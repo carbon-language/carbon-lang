@@ -12,17 +12,20 @@
 
 #include "mlir/Dialect/Linalg/Transforms/HoistPadding.h"
 #include "mlir/Analysis/SliceAnalysis.h"
+#include "mlir/Dialect/Affine/IR/AffineOps.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/Linalg/IR/Linalg.h"
 #include "mlir/Dialect/Linalg/Transforms/Transforms.h"
 #include "mlir/Dialect/SCF/SCF.h"
 #include "mlir/Dialect/SCF/Utils/Utils.h"
-#include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
+#include "mlir/Dialect/Utils/IndexingUtils.h"
 #include "mlir/Dialect/Vector/IR/VectorOps.h"
 #include "mlir/Dialect/Vector/Utils/VectorUtils.h"
 #include "mlir/IR/AsmState.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/Dominance.h"
+#include "mlir/IR/Matchers.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Debug.h"
 
@@ -126,7 +129,7 @@ static bool isOnlyUsedAsInputOfLinalgOp(tensor::PadOp padOp) {
 static void
 getAtMostNEnclosingLoops(tensor::PadOp padOp, int nLevels,
                          SmallVector<scf::ForOp> &reverseEnclosingLoops) {
-  AsmState state(padOp->getParentOfType<mlir::FuncOp>());
+  AsmState state(padOp->getParentOfType<func::FuncOp>());
   (void)state;
   scf::ForOp outermostEnclosingForOp = nullptr;
   Operation *nextEnclosingOp = padOp->getParentOp();
@@ -368,7 +371,7 @@ HoistingAnalysis::getPackedTensorSizes(ImplicitLocOpBuilder &b) {
 }
 
 static bool isDefinedOutsideOrConstant(scf::ForOp outer, Value v) {
-  return outer.isDefinedOutsideOfLoop(v) || v.getDefiningOp<ConstantOp>();
+  return outer.isDefinedOutsideOfLoop(v) || matchPattern(v, m_Constant());
 }
 
 /// Return the current iteration number in the loop (iv - lb).ceilDiv(step).

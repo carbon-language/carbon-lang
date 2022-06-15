@@ -47,7 +47,11 @@ public:
       : CGCXXABI(CGM), BaseClassDescriptorType(nullptr),
         ClassHierarchyDescriptorType(nullptr),
         CompleteObjectLocatorType(nullptr), CatchableTypeType(nullptr),
-        ThrowInfoType(nullptr) {}
+        ThrowInfoType(nullptr) {
+    assert(!(CGM.getLangOpts().isExplicitDefaultVisibilityExportMapping() ||
+             CGM.getLangOpts().isAllDefaultVisibilityExportMapping()) &&
+           "visibility export mapping option unimplemented in this ABI");
+  }
 
   bool HasThisReturn(GlobalDecl GD) const override;
   bool hasMostDerivedReturn(GlobalDecl GD) const override;
@@ -1947,7 +1951,7 @@ CGCallee MicrosoftCXXABI::getVirtualFunctionPointer(CodeGenFunction &CGF,
   llvm::Value *VFunc;
   if (CGF.ShouldEmitVTableTypeCheckedLoad(MethodDecl->getParent())) {
     VFunc = CGF.EmitVTableTypeCheckedLoad(
-        getObjectWithVPtr(), VTable,
+        getObjectWithVPtr(), VTable, Ty,
         ML.Index * CGM.getContext().getTargetInfo().getPointerWidth(0) / 8);
   } else {
     if (CGM.getCodeGenOpts().PrepareForLTO)

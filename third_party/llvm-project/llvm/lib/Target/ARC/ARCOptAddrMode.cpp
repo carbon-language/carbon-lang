@@ -36,7 +36,7 @@ using namespace llvm;
 namespace llvm {
 
 static cl::opt<unsigned> ArcKillAddrMode("arc-kill-addr-mode", cl::init(0),
-                                         cl::ReallyHidden, cl::ZeroOrMore);
+                                         cl::ReallyHidden);
 
 #define DUMP_BEFORE() ((ArcKillAddrMode & 0x0001) != 0)
 #define DUMP_AFTER() ((ArcKillAddrMode & 0x0002) != 0)
@@ -459,12 +459,12 @@ void ARCOptAddrMode::changeToAddrMode(MachineInstr &Ldst, unsigned NewOpcode,
 
   Register BaseReg = Ldst.getOperand(BasePos).getReg();
 
-  Ldst.RemoveOperand(OffPos);
-  Ldst.RemoveOperand(BasePos);
+  Ldst.removeOperand(OffPos);
+  Ldst.removeOperand(BasePos);
 
   if (IsStore) {
     Src = Ldst.getOperand(BasePos - 1);
-    Ldst.RemoveOperand(BasePos - 1);
+    Ldst.removeOperand(BasePos - 1);
   }
 
   Ldst.setDesc(AST->getInstrInfo()->get(NewOpcode));

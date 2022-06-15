@@ -9,7 +9,6 @@
 #include "llvm/DebugInfo/PDB/Native/PDBFileBuilder.h"
 #include "llvm/DebugInfo/CodeView/CodeView.h"
 #include "llvm/DebugInfo/CodeView/GUID.h"
-#include "llvm/DebugInfo/MSF/IMSFFile.h"
 #include "llvm/DebugInfo/MSF/MSFBuilder.h"
 #include "llvm/DebugInfo/MSF/MSFCommon.h"
 #include "llvm/DebugInfo/MSF/MappedBlockStream.h"
@@ -25,6 +24,8 @@
 #include "llvm/Support/CRC.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/xxhash.h"
+
+#include <ctime>
 
 using namespace llvm;
 using namespace llvm::codeview;

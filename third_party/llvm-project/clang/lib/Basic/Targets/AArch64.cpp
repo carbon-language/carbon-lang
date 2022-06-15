@@ -226,8 +226,6 @@ void AArch64TargetInfo::getTargetDefinesARMV87A(const LangOptions &Opts,
 
 void AArch64TargetInfo::getTargetDefinesARMV88A(const LangOptions &Opts,
                                                 MacroBuilder &Builder) const {
-  // FIXME: this does not handle the case where MOPS is disabled using +nomops
-  Builder.defineMacro("__ARM_FEATURE_MOPS", "1");
   // Also include the Armv8.7 defines
   getTargetDefinesARMV87A(Opts, Builder);
 }
@@ -511,14 +509,12 @@ AArch64TargetInfo::getVScaleRange(const LangOptions &LangOpts) const {
 }
 
 bool AArch64TargetInfo::hasFeature(StringRef Feature) const {
-  return Feature == "aarch64" || Feature == "arm64" || Feature == "arm" ||
-         (Feature == "neon" && (FPU & NeonMode)) ||
-         ((Feature == "sve" || Feature == "sve2" || Feature == "sve2-bitperm" ||
-           Feature == "sve2-aes" || Feature == "sve2-sha3" ||
-           Feature == "sve2-sm4" || Feature == "f64mm" || Feature == "f32mm" ||
-           Feature == "i8mm" || Feature == "bf16") &&
-          (FPU & SveMode)) ||
-         (Feature == "ls64" && HasLS64);
+  return llvm::StringSwitch<bool>(Feature)
+    .Cases("aarch64", "arm64", "arm", true)
+    .Case("neon", FPU & NeonMode)
+    .Cases("sve", "sve2", "sve2-bitperm", "sve2-aes", "sve2-sha3", "sve2-sm4", "f64mm", "f32mm", "i8mm", "bf16", FPU & SveMode)
+    .Case("ls64", HasLS64)
+    .Default(false);
 }
 
 bool AArch64TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
@@ -680,6 +676,7 @@ AArch64TargetInfo::checkCallingConvention(CallingConv CC) const {
   case CC_PreserveAll:
   case CC_OpenCLKernel:
   case CC_AArch64VectorCall:
+  case CC_AArch64SVEPCS:
   case CC_Win64:
     return CCCR_OK;
   default:

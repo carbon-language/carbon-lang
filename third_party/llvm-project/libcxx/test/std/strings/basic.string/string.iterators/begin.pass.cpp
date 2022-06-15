@@ -8,8 +8,8 @@
 
 // <string>
 
-//       iterator begin();
-// const_iterator begin() const;
+//       iterator begin(); // constexpr since C++20
+// const_iterator begin() const; // constexpr since C++20
 
 #include <string>
 #include <cassert>
@@ -31,7 +31,7 @@ test(S s)
     assert(b == cb);
 }
 
-bool test() {
+TEST_CONSTEXPR_CXX20 bool test() {
   {
     typedef std::string S;
     test(S());
@@ -52,7 +52,7 @@ int main(int, char**)
 {
   test();
 #if TEST_STD_VER > 17
-  // static_assert(test());
+  static_assert(test());
 #endif
 
   return 0;

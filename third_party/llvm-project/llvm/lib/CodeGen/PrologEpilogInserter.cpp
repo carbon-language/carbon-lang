@@ -55,10 +55,8 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CodeGen.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -284,6 +282,9 @@ bool PEI::runOnMachineFunction(MachineFunction &MF) {
     // Verifier should have caught this.
     assert(!Failed && "Invalid warn-stack-size fn attr value");
     (void)Failed;
+  }
+  if (MF.getFunction().hasFnAttribute(Attribute::SafeStack)) {
+    StackSize += MFI.getUnsafeStackSize();
   }
   if (StackSize > Threshold) {
     DiagnosticInfoStackSize DiagStackSize(F, StackSize, Threshold, DS_Warning);
@@ -838,8 +839,8 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &MF) {
   // Adjust 'Offset' to point to the end of last fixed sized preallocated
   // object.
   for (int i = MFI.getObjectIndexBegin(); i != 0; ++i) {
-    if (MFI.getStackID(i) !=
-        TargetStackID::Default) // Only allocate objects on the default stack.
+    // Only allocate objects on the default stack.
+    if (MFI.getStackID(i) != TargetStackID::Default)
       continue;
 
     int64_t FixedOff;
@@ -856,47 +857,34 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &MF) {
     if (FixedOff > Offset) Offset = FixedOff;
   }
 
+  Align MaxAlign = MFI.getMaxAlign();
   // First assign frame offsets to stack objects that are used to spill
   // callee saved registers.
-  if (StackGrowsDown && MaxCSFrameIndex >= MinCSFrameIndex) {
-    for (unsigned i = MinCSFrameIndex; i <= MaxCSFrameIndex; ++i) {
-      if (MFI.getStackID(i) !=
-          TargetStackID::Default) // Only allocate objects on the default stack.
+  if (MaxCSFrameIndex >= MinCSFrameIndex) {
+    for (unsigned i = 0; i <= MaxCSFrameIndex - MinCSFrameIndex; ++i) {
+      unsigned FrameIndex =
+          StackGrowsDown ? MinCSFrameIndex + i : MaxCSFrameIndex - i;
+
+      // Only allocate objects on the default stack.
+      if (MFI.getStackID(FrameIndex) != TargetStackID::Default)
         continue;
 
-      // If the stack grows down, we need to add the size to find the lowest
-      // address of the object.
-      Offset += MFI.getObjectSize(i);
-
-      // Adjust to alignment boundary
-      Offset = alignTo(Offset, MFI.getObjectAlign(i), Skew);
-
-      LLVM_DEBUG(dbgs() << "alloc FI(" << i << ") at SP[" << -Offset << "]\n");
-      MFI.setObjectOffset(i, -Offset);        // Set the computed offset
-    }
-  } else if (MaxCSFrameIndex >= MinCSFrameIndex) {
-    // Be careful about underflow in comparisons agains MinCSFrameIndex.
-    for (unsigned i = MaxCSFrameIndex; i != MinCSFrameIndex - 1; --i) {
-      if (MFI.getStackID(i) !=
-          TargetStackID::Default) // Only allocate objects on the default stack.
+      // TODO: should this just be if (MFI.isDeadObjectIndex(FrameIndex))
+      if (!StackGrowsDown && MFI.isDeadObjectIndex(FrameIndex))
         continue;
 
-      if (MFI.isDeadObjectIndex(i))
-        continue;
-
-      // Adjust to alignment boundary
-      Offset = alignTo(Offset, MFI.getObjectAlign(i), Skew);
-
-      LLVM_DEBUG(dbgs() << "alloc FI(" << i << ") at SP[" << Offset << "]\n");
-      MFI.setObjectOffset(i, Offset);
-      Offset += MFI.getObjectSize(i);
+      AdjustStackOffset(MFI, FrameIndex, StackGrowsDown, Offset, MaxAlign,
+                        Skew);
     }
   }
+
+  assert(MaxAlign == MFI.getMaxAlign() &&
+         "MFI.getMaxAlign should already account for all callee-saved "
+         "registers without a fixed stack slot");
 
   // FixedCSEnd is the stack offset to the end of the fixed and callee-save
   // stack area.
   int64_t FixedCSEnd = Offset;
-  Align MaxAlign = MFI.getMaxAlign();
 
   // Make sure the special register scavenging spill slot is closest to the
   // incoming stack pointer if a frame pointer is required and is closer
@@ -983,8 +971,8 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &MF) {
         continue;
       if (StackProtectorFI == (int)i || EHRegNodeFrameIndex == (int)i)
         continue;
-      if (MFI.getStackID(i) !=
-          TargetStackID::Default) // Only allocate objects on the default stack.
+      // Only allocate objects on the default stack.
+      if (MFI.getStackID(i) != TargetStackID::Default)
         continue;
 
       switch (MFI.getObjectSSPLayout(i)) {
@@ -1037,8 +1025,8 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &MF) {
       continue;
     if (ProtectedObjs.count(i))
       continue;
-    if (MFI.getStackID(i) !=
-        TargetStackID::Default) // Only allocate objects on the default stack.
+    // Only allocate objects on the default stack.
+    if (MFI.getStackID(i) != TargetStackID::Default)
       continue;
 
     // Add the objects that we need to allocate to our working set.
@@ -1159,11 +1147,7 @@ void PEI::insertPrologEpilogCode(MachineFunction &MF) {
   if (MF.shouldSplitStack()) {
     for (MachineBasicBlock *SaveBlock : SaveBlocks)
       TFI.adjustForSegmentedStacks(MF, *SaveBlock);
-    // Record that there are split-stack functions, so we will emit a
-    // special section to tell the linker.
-    MF.getMMI().setHasSplitStack(true);
-  } else
-    MF.getMMI().setHasNosplitStack(true);
+  }
 
   // Emit additional code that is required to explicitly handle the stack in
   // HiPE native code (if needed) when loaded in the Erlang/OTP runtime. The
@@ -1243,7 +1227,7 @@ void PEI::insertZeroCallUsedRegs(MachineFunction &MF) {
     RegsToZero.set(Reg);
   }
 
-  // Remove registers that are live when leaving the function.
+  // Don't clear registers that are live when leaving the function.
   for (const MachineBasicBlock &MBB : MF)
     for (const MachineInstr &MI : MBB.terminators()) {
       if (!MI.isReturn())
@@ -1257,6 +1241,31 @@ void PEI::insertZeroCallUsedRegs(MachineFunction &MF) {
           RegsToZero.reset(SReg);
       }
     }
+
+  // Don't need to clear registers that are used/clobbered by terminating
+  // instructions.
+  for (const MachineBasicBlock &MBB : MF) {
+    if (!MBB.isReturnBlock())
+      continue;
+
+    MachineBasicBlock::const_iterator MBBI = MBB.getFirstTerminator();
+    for (MachineBasicBlock::const_iterator I = MBBI, E = MBB.end(); I != E;
+         ++I) {
+      for (const MachineOperand &MO : I->operands()) {
+        if (!MO.isReg())
+          continue;
+
+        for (const MCPhysReg &Reg :
+             TRI.sub_and_superregs_inclusive(MO.getReg()))
+          RegsToZero.reset(Reg);
+      }
+    }
+  }
+
+  // Don't clear registers that are reset before exiting.
+  for (const CalleeSavedInfo &CSI : MF.getFrameInfo().getCalleeSavedInfo())
+    for (MCRegister Reg : TRI.sub_and_superregs_inclusive(CSI.getReg()))
+      RegsToZero.reset(Reg);
 
   const TargetFrameLowering &TFI = *MF.getSubtarget().getFrameLowering();
   for (MachineBasicBlock &MBB : MF)

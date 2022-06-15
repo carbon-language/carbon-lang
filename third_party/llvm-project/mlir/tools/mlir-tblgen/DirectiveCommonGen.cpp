@@ -35,7 +35,7 @@ using llvm::RecordKeeper;
 // declarations, functions etc.
 //
 // Some OpenMP/OpenACC clauses accept only a fixed set of values as inputs.
-// These can be represented as a String Enum Attribute (StrEnumAttr) in MLIR
+// These can be represented as a Enum Attributes (EnumAttrDef) in MLIR
 // ODS. The emitDecls function below currently generates these enumerations. The
 // name of the enumeration is specified in the enumClauseValue field of
 // Clause record in OMP.td. This name can be used to specify the type of the
@@ -70,10 +70,14 @@ static bool emitDecls(const RecordKeeper &recordKeeper, llvm::StringRef dialect,
       if (!cval.isUserVisible())
         continue;
 
-      const auto name = cval.getFormattedName();
+      std::string name = cval.getFormattedName();
+      std::string enumValName(name.length(), ' ');
+      std::transform(name.begin(), name.end(), enumValName.begin(),
+                     llvm::toLower);
+      enumValName[0] = llvm::toUpper(enumValName[0]);
       std::string cvDef{(enumName + llvm::Twine(name)).str()};
-      os << "def " << cvDef << " : I32EnumAttrCase<\"" << name << "\", "
-         << it.index() << ">;\n";
+      os << "def " << cvDef << " : I32EnumAttrCase<\"" << enumValName << "\", "
+         << it.index() << ", \"" << name << "\">;\n";
       cvDefs.push_back(cvDef);
     }
 

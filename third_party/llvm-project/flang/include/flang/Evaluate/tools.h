@@ -83,7 +83,7 @@ template <typename A> bool IsAssumedRank(const Designator<A> &designator) {
   }
 }
 template <typename T> bool IsAssumedRank(const Expr<T> &expr) {
-  return std::visit([](const auto &x) { return IsAssumedRank(x); }, expr.u);
+  return common::visit([](const auto &x) { return IsAssumedRank(x); }, expr.u);
 }
 template <typename A> bool IsAssumedRank(const std::optional<A> &x) {
   return x && IsAssumedRank(*x);
@@ -100,7 +100,7 @@ template <typename A> bool IsCoarray(const Designator<A> &designator) {
   return false;
 }
 template <typename T> bool IsCoarray(const Expr<T> &expr) {
-  return std::visit([](const auto &x) { return IsCoarray(x); }, expr.u);
+  return common::visit([](const auto &x) { return IsCoarray(x); }, expr.u);
 }
 template <typename A> bool IsCoarray(const std::optional<A> &x) {
   return x && IsCoarray(*x);
@@ -149,6 +149,7 @@ Expr<SomeType> Parenthesize(Expr<SomeType> &&);
 
 Expr<SomeReal> GetComplexPart(
     const Expr<SomeComplex> &, bool isImaginary = false);
+Expr<SomeReal> GetComplexPart(Expr<SomeComplex> &&, bool isImaginary = false);
 
 template <int KIND>
 Expr<SomeComplex> MakeComplex(Expr<Type<TypeCategory::Real, KIND>> &&re,
@@ -177,11 +178,11 @@ auto UnwrapExpr(B &x) -> common::Constify<A, B> * {
       return UnwrapExpr<A>(*expr);
     }
   } else if constexpr (std::is_same_v<Ty, Expr<SomeType>>) {
-    return std::visit([](auto &x) { return UnwrapExpr<A>(x); }, x.u);
+    return common::visit([](auto &x) { return UnwrapExpr<A>(x); }, x.u);
   } else if constexpr (!common::HasMember<A, TypelessExpression>) {
     if constexpr (std::is_same_v<Ty, Expr<ResultType<A>>> ||
         std::is_same_v<Ty, Expr<SomeKind<ResultType<A>::category>>>) {
-      return std::visit([](auto &x) { return UnwrapExpr<A>(x); }, x.u);
+      return common::visit([](auto &x) { return UnwrapExpr<A>(x); }, x.u);
     }
   }
   return nullptr;
@@ -217,16 +218,24 @@ auto UnwrapConvertedExpr(B &x) -> common::Constify<A, B> * {
       return UnwrapConvertedExpr<A>(*expr);
     }
   } else if constexpr (std::is_same_v<Ty, Expr<SomeType>>) {
-    return std::visit([](auto &x) { return UnwrapConvertedExpr<A>(x); }, x.u);
-  } else if constexpr (!common::HasMember<A, TypelessExpression>) {
-    using Result = ResultType<A>;
-    if constexpr (std::is_same_v<Ty, Expr<Result>> ||
-        std::is_same_v<Ty, Expr<SomeKind<Result::category>>>) {
-      return std::visit([](auto &x) { return UnwrapConvertedExpr<A>(x); }, x.u);
-    } else if constexpr (std::is_same_v<Ty, Parentheses<Result>> ||
-        std::is_same_v<Ty, Convert<Result, Result::category>>) {
-      return std::visit(
-          [](auto &x) { return UnwrapConvertedExpr<A>(x); }, x.left().u);
+    return common::visit(
+        [](auto &x) { return UnwrapConvertedExpr<A>(x); }, x.u);
+  } else {
+    using DesiredResult = ResultType<A>;
+    if constexpr (std::is_same_v<Ty, Expr<DesiredResult>> ||
+        std::is_same_v<Ty, Expr<SomeKind<DesiredResult::category>>>) {
+      return common::visit(
+          [](auto &x) { return UnwrapConvertedExpr<A>(x); }, x.u);
+    } else {
+      using ThisResult = ResultType<B>;
+      if constexpr (std::is_same_v<Ty, Expr<ThisResult>>) {
+        return common::visit(
+            [](auto &x) { return UnwrapConvertedExpr<A>(x); }, x.u);
+      } else if constexpr (std::is_same_v<Ty, Parentheses<ThisResult>> ||
+          std::is_same_v<Ty, Convert<ThisResult, DesiredResult::category>>) {
+        return common::visit(
+            [](auto &x) { return UnwrapConvertedExpr<A>(x); }, x.left().u);
+      }
     }
   }
   return nullptr;
@@ -251,18 +260,18 @@ template <typename A> const Symbol *ExtractBareLenParameter(const A &expr) {
 }
 
 // If an expression simply wraps a DataRef, extract and return it.
-// The Boolean argument controls the handling of Substring
+// The Boolean argument controls the handling of Substring and ComplexPart
 // references: when true (not default), it extracts the base DataRef
-// of a substring, if it has one.
+// of a substring or complex part, if it has one.
 template <typename A>
 common::IfNoLvalue<std::optional<DataRef>, A> ExtractDataRef(
-    const A &, bool intoSubstring) {
+    const A &, bool intoSubstring, bool intoComplexPart) {
   return std::nullopt; // default base case
 }
 template <typename T>
-std::optional<DataRef> ExtractDataRef(
-    const Designator<T> &d, bool intoSubstring = false) {
-  return std::visit(
+std::optional<DataRef> ExtractDataRef(const Designator<T> &d,
+    bool intoSubstring = false, bool intoComplexPart = false) {
+  return common::visit(
       [=](const auto &x) -> std::optional<DataRef> {
         if constexpr (common::HasMember<decltype(x), decltype(DataRef::u)>) {
           return DataRef{x};
@@ -272,29 +281,38 @@ std::optional<DataRef> ExtractDataRef(
             return ExtractSubstringBase(x);
           }
         }
+        if constexpr (std::is_same_v<std::decay_t<decltype(x)>, ComplexPart>) {
+          if (intoComplexPart) {
+            return x.complex();
+          }
+        }
         return std::nullopt; // w/o "else" to dodge bogus g++ 8.1 warning
       },
       d.u);
 }
 template <typename T>
-std::optional<DataRef> ExtractDataRef(
-    const Expr<T> &expr, bool intoSubstring = false) {
-  return std::visit(
-      [=](const auto &x) { return ExtractDataRef(x, intoSubstring); }, expr.u);
+std::optional<DataRef> ExtractDataRef(const Expr<T> &expr,
+    bool intoSubstring = false, bool intoComplexPart = false) {
+  return common::visit(
+      [=](const auto &x) {
+        return ExtractDataRef(x, intoSubstring, intoComplexPart);
+      },
+      expr.u);
 }
 template <typename A>
-std::optional<DataRef> ExtractDataRef(
-    const std::optional<A> &x, bool intoSubstring = false) {
+std::optional<DataRef> ExtractDataRef(const std::optional<A> &x,
+    bool intoSubstring = false, bool intoComplexPart = false) {
   if (x) {
-    return ExtractDataRef(*x, intoSubstring);
+    return ExtractDataRef(*x, intoSubstring, intoComplexPart);
   } else {
     return std::nullopt;
   }
 }
 template <typename A>
-std::optional<DataRef> ExtractDataRef(const A *p, bool intoSubstring = false) {
+std::optional<DataRef> ExtractDataRef(
+    const A *p, bool intoSubstring = false, bool intoComplexPart = false) {
   if (p) {
-    return ExtractDataRef(*p, intoSubstring);
+    return ExtractDataRef(*p, intoSubstring, intoComplexPart);
   } else {
     return std::nullopt;
   }
@@ -328,7 +346,7 @@ bool IsArrayElement(const Expr<T> &expr, bool intoSubstring = true,
 template <typename A>
 std::optional<NamedEntity> ExtractNamedEntity(const A &x) {
   if (auto dataRef{ExtractDataRef(x, true)}) {
-    return std::visit(
+    return common::visit(
         common::visitors{
             [](SymbolRef &&symbol) -> std::optional<NamedEntity> {
               return NamedEntity{symbol};
@@ -354,10 +372,10 @@ struct ExtractCoindexedObjectHelper {
   std::optional<CoarrayRef> operator()(const CoarrayRef &x) const { return x; }
   template <typename A>
   std::optional<CoarrayRef> operator()(const Expr<A> &expr) const {
-    return std::visit(*this, expr.u);
+    return common::visit(*this, expr.u);
   }
   std::optional<CoarrayRef> operator()(const DataRef &dataRef) const {
-    return std::visit(*this, dataRef.u);
+    return common::visit(*this, dataRef.u);
   }
   std::optional<CoarrayRef> operator()(const NamedEntity &named) const {
     if (const Component * component{named.UnwrapComponent()}) {
@@ -417,6 +435,27 @@ const Symbol *UnwrapWholeSymbolOrComponentDataRef(const A &x) {
   return nullptr;
 }
 
+// If an expression is a whole symbol or a whole component designator,
+// potentially followed by an image selector, extract and return that symbol,
+// else null.
+template <typename A>
+const Symbol *UnwrapWholeSymbolOrComponentOrCoarrayRef(const A &x) {
+  if (auto dataRef{ExtractDataRef(x)}) {
+    if (const SymbolRef * p{std::get_if<SymbolRef>(&dataRef->u)}) {
+      return &p->get();
+    } else if (const Component * c{std::get_if<Component>(&dataRef->u)}) {
+      if (c->base().Rank() == 0) {
+        return &c->GetLastSymbol();
+      }
+    } else if (const CoarrayRef * c{std::get_if<CoarrayRef>(&dataRef->u)}) {
+      if (c->subscript().empty()) {
+        return &c->GetLastSymbol();
+      }
+    }
+  }
+  return nullptr;
+}
+
 // GetFirstSymbol(A%B%C[I]%D) -> A
 template <typename A> const Symbol *GetFirstSymbol(const A &x) {
   if (auto dataRef{ExtractDataRef(x, true)}) {
@@ -449,7 +488,7 @@ Expr<TO> ConvertToType(Expr<SomeKind<FROMCAT>> &&x) {
         ConvertToType<Part>(std::move(x)), Expr<Part>{Constant<Part>{zero}}}};
   } else if constexpr (FROMCAT == TypeCategory::Complex) {
     // Extract and convert the real component of a complex value
-    return std::visit(
+    return common::visit(
         [&](auto &&z) {
           using ZType = ResultType<decltype(z)>;
           using Part = typename ZType::Part;
@@ -503,7 +542,7 @@ common::IfNoLvalue<Expr<Type<TC, TK>>, FROM> ConvertTo(
 template <TypeCategory TC, typename FROM>
 common::IfNoLvalue<Expr<SomeKind<TC>>, FROM> ConvertTo(
     const Expr<SomeKind<TC>> &to, FROM &&from) {
-  return std::visit(
+  return common::visit(
       [&](const auto &toKindExpr) {
         using KindExpr = std::decay_t<decltype(toKindExpr)>;
         return AsCategoryExpr(
@@ -515,7 +554,7 @@ common::IfNoLvalue<Expr<SomeKind<TC>>, FROM> ConvertTo(
 template <typename FROM>
 common::IfNoLvalue<Expr<SomeType>, FROM> ConvertTo(
     const Expr<SomeType> &to, FROM &&from) {
-  return std::visit(
+  return common::visit(
       [&](const auto &toCatExpr) {
         return AsGenericExpr(ConvertTo(toCatExpr, std::move(from)));
       },
@@ -565,7 +604,7 @@ using SameKindExprs =
 template <TypeCategory CAT>
 SameKindExprs<CAT, 2> AsSameKindExprs(
     Expr<SomeKind<CAT>> &&x, Expr<SomeKind<CAT>> &&y) {
-  return std::visit(
+  return common::visit(
       [&](auto &&kx, auto &&ky) -> SameKindExprs<CAT, 2> {
         using XTy = ResultType<decltype(kx)>;
         using YTy = ResultType<decltype(ky)>;
@@ -626,7 +665,7 @@ Expr<SPECIFIC> Combine(Expr<SPECIFIC> &&x, Expr<SPECIFIC> &&y) {
 template <template <typename> class OPR, TypeCategory CAT>
 Expr<SomeKind<CAT>> PromoteAndCombine(
     Expr<SomeKind<CAT>> &&x, Expr<SomeKind<CAT>> &&y) {
-  return std::visit(
+  return common::visit(
       [](auto &&xy) {
         using Ty = ResultType<decltype(xy[0])>;
         return AsCategoryExpr(
@@ -727,7 +766,7 @@ Expr<Type<C, K>> operator/(Expr<Type<C, K>> &&x, Expr<Type<C, K>> &&y) {
 }
 
 template <TypeCategory C> Expr<SomeKind<C>> operator-(Expr<SomeKind<C>> &&x) {
-  return std::visit(
+  return common::visit(
       [](auto &xk) { return Expr<SomeKind<C>>{-std::move(xk)}; }, x.u);
 }
 
@@ -872,7 +911,7 @@ std::optional<BaseObject> GetBaseObject(const Designator<T> &x) {
 }
 template <typename T>
 std::optional<BaseObject> GetBaseObject(const Expr<T> &x) {
-  return std::visit([](const auto &y) { return GetBaseObject(y); }, x.u);
+  return common::visit([](const auto &y) { return GetBaseObject(y); }, x.u);
 }
 template <typename A>
 std::optional<BaseObject> GetBaseObject(const std::optional<A> &x) {
@@ -892,6 +931,8 @@ template <typename A> bool IsAllocatableOrPointer(const A &x) {
 // Like IsAllocatableOrPointer, but accepts pointer function results as being
 // pointers.
 bool IsAllocatableOrPointerObject(const Expr<SomeType> &, FoldingContext &);
+
+bool IsAllocatableDesignator(const Expr<SomeType> &);
 
 // Procedure and pointer detection predicates
 bool IsProcedure(const Expr<SomeType> &);
@@ -1012,7 +1053,8 @@ public:
     return Expand(std::move(x.left())); // Constant<> can be parenthesized
   }
   template <typename T> Expr<T> Expand(Expr<T> &&x) {
-    return std::visit([&](auto &&x) { return Expr<T>{Expand(std::move(x))}; },
+    return common::visit(
+        [&](auto &&x) { return Expr<T>{Expand(std::move(x))}; },
         std::move(x.u));
   }
 
@@ -1042,6 +1084,11 @@ Constant<T> PackageConstant(std::vector<Scalar<T>> &&elements,
 // that can appear in DATA statements as an extension.
 std::optional<Expr<SomeType>> DataConstantConversionExtension(
     FoldingContext &, const DynamicType &, const Expr<SomeType> &);
+
+// Convert Hollerith or short character to a another type as if the
+// Hollerith data had been BOZ.
+std::optional<Expr<SomeType>> HollerithToBOZ(
+    FoldingContext &, const Expr<SomeType> &, const DynamicType &);
 
 } // namespace Fortran::evaluate
 

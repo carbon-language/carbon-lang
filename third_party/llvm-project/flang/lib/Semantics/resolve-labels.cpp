@@ -122,7 +122,6 @@ constexpr Legality IsLegalBranchTarget(const parser::Statement<A> &) {
       std::is_same_v<A, parser::CriticalStmt> ||
       std::is_same_v<A, parser::EndCriticalStmt> ||
       std::is_same_v<A, parser::ForallConstructStmt> ||
-      std::is_same_v<A, parser::ForallStmt> ||
       std::is_same_v<A, parser::WhereConstructStmt> ||
       std::is_same_v<A, parser::EndFunctionStmt> ||
       std::is_same_v<A, parser::EndMpSubprogramStmt> ||
@@ -230,17 +229,20 @@ public:
         parser::BlockStmt, parser::ChangeTeamStmt, parser::CriticalStmt,
         parser::IfThenStmt, parser::NonLabelDoStmt, parser::SelectCaseStmt,
         parser::SelectRankStmt, parser::SelectTypeStmt,
-        parser::WhereConstructStmt>;
+        parser::ForallConstructStmt, parser::WhereConstructStmt>;
     using LabeledConstructEndStmts = std::tuple<parser::EndAssociateStmt,
         parser::EndBlockStmt, parser::EndChangeTeamStmt,
         parser::EndCriticalStmt, parser::EndDoStmt, parser::EndForallStmt,
-        parser::EndIfStmt, parser::EndSelectStmt, parser::EndWhereStmt>;
+        parser::EndIfStmt, parser::EndWhereStmt>;
     using LabeledProgramUnitEndStmts =
         std::tuple<parser::EndFunctionStmt, parser::EndMpSubprogramStmt,
             parser::EndProgramStmt, parser::EndSubroutineStmt>;
     auto targetFlags{ConstructBranchTargetFlags(statement)};
     if constexpr (common::HasMember<A, LabeledConstructStmts>) {
       AddTargetLabelDefinition(label.value(), targetFlags, ParentScope());
+    } else if constexpr (std::is_same_v<A, parser::EndSelectStmt>) {
+      // the label on an END SELECT is not in the last case
+      AddTargetLabelDefinition(label.value(), targetFlags, ParentScope(), true);
     } else if constexpr (common::HasMember<A, LabeledConstructEndStmts>) {
       constexpr bool isExecutableConstructEndStmt{true};
       AddTargetLabelDefinition(label.value(), targetFlags, currentScope_,
@@ -287,19 +289,23 @@ public:
   bool Pre(const parser::CaseConstruct &caseConstruct) {
     return PushConstructName(caseConstruct);
   }
+  void Post(const parser::SelectCaseStmt &) { PushScope(); }
   bool Pre(const parser::CaseConstruct::Case &) { return SwitchToNewScope(); }
   bool Pre(const parser::SelectRankConstruct &selectRankConstruct) {
     return PushConstructName(selectRankConstruct);
   }
+  void Post(const parser::SelectRankStmt &) { PushScope(); }
   bool Pre(const parser::SelectRankConstruct::RankCase &) {
     return SwitchToNewScope();
   }
   bool Pre(const parser::SelectTypeConstruct &selectTypeConstruct) {
     return PushConstructName(selectTypeConstruct);
   }
+  void Post(const parser::SelectTypeStmt &) { PushScope(); }
   bool Pre(const parser::SelectTypeConstruct::TypeCase &) {
     return SwitchToNewScope();
   }
+  void Post(const parser::EndSelectStmt &) { PopScope(); }
   bool Pre(const parser::WhereConstruct &whereConstruct) {
     return PushConstructName(whereConstruct);
   }
@@ -868,7 +874,9 @@ void CheckBranchesIntoDoBody(const SourceStmtList &branches,
       const auto &toPosition{branchTarget.parserCharBlock};
       for (const auto &body : loopBodies) {
         if (!InBody(fromPosition, body) && InBody(toPosition, body)) {
-          context.Say(fromPosition, "branch into loop body from outside"_en_US)
+          context
+              .Say(
+                  fromPosition, "branch into loop body from outside"_warn_en_US)
               .Attach(body.first, "the loop branched into"_en_US);
         }
       }
@@ -937,7 +945,7 @@ void CheckLabelDoConstraints(const SourceStmtList &dos,
               common::LanguageFeature::OldLabelDoEndStatements)) {
         context
             .Say(position,
-                "A DO loop should terminate with an END DO or CONTINUE"_en_US)
+                "A DO loop should terminate with an END DO or CONTINUE"_port_en_US)
             .Attach(doTarget.parserCharBlock,
                 "DO loop currently ends at statement:"_en_US);
       }
@@ -993,7 +1001,7 @@ void CheckScopeConstraints(const SourceStmtList &stmts,
       context.Say(position,
           isFatal
               ? "Label '%u' is in a construct that prevents its use as a branch target here"_err_en_US
-              : "Label '%u' is in a construct that prevents its use as a branch target here"_en_US,
+              : "Label '%u' is in a construct that should not be used as a branch target here"_warn_en_US,
           SayLabel(label));
     }
   }
@@ -1018,7 +1026,7 @@ void CheckBranchTargetConstraints(const SourceStmtList &stmts,
                      TargetStatementEnum::Branch)) { // warning
         context
             .Say(branchTarget.parserCharBlock,
-                "Label '%u' is not a branch target"_en_US, SayLabel(label))
+                "Label '%u' is not a branch target"_warn_en_US, SayLabel(label))
             .Attach(stmt.parserCharBlock, "Control flow use of '%u'"_en_US,
                 SayLabel(label));
       }
@@ -1072,7 +1080,7 @@ void CheckAssignTargetConstraints(const SourceStmtList &stmts,
           .Say(target.parserCharBlock,
               target.labeledStmtClassificationSet.test(
                   TargetStatementEnum::CompatibleBranch)
-                  ? "Label '%u' is not a branch target or FORMAT"_en_US
+                  ? "Label '%u' is not a branch target or FORMAT"_warn_en_US
                   : "Label '%u' is not a branch target or FORMAT"_err_en_US,
               SayLabel(label))
           .Attach(stmt.parserCharBlock, "ASSIGN statement use of '%u'"_en_US,

@@ -26,7 +26,6 @@
 #include "llvm/MC/MCSymbolWasm.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -122,6 +121,7 @@ bool MCWasmStreamer::emitSymbolAttribute(MCSymbol *S, MCSymbolAttr Attribute) {
   case MCSA_Invalid:
   case MCSA_IndirectSymbol:
   case MCSA_Protected:
+  case MCSA_Exported:
     return false;
 
   case MCSA_Hidden:

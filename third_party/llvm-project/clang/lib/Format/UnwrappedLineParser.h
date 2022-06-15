@@ -92,14 +92,19 @@ private:
   void reset();
   void parseFile();
   bool precededByCommentOrPPDirective() const;
-  bool parseLevel(bool HasOpeningBrace, bool CanContainBracedList,
+  bool parseLevel(const FormatToken *OpeningBrace = nullptr,
+                  bool CanContainBracedList = true,
+                  TokenType NextLBracesType = TT_Unknown,
                   IfStmtKind *IfKind = nullptr,
-                  TokenType NextLBracesType = TT_Unknown);
-  IfStmtKind parseBlock(bool MustBeDeclaration = false, unsigned AddLevels = 1u,
-                        bool MunchSemi = true,
-                        bool UnindentWhitesmithsBraces = false,
-                        bool CanContainBracedList = true,
-                        TokenType NextLBracesType = TT_Unknown);
+                  FormatToken **IfLeftBrace = nullptr);
+  bool mightFitOnOneLine(UnwrappedLine &Line,
+                         const FormatToken *OpeningBrace = nullptr) const;
+  FormatToken *parseBlock(bool MustBeDeclaration = false,
+                          unsigned AddLevels = 1u, bool MunchSemi = true,
+                          bool KeepBraces = true, IfStmtKind *IfKind = nullptr,
+                          bool UnindentWhitesmithsBraces = false,
+                          bool CanContainBracedList = true,
+                          TokenType NextLBracesType = TT_Unknown);
   void parseChildBlock(bool CanContainBracedList = true,
                        TokenType NextLBracesType = TT_Unknown);
   void parsePPDirective();
@@ -110,9 +115,12 @@ private:
   void parsePPEndIf();
   void parsePPUnknown();
   void readTokenWithJavaScriptASI();
-  void parseStructuralElement(IfStmtKind *IfKind = nullptr,
-                              bool IsTopLevel = false,
-                              TokenType NextLBracesType = TT_Unknown);
+  void parseStructuralElement(bool IsTopLevel = false,
+                              TokenType NextLBracesType = TT_Unknown,
+                              IfStmtKind *IfKind = nullptr,
+                              FormatToken **IfLeftBrace = nullptr,
+                              bool *HasDoWhile = nullptr,
+                              bool *HasLabel = nullptr);
   bool tryToParseBracedList();
   bool parseBracedList(bool ContinueOnSemicolons = false, bool IsEnum = false,
                        tok::TokenKind ClosingBraceKind = tok::r_brace);
@@ -120,8 +128,11 @@ private:
   void parseSquare(bool LambdaIntroducer = false);
   void keepAncestorBraces();
   void parseUnbracedBody(bool CheckEOF = false);
+  void handleAttributes();
+  bool handleCppAttributes();
   FormatToken *parseIfThenElse(IfStmtKind *IfKind, bool KeepBraces = false);
   void parseTryCatch();
+  void parseLoopBody(bool KeepBraces, bool WrapRightBrace);
   void parseForOrWhileLoop();
   void parseDoWhile();
   void parseLabel(bool LeftAlignLabel = false);

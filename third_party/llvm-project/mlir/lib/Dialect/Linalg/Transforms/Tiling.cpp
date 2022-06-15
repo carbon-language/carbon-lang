@@ -20,6 +20,7 @@
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/Dialect/SCF/Transforms.h"
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
+#include "mlir/Dialect/Utils/IndexingUtils.h"
 #include "mlir/IR/AffineExpr.h"
 #include "mlir/IR/AffineMap.h"
 #include "mlir/Transforms/FoldUtils.h"
@@ -177,8 +178,9 @@ tileLinalgOpImpl(RewriterBase &b, LinalgOp op, ValueRange tileSizes,
     SmallVector<Value> valuesToTile = operandValuesToUse;
     auto sizeBounds =
         applyMapToValues(b, loc, shapeSizesToLoopsMap, allShapeSizes);
-    SmallVector<Value, 4> tiledOperands = makeTiledShapes(
-        b, loc, op, valuesToTile, interchangedIvs, tileSizes, sizeBounds);
+    SmallVector<Value, 4> tiledOperands =
+        makeTiledShapes(b, loc, op, valuesToTile, interchangedIvs, tileSizes,
+                        sizeBounds, /*omitPartialTileCheck=*/false);
 
     // TODO: use an interface/adaptor to avoid leaking position in
     // `tiledOperands`.
@@ -271,8 +273,6 @@ mlir::linalg::tileLinalgOp(RewriterBase &b, LinalgOp op,
     return tileLinalgOpImpl<scf::ForOp>(b, op, options);
   case LinalgTilingLoopType::ParallelLoops:
     return tileLinalgOpImpl<scf::ParallelOp>(b, op, options);
-  case LinalgTilingLoopType::TiledLoops:
-    return tileLinalgOpImpl<linalg::TiledLoopOp>(b, op, options);
   default:;
   }
   return failure();
@@ -320,15 +320,14 @@ static LogicalResult tilePadOp(RewriterBase &builder, tensor::PadOp op,
         // Compute offsets and sizes of ExtractSliceOp.
         SmallVector<Value> offsets =
             computeTileOffsets(b, loc, localIvs, tileSizes);
-        SmallVector<Value> sizes =
-            computeTileSizes(b, loc, localIvs, tileSizes, allDims);
+        SmallVector<Value> sizes = computeTileSizes(b, loc, tileSizes, allDims);
         // Create ExtractSliceOp: Extract a tile from the tensor::PadOp.
         // Note: The tensor::PadOp is located outside of the loop nest. It is
         // later moved inside by ExtractSliceOfPadTensorSwapPattern.
         auto map = AffineMap::getMultiDimIdentityMap(rank, b.getContext());
-        Value tiledOutput =
-            makeTiledShape(b, loc, newPadOp->getResult(0), tileSizes, map,
-                           offsets, allDims, sizes);
+        Value tiledOutput = makeTiledShape(
+            b, loc, newPadOp->getResult(0), tileSizes, map, offsets, allDims,
+            sizes, /*omitPartialTileCheck=*/false);
         auto sliceOp = tiledOutput.getDefiningOp<tensor::ExtractSliceOp>();
         assert(sliceOp && "expected ExtractSliceOp");
         // Insert the tile into the output tensor.
@@ -441,7 +440,7 @@ void mlir::linalg::populatePadTensorTilingPatterns(
   patterns.add<PadOpTilingPattern>(ctx, options);
 }
 
-static void applyExtractSliceOfPadTensorSwapPattern(FuncOp funcOp) {
+static void applyExtractSliceOfPadTensorSwapPattern(func::FuncOp funcOp) {
   MLIRContext *ctx = funcOp.getContext();
   RewritePatternSet patterns(ctx);
   patterns.add<ExtractSliceOfPadTensorSwapPattern>(patterns.getContext());
@@ -453,30 +452,22 @@ static void applyExtractSliceOfPadTensorSwapPattern(FuncOp funcOp) {
 namespace {
 struct LinalgTilingPass : public LinalgTilingBase<LinalgTilingPass> {
   LinalgTilingPass() = default;
-  LinalgTilingPass(ArrayRef<int64_t> tileSizes, LinalgTilingLoopType loopType,
-                   ArrayRef<StringRef> distributionTypes) {
+  LinalgTilingPass(ArrayRef<int64_t> tileSizes, LinalgTilingLoopType loopType) {
     this->tileSizes = tileSizes;
     this->loopType = "";
     this->loopTypeEnum = loopType;
-    this->distributionTypes = llvm::to_vector<2>(llvm::map_range(
-        distributionTypes, [](StringRef ref) { return ref.str(); }));
   }
 
   void runOnOperation() override {
-    FuncOp funcOp = getOperation();
+    func::FuncOp funcOp = getOperation();
     LinalgTilingLoopType type =
         llvm::StringSwitch<LinalgTilingLoopType>(loopType)
             .Case("for", LinalgTilingLoopType::Loops)
             .Case("affine", LinalgTilingLoopType::AffineLoops)
             .Case("parallel", LinalgTilingLoopType::ParallelLoops)
-            .Case("tiled_loop", LinalgTilingLoopType::TiledLoops)
             .Default(loopTypeEnum);
-    auto distTypes = llvm::to_vector<2>(llvm::map_range(
-        distributionTypes, [](std::string &str) { return StringRef(str); }));
-    auto options = LinalgTilingOptions()
-                       .setTileSizes(tileSizes)
-                       .setLoopType(type)
-                       .setDistributionTypes(distTypes);
+    auto options =
+        LinalgTilingOptions().setTileSizes(tileSizes).setLoopType(type);
     MLIRContext *ctx = funcOp.getContext();
     RewritePatternSet patterns(ctx);
     insertTilingPatterns(patterns, options);
@@ -499,10 +490,8 @@ struct LinalgTilingPass : public LinalgTilingBase<LinalgTilingPass> {
 
 } // namespace
 
-std::unique_ptr<OperationPass<FuncOp>>
+std::unique_ptr<OperationPass<func::FuncOp>>
 mlir::createLinalgTilingPass(ArrayRef<int64_t> tileSizes,
-                             linalg::LinalgTilingLoopType loopType,
-                             ArrayRef<StringRef> distributionTypes) {
-  return std::make_unique<LinalgTilingPass>(tileSizes, loopType,
-                                            distributionTypes);
+                             linalg::LinalgTilingLoopType loopType) {
+  return std::make_unique<LinalgTilingPass>(tileSizes, loopType);
 }

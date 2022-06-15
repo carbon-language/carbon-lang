@@ -135,6 +135,8 @@ public:
   virtual bool isMBBSafeToOutlineFrom(MachineBasicBlock &MBB,
                                       unsigned &Flags) const override;
 
+  bool shouldOutlineFromFunctionByDefault(MachineFunction &MF) const override;
+
   // Calculate target-specific information for a set of outlining candidates.
   outliner::OutlinedFunction getOutliningCandidateInfo(
       std::vector<outliner::Candidate> &RepeatedSequenceLocs) const override;
@@ -164,24 +166,31 @@ public:
   MachineInstr *convertToThreeAddress(MachineInstr &MI, LiveVariables *LV,
                                       LiveIntervals *LIS) const override;
 
+  // MIR printer helper function to annotate Operands with a comment.
+  std::string
+  createMIROperandComment(const MachineInstr &MI, const MachineOperand &Op,
+                          unsigned OpIdx,
+                          const TargetRegisterInfo *TRI) const override;
+
   Register getVLENFactoredAmount(
       MachineFunction &MF, MachineBasicBlock &MBB,
       MachineBasicBlock::iterator II, const DebugLoc &DL, int64_t Amount,
       MachineInstr::MIFlag Flag = MachineInstr::NoFlags) const;
-
-  // Returns true if the given MI is an RVV instruction opcode for which we may
-  // expect to see a FrameIndex operand. When CheckFIs is true, the instruction
-  // must contain at least one FrameIndex operand.
-  bool isRVVSpill(const MachineInstr &MI, bool CheckFIs) const;
-
-  Optional<std::pair<unsigned, unsigned>>
-  isRVVSpillForZvlsseg(unsigned Opcode) const;
 
 protected:
   const RISCVSubtarget &STI;
 };
 
 namespace RISCV {
+
+// Returns true if the given MI is an RVV instruction opcode for which we may
+// expect to see a FrameIndex operand. When CheckFIs is true, the instruction
+// must contain at least one FrameIndex operand.
+bool isRVVSpill(const MachineInstr &MI, bool CheckFIs);
+
+Optional<std::pair<unsigned, unsigned>> isRVVSpillForZvlsseg(unsigned Opcode);
+
+bool isFaultFirstLoad(const MachineInstr &MI);
 
 // Implemented in RISCVGenInstrInfo.inc
 int16_t getNamedOperandIdx(uint16_t Opcode, uint16_t NamedIndex);

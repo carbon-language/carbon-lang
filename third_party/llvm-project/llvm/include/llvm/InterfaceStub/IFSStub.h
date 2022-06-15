@@ -14,9 +14,8 @@
 #ifndef LLVM_INTERFACESTUB_IFSSTUB_H
 #define LLVM_INTERFACESTUB_IFSSTUB_H
 
-#include "llvm/Support/Error.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/Support/VersionTuple.h"
-#include <set>
 #include <vector>
 
 namespace llvm {
@@ -54,7 +53,7 @@ struct IFSSymbol {
   IFSSymbol() = default;
   explicit IFSSymbol(std::string SymbolName) : Name(std::move(SymbolName)) {}
   std::string Name;
-  uint64_t Size;
+  Optional<uint64_t> Size;
   IFSSymbolType Type;
   bool Undefined;
   bool Weak;

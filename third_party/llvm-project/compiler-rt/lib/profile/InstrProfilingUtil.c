@@ -46,7 +46,7 @@
 #include "InstrProfiling.h"
 #include "InstrProfilingUtil.h"
 
-COMPILER_RT_WEAK unsigned lprofDirMode = 0755;
+COMPILER_RT_VISIBILITY unsigned lprofDirMode = 0755;
 
 COMPILER_RT_VISIBILITY
 void __llvm_profile_recursive_mkdir(char *path) {
@@ -324,7 +324,7 @@ COMPILER_RT_VISIBILITY const char *lprofFindLastDirSeparator(const char *Path) {
   return Sep;
 }
 
-COMPILER_RT_VISIBILITY int lprofSuspendSigKill() {
+COMPILER_RT_VISIBILITY int lprofSuspendSigKill(void) {
 #if defined(__linux__)
   int PDeachSig = 0;
   /* Temporarily suspend getting SIGKILL upon exit of the parent process. */
@@ -342,7 +342,7 @@ COMPILER_RT_VISIBILITY int lprofSuspendSigKill() {
 #endif
 }
 
-COMPILER_RT_VISIBILITY void lprofRestoreSigKill() {
+COMPILER_RT_VISIBILITY void lprofRestoreSigKill(void) {
 #if defined(__linux__)
   prctl(PR_SET_PDEATHSIG, SIGKILL);
 #elif defined(__FreeBSD__)

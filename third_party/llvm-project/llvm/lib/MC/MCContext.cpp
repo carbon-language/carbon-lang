@@ -29,6 +29,7 @@
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionGOFF.h"
 #include "llvm/MC/MCSectionMachO.h"
+#include "llvm/MC/MCSectionSPIRV.h"
 #include "llvm/MC/MCSectionWasm.h"
 #include "llvm/MC/MCSectionXCOFF.h"
 #include "llvm/MC/MCStreamer.h"
@@ -107,6 +108,12 @@ MCContext::MCContext(const Triple &TheTriple, const MCAsmInfo *mai,
   case Triple::GOFF:
     Env = IsGOFF;
     break;
+  case Triple::DXContainer:
+    Env = IsDXContainer;
+    break;
+  case Triple::SPIRV:
+    Env = IsSPIRV;
+    break;
   case Triple::UnknownObjectFormat:
     report_fatal_error("Cannot initialize MC for unknown object file format.");
     break;
@@ -141,8 +148,10 @@ void MCContext::reset() {
   ELFAllocator.DestroyAll();
   GOFFAllocator.DestroyAll();
   MachOAllocator.DestroyAll();
+  WasmAllocator.DestroyAll();
   XCOFFAllocator.DestroyAll();
   MCInstAllocator.DestroyAll();
+  SPIRVAllocator.DestroyAll();
 
   MCSubtargetAllocator.DestroyAll();
   InlineAsmUsedLabelNames.clear();
@@ -247,6 +256,11 @@ MCSymbol *MCContext::createSymbolImpl(const StringMapEntry<bool> *Name,
     return new (Name, *this) MCSymbolWasm(Name, IsTemporary);
   case MCContext::IsXCOFF:
     return createXCOFFSymbolImpl(Name, IsTemporary);
+  case MCContext::IsDXContainer:
+    break;
+  case MCContext::IsSPIRV:
+    return new (Name, *this)
+        MCSymbol(MCSymbol::SymbolKindUnset, Name, IsTemporary);
   }
   return new (Name, *this) MCSymbol(MCSymbol::SymbolKindUnset, Name,
                                     IsTemporary);
@@ -620,11 +634,14 @@ Optional<unsigned> MCContext::getELFUniqueIDForEntsize(StringRef SectionName,
   return (I != ELFEntrySizeMap.end()) ? Optional<unsigned>(I->second) : None;
 }
 
-MCSectionGOFF *MCContext::getGOFFSection(StringRef Section, SectionKind Kind) {
+MCSectionGOFF *MCContext::getGOFFSection(StringRef Section, SectionKind Kind,
+                                         MCSection *Parent,
+                                         const MCExpr *SubsectionId) {
   // Do the lookup. If we don't have a hit, return a new section.
   auto &GOFFSection = GOFFUniquingMap[Section.str()];
   if (!GOFFSection)
-    GOFFSection = new (GOFFAllocator.Allocate()) MCSectionGOFF(Section, Kind);
+    GOFFSection = new (GOFFAllocator.Allocate())
+        MCSectionGOFF(Section, Kind, Parent, SubsectionId);
 
   return GOFFSection;
 }
@@ -806,6 +823,21 @@ MCSectionXCOFF *MCContext::getXCOFFSection(
   return Result;
 }
 
+MCSectionSPIRV *MCContext::getSPIRVSection() {
+  MCSymbol *Begin = nullptr;
+  MCSectionSPIRV *Result = new (SPIRVAllocator.Allocate())
+      MCSectionSPIRV(SectionKind::getText(), Begin);
+
+  auto *F = new MCDataFragment();
+  Result->getFragmentList().insert(Result->begin(), F);
+  F->setParent(Result);
+
+  if (Begin)
+    Begin->setFragment(F);
+
+  return Result;
+}
+
 MCSubtargetInfo &MCContext::getSubtargetCopy(const MCSubtargetInfo &STI) {
   return *new (MCSubtargetAllocator.Allocate()) MCSubtargetInfo(STI);
 }
@@ -844,6 +876,12 @@ void MCContext::RemapDebugPaths() {
 //===----------------------------------------------------------------------===//
 // Dwarf Management
 //===----------------------------------------------------------------------===//
+
+EmitDwarfUnwindType MCContext::emitDwarfUnwindInfo() const {
+  if (!TargetOptions)
+    return EmitDwarfUnwindType::Default;
+  return TargetOptions->EmitDwarfUnwind;
+}
 
 void MCContext::setGenDwarfRootFile(StringRef InputFileName, StringRef Buffer) {
   // MCDwarf needs the root file as well as the compilation directory.
@@ -916,9 +954,9 @@ void MCContext::finalizeDwarfSections(MCStreamer &MCOS) {
 }
 
 CodeViewContext &MCContext::getCVContext() {
-  if (!CVContext.get())
+  if (!CVContext)
     CVContext.reset(new CodeViewContext);
-  return *CVContext.get();
+  return *CVContext;
 }
 
 //===----------------------------------------------------------------------===//

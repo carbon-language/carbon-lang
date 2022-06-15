@@ -16,6 +16,13 @@
 #include "mlir/IR/BuiltinAttributes.h"
 #include "mlir/IR/BuiltinTypes.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/IR/Type.h"
+
+namespace fir {
+class FIROpsDialect;
+class KindMapping;
+using KindTy = unsigned;
+} // namespace fir
 
 #define GET_TYPEDEF_CLASSES
 #include "flang/Optimizer/Dialect/FIROpsTypes.h.inc"
@@ -37,11 +44,6 @@ class ValueRange;
 } // namespace mlir
 
 namespace fir {
-
-class FIROpsDialect;
-
-using KindTy = unsigned;
-
 namespace detail {
 struct RecordTypeStorage;
 } // namespace detail
@@ -65,22 +67,21 @@ inline bool isa_ref_type(mlir::Type t) {
 
 /// Is `t` a boxed type?
 inline bool isa_box_type(mlir::Type t) {
-  return t.isa<BoxType>() || t.isa<BoxCharType>() || t.isa<BoxProcType>();
+  return t.isa<fir::BoxType, fir::BoxCharType, fir::BoxProcType>();
 }
 
 /// Is `t` a type that is always trivially pass-by-reference? Specifically, this
 /// is testing if `t` is a ReferenceType or any box type. Compare this to
 /// conformsWithPassByRef(), which includes pointers and allocatables.
 inline bool isa_passbyref_type(mlir::Type t) {
-  return t.isa<ReferenceType>() || isa_box_type(t) ||
-         t.isa<mlir::FunctionType>();
+  return t.isa<fir::ReferenceType, mlir::FunctionType>() || isa_box_type(t);
 }
 
 /// Is `t` a type that can conform to be pass-by-reference? Depending on the
 /// context, these types may simply demote to pass-by-reference or a reference
-/// to them may have to be passed instead.
+/// to them may have to be passed instead. Functions are always referent.
 inline bool conformsWithPassByRef(mlir::Type t) {
-  return isa_ref_type(t) || isa_box_type(t);
+  return isa_ref_type(t) || isa_box_type(t) || t.isa<mlir::FunctionType>();
 }
 
 /// Is `t` a derived (record) type?
@@ -88,8 +89,7 @@ inline bool isa_derived(mlir::Type t) { return t.isa<fir::RecordType>(); }
 
 /// Is `t` a FIR dialect aggregate type?
 inline bool isa_aggregate(mlir::Type t) {
-  return t.isa<SequenceType>() || fir::isa_derived(t) ||
-         t.isa<mlir::TupleType>();
+  return t.isa<SequenceType, mlir::TupleType>() || fir::isa_derived(t);
 }
 
 /// Extract the `Type` pointed to from a FIR memory reference type. If `t` is
@@ -102,13 +102,12 @@ mlir::Type dyn_cast_ptrOrBoxEleTy(mlir::Type t);
 
 /// Is `t` a FIR Real or MLIR Float type?
 inline bool isa_real(mlir::Type t) {
-  return t.isa<fir::RealType>() || t.isa<mlir::FloatType>();
+  return t.isa<fir::RealType, mlir::FloatType>();
 }
 
 /// Is `t` an integral type?
 inline bool isa_integer(mlir::Type t) {
-  return t.isa<mlir::IndexType>() || t.isa<mlir::IntegerType>() ||
-         t.isa<fir::IntegerType>();
+  return t.isa<mlir::IndexType, mlir::IntegerType, fir::IntegerType>();
 }
 
 mlir::Type parseFirType(FIROpsDialect *, mlir::DialectAsmParser &parser);
@@ -121,11 +120,18 @@ void verifyIntegralType(mlir::Type type);
 
 /// Is `t` a FIR or MLIR Complex type?
 inline bool isa_complex(mlir::Type t) {
-  return t.isa<fir::ComplexType>() || t.isa<mlir::ComplexType>();
+  return t.isa<fir::ComplexType, mlir::ComplexType>();
 }
 
 /// Is `t` a CHARACTER type? Does not check the length.
 inline bool isa_char(mlir::Type t) { return t.isa<fir::CharacterType>(); }
+
+/// Is `t` a trivial intrinsic type? CHARACTER is <em>excluded</em> because it
+/// is a dependent type.
+inline bool isa_trivial(mlir::Type t) {
+  return isa_integer(t) || isa_real(t) || isa_complex(t) ||
+         t.isa<fir::LogicalType>();
+}
 
 /// Is `t` a CHARACTER type with a LEN other than 1?
 inline bool isa_char_string(mlir::Type t) {
@@ -155,6 +161,16 @@ inline bool sequenceWithNonConstantShape(fir::SequenceType seqTy) {
 /// Returns true iff the type `t` does not have a constant size.
 bool hasDynamicSize(mlir::Type t);
 
+inline unsigned getRankOfShapeType(mlir::Type t) {
+  if (auto shTy = t.dyn_cast<fir::ShapeType>())
+    return shTy.getRank();
+  if (auto shTy = t.dyn_cast<fir::ShapeShiftType>())
+    return shTy.getRank();
+  if (auto shTy = t.dyn_cast<fir::ShiftType>())
+    return shTy.getRank();
+  return 0;
+}
+
 /// If `t` is a SequenceType return its element type, otherwise return `t`.
 inline mlir::Type unwrapSequenceType(mlir::Type t) {
   if (auto seqTy = t.dyn_cast<fir::SequenceType>())
@@ -176,6 +192,36 @@ inline mlir::Type unwrapPassByRefType(mlir::Type t) {
   return t;
 }
 
+/// Unwrap either a sequence or a boxed sequence type, returning the element
+/// type of the sequence type.
+/// e.g.,
+///   !fir.array<...xT>  ->  T
+///   !fir.box<!fir.ptr<!fir.array<...xT>>>  ->  T
+/// otherwise
+///   T -> T
+mlir::Type unwrapSeqOrBoxedSeqType(mlir::Type ty);
+
+/// Unwrap all referential and sequential outer types (if any). Returns the
+/// element type. This is useful for determining the element type of any object
+/// memory reference, whether it is a single instance or a series of instances.
+mlir::Type unwrapAllRefAndSeqType(mlir::Type ty);
+
+/// Unwrap all pointer and box types and return the element type if it is a
+/// sequence type, otherwise return null.
+inline fir::SequenceType unwrapUntilSeqType(mlir::Type t) {
+  while (true) {
+    if (!t)
+      return {};
+    if (auto ty = dyn_cast_ptrOrBoxEleTy(t)) {
+      t = ty;
+      continue;
+    }
+    if (auto seqTy = t.dyn_cast<fir::SequenceType>())
+      return seqTy;
+    return {};
+  }
+}
+
 #ifndef NDEBUG
 // !fir.ptr<X> and !fir.heap<X> where X is !fir.ptr, !fir.heap, or !fir.ref
 // is undefined and disallowed.
@@ -184,6 +230,20 @@ inline bool singleIndirectionLevel(mlir::Type ty) {
 }
 #endif
 
+/// Return true iff `ty` is the type of a POINTER entity or value.
+/// `isa_ref_type()` can be used to distinguish.
+bool isPointerType(mlir::Type ty);
+
+/// Return true iff `ty` is the type of an ALLOCATABLE entity or value.
+bool isAllocatableType(mlir::Type ty);
+
+/// Return true iff `ty` is the type of an unlimited polymorphic entity or
+/// value.
+bool isUnlimitedPolymorphicType(mlir::Type ty);
+
+/// Return true iff `ty` is a RecordType with members that are allocatable.
+bool isRecordWithAllocatableMember(mlir::Type ty);
+
 /// Return true iff `ty` is a RecordType with type parameters.
 inline bool isRecordWithTypeParameters(mlir::Type ty) {
   if (auto recTy = ty.dyn_cast_or_null<fir::RecordType>())
@@ -191,10 +251,21 @@ inline bool isRecordWithTypeParameters(mlir::Type ty) {
   return false;
 }
 
+/// Is this tuple type holding a character function and its result length ?
+bool isCharacterProcedureTuple(mlir::Type type, bool acceptRawFunc = true);
+
 /// Apply the components specified by `path` to `rootTy` to determine the type
 /// of the resulting component element. `rootTy` should be an aggregate type.
 /// Returns null on error.
 mlir::Type applyPathToType(mlir::Type rootTy, mlir::ValueRange path);
+
+/// Does this function type have a result that requires binding the result value
+/// with storage in a fir.save_result operation in order to use the result?
+bool hasAbstractResult(mlir::FunctionType ty);
+
+/// Convert llvm::Type::TypeID to mlir::Type
+mlir::Type fromRealTypeID(mlir::MLIRContext *context, llvm::Type::TypeID typeID,
+                          fir::KindTy kind);
 
 } // namespace fir
 

@@ -593,8 +593,9 @@ define <4 x i64> @insert_v4i64(<4 x i64> %x, i64 %y , i64* %ptr) {
 define <2 x i64> @insert_v2i64(<2 x i64> %x, i64 %y , i64* %ptr) {
 ; CHECK-LABEL: insert_v2i64:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vpinsrq $0, %rdi, %xmm0, %xmm0
-; CHECK-NEXT:    vpinsrq $1, (%rsi), %xmm0, %xmm0
+; CHECK-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    vmovq %rdi, %xmm1
+; CHECK-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm1[0],xmm0[0]
 ; CHECK-NEXT:    retq
   %val = load i64, i64* %ptr
   %r1 = insertelement <2 x i64> %x, i64 %val, i32 1
@@ -1633,23 +1634,12 @@ define zeroext i8 @test_extractelement_varible_v16i1(<16 x i32> %a, <16 x i32> %
 define zeroext i8 @test_extractelement_varible_v32i1(<32 x i8> %a, <32 x i8> %b, i32 %index) {
 ; KNL-LABEL: test_extractelement_varible_v32i1:
 ; KNL:       ## %bb.0:
-; KNL-NEXT:    pushq %rbp
-; KNL-NEXT:    .cfi_def_cfa_offset 16
-; KNL-NEXT:    .cfi_offset %rbp, -16
-; KNL-NEXT:    movq %rsp, %rbp
-; KNL-NEXT:    .cfi_def_cfa_register %rbp
-; KNL-NEXT:    andq $-32, %rsp
-; KNL-NEXT:    subq $64, %rsp
-; KNL-NEXT:    ## kill: def $edi killed $edi def $rdi
 ; KNL-NEXT:    vpminub %ymm1, %ymm0, %ymm1
 ; KNL-NEXT:    vpcmpeqb %ymm1, %ymm0, %ymm0
-; KNL-NEXT:    vpternlogq $15, %zmm0, %zmm0, %zmm0
-; KNL-NEXT:    vmovdqa %ymm0, (%rsp)
-; KNL-NEXT:    andl $31, %edi
-; KNL-NEXT:    movzbl (%rsp,%rdi), %eax
-; KNL-NEXT:    andl $1, %eax
-; KNL-NEXT:    movq %rbp, %rsp
-; KNL-NEXT:    popq %rbp
+; KNL-NEXT:    vpmovmskb %ymm0, %ecx
+; KNL-NEXT:    xorl %eax, %eax
+; KNL-NEXT:    btl %edi, %ecx
+; KNL-NEXT:    setae %al
 ; KNL-NEXT:    vzeroupper
 ; KNL-NEXT:    retq
 ;

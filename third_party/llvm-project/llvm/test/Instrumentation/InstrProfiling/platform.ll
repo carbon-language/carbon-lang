@@ -8,6 +8,8 @@
 ; RUN: opt < %s -mtriple=x86_64-unknown-freebsd -passes=instrprof -S | FileCheck %s -check-prefixes=FREEBSD,ELF
 ; RUN: opt < %s -mtriple=x86_64-scei-ps4 -instrprof -S | FileCheck %s -check-prefixes=PS4,ELF
 ; RUN: opt < %s -mtriple=x86_64-scei-ps4 -passes=instrprof -S | FileCheck %s -check-prefixes=PS4,ELF
+; RUN: opt < %s -mtriple=x86_64-sie-ps5 -instrprof -S | FileCheck %s -check-prefixes=PS4,ELF
+; RUN: opt < %s -mtriple=x86_64-sie-ps5 -passes=instrprof -S | FileCheck %s -check-prefixes=PS4,ELF
 ; RUN: opt < %s -mtriple=x86_64-pc-solaris -instrprof -S | FileCheck %s -check-prefixes=SOLARIS,ELF
 ; RUN: opt < %s -mtriple=x86_64-pc-solaris -passes=instrprof -S | FileCheck %s -check-prefixes=SOLARIS,ELF
 ; RUN: opt < %s -mtriple=x86_64-pc-windows -instrprof -S | FileCheck %s -check-prefix=WINDOWS
@@ -50,7 +52,7 @@ declare void @llvm.instrprof.increment(i8*, i64, i32, i32)
 ; SOLARIS-NOT: define internal void @__llvm_profile_register_functions
 ; PS4-NOT: define internal void @__llvm_profile_register_functions
 ; WINDOWS-NOT: define internal void @__llvm_profile_register_functions
-; AIX: define internal void @__llvm_profile_register_functions
+; AIX-NOT: define internal void @__llvm_profile_register_functions
 
 ;; PR38340: When dynamic registration is used, we had a bug where we'd register
 ;; something that's not a __profd_* variable.
@@ -61,4 +63,4 @@ declare void @llvm.instrprof.increment(i8*, i64, i32, i32)
 ; SOLARIS-NOT: define internal void @__llvm_profile_init
 ; PS4-NOT: define internal void @__llvm_profile_init
 ; WINDOWS-NOT: define internal void @__llvm_profile_init
-; AIX: define internal void @__llvm_profile_init
+; AIX-NOT: define internal void @__llvm_profile_init

@@ -114,7 +114,7 @@ public:
   ///
   /// Constraints that do not meet the restriction that they can only reference
   /// `$_self`, `$_op`, and `$_builder` are not uniqued.
-  void emitPatternConstraints(const DenseSet<DagLeaf> &constraints);
+  void emitPatternConstraints(const ArrayRef<DagLeaf> constraints);
 
   /// Get the name of the static function used for the given type constraint.
   /// These functions are used for operand and result constraints and have the
@@ -178,7 +178,7 @@ private:
   /// Collect and unique all the constraints used by operations.
   void collectOpConstraints(ArrayRef<llvm::Record *> opDefs);
   /// Collect and unique all pattern constraints.
-  void collectPatternConstraints(const DenseSet<DagLeaf> &constraints);
+  void collectPatternConstraints(ArrayRef<DagLeaf> constraints);
 
   /// The output stream.
   raw_ostream &os;
@@ -187,19 +187,9 @@ private:
   /// ensure that the static functions have a unique name.
   std::string uniqueOutputLabel;
 
-  /// Unique constraints by their predicate and summary. Constraints that share
-  /// the same predicate may have different descriptions; ensure that the
-  /// correct error message is reported when verification fails.
-  struct ConstraintUniquer {
-    static Constraint getEmptyKey();
-    static Constraint getTombstoneKey();
-    static unsigned getHashValue(Constraint constraint);
-    static bool isEqual(Constraint lhs, Constraint rhs);
-  };
   /// Use a MapVector to ensure that functions are generated deterministically.
-  using ConstraintMap =
-      llvm::MapVector<Constraint, std::string,
-                      llvm::DenseMap<Constraint, unsigned, ConstraintUniquer>>;
+  using ConstraintMap = llvm::MapVector<Constraint, std::string,
+                                        llvm::DenseMap<Constraint, unsigned>>;
 
   /// A generic function to emit constraints
   void emitConstraints(const ConstraintMap &constraints, StringRef selfName,

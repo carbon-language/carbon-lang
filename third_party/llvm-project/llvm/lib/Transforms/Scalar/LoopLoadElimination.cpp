@@ -61,7 +61,6 @@
 #include <algorithm>
 #include <cassert>
 #include <forward_list>
-#include <set>
 #include <tuple>
 #include <utility>
 
@@ -707,8 +706,12 @@ FunctionPass *llvm::createLoopLoadEliminationPass() {
 
 PreservedAnalyses LoopLoadEliminationPass::run(Function &F,
                                                FunctionAnalysisManager &AM) {
-  auto &SE = AM.getResult<ScalarEvolutionAnalysis>(F);
   auto &LI = AM.getResult<LoopAnalysis>(F);
+  // There are no loops in the function. Return before computing other expensive
+  // analyses.
+  if (LI.empty())
+    return PreservedAnalyses::all();
+  auto &SE = AM.getResult<ScalarEvolutionAnalysis>(F);
   auto &TTI = AM.getResult<TargetIRAnalysis>(F);
   auto &DT = AM.getResult<DominatorTreeAnalysis>(F);
   auto &TLI = AM.getResult<TargetLibraryAnalysis>(F);

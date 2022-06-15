@@ -58,29 +58,39 @@ Type mlir::sparse_tensor::getOverheadType(Builder &builder, OverheadType ot) {
   llvm_unreachable("Unknown OverheadType");
 }
 
+OverheadType mlir::sparse_tensor::pointerOverheadTypeEncoding(
+    const SparseTensorEncodingAttr &enc) {
+  return overheadTypeEncoding(enc.getPointerBitWidth());
+}
+
+OverheadType mlir::sparse_tensor::indexOverheadTypeEncoding(
+    const SparseTensorEncodingAttr &enc) {
+  return overheadTypeEncoding(enc.getIndexBitWidth());
+}
+
 Type mlir::sparse_tensor::getPointerOverheadType(
     Builder &builder, const SparseTensorEncodingAttr &enc) {
-  return getOverheadType(builder,
-                         overheadTypeEncoding(enc.getPointerBitWidth()));
+  return getOverheadType(builder, pointerOverheadTypeEncoding(enc));
 }
 
 Type mlir::sparse_tensor::getIndexOverheadType(
     Builder &builder, const SparseTensorEncodingAttr &enc) {
-  return getOverheadType(builder, overheadTypeEncoding(enc.getIndexBitWidth()));
+  return getOverheadType(builder, indexOverheadTypeEncoding(enc));
 }
 
+// TODO: Adjust the naming convention for the constructors of
+// `OverheadType` so we can use the `FOREVERY_O` x-macro here instead
+// of `FOREVERY_FIXED_O`; to further reduce the possibility of typo bugs
+// or things getting out of sync.
 StringRef mlir::sparse_tensor::overheadTypeFunctionSuffix(OverheadType ot) {
   switch (ot) {
   case OverheadType::kIndex:
-    return "";
-  case OverheadType::kU64:
-    return "64";
-  case OverheadType::kU32:
-    return "32";
-  case OverheadType::kU16:
-    return "16";
-  case OverheadType::kU8:
-    return "8";
+    return "0";
+#define CASE(ONAME, O)                                                         \
+  case OverheadType::kU##ONAME:                                                \
+    return #ONAME;
+    FOREVERY_FIXED_O(CASE)
+#undef CASE
   }
   llvm_unreachable("Unknown OverheadType");
 }
@@ -94,6 +104,10 @@ PrimaryType mlir::sparse_tensor::primaryTypeEncoding(Type elemTp) {
     return PrimaryType::kF64;
   if (elemTp.isF32())
     return PrimaryType::kF32;
+  if (elemTp.isF16())
+    return PrimaryType::kF16;
+  if (elemTp.isBF16())
+    return PrimaryType::kBF16;
   if (elemTp.isInteger(64))
     return PrimaryType::kI64;
   if (elemTp.isInteger(32))
@@ -102,23 +116,23 @@ PrimaryType mlir::sparse_tensor::primaryTypeEncoding(Type elemTp) {
     return PrimaryType::kI16;
   if (elemTp.isInteger(8))
     return PrimaryType::kI8;
+  if (auto complexTp = elemTp.dyn_cast<ComplexType>()) {
+    auto complexEltTp = complexTp.getElementType();
+    if (complexEltTp.isF64())
+      return PrimaryType::kC64;
+    if (complexEltTp.isF32())
+      return PrimaryType::kC32;
+  }
   llvm_unreachable("Unknown primary type");
 }
 
 StringRef mlir::sparse_tensor::primaryTypeFunctionSuffix(PrimaryType pt) {
   switch (pt) {
-  case PrimaryType::kF64:
-    return "F64";
-  case PrimaryType::kF32:
-    return "F32";
-  case PrimaryType::kI64:
-    return "I64";
-  case PrimaryType::kI32:
-    return "I32";
-  case PrimaryType::kI16:
-    return "I16";
-  case PrimaryType::kI8:
-    return "I8";
+#define CASE(VNAME, V)                                                         \
+  case PrimaryType::k##VNAME:                                                  \
+    return #VNAME;
+    FOREVERY_V(CASE)
+#undef CASE
   }
   llvm_unreachable("Unknown PrimaryType");
 }
@@ -169,5 +183,7 @@ Value mlir::sparse_tensor::genIsNonzero(OpBuilder &builder, mlir::Location loc,
   if (tp.isIntOrIndex())
     return builder.create<arith::CmpIOp>(loc, arith::CmpIPredicate::ne, v,
                                          zero);
+  if (tp.dyn_cast<ComplexType>())
+    return builder.create<complex::NotEqualOp>(loc, v, zero);
   llvm_unreachable("Non-numeric type");
 }

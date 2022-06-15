@@ -12,7 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "ReduceInstructionsMIR.h"
+#include "Delta.h"
 
+#include "llvm/ADT/SetVector.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -23,7 +25,7 @@ using namespace llvm;
 
 static Register getPrevDefOfRCInMBB(MachineBasicBlock &MBB,
                                     MachineBasicBlock::reverse_iterator &RI,
-                                    const TargetRegisterClass *RC,
+                                    const RegClassOrRegBank &RC, LLT Ty,
                                     SetVector<MachineInstr *> &ExcludeMIs) {
   auto MRI = &MBB.getParent()->getRegInfo();
   for (MachineBasicBlock::reverse_instr_iterator E = MBB.instr_rend(); RI != E;
@@ -37,31 +39,47 @@ static Register getPrevDefOfRCInMBB(MachineBasicBlock &MBB,
       if (Register::isPhysicalRegister(Reg))
         continue;
 
-      if (MRI->getRegClass(Reg) == RC && !ExcludeMIs.count(MO.getParent()))
+      if (MRI->getRegClassOrRegBank(Reg) == RC && MRI->getType(Reg) == Ty &&
+          !ExcludeMIs.count(MO.getParent()))
         return Reg;
     }
   }
   return 0;
 }
 
-static void extractInstrFromModule(Oracle &O, MachineFunction &MF) {
+static bool shouldNotRemoveInstruction(const TargetInstrInfo &TII,
+                                       const MachineInstr &MI) {
+  if (MI.isTerminator())
+    return true;
+
+  // The MIR is almost certainly going to be invalid if frame instructions are
+  // deleted individually since they need to come in balanced pairs, so don't
+  // try to delete them.
+  if (MI.getOpcode() == TII.getCallFrameSetupOpcode() ||
+      MI.getOpcode() == TII.getCallFrameDestroyOpcode())
+    return true;
+
+  return false;
+}
+
+static void extractInstrFromFunction(Oracle &O, MachineFunction &MF) {
   MachineDominatorTree MDT;
   MDT.runOnMachineFunction(MF);
 
   auto MRI = &MF.getRegInfo();
   SetVector<MachineInstr *> ToDelete;
 
-  MachineInstr *TopMI = nullptr;
+  const TargetSubtargetInfo &STI = MF.getSubtarget();
+  const TargetInstrInfo *TII = STI.getInstrInfo();
+  MachineBasicBlock *EntryMBB = &*MF.begin();
+  MachineBasicBlock::iterator EntryInsPt =
+      EntryMBB->SkipPHIsLabelsAndDebug(EntryMBB->begin());
 
   // Mark MIs for deletion according to some criteria.
   for (auto &MBB : MF) {
     for (auto &MI : MBB) {
-      if (MI.isTerminator())
+      if (shouldNotRemoveInstruction(*TII, MI))
         continue;
-      if (MBB.isEntryBlock() && !TopMI) {
-        TopMI = &MI;
-        continue;
-      }
       if (!O.shouldKeep())
         ToDelete.insert(&MI);
     }
@@ -79,31 +97,39 @@ static void extractInstrFromModule(Oracle &O, MachineFunction &MF) {
       auto UI = MRI->use_begin(Reg);
       auto UE = MRI->use_end();
 
-      auto RegRC = MRI->getRegClass(Reg);
+      const auto &RegRC = MRI->getRegClassOrRegBank(Reg);
+      LLT RegTy = MRI->getType(Reg);
+
       Register NewReg = 0;
       // If this is not a physical register and there are some uses.
       if (UI != UE) {
         MachineBasicBlock::reverse_iterator RI(*MI);
         MachineBasicBlock *BB = MI->getParent();
         ++RI;
-        while (NewReg == 0 && BB) {
-          NewReg = getPrevDefOfRCInMBB(*BB, RI, RegRC, ToDelete);
-          // Prepare for idom(BB).
-          if (auto *IDM = MDT.getNode(BB)->getIDom()) {
-            BB = IDM->getBlock();
-            RI = BB->rbegin();
-          } else {
-            BB = nullptr;
+
+        if (MDT.isReachableFromEntry(BB)) {
+          while (NewReg == 0 && BB) {
+            NewReg = getPrevDefOfRCInMBB(*BB, RI, RegRC, RegTy, ToDelete);
+            // Prepare for idom(BB).
+            if (auto *IDM = MDT.getNode(BB)->getIDom()) {
+              BB = IDM->getBlock();
+              RI = BB->rbegin();
+            } else {
+              BB = nullptr;
+            }
           }
         }
       }
 
-      // If no dominating definition was found then add an implicit one to the
-      // first instruction in the entry block.
-      if (!NewReg && TopMI) {
-        NewReg = MRI->createVirtualRegister(RegRC);
-        TopMI->addOperand(MachineOperand::CreateReg(
-            NewReg, true /*IsDef*/, true /*IsImp*/, false /*IsKill*/));
+      // If no dominating definition was found then add an implicit def to the
+      // top of the entry block.
+      if (!NewReg) {
+        NewReg = MRI->cloneVirtualRegister(Reg);
+        bool IsGeneric = MRI->getRegClassOrNull(Reg) == nullptr;
+        unsigned ImpDef = IsGeneric ? TargetOpcode::G_IMPLICIT_DEF
+                                    : TargetOpcode::IMPLICIT_DEF;
+        BuildMI(*EntryMBB, EntryInsPt, DebugLoc(), TII->get(ImpDef))
+          .addReg(NewReg, getRegState(MO), MO.getSubReg());
       }
 
       // Update all uses.
@@ -117,6 +143,13 @@ static void extractInstrFromModule(Oracle &O, MachineFunction &MF) {
   // Finally delete the MIs.
   for (auto *MI : ToDelete)
     MI->eraseFromParent();
+}
+
+static void extractInstrFromModule(Oracle &O, ReducerWorkItem &WorkItem) {
+  for (const Function &F : WorkItem.getModule()) {
+    if (MachineFunction *MF = WorkItem.MMI->getMachineFunction(F))
+      extractInstrFromFunction(O, *MF);
+  }
 }
 
 void llvm::reduceInstructionsMIRDeltaPass(TestRunner &Test) {

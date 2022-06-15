@@ -42,7 +42,6 @@
 #include <utility>
 
 #define DEBUG_TYPE "instcombine"
-#include "llvm/Transforms/Utils/InstructionWorklist.h"
 
 using namespace llvm;
 using namespace PatternMatch;
@@ -378,7 +377,7 @@ ConstantInt *getPreferredVectorIndex(ConstantInt *IndexC) {
 Instruction *InstCombinerImpl::visitExtractElementInst(ExtractElementInst &EI) {
   Value *SrcVec = EI.getVectorOperand();
   Value *Index = EI.getIndexOperand();
-  if (Value *V = SimplifyExtractElementInst(SrcVec, Index,
+  if (Value *V = simplifyExtractElementInst(SrcVec, Index,
                                             SQ.getWithInstruction(&EI)))
     return replaceInstUsesWith(EI, V);
 
@@ -1489,7 +1488,7 @@ Instruction *InstCombinerImpl::visitInsertElementInst(InsertElementInst &IE) {
   Value *ScalarOp = IE.getOperand(1);
   Value *IdxOp    = IE.getOperand(2);
 
-  if (auto *V = SimplifyInsertElementInst(
+  if (auto *V = simplifyInsertElementInst(
           VecOp, ScalarOp, IdxOp, SQ.getWithInstruction(&IE)))
     return replaceInstUsesWith(IE, V);
 
@@ -1919,24 +1918,29 @@ static BinopElts getAlternateBinop(BinaryOperator *BO, const DataLayout &DL) {
   Value *BO0 = BO->getOperand(0), *BO1 = BO->getOperand(1);
   Type *Ty = BO->getType();
   switch (BO->getOpcode()) {
-    case Instruction::Shl: {
-      // shl X, C --> mul X, (1 << C)
-      Constant *C;
-      if (match(BO1, m_Constant(C))) {
-        Constant *ShlOne = ConstantExpr::getShl(ConstantInt::get(Ty, 1), C);
-        return { Instruction::Mul, BO0, ShlOne };
-      }
-      break;
+  case Instruction::Shl: {
+    // shl X, C --> mul X, (1 << C)
+    Constant *C;
+    if (match(BO1, m_Constant(C))) {
+      Constant *ShlOne = ConstantExpr::getShl(ConstantInt::get(Ty, 1), C);
+      return {Instruction::Mul, BO0, ShlOne};
     }
-    case Instruction::Or: {
-      // or X, C --> add X, C (when X and C have no common bits set)
-      const APInt *C;
-      if (match(BO1, m_APInt(C)) && MaskedValueIsZero(BO0, *C, DL))
-        return { Instruction::Add, BO0, BO1 };
-      break;
-    }
-    default:
-      break;
+    break;
+  }
+  case Instruction::Or: {
+    // or X, C --> add X, C (when X and C have no common bits set)
+    const APInt *C;
+    if (match(BO1, m_APInt(C)) && MaskedValueIsZero(BO0, *C, DL))
+      return {Instruction::Add, BO0, BO1};
+    break;
+  }
+  case Instruction::Sub:
+    // sub 0, X --> mul X, -1
+    if (match(BO0, m_ZeroInt()))
+      return {Instruction::Mul, BO1, ConstantInt::getAllOnesValue(Ty)};
+    break;
+  default:
+    break;
   }
   return {};
 }
@@ -2053,15 +2057,20 @@ Instruction *InstCombinerImpl::foldSelectShuffle(ShuffleVectorInst &Shuf) {
       !match(Shuf.getOperand(1), m_BinOp(B1)))
     return nullptr;
 
+  // If one operand is "0 - X", allow that to be viewed as "X * -1"
+  // (ConstantsAreOp1) by getAlternateBinop below. If the neg is not paired
+  // with a multiply, we will exit because C0/C1 will not be set.
   Value *X, *Y;
-  Constant *C0, *C1;
+  Constant *C0 = nullptr, *C1 = nullptr;
   bool ConstantsAreOp1;
-  if (match(B0, m_BinOp(m_Value(X), m_Constant(C0))) &&
-      match(B1, m_BinOp(m_Value(Y), m_Constant(C1))))
-    ConstantsAreOp1 = true;
-  else if (match(B0, m_BinOp(m_Constant(C0), m_Value(X))) &&
-           match(B1, m_BinOp(m_Constant(C1), m_Value(Y))))
+  if (match(B0, m_BinOp(m_Constant(C0), m_Value(X))) &&
+      match(B1, m_BinOp(m_Constant(C1), m_Value(Y))))
     ConstantsAreOp1 = false;
+  else if (match(B0, m_CombineOr(m_BinOp(m_Value(X), m_Constant(C0)),
+                                 m_Neg(m_Value(X)))) &&
+           match(B1, m_CombineOr(m_BinOp(m_Value(Y), m_Constant(C1)),
+                                 m_Neg(m_Value(Y)))))
+    ConstantsAreOp1 = true;
   else
     return nullptr;
 
@@ -2086,7 +2095,7 @@ Instruction *InstCombinerImpl::foldSelectShuffle(ShuffleVectorInst &Shuf) {
     }
   }
 
-  if (Opc0 != Opc1)
+  if (Opc0 != Opc1 || !C0 || !C1)
     return nullptr;
 
   // The opcodes must be the same. Use a new name to make that clear.
@@ -2231,6 +2240,88 @@ static Instruction *narrowVectorSelect(ShuffleVectorInst &Shuf,
   Value *NarrowX = Builder.CreateShuffleVector(X, Shuf.getShuffleMask());
   Value *NarrowY = Builder.CreateShuffleVector(Y, Shuf.getShuffleMask());
   return SelectInst::Create(NarrowCond, NarrowX, NarrowY);
+}
+
+/// Canonicalize FP negate after shuffle.
+static Instruction *foldFNegShuffle(ShuffleVectorInst &Shuf,
+                                    InstCombiner::BuilderTy &Builder) {
+  Instruction *FNeg0;
+  Value *X;
+  if (!match(Shuf.getOperand(0), m_CombineAnd(m_Instruction(FNeg0),
+                                              m_FNeg(m_Value(X)))))
+    return nullptr;
+
+  // shuffle (fneg X), Mask --> fneg (shuffle X, Mask)
+  if (FNeg0->hasOneUse() && match(Shuf.getOperand(1), m_Undef())) {
+    Value *NewShuf = Builder.CreateShuffleVector(X, Shuf.getShuffleMask());
+    return UnaryOperator::CreateFNegFMF(NewShuf, FNeg0);
+  }
+
+  Instruction *FNeg1;
+  Value *Y;
+  if (!match(Shuf.getOperand(1), m_CombineAnd(m_Instruction(FNeg1),
+                                              m_FNeg(m_Value(Y)))))
+    return nullptr;
+
+  // shuffle (fneg X), (fneg Y), Mask --> fneg (shuffle X, Y, Mask)
+  if (FNeg0->hasOneUse() || FNeg1->hasOneUse()) {
+    Value *NewShuf = Builder.CreateShuffleVector(X, Y, Shuf.getShuffleMask());
+    Instruction *NewFNeg = UnaryOperator::CreateFNeg(NewShuf);
+    NewFNeg->copyIRFlags(FNeg0);
+    NewFNeg->andIRFlags(FNeg1);
+    return NewFNeg;
+  }
+
+  return nullptr;
+}
+
+/// Canonicalize casts after shuffle.
+static Instruction *foldCastShuffle(ShuffleVectorInst &Shuf,
+                                    InstCombiner::BuilderTy &Builder) {
+  // Do we have 2 matching cast operands?
+  auto *Cast0 = dyn_cast<CastInst>(Shuf.getOperand(0));
+  auto *Cast1 = dyn_cast<CastInst>(Shuf.getOperand(1));
+  if (!Cast0 || !Cast1 || Cast0->getOpcode() != Cast1->getOpcode() ||
+      Cast0->getSrcTy() != Cast1->getSrcTy())
+    return nullptr;
+
+  // TODO: Allow other opcodes? That would require easing the type restrictions
+  //       below here.
+  CastInst::CastOps CastOpcode = Cast0->getOpcode();
+  switch (CastOpcode) {
+  case Instruction::FPToSI:
+  case Instruction::FPToUI:
+  case Instruction::SIToFP:
+  case Instruction::UIToFP:
+    break;
+  default:
+    return nullptr;
+  }
+
+  VectorType *ShufTy = Shuf.getType();
+  VectorType *ShufOpTy = cast<VectorType>(Shuf.getOperand(0)->getType());
+  VectorType *CastSrcTy = cast<VectorType>(Cast0->getSrcTy());
+
+  // TODO: Allow length-increasing shuffles?
+  if (ShufTy->getElementCount().getKnownMinValue() >
+      ShufOpTy->getElementCount().getKnownMinValue())
+    return nullptr;
+
+  // TODO: Allow element-size-decreasing casts (ex: fptosi float to i8)?
+  assert(isa<FixedVectorType>(CastSrcTy) && isa<FixedVectorType>(ShufOpTy) &&
+         "Expected fixed vector operands for casts and binary shuffle");
+  if (CastSrcTy->getPrimitiveSizeInBits() > ShufOpTy->getPrimitiveSizeInBits())
+    return nullptr;
+
+  // At least one of the operands must have only one use (the shuffle).
+  if (!Cast0->hasOneUse() && !Cast1->hasOneUse())
+    return nullptr;
+
+  // shuffle (cast X), (cast Y), Mask --> cast (shuffle X, Y, Mask)
+  Value *X = Cast0->getOperand(0);
+  Value *Y = Cast1->getOperand(0);
+  Value *NewShuf = Builder.CreateShuffleVector(X, Y, Shuf.getShuffleMask());
+  return CastInst::Create(CastOpcode, NewShuf, ShufTy);
 }
 
 /// Try to fold an extract subvector operation.
@@ -2442,7 +2533,7 @@ Instruction *InstCombinerImpl::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
   Value *LHS = SVI.getOperand(0);
   Value *RHS = SVI.getOperand(1);
   SimplifyQuery ShufQuery = SQ.getWithInstruction(&SVI);
-  if (auto *V = SimplifyShuffleVectorInst(LHS, RHS, SVI.getShuffleMask(),
+  if (auto *V = simplifyShuffleVectorInst(LHS, RHS, SVI.getShuffleMask(),
                                           SVI.getType(), ShufQuery))
     return replaceInstUsesWith(SVI, V);
 
@@ -2497,7 +2588,7 @@ Instruction *InstCombinerImpl::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
     if (!ScaledMask.empty()) {
       // If the shuffled source vector simplifies, cast that value to this
       // shuffle's type.
-      if (auto *V = SimplifyShuffleVectorInst(X, UndefValue::get(XType),
+      if (auto *V = simplifyShuffleVectorInst(X, UndefValue::get(XType),
                                               ScaledMask, XType, ShufQuery))
         return BitCastInst::Create(Instruction::BitCast, V, SVI.getType());
     }
@@ -2526,6 +2617,12 @@ Instruction *InstCombinerImpl::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
     return I;
 
   if (Instruction *I = narrowVectorSelect(SVI, Builder))
+    return I;
+
+  if (Instruction *I = foldFNegShuffle(SVI, Builder))
+    return I;
+
+  if (Instruction *I = foldCastShuffle(SVI, Builder))
     return I;
 
   APInt UndefElts(VWidth, 0);

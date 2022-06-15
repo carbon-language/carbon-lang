@@ -7,15 +7,15 @@
 //===----------------------------------------------------------------------===//
 
 // UNSUPPORTED: c++03, c++11, c++14, c++17
-// UNSUPPORTED: libcpp-no-concepts
 // UNSUPPORTED: libcpp-has-no-incomplete-ranges
 
 // template<class R>
 //   take_view(R&&, range_difference_t<R>) -> take_view<views::all_t<R>>;
 
-#include <ranges>
 #include <cassert>
 #include <concepts>
+#include <ranges>
+#include <utility>
 
 struct View : std::ranges::view_base {
   int *begin() const;

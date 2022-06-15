@@ -30,7 +30,7 @@ def testTraverseOpRegionBlockIterators():
   ctx.allow_unregistered_dialects = True
   module = Module.parse(
       r"""
-    func @f1(%arg0: i32) -> i32 {
+    func.func @f1(%arg0: i32) -> i32 {
       %1 = "custom.addi"(%arg0, %arg0) : (i32, i32) -> i32
       return %1 : i32
     }
@@ -75,7 +75,7 @@ def testTraverseOpRegionBlockIterators():
   # CHECK:       REGION 0:
   # CHECK:         BLOCK 0:
   # CHECK:           OP 0: %0 = "custom.addi"
-  # CHECK:           OP 1: return
+  # CHECK:           OP 1: func.return
   walk_operations("", op)
 
 
@@ -87,7 +87,7 @@ def testTraverseOpRegionBlockIndices():
   ctx.allow_unregistered_dialects = True
   module = Module.parse(
       r"""
-    func @f1(%arg0: i32) -> i32 {
+    func.func @f1(%arg0: i32) -> i32 {
       %1 = "custom.addi"(%arg0, %arg0) : (i32, i32) -> i32
       return %1 : i32
     }
@@ -113,9 +113,9 @@ def testTraverseOpRegionBlockIndices():
   # CHECK:       REGION 0:
   # CHECK:         BLOCK 0:
   # CHECK:           OP 0: %0 = "custom.addi"
-  # CHECK:           OP 0: parent builtin.func
-  # CHECK:           OP 1: return
-  # CHECK:           OP 1: parent builtin.func
+  # CHECK:           OP 0: parent func.func
+  # CHECK:           OP 1: func.return
+  # CHECK:           OP 1: parent func.func
   walk_operations("", module.operation)
 
 
@@ -127,8 +127,8 @@ def testBlockAndRegionOwners():
   module = Module.parse(
       r"""
     builtin.module {
-      builtin.func @f() {
-        std.return
+      func.func @f() {
+        func.return
       }
     }
   """, ctx)
@@ -147,7 +147,7 @@ def testBlockArgumentList():
   with Context() as ctx:
     module = Module.parse(
         r"""
-      func @f1(%arg0: i32, %arg1: f64, %arg2: index) {
+      func.func @f1(%arg0: i32, %arg1: f64, %arg2: index) {
         return
       }
     """, ctx)
@@ -192,7 +192,7 @@ def testOperationOperands():
   with Context() as ctx:
     ctx.allow_unregistered_dialects = True
     module = Module.parse(r"""
-      func @f1(%arg0: i32) {
+      func.func @f1(%arg0: i32) {
         %0 = "test.producer"() : () -> i64
         "test.consumer"(%arg0, %0) : (i32, i64) -> ()
         return
@@ -215,7 +215,7 @@ def testOperationOperandsSlice():
   with Context() as ctx:
     ctx.allow_unregistered_dialects = True
     module = Module.parse(r"""
-      func @f1() {
+      func.func @f1() {
         %0 = "test.producer0"() : () -> i64
         %1 = "test.producer1"() : () -> i64
         %2 = "test.producer2"() : () -> i64
@@ -273,7 +273,7 @@ def testOperationOperandsSet():
   with Context() as ctx, Location.unknown(ctx):
     ctx.allow_unregistered_dialects = True
     module = Module.parse(r"""
-      func @f1() {
+      func.func @f1() {
         %0 = "test.producer0"() : () -> i64
         %1 = "test.producer1"() : () -> i64
         %2 = "test.producer2"() : () -> i64
@@ -328,7 +328,7 @@ def testOperationInsertionPoint():
   ctx.allow_unregistered_dialects = True
   module = Module.parse(
       r"""
-    func @f1(%arg0: i32) -> i32 {
+    func.func @f1(%arg0: i32) -> i32 {
       %1 = "custom.addi"(%arg0, %arg0) : (i32, i32) -> i32
       return %1 : i32
     }
@@ -383,7 +383,7 @@ def testOperationWithRegion():
     # TODO: Also verify accessing the terminator once both parents are nulled
     # out.
     module = Module.parse(r"""
-      func @f1(%arg0: i32) -> i32 {
+      func.func @f1(%arg0: i32) -> i32 {
         %1 = "custom.addi"(%arg0, %arg0) : (i32, i32) -> i32
         return %1 : i32
       }
@@ -405,11 +405,11 @@ def testOperationResultList():
   ctx = Context()
   module = Module.parse(
       r"""
-    func @f1() {
+    func.func @f1() {
       %0:3 = call @f2() : () -> (i32, f64, index)
       return
     }
-    func private @f2() -> (i32, f64, index)
+    func.func private @f2() -> (i32, f64, index)
   """, ctx)
   caller = module.body.operations[0]
   call = caller.regions[0].blocks[0].operations[0]
@@ -437,7 +437,7 @@ def testOperationResultListSlice():
   with Context() as ctx:
     ctx.allow_unregistered_dialects = True
     module = Module.parse(r"""
-      func @f1() {
+      func.func @f1() {
         "some.op"() : () -> (i1, i2, i3, i4, i5)
         return
       }
@@ -534,7 +534,7 @@ def testOperationPrint():
   ctx = Context()
   module = Module.parse(
       r"""
-    func @f1(%arg0: i32) -> i32 {
+    func.func @f1(%arg0: i32) -> i32 {
       %0 = arith.constant dense<[1, 2, 3, 4]> : tensor<4xi32>
       return %arg0 : i32
     }
@@ -564,7 +564,7 @@ def testOperationPrint():
 
   # Test get_asm with options.
   # CHECK: value = opaque<"elided_large_const", "0xDEADBEEF"> : tensor<4xi32>
-  # CHECK: "std.return"(%arg0) : (i32) -> () -:4:7
+  # CHECK: "func.return"(%arg0) : (i32) -> () -:4:7
   module.operation.print(
       large_elements_limit=2,
       enable_debug_info=True,
@@ -587,7 +587,7 @@ def testKnownOpView():
     """)
     print(module)
 
-    # addf should map to a known OpView class in the std dialect.
+    # addf should map to a known OpView class in the arithmetic dialect.
     # We know the OpView for it defines an 'lhs' attribute.
     addf = module.body.operations[2]
     # CHECK: <mlir.dialects._arith_ops_gen._AddFOp object
@@ -767,6 +767,26 @@ def testOperationErase():
       Operation.create("custom.op2")
 
 
+# CHECK-LABEL: TEST: testOperationClone
+@run
+def testOperationClone():
+  ctx = Context()
+  ctx.allow_unregistered_dialects = True
+  with Location.unknown(ctx):
+    m = Module.create()
+    with InsertionPoint(m.body):
+      op = Operation.create("custom.op1")
+
+      # CHECK: "custom.op1"
+      print(m)
+
+      clone = op.operation.clone()
+      op.operation.erase()
+
+      # CHECK: "custom.op1"
+      print(m)
+
+
 # CHECK-LABEL: TEST: testOperationLoc
 @run
 def testOperationLoc():
@@ -783,10 +803,10 @@ def testOperationLoc():
 @run
 def testModuleMerge():
   with Context():
-    m1 = Module.parse("func private @foo()")
+    m1 = Module.parse("func.func private @foo()")
     m2 = Module.parse("""
-      func private @bar()
-      func private @qux()
+      func.func private @bar()
+      func.func private @qux()
     """)
     foo = m1.body.operations[0]
     bar = m2.body.operations[0]
@@ -809,8 +829,8 @@ def testModuleMerge():
 @run
 def testAppendMoveFromAnotherBlock():
   with Context():
-    m1 = Module.parse("func private @foo()")
-    m2 = Module.parse("func private @bar()")
+    m1 = Module.parse("func.func private @foo()")
+    m2 = Module.parse("func.func private @bar()")
     func = m1.body.operations[0]
     m2.body.append(func)
 
@@ -828,7 +848,7 @@ def testAppendMoveFromAnotherBlock():
 @run
 def testDetachFromParent():
   with Context():
-    m1 = Module.parse("func private @foo()")
+    m1 = Module.parse("func.func private @foo()")
     func = m1.body.operations[0].detach_from_parent()
 
     try:

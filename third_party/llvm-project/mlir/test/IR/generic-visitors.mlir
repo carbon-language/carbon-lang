@@ -3,7 +3,7 @@
 
 // Verify the different configurations of generic IR visitors.
 
-func @structured_cfg() {
+func.func @structured_cfg() {
   %c0 = arith.constant 0 : index
   %c1 = arith.constant 1 : index
   %c10 = arith.constant 10 : index
@@ -20,7 +20,7 @@ func @structured_cfg() {
 }
 
 // CHECK: step 0 op 'builtin.module' before all regions
-// CHECK: step 1 op 'builtin.func' before all regions
+// CHECK: step 1 op 'func.func' before all regions
 // CHECK: step 2 op 'arith.constant' before all regions
 // CHECK: step 3 op 'arith.constant' before all regions
 // CHECK: step 4 op 'arith.constant' before all regions
@@ -36,14 +36,14 @@ func @structured_cfg() {
 // CHECK: step 14 op 'use3' before all regions
 // CHECK: step 15 op 'scf.yield' before all regions
 // CHECK: step 16 op 'scf.for' after all regions
-// CHECK: step 17 op 'std.return' before all regions
-// CHECK: step 18 op 'builtin.func' after all regions
+// CHECK: step 17 op 'func.return' before all regions
+// CHECK: step 18 op 'func.func' after all regions
 // CHECK: step 19 op 'builtin.module' after all regions
 
 // -----
 // Test the specific operation type visitor.
 
-func @correct_number_of_regions() {
+func.func @correct_number_of_regions() {
   %c0 = arith.constant 0 : index
   %c1 = arith.constant 1 : index
   %c10 = arith.constant 10 : index

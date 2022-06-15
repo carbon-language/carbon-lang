@@ -327,11 +327,9 @@ static InputFile *addFile(StringRef path, ForceLoad forceLoadArchive,
   case file_magic::macho_dynamically_linked_shared_lib:
   case file_magic::macho_dynamically_linked_shared_lib_stub:
   case file_magic::tapi_file:
-    if (DylibFile *dylibFile = loadDylib(mbref)) {
-      if (isExplicit)
-        dylibFile->explicitlyLinked = true;
+    if (DylibFile *dylibFile =
+            loadDylib(mbref, nullptr, /*isBundleLoader=*/false, isExplicit))
       newFile = dylibFile;
-    }
     break;
   case file_magic::bitcode:
     newFile = make<BitcodeFile>(mbref, "", 0, isLazy);
@@ -408,7 +406,8 @@ static void addFramework(StringRef name, bool isNeeded, bool isWeak,
         config->hasReexports = true;
         dylibFile->reexport = true;
       }
-    } else if (isa<ObjFile>(file) || isa<BitcodeFile>(file)) {
+    } else if (isa_and_nonnull<ObjFile>(file) ||
+               isa_and_nonnull<BitcodeFile>(file)) {
       // Cache frameworks containing object or bitcode files to avoid duplicate
       // symbols. Frameworks containing static archives are cached separately
       // in addFile() to share caching with libraries, and frameworks
@@ -530,14 +529,11 @@ static void replaceCommonSymbols() {
 
     // FIXME: CommonSymbol should store isReferencedDynamically, noDeadStrip
     // and pass them on here.
-    replaceSymbol<Defined>(sym, sym->getName(), common->getFile(), isec,
-                           /*value=*/0,
-                           /*size=*/0,
-                           /*isWeakDef=*/false,
-                           /*isExternal=*/true, common->privateExtern,
-                           /*isThumb=*/false,
-                           /*isReferencedDynamically=*/false,
-                           /*noDeadStrip=*/false);
+    replaceSymbol<Defined>(
+        sym, sym->getName(), common->getFile(), isec, /*value=*/0, /*size=*/0,
+        /*isWeakDef=*/false, /*isExternal=*/true, common->privateExtern,
+        /*includeInSymtab=*/true, /*isThumb=*/false,
+        /*isReferencedDynamically=*/false, /*noDeadStrip=*/false);
   }
 }
 
@@ -581,20 +577,22 @@ static std::string lowerDash(StringRef s) {
                      map_iterator(s.end(), toLowerDash));
 }
 
-// Has the side-effect of setting Config::platformInfo.
-static PlatformType parsePlatformVersion(const ArgList &args) {
-  const Arg *arg = args.getLastArg(OPT_platform_version);
-  if (!arg) {
-    error("must specify -platform_version");
-    return PLATFORM_UNKNOWN;
-  }
+struct PlatformVersion {
+  PlatformType platform = PLATFORM_UNKNOWN;
+  llvm::VersionTuple minimum;
+  llvm::VersionTuple sdk;
+};
 
+static PlatformVersion parsePlatformVersion(const Arg *arg) {
+  assert(arg->getOption().getID() == OPT_platform_version);
   StringRef platformStr = arg->getValue(0);
   StringRef minVersionStr = arg->getValue(1);
   StringRef sdkVersionStr = arg->getValue(2);
 
+  PlatformVersion platformVersion;
+
   // TODO(compnerd) see if we can generate this case list via XMACROS
-  PlatformType platform =
+  platformVersion.platform =
       StringSwitch<PlatformType>(lowerDash(platformStr))
           .Cases("macos", "1", PLATFORM_MACOS)
           .Cases("ios", "2", PLATFORM_IOS)
@@ -607,17 +605,67 @@ static PlatformType parsePlatformVersion(const ArgList &args) {
           .Cases("watchos-simulator", "9", PLATFORM_WATCHOSSIMULATOR)
           .Cases("driverkit", "10", PLATFORM_DRIVERKIT)
           .Default(PLATFORM_UNKNOWN);
-  if (platform == PLATFORM_UNKNOWN)
+  if (platformVersion.platform == PLATFORM_UNKNOWN)
     error(Twine("malformed platform: ") + platformStr);
   // TODO: check validity of version strings, which varies by platform
   // NOTE: ld64 accepts version strings with 5 components
   // llvm::VersionTuple accepts no more than 4 components
   // Has Apple ever published version strings with 5 components?
-  if (config->platformInfo.minimum.tryParse(minVersionStr))
+  if (platformVersion.minimum.tryParse(minVersionStr))
     error(Twine("malformed minimum version: ") + minVersionStr);
-  if (config->platformInfo.sdk.tryParse(sdkVersionStr))
+  if (platformVersion.sdk.tryParse(sdkVersionStr))
     error(Twine("malformed sdk version: ") + sdkVersionStr);
-  return platform;
+  return platformVersion;
+}
+
+// Has the side-effect of setting Config::platformInfo.
+static PlatformType parsePlatformVersions(const ArgList &args) {
+  std::map<PlatformType, PlatformVersion> platformVersions;
+  const PlatformVersion *lastVersionInfo = nullptr;
+  for (const Arg *arg : args.filtered(OPT_platform_version)) {
+    PlatformVersion version = parsePlatformVersion(arg);
+
+    // For each platform, the last flag wins:
+    // `-platform_version macos 2 3 -platform_version macos 4 5` has the same
+    // effect as just passing `-platform_version macos 4 5`.
+    // FIXME: ld64 warns on multiple flags for one platform. Should we?
+    platformVersions[version.platform] = version;
+    lastVersionInfo = &platformVersions[version.platform];
+  }
+
+  if (platformVersions.empty()) {
+    error("must specify -platform_version");
+    return PLATFORM_UNKNOWN;
+  }
+  if (platformVersions.size() > 2) {
+    error("must specify -platform_version at most twice");
+    return PLATFORM_UNKNOWN;
+  }
+  if (platformVersions.size() == 2) {
+    bool isZipperedCatalyst = platformVersions.count(PLATFORM_MACOS) &&
+                              platformVersions.count(PLATFORM_MACCATALYST);
+
+    if (!isZipperedCatalyst) {
+      error("lld supports writing zippered outputs only for "
+            "macos and mac-catalyst");
+    } else if (config->outputType != MH_DYLIB &&
+               config->outputType != MH_BUNDLE) {
+      error("writing zippered outputs only valid for -dylib and -bundle");
+    } else {
+      config->platformInfo.minimum = platformVersions[PLATFORM_MACOS].minimum;
+      config->platformInfo.sdk = platformVersions[PLATFORM_MACOS].sdk;
+      config->secondaryPlatformInfo = PlatformInfo{};
+      config->secondaryPlatformInfo->minimum =
+          platformVersions[PLATFORM_MACCATALYST].minimum;
+      config->secondaryPlatformInfo->sdk =
+          platformVersions[PLATFORM_MACCATALYST].sdk;
+    }
+    return PLATFORM_MACOS;
+  }
+
+  config->platformInfo.minimum = lastVersionInfo->minimum;
+  config->platformInfo.sdk = lastVersionInfo->sdk;
+  return lastVersionInfo->platform;
 }
 
 // Has the side-effect of setting Config::target.
@@ -628,9 +676,13 @@ static TargetInfo *createTargetInfo(InputArgList &args) {
     return nullptr;
   }
 
-  PlatformType platform = parsePlatformVersion(args);
+  PlatformType platform = parsePlatformVersions(args);
   config->platformInfo.target =
       MachO::Target(getArchitectureFromName(archName), platform);
+  if (config->secondaryPlatformInfo) {
+    config->secondaryPlatformInfo->target =
+        MachO::Target(getArchitectureFromName(archName), PLATFORM_MACCATALYST);
+  }
 
   uint32_t cpuType;
   uint32_t cpuSubtype;
@@ -687,9 +739,6 @@ static ICFLevel getICFLevel(const ArgList &args) {
   if (icfLevel == ICFLevel::unknown) {
     warn(Twine("unknown --icf=OPTION `") + icfLevelStr +
          "', defaulting to `none'");
-    icfLevel = ICFLevel::none;
-  } else if (icfLevel == ICFLevel::safe) {
-    warn(Twine("`--icf=safe' is not yet implemented, reverting to `none'"));
     icfLevel = ICFLevel::none;
   }
   return icfLevel;
@@ -889,26 +938,30 @@ bool SymbolPatterns::match(StringRef symbolName) const {
   return matchLiteral(symbolName) || matchGlob(symbolName);
 }
 
+static void parseSymbolPatternsFile(const Arg *arg,
+                                    SymbolPatterns &symbolPatterns) {
+  StringRef path = arg->getValue();
+  Optional<MemoryBufferRef> buffer = readFile(path);
+  if (!buffer) {
+    error("Could not read symbol file: " + path);
+    return;
+  }
+  MemoryBufferRef mbref = *buffer;
+  for (StringRef line : args::getLines(mbref)) {
+    line = line.take_until([](char c) { return c == '#'; }).trim();
+    if (!line.empty())
+      symbolPatterns.insert(line);
+  }
+}
+
 static void handleSymbolPatterns(InputArgList &args,
                                  SymbolPatterns &symbolPatterns,
                                  unsigned singleOptionCode,
                                  unsigned listFileOptionCode) {
   for (const Arg *arg : args.filtered(singleOptionCode))
     symbolPatterns.insert(arg->getValue());
-  for (const Arg *arg : args.filtered(listFileOptionCode)) {
-    StringRef path = arg->getValue();
-    Optional<MemoryBufferRef> buffer = readFile(path);
-    if (!buffer) {
-      error("Could not read symbol file: " + path);
-      continue;
-    }
-    MemoryBufferRef mbref = *buffer;
-    for (StringRef line : args::getLines(mbref)) {
-      line = line.take_until([](char c) { return c == '#'; }).trim();
-      if (!line.empty())
-        symbolPatterns.insert(line);
-    }
-  }
+  for (const Arg *arg : args.filtered(listFileOptionCode))
+    parseSymbolPatternsFile(arg, symbolPatterns);
 }
 
 static void createFiles(const InputArgList &args) {
@@ -986,14 +1039,12 @@ static void gatherInputSections() {
   int inputOrder = 0;
   for (const InputFile *file : inputFiles) {
     for (const Section *section : file->sections) {
-      const Subsections &subsections = section->subsections;
-      if (subsections.empty())
-        continue;
-      if (subsections[0].isec->getName() == section_names::compactUnwind)
-        // Compact unwind entries require special handling elsewhere.
+      // Compact unwind entries require special handling elsewhere. (In
+      // contrast, EH frames are handled like regular ConcatInputSections.)
+      if (section->name == section_names::compactUnwind)
         continue;
       ConcatOutputSection *osec = nullptr;
-      for (const Subsection &subsection : subsections) {
+      for (const Subsection &subsection : section->subsections) {
         if (auto *isec = dyn_cast<ConcatInputSection>(subsection.isec)) {
           if (isec->isCoalescedWeak())
             continue;
@@ -1101,6 +1152,7 @@ bool macho::link(ArrayRef<const char *> argsArr, llvm::raw_ostream &stdoutOS,
 
   config = std::make_unique<Configuration>();
   symtab = std::make_unique<SymbolTable>();
+  config->outputType = getOutputType(args);
   target = createTargetInfo(args);
   depTracker = std::make_unique<DependencyTracker>(
       args.getLastArgValue(OPT_dependency_info));
@@ -1207,7 +1259,6 @@ bool macho::link(ArrayRef<const char *> argsArr, llvm::raw_ostream &stdoutOS,
   config->printEachFile = args.hasArg(OPT_t);
   config->printWhyLoad = args.hasArg(OPT_why_load);
   config->omitDebugInfo = args.hasArg(OPT_S);
-  config->outputType = getOutputType(args);
   config->errorForArchMismatch = args.hasArg(OPT_arch_errors_fatal);
   if (const Arg *arg = args.getLastArg(OPT_bundle_loader)) {
     if (config->outputType != MH_BUNDLE)
@@ -1222,9 +1273,6 @@ bool macho::link(ArrayRef<const char *> argsArr, llvm::raw_ostream &stdoutOS,
     config->umbrella = arg->getValue();
   }
   config->ltoObjPath = args.getLastArgValue(OPT_object_path_lto);
-  config->ltoNewPassManager =
-      args.hasFlag(OPT_no_lto_legacy_pass_manager, OPT_lto_legacy_pass_manager,
-                   LLVM_ENABLE_NEW_PASS_MANAGER);
   config->ltoo = args::getInteger(args, OPT_lto_O, 2);
   if (config->ltoo > 3)
     error("--lto-O: invalid optimization level: " + Twine(config->ltoo));
@@ -1255,6 +1303,7 @@ bool macho::link(ArrayRef<const char *> argsArr, llvm::raw_ostream &stdoutOS,
   config->callGraphProfileSort = args.hasFlag(
       OPT_call_graph_profile_sort, OPT_no_call_graph_profile_sort, true);
   config->printSymbolOrder = args.getLastArgValue(OPT_print_symbol_order);
+  config->parseEhFrames = static_cast<bool>(getenv("LLD_IN_TEST"));
 
   // FIXME: Add a commandline flag for this too.
   config->zeroModTime = getenv("ZERO_AR_DATE");
@@ -1363,12 +1412,60 @@ bool macho::link(ArrayRef<const char *> argsArr, llvm::raw_ostream &stdoutOS,
           ">>> ignoring unexports");
     config->unexportedSymbols.clear();
   }
+
+  // Imitating LD64's:
+  // -non_global_symbols_no_strip_list and -non_global_symbols_strip_list can't
+  // both be present.
+  // But -x can be used with either of these two, in which case, the last arg
+  // takes effect.
+  // (TODO: This is kind of confusing - considering disallowing using them
+  // together for a more straightforward behaviour)
+  {
+    bool includeLocal = false;
+    bool excludeLocal = false;
+    for (const Arg *arg :
+         args.filtered(OPT_x, OPT_non_global_symbols_no_strip_list,
+                       OPT_non_global_symbols_strip_list)) {
+      switch (arg->getOption().getID()) {
+      case OPT_x:
+        config->localSymbolsPresence = SymtabPresence::None;
+        break;
+      case OPT_non_global_symbols_no_strip_list:
+        if (excludeLocal) {
+          error("cannot use both -non_global_symbols_no_strip_list and "
+                "-non_global_symbols_strip_list");
+        } else {
+          includeLocal = true;
+          config->localSymbolsPresence = SymtabPresence::SelectivelyIncluded;
+          parseSymbolPatternsFile(arg, config->localSymbolPatterns);
+        }
+        break;
+      case OPT_non_global_symbols_strip_list:
+        if (includeLocal) {
+          error("cannot use both -non_global_symbols_no_strip_list and "
+                "-non_global_symbols_strip_list");
+        } else {
+          excludeLocal = true;
+          config->localSymbolsPresence = SymtabPresence::SelectivelyExcluded;
+          parseSymbolPatternsFile(arg, config->localSymbolPatterns);
+        }
+        break;
+      default:
+        llvm_unreachable("unexpected option");
+      }
+    }
+  }
   // Explicitly-exported literal symbols must be defined, but might
-  // languish in an archive if unreferenced elsewhere. Light a fire
-  // under those lazy symbols!
+  // languish in an archive if unreferenced elsewhere or if they are in the
+  // non-global strip list. Light a fire under those lazy symbols!
   for (const CachedHashStringRef &cachedName : config->exportedSymbols.literals)
     symtab->addUndefined(cachedName.val(), /*file=*/nullptr,
                          /*isWeakRef=*/false);
+
+  for (const Arg *arg : args.filtered(OPT_why_live))
+    config->whyLive.insert(arg->getValue());
+  if (!config->whyLive.empty() && !config->deadStrip)
+    warn("-why_live has no effect without -dead_strip, ignoring");
 
   config->saveTemps = args.hasArg(OPT_save_temps);
 
@@ -1448,7 +1545,7 @@ bool macho::link(ArrayRef<const char *> argsArr, llvm::raw_ostream &stdoutOS,
 
     StringRef orderFile = args.getLastArgValue(OPT_order_file);
     if (!orderFile.empty())
-      parseOrderFile(orderFile);
+      priorityBuilder.parseOrderFile(orderFile);
 
     referenceStubBinder();
 
@@ -1471,7 +1568,7 @@ bool macho::link(ArrayRef<const char *> argsArr, llvm::raw_ostream &stdoutOS,
                 // The former can be exported but the latter cannot.
                 defined->privateExtern = false;
               } else {
-                warn("cannot export hidden symbol " + symbolName +
+                warn("cannot export hidden symbol " + toString(*defined) +
                      "\n>>> defined in " + toString(defined->getFile()));
               }
             }
@@ -1505,7 +1602,7 @@ bool macho::link(ArrayRef<const char *> argsArr, llvm::raw_ostream &stdoutOS,
 
     gatherInputSections();
     if (config->callGraphProfileSort)
-      extractCallGraphProfile();
+      priorityBuilder.extractCallGraphProfile();
 
     if (config->deadStrip)
       markLive();
@@ -1513,8 +1610,11 @@ bool macho::link(ArrayRef<const char *> argsArr, llvm::raw_ostream &stdoutOS,
     // ICF assumes that all literals have been folded already, so we must run
     // foldIdenticalLiterals before foldIdenticalSections.
     foldIdenticalLiterals();
-    if (config->icfLevel != ICFLevel::none)
+    if (config->icfLevel != ICFLevel::none) {
+      if (config->icfLevel == ICFLevel::safe)
+        markAddrSigSymbols();
       foldIdenticalSections();
+    }
 
     // Write to an output file.
     if (target->wordSize == 8)

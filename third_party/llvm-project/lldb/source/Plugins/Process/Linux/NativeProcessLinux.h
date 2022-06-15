@@ -20,7 +20,7 @@
 #include "lldb/Utility/FileSpec.h"
 #include "lldb/lldb-types.h"
 
-#include "IntelPTManager.h"
+#include "IntelPTCollector.h"
 #include "NativeThreadLinux.h"
 #include "Plugins/Process/POSIX/NativeProcessELF.h"
 #include "Plugins/Process/Utility/NativeProcessSoftwareSingleStep.h"
@@ -209,6 +209,8 @@ private:
   /// stopping for threads being destroyed.
   Status NotifyTracersOfThreadDestroyed(lldb::tid_t tid);
 
+  void NotifyTracersProcessStateChanged(lldb::StateType state) override;
+
   /// Writes the raw event message code (vis-a-vis PTRACE_GETEVENTMSG)
   /// corresponding to the given thread ID to the memory pointed to by @p
   /// message.
@@ -241,7 +243,7 @@ private:
   Status PopulateMemoryRegionCache();
 
   /// Manages Intel PT process and thread traces.
-  IntelPTManager m_intel_pt_manager;
+  IntelPTCollector m_intel_pt_collector;
 
   // Handle a clone()-like event.
   bool MonitorClone(NativeThreadLinux &parent, lldb::pid_t child_pid,

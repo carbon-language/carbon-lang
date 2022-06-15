@@ -13,12 +13,13 @@
 #ifndef LLVM_TRANSFORMS_UTILS_MODULEUTILS_H
 #define LLVM_TRANSFORMS_UTILS_MODULEUTILS_H
 
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/Alignment.h"
+#include "llvm/Support/MemoryBufferRef.h"
 #include <utility> // for std::pair
 
 namespace llvm {
+template <typename T> class SmallVectorImpl;
 
 template <typename T> class ArrayRef;
 class Module;
@@ -109,7 +110,8 @@ std::string getUniqueModuleId(Module *M);
 
 /// Embed the memory buffer \p Buf into the module \p M as a global using the
 /// specified section name.
-void embedBufferInModule(Module &M, MemoryBufferRef Buf, StringRef SectionName);
+void embedBufferInModule(Module &M, MemoryBufferRef Buf, StringRef SectionName,
+                         Align Alignment = Align(1));
 
 class CallInst;
 namespace VFABI {

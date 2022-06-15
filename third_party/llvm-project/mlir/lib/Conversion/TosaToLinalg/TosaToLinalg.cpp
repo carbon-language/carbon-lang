@@ -15,7 +15,6 @@
 #include "mlir/Dialect/Linalg/IR/Linalg.h"
 #include "mlir/Dialect/Math/IR/Math.h"
 #include "mlir/Dialect/SCF/SCF.h"
-#include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
 #include "mlir/Dialect/Tensor/Utils/Utils.h"
 #include "mlir/Dialect/Tosa/IR/TosaOps.h"
@@ -148,10 +147,8 @@ createLinalgBodyCalculationForElementwiseOp(Operation *op, ValueRange args,
       cast<tosa::NegateOp>(op).quantization_info()) {
     auto quantizationInfo = cast<tosa::NegateOp>(op).quantization_info();
     int32_t inputBitWidth = elementTy.getIntOrFloatBitWidth();
-    int64_t inZp =
-        quantizationInfo.getValue().input_zp().getValue().getSExtValue();
-    int64_t outZp =
-        quantizationInfo.getValue().output_zp().getValue().getSExtValue();
+    int64_t inZp = quantizationInfo.getValue().getInputZp();
+    int64_t outZp = quantizationInfo.getValue().getOutputZp();
 
     // Compute the maximum value that can occur in the intermediate buffer.
     int64_t zpAdd = inZp + outZp;
@@ -260,54 +257,7 @@ createLinalgBodyCalculationForElementwiseOp(Operation *op, ValueRange args,
 
   // tosa::ClzOp
   if (isa<tosa::ClzOp>(op) && elementTy.isa<IntegerType>()) {
-    int bitWidth = elementTy.getIntOrFloatBitWidth();
-    auto zero =
-        rewriter.create<arith::ConstantOp>(loc, IntegerAttr::get(elementTy, 0));
-    auto leadingZeros = rewriter.create<arith::ConstantOp>(
-        loc, IntegerAttr::get(elementTy, bitWidth));
-
-    SmallVector<Value> operands = {args[0], leadingZeros, zero};
-    SmallVector<Type> types = {elementTy, elementTy, elementTy};
-    SmallVector<Location> locations = {loc, loc, loc};
-
-    auto whileOp = rewriter.create<scf::WhileOp>(loc, types, operands);
-    Block *before =
-        rewriter.createBlock(&whileOp.getBefore(), {}, types, locations);
-    Block *after =
-        rewriter.createBlock(&whileOp.getAfter(), {}, types, locations);
-
-    // The conditional block of the while loop.
-    {
-      rewriter.setInsertionPointToStart(&whileOp.getBefore().front());
-      Value input = before->getArgument(0);
-      Value zero = before->getArgument(2);
-
-      Value inputLargerThanZero = rewriter.create<arith::CmpIOp>(
-          loc, arith::CmpIPredicate::ne, input, zero);
-      rewriter.create<scf::ConditionOp>(loc, inputLargerThanZero,
-                                        before->getArguments());
-    }
-
-    // The body of the while loop: shift right until reaching a value of 0.
-    {
-      rewriter.setInsertionPointToStart(&whileOp.getAfter().front());
-      Value input = after->getArgument(0);
-      Value leadingZeros = after->getArgument(1);
-
-      auto one = rewriter.create<arith::ConstantOp>(
-          loc, IntegerAttr::get(elementTy, 1));
-      auto shifted =
-          rewriter.create<arith::ShRUIOp>(loc, resultTypes, input, one);
-      auto leadingZerosMinusOne =
-          rewriter.create<arith::SubIOp>(loc, resultTypes, leadingZeros, one);
-
-      rewriter.create<scf::YieldOp>(
-          loc,
-          ValueRange({shifted, leadingZerosMinusOne, after->getArgument(2)}));
-    }
-
-    rewriter.setInsertionPointAfter(whileOp);
-    return whileOp->getResult(1);
+    return rewriter.create<math::CountLeadingZerosOp>(loc, elementTy, args[0]);
   }
 
   // tosa::LogicalAnd
@@ -857,8 +807,10 @@ static LogicalResult reduceMatchAndRewriteHelper(Operation *op, uint64_t axis,
         op, "No initial value found for reduction operation");
 
   auto fillValue = rewriter.create<arith::ConstantOp>(loc, fillValueAttr);
-  auto filledTensor =
-      rewriter.create<linalg::FillOp>(loc, fillValue, initTensor).result();
+  auto filledTensor = rewriter
+                          .create<linalg::FillOp>(loc, ValueRange{fillValue},
+                                                  ValueRange{initTensor})
+                          .result();
 
   SmallVector<AffineExpr, 2> srcExprs;
   SmallVector<AffineExpr, 2> dstExprs;
@@ -1718,7 +1670,9 @@ struct ConcatConverter : public OpConversionPattern<tosa::ConcatOp> {
     Value zeroVal = rewriter.createOrFold<arith::ConstantOp>(
         loc, rewriter.getZeroAttr(resultType.getElementType()));
     Value result =
-        rewriter.create<linalg::FillOp>(loc, zeroVal, init).getResult(0);
+        rewriter
+            .create<linalg::FillOp>(loc, ValueRange{zeroVal}, ValueRange{init})
+            .result();
 
     auto toOpFoldResult = [](Value v) -> OpFoldResult {
       auto op = v.getDefiningOp<arith::ConstantIndexOp>();
@@ -1888,13 +1842,13 @@ public:
           loc, padOp.pad_const(), ValueRange({}));
     } else {
       Attribute constantAttr;
-      if (elementTy.isa<FloatType>())
+      if (elementTy.isa<FloatType>()) {
         constantAttr = rewriter.getFloatAttr(elementTy, 0.0);
-      else if (elementTy.isa<IntegerType>() && !padOp.quantization_info())
+      } else if (elementTy.isa<IntegerType>() && !padOp.quantization_info()) {
         constantAttr = rewriter.getIntegerAttr(elementTy, 0);
-      else if (elementTy.isa<IntegerType>() && padOp.quantization_info()) {
-        auto value = padOp.quantization_info().getValue().input_zp().getValue();
-        constantAttr = rewriter.getIntegerAttr(elementTy, value.getZExtValue());
+      } else if (elementTy.isa<IntegerType>() && padOp.quantization_info()) {
+        int64_t value = padOp.quantization_info().getValue().getInputZp();
+        constantAttr = rewriter.getIntegerAttr(elementTy, value);
       }
       if (constantAttr)
         padConstant = rewriter.create<arith::ConstantOp>(loc, constantAttr);
@@ -1990,7 +1944,9 @@ public:
     auto fillValueIdx = rewriter.create<arith::ConstantOp>(
         loc, rewriter.getIntegerAttr(outElementTy, 0));
     auto filledTensorIdx =
-        rewriter.create<linalg::FillOp>(loc, fillValueIdx, initTensorIdx)
+        rewriter
+            .create<linalg::FillOp>(loc, ValueRange{fillValueIdx},
+                                    ValueRange{initTensorIdx})
             .result();
 
     // Second fill the output buffer for the running max.
@@ -2008,7 +1964,9 @@ public:
     auto fillValueMax =
         rewriter.create<arith::ConstantOp>(loc, fillValueMaxAttr);
     auto filledTensorMax =
-        rewriter.create<linalg::FillOp>(loc, fillValueMax, initTensorMax)
+        rewriter
+            .create<linalg::FillOp>(loc, ValueRange{fillValueMax},
+                                    ValueRange{initTensorMax})
             .result();
 
     // We need to reduce along the arg-max axis, with parallel operations along

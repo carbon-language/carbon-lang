@@ -6,18 +6,21 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LIBC_SRC_SUPPORT_FPUTIL_DUMMY_FENVIMPL_H
-#define LLVM_LIBC_SRC_SUPPORT_FPUTIL_DUMMY_FENVIMPL_H
+#ifndef LLVM_LIBC_SRC_SUPPORT_FPUTIL_FENVIMPL_H
+#define LLVM_LIBC_SRC_SUPPORT_FPUTIL_FENVIMPL_H
 
 #include "src/__support/architectures.h"
 
 #if defined(LLVM_LIBC_ARCH_AARCH64)
+#if defined(__APPLE__)
+#include "aarch64/fenv_darwin_impl.h"
+#else
 #include "aarch64/FEnvImpl.h"
+#endif
 #elif defined(LLVM_LIBC_ARCH_X86)
 #include "x86_64/FEnvImpl.h"
 #else
 #include <fenv.h>
-#include <math.h>
 
 namespace __llvm_libc {
 namespace fputil {
@@ -44,4 +47,4 @@ static inline int set_env(const fenv_t *) { return 0; }
 } // namespace __llvm_libc
 #endif
 
-#endif // LLVM_LIBC_SRC_SUPPORT_FPUTIL_DUMMY_FENVIMPL_H
+#endif // LLVM_LIBC_SRC_SUPPORT_FPUTIL_FENVIMPL_H

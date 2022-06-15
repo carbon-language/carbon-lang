@@ -46,7 +46,8 @@ public:
     SV_GOFF,
     SV_MachO,
     SV_Wasm,
-    SV_XCOFF
+    SV_XCOFF,
+    SV_SPIRV,
   };
 
   /// Express the state of bundle locked groups while emitting code.
@@ -184,13 +185,13 @@ public:
 
   void dump() const;
 
-  virtual void PrintSwitchToSection(const MCAsmInfo &MAI, const Triple &T,
+  virtual void printSwitchToSection(const MCAsmInfo &MAI, const Triple &T,
                                     raw_ostream &OS,
                                     const MCExpr *Subsection) const = 0;
 
   /// Return true if a .align directive should use "optimized nops" to fill
   /// instead of 0s.
-  virtual bool UseCodeAlign() const = 0;
+  virtual bool useCodeAlign() const = 0;
 
   /// Check whether this section is "virtual", that is has no actual object
   /// file contents.

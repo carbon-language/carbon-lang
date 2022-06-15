@@ -1,11 +1,11 @@
-// RUN: mlir-opt %s -convert-scf-to-cf -convert-vector-to-llvm="enable-x86vector" -convert-std-to-llvm -reconcile-unrealized-casts  | \
+// RUN: mlir-opt %s -convert-scf-to-cf -convert-vector-to-llvm="enable-x86vector" -convert-func-to-llvm -reconcile-unrealized-casts  | \
 // RUN: mlir-translate  --mlir-to-llvmir | \
 // RUN: %lli --entry-function=entry --mattr="avx512bw,avx512vp2intersect" --dlopen=%mlir_integration_test_dir/libmlir_c_runner_utils%shlibext | \
 // RUN: FileCheck %s
 
 // Note: To run this test, your CPU must support AVX512 vp2intersect.
 
-func @entry() -> i32 {
+func.func @entry() -> i32 {
   %i0 = arith.constant 0 : i32
   %i1 = arith.constant 1: i32
   %i2 = arith.constant 2: i32

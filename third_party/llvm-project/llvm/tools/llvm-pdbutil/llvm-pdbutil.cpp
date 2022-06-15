@@ -15,8 +15,6 @@
 #include "BytesOutputStyle.h"
 #include "DumpOutputStyle.h"
 #include "ExplainOutputStyle.h"
-#include "InputFile.h"
-#include "LinePrinter.h"
 #include "OutputStyle.h"
 #include "PrettyClassDefinitionDumper.h"
 #include "PrettyCompilandDumper.h"
@@ -44,6 +42,7 @@
 #include "llvm/DebugInfo/CodeView/StringsAndChecksums.h"
 #include "llvm/DebugInfo/CodeView/TypeStreamMerger.h"
 #include "llvm/DebugInfo/MSF/MSFBuilder.h"
+#include "llvm/DebugInfo/MSF/MappedBlockStream.h"
 #include "llvm/DebugInfo/PDB/ConcreteSymbolEnumerator.h"
 #include "llvm/DebugInfo/PDB/IPDBEnumChildren.h"
 #include "llvm/DebugInfo/PDB/IPDBInjectedSource.h"
@@ -54,6 +53,7 @@
 #include "llvm/DebugInfo/PDB/Native/DbiStreamBuilder.h"
 #include "llvm/DebugInfo/PDB/Native/InfoStream.h"
 #include "llvm/DebugInfo/PDB/Native/InfoStreamBuilder.h"
+#include "llvm/DebugInfo/PDB/Native/InputFile.h"
 #include "llvm/DebugInfo/PDB/Native/NativeSession.h"
 #include "llvm/DebugInfo/PDB/Native/PDBFile.h"
 #include "llvm/DebugInfo/PDB/Native/PDBFileBuilder.h"
@@ -198,6 +198,8 @@ static cl::opt<bool> Typedefs("typedefs", cl::desc("Dump typedefs"),
                               cl::sub(DiaDumpSubcommand));
 } // namespace diadump
 
+FilterOptions Filters;
+
 namespace pretty {
 cl::list<std::string> InputFilenames(cl::Positional,
                                      cl::desc("<input PDB files>"),
@@ -214,7 +216,7 @@ cl::opt<bool> ShowInjectedSourceContent(
 cl::list<std::string> WithName(
     "with-name",
     cl::desc("Display any symbol or type with the specified exact name"),
-    cl::cat(TypeCategory), cl::ZeroOrMore, cl::sub(PrettySubcommand));
+    cl::cat(TypeCategory), cl::sub(PrettySubcommand));
 
 cl::opt<bool> Compilands("compilands", cl::desc("Display compilands"),
                          cl::cat(TypeCategory), cl::sub(PrettySubcommand));
@@ -227,7 +229,7 @@ cl::opt<bool> Externals("externals", cl::desc("Dump external symbols"),
                         cl::cat(TypeCategory), cl::sub(PrettySubcommand));
 cl::list<SymLevel> SymTypes(
     "sym-types", cl::desc("Type of symbols to dump (default all)"),
-    cl::cat(TypeCategory), cl::sub(PrettySubcommand), cl::ZeroOrMore,
+    cl::cat(TypeCategory), cl::sub(PrettySubcommand),
     cl::values(
         clEnumValN(SymLevel::Thunks, "thunks", "Display thunk symbols"),
         clEnumValN(SymLevel::Data, "data", "Display data symbols"),
@@ -313,28 +315,31 @@ cl::opt<cl::boolOrDefault>
     ColorOutput("color-output",
                 cl::desc("Override use of color (default = isatty)"),
                 cl::cat(OtherOptions), cl::sub(PrettySubcommand));
-cl::list<std::string> ExcludeTypes(
-    "exclude-types", cl::desc("Exclude types by regular expression"),
-    cl::ZeroOrMore, cl::cat(FilterCategory), cl::sub(PrettySubcommand));
-cl::list<std::string> ExcludeSymbols(
-    "exclude-symbols", cl::desc("Exclude symbols by regular expression"),
-    cl::ZeroOrMore, cl::cat(FilterCategory), cl::sub(PrettySubcommand));
-cl::list<std::string> ExcludeCompilands(
-    "exclude-compilands", cl::desc("Exclude compilands by regular expression"),
-    cl::ZeroOrMore, cl::cat(FilterCategory), cl::sub(PrettySubcommand));
+cl::list<std::string>
+    ExcludeTypes("exclude-types",
+                 cl::desc("Exclude types by regular expression"),
+                 cl::cat(FilterCategory), cl::sub(PrettySubcommand));
+cl::list<std::string>
+    ExcludeSymbols("exclude-symbols",
+                   cl::desc("Exclude symbols by regular expression"),
+                   cl::cat(FilterCategory), cl::sub(PrettySubcommand));
+cl::list<std::string>
+    ExcludeCompilands("exclude-compilands",
+                      cl::desc("Exclude compilands by regular expression"),
+                      cl::cat(FilterCategory), cl::sub(PrettySubcommand));
 
 cl::list<std::string> IncludeTypes(
     "include-types",
     cl::desc("Include only types which match a regular expression"),
-    cl::ZeroOrMore, cl::cat(FilterCategory), cl::sub(PrettySubcommand));
+    cl::cat(FilterCategory), cl::sub(PrettySubcommand));
 cl::list<std::string> IncludeSymbols(
     "include-symbols",
     cl::desc("Include only symbols which match a regular expression"),
-    cl::ZeroOrMore, cl::cat(FilterCategory), cl::sub(PrettySubcommand));
+    cl::cat(FilterCategory), cl::sub(PrettySubcommand));
 cl::list<std::string> IncludeCompilands(
     "include-compilands",
     cl::desc("Include only compilands those which match a regular expression"),
-    cl::ZeroOrMore, cl::cat(FilterCategory), cl::sub(PrettySubcommand));
+    cl::cat(FilterCategory), cl::sub(PrettySubcommand));
 cl::opt<uint32_t> SizeThreshold(
     "min-type-size", cl::desc("Displays only those types which are greater "
                               "than or equal to the specified size."),
@@ -387,7 +392,7 @@ cl::opt<std::string>
                      cl::sub(BytesSubcommand), cl::cat(MsfBytes));
 
 cl::list<std::string>
-    DumpStreamData("stream-data", cl::CommaSeparated, cl::ZeroOrMore,
+    DumpStreamData("stream-data", cl::CommaSeparated,
                    cl::desc("Dump binary data from specified streams.  Format "
                             "is SN[:Start][@Size]"),
                    cl::sub(BytesSubcommand), cl::cat(MsfBytes));
@@ -410,14 +415,12 @@ cl::opt<bool> TypeServerMap("type-server", cl::desc("Dump type server map"),
 cl::opt<bool> ECData("ec", cl::desc("Dump edit and continue map"),
                      cl::sub(BytesSubcommand), cl::cat(DbiBytes));
 
-cl::list<uint32_t>
-    TypeIndex("type",
-              cl::desc("Dump the type record with the given type index"),
-              cl::ZeroOrMore, cl::CommaSeparated, cl::sub(BytesSubcommand),
-              cl::cat(TypeCategory));
+cl::list<uint32_t> TypeIndex(
+    "type", cl::desc("Dump the type record with the given type index"),
+    cl::CommaSeparated, cl::sub(BytesSubcommand), cl::cat(TypeCategory));
 cl::list<uint32_t>
     IdIndex("id", cl::desc("Dump the id record with the given type index"),
-            cl::ZeroOrMore, cl::CommaSeparated, cl::sub(BytesSubcommand),
+            cl::CommaSeparated, cl::sub(BytesSubcommand),
             cl::cat(TypeCategory));
 
 cl::opt<uint32_t> ModuleIndex(
@@ -503,7 +506,7 @@ cl::opt<bool> DontResolveForwardRefs(
     cl::cat(TypeOptions), cl::sub(DumpSubcommand));
 
 cl::list<uint32_t> DumpTypeIndex(
-    "type-index", cl::ZeroOrMore, cl::CommaSeparated,
+    "type-index", cl::CommaSeparated,
     cl::desc("only dump types with the specified hexadecimal type index"),
     cl::cat(TypeOptions), cl::sub(DumpSubcommand));
 
@@ -519,7 +522,7 @@ cl::opt<bool> DumpIdExtras("id-extras",
                            cl::desc("dump id hashes and index offsets"),
                            cl::cat(TypeOptions), cl::sub(DumpSubcommand));
 cl::list<uint32_t> DumpIdIndex(
-    "id-index", cl::ZeroOrMore, cl::CommaSeparated,
+    "id-index", cl::CommaSeparated,
     cl::desc("only dump ids with the specified hexadecimal type index"),
     cl::cat(TypeOptions), cl::sub(DumpSubcommand));
 
@@ -539,7 +542,7 @@ cl::list<std::string> DumpGlobalNames(
     "global-name",
     cl::desc(
         "With -globals, only dump globals whose name matches the given value"),
-    cl::cat(SymbolOptions), cl::sub(DumpSubcommand), cl::ZeroOrMore);
+    cl::cat(SymbolOptions), cl::sub(DumpSubcommand));
 cl::opt<bool> DumpPublics("publics", cl::desc("dump Publics stream data"),
                           cl::cat(SymbolOptions), cl::sub(DumpSubcommand));
 cl::opt<bool> DumpPublicExtras("public-extras",
@@ -558,6 +561,27 @@ cl::opt<bool>
                        cl::cat(SymbolOptions), cl::sub(DumpSubcommand));
 
 cl::opt<bool> DumpFpo("fpo", cl::desc("dump FPO records"),
+                      cl::cat(SymbolOptions), cl::sub(DumpSubcommand));
+
+cl::opt<uint32_t> DumpSymbolOffset(
+    "symbol-offset", cl::Optional,
+    cl::desc("only dump symbol record with the specified symbol offset"),
+    cl::cat(SymbolOptions), cl::sub(DumpSubcommand));
+cl::opt<bool> DumpParents("show-parents",
+                          cl::desc("dump the symbols record's all parents."),
+                          cl::cat(SymbolOptions), cl::sub(DumpSubcommand));
+cl::opt<uint32_t>
+    DumpParentDepth("parent-recurse-depth", cl::Optional, cl::init(-1U),
+                    cl::desc("only recurse to a depth of N when displaying "
+                             "parents of a symbol record."),
+                    cl::cat(SymbolOptions), cl::sub(DumpSubcommand));
+cl::opt<bool> DumpChildren("show-children",
+                           cl::desc("dump the symbols record's all children."),
+                           cl::cat(SymbolOptions), cl::sub(DumpSubcommand));
+cl::opt<uint32_t>
+    DumpChildrenDepth("children-recurse-depth", cl::Optional, cl::init(-1U),
+                      cl::desc("only recurse to a depth of N when displaying "
+                               "children of a symbol record."),
                       cl::cat(SymbolOptions), cl::sub(DumpSubcommand));
 
 // MODULE & FILE OPTIONS
@@ -683,7 +707,7 @@ cl::opt<bool> DumpModuleFiles("module-files", cl::desc("dump file information"),
                               cl::cat(FileOptions),
                               cl::sub(PdbToYamlSubcommand));
 cl::list<ModuleSubsection> DumpModuleSubsections(
-    "subsections", cl::ZeroOrMore, cl::CommaSeparated,
+    "subsections", cl::CommaSeparated,
     cl::desc("dump subsections from each module's debug stream"), ChunkValues,
     cl::cat(FileOptions), cl::sub(PdbToYamlSubcommand));
 cl::opt<bool> DumpModuleSyms("module-syms", cl::desc("dump module symbols"),
@@ -1071,7 +1095,7 @@ static void dumpPretty(StringRef Path) {
   const bool UseColor = opts::pretty::ColorOutput == cl::BOU_UNSET
                             ? Stream.has_colors()
                             : opts::pretty::ColorOutput == cl::BOU_TRUE;
-  LinePrinter Printer(2, UseColor, Stream);
+  LinePrinter Printer(2, UseColor, Stream, opts::Filters);
 
   auto GlobalScope(Session->getGlobalScope());
   if (!GlobalScope)
@@ -1509,6 +1533,44 @@ int main(int Argc, const char **Argv) {
 
   llvm::sys::InitializeCOMRAII COM(llvm::sys::COMThreadingMode::MultiThreaded);
 
+  // Initialize the filters for LinePrinter.
+  auto propagate = [&](auto &Target, auto &Reference) {
+    for (std::string &Option : Reference)
+      Target.push_back(Option);
+  };
+
+  propagate(opts::Filters.ExcludeTypes, opts::pretty::ExcludeTypes);
+  propagate(opts::Filters.ExcludeTypes, opts::pretty::ExcludeTypes);
+  propagate(opts::Filters.ExcludeSymbols, opts::pretty::ExcludeSymbols);
+  propagate(opts::Filters.ExcludeCompilands, opts::pretty::ExcludeCompilands);
+  propagate(opts::Filters.IncludeTypes, opts::pretty::IncludeTypes);
+  propagate(opts::Filters.IncludeSymbols, opts::pretty::IncludeSymbols);
+  propagate(opts::Filters.IncludeCompilands, opts::pretty::IncludeCompilands);
+  opts::Filters.PaddingThreshold = opts::pretty::PaddingThreshold;
+  opts::Filters.SizeThreshold = opts::pretty::SizeThreshold;
+  opts::Filters.JustMyCode = opts::dump::JustMyCode;
+  if (opts::dump::DumpModi.getNumOccurrences() > 0) {
+    if (opts::dump::DumpModi.getNumOccurrences() != 1) {
+      errs() << "argument '-modi' specified more than once.\n";
+      errs().flush();
+      exit(1);
+    }
+    opts::Filters.DumpModi = opts::dump::DumpModi;
+  }
+  if (opts::dump::DumpSymbolOffset) {
+    if (opts::dump::DumpModi.getNumOccurrences() != 1) {
+      errs()
+          << "need to specify argument '-modi' when using '-symbol-offset'.\n";
+      errs().flush();
+      exit(1);
+    }
+    opts::Filters.SymbolOffset = opts::dump::DumpSymbolOffset;
+    if (opts::dump::DumpParents)
+      opts::Filters.ParentRecurseDepth = opts::dump::DumpParentDepth;
+    if (opts::dump::DumpChildren)
+      opts::Filters.ChildrenRecurseDepth = opts::dump::DumpChildrenDepth;
+  }
+
   if (opts::PdbToYamlSubcommand) {
     pdb2Yaml(opts::pdb2yaml::InputFilename.front());
   } else if (opts::YamlToPdbSubcommand) {
@@ -1547,14 +1609,14 @@ int main(int Argc, const char **Argv) {
     // it needs to be escaped again in the C++.  So matching a single \ in the
     // input requires 4 \es in the C++.
     if (opts::pretty::ExcludeCompilerGenerated) {
-      opts::pretty::ExcludeTypes.push_back("__vc_attributes");
-      opts::pretty::ExcludeCompilands.push_back("\\* Linker \\*");
+      opts::Filters.ExcludeTypes.push_back("__vc_attributes");
+      opts::Filters.ExcludeCompilands.push_back("\\* Linker \\*");
     }
     if (opts::pretty::ExcludeSystemLibraries) {
-      opts::pretty::ExcludeCompilands.push_back(
+      opts::Filters.ExcludeCompilands.push_back(
           "f:\\\\binaries\\\\Intermediate\\\\vctools\\\\crt_bld");
-      opts::pretty::ExcludeCompilands.push_back("f:\\\\dd\\\\vctools\\\\crt");
-      opts::pretty::ExcludeCompilands.push_back(
+      opts::Filters.ExcludeCompilands.push_back("f:\\\\dd\\\\vctools\\\\crt");
+      opts::Filters.ExcludeCompilands.push_back(
           "d:\\\\th.obj.x86fre\\\\minkernel");
     }
     llvm::for_each(opts::pretty::InputFilenames, dumpPretty);

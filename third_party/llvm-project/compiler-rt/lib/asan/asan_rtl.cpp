@@ -51,10 +51,9 @@ static void AsanDie() {
   }
   if (common_flags()->print_module_map >= 1)
     DumpProcessMap();
-  if (flags()->sleep_before_dying) {
-    Report("Sleeping for %d second(s)\n", flags()->sleep_before_dying);
-    SleepForSeconds(flags()->sleep_before_dying);
-  }
+
+  WaitForDebugger(flags()->sleep_before_dying, "before dying");
+
   if (flags()->unmap_shadow_on_exit) {
     if (kMidMemBeg) {
       UnmapOrDie((void*)kLowShadowBeg, kMidMemBeg - kLowShadowBeg);
@@ -187,7 +186,7 @@ ASAN_MEMORY_ACCESS_CALLBACK(store, true, 16)
 extern "C"
 NOINLINE INTERFACE_ATTRIBUTE
 void __asan_loadN(uptr addr, uptr size) {
-  if (__asan_region_is_poisoned(addr, size)) {
+  if ((addr = __asan_region_is_poisoned(addr, size))) {
     GET_CALLER_PC_BP_SP;
     ReportGenericError(pc, bp, sp, addr, false, size, 0, true);
   }
@@ -196,7 +195,7 @@ void __asan_loadN(uptr addr, uptr size) {
 extern "C"
 NOINLINE INTERFACE_ATTRIBUTE
 void __asan_exp_loadN(uptr addr, uptr size, u32 exp) {
-  if (__asan_region_is_poisoned(addr, size)) {
+  if ((addr = __asan_region_is_poisoned(addr, size))) {
     GET_CALLER_PC_BP_SP;
     ReportGenericError(pc, bp, sp, addr, false, size, exp, true);
   }
@@ -205,7 +204,7 @@ void __asan_exp_loadN(uptr addr, uptr size, u32 exp) {
 extern "C"
 NOINLINE INTERFACE_ATTRIBUTE
 void __asan_loadN_noabort(uptr addr, uptr size) {
-  if (__asan_region_is_poisoned(addr, size)) {
+  if ((addr = __asan_region_is_poisoned(addr, size))) {
     GET_CALLER_PC_BP_SP;
     ReportGenericError(pc, bp, sp, addr, false, size, 0, false);
   }
@@ -214,7 +213,7 @@ void __asan_loadN_noabort(uptr addr, uptr size) {
 extern "C"
 NOINLINE INTERFACE_ATTRIBUTE
 void __asan_storeN(uptr addr, uptr size) {
-  if (__asan_region_is_poisoned(addr, size)) {
+  if ((addr = __asan_region_is_poisoned(addr, size))) {
     GET_CALLER_PC_BP_SP;
     ReportGenericError(pc, bp, sp, addr, true, size, 0, true);
   }
@@ -223,7 +222,7 @@ void __asan_storeN(uptr addr, uptr size) {
 extern "C"
 NOINLINE INTERFACE_ATTRIBUTE
 void __asan_exp_storeN(uptr addr, uptr size, u32 exp) {
-  if (__asan_region_is_poisoned(addr, size)) {
+  if ((addr = __asan_region_is_poisoned(addr, size))) {
     GET_CALLER_PC_BP_SP;
     ReportGenericError(pc, bp, sp, addr, true, size, exp, true);
   }
@@ -232,7 +231,7 @@ void __asan_exp_storeN(uptr addr, uptr size, u32 exp) {
 extern "C"
 NOINLINE INTERFACE_ATTRIBUTE
 void __asan_storeN_noabort(uptr addr, uptr size) {
-  if (__asan_region_is_poisoned(addr, size)) {
+  if ((addr = __asan_region_is_poisoned(addr, size))) {
     GET_CALLER_PC_BP_SP;
     ReportGenericError(pc, bp, sp, addr, true, size, 0, false);
   }
@@ -386,6 +385,8 @@ static void AsanInitInternal() {
   // initialization steps look at flags().
   InitializeFlags();
 
+  WaitForDebugger(flags()->sleep_before_init, "before init");
+
   // Stop performing init at this point if we are being loaded via
   // dlopen() and the platform supports it.
   if (SANITIZER_SUPPORTS_INIT_FOR_DLOPEN && UNLIKELY(HandleDlopenInit())) {
@@ -477,12 +478,7 @@ static void AsanInitInternal() {
 
   if (CAN_SANITIZE_LEAKS) {
     __lsan::InitCommonLsan();
-    if (common_flags()->detect_leaks && common_flags()->leak_check_at_exit) {
-      if (flags()->halt_on_error)
-        Atexit(__lsan::DoLeakCheck);
-      else
-        Atexit(__lsan::DoRecoverableLeakCheckVoid);
-    }
+    InstallAtExitCheckLeaks();
   }
 
 #if CAN_SANITIZE_UB
@@ -502,10 +498,7 @@ static void AsanInitInternal() {
 
   VReport(1, "AddressSanitizer Init done\n");
 
-  if (flags()->sleep_after_init) {
-    Report("Sleeping for %d second(s)\n", flags()->sleep_after_init);
-    SleepForSeconds(flags()->sleep_after_init);
-  }
+  WaitForDebugger(flags()->sleep_after_init, "after init");
 }
 
 // Initialize as requested from some part of ASan runtime library (interceptors,

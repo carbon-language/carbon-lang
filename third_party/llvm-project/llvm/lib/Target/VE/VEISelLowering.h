@@ -186,8 +186,13 @@ public:
 
   /// VVP Lowering {
   SDValue lowerToVVP(SDValue Op, SelectionDAG &DAG) const;
+  SDValue lowerVVP_LOAD_STORE(SDValue Op, VECustomDAG &) const;
+  SDValue lowerVVP_GATHER_SCATTER(SDValue Op, VECustomDAG &) const;
+
   SDValue legalizeInternalVectorOp(SDValue Op, SelectionDAG &DAG) const;
+  SDValue legalizeInternalLoadStoreOp(SDValue Op, VECustomDAG &CDAG) const;
   SDValue splitVectorOp(SDValue Op, VECustomDAG &CDAG) const;
+  SDValue splitPackedLoadStore(SDValue Op, VECustomDAG &CDAG) const;
   SDValue legalizePackedAVL(SDValue Op, VECustomDAG &CDAG) const;
   SDValue splitMaskArithmetic(SDValue Op, SelectionDAG &DAG) const;
   /// } VVPLowering

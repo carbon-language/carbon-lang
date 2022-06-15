@@ -37,19 +37,19 @@ Clang-Tidy Checks
    `altera-struct-pack-align <altera-struct-pack-align.html>`_, "Yes"
    `altera-unroll-loops <altera-unroll-loops.html>`_,
    `android-cloexec-accept <android-cloexec-accept.html>`_, "Yes"
-   `android-cloexec-accept4 <android-cloexec-accept4.html>`_,
+   `android-cloexec-accept4 <android-cloexec-accept4.html>`_, "Yes"
    `android-cloexec-creat <android-cloexec-creat.html>`_, "Yes"
    `android-cloexec-dup <android-cloexec-dup.html>`_, "Yes"
-   `android-cloexec-epoll-create <android-cloexec-epoll-create.html>`_,
-   `android-cloexec-epoll-create1 <android-cloexec-epoll-create1.html>`_,
-   `android-cloexec-fopen <android-cloexec-fopen.html>`_,
-   `android-cloexec-inotify-init <android-cloexec-inotify-init.html>`_,
-   `android-cloexec-inotify-init1 <android-cloexec-inotify-init1.html>`_,
-   `android-cloexec-memfd-create <android-cloexec-memfd-create.html>`_,
-   `android-cloexec-open <android-cloexec-open.html>`_,
+   `android-cloexec-epoll-create <android-cloexec-epoll-create.html>`_, "Yes"
+   `android-cloexec-epoll-create1 <android-cloexec-epoll-create1.html>`_, "Yes"
+   `android-cloexec-fopen <android-cloexec-fopen.html>`_, "Yes"
+   `android-cloexec-inotify-init <android-cloexec-inotify-init.html>`_, "Yes"
+   `android-cloexec-inotify-init1 <android-cloexec-inotify-init1.html>`_, "Yes"
+   `android-cloexec-memfd-create <android-cloexec-memfd-create.html>`_, "Yes"
+   `android-cloexec-open <android-cloexec-open.html>`_, "Yes"
    `android-cloexec-pipe <android-cloexec-pipe.html>`_, "Yes"
-   `android-cloexec-pipe2 <android-cloexec-pipe2.html>`_,
-   `android-cloexec-socket <android-cloexec-socket.html>`_,
+   `android-cloexec-pipe2 <android-cloexec-pipe2.html>`_, "Yes"
+   `android-cloexec-socket <android-cloexec-socket.html>`_, "Yes"
    `android-comparison-in-temp-failure-retry <android-comparison-in-temp-failure-retry.html>`_,
    `boost-use-to-string <boost-use-to-string.html>`_, "Yes"
    `bugprone-argument-comment <bugprone-argument-comment.html>`_, "Yes"
@@ -105,6 +105,7 @@ Clang-Tidy Checks
    `bugprone-terminating-continue <bugprone-terminating-continue.html>`_, "Yes"
    `bugprone-throw-keyword-missing <bugprone-throw-keyword-missing.html>`_,
    `bugprone-too-small-loop-variable <bugprone-too-small-loop-variable.html>`_,
+   `bugprone-unchecked-optional-access <bugprone-unchecked-optional-access.html>`_,
    `bugprone-undefined-memory-manipulation <bugprone-undefined-memory-manipulation.html>`_,
    `bugprone-undelegated-constructor <bugprone-undelegated-constructor.html>`_,
    `bugprone-unhandled-exception-at-new <bugprone-unhandled-exception-at-new.html>`_,
@@ -113,7 +114,7 @@ Clang-Tidy Checks
    `bugprone-unused-return-value <bugprone-unused-return-value.html>`_,
    `bugprone-use-after-move <bugprone-use-after-move.html>`_,
    `bugprone-virtual-near-miss <bugprone-virtual-near-miss.html>`_, "Yes"
-   `cert-dcl21-cpp <cert-dcl21-cpp.html>`_,
+   `cert-dcl21-cpp <cert-dcl21-cpp.html>`_, "Yes"
    `cert-dcl50-cpp <cert-dcl50-cpp.html>`_,
    `cert-dcl58-cpp <cert-dcl58-cpp.html>`_,
    `cert-env33-c <cert-env33-c.html>`_,
@@ -234,6 +235,7 @@ Clang-Tidy Checks
    `modernize-deprecated-headers <modernize-deprecated-headers.html>`_, "Yes"
    `modernize-deprecated-ios-base-aliases <modernize-deprecated-ios-base-aliases.html>`_, "Yes"
    `modernize-loop-convert <modernize-loop-convert.html>`_, "Yes"
+   `modernize-macro-to-enum <modernize-macro-to-enum.html>`_, "Yes"
    `modernize-make-shared <modernize-make-shared.html>`_, "Yes"
    `modernize-make-unique <modernize-make-unique.html>`_, "Yes"
    `modernize-pass-by-value <modernize-pass-by-value.html>`_, "Yes"
@@ -288,6 +290,7 @@ Clang-Tidy Checks
    `performance-unnecessary-value-param <performance-unnecessary-value-param.html>`_, "Yes"
    `portability-restrict-system-includes <portability-restrict-system-includes.html>`_, "Yes"
    `portability-simd-intrinsics <portability-simd-intrinsics.html>`_,
+   `portability-std-allocator-const <portability-std-allocator-const.html>`_,
    `readability-avoid-const-params-in-decls <readability-avoid-const-params-in-decls.html>`_, "Yes"
    `readability-braces-around-statements <readability-braces-around-statements.html>`_, "Yes"
    `readability-const-return-type <readability-const-return-type.html>`_, "Yes"
@@ -336,6 +339,7 @@ Clang-Tidy Checks
 .. csv-table:: Aliases..
    :header: "Name", "Redirect", "Offers fixes"
 
+   `bugprone-narrowing-conversions <bugprone-narrowing-conversions.html>`_, `cppcoreguidelines-narrowing-conversions <cppcoreguidelines-narrowing-conversions.html>`_,
    `cert-con36-c <cert-con36-c.html>`_, `bugprone-spuriously-wake-up-functions <bugprone-spuriously-wake-up-functions.html>`_,
    `cert-con54-cpp <cert-con54-cpp.html>`_, `bugprone-spuriously-wake-up-functions <bugprone-spuriously-wake-up-functions.html>`_,
    `cert-dcl03-c <cert-dcl03-c.html>`_, `misc-static-assert <misc-static-assert.html>`_, "Yes"
@@ -425,6 +429,7 @@ Clang-Tidy Checks
    `cppcoreguidelines-avoid-magic-numbers <cppcoreguidelines-avoid-magic-numbers.html>`_, `readability-magic-numbers <readability-magic-numbers.html>`_,
    `cppcoreguidelines-c-copy-assignment-signature <cppcoreguidelines-c-copy-assignment-signature.html>`_, `misc-unconventional-assign-operator <misc-unconventional-assign-operator.html>`_,
    `cppcoreguidelines-explicit-virtual-functions <cppcoreguidelines-explicit-virtual-functions.html>`_, `modernize-use-override <modernize-use-override.html>`_, "Yes"
+   `cppcoreguidelines-macro-to-enum <cppcoreguidelines-macro-to-enum.html>`_, `modernize-macro-to-enum <modernize-macro-to-enum.html>`_, "Yes"
    `cppcoreguidelines-non-private-member-variables-in-classes <cppcoreguidelines-non-private-member-variables-in-classes.html>`_, `misc-non-private-member-variables-in-classes <misc-non-private-member-variables-in-classes.html>`_,
    `fuchsia-header-anon-namespaces <fuchsia-header-anon-namespaces.html>`_, `google-build-namespaces <google-build-namespaces.html>`_,
    `google-readability-braces-around-statements <google-readability-braces-around-statements.html>`_, `readability-braces-around-statements <readability-braces-around-statements.html>`_, "Yes"

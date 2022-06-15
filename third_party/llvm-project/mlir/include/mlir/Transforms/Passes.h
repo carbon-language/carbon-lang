@@ -60,7 +60,7 @@ std::unique_ptr<Pass> createStripDebugInfoPass();
 
 /// Creates a pass which prints the list of ops and the number of occurrences in
 /// the module.
-std::unique_ptr<Pass> createPrintOpStatsPass();
+std::unique_ptr<Pass> createPrintOpStatsPass(raw_ostream &os = llvm::errs());
 
 /// Creates a pass which inlines calls and callable operations as defined by
 /// the CallGraph.
@@ -91,6 +91,11 @@ std::unique_ptr<Pass> createSymbolDCEPass();
 /// listed in `excludeSymbols`.
 std::unique_ptr<Pass>
 createSymbolPrivatizePass(ArrayRef<std::string> excludeSymbols = {});
+
+/// Creates a pass that recursively sorts nested regions without SSA dominance
+/// topologically such that, as much as possible, users of values appear after
+/// their producers.
+std::unique_ptr<Pass> createTopologicalSortPass();
 
 //===----------------------------------------------------------------------===//
 // Registration

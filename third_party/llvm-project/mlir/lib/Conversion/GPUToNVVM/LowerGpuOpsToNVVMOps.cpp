@@ -15,14 +15,16 @@
 
 #include "mlir/Conversion/ArithmeticToLLVM/ArithmeticToLLVM.h"
 #include "mlir/Conversion/ControlFlowToLLVM/ControlFlowToLLVM.h"
+#include "mlir/Conversion/FuncToLLVM/ConvertFuncToLLVM.h"
 #include "mlir/Conversion/LLVMCommon/ConversionTarget.h"
 #include "mlir/Conversion/LLVMCommon/LoweringOptions.h"
 #include "mlir/Conversion/LLVMCommon/TypeConverter.h"
 #include "mlir/Conversion/MemRefToLLVM/MemRefToLLVM.h"
-#include "mlir/Conversion/StandardToLLVM/ConvertStandardToLLVM.h"
 #include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
-#include "mlir/Dialect/GPU/GPUDialect.h"
-#include "mlir/Dialect/GPU/Passes.h"
+#include "mlir/Dialect/ControlFlow/IR/ControlFlow.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
+#include "mlir/Dialect/GPU/IR/GPUDialect.h"
+#include "mlir/Dialect/GPU/Transforms/Passes.h"
 #include "mlir/Dialect/LLVMIR/NVVMDialect.h"
 #include "mlir/Dialect/Math/IR/Math.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
@@ -39,14 +41,6 @@
 using namespace mlir;
 
 namespace {
-
-/// NVVM memory space identifiers.
-enum NVVMMemorySpace {
-  /// Global memory space identifier.
-  kGlobalMemorySpace = 1,
-  /// Shared memory space identifier.
-  kSharedMemorySpace = 3
-};
 
 /// Convert gpu dialect shfl mode enum to the equivalent nvvm one.
 static NVVM::ShflKind convertShflKind(gpu::ShuffleMode mode) {
@@ -130,78 +124,26 @@ struct GPUShuffleOpLowering : public ConvertOpToLLVMPattern<gpu::ShuffleOp> {
   }
 };
 
-struct GPUAsyncCopyLowering
-    : public ConvertOpToLLVMPattern<gpu::DeviceAsyncCopyOp> {
-  using ConvertOpToLLVMPattern<gpu::DeviceAsyncCopyOp>::ConvertOpToLLVMPattern;
+struct GPULaneIdOpToNVVM : ConvertOpToLLVMPattern<gpu::LaneIdOp> {
+  using ConvertOpToLLVMPattern<gpu::LaneIdOp>::ConvertOpToLLVMPattern;
 
   LogicalResult
-  matchAndRewrite(gpu::DeviceAsyncCopyOp op, OpAdaptor adaptor,
+  matchAndRewrite(gpu::LaneIdOp op, gpu::LaneIdOp::Adaptor adaptor,
                   ConversionPatternRewriter &rewriter) const override {
-    Location loc = op->getLoc();
-    auto dstMemrefType = op.dst().getType().cast<MemRefType>();
-    Value dstPtr = getStridedElementPtr(loc, dstMemrefType, adaptor.dst(),
-                                        adaptor.dstIndices(), rewriter);
-    auto i8Ty = IntegerType::get(op.getContext(), 8);
-    auto dstPointerType =
-        LLVM::LLVMPointerType::get(i8Ty, dstMemrefType.getMemorySpaceAsInt());
-    dstPtr = rewriter.create<LLVM::BitcastOp>(loc, dstPointerType, dstPtr);
-
-    auto srcMemrefType = op.src().getType().cast<MemRefType>();
-
-    Value scrPtr = getStridedElementPtr(loc, srcMemrefType, adaptor.src(),
-                                        adaptor.srcIndices(), rewriter);
-    auto srcPointerType =
-        LLVM::LLVMPointerType::get(i8Ty, srcMemrefType.getMemorySpaceAsInt());
-    scrPtr = rewriter.create<LLVM::BitcastOp>(loc, srcPointerType, scrPtr);
-    // Intrinsics takes a global pointer so we need an address space cast.
-    auto srcPointerGlobalType =
-        LLVM::LLVMPointerType::get(i8Ty, NVVMMemorySpace::kGlobalMemorySpace);
-    scrPtr = rewriter.create<LLVM::AddrSpaceCastOp>(loc, srcPointerGlobalType,
-                                                    scrPtr);
-    int64_t numElements = adaptor.numElements().getZExtValue();
-    int64_t sizeInBytes =
-        (dstMemrefType.getElementTypeBitWidth() / 8) * numElements;
-    rewriter.create<NVVM::CpAsyncOp>(loc, dstPtr, scrPtr,
-                                     rewriter.getI32IntegerAttr(sizeInBytes));
-
-    // Drop the result token.
-    Value zero = rewriter.create<LLVM::ConstantOp>(
-        op->getLoc(), IntegerType::get(op.getContext(), 32),
-        rewriter.getI32IntegerAttr(0));
-    rewriter.replaceOp(op, zero);
-    return success();
-  }
-};
-
-struct GPUAsyncCreateGroupLowering
-    : public ConvertOpToLLVMPattern<gpu::DeviceAsyncCreateGroupOp> {
-  using ConvertOpToLLVMPattern<
-      gpu::DeviceAsyncCreateGroupOp>::ConvertOpToLLVMPattern;
-
-  LogicalResult
-  matchAndRewrite(gpu::DeviceAsyncCreateGroupOp op, OpAdaptor adaptor,
-                  ConversionPatternRewriter &rewriter) const override {
-    rewriter.create<NVVM::CpAsyncCommitGroupOp>(op.getLoc());
-    // Drop the result token.
-    Value zero = rewriter.create<LLVM::ConstantOp>(
-        op->getLoc(), IntegerType::get(op.getContext(), 32),
-        rewriter.getI32IntegerAttr(0));
-    rewriter.replaceOp(op, zero);
-    return success();
-  }
-};
-
-struct GPUAsyncWaitLowering
-    : public ConvertOpToLLVMPattern<gpu::DeviceAsyncWaitOp> {
-  using ConvertOpToLLVMPattern<gpu::DeviceAsyncWaitOp>::ConvertOpToLLVMPattern;
-
-  LogicalResult
-  matchAndRewrite(gpu::DeviceAsyncWaitOp op, OpAdaptor adaptor,
-                  ConversionPatternRewriter &rewriter) const override {
-    // If numGroup is not present pick 0 as a conservative correct value.
-    int32_t numGroups = adaptor.numGroups() ? *adaptor.numGroups() : 0;
-    rewriter.create<NVVM::CpAsyncWaitGroupOp>(op.getLoc(), numGroups);
-    rewriter.eraseOp(op);
+    auto loc = op->getLoc();
+    MLIRContext *context = rewriter.getContext();
+    Value newOp = rewriter.create<NVVM::LaneIdOp>(loc, rewriter.getI32Type());
+    // Truncate or extend the result depending on the index bitwidth specified
+    // by the LLVMTypeConverter options.
+    const unsigned indexBitwidth = getTypeConverter()->getIndexTypeBitwidth();
+    if (indexBitwidth > 32) {
+      newOp = rewriter.create<LLVM::SExtOp>(
+          loc, IntegerType::get(context, indexBitwidth), newOp);
+    } else if (indexBitwidth < 32) {
+      newOp = rewriter.create<LLVM::TruncOp>(
+          loc, IntegerType::get(context, indexBitwidth), newOp);
+    }
+    rewriter.replaceOp(op, {newOp});
     return success();
   }
 };
@@ -243,11 +185,6 @@ struct LowerGpuOpsToNVVMOpsPass
         return llvm::None;
       return converter.convertType(MemRefType::Builder(type).setMemorySpace(0));
     });
-    /// device-side async tokens cannot be materialized in nvvm. We just convert
-    /// them to a dummy i32 type in order to easily drop them during conversion.
-    converter.addConversion([&](gpu::DeviceAsyncTokenType type) -> Type {
-      return converter.convertType(IntegerType::get(type.getContext(), 32));
-    });
     // Lowering for MMAMatrixType.
     converter.addConversion([&](gpu::MMAMatrixType type) -> Type {
       return convertMMAToLLVMType(type);
@@ -263,7 +200,7 @@ struct LowerGpuOpsToNVVMOpsPass
 
     arith::populateArithmeticToLLVMConversionPatterns(converter, llvmPatterns);
     cf::populateControlFlowToLLVMConversionPatterns(converter, llvmPatterns);
-    populateStdToLLVMConversionPatterns(converter, llvmPatterns);
+    populateFuncToLLVMConversionPatterns(converter, llvmPatterns);
     populateMemRefToLLVMConversionPatterns(converter, llvmPatterns);
     populateGpuToNVVMConversionPatterns(converter, llvmPatterns);
     populateGpuWMMAToNVVMConversionPatterns(converter, llvmPatterns);
@@ -277,7 +214,7 @@ struct LowerGpuOpsToNVVMOpsPass
 } // namespace
 
 void mlir::configureGpuToNVVMConversionLegality(ConversionTarget &target) {
-  target.addIllegalOp<FuncOp>();
+  target.addIllegalOp<func::FuncOp>();
   target.addLegalDialect<::mlir::LLVM::LLVMDialect>();
   target.addLegalDialect<::mlir::NVVM::NVVMDialect>();
   target.addIllegalDialect<gpu::GPUDialect>();
@@ -301,7 +238,8 @@ void mlir::populateGpuToNVVMConversionPatterns(LLVMTypeConverter &converter,
                                        NVVM::BlockIdYOp, NVVM::BlockIdZOp>,
            GPUIndexIntrinsicOpLowering<gpu::GridDimOp, NVVM::GridDimXOp,
                                        NVVM::GridDimYOp, NVVM::GridDimZOp>,
-           GPUShuffleOpLowering, GPUReturnOpLowering>(converter);
+           GPULaneIdOpToNVVM, GPUShuffleOpLowering, GPUReturnOpLowering>(
+          converter);
 
   // Explicitly drop memory space when lowering private memory
   // attributions since NVVM models it as `alloca`s in the default
@@ -347,8 +285,6 @@ void mlir::populateGpuToNVVMConversionPatterns(LLVMTypeConverter &converter,
                                                    "__nv_sqrt");
   patterns.add<OpToFuncCallLowering<math::TanhOp>>(converter, "__nv_tanhf",
                                                    "__nv_tanh");
-  patterns.add<GPUAsyncCopyLowering, GPUAsyncCreateGroupLowering,
-               GPUAsyncWaitLowering>(converter);
 }
 
 std::unique_ptr<OperationPass<gpu::GPUModuleOp>>

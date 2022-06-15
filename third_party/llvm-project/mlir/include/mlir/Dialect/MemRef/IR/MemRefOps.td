@@ -9,11 +9,10 @@
 #ifndef MEMREF_OPS
 #define MEMREF_OPS
 
-include "mlir/Interfaces/ControlFlowInterfaces.td"
-include "mlir/Dialect/MemRef/IR/MemRefBase.td"
 include "mlir/Dialect/Arithmetic/IR/ArithmeticBase.td"
-include "mlir/IR/OpBase.td"
+include "mlir/Dialect/MemRef/IR/MemRefBase.td"
 include "mlir/Interfaces/CastInterfaces.td"
+include "mlir/Interfaces/ControlFlowInterfaces.td"
 include "mlir/Interfaces/CopyOpInterface.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 include "mlir/Interfaces/ViewLikeInterface.td"
@@ -273,7 +272,7 @@ def MemRef_AllocaScopeOp : MemRef_Op<"alloca_scope",
   let results = (outs Variadic<AnyType>:$results);
   let regions = (region SizedRegion<1>:$bodyRegion);
   let hasCustomAssemblyFormat = 1;
-  let hasVerifier = 1;
+  let hasCanonicalizer = 1;
 }
 
 //===----------------------------------------------------------------------===//
@@ -825,7 +824,7 @@ def MemRef_GlobalOp : MemRef_Op<"global", [Symbol]> {
     The `memref.global` operation declares or defines a named global memref
     variable. The backing memory for the variable is allocated statically and is
     described by the type of the variable (which should be a statically shaped
-    memref type). The operation is a declaration if no `inital_value` is
+    memref type). The operation is a declaration if no `initial_value` is
     specified, else it is a definition. The `initial_value` can either be a unit
     attribute to represent a definition of an uninitialized global variable, or
     an elements attribute to represent the definition of a global variable with
@@ -878,6 +877,9 @@ def MemRef_GlobalOp : MemRef_Op<"global", [Symbol]> {
      bool isUninitialized() {
        return !isExternal() && initial_value().getValue().isa<UnitAttr>();
      }
+     /// Returns the constant initial value if the memref.global is a constant,
+     /// or null otherwise.
+     ElementsAttr getConstantInitValue();
   }];
   let hasVerifier = 1;
 }
@@ -902,7 +904,7 @@ def LoadOp : MemRef_Op<"load",
     In an `affine.if` or `affine.for` body, the indices of a load are restricted
     to SSA values bound to surrounding loop induction variables,
     [symbols](Affine.md/#dimensions-and-symbols), results of a
-    [`constant` operation](Standard.md/#stdconstant-constantop), or the result of an
+    constant operations, or the result of an
     `affine.apply` operation that can in turn take as arguments all of the
     aforementioned SSA values or the recursively result of such an
     `affine.apply` operation.
@@ -1090,6 +1092,8 @@ def MemRef_ReinterpretCastOp
     /// and `strides` operands.
     static unsigned getOffsetSizeAndStrideStartOperandIndex() { return 1; }
   }];
+
+  let hasFolder = 1;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1188,6 +1192,154 @@ class MemRef_ReassociativeReshapeOp<string mnemonic, list<Trait> traits = []> :
       [NoSideEffect, ViewLikeOpInterface])>,
     Arguments<(ins AnyStridedMemRef:$src, IndexListArrayAttr:$reassociation)>,
     Results<(outs AnyStridedMemRef:$result)>{
+  
+  code commonExtraClassDeclaration = [{
+    SmallVector<AffineMap, 4> getReassociationMaps();
+
+    SmallVector<ReassociationExprs, 4> getReassociationExprs();
+
+    SmallVector<ReassociationIndices, 4> getReassociationIndices() {
+      SmallVector<ReassociationIndices, 4> reassociationIndices;
+      for (auto attr : reassociation())
+        reassociationIndices.push_back(llvm::to_vector<2>(
+            llvm::map_range(attr.cast<ArrayAttr>(), [&](Attribute indexAttr) {
+              return indexAttr.cast<IntegerAttr>().getInt();
+            })));
+      return reassociationIndices;
+    };
+
+    MemRefType getSrcType() { return src().getType().cast<MemRefType>(); }
+
+    MemRefType getResultType() { return result().getType().cast<MemRefType>(); }
+
+    Value getViewSource() { return src(); }
+  }];
+
+  let assemblyFormat = [{
+    $src $reassociation attr-dict `:` type($src) `into` type($result)
+  }];
+
+  let hasFolder = 1;
+  let hasCanonicalizer = 1;
+  let hasVerifier = 1;
+}
+
+def MemRef_ExpandShapeOp : MemRef_ReassociativeReshapeOp<"expand_shape"> {
+  let summary = "operation to produce a memref with a higher rank.";
+  let description = [{
+    The `memref.expand_shape` op produces a new view with a higher rank whose
+    sizes are a reassociation of the original `view`. The operation is limited
+    to such reassociations, where a dimension is expanded into one or multiple
+    contiguous dimensions. Such reassociations never require additional allocs
+    or copies.
+
+    A reassociation is defined as a grouping of dimensions and is represented
+    with an array of I64ArrayAttr attributes.
+
+    Example:
+
+    ```mlir
+    %r = memref.expand_shape %0 [[0, 1], [2]]
+        : memref<?x?xf32> into memref<?x5x?xf32>
+    ```
+
+    At most one dimension of a reassociation group (e.g., [0, 1] above) may be
+    dynamic in the result type. Otherwise, the op would be ambiguous, as it
+    would not be clear how the source dimension is extended.
+
+    If an op can be statically proven to be invalid (e.g, an expansion from
+    `memref<10xf32>` to `memref<2x6xf32>`), it is rejected by the verifier. If
+    it cannot statically be proven invalid (e.g., the full example above; it is
+    unclear whether the first source dimension is divisible by 5), the op is
+    accepted by the verifier. However, if the op is in fact invalid at runtime,
+    the behavior is undefined.
+
+    The source memref can be zero-ranked. In that case, the reassociation
+    indices must be empty and the result shape may only consist of unit
+    dimensions.
+
+    For simplicity, this op may not be used to cast dynamicity of dimension
+    sizes and/or strides. I.e., if and only if a source dimension is dynamic,
+    there must be a dynamic result dimension in the corresponding reassociation
+    group. Same for strides.
+
+    Note: This op currently assumes that the inner strides are of the
+    source/result layout map are the faster-varying ones.
+  }];
+
+  let builders = [
+    // Builders using ReassociationIndices.
+    OpBuilder<(ins "Type":$resultType, "Value":$src,
+      "ArrayRef<ReassociationIndices>":$reassociation,
+      CArg<"ArrayRef<NamedAttribute>", "{}">:$attrs),
+    [{
+      build($_builder, $_state, resultType, src, attrs);
+      $_state.addAttribute("reassociation",
+                          getReassociationIndicesAttribute($_builder, reassociation));
+    }]>,
+
+    // Builder using ReassociationExprs.
+    OpBuilder<(ins "Type":$resultType, "Value":$src,
+      "ArrayRef<ReassociationExprs>":$reassociation,
+      CArg<"ArrayRef<NamedAttribute>", "{}">:$attrs),
+    [{
+      auto reassociationMaps =
+          convertReassociationMapsToIndices($_builder, reassociation);
+      build($_builder, $_state, resultType, src, reassociationMaps, attrs);
+    }]>,
+
+    // Builder that infers the result layout map. The result shape must be
+    // specified. Otherwise, the op may be ambiguous.
+    OpBuilder<(ins "ArrayRef<int64_t>":$resultShape, "Value":$src,
+               "ArrayRef<ReassociationIndices>":$reassociation)>
+  ];
+  let extraClassDeclaration = commonExtraClassDeclaration;
+  let hasVerifier = 1;
+}
+
+def MemRef_CollapseShapeOp : MemRef_ReassociativeReshapeOp<"collapse_shape"> {
+  let summary = "operation to produce a memref with a smaller rank.";
+  let description = [{
+    The `memref.collapse_shape` op produces a new view with a smaller rank
+    whose sizes are a reassociation of the original `view`. The operation is
+    limited to such reassociations, where subsequent, contiguous dimensions are
+    collapsed into a single dimension. Such reassociations never require
+    additional allocs or copies.
+
+    Collapsing non-contiguous dimensions is undefined behavior. When a group of
+    dimensions can be statically proven to be non-contiguous, collapses of such
+    groups are rejected in the verifier on a best-effort basis. In the general
+    case, collapses of dynamically-sized dims with dynamic strides cannot be
+    proven to be contiguous or non-contiguous due to limitations in the memref
+    type.
+
+    A reassociation is defined as a continuous grouping of dimensions and is
+    represented with an array of I64ArrayAttr attribute.
+
+    Note: Only the dimensions within a reassociation group must be contiguous.
+    The remaining dimensions may be non-contiguous.
+
+    The result memref type can be zero-ranked if the source memref type is
+    statically shaped with all dimensions being unit extent. In such a case, the
+    reassociation indices must be empty.
+
+    Examples:
+
+    ```mlir
+    // Dimension collapse (i, j) -> i' and k -> k'
+    %1 = memref.collapse_shape %0 [[0, 1], [2]] :
+        memref<?x?x?xf32, stride_spec> into memref<?x?xf32, stride_spec_2>
+    ```
+
+    For simplicity, this op may not be used to cast dynamicity of dimension
+    sizes and/or strides. I.e., a result dimension must be dynamic if and only
+    if at least one dimension in the corresponding reassociation group is
+    dynamic. Similarly, the stride of a result dimension must be dynamic if and
+    only if the corresponding start dimension in the source type is dynamic.
+
+    Note: This op currently assumes that the inner strides are of the
+    source/result layout map are the faster-varying ones.
+  }];
   let builders = [
     // Builders for a contracting reshape whose result type is computed from
     // `src` and `reassociation`.
@@ -1203,8 +1355,7 @@ class MemRef_ReassociativeReshapeOp<string mnemonic, list<Trait> traits = []> :
       build($_builder, $_state, src, reassociationMaps, attrs);
     }]>,
 
-    // Builders for a reshape whose result type is passed explicitly. This may
-    // be either a contracting or expanding reshape.
+    // Builders for a reshape whose result type is passed explicitly.
     OpBuilder<(ins "Type":$resultType, "Value":$src,
       "ArrayRef<ReassociationIndices>":$reassociation,
       CArg<"ArrayRef<NamedAttribute>", "{}">:$attrs),
@@ -1222,106 +1373,14 @@ class MemRef_ReassociativeReshapeOp<string mnemonic, list<Trait> traits = []> :
       build($_builder, $_state, resultType, src, reassociationMaps, attrs);
     }]>
   ];
-
-  code commonExtraClassDeclaration = [{
-    SmallVector<AffineMap, 4> getReassociationMaps();
-    SmallVector<ReassociationExprs, 4> getReassociationExprs();
-    SmallVector<ReassociationIndices, 4> getReassociationIndices() {
-      SmallVector<ReassociationIndices, 4> reassociationIndices;
-      for (auto attr : reassociation())
-        reassociationIndices.push_back(llvm::to_vector<2>(
-            llvm::map_range(attr.cast<ArrayAttr>(), [&](Attribute indexAttr) {
-              return indexAttr.cast<IntegerAttr>().getInt();
-            })));
-      return reassociationIndices;
-    };
-    MemRefType getSrcType() { return src().getType().cast<MemRefType>(); }
-    MemRefType getResultType() { return result().getType().cast<MemRefType>(); }
-    Value getViewSource() { return src(); }
+  let extraClassDeclaration = commonExtraClassDeclaration # [{
+    /// Return `true` if this source MemRef type is guaranteed to be collapsible
+    /// according to the given reassociation indices. In the presence of dynamic
+    /// strides this is usually not the case.
+    static bool isGuaranteedCollapsible(
+        MemRefType srcType, ArrayRef<ReassociationIndices> reassociation);
   }];
 
-  let assemblyFormat = [{
-    $src $reassociation attr-dict `:` type($src) `into` type($result)
-  }];
-
-  let hasFolder = 1;
-  let hasCanonicalizer = 1;
-  let hasVerifier = 1;
-}
-
-def MemRef_ExpandShapeOp : MemRef_ReassociativeReshapeOp<"expand_shape"> {
-  let summary = "operation to produce a memref with a higher rank.";
-  let description = [{
-    The `memref.expand_shape` op produces a new view with a higher rank whose
-    sizes are a reassociation of the original `view`. Depending on whether or
-    not the reassociated MemRefType is contiguous, the resulting memref may
-    require explicit alloc and copies.
-
-    A reassociation is defined as a continuous grouping of dimensions and is
-    represented with an array of I64ArrayAttr attribute.
-
-    For now, it is assumed that either:
-      1. a reassociation produces and consumes contiguous MemRefType or,
-      2. the reshape op will be folded into its consumers (by changing the shape
-         of the computations).
-    All other cases are undefined behavior and a reshape op may not lower to
-    LLVM if it cannot be proven statically that it does not require alloc+copy.
-
-    The operand memref type when dimensions can be zero-ranked if the result
-    memref type is statically shaped with all dimensions being unit extent. In
-    such case the reassociation map is empty.
-
-    The verification rule is that the reassociation maps are applied to the
-    result memref with the larger rank to obtain the operand memref with the
-    smaller rank.
-
-    Example:
-
-    ```mlir
-    // Dimension expansion i -> (i', j') and (k) -> (k')
-    %1 = memref.expand_shape %0 [[0, 1], [2]] :
-      memref<?x?xf32, stride_spec> into memref<?x?x?xf32, stride_spec_2>
-    ```
-  }];
-  let extraClassDeclaration = commonExtraClassDeclaration;
-  let hasVerifier = 1;
-}
-
-def MemRef_CollapseShapeOp : MemRef_ReassociativeReshapeOp<"collapse_shape"> {
-  let summary = "operation to produce a memref with a smaller rank.";
-  let description = [{
-    The `memref.collapse_shape` op produces a new view with a smaller rank
-    whose sizes are a reassociation of the original `view`. Depending on
-    whether or not the reassociated MemRefType is contiguous, the resulting
-    memref may require explicit alloc and copies.
-
-    A reassociation is defined as a continuous grouping of dimensions and is
-    represented with an array of I64ArrayAttr attribute.
-
-    For now, it is assumed that either:
-      1. a reassociation produces and consumes contiguous MemRefType or,
-      2. the reshape op will be folded into its consumers (by changing the shape
-         of the computations).
-    All other cases are undefined behavior and a reshape op may not lower to
-    LLVM if it cannot be proven statically that it does not require alloc+copy.
-
-    The result memref type of a reshape can be zero-ranked if the operand
-    memref type is statically shaped with all dimensions being unit extent. In
-    such case the reassociation map is empty.
-
-    The verification rule is that the reassociation maps are applied to the
-    operand memref with the larger rank to obtain the result memref with the
-    smaller rank.
-
-    Examples:
-
-    ```mlir
-    // Dimension collapse (i, j) -> i' and k -> k'
-    %1 = memref.collapse_shape %0 [[0, 1], [2]] :
-      memref<?x?x?xf32, stride_spec> into memref<?x?xf32, stride_spec_2>
-    ```
-  }];
-  let extraClassDeclaration = commonExtraClassDeclaration;
   let hasVerifier = 1;
 }
 
@@ -1343,7 +1402,7 @@ def MemRef_StoreOp : MemRef_Op<"store",
     In an affine context, the indices of a store are restricted to SSA values
     bound to surrounding loop induction variables,
     [symbols](Affine.md/#restrictions-on-dimensions-and-symbols), results of a
-    [`constant` operation](Standard.md/#stdconstant-constantop), or the result of an
+    `constant` operation, or the result of an
     [`affine.apply`](Affine.md/#affineapply-affineapplyop) operation that can in
     turn take as arguments all of the aforementioned SSA values or the
     recursively result of such an `affine.apply` operation.

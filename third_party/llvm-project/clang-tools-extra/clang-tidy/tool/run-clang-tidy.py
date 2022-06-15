@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 #===- run-clang-tidy.py - Parallel clang-tidy runner --------*- python -*--===#
 #
@@ -41,6 +41,7 @@ import glob
 import json
 import multiprocessing
 import os
+import queue
 import re
 import shutil
 import subprocess
@@ -53,13 +54,6 @@ try:
   import yaml
 except ImportError:
   yaml = None
-
-is_py2 = sys.version[0] == '2'
-
-if is_py2:
-    import Queue as queue
-else:
-    import queue as queue
 
 
 def strtobool(val):
@@ -79,13 +73,14 @@ def strtobool(val):
 
 def find_compilation_database(path):
   """Adjusts the directory until a compilation database is found."""
-  result = './'
+  result = os.path.realpath('./')
   while not os.path.isfile(os.path.join(result, path)):
-    if os.path.realpath(result) == '/':
+    parent = os.path.dirname(result)
+    if result == parent:
       print('Error: could not find compilation database.')
       sys.exit(1)
-    result += '../'
-  return os.path.realpath(result)
+    result = parent
+  return result
 
 
 def make_absolute(f, directory):
@@ -96,8 +91,8 @@ def make_absolute(f, directory):
 
 def get_tidy_invocation(f, clang_tidy_binary, checks, tmpdir, build_path,
                         header_filter, allow_enabling_alpha_checkers,
-                        extra_arg, extra_arg_before, quiet, config,
-                        line_filter, use_color):
+                        extra_arg, extra_arg_before, quiet, config_file_path,
+                        config, line_filter, use_color, plugins):
   """Gets a command line for clang-tidy."""
   start = [clang_tidy_binary]
   if allow_enabling_alpha_checkers:
@@ -127,8 +122,12 @@ def get_tidy_invocation(f, clang_tidy_binary, checks, tmpdir, build_path,
   start.append('-p=' + build_path)
   if quiet:
       start.append('-quiet')
-  if config:
+  if config_file_path:
+      start.append('--config-file=' + config_file_path)
+  elif config:
       start.append('-config=' + config)
+  for plugin in plugins:
+      start.append('-load=' + plugin)
   start.append(f)
   return start
 
@@ -158,20 +157,30 @@ def merge_replacement_files(tmpdir, mergefile):
     open(mergefile, 'w').close()
 
 
-def check_clang_apply_replacements_binary(args):
-  """Checks if invoking supplied clang-apply-replacements binary works."""
-  try:
-    subprocess.check_call([args.clang_apply_replacements_binary, '--version'])
-  except:
-    print('Unable to run clang-apply-replacements. Is clang-apply-replacements '
-          'binary correctly specified?', file=sys.stderr)
-    traceback.print_exc()
-    sys.exit(1)
+def find_binary(arg, name, build_path):
+  """Get the path for a binary or exit"""
+  if arg:
+    if shutil.which(arg):
+      return arg
+    else:
+      raise SystemExit(
+        "error: passed binary '{}' was not found or is not executable"
+        .format(arg))
+
+  built_path = os.path.join(build_path, "bin", name)
+  binary = shutil.which(name) or shutil.which(built_path)
+  if binary:
+    return binary
+  else:
+    raise SystemExit(
+      "error: failed to find {} in $PATH or at {}"
+      .format(name, built_path))
 
 
-def apply_fixes(args, tmpdir):
+def apply_fixes(args, clang_apply_replacements_binary, tmpdir):
   """Calls clang-apply-fixes on a given directory."""
-  invocation = [args.clang_apply_replacements_binary]
+  invocation = [clang_apply_replacements_binary]
+  invocation.append('-ignore-insert-conflict')
   if args.format:
     invocation.append('-format')
   if args.style:
@@ -180,16 +189,18 @@ def apply_fixes(args, tmpdir):
   subprocess.call(invocation)
 
 
-def run_tidy(args, tmpdir, build_path, queue, lock, failed_files):
+def run_tidy(args, clang_tidy_binary, tmpdir, build_path, queue, lock,
+             failed_files):
   """Takes filenames out of queue and runs clang-tidy on them."""
   while True:
     name = queue.get()
-    invocation = get_tidy_invocation(name, args.clang_tidy_binary, args.checks,
+    invocation = get_tidy_invocation(name, clang_tidy_binary, args.checks,
                                      tmpdir, build_path, args.header_filter,
                                      args.allow_enabling_alpha_checkers,
                                      args.extra_arg, args.extra_arg_before,
-                                     args.quiet, args.config, args.line_filter,
-                                     args.use_color)
+                                     args.quiet, args.config_file, args.config,
+                                     args.line_filter, args.use_color,
+                                     args.plugins)
 
     proc = subprocess.Popen(invocation, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, err = proc.communicate()
@@ -210,20 +221,19 @@ def main():
   parser = argparse.ArgumentParser(description='Runs clang-tidy over all files '
                                    'in a compilation database. Requires '
                                    'clang-tidy and clang-apply-replacements in '
-                                   '$PATH.')
+                                   '$PATH or in your build directory.')
   parser.add_argument('-allow-enabling-alpha-checkers',
                       action='store_true', help='allow alpha checkers from '
                                                 'clang-analyzer.')
   parser.add_argument('-clang-tidy-binary', metavar='PATH',
-                      default='clang-tidy',
                       help='path to clang-tidy binary')
   parser.add_argument('-clang-apply-replacements-binary', metavar='PATH',
-                      default='clang-apply-replacements',
                       help='path to clang-apply-replacements binary')
   parser.add_argument('-checks', default=None,
                       help='checks filter, when not specified, use clang-tidy '
                       'default')
-  parser.add_argument('-config', default=None,
+  config_group = parser.add_mutually_exclusive_group()
+  config_group.add_argument('-config', default=None,
                       help='Specifies a configuration in YAML/JSON format: '
                       '  -config="{Checks: \'*\', '
                       '                       CheckOptions: [{key: x, '
@@ -231,6 +241,12 @@ def main():
                       'When the value is empty, clang-tidy will '
                       'attempt to find a file named .clang-tidy for '
                       'each source file in its parent directories.')
+  config_group.add_argument('-config-file', default=None,
+                      help='Specify the path of .clang-tidy or custom config '
+                      'file: e.g. -config-file=/some/path/myTidyConfigFile. '
+                      'This option internally works exactly the same way as '
+                      '-config option after reading specified config file. '
+                      'Use either -config-file or -config, not both.')
   parser.add_argument('-header-filter', default=None,
                       help='regular expression matching the names of the '
                       'headers to output diagnostics from. Diagnostics from '
@@ -268,6 +284,9 @@ def main():
                       'command line.')
   parser.add_argument('-quiet', action='store_true',
                       help='Run clang-tidy in quiet mode')
+  parser.add_argument('-load', dest='plugins',
+                      action='append', default=[],
+                      help='Load the specified plugin in clang-tidy.')
   args = parser.parse_args()
 
   db_path = 'compile_commands.json'
@@ -278,13 +297,24 @@ def main():
     # Find our database
     build_path = find_compilation_database(db_path)
 
+  clang_tidy_binary = find_binary(args.clang_tidy_binary, "clang-tidy",
+                                  build_path)
+
+  tmpdir = None
+  if args.fix or (yaml and args.export_fixes):
+    clang_apply_replacements_binary = find_binary(
+      args.clang_apply_replacements_binary, "clang-apply-replacements",
+      build_path)
+    tmpdir = tempfile.mkdtemp()
+
   try:
-    invocation = get_tidy_invocation("", args.clang_tidy_binary, args.checks,
+    invocation = get_tidy_invocation("", clang_tidy_binary, args.checks,
                                      None, build_path, args.header_filter,
                                      args.allow_enabling_alpha_checkers,
                                      args.extra_arg, args.extra_arg_before,
-                                     args.quiet, args.config, args.line_filter,
-                                     args.use_color)
+                                     args.quiet, args.config_file, args.config,
+                                     args.line_filter, args.use_color,
+                                     args.plugins)
     invocation.append('-list-checks')
     invocation.append('-')
     if args.quiet:
@@ -306,11 +336,6 @@ def main():
   if max_task == 0:
     max_task = multiprocessing.cpu_count()
 
-  tmpdir = None
-  if args.fix or (yaml and args.export_fixes):
-    check_clang_apply_replacements_binary(args)
-    tmpdir = tempfile.mkdtemp()
-
   # Build up a big regexy filter from all command line arguments.
   file_name_re = re.compile('|'.join(args.files))
 
@@ -323,7 +348,8 @@ def main():
     lock = threading.Lock()
     for _ in range(max_task):
       t = threading.Thread(target=run_tidy,
-                           args=(args, tmpdir, build_path, task_queue, lock, failed_files))
+                           args=(args, clang_tidy_binary, tmpdir, build_path,
+                                 task_queue, lock, failed_files))
       t.daemon = True
       t.start()
 
@@ -357,7 +383,7 @@ def main():
   if args.fix:
     print('Applying fixes ...')
     try:
-      apply_fixes(args, tmpdir)
+      apply_fixes(args, clang_apply_replacements_binary, tmpdir)
     except:
       print('Error applying fixes.\n', file=sys.stderr)
       traceback.print_exc()

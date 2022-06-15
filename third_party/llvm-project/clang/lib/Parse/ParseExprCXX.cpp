@@ -1355,7 +1355,8 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
           DeclEndLoc = ESpecRange.getEnd();
 
         // Parse attribute-specifier[opt].
-        MaybeParseCXX11Attributes(Attr, &DeclEndLoc);
+        if (MaybeParseCXX11Attributes(Attr))
+          DeclEndLoc = Attr.Range.getEnd();
 
         // Parse OpenCL addr space attribute.
         if (Tok.isOneOf(tok::kw___private, tok::kw___global, tok::kw___local,
@@ -1912,7 +1913,7 @@ Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
 
 Parser::DeclGroupPtrTy
 Parser::ParseAliasDeclarationInInitStatement(DeclaratorContext Context,
-                                             ParsedAttributesWithRange &Attrs) {
+                                             ParsedAttributes &Attrs) {
   assert(Tok.is(tok::kw_using) && "Expected using");
   assert((Context == DeclaratorContext::ForInit ||
           Context == DeclaratorContext::SelectionInit) &&
@@ -1991,7 +1992,7 @@ Parser::ParseCXXCondition(StmtResult *InitStmt, SourceLocation Loc,
     return Sema::ConditionError();
   }
 
-  ParsedAttributesWithRange attrs(AttrFactory);
+  ParsedAttributes attrs(AttrFactory);
   MaybeParseCXX11Attributes(attrs);
 
   const auto WarnOnInit = [this, &CK] {
@@ -2230,6 +2231,9 @@ void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
     break;
   case tok::kw_void:
     DS.SetTypeSpecType(DeclSpec::TST_void, Loc, PrevSpec, DiagID, Policy);
+    break;
+  case tok::kw_auto:
+    DS.SetTypeSpecType(DeclSpec::TST_auto, Loc, PrevSpec, DiagID, Policy);
     break;
   case tok::kw_char:
     DS.SetTypeSpecType(DeclSpec::TST_char, Loc, PrevSpec, DiagID, Policy);

@@ -17,6 +17,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/FPEnv.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
@@ -25,6 +26,7 @@
 #include "llvm/IR/NoFolder.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/Support/SourceMgr.h"
+#include "llvm-c/Core.h"
 #include "gmock/gmock-matchers.h"
 #include "gtest/gtest.h"
 #include <memory>
@@ -390,6 +392,67 @@ TEST(InstructionsTest, CastInst) {
   delete BB;
 }
 
+TEST(InstructionsTest, CastCAPI) {
+  LLVMContext C;
+
+  Type *Int8Ty = Type::getInt8Ty(C);
+  Type *Int32Ty = Type::getInt32Ty(C);
+  Type *Int64Ty = Type::getInt64Ty(C);
+
+  Type *FloatTy = Type::getFloatTy(C);
+  Type *DoubleTy = Type::getDoubleTy(C);
+
+  Type *Int8PtrTy = PointerType::get(Int8Ty, 0);
+  Type *Int32PtrTy = PointerType::get(Int32Ty, 0);
+
+  const Constant *C8 = Constant::getNullValue(Int8Ty);
+  const Constant *C64 = Constant::getNullValue(Int64Ty);
+
+  EXPECT_EQ(LLVMBitCast,
+            LLVMGetCastOpcode(wrap(C64), true, wrap(Int64Ty), true));
+  EXPECT_EQ(LLVMTrunc, LLVMGetCastOpcode(wrap(C64), true, wrap(Int8Ty), true));
+  EXPECT_EQ(LLVMSExt, LLVMGetCastOpcode(wrap(C8), true, wrap(Int64Ty), true));
+  EXPECT_EQ(LLVMZExt, LLVMGetCastOpcode(wrap(C8), false, wrap(Int64Ty), true));
+
+  const Constant *CF32 = Constant::getNullValue(FloatTy);
+  const Constant *CF64 = Constant::getNullValue(DoubleTy);
+
+  EXPECT_EQ(LLVMFPToUI,
+            LLVMGetCastOpcode(wrap(CF32), true, wrap(Int8Ty), false));
+  EXPECT_EQ(LLVMFPToSI,
+            LLVMGetCastOpcode(wrap(CF32), true, wrap(Int8Ty), true));
+  EXPECT_EQ(LLVMUIToFP,
+            LLVMGetCastOpcode(wrap(C8), false, wrap(FloatTy), true));
+  EXPECT_EQ(LLVMSIToFP, LLVMGetCastOpcode(wrap(C8), true, wrap(FloatTy), true));
+  EXPECT_EQ(LLVMFPTrunc,
+            LLVMGetCastOpcode(wrap(CF64), true, wrap(FloatTy), true));
+  EXPECT_EQ(LLVMFPExt,
+            LLVMGetCastOpcode(wrap(CF32), true, wrap(DoubleTy), true));
+
+  const Constant *CPtr8 = Constant::getNullValue(Int8PtrTy);
+
+  EXPECT_EQ(LLVMPtrToInt,
+            LLVMGetCastOpcode(wrap(CPtr8), true, wrap(Int8Ty), true));
+  EXPECT_EQ(LLVMIntToPtr,
+            LLVMGetCastOpcode(wrap(C8), true, wrap(Int8PtrTy), true));
+
+  Type *V8x8Ty = FixedVectorType::get(Int8Ty, 8);
+  Type *V8x64Ty = FixedVectorType::get(Int64Ty, 8);
+  const Constant *CV8 = Constant::getNullValue(V8x8Ty);
+  const Constant *CV64 = Constant::getNullValue(V8x64Ty);
+
+  EXPECT_EQ(LLVMTrunc, LLVMGetCastOpcode(wrap(CV64), true, wrap(V8x8Ty), true));
+  EXPECT_EQ(LLVMSExt, LLVMGetCastOpcode(wrap(CV8), true, wrap(V8x64Ty), true));
+
+  Type *Int32PtrAS1Ty = PointerType::get(Int32Ty, 1);
+  Type *V2Int32PtrAS1Ty = FixedVectorType::get(Int32PtrAS1Ty, 2);
+  Type *V2Int32PtrTy = FixedVectorType::get(Int32PtrTy, 2);
+  const Constant *CV2ptr32 = Constant::getNullValue(V2Int32PtrTy);
+
+  EXPECT_EQ(LLVMAddrSpaceCast, LLVMGetCastOpcode(wrap(CV2ptr32), true,
+                                                 wrap(V2Int32PtrAS1Ty), true));
+}
+
 TEST(InstructionsTest, VectorGep) {
   LLVMContext C;
 
@@ -507,6 +570,59 @@ TEST(InstructionsTest, FPMathOperator) {
   I->deleteValue();
 }
 
+TEST(InstructionTest, ConstrainedTrans) {
+  LLVMContext Context;
+  std::unique_ptr<Module> M(new Module("MyModule", Context));
+  FunctionType *FTy =
+      FunctionType::get(Type::getVoidTy(Context),
+                        {Type::getFloatTy(Context), Type::getFloatTy(Context),
+                         Type::getInt32Ty(Context)},
+                        false);
+  auto *F = Function::Create(FTy, Function::ExternalLinkage, "", M.get());
+  auto *BB = BasicBlock::Create(Context, "bb", F);
+  IRBuilder<> Builder(Context);
+  Builder.SetInsertPoint(BB);
+  auto *Arg0 = F->arg_begin();
+  auto *Arg1 = F->arg_begin() + 1;
+
+  {
+    auto *I = cast<Instruction>(Builder.CreateFAdd(Arg0, Arg1));
+    EXPECT_EQ(Intrinsic::experimental_constrained_fadd,
+              getConstrainedIntrinsicID(*I));
+  }
+
+  {
+    auto *I = cast<Instruction>(
+        Builder.CreateFPToSI(Arg0, Type::getInt32Ty(Context)));
+    EXPECT_EQ(Intrinsic::experimental_constrained_fptosi,
+              getConstrainedIntrinsicID(*I));
+  }
+
+  {
+    auto *I = cast<Instruction>(Builder.CreateIntrinsic(
+        Intrinsic::ceil, {Type::getFloatTy(Context)}, {Arg0}));
+    EXPECT_EQ(Intrinsic::experimental_constrained_ceil,
+              getConstrainedIntrinsicID(*I));
+  }
+
+  {
+    auto *I = cast<Instruction>(Builder.CreateFCmpOEQ(Arg0, Arg1));
+    EXPECT_EQ(Intrinsic::experimental_constrained_fcmp,
+              getConstrainedIntrinsicID(*I));
+  }
+
+  {
+    auto *Arg2 = F->arg_begin() + 2;
+    auto *I = cast<Instruction>(Builder.CreateAdd(Arg2, Arg2));
+    EXPECT_EQ(Intrinsic::not_intrinsic, getConstrainedIntrinsicID(*I));
+  }
+
+  {
+    auto *I = cast<Instruction>(Builder.CreateConstrainedFPBinOp(
+        Intrinsic::experimental_constrained_fadd, Arg0, Arg0));
+    EXPECT_EQ(Intrinsic::not_intrinsic, getConstrainedIntrinsicID(*I));
+  }
+}
 
 TEST(InstructionsTest, isEliminableCastPair) {
   LLVMContext C;

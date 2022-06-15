@@ -214,14 +214,14 @@ public:
     switch (State) {
     case PS_BeforeBegin:
     case PS_AtEnd:
-      return PS("");
+      return PATHSTR("");
     case PS_InRootDir:
       if (RawEntry[0] == '\\')
-        return PS("\\");
+        return PATHSTR("\\");
       else
-        return PS("/");
+        return PATHSTR("/");
     case PS_InTrailingSep:
-      return PS("");
+      return PATHSTR("");
     case PS_InRootName:
     case PS_InFilenames:
       return RawEntry;
@@ -387,8 +387,8 @@ private:
 };
 
 string_view_pair separate_filename(string_view_t const& s) {
-  if (s == PS(".") || s == PS("..") || s.empty())
-    return string_view_pair{s, PS("")};
+  if (s == PATHSTR(".") || s == PATHSTR("..") || s.empty())
+    return string_view_pair{s, PATHSTR("")};
   auto pos = s.find_last_of('.');
   if (pos == string_view_t::npos || pos == 0)
     return string_view_pair{s, string_view_t{}};
@@ -1416,12 +1416,14 @@ uintmax_t remove_all_impl(int parent_directory, const path& p, error_code& ec) {
   if (fd != -1) {
     // If that worked, iterate over the contents of the directory and
     // remove everything in it, recursively.
-    scope_exit close_fd([=] { ::close(fd); });
     DIR* stream = ::fdopendir(fd);
     if (stream == nullptr) {
+      ::close(fd);
       ec = detail::capture_errno();
       return 0;
     }
+    // Note: `::closedir` will also close the associated file descriptor, so
+    // there should be no call to `close(fd)`.
     scope_exit close_stream([=] { ::closedir(stream); });
 
     uintmax_t count = 0;
@@ -1614,7 +1616,7 @@ path& path::replace_extension(path const& replacement) {
   }
   if (!replacement.empty()) {
     if (replacement.native()[0] != '.') {
-      __pn_ += PS(".");
+      __pn_ += PATHSTR(".");
     }
     __pn_.append(replacement.__pn_);
   }
@@ -1736,14 +1738,14 @@ enum PathPartKind : unsigned char {
 static PathPartKind ClassifyPathPart(string_view_t Part) {
   if (Part.empty())
     return PK_TrailingSep;
-  if (Part == PS("."))
+  if (Part == PATHSTR("."))
     return PK_Dot;
-  if (Part == PS(".."))
+  if (Part == PATHSTR(".."))
     return PK_DotDot;
-  if (Part == PS("/"))
+  if (Part == PATHSTR("/"))
     return PK_RootSep;
 #if defined(_LIBCPP_WIN32API)
-  if (Part == PS("\\"))
+  if (Part == PATHSTR("\\"))
     return PK_RootSep;
 #endif
   return PK_Filename;
@@ -1793,7 +1795,7 @@ path path::lexically_normal() const {
         NewPathSize -= Parts.back().first.size();
         Parts.pop_back();
       } else if (LastKind != PK_RootSep)
-        AddPart(PK_DotDot, PS(".."));
+        AddPart(PK_DotDot, PATHSTR(".."));
       MaybeNeedTrailingSep = LastKind == PK_Filename;
       break;
     }
@@ -1808,7 +1810,7 @@ path path::lexically_normal() const {
   }
   // [fs.path.generic]p6.8: If the path is empty, add a dot.
   if (Parts.empty())
-    return PS(".");
+    return PATHSTR(".");
 
   // [fs.path.generic]p6.7: If the last filename is dot-dot, remove any
   // trailing directory-separator.
@@ -1820,7 +1822,7 @@ path path::lexically_normal() const {
     Result /= PK.first;
 
   if (NeedTrailingSep)
-    Result /= PS("");
+    Result /= PATHSTR("");
 
   Result.make_preferred();
   return Result;
@@ -1830,9 +1832,9 @@ static int DetermineLexicalElementCount(PathParser PP) {
   int Count = 0;
   for (; PP; ++PP) {
     auto Elem = *PP;
-    if (Elem == PS(".."))
+    if (Elem == PATHSTR(".."))
       --Count;
-    else if (Elem != PS(".") && Elem != PS(""))
+    else if (Elem != PATHSTR(".") && Elem != PATHSTR(""))
       ++Count;
   }
   return Count;
@@ -1879,15 +1881,15 @@ path path::lexically_relative(const path& base) const {
     return {};
 
   // if n == 0 and (a == end() || a->empty()), returns path("."); otherwise
-  if (ElemCount == 0 && (PP.atEnd() || *PP == PS("")))
-    return PS(".");
+  if (ElemCount == 0 && (PP.atEnd() || *PP == PATHSTR("")))
+    return PATHSTR(".");
 
-  // return a path constructed with 'n' dot-dot elements, followed by the the
+  // return a path constructed with 'n' dot-dot elements, followed by the
   // elements of '*this' after the mismatch.
   path Result;
   // FIXME: Reserve enough room in Result that it won't have to re-allocate.
   while (ElemCount--)
-    Result /= PS("..");
+    Result /= PATHSTR("..");
   for (; PP; ++PP)
     Result /= *PP;
   return Result;
@@ -1900,7 +1902,7 @@ static int CompareRootName(PathParser *LHS, PathParser *RHS) {
     return 0;
 
   auto GetRootName = [](PathParser *Parser) -> string_view_t {
-    return Parser->inRootName() ? **Parser : PS("");
+    return Parser->inRootName() ? **Parser : PATHSTR("");
   };
   int res = GetRootName(LHS).compare(GetRootName(RHS));
   ConsumeRootName(LHS);

@@ -52,7 +52,6 @@
 #include "ValueProfileCollector.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -68,6 +67,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/OptimizationRemarkEmitter.h"
 #include "llvm/Analysis/ProfileSummaryInfo.h"
+#include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CFG.h"
@@ -94,8 +94,6 @@
 #include "llvm/IR/ProfileSummary.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
-#include "llvm/InitializePasses.h"
-#include "llvm/Pass.h"
 #include "llvm/ProfileData/InstrProf.h"
 #include "llvm/ProfileData/InstrProfReader.h"
 #include "llvm/Support/BranchProbability.h"
@@ -110,6 +108,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/MisExpect.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include <algorithm>
 #include <cassert>
@@ -173,14 +172,14 @@ static cl::opt<bool> DisableValueProfiling("disable-vp", cl::init(false),
 // Command line option to set the maximum number of VP annotations to write to
 // the metadata for a single indirect call callsite.
 static cl::opt<unsigned> MaxNumAnnotations(
-    "icp-max-annotations", cl::init(3), cl::Hidden, cl::ZeroOrMore,
+    "icp-max-annotations", cl::init(3), cl::Hidden,
     cl::desc("Max number of annotations for a single indirect "
              "call callsite"));
 
 // Command line option to set the maximum number of value annotations
 // to write to the metadata for a single memop intrinsic.
 static cl::opt<unsigned> MaxNumMemOPAnnotations(
-    "memop-max-annotations", cl::init(4), cl::Hidden, cl::ZeroOrMore,
+    "memop-max-annotations", cl::init(4), cl::Hidden,
     cl::desc("Max number of preicise value annotations for a single memop"
              "intrinsic"));
 
@@ -256,7 +255,7 @@ static cl::opt<bool> PGOInstrumentEntry(
     cl::desc("Force to instrument function entry basicblock."));
 
 static cl::opt<bool> PGOFunctionEntryCoverage(
-    "pgo-function-entry-coverage", cl::init(false), cl::Hidden, cl::ZeroOrMore,
+    "pgo-function-entry-coverage", cl::Hidden,
     cl::desc(
         "Use this option to enable function entry coverage instrumentation."));
 
@@ -431,124 +430,7 @@ struct SelectInstVisitor : public InstVisitor<SelectInstVisitor> {
   unsigned getNumOfSelectInsts() const { return NSIs; }
 };
 
-
-class PGOInstrumentationGenLegacyPass : public ModulePass {
-public:
-  static char ID;
-
-  PGOInstrumentationGenLegacyPass(bool IsCS = false)
-      : ModulePass(ID), IsCS(IsCS) {
-    initializePGOInstrumentationGenLegacyPassPass(
-        *PassRegistry::getPassRegistry());
-  }
-
-  StringRef getPassName() const override { return "PGOInstrumentationGenPass"; }
-
-private:
-  // Is this is context-sensitive instrumentation.
-  bool IsCS;
-  bool runOnModule(Module &M) override;
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.addRequired<BlockFrequencyInfoWrapperPass>();
-    AU.addRequired<TargetLibraryInfoWrapperPass>();
-  }
-};
-
-class PGOInstrumentationUseLegacyPass : public ModulePass {
-public:
-  static char ID;
-
-  // Provide the profile filename as the parameter.
-  PGOInstrumentationUseLegacyPass(std::string Filename = "", bool IsCS = false)
-      : ModulePass(ID), ProfileFileName(std::move(Filename)), IsCS(IsCS) {
-    if (!PGOTestProfileFile.empty())
-      ProfileFileName = PGOTestProfileFile;
-    initializePGOInstrumentationUseLegacyPassPass(
-        *PassRegistry::getPassRegistry());
-  }
-
-  StringRef getPassName() const override { return "PGOInstrumentationUsePass"; }
-
-private:
-  std::string ProfileFileName;
-  // Is this is context-sensitive instrumentation use.
-  bool IsCS;
-
-  bool runOnModule(Module &M) override;
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.addRequired<ProfileSummaryInfoWrapperPass>();
-    AU.addRequired<BlockFrequencyInfoWrapperPass>();
-    AU.addRequired<TargetLibraryInfoWrapperPass>();
-  }
-};
-
-class PGOInstrumentationGenCreateVarLegacyPass : public ModulePass {
-public:
-  static char ID;
-  StringRef getPassName() const override {
-    return "PGOInstrumentationGenCreateVarPass";
-  }
-  PGOInstrumentationGenCreateVarLegacyPass(std::string CSInstrName = "")
-      : ModulePass(ID), InstrProfileOutput(CSInstrName) {
-    initializePGOInstrumentationGenCreateVarLegacyPassPass(
-        *PassRegistry::getPassRegistry());
-  }
-
-private:
-  bool runOnModule(Module &M) override {
-    createProfileFileNameVar(M, InstrProfileOutput);
-    // The variable in a comdat may be discarded by LTO. Ensure the
-    // declaration will be retained.
-    appendToCompilerUsed(M, createIRLevelProfileFlagVar(M, /*IsCS=*/true));
-    return false;
-  }
-  std::string InstrProfileOutput;
-};
-
 } // end anonymous namespace
-
-char PGOInstrumentationGenLegacyPass::ID = 0;
-
-INITIALIZE_PASS_BEGIN(PGOInstrumentationGenLegacyPass, "pgo-instr-gen",
-                      "PGO instrumentation.", false, false)
-INITIALIZE_PASS_DEPENDENCY(BlockFrequencyInfoWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(BranchProbabilityInfoWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
-INITIALIZE_PASS_END(PGOInstrumentationGenLegacyPass, "pgo-instr-gen",
-                    "PGO instrumentation.", false, false)
-
-ModulePass *llvm::createPGOInstrumentationGenLegacyPass(bool IsCS) {
-  return new PGOInstrumentationGenLegacyPass(IsCS);
-}
-
-char PGOInstrumentationUseLegacyPass::ID = 0;
-
-INITIALIZE_PASS_BEGIN(PGOInstrumentationUseLegacyPass, "pgo-instr-use",
-                      "Read PGO instrumentation profile.", false, false)
-INITIALIZE_PASS_DEPENDENCY(BlockFrequencyInfoWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(BranchProbabilityInfoWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(ProfileSummaryInfoWrapperPass)
-INITIALIZE_PASS_END(PGOInstrumentationUseLegacyPass, "pgo-instr-use",
-                    "Read PGO instrumentation profile.", false, false)
-
-ModulePass *llvm::createPGOInstrumentationUseLegacyPass(StringRef Filename,
-                                                        bool IsCS) {
-  return new PGOInstrumentationUseLegacyPass(Filename.str(), IsCS);
-}
-
-char PGOInstrumentationGenCreateVarLegacyPass::ID = 0;
-
-INITIALIZE_PASS(PGOInstrumentationGenCreateVarLegacyPass,
-                "pgo-instr-gen-create-var",
-                "Create PGO instrumentation version variable for CSPGO.", false,
-                false)
-
-ModulePass *
-llvm::createPGOInstrumentationGenCreateVarLegacyPass(StringRef CSInstrName) {
-  return new PGOInstrumentationGenCreateVarLegacyPass(std::string(CSInstrName));
-}
 
 namespace {
 
@@ -940,7 +822,7 @@ static void instrumentOneFunc(
     bool IsCS) {
   // Split indirectbr critical edges here before computing the MST rather than
   // later in getInstrBB() to avoid invalidating it.
-  SplitIndirectBrCriticalEdges(F, BPI, BFI);
+  SplitIndirectBrCriticalEdges(F, /*IgnoreBlocksWithoutPHI=*/false, BPI, BFI);
 
   FuncPGOInstrumentation<PGOEdge, BBInfo> FuncInfo(
       F, TLI, ComdatMembers, true, BPI, BFI, IsCS, PGOInstrumentEntry);
@@ -1457,6 +1339,7 @@ void PGOUseFunc::populateCounters() {
   }
 
   LLVM_DEBUG(dbgs() << "Populate counts in " << NumPasses << " passes.\n");
+  (void) NumPasses;
 #ifndef NDEBUG
   // Assert every BB has a valid counter.
   for (auto &BB : F) {
@@ -1697,22 +1580,6 @@ PGOInstrumentationGenCreateVar::run(Module &M, ModuleAnalysisManager &AM) {
   return PreservedAnalyses::all();
 }
 
-bool PGOInstrumentationGenLegacyPass::runOnModule(Module &M) {
-  if (skipModule(M))
-    return false;
-
-  auto LookupTLI = [this](Function &F) -> TargetLibraryInfo & {
-    return this->getAnalysis<TargetLibraryInfoWrapperPass>().getTLI(F);
-  };
-  auto LookupBPI = [this](Function &F) {
-    return &this->getAnalysis<BranchProbabilityInfoWrapperPass>(F).getBPI();
-  };
-  auto LookupBFI = [this](Function &F) {
-    return &this->getAnalysis<BlockFrequencyInfoWrapperPass>(F).getBFI();
-  };
-  return InstrumentAllFunctions(M, LookupTLI, LookupBPI, LookupBFI, IsCS);
-}
-
 PreservedAnalyses PGOInstrumentationGen::run(Module &M,
                                              ModuleAnalysisManager &AM) {
   auto &FAM = AM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
@@ -1929,7 +1796,7 @@ static bool annotateAllFunctions(
     auto *BFI = LookupBFI(F);
     // Split indirectbr critical edges here before computing the MST rather than
     // later in getInstrBB() to avoid invalidating it.
-    SplitIndirectBrCriticalEdges(F, BPI, BFI);
+    SplitIndirectBrCriticalEdges(F, /*IgnoreBlocksWithoutPHI=*/false, BPI, BFI);
     PGOUseFunc Func(F, &M, TLI, ComdatMembers, BPI, BFI, PSI, IsCS,
                     InstrumentFuncEntry);
     // When AllMinusOnes is true, it means the profile for the function
@@ -2073,25 +1940,6 @@ PreservedAnalyses PGOInstrumentationUse::run(Module &M,
   return PreservedAnalyses::none();
 }
 
-bool PGOInstrumentationUseLegacyPass::runOnModule(Module &M) {
-  if (skipModule(M))
-    return false;
-
-  auto LookupTLI = [this](Function &F) -> TargetLibraryInfo & {
-    return this->getAnalysis<TargetLibraryInfoWrapperPass>().getTLI(F);
-  };
-  auto LookupBPI = [this](Function &F) {
-    return &this->getAnalysis<BranchProbabilityInfoWrapperPass>(F).getBPI();
-  };
-  auto LookupBFI = [this](Function &F) {
-    return &this->getAnalysis<BlockFrequencyInfoWrapperPass>(F).getBFI();
-  };
-
-  auto *PSI = &getAnalysis<ProfileSummaryInfoWrapperPass>().getPSI();
-  return annotateAllFunctions(M, ProfileFileName, "", LookupTLI, LookupBPI,
-                              LookupBFI, PSI, IsCS);
-}
-
 static std::string getSimpleNodeName(const BasicBlock *Node) {
   if (!Node->getName().empty())
     return std::string(Node->getName());
@@ -2116,6 +1964,8 @@ void llvm::setProfMetadata(Module *M, Instruction *TI,
                                            : Weights) {
     dbgs() << W << " ";
   } dbgs() << "\n";);
+
+  misexpect::checkExpectAnnotations(*TI, Weights, /*IsFrontend=*/false);
 
   TI->setMetadata(LLVMContext::MD_prof, MDB.createBranchWeights(Weights));
   if (EmitBranchProbability) {

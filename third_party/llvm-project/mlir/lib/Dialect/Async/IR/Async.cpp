@@ -50,7 +50,6 @@ LogicalResult YieldOp::verify() {
 
 MutableOperandRange
 YieldOp::getMutableSuccessorOperands(Optional<unsigned> index) {
-  assert(!index.hasValue());
   return operandsMutable();
 }
 
@@ -60,9 +59,18 @@ YieldOp::getMutableSuccessorOperands(Optional<unsigned> index) {
 
 constexpr char kOperandSegmentSizesAttr[] = "operand_segment_sizes";
 
-OperandRange ExecuteOp::getSuccessorEntryOperands(unsigned index) {
-  assert(index == 0 && "invalid region index");
+OperandRange ExecuteOp::getSuccessorEntryOperands(Optional<unsigned> index) {
+  assert(index && *index == 0 && "invalid region index");
   return operands();
+}
+
+bool ExecuteOp::areTypesCompatible(Type lhs, Type rhs) {
+  const auto getValueOrTokenType = [](Type type) {
+    if (auto value = type.dyn_cast<ValueType>())
+      return value.getValueType();
+    return type;
+  };
+  return getValueOrTokenType(lhs) == getValueOrTokenType(rhs);
 }
 
 void ExecuteOp::getSuccessorRegions(Optional<unsigned> index,
@@ -159,7 +167,7 @@ ParseResult ExecuteOp::parse(OpAsmParser &parser, OperationState &result) {
 
   // Parse dependency tokens.
   if (succeeded(parser.parseOptionalLSquare())) {
-    SmallVector<OpAsmParser::OperandType, 4> tokenArgs;
+    SmallVector<OpAsmParser::UnresolvedOperand, 4> tokenArgs;
     if (parser.parseOperandList(tokenArgs) ||
         parser.resolveOperands(tokenArgs, tokenTy, result.operands) ||
         parser.parseRSquare())
@@ -169,22 +177,20 @@ ParseResult ExecuteOp::parse(OpAsmParser &parser, OperationState &result) {
   }
 
   // Parse async value operands (%value as %unwrapped : !async.value<!type>).
-  SmallVector<OpAsmParser::OperandType, 4> valueArgs;
-  SmallVector<OpAsmParser::OperandType, 4> unwrappedArgs;
+  SmallVector<OpAsmParser::UnresolvedOperand, 4> valueArgs;
+  SmallVector<OpAsmParser::Argument, 4> unwrappedArgs;
   SmallVector<Type, 4> valueTypes;
-  SmallVector<Type, 4> unwrappedTypes;
 
   // Parse a single instance of `%value as %unwrapped : !async.value<!type>`.
   auto parseAsyncValueArg = [&]() -> ParseResult {
     if (parser.parseOperand(valueArgs.emplace_back()) ||
         parser.parseKeyword("as") ||
-        parser.parseOperand(unwrappedArgs.emplace_back()) ||
+        parser.parseArgument(unwrappedArgs.emplace_back()) ||
         parser.parseColonType(valueTypes.emplace_back()))
       return failure();
 
     auto valueTy = valueTypes.back().dyn_cast<ValueType>();
-    unwrappedTypes.emplace_back(valueTy ? valueTy.getValueType() : Type());
-
+    unwrappedArgs.back().type = valueTy ? valueTy.getValueType() : Type();
     return success();
   };
 
@@ -204,31 +210,23 @@ ParseResult ExecuteOp::parse(OpAsmParser &parser, OperationState &result) {
 
   // Parse the types of results returned from the async execute op.
   SmallVector<Type, 4> resultTypes;
-  if (parser.parseOptionalArrowTypeList(resultTypes))
-    return failure();
-
-  // Async execute first result is always a completion token.
-  parser.addTypeToList(tokenTy, result.types);
-  parser.addTypesToList(resultTypes, result.types);
-
-  // Parse operation attributes.
   NamedAttrList attrs;
-  if (parser.parseOptionalAttrDictWithKeyword(attrs))
+  if (parser.parseOptionalArrowTypeList(resultTypes) ||
+      // Async execute first result is always a completion token.
+      parser.addTypeToList(tokenTy, result.types) ||
+      parser.addTypesToList(resultTypes, result.types) ||
+      // Parse operation attributes.
+      parser.parseOptionalAttrDictWithKeyword(attrs))
     return failure();
+
   result.addAttributes(attrs);
 
   // Parse asynchronous region.
   Region *body = result.addRegion();
-  if (parser.parseRegion(*body, /*arguments=*/{unwrappedArgs},
-                         /*argTypes=*/{unwrappedTypes},
-                         /*argLocations=*/{},
-                         /*enableNameShadowing=*/false))
-    return failure();
-
-  return success();
+  return parser.parseRegion(*body, /*arguments=*/unwrappedArgs);
 }
 
-LogicalResult ExecuteOp::verify() {
+LogicalResult ExecuteOp::verifyRegions() {
   // Unwrap async.execute value operands types.
   auto unwrappedTypes = llvm::map_range(operands(), [](Value operand) {
     return operand.getType().cast<ValueType>().getValueType();

@@ -156,6 +156,7 @@ def : InstRW<[P9_ALU_2C, IP_EXEC_1C, DISP_1C],
     MCRF,
     MCRXRX,
     XSNABSDP,
+    XSNABSDPs,
     XSXEXPDP,
     XSABSDP,
     XSNEGDP,
@@ -932,6 +933,7 @@ def : InstRW<[P9_DIV_12C, IP_EXECE_1C, IP_EXECO_1C, DISP_EVEN_1C],
     (instregex "M(T|F)TB(8)?$"),
     (instregex "MF(SPR|CTR|LR)(8)?$"),
     (instregex "M(T|F)MSR(D)?$"),
+    (instregex "M(T|F)(U)?DSCR$"),
     (instregex "MTSPR(8)?$")
 )>;
 

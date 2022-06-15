@@ -6,14 +6,12 @@
 // Test that we can lower all the way to LLVM without crashing, don't check results here.
 // DISABLED: mlir-opt %s --convert-linalg-to-llvm -o=/dev/null 2>&1
 
-// CHECK-DAG: #[[$id_2d:.*]] = affine_map<(d0, d1, d2) -> (d0, d2)>
-// CHECK-DAG: #[[$id_1d:.*]] = affine_map<(d0, d1, d2) -> (d1)>
 // CHECK-DAG: #[[$strided1D:.*]] = affine_map<(d0)[s0] -> (d0 + s0)>
 // CHECK-DAG: #[[$strided2D:.*]] = affine_map<(d0, d1)[s0, s1] -> (d0 * s1 + s0 + d1)>
 // CHECK-DAG: #[[$strided3D:.*]] = affine_map<(d0, d1, d2)[s0, s1, s2] -> (d0 * s1 + s0 + d1 * s2 + d2)>
 // CHECK-DAG: #[[$strided3DT:.*]] = affine_map<(d0, d1, d2)[s0, s1, s2] -> (d2 * s1 + s0 + d1 * s2 + d0)>
 
-func @views(%arg0: index) {
+func.func @views(%arg0: index) {
   %c0 = arith.constant 0 : index
   %0 = arith.muli %arg0, %arg0 : index
   %1 = memref.alloc (%0) : memref<?xi8>
@@ -33,7 +31,7 @@ func @views(%arg0: index) {
 
 // -----
 
-func @ops(%arg0: memref<?x?xf32, offset: ?, strides: [?, 1]>,
+func.func @ops(%arg0: memref<?x?xf32, offset: ?, strides: [?, 1]>,
           %arg1: memref<?xf32, offset: ?, strides: [1]>,
           %arg2: memref<?xf32, offset: ?, strides: [1]>,
           %arg3: memref<f32>) {
@@ -64,17 +62,17 @@ func @ops(%arg0: memref<?x?xf32, offset: ?, strides: [?, 1]>,
 
 // -----
 
-func @fill_view(%arg0: memref<?xf32, offset: ?, strides: [1]>, %arg1: f32) {
-  linalg.fill(%arg1, %arg0) : f32, memref<?xf32, offset: ?, strides: [1]>
+func.func @fill_view(%arg0: memref<?xf32, offset: ?, strides: [1]>, %arg1: f32) {
+  linalg.fill ins(%arg1 : f32) outs(%arg0 : memref<?xf32, offset: ?, strides: [1]>)
   return
 }
 // CHECK-LABEL: func @fill_view(
 //       CHECK:  %{{.*}}: memref<?xf32, #[[$strided1D]]>, %{{.*}}: f32) {
-//       CHECK:   linalg.fill(%{{.*}}, %{{.*}}) : f32, memref<?xf32, #[[$strided1D]]>
+//       CHECK:   linalg.fill ins(%{{.*}} : f32) outs(%{{.*}} : memref<?xf32, #[[$strided1D]]>)
 
 // -----
 
-func @transpose(%arg0: memref<?x?x?xf32, offset: ?, strides: [?, ?, 1]>) {
+func.func @transpose(%arg0: memref<?x?x?xf32, offset: ?, strides: [?, ?, 1]>) {
   %0 = memref.transpose %arg0 (i, j, k) -> (k, j, i) : memref<?x?x?xf32, offset: ?, strides: [?, ?, 1]> to memref<?x?x?xf32, affine_map<(d0, d1, d2)[s0, s1, s2] -> (d2 * s1 + s0 + d1 * s2 + d0)>>
   return
 }
@@ -85,13 +83,13 @@ func @transpose(%arg0: memref<?x?x?xf32, offset: ?, strides: [?, ?, 1]>) {
 // -----
 
 
-func @fill_view3(%arg0: memref<?x?x?xf32, offset: ?, strides: [?, ?, 1]>, %arg1: f32) {
-  linalg.fill(%arg1, %arg0) : f32, memref<?x?x?xf32, offset: ?, strides: [?, ?, 1]>
+func.func @fill_view3(%arg0: memref<?x?x?xf32, offset: ?, strides: [?, ?, 1]>, %arg1: f32) {
+  linalg.fill ins(%arg1 : f32) outs(%arg0 : memref<?x?x?xf32, offset: ?, strides: [?, ?, 1]>)
   return
 }
 // CHECK-LABEL: func @fill_view3(
 //       CHECK:  %{{.*}}: memref<?x?x?xf32, #[[$strided3D]]>, %{{.*}}: f32) {
-//       CHECK:   linalg.fill(%{{.*}}, %{{.*}}) : f32, memref<?x?x?xf32, #[[$strided3D]]>
+//       CHECK:   linalg.fill ins(%{{.*}} : f32) outs(%{{.*}} : memref<?x?x?xf32, #[[$strided3D]]>)
 
 // -----
 
@@ -107,7 +105,7 @@ func @fill_view3(%arg0: memref<?x?x?xf32, offset: ?, strides: [?, ?, 1]>, %arg1:
   library_call = "some_external_function_name_1"
 }
 
-func @generic(%arg0: memref<?x?xvector<3x4xi4>, offset: ?, strides: [?, 1]>,
+func.func @generic(%arg0: memref<?x?xvector<3x4xi4>, offset: ?, strides: [?, 1]>,
               %arg1: memref<?x?x?xf32, offset: ?, strides: [?, ?, 1]>) {
   %cst = arith.constant 0.0 : f32
   linalg.generic #trait_0
@@ -128,7 +126,7 @@ func @generic(%arg0: memref<?x?xvector<3x4xi4>, offset: ?, strides: [?, 1]>,
 //  CHECK-SAME:     outs({{.*}} : memref<?x?x?xf32, #[[$strided3D]]>)
 //  CHECK-SAME:     {foo = 1 : i64}
 
-func @generic_with_tensor_input(%arg0: tensor<?x?xvector<3x4xi4>>,
+func.func @generic_with_tensor_input(%arg0: tensor<?x?xvector<3x4xi4>>,
                                 %arg1: memref<?x?x?xf32, offset: ?, strides: [?, ?, 1]>) {
   %cst = arith.constant 0.0 : f32
   linalg.generic #trait_0
@@ -151,11 +149,11 @@ func @generic_with_tensor_input(%arg0: tensor<?x?xvector<3x4xi4>>,
 // -----
 
 #map0 = affine_map<(d0, d1, d2) -> (d0, d1, d2)>
-func @generic_without_inputs(%arg0 : memref<?x?x?xf32>) {
+func.func @generic_without_inputs(%arg0 : memref<?x?x?xf32>) {
   linalg.generic  {indexing_maps = [#map0],
                    iterator_types = ["parallel", "parallel", "parallel"]}
                   outs(%arg0 : memref<?x?x?xf32>) {
-   ^bb0(%arg3: f32):  
+   ^bb0(%arg3: f32):
       %cst = arith.constant 0.000000e+00 : f32
       linalg.yield %cst : f32
     }
@@ -180,7 +178,7 @@ func @generic_without_inputs(%arg0 : memref<?x?x?xf32>) {
   library_call = "some_external_function_name_1"
 }
 
-func @generic_with_tensor_input_and_output(
+func.func @generic_with_tensor_input_and_output(
     %arg0: tensor<?x?xvector<3x4xi4>>, %arg1: tensor<?x?x?xf32>)
     -> (tensor<?x?x?xf32>) {
   %0 = linalg.generic #trait_1
@@ -205,20 +203,20 @@ func @generic_with_tensor_input_and_output(
 
 // -----
 
-func @generic_with_multiple_tensor_outputs(
+func.func @generic_with_multiple_tensor_outputs(
     %arg0: tensor<?xi32>, %arg1: tensor<?xi32>, %arg2: i32)
     -> (tensor<i32>, tensor<i32>) {
   %c0 = arith.constant 0 : index
   %0 = linalg.init_tensor [] : tensor<i32>
-  %1 = linalg.fill(%arg2, %0) : i32, tensor<i32> -> tensor<i32>
+  %1 = linalg.fill ins(%arg2 : i32) outs(%0 : tensor<i32>) -> tensor<i32>
   %2 = linalg.init_tensor [] : tensor<i32>
-  %3 = linalg.fill(%arg2, %2) : i32, tensor<i32> -> tensor<i32>
+  %3 = linalg.fill ins(%arg2 : i32) outs(%2 : tensor<i32>) -> tensor<i32>
   %4:2 = linalg.generic {
     indexing_maps = [affine_map<(d0) -> (d0)>, affine_map<(d0) -> (d0)>, affine_map<(d0) -> ()>, affine_map<(d0) -> ()>],
     iterator_types = ["reduction"]}
     ins(%arg0, %arg1 : tensor<?xi32>, tensor<?xi32>)
     outs(%1, %3 : tensor<i32>, tensor<i32>) {
-  ^bb0(%arg3: i32, %arg4: i32, %arg5: i32, %arg6: i32):  
+  ^bb0(%arg3: i32, %arg4: i32, %arg5: i32, %arg6: i32):
     %5 = arith.cmpi sge, %arg3, %arg5 : i32
     %6 = arith.select %5, %arg3, %arg5 : i32
     %7 = arith.cmpi eq, %arg3, %arg5 : i32
@@ -249,7 +247,7 @@ func @generic_with_multiple_tensor_outputs(
   library_call = "some_broadcast_external_fn"
 }
 
-func @generic_op_zero_rank(%arg0: tensor<f32>, %arg1 : tensor<3x4xf32>) -> (tensor<3x4xf32>)
+func.func @generic_op_zero_rank(%arg0: tensor<f32>, %arg1 : tensor<3x4xf32>) -> (tensor<3x4xf32>)
 {
   %0 = linalg.generic #trait_broadcast
        ins(%arg0 : tensor<f32>)
@@ -274,7 +272,7 @@ func @generic_op_zero_rank(%arg0: tensor<f32>, %arg1 : tensor<3x4xf32>) -> (tens
   library_call = "some_external_function_name_2"
 }
 
-func @generic_region(%arg0: memref<?x?xvector<3x4xi4>, offset: ?, strides: [?, 1]>,
+func.func @generic_region(%arg0: memref<?x?xvector<3x4xi4>, offset: ?, strides: [?, 1]>,
                      %arg1: memref<?x?x?xf32, offset: ?, strides: [?, ?, 1]>) {
   linalg.generic #trait_3
        ins(%arg0 : memref<?x?xvector<3x4xi4>, offset: ?, strides: [?, 1]>)
@@ -305,7 +303,7 @@ func @generic_region(%arg0: memref<?x?xvector<3x4xi4>, offset: ?, strides: [?, 1
 // -----
 
 
-func @named_ops(%a3: memref<?x?x?xf32>, %b3: memref<?x?x?xf32>, %c3: memref<?x?x?xf32>,
+func.func @named_ops(%a3: memref<?x?x?xf32>, %b3: memref<?x?x?xf32>, %c3: memref<?x?x?xf32>,
                 %ta3: tensor<?x?x?xf32>, %tb3: tensor<?x?x?xf32>, %tc3: tensor<?x?x?xf32>)
   -> (tensor<?x?x?xf32>, tensor<?x?x?xf32>)
 {
@@ -332,7 +330,7 @@ func @named_ops(%a3: memref<?x?x?xf32>, %b3: memref<?x?x?xf32>, %c3: memref<?x?x
 // -----
 
 #attr = {"foo"}
-func @init_tensor(%arg0 : index, %arg1 : index)
+func.func @init_tensor(%arg0 : index, %arg1 : index)
 {
   %0 = linalg.init_tensor [3, 42] : tensor<3x42xf32>
   %1 = linalg.init_tensor [4, %arg0, %arg1, 5] : tensor<4x?x?x5xf32>
@@ -346,179 +344,9 @@ func @init_tensor(%arg0 : index, %arg1 : index)
 
 // -----
 
-func @fill_tensor(%arg0 : index, %arg1 : index, %arg2 : f32) -> tensor<?x?xf32> {
+func.func @fill_tensor(%arg0 : index, %arg1 : index, %arg2 : f32) -> tensor<?x?xf32> {
   %0 = linalg.init_tensor [%arg0, %arg1] : tensor<?x?xf32>
-  %1 = linalg.fill(%arg2, %0) : f32, tensor<?x?xf32> -> tensor<?x?xf32>
+  %1 = linalg.fill ins(%arg2 : f32) outs(%0 : tensor<?x?xf32>) -> tensor<?x?xf32>
   return %1 : tensor<?x?xf32>
 }
-// CHECK: %{{.+}} = linalg.fill(%{{.+}}, %{{.+}}) : f32, tensor<?x?xf32> -> tensor<?x?xf32>
-
-// -----
-
-#accesses_4 = [
-  affine_map<(i, j) -> (i, j)>,
-  affine_map<(i, j) -> (i, j)>,
-  affine_map<(i, j) -> (i, j)>
-]
-
-#trait_4 = {
-  indexing_maps = #accesses_4,
-  iterator_types = ["parallel", "parallel"]
-}
-
-func @tiled_loop(%lhs: tensor<24x64xi8>, %rhs: tensor<24x64xi8>,
-                 %out: tensor<24x64xi8>) -> tensor<24x64xi8> {
- %c0 = arith.constant 0 : index
- %c1 = arith.constant 1 : index
- %c4 = arith.constant 4 : index
- %c24 = arith.constant 24 : index
- %c64 = arith.constant 64 : index
- %prod = linalg.tiled_loop (%i) = (%c0) to (%c24) step (%c4)
-      ins(%lhs_ = %lhs: tensor<24x64xi8>, %rhs_ = %rhs: tensor<24x64xi8>)
-      outs(%out_ = %out: tensor<24x64xi8>) {
-    %lhs_sub = tensor.extract_slice %lhs_[%i, 0] [%c4, %c64] [1, 1]
-        : tensor<24x64xi8> to tensor<?x?xi8>
-    %rhs_sub = tensor.extract_slice %rhs_[%i, 0] [%c4, %c64] [1, 1]
-        : tensor<24x64xi8> to tensor<?x?xi8>
-    %out_sub = tensor.extract_slice %out_[%i, 0] [%c4, %c64] [1, 1]
-        : tensor<24x64xi8> to tensor<?x?xi8>
-
-    %sum = linalg.generic #trait_4
-        ins(%lhs_sub, %rhs_sub : tensor<?x?xi8>, tensor<?x?xi8>)
-        outs(%out_sub : tensor<?x?xi8>) {
-      ^bb(%l: i8, %r: i8, %o: i8) :
-        %s = arith.addi %l, %r : i8
-        linalg.yield %s : i8
-      } -> tensor<?x?xi8>
-
-    %sum_sub = tensor.insert_slice %sum into %out_[%i, 0][%c4, %c64][1, 1]
-      : tensor<?x?xi8> into tensor<24x64xi8>
-    linalg.yield %sum_sub : tensor<24x64xi8>
-  }
-  return %prod : tensor<24x64xi8>
-}
-// CHECK-LABEL: func @tiled_loop
-// CHECK-NOT: iterators[
-
-// -----
-
-#id_3d = affine_map<(d0, d1, d2) -> (d0, d1, d2)>
-#id_2d = affine_map<(d0, d1, d2) -> (d0, d2)>
-#id_1d = affine_map<(d0, d1, d2) -> (d1)>
-
-#trait_5 = {
-  indexing_maps = [
-    #id_3d,
-    #id_2d,
-    #id_1d,
-    #id_1d
-  ],
-  iterator_types = ["reduction", "parallel", "reduction"]
-}
-
-func @tiled_loop_reduction(%input_3d: tensor<16x24x32xf32>,
-                           %input_2d: tensor<16x32xf32>,
-                           %input_1d: tensor<24xf32>,
-                           %output: tensor<24xf32>) -> tensor<24xf32> {
-  %c0 = arith.constant 0 : index
-  %c1 = arith.constant 1 : index
-  %c2 = arith.constant 2 : index
-  %c4 = arith.constant 4 : index
-  %c8 = arith.constant 8 : index
-  %X = tensor.dim %input_3d, %c0 : tensor<16x24x32xf32>
-  %Y = tensor.dim %input_3d, %c1 : tensor<16x24x32xf32>
-  %Z = tensor.dim %input_3d, %c2 : tensor<16x24x32xf32>
-  %result = linalg.tiled_loop (%i, %j, %k)
-      = (%c0, %c0, %c0) to (%X, %Y, %Z) step (%c2, %c4, %c8)
-      ins(%i3d_ = %input_3d: tensor<16x24x32xf32>,
-          %i2d_ = %input_2d: tensor<16x32xf32>,
-          %i1d_ = %input_1d: tensor<24xf32>)
-      outs(%o_ =  %output: tensor<24xf32>)
-      iterators["reduction", "parallel", "reduction"]
-      distribution["block_x", "block_y", "none"] {
-    %sub_3d = tensor.extract_slice %i3d_[%i, %j, %k][2, 4, 8][1, 1, 1]
-      : tensor<16x24x32xf32> to tensor<2x4x8xf32>
-    %sub_2d = tensor.extract_slice %i2d_[%i, %k][2, 8][1, 1]
-      : tensor<16x32xf32> to tensor<2x8xf32>
-    %sub_1d = tensor.extract_slice %i1d_[%j] [4] [1]
-      : tensor<24xf32> to tensor<4xf32>
-    %sub_out = tensor.extract_slice %o_[%j] [4] [1]
-      : tensor<24xf32> to tensor<4xf32>
-    %acc = linalg.generic #trait_5
-      ins(%sub_3d, %sub_2d, %sub_1d
-        : tensor<2x4x8xf32>, tensor<2x8xf32>, tensor<4xf32>)
-      outs(%sub_out : tensor<4xf32>)  {
-    ^bb0(%i3d: f32, %i2d: f32, %i1d: f32, %o: f32):
-      %0 = arith.addf %i3d, %i2d : f32
-      %1 = arith.addf %0, %i1d : f32
-      linalg.yield %1 : f32
-    } -> tensor<4xf32>
-
-    %sum_sub = tensor.insert_slice %acc into %o_[%j][4][1]
-      : tensor<4xf32> into tensor<24xf32>
-    linalg.yield %sum_sub : tensor<24xf32>
-  }
-  return %result : tensor<24xf32>
-}
-// CHECK-LABEL: func @tiled_loop_reduction
-// CHECK: iterators[
-
-// -----
-
-#trait_6 = {
-  indexing_maps = [
-    #id_3d,
-    #id_2d,
-    #id_1d,
-    #id_1d
-  ],
-  iterator_types = ["reduction", "parallel", "reduction"]
-}
-#map_1 = affine_map<(d0, d1, d2)[s0] -> (d0 * 768 + s0 + d1 * 32 + d2)>
-#map_2 = affine_map<(d0, d1)[s0] -> (d0 * 32 + s0 + d1)>
-#map_3 = affine_map<(d0)[s0] -> (d0 + s0)>
-
-func @tiled_loop_on_buffers(%input_3d: memref<16x24x32xf32>,
-                            %input_2d: memref<16x32xf32>,
-                            %input_1d: memref<24xf32>,
-                            %output: memref<24xf32>) {
-  %c0 = arith.constant 0 : index
-  %c1 = arith.constant 1 : index
-  %c2 = arith.constant 2 : index
-  %c4 = arith.constant 4 : index
-  %c8 = arith.constant 8 : index
-  %X = memref.dim %input_3d, %c0 : memref<16x24x32xf32>
-  %Y = memref.dim %input_3d, %c1 : memref<16x24x32xf32>
-  %Z = memref.dim %input_3d, %c2 : memref<16x24x32xf32>
-  linalg.tiled_loop (%i, %j, %k) = (%c0, %c0, %c0)
-      to (%X, %Y, %Z) step (%c2, %c4, %c8)
-      ins(%i3d_ = %input_3d: memref<16x24x32xf32>,
-          %i2d_ = %input_2d: memref<16x32xf32>,
-          %i1d_ = %input_1d: memref<24xf32>)
-      outs(%o_ =  %output: memref<24xf32>)
-      iterators["reduction", "parallel", "reduction"] {
-    %sub_3d = memref.subview %i3d_[%i, %j, %k][2, 4, 8][1, 1, 1]
-      : memref<16x24x32xf32> to memref<2x4x8xf32, #map_1>
-    %sub_2d = memref.subview %i2d_[%i, %k][2, 8][1, 1]
-      : memref<16x32xf32> to memref<2x8xf32, #map_2>
-    %sub_1d = memref.subview %i1d_[%j] [4] [1]
-      : memref<24xf32> to memref<4xf32, #map_3>
-    %sub_out = memref.subview %o_[%j] [4] [1]
-      : memref<24xf32> to memref<4xf32, #map_3>
-    linalg.generic #trait_6
-      ins(%sub_3d, %sub_2d, %sub_1d
-        : memref<2x4x8xf32, #map_1>,
-          memref<2x8xf32, #map_2>,
-          memref<4xf32, #map_3>)
-      outs(%sub_out : memref<4xf32, #map_3>)  {
-    ^bb0(%i3d: f32, %i2d: f32, %i1d: f32, %o: f32):
-      %0 = arith.addf %i3d, %i2d : f32
-      %1 = arith.addf %0, %i1d : f32
-      linalg.yield %1 : f32
-    }
-    linalg.yield
-  }
-  return
-}
-// CHECK-LABEL: func @tiled_loop_on_buffers
-// CHECK: iterators[
+// CHECK: %{{.+}} = linalg.fill ins(%{{.+}} : f32) outs(%{{.+}} : tensor<?x?xf32>) -> tensor<?x?xf32>

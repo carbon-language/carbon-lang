@@ -17,6 +17,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/ADT/iterator_range.h"
@@ -37,7 +38,6 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
-#include "llvm/IR/GetElementPtrTypeIterator.h"
 #include "llvm/IR/GlobalAlias.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/GlobalVariable.h"
@@ -60,7 +60,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Utils/CtorUtils.h"
@@ -100,7 +99,7 @@ static cl::opt<bool>
                            cl::init(false), cl::Hidden);
 
 static cl::opt<int> ColdCCRelFreq(
-    "coldcc-rel-freq", cl::Hidden, cl::init(2), cl::ZeroOrMore,
+    "coldcc-rel-freq", cl::Hidden, cl::init(2),
     cl::desc(
         "Maximum block frequency, expressed as a percentage of caller's "
         "entry frequency, for a call site to be considered cold for enabling"
@@ -232,7 +231,7 @@ CleanupPointerRootUsers(GlobalVariable *GV,
       if (MemSrc && MemSrc->isConstant()) {
         Changed = true;
         MTI->eraseFromParent();
-      } else if (Instruction *I = dyn_cast<Instruction>(MemSrc)) {
+      } else if (Instruction *I = dyn_cast<Instruction>(MTI->getSource())) {
         if (I->hasOneUse())
           Dead.push_back(std::make_pair(I, MTI));
       }
@@ -405,9 +404,37 @@ static void transferSRADebugInfo(GlobalVariable *GV, GlobalVariable *NGV,
   for (auto *GVE : GVs) {
     DIVariable *Var = GVE->getVariable();
     DIExpression *Expr = GVE->getExpression();
+    int64_t CurVarOffsetInBytes = 0;
+    uint64_t CurVarOffsetInBits = 0;
+
+    // Calculate the offset (Bytes), Continue if unknown.
+    if (!Expr->extractIfOffset(CurVarOffsetInBytes))
+      continue;
+
+    // Ignore negative offset.
+    if (CurVarOffsetInBytes < 0)
+      continue;
+
+    // Convert offset to bits.
+    CurVarOffsetInBits = CHAR_BIT * (uint64_t)CurVarOffsetInBytes;
+
+    // Current var starts after the fragment, ignore.
+    if (CurVarOffsetInBits >= (FragmentOffsetInBits + FragmentSizeInBits))
+      continue;
+
+    uint64_t CurVarSize = Var->getType()->getSizeInBits();
+    // Current variable ends before start of fragment, ignore.
+    if (CurVarSize != 0 &&
+        (CurVarOffsetInBits + CurVarSize) <= FragmentOffsetInBits)
+      continue;
+
+    // Current variable fits in the fragment.
+    if (CurVarOffsetInBits == FragmentOffsetInBits &&
+        CurVarSize == FragmentSizeInBits)
+      Expr = DIExpression::get(Expr->getContext(), {});
     // If the FragmentSize is smaller than the variable,
     // emit a fragment expression.
-    if (FragmentSizeInBits < VarSize) {
+    else if (FragmentSizeInBits < VarSize) {
       if (auto E = DIExpression::createFragmentExpression(
               Expr, FragmentOffsetInBits, FragmentSizeInBits))
         Expr = *E;
@@ -581,17 +608,14 @@ static bool AllUsesOfValueWillTrapIfNull(const Value *V,
       // Will trap.
     } else if (const StoreInst *SI = dyn_cast<StoreInst>(U)) {
       if (SI->getOperand(0) == V) {
-        //cerr << "NONTRAPPING USE: " << *U;
         return false;  // Storing the value.
       }
     } else if (const CallInst *CI = dyn_cast<CallInst>(U)) {
       if (CI->getCalledOperand() != V) {
-        //cerr << "NONTRAPPING USE: " << *U;
         return false;  // Not calling the ptr
       }
     } else if (const InvokeInst *II = dyn_cast<InvokeInst>(U)) {
       if (II->getCalledOperand() != V) {
-        //cerr << "NONTRAPPING USE: " << *U;
         return false;  // Not calling the ptr
       }
     } else if (const BitCastInst *CI = dyn_cast<BitCastInst>(U)) {
@@ -615,7 +639,6 @@ static bool AllUsesOfValueWillTrapIfNull(const Value *V,
       // the comparing of the value of the created global init bool later in
       // optimizeGlobalAddressOfAllocation for the global variable.
     } else {
-      //cerr << "NONTRAPPING USE: " << *U;
       return false;
     }
   }
@@ -878,7 +901,7 @@ OptimizeGlobalAddressOfAllocation(GlobalVariable *GV, CallInst *CI,
     }
   }
 
-  SmallPtrSet<Constant *, 1> RepValues;
+  SmallSetVector<Constant *, 1> RepValues;
   RepValues.insert(NewGV);
 
   // If there is a comparison against null, we will insert a global bool to
@@ -1755,7 +1778,7 @@ hasOnlyColdCalls(Function &F,
           return false;
         if (!CalledFn->hasLocalLinkage())
           return false;
-        // Skip over instrinsics since they won't remain as function calls.
+        // Skip over intrinsics since they won't remain as function calls.
         if (CalledFn->getIntrinsicID() != Intrinsic::not_intrinsic)
           continue;
         // Check if it's valid to use coldcc calling convention.
@@ -2031,6 +2054,9 @@ OptimizeGlobalVars(Module &M,
 /// can, false otherwise.
 static bool EvaluateStaticConstructor(Function *F, const DataLayout &DL,
                                       TargetLibraryInfo *TLI) {
+  // Skip external functions.
+  if (F->isDeclaration())
+    return false;
   // Call the function.
   Evaluator Eval(DL, TLI);
   Constant *RetValDummy;
@@ -2392,6 +2418,8 @@ static bool optimizeGlobalsInModule(
   SmallPtrSet<const Comdat *, 8> NotDiscardableComdats;
   bool Changed = false;
   bool LocalChange = true;
+  Optional<uint32_t> FirstNotFullyEvaluatedPriority;
+
   while (LocalChange) {
     LocalChange = false;
 
@@ -2414,9 +2442,16 @@ static bool optimizeGlobalsInModule(
                                      NotDiscardableComdats);
 
     // Optimize global_ctors list.
-    LocalChange |= optimizeGlobalCtorsList(M, [&](Function *F) {
-      return EvaluateStaticConstructor(F, DL, &GetTLI(*F));
-    });
+    LocalChange |=
+        optimizeGlobalCtorsList(M, [&](uint32_t Priority, Function *F) {
+          if (FirstNotFullyEvaluatedPriority &&
+              *FirstNotFullyEvaluatedPriority != Priority)
+            return false;
+          bool Evaluated = EvaluateStaticConstructor(F, DL, &GetTLI(*F));
+          if (!Evaluated)
+            FirstNotFullyEvaluatedPriority = Priority;
+          return Evaluated;
+        });
 
     // Optimize non-address-taken globals.
     LocalChange |= OptimizeGlobalVars(M, GetTTI, GetTLI, LookupDomTree,

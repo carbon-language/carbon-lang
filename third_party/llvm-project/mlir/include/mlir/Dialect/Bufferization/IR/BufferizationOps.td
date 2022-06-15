@@ -12,11 +12,128 @@
 include "mlir/Dialect/Bufferization/IR/AllocationOpInterface.td"
 include "mlir/Dialect/Bufferization/IR/BufferizableOpInterface.td"
 include "mlir/Dialect/Bufferization/IR/BufferizationBase.td"
+include "mlir/Interfaces/InferTypeOpInterface.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 include "mlir/Interfaces/CopyOpInterface.td"
 
 class Bufferization_Op<string mnemonic, list<Trait> traits = []>
     : Op<Bufferization_Dialect, mnemonic, traits>;
+
+//===----------------------------------------------------------------------===//
+// AllocTensorOp
+//===----------------------------------------------------------------------===//
+
+def Bufferization_AllocTensorOp : Bufferization_Op<"alloc_tensor",
+    [AttrSizedOperandSegments, BufferizableOpInterface,
+     DeclareOpInterfaceMethods<ReifyRankedShapedTypeOpInterface>]> {
+  let summary = "buffer allocation in tensor land";
+
+  let description = [{
+    `bufferization.alloc_tensor` materializes an uninitialized tensor with a
+    given shape (dynamic or static). It always bufferizes to a new buffer
+    allocation of the given shape. The optional `copy` operand specifies the
+    contents of the tensors. If no `copy` operand is specified, reading from the
+    result of an `alloc_tensor` op yields an undefined value.
+
+    If `copy` is specified, no dynamic sizes should be passed, since they are
+    the same as the dynamic sizes of the `copy` operand.
+
+    The optional `escape` attribute indicates whether the buffer escapes the
+    parent block or not. In the latter case, the buffer is deallocated at the
+    of the block (during bufferization). In the former case, the buffer is not
+    deallocated and must be deallocated through some other mechanism.
+
+    `alloc_tensor` is a helper op for bufferization. The operation is provided
+    as an anchor that marks the beginning of a new tensor SSA use-def chain. It
+    can be used to control in-place bufferization decisions during One-Shot
+    Bufferize: The bufferized result of a `bufferization.alloc_tensor` does not
+    alias with any other buffer, so it can be used to resolve read-after-write
+    conflicts that would have been introduced by the in-place bufferization of
+    another op.
+
+    Both dense and sparse tensor types are supported. The result of a
+    `bufferization.alloc_tensor` is a tensor value that can be used like any
+    other tensor value. In practice, it is often used as the "out" operand of
+    another op. E.g.:
+
+    ```mlir
+    %c = bufferization.alloc_tensor [%d1, %d2] : tensor<?x?xf32, #SparseMatrix>
+    %0 = linalg.matmul
+      ins(%a, %b: tensor<?x?xf32, #SparseMatrix>, tensor<?x?xf32, #SparseMatrix>)
+      outs(%c: tensor<?x?xf32, #SparseMatrix>) -> tensor<?x?xf32, #SparseMatrix>
+    ```
+  }];
+
+  let arguments = (ins Variadic<Index>:$dynamicSizes,
+                       Optional<AnyTensor>:$copy,
+                       OptionalAttr<BoolAttr>:$escape);
+
+  let results = (outs AnyTensor:$result);
+
+  let extraClassDeclaration = [{
+    LogicalResult bufferize(RewriterBase &rewriter, BufferizationState &state);
+
+    bool isMemoryWrite(OpResult opResult, const AnalysisState &state);
+
+    bool bufferizesToMemoryRead(OpOperand &opOperand,
+                                const AnalysisState &state);
+
+    bool bufferizesToMemoryWrite(OpOperand &opOperand,
+                                 const AnalysisState &state);
+
+    SmallVector<OpResult> getAliasingOpResult(
+        OpOperand &opOperand, const AnalysisState &state);
+
+    RankedTensorType getType() {
+      return getResult().getType().cast<RankedTensorType>();
+    }
+
+    // Return true if the size of the tensor is dynamic at `idx`
+    bool isDynamicDim(unsigned idx) {
+      return getType().isDynamicDim(idx);
+    }
+
+    // Return the argument position that contains the dynamic size of
+    // the tensor at dimension `idx`. Asserts that the shape is
+    // dynamic at that `idx`.
+    unsigned getIndexOfDynamicSize(unsigned idx) {
+      assert(!copy() && "no dim sizes specified when copying a tensor");
+      assert(isDynamicDim(idx) && "expected dynamic size");
+      ArrayRef<int64_t> shape = getType().getShape();
+      return std::count_if(
+          shape.begin(), shape.begin() + idx,
+          [&](int64_t size) { return ShapedType::isDynamic(size); });
+    }
+
+    // Return the Value of the dynamic size of the tensor at dimension
+    // `idx`. Asserts that the shape is dynamic at that `idx.
+    Value getDynamicSize(OpBuilder &b, unsigned idx);
+
+    // Assert that the size of the result tensor is static at `idx`
+    // and return the shape.
+    int64_t getStaticSize(unsigned idx) {
+      assert(!isDynamicDim(idx) && "expected static size");
+      return getType().getShape()[idx];
+    }
+  }];
+
+  let builders = [
+    // Build an op without `copy` operand and `escape` attribute.
+    OpBuilder<(ins "RankedTensorType":$type, "ValueRange":$dynamicSizes)>,
+
+    // Build an op without `escape` attribute.
+    OpBuilder<(ins "RankedTensorType":$type, "ValueRange":$dynamicSizes,
+                   "Value":$copy)>,
+
+    // Build an op with `copy` and `escape` attribute.
+    OpBuilder<(ins "RankedTensorType":$type, "ValueRange":$dynamicSizes,
+                   "Value":$copy, "bool":$escape)>,
+  ];
+
+  let hasCanonicalizer = 1;
+  let hasCustomAssemblyFormat = 1;
+  let hasVerifier = 1;
+}
 
 //===----------------------------------------------------------------------===//
 // CloneOp
@@ -125,7 +242,7 @@ def Bufferization_ToTensorOp : Bufferization_Op<"to_tensor", [
     // results as not writable enforces a buffer copy and has the same effect.
 
     LogicalResult bufferize(RewriterBase &rewriter,
-                            const BufferizationState &state) const {
+                            BufferizationState &state) const {
       // to_tensor cannot be bufferized. However, other ops that are using
       // to_tensor's result will eventually be bufferized. At that point, they
       // will start using to_tensor's memref operand. Once all users of
@@ -133,10 +250,10 @@ def Bufferization_ToTensorOp : Bufferization_Op<"to_tensor", [
       // DCE away. In case of partial bufferization, to_memref(to_tensor(x))
       // constructs may be left over. These are folded by the canonicalizer or
       // FinalizingBufferize.
-      return failure();
+      return success();
     }
 
-    bool isWritable(Value value, const BufferizationState &state) const {
+    bool isWritable(Value value, const AnalysisState &state) const {
       // It is unknown whether the memref operand is writable or not.
       return false;
     }
@@ -194,30 +311,30 @@ def Bufferization_ToMemrefOp : Bufferization_Op<"to_memref", [
     // but such IR may no longer be analyzable by One-Shot analysis.
 
     bool bufferizesToMemoryRead(OpOperand &opOperand,
-                                const BufferizationState &state) const {
+                                const AnalysisState &state) const {
       // It is unknown whether the resulting memref will be read or not.
       return true;
     }
 
     bool bufferizesToMemoryWrite(OpOperand &opOperand,
-                                 const BufferizationState &state) const {
+                                 const AnalysisState &state) const {
       // It is unknown whether the resulting MemRef will be written or not.
       return true;
     }
 
     bool mustBufferizeInPlace(OpOperand &opOperand,
-                              const BufferizationState &state) const {
+                              const AnalysisState &state) const {
       // ToMemrefOps always bufferize inplace.
       return true;
     }
 
     SmallVector<OpResult> getAliasingOpResult(
-        OpOperand &opOperand, const BufferizationState &state) const {
+        OpOperand &opOperand, const AnalysisState &state) const {
       return {};
     }
 
     LogicalResult bufferize(RewriterBase &rewriter,
-                            const BufferizationState &state);
+                            BufferizationState &state);
   }];
 
   let assemblyFormat = "$tensor attr-dict `:` type($memref)";

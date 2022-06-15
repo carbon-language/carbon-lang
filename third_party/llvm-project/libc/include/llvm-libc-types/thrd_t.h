@@ -9,12 +9,8 @@
 #ifndef __LLVM_LIBC_TYPES_THRD_T_H__
 #define __LLVM_LIBC_TYPES_THRD_T_H__
 
-typedef struct {
-  unsigned char __clear_tid[4];
-  int __tid;
-  void *__stack;
-  int __stack_size;
-  int __retval;
-} thrd_t;
+#include <llvm-libc-types/__thread_type.h>
+
+typedef __thread_type thrd_t;
 
 #endif // __LLVM_LIBC_TYPES_THRD_T_H__

@@ -191,7 +191,9 @@ if(CLANG_BUILT_STANDALONE)
     else()
       set(LLVM_INCLUDE_TESTS OFF)
     endif()
-  endif()
+
+    umbrella_lit_testsuite_begin(check-all)
+  endif() # LLVM_INCLUDE_TESTS
 
   set(BACKEND_PACKAGE_STRING "LLVM ${LLVM_PACKAGE_VERSION}")
 else()
@@ -245,7 +247,18 @@ set(PPC_LINUX_DEFAULT_IEEELONGDOUBLE OFF CACHE BOOL
 set(CLANG_SPAWN_CC1 OFF CACHE BOOL
     "Whether clang should use a new process for the CC1 invocation")
 
-option(CLANG_DEFAULT_PIE_ON_LINUX "Default to -fPIE and -pie on Linux" OFF)
+option(CLANG_DEFAULT_PIE_ON_LINUX "Default to -fPIE and -pie on linux-gnu" ON)
+
+# Manually handle default so we can change the meaning of a cached default.
+set(CLANG_ENABLE_OPAQUE_POINTERS "DEFAULT" CACHE STRING
+    "Enable opaque pointers by default")
+if(CLANG_ENABLE_OPAQUE_POINTERS STREQUAL "DEFAULT")
+  set(CLANG_ENABLE_OPAQUE_POINTERS_INTERNAL ON)
+elseif(CLANG_ENABLE_OPAQUE_POINTERS)
+  set(CLANG_ENABLE_OPAQUE_POINTERS_INTERNAL ON)
+else()
+  set(CLANG_ENABLE_OPAQUE_POINTERS_INTERNAL OFF)
+endif()
 
 # TODO: verify the values against LangStandards.def?
 set(CLANG_DEFAULT_STD_C "" CACHE STRING
@@ -403,7 +416,7 @@ endif ()
 
 # Determine HOST_LINK_VERSION on Darwin.
 set(HOST_LINK_VERSION)
-if (APPLE)
+if (APPLE AND NOT CMAKE_LINKER MATCHES ".*lld.*")
   set(LD_V_OUTPUT)
   execute_process(
     COMMAND sh -c "${CMAKE_LINKER} -v 2>&1 | head -1"
@@ -574,21 +587,7 @@ if( CLANG_INCLUDE_TESTS )
   add_subdirectory(bindings/python/tests)
 
   if(CLANG_BUILT_STANDALONE)
-    # Add a global check rule now that all subdirectories have been traversed
-    # and we know the total set of lit testsuites.
-    get_property(LLVM_LIT_TESTSUITES GLOBAL PROPERTY LLVM_LIT_TESTSUITES)
-    get_property(LLVM_LIT_PARAMS GLOBAL PROPERTY LLVM_LIT_PARAMS)
-    get_property(LLVM_LIT_DEPENDS GLOBAL PROPERTY LLVM_LIT_DEPENDS)
-    get_property(LLVM_LIT_EXTRA_ARGS GLOBAL PROPERTY LLVM_LIT_EXTRA_ARGS)
-    get_property(LLVM_ADDITIONAL_TEST_TARGETS
-                 GLOBAL PROPERTY LLVM_ADDITIONAL_TEST_TARGETS)
-    add_lit_target(check-all
-      "Running all regression tests"
-      ${LLVM_LIT_TESTSUITES}
-      PARAMS ${LLVM_LIT_PARAMS}
-      DEPENDS ${LLVM_LIT_DEPENDS} ${LLVM_ADDITIONAL_TEST_TARGETS}
-      ARGS ${LLVM_LIT_EXTRA_ARGS}
-      )
+    umbrella_lit_testsuite_end(check-all)
   endif()
   add_subdirectory(utils/perf-training)
 endif()

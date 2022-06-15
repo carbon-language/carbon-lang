@@ -34,7 +34,7 @@ _add_capi_test_executable(mlir-capi-ir-test
   ir.c
   LINK_LIBS PRIVATE
     MLIRCAPIIR
-    MLIRCAPIStandard
+    MLIRCAPIFunc
     MLIRCAPIRegistration
 )
 
@@ -49,6 +49,7 @@ _add_capi_test_executable(mlir-capi-llvm-test
 _add_capi_test_executable(mlir-capi-pass-test
   pass.c
   LINK_LIBS PRIVATE
+    MLIRCAPIFunc
     MLIRCAPIIR
     MLIRCAPIRegistration
     MLIRCAPITransforms

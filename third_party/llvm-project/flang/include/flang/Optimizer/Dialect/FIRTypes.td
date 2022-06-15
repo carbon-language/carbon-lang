@@ -13,6 +13,7 @@
 #ifndef FIR_DIALECT_FIR_TYPES
 #define FIR_DIALECT_FIR_TYPES
 
+include "mlir/IR/AttrTypeBase.td"
 include "flang/Optimizer/Dialect/FIRDialect.td"
 
 //===----------------------------------------------------------------------===//
@@ -38,6 +39,7 @@ def fir_BoxCharType : FIR_Type<"BoxChar", "boxchar"> {
   let parameters = (ins "KindTy":$kind);
 
   let genAccessors = 1;
+  let hasCustomAssemblyFormat = 1;
 
   let extraClassDeclaration = [{
     using KindTy = unsigned;
@@ -61,6 +63,7 @@ def fir_BoxProcType : FIR_Type<"BoxProc", "boxproc"> {
   let parameters = (ins "mlir::Type":$eleTy);
 
   let genVerifyDecl = 1;
+  let hasCustomAssemblyFormat = 1;
 }
 
 def fir_BoxType : FIR_Type<"Box", "box"> {
@@ -90,6 +93,7 @@ def fir_BoxType : FIR_Type<"Box", "box"> {
   }];
 
   let genVerifyDecl = 1;
+  let hasCustomAssemblyFormat = 1;
 }
 
 def fir_CharacterType : FIR_Type<"Character", "char"> {
@@ -103,6 +107,7 @@ def fir_CharacterType : FIR_Type<"Character", "char"> {
   }];
 
   let parameters = (ins "KindTy":$FKind, "CharacterType::LenType":$len);
+  let hasCustomAssemblyFormat = 1;
 
   let extraClassDeclaration = [{
     using KindTy = unsigned;
@@ -142,11 +147,13 @@ def fir_ComplexType : FIR_Type<"Complex", "complex"> {
   }];
 
   let parameters = (ins "KindTy":$fKind);
+  let hasCustomAssemblyFormat = 1;
 
   let extraClassDeclaration = [{
     using KindTy = unsigned;
 
     mlir::Type getElementType() const;
+    mlir::Type getEleType(const fir::KindMapping &kindMap) const;
   }];
 }
 
@@ -173,6 +180,7 @@ def fir_HeapType : FIR_Type<"Heap", "heap"> {
   let parameters = (ins "mlir::Type":$eleTy);
 
   let genVerifyDecl = 1;
+  let hasCustomAssemblyFormat = 1;
 
   let skipDefaultBuilders = 1;
 
@@ -193,6 +201,7 @@ def fir_IntegerType : FIR_Type<"Integer", "int"> {
   }];
 
   let parameters = (ins "KindTy":$fKind);
+  let hasCustomAssemblyFormat = 1;
 
   let extraClassDeclaration = [{
     using KindTy = unsigned;
@@ -218,6 +227,7 @@ def fir_LogicalType : FIR_Type<"Logical", "logical"> {
   }];
 
   let parameters = (ins "KindTy":$fKind);
+  let hasCustomAssemblyFormat = 1;
 
   let extraClassDeclaration = [{
     using KindTy = unsigned;
@@ -258,6 +268,7 @@ def fir_PointerType : FIR_Type<"Pointer", "ptr"> {
   let parameters = (ins "mlir::Type":$eleTy);
 
   let genVerifyDecl = 1;
+  let hasCustomAssemblyFormat = 1;
 
   let skipDefaultBuilders = 1;
 
@@ -282,6 +293,7 @@ def fir_RealType : FIR_Type<"Real", "real"> {
   }];
 
   let parameters = (ins "KindTy":$fKind);
+  let hasCustomAssemblyFormat = 1;
 
   let extraClassDeclaration = [{
     using KindTy = unsigned;
@@ -303,6 +315,7 @@ def fir_RecordType : FIR_Type<"Record", "type"> {
 
   let genVerifyDecl = 1;
   let genStorageClass = 0;
+  let hasCustomAssemblyFormat = 1;
 
   let extraClassDeclaration = [{
     using TypePair = std::pair<std::string, mlir::Type>;
@@ -323,8 +336,6 @@ def fir_RecordType : FIR_Type<"Record", "type"> {
 
     void finalize(llvm::ArrayRef<TypePair> lenPList,
                   llvm::ArrayRef<TypePair> typeList);
-    
-    std::string translateNameToFrontendMangledName() const;
 
     detail::RecordTypeStorage const *uniqueKey() const;
   }];
@@ -352,6 +363,7 @@ def fir_ReferenceType : FIR_Type<"Reference", "ref"> {
   }];
 
   let genVerifyDecl = 1;
+  let hasCustomAssemblyFormat = 1;
 }
 
 def fir_ShapeType : FIR_Type<"Shape", "shape"> {
@@ -364,6 +376,7 @@ def fir_ShapeType : FIR_Type<"Shape", "shape"> {
   }];
 
   let parameters = (ins "unsigned":$rank);
+  let hasCustomAssemblyFormat = 1;
 }
 
 def fir_ShapeShiftType : FIR_Type<"ShapeShift", "shapeshift"> {
@@ -377,6 +390,7 @@ def fir_ShapeShiftType : FIR_Type<"ShapeShift", "shapeshift"> {
   }];
 
   let parameters = (ins "unsigned":$rank);
+  let hasCustomAssemblyFormat = 1;
 }
 
 def fir_ShiftType : FIR_Type<"Shift", "shift"> {
@@ -389,6 +403,7 @@ def fir_ShiftType : FIR_Type<"Shift", "shift"> {
   }];
 
   let parameters = (ins "unsigned":$rank);
+  let hasCustomAssemblyFormat = 1;
 
   let extraClassDeclaration = [{
     using KindTy = unsigned;
@@ -418,6 +433,7 @@ def fir_SequenceType : FIR_Type<"Sequence", "array"> {
   );
 
   let genVerifyDecl = 1;
+  let hasCustomAssemblyFormat = 1;
 
   let builders = [
     TypeBuilderWithInferredContext<(ins
@@ -471,6 +487,7 @@ def fir_SliceType : FIR_Type<"Slice", "slice"> {
   }];
 
   let parameters = (ins "unsigned":$rank);
+  let hasCustomAssemblyFormat = 1;
 }
 
 def fir_TypeDescType : FIR_Type<"TypeDesc", "tdesc"> {
@@ -484,6 +501,7 @@ def fir_TypeDescType : FIR_Type<"TypeDesc", "tdesc"> {
   let parameters = (ins "mlir::Type":$ofTy);
 
   let genVerifyDecl = 1;
+  let hasCustomAssemblyFormat = 1;
 
   let skipDefaultBuilders = 1;
 
@@ -506,6 +524,7 @@ def fir_VectorType : FIR_Type<"Vector", "vector"> {
   let parameters = (ins "uint64_t":$len, "mlir::Type":$eleTy);
 
   let genVerifyDecl = 1;
+  let hasCustomAssemblyFormat = 1;
 
   let extraClassDeclaration = [{
     static bool isValidElementType(mlir::Type t);
@@ -548,6 +567,11 @@ def AnyCompositeLike : TypeConstraint<Or<[fir_RecordType.predicate,
 def AnyReferenceLike : TypeConstraint<Or<[fir_ReferenceType.predicate,
     fir_HeapType.predicate, fir_PointerType.predicate,
     fir_LLVMPointerType.predicate]>, "any reference">;
+
+def FuncType : TypeConstraint<FunctionType.predicate, "function type">;
+
+def AnyCodeOrDataRefLike : TypeConstraint<Or<[AnyReferenceLike.predicate,
+    FunctionType.predicate]>, "any code or data reference">;
 
 def RefOrLLVMPtr : TypeConstraint<Or<[fir_ReferenceType.predicate,
     fir_LLVMPointerType.predicate]>, "fir.ref or fir.llvm_ptr">;

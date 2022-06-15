@@ -98,7 +98,7 @@ static const char *ReportTypeString(ReportType typ, uptr tag) {
   UNREACHABLE("missing case");
 }
 
-#if SANITIZER_MAC
+#if SANITIZER_APPLE
 static const char *const kInterposedFunctionPrefix = "wrap_";
 #else
 static const char *const kInterposedFunctionPrefix = "__interceptor_";
@@ -305,6 +305,9 @@ void PrintReport(const ReportDesc *rep) {
   Printf("WARNING: ThreadSanitizer: %s (pid=%d)\n", rep_typ_str,
          (int)internal_getpid());
   Printf("%s", d.Default());
+
+  if (rep->typ == ReportTypeErrnoInSignal)
+    Printf("  Signal %u handler invoked at:\n", rep->signum);
 
   if (rep->typ == ReportTypeDeadlock) {
     char thrbuf[kThreadBufSize];

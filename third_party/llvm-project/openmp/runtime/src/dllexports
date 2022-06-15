@@ -556,6 +556,7 @@ kmp_set_disp_num_buffers                    890
     omp_get_interop_int                     807
     omp_get_interop_ptr                     808
     omp_get_interop_str                     809
+    omp_in_explicit_task                    769
 
     omp_null_allocator                     DATA
     omp_default_mem_alloc                  DATA
@@ -566,7 +567,7 @@ kmp_set_disp_num_buffers                    890
     omp_cgroup_mem_alloc                   DATA
     omp_pteam_mem_alloc                    DATA
     omp_thread_mem_alloc                   DATA
-    # Preview of target memory support
+
     llvm_omp_target_host_mem_alloc         DATA
     llvm_omp_target_shared_mem_alloc       DATA
     llvm_omp_target_device_mem_alloc       DATA
@@ -576,7 +577,7 @@ kmp_set_disp_num_buffers                    890
     omp_const_mem_space                    DATA
     omp_high_bw_mem_space                  DATA
     omp_low_lat_mem_space                  DATA
-    # Preview of target memory support
+
     llvm_omp_target_host_mem_space         DATA
     llvm_omp_target_shared_mem_space       DATA
     llvm_omp_target_device_mem_space       DATA

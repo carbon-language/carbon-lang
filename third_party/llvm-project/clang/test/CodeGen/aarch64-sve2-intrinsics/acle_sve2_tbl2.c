@@ -3,8 +3,6 @@
 // RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +sve2 -fallow-half-arguments-and-returns -S -O1 -Werror -Wall -emit-llvm -o - -x c++ %s | FileCheck %s -check-prefix=CPP-CHECK
 // RUN: %clang_cc1 -DSVE_OVERLOADED_FORMS -triple aarch64-none-linux-gnu -target-feature +sve2 -fallow-half-arguments-and-returns -S -O1 -Werror -Wall -emit-llvm -o - %s | FileCheck %s
 // RUN: %clang_cc1 -DSVE_OVERLOADED_FORMS -triple aarch64-none-linux-gnu -target-feature +sve2 -fallow-half-arguments-and-returns -S -O1 -Werror -Wall -emit-llvm -o - -x c++ %s | FileCheck %s -check-prefix=CPP-CHECK
-// RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +sve -fallow-half-arguments-and-returns -fsyntax-only -verify -verify-ignore-unexpected=error %s
-// RUN: %clang_cc1 -DSVE_OVERLOADED_FORMS -triple aarch64-none-linux-gnu -target-feature +sve -fallow-half-arguments-and-returns -fsyntax-only -verify=overload -verify-ignore-unexpected=error %s
 
 // REQUIRES: aarch64-registered-target
 
@@ -33,8 +31,6 @@
 //
 svint8_t test_svtbl2_s8(svint8x2_t data, svuint8_t indices)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svtbl2'}}
-  // expected-warning@+1 {{implicit declaration of function 'svtbl2_s8'}}
   return SVE_ACLE_FUNC(svtbl2,_s8,,)(data, indices);
 }
 
@@ -54,8 +50,6 @@ svint8_t test_svtbl2_s8(svint8x2_t data, svuint8_t indices)
 //
 svint16_t test_svtbl2_s16(svint16x2_t data, svuint16_t indices)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svtbl2'}}
-  // expected-warning@+1 {{implicit declaration of function 'svtbl2_s16'}}
   return SVE_ACLE_FUNC(svtbl2,_s16,,)(data, indices);
 }
 
@@ -75,8 +69,6 @@ svint16_t test_svtbl2_s16(svint16x2_t data, svuint16_t indices)
 //
 svint32_t test_svtbl2_s32(svint32x2_t data, svuint32_t indices)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svtbl2'}}
-  // expected-warning@+1 {{implicit declaration of function 'svtbl2_s32'}}
   return SVE_ACLE_FUNC(svtbl2,_s32,,)(data, indices);
 }
 
@@ -96,8 +88,6 @@ svint32_t test_svtbl2_s32(svint32x2_t data, svuint32_t indices)
 //
 svint64_t test_svtbl2_s64(svint64x2_t data, svuint64_t indices)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svtbl2'}}
-  // expected-warning@+1 {{implicit declaration of function 'svtbl2_s64'}}
   return SVE_ACLE_FUNC(svtbl2,_s64,,)(data, indices);
 }
 
@@ -117,8 +107,6 @@ svint64_t test_svtbl2_s64(svint64x2_t data, svuint64_t indices)
 //
 svuint8_t test_svtbl2_u8(svuint8x2_t data, svuint8_t indices)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svtbl2'}}
-  // expected-warning@+1 {{implicit declaration of function 'svtbl2_u8'}}
   return SVE_ACLE_FUNC(svtbl2,_u8,,)(data, indices);
 }
 
@@ -138,8 +126,6 @@ svuint8_t test_svtbl2_u8(svuint8x2_t data, svuint8_t indices)
 //
 svuint16_t test_svtbl2_u16(svuint16x2_t data, svuint16_t indices)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svtbl2'}}
-  // expected-warning@+1 {{implicit declaration of function 'svtbl2_u16'}}
   return SVE_ACLE_FUNC(svtbl2,_u16,,)(data, indices);
 }
 
@@ -159,8 +145,6 @@ svuint16_t test_svtbl2_u16(svuint16x2_t data, svuint16_t indices)
 //
 svuint32_t test_svtbl2_u32(svuint32x2_t data, svuint32_t indices)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svtbl2'}}
-  // expected-warning@+1 {{implicit declaration of function 'svtbl2_u32'}}
   return SVE_ACLE_FUNC(svtbl2,_u32,,)(data, indices);
 }
 
@@ -180,8 +164,6 @@ svuint32_t test_svtbl2_u32(svuint32x2_t data, svuint32_t indices)
 //
 svuint64_t test_svtbl2_u64(svuint64x2_t data, svuint64_t indices)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svtbl2'}}
-  // expected-warning@+1 {{implicit declaration of function 'svtbl2_u64'}}
   return SVE_ACLE_FUNC(svtbl2,_u64,,)(data, indices);
 }
 
@@ -201,8 +183,6 @@ svuint64_t test_svtbl2_u64(svuint64x2_t data, svuint64_t indices)
 //
 svfloat16_t test_svtbl2_f16(svfloat16x2_t data, svuint16_t indices)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svtbl2'}}
-  // expected-warning@+1 {{implicit declaration of function 'svtbl2_f16'}}
   return SVE_ACLE_FUNC(svtbl2,_f16,,)(data, indices);
 }
 
@@ -222,8 +202,6 @@ svfloat16_t test_svtbl2_f16(svfloat16x2_t data, svuint16_t indices)
 //
 svfloat32_t test_svtbl2_f32(svfloat32x2_t data, svuint32_t indices)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svtbl2'}}
-  // expected-warning@+1 {{implicit declaration of function 'svtbl2_f32'}}
   return SVE_ACLE_FUNC(svtbl2,_f32,,)(data, indices);
 }
 
@@ -243,7 +221,5 @@ svfloat32_t test_svtbl2_f32(svfloat32x2_t data, svuint32_t indices)
 //
 svfloat64_t test_svtbl2_f64(svfloat64x2_t data, svuint64_t indices)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svtbl2'}}
-  // expected-warning@+1 {{implicit declaration of function 'svtbl2_f64'}}
   return SVE_ACLE_FUNC(svtbl2,_f64,,)(data, indices);
 }

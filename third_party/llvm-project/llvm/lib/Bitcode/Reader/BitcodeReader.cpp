@@ -39,6 +39,7 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GVMaterializer.h"
+#include "llvm/IR/GetElementPtrTypeIterator.h"
 #include "llvm/IR/GlobalAlias.h"
 #include "llvm/IR/GlobalIFunc.h"
 #include "llvm/IR/GlobalObject.h"
@@ -50,6 +51,8 @@
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/IntrinsicsAArch64.h"
+#include "llvm/IR/IntrinsicsARM.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
@@ -282,7 +285,7 @@ static Expected<bool> hasObjCCategoryInModule(BitstreamCursor &Stream) {
     case bitc::MODULE_CODE_SECTIONNAME: { // SECTIONNAME: [strchr x N]
       std::string S;
       if (convertToString(Record, 0, S))
-        return error("Invalid record");
+        return error("Invalid section name record");
       // Check for the i386 and other (x86_64, ARM) conventions
       if (S.find("__DATA,__objc_catlist") != std::string::npos ||
           S.find("__OBJC,__category") != std::string::npos)
@@ -361,7 +364,7 @@ static Expected<std::string> readModuleTriple(BitstreamCursor &Stream) {
     case bitc::MODULE_CODE_TRIPLE: {  // TRIPLE: [strchr x N]
       std::string S;
       if (convertToString(Record, 0, S))
-        return error("Invalid record");
+        return error("Invalid triple record");
       Triple = S;
       break;
     }
@@ -450,7 +453,7 @@ Error BitcodeReaderBase::error(const Twine &Message) {
 Expected<unsigned>
 BitcodeReaderBase::parseVersionRecord(ArrayRef<uint64_t> Record) {
   if (Record.empty())
-    return error("Invalid record");
+    return error("Invalid version record");
   unsigned ModuleVersion = Record[0];
   if (ModuleVersion > 2)
     return error("Invalid value");
@@ -488,7 +491,14 @@ class BitcodeReader : public BitcodeReaderBase, public GVMaterializer {
   /// types of a Type*. This is used during upgrades of typed pointer IR in
   /// opaque pointer mode.
   DenseMap<unsigned, SmallVector<unsigned, 1>> ContainedTypeIDs;
-  DenseMap<Function *, FunctionType *> FunctionTypes;
+  /// In some cases, we need to create a type ID for a type that was not
+  /// explicitly encoded in the bitcode, or we don't know about at the current
+  /// point. For example, a global may explicitly encode the value type ID, but
+  /// not have a type ID for the pointer to value type, for which we create a
+  /// virtual type ID instead. This map stores the new type ID that was created
+  /// for the given pair of Type and contained type ID.
+  DenseMap<std::pair<Type *, unsigned>, unsigned> VirtualTypeIDs;
+  DenseMap<Function *, unsigned> FunctionTypeIDs;
   BitcodeReaderValueList ValueList;
   Optional<MetadataLoader> MDLoader;
   std::vector<Comdat *> ComdatList;
@@ -548,6 +558,13 @@ class BitcodeReader : public BitcodeReaderBase, public GVMaterializer {
   DenseMap<Function *, std::vector<BasicBlock *>> BasicBlockFwdRefs;
   std::deque<Function *> BasicBlockFwdRefQueue;
 
+  /// These are Functions that contain BlockAddresses which refer a different
+  /// Function. When parsing the different Function, queue Functions that refer
+  /// to the different Function. Those Functions must be materialized in order
+  /// to resolve their BlockAddress constants before the different Function
+  /// gets moved into another Module.
+  std::vector<Function *> BackwardRefFunctions;
+
   /// Indicates that we are using a new encoding for instruction operands where
   /// most operands in the current FUNCTION_BLOCK are encoded relative to the
   /// instruction number, for a more compact encoding.  Some instruction
@@ -595,12 +612,11 @@ private:
   StructType *createIdentifiedStructType(LLVMContext &Context);
 
   static constexpr unsigned InvalidTypeID = ~0u;
-  /// Placeholder for value type IDs we don't yet determine.
-  static constexpr unsigned TODOTypeID = InvalidTypeID - 1;
 
   Type *getTypeByID(unsigned ID);
   Type *getPtrElementTypeByID(unsigned ID);
   unsigned getContainedTypeID(unsigned ID, unsigned Idx = 0);
+  unsigned getVirtualTypeID(Type *Ty, ArrayRef<unsigned> ContainedTypeIDs = {});
 
   Value *getFnValueByID(unsigned ID, Type *Ty, unsigned TyID) {
     if (Ty && Ty->isMetadataTy())
@@ -638,6 +654,8 @@ private:
       // have.
       TypeID = ValueList.getTypeID(ValNo);
       ResVal = getFnValueByID(ValNo, nullptr, TypeID);
+      assert((!ResVal || ResVal->getType() == getTypeByID(TypeID)) &&
+             "Incorrect type ID stored for value");
       return ResVal == nullptr;
     }
     if (Slot == Record.size())
@@ -693,7 +711,7 @@ private:
   /// Upgrades old-style typeless byval/sret/inalloca attributes by adding the
   /// corresponding argument's pointee type. Also upgrades intrinsics that now
   /// require an elementtype attribute.
-  void propagateAttributeTypes(CallBase *CB, ArrayRef<Type *> ArgsTys);
+  Error propagateAttributeTypes(CallBase *CB, ArrayRef<unsigned> ArgsTys);
 
   /// Converts alignment exponent (i.e. power of two (or zero)) to the
   /// corresponding alignment to use. If alignment is too large, returns
@@ -869,6 +887,11 @@ Error BitcodeReader::materializeForwardReferencedFunctions() {
       return Err;
   }
   assert(BasicBlockFwdRefs.empty() && "Function missing from queue");
+
+  for (Function *F : BackwardRefFunctions)
+    if (Error Err = materialize(F))
+      return Err;
+  BackwardRefFunctions.clear();
 
   // Reset state.
   WillMaterializeAllForwardRefs = false;
@@ -1188,9 +1211,6 @@ Type *BitcodeReader::getTypeByID(unsigned ID) {
 }
 
 unsigned BitcodeReader::getContainedTypeID(unsigned ID, unsigned Idx) {
-  if (ID == TODOTypeID)
-    return TODOTypeID;
-
   auto It = ContainedTypeIDs.find(ID);
   if (It == ContainedTypeIDs.end())
     return InvalidTypeID;
@@ -1216,6 +1236,41 @@ Type *BitcodeReader::getPtrElementTypeByID(unsigned ID) {
   assert(cast<PointerType>(Ty)->isOpaqueOrPointeeTypeMatches(ElemTy) &&
          "Incorrect element type");
   return ElemTy;
+}
+
+unsigned BitcodeReader::getVirtualTypeID(Type *Ty,
+                                         ArrayRef<unsigned> ChildTypeIDs) {
+  unsigned ChildTypeID = ChildTypeIDs.empty() ? InvalidTypeID : ChildTypeIDs[0];
+  auto CacheKey = std::make_pair(Ty, ChildTypeID);
+  auto It = VirtualTypeIDs.find(CacheKey);
+  if (It != VirtualTypeIDs.end()) {
+    // The cmpxchg return value is the only place we need more than one
+    // contained type ID, however the second one will always be the same (i1),
+    // so we don't need to include it in the cache key. This asserts that the
+    // contained types are indeed as expected and there are no collisions.
+    assert((ChildTypeIDs.empty() ||
+            ContainedTypeIDs[It->second] == ChildTypeIDs) &&
+           "Incorrect cached contained type IDs");
+    return It->second;
+  }
+
+#ifndef NDEBUG
+  if (!Ty->isOpaquePointerTy()) {
+    assert(Ty->getNumContainedTypes() == ChildTypeIDs.size() &&
+           "Wrong number of contained types");
+    for (auto Pair : zip(Ty->subtypes(), ChildTypeIDs)) {
+      assert(std::get<0>(Pair) == getTypeByID(std::get<1>(Pair)) &&
+             "Incorrect contained type ID");
+    }
+  }
+#endif
+
+  unsigned TypeID = TypeList.size();
+  TypeList.push_back(Ty);
+  if (!ChildTypeIDs.empty())
+    append_range(ContainedTypeIDs[TypeID], ChildTypeIDs);
+  VirtualTypeIDs.insert({CacheKey, TypeID});
+  return TypeID;
 }
 
 StructType *BitcodeReader::createIdentifiedStructType(LLVMContext &Context,
@@ -1388,7 +1443,7 @@ Error BitcodeReader::parseAttributeBlock() {
     case bitc::PARAMATTR_CODE_ENTRY_OLD: // ENTRY: [paramidx0, attr0, ...]
       // Deprecated, but still needed to read old bitcode files.
       if (Record.size() & 1)
-        return error("Invalid record");
+        return error("Invalid parameter attribute record");
 
       for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
         AttrBuilder B(Context);
@@ -1479,8 +1534,14 @@ static Attribute::AttrKind getAttrFromCode(uint64_t Code) {
     return Attribute::Dereferenceable;
   case bitc::ATTR_KIND_DEREFERENCEABLE_OR_NULL:
     return Attribute::DereferenceableOrNull;
+  case bitc::ATTR_KIND_ALLOC_ALIGN:
+    return Attribute::AllocAlign;
+  case bitc::ATTR_KIND_ALLOC_KIND:
+    return Attribute::AllocKind;
   case bitc::ATTR_KIND_ALLOC_SIZE:
     return Attribute::AllocSize;
+  case bitc::ATTR_KIND_ALLOCATED_POINTER:
+    return Attribute::AllocatedPointer;
   case bitc::ATTR_KIND_NO_RED_ZONE:
     return Attribute::NoRedZone;
   case bitc::ATTR_KIND_NO_RETURN:
@@ -1493,6 +1554,8 @@ static Attribute::AttrKind getAttrFromCode(uint64_t Code) {
     return Attribute::NoProfile;
   case bitc::ATTR_KIND_NO_UNWIND:
     return Attribute::NoUnwind;
+  case bitc::ATTR_KIND_NO_SANITIZE_BOUNDS:
+    return Attribute::NoSanitizeBounds;
   case bitc::ATTR_KIND_NO_SANITIZE_COVERAGE:
     return Attribute::NoSanitizeCoverage;
   case bitc::ATTR_KIND_NULL_POINTER_IS_VALID:
@@ -1571,6 +1634,8 @@ static Attribute::AttrKind getAttrFromCode(uint64_t Code) {
     return Attribute::MustProgress;
   case bitc::ATTR_KIND_HOT:
     return Attribute::Hot;
+  case bitc::ATTR_KIND_PRESPLIT_COROUTINE:
+    return Attribute::PresplitCoroutine;
   }
 }
 
@@ -1628,7 +1693,7 @@ Error BitcodeReader::parseAttributeGroupBlock() {
       break;
     case bitc::PARAMATTR_GRP_CODE_ENTRY: { // ENTRY: [grpid, idx, a0, a1, ...]
       if (Record.size() < 3)
-        return error("Invalid record");
+        return error("Invalid grp record");
 
       uint64_t GrpID = Record[0];
       uint64_t Idx = Record[1]; // Index of the object this attribute refers to.
@@ -1675,6 +1740,8 @@ Error BitcodeReader::parseAttributeGroupBlock() {
             B.addVScaleRangeAttrFromRawRepr(Record[++i]);
           else if (Kind == Attribute::UWTable)
             B.addUWTableAttr(UWTableKind(Record[++i]));
+          else if (Kind == Attribute::AllocKind)
+            B.addAllocKindAttr(static_cast<AllocFnKind>(Record[++i]));
         } else if (Record[i] == 3 || Record[i] == 4) { // String attribute
           bool HasValue = (Record[i++] == 4);
           SmallString<64> KindStr;
@@ -1765,7 +1832,7 @@ Error BitcodeReader::parseTypeTableBody() {
       // TYPE_CODE_NUMENTRY contains a count of the number of types in the
       // type list.  This allows us to reserve space.
       if (Record.empty())
-        return error("Invalid record");
+        return error("Invalid numentry record");
       TypeList.resize(Record[0]);
       continue;
     case bitc::TYPE_CODE_VOID:      // VOID
@@ -1809,7 +1876,7 @@ Error BitcodeReader::parseTypeTableBody() {
       break;
     case bitc::TYPE_CODE_INTEGER: { // INTEGER: [width]
       if (Record.empty())
-        return error("Invalid record");
+        return error("Invalid integer record");
 
       uint64_t NumBits = Record[0];
       if (NumBits < IntegerType::MIN_INT_BITS ||
@@ -1821,7 +1888,7 @@ Error BitcodeReader::parseTypeTableBody() {
     case bitc::TYPE_CODE_POINTER: { // POINTER: [pointee type] or
                                     //          [pointee type, address space]
       if (Record.empty())
-        return error("Invalid record");
+        return error("Invalid pointer record");
       unsigned AddressSpace = 0;
       if (Record.size() == 2)
         AddressSpace = Record[1];
@@ -1829,14 +1896,18 @@ Error BitcodeReader::parseTypeTableBody() {
       if (!ResultTy ||
           !PointerType::isValidElementType(ResultTy))
         return error("Invalid type");
+      if (LLVM_UNLIKELY(!Context.hasSetOpaquePointersValue()))
+        Context.setOpaquePointers(false);
       ContainedIDs.push_back(Record[0]);
       ResultTy = PointerType::get(ResultTy, AddressSpace);
       break;
     }
     case bitc::TYPE_CODE_OPAQUE_POINTER: { // OPAQUE_POINTER: [addrspace]
       if (Record.size() != 1)
-        return error("Invalid record");
-      if (Context.supportsTypedPointers())
+        return error("Invalid opaque pointer record");
+      if (LLVM_UNLIKELY(!Context.hasSetOpaquePointersValue())) {
+        Context.setOpaquePointers(true);
+      } else if (Context.supportsTypedPointers())
         return error(
             "Opaque pointers are only supported in -opaque-pointers mode");
       unsigned AddressSpace = Record[0];
@@ -1847,7 +1918,7 @@ Error BitcodeReader::parseTypeTableBody() {
       // Deprecated, but still needed to read old bitcode files.
       // FUNCTION: [vararg, attrid, retty, paramty x N]
       if (Record.size() < 3)
-        return error("Invalid record");
+        return error("Invalid function record");
       SmallVector<Type*, 8> ArgTys;
       for (unsigned i = 3, e = Record.size(); i != e; ++i) {
         if (Type *T = getTypeByID(Record[i]))
@@ -1867,7 +1938,7 @@ Error BitcodeReader::parseTypeTableBody() {
     case bitc::TYPE_CODE_FUNCTION: {
       // FUNCTION: [vararg, retty, paramty x N]
       if (Record.size() < 2)
-        return error("Invalid record");
+        return error("Invalid function record");
       SmallVector<Type*, 8> ArgTys;
       for (unsigned i = 2, e = Record.size(); i != e; ++i) {
         if (Type *T = getTypeByID(Record[i])) {
@@ -1889,7 +1960,7 @@ Error BitcodeReader::parseTypeTableBody() {
     }
     case bitc::TYPE_CODE_STRUCT_ANON: {  // STRUCT: [ispacked, eltty x N]
       if (Record.empty())
-        return error("Invalid record");
+        return error("Invalid anon struct record");
       SmallVector<Type*, 8> EltTys;
       for (unsigned i = 1, e = Record.size(); i != e; ++i) {
         if (Type *T = getTypeByID(Record[i]))
@@ -1905,12 +1976,12 @@ Error BitcodeReader::parseTypeTableBody() {
     }
     case bitc::TYPE_CODE_STRUCT_NAME:   // STRUCT_NAME: [strchr x N]
       if (convertToString(Record, 0, TypeName))
-        return error("Invalid record");
+        return error("Invalid struct name record");
       continue;
 
     case bitc::TYPE_CODE_STRUCT_NAMED: { // STRUCT: [ispacked, eltty x N]
       if (Record.empty())
-        return error("Invalid record");
+        return error("Invalid named struct record");
 
       if (NumRecords >= TypeList.size())
         return error("Invalid TYPE table");
@@ -1932,7 +2003,7 @@ Error BitcodeReader::parseTypeTableBody() {
           break;
       }
       if (EltTys.size() != Record.size()-1)
-        return error("Invalid record");
+        return error("Invalid named struct record");
       Res->setBody(EltTys, Record[0]);
       ContainedIDs.append(Record.begin() + 1, Record.end());
       ResultTy = Res;
@@ -1940,7 +2011,7 @@ Error BitcodeReader::parseTypeTableBody() {
     }
     case bitc::TYPE_CODE_OPAQUE: {       // OPAQUE: []
       if (Record.size() != 1)
-        return error("Invalid record");
+        return error("Invalid opaque type record");
 
       if (NumRecords >= TypeList.size())
         return error("Invalid TYPE table");
@@ -1958,7 +2029,7 @@ Error BitcodeReader::parseTypeTableBody() {
     }
     case bitc::TYPE_CODE_ARRAY:     // ARRAY: [numelts, eltty]
       if (Record.size() < 2)
-        return error("Invalid record");
+        return error("Invalid array type record");
       ResultTy = getTypeByID(Record[1]);
       if (!ResultTy || !ArrayType::isValidElementType(ResultTy))
         return error("Invalid type");
@@ -1968,7 +2039,7 @@ Error BitcodeReader::parseTypeTableBody() {
     case bitc::TYPE_CODE_VECTOR:    // VECTOR: [numelts, eltty] or
                                     //         [numelts, eltty, scalable]
       if (Record.size() < 2)
-        return error("Invalid record");
+        return error("Invalid vector type record");
       if (Record[0] == 0)
         return error("Invalid vector length");
       ResultTy = getTypeByID(Record[1]);
@@ -2025,12 +2096,12 @@ Error BitcodeReader::parseOperandBundleTags() {
     if (!MaybeRecord)
       return MaybeRecord.takeError();
     if (MaybeRecord.get() != bitc::OPERAND_BUNDLE_TAG)
-      return error("Invalid record");
+      return error("Invalid operand bundle record");
 
     // OPERAND_BUNDLE_TAG: [strchr x N]
     BundleTags.emplace_back();
     if (convertToString(Record, 0, BundleTags.back()))
-      return error("Invalid record");
+      return error("Invalid operand bundle record");
     Record.clear();
   }
 }
@@ -2069,11 +2140,11 @@ Error BitcodeReader::parseSyncScopeNames() {
     if (!MaybeRecord)
       return MaybeRecord.takeError();
     if (MaybeRecord.get() != bitc::SYNC_SCOPE_NAME)
-      return error("Invalid record");
+      return error("Invalid sync scope record");
 
     SmallString<16> SSN;
     if (convertToString(Record, 0, SSN))
-      return error("Invalid record");
+      return error("Invalid sync scope record");
 
     SSIDs.push_back(Context.getOrInsertSyncScopeID(SSN));
     Record.clear();
@@ -2275,10 +2346,10 @@ Error BitcodeReader::parseValueSymbolTable(uint64_t Offset) {
     }
     case bitc::VST_CODE_BBENTRY: {
       if (convertToString(Record, 1, ValueName))
-        return error("Invalid record");
+        return error("Invalid bbentry record");
       BasicBlock *BB = getBasicBlock(Record[0]);
       if (!BB)
-        return error("Invalid record");
+        return error("Invalid bbentry record");
 
       BB->setName(StringRef(ValueName.data(), ValueName.size()));
       ValueName.clear();
@@ -2404,8 +2475,9 @@ Error BitcodeReader::parseConstants() {
   SmallVector<uint64_t, 64> Record;
 
   // Read all the records for this value table.
-  unsigned CurTyID = TODOTypeID;
   Type *CurTy = Type::getInt32Ty(Context);
+  unsigned Int32TyID = getVirtualTypeID(CurTy);
+  unsigned CurTyID = Int32TyID;
   Type *CurElemTy = nullptr;
   unsigned NextCstNo = ValueList.size();
 
@@ -2458,18 +2530,23 @@ Error BitcodeReader::parseConstants() {
         Constant *Op1 = ValueList.getConstantFwdRef(Op1Idx, OpTy, OpTyID);
         Type *ShufTy =
             VectorType::get(Type::getInt32Ty(Context), RTy->getElementCount());
-        Constant *Op2 = ValueList.getConstantFwdRef(Op2Idx, ShufTy, TODOTypeID);
+        Constant *Op2 = ValueList.getConstantFwdRef(
+            Op2Idx, ShufTy, getVirtualTypeID(ShufTy, Int32TyID));
         if (!ShuffleVectorInst::isValidOperands(Op0, Op1, Op2))
           return error("Invalid shufflevector operands");
         SmallVector<int, 16> Mask;
         ShuffleVectorInst::getShuffleMask(Op2, Mask);
         Value *V = ConstantExpr::getShuffleVector(Op0, Op1, Mask);
-        ValueList.assignValue(CstNo, V, TODOTypeID);
+        if (Error Err = ValueList.assignValue(
+                CstNo, V,
+                getVirtualTypeID(V->getType(), getContainedTypeID(OpTyID))))
+          return Err;
       }
       for (auto &DelayedSelector : DelayedSelectors) {
         Type *OpTy = DelayedSelector.OpTy;
         unsigned OpTyID = DelayedSelector.OpTyID;
         Type *SelectorTy = Type::getInt1Ty(Context);
+        unsigned SelectorTyID = getVirtualTypeID(SelectorTy);
         uint64_t Op0Idx = DelayedSelector.Op0Idx;
         uint64_t Op1Idx = DelayedSelector.Op1Idx;
         uint64_t Op2Idx = DelayedSelector.Op2Idx;
@@ -2481,13 +2558,16 @@ Error BitcodeReader::parseConstants() {
         if (VectorType *VTy = dyn_cast<VectorType>(OpTy)) {
           Value *V = ValueList[Op0Idx];
           assert(V);
-          if (SelectorTy != V->getType())
+          if (SelectorTy != V->getType()) {
             SelectorTy = VectorType::get(SelectorTy, VTy->getElementCount());
+            SelectorTyID = getVirtualTypeID(SelectorTy, SelectorTyID);
+          }
         }
         Constant *Op0 =
-            ValueList.getConstantFwdRef(Op0Idx, SelectorTy, TODOTypeID);
+            ValueList.getConstantFwdRef(Op0Idx, SelectorTy, SelectorTyID);
         Value *V = ConstantExpr::getSelect(Op0, Op1, Op2);
-        ValueList.assignValue(CstNo, V, TODOTypeID);
+        if (Error Err = ValueList.assignValue(CstNo, V, OpTyID))
+          return Err;
       }
 
       if (NextCstNo != ValueList.size())
@@ -2517,9 +2597,9 @@ Error BitcodeReader::parseConstants() {
       break;
     case bitc::CST_CODE_SETTYPE:   // SETTYPE: [typeid]
       if (Record.empty())
-        return error("Invalid record");
+        return error("Invalid settype record");
       if (Record[0] >= TypeList.size() || !TypeList[Record[0]])
-        return error("Invalid record");
+        return error("Invalid settype record");
       if (TypeList[Record[0]] == VoidType)
         return error("Invalid constant type");
       CurTyID = Record[0];
@@ -2533,12 +2613,12 @@ Error BitcodeReader::parseConstants() {
       break;
     case bitc::CST_CODE_INTEGER:   // INTEGER: [intval]
       if (!CurTy->isIntegerTy() || Record.empty())
-        return error("Invalid record");
+        return error("Invalid integer const record");
       V = ConstantInt::get(CurTy, decodeSignRotatedValue(Record[0]));
       break;
     case bitc::CST_CODE_WIDE_INTEGER: {// WIDE_INTEGER: [n x intval]
       if (!CurTy->isIntegerTy() || Record.empty())
-        return error("Invalid record");
+        return error("Invalid wide integer const record");
 
       APInt VInt =
           readWideAPInt(Record, cast<IntegerType>(CurTy)->getBitWidth());
@@ -2548,7 +2628,7 @@ Error BitcodeReader::parseConstants() {
     }
     case bitc::CST_CODE_FLOAT: {    // FLOAT: [fpval]
       if (Record.empty())
-        return error("Invalid record");
+        return error("Invalid float const record");
       if (CurTy->isHalfTy())
         V = ConstantFP::get(Context, APFloat(APFloat::IEEEhalf(),
                                              APInt(16, (uint16_t)Record[0])));
@@ -2581,7 +2661,7 @@ Error BitcodeReader::parseConstants() {
 
     case bitc::CST_CODE_AGGREGATE: {// AGGREGATE: [n x value number]
       if (Record.empty())
-        return error("Invalid record");
+        return error("Invalid aggregate record");
 
       unsigned Size = Record.size();
       SmallVector<Constant*, 16> Elts;
@@ -2614,7 +2694,7 @@ Error BitcodeReader::parseConstants() {
     case bitc::CST_CODE_STRING:    // STRING: [values]
     case bitc::CST_CODE_CSTRING: { // CSTRING: [values]
       if (Record.empty())
-        return error("Invalid record");
+        return error("Invalid string record");
 
       SmallString<16> Elts(Record.begin(), Record.end());
       V = ConstantDataArray::getString(Context, Elts,
@@ -2623,7 +2703,7 @@ Error BitcodeReader::parseConstants() {
     }
     case bitc::CST_CODE_DATA: {// DATA: [n x value]
       if (Record.empty())
-        return error("Invalid record");
+        return error("Invalid data record");
 
       Type *EltTy;
       if (auto *Array = dyn_cast<ArrayType>(CurTy))
@@ -2685,7 +2765,7 @@ Error BitcodeReader::parseConstants() {
     }
     case bitc::CST_CODE_CE_UNOP: {  // CE_UNOP: [opcode, opval]
       if (Record.size() < 2)
-        return error("Invalid record");
+        return error("Invalid unary op constexpr record");
       int Opc = getDecodedUnaryOpcode(Record[0], CurTy);
       if (Opc < 0) {
         V = UndefValue::get(CurTy);  // Unknown unop.
@@ -2698,7 +2778,7 @@ Error BitcodeReader::parseConstants() {
     }
     case bitc::CST_CODE_CE_BINOP: {  // CE_BINOP: [opcode, opval, opval]
       if (Record.size() < 3)
-        return error("Invalid record");
+        return error("Invalid binary op constexpr record");
       int Opc = getDecodedBinaryOpcode(Record[0], CurTy);
       if (Opc < 0) {
         V = UndefValue::get(CurTy);  // Unknown binop.
@@ -2729,7 +2809,7 @@ Error BitcodeReader::parseConstants() {
     }
     case bitc::CST_CODE_CE_CAST: {  // CE_CAST: [opcode, opty, opval]
       if (Record.size() < 3)
-        return error("Invalid record");
+        return error("Invalid cast constexpr record");
       int Opc = getDecodedCastOpcode(Record[0]);
       if (Opc < 0) {
         V = UndefValue::get(CurTy);  // Unknown cast.
@@ -2737,7 +2817,7 @@ Error BitcodeReader::parseConstants() {
         unsigned OpTyID = Record[1];
         Type *OpTy = getTypeByID(OpTyID);
         if (!OpTy)
-          return error("Invalid record");
+          return error("Invalid cast constexpr record");
         Constant *Op = ValueList.getConstantFwdRef(Record[2], OpTy, OpTyID);
         V = UpgradeBitCastExpr(Opc, Op, CurTy);
         if (!V) V = ConstantExpr::getCast(Opc, Op, CurTy);
@@ -2771,7 +2851,7 @@ Error BitcodeReader::parseConstants() {
         unsigned ElTyID = Record[OpNum++];
         Type *ElTy = getTypeByID(ElTyID);
         if (!ElTy)
-          return error("Invalid record");
+          return error("Invalid getelementptr constexpr record");
         Elts.push_back(ValueList.getConstantFwdRef(Record[OpNum++], ElTy,
                                                    ElTyID));
       }
@@ -2804,7 +2884,7 @@ Error BitcodeReader::parseConstants() {
     }
     case bitc::CST_CODE_CE_SELECT: {  // CE_SELECT: [opval#, opval#, opval#]
       if (Record.size() < 3)
-        return error("Invalid record");
+        return error("Invalid select constexpr record");
 
       DelayedSelectors.push_back(
           {CurTy, CurTyID, Record[0], Record[1], Record[2], NextCstNo});
@@ -2815,27 +2895,27 @@ Error BitcodeReader::parseConstants() {
     case bitc::CST_CODE_CE_EXTRACTELT
         : { // CE_EXTRACTELT: [opty, opval, opty, opval]
       if (Record.size() < 3)
-        return error("Invalid record");
+        return error("Invalid extractelement constexpr record");
       unsigned OpTyID = Record[0];
       VectorType *OpTy =
         dyn_cast_or_null<VectorType>(getTypeByID(OpTyID));
       if (!OpTy)
-        return error("Invalid record");
+        return error("Invalid extractelement constexpr record");
       Constant *Op0 = ValueList.getConstantFwdRef(Record[1], OpTy, OpTyID);
       Constant *Op1 = nullptr;
       if (Record.size() == 4) {
         unsigned IdxTyID = Record[2];
         Type *IdxTy = getTypeByID(IdxTyID);
         if (!IdxTy)
-          return error("Invalid record");
+          return error("Invalid extractelement constexpr record");
         Op1 = ValueList.getConstantFwdRef(Record[3], IdxTy, IdxTyID);
       } else {
         // Deprecated, but still needed to read old bitcode files.
         Op1 = ValueList.getConstantFwdRef(Record[2], Type::getInt32Ty(Context),
-                                          TODOTypeID);
+                                          Int32TyID);
       }
       if (!Op1)
-        return error("Invalid record");
+        return error("Invalid extractelement constexpr record");
       V = ConstantExpr::getExtractElement(Op0, Op1);
       break;
     }
@@ -2843,7 +2923,7 @@ Error BitcodeReader::parseConstants() {
         : { // CE_INSERTELT: [opval, opval, opty, opval]
       VectorType *OpTy = dyn_cast<VectorType>(CurTy);
       if (Record.size() < 3 || !OpTy)
-        return error("Invalid record");
+        return error("Invalid insertelement constexpr record");
       Constant *Op0 = ValueList.getConstantFwdRef(Record[0], OpTy, CurTyID);
       Constant *Op1 = ValueList.getConstantFwdRef(Record[1],
                                                   OpTy->getElementType(),
@@ -2853,22 +2933,22 @@ Error BitcodeReader::parseConstants() {
         unsigned IdxTyID = Record[2];
         Type *IdxTy = getTypeByID(IdxTyID);
         if (!IdxTy)
-          return error("Invalid record");
+          return error("Invalid insertelement constexpr record");
         Op2 = ValueList.getConstantFwdRef(Record[3], IdxTy, IdxTyID);
       } else {
         // Deprecated, but still needed to read old bitcode files.
         Op2 = ValueList.getConstantFwdRef(Record[2], Type::getInt32Ty(Context),
-                                          TODOTypeID);
+                                          Int32TyID);
       }
       if (!Op2)
-        return error("Invalid record");
+        return error("Invalid insertelement constexpr record");
       V = ConstantExpr::getInsertElement(Op0, Op1, Op2);
       break;
     }
     case bitc::CST_CODE_CE_SHUFFLEVEC: { // CE_SHUFFLEVEC: [opval, opval, opval]
       VectorType *OpTy = dyn_cast<VectorType>(CurTy);
       if (Record.size() < 3 || !OpTy)
-        return error("Invalid record");
+        return error("Invalid shufflevector constexpr record");
       DelayedShuffles.push_back(
           {OpTy, CurTyID, OpTy, Record[0], Record[1], Record[2], NextCstNo});
       ++NextCstNo;
@@ -2879,7 +2959,7 @@ Error BitcodeReader::parseConstants() {
       VectorType *OpTy =
         dyn_cast_or_null<VectorType>(getTypeByID(Record[0]));
       if (Record.size() < 4 || !RTy || !OpTy)
-        return error("Invalid record");
+        return error("Invalid shufflevector constexpr record");
       DelayedShuffles.push_back(
           {OpTy, CurTyID, RTy, Record[1], Record[2], Record[3], NextCstNo});
       ++NextCstNo;
@@ -2887,11 +2967,11 @@ Error BitcodeReader::parseConstants() {
     }
     case bitc::CST_CODE_CE_CMP: {     // CE_CMP: [opty, opval, opval, pred]
       if (Record.size() < 4)
-        return error("Invalid record");
+        return error("Invalid cmp constexpt record");
       unsigned OpTyID = Record[0];
       Type *OpTy = getTypeByID(OpTyID);
       if (!OpTy)
-        return error("Invalid record");
+        return error("Invalid cmp constexpr record");
       Constant *Op0 = ValueList.getConstantFwdRef(Record[1], OpTy, OpTyID);
       Constant *Op1 = ValueList.getConstantFwdRef(Record[2], OpTy, OpTyID);
 
@@ -2905,16 +2985,16 @@ Error BitcodeReader::parseConstants() {
     // Deprecated, but still needed to read old bitcode files.
     case bitc::CST_CODE_INLINEASM_OLD: {
       if (Record.size() < 2)
-        return error("Invalid record");
+        return error("Invalid inlineasm record");
       std::string AsmStr, ConstrStr;
       bool HasSideEffects = Record[0] & 1;
       bool IsAlignStack = Record[0] >> 1;
       unsigned AsmStrSize = Record[1];
       if (2+AsmStrSize >= Record.size())
-        return error("Invalid record");
+        return error("Invalid inlineasm record");
       unsigned ConstStrSize = Record[2+AsmStrSize];
       if (3+AsmStrSize+ConstStrSize > Record.size())
-        return error("Invalid record");
+        return error("Invalid inlineasm record");
 
       for (unsigned i = 0; i != AsmStrSize; ++i)
         AsmStr += (char)Record[2+i];
@@ -2931,17 +3011,17 @@ Error BitcodeReader::parseConstants() {
     // inteldialect).
     case bitc::CST_CODE_INLINEASM_OLD2: {
       if (Record.size() < 2)
-        return error("Invalid record");
+        return error("Invalid inlineasm record");
       std::string AsmStr, ConstrStr;
       bool HasSideEffects = Record[0] & 1;
       bool IsAlignStack = (Record[0] >> 1) & 1;
       unsigned AsmDialect = Record[0] >> 2;
       unsigned AsmStrSize = Record[1];
       if (2+AsmStrSize >= Record.size())
-        return error("Invalid record");
+        return error("Invalid inlineasm record");
       unsigned ConstStrSize = Record[2+AsmStrSize];
       if (3+AsmStrSize+ConstStrSize > Record.size())
-        return error("Invalid record");
+        return error("Invalid inlineasm record");
 
       for (unsigned i = 0; i != AsmStrSize; ++i)
         AsmStr += (char)Record[2+i];
@@ -2958,7 +3038,7 @@ Error BitcodeReader::parseConstants() {
     // This version adds support for the unwind keyword.
     case bitc::CST_CODE_INLINEASM_OLD3: {
       if (Record.size() < 2)
-        return error("Invalid record");
+        return error("Invalid inlineasm record");
       unsigned OpNum = 0;
       std::string AsmStr, ConstrStr;
       bool HasSideEffects = Record[OpNum] & 1;
@@ -2969,10 +3049,10 @@ Error BitcodeReader::parseConstants() {
       unsigned AsmStrSize = Record[OpNum];
       ++OpNum;
       if (OpNum + AsmStrSize >= Record.size())
-        return error("Invalid record");
+        return error("Invalid inlineasm record");
       unsigned ConstStrSize = Record[OpNum + AsmStrSize];
       if (OpNum + 1 + AsmStrSize + ConstStrSize > Record.size())
-        return error("Invalid record");
+        return error("Invalid inlineasm record");
 
       for (unsigned i = 0; i != AsmStrSize; ++i)
         AsmStr += (char)Record[OpNum + i];
@@ -2990,12 +3070,12 @@ Error BitcodeReader::parseConstants() {
     // This version adds explicit function type.
     case bitc::CST_CODE_INLINEASM: {
       if (Record.size() < 3)
-        return error("Invalid record");
+        return error("Invalid inlineasm record");
       unsigned OpNum = 0;
       auto *FnTy = dyn_cast_or_null<FunctionType>(getTypeByID(Record[OpNum]));
       ++OpNum;
       if (!FnTy)
-        return error("Invalid record");
+        return error("Invalid inlineasm record");
       std::string AsmStr, ConstrStr;
       bool HasSideEffects = Record[OpNum] & 1;
       bool IsAlignStack = (Record[OpNum] >> 1) & 1;
@@ -3005,10 +3085,10 @@ Error BitcodeReader::parseConstants() {
       unsigned AsmStrSize = Record[OpNum];
       ++OpNum;
       if (OpNum + AsmStrSize >= Record.size())
-        return error("Invalid record");
+        return error("Invalid inlineasm record");
       unsigned ConstStrSize = Record[OpNum + AsmStrSize];
       if (OpNum + 1 + AsmStrSize + ConstStrSize > Record.size())
-        return error("Invalid record");
+        return error("Invalid inlineasm record");
 
       for (unsigned i = 0; i != AsmStrSize; ++i)
         AsmStr += (char)Record[OpNum + i];
@@ -3022,15 +3102,15 @@ Error BitcodeReader::parseConstants() {
     }
     case bitc::CST_CODE_BLOCKADDRESS:{
       if (Record.size() < 3)
-        return error("Invalid record");
+        return error("Invalid blockaddress record");
       unsigned FnTyID = Record[0];
       Type *FnTy = getTypeByID(FnTyID);
       if (!FnTy)
-        return error("Invalid record");
+        return error("Invalid blockaddress record");
       Function *Fn = dyn_cast_or_null<Function>(
           ValueList.getConstantFwdRef(Record[1], FnTy, FnTyID));
       if (!Fn)
-        return error("Invalid record");
+        return error("Invalid blockaddress record");
 
       // If the function is already parsed we can insert the block address right
       // away.
@@ -3064,36 +3144,38 @@ Error BitcodeReader::parseConstants() {
     }
     case bitc::CST_CODE_DSO_LOCAL_EQUIVALENT: {
       if (Record.size() < 2)
-        return error("Invalid record");
+        return error("Invalid dso_local record");
       unsigned GVTyID = Record[0];
       Type *GVTy = getTypeByID(GVTyID);
       if (!GVTy)
-        return error("Invalid record");
+        return error("Invalid dso_local record");
       GlobalValue *GV = dyn_cast_or_null<GlobalValue>(
           ValueList.getConstantFwdRef(Record[1], GVTy, GVTyID));
       if (!GV)
-        return error("Invalid record");
+        return error("Invalid dso_local record");
 
       V = DSOLocalEquivalent::get(GV);
       break;
     }
     case bitc::CST_CODE_NO_CFI_VALUE: {
       if (Record.size() < 2)
-        return error("Invalid record");
+        return error("Invalid no_cfi record");
       unsigned GVTyID = Record[0];
       Type *GVTy = getTypeByID(GVTyID);
       if (!GVTy)
-        return error("Invalid record");
+        return error("Invalid no_cfi record");
       GlobalValue *GV = dyn_cast_or_null<GlobalValue>(
           ValueList.getConstantFwdRef(Record[1], GVTy, GVTyID));
       if (!GV)
-        return error("Invalid record");
+        return error("Invalid no_cfi record");
       V = NoCFIValue::get(GV);
       break;
     }
     }
 
-    ValueList.assignValue(NextCstNo, V, CurTyID);
+    assert(V->getType() == getTypeByID(CurTyID) && "Incorrect result type ID");
+    if (Error Err = ValueList.assignValue(NextCstNo, V, CurTyID))
+      return Err;
     ++NextCstNo;
   }
 }
@@ -3361,6 +3443,19 @@ static void inferDSOLocal(GlobalValue *GV) {
     GV->setDSOLocal(true);
 }
 
+GlobalValue::SanitizerMetadata deserializeSanitizerMetadata(unsigned V) {
+  GlobalValue::SanitizerMetadata Meta;
+  if (V & (1 << 0))
+    Meta.NoAddress = true;
+  if (V & (1 << 1))
+    Meta.NoHWAddress = true;
+  if (V & (1 << 2))
+    Meta.NoMemtag = true;
+  if (V & (1 << 3))
+    Meta.IsDynInit = true;
+  return Meta;
+}
+
 Error BitcodeReader::parseGlobalVarRecord(ArrayRef<uint64_t> Record) {
   // v1: [pointer type, isconst, initid, linkage, alignment, section,
   // visibility, threadlocal, unnamed_addr, externally_initialized,
@@ -3385,7 +3480,8 @@ Error BitcodeReader::parseGlobalVarRecord(ArrayRef<uint64_t> Record) {
     if (!Ty->isPointerTy())
       return error("Invalid type for value");
     AddressSpace = cast<PointerType>(Ty)->getAddressSpace();
-    Ty = getPtrElementTypeByID(Record[0]);
+    TyID = getContainedTypeID(TyID);
+    Ty = getTypeByID(TyID);
     if (!Ty)
       return error("Missing element type for old-style global");
   }
@@ -3433,7 +3529,7 @@ Error BitcodeReader::parseGlobalVarRecord(ArrayRef<uint64_t> Record) {
   else
     upgradeDLLImportExportLinkage(NewGV, RawLinkage);
 
-  ValueList.push_back(NewGV, TyID);
+  ValueList.push_back(NewGV, getVirtualTypeID(NewGV->getType(), TyID));
 
   // Remember which value to use for the global initializer.
   if (unsigned InitID = Record[2])
@@ -3462,6 +3558,12 @@ Error BitcodeReader::parseGlobalVarRecord(ArrayRef<uint64_t> Record) {
   // Check whether we have enough values to read a partition name.
   if (Record.size() > 15)
     NewGV->setPartition(StringRef(Strtab.data() + Record[14], Record[15]));
+
+  if (Record.size() > 16 && Record[16]) {
+    llvm::GlobalValue::SanitizerMetadata Meta =
+        deserializeSanitizerMetadata(Record[16]);
+    NewGV->setSanitizerMetadata(Meta);
+  }
 
   return Error::success();
 }
@@ -3503,7 +3605,7 @@ Error BitcodeReader::parseFunctionRecord(ArrayRef<uint64_t> Record) {
 
   assert(Func->getFunctionType() == FTy &&
          "Incorrect fully specified type provided for function");
-  FunctionTypes[Func] = cast<FunctionType>(FTy);
+  FunctionTypeIDs[Func] = FTyID;
 
   Func->setCallingConv(CC);
   bool isProto = Record[2];
@@ -3547,6 +3649,16 @@ Error BitcodeReader::parseFunctionRecord(ArrayRef<uint64_t> Record) {
 
       Func->addParamAttr(i, NewAttr);
     }
+  }
+
+  if (Func->getCallingConv() == CallingConv::X86_INTR &&
+      !Func->arg_empty() && !Func->hasParamAttribute(0, Attribute::ByVal)) {
+    unsigned ParamTypeID = getContainedTypeID(FTyID, 1);
+    Type *ByValTy = getPtrElementTypeByID(ParamTypeID);
+    if (!ByValTy)
+      return error("Missing param element type for x86_intrcc upgrade");
+    Attribute NewAttr = Attribute::getWithByValType(Context, ByValTy);
+    Func->addParamAttr(0, NewAttr);
   }
 
   MaybeAlign Alignment;
@@ -3611,7 +3723,7 @@ Error BitcodeReader::parseFunctionRecord(ArrayRef<uint64_t> Record) {
     Func->setPartition(StringRef(Strtab.data() + Record[17], Record[18]));
   }
 
-  ValueList.push_back(Func, TODOTypeID);
+  ValueList.push_back(Func, getVirtualTypeID(Func->getType(), FTyID));
 
   if (OperandInfo.PersonalityFn || OperandInfo.Prefix || OperandInfo.Prologue)
     FunctionOperands.push_back(OperandInfo);
@@ -3654,7 +3766,8 @@ Error BitcodeReader::parseGlobalIndirectSymbolRecord(
     if (!PTy)
       return error("Invalid type for value");
     AddrSpace = PTy->getAddressSpace();
-    Ty = getPtrElementTypeByID(TypeID);
+    TypeID = getContainedTypeID(TypeID);
+    Ty = getTypeByID(TypeID);
     if (!Ty)
       return error("Missing element type for old-style indirect symbol");
   } else {
@@ -3701,7 +3814,7 @@ Error BitcodeReader::parseGlobalIndirectSymbolRecord(
     OpNum += 2;
   }
 
-  ValueList.push_back(NewGA, TypeID);
+  ValueList.push_back(NewGA, getVirtualTypeID(NewGA->getType(), TypeID));
   IndirectSymbolInits.push_back(std::make_pair(NewGA, Val));
   return Error::success();
 }
@@ -4016,18 +4129,20 @@ Error BitcodeReader::typeCheckLoadStoreInst(Type *ValType, Type *PtrType) {
   return Error::success();
 }
 
-void BitcodeReader::propagateAttributeTypes(CallBase *CB,
-                                            ArrayRef<Type *> ArgsTys) {
+Error BitcodeReader::propagateAttributeTypes(CallBase *CB,
+                                             ArrayRef<unsigned> ArgTyIDs) {
+  AttributeList Attrs = CB->getAttributes();
   for (unsigned i = 0; i != CB->arg_size(); ++i) {
     for (Attribute::AttrKind Kind : {Attribute::ByVal, Attribute::StructRet,
                                      Attribute::InAlloca}) {
-      if (!CB->paramHasAttr(i, Kind) ||
-          CB->getParamAttr(i, Kind).getValueAsType())
+      if (!Attrs.hasParamAttr(i, Kind) ||
+          Attrs.getParamAttr(i, Kind).getValueAsType())
         continue;
 
-      CB->removeParamAttr(i, Kind);
+      Type *PtrEltTy = getPtrElementTypeByID(ArgTyIDs[i]);
+      if (!PtrEltTy)
+        return error("Missing element type for typed attribute upgrade");
 
-      Type *PtrEltTy = ArgsTys[i]->getPointerElementType();
       Attribute NewAttr;
       switch (Kind) {
       case Attribute::ByVal:
@@ -4043,7 +4158,7 @@ void BitcodeReader::propagateAttributeTypes(CallBase *CB,
         llvm_unreachable("not an upgraded type attribute");
       }
 
-      CB->addParamAttr(i, NewAttr);
+      Attrs = Attrs.addParamAttribute(Context, i, NewAttr);
     }
   }
 
@@ -4054,10 +4169,13 @@ void BitcodeReader::propagateAttributeTypes(CallBase *CB,
       if (!CI.hasArg())
         continue;
 
-      if (CI.isIndirect && !CB->getAttributes().getParamElementType(ArgNo)) {
-        Type *ElemTy = ArgsTys[ArgNo]->getPointerElementType();
-        CB->addParamAttr(
-            ArgNo, Attribute::get(Context, Attribute::ElementType, ElemTy));
+      if (CI.isIndirect && !Attrs.getParamElementType(ArgNo)) {
+        Type *ElemTy = getPtrElementTypeByID(ArgTyIDs[ArgNo]);
+        if (!ElemTy)
+          return error("Missing element type for inline asm upgrade");
+        Attrs = Attrs.addParamAttribute(
+            Context, ArgNo,
+            Attribute::get(Context, Attribute::ElementType, ElemTy));
       }
 
       ArgNo++;
@@ -4067,15 +4185,41 @@ void BitcodeReader::propagateAttributeTypes(CallBase *CB,
   switch (CB->getIntrinsicID()) {
   case Intrinsic::preserve_array_access_index:
   case Intrinsic::preserve_struct_access_index:
-    if (!CB->getAttributes().getParamElementType(0)) {
-      Type *ElTy = ArgsTys[0]->getPointerElementType();
+  case Intrinsic::aarch64_ldaxr:
+  case Intrinsic::aarch64_ldxr:
+  case Intrinsic::aarch64_stlxr:
+  case Intrinsic::aarch64_stxr:
+  case Intrinsic::arm_ldaex:
+  case Intrinsic::arm_ldrex:
+  case Intrinsic::arm_stlex:
+  case Intrinsic::arm_strex: {
+    unsigned ArgNo;
+    switch (CB->getIntrinsicID()) {
+    case Intrinsic::aarch64_stlxr:
+    case Intrinsic::aarch64_stxr:
+    case Intrinsic::arm_stlex:
+    case Intrinsic::arm_strex:
+      ArgNo = 1;
+      break;
+    default:
+      ArgNo = 0;
+      break;
+    }
+    if (!Attrs.getParamElementType(ArgNo)) {
+      Type *ElTy = getPtrElementTypeByID(ArgTyIDs[ArgNo]);
+      if (!ElTy)
+        return error("Missing element type for elementtype upgrade");
       Attribute NewAttr = Attribute::get(Context, Attribute::ElementType, ElTy);
-      CB->addParamAttr(0, NewAttr);
+      Attrs = Attrs.addParamAttribute(Context, ArgNo, NewAttr);
     }
     break;
+  }
   default:
     break;
   }
+
+  CB->setAttributes(Attrs);
+  return Error::success();
 }
 
 /// Lazily parse the specified function body block.
@@ -4092,14 +4236,14 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
   unsigned ModuleMDLoaderSize = MDLoader->size();
 
   // Add all the function arguments to the value table.
-#ifndef NDEBUG
   unsigned ArgNo = 0;
-  FunctionType *FTy = FunctionTypes[F];
-#endif
+  unsigned FTyID = FunctionTypeIDs[F];
   for (Argument &I : F->args()) {
-    assert(I.getType() == FTy->getParamType(ArgNo++) &&
+    unsigned ArgTyID = getContainedTypeID(FTyID, ArgNo + 1);
+    assert(I.getType() == getTypeByID(ArgTyID) &&
            "Incorrect fully specified type for Function Argument");
-    ValueList.push_back(&I, TODOTypeID);
+    ValueList.push_back(&I, ArgTyID);
+    ++ArgNo;
   }
   unsigned NextValueNo = ValueList.size();
   BasicBlock *CurBB = nullptr;
@@ -4213,6 +4357,31 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
       CurBB = FunctionBBs[0];
       continue;
     }
+
+    case bitc::FUNC_CODE_BLOCKADDR_USERS: // BLOCKADDR_USERS: [vals...]
+      // The record should not be emitted if it's an empty list.
+      if (Record.empty())
+        return error("Invalid record");
+      // When we have the RARE case of a BlockAddress Constant that is not
+      // scoped to the Function it refers to, we need to conservatively
+      // materialize the referred to Function, regardless of whether or not
+      // that Function will ultimately be linked, otherwise users of
+      // BitcodeReader might start splicing out Function bodies such that we
+      // might no longer be able to materialize the BlockAddress since the
+      // BasicBlock (and entire body of the Function) the BlockAddress refers
+      // to may have been moved. In the case that the user of BitcodeReader
+      // decides ultimately not to link the Function body, materializing here
+      // could be considered wasteful, but it's better than a deserialization
+      // failure as described. This keeps BitcodeReader unaware of complex
+      // linkage policy decisions such as those use by LTO, leaving those
+      // decisions "one layer up."
+      for (uint64_t ValID : Record)
+        if (auto *F = dyn_cast<Function>(ValueList[ValID]))
+          BackwardRefFunctions.push_back(F);
+        else
+          return error("Invalid record");
+
+      continue;
 
     case bitc::FUNC_CODE_DEBUG_LOC_AGAIN:  // DEBUG_LOC_AGAIN
       // This record indicates that the last instruction is at the same
@@ -4349,14 +4518,17 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
     case bitc::FUNC_CODE_INST_GEP: { // GEP: type, [n x operands]
       unsigned OpNum = 0;
 
+      unsigned TyID;
       Type *Ty;
       bool InBounds;
 
       if (BitCode == bitc::FUNC_CODE_INST_GEP) {
         InBounds = Record[OpNum++];
-        Ty = getTypeByID(Record[OpNum++]);
+        TyID = Record[OpNum++];
+        Ty = getTypeByID(TyID);
       } else {
         InBounds = BitCode == bitc::FUNC_CODE_INST_INBOUNDS_GEP_OLD;
+        TyID = InvalidTypeID;
         Ty = nullptr;
       }
 
@@ -4366,7 +4538,10 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
         return error("Invalid record");
 
       if (!Ty) {
-        Ty = BasePtr->getType()->getScalarType()->getPointerElementType();
+        TyID = getContainedTypeID(BasePtrTypeID);
+        if (BasePtr->getType()->isVectorTy())
+          TyID = getContainedTypeID(TyID);
+        Ty = getTypeByID(TyID);
       } else if (!cast<PointerType>(BasePtr->getType()->getScalarType())
                       ->isOpaqueOrPointeeTypeMatches(Ty)) {
         return error(
@@ -4383,7 +4558,29 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
       }
 
       I = GetElementPtrInst::Create(Ty, BasePtr, GEPIdx);
-      ResTypeID = TODOTypeID;
+
+      ResTypeID = TyID;
+      if (cast<GEPOperator>(I)->getNumIndices() != 0) {
+        auto GTI = std::next(gep_type_begin(I));
+        for (Value *Idx : drop_begin(cast<GEPOperator>(I)->indices())) {
+          unsigned SubType = 0;
+          if (GTI.isStruct()) {
+            ConstantInt *IdxC =
+                Idx->getType()->isVectorTy()
+                    ? cast<ConstantInt>(cast<Constant>(Idx)->getSplatValue())
+                    : cast<ConstantInt>(Idx);
+            SubType = IdxC->getZExtValue();
+          }
+          ResTypeID = getContainedTypeID(ResTypeID, SubType);
+          ++GTI;
+        }
+      }
+
+      // At this point ResTypeID is the result element type. We need a pointer
+      // or vector of pointer to it.
+      ResTypeID = getVirtualTypeID(I->getType()->getScalarType(), ResTypeID);
+      if (I->getType()->isVectorTy())
+        ResTypeID = getVirtualTypeID(I->getType(), ResTypeID);
 
       InstructionList.push_back(I);
       if (InBounds)
@@ -4489,11 +4686,12 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
       unsigned OpNum = 0;
       Value *TrueVal, *FalseVal, *Cond;
       unsigned TypeID;
+      Type *CondType = Type::getInt1Ty(Context);
       if (getValueTypePair(Record, OpNum, NextValueNo, TrueVal, TypeID) ||
           popValue(Record, OpNum, NextValueNo, TrueVal->getType(), TypeID,
                    FalseVal) ||
-          popValue(Record, OpNum, NextValueNo, Type::getInt1Ty(Context),
-                   TODOTypeID, Cond))
+          popValue(Record, OpNum, NextValueNo, CondType,
+                   getVirtualTypeID(CondType), Cond))
         return error("Invalid record");
 
       I = SelectInst::Create(Cond, TrueVal, FalseVal);
@@ -4587,7 +4785,8 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
         return error("Invalid type for value");
 
       I = new ShuffleVectorInst(Vec1, Vec2, Mask);
-      ResTypeID = TODOTypeID;
+      ResTypeID =
+          getVirtualTypeID(I->getType(), getContainedTypeID(Vec1TypeID));
       InstructionList.push_back(I);
       break;
     }
@@ -4623,7 +4822,10 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
         I = new FCmpInst((FCmpInst::Predicate)PredVal, LHS, RHS);
       else
         I = new ICmpInst((ICmpInst::Predicate)PredVal, LHS, RHS);
-      ResTypeID = TODOTypeID;
+
+      ResTypeID = getVirtualTypeID(I->getType()->getScalarType());
+      if (LHS->getType()->isVectorTy())
+        ResTypeID = getVirtualTypeID(I->getType(), ResTypeID);
 
       if (FMF.any())
         I->setFastMathFlags(FMF);
@@ -4665,8 +4867,9 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
       }
       else {
         BasicBlock *FalseDest = getBasicBlock(Record[1]);
-        Value *Cond = getValue(Record, 2, NextValueNo,
-                               Type::getInt1Ty(Context), TODOTypeID);
+        Type *CondType = Type::getInt1Ty(Context);
+        Value *Cond = getValue(Record, 2, NextValueNo, CondType,
+                               getVirtualTypeID(CondType));
         if (!FalseDest || !Cond)
           return error("Invalid record");
         I = BranchInst::Create(TrueDest, FalseDest, Cond);
@@ -4678,8 +4881,9 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
       if (Record.size() != 1 && Record.size() != 2)
         return error("Invalid record");
       unsigned Idx = 0;
-      Value *CleanupPad = getValue(
-          Record, Idx++, NextValueNo, Type::getTokenTy(Context), TODOTypeID);
+      Type *TokenTy = Type::getTokenTy(Context);
+      Value *CleanupPad = getValue(Record, Idx++, NextValueNo, TokenTy,
+                                   getVirtualTypeID(TokenTy));
       if (!CleanupPad)
         return error("Invalid record");
       BasicBlock *UnwindDest = nullptr;
@@ -4697,8 +4901,9 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
       if (Record.size() != 2)
         return error("Invalid record");
       unsigned Idx = 0;
-      Value *CatchPad = getValue(
-          Record, Idx++, NextValueNo, Type::getTokenTy(Context), TODOTypeID);
+      Type *TokenTy = Type::getTokenTy(Context);
+      Value *CatchPad = getValue(Record, Idx++, NextValueNo, TokenTy,
+                                 getVirtualTypeID(TokenTy));
       if (!CatchPad)
         return error("Invalid record");
       BasicBlock *BB = getBasicBlock(Record[Idx++]);
@@ -4716,8 +4921,9 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
 
       unsigned Idx = 0;
 
-      Value *ParentPad = getValue(
-          Record, Idx++, NextValueNo, Type::getTokenTy(Context), TODOTypeID);
+      Type *TokenTy = Type::getTokenTy(Context);
+      Value *ParentPad = getValue(Record, Idx++, NextValueNo, TokenTy,
+                                  getVirtualTypeID(TokenTy));
 
       unsigned NumHandlers = Record[Idx++];
 
@@ -4744,7 +4950,7 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
       for (BasicBlock *Handler : Handlers)
         CatchSwitch->addHandler(Handler);
       I = CatchSwitch;
-      ResTypeID = TODOTypeID;
+      ResTypeID = getVirtualTypeID(I->getType());
       InstructionList.push_back(I);
       break;
     }
@@ -4756,8 +4962,9 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
 
       unsigned Idx = 0;
 
-      Value *ParentPad = getValue(
-          Record, Idx++, NextValueNo, Type::getTokenTy(Context), TODOTypeID);
+      Type *TokenTy = Type::getTokenTy(Context);
+      Value *ParentPad = getValue(Record, Idx++, NextValueNo, TokenTy,
+                                  getVirtualTypeID(TokenTy));
 
       unsigned NumArgOperands = Record[Idx++];
 
@@ -4777,7 +4984,7 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
         I = CleanupPadInst::Create(ParentPad, Args);
       else
         I = CatchPadInst::Create(ParentPad, Args);
-      ResTypeID = TODOTypeID;
+      ResTypeID = getVirtualTypeID(I->getType());
       InstructionList.push_back(I);
       break;
     }
@@ -4902,9 +5109,11 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
       BasicBlock *NormalBB = getBasicBlock(Record[OpNum++]);
       BasicBlock *UnwindBB = getBasicBlock(Record[OpNum++]);
 
+      unsigned FTyID = InvalidTypeID;
       FunctionType *FTy = nullptr;
       if ((CCInfo >> 13) & 1) {
-        FTy = dyn_cast<FunctionType>(getTypeByID(Record[OpNum++]));
+        FTyID = Record[OpNum++];
+        FTy = dyn_cast<FunctionType>(getTypeByID(FTyID));
         if (!FTy)
           return error("Explicit invoke type is not a function type");
       }
@@ -4918,8 +5127,8 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
       if (!CalleeTy)
         return error("Callee is not a pointer");
       if (!FTy) {
-        FTy =
-            dyn_cast<FunctionType>(Callee->getType()->getPointerElementType());
+        FTyID = getContainedTypeID(CalleeTypeID);
+        FTy = dyn_cast_or_null<FunctionType>(getTypeByID(FTyID));
         if (!FTy)
           return error("Callee is not of pointer to function type");
       } else if (!CalleeTy->isOpaqueOrPointeeTypeMatches(FTy))
@@ -4929,11 +5138,12 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
         return error("Insufficient operands to call");
 
       SmallVector<Value*, 16> Ops;
-      SmallVector<Type *, 16> ArgsTys;
+      SmallVector<unsigned, 16> ArgTyIDs;
       for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i, ++OpNum) {
-        Ops.push_back(getValue(Record, OpNum, NextValueNo,
-                               FTy->getParamType(i), TODOTypeID));
-        ArgsTys.push_back(FTy->getParamType(i));
+        unsigned ArgTyID = getContainedTypeID(FTyID, i + 1);
+        Ops.push_back(getValue(Record, OpNum, NextValueNo, FTy->getParamType(i),
+                               ArgTyID));
+        ArgTyIDs.push_back(ArgTyID);
         if (!Ops.back())
           return error("Invalid record");
       }
@@ -4949,19 +5159,26 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
           if (getValueTypePair(Record, OpNum, NextValueNo, Op, OpTypeID))
             return error("Invalid record");
           Ops.push_back(Op);
-          ArgsTys.push_back(Op->getType());
+          ArgTyIDs.push_back(OpTypeID);
         }
       }
 
+      // Upgrade the bundles if needed.
+      if (!OperandBundles.empty())
+        UpgradeOperandBundles(OperandBundles);
+
       I = InvokeInst::Create(FTy, Callee, NormalBB, UnwindBB, Ops,
                              OperandBundles);
-      ResTypeID = TODOTypeID;
+      ResTypeID = getContainedTypeID(FTyID);
       OperandBundles.clear();
       InstructionList.push_back(I);
       cast<InvokeInst>(I)->setCallingConv(
           static_cast<CallingConv::ID>(CallingConv::MaxID & CCInfo));
       cast<InvokeInst>(I)->setAttributes(PAL);
-      propagateAttributeTypes(cast<CallBase>(I), ArgsTys);
+      if (Error Err = propagateAttributeTypes(cast<CallBase>(I), ArgTyIDs)) {
+        I->deleteValue();
+        return Err;
+      }
 
       break;
     }
@@ -4987,9 +5204,11 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
       for (unsigned i = 0, e = NumIndirectDests; i != e; ++i)
         IndirectDests.push_back(getBasicBlock(Record[OpNum++]));
 
+      unsigned FTyID = InvalidTypeID;
       FunctionType *FTy = nullptr;
       if ((CCInfo >> bitc::CALL_EXPLICIT_TYPE) & 1) {
-        FTy = dyn_cast<FunctionType>(getTypeByID(Record[OpNum++]));
+        FTyID = Record[OpNum++];
+        FTy = dyn_cast_or_null<FunctionType>(getTypeByID(FTyID));
         if (!FTy)
           return error("Explicit call type is not a function type");
       }
@@ -5003,8 +5222,8 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
       if (!OpTy)
         return error("Callee is not a pointer type");
       if (!FTy) {
-        FTy =
-            dyn_cast<FunctionType>(Callee->getType()->getPointerElementType());
+        FTyID = getContainedTypeID(CalleeTypeID);
+        FTy = dyn_cast_or_null<FunctionType>(getTypeByID(FTyID));
         if (!FTy)
           return error("Callee is not of pointer to function type");
       } else if (!OpTy->isOpaqueOrPointeeTypeMatches(FTy))
@@ -5014,19 +5233,20 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
         return error("Insufficient operands to call");
 
       SmallVector<Value*, 16> Args;
-      SmallVector<Type *, 16> ArgsTys;
+      SmallVector<unsigned, 16> ArgTyIDs;
       // Read the fixed params.
       for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i, ++OpNum) {
         Value *Arg;
+        unsigned ArgTyID = getContainedTypeID(FTyID, i + 1);
         if (FTy->getParamType(i)->isLabelTy())
           Arg = getBasicBlock(Record[OpNum]);
         else
           Arg = getValue(Record, OpNum, NextValueNo, FTy->getParamType(i),
-                         TODOTypeID);
+                         ArgTyID);
         if (!Arg)
           return error("Invalid record");
         Args.push_back(Arg);
-        ArgsTys.push_back(Arg->getType());
+        ArgTyIDs.push_back(ArgTyID);
       }
 
       // Read type/value pairs for varargs params.
@@ -5040,19 +5260,26 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
           if (getValueTypePair(Record, OpNum, NextValueNo, Op, OpTypeID))
             return error("Invalid record");
           Args.push_back(Op);
-          ArgsTys.push_back(Op->getType());
+          ArgTyIDs.push_back(OpTypeID);
         }
       }
 
+      // Upgrade the bundles if needed.
+      if (!OperandBundles.empty())
+        UpgradeOperandBundles(OperandBundles);
+
       I = CallBrInst::Create(FTy, Callee, DefaultDest, IndirectDests, Args,
                              OperandBundles);
-      ResTypeID = TODOTypeID;
+      ResTypeID = getContainedTypeID(FTyID);
       OperandBundles.clear();
       InstructionList.push_back(I);
       cast<CallBrInst>(I)->setCallingConv(
           static_cast<CallingConv::ID>((0x7ff & CCInfo) >> bitc::CALL_CCONV));
       cast<CallBrInst>(I)->setAttributes(PAL);
-      propagateAttributeTypes(cast<CallBase>(I), ArgsTys);
+      if (Error Err = propagateAttributeTypes(cast<CallBase>(I), ArgTyIDs)) {
+        I->deleteValue();
+        return Err;
+      }
       break;
     }
     case bitc::FUNC_CODE_INST_UNREACHABLE: // UNREACHABLE
@@ -5061,20 +5288,22 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
       break;
     case bitc::FUNC_CODE_INST_PHI: { // PHI: [ty, val0,bb0, ...]
       if (Record.empty())
-        return error("Invalid record");
+        return error("Invalid phi record");
       // The first record specifies the type.
       unsigned TyID = Record[0];
       Type *Ty = getTypeByID(TyID);
       if (!Ty)
-        return error("Invalid record");
+        return error("Invalid phi record");
 
       // Phi arguments are pairs of records of [value, basic block].
       // There is an optional final record for fast-math-flags if this phi has a
       // floating-point type.
       size_t NumArgs = (Record.size() - 1) / 2;
       PHINode *PN = PHINode::Create(Ty, NumArgs);
-      if ((Record.size() - 1) % 2 == 1 && !isa<FPMathOperator>(PN))
-        return error("Invalid record");
+      if ((Record.size() - 1) % 2 == 1 && !isa<FPMathOperator>(PN)) {
+        PN->deleteValue();
+        return error("Invalid phi record");
+      }
       InstructionList.push_back(PN);
 
       for (unsigned i = 0; i != NumArgs; i++) {
@@ -5087,8 +5316,10 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
         else
           V = getValue(Record, i * 2 + 1, NextValueNo, Ty, TyID);
         BasicBlock *BB = getBasicBlock(Record[i * 2 + 2]);
-        if (!V || !BB)
-          return error("Invalid record");
+        if (!V || !BB) {
+          PN->deleteValue();
+          return error("Invalid phi record");
+        }
         PN->addIncoming(V, BB);
       }
       I = PN;
@@ -5163,15 +5394,17 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
     }
 
     case bitc::FUNC_CODE_INST_ALLOCA: { // ALLOCA: [instty, opty, op, align]
-      if (Record.size() != 4)
+      if (Record.size() != 4 && Record.size() != 5)
         return error("Invalid record");
       using APV = AllocaPackedValues;
       const uint64_t Rec = Record[3];
       const bool InAlloca = Bitfield::get<APV::UsedWithInAlloca>(Rec);
       const bool SwiftError = Bitfield::get<APV::SwiftError>(Rec);
-      Type *Ty = getTypeByID(Record[0]);
+      unsigned TyID = Record[0];
+      Type *Ty = getTypeByID(TyID);
       if (!Bitfield::get<APV::ExplicitType>(Rec)) {
-        Ty = getPtrElementTypeByID(Record[0]);
+        TyID = getContainedTypeID(TyID);
+        Ty = getTypeByID(TyID);
         if (!Ty)
           return error("Missing element type for old-style alloca");
       }
@@ -5188,9 +5421,8 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
       if (!Ty || !Size)
         return error("Invalid record");
 
-      // FIXME: Make this an optional field.
       const DataLayout &DL = TheModule->getDataLayout();
-      unsigned AS = DL.getAllocaAddrSpace();
+      unsigned AS = Record.size() == 5 ? Record[4] : DL.getAllocaAddrSpace();
 
       SmallPtrSet<Type *, 4> Visited;
       if (!Align && !Ty->isSized(&Visited))
@@ -5202,7 +5434,7 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
       AI->setUsedWithInAlloca(InAlloca);
       AI->setSwiftError(SwiftError);
       I = AI;
-      ResTypeID = TODOTypeID;
+      ResTypeID = getVirtualTypeID(AI->getType(), TyID);
       InstructionList.push_back(I);
       break;
     }
@@ -5223,7 +5455,9 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
         Ty = getTypeByID(ResTypeID);
       } else {
         ResTypeID = getContainedTypeID(OpTypeID);
-        Ty = Op->getType()->getPointerElementType();
+        Ty = getTypeByID(ResTypeID);
+        if (!Ty)
+          return error("Missing element type for old-style load");
       }
 
       if (Error Err = typeCheckLoadStoreInst(Ty, Op->getType()))
@@ -5259,7 +5493,9 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
         Ty = getTypeByID(ResTypeID);
       } else {
         ResTypeID = getContainedTypeID(OpTypeID);
-        Ty = Op->getType()->getPointerElementType();
+        Ty = getTypeByID(ResTypeID);
+        if (!Ty)
+          return error("Missing element type for old style atomic load");
       }
 
       if (Error Err = typeCheckLoadStoreInst(Ty, Op->getType()))
@@ -5288,13 +5524,20 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
       unsigned OpNum = 0;
       Value *Val, *Ptr;
       unsigned PtrTypeID, ValTypeID;
-      if (getValueTypePair(Record, OpNum, NextValueNo, Ptr, PtrTypeID) ||
-          (BitCode == bitc::FUNC_CODE_INST_STORE
-               ? getValueTypePair(Record, OpNum, NextValueNo, Val, ValTypeID)
-               : popValue(Record, OpNum, NextValueNo,
-                          Ptr->getType()->getPointerElementType(),
-                          getContainedTypeID(PtrTypeID), Val)) ||
-          OpNum + 2 != Record.size())
+      if (getValueTypePair(Record, OpNum, NextValueNo, Ptr, PtrTypeID))
+        return error("Invalid record");
+
+      if (BitCode == bitc::FUNC_CODE_INST_STORE) {
+        if (getValueTypePair(Record, OpNum, NextValueNo, Val, ValTypeID))
+          return error("Invalid record");
+      } else {
+        ValTypeID = getContainedTypeID(PtrTypeID);
+        if (popValue(Record, OpNum, NextValueNo, getTypeByID(ValTypeID),
+                     ValTypeID, Val))
+          return error("Invalid record");
+      }
+
+      if (OpNum + 2 != Record.size())
         return error("Invalid record");
 
       if (Error Err = typeCheckLoadStoreInst(Val->getType(), Ptr->getType()))
@@ -5318,13 +5561,19 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
       Value *Val, *Ptr;
       unsigned PtrTypeID, ValTypeID;
       if (getValueTypePair(Record, OpNum, NextValueNo, Ptr, PtrTypeID) ||
-          !isa<PointerType>(Ptr->getType()) ||
-          (BitCode == bitc::FUNC_CODE_INST_STOREATOMIC
-               ? getValueTypePair(Record, OpNum, NextValueNo, Val, ValTypeID)
-               : popValue(Record, OpNum, NextValueNo,
-                          Ptr->getType()->getPointerElementType(),
-                          getContainedTypeID(PtrTypeID), Val)) ||
-          OpNum + 4 != Record.size())
+          !isa<PointerType>(Ptr->getType()))
+        return error("Invalid record");
+      if (BitCode == bitc::FUNC_CODE_INST_STOREATOMIC) {
+        if (getValueTypePair(Record, OpNum, NextValueNo, Val, ValTypeID))
+          return error("Invalid record");
+      } else {
+        ValTypeID = getContainedTypeID(PtrTypeID);
+        if (popValue(Record, OpNum, NextValueNo, getTypeByID(ValTypeID),
+                     ValTypeID, Val))
+          return error("Invalid record");
+      }
+
+      if (OpNum + 4 != Record.size())
         return error("Invalid record");
 
       if (Error Err = typeCheckLoadStoreInst(Val->getType(), Ptr->getType()))
@@ -5362,8 +5611,7 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
 
       Value *Cmp = nullptr;
       unsigned CmpTypeID = getContainedTypeID(PtrTypeID);
-      if (popValue(Record, OpNum, NextValueNo,
-                   cast<PointerType>(Ptr->getType())->getPointerElementType(),
+      if (popValue(Record, OpNum, NextValueNo, getTypeByID(CmpTypeID),
                    CmpTypeID, Cmp))
         return error("Invalid record");
 
@@ -5398,7 +5646,6 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
 
       I = new AtomicCmpXchgInst(Ptr, Cmp, New, Alignment, SuccessOrdering,
                                 FailureOrdering, SSID);
-      ResTypeID = TODOTypeID;
       cast<AtomicCmpXchgInst>(I)->setVolatile(Record[OpNum]);
 
       if (NumRecords < 8) {
@@ -5407,9 +5654,11 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
         // expecting the first component of a modern cmpxchg.
         CurBB->getInstList().push_back(I);
         I = ExtractValueInst::Create(I, 0);
-        ResTypeID = TODOTypeID;
+        ResTypeID = CmpTypeID;
       } else {
         cast<AtomicCmpXchgInst>(I)->setWeak(Record[OpNum + 4]);
+        unsigned I1TypeID = getVirtualTypeID(Type::getInt1Ty(Context));
+        ResTypeID = getVirtualTypeID(I->getType(), {CmpTypeID, I1TypeID});
       }
 
       InstructionList.push_back(I);
@@ -5473,7 +5722,9 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
                                 FailureOrdering, SSID);
       cast<AtomicCmpXchgInst>(I)->setVolatile(IsVol);
       cast<AtomicCmpXchgInst>(I)->setWeak(IsWeak);
-      ResTypeID = TODOTypeID;
+
+      unsigned I1TypeID = getVirtualTypeID(Type::getInt1Ty(Context));
+      ResTypeID = getVirtualTypeID(I->getType(), {CmpTypeID, I1TypeID});
 
       InstructionList.push_back(I);
       break;
@@ -5494,13 +5745,13 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
         return error("Invalid record");
 
       Value *Val = nullptr;
+      unsigned ValTypeID = InvalidTypeID;
       if (BitCode == bitc::FUNC_CODE_INST_ATOMICRMW_OLD) {
+        ValTypeID = getContainedTypeID(PtrTypeID);
         if (popValue(Record, OpNum, NextValueNo,
-                     cast<PointerType>(Ptr->getType())->getPointerElementType(),
-                     getContainedTypeID(PtrTypeID), Val))
+                     getTypeByID(ValTypeID), ValTypeID, Val))
           return error("Invalid record");
       } else {
-        unsigned ValTypeID;
         if (getValueTypePair(Record, OpNum, NextValueNo, Val, ValTypeID))
           return error("Invalid record");
       }
@@ -5535,7 +5786,7 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
             Align(TheModule->getDataLayout().getTypeStoreSize(Val->getType()));
 
       I = new AtomicRMWInst(Operation, Ptr, Val, *Alignment, Ordering, SSID);
-      ResTypeID = TODOTypeID;
+      ResTypeID = ValTypeID;
       cast<AtomicRMWInst>(I)->setVolatile(IsVol);
 
       InstructionList.push_back(I);
@@ -5570,9 +5821,11 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
           return error("Fast math flags indicator set for call with no FMF");
       }
 
+      unsigned FTyID = InvalidTypeID;
       FunctionType *FTy = nullptr;
       if ((CCInfo >> bitc::CALL_EXPLICIT_TYPE) & 1) {
-        FTy = dyn_cast<FunctionType>(getTypeByID(Record[OpNum++]));
+        FTyID = Record[OpNum++];
+        FTy = dyn_cast_or_null<FunctionType>(getTypeByID(FTyID));
         if (!FTy)
           return error("Explicit call type is not a function type");
       }
@@ -5586,8 +5839,8 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
       if (!OpTy)
         return error("Callee is not a pointer type");
       if (!FTy) {
-        FTy =
-            dyn_cast<FunctionType>(Callee->getType()->getPointerElementType());
+        FTyID = getContainedTypeID(CalleeTypeID);
+        FTy = dyn_cast_or_null<FunctionType>(getTypeByID(FTyID));
         if (!FTy)
           return error("Callee is not of pointer to function type");
       } else if (!OpTy->isOpaqueOrPointeeTypeMatches(FTy))
@@ -5597,15 +5850,16 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
         return error("Insufficient operands to call");
 
       SmallVector<Value*, 16> Args;
-      SmallVector<Type *, 16> ArgsTys;
+      SmallVector<unsigned, 16> ArgTyIDs;
       // Read the fixed params.
       for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i, ++OpNum) {
+        unsigned ArgTyID = getContainedTypeID(FTyID, i + 1);
         if (FTy->getParamType(i)->isLabelTy())
           Args.push_back(getBasicBlock(Record[OpNum]));
         else
           Args.push_back(getValue(Record, OpNum, NextValueNo,
-                                  FTy->getParamType(i), TODOTypeID));
-        ArgsTys.push_back(FTy->getParamType(i));
+                                  FTy->getParamType(i), ArgTyID));
+        ArgTyIDs.push_back(ArgTyID);
         if (!Args.back())
           return error("Invalid record");
       }
@@ -5621,12 +5875,16 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
           if (getValueTypePair(Record, OpNum, NextValueNo, Op, OpTypeID))
             return error("Invalid record");
           Args.push_back(Op);
-          ArgsTys.push_back(Op->getType());
+          ArgTyIDs.push_back(OpTypeID);
         }
       }
 
+      // Upgrade the bundles if needed.
+      if (!OperandBundles.empty())
+        UpgradeOperandBundles(OperandBundles);
+
       I = CallInst::Create(FTy, Callee, Args, OperandBundles);
-      ResTypeID = TODOTypeID;
+      ResTypeID = getContainedTypeID(FTyID);
       OperandBundles.clear();
       InstructionList.push_back(I);
       cast<CallInst>(I)->setCallingConv(
@@ -5640,7 +5898,10 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
         TCK = CallInst::TCK_NoTail;
       cast<CallInst>(I)->setTailCallKind(TCK);
       cast<CallInst>(I)->setAttributes(PAL);
-      propagateAttributeTypes(cast<CallBase>(I), ArgsTys);
+      if (Error Err = propagateAttributeTypes(cast<CallBase>(I), ArgTyIDs)) {
+        I->deleteValue();
+        return Err;
+      }
       if (FMF.any()) {
         if (!isa<FPMathOperator>(I))
           return error("Fast-math-flags specified for call without "
@@ -5723,8 +5984,10 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
 
     // Non-void values get registered in the value table for future use.
     if (!I->getType()->isVoidTy()) {
-      assert(ResTypeID != InvalidTypeID && "Should have ID for non-void type");
-      ValueList.assignValue(NextValueNo++, I, ResTypeID);
+      assert(I->getType() == getTypeByID(ResTypeID) &&
+             "Incorrect result type ID");
+      if (Error Err = ValueList.assignValue(NextValueNo++, I, ResTypeID))
+        return Err;
     }
   }
 

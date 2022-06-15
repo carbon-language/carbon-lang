@@ -41,7 +41,9 @@ template <Direction DIR> void InternalDescriptorUnit<DIR>::EndIoStatement() {
   if constexpr (DIR == Direction::Output) {
     // Clear the remainder of the current record if anything was written
     // to it, or if it is the only record.
-    if (endfileRecordNumber.value_or(-1) == 2 || furthestPositionInRecord > 0) {
+    auto end{endfileRecordNumber.value_or(0)};
+    if (currentRecordNumber < end &&
+        (end == 2 || furthestPositionInRecord > 0)) {
       BlankFillOutputRecord();
     }
   }
@@ -99,21 +101,6 @@ std::size_t InternalDescriptorUnit<DIR>::GetNextInputBytes(
       p = &record[positionInRecord];
       return *recordLength - positionInRecord;
     }
-  }
-}
-
-template <Direction DIR>
-std::optional<char32_t> InternalDescriptorUnit<DIR>::GetCurrentChar(
-    IoErrorHandler &handler) {
-  const char *p{nullptr};
-  std::size_t bytes{GetNextInputBytes(p, handler)};
-  if (bytes == 0) {
-    return std::nullopt;
-  } else {
-    if (isUTF8) {
-      // TODO: UTF-8 decoding
-    }
-    return *p;
   }
 }
 

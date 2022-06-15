@@ -1,6 +1,6 @@
-// RUN: mlir-opt -test-gpu-greedy-parallel-loop-mapping -split-input-file %s | FileCheck %s
+// RUN: mlir-opt -gpu-map-parallel-loops -split-input-file %s | FileCheck %s
 
-func @parallel_loop(%arg0 : index, %arg1 : index, %arg2 : index,
+func.func @parallel_loop(%arg0 : index, %arg1 : index, %arg2 : index,
                     %arg3 : index) {
   %zero = arith.constant 0 : index
   %one = arith.constant 1 : index
@@ -14,19 +14,18 @@ func @parallel_loop(%arg0 : index, %arg1 : index, %arg2 : index,
   return
 }
 
-// CHECK: #[[$MAP:.*]] = affine_map<(d0) -> (d0)>
 // CHECK-LABEL:   func @parallel_loop(
 // CHECK:           scf.parallel
 // CHECK:             scf.parallel
-// CHECK:      {mapping = [{bound = #[[$MAP]], map = #[[$MAP]], processor = 3 : i64},
-// CHECK-SAME:             {bound = #[[$MAP]], map = #[[$MAP]], processor = 4 : i64}]}
-// CHECK:      {mapping = [{bound = #[[$MAP]], map = #[[$MAP]], processor = 0 : i64},
-// CHECK-SAME:             {bound = #[[$MAP]], map = #[[$MAP]], processor = 1 : i64}]}
+// CHECK:      {mapping = [#gpu.loop_dim_map<processor = thread_x, map = (d0) -> (d0), bound = (d0) -> (d0)>,
+// CHECK-SAME:             #gpu.loop_dim_map<processor = thread_y, map = (d0) -> (d0), bound = (d0) -> (d0)>]}
+// CHECK:      {mapping = [#gpu.loop_dim_map<processor = block_x, map = (d0) -> (d0), bound = (d0) -> (d0)>,
+// CHECK-SAME:             #gpu.loop_dim_map<processor = block_y, map = (d0) -> (d0), bound = (d0) -> (d0)>]}
 // CHECK-NOT: mapping
 
 // -----
 
-func @parallel_loop_4d(%arg0 : index, %arg1 : index, %arg2 : index,
+func.func @parallel_loop_4d(%arg0 : index, %arg1 : index, %arg2 : index,
                        %arg3 : index) {
   %zero = arith.constant 0 : index
   %one = arith.constant 1 : index
@@ -43,21 +42,20 @@ func @parallel_loop_4d(%arg0 : index, %arg1 : index, %arg2 : index,
   return
 }
 
-// CHECK: #[[$MAP:.*]] = affine_map<(d0) -> (d0)>
 // CHECK-LABEL:   func @parallel_loop_4d(
 // CHECK:           scf.parallel
 // CHECK:             scf.parallel
 // CHECK:               scf.parallel
-// CHECK:      {mapping = [{bound = #[[$MAP]], map = #[[$MAP]], processor = 6 : i64},
-// CHECK-SAME:             {bound = #[[$MAP]], map = #[[$MAP]], processor = 6 : i64},
-// CHECK-SAME:             {bound = #[[$MAP]], map = #[[$MAP]], processor = 6 : i64},
-// CHECK-SAME:             {bound = #[[$MAP]], map = #[[$MAP]], processor = 6 : i64}]}
-// CHECK:      {mapping = [{bound = #[[$MAP]], map = #[[$MAP]], processor = 3 : i64},
-// CHECK-SAME:             {bound = #[[$MAP]], map = #[[$MAP]], processor = 4 : i64},
-// CHECK-SAME:             {bound = #[[$MAP]], map = #[[$MAP]], processor = 5 : i64},
-// CHECK-SAME:             {bound = #[[$MAP]], map = #[[$MAP]], processor = 6 : i64}]}
-// CHECK:      {mapping = [{bound = #[[$MAP]], map = #[[$MAP]], processor = 0 : i64},
-// CHECK-SAME:             {bound = #[[$MAP]], map = #[[$MAP]], processor = 1 : i64},
-// CHECK-SAME:             {bound = #[[$MAP]], map = #[[$MAP]], processor = 2 : i64},
-// CHECK-SAME:             {bound = #[[$MAP]], map = #[[$MAP]], processor = 6 : i64}]}
+// CHECK:      {mapping = [#gpu.loop_dim_map<processor = sequential, map = (d0) -> (d0), bound = (d0) -> (d0)>,
+// CHECK-SAME:             #gpu.loop_dim_map<processor = sequential, map = (d0) -> (d0), bound = (d0) -> (d0)>,
+// CHECK-SAME:             #gpu.loop_dim_map<processor = sequential, map = (d0) -> (d0), bound = (d0) -> (d0)>,
+// CHECK-SAME:             #gpu.loop_dim_map<processor = sequential, map = (d0) -> (d0), bound = (d0) -> (d0)>]}
+// CHECK:      {mapping = [#gpu.loop_dim_map<processor = thread_x, map = (d0) -> (d0), bound = (d0) -> (d0)>,
+// CHECK-SAME:             #gpu.loop_dim_map<processor = thread_y, map = (d0) -> (d0), bound = (d0) -> (d0)>,
+// CHECK-SAME:             #gpu.loop_dim_map<processor = thread_z, map = (d0) -> (d0), bound = (d0) -> (d0)>,
+// CHECK-SAME:             #gpu.loop_dim_map<processor = sequential, map = (d0) -> (d0), bound = (d0) -> (d0)>]}
+// CHECK:      {mapping = [#gpu.loop_dim_map<processor = block_x, map = (d0) -> (d0), bound = (d0) -> (d0)>,
+// CHECK-SAME:             #gpu.loop_dim_map<processor = block_y, map = (d0) -> (d0), bound = (d0) -> (d0)>,
+// CHECK-SAME:             #gpu.loop_dim_map<processor = block_z, map = (d0) -> (d0), bound = (d0) -> (d0)>,
+// CHECK-SAME:             #gpu.loop_dim_map<processor = sequential, map = (d0) -> (d0), bound = (d0) -> (d0)>]}
 // CHECK-NOT: mapping

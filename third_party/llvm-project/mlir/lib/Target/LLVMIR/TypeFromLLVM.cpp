@@ -71,6 +71,8 @@ private:
       return LLVM::LLVMLabelType::get(&context);
     if (type->isMetadataTy())
       return LLVM::LLVMMetadataType::get(&context);
+    if (type->isTokenTy())
+      return LLVM::LLVMTokenType::get(&context);
     llvm_unreachable("not a primitive type");
   }
 
@@ -95,8 +97,12 @@ private:
 
   /// Translates the given pointer type.
   Type translate(llvm::PointerType *type) {
+    if (type->isOpaque())
+      return LLVM::LLVMPointerType::get(&context, type->getAddressSpace());
+
     return LLVM::LLVMPointerType::get(
-        translateType(type->getPointerElementType()), type->getAddressSpace());
+        translateType(type->getNonOpaquePointerElementType()),
+        type->getAddressSpace());
   }
 
   /// Translates the given structure type.

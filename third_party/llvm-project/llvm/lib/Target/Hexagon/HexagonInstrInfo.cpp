@@ -77,9 +77,9 @@ cl::opt<bool> ScheduleInlineAsm("hexagon-sched-inline-asm", cl::Hidden,
 static cl::opt<bool> EnableBranchPrediction("hexagon-enable-branch-prediction",
   cl::Hidden, cl::init(true), cl::desc("Enable branch prediction"));
 
-static cl::opt<bool> DisableNVSchedule("disable-hexagon-nv-schedule",
-  cl::Hidden, cl::ZeroOrMore, cl::init(false),
-  cl::desc("Disable schedule adjustment for new value stores."));
+static cl::opt<bool> DisableNVSchedule(
+    "disable-hexagon-nv-schedule", cl::Hidden,
+    cl::desc("Disable schedule adjustment for new value stores."));
 
 static cl::opt<bool> EnableTimingClassLatency(
   "enable-timing-class-latency", cl::Hidden, cl::init(false),
@@ -94,11 +94,12 @@ static cl::opt<bool> EnableACCForwarding(
   cl::desc("Enable vec acc forwarding"));
 
 static cl::opt<bool> BranchRelaxAsmLarge("branch-relax-asm-large",
-  cl::init(true), cl::Hidden, cl::ZeroOrMore, cl::desc("branch relax asm"));
+                                         cl::init(true), cl::Hidden,
+                                         cl::desc("branch relax asm"));
 
-static cl::opt<bool> UseDFAHazardRec("dfa-hazard-rec",
-  cl::init(true), cl::Hidden, cl::ZeroOrMore,
-  cl::desc("Use the DFA based hazard recognizer."));
+static cl::opt<bool>
+    UseDFAHazardRec("dfa-hazard-rec", cl::init(true), cl::Hidden,
+                    cl::desc("Use the DFA based hazard recognizer."));
 
 /// Constants for Hexagon instructions.
 const int Hexagon_MEMW_OFFSET_MAX = 4095;
@@ -1072,6 +1073,43 @@ bool HexagonInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
   };
 
   switch (Opc) {
+    case Hexagon::PS_call_instrprof_custom: {
+      auto Op0 = MI.getOperand(0);
+      assert(Op0.isGlobal() &&
+             "First operand must be a global containing handler name.");
+      const GlobalValue *NameVar = Op0.getGlobal();
+      const GlobalVariable *GV = dyn_cast<GlobalVariable>(NameVar);
+      auto *Arr = cast<ConstantDataArray>(GV->getInitializer());
+      StringRef NameStr = Arr->isCString() ? Arr->getAsCString() : Arr->getAsString();
+
+      MachineOperand &Op1 = MI.getOperand(1);
+      // Set R0 with the imm value to be passed to the custom profiling handler.
+      BuildMI(MBB, MI, DL, get(Hexagon::A2_tfrsi), Hexagon::R0)
+        .addImm(Op1.getImm());
+      // The call to the custom handler is being treated as a special one as the
+      // callee is responsible for saving and restoring all the registers
+      // (including caller saved registers) it needs to modify. This is
+      // done to reduce the impact of instrumentation on the code being
+      // instrumented/profiled.
+      // NOTE: R14, R15 and R28 are reserved for PLT handling. These registers
+      // are in the Def list of the Hexagon::PS_call_instrprof_custom and
+      // therefore will be handled appropriately duing register allocation.
+
+      // TODO: It may be a good idea to add a separate pseudo instruction for
+      // static relocation which doesn't need to reserve r14, r15 and r28.
+
+      auto MIB = BuildMI(MBB, MI, DL, get(Hexagon::J2_call))
+                 .addUse(Hexagon::R0, RegState::Implicit|RegState::InternalRead)
+                 .addDef(Hexagon::R29, RegState::ImplicitDefine)
+                 .addDef(Hexagon::R30, RegState::ImplicitDefine)
+                 .addDef(Hexagon::R14, RegState::ImplicitDefine)
+                 .addDef(Hexagon::R15, RegState::ImplicitDefine)
+                 .addDef(Hexagon::R28, RegState::ImplicitDefine);
+      const char *cstr = MF.createExternalSymbolName(NameStr);
+      MIB.addExternalSymbol(cstr);
+      MBB.erase(MI);
+      return true;
+    }
     case TargetOpcode::COPY: {
       MachineOperand &MD = MI.getOperand(0);
       MachineOperand &MS = MI.getOperand(1);
@@ -1392,8 +1430,8 @@ bool HexagonInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
       // Generate a misaligned load that is guaranteed to cause a crash.
       class CrashPseudoSourceValue : public PseudoSourceValue {
       public:
-        CrashPseudoSourceValue(const TargetInstrInfo &TII)
-          : PseudoSourceValue(TargetCustom, TII) {}
+        CrashPseudoSourceValue(const TargetMachine &TM)
+            : PseudoSourceValue(TargetCustom, TM) {}
 
         bool isConstant(const MachineFrameInfo *) const override {
           return false;
@@ -1409,7 +1447,7 @@ bool HexagonInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
         }
       };
 
-      static const CrashPseudoSourceValue CrashPSV(*this);
+      static const CrashPseudoSourceValue CrashPSV(MF.getTarget());
       MachineMemOperand *MMO = MF.getMachineMemOperand(
           MachinePointerInfo(&CrashPSV),
           MachineMemOperand::MOLoad | MachineMemOperand::MOVolatile, 8,
@@ -1662,7 +1700,7 @@ bool HexagonInstrInfo::PredicateInstruction(
 
   MI.setDesc(get(PredOpc));
   while (unsigned n = MI.getNumOperands())
-    MI.RemoveOperand(n-1);
+    MI.removeOperand(n-1);
   for (unsigned i = 0, n = T->getNumOperands(); i < n; ++i)
     MI.addOperand(T->getOperand(i));
 
@@ -4464,6 +4502,9 @@ unsigned HexagonInstrInfo::getMemAccessSize(const MachineInstr &MI) const {
   unsigned Size = getMemAccessSizeInBytes(MemAccessSize(S));
   if (Size != 0)
     return Size;
+  // Y2_dcfetchbo is special
+  if (MI.getOpcode() == Hexagon::Y2_dcfetchbo)
+    return HexagonII::DoubleWordAccess;
 
   // Handle vector access sizes.
   const HexagonRegisterInfo &HRI = *Subtarget.getRegisterInfo();

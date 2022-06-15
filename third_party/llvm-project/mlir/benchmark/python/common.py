@@ -6,9 +6,9 @@ import mlir.all_passes_registration
 from mlir import ir
 from mlir.dialects import arith
 from mlir.dialects import builtin
+from mlir.dialects import func
 from mlir.dialects import memref
 from mlir.dialects import scf
-from mlir.dialects import std
 from mlir.passmanager import PassManager
 
 
@@ -41,7 +41,7 @@ def create_sparse_np_tensor(dimensions, number_of_elements):
     return tensor
 
 
-def get_kernel_func_from_module(module: ir.Module) -> builtin.FuncOp:
+def get_kernel_func_from_module(module: ir.Module) -> func.FuncOp:
     """Takes an mlir module object and extracts the function object out of it.
     This function only works for a module with one region, one block, and one
     operation.
@@ -55,15 +55,15 @@ def get_kernel_func_from_module(module: ir.Module) -> builtin.FuncOp:
     return module.operation.regions[0].blocks[0].operations[0]
 
 
-def emit_timer_func() -> builtin.FuncOp:
-    """Returns the declaration of nano_time function. If nano_time function is
+def emit_timer_func() -> func.FuncOp:
+    """Returns the declaration of nanoTime function. If nanoTime function is
     used, the `MLIR_RUNNER_UTILS` and `MLIR_C_RUNNER_UTILS` must be included.
     """
     i64_type = ir.IntegerType.get_signless(64)
-    nano_time = builtin.FuncOp(
-        "nano_time", ([], [i64_type]), visibility="private")
-    nano_time.attributes["llvm.emit_c_interface"] = ir.UnitAttr.get()
-    return nano_time
+    nanoTime = func.FuncOp(
+        "nanoTime", ([], [i64_type]), visibility="private")
+    nanoTime.attributes["llvm.emit_c_interface"] = ir.UnitAttr.get()
+    return nanoTime
 
 
 def emit_benchmark_wrapped_main_func(func, timer_func):
@@ -76,7 +76,7 @@ def emit_benchmark_wrapped_main_func(func, timer_func):
     """
     i64_type = ir.IntegerType.get_signless(64)
     memref_of_i64_type = ir.MemRefType.get([-1], i64_type)
-    wrapped_func = builtin.FuncOp(
+    wrapped_func = func.FuncOp(
         # Same signature and an extra buffer of indices to save timings.
         "main",
         (func.arguments.types + [memref_of_i64_type], func.type.results),
@@ -93,15 +93,15 @@ def emit_benchmark_wrapped_main_func(func, timer_func):
         iter_args = list(wrapped_func.arguments[-num_results - 1:-1])
         loop = scf.ForOp(zero, n_iterations, one, iter_args)
         with ir.InsertionPoint(loop.body):
-            start = std.CallOp(timer_func, [])
-            call = std.CallOp(
+            start = func.CallOp(timer_func, [])
+            call = func.CallOp(
                 func,
                 wrapped_func.arguments[:-num_results - 1] + loop.inner_iter_args
             )
-            end = std.CallOp(timer_func, [])
+            end = func.CallOp(timer_func, [])
             time_taken = arith.SubIOp(end, start)
             memref.StoreOp(time_taken, timer_buffer, [loop.induction_variable])
             scf.YieldOp(list(call.results))
-        std.ReturnOp(loop)
+        func.ReturnOp(loop)
 
     return wrapped_func

@@ -234,7 +234,7 @@ inline __device__ unsigned int __match32_any_sync(unsigned int mask,
   return __nvvm_match_any_sync_i32(mask, value);
 }
 
-inline __device__ unsigned long long
+inline __device__ unsigned int
 __match64_any_sync(unsigned int mask, unsigned long long value) {
   return __nvvm_match_any_sync_i64(mask, value);
 }
@@ -244,7 +244,7 @@ __match32_all_sync(unsigned int mask, unsigned int value, int *pred) {
   return __nvvm_match_all_sync_i32p(mask, value, pred);
 }
 
-inline __device__ unsigned long long
+inline __device__ unsigned int
 __match64_all_sync(unsigned int mask, unsigned long long value, int *pred) {
   return __nvvm_match_all_sync_i64p(mask, value, pred);
 }
@@ -509,7 +509,7 @@ __device__ inline void *__nv_cvta_constant_to_generic_impl(size_t __ptr) {
 __device__ inline void *__nv_cvta_local_to_generic_impl(size_t __ptr) {
   return (void *)(void __attribute__((address_space(5))) *)__ptr;
 }
-__device__ inline uint32_t __nvvm_get_smem_pointer(void *__ptr) {
+__device__ inline cuuint32_t __nvvm_get_smem_pointer(void *__ptr) {
   return __nv_cvta_generic_to_shared_impl(__ptr);
 }
 } // extern "C"

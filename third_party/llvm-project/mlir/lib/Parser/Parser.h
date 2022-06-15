@@ -68,10 +68,14 @@ public:
   //===--------------------------------------------------------------------===//
 
   /// Emit an error and return failure.
-  InFlightDiagnostic emitError(const Twine &message = {}) {
-    return emitError(state.curToken.getLoc(), message);
-  }
+  InFlightDiagnostic emitError(const Twine &message = {});
   InFlightDiagnostic emitError(SMLoc loc, const Twine &message = {});
+
+  /// Emit an error about a "wrong token".  If the current token is at the
+  /// start of a source line, this will apply heuristics to back up and report
+  /// the error at the end of the previous line, which is where the expected
+  /// token is supposed to be.
+  InFlightDiagnostic emitWrongTokenError(const Twine &message = {});
 
   /// Encode the specified source location information into an attribute for
   /// attachment to the IR.
@@ -199,7 +203,8 @@ public:
   ParseResult parseVectorDimensionList(SmallVectorImpl<int64_t> &dimensions,
                                        unsigned &numScalableDims);
   ParseResult parseDimensionListRanked(SmallVectorImpl<int64_t> &dimensions,
-                                       bool allowDynamic = true);
+                                       bool allowDynamic = true,
+                                       bool withTrailingX = true);
   ParseResult parseIntegerInDimensionList(int64_t &value);
   ParseResult parseXInDimensionList();
 

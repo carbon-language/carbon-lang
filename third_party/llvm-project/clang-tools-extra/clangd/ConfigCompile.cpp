@@ -38,17 +38,16 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/StringSwitch.h"
-#include "llvm/Support/Error.h"
 #include "llvm/Support/FileSystem.h"
-#include "llvm/Support/Format.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/SMLoc.h"
 #include "llvm/Support/SourceMgr.h"
 #include <algorithm>
+#include <memory>
 #include <string>
+#include <vector>
 
 namespace clang {
 namespace clangd {
@@ -333,6 +332,11 @@ struct FragmentCompiler {
     }
     if (F.External)
       compile(std::move(**F.External), F.External->Range);
+    if (F.StandardLibrary)
+      Out.Apply.push_back(
+          [Val(**F.StandardLibrary)](const Params &, Config &C) {
+            C.Index.StandardLibrary = Val;
+          });
   }
 
   void compile(Fragment::IndexBlock::ExternalBlock &&External,
@@ -435,6 +439,7 @@ struct FragmentCompiler {
         Out.Apply.push_back([Val](const Params &, Config &C) {
           C.Diagnostics.UnusedIncludes = *Val;
         });
+    compile(std::move(F.Includes));
 
     compile(std::move(F.ClangTidy));
   }
@@ -508,6 +513,41 @@ struct FragmentCompiler {
                   StringPair.first, StringPair.second);
           });
     }
+  }
+
+  void compile(Fragment::DiagnosticsBlock::IncludesBlock &&F) {
+#ifdef CLANGD_PATH_CASE_INSENSITIVE
+    static llvm::Regex::RegexFlags Flags = llvm::Regex::IgnoreCase;
+#else
+    static llvm::Regex::RegexFlags Flags = llvm::Regex::NoFlags;
+#endif
+    auto Filters = std::make_shared<std::vector<llvm::Regex>>();
+    for (auto &HeaderPattern : F.IgnoreHeader) {
+      // Anchor on the right.
+      std::string AnchoredPattern = "(" + *HeaderPattern + ")$";
+      llvm::Regex CompiledRegex(AnchoredPattern, Flags);
+      std::string RegexError;
+      if (!CompiledRegex.isValid(RegexError)) {
+        diag(Warning,
+             llvm::formatv("Invalid regular expression '{0}': {1}",
+                           *HeaderPattern, RegexError)
+                 .str(),
+             HeaderPattern.Range);
+        continue;
+      }
+      Filters->push_back(std::move(CompiledRegex));
+    }
+    if (Filters->empty())
+      return;
+    auto Filter = [Filters](llvm::StringRef Path) {
+      for (auto &Regex : *Filters)
+        if (Regex.match(Path))
+          return true;
+      return false;
+    };
+    Out.Apply.push_back([Filter](const Params &, Config &C) {
+      C.Diagnostics.Includes.IgnoreHeader.emplace_back(Filter);
+    });
   }
 
   void compile(Fragment::CompletionBlock &&F) {

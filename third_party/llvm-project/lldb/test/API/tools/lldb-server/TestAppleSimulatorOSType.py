@@ -17,9 +17,13 @@ class TestAppleSimulatorOSType(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     def check_simulator_ostype(self, sdk, platform_name, arch=platform.machine()):
         cmd = ['xcrun', 'simctl', 'list', '-j', 'devices']
-        self.trace(' '.join(cmd))
+        cmd_str = ' '.join(cmd)
+        self.trace(cmd_str)
         sim_devices_str = subprocess.check_output(cmd).decode("utf-8")
-        sim_devices = json.loads(sim_devices_str)['devices']
+        try:
+            sim_devices = json.loads(sim_devices_str)['devices']
+        except json.decoder.JSONDecodeError:
+            self.fail("Could not parse '{}' output. Authorization denied?".format(cmd_str))
         # Find an available simulator for the requested platform
         deviceUDID = None
         deviceRuntime = None
@@ -45,7 +49,7 @@ class TestAppleSimulatorOSType(gdbremote_testcase.GdbRemoteTestCaseBase):
                 break
 
         # Launch the process using simctl
-        self.assertIsNotNone(deviceUDID)
+        self.assertIsNotNone(deviceUDID, 'Could not find a simulator for {} ({})'.format(platform_name, arch))
 
         exe_name = 'test_simulator_platform_{}'.format(platform_name)
         sdkroot = lldbutil.get_xcode_sdk_root(sdk)
@@ -68,7 +72,7 @@ class TestAppleSimulatorOSType(gdbremote_testcase.GdbRemoteTestCaseBase):
                 'ARCH': arch,
                 'ARCH_CFLAGS': '-target {} {}'.format(triple, version_min),
             })
-        exe_path = self.getBuildArtifact(exe_name)
+        exe_path = os.path.realpath(self.getBuildArtifact(exe_name))
         cmd = [
             'xcrun', 'simctl', 'spawn', '-s', deviceUDID, exe_path,
             'print-pid', 'sleep:10'

@@ -13,15 +13,14 @@
 #ifndef LLVM_CODEGEN_MACHINEOPERAND_H
 #define LLVM_CODEGEN_MACHINEOPERAND_H
 
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/CodeGen/Register.h"
 #include "llvm/IR/Intrinsics.h"
-#include "llvm/Support/DataTypes.h"
-#include "llvm/Support/LowLevelTypeImpl.h"
 #include <cassert>
 
 namespace llvm {
 
+class LLT;
 class BlockAddress;
 class Constant;
 class ConstantFP;

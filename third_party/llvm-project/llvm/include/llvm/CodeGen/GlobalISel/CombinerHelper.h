@@ -17,16 +17,20 @@
 #ifndef LLVM_CODEGEN_GLOBALISEL_COMBINERHELPER_H
 #define LLVM_CODEGEN_GLOBALISEL_COMBINERHELPER_H
 
-#include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
-#include "llvm/CodeGen/LowLevelType.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/Register.h"
-#include "llvm/Support/Alignment.h"
+#include "llvm/Support/LowLevelTypeImpl.h"
+#include <functional>
 
 namespace llvm {
 
 class GISelChangeObserver;
+class APFloat;
+class APInt;
+class GPtrAdd;
+class GStore;
+class GZExtLoad;
 class MachineIRBuilder;
 class MachineInstrBuilder;
 class MachineRegisterInfo;
@@ -729,6 +733,12 @@ public:
 
   /// Fold boolean selects to logical operations.
   bool matchSelectToLogical(MachineInstr &MI, BuildFnTy &MatchInfo);
+
+  bool matchCombineFMinMaxNaN(MachineInstr &MI, unsigned &Info);
+
+  /// Transform G_ADD(x, G_SUB(y, x)) to y.
+  /// Transform G_ADD(G_SUB(y, x), x) to y.
+  bool matchAddSubSameReg(MachineInstr &MI, Register &Src);
 
 private:
   /// Given a non-indexed load or store instruction \p MI, find an offset that

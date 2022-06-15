@@ -1,7 +1,7 @@
 // RUN: toyc-ch5 %s -emit=mlir-affine 2>&1 | FileCheck %s
 // RUN: toyc-ch5 %s -emit=mlir-affine -opt 2>&1 | FileCheck %s --check-prefix=OPT
 
-func @main() {
+toy.func @main() {
   %0 = toy.constant dense<[[1.000000e+00, 2.000000e+00, 3.000000e+00], [4.000000e+00, 5.000000e+00, 6.000000e+00]]> : tensor<2x3xf64>
   %2 = toy.transpose(%0 : tensor<2x3xf64>) to tensor<3x2xf64>
   %3 = toy.mul %2, %2 : tensor<3x2xf64>
@@ -32,8 +32,7 @@ func @main() {
 // CHECK:         affine.for [[VAL_12:%.*]] = 0 to 3 {
 // CHECK:           affine.for [[VAL_13:%.*]] = 0 to 2 {
 // CHECK:             [[VAL_14:%.*]] = affine.load [[VAL_7]]{{\[}}[[VAL_12]], [[VAL_13]]] : memref<3x2xf64>
-// CHECK:             [[VAL_15:%.*]] = affine.load [[VAL_7]]{{\[}}[[VAL_12]], [[VAL_13]]] : memref<3x2xf64>
-// CHECK:             [[VAL_16:%.*]] = arith.mulf [[VAL_14]], [[VAL_15]] : f64
+// CHECK:             [[VAL_16:%.*]] = arith.mulf [[VAL_14]], [[VAL_14]] : f64
 // CHECK:             affine.store [[VAL_16]], [[VAL_6]]{{\[}}[[VAL_12]], [[VAL_13]]] : memref<3x2xf64>
 // CHECK:         toy.print [[VAL_6]] : memref<3x2xf64>
 // CHECK:         memref.dealloc [[VAL_8]] : memref<2x3xf64>

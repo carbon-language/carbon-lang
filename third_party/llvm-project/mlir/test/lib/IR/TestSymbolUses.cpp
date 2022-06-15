@@ -17,12 +17,14 @@ namespace {
 /// provided by the symbol table along with erasing from the symbol table.
 struct SymbolUsesPass
     : public PassWrapper<SymbolUsesPass, OperationPass<ModuleOp>> {
+  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(SymbolUsesPass)
+
   StringRef getArgument() const final { return "test-symbol-uses"; }
   StringRef getDescription() const final {
     return "Test detection of symbol uses";
   }
   WalkResult operateOnSymbol(Operation *symbol, ModuleOp module,
-                             SmallVectorImpl<FuncOp> &deadFunctions) {
+                             SmallVectorImpl<func::FuncOp> &deadFunctions) {
     // Test computing uses on a non symboltable op.
     Optional<SymbolTable::UseRange> symbolUses =
         SymbolTable::getSymbolUses(symbol);
@@ -40,7 +42,7 @@ struct SymbolUsesPass
 
     // Test the functionality of symbolKnownUseEmpty.
     if (SymbolTable::symbolKnownUseEmpty(symbol, &module.getBodyRegion())) {
-      FuncOp funcSymbol = dyn_cast<FuncOp>(symbol);
+      func::FuncOp funcSymbol = dyn_cast<func::FuncOp>(symbol);
       if (funcSymbol && funcSymbol.isExternal())
         deadFunctions.push_back(funcSymbol);
 
@@ -68,7 +70,7 @@ struct SymbolUsesPass
     auto module = getOperation();
 
     // Walk nested symbols.
-    SmallVector<FuncOp, 4> deadFunctions;
+    SmallVector<func::FuncOp, 4> deadFunctions;
     module.getBodyRegion().walk([&](Operation *nestedOp) {
       if (isa<SymbolOpInterface>(nestedOp))
         return operateOnSymbol(nestedOp, module, deadFunctions);
@@ -93,6 +95,8 @@ struct SymbolUsesPass
 /// functionality provided by the symbol table.
 struct SymbolReplacementPass
     : public PassWrapper<SymbolReplacementPass, OperationPass<ModuleOp>> {
+  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(SymbolReplacementPass)
+
   StringRef getArgument() const final { return "test-symbol-rauw"; }
   StringRef getDescription() const final {
     return "Test replacement of symbol uses";

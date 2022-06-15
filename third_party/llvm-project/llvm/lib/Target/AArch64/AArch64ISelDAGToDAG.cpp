@@ -159,6 +159,22 @@ public:
     return SelectAddrModeXRO(N, Width / 8, Base, Offset, SignExtend, DoShift);
   }
 
+  bool SelectExtractHigh(SDValue N, SDValue &Res) {
+    if (Subtarget->isLittleEndian() && N->getOpcode() == ISD::BITCAST)
+      N = N->getOperand(0);
+    if (N->getOpcode() != ISD::EXTRACT_SUBVECTOR ||
+        !isa<ConstantSDNode>(N->getOperand(1)))
+      return false;
+    EVT VT = N->getValueType(0);
+    EVT LVT = N->getOperand(0).getValueType();
+    unsigned Index = N->getConstantOperandVal(1);
+    if (!VT.is64BitVector() || !LVT.is128BitVector() ||
+        Index != VT.getVectorNumElements())
+      return false;
+    Res = N->getOperand(0);
+    return true;
+  }
+
   bool SelectDupZeroOrUndef(SDValue N) {
     switch(N->getOpcode()) {
     case ISD::UNDEF:
@@ -202,6 +218,11 @@ public:
   template<MVT::SimpleValueType VT>
   bool SelectSVEAddSubImm(SDValue N, SDValue &Imm, SDValue &Shift) {
     return SelectSVEAddSubImm(N, VT, Imm, Shift);
+  }
+
+  template <MVT::SimpleValueType VT>
+  bool SelectSVECpyDupImm(SDValue N, SDValue &Imm, SDValue &Shift) {
+    return SelectSVECpyDupImm(N, VT, Imm, Shift);
   }
 
   template <MVT::SimpleValueType VT, bool Invert = false>
@@ -257,6 +278,15 @@ public:
     return false;
   }
 
+  template <unsigned BaseReg> bool ImmToTile(SDValue N, SDValue &Imm) {
+    if (auto *CI = dyn_cast<ConstantSDNode>(N)) {
+      uint64_t C = CI->getZExtValue();
+      Imm = CurDAG->getRegister(BaseReg + C, MVT::Other);
+      return true;
+    }
+    return false;
+  }
+
   /// Form sequences of consecutive 64/128-bit registers for use in NEON
   /// instructions making use of a vector-list (e.g. ldN, tbl). Vecs must have
   /// between 1 and 4 elements. If it contains a single element that is returned
@@ -298,6 +328,11 @@ public:
   template <unsigned Scale>
   bool SelectSVERegRegAddrMode(SDValue N, SDValue &Base, SDValue &Offset) {
     return SelectSVERegRegAddrMode(N, Scale, Base, Offset);
+  }
+
+  template <unsigned Scale>
+  bool SelectSMETileSlice(SDValue N, SDValue &Vector, SDValue &Offset) {
+    return SelectSMETileSlice(N, Scale, Vector, Offset);
   }
 
   void SelectStore(SDNode *N, unsigned NumVecs, unsigned Opc);
@@ -357,10 +392,8 @@ private:
 
   bool SelectCMP_SWAP(SDNode *N);
 
-  bool SelectSVE8BitLslImm(SDValue N, SDValue &Imm, SDValue &Shift);
-
   bool SelectSVEAddSubImm(SDValue N, MVT VT, SDValue &Imm, SDValue &Shift);
-
+  bool SelectSVECpyDupImm(SDValue N, MVT VT, SDValue &Imm, SDValue &Shift);
   bool SelectSVELogicalImm(SDValue N, MVT VT, SDValue &Imm, bool Invert);
 
   bool SelectSVESignedArithImm(SDValue N, SDValue &Imm);
@@ -370,6 +403,8 @@ private:
   bool SelectSVEArithImm(SDValue N, MVT VT, SDValue &Imm);
   bool SelectSVERegRegAddrMode(SDValue N, unsigned Scale, SDValue &Base,
                                SDValue &Offset);
+  bool SelectSMETileSlice(SDValue N, unsigned Scale, SDValue &Vector,
+                          SDValue &Offset);
 
   bool SelectAllActivePredicate(SDValue N);
 };
@@ -822,9 +857,17 @@ bool AArch64DAGToDAGISel::SelectArithExtendedRegister(SDValue N, SDValue &Reg,
 
     Reg = N.getOperand(0);
 
-    // Don't match if free 32-bit -> 64-bit zext can be used instead.
-    if (Ext == AArch64_AM::UXTW &&
-        Reg->getValueType(0).getSizeInBits() == 32 && isDef32(*Reg.getNode()))
+    // Don't match if free 32-bit -> 64-bit zext can be used instead. Use the
+    // isDef32 as a heuristic for when the operand is likely to be a 32bit def.
+    auto isDef32 = [](SDValue N) {
+      unsigned Opc = N.getOpcode();
+      return Opc != ISD::TRUNCATE && Opc != TargetOpcode::EXTRACT_SUBREG &&
+             Opc != ISD::CopyFromReg && Opc != ISD::AssertSext &&
+             Opc != ISD::AssertZext && Opc != ISD::AssertAlign &&
+             Opc != ISD::FREEZE;
+    };
+    if (Ext == AArch64_AM::UXTW && Reg->getValueType(0).getSizeInBits() == 32 &&
+        isDef32(Reg))
       return false;
   }
 
@@ -1852,6 +1895,7 @@ static bool isBitfieldExtractOpFromAnd(SelectionDAG *CurDAG, SDNode *N,
     VT = Opd0->getValueType(0);
   } else if (isOpcWithIntImmediate(Op0, ISD::SRL, SrlImm)) {
     Opd0 = Op0->getOperand(0);
+    ClampMSB = (VT == MVT::i32);
   } else if (BiggerPattern) {
     // Let's pretend a 0 shift right has been performed.
     // The resulting code will be at least as good as the original one
@@ -2710,8 +2754,16 @@ static bool tryBitfieldInsertOpFromOr(SDNode *N, const APInt &UsefulBits,
     // shift the needed bits into place.
     SDLoc DL(N);
     unsigned ShiftOpc = (VT == MVT::i32) ? AArch64::UBFMWri : AArch64::UBFMXri;
+    uint64_t LsrImm = LSB;
+    if (Src->hasOneUse() &&
+        isOpcWithIntImmediate(Src.getNode(), ISD::SRL, LsrImm) &&
+        (LsrImm + LSB) < BitWidth) {
+      Src = Src->getOperand(0);
+      LsrImm += LSB;
+    }
+
     SDNode *LSR = CurDAG->getMachineNode(
-        ShiftOpc, DL, VT, Src, CurDAG->getTargetConstant(LSB, DL, VT),
+        ShiftOpc, DL, VT, Src, CurDAG->getTargetConstant(LsrImm, DL, VT),
         CurDAG->getTargetConstant(BitWidth - 1, DL, VT));
 
     // BFXIL is an alias of BFM, so translate to BFM operands.
@@ -3128,72 +3180,81 @@ bool AArch64DAGToDAGISel::SelectCMP_SWAP(SDNode *N) {
   return true;
 }
 
-bool AArch64DAGToDAGISel::SelectSVE8BitLslImm(SDValue N, SDValue &Base,
-                                                  SDValue &Offset) {
-  auto C = dyn_cast<ConstantSDNode>(N);
-  if (!C)
+bool AArch64DAGToDAGISel::SelectSVEAddSubImm(SDValue N, MVT VT, SDValue &Imm,
+                                             SDValue &Shift) {
+  if (!isa<ConstantSDNode>(N))
     return false;
 
-  auto Ty = N->getValueType(0);
-
-  int64_t Imm = C->getSExtValue();
   SDLoc DL(N);
+  uint64_t Val = cast<ConstantSDNode>(N)
+                     ->getAPIntValue()
+                     .trunc(VT.getFixedSizeInBits())
+                     .getZExtValue();
 
-  if ((Imm >= -128) && (Imm <= 127)) {
-    Base = CurDAG->getTargetConstant(Imm, DL, Ty);
-    Offset = CurDAG->getTargetConstant(0, DL, Ty);
+  switch (VT.SimpleTy) {
+  case MVT::i8:
+    // All immediates are supported.
+    Shift = CurDAG->getTargetConstant(0, DL, MVT::i32);
+    Imm = CurDAG->getTargetConstant(Val, DL, MVT::i32);
     return true;
-  }
-
-  if (((Imm % 256) == 0) && (Imm >= -32768) && (Imm <= 32512)) {
-    Base = CurDAG->getTargetConstant(Imm/256, DL, Ty);
-    Offset = CurDAG->getTargetConstant(8, DL, Ty);
-    return true;
+  case MVT::i16:
+  case MVT::i32:
+  case MVT::i64:
+    // Support 8bit unsigned immediates.
+    if (Val <= 255) {
+      Shift = CurDAG->getTargetConstant(0, DL, MVT::i32);
+      Imm = CurDAG->getTargetConstant(Val, DL, MVT::i32);
+      return true;
+    }
+    // Support 16bit unsigned immediates that are a multiple of 256.
+    if (Val <= 65280 && Val % 256 == 0) {
+      Shift = CurDAG->getTargetConstant(8, DL, MVT::i32);
+      Imm = CurDAG->getTargetConstant(Val >> 8, DL, MVT::i32);
+      return true;
+    }
+    break;
+  default:
+    break;
   }
 
   return false;
 }
 
-bool AArch64DAGToDAGISel::SelectSVEAddSubImm(SDValue N, MVT VT, SDValue &Imm, SDValue &Shift) {
-  if (auto CNode = dyn_cast<ConstantSDNode>(N)) {
-    const int64_t ImmVal = CNode->getSExtValue();
-    SDLoc DL(N);
+bool AArch64DAGToDAGISel::SelectSVECpyDupImm(SDValue N, MVT VT, SDValue &Imm,
+                                             SDValue &Shift) {
+  if (!isa<ConstantSDNode>(N))
+    return false;
 
-    switch (VT.SimpleTy) {
-    case MVT::i8:
-      // Can always select i8s, no shift, mask the immediate value to
-      // deal with sign-extended value from lowering.
+  SDLoc DL(N);
+  int64_t Val = cast<ConstantSDNode>(N)
+                    ->getAPIntValue()
+                    .trunc(VT.getFixedSizeInBits())
+                    .getSExtValue();
+
+  switch (VT.SimpleTy) {
+  case MVT::i8:
+    // All immediates are supported.
+    Shift = CurDAG->getTargetConstant(0, DL, MVT::i32);
+    Imm = CurDAG->getTargetConstant(Val & 0xFF, DL, MVT::i32);
+    return true;
+  case MVT::i16:
+  case MVT::i32:
+  case MVT::i64:
+    // Support 8bit signed immediates.
+    if (Val >= -128 && Val <= 127) {
       Shift = CurDAG->getTargetConstant(0, DL, MVT::i32);
-      Imm = CurDAG->getTargetConstant(ImmVal & 0xFF, DL, MVT::i32);
+      Imm = CurDAG->getTargetConstant(Val & 0xFF, DL, MVT::i32);
       return true;
-    case MVT::i16:
-      // i16 values get sign-extended to 32-bits during lowering.
-      if ((ImmVal & 0xFF) == ImmVal) {
-        Shift = CurDAG->getTargetConstant(0, DL, MVT::i32);
-        Imm = CurDAG->getTargetConstant(ImmVal, DL, MVT::i32);
-        return true;
-      } else if ((ImmVal & 0xFF) == 0) {
-        Shift = CurDAG->getTargetConstant(8, DL, MVT::i32);
-        Imm = CurDAG->getTargetConstant((ImmVal >> 8) & 0xFF, DL, MVT::i32);
-        return true;
-      }
-      break;
-    case MVT::i32:
-    case MVT::i64:
-      // Range of immediate won't trigger signedness problems for 32/64b.
-      if ((ImmVal & 0xFF) == ImmVal) {
-        Shift = CurDAG->getTargetConstant(0, DL, MVT::i32);
-        Imm = CurDAG->getTargetConstant(ImmVal, DL, MVT::i32);
-        return true;
-      } else if ((ImmVal & 0xFF00) == ImmVal) {
-        Shift = CurDAG->getTargetConstant(8, DL, MVT::i32);
-        Imm = CurDAG->getTargetConstant(ImmVal >> 8, DL, MVT::i32);
-        return true;
-      }
-      break;
-    default:
-      break;
     }
+    // Support 16bit signed immediates that are a multiple of 256.
+    if (Val >= -32768 && Val <= 32512 && Val % 256 == 0) {
+      Shift = CurDAG->getTargetConstant(8, DL, MVT::i32);
+      Imm = CurDAG->getTargetConstant((Val >> 8) & 0xFF, DL, MVT::i32);
+      return true;
+    }
+    break;
+  default:
+    break;
   }
 
   return false;
@@ -5053,6 +5114,10 @@ static EVT getMemVTFromNode(LLVMContext &Ctx, SDNode *Root) {
 
   const unsigned IntNo =
       cast<ConstantSDNode>(Root->getOperand(1))->getZExtValue();
+  if (IntNo == Intrinsic::aarch64_sme_ldr ||
+      IntNo == Intrinsic::aarch64_sme_str)
+    return MVT::nxv16i8;
+
   if (IntNo != Intrinsic::aarch64_sve_prf)
     return EVT();
 
@@ -5071,12 +5136,19 @@ bool AArch64DAGToDAGISel::SelectAddrModeIndexedSVE(SDNode *Root, SDValue N,
                                                    SDValue &OffImm) {
   const EVT MemVT = getMemVTFromNode(*(CurDAG->getContext()), Root);
   const DataLayout &DL = CurDAG->getDataLayout();
+  const MachineFrameInfo &MFI = MF->getFrameInfo();
 
   if (N.getOpcode() == ISD::FrameIndex) {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
-    Base = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy(DL));
-    OffImm = CurDAG->getTargetConstant(0, SDLoc(N), MVT::i64);
-    return true;
+    // We can only encode VL scaled offsets, so only fold in frame indexes
+    // referencing SVE objects.
+    if (FI == 0 || MFI.getStackID(FI) == TargetStackID::ScalableVector) {
+      Base = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy(DL));
+      OffImm = CurDAG->getTargetConstant(0, SDLoc(N), MVT::i64);
+      return true;
+    }
+
+    return false;
   }
 
   if (MemVT == EVT())
@@ -5103,7 +5175,10 @@ bool AArch64DAGToDAGISel::SelectAddrModeIndexedSVE(SDNode *Root, SDValue N,
   Base = N.getOperand(0);
   if (Base.getOpcode() == ISD::FrameIndex) {
     int FI = cast<FrameIndexSDNode>(Base)->getIndex();
-    Base = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy(DL));
+    // We can only encode VL scaled offsets, so only fold in frame indexes
+    // referencing SVE objects.
+    if (FI == 0 || MFI.getStackID(FI) == TargetStackID::ScalableVector)
+      Base = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy(DL));
   }
 
   OffImm = CurDAG->getTargetConstant(Offset, SDLoc(N), MVT::i64);
@@ -5168,4 +5243,28 @@ bool AArch64DAGToDAGISel::SelectAllActivePredicate(SDValue N) {
       static_cast<const AArch64TargetLowering *>(getTargetLowering());
 
   return TLI->isAllActivePredicate(*CurDAG, N);
+}
+
+bool AArch64DAGToDAGISel::SelectSMETileSlice(SDValue N, unsigned Scale,
+                                             SDValue &Vector, SDValue &Offset) {
+  if (N.getOpcode() != ISD::ADD)
+    return false;
+
+  // Process an ADD node.
+  const SDValue LHS = N.getOperand(0);
+  const SDValue RHS = N.getOperand(1);
+
+  if (auto C = dyn_cast<ConstantSDNode>(RHS)) {
+    int64_t ImmOff = C->getSExtValue();
+    unsigned MaxSize = (1 << Scale) - 1;
+
+    if (ImmOff < 0 || ImmOff > MaxSize)
+      return false;
+
+    Vector = LHS;
+    Offset = CurDAG->getTargetConstant(ImmOff, SDLoc(N), MVT::i64);
+    return true;
+  }
+
+  return false;
 }

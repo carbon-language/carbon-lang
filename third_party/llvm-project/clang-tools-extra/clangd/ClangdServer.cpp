@@ -14,7 +14,6 @@
 #include "FindSymbols.h"
 #include "Format.h"
 #include "HeaderSourceSwitch.h"
-#include "Headers.h"
 #include "InlayHints.h"
 #include "ParsedAST.h"
 #include "Preamble.h"
@@ -27,30 +26,24 @@
 #include "index/CanonicalIncludes.h"
 #include "index/FileIndex.h"
 #include "index/Merge.h"
+#include "index/StdLib.h"
 #include "refactor/Rename.h"
 #include "refactor/Tweak.h"
+#include "support/Cancellation.h"
 #include "support/Logger.h"
-#include "support/Markup.h"
 #include "support/MemoryTree.h"
 #include "support/ThreadsafeFS.h"
 #include "support/Trace.h"
 #include "clang/Format/Format.h"
-#include "clang/Frontend/CompilerInstance.h"
-#include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Tooling/CompilationDatabase.h"
 #include "clang/Tooling/Core/Replacement.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/ScopeExit.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Errc.h"
 #include "llvm/Support/Error.h"
-#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/ScopedPrinter.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <chrono>
@@ -67,14 +60,37 @@ namespace {
 // Update the FileIndex with new ASTs and plumb the diagnostics responses.
 struct UpdateIndexCallbacks : public ParsingCallbacks {
   UpdateIndexCallbacks(FileIndex *FIndex,
-                       ClangdServer::Callbacks *ServerCallbacks)
-      : FIndex(FIndex), ServerCallbacks(ServerCallbacks) {}
+                       ClangdServer::Callbacks *ServerCallbacks,
+                       const ThreadsafeFS &TFS, AsyncTaskRunner *Tasks)
+      : FIndex(FIndex), ServerCallbacks(ServerCallbacks), TFS(TFS),
+        Tasks(Tasks) {}
 
-  void onPreambleAST(PathRef Path, llvm::StringRef Version, ASTContext &Ctx,
+  void onPreambleAST(PathRef Path, llvm::StringRef Version,
+                     const CompilerInvocation &CI, ASTContext &Ctx,
                      Preprocessor &PP,
                      const CanonicalIncludes &CanonIncludes) override {
+    // If this preamble uses a standard library we haven't seen yet, index it.
+    if (FIndex)
+      if (auto Loc = Stdlib.add(*CI.getLangOpts(), PP.getHeaderSearchInfo()))
+        indexStdlib(CI, std::move(*Loc));
+
     if (FIndex)
       FIndex->updatePreamble(Path, Version, Ctx, PP, CanonIncludes);
+  }
+
+  void indexStdlib(const CompilerInvocation &CI, StdLibLocation Loc) {
+    auto Task = [this, LO(*CI.getLangOpts()), Loc(std::move(Loc)),
+                 CI(std::make_unique<CompilerInvocation>(CI))]() mutable {
+      IndexFileIn IF;
+      IF.Symbols = indexStandardLibrary(std::move(CI), Loc, TFS);
+      if (Stdlib.isBest(LO))
+        FIndex->updatePreamble(std::move(IF));
+    };
+    if (Tasks)
+      // This doesn't have a semaphore to enforce -j, but it's rare.
+      Tasks->runAsync("IndexStdlib", std::move(Task));
+    else
+      Task();
   }
 
   void onMainAST(PathRef Path, ParsedAST &AST, PublishFn Publish) override {
@@ -111,6 +127,9 @@ struct UpdateIndexCallbacks : public ParsingCallbacks {
 private:
   FileIndex *FIndex;
   ClangdServer::Callbacks *ServerCallbacks;
+  const ThreadsafeFS &TFS;
+  StdLibSet Stdlib;
+  AsyncTaskRunner *Tasks;
 };
 
 class DraftStoreFS : public ThreadsafeFS {
@@ -156,16 +175,21 @@ ClangdServer::ClangdServer(const GlobalCompilationDatabase &CDB,
     : FeatureModules(Opts.FeatureModules), CDB(CDB), TFS(TFS),
       DynamicIdx(Opts.BuildDynamicSymbolIndex ? new FileIndex() : nullptr),
       ClangTidyProvider(Opts.ClangTidyProvider),
-      UseDirtyHeaders(Opts.UseDirtyHeaders), WorkspaceRoot(Opts.WorkspaceRoot),
+      UseDirtyHeaders(Opts.UseDirtyHeaders),
+      PreambleParseForwardingFunctions(Opts.PreambleParseForwardingFunctions),
+      WorkspaceRoot(Opts.WorkspaceRoot),
       Transient(Opts.ImplicitCancellation ? TUScheduler::InvalidateOnUpdate
                                           : TUScheduler::NoInvalidation),
       DirtyFS(std::make_unique<DraftStoreFS>(TFS, DraftMgr)) {
+  if (Opts.AsyncThreadsCount != 0)
+    IndexTasks.emplace();
   // Pass a callback into `WorkScheduler` to extract symbols from a newly
   // parsed file and rebuild the file index synchronously each time an AST
   // is parsed.
-  WorkScheduler.emplace(
-      CDB, TUScheduler::Options(Opts),
-      std::make_unique<UpdateIndexCallbacks>(DynamicIdx.get(), Callbacks));
+  WorkScheduler.emplace(CDB, TUScheduler::Options(Opts),
+                        std::make_unique<UpdateIndexCallbacks>(
+                            DynamicIdx.get(), Callbacks, TFS,
+                            IndexTasks ? IndexTasks.getPointer() : nullptr));
   // Adds an index to the stack, at higher priority than existing indexes.
   auto AddIndex = [&](SymbolIndex *Idx) {
     if (this->Index != nullptr) {
@@ -225,6 +249,7 @@ void ClangdServer::addDocument(PathRef File, llvm::StringRef Contents,
                                WantDiagnostics WantDiags, bool ForceRebuild) {
   std::string ActualVersion = DraftMgr.addDraft(File, Version, Contents);
   ParseOptions Opts;
+  Opts.PreambleParseForwardingFunctions = PreambleParseForwardingFunctions;
 
   // Compile command is set asynchronously during update, as it can be slow.
   ParseInputs Inputs;
@@ -918,7 +943,7 @@ void ClangdServer::getAST(PathRef File, llvm::Optional<Range> R,
           // It's safe to pass in the TU, as dumpAST() does not
           // deserialize the preamble.
           auto Node = DynTypedNode::create(
-                *Inputs->AST.getASTContext().getTranslationUnitDecl());
+              *Inputs->AST.getASTContext().getTranslationUnitDecl());
           return CB(dumpAST(Node, Inputs->AST.getTokens(),
                             Inputs->AST.getASTContext()));
         }
@@ -979,6 +1004,9 @@ ClangdServer::blockUntilIdleForTest(llvm::Optional<double> TimeoutSeconds) {
   // Nothing else can schedule work on TUScheduler, because it's not threadsafe
   // and we're blocking the main thread.
   if (!WorkScheduler->blockUntilIdle(timeoutSeconds(TimeoutSeconds)))
+    return false;
+  // TUScheduler is the only thing that starts background indexing work.
+  if (IndexTasks && !IndexTasks->wait(timeoutSeconds(TimeoutSeconds)))
     return false;
 
   // Unfortunately we don't have strict topological order between the rest of

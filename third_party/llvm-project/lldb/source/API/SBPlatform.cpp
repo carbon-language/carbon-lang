@@ -48,8 +48,7 @@ struct PlatformConnectOptions {
 // PlatformShellCommand
 struct PlatformShellCommand {
   PlatformShellCommand(llvm::StringRef shell_interpreter,
-                       llvm::StringRef shell_command)
-      : m_status(0), m_signo(0) {
+                       llvm::StringRef shell_command) {
     if (!shell_interpreter.empty())
       m_shell = shell_interpreter.str();
 
@@ -293,9 +292,7 @@ SBPlatform::SBPlatform() { LLDB_INSTRUMENT_VA(this); }
 SBPlatform::SBPlatform(const char *platform_name) {
   LLDB_INSTRUMENT_VA(this, platform_name);
 
-  Status error;
-  if (platform_name && platform_name[0])
-    m_opaque_sp = Platform::Create(ConstString(platform_name), error);
+  m_opaque_sp = Platform::Create(platform_name);
 }
 
 SBPlatform::SBPlatform(const SBPlatform &rhs) {
@@ -342,7 +339,7 @@ const char *SBPlatform::GetName() {
 
   PlatformSP platform_sp(GetSP());
   if (platform_sp)
-    return platform_sp->GetName().GetCString();
+    return ConstString(platform_sp->GetName()).AsCString();
   return nullptr;
 }
 

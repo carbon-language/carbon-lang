@@ -8,7 +8,7 @@ pdl.pattern : benefit(1) {
   %op = operation "foo.op"
 
   // expected-error@below {{expected at least one argument}}
-  "pdl.apply_native_constraint"() {name = "foo", params = []} : () -> ()
+  "pdl.apply_native_constraint"() {name = "foo"} : () -> ()
   rewrite %op with "rewriter"
 }
 
@@ -22,7 +22,7 @@ pdl.pattern : benefit(1) {
   %op = operation "foo.op"
   rewrite %op {
     // expected-error@below {{expected at least one argument}}
-    "pdl.apply_native_rewrite"() {name = "foo", params = []} : () -> ()
+    "pdl.apply_native_rewrite"() {name = "foo"} : () -> ()
   }
 }
 
@@ -36,7 +36,7 @@ pdl.pattern : benefit(1) {
   %type = type
 
   // expected-error@below {{expected only one of [`type`, `value`] to be set}}
-  %attr = attribute : %type 10
+  %attr = attribute : %type = 10
 
   %op = operation "foo.op" {"attr" = %attr} -> (%type : !pdl.type)
   rewrite %op with "rewriter"
@@ -136,7 +136,21 @@ pdl.pattern : benefit(1) {
 
     // expected-error@below {{op must have inferable or constrained result types when nested within `pdl.rewrite`}}
     // expected-note@below {{result type #0 was not constrained}}
-    %newOp = operation "foo.op" -> (%type : !pdl.type)
+    %newOp = operation "builtin.unrealized_conversion_cast" -> (%type : !pdl.type)
+  }
+}
+
+// -----
+
+// Unused operation only necessary to ensure the func dialect is loaded.
+func.func private @unusedOpToLoadFuncDialect()
+
+pdl.pattern : benefit(1) {
+  %op = operation "foo.op"
+  rewrite %op {
+    // expected-error@below {{op must have inferable or constrained result types when nested within `pdl.rewrite`}}
+    // expected-note@below {{operation is created in a non-inferrable context, but 'func.constant' does not implement InferTypeOpInterface}}
+    %newOp = operation "func.constant"
   }
 }
 
@@ -159,7 +173,7 @@ pdl.pattern : benefit(1) {
 // expected-error@below {{expected body to terminate with `pdl.rewrite`}}
 pdl.pattern : benefit(1) {
   // expected-note@below {{see terminator defined here}}
-  return
+  "test.finish" () : () -> ()
 }
 
 // -----
@@ -260,19 +274,6 @@ pdl.pattern : benefit(1) {
   }) {
     operand_segment_sizes = dense<1> : vector<2xi32>
   }: (!pdl.operation, !pdl.operation) -> ()
-}
-
-// -----
-
-pdl.pattern : benefit(1) {
-  %op = operation "foo.op"
-
-  // expected-error@below {{expected no external constant parameters when the rewrite is specified inline}}
-  "pdl.rewrite"(%op) ({
-    ^bb1:
-  }) {
-    operand_segment_sizes = dense<[1,0]> : vector<2xi32>,
-    externalConstParams = []} : (!pdl.operation) -> ()
 }
 
 // -----

@@ -360,8 +360,8 @@ bb:
 }
 
 ; GCN-LABEL: {{^}}test_div_scale_f32:
-; GFX1032: v_div_scale_f32 v{{[0-9]+}}, s{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}
-; GFX1064: v_div_scale_f32 v{{[0-9]+}}, s[{{[0-9:]+}}], v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}
+; GFX1032: v_div_scale_f32 v{{[0-9]+}}, null, v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}
+; GFX1064: v_div_scale_f32 v{{[0-9]+}}, null, v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}
 define amdgpu_kernel void @test_div_scale_f32(float addrspace(1)* %out, float addrspace(1)* %in) #0 {
   %tid = call i32 @llvm.amdgcn.workitem.id.x() nounwind readnone
   %gep.0 = getelementptr float, float addrspace(1)* %in, i32 %tid
@@ -377,8 +377,8 @@ define amdgpu_kernel void @test_div_scale_f32(float addrspace(1)* %out, float ad
 }
 
 ; GCN-LABEL: {{^}}test_div_scale_f64:
-; GFX1032: v_div_scale_f64 v[{{[0-9:]+}}], s{{[0-9]+}}, v[{{[0-9:]+}}], v[{{[0-9:]+}}], v[{{[0-9:]+}}]
-; GFX1064: v_div_scale_f64 v[{{[0-9:]+}}], s[{{[0-9:]+}}], v[{{[0-9:]+}}], v[{{[0-9:]+}}], v[{{[0-9:]+}}]
+; GFX1032: v_div_scale_f64 v[{{[0-9:]+}}], null, v[{{[0-9:]+}}], v[{{[0-9:]+}}], v[{{[0-9:]+}}]
+; GFX1064: v_div_scale_f64 v[{{[0-9:]+}}], null, v[{{[0-9:]+}}], v[{{[0-9:]+}}], v[{{[0-9:]+}}]
 define amdgpu_kernel void @test_div_scale_f64(double addrspace(1)* %out, double addrspace(1)* %aptr, double addrspace(1)* %in) #0 {
   %tid = call i32 @llvm.amdgcn.workitem.id.x() nounwind readnone
   %gep.0 = getelementptr double, double addrspace(1)* %in, i32 %tid
@@ -394,8 +394,8 @@ define amdgpu_kernel void @test_div_scale_f64(double addrspace(1)* %out, double 
 }
 
 ; GCN-LABEL: {{^}}test_mad_i64_i32:
-; GFX1032: v_mad_i64_i32 v[{{[0-9:]+}}], s{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, v[{{[0-9:]+}}]
-; GFX1064: v_mad_i64_i32 v[{{[0-9:]+}}], s[{{[0-9:]+}}], v{{[0-9]+}}, v{{[0-9]+}}, v[{{[0-9:]+}}]
+; GFX1032: v_mad_i64_i32 v[{{[0-9:]+}}], null, v{{[0-9]+}}, v{{[0-9]+}}, v[{{[0-9:]+}}]
+; GFX1064: v_mad_i64_i32 v[{{[0-9:]+}}], null, v{{[0-9]+}}, v{{[0-9]+}}, v[{{[0-9:]+}}]
 define i64 @test_mad_i64_i32(i32 %arg0, i32 %arg1, i64 %arg2) #0 {
   %sext0 = sext i32 %arg0 to i64
   %sext1 = sext i32 %arg1 to i64
@@ -405,8 +405,8 @@ define i64 @test_mad_i64_i32(i32 %arg0, i32 %arg1, i64 %arg2) #0 {
 }
 
 ; GCN-LABEL: {{^}}test_mad_u64_u32:
-; GFX1032: v_mad_u64_u32 v[{{[0-9:]+}}], s{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, v[{{[0-9:]+}}]
-; GFX1064: v_mad_u64_u32 v[{{[0-9:]+}}], s[{{[0-9:]+}}], v{{[0-9]+}}, v{{[0-9]+}}, v[{{[0-9:]+}}]
+; GFX1032: v_mad_u64_u32 v[{{[0-9:]+}}], null, v{{[0-9]+}}, v{{[0-9]+}}, v[{{[0-9:]+}}]
+; GFX1064: v_mad_u64_u32 v[{{[0-9:]+}}], null, v{{[0-9]+}}, v{{[0-9]+}}, v[{{[0-9:]+}}]
 define i64 @test_mad_u64_u32(i32 %arg0, i32 %arg1, i64 %arg2) #0 {
   %sext0 = zext i32 %arg0 to i64
   %sext1 = zext i32 %arg1 to i64
@@ -478,8 +478,8 @@ exit:
 }
 
 ; GCN-LABEL: {{^}}fdiv_f32:
-; GFX1032: v_div_scale_f32 v{{[0-9]+}}, s{{[0-9]+}}, s{{[0-9]+}}, s{{[0-9]+}}, s{{[0-9]+}}
-; GFX1064: v_div_scale_f32 v{{[0-9]+}}, s{{\[[0-9]+:[0-9]+\]}}, s{{[0-9]+}}, s{{[0-9]+}}, s{{[0-9]+}}
+; GFX1032: v_div_scale_f32 v{{[0-9]+}}, null, s{{[0-9]+}}, s{{[0-9]+}}, s{{[0-9]+}}
+; GFX1064: v_div_scale_f32 v{{[0-9]+}}, null, s{{[0-9]+}}, s{{[0-9]+}}, s{{[0-9]+}}
 ; GCN: v_rcp_f32_e32 v{{[0-9]+}}, v{{[0-9]+}}
 ; GFX1032: v_div_scale_f32 v{{[0-9]+}}, vcc_lo, s{{[0-9]+}}, s{{[0-9]+}}, s{{[0-9]+}}
 ; GFX1064: v_div_scale_f32 v{{[0-9]+}}, vcc, s{{[0-9]+}}, s{{[0-9]+}}, s{{[0-9]+}}
@@ -495,9 +495,7 @@ entry:
 
 ; GCN-LABEL: {{^}}test_br_cc_f16:
 ; GFX1032:  v_cmp_nlt_f16_e32 vcc_lo,
-; GFX1032:  s_and_b32 vcc_lo, exec_lo, vcc_lo
 ; GFX1064:  v_cmp_nlt_f16_e32 vcc,
-; GFX1064:  s_and_b64 vcc, exec, vcc{{$}}
 ; GCN-NEXT: s_cbranch_vccnz
 define amdgpu_kernel void @test_br_cc_f16(
     half addrspace(1)* %r,
@@ -1136,8 +1134,8 @@ declare void @external_void_func_void() #1
 ; GCN-DAG: v_writelane_b32 v40, s30, 0
 ; GCN-DAG: v_writelane_b32 v40, s31, 1
 ; GCN: s_swappc_b64
-; GCN-DAG: v_readlane_b32 s4, v40, 0
-; GCN-DAG: v_readlane_b32 s5, v40, 1
+; GCN-DAG: v_readlane_b32 s30, v40, 0
+; GCN-DAG: v_readlane_b32 s31, v40, 1
 
 
 ; GFX1064: s_addk_i32 s32, 0xfc00

@@ -162,7 +162,7 @@ class RISCVAsmParser : public MCTargetAsmParser {
   OperandMatchResultTy parseRegister(OperandVector &Operands,
                                      bool AllowParens = false);
   OperandMatchResultTy parseMemOpBaseReg(OperandVector &Operands);
-  OperandMatchResultTy parseAtomicMemOp(OperandVector &Operands);
+  OperandMatchResultTy parseZeroOffsetMemOp(OperandVector &Operands);
   OperandMatchResultTy parseOperandWithModifier(OperandVector &Operands);
   OperandMatchResultTy parseBareSymbol(OperandVector &Operands);
   OperandMatchResultTy parseCallSymbol(OperandVector &Operands);
@@ -255,6 +255,11 @@ public:
                 "doesn't support the D instruction set extension (ignoring "
                 "target-abi)\n";
     }
+
+    // Use computeTargetABI to check if ABIName is valid. If invalid, output
+    // error message.
+    RISCVABI::computeTargetABI(STI.getTargetTriple(), STI.getFeatureBits(),
+                               ABIName);
 
     const MCObjectFileInfo *MOFI = Parser.getContext().getObjectFileInfo();
     ParserOptions.IsPicEnabled = MOFI->isPositionIndependent();
@@ -1626,9 +1631,11 @@ OperandMatchResultTy RISCVAsmParser::parseBareSymbol(OperandVector &Operands) {
     return MatchOperand_Success;
   case AsmToken::Plus:
     Opcode = MCBinaryExpr::Add;
+    getLexer().Lex();
     break;
   case AsmToken::Minus:
     Opcode = MCBinaryExpr::Sub;
+    getLexer().Lex();
     break;
   }
 
@@ -1769,9 +1776,7 @@ OperandMatchResultTy RISCVAsmParser::parseVTypeI(OperandVector &Operands) {
     else
       goto MatchFail;
 
-    unsigned LmulLog2 = Log2_32(Lmul);
-    RISCVII::VLMUL VLMUL =
-        static_cast<RISCVII::VLMUL>(Fractional ? 8 - LmulLog2 : LmulLog2);
+    RISCVII::VLMUL VLMUL = RISCVVType::encodeLMUL(Lmul, Fractional);
 
     unsigned VTypeI =
         RISCVVType::encodeVTYPE(VLMUL, Sew, TailAgnostic, MaskAgnostic);
@@ -1858,7 +1863,8 @@ RISCVAsmParser::parseMemOpBaseReg(OperandVector &Operands) {
   return MatchOperand_Success;
 }
 
-OperandMatchResultTy RISCVAsmParser::parseAtomicMemOp(OperandVector &Operands) {
+OperandMatchResultTy
+RISCVAsmParser::parseZeroOffsetMemOp(OperandVector &Operands) {
   // Atomic operations such as lr.w, sc.w, and amo*.w accept a "memory operand"
   // as one of their register operands, such as `(a0)`. This just denotes that
   // the register (in this case `a0`) contains a memory address.
@@ -1874,9 +1880,9 @@ OperandMatchResultTy RISCVAsmParser::parseAtomicMemOp(OperandVector &Operands) {
   // offset if it is zero; require (and discard) parentheses; and add only the
   // parsed register operand to `Operands`.
   //
-  // These operands are printed with RISCVInstPrinter::printAtomicMemOp, which
-  // will only print the register surrounded by parentheses (which GNU as also
-  // uses as its canonical representation for these operands).
+  // These operands are printed with RISCVInstPrinter::printZeroOffsetMemOp,
+  // which will only print the register surrounded by parentheses (which GNU as
+  // also uses as its canonical representation for these operands).
   std::unique_ptr<RISCVOperand> OptionalImmOp;
 
   if (getLexer().isNot(AsmToken::LParen)) {
@@ -1987,7 +1993,6 @@ bool RISCVAsmParser::ParseInstruction(ParseInstructionInfo &Info,
     return true;
 
   // Parse until end of statement, consuming commas between operands
-  unsigned OperandIdx = 1;
   while (getLexer().is(AsmToken::Comma)) {
     // Consume comma token
     getLexer().Lex();
@@ -1995,8 +2000,6 @@ bool RISCVAsmParser::ParseInstruction(ParseInstructionInfo &Info,
     // Parse next operand
     if (parseOperand(Operands, Name))
       return true;
-
-    ++OperandIdx;
   }
 
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
@@ -2222,8 +2225,7 @@ bool RISCVAsmParser::parseDirectiveAttribute() {
     Parser.Lex();
   }
 
-  if (Parser.parseToken(AsmToken::EndOfStatement,
-                        "unexpected token in '.attribute' directive"))
+  if (Parser.parseEOL())
     return true;
 
   if (IsIntegerValue)
@@ -2315,23 +2317,26 @@ void RISCVAsmParser::emitLoadImm(MCRegister DestReg, int64_t Value,
 
   MCRegister SrcReg = RISCV::X0;
   for (RISCVMatInt::Inst &Inst : Seq) {
-    if (Inst.Opc == RISCV::LUI) {
+    switch (Inst.getOpndKind()) {
+    case RISCVMatInt::Imm:
+      emitToStreamer(Out,
+                     MCInstBuilder(Inst.Opc).addReg(DestReg).addImm(Inst.Imm));
+      break;
+    case RISCVMatInt::RegX0:
       emitToStreamer(
-          Out, MCInstBuilder(RISCV::LUI).addReg(DestReg).addImm(Inst.Imm));
-    } else if (Inst.Opc == RISCV::ADD_UW) {
-      emitToStreamer(Out, MCInstBuilder(RISCV::ADD_UW)
-                              .addReg(DestReg)
-                              .addReg(SrcReg)
-                              .addReg(RISCV::X0));
-    } else if (Inst.Opc == RISCV::SH1ADD || Inst.Opc == RISCV::SH2ADD ||
-               Inst.Opc == RISCV::SH3ADD) {
+          Out, MCInstBuilder(Inst.Opc).addReg(DestReg).addReg(SrcReg).addReg(
+                   RISCV::X0));
+      break;
+    case RISCVMatInt::RegReg:
       emitToStreamer(
           Out, MCInstBuilder(Inst.Opc).addReg(DestReg).addReg(SrcReg).addReg(
                    SrcReg));
-    } else {
+      break;
+    case RISCVMatInt::RegImm:
       emitToStreamer(
           Out, MCInstBuilder(Inst.Opc).addReg(DestReg).addReg(SrcReg).addImm(
                    Inst.Imm));
+      break;
     }
 
     // Only the first instruction has X0 as its source.
@@ -2593,8 +2598,7 @@ bool RISCVAsmParser::validateInstruction(MCInst &Inst,
   }
 
   const MCInstrDesc &MCID = MII.get(Inst.getOpcode());
-  RISCVII::VConstraintType Constraints =
-      RISCVII::getConstraint(MCID.TSFlags);
+  RISCVII::VConstraintType Constraints = RISCVII::getConstraint(MCID.TSFlags);
   if (Constraints == RISCVII::NoConstraint)
     return false;
 

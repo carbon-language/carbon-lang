@@ -9,7 +9,8 @@
 #ifndef LLDB_SOURCE_PLUGINS_TRACE_INTEL_PT_TRACEINTELPT_H
 #define LLDB_SOURCE_PLUGINS_TRACE_INTEL_PT_TRACEINTELPT_H
 
-#include "IntelPTDecoder.h"
+#include "TaskTimer.h"
+#include "ThreadDecoder.h"
 #include "TraceIntelPTSessionFileParser.h"
 #include "lldb/Utility/FileSpec.h"
 #include "lldb/lldb-types.h"
@@ -72,7 +73,7 @@ public:
 
   void DumpTraceInfo(Thread &thread, Stream &s, bool verbose) override;
 
-  llvm::Optional<size_t> GetRawTraceSize(Thread &thread);
+  llvm::Expected<size_t> GetRawTraceSize(Thread &thread);
 
   void DoRefreshLiveProcessState(
       llvm::Expected<TraceGetStateResponse> state) override;
@@ -83,27 +84,31 @@ public:
 
   /// Start tracing a live process.
   ///
-  /// \param[in] thread_buffer_size
+  /// More information on the parameters below can be found in the
+  /// jLLDBTraceStart section in lldb/docs/lldb-gdb-remote.txt.
+  ///
+  /// \param[in] trace_buffer_size
   ///     Trace size per thread in bytes.
   ///
   /// \param[in] total_buffer_size_limit
   ///     Maximum total trace size per process in bytes.
-  ///     More information in TraceIntelPT::GetStartConfigurationHelp().
   ///
   /// \param[in] enable_tsc
   ///     Whether to use enable TSC timestamps or not.
-  ///     More information in TraceIntelPT::GetStartConfigurationHelp().
   ///
   /// \param[in] psb_period
-  ///
   ///     This value defines the period in which PSB packets will be generated.
-  ///     More information in TraceIntelPT::GetStartConfigurationHelp();
+  ///
+  /// \param[in] per_core_tracing
+  ///     This value defines whether to have a trace buffer per thread or per
+  ///     cpu core.
   ///
   /// \return
   ///     \a llvm::Error::success if the operation was successful, or
   ///     \a llvm::Error otherwise.
-  llvm::Error Start(size_t thread_buffer_size, size_t total_buffer_size_limit,
-                    bool enable_tsc, llvm::Optional<size_t> psb_period);
+  llvm::Error Start(size_t trace_buffer_size, size_t total_buffer_size_limit,
+                    bool enable_tsc, llvm::Optional<size_t> psb_period,
+                    bool m_per_core_tracing);
 
   /// \copydoc Trace::Start
   llvm::Error Start(StructuredData::ObjectSP configuration =
@@ -111,25 +116,25 @@ public:
 
   /// Start tracing live threads.
   ///
+  /// More information on the parameters below can be found in the
+  /// jLLDBTraceStart section in lldb/docs/lldb-gdb-remote.txt.
+  ///
   /// \param[in] tids
   ///     Threads to trace.
   ///
-  /// \param[in] thread_buffer_size
-  ///     Trace size per thread in bytes.
+  /// \param[in] trace_buffer_size
+  ///     Trace size per thread or per core in bytes.
   ///
   /// \param[in] enable_tsc
   ///     Whether to use enable TSC timestamps or not.
-  ///     More information in TraceIntelPT::GetStartConfigurationHelp().
   ///
   /// \param[in] psb_period
-  ///
   ///     This value defines the period in which PSB packets will be generated.
-  ///     More information in TraceIntelPT::GetStartConfigurationHelp().
   ///
   /// \return
   ///     \a llvm::Error::success if the operation was successful, or
   ///     \a llvm::Error otherwise.
-  llvm::Error Start(llvm::ArrayRef<lldb::tid_t> tids, size_t thread_buffer_size,
+  llvm::Error Start(llvm::ArrayRef<lldb::tid_t> tids, size_t trace_buffer_size,
                     bool enable_tsc, llvm::Optional<size_t> psb_period);
 
   /// \copydoc Trace::Start
@@ -137,8 +142,9 @@ public:
                     StructuredData::ObjectSP configuration =
                         StructuredData::ObjectSP()) override;
 
-  /// Get the thread buffer content for a live thread
-  llvm::Expected<std::vector<uint8_t>> GetLiveThreadBuffer(lldb::tid_t tid);
+  /// See \a Trace::OnThreadBinaryDataRead().
+  llvm::Error OnThreadBufferRead(lldb::tid_t tid,
+                                 OnBinaryDataReadCallback callback);
 
   llvm::Expected<pt_cpu> GetCPUInfo();
 
@@ -148,6 +154,10 @@ public:
   ///     The current traced live process. If it's not a live process,
   ///     return \a nullptr.
   Process *GetLiveProcess();
+
+  /// \return
+  ///     The timer object for this trace.
+  TaskTimer &GetTimer();
 
 private:
   friend class TraceIntelPTSessionFileParser;
@@ -183,6 +193,7 @@ private:
   std::map<lldb::tid_t, std::unique_ptr<ThreadDecoder>> m_thread_decoders;
   /// Error gotten after a failed live process update, if any.
   llvm::Optional<std::string> m_live_refresh_error;
+  TaskTimer m_task_timer;
 };
 
 } // namespace trace_intel_pt

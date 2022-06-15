@@ -24,7 +24,6 @@
 #include "llvm/Support/YAMLParser.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
-#include <cctype>
 #include <map>
 #include <memory>
 #include <new>
@@ -63,6 +62,7 @@ struct MappingTraits {
   // static void mapping(IO &io, T &fields);
   // Optionally may provide:
   // static std::string validate(IO &io, T &fields);
+  // static void enumInput(IO &io, T &value);
   //
   // The optional flow flag will cause generated YAML to use a flow mapping
   // (e.g. { a: 0, b: 1 }):
@@ -446,6 +446,31 @@ template <class T> struct has_MappingValidateTraits<T, EmptyContext> {
   static bool const value = (sizeof(test<MappingTraits<T>>(nullptr)) == 1);
 };
 
+// Test if MappingContextTraits<T>::enumInput() is defined on type T.
+template <class T, class Context> struct has_MappingEnumInputTraits {
+  using Signature_validate = void (*)(class IO &, T &);
+
+  template <typename U>
+  static char test(SameType<Signature_validate, &U::enumInput> *);
+
+  template <typename U> static double test(...);
+
+  static bool const value =
+      (sizeof(test<MappingContextTraits<T, Context>>(nullptr)) == 1);
+};
+
+// Test if MappingTraits<T>::enumInput() is defined on type T.
+template <class T> struct has_MappingEnumInputTraits<T, EmptyContext> {
+  using Signature_validate = void (*)(class IO &, T &);
+
+  template <typename U>
+  static char test(SameType<Signature_validate, &U::enumInput> *);
+
+  template <typename U> static double test(...);
+
+  static bool const value = (sizeof(test<MappingTraits<T>>(nullptr)) == 1);
+};
+
 // Test if SequenceTraits<T> is defined on type T.
 template <class T>
 struct has_SequenceMethodTraits
@@ -537,9 +562,8 @@ template <class T> struct has_PolymorphicTraits {
 };
 
 inline bool isNumeric(StringRef S) {
-  const static auto skipDigits = [](StringRef Input) {
-    return Input.drop_front(
-        std::min(Input.find_first_not_of("0123456789"), Input.size()));
+  const auto skipDigits = [](StringRef Input) {
+    return Input.ltrim("0123456789");
   };
 
   // Make S.front() and S.drop_front().front() (if S.front() is [+-]) calls
@@ -666,8 +690,7 @@ inline QuotingType needsQuotes(StringRef S) {
   // 7.3.3 Plain Style
   // Plain scalars must not begin with most indicators, as this would cause
   // ambiguity with other YAML constructs.
-  static constexpr char Indicators[] = R"(-?:\,[]{}#&*!|>'"%@`)";
-  if (S.find_first_of(Indicators) == 0)
+  if (std::strchr(R"(-?:\,[]{}#&*!|>'"%@`)", S[0]) != nullptr)
     MaxQuotingNeeded = QuotingType::Single;
 
   for (unsigned char C : S) {
@@ -1062,8 +1085,29 @@ yamlize(IO &io, T &Val, bool, Context &Ctx) {
 }
 
 template <typename T, typename Context>
+std::enable_if_t<!has_MappingEnumInputTraits<T, Context>::value, bool>
+yamlizeMappingEnumInput(IO &io, T &Val) {
+  return false;
+}
+
+template <typename T, typename Context>
+std::enable_if_t<has_MappingEnumInputTraits<T, Context>::value, bool>
+yamlizeMappingEnumInput(IO &io, T &Val) {
+  if (io.outputting())
+    return false;
+
+  io.beginEnumScalar();
+  MappingTraits<T>::enumInput(io, Val);
+  bool Matched = !io.matchEnumFallback();
+  io.endEnumScalar();
+  return Matched;
+}
+
+template <typename T, typename Context>
 std::enable_if_t<unvalidatedMappingTraits<T, Context>::value, void>
 yamlize(IO &io, T &Val, bool, Context &Ctx) {
+  if (yamlizeMappingEnumInput<T, Context>(io, Val))
+    return;
   if (has_FlowTraits<MappingTraits<T>>::value) {
     io.beginFlowMapping();
     detail::doMapping(io, Val, Ctx);

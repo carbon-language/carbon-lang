@@ -98,7 +98,7 @@ ValueWithRealFlags<Real<W, P>> Real<W, P>::Add(
     if (order == Ordering::Equal) {
       // x + (-x) -> +0.0 unless rounding is directed downwards
       if (rounding.mode == common::RoundingMode::Down) {
-        result.value.word_ = result.value.word_.IBSET(bits - 1); // -0.0
+        result.value = NegativeZero();
       }
       return result;
     }
@@ -221,7 +221,7 @@ ValueWithRealFlags<Real<W, P>> Real<W, P>::Divide(
       }
     } else if (IsZero() || y.IsInfinite()) { // 0/x, x/Inf -> 0
       if (isNegative) {
-        result.value.word_ = result.value.word_.IBSET(bits - 1);
+        result.value = NegativeZero();
       }
     } else {
       // dividend and divisor are both finite and nonzero numbers
@@ -272,13 +272,15 @@ ValueWithRealFlags<Real<W, P>> Real<W, P>::SQRT(Rounding rounding) const {
   } else if (IsNegative()) {
     if (IsZero()) {
       // SQRT(-0) == -0 in IEEE-754.
-      result.value.word_ = result.value.word_.IBSET(bits - 1);
+      result.value = NegativeZero();
     } else {
       result.value = NotANumber();
     }
   } else if (IsInfinite()) {
     // SQRT(+Inf) == +Inf
     result.value = Infinity(false);
+  } else if (IsZero()) {
+    result.value = PositiveZero();
   } else {
     int expo{UnbiasedExponent()};
     if (expo < -1 || expo > 1) {
@@ -346,6 +348,45 @@ ValueWithRealFlags<Real<W, P>> Real<W, P>::SQRT(Rounding rounding) const {
   return result;
 }
 
+template <typename W, int P>
+ValueWithRealFlags<Real<W, P>> Real<W, P>::NEAREST(bool upward) const {
+  ValueWithRealFlags<Real> result;
+  if (IsFinite()) {
+    Fraction fraction{GetFraction()};
+    int expo{Exponent()};
+    Fraction one{1};
+    Fraction nearest;
+    bool isNegative{IsNegative()};
+    if (upward != isNegative) { // upward in magnitude
+      auto next{fraction.AddUnsigned(one)};
+      if (next.carry) {
+        ++expo;
+        nearest = Fraction::Least(); // MSB only
+      } else {
+        nearest = next.value;
+      }
+    } else { // downward in magnitude
+      if (IsZero()) {
+        nearest = 1; // smallest magnitude negative subnormal
+        isNegative = !isNegative;
+      } else {
+        auto sub1{fraction.SubtractSigned(one)};
+        if (sub1.overflow) {
+          nearest = Fraction{0}.NOT();
+          --expo;
+        } else {
+          nearest = sub1.value;
+        }
+      }
+    }
+    result.flags = result.value.Normalize(isNegative, expo, nearest);
+  } else {
+    result.flags.set(RealFlag::InvalidArgument);
+    result.value = *this;
+  }
+  return result;
+}
+
 // HYPOT(x,y) = SQRT(x**2 + y**2) by definition, but those squared intermediate
 // values are susceptible to over/underflow when computed naively.
 // Assuming that x>=y, calculate instead:
@@ -377,6 +418,47 @@ ValueWithRealFlags<Real<W, P>> Real<W, P>::HYPOT(
     if (inexact) {
       result.flags.set(RealFlag::Inexact);
     }
+  }
+  return result;
+}
+
+// MOD(x,y) = x - AINT(x/y)*y
+template <typename W, int P>
+ValueWithRealFlags<Real<W, P>> Real<W, P>::MOD(
+    const Real &y, Rounding rounding) const {
+  ValueWithRealFlags<Real> result;
+  Real quotient{Divide(y, rounding).AccumulateFlags(result.flags)};
+  Real toInt{quotient.ToWholeNumber(common::RoundingMode::ToZero)
+                 .AccumulateFlags(result.flags)};
+  Real product{toInt.Multiply(y, rounding).AccumulateFlags(result.flags)};
+  result.value = Subtract(product, rounding).AccumulateFlags(result.flags);
+  return result;
+}
+
+// MODULO(x,y) = x - FLOOR(x/y)*y
+template <typename W, int P>
+ValueWithRealFlags<Real<W, P>> Real<W, P>::MODULO(
+    const Real &y, Rounding rounding) const {
+  ValueWithRealFlags<Real> result;
+  Real quotient{Divide(y, rounding).AccumulateFlags(result.flags)};
+  Real toInt{quotient.ToWholeNumber(common::RoundingMode::Down)
+                 .AccumulateFlags(result.flags)};
+  Real product{toInt.Multiply(y, rounding).AccumulateFlags(result.flags)};
+  result.value = Subtract(product, rounding).AccumulateFlags(result.flags);
+  return result;
+}
+
+template <typename W, int P>
+ValueWithRealFlags<Real<W, P>> Real<W, P>::DIM(
+    const Real &y, Rounding rounding) const {
+  ValueWithRealFlags<Real> result;
+  if (IsNotANumber() || y.IsNotANumber()) {
+    result.flags.set(RealFlag::InvalidArgument);
+    result.value = NotANumber();
+  } else if (Compare(y) == Relation::Greater) {
+    result = Subtract(y, rounding);
+  } else {
+    // result is already zero
   }
   return result;
 }
@@ -598,6 +680,9 @@ template <typename W, int P> std::string Real<W, P>::DumpHexadecimal() const {
     }
     result += 'p';
     int exponent = Exponent() - exponentBias;
+    if (intPart == '0') {
+      exponent += 1;
+    }
     result += Integer<32>{exponent}.SignedDecimal();
     return result;
   }
@@ -640,6 +725,35 @@ llvm::raw_ostream &Real<W, P>::AsFortran(
     o << '_' << kind;
   }
   return o;
+}
+
+// 16.9.180
+template <typename W, int P> Real<W, P> Real<W, P>::RRSPACING() const {
+  if (IsNotANumber()) {
+    return *this;
+  } else if (IsInfinite()) {
+    return NotANumber();
+  } else {
+    Real result;
+    result.Normalize(false, binaryPrecision + exponentBias - 1, GetFraction());
+    return result;
+  }
+}
+
+// 16.9.180
+template <typename W, int P> Real<W, P> Real<W, P>::SPACING() const {
+  if (IsNotANumber()) {
+    return *this;
+  } else if (IsInfinite()) {
+    return NotANumber();
+  } else if (IsZero()) {
+    return TINY();
+  } else {
+    Real result;
+    result.Normalize(
+        false, Exponent() - binaryPrecision + 1, Fraction::MASKL(1));
+    return result;
+  }
 }
 
 template class Real<Integer<16>, 11>;

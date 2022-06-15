@@ -174,24 +174,19 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/IntrinsicsX86.h"
-#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
 #include "llvm/IR/ValueMap.h"
-#include "llvm/InitializePasses.h"
-#include "llvm/Pass.h"
 #include "llvm/Support/Alignment.h"
 #include "llvm/Support/AtomicOrdering.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
@@ -634,33 +629,6 @@ void insertModuleCtor(Module &M) {
       });
 }
 
-/// A legacy function pass for msan instrumentation.
-///
-/// Instruments functions to detect uninitialized reads.
-struct MemorySanitizerLegacyPass : public FunctionPass {
-  // Pass identification, replacement for typeid.
-  static char ID;
-
-  MemorySanitizerLegacyPass(MemorySanitizerOptions Options = {})
-      : FunctionPass(ID), Options(Options) {
-    initializeMemorySanitizerLegacyPassPass(*PassRegistry::getPassRegistry());
-  }
-  StringRef getPassName() const override { return "MemorySanitizerLegacyPass"; }
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.addRequired<TargetLibraryInfoWrapperPass>();
-  }
-
-  bool runOnFunction(Function &F) override {
-    return MSan->sanitizeFunction(
-        F, getAnalysis<TargetLibraryInfoWrapperPass>().getTLI(F));
-  }
-  bool doInitialization(Module &M) override;
-
-  Optional<MemorySanitizer> MSan;
-  MemorySanitizerOptions Options;
-};
-
 template <class T> T getOptOrDefault(const cl::opt<T> &Opt, T Default) {
   return (Opt.getNumOccurrences() > 0) ? Opt : Default;
 }
@@ -703,21 +671,6 @@ void MemorySanitizerPass::printPipeline(
     OS << "eager-checks;";
   OS << "track-origins=" << Options.TrackOrigins;
   OS << ">";
-}
-
-char MemorySanitizerLegacyPass::ID = 0;
-
-INITIALIZE_PASS_BEGIN(MemorySanitizerLegacyPass, "msan",
-                      "MemorySanitizer: detects uninitialized reads.", false,
-                      false)
-INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
-INITIALIZE_PASS_END(MemorySanitizerLegacyPass, "msan",
-                    "MemorySanitizer: detects uninitialized reads.", false,
-                    false)
-
-FunctionPass *
-llvm::createMemorySanitizerLegacyPassPass(MemorySanitizerOptions Options) {
-  return new MemorySanitizerLegacyPass(Options);
 }
 
 /// Create a non-const global initialized with the given string.
@@ -1015,13 +968,6 @@ void MemorySanitizer::initializeModule(Module &M) {
                                   IRB.getInt32(Recover), "__msan_keep_going");
       });
 }
-}
-
-bool MemorySanitizerLegacyPass::doInitialization(Module &M) {
-  if (!Options.Kernel)
-    insertModuleCtor(M);
-  MSan.emplace(M, Options);
-  return true;
 }
 
 namespace {
@@ -1674,7 +1620,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   /// or extracts if from ParamTLS (for function arguments).
   Value *getShadow(Value *V) {
     if (Instruction *I = dyn_cast<Instruction>(V)) {
-      if (!PropagateShadow || I->getMetadata("nosanitize"))
+      if (!PropagateShadow || I->getMetadata(LLVMContext::MD_nosanitize))
         return getCleanShadow(V);
       // For instructions the shadow is already stored in the map.
       Value *Shadow = ShadowMap[V];
@@ -1694,9 +1640,9 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     }
     if (Argument *A = dyn_cast<Argument>(V)) {
       // For arguments we compute the shadow on demand and store it in the map.
-      Value **ShadowPtr = &ShadowMap[V];
-      if (*ShadowPtr)
-        return *ShadowPtr;
+      Value *&ShadowPtr = ShadowMap[V];
+      if (ShadowPtr)
+        return ShadowPtr;
       Function *F = A->getParent();
       IRBuilder<> EntryIRB(FnPrologueEnd);
       unsigned ArgOffset = 0;
@@ -1753,12 +1699,12 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
           if (!PropagateShadow || Overflow || FArg.hasByValAttr() ||
               (MS.EagerChecks && FArg.hasAttribute(Attribute::NoUndef))) {
-            *ShadowPtr = getCleanShadow(V);
+            ShadowPtr = getCleanShadow(V);
             setOrigin(A, getCleanOrigin());
           } else {
             // Shadow over TLS
             Value *Base = getShadowPtrForArgument(&FArg, EntryIRB, ArgOffset);
-            *ShadowPtr = EntryIRB.CreateAlignedLoad(getShadowTy(&FArg), Base,
+            ShadowPtr = EntryIRB.CreateAlignedLoad(getShadowTy(&FArg), Base,
                                                     kShadowTLSAlignment);
             if (MS.TrackOrigins) {
               Value *OriginPtr =
@@ -1767,14 +1713,14 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
             }
           }
           LLVM_DEBUG(dbgs()
-                     << "  ARG:    " << FArg << " ==> " << **ShadowPtr << "\n");
+                     << "  ARG:    " << FArg << " ==> " << *ShadowPtr << "\n");
           break;
         }
 
         ArgOffset += alignTo(Size, kShadowTLSAlignment);
       }
-      assert(*ShadowPtr && "Could not find shadow for an argument");
-      return *ShadowPtr;
+      assert(ShadowPtr && "Could not find shadow for an argument");
+      return ShadowPtr;
     }
     // For everything else the shadow is zero.
     return getCleanShadow(V);
@@ -1793,7 +1739,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     assert((isa<Instruction>(V) || isa<Argument>(V)) &&
            "Unexpected value type in getOrigin()");
     if (Instruction *I = dyn_cast<Instruction>(V)) {
-      if (I->getMetadata("nosanitize"))
+      if (I->getMetadata(LLVMContext::MD_nosanitize))
         return getCleanOrigin();
     }
     Value *Origin = OriginMap[V];
@@ -1916,7 +1862,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   // ------------------- Visitors.
   using InstVisitor<MemorySanitizerVisitor>::visit;
   void visit(Instruction &I) {
-    if (I.getMetadata("nosanitize"))
+    if (I.getMetadata(LLVMContext::MD_nosanitize))
       return;
     // Don't want to visit if we're in the prologue
     if (isInPrologue(I))
@@ -1930,12 +1876,12 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   /// Optionally, checks that the load address is fully defined.
   void visitLoadInst(LoadInst &I) {
     assert(I.getType()->isSized() && "Load type must have size");
-    assert(!I.getMetadata("nosanitize"));
+    assert(!I.getMetadata(LLVMContext::MD_nosanitize));
     IRBuilder<> IRB(I.getNextNode());
     Type *ShadowTy = getShadowTy(&I);
     Value *Addr = I.getPointerOperand();
     Value *ShadowPtr = nullptr, *OriginPtr = nullptr;
-    const Align Alignment = assumeAligned(I.getAlignment());
+    const Align Alignment = I.getAlign();
     if (PropagateShadow) {
       std::tie(ShadowPtr, OriginPtr) =
           getShadowOriginPtr(Addr, IRB, ShadowTy, Alignment, /*isStore*/ false);
@@ -2573,6 +2519,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   ///
   /// Similar situation exists for memcpy and memset.
   void visitMemMoveInst(MemMoveInst &I) {
+    getShadow(I.getArgOperand(1)); // Ensure shadow initialized
     IRBuilder<> IRB(&I);
     IRB.CreateCall(
         MS.MemmoveFn,
@@ -2587,6 +2534,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   // FIXME: consider doing manual inline for small constant sizes and proper
   // alignment.
   void visitMemCpyInst(MemCpyInst &I) {
+    getShadow(I.getArgOperand(1)); // Ensure shadow initialized
     IRBuilder<> IRB(&I);
     IRB.CreateCall(
         MS.MemcpyFn,
@@ -3252,27 +3200,37 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     SOC.Done(&I);
   }
 
-  // Instrument _mm_*_sd intrinsics
-  void handleUnarySdIntrinsic(IntrinsicInst &I) {
+  // Instrument _mm_*_sd|ss intrinsics
+  void handleUnarySdSsIntrinsic(IntrinsicInst &I) {
     IRBuilder<> IRB(&I);
+    unsigned Width =
+        cast<FixedVectorType>(I.getArgOperand(0)->getType())->getNumElements();
     Value *First = getShadow(&I, 0);
     Value *Second = getShadow(&I, 1);
-    // High word of first operand, low word of second
-    Value *Shadow =
-        IRB.CreateShuffleVector(First, Second, llvm::makeArrayRef<int>({2, 1}));
+    // First element of second operand, remaining elements of first operand
+    SmallVector<int, 16> Mask;
+    Mask.push_back(Width);
+    for (unsigned i = 1; i < Width; i++)
+      Mask.push_back(i);
+    Value *Shadow = IRB.CreateShuffleVector(First, Second, Mask);
 
     setShadow(&I, Shadow);
     setOriginForNaryOp(I);
   }
 
-  void handleBinarySdIntrinsic(IntrinsicInst &I) {
+  void handleBinarySdSsIntrinsic(IntrinsicInst &I) {
     IRBuilder<> IRB(&I);
+    unsigned Width =
+        cast<FixedVectorType>(I.getArgOperand(0)->getType())->getNumElements();
     Value *First = getShadow(&I, 0);
     Value *Second = getShadow(&I, 1);
     Value *OrShadow = IRB.CreateOr(First, Second);
-    // High word of first operand, low word of both OR'd together
-    Value *Shadow = IRB.CreateShuffleVector(First, OrShadow,
-                                            llvm::makeArrayRef<int>({2, 1}));
+    // First element of both OR'd together, remaining elements of first operand
+    SmallVector<int, 16> Mask;
+    Mask.push_back(Width);
+    for (unsigned i = 1; i < Width; i++)
+      Mask.push_back(i);
+    Value *Shadow = IRB.CreateShuffleVector(First, OrShadow, Mask);
 
     setShadow(&I, Shadow);
     setOriginForNaryOp(I);
@@ -3547,11 +3505,14 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       break;
 
     case Intrinsic::x86_sse41_round_sd:
-      handleUnarySdIntrinsic(I);
+    case Intrinsic::x86_sse41_round_ss:
+      handleUnarySdSsIntrinsic(I);
       break;
     case Intrinsic::x86_sse2_max_sd:
+    case Intrinsic::x86_sse_max_ss:
     case Intrinsic::x86_sse2_min_sd:
-      handleBinarySdIntrinsic(I);
+    case Intrinsic::x86_sse_min_ss:
+      handleBinarySdSsIntrinsic(I);
       break;
 
     case Intrinsic::fshl:
@@ -3630,7 +3591,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   }
 
   void visitCallBase(CallBase &CB) {
-    assert(!CB.getMetadata("nosanitize"));
+    assert(!CB.getMetadata(LLVMContext::MD_nosanitize));
     if (CB.isInlineAsm()) {
       // For inline asm (either a call to asm function, or callbr instruction),
       // do the usual thing: check argument shadow and mark all outputs as

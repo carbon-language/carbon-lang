@@ -67,7 +67,8 @@ clang::QualType UdtRecordCompleter::AddBaseClassForTypeIndex(
       m_ast_builder.clang().CreateBaseClassSpecifier(
           qt.getAsOpaquePtr(), TranslateMemberAccess(access),
           vtable_idx.hasValue(), udt_cvt.kind() == LF_CLASS);
-  lldbassert(base_spec);
+  if (!base_spec)
+    return {};
 
   m_bases.push_back(
       std::make_pair(vtable_idx.getValueOr(0), std::move(base_spec)));
@@ -80,6 +81,8 @@ void UdtRecordCompleter::AddMethod(llvm::StringRef name, TypeIndex type_idx,
                                    MemberAttributes attrs) {
   clang::QualType method_qt =
       m_ast_builder.GetOrCreateType(PdbTypeSymId(type_idx));
+  if (method_qt.isNull())
+    return;
   m_ast_builder.CompleteType(method_qt);
   CompilerType method_ct = m_ast_builder.ToCompilerType(method_qt);
   lldb::opaque_compiler_type_t derived_opaque_ty = m_derived_ct.GetOpaqueQualType();
@@ -106,6 +109,8 @@ Error UdtRecordCompleter::visitKnownMember(CVMemberRecord &cvr,
   clang::QualType base_qt =
       AddBaseClassForTypeIndex(base.Type, base.getAccess());
 
+  if (base_qt.isNull())
+    return llvm::Error::success();
   auto decl =
       m_ast_builder.clang().GetAsCXXRecordDecl(base_qt.getAsOpaquePtr());
   lldbassert(decl);
@@ -137,8 +142,8 @@ Error UdtRecordCompleter::visitKnownMember(
     CVMemberRecord &cvr, StaticDataMemberRecord &static_data_member) {
   clang::QualType member_type =
       m_ast_builder.GetOrCreateType(PdbTypeSymId(static_data_member.Type));
-
-  m_ast_builder.CompleteType(member_type);
+  if (member_type.isNull())
+    return llvm::Error::success();
 
   CompilerType member_ct = m_ast_builder.ToCompilerType(member_type);
 
@@ -149,7 +154,7 @@ Error UdtRecordCompleter::visitKnownMember(
 
   // Static constant members may be a const[expr] declaration.
   // Query the symbol's value as the variable initializer if valid.
-  if (member_ct.IsConst()) {
+  if (member_ct.IsConst() && member_ct.IsCompleteType()) {
     std::string qual_name = decl->getQualifiedNameAsString();
 
     auto results =
@@ -237,6 +242,8 @@ Error UdtRecordCompleter::visitKnownMember(CVMemberRecord &cvr,
   }
 
   clang::QualType member_qt = m_ast_builder.GetOrCreateType(PdbTypeSymId(ti));
+  if (member_qt.isNull())
+    return Error::success();
   m_ast_builder.CompleteType(member_qt);
 
   lldb::AccessType access = TranslateMemberAccess(data_member.getAccess());
@@ -290,10 +297,7 @@ Error UdtRecordCompleter::visitKnownMember(CVMemberRecord &cvr,
 
 void UdtRecordCompleter::complete() {
   // Ensure the correct order for virtual bases.
-  std::stable_sort(m_bases.begin(), m_bases.end(),
-                   [](const IndexedBase &lhs, const IndexedBase &rhs) {
-                     return lhs.first < rhs.first;
-                   });
+  llvm::stable_sort(m_bases, llvm::less_first());
 
   std::vector<std::unique_ptr<clang::CXXBaseSpecifier>> bases;
   bases.reserve(m_bases.size());

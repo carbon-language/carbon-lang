@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "InputFiles.h"
+#include "Config.h"
 #include "DWARF.h"
 #include "Driver.h"
 #include "InputSection.h"
@@ -600,6 +601,9 @@ void ObjFile<ELFT>::initializeSections(bool ignoreComdats,
     case SHT_RELA:
     case SHT_NULL:
       break;
+    case SHT_LLVM_SYMPART:
+      ctx->hasSympart.store(true, std::memory_order_relaxed);
+      LLVM_FALLTHROUGH;
     default:
       this->sections[i] =
           createInputSection(i, sec, check(obj.getSectionName(sec, shstrtab)));
@@ -992,15 +996,6 @@ InputSectionBase *ObjFile<ELFT>::createInputSection(uint32_t idx,
       return &InputSection::discarded;
   }
 
-  // The linkonce feature is a sort of proto-comdat. Some glibc i386 object
-  // files contain definitions of symbol "__x86.get_pc_thunk.bx" in linkonce
-  // sections. Drop those sections to avoid duplicate symbol errors.
-  // FIXME: This is glibc PR20543, we should remove this hack once that has been
-  // fixed for a while.
-  if (name == ".gnu.linkonce.t.__x86.get_pc_thunk.bx" ||
-      name == ".gnu.linkonce.t.__i686.get_pc_thunk.bx")
-    return &InputSection::discarded;
-
   // The linker merges EH (exception handling) frames and creates a
   // .eh_frame_hdr section for runtime. So we handle them with a special
   // class. For relocatable outputs, they are just passed through.
@@ -1016,16 +1011,72 @@ InputSectionBase *ObjFile<ELFT>::createInputSection(uint32_t idx,
 // its corresponding ELF symbol table.
 template <class ELFT>
 void ObjFile<ELFT>::initializeSymbols(const object::ELFFile<ELFT> &obj) {
-  ArrayRef<InputSectionBase *> sections(this->sections);
   SymbolTable &symtab = *elf::symtab;
 
   ArrayRef<Elf_Sym> eSyms = this->getELFSyms<ELFT>();
   symbols.resize(eSyms.size());
-  SymbolUnion *locals =
-      firstGlobal == 0
-          ? nullptr
-          : getSpecificAllocSingleton<SymbolUnion>().Allocate(firstGlobal);
 
+  // Some entries have been filled by LazyObjFile.
+  for (size_t i = firstGlobal, end = eSyms.size(); i != end; ++i)
+    if (!symbols[i])
+      symbols[i] = symtab.insert(CHECK(eSyms[i].getName(stringTable), this));
+
+  // Perform symbol resolution on non-local symbols.
+  SmallVector<unsigned, 32> undefineds;
+  for (size_t i = firstGlobal, end = eSyms.size(); i != end; ++i) {
+    const Elf_Sym &eSym = eSyms[i];
+    uint32_t secIdx = eSym.st_shndx;
+    if (secIdx == SHN_UNDEF) {
+      undefineds.push_back(i);
+      continue;
+    }
+
+    uint8_t binding = eSym.getBinding();
+    uint8_t stOther = eSym.st_other;
+    uint8_t type = eSym.getType();
+    uint64_t value = eSym.st_value;
+    uint64_t size = eSym.st_size;
+
+    Symbol *sym = symbols[i];
+    sym->isUsedInRegularObj = true;
+    if (LLVM_UNLIKELY(eSym.st_shndx == SHN_COMMON)) {
+      if (value == 0 || value >= UINT32_MAX)
+        fatal(toString(this) + ": common symbol '" + sym->getName() +
+              "' has invalid alignment: " + Twine(value));
+      hasCommonSyms = true;
+      sym->resolve(
+          CommonSymbol{this, StringRef(), binding, stOther, type, value, size});
+      continue;
+    }
+
+    // Handle global defined symbols. Defined::section will be set in postParse.
+    sym->resolve(Defined{this, StringRef(), binding, stOther, type, value, size,
+                         nullptr});
+  }
+
+  // Undefined symbols (excluding those defined relative to non-prevailing
+  // sections) can trigger recursive extract. Process defined symbols first so
+  // that the relative order between a defined symbol and an undefined symbol
+  // does not change the symbol resolution behavior. In addition, a set of
+  // interconnected symbols will all be resolved to the same file, instead of
+  // being resolved to different files.
+  for (unsigned i : undefineds) {
+    const Elf_Sym &eSym = eSyms[i];
+    Symbol *sym = symbols[i];
+    sym->resolve(Undefined{this, StringRef(), eSym.getBinding(), eSym.st_other,
+                           eSym.getType()});
+    sym->isUsedInRegularObj = true;
+    sym->referenced = true;
+  }
+}
+
+template <class ELFT> void ObjFile<ELFT>::initializeLocalSymbols() {
+  if (!firstGlobal)
+    return;
+  localSymStorage = std::make_unique<SymbolUnion[]>(firstGlobal);
+  SymbolUnion *locals = localSymStorage.get();
+
+  ArrayRef<Elf_Sym> eSyms = this->getELFSyms<ELFT>();
   for (size_t i = 0, end = firstGlobal; i != end; ++i) {
     const Elf_Sym &eSym = eSyms[i];
     uint32_t secIdx = eSym.st_shndx;
@@ -1054,29 +1105,39 @@ void ObjFile<ELFT>::initializeSymbols(const object::ELFFile<ELFT> &obj) {
     else
       new (symbols[i]) Defined(this, name, STB_LOCAL, eSym.st_other, type,
                                eSym.st_value, eSym.st_size, sec);
+    symbols[i]->isUsedInRegularObj = true;
   }
+}
 
-  // Some entries have been filled by LazyObjFile.
-  for (size_t i = firstGlobal, end = eSyms.size(); i != end; ++i)
-    if (!symbols[i])
-      symbols[i] = symtab.insert(CHECK(eSyms[i].getName(stringTable), this));
-
-  // Perform symbol resolution on non-local symbols.
-  SmallVector<unsigned, 32> undefineds;
+// Called after all ObjFile::parse is called for all ObjFiles. This checks
+// duplicate symbols and may do symbol property merge in the future.
+template <class ELFT> void ObjFile<ELFT>::postParse() {
+  static std::mutex mu;
+  ArrayRef<Elf_Sym> eSyms = this->getELFSyms<ELFT>();
   for (size_t i = firstGlobal, end = eSyms.size(); i != end; ++i) {
     const Elf_Sym &eSym = eSyms[i];
-    uint8_t binding = eSym.getBinding();
-    if (LLVM_UNLIKELY(binding == STB_LOCAL)) {
-      errorOrWarn(toString(this) + ": STB_LOCAL symbol (" + Twine(i) +
-                  ") found at index >= .symtab's sh_info (" +
-                  Twine(firstGlobal) + ")");
-      continue;
-    }
+    Symbol &sym = *symbols[i];
     uint32_t secIdx = eSym.st_shndx;
-    if (secIdx == SHN_UNDEF) {
-      undefineds.push_back(i);
+    uint8_t binding = eSym.getBinding();
+    if (LLVM_UNLIKELY(binding != STB_GLOBAL && binding != STB_WEAK &&
+                      binding != STB_GNU_UNIQUE))
+      errorOrWarn(toString(this) + ": symbol (" + Twine(i) +
+                  ") has invalid binding: " + Twine((int)binding));
+
+    // st_value of STT_TLS represents the assigned offset, not the actual
+    // address which is used by STT_FUNC and STT_OBJECT. STT_TLS symbols can
+    // only be referenced by special TLS relocations. It is usually an error if
+    // a STT_TLS symbol is replaced by a non-STT_TLS symbol, vice versa.
+    if (LLVM_UNLIKELY(sym.isTls()) && eSym.getType() != STT_TLS &&
+        eSym.getType() != STT_NOTYPE)
+      errorOrWarn("TLS attribute mismatch: " + toString(sym) + "\n>>> in " +
+                  toString(sym.file) + "\n>>> in " + toString(this));
+
+    // Handle non-COMMON defined symbol below. !sym.file allows a symbol
+    // assignment to redefine a symbol without an error.
+    if (!sym.file || !sym.isDefined() || secIdx == SHN_UNDEF ||
+        secIdx == SHN_COMMON)
       continue;
-    }
 
     if (LLVM_UNLIKELY(secIdx == SHN_XINDEX))
       secIdx = check(getExtendedSymbolTableIndex<ELFT>(eSym, i, shndxTable));
@@ -1085,94 +1146,28 @@ void ObjFile<ELFT>::initializeSymbols(const object::ELFFile<ELFT> &obj) {
     if (LLVM_UNLIKELY(secIdx >= sections.size()))
       fatal(toString(this) + ": invalid section index: " + Twine(secIdx));
     InputSectionBase *sec = sections[secIdx];
-    uint8_t stOther = eSym.st_other;
-    uint8_t type = eSym.getType();
-    uint64_t value = eSym.st_value;
-    uint64_t size = eSym.st_size;
-
-    Symbol *sym = symbols[i];
-    if (LLVM_UNLIKELY(eSym.st_shndx == SHN_COMMON)) {
-      if (value == 0 || value >= UINT32_MAX)
-        fatal(toString(this) + ": common symbol '" + sym->getName() +
-              "' has invalid alignment: " + Twine(value));
-      hasCommonSyms = true;
-      sym->resolve(
-          CommonSymbol{this, StringRef(), binding, stOther, type, value, size});
-      continue;
-    }
-
-    // If a defined symbol is in a discarded section, handle it as if it
-    // were an undefined symbol. Such symbol doesn't comply with the
-    // standard, but in practice, a .eh_frame often directly refer
-    // COMDAT member sections, and if a comdat group is discarded, some
-    // defined symbol in a .eh_frame becomes dangling symbols.
     if (sec == &InputSection::discarded) {
-      Undefined und{this, StringRef(), binding, stOther, type, secIdx};
-      // !LazyObjFile::lazy indicates that the file containing this object has
-      // not finished processing, i.e. this symbol is a result of a lazy symbol
-      // extract. We should demote the lazy symbol to an Undefined so that any
-      // relocations outside of the group to it will trigger a discarded section
-      // error.
-      if (sym->symbolKind == Symbol::LazyObjectKind && !sym->file->lazy) {
-        sym->replace(und);
-        // Prevent LTO from internalizing the symbol in case there is a
-        // reference to this symbol from this file.
-        sym->isUsedInRegularObj = true;
-      } else
-        sym->resolve(und);
+      if (sym.traced) {
+        printTraceSymbol(Undefined{this, sym.getName(), sym.binding,
+                                   sym.stOther, sym.type, secIdx},
+                         sym.getName());
+      }
+      if (sym.file == this) {
+        std::lock_guard<std::mutex> lock(mu);
+        ctx->nonPrevailingSyms.emplace_back(&sym, secIdx);
+      }
       continue;
     }
 
-    // Handle global defined symbols.
-    if (binding == STB_GLOBAL || binding == STB_WEAK ||
-        binding == STB_GNU_UNIQUE) {
-      sym->resolve(
-          Defined{this, StringRef(), binding, stOther, type, value, size, sec});
+    if (sym.file == this) {
+      cast<Defined>(sym).section = sec;
       continue;
     }
 
-    fatal(toString(this) + ": unexpected binding: " + Twine((int)binding));
-  }
-
-  // Undefined symbols (excluding those defined relative to non-prevailing
-  // sections) can trigger recursive extract. Process defined symbols first so
-  // that the relative order between a defined symbol and an undefined symbol
-  // does not change the symbol resolution behavior. In addition, a set of
-  // interconnected symbols will all be resolved to the same file, instead of
-  // being resolved to different files.
-  for (unsigned i : undefineds) {
-    const Elf_Sym &eSym = eSyms[i];
-    Symbol *sym = symbols[i];
-    sym->resolve(Undefined{this, StringRef(), eSym.getBinding(), eSym.st_other,
-                           eSym.getType()});
-    sym->referenced = true;
-  }
-}
-
-// Called after all ObjFile::parse is called for all ObjFiles. This checks
-// duplicate symbols and may do symbol property merge in the future.
-template <class ELFT> void ObjFile<ELFT>::postParse() {
-  ArrayRef<Elf_Sym> eSyms = this->getELFSyms<ELFT>();
-  for (size_t i = firstGlobal, end = eSyms.size(); i != end; ++i) {
-    const Elf_Sym &eSym = eSyms[i];
-    const Symbol &sym = *symbols[i];
-    // !sym.file allows a symbol assignment redefines a symbol without an error.
-    if (sym.file == this || !sym.file || !sym.isDefined() ||
-        eSym.st_shndx == SHN_UNDEF || eSym.st_shndx == SHN_COMMON ||
-        eSym.getBinding() == STB_WEAK)
+    if (binding == STB_WEAK)
       continue;
-    uint32_t secIdx = eSym.st_shndx;
-    if (LLVM_UNLIKELY(secIdx == SHN_XINDEX))
-      secIdx = cantFail(getExtendedSymbolTableIndex<ELFT>(eSym, i, shndxTable));
-    else if (secIdx >= SHN_LORESERVE)
-      secIdx = 0;
-    if (sections[secIdx] == &InputSection::discarded)
-      continue;
-    // Allow absolute symbols with the same value for GNU ld compatibility.
-    if (!cast<Defined>(sym).section && !sections[secIdx] &&
-        cast<Defined>(sym).value == eSym.st_value)
-      continue;
-    reportDuplicate(sym, this, sections[secIdx], eSym.st_value);
+    std::lock_guard<std::mutex> lock(mu);
+    ctx->duplicates.push_back({&sym, this, sec, eSym.st_value});
   }
 }
 
@@ -1652,10 +1647,18 @@ template <class ELFT> void BitcodeFile::parse() {
   }
 
   symbols.resize(obj->symbols().size());
-  for (auto it : llvm::enumerate(obj->symbols())) {
-    Symbol *&sym = symbols[it.index()];
-    createBitcodeSymbol<ELFT>(sym, keptComdats, it.value(), *this);
-  }
+  // Process defined symbols first. See the comment in
+  // ObjFile<ELFT>::initializeSymbols.
+  for (auto it : llvm::enumerate(obj->symbols()))
+    if (!it.value().isUndefined()) {
+      Symbol *&sym = symbols[it.index()];
+      createBitcodeSymbol<ELFT>(sym, keptComdats, it.value(), *this);
+    }
+  for (auto it : llvm::enumerate(obj->symbols()))
+    if (it.value().isUndefined()) {
+      Symbol *&sym = symbols[it.index()];
+      createBitcodeSymbol<ELFT>(sym, keptComdats, it.value(), *this);
+    }
 
   for (auto l : obj->getDependentLibraries())
     addDependentLibrary(l, this);

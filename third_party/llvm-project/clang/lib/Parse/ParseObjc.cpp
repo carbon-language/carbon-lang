@@ -45,8 +45,7 @@ void Parser::MaybeSkipAttributes(tok::ObjCKeywordKind Kind) {
 /// [OBJC]  objc-protocol-definition
 /// [OBJC]  objc-method-definition
 /// [OBJC]  '@' 'end'
-Parser::DeclGroupPtrTy
-Parser::ParseObjCAtDirectives(ParsedAttributesWithRange &Attrs) {
+Parser::DeclGroupPtrTy Parser::ParseObjCAtDirectives(ParsedAttributes &Attrs) {
   SourceLocation AtLoc = ConsumeToken(); // the "@"
 
   if (Tok.is(tok::code_completion)) {
@@ -284,7 +283,7 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
                                     /*consumeLastToken=*/true))
       return nullptr;
 
-    Decl *CategoryType = Actions.ActOnStartCategoryInterface(
+    ObjCCategoryDecl *CategoryType = Actions.ActOnStartCategoryInterface(
         AtLoc, nameId, nameLoc, typeParameterList, categoryId, categoryLoc,
         ProtocolRefs.data(), ProtocolRefs.size(), ProtocolLocs.data(),
         EndProtoLoc, attrs);
@@ -354,7 +353,7 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
     Actions.ActOnTypedefedProtocols(protocols, protocolLocs,
                                     superClassId, superClassLoc);
 
-  Decl *ClsType = Actions.ActOnStartClassInterface(
+  ObjCInterfaceDecl *ClsType = Actions.ActOnStartClassInterface(
       getCurScope(), AtLoc, nameId, nameLoc, typeParameterList, superClassId,
       superClassLoc, typeArgs,
       SourceRange(typeArgsLAngleLoc, typeArgsRAngleLoc), protocols.data(),
@@ -651,7 +650,7 @@ void Parser::ParseObjCInterfaceDeclList(tok::ObjCKeywordKind contextKey,
       if (Tok.is(tok::r_brace))
         break;
 
-      ParsedAttributesWithRange attrs(AttrFactory);
+      ParsedAttributes attrs(AttrFactory);
 
       // Since we call ParseDeclarationOrFunctionDefinition() instead of
       // ParseExternalDeclaration() below (so that this doesn't parse nested
@@ -1865,16 +1864,16 @@ TypeResult Parser::parseObjCTypeArgsAndProtocolQualifiers(
            protocolRAngleLoc);
 }
 
-void Parser::HelperActionsForIvarDeclarations(Decl *interfaceDecl, SourceLocation atLoc,
-                                 BalancedDelimiterTracker &T,
-                                 SmallVectorImpl<Decl *> &AllIvarDecls,
-                                 bool RBraceMissing) {
+void Parser::HelperActionsForIvarDeclarations(
+    ObjCContainerDecl *interfaceDecl, SourceLocation atLoc,
+    BalancedDelimiterTracker &T, SmallVectorImpl<Decl *> &AllIvarDecls,
+    bool RBraceMissing) {
   if (!RBraceMissing)
     T.consumeClose();
 
-  Actions.ActOnObjCContainerStartDefinition(interfaceDecl);
+  assert(getObjCDeclContext() == interfaceDecl &&
+         "Ivars should have interfaceDecl as their decl context");
   Actions.ActOnLastBitfield(T.getCloseLocation(), AllIvarDecls);
-  Actions.ActOnObjCContainerFinishDefinition();
   // Call ActOnFields() even if we don't have any decls. This is useful
   // for code rewriting tools that need to be aware of the empty list.
   Actions.ActOnFields(getCurScope(), atLoc, interfaceDecl, AllIvarDecls,
@@ -1903,14 +1902,13 @@ void Parser::HelperActionsForIvarDeclarations(Decl *interfaceDecl, SourceLocatio
 ///   objc-instance-variable-decl:
 ///     struct-declaration
 ///
-void Parser::ParseObjCClassInstanceVariables(Decl *interfaceDecl,
+void Parser::ParseObjCClassInstanceVariables(ObjCContainerDecl *interfaceDecl,
                                              tok::ObjCKeywordKind visibility,
                                              SourceLocation atLoc) {
   assert(Tok.is(tok::l_brace) && "expected {");
   SmallVector<Decl *, 32> AllIvarDecls;
 
-  ParseScope ClassScope(this, Scope::DeclScope|Scope::ClassScope);
-  ObjCDeclContextSwitch ObjCDC(*this);
+  ParseScope ClassScope(this, Scope::DeclScope | Scope::ClassScope);
 
   BalancedDelimiterTracker T(*this, tok::l_brace);
   T.consumeOpen();
@@ -1974,13 +1972,13 @@ void Parser::ParseObjCClassInstanceVariables(Decl *interfaceDecl,
     }
 
     auto ObjCIvarCallback = [&](ParsingFieldDeclarator &FD) {
-      Actions.ActOnObjCContainerStartDefinition(interfaceDecl);
+      assert(getObjCDeclContext() == interfaceDecl &&
+             "Ivar should have interfaceDecl as its decl context");
       // Install the declarator into the interface decl.
       FD.D.setObjCIvar(true);
       Decl *Field = Actions.ActOnIvar(
           getCurScope(), FD.D.getDeclSpec().getSourceRange().getBegin(), FD.D,
           FD.BitfieldSize, visibility);
-      Actions.ActOnObjCContainerFinishDefinition();
       if (Field)
         AllIvarDecls.push_back(Field);
       FD.complete(Field);
@@ -2122,7 +2120,7 @@ Parser::ParseObjCAtImplementationDeclaration(SourceLocation AtLoc,
   // We have a class or category name - consume it.
   IdentifierInfo *nameId = Tok.getIdentifierInfo();
   SourceLocation nameLoc = ConsumeToken(); // consume class or category name
-  Decl *ObjCImpDecl = nullptr;
+  ObjCImplDecl *ObjCImpDecl = nullptr;
 
   // Neither a type parameter list nor a list of protocol references is
   // permitted here. Parse and diagnose them.
@@ -2217,7 +2215,7 @@ Parser::ParseObjCAtImplementationDeclaration(SourceLocation AtLoc,
   {
     ObjCImplParsingDataRAII ObjCImplParsing(*this, ObjCImpDecl);
     while (!ObjCImplParsing.isFinished() && !isEofOrEom()) {
-      ParsedAttributesWithRange attrs(AttrFactory);
+      ParsedAttributes attrs(AttrFactory);
       MaybeParseCXX11Attributes(attrs);
       if (DeclGroupPtrTy DGP = ParseExternalDeclaration(attrs)) {
         DeclGroupRef DG = DGP.get();

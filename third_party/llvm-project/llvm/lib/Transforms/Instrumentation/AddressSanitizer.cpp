@@ -42,14 +42,12 @@
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalAlias.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InlineAsm.h"
-#include "llvm/IR/InstIterator.h"
 #include "llvm/IR/InstVisitor.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instruction.h"
@@ -63,15 +61,12 @@
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Use.h"
 #include "llvm/IR/Value.h"
-#include "llvm/InitializePasses.h"
 #include "llvm/MC/MCSectionMachO.h"
-#include "llvm/Pass.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/ScopedPrinter.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Transforms/Instrumentation/AddressSanitizerCommon.h"
@@ -87,7 +82,6 @@
 #include <cstdint>
 #include <iomanip>
 #include <limits>
-#include <memory>
 #include <sstream>
 #include <string>
 #include <tuple>
@@ -116,7 +110,7 @@ static const uint64_t kFreeBSDKasan_ShadowOffset64 = 0xdffff7c000000000;
 static const uint64_t kNetBSD_ShadowOffset32 = 1ULL << 30;
 static const uint64_t kNetBSD_ShadowOffset64 = 1ULL << 46;
 static const uint64_t kNetBSDKasan_ShadowOffset64 = 0xdfff900000000000;
-static const uint64_t kPS4CPU_ShadowOffset64 = 1ULL << 40;
+static const uint64_t kPS4_ShadowOffset64 = 1ULL << 40;
 static const uint64_t kWindowsShadowOffset32 = 3ULL << 28;
 static const uint64_t kEmscriptenShadowOffset = 0;
 
@@ -335,6 +329,11 @@ static cl::opt<std::string> ClMemoryAccessCallbackPrefix(
     cl::desc("Prefix for memory access callbacks"), cl::Hidden,
     cl::init("__asan_"));
 
+static cl::opt<bool> ClKasanMemIntrinCallbackPrefix(
+    "asan-kernel-mem-intrinsic-prefix",
+    cl::desc("Use prefix for memory intrinsics in KASAN mode"), cl::Hidden,
+    cl::init(false));
+
 static cl::opt<bool>
     ClInstrumentDynamicAllocas("asan-instrument-dynamic-allocas",
                                cl::desc("instrument dynamic allocas"),
@@ -470,7 +469,7 @@ static ShadowMapping getShadowMapping(const Triple &TargetTriple, int LongSize,
   bool IsMacOS = TargetTriple.isMacOSX();
   bool IsFreeBSD = TargetTriple.isOSFreeBSD();
   bool IsNetBSD = TargetTriple.isOSNetBSD();
-  bool IsPS4CPU = TargetTriple.isPS4CPU();
+  bool IsPS4 = TargetTriple.isPS4();
   bool IsLinux = TargetTriple.isOSLinux();
   bool IsPPC64 = TargetTriple.getArch() == Triple::ppc64 ||
                  TargetTriple.getArch() == Triple::ppc64le;
@@ -529,8 +528,8 @@ static ShadowMapping getShadowMapping(const Triple &TargetTriple, int LongSize,
         Mapping.Offset = kNetBSDKasan_ShadowOffset64;
       else
         Mapping.Offset = kNetBSD_ShadowOffset64;
-    } else if (IsPS4CPU)
-      Mapping.Offset = kPS4CPU_ShadowOffset64;
+    } else if (IsPS4)
+      Mapping.Offset = kPS4_ShadowOffset64;
     else if (IsLinux && IsX86_64) {
       if (IsKasan)
         Mapping.Offset = kLinuxKasan_ShadowOffset64;
@@ -569,7 +568,7 @@ static ShadowMapping getShadowMapping(const Triple &TargetTriple, int LongSize,
   // offset is not necessary 1/8-th of the address space.  On SystemZ,
   // we could OR the constant in a single instruction, but it's more
   // efficient to load it once and use indexed addressing.
-  Mapping.OrShadowOffset = !IsAArch64 && !IsPPC64 && !IsSystemZ && !IsPS4CPU &&
+  Mapping.OrShadowOffset = !IsAArch64 && !IsPPC64 && !IsSystemZ && !IsPS4 &&
                            !IsRISCV64 &&
                            !(Mapping.Offset & (Mapping.Offset - 1)) &&
                            Mapping.Offset != kDynamicShadowSentinel;
@@ -621,37 +620,6 @@ static uint64_t GetCtorAndDtorPriority(Triple &TargetTriple) {
 }
 
 namespace {
-
-/// Module analysis for getting various metadata about the module.
-class ASanGlobalsMetadataWrapperPass : public ModulePass {
-public:
-  static char ID;
-
-  ASanGlobalsMetadataWrapperPass() : ModulePass(ID) {
-    initializeASanGlobalsMetadataWrapperPassPass(
-        *PassRegistry::getPassRegistry());
-  }
-
-  bool runOnModule(Module &M) override {
-    GlobalsMD = GlobalsMetadata(M);
-    return false;
-  }
-
-  StringRef getPassName() const override {
-    return "ASanGlobalsMetadataWrapperPass";
-  }
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.setPreservesAll();
-  }
-
-  GlobalsMetadata &getGlobalsMD() { return GlobalsMD; }
-
-private:
-  GlobalsMetadata GlobalsMD;
-};
-
-char ASanGlobalsMetadataWrapperPass::ID = 0;
 
 /// AddressSanitizer: instrument the code in module to find memory bugs.
 struct AddressSanitizer {
@@ -788,52 +756,6 @@ private:
   FunctionCallee AMDGPUAddressPrivate;
 };
 
-class AddressSanitizerLegacyPass : public FunctionPass {
-public:
-  static char ID;
-
-  explicit AddressSanitizerLegacyPass(
-      bool CompileKernel = false, bool Recover = false,
-      bool UseAfterScope = false,
-      AsanDetectStackUseAfterReturnMode UseAfterReturn =
-          AsanDetectStackUseAfterReturnMode::Runtime)
-      : FunctionPass(ID), CompileKernel(CompileKernel), Recover(Recover),
-        UseAfterScope(UseAfterScope), UseAfterReturn(UseAfterReturn) {
-    initializeAddressSanitizerLegacyPassPass(*PassRegistry::getPassRegistry());
-  }
-
-  StringRef getPassName() const override {
-    return "AddressSanitizerFunctionPass";
-  }
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.addRequired<ASanGlobalsMetadataWrapperPass>();
-    if (ClUseStackSafety)
-      AU.addRequired<StackSafetyGlobalInfoWrapperPass>();
-    AU.addRequired<TargetLibraryInfoWrapperPass>();
-  }
-
-  bool runOnFunction(Function &F) override {
-    GlobalsMetadata &GlobalsMD =
-        getAnalysis<ASanGlobalsMetadataWrapperPass>().getGlobalsMD();
-    const StackSafetyGlobalInfo *const SSGI =
-        ClUseStackSafety
-            ? &getAnalysis<StackSafetyGlobalInfoWrapperPass>().getResult()
-            : nullptr;
-    const TargetLibraryInfo *TLI =
-        &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI(F);
-    AddressSanitizer ASan(*F.getParent(), &GlobalsMD, SSGI, CompileKernel,
-                          Recover, UseAfterScope, UseAfterReturn);
-    return ASan.instrumentFunction(F, TLI);
-  }
-
-private:
-  bool CompileKernel;
-  bool Recover;
-  bool UseAfterScope;
-  AsanDetectStackUseAfterReturnMode UseAfterReturn;
-};
-
 class ModuleAddressSanitizer {
 public:
   ModuleAddressSanitizer(Module &M, const GlobalsMetadata *GlobalsMD,
@@ -930,44 +852,6 @@ private:
 
   Function *AsanCtorFunction = nullptr;
   Function *AsanDtorFunction = nullptr;
-};
-
-class ModuleAddressSanitizerLegacyPass : public ModulePass {
-public:
-  static char ID;
-
-  explicit ModuleAddressSanitizerLegacyPass(
-      bool CompileKernel = false, bool Recover = false, bool UseGlobalGC = true,
-      bool UseOdrIndicator = false,
-      AsanDtorKind DestructorKind = AsanDtorKind::Global)
-      : ModulePass(ID), CompileKernel(CompileKernel), Recover(Recover),
-        UseGlobalGC(UseGlobalGC), UseOdrIndicator(UseOdrIndicator),
-        DestructorKind(DestructorKind) {
-    initializeModuleAddressSanitizerLegacyPassPass(
-        *PassRegistry::getPassRegistry());
-  }
-
-  StringRef getPassName() const override { return "ModuleAddressSanitizer"; }
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.addRequired<ASanGlobalsMetadataWrapperPass>();
-  }
-
-  bool runOnModule(Module &M) override {
-    GlobalsMetadata &GlobalsMD =
-        getAnalysis<ASanGlobalsMetadataWrapperPass>().getGlobalsMD();
-    ModuleAddressSanitizer ASanModule(M, &GlobalsMD, CompileKernel, Recover,
-                                      UseGlobalGC, UseOdrIndicator,
-                                      DestructorKind);
-    return ASanModule.instrumentModule(M);
-  }
-
-private:
-  bool CompileKernel;
-  bool Recover;
-  bool UseGlobalGC;
-  bool UseOdrIndicator;
-  AsanDtorKind DestructorKind;
 };
 
 // Stack poisoning does not play well with exception handling.
@@ -1271,36 +1155,6 @@ GlobalsMetadata ASanGlobalsMetadataAnalysis::run(Module &M,
   return GlobalsMetadata(M);
 }
 
-PreservedAnalyses AddressSanitizerPass::run(Function &F,
-                                            AnalysisManager<Function> &AM) {
-  auto &MAMProxy = AM.getResult<ModuleAnalysisManagerFunctionProxy>(F);
-  Module &M = *F.getParent();
-  if (auto *R = MAMProxy.getCachedResult<ASanGlobalsMetadataAnalysis>(M)) {
-    const TargetLibraryInfo *TLI = &AM.getResult<TargetLibraryAnalysis>(F);
-    AddressSanitizer Sanitizer(M, R, nullptr, Options.CompileKernel,
-                               Options.Recover, Options.UseAfterScope,
-                               Options.UseAfterReturn);
-    if (Sanitizer.instrumentFunction(F, TLI))
-      return PreservedAnalyses::none();
-    return PreservedAnalyses::all();
-  }
-
-  report_fatal_error(
-      "The ASanGlobalsMetadataAnalysis is required to run before "
-      "AddressSanitizer can run");
-  return PreservedAnalyses::all();
-}
-
-void AddressSanitizerPass::printPipeline(
-    raw_ostream &OS, function_ref<StringRef(StringRef)> MapClassName2PassName) {
-  static_cast<PassInfoMixin<AddressSanitizerPass> *>(this)->printPipeline(
-      OS, MapClassName2PassName);
-  OS << "<";
-  if (Options.CompileKernel)
-    OS << "kernel";
-  OS << ">";
-}
-
 void ModuleAddressSanitizerPass::printPipeline(
     raw_ostream &OS, function_ref<StringRef(StringRef)> MapClassName2PassName) {
   static_cast<PassInfoMixin<ModuleAddressSanitizerPass> *>(this)->printPipeline(
@@ -1336,49 +1190,6 @@ PreservedAnalyses ModuleAddressSanitizerPass::run(Module &M,
   }
   Modified |= ModuleSanitizer.instrumentModule(M);
   return Modified ? PreservedAnalyses::none() : PreservedAnalyses::all();
-}
-
-INITIALIZE_PASS(ASanGlobalsMetadataWrapperPass, "asan-globals-md",
-                "Read metadata to mark which globals should be instrumented "
-                "when running ASan.",
-                false, true)
-
-char AddressSanitizerLegacyPass::ID = 0;
-
-INITIALIZE_PASS_BEGIN(
-    AddressSanitizerLegacyPass, "asan",
-    "AddressSanitizer: detects use-after-free and out-of-bounds bugs.", false,
-    false)
-INITIALIZE_PASS_DEPENDENCY(ASanGlobalsMetadataWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(StackSafetyGlobalInfoWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
-INITIALIZE_PASS_END(
-    AddressSanitizerLegacyPass, "asan",
-    "AddressSanitizer: detects use-after-free and out-of-bounds bugs.", false,
-    false)
-
-FunctionPass *llvm::createAddressSanitizerFunctionPass(
-    bool CompileKernel, bool Recover, bool UseAfterScope,
-    AsanDetectStackUseAfterReturnMode UseAfterReturn) {
-  assert(!CompileKernel || Recover);
-  return new AddressSanitizerLegacyPass(CompileKernel, Recover, UseAfterScope,
-                                        UseAfterReturn);
-}
-
-char ModuleAddressSanitizerLegacyPass::ID = 0;
-
-INITIALIZE_PASS(
-    ModuleAddressSanitizerLegacyPass, "asan-module",
-    "AddressSanitizer: detects use-after-free and out-of-bounds bugs."
-    "ModulePass",
-    false, false)
-
-ModulePass *llvm::createModuleAddressSanitizerLegacyPassPass(
-    bool CompileKernel, bool Recover, bool UseGlobalsGC, bool UseOdrIndicator,
-    AsanDtorKind Destructor) {
-  assert(!CompileKernel || Recover);
-  return new ModuleAddressSanitizerLegacyPass(
-      CompileKernel, Recover, UseGlobalsGC, UseOdrIndicator, Destructor);
 }
 
 static size_t TypeSizeToSizeIndex(uint32_t TypeSize) {
@@ -1519,10 +1330,6 @@ bool AddressSanitizer::ignoreAccess(Instruction *Inst, Value *Ptr) {
 
 void AddressSanitizer::getInterestingMemoryOperands(
     Instruction *I, SmallVectorImpl<InterestingMemoryOperand> &Interesting) {
-  // Skip memory accesses inserted by another instrumentation.
-  if (I->hasMetadata("nosanitize"))
-    return;
-
   // Do not instrument the load fetching the dynamic shadow address.
   if (LocalDynamicShadow == I)
     return;
@@ -2139,7 +1946,9 @@ StringRef ModuleAddressSanitizer::getGlobalMetadataSection() const {
   case Triple::MachO: return "__DATA,__asan_globals,regular";
   case Triple::Wasm:
   case Triple::GOFF:
+  case Triple::SPIRV:
   case Triple::XCOFF:
+  case Triple::DXContainer:
     report_fatal_error(
         "ModuleAddressSanitizer not implemented for object file format");
   case Triple::UnknownObjectFormat:
@@ -2762,7 +2571,9 @@ void AddressSanitizer::initializeCallbacks(Module &M) {
   }
 
   const std::string MemIntrinCallbackPrefix =
-      CompileKernel ? std::string("") : ClMemoryAccessCallbackPrefix;
+      (CompileKernel && !ClKasanMemIntrinCallbackPrefix)
+          ? std::string("")
+          : ClMemoryAccessCallbackPrefix;
   AsanMemmove = M.getOrInsertFunction(MemIntrinCallbackPrefix + "memmove",
                                       IRB.getInt8PtrTy(), IRB.getInt8PtrTy(),
                                       IRB.getInt8PtrTy(), IntptrTy);
@@ -2914,7 +2725,6 @@ bool AddressSanitizer::instrumentFunction(Function &F,
   SmallVector<Instruction *, 8> NoReturnCalls;
   SmallVector<BasicBlock *, 16> AllBlocks;
   SmallVector<Instruction *, 16> PointerComparisonsOrSubtracts;
-  int NumAllocas = 0;
 
   // Fill the set of memory operations to instrument.
   for (auto &BB : F) {
@@ -2923,6 +2733,9 @@ bool AddressSanitizer::instrumentFunction(Function &F,
     int NumInsnsPerBB = 0;
     for (auto &Inst : BB) {
       if (LooksLikeCodeInBug11395(&Inst)) return false;
+      // Skip instructions inserted by another instrumentation.
+      if (Inst.hasMetadata(LLVMContext::MD_nosanitize))
+        continue;
       SmallVector<InterestingMemoryOperand, 1> InterestingOperands;
       getInterestingMemoryOperands(&Inst, InterestingOperands);
 
@@ -2954,11 +2767,10 @@ bool AddressSanitizer::instrumentFunction(Function &F,
         IntrinToInstrument.push_back(MI);
         NumInsnsPerBB++;
       } else {
-        if (isa<AllocaInst>(Inst)) NumAllocas++;
         if (auto *CB = dyn_cast<CallBase>(&Inst)) {
           // A call inside BB.
           TempsToInstrument.clear();
-          if (CB->doesNotReturn() && !CB->hasMetadata("nosanitize"))
+          if (CB->doesNotReturn())
             NoReturnCalls.push_back(CB);
         }
         if (CallInst *CI = dyn_cast<CallInst>(&Inst))
@@ -3353,7 +3165,7 @@ void FunctionStackPoisoner::processStaticAllocas() {
     ASanStackVariableDescription D = {AI->getName().data(),
                                       ASan.getAllocaSizeInBytes(*AI),
                                       0,
-                                      AI->getAlignment(),
+                                      AI->getAlign().value(),
                                       AI,
                                       0,
                                       0};
@@ -3617,7 +3429,7 @@ void FunctionStackPoisoner::poisonAlloca(Value *V, uint64_t Size,
 void FunctionStackPoisoner::handleDynamicAllocaCall(AllocaInst *AI) {
   IRBuilder<> IRB(AI);
 
-  const uint64_t Alignment = std::max(kAllocaRzSize, AI->getAlignment());
+  const Align Alignment = std::max(Align(kAllocaRzSize), AI->getAlign());
   const uint64_t AllocaRedzoneMask = kAllocaRzSize - 1;
 
   Value *Zero = Constant::getNullValue(IntptrTy);
@@ -3648,17 +3460,19 @@ void FunctionStackPoisoner::handleDynamicAllocaCall(AllocaInst *AI) {
   // Alignment is added to locate left redzone, PartialPadding for possible
   // partial redzone and kAllocaRzSize for right redzone respectively.
   Value *AdditionalChunkSize = IRB.CreateAdd(
-      ConstantInt::get(IntptrTy, Alignment + kAllocaRzSize), PartialPadding);
+      ConstantInt::get(IntptrTy, Alignment.value() + kAllocaRzSize),
+      PartialPadding);
 
   Value *NewSize = IRB.CreateAdd(OldSize, AdditionalChunkSize);
 
   // Insert new alloca with new NewSize and Alignment params.
   AllocaInst *NewAlloca = IRB.CreateAlloca(IRB.getInt8Ty(), NewSize);
-  NewAlloca->setAlignment(Align(Alignment));
+  NewAlloca->setAlignment(Alignment);
 
   // NewAddress = Address + Alignment
-  Value *NewAddress = IRB.CreateAdd(IRB.CreatePtrToInt(NewAlloca, IntptrTy),
-                                    ConstantInt::get(IntptrTy, Alignment));
+  Value *NewAddress =
+      IRB.CreateAdd(IRB.CreatePtrToInt(NewAlloca, IntptrTy),
+                    ConstantInt::get(IntptrTy, Alignment.value()));
 
   // Insert __asan_alloca_poison call for new created alloca.
   IRB.CreateCall(AsanAllocaPoisonFunc, {NewAddress, OldSize});

@@ -36,7 +36,23 @@ class TestTraceLoad(TraceIntelPTTestCaseBase):
         self.expect("thread trace dump info", substrs=['''Trace technology: intel-pt
 
 thread #1: tid = 3842849
-  Raw trace size: 4096 bytes'''])
+  Total number of instructions: 21
+
+  Memory usage:
+    Raw trace size: 4 KiB
+    Total approximate memory usage (excluding raw trace): 1.27 KiB
+    Average memory usage per instruction (excluding raw trace): 61.76 bytes
+
+  Timing:
+    Decoding instructions: ''', '''s
+
+  Events:
+    Number of instructions with events: 1
+    Number of individual events: 1
+      paused: 1
+
+  Errors:
+    Number of TSC decoding errors: 0'''])
 
     def testLoadInvalidTraces(self):
         src_dir = self.getSourceDir()

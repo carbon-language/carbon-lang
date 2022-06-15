@@ -112,6 +112,29 @@ class TargetAPITestCase(TestBase):
         self.assertIsNotNone(data_section2)
         self.assertEqual(data_section.name, data_section2.name)
 
+    def test_get_ABIName(self):
+        d = {'EXE': 'b.out'}
+        self.build(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        target = self.create_simple_target('b.out')
+
+        abi_pre_launch = target.GetABIName()
+        self.assertTrue(len(abi_pre_launch) != 0, "Got an ABI string")
+        
+        breakpoint = target.BreakpointCreateByLocation(
+            "main.c", self.line_main)
+        self.assertTrue(breakpoint, VALID_BREAKPOINT)
+
+        # Put debugger into synchronous mode so when we target.LaunchSimple returns
+        # it will guaranteed to be at the breakpoint
+        self.dbg.SetAsync(False)
+
+        # Launch the process, and do not stop at the entry point.
+        process = target.LaunchSimple(
+            None, None, self.get_process_working_directory())
+        abi_after_launch = target.GetABIName()
+        self.assertEqual(abi_pre_launch, abi_after_launch, "ABI's match before and during run")
+
     def test_read_memory(self):
         d = {'EXE': 'b.out'}
         self.build(dictionary=d)
@@ -405,7 +428,7 @@ class TargetAPITestCase(TestBase):
         self.assertTrue(process, PROCESS_IS_VALID)
 
         # Frame #0 should be on self.line1.
-        self.assertEqual(process.GetState(), lldb.eStateStopped)
+        self.assertState(process.GetState(), lldb.eStateStopped)
         thread = lldbutil.get_stopped_thread(
             process, lldb.eStopReasonBreakpoint)
         self.assertTrue(
@@ -420,7 +443,7 @@ class TargetAPITestCase(TestBase):
 
         # Continue the inferior, the breakpoint 2 should be hit.
         process.Continue()
-        self.assertEqual(process.GetState(), lldb.eStateStopped)
+        self.assertState(process.GetState(), lldb.eStateStopped)
         thread = lldbutil.get_stopped_thread(
             process, lldb.eStopReasonBreakpoint)
         self.assertTrue(
@@ -460,6 +483,7 @@ class TargetAPITestCase(TestBase):
         self.assertTrue(desc1 and desc2 and desc1 == desc2,
                         "The two addresses should resolve to the same symbol")
 
+    @skipIfRemote
     def test_default_arch(self):
         """ Test the other two target create methods using LLDB_ARCH_DEFAULT. """
         self.build()

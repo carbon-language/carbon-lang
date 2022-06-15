@@ -17,7 +17,6 @@
 #include "SafeStackLayout.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -49,10 +48,10 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/MDBuilder.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Use.h"
-#include "llvm/IR/User.h"
 #include "llvm/IR/Value.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
@@ -97,30 +96,11 @@ static cl::opt<bool>
     SafeStackUsePointerAddress("safestack-use-pointer-address",
                                   cl::init(false), cl::Hidden);
 
-// Disabled by default due to PR32143.
 static cl::opt<bool> ClColoring("safe-stack-coloring",
                                 cl::desc("enable safe stack coloring"),
-                                cl::Hidden, cl::init(false));
+                                cl::Hidden, cl::init(true));
 
 namespace {
-
-/// Rewrite an SCEV expression for a memory access address to an expression that
-/// represents offset from the given alloca.
-///
-/// The implementation simply replaces all mentions of the alloca with zero.
-class AllocaOffsetRewriter : public SCEVRewriteVisitor<AllocaOffsetRewriter> {
-  const Value *AllocaPtr;
-
-public:
-  AllocaOffsetRewriter(ScalarEvolution &SE, const Value *AllocaPtr)
-      : SCEVRewriteVisitor(SE), AllocaPtr(AllocaPtr) {}
-
-  const SCEV *visitUnknown(const SCEVUnknown *Expr) {
-    if (Expr->getValue() == AllocaPtr)
-      return SE.getZero(Expr->getType());
-    return Expr;
-  }
-};
 
 /// The SafeStack pass splits the stack of each function into the safe
 /// stack, which is only accessed through memory safe dereferences (as
@@ -147,7 +127,7 @@ class SafeStack {
   ///
   /// 16 seems like a reasonable upper bound on the alignment of objects that we
   /// might expect to appear on the stack on most common targets.
-  static constexpr uint64_t StackAlignment = 16;
+  static constexpr Align StackAlignment = Align::Constant<16>();
 
   /// Return the value of the stack canary.
   Value *getStackGuard(IRBuilder<> &IRB, Function &F);
@@ -221,7 +201,7 @@ public:
   bool run();
 };
 
-constexpr uint64_t SafeStack::StackAlignment;
+constexpr Align SafeStack::StackAlignment;
 
 uint64_t SafeStack::getStaticAllocaAllocationSize(const AllocaInst* AI) {
   uint64_t Size = DL.getTypeAllocSize(AI->getAllocatedType());
@@ -236,9 +216,18 @@ uint64_t SafeStack::getStaticAllocaAllocationSize(const AllocaInst* AI) {
 
 bool SafeStack::IsAccessSafe(Value *Addr, uint64_t AccessSize,
                              const Value *AllocaPtr, uint64_t AllocaSize) {
-  AllocaOffsetRewriter Rewriter(SE, AllocaPtr);
-  const SCEV *Expr = Rewriter.visit(SE.getSCEV(Addr));
+  const SCEV *AddrExpr = SE.getSCEV(Addr);
+  const auto *Base = dyn_cast<SCEVUnknown>(SE.getPointerBase(AddrExpr));
+  if (!Base || Base->getValue() != AllocaPtr) {
+    LLVM_DEBUG(
+        dbgs() << "[SafeStack] "
+               << (isa<AllocaInst>(AllocaPtr) ? "Alloca " : "ByValArgument ")
+               << *AllocaPtr << "\n"
+               << "SCEV " << *AddrExpr << " not directly based on alloca\n");
+    return false;
+  }
 
+  const SCEV *Expr = SE.removePointerBase(AddrExpr);
   uint64_t BitWidth = SE.getTypeSizeInBits(Expr->getType());
   ConstantRange AccessStartRange = SE.getUnsignedRange(Expr);
   ConstantRange SizeRange =
@@ -645,6 +634,13 @@ Value *SafeStack::moveStaticAllocasToUnsafeStack(
   // FIXME: no need to update BasePointer in leaf functions.
   unsigned FrameSize = alignTo(SSL.getFrameSize(), StackAlignment);
 
+  MDBuilder MDB(F.getContext());
+  SmallVector<Metadata *, 2> Data;
+  Data.push_back(MDB.createString("unsafe-stack-size"));
+  Data.push_back(MDB.createConstant(ConstantInt::get(Int32Ty, FrameSize)));
+  MDNode *MD = MDTuple::get(F.getContext(), Data);
+  F.setMetadata(LLVMContext::MD_annotation, MD);
+
   // Update shadow stack pointer in the function epilogue.
   IRB.SetInsertPoint(BasePointer->getNextNode());
 
@@ -677,13 +673,12 @@ void SafeStack::moveDynamicAllocasToUnsafeStack(
     SP = IRB.CreateSub(SP, Size);
 
     // Align the SP value to satisfy the AllocaInst, type and stack alignments.
-    uint64_t Align =
-        std::max(std::max(DL.getPrefTypeAlignment(Ty), AI->getAlignment()),
-                 StackAlignment);
+    auto Align = std::max(std::max(DL.getPrefTypeAlign(Ty), AI->getAlign()),
+                          StackAlignment);
 
-    assert(isPowerOf2_32(Align));
     Value *NewTop = IRB.CreateIntToPtr(
-        IRB.CreateAnd(SP, ConstantInt::get(IntPtrTy, ~uint64_t(Align - 1))),
+        IRB.CreateAnd(SP,
+                      ConstantInt::get(IntPtrTy, ~uint64_t(Align.value() - 1))),
         StackPtrTy);
 
     // Save the stack pointer.

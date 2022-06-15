@@ -14,14 +14,12 @@
 #include "llvm/ProfileData/InstrProfReader.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/ProfileSummary.h"
 #include "llvm/ProfileData/InstrProf.h"
 #include "llvm/ProfileData/MemProf.h"
 #include "llvm/ProfileData/ProfileCommon.h"
-#include "llvm/ProfileData/RawMemProfReader.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/ErrorOr.h"
@@ -29,7 +27,6 @@
 #include "llvm/Support/SwapByteOrder.h"
 #include "llvm/Support/SymbolRemappingReader.h"
 #include <algorithm>
-#include <cctype>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -45,13 +42,13 @@ using namespace llvm;
 static InstrProfKind getProfileKindFromVersion(uint64_t Version) {
   InstrProfKind ProfileKind = InstrProfKind::Unknown;
   if (Version & VARIANT_MASK_IR_PROF) {
-    ProfileKind |= InstrProfKind::IR;
+    ProfileKind |= InstrProfKind::IRInstrumentation;
   }
   if (Version & VARIANT_MASK_CSIR_PROF) {
-    ProfileKind |= InstrProfKind::CS;
+    ProfileKind |= InstrProfKind::ContextSensitive;
   }
   if (Version & VARIANT_MASK_INSTR_ENTRY) {
-    ProfileKind |= InstrProfKind::BB;
+    ProfileKind |= InstrProfKind::FunctionEntryInstrumentation;
   }
   if (Version & VARIANT_MASK_BYTE_COVERAGE) {
     ProfileKind |= InstrProfKind::SingleByteCoverage;
@@ -177,16 +174,16 @@ Error TextInstrProfReader::readHeader() {
   while (Line->startswith(":")) {
     StringRef Str = Line->substr(1);
     if (Str.equals_insensitive("ir"))
-      ProfileKind |= InstrProfKind::IR;
+      ProfileKind |= InstrProfKind::IRInstrumentation;
     else if (Str.equals_insensitive("fe"))
-      ProfileKind |= InstrProfKind::FE;
+      ProfileKind |= InstrProfKind::FrontendInstrumentation;
     else if (Str.equals_insensitive("csir")) {
-      ProfileKind |= InstrProfKind::IR;
-      ProfileKind |= InstrProfKind::CS;
+      ProfileKind |= InstrProfKind::IRInstrumentation;
+      ProfileKind |= InstrProfKind::ContextSensitive;
     } else if (Str.equals_insensitive("entry_first"))
-      ProfileKind |= InstrProfKind::BB;
+      ProfileKind |= InstrProfKind::FunctionEntryInstrumentation;
     else if (Str.equals_insensitive("not_entry_first"))
-      ProfileKind &= ~InstrProfKind::BB;
+      ProfileKind &= ~InstrProfKind::FunctionEntryInstrumentation;
     else
       return error(instrprof_error::bad_header);
     ++Line;
@@ -451,7 +448,7 @@ Error RawInstrProfReader<IntPtrT>::readHeader(
     return error(instrprof_error::bad_header);
 
   std::unique_ptr<InstrProfSymtab> NewSymtab = std::make_unique<InstrProfSymtab>();
-  if (Error E = createSymtab(*NewSymtab.get()))
+  if (Error E = createSymtab(*NewSymtab))
     return E;
 
   Symtab = std::move(NewSymtab);
@@ -972,8 +969,14 @@ Error IndexedInstrProfReader::readHeader() {
         endian::byte_swap<uint64_t, little>(Header->MemProfOffset);
 
     const unsigned char *Ptr = Start + MemProfOffset;
-    // The value returned from Generator.Emit.
-    const uint64_t TableOffset =
+    // The value returned from RecordTableGenerator.Emit.
+    const uint64_t RecordTableOffset =
+        support::endian::readNext<uint64_t, little, unaligned>(Ptr);
+    // The offset in the stream right before invoking FrameTableGenerator.Emit.
+    const uint64_t FramePayloadOffset =
+        support::endian::readNext<uint64_t, little, unaligned>(Ptr);
+    // The value returned from FrameTableGenerator.Emit.
+    const uint64_t FrameTableOffset =
         support::endian::readNext<uint64_t, little, unaligned>(Ptr);
 
     // Read the schema.
@@ -983,10 +986,16 @@ Error IndexedInstrProfReader::readHeader() {
     Schema = SchemaOr.get();
 
     // Now initialize the table reader with a pointer into data buffer.
-    MemProfTable.reset(MemProfHashTable::Create(
-        /*Buckets=*/Start + TableOffset,
+    MemProfRecordTable.reset(MemProfRecordHashTable::Create(
+        /*Buckets=*/Start + RecordTableOffset,
         /*Payload=*/Ptr,
-        /*Base=*/Start, memprof::MemProfRecordLookupTrait(Schema)));
+        /*Base=*/Start, memprof::RecordLookupTrait(Schema)));
+
+    // Initialize the frame table reader with the payload and bucket offsets.
+    MemProfFrameTable.reset(MemProfFrameHashTable::Create(
+        /*Buckets=*/Start + FrameTableOffset,
+        /*Payload=*/Start + FramePayloadOffset,
+        /*Base=*/Start, memprof::FrameLookupTrait()));
   }
 
   // Load the remapping table now if requested.
@@ -1005,16 +1014,16 @@ Error IndexedInstrProfReader::readHeader() {
 }
 
 InstrProfSymtab &IndexedInstrProfReader::getSymtab() {
-  if (Symtab.get())
-    return *Symtab.get();
+  if (Symtab)
+    return *Symtab;
 
   std::unique_ptr<InstrProfSymtab> NewSymtab = std::make_unique<InstrProfSymtab>();
-  if (Error E = Index->populateSymtab(*NewSymtab.get())) {
+  if (Error E = Index->populateSymtab(*NewSymtab)) {
     consumeError(error(InstrProfError::take(std::move(E))));
   }
 
   Symtab = std::move(NewSymtab);
-  return *Symtab.get();
+  return *Symtab;
 }
 
 Expected<InstrProfRecord>
@@ -1033,18 +1042,41 @@ IndexedInstrProfReader::getInstrProfRecord(StringRef FuncName,
   return error(instrprof_error::hash_mismatch);
 }
 
-Expected<ArrayRef<memprof::MemProfRecord>>
+Expected<memprof::MemProfRecord>
 IndexedInstrProfReader::getMemProfRecord(const uint64_t FuncNameHash) {
   // TODO: Add memprof specific errors.
-  if (MemProfTable == nullptr)
+  if (MemProfRecordTable == nullptr)
     return make_error<InstrProfError>(instrprof_error::invalid_prof,
                                       "no memprof data available in profile");
-  auto Iter = MemProfTable->find(FuncNameHash);
-  if (Iter == MemProfTable->end())
+  auto Iter = MemProfRecordTable->find(FuncNameHash);
+  if (Iter == MemProfRecordTable->end())
+    return make_error<InstrProfError>(
+        instrprof_error::unknown_function,
+        "memprof record not found for function hash " + Twine(FuncNameHash));
+
+  // Setup a callback to convert from frame ids to frame using the on-disk
+  // FrameData hash table.
+  memprof::FrameId LastUnmappedFrameId = 0;
+  bool HasFrameMappingError = false;
+  auto IdToFrameCallback = [&](const memprof::FrameId Id) {
+    auto FrIter = MemProfFrameTable->find(Id);
+    if (FrIter == MemProfFrameTable->end()) {
+      LastUnmappedFrameId = Id;
+      HasFrameMappingError = true;
+      return memprof::Frame(0, 0, 0, false);
+    }
+    return *FrIter;
+  };
+
+  memprof::MemProfRecord Record(*Iter, IdToFrameCallback);
+
+  // Check that all frame ids were successfully converted to frames.
+  if (HasFrameMappingError) {
     return make_error<InstrProfError>(instrprof_error::hash_mismatch,
-                                      "memprof record not found for hash " +
-                                          Twine(FuncNameHash));
-  return *Iter;
+                                      "memprof frame not found for frame id " +
+                                          Twine(LastUnmappedFrameId));
+  }
+  return Record;
 }
 
 Error IndexedInstrProfReader::getFunctionCounts(StringRef FuncName,

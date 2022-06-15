@@ -29,7 +29,8 @@ public:
     return HostInfo::GetUserIDResolver();
   }
 
-  std::vector<ArchSpec> GetSupportedArchitectures() override;
+  std::vector<ArchSpec>
+  GetSupportedArchitectures(const ArchSpec &process_host_arch) override;
 
   lldb::ProcessSP DebugProcess(ProcessLaunchInfo &launch_info,
                                Debugger &debugger, Target &target,
@@ -59,7 +60,7 @@ private:
   static lldb::PlatformSP CreateInstance(bool force, const ArchSpec *arch);
   static void DebuggerInitialize(Debugger &debugger);
 
-  PlatformQemuUser() : Platform(/*is_host=*/false) {}
+  PlatformQemuUser() : Platform(/*is_host=*/true) {}
 };
 
 } // namespace lldb_private

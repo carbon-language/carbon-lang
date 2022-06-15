@@ -299,8 +299,6 @@ CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
   case Stmt::BinaryConditionalOperatorClass:
   case Stmt::TypeTraitExprClass:
   case Stmt::CoawaitExprClass:
-  case Stmt::ConceptSpecializationExprClass:
-  case Stmt::RequiresExprClass:
   case Stmt::DependentCoawaitExprClass:
   case Stmt::CoyieldExprClass:
   case Stmt::CXXBindTemporaryExprClass:
@@ -637,6 +635,14 @@ CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
     return getSelectorIdentifierCursor(SelectorIdIndex, C);
   }
 
+  case Stmt::ConceptSpecializationExprClass:
+    K = CXCursor_ConceptSpecializationExpr;
+    break;
+
+  case Stmt::RequiresExprClass:
+    K = CXCursor_RequiresExpr;
+    break;
+
   case Stmt::MSDependentExistsStmtClass:
     K = CXCursor_UnexposedStmt;
     break;
@@ -825,6 +831,18 @@ CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
     break;
   case Stmt::OMPGenericLoopDirectiveClass:
     K = CXCursor_OMPGenericLoopDirective;
+    break;
+  case Stmt::OMPTeamsGenericLoopDirectiveClass:
+    K = CXCursor_OMPTeamsGenericLoopDirective;
+    break;
+  case Stmt::OMPTargetTeamsGenericLoopDirectiveClass:
+    K = CXCursor_OMPTargetTeamsGenericLoopDirective;
+    break;
+  case Stmt::OMPParallelGenericLoopDirectiveClass:
+    K = CXCursor_OMPParallelGenericLoopDirective;
+    break;
+  case Stmt::OMPTargetParallelGenericLoopDirectiveClass:
+    K = CXCursor_OMPTargetParallelGenericLoopDirective;
     break;
   case Stmt::BuiltinBitCastExprClass:
     K = CXCursor_BuiltinBitCastExpr;

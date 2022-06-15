@@ -13,7 +13,6 @@
 
 #include "CoroInstr.h"
 #include "llvm/IR/IRBuilder.h"
-#include "llvm/Transforms/Coroutines.h"
 
 namespace llvm {
 
@@ -21,40 +20,13 @@ class CallGraph;
 class CallGraphSCC;
 class PassRegistry;
 
-void initializeCoroEarlyLegacyPass(PassRegistry &);
-void initializeCoroSplitLegacyPass(PassRegistry &);
-void initializeCoroElideLegacyPass(PassRegistry &);
-void initializeCoroCleanupLegacyPass(PassRegistry &);
-
-// CoroEarly pass marks every function that has coro.begin with a string
-// attribute "coroutine.presplit"="0". CoroSplit pass processes the coroutine
-// twice. First, it lets it go through complete IPO optimization pipeline as a
-// single function. It forces restart of the pipeline by inserting an indirect
-// call to an empty function "coro.devirt.trigger" which is devirtualized by
-// CoroElide pass that triggers a restart of the pipeline by CGPassManager.
-// When CoroSplit pass sees the same coroutine the second time, it splits it up,
-// adds coroutine subfunctions to the SCC to be processed by IPO pipeline.
-// Async lowering similarily triggers a restart of the pipeline after it has
-// split the coroutine.
-//
-// FIXME: Refactor these attributes as LLVM attributes instead of string
-// attributes since these attributes are already used outside LLVM's
-// coroutine module.
-// FIXME: Remove these values once we remove the Legacy PM.
-#define CORO_PRESPLIT_ATTR "coroutine.presplit"
-#define UNPREPARED_FOR_SPLIT "0"
-#define PREPARED_FOR_SPLIT "1"
-#define ASYNC_RESTART_AFTER_SPLIT "2"
-
-#define CORO_DEVIRT_TRIGGER_FN "coro.devirt.trigger"
-
 namespace coro {
 
+bool declaresAnyIntrinsic(const Module &M);
 bool declaresIntrinsics(const Module &M,
                         const std::initializer_list<StringRef>);
 void replaceCoroFree(CoroIdInst *CoroId, bool Elide);
-void updateCallGraph(Function &Caller, ArrayRef<Function *> Funcs,
-                     CallGraph &CG, CallGraphSCC &SCC);
+
 /// Recover a dbg.declare prepared by the frontend and emit an alloca
 /// holding a pointer to the coroutine frame.
 void salvageDebugInfo(
@@ -128,7 +100,7 @@ struct LLVM_LIBRARY_VISIBILITY Shape {
   StructType *FrameTy;
   Align FrameAlign;
   uint64_t FrameSize;
-  Instruction *FramePtr;
+  Value *FramePtr;
   BasicBlock *AllocaSpillBlock;
 
   /// This would only be true if optimization are enabled.
@@ -210,10 +182,9 @@ struct LLVM_LIBRARY_VISIBILITY Shape {
 
   FunctionType *getResumeFunctionType() const {
     switch (ABI) {
-    case coro::ABI::Switch: {
-      auto *FnPtrTy = getSwitchResumePointerType();
-      return cast<FunctionType>(FnPtrTy->getPointerElementType());
-    }
+    case coro::ABI::Switch:
+      return FunctionType::get(Type::getVoidTy(FrameTy->getContext()),
+                               FrameTy->getPointerTo(), /*IsVarArg*/false);
     case coro::ABI::Retcon:
     case coro::ABI::RetconOnce:
       return RetconLowering.ResumePrototype->getFunctionType();
@@ -265,6 +236,12 @@ struct LLVM_LIBRARY_VISIBILITY Shape {
     if (ABI == coro::ABI::Switch)
       return SwitchLowering.PromiseAlloca;
     return nullptr;
+  }
+
+  Instruction *getInsertPtAfterFramePtr() const {
+    if (auto *I = dyn_cast<Instruction>(FramePtr))
+      return I->getNextNode();
+    return &cast<Argument>(FramePtr)->getParent()->getEntryBlock().front();
   }
 
   /// Allocate memory according to the rules of the active lowering.

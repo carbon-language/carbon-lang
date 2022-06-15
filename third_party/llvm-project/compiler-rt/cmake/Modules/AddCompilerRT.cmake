@@ -77,6 +77,17 @@ function(add_compiler_rt_object_libraries name)
       list(REMOVE_ITEM target_flags "-msse3")
     endif()
 
+    # Build the macOS sanitizers with Mac Catalyst support.
+    if (APPLE AND
+        "${COMPILER_RT_ENABLE_MACCATALYST}" AND
+        "${libname}" MATCHES ".*\.osx.*")
+      foreach(arch ${LIB_ARCHS_${libname}})
+        list(APPEND target_flags
+          -target ${arch}-apple-macos${DARWIN_osx_MIN_VER}
+          -darwin-target-variant ${arch}-apple-ios13.1-macabi)
+      endforeach()
+    endif()
+
     set_target_compile_flags(${libname}
       ${extra_cflags_${libname}} ${target_flags})
     set_property(TARGET ${libname} APPEND PROPERTY
@@ -128,7 +139,7 @@ macro(set_output_name output name arch)
       if(COMPILER_RT_DEFAULT_TARGET_ONLY)
         set(triple "${COMPILER_RT_DEFAULT_TARGET_TRIPLE}")
       else()
-        set(triple "${TARGET_TRIPLE}")
+        set(triple "${LLVM_TARGET_TRIPLE}")
       endif()
       # Except for baremetal, when using arch-suffixed runtime library names,
       # clang only looks for libraries named "arm" or "armhf", see
@@ -233,6 +244,19 @@ function(add_compiler_rt_runtime name type)
         format_object_libs(sources_${libname} ${os} ${LIB_OBJECT_LIBS})
         get_compiler_rt_output_dir(${COMPILER_RT_DEFAULT_TARGET_ARCH} output_dir_${libname})
         get_compiler_rt_install_dir(${COMPILER_RT_DEFAULT_TARGET_ARCH} install_dir_${libname})
+      endif()
+
+      # Build the macOS sanitizers with Mac Catalyst support.
+      if ("${COMPILER_RT_ENABLE_MACCATALYST}" AND
+          "${os}" MATCHES "^(osx)$")
+        foreach(arch ${LIB_ARCHS_${libname}})
+          list(APPEND extra_cflags_${libname}
+            -target ${arch}-apple-macos${DARWIN_osx_MIN_VER}
+            -darwin-target-variant ${arch}-apple-ios13.1-macabi)
+          list(APPEND extra_link_flags_${libname}
+            -target ${arch}-apple-macos${DARWIN_osx_MIN_VER}
+            -darwin-target-variant ${arch}-apple-ios13.1-macabi)
+        endforeach()
       endif()
     endforeach()
   else()
@@ -372,13 +396,33 @@ function(add_compiler_rt_runtime name type)
         set_target_properties(${libname} PROPERTIES IMPORT_PREFIX "")
         set_target_properties(${libname} PROPERTIES IMPORT_SUFFIX ".lib")
       endif()
-      if(APPLE)
-        # Ad-hoc sign the dylibs
-        add_custom_command(TARGET ${libname}
-          POST_BUILD
-          COMMAND codesign --sign - $<TARGET_FILE:${libname}>
-          WORKING_DIRECTORY ${COMPILER_RT_OUTPUT_LIBRARY_DIR}
+      if (APPLE AND NOT CMAKE_LINKER MATCHES ".*lld.*")
+        # Ad-hoc sign the dylibs when using Xcode versions older than 12.
+        # Xcode 12 shipped with ld64-609.
+        # FIXME: Remove whole conditional block once everything uses Xcode 12+.
+        set(LD_V_OUTPUT)
+        execute_process(
+          COMMAND sh -c "${CMAKE_LINKER} -v 2>&1 | head -1"
+          RESULT_VARIABLE HAD_ERROR
+          OUTPUT_VARIABLE LD_V_OUTPUT
         )
+        if (HAD_ERROR)
+          message(FATAL_ERROR "${CMAKE_LINKER} failed with status ${HAD_ERROR}")
+        endif()
+        set(NEED_EXPLICIT_ADHOC_CODESIGN 1)
+        if ("${LD_V_OUTPUT}" MATCHES ".*ld64-([0-9.]+).*")
+          string(REGEX REPLACE ".*ld64-([0-9.]+).*" "\\1" HOST_LINK_VERSION ${LD_V_OUTPUT})
+          if (HOST_LINK_VERSION VERSION_GREATER_EQUAL 609)
+            set(NEED_EXPLICIT_ADHOC_CODESIGN 0)
+          endif()
+        endif()
+        if (NEED_EXPLICIT_ADHOC_CODESIGN)
+          add_custom_command(TARGET ${libname}
+            POST_BUILD
+            COMMAND codesign --sign - $<TARGET_FILE:${libname}>
+            WORKING_DIRECTORY ${COMPILER_RT_OUTPUT_LIBRARY_DIR}
+          )
+        endif()
       endif()
     endif()
 
@@ -602,6 +646,9 @@ macro(add_custom_libcxx name prefix)
     CMAKE_READELF
     CMAKE_SYSROOT
     LIBCXX_HAS_MUSL_LIBC
+    LIBCXX_HAS_PTHREAD_LIB
+    LIBCXX_HAS_RT_LIB
+    LIBCXXABI_HAS_PTHREAD_LIB
     PYTHON_EXECUTABLE
     Python3_EXECUTABLE
     Python2_EXECUTABLE

@@ -1,4 +1,4 @@
-// RUN: mlir-opt %s -convert-scf-to-cf -convert-vector-to-llvm -convert-memref-to-llvm -convert-std-to-llvm -reconcile-unrealized-casts | \
+// RUN: mlir-opt %s -convert-scf-to-cf -convert-vector-to-llvm -convert-memref-to-llvm -convert-func-to-llvm -reconcile-unrealized-casts | \
 // RUN: mlir-cpu-runner -e entry -entry-point-result=void \
 // RUN:   -shared-libs=%mlir_integration_test_dir/libmlir_c_runner_utils%shlibext | \
 // RUN: FileCheck %s
@@ -53,7 +53,7 @@
   iterator_types = ["reduction"]
 }
 
-func @spmv8x8(%AVAL: memref<8xvector<4xf32>>,
+func.func @spmv8x8(%AVAL: memref<8xvector<4xf32>>,
               %AIDX: memref<8xvector<4xi32>>, %X: memref<?xf32>, %B: memref<?xf32>) {
   %c0 = arith.constant 0 : index
   %c1 = arith.constant 1 : index
@@ -72,7 +72,7 @@ func @spmv8x8(%AVAL: memref<8xvector<4xf32>>,
   return
 }
 
-func @entry() {
+func.func @entry() {
   %c0 = arith.constant 0 : index
   %c1 = arith.constant 1 : index
   %c2 = arith.constant 2 : index

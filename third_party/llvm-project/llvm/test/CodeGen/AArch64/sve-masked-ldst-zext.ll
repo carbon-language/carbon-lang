@@ -79,17 +79,14 @@ define <vscale x 2 x i64> @masked_zload_passthru(<vscale x 2 x i32>* %src, <vsca
 ; Return type requires splitting
 define <vscale x 8 x i64> @masked_zload_nxv8i16(<vscale x 8 x i16>* %a, <vscale x 8 x i1> %mask) {
 ; CHECK-LABEL: masked_zload_nxv8i16:
-; CHECK:       punpklo p1.h, p0.b
-; CHECK-NEXT:  punpkhi p0.h, p0.b
-; CHECK-NEXT:  punpklo p2.h, p1.b
-; CHECK-NEXT:  punpkhi p1.h, p1.b
-; CHECK-NEXT:  ld1h { z0.d }, p2/z, [x0]
-; CHECK-NEXT:  punpklo p2.h, p0.b
-; CHECK-NEXT:  punpkhi p0.h, p0.b
-; CHECK-NEXT:  ld1h { z1.d }, p1/z, [x0, #1, mul vl]
-; CHECK-NEXT:  ld1h { z2.d }, p2/z, [x0, #2, mul vl]
-; CHECK-NEXT:  ld1h { z3.d }, p0/z, [x0, #3, mul vl]
-; CHECK-NEXT:  ret
+; CHECK:         ld1h { z0.h }, p0/z, [x0]
+; CHECK-NEXT:    uunpklo z1.s, z0.h
+; CHECK-NEXT:    uunpkhi z3.s, z0.h
+; CHECK-NEXT:    uunpklo z0.d, z1.s
+; CHECK-NEXT:    uunpkhi z1.d, z1.s
+; CHECK-NEXT:    uunpklo z2.d, z3.s
+; CHECK-NEXT:    uunpkhi z3.d, z3.s
+; CHECK-NEXT:    ret
   %load = call <vscale x 8 x i16> @llvm.masked.load.nxv8i16(<vscale x 8 x i16>* %a, i32 2, <vscale x 8 x i1> %mask, <vscale x 8 x i16> undef)
   %ext = zext <vscale x 8 x i16> %load to <vscale x 8 x i64>
   ret <vscale x 8 x i64> %ext
@@ -100,7 +97,7 @@ define <vscale x 2 x double> @masked_zload_2i16_2f64(<vscale x 2 x i16>* noalias
 ; CHECK-LABEL: masked_zload_2i16_2f64:
 ; CHECK:       ld1h { z0.d }, p0/z, [x0]
 ; CHECK-NEXT:  ptrue p0.d
-; CHECK-NEXT:  ucvtf z0.d, p0/m, z0.s
+; CHECK-NEXT:  ucvtf z0.d, p0/m, z0.d
 ; CHECK-NEXT:  ret
   %wide.load = call <vscale x 2 x i16> @llvm.masked.load.nxv2i16(<vscale x 2 x i16>* %in, i32 2, <vscale x 2 x i1> %mask, <vscale x 2 x i16> undef)
   %zext = zext <vscale x 2 x i16> %wide.load to <vscale x 2 x i32>

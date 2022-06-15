@@ -30,7 +30,8 @@ class Async_Op<string mnemonic, list<Trait> traits = []> :
 def Async_ExecuteOp :
   Async_Op<"execute", [SingleBlockImplicitTerminator<"YieldOp">,
                        DeclareOpInterfaceMethods<RegionBranchOpInterface,
-                                                 ["getSuccessorEntryOperands"]>,
+                                                 ["getSuccessorEntryOperands",
+                                                  "areTypesCompatible"]>,
                        AttrSizedOperandSegments,
                        AutomaticAllocationScope]> {
   let summary = "Asynchronous execute operation";
@@ -83,7 +84,7 @@ def Async_ExecuteOp :
 
   let hasCustomAssemblyFormat = 1;
   let skipDefaultBuilders = 1;
-  let hasVerifier = 1;
+  let hasRegionVerifier = 1;
   let builders = [
     OpBuilder<(ins "TypeRange":$resultTypes, "ValueRange":$dependencies,
       "ValueRange":$operands,

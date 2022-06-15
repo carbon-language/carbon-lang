@@ -15,7 +15,9 @@
 
 include "mlir/Interfaces/ControlFlowInterfaces.td"
 include "mlir/Interfaces/LoopLikeInterface.td"
+include "mlir/IR/RegionKindInterface.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
+include "mlir/Interfaces/ViewLikeInterface.td"
 
 def SCF_Dialect : Dialect {
   let name = "scf";
@@ -56,7 +58,8 @@ def ConditionOp : SCF_Op<"condition", [
 // ExecuteRegionOp
 //===----------------------------------------------------------------------===//
 
-def ExecuteRegionOp : SCF_Op<"execute_region"> {
+def ExecuteRegionOp : SCF_Op<"execute_region", [
+    DeclareOpInterfaceMethods<RegionBranchOpInterface>]> {
   let summary = "operation that executes its region exactly once";
   let description = [{
     The `execute_region` operation is used to allow multiple blocks within SCF
@@ -105,12 +108,17 @@ def ExecuteRegionOp : SCF_Op<"execute_region"> {
   let hasCanonicalizer = 1;
   let hasCustomAssemblyFormat = 1;
 
-  let hasFolder = 0;
   let hasVerifier = 1;
 }
 
+//===----------------------------------------------------------------------===//
+// ForOp
+//===----------------------------------------------------------------------===//
+
 def ForOp : SCF_Op<"for",
-      [AutomaticAllocationScope, DeclareOpInterfaceMethods<LoopLikeOpInterface>,
+      [AutomaticAllocationScope, DeclareOpInterfaceMethods<LoopLikeOpInterface,
+       ["getSingleInductionVar", "getSingleLowerBound", "getSingleStep",
+        "getSingleUpperBound"]>,
        DeclareOpInterfaceMethods<RegionBranchOpInterface>,
        SingleBlockImplicitTerminator<"scf::YieldOp">,
        RecursiveSideEffects]> {
@@ -157,8 +165,8 @@ def ForOp : SCF_Op<"for",
     For example, to sum-reduce a memref:
 
     ```mlir
-    func @reduce(%buffer: memref<1024xf32>, %lb: index,
-                 %ub: index, %step: index) -> (f32) {
+    func.func @reduce(%buffer: memref<1024xf32>, %lb: index,
+                      %ub: index, %step: index) -> (f32) {
       // Initial sum set to 0.
       %sum_0 = arith.constant 0.0 : f32
       // iter_args binds initial values to the loop's region arguments.
@@ -182,8 +190,8 @@ def ForOp : SCF_Op<"for",
     perform conditional reduction:
 
     ```mlir
-    func @conditional_reduce(%buffer: memref<1024xf32>, %lb: index,
-                             %ub: index, %step: index) -> (f32) {
+    func.func @conditional_reduce(%buffer: memref<1024xf32>, %lb: index,
+                                  %ub: index, %step: index) -> (f32) {
       %sum_0 = arith.constant 0.0 : f32
       %c0 = arith.constant 0.0 : f32
       %sum = scf.for %iv = %lb to %ub step %step
@@ -301,13 +309,266 @@ def ForOp : SCF_Op<"for",
     /// correspond to the loop iterator operands, i.e., those exclusing the
     /// induction variable. LoopOp only has one region, so 0 is the only valid
     /// value for `index`.
-    OperandRange getSuccessorEntryOperands(unsigned index);
+    OperandRange getSuccessorEntryOperands(Optional<unsigned> index);
   }];
 
   let hasCanonicalizer = 1;
   let hasCustomAssemblyFormat = 1;
   let hasVerifier = 1;
+  let hasRegionVerifier = 1;
 }
+
+//===----------------------------------------------------------------------===//
+// ForeachThreadOp
+//===----------------------------------------------------------------------===//
+
+def ForeachThreadOp : SCF_Op<"foreach_thread", [
+       SingleBlockImplicitTerminator<"scf::PerformConcurrentlyOp">,
+       RecursiveSideEffects,
+       AutomaticAllocationScope,
+      ]> {
+  let summary = "evaluate a block multiple times in parallel";
+  let description = [{
+    `scf.foreach_thread` is a target-independent multi-dimensional parallel
+    region application operation. It has exactly one block that represents the
+    parallel body and it takes index operands that indicate how many parallel
+    instances of that function are created.
+
+    The name "thread" conveys the fact that the parallel execution is mapped
+    (i.e. distributed) to a set of virtual threads of execution, one function
+    application per thread. Further lowerings are responsible for specifying
+    how this is materialized on concrete hardware resources.
+
+    The only allowed terminator is `scf.foreach_thread.perform_concurrently`,
+    which dictates how the partial results of all parallel invocations should be
+    reconciled into a full value.
+
+    `scf.foreach_thread` returns values that are formed by aggregating the
+    actions of all the `perform_concurrently` terminator of all the virtual
+    threads, in some unspecified order.
+    In other words, `scf.foreach_thread` performs all actions specified in the
+    `perform_concurrently` terminator, after it receives the control back from
+    its body along each virtual thread of execution.
+    The actions involved in constructing the return values are further described
+    by [parallel_insert_slice](#parallelinsertslice-parallelinsertsliceop).
+
+    `scf.foreach_thread` acts as an implicit synchronization point.
+
+    Multi-value returns are encoded by including multiple operations inside the
+    `perform_concurrently` block.
+
+    When the parallel function body has side effects, the order of reads and
+    writes to memory is unspecified across threads.
+
+    Example:
+
+    ```mlir
+    //
+    // Sequential context.
+    //
+    %matmul_and_pointwise:2 = scf.foreach_thread (%thread_id_1, %thread_id_2) in
+         (%num_threads_1, %numthread_id_2) -> (tensor<?x?xT>, tensor<?xT>) {
+      //
+      // Parallel context, each thread with id = (%thread_id_1, %thread_id_2)
+      // runs its version of the code.
+      //
+      %sA = tensor.extract_slice %A[f((%thread_id_1, %thread_id_2))]:
+        tensor<?x?xT> to tensor<?x?xT>
+      %sB = tensor.extract_slice %B[g((%thread_id_1, %thread_id_2))]:
+        tensor<?x?xT> to tensor<?x?xT>
+      %sC = tensor.extract_slice %C[h((%thread_id_1, %thread_id_2))]:
+        tensor<?x?xT> to tensor<?x?xT>
+      %sD = matmul ins(%sA, %sB) outs(%sC)
+
+      %spointwise = subtensor %pointwise[i((%thread_id_1, %thread_id_2))]:
+        tensor<?xT> to tensor<?xT>
+      %sE = add ins(%spointwise) outs(%sD)
+
+      scf.foreach_thread.perform_concurrently {
+        // First op within the parallel terminator contributes to producing %matmul_and_pointwise#0.
+        scf.foreach_thread.parallel_insert_slice %sD into %C[h((%thread_id_1, %thread_id_2))]:
+          tensor<?x?xT> into tensor<?x?xT>
+
+        // Second op within the parallel terminator contributes to producing %matmul_and_pointwise#1.
+        scf.foreach_thread.parallel_insert_slice %spointwise into %pointwise[i((%thread_id_1, %thread_id_2))]:
+          tensor<?xT> into tensor<?xT>
+      }
+    }
+    // Implicit synchronization point.
+    // Sequential context.
+    //
+    ```
+  }];
+  let arguments = (ins Variadic<Index>:$num_threads);
+
+  let results = (outs Variadic<AnyType>:$results);
+  let regions = (region SizedRegion<1>:$region);
+
+  let hasCustomAssemblyFormat = 1;
+  let hasVerifier = 1;
+
+  // The default builder does not add the proper body BBargs, roll our own.
+  let skipDefaultBuilders = 1;
+  let builders = [
+    // Bodyless builder, result types must be specified.
+    OpBuilder<(ins "TypeRange":$resultTypes, "ValueRange":$num_threads)>,
+    // Builder that takes a bodyBuilder lambda, result types are inferred from
+    // the terminator.
+    OpBuilder<(ins "ValueRange":$num_threads,
+              "function_ref<void(OpBuilder &, Location, ValueRange)>":$bodyBuilder)>
+  ];
+  let extraClassDeclaration = [{
+    int64_t getRank() { return getNumThreads().size(); }
+    ::mlir::ValueRange getThreadIndices() { return getBody()->getArguments(); }
+    ::mlir::Value getThreadIndex(int64_t idx) { return getBody()->getArgument(idx); }
+
+    // The ensureTerminator method generated by SingleBlockImplicitTerminator is
+    // unaware of the fact that our terminator also needs a region to be
+    // well-formed. We override it here to ensure that we do the right thing.
+    static void ensureTerminator(Region &region, OpBuilder &builder, Location loc);
+
+    PerformConcurrentlyOp getTerminator();
+  }];
+}
+
+//===----------------------------------------------------------------------===//
+// PerformConcurrentlyOp
+//===----------------------------------------------------------------------===//
+
+def PerformConcurrentlyOp : SCF_Op<"foreach_thread.perform_concurrently", [
+       NoSideEffect,
+       Terminator,
+       HasParent<"ForeachThreadOp">,
+      ] # GraphRegionNoTerminator.traits> {
+  let summary = "terminates a `foreach_thread` block";
+  let description = [{
+    `scf.foreach_thread.perform_concurrently` is a designated terminator for
+    the `scf.foreach_thread` operation.
+
+    It has a single region with a single block that contains a flat list of ops.
+    Each such op participates in the aggregate formation of a single result of
+    the enclosing `scf.foreach_thread`.
+    The result number corresponds to the position of the op in the terminator.
+  }];
+
+  let regions = (region SizedRegion<1>:$region);
+
+  let hasCustomAssemblyFormat = 1;
+  let hasVerifier = 1;
+
+  // The default builder does not add a region with an empty body, add our own.
+  let skipDefaultBuilders = 1;
+  let builders = [
+    OpBuilder<(ins)>,
+  ];
+
+  // TODO: Add a `PerformConcurrentlyOpInterface` interface for ops that can
+  // appear inside perform_concurrently.
+  let extraClassDeclaration = [{
+    SmallVector<Type> yieldedTypes();
+    ::llvm::iterator_range<Block::iterator> yieldingOps();
+  }];
+}
+
+//===----------------------------------------------------------------------===//
+// ParallelInsertSliceOp
+//===----------------------------------------------------------------------===//
+
+// TODO: Implement PerformConcurrentlyOpInterface.
+def ParallelInsertSliceOp : SCF_Op<"foreach_thread.parallel_insert_slice", [
+       AttrSizedOperandSegments,
+       OffsetSizeAndStrideOpInterface,
+       HasParent<"PerformConcurrentlyOp">]> {
+  let summary = [{
+    Specify the tensor slice update of a single thread within the terminator of
+    an `scf.foreach_thread`.
+  }];
+  let description = [{
+    The parent `scf.foreach_thread` returns values that are formed by aggregating
+    the actions of all the ops contained within the `perform_concurrently`
+    terminator of all the threads, in some unspecified order.
+    The `scf.foreach_thread.parallel_insert_slice` is one such op allowed in
+    the `scf.foreach_thread.perform_concurrently` terminator.
+
+    Conflicting writes result in undefined semantics, in that the indices written
+    to by multiple parallel updates might contain data from any of the updates, or
+    even a malformed bit pattern.
+
+    If an index is updated exactly once, the value contained at that index
+    in the resulting tensor will be equal to the value at a corresponding index of a
+    slice that was used for the updated. If an index is not updated at all, its value
+    will be equal to the one in the original tensor.
+
+    This op does not create a new value, which allows maintaining a clean
+    separation between the subset and full tensor.
+    Note that we cannot mark this operation as pure (NoSideEffects), even
+    though it has no side effects, because it will get DCEd during
+    canonicalization.
+  }];
+
+  let arguments = (ins
+    AnyRankedTensor:$source,
+    AnyRankedTensor:$dest,
+    Variadic<Index>:$offsets,
+    Variadic<Index>:$sizes,
+    Variadic<Index>:$strides,
+    I64ArrayAttr:$static_offsets,
+    I64ArrayAttr:$static_sizes,
+    I64ArrayAttr:$static_strides
+  );
+  let assemblyFormat = [{
+    $source `into` $dest ``
+    custom<OperandsOrIntegersOffsetsOrStridesList>($offsets, $static_offsets)
+    custom<OperandsOrIntegersSizesList>($sizes, $static_sizes)
+    custom<OperandsOrIntegersOffsetsOrStridesList>($strides, $static_strides)
+    attr-dict `:` type($source) `into` type($dest)
+  }];
+
+  let extraClassDeclaration = [{
+    ::mlir::Operation::operand_range offsets() { return getOffsets(); }
+    ::mlir::Operation::operand_range sizes() { return getSizes(); }
+    ::mlir::Operation::operand_range strides() { return getStrides(); }
+    ::mlir::ArrayAttr static_offsets() { return getStaticOffsets(); }
+    ::mlir::ArrayAttr static_sizes() { return getStaticSizes(); }
+    ::mlir::ArrayAttr static_strides() { return getStaticStrides(); }
+
+    Type yieldedType() { return getDest().getType(); }
+
+    RankedTensorType getSourceType() {
+      return getSource().getType().cast<RankedTensorType>();
+    }
+
+    /// Return the expected rank of each of the `static_offsets`, `static_sizes`
+    /// and `static_strides` attributes.
+    std::array<unsigned, 3> getArrayAttrMaxRanks() {
+      unsigned rank = getSourceType().getRank();
+      return {rank, rank, rank};
+    }
+
+    /// Return the number of leading operands before `offsets`, `sizes` and
+    /// `strides` operands.
+    static unsigned getOffsetSizeAndStrideStartOperandIndex() { return 1; }
+  }];
+
+  let builders = [
+    // Build a ParallelInsertSliceOp with mixed static and dynamic entries.
+    OpBuilder<(ins "Value":$source, "Value":$dest,
+      "ArrayRef<OpFoldResult>":$offsets, "ArrayRef<OpFoldResult>":$sizes,
+      "ArrayRef<OpFoldResult>":$strides,
+      CArg<"ArrayRef<NamedAttribute>", "{}">:$attrs)>,
+
+    // Build a ParallelInsertSliceOp with dynamic entries.
+    OpBuilder<(ins "Value":$source, "Value":$dest,
+      "ValueRange":$offsets, "ValueRange":$sizes, "ValueRange":$strides,
+      CArg<"ArrayRef<NamedAttribute>", "{}">:$attrs)>
+  ];
+  
+  let hasCanonicalizer = 1;
+}
+
+//===----------------------------------------------------------------------===//
+// IfOp
+//===----------------------------------------------------------------------===//
 
 def IfOp : SCF_Op<"if",
       [DeclareOpInterfaceMethods<RegionBranchOpInterface,
@@ -403,6 +664,10 @@ def IfOp : SCF_Op<"if",
   let hasVerifier = 1;
 }
 
+//===----------------------------------------------------------------------===//
+// ParallelOp
+//===----------------------------------------------------------------------===//
+
 def ParallelOp : SCF_Op<"parallel",
     [AutomaticAllocationScope,
      AttrSizedOperandSegments,
@@ -487,6 +752,10 @@ def ParallelOp : SCF_Op<"parallel",
   let hasVerifier = 1;
 }
 
+//===----------------------------------------------------------------------===//
+// ReduceOp
+//===----------------------------------------------------------------------===//
+
 def ReduceOp : SCF_Op<"reduce", [HasParent<"ParallelOp">]> {
   let summary = "reduce operation for parallel for";
   let description = [{
@@ -534,8 +803,12 @@ def ReduceOp : SCF_Op<"reduce", [HasParent<"ParallelOp">]> {
   let arguments = (ins AnyType:$operand);
   let hasCustomAssemblyFormat = 1;
   let regions = (region SizedRegion<1>:$reductionOperator);
-  let hasVerifier = 1;
+  let hasRegionVerifier = 1;
 }
+
+//===----------------------------------------------------------------------===//
+// ReduceReturnOp
+//===----------------------------------------------------------------------===//
 
 def ReduceReturnOp :
     SCF_Op<"reduce.return", [HasParent<"ReduceOp">, NoSideEffect,
@@ -555,6 +828,10 @@ def ReduceReturnOp :
   let assemblyFormat = "$result attr-dict `:` type($result)";
   let hasVerifier = 1;
 }
+
+//===----------------------------------------------------------------------===//
+// WhileOp
+//===----------------------------------------------------------------------===//
 
 def WhileOp : SCF_Op<"while",
     [DeclareOpInterfaceMethods<RegionBranchOpInterface>,
@@ -585,21 +862,21 @@ def WhileOp : SCF_Op<"while",
 
     ```mlir
     %res = scf.while (%arg1 = %init1) : (f32) -> f32 {
-      /* "Before" region.
-       * In a "while" loop, this region computes the condition. */
+      // "Before" region.
+      // In a "while" loop, this region computes the condition.
       %condition = call @evaluate_condition(%arg1) : (f32) -> i1
 
-      /* Forward the argument (as result or "after" region argument). */
+      // Forward the argument (as result or "after" region argument).
       scf.condition(%condition) %arg1 : f32
 
     } do {
     ^bb0(%arg2: f32):
-      /* "After region.
-       * In a "while" loop, this region is the loop body. */
+      // "After" region.
+      // In a "while" loop, this region is the loop body.
       %next = call @payload(%arg2) : (f32) -> f32
 
-      /* Forward the new value to the "before" region.
-       * The operand types must match the types of the `scf.while` operands. */
+      // Forward the new value to the "before" region.
+      // The operand types must match the types of the `scf.while` operands.
       scf.yield %next : f32
     }
     ```
@@ -609,20 +886,20 @@ def WhileOp : SCF_Op<"while",
 
     ```mlir
     %res = scf.while (%arg1 = %init1) : (f32) -> f32 {
-      /* "Before" region.
-       * In a "do-while" loop, this region contains the loop body. */
+      // "Before" region.
+      // In a "do-while" loop, this region contains the loop body.
       %next = call @payload(%arg1) : (f32) -> f32
 
-      /* And also evaluates the condition. */
+      // And also evaluates the condition.
       %condition = call @evaluate_condition(%arg1) : (f32) -> i1
 
-      /* Loop through the "after" region. */
+      // Loop through the "after" region.
       scf.condition(%condition) %next : f32
 
     } do {
     ^bb0(%arg2: f32):
-      /* "After" region.
-       * Forwards the values back to "before" region unmodified. */
+      // "After" region.
+      // Forwards the values back to "before" region unmodified.
       scf.yield %arg2 : f32
     }
     ```
@@ -637,27 +914,27 @@ def WhileOp : SCF_Op<"while",
 
     ```mlir
     %res = scf.while (%arg1 = %init1) : (f32) -> i64 {
-      /* One can perform some computations, e.g., necessary to evaluate the
-       * condition, in the "before" region and forward their results to the
-       * "after" region. */
+      // One can perform some computations, e.g., necessary to evaluate the
+      // condition, in the "before" region and forward their results to the
+      // "after" region.
       %shared = call @shared_compute(%arg1) : (f32) -> i64
 
-      /* Evaluate the condition. */
+      // Evaluate the condition.
       %condition = call @evaluate_condition(%arg1, %shared) : (f32, i64) -> i1
 
-      /* Forward the result of the shared computation to the "after" region.
-       * The types must match the arguments of the "after" region as well as
-       * those of the `scf.while` results. */
+      // Forward the result of the shared computation to the "after" region.
+      // The types must match the arguments of the "after" region as well as
+      // those of the `scf.while` results.
       scf.condition(%condition) %shared : i64
 
     } do {
     ^bb0(%arg2: i64) {
-      /* Use the partial result to compute the rest of the payload in the
-       * "after" region. */
+      // Use the partial result to compute the rest of the payload in the
+      // "after" region.
       %res = call @payload(%arg2) : (i64) -> f32
 
-      /* Forward the new value to the "before" region.
-       * The operand types must match the types of the `scf.while` operands. */
+      // Forward the new value to the "before" region.
+      // The operand types must match the types of the `scf.while` operands.
       scf.yield %res : f32
     }
     ```
@@ -678,7 +955,7 @@ def WhileOp : SCF_Op<"while",
   let regions = (region SizedRegion<1>:$before, SizedRegion<1>:$after);
 
   let extraClassDeclaration = [{
-    OperandRange getSuccessorEntryOperands(unsigned index);
+    OperandRange getSuccessorEntryOperands(Optional<unsigned> index);
     ConditionOp getConditionOp();
     YieldOp getYieldOp();
     Block::BlockArgListType getBeforeArguments();
@@ -689,6 +966,10 @@ def WhileOp : SCF_Op<"while",
   let hasCustomAssemblyFormat = 1;
   let hasVerifier = 1;
 }
+
+//===----------------------------------------------------------------------===//
+// YieldOp
+//===----------------------------------------------------------------------===//
 
 def YieldOp : SCF_Op<"yield", [NoSideEffect, ReturnLike, Terminator,
                                ParentOneOf<["ExecuteRegionOp, ForOp",

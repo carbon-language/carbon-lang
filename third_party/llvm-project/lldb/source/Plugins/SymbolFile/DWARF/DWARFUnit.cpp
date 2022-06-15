@@ -25,7 +25,7 @@
 
 using namespace lldb;
 using namespace lldb_private;
-using namespace std;
+using namespace lldb_private::dwarf;
 
 extern int g_verbose;
 
@@ -448,7 +448,7 @@ ParseListTableHeader(const llvm::DWARFDataExtractor &data, uint64_t offset,
 
   uint64_t HeaderSize = llvm::DWARFListTableHeader::getHeaderSize(format);
   if (offset < HeaderSize)
-    return llvm::createStringError(errc::invalid_argument,
+    return llvm::createStringError(std::errc::invalid_argument,
                                    "did not detect a valid"
                                    " list table with base = 0x%" PRIx64 "\n",
                                    offset);
@@ -558,10 +558,10 @@ DWARFUnit::GetRnglistTable() {
 // This function is called only for DW_FORM_rnglistx.
 llvm::Expected<uint64_t> DWARFUnit::GetRnglistOffset(uint32_t Index) {
   if (!GetRnglistTable())
-    return llvm::createStringError(errc::invalid_argument,
+    return llvm::createStringError(std::errc::invalid_argument,
                                    "missing or invalid range list table");
   if (!m_ranges_base)
-    return llvm::createStringError(errc::invalid_argument,
+    return llvm::createStringError(std::errc::invalid_argument,
                                    "DW_FORM_rnglistx cannot be used without "
                                    "DW_AT_rnglists_base for CU at 0x%8.8x",
                                    GetOffset());
@@ -569,7 +569,7 @@ llvm::Expected<uint64_t> DWARFUnit::GetRnglistOffset(uint32_t Index) {
           GetRnglistData().GetAsLLVM(), Index))
     return *off + m_ranges_base;
   return llvm::createStringError(
-      errc::invalid_argument,
+      std::errc::invalid_argument,
       "invalid range list table index %u; OffsetEntryCount is %u, "
       "DW_AT_rnglists_base is %" PRIu64,
       Index, GetRnglistTable()->getOffsetEntryCount(), m_ranges_base);
@@ -772,7 +772,8 @@ removeHostnameFromPathname(llvm::StringRef path_from_dwarf) {
 
   // check whether we have a windows path, and so the first character is a
   // drive-letter not a hostname.
-  if (host.size() == 1 && llvm::isAlpha(host[0]) && path.startswith("\\"))
+  if (host.size() == 1 && llvm::isAlpha(host[0]) &&
+      (path.startswith("\\") || path.startswith("/")))
     return path_from_dwarf;
 
   return path;
@@ -864,14 +865,24 @@ DWARFUnitHeader::extract(const DWARFDataExtractor &data,
         section == DIERef::Section::DebugTypes ? DW_UT_type : DW_UT_compile;
   }
 
+  if (header.IsTypeUnit()) {
+    header.m_type_hash = data.GetU64(offset_ptr);
+    header.m_type_offset = data.GetDWARFOffset(offset_ptr);
+  }
+
   if (context.isDwo()) {
+    const llvm::DWARFUnitIndex *Index;
     if (header.IsTypeUnit()) {
-      header.m_index_entry =
-          context.GetAsLLVM().getTUIndex().getFromOffset(header.m_offset);
+      Index = &context.GetAsLLVM().getTUIndex();
+      if (*Index)
+        header.m_index_entry = Index->getFromHash(header.m_type_hash);
     } else {
-      header.m_index_entry =
-          context.GetAsLLVM().getCUIndex().getFromOffset(header.m_offset);
+      Index = &context.GetAsLLVM().getCUIndex();
+      if (*Index && header.m_version >= 5)
+        header.m_index_entry = Index->getFromHash(header.m_dwo_id);
     }
+    if (!header.m_index_entry)
+      header.m_index_entry = Index->getFromOffset(header.m_offset);
   }
 
   if (header.m_index_entry) {
@@ -893,10 +904,6 @@ DWARFUnitHeader::extract(const DWARFDataExtractor &data,
           "DWARF package index missing abbreviation column");
     }
     header.m_abbr_offset = abbr_entry->Offset;
-  }
-  if (header.IsTypeUnit()) {
-    header.m_type_hash = data.GetU64(offset_ptr);
-    header.m_type_offset = data.GetDWARFOffset(offset_ptr);
   }
 
   bool length_OK = data.ValidOffset(header.GetNextUnitOffset() - 1);
@@ -998,7 +1005,7 @@ DWARFUnit::FindRnglistFromOffset(dw_offset_t offset) {
   }
 
   if (!GetRnglistTable())
-    return llvm::createStringError(errc::invalid_argument,
+    return llvm::createStringError(std::errc::invalid_argument,
                                    "missing or invalid range list table");
 
   llvm::DWARFDataExtractor data = GetRnglistData().GetAsLLVM();

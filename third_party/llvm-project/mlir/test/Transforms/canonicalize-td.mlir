@@ -1,10 +1,10 @@
-// RUN: mlir-opt -allow-unregistered-dialect %s -pass-pipeline='builtin.func(canonicalize{top-down=true})' | FileCheck %s --check-prefix=TD
-// RUN: mlir-opt -allow-unregistered-dialect %s -pass-pipeline='builtin.func(canonicalize)' | FileCheck %s --check-prefix=BU
+// RUN: mlir-opt -allow-unregistered-dialect %s -pass-pipeline='func.func(canonicalize{top-down=true})' | FileCheck %s --check-prefix=TD
+// RUN: mlir-opt -allow-unregistered-dialect %s -pass-pipeline='func.func(canonicalize)' | FileCheck %s --check-prefix=BU
 
 
 // BU-LABEL: func @default_insertion_position
 // TD-LABEL: func @default_insertion_position
-func @default_insertion_position(%cond: i1) {
+func.func @default_insertion_position(%cond: i1) {
   // Constant should be folded into the entry block.
 
   // BU: arith.constant 2
@@ -24,7 +24,7 @@ func @default_insertion_position(%cond: i1) {
 // wants to be the insertion point for the constant.
 // BU-LABEL: func @custom_insertion_position
 // TD-LABEL: func @custom_insertion_position
-func @custom_insertion_position() {
+func.func @custom_insertion_position() {
   // BU: test.one_region_op
   // BU-NEXT: arith.constant 2
 

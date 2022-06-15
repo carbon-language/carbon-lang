@@ -186,9 +186,7 @@ private:
 class BssSection final : public SyntheticSection {
 public:
   BssSection(StringRef name, uint64_t size, uint32_t alignment);
-  void writeTo(uint8_t *) override {
-    llvm_unreachable("unexpected writeTo() call for SHT_NOBITS section");
-  }
+  void writeTo(uint8_t *) override {}
   bool isNeeded() const override { return size != 0; }
   size_t getSize() const override { return size; }
 
@@ -761,6 +759,7 @@ class IBTPltSection : public SyntheticSection {
 public:
   IBTPltSection();
   void writeTo(uint8_t *Buf) override;
+  bool isNeeded() const override;
   size_t getSize() const override;
 };
 
@@ -956,7 +955,7 @@ private:
   // The reason why we don't want to use the least significant bits is
   // because DenseMap also uses lower bits to determine a bucket ID.
   // If we use lower bits, it significantly increases the probability of
-  // hash collisons.
+  // hash collisions.
   size_t getShardId(uint32_t hash) {
     assert((hash >> 31) == 0);
     return hash >> (31 - llvm::countTrailingZeros(numShards));
@@ -1081,7 +1080,10 @@ public:
   void finalizeContents() override;
   InputSection *getLinkOrderDep() const;
 
-  static bool classof(const SectionBase *d);
+  static bool classof(const SectionBase *sec) {
+    return sec->kind() == InputSectionBase::Synthetic &&
+           sec->type == llvm::ELF::SHT_ARM_EXIDX;
+  }
 
   // Links to the ARMExidxSections so we can transfer the relocations once the
   // layout is known.
@@ -1185,6 +1187,18 @@ public:
   void writeTo(uint8_t *buf) override;
 };
 
+// See the following link for the Android-specific loader code that operates on
+// this section:
+// https://cs.android.com/android/platform/superproject/+/master:bionic/libc/bionic/libc_init_static.cpp;drc=9425b16978f9c5aa8f2c50c873db470819480d1d;l=192
+class MemtagAndroidNote : public SyntheticSection {
+public:
+  MemtagAndroidNote()
+      : SyntheticSection(llvm::ELF::SHF_ALLOC, llvm::ELF::SHT_NOTE,
+                         /*alignment=*/4, ".note.android.memtag") {}
+  void writeTo(uint8_t *buf) override;
+  size_t getSize() const override;
+};
+
 InputSection *createInterpSection();
 MergeInputSection *createCommentSection();
 template <class ELFT> void splitSections();
@@ -1215,6 +1229,7 @@ struct Partition {
   std::unique_ptr<EhFrameSection> ehFrame;
   std::unique_ptr<GnuHashTableSection> gnuHashTab;
   std::unique_ptr<HashTableSection> hashTab;
+  std::unique_ptr<MemtagAndroidNote> memtagAndroidNote;
   std::unique_ptr<RelocationBaseSection> relaDyn;
   std::unique_ptr<RelrBaseSection> relrDyn;
   std::unique_ptr<VersionDefinitionSection> verDef;

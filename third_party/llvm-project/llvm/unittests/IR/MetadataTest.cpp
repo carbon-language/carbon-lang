@@ -2283,6 +2283,8 @@ TEST_F(DISubprogramTest, get) {
   DISubprogram *Declaration = getSubprogram();
   MDTuple *RetainedNodes = getTuple();
   MDTuple *ThrownTypes = getTuple();
+  MDTuple *Annotations = getTuple();
+  StringRef TargetFuncName = "target";
   DICompileUnit *Unit = getUnit();
   DISubprogram::DISPFlags SPFlags =
       static_cast<DISubprogram::DISPFlags>(Virtuality);
@@ -2293,7 +2295,8 @@ TEST_F(DISubprogramTest, get) {
   auto *N = DISubprogram::get(
       Context, Scope, Name, LinkageName, File, Line, Type, ScopeLine,
       ContainingType, VirtualIndex, ThisAdjustment, Flags, SPFlags, Unit,
-      TemplateParams, Declaration, RetainedNodes, ThrownTypes);
+      TemplateParams, Declaration, RetainedNodes, ThrownTypes, Annotations,
+      TargetFuncName);
 
   EXPECT_EQ(dwarf::DW_TAG_subprogram, N->getTag());
   EXPECT_EQ(Scope, N->getScope());
@@ -2316,101 +2319,127 @@ TEST_F(DISubprogramTest, get) {
   EXPECT_EQ(Declaration, N->getDeclaration());
   EXPECT_EQ(RetainedNodes, N->getRetainedNodes().get());
   EXPECT_EQ(ThrownTypes, N->getThrownTypes().get());
+  EXPECT_EQ(Annotations, N->getAnnotations().get());
+  EXPECT_EQ(TargetFuncName, N->getTargetFuncName());
   EXPECT_EQ(N, DISubprogram::get(Context, Scope, Name, LinkageName, File, Line,
                                  Type, ScopeLine, ContainingType, VirtualIndex,
                                  ThisAdjustment, Flags, SPFlags, Unit,
                                  TemplateParams, Declaration, RetainedNodes,
-                                 ThrownTypes));
+                                 ThrownTypes, Annotations, TargetFuncName));
 
   EXPECT_NE(N, DISubprogram::get(Context, getCompositeType(), Name, LinkageName,
                                  File, Line, Type, ScopeLine, ContainingType,
                                  VirtualIndex, ThisAdjustment, Flags, SPFlags,
                                  Unit, TemplateParams, Declaration,
-                                 RetainedNodes, ThrownTypes));
+                                 RetainedNodes, ThrownTypes, Annotations,
+                                 TargetFuncName));
   EXPECT_NE(N, DISubprogram::get(Context, Scope, "other", LinkageName, File,
                                  Line, Type, ScopeLine, ContainingType,
                                  VirtualIndex, ThisAdjustment, Flags, SPFlags,
                                  Unit, TemplateParams, Declaration,
-                                 RetainedNodes, ThrownTypes));
+                                 RetainedNodes, ThrownTypes, Annotations,
+                                 TargetFuncName));
   EXPECT_NE(N, DISubprogram::get(Context, Scope, Name, "other", File, Line,
                                  Type, ScopeLine, ContainingType, VirtualIndex,
                                  ThisAdjustment, Flags, SPFlags, Unit,
                                  TemplateParams, Declaration, RetainedNodes,
-                                 ThrownTypes));
+                                 ThrownTypes, Annotations, TargetFuncName));
   EXPECT_NE(N, DISubprogram::get(Context, Scope, Name, LinkageName, getFile(),
                                  Line, Type, ScopeLine, ContainingType,
                                  VirtualIndex, ThisAdjustment, Flags, SPFlags,
                                  Unit, TemplateParams, Declaration,
-                                 RetainedNodes, ThrownTypes));
+                                 RetainedNodes, ThrownTypes, Annotations,
+                                 TargetFuncName));
   EXPECT_NE(N, DISubprogram::get(Context, Scope, Name, LinkageName, File,
                                  Line + 1, Type, ScopeLine, ContainingType,
                                  VirtualIndex, ThisAdjustment, Flags, SPFlags,
                                  Unit, TemplateParams, Declaration,
-                                 RetainedNodes, ThrownTypes));
+                                 RetainedNodes, ThrownTypes, Annotations,
+                                 TargetFuncName));
   EXPECT_NE(N, DISubprogram::get(Context, Scope, Name, LinkageName, File, Line,
                                  getSubroutineType(), ScopeLine, ContainingType,
                                  VirtualIndex, ThisAdjustment, Flags, SPFlags,
                                  Unit, TemplateParams, Declaration,
-                                 RetainedNodes, ThrownTypes));
+                                 RetainedNodes, ThrownTypes, Annotations,
+                                 TargetFuncName));
   EXPECT_NE(N, DISubprogram::get(
                    Context, Scope, Name, LinkageName, File, Line, Type,
                    ScopeLine, ContainingType, VirtualIndex, ThisAdjustment,
                    Flags, SPFlags ^ DISubprogram::SPFlagLocalToUnit, Unit,
-                   TemplateParams, Declaration, RetainedNodes, ThrownTypes));
+                   TemplateParams, Declaration, RetainedNodes, ThrownTypes,
+                   Annotations, TargetFuncName));
   EXPECT_NE(N, DISubprogram::get(
                    Context, Scope, Name, LinkageName, File, Line, Type,
                    ScopeLine, ContainingType, VirtualIndex, ThisAdjustment,
                    Flags, SPFlags ^ DISubprogram::SPFlagDefinition, Unit,
-                   TemplateParams, Declaration, RetainedNodes, ThrownTypes));
+                   TemplateParams, Declaration, RetainedNodes, ThrownTypes,
+                   Annotations, TargetFuncName));
   EXPECT_NE(N, DISubprogram::get(Context, Scope, Name, LinkageName, File, Line,
                                  Type, ScopeLine + 1, ContainingType,
                                  VirtualIndex, ThisAdjustment, Flags, SPFlags,
                                  Unit, TemplateParams, Declaration,
-                                 RetainedNodes, ThrownTypes));
+                                 RetainedNodes, ThrownTypes, Annotations,
+                                 TargetFuncName));
   EXPECT_NE(N, DISubprogram::get(Context, Scope, Name, LinkageName, File, Line,
                                  Type, ScopeLine, getCompositeType(),
                                  VirtualIndex, ThisAdjustment, Flags, SPFlags,
                                  Unit, TemplateParams, Declaration,
-                                 RetainedNodes, ThrownTypes));
+                                 RetainedNodes, ThrownTypes, Annotations,
+                                 TargetFuncName));
   EXPECT_NE(N, DISubprogram::get(
                    Context, Scope, Name, LinkageName, File, Line, Type,
                    ScopeLine, ContainingType, VirtualIndex, ThisAdjustment,
                    Flags, SPFlags ^ DISubprogram::SPFlagVirtual, Unit,
-                   TemplateParams, Declaration, RetainedNodes, ThrownTypes));
+                   TemplateParams, Declaration, RetainedNodes, ThrownTypes,
+                   Annotations, TargetFuncName));
   EXPECT_NE(N, DISubprogram::get(Context, Scope, Name, LinkageName, File, Line,
                                  Type, ScopeLine, ContainingType,
                                  VirtualIndex + 1, ThisAdjustment, Flags,
                                  SPFlags, Unit, TemplateParams, Declaration,
-                                 RetainedNodes, ThrownTypes));
+                                 RetainedNodes, ThrownTypes, Annotations,
+                                 TargetFuncName));
   EXPECT_NE(N, DISubprogram::get(
                    Context, Scope, Name, LinkageName, File, Line, Type,
                    ScopeLine, ContainingType, VirtualIndex, ThisAdjustment,
                    Flags, SPFlags ^ DISubprogram::SPFlagOptimized, Unit,
-                   TemplateParams, Declaration, RetainedNodes, ThrownTypes));
+                   TemplateParams, Declaration, RetainedNodes, ThrownTypes,
+                   Annotations, TargetFuncName));
   EXPECT_NE(N, DISubprogram::get(Context, Scope, Name, LinkageName, File, Line,
                                  Type, ScopeLine, ContainingType, VirtualIndex,
                                  ThisAdjustment, Flags, SPFlags, nullptr,
                                  TemplateParams, Declaration, RetainedNodes,
-                                 ThrownTypes));
+                                 ThrownTypes, Annotations, TargetFuncName));
   EXPECT_NE(N,
             DISubprogram::get(Context, Scope, Name, LinkageName, File, Line,
                               Type, ScopeLine, ContainingType, VirtualIndex,
                               ThisAdjustment, Flags, SPFlags, Unit, getTuple(),
-                              Declaration, RetainedNodes, ThrownTypes));
+                              Declaration, RetainedNodes, ThrownTypes,
+                              Annotations, TargetFuncName));
   EXPECT_NE(N, DISubprogram::get(Context, Scope, Name, LinkageName, File, Line,
                                  Type, ScopeLine, ContainingType, VirtualIndex,
                                  ThisAdjustment, Flags, SPFlags, Unit,
                                  TemplateParams, getSubprogram(), RetainedNodes,
-                                 ThrownTypes));
+                                 ThrownTypes, Annotations, TargetFuncName));
   EXPECT_NE(N, DISubprogram::get(Context, Scope, Name, LinkageName, File, Line,
                                  Type, ScopeLine, ContainingType, VirtualIndex,
                                  ThisAdjustment, Flags, SPFlags, Unit,
-                                 TemplateParams, Declaration, getTuple()));
+                                 TemplateParams, Declaration, getTuple(),
+                                 ThrownTypes, Annotations, TargetFuncName));
   EXPECT_NE(N, DISubprogram::get(Context, Scope, Name, LinkageName, File, Line,
                                  Type, ScopeLine, ContainingType, VirtualIndex,
                                  ThisAdjustment, Flags, SPFlags, Unit,
                                  TemplateParams, Declaration, RetainedNodes,
-                                 getTuple()));
+                                 getTuple(), Annotations, TargetFuncName));
+  EXPECT_NE(N, DISubprogram::get(Context, Scope, Name, LinkageName, File, Line,
+                                 Type, ScopeLine, ContainingType, VirtualIndex,
+                                 ThisAdjustment, Flags, SPFlags, Unit,
+                                 TemplateParams, Declaration, RetainedNodes,
+                                 ThrownTypes, getTuple(), TargetFuncName));
+  EXPECT_NE(N, DISubprogram::get(Context, Scope, Name, LinkageName, File, Line,
+                                 Type, ScopeLine, ContainingType, VirtualIndex,
+                                 ThisAdjustment, Flags, SPFlags, Unit,
+                                 TemplateParams, Declaration, RetainedNodes,
+                                 ThrownTypes, Annotations, "other"));
 
   TempDISubprogram Temp = N->clone();
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
@@ -3571,6 +3600,35 @@ TEST_F(DebugVariableTest, DenseMap) {
   EXPECT_EQ(DebugVariableMap.find(DebugVariableInlineA)->second, 3u);
   EXPECT_EQ(DebugVariableMap.find(DebugVariableB)->second, 6u);
   EXPECT_EQ(DebugVariableMap.find(DebugVariableFragB)->second, 12u);
+}
+
+typedef MetadataTest MDTupleAllocationTest;
+TEST_F(MDTupleAllocationTest, Tracking) {
+  // Make sure that the move constructor and move assignment op
+  // for MDOperand correctly adjust tracking information.
+  auto *Value1 = getConstantAsMetadata();
+  MDTuple *A = MDTuple::getDistinct(Context, {Value1, Value1});
+  EXPECT_EQ(A->getOperand(0), Value1);
+  EXPECT_EQ(A->getOperand(1), Value1);
+
+  MDNode::op_range Ops = A->operands();
+
+  MDOperand NewOps1;
+  // Move assignment operator.
+  NewOps1 = std::move(*const_cast<MDOperand *>(Ops.begin()));
+  // Move constructor.
+  MDOperand NewOps2(std::move(*const_cast<MDOperand *>(Ops.begin() + 1)));
+
+  EXPECT_EQ(NewOps1.get(), static_cast<Metadata *>(Value1));
+  EXPECT_EQ(NewOps2.get(), static_cast<Metadata *>(Value1));
+
+  auto *Value2 = getConstantAsMetadata();
+  Value *V1 = Value1->getValue();
+  Value *V2 = Value2->getValue();
+  ValueAsMetadata::handleRAUW(V1, V2);
+
+  EXPECT_EQ(NewOps1.get(), static_cast<Metadata *>(Value2));
+  EXPECT_EQ(NewOps2.get(), static_cast<Metadata *>(Value2));
 }
 
 } // end namespace

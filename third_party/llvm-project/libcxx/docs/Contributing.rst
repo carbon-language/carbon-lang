@@ -37,7 +37,7 @@ sure you don't forget anything:
 - Did you mark all functions and type declarations with the :ref:`proper visibility macro <visibility-macros>`?
 - If you added a header:
 
-  - Did you add it to ``include/module.modulemap``?
+  - Did you add it to ``include/module.modulemap.in``?
   - Did you add it to ``include/CMakeLists.txt``?
   - If it's a public header, did you add a test under ``test/libcxx`` that the new header defines ``_LIBCPP_VERSION``? See ``test/libcxx/algorithms/version.pass.cpp`` for an example. NOTE: This should be automated.
   - If it's a public header, did you update ``utils/generate_header_inclusion_tests.py``?
@@ -67,9 +67,9 @@ Post-release check list
 After branching for an LLVM release:
 
 1. Update ``_LIBCPP_VERSION`` in ``libcxx/include/__config``
-2. Update the ``libcxx/include/__libcpp_version`` file
-3. Update the version number in ``libcxx/docs/conf.py``
-4. Update ``_LIBCPPABI_VERSION`` in ``libcxxabi/include/cxxabi.h``
+2. Update the version number in ``libcxx/docs/conf.py``
+3. Update ``_LIBCPPABI_VERSION`` in ``libcxxabi/include/cxxabi.h``
+4. Update ``_LIBUNWIND_VERSION`` in ``libunwind/include/__libunwind_config.h``
 
 Exporting new symbols from the library
 ======================================

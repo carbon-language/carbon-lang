@@ -15,26 +15,18 @@
 #define LLVM_TRANSFORMS_UTILS_LOCAL_H
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/Analysis/Utils/Local.h"
-#include "llvm/IR/Constant.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Dominators.h"
-#include "llvm/IR/Operator.h"
-#include "llvm/IR/Type.h"
-#include "llvm/IR/User.h"
-#include "llvm/IR/Value.h"
-#include "llvm/IR/ValueHandle.h"
-#include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Transforms/Utils/SimplifyCFGOptions.h"
 #include <cstdint>
-#include <limits>
 
 namespace llvm {
 
+class DataLayout;
+class Value;
+class WeakTrackingVH;
+class WeakVH;
+template <typename T> class SmallVectorImpl;
 class AAResults;
 class AllocaInst;
 class AssumptionCache;
@@ -343,7 +335,7 @@ bool replaceAllDbgUsesWith(Instruction &From, Value &To, Instruction &DomPoint,
 
 /// Remove all instructions from a basic block other than its terminator
 /// and any present EH pad instructions. Returns a pair where the first element
-/// is the number of instructions (excluding debug info instrinsics) that have
+/// is the number of instructions (excluding debug info intrinsics) that have
 /// been removed, and the second element is the number of debug info intrinsics
 /// that have been removed.
 std::pair<unsigned, unsigned>

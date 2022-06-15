@@ -63,11 +63,14 @@ let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
 
   // Generate a random number
   def int_ppc_darn : GCCBuiltin<"__builtin_darn">,
-                     Intrinsic<[llvm_i64_ty], [], [IntrNoMem]>;
+                     Intrinsic<[llvm_i64_ty], [],
+                               [IntrNoMerge, IntrHasSideEffects]>;
   def int_ppc_darnraw : GCCBuiltin<"__builtin_darn_raw">,
-                     Intrinsic<[llvm_i64_ty], [], [IntrNoMem]>;
+                     Intrinsic<[llvm_i64_ty], [],
+                               [IntrNoMerge, IntrHasSideEffects]>;
   def int_ppc_darn32 : GCCBuiltin<"__builtin_darn_32">,
-                     Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
+                     Intrinsic<[llvm_i32_ty], [],
+                               [IntrNoMerge, IntrHasSideEffects]>;
 
   // Bit permute doubleword
   def int_ppc_bpermd : GCCBuiltin<"__builtin_bpermd">,
@@ -160,6 +163,37 @@ let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
   def int_ppc_fctuwz
       : GCCBuiltin<"__builtin_ppc_fctuwz">,
         Intrinsic <[llvm_double_ty], [llvm_double_ty], [IntrNoMem]>;
+
+  // XL compatible select functions
+  // TODO: Add llvm_f128_ty support.
+  def int_ppc_maxfe
+      : Intrinsic<
+            [llvm_ppcf128_ty],
+            [llvm_ppcf128_ty, llvm_ppcf128_ty, llvm_ppcf128_ty, llvm_vararg_ty],
+            [IntrNoMem]>;
+  def int_ppc_maxfl
+      : Intrinsic<
+            [llvm_double_ty],
+            [llvm_double_ty, llvm_double_ty, llvm_double_ty, llvm_vararg_ty],
+            [IntrNoMem]>;
+  def int_ppc_maxfs
+      : Intrinsic<[llvm_float_ty],
+                  [llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_vararg_ty],
+                  [IntrNoMem]>;
+  def int_ppc_minfe
+      : Intrinsic<
+            [llvm_ppcf128_ty],
+            [llvm_ppcf128_ty, llvm_ppcf128_ty, llvm_ppcf128_ty, llvm_vararg_ty],
+            [IntrNoMem]>;
+  def int_ppc_minfl
+      : Intrinsic<
+            [llvm_double_ty],
+            [llvm_double_ty, llvm_double_ty, llvm_double_ty, llvm_vararg_ty],
+            [IntrNoMem]>;
+  def int_ppc_minfs
+      : Intrinsic<[llvm_float_ty],
+                  [llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_vararg_ty],
+                  [IntrNoMem]>;
 }
 
 let TargetPrefix = "ppc" in {  // All PPC intrinsics start with "llvm.ppc.".
@@ -1722,15 +1756,9 @@ let TargetPrefix = "ppc" in {
                    [llvm_float_ty, llvm_float_ty, llvm_float_ty],
                    [IntrNoMem]>;
   def int_ppc_fnmsub
-      : GCCBuiltin<"__builtin_ppc_fnmsub">,
-        Intrinsic <[llvm_double_ty],
-                   [llvm_double_ty, llvm_double_ty, llvm_double_ty],
-                   [IntrNoMem]>;
-  def int_ppc_fnmsubs
-      : GCCBuiltin<"__builtin_ppc_fnmsubs">,
-        Intrinsic <[llvm_float_ty],
-                   [llvm_float_ty, llvm_float_ty, llvm_float_ty],
-                   [IntrNoMem]>;
+      : Intrinsic<[llvm_anyfloat_ty],
+                  [LLVMMatchType<0>, LLVMMatchType<0>, LLVMMatchType<0>],
+                  [IntrNoMem]>;
   def int_ppc_fre
       : GCCBuiltin<"__builtin_ppc_fre">,
         Intrinsic <[llvm_double_ty], [llvm_double_ty], [IntrNoMem]>;
@@ -1773,6 +1801,12 @@ let TargetPrefix = "ppc" in {
   def int_ppc_test_data_class_f : Intrinsic<[llvm_i32_ty],
                                             [llvm_float_ty, llvm_i32_ty],
                                             [IntrNoMem, ImmArg<ArgIndex<1>>]>;
+  def int_ppc_fnabs
+      : GCCBuiltin<"__builtin_ppc_fnabs">,
+        Intrinsic <[llvm_double_ty], [llvm_double_ty], [IntrNoMem]>;
+  def int_ppc_fnabss
+      : GCCBuiltin<"__builtin_ppc_fnabss">,
+        Intrinsic <[llvm_float_ty], [llvm_float_ty], [IntrNoMem]>;
 
   def int_ppc_convert_f128_to_ppcf128
       : Intrinsic<[llvm_ppcf128_ty], [llvm_f128_ty], [IntrNoMem]>;

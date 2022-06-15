@@ -13,7 +13,6 @@
 #include "llvm/ADT/None.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/SMLoc.h"
-#include "llvm/Support/ScopedPrinter.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Testing/Support/SupportHelpers.h"
 #include "gmock/gmock.h"
@@ -248,6 +247,20 @@ InlayHints:
   EXPECT_EQ(Results[0].InlayHints.DeducedTypes, llvm::None);
 }
 
+TEST(ParseYAML, IncludesIgnoreHeader) {
+  CapturedDiags Diags;
+  Annotations YAML(R"yaml(
+Diagnostics:
+  Includes:
+    IgnoreHeader: [foo, bar]
+  )yaml");
+  auto Results =
+      Fragment::parseYAML(YAML.code(), "config.yaml", Diags.callback());
+  ASSERT_THAT(Diags.Diagnostics, IsEmpty());
+  ASSERT_EQ(Results.size(), 1u);
+  EXPECT_THAT(Results[0].Diagnostics.Includes.IgnoreHeader,
+              ElementsAre(val("foo"), val("bar")));
+}
 } // namespace
 } // namespace config
 } // namespace clangd

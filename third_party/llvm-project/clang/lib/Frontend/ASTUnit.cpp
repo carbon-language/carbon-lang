@@ -759,7 +759,8 @@ std::unique_ptr<ASTUnit> ASTUnit::LoadFromASTFile(
     WhatToLoad ToLoad, IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
     const FileSystemOptions &FileSystemOpts, bool UseDebugInfo,
     bool OnlyLocalDecls, CaptureDiagsKind CaptureDiagnostics,
-    bool AllowASTWithCompilerErrors, bool UserFilesAreVolatile) {
+    bool AllowASTWithCompilerErrors, bool UserFilesAreVolatile,
+    IntrusiveRefCntPtr<llvm::vfs::FileSystem> VFS) {
   std::unique_ptr<ASTUnit> AST(new ASTUnit(true));
 
   // Recover resources if we crash before exiting this method.
@@ -775,8 +776,6 @@ std::unique_ptr<ASTUnit> ASTUnit::LoadFromASTFile(
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->CaptureDiagnostics = CaptureDiagnostics;
   AST->Diagnostics = Diags;
-  IntrusiveRefCntPtr<llvm::vfs::FileSystem> VFS =
-      llvm::vfs::getRealFileSystem();
   AST->FileMgr = new FileManager(FileSystemOpts, VFS);
   AST->UserFilesAreVolatile = UserFilesAreVolatile;
   AST->SourceMgr = new SourceManager(AST->getDiagnostics(),
@@ -1729,8 +1728,12 @@ ASTUnit *ASTUnit::LoadFromCommandLine(
     CaptureDroppedDiagnostics Capture(CaptureDiagnostics, *Diags,
                                       &StoredDiagnostics, nullptr);
 
-    CI = createInvocationFromCommandLine(
-        llvm::makeArrayRef(ArgBegin, ArgEnd), Diags, VFS);
+    CreateInvocationOptions CIOpts;
+    CIOpts.VFS = VFS;
+    CIOpts.Diags = Diags;
+    CIOpts.ProbePrecompiled = true; // FIXME: historical default. Needed?
+    CI = createInvocation(llvm::makeArrayRef(ArgBegin, ArgEnd),
+                          std::move(CIOpts));
     if (!CI)
       return nullptr;
   }

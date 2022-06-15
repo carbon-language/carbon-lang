@@ -16,6 +16,7 @@
 
 include "mlir/Dialect/Linalg/IR/LinalgBase.td"
 include "mlir/Dialect/Linalg/IR/LinalgInterfaces.td"
+include "mlir/Interfaces/ControlFlowInterfaces.td"
 include "mlir/Interfaces/InferTypeOpInterface.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 
@@ -28,6 +29,7 @@ class LinalgStructuredBase_Op<string mnemonic, list<Trait> props>
        SingleBlockImplicitTerminator<"YieldOp">,
        DeclareOpInterfaceMethods<MemoryEffectsOpInterface>,
        LinalgStructuredInterface,
+       RegionBranchOpInterface,
        ReifyRankedShapedTypeOpInterface], props)> {
   code structuredOpsBaseDecls = [{
     // Return whether the op accesses the iteration indices.
@@ -37,75 +39,17 @@ class LinalgStructuredBase_Op<string mnemonic, list<Trait> props>
 
     LogicalResult reifyResultShapes(OpBuilder &b,
         ReifiedRankedShapedTypeDims &reifiedReturnShapes) {
-      return cast<LinalgOp>(getOperation()).reifyResultShapes(b,
+      return llvm::cast<LinalgOp>(getOperation()).reifyResultShapes(b,
           reifiedReturnShapes);
     }
-  }];
-}
 
-class LinalgStructured_Op<string mnemonic, list<Trait> props>
-  : LinalgStructuredBase_Op<mnemonic, !listconcat(props, [])> {
-  code structuredOpsDecls = structuredOpsBaseDecls # [{
-    std::string getLibraryCallName() {
-      return generateLibraryCallName(getOperation());
+    void getSuccessorRegions(
+        Optional<unsigned> index, ArrayRef<Attribute> operands,
+        SmallVectorImpl<RegionSuccessor> &regions) {
+      // Op has a region, but conceptually the control flow does not enter the
+      // region.
     }
   }];
-  let assemblyFormat = "`(` operands `)` attr-dict `:` type(operands)";
-}
-
-//===----------------------------------------------------------------------===//
-// Named Linalg ops, implemented as special configurations of generic ops.
-//===----------------------------------------------------------------------===//
-
-def FillOp : LinalgStructured_Op<"fill", []> {
-  let arguments = (ins
-    AnyTypeOf<[AnyComplex, AnyFloat, AnySignlessInteger, AnyVector]>:$value,
-    AnyShaped:$output);
-  let results = (outs Optional<AnyRankedTensor>:$result);
-  let regions = (region AnyRegion:$region);
-  let extraClassDeclaration = structuredOpsDecls # [{
-    ValueRange inputs() { return getOperands().take_front(); }
-    ValueRange outputs() { return getOperands().take_back(); }
-
-    // Rank-polymorphic.
-    //   filling_value -> O(ivs) with parallel iterators.
-    ArrayAttr iterator_types() {
-      int64_t nPar = getRank(getOutputOperand(0));
-      return Builder(getContext()).getStrArrayAttr(
-        SmallVector<StringRef, 8>(nPar, getParallelIteratorTypeName()));
-    }
-
-    ArrayAttr indexing_maps() {
-      MLIRContext *context = getContext();
-      // filling_value -> O(ivs)
-      return Builder(getContext()).getAffineMapArrayAttr({
-          AffineMap::get(getNumParallelLoops(), 0, {}, getContext()),
-          extractOrIdentityMap(llvm::None, getNumParallelLoops(), context)});
-    }
-
-    static void regionBuilder(ImplicitLocOpBuilder &b, Block &block,
-                              ArrayRef<NamedAttribute> attrs);
-    static std::function<void(ImplicitLocOpBuilder&,
-                              Block&, ArrayRef<NamedAttribute>)>
-    getRegionBuilder() {
-      return &regionBuilder;
-    }
-    static unsigned getNumRegionArgs() { return 2; }
-  }];
-
-  let assemblyFormat = [{
-    `(` $value `,` $output `)` attr-dict `:`
-        type($value) `,` type($output) (`->` type($result)^)?
-      custom<FillOpRegion>($region, ref(type($value)), ref(type($output)))
-  }];
-
-  let builders = [
-    OpBuilder<(ins "Value":$value, "Value":$output)>
-  ];
-
-  let hasFolder = 1;
-  let hasCanonicalizer = 1;
-  let hasVerifier = 1;
 }
 
 //===----------------------------------------------------------------------===//
@@ -221,6 +165,12 @@ def GenericOp : LinalgStructuredBase_Op<"generic", [AttrSizedOperandSegments]> {
   let regions = (region AnyRegion:$region);
 
   let builders = [
+    OpBuilder<(ins "TypeRange":$resultTensorTypes, "ValueRange":$inputs,
+      "ValueRange":$outputs, "ArrayAttr":$indexingMaps,
+      "ArrayAttr":$iteratorTypes, "StringAttr":$doc,
+      "StringAttr":$libraryCall,
+      "function_ref<void(OpBuilder &, Location, ValueRange)>",
+      CArg<"ArrayRef<NamedAttribute>", "{}">:$attributes)>,
     OpBuilder<(ins "TypeRange":$resultTensorTypes, "ValueRange":$inputs,
       "ValueRange":$outputs, "ArrayRef<AffineMap>":$indexingMaps,
       "ArrayRef<StringRef>":$iteratorTypes, "StringRef":$doc,

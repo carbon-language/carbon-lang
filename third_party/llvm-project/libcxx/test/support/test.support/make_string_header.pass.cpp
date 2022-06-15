@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 
 // UNSUPPORTED: c++03
-// UNSUPPORTED: libcpp-has-no-localization
+// UNSUPPORTED: no-localization
 
 // "support/make_string.h"
 
@@ -37,7 +37,6 @@ int main(int, char**) {
     == u8" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMN"
              "OPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~");
 #endif
-#ifndef TEST_HAS_NO_UNICODE_CHARS
   assert(MAKE_STRING(char16_t,
          " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMN"
              "OPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~")
@@ -49,7 +48,6 @@ int main(int, char**) {
              "OPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~")
     ==  U" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMN"
              "OPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~");
-#endif
 
   // clang-format on
   return 0;

@@ -540,6 +540,7 @@ private:
     DK_PSEUDO_PROBE,
     DK_LTO_DISCARD,
     DK_LTO_SET_CONDITIONAL,
+    DK_CFI_MTE_TAGGED_FRAME,
     DK_END
   };
 
@@ -792,11 +793,18 @@ AsmParser::AsmParser(SourceMgr &SM, MCContext &Ctx, MCStreamer &Out,
   case MCContext::IsGOFF:
     PlatformParser.reset(createGOFFAsmParser());
     break;
+  case MCContext::IsSPIRV:
+    report_fatal_error(
+        "Need to implement createSPIRVAsmParser for SPIRV format.");
+    break;
   case MCContext::IsWasm:
     PlatformParser.reset(createWasmAsmParser());
     break;
   case MCContext::IsXCOFF:
     PlatformParser.reset(createXCOFFAsmParser());
+    break;
+  case MCContext::IsDXContainer:
+    llvm_unreachable("DXContainer is not supported yet");
     break;
   }
 
@@ -1066,7 +1074,7 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
     if (auto *TS = Out.getTargetStreamer())
       TS->emitConstantPools();
 
-    Out.Finish(Lexer.getLoc());
+    Out.finish(Lexer.getLoc());
   }
 
   return HadError || getContext().hadError();
@@ -1779,7 +1787,7 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info,
     // if this is a line comment we can drop it safely
     if (getTok().getString().empty() || getTok().getString().front() == '\r' ||
         getTok().getString().front() == '\n')
-      Out.AddBlankLine();
+      Out.addBlankLine();
     Lex();
     return false;
   }
@@ -1936,7 +1944,7 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info,
     }
 
     // Consume any end of statement token, if present, to avoid spurious
-    // AddBlankLine calls().
+    // addBlankLine calls().
     if (getTok().is(AsmToken::EndOfStatement)) {
       Lex();
     }
@@ -3444,10 +3452,14 @@ bool AsmParser::parseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
     // up to one.
     if (Alignment == 0)
       Alignment = 1;
-    if (!isPowerOf2_64(Alignment))
+    else if (!isPowerOf2_64(Alignment)) {
       ReturnVal |= Error(AlignmentLoc, "alignment must be a power of 2");
-    if (!isUInt<32>(Alignment))
+      Alignment = PowerOf2Floor(Alignment);
+    }
+    if (!isUInt<32>(Alignment)) {
       ReturnVal |= Error(AlignmentLoc, "alignment must be smaller than 2**32");
+      Alignment = 1u << 31;
+    }
   }
 
   // Diagnose non-sensical max bytes to align.
@@ -3470,9 +3482,9 @@ bool AsmParser::parseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
   // directive.
   const MCSection *Section = getStreamer().getCurrentSectionOnly();
   assert(Section && "must have section to emit alignment");
-  bool UseCodeAlign = Section->UseCodeAlign();
+  bool useCodeAlign = Section->useCodeAlign();
   if ((!HasFillExpr || Lexer.getMAI().getTextAlignFillValue() == FillExpr) &&
-      ValueSize == 1 && UseCodeAlign) {
+      ValueSize == 1 && useCodeAlign) {
     getStreamer().emitCodeAlignment(Alignment, &getTargetParser().getSTI(),
                                     MaxBytesToFill);
   } else {
@@ -3570,8 +3582,8 @@ bool AsmParser::parseDirectiveFile(SMLoc DirectiveLoc) {
     if (HasMD5) {
       MD5::MD5Result Sum;
       for (unsigned i = 0; i != 8; ++i) {
-        Sum.Bytes[i] = uint8_t(MD5Hi >> ((7 - i) * 8));
-        Sum.Bytes[i + 8] = uint8_t(MD5Lo >> ((7 - i) * 8));
+        Sum[i] = uint8_t(MD5Hi >> ((7 - i) * 8));
+        Sum[i + 8] = uint8_t(MD5Lo >> ((7 - i) * 8));
       }
       CKMem = Sum;
     }
@@ -3742,8 +3754,7 @@ bool AsmParser::parseDirectiveCVFile() {
         parseEscapedString(Checksum) ||
         parseIntToken(ChecksumKind,
                       "expected checksum kind in '.cv_file' directive") ||
-        parseToken(AsmToken::EndOfStatement,
-                   "unexpected token in '.cv_file' directive"))
+        parseEOL())
       return true;
   }
 
@@ -3753,7 +3764,7 @@ bool AsmParser::parseDirectiveCVFile() {
   ArrayRef<uint8_t> ChecksumAsBytes(reinterpret_cast<const uint8_t *>(CKMem),
                                     Checksum.size());
 
-  if (!getStreamer().EmitCVFileDirective(FileNumber, Filename, ChecksumAsBytes,
+  if (!getStreamer().emitCVFileDirective(FileNumber, Filename, ChecksumAsBytes,
                                          static_cast<uint8_t>(ChecksumKind)))
     return Error(FileNumberLoc, "file number already allocated");
 
@@ -3789,12 +3800,10 @@ bool AsmParser::parseDirectiveCVFuncId() {
   SMLoc FunctionIdLoc = getTok().getLoc();
   int64_t FunctionId;
 
-  if (parseCVFunctionId(FunctionId, ".cv_func_id") ||
-      parseToken(AsmToken::EndOfStatement,
-                 "unexpected token in '.cv_func_id' directive"))
+  if (parseCVFunctionId(FunctionId, ".cv_func_id") || parseEOL())
     return true;
 
-  if (!getStreamer().EmitCVFuncIdDirective(FunctionId))
+  if (!getStreamer().emitCVFuncIdDirective(FunctionId))
     return Error(FunctionIdLoc, "function id already allocated");
 
   return false;
@@ -3850,11 +3859,10 @@ bool AsmParser::parseDirectiveCVInlineSiteId() {
     Lex();
   }
 
-  if (parseToken(AsmToken::EndOfStatement,
-                 "unexpected token in '.cv_inline_site_id' directive"))
+  if (parseEOL())
     return true;
 
-  if (!getStreamer().EmitCVInlineSiteIdDirective(FunctionId, IAFunc, IAFile,
+  if (!getStreamer().emitCVInlineSiteIdDirective(FunctionId, IAFunc, IAFile,
                                                  IALine, IACol, FunctionIdLoc))
     return Error(FunctionIdLoc, "function id already allocated");
 
@@ -3975,7 +3983,7 @@ bool AsmParser::parseDirectiveCVInlineLinetable() {
                                   "expected identifier in directive"))
     return true;
 
-  if (parseToken(AsmToken::EndOfStatement, "Expected End of Statement"))
+  if (parseEOL())
     return true;
 
   MCSymbol *FnStartSym = getContext().getOrCreateSymbol(FnStartName);
@@ -4136,7 +4144,7 @@ bool AsmParser::parseDirectiveCVFileChecksumOffset() {
   int64_t FileNo;
   if (parseIntToken(FileNo, "expected identifier in directive"))
     return true;
-  if (parseToken(AsmToken::EndOfStatement, "Expected End of Statement"))
+  if (parseEOL())
     return true;
   getStreamer().emitCVFileChecksumOffsetDirective(FileNo);
   return false;
@@ -4152,7 +4160,7 @@ bool AsmParser::parseDirectiveCVFPOData() {
   if (parseEOL())
     return true;
   MCSymbol *ProcSym = getContext().getOrCreateSymbol(ProcName);
-  getStreamer().EmitCVFPOData(ProcSym, DirLoc);
+  getStreamer().emitCVFPOData(ProcSym, DirLoc);
   return false;
 }
 
@@ -5549,6 +5557,7 @@ void AsmParser::initializeDirectiveKindMap() {
   DirectiveKindMap[".cfi_register"] = DK_CFI_REGISTER;
   DirectiveKindMap[".cfi_window_save"] = DK_CFI_WINDOW_SAVE;
   DirectiveKindMap[".cfi_b_key_frame"] = DK_CFI_B_KEY_FRAME;
+  DirectiveKindMap[".cfi_mte_tagged_frame"] = DK_CFI_MTE_TAGGED_FRAME;
   DirectiveKindMap[".macros_on"] = DK_MACROS_ON;
   DirectiveKindMap[".macros_off"] = DK_MACROS_OFF;
   DirectiveKindMap[".macro"] = DK_MACRO;
@@ -6021,22 +6030,25 @@ bool AsmParser::parseMSInlineAsm(
       }
 
       bool isOutput = (i == 1) && Desc.mayStore();
+      bool Restricted = Operand.isMemUseUpRegs();
       SMLoc Start = SMLoc::getFromPointer(SymName.data());
-      int64_t Size = Operand.isMemPlaceholder(Desc) ? 0 : SymName.size();
       if (isOutput) {
         ++InputIdx;
         OutputDecls.push_back(OpDecl);
         OutputDeclsAddressOf.push_back(Operand.needAddressOf());
         OutputConstraints.push_back(("=" + Constraint).str());
-        AsmStrRewrites.emplace_back(AOK_Output, Start, Size);
+        AsmStrRewrites.emplace_back(AOK_Output, Start, SymName.size(), 0,
+                                    Restricted);
       } else {
         InputDecls.push_back(OpDecl);
         InputDeclsAddressOf.push_back(Operand.needAddressOf());
         InputConstraints.push_back(Constraint.str());
         if (Desc.OpInfo[i - 1].isBranchTarget())
-          AsmStrRewrites.emplace_back(AOK_CallInput, Start, SymName.size());
+          AsmStrRewrites.emplace_back(AOK_CallInput, Start, SymName.size(), 0,
+                                      Restricted);
         else
-          AsmStrRewrites.emplace_back(AOK_Input, Start, Size);
+          AsmStrRewrites.emplace_back(AOK_Input, Start, SymName.size(), 0,
+                                      Restricted);
       }
     }
 
@@ -6151,17 +6163,19 @@ bool AsmParser::parseMSInlineAsm(
       OS << Ctx.getAsmInfo()->getPrivateLabelPrefix() << AR.Label;
       break;
     case AOK_Input:
-      if (AR.Len)
-        OS << '$' << InputIdx;
-      ++InputIdx;
+      if (AR.IntelExpRestricted)
+        OS << "${" << InputIdx++ << ":P}";
+      else
+        OS << '$' << InputIdx++;
       break;
     case AOK_CallInput:
       OS << "${" << InputIdx++ << ":P}";
       break;
     case AOK_Output:
-      if (AR.Len)
-        OS << '$' << OutputIdx;
-      ++OutputIdx;
+      if (AR.IntelExpRestricted)
+        OS << "${" << OutputIdx++ << ":P}";
+      else
+        OS << '$' << OutputIdx++;
       break;
     case AOK_SizeDirective:
       switch (AR.Val) {
@@ -6298,7 +6312,7 @@ bool HLASMAsmParser::parseStatement(ParseStatementInfo &Info,
     // if this is a line comment we can drop it safely
     if (getTok().getString().empty() || getTok().getString().front() == '\r' ||
         getTok().getString().front() == '\n')
-      Out.AddBlankLine();
+      Out.addBlankLine();
     Lex();
     return false;
   }
@@ -6314,7 +6328,7 @@ bool HLASMAsmParser::parseStatement(ParseStatementInfo &Info,
   if (Lexer.is(AsmToken::EndOfStatement)) {
     if (getTok().getString().front() == '\n' ||
         getTok().getString().front() == '\r') {
-      Out.AddBlankLine();
+      Out.addBlankLine();
       Lex();
       return false;
     }

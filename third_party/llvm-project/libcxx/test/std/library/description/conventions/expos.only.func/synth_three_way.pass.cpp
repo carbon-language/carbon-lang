@@ -6,18 +6,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-// UNSUPPORTED: c++03, c++11, c++14, c++17, libcpp-no-concepts
+// UNSUPPORTED: c++03, c++11, c++14, c++17
 
 // constexpr auto synth-three-way = ...;
 //   via std::tuple<T>(t) <=> std::tuple<U>(u), which exposes its behavior most directly
 
 #include "test_macros.h"
 
-#if defined(TEST_COMPILER_CLANG) || defined(TEST_COMPILER_GCC)
-#pragma GCC diagnostic ignored "-Wsign-compare"
-#elif defined(TEST_COMPILER_MSVC)
-#pragma warning(disable: 4242 4244) // Various truncation warnings
-#endif
+TEST_CLANG_DIAGNOSTIC_IGNORED("-Wsign-compare")
+TEST_GCC_DIAGNOSTIC_IGNORED("-Wsign-compare")
+TEST_MSVC_DIAGNOSTIC_IGNORED(4242 4244) // Various truncation warnings
 
 #include <cassert>
 #include <compare>

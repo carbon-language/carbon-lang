@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PassDetail.h"
+#include "mlir/Analysis/SliceAnalysis.h"
 #include "mlir/Dialect/Affine/Analysis/AffineAnalysis.h"
 #include "mlir/Dialect/Affine/Analysis/LoopAnalysis.h"
 #include "mlir/Dialect/Affine/Analysis/NestedMatcher.h"
@@ -1408,10 +1409,9 @@ static Operation *widenOp(Operation *op, VectorizationState &state) {
   // name that works both in scalar mode and vector mode.
   // TODO: Is it worth considering an Operation.clone operation which
   // changes the type so we can promote an Operation with less boilerplate?
-  OperationState vecOpState(op->getLoc(), op->getName(), vectorOperands,
-                            vectorTypes, op->getAttrs(), /*successors=*/{},
-                            /*regions=*/{});
-  Operation *vecOp = state.builder.createOperation(vecOpState);
+  Operation *vecOp =
+      state.builder.create(op->getLoc(), op->getName().getIdentifier(),
+                           vectorOperands, vectorTypes, op->getAttrs());
   state.registerOpVectorReplacement(op, vecOp);
   return vecOp;
 }
@@ -1429,21 +1429,29 @@ static Operation *vectorizeAffineYieldOp(AffineYieldOp yieldOp,
   // being added to the accumulator by inserting `select` operations, for
   // example:
   //
-  //   %res = arith.addf %acc, %val : vector<128xf32>
-  //   %res_masked = select %mask, %res, %acc : vector<128xi1>, vector<128xf32>
-  //   affine.yield %res_masked : vector<128xf32>
+  //   %val_masked = select %mask, %val, %neutralCst : vector<128xi1>,
+  //   vector<128xf32>
+  //   %res = arith.addf %acc, %val_masked : vector<128xf32>
+  //   affine.yield %res : vector<128xf32>
   //
   if (Value mask = state.vecLoopToMask.lookup(newParentOp)) {
     state.builder.setInsertionPoint(newYieldOp);
     for (unsigned i = 0; i < newYieldOp->getNumOperands(); ++i) {
-      Value result = newYieldOp->getOperand(i);
-      Value iterArg = cast<AffineForOp>(newParentOp).getRegionIterArgs()[i];
-      Value maskedResult = state.builder.create<arith::SelectOp>(
-          result.getLoc(), mask, result, iterArg);
+      SmallVector<Operation *> combinerOps;
+      Value reducedVal = matchReduction(
+          cast<AffineForOp>(newParentOp).getRegionIterArgs(), i, combinerOps);
+      assert(reducedVal && "expect non-null value for parallel reduction loop");
+      assert(combinerOps.size() == 1 && "expect only one combiner op");
+      // IterOperands are neutral element vectors.
+      Value neutralVal = cast<AffineForOp>(newParentOp).getIterOperands()[i];
+      state.builder.setInsertionPoint(combinerOps.back());
+      Value maskedReducedVal = state.builder.create<arith::SelectOp>(
+          reducedVal.getLoc(), mask, reducedVal, neutralVal);
       LLVM_DEBUG(
-          dbgs() << "\n[early-vect]+++++ masking a yielded vector value: "
-                 << maskedResult);
-      newYieldOp->setOperand(i, maskedResult);
+          dbgs() << "\n[early-vect]+++++ masking an input to a binary op that"
+                    "produces value for a yield Op: "
+                 << maskedReducedVal);
+      combinerOps.back()->replaceUsesOfWith(reducedVal, maskedReducedVal);
     }
   }
 
@@ -1701,18 +1709,18 @@ static void vectorizeLoops(Operation *parentOp, DenseSet<Operation *> &loops,
   LLVM_DEBUG(dbgs() << "\n");
 }
 
-std::unique_ptr<OperationPass<FuncOp>>
+std::unique_ptr<OperationPass<func::FuncOp>>
 createSuperVectorizePass(ArrayRef<int64_t> virtualVectorSize) {
   return std::make_unique<Vectorize>(virtualVectorSize);
 }
-std::unique_ptr<OperationPass<FuncOp>> createSuperVectorizePass() {
+std::unique_ptr<OperationPass<func::FuncOp>> createSuperVectorizePass() {
   return std::make_unique<Vectorize>();
 }
 
 /// Applies vectorization to the current function by searching over a bunch of
 /// predetermined patterns.
 void Vectorize::runOnOperation() {
-  FuncOp f = getOperation();
+  func::FuncOp f = getOperation();
   if (!fastestVaryingPattern.empty() &&
       fastestVaryingPattern.size() != vectorSizes.size()) {
     f.emitRemark("Fastest varying pattern specified with different size than "
@@ -1856,11 +1864,11 @@ vectorizeAffineLoopNest(std::vector<SmallVector<AffineForOp, 2>> &loops,
   return vectorizeLoopNest(loops, strategy);
 }
 
-std::unique_ptr<OperationPass<FuncOp>>
+std::unique_ptr<OperationPass<func::FuncOp>>
 createSuperVectorizePass(ArrayRef<int64_t> virtualVectorSize) {
   return std::make_unique<Vectorize>(virtualVectorSize);
 }
-std::unique_ptr<OperationPass<FuncOp>> createSuperVectorizePass() {
+std::unique_ptr<OperationPass<func::FuncOp>> createSuperVectorizePass() {
   return std::make_unique<Vectorize>();
 }
 

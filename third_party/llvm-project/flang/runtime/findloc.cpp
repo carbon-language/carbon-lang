@@ -10,7 +10,6 @@
 // integer kinds.
 
 #include "reduction-templates.h"
-#include "flang/Common/long-double.h"
 #include "flang/Runtime/character.h"
 #include "flang/Runtime/reduction.h"
 #include <cinttypes>
@@ -248,7 +247,7 @@ void RTNAME(Findloc)(Descriptor &result, const Descriptor &x,
     break;
   default:
     terminator.Crash(
-        "FINDLOC: Bad data type code (%d) for array", x.type().raw());
+        "FINDLOC: bad data type code (%d) for array", x.type().raw());
   }
 }
 } // extern "C"
@@ -335,7 +334,7 @@ void RTNAME(FindlocDim)(Descriptor &result, const Descriptor &x,
     break;
   default:
     terminator.Crash(
-        "FINDLOC: Bad data type code (%d) for array", x.type().raw());
+        "FINDLOC: bad data type code (%d) for array", x.type().raw());
   }
 }
 } // extern "C"

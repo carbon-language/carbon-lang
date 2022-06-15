@@ -49,6 +49,8 @@ def setup_llvmbot_git(git_dir = '.'):
 
 class ReleaseWorkflow:
 
+    CHERRY_PICK_FAILED_LABEL = 'release:cherry-pick-failed'
+
     """
     This class implements the sub-commands for the release-workflow command.
     The current sub-commands are:
@@ -146,7 +148,7 @@ class ReleaseWorkflow:
         message += "Please manually backport the fix and push it to your github fork.  Once this is done, please add a comment like this:\n\n`/branch <user>/<repo>/<branch>`"
         issue = self.issue
         comment = issue.create_comment(message)
-        issue.add_to_labels('release:cherry-pick-failed')
+        issue.add_to_labels(self.CHERRY_PICK_FAILED_LABEL)
         return comment
 
     def issue_notify_pull_request_failure(self, branch:str) -> github.IssueComment.IssueComment:
@@ -154,6 +156,9 @@ class ReleaseWorkflow:
         message += self.action_url
         return self.issue.create_comment(message)
 
+    def issue_remove_cherry_pick_failed_label(self):
+        if self.CHERRY_PICK_FAILED_LABEL in [l.name for l in self.issue.labels]:
+            self.issue.remove_from_labels(self.CHERRY_PICK_FAILED_LABEL)
 
     def create_branch(self, commits:List[str]) -> bool:
         """
@@ -180,11 +185,15 @@ class ReleaseWorkflow:
 
         push_url = self.push_url
         print('Pushing to {} {}'.format(push_url, branch_name))
-        local_repo.git.push(push_url, 'HEAD:{}'.format(branch_name))
+        local_repo.git.push(push_url, 'HEAD:{}'.format(branch_name), force=True)
 
         self.issue_notify_branch()
+        self.issue_remove_cherry_pick_failed_label()
         return True
 
+    def check_if_pull_request_exists(self, repo:github.Repository.Repository, head:str) -> bool:
+        pulls = repo.get_pulls(head=head)
+        return pulls.totalCount != 0
 
     def create_pull_request(self, owner:str, branch:str) -> bool:
         """
@@ -202,11 +211,15 @@ class ReleaseWorkflow:
         release_branch_for_issue = self.release_branch_for_issue
         if release_branch_for_issue is None:
             return False
+        head = f"{owner}:{branch}"
+        if self.check_if_pull_request_exists(repo, head):
+            print("PR already exists...")
+            return True
         try:
-            pull = repo.create_pull(title='PR for {}'.format(issue_ref),
+            pull = repo.create_pull(title=f"PR for {issue_ref}",
                                     body='resolves {}'.format(issue_ref),
                                     base=release_branch_for_issue,
-                                    head='{}:{}'.format(owner, branch),
+                                    head=head,
                                     maintainer_can_modify=False)
         except Exception as e:
             self.issue_notify_pull_request_failure(branch)
@@ -216,6 +229,7 @@ class ReleaseWorkflow:
             return False
 
         self.issue_notify_pull_request(pull)
+        self.issue_remove_cherry_pick_failed_label()
 
         # TODO(tstellar): Do you really want to always return True?
         return True
@@ -265,7 +279,7 @@ release_workflow_parser.add_argument('--llvm-project-dir', type=str, default='.'
 release_workflow_parser.add_argument('--issue-number', type=int, required=True, help='The issue number to update')
 release_workflow_parser.add_argument('--branch-repo-token', type=str,
                                      help='GitHub authentication token to use for the repository where new branches will be pushed. Defaults to TOKEN.')
-release_workflow_parser.add_argument('--branch-repo', type=str, default='llvmbot/llvm-project',
+release_workflow_parser.add_argument('--branch-repo', type=str, default='llvm/llvm-project-release-prs',
                                      help='The name of the repo where new branches will be pushed (e.g. llvm/llvm-project)')
 release_workflow_parser.add_argument('sub_command', type=str, choices=['print-release-branch', 'auto'],
                                      help='Print to stdout the name of the release branch ISSUE_NUMBER should be backported to')

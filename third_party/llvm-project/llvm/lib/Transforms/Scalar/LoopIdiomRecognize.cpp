@@ -61,7 +61,6 @@
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
-#include "llvm/IR/Attributes.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/Constants.h"
@@ -798,7 +797,7 @@ bool LoopIdiomRecognize::processLoopStores(SmallVectorImpl<StoreInst *> &SL,
 }
 
 /// processLoopMemIntrinsic - Template function for calling different processor
-/// functions based on mem instrinsic type.
+/// functions based on mem intrinsic type.
 template <typename MemInst>
 bool LoopIdiomRecognize::processLoopMemIntrinsic(
     BasicBlock *BB,
@@ -995,9 +994,8 @@ bool LoopIdiomRecognize::processLoopMemSet(MemSetInst *MSI,
   SmallPtrSet<Instruction *, 1> MSIs;
   MSIs.insert(MSI);
   return processLoopStridedStore(Pointer, SE->getSCEV(MSI->getLength()),
-                                 MaybeAlign(MSI->getDestAlignment()),
-                                 SplatValue, MSI, MSIs, Ev, BECount,
-                                 IsNegStride, /*IsLoopMemset=*/true);
+                                 MSI->getDestAlign(), SplatValue, MSI, MSIs, Ev,
+                                 BECount, IsNegStride, /*IsLoopMemset=*/true);
 }
 
 /// mayLoopAccessLocation - Return true if the specified loop might access the
@@ -1101,6 +1099,7 @@ bool LoopIdiomRecognize::processLoopStridedStore(
     Value *StoredVal, Instruction *TheStore,
     SmallPtrSetImpl<Instruction *> &Stores, const SCEVAddRecExpr *Ev,
     const SCEV *BECount, bool IsNegStride, bool IsLoopMemset) {
+  Module *M = TheStore->getModule();
   Value *SplatValue = isBytewiseValue(StoredVal, *DL);
   Constant *PatternValue = nullptr;
 
@@ -1173,6 +1172,8 @@ bool LoopIdiomRecognize::processLoopStridedStore(
   CallInst *NewCall;
   if (SplatValue) {
     AAMDNodes AATags = TheStore->getAAMetadata();
+    for (Instruction *Store : Stores)
+      AATags = AATags.merge(Store->getAAMetadata());
     if (auto CI = dyn_cast<ConstantInt>(NumBytes))
       AATags = AATags.extendTo(CI->getZExtValue());
     else
@@ -1181,15 +1182,14 @@ bool LoopIdiomRecognize::processLoopStridedStore(
     NewCall = Builder.CreateMemSet(
         BasePtr, SplatValue, NumBytes, MaybeAlign(StoreAlignment),
         /*isVolatile=*/false, AATags.TBAA, AATags.Scope, AATags.NoAlias);
-  } else {
+  } else if (isLibFuncEmittable(M, TLI, LibFunc_memset_pattern16)) {
     // Everything is emitted in default address space
     Type *Int8PtrTy = DestInt8PtrTy;
 
-    Module *M = TheStore->getModule();
     StringRef FuncName = "memset_pattern16";
-    FunctionCallee MSP = M->getOrInsertFunction(FuncName, Builder.getVoidTy(),
-                                                Int8PtrTy, Int8PtrTy, IntIdxTy);
-    inferLibFuncAttributes(M, FuncName, *TLI);
+    FunctionCallee MSP = getOrInsertLibFunc(M, *TLI, LibFunc_memset_pattern16,
+                            Builder.getVoidTy(), Int8PtrTy, Int8PtrTy, IntIdxTy);
+    inferNonMandatoryLibFuncAttrs(M, FuncName, *TLI);
 
     // Otherwise we should form a memset_pattern16.  PatternValue is known to be
     // an constant array of 16-bytes.  Plop the value into a mergable global.
@@ -1200,7 +1200,9 @@ bool LoopIdiomRecognize::processLoopStridedStore(
     GV->setAlignment(Align(16));
     Value *PatternPtr = ConstantExpr::getBitCast(GV, Int8PtrTy);
     NewCall = Builder.CreateCall(MSP, {BasePtr, PatternPtr, NumBytes});
-  }
+  } else
+    return Changed;
+
   NewCall->setDebugLoc(TheStore->getDebugLoc());
 
   if (MSSAU) {
@@ -1419,26 +1421,19 @@ bool LoopIdiomRecognize::processLoopStoreOfLoopLoad(
 
   // If the store is a memcpy instruction, we must check if it will write to
   // the load memory locations. So remove it from the ignored stores.
-  if (IsMemCpy)
-    IgnoredInsts.erase(TheStore);
   MemmoveVerifier Verifier(*LoadBasePtr, *StoreBasePtr, *DL);
+  if (IsMemCpy && !Verifier.IsSameObject)
+    IgnoredInsts.erase(TheStore);
   if (mayLoopAccessLocation(LoadBasePtr, ModRefInfo::Mod, CurLoop, BECount,
                             StoreSizeSCEV, *AA, IgnoredInsts)) {
-    if (!IsMemCpy) {
-      ORE.emit([&]() {
-        return OptimizationRemarkMissed(DEBUG_TYPE, "LoopMayAccessLoad",
-                                        TheLoad)
-               << ore::NV("Inst", InstRemark) << " in "
-               << ore::NV("Function", TheStore->getFunction())
-               << " function will not be hoisted: "
-               << ore::NV("Reason", "The loop may access load location");
-      });
-      return Changed;
-    }
-    // At this point loop may access load only for memcpy in same underlying
-    // object. If that's not the case bail out.
-    if (!Verifier.IsSameObject)
-      return Changed;
+    ORE.emit([&]() {
+      return OptimizationRemarkMissed(DEBUG_TYPE, "LoopMayAccessLoad", TheLoad)
+             << ore::NV("Inst", InstRemark) << " in "
+             << ore::NV("Function", TheStore->getFunction())
+             << " function will not be hoisted: "
+             << ore::NV("Reason", "The loop may access load location");
+    });
+    return Changed;
   }
 
   bool UseMemMove = IsMemCpy ? Verifier.IsSameObject : LoopAccessStore;

@@ -284,7 +284,8 @@ public:
     return CurInst ? CurInst->getDebugLoc() : DebugLoc();
   }
 
-  void CopyValueToVirtualRegister(const Value *V, unsigned Reg);
+  void CopyValueToVirtualRegister(const Value *V, unsigned Reg,
+                                  ISD::NodeType ExtendType = ISD::ANY_EXTEND);
 
   void visit(const Instruction &I);
 
@@ -570,6 +571,11 @@ private:
                          SmallVector<SDValue, 7> &OpValues, bool IsGather);
   void visitVPStoreScatter(const VPIntrinsic &VPIntrin,
                            SmallVector<SDValue, 7> &OpValues, bool IsScatter);
+  void visitVPStridedLoad(const VPIntrinsic &VPIntrin, EVT VT,
+                          SmallVectorImpl<SDValue> &OpValues);
+  void visitVPStridedStore(const VPIntrinsic &VPIntrin,
+                           SmallVectorImpl<SDValue> &OpValues);
+  void visitVPCmp(const VPCmpIntrinsic &VPIntrin);
   void visitVectorPredicationIntrinsic(const VPIntrinsic &VPIntrin);
 
   void visitVAStart(const CallInst &I);
@@ -602,12 +608,22 @@ private:
 
   void emitInlineAsmError(const CallBase &Call, const Twine &Message);
 
+  /// An enum that states to emit func argument dbg value the kind of intrinsic
+  /// it originally had. This controls the internal behavior of
+  /// EmitFuncArgumentDbgValue.
+  enum class FuncArgumentDbgValueKind {
+    Value,   // This was originally a llvm.dbg.value.
+    Addr,    // This was originally a llvm.dbg.addr.
+    Declare, // This was originally a llvm.dbg.declare.
+  };
+
   /// If V is an function argument then create corresponding DBG_VALUE machine
   /// instruction for it now. At the end of instruction selection, they will be
   /// inserted to the entry BB.
   bool EmitFuncArgumentDbgValue(const Value *V, DILocalVariable *Variable,
                                 DIExpression *Expr, DILocation *DL,
-                                bool IsDbgDeclare, const SDValue &N);
+                                FuncArgumentDbgValueKind Kind,
+                                const SDValue &N);
 
   /// Return the next block after MBB, or nullptr if there is none.
   MachineBasicBlock *NextBlock(MachineBasicBlock *MBB);

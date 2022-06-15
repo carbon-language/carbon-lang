@@ -240,7 +240,7 @@ public:
     m_delegate->SetImportListener(this);
   }
 
-  virtual ~CompleteTagDeclsScope() {
+  ~CompleteTagDeclsScope() override {
     ClangASTImporter::ASTContextMetadataSP to_context_md =
         importer.GetContextMetadata(m_dst_ctx);
 
@@ -806,7 +806,7 @@ void ClangASTImporter::ForgetSource(clang::ASTContext *dst_ast,
   md->removeOriginsWithContext(src_ast);
 }
 
-ClangASTImporter::MapCompleter::~MapCompleter() {}
+ClangASTImporter::MapCompleter::~MapCompleter() = default;
 
 llvm::Expected<Decl *>
 ClangASTImporter::ASTImporterDelegate::ImportImpl(Decl *From) {

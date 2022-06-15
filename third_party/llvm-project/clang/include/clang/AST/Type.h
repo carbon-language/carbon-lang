@@ -57,6 +57,7 @@
 
 namespace clang {
 
+class BTFTypeTagAttr;
 class ExtQuals;
 class QualType;
 class ConceptDecl;
@@ -932,6 +933,10 @@ public:
   /// The resulting type might still be qualified if it's sugar for an array
   /// type.  To strip qualifiers even from within a sugared array type, use
   /// ASTContext::getUnqualifiedArrayType.
+  ///
+  /// Note: In C, the _Atomic qualifier is special (see C2x 6.2.5p29 for
+  /// details), and it is not stripped by this function. Use
+  /// getAtomicUnqualifiedType() to strip qualifiers including _Atomic.
   inline QualType getUnqualifiedType() const;
 
   /// Retrieve the unqualified variant of the given type, removing as little
@@ -1313,6 +1318,8 @@ private:
   static bool hasNonTrivialToPrimitiveCopyCUnion(const RecordDecl *RD);
 };
 
+raw_ostream &operator<<(raw_ostream &OS, QualType QT);
+
 } // namespace clang
 
 namespace llvm {
@@ -1616,6 +1623,9 @@ protected:
 
     /// Whether this function has extended parameter information.
     unsigned HasExtParameterInfos : 1;
+
+    /// Whether this function has extra bitfields for the prototype.
+    unsigned HasExtraBitfields : 1;
 
     /// Whether the function is variadic.
     unsigned Variadic : 1;
@@ -2048,6 +2058,7 @@ public:
   bool isComplexIntegerType() const;            // GCC _Complex integer type.
   bool isVectorType() const;                    // GCC vector type.
   bool isExtVectorType() const;                 // Extended vector type.
+  bool isExtVectorBoolType() const;             // Extended vector type with bool element.
   bool isMatrixType() const;                    // Matrix type.
   bool isConstantMatrixType() const;            // Constant matrix type.
   bool isDependentAddressSpaceType() const;     // value-dependent address space qualifier
@@ -2556,6 +2567,8 @@ public:
   bool isFloatingPoint() const {
     return getKind() >= Half && getKind() <= Ibm128;
   }
+
+  bool isSVEBool() const { return getKind() == Kind::SveBool; }
 
   /// Determines whether the given kind corresponds to a placeholder type.
   static bool isPlaceholderTypeKind(Kind K) {
@@ -3788,13 +3801,12 @@ public:
 
   /// A simple holder for various uncommon bits which do not fit in
   /// FunctionTypeBitfields. Aligned to alignof(void *) to maintain the
-  /// alignment of subsequent objects in TrailingObjects. You must update
-  /// hasExtraBitfields in FunctionProtoType after adding extra data here.
+  /// alignment of subsequent objects in TrailingObjects.
   struct alignas(void *) FunctionTypeExtraBitfields {
     /// The number of types in the exception specification.
     /// A whole unsigned is not needed here and according to
     /// [implimits] 8 bits would be enough here.
-    unsigned NumExceptionType;
+    unsigned NumExceptionType = 0;
   };
 
 protected:
@@ -3988,6 +4000,10 @@ public:
       Result.ExceptionSpec = ESI;
       return Result;
     }
+
+    bool requiresFunctionProtoTypeExtraBitfields() const {
+      return ExceptionSpec.Type == EST_Dynamic;
+    }
   };
 
 private:
@@ -4079,15 +4095,12 @@ private:
   }
 
   /// Whether the trailing FunctionTypeExtraBitfields is present.
-  static bool hasExtraBitfields(ExceptionSpecificationType EST) {
-    // If the exception spec type is EST_Dynamic then we have > 0 exception
-    // types and the exact number is stored in FunctionTypeExtraBitfields.
-    return EST == EST_Dynamic;
-  }
-
-  /// Whether the trailing FunctionTypeExtraBitfields is present.
   bool hasExtraBitfields() const {
-    return hasExtraBitfields(getExceptionSpecType());
+    assert((getExceptionSpecType() != EST_Dynamic ||
+            FunctionTypeBits.HasExtraBitfields) &&
+           "ExtraBitfields are required for given ExceptionSpecType");
+    return FunctionTypeBits.HasExtraBitfields;
+
   }
 
   bool hasExtQualifiers() const {
@@ -4786,6 +4799,40 @@ public:
   }
 };
 
+class BTFTagAttributedType : public Type, public llvm::FoldingSetNode {
+private:
+  friend class ASTContext; // ASTContext creates these
+
+  QualType WrappedType;
+  const BTFTypeTagAttr *BTFAttr;
+
+  BTFTagAttributedType(QualType Canon, QualType Wrapped,
+                       const BTFTypeTagAttr *BTFAttr)
+      : Type(BTFTagAttributed, Canon, Wrapped->getDependence()),
+        WrappedType(Wrapped), BTFAttr(BTFAttr) {}
+
+public:
+  QualType getWrappedType() const { return WrappedType; }
+  const BTFTypeTagAttr *getAttr() const { return BTFAttr; }
+
+  bool isSugared() const { return true; }
+  QualType desugar() const { return getWrappedType(); }
+
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, WrappedType, BTFAttr);
+  }
+
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType Wrapped,
+                      const BTFTypeTagAttr *BTFAttr) {
+    ID.AddPointer(Wrapped.getAsOpaquePtr());
+    ID.AddPointer(BTFAttr);
+  }
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == BTFTagAttributed;
+  }
+};
+
 class TemplateTypeParmType : public Type, public llvm::FoldingSetNode {
   friend class ASTContext; // ASTContext creates these
 
@@ -5045,6 +5092,10 @@ public:
 
   bool isDecltypeAuto() const {
     return getKeyword() == AutoTypeKeyword::DecltypeAuto;
+  }
+
+  bool isGNUAutoType() const {
+    return getKeyword() == AutoTypeKeyword::GNUAutoType;
   }
 
   AutoTypeKeyword getKeyword() const {
@@ -6807,6 +6858,12 @@ inline bool Type::isExtVectorType() const {
   return isa<ExtVectorType>(CanonicalType);
 }
 
+inline bool Type::isExtVectorBoolType() const {
+  if (!isExtVectorType())
+    return false;
+  return cast<ExtVectorType>(CanonicalType)->getElementType()->isBooleanType();
+}
+
 inline bool Type::isMatrixType() const {
   return isa<MatrixType>(CanonicalType);
 }
@@ -7220,6 +7277,8 @@ template <typename T> const T *Type::getAsAdjusted() const {
   while (Ty) {
     if (const auto *A = dyn_cast<AttributedType>(Ty))
       Ty = A->getModifiedType().getTypePtr();
+    else if (const auto *A = dyn_cast<BTFTagAttributedType>(Ty))
+      Ty = A->getWrappedType().getTypePtr();
     else if (const auto *E = dyn_cast<ElaboratedType>(Ty))
       Ty = E->desugar().getTypePtr();
     else if (const auto *P = dyn_cast<ParenType>(Ty))

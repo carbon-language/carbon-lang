@@ -12,13 +12,13 @@ add_mlir_conversion_library(MLIRGPUToNVVMTransforms
 
   LINK_LIBS PUBLIC
   MLIRArithmeticToLLVM
+  MLIRFuncToLLVM
   MLIRGPUOps
   MLIRGPUToGPURuntimeTransforms
   MLIRLLVMCommonConversion
-  MLIRLLVMIR
+  MLIRLLVMDialect
   MLIRMemRefToLLVM
-  MLIRNVVMIR
+  MLIRNVVMDialect
   MLIRPass
-  MLIRStandardToLLVM
   MLIRTransformUtils
   )

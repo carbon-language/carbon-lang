@@ -1,12 +1,4 @@
-// RUN:   mlir-opt %s -async-to-async-runtime                                  \
-// RUN:               -async-runtime-ref-counting                              \
-// RUN:               -async-runtime-ref-counting-opt                          \
-// RUN:               -convert-async-to-llvm                                   \
-// RUN:               -convert-arith-to-llvm                                   \
-// RUN:               -convert-vector-to-llvm                                  \
-// RUN:               -convert-memref-to-llvm                                  \
-// RUN:               -convert-std-to-llvm                                     \
-// RUN:               -reconcile-unrealized-casts                              \
+// RUN:   mlir-opt %s -pass-pipeline="async-to-async-runtime,func.func(async-runtime-ref-counting,async-runtime-ref-counting-opt),convert-async-to-llvm,func.func(convert-arith-to-llvm),convert-vector-to-llvm,convert-memref-to-llvm,convert-func-to-llvm,reconcile-unrealized-casts" \
 // RUN: | mlir-cpu-runner                                                      \
 // RUN:     -e main -entry-point-result=void -O0                               \
 // RUN:     -shared-libs=%linalg_test_lib_dir/libmlir_c_runner_utils%shlibext  \
@@ -14,7 +6,7 @@
 // RUN:     -shared-libs=%linalg_test_lib_dir/libmlir_async_runtime%shlibext   \
 // RUN: | FileCheck %s --dump-input=always
 
-func @main() {
+func.func @main() {
 
   // ------------------------------------------------------------------------ //
   // Blocking async.await outside of the async.execute.
@@ -59,7 +51,7 @@ func @main() {
   // CHECK: Unranked Memref
   // CHECK-SAME: rank = 0 offset = 0 sizes = [] strides = []
   // CHECK-NEXT: [0.25]
-  call @print_memref_f32(%7): (memref<*xf32>) -> ()
+  call @printMemrefF32(%7): (memref<*xf32>) -> ()
 
   // ------------------------------------------------------------------------ //
   // Memref passed as async.execute operand.
@@ -75,12 +67,12 @@ func @main() {
   // CHECK: Unranked Memref
   // CHECK-SAME: rank = 0 offset = 0 sizes = [] strides = []
   // CHECK-NEXT: [0.5]
-  call @print_memref_f32(%7): (memref<*xf32>) -> ()
+  call @printMemrefF32(%7): (memref<*xf32>) -> ()
 
   memref.dealloc %6 : memref<f32>
 
   return
 }
 
-func private @print_memref_f32(memref<*xf32>)
+func.func private @printMemrefF32(memref<*xf32>)
   attributes { llvm.emit_c_interface }

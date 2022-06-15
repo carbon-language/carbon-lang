@@ -11,6 +11,8 @@
 
 #include "llvm/Support/JSON.h"
 
+#include <chrono>
+
 #include "lldb/lldb-defines.h"
 #include "lldb/lldb-enumerations.h"
 
@@ -44,7 +46,7 @@ struct TraceStartRequest {
 
   /// If \a llvm::None, then this starts tracing the whole process. Otherwise,
   /// only tracing for the specified threads is enabled.
-  llvm::Optional<std::vector<int64_t>> tids;
+  llvm::Optional<std::vector<lldb::tid_t>> tids;
 
   /// \return
   ///     \b true if \a tids is \a None, i.e. whole process tracing.
@@ -72,7 +74,7 @@ struct TraceStopRequest {
   std::string type;
   /// If \a llvm::None, then this stops tracing the whole process. Otherwise,
   /// only tracing for the specified threads is stopped.
-  llvm::Optional<std::vector<int64_t>> tids;
+  llvm::Optional<std::vector<lldb::tid_t>> tids;
 };
 
 bool fromJSON(const llvm::json::Value &value, TraceStopRequest &packet,
@@ -97,7 +99,7 @@ struct TraceBinaryData {
   /// Identifier of data to fetch with jLLDBTraceGetBinaryData.
   std::string kind;
   /// Size in bytes for this data.
-  int64_t size;
+  uint64_t size;
 };
 
 bool fromJSON(const llvm::json::Value &value, TraceBinaryData &packet,
@@ -106,9 +108,9 @@ bool fromJSON(const llvm::json::Value &value, TraceBinaryData &packet,
 llvm::json::Value toJSON(const TraceBinaryData &packet);
 
 struct TraceThreadState {
-  int64_t tid;
+  lldb::tid_t tid;
   /// List of binary data objects for this thread.
-  std::vector<TraceBinaryData> binaryData;
+  std::vector<TraceBinaryData> binary_data;
 };
 
 bool fromJSON(const llvm::json::Value &value, TraceThreadState &packet,
@@ -116,9 +118,46 @@ bool fromJSON(const llvm::json::Value &value, TraceThreadState &packet,
 
 llvm::json::Value toJSON(const TraceThreadState &packet);
 
+struct TraceCoreState {
+  lldb::core_id_t core_id;
+  /// List of binary data objects for this core.
+  std::vector<TraceBinaryData> binary_data;
+};
+
+bool fromJSON(const llvm::json::Value &value, TraceCoreState &packet,
+              llvm::json::Path path);
+
+llvm::json::Value toJSON(const TraceCoreState &packet);
+
+/// Interface for different algorithms used to convert trace
+/// counters into different units.
+template <typename ToType> class TraceCounterConversion {
+public:
+  virtual ~TraceCounterConversion() = default;
+
+  /// Convert from raw counter value to the target type.
+  ///
+  /// \param[in] raw_counter_value
+  ///   The raw counter value to be converted.
+  ///
+  /// \return
+  ///   The converted counter value.
+  virtual ToType Convert(uint64_t raw_counter_value) = 0;
+
+  /// Serialize trace counter conversion values to JSON.
+  ///
+  /// \return
+  ///   \a llvm::json::Value representing the trace counter conversion object.
+  virtual llvm::json::Value toJSON() = 0;
+};
+
+using TraceTscConversionUP =
+    std::unique_ptr<TraceCounterConversion<std::chrono::nanoseconds>>;
+
 struct TraceGetStateResponse {
-  std::vector<TraceThreadState> tracedThreads;
-  std::vector<TraceBinaryData> processBinaryData;
+  std::vector<TraceThreadState> traced_threads;
+  std::vector<TraceBinaryData> process_binary_data;
+  llvm::Optional<std::vector<TraceCoreState>> cores;
 };
 
 bool fromJSON(const llvm::json::Value &value, TraceGetStateResponse &packet,
@@ -135,11 +174,11 @@ struct TraceGetBinaryDataRequest {
   /// Identifier for the data.
   std::string kind;
   /// Optional tid if the data is related to a thread.
-  llvm::Optional<int64_t> tid;
+  llvm::Optional<lldb::tid_t> tid;
   /// Offset in bytes from where to start reading the data.
-  int64_t offset;
+  uint64_t offset;
   /// Number of bytes to read.
-  int64_t size;
+  uint64_t size;
 };
 
 bool fromJSON(const llvm::json::Value &value,

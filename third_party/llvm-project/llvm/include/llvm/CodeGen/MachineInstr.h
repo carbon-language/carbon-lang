@@ -26,7 +26,6 @@
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/InlineAsm.h"
-#include "llvm/IR/PseudoProbe.h"
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/ArrayRecycler.h"
@@ -38,6 +37,9 @@
 
 namespace llvm {
 
+class DILabel;
+class Instruction;
+class MDNode;
 class AAResults;
 template <typename T> class ArrayRef;
 class DIExpression;
@@ -96,7 +98,7 @@ public:
     FmContract   = 1 << 8,              // Instruction supports Fast math
                                         // contraction operations like fma.
     FmAfn        = 1 << 9,              // Instruction may map to Fast math
-                                        // instrinsic approximation.
+                                        // intrinsic approximation.
     FmReassoc    = 1 << 10,             // Instruction supports Fast math
                                         // reassociation of operand order.
     NoUWrap      = 1 << 11,             // Instruction supports binary operator
@@ -810,6 +812,12 @@ public:
     return hasProperty(MCID::Pseudo, Type);
   }
 
+  /// Return true if this instruction doesn't produce any output in the form of
+  /// executable instructions.
+  bool isMetaInstruction(QueryType Type = IgnoreBundle) const {
+    return hasProperty(MCID::Meta, Type);
+  }
+
   bool isReturn(QueryType Type = AnyInBundle) const {
     return hasProperty(MCID::Return, Type);
   }
@@ -1306,30 +1314,6 @@ public:
       getOperand(0).getSubReg() == getOperand(1).getSubReg();
   }
 
-  /// Return true if this instruction doesn't produce any output in the form of
-  /// executable instructions.
-  bool isMetaInstruction() const {
-    switch (getOpcode()) {
-    default:
-      return false;
-    case TargetOpcode::IMPLICIT_DEF:
-    case TargetOpcode::KILL:
-    case TargetOpcode::CFI_INSTRUCTION:
-    case TargetOpcode::EH_LABEL:
-    case TargetOpcode::GC_LABEL:
-    case TargetOpcode::DBG_VALUE:
-    case TargetOpcode::DBG_VALUE_LIST:
-    case TargetOpcode::DBG_INSTR_REF:
-    case TargetOpcode::DBG_PHI:
-    case TargetOpcode::DBG_LABEL:
-    case TargetOpcode::LIFETIME_START:
-    case TargetOpcode::LIFETIME_END:
-    case TargetOpcode::PSEUDO_PROBE:
-    case TargetOpcode::ARITH_FENCE:
-      return true;
-    }
-  }
-
   /// Return true if this is a transient instruction that is either very likely
   /// to be eliminated during register allocation (such as copy-like
   /// instructions), or if this instruction doesn't have an execution-time cost.
@@ -1744,7 +1728,7 @@ public:
 
   /// Erase an operand from an instruction, leaving it with one
   /// fewer operand than it started with.
-  void RemoveOperand(unsigned OpNo);
+  void removeOperand(unsigned OpNo);
 
   /// Clear this MachineInstr's memory reference descriptor list.  This resets
   /// the memrefs to their most conservative state.  This should be used only
@@ -1863,12 +1847,12 @@ private:
   /// Unlink all of the register operands in this instruction from their
   /// respective use lists.  This requires that the operands already be on their
   /// use lists.
-  void RemoveRegOperandsFromUseLists(MachineRegisterInfo&);
+  void removeRegOperandsFromUseLists(MachineRegisterInfo&);
 
   /// Add all of the register operands in this instruction from their
   /// respective use lists.  This requires that the operands not be on their
   /// use lists yet.
-  void AddRegOperandsToUseLists(MachineRegisterInfo&);
+  void addRegOperandsToUseLists(MachineRegisterInfo&);
 
   /// Slow path for hasProperty when we're dealing with a bundle.
   bool hasPropertyInBundle(uint64_t Mask, QueryType Type) const;

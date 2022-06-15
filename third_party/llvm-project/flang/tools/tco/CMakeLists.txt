@@ -9,17 +9,16 @@ target_link_libraries(tco PRIVATE
   FIRBuilder
   ${dialect_libs}
   MLIRIR
-  MLIRLLVMIR
+  MLIRLLVMDialect
   MLIRLLVMToLLVMIRTranslation
   MLIRTargetLLVMIRExport
   MLIRPass
-  MLIRStandardToLLVM
+  MLIRFuncToLLVM
   MLIRTransforms
   MLIRAffineToStandard
   MLIRAnalysis
   MLIRSCFToControlFlow
   MLIRParser
-  MLIRStandardToLLVM
   MLIRSupport
   MLIRVectorToLLVM
 )

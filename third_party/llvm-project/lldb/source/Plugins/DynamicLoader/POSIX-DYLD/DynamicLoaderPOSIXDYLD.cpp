@@ -86,10 +86,6 @@ void DynamicLoaderPOSIXDYLD::DidAttach() {
       log, "DynamicLoaderPOSIXDYLD::%s pid %" PRIu64 " reloaded auxv data",
       __FUNCTION__, m_process ? m_process->GetID() : LLDB_INVALID_PROCESS_ID);
 
-  // ask the process if it can load any of its own modules
-  auto error = m_process->LoadModules();
-  LLDB_LOG_ERROR(log, std::move(error), "Couldn't load modules: {0}");
-
   ModuleSP executable_sp = GetTargetExecutable();
   ResolveExecutableModule(executable_sp);
   m_rendezvous.UpdateExecutablePath();
@@ -313,7 +309,7 @@ bool DynamicLoaderPOSIXDYLD::SetRendezvousBreakpoint() {
   addr_t break_addr;
   Target &target = m_process->GetTarget();
   BreakpointSP dyld_break;
-  if (m_rendezvous.IsValid()) {
+  if (m_rendezvous.IsValid() && m_rendezvous.GetBreakAddress() != 0) {
     break_addr = m_rendezvous.GetBreakAddress();
     LLDB_LOG(log, "Setting rendezvous break address for pid {0} at {1:x}",
              m_process ? m_process->GetID() : LLDB_INVALID_PROCESS_ID,
@@ -569,13 +565,45 @@ ModuleSP DynamicLoaderPOSIXDYLD::LoadInterpreterModule() {
   FileSpec file(info.GetName().GetCString());
   ModuleSpec module_spec(file, target.GetArchitecture());
 
-  if (ModuleSP module_sp = target.GetOrCreateModule(module_spec, 
+  if (ModuleSP module_sp = target.GetOrCreateModule(module_spec,
                                                     true /* notify */)) {
     UpdateLoadedSections(module_sp, LLDB_INVALID_ADDRESS, m_interpreter_base,
                          false);
     m_interpreter_module = module_sp;
     return module_sp;
   }
+  return nullptr;
+}
+
+ModuleSP DynamicLoaderPOSIXDYLD::LoadModuleAtAddress(const FileSpec &file,
+                                                     addr_t link_map_addr,
+                                                     addr_t base_addr,
+                                                     bool base_addr_is_offset) {
+  if (ModuleSP module_sp = DynamicLoader::LoadModuleAtAddress(
+          file, link_map_addr, base_addr, base_addr_is_offset))
+    return module_sp;
+
+  // This works around an dynamic linker "bug" on android <= 23, where the
+  // dynamic linker would report the application name
+  // (e.g. com.example.myapplication) instead of the main process binary
+  // (/system/bin/app_process(32)). The logic is not sound in general (it
+  // assumes base_addr is the real address, even though it actually is a load
+  // bias), but it happens to work on adroid because app_process has a file
+  // address of zero.
+  // This should be removed after we drop support for android-23.
+  if (m_process->GetTarget().GetArchitecture().GetTriple().isAndroid()) {
+    MemoryRegionInfo memory_info;
+    Status error = m_process->GetMemoryRegionInfo(base_addr, memory_info);
+    if (error.Success() && memory_info.GetMapped() &&
+        memory_info.GetRange().GetRangeBase() == base_addr &&
+        !(memory_info.GetName().IsEmpty())) {
+      if (ModuleSP module_sp = DynamicLoader::LoadModuleAtAddress(
+              FileSpec(memory_info.GetName().GetStringRef()), link_map_addr,
+              base_addr, base_addr_is_offset))
+        return module_sp;
+    }
+  }
+
   return nullptr;
 }
 

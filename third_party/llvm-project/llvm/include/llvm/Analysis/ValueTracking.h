@@ -21,12 +21,12 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Intrinsics.h"
-#include "llvm/IR/Operator.h"
 #include <cassert>
 #include <cstdint>
 
 namespace llvm {
 
+class Operator;
 class AddOperator;
 class AllocaInst;
 class APInt;
@@ -463,15 +463,37 @@ constexpr unsigned MaxAnalysisRecursionDepth = 6;
                                     const DominatorTree *DT = nullptr,
                                     const TargetLibraryInfo *TLI = nullptr);
 
+  /// This returns the same result as isSafeToSpeculativelyExecute if Opcode is
+  /// the actual opcode of Inst. If the provided and actual opcode differ, the
+  /// function (virtually) overrides the opcode of Inst with the provided
+  /// Opcode. There are come constraints in this case:
+  /// * If Opcode has a fixed number of operands (eg, as binary operators do),
+  ///   then Inst has to have at least as many leading operands. The function
+  ///   will ignore all trailing operands beyond that number.
+  /// * If Opcode allows for an arbitrary number of operands (eg, as CallInsts
+  ///   do), then all operands are considered.
+  /// * The virtual instruction has to satisfy all typing rules of the provided
+  ///   Opcode.
+  /// * This function is pessimistic in the following sense: If one actually
+  ///   materialized the virtual instruction, then isSafeToSpeculativelyExecute
+  ///   may say that the materialized instruction is speculatable whereas this
+  ///   function may have said that the instruction wouldn't be speculatable.
+  ///   This behavior is a shortcoming in the current implementation and not
+  ///   intentional.
+  bool isSafeToSpeculativelyExecuteWithOpcode(
+      unsigned Opcode, const Operator *Inst, const Instruction *CtxI = nullptr,
+      const DominatorTree *DT = nullptr,
+      const TargetLibraryInfo *TLI = nullptr);
+
   /// Returns true if the result or effects of the given instructions \p I
-  /// depend on or influence global memory.
-  /// Memory dependence arises for example if the instruction reads from
-  /// memory or may produce effects or undefined behaviour. Memory dependent
-  /// instructions generally cannot be reorderd with respect to other memory
-  /// dependent instructions or moved into non-dominated basic blocks.
-  /// Instructions which just compute a value based on the values of their
-  /// operands are not memory dependent.
-  bool mayBeMemoryDependent(const Instruction &I);
+  /// depend values not reachable through the def use graph.
+  /// * Memory dependence arises for example if the instruction reads from
+  ///   memory or may produce effects or undefined behaviour. Memory dependent
+  ///   instructions generally cannot be reorderd with respect to other memory
+  ///   dependent instructions.
+  /// * Control dependence arises for example if the instruction may fault
+  ///   if lifted above a throwing call or infinite loop.
+  bool mayHaveNonDefUseDependency(const Instruction &I);
 
   /// Return true if it is an intrinsic that cannot be speculated but also
   /// cannot trap.

@@ -28,16 +28,21 @@ using namespace llvm;
 #define GET_SUBTARGETINFO_CTOR
 #include "RISCVGenSubtargetInfo.inc"
 
-static cl::opt<unsigned> RVVVectorBitsMax(
+static cl::opt<bool> EnableSubRegLiveness("riscv-enable-subreg-liveness",
+                                          cl::init(false), cl::Hidden);
+
+static cl::opt<int> RVVVectorBitsMax(
     "riscv-v-vector-bits-max",
     cl::desc("Assume V extension vector registers are at most this big, "
              "with zero meaning no maximum size is assumed."),
     cl::init(0), cl::Hidden);
 
-static cl::opt<unsigned> RVVVectorBitsMin(
+static cl::opt<int> RVVVectorBitsMin(
     "riscv-v-vector-bits-min",
     cl::desc("Assume V extension vector registers are at least this big, "
-             "with zero meaning no minimum size is assumed."),
+             "with zero meaning no minimum size is assumed. A value of -1 "
+             "means use Zvl*b extension. This is primarily used to enable "
+             "autovectorization with fixed width vectors."),
     cl::init(0), cl::Hidden);
 
 static cl::opt<unsigned> RVVVectorLMULMax(
@@ -45,11 +50,6 @@ static cl::opt<unsigned> RVVVectorLMULMax(
     cl::desc("The maximum LMUL value to use for fixed length vectors. "
              "Fractional LMUL values are not supported."),
     cl::init(8), cl::Hidden);
-
-static cl::opt<unsigned> RVVVectorELENMax(
-    "riscv-v-fixed-length-vector-elen-max",
-    cl::desc("The maximum ELEN value to use for fixed length vectors."),
-    cl::init(64), cl::Hidden);
 
 static cl::opt<bool> RISCVDisableUsingConstantPoolForLargeInts(
     "riscv-disable-using-constant-pool-for-large-ints",
@@ -69,11 +69,8 @@ RISCVSubtarget::initializeSubtargetDependencies(const Triple &TT, StringRef CPU,
                                                 StringRef ABIName) {
   // Determine default and user-specified characteristics
   bool Is64Bit = TT.isArch64Bit();
-  if (CPU.empty())
+  if (CPU.empty() || CPU == "generic")
     CPU = Is64Bit ? "generic-rv64" : "generic-rv32";
-  if (CPU == "generic")
-    report_fatal_error(Twine("CPU 'generic' is not supported. Use ") +
-                       (Is64Bit ? "generic-rv64" : "generic-rv32"));
 
   if (TuneCPU.empty())
     TuneCPU = CPU;
@@ -144,7 +141,7 @@ unsigned RISCVSubtarget::getMaxRVVVectorSizeInBits() const {
 
   // ZvlLen specifies the minimum required vlen. The upper bound provided by
   // riscv-v-vector-bits-max should be no less than it.
-  if (RVVVectorBitsMax < ZvlLen)
+  if (RVVVectorBitsMax < (int)ZvlLen)
     report_fatal_error("riscv-v-vector-bits-max specified is lower "
                        "than the Zvl*b limitation");
 
@@ -162,14 +159,18 @@ unsigned RISCVSubtarget::getMaxRVVVectorSizeInBits() const {
 }
 
 unsigned RISCVSubtarget::getMinRVVVectorSizeInBits() const {
+  assert(hasVInstructions() &&
+         "Tried to get vector length without Zve or V extension support!");
+
+  if (RVVVectorBitsMin == -1)
+    return ZvlLen;
+
   // ZvlLen specifies the minimum required vlen. The lower bound provided by
   // riscv-v-vector-bits-min should be no less than it.
-  if (RVVVectorBitsMin != 0 && RVVVectorBitsMin < ZvlLen)
+  if (RVVVectorBitsMin != 0 && RVVVectorBitsMin < (int)ZvlLen)
     report_fatal_error("riscv-v-vector-bits-min specified is lower "
                        "than the Zvl*b limitation");
 
-  assert(hasVInstructions() &&
-         "Tried to get vector length without Zve or V extension support!");
   // FIXME: Change to >= 32 when VLEN = 32 is supported
   assert(
       (RVVVectorBitsMin == 0 ||
@@ -195,17 +196,11 @@ unsigned RISCVSubtarget::getMaxLMULForFixedLengthVectors() const {
       std::max<unsigned>(std::min<unsigned>(RVVVectorLMULMax, 8), 1));
 }
 
-unsigned RISCVSubtarget::getMaxELENForFixedLengthVectors() const {
-  assert(hasVInstructions() &&
-         "Tried to get maximum ELEN without Zve or V extension support!");
-  assert(RVVVectorELENMax <= 64 && RVVVectorELENMax >= 8 &&
-         isPowerOf2_32(RVVVectorELENMax) &&
-         "V extension requires a ELEN to be a power of 2 between 8 and 64!");
-  unsigned ELEN = hasVInstructionsI64() ? 64 : 32;
-  return PowerOf2Floor(
-      std::max<unsigned>(std::min<unsigned>(RVVVectorELENMax, ELEN), 8));
-}
-
 bool RISCVSubtarget::useRVVForFixedLengthVectors() const {
   return hasVInstructions() && getMinRVVVectorSizeInBits() != 0;
+}
+
+bool RISCVSubtarget::enableSubRegLiveness() const {
+  // TODO: Enable for for RVV to better handle LMUL>1 and segment load/store.
+  return EnableSubRegLiveness;
 }

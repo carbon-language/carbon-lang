@@ -97,7 +97,7 @@ multiple stages by relying on
   mlir::cf::populateSCFToControlFlowConversionPatterns(patterns, &getContext());
   mlir::arith::populateArithmeticToLLVMConversionPatterns(typeConverter,
                                                           patterns);
-  mlir::populateStdToLLVMConversionPatterns(typeConverter, patterns);
+  mlir::populateFuncToLLVMConversionPatterns(typeConverter, patterns);
   mlir::cf::populateControlFlowToLLVMConversionPatterns(patterns, &getContext());
 
   // The only remaining operation, to lower from the `toy` dialect, is the
@@ -119,7 +119,7 @@ that only legal operations will remain after the conversion.
 Looking back at our current working example:
 
 ```mlir
-func @main() {
+toy.func @main() {
   %0 = toy.constant dense<[[1.000000e+00, 2.000000e+00, 3.000000e+00], [4.000000e+00, 5.000000e+00, 6.000000e+00]]> : tensor<2x3xf64>
   %2 = toy.transpose(%0 : tensor<2x3xf64>) to tensor<3x2xf64>
   %3 = toy.mul %2, %2 : tensor<3x2xf64>
@@ -324,7 +324,7 @@ $ echo 'def main() { print([[1, 2], [3, 4]]); }' | ./bin/toyc-ch6 -emit=jit
 
 You can also play with `-emit=mlir`, `-emit=mlir-affine`, `-emit=mlir-llvm`, and
 `-emit=llvm` to compare the various levels of IR involved. Also try options like
-[`--print-ir-after-all`](../../PassManagement.md/#ir-printing) to track the
+[`--mlir-print-ir-after-all`](../../PassManagement.md/#ir-printing) to track the
 evolution of the IR throughout the pipeline.
 
 The example code used throughout this section can be found in

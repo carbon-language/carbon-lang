@@ -1,4 +1,3 @@
-// REQUIRES: clang-driver
 // REQUIRES: x86-registered-target
 // REQUIRES: amdgpu-registered-target
 
@@ -217,10 +216,10 @@
 // DIVSQRT-SAME: "-mlink-builtin-bitcode" "{{.*}}oclc_correctly_rounded_sqrt_off.bc"
 
 // ABI4-NOT: error:
-// ABI4: "-mlink-builtin-bitcode" "{{.*}}abi_version_400.bc"
+// ABI4: "-mlink-builtin-bitcode" "{{.*}}oclc_abi_version_400.bc"
 // ABI5-NOT: error:
-// ABI5: "-mlink-builtin-bitcode" "{{.*}}abi_version_500.bc"
+// ABI5: "-mlink-builtin-bitcode" "{{.*}}oclc_abi_version_500.bc"
 // NOABI4-NOT: error:
-// NOABI4-NOT: "-mlink-builtin-bitcode" "{{.*}}abi_version_400.bc"
-// NOABI4-NOT: "-mlink-builtin-bitcode" "{{.*}}abi_version_500.bc"
+// NOABI4-NOT: "-mlink-builtin-bitcode" "{{.*}}oclc_abi_version_400.bc"
+// NOABI4-NOT: "-mlink-builtin-bitcode" "{{.*}}oclc_abi_version_500.bc"
 // NOABI5: error: cannot find ROCm device libraryfor ABI version 5; provide its path via '--rocm-path' or '--rocm-device-lib-path', or pass '-nogpulib' to build without ROCm device library

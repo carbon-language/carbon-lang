@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - -triple=x86_64-apple-darwin9 -fblocks -std=c++11 | FileCheck %s
+// RUN: %clang_cc1 -no-opaque-pointers -emit-llvm %s -o - -triple=x86_64-apple-darwin9 -fblocks -std=c++11 | FileCheck %s
 struct X { };
 struct Y { };
 
@@ -1154,4 +1154,16 @@ namespace test60 {
   template<typename T> void f(decltype(a + T())) {}
   // CHECK-LABEL: @_ZN6test601fIiEEvDTplL_ZNS_1aEEcvT__EE
   template void f<int>(int);
+}
+
+namespace test61 {
+  struct X {
+    struct Y {
+      using a = int;
+      using b = int;
+    };
+  };
+  template <typename T> void f(typename T::Y::a, typename T::Y::b) {}
+  // CHECK-LABEL: @_ZN6test611fINS_1XEEEvNT_1Y1aENS3_1bE
+  template void f<X>(int, int);
 }

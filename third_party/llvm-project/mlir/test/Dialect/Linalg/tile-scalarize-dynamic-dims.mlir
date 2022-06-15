@@ -14,7 +14,7 @@
 //       CHECK:       %[[S2:.*]] = tensor.extract_slice %[[ARG1]][%[[IV1]], 0] [1, 2000] [1, 1] : tensor<?x2000xf32> to tensor<1x2000xf32>
 //       CHECK:       %[[S3:.*]] = tensor.extract_slice %{{.*}}[%[[IV0]], 0] [1, 2000] [1, 1] : tensor<?x2000xf32> to tensor<1x2000xf32>
 //       CHECK:       linalg.matmul ins(%[[S1]], %[[S2]] : tensor<1x1xf32>, tensor<1x2000xf32>) outs(%[[S3]] : tensor<1x2000xf32>) -> tensor<1x2000xf32>
-func @matmul_partly_dynamic_tensor(%arg0: tensor<?x?xf32>, %arg1: tensor<?x2000xf32>)
+func.func @matmul_partly_dynamic_tensor(%arg0: tensor<?x?xf32>, %arg1: tensor<?x2000xf32>)
     -> tensor<?x2000xf32> {
   %c0 = arith.constant 0 : index
   %c1 = arith.constant 1 : index
@@ -37,13 +37,13 @@ func @matmul_partly_dynamic_tensor(%arg0: tensor<?x?xf32>, %arg1: tensor<?x2000x
 #map1 = affine_map<()[s0] -> ((s0 floordiv 32) * 32)>
 #map2 = affine_map<(d0)[s0] -> (d0 - (s0 floordiv 32) * 32)>
 
-func @tiled_and_peeled_matmul(%arg0: tensor<257x259xf32>, %arg1: tensor<259x258xf32>, %arg2: tensor<257x258xf32>) -> tensor<257x258xf32> {
+func.func @tiled_and_peeled_matmul(%arg0: tensor<257x259xf32>, %arg1: tensor<259x258xf32>, %arg2: tensor<257x258xf32>) -> tensor<257x258xf32> {
   %c257 = arith.constant 257 : index
   %c64 = arith.constant 64 : index
   %cst = arith.constant 0.000000e+00 : f32
   %c0 = arith.constant 0 : index
   %c32 = arith.constant 32 : index
-  %0 = linalg.fill(%cst, %arg2) : f32, tensor<257x258xf32> -> tensor<257x258xf32>
+  %0 = linalg.fill ins(%cst : f32) outs(%arg2 : tensor<257x258xf32>) -> tensor<257x258xf32>
   %1 = scf.for %arg3 = %c0 to %c257 step %c64 iter_args(%arg4 = %0) -> (tensor<257x258xf32>) {
     %2 = affine.min #map0(%arg3)
     %3 = tensor.extract_slice %arg0[%arg3, 0] [%2, 259] [1, 1] : tensor<257x259xf32> to tensor<?x259xf32>

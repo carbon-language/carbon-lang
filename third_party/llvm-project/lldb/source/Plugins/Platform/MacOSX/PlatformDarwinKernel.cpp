@@ -193,7 +193,7 @@ public:
     m_collection_sp->Initialize(g_platformdarwinkernel_properties);
   }
 
-  virtual ~PlatformDarwinKernelProperties() = default;
+  ~PlatformDarwinKernelProperties() override = default;
 
   FileSpecList GetKextDirectories() const {
     const uint32_t idx = ePropertyKextDirectories;
@@ -909,7 +909,8 @@ Status PlatformDarwinKernel::ExamineKextForMatchingUUID(
   return {};
 }
 
-std::vector<ArchSpec> PlatformDarwinKernel::GetSupportedArchitectures() {
+std::vector<ArchSpec> PlatformDarwinKernel::GetSupportedArchitectures(
+    const ArchSpec &process_host_arch) {
   std::vector<ArchSpec> result;
 #if defined(__arm__) || defined(__arm64__) || defined(__aarch64__)
   ARMGetSupportedArchitectures(result);

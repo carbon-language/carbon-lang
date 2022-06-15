@@ -93,14 +93,6 @@ enum_targets_gen(
     targets = llvm_target_mcas,
 )
 
-# TODO: Need to replace this with something that actually extracts the git
-# commit from the LLVM source (submodule or http_archive).
-genrule(
-    name = "version_info_gen",
-    outs = ["include/llvm/Config/VersionInfo.h"],
-    cmd = "echo '#define LLVM_VERSION_INFO \"git\"' > $@",
-)
-
 template_rule(
     name = "abi_breaking_h_gen",
     src = "include/llvm/Config/abi-breaking.h.cmake",
@@ -124,7 +116,6 @@ exports_files([
 cc_library(
     name = "config",
     hdrs = [
-        "include/llvm/Config/VersionInfo.h",
         "include/llvm/Config/abi-breaking.h",
         "include/llvm/Config/llvm-config.h",
     ],
@@ -148,7 +139,10 @@ cc_library(
         "lib/Demangle/*.cpp",
         "lib/Demangle/*.h",
     ]),
-    hdrs = glob(["include/llvm/Demangle/*.h"]),
+    hdrs = glob([
+        "include/llvm/Demangle/*.h",
+        "include/llvm/Demangle/*.def",
+    ]),
     copts = llvm_copts,
     deps = [":config"],
 )
@@ -156,7 +150,7 @@ cc_library(
 genrule(
     name = "generate_vcs_revision",
     outs = ["include/llvm/Support/VCSRevision.h"],
-    cmd = "echo '#define LLVM_REVISION \"git\"' >> $@\n" +
+    cmd = "echo '#undef LLVM_REVISION' >> $@\n" +
           "echo '#undef LLVM_REPOSITORY' >> $@\n",
 )
 
@@ -185,6 +179,23 @@ cc_library(
             "lib/Support/Unix/*.h",
             "lib/Support/Unix/*.inc",
         ]),
+    }) + [
+        "lib/Support/BLAKE3/blake3_impl.h",
+        "lib/Support/BLAKE3/blake3.c",
+        "lib/Support/BLAKE3/blake3_dispatch.c",
+        "lib/Support/BLAKE3/blake3_portable.c",
+    ] + select({
+        "@platforms//cpu:aarch64": [
+            "lib/Support/BLAKE3/blake3_neon.c",
+        ],
+        "@platforms//cpu:x86_64": [
+            "lib/Support/BLAKE3/blake3_sse2_x86-64_unix.S",
+            "lib/Support/BLAKE3/blake3_sse41_x86-64_unix.S",
+            "lib/Support/BLAKE3/blake3_avx2_x86-64_unix.S",
+            "lib/Support/BLAKE3/blake3_avx512_x86-64_unix.S",
+        ],
+        "//conditions:default": [
+        ]
     }),
     hdrs = glob([
         "include/llvm/Support/**/*.h",
@@ -199,11 +210,28 @@ cc_library(
         "include/llvm-c/ExternC.h",
         "include/llvm-c/Support.h",
         "include/llvm-c/Types.h",
+        "include/llvm-c/blake3.h",
         "include/llvm/ExecutionEngine/JITSymbol.h",
         "include/llvm/Support/Extension.def",
         "include/llvm/Support/VCSRevision.h",
     ],
     copts = llvm_copts,
+    defines = select({
+        "@platforms//cpu:aarch64": [
+        ],
+        "//conditions:default": [
+            "BLAKE3_USE_NEON=0",
+        ]
+    }) + select({
+        "@platforms//cpu:x86_64": [
+        ],
+        "//conditions:default": [
+            "BLAKE3_NO_AVX2",
+            "BLAKE3_NO_AVX512",
+            "BLAKE3_NO_SSE2",
+            "BLAKE3_NO_SSE41",
+        ]
+    }),
     includes = ["include"],
     linkopts = select({
         "@bazel_tools//src/conditions:windows": [],
@@ -619,10 +647,7 @@ gentbl(
     tbl_outs = [("-gen-attrs", "include/llvm/IR/Attributes.inc")],
     tblgen = ":llvm-tblgen",
     td_file = "include/llvm/IR/Attributes.td",
-    td_srcs = [
-        "include/llvm/IR/Attributes.td",
-        "include/llvm/IR/AttributesAMDGPU.td",
-    ],
+    td_srcs = ["include/llvm/IR/Attributes.td"],
 )
 
 cc_library(
@@ -632,6 +657,7 @@ cc_library(
         "lib/Bitstream/Reader/*.h",
     ]),
     hdrs = [
+        "include/llvm/Bitstream/BitCodeEnums.h",
         "include/llvm/Bitstream/BitCodes.h",
         "include/llvm/Bitstream/BitstreamReader.h",
     ],
@@ -647,6 +673,7 @@ cc_library(
         "lib/Bitstream/Writer/*.h",
     ]),
     hdrs = [
+        "include/llvm/Bitstream/BitCodeEnums.h",
         "include/llvm/Bitstream/BitCodes.h",
         "include/llvm/Bitstream/BitstreamWriter.h",
     ],
@@ -1366,14 +1393,7 @@ cc_library(
         "lib/Transforms/Coroutines/*.cpp",
         "lib/Transforms/Coroutines/*.h",
     ]),
-    hdrs = [
-        "include/llvm-c/Transforms/Coroutines.h",
-        "include/llvm/Transforms/Coroutines.h",
-        "include/llvm/Transforms/Coroutines/CoroCleanup.h",
-        "include/llvm/Transforms/Coroutines/CoroEarly.h",
-        "include/llvm/Transforms/Coroutines/CoroElide.h",
-        "include/llvm/Transforms/Coroutines/CoroSplit.h",
-    ],
+    hdrs = glob(["include/llvm/Transforms/Coroutines/*.h"]),
     copts = llvm_copts,
     deps = [
         ":Analysis",
@@ -1614,6 +1634,7 @@ llvm_target_lib_list = [lib for lib in [
             ("-gen-exegesis", "lib/Target/Mips/MipsGenExegesis.inc"),
             ("-gen-fast-isel", "lib/Target/Mips/MipsGenFastISel.inc"),
             ("-gen-global-isel", "lib/Target/Mips/MipsGenGlobalISel.inc"),
+            ("-gen-global-isel-combiner -combiners=MipsPostLegalizerCombinerHelper", "lib/Target/Mips/MipsGenPostLegalizeGICombiner.inc"),
             ("-gen-instr-info", "lib/Target/Mips/MipsGenInstrInfo.inc"),
             ("-gen-pseudo-lowering", "lib/Target/Mips/MipsGenMCPseudoLowering.inc"),
             ("-gen-register-bank", "lib/Target/Mips/MipsGenRegisterBank.inc"),
@@ -1715,6 +1736,21 @@ llvm_target_lib_list = [lib for lib in [
         ],
     },
     {
+        "name": "VE",
+        "short_name": "VE",
+        "tbl_outs": [
+            ("-gen-asm-matcher", "lib/Target/VE/VEGenAsmMatcher.inc"),
+            ("-gen-asm-writer", "lib/Target/VE/VEGenAsmWriter.inc"),
+            ("-gen-callingconv", "lib/Target/VE/VEGenCallingConv.inc"),
+            ("-gen-dag-isel", "lib/Target/VE/VEGenDAGISel.inc"),
+            ("-gen-disassembler", "lib/Target/VE/VEGenDisassemblerTables.inc"),
+            ("-gen-emitter", "lib/Target/VE/VEGenMCCodeEmitter.inc"),
+            ("-gen-instr-info", "lib/Target/VE/VEGenInstrInfo.inc"),
+            ("-gen-register-info", "lib/Target/VE/VEGenRegisterInfo.inc"),
+            ("-gen-subtarget", "lib/Target/VE/VEGenSubtargetInfo.inc"),
+        ],
+    },
+    {
         "name": "WebAssembly",
         "short_name": "WebAssembly",
         "tbl_outs": [
@@ -1747,6 +1783,7 @@ llvm_target_lib_list = [lib for lib in [
             ("-gen-subtarget", "lib/Target/X86/X86GenSubtargetInfo.inc"),
             ("-gen-x86-EVEX2VEX-tables", "lib/Target/X86/X86GenEVEX2VEXTables.inc"),
             ("-gen-exegesis", "lib/Target/X86/X86GenExegesis.inc"),
+            ("-gen-x86-mnemonic-tables -asmwriternum=1", "lib/Target/X86/X86GenMnemonicTables.inc"),
         ],
     },
     {
@@ -2548,12 +2585,21 @@ gentbl(
     td_srcs = ["include/llvm/Option/OptParser.td"],
 )
 
+template_rule(
+    name = "dsymutil_main",
+    src = "cmake/modules/llvm-driver-template.cpp.in",
+    out = "dsymutil_main.cpp",
+    substitutions = {
+        "@TOOL_NAME@": "dsymutil"
+    },
+)
+
 cc_binary(
     name = "dsymutil",
     srcs = glob([
         "tools/dsymutil/*.cpp",
         "tools/dsymutil/*.h",
-    ]),
+    ]) + ["dsymutil_main.cpp"],
     copts = llvm_copts,
     stamp = 0,
     deps = [
@@ -2643,12 +2689,21 @@ cc_binary(
     ],
 )
 
+template_rule(
+    name = "ar_main",
+    src = "cmake/modules/llvm-driver-template.cpp.in",
+    out = "ar_main.cpp",
+    substitutions = {
+        "@TOOL_NAME@": "llvm_ar"
+    },
+)
+
 cc_binary(
     name = "llvm-ar",
     srcs = glob([
         "tools/llvm-ar/*.cpp",
         "tools/llvm-ar/*.h",
-    ]),
+    ]) + ["ar_main.cpp"],
     copts = llvm_copts,
     stamp = 0,
     deps = [
@@ -2836,12 +2891,21 @@ gentbl(
     td_srcs = ["include/llvm/Option/OptParser.td"],
 )
 
+template_rule(
+    name = "cxxfilt_main",
+    src = "cmake/modules/llvm-driver-template.cpp.in",
+    out = "cxxfilt_main.cpp",
+    substitutions = {
+        "@TOOL_NAME@": "llvm_cxxfilt"
+    },
+)
+
 cc_binary(
     name = "llvm-cxxfilt",
     srcs = glob([
         "tools/llvm-cxxfilt/*.cpp",
         "tools/llvm-cxxfilt/*.h",
-    ]),
+    ]) + ["cxxfilt_main.cpp"],
     copts = llvm_copts,
     stamp = 0,
     deps = [
@@ -2849,6 +2913,23 @@ cc_binary(
         ":Demangle",
         ":Option",
         ":Support",
+    ],
+)
+
+cc_binary(
+    name = "llvm-debuginfod-find",
+    srcs = glob([
+        "tools/llvm-debuginfod-find/*.cpp",
+        "tools/llvm-debuginfod-find/*.h",
+    ]),
+    copts = llvm_copts,
+    stamp = 0,
+    deps = [
+        ":Symbolize",
+        ":BitReader",
+        ":Core",
+        ":Support",
+        ":Debuginfod",
     ],
 )
 
@@ -2947,6 +3028,18 @@ cc_binary(
     ],
 )
 
+gentbl(
+    name = "IfsOptionsTableGen",
+    strip_include_prefix = "tools/llvm-ifs",
+    tbl_outs = [(
+        "-gen-opt-parser-defs",
+        "tools/llvm-ifs/Opts.inc",
+    )],
+    tblgen = ":llvm-tblgen",
+    td_file = "tools/llvm-ifs/Opts.td",
+    td_srcs = ["include/llvm/Option/OptParser.td"],
+)
+
 cc_binary(
     name = "llvm-ifs",
     srcs = glob([
@@ -2956,8 +3049,10 @@ cc_binary(
     copts = llvm_copts,
     stamp = 0,
     deps = [
+        ":IfsOptionsTableGen",
         ":InterfaceStub",
         ":ObjectYAML",
+        ":Option",
         ":Support",
         ":TextAPI",
     ],
@@ -3339,12 +3434,22 @@ cc_binary(
     ],
 )
 
+template_rule(
+    name = "objcopy_main",
+    src = "cmake/modules/llvm-driver-template.cpp.in",
+    out = "objcopy_main.cpp",
+    substitutions = {
+        "@TOOL_NAME@": "llvm_objcopy"
+    },
+)
+
+
 cc_binary(
     name = "llvm-objcopy",
     srcs = glob([
         "tools/llvm-objcopy/*.cpp",
         "tools/llvm-objcopy/*.h",
-    ]),
+    ]) + ["objcopy_main.cpp"],
     copts = llvm_copts,
     stamp = 0,
     deps = [
@@ -3608,6 +3713,24 @@ cc_binary(
         ":AllTargetsCodeGens",
         ":BitReader",
         ":Core",
+    ],
+)
+
+cc_binary(
+    name = "llvm-remark-size-diff",
+    srcs = glob([
+        "tools/llvm-remark-size-diff/**/*.cpp",
+        "tools/llvm-remark-size-diff/**/*.h",
+    ]),
+    copts = llvm_copts,
+    includes = ["tools/llvm-reark-size-diff"],
+    stamp = 0,
+    deps = [
+        ":Core",
+        ":Demangle",
+        ":Object",
+        ":Remarks",
+        ":Support",
     ],
 )
 

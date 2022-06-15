@@ -61,6 +61,8 @@
 ; CHECK-NEXT:       Expand vector predication intrinsics
 ; CHECK-NEXT:       Scalarize Masked Memory Intrinsics
 ; CHECK-NEXT:       Expand reduction intrinsics
+; CHECK-NEXT:       Natural Loop Information
+; CHECK-NEXT:       TLS Variable Hoist
 ; CHECK-NEXT:     Stack Safety Analysis
 ; CHECK-NEXT:       FunctionPass Manager
 ; CHECK-NEXT:         Dominator Tree Construction
@@ -130,6 +132,7 @@
 ; CHECK-NEXT:       Machine Block Frequency Analysis
 ; CHECK-NEXT:       Machine Common Subexpression Elimination
 ; CHECK-NEXT:       MachinePostDominator Tree Construction
+; CHECK-NEXT:       Machine Cycle Info Analysis
 ; CHECK-NEXT:       Machine code sinking
 ; CHECK-NEXT:       Peephole Optimizations
 ; CHECK-NEXT:       Remove dead machine instructions
@@ -197,6 +200,7 @@
 ; CHECK-NEXT:       Insert XRay ops
 ; CHECK-NEXT:       Implement the 'patchable-function' attribute
 ; CHECK-NEXT:       AArch64 load / store optimization pass
+; CHECK-NEXT:       Machine Copy Propagation Pass
 ; CHECK-NEXT:       Workaround A53 erratum 835769 pass
 ; CHECK-NEXT:       AArch64 Branch Targets
 ; CHECK-NEXT:       Branch relaxation pass
@@ -206,6 +210,7 @@
 ; CHECK-NEXT:       Live DEBUG_VALUE analysis
 ; CHECK-NEXT:     Machine Outliner
 ; CHECK-NEXT:     FunctionPass Manager
+; CHECK-NEXT:       Insert CFI remember/restore state instructions
 ; CHECK-NEXT:       Unpack machine instruction bundles
 ; CHECK-NEXT:       Lazy Machine Block Frequency Analysis
 ; CHECK-NEXT:       Machine Optimization Remark Emitter

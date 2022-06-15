@@ -7,7 +7,8 @@
 //===----------------------------------------------------------------------===//
 
 // UNSUPPORTED: c++03, c++11
-// UNSUPPORTED: libcpp-has-no-localization
+// UNSUPPORTED: no-localization
+// UNSUPPORTED: !stdlib=libc++ && c++14
 
 // <iomanip>
 

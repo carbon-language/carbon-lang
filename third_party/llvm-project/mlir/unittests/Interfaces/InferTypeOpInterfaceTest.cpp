@@ -8,7 +8,7 @@
 
 #include "mlir/Interfaces/InferTypeOpInterface.h"
 #include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
-#include "mlir/Dialect/StandardOps/IR/Ops.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/Dialect.h"
@@ -16,7 +16,7 @@
 #include "mlir/IR/ImplicitLocOpBuilder.h"
 #include "mlir/IR/OpDefinition.h"
 #include "mlir/IR/OpImplementation.h"
-#include "mlir/Parser.h"
+#include "mlir/Parser/Parser.h"
 
 #include <gtest/gtest.h>
 
@@ -26,29 +26,29 @@ class ValueShapeRangeTest : public testing::Test {
 protected:
   void SetUp() override {
     const char *ir = R"MLIR(
-      func @map(%arg : tensor<1xi64>) {
+      func.func @map(%arg : tensor<1xi64>) {
         %0 = arith.constant dense<[10]> : tensor<1xi64>
         %1 = arith.addi %arg, %0 : tensor<1xi64>
         return
       }
     )MLIR";
 
-    registry.insert<StandardOpsDialect, arith::ArithmeticDialect>();
+    registry.insert<func::FuncDialect, arith::ArithmeticDialect>();
     ctx.appendDialectRegistry(registry);
-    module = parseSourceString(ir, &ctx);
-    mapFn = cast<FuncOp>(module->front());
+    module = parseSourceString<ModuleOp>(ir, &ctx);
+    mapFn = cast<func::FuncOp>(module->front());
   }
 
   // Create ValueShapeRange on the arith.addi operation.
   ValueShapeRange addiRange() {
-    auto &fnBody = mapFn.body();
+    auto &fnBody = mapFn.getBody();
     return std::next(fnBody.front().begin())->getOperands();
   }
 
   DialectRegistry registry;
   MLIRContext ctx;
   OwningOpRef<ModuleOp> module;
-  FuncOp mapFn;
+  func::FuncOp mapFn;
 };
 
 TEST_F(ValueShapeRangeTest, ShapesFromValues) {

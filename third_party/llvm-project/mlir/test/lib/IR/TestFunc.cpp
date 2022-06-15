@@ -7,21 +7,25 @@
 //===----------------------------------------------------------------------===//
 
 #include "mlir/IR/BuiltinOps.h"
+#include "mlir/IR/FunctionInterfaces.h"
 #include "mlir/Pass/Pass.h"
 
 using namespace mlir;
 
 namespace {
-/// This is a test pass for verifying FuncOp's insertArgument method.
+/// This is a test pass for verifying FunctionOpInterface's insertArgument
+/// method.
 struct TestFuncInsertArg
     : public PassWrapper<TestFuncInsertArg, OperationPass<ModuleOp>> {
+  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(TestFuncInsertArg)
+
   StringRef getArgument() const final { return "test-func-insert-arg"; }
   StringRef getDescription() const final { return "Test inserting func args."; }
   void runOnOperation() override {
     auto module = getOperation();
 
     UnknownLoc unknownLoc = UnknownLoc::get(module.getContext());
-    for (FuncOp func : module.getOps<FuncOp>()) {
+    for (auto func : module.getOps<FunctionOpInterface>()) {
       auto inserts = func->getAttrOfType<ArrayAttr>("test.insert_args");
       if (!inserts || inserts.empty())
         continue;
@@ -47,9 +51,11 @@ struct TestFuncInsertArg
   }
 };
 
-/// This is a test pass for verifying FuncOp's insertResult method.
+/// This is a test pass for verifying FunctionOpInterface's insertResult method.
 struct TestFuncInsertResult
     : public PassWrapper<TestFuncInsertResult, OperationPass<ModuleOp>> {
+  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(TestFuncInsertResult)
+
   StringRef getArgument() const final { return "test-func-insert-result"; }
   StringRef getDescription() const final {
     return "Test inserting func results.";
@@ -57,7 +63,7 @@ struct TestFuncInsertResult
   void runOnOperation() override {
     auto module = getOperation();
 
-    for (FuncOp func : module.getOps<FuncOp>()) {
+    for (auto func : module.getOps<FunctionOpInterface>()) {
       auto inserts = func->getAttrOfType<ArrayAttr>("test.insert_results");
       if (!inserts || inserts.empty())
         continue;
@@ -78,15 +84,18 @@ struct TestFuncInsertResult
   }
 };
 
-/// This is a test pass for verifying FuncOp's eraseArgument method.
+/// This is a test pass for verifying FunctionOpInterface's eraseArgument
+/// method.
 struct TestFuncEraseArg
     : public PassWrapper<TestFuncEraseArg, OperationPass<ModuleOp>> {
+  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(TestFuncEraseArg)
+
   StringRef getArgument() const final { return "test-func-erase-arg"; }
   StringRef getDescription() const final { return "Test erasing func args."; }
   void runOnOperation() override {
     auto module = getOperation();
 
-    for (FuncOp func : module.getOps<FuncOp>()) {
+    for (auto func : module.getOps<FunctionOpInterface>()) {
       BitVector indicesToErase(func.getNumArguments());
       for (auto argIndex : llvm::seq<int>(0, func.getNumArguments()))
         if (func.getArgAttr(argIndex, "test.erase_this_arg"))
@@ -96,9 +105,11 @@ struct TestFuncEraseArg
   }
 };
 
-/// This is a test pass for verifying FuncOp's eraseResult method.
+/// This is a test pass for verifying FunctionOpInterface's eraseResult method.
 struct TestFuncEraseResult
     : public PassWrapper<TestFuncEraseResult, OperationPass<ModuleOp>> {
+  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(TestFuncEraseResult)
+
   StringRef getArgument() const final { return "test-func-erase-result"; }
   StringRef getDescription() const final {
     return "Test erasing func results.";
@@ -106,7 +117,7 @@ struct TestFuncEraseResult
   void runOnOperation() override {
     auto module = getOperation();
 
-    for (FuncOp func : module.getOps<FuncOp>()) {
+    for (auto func : module.getOps<FunctionOpInterface>()) {
       BitVector indicesToErase(func.getNumResults());
       for (auto resultIndex : llvm::seq<int>(0, func.getNumResults()))
         if (func.getResultAttr(resultIndex, "test.erase_this_result"))
@@ -116,20 +127,25 @@ struct TestFuncEraseResult
   }
 };
 
-/// This is a test pass for verifying FuncOp's setType method.
+/// This is a test pass for verifying FunctionOpInterface's setType method.
 struct TestFuncSetType
     : public PassWrapper<TestFuncSetType, OperationPass<ModuleOp>> {
+  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(TestFuncSetType)
+
   StringRef getArgument() const final { return "test-func-set-type"; }
-  StringRef getDescription() const final { return "Test FuncOp::setType."; }
+  StringRef getDescription() const final {
+    return "Test FunctionOpInterface::setType.";
+  }
   void runOnOperation() override {
     auto module = getOperation();
     SymbolTable symbolTable(module);
 
-    for (FuncOp func : module.getOps<FuncOp>()) {
+    for (auto func : module.getOps<FunctionOpInterface>()) {
       auto sym = func->getAttrOfType<FlatSymbolRefAttr>("test.set_type_from");
       if (!sym)
         continue;
-      func.setType(symbolTable.lookup<FuncOp>(sym.getValue()).getType());
+      func.setType(symbolTable.lookup<FunctionOpInterface>(sym.getValue())
+                       .getFunctionType());
     }
   }
 };

@@ -19,7 +19,6 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/ProfileData/InstrProf.h"
 #include "llvm/Transforms/Instrumentation.h"
-#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <vector>
@@ -57,6 +56,9 @@ private:
     }
   };
   DenseMap<GlobalVariable *, PerFunctionProfileData> ProfileDataMap;
+  /// If runtime relocation is enabled, this maps functions to the load
+  /// instruction that produces the profile relocation bias.
+  DenseMap<const Function *, LoadInst *> FunctionToProfileBiasMap;
   std::vector<GlobalValue *> CompilerUsedVars;
   std::vector<GlobalValue *> UsedVars;
   std::vector<GlobalVariable *> ReferencedNames;

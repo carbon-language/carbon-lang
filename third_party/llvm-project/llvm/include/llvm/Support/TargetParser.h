@@ -14,14 +14,14 @@
 #ifndef LLVM_SUPPORT_TARGETPARSER_H
 #define LLVM_SUPPORT_TARGETPARSER_H
 
+#include "llvm/ADT/StringRef.h"
+#include <cstdint>
 // FIXME: vector is used because that's what clang uses for subtarget feature
 // lists, but SmallVector would probably be better
-#include "llvm/Support/RISCVISAInfo.h"
 #include <vector>
 
 namespace llvm {
 
-class StringRef;
 template <typename T> class SmallVectorImpl;
 class Triple;
 
@@ -86,6 +86,7 @@ enum GPUKind : uint32_t {
   GK_GFX909 = 65,
   GK_GFX90A = 66,
   GK_GFX90C = 67,
+  GK_GFX940 = 68,
 
   GK_GFX1010 = 71,
   GK_GFX1011 = 72,
@@ -97,9 +98,15 @@ enum GPUKind : uint32_t {
   GK_GFX1033 = 78,
   GK_GFX1034 = 79,
   GK_GFX1035 = 80,
+  GK_GFX1036 = 81,
+
+  GK_GFX1100 = 90,
+  GK_GFX1101 = 91,
+  GK_GFX1102 = 92,
+  GK_GFX1103 = 93,
 
   GK_AMDGCN_FIRST = GK_GFX600,
-  GK_AMDGCN_LAST = GK_GFX1035,
+  GK_AMDGCN_LAST = GK_GFX1103,
 };
 
 /// Instruction set architecture version.

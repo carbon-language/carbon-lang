@@ -21,6 +21,7 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/MC/MCAsmBackend.h"
+#include "llvm/MC/MCDisassembler/MCSymbolizer.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrAnalysis.h"
@@ -44,6 +45,7 @@ class MCSymbol;
 class raw_ostream;
 
 namespace bolt {
+class BinaryFunction;
 
 /// Different types of indirect branches encountered during disassembly.
 enum class IndirectBranchType : char {
@@ -74,9 +76,9 @@ private:
   AllocatorIdTy MaxAllocatorId = 0;
 
   /// We encode Index and Value into a 64-bit immediate operand value.
-  static int64_t encodeAnnotationImm(unsigned Index, int64_t Value) {
-    assert(Index < 256 && "annotation index max value exceeded");
-    assert((Value == (Value << 8) >> 8) && "annotation value out of range");
+  static int64_t encodeAnnotationImm(uint8_t Index, int64_t Value) {
+    if (LLVM_UNLIKELY(Value != extractAnnotationValue(Value)))
+      report_fatal_error("annotation value out of range");
 
     Value &= 0xff'ffff'ffff'ffff;
     Value |= (int64_t)Index << 56;
@@ -85,14 +87,13 @@ private:
   }
 
   /// Extract annotation index from immediate operand value.
-  static unsigned extractAnnotationIndex(int64_t ImmValue) {
+  static uint8_t extractAnnotationIndex(int64_t ImmValue) {
     return ImmValue >> 56;
   }
 
   /// Extract annotation value from immediate operand value.
   static int64_t extractAnnotationValue(int64_t ImmValue) {
-    ImmValue &= 0xff'ffff'ffff'ffff;
-    return (ImmValue << 8) >> 8;
+    return SignExtend64<56>(ImmValue & 0xff'ffff'ffff'ffffULL);
   }
 
   MCInst *getAnnotationInst(const MCInst &Inst) const {
@@ -283,6 +284,14 @@ public:
     // Initialize the default annotation allocator with id 0
     AnnotationAllocators.emplace(0, AnnotationAllocator());
     MaxAllocatorId++;
+    // Build alias map
+    initAliases();
+  }
+
+  /// Create and return target-specific MC symbolizer for the \p Function.
+  virtual std::unique_ptr<MCSymbolizer>
+  createTargetSymbolizer(BinaryFunction &Function) const {
+    return nullptr;
   }
 
   /// Initialize a new annotation allocator and return its id
@@ -354,7 +363,7 @@ public:
   }
 
   virtual bool isUnconditionalBranch(const MCInst &Inst) const {
-    return Analysis->isUnconditionalBranch(Inst);
+    return Analysis->isUnconditionalBranch(Inst) && !isTailCall(Inst);
   }
 
   virtual bool isIndirectBranch(const MCInst &Inst) const {
@@ -425,9 +434,7 @@ public:
 
   /// Return a register number that is guaranteed to not match with
   /// any real register on the underlying architecture.
-  virtual MCPhysReg getNoRegister() const {
-    llvm_unreachable("not implemented");
-  }
+  MCPhysReg getNoRegister() const { return MCRegister::NoRegister; }
 
   /// Return a register corresponding to a function integer argument \p ArgNo
   /// if the argument is passed in a register. Or return the result of
@@ -514,22 +521,12 @@ public:
     return 0;
   }
 
-  virtual bool isADD64rr(const MCInst &Inst) const {
-    llvm_unreachable("not implemented");
-    return false;
-  }
-
   virtual bool isSUB(const MCInst &Inst) const {
     llvm_unreachable("not implemented");
     return false;
   }
 
   virtual bool isLEA64r(const MCInst &Inst) const {
-    llvm_unreachable("not implemented");
-    return false;
-  }
-
-  virtual bool isMOVSX64rm32(const MCInst &Inst) const {
     llvm_unreachable("not implemented");
     return false;
   }
@@ -920,12 +917,22 @@ public:
     return false;
   }
 
-  /// Use \p Input1 or Input2 as the current value for the input register and
-  /// put in \p Output the changes incurred by executing \p Inst. Return false
-  /// if it was not possible to perform the evaluation.
-  virtual bool evaluateSimple(const MCInst &Inst, int64_t &Output,
-                              std::pair<MCPhysReg, int64_t> Input1,
-                              std::pair<MCPhysReg, int64_t> Input2) const {
+  /// Use \p Input1 or Input2 as the current value for the input
+  /// register and put in \p Output the changes incurred by executing
+  /// \p Inst. Return false if it was not possible to perform the
+  /// evaluation. evaluateStackOffsetExpr is restricted to operations
+  /// that have associativity with addition. Its intended usage is for
+  /// evaluating stack offset changes. In these cases, expressions
+  /// appear in the form of (x + offset) OP constant, where x is an
+  /// unknown base (such as stack base) but offset and constant are
+  /// known. In these cases, \p Output represents the new stack offset
+  /// after executing \p Inst. Because we don't know x, we can't
+  /// evaluate operations such as multiply or AND/OR, e.g. (x +
+  /// offset) OP constant is not the same as x + (offset OP constant).
+  virtual bool
+  evaluateStackOffsetExpr(const MCInst &Inst, int64_t &Output,
+                          std::pair<MCPhysReg, int64_t> Input1,
+                          std::pair<MCPhysReg, int64_t> Input2) const {
     llvm_unreachable("not implemented");
     return false;
   }
@@ -1148,6 +1155,9 @@ public:
   virtual const BitVector &getAliases(MCPhysReg Reg,
                                       bool OnlySmaller = false) const;
 
+  /// Initialize aliases tables.
+  virtual void initAliases();
+
   /// Change \p Regs setting all registers used to pass parameters according
   /// to the host abi. Do nothing if not implemented.
   virtual BitVector getRegsUsedAsParams() const {
@@ -1290,7 +1300,18 @@ public:
 
   /// Replace instruction with a shorter version that could be relaxed later
   /// if needed.
-  virtual bool shortenInstruction(MCInst &Inst) const {
+  virtual bool shortenInstruction(MCInst &Inst,
+                                  const MCSubtargetInfo &STI) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Convert a move instruction into a conditional move instruction, given a
+  /// condition code.
+  virtual bool
+  convertMoveToConditionalMove(MCInst &Inst, unsigned CC,
+                               bool AllowStackMemOp = false,
+                               bool AllowBasePtrStackMemOp = false) const {
     llvm_unreachable("not implemented");
     return false;
   }
@@ -1326,6 +1347,16 @@ public:
                         const MCExpr *&DispExpr, MCInst *&PCRelBaseOut) const {
     llvm_unreachable("not implemented");
     return IndirectBranchType::UNKNOWN;
+  }
+
+  /// Analyze branch \p Instruction in PLT section and try to determine
+  /// associated got entry address.
+  virtual uint64_t analyzePLTEntry(MCInst &Instruction,
+                                   InstructionIterator Begin,
+                                   InstructionIterator End,
+                                   uint64_t BeginPC) const {
+    llvm_unreachable("not implemented");
+    return 0;
   }
 
   virtual bool analyzeVirtualMethodCall(InstructionIterator Begin,
@@ -1896,6 +1927,11 @@ public:
     llvm_unreachable("not implemented");
     return BlocksVectorTy();
   }
+
+  // AliasMap caches a mapping of registers to the set of registers that
+  // alias (are sub or superregs of itself, including itself).
+  std::vector<BitVector> AliasMap;
+  std::vector<BitVector> SmallerAliasMap;
 };
 
 MCPlusBuilder *createX86MCPlusBuilder(const MCInstrAnalysis *,

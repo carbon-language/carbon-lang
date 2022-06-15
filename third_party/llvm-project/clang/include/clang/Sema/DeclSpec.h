@@ -516,7 +516,8 @@ public:
   SourceLocation getTypeSpecSatLoc() const { return TSSatLoc; }
 
   SourceLocation getTypeSpecTypeNameLoc() const {
-    assert(isDeclRep((TST) TypeSpecType) || TypeSpecType == TST_typename);
+    assert(isDeclRep((TST)TypeSpecType) || isTypeRep((TST)TypeSpecType) ||
+           isExprRep((TST)TypeSpecType));
     return TSTNameLoc;
   }
 
@@ -786,7 +787,7 @@ public:
   /// int __attribute__((may_alias)) __attribute__((aligned(16))) var;
   /// \endcode
   ///
-  void addAttributes(ParsedAttributesView &AL) {
+  void addAttributes(const ParsedAttributesView &AL) {
     Attrs.addAll(AL.begin(), AL.end());
   }
 
@@ -1785,7 +1786,8 @@ enum class DeclaratorContext {
   TemplateTypeArg,     // Template type argument (in default argument).
   AliasDecl,           // C++11 alias-declaration.
   AliasTemplate,       // C++11 alias-declaration template.
-  RequiresExpr         // C++2a requires-expression.
+  RequiresExpr,        // C++2a requires-expression.
+  Association          // C11 _Generic selection expression association.
 };
 
 /// Information about one declarator, including the parsed type
@@ -2023,6 +2025,7 @@ public:
     case DeclaratorContext::TrailingReturn:
     case DeclaratorContext::TrailingReturnVar:
     case DeclaratorContext::RequiresExpr:
+    case DeclaratorContext::Association:
       return true;
     }
     llvm_unreachable("unknown context kind!");
@@ -2062,6 +2065,7 @@ public:
     case DeclaratorContext::TemplateTypeArg:
     case DeclaratorContext::TrailingReturn:
     case DeclaratorContext::TrailingReturnVar:
+    case DeclaratorContext::Association:
       return false;
     }
     llvm_unreachable("unknown context kind!");
@@ -2105,6 +2109,7 @@ public:
     case DeclaratorContext::TemplateTypeArg:
     case DeclaratorContext::TrailingReturn:
     case DeclaratorContext::TrailingReturnVar:
+    case DeclaratorContext::Association:
       return false;
     }
     llvm_unreachable("unknown context kind!");
@@ -2161,6 +2166,7 @@ public:
     case DeclaratorContext::TemplateTypeArg:
     case DeclaratorContext::TrailingReturn:
     case DeclaratorContext::RequiresExpr:
+    case DeclaratorContext::Association:
       return false;
     }
     llvm_unreachable("unknown context kind!");
@@ -2383,6 +2389,7 @@ public:
     case DeclaratorContext::TrailingReturn:
     case DeclaratorContext::TrailingReturnVar:
     case DeclaratorContext::RequiresExpr:
+    case DeclaratorContext::Association:
       return false;
     }
     llvm_unreachable("unknown context kind!");
@@ -2417,6 +2424,7 @@ public:
     case DeclaratorContext::TrailingReturnVar:
     case DeclaratorContext::TemplateTypeArg:
     case DeclaratorContext::RequiresExpr:
+    case DeclaratorContext::Association:
       return false;
 
     case DeclaratorContext::Block:
@@ -2513,11 +2521,11 @@ public:
   ///                                 __attribute__((common,deprecated));
   ///
   /// Also extends the range of the declarator.
-  void takeAttributes(ParsedAttributes &attrs, SourceLocation lastLoc) {
+  void takeAttributes(ParsedAttributes &attrs) {
     Attrs.takeAllFrom(attrs);
 
-    if (!lastLoc.isInvalid())
-      SetRangeEnd(lastLoc);
+    if (attrs.Range.getEnd().isValid())
+      SetRangeEnd(attrs.Range.getEnd());
   }
 
   const ParsedAttributes &getAttributes() const { return Attrs; }

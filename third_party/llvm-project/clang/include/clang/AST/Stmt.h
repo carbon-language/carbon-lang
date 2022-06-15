@@ -128,10 +128,7 @@ protected:
 
     unsigned : NumStmtBits;
 
-    unsigned NumStmts : 32 - NumStmtBits;
-
-    /// The location of the opening "{".
-    SourceLocation LBraceLoc;
+    unsigned NumStmts;
   };
 
   class LabelStmtBitfields {
@@ -594,8 +591,8 @@ protected:
     unsigned : NumExprBits;
 
     /// The kind of source location builtin represented by the SourceLocExpr.
-    /// Ex. __builtin_LINE, __builtin_FUNCTION, ect.
-    unsigned Kind : 2;
+    /// Ex. __builtin_LINE, __builtin_FUNCTION, etc.
+    unsigned Kind : 3;
   };
 
   class StmtExprBitfields {
@@ -1244,7 +1241,7 @@ public:
   }
 
   /// Child Iterators: All subclasses must implement 'children'
-  /// to permit easy iteration over the substatements/subexpessions of an
+  /// to permit easy iteration over the substatements/subexpressions of an
   /// AST node.  This permits easy iteration over all nodes in the AST.
   using child_iterator = StmtIterator;
   using const_child_iterator = ConstStmtIterator;
@@ -1406,7 +1403,10 @@ class CompoundStmt final : public Stmt,
   friend class ASTStmtReader;
   friend TrailingObjects;
 
-  /// The location of the closing "}". LBraceLoc is stored in CompoundStmtBits.
+  /// The location of the opening "{".
+  SourceLocation LBraceLoc;
+
+  /// The location of the closing "}".
   SourceLocation RBraceLoc;
 
   CompoundStmt(ArrayRef<Stmt *> Stmts, SourceLocation LB, SourceLocation RB);
@@ -1420,9 +1420,8 @@ public:
 
   // Build an empty compound statement with a location.
   explicit CompoundStmt(SourceLocation Loc)
-      : Stmt(CompoundStmtClass), RBraceLoc(Loc) {
+      : Stmt(CompoundStmtClass), LBraceLoc(Loc), RBraceLoc(Loc) {
     CompoundStmtBits.NumStmts = 0;
-    CompoundStmtBits.LBraceLoc = Loc;
   }
 
   // Build an empty compound statement.
@@ -1505,10 +1504,10 @@ public:
     return const_cast<CompoundStmt *>(this)->getStmtExprResult();
   }
 
-  SourceLocation getBeginLoc() const { return CompoundStmtBits.LBraceLoc; }
+  SourceLocation getBeginLoc() const { return LBraceLoc; }
   SourceLocation getEndLoc() const { return RBraceLoc; }
 
-  SourceLocation getLBracLoc() const { return CompoundStmtBits.LBraceLoc; }
+  SourceLocation getLBracLoc() const { return LBraceLoc; }
   SourceLocation getRBracLoc() const { return RBraceLoc; }
 
   static bool classof(const Stmt *T) {

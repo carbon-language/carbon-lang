@@ -27,7 +27,7 @@ using namespace llvm;
 namespace llvm {
 // Use FS-AFDO discriminator.
 cl::opt<bool> EnableFSDiscriminator(
-    "enable-fs-discriminator", cl::Hidden, cl::init(false),
+    "enable-fs-discriminator", cl::Hidden,
     cl::desc("Enable adding flow sensitive discriminators"));
 } // namespace llvm
 
@@ -78,8 +78,8 @@ DILocation *DILocation::getImpl(LLVMContext &Context, unsigned Line,
   Ops.push_back(Scope);
   if (InlinedAt)
     Ops.push_back(InlinedAt);
-  return storeImpl(new (Ops.size()) DILocation(Context, Storage, Line, Column,
-                                               Ops, ImplicitCode),
+  return storeImpl(new (Ops.size(), Storage) DILocation(
+                       Context, Storage, Line, Column, Ops, ImplicitCode),
                    Storage, Context.pImpl->DILocations);
 }
 
@@ -304,7 +304,7 @@ GenericDINode *GenericDINode::getImpl(LLVMContext &Context, unsigned Tag,
   // Use a nullptr for empty headers.
   assert(isCanonical(Header) && "Expected canonical MDString");
   Metadata *PreOps[] = {Header};
-  return storeImpl(new (DwarfOps.size() + 1) GenericDINode(
+  return storeImpl(new (DwarfOps.size() + 1, Storage) GenericDINode(
                        Context, Storage, Hash, Tag, PreOps, DwarfOps),
                    Storage, Context.pImpl->GenericDINodes);
 }
@@ -329,17 +329,19 @@ void GenericDINode::recalculateHash() {
     }                                                                          \
   } while (false)
 #define DEFINE_GETIMPL_STORE(CLASS, ARGS, OPS)                                 \
-  return storeImpl(new (array_lengthof(OPS))                                   \
+  return storeImpl(new (array_lengthof(OPS), Storage)                          \
                        CLASS(Context, Storage, UNWRAP_ARGS(ARGS), OPS),        \
                    Storage, Context.pImpl->CLASS##s)
 #define DEFINE_GETIMPL_STORE_NO_OPS(CLASS, ARGS)                               \
-  return storeImpl(new (0u) CLASS(Context, Storage, UNWRAP_ARGS(ARGS)),        \
+  return storeImpl(new (0u, Storage)                                           \
+                       CLASS(Context, Storage, UNWRAP_ARGS(ARGS)),             \
                    Storage, Context.pImpl->CLASS##s)
 #define DEFINE_GETIMPL_STORE_NO_CONSTRUCTOR_ARGS(CLASS, OPS)                   \
-  return storeImpl(new (array_lengthof(OPS)) CLASS(Context, Storage, OPS),     \
+  return storeImpl(new (array_lengthof(OPS), Storage)                          \
+                       CLASS(Context, Storage, OPS),                           \
                    Storage, Context.pImpl->CLASS##s)
 #define DEFINE_GETIMPL_STORE_N(CLASS, ARGS, OPS, NUM_OPS)                      \
-  return storeImpl(new (NUM_OPS)                                               \
+  return storeImpl(new (NUM_OPS, Storage)                                      \
                        CLASS(Context, Storage, UNWRAP_ARGS(ARGS), OPS),        \
                    Storage, Context.pImpl->CLASS##s)
 
@@ -848,7 +850,7 @@ DICompileUnit *DICompileUnit::getImpl(
                      Macros,
                      SysRoot,
                      SDK};
-  return storeImpl(new (array_lengthof(Ops)) DICompileUnit(
+  return storeImpl(new (array_lengthof(Ops), Storage) DICompileUnit(
                        Context, Storage, SourceLanguage, IsOptimized,
                        RuntimeVersion, EmissionKind, DWOId, SplitDebugInlining,
                        DebugInfoForProfiling, NameTableKind, RangesBaseAddress,
@@ -978,27 +980,33 @@ DISubprogram *DISubprogram::getImpl(
     unsigned ScopeLine, Metadata *ContainingType, unsigned VirtualIndex,
     int ThisAdjustment, DIFlags Flags, DISPFlags SPFlags, Metadata *Unit,
     Metadata *TemplateParams, Metadata *Declaration, Metadata *RetainedNodes,
-    Metadata *ThrownTypes, Metadata *Annotations, StorageType Storage,
-    bool ShouldCreate) {
+    Metadata *ThrownTypes, Metadata *Annotations, MDString *TargetFuncName,
+    StorageType Storage, bool ShouldCreate) {
   assert(isCanonical(Name) && "Expected canonical MDString");
   assert(isCanonical(LinkageName) && "Expected canonical MDString");
+  assert(isCanonical(TargetFuncName) && "Expected canonical MDString");
   DEFINE_GETIMPL_LOOKUP(DISubprogram,
                         (Scope, Name, LinkageName, File, Line, Type, ScopeLine,
                          ContainingType, VirtualIndex, ThisAdjustment, Flags,
                          SPFlags, Unit, TemplateParams, Declaration,
-                         RetainedNodes, ThrownTypes, Annotations));
-  SmallVector<Metadata *, 12> Ops = {
+                         RetainedNodes, ThrownTypes, Annotations,
+                         TargetFuncName));
+  SmallVector<Metadata *, 13> Ops = {
       File,           Scope,          Name,        LinkageName,
       Type,           Unit,           Declaration, RetainedNodes,
-      ContainingType, TemplateParams, ThrownTypes, Annotations};
-  if (!Annotations) {
+      ContainingType, TemplateParams, ThrownTypes, Annotations,
+      TargetFuncName};
+  if (!TargetFuncName) {
     Ops.pop_back();
-    if (!ThrownTypes) {
+    if (!Annotations) {
       Ops.pop_back();
-      if (!TemplateParams) {
+      if (!ThrownTypes) {
         Ops.pop_back();
-        if (!ContainingType)
+        if (!TemplateParams) {
           Ops.pop_back();
+          if (!ContainingType)
+            Ops.pop_back();
+        }
       }
     }
   }

@@ -28,6 +28,7 @@
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/ValueObjectUpdater.h"
 #include "lldb/Host/File.h"
+#include "lldb/Utility/AnsiTerminal.h"
 #include "lldb/Utility/Predicate.h"
 #include "lldb/Utility/Status.h"
 #include "lldb/Utility/StreamString.h"
@@ -341,7 +342,7 @@ public:
 
 protected:
   StringList m_text;
-  int m_first_visible_line;
+  int m_first_visible_line = 0;
 };
 
 // A surface is an abstraction for something than can be drawn on. The surface
@@ -352,7 +353,7 @@ class Surface {
 public:
   enum class Type { Window, Pad };
 
-  Surface(Surface::Type type) : m_type(type), m_window(nullptr) {}
+  Surface(Surface::Type type) : m_type(type) {}
 
   WINDOW *get() { return m_window; }
 
@@ -495,7 +496,7 @@ public:
     if (use_blue_background)
       ::wattron(m_window, COLOR_PAIR(WhiteOnBlue));
     while (!string.empty()) {
-      size_t esc_pos = string.find('\x1b');
+      size_t esc_pos = string.find(ANSI_ESC_START);
       if (esc_pos == StringRef::npos) {
         string = string.substr(skip_first_count);
         if (!string.empty()) {
@@ -517,36 +518,36 @@ public:
           string = string.drop_front(esc_pos);
         }
       }
-      bool consumed = string.consume_front("\x1b");
+      bool consumed = string.consume_front(ANSI_ESC_START);
       assert(consumed);
       UNUSED_IF_ASSERT_DISABLED(consumed);
       // This is written to match our Highlighter classes, which seem to
       // generate only foreground color escape sequences. If necessary, this
       // will need to be extended.
-      if (!string.consume_front("[")) {
-        llvm::errs() << "Missing '[' in color escape sequence.\n";
-        continue;
-      }
-      // Only 8 basic foreground colors and reset, our Highlighter doesn't use
-      // anything else.
+      // Only 8 basic foreground colors, underline and reset, our Highlighter
+      // doesn't use anything else.
       int value;
       if (!!string.consumeInteger(10, value) || // Returns false on success.
-          !(value == 0 || (value >= 30 && value <= 37))) {
+          !(value == 0 || value == ANSI_CTRL_UNDERLINE ||
+            (value >= ANSI_FG_COLOR_BLACK && value <= ANSI_FG_COLOR_WHITE))) {
         llvm::errs() << "No valid color code in color escape sequence.\n";
         continue;
       }
-      if (!string.consume_front("m")) {
-        llvm::errs() << "Missing 'm' in color escape sequence.\n";
+      if (!string.consume_front(ANSI_ESC_END)) {
+        llvm::errs() << "Missing '" << ANSI_ESC_END
+                     << "' in color escape sequence.\n";
         continue;
       }
       if (value == 0) { // Reset.
         wattr_set(m_window, saved_attr, saved_pair, nullptr);
         if (use_blue_background)
           ::wattron(m_window, COLOR_PAIR(WhiteOnBlue));
+      } else if (value == ANSI_CTRL_UNDERLINE) {
+        ::wattron(m_window, A_UNDERLINE);
       } else {
         // Mapped directly to first 16 color pairs (black/blue background).
-        ::wattron(m_window,
-                  COLOR_PAIR(value - 30 + 1 + (use_blue_background ? 8 : 0)));
+        ::wattron(m_window, COLOR_PAIR(value - ANSI_FG_COLOR_BLACK + 1 +
+                                       (use_blue_background ? 8 : 0)));
       }
     }
     wattr_set(m_window, saved_attr, saved_pair, nullptr);
@@ -555,7 +556,7 @@ public:
 
 protected:
   Type m_type;
-  WINDOW *m_window;
+  WINDOW *m_window = nullptr;
 };
 
 class Pad : public Surface {
@@ -1076,8 +1077,7 @@ typedef std::unique_ptr<FieldDelegate> FieldDelegateUP;
 class TextFieldDelegate : public FieldDelegate {
 public:
   TextFieldDelegate(const char *label, const char *content, bool required)
-      : m_label(label), m_required(required), m_cursor_position(0),
-        m_first_visibile_char(0) {
+      : m_label(label), m_required(required) {
     if (content)
       m_content = content;
   }
@@ -1325,9 +1325,9 @@ protected:
   std::string m_content;
   // The cursor position in the content string itself. Can be in the range
   // [0, GetContentLength()].
-  int m_cursor_position;
+  int m_cursor_position = 0;
   // The index of the first visible character in the content.
-  int m_first_visibile_char;
+  int m_first_visibile_char = 0;
   // Optional error message. If empty, field is considered to have no error.
   std::string m_error;
 };
@@ -1515,7 +1515,7 @@ public:
   ChoicesFieldDelegate(const char *label, int number_of_visible_choices,
                        std::vector<std::string> choices)
       : m_label(label), m_number_of_visible_choices(number_of_visible_choices),
-        m_choices(choices), m_choice(0), m_first_visibile_choice(0) {}
+        m_choices(choices) {}
 
   // Choices fields are drawn as titles boxses of a number of visible choices.
   // The rest of the choices become visible as the user scroll. The selected
@@ -1609,7 +1609,7 @@ public:
   // Returns the index of the choice.
   int GetChoice() { return m_choice; }
 
-  void SetChoice(const std::string &choice) {
+  void SetChoice(llvm::StringRef choice) {
     for (int i = 0; i < GetNumberOfChoices(); i++) {
       if (choice == m_choices[i]) {
         m_choice = i;
@@ -1623,9 +1623,9 @@ protected:
   int m_number_of_visible_choices;
   std::vector<std::string> m_choices;
   // The index of the selected choice.
-  int m_choice;
+  int m_choice = 0;
   // The index of the first visible choice in the field.
-  int m_first_visibile_choice;
+  int m_first_visibile_choice = 0;
 };
 
 class PlatformPluginFieldDelegate : public ChoicesFieldDelegate {
@@ -1634,7 +1634,7 @@ public:
       : ChoicesFieldDelegate("Platform Plugin", 3, GetPossiblePluginNames()) {
     PlatformSP platform_sp = debugger.GetPlatformList().GetSelectedPlatform();
     if (platform_sp)
-      SetChoice(platform_sp->GetName().AsCString());
+      SetChoice(platform_sp->GetPluginName());
   }
 
   std::vector<std::string> GetPossiblePluginNames() {
@@ -1707,7 +1707,7 @@ public:
 template <class T> class ListFieldDelegate : public FieldDelegate {
 public:
   ListFieldDelegate(const char *label, T default_field)
-      : m_label(label), m_default_field(default_field), m_selection_index(0),
+      : m_label(label), m_default_field(default_field),
         m_selection_type(SelectionType::NewButton) {}
 
   // Signify which element is selected. If a field or a remove button is
@@ -2011,7 +2011,7 @@ protected:
   // created though a copy.
   T m_default_field;
   std::vector<T> m_fields;
-  int m_selection_index;
+  int m_selection_index = 0;
   // See SelectionType class enum.
   SelectionType m_selection_type;
 };
@@ -2283,7 +2283,7 @@ protected:
 
 class FormDelegate {
 public:
-  FormDelegate() {}
+  FormDelegate() = default;
 
   virtual ~FormDelegate() = default;
 
@@ -2465,9 +2465,7 @@ typedef std::shared_ptr<FormDelegate> FormDelegateSP;
 
 class FormWindowDelegate : public WindowDelegate {
 public:
-  FormWindowDelegate(FormDelegateSP &delegate_sp)
-      : m_delegate_sp(delegate_sp), m_selection_index(0),
-        m_first_visible_line(0) {
+  FormWindowDelegate(FormDelegateSP &delegate_sp) : m_delegate_sp(delegate_sp) {
     assert(m_delegate_sp->GetNumberOfActions() > 0);
     if (m_delegate_sp->GetNumberOfFields() > 0)
       m_selection_type = SelectionType::Field;
@@ -2856,11 +2854,11 @@ public:
 protected:
   FormDelegateSP m_delegate_sp;
   // The index of the currently selected SelectionType.
-  int m_selection_index;
+  int m_selection_index = 0;
   // See SelectionType class enum.
   SelectionType m_selection_type;
   // The first visible line from the pad.
-  int m_first_visible_line;
+  int m_first_visible_line = 0;
 };
 
 ///////////////////////////
@@ -3647,7 +3645,7 @@ protected:
 
 class SearcherDelegate {
 public:
-  SearcherDelegate() {}
+  SearcherDelegate() = default;
 
   virtual ~SearcherDelegate() = default;
 
@@ -3670,8 +3668,7 @@ typedef std::shared_ptr<SearcherDelegate> SearcherDelegateSP;
 class SearcherWindowDelegate : public WindowDelegate {
 public:
   SearcherWindowDelegate(SearcherDelegateSP &delegate_sp)
-      : m_delegate_sp(delegate_sp), m_text_field("Search", "", false),
-        m_selected_match(0), m_first_visible_match(0) {
+      : m_delegate_sp(delegate_sp), m_text_field("Search", "", false) {
     ;
   }
 
@@ -3811,9 +3808,9 @@ protected:
   SearcherDelegateSP m_delegate_sp;
   TextFieldDelegate m_text_field;
   // The index of the currently selected match.
-  int m_selected_match;
+  int m_selected_match = 0;
   // The index of the first visible match.
-  int m_first_visible_match;
+  int m_first_visible_match = 0;
 };
 
 //////////////////////////////
@@ -4266,8 +4263,7 @@ HandleCharResult Menu::WindowDelegateHandleChar(Window &window, int key) {
 
 class Application {
 public:
-  Application(FILE *in, FILE *out)
-      : m_window_sp(), m_screen(nullptr), m_in(in), m_out(out) {}
+  Application(FILE *in, FILE *out) : m_window_sp(), m_in(in), m_out(out) {}
 
   ~Application() {
     m_window_delegates.clear();
@@ -4475,7 +4471,7 @@ public:
 protected:
   WindowSP m_window_sp;
   WindowDelegates m_window_delegates;
-  SCREEN *m_screen;
+  SCREEN *m_screen = nullptr;
   FILE *m_in;
   FILE *m_out;
   bool m_update_screen = false;
@@ -4541,7 +4537,8 @@ struct Row {
     if (parent)
       parent->DrawTreeForChild(window, this, 0);
 
-    if (might_have_children) {
+    if (might_have_children &&
+        (!calculated_children || !GetChildren().empty())) {
       // It we can get UTF8 characters to work we should try to use the
       // "symbol" UTF8 string below
       //            const char *symbol = "";
@@ -4619,9 +4616,8 @@ typedef std::shared_ptr<TreeDelegate> TreeDelegateSP;
 class TreeItem {
 public:
   TreeItem(TreeItem *parent, TreeDelegate &delegate, bool might_have_children)
-      : m_parent(parent), m_delegate(delegate), m_user_data(nullptr),
-        m_identifier(0), m_row_idx(-1), m_children(),
-        m_might_have_children(might_have_children), m_is_expanded(false) {
+      : m_parent(parent), m_delegate(delegate), m_children(),
+        m_might_have_children(might_have_children) {
     if (m_parent == nullptr)
       m_is_expanded = m_delegate.TreeDelegateExpandRootByDefault();
   }
@@ -4816,23 +4812,21 @@ public:
 protected:
   TreeItem *m_parent;
   TreeDelegate &m_delegate;
-  void *m_user_data;
-  uint64_t m_identifier;
+  void *m_user_data = nullptr;
+  uint64_t m_identifier = 0;
   std::string m_text;
-  int m_row_idx; // Zero based visible row index, -1 if not visible or for the
-                 // root item
+  int m_row_idx = -1; // Zero based visible row index, -1 if not visible or for
+                      // the root item
   std::vector<TreeItem> m_children;
   bool m_might_have_children;
-  bool m_is_expanded;
+  bool m_is_expanded = false;
 };
 
 class TreeWindowDelegate : public WindowDelegate {
 public:
   TreeWindowDelegate(Debugger &debugger, const TreeDelegateSP &delegate_sp)
       : m_debugger(debugger), m_delegate_sp(delegate_sp),
-        m_root(nullptr, *delegate_sp, true), m_selected_item(nullptr),
-        m_num_rows(0), m_selected_row_idx(0), m_first_visible_row(0),
-        m_min_x(0), m_min_y(0), m_max_x(0), m_max_y(0) {}
+        m_root(nullptr, *delegate_sp, true) {}
 
   int NumVisibleRows() const { return m_max_y - m_min_y; }
 
@@ -4992,14 +4986,14 @@ protected:
   Debugger &m_debugger;
   TreeDelegateSP m_delegate_sp;
   TreeItem m_root;
-  TreeItem *m_selected_item;
-  int m_num_rows;
-  int m_selected_row_idx;
-  int m_first_visible_row;
-  int m_min_x;
-  int m_min_y;
-  int m_max_x;
-  int m_max_y;
+  TreeItem *m_selected_item = nullptr;
+  int m_num_rows = 0;
+  int m_selected_row_idx = 0;
+  int m_first_visible_row = 0;
+  int m_min_x = 0;
+  int m_min_y = 0;
+  int m_max_x = 0;
+  int m_max_y = 0;
 };
 
 // A tree delegate that just draws the text member of the tree item, it doesn't
@@ -5023,8 +5017,7 @@ class FrameTreeDelegate : public TreeDelegate {
 public:
   FrameTreeDelegate() : TreeDelegate() {
     FormatEntity::Parse(
-        "frame #${frame.index}: {${function.name}${function.pc-offset}}}",
-        m_format);
+        "#${frame.index}: {${function.name}${function.pc-offset}}}", m_format);
   }
 
   ~FrameTreeDelegate() override = default;
@@ -5071,8 +5064,7 @@ protected:
 class ThreadTreeDelegate : public TreeDelegate {
 public:
   ThreadTreeDelegate(Debugger &debugger)
-      : TreeDelegate(), m_debugger(debugger), m_tid(LLDB_INVALID_THREAD_ID),
-        m_stop_id(UINT32_MAX) {
+      : TreeDelegate(), m_debugger(debugger) {
     FormatEntity::Parse("thread #${thread.index}: tid = ${thread.id}{, stop "
                         "reason = ${thread.stop-reason}}",
                         m_format);
@@ -5161,16 +5153,15 @@ public:
 protected:
   Debugger &m_debugger;
   std::shared_ptr<FrameTreeDelegate> m_frame_delegate_sp;
-  lldb::user_id_t m_tid;
-  uint32_t m_stop_id;
+  lldb::user_id_t m_tid = LLDB_INVALID_THREAD_ID;
+  uint32_t m_stop_id = UINT32_MAX;
   FormatEntity::Entry m_format;
 };
 
 class ThreadsTreeDelegate : public TreeDelegate {
 public:
   ThreadsTreeDelegate(Debugger &debugger)
-      : TreeDelegate(), m_thread_delegate_sp(), m_debugger(debugger),
-        m_stop_id(UINT32_MAX), m_update_selection(false) {
+      : TreeDelegate(), m_thread_delegate_sp(), m_debugger(debugger) {
     FormatEntity::Parse("process ${process.id}{, name = ${process.name}}",
                         m_format);
   }
@@ -5280,8 +5271,8 @@ public:
 protected:
   std::shared_ptr<ThreadTreeDelegate> m_thread_delegate_sp;
   Debugger &m_debugger;
-  uint32_t m_stop_id;
-  bool m_update_selection;
+  uint32_t m_stop_id = UINT32_MAX;
+  bool m_update_selection = false;
   FormatEntity::Entry m_format;
 };
 
@@ -5523,9 +5514,7 @@ class ValueObjectListDelegate : public WindowDelegate {
 public:
   ValueObjectListDelegate() : m_rows() {}
 
-  ValueObjectListDelegate(ValueObjectList &valobj_list)
-      : m_rows(), m_selected_row(nullptr), m_selected_row_idx(0),
-        m_first_visible_row(0), m_num_rows(0), m_max_x(0), m_max_y(0) {
+  ValueObjectListDelegate(ValueObjectList &valobj_list) : m_rows() {
     SetValues(valobj_list);
   }
 
@@ -5836,9 +5825,11 @@ protected:
         ++m_num_rows;
       }
 
-      auto &children = row.GetChildren();
-      if (row.expanded && !children.empty()) {
-        DisplayRows(window, children, options);
+      if (row.expanded) {
+        auto &children = row.GetChildren();
+        if (!children.empty()) {
+          DisplayRows(window, children, options);
+        }
       }
     }
   }
@@ -5859,11 +5850,13 @@ protected:
         return &row;
       else {
         --row_index;
-        auto &children = row.GetChildren();
-        if (row.expanded && !children.empty()) {
-          Row *result = GetRowForRowIndexImpl(children, row_index);
-          if (result)
-            return result;
+        if (row.expanded) {
+          auto &children = row.GetChildren();
+          if (!children.empty()) {
+            Row *result = GetRowForRowIndexImpl(children, row_index);
+            if (result)
+              return result;
+          }
         }
       }
     }
@@ -5882,8 +5875,7 @@ protected:
 class FrameVariablesWindowDelegate : public ValueObjectListDelegate {
 public:
   FrameVariablesWindowDelegate(Debugger &debugger)
-      : ValueObjectListDelegate(), m_debugger(debugger),
-        m_frame_block(nullptr) {}
+      : ValueObjectListDelegate(), m_debugger(debugger) {}
 
   ~FrameVariablesWindowDelegate() override = default;
 
@@ -5944,7 +5936,7 @@ public:
 
 protected:
   Debugger &m_debugger;
-  Block *m_frame_block;
+  Block *m_frame_block = nullptr;
 };
 
 class RegistersWindowDelegate : public ValueObjectListDelegate {
@@ -6198,7 +6190,7 @@ static const char *CursesKeyToCString(int ch) {
 
 HelpDialogDelegate::HelpDialogDelegate(const char *text,
                                        KeyHelp *key_help_array)
-    : m_text(), m_first_visible_line(0) {
+    : m_text() {
   if (text && text[0]) {
     m_text.SplitIntoLines(text);
     m_text.AppendString("");
@@ -6415,8 +6407,11 @@ public:
       if (exe_ctx.HasThreadScope()) {
         Process *process = exe_ctx.GetProcessPtr();
         if (process && process->IsAlive() &&
-            StateIsStoppedState(process->GetState(), true))
-          exe_ctx.GetThreadRef().StepOut();
+            StateIsStoppedState(process->GetState(), true)) {
+          Thread *thread = exe_ctx.GetThreadPtr();
+          uint32_t frame_idx = thread->GetSelectedFrameIndex();
+          exe_ctx.GetThreadRef().StepOut(frame_idx);
+        }
       }
     }
       return MenuActionResult::Handled;
@@ -6762,11 +6757,7 @@ class SourceFileWindowDelegate : public WindowDelegate {
 public:
   SourceFileWindowDelegate(Debugger &debugger)
       : WindowDelegate(), m_debugger(debugger), m_sc(), m_file_sp(),
-        m_disassembly_scope(nullptr), m_disassembly_sp(), m_disassembly_range(),
-        m_title(), m_tid(LLDB_INVALID_THREAD_ID), m_line_width(4),
-        m_selected_line(0), m_pc_line(0), m_stop_id(0), m_frame_idx(UINT32_MAX),
-        m_first_visible_line(0), m_first_visible_column(0), m_min_x(0),
-        m_min_y(0), m_max_x(0), m_max_y(0) {}
+        m_disassembly_sp(), m_disassembly_range(), m_title() {}
 
   ~SourceFileWindowDelegate() override = default;
 
@@ -6994,9 +6985,6 @@ public:
         }
       }
 
-      const attr_t selected_highlight_attr = A_REVERSE;
-      const attr_t pc_highlight_attr = COLOR_PAIR(BlackOnBlue);
-
       for (size_t i = 0; i < num_visible_lines; ++i) {
         const uint32_t curr_line = m_first_visible_line + i;
         if (curr_line < num_source_lines) {
@@ -7004,14 +6992,13 @@ public:
           window.MoveCursor(1, line_y);
           const bool is_pc_line = curr_line == m_pc_line;
           const bool line_is_selected = m_selected_line == curr_line;
-          // Highlight the line as the PC line first, then if the selected
-          // line isn't the same as the PC line, highlight it differently
+          // Highlight the line as the PC line first (done by passing
+          // argument to OutputColoredStringTruncated()), then if the selected
+          // line isn't the same as the PC line, highlight it differently.
           attr_t highlight_attr = 0;
           attr_t bp_attr = 0;
-          if (is_pc_line)
-            highlight_attr = pc_highlight_attr;
-          else if (line_is_selected)
-            highlight_attr = selected_highlight_attr;
+          if (line_is_selected && !is_pc_line)
+            highlight_attr = A_REVERSE;
 
           if (bp_lines.find(curr_line + 1) != bp_lines.end())
             bp_attr = COLOR_PAIR(BlackOnWhite);
@@ -7035,14 +7022,19 @@ public:
             window.AttributeOn(highlight_attr);
 
           StreamString lineStream;
-          m_file_sp->DisplaySourceLines(curr_line + 1, {}, 0, 0, &lineStream);
+
+          llvm::Optional<size_t> column;
+          if (is_pc_line && m_sc.line_entry.IsValid() && m_sc.line_entry.column)
+            column = m_sc.line_entry.column - 1;
+          m_file_sp->DisplaySourceLines(curr_line + 1, column, 0, 0,
+                                        &lineStream);
           StringRef line = lineStream.GetString();
           if (line.endswith("\n"))
             line = line.drop_back();
           bool wasWritten = window.OutputColoredStringTruncated(
-              1, line, m_first_visible_column, line_is_selected);
-          if (line_is_selected && !wasWritten) {
-            // Draw an empty space to show the selected line if empty,
+              1, line, m_first_visible_column, is_pc_line);
+          if (!wasWritten && (line_is_selected || is_pc_line)) {
+            // Draw an empty space to show the selected/PC line if empty,
             // or draw '<' if nothing is visible because of scrolling too much
             // to the right.
             window.PutCStringTruncated(
@@ -7377,7 +7369,9 @@ public:
             m_debugger.GetCommandInterpreter().GetExecutionContext();
         if (exe_ctx.HasThreadScope() &&
             StateIsStoppedState(exe_ctx.GetProcessRef().GetState(), true)) {
-          exe_ctx.GetThreadRef().StepOut();
+          Thread *thread = exe_ctx.GetThreadPtr();
+          uint32_t frame_idx = thread->GetSelectedFrameIndex();
+          exe_ctx.GetThreadRef().StepOut(frame_idx);
         }
       }
       return eKeyHandled;
@@ -7524,22 +7518,22 @@ protected:
   Debugger &m_debugger;
   SymbolContext m_sc;
   SourceManager::FileSP m_file_sp;
-  SymbolContextScope *m_disassembly_scope;
+  SymbolContextScope *m_disassembly_scope = nullptr;
   lldb::DisassemblerSP m_disassembly_sp;
   AddressRange m_disassembly_range;
   StreamString m_title;
-  lldb::user_id_t m_tid;
-  int m_line_width;
-  uint32_t m_selected_line; // The selected line
-  uint32_t m_pc_line;       // The line with the PC
-  uint32_t m_stop_id;
-  uint32_t m_frame_idx;
-  int m_first_visible_line;
-  int m_first_visible_column;
-  int m_min_x;
-  int m_min_y;
-  int m_max_x;
-  int m_max_y;
+  lldb::user_id_t m_tid = LLDB_INVALID_THREAD_ID;
+  int m_line_width = 4;
+  uint32_t m_selected_line = 0; // The selected line
+  uint32_t m_pc_line = 0;       // The line with the PC
+  uint32_t m_stop_id = 0;
+  uint32_t m_frame_idx = UINT32_MAX;
+  int m_first_visible_line = 0;
+  int m_first_visible_column = 0;
+  int m_min_x = 0;
+  int m_min_y = 0;
+  int m_max_x = 0;
+  int m_max_y = 0;
 };
 
 DisplayOptions ValueObjectListDelegate::g_options = {true};
@@ -7682,14 +7676,6 @@ void IOHandlerCursesGUI::Activate() {
     status_window_sp->SetDelegate(
         WindowDelegateSP(new StatusBarWindowDelegate(m_debugger)));
 
-    // Show the main help window once the first time the curses GUI is
-    // launched
-    static bool g_showed_help = false;
-    if (!g_showed_help) {
-      g_showed_help = true;
-      main_window_sp->CreateHelpSubwindow();
-    }
-
     // All colors with black background.
     init_pair(1, COLOR_BLACK, COLOR_BLACK);
     init_pair(2, COLOR_RED, COLOR_BLACK);
@@ -7729,7 +7715,9 @@ IOHandlerCursesGUI::~IOHandlerCursesGUI() = default;
 
 void IOHandlerCursesGUI::Cancel() {}
 
-bool IOHandlerCursesGUI::Interrupt() { return false; }
+bool IOHandlerCursesGUI::Interrupt() {
+  return m_debugger.GetCommandInterpreter().IOHandlerInterrupt(*this);
+}
 
 void IOHandlerCursesGUI::GotEOF() {}
 

@@ -10,11 +10,15 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <algorithm>
 #include <cstdint>
+#include <memory>
 #include <type_traits>
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/DebugInfo/Symbolize/SymbolizableModule.h"
 #include "llvm/DebugInfo/Symbolize/SymbolizableObjectFile.h"
@@ -26,39 +30,17 @@
 #include "llvm/ProfileData/MemProfData.inc"
 #include "llvm/ProfileData/RawMemProfReader.h"
 #include "llvm/Support/Endian.h"
-#include "llvm/Support/MD5.h"
+#include "llvm/Support/Path.h"
 
 #define DEBUG_TYPE "memprof"
 
 namespace llvm {
 namespace memprof {
 namespace {
-
-struct Summary {
-  uint64_t Version;
-  uint64_t TotalSizeBytes;
-  uint64_t NumSegments;
-  uint64_t NumMIBInfo;
-  uint64_t NumStackOffsets;
-};
-
 template <class T = uint64_t> inline T alignedRead(const char *Ptr) {
   static_assert(std::is_pod<T>::value, "Not a pod type.");
   assert(reinterpret_cast<size_t>(Ptr) % sizeof(T) == 0 && "Unaligned Read");
   return *reinterpret_cast<const T *>(Ptr);
-}
-
-Summary computeSummary(const char *Start) {
-  auto *H = reinterpret_cast<const Header *>(Start);
-
-  // Check alignment while reading the number of items in each section.
-  return Summary{
-      H->Version,
-      H->TotalSize,
-      alignedRead(Start + H->SegmentOffset),
-      alignedRead(Start + H->MIBOffset),
-      alignedRead(Start + H->StackOffset),
-  };
 }
 
 Error checkBuffer(const MemoryBuffer &Buffer) {
@@ -133,7 +115,7 @@ CallStackMap readStackInfo(const char *Ptr) {
     const uint64_t StackId = endian::readNext<uint64_t, little, unaligned>(Ptr);
     const uint64_t NumPCs = endian::readNext<uint64_t, little, unaligned>(Ptr);
 
-    SmallVector<uint64_t, 32> CallStack;
+    SmallVector<uint64_t> CallStack;
     for (uint64_t J = 0; J < NumPCs; J++) {
       CallStack.push_back(endian::readNext<uint64_t, little, unaligned>(Ptr));
     }
@@ -160,19 +142,35 @@ bool mergeStackMap(const CallStackMap &From, CallStackMap &To) {
   return false;
 }
 
-StringRef trimSuffix(const StringRef Name) {
-  const auto Pos = Name.find(".llvm.");
-  return Name.take_front(Pos);
-}
-
 Error report(Error E, const StringRef Context) {
   return joinErrors(createStringError(inconvertibleErrorCode(), Context),
                     std::move(E));
 }
+
+bool isRuntimePath(const StringRef Path) {
+  return StringRef(llvm::sys::path::convert_to_slash(Path))
+      .contains("memprof/memprof_");
+}
+
+std::string getBuildIdString(const SegmentEntry &Entry) {
+  constexpr size_t Size = sizeof(Entry.BuildId) / sizeof(uint8_t);
+  constexpr uint8_t Zeros[Size] = {0};
+  // If the build id is unset print a helpful string instead of all zeros.
+  if (memcmp(Entry.BuildId, Zeros, Size) == 0)
+    return "<None>";
+
+  std::string Str;
+  raw_string_ostream OS(Str);
+  for (size_t I = 0; I < Size; I++) {
+    OS << format_hex_no_prefix(Entry.BuildId[I], 2);
+  }
+  return OS.str();
+}
 } // namespace
 
 Expected<std::unique_ptr<RawMemProfReader>>
-RawMemProfReader::create(const Twine &Path, const StringRef ProfiledBinary) {
+RawMemProfReader::create(const Twine &Path, const StringRef ProfiledBinary,
+                         bool KeepName) {
   auto BufferOr = MemoryBuffer::getFileOrSTDIN(Path);
   if (std::error_code EC = BufferOr.getError())
     return report(errorCodeToError(EC), Path.getSingleStringRef());
@@ -191,9 +189,10 @@ RawMemProfReader::create(const Twine &Path, const StringRef ProfiledBinary) {
     return report(BinaryOr.takeError(), ProfiledBinary);
   }
 
+  // Use new here since constructor is private.
   std::unique_ptr<RawMemProfReader> Reader(
-      new RawMemProfReader(std::move(Buffer), std::move(BinaryOr.get())));
-  if (Error E = Reader->initialize()) {
+      new RawMemProfReader(std::move(BinaryOr.get()), KeepName));
+  if (Error E = Reader->initialize(std::move(Buffer))) {
     return std::move(E);
   }
   return std::move(Reader);
@@ -218,36 +217,41 @@ bool RawMemProfReader::hasFormat(const MemoryBuffer &Buffer) {
 }
 
 void RawMemProfReader::printYAML(raw_ostream &OS) {
+  uint64_t NumAllocFunctions = 0, NumMibInfo = 0;
+  for (const auto &KV : FunctionProfileData) {
+    const size_t NumAllocSites = KV.second.AllocSites.size();
+    if (NumAllocSites > 0) {
+      NumAllocFunctions++;
+      NumMibInfo += NumAllocSites;
+    }
+  }
+
   OS << "MemprofProfile:\n";
-  printSummaries(OS);
+  OS << "  Summary:\n";
+  OS << "    Version: " << MEMPROF_RAW_VERSION << "\n";
+  OS << "    NumSegments: " << SegmentInfo.size() << "\n";
+  OS << "    NumMibInfo: " << NumMibInfo << "\n";
+  OS << "    NumAllocFunctions: " << NumAllocFunctions << "\n";
+  OS << "    NumStackOffsets: " << StackMap.size() << "\n";
+  // Print out the segment information.
+  OS << "  Segments:\n";
+  for (const auto &Entry : SegmentInfo) {
+    OS << "  -\n";
+    OS << "    BuildId: " << getBuildIdString(Entry) << "\n";
+    OS << "    Start: 0x" << llvm::utohexstr(Entry.Start) << "\n";
+    OS << "    End: 0x" << llvm::utohexstr(Entry.End) << "\n";
+    OS << "    Offset: 0x" << llvm::utohexstr(Entry.Offset) << "\n";
+  }
   // Print out the merged contents of the profiles.
   OS << "  Records:\n";
-  for (const auto &Record : *this) {
+  for (const auto &Entry : *this) {
     OS << "  -\n";
-    Record.print(OS);
+    OS << "    FunctionGUID: " << Entry.first << "\n";
+    Entry.second.print(OS);
   }
 }
 
-void RawMemProfReader::printSummaries(raw_ostream &OS) const {
-  const char *Next = DataBuffer->getBufferStart();
-  while (Next < DataBuffer->getBufferEnd()) {
-    auto Summary = computeSummary(Next);
-    OS << "  -\n";
-    OS << "  Header:\n";
-    OS << "    Version: " << Summary.Version << "\n";
-    OS << "    TotalSizeBytes: " << Summary.TotalSizeBytes << "\n";
-    OS << "    NumSegments: " << Summary.NumSegments << "\n";
-    OS << "    NumMibInfo: " << Summary.NumMIBInfo << "\n";
-    OS << "    NumStackOffsets: " << Summary.NumStackOffsets << "\n";
-    // TODO: Print the build ids once we can record them using the
-    // sanitizer_procmaps library for linux.
-
-    auto *H = reinterpret_cast<const Header *>(Next);
-    Next += H->TotalSize;
-  }
-}
-
-Error RawMemProfReader::initialize() {
+Error RawMemProfReader::initialize(std::unique_ptr<MemoryBuffer> DataBuffer) {
   const StringRef FileName = Binary.getBinary()->getFileName();
 
   auto *ElfObject = dyn_cast<object::ELFObjectFileBase>(Binary.getBinary());
@@ -274,10 +278,175 @@ Error RawMemProfReader::initialize() {
     return report(SOFOr.takeError(), FileName);
   Symbolizer = std::move(SOFOr.get());
 
-  return readRawProfile();
+  if (Error E = readRawProfile(std::move(DataBuffer)))
+    return E;
+
+  if (Error E = symbolizeAndFilterStackFrames())
+    return E;
+
+  return mapRawProfileToRecords();
 }
 
-Error RawMemProfReader::readRawProfile() {
+Error RawMemProfReader::mapRawProfileToRecords() {
+  // Hold a mapping from function to each callsite location we encounter within
+  // it that is part of some dynamic allocation context. The location is stored
+  // as a pointer to a symbolized list of inline frames.
+  using LocationPtr = const llvm::SmallVector<FrameId> *;
+  llvm::DenseMap<GlobalValue::GUID, llvm::SetVector<LocationPtr>>
+      PerFunctionCallSites;
+
+  // Convert the raw profile callstack data into memprof records. While doing so
+  // keep track of related contexts so that we can fill these in later.
+  for (const auto &Entry : CallstackProfileData) {
+    const uint64_t StackId = Entry.first;
+
+    auto It = StackMap.find(StackId);
+    if (It == StackMap.end())
+      return make_error<InstrProfError>(
+          instrprof_error::malformed,
+          "memprof callstack record does not contain id: " + Twine(StackId));
+
+    // Construct the symbolized callstack.
+    llvm::SmallVector<FrameId> Callstack;
+    Callstack.reserve(It->getSecond().size());
+
+    llvm::ArrayRef<uint64_t> Addresses = It->getSecond();
+    for (size_t I = 0; I < Addresses.size(); I++) {
+      const uint64_t Address = Addresses[I];
+      assert(SymbolizedFrame.count(Address) > 0 &&
+             "Address not found in SymbolizedFrame map");
+      const SmallVector<FrameId> &Frames = SymbolizedFrame[Address];
+
+      assert(!idToFrame(Frames.back()).IsInlineFrame &&
+             "The last frame should not be inlined");
+
+      // Record the callsites for each function. Skip the first frame of the
+      // first address since it is the allocation site itself that is recorded
+      // as an alloc site.
+      for (size_t J = 0; J < Frames.size(); J++) {
+        if (I == 0 && J == 0)
+          continue;
+        // We attach the entire bottom-up frame here for the callsite even
+        // though we only need the frames up to and including the frame for
+        // Frames[J].Function. This will enable better deduplication for
+        // compression in the future.
+        const GlobalValue::GUID Guid = idToFrame(Frames[J]).Function;
+        PerFunctionCallSites[Guid].insert(&Frames);
+      }
+
+      // Add all the frames to the current allocation callstack.
+      Callstack.append(Frames.begin(), Frames.end());
+    }
+
+    // We attach the memprof record to each function bottom-up including the
+    // first non-inline frame.
+    for (size_t I = 0; /*Break out using the condition below*/; I++) {
+      const Frame &F = idToFrame(Callstack[I]);
+      auto Result =
+          FunctionProfileData.insert({F.Function, IndexedMemProfRecord()});
+      IndexedMemProfRecord &Record = Result.first->second;
+      Record.AllocSites.emplace_back(Callstack, Entry.second);
+
+      if (!F.IsInlineFrame)
+        break;
+    }
+  }
+
+  // Fill in the related callsites per function.
+  for (auto I = PerFunctionCallSites.begin(), E = PerFunctionCallSites.end();
+       I != E; I++) {
+    const GlobalValue::GUID Id = I->first;
+    // Some functions may have only callsite data and no allocation data. Here
+    // we insert a new entry for callsite data if we need to.
+    auto Result = FunctionProfileData.insert({Id, IndexedMemProfRecord()});
+    IndexedMemProfRecord &Record = Result.first->second;
+    for (LocationPtr Loc : I->getSecond()) {
+      Record.CallSites.push_back(*Loc);
+    }
+  }
+
+  return Error::success();
+}
+
+Error RawMemProfReader::symbolizeAndFilterStackFrames() {
+  // The specifier to use when symbolization is requested.
+  const DILineInfoSpecifier Specifier(
+      DILineInfoSpecifier::FileLineInfoKind::RawValue,
+      DILineInfoSpecifier::FunctionNameKind::LinkageName);
+
+  // For entries where all PCs in the callstack are discarded, we erase the
+  // entry from the stack map.
+  llvm::SmallVector<uint64_t> EntriesToErase;
+  // We keep track of all prior discarded entries so that we can avoid invoking
+  // the symbolizer for such entries.
+  llvm::DenseSet<uint64_t> AllVAddrsToDiscard;
+  for (auto &Entry : StackMap) {
+    for (const uint64_t VAddr : Entry.getSecond()) {
+      // Check if we have already symbolized and cached the result or if we
+      // don't want to attempt symbolization since we know this address is bad.
+      // In this case the address is also removed from the current callstack.
+      if (SymbolizedFrame.count(VAddr) > 0 ||
+          AllVAddrsToDiscard.contains(VAddr))
+        continue;
+
+      Expected<DIInliningInfo> DIOr = Symbolizer->symbolizeInlinedCode(
+          getModuleOffset(VAddr), Specifier, /*UseSymbolTable=*/false);
+      if (!DIOr)
+        return DIOr.takeError();
+      DIInliningInfo DI = DIOr.get();
+
+      // Drop frames which we can't symbolize or if they belong to the runtime.
+      if (DI.getFrame(0).FunctionName == DILineInfo::BadString ||
+          isRuntimePath(DI.getFrame(0).FileName)) {
+        AllVAddrsToDiscard.insert(VAddr);
+        continue;
+      }
+
+      for (size_t I = 0, NumFrames = DI.getNumberOfFrames(); I < NumFrames;
+           I++) {
+        const auto &DIFrame = DI.getFrame(I);
+        const uint64_t Guid =
+            IndexedMemProfRecord::getGUID(DIFrame.FunctionName);
+        const Frame F(Guid, DIFrame.Line - DIFrame.StartLine, DIFrame.Column,
+                      // Only the last entry is not an inlined location.
+                      I != NumFrames - 1);
+        // Here we retain a mapping from the GUID to symbol name instead of
+        // adding it to the frame object directly to reduce memory overhead.
+        // This is because there can be many unique frames, particularly for
+        // callsite frames.
+        if (KeepSymbolName)
+          GuidToSymbolName.insert({Guid, DIFrame.FunctionName});
+
+        const FrameId Hash = F.hash();
+        IdToFrame.insert({Hash, F});
+        SymbolizedFrame[VAddr].push_back(Hash);
+      }
+    }
+
+    auto &CallStack = Entry.getSecond();
+    llvm::erase_if(CallStack, [&AllVAddrsToDiscard](const uint64_t A) {
+      return AllVAddrsToDiscard.contains(A);
+    });
+    if (CallStack.empty())
+      EntriesToErase.push_back(Entry.getFirst());
+  }
+
+  // Drop the entries where the callstack is empty.
+  for (const uint64_t Id : EntriesToErase) {
+    StackMap.erase(Id);
+    CallstackProfileData.erase(Id);
+  }
+
+  if (StackMap.empty())
+    return make_error<InstrProfError>(
+        instrprof_error::malformed,
+        "no entries in callstack map after symbolization");
+
+  return Error::success();
+}
+
+Error RawMemProfReader::readRawProfile(
+    std::unique_ptr<MemoryBuffer> DataBuffer) {
   const char *Next = DataBuffer->getBufferStart();
 
   while (Next < DataBuffer->getBufferEnd()) {
@@ -301,10 +470,10 @@ Error RawMemProfReader::readRawProfile() {
     // raw profiles in the same binary file are from the same process so the
     // stackdepot ids are the same.
     for (const auto &Value : readMemInfoBlocks(Next + Header->MIBOffset)) {
-      if (ProfileData.count(Value.first)) {
-        ProfileData[Value.first].Merge(Value.second);
+      if (CallstackProfileData.count(Value.first)) {
+        CallstackProfileData[Value.first].Merge(Value.second);
       } else {
-        ProfileData[Value.first] = Value.second;
+        CallstackProfileData[Value.first] = Value.second;
       }
     }
 
@@ -345,49 +514,25 @@ RawMemProfReader::getModuleOffset(const uint64_t VirtualAddress) {
   return object::SectionedAddress{VirtualAddress};
 }
 
-Error RawMemProfReader::fillRecord(const uint64_t Id, const MemInfoBlock &MIB,
-                                   MemProfRecord &Record) {
-  auto &CallStack = StackMap[Id];
-  DILineInfoSpecifier Specifier(
-      DILineInfoSpecifier::FileLineInfoKind::RawValue,
-      DILineInfoSpecifier::FunctionNameKind::LinkageName);
-  for (const uint64_t Address : CallStack) {
-    Expected<DIInliningInfo> DIOr = Symbolizer->symbolizeInlinedCode(
-        getModuleOffset(Address), Specifier, /*UseSymbolTable=*/false);
-
-    if (!DIOr)
-      return DIOr.takeError();
-    DIInliningInfo DI = DIOr.get();
-
-    for (size_t I = 0; I < DI.getNumberOfFrames(); I++) {
-      const auto &Frame = DI.getFrame(I);
-      Record.CallStack.emplace_back(
-          // We use the function guid which we expect to be a uint64_t. At this
-          // time, it is the lower 64 bits of the md5 of the function name. Any
-          // suffix with .llvm. is trimmed since these are added by thinLTO
-          // global promotion. At the time the profile is consumed, these
-          // suffixes will not be present.
-          Function::getGUID(trimSuffix(Frame.FunctionName)),
-          Frame.Line - Frame.StartLine, Frame.Column,
-          // Only the first entry is not an inlined location.
-          I != 0);
-    }
-  }
-  Record.Info = PortableMemInfoBlock(MIB);
-  return Error::success();
-}
-
-Error RawMemProfReader::readNextRecord(MemProfRecord &Record) {
-  if (ProfileData.empty())
+Error RawMemProfReader::readNextRecord(GuidMemProfRecordPair &GuidRecord) {
+  if (FunctionProfileData.empty())
     return make_error<InstrProfError>(instrprof_error::empty_raw_profile);
 
-  if (Iter == ProfileData.end())
+  if (Iter == FunctionProfileData.end())
     return make_error<InstrProfError>(instrprof_error::eof);
 
-  Record.clear();
-  if (Error E = fillRecord(Iter->first, Iter->second, Record)) {
-    return E;
-  }
+  auto IdToFrameCallback = [this](const FrameId Id) {
+    Frame F = this->idToFrame(Id);
+    if (!this->KeepSymbolName)
+      return F;
+    auto Iter = this->GuidToSymbolName.find(F.Function);
+    assert(Iter != this->GuidToSymbolName.end());
+    F.SymbolName = Iter->getSecond();
+    return F;
+  };
+
+  const IndexedMemProfRecord &IndexedRecord = Iter->second;
+  GuidRecord = {Iter->first, MemProfRecord(IndexedRecord, IdToFrameCallback)};
   Iter++;
   return Error::success();
 }

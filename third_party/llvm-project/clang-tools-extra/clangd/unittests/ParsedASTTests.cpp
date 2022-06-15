@@ -32,9 +32,8 @@
 #include "clang/Lex/PPCallbacks.h"
 #include "clang/Lex/Token.h"
 #include "clang/Tooling/Syntax/Tokens.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/ScopedPrinter.h"
+#include "llvm/Testing/Support/Error.h"
 #include "gmock/gmock-matchers.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -381,8 +380,9 @@ TEST(ParsedASTTest, ReplayPreambleForTidyCheckers) {
 
     void InclusionDirective(SourceLocation HashLoc, const Token &IncludeTok,
                             StringRef FileName, bool IsAngled,
-                            CharSourceRange FilenameRange, const FileEntry *,
-                            StringRef, StringRef, const clang::Module *,
+                            CharSourceRange FilenameRange,
+                            Optional<FileEntryRef>, StringRef, StringRef,
+                            const clang::Module *,
                             SrcMgr::CharacteristicKind) override {
       Includes.emplace_back(SM, HashLoc, IncludeTok, FileName, IsAngled,
                             FilenameRange);
@@ -562,13 +562,13 @@ TEST(ParsedASTTest, PatchesDeletedIncludes) {
   auto &FM = SM.getFileManager();
   // Copy so that we can getOrCreateID().
   IncludeStructure Includes = ExpectedAST.getIncludeStructure();
-  auto MainFE = FM.getFile(testPath("foo.cpp"));
-  ASSERT_TRUE(MainFE);
+  auto MainFE = FM.getFileRef(testPath("foo.cpp"));
+  ASSERT_THAT_EXPECTED(MainFE, llvm::Succeeded());
   auto MainID = Includes.getOrCreateID(*MainFE);
   auto &PatchedFM = PatchedAST->getSourceManager().getFileManager();
   IncludeStructure PatchedIncludes = PatchedAST->getIncludeStructure();
-  auto PatchedMainFE = PatchedFM.getFile(testPath("foo.cpp"));
-  ASSERT_TRUE(PatchedMainFE);
+  auto PatchedMainFE = PatchedFM.getFileRef(testPath("foo.cpp"));
+  ASSERT_THAT_EXPECTED(PatchedMainFE, llvm::Succeeded());
   auto PatchedMainID = PatchedIncludes.getOrCreateID(*PatchedMainFE);
   EXPECT_EQ(Includes.includeDepth(MainID)[MainID],
             PatchedIncludes.includeDepth(PatchedMainID)[PatchedMainID]);

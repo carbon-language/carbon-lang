@@ -133,7 +133,7 @@ using BoxedLoopsSetTy = llvm::SetVector<const llvm::Loop *>;
 /// is currently not supported in C++ such that those cannot be used directly.
 /// (llvm::isa could, but then llvm:cast etc. would not have the expected
 /// behavior)
-class MemAccInst {
+class MemAccInst final {
 private:
   llvm::Instruction *I;
 
@@ -250,21 +250,6 @@ public:
       return asMemIntrinsic()->getRawDest();
     if (isCallInst())
       return nullptr;
-    llvm_unreachable("Operation not supported on nullptr");
-  }
-
-  unsigned getAlignment() const {
-    if (isLoad())
-      return asLoad()->getAlignment();
-    if (isStore())
-      return asStore()->getAlignment();
-    if (isMemTransferInst())
-      return std::min(asMemTransferInst()->getDestAlignment(),
-                      asMemTransferInst()->getSourceAlignment());
-    if (isMemIntrinsic())
-      return asMemIntrinsic()->getDestAlignment();
-    if (isCallInst())
-      return 0;
     llvm_unreachable("Operation not supported on nullptr");
   }
   bool isVolatile() const {

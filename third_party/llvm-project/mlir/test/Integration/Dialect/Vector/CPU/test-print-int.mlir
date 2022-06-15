@@ -1,4 +1,4 @@
-// RUN: mlir-opt %s -convert-scf-to-cf -convert-vector-to-llvm -convert-std-to-llvm -reconcile-unrealized-casts | \
+// RUN: mlir-opt %s -convert-scf-to-cf -convert-vector-to-llvm -convert-func-to-llvm -reconcile-unrealized-casts | \
 // RUN: mlir-cpu-runner -e entry -entry-point-result=void  \
 // RUN:   -shared-libs=%mlir_integration_test_dir/libmlir_c_runner_utils%shlibext | \
 // RUN: FileCheck %s
@@ -6,7 +6,7 @@
 //
 // Test various signless, signed, unsigned integer types.
 //
-func @entry() {
+func.func @entry() {
   %0 = arith.constant dense<[true, false, -1, 0, 1]> : vector<5xi1>
   vector.print %0 : vector<5xi1>
   // CHECK: ( 1, 0, 1, 0, 1 )

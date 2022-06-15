@@ -1,8 +1,8 @@
-// RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -debug-info-kind=limited -o - %s | \
+// RUN: %clang_cc1 -no-opaque-pointers -triple x86_64-unknown-unknown -emit-llvm -debug-info-kind=limited -Wno-strict-prototypes -o - %s | \
 // RUN:   FileCheck %s -check-prefix=CHECK -check-prefix=SSE -check-prefix=NO-AVX512
-// RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -debug-info-kind=limited -o - %s -target-feature +avx | \
+// RUN: %clang_cc1 -no-opaque-pointers -triple x86_64-unknown-unknown -emit-llvm -debug-info-kind=limited -Wno-strict-prototypes -o - %s -target-feature +avx | \
 // RUN:   FileCheck %s -check-prefix=CHECK -check-prefix=AVX -check-prefix=NO-AVX512
-// RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -debug-info-kind=limited -o - %s -target-feature +avx512f | \
+// RUN: %clang_cc1 -no-opaque-pointers -triple x86_64-unknown-unknown -emit-llvm -debug-info-kind=limited -Wno-strict-prototypes -o - %s -target-feature +avx512f | \
 // RUN:   FileCheck %s -check-prefix=CHECK -check-prefix=AVX -check-prefix=AVX512
 #include <stdarg.h>
 
@@ -544,6 +544,12 @@ struct t65 {
 // SSE-LABEL: @f65(%struct.t65* noundef byval(%struct.t65) align 32 %{{[^,)]+}})
 // AVX: @f65(<8 x float> %{{[^,)]+}})
 void f65(struct t65 a0) {
+}
+
+typedef float t66 __attribute__((__vector_size__(128), __aligned__(128)));
+
+// AVX512: @f66(<32 x float>* noundef byval(<32 x float>) align 128 %0)
+void f66(t66 a0) {
 }
 
 /// The synthesized __va_list_tag does not have file/line fields.

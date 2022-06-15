@@ -436,7 +436,7 @@ bool MipsConstantIslands::runOnMachineFunction(MachineFunction &mf) {
   // FIXME:
   MF = &mf;
   MCP = mf.getConstantPool();
-  STI = &static_cast<const MipsSubtarget &>(mf.getSubtarget());
+  STI = &mf.getSubtarget<MipsSubtarget>();
   LLVM_DEBUG(dbgs() << "constant island machine function "
                     << "\n");
   if (!STI->inMips16Mode() || !MipsSubtarget::useConstantIslands()) {
@@ -1653,8 +1653,8 @@ void MipsConstantIslands::prescanForConstants() {
             I->getOperand(2).ChangeToImmediate(index);
             LLVM_DEBUG(dbgs() << "constant island constant " << *I << "\n");
             I->setDesc(TII->get(Mips::LwRxPcTcp16));
-            I->RemoveOperand(1);
-            I->RemoveOperand(1);
+            I->removeOperand(1);
+            I->removeOperand(1);
             I->addOperand(MachineOperand::CreateCPI(index, 0));
             I->addOperand(MachineOperand::CreateImm(4));
           }

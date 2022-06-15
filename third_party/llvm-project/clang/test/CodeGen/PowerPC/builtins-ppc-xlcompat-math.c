@@ -1,10 +1,10 @@
-// RUN: %clang_cc1 -triple powerpc64-unknown-linux-gnu -emit-llvm %s \
+// RUN: %clang_cc1 -no-opaque-pointers -triple powerpc64-unknown-linux-gnu -emit-llvm %s \
 // RUN:   -target-cpu pwr7 -o - | FileCheck %s
-// RUN: %clang_cc1 -triple powerpc64le-unknown-linux-gnu -emit-llvm %s \
+// RUN: %clang_cc1 -no-opaque-pointers -triple powerpc64le-unknown-linux-gnu -emit-llvm %s \
 // RUN:   -target-cpu pwr8 -o - | FileCheck %s
-// RUN: %clang_cc1 -triple powerpc64-unknown-aix -emit-llvm %s \
+// RUN: %clang_cc1 -no-opaque-pointers -triple powerpc64-unknown-aix -emit-llvm %s \
 // RUN:   -target-cpu pwr7 -o - | FileCheck %s
-// RUN: %clang_cc1 -triple powerpc-unknown-aix -emit-llvm %s \
+// RUN: %clang_cc1 -no-opaque-pointers -triple powerpc-unknown-aix -emit-llvm %s \
 // RUN:   -target-cpu pwr7 -o - | FileCheck %s
 
 // CHECK-LABEL: @mtfsb0(
@@ -98,7 +98,7 @@ float fnmadds (float f) {
 // CHECK-NEXT:    [[TMP0:%.*]] = load double, double* [[D_ADDR]], align 8
 // CHECK-NEXT:    [[TMP1:%.*]] = load double, double* [[D_ADDR]], align 8
 // CHECK-NEXT:    [[TMP2:%.*]] = load double, double* [[D_ADDR]], align 8
-// CHECK-NEXT:    [[TMP3:%.*]] = call double @llvm.ppc.fnmsub(double [[TMP0]], double [[TMP1]], double [[TMP2]])
+// CHECK-NEXT:    [[TMP3:%.*]] = call double @llvm.ppc.fnmsub.f64(double [[TMP0]], double [[TMP1]], double [[TMP2]])
 // CHECK-NEXT:    ret double [[TMP3]]
 //
 double fnmsub (double d) {
@@ -111,7 +111,7 @@ double fnmsub (double d) {
 // CHECK-NEXT:    [[TMP0:%.*]] = load float, float* [[F_ADDR]], align 4
 // CHECK-NEXT:    [[TMP1:%.*]] = load float, float* [[F_ADDR]], align 4
 // CHECK-NEXT:    [[TMP2:%.*]] = load float, float* [[F_ADDR]], align 4
-// CHECK-NEXT:    [[TMP3:%.*]] = call float @llvm.ppc.fnmsubs(float [[TMP0]], float [[TMP1]], float [[TMP2]])
+// CHECK-NEXT:    [[TMP3:%.*]] = call float @llvm.ppc.fnmsub.f32(float [[TMP0]], float [[TMP1]], float [[TMP2]])
 // CHECK-NEXT:    ret float [[TMP3]]
 //
 float fnmsubs (float f) {

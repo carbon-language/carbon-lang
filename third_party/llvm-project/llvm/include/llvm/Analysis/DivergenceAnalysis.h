@@ -17,9 +17,7 @@
 
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/Analysis/SyncDependenceAnalysis.h"
-#include "llvm/IR/Function.h"
 #include "llvm/IR/PassManager.h"
-#include "llvm/Pass.h"
 #include <vector>
 
 namespace llvm {
@@ -43,7 +41,7 @@ public:
   /// \param RegionLoop if non-null the analysis is restricted to \p RegionLoop.
   /// Otherwise the whole function is analyzed.
   /// \param IsLCSSAForm whether the analysis may assume that the IR in the
-  /// region in in LCSSA form.
+  /// region in LCSSA form.
   DivergenceAnalysisImpl(const Function &F, const Loop *RegionLoop,
                          const DominatorTree &DT, const LoopInfo &LI,
                          SyncDependenceAnalysis &SDA, bool IsLCSSAForm);

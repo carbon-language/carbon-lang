@@ -1,19 +1,19 @@
 
-// RUN: %clang_cc1 -verify -triple x86_64-apple-darwin10 -target-cpu core2 -fopenmp -x c -emit-llvm %s -o - | FileCheck %s
-// RUN: %clang_cc1 -fopenmp -x c -triple x86_64-apple-darwin10 -target-cpu core2 -emit-pch -o %t %s
-// RUN: %clang_cc1 -fopenmp -x c -triple x86_64-apple-darwin10 -target-cpu core2 -include-pch %t -verify %s -emit-llvm -o - | FileCheck --check-prefix=CHECK --check-prefix=CHECK-50 %s
+// RUN: %clang_cc1 -no-opaque-pointers -verify -triple x86_64-apple-darwin10 -target-cpu core2 -fopenmp -x c -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -no-opaque-pointers -fopenmp -x c -triple x86_64-apple-darwin10 -target-cpu core2 -emit-pch -o %t %s
+// RUN: %clang_cc1 -no-opaque-pointers -fopenmp -x c -triple x86_64-apple-darwin10 -target-cpu core2 -include-pch %t -verify %s -emit-llvm -o - | FileCheck --check-prefix=CHECK --check-prefix=CHECK-50 %s
 
-// RUN: %clang_cc1 -verify -triple x86_64-apple-darwin10 -target-cpu core2 -fopenmp-simd -x c -emit-llvm %s -o - | FileCheck --check-prefix SIMD-ONLY0 %s
-// RUN: %clang_cc1 -fopenmp-simd -x c -triple x86_64-apple-darwin10 -target-cpu core2 -emit-pch -o %t %s
-// RUN: %clang_cc1 -fopenmp-simd -x c -triple x86_64-apple-darwin10 -target-cpu core2 -include-pch %t -verify %s -emit-llvm -o - | FileCheck --check-prefix SIMD-ONLY0 %s
+// RUN: %clang_cc1 -no-opaque-pointers -verify -triple x86_64-apple-darwin10 -target-cpu core2 -fopenmp-simd -x c -emit-llvm %s -o - | FileCheck --check-prefix SIMD-ONLY0 %s
+// RUN: %clang_cc1 -no-opaque-pointers -fopenmp-simd -x c -triple x86_64-apple-darwin10 -target-cpu core2 -emit-pch -o %t %s
+// RUN: %clang_cc1 -no-opaque-pointers -fopenmp-simd -x c -triple x86_64-apple-darwin10 -target-cpu core2 -include-pch %t -verify %s -emit-llvm -o - | FileCheck --check-prefix SIMD-ONLY0 %s
 
-// RUN: %clang_cc1 -verify -triple x86_64-apple-darwin10 -target-cpu core2 -fopenmp -fopenmp-version=51 -x c -emit-llvm %s -o - | FileCheck %s
-// RUN: %clang_cc1 -fopenmp -fopenmp-version=51 -x c -triple x86_64-apple-darwin10 -target-cpu core2 -emit-pch -o %t %s
-// RUN: %clang_cc1 -fopenmp -fopenmp-version=51 -x c -triple x86_64-apple-darwin10 -target-cpu core2 -include-pch %t -verify %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -no-opaque-pointers -verify -triple x86_64-apple-darwin10 -target-cpu core2 -fopenmp -fopenmp-version=51 -x c -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -no-opaque-pointers -fopenmp -fopenmp-version=51 -x c -triple x86_64-apple-darwin10 -target-cpu core2 -emit-pch -o %t %s
+// RUN: %clang_cc1 -no-opaque-pointers -fopenmp -fopenmp-version=51 -x c -triple x86_64-apple-darwin10 -target-cpu core2 -include-pch %t -verify %s -emit-llvm -o - | FileCheck %s
 
-// RUN: %clang_cc1 -verify -triple x86_64-apple-darwin10 -target-cpu core2 -fopenmp-simd -fopenmp-version=51 -x c -emit-llvm %s -o - | FileCheck --check-prefix SIMD-ONLY0 %s
-// RUN: %clang_cc1 -fopenmp-simd -fopenmp-version=51 -x c -triple x86_64-apple-darwin10 -target-cpu core2 -emit-pch -o %t %s
-// RUN: %clang_cc1 -fopenmp-simd -fopenmp-version=51 -x c -triple x86_64-apple-darwin10 -target-cpu core2 -include-pch %t -verify %s -emit-llvm -o - | FileCheck --check-prefix SIMD-ONLY0 %s
+// RUN: %clang_cc1 -no-opaque-pointers -verify -triple x86_64-apple-darwin10 -target-cpu core2 -fopenmp-simd -fopenmp-version=51 -x c -emit-llvm %s -o - | FileCheck --check-prefix SIMD-ONLY0 %s
+// RUN: %clang_cc1 -no-opaque-pointers -fopenmp-simd -fopenmp-version=51 -x c -triple x86_64-apple-darwin10 -target-cpu core2 -emit-pch -o %t %s
+// RUN: %clang_cc1 -no-opaque-pointers -fopenmp-simd -fopenmp-version=51 -x c -triple x86_64-apple-darwin10 -target-cpu core2 -include-pch %t -verify %s -emit-llvm -o - | FileCheck --check-prefix SIMD-ONLY0 %s
 // SIMD-ONLY0-NOT: {{__kmpc|__tgt}}
 // expected-no-diagnostics
 #ifndef HEADER
@@ -216,20 +216,8 @@ int main(void) {
 #pragma omp atomic capture
   llv = ullx |= ullv;
 // CHECK: [[EXPR:%.+]] = load float, float* @{{.+}},
-// CHECK: [[X:%.+]] = load atomic i32, i32*  bitcast (float* [[X_ADDR:@.+]] to i32*) monotonic, align 4
-// CHECK: br label %[[CONT:.+]]
-// CHECK: [[CONT]]
-// CHECK: [[EXPECTED:%.+]] = phi i32 [ [[X]], %{{.+}} ], [ [[OLD_X:%.+]], %[[CONT]] ]
-// CHECK: [[TEMP_I:%.+]] = bitcast float* [[TEMP:%.+]] to i32*
-// CHECK: [[OLD:%.+]] = bitcast i32 [[EXPECTED]] to float
+// CHECK: [[OLD:%.+]] = atomicrmw fadd float* @{{.+}}, float [[EXPR]] monotonic, align 4
 // CHECK: [[ADD:%.+]] = fadd float [[OLD]], [[EXPR]]
-// CHECK: store float [[ADD]], float* [[TEMP]],
-// CHECK: [[DESIRED:%.+]] = load i32, i32* [[TEMP_I]],
-// CHECK: [[RES:%.+]] = cmpxchg i32* bitcast (float* [[X_ADDR]] to i32*), i32 [[EXPECTED]], i32 [[DESIRED]] monotonic monotonic, align 4
-// CHECK: [[OLD_X:%.+]] = extractvalue { i32, i1 } [[RES]], 0
-// CHECK: [[SUCCESS_FAIL:%.+]] = extractvalue { i32, i1 } [[RES]], 1
-// CHECK: br i1 [[SUCCESS_FAIL]], label %[[EXIT:.+]], label %[[CONT]]
-// CHECK: [[EXIT]]
 // CHECK: [[CAST:%.+]] = fpext float [[ADD]] to double
 // CHECK: store double [[CAST]], double* @{{.+}},
 #pragma omp atomic capture

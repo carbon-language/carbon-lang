@@ -55,35 +55,29 @@ using namespace llvm;
 
 static cl::opt<bool> DumpSchedule("polly-acc-dump-schedule",
                                   cl::desc("Dump the computed GPU Schedule"),
-                                  cl::Hidden, cl::init(false), cl::ZeroOrMore,
-                                  cl::cat(PollyCategory));
+                                  cl::Hidden, cl::cat(PollyCategory));
 
 static cl::opt<bool>
     DumpCode("polly-acc-dump-code",
              cl::desc("Dump C code describing the GPU mapping"), cl::Hidden,
-             cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
+             cl::cat(PollyCategory));
 
 static cl::opt<bool> DumpKernelIR("polly-acc-dump-kernel-ir",
                                   cl::desc("Dump the kernel LLVM-IR"),
-                                  cl::Hidden, cl::init(false), cl::ZeroOrMore,
-                                  cl::cat(PollyCategory));
+                                  cl::Hidden, cl::cat(PollyCategory));
 
 static cl::opt<bool> DumpKernelASM("polly-acc-dump-kernel-asm",
                                    cl::desc("Dump the kernel assembly code"),
-                                   cl::Hidden, cl::init(false), cl::ZeroOrMore,
-                                   cl::cat(PollyCategory));
+                                   cl::Hidden, cl::cat(PollyCategory));
 
 static cl::opt<bool> FastMath("polly-acc-fastmath",
                               cl::desc("Allow unsafe math optimizations"),
-                              cl::Hidden, cl::init(false), cl::ZeroOrMore,
-                              cl::cat(PollyCategory));
+                              cl::Hidden, cl::cat(PollyCategory));
 static cl::opt<bool> SharedMemory("polly-acc-use-shared",
                                   cl::desc("Use shared memory"), cl::Hidden,
-                                  cl::init(false), cl::ZeroOrMore,
                                   cl::cat(PollyCategory));
 static cl::opt<bool> PrivateMemory("polly-acc-use-private",
                                    cl::desc("Use private memory"), cl::Hidden,
-                                   cl::init(false), cl::ZeroOrMore,
                                    cl::cat(PollyCategory));
 
 bool polly::PollyManagedMemory;
@@ -93,25 +87,24 @@ static cl::opt<bool, true>
                             " that all memory has been"
                             " declared as managed memory"),
                    cl::location(PollyManagedMemory), cl::Hidden,
-                   cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
+                   cl::init(false), cl::cat(PollyCategory));
 
 static cl::opt<bool>
     FailOnVerifyModuleFailure("polly-acc-fail-on-verify-module-failure",
                               cl::desc("Fail and generate a backtrace if"
                                        " verifyModule fails on the GPU "
                                        " kernel module."),
-                              cl::Hidden, cl::init(false), cl::ZeroOrMore,
-                              cl::cat(PollyCategory));
+                              cl::Hidden, cl::cat(PollyCategory));
 
 static cl::opt<std::string> CUDALibDevice(
     "polly-acc-libdevice", cl::desc("Path to CUDA libdevice"), cl::Hidden,
     cl::init("/usr/local/cuda/nvvm/libdevice/libdevice.compute_20.10.ll"),
-    cl::ZeroOrMore, cl::cat(PollyCategory));
+    cl::cat(PollyCategory));
 
 static cl::opt<std::string>
     CudaVersion("polly-acc-cuda-version",
                 cl::desc("The CUDA version to compile for"), cl::Hidden,
-                cl::init("sm_30"), cl::ZeroOrMore, cl::cat(PollyCategory));
+                cl::init("sm_30"), cl::cat(PollyCategory));
 
 static cl::opt<int>
     MinCompute("polly-acc-mincompute",
@@ -119,14 +112,15 @@ static cl::opt<int>
                cl::Hidden, cl::init(10 * 512 * 512));
 
 GPURuntime polly::GPURuntimeChoice;
-static cl::opt<GPURuntime, true> XGPURuntimeChoice(
-    "polly-gpu-runtime", cl::desc("The GPU Runtime API to target"),
-    cl::values(clEnumValN(GPURuntime::CUDA, "libcudart",
-                          "use the CUDA Runtime API"),
-               clEnumValN(GPURuntime::OpenCL, "libopencl",
-                          "use the OpenCL Runtime API")),
-    cl::location(polly::GPURuntimeChoice), cl::init(GPURuntime::CUDA),
-    cl::ZeroOrMore, cl::cat(PollyCategory));
+static cl::opt<GPURuntime, true>
+    XGPURuntimeChoice("polly-gpu-runtime",
+                      cl::desc("The GPU Runtime API to target"),
+                      cl::values(clEnumValN(GPURuntime::CUDA, "libcudart",
+                                            "use the CUDA Runtime API"),
+                                 clEnumValN(GPURuntime::OpenCL, "libopencl",
+                                            "use the OpenCL Runtime API")),
+                      cl::location(polly::GPURuntimeChoice),
+                      cl::init(GPURuntime::CUDA), cl::cat(PollyCategory));
 
 GPUArch polly::GPUArchChoice;
 static cl::opt<GPUArch, true>
@@ -138,8 +132,7 @@ static cl::opt<GPUArch, true>
                               clEnumValN(GPUArch::SPIR64, "spir64",
                                          "target SPIR 64-bit architecture")),
                    cl::location(polly::GPUArchChoice),
-                   cl::init(GPUArch::NVPTX64), cl::ZeroOrMore,
-                   cl::cat(PollyCategory));
+                   cl::init(GPUArch::NVPTX64), cl::cat(PollyCategory));
 
 extern bool polly::PerfMonitoring;
 
@@ -346,7 +339,7 @@ static int computeSizeInBytes(const Type *T) {
 /// for generating GPU specific user nodes.
 ///
 /// @see GPUNodeBuilder::createUser
-class GPUNodeBuilder : public IslNodeBuilder {
+class GPUNodeBuilder final : public IslNodeBuilder {
 public:
   GPUNodeBuilder(PollyIRBuilder &Builder, ScopAnnotator &Annotator,
                  const DataLayout &DL, LoopInfo &LI, ScalarEvolution &SE,
@@ -409,7 +402,7 @@ private:
   GPUArch Arch;
 
   /// Class to free isl_ids.
-  class IslIdDeleter {
+  class IslIdDeleter final {
   public:
     void operator()(__isl_take isl_id *Id) { isl_id_free(Id); };
   };
@@ -486,12 +479,13 @@ private:
   /// Store a specific kernel launch parameter in the array of kernel launch
   /// parameters.
   ///
+  /// @param ArrayTy    Array type of \p Parameters.
   /// @param Parameters The list of parameters in which to store.
   /// @param Param      The kernel launch parameter to store.
   /// @param Index      The index in the parameter list, at which to store the
   ///                   parameter.
-  void insertStoreParameter(Instruction *Parameters, Instruction *Param,
-                            int Index);
+  void insertStoreParameter(Type *ArrayTy, Instruction *Parameters,
+                            Instruction *Param, int Index);
 
   /// Create kernel launch parameters.
   ///
@@ -1313,19 +1307,18 @@ void GPUNodeBuilder::createFor(__isl_take isl_ast_node *Node) {
 
 void GPUNodeBuilder::createKernelCopy(ppcg_kernel_stmt *KernelStmt) {
   isl_ast_expr *LocalIndex = isl_ast_expr_copy(KernelStmt->u.c.local_index);
-  LocalIndex = isl_ast_expr_address_of(LocalIndex);
-  Value *LocalAddr = ExprBuilder.create(LocalIndex);
+  auto LocalAddr = ExprBuilder.createAccessAddress(LocalIndex);
   isl_ast_expr *Index = isl_ast_expr_copy(KernelStmt->u.c.index);
-  Index = isl_ast_expr_address_of(Index);
-  Value *GlobalAddr = ExprBuilder.create(Index);
-  Type *IndexTy = GlobalAddr->getType()->getPointerElementType();
+  auto GlobalAddr = ExprBuilder.createAccessAddress(Index);
 
   if (KernelStmt->u.c.read) {
-    LoadInst *Load = Builder.CreateLoad(IndexTy, GlobalAddr, "shared.read");
-    Builder.CreateStore(Load, LocalAddr);
+    LoadInst *Load =
+        Builder.CreateLoad(GlobalAddr.second, GlobalAddr.first, "shared.read");
+    Builder.CreateStore(Load, LocalAddr.first);
   } else {
-    LoadInst *Load = Builder.CreateLoad(IndexTy, LocalAddr, "shared.write");
-    Builder.CreateStore(Load, GlobalAddr);
+    LoadInst *Load =
+        Builder.CreateLoad(LocalAddr.second, LocalAddr.first, "shared.write");
+    Builder.CreateStore(Load, GlobalAddr.first);
   }
 }
 
@@ -1625,11 +1618,11 @@ GPUNodeBuilder::getBlockSizes(ppcg_kernel *Kernel) {
   return std::make_tuple(Sizes[0], Sizes[1], Sizes[2]);
 }
 
-void GPUNodeBuilder::insertStoreParameter(Instruction *Parameters,
+void GPUNodeBuilder::insertStoreParameter(Type *ArrayTy,
+                                          Instruction *Parameters,
                                           Instruction *Param, int Index) {
   Value *Slot = Builder.CreateGEP(
-      Parameters->getType()->getPointerElementType(), Parameters,
-      {Builder.getInt64(0), Builder.getInt64(Index)});
+      ArrayTy, Parameters, {Builder.getInt64(0), Builder.getInt64(Index)});
   Value *ParamTyped = Builder.CreatePointerCast(Param, Builder.getInt8PtrTy());
   Builder.CreateStore(ParamTyped, Slot);
 }
@@ -1730,7 +1723,7 @@ GPUNodeBuilder::createLaunchParameters(ppcg_kernel *Kernel, Function *F,
                        Launch + "_param_" + std::to_string(Index),
                        EntryBlock->getTerminator());
     Builder.CreateStore(Val, Param);
-    insertStoreParameter(Parameters, Param, Index);
+    insertStoreParameter(ArrayTy, Parameters, Param, Index);
     Index++;
   }
 
@@ -1751,7 +1744,7 @@ GPUNodeBuilder::createLaunchParameters(ppcg_kernel *Kernel, Function *F,
                        Launch + "_param_" + std::to_string(Index),
                        EntryBlock->getTerminator());
     Builder.CreateStore(Val, Param);
-    insertStoreParameter(Parameters, Param, Index);
+    insertStoreParameter(ArrayTy, Parameters, Param, Index);
     Index++;
   }
 
@@ -1764,7 +1757,7 @@ GPUNodeBuilder::createLaunchParameters(ppcg_kernel *Kernel, Function *F,
                        Launch + "_param_" + std::to_string(Index),
                        EntryBlock->getTerminator());
     Builder.CreateStore(Val, Param);
-    insertStoreParameter(Parameters, Param, Index);
+    insertStoreParameter(ArrayTy, Parameters, Param, Index);
     Index++;
   }
 
@@ -1776,7 +1769,7 @@ GPUNodeBuilder::createLaunchParameters(ppcg_kernel *Kernel, Function *F,
                          Launch + "_param_size_" + std::to_string(i),
                          EntryBlock->getTerminator());
       Builder.CreateStore(Val, Param);
-      insertStoreParameter(Parameters, Param, Index);
+      insertStoreParameter(ArrayTy, Parameters, Param, Index);
       Index++;
     }
   }
@@ -2558,7 +2551,7 @@ alignPwAffs(const std::vector<__isl_take isl_pw_aff *> &&PwAffs,
 }
 
 namespace {
-class PPCGCodeGeneration : public ScopPass {
+class PPCGCodeGeneration final : public ScopPass {
 public:
   static char ID;
 
@@ -3443,13 +3436,11 @@ public:
         continue;
 
       for (Value *Op : Inst.operands())
-        // Look for (<func-type>*) among operands of Inst
-        if (auto PtrTy = dyn_cast<PointerType>(Op->getType())) {
-          if (isa<FunctionType>(PtrTy->getPointerElementType())) {
-            LLVM_DEBUG(dbgs()
-                       << Inst << " has illegal use of function in kernel.\n");
-            return true;
-          }
+        // Look for functions among operands of Inst.
+        if (isa<Function>(Op->stripPointerCasts())) {
+          LLVM_DEBUG(dbgs()
+                     << Inst << " has illegal use of function in kernel.\n");
+          return true;
         }
     }
     return false;

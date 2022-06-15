@@ -38,7 +38,8 @@ bool FormatErrorReporter::Say(const common::FormatMessage &msg) {
     return false;
   }
   parser::MessageFormattedText text{
-      parser::MessageFixedText(msg.text, strlen(msg.text), msg.isError),
+      parser::MessageFixedText{msg.text, strlen(msg.text),
+          msg.isError ? parser::Severity::Error : parser::Severity::Warning},
       msg.arg};
   if (formatCharBlock_.size()) {
     // The input format is a folded expression.  Error markers span the full
@@ -203,12 +204,12 @@ void IoChecker::Enter(const parser::FileUnitNumber &) {
 void IoChecker::Enter(const parser::Format &spec) {
   SetSpecifier(IoSpecKind::Fmt);
   flags_.set(Flag::FmtOrNml);
-  std::visit(
+  common::visit(
       common::visitors{
           [&](const parser::Label &) { flags_.set(Flag::LabelFmt); },
           [&](const parser::Star &) { flags_.set(Flag::StarFmt); },
           [&](const parser::Expr &format) {
-            const SomeExpr *expr{GetExpr(format)};
+            const SomeExpr *expr{GetExpr(context_, format)};
             if (!expr) {
               return;
             }
@@ -234,7 +235,7 @@ void IoChecker::Enter(const parser::Format &spec) {
               if (context_.ShouldWarn(
                       common::LanguageFeature::NonCharacterFormat)) {
                 context_.Say(format.source,
-                    "Non-character format expression is not standard"_en_US);
+                    "Non-character format expression is not standard"_port_en_US);
               }
             } else if (!type ||
                 type->kind() !=
@@ -298,7 +299,7 @@ void IoChecker::Enter(const parser::IdExpr &) { SetSpecifier(IoSpecKind::Id); }
 
 void IoChecker::Enter(const parser::IdVariable &spec) {
   SetSpecifier(IoSpecKind::Id);
-  const auto *expr{GetExpr(spec)};
+  const auto *expr{GetExpr(context_, spec)};
   if (!expr || !expr->GetType()) {
     return;
   }
@@ -319,6 +320,12 @@ void IoChecker::Enter(const parser::InputItem &spec) {
     return;
   }
   CheckForDefinableVariable(*var, "Input");
+  if (auto expr{AnalyzeExpr(context_, *var)}) {
+    CheckForBadIoComponent(*expr,
+        flags_.test(Flag::FmtOrNml) ? GenericKind::DefinedIo::ReadFormatted
+                                    : GenericKind::DefinedIo::ReadUnformatted,
+        var->GetSource());
+  }
 }
 
 void IoChecker::Enter(const parser::InquireSpec &spec) {
@@ -539,7 +546,7 @@ void IoChecker::Enter(const parser::IoUnit &spec) {
     if (stmt_ == IoStmtKind::Write) {
       CheckForDefinableVariable(*var, "Internal file");
     }
-    if (const auto *expr{GetExpr(*var)}) {
+    if (const auto *expr{GetExpr(context_, *var)}) {
       if (HasVectorSubscript(*expr)) {
         context_.Say(parser::FindSourceLocation(*var), // C1201
             "Internal file must not have a vector subscript"_err_en_US);
@@ -570,7 +577,7 @@ void IoChecker::Enter(const parser::MsgVariable &var) {
 void IoChecker::Enter(const parser::OutputItem &item) {
   flags_.set(Flag::DataList);
   if (const auto *x{std::get_if<parser::Expr>(&item.u)}) {
-    if (const auto *expr{GetExpr(*x)}) {
+    if (const auto *expr{GetExpr(context_, *x)}) {
       if (evaluate::IsBOZLiteral(*expr)) {
         context_.Say(parser::FindSourceLocation(*x), // C7109
             "Output item must not be a BOZ literal constant"_err_en_US);
@@ -580,6 +587,11 @@ void IoChecker::Enter(const parser::OutputItem &item) {
         context_.Say(parser::FindSourceLocation(*x),
             "Output item must not be a procedure pointer"_err_en_US); // C1233
       }
+      CheckForBadIoComponent(*expr,
+          flags_.test(Flag::FmtOrNml)
+              ? GenericKind::DefinedIo::WriteFormatted
+              : GenericKind::DefinedIo::WriteUnformatted,
+          parser::FindSourceLocation(item));
     }
   }
 }
@@ -861,8 +873,9 @@ void IoChecker::CheckStringValue(IoSpecKind specKind, const std::string &value,
     if (specKind == IoSpecKind::Access && upper == "APPEND") {
       if (context_.languageFeatures().ShouldWarn(
               common::LanguageFeature::OpenAccessAppend)) {
-        context_.Say(source, "ACCESS='%s' interpreted as POSITION='%s'"_en_US,
-            value, upper);
+        context_.Say(source,
+            "ACCESS='%s' interpreted as POSITION='%s'"_port_en_US, value,
+            upper);
       }
     } else {
       context_.Say(source, "Invalid %s value '%s'"_err_en_US,
@@ -983,6 +996,22 @@ void IoChecker::CheckForPureSubprogram() const { // C1597
     if (FindPureProcedureContaining(*scope)) {
       context_.Say(
           "External I/O is not allowed in a pure subprogram"_err_en_US);
+    }
+  }
+}
+
+// Fortran 2018, 12.6.3 paragraph 7
+void IoChecker::CheckForBadIoComponent(const SomeExpr &expr,
+    GenericKind::DefinedIo which, parser::CharBlock where) const {
+  if (auto type{expr.GetType()}) {
+    if (type->category() == TypeCategory::Derived &&
+        !type->IsUnlimitedPolymorphic()) {
+      if (const Symbol *
+          bad{FindUnsafeIoDirectComponent(
+              which, type->GetDerivedTypeSpec(), &context_.FindScope(where))}) {
+        context_.SayWithDecl(*bad, where,
+            "Derived type in I/O cannot have an allocatable or pointer direct component unless using defined I/O"_err_en_US);
+      }
     }
   }
 }

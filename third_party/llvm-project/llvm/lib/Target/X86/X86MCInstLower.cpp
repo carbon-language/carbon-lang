@@ -962,6 +962,12 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
     // These are not truly commutable so hide them from the default case.
     break;
 
+  case X86::MASKMOVDQU:
+  case X86::VMASKMOVDQU:
+    if (AsmPrinter.getSubtarget().is64Bit())
+      OutMI.setFlags(X86::IP_HAS_AD_SIZE);
+    break;
+
   default: {
     // If the instruction is a commutable arithmetic instruction we might be
     // able to commute the operands to get a 2 byte VEX prefix.
@@ -1986,34 +1992,34 @@ void X86AsmPrinter::EmitSEHInstruction(const MachineInstr *MI) {
   // Otherwise, use the .seh_ directives for all other Windows platforms.
   switch (MI->getOpcode()) {
   case X86::SEH_PushReg:
-    OutStreamer->EmitWinCFIPushReg(MI->getOperand(0).getImm());
+    OutStreamer->emitWinCFIPushReg(MI->getOperand(0).getImm());
     break;
 
   case X86::SEH_SaveReg:
-    OutStreamer->EmitWinCFISaveReg(MI->getOperand(0).getImm(),
+    OutStreamer->emitWinCFISaveReg(MI->getOperand(0).getImm(),
                                    MI->getOperand(1).getImm());
     break;
 
   case X86::SEH_SaveXMM:
-    OutStreamer->EmitWinCFISaveXMM(MI->getOperand(0).getImm(),
+    OutStreamer->emitWinCFISaveXMM(MI->getOperand(0).getImm(),
                                    MI->getOperand(1).getImm());
     break;
 
   case X86::SEH_StackAlloc:
-    OutStreamer->EmitWinCFIAllocStack(MI->getOperand(0).getImm());
+    OutStreamer->emitWinCFIAllocStack(MI->getOperand(0).getImm());
     break;
 
   case X86::SEH_SetFrame:
-    OutStreamer->EmitWinCFISetFrame(MI->getOperand(0).getImm(),
+    OutStreamer->emitWinCFISetFrame(MI->getOperand(0).getImm(),
                                     MI->getOperand(1).getImm());
     break;
 
   case X86::SEH_PushFrame:
-    OutStreamer->EmitWinCFIPushFrame(MI->getOperand(0).getImm());
+    OutStreamer->emitWinCFIPushFrame(MI->getOperand(0).getImm());
     break;
 
   case X86::SEH_EndPrologue:
-    OutStreamer->EmitWinCFIEndProlog();
+    OutStreamer->emitWinCFIEndProlog();
     break;
 
   default:

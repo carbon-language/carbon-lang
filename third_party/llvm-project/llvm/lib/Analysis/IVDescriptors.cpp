@@ -11,26 +11,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/IVDescriptors.h"
-#include "llvm/ADT/ScopeExit.h"
-#include "llvm/Analysis/BasicAliasAnalysis.h"
 #include "llvm/Analysis/DemandedBits.h"
-#include "llvm/Analysis/DomTreeUpdater.h"
-#include "llvm/Analysis/GlobalsModRef.h"
-#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Analysis/LoopPass.h"
-#include "llvm/Analysis/MustExecute.h"
 #include "llvm/Analysis/ScalarEvolution.h"
-#include "llvm/Analysis/ScalarEvolutionAliasAnalysis.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
-#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/IR/ValueHandle.h"
-#include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/KnownBits.h"
 
@@ -237,12 +227,10 @@ static bool checkOrderedReduction(RecurKind Kind, Instruction *ExactFPMathInst,
   return true;
 }
 
-bool RecurrenceDescriptor::AddReductionVar(PHINode *Phi, RecurKind Kind,
-                                           Loop *TheLoop, FastMathFlags FuncFMF,
-                                           RecurrenceDescriptor &RedDes,
-                                           DemandedBits *DB,
-                                           AssumptionCache *AC,
-                                           DominatorTree *DT) {
+bool RecurrenceDescriptor::AddReductionVar(
+    PHINode *Phi, RecurKind Kind, Loop *TheLoop, FastMathFlags FuncFMF,
+    RecurrenceDescriptor &RedDes, DemandedBits *DB, AssumptionCache *AC,
+    DominatorTree *DT, ScalarEvolution *SE) {
   if (Phi->getNumIncomingValues() != 2)
     return false;
 
@@ -259,6 +247,12 @@ bool RecurrenceDescriptor::AddReductionVar(PHINode *Phi, RecurKind Kind,
   // This includes users of the reduction, variables (which form a cycle
   // which ends in the phi node).
   Instruction *ExitInstruction = nullptr;
+
+  // Variable to keep last visited store instruction. By the end of the
+  // algorithm this variable will be either empty or having intermediate
+  // reduction value stored in invariant address.
+  StoreInst *IntermediateStore = nullptr;
+
   // Indicates that we found a reduction operation in our scan.
   bool FoundReduxOp = false;
 
@@ -324,12 +318,53 @@ bool RecurrenceDescriptor::AddReductionVar(PHINode *Phi, RecurKind Kind,
   //  - By instructions outside of the loop (safe).
   //      * One value may have several outside users, but all outside
   //        uses must be of the same value.
+  //  - By store instructions with a loop invariant address (safe with
+  //    the following restrictions):
+  //      * If there are several stores, all must have the same address.
+  //      * Final value should be stored in that loop invariant address.
   //  - By an instruction that is not part of the reduction (not safe).
   //    This is either:
   //      * An instruction type other than PHI or the reduction operation.
   //      * A PHI in the header other than the initial PHI.
   while (!Worklist.empty()) {
     Instruction *Cur = Worklist.pop_back_val();
+
+    // Store instructions are allowed iff it is the store of the reduction
+    // value to the same loop invariant memory location.
+    if (auto *SI = dyn_cast<StoreInst>(Cur)) {
+      if (!SE) {
+        LLVM_DEBUG(dbgs() << "Store instructions are not processed without "
+                          << "Scalar Evolution Analysis\n");
+        return false;
+      }
+
+      const SCEV *PtrScev = SE->getSCEV(SI->getPointerOperand());
+      // Check it is the same address as previous stores
+      if (IntermediateStore) {
+        const SCEV *OtherScev =
+            SE->getSCEV(IntermediateStore->getPointerOperand());
+
+        if (OtherScev != PtrScev) {
+          LLVM_DEBUG(dbgs() << "Storing reduction value to different addresses "
+                            << "inside the loop: " << *SI->getPointerOperand()
+                            << " and "
+                            << *IntermediateStore->getPointerOperand() << '\n');
+          return false;
+        }
+      }
+
+      // Check the pointer is loop invariant
+      if (!SE->isLoopInvariant(PtrScev, TheLoop)) {
+        LLVM_DEBUG(dbgs() << "Storing reduction value to non-uniform address "
+                          << "inside the loop: " << *SI->getPointerOperand()
+                          << '\n');
+        return false;
+      }
+
+      // IntermediateStore is always the last store in the loop.
+      IntermediateStore = SI;
+      continue;
+    }
 
     // No Users.
     // If the instruction has no users then this is a broken chain and can't be
@@ -453,10 +488,17 @@ bool RecurrenceDescriptor::AddReductionVar(PHINode *Phi, RecurKind Kind,
       // reductions which are represented as a cmp followed by a select.
       InstDesc IgnoredVal(false, nullptr);
       if (VisitedInsts.insert(UI).second) {
-        if (isa<PHINode>(UI))
+        if (isa<PHINode>(UI)) {
           PHIs.push_back(UI);
-        else
+        } else {
+          StoreInst *SI = dyn_cast<StoreInst>(UI);
+          if (SI && SI->getPointerOperand() == Cur) {
+            // Reduction variable chain can only be stored somewhere but it
+            // can't be used as an address.
+            return false;
+          }
           NonPHIs.push_back(UI);
+        }
       } else if (!isa<PHINode>(UI) &&
                  ((!isa<FCmpInst>(UI) && !isa<ICmpInst>(UI) &&
                    !isa<SelectInst>(UI)) ||
@@ -476,13 +518,39 @@ bool RecurrenceDescriptor::AddReductionVar(PHINode *Phi, RecurKind Kind,
 
   // This means we have seen one but not the other instruction of the
   // pattern or more than just a select and cmp. Zero implies that we saw a
-  // llvm.min/max instrinsic, which is always OK.
+  // llvm.min/max intrinsic, which is always OK.
   if (isMinMaxRecurrenceKind(Kind) && NumCmpSelectPatternInst != 2 &&
       NumCmpSelectPatternInst != 0)
     return false;
 
   if (isSelectCmpRecurrenceKind(Kind) && NumCmpSelectPatternInst != 1)
     return false;
+
+  if (IntermediateStore) {
+    // Check that stored value goes to the phi node again. This way we make sure
+    // that the value stored in IntermediateStore is indeed the final reduction
+    // value.
+    if (!is_contained(Phi->operands(), IntermediateStore->getValueOperand())) {
+      LLVM_DEBUG(dbgs() << "Not a final reduction value stored: "
+                        << *IntermediateStore << '\n');
+      return false;
+    }
+
+    // If there is an exit instruction it's value should be stored in
+    // IntermediateStore
+    if (ExitInstruction &&
+        IntermediateStore->getValueOperand() != ExitInstruction) {
+      LLVM_DEBUG(dbgs() << "Last store Instruction of reduction value does not "
+                           "store last calculated value of the reduction: "
+                        << *IntermediateStore << '\n');
+      return false;
+    }
+
+    // If all uses are inside the loop (intermediate stores), then the
+    // reduction value after the loop will be the one used in the last store.
+    if (!ExitInstruction)
+      ExitInstruction = cast<Instruction>(IntermediateStore->getValueOperand());
+  }
 
   if (!FoundStartPHI || !FoundReduxOp || !ExitInstruction)
     return false;
@@ -545,9 +613,9 @@ bool RecurrenceDescriptor::AddReductionVar(PHINode *Phi, RecurKind Kind,
   // is saved as part of the RecurrenceDescriptor.
 
   // Save the description of this reduction variable.
-  RecurrenceDescriptor RD(RdxStart, ExitInstruction, Kind, FMF, ExactFPMathInst,
-                          RecurrenceType, IsSigned, IsOrdered, CastInsts,
-                          MinWidthCastToRecurrenceType);
+  RecurrenceDescriptor RD(RdxStart, ExitInstruction, IntermediateStore, Kind,
+                          FMF, ExactFPMathInst, RecurrenceType, IsSigned,
+                          IsOrdered, CastInsts, MinWidthCastToRecurrenceType);
   RedDes = RD;
 
   return true;
@@ -771,7 +839,8 @@ bool RecurrenceDescriptor::hasMultipleUsesOf(
 bool RecurrenceDescriptor::isReductionPHI(PHINode *Phi, Loop *TheLoop,
                                           RecurrenceDescriptor &RedDes,
                                           DemandedBits *DB, AssumptionCache *AC,
-                                          DominatorTree *DT) {
+                                          DominatorTree *DT,
+                                          ScalarEvolution *SE) {
   BasicBlock *Header = TheLoop->getHeader();
   Function &F = *Header->getParent();
   FastMathFlags FMF;
@@ -780,72 +849,85 @@ bool RecurrenceDescriptor::isReductionPHI(PHINode *Phi, Loop *TheLoop,
   FMF.setNoSignedZeros(
       F.getFnAttribute("no-signed-zeros-fp-math").getValueAsBool());
 
-  if (AddReductionVar(Phi, RecurKind::Add, TheLoop, FMF, RedDes, DB, AC, DT)) {
+  if (AddReductionVar(Phi, RecurKind::Add, TheLoop, FMF, RedDes, DB, AC, DT,
+                      SE)) {
     LLVM_DEBUG(dbgs() << "Found an ADD reduction PHI." << *Phi << "\n");
     return true;
   }
-  if (AddReductionVar(Phi, RecurKind::Mul, TheLoop, FMF, RedDes, DB, AC, DT)) {
+  if (AddReductionVar(Phi, RecurKind::Mul, TheLoop, FMF, RedDes, DB, AC, DT,
+                      SE)) {
     LLVM_DEBUG(dbgs() << "Found a MUL reduction PHI." << *Phi << "\n");
     return true;
   }
-  if (AddReductionVar(Phi, RecurKind::Or, TheLoop, FMF, RedDes, DB, AC, DT)) {
+  if (AddReductionVar(Phi, RecurKind::Or, TheLoop, FMF, RedDes, DB, AC, DT,
+                      SE)) {
     LLVM_DEBUG(dbgs() << "Found an OR reduction PHI." << *Phi << "\n");
     return true;
   }
-  if (AddReductionVar(Phi, RecurKind::And, TheLoop, FMF, RedDes, DB, AC, DT)) {
+  if (AddReductionVar(Phi, RecurKind::And, TheLoop, FMF, RedDes, DB, AC, DT,
+                      SE)) {
     LLVM_DEBUG(dbgs() << "Found an AND reduction PHI." << *Phi << "\n");
     return true;
   }
-  if (AddReductionVar(Phi, RecurKind::Xor, TheLoop, FMF, RedDes, DB, AC, DT)) {
+  if (AddReductionVar(Phi, RecurKind::Xor, TheLoop, FMF, RedDes, DB, AC, DT,
+                      SE)) {
     LLVM_DEBUG(dbgs() << "Found a XOR reduction PHI." << *Phi << "\n");
     return true;
   }
-  if (AddReductionVar(Phi, RecurKind::SMax, TheLoop, FMF, RedDes, DB, AC, DT)) {
+  if (AddReductionVar(Phi, RecurKind::SMax, TheLoop, FMF, RedDes, DB, AC, DT,
+                      SE)) {
     LLVM_DEBUG(dbgs() << "Found a SMAX reduction PHI." << *Phi << "\n");
     return true;
   }
-  if (AddReductionVar(Phi, RecurKind::SMin, TheLoop, FMF, RedDes, DB, AC, DT)) {
+  if (AddReductionVar(Phi, RecurKind::SMin, TheLoop, FMF, RedDes, DB, AC, DT,
+                      SE)) {
     LLVM_DEBUG(dbgs() << "Found a SMIN reduction PHI." << *Phi << "\n");
     return true;
   }
-  if (AddReductionVar(Phi, RecurKind::UMax, TheLoop, FMF, RedDes, DB, AC, DT)) {
+  if (AddReductionVar(Phi, RecurKind::UMax, TheLoop, FMF, RedDes, DB, AC, DT,
+                      SE)) {
     LLVM_DEBUG(dbgs() << "Found a UMAX reduction PHI." << *Phi << "\n");
     return true;
   }
-  if (AddReductionVar(Phi, RecurKind::UMin, TheLoop, FMF, RedDes, DB, AC, DT)) {
+  if (AddReductionVar(Phi, RecurKind::UMin, TheLoop, FMF, RedDes, DB, AC, DT,
+                      SE)) {
     LLVM_DEBUG(dbgs() << "Found a UMIN reduction PHI." << *Phi << "\n");
     return true;
   }
   if (AddReductionVar(Phi, RecurKind::SelectICmp, TheLoop, FMF, RedDes, DB, AC,
-                      DT)) {
+                      DT, SE)) {
     LLVM_DEBUG(dbgs() << "Found an integer conditional select reduction PHI."
                       << *Phi << "\n");
     return true;
   }
-  if (AddReductionVar(Phi, RecurKind::FMul, TheLoop, FMF, RedDes, DB, AC, DT)) {
+  if (AddReductionVar(Phi, RecurKind::FMul, TheLoop, FMF, RedDes, DB, AC, DT,
+                      SE)) {
     LLVM_DEBUG(dbgs() << "Found an FMult reduction PHI." << *Phi << "\n");
     return true;
   }
-  if (AddReductionVar(Phi, RecurKind::FAdd, TheLoop, FMF, RedDes, DB, AC, DT)) {
+  if (AddReductionVar(Phi, RecurKind::FAdd, TheLoop, FMF, RedDes, DB, AC, DT,
+                      SE)) {
     LLVM_DEBUG(dbgs() << "Found an FAdd reduction PHI." << *Phi << "\n");
     return true;
   }
-  if (AddReductionVar(Phi, RecurKind::FMax, TheLoop, FMF, RedDes, DB, AC, DT)) {
+  if (AddReductionVar(Phi, RecurKind::FMax, TheLoop, FMF, RedDes, DB, AC, DT,
+                      SE)) {
     LLVM_DEBUG(dbgs() << "Found a float MAX reduction PHI." << *Phi << "\n");
     return true;
   }
-  if (AddReductionVar(Phi, RecurKind::FMin, TheLoop, FMF, RedDes, DB, AC, DT)) {
+  if (AddReductionVar(Phi, RecurKind::FMin, TheLoop, FMF, RedDes, DB, AC, DT,
+                      SE)) {
     LLVM_DEBUG(dbgs() << "Found a float MIN reduction PHI." << *Phi << "\n");
     return true;
   }
   if (AddReductionVar(Phi, RecurKind::SelectFCmp, TheLoop, FMF, RedDes, DB, AC,
-                      DT)) {
+                      DT, SE)) {
     LLVM_DEBUG(dbgs() << "Found a float conditional select reduction PHI."
                       << " PHI." << *Phi << "\n");
     return true;
   }
-  if (AddReductionVar(Phi, RecurKind::FMulAdd, TheLoop, FMF, RedDes, DB, AC,
-                      DT)) {
+  if (AddReductionVar(Phi, RecurKind::FMulAdd, TheLoop, FMF, RedDes, DB, AC, DT,
+                      SE)) {
     LLVM_DEBUG(dbgs() << "Found an FMulAdd reduction PHI." << *Phi << "\n");
     return true;
   }
@@ -917,17 +999,36 @@ bool RecurrenceDescriptor::isFirstOrderRecurrence(
         SinkCandidate->mayReadFromMemory() || SinkCandidate->isTerminator())
       return false;
 
-    // Try to sink an instruction after the 'deepest' previous instruction,
-    // which has multiple operands for first order recurrences.
+    // Avoid sinking an instruction multiple times (if multiple operands are
+    // first order recurrences) by sinking once - after the latest 'previous'
+    // instruction.
     auto It = SinkAfter.find(SinkCandidate);
     if (It != SinkAfter.end()) {
-      auto LastPrev = It->second;
-      if (LastPrev->getParent() != Previous->getParent())
+      auto *OtherPrev = It->second;
+      // Find the earliest entry in the 'sink-after' chain. The last entry in
+      // the chain is the original 'Previous' for a recurrence handled earlier.
+      auto EarlierIt = SinkAfter.find(OtherPrev);
+      while (EarlierIt != SinkAfter.end()) {
+        Instruction *EarlierInst = EarlierIt->second;
+        EarlierIt = SinkAfter.find(EarlierInst);
+        // Bail out if order has not been preserved.
+        if (EarlierIt != SinkAfter.end() &&
+            !DT->dominates(EarlierInst, OtherPrev))
+          return false;
+        OtherPrev = EarlierInst;
+      }
+      // Bail out if order has not been preserved.
+      if (OtherPrev != It->second && !DT->dominates(It->second, OtherPrev))
         return false;
 
-      // If LastPrev comes after the current Previous, SinkCandidate already
-      // gets sunk past Previous and nothing left to do.
-      return Previous->comesBefore(LastPrev);
+      // SinkCandidate is already being sunk after an instruction after
+      // Previous. Nothing left to do.
+      if (DT->dominates(Previous, OtherPrev) || Previous == OtherPrev)
+        return true;
+      // Otherwise, Previous comes after OtherPrev and SinkCandidate needs to be
+      // re-sunk to Previous, instead of sinking to OtherPrev. Remove
+      // SinkCandidate from SinkAfter to ensure it's insert position is updated.
+      SinkAfter.erase(SinkCandidate);
     }
 
     // If we reach a PHI node that is not dominated by Previous, we reached a

@@ -6,7 +6,7 @@
 ;     http://llvm.org/docs/DeveloperPolicy.html#ir-backwards-compatibility
 
 ; RUN: llvm-as < %s | llvm-dis | llvm-as | llvm-dis | FileCheck %s
-; RUN-PR24755: verify-uselistorder < %s
+; RUN: verify-uselistorder < %s
 
 target datalayout = "E"
 ; CHECK: target datalayout = "E"
@@ -202,6 +202,18 @@ declare void @g.f1()
 ; CHECK: @llvm.global_ctors = appending global [1 x %pri.func.data] [%pri.func.data { i32 0, void ()* @g.f1, i8* @g.used3 }], section "llvm.metadata"
 @llvm.global_dtors = appending global [1 x %pri.func.data] [%pri.func.data { i32 0, void ()* @g.f1, i8* @g.used3 }], section "llvm.metadata"
 ; CHECK: @llvm.global_dtors = appending global [1 x %pri.func.data] [%pri.func.data { i32 0, void ()* @g.f1, i8* @g.used3 }], section "llvm.metadata"
+
+; Global Variables -- sanitizers
+@g.no_sanitize_address = global i32 0, no_sanitize_address
+@g.no_sanitize_hwaddress = global i32 0, no_sanitize_hwaddress
+@g.no_sanitize_memtag = global i32 0, no_sanitize_memtag
+@g.no_sanitize_multiple = global i32 0, no_sanitize_address, no_sanitize_hwaddress, no_sanitize_memtag
+@g.sanitize_address_dyninit = global i32 0, sanitize_address_dyninit
+; CHECK: @g.no_sanitize_address = global i32 0, no_sanitize_address
+; CHECK: @g.no_sanitize_hwaddress = global i32 0, no_sanitize_hwaddress
+; CHECK: @g.no_sanitize_memtag = global i32 0, no_sanitize_memtag
+; CHECK: @g.no_sanitize_multiple = global i32 0, no_sanitize_address, no_sanitize_hwaddress, no_sanitize_memtag
+; CHECK: @g.sanitize_address_dyninit = global i32 0, sanitize_address_dyninit
 
 ;; Aliases
 ; Format: @<Name> = [Linkage] [Visibility] [DLLStorageClass] [ThreadLocal]
@@ -560,6 +572,10 @@ declare void @f.param.swiftasync(i8* swiftasync)
 ; CHECK: declare void @f.param.swiftasync(i8* swiftasync)
 declare void @f.param.swifterror(i8** swifterror)
 ; CHECK: declare void @f.param.swifterror(i8** swifterror)
+declare void @f.param.allocalign(i32 allocalign)
+; CHECK: declare void @f.param.allocalign(i32 allocalign)
+declare void @f.param.allocptr(i32* allocptr)
+; CHECK: declare void @f.param.allocptr(i32* allocptr)
 
 ; Functions -- unnamed_addr and local_unnamed_addr
 declare void @f.unnamed_addr() unnamed_addr
@@ -847,6 +863,12 @@ define void @fp_atomics(float* %word) {
 ; CHECK: %atomicrmw.fsub = atomicrmw fsub float* %word, float 1.000000e+00 monotonic
   %atomicrmw.fsub = atomicrmw fsub float* %word, float 1.0 monotonic
 
+  ret void
+}
+
+define void @pointer_atomics(i8** %word) {
+; CHECK: %atomicrmw.xchg = atomicrmw xchg i8** %word, i8* null monotonic
+  %atomicrmw.xchg = atomicrmw xchg i8** %word, i8* null monotonic
   ret void
 }
 
@@ -1510,7 +1532,7 @@ exit:
   ; CHECK: select <2 x i1> <i1 true, i1 false>, <2 x i8> <i8 2, i8 3>, <2 x i8> <i8 3, i8 2>
 
   call void @f.nobuiltin() builtin
-  ; CHECK: call void @f.nobuiltin() #48
+  ; CHECK: call void @f.nobuiltin() #50
 
   call fastcc noalias i32* @f.noalias() noinline
   ; CHECK: call fastcc noalias i32* @f.noalias() #12
@@ -1930,6 +1952,12 @@ declare void @f.allocsize_two(i32, i32) allocsize(1, 0)
 ; CHECK: Function Attrs: allocsize(1,0)
 ; CHECK: declare void @f.allocsize_two(i32, i32)
 
+declare void @f.nosanitize_bounds() nosanitize_bounds
+; CHECK: declare void @f.nosanitize_bounds() #48
+
+declare void @f.allockind() allockind("alloc,uninitialized")
+; CHECK: declare void @f.allockind() #49
+
 ; CHECK: attributes #0 = { alignstack=4 }
 ; CHECK: attributes #1 = { alignstack=8 }
 ; CHECK: attributes #2 = { alwaysinline }
@@ -1965,12 +1993,12 @@ declare void @f.allocsize_two(i32, i32) allocsize(1, 0)
 ; CHECK: attributes #32 = { norecurse }
 ; CHECK: attributes #33 = { inaccessiblememonly }
 ; CHECK: attributes #34 = { inaccessiblemem_or_argmemonly }
-; CHECK: attributes #35 = { nofree nosync nounwind readnone willreturn }
-; CHECK: attributes #36 = { nofree nosync nounwind willreturn }
+; CHECK: attributes #35 = { nocallback nofree nosync nounwind readnone willreturn }
+; CHECK: attributes #36 = { nocallback nofree nosync nounwind willreturn }
 ; CHECK: attributes #37 = { argmemonly nounwind readonly }
 ; CHECK: attributes #38 = { argmemonly nounwind }
 ; CHECK: attributes #39 = { nounwind readonly }
-; CHECK: attributes #40 = { inaccessiblemem_or_argmemonly nofree nosync nounwind willreturn }
+; CHECK: attributes #40 = { inaccessiblemem_or_argmemonly nocallback nofree nosync nounwind willreturn }
 ; CHECK: attributes #41 = { writeonly }
 ; CHECK: attributes #42 = { speculatable }
 ; CHECK: attributes #43 = { strictfp }
@@ -1978,7 +2006,9 @@ declare void @f.allocsize_two(i32, i32) allocsize(1, 0)
 ; CHECK: attributes #45 = { disable_sanitizer_instrumentation }
 ; CHECK: attributes #46 = { allocsize(0) }
 ; CHECK: attributes #47 = { allocsize(1,0) }
-; CHECK: attributes #48 = { builtin }
+; CHECK: attributes #48 = { nosanitize_bounds }
+; CHECK: attributes #49 = { allockind("alloc,uninitialized") }
+; CHECK: attributes #50 = { builtin }
 
 ;; Metadata
 

@@ -9,7 +9,9 @@
 #ifndef TEST_SUPPORT_DEDUCTION_GUIDES_SFINAE_CHECKS_H
 #define TEST_SUPPORT_DEDUCTION_GUIDES_SFINAE_CHECKS_H
 
+#include <functional>
 #include <initializer_list>
+#include <iterator>
 #include <memory>
 #include <type_traits>
 #include <utility>

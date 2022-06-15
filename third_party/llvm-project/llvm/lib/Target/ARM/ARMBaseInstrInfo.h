@@ -372,6 +372,11 @@ public:
            MI->getOpcode() == ARM::t2WhileLoopStartTP;
   }
 
+  /// Analyze loop L, which must be a single-basic-block loop, and if the
+  /// conditions can be understood enough produce a PipelinerLoopInfo object.
+  std::unique_ptr<TargetInstrInfo::PipelinerLoopInfo>
+  analyzeLoopForPipelining(MachineBasicBlock *LoopBB) const override;
+
 private:
   /// Returns an unused general-purpose register which can be used for
   /// constructing an outlined call if one exists. Returns 0 otherwise.
@@ -750,6 +755,26 @@ static inline bool isValidCoprocessorNumber(unsigned Num,
     return false;
 
   return true;
+}
+
+static inline bool isSEHInstruction(const MachineInstr &MI) {
+  unsigned Opc = MI.getOpcode();
+  switch (Opc) {
+  case ARM::SEH_StackAlloc:
+  case ARM::SEH_SaveRegs:
+  case ARM::SEH_SaveRegs_Ret:
+  case ARM::SEH_SaveSP:
+  case ARM::SEH_SaveFRegs:
+  case ARM::SEH_SaveLR:
+  case ARM::SEH_Nop:
+  case ARM::SEH_Nop_Ret:
+  case ARM::SEH_PrologEnd:
+  case ARM::SEH_EpilogStart:
+  case ARM::SEH_EpilogEnd:
+    return true;
+  default:
+    return false;
+  }
 }
 
 /// getInstrPredicate - If instruction is predicated, returns its predicate

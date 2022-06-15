@@ -1242,8 +1242,15 @@ const EnumEntry<unsigned> ElfSectionFlags[] = {
   ENUM_ENT(SHF_GROUP,            "G"),
   ENUM_ENT(SHF_TLS,              "T"),
   ENUM_ENT(SHF_COMPRESSED,       "C"),
-  ENUM_ENT(SHF_GNU_RETAIN,       "R"),
   ENUM_ENT(SHF_EXCLUDE,          "E"),
+};
+
+const EnumEntry<unsigned> ElfGNUSectionFlags[] = {
+  ENUM_ENT(SHF_GNU_RETAIN, "R")
+};
+
+const EnumEntry<unsigned> ElfSolarisSectionFlags[] = {
+  ENUM_ENT(SHF_SUNW_NODISCARD, "R")
 };
 
 const EnumEntry<unsigned> ElfXCoreSectionFlags[] = {
@@ -1275,9 +1282,19 @@ const EnumEntry<unsigned> ElfX86_64SectionFlags[] = {
 };
 
 static std::vector<EnumEntry<unsigned>>
-getSectionFlagsForTarget(unsigned EMachine) {
+getSectionFlagsForTarget(unsigned EOSAbi, unsigned EMachine) {
   std::vector<EnumEntry<unsigned>> Ret(std::begin(ElfSectionFlags),
                                        std::end(ElfSectionFlags));
+  switch (EOSAbi) {
+  case ELFOSABI_SOLARIS:
+    Ret.insert(Ret.end(), std::begin(ElfSolarisSectionFlags),
+               std::end(ElfSolarisSectionFlags));
+    break;
+  default:
+    Ret.insert(Ret.end(), std::begin(ElfGNUSectionFlags),
+               std::end(ElfGNUSectionFlags));
+    break;
+  }
   switch (EMachine) {
   case EM_ARM:
     Ret.insert(Ret.end(), std::begin(ElfARMSectionFlags),
@@ -1305,7 +1322,8 @@ getSectionFlagsForTarget(unsigned EMachine) {
   return Ret;
 }
 
-static std::string getGNUFlags(unsigned EMachine, uint64_t Flags) {
+static std::string getGNUFlags(unsigned EOSAbi, unsigned EMachine,
+                               uint64_t Flags) {
   // Here we are trying to build the flags string in the same way as GNU does.
   // It is not that straightforward. Imagine we have sh_flags == 0x90000000.
   // SHF_EXCLUDE ("E") has a value of 0x80000000 and SHF_MASKPROC is 0xf0000000.
@@ -1316,7 +1334,7 @@ static std::string getGNUFlags(unsigned EMachine, uint64_t Flags) {
   bool HasOSFlag = false;
   bool HasProcFlag = false;
   std::vector<EnumEntry<unsigned>> FlagsList =
-      getSectionFlagsForTarget(EMachine);
+      getSectionFlagsForTarget(EOSAbi, EMachine);
   while (Flags) {
     // Take the least significant bit as a flag.
     uint64_t Flag = Flags & -Flags;
@@ -1509,6 +1527,7 @@ const EnumEntry<unsigned> ElfHeaderAMDGPUFlagsABIVersion3[] = {
   LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX909),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX90A),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX90C),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX940),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX1010),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX1011),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX1012),
@@ -1519,6 +1538,11 @@ const EnumEntry<unsigned> ElfHeaderAMDGPUFlagsABIVersion3[] = {
   LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX1033),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX1034),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX1035),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX1036),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX1100),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX1101),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX1102),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX1103),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_FEATURE_XNACK_V3),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_FEATURE_SRAMECC_V3)
 };
@@ -1563,6 +1587,7 @@ const EnumEntry<unsigned> ElfHeaderAMDGPUFlagsABIVersion4[] = {
   LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX909),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX90A),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX90C),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX940),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX1010),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX1011),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX1012),
@@ -1573,6 +1598,11 @@ const EnumEntry<unsigned> ElfHeaderAMDGPUFlagsABIVersion4[] = {
   LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX1033),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX1034),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX1035),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX1036),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX1100),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX1101),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX1102),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_MACH_AMDGCN_GFX1103),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_FEATURE_XNACK_ANY_V4),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_FEATURE_XNACK_OFF_V4),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_FEATURE_XNACK_ON_V4),
@@ -2266,6 +2296,7 @@ std::string ELFDumper<ELFT>::getDynamicEntry(uint64_t Type,
     case DT_MIPS_PLTGOT:
     case DT_MIPS_RWPLT:
     case DT_MIPS_RLD_MAP_REL:
+    case DT_MIPS_XHASH:
       return FormatHexValue(Value);
     case DT_MIPS_FLAGS:
       return FormatFlags(Value, makeArrayRef(ElfDynamicDTMipsFlags));
@@ -3681,7 +3712,8 @@ template <class ELFT> void GNUELFDumper<ELFT>::printSectionHeaders() {
     Fields[4].Str = to_string(format_hex_no_prefix(Sec.sh_offset, 6));
     Fields[5].Str = to_string(format_hex_no_prefix(Sec.sh_size, 6));
     Fields[6].Str = to_string(format_hex_no_prefix(Sec.sh_entsize, 2));
-    Fields[7].Str = getGNUFlags(this->Obj.getHeader().e_machine, Sec.sh_flags);
+    Fields[7].Str = getGNUFlags(this->Obj.getHeader().e_ident[ELF::EI_OSABI],
+                                this->Obj.getHeader().e_machine, Sec.sh_flags);
     Fields[8].Str = to_string(Sec.sh_link);
     Fields[9].Str = to_string(Sec.sh_info);
     Fields[10].Str = to_string(Sec.sh_addralign);
@@ -5042,6 +5074,57 @@ static bool printGNUNote(raw_ostream &OS, uint32_t NoteType,
   return true;
 }
 
+using AndroidNoteProperties = std::vector<std::pair<StringRef, std::string>>;
+static AndroidNoteProperties getAndroidNoteProperties(uint32_t NoteType,
+                                                      ArrayRef<uint8_t> Desc) {
+  AndroidNoteProperties Props;
+  switch (NoteType) {
+  case ELF::NT_ANDROID_TYPE_MEMTAG:
+    if (Desc.empty()) {
+      Props.emplace_back("Invalid .note.android.memtag", "");
+      return Props;
+    }
+
+    switch (Desc[0] & NT_MEMTAG_LEVEL_MASK) {
+    case NT_MEMTAG_LEVEL_NONE:
+      Props.emplace_back("Tagging Mode", "NONE");
+      break;
+    case NT_MEMTAG_LEVEL_ASYNC:
+      Props.emplace_back("Tagging Mode", "ASYNC");
+      break;
+    case NT_MEMTAG_LEVEL_SYNC:
+      Props.emplace_back("Tagging Mode", "SYNC");
+      break;
+    default:
+      Props.emplace_back(
+          "Tagging Mode",
+          ("Unknown (" + Twine::utohexstr(Desc[0] & NT_MEMTAG_LEVEL_MASK) + ")")
+              .str());
+      break;
+    }
+    Props.emplace_back("Heap",
+                       (Desc[0] & NT_MEMTAG_HEAP) ? "Enabled" : "Disabled");
+    Props.emplace_back("Stack",
+                       (Desc[0] & NT_MEMTAG_STACK) ? "Enabled" : "Disabled");
+    break;
+  default:
+    return Props;
+  }
+  return Props;
+}
+
+static bool printAndroidNote(raw_ostream &OS, uint32_t NoteType,
+                             ArrayRef<uint8_t> Desc) {
+  // Return true if we were able to pretty-print the note, false otherwise.
+  AndroidNoteProperties Props = getAndroidNoteProperties(NoteType, Desc);
+  if (Props.empty())
+    return false;
+  for (const auto &KV : Props)
+    OS << "    " << KV.first << ": " << KV.second << '\n';
+  OS << '\n';
+  return true;
+}
+
 template <typename ELFT>
 static bool printLLVMOMPOFFLOADNote(raw_ostream &OS, uint32_t NoteType,
                                     ArrayRef<uint8_t> Desc) {
@@ -5401,6 +5484,13 @@ const NoteType LLVMOMPOFFLOADNoteTypes[] = {
      "NT_LLVM_OPENMP_OFFLOAD_PRODUCER_VERSION (producing toolchain version)"},
 };
 
+const NoteType AndroidNoteTypes[] = {
+    {ELF::NT_ANDROID_TYPE_IDENT, "NT_ANDROID_TYPE_IDENT"},
+    {ELF::NT_ANDROID_TYPE_KUSER, "NT_ANDROID_TYPE_KUSER"},
+    {ELF::NT_ANDROID_TYPE_MEMTAG,
+     "NT_ANDROID_TYPE_MEMTAG (Android memory tagging information)"},
+};
+
 const NoteType CoreNoteTypes[] = {
     {ELF::NT_PRSTATUS, "NT_PRSTATUS (prstatus structure)"},
     {ELF::NT_FPREGSET, "NT_FPREGSET (floating point registers)"},
@@ -5509,6 +5599,8 @@ StringRef getNoteTypeName(const typename ELFT::Note &Note, unsigned ELFType) {
     return FindNote(AMDGPUNoteTypes);
   if (Name == "LLVMOMPOFFLOAD")
     return FindNote(LLVMOMPOFFLOADNoteTypes);
+  if (Name == "Android")
+    return FindNote(AndroidNoteTypes);
 
   if (ELFType == ELF::ET_CORE)
     return FindNote(CoreNoteTypes);
@@ -5659,6 +5751,9 @@ template <class ELFT> void GNUELFDumper<ELFT>::printNotes() {
           return NoteOrErr.takeError();
         }
       }
+    } else if (Name == "Android") {
+      if (printAndroidNote(OS, Type, Descriptor))
+        return Error::success();
     }
     if (!Descriptor.empty()) {
       OS << "   description data:";
@@ -6502,7 +6597,8 @@ template <class ELFT> void LLVMELFDumper<ELFT>::printSectionHeaders() {
 
   int SectionIndex = -1;
   std::vector<EnumEntry<unsigned>> FlagsList =
-      getSectionFlagsForTarget(this->Obj.getHeader().e_machine);
+      getSectionFlagsForTarget(this->Obj.getHeader().e_ident[ELF::EI_OSABI],
+                               this->Obj.getHeader().e_machine);
   for (const Elf_Shdr &Sec : cantFail(this->Obj.sections())) {
     DictScope SectionD(W, "Section");
     W.printNumber("Index", ++SectionIndex);
@@ -6962,13 +7058,10 @@ template <class ELFT> void LLVMELFDumper<ELFT>::printBBAddrMaps() {
       W.printString("Name", FuncName);
 
       ListScope L(W, "BB entries");
-      uint32_t FunctionRelativeAddress = 0;
       for (const BBAddrMap::BBEntry &BBE : AM.BBEntries) {
         DictScope L(W);
-        FunctionRelativeAddress += BBE.Offset;
-        W.printHex("Offset", FunctionRelativeAddress);
+        W.printHex("Offset", BBE.Offset);
         W.printHex("Size", BBE.Size);
-        FunctionRelativeAddress += BBE.Size;
         W.printBoolean("HasReturn", BBE.HasReturn);
         W.printBoolean("HasTailCall", BBE.HasTailCall);
         W.printBoolean("IsEHPad", BBE.IsEHPad);
@@ -7025,6 +7118,17 @@ static bool printGNUNoteLLVMStyle(uint32_t NoteType, ArrayRef<uint8_t> Desc,
       W.printString(Property);
     break;
   }
+  return true;
+}
+
+static bool printAndroidNoteLLVMStyle(uint32_t NoteType, ArrayRef<uint8_t> Desc,
+                                      ScopedPrinter &W) {
+  // Return true if we were able to pretty-print the note, false otherwise.
+  AndroidNoteProperties Props = getAndroidNoteProperties(NoteType, Desc);
+  if (Props.empty())
+    return false;
+  for (const auto &KV : Props)
+    W.printString(KV.first, KV.second);
   return true;
 }
 
@@ -7130,6 +7234,9 @@ template <class ELFT> void LLVMELFDumper<ELFT>::printNotes() {
           return N.takeError();
         }
       }
+    } else if (Name == "Android") {
+      if (printAndroidNoteLLVMStyle(Type, Descriptor, W))
+        return Error::success();
     }
     if (!Descriptor.empty()) {
       W.printBinaryBlock("Description data", Descriptor);

@@ -43,14 +43,13 @@
 
 #include "llvm/Analysis/IRSimilarityIdentifier.h"
 #include "llvm/IR/PassManager.h"
-#include "llvm/IR/ValueMap.h"
 #include "llvm/Support/InstructionCost.h"
 #include "llvm/Transforms/Utils/CodeExtractor.h"
-#include <set>
 
 struct OutlinableGroup;
 
 namespace llvm {
+using namespace CallingConv;
 using namespace IRSimilarity;
 
 class Module;
@@ -85,6 +84,13 @@ struct OutlinableRegion {
   /// track of which extracted argument maps to which overall argument.
   DenseMap<unsigned, unsigned> ExtractedArgToAgg;
   DenseMap<unsigned, unsigned> AggArgToExtracted;
+
+  /// Values in the outlined functions will often be replaced by arguments. When
+  /// finding corresponding values from one region to another, the found value
+  /// will be the value the argument previously replaced.  This structure maps
+  /// any replaced values for the region to the aggregate aggregate argument
+  /// in the overall function.
+  DenseMap<Value *, Value *> RemappedArguments;
 
   /// Marks whether we need to change the order of the arguments when mapping
   /// the old extracted function call to the new aggregate outlined function
@@ -167,6 +173,15 @@ struct OutlinableRegion {
   /// \param V [in] - The Value to look for in the other region.
   /// \return The corresponding Value to \p V if it exists, otherwise nullptr.
   Value *findCorrespondingValueIn(const OutlinableRegion &Other, Value *V);
+
+  /// Find a corresponding BasicBlock for \p BB in similar OutlinableRegion \p Other.
+  ///
+  /// \param Other [in] - The OutlinableRegion to find the corresponding
+  /// BasicBlock in.
+  /// \param BB [in] - The BasicBlock to look for in the other region.
+  /// \return The corresponding Value to \p V if it exists, otherwise nullptr.
+  BasicBlock *findCorrespondingBlockIn(const OutlinableRegion &Other,
+                                       BasicBlock *BB);
 
   /// Get the size of the code removed from the region.
   ///
@@ -372,6 +387,25 @@ private:
       // the call in outlined functions.
       if (CI.canReturnTwice())
         return false;
+      // TODO: Update the outliner to capture whether the outlined function
+      // needs these extra attributes.
+
+      // Functions marked with the swifttailcc and tailcc calling conventions
+      // require special handling when outlining musttail functions.  The
+      // calling convention must be passed down to the outlined function as
+      // well. Further, there is special handling for musttail calls as well,
+      // requiring a return call directly after.  For now, the outliner does not
+      // support this.
+      bool IsTailCC = CI.getCallingConv() == CallingConv::SwiftTail ||
+                      CI.getCallingConv() == CallingConv::Tail;
+      if (IsTailCC && !EnableMustTailCalls)
+        return false;
+      if (CI.isMustTailCall() && !EnableMustTailCalls)
+        return false;
+      // The outliner can only handle musttail items if it is also accompanied
+      // by the tailcc or swifttailcc calling convention.
+      if (CI.isMustTailCall() && !IsTailCC)
+        return false;
       return true;
     }
     // TODO: Handle FreezeInsts.  Since a frozen value could be frozen inside
@@ -397,6 +431,9 @@ private:
     // The flag variable that marks whether we should allow intrinsics
     // instructions to be outlined.
     bool EnableIntrinsics = false;
+
+    // The flag variable that marks whether we should allow musttail calls.
+    bool EnableMustTailCalls = false;
   };
 
   /// A InstVisitor used to exclude certain instructions from being outlined.

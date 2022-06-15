@@ -191,6 +191,7 @@ public:
   }
 
 private:
+  void CheckMultListItems();
   bool HasInvalidWorksharingNesting(
       const parser::CharBlock &, const OmpDirectiveSet &);
   bool IsCloselyNestedRegion(const OmpDirectiveSet &set);
@@ -241,7 +242,6 @@ private:
   void CheckCancellationNest(
       const parser::CharBlock &source, const parser::OmpCancelType::Type &type);
   std::int64_t GetOrdCollapseLevel(const parser::OpenMPLoopConstruct &x);
-  void CheckIfDoOrderedClause(const parser::OmpBlockDirective &blkDirectiv);
   bool CheckReductionOperators(const parser::OmpClause::Reduction &);
   bool CheckIntrinsicOperator(
       const parser::DefinedOperator::IntrinsicOperator &);
@@ -250,6 +250,7 @@ private:
   void ChecksOnOrderedAsBlock();
   void CheckBarrierNesting(const parser::OpenMPSimpleStandaloneConstruct &x);
   void ChecksOnOrderedAsStandalone();
+  void CheckOrderedDependClause(std::optional<std::int64_t> orderedValue);
   void CheckReductionArraySection(const parser::OmpObjectList &ompObjectList);
   void CheckIntentInPointerAndDefinable(
       const parser::OmpObjectList &, const llvm::omp::Clause);

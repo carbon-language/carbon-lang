@@ -33,12 +33,10 @@
 #include "llvm/IR/ConstantRange.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/Operator.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/IR/ValueMap.h"
 #include "llvm/Pass.h"
-#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <memory>
@@ -46,6 +44,7 @@
 
 namespace llvm {
 
+class OverflowingBinaryOperator;
 class AssumptionCache;
 class BasicBlock;
 class Constant;
@@ -67,6 +66,8 @@ class TargetLibraryInfo;
 class Type;
 class Value;
 enum SCEVTypes : unsigned short;
+
+extern bool VerifySCEV;
 
 /// This class represents an analyzed expression in the program.  These are
 /// opaque objects that the client is not allowed to do much with directly.
@@ -543,6 +544,10 @@ public:
 
   /// Return true if the SCEV expression contains an undef value.
   bool containsUndefs(const SCEV *S) const;
+
+  /// Return true if the SCEV expression contains a Value that has been
+  /// optimised out and is now a nullptr.
+  bool containsErasedValue(const SCEV *S) const;
 
   /// Return a SCEV expression for the full generality of the specified
   /// expression.
@@ -1246,30 +1251,11 @@ private:
   HasRecMapType HasRecMap;
 
   /// The type for ExprValueMap.
-  using ValueOffsetPair = std::pair<Value *, ConstantInt *>;
-  using ValueOffsetPairSetVector = SmallSetVector<ValueOffsetPair, 4>;
-  using ExprValueMapType = DenseMap<const SCEV *, ValueOffsetPairSetVector>;
+  using ValueSetVector = SmallSetVector<Value *, 4>;
+  using ExprValueMapType = DenseMap<const SCEV *, ValueSetVector>;
 
   /// ExprValueMap -- This map records the original values from which
   /// the SCEV expr is generated from.
-  ///
-  /// We want to represent the mapping as SCEV -> ValueOffsetPair instead
-  /// of SCEV -> Value:
-  /// Suppose we know S1 expands to V1, and
-  ///  S1 = S2 + C_a
-  ///  S3 = S2 + C_b
-  /// where C_a and C_b are different SCEVConstants. Then we'd like to
-  /// expand S3 as V1 - C_a + C_b instead of expanding S2 literally.
-  /// It is helpful when S2 is a complex SCEV expr.
-  ///
-  /// In order to do that, we represent ExprValueMap as a mapping from
-  /// SCEV to ValueOffsetPair. We will save both S1->{V1, 0} and
-  /// S2->{V1, C_a} into the map when we create SCEV for V1. When S3
-  /// is expanded, it will first expand S2 to V1 - C_a because of
-  /// S2->{V1, C_a} in the map, then expand S3 to V1 - C_a + C_b.
-  ///
-  /// Note: S->{V, Offset} in the ExprValueMap means S can be expanded
-  /// to V - Offset.
   ExprValueMapType ExprValueMap;
 
   /// The type for ValueExprMap.
@@ -1300,7 +1286,7 @@ private:
   DenseMap<const SCEV *, uint32_t> MinTrailingZerosCache;
 
   /// Return the Value set from which the SCEV expr is generated.
-  ValueOffsetPairSetVector *getSCEVValues(const SCEV *S);
+  ArrayRef<Value *> getSCEVValues(const SCEV *S);
 
   /// Private helper method for the GetMinTrailingZeros method
   uint32_t GetMinTrailingZerosImpl(const SCEV *S);
@@ -1587,19 +1573,6 @@ private:
   /// *add* recurrences with loop invariant steps aren't represented by
   /// SCEVUnknowns and thus don't use this mechanism.
   ConstantRange getRangeForUnknownRecurrence(const SCEVUnknown *U);
-
-  /// Return true and fill \p SCC with elements of PNINode-composed strongly
-  /// connected component that contains \p Phi. Here SCC is a maximum by
-  /// inclusion subgraph composed of Phis that transitively use one another as
-  /// inputs. Otherwise, return false and conservatively put \p Phi into \p SCC
-  /// as the only element of its strongly connected component.
-  bool collectSCC(const PHINode *Phi,
-                  SmallVectorImpl<const PHINode *> &SCC) const;
-
-  /// Sharpen range of entire SCEVUnknown Phi strongly connected component that
-  /// includes \p Phi. On output, \p ConservativeResult is the sharpened range.
-  void sharpenPhiSCCRange(const PHINode *Phi, ConstantRange &ConservativeResult,
-                          ScalarEvolution::RangeSignHint SignHint);
 
   /// We know that there is no SCEV for the specified value.  Analyze the
   /// expression.
@@ -2113,6 +2086,11 @@ private:
   /// Look for a SCEV expression with type `SCEVType` and operands `Ops` in
   /// `UniqueSCEVs`.  Return if found, else nullptr.
   SCEV *findExistingSCEVInCache(SCEVTypes SCEVType, ArrayRef<const SCEV *> Ops);
+
+  /// Get reachable blocks in this function, making limited use of SCEV
+  /// reasoning about conditions.
+  void getReachableBlocks(SmallPtrSetImpl<BasicBlock *> &Reachable,
+                          Function &F);
 
   FoldingSet<SCEV> UniqueSCEVs;
   FoldingSet<SCEVPredicate> UniquePreds;

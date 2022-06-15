@@ -25,6 +25,7 @@
 #define LLVM_TRANSFORMS_VECTORIZE_LOOPVECTORIZATIONPLANNER_H
 
 #include "VPlan.h"
+#include "llvm/Support/InstructionCost.h"
 
 namespace llvm {
 
@@ -318,6 +319,9 @@ public:
   static bool
   getDecisionAndClampRange(const std::function<bool(ElementCount)> &Predicate,
                            VFRange &Range);
+
+  /// Check if the number of runtime checks exceeds the threshold.
+  bool requiresTooManyRuntimeChecks() const;
 
 protected:
   /// Collect the instructions from the original loop that would be trivially

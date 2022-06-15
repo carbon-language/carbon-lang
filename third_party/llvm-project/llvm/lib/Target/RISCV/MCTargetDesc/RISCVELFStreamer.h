@@ -29,6 +29,7 @@ private:
   SmallVector<AttributeItem, 64> Contents;
 
   MCSection *AttributeSection = nullptr;
+  const MCSubtargetInfo &STI;
 
   AttributeItem *getAttributeItem(unsigned Attribute) {
     for (size_t i = 0; i < Contents.size(); ++i)
@@ -91,6 +92,8 @@ private:
   void finishAttributeSection() override;
   size_t calculateContentSize() const;
 
+  void reset() override;
+
 public:
   MCELFStreamer &getStreamer();
   RISCVTargetELFStreamer(MCStreamer &S, const MCSubtargetInfo &STI);
@@ -103,6 +106,8 @@ public:
   void emitDirectiveOptionNoRVC() override;
   void emitDirectiveOptionRelax() override;
   void emitDirectiveOptionNoRelax() override;
+
+  void finish() override;
 };
 
 MCELFStreamer *createRISCVELFStreamer(MCContext &C,

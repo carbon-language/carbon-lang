@@ -61,7 +61,7 @@ define i32* @checkAndAdvance(i32* align 16 %0) {
 ; GRAPH-EMPTY:
 ; GRAPH-NEXT: [AAValueConstantRange] for CtxI '  %2 = load i32, i32* %0, align 4' at position {flt: [@-1]} with state range(32)<full-set / full-set>
 ; GRAPH-EMPTY:
-; GRAPH-NEXT: [AAPotentialValues] for CtxI '  %2 = load i32, i32* %0, align 4' at position {flt: [@-1]} with state set-state(< {full-set} >)
+; GRAPH-NEXT: [AAPotentialConstantValues] for CtxI '  %2 = load i32, i32* %0, align 4' at position {flt: [@-1]} with state set-state(< {full-set} >)
 ; GRAPH-EMPTY:
 ; GRAPH-NEXT: [AAValueSimplify] for CtxI <<null inst>> at position {flt: [@-1]} with state not-simple
 ; GRAPH-EMPTY:
@@ -69,7 +69,7 @@ define i32* @checkAndAdvance(i32* align 16 %0) {
 ; GRAPH-EMPTY:
 ; GRAPH-NEXT: [AAValueConstantRange] for CtxI <<null inst>> at position {flt: [@-1]} with state range(32)<[0,1) / [0,1)>
 ; GRAPH-EMPTY:
-; GRAPH-NEXT: [AAPotentialValues] for CtxI '  %3 = icmp eq i32 %2, 0' at position {flt: [@-1]} with state set-state(< {full-set} >)
+; GRAPH-NEXT: [AAPotentialConstantValues] for CtxI '  %3 = icmp eq i32 %2, 0' at position {flt: [@-1]} with state set-state(< {full-set} >)
 ; GRAPH-EMPTY:
 ; GRAPH-NEXT: [AANoReturn] for CtxI '  %6 = call i32* @checkAndAdvance(i32* %5)' at position {cs: [@-1]} with state may-return
 ; GRAPH-EMPTY:
@@ -180,7 +180,9 @@ define i32* @checkAndAdvance(i32* align 16 %0) {
 ; GRAPH-EMPTY:
 ; GRAPH-NEXT: [AAHeapToStack] for CtxI '  %2 = load i32, i32* %0, align 4' at position {fn:checkAndAdvance [checkAndAdvance@-1]} with state [H2S] Mallocs Good/Bad: 0/0
 ; GRAPH-EMPTY:
-; GRAPH-NEXT: [AAValueSimplify] for CtxI '  %2 = load i32, i32* %0, align 4' at position {fn_ret:checkAndAdvance [checkAndAdvance@-1]} with state not-simple
+; GRAPH-NEXT: [AAValueSimplify] for CtxI '  %2 = load i32, i32* %0, align 4' at position {fn_ret:checkAndAdvance [checkAndAdvance@-1]} with state simplified
+; GRAPH-EMPTY:
+; GRAPH-NEXT: [AAValueSimplify] for CtxI '  %.0 = phi i32* [ %6, %4 ], [ %0, %7 ]' at position {flt:.0 [.0@-1]} with state not-simple
 ; GRAPH-EMPTY:
 ; GRAPH-NEXT: [AAAlign] for CtxI '  %2 = load i32, i32* %0, align 4' at position {fn_ret:checkAndAdvance [checkAndAdvance@-1]} with state align<1-16>
 ; GRAPH-NEXT:   updates [AAAlign] for CtxI '  %6 = call i32* @checkAndAdvance(i32* %5)' at position {cs_ret: [@-1]} with state align<1-16>
@@ -229,8 +231,6 @@ define i32* @checkAndAdvance(i32* align 16 %0) {
 ; GRAPH-NEXT:   updates [AANoCapture] for CtxI '  %6 = call i32* @checkAndAdvance(i32* %5)' at position {cs_arg: [@0]} with state assumed not-captured-maybe-returned
 ; GRAPH-NEXT:   updates [AANoCapture] for CtxI '  %6 = call i32* @checkAndAdvance(i32* %5)' at position {cs_arg: [@0]} with state assumed not-captured-maybe-returned
 ; GRAPH-EMPTY:
-; GRAPH-NEXT: [AAIsDead] for CtxI '  br label %8' at position {flt: [@-1]} with state assumed-live
-; GRAPH-EMPTY:
 ; GRAPH-NEXT: [AAIsDead] for CtxI '  %5 = getelementptr inbounds i32, i32* %0, i64 4' at position {flt: [@-1]} with state assumed-live
 ; GRAPH-EMPTY:
 ; GRAPH-NEXT: [AAIsDead] for CtxI '  %6 = call i32* @checkAndAdvance(i32* %5)' at position {cs_arg: [@0]} with state assumed-live
@@ -238,6 +238,8 @@ define i32* @checkAndAdvance(i32* align 16 %0) {
 ; GRAPH-NEXT: [AANoCapture] for CtxI '  %6 = call i32* @checkAndAdvance(i32* %5)' at position {cs_arg: [@0]} with state assumed not-captured-maybe-returned
 ; GRAPH-NEXT:   updates [AANoCapture] for CtxI '  %2 = load i32, i32* %0, align 4' at position {arg: [@0]} with state assumed not-captured-maybe-returned
 ; GRAPH-NEXT:   updates [AANoCapture] for CtxI '  %2 = load i32, i32* %0, align 4' at position {arg: [@0]} with state assumed not-captured-maybe-returned
+; GRAPH-EMPTY:
+; GRAPH-NEXT: [AAIsDead] for CtxI '  br label %8' at position {flt: [@-1]} with state assumed-live
 ; GRAPH-EMPTY:
 ; GRAPH-NEXT: [AAMemoryBehavior] for CtxI '  %2 = load i32, i32* %0, align 4' at position {arg: [@0]} with state readonly
 ; GRAPH-NEXT:   updates [AAMemoryBehavior] for CtxI '  %6 = call i32* @checkAndAdvance(i32* %5)' at position {cs_arg: [@0]} with state readonly

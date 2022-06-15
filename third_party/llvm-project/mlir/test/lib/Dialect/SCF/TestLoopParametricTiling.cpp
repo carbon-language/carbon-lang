@@ -22,9 +22,10 @@ namespace {
 // Extracts fixed-range loops for top-level loop nests with ranges defined in
 // the pass constructor.  Assumes loops are permutable.
 class SimpleParametricLoopTilingPass
-    : public PassWrapper<SimpleParametricLoopTilingPass,
-                         OperationPass<FuncOp>> {
+    : public PassWrapper<SimpleParametricLoopTilingPass, OperationPass<>> {
 public:
+  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(SimpleParametricLoopTilingPass)
+
   StringRef getArgument() const final {
     return "test-extract-fixed-outer-loops";
   }
@@ -39,8 +40,7 @@ public:
   }
 
   void runOnOperation() override {
-    FuncOp func = getOperation();
-    func.walk([this](scf::ForOp op) {
+    getOperation()->walk([this](scf::ForOp op) {
       // Ignore nested loops.
       if (op->getParentRegion()->getParentOfType<scf::ForOp>())
         return;
@@ -49,7 +49,7 @@ public:
   }
 
   ListOption<int64_t> sizes{
-      *this, "test-outer-loop-sizes", llvm::cl::MiscFlags::CommaSeparated,
+      *this, "test-outer-loop-sizes",
       llvm::cl::desc(
           "fixed number of iterations that the outer loops should have")};
 };

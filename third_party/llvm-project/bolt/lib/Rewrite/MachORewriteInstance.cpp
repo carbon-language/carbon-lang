@@ -91,7 +91,7 @@ MachORewriteInstance::createMachORewriteInstance(
       std::make_unique<MachORewriteInstance>(InputFile, ToolPath, Err);
   if (Err)
     return std::move(Err);
-  return MachORI;
+  return std::move(MachORI);
 }
 
 MachORewriteInstance::MachORewriteInstance(object::MachOObjectFile *InputFile,
@@ -494,7 +494,7 @@ void MachORewriteInstance::emitAndLink() {
   auto Streamer = BC->createStreamer(*OS);
 
   emitBinaryContext(*Streamer, *BC, getOrgSecPrefix());
-  Streamer->Finish();
+  Streamer->finish();
 
   std::unique_ptr<MemoryBuffer> ObjectMemBuffer =
       MemoryBuffer::getMemBuffer(BOS->str(), "in-memory object file", false);

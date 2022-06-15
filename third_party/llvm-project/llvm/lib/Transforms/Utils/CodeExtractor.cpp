@@ -53,7 +53,6 @@
 #include "llvm/IR/User.h"
 #include "llvm/IR/Value.h"
 #include "llvm/IR/Verifier.h"
-#include "llvm/Pass.h"
 #include "llvm/Support/BlockFrequency.h"
 #include "llvm/Support/BranchProbability.h"
 #include "llvm/Support/Casting.h"
@@ -62,12 +61,10 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/Transforms/Utils/Local.h"
 #include <cassert>
 #include <cstdint>
 #include <iterator>
 #include <map>
-#include <set>
 #include <utility>
 #include <vector>
 
@@ -249,9 +246,10 @@ CodeExtractor::CodeExtractor(ArrayRef<BasicBlock *> BBs, DominatorTree *DT,
                              bool AggregateArgs, BlockFrequencyInfo *BFI,
                              BranchProbabilityInfo *BPI, AssumptionCache *AC,
                              bool AllowVarArgs, bool AllowAlloca,
-                             std::string Suffix)
+                             BasicBlock *AllocationBlock, std::string Suffix)
     : DT(DT), AggregateArgs(AggregateArgs || AggregateArgsOpt), BFI(BFI),
-      BPI(BPI), AC(AC), AllowVarArgs(AllowVarArgs),
+      BPI(BPI), AC(AC), AllocationBlock(AllocationBlock),
+      AllowVarArgs(AllowVarArgs),
       Blocks(buildExtractionBlockSet(BBs, DT, AllowVarArgs, AllowAlloca)),
       Suffix(Suffix) {}
 
@@ -260,7 +258,7 @@ CodeExtractor::CodeExtractor(DominatorTree &DT, Loop &L, bool AggregateArgs,
                              BranchProbabilityInfo *BPI, AssumptionCache *AC,
                              std::string Suffix)
     : DT(&DT), AggregateArgs(AggregateArgs || AggregateArgsOpt), BFI(BFI),
-      BPI(BPI), AC(AC), AllowVarArgs(false),
+      BPI(BPI), AC(AC), AllocationBlock(nullptr), AllowVarArgs(false),
       Blocks(buildExtractionBlockSet(L.getBlocks(), &DT,
                                      /* AllowVarArgs */ false,
                                      /* AllowAlloca */ false)),
@@ -922,6 +920,8 @@ Function *CodeExtractor::constructFunction(const ValueSet &inputs,
       case Attribute::StackAlignment:
       case Attribute::WillReturn:
       case Attribute::WriteOnly:
+      case Attribute::AllocKind:
+      case Attribute::PresplitCoroutine:
         continue;
       // Those attributes should be safe to propagate to the extracted function.
       case Attribute::AlwaysInline:
@@ -939,6 +939,7 @@ Function *CodeExtractor::constructFunction(const ValueSet &inputs,
       case Attribute::NonLazyBind:
       case Attribute::NoRedZone:
       case Attribute::NoUnwind:
+      case Attribute::NoSanitizeBounds:
       case Attribute::NoSanitizeCoverage:
       case Attribute::NullPointerIsValid:
       case Attribute::OptForFuzzing:
@@ -964,6 +965,8 @@ Function *CodeExtractor::constructFunction(const ValueSet &inputs,
         break;
       // These attributes cannot be applied to functions.
       case Attribute::Alignment:
+      case Attribute::AllocatedPointer:
+      case Attribute::AllocAlign:
       case Attribute::ByVal:
       case Attribute::Dereferenceable:
       case Attribute::DereferenceableOrNull:
@@ -1190,9 +1193,10 @@ CallInst *CodeExtractor::emitCallAndSwitchStatement(Function *newFunction,
 
     // Allocate a struct at the beginning of this function
     StructArgTy = StructType::get(newFunction->getContext(), ArgTypes);
-    Struct = new AllocaInst(StructArgTy, DL.getAllocaAddrSpace(), nullptr,
-                            "structArg",
-                            &codeReplacer->getParent()->front().front());
+    Struct = new AllocaInst(
+        StructArgTy, DL.getAllocaAddrSpace(), nullptr, "structArg",
+        AllocationBlock ? &*AllocationBlock->getFirstInsertionPt()
+                        : &codeReplacer->getParent()->front().front());
     params.push_back(Struct);
 
     // Store aggregated inputs in the struct.

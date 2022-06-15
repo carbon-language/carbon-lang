@@ -10,13 +10,9 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/Option/Arg.h"
-#include "llvm/Option/ArgList.h"
-#include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Process.h"
@@ -24,6 +20,10 @@
 #include "llvm/Support/VersionTuple.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include <string>
+
+#ifdef _WIN32
+#include "llvm/Support/ConvertUTF.h"
+#endif
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -359,7 +359,16 @@ std::string getSubDirectoryPath(SubDirectoryType Type, ToolsetLayout VSLayout,
   switch (Type) {
   case SubDirectoryType::Bin:
     if (VSLayout == ToolsetLayout::VS2017OrNewer) {
-      const bool HostIsX64 = Triple(sys::getProcessTriple()).isArch64Bit();
+      // MSVC ships with two linkers: a 32-bit x86 and 64-bit x86 linker.
+      // On x86, pick the linker that corresponds to the current process.
+      // On ARM64, pick the 32-bit x86 linker; the 64-bit one doesn't run
+      // on Windows 10.
+      //
+      // FIXME: Consider using IsWow64GuestMachineSupported to figure out
+      // if we can invoke the 64-bit linker. It's generally preferable
+      // because it won't run out of address-space.
+      const bool HostIsX64 =
+          Triple(sys::getProcessTriple()).getArch() == Triple::x86_64;
       const char *const HostName = HostIsX64 ? "Hostx64" : "Hostx86";
       sys::path::append(Path, "bin", HostName, SubdirName);
     } else { // OlderVS or DevDivInternal

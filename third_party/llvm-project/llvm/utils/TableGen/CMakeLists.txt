@@ -8,7 +8,6 @@ add_tablegen(llvm-tblgen LLVM
   AsmWriterInst.cpp
   Attributes.cpp
   CallingConvEmitter.cpp
-  CodeBeadsGen.cpp
   CodeEmitterGen.cpp
   CodeGenDAGPatterns.cpp
   CodeGenHwModes.cpp
@@ -22,13 +21,13 @@ add_tablegen(llvm-tblgen LLVM
   DAGISelMatcherGen.cpp
   DAGISelMatcherOpt.cpp
   DAGISelMatcher.cpp
+  DecoderEmitter.cpp
   DFAEmitter.cpp
   DFAPacketizerEmitter.cpp
   DirectiveEmitter.cpp
   DisassemblerEmitter.cpp
   ExegesisEmitter.cpp
   FastISelEmitter.cpp
-  FixedLenDecoderEmitter.cpp
   GICombinerEmitter.cpp
   GlobalISelEmitter.cpp
   InfoByHwMode.cpp
@@ -53,6 +52,7 @@ add_tablegen(llvm-tblgen LLVM
   X86DisassemblerTables.cpp
   X86EVEX2VEXTablesEmitter.cpp
   X86FoldTablesEmitter.cpp
+  X86MnemonicTables.cpp
   X86ModRMFilters.cpp
   X86RecognizableInstr.cpp
   WebAssemblyDisassemblerEmitter.cpp

@@ -462,6 +462,113 @@ define <2 x i32> @signbit_mul_vec_commute(<2 x i32> %a, <2 x i32> %b) {
   ret <2 x i32> %e
 }
 
+; (A & 1) * B --> (lowbit A) ? B : 0
+
+define i32 @lowbit_mul(i32 %a, i32 %b) {
+; CHECK-LABEL: @lowbit_mul(
+; CHECK-NEXT:    [[TMP1:%.*]] = and i32 [[A:%.*]], 1
+; CHECK-NEXT:    [[DOTNOT:%.*]] = icmp eq i32 [[TMP1]], 0
+; CHECK-NEXT:    [[E:%.*]] = select i1 [[DOTNOT]], i32 0, i32 [[B:%.*]]
+; CHECK-NEXT:    ret i32 [[E]]
+;
+  %d = and i32 %a, 1
+  %e = mul i32 %d, %b
+  ret i32 %e
+}
+
+; (A & 1) * B --> (lowbit A) ? B : 0
+
+define <2 x i17> @lowbit_mul_commute(<2 x i17> %a, <2 x i17> %p) {
+; CHECK-LABEL: @lowbit_mul_commute(
+; CHECK-NEXT:    [[B:%.*]] = xor <2 x i17> [[P:%.*]], <i17 42, i17 43>
+; CHECK-NEXT:    [[TMP1:%.*]] = trunc <2 x i17> [[A:%.*]] to <2 x i1>
+; CHECK-NEXT:    [[E:%.*]] = select <2 x i1> [[TMP1]], <2 x i17> [[B]], <2 x i17> zeroinitializer
+; CHECK-NEXT:    ret <2 x i17> [[E]]
+;
+  %b = xor <2 x i17> %p, <i17 42, i17 43> ; thwart complexity-based canonicalization
+  %d = and <2 x i17> %a, <i17 1, i17 1>
+  %e = mul <2 x i17> %b, %d
+  ret <2 x i17> %e
+}
+
+; negative test - extra use
+
+define i32 @lowbit_mul_use(i32 %a, i32 %b) {
+; CHECK-LABEL: @lowbit_mul_use(
+; CHECK-NEXT:    [[D:%.*]] = and i32 [[A:%.*]], 1
+; CHECK-NEXT:    call void @use32(i32 [[D]])
+; CHECK-NEXT:    [[E:%.*]] = mul nuw i32 [[D]], [[B:%.*]]
+; CHECK-NEXT:    ret i32 [[E]]
+;
+  %d = and i32 %a, 1
+  call void @use32(i32 %d)
+  %e = mul i32 %d, %b
+  ret i32 %e
+}
+
+; negative test - wrong mask
+
+define i32 @not_lowbit_mul(i32 %a, i32 %b) {
+; CHECK-LABEL: @not_lowbit_mul(
+; CHECK-NEXT:    [[D:%.*]] = and i32 [[A:%.*]], 2
+; CHECK-NEXT:    [[E:%.*]] = mul i32 [[D]], [[B:%.*]]
+; CHECK-NEXT:    ret i32 [[E]]
+;
+  %d = and i32 %a, 2
+  %e = mul i32 %d, %b
+  ret i32 %e
+}
+
+define i32 @signsplat_mul(i32 %x) {
+; CHECK-LABEL: @signsplat_mul(
+; CHECK-NEXT:    [[ISNEG:%.*]] = icmp slt i32 [[X:%.*]], 0
+; CHECK-NEXT:    [[MUL:%.*]] = select i1 [[ISNEG]], i32 -42, i32 0
+; CHECK-NEXT:    ret i32 [[MUL]]
+;
+  %ash = ashr i32 %x, 31
+  %mul = mul i32 %ash, 42
+  ret i32 %mul
+}
+
+define <2 x i32> @signsplat_mul_vec(<2 x i32> %x) {
+; CHECK-LABEL: @signsplat_mul_vec(
+; CHECK-NEXT:    [[ISNEG:%.*]] = icmp slt <2 x i32> [[X:%.*]], zeroinitializer
+; CHECK-NEXT:    [[MUL:%.*]] = select <2 x i1> [[ISNEG]], <2 x i32> <i32 -42, i32 3>, <2 x i32> zeroinitializer
+; CHECK-NEXT:    ret <2 x i32> [[MUL]]
+;
+  %ash = ashr <2 x i32> %x, <i32 31, i32 31>
+  %mul = mul <2 x i32> %ash, <i32 42, i32 -3>
+  ret <2 x i32> %mul
+}
+
+; negative test - wrong shift amount
+
+define i32 @not_signsplat_mul(i32 %x) {
+; CHECK-LABEL: @not_signsplat_mul(
+; CHECK-NEXT:    [[ASH:%.*]] = ashr i32 [[X:%.*]], 30
+; CHECK-NEXT:    [[MUL:%.*]] = mul nsw i32 [[ASH]], 42
+; CHECK-NEXT:    ret i32 [[MUL]]
+;
+  %ash = ashr i32 %x, 30
+  %mul = mul i32 %ash, 42
+  ret i32 %mul
+}
+
+; negative test - extra use
+
+define i32 @signsplat_mul_use(i32 %x) {
+; CHECK-LABEL: @signsplat_mul_use(
+; CHECK-NEXT:    [[ASH:%.*]] = ashr i32 [[X:%.*]], 31
+; CHECK-NEXT:    call void @use32(i32 [[ASH]])
+; CHECK-NEXT:    [[MUL:%.*]] = mul nsw i32 [[ASH]], -42
+; CHECK-NEXT:    ret i32 [[MUL]]
+;
+  %ash = ashr i32 %x, 31
+  call void @use32(i32 %ash)
+  %mul = mul i32 %ash, -42
+  ret i32 %mul
+}
+
 define i32 @test18(i32 %A, i32 %B) {
 ; CHECK-LABEL: @test18(
 ; CHECK-NEXT:    ret i32 0
@@ -1199,6 +1306,7 @@ define i32 @mulnot(i32 %a0) {
   %mul = mul i32 %add, -4
   ret i32 %mul
 }
+
 define i32 @mulnot_extrause(i32 %a0) {
 ; CHECK-LABEL: @mulnot_extrause(
 ; CHECK-NEXT:    [[NOT:%.*]] = xor i32 [[A0:%.*]], -1

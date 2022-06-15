@@ -23,14 +23,14 @@
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-#if !defined(_LIBCPP_HAS_NO_CONCEPTS) && !defined(_LIBCPP_HAS_NO_INCOMPLETE_RANGES)
+#if _LIBCPP_STD_VER > 17
 
 template <class _Iter, class _Comp = ranges::less, class _Proj = identity>
 concept sortable =
   permutable<_Iter> &&
   indirect_strict_weak_order<_Comp, projected<_Iter, _Proj>>;
 
-#endif // !defined(_LIBCPP_HAS_NO_CONCEPTS) && !defined(_LIBCPP_HAS_NO_INCOMPLETE_RANGES)
+#endif // _LIBCPP_STD_VER > 17
 
 _LIBCPP_END_NAMESPACE_STD
 

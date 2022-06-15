@@ -49,6 +49,8 @@ LLVMTypeConverter::LLVMTypeConverter(MLIRContext *ctx,
   // LLVM container types may (recursively) contain other types that must be
   // converted even when the outer type is compatible.
   addConversion([&](LLVM::LLVMPointerType type) -> llvm::Optional<Type> {
+    if (type.isOpaque())
+      return type;
     if (auto pointee = convertType(type.getElementType()))
       return LLVM::LLVMPointerType::get(pointee, type.getAddressSpace());
     return llvm::None;
@@ -220,11 +222,6 @@ Type LLVMTypeConverter::convertFunctionSignature(
     result.addInputs(en.index(), converted);
   }
 
-  SmallVector<Type, 8> argTypes;
-  argTypes.reserve(llvm::size(result.getConvertedTypes()));
-  for (Type type : result.getConvertedTypes())
-    argTypes.push_back(type);
-
   // If function does not return anything, create the void result type,
   // if it returns on element, convert it, otherwise pack the result types into
   // a struct.
@@ -233,7 +230,8 @@ Type LLVMTypeConverter::convertFunctionSignature(
                         : packFunctionResults(funcTy.getResults());
   if (!resultType)
     return {};
-  return LLVM::LLVMFunctionType::get(resultType, argTypes, isVariadic);
+  return LLVM::LLVMFunctionType::get(resultType, result.getConvertedTypes(),
+                                     isVariadic);
 }
 
 /// Converts the function type to a C-compatible format, in particular using
@@ -370,30 +368,34 @@ Type LLVMTypeConverter::convertUnrankedMemRefType(UnrankedMemRefType type) {
                                           getUnrankedMemRefDescriptorFields());
 }
 
-/// Convert a memref type to a bare pointer to the memref element type.
-Type LLVMTypeConverter::convertMemRefToBarePtr(BaseMemRefType type) {
+// Check if a memref type can be converted to a bare pointer.
+bool LLVMTypeConverter::canConvertToBarePtr(BaseMemRefType type) {
   if (type.isa<UnrankedMemRefType>())
     // Unranked memref is not supported in the bare pointer calling convention.
-    return {};
+    return false;
 
   // Check that the memref has static shape, strides and offset. Otherwise, it
   // cannot be lowered to a bare pointer.
   auto memrefTy = type.cast<MemRefType>();
   if (!memrefTy.hasStaticShape())
-    return {};
+    return false;
 
   int64_t offset = 0;
   SmallVector<int64_t, 4> strides;
   if (failed(getStridesAndOffset(memrefTy, strides, offset)))
-    return {};
+    return false;
 
   for (int64_t stride : strides)
     if (ShapedType::isDynamicStrideOrOffset(stride))
-      return {};
+      return false;
 
-  if (ShapedType::isDynamicStrideOrOffset(offset))
+  return !ShapedType::isDynamicStrideOrOffset(offset);
+}
+
+/// Convert a memref type to a bare pointer to the memref element type.
+Type LLVMTypeConverter::convertMemRefToBarePtr(BaseMemRefType type) {
+  if (!canConvertToBarePtr(type))
     return {};
-
   Type elementType = convertType(type.getElementType());
   if (!elementType)
     return {};

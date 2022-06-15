@@ -25,7 +25,6 @@
 #include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/BlockFrequencyInfo.h"
 #include "llvm/Analysis/CodeMetrics.h"
-#include "llvm/Analysis/LazyBlockFrequencyInfo.h"
 #include "llvm/Analysis/LoopAnalysisManager.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
@@ -133,7 +132,7 @@ static cl::opt<bool> UnrollAllowRemainder(
              "when unrolling a loop."));
 
 static cl::opt<bool>
-    UnrollRuntime("unroll-runtime", cl::ZeroOrMore, cl::Hidden,
+    UnrollRuntime("unroll-runtime", cl::Hidden,
                   cl::desc("Unroll loops with run-time trip counts"));
 
 static cl::opt<unsigned> UnrollMaxUpperBound(
@@ -664,7 +663,7 @@ static Optional<EstimatedUnrollCost> analyzeLoopUnrollCost(
 }
 
 /// ApproximateLoopSize - Approximate the size of the loop.
-unsigned llvm::ApproximateLoopSize(
+InstructionCost llvm::ApproximateLoopSize(
     const Loop *L, unsigned &NumCalls, bool &NotDuplicatable, bool &Convergent,
     const TargetTransformInfo &TTI,
     const SmallPtrSetImpl<const Value *> &EphValues, unsigned BEInsns) {
@@ -675,7 +674,7 @@ unsigned llvm::ApproximateLoopSize(
   NotDuplicatable = Metrics.notDuplicatable;
   Convergent = Metrics.convergent;
 
-  unsigned LoopSize = Metrics.NumInsts;
+  InstructionCost LoopSize = Metrics.NumInsts;
 
   // Don't allow an estimate of size zero.  This would allows unrolling of loops
   // with huge iteration counts, which is a compile time problem even if it's
@@ -683,7 +682,9 @@ unsigned llvm::ApproximateLoopSize(
   // that each loop has at least three instructions (likely a conditional
   // branch, a comparison feeding that branch, and some kind of loop increment
   // feeding that comparison instruction).
-  LoopSize = std::max(LoopSize, BEInsns + 1);
+  if (LoopSize.isValid() && *LoopSize.getValue() < BEInsns + 1)
+    // This is an open coded max() on InstructionCost
+    LoopSize = BEInsns + 1;
 
   return LoopSize;
 }
@@ -788,15 +789,13 @@ shouldPragmaUnroll(Loop *L, const PragmaInfo &PInfo,
 
   // 2nd priority is unroll count set by pragma.
   if (PInfo.PragmaCount > 0) {
-    if ((UP.AllowRemainder || (TripMultiple % PInfo.PragmaCount == 0)) &&
-        UCE.getUnrolledLoopSize(UP, PInfo.PragmaCount) < PragmaUnrollThreshold)
+    if ((UP.AllowRemainder || (TripMultiple % PInfo.PragmaCount == 0)))
       return PInfo.PragmaCount;
   }
 
-  if (PInfo.PragmaFullUnroll && TripCount != 0) {
-    if (UCE.getUnrolledLoopSize(UP, TripCount) < PragmaUnrollThreshold)
-      return TripCount;
-  }
+  if (PInfo.PragmaFullUnroll && TripCount != 0)
+    return TripCount;
+
   // if didn't return until here, should continue to other priorties
   return None;
 }
@@ -912,7 +911,7 @@ bool llvm::computeUnrollCount(
   if (PP.PeelCount) {
     if (UnrollCount.getNumOccurrences() > 0) {
       report_fatal_error("Cannot specify both explicit peel count and "
-                         "explicit unroll count");
+                         "explicit unroll count", /*GenCrashDiag=*/false);
     }
     UP.Count = 1;
     UP.Runtime = false;
@@ -1192,10 +1191,18 @@ static LoopUnrollResult tryToUnrollLoop(
   SmallPtrSet<const Value *, 32> EphValues;
   CodeMetrics::collectEphemeralValues(L, &AC, EphValues);
 
-  unsigned LoopSize =
+  InstructionCost LoopSizeIC =
       ApproximateLoopSize(L, NumInlineCandidates, NotDuplicatable, Convergent,
                           TTI, EphValues, UP.BEInsns);
-  LLVM_DEBUG(dbgs() << "  Loop Size = " << LoopSize << "\n");
+  LLVM_DEBUG(dbgs() << "  Loop Size = " << LoopSizeIC << "\n");
+
+  if (!LoopSizeIC.isValid()) {
+    LLVM_DEBUG(dbgs() << "  Not unrolling loop which contains instructions"
+                      << " with invalid cost.\n");
+    return LoopUnrollResult::Unmodified;
+  }
+  unsigned LoopSize = *LoopSizeIC.getValue();
+
   if (NotDuplicatable) {
     LLVM_DEBUG(dbgs() << "  Not unrolling loop which contains non-duplicatable"
                       << " instructions.\n");
@@ -1548,8 +1555,12 @@ PreservedAnalyses LoopFullUnrollPass::run(Loop &L, LoopAnalysisManager &AM,
 
 PreservedAnalyses LoopUnrollPass::run(Function &F,
                                       FunctionAnalysisManager &AM) {
-  auto &SE = AM.getResult<ScalarEvolutionAnalysis>(F);
   auto &LI = AM.getResult<LoopAnalysis>(F);
+  // There are no loops in the function. Return before computing other expensive
+  // analyses.
+  if (LI.empty())
+    return PreservedAnalyses::all();
+  auto &SE = AM.getResult<ScalarEvolutionAnalysis>(F);
   auto &TTI = AM.getResult<TargetIRAnalysis>(F);
   auto &DT = AM.getResult<DominatorTreeAnalysis>(F);
   auto &AC = AM.getResult<AssumptionAnalysis>(F);

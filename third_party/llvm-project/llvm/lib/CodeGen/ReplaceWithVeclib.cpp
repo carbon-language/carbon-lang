@@ -1,4 +1,4 @@
-//=== ReplaceWithVeclib.cpp - Replace vector instrinsics with veclib calls ===//
+//=== ReplaceWithVeclib.cpp - Replace vector intrinsics with veclib calls -===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -23,7 +23,6 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InstIterator.h"
-#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 
 using namespace llvm;
@@ -110,7 +109,7 @@ static bool replaceWithCallToVeclib(const TargetLibraryInfo &TLI,
     auto *ArgType = Arg.value()->getType();
     // Vector calls to intrinsics can still have
     // scalar operands for specific arguments.
-    if (hasVectorInstrinsicScalarOpd(IntrinsicID, Arg.index())) {
+    if (isVectorIntrinsicWithScalarOpAtArg(IntrinsicID, Arg.index())) {
       ScalarTypes.push_back(ArgType);
     } else {
       // The argument in this place should be a vector if

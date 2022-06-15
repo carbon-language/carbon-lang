@@ -1,7 +1,7 @@
 # RUN: %PYTHON %s | FileCheck %s
 
 from mlir.ir import *
-import mlir.dialects.std as std
+import mlir.dialects.func as func
 import mlir.dialects.memref as memref
 
 
@@ -17,7 +17,7 @@ def testSubViewAccessors():
   ctx = Context()
   module = Module.parse(
       r"""
-    func @f1(%arg0: memref<?x?xf32>) {
+    func.func @f1(%arg0: memref<?x?xf32>) {
       %0 = arith.constant 0 : index
       %1 = arith.constant 1 : index
       %2 = arith.constant 2 : index
@@ -59,14 +59,14 @@ def testSubViewAccessors():
 def testCustomBuidlers():
   with Context() as ctx, Location.unknown(ctx):
     module = Module.parse(r"""
-      func @f1(%arg0: memref<?x?xf32>, %arg1: index, %arg2: index) {
+      func.func @f1(%arg0: memref<?x?xf32>, %arg1: index, %arg2: index) {
         return
       }
     """)
-    func = module.body.operations[0]
-    func_body = func.regions[0].blocks[0]
+    f = module.body.operations[0]
+    func_body = f.regions[0].blocks[0]
     with InsertionPoint.at_block_terminator(func_body):
-      memref.LoadOp(func.arguments[0], func.arguments[1:])
+      memref.LoadOp(f.arguments[0], f.arguments[1:])
 
     # CHECK: func @f1(%[[ARG0:.*]]: memref<?x?xf32>, %[[ARG1:.*]]: index, %[[ARG2:.*]]: index)
     # CHECK: memref.load %[[ARG0]][%[[ARG1]], %[[ARG2]]]

@@ -14,8 +14,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-namespace mlir {
-using namespace presburger_utils;
+using namespace mlir;
+using namespace presburger;
 
 /// Take a snapshot, add constraints making the set empty, and rollback.
 /// The set should not be empty after rolling back. We add additional
@@ -389,7 +389,7 @@ TEST(SimplexTest, isMarkedRedundantTiledLoopNestConstraints) {
   EXPECT_FALSE(simplex.isMarkedRedundant(5));
 }
 
-TEST(Simplextest, pivotRedundantRegressionTest) {
+TEST(SimplexTest, pivotRedundantRegressionTest) {
   Simplex simplex(2);
   simplex.addInequality({-1, 0, -1}); // x <= -1.
   unsigned snapshot = simplex.getSnapshot();
@@ -503,12 +503,10 @@ TEST(SimplexTest, isRedundantEquality) {
 }
 
 TEST(SimplexTest, IsRationalSubsetOf) {
-  MLIRContext context;
-  IntegerPolyhedron univ = parsePoly("(x) : ()", &context);
-  IntegerPolyhedron empty =
-      parsePoly("(x) : (x + 0 >= 0, -x - 1 >= 0)", &context);
-  IntegerPolyhedron s1 = parsePoly("(x) : ( x >= 0, -x + 4 >= 0)", &context);
-  IntegerPolyhedron s2 = parsePoly("(x) : (x - 1 >= 0, -x + 3 >= 0)", &context);
+  IntegerPolyhedron univ = parsePoly("(x) : ()");
+  IntegerPolyhedron empty = parsePoly("(x) : (x + 0 >= 0, -x - 1 >= 0)");
+  IntegerPolyhedron s1 = parsePoly("(x) : ( x >= 0, -x + 4 >= 0)");
+  IntegerPolyhedron s2 = parsePoly("(x) : (x - 1 >= 0, -x + 3 >= 0)");
 
   Simplex simUniv(univ);
   Simplex simEmpty(empty);
@@ -541,4 +539,29 @@ TEST(SimplexTest, IsRationalSubsetOf) {
   EXPECT_FALSE(sim2.isRationalSubsetOf(empty));
 }
 
-} // namespace mlir
+TEST(SimplexTest, addDivisionVariable) {
+  Simplex simplex(/*nVar=*/1);
+  simplex.addDivisionVariable({1, 0}, 2);
+  simplex.addInequality({1, 0, -3}); // x >= 3.
+  simplex.addInequality({-1, 0, 9}); // x <= 9.
+  Optional<SmallVector<int64_t, 8>> sample = simplex.findIntegerSample();
+  ASSERT_TRUE(sample.hasValue());
+  EXPECT_EQ((*sample)[0] / 2, (*sample)[1]);
+}
+
+TEST(SimplexTest, LexIneqType) {
+  LexSimplex simplex(/*nVar=*/1);
+  simplex.addInequality({2, -1}); // x >= 1/2.
+
+  // Redundant inequality x >= 2/3.
+  EXPECT_TRUE(simplex.isRedundantInequality({3, -2}));
+  EXPECT_FALSE(simplex.isSeparateInequality({3, -2}));
+
+  // Separate inequality x <= 2/3.
+  EXPECT_FALSE(simplex.isRedundantInequality({-3, 2}));
+  EXPECT_TRUE(simplex.isSeparateInequality({-3, 2}));
+
+  // Cut inequality x <= 1.
+  EXPECT_FALSE(simplex.isRedundantInequality({-1, 1}));
+  EXPECT_FALSE(simplex.isSeparateInequality({-1, 1}));
+}

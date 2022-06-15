@@ -10,7 +10,7 @@
 // RUN:               -memref-expand                                              \
 // RUN:               -convert-vector-to-llvm                                  \
 // RUN:               -convert-memref-to-llvm                                  \
-// RUN:               -convert-std-to-llvm                                     \
+// RUN:               -convert-func-to-llvm                                     \
 // RUN:               -reconcile-unrealized-casts                              \
 // RUN: | mlir-cpu-runner                                                      \
 // RUN: -e entry -entry-point-result=void -O3                                  \
@@ -24,7 +24,7 @@
 // RUN:               -convert-scf-to-cf                                      \
 // RUN:               -convert-vector-to-llvm                                  \
 // RUN:               -convert-memref-to-llvm                                  \
-// RUN:               -convert-std-to-llvm                                     \
+// RUN:               -convert-func-to-llvm                                     \
 // RUN:               -reconcile-unrealized-casts                              \
 // RUN: | mlir-cpu-runner                                                      \
 // RUN: -e entry -entry-point-result=void -O3                                  \
@@ -35,7 +35,7 @@
 
 #map0 = affine_map<(d0, d1) -> (d0, d1)>
 
-func @linalg_generic(%lhs: memref<?x?xf32>,
+func.func @linalg_generic(%lhs: memref<?x?xf32>,
                      %rhs: memref<?x?xf32>,
                      %sum: memref<?x?xf32>) {
   linalg.generic {
@@ -53,7 +53,7 @@ func @linalg_generic(%lhs: memref<?x?xf32>,
   return
 }
 
-func @entry() {
+func.func @entry() {
   %f1 = arith.constant 1.0 : f32
   %f4 = arith.constant 4.0 : f32
   %c0 = arith.constant 0 : index
@@ -68,8 +68,8 @@ func @entry() {
   %RHS10 = memref.alloc() {alignment = 64} : memref<1x10xf32>
   %DST10 = memref.alloc() {alignment = 64} : memref<1x10xf32>
 
-  linalg.fill(%f1, %LHS10) : f32, memref<1x10xf32>
-  linalg.fill(%f1, %RHS10) : f32, memref<1x10xf32>
+  linalg.fill ins(%f1 : f32) outs(%LHS10 : memref<1x10xf32>)
+  linalg.fill ins(%f1 : f32) outs(%RHS10 : memref<1x10xf32>)
 
   %LHS = memref.cast %LHS10 : memref<1x10xf32> to memref<?x?xf32>
   %RHS = memref.cast %RHS10 : memref<1x10xf32> to memref<?x?xf32>
@@ -80,7 +80,7 @@ func @entry() {
 
   // CHECK: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
   %U = memref.cast %DST10 :  memref<1x10xf32> to memref<*xf32>
-  call @print_memref_f32(%U): (memref<*xf32>) -> ()
+  call @printMemrefF32(%U): (memref<*xf32>) -> ()
 
   memref.dealloc %LHS10: memref<1x10xf32>
   memref.dealloc %RHS10: memref<1x10xf32>
@@ -111,7 +111,7 @@ func @entry() {
 
   %t0 = call @rtclock() : () -> f64
   scf.for %i = %c0 to %cN step %c1 {
-    call @linalg_generic(%LHS0, %RHS0, %DST0)
+    func.call @linalg_generic(%LHS0, %RHS0, %DST0)
       : (memref<?x?xf32>, memref<?x?xf32>, memref<?x?xf32>) -> ()
   }
   %t1 = call @rtclock() : () -> f64
@@ -128,7 +128,7 @@ func @entry() {
   return
 }
 
-func private @rtclock() -> f64
+func.func private @rtclock() -> f64
 
-func private @print_memref_f32(memref<*xf32>)
+func.func private @printMemrefF32(memref<*xf32>)
   attributes { llvm.emit_c_interface }

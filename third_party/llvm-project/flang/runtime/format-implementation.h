@@ -207,6 +207,13 @@ int FormatControl<CONTEXT>::CueUpNextDataEdit(Context &context, bool stop) {
             maybeReversionPoint);
         return 0;
       }
+      if (height_ != 1) {
+        ReportBadFormat(context,
+            "Invalid FORMAT: '*' must be nested in exactly one set of "
+            "parentheses",
+            maybeReversionPoint);
+        return 0;
+      }
     }
     ch = Capitalize(ch);
     if (ch == '(') {
@@ -251,12 +258,20 @@ int FormatControl<CONTEXT>::CueUpNextDataEdit(Context &context, bool stop) {
         ++restart;
       }
       if (stack_[height_ - 1].remaining == Iteration::unlimited) {
-        offset_ = restart;
+        if (height_ > 1 && GetNextChar(context) != ')') {
+          ReportBadFormat(context,
+              "Unlimited repetition in FORMAT may not be followed by more "
+              "items",
+              restart);
+          return 0;
+        }
         if (offset_ == unlimitedLoopCheck) {
           ReportBadFormat(context,
               "Unlimited repetition in FORMAT lacks data edit descriptors",
               restart);
+          return 0;
         }
+        offset_ = restart;
       } else if (stack_[height_ - 1].remaining-- > 0) {
         offset_ = restart;
       } else {
@@ -301,8 +316,14 @@ int FormatControl<CONTEXT>::CueUpNextDataEdit(Context &context, bool stop) {
       if (ch != 'P') { // 1PE5.2 - comma not required (C1302)
         CharType peek{Capitalize(PeekNext())};
         if (peek >= 'A' && peek <= 'Z') {
-          next = peek;
-          ++offset_;
+          if (ch == 'A' /* anticipate F'202X AT editing */ || ch == 'B' ||
+              ch == 'D' || ch == 'E' || ch == 'R' || ch == 'S' || ch == 'T') {
+            // Assume a two-letter edit descriptor
+            next = peek;
+            ++offset_;
+          } else {
+            // extension: assume a comma between 'ch' and 'peek'
+          }
         }
       }
       if ((!next &&
@@ -412,6 +433,11 @@ DataEdit FormatControl<CONTEXT>::GetNextDataEdit(
     }
   } else if (edit.descriptor != DataEdit::DefinedDerivedType) {
     edit.width = GetIntField(context);
+  }
+  if constexpr (std::is_base_of_v<InputStatementState, CONTEXT>) {
+    if (edit.width.value_or(-1) == 0) {
+      ReportBadFormat(context, "Input field width is zero", start);
+    }
   }
   if (edit.descriptor != DataEdit::DefinedDerivedType && PeekNext() == '.') {
     ++offset_;

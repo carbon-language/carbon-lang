@@ -13,12 +13,13 @@ tablegen(LLVM X86GenExegesis.inc -gen-exegesis)
 tablegen(LLVM X86GenFastISel.inc -gen-fast-isel)
 tablegen(LLVM X86GenGlobalISel.inc -gen-global-isel)
 tablegen(LLVM X86GenInstrInfo.inc -gen-instr-info)
+tablegen(LLVM X86GenMnemonicTables.inc -gen-x86-mnemonic-tables -asmwriternum=1)
 tablegen(LLVM X86GenRegisterBank.inc -gen-register-bank)
 tablegen(LLVM X86GenRegisterInfo.inc -gen-register-info)
 tablegen(LLVM X86GenSubtargetInfo.inc -gen-subtarget)
 
 if (X86_GEN_FOLD_TABLES)
-  tablegen(LLVM X86GenFoldTables.inc -gen-x86-fold-tables)
+  tablegen(LLVM X86GenFoldTables.inc -gen-x86-fold-tables -asmwriternum=1)
 endif()
 
 add_public_tablegen_target(X86CommonTableGen)
@@ -37,6 +38,7 @@ set(sources
   X86PreAMXConfig.cpp
   X86LowerAMXIntrinsics.cpp
   X86TileConfig.cpp
+  X86FastPreTileConfig.cpp
   X86FastTileConfig.cpp
   X86PreTileConfig.cpp
   X86ExpandPseudo.cpp

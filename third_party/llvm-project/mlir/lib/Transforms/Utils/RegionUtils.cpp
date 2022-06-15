@@ -223,12 +223,14 @@ static void propagateTerminatorLiveness(Operation *op, LiveMap &liveMap) {
     return;
   }
 
-  // If we can't reason about the operands to a successor, conservatively mark
-  // all arguments as live.
+  // If we can't reason about the operand to a successor, conservatively mark
+  // it as live.
   for (unsigned i = 0, e = op->getNumSuccessors(); i != e; ++i) {
-    if (!branchInterface.getMutableSuccessorOperands(i))
-      for (BlockArgument arg : op->getSuccessor(i)->getArguments())
-        liveMap.setProvedLive(arg);
+    SuccessorOperands successorOperands =
+        branchInterface.getSuccessorOperands(i);
+    for (unsigned opI = 0, opE = successorOperands.getProducedOperandCount();
+         opI != opE; ++opI)
+      liveMap.setProvedLive(op->getSuccessor(i)->getArgument(opI));
   }
 }
 
@@ -291,18 +293,15 @@ static void eraseTerminatorSuccessorOperands(Operation *terminator,
     // since it will promote later operands of the terminator being erased
     // first, reducing the quadratic-ness.
     unsigned succ = succE - succI - 1;
-    Optional<MutableOperandRange> succOperands =
-        branchOp.getMutableSuccessorOperands(succ);
-    if (!succOperands)
-      continue;
+    SuccessorOperands succOperands = branchOp.getSuccessorOperands(succ);
     Block *successor = terminator->getSuccessor(succ);
 
-    for (unsigned argI = 0, argE = succOperands->size(); argI < argE; ++argI) {
+    for (unsigned argI = 0, argE = succOperands.size(); argI < argE; ++argI) {
       // Iterating args in reverse is needed for correctness, to avoid
       // shifting later args when earlier args are erased.
       unsigned arg = argE - argI - 1;
       if (!liveMap.wasProvenLive(successor->getArgument(arg)))
-        succOperands->erase(arg);
+        succOperands.erase(arg);
     }
   }
 }
@@ -518,6 +517,23 @@ LogicalResult BlockMergeCluster::addToCluster(BlockEquivalenceData &blockData) {
       // Let the operands differ if they are defined in a different block. These
       // will become new arguments if the blocks get merged.
       if (!lhsIsInBlock) {
+
+        // Check whether the operands aren't the result of an immediate
+        // predecessors terminator. In that case we are not able to use it as a
+        // successor operand when branching to the merged block as it does not
+        // dominate its producing operation.
+        auto isValidSuccessorArg = [](Block *block, Value operand) {
+          if (operand.getDefiningOp() !=
+              operand.getParentBlock()->getTerminator())
+            return true;
+          return !llvm::is_contained(block->getPredecessors(),
+                                     operand.getParentBlock());
+        };
+
+        if (!isValidSuccessorArg(leaderBlock, lhsOperand) ||
+            !isValidSuccessorArg(mergeBlock, rhsOperand))
+          return failure();
+
         mismatchedOperands.emplace_back(opI, operand);
         continue;
       }
@@ -553,8 +569,7 @@ LogicalResult BlockMergeCluster::addToCluster(BlockEquivalenceData &blockData) {
 /// their operands updated.
 static bool ableToUpdatePredOperands(Block *block) {
   for (auto it = block->pred_begin(), e = block->pred_end(); it != e; ++it) {
-    auto branch = dyn_cast<BranchOpInterface>((*it)->getTerminator());
-    if (!branch || !branch.getMutableSuccessorOperands(it.getSuccessorIndex()))
+    if (!isa<BranchOpInterface>((*it)->getTerminator()))
       return false;
   }
   return true;
@@ -614,7 +629,7 @@ LogicalResult BlockMergeCluster::merge(RewriterBase &rewriter) {
            predIt != predE; ++predIt) {
         auto branch = cast<BranchOpInterface>((*predIt)->getTerminator());
         unsigned succIndex = predIt.getSuccessorIndex();
-        branch.getMutableSuccessorOperands(succIndex)->append(
+        branch.getSuccessorOperands(succIndex).append(
             newArguments[clusterIndex]);
       }
     };

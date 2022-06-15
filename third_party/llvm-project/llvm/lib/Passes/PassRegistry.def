@@ -50,9 +50,12 @@ MODULE_PASS("canonicalize-aliases", CanonicalizeAliasesPass())
 MODULE_PASS("cg-profile", CGProfilePass())
 MODULE_PASS("check-debugify", NewPMCheckDebugifyPass())
 MODULE_PASS("constmerge", ConstantMergePass())
+MODULE_PASS("coro-early", CoroEarlyPass())
+MODULE_PASS("coro-cleanup", CoroCleanupPass())
 MODULE_PASS("cross-dso-cfi", CrossDSOCFIPass())
 MODULE_PASS("deadargelim", DeadArgumentEliminationPass())
 MODULE_PASS("debugify", NewPMDebugifyPass())
+MODULE_PASS("dot-callgraph", CallGraphDOTPrinterPass())
 MODULE_PASS("elim-avail-extern", EliminateAvailableExternallyPass())
 MODULE_PASS("extract-blocks", BlockExtractorPass())
 MODULE_PASS("forceattrs", ForceFunctionAttrsPass())
@@ -76,6 +79,7 @@ MODULE_PASS("invalidate<all>", InvalidateAllAnalysesPass())
 MODULE_PASS("ipsccp", IPSCCPPass())
 MODULE_PASS("iroutliner", IROutlinerPass())
 MODULE_PASS("print-ir-similarity", IRSimilarityAnalysisPrinterPass(dbgs()))
+MODULE_PASS("lower-global-dtors", LowerGlobalDtorsPass())
 MODULE_PASS("lowertypetests", LowerTypeTestsPass())
 MODULE_PASS("metarenamer", MetaRenamerPass())
 MODULE_PASS("mergefunc", MergeFunctionsPass())
@@ -94,6 +98,7 @@ MODULE_PASS("print-lcg-dot", LazyCallGraphDOTPrinterPass(dbgs()))
 MODULE_PASS("print-must-be-executed-contexts", MustBeExecutedContextPrinterPass(dbgs()))
 MODULE_PASS("print-stack-safety", StackSafetyGlobalPrinterPass(dbgs()))
 MODULE_PASS("print<module-debuginfo>", ModuleDebugInfoPrinterPass(dbgs()))
+MODULE_PASS("recompute-globalsaa", RecomputeGlobalsAAPass())
 MODULE_PASS("rel-lookup-table-converter", RelLookupTableConverterPass())
 MODULE_PASS("rewrite-statepoints-for-gc", RewriteStatepointsForGC())
 MODULE_PASS("rewrite-symbols", RewriteSymbolPass())
@@ -109,7 +114,9 @@ MODULE_PASS("strip-debug-declare", StripDebugDeclarePass())
 MODULE_PASS("strip-nondebug", StripNonDebugSymbolsPass())
 MODULE_PASS("strip-nonlinetable-debuginfo", StripNonLineTableDebugInfoPass())
 MODULE_PASS("synthetic-counts-propagation", SyntheticCountsPropagation())
+MODULE_PASS("trigger-crash", TriggerCrashPass())
 MODULE_PASS("verify", VerifierPass())
+MODULE_PASS("view-callgraph", CallGraphViewerPass())
 MODULE_PASS("wholeprogramdevirt", WholeProgramDevirtPass())
 MODULE_PASS("dfsan", DataFlowSanitizerPass())
 MODULE_PASS("msan-module", ModuleMemorySanitizerPass({}))
@@ -165,7 +172,6 @@ CGSCC_PASS("invalidate<all>", InvalidateAllAnalysesPass())
 CGSCC_PASS("function-attrs", PostOrderFunctionAttrsPass())
 CGSCC_PASS("attributor-cgscc", AttributorCGSCCPass())
 CGSCC_PASS("openmp-opt-cgscc", OpenMPOptCGSCCPass())
-CGSCC_PASS("coro-split", CoroSplitPass())
 CGSCC_PASS("no-op-cgscc", NoOpCGSCCPass())
 #undef CGSCC_PASS
 
@@ -179,6 +185,13 @@ CGSCC_PASS_WITH_PARAMS("inline",
                        },
                        parseInlinerPassOptions,
                        "only-mandatory")
+CGSCC_PASS_WITH_PARAMS("coro-split",
+                       "CoroSplitPass",
+                       [](bool OptimizeFrame) {
+                         return CoroSplitPass(OptimizeFrame);
+                       },
+                       parseCoroSplitPassOptions,
+                       "reuse-storage")
 #undef CGSCC_PASS_WITH_PARAMS
 
 #ifndef FUNCTION_ANALYSIS
@@ -247,9 +260,7 @@ FUNCTION_PASS("callsite-splitting", CallSiteSplittingPass())
 FUNCTION_PASS("consthoist", ConstantHoistingPass())
 FUNCTION_PASS("constraint-elimination", ConstraintEliminationPass())
 FUNCTION_PASS("chr", ControlHeightReductionPass())
-FUNCTION_PASS("coro-early", CoroEarlyPass())
 FUNCTION_PASS("coro-elide", CoroElidePass())
-FUNCTION_PASS("coro-cleanup", CoroCleanupPass())
 FUNCTION_PASS("correlated-propagation", CorrelatedValuePropagationPass())
 FUNCTION_PASS("dce", DCEPass())
 FUNCTION_PASS("dfa-jump-threading", DFAJumpThreadingPass())
@@ -257,8 +268,14 @@ FUNCTION_PASS("div-rem-pairs", DivRemPairsPass())
 FUNCTION_PASS("dse", DSEPass())
 FUNCTION_PASS("dot-cfg", CFGPrinterPass())
 FUNCTION_PASS("dot-cfg-only", CFGOnlyPrinterPass())
-FUNCTION_PASS("dot-dom", DomTreePrinterPass())
-FUNCTION_PASS("dot-dom-only", DomTreeOnlyPrinterPass())
+FUNCTION_PASS("dot-dom", DomPrinter())
+FUNCTION_PASS("dot-dom-only", DomOnlyPrinter())
+FUNCTION_PASS("dot-post-dom", PostDomPrinter())
+FUNCTION_PASS("dot-post-dom-only", PostDomOnlyPrinter())
+FUNCTION_PASS("view-dom", DomViewer())
+FUNCTION_PASS("view-dom-only", DomOnlyViewer())
+FUNCTION_PASS("view-post-dom", PostDomViewer())
+FUNCTION_PASS("view-post-dom-only", PostDomOnlyViewer())
 FUNCTION_PASS("fix-irreducible", FixIrreduciblePass())
 FUNCTION_PASS("flattencfg", FlattenCFGPass())
 FUNCTION_PASS("make-guards-explicit", MakeGuardsExplicitPass())
@@ -361,6 +378,7 @@ FUNCTION_PASS("verify<safepoint-ir>", SafepointIRVerifierPass())
 FUNCTION_PASS("verify<scalar-evolution>", ScalarEvolutionVerifierPass())
 FUNCTION_PASS("view-cfg", CFGViewerPass())
 FUNCTION_PASS("view-cfg-only", CFGOnlyViewerPass())
+FUNCTION_PASS("tlshoist", TLSVariableHoistPass())
 FUNCTION_PASS("transform-warning", WarnMissedTransformationsPass())
 FUNCTION_PASS("tsan", ThreadSanitizerPass())
 FUNCTION_PASS("memprof", MemProfilerPass())
@@ -402,13 +420,6 @@ FUNCTION_PASS_WITH_PARAMS("loop-unroll",
                           "no-profile-peeling;profile-peeling;"
                           "no-runtime;runtime;"
                           "no-upperbound;upperbound")
-FUNCTION_PASS_WITH_PARAMS("asan",
-                          "AddressSanitizerPass",
-                           [](AddressSanitizerOptions Opts) {
-                             return AddressSanitizerPass(Opts);
-                           },
-                          parseASanPassOptions,
-                          "kernel")
 FUNCTION_PASS_WITH_PARAMS("msan",
                           "MemorySanitizerPass",
                            [](MemorySanitizerOptions Opts) {
@@ -467,7 +478,6 @@ FUNCTION_PASS_WITH_PARAMS("print<stack-lifetime>",
 #ifndef LOOPNEST_PASS
 #define LOOPNEST_PASS(NAME, CREATE_PASS)
 #endif
-LOOPNEST_PASS("lnicm", LNICMPass())
 LOOPNEST_PASS("loop-flatten", LoopFlattenPass())
 LOOPNEST_PASS("loop-interchange", LoopInterchangePass())
 LOOPNEST_PASS("loop-unroll-and-jam", LoopUnrollAndJamPass())
@@ -490,7 +500,6 @@ LOOP_ANALYSIS("pass-instrumentation", PassInstrumentationAnalysis(PIC))
 LOOP_PASS("canon-freeze", CanonicalizeFreezeInLoopsPass())
 LOOP_PASS("dot-ddg", DDGDotPrinterPass())
 LOOP_PASS("invalidate<all>", InvalidateAllAnalysesPass())
-LOOP_PASS("licm", LICMPass())
 LOOP_PASS("loop-idiom", LoopIdiomRecognizePass())
 LOOP_PASS("loop-instsimplify", LoopInstSimplifyPass())
 LOOP_PASS("loop-rotate", LoopRotatePass())
@@ -523,4 +532,18 @@ LOOP_PASS_WITH_PARAMS("simple-loop-unswitch",
                       },
                       parseLoopUnswitchOptions,
                       "nontrivial;no-nontrivial;trivial;no-trivial")
+
+LOOP_PASS_WITH_PARAMS("licm", "LICMPass",
+                      [](LICMOptions Params) {
+                        return LICMPass(Params);
+                      },
+                      parseLICMOptions,
+                      "allowspeculation");
+
+LOOP_PASS_WITH_PARAMS("lnicm", "LNICMPass",
+                      [](LICMOptions Params) {
+                        return LNICMPass(Params);
+                      },
+                      parseLICMOptions,
+                      "allowspeculation");
 #undef LOOP_PASS_WITH_PARAMS

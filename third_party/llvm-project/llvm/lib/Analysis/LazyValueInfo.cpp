@@ -38,7 +38,6 @@
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/KnownBits.h"
 #include "llvm/Support/raw_ostream.h"
-#include <map>
 using namespace llvm;
 using namespace PatternMatch;
 
@@ -956,13 +955,6 @@ Optional<ValueLatticeElement> LazyValueInfoImpl::solveBlockValueBinaryOp(
     BinaryOperator *BO, BasicBlock *BB) {
   assert(BO->getOperand(0)->getType()->isSized() &&
          "all operands to binary operators are sized");
-  if (BO->getOpcode() == Instruction::Xor) {
-    // Xor is the only operation not supported by ConstantRange::binaryOp().
-    LLVM_DEBUG(dbgs() << " compute BB '" << BB->getName()
-                      << "' - overdefined (unknown binary operator).\n");
-    return ValueLatticeElement::getOverdefined();
-  }
-
   if (auto *OBO = dyn_cast<OverflowingBinaryOperator>(BO)) {
     unsigned NoWrapKind = 0;
     if (OBO->hasNoUnsignedWrap())
@@ -1020,7 +1012,7 @@ Optional<ValueLatticeElement> LazyValueInfoImpl::solveBlockValueExtractValue(
 
   // Handle extractvalue of insertvalue to allow further simplification
   // based on replaced with.overflow intrinsics.
-  if (Value *V = SimplifyExtractValueInst(
+  if (Value *V = simplifyExtractValueInst(
           EVI->getAggregateOperand(), EVI->getIndices(),
           EVI->getModule()->getDataLayout()))
     return getBlockValue(V, BB, EVI);
@@ -1141,7 +1133,7 @@ static ValueLatticeElement getValueFromICmpCondition(Value *Val, ICmpInst *ICI,
     ConstantRange CR = ConstantRange::makeExactICmpRegion(EdgePred, *C);
     if (!CR.isEmptySet())
       return ValueLatticeElement::getRange(ConstantRange::getNonEmpty(
-          CR.getUnsignedMin().zextOrSelf(BitWidth), APInt(BitWidth, 0)));
+          CR.getUnsignedMin().zext(BitWidth), APInt(BitWidth, 0)));
   }
 
   return ValueLatticeElement::getOverdefined();
@@ -1278,7 +1270,7 @@ static ValueLatticeElement constantFoldUser(User *Usr, Value *Op,
   if (auto *CI = dyn_cast<CastInst>(Usr)) {
     assert(CI->getOperand(0) == Op && "Operand 0 isn't Op");
     if (auto *C = dyn_cast_or_null<ConstantInt>(
-            SimplifyCastInst(CI->getOpcode(), OpConst,
+            simplifyCastInst(CI->getOpcode(), OpConst,
                              CI->getDestTy(), DL))) {
       return ValueLatticeElement::getRange(ConstantRange(C->getValue()));
     }
@@ -1290,7 +1282,7 @@ static ValueLatticeElement constantFoldUser(User *Usr, Value *Op,
     Value *LHS = Op0Match ? OpConst : BO->getOperand(0);
     Value *RHS = Op1Match ? OpConst : BO->getOperand(1);
     if (auto *C = dyn_cast_or_null<ConstantInt>(
-            SimplifyBinOp(BO->getOpcode(), LHS, RHS, DL))) {
+            simplifyBinOp(BO->getOpcode(), LHS, RHS, DL))) {
       return ValueLatticeElement::getRange(ConstantRange(C->getValue()));
     }
   } else if (isa<FreezeInst>(Usr)) {
@@ -1886,6 +1878,11 @@ void LazyValueInfo::eraseBlock(BasicBlock *BB) {
   }
 }
 
+void LazyValueInfo::clear(const Module *M) {
+  if (PImpl) {
+    getImpl(PImpl, AC, M).clear();
+  }
+}
 
 void LazyValueInfo::printLVI(Function &F, DominatorTree &DTree, raw_ostream &OS) {
   if (PImpl) {

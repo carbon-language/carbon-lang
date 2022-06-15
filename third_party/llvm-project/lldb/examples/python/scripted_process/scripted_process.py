@@ -19,7 +19,7 @@ class ScriptedProcess:
     memory_regions = None
     stack_memory_dump = None
     loaded_images = None
-    threads = {}
+    threads = None
 
     @abstractmethod
     def __init__(self, target, args):
@@ -41,6 +41,8 @@ class ScriptedProcess:
             self.dbg = target.GetDebugger()
         if isinstance(args, lldb.SBStructuredData) and args.IsValid():
             self.args = args
+        self.threads = {}
+        self.loaded_images = []
 
     @abstractmethod
     def get_memory_region_containing_address(self, addr):
@@ -116,8 +118,7 @@ class ScriptedProcess:
 
         ```
         class ScriptedProcessImage:
-            def __init__(name, file_spec, uuid, load_address):
-              self.name = name
+            def __init__(file_spec, uuid, load_address):
               self.file_spec = file_spec
               self.uuid = uuid
               self.load_address = load_address
@@ -218,8 +219,8 @@ class ScriptedThread:
         self.scripted_process = None
         self.process = None
         self.args = None
-
-        self.id = None
+        self.idx = 0
+        self.tid = 0
         self.idx = None
         self.name = None
         self.queue = None
@@ -235,24 +236,29 @@ class ScriptedThread:
             self.process = self.target.GetProcess()
             self.get_register_info()
 
+    def get_thread_idx(self):
+        """ Get the scripted thread index.
 
-    @abstractmethod
+        Returns:
+            int: The index of the scripted thread in the scripted process.
+        """
+        return self.idx
+
     def get_thread_id(self):
         """ Get the scripted thread identifier.
 
         Returns:
             int: The identifier of the scripted thread.
         """
-        pass
+        return self.tid
 
-    @abstractmethod
     def get_name(self):
         """ Get the scripted thread name.
 
         Returns:
             str: The name of the scripted thread.
         """
-        pass
+        return self.name
 
     def get_state(self):
         """ Get the scripted thread state type.
@@ -276,7 +282,7 @@ class ScriptedThread:
         Returns:
             str: The queue name associated with the scripted thread.
         """
-        pass
+        return self.queue
 
     @abstractmethod
     def get_stop_reason(self):

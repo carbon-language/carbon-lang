@@ -23,6 +23,7 @@
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/AlignedAllocation.h"
+#include "clang/Basic/DiagnosticSema.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/TypeTraits.h"
@@ -40,6 +41,7 @@
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/TypeSize.h"
 using namespace clang;
 using namespace sema;
 
@@ -841,10 +843,10 @@ Sema::ActOnCXXThrow(Scope *S, SourceLocation OpLoc, Expr *Ex) {
               break;
             }
 
+            // FIXME: Many of the scope checks here seem incorrect.
             if (S->getFlags() &
                 (Scope::FnScope | Scope::ClassScope | Scope::BlockScope |
-                 Scope::FunctionPrototypeScope | Scope::ObjCMethodScope |
-                 Scope::TryScope))
+                 Scope::ObjCMethodScope | Scope::TryScope))
               break;
           }
         }
@@ -1468,12 +1470,50 @@ Sema::BuildCXXTypeConstructExpr(TypeSourceInfo *TInfo,
   // C++1z [expr.type.conv]p1:
   //   If the type is a placeholder for a deduced class type, [...perform class
   //   template argument deduction...]
+  // C++2b:
+  //   Otherwise, if the type contains a placeholder type, it is replaced by the
+  //   type determined by placeholder type deduction.
   DeducedType *Deduced = Ty->getContainedDeducedType();
   if (Deduced && isa<DeducedTemplateSpecializationType>(Deduced)) {
     Ty = DeduceTemplateSpecializationFromInitializer(TInfo, Entity,
                                                      Kind, Exprs);
     if (Ty.isNull())
       return ExprError();
+    Entity = InitializedEntity::InitializeTemporary(TInfo, Ty);
+  } else if (Deduced) {
+    MultiExprArg Inits = Exprs;
+    if (ListInitialization) {
+      auto *ILE = cast<InitListExpr>(Exprs[0]);
+      Inits = MultiExprArg(ILE->getInits(), ILE->getNumInits());
+    }
+
+    if (Inits.empty())
+      return ExprError(Diag(TyBeginLoc, diag::err_auto_expr_init_no_expression)
+                       << Ty << FullRange);
+    if (Inits.size() > 1) {
+      Expr *FirstBad = Inits[1];
+      return ExprError(Diag(FirstBad->getBeginLoc(),
+                            diag::err_auto_expr_init_multiple_expressions)
+                       << Ty << FullRange);
+    }
+    if (getLangOpts().CPlusPlus2b) {
+      if (Ty->getAs<AutoType>())
+        Diag(TyBeginLoc, diag::warn_cxx20_compat_auto_expr) << FullRange;
+    }
+    Expr *Deduce = Inits[0];
+    if (isa<InitListExpr>(Deduce))
+      return ExprError(
+          Diag(Deduce->getBeginLoc(), diag::err_auto_expr_init_paren_braces)
+          << ListInitialization << Ty << FullRange);
+    QualType DeducedType;
+    if (DeduceAutoType(TInfo, Deduce, DeducedType) == DAR_Failed)
+      return ExprError(Diag(TyBeginLoc, diag::err_auto_expr_deduction_failure)
+                       << Ty << Deduce->getType() << FullRange
+                       << Deduce->getSourceRange());
+    if (DeducedType.isNull())
+      return ExprError();
+
+    Ty = DeducedType;
     Entity = InitializedEntity::InitializeTemporary(TInfo, Ty);
   }
 
@@ -1560,7 +1600,7 @@ Sema::BuildCXXTypeConstructExpr(TypeSourceInfo *TInfo,
 
 bool Sema::isUsualDeallocationFunction(const CXXMethodDecl *Method) {
   // [CUDA] Ignore this function, if we can't call it.
-  const FunctionDecl *Caller = dyn_cast<FunctionDecl>(CurContext);
+  const FunctionDecl *Caller = getCurFunctionDecl(/*AllowLambda=*/true);
   if (getLangOpts().CUDA) {
     auto CallPreference = IdentifyCUDAPreference(Caller, Method);
     // If it's not callable at all, it's not the right function.
@@ -1654,7 +1694,7 @@ namespace {
 
       // In CUDA, determine how much we'd like / dislike to call this.
       if (S.getLangOpts().CUDA)
-        if (auto *Caller = dyn_cast<FunctionDecl>(S.CurContext))
+        if (auto *Caller = S.getCurFunctionDecl(/*AllowLambda=*/true))
           CUDAPref = S.IdentifyCUDAPreference(Caller, FD);
     }
 
@@ -1937,12 +1977,10 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
     initStyle = CXXNewExpr::NoInit;
   }
 
-  Expr **Inits = &Initializer;
-  unsigned NumInits = Initializer ? 1 : 0;
+  MultiExprArg Exprs(&Initializer, Initializer ? 1 : 0);
   if (ParenListExpr *List = dyn_cast_or_null<ParenListExpr>(Initializer)) {
     assert(initStyle == CXXNewExpr::CallInit && "paren init for non-call init");
-    Inits = List->getExprs();
-    NumInits = List->getNumExprs();
+    Exprs = MultiExprArg(List->getExprs(), List->getNumExprs());
   }
 
   // C++11 [expr.new]p15:
@@ -1978,23 +2016,21 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
     InitializedEntity Entity
       = InitializedEntity::InitializeNew(StartLoc, AllocType);
     AllocType = DeduceTemplateSpecializationFromInitializer(
-        AllocTypeInfo, Entity, Kind, MultiExprArg(Inits, NumInits));
+        AllocTypeInfo, Entity, Kind, Exprs);
     if (AllocType.isNull())
       return ExprError();
   } else if (Deduced) {
+    MultiExprArg Inits = Exprs;
     bool Braced = (initStyle == CXXNewExpr::ListInit);
-    if (NumInits == 1) {
-      if (auto p = dyn_cast_or_null<InitListExpr>(Inits[0])) {
-        Inits = p->getInits();
-        NumInits = p->getNumInits();
-        Braced = true;
-      }
+    if (Braced) {
+      auto *ILE = cast<InitListExpr>(Exprs[0]);
+      Inits = MultiExprArg(ILE->getInits(), ILE->getNumInits());
     }
 
-    if (initStyle == CXXNewExpr::NoInit || NumInits == 0)
+    if (initStyle == CXXNewExpr::NoInit || Inits.empty())
       return ExprError(Diag(StartLoc, diag::err_auto_new_requires_ctor_arg)
                        << AllocType << TypeRange);
-    if (NumInits > 1) {
+    if (Inits.size() > 1) {
       Expr *FirstBad = Inits[1];
       return ExprError(Diag(FirstBad->getBeginLoc(),
                             diag::err_auto_new_ctor_multiple_expressions)
@@ -2004,6 +2040,10 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
       Diag(Initializer->getBeginLoc(), diag::ext_auto_new_list_init)
           << AllocType << TypeRange;
     Expr *Deduce = Inits[0];
+    if (isa<InitListExpr>(Deduce))
+      return ExprError(
+          Diag(Deduce->getBeginLoc(), diag::err_auto_expr_init_paren_braces)
+          << Braced << AllocType << TypeRange);
     QualType DeducedType;
     if (DeduceAutoType(AllocTypeInfo, Deduce, DeducedType) == DAR_Failed)
       return ExprError(Diag(StartLoc, diag::err_auto_new_deduction_failure)
@@ -2304,8 +2344,8 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
   // Initializer lists are also allowed, in C++11. Rely on the parser for the
   // dialect distinction.
   if (ArraySize && !isLegalArrayNewInitializer(initStyle, Initializer)) {
-    SourceRange InitRange(Inits[0]->getBeginLoc(),
-                          Inits[NumInits - 1]->getEndLoc());
+    SourceRange InitRange(Exprs.front()->getBeginLoc(),
+                          Exprs.back()->getEndLoc());
     Diag(StartLoc, diag::err_new_array_init_args) << InitRange;
     return ExprError();
   }
@@ -2313,8 +2353,7 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
   // If we can perform the initialization, and we've not already done so,
   // do it now.
   if (!AllocType->isDependentType() &&
-      !Expr::hasAnyTypeDependentArguments(
-          llvm::makeArrayRef(Inits, NumInits))) {
+      !Expr::hasAnyTypeDependentArguments(Exprs)) {
     // The type we initialize is the complete type, including the array bound.
     QualType InitType;
     if (KnownArraySize)
@@ -2331,10 +2370,8 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
 
     InitializedEntity Entity
       = InitializedEntity::InitializeNew(StartLoc, InitType);
-    InitializationSequence InitSeq(*this, Entity, Kind,
-                                   MultiExprArg(Inits, NumInits));
-    ExprResult FullInit = InitSeq.Perform(*this, Entity, Kind,
-                                          MultiExprArg(Inits, NumInits));
+    InitializationSequence InitSeq(*this, Entity, Kind, Exprs);
+    ExprResult FullInit = InitSeq.Perform(*this, Entity, Kind, Exprs);
     if (FullInit.isInvalid())
       return ExprError();
 
@@ -2796,7 +2833,8 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
     }
 
     if (getLangOpts().CUDA)
-      EraseUnwantedCUDAMatches(dyn_cast<FunctionDecl>(CurContext), Matches);
+      EraseUnwantedCUDAMatches(getCurFunctionDecl(/*AllowLambda=*/true),
+                               Matches);
   } else {
     // C++1y [expr.new]p22:
     //   For a non-placement allocation function, the normal deallocation
@@ -3707,7 +3745,7 @@ static bool resolveBuiltinNewDeleteOverload(Sema &S, CallExpr *TheCall,
   // We do our own custom access checks below.
   R.suppressDiagnostics();
 
-  SmallVector<Expr *, 8> Args(TheCall->arg_begin(), TheCall->arg_end());
+  SmallVector<Expr *, 8> Args(TheCall->arguments());
   OverloadCandidateSet Candidates(R.getNameLoc(),
                                   OverloadCandidateSet::CSK_Normal);
   for (LookupResult::iterator FnOvl = R.begin(), FnOvlEnd = R.end();
@@ -4202,6 +4240,14 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
       return ExprError();
 
     From = FixOverloadedFunctionReference(From, Found, Fn);
+
+    // We might get back another placeholder expression if we resolved to a
+    // builtin.
+    ExprResult Checked = CheckPlaceholderExpr(From);
+    if (Checked.isInvalid())
+      return ExprError();
+
+    From = Checked.get();
     FromType = From->getType();
   }
 
@@ -4605,6 +4651,13 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
         ToType->getPointeeType().getAddressSpace() !=
             From->getType()->getPointeeType().getAddressSpace())
       CK = CK_AddressSpaceConversion;
+
+    if (!isCast(CCK) &&
+        !ToType->getPointeeType().getQualifiers().hasUnaligned() &&
+        From->getType()->getPointeeType().getQualifiers().hasUnaligned()) {
+      Diag(From->getBeginLoc(), diag::warn_imp_cast_drops_unaligned)
+          << InitialFromType << ToType;
+    }
 
     From = ImpCastExprToType(From, ToType.getNonLValueExprType(Context), CK, VK,
                              /*BasePath=*/nullptr, CCK)
@@ -6053,8 +6106,17 @@ static bool isValidVectorForConditionalCondition(ASTContext &Ctx,
     return false;
   const QualType EltTy =
       cast<VectorType>(CondTy.getCanonicalType())->getElementType();
-  assert(!EltTy->isBooleanType() && !EltTy->isEnumeralType() &&
-         "Vectors cant be boolean or enum types");
+  assert(!EltTy->isEnumeralType() && "Vectors cant be enum types");
+  return EltTy->isIntegralType(Ctx);
+}
+
+static bool isValidSizelessVectorForConditionalCondition(ASTContext &Ctx,
+                                                         QualType CondTy) {
+  if (!CondTy->isVLSTBuiltinType())
+    return false;
+  const QualType EltTy =
+      cast<BuiltinType>(CondTy.getCanonicalType())->getSveEltType(Ctx);
+  assert(!EltTy->isEnumeralType() && "Vectors cant be enum types");
   return EltTy->isIntegralType(Ctx);
 }
 
@@ -6093,7 +6155,9 @@ QualType Sema::CheckVectorConditionalTypes(ExprResult &Cond, ExprResult &LHS,
   } else if (LHSVT || RHSVT) {
     ResultType = CheckVectorOperands(
         LHS, RHS, QuestionLoc, /*isCompAssign*/ false, /*AllowBothBool*/ true,
-        /*AllowBoolConversions*/ false);
+        /*AllowBoolConversions*/ false,
+        /*AllowBoolOperation*/ true,
+        /*ReportInvalid*/ true);
     if (ResultType.isNull())
       return {};
   } else {
@@ -6147,6 +6211,89 @@ QualType Sema::CheckVectorConditionalTypes(ExprResult &Cond, ExprResult &LHS,
   return ResultType;
 }
 
+QualType Sema::CheckSizelessVectorConditionalTypes(ExprResult &Cond,
+                                                   ExprResult &LHS,
+                                                   ExprResult &RHS,
+                                                   SourceLocation QuestionLoc) {
+  LHS = DefaultFunctionArrayLvalueConversion(LHS.get());
+  RHS = DefaultFunctionArrayLvalueConversion(RHS.get());
+
+  QualType CondType = Cond.get()->getType();
+  const auto *CondBT = CondType->castAs<BuiltinType>();
+  QualType CondElementTy = CondBT->getSveEltType(Context);
+  llvm::ElementCount CondElementCount =
+      Context.getBuiltinVectorTypeInfo(CondBT).EC;
+
+  QualType LHSType = LHS.get()->getType();
+  const auto *LHSBT =
+      LHSType->isVLSTBuiltinType() ? LHSType->getAs<BuiltinType>() : nullptr;
+  QualType RHSType = RHS.get()->getType();
+  const auto *RHSBT =
+      RHSType->isVLSTBuiltinType() ? RHSType->getAs<BuiltinType>() : nullptr;
+
+  QualType ResultType;
+
+  if (LHSBT && RHSBT) {
+    // If both are sizeless vector types, they must be the same type.
+    if (!Context.hasSameType(LHSType, RHSType)) {
+      Diag(QuestionLoc, diag::err_conditional_vector_mismatched)
+          << LHSType << RHSType;
+      return QualType();
+    }
+    ResultType = LHSType;
+  } else if (LHSBT || RHSBT) {
+    ResultType = CheckSizelessVectorOperands(
+        LHS, RHS, QuestionLoc, /*IsCompAssign*/ false, ACK_Conditional);
+    if (ResultType.isNull())
+      return QualType();
+  } else {
+    // Both are scalar so splat
+    QualType ResultElementTy;
+    LHSType = LHSType.getCanonicalType().getUnqualifiedType();
+    RHSType = RHSType.getCanonicalType().getUnqualifiedType();
+
+    if (Context.hasSameType(LHSType, RHSType))
+      ResultElementTy = LHSType;
+    else
+      ResultElementTy =
+          UsualArithmeticConversions(LHS, RHS, QuestionLoc, ACK_Conditional);
+
+    if (ResultElementTy->isEnumeralType()) {
+      Diag(QuestionLoc, diag::err_conditional_vector_operand_type)
+          << ResultElementTy;
+      return QualType();
+    }
+
+    ResultType = Context.getScalableVectorType(
+        ResultElementTy, CondElementCount.getKnownMinValue());
+
+    LHS = ImpCastExprToType(LHS.get(), ResultType, CK_VectorSplat);
+    RHS = ImpCastExprToType(RHS.get(), ResultType, CK_VectorSplat);
+  }
+
+  assert(!ResultType.isNull() && ResultType->isVLSTBuiltinType() &&
+         "Result should have been a vector type");
+  auto *ResultBuiltinTy = ResultType->castAs<BuiltinType>();
+  QualType ResultElementTy = ResultBuiltinTy->getSveEltType(Context);
+  llvm::ElementCount ResultElementCount =
+      Context.getBuiltinVectorTypeInfo(ResultBuiltinTy).EC;
+
+  if (ResultElementCount != CondElementCount) {
+    Diag(QuestionLoc, diag::err_conditional_vector_size)
+        << CondType << ResultType;
+    return QualType();
+  }
+
+  if (Context.getTypeSize(ResultElementTy) !=
+      Context.getTypeSize(CondElementTy)) {
+    Diag(QuestionLoc, diag::err_conditional_vector_element_size)
+        << CondType << ResultType;
+    return QualType();
+  }
+
+  return ResultType;
+}
+
 /// Check the operands of ?: under C++ semantics.
 ///
 /// See C++ [expr.cond]. Note that LHS is never null, even for the GNU x ?: y
@@ -6180,10 +6327,14 @@ QualType Sema::CXXCheckConditionalOperands(ExprResult &Cond, ExprResult &LHS,
   bool IsVectorConditional =
       isValidVectorForConditionalCondition(Context, Cond.get()->getType());
 
+  bool IsSizelessVectorConditional =
+      isValidSizelessVectorForConditionalCondition(Context,
+                                                   Cond.get()->getType());
+
   // C++11 [expr.cond]p1
   //   The first expression is contextually converted to bool.
   if (!Cond.get()->isTypeDependent()) {
-    ExprResult CondRes = IsVectorConditional
+    ExprResult CondRes = IsVectorConditional || IsSizelessVectorConditional
                              ? DefaultFunctionArrayLvalueConversion(Cond.get())
                              : CheckCXXBooleanCondition(Cond.get());
     if (CondRes.isInvalid())
@@ -6251,6 +6402,9 @@ QualType Sema::CXXCheckConditionalOperands(ExprResult &Cond, ExprResult &LHS,
   // Neither is void.
   if (IsVectorConditional)
     return CheckVectorConditionalTypes(Cond, LHS, RHS, QuestionLoc);
+
+  if (IsSizelessVectorConditional)
+    return CheckSizelessVectorConditionalTypes(Cond, LHS, RHS, QuestionLoc);
 
   // C++11 [expr.cond]p3
   //   Otherwise, if the second and third operand have different types, and
@@ -6420,9 +6574,11 @@ QualType Sema::CXXCheckConditionalOperands(ExprResult &Cond, ExprResult &LHS,
 
   // Extension: conditional operator involving vector types.
   if (LTy->isVectorType() || RTy->isVectorType())
-    return CheckVectorOperands(LHS, RHS, QuestionLoc, /*isCompAssign*/false,
-                               /*AllowBothBool*/true,
-                               /*AllowBoolConversions*/false);
+    return CheckVectorOperands(LHS, RHS, QuestionLoc, /*isCompAssign*/ false,
+                               /*AllowBothBool*/ true,
+                               /*AllowBoolConversions*/ false,
+                               /*AllowBoolOperation*/ false,
+                               /*ReportInvalid*/ true);
 
   //   -- The second and third operands have arithmetic or enumeration type;
   //      the usual arithmetic conversions are performed to bring them to a
@@ -7880,6 +8036,8 @@ ExprResult Sema::ActOnNoexceptExpr(SourceLocation KeyLoc, SourceLocation,
 static void MaybeDecrementCount(
     Expr *E, llvm::DenseMap<const VarDecl *, int> &RefsMinusAssignments) {
   DeclRefExpr *LHS = nullptr;
+  bool IsCompoundAssign = false;
+  bool isIncrementDecrementUnaryOp = false;
   if (BinaryOperator *BO = dyn_cast<BinaryOperator>(E)) {
     if (BO->getLHS()->getType()->isDependentType() ||
         BO->getRHS()->getType()->isDependentType()) {
@@ -7887,16 +8045,29 @@ static void MaybeDecrementCount(
         return;
     } else if (!BO->isAssignmentOp())
       return;
+    else
+      IsCompoundAssign = BO->isCompoundAssignmentOp();
     LHS = dyn_cast<DeclRefExpr>(BO->getLHS());
   } else if (CXXOperatorCallExpr *COCE = dyn_cast<CXXOperatorCallExpr>(E)) {
     if (COCE->getOperator() != OO_Equal)
       return;
     LHS = dyn_cast<DeclRefExpr>(COCE->getArg(0));
+  } else if (UnaryOperator *UO = dyn_cast<UnaryOperator>(E)) {
+    if (!UO->isIncrementDecrementOp())
+      return;
+    isIncrementDecrementUnaryOp = true;
+    LHS = dyn_cast<DeclRefExpr>(UO->getSubExpr());
   }
   if (!LHS)
     return;
   VarDecl *VD = dyn_cast<VarDecl>(LHS->getDecl());
   if (!VD)
+    return;
+  // Don't decrement RefsMinusAssignments if volatile variable with compound
+  // assignment (+=, ...) or increment/decrement unary operator to avoid
+  // potential unused-but-set-variable warning.
+  if ((IsCompoundAssign || isIncrementDecrementUnaryOp) &&
+      VD->getType().isVolatileQualified())
     return;
   auto iter = RefsMinusAssignments.find(VD);
   if (iter == RefsMinusAssignments.end())

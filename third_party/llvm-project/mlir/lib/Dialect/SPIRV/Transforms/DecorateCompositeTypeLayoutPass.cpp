@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PassDetail.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/SPIRV/IR/SPIRVDialect.h"
 #include "mlir/Dialect/SPIRV/IR/SPIRVOps.h"
 #include "mlir/Dialect/SPIRV/Transforms/Passes.h"
@@ -110,7 +111,7 @@ void DecorateSPIRVCompositeTypeLayoutPass::runOnOperation() {
   populateSPIRVLayoutInfoPatterns(patterns);
   ConversionTarget target(*(module.getContext()));
   target.addLegalDialect<spirv::SPIRVDialect>();
-  target.addLegalOp<FuncOp>();
+  target.addLegalOp<func::FuncOp>();
   target.addDynamicallyLegalOp<spirv::GlobalVariableOp>(
       [](spirv::GlobalVariableOp op) {
         return VulkanLayoutUtils::isLegalType(op.type());

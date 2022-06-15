@@ -17,12 +17,8 @@
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/None.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/iterator_range.h"
-#include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
-#include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/GlobalValue.h"
@@ -32,9 +28,7 @@
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/MC/MachineLocation.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include <cassert>
 #include <cstdint>
@@ -598,10 +592,8 @@ DIE *DwarfUnit::createTypeDIE(const DIScope *Context, DIE &ContextDIE,
       // Skip updating the accelerator tables since this is not the full type.
       if (MDString *TypeId = CTy->getRawIdentifier())
         DD->addDwarfTypeUnitType(getCU(), TypeId->getString(), TyDIE, CTy);
-      else {
-        auto X = DD->enterNonTypeUnitContext();
+      else
         finishNonUnitTypeDIE(TyDIE, CTy);
-      }
       return &TyDIE;
     }
     constructTypeDIE(TyDIE, CTy);
@@ -1352,6 +1344,9 @@ void DwarfUnit::applySubprogramAttributes(const DISubprogram *SP, DIE &SPDie,
   if (SP->isRecursive())
     addFlag(SPDie, dwarf::DW_AT_recursive);
 
+  if (!SP->getTargetFuncName().empty())
+    addString(SPDie, dwarf::DW_AT_trampoline, SP->getTargetFuncName());
+
   if (DD->getDwarfVersion() >= 5 && SP->isDeleted())
     addFlag(SPDie, dwarf::DW_AT_deleted);
 }
@@ -1444,7 +1439,8 @@ DIE *DwarfUnit::getIndexTyDie() {
   addString(*IndexTyDie, dwarf::DW_AT_name, Name);
   addUInt(*IndexTyDie, dwarf::DW_AT_byte_size, None, sizeof(int64_t));
   addUInt(*IndexTyDie, dwarf::DW_AT_encoding, dwarf::DW_FORM_data1,
-          dwarf::DW_ATE_unsigned);
+          dwarf::getArrayIndexTypeEncoding(
+              (dwarf::SourceLanguage)getLanguage()));
   DD->addAccelType(*CUNode, Name, *IndexTyDie, /*Flags*/ 0);
   return IndexTyDie;
 }
@@ -1849,11 +1845,5 @@ void DwarfUnit::addRnglistsBase() {
 }
 
 void DwarfTypeUnit::finishNonUnitTypeDIE(DIE& D, const DICompositeType *CTy) {
-  addFlag(D, dwarf::DW_AT_declaration);
-  StringRef Name = CTy->getName();
-  if (!Name.empty())
-    addString(D, dwarf::DW_AT_name, Name);
-  if (Name.startswith("_STN") || !Name.contains('<'))
-    addTemplateParams(D, CTy->getTemplateParams());
-  getCU().createTypeDIE(CTy);
+  DD->getAddressPool().resetUsedFlag(true);
 }

@@ -46,21 +46,25 @@ private:
   DependencyConsumer &C;
 };
 
+using PrebuiltModuleFilesT = decltype(HeaderSearchOptions::PrebuiltModuleFiles);
+
 /// A listener that collects the imported modules and optionally the input
 /// files.
 class PrebuiltModuleListener : public ASTReaderListener {
 public:
-  PrebuiltModuleListener(llvm::StringMap<std::string> &PrebuiltModuleFiles,
-                         llvm::StringSet<> &InputFiles, bool VisitInputFiles)
+  PrebuiltModuleListener(PrebuiltModuleFilesT &PrebuiltModuleFiles,
+                         llvm::StringSet<> &InputFiles, bool VisitInputFiles,
+                         llvm::SmallVector<std::string> &NewModuleFiles)
       : PrebuiltModuleFiles(PrebuiltModuleFiles), InputFiles(InputFiles),
-        VisitInputFiles(VisitInputFiles) {}
+        VisitInputFiles(VisitInputFiles), NewModuleFiles(NewModuleFiles) {}
 
   bool needsImportVisitation() const override { return true; }
   bool needsInputFileVisitation() override { return VisitInputFiles; }
   bool needsSystemInputFileVisitation() override { return VisitInputFiles; }
 
   void visitImport(StringRef ModuleName, StringRef Filename) override {
-    PrebuiltModuleFiles.insert({ModuleName, Filename.str()});
+    if (PrebuiltModuleFiles.insert({ModuleName.str(), Filename.str()}).second)
+      NewModuleFiles.push_back(Filename.str());
   }
 
   bool visitInputFile(StringRef Filename, bool isSystem, bool isOverridden,
@@ -70,12 +74,11 @@ public:
   }
 
 private:
-  llvm::StringMap<std::string> &PrebuiltModuleFiles;
+  PrebuiltModuleFilesT &PrebuiltModuleFiles;
   llvm::StringSet<> &InputFiles;
   bool VisitInputFiles;
+  llvm::SmallVector<std::string> &NewModuleFiles;
 };
-
-using PrebuiltModuleFilesT = decltype(HeaderSearchOptions::PrebuiltModuleFiles);
 
 /// Visit the given prebuilt module and collect all of the modules it
 /// transitively imports and contributing input files.
@@ -84,33 +87,17 @@ static void visitPrebuiltModule(StringRef PrebuiltModuleFilename,
                                 PrebuiltModuleFilesT &ModuleFiles,
                                 llvm::StringSet<> &InputFiles,
                                 bool VisitInputFiles) {
-  // Maps the names of modules that weren't yet visited to their PCM path.
-  llvm::StringMap<std::string> ModuleFilesWorklist;
-  // Contains PCM paths of all visited modules.
-  llvm::StringSet<> VisitedModuleFiles;
+  // List of module files to be processed.
+  llvm::SmallVector<std::string> Worklist{PrebuiltModuleFilename.str()};
+  PrebuiltModuleListener Listener(ModuleFiles, InputFiles, VisitInputFiles,
+                                  Worklist);
 
-  PrebuiltModuleListener Listener(ModuleFilesWorklist, InputFiles,
-                                  VisitInputFiles);
-
-  auto GatherModuleFileInfo = [&](StringRef ASTFile) {
+  while (!Worklist.empty())
     ASTReader::readASTFileControlBlock(
-        ASTFile, CI.getFileManager(), CI.getPCHContainerReader(),
+        Worklist.pop_back_val(), CI.getFileManager(),
+        CI.getPCHContainerReader(),
         /*FindModuleFileExtensions=*/false, Listener,
         /*ValidateDiagnosticOptions=*/false);
-  };
-
-  GatherModuleFileInfo(PrebuiltModuleFilename);
-  while (!ModuleFilesWorklist.empty()) {
-    auto WorklistItemIt = ModuleFilesWorklist.begin();
-
-    if (!VisitedModuleFiles.contains(WorklistItemIt->getValue())) {
-      VisitedModuleFiles.insert(WorklistItemIt->getValue());
-      GatherModuleFileInfo(WorklistItemIt->getValue());
-      ModuleFiles[WorklistItemIt->getKey().str()] = WorklistItemIt->getValue();
-    }
-
-    ModuleFilesWorklist.erase(WorklistItemIt);
-  }
 }
 
 /// Transform arbitrary file name into an object-like file name.
@@ -150,12 +137,11 @@ public:
   DependencyScanningAction(
       StringRef WorkingDirectory, DependencyConsumer &Consumer,
       llvm::IntrusiveRefCntPtr<DependencyScanningWorkerFilesystem> DepFS,
-      ExcludedPreprocessorDirectiveSkipMapping *PPSkipMappings,
-      ScanningOutputFormat Format, bool OptimizeArgs,
+      ScanningOutputFormat Format, bool OptimizeArgs, bool DisableFree,
       llvm::Optional<StringRef> ModuleName = None)
       : WorkingDirectory(WorkingDirectory), Consumer(Consumer),
-        DepFS(std::move(DepFS)), PPSkipMappings(PPSkipMappings), Format(Format),
-        OptimizeArgs(OptimizeArgs), ModuleName(ModuleName) {}
+        DepFS(std::move(DepFS)), Format(Format), OptimizeArgs(OptimizeArgs),
+        DisableFree(DisableFree), ModuleName(ModuleName) {}
 
   bool runInvocation(std::shared_ptr<CompilerInvocation> Invocation,
                      FileManager *FileMgr,
@@ -163,6 +149,8 @@ public:
                      DiagnosticConsumer *DiagConsumer) override {
     // Make a deep copy of the original Clang invocation.
     CompilerInvocation OriginalInvocation(*Invocation);
+    // Restore the value of DisableFree, which may be modified by Tooling.
+    OriginalInvocation.getFrontendOpts().DisableFree = DisableFree;
 
     // Create a compiler instance to handle the actual work.
     CompilerInstance ScanInstance(std::move(PCHContainerOps));
@@ -196,30 +184,21 @@ public:
 
     // Use the dependency scanning optimized file system if requested to do so.
     if (DepFS) {
-      DepFS->enableMinimizationOfAllFiles();
-      // Don't minimize any files that contributed to prebuilt modules. The
-      // implicit build validates the modules by comparing the reported sizes of
-      // their inputs to the current state of the filesystem. Minimization would
-      // throw this mechanism off.
-      for (const auto &File : PrebuiltModulesInputFiles)
-        DepFS->disableMinimization(File.getKey());
-      // Don't minimize any files that were explicitly passed in the build
-      // settings and that might be opened.
-      for (const auto &E : ScanInstance.getHeaderSearchOpts().UserEntries)
-        DepFS->disableMinimization(E.Path);
-      for (const auto &F : ScanInstance.getHeaderSearchOpts().VFSOverlayFiles)
-        DepFS->disableMinimization(F);
-
       // Support for virtual file system overlays on top of the caching
       // filesystem.
       FileMgr->setVirtualFileSystem(createVFSFromCompilerInvocation(
           ScanInstance.getInvocation(), ScanInstance.getDiagnostics(), DepFS));
 
-      // Pass the skip mappings which should speed up excluded conditional block
-      // skipping in the preprocessor.
-      if (PPSkipMappings)
-        ScanInstance.getPreprocessorOpts()
-            .ExcludedConditionalDirectiveSkipMappings = PPSkipMappings;
+      llvm::IntrusiveRefCntPtr<DependencyScanningWorkerFilesystem> LocalDepFS =
+          DepFS;
+      ScanInstance.getPreprocessorOpts().DependencyDirectivesForFile =
+          [LocalDepFS = std::move(LocalDepFS)](FileEntryRef File)
+          -> Optional<ArrayRef<dependency_directives_scan::Directive>> {
+        if (llvm::ErrorOr<EntryRef> Entry =
+                LocalDepFS->getOrCreateFileSystemEntry(File.getName()))
+          return Entry->getDirectiveTokens();
+        return None;
+      };
     }
 
     // Create the dependency collector that will collect the produced
@@ -276,9 +255,9 @@ private:
   StringRef WorkingDirectory;
   DependencyConsumer &Consumer;
   llvm::IntrusiveRefCntPtr<DependencyScanningWorkerFilesystem> DepFS;
-  ExcludedPreprocessorDirectiveSkipMapping *PPSkipMappings;
   ScanningOutputFormat Format;
   bool OptimizeArgs;
+  bool DisableFree;
   llvm::Optional<StringRef> ModuleName;
 };
 
@@ -301,12 +280,9 @@ DependencyScanningWorker::DependencyScanningWorker(
   OverlayFS->pushOverlay(InMemoryFS);
   RealFS = OverlayFS;
 
-  if (Service.canSkipExcludedPPRanges())
-    PPSkipMappings =
-        std::make_unique<ExcludedPreprocessorDirectiveSkipMapping>();
-  if (Service.getMode() == ScanningMode::MinimizedSourcePreprocessing)
-    DepFS = new DependencyScanningWorkerFilesystem(
-        Service.getSharedCache(), RealFS, PPSkipMappings.get());
+  if (Service.getMode() == ScanningMode::DependencyDirectivesScan)
+    DepFS = new DependencyScanningWorkerFilesystem(Service.getSharedCache(),
+                                                   RealFS);
   if (Service.canReuseFileManager())
     Files = new FileManager(FileSystemOptions(), RealFS);
 }
@@ -356,10 +332,13 @@ llvm::Error DependencyScanningWorker::computeDependencies(
 
   return runWithDiags(CreateAndPopulateDiagOpts(FinalCCommandLine).release(),
                       [&](DiagnosticConsumer &DC, DiagnosticOptions &DiagOpts) {
+                        // DisableFree is modified by Tooling for running
+                        // in-process; preserve the original value, which is
+                        // always true for a driver invocation.
+                        bool DisableFree = true;
                         DependencyScanningAction Action(
-                            WorkingDirectory, Consumer, DepFS,
-                            PPSkipMappings.get(), Format, OptimizeArgs,
-                            ModuleName);
+                            WorkingDirectory, Consumer, DepFS, Format,
+                            OptimizeArgs, DisableFree, ModuleName);
                         // Create an invocation that uses the underlying file
                         // system to ensure that any file system requests that
                         // are made by the driver do not go through the

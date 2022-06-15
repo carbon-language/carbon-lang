@@ -40,9 +40,6 @@ def reproduce_eq: Joined<["--"], "reproduce=">,
 def version: Flag<["--"], "version">,
     HelpText<"Display the version number and exit">,
     Group<grp_lld>;
-def lto_legacy_pass_manager: Flag<["--"], "lto-legacy-pass-manager">,
-    HelpText<"Use the legacy pass manager in LLVM">,
-    Group<grp_lld>;
 def no_lto_legacy_pass_manager : Flag<["--"], "no-lto-legacy-pass-manager">,
     HelpText<"Use the new pass manager in LLVM">,
     Group<grp_lld>;
@@ -549,7 +546,6 @@ def whyload : Flag<["-"], "whyload">,
 def why_live : Separate<["-"], "why_live">,
     MetaVarName<"<symbol>">,
     HelpText<"Log a chain of references to <symbol>, for use with -dead_strip">,
-    Flags<[HelpHidden]>,
     Group<grp_introspect>;
 def print_statistics : Flag<["-"], "print_statistics">,
     HelpText<"Log the linker's memory and CPU usage">,
@@ -585,17 +581,14 @@ def S : Flag<["-"], "S">,
     Group<grp_symtab>;
 def x : Flag<["-"], "x">,
     HelpText<"Exclude non-global symbols from the output symbol table">,
-    Flags<[HelpHidden]>,
     Group<grp_symtab>;
 def non_global_symbols_strip_list : Separate<["-"], "non_global_symbols_strip_list">,
     MetaVarName<"<path>">,
     HelpText<"Specify in <path> the non-global symbols that should be removed from the output symbol table">,
-    Flags<[HelpHidden]>,
     Group<grp_symtab>;
 def non_global_symbols_no_strip_list : Separate<["-"], "non_global_symbols_no_strip_list">,
     MetaVarName<"<path>">,
     HelpText<"Specify in <path> the non-global symbols that should remain in the output symbol table">,
-    Flags<[HelpHidden]>,
     Group<grp_symtab>;
 def oso_prefix : Separate<["-"], "oso_prefix">,
     MetaVarName<"<path>">,
@@ -894,7 +887,6 @@ def e : Separate<["-"], "e">,
     Group<grp_rare>;
 def w : Flag<["-"], "w">,
     HelpText<"Suppress all warnings">,
-    Flags<[HelpHidden]>,
     Group<grp_rare>;
 def final_output : Separate<["-"], "final_output">,
     MetaVarName<"<name>">,

@@ -21,7 +21,7 @@ characteristics::TypeAndShape Fold(
 std::optional<Constant<SubscriptInteger>> GetConstantSubscript(
     FoldingContext &context, Subscript &ss, const NamedEntity &base, int dim) {
   ss = FoldOperation(context, std::move(ss));
-  return std::visit(
+  return common::visit(
       common::visitors{
           [](IndirectSubscriptIntegerExpr &expr)
               -> std::optional<Constant<SubscriptInteger>> {
@@ -36,12 +36,13 @@ std::optional<Constant<SubscriptInteger>> GetConstantSubscript(
             auto lower{triplet.lower()}, upper{triplet.upper()};
             std::optional<ConstantSubscript> stride{ToInt64(triplet.stride())};
             if (!lower) {
-              lower = GetLowerBound(context, base, dim);
+              lower = GetLBOUND(context, base, dim);
             }
             if (!upper) {
-              upper =
-                  ComputeUpperBound(context, GetLowerBound(context, base, dim),
-                      GetExtent(context, base, dim));
+              if (auto lb{GetLBOUND(context, base, dim)}) {
+                upper = ComputeUpperBound(
+                    context, std::move(*lb), GetExtent(context, base, dim));
+              }
             }
             auto lbi{ToInt64(lower)}, ubi{ToInt64(upper)};
             if (lbi && ubi && stride && *stride != 0) {
@@ -66,6 +67,7 @@ Expr<SomeDerived> FoldOperation(
     FoldingContext &context, StructureConstructor &&structure) {
   StructureConstructor ctor{structure.derivedTypeSpec()};
   bool isConstant{true};
+  auto restorer{context.WithPDTInstance(structure.derivedTypeSpec())};
   for (auto &&[symbol, value] : std::move(structure)) {
     auto expr{Fold(context, std::move(value.value()))};
     if (IsPointer(symbol)) {
@@ -118,16 +120,16 @@ Triplet FoldOperation(FoldingContext &context, Triplet &&triplet) {
 }
 
 Subscript FoldOperation(FoldingContext &context, Subscript &&subscript) {
-  return std::visit(common::visitors{
-                        [&](IndirectSubscriptIntegerExpr &&expr) {
-                          expr.value() = Fold(context, std::move(expr.value()));
-                          return Subscript(std::move(expr));
-                        },
-                        [&](Triplet &&triplet) {
-                          return Subscript(
-                              FoldOperation(context, std::move(triplet)));
-                        },
-                    },
+  return common::visit(
+      common::visitors{
+          [&](IndirectSubscriptIntegerExpr &&expr) {
+            expr.value() = Fold(context, std::move(expr.value()));
+            return Subscript(std::move(expr));
+          },
+          [&](Triplet &&triplet) {
+            return Subscript(FoldOperation(context, std::move(triplet)));
+          },
+      },
       std::move(subscript.u));
 }
 
@@ -161,12 +163,13 @@ CoarrayRef FoldOperation(FoldingContext &context, CoarrayRef &&coarrayRef) {
 }
 
 DataRef FoldOperation(FoldingContext &context, DataRef &&dataRef) {
-  return std::visit(common::visitors{
-                        [&](SymbolRef symbol) { return DataRef{*symbol}; },
-                        [&](auto &&x) {
-                          return DataRef{FoldOperation(context, std::move(x))};
-                        },
-                    },
+  return common::visit(common::visitors{
+                           [&](SymbolRef symbol) { return DataRef{*symbol}; },
+                           [&](auto &&x) {
+                             return DataRef{
+                                 FoldOperation(context, std::move(x))};
+                           },
+                       },
       std::move(dataRef.u));
 }
 

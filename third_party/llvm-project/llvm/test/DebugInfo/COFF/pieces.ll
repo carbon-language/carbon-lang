@@ -105,8 +105,6 @@
 ; ASM:         #APP
 ; ASM:         #NO_APP
 ; ASM:         movl    [[offset_o_x]](%rsp), %eax          # 4-byte Reload
-; ASM: [[spill_o_x_end:\.Ltmp[0-9]+]]:
-; ASM:         #DEBUG_VALUE: bitpiece_spill:o <- [DW_OP_LLVM_fragment 32 32] $eax
 ; ASM:         retq
 ; ASM: [[spill_o_x_end_func:\.Ltmp[0-9]+]]:
 ; ASM-NEXT: .Lfunc_end4:
@@ -116,10 +114,8 @@
 ; ASM:        .asciz  "loop_csr"              # Function name
 ; ASM:        .short  4414                    # Record kind: S_LOCAL
 ; ASM:        .asciz  "o"
-; ASM:        .cv_def_range    [[oy_ox_start]] [[ox_start]], subfield_reg, 24, 0
-; ASM:        .cv_def_range    [[oy_ox_start]] [[oy_start]], subfield_reg, 23, 4
-; ASM:        .cv_def_range    [[ox_start]] [[loopskip_start]], subfield_reg, 24, 0
-; ASM:        .cv_def_range    [[oy_start]] [[loopskip_start]], subfield_reg, 23, 4
+; ASM:        .cv_def_range    [[oy_ox_start]] [[loopskip_start]], subfield_reg, 24, 0
+; ASM:        .cv_def_range    [[oy_ox_start]] [[loopskip_start]], subfield_reg, 23, 4
 
 
 ; OBJ-LABEL: GlobalProcIdSym {
@@ -235,8 +231,7 @@
 ; ASM:        .asciz  "bitpiece_spill"        # Function name
 ; ASM:        .short  4414                    # Record kind: S_LOCAL
 ; ASM:        .asciz  "o"
-; ASM:        .cv_def_range    [[spill_o_x_start]] [[spill_o_x_end]], reg_rel, 335, 65, 36
-; ASM:        .cv_def_range    [[spill_o_x_end]] .Lfunc_end4, subfield_reg, 17, 4
+; ASM:        .cv_def_range    [[spill_o_x_start]] .Lfunc_end4, reg_rel, 335, 65, 36
 
 ; OBJ-LABEL: GlobalProcIdSym {
 ; OBJ:         Kind: S_GPROC32_ID (0x1147)

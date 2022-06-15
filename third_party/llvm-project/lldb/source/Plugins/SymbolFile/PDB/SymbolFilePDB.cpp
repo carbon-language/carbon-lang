@@ -57,7 +57,7 @@
 #include "Plugins/SymbolFile/NativePDB/SymbolFileNativePDB.h"
 
 #if defined(_WIN32)
-#include "llvm/Config/config.h"
+#include "llvm/Config/llvm-config.h"
 #endif
 
 using namespace lldb;
@@ -135,7 +135,7 @@ SymbolFilePDB::CreateInstance(ObjectFileSP objfile_sp) {
 }
 
 SymbolFilePDB::SymbolFilePDB(lldb::ObjectFileSP objfile_sp)
-    : SymbolFile(std::move(objfile_sp)), m_session_up(), m_global_scope_up() {}
+    : SymbolFileCommon(std::move(objfile_sp)), m_session_up(), m_global_scope_up() {}
 
 SymbolFilePDB::~SymbolFilePDB() = default;
 

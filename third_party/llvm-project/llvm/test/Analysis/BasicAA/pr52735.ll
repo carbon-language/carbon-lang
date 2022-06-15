@@ -1,4 +1,4 @@
-; RUN: opt %s -basic-aa -aa-eval -print-all-alias-modref-info -disable-output 2>&1 | FileCheck %s
+; RUN: opt %s -aa-pipeline=basic-aa -passes=aa-eval -print-all-alias-modref-info -disable-output 2>&1 | FileCheck %s
 ;
 ; Generated from:
 ;
@@ -11,7 +11,8 @@
 
 target triple = "x86_64-unknown-linux-gnu"
 
-; CHECK: MayAlias: i32* %v, void (i32*, i8*)* asm "movl $$1, $0", "=*m,X,~{dirflag},~{fpsr},~{flags}"
+; CHECK: Both ModRef:  Ptr: i32* %v	<->  callbr void asm "movl $$1, $0", "=*m,X,~{dirflag},~{fpsr},~{flags}"(i32* nonnull elementtype(i32) %v, i8* blockaddress(@foo, %out))
+
 
 define dso_local i32 @foo() {
 entry:

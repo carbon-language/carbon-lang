@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 %s -verify -pedantic -fsyntax-only
-// RUN: %clang_cc1 %s -cl-std=CL2.0 -verify -pedantic -fsyntax-only
-// RUN: %clang_cc1 %s -cl-std=CL3.0 -cl-ext=+__opencl_c_generic_address_space -verify -pedantic -fsyntax-only
+// RUN: %clang_cc1 %s -verify=expected -pedantic -fsyntax-only
+// RUN: %clang_cc1 %s -cl-std=CL2.0 -verify=expected -pedantic -fsyntax-only
+// RUN: %clang_cc1 %s -cl-std=CL3.0 -cl-ext=+__opencl_c_generic_address_space -verify=expected -pedantic -fsyntax-only
 // RUN: %clang_cc1 %s -cl-std=clc++1.0 -verify -pedantic -fsyntax-only
 // RUN: %clang_cc1 %s -cl-std=clc++2021 -cl-ext=+__opencl_c_generic_address_space -verify -pedantic -fsyntax-only
 
@@ -258,7 +258,7 @@ __kernel void k() {
 
 void func_multiple_addr2(void) {
   typedef __private int private_int_t;
-  __private __attribute__((opencl_global)) int var1;   // expected-error {{multiple address spaces specified for type}} \
+  __attribute__((opencl_global)) __private int var1;   // expected-error {{multiple address spaces specified for type}} \
                                                        // expected-error {{function scope variable cannot be declared in global address space}}
   __private __attribute__((opencl_global)) int *var2;  // expected-error {{multiple address spaces specified for type}}
   __attribute__((opencl_global)) private_int_t var3;   // expected-error {{multiple address spaces specified for type}}

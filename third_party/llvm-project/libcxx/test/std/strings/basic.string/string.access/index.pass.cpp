@@ -8,8 +8,8 @@
 
 // <string>
 
-// const_reference operator[](size_type pos) const;
-//       reference operator[](size_type pos);
+// const_reference operator[](size_type pos) const; // constexpr since C++20
+//       reference operator[](size_type pos); // constexpr since C++20
 
 #include <string>
 #include <cassert>
@@ -17,7 +17,7 @@
 #include "test_macros.h"
 #include "min_allocator.h"
 
-bool test() {
+TEST_CONSTEXPR_CXX20 bool test() {
   {
     typedef std::string S;
     S s("0123456789");
@@ -62,7 +62,7 @@ int main(int, char**)
 {
   test();
 #if TEST_STD_VER > 17
-  // static_assert(test());
+  static_assert(test());
 #endif
 
   return 0;

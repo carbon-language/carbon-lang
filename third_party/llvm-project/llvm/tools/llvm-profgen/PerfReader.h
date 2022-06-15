@@ -84,19 +84,12 @@ struct PerfInputFile {
 struct LBREntry {
   uint64_t Source = 0;
   uint64_t Target = 0;
-  // An artificial branch stands for a series of consecutive branches starting
-  // from the current binary with a transition through external code and
-  // eventually landing back in the current binary.
-  bool IsArtificial = false;
-  LBREntry(uint64_t S, uint64_t T, bool I)
-      : Source(S), Target(T), IsArtificial(I) {}
+  LBREntry(uint64_t S, uint64_t T) : Source(S), Target(T) {}
 
 #ifndef NDEBUG
   void print() const {
     dbgs() << "from " << format("%#010x", Source) << " to "
            << format("%#010x", Target);
-    if (IsArtificial)
-      dbgs() << " Artificial";
   }
 #endif
 };
@@ -197,7 +190,10 @@ struct PerfSample {
   }
 
 #ifndef NDEBUG
+  uint64_t Linenum = 0;
+
   void print() const {
+    dbgs() << "Line " << Linenum << "\n";
     dbgs() << "LBR stack\n";
     printLBRStack(LBRStack);
     dbgs() << "Call stack\n";
@@ -213,6 +209,17 @@ using AggregatedCounter =
                        Hashable<PerfSample>::Hash, Hashable<PerfSample>::Equal>;
 
 using SampleVector = SmallVector<std::tuple<uint64_t, uint64_t, uint64_t>, 16>;
+
+inline bool isValidFallThroughRange(uint64_t Start, uint64_t End,
+                                    ProfiledBinary *Binary) {
+  // Start bigger than End is considered invalid.
+  // LBR ranges cross the unconditional jmp are also assumed invalid.
+  // It's found that perf data may contain duplicate LBR entries that could form
+  // a range that does not reflect real execution flow on some Intel targets,
+  // e.g. Skylake. Such ranges are ususally very long. Exclude them since there
+  // cannot be a linear execution range that spans over unconditional jmp.
+  return Start <= End && !Binary->rangeCrossUncondBranch(Start, End);
+}
 
 // The state for the unwinder, it doesn't hold the data but only keep the
 // pointer/index of the data, While unwinding, the CallStack is changed
@@ -255,6 +262,9 @@ struct UnwindState {
   const SmallVector<LBREntry, 16> &LBRStack;
   // Used to iterate the address range
   InstructionPointer InstPtr;
+  // Indicate whether unwinding is currently in a bad state which requires to
+  // skip all subsequent unwinding.
+  bool Invalid = false;
   UnwindState(const PerfSample *Sample, const ProfiledBinary *Binary)
       : Binary(Binary), LBRStack(Sample->LBRStack),
         InstPtr(Binary, Sample->CallStack.front()) {
@@ -270,7 +280,7 @@ struct UnwindState {
     // When we take a stack sample, ideally the sampling distance between the
     // leaf IP of stack and the last LBR target shouldn't be very large.
     // Use a heuristic size (0x100) to filter out broken records.
-    if (LeafAddr < LBRLeaf || LeafAddr >= LBRLeaf + 0x100) {
+    if (LeafAddr < LBRLeaf || LeafAddr - LBRLeaf >= 0x100) {
       WithColor::warning() << "Bogus trace: stack tip = "
                            << format("%#010x", LeafAddr)
                            << ", LBR tip = " << format("%#010x\n", LBRLeaf);
@@ -284,6 +294,7 @@ struct UnwindState {
            "IP should align with context leaf");
   }
 
+  void setInvalid() { Invalid = true; }
   bool hasNextLBR() const { return LBRIndex < LBRStack.size(); }
   uint64_t getCurrentLBRSource() const { return LBRStack[LBRIndex].Source; }
   uint64_t getCurrentLBRTarget() const { return LBRStack[LBRIndex].Target; }
@@ -333,7 +344,7 @@ struct ContextKey {
   };
 
   // Utilities for LLVM-style RTTI
-  enum ContextKind { CK_StringBased, CK_ProbeBased };
+  enum ContextKind { CK_StringBased, CK_AddrBased };
   const ContextKind Kind;
   ContextKind getKind() const { return Kind; }
   ContextKey(ContextKind K) : Kind(K){};
@@ -359,34 +370,23 @@ struct StringBasedCtxKey : public ContextKey {
   }
 };
 
-// Probe based context key as the intermediate key of context
-// String based context key will introduce redundant string handling
-// since the callee context is inferred from the context string which
-// need to be splitted by '@' to get the last location frame, so we
-// can just use probe instead and generate the string in the end.
-struct ProbeBasedCtxKey : public ContextKey {
-  SmallVector<const MCDecodedPseudoProbe *, 16> Probes;
+// Address-based context id
+struct AddrBasedCtxKey : public ContextKey {
+  SmallVector<uint64_t, 16> Context;
 
-  ProbeBasedCtxKey() : ContextKey(CK_ProbeBased) {}
+  bool WasLeafInlined;
+  AddrBasedCtxKey() : ContextKey(CK_AddrBased), WasLeafInlined(false){};
   static bool classof(const ContextKey *K) {
-    return K->getKind() == CK_ProbeBased;
+    return K->getKind() == CK_AddrBased;
   }
 
   bool isEqual(const ContextKey *K) const override {
-    const ProbeBasedCtxKey *O = dyn_cast<ProbeBasedCtxKey>(K);
-    assert(O != nullptr && "Probe based key shouldn't be null in isEqual");
-    return std::equal(Probes.begin(), Probes.end(), O->Probes.begin(),
-                      O->Probes.end());
+    const AddrBasedCtxKey *Other = dyn_cast<AddrBasedCtxKey>(K);
+    return Context == Other->Context;
   }
 
   void genHashCode() override {
-    for (const auto *P : Probes) {
-      HashCode = hash_combine(HashCode, P);
-    }
-    if (HashCode == 0) {
-      // Avoid zero value of HashCode when it's an empty list
-      HashCode = 1;
-    }
+    HashCode = hash_combine_range(Context.begin(), Context.end());
   }
 };
 
@@ -433,22 +433,14 @@ struct FrameStack {
   std::shared_ptr<StringBasedCtxKey> getContextKey();
 };
 
-struct ProbeStack {
-  SmallVector<const MCDecodedPseudoProbe *, 16> Stack;
+struct AddressStack {
+  SmallVector<uint64_t, 16> Stack;
   ProfiledBinary *Binary;
-  ProbeStack(ProfiledBinary *B) : Binary(B) {}
+  AddressStack(ProfiledBinary *B) : Binary(B) {}
   bool pushFrame(UnwindState::ProfiledFrame *Cur) {
     assert(!Cur->isExternalFrame() &&
            "External frame's not expected for context stack.");
-    const MCDecodedPseudoProbe *CallProbe =
-        Binary->getCallProbeForAddr(Cur->Address);
-    // We may not find a probe for a merged or external callsite.
-    // Callsite merging may cause the loss of original probe IDs.
-    // Cutting off the context from here since the inliner will
-    // not know how to consume a context with unknown callsites.
-    if (!CallProbe)
-      return false;
-    Stack.push_back(CallProbe);
+    Stack.push_back(Cur->Address);
     return true;
   }
 
@@ -456,18 +448,7 @@ struct ProbeStack {
     if (!Stack.empty())
       Stack.pop_back();
   }
-  // Use pseudo probe based context key to get the sample counter
-  // A context stands for a call path from 'main' to an uninlined
-  // callee with all inline frames recovered on that path. The probes
-  // belonging to that call path is the probes either originated from
-  // the callee or from any functions inlined into the callee. Since
-  // pseudo probes are organized in a tri-tree style after decoded,
-  // the tree path from the tri-tree root (which is the uninlined
-  // callee) to the probe node forms an inline context.
-  // Here we use a list of probe(pointer) as the context key to speed up
-  // aggregation and the final context string will be generate in
-  // ProfileGenerator
-  std::shared_ptr<ProbeBasedCtxKey> getContextKey();
+  std::shared_ptr<AddrBasedCtxKey> getContextKey();
 };
 
 /*
@@ -501,31 +482,57 @@ public:
   uint64_t NumMissingExternalFrame = 0;
   uint64_t NumMismatchedProEpiBranch = 0;
   uint64_t NumMismatchedExtCallBranch = 0;
+  uint64_t NumUnpairedExtAddr = 0;
+  uint64_t NumPairedExtAddr = 0;
 
 private:
+  bool isSourceExternal(UnwindState &State) const {
+    return State.getCurrentLBRSource() == ExternalAddr;
+  }
+
+  bool isTargetExternal(UnwindState &State) const {
+    return State.getCurrentLBRTarget() == ExternalAddr;
+  }
+
+  // Determine whether the return source is from external code by checking if
+  // the target's the next inst is a call inst.
+  bool isReturnFromExternal(UnwindState &State) const {
+    return isSourceExternal(State) &&
+           (Binary->getCallAddrFromFrameAddr(State.getCurrentLBRTarget()) != 0);
+  }
+
+  // If the source is external address but it's not the `return` case, treat it
+  // as a call from external.
+  bool isCallFromExternal(UnwindState &State) const {
+    return isSourceExternal(State) &&
+           Binary->getCallAddrFromFrameAddr(State.getCurrentLBRTarget()) == 0;
+  }
+
   bool isCallState(UnwindState &State) const {
     // The tail call frame is always missing here in stack sample, we will
     // use a specific tail call tracker to infer it.
-    return Binary->addressIsCall(State.getCurrentLBRSource());
+    if (!isValidState(State))
+      return false;
+
+    if (Binary->addressIsCall(State.getCurrentLBRSource()))
+      return true;
+
+    return isCallFromExternal(State);
   }
 
   bool isReturnState(UnwindState &State) const {
-    // Simply check addressIsReturn, as ret is always reliable, both for
-    // regular call and tail call.
-    if (!Binary->addressIsReturn(State.getCurrentLBRSource()))
+    if (!isValidState(State))
       return false;
 
-    // In a callback case, a return from internal code, say A, to external
-    // runtime can happen. The external runtime can then call back to
-    // another internal routine, say B. Making an artificial branch that
-    // looks like a return from A to B can confuse the unwinder to treat
-    // the instruction before B as the call instruction. Here we detect this
-    // case if the return target is not the next inst of call inst, then we just
-    // do not treat it as a return.
-    uint64_t CallAddr =
-        Binary->getCallAddrFromFrameAddr(State.getCurrentLBRTarget());
-    return (CallAddr != 0);
+    // Simply check addressIsReturn, as ret is always reliable, both for
+    // regular call and tail call.
+    if (Binary->addressIsReturn(State.getCurrentLBRSource()))
+      return true;
+
+    return isReturnFromExternal(State);
   }
+
+  bool isValidState(UnwindState &State) const { return !State.Invalid; }
 
   void unwindCall(UnwindState &State);
   void unwindLinear(UnwindState &State, uint64_t Repeat);
@@ -561,21 +568,22 @@ public:
   };
   virtual ~PerfReaderBase() = default;
   static std::unique_ptr<PerfReaderBase> create(ProfiledBinary *Binary,
-                                                PerfInputFile &PerfInput);
+                                                PerfInputFile &PerfInput,
+                                                Optional<uint32_t> PIDFilter);
 
   // Entry of the reader to parse multiple perf traces
   virtual void parsePerfTraces() = 0;
   const ContextSampleCounterMap &getSampleCounters() const {
     return SampleCounters;
   }
-  bool profileIsCSFlat() { return ProfileIsCSFlat; }
+  bool profileIsCS() { return ProfileIsCS; }
 
 protected:
   ProfiledBinary *Binary = nullptr;
   StringRef PerfTraceFile;
 
   ContextSampleCounterMap SampleCounters;
-  bool ProfileIsCSFlat = false;
+  bool ProfileIsCS = false;
 
   uint64_t NumTotalSample = 0;
   uint64_t NumLeafExternalFrame = 0;
@@ -585,14 +593,16 @@ protected:
 // Read perf script to parse the events and samples.
 class PerfScriptReader : public PerfReaderBase {
 public:
-  PerfScriptReader(ProfiledBinary *B, StringRef PerfTrace)
-      : PerfReaderBase(B, PerfTrace){};
+  PerfScriptReader(ProfiledBinary *B, StringRef PerfTrace,
+                   Optional<uint32_t> PID)
+      : PerfReaderBase(B, PerfTrace), PIDFilter(PID){};
 
   // Entry of the reader to parse multiple perf traces
   virtual void parsePerfTraces() override;
   // Generate perf script from perf data
   static PerfInputFile convertPerfDataToTrace(ProfiledBinary *Binary,
-                                              PerfInputFile &File);
+                                              PerfInputFile &File,
+                                              Optional<uint32_t> PIDFilter);
   // Extract perf script type by peaking at the input
   static PerfContent checkPerfScriptType(StringRef FileName);
 
@@ -652,6 +662,8 @@ protected:
   AggregatedCounter AggregatedSamples;
   // Keep track of all invalid return addresses
   std::set<uint64_t> InvalidReturnAddresses;
+  // PID for the process of interest
+  Optional<uint32_t> PIDFilter;
 };
 
 /*
@@ -662,8 +674,9 @@ protected:
 */
 class LBRPerfReader : public PerfScriptReader {
 public:
-  LBRPerfReader(ProfiledBinary *Binary, StringRef PerfTrace)
-      : PerfScriptReader(Binary, PerfTrace){};
+  LBRPerfReader(ProfiledBinary *Binary, StringRef PerfTrace,
+                Optional<uint32_t> PID)
+      : PerfScriptReader(Binary, PerfTrace, PID){};
   // Parse the LBR only sample.
   virtual void parseSample(TraceStream &TraceIt, uint64_t Count) override;
 };
@@ -679,8 +692,9 @@ public:
 */
 class HybridPerfReader : public PerfScriptReader {
 public:
-  HybridPerfReader(ProfiledBinary *Binary, StringRef PerfTrace)
-      : PerfScriptReader(Binary, PerfTrace){};
+  HybridPerfReader(ProfiledBinary *Binary, StringRef PerfTrace,
+                   Optional<uint32_t> PID)
+      : PerfScriptReader(Binary, PerfTrace, PID){};
   // Parse the hybrid sample including the call and LBR line
   void parseSample(TraceStream &TraceIt, uint64_t Count) override;
   void generateUnsymbolizedProfile() override;

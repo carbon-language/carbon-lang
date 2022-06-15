@@ -27,9 +27,11 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/ExecutionDomainFix.h"
+#include "llvm/CodeGen/GlobalISel/CSEInfo.h"
 #include "llvm/CodeGen/GlobalISel/CallLowering.h"
 #include "llvm/CodeGen/GlobalISel/IRTranslator.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelect.h"
+#include "llvm/CodeGen/GlobalISel/InstructionSelector.h"
 #include "llvm/CodeGen/GlobalISel/Legalizer.h"
 #include "llvm/CodeGen/GlobalISel/RegBankSelect.h"
 #include "llvm/CodeGen/MachineScheduler.h"
@@ -65,6 +67,7 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeX86Target() {
   initializeX86LowerAMXIntrinsicsLegacyPassPass(PR);
   initializeX86LowerAMXTypeLegacyPassPass(PR);
   initializeX86PreAMXConfigPassPass(PR);
+  initializeX86PreTileConfigPass(PR);
   initializeGlobalISel(PR);
   initializeWinEHStatePassPass(PR);
   initializeFixupBWInstPassPass(PR);
@@ -75,6 +78,7 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeX86Target() {
   initializeX86CallFrameOptimizationPass(PR);
   initializeX86CmovConverterPassPass(PR);
   initializeX86TileConfigPass(PR);
+  initializeX86FastPreTileConfigPass(PR);
   initializeX86FastTileConfigPass(PR);
   initializeX86LowerTileCopyPass(PR);
   initializeX86ExpandPseudoPass(PR);
@@ -333,7 +337,7 @@ bool X86TargetMachine::isNoopAddrSpaceCast(unsigned SrcAS,
 //===----------------------------------------------------------------------===//
 
 TargetTransformInfo
-X86TargetMachine::getTargetTransformInfo(const Function &F) {
+X86TargetMachine::getTargetTransformInfo(const Function &F) const {
   return TargetTransformInfo(X86TTIImpl(this, F));
 }
 
@@ -416,9 +420,6 @@ void X86PassConfig::addIRPasses() {
   // based on the option level and option attribute.
   addPass(createX86LowerAMXIntrinsicsPass());
   addPass(createX86LowerAMXTypePass());
-
-  if (TM->getOptLevel() == CodeGenOpt::None)
-    addPass(createX86PreAMXConfigPass());
 
   TargetPassConfig::addIRPasses();
 
@@ -508,9 +509,10 @@ void X86PassConfig::addPreRegAlloc() {
   addPass(createX86FlagsCopyLoweringPass());
   addPass(createX86DynAllocaExpander());
 
-  if (getOptLevel() != CodeGenOpt::None) {
+  if (getOptLevel() != CodeGenOpt::None)
     addPass(createX86PreTileConfigPass());
-  }
+  else
+    addPass(createX86FastPreTileConfigPass());
 }
 
 void X86PassConfig::addMachineSSAOptimization() {

@@ -817,7 +817,7 @@ void ObjectFileMachO::Terminate() {
 }
 
 ObjectFile *ObjectFileMachO::CreateInstance(const lldb::ModuleSP &module_sp,
-                                            DataBufferSP &data_sp,
+                                            DataBufferSP data_sp,
                                             lldb::offset_t data_offset,
                                             const FileSpec *file,
                                             lldb::offset_t file_offset,
@@ -848,7 +848,7 @@ ObjectFile *ObjectFileMachO::CreateInstance(const lldb::ModuleSP &module_sp,
 }
 
 ObjectFile *ObjectFileMachO::CreateMemoryInstance(
-    const lldb::ModuleSP &module_sp, DataBufferSP &data_sp,
+    const lldb::ModuleSP &module_sp, WritableDataBufferSP data_sp,
     const ProcessSP &process_sp, lldb::addr_t header_addr) {
   if (ObjectFileMachO::MagicBytesMatch(data_sp, 0, data_sp->GetByteSize())) {
     std::unique_ptr<ObjectFile> objfile_up(
@@ -929,7 +929,7 @@ ConstString ObjectFileMachO::GetSectionNameEHFrame() {
   return g_section_name_eh_frame;
 }
 
-bool ObjectFileMachO::MagicBytesMatch(DataBufferSP &data_sp,
+bool ObjectFileMachO::MagicBytesMatch(DataBufferSP data_sp,
                                       lldb::addr_t data_offset,
                                       lldb::addr_t data_length) {
   DataExtractor data;
@@ -940,7 +940,7 @@ bool ObjectFileMachO::MagicBytesMatch(DataBufferSP &data_sp,
 }
 
 ObjectFileMachO::ObjectFileMachO(const lldb::ModuleSP &module_sp,
-                                 DataBufferSP &data_sp,
+                                 DataBufferSP data_sp,
                                  lldb::offset_t data_offset,
                                  const FileSpec *file,
                                  lldb::offset_t file_offset,
@@ -954,7 +954,7 @@ ObjectFileMachO::ObjectFileMachO(const lldb::ModuleSP &module_sp,
 }
 
 ObjectFileMachO::ObjectFileMachO(const lldb::ModuleSP &module_sp,
-                                 lldb::DataBufferSP &header_data_sp,
+                                 lldb::WritableDataBufferSP header_data_sp,
                                  const lldb::ProcessSP &process_sp,
                                  lldb::addr_t header_addr)
     : ObjectFile(module_sp, process_sp, header_addr, header_data_sp),
@@ -2201,19 +2201,20 @@ ParseNList(DataExtractor &nlist_data, lldb::offset_t &nlist_data_offset,
 enum { DebugSymbols = true, NonDebugSymbols = false };
 
 void ObjectFileMachO::ParseSymtab(Symtab &symtab) {
-  LLDB_SCOPED_TIMERF("ObjectFileMachO::ParseSymtab () module = %s",
-                     m_file.GetFilename().AsCString(""));
   ModuleSP module_sp(GetModule());
   if (!module_sp)
     return;
 
-  Progress progress(llvm::formatv("Parsing symbol table for {0}",
-                                  m_file.GetFilename().AsCString("<Unknown>")));
+  const FileSpec &file = m_file ? m_file : module_sp->GetFileSpec();
+  const char *file_name = file.GetFilename().AsCString("<Unknown>");
+  LLDB_SCOPED_TIMERF("ObjectFileMachO::ParseSymtab () module = %s", file_name);
+  Progress progress(llvm::formatv("Parsing symbol table for {0}", file_name));
 
   llvm::MachO::symtab_command symtab_load_command = {0, 0, 0, 0, 0, 0};
   llvm::MachO::linkedit_data_command function_starts_load_command = {0, 0, 0, 0};
   llvm::MachO::linkedit_data_command exports_trie_load_command = {0, 0, 0, 0};
   llvm::MachO::dyld_info_command dyld_info = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  llvm::MachO::dysymtab_command dysymtab = m_dysymtab;
   // The data element of type bool indicates that this entry is thumb
   // code.
   typedef AddressDataArray<lldb::addr_t, bool, 100> FunctionStarts;
@@ -2394,12 +2395,12 @@ void ObjectFileMachO::ParseSymtab(Symtab &symtab) {
               ReadMemory(process_sp, symoff_addr, nlist_data_byte_size));
           if (nlist_data_sp)
             nlist_data.SetData(nlist_data_sp, 0, nlist_data_sp->GetByteSize());
-          if (m_dysymtab.nindirectsyms != 0) {
+          if (dysymtab.nindirectsyms != 0) {
             const addr_t indirect_syms_addr = linkedit_load_addr +
-                                              m_dysymtab.indirectsymoff -
+                                              dysymtab.indirectsymoff -
                                               linkedit_file_offset;
             DataBufferSP indirect_syms_data_sp(ReadMemory(
-                process_sp, indirect_syms_addr, m_dysymtab.nindirectsyms * 4));
+                process_sp, indirect_syms_addr, dysymtab.nindirectsyms * 4));
             if (indirect_syms_data_sp)
               indirect_symbol_index_data.SetData(
                   indirect_syms_data_sp, 0,
@@ -2452,7 +2453,7 @@ void ObjectFileMachO::ParseSymtab(Symtab &symtab) {
       symtab_load_command.symoff += linkedit_slide;
       symtab_load_command.stroff += linkedit_slide;
       dyld_info.export_off += linkedit_slide;
-      m_dysymtab.indirectsymoff += linkedit_slide;
+      dysymtab.indirectsymoff += linkedit_slide;
       function_starts_load_command.dataoff += linkedit_slide;
       exports_trie_load_command.dataoff += linkedit_slide;
     }
@@ -2474,9 +2475,9 @@ void ObjectFileMachO::ParseSymtab(Symtab &symtab) {
                              exports_trie_load_command.datasize);
     }
 
-    if (m_dysymtab.nindirectsyms != 0) {
-      indirect_symbol_index_data.SetData(m_data, m_dysymtab.indirectsymoff,
-                                         m_dysymtab.nindirectsyms * 4);
+    if (dysymtab.nindirectsyms != 0) {
+      indirect_symbol_index_data.SetData(m_data, dysymtab.indirectsymoff,
+                                         dysymtab.nindirectsyms * 4);
     }
     if (function_starts_load_command.cmd) {
       function_starts_data.SetData(m_data, function_starts_load_command.dataoff,
@@ -2711,7 +2712,7 @@ void ObjectFileMachO::ParseSymtab(Symtab &symtab) {
         if (process_shared_cache_uuid.IsValid() &&
           process_shared_cache_uuid != UUID::fromOptionalData(&cache_uuid, 16))
         return;
-      const bool pinned = dyld_shared_cache_pin_mapping(shared_cache);
+
       dyld_shared_cache_for_each_image(shared_cache, ^(dyld_image_t image) {
         uuid_t dsc_image_uuid;
         if (found_image)
@@ -2768,8 +2769,6 @@ void ObjectFileMachO::ParseSymtab(Symtab &symtab) {
               nlist_count = nlistCount;
             });
       });
-      if (pinned)
-        dyld_shared_cache_unpin_mapping(shared_cache);
     });
     if (nlist_buffer) {
       DataExtractor dsc_local_symbols_data(nlist_buffer,
@@ -6968,7 +6967,8 @@ bool ObjectFileMachO::LoadCoreFileImages(lldb_private::Process &process) {
       module_spec.GetFileSpec() = FileSpec(image.filename.c_str());
     }
     if (image.currently_executing) {
-      Symbols::DownloadObjectAndSymbolFile(module_spec, true);
+      Status error;
+      Symbols::DownloadObjectAndSymbolFile(module_spec, error, true);
       if (FileSystem::Instance().Exists(module_spec.GetFileSpec())) {
         process.GetTarget().GetOrCreateModule(module_spec, false);
       }

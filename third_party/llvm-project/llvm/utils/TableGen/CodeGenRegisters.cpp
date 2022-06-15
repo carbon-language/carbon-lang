@@ -12,21 +12,18 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodeGenRegisters.h"
-#include "CodeGenTarget.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IntEqClasses.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
@@ -641,6 +638,7 @@ struct TupleExpander : SetTheory::Expander {
       Def->getValueAsListOfStrings("RegAsmNames");
 
     // Zip them up.
+    RecordKeeper &RK = Def->getRecords();
     for (unsigned n = 0; n != Length; ++n) {
       std::string Name;
       Record *Proto = Lists[0][n];
@@ -657,13 +655,13 @@ struct TupleExpander : SetTheory::Expander {
       SmallVector<Init *, 2> CostPerUse;
       CostPerUse.insert(CostPerUse.end(), CostList->begin(), CostList->end());
 
-      StringInit *AsmName = StringInit::get("");
+      StringInit *AsmName = StringInit::get(RK, "");
       if (!RegNames.empty()) {
         if (RegNames.size() <= n)
           PrintFatalError(Def->getLoc(),
                           "Register tuple definition missing name for '" +
                             Name + "'.");
-        AsmName = StringInit::get(RegNames[n]);
+        AsmName = StringInit::get(RK, RegNames[n]);
       }
 
       // Create a new Record representing the synthesized register. This record
@@ -702,7 +700,7 @@ struct TupleExpander : SetTheory::Expander {
 
         // Composite registers are always covered by sub-registers.
         if (Field == "CoveredBySubRegs")
-          RV.setValue(BitInit::get(true));
+          RV.setValue(BitInit::get(RK, true));
 
         // Copy fields from the RegisterTuples def.
         if (Field == "SubRegIndices" ||
@@ -1817,6 +1815,7 @@ void CodeGenRegBank::computeRegUnitWeights() {
   unsigned NumIters = 0;
   for (bool Changed = true; Changed; ++NumIters) {
     assert(NumIters <= NumNativeRegUnits && "Runaway register unit weights");
+    (void) NumIters;
     Changed = false;
     for (auto &Reg : Registers) {
       CodeGenRegister::RegUnitList NormalUnits;

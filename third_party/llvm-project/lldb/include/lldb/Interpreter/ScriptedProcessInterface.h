@@ -10,7 +10,6 @@
 #define LLDB_INTERPRETER_SCRIPTEDPROCESSINTERFACE_H
 
 #include "lldb/Core/StructuredDataImpl.h"
-#include "lldb/Interpreter/ScriptInterpreter.h"
 #include "lldb/Interpreter/ScriptedInterface.h"
 #include "lldb/Target/MemoryRegionInfo.h"
 
@@ -57,7 +56,7 @@ public:
     return nullptr;
   }
 
-  virtual StructuredData::DictionarySP GetLoadedImages() { return nullptr; }
+  virtual StructuredData::ArraySP GetLoadedImages() { return nullptr; }
 
   virtual lldb::pid_t GetProcessID() { return LLDB_INVALID_PROCESS_ID; }
 

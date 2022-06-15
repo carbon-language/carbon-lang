@@ -3,8 +3,6 @@
 // RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +sve2 -fallow-half-arguments-and-returns -S -O1 -Werror -Wall -emit-llvm -o - -x c++ %s | FileCheck %s -check-prefix=CPP-CHECK
 // RUN: %clang_cc1 -DSVE_OVERLOADED_FORMS -triple aarch64-none-linux-gnu -target-feature +sve2 -fallow-half-arguments-and-returns -S -O1 -Werror -Wall -emit-llvm -o - %s | FileCheck %s
 // RUN: %clang_cc1 -DSVE_OVERLOADED_FORMS -triple aarch64-none-linux-gnu -target-feature +sve2 -fallow-half-arguments-and-returns -S -O1 -Werror -Wall -emit-llvm -o - -x c++ %s | FileCheck %s -check-prefix=CPP-CHECK
-// RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +sve -fallow-half-arguments-and-returns -fsyntax-only -verify -verify-ignore-unexpected=error %s
-// RUN: %clang_cc1 -DSVE_OVERLOADED_FORMS -triple aarch64-none-linux-gnu -target-feature +sve -fallow-half-arguments-and-returns -fsyntax-only -verify=overload -verify-ignore-unexpected=error %s
 
 // REQUIRES: aarch64-registered-target
 
@@ -29,8 +27,6 @@
 //
 svuint8_t test_svqxtunb_s16(svint16_t op1)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svqxtunb'}}
-  // expected-warning@+1 {{implicit declaration of function 'svqxtunb_s16'}}
   return SVE_ACLE_FUNC(svqxtunb,_s16,,)(op1);
 }
 
@@ -46,8 +42,6 @@ svuint8_t test_svqxtunb_s16(svint16_t op1)
 //
 svuint16_t test_svqxtunb_s32(svint32_t op1)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svqxtunb'}}
-  // expected-warning@+1 {{implicit declaration of function 'svqxtunb_s32'}}
   return SVE_ACLE_FUNC(svqxtunb,_s32,,)(op1);
 }
 
@@ -63,7 +57,5 @@ svuint16_t test_svqxtunb_s32(svint32_t op1)
 //
 svuint32_t test_svqxtunb_s64(svint64_t op1)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svqxtunb'}}
-  // expected-warning@+1 {{implicit declaration of function 'svqxtunb_s64'}}
   return SVE_ACLE_FUNC(svqxtunb,_s64,,)(op1);
 }

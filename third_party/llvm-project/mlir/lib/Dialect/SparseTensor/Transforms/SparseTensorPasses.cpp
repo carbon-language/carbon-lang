@@ -6,12 +6,17 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "mlir/Dialect/Affine/IR/AffineOps.h"
+#include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
 #include "mlir/Dialect/Bufferization/IR/Bufferization.h"
+#include "mlir/Dialect/Complex/IR/Complex.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
+#include "mlir/Dialect/Func/Transforms/FuncConversions.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/Dialect/Linalg/Transforms/Transforms.h"
 #include "mlir/Dialect/SparseTensor/IR/SparseTensor.h"
 #include "mlir/Dialect/SparseTensor/Transforms/Passes.h"
-#include "mlir/Dialect/StandardOps/Transforms/FuncConversions.h"
+#include "mlir/Dialect/Tensor/IR/Tensor.h"
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
 
 using namespace mlir;
@@ -39,6 +44,7 @@ struct SparsificationPass : public SparsificationBase<SparsificationPass> {
     vectorization = static_cast<int32_t>(options.vectorizationStrategy);
     vectorLength = options.vectorLength;
     enableSIMDIndex32 = options.enableSIMDIndex32;
+    enableVLAVectorization = options.enableVLAVectorization;
   }
 
   void runOnOperation() override {
@@ -48,7 +54,7 @@ struct SparsificationPass : public SparsificationBase<SparsificationPass> {
     SparsificationOptions options(
         sparseParallelizationStrategy(parallelization),
         sparseVectorizationStrategy(vectorization), vectorLength,
-        enableSIMDIndex32);
+        enableSIMDIndex32, enableVLAVectorization);
     // Apply rewriting.
     populateSparsificationPatterns(patterns, options);
     vector::populateVectorToVectorCanonicalizationPatterns(patterns);
@@ -72,6 +78,13 @@ public:
 
 struct SparseTensorConversionPass
     : public SparseTensorConversionBase<SparseTensorConversionPass> {
+
+  SparseTensorConversionPass() = default;
+  SparseTensorConversionPass(const SparseTensorConversionPass &pass) = default;
+  SparseTensorConversionPass(const SparseTensorConversionOptions &options) {
+    sparseToSparse = static_cast<int32_t>(options.sparseToSparseStrategy);
+  }
+
   void runOnOperation() override {
     auto *ctx = &getContext();
     RewritePatternSet patterns(ctx);
@@ -82,13 +95,15 @@ struct SparseTensorConversionPass
     // All dynamic rules below accept new function, call, return, and tensor
     // dim and cast operations as legal output of the rewriting provided that
     // all sparse tensor types have been fully rewritten.
-    target.addDynamicallyLegalOp<FuncOp>(
-        [&](FuncOp op) { return converter.isSignatureLegal(op.getType()); });
-    target.addDynamicallyLegalOp<CallOp>([&](CallOp op) {
+    target.addDynamicallyLegalOp<func::FuncOp>([&](func::FuncOp op) {
+      return converter.isSignatureLegal(op.getFunctionType());
+    });
+    target.addDynamicallyLegalOp<func::CallOp>([&](func::CallOp op) {
       return converter.isSignatureLegal(op.getCalleeType());
     });
-    target.addDynamicallyLegalOp<ReturnOp>(
-        [&](ReturnOp op) { return converter.isLegal(op.getOperandTypes()); });
+    target.addDynamicallyLegalOp<func::ReturnOp>([&](func::ReturnOp op) {
+      return converter.isLegal(op.getOperandTypes());
+    });
     target.addDynamicallyLegalOp<tensor::DimOp>([&](tensor::DimOp op) {
       return converter.isLegal(op.getOperandTypes());
     });
@@ -98,16 +113,21 @@ struct SparseTensorConversionPass
     // The following operations and dialects may be introduced by the
     // rewriting rules, and are therefore marked as legal.
     target.addLegalOp<arith::CmpFOp, arith::CmpIOp, arith::ConstantOp,
-                      arith::IndexCastOp, linalg::FillOp, linalg::YieldOp,
+                      arith::IndexCastOp, complex::ConstantOp,
+                      complex::NotEqualOp, linalg::FillOp, linalg::YieldOp,
                       tensor::ExtractOp>();
     target
         .addLegalDialect<bufferization::BufferizationDialect, LLVM::LLVMDialect,
                          memref::MemRefDialect, scf::SCFDialect>();
+    target.addIllegalOp<bufferization::AllocTensorOp>();
+    // Translate strategy flags to strategy options.
+    SparseTensorConversionOptions options(
+        sparseToSparseConversionStrategy(sparseToSparse));
     // Populate with rules and apply rewriting rules.
-    populateFunctionOpInterfaceTypeConversionPattern<FuncOp>(patterns,
-                                                             converter);
+    populateFunctionOpInterfaceTypeConversionPattern<func::FuncOp>(patterns,
+                                                                   converter);
     populateCallOpTypeConversionPattern(patterns, converter);
-    populateSparseTensorConversionPatterns(converter, patterns);
+    populateSparseTensorConversionPatterns(converter, patterns, options);
     if (failed(applyPartialConversion(getOperation(), target,
                                       std::move(patterns))))
       signalPassFailure();
@@ -143,6 +163,18 @@ SparseVectorizationStrategy mlir::sparseVectorizationStrategy(int32_t flag) {
   }
 }
 
+SparseToSparseConversionStrategy
+mlir::sparseToSparseConversionStrategy(int32_t flag) {
+  switch (flag) {
+  default:
+    return SparseToSparseConversionStrategy::kAuto;
+  case 1:
+    return SparseToSparseConversionStrategy::kViaCOO;
+  case 2:
+    return SparseToSparseConversionStrategy::kDirect;
+  }
+}
+
 std::unique_ptr<Pass> mlir::createSparsificationPass() {
   return std::make_unique<SparsificationPass>();
 }
@@ -154,4 +186,9 @@ mlir::createSparsificationPass(const SparsificationOptions &options) {
 
 std::unique_ptr<Pass> mlir::createSparseTensorConversionPass() {
   return std::make_unique<SparseTensorConversionPass>();
+}
+
+std::unique_ptr<Pass> mlir::createSparseTensorConversionPass(
+    const SparseTensorConversionOptions &options) {
+  return std::make_unique<SparseTensorConversionPass>(options);
 }

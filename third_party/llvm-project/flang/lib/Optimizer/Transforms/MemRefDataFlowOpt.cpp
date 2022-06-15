@@ -11,7 +11,7 @@
 #include "flang/Optimizer/Dialect/FIROps.h"
 #include "flang/Optimizer/Dialect/FIRType.h"
 #include "flang/Optimizer/Transforms/Passes.h"
-#include "mlir/Dialect/StandardOps/IR/Ops.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/IR/Dominance.h"
 #include "mlir/IR/Operation.h"
 #include "mlir/Transforms/Passes.h"
@@ -20,6 +20,8 @@
 #include "llvm/ADT/SmallVector.h"
 
 #define DEBUG_TYPE "fir-memref-dataflow-opt"
+
+using namespace mlir;
 
 namespace {
 
@@ -95,7 +97,7 @@ private:
 class MemDataFlowOpt : public fir::MemRefDataFlowOptBase<MemDataFlowOpt> {
 public:
   void runOnOperation() override {
-    mlir::FuncOp f = getOperation();
+    mlir::func::FuncOp f = getOperation();
 
     auto *domInfo = &getAnalysis<mlir::DominanceInfo>();
     LoadStoreForwarding<fir::LoadOp, fir::StoreOp> lsf(domInfo);

@@ -643,7 +643,7 @@ DataBufferSP GDBRemoteCommunicationClient::ReadMemoryTags(lldb::addr_t addr,
   }
 
   size_t expected_bytes = response.GetBytesLeft() / 2;
-  DataBufferSP buffer_sp(new DataBufferHeap(expected_bytes, 0));
+  WritableDataBufferSP buffer_sp(new DataBufferHeap(expected_bytes, 0));
   size_t got_bytes = response.GetHexBytesAvail(buffer_sp->GetData());
   // Check both because in some situations chars are consumed even
   // if the decoding fails.
@@ -2228,8 +2228,10 @@ bool GDBRemoteCommunicationClient::GetCurrentProcessInfo(bool allow_lazy) {
           m_process_arch.SetArchitecture(eArchTypeCOFF, cpu, sub);
           break;
         case llvm::Triple::GOFF:
+        case llvm::Triple::SPIRV:
         case llvm::Triple::Wasm:
         case llvm::Triple::XCOFF:
+        case llvm::Triple::DXContainer:
           LLDB_LOGF(log, "error: not supported target architecture");
           return false;
         case llvm::Triple::UnknownObjectFormat:
@@ -2246,9 +2248,6 @@ bool GDBRemoteCommunicationClient::GetCurrentProcessInfo(bool allow_lazy) {
         m_process_arch.GetTriple().setVendorName(llvm::StringRef(vendor_name));
         m_process_arch.GetTriple().setOSName(llvm::StringRef(os_name));
         m_process_arch.GetTriple().setEnvironmentName(llvm::StringRef(environment));
-        m_host_arch.GetTriple().setVendorName(llvm::StringRef(vendor_name));
-        m_host_arch.GetTriple().setOSName(llvm::StringRef(os_name));
-        m_host_arch.GetTriple().setEnvironmentName(llvm::StringRef(environment));
       }
       return true;
     }
@@ -3444,7 +3443,7 @@ DataBufferSP GDBRemoteCommunicationClient::ReadRegister(lldb::tid_t tid,
       !response.IsNormalResponse())
     return nullptr;
 
-  DataBufferSP buffer_sp(
+  WritableDataBufferSP buffer_sp(
       new DataBufferHeap(response.GetStringRef().size() / 2, 0));
   response.GetHexBytes(buffer_sp->GetData(), '\xcc');
   return buffer_sp;
@@ -3459,7 +3458,7 @@ DataBufferSP GDBRemoteCommunicationClient::ReadAllRegisters(lldb::tid_t tid) {
       !response.IsNormalResponse())
     return nullptr;
 
-  DataBufferSP buffer_sp(
+  WritableDataBufferSP buffer_sp(
       new DataBufferHeap(response.GetStringRef().size() / 2, 0));
   response.GetHexBytes(buffer_sp->GetData(), '\xcc');
   return buffer_sp;

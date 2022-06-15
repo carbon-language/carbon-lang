@@ -74,12 +74,29 @@ struct ParsedAttrInfo {
   // The names of the known arguments of this attribute.
   ArrayRef<const char *> ArgNames;
 
-  ParsedAttrInfo(AttributeCommonInfo::Kind AttrKind =
-                     AttributeCommonInfo::NoSemaHandlerAttribute)
-      : AttrKind(AttrKind), NumArgs(0), OptArgs(0), HasCustomParsing(0),
-        IsTargetSpecific(0), IsType(0), IsStmt(0), IsKnownToGCC(0),
-        IsSupportedByPragmaAttribute(0) {}
+protected:
+  constexpr ParsedAttrInfo(AttributeCommonInfo::Kind AttrKind =
+                               AttributeCommonInfo::NoSemaHandlerAttribute)
+      : AttrKind(AttrKind), NumArgs(0), OptArgs(0), NumArgMembers(0),
+        HasCustomParsing(0), AcceptsExprPack(0), IsTargetSpecific(0), IsType(0),
+        IsStmt(0), IsKnownToGCC(0), IsSupportedByPragmaAttribute(0) {}
 
+  constexpr ParsedAttrInfo(AttributeCommonInfo::Kind AttrKind, unsigned NumArgs,
+                           unsigned OptArgs, unsigned NumArgMembers,
+                           unsigned HasCustomParsing, unsigned AcceptsExprPack,
+                           unsigned IsTargetSpecific, unsigned IsType,
+                           unsigned IsStmt, unsigned IsKnownToGCC,
+                           unsigned IsSupportedByPragmaAttribute,
+                           ArrayRef<Spelling> Spellings,
+                           ArrayRef<const char *> ArgNames)
+      : AttrKind(AttrKind), NumArgs(NumArgs), OptArgs(OptArgs),
+        NumArgMembers(NumArgMembers), HasCustomParsing(HasCustomParsing),
+        AcceptsExprPack(AcceptsExprPack), IsTargetSpecific(IsTargetSpecific),
+        IsType(IsType), IsStmt(IsStmt), IsKnownToGCC(IsKnownToGCC),
+        IsSupportedByPragmaAttribute(IsSupportedByPragmaAttribute),
+        Spellings(Spellings), ArgNames(ArgNames) {}
+
+public:
   virtual ~ParsedAttrInfo() = default;
 
   /// Check if this attribute appertains to D, and issue a diagnostic if not.
@@ -883,6 +900,7 @@ class ParsedAttributesView {
   using SizeType = decltype(std::declval<VecTy>().size());
 
 public:
+  SourceRange Range;
   bool empty() const { return AttrList.empty(); }
   SizeType size() const { return AttrList.size(); }
   ParsedAttr &operator[](SizeType pos) { return *AttrList[pos]; }
@@ -981,15 +999,19 @@ public:
 
   AttributePool &getPool() const { return pool; }
 
-  void takeAllFrom(ParsedAttributes &attrs) {
-    addAll(attrs.begin(), attrs.end());
-    attrs.clearListOnly();
-    pool.takeAllFrom(attrs.pool);
+  void takeAllFrom(ParsedAttributes &Other) {
+    assert(&Other != this &&
+           "ParsedAttributes can't take attributes from itself");
+    addAll(Other.begin(), Other.end());
+    Other.clearListOnly();
+    pool.takeAllFrom(Other.pool);
   }
 
-  void takeOneFrom(ParsedAttributes &Attrs, ParsedAttr *PA) {
-    Attrs.getPool().remove(PA);
-    Attrs.remove(PA);
+  void takeOneFrom(ParsedAttributes &Other, ParsedAttr *PA) {
+    assert(&Other != this &&
+           "ParsedAttributes can't take attribute from itself");
+    Other.getPool().remove(PA);
+    Other.remove(PA);
     getPool().add(PA);
     addAtEnd(PA);
   }
@@ -997,6 +1019,7 @@ public:
   void clear() {
     clearListOnly();
     pool.clear();
+    Range = SourceRange();
   }
 
   /// Add attribute with expression arguments.
@@ -1078,27 +1101,6 @@ public:
 
 private:
   mutable AttributePool pool;
-};
-
-struct ParsedAttributesWithRange : ParsedAttributes {
-  ParsedAttributesWithRange(AttributeFactory &factory)
-      : ParsedAttributes(factory) {}
-
-  void clear() {
-    ParsedAttributes::clear();
-    Range = SourceRange();
-  }
-
-  SourceRange Range;
-};
-struct ParsedAttributesViewWithRange : ParsedAttributesView {
-  ParsedAttributesViewWithRange() {}
-  void clearListOnly() {
-    ParsedAttributesView::clearListOnly();
-    Range = SourceRange();
-  }
-
-  SourceRange Range;
 };
 
 /// These constants match the enumerated choices of

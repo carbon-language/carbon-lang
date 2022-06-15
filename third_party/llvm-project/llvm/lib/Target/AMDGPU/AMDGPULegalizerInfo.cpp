@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/IntrinsicsAMDGPU.h"
+#include "llvm/IR/IntrinsicsR600.h"
 
 #define DEBUG_TYPE "amdgpu-legalinfo"
 
@@ -134,7 +135,6 @@ static LegalizeMutation moreEltsToNext32Bit(unsigned TypeIdx) {
 static LLT getBitcastRegisterType(const LLT Ty) {
   const unsigned Size = Ty.getSizeInBits();
 
-  LLT CoercedTy;
   if (Size <= 32) {
     // <2 x s8> -> s16
     // <4 x s8> -> s32
@@ -530,13 +530,22 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
 
   if (ST.hasVOP3PInsts() && ST.hasAddNoCarry() && ST.hasIntClamp()) {
     // Full set of gfx9 features.
-    getActionDefinitionsBuilder({G_ADD, G_SUB, G_MUL})
+    getActionDefinitionsBuilder({G_ADD, G_SUB})
       .legalFor({S32, S16, V2S16})
-      .minScalar(0, S16)
       .clampMaxNumElementsStrict(0, S16, 2)
+      .scalarize(0)
+      .minScalar(0, S16)
       .widenScalarToNextMultipleOf(0, 32)
-      .maxScalar(0, S32)
-      .scalarize(0);
+      .maxScalar(0, S32);
+
+    getActionDefinitionsBuilder(G_MUL)
+      .legalFor({S32, S16, V2S16})
+      .clampMaxNumElementsStrict(0, S16, 2)
+      .scalarize(0)
+      .minScalar(0, S16)
+      .widenScalarToNextMultipleOf(0, 32)
+      .custom();
+    assert(ST.hasMad64_32());
 
     getActionDefinitionsBuilder({G_UADDSAT, G_USUBSAT, G_SADDSAT, G_SSUBSAT})
       .legalFor({S32, S16, V2S16}) // Clamp modifier
@@ -546,12 +555,20 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
       .widenScalarToNextPow2(0, 32)
       .lower();
   } else if (ST.has16BitInsts()) {
-    getActionDefinitionsBuilder({G_ADD, G_SUB, G_MUL})
+    getActionDefinitionsBuilder({G_ADD, G_SUB})
       .legalFor({S32, S16})
       .minScalar(0, S16)
       .widenScalarToNextMultipleOf(0, 32)
       .maxScalar(0, S32)
       .scalarize(0);
+
+    getActionDefinitionsBuilder(G_MUL)
+      .legalFor({S32, S16})
+      .scalarize(0)
+      .minScalar(0, S16)
+      .widenScalarToNextMultipleOf(0, 32)
+      .custom();
+    assert(ST.hasMad64_32());
 
     // Technically the saturating operations require clamp bit support, but this
     // was introduced at the same time as 16-bit operations.
@@ -569,11 +586,22 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
       .scalarize(0)
       .lower();
   } else {
-    getActionDefinitionsBuilder({G_ADD, G_SUB, G_MUL})
+    getActionDefinitionsBuilder({G_ADD, G_SUB})
       .legalFor({S32})
       .widenScalarToNextMultipleOf(0, 32)
       .clampScalar(0, S32, S32)
       .scalarize(0);
+
+    auto &Mul = getActionDefinitionsBuilder(G_MUL)
+      .legalFor({S32})
+      .scalarize(0)
+      .minScalar(0, S32)
+      .widenScalarToNextMultipleOf(0, 32);
+
+    if (ST.hasMad64_32())
+      Mul.custom();
+    else
+      Mul.maxScalar(0, S32);
 
     if (ST.hasIntClamp()) {
       getActionDefinitionsBuilder({G_UADDSAT, G_USUBSAT})
@@ -632,7 +660,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
                                G_UADDE, G_SADDE, G_USUBE, G_SSUBE})
     .legalFor({{S32, S1}, {S32, S32}})
     .minScalar(0, S32)
-    // TODO: .scalarize(0)
+    .scalarize(0)
     .lower();
 
   getActionDefinitionsBuilder(G_BITCAST)
@@ -1297,6 +1325,8 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
     Atomic.legalFor({{S32, LocalPtr}, {S32, RegionPtr}});
     if (ST.hasGFX90AInsts())
       Atomic.legalFor({{S64, LocalPtr}});
+    if (ST.hasGFX940Insts())
+      Atomic.legalFor({{V2S16, LocalPtr}});
   }
   if (ST.hasAtomicFaddInsts())
     Atomic.legalFor({{S32, GlobalPtr}});
@@ -1761,6 +1791,8 @@ bool AMDGPULegalizerInfo::legalizeCustom(LegalizerHelper &Helper,
     return legalizeFFloor(MI, MRI, B);
   case TargetOpcode::G_BUILD_VECTOR:
     return legalizeBuildVector(MI, MRI, B);
+  case TargetOpcode::G_MUL:
+    return legalizeMul(Helper, MI);
   case TargetOpcode::G_CTLZ:
   case TargetOpcode::G_CTTZ:
     return legalizeCTLZ_CTTZ(MI, MRI, B);
@@ -1808,6 +1840,39 @@ Register AMDGPULegalizerInfo::getSegmentAperture(
     return B.buildShl(S32, GetReg, ShiftAmt).getReg(0);
   }
 
+  // TODO: can we be smarter about machine pointer info?
+  MachinePointerInfo PtrInfo(AMDGPUAS::CONSTANT_ADDRESS);
+  Register LoadAddr = MRI.createGenericVirtualRegister(
+    LLT::pointer(AMDGPUAS::CONSTANT_ADDRESS, 64));
+  // For code object version 5, private_base and shared_base are passed through
+  // implicit kernargs.
+  if (AMDGPU::getAmdhsaCodeObjectVersion() == 5) {
+    AMDGPUTargetLowering::ImplicitParameter Param =
+        AS == AMDGPUAS::LOCAL_ADDRESS ? AMDGPUTargetLowering::SHARED_BASE
+                                      : AMDGPUTargetLowering::PRIVATE_BASE;
+    uint64_t Offset =
+        ST.getTargetLowering()->getImplicitParameterOffset(B.getMF(), Param);
+
+    Register KernargPtrReg = MRI.createGenericVirtualRegister(
+        LLT::pointer(AMDGPUAS::CONSTANT_ADDRESS, 64));
+
+    if (!loadInputValue(KernargPtrReg, B,
+                        AMDGPUFunctionArgInfo::KERNARG_SEGMENT_PTR))
+      return Register();
+
+    MachineMemOperand *MMO = MF.getMachineMemOperand(
+        PtrInfo,
+        MachineMemOperand::MOLoad | MachineMemOperand::MODereferenceable |
+            MachineMemOperand::MOInvariant,
+        LLT::scalar(32), commonAlignment(Align(64), Offset));
+
+    // Pointer address
+    B.buildPtrAdd(LoadAddr, KernargPtrReg,
+                  B.buildConstant(LLT::scalar(64), Offset).getReg(0));
+    // Load address
+    return B.buildLoad(S32, LoadAddr, *MMO).getReg(0);
+  }
+
   Register QueuePtr = MRI.createGenericVirtualRegister(
     LLT::pointer(AMDGPUAS::CONSTANT_ADDRESS, 64));
 
@@ -1818,17 +1883,14 @@ Register AMDGPULegalizerInfo::getSegmentAperture(
   // private_segment_aperture_base_hi.
   uint32_t StructOffset = (AS == AMDGPUAS::LOCAL_ADDRESS) ? 0x40 : 0x44;
 
-  // TODO: can we be smarter about machine pointer info?
-  MachinePointerInfo PtrInfo(AMDGPUAS::CONSTANT_ADDRESS);
   MachineMemOperand *MMO = MF.getMachineMemOperand(
       PtrInfo,
       MachineMemOperand::MOLoad | MachineMemOperand::MODereferenceable |
           MachineMemOperand::MOInvariant,
       LLT::scalar(32), commonAlignment(Align(64), StructOffset));
 
-  Register LoadAddr;
-
-  B.materializePtrAdd(LoadAddr, QueuePtr, LLT::scalar(64), StructOffset);
+  B.buildPtrAdd(LoadAddr, QueuePtr,
+                B.buildConstant(LLT::scalar(64), StructOffset).getReg(0));
   return B.buildLoad(S32, LoadAddr, *MMO).getReg(0);
 }
 
@@ -2829,6 +2891,298 @@ bool AMDGPULegalizerInfo::legalizeBuildVector(
   return true;
 }
 
+// Build a big integer multiply or multiply-add using MAD_64_32 instructions.
+//
+// Source and accumulation registers must all be 32-bits.
+//
+// TODO: When the multiply is uniform, we should produce a code sequence
+// that is better suited to instruction selection on the SALU. Instead of
+// the outer loop going over parts of the result, the outer loop should go
+// over parts of one of the factors. This should result in instruction
+// selection that makes full use of S_ADDC_U32 instructions.
+void AMDGPULegalizerInfo::buildMultiply(
+    LegalizerHelper &Helper, MutableArrayRef<Register> Accum,
+    ArrayRef<Register> Src0, ArrayRef<Register> Src1,
+    bool UsePartialMad64_32, bool SeparateOddAlignedProducts) const {
+  // Use (possibly empty) vectors of S1 registers to represent the set of
+  // carries from one pair of positions to the next.
+  using Carry = SmallVector<Register, 2>;
+
+  MachineIRBuilder &B = Helper.MIRBuilder;
+
+  const LLT S1 = LLT::scalar(1);
+  const LLT S32 = LLT::scalar(32);
+  const LLT S64 = LLT::scalar(64);
+
+  Register Zero32;
+  Register Zero64;
+
+  auto getZero32 = [&]() -> Register {
+    if (!Zero32)
+      Zero32 = B.buildConstant(S32, 0).getReg(0);
+    return Zero32;
+  };
+  auto getZero64 = [&]() -> Register {
+    if (!Zero64)
+      Zero64 = B.buildConstant(S64, 0).getReg(0);
+    return Zero64;
+  };
+
+  // Merge the given carries into the 32-bit LocalAccum, which is modified
+  // in-place.
+  //
+  // Returns the carry-out, which is a single S1 register or null.
+  auto mergeCarry =
+      [&](Register &LocalAccum, const Carry &CarryIn) -> Register {
+        if (CarryIn.empty())
+          return Register();
+
+        bool HaveCarryOut = true;
+        Register CarryAccum;
+        if (CarryIn.size() == 1) {
+          if (!LocalAccum) {
+            LocalAccum = B.buildZExt(S32, CarryIn[0]).getReg(0);
+            return Register();
+          }
+
+          CarryAccum = getZero32();
+        } else {
+          CarryAccum = B.buildZExt(S32, CarryIn[0]).getReg(0);
+          for (unsigned i = 1; i + 1 < CarryIn.size(); ++i) {
+            CarryAccum =
+                B.buildUAdde(S32, S1, CarryAccum, getZero32(), CarryIn[i])
+                    .getReg(0);
+          }
+
+          if (!LocalAccum) {
+            LocalAccum = getZero32();
+            HaveCarryOut = false;
+          }
+        }
+
+        auto Add =
+            B.buildUAdde(S32, S1, CarryAccum, LocalAccum, CarryIn.back());
+        LocalAccum = Add.getReg(0);
+        return HaveCarryOut ? Add.getReg(1) : Register();
+      };
+
+  // Build a multiply-add chain to compute
+  //
+  //   LocalAccum + (partial products at DstIndex)
+  //       + (opportunistic subset of CarryIn)
+  //
+  // LocalAccum is an array of one or two 32-bit registers that are updated
+  // in-place. The incoming registers may be null.
+  //
+  // In some edge cases, carry-ins can be consumed "for free". In that case,
+  // the consumed carry bits are removed from CarryIn in-place.
+  auto buildMadChain =
+      [&](MutableArrayRef<Register> LocalAccum, unsigned DstIndex, Carry &CarryIn)
+          -> Carry {
+        assert((DstIndex + 1 < Accum.size() && LocalAccum.size() == 2) ||
+               (DstIndex + 1 >= Accum.size() && LocalAccum.size() == 1));
+
+        Carry CarryOut;
+        unsigned j0 = 0;
+
+        // Use plain 32-bit multiplication for the most significant part of the
+        // result by default.
+        if (LocalAccum.size() == 1 &&
+            (!UsePartialMad64_32 || !CarryIn.empty())) {
+          do {
+            unsigned j1 = DstIndex - j0;
+            auto Mul = B.buildMul(S32, Src0[j0], Src1[j1]);
+            if (!LocalAccum[0]) {
+              LocalAccum[0] = Mul.getReg(0);
+            } else {
+              if (CarryIn.empty()) {
+                LocalAccum[0] = B.buildAdd(S32, LocalAccum[0], Mul).getReg(0);
+              } else {
+                LocalAccum[0] =
+                    B.buildUAdde(S32, S1, LocalAccum[0], Mul, CarryIn.back())
+                        .getReg(0);
+                CarryIn.pop_back();
+              }
+            }
+            ++j0;
+          } while (j0 <= DstIndex && (!UsePartialMad64_32 || !CarryIn.empty()));
+        }
+
+        // Build full 64-bit multiplies.
+        if (j0 <= DstIndex) {
+          bool HaveSmallAccum = false;
+          Register Tmp;
+
+          if (LocalAccum[0]) {
+            if (LocalAccum.size() == 1) {
+              Tmp = B.buildAnyExt(S64, LocalAccum[0]).getReg(0);
+              HaveSmallAccum = true;
+            } else if (LocalAccum[1]) {
+              Tmp = B.buildMerge(S64, LocalAccum).getReg(0);
+              HaveSmallAccum = false;
+            } else {
+              Tmp = B.buildZExt(S64, LocalAccum[0]).getReg(0);
+              HaveSmallAccum = true;
+            }
+          } else {
+            assert(LocalAccum.size() == 1 || !LocalAccum[1]);
+            Tmp = getZero64();
+            HaveSmallAccum = true;
+          }
+
+          do {
+            unsigned j1 = DstIndex - j0;
+            auto Mad = B.buildInstr(AMDGPU::G_AMDGPU_MAD_U64_U32, {S64, S1},
+                                    {Src0[j0], Src1[j1], Tmp});
+            Tmp = Mad.getReg(0);
+            if (!HaveSmallAccum)
+              CarryOut.push_back(Mad.getReg(1));
+            HaveSmallAccum = false;
+            ++j0;
+          } while (j0 <= DstIndex);
+
+          auto Unmerge = B.buildUnmerge(S32, Tmp);
+          LocalAccum[0] = Unmerge.getReg(0);
+          if (LocalAccum.size() > 1)
+            LocalAccum[1] = Unmerge.getReg(1);
+        }
+
+        return CarryOut;
+      };
+
+  // Outer multiply loop, iterating over destination parts from least
+  // significant to most significant parts.
+  //
+  // The columns of the following diagram correspond to the destination parts
+  // affected by one iteration of the outer loop (ignoring boundary
+  // conditions).
+  //
+  //   Dest index relative to 2 * i:      1 0 -1
+  //                                      ------
+  //   Carries from previous iteration:     e o
+  //   Even-aligned partial product sum:  E E .
+  //   Odd-aligned partial product sum:     O O
+  //
+  // 'o' is OddCarry, 'e' is EvenCarry.
+  // EE and OO are computed from partial products via buildMadChain and use
+  // accumulation where possible and appropriate.
+  //
+  Register SeparateOddCarry;
+  Carry EvenCarry;
+  Carry OddCarry;
+
+  for (unsigned i = 0; i <= Accum.size() / 2; ++i) {
+    Carry OddCarryIn = std::move(OddCarry);
+    Carry EvenCarryIn = std::move(EvenCarry);
+    OddCarry.clear();
+    EvenCarry.clear();
+
+    // Partial products at offset 2 * i.
+    if (2 * i < Accum.size()) {
+      auto LocalAccum = Accum.drop_front(2 * i).take_front(2);
+      EvenCarry = buildMadChain(LocalAccum, 2 * i, EvenCarryIn);
+    }
+
+    // Partial products at offset 2 * i - 1.
+    if (i > 0) {
+      if (!SeparateOddAlignedProducts) {
+        auto LocalAccum = Accum.drop_front(2 * i - 1).take_front(2);
+        OddCarry = buildMadChain(LocalAccum, 2 * i - 1, OddCarryIn);
+      } else {
+        bool IsHighest = 2 * i >= Accum.size();
+        Register SeparateOddOut[2];
+        auto LocalAccum = makeMutableArrayRef(SeparateOddOut)
+                              .take_front(IsHighest ? 1 : 2);
+        OddCarry = buildMadChain(LocalAccum, 2 * i - 1, OddCarryIn);
+
+        MachineInstr *Lo;
+
+        if (i == 1) {
+          if (!IsHighest)
+            Lo = B.buildUAddo(S32, S1, Accum[2 * i - 1], SeparateOddOut[0]);
+          else
+            Lo = B.buildAdd(S32, Accum[2 * i - 1], SeparateOddOut[0]);
+        } else {
+          Lo = B.buildUAdde(S32, S1, Accum[2 * i - 1], SeparateOddOut[0],
+                            SeparateOddCarry);
+        }
+        Accum[2 * i - 1] = Lo->getOperand(0).getReg();
+
+        if (!IsHighest) {
+          auto Hi = B.buildUAdde(S32, S1, Accum[2 * i], SeparateOddOut[1],
+                                Lo->getOperand(1).getReg());
+          Accum[2 * i] = Hi.getReg(0);
+          SeparateOddCarry = Hi.getReg(1);
+        }
+      }
+    }
+
+    // Add in the carries from the previous iteration
+    if (i > 0) {
+      if (Register CarryOut = mergeCarry(Accum[2 * i - 1], OddCarryIn))
+        EvenCarryIn.push_back(CarryOut);
+
+      if (2 * i < Accum.size()) {
+        if (Register CarryOut = mergeCarry(Accum[2 * i], EvenCarryIn))
+          OddCarry.push_back(CarryOut);
+      }
+    }
+  }
+}
+
+// Custom narrowing of wide multiplies using wide multiply-add instructions.
+//
+// TODO: If the multiply is followed by an addition, we should attempt to
+// integrate it to make better use of V_MAD_U64_U32's multiply-add capabilities.
+bool AMDGPULegalizerInfo::legalizeMul(LegalizerHelper &Helper,
+                                      MachineInstr &MI) const {
+  assert(ST.hasMad64_32());
+  assert(MI.getOpcode() == TargetOpcode::G_MUL);
+
+  MachineIRBuilder &B = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *B.getMRI();
+
+  Register DstReg = MI.getOperand(0).getReg();
+  Register Src0 = MI.getOperand(1).getReg();
+  Register Src1 = MI.getOperand(2).getReg();
+
+  LLT Ty = MRI.getType(DstReg);
+  assert(Ty.isScalar());
+
+  unsigned Size = Ty.getSizeInBits();
+  unsigned NumParts = Size / 32;
+  assert((Size % 32) == 0);
+  assert(NumParts >= 2);
+
+  // Whether to use MAD_64_32 for partial products whose high half is
+  // discarded. This avoids some ADD instructions but risks false dependency
+  // stalls on some subtargets in some cases.
+  const bool UsePartialMad64_32 = ST.getGeneration() < AMDGPUSubtarget::GFX10;
+
+  // Whether to compute odd-aligned partial products separately. This is
+  // advisable on subtargets where the accumulator of MAD_64_32 must be placed
+  // in an even-aligned VGPR.
+  const bool SeparateOddAlignedProducts = ST.hasFullRate64Ops();
+
+  LLT S32 = LLT::scalar(32);
+  SmallVector<Register, 2> Src0Parts, Src1Parts;
+  for (unsigned i = 0; i < NumParts; ++i) {
+    Src0Parts.push_back(MRI.createGenericVirtualRegister(S32));
+    Src1Parts.push_back(MRI.createGenericVirtualRegister(S32));
+  }
+  B.buildUnmerge(Src0Parts, Src0);
+  B.buildUnmerge(Src1Parts, Src1);
+
+  SmallVector<Register, 2> AccumRegs(NumParts);
+  buildMultiply(Helper, AccumRegs, Src0Parts, Src1Parts, UsePartialMad64_32,
+                SeparateOddAlignedProducts);
+
+  B.buildMerge(DstReg, AccumRegs);
+  MI.eraseFromParent();
+  return true;
+
+}
+
 // Legalize ctlz/cttz to ffbh/ffbl instead of the default legalization to
 // ctlz/cttz_zero_undef. This allows us to fix up the result for the zero input
 // case with a single min instruction instead of a compare+select.
@@ -2968,6 +3322,89 @@ bool AMDGPULegalizerInfo::legalizePreloadedArgIntrin(
   if (!loadInputValue(MI.getOperand(0).getReg(), B, ArgType))
     return false;
 
+  MI.eraseFromParent();
+  return true;
+}
+
+static bool replaceWithConstant(MachineIRBuilder &B, MachineInstr &MI,
+                                int64_t C) {
+  B.buildConstant(MI.getOperand(0).getReg(), C);
+  MI.eraseFromParent();
+  return true;
+}
+
+bool AMDGPULegalizerInfo::legalizeWorkitemIDIntrinsic(
+    MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B,
+    unsigned Dim, AMDGPUFunctionArgInfo::PreloadedValue ArgType) const {
+  unsigned MaxID = ST.getMaxWorkitemID(B.getMF().getFunction(), Dim);
+  if (MaxID == 0)
+    return replaceWithConstant(B, MI, 0);
+
+  const SIMachineFunctionInfo *MFI = B.getMF().getInfo<SIMachineFunctionInfo>();
+  const ArgDescriptor *Arg;
+  const TargetRegisterClass *ArgRC;
+  LLT ArgTy;
+  std::tie(Arg, ArgRC, ArgTy) = MFI->getPreloadedValue(ArgType);
+
+  Register DstReg = MI.getOperand(0).getReg();
+  if (!Arg) {
+    // It's undefined behavior if a function marked with the amdgpu-no-*
+    // attributes uses the corresponding intrinsic.
+    B.buildUndef(DstReg);
+    MI.eraseFromParent();
+    return true;
+  }
+
+  if (Arg->isMasked()) {
+    // Don't bother inserting AssertZext for packed IDs since we're emitting the
+    // masking operations anyway.
+    //
+    // TODO: We could assert the top bit is 0 for the source copy.
+    if (!loadInputValue(DstReg, B, ArgType))
+      return false;
+  } else {
+    Register TmpReg = MRI.createGenericVirtualRegister(LLT::scalar(32));
+    if (!loadInputValue(TmpReg, B, ArgType))
+      return false;
+    B.buildAssertZExt(DstReg, TmpReg, 32 - countLeadingZeros(MaxID));
+  }
+
+  MI.eraseFromParent();
+  return true;
+}
+
+Register AMDGPULegalizerInfo::getKernargParameterPtr(MachineIRBuilder &B,
+                                                     int64_t Offset) const {
+  LLT PtrTy = LLT::pointer(AMDGPUAS::CONSTANT_ADDRESS, 64);
+  Register KernArgReg = B.getMRI()->createGenericVirtualRegister(PtrTy);
+
+  // TODO: If we passed in the base kernel offset we could have a better
+  // alignment than 4, but we don't really need it.
+  if (!loadInputValue(KernArgReg, B,
+                      AMDGPUFunctionArgInfo::KERNARG_SEGMENT_PTR))
+    llvm_unreachable("failed to find kernarg segment ptr");
+
+  auto COffset = B.buildConstant(LLT::scalar(64), Offset);
+  // TODO: Should get nuw
+  return B.buildPtrAdd(PtrTy, KernArgReg, COffset).getReg(0);
+}
+
+/// Legalize a value that's loaded from kernel arguments. This is only used by
+/// legacy intrinsics.
+bool AMDGPULegalizerInfo::legalizeKernargMemParameter(MachineInstr &MI,
+                                                      MachineIRBuilder &B,
+                                                      uint64_t Offset,
+                                                      Align Alignment) const {
+  Register DstReg = MI.getOperand(0).getReg();
+
+  assert(B.getMRI()->getType(DstReg) == LLT::scalar(32) &&
+         "unexpected kernarg parameter type");
+
+  Register Ptr = getKernargParameterPtr(B, Offset);
+  MachinePointerInfo PtrInfo(AMDGPUAS::CONSTANT_ADDRESS);
+  B.buildLoad(DstReg, Ptr, PtrInfo, Align(4),
+              MachineMemOperand::MODereferenceable |
+                  MachineMemOperand::MOInvariant);
   MI.eraseFromParent();
   return true;
 }
@@ -3706,9 +4143,9 @@ bool AMDGPULegalizerInfo::legalizeDSAtomicFPIntrinsic(LegalizerHelper &Helper,
   // The remaining operands were used to set fields in the MemOperand on
   // construction.
   for (int I = 6; I > 3; --I)
-    MI.RemoveOperand(I);
+    MI.removeOperand(I);
 
-  MI.RemoveOperand(1); // Remove the intrinsic ID.
+  MI.removeOperand(1); // Remove the intrinsic ID.
   Observer.changedInstr(MI);
   return true;
 }
@@ -4625,7 +5062,7 @@ bool AMDGPULegalizerInfo::legalizeImageIntrinsic(
       return false;
 
     // TODO: Make sure the TFE operand bit is set.
-    MI.RemoveOperand(1);
+    MI.removeOperand(1);
 
     // Handle the easy case that requires no repack instructions.
     if (Ty == S32) {
@@ -4755,7 +5192,7 @@ bool AMDGPULegalizerInfo::legalizeSBufferLoad(
   // should be fixed to have a memory operand. Since it's readnone, we're not
   // allowed to add one.
   MI.setDesc(B.getTII().get(AMDGPU::G_AMDGPU_S_BUFFER_LOAD));
-  MI.RemoveOperand(1); // Remove intrinsic ID
+  MI.removeOperand(1); // Remove intrinsic ID
 
   // FIXME: When intrinsic definition is fixed, this should have an MMO already.
   // TODO: Should this use datalayout alignment?
@@ -4815,6 +5252,47 @@ bool AMDGPULegalizerInfo::legalizeTrapEndpgm(
 
 bool AMDGPULegalizerInfo::legalizeTrapHsaQueuePtr(
     MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B) const {
+  MachineFunction &MF = B.getMF();
+  const LLT S64 = LLT::scalar(64);
+
+  Register SGPR01(AMDGPU::SGPR0_SGPR1);
+  // For code object version 5, queue_ptr is passed through implicit kernarg.
+  if (AMDGPU::getAmdhsaCodeObjectVersion() == 5) {
+    AMDGPUTargetLowering::ImplicitParameter Param =
+        AMDGPUTargetLowering::QUEUE_PTR;
+    uint64_t Offset =
+        ST.getTargetLowering()->getImplicitParameterOffset(B.getMF(), Param);
+
+    Register KernargPtrReg = MRI.createGenericVirtualRegister(
+        LLT::pointer(AMDGPUAS::CONSTANT_ADDRESS, 64));
+
+    if (!loadInputValue(KernargPtrReg, B,
+                        AMDGPUFunctionArgInfo::KERNARG_SEGMENT_PTR))
+      return false;
+
+    // TODO: can we be smarter about machine pointer info?
+    MachinePointerInfo PtrInfo(AMDGPUAS::CONSTANT_ADDRESS);
+    MachineMemOperand *MMO = MF.getMachineMemOperand(
+        PtrInfo,
+        MachineMemOperand::MOLoad | MachineMemOperand::MODereferenceable |
+            MachineMemOperand::MOInvariant,
+        LLT::scalar(64), commonAlignment(Align(64), Offset));
+
+    // Pointer address
+    Register LoadAddr = MRI.createGenericVirtualRegister(
+        LLT::pointer(AMDGPUAS::CONSTANT_ADDRESS, 64));
+    B.buildPtrAdd(LoadAddr, KernargPtrReg,
+                  B.buildConstant(LLT::scalar(64), Offset).getReg(0));
+    // Load address
+    Register Temp = B.buildLoad(S64, LoadAddr, *MMO).getReg(0);
+    B.buildCopy(SGPR01, Temp);
+    B.buildInstr(AMDGPU::S_TRAP)
+        .addImm(static_cast<unsigned>(GCNSubtarget::TrapID::LLVMAMDHSATrap))
+        .addReg(SGPR01, RegState::Implicit);
+    MI.eraseFromParent();
+    return true;
+  }
+
   // Pass queue pointer to trap handler as input, and insert trap instruction
   // Reference: https://llvm.org/docs/AMDGPUUsage.html#trap-handler-abi
   Register LiveIn =
@@ -4822,7 +5300,6 @@ bool AMDGPULegalizerInfo::legalizeTrapHsaQueuePtr(
   if (!loadInputValue(LiveIn, B, AMDGPUFunctionArgInfo::QUEUE_PTR))
     return false;
 
-  Register SGPR01(AMDGPU::SGPR0_SGPR1);
   B.buildCopy(SGPR01, LiveIn);
   B.buildInstr(AMDGPU::S_TRAP)
       .addImm(static_cast<unsigned>(GCNSubtarget::TrapID::LLVMAMDHSATrap))
@@ -4964,12 +5441,6 @@ bool AMDGPULegalizerInfo::legalizeBVHIntrinsic(MachineInstr &MI,
   return true;
 }
 
-static bool replaceWithConstant(MachineIRBuilder &B, MachineInstr &MI, int64_t C) {
-  B.buildConstant(MI.getOperand(0).getReg(), C);
-  MI.eraseFromParent();
-  return true;
-}
-
 bool AMDGPULegalizerInfo::legalizeFPTruncRound(MachineInstr &MI,
                                                MachineIRBuilder &B) const {
   unsigned Opc;
@@ -5094,22 +5565,14 @@ bool AMDGPULegalizerInfo::legalizeIntrinsic(LegalizerHelper &Helper,
   case Intrinsic::amdgcn_implicitarg_ptr:
     return legalizeImplicitArgPtr(MI, MRI, B);
   case Intrinsic::amdgcn_workitem_id_x:
-    if (ST.getMaxWorkitemID(B.getMF().getFunction(), 0) == 0)
-      return replaceWithConstant(B, MI, 0);
-    return legalizePreloadedArgIntrin(MI, MRI, B,
-                                      AMDGPUFunctionArgInfo::WORKITEM_ID_X);
+    return legalizeWorkitemIDIntrinsic(MI, MRI, B, 0,
+                                       AMDGPUFunctionArgInfo::WORKITEM_ID_X);
   case Intrinsic::amdgcn_workitem_id_y:
-    if (ST.getMaxWorkitemID(B.getMF().getFunction(), 1) == 0)
-      return replaceWithConstant(B, MI, 0);
-
-    return legalizePreloadedArgIntrin(MI, MRI, B,
-                                      AMDGPUFunctionArgInfo::WORKITEM_ID_Y);
+    return legalizeWorkitemIDIntrinsic(MI, MRI, B, 1,
+                                       AMDGPUFunctionArgInfo::WORKITEM_ID_Y);
   case Intrinsic::amdgcn_workitem_id_z:
-    if (ST.getMaxWorkitemID(B.getMF().getFunction(), 2) == 0)
-      return replaceWithConstant(B, MI, 0);
-
-    return legalizePreloadedArgIntrin(MI, MRI, B,
-                                      AMDGPUFunctionArgInfo::WORKITEM_ID_Z);
+    return legalizeWorkitemIDIntrinsic(MI, MRI, B, 2,
+                                       AMDGPUFunctionArgInfo::WORKITEM_ID_Z);
   case Intrinsic::amdgcn_workgroup_id_x:
     return legalizePreloadedArgIntrin(MI, MRI, B,
                                       AMDGPUFunctionArgInfo::WORKGROUP_ID_X);
@@ -5131,6 +5594,31 @@ bool AMDGPULegalizerInfo::legalizeIntrinsic(LegalizerHelper &Helper,
   case Intrinsic::amdgcn_dispatch_id:
     return legalizePreloadedArgIntrin(MI, MRI, B,
                                       AMDGPUFunctionArgInfo::DISPATCH_ID);
+  case Intrinsic::r600_read_ngroups_x:
+    // TODO: Emit error for hsa
+    return legalizeKernargMemParameter(MI, B,
+                                       SI::KernelInputOffsets::NGROUPS_X);
+  case Intrinsic::r600_read_ngroups_y:
+    return legalizeKernargMemParameter(MI, B,
+                                       SI::KernelInputOffsets::NGROUPS_Y);
+  case Intrinsic::r600_read_ngroups_z:
+    return legalizeKernargMemParameter(MI, B,
+                                       SI::KernelInputOffsets::NGROUPS_Z);
+  case Intrinsic::r600_read_local_size_x:
+    // TODO: Could insert G_ASSERT_ZEXT from s16
+    return legalizeKernargMemParameter(MI, B, SI::KernelInputOffsets::LOCAL_SIZE_X);
+  case Intrinsic::r600_read_local_size_y:
+    // TODO: Could insert G_ASSERT_ZEXT from s16
+    return legalizeKernargMemParameter(MI, B,  SI::KernelInputOffsets::LOCAL_SIZE_Y);
+    // TODO: Could insert G_ASSERT_ZEXT from s16
+  case Intrinsic::r600_read_local_size_z:
+    return legalizeKernargMemParameter(MI, B, SI::KernelInputOffsets::LOCAL_SIZE_Z);
+  case Intrinsic::r600_read_global_size_x:
+    return legalizeKernargMemParameter(MI, B, SI::KernelInputOffsets::GLOBAL_SIZE_X);
+  case Intrinsic::r600_read_global_size_y:
+    return legalizeKernargMemParameter(MI, B, SI::KernelInputOffsets::GLOBAL_SIZE_Y);
+  case Intrinsic::r600_read_global_size_z:
+    return legalizeKernargMemParameter(MI, B, SI::KernelInputOffsets::GLOBAL_SIZE_Z);
   case Intrinsic::amdgcn_fdiv_fast:
     return legalizeFDIVFastIntrin(MI, MRI, B);
   case Intrinsic::amdgcn_is_shared:

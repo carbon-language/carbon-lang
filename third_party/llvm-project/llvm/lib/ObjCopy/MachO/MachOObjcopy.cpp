@@ -99,7 +99,7 @@ static void updateAndRemoveSymbols(const CommonConfig &Config,
       Sym.Name = std::string(I->getValue());
   }
 
-  auto RemovePred = [Config, MachOConfig,
+  auto RemovePred = [&Config, &MachOConfig,
                      &Obj](const std::unique_ptr<SymbolEntry> &N) {
     if (N->Referenced)
       return false;
@@ -258,6 +258,21 @@ static Error processLoadCommands(const MachOConfig &MachOConfig, Object &Obj) {
   if (!MachOConfig.RPathToPrepend.empty())
     Obj.updateLoadCommandIndexes();
 
+  // Remove any empty segments if required.
+  if (!MachOConfig.EmptySegmentsToRemove.empty()) {
+    auto RemovePred = [&MachOConfig](const LoadCommand &LC) {
+      if (LC.MachOLoadCommand.load_command_data.cmd == MachO::LC_SEGMENT_64 ||
+          LC.MachOLoadCommand.load_command_data.cmd == MachO::LC_SEGMENT) {
+        return LC.Sections.empty() &&
+               MachOConfig.EmptySegmentsToRemove.contains(
+                   LC.getSegmentName().getValue());
+      }
+      return false;
+    };
+    if (Error E = Obj.removeLoadCommands(RemovePred))
+      return E;
+  }
+
   return Error::success();
 }
 
@@ -283,17 +298,12 @@ static Error dumpSectionToFile(StringRef SecName, StringRef Filename,
                            SecName.str().c_str());
 }
 
-static Error addSection(StringRef SecName, StringRef Filename, Object &Obj) {
-  ErrorOr<std::unique_ptr<MemoryBuffer>> BufOrErr =
-      MemoryBuffer::getFile(Filename);
-  if (!BufOrErr)
-    return createFileError(Filename, errorCodeToError(BufOrErr.getError()));
-  std::unique_ptr<MemoryBuffer> Buf = std::move(*BufOrErr);
-
-  std::pair<StringRef, StringRef> Pair = SecName.split(',');
+static Error addSection(const NewSectionInfo &NewSection, Object &Obj) {
+  std::pair<StringRef, StringRef> Pair = NewSection.SectionName.split(',');
   StringRef TargetSegName = Pair.first;
   Section Sec(TargetSegName, Pair.second);
-  Sec.Content = Obj.NewSectionsContents.save(Buf->getBuffer());
+  Sec.Content =
+      Obj.NewSectionsContents.save(NewSection.SectionData->getBuffer());
   Sec.Size = Sec.Content.size();
 
   // Add the a section into an existing segment.
@@ -342,24 +352,18 @@ static Expected<Section &> findSection(StringRef SecName, Object &O) {
   return *FoundSec->get();
 }
 
-static Error updateSection(StringRef SecName, StringRef Filename, Object &O) {
-  Expected<Section &> SecToUpdateOrErr = findSection(SecName, O);
+static Error updateSection(const NewSectionInfo &NewSection, Object &O) {
+  Expected<Section &> SecToUpdateOrErr = findSection(NewSection.SectionName, O);
 
   if (!SecToUpdateOrErr)
     return SecToUpdateOrErr.takeError();
   Section &Sec = *SecToUpdateOrErr;
 
-  ErrorOr<std::unique_ptr<MemoryBuffer>> BufOrErr =
-      MemoryBuffer::getFile(Filename);
-  if (!BufOrErr)
-    return createFileError(Filename, errorCodeToError(BufOrErr.getError()));
-  std::unique_ptr<MemoryBuffer> Buf = std::move(*BufOrErr);
-
-  if (Buf->getBufferSize() > Sec.Size)
+  if (NewSection.SectionData->getBufferSize() > Sec.Size)
     return createStringError(
         errc::invalid_argument,
         "new section cannot be larger than previous section");
-  Sec.Content = O.NewSectionsContents.save(Buf->getBuffer());
+  Sec.Content = O.NewSectionsContents.save(NewSection.SectionData->getBuffer());
   Sec.Size = Sec.Content.size();
   return Error::success();
 }
@@ -411,23 +415,17 @@ static Error handleArgs(const CommonConfig &Config,
       for (std::unique_ptr<Section> &Sec : LC.Sections)
         Sec->Relocations.clear();
 
-  for (const auto &Flag : Config.AddSection) {
-    std::pair<StringRef, StringRef> SecPair = Flag.split("=");
-    StringRef SecName = SecPair.first;
-    StringRef File = SecPair.second;
-    if (Error E = isValidMachOCannonicalName(SecName))
+  for (const NewSectionInfo &NewSection : Config.AddSection) {
+    if (Error E = isValidMachOCannonicalName(NewSection.SectionName))
       return E;
-    if (Error E = addSection(SecName, File, Obj))
+    if (Error E = addSection(NewSection, Obj))
       return E;
   }
 
-  for (const auto &Flag : Config.UpdateSection) {
-    StringRef SectionName;
-    StringRef FileName;
-    std::tie(SectionName, FileName) = Flag.split('=');
-    if (Error E = isValidMachOCannonicalName(SectionName))
+  for (const NewSectionInfo &NewSection : Config.UpdateSection) {
+    if (Error E = isValidMachOCannonicalName(NewSection.SectionName))
       return E;
-    if (Error E = updateSection(SectionName, FileName, Obj))
+    if (Error E = updateSection(NewSection, Obj))
       return E;
   }
 
@@ -486,9 +484,12 @@ Error objcopy::macho::executeObjcopyOnMachOUniversalBinary(
           createNewArchiveMembers(Config, **ArOrErr);
       if (!NewArchiveMembersOrErr)
         return NewArchiveMembersOrErr.takeError();
+      auto Kind = (*ArOrErr)->kind();
+      if (Kind == object::Archive::K_BSD)
+        Kind = object::Archive::K_DARWIN;
       Expected<std::unique_ptr<MemoryBuffer>> OutputBufferOrErr =
           writeArchiveToBuffer(*NewArchiveMembersOrErr,
-                               (*ArOrErr)->hasSymbolTable(), (*ArOrErr)->kind(),
+                               (*ArOrErr)->hasSymbolTable(), Kind,
                                Config.getCommonConfig().DeterministicArchives,
                                (*ArOrErr)->isThin());
       if (!OutputBufferOrErr)

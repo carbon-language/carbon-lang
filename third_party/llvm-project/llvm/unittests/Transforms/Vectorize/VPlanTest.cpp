@@ -8,6 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "../lib/Transforms/Vectorize/VPlan.h"
+#include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Analysis/VectorUtils.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
@@ -1097,10 +1099,8 @@ TEST(VPRecipeTest, dump) {
       BinaryOperator::CreateAdd(UndefValue::get(Int32), UndefValue::get(Int32));
   AI->setName("a");
   SmallVector<VPValue *, 2> Args;
-  VPValue *ExtVPV1 = new VPValue();
-  VPValue *ExtVPV2 = new VPValue();
-  Plan.addExternalDef(ExtVPV1);
-  Plan.addExternalDef(ExtVPV2);
+  VPValue *ExtVPV1 = Plan.getOrAddExternalDef(ConstantInt::get(Int32, 1));
+  VPValue *ExtVPV2 = Plan.getOrAddExternalDef(ConstantInt::get(Int32, 2));
   Args.push_back(ExtVPV1);
   Args.push_back(ExtVPV2);
   VPWidenRecipe *WidenR =
@@ -1117,7 +1117,7 @@ TEST(VPRecipeTest, dump) {
           VPV->dump();
           exit(0);
         },
-        testing::ExitedWithCode(0), "WIDEN ir<%a> = add vp<%0>, vp<%1>");
+        testing::ExitedWithCode(0), "WIDEN ir<%a> = add ir<1>, ir<2>");
 
     // Test VPRecipeBase::dump().
     VPRecipeBase *R = WidenR;
@@ -1126,7 +1126,7 @@ TEST(VPRecipeTest, dump) {
           R->dump();
           exit(0);
         },
-        testing::ExitedWithCode(0), "WIDEN ir<%a> = add vp<%0>, vp<%1>");
+        testing::ExitedWithCode(0), "WIDEN ir<%a> = add ir<1>, ir<2>");
 
     // Test VPDef::dump().
     VPDef *D = WidenR;
@@ -1135,7 +1135,7 @@ TEST(VPRecipeTest, dump) {
           D->dump();
           exit(0);
         },
-        testing::ExitedWithCode(0), "WIDEN ir<%a> = add vp<%0>, vp<%1>");
+        testing::ExitedWithCode(0), "WIDEN ir<%a> = add ir<1>, ir<2>");
   }
 
   delete AI;

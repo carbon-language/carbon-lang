@@ -14,6 +14,7 @@
 
 #include "AArch64.h"
 #include "AArch64CallingConvention.h"
+#include "AArch64MachineFunctionInfo.h"
 #include "AArch64RegisterInfo.h"
 #include "AArch64Subtarget.h"
 #include "MCTargetDesc/AArch64AddressingModes.h"
@@ -282,8 +283,7 @@ public:
   explicit AArch64FastISel(FunctionLoweringInfo &FuncInfo,
                            const TargetLibraryInfo *LibInfo)
       : FastISel(FuncInfo, LibInfo, /*SkipTargetIndependentISel=*/true) {
-    Subtarget =
-        &static_cast<const AArch64Subtarget &>(FuncInfo.MF->getSubtarget());
+    Subtarget = &FuncInfo.MF->getSubtarget<AArch64Subtarget>();
     Context = &FuncInfo.Fn->getContext();
   }
 
@@ -3125,6 +3125,13 @@ bool AArch64FastISel::fastLowerCall(CallLoweringInfo &CLI) {
   MCSymbol *Symbol = CLI.Symbol;
 
   if (!Callee && !Symbol)
+    return false;
+
+  // Allow SelectionDAG isel to handle calls to functions like setjmp that need
+  // a bti instruction following the call.
+  if (CLI.CB && CLI.CB->hasFnAttr(Attribute::ReturnsTwice) &&
+      !Subtarget->noBTIAtReturnTwice() &&
+      MF->getInfo<AArch64FunctionInfo>()->branchTargetEnforcement())
     return false;
 
   // Allow SelectionDAG isel to handle tail calls.

@@ -91,7 +91,7 @@ Expr<Type<TypeCategory::Logical, KIND>> FoldIntrinsicFunction(
             }));
   } else if (name == "btest") {
     if (const auto *ix{UnwrapExpr<Expr<SomeInteger>>(args[0])}) {
-      return std::visit(
+      return common::visit(
           [&](const auto &x) {
             using IT = ResultType<decltype(x)>;
             return FoldElementalIntrinsic<T, IT, SameInt>(context,
@@ -108,6 +108,18 @@ Expr<Type<TypeCategory::Logical, KIND>> FoldIntrinsicFunction(
                     }));
           },
           ix->u);
+    }
+  } else if (name == "extends_type_of") {
+    // Type extension testing with EXTENDS_TYPE_OF() ignores any type
+    // parameters. Returns a constant truth value when the result is known now.
+    if (args[0] && args[1]) {
+      auto t0{args[0]->GetType()};
+      auto t1{args[1]->GetType()};
+      if (t0 && t1) {
+        if (auto result{t0->ExtendsTypeOf(*t1)}) {
+          return Expr<T>{*result};
+        }
+      }
     }
   } else if (name == "isnan" || name == "__builtin_ieee_is_nan") {
     // A warning about an invalid argument is discarded from converting
@@ -160,6 +172,18 @@ Expr<Type<TypeCategory::Logical, KIND>> FoldIntrinsicFunction(
     }
   } else if (name == "merge") {
     return FoldMerge<T>(context, std::move(funcRef));
+  } else if (name == "same_type_as") {
+    // Type equality testing with SAME_TYPE_AS() ignores any type parameters.
+    // Returns a constant truth value when the result is known now.
+    if (args[0] && args[1]) {
+      auto t0{args[0]->GetType()};
+      auto t1{args[1]->GetType()};
+      if (t0 && t1) {
+        if (auto result{t0->SameTypeAs(*t1)}) {
+          return Expr<T>{*result};
+        }
+      }
+    }
   } else if (name == "__builtin_ieee_support_datatype" ||
       name == "__builtin_ieee_support_denormal" ||
       name == "__builtin_ieee_support_divide" ||
@@ -212,7 +236,7 @@ Expr<LogicalResult> FoldOperation(
 
 Expr<LogicalResult> FoldOperation(
     FoldingContext &context, Relational<SomeType> &&relation) {
-  return std::visit(
+  return common::visit(
       [&](auto &&x) {
         return Expr<LogicalResult>{FoldOperation(context, std::move(x))};
       },

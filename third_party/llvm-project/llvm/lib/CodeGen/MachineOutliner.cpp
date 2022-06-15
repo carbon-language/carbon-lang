@@ -59,6 +59,8 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Analysis/OptimizationRemarkEmitter.h"
+#include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/Passes.h"
@@ -258,10 +260,6 @@ struct InstructionMapper {
     if (!TII.isMBBSafeToOutlineFrom(MBB, Flags))
       return;
 
-    auto Ranges = TII.getOutlinableRanges(MBB, Flags);
-    if (Ranges.empty())
-      return;
-
     // Store info for the MBB for later outlining.
     MBBFlagsMap[&MBB] = Flags;
 
@@ -284,47 +282,34 @@ struct InstructionMapper {
     std::vector<unsigned> UnsignedVecForMBB;
     std::vector<MachineBasicBlock::iterator> InstrListForMBB;
 
-    for (auto &Range : Ranges) {
-      auto RangeStart = Range.first;
-      auto RangeEnd = Range.second;
-      // Everything outside of an outlinable range is illegal.
-      for (; It != RangeStart; ++It)
+    for (MachineBasicBlock::iterator Et = MBB.end(); It != Et; ++It) {
+      // Keep track of where this instruction is in the module.
+      switch (TII.getOutliningType(It, Flags)) {
+      case InstrType::Illegal:
         mapToIllegalUnsigned(It, CanOutlineWithPrevInstr, UnsignedVecForMBB,
                              InstrListForMBB);
-      assert(It != MBB.end() && "Should still have instructions?");
-      // `It` is now positioned at the beginning of a range of instructions
-      // which may be outlinable. Check if each instruction is known to be safe.
-      for (; It != RangeEnd; ++It) {
-        // Keep track of where this instruction is in the module.
-        switch (TII.getOutliningType(It, Flags)) {
-        case InstrType::Illegal:
-          mapToIllegalUnsigned(It, CanOutlineWithPrevInstr, UnsignedVecForMBB,
-                               InstrListForMBB);
-          break;
+        break;
 
-        case InstrType::Legal:
-          mapToLegalUnsigned(It, CanOutlineWithPrevInstr, HaveLegalRange,
-                             NumLegalInBlock, UnsignedVecForMBB,
+      case InstrType::Legal:
+        mapToLegalUnsigned(It, CanOutlineWithPrevInstr, HaveLegalRange,
+                           NumLegalInBlock, UnsignedVecForMBB, InstrListForMBB);
+        break;
+
+      case InstrType::LegalTerminator:
+        mapToLegalUnsigned(It, CanOutlineWithPrevInstr, HaveLegalRange,
+                           NumLegalInBlock, UnsignedVecForMBB, InstrListForMBB);
+        // The instruction also acts as a terminator, so we have to record that
+        // in the string.
+        mapToIllegalUnsigned(It, CanOutlineWithPrevInstr, UnsignedVecForMBB,
                              InstrListForMBB);
-          break;
+        break;
 
-        case InstrType::LegalTerminator:
-          mapToLegalUnsigned(It, CanOutlineWithPrevInstr, HaveLegalRange,
-                             NumLegalInBlock, UnsignedVecForMBB,
-                             InstrListForMBB);
-          // The instruction also acts as a terminator, so we have to record
-          // that in the string.
-          mapToIllegalUnsigned(It, CanOutlineWithPrevInstr, UnsignedVecForMBB,
-                               InstrListForMBB);
-          break;
-
-        case InstrType::Invisible:
-          // Normally this is set by mapTo(Blah)Unsigned, but we just want to
-          // skip this instruction. So, unset the flag here.
-          ++NumInvisible;
-          AddedIllegalLastTime = false;
-          break;
-        }
+      case InstrType::Invisible:
+        // Normally this is set by mapTo(Blah)Unsigned, but we just want to
+        // skip this instruction. So, unset the flag here.
+        ++NumInvisible;
+        AddedIllegalLastTime = false;
+        break;
       }
     }
 
@@ -680,17 +665,20 @@ MachineFunction *MachineOutliner::createOutlinedFunction(
        ++I) {
     if (I->isDebugInstr())
       continue;
-    MachineInstr *NewMI = MF.CloneMachineInstr(&*I);
-    if (I->isCFIInstruction()) {
-      unsigned CFIIndex = NewMI->getOperand(0).getCFIIndex();
-      MCCFIInstruction CFI = Instrs[CFIIndex];
-      (void)MF.addFrameInst(CFI);
-    }
-    NewMI->dropMemRefs(MF);
 
     // Don't keep debug information for outlined instructions.
-    NewMI->setDebugLoc(DebugLoc());
-    MBB.insert(MBB.end(), NewMI);
+    auto DL = DebugLoc();
+    if (I->isCFIInstruction()) {
+      unsigned CFIIndex = I->getOperand(0).getCFIIndex();
+      MCCFIInstruction CFI = Instrs[CFIIndex];
+      BuildMI(MBB, MBB.end(), DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
+          .addCFIIndex(MF.addFrameInst(CFI));
+    } else {
+      MachineInstr *NewMI = MF.CloneMachineInstr(&*I);
+      NewMI->dropMemRefs(MF);
+      NewMI->setDebugLoc(DL);
+      MBB.insert(MBB.end(), NewMI);
+    }
   }
 
   // Set normal properties for a late MachineFunction.
@@ -870,9 +858,10 @@ bool MachineOutliner::outline(Module &M,
       MBB.erase(std::next(StartIt), std::next(EndIt));
 
       // Keep track of what we removed by marking them all as -1.
-      std::for_each(Mapper.UnsignedVec.begin() + C.getStartIdx(),
-                    Mapper.UnsignedVec.begin() + C.getEndIdx() + 1,
-                    [](unsigned &I) { I = static_cast<unsigned>(-1); });
+      for (unsigned &I :
+           llvm::make_range(Mapper.UnsignedVec.begin() + C.getStartIdx(),
+                            Mapper.UnsignedVec.begin() + C.getEndIdx() + 1))
+        I = static_cast<unsigned>(-1);
       OutlinedSomething = true;
 
       // Statistics.

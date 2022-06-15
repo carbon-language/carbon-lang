@@ -180,6 +180,7 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MipsISD::Ret:               return "MipsISD::Ret";
   case MipsISD::ERet:              return "MipsISD::ERet";
   case MipsISD::EH_RETURN:         return "MipsISD::EH_RETURN";
+  case MipsISD::FAbs:              return "MipsISD::FAbs";
   case MipsISD::FMS:               return "MipsISD::FMS";
   case MipsISD::FPBrcond:          return "MipsISD::FPBrcond";
   case MipsISD::FPCmp:             return "MipsISD::FPCmp";
@@ -341,14 +342,11 @@ MipsTargetLowering::MipsTargetLowering(const MipsTargetMachine &TM,
   setOperationAction(ISD::SETCC,              MVT::f32,   Custom);
   setOperationAction(ISD::SETCC,              MVT::f64,   Custom);
   setOperationAction(ISD::BRCOND,             MVT::Other, Custom);
+  setOperationAction(ISD::FABS,               MVT::f32,   Custom);
+  setOperationAction(ISD::FABS,               MVT::f64,   Custom);
   setOperationAction(ISD::FCOPYSIGN,          MVT::f32,   Custom);
   setOperationAction(ISD::FCOPYSIGN,          MVT::f64,   Custom);
   setOperationAction(ISD::FP_TO_SINT,         MVT::i32,   Custom);
-
-  if (!(TM.Options.NoNaNsFPMath || Subtarget.inAbs2008Mode())) {
-    setOperationAction(ISD::FABS, MVT::f32, Custom);
-    setOperationAction(ISD::FABS, MVT::f64, Custom);
-  }
 
   if (Subtarget.isGP64bit()) {
     setOperationAction(ISD::GlobalAddress,      MVT::i64,   Custom);
@@ -482,15 +480,8 @@ MipsTargetLowering::MipsTargetLowering(const MipsTargetMachine &TM,
 
   setOperationAction(ISD::TRAP, MVT::Other, Legal);
 
-  setTargetDAGCombine(ISD::SDIVREM);
-  setTargetDAGCombine(ISD::UDIVREM);
-  setTargetDAGCombine(ISD::SELECT);
-  setTargetDAGCombine(ISD::AND);
-  setTargetDAGCombine(ISD::OR);
-  setTargetDAGCombine(ISD::ADD);
-  setTargetDAGCombine(ISD::SUB);
-  setTargetDAGCombine(ISD::AssertZext);
-  setTargetDAGCombine(ISD::SHL);
+  setTargetDAGCombine({ISD::SDIVREM, ISD::UDIVREM, ISD::SELECT, ISD::AND,
+                       ISD::OR, ISD::ADD, ISD::SUB, ISD::AssertZext, ISD::SHL});
 
   if (ABI.IsO32()) {
     // These libcalls are not available in 32-bit.
@@ -959,6 +950,14 @@ static SDValue performMADD_MSUBCombine(SDNode *ROOTNode, SelectionDAG &CurDAG,
       ROOTNode->getOperand(1).getOpcode() != ISD::MUL)
     return SDValue();
 
+  // In the case where we have a multiplication as the left operand of
+  // of a subtraction, we can't combine into a MipsISD::MSub node as the
+  // the instruction definition of msub(u) places the multiplication on
+  // on the right.
+  if (ROOTNode->getOpcode() == ISD::SUB &&
+      ROOTNode->getOperand(0).getOpcode() == ISD::MUL)
+    return SDValue();
+
   // We don't handle vector types here.
   if (ROOTNode->getValueType(0).isVector())
     return SDValue();
@@ -1179,6 +1178,16 @@ bool MipsTargetLowering::isCheapToSpeculateCttz() const {
 
 bool MipsTargetLowering::isCheapToSpeculateCtlz() const {
   return Subtarget.hasMips32();
+}
+
+bool MipsTargetLowering::hasBitTest(SDValue X, SDValue Y) const {
+  // We can use ANDI+SLTIU as a bit test. Y contains the bit position.
+  // For MIPSR2 or later, we may be able to use the `ext` instruction or its'
+  // double-word variants.
+  if (auto *C = dyn_cast<ConstantSDNode>(Y))
+    return C->getAPIntValue().ule(15);
+
+  return false;
 }
 
 bool MipsTargetLowering::shouldFoldConstantShiftPairToMask(
@@ -2411,10 +2420,13 @@ MipsTargetLowering::lowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const {
   return lowerFCOPYSIGN32(Op, DAG, Subtarget.hasExtractInsert());
 }
 
-static SDValue lowerFABS32(SDValue Op, SelectionDAG &DAG,
-                           bool HasExtractInsert) {
+SDValue MipsTargetLowering::lowerFABS32(SDValue Op, SelectionDAG &DAG,
+                                        bool HasExtractInsert) const {
   SDLoc DL(Op);
   SDValue Res, Const1 = DAG.getConstant(1, DL, MVT::i32);
+
+  if (DAG.getTarget().Options.NoNaNsFPMath || Subtarget.inAbs2008Mode())
+    return DAG.getNode(MipsISD::FAbs, DL, Op.getValueType(), Op.getOperand(0));
 
   // If operand is of type f64, extract the upper 32-bit. Otherwise, bitcast it
   // to i32.
@@ -2448,10 +2460,13 @@ static SDValue lowerFABS32(SDValue Op, SelectionDAG &DAG,
   return DAG.getNode(MipsISD::BuildPairF64, DL, MVT::f64, LowX, Res);
 }
 
-static SDValue lowerFABS64(SDValue Op, SelectionDAG &DAG,
-                           bool HasExtractInsert) {
+SDValue MipsTargetLowering::lowerFABS64(SDValue Op, SelectionDAG &DAG,
+                                        bool HasExtractInsert) const {
   SDLoc DL(Op);
   SDValue Res, Const1 = DAG.getConstant(1, DL, MVT::i32);
+
+  if (DAG.getTarget().Options.NoNaNsFPMath || Subtarget.inAbs2008Mode())
+    return DAG.getNode(MipsISD::FAbs, DL, Op.getValueType(), Op.getOperand(0));
 
   // Bitcast to integer node.
   SDValue X = DAG.getNode(ISD::BITCAST, DL, MVT::i64, Op.getOperand(0));
@@ -2663,7 +2678,7 @@ SDValue MipsTargetLowering::lowerLOAD(SDValue Op, SelectionDAG &DAG) const {
     return Op;
 
   // Return if load is aligned or if MemVT is neither i32 nor i64.
-  if ((LD->getAlignment() >= MemVT.getSizeInBits() / 8) ||
+  if ((LD->getAlign().value() >= (MemVT.getSizeInBits() / 8)) ||
       ((MemVT != MVT::i32) && (MemVT != MVT::i64)))
     return SDValue();
 
@@ -2777,7 +2792,7 @@ static SDValue lowerFP_TO_SINT_STORE(StoreSDNode *SD, SelectionDAG &DAG,
   SDValue Tr = DAG.getNode(MipsISD::TruncIntFP, SDLoc(Val), FPTy,
                            Val.getOperand(0));
   return DAG.getStore(SD->getChain(), SDLoc(SD), Tr, SD->getBasePtr(),
-                      SD->getPointerInfo(), SD->getAlignment(),
+                      SD->getPointerInfo(), SD->getAlign(),
                       SD->getMemOperand()->getFlags());
 }
 
@@ -2787,7 +2802,7 @@ SDValue MipsTargetLowering::lowerSTORE(SDValue Op, SelectionDAG &DAG) const {
 
   // Lower unaligned integer stores.
   if (!Subtarget.systemSupportsUnalignedAccess() &&
-      (SD->getAlignment() < MemVT.getSizeInBits() / 8) &&
+      (SD->getAlign().value() < (MemVT.getSizeInBits() / 8)) &&
       ((MemVT == MVT::i32) || (MemVT == MVT::i64)))
     return lowerUnalignedIntStore(SD, DAG, Subtarget.isLittle());
 
@@ -4722,18 +4737,19 @@ MipsTargetLowering::emitPseudoD_SELECT(MachineInstr &MI,
 Register
 MipsTargetLowering::getRegisterByName(const char *RegName, LLT VT,
                                       const MachineFunction &MF) const {
-  // Named registers is expected to be fairly rare. For now, just support $28
-  // since the linux kernel uses it.
+  // The Linux kernel uses $28 and sp.
   if (Subtarget.isGP64bit()) {
     Register Reg = StringSwitch<Register>(RegName)
-                         .Case("$28", Mips::GP_64)
-                         .Default(Register());
+                       .Case("$28", Mips::GP_64)
+                       .Case("sp", Mips::SP_64)
+                       .Default(Register());
     if (Reg)
       return Reg;
   } else {
     Register Reg = StringSwitch<Register>(RegName)
-                         .Case("$28", Mips::GP)
-                         .Default(Register());
+                       .Case("$28", Mips::GP)
+                       .Case("sp", Mips::SP)
+                       .Default(Register());
     if (Reg)
       return Reg;
   }

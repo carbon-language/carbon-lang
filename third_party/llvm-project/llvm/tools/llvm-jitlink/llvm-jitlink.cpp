@@ -98,7 +98,7 @@ static cl::opt<bool> NoExec("noexec", cl::desc("Do not execute loaded code"),
 
 static cl::list<std::string>
     CheckFiles("check", cl::desc("File containing verifier checks"),
-               cl::ZeroOrMore, cl::cat(JITLinkCategory));
+               cl::cat(JITLinkCategory));
 
 static cl::opt<std::string>
     CheckName("check-name", cl::desc("Name of checks to match against"),
@@ -118,11 +118,11 @@ static cl::list<std::string>
     Dylibs("preload",
            cl::desc("Pre-load dynamic libraries (e.g. language runtimes "
                     "required by the ORC runtime)"),
-           cl::ZeroOrMore, cl::cat(JITLinkCategory));
+           cl::cat(JITLinkCategory));
 
 static cl::list<std::string> InputArgv("args", cl::Positional,
                                        cl::desc("<program arguments>..."),
-                                       cl::ZeroOrMore, cl::PositionalEatsArgs,
+                                       cl::PositionalEatsArgs,
                                        cl::cat(JITLinkCategory));
 
 static cl::opt<bool>
@@ -138,15 +138,14 @@ static cl::opt<bool>
 static cl::list<std::string> AbsoluteDefs(
     "abs",
     cl::desc("Inject absolute symbol definitions (syntax: <name>=<addr>)"),
-    cl::ZeroOrMore, cl::cat(JITLinkCategory));
+    cl::cat(JITLinkCategory));
 
 static cl::list<std::string>
     Aliases("alias", cl::desc("Inject symbol aliases (syntax: <name>=<addr>)"),
-            cl::ZeroOrMore, cl::cat(JITLinkCategory));
+            cl::cat(JITLinkCategory));
 
 static cl::list<std::string> TestHarnesses("harness", cl::Positional,
                                            cl::desc("Test harness files"),
-                                           cl::ZeroOrMore,
                                            cl::PositionalEatsArgs,
                                            cl::cat(JITLinkCategory));
 
@@ -224,9 +223,14 @@ static cl::opt<bool> AddSelfRelocations(
     cl::desc("Add relocations to function pointers to the current function"),
     cl::init(false), cl::cat(JITLinkCategory));
 
-ExitOnError ExitOnErr;
+static cl::opt<bool>
+    ShowErrFailedToMaterialize("show-err-failed-to-materialize",
+                               cl::desc("Show FailedToMaterialize errors"),
+                               cl::init(false), cl::cat(JITLinkCategory));
 
-LLVM_ATTRIBUTE_USED void linkComponents() {
+static ExitOnError ExitOnErr;
+
+static LLVM_ATTRIBUTE_USED void linkComponents() {
   errs() << (void *)&llvm_orc_registerEHFrameSectionWrapper
          << (void *)&llvm_orc_deregisterEHFrameSectionWrapper
          << (void *)&llvm_orc_registerJITLoaderGDBWrapper;
@@ -242,6 +246,41 @@ llvm_jitlink_setTestResultOverride(int64_t Value) {
 }
 
 static Error addSelfRelocations(LinkGraph &G);
+
+namespace {
+
+template <typename ErrT>
+
+class ConditionalPrintErr {
+public:
+  ConditionalPrintErr(bool C) : C(C) {}
+  void operator()(ErrT &EI) {
+    if (C) {
+      errs() << "llvm-jitlink error: ";
+      EI.log(errs());
+      errs() << "\n";
+    }
+  }
+
+private:
+  bool C;
+};
+
+Expected<std::unique_ptr<MemoryBuffer>> getFile(const Twine &FileName) {
+  if (auto F = MemoryBuffer::getFile(FileName))
+    return std::move(*F);
+  else
+    return createFileError(FileName, F.getError());
+}
+
+void reportLLVMJITLinkError(Error Err) {
+  handleAllErrors(
+      std::move(Err),
+      ConditionalPrintErr<orc::FailedToMaterialize>(ShowErrFailedToMaterialize),
+      ConditionalPrintErr<ErrorInfoBase>(true));
+}
+
+} // end anonymous namespace
 
 namespace llvm {
 
@@ -1010,6 +1049,8 @@ Session::Session(std::unique_ptr<ExecutorProcessControl> EPC, Error &Err)
 
   ErrorAsOutParameter _(&Err);
 
+  ES.setErrorReporter(reportLLVMJITLinkError);
+
   if (auto MainJDOrErr = ES.createJITDylib("main"))
     MainJD = &*MainJDOrErr;
   else {
@@ -1059,8 +1100,7 @@ Session::Session(std::unique_ptr<ExecutorProcessControl> EPC, Error &Err)
   for (auto &HarnessFile : TestHarnesses) {
     HarnessFiles.insert(HarnessFile);
 
-    auto ObjBuffer =
-        ExitOnErr(errorOrToExpected(MemoryBuffer::getFile(HarnessFile)));
+    auto ObjBuffer = ExitOnErr(getFile(HarnessFile));
 
     auto ObjInterface =
         ExitOnErr(getObjectFileInterface(ES, ObjBuffer->getMemBufferRef()));
@@ -1211,8 +1251,7 @@ static Triple getFirstFileTriple() {
   static Triple FirstTT = []() {
     assert(!InputFiles.empty() && "InputFiles can not be empty");
     for (auto InputFile : InputFiles) {
-      auto ObjBuffer =
-          ExitOnErr(errorOrToExpected(MemoryBuffer::getFile(InputFile)));
+      auto ObjBuffer = ExitOnErr(getFile(InputFile));
       switch (identify_magic(ObjBuffer->getBuffer())) {
       case file_magic::elf_relocatable:
       case file_magic::macho_object:
@@ -1421,7 +1460,7 @@ static Error addTestHarnesses(Session &S) {
   LLVM_DEBUG(dbgs() << "Adding test harness objects...\n");
   for (auto HarnessFile : TestHarnesses) {
     LLVM_DEBUG(dbgs() << "  " << HarnessFile << "\n");
-    auto ObjBuffer = errorOrToExpected(MemoryBuffer::getFile(HarnessFile));
+    auto ObjBuffer = getFile(HarnessFile);
     if (!ObjBuffer)
       return ObjBuffer.takeError();
     if (auto Err = S.ObjLayer.add(*S.MainJD, std::move(*ObjBuffer)))
@@ -1445,7 +1484,7 @@ static Error addObjects(Session &S,
     auto &JD = *std::prev(IdxToJD.lower_bound(InputFileArgIdx))->second;
     LLVM_DEBUG(dbgs() << "  " << InputFileArgIdx << ": \"" << InputFile
                       << "\" to " << JD.getName() << "\n";);
-    auto ObjBuffer = errorOrToExpected(MemoryBuffer::getFile(InputFile));
+    auto ObjBuffer = getFile(InputFile);
     if (!ObjBuffer)
       return ObjBuffer.takeError();
 
@@ -1857,8 +1896,7 @@ static Error runChecks(Session &S) {
 
   std::string CheckLineStart = "# " + CheckName + ":";
   for (auto &CheckFile : CheckFiles) {
-    auto CheckerFileBuf =
-        ExitOnErr(errorOrToExpected(MemoryBuffer::getFile(CheckFile)));
+    auto CheckerFileBuf = ExitOnErr(getFile(CheckFile));
     if (!Checker.checkAllRulesInBuffer(CheckLineStart, &*CheckerFileBuf))
       ExitOnErr(make_error<StringError>(
           "Some checks in " + CheckFile + " failed", inconvertibleErrorCode()));
@@ -1902,14 +1940,45 @@ static Expected<JITEvaluatedSymbol> getOrcRuntimeEntryPoint(Session &S) {
   return S.ES.lookup(S.JDSearchOrder, S.ES.intern(RuntimeEntryPoint));
 }
 
+static Expected<JITEvaluatedSymbol> getEntryPoint(Session &S) {
+  JITEvaluatedSymbol EntryPoint;
+
+  // Find the entry-point function unconditionally, since we want to force
+  // it to be materialized to collect stats.
+  if (auto EP = getMainEntryPoint(S))
+    EntryPoint = *EP;
+  else
+    return EP.takeError();
+  LLVM_DEBUG({
+    dbgs() << "Using entry point \"" << EntryPointName
+           << "\": " << formatv("{0:x16}", EntryPoint.getAddress()) << "\n";
+  });
+
+  // If we're running with the ORC runtime then replace the entry-point
+  // with the __orc_rt_run_program symbol.
+  if (!OrcRuntime.empty()) {
+    if (auto EP = getOrcRuntimeEntryPoint(S))
+      EntryPoint = *EP;
+    else
+      return EP.takeError();
+    LLVM_DEBUG({
+      dbgs() << "(called via __orc_rt_run_program_wrapper at "
+             << formatv("{0:x16}", EntryPoint.getAddress()) << ")\n";
+    });
+  }
+
+  return EntryPoint;
+}
+
 static Expected<int> runWithRuntime(Session &S, ExecutorAddr EntryPointAddr) {
   StringRef DemangledEntryPoint = EntryPointName;
   const auto &TT = S.ES.getExecutorProcessControl().getTargetTriple();
   if (TT.getObjectFormat() == Triple::MachO &&
       DemangledEntryPoint.front() == '_')
     DemangledEntryPoint = DemangledEntryPoint.drop_front();
+  using llvm::orc::shared::SPSString;
   using SPSRunProgramSig =
-      int64_t(SPSString, SPSString, SPSSequence<SPSString>);
+      int64_t(SPSString, SPSString, shared::SPSSequence<SPSString>);
   int64_t Result;
   if (auto Err = S.ES.callSPSWrapper<SPSRunProgramSig>(
           EntryPointAddr, Result, S.MainJD->getName(), DemangledEntryPoint,
@@ -1962,37 +2031,30 @@ int main(int argc, char *argv[]) {
   if (ShowInitialExecutionSessionState)
     S->ES.dump(outs());
 
-  JITEvaluatedSymbol EntryPoint = nullptr;
+  Expected<JITEvaluatedSymbol> EntryPoint(nullptr);
   {
+    ExpectedAsOutParameter<JITEvaluatedSymbol> _(&EntryPoint);
     TimeRegion TR(Timers ? &Timers->LinkTimer : nullptr);
-    // Find the entry-point function unconditionally, since we want to force
-    // it to be materialized to collect stats.
-    EntryPoint = ExitOnErr(getMainEntryPoint(*S));
-    LLVM_DEBUG({
-      dbgs() << "Using entry point \"" << EntryPointName
-             << "\": " << formatv("{0:x16}", EntryPoint.getAddress()) << "\n";
-    });
-
-    // If we're running with the ORC runtime then replace the entry-point
-    // with the __orc_rt_run_program symbol.
-    if (!OrcRuntime.empty()) {
-      EntryPoint = ExitOnErr(getOrcRuntimeEntryPoint(*S));
-      LLVM_DEBUG({
-        dbgs() << "(called via __orc_rt_run_program_wrapper at "
-               << formatv("{0:x16}", EntryPoint.getAddress()) << ")\n";
-      });
-    }
+    EntryPoint = getEntryPoint(*S);
   }
 
+  // Print any reports regardless of whether we succeeded or failed.
   if (ShowEntryExecutionSessionState)
     S->ES.dump(outs());
 
   if (ShowAddrs)
     S->dumpSessionInfo(outs());
 
-  ExitOnErr(runChecks(*S));
-
   dumpSessionStats(*S);
+
+  if (!EntryPoint) {
+    if (Timers)
+      Timers->JITLinkTG.printAll(errs());
+    reportLLVMJITLinkError(EntryPoint.takeError());
+    exit(1);
+  }
+
+  ExitOnErr(runChecks(*S));
 
   if (NoExec)
     return 0;
@@ -2003,15 +2065,18 @@ int main(int argc, char *argv[]) {
     TimeRegion TR(Timers ? &Timers->RunTimer : nullptr);
     if (!OrcRuntime.empty())
       Result =
-          ExitOnErr(runWithRuntime(*S, ExecutorAddr(EntryPoint.getAddress())));
+          ExitOnErr(runWithRuntime(*S, ExecutorAddr(EntryPoint->getAddress())));
     else
       Result = ExitOnErr(
-          runWithoutRuntime(*S, ExecutorAddr(EntryPoint.getAddress())));
+          runWithoutRuntime(*S, ExecutorAddr(EntryPoint->getAddress())));
   }
 
   // Destroy the session.
   ExitOnErr(S->ES.endSession());
   S.reset();
+
+  if (Timers)
+    Timers->JITLinkTG.printAll(errs());
 
   // If the executing code set a test result override then use that.
   if (UseTestResultOverride)

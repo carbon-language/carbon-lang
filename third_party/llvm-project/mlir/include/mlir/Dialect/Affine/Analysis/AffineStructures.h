@@ -13,7 +13,7 @@
 #ifndef MLIR_DIALECT_AFFINE_ANALYSIS_AFFINESTRUCTURES_H
 #define MLIR_DIALECT_AFFINE_ANALYSIS_AFFINESTRUCTURES_H
 
-#include "mlir/Analysis/Presburger/IntegerPolyhedron.h"
+#include "mlir/Analysis/Presburger/IntegerRelation.h"
 #include "mlir/Analysis/Presburger/Matrix.h"
 #include "mlir/IR/AffineExpr.h"
 #include "mlir/IR/OpDefinition.h"
@@ -32,152 +32,9 @@ class Value;
 class MemRefType;
 struct MutableAffineMap;
 
-/// A flat list of affine equalities and inequalities in the form.
-/// Inequality: c_0*x_0 + c_1*x_1 + .... + c_{n-1}*x_{n-1} >= 0
-/// Equality: c_0*x_0 + c_1*x_1 + .... + c_{n-1}*x_{n-1} == 0
-///
-/// FlatAffineConstraints stores coefficients in a contiguous buffer (one buffer
-/// for equalities and one for inequalities). The size of each buffer is
-/// numReservedCols * number of inequalities (or equalities). The reserved size
-/// is numReservedCols * numReservedInequalities (or numReservedEqualities). A
-/// coefficient (r, c) lives at the location numReservedCols * r + c in the
-/// buffer. The extra space between getNumCols() and numReservedCols exists to
-/// prevent frequent movement of data when adding columns, especially at the
-/// end.
-///
-/// The identifiers x_0, x_1, ... appear in the order: dimensional identifiers,
-/// symbolic identifiers, and local identifiers.  The local identifiers
-/// correspond to local/internal variables created when converting from
-/// AffineExpr's containing mod's and div's; they are thus needed to increase
-/// representational power. Each local identifier is always (by construction) a
-/// floordiv of a pure add/mul affine function of dimensional, symbolic, and
-/// other local identifiers, in a non-mutually recursive way. Hence, every local
-/// identifier can ultimately always be recovered as an affine function of
-/// dimensional and symbolic identifiers (involving floordiv's); note however
-/// that some floordiv combinations are converted to mod's by AffineExpr
-/// construction.
-///
-class FlatAffineConstraints : public IntegerPolyhedron {
-public:
-  /// Constructs a constraint system reserving memory for the specified number
-  /// of constraints and identifiers.
-  FlatAffineConstraints(unsigned numReservedInequalities,
-                        unsigned numReservedEqualities,
-                        unsigned numReservedCols, unsigned numDims,
-                        unsigned numSymbols, unsigned numLocals)
-      : IntegerPolyhedron(numReservedInequalities, numReservedEqualities,
-                          numReservedCols, numDims, numSymbols, numLocals) {}
-
-  /// Constructs a constraint system with the specified number of
-  /// dimensions and symbols.
-  FlatAffineConstraints(unsigned numDims = 0, unsigned numSymbols = 0,
-                        unsigned numLocals = 0)
-      : IntegerPolyhedron(/*numReservedInequalities=*/0,
-                          /*numReservedEqualities=*/0,
-                          /*numReservedCols=*/numDims + numSymbols + numLocals +
-                              1,
-                          numDims, numSymbols, numLocals) {}
-
-  explicit FlatAffineConstraints(const IntegerPolyhedron &poly)
-      : IntegerPolyhedron(poly) {}
-
-  /// Return a system with no constraints, i.e., one which is satisfied by all
-  /// points.
-  static FlatAffineConstraints getUniverse(unsigned numDims = 0,
-                                           unsigned numSymbols = 0) {
-    return FlatAffineConstraints(numDims, numSymbols);
-  }
-
-  /// Creates an affine constraint system from an IntegerSet.
-  explicit FlatAffineConstraints(IntegerSet set);
-
-  FlatAffineConstraints(const MutableAffineMap &map);
-
-  ~FlatAffineConstraints() override = default;
-
-  /// Return the kind of this FlatAffineConstraints.
-  Kind getKind() const override { return Kind::FlatAffineConstraints; }
-
-  static bool classof(const IntegerPolyhedron *cst) {
-    return cst->getKind() == Kind::FlatAffineConstraints;
-  }
-
-  // Clones this object.
-  std::unique_ptr<FlatAffineConstraints> clone() const;
-
-  /// Adds a bound for the identifier at the specified position with constraints
-  /// being drawn from the specified bound map. In case of an EQ bound, the
-  /// bound map is expected to have exactly one result. In case of a LB/UB, the
-  /// bound map may have more than one result, for each of which an inequality
-  /// is added.
-  /// Note: The dimensions/symbols of this FlatAffineConstraints must match the
-  /// dimensions/symbols of the affine map.
-  LogicalResult addBound(BoundType type, unsigned pos, AffineMap boundMap);
-
-  /// The `addBound` overload above hides the inherited overloads by default, so
-  /// we explicitly introduce them here.
-  using IntegerPolyhedron::addBound;
-
-  /// Returns the constraint system as an integer set. Returns a null integer
-  /// set if the system has no constraints, or if an integer set couldn't be
-  /// constructed as a result of a local variable's explicit representation not
-  /// being known and such a local variable appearing in any of the constraints.
-  IntegerSet getAsIntegerSet(MLIRContext *context) const;
-
-  /// Computes the lower and upper bounds of the first `num` dimensional
-  /// identifiers (starting at `offset`) as an affine map of the remaining
-  /// identifiers (dimensional and symbolic). This method is able to detect
-  /// identifiers as floordiv's and mod's of affine expressions of other
-  /// identifiers with respect to (positive) constants. Sets bound map to a
-  /// null AffineMap if such a bound can't be found (or yet unimplemented).
-  void getSliceBounds(unsigned offset, unsigned num, MLIRContext *context,
-                      SmallVectorImpl<AffineMap> *lbMaps,
-                      SmallVectorImpl<AffineMap> *ubMaps);
-
-  /// Composes an affine map whose dimensions and symbols match one to one with
-  /// the dimensions and symbols of this FlatAffineConstraints. The results of
-  /// the map `other` are added as the leading dimensions of this constraint
-  /// system. Returns failure if `other` is a semi-affine map.
-  LogicalResult composeMatchingMap(AffineMap other);
-
-  /// Replaces the contents of this FlatAffineConstraints with `other`.
-  void clearAndCopyFrom(const IntegerPolyhedron &other) override;
-
-  /// Gets the lower and upper bound of the `offset` + `pos`th identifier
-  /// treating [0, offset) U [offset + num, symStartPos) as dimensions and
-  /// [symStartPos, getNumDimAndSymbolIds) as symbols, and `pos` lies in
-  /// [0, num). The multi-dimensional maps in the returned pair represent the
-  /// max and min of potentially multiple affine expressions. The upper bound is
-  /// exclusive. `localExprs` holds pre-computed AffineExpr's for all local
-  /// identifiers in the system.
-  std::pair<AffineMap, AffineMap>
-  getLowerAndUpperBound(unsigned pos, unsigned offset, unsigned num,
-                        unsigned symStartPos, ArrayRef<AffineExpr> localExprs,
-                        MLIRContext *context) const;
-
-protected:
-  /// Given an affine map that is aligned with this constraint system:
-  /// * Flatten the map.
-  /// * Add newly introduced local columns at the beginning of this constraint
-  ///   system (local column pos 0).
-  /// * Add equalities that define the new local columns to this constraint
-  ///   system.
-  /// * Return the flattened expressions via `flattenedExprs`.
-  ///
-  /// Note: This is a shared helper function of `addLowerOrUpperBound` and
-  ///       `composeMatchingMap`.
-  LogicalResult flattenAlignedMapAndMergeLocals(
-      AffineMap map, std::vector<SmallVector<int64_t, 8>> *flattenedExprs);
-
-  /// Prints the number of constraints, dimensions, symbols and locals in the
-  /// FlatAffineConstraints. Also, prints for each identifier whether there is
-  /// an SSA Value attached to it.
-  void printSpace(raw_ostream &os) const override;
-};
-
-/// An extension of FlatAffineConstraints in which dimensions and symbols can
-/// optionally be associated with an SSA value.
-class FlatAffineValueConstraints : public FlatAffineConstraints {
+/// FlatAffineValueConstraints represents an extension of IntegerPolyhedron
+/// where each non-local identifier can have an SSA Value attached to it.
+class FlatAffineValueConstraints : public presburger::IntegerPolyhedron {
 public:
   /// Constructs a constraint system reserving memory for the specified number
   /// of constraints and identifiers.
@@ -186,13 +43,15 @@ public:
                              unsigned numReservedCols, unsigned numDims,
                              unsigned numSymbols, unsigned numLocals,
                              ArrayRef<Optional<Value>> valArgs = {})
-      : FlatAffineConstraints(numReservedInequalities, numReservedEqualities,
-                              numReservedCols, numDims, numSymbols, numLocals) {
+      : IntegerPolyhedron(numReservedInequalities, numReservedEqualities,
+                          numReservedCols,
+                          presburger::PresburgerSpace::getSetSpace(
+                              numDims, numSymbols, numLocals)) {
     assert(numReservedCols >= getNumIds() + 1);
-    assert(valArgs.empty() || valArgs.size() == getNumIds());
+    assert(valArgs.empty() || valArgs.size() == getNumDimAndSymbolIds());
     values.reserve(numReservedCols);
     if (valArgs.empty())
-      values.resize(getNumIds(), None);
+      values.resize(getNumDimAndSymbolIds(), None);
     else
       values.append(valArgs.begin(), valArgs.end());
   }
@@ -208,12 +67,12 @@ public:
                                        numLocals + 1,
                                    numDims, numSymbols, numLocals, valArgs) {}
 
-  FlatAffineValueConstraints(const FlatAffineConstraints &fac,
+  FlatAffineValueConstraints(const IntegerPolyhedron &fac,
                              ArrayRef<Optional<Value>> valArgs = {})
-      : FlatAffineConstraints(fac) {
-    assert(valArgs.empty() || valArgs.size() == getNumIds());
+      : IntegerPolyhedron(fac) {
+    assert(valArgs.empty() || valArgs.size() == getNumDimAndSymbolIds());
     if (valArgs.empty())
-      values.resize(getNumIds(), None);
+      values.resize(getNumDimAndSymbolIds(), None);
     else
       values.append(valArgs.begin(), valArgs.end());
   }
@@ -246,7 +105,7 @@ public:
   /// Return the kind of this FlatAffineConstraints.
   Kind getKind() const override { return Kind::FlatAffineValueConstraints; }
 
-  static bool classof(const IntegerPolyhedron *cst) {
+  static bool classof(const IntegerRelation *cst) {
     return cst->getKind() == Kind::FlatAffineValueConstraints;
   }
 
@@ -254,13 +113,14 @@ public:
   /// constraints.
   void reset(unsigned numReservedInequalities, unsigned numReservedEqualities,
              unsigned numReservedCols, unsigned numDims, unsigned numSymbols,
-             unsigned numLocals = 0) override;
+             unsigned numLocals = 0);
+  void reset(unsigned numDims = 0, unsigned numSymbols = 0,
+             unsigned numLocals = 0);
   void reset(unsigned numReservedInequalities, unsigned numReservedEqualities,
              unsigned numReservedCols, unsigned numDims, unsigned numSymbols,
              unsigned numLocals, ArrayRef<Value> valArgs);
   void reset(unsigned numDims, unsigned numSymbols, unsigned numLocals,
              ArrayRef<Value> valArgs);
-  using FlatAffineConstraints::reset;
 
   /// Clones this object.
   std::unique_ptr<FlatAffineValueConstraints> clone() const;
@@ -302,6 +162,32 @@ public:
   void addAffineIfOpDomain(AffineIfOp ifOp);
 
   /// Adds a bound for the identifier at the specified position with constraints
+  /// being drawn from the specified bound map. In case of an EQ bound, the
+  /// bound map is expected to have exactly one result. In case of a LB/UB, the
+  /// bound map may have more than one result, for each of which an inequality
+  /// is added.
+  ///
+  /// The bound can be added as open or closed by specifying isClosedBound. In
+  /// case of a LB/UB, isClosedBound = false means the bound is added internally
+  /// as a closed bound by +1/-1 respectively. In case of an EQ bound, it can
+  /// only be added as a closed bound.
+  ///
+  /// Note: The dimensions/symbols of this FlatAffineConstraints must match the
+  /// dimensions/symbols of the affine map.
+  LogicalResult addBound(BoundType type, unsigned pos, AffineMap boundMap,
+                         bool isClosedBound);
+
+  /// Adds a bound for the identifier at the specified position with constraints
+  /// being drawn from the specified bound map. In case of an EQ bound, the
+  /// bound map is expected to have exactly one result. In case of a LB/UB, the
+  /// bound map may have more than one result, for each of which an inequality
+  /// is added.
+  /// Note: The dimensions/symbols of this FlatAffineConstraints must match the
+  /// dimensions/symbols of the affine map. By default the lower bound is closed
+  /// and the upper bound is open.
+  LogicalResult addBound(BoundType type, unsigned pos, AffineMap boundMap);
+
+  /// Adds a bound for the identifier at the specified position with constraints
   /// being drawn from the specified bound map and operands. In case of an
   /// EQ bound, the  bound map is expected to have exactly one result. In case
   /// of a LB/UB, the bound map may have more than one result, for each of which
@@ -312,7 +198,47 @@ public:
   /// Adds a constant bound for the identifier associated with the given Value.
   void addBound(BoundType type, Value val, int64_t value);
 
-  using FlatAffineConstraints::addBound;
+  /// The `addBound` overload above hides the inherited overloads by default, so
+  /// we explicitly introduce them here.
+  using IntegerPolyhedron::addBound;
+
+  /// Returns the constraint system as an integer set. Returns a null integer
+  /// set if the system has no constraints, or if an integer set couldn't be
+  /// constructed as a result of a local variable's explicit representation not
+  /// being known and such a local variable appearing in any of the constraints.
+  IntegerSet getAsIntegerSet(MLIRContext *context) const;
+
+  /// Computes the lower and upper bounds of the first `num` dimensional
+  /// identifiers (starting at `offset`) as an affine map of the remaining
+  /// identifiers (dimensional and symbolic). This method is able to detect
+  /// identifiers as floordiv's and mod's of affine expressions of other
+  /// identifiers with respect to (positive) constants. Sets bound map to a
+  /// null AffineMap if such a bound can't be found (or yet unimplemented).
+  ///
+  /// By default the returned lower bounds are closed and upper bounds are open.
+  /// This can be changed by getClosedUB.
+  void getSliceBounds(unsigned offset, unsigned num, MLIRContext *context,
+                      SmallVectorImpl<AffineMap> *lbMaps,
+                      SmallVectorImpl<AffineMap> *ubMaps,
+                      bool getClosedUB = false);
+
+  /// Composes an affine map whose dimensions and symbols match one to one with
+  /// the dimensions and symbols of this FlatAffineConstraints. The results of
+  /// the map `other` are added as the leading dimensions of this constraint
+  /// system. Returns failure if `other` is a semi-affine map.
+  LogicalResult composeMatchingMap(AffineMap other);
+
+  /// Gets the lower and upper bound of the `offset` + `pos`th identifier
+  /// treating [0, offset) U [offset + num, symStartPos) as dimensions and
+  /// [symStartPos, getNumDimAndSymbolIds) as symbols, and `pos` lies in
+  /// [0, num). The multi-dimensional maps in the returned pair represent the
+  /// max and min of potentially multiple affine expressions. The upper bound is
+  /// exclusive. `localExprs` holds pre-computed AffineExpr's for all local
+  /// identifiers in the system.
+  std::pair<AffineMap, AffineMap>
+  getLowerAndUpperBound(unsigned pos, unsigned offset, unsigned num,
+                        unsigned symStartPos, ArrayRef<AffineExpr> localExprs,
+                        MLIRContext *context) const;
 
   /// Returns the bound for the identifier at `pos` from the inequality at
   /// `ineqPos` as a 1-d affine value map (affine map + operands). The returned
@@ -349,17 +275,26 @@ public:
   /// Insert identifiers of the specified kind at position `pos`. Positions are
   /// relative to the kind of identifier. The coefficient columns corresponding
   /// to the added identifiers are initialized to zero. `vals` are the Values
-  /// corresponding to the identifiers. Return the absolute column position
-  /// (i.e., not relative to the kind of identifier) of the first added
-  /// identifier.
+  /// corresponding to the identifiers. Values should not be used with
+  /// IdKind::Local since values can only be attached to non-local identifiers.
+  /// Return the absolute column position (i.e., not relative to the kind of
+  /// identifier) of the first added identifier.
   ///
   /// Note: Empty Values are allowed in `vals`.
+  unsigned insertDimId(unsigned pos, unsigned num = 1) {
+    return insertId(IdKind::SetDim, pos, num);
+  }
+  unsigned insertSymbolId(unsigned pos, unsigned num = 1) {
+    return insertId(IdKind::Symbol, pos, num);
+  }
+  unsigned insertLocalId(unsigned pos, unsigned num = 1) {
+    return insertId(IdKind::Local, pos, num);
+  }
   unsigned insertDimId(unsigned pos, ValueRange vals);
-  using FlatAffineConstraints::insertDimId;
   unsigned insertSymbolId(unsigned pos, ValueRange vals);
-  using FlatAffineConstraints::insertSymbolId;
-  unsigned insertId(IdKind kind, unsigned pos, unsigned num = 1) override;
-  unsigned insertId(IdKind kind, unsigned pos, ValueRange vals);
+  unsigned insertId(presburger::IdKind kind, unsigned pos,
+                    unsigned num = 1) override;
+  unsigned insertId(presburger::IdKind kind, unsigned pos, ValueRange vals);
 
   /// Append identifiers of the specified kind after the last identifier of that
   /// kind. The coefficient columns corresponding to the added identifiers are
@@ -368,9 +303,23 @@ public:
   ///
   /// Note: Empty Values are allowed in `vals`.
   unsigned appendDimId(ValueRange vals);
-  using FlatAffineConstraints::appendDimId;
   unsigned appendSymbolId(ValueRange vals);
-  using FlatAffineConstraints::appendSymbolId;
+  unsigned appendDimId(unsigned num = 1) {
+    return appendId(IdKind::SetDim, num);
+  }
+  unsigned appendSymbolId(unsigned num = 1) {
+    return appendId(IdKind::Symbol, num);
+  }
+  unsigned appendLocalId(unsigned num = 1) {
+    return appendId(IdKind::Local, num);
+  }
+
+  /// Removes identifiers in the column range [idStart, idLimit), and copies any
+  /// remaining valid data into place, updates member variables, and resizes
+  /// arrays as needed.
+  void removeIdRange(presburger::IdKind kind, unsigned idStart,
+                     unsigned idLimit) override;
+  using IntegerPolyhedron::removeIdRange;
 
   /// Add the specified values as a dim or symbol id depending on its nature, if
   /// it already doesn't exist in the system. `val` has to be either a terminal
@@ -398,7 +347,7 @@ public:
 
   /// Projects out the identifier that is associate with Value.
   void projectOut(Value val);
-  using FlatAffineConstraints::projectOut;
+  using IntegerPolyhedron::projectOut;
 
   /// Changes all symbol identifiers which are loop IVs to dim identifiers.
   void convertLoopIVSymbolsToDims();
@@ -421,7 +370,7 @@ public:
   ///    other  = {2 <= d0 <= 6, 5 <= d1 <= 15},
   ///    output = {0 <= d0 <= 6, 1 <= d1 <= 15}
   LogicalResult unionBoundingBox(const FlatAffineValueConstraints &other);
-  using FlatAffineConstraints::unionBoundingBox;
+  using IntegerPolyhedron::unionBoundingBox;
 
   /// Merge and align the identifiers of `this` and `other` starting at
   /// `offset`, so that both constraint systems get the union of the contained
@@ -444,17 +393,21 @@ public:
   bool areIdsAlignedWithOther(const FlatAffineValueConstraints &other);
 
   /// Replaces the contents of this FlatAffineValueConstraints with `other`.
-  void clearAndCopyFrom(const IntegerPolyhedron &other) override;
+  void clearAndCopyFrom(const IntegerRelation &other) override;
 
   /// Returns the Value associated with the pos^th identifier. Asserts if
   /// no Value identifier was associated.
   inline Value getValue(unsigned pos) const {
+    assert(pos < getNumDimAndSymbolIds() && "Invalid position");
     assert(hasValue(pos) && "identifier's Value not set");
     return values[pos].getValue();
   }
 
   /// Returns true if the pos^th identifier has an associated Value.
-  inline bool hasValue(unsigned pos) const { return values[pos].hasValue(); }
+  inline bool hasValue(unsigned pos) const {
+    assert(pos < getNumDimAndSymbolIds() && "Invalid position");
+    return values[pos].hasValue();
+  }
 
   /// Returns true if at least one identifier has an associated Value.
   bool hasValues() const;
@@ -463,44 +416,41 @@ public:
   /// Asserts if no Value was associated with one of these identifiers.
   inline void getValues(unsigned start, unsigned end,
                         SmallVectorImpl<Value> *values) const {
-    assert((start < getNumIds() || start == end) && "invalid start position");
-    assert(end <= getNumIds() && "invalid end position");
+    assert(end <= getNumDimAndSymbolIds() && "invalid end position");
+    assert(start <= end && "invalid start position");
     values->clear();
     values->reserve(end - start);
     for (unsigned i = start; i < end; i++)
       values->push_back(getValue(i));
   }
   inline void getAllValues(SmallVectorImpl<Value> *values) const {
-    getValues(0, getNumIds(), values);
+    getValues(0, getNumDimAndSymbolIds(), values);
   }
 
   inline ArrayRef<Optional<Value>> getMaybeValues() const {
     return {values.data(), values.size()};
   }
 
-  inline ArrayRef<Optional<Value>> getMaybeDimValues() const {
-    return {values.data(), getNumDimIds()};
-  }
-
-  inline ArrayRef<Optional<Value>> getMaybeSymbolValues() const {
-    return {values.data() + getNumDimIds(), getNumSymbolIds()};
-  }
-
-  inline ArrayRef<Optional<Value>> getMaybeDimAndSymbolValues() const {
-    return {values.data(), getNumDimIds() + getNumSymbolIds()};
+  inline ArrayRef<Optional<Value>>
+  getMaybeValues(presburger::IdKind kind) const {
+    assert(kind != IdKind::Local &&
+           "Local identifiers do not have any value attached to them.");
+    return {values.data() + getIdKindOffset(kind), getNumIdKind(kind)};
   }
 
   /// Sets the Value associated with the pos^th identifier.
   inline void setValue(unsigned pos, Value val) {
-    assert(pos < getNumIds() && "invalid id position");
+    assert(pos < getNumDimAndSymbolIds() && "invalid id position");
     values[pos] = val;
   }
 
   /// Sets the Values associated with the identifiers in the range [start, end).
+  /// The range must contain only dim and symbol identifiers.
   void setValues(unsigned start, unsigned end, ArrayRef<Value> values) {
-    assert((start < getNumIds() || end == start) && "invalid start position");
     assert(end <= getNumIds() && "invalid end position");
-    assert(values.size() == end - start);
+    assert(start <= end && "invalid start position");
+    assert(values.size() == end - start &&
+           "value should be provided for each identifier in the range.");
     for (unsigned i = start; i < end; ++i)
       setValue(i, values[i - start]);
   }
@@ -512,15 +462,25 @@ public:
   void mergeSymbolIds(FlatAffineValueConstraints &other);
 
 protected:
+  using IdKind = presburger::IdKind;
+
   /// Returns false if the fields corresponding to various identifier counts, or
   /// equality/inequality buffer sizes aren't consistent; true otherwise. This
   /// is meant to be used within an assert internally.
   bool hasConsistentState() const override;
 
-  /// Removes identifiers in the column range [idStart, idLimit), and copies any
-  /// remaining valid data into place, updates member variables, and resizes
-  /// arrays as needed.
-  void removeIdRange(unsigned idStart, unsigned idLimit) override;
+  /// Given an affine map that is aligned with this constraint system:
+  /// * Flatten the map.
+  /// * Add newly introduced local columns at the beginning of this constraint
+  ///   system (local column pos 0).
+  /// * Add equalities that define the new local columns to this constraint
+  ///   system.
+  /// * Return the flattened expressions via `flattenedExprs`.
+  ///
+  /// Note: This is a shared helper function of `addLowerOrUpperBound` and
+  ///       `composeMatchingMap`.
+  LogicalResult flattenAlignedMapAndMergeLocals(
+      AffineMap map, std::vector<SmallVector<int64_t, 8>> *flattenedExprs);
 
   /// Eliminates the identifier at the specified position using Fourier-Motzkin
   /// variable elimination, but uses Gaussian elimination if there is an
@@ -532,9 +492,14 @@ protected:
   void fourierMotzkinEliminate(unsigned pos, bool darkShadow = false,
                                bool *isResultIntegerExact = nullptr) override;
 
-  /// Values corresponding to the (column) identifiers of this constraint
-  /// system appearing in the order the identifiers correspond to columns.
-  /// Temporary ones or those that aren't associated with any Value are set to
+  /// Prints the number of constraints, dimensions, symbols and locals in the
+  /// FlatAffineConstraints. Also, prints for each identifier whether there is
+  /// an SSA Value attached to it.
+  void printSpace(raw_ostream &os) const override;
+
+  /// Values corresponding to the (column) non-local identifiers of this
+  /// constraint system appearing in the order the identifiers correspond to
+  /// columns. Identifiers that aren't associated with any Value are set to
   /// None.
   SmallVector<Optional<Value>, 8> values;
 };
@@ -568,7 +533,7 @@ public:
         numRangeDims(numRangeDims) {}
 
   FlatAffineRelation(unsigned numDomainDims, unsigned numRangeDims,
-                     FlatAffineConstraints &fac)
+                     IntegerPolyhedron &fac)
       : FlatAffineValueConstraints(fac), numDomainDims(numDomainDims),
         numRangeDims(numRangeDims) {}
 
@@ -603,17 +568,18 @@ public:
   void appendDomainId(unsigned num = 1);
   void appendRangeId(unsigned num = 1);
 
+  /// Removes identifiers in the column range [idStart, idLimit), and copies any
+  /// remaining valid data into place, updates member variables, and resizes
+  /// arrays as needed.
+  void removeIdRange(IdKind kind, unsigned idStart, unsigned idLimit) override;
+  using IntegerRelation::removeIdRange;
+
 protected:
   // Number of dimension identifers corresponding to domain identifers.
   unsigned numDomainDims;
 
   // Number of dimension identifers corresponding to range identifers.
   unsigned numRangeDims;
-
-  /// Removes identifiers in the column range [idStart, idLimit), and copies any
-  /// remaining valid data into place, updates member variables, and resizes
-  /// arrays as needed.
-  void removeIdRange(unsigned idStart, unsigned idLimit) override;
 };
 
 /// Flattens 'expr' into 'flattenedExpr', which contains the coefficients of the
@@ -626,7 +592,7 @@ protected:
 LogicalResult getFlattenedAffineExpr(AffineExpr expr, unsigned numDims,
                                      unsigned numSymbols,
                                      SmallVectorImpl<int64_t> *flattenedExpr,
-                                     FlatAffineConstraints *cst = nullptr);
+                                     FlatAffineValueConstraints *cst = nullptr);
 
 /// Flattens the result expressions of the map to their corresponding flattened
 /// forms and set in 'flattenedExprs'. Returns failure if any expression in the
@@ -641,11 +607,11 @@ LogicalResult getFlattenedAffineExpr(AffineExpr expr, unsigned numDims,
 LogicalResult
 getFlattenedAffineExprs(AffineMap map,
                         std::vector<SmallVector<int64_t, 8>> *flattenedExprs,
-                        FlatAffineConstraints *cst = nullptr);
+                        FlatAffineValueConstraints *cst = nullptr);
 LogicalResult
 getFlattenedAffineExprs(IntegerSet set,
                         std::vector<SmallVector<int64_t, 8>> *flattenedExprs,
-                        FlatAffineConstraints *cst = nullptr);
+                        FlatAffineValueConstraints *cst = nullptr);
 
 /// Re-indexes the dimensions and symbols of an affine map with given `operands`
 /// values to align with `dims` and `syms` values.

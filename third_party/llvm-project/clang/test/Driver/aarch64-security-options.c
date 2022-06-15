@@ -27,6 +27,9 @@
 // RUN: %clang -target aarch64--none-eabi -c %s -### -mbranch-protection=bar     2>&1 | \
 // RUN: FileCheck %s --check-prefix=BAD-BP-PROTECTION --check-prefix=WARN
 
+// RUN: %clang -target aarch64--none-eabi -### -o /dev/null -mbranch-protection=standard /dev/null 2>&1 | \
+// RUN: FileCheck --allow-empty %s --check-prefix=LINKER-DRIVER
+
 // WARN-NOT: warning: ignoring '-mbranch-protection=' option because the 'aarch64' architecture does not support it [-Wbranch-protection]
 
 // RA-OFF: "-msign-return-address=none"
@@ -41,8 +44,12 @@
 
 // CONFLICT: "-msign-return-address=none"
 
-// BAD-RA-PROTECTION: invalid branch protection option 'foo' in '-msign-return-address={{.*}}'
-// BAD-BP-PROTECTION: invalid branch protection option 'bar' in '-mbranch-protection={{.*}}'
+// BAD-RA-PROTECTION: unsupported argument 'foo' to option '-msign-return-address='
+// BAD-BP-PROTECTION: unsupported argument 'bar' to option '-mbranch-protection='
 
-// BAD-B-KEY-COMBINATION: invalid branch protection option 'b-key' in '-mbranch-protection={{.*}}'
-// BAD-LEAF-COMBINATION: invalid branch protection option 'leaf' in '-mbranch-protection={{.*}}'
+// BAD-B-KEY-COMBINATION: unsupported argument 'b-key' to option '-mbranch-protection='
+// BAD-LEAF-COMBINATION: unsupported argument 'leaf' to option '-mbranch-protection='
+
+// Check that the linker driver doesn't warn about -mbranch-protection=standard
+// as an unused option.
+// LINKER-DRIVER-NOT: warning: argument unused during compilation: '-mbranch-protection=standard'

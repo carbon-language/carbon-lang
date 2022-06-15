@@ -6,18 +6,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "mlir/Analysis/Presburger/IntegerPolyhedron.h"
 #include "./Utils.h"
+#include "mlir/Analysis/Presburger/IntegerRelation.h"
+#include "mlir/Analysis/Presburger/PWMAFunction.h"
 #include "mlir/Analysis/Presburger/Simplex.h"
-#include "mlir/IR/MLIRContext.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <numeric>
 
-namespace mlir {
-using namespace presburger_utils;
+using namespace mlir;
+using namespace presburger;
+
 using testing::ElementsAre;
 
 enum class TestFunction { Sample, Empty };
@@ -28,8 +29,9 @@ static IntegerPolyhedron
 makeSetFromConstraints(unsigned ids, ArrayRef<SmallVector<int64_t, 4>> ineqs,
                        ArrayRef<SmallVector<int64_t, 4>> eqs,
                        unsigned syms = 0) {
-  IntegerPolyhedron set(ineqs.size(), eqs.size(), ids + 1, ids - syms, syms,
-                        /*numLocals=*/0);
+  IntegerPolyhedron set(
+      ineqs.size(), eqs.size(), ids + 1,
+      PresburgerSpace::getSetSpace(ids - syms, syms, /*numLocals=*/0));
   for (const auto &eq : eqs)
     set.addEquality(eq);
   for (const auto &ineq : ineqs)
@@ -50,7 +52,7 @@ static void dump(ArrayRef<int64_t> vec) {
 ///   non-empty lexmin.
 ///
 ///   If hasSample is false, check that findIntegerSample returns None and
-///   getIntegerLexMin returns Empty.
+///   findIntegerLexMin returns Empty.
 ///
 /// If fn is TestFunction::Empty, check that isIntegerEmpty returns the
 /// opposite of hasSample.
@@ -72,7 +74,7 @@ static void checkSample(bool hasSample, const IntegerPolyhedron &poly,
 
       EXPECT_TRUE(maybeLexMin.isEmpty());
       if (maybeLexMin.isBounded()) {
-        llvm::errs() << "getIntegerLexMin gave sample: ";
+        llvm::errs() << "findIntegerLexMin gave sample: ";
         dump(*maybeLexMin);
       }
     } else {
@@ -80,10 +82,12 @@ static void checkSample(bool hasSample, const IntegerPolyhedron &poly,
       EXPECT_TRUE(poly.containsPoint(*maybeSample));
 
       ASSERT_FALSE(maybeLexMin.isEmpty());
-      if (maybeLexMin.isUnbounded())
+      if (maybeLexMin.isUnbounded()) {
         EXPECT_TRUE(Simplex(poly).isUnbounded());
-      if (maybeLexMin.isBounded())
+      }
+      if (maybeLexMin.isBounded()) {
         EXPECT_TRUE(poly.containsPoint(*maybeLexMin));
+      }
     }
     break;
   case TestFunction::Empty:
@@ -176,66 +180,57 @@ TEST(IntegerPolyhedronTest, clearConstraints) {
 }
 
 TEST(IntegerPolyhedronTest, removeIdRange) {
-  IntegerPolyhedron set(3, 2, 1);
+  IntegerPolyhedron set(PresburgerSpace::getSetSpace(3, 2, 1));
 
   set.addInequality({10, 11, 12, 20, 21, 30, 40});
-  set.removeId(IntegerPolyhedron::IdKind::Symbol, 1);
+  set.removeId(IdKind::Symbol, 1);
   EXPECT_THAT(set.getInequality(0),
               testing::ElementsAre(10, 11, 12, 20, 30, 40));
 
-  set.removeIdRange(IntegerPolyhedron::IdKind::SetDim, 0, 2);
+  set.removeIdRange(IdKind::SetDim, 0, 2);
   EXPECT_THAT(set.getInequality(0), testing::ElementsAre(12, 20, 30, 40));
 
-  set.removeIdRange(IntegerPolyhedron::IdKind::Local, 1, 1);
+  set.removeIdRange(IdKind::Local, 1, 1);
   EXPECT_THAT(set.getInequality(0), testing::ElementsAre(12, 20, 30, 40));
 
-  set.removeIdRange(IntegerPolyhedron::IdKind::Local, 0, 1);
+  set.removeIdRange(IdKind::Local, 0, 1);
   EXPECT_THAT(set.getInequality(0), testing::ElementsAre(12, 20, 40));
 }
 
 TEST(IntegerPolyhedronTest, FindSampleTest) {
   // Bounded sets with only inequalities.
-
-  MLIRContext context;
-
   // 0 <= 7x <= 5
-  checkSample(true, parsePoly("(x) : (7 * x >= 0, -7 * x + 5 >= 0)", &context));
+  checkSample(true, parsePoly("(x) : (7 * x >= 0, -7 * x + 5 >= 0)"));
 
   // 1 <= 5x and 5x <= 4 (no solution).
-  checkSample(false,
-              parsePoly("(x) : (5 * x - 1 >= 0, -5 * x + 4 >= 0)", &context));
+  checkSample(false, parsePoly("(x) : (5 * x - 1 >= 0, -5 * x + 4 >= 0)"));
 
   // 1 <= 5x and 5x <= 9 (solution: x = 1).
-  checkSample(true,
-              parsePoly("(x) : (5 * x - 1 >= 0, -5 * x + 9 >= 0)", &context));
+  checkSample(true, parsePoly("(x) : (5 * x - 1 >= 0, -5 * x + 9 >= 0)"));
 
   // Bounded sets with equalities.
   // x >= 8 and 40 >= y and x = y.
-  checkSample(true, parsePoly("(x,y) : (x - 8 >= 0, -y + 40 >= 0, x - y == 0)",
-                              &context));
+  checkSample(true,
+              parsePoly("(x,y) : (x - 8 >= 0, -y + 40 >= 0, x - y == 0)"));
 
   // x <= 10 and y <= 10 and 10 <= z and x + 2y = 3z.
   // solution: x = y = z = 10.
   checkSample(true, parsePoly("(x,y,z) : (-x + 10 >= 0, -y + 10 >= 0, "
-                              "z - 10 >= 0, x + 2 * y - 3 * z == 0)",
-                              &context));
+                              "z - 10 >= 0, x + 2 * y - 3 * z == 0)"));
 
   // x <= 10 and y <= 10 and 11 <= z and x + 2y = 3z.
   // This implies x + 2y >= 33 and x + 2y <= 30, which has no solution.
   checkSample(false, parsePoly("(x,y,z) : (-x + 10 >= 0, -y + 10 >= 0, "
-                               "z - 11 >= 0, x + 2 * y - 3 * z == 0)",
-                               &context));
+                               "z - 11 >= 0, x + 2 * y - 3 * z == 0)"));
 
   // 0 <= r and r <= 3 and 4q + r = 7.
   // Solution: q = 1, r = 3.
-  checkSample(
-      true,
-      parsePoly("(q,r) : (r >= 0, -r + 3 >= 0, 4 * q + r - 7 == 0)", &context));
+  checkSample(true,
+              parsePoly("(q,r) : (r >= 0, -r + 3 >= 0, 4 * q + r - 7 == 0)"));
 
   // 4q + r = 7 and r = 0.
   // Solution: q = 1, r = 3.
-  checkSample(false,
-              parsePoly("(q,r) : (4 * q + r - 7 == 0, r == 0)", &context));
+  checkSample(false, parsePoly("(q,r) : (4 * q + r - 7 == 0, r == 0)"));
 
   // The next two sets are large sets that should take a long time to sample
   // with a naive branch and bound algorithm but can be sampled efficiently with
@@ -244,8 +239,7 @@ TEST(IntegerPolyhedronTest, FindSampleTest) {
   // This is a triangle with vertices at (1/3, 0), (2/3, 0) and (10000, 10000).
   checkSample(true, parsePoly("(x,y) : (y >= 0, "
                               "300000 * x - 299999 * y - 100000 >= 0, "
-                              "-300000 * x + 299998 * y + 200000 >= 0)",
-                              &context));
+                              "-300000 * x + 299998 * y + 200000 >= 0)"));
 
   // This is a tetrahedron with vertices at
   // (1/3, 0, 0), (2/3, 0, 0), (2/3, 0, 10000), and (10000, 10000, 10000).
@@ -268,8 +262,7 @@ TEST(IntegerPolyhedronTest, FindSampleTest) {
       parsePoly("(a,b,c,d,e) : (b + d - e >= 0, -b + c - d + e >= 0, "
                 "300000 * a - 299998 * b - c - 9 * d + 21 * e - 112000 >= 0, "
                 "-150000 * a + 149999 * b - 15 * d + 47 * e + 68000 >= 0, "
-                "d - e == 0, d + e - 2000 == 0)",
-                &context));
+                "d - e == 0, d + e - 2000 == 0)"));
 
   // This is a tetrahedron with vertices at
   // (1/3, 0, 0), (2/3, 0, 0), (2/3, 0, 100), (100, 100 - 1/3, 100).
@@ -288,24 +281,20 @@ TEST(IntegerPolyhedronTest, FindSampleTest) {
   // This is a line segment from (0, 1/3) to (100, 100 + 1/3).
   checkSample(
       false,
-      parsePoly("(x,y) : (x >= 0, -x + 100 >= 0, 3 * x - 3 * y + 1 == 0)",
-                &context));
+      parsePoly("(x,y) : (x >= 0, -x + 100 >= 0, 3 * x - 3 * y + 1 == 0)"));
 
   // A thin parallelogram. 0 <= x <= 100 and x + 1/3 <= y <= x + 2/3.
   checkSample(false,
               parsePoly("(x,y) : (x >= 0, -x + 100 >= 0, "
-                        "3 * x - 3 * y + 2 >= 0, -3 * x + 3 * y - 1 >= 0)",
-                        &context));
+                        "3 * x - 3 * y + 2 >= 0, -3 * x + 3 * y - 1 >= 0)"));
 
   checkSample(true, parsePoly("(x,y) : (2 * x >= 0, -2 * x + 99 >= 0, "
-                              "2 * y >= 0, -2 * y + 99 >= 0)",
-                              &context));
+                              "2 * y >= 0, -2 * y + 99 >= 0)"));
 
   // 2D cone with apex at (10000, 10000) and
   // edges passing through (1/3, 0) and (2/3, 0).
   checkSample(true, parsePoly("(x,y) : (300000 * x - 299999 * y - 100000 >= 0, "
-                              "-300000 * x + 299998 * y + 200000 >= 0)",
-                              &context));
+                              "-300000 * x + 299998 * y + 200000 >= 0)"));
 
   // Cartesian product of a tetrahedron and a 2D cone.
   // The tetrahedron has vertices at
@@ -419,8 +408,7 @@ TEST(IntegerPolyhedronTest, FindSampleTest) {
                           {});
 
   checkSample(true, parsePoly("(x, y, z) : (2 * x - 1 >= 0, x - y - 1 == 0, "
-                              "y - z == 0)",
-                              &context));
+                              "y - z == 0)"));
 
   // Regression tests for the computation of dual coefficients.
   checkSample(false, parsePoly("(x, y, z) : ("
@@ -428,42 +416,34 @@ TEST(IntegerPolyhedronTest, FindSampleTest) {
                                "x + 5*y + z + 5 >= 0,"
                                "-4*x + y + 2*z - 1 >= 0,"
                                "-3*x - 2*y - 7*z - 1 >= 0,"
-                               "-7*x - 5*y - 9*z - 1 >= 0)",
-                               &context));
+                               "-7*x - 5*y - 9*z - 1 >= 0)"));
   checkSample(true, parsePoly("(x, y, z) : ("
                               "3*x + 3*y + 3 >= 0,"
                               "-4*x - 8*y - z + 4 >= 0,"
                               "-7*x - 4*y + z + 1 >= 0,"
                               "2*x - 7*y - 8*z - 7 >= 0,"
-                              "9*x + 8*y - 9*z - 7 >= 0)",
-                              &context));
+                              "9*x + 8*y - 9*z - 7 >= 0)"));
 }
 
 TEST(IntegerPolyhedronTest, IsIntegerEmptyTest) {
-
-  MLIRContext context;
-
   // 1 <= 5x and 5x <= 4 (no solution).
-  EXPECT_TRUE(parsePoly("(x) : (5 * x - 1 >= 0, -5 * x + 4 >= 0)", &context)
-                  .isIntegerEmpty());
+  EXPECT_TRUE(
+      parsePoly("(x) : (5 * x - 1 >= 0, -5 * x + 4 >= 0)").isIntegerEmpty());
   // 1 <= 5x and 5x <= 9 (solution: x = 1).
-  EXPECT_FALSE(parsePoly("(x) : (5 * x - 1 >= 0, -5 * x + 9 >= 0)", &context)
-                   .isIntegerEmpty());
+  EXPECT_FALSE(
+      parsePoly("(x) : (5 * x - 1 >= 0, -5 * x + 9 >= 0)").isIntegerEmpty());
 
   // Unbounded sets.
   EXPECT_TRUE(parsePoly("(x,y,z) : (2 * y - 1 >= 0, -2 * y + 1 >= 0, "
-                        "2 * z - 1 >= 0, 2 * x - 1 == 0)",
-                        &context)
+                        "2 * z - 1 >= 0, 2 * x - 1 == 0)")
                   .isIntegerEmpty());
 
   EXPECT_FALSE(parsePoly("(x,y,z) : (2 * x - 1 >= 0, -3 * x + 3 >= 0, "
-                         "5 * z - 6 >= 0, -7 * z + 17 >= 0, 3 * y - 2 >= 0)",
-                         &context)
+                         "5 * z - 6 >= 0, -7 * z + 17 >= 0, 3 * y - 2 >= 0)")
                    .isIntegerEmpty());
 
   EXPECT_FALSE(
-      parsePoly("(x,y,z) : (2 * x - 1 >= 0, x - y - 1 == 0, y - z == 0)",
-                &context)
+      parsePoly("(x,y,z) : (2 * x - 1 >= 0, x - y - 1 == 0, y - z == 0)")
           .isIntegerEmpty());
 
   // IntegerPolyhedron::isEmpty() does not detect the following sets to be
@@ -472,8 +452,7 @@ TEST(IntegerPolyhedronTest, IsIntegerEmptyTest) {
   // 3x + 7y = 1 and 0 <= x, y <= 10.
   // Since x and y are non-negative, 3x + 7y can never be 1.
   EXPECT_TRUE(parsePoly("(x,y) : (x >= 0, -x + 10 >= 0, y >= 0, -y + 10 >= 0, "
-                        "3 * x + 7 * y - 1 == 0)",
-                        &context)
+                        "3 * x + 7 * y - 1 == 0)")
                   .isIntegerEmpty());
 
   // 2x = 3y and y = x - 1 and x + y = 6z + 2 and 0 <= x, y <= 100.
@@ -481,8 +460,7 @@ TEST(IntegerPolyhedronTest, IsIntegerEmptyTest) {
   // Since x + y = 5 cannot be equal to 6z + 2 for any z, the set is empty.
   EXPECT_TRUE(
       parsePoly("(x,y,z) : (x >= 0, -x + 100 >= 0, y >= 0, -y + 100 >= 0, "
-                "2 * x - 3 * y == 0, x - y - 1 == 0, x + y - 6 * z - 2 == 0)",
-                &context)
+                "2 * x - 3 * y == 0, x - y - 1 == 0, x + y - 6 * z - 2 == 0)")
           .isIntegerEmpty());
 
   // 2x = 3y and y = x - 1 + 6z and x + y = 6q + 2 and 0 <= x, y <= 100.
@@ -493,20 +471,16 @@ TEST(IntegerPolyhedronTest, IsIntegerEmptyTest) {
   EXPECT_TRUE(
       parsePoly(
           "(x,y,z,q) : (x >= 0, -x + 100 >= 0, y >= 0, -y + 100 >= 0, "
-          "2 * x - 3 * y == 0, x - y + 6 * z - 1 == 0, x + y - 6 * q - 2 == 0)",
-          &context)
+          "2 * x - 3 * y == 0, x - y + 6 * z - 1 == 0, x + y - 6 * q - 2 == 0)")
           .isIntegerEmpty());
 
   // Set with symbols.
-  EXPECT_FALSE(parsePoly("(x)[s] : (x + s >= 0, x - s == 0)", &context)
-                   .isIntegerEmpty());
+  EXPECT_FALSE(parsePoly("(x)[s] : (x + s >= 0, x - s == 0)").isIntegerEmpty());
 }
 
 TEST(IntegerPolyhedronTest, removeRedundantConstraintsTest) {
-  MLIRContext context;
-
   IntegerPolyhedron poly =
-      parsePoly("(x) : (x - 2 >= 0, -x + 2 >= 0, x - 2 == 0)", &context);
+      parsePoly("(x) : (x - 2 >= 0, -x + 2 >= 0, x - 2 == 0)");
   poly.removeRedundantConstraints();
 
   // Both inequalities are redundant given the equality. Both have been removed.
@@ -514,7 +488,7 @@ TEST(IntegerPolyhedronTest, removeRedundantConstraintsTest) {
   EXPECT_EQ(poly.getNumEqualities(), 1u);
 
   IntegerPolyhedron poly2 =
-      parsePoly("(x,y) : (x - 3 >= 0, y - 2 >= 0, x - y == 0)", &context);
+      parsePoly("(x,y) : (x - 3 >= 0, y - 2 >= 0, x - y == 0)");
   poly2.removeRedundantConstraints();
 
   // The second inequality is redundant and should have been removed. The
@@ -524,7 +498,7 @@ TEST(IntegerPolyhedronTest, removeRedundantConstraintsTest) {
   EXPECT_EQ(poly2.getNumEqualities(), 1u);
 
   IntegerPolyhedron poly3 =
-      parsePoly("(x,y,z) : (x - y == 0, x - z == 0, y - z == 0)", &context);
+      parsePoly("(x,y,z) : (x - y == 0, x - z == 0, y - z == 0)");
   poly3.removeRedundantConstraints();
 
   // One of the three equalities can be removed.
@@ -569,8 +543,7 @@ TEST(IntegerPolyhedronTest, removeRedundantConstraintsTest) {
                 "-c + 10 >= 0,"
                 "a - 13 >= 0,"
                 "-a + 13 >= 0"
-                ")",
-                &context);
+                ")");
 
   // The above is a large set of constraints without any redundant constraints,
   // as verified by the Fourier-Motzkin based removeRedundantInequalities.
@@ -586,8 +559,7 @@ TEST(IntegerPolyhedronTest, removeRedundantConstraintsTest) {
   EXPECT_EQ(poly4.getNumEqualities(), nEq);
 
   IntegerPolyhedron poly5 = parsePoly(
-      "(x,y) : (128 * x + 127 >= 0, -x + 7 >= 0, -128 * x + y >= 0, y >= 0)",
-      &context);
+      "(x,y) : (128 * x + 127 >= 0, -x + 7 >= 0, -128 * x + y >= 0, y >= 0)");
   // 128x + 127 >= 0  implies that 128x >= 0, since x has to be an integer.
   // (This should be caught by GCDTightenInqualities().)
   // So -128x + y >= 0 and 128x + 127 >= 0 imply y >= 0 since we have
@@ -602,7 +574,7 @@ TEST(IntegerPolyhedronTest, removeRedundantConstraintsTest) {
 }
 
 TEST(IntegerPolyhedronTest, addConstantUpperBound) {
-  IntegerPolyhedron poly(2);
+  IntegerPolyhedron poly(PresburgerSpace::getSetSpace(2));
   poly.addBound(IntegerPolyhedron::UB, 0, 1);
   EXPECT_EQ(poly.atIneq(0, 0), -1);
   EXPECT_EQ(poly.atIneq(0, 1), 0);
@@ -615,7 +587,7 @@ TEST(IntegerPolyhedronTest, addConstantUpperBound) {
 }
 
 TEST(IntegerPolyhedronTest, addConstantLowerBound) {
-  IntegerPolyhedron poly(2);
+  IntegerPolyhedron poly(PresburgerSpace::getSetSpace(2));
   poly.addBound(IntegerPolyhedron::LB, 0, 1);
   EXPECT_EQ(poly.atIneq(0, 0), 1);
   EXPECT_EQ(poly.atIneq(0, 1), 0);
@@ -637,7 +609,6 @@ static void checkDivisionRepresentation(
     IntegerPolyhedron &poly,
     const std::vector<SmallVector<int64_t, 8>> &expectedDividends,
     const SmallVectorImpl<unsigned> &expectedDenominators) {
-
   std::vector<SmallVector<int64_t, 8>> dividends;
   SmallVector<unsigned, 4> denominators;
 
@@ -657,7 +628,7 @@ static void checkDivisionRepresentation(
 }
 
 TEST(IntegerPolyhedronTest, computeLocalReprSimple) {
-  IntegerPolyhedron poly(1);
+  IntegerPolyhedron poly(PresburgerSpace::getSetSpace(1));
 
   poly.addLocalFloorDiv({1, 4}, 10);
   poly.addLocalFloorDiv({1, 0, 100}, 10);
@@ -672,7 +643,7 @@ TEST(IntegerPolyhedronTest, computeLocalReprSimple) {
 }
 
 TEST(IntegerPolyhedronTest, computeLocalReprConstantFloorDiv) {
-  IntegerPolyhedron poly(4);
+  IntegerPolyhedron poly(PresburgerSpace::getSetSpace(4));
 
   poly.addInequality({1, 0, 3, 1, 2});
   poly.addInequality({1, 2, -8, 1, 10});
@@ -690,7 +661,7 @@ TEST(IntegerPolyhedronTest, computeLocalReprConstantFloorDiv) {
 }
 
 TEST(IntegerPolyhedronTest, computeLocalReprRecursive) {
-  IntegerPolyhedron poly(4);
+  IntegerPolyhedron poly(PresburgerSpace::getSetSpace(4));
   poly.addInequality({1, 0, 3, 1, 2});
   poly.addInequality({1, 2, -8, 1, 10});
   poly.addEquality({1, 2, -4, 1, 10});
@@ -714,10 +685,8 @@ TEST(IntegerPolyhedronTest, computeLocalReprRecursive) {
 }
 
 TEST(IntegerPolyhedronTest, computeLocalReprTightUpperBound) {
-  MLIRContext context;
-
   {
-    IntegerPolyhedron poly = parsePoly("(i) : (i mod 3 - 1 >= 0)", &context);
+    IntegerPolyhedron poly = parsePoly("(i) : (i mod 3 - 1 >= 0)");
 
     // The set formed by the poly is:
     //        3q - i + 2 >= 0             <-- Division lower bound
@@ -737,10 +706,10 @@ TEST(IntegerPolyhedronTest, computeLocalReprTightUpperBound) {
   }
 
   {
-    IntegerPolyhedron poly = parsePoly(
-        "(i, j, q) : (4*q - i - j + 2 >= 0, -4*q + i + j >= 0)", &context);
+    IntegerPolyhedron poly =
+        parsePoly("(i, j, q) : (4*q - i - j + 2 >= 0, -4*q + i + j >= 0)");
     // Convert `q` to a local variable.
-    poly.convertDimToLocal(2, 3);
+    poly.convertToLocal(IdKind::SetDim, 2, 3);
 
     std::vector<SmallVector<int64_t, 8>> divisions = {{1, 1, 0, 1}};
     SmallVector<unsigned, 8> denoms = {4};
@@ -751,12 +720,10 @@ TEST(IntegerPolyhedronTest, computeLocalReprTightUpperBound) {
 }
 
 TEST(IntegerPolyhedronTest, computeLocalReprFromEquality) {
-  MLIRContext context;
   {
-    IntegerPolyhedron poly =
-        parsePoly("(i, j, q) : (-4*q + i + j == 0)", &context);
+    IntegerPolyhedron poly = parsePoly("(i, j, q) : (-4*q + i + j == 0)");
     // Convert `q` to a local variable.
-    poly.convertDimToLocal(2, 3);
+    poly.convertToLocal(IdKind::SetDim, 2, 3);
 
     std::vector<SmallVector<int64_t, 8>> divisions = {{-1, -1, 0, 0}};
     SmallVector<unsigned, 8> denoms = {4};
@@ -764,10 +731,9 @@ TEST(IntegerPolyhedronTest, computeLocalReprFromEquality) {
     checkDivisionRepresentation(poly, divisions, denoms);
   }
   {
-    IntegerPolyhedron poly =
-        parsePoly("(i, j, q) : (4*q - i - j == 0)", &context);
+    IntegerPolyhedron poly = parsePoly("(i, j, q) : (4*q - i - j == 0)");
     // Convert `q` to a local variable.
-    poly.convertDimToLocal(2, 3);
+    poly.convertToLocal(IdKind::SetDim, 2, 3);
 
     std::vector<SmallVector<int64_t, 8>> divisions = {{-1, -1, 0, 0}};
     SmallVector<unsigned, 8> denoms = {4};
@@ -775,10 +741,9 @@ TEST(IntegerPolyhedronTest, computeLocalReprFromEquality) {
     checkDivisionRepresentation(poly, divisions, denoms);
   }
   {
-    IntegerPolyhedron poly =
-        parsePoly("(i, j, q) : (3*q + i + j - 2 == 0)", &context);
+    IntegerPolyhedron poly = parsePoly("(i, j, q) : (3*q + i + j - 2 == 0)");
     // Convert `q` to a local variable.
-    poly.convertDimToLocal(2, 3);
+    poly.convertToLocal(IdKind::SetDim, 2, 3);
 
     std::vector<SmallVector<int64_t, 8>> divisions = {{1, 1, 0, -2}};
     SmallVector<unsigned, 8> denoms = {3};
@@ -788,14 +753,12 @@ TEST(IntegerPolyhedronTest, computeLocalReprFromEquality) {
 }
 
 TEST(IntegerPolyhedronTest, computeLocalReprFromEqualityAndInequality) {
-  MLIRContext context;
   {
     IntegerPolyhedron poly =
         parsePoly("(i, j, q, k) : (-3*k + i + j == 0, 4*q - "
-                  "i - j + 2 >= 0, -4*q + i + j >= 0)",
-                  &context);
+                  "i - j + 2 >= 0, -4*q + i + j >= 0)");
     // Convert `q` and `k` to local variables.
-    poly.convertDimToLocal(2, 4);
+    poly.convertToLocal(IdKind::SetDim, 2, 4);
 
     std::vector<SmallVector<int64_t, 8>> divisions = {{1, 1, 0, 0, 1},
                                                       {-1, -1, 0, 0, 0}};
@@ -806,11 +769,10 @@ TEST(IntegerPolyhedronTest, computeLocalReprFromEqualityAndInequality) {
 }
 
 TEST(IntegerPolyhedronTest, computeLocalReprNoRepr) {
-  MLIRContext context;
   IntegerPolyhedron poly =
-      parsePoly("(x, q) : (x - 3 * q >= 0, -x + 3 * q + 3 >= 0)", &context);
+      parsePoly("(x, q) : (x - 3 * q >= 0, -x + 3 * q + 3 >= 0)");
   // Convert q to a local variable.
-  poly.convertDimToLocal(1, 2);
+  poly.convertToLocal(IdKind::SetDim, 1, 2);
 
   std::vector<SmallVector<int64_t, 8>> divisions = {{0, 0, 0}};
   SmallVector<unsigned, 8> denoms = {0};
@@ -820,11 +782,10 @@ TEST(IntegerPolyhedronTest, computeLocalReprNoRepr) {
 }
 
 TEST(IntegerPolyhedronTest, computeLocalReprNegConstNormalize) {
-  MLIRContext context;
-  IntegerPolyhedron poly = parsePoly(
-      "(x, q) : (-1 - 3*x - 6 * q >= 0, 6 + 3*x + 6*q >= 0)", &context);
+  IntegerPolyhedron poly =
+      parsePoly("(x, q) : (-1 - 3*x - 6 * q >= 0, 6 + 3*x + 6*q >= 0)");
   // Convert q to a local variable.
-  poly.convertDimToLocal(1, 2);
+  poly.convertToLocal(IdKind::SetDim, 1, 2);
 
   // q = floor((-1/3 - x)/2)
   //   = floor((1/3) + (-1 - x)/2)
@@ -836,14 +797,14 @@ TEST(IntegerPolyhedronTest, computeLocalReprNegConstNormalize) {
 
 TEST(IntegerPolyhedronTest, simplifyLocalsTest) {
   // (x) : (exists y: 2x + y = 1 and y = 2).
-  IntegerPolyhedron poly(1, 0, 1);
+  IntegerPolyhedron poly(PresburgerSpace::getSetSpace(1, 0, 1));
   poly.addEquality({2, 1, -1});
   poly.addEquality({0, 1, -2});
 
   EXPECT_TRUE(poly.isEmpty());
 
   // (x) : (exists y, z, w: 3x + y = 1 and 2y = z and 3y = w and z = w).
-  IntegerPolyhedron poly2(1, 0, 3);
+  IntegerPolyhedron poly2(PresburgerSpace::getSetSpace(1, 0, 3));
   poly2.addEquality({3, 1, 0, 0, -1});
   poly2.addEquality({0, 2, -1, 0, 0});
   poly2.addEquality({0, 3, 0, -1, 0});
@@ -852,7 +813,7 @@ TEST(IntegerPolyhedronTest, simplifyLocalsTest) {
   EXPECT_TRUE(poly2.isEmpty());
 
   // (x) : (exists y: x >= y + 1 and 2x + y = 0 and y >= -1).
-  IntegerPolyhedron poly3(1, 0, 1);
+  IntegerPolyhedron poly3(PresburgerSpace::getSetSpace(1, 0, 1));
   poly3.addInequality({1, -1, -1});
   poly3.addInequality({0, 1, 1});
   poly3.addEquality({2, 1, 0});
@@ -863,16 +824,16 @@ TEST(IntegerPolyhedronTest, simplifyLocalsTest) {
 TEST(IntegerPolyhedronTest, mergeDivisionsSimple) {
   {
     // (x) : (exists z, y  = [x / 2] : x = 3y and x + z + 1 >= 0).
-    IntegerPolyhedron poly1(1, 0, 1);
+    IntegerPolyhedron poly1(PresburgerSpace::getSetSpace(1, 0, 1));
     poly1.addLocalFloorDiv({1, 0, 0}, 2); // y = [x / 2].
     poly1.addEquality({1, 0, -3, 0});     // x = 3y.
     poly1.addInequality({1, 1, 0, 1});    // x + z + 1 >= 0.
 
     // (x) : (exists y = [x / 2], z : x = 5y).
-    IntegerPolyhedron poly2(1);
+    IntegerPolyhedron poly2(PresburgerSpace::getSetSpace(1));
     poly2.addLocalFloorDiv({1, 0}, 2); // y = [x / 2].
     poly2.addEquality({1, -5, 0});     // x = 5y.
-    poly2.appendLocalId();             // Add local id z.
+    poly2.appendId(IdKind::Local);     // Add local id z.
 
     poly1.mergeLocalIds(poly2);
 
@@ -886,13 +847,13 @@ TEST(IntegerPolyhedronTest, mergeDivisionsSimple) {
 
   {
     // (x) : (exists z = [x / 5], y = [x / 2] : x = 3y).
-    IntegerPolyhedron poly1(1);
+    IntegerPolyhedron poly1(PresburgerSpace::getSetSpace(1));
     poly1.addLocalFloorDiv({1, 0}, 5);    // z = [x / 5].
     poly1.addLocalFloorDiv({1, 0, 0}, 2); // y = [x / 2].
     poly1.addEquality({1, 0, -3, 0});     // x = 3y.
 
     // (x) : (exists y = [x / 2], z = [x / 5]: x = 5z).
-    IntegerPolyhedron poly2(1);
+    IntegerPolyhedron poly2(PresburgerSpace::getSetSpace(1));
     poly2.addLocalFloorDiv({1, 0}, 2);    // y = [x / 2].
     poly2.addLocalFloorDiv({1, 0, 0}, 5); // z = [x / 5].
     poly2.addEquality({1, 0, -5, 0});     // x = 5z.
@@ -910,17 +871,17 @@ TEST(IntegerPolyhedronTest, mergeDivisionsSimple) {
   {
     // Division Normalization test.
     // (x) : (exists z, y  = [x / 2] : x = 3y and x + z + 1 >= 0).
-    IntegerPolyhedron poly1(1, 0, 1);
+    IntegerPolyhedron poly1(PresburgerSpace::getSetSpace(1, 0, 1));
     // This division would be normalized.
     poly1.addLocalFloorDiv({3, 0, 0}, 6); // y = [3x / 6] -> [x/2].
     poly1.addEquality({1, 0, -3, 0});     // x = 3z.
     poly1.addInequality({1, 1, 0, 1});    // x + y + 1 >= 0.
 
     // (x) : (exists y = [x / 2], z : x = 5y).
-    IntegerPolyhedron poly2(1);
+    IntegerPolyhedron poly2(PresburgerSpace::getSetSpace(1));
     poly2.addLocalFloorDiv({1, 0}, 2); // y = [x / 2].
     poly2.addEquality({1, -5, 0});     // x = 5y.
-    poly2.appendLocalId();             // Add local id z.
+    poly2.appendId(IdKind::Local);     // Add local id z.
 
     poly1.mergeLocalIds(poly2);
 
@@ -936,13 +897,13 @@ TEST(IntegerPolyhedronTest, mergeDivisionsSimple) {
 TEST(IntegerPolyhedronTest, mergeDivisionsNestedDivsions) {
   {
     // (x) : (exists y = [x / 2], z = [x + y / 3]: y + z >= x).
-    IntegerPolyhedron poly1(1);
+    IntegerPolyhedron poly1(PresburgerSpace::getSetSpace(1));
     poly1.addLocalFloorDiv({1, 0}, 2);    // y = [x / 2].
     poly1.addLocalFloorDiv({1, 1, 0}, 3); // z = [x + y / 3].
     poly1.addInequality({-1, 1, 1, 0});   // y + z >= x.
 
     // (x) : (exists y = [x / 2], z = [x + y / 3]: y + z <= x).
-    IntegerPolyhedron poly2(1);
+    IntegerPolyhedron poly2(PresburgerSpace::getSetSpace(1));
     poly2.addLocalFloorDiv({1, 0}, 2);    // y = [x / 2].
     poly2.addLocalFloorDiv({1, 1, 0}, 3); // z = [x + y / 3].
     poly2.addInequality({1, -1, -1, 0});  // y + z <= x.
@@ -959,14 +920,14 @@ TEST(IntegerPolyhedronTest, mergeDivisionsNestedDivsions) {
 
   {
     // (x) : (exists y = [x / 2], z = [x + y / 3], w = [z + 1 / 5]: y + z >= x).
-    IntegerPolyhedron poly1(1);
+    IntegerPolyhedron poly1(PresburgerSpace::getSetSpace(1));
     poly1.addLocalFloorDiv({1, 0}, 2);       // y = [x / 2].
     poly1.addLocalFloorDiv({1, 1, 0}, 3);    // z = [x + y / 3].
     poly1.addLocalFloorDiv({0, 0, 1, 1}, 5); // w = [z + 1 / 5].
     poly1.addInequality({-1, 1, 1, 0, 0});   // y + z >= x.
 
     // (x) : (exists y = [x / 2], z = [x + y / 3], w = [z + 1 / 5]: y + z <= x).
-    IntegerPolyhedron poly2(1);
+    IntegerPolyhedron poly2(PresburgerSpace::getSetSpace(1));
     poly2.addLocalFloorDiv({1, 0}, 2);       // y = [x / 2].
     poly2.addLocalFloorDiv({1, 1, 0}, 3);    // z = [x + y / 3].
     poly2.addLocalFloorDiv({0, 0, 1, 1}, 5); // w = [z + 1 / 5].
@@ -983,13 +944,13 @@ TEST(IntegerPolyhedronTest, mergeDivisionsNestedDivsions) {
   }
   {
     // (x) : (exists y = [x / 2], z = [x + y / 3]: y + z >= x).
-    IntegerPolyhedron poly1(1);
+    IntegerPolyhedron poly1(PresburgerSpace::getSetSpace(1));
     poly1.addLocalFloorDiv({2, 0}, 4);    // y = [2x / 4] -> [x / 2].
     poly1.addLocalFloorDiv({1, 1, 0}, 3); // z = [x + y / 3].
     poly1.addInequality({-1, 1, 1, 0});   // y + z >= x.
 
     // (x) : (exists y = [x / 2], z = [x + y / 3]: y + z <= x).
-    IntegerPolyhedron poly2(1);
+    IntegerPolyhedron poly2(PresburgerSpace::getSetSpace(1));
     poly2.addLocalFloorDiv({1, 0}, 2); // y = [x / 2].
     // This division would be normalized.
     poly2.addLocalFloorDiv({3, 3, 0}, 9); // z = [3x + 3y / 9] -> [x + y / 3].
@@ -1009,13 +970,13 @@ TEST(IntegerPolyhedronTest, mergeDivisionsNestedDivsions) {
 TEST(IntegerPolyhedronTest, mergeDivisionsConstants) {
   {
     // (x) : (exists y = [x + 1 / 3], z = [x + 2 / 3]: y + z >= x).
-    IntegerPolyhedron poly1(1);
+    IntegerPolyhedron poly1(PresburgerSpace::getSetSpace(1));
     poly1.addLocalFloorDiv({1, 1}, 2);    // y = [x + 1 / 2].
     poly1.addLocalFloorDiv({1, 0, 2}, 3); // z = [x + 2 / 3].
     poly1.addInequality({-1, 1, 1, 0});   // y + z >= x.
 
     // (x) : (exists y = [x + 1 / 3], z = [x + 2 / 3]: y + z <= x).
-    IntegerPolyhedron poly2(1);
+    IntegerPolyhedron poly2(PresburgerSpace::getSetSpace(1));
     poly2.addLocalFloorDiv({1, 1}, 2);    // y = [x + 1 / 2].
     poly2.addLocalFloorDiv({1, 0, 2}, 3); // z = [x + 2 / 3].
     poly2.addInequality({1, -1, -1, 0});  // y + z <= x.
@@ -1031,14 +992,14 @@ TEST(IntegerPolyhedronTest, mergeDivisionsConstants) {
   }
   {
     // (x) : (exists y = [x + 1 / 3], z = [x + 2 / 3]: y + z >= x).
-    IntegerPolyhedron poly1(1);
+    IntegerPolyhedron poly1(PresburgerSpace::getSetSpace(1));
     poly1.addLocalFloorDiv({1, 1}, 2); // y = [x + 1 / 2].
     // Normalization test.
     poly1.addLocalFloorDiv({3, 0, 6}, 9); // z = [3x + 6 / 9] -> [x + 2 / 3].
     poly1.addInequality({-1, 1, 1, 0});   // y + z >= x.
 
     // (x) : (exists y = [x + 1 / 3], z = [x + 2 / 3]: y + z <= x).
-    IntegerPolyhedron poly2(1);
+    IntegerPolyhedron poly2(PresburgerSpace::getSetSpace(1));
     // Normalization test.
     poly2.addLocalFloorDiv({2, 2}, 4);    // y = [2x + 2 / 4] -> [x + 1 / 2].
     poly2.addLocalFloorDiv({1, 0, 2}, 3); // z = [x + 2 / 3].
@@ -1055,16 +1016,39 @@ TEST(IntegerPolyhedronTest, mergeDivisionsConstants) {
   }
 }
 
+TEST(IntegerPolyhedronTest, mergeDivisionsDuplicateInSameSet) {
+  // (x) : (exists y = [x + 1 / 3], z = [x + 1 / 3]: y + z >= x).
+  IntegerPolyhedron poly1(PresburgerSpace::getSetSpace(1));
+  poly1.addLocalFloorDiv({1, 1}, 3);    // y = [x + 1 / 2].
+  poly1.addLocalFloorDiv({1, 0, 1}, 3); // z = [x + 1 / 3].
+  poly1.addInequality({-1, 1, 1, 0});   // y + z >= x.
+
+  // (x) : (exists y = [x + 1 / 3], z = [x + 2 / 3]: y + z <= x).
+  IntegerPolyhedron poly2(PresburgerSpace::getSetSpace(1));
+  poly2.addLocalFloorDiv({1, 1}, 3);    // y = [x + 1 / 3].
+  poly2.addLocalFloorDiv({1, 0, 2}, 3); // z = [x + 2 / 3].
+  poly2.addInequality({1, -1, -1, 0});  // y + z <= x.
+
+  poly1.mergeLocalIds(poly2);
+
+  // Local space should be same.
+  EXPECT_EQ(poly1.getNumLocalIds(), poly2.getNumLocalIds());
+
+  // 1 divisions should be matched.
+  EXPECT_EQ(poly1.getNumLocalIds(), 3u);
+  EXPECT_EQ(poly2.getNumLocalIds(), 3u);
+}
+
 TEST(IntegerPolyhedronTest, negativeDividends) {
   // (x) : (exists y = [-x + 1 / 2], z = [-x - 2 / 3]: y + z >= x).
-  IntegerPolyhedron poly1(1);
+  IntegerPolyhedron poly1(PresburgerSpace::getSetSpace(1));
   poly1.addLocalFloorDiv({-1, 1}, 2); // y = [x + 1 / 2].
   // Normalization test with negative dividends
   poly1.addLocalFloorDiv({-3, 0, -6}, 9); // z = [3x + 6 / 9] -> [x + 2 / 3].
   poly1.addInequality({-1, 1, 1, 0});     // y + z >= x.
 
   // (x) : (exists y = [x + 1 / 3], z = [x + 2 / 3]: y + z <= x).
-  IntegerPolyhedron poly2(1);
+  IntegerPolyhedron poly2(PresburgerSpace::getSetSpace(1));
   // Normalization test.
   poly2.addLocalFloorDiv({-2, 2}, 4);     // y = [-2x + 2 / 4] -> [-x + 1 / 2].
   poly2.addLocalFloorDiv({-1, 0, -2}, 3); // z = [-x - 2 / 3].
@@ -1092,42 +1076,34 @@ void expectNoRationalLexMin(OptimumKind kind, const IntegerPolyhedron &poly) {
   EXPECT_EQ(poly.findRationalLexMin().getKind(), kind);
 }
 
-TEST(IntegerPolyhedronTest, getRationalLexMin) {
-  MLIRContext context;
+TEST(IntegerPolyhedronTest, findRationalLexMin) {
   expectRationalLexMin(
-      parsePoly("(x, y, z) : (x + 10 >= 0, y + 40 >= 0, z + 30 >= 0)",
-                &context),
+      parsePoly("(x, y, z) : (x + 10 >= 0, y + 40 >= 0, z + 30 >= 0)"),
       {{-10, 1}, {-40, 1}, {-30, 1}});
   expectRationalLexMin(
       parsePoly(
-          "(x, y, z) : (2*x + 7 >= 0, 3*y - 5 >= 0, 8*z + 10 >= 0, 9*z >= 0)",
-          &context),
+          "(x, y, z) : (2*x + 7 >= 0, 3*y - 5 >= 0, 8*z + 10 >= 0, 9*z >= 0)"),
       {{-7, 2}, {5, 3}, {0, 1}});
-  expectRationalLexMin(
-      parsePoly(
-          "(x, y) : (3*x + 2*y + 10 >= 0, -3*y + 10 >= 0, 4*x - 7*y - 10 >= 0)",
-          &context),
-      {{-50, 29}, {-70, 29}});
+  expectRationalLexMin(parsePoly("(x, y) : (3*x + 2*y + 10 >= 0, -3*y + 10 >= "
+                                 "0, 4*x - 7*y - 10 >= 0)"),
+                       {{-50, 29}, {-70, 29}});
 
   // Test with some locals. This is basically x >= 11, 0 <= x - 2e <= 1.
   // It'll just choose x = 11, e = 5.5 since it's rational lexmin.
   expectRationalLexMin(
       parsePoly(
-          "(x, y) : (x - 2*(x floordiv 2) == 0, y - 2*x >= 0, x - 11 >= 0)",
-          &context),
+          "(x, y) : (x - 2*(x floordiv 2) == 0, y - 2*x >= 0, x - 11 >= 0)"),
       {{11, 1}, {22, 1}});
 
   expectRationalLexMin(parsePoly("(x, y) : (3*x + 2*y + 10 >= 0,"
-                                 "-4*x + 7*y + 10 >= 0, -3*y + 10 >= 0)",
-                                 &context),
+                                 "-4*x + 7*y + 10 >= 0, -3*y + 10 >= 0)"),
                        {{-50, 9}, {10, 3}});
 
   // Cartesian product of above with itself.
   expectRationalLexMin(
       parsePoly("(x, y, z, w) : (3*x + 2*y + 10 >= 0, -4*x + 7*y + 10 >= 0,"
                 "-3*y + 10 >= 0, 3*z + 2*w + 10 >= 0, -4*z + 7*w + 10 >= 0,"
-                "-3*w + 10 >= 0)",
-                &context),
+                "-3*w + 10 >= 0)"),
       {{-50, 9}, {10, 3}, {-50, 9}, {10, 3}});
 
   // Same as above but for the constraints on z and w, we express "10" in terms
@@ -1139,8 +1115,7 @@ TEST(IntegerPolyhedronTest, getRationalLexMin) {
       parsePoly(
           "(x, y, z, w) : (3*x + 2*y + 10 >= 0, -4*x + 7*y + 10 >= 0, "
           "-3*y + 10 >= 0, 3*z + 2*w - 9*x - 12*y >= 0,"
-          "-4*z + 7*w + - 9*x - 9*y - 10 >= 0, -3*w - 9*x - 15*y + 10 >= 0)",
-          &context),
+          "-4*z + 7*w + - 9*x - 9*y - 10 >= 0, -3*w - 9*x - 15*y + 10 >= 0)"),
       {{-50, 9}, {10, 3}, {-50, 9}, {10, 3}});
 
   // Same as above with one constraint removed, making the lexmin unbounded.
@@ -1148,19 +1123,17 @@ TEST(IntegerPolyhedronTest, getRationalLexMin) {
       OptimumKind::Unbounded,
       parsePoly("(x, y, z, w) : (3*x + 2*y + 10 >= 0, -4*x + 7*y + 10 >= 0,"
                 "-3*y + 10 >= 0, 3*z + 2*w - 9*x - 12*y >= 0,"
-                "-4*z + 7*w + - 9*x - 9*y - 10>= 0)",
-                &context));
+                "-4*z + 7*w + - 9*x - 9*y - 10>= 0)"));
 
   // Again, the lexmin is unbounded.
   expectNoRationalLexMin(
       OptimumKind::Unbounded,
       parsePoly("(x, y, z) : (2*x + 5*y + 8*z - 10 >= 0,"
-                "2*x + 10*y + 8*z - 10 >= 0, 2*x + 5*y + 10*z - 10 >= 0)",
-                &context));
+                "2*x + 10*y + 8*z - 10 >= 0, 2*x + 5*y + 10*z - 10 >= 0)"));
 
   // The set is empty.
   expectNoRationalLexMin(OptimumKind::Empty,
-                         parsePoly("(x) : (2*x >= 0, -x - 1 >= 0)", &context));
+                         parsePoly("(x) : (2*x >= 0, -x - 1 >= 0)"));
 }
 
 void expectIntegerLexMin(const IntegerPolyhedron &poly, ArrayRef<int64_t> min) {
@@ -1175,17 +1148,237 @@ void expectNoIntegerLexMin(OptimumKind kind, const IntegerPolyhedron &poly) {
   EXPECT_EQ(poly.findRationalLexMin().getKind(), kind);
 }
 
-TEST(IntegerPolyhedronTest, getIntegerLexMin) {
-  MLIRContext context;
+TEST(IntegerPolyhedronTest, findIntegerLexMin) {
   expectIntegerLexMin(parsePoly("(x, y, z) : (2*x + 13 >= 0, 4*y - 3*x - 2  >= "
-                                "0, 11*z + 5*y - 3*x + 7 >= 0)",
-                                &context),
+                                "0, 11*z + 5*y - 3*x + 7 >= 0)"),
                       {-6, -4, 0});
   // Similar to above but no lower bound on z.
   expectNoIntegerLexMin(OptimumKind::Unbounded,
                         parsePoly("(x, y, z) : (2*x + 13 >= 0, 4*y - 3*x - 2  "
-                                  ">= 0, -11*z + 5*y - 3*x + 7 >= 0)",
-                                  &context));
+                                  ">= 0, -11*z + 5*y - 3*x + 7 >= 0)"));
+}
+
+void expectSymbolicIntegerLexMin(
+    StringRef polyStr,
+    ArrayRef<std::pair<StringRef, SmallVector<SmallVector<int64_t, 8>, 8>>>
+        expectedLexminRepr,
+    ArrayRef<StringRef> expectedUnboundedDomainRepr) {
+  IntegerPolyhedron poly = parsePoly(polyStr);
+
+  ASSERT_NE(poly.getNumDimIds(), 0u);
+  ASSERT_NE(poly.getNumSymbolIds(), 0u);
+
+  PWMAFunction expectedLexmin =
+      parsePWMAF(/*numInputs=*/poly.getNumSymbolIds(),
+                 /*numOutputs=*/poly.getNumDimIds(), expectedLexminRepr);
+
+  PresburgerSet expectedUnboundedDomain = parsePresburgerSetFromPolyStrings(
+      poly.getNumSymbolIds(), expectedUnboundedDomainRepr);
+
+  SymbolicLexMin result = poly.findSymbolicIntegerLexMin();
+
+  EXPECT_TRUE(result.lexmin.isEqual(expectedLexmin));
+  if (!result.lexmin.isEqual(expectedLexmin)) {
+    llvm::errs() << "got:\n";
+    result.lexmin.dump();
+    llvm::errs() << "expected:\n";
+    expectedLexmin.dump();
+  }
+
+  EXPECT_TRUE(result.unboundedDomain.isEqual(expectedUnboundedDomain));
+  if (!result.unboundedDomain.isEqual(expectedUnboundedDomain))
+    result.unboundedDomain.dump();
+}
+
+void expectSymbolicIntegerLexMin(
+    StringRef polyStr,
+    ArrayRef<std::pair<StringRef, SmallVector<SmallVector<int64_t, 8>, 8>>>
+        result) {
+  expectSymbolicIntegerLexMin(polyStr, result, {});
+}
+
+TEST(IntegerPolyhedronTest, findSymbolicIntegerLexMin) {
+  expectSymbolicIntegerLexMin("(x)[a] : (x - a >= 0)",
+                              {
+                                  {"(a) : ()", {{1, 0}}}, // a
+                              });
+
+  expectSymbolicIntegerLexMin(
+      "(x)[a, b] : (x - a >= 0, x - b >= 0)",
+      {
+          {"(a, b) : (a - b >= 0)", {{1, 0, 0}}},     // a
+          {"(a, b) : (b - a - 1 >= 0)", {{0, 1, 0}}}, // b
+      });
+
+  expectSymbolicIntegerLexMin(
+      "(x)[a, b, c] : (x -a >= 0, x - b >= 0, x - c >= 0)",
+      {
+          {"(a, b, c) : (a - b >= 0, a - c >= 0)", {{1, 0, 0, 0}}},         // a
+          {"(a, b, c) : (b - a - 1 >= 0, b - c >= 0)", {{0, 1, 0, 0}}},     // b
+          {"(a, b, c) : (c - a - 1 >= 0, c - b - 1 >= 0)", {{0, 0, 1, 0}}}, // c
+      });
+
+  expectSymbolicIntegerLexMin("(x, y)[a] : (x - a >= 0, x + y >= 0)",
+                              {
+                                  {"(a) : ()", {{1, 0}, {-1, 0}}}, // (a, -a)
+                              });
+
+  expectSymbolicIntegerLexMin(
+      "(x, y)[a] : (x - a >= 0, x + y >= 0, y >= 0)",
+      {
+          {"(a) : (a >= 0)", {{1, 0}, {0, 0}}},       // (a, 0)
+          {"(a) : (-a - 1 >= 0)", {{1, 0}, {-1, 0}}}, // (a, -a)
+      });
+
+  expectSymbolicIntegerLexMin(
+      "(x, y)[a, b, c] : (x - a >= 0, y - b >= 0, c - x - y >= 0)",
+      {
+          {"(a, b, c) : (c - a - b >= 0)",
+           {{1, 0, 0, 0}, {0, 1, 0, 0}}}, // (a, b)
+      });
+
+  expectSymbolicIntegerLexMin(
+      "(x, y, z)[a, b, c] : (c - z >= 0, b - y >= 0, x + y + z - a == 0)",
+      {
+          {"(a, b, c) : ()",
+           {{1, -1, -1, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}}}, // (a - b - c, b, c)
+      });
+
+  expectSymbolicIntegerLexMin(
+      "(x)[a, b] : (a >= 0, b >= 0, x >= 0, a + b + x - 1 >= 0)",
+      {
+          {"(a, b) : (a >= 0, b >= 0, a + b - 1 >= 0)", {{0, 0, 0}}}, // 0
+          {"(a, b) : (a == 0, b == 0)", {{0, 0, 1}}},                 // 1
+      });
+
+  expectSymbolicIntegerLexMin(
+      "(x)[a, b] : (1 - a >= 0, a >= 0, 1 - b >= 0, b >= 0, 1 - x >= 0, x >= "
+      "0, a + b + x - 1 >= 0)",
+      {
+          {"(a, b) : (1 - a >= 0, a >= 0, 1 - b >= 0, b >= 0, a + b - 1 >= 0)",
+           {{0, 0, 0}}},                              // 0
+          {"(a, b) : (a == 0, b == 0)", {{0, 0, 1}}}, // 1
+      });
+
+  expectSymbolicIntegerLexMin(
+      "(x, y, z)[a, b] : (x - a == 0, y - b == 0, x >= 0, y >= 0, z >= 0, x + "
+      "y + z - 1 >= 0)",
+      {
+          {"(a, b) : (a >= 0, b >= 0, 1 - a - b >= 0)",
+           {{1, 0, 0}, {0, 1, 0}, {-1, -1, 1}}}, // (a, b, 1 - a - b)
+          {"(a, b) : (a >= 0, b >= 0, a + b - 2 >= 0)",
+           {{1, 0, 0}, {0, 1, 0}, {0, 0, 0}}}, // (a, b, 0)
+      });
+
+  expectSymbolicIntegerLexMin("(x)[a, b] : (x - a == 0, x - b >= 0)",
+                              {
+                                  {"(a, b) : (a - b >= 0)", {{1, 0, 0}}}, // a
+                              });
+
+  expectSymbolicIntegerLexMin(
+      "(q)[a] : (a - 1 - 3*q == 0, q >= 0)",
+      {
+          {"(a) : (a - 1 - 3*(a floordiv 3) == 0, a >= 0)",
+           {{0, 1, 0}}}, // a floordiv 3
+      });
+
+  expectSymbolicIntegerLexMin(
+      "(r, q)[a] : (a - r - 3*q == 0, q >= 0, 1 - r >= 0, r >= 0)",
+      {
+          {"(a) : (a - 0 - 3*(a floordiv 3) == 0, a >= 0)",
+           {{0, 0, 0}, {0, 1, 0}}}, // (0, a floordiv 3)
+          {"(a) : (a - 1 - 3*(a floordiv 3) == 0, a >= 0)",
+           {{0, 0, 1}, {0, 1, 0}}}, // (1 a floordiv 3)
+      });
+
+  expectSymbolicIntegerLexMin(
+      "(r, q)[a] : (a - r - 3*q == 0, q >= 0, 2 - r >= 0, r - 1 >= 0)",
+      {
+          {"(a) : (a - 1 - 3*(a floordiv 3) == 0, a >= 0)",
+           {{0, 0, 1}, {0, 1, 0}}}, // (1, a floordiv 3)
+          {"(a) : (a - 2 - 3*(a floordiv 3) == 0, a >= 0)",
+           {{0, 0, 2}, {0, 1, 0}}}, // (2, a floordiv 3)
+      });
+
+  expectSymbolicIntegerLexMin(
+      "(r, q)[a] : (a - r - 3*q == 0, q >= 0, r >= 0)",
+      {
+          {"(a) : (a - 3*(a floordiv 3) == 0, a >= 0)",
+           {{0, 0, 0}, {0, 1, 0}}}, // (0, a floordiv 3)
+          {"(a) : (a - 1 - 3*(a floordiv 3) == 0, a >= 0)",
+           {{0, 0, 1}, {0, 1, 0}}}, // (1, a floordiv 3)
+          {"(a) : (a - 2 - 3*(a floordiv 3) == 0, a >= 0)",
+           {{0, 0, 2}, {0, 1, 0}}}, // (2, a floordiv 3)
+      });
+
+  expectSymbolicIntegerLexMin(
+      "(x, y, z, w)[g] : ("
+      // x, y, z, w are boolean variables.
+      "1 - x >= 0, x >= 0, 1 - y >= 0, y >= 0,"
+      "1 - z >= 0, z >= 0, 1 - w >= 0, w >= 0,"
+      // We have some constraints on them:
+      "x + y + z - 1 >= 0,"             // x or y or z
+      "x + y + w - 1 >= 0,"             // x or y or w
+      "1 - x + 1 - y + 1 - w - 1 >= 0," // ~x or ~y or ~w
+      // What's the lexmin solution using exactly g true vars?
+      "g - x - y - z - w == 0)",
+      {
+          {"(g) : (g - 1 == 0)",
+           {{0, 0}, {0, 1}, {0, 0}, {0, 0}}}, // (0, 1, 0, 0)
+          {"(g) : (g - 2 == 0)",
+           {{0, 0}, {0, 0}, {0, 1}, {0, 1}}}, // (0, 0, 1, 1)
+          {"(g) : (g - 3 == 0)",
+           {{0, 0}, {0, 1}, {0, 1}, {0, 1}}}, // (0, 1, 1, 1)
+      });
+
+  // Bezout's lemma: if a, b are constants,
+  // the set of values that ax + by can take is all multiples of gcd(a, b).
+  expectSymbolicIntegerLexMin(
+      // If (x, y) is a solution for a given [a, r], then so is (x - 5, y + 2).
+      // So the lexmin is unbounded if it exists.
+      "(x, y)[a, r] : (a >= 0, r - a + 14*x + 35*y == 0)", {},
+      // According to Bezout's lemma, 14x + 35y can take on all multiples
+      // of 7 and no other values. So the solution exists iff r - a is a
+      // multiple of 7.
+      {"(a, r) : (a >= 0, r - a - 7*((r - a) floordiv 7) == 0)"});
+
+  // The lexmins are unbounded.
+  expectSymbolicIntegerLexMin("(x, y)[a] : (9*x - 4*y - 2*a >= 0)", {},
+                              {"(a) : ()"});
+
+  // Test cases adapted from isl.
+  expectSymbolicIntegerLexMin(
+      // a = 2b - 2(c - b), c - b >= 0.
+      // So b is minimized when c = b.
+      "(b, c)[a] : (a - 4*b + 2*c == 0, c - b >= 0)",
+      {
+          {"(a) : (a - 2*(a floordiv 2) == 0)",
+           {{0, 1, 0}, {0, 1, 0}}}, // (a floordiv 2, a floordiv 2)
+      });
+
+  expectSymbolicIntegerLexMin(
+      // 0 <= b <= 255, 1 <= a - 512b <= 509,
+      // b + 8 >= 1 + 16*(b + 8 floordiv 16) // i.e. b % 16 != 8
+      "(b)[a] : (255 - b >= 0, b >= 0, a - 512*b - 1 >= 0, 512*b -a + 509 >= "
+      "0, b + 7 - 16*((8 + b) floordiv 16) >= 0)",
+      {
+          {"(a) : (255 - (a floordiv 512) >= 0, a >= 0, a - 512*(a floordiv "
+           "512) - 1 >= 0, 512*(a floordiv 512) - a + 509 >= 0, (a floordiv "
+           "512) + 7 - 16*((8 + (a floordiv 512)) floordiv 16) >= 0)",
+           {{0, 1, 0, 0}}}, // (a floordiv 2, a floordiv 2)
+      });
+
+  expectSymbolicIntegerLexMin(
+      "(a, b)[K, N, x, y] : (N - K - 2 >= 0, K + 4 - N >= 0, x - 4 >= 0, x + 6 "
+      "- 2*N >= 0, K+N - x - 1 >= 0, a - N + 1 >= 0, K+N-1-a >= 0,a + 6 - b - "
+      "N >= 0, 2*N - 4 - a >= 0,"
+      "2*N - 3*K + a - b >= 0, 4*N - K + 1 - 3*b >= 0, b - N >= 0, a - x - 1 "
+      ">= 0)",
+      {{
+          "(K, N, x, y) : (x + 6 - 2*N >= 0, 2*N - 5 - x >= 0, x + 1 -3*K + N "
+          ">= 0, N + K - 2 - x >= 0, x - 4 >= 0)",
+          {{0, 0, 1, 0, 1}, {0, 1, 0, 0, 0}} // (1 + x, N)
+      }});
 }
 
 static void
@@ -1197,30 +1390,25 @@ expectComputedVolumeIsValidOverapprox(const IntegerPolyhedron &poly,
 }
 
 TEST(IntegerPolyhedronTest, computeVolume) {
-  MLIRContext context;
-
   // 0 <= x <= 3 + 1/3, -5.5 <= y <= 2 + 3/5, 3 <= z <= 1.75.
   // i.e. 0 <= x <= 3, -5 <= y <= 2, 3 <= z <= 3 + 1/4.
   // So volume is 4 * 8 * 1 = 32.
   expectComputedVolumeIsValidOverapprox(
       parsePoly("(x, y, z) : (x >= 0, -3*x + 10 >= 0, 2*y + 11 >= 0,"
-                "-5*y + 13 >= 0, z - 3 >= 0, -4*z + 13 >= 0)",
-                &context),
+                "-5*y + 13 >= 0, z - 3 >= 0, -4*z + 13 >= 0)"),
       /*trueVolume=*/32ull, /*resultBound=*/32ull);
 
   // Same as above but y has bounds 2 + 1/5 <= y <= 2 + 3/5. So the volume is
   // zero.
   expectComputedVolumeIsValidOverapprox(
       parsePoly("(x, y, z) : (x >= 0, -3*x + 10 >= 0, 5*y - 11 >= 0,"
-                "-5*y + 13 >= 0, z - 3 >= 0, -4*z + 13 >= 0)",
-                &context),
+                "-5*y + 13 >= 0, z - 3 >= 0, -4*z + 13 >= 0)"),
       /*trueVolume=*/0ull, /*resultBound=*/0ull);
 
   // Now x is unbounded below but y still has no integer values.
   expectComputedVolumeIsValidOverapprox(
       parsePoly("(x, y, z) : (-3*x + 10 >= 0, 5*y - 11 >= 0,"
-                "-5*y + 13 >= 0, z - 3 >= 0, -4*z + 13 >= 0)",
-                &context),
+                "-5*y + 13 >= 0, z - 3 >= 0, -4*z + 13 >= 0)"),
       /*trueVolume=*/0ull, /*resultBound=*/0ull);
 
   // A diamond shape, 0 <= x + y <= 10, 0 <= x - y <= 10,
@@ -1228,8 +1416,7 @@ TEST(IntegerPolyhedronTest, computeVolume) {
   // x and y can take 11 possible values so result computed is 11*11 = 121.
   expectComputedVolumeIsValidOverapprox(
       parsePoly("(x, y) : (x + y >= 0, -x - y + 10 >= 0, x - y >= 0,"
-                "-x + y + 10 >= 0)",
-                &context),
+                "-x + y + 10 >= 0)"),
       /*trueVolume=*/61ull, /*resultBound=*/121ull);
 
   // Effectively the same diamond as above; constrain the variables to be even
@@ -1240,14 +1427,36 @@ TEST(IntegerPolyhedronTest, computeVolume) {
   expectComputedVolumeIsValidOverapprox(
       parsePoly("(x, y) : (x + y >= 0, -x - y + 20 >= 0, x - y >= 0,"
                 " -x + y + 20 >= 0, x - 2*(x floordiv 2) == 0,"
-                "y - 2*(y floordiv 2) == 0)",
-                &context),
+                "y - 2*(y floordiv 2) == 0)"),
       /*trueVolume=*/61ull, /*resultBound=*/441ull);
 
   // Unbounded polytope.
   expectComputedVolumeIsValidOverapprox(
-      parsePoly("(x, y) : (2*x - y >= 0, y - 3*x >= 0)", &context),
+      parsePoly("(x, y) : (2*x - y >= 0, y - 3*x >= 0)"),
       /*trueVolume=*/{}, /*resultBound=*/{});
 }
 
-} // namespace mlir
+TEST(IntegerPolyhedronTest, containsPointNoLocal) {
+  IntegerPolyhedron poly1 = parsePoly("(x) : ((x floordiv 2) - x == 0)");
+  EXPECT_TRUE(poly1.containsPointNoLocal({0}));
+  EXPECT_FALSE(poly1.containsPointNoLocal({1}));
+
+  IntegerPolyhedron poly2 = parsePoly(
+      "(x) : (x - 2*(x floordiv 2) == 0, x - 4*(x floordiv 4) - 2 == 0)");
+  EXPECT_TRUE(poly2.containsPointNoLocal({6}));
+  EXPECT_FALSE(poly2.containsPointNoLocal({4}));
+
+  IntegerPolyhedron poly3 = parsePoly("(x, y) : (2*x - y >= 0, y - 3*x >= 0)");
+  EXPECT_TRUE(poly3.containsPointNoLocal({0, 0}));
+  EXPECT_FALSE(poly3.containsPointNoLocal({1, 0}));
+}
+
+TEST(IntegerPolyhedronTest, truncateEqualityRegressionTest) {
+  // IntegerRelation::truncate was truncating inequalities to the number of
+  // equalities.
+  IntegerRelation set(PresburgerSpace::getSetSpace(1));
+  IntegerRelation::CountsSnapshot snapshot = set.getCounts();
+  set.addEquality({1, 0});
+  set.truncate(snapshot);
+  EXPECT_EQ(set.getNumEqualities(), 0u);
+}

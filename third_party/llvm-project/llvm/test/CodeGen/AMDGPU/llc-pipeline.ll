@@ -30,7 +30,6 @@
 ; GCN-O0-NEXT:      FunctionPass Manager
 ; GCN-O0-NEXT:        Dominator Tree Construction
 ; GCN-O0-NEXT:    Lower ctors and dtors for AMDGPU
-; GCN-O0-NEXT:    Fix function bitcasts for AMDGPU
 ; GCN-O0-NEXT:    FunctionPass Manager
 ; GCN-O0-NEXT:      Early propagate attributes from kernels to functions
 ; GCN-O0-NEXT:    AMDGPU Lower Intrinsics
@@ -167,7 +166,6 @@
 ; GCN-O1-NEXT:      FunctionPass Manager
 ; GCN-O1-NEXT:        Dominator Tree Construction
 ; GCN-O1-NEXT:    Lower ctors and dtors for AMDGPU
-; GCN-O1-NEXT:    Fix function bitcasts for AMDGPU
 ; GCN-O1-NEXT:    FunctionPass Manager
 ; GCN-O1-NEXT:      Early propagate attributes from kernels to functions
 ; GCN-O1-NEXT:    AMDGPU Lower Intrinsics
@@ -214,6 +212,8 @@
 ; GCN-O1-NEXT:      Expand vector predication intrinsics
 ; GCN-O1-NEXT:      Scalarize Masked Memory Intrinsics
 ; GCN-O1-NEXT:      Expand reduction intrinsics
+; GCN-O1-NEXT:      Natural Loop Information
+; GCN-O1-NEXT:      TLS Variable Hoist
 ; GCN-O1-NEXT:    AMDGPU Attributor
 ; GCN-O1-NEXT:    CallGraph Construction
 ; GCN-O1-NEXT:    Call Graph SCC Pass Manager
@@ -296,6 +296,7 @@
 ; GCN-O1-NEXT:        Machine Block Frequency Analysis
 ; GCN-O1-NEXT:        Machine Common Subexpression Elimination
 ; GCN-O1-NEXT:        MachinePostDominator Tree Construction
+; GCN-O1-NEXT:        Machine Cycle Info Analysis
 ; GCN-O1-NEXT:        Machine code sinking
 ; GCN-O1-NEXT:        Peephole Optimizations
 ; GCN-O1-NEXT:        Remove dead machine instructions
@@ -419,7 +420,6 @@
 ; GCN-O1-OPTS-NEXT:      FunctionPass Manager
 ; GCN-O1-OPTS-NEXT:        Dominator Tree Construction
 ; GCN-O1-OPTS-NEXT:    Lower ctors and dtors for AMDGPU
-; GCN-O1-OPTS-NEXT:    Fix function bitcasts for AMDGPU
 ; GCN-O1-OPTS-NEXT:    FunctionPass Manager
 ; GCN-O1-OPTS-NEXT:      Early propagate attributes from kernels to functions
 ; GCN-O1-OPTS-NEXT:    AMDGPU Lower Intrinsics
@@ -484,6 +484,8 @@
 ; GCN-O1-OPTS-NEXT:      Expand vector predication intrinsics
 ; GCN-O1-OPTS-NEXT:      Scalarize Masked Memory Intrinsics
 ; GCN-O1-OPTS-NEXT:      Expand reduction intrinsics
+; GCN-O1-OPTS-NEXT:      Natural Loop Information
+; GCN-O1-OPTS-NEXT:      TLS Variable Hoist
 ; GCN-O1-OPTS-NEXT:      Early CSE
 ; GCN-O1-OPTS-NEXT:    AMDGPU Attributor
 ; GCN-O1-OPTS-NEXT:    CallGraph Construction
@@ -573,6 +575,7 @@
 ; GCN-O1-OPTS-NEXT:        Machine Block Frequency Analysis
 ; GCN-O1-OPTS-NEXT:        Machine Common Subexpression Elimination
 ; GCN-O1-OPTS-NEXT:        MachinePostDominator Tree Construction
+; GCN-O1-OPTS-NEXT:        Machine Cycle Info Analysis
 ; GCN-O1-OPTS-NEXT:        Machine code sinking
 ; GCN-O1-OPTS-NEXT:        Peephole Optimizations
 ; GCN-O1-OPTS-NEXT:        Remove dead machine instructions
@@ -704,7 +707,6 @@
 ; GCN-O2-NEXT:      FunctionPass Manager
 ; GCN-O2-NEXT:        Dominator Tree Construction
 ; GCN-O2-NEXT:    Lower ctors and dtors for AMDGPU
-; GCN-O2-NEXT:    Fix function bitcasts for AMDGPU
 ; GCN-O2-NEXT:    FunctionPass Manager
 ; GCN-O2-NEXT:      Early propagate attributes from kernels to functions
 ; GCN-O2-NEXT:    AMDGPU Lower Intrinsics
@@ -769,6 +771,8 @@
 ; GCN-O2-NEXT:      Expand vector predication intrinsics
 ; GCN-O2-NEXT:      Scalarize Masked Memory Intrinsics
 ; GCN-O2-NEXT:      Expand reduction intrinsics
+; GCN-O2-NEXT:      Natural Loop Information
+; GCN-O2-NEXT:      TLS Variable Hoist
 ; GCN-O2-NEXT:      Early CSE
 ; GCN-O2-NEXT:    AMDGPU Attributor
 ; GCN-O2-NEXT:    CallGraph Construction
@@ -859,6 +863,7 @@
 ; GCN-O2-NEXT:        Machine Block Frequency Analysis
 ; GCN-O2-NEXT:        Machine Common Subexpression Elimination
 ; GCN-O2-NEXT:        MachinePostDominator Tree Construction
+; GCN-O2-NEXT:        Machine Cycle Info Analysis
 ; GCN-O2-NEXT:        Machine code sinking
 ; GCN-O2-NEXT:        Peephole Optimizations
 ; GCN-O2-NEXT:        Remove dead machine instructions
@@ -991,7 +996,6 @@
 ; GCN-O3-NEXT:      FunctionPass Manager
 ; GCN-O3-NEXT:        Dominator Tree Construction
 ; GCN-O3-NEXT:    Lower ctors and dtors for AMDGPU
-; GCN-O3-NEXT:    Fix function bitcasts for AMDGPU
 ; GCN-O3-NEXT:    FunctionPass Manager
 ; GCN-O3-NEXT:      Early propagate attributes from kernels to functions
 ; GCN-O3-NEXT:    AMDGPU Lower Intrinsics
@@ -1062,6 +1066,7 @@
 ; GCN-O3-NEXT:      Scalarize Masked Memory Intrinsics
 ; GCN-O3-NEXT:      Expand reduction intrinsics
 ; GCN-O3-NEXT:      Natural Loop Information
+; GCN-O3-NEXT:      TLS Variable Hoist
 ; GCN-O3-NEXT:      Phi Values Analysis
 ; GCN-O3-NEXT:      Basic Alias Analysis (stateless AA impl)
 ; GCN-O3-NEXT:      Function Alias Analysis Results
@@ -1159,6 +1164,7 @@
 ; GCN-O3-NEXT:        Machine Block Frequency Analysis
 ; GCN-O3-NEXT:        Machine Common Subexpression Elimination
 ; GCN-O3-NEXT:        MachinePostDominator Tree Construction
+; GCN-O3-NEXT:        Machine Cycle Info Analysis
 ; GCN-O3-NEXT:        Machine code sinking
 ; GCN-O3-NEXT:        Peephole Optimizations
 ; GCN-O3-NEXT:        Remove dead machine instructions

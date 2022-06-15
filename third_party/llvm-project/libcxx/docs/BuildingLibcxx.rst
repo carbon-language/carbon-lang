@@ -95,10 +95,11 @@ it is the simplest way to build.
 
 .. code-block:: batch
 
-  > cmake -G "Visual Studio 16 2019" -S libcxx -B build ^
-          -T "ClangCL"                                  ^
-          -DLIBCXX_ENABLE_SHARED=YES                    ^
-          -DLIBCXX_ENABLE_STATIC=NO                     ^
+  > cmake -G "Visual Studio 16 2019" -S runtimes -B build ^
+          -T "ClangCL"                                    ^
+          -DLLVM_ENABLE_RUNTIMES=libcxx                   ^
+          -DLIBCXX_ENABLE_SHARED=YES                      ^
+          -DLIBCXX_ENABLE_STATIC=NO                       ^
           -DLIBCXX_ENABLE_EXPERIMENTAL_LIBRARY=NO
   > cmake --build build
 
@@ -127,16 +128,17 @@ In either case, then run:
 
 .. code-block:: batch
 
-  > cmake -G Ninja -S libcxx -B build                                                 ^
+  > cmake -G Ninja -S runtimes -B build                                               ^
           -DCMAKE_C_COMPILER=clang-cl                                                 ^
           -DCMAKE_CXX_COMPILER=clang-cl                                               ^
+          -DLLVM_ENABLE_RUNTIMES=libcxx                                               ^
           -DLIBCXX_ENABLE_EXPERIMENTAL_LIBRARY=NO
   > ninja -C build cxx
   > ninja -C build check-cxx
 
 If you are running in an MSYS2 shell and you have installed the
 MSYS2-provided clang package (which defaults to a non-MSVC target), you
-should add e.g. ``-DLIBCXX_TARGET_TRIPLE=x86_64-windows-msvc`` (replacing
+should add e.g. ``-DCMAKE_CXX_COMPILER_TARGET=x86_64-windows-msvc`` (replacing
 ``x86_64`` with the architecture you're targeting) to the ``cmake`` command
 line above. This will instruct ``check-cxx`` to use the right target triple
 when invoking ``clang++``.
@@ -153,10 +155,10 @@ e.g. the ``mingw-w64-x86_64-clang`` package), together with CMake and ninja.
 
 .. code-block:: bash
 
-  > cmake -G Ninja -S libcxx -B build                                                 \
+  > cmake -G Ninja -S runtimes -B build                                               \
           -DCMAKE_C_COMPILER=clang                                                    \
           -DCMAKE_CXX_COMPILER=clang++                                                \
-          -DLIBCXX_HAS_WIN32_THREAD_API=ON                                            \
+          -DLLVM_ENABLE_RUNTIMES=libcxx                                               \
           -DLIBCXX_CXX_ABI=libstdc++                                                  \
           -DLIBCXX_TARGET_INFO="libcxx.test.target_info.MingwLocalTI"
   > ninja -C build cxx
@@ -216,7 +218,10 @@ libc++ specific options
 
   **Default**: ``OFF``
 
-  Build libc++ with assertions enabled.
+  Build libc++ with assertions enabled in the compiled library, and enable assertions
+  by default when building user code as well. Assertions can be turned off by users
+  by defining ``_LIBCPP_ENABLE_ASSERTIONS=0``. For details, see
+  :ref:`the documentation <assertions-mode>`.
 
 .. option:: LIBCXX_ENABLE_SHARED:BOOL
 
@@ -318,7 +323,7 @@ ABI Library Specific Options
 
 .. option:: LIBCXX_CXX_ABI:STRING
 
-  **Values**: ``none``, ``libcxxabi``, ``libcxxrt``, ``libstdc++``, ``libsupc++``.
+  **Values**: ``none``, ``libcxxabi``, ``system-libcxxabi``, ``libcxxrt``, ``libstdc++``, ``libsupc++``, ``vcruntime``.
 
   Select the ABI library to build libc++ against.
 
@@ -328,7 +333,8 @@ ABI Library Specific Options
 
 .. option:: LIBCXX_CXX_ABI_LIBRARY_PATH:PATH
 
-  Provide the path to the ABI library that libc++ should link against.
+  Provide the path to the ABI library that libc++ should link against. This is only
+  useful when linking against an out-of-tree ABI library.
 
 .. option:: LIBCXX_ENABLE_STATIC_ABI_LIBRARY:BOOL
 

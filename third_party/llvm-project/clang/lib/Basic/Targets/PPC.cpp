@@ -36,6 +36,8 @@ bool PPCTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
       HasAltivec = true;
     } else if (Feature == "+vsx") {
       HasVSX = true;
+    } else if (Feature == "+crbits") {
+      UseCRBits = true;
     } else if (Feature == "+bpermd") {
       HasBPERMD = true;
     } else if (Feature == "+extdiv") {
@@ -81,6 +83,8 @@ bool PPCTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
       IsISA3_0 = true;
     } else if (Feature == "+isa-v31-instructions") {
       IsISA3_1 = true;
+    } else if (Feature == "+quadword-atomics") {
+      HasQuadwordAtomics = true;
     }
     // TODO: Finish this list and add an assert that we've handled them
     // all.
@@ -206,6 +210,7 @@ static void defineXLCompatMacros(MacroBuilder &Builder) {
   Builder.defineMacro("__dcbf", "__builtin_dcbf");
   Builder.defineMacro("__fmadd", "__builtin_fma");
   Builder.defineMacro("__fmadds", "__builtin_fmaf");
+  Builder.defineMacro("__abs", "__builtin_abs");
   Builder.defineMacro("__labs", "__builtin_labs");
   Builder.defineMacro("__llabs", "__builtin_llabs");
   Builder.defineMacro("__popcnt4", "__builtin_popcount");
@@ -247,6 +252,14 @@ static void defineXLCompatMacros(MacroBuilder &Builder) {
   Builder.defineMacro("__test_data_class", "__builtin_ppc_test_data_class");
   Builder.defineMacro("__swdiv", "__builtin_ppc_swdiv");
   Builder.defineMacro("__swdivs", "__builtin_ppc_swdivs");
+  Builder.defineMacro("__fnabs", "__builtin_ppc_fnabs");
+  Builder.defineMacro("__fnabss", "__builtin_ppc_fnabss");
+  Builder.defineMacro("__builtin_maxfe", "__builtin_ppc_maxfe");
+  Builder.defineMacro("__builtin_maxfl", "__builtin_ppc_maxfl");
+  Builder.defineMacro("__builtin_maxfs", "__builtin_ppc_maxfs");
+  Builder.defineMacro("__builtin_minfe", "__builtin_ppc_minfe");
+  Builder.defineMacro("__builtin_minfl", "__builtin_ppc_minfl");
+  Builder.defineMacro("__builtin_minfs", "__builtin_ppc_minfs");
 }
 
 /// PPCTargetInfo::getTargetDefines - Return a set of the PowerPC-specific
@@ -506,6 +519,11 @@ bool PPCTargetInfo::initFeatureMap(
                                 .Case("pwr9", true)
                                 .Case("pwr8", true)
                                 .Default(false);
+  Features["crbits"] = llvm::StringSwitch<bool>(CPU)
+                                .Case("ppc64le", true)
+                                .Case("pwr9", true)
+                                .Case("pwr8", true)
+                                .Default(false);
   Features["vsx"] = llvm::StringSwitch<bool>(CPU)
                         .Case("ppc64le", true)
                         .Case("pwr9", true)
@@ -533,6 +551,7 @@ bool PPCTargetInfo::initFeatureMap(
                                           .Case("pwr9", true)
                                           .Case("pwr8", true)
                                           .Case("pwr7", true)
+                                          .Case("a2", true)
                                           .Default(false);
 
   Features["isa-v207-instructions"] = llvm::StringSwitch<bool>(CPU)
@@ -543,6 +562,12 @@ bool PPCTargetInfo::initFeatureMap(
 
   Features["isa-v30-instructions"] =
       llvm::StringSwitch<bool>(CPU).Case("pwr9", true).Default(false);
+
+  Features["quadword-atomics"] =
+      getTriple().isArch64Bit() && llvm::StringSwitch<bool>(CPU)
+                                       .Case("pwr9", true)
+                                       .Case("pwr8", true)
+                                       .Default(false);
 
   // Power10 includes all the same features as Power9 plus any features specific
   // to the Power10 core.
@@ -569,12 +594,12 @@ bool PPCTargetInfo::initFeatureMap(
   }
 
   if (!(ArchDefs & ArchDefinePwr10)) {
-    if (llvm::find(FeaturesVec, "+mma") != FeaturesVec.end()) {
+    if (llvm::is_contained(FeaturesVec, "+mma")) {
       // MMA operations are not available pre-Power10.
       Diags.Report(diag::err_opt_not_valid_with_opt) << "-mmma" << CPU;
       return false;
     }
-    if (llvm::find(FeaturesVec, "+pcrel") != FeaturesVec.end()) {
+    if (llvm::is_contained(FeaturesVec, "+pcrel")) {
       // PC-Relative instructions are not available pre-Power10,
       // and these instructions also require prefixed instructions support.
       Diags.Report(diag::err_opt_not_valid_without_opt)
@@ -582,13 +607,13 @@ bool PPCTargetInfo::initFeatureMap(
           << "-mcpu=pwr10 -mprefixed";
       return false;
     }
-    if (llvm::find(FeaturesVec, "+prefixed") != FeaturesVec.end()) {
+    if (llvm::is_contained(FeaturesVec, "+prefixed")) {
       // Prefixed instructions are not available pre-Power10.
       Diags.Report(diag::err_opt_not_valid_without_opt) << "-mprefixed"
                                                         << "-mcpu=pwr10";
       return false;
     }
-    if (llvm::find(FeaturesVec, "+paired-vector-memops") != FeaturesVec.end()) {
+    if (llvm::is_contained(FeaturesVec, "+paired-vector-memops")) {
       // Paired vector memops are not available pre-Power10.
       Diags.Report(diag::err_opt_not_valid_without_opt)
           << "-mpaired-vector-memops"
@@ -634,6 +659,7 @@ bool PPCTargetInfo::hasFeature(StringRef Feature) const {
       .Case("powerpc", true)
       .Case("altivec", HasAltivec)
       .Case("vsx", HasVSX)
+      .Case("crbits", UseCRBits)
       .Case("power8-vector", HasP8Vector)
       .Case("crypto", HasP8Crypto)
       .Case("direct-move", HasDirectMove)
@@ -654,6 +680,7 @@ bool PPCTargetInfo::hasFeature(StringRef Feature) const {
       .Case("isa-v207-instructions", IsISA2_07)
       .Case("isa-v30-instructions", IsISA3_0)
       .Case("isa-v31-instructions", IsISA3_1)
+      .Case("quadword-atomics", HasQuadwordAtomics)
       .Default(false);
 }
 

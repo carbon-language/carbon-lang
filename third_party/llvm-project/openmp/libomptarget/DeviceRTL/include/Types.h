@@ -12,6 +12,15 @@
 #ifndef OMPTARGET_TYPES_H
 #define OMPTARGET_TYPES_H
 
+// Tell the compiler that we do not have any "call-like" inline assembly in the
+// device rutime. That means we cannot have inline assembly which will call
+// another function but only inline assembly that performs some operation or
+// side-effect and then continues execution with something on the existing call
+// stack.
+//
+// TODO: Find a good place for this
+#pragma omp assumes ext_no_call_asm
+
 /// Base type declarations for freestanding mode
 ///
 ///{
@@ -199,6 +208,13 @@ enum OMPTgtExecModeFlags : int8_t {
 //       does?
 #define CONSTANT(NAME)                                                         \
   NAME [[clang::loader_uninitialized, clang::address_space(4)]]
+
+// Attribute to keep alive certain definition for the bitcode library.
+#ifdef LIBOMPTARGET_BC_TARGET
+#define KEEP_ALIVE __attribute__((used, retain))
+#else
+#define KEEP_ALIVE
+#endif
 
 ///}
 

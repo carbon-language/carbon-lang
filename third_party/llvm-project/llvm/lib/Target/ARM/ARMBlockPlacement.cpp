@@ -16,6 +16,7 @@
 #include "ARMBasicBlockInfo.h"
 #include "ARMSubtarget.h"
 #include "MVETailPredUtils.h"
+#include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
@@ -212,7 +213,7 @@ bool ARMBlockPlacement::processPostOrderLoops(MachineLoop *ML) {
 bool ARMBlockPlacement::runOnMachineFunction(MachineFunction &MF) {
   if (skipFunction(MF.getFunction()))
     return false;
-  const ARMSubtarget &ST = static_cast<const ARMSubtarget &>(MF.getSubtarget());
+  const ARMSubtarget &ST = MF.getSubtarget<ARMSubtarget>();
   if (!ST.hasLOB())
     return false;
   LLVM_DEBUG(dbgs() << DEBUG_PREFIX << "Running on " << MF.getName() << "\n");

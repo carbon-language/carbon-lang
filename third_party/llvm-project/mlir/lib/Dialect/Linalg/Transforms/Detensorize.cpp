@@ -8,9 +8,9 @@
 
 #include "PassDetail.h"
 #include "mlir/Dialect/ControlFlow/IR/ControlFlowOps.h"
+#include "mlir/Dialect/Func/Transforms/FuncConversions.h"
 #include "mlir/Dialect/Linalg/IR/Linalg.h"
 #include "mlir/Dialect/Linalg/Passes.h"
-#include "mlir/Dialect/StandardOps/Transforms/FuncConversions.h"
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
 #include "mlir/IR/OpDefinition.h"
 #include "mlir/Transforms/DialectConversion.h"
@@ -223,12 +223,12 @@ struct LinalgDetensorize : public LinalgDetensorizeBase<LinalgDetensorize> {
           auto blockOperands =
               terminator.getSuccessorOperands(pred.getSuccessorIndex());
 
-          if (!blockOperands || blockOperands->empty())
+          if (blockOperands.empty() ||
+              blockOperands.isOperandProduced(blockArgumentElem.getArgNumber()))
             continue;
 
           detensorableBranchOps[terminator].insert(
-              blockOperands->getBeginOperandIndex() +
-              blockArgumentElem.getArgNumber());
+              blockOperands.getOperandIndex(blockArgumentElem.getArgNumber()));
         }
       }
 
@@ -256,15 +256,11 @@ struct LinalgDetensorize : public LinalgDetensorizeBase<LinalgDetensorize> {
       SmallVector<Value> workList;
 
       func->walk([&](cf::CondBranchOp condBr) {
-        for (auto operand : condBr.getOperands()) {
-          workList.push_back(operand);
-        }
+        llvm::append_range(workList, condBr.getOperands());
       });
 
       func->walk([&](cf::BranchOp br) {
-        for (auto operand : br.getOperands()) {
-          workList.push_back(operand);
-        }
+        llvm::append_range(workList, br.getOperands());
       });
 
       DenseSet<Value> visitedValues;
@@ -310,8 +306,7 @@ struct LinalgDetensorize : public LinalgDetensorizeBase<LinalgDetensorize> {
         // detensorable and if so, their operands will be added to workList to
         // potentially discover other parts of the detensorable component.
         for (auto *user : currentItem.getUsers())
-          for (Value result : user->getResults())
-            workList.push_back(result);
+          llvm::append_range(workList, user->getResults());
 
         // 2   - Look backward:
         // 2.1 - The current item is defined by a block argument. If the owner
@@ -348,14 +343,15 @@ struct LinalgDetensorize : public LinalgDetensorizeBase<LinalgDetensorize> {
             auto ownerBlockOperands =
                 predTerminator.getSuccessorOperands(pred.getSuccessorIndex());
 
-            if (!ownerBlockOperands || ownerBlockOperands->empty())
+            if (ownerBlockOperands.empty() ||
+                ownerBlockOperands.isOperandProduced(
+                    currentItemBlockArgument.getArgNumber()))
               continue;
 
             // For each predecessor, add the value it passes to that argument to
             // workList to find out how it's computed.
             workList.push_back(
-                ownerBlockOperands
-                    .getValue()[currentItemBlockArgument.getArgNumber()]);
+                ownerBlockOperands[currentItemBlockArgument.getArgNumber()]);
           }
 
           continue;
@@ -383,10 +379,7 @@ struct LinalgDetensorize : public LinalgDetensorizeBase<LinalgDetensorize> {
           }
 
           opsToDetensor.insert(genericOp);
-
-          for (Value genericOpOperand : genericOp.inputs())
-            workList.push_back(genericOpOperand);
-
+          llvm::append_range(workList, genericOp.inputs());
           continue;
         }
 
@@ -405,8 +398,7 @@ struct LinalgDetensorize : public LinalgDetensorizeBase<LinalgDetensorize> {
         if (llvm::all_of(
                 currentItemDefiningOp->getResultTypes(),
                 [&](Type resultType) { return resultType.isIntOrFloat(); }))
-          for (Value scalarOpOperand : currentItemDefiningOp->getOperands())
-            workList.push_back(scalarOpOperand);
+          llvm::append_range(workList, currentItemDefiningOp->getOperands());
       }
 
       // Since the cost model gives up on some ops (see the details of step 2.2
@@ -427,18 +419,16 @@ struct LinalgDetensorize : public LinalgDetensorizeBase<LinalgDetensorize> {
           auto blockOperands =
               terminator.getSuccessorOperands(pred.getSuccessorIndex());
 
-          if (!blockOperands || blockOperands->empty())
+          if (blockOperands.empty() ||
+              blockOperands.isOperandProduced(blockArg.getArgNumber()))
             continue;
 
           Operation *definingOp =
-              terminator
-                  ->getOperand(blockOperands->getBeginOperandIndex() +
-                               blockArg.getArgNumber())
-                  .getDefiningOp();
+              blockOperands[blockArg.getArgNumber()].getDefiningOp();
 
           // If the operand is defined by a GenericOp that will not be
           // detensored, then do not detensor the corresponding block argument.
-          if (dyn_cast_or_null<GenericOp>(definingOp) &&
+          if (isa_and_nonnull<GenericOp>(definingOp) &&
               opsToDetensor.count(definingOp) == 0) {
             blockArgsToRemove.insert(blockArg);
             break;

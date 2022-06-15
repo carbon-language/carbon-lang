@@ -23,12 +23,12 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TokenKinds.h"
+#include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/ModuleLoader.h"
 #include "clang/Lex/ModuleMap.h"
 #include "clang/Lex/PPCallbacks.h"
-#include "clang/Lex/PreprocessorExcludedConditionalDirectiveSkipMapping.h"
 #include "clang/Lex/Token.h"
 #include "clang/Lex/TokenLexer.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -179,11 +179,31 @@ class Preprocessor {
   IdentifierInfo *Ident__is_target_vendor;         // __is_target_vendor
   IdentifierInfo *Ident__is_target_os;             // __is_target_os
   IdentifierInfo *Ident__is_target_environment;    // __is_target_environment
+  IdentifierInfo *Ident__FLT_EVAL_METHOD__;        // __FLT_EVAL_METHOD
 
   // Weak, only valid (and set) while InMacroArgs is true.
   Token* ArgMacro;
 
   SourceLocation DATELoc, TIMELoc;
+
+  // FEM_UnsetOnCommandLine means that an explicit evaluation method was
+  // not specified on the command line. The target is queried to set the
+  // default evaluation method.
+  LangOptions::FPEvalMethodKind CurrentFPEvalMethod =
+      LangOptions::FPEvalMethodKind::FEM_UnsetOnCommandLine;
+
+  // Keeps the value of the last evaluation method before a
+  // `pragma float_control (precise,off) is applied.
+  LangOptions::FPEvalMethodKind LastFPEvalMethod =
+      LangOptions::FPEvalMethodKind::FEM_UnsetOnCommandLine;
+
+  // The most recent pragma location where the floating point evaluation
+  // method was modified. This is used to determine whether the
+  // 'pragma clang fp eval_method' was used whithin the current scope.
+  SourceLocation LastFPEvalPragmaLocation;
+
+  LangOptions::FPEvalMethodKind TUFPEvalMethod =
+      LangOptions::FPEvalMethodKind::FEM_UnsetOnCommandLine;
 
   // Next __COUNTER__ value, starts at 0.
   unsigned CounterValue = 0;
@@ -389,6 +409,14 @@ private:
   /// \#pragma clang assume_nonnull begin.
   SourceLocation PragmaAssumeNonNullLoc;
 
+  /// Set only for preambles which end with an active
+  /// \#pragma clang assume_nonnull begin.
+  ///
+  /// When the preamble is loaded into the main file,
+  /// `PragmaAssumeNonNullLoc` will be set to this to
+  /// replay the unterminated assume_nonnull.
+  SourceLocation PreambleRecordedPragmaAssumeNonNullLoc;
+
   /// True if we hit the code-completion point.
   bool CodeCompletionReached = false;
 
@@ -529,6 +557,7 @@ private:
     CLK_Lexer,
     CLK_TokenLexer,
     CLK_CachingLexer,
+    CLK_DependencyDirectivesLexer,
     CLK_LexAfterModuleImport
   } CurLexerKind = CLK_Lexer;
 
@@ -923,6 +952,18 @@ private:
   /// of that list.
   MacroInfoChain *MIChainHead = nullptr;
 
+  /// True if \p Preprocessor::SkipExcludedConditionalBlock() is running.
+  /// This is used to guard against calling this function recursively.
+  ///
+  /// See comments at the use-site for more context about why it is needed.
+  bool SkippingExcludedConditionalBlock = false;
+
+  /// Keeps track of skipped range mappings that were recorded while skipping
+  /// excluded conditional directives. It maps the source buffer pointer at
+  /// the beginning of a skipped block, to the number of bytes that should be
+  /// skipped.
+  llvm::DenseMap<const char *, unsigned> RecordedSkippedRanges;
+
   void updateOutOfDateIdentifier(IdentifierInfo &II) const;
 
 public:
@@ -1251,13 +1292,10 @@ public:
   StringRef getLastMacroWithSpelling(SourceLocation Loc,
                                      ArrayRef<TokenValue> Tokens) const;
 
-  const std::string &getPredefines() const { return Predefines; }
-
   /// Set the predefines for this Preprocessor.
   ///
   /// These predefines are automatically injected when parsing the main file.
-  void setPredefines(const char *P) { Predefines = P; }
-  void setPredefines(StringRef P) { Predefines = std::string(P); }
+  void setPredefines(std::string P) { Predefines = std::move(P); }
 
   /// Return information about the specified preprocessor
   /// identifier token.
@@ -1742,6 +1780,21 @@ public:
     PragmaAssumeNonNullLoc = Loc;
   }
 
+  /// Get the location of the recorded unterminated \#pragma clang
+  /// assume_nonnull begin in the preamble, if one exists.
+  ///
+  /// Returns an invalid location if the premable did not end with
+  /// such a pragma active or if there is no recorded preamble.
+  SourceLocation getPreambleRecordedPragmaAssumeNonNullLoc() const {
+    return PreambleRecordedPragmaAssumeNonNullLoc;
+  }
+
+  /// Record the location of the unterminated \#pragma clang
+  /// assume_nonnull begin in the preamble.
+  void setPreambleRecordedPragmaAssumeNonNullLoc(SourceLocation Loc) {
+    PreambleRecordedPragmaAssumeNonNullLoc = Loc;
+  }
+
   /// Set the directory in which the main file should be considered
   /// to have been found, if it is not a real file.
   void setMainFileDir(const DirectoryEntry *Dir) {
@@ -2011,8 +2064,7 @@ public:
   /// This either returns the EOF token and returns true, or
   /// pops a level off the include stack and returns false, at which point the
   /// client should call lex again.
-  bool HandleEndOfFile(Token &Result, SourceLocation Loc,
-                       bool isEndOfMacro = false);
+  bool HandleEndOfFile(Token &Result, bool isEndOfMacro = false);
 
   /// Callback invoked when the current TokenLexer hits the end of its
   /// token stream.
@@ -2047,6 +2099,46 @@ public:
   }
   unsigned getCounterValue() const { return CounterValue; }
   void setCounterValue(unsigned V) { CounterValue = V; }
+
+  LangOptions::FPEvalMethodKind getCurrentFPEvalMethod() const {
+    assert(CurrentFPEvalMethod != LangOptions::FEM_UnsetOnCommandLine &&
+           "FPEvalMethod should be set either from command line or from the "
+           "target info");
+    return CurrentFPEvalMethod;
+  }
+
+  LangOptions::FPEvalMethodKind getTUFPEvalMethod() const {
+    return TUFPEvalMethod;
+  }
+
+  SourceLocation getLastFPEvalPragmaLocation() const {
+    return LastFPEvalPragmaLocation;
+  }
+
+  LangOptions::FPEvalMethodKind getLastFPEvalMethod() const {
+    return LastFPEvalMethod;
+  }
+
+  void setLastFPEvalMethod(LangOptions::FPEvalMethodKind Val) {
+    LastFPEvalMethod = Val;
+  }
+
+  void setCurrentFPEvalMethod(SourceLocation PragmaLoc,
+                              LangOptions::FPEvalMethodKind Val) {
+    assert(Val != LangOptions::FEM_UnsetOnCommandLine &&
+           "FPEvalMethod should never be set to FEM_UnsetOnCommandLine");
+    // This is the location of the '#pragma float_control" where the
+    // execution state is modifed.
+    LastFPEvalPragmaLocation = PragmaLoc;
+    CurrentFPEvalMethod = Val;
+    TUFPEvalMethod = Val;
+  }
+
+  void setTUFPEvalMethod(LangOptions::FPEvalMethodKind Val) {
+    assert(Val != LangOptions::FEM_UnsetOnCommandLine &&
+           "TUPEvalMethod should never be set to FEM_UnsetOnCommandLine");
+    TUFPEvalMethod = Val;
+  }
 
   /// Retrieves the module that we're currently building, if any.
   Module *getCurrentModule();
@@ -2157,6 +2249,13 @@ private:
   /// what we learn and saving in \p LastTok the last token read.
   /// Return true if an error occurs parsing the arg list.
   bool ReadMacroParameterList(MacroInfo *MI, Token& LastTok);
+
+  /// Provide a suggestion for a typoed directive. If there is no typo, then
+  /// just skip suggesting.
+  ///
+  /// \param Tok - Token that represents the directive
+  /// \param Directive - String reference for the directive name
+  void SuggestTypoedDirective(const Token &Tok, StringRef Directive) const;
 
   /// We just read a \#if or related directive and decided that the
   /// subsequent tokens are in the \#if'd out portion of the
@@ -2429,14 +2528,12 @@ private:
 
   // Pragmas.
   void HandlePragmaDirective(PragmaIntroducer Introducer);
-  void ResolvePragmaIncludeInstead(SourceLocation Location) const;
 
 public:
   void HandlePragmaOnce(Token &OnceTok);
   void HandlePragmaMark(Token &MarkTok);
   void HandlePragmaPoison();
   void HandlePragmaSystemHeader(Token &SysHeaderTok);
-  void HandlePragmaIncludeInstead(Token &Tok);
   void HandlePragmaDependency(Token &DependencyTok);
   void HandlePragmaPushMacro(Token &Tok);
   void HandlePragmaPopMacro(Token &Tok);
@@ -2499,18 +2596,14 @@ public:
       emitRestrictExpansionWarning(Identifier);
   }
 
+  static void processPathForFileMacro(SmallVectorImpl<char> &Path,
+                                      const LangOptions &LangOpts,
+                                      const TargetInfo &TI);
+
 private:
   void emitMacroDeprecationWarning(const Token &Identifier) const;
   void emitRestrictExpansionWarning(const Token &Identifier) const;
   void emitFinalMacroWarning(const Token &Identifier, bool IsUndef) const;
-
-  Optional<unsigned>
-  getSkippedRangeForExcludedConditionalBlock(SourceLocation HashLoc);
-
-  /// Contains the currently active skipped range mappings for skipping excluded
-  /// conditional directives.
-  ExcludedPreprocessorDirectiveSkipMapping
-      *ExcludedConditionalDirectiveSkipMappings;
 };
 
 /// Abstract base class that describes a handler that will receive

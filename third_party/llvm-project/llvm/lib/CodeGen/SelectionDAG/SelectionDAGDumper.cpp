@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "SDNodeDbgValue.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
-#include "llvm/ADT/None.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/CodeGen/ISDOpcodes.h"
@@ -45,7 +45,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetIntrinsicInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "SDNodeDbgValue.h"
 #include <cstdint>
 #include <iterator>
 
@@ -271,6 +270,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::FCOPYSIGN:                  return "fcopysign";
   case ISD::FGETSIGN:                   return "fgetsign";
   case ISD::FCANONICALIZE:              return "fcanonicalize";
+  case ISD::IS_FPCLASS:                 return "is_fpclass";
   case ISD::FPOW:                       return "fpow";
   case ISD::STRICT_FPOW:                return "strict_fpow";
   case ISD::SMIN:                       return "smin";
@@ -818,6 +818,8 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
   } else if (const LifetimeSDNode *LN = dyn_cast<LifetimeSDNode>(this)) {
     if (LN->hasOffset())
       OS << "<" << LN->getOffset() << " to " << LN->getOffset() + LN->getSize() << ">";
+  } else if (const auto *AA = dyn_cast<AssertAlignSDNode>(this)) {
+    OS << '<' << AA->getAlign().value() << '>';
   }
 
   if (VerboseDAGDumping) {

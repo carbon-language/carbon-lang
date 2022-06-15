@@ -48,28 +48,38 @@ public:
   //===--------------------------------------------------------------------===//
   Value *FoldAdd(Value *LHS, Value *RHS, bool HasNUW = false,
                  bool HasNSW = false) const override {
-    return SimplifyAddInst(LHS, RHS, HasNUW, HasNSW, SQ);
+    return simplifyAddInst(LHS, RHS, HasNUW, HasNSW, SQ);
   }
 
   Value *FoldAnd(Value *LHS, Value *RHS) const override {
-    return SimplifyAndInst(LHS, RHS, SQ);
+    return simplifyAndInst(LHS, RHS, SQ);
   }
 
   Value *FoldOr(Value *LHS, Value *RHS) const override {
-    return SimplifyOrInst(LHS, RHS, SQ);
+    return simplifyOrInst(LHS, RHS, SQ);
   }
 
   Value *FoldICmp(CmpInst::Predicate P, Value *LHS, Value *RHS) const override {
-    return SimplifyICmpInst(P, LHS, RHS, SQ);
+    return simplifyICmpInst(P, LHS, RHS, SQ);
   }
 
   Value *FoldGEP(Type *Ty, Value *Ptr, ArrayRef<Value *> IdxList,
                  bool IsInBounds = false) const override {
-    return SimplifyGEPInst(Ty, Ptr, IdxList, IsInBounds, SQ);
+    return simplifyGEPInst(Ty, Ptr, IdxList, IsInBounds, SQ);
   }
 
   Value *FoldSelect(Value *C, Value *True, Value *False) const override {
-    return SimplifySelectInst(C, True, False, SQ);
+    return simplifySelectInst(C, True, False, SQ);
+  }
+
+  Value *FoldExtractValue(Value *Agg,
+                          ArrayRef<unsigned> IdxList) const override {
+    return simplifyExtractValueInst(Agg, IdxList, SQ);
+  };
+
+  Value *FoldInsertValue(Value *Agg, Value *Val,
+                         ArrayRef<unsigned> IdxList) const override {
+    return simplifyInsertValueInst(Agg, Val, IdxList, SQ);
   }
 
   //===--------------------------------------------------------------------===//
@@ -236,16 +246,6 @@ public:
   Value *CreateShuffleVector(Constant *V1, Constant *V2,
                              ArrayRef<int> Mask) const override {
     return ConstFolder.CreateShuffleVector(V1, V2, Mask);
-  }
-
-  Value *CreateExtractValue(Constant *Agg,
-                            ArrayRef<unsigned> IdxList) const override {
-    return ConstFolder.CreateExtractValue(Agg, IdxList);
-  }
-
-  Value *CreateInsertValue(Constant *Agg, Constant *Val,
-                           ArrayRef<unsigned> IdxList) const override {
-    return ConstFolder.CreateInsertValue(Agg, Val, IdxList);
   }
 };
 

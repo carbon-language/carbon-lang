@@ -41,8 +41,8 @@ void addArgAndResultAttrs(Builder &builder, OperationState &result,
                           ArrayRef<DictionaryAttr> argAttrs,
                           ArrayRef<DictionaryAttr> resultAttrs);
 void addArgAndResultAttrs(Builder &builder, OperationState &result,
-                          ArrayRef<NamedAttrList> argAttrs,
-                          ArrayRef<NamedAttrList> resultAttrs);
+                          ArrayRef<OpAsmParser::Argument> argAttrs,
+                          ArrayRef<DictionaryAttr> resultAttrs);
 
 /// Callback type for `parseFunctionOp`, the callback should produce the
 /// type that will be associated with a function-like operation from lists of
@@ -52,28 +52,20 @@ void addArgAndResultAttrs(Builder &builder, OperationState &result,
 using FuncTypeBuilder = function_ref<Type(
     Builder &, ArrayRef<Type>, ArrayRef<Type>, VariadicFlag, std::string &)>;
 
-/// Parses function arguments using `parser`. The `allowVariadic` argument
-/// indicates whether functions with variadic arguments are supported. The
-/// trailing arguments are populated by this function with names, types,
-/// attributes and locations of the arguments.
-ParseResult parseFunctionArgumentList(
-    OpAsmParser &parser, bool allowAttributes, bool allowVariadic,
-    SmallVectorImpl<OpAsmParser::OperandType> &argNames,
-    SmallVectorImpl<Type> &argTypes, SmallVectorImpl<NamedAttrList> &argAttrs,
-    SmallVectorImpl<Location> &argLocations, bool &isVariadic);
-
 /// Parses a function signature using `parser`. The `allowVariadic` argument
 /// indicates whether functions with variadic arguments are supported. The
 /// trailing arguments are populated by this function with names, types,
 /// attributes and locations of the arguments and those of the results.
 ParseResult
 parseFunctionSignature(OpAsmParser &parser, bool allowVariadic,
-                       SmallVectorImpl<OpAsmParser::OperandType> &argNames,
-                       SmallVectorImpl<Type> &argTypes,
-                       SmallVectorImpl<NamedAttrList> &argAttrs,
-                       SmallVectorImpl<Location> &argLocations,
+                       SmallVectorImpl<OpAsmParser::Argument> &arguments,
                        bool &isVariadic, SmallVectorImpl<Type> &resultTypes,
-                       SmallVectorImpl<NamedAttrList> &resultAttrs);
+                       SmallVectorImpl<DictionaryAttr> &resultAttrs);
+
+/// Get a function type corresponding to an array of arguments (which have
+/// types) and a set of result types.
+Type getFunctionType(Builder &builder, ArrayRef<OpAsmParser::Argument> argAttrs,
+                     ArrayRef<Type> resultTypes);
 
 /// Parser implementation for function-like operations.  Uses
 /// `funcTypeBuilder` to construct the custom function type given lists of
@@ -86,10 +78,8 @@ ParseResult parseFunctionOp(OpAsmParser &parser, OperationState &result,
                             bool allowVariadic,
                             FuncTypeBuilder funcTypeBuilder);
 
-/// Printer implementation for function-like operations.  Accepts lists of
-/// argument and result types to use while printing.
-void printFunctionOp(OpAsmPrinter &p, Operation *op, ArrayRef<Type> argTypes,
-                     bool isVariadic, ArrayRef<Type> resultTypes);
+/// Printer implementation for function-like operations.
+void printFunctionOp(OpAsmPrinter &p, FunctionOpInterface op, bool isVariadic);
 
 /// Prints the signature of the function-like operation `op`. Assumes `op` has
 /// is a FunctionOpInterface and has passed verification.

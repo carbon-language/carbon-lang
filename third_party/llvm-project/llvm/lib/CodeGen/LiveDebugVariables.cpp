@@ -39,11 +39,9 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
-#include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/CodeGen/VirtRegMap.h"
@@ -51,15 +49,12 @@
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/Function.h"
-#include "llvm/IR/Metadata.h"
 #include "llvm/InitializePasses.h"
-#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetMachine.h"
 #include <algorithm>
 #include <cassert>
 #include <iterator>
@@ -1855,16 +1850,33 @@ void LDVImpl::emitDebugValues(VirtRegMap *VRM) {
       const TargetRegisterClass *TRC = MRI.getRegClass(Reg);
       unsigned SpillSize, SpillOffset;
 
-      // Test whether this location is legal with the given subreg.
+      unsigned regSizeInBits = TRI->getRegSizeInBits(*TRC);
+      if (SubReg)
+        regSizeInBits = TRI->getSubRegIdxSize(SubReg);
+
+      // Test whether this location is legal with the given subreg. If the
+      // subregister has a nonzero offset, drop this location, it's too complex
+      // to describe. (TODO: future work).
       bool Success =
           TII->getStackSlotRange(TRC, SubReg, SpillSize, SpillOffset, *MF);
 
-      if (Success) {
+      if (Success && SpillOffset == 0) {
         auto Builder = BuildMI(*OrigMBB, OrigMBB->begin(), DebugLoc(),
                                TII->get(TargetOpcode::DBG_PHI));
         Builder.addFrameIndex(VRM->getStackSlot(Reg));
         Builder.addImm(InstNum);
+        // Record how large the original value is. The stack slot might be
+        // merged and altered during optimisation, but we will want to know how
+        // large the value is, at this DBG_PHI.
+        Builder.addImm(regSizeInBits);
       }
+
+      LLVM_DEBUG(
+      if (SpillOffset != 0) {
+        dbgs() << "DBG_PHI for Vreg " << Reg << " subreg " << SubReg <<
+                  " has nonzero offset\n";
+      }
+      );
     }
     // If there was no mapping for a value ID, it's optimized out. Create no
     // DBG_PHI, and any variables using this value will become optimized out.

@@ -12,6 +12,7 @@ include(CheckCCompilerFlag)
 include(CMakePushCheckState)
 
 include(CheckCompilerVersion)
+include(CheckProblematicConfigurations)
 include(HandleLLVMStdlib)
 
 if( UNIX AND NOT (APPLE OR BEOS OR HAIKU) )
@@ -63,7 +64,6 @@ check_symbol_exists(FE_ALL_EXCEPT "fenv.h" HAVE_DECL_FE_ALL_EXCEPT)
 check_symbol_exists(FE_INEXACT "fenv.h" HAVE_DECL_FE_INEXACT)
 
 check_include_file(mach/mach.h HAVE_MACH_MACH_H)
-check_include_file(histedit.h HAVE_HISTEDIT_H)
 check_include_file(CrashReporterClient.h HAVE_CRASHREPORTERCLIENT_H)
 if(APPLE)
   include(CheckCSourceCompiles)
@@ -87,14 +87,12 @@ endif()
 if( NOT PURE_WINDOWS )
   check_library_exists(pthread pthread_create "" HAVE_LIBPTHREAD)
   if (HAVE_LIBPTHREAD)
-    check_library_exists(pthread pthread_getspecific "" HAVE_PTHREAD_GETSPECIFIC)
     check_library_exists(pthread pthread_rwlock_init "" HAVE_PTHREAD_RWLOCK_INIT)
     check_library_exists(pthread pthread_mutex_lock "" HAVE_PTHREAD_MUTEX_LOCK)
   else()
     # this could be Android
     check_library_exists(c pthread_create "" PTHREAD_IN_LIBC)
     if (PTHREAD_IN_LIBC)
-      check_library_exists(c pthread_getspecific "" HAVE_PTHREAD_GETSPECIFIC)
       check_library_exists(c pthread_rwlock_init "" HAVE_PTHREAD_RWLOCK_INIT)
       check_library_exists(c pthread_mutex_lock "" HAVE_PTHREAD_MUTEX_LOCK)
     endif()
@@ -169,8 +167,7 @@ if(LLVM_ENABLE_CURL)
     # Check if curl we found is usable; for example, we may have found a 32-bit
     # library on a 64-bit system which would result in a link-time failure.
     cmake_push_check_state()
-    list(APPEND CMAKE_REQUIRED_INCLUDES ${CURL_INCLUDE_DIRS})
-    list(APPEND CMAKE_REQUIRED_LIBRARIES ${CURL_LIBRARY})
+    list(APPEND CMAKE_REQUIRED_LIBRARIES CURL::libcurl)
     check_symbol_exists(curl_easy_init curl/curl.h HAVE_CURL)
     cmake_pop_check_state()
     if(LLVM_ENABLE_CURL STREQUAL FORCE_ON AND NOT HAVE_CURL)
@@ -186,8 +183,9 @@ if(NOT LLVM_USE_SANITIZER MATCHES "Memory.*")
   # Don't look for these libraries on Windows.
   if (NOT PURE_WINDOWS)
     # Skip libedit if using ASan as it contains memory leaks.
-    if (LLVM_ENABLE_LIBEDIT AND HAVE_HISTEDIT_H AND NOT LLVM_USE_SANITIZER MATCHES ".*Address.*")
-      check_library_exists(edit el_init "" HAVE_LIBEDIT)
+    if (LLVM_ENABLE_LIBEDIT AND NOT LLVM_USE_SANITIZER MATCHES ".*Address.*")
+      find_package(LibEdit)
+      set(HAVE_LIBEDIT ${LibEdit_FOUND})
     else()
       set(HAVE_LIBEDIT 0)
     endif()
@@ -540,9 +538,6 @@ if( MSVC )
 else()
   set(LLVM_ENABLE_DIA_SDK 0)
 endif( MSVC )
-
-# FIXME: Signal handler return type, currently hardcoded to 'void'
-set(RETSIGTYPE void)
 
 if( LLVM_ENABLE_THREADS )
   # Check if threading primitives aren't supported on this platform

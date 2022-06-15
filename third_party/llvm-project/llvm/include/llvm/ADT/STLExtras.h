@@ -129,7 +129,7 @@ struct function_traits<ReturnType (ClassType::*)(Args...) const, false> {
 /// Overload for class function types.
 template <typename ClassType, typename ReturnType, typename... Args>
 struct function_traits<ReturnType (ClassType::*)(Args...), false>
-    : function_traits<ReturnType (ClassType::*)(Args...) const> {};
+    : public function_traits<ReturnType (ClassType::*)(Args...) const> {};
 /// Overload for non-class function types.
 template <typename ReturnType, typename... Args>
 struct function_traits<ReturnType (*)(Args...), false> {
@@ -143,6 +143,9 @@ struct function_traits<ReturnType (*)(Args...), false> {
   template <size_t i>
   using arg_t = typename std::tuple_element<i, std::tuple<Args...>>::type;
 };
+template <typename ReturnType, typename... Args>
+struct function_traits<ReturnType (*const)(Args...), false>
+    : public function_traits<ReturnType (*)(Args...)> {};
 /// Overload for non-class function type references.
 template <typename ReturnType, typename... Args>
 struct function_traits<ReturnType (&)(Args...), false>
@@ -202,6 +205,17 @@ struct FirstIndexOfType<T, T, Us...> : std::integral_constant<size_t, 0> {};
 /// TypeAtIndex<I, Ts...> is the type at index I in Ts.
 template <size_t I, typename... Ts>
 using TypeAtIndex = std::tuple_element_t<I, std::tuple<Ts...>>;
+
+/// Helper which adds two underlying types of enumeration type.
+/// Implicit conversion to a common type is accepted.
+template <typename EnumTy1, typename EnumTy2,
+          typename UT1 = std::enable_if_t<std::is_enum<EnumTy1>::value,
+                                          std::underlying_type_t<EnumTy1>>,
+          typename UT2 = std::enable_if_t<std::is_enum<EnumTy2>::value,
+                                          std::underlying_type_t<EnumTy2>>>
+constexpr auto addEnumValues(EnumTy1 LHS, EnumTy2 RHS) {
+  return static_cast<UT1>(LHS) + static_cast<UT2>(RHS);
+}
 
 //===----------------------------------------------------------------------===//
 //     Extra additions to <iterator>
@@ -266,6 +280,13 @@ template <typename ContainerTy> bool hasSingleElement(ContainerTy &&C) {
 template <typename T> auto drop_begin(T &&RangeOrContainer, size_t N = 1) {
   return make_range(std::next(adl_begin(RangeOrContainer), N),
                     adl_end(RangeOrContainer));
+}
+
+/// Return a range covering \p RangeOrContainer with the last N elements
+/// excluded.
+template <typename T> auto drop_end(T &&RangeOrContainer, size_t N = 1) {
+  return make_range(adl_begin(RangeOrContainer),
+                    std::prev(adl_end(RangeOrContainer), N));
 }
 
 // mapped_iterator - This is a simple iterator adapter that causes a function to
@@ -1160,13 +1181,15 @@ public:
   }
 
   /// Compare this range with another.
-  template <typename OtherT> bool operator==(const OtherT &other) const {
-    return size() ==
-               static_cast<size_t>(std::distance(other.begin(), other.end())) &&
-           std::equal(begin(), end(), other.begin());
+  template <typename OtherT>
+  friend bool operator==(const indexed_accessor_range_base &lhs,
+                         const OtherT &rhs) {
+    return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
   }
-  template <typename OtherT> bool operator!=(const OtherT &other) const {
-    return !(*this == other);
+  template <typename OtherT>
+  friend bool operator!=(const indexed_accessor_range_base &lhs,
+                         const OtherT &rhs) {
+    return !(lhs == rhs);
   }
 
   /// Return the size of this range.
@@ -1648,6 +1671,15 @@ OutputIt move(R &&Range, OutputIt Out) {
 template <typename R, typename E>
 bool is_contained(R &&Range, const E &Element) {
   return std::find(adl_begin(Range), adl_end(Range), Element) != adl_end(Range);
+}
+
+template <typename T>
+constexpr bool is_contained(std::initializer_list<T> Set, T Value) {
+  // TODO: Use std::find when we switch to C++20.
+  for (T V : Set)
+    if (V == Value)
+      return true;
+  return false;
 }
 
 /// Wrapper function around std::is_sorted to check if elements in a range \p R

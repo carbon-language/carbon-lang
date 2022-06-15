@@ -14,6 +14,7 @@
 #include "CSKYConstantPoolValue.h"
 #include "CSKYMachineFunctionInfo.h"
 #include "CSKYTargetMachine.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/MC/MCContext.h"
 
 #define DEBUG_TYPE "csky-instr-info"
@@ -475,9 +476,6 @@ void CSKYInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                 MachineBasicBlock::iterator I,
                                 const DebugLoc &DL, MCRegister DestReg,
                                 MCRegister SrcReg, bool KillSrc) const {
-
-  MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
-
   if (CSKY::GPRRegClass.contains(SrcReg) &&
       CSKY::CARRYRegClass.contains(DestReg)) {
     if (STI.hasE2()) {

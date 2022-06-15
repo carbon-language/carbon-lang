@@ -42,11 +42,13 @@ define dso_local void @foo(i64 %t) local_unnamed_addr #0 {
 ; CHECK-LABEL:   foo:
 ; CHECK:         // %bb.0: // %entry
 ; CHECK-NEXT:    stp x29, x30, [sp, #-16]! // 16-byte Folded Spill
+; CHECK-NEXT:    .cfi_def_cfa_offset 16
 ; CHECK-NEXT:    mov x29, sp
-; CHECK-NEXT:    sub sp, sp, #16
 ; CHECK-NEXT:    .cfi_def_cfa w29, 16
 ; CHECK-NEXT:    .cfi_offset w30, -8
 ; CHECK-NEXT:    .cfi_offset w29, -16
+; CHECK-NEXT:    .cfi_remember_state
+; CHECK-NEXT:    sub sp, sp, #16
 ; CHECK-NEXT:    mrs x8, SP_EL0
 ; CHECK-NEXT:    lsl x9, x0, #2
 ; CHECK-NO-OFFSET:       ldr x8, [x8]
@@ -80,9 +82,14 @@ define dso_local void @foo(i64 %t) local_unnamed_addr #0 {
 ; CHECK-NEXT:    b.ne .LBB0_2
 ; CHECK-NEXT:  // %bb.1: // %entry
 ; CHECK-NEXT:    mov sp, x29
+; CHECK-NEXT:    .cfi_def_cfa wsp, 16
 ; CHECK-NEXT:    ldp x29, x30, [sp], #16 // 16-byte Folded Reload
+; CHECK-NEXT:   .cfi_def_cfa_offset 0
+; CHECK-NEXT:   .cfi_restore w30
+; CHECK-NEXT:   .cfi_restore w29
 ; CHECK-NEXT:    ret
 ; CHECK-NEXT:  .LBB0_2: // %entry
+; CHECK-NEXT:   .cfi_restore_state
 ; CHECK-NEXT:    bl __stack_chk_fail
 ; CHECK-NOT: __stack_chk_guard
 entry:
@@ -95,7 +102,7 @@ declare void @baz(i32*)
 
 ; CHECK-BAD-OFFSET: LLVM ERROR: Unable to encode Stack Protector Guard Offset
 
-attributes #0 = { sspstrong }
+attributes #0 = { sspstrong uwtable }
 !llvm.module.flags = !{!1, !2, !3}
 
 !1 = !{i32 2, !"stack-protector-guard", !"sysreg"}

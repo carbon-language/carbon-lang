@@ -5,6 +5,7 @@
 load("//llvm:tblgen.bzl", "gentbl")
 load("//llvm:binary_alias.bzl", "binary_alias")
 load("//llvm:cc_plugin_library.bzl", "cc_plugin_library")
+load("//llvm:template_rule.bzl", "template_rule")
 
 package(
     default_visibility = ["//visibility:public"],
@@ -31,6 +32,7 @@ cc_binary(
     ],
     stamp = 0,
     deps = [
+        ":support",
         "//llvm:Support",
         "//llvm:TableGen",
         "//llvm:config",
@@ -343,11 +345,11 @@ genrule(
     name = "basic_version_gen",
     outs = ["include/clang/Basic/Version.inc"],
     cmd = (
-        "echo '#define CLANG_VERSION 14.0.0' >> $@\n" +
-        "echo '#define CLANG_VERSION_MAJOR 14' >> $@\n" +
+        "echo '#define CLANG_VERSION 15.0.0' >> $@\n" +
+        "echo '#define CLANG_VERSION_MAJOR 15' >> $@\n" +
         "echo '#define CLANG_VERSION_MINOR 0' >> $@\n" +
         "echo '#define CLANG_VERSION_PATCHLEVEL 0' >> $@\n" +
-        "echo '#define CLANG_VERSION_STRING \"14.0.0\"' >> $@\n"
+        "echo '#define CLANG_VERSION_STRING \"15.0.0\"' >> $@\n"
     ),
 )
 
@@ -372,7 +374,7 @@ genrule(
     # are passed through bazel, it's easier to drop generated files next to
     # the other includes.
     outs = ["include/VCSVersion.inc"],
-    cmd = "echo '#define CLANG_REVISION \"git\"' > $@",
+    cmd = "echo '#undef CLANG_REVISION' > $@",
 )
 
 # A hacky library to expose some internal headers of the `basic` library to its
@@ -780,6 +782,8 @@ cc_library(
 cc_library(
     name = "analysis",
     srcs = glob([
+        "lib/Analysis/FlowSensitive/Models/*.cpp",
+        "lib/Analysis/FlowSensitive/*.cpp",
         "lib/Analysis/*.cpp",
         "lib/Analysis/*.h",
     ]),
@@ -978,6 +982,7 @@ cc_library(
 
 cc_library(
     name = "testing",
+    testonly = 1,
     srcs = glob([
         "lib/Testing/*.cpp",
     ]),
@@ -985,7 +990,9 @@ cc_library(
     includes = ["include"],
     deps = [
         ":basic",
+        ":frontend",
         "//llvm:Support",
+        "//llvm:gtest",
     ],
 )
 
@@ -1669,6 +1676,20 @@ gentbl(
 )
 
 cc_library(
+    name = "support",
+    srcs = glob([
+        "lib/Support/*.cpp",
+    ]),
+    hdrs = glob([
+        "include/clang/Support/*.h",
+    ]),
+    includes = ["include"],
+    deps = [
+        "//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "serialization",
     srcs = [
         "include/clang/Serialization/AttrPCHRead.inc",
@@ -1713,6 +1734,7 @@ cc_library(
         ":codegen",
         ":config",
         ":driver",
+        ":extract_api",
         ":frontend",
         ":frontend_rewrite",
         ":static_analyzer_frontend",
@@ -1904,12 +1926,21 @@ cc_binary(
     ],
 )
 
+template_rule(
+    name = "clang_main",
+    src = "//llvm:cmake/modules/llvm-driver-template.cpp.in",
+    out = "clang_main.cpp",
+    substitutions = {
+        "@TOOL_NAME@": "clang"
+    },
+)
+
 cc_library(
     name = "clang-driver",
     srcs = glob([
         "tools/driver/*.cpp",
         "tools/driver/*.h",
-    ]),
+    ]) + ["clang_main.cpp"],
     copts = [
         # Disable stack frame size checks in the driver because
         # clang::ensureStackAddressSpace allocates a large array on the stack.
@@ -2139,6 +2170,24 @@ cc_binary(
         ":frontend",
         ":tooling",
         ":tooling_dependency_scanning",
+        "//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "extract_api",
+    srcs = glob([
+        "lib/ExtractAPI/**/*.cpp",
+        "lib/ExtractAPI/**/*.h",
+    ]),
+    hdrs = glob(["include/clang/ExtractAPI/**/*.h"]),
+    includes = ["include"],
+    deps = [
+        ":ast",
+        ":basic",
+        ":frontend",
+        ":index",
+        "//llvm:Option",
         "//llvm:Support",
     ],
 )

@@ -1,7 +1,7 @@
 // A contrived example to test the double jump removal peephole.
 
 // RUN: %clang %cflags -O0 %s -o %t.exe
-// RUN: llvm-bolt %t.exe -o %t.bolt -peepholes=double-jumps | \
+// RUN: llvm-bolt %t.exe -o %t.bolt --peepholes=double-jumps | \
 // RUN:   FileCheck %s -check-prefix=CHECKBOLT
 // RUN: llvm-objdump -d %t.bolt | FileCheck %s
 
@@ -52,4 +52,4 @@ unsigned long foo(unsigned long count) {
   return count;
 }
 
-int main(int argc, const char *argv[]) { return foo(38); }
+extern "C" int _start() { return foo(38); }

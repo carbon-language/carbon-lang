@@ -157,7 +157,6 @@ static llvm::FastMathFlags getFastmathFlags(FastmathFlagsInterface &op) {
       {FastmathFlags::contract, &llvmFMF::setAllowContract},
       {FastmathFlags::afn,      &llvmFMF::setApproxFunc},
       {FastmathFlags::reassoc,  &llvmFMF::setAllowReassoc},
-      {FastmathFlags::fast,     &llvmFMF::setFast},
       // clang-format on
   };
   llvm::FastMathFlags ret;
@@ -268,6 +267,7 @@ convertOperationImpl(Operation &opInst, llvm::IRBuilderBase &builder,
     builder.setFastMathFlags(getFastmathFlags(fmf));
 
 #include "mlir/Dialect/LLVMIR/LLVMConversions.inc"
+#include "mlir/Dialect/LLVMIR/LLVMIntrinsicConversions.inc"
 
   // Emit function calls.  If the "callee" attribute is present, this is a
   // direct function call and we also need to look up the remapped function
@@ -280,9 +280,10 @@ convertOperationImpl(Operation &opInst, llvm::IRBuilderBase &builder,
     if (auto attr = op.getAttrOfType<FlatSymbolRefAttr>("callee"))
       return builder.CreateCall(
           moduleTranslation.lookupFunction(attr.getValue()), operandsRef);
-    auto *calleeType = operandsRef.front()->getType();
-    auto *calleeFunctionType =
-        cast<llvm::FunctionType>(calleeType->getPointerElementType());
+    auto calleeType =
+        op.getOperands().front().getType().cast<LLVMPointerType>();
+    auto *calleeFunctionType = cast<llvm::FunctionType>(
+        moduleTranslation.convertType(calleeType.getElementType()));
     return builder.CreateCall(calleeFunctionType, operandsRef.front(),
                               operandsRef.drop_front());
   };
@@ -303,9 +304,7 @@ convertOperationImpl(Operation &opInst, llvm::IRBuilderBase &builder,
     // TODO: refactor function type creation which usually occurs in std-LLVM
     // conversion.
     SmallVector<Type, 8> operandTypes;
-    operandTypes.reserve(inlineAsmOp.getOperands().size());
-    for (auto t : inlineAsmOp.getOperands().getTypes())
-      operandTypes.push_back(t);
+    llvm::append_range(operandTypes, inlineAsmOp.getOperands().getTypes());
 
     Type resultType;
     if (inlineAsmOp.getNumResults() == 0) {
@@ -369,9 +368,10 @@ convertOperationImpl(Operation &opInst, llvm::IRBuilderBase &builder,
           moduleTranslation.lookupBlock(invOp.getSuccessor(0)),
           moduleTranslation.lookupBlock(invOp.getSuccessor(1)), operandsRef);
     } else {
-      auto *calleeType = operandsRef.front()->getType();
-      auto *calleeFunctionType =
-          cast<llvm::FunctionType>(calleeType->getPointerElementType());
+      auto calleeType =
+          invOp.getCalleeOperands().front().getType().cast<LLVMPointerType>();
+      auto *calleeFunctionType = cast<llvm::FunctionType>(
+          moduleTranslation.convertType(calleeType.getElementType()));
       result = builder.CreateInvoke(
           calleeFunctionType, operandsRef.front(),
           moduleTranslation.lookupBlock(invOp.getSuccessor(0)),
@@ -503,8 +503,9 @@ public:
 
 void mlir::registerLLVMDialectTranslation(DialectRegistry &registry) {
   registry.insert<LLVM::LLVMDialect>();
-  registry.addDialectInterface<LLVM::LLVMDialect,
-                               LLVMDialectLLVMIRTranslationInterface>();
+  registry.addExtension(+[](MLIRContext *ctx, LLVM::LLVMDialect *dialect) {
+    dialect->addInterfaces<LLVMDialectLLVMIRTranslationInterface>();
+  });
 }
 
 void mlir::registerLLVMDialectTranslation(MLIRContext &context) {

@@ -1,19 +1,19 @@
 /**
  * Test for asm-dump functionality.
  *
- * REQUIRES: system-linux
+ * REQUIRES: system-linux,bolt-runtime
  *
  * Compile the source
  * RUN: %clang -fPIC %s -o %t.exe -Wl,-q
  *
  * Profile collection: instrument the binary
- * RUN: llvm-bolt %t.exe -instrument -instrumentation-file=%t.fdata -o %t.instr
+ * RUN: llvm-bolt %t.exe --instrument --instrumentation-file=%t.fdata -o %t.instr
  *
  * Profile collection: run instrumented binary (and capture output)
  * RUN: %t.instr > %t.result
  *
  * Run BOLT with asm-dump
- * RUN: llvm-bolt %t.exe -p %t.fdata -funcs=main -asm-dump=%t -o /dev/null \
+ * RUN: llvm-bolt %t.exe -p %t.fdata --funcs=main --asm-dump=%t -o /dev/null \
  * RUN:   | FileCheck %s --check-prefix=CHECK-BOLT
  *
  * Check asm file contents
@@ -59,7 +59,8 @@
  * CHECK-FILE-NEXT: .size main, .-main
  * CHECK-FILE:      .section .rodata
  *
- * CHECK-REOPT: BOLT-INFO: 1 out of {{.*}} functions in the binary {{.*}} have non-empty execution profile
+ * CHECK-REOPT: BOLT-INFO: 1 out of {{.*}} functions in the binary {{.*}} have
+ * CHECK-REOPT: non-empty execution profile
  */
 #include <stdio.h>
 #include <string.h>

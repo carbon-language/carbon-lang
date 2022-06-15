@@ -6,8 +6,6 @@
 #
 #===----------------------------------------------------------------------===##
 
-# XFAIL: LIBCXX-WINDOWS-FIXME
-
 # Note: We prepend arguments with 'x' to avoid thinking there are too few
 #       arguments in case an argument is an empty string.
 # RUN: %{python} %s x%S x%T x%{substitutions}
@@ -62,6 +60,7 @@ class SetupConfigs(unittest.TestCase):
             noExecute=False,
             debug=False,
             isWindows=platform.system() == 'Windows',
+            order='smart',
             params={})
 
         self.config = lit.TestingConfig.TestingConfig.fromdefaults(self.litConfig)
@@ -251,7 +250,7 @@ class TestHasLocale(SetupConfigs):
             self.fail("checking for hasLocale should not explode")
 
     def test_nonexistent_locale(self):
-        self.assertFalse(dsl.hasAnyLocale(self.config, ['for_sure_this_is_not_an_existing_locale']))
+        self.assertFalse(dsl.hasAnyLocale(self.config, ['forsurethisisnotanexistinglocale']))
 
     def test_localization_program_doesnt_compile(self):
         compilerIndex = findIndex(self.config.substitutions, lambda x: x[0] == '%{cxx}')

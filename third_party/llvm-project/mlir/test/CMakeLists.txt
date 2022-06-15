@@ -23,9 +23,18 @@ set(MLIR_VULKAN_WRAPPER_LIBRARY_DIR ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 if (MLIR_INCLUDE_INTEGRATION_TESTS)
   set(INTEL_SDE_EXECUTABLE "" CACHE STRING
       "If set, arch-specific integration tests are run with Intel SDE.")
+  set(ARM_EMULATOR_EXECUTABLE "" CACHE STRING
+      "If set, arch-specific Arm integration tests are run with an emulator.")
+  set(ARM_EMULATOR_OPTIONS "" CACHE STRING
+      "If arch-specific Arm integration tests run emulated, pass these as parameters to the emulator.")
+  set(ARM_EMULATOR_LLI_EXECUTABLE "" CACHE STRING
+      "If arch-specific Arm integration tests run emulated, use this Arm native lli.")
+  set(ARM_EMULATOR_UTILS_LIB_DIR "" CACHE STRING
+      "If arch-specific Arm integration tests run emulated, find Arm native utility libraries in this directory.")
   option(MLIR_RUN_AMX_TESTS "Run AMX tests.")
   option(MLIR_RUN_X86VECTOR_TESTS "Run X86Vector tests.")
   option(MLIR_RUN_CUDA_TENSOR_CORE_TESTS "Run CUDA Tensor core WMMA tests.")
+  option(MLIR_RUN_ARM_SVE_TESTS "Run Arm SVE tests.")
   # Passed to lit.site.cfg.py.in to set up the path where to find the libraries.
   set(MLIR_INTEGRATION_TEST_DIR ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
@@ -39,6 +48,7 @@ if (MLIR_INCLUDE_INTEGRATION_TESTS)
   file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Integration/data/mttkrp_b.tns
             ${CMAKE_CURRENT_SOURCE_DIR}/Integration/data/test.mtx
             ${CMAKE_CURRENT_SOURCE_DIR}/Integration/data/test_symmetric.mtx
+            ${CMAKE_CURRENT_SOURCE_DIR}/Integration/data/test_symmetric_complex.mtx
             ${CMAKE_CURRENT_SOURCE_DIR}/Integration/data/test.tns
             ${CMAKE_CURRENT_SOURCE_DIR}/Integration/data/wide.mtx
           DESTINATION ${MLIR_INTEGRATION_TEST_DIR}/data/)
@@ -82,11 +92,13 @@ set(MLIR_TEST_DEPENDS
   mlir-capi-pdl-test
   mlir-linalg-ods-yaml-gen
   mlir-lsp-server
+  mlir-pdll-lsp-server
   mlir-opt
   mlir-pdll
   mlir-reduce
   mlir-tblgen
   mlir-translate
+  tblgen-lsp-server
   )
 
 # The native target may not be enabled, in this case we won't

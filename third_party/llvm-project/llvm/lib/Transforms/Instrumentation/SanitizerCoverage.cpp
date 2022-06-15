@@ -16,28 +16,21 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/EHPersonalities.h"
 #include "llvm/Analysis/PostDominators.h"
-#include "llvm/IR/CFG.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/DataLayout.h"
-#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/MDBuilder.h"
-#include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/SpecialCaseList.h"
 #include "llvm/Support/VirtualFileSystem.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
@@ -248,8 +241,7 @@ private:
                                                 Type *Ty);
 
   void SetNoSanitizeMetadata(Instruction *I) {
-    I->setMetadata(I->getModule()->getMDKindID("nosanitize"),
-                   MDNode::get(*C, None));
+    I->setMetadata(LLVMContext::MD_nosanitize, MDNode::get(*C, None));
   }
 
   std::string getSectionName(const std::string &Section) const;
@@ -695,7 +687,7 @@ void ModuleSanitizerCoverage::instrumentFunction(
     for (auto &Inst : BB) {
       if (Options.IndirectCalls) {
         CallBase *CB = dyn_cast<CallBase>(&Inst);
-        if (CB && !CB->getCalledFunction())
+        if (CB && CB->isIndirectCall())
           IndirCalls.push_back(&Inst);
       }
       if (Options.TraceCmp) {
@@ -997,15 +989,11 @@ void ModuleSanitizerCoverage::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
     // if we aren't splitting the block, it's nice for allocas to be before
     // calls.
     IP = PrepareToSplitEntryBlock(BB, IP);
-  } else {
-    EntryLoc = IP->getDebugLoc();
-    if (!EntryLoc)
-      if (auto *SP = F.getSubprogram())
-        EntryLoc = DILocation::get(SP->getContext(), 0, 0, SP);
   }
 
-  IRBuilder<> IRB(&*IP);
-  IRB.SetCurrentDebugLocation(EntryLoc);
+  InstrumentationIRBuilder IRB(&*IP);
+  if (EntryLoc)
+    IRB.SetCurrentDebugLocation(EntryLoc);
   if (Options.TracePC) {
     IRB.CreateCall(SanCovTracePC)
         ->setCannotMerge(); // gets the PC using GET_CALLER_PC.

@@ -97,6 +97,7 @@ private:
   bool selectG_AND_OR_XOR(MachineInstr &I) const;
   bool selectG_ADD_SUB(MachineInstr &I) const;
   bool selectG_UADDO_USUBO_UADDE_USUBE(MachineInstr &I) const;
+  bool selectG_AMDGPU_MAD_64_32(MachineInstr &I) const;
   bool selectG_EXTRACT(MachineInstr &I) const;
   bool selectG_MERGE_VALUES(MachineInstr &I) const;
   bool selectG_UNMERGE_VALUES(MachineInstr &I) const;
@@ -133,7 +134,6 @@ private:
 
   void initM0(MachineInstr &I) const;
   bool selectG_LOAD_STORE_ATOMICRMW(MachineInstr &I) const;
-  bool selectG_AMDGPU_ATOMIC_CMPXCHG(MachineInstr &I) const;
   bool selectG_SELECT(MachineInstr &I) const;
   bool selectG_BRCOND(MachineInstr &I) const;
   bool selectG_GLOBAL_VALUE(MachineInstr &I) const;
@@ -144,7 +144,10 @@ private:
   bool selectAMDGPU_BUFFER_ATOMIC_FADD(MachineInstr &I) const;
   bool selectGlobalAtomicFadd(MachineInstr &I, MachineOperand &AddrOp,
                               MachineOperand &DataOp) const;
+  bool selectBufferLoadLds(MachineInstr &MI) const;
+  bool selectGlobalLoadLds(MachineInstr &MI) const;
   bool selectBVHIntrinsic(MachineInstr &I) const;
+  bool selectSMFMACIntrin(MachineInstr &I) const;
   bool selectWaveAddress(MachineInstr &I) const;
 
   std::pair<Register, unsigned> selectVOP3ModsImpl(MachineOperand &Root,
@@ -173,10 +176,14 @@ private:
   selectVOP3Mods_nnan(MachineOperand &Root) const;
 
   std::pair<Register, unsigned>
-  selectVOP3PModsImpl(Register Src, const MachineRegisterInfo &MRI) const;
+  selectVOP3PModsImpl(Register Src, const MachineRegisterInfo &MRI,
+                      bool IsDOT = false) const;
 
   InstructionSelector::ComplexRendererFns
   selectVOP3PMods(MachineOperand &Root) const;
+
+  InstructionSelector::ComplexRendererFns
+  selectVOP3PModsDOT(MachineOperand &Root) const;
 
   InstructionSelector::ComplexRendererFns
   selectVOP3OpSelMods(MachineOperand &Root) const;
@@ -203,6 +210,10 @@ private:
 
   InstructionSelector::ComplexRendererFns
   selectScratchSAddr(MachineOperand &Root) const;
+  bool checkFlatScratchSVSSwizzleBug(Register VAddr, Register SAddr,
+                                     uint64_t ImmOffset) const;
+  InstructionSelector::ComplexRendererFns
+  selectScratchSVAddr(MachineOperand &Root) const;
 
   InstructionSelector::ComplexRendererFns
   selectMUBUFScratchOffen(MachineOperand &Root) const;

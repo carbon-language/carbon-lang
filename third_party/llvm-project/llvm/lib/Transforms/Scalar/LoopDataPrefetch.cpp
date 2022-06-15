@@ -22,7 +22,6 @@
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
-#include "llvm/IR/CFG.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
@@ -30,9 +29,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/ScalarEvolutionExpander.h"
-#include "llvm/Transforms/Utils/ValueMapper.h"
 
 #define DEBUG_TYPE "loop-data-prefetch"
 
@@ -302,7 +299,11 @@ bool LoopDataPrefetch::runOnLoop(Loop *L) {
     }
     Metrics.analyzeBasicBlock(BB, *TTI, EphValues);
   }
-  unsigned LoopSize = Metrics.NumInsts;
+
+  if (!Metrics.NumInsts.isValid())
+    return MadeChange;
+
+  unsigned LoopSize = *Metrics.NumInsts.getValue();
   if (!LoopSize)
     LoopSize = 1;
 

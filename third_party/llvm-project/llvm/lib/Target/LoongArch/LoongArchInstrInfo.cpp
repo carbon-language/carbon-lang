@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "LoongArchInstrInfo.h"
+#include "LoongArch.h"
 
 using namespace llvm;
 
@@ -19,6 +20,19 @@ using namespace llvm;
 
 LoongArchInstrInfo::LoongArchInstrInfo(LoongArchSubtarget &STI)
     // FIXME: add CFSetup and CFDestroy Inst when we implement function call.
-    : LoongArchGenInstrInfo(),
+    : LoongArchGenInstrInfo() {}
 
-      STI(STI) {}
+void LoongArchInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator MBBI,
+                                     const DebugLoc &DL, MCRegister DstReg,
+                                     MCRegister SrcReg, bool KillSrc) const {
+  if (LoongArch::GPRRegClass.contains(DstReg, SrcReg)) {
+    BuildMI(MBB, MBBI, DL, get(LoongArch::OR), DstReg)
+        .addReg(SrcReg, getKillRegState(KillSrc))
+        .addReg(LoongArch::R0);
+    return;
+  }
+
+  // TODO: Now, we only support GPR->GPR copies.
+  llvm_unreachable("LoongArch didn't implement copyPhysReg");
+}

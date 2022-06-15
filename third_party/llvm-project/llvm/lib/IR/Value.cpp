@@ -28,7 +28,6 @@
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
@@ -964,6 +963,9 @@ Align Value::getPointerAlignment(const DataLayout &DL) const {
       return Align(CI->getLimitedValue());
     }
   } else if (auto *CstPtr = dyn_cast<Constant>(this)) {
+    // Strip pointer casts to avoid creating unnecessary ptrtoint expression
+    // if the only "reduction" is combining a bitcast + ptrtoint.
+    CstPtr = CstPtr->stripPointerCasts();
     if (auto *CstInt = dyn_cast_or_null<ConstantInt>(ConstantExpr::getPtrToInt(
             const_cast<Constant *>(CstPtr), DL.getIntPtrType(getType()),
             /*OnlyIfReduced=*/true))) {
@@ -1018,20 +1020,16 @@ bool Value::isSwiftError() const {
 }
 
 bool Value::isTransitiveUsedByMetadataOnly() const {
-  if (use_empty())
-    return false;
-  llvm::SmallVector<const User *, 32> WorkList;
-  llvm::SmallPtrSet<const User *, 32> Visited;
-  WorkList.insert(WorkList.begin(), user_begin(), user_end());
+  SmallVector<const User *, 32> WorkList(user_begin(), user_end());
+  SmallPtrSet<const User *, 32> Visited(user_begin(), user_end());
   while (!WorkList.empty()) {
     const User *U = WorkList.pop_back_val();
-    Visited.insert(U);
     // If it is transitively used by a global value or a non-constant value,
     // it's obviously not only used by metadata.
     if (!isa<Constant>(U) || isa<GlobalValue>(U))
       return false;
     for (const User *UU : U->users())
-      if (!Visited.count(UU))
+      if (Visited.insert(UU).second)
         WorkList.push_back(UU);
   }
   return true;

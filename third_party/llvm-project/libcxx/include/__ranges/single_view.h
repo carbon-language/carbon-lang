@@ -11,6 +11,7 @@
 
 #include <__config>
 #include <__ranges/copyable_box.h>
+#include <__ranges/range_adaptor.h>
 #include <__ranges/view_interface.h>
 #include <__utility/forward.h>
 #include <__utility/in_place.h>
@@ -24,7 +25,7 @@
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-#if !defined(_LIBCPP_HAS_NO_CONCEPTS) && !defined(_LIBCPP_HAS_NO_INCOMPLETE_RANGES)
+#if _LIBCPP_STD_VER > 17 && !defined(_LIBCPP_HAS_NO_INCOMPLETE_RANGES)
 
 namespace ranges {
   template<copy_constructible _Tp>
@@ -70,11 +71,30 @@ namespace ranges {
     constexpr const _Tp* data() const noexcept { return __value_.operator->(); }
   };
 
-  template<class _Tp>
-  single_view(_Tp) -> single_view<_Tp>;
+template<class _Tp>
+single_view(_Tp) -> single_view<_Tp>;
+
+namespace views {
+namespace __single_view {
+
+struct __fn : __range_adaptor_closure<__fn> {
+  template<class _Range>
+  [[nodiscard]] _LIBCPP_HIDE_FROM_ABI
+  constexpr auto operator()(_Range&& __range) const
+    noexcept(noexcept(single_view<decay_t<_Range&&>>(std::forward<_Range>(__range))))
+    -> decltype(      single_view<decay_t<_Range&&>>(std::forward<_Range>(__range)))
+    { return          single_view<decay_t<_Range&&>>(std::forward<_Range>(__range)); }
+};
+} // namespace __single_view
+
+inline namespace __cpo {
+  inline constexpr auto single = __single_view::__fn{};
+} // namespace __cpo
+
+} // namespace views
 } // namespace ranges
 
-#endif // !defined(_LIBCPP_HAS_NO_CONCEPTS) && !defined(_LIBCPP_HAS_NO_INCOMPLETE_RANGES)
+#endif // _LIBCPP_STD_VER > 17 && !defined(_LIBCPP_HAS_NO_INCOMPLETE_RANGES)
 
 _LIBCPP_END_NAMESPACE_STD
 

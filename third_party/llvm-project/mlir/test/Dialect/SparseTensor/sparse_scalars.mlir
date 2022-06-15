@@ -24,9 +24,9 @@
 // CHECK-SAME:              %[[VAL_2:.*2]]: f32,
 // CHECK-SAME:              %[[VAL_3:.*3]]: f32,
 // CHECK-SAME:              %[[VAL_4:.*4]]: tensor<32x16xf32> {linalg.inplaceable = true}) -> tensor<32x16xf32> {
-// CHECK:           %[[VAL_5:.*]] = arith.constant 2.200000e+00 : f32
-// CHECK:           %[[VAL_6:.*]] = arith.constant 0 : index
-// CHECK:           %[[VAL_7:.*]] = arith.constant 1 : index
+// CHECK-DAG:       %[[VAL_5:.*]] = arith.constant 2.200000e+00 : f32
+// CHECK-DAG:       %[[VAL_6:.*]] = arith.constant 0 : index
+// CHECK-DAG:       %[[VAL_7:.*]] = arith.constant 1 : index
 // CHECK:           %[[VAL_8:.*]] = arith.addf %[[VAL_2]], %[[VAL_3]] : f32
 // CHECK:           %[[VAL_9:.*]] = sparse_tensor.pointers %[[VAL_0]], %[[VAL_6]] : tensor<32x16xf32, #sparse_tensor.encoding<{{.*}}>> to memref<?xindex>
 // CHECK:           %[[VAL_10:.*]] = sparse_tensor.indices %[[VAL_0]], %[[VAL_6]] : tensor<32x16xf32, #sparse_tensor.encoding<{{.*}}>> to memref<?xindex>
@@ -59,7 +59,7 @@
 // CHECK:           %[[VAL_34:.*]] = bufferization.to_tensor %[[VAL_15]] : memref<32x16xf32>
 // CHECK:           return %[[VAL_34]] : tensor<32x16xf32>
 // CHECK:         }
-func @mul(%arga: tensor<32x16xf32, #SparseMatrix>,
+func.func @mul(%arga: tensor<32x16xf32, #SparseMatrix>,
           %argp: tensor<f32>,
           %argq: f32,
           %argr: f32,

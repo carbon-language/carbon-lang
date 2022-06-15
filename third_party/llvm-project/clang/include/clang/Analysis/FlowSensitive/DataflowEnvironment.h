@@ -49,6 +49,11 @@ enum class SkipPast {
 };
 
 /// Holds the state of the program (store and heap) at a given program point.
+///
+/// WARNING: Symbolic values that are created by the environment for static
+/// local and global variables are not currently invalidated on function calls.
+/// This is unsound and should be taken into account when designing dataflow
+/// analyses.
 class Environment {
 public:
   /// Supplements `Environment` with non-standard comparison and join
@@ -64,32 +69,55 @@ public:
     ///  `Val1` and `Val2` must be distinct.
     ///
     ///  `Val1` and `Val2` must model values of type `Type`.
+    ///
+    ///  `Val1` and `Val2` must be assigned to the same storage location in
+    ///  `Env1` and `Env2` respectively.
     virtual bool compareEquivalent(QualType Type, const Value &Val1,
-                                   const Value &Val2) {
+                                   const Environment &Env1, const Value &Val2,
+                                   const Environment &Env2) {
       // FIXME: Consider adding QualType to StructValue and removing the Type
       // argument here.
-      return false;
+      //
+      // FIXME: default to a sound comparison and/or expand the comparison logic
+      // built into the framework to support broader forms of equivalence than
+      // strict pointer equality.
+      return true;
     }
 
     /// Modifies `MergedVal` to approximate both `Val1` and `Val2`. This could
-    /// be a strict lattice join or a more general widening operation. If this
-    /// function returns true, `MergedVal` will be assigned to a storage
-    /// location of type `Type` in `Env`.
+    /// be a strict lattice join or a more general widening operation.
+    ///
+    /// If this function returns true, `MergedVal` will be assigned to a storage
+    /// location of type `Type` in `MergedEnv`.
+    ///
+    /// `Env1` and `Env2` can be used to query child values and path condition
+    /// implications of `Val1` and `Val2` respectively.
     ///
     /// Requirements:
     ///
     ///  `Val1` and `Val2` must be distinct.
     ///
     ///  `Val1`, `Val2`, and `MergedVal` must model values of type `Type`.
-    virtual bool merge(QualType Type, const Value &Val1, const Value &Val2,
-                       Value &MergedVal, Environment &Env) {
-      return false;
+    ///
+    ///  `Val1` and `Val2` must be assigned to the same storage location in
+    ///  `Env1` and `Env2` respectively.
+    virtual bool merge(QualType Type, const Value &Val1,
+                       const Environment &Env1, const Value &Val2,
+                       const Environment &Env2, Value &MergedVal,
+                       Environment &MergedEnv) {
+      return true;
     }
   };
 
   /// Creates an environment that uses `DACtx` to store objects that encompass
   /// the state of a program.
-  explicit Environment(DataflowAnalysisContext &DACtx) : DACtx(&DACtx) {}
+  explicit Environment(DataflowAnalysisContext &DACtx);
+
+  Environment(const Environment &Other);
+  Environment &operator=(const Environment &Other);
+
+  Environment(Environment &&Other) = default;
+  Environment &operator=(Environment &&Other) = default;
 
   /// Creates an environment that uses `DACtx` to store objects that encompass
   /// the state of a program.
@@ -230,6 +258,61 @@ public:
     return DACtx->getBoolLiteralValue(Value);
   }
 
+  /// Returns an atomic boolean value.
+  BoolValue &makeAtomicBoolValue() const {
+    return DACtx->createAtomicBoolValue();
+  }
+
+  /// Returns a boolean value that represents the conjunction of `LHS` and
+  /// `RHS`. Subsequent calls with the same arguments, regardless of their
+  /// order, will return the same result. If the given boolean values represent
+  /// the same value, the result will be the value itself.
+  BoolValue &makeAnd(BoolValue &LHS, BoolValue &RHS) const {
+    return DACtx->getOrCreateConjunctionValue(LHS, RHS);
+  }
+
+  /// Returns a boolean value that represents the disjunction of `LHS` and
+  /// `RHS`. Subsequent calls with the same arguments, regardless of their
+  /// order, will return the same result. If the given boolean values represent
+  /// the same value, the result will be the value itself.
+  BoolValue &makeOr(BoolValue &LHS, BoolValue &RHS) const {
+    return DACtx->getOrCreateDisjunctionValue(LHS, RHS);
+  }
+
+  /// Returns a boolean value that represents the negation of `Val`. Subsequent
+  /// calls with the same argument will return the same result.
+  BoolValue &makeNot(BoolValue &Val) const {
+    return DACtx->getOrCreateNegationValue(Val);
+  }
+
+  /// Returns a boolean value represents `LHS` => `RHS`. Subsequent calls with
+  /// the same arguments, regardless of their order, will return the same
+  /// result. If the given boolean values represent the same value, the result
+  /// will be a value that represents the true boolean literal.
+  BoolValue &makeImplication(BoolValue &LHS, BoolValue &RHS) const {
+    return &LHS == &RHS ? getBoolLiteralValue(true) : makeOr(makeNot(LHS), RHS);
+  }
+
+  /// Returns a boolean value represents `LHS` <=> `RHS`. Subsequent calls with
+  /// the same arguments, regardless of their order, will return the same
+  /// result. If the given boolean values represent the same value, the result
+  /// will be a value that represents the true boolean literal.
+  BoolValue &makeIff(BoolValue &LHS, BoolValue &RHS) const {
+    return &LHS == &RHS
+               ? getBoolLiteralValue(true)
+               : makeAnd(makeImplication(LHS, RHS), makeImplication(RHS, LHS));
+  }
+
+  /// Returns the token that identifies the flow condition of the environment.
+  AtomicBoolValue &getFlowConditionToken() const { return *FlowConditionToken; }
+
+  /// Adds `Val` to the set of clauses that constitute the flow condition.
+  void addToFlowCondition(BoolValue &Val);
+
+  /// Returns true if and only if the clauses that constitute the flow condition
+  /// imply that `Val` is true.
+  bool flowConditionImplies(BoolValue &Val) const;
+
 private:
   /// Creates a value appropriate for `Type`, if `Type` is supported, otherwise
   /// return null.
@@ -243,7 +326,8 @@ private:
   ///
   ///  `Type` must not be null.
   Value *createValueUnlessSelfReferential(QualType Type,
-                                          llvm::DenseSet<QualType> &Visited);
+                                          llvm::DenseSet<QualType> &Visited,
+                                          int Depth, int &CreatedValuesCount);
 
   StorageLocation &skip(StorageLocation &Loc, SkipPast SP) const;
   const StorageLocation &skip(const StorageLocation &Loc, SkipPast SP) const;
@@ -260,7 +344,13 @@ private:
 
   llvm::DenseMap<const StorageLocation *, Value *> LocToVal;
 
-  // FIXME: Add flow condition constraints.
+  // Maps locations of struct members to symbolic values of the structs that own
+  // them and the decls of the struct members.
+  llvm::DenseMap<const StorageLocation *,
+                 std::pair<StructValue *, const ValueDecl *>>
+      MemberLocToStruct;
+
+  AtomicBoolValue *FlowConditionToken;
 };
 
 } // namespace dataflow

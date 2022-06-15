@@ -30,7 +30,7 @@ using namespace lld::macho;
 // can differ based on STL debug levels (e.g. iterator debugging on MSVC's STL),
 // so account for that.
 static_assert(sizeof(void *) != 8 ||
-                  sizeof(ConcatInputSection) == sizeof(std::vector<Reloc>) + 96,
+                  sizeof(ConcatInputSection) == sizeof(std::vector<Reloc>) + 88,
               "Try to minimize ConcatInputSection's size, we create many "
               "instances of it");
 
@@ -58,12 +58,14 @@ static uint64_t resolveSymbolVA(const Symbol *sym, uint8_t type) {
 std::string InputSection::getLocation(uint64_t off) const {
   // First, try to find a symbol that's near the offset. Use it as a reference
   // point.
-  for (size_t i = 0; i < symbols.size(); ++i)
-    if (symbols[i]->value <= off &&
-        (i + 1 == symbols.size() || symbols[i + 1]->value > off))
-      return (toString(getFile()) + ":(symbol " + symbols.front()->getName() +
-              "+0x" + Twine::utohexstr(off - symbols[i]->value) + ")")
-          .str();
+  auto *nextSym = llvm::upper_bound(
+      symbols, off, [](uint64_t a, const Defined *b) { return a < b->value; });
+  if (nextSym != symbols.begin()) {
+    auto &sym = *std::prev(nextSym);
+    return (toString(getFile()) + ":(symbol " + sym->getName() + "+0x" +
+            Twine::utohexstr(off - sym->value) + ")")
+        .str();
+  }
 
   // If that fails, use the section itself as a reference point.
   for (const Subsection &subsec : section.subsections) {
@@ -77,53 +79,13 @@ std::string InputSection::getLocation(uint64_t off) const {
       .str();
 }
 
-// ICF needs to hash any section that might potentially be duplicated so
-// that it can match on content rather than identity.
-bool ConcatInputSection::isHashableForICF() const {
-  switch (sectionType(getFlags())) {
-  case S_REGULAR:
-    return true;
-  case S_CSTRING_LITERALS:
-  case S_4BYTE_LITERALS:
-  case S_8BYTE_LITERALS:
-  case S_16BYTE_LITERALS:
-  case S_LITERAL_POINTERS:
-    llvm_unreachable("found unexpected literal type in ConcatInputSection");
-  case S_ZEROFILL:
-  case S_GB_ZEROFILL:
-  case S_NON_LAZY_SYMBOL_POINTERS:
-  case S_LAZY_SYMBOL_POINTERS:
-  case S_SYMBOL_STUBS:
-  case S_MOD_INIT_FUNC_POINTERS:
-  case S_MOD_TERM_FUNC_POINTERS:
-  case S_COALESCED:
-  case S_INTERPOSING:
-  case S_DTRACE_DOF:
-  case S_LAZY_DYLIB_SYMBOL_POINTERS:
-  case S_THREAD_LOCAL_REGULAR:
-  case S_THREAD_LOCAL_ZEROFILL:
-  case S_THREAD_LOCAL_VARIABLES:
-  case S_THREAD_LOCAL_VARIABLE_POINTERS:
-  case S_THREAD_LOCAL_INIT_FUNCTION_POINTERS:
-    return false;
-  default:
-    llvm_unreachable("Section type");
-  }
-}
-
-void ConcatInputSection::hashForICF() {
-  assert(data.data()); // zeroFill section data has nullptr with non-zero size
-  assert(icfEqClass[0] == 0); // don't overwrite a unique ID!
-  // Turn-on the top bit to guarantee that valid hashes have no collisions
-  // with the small-integer unique IDs for ICF-ineligible sections
-  icfEqClass[0] = xxHash64(data) | (1ull << 63);
-}
-
 void ConcatInputSection::foldIdentical(ConcatInputSection *copy) {
   align = std::max(align, copy->align);
   copy->live = false;
   copy->wasCoalesced = true;
   copy->replacement = this;
+  for (auto &copySym : copy->symbols)
+    copySym->wasIdenticalCodeFolded = true;
 
   // Merge the sorted vectors of symbols together.
   auto it = symbols.begin();
@@ -301,6 +263,16 @@ bool macho::isCodeSection(const InputSection *isec) {
 bool macho::isCfStringSection(const InputSection *isec) {
   return isec->getName() == section_names::cfString &&
          isec->getSegName() == segment_names::data;
+}
+
+bool macho::isClassRefsSection(const InputSection *isec) {
+  return isec->getName() == section_names::objcClassRefs &&
+         isec->getSegName() == segment_names::data;
+}
+
+bool macho::isEhFrameSection(const InputSection *isec) {
+  return isec->getName() == section_names::ehFrame &&
+         isec->getSegName() == segment_names::text;
 }
 
 std::string lld::toString(const InputSection *isec) {

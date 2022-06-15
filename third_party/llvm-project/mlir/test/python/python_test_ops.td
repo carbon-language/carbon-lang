@@ -9,6 +9,7 @@
 #ifndef PYTHON_TEST_OPS
 #define PYTHON_TEST_OPS
 
+include "mlir/IR/AttrTypeBase.td"
 include "mlir/Bindings/Python/Attributes.td"
 include "mlir/IR/OpBase.td"
 include "mlir/Interfaces/InferTypeOpInterface.td"
@@ -16,6 +17,9 @@ include "mlir/Interfaces/InferTypeOpInterface.td"
 def Python_Test_Dialect : Dialect {
   let name = "python_test";
   let cppNamespace = "python_test";
+
+  let useDefaultTypePrinterParser = 1;
+  let useDefaultAttributePrinterParser = 1;
 }
 
 class TestType<string name, string typeMnemonic>

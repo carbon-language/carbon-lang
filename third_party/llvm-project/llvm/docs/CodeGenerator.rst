@@ -510,7 +510,7 @@ The ``MachineFunction`` class
 The ``MachineFunction`` class contains a list of machine basic blocks
 (:raw-html:`<tt>` `MachineBasicBlock`_ :raw-html:`</tt>` instances).  It
 corresponds one-to-one with the LLVM function input to the instruction selector.
-In addition to a list of basic blocks, the ``MachineFunction`` contains a a
+In addition to a list of basic blocks, the ``MachineFunction`` contains a
 ``MachineConstantPool``, a ``MachineFrameInfo``, a ``MachineFunctionInfo``, and
 a ``MachineRegisterInfo``.  See ``include/llvm/CodeGen/MachineFunction.h`` for
 more information.
@@ -618,7 +618,7 @@ MCStreamer is best thought of as an assembler API.  It is an abstract API which
 is *implemented* in different ways (e.g. to output a .s file, output an ELF .o
 file, etc) but whose API correspond directly to what you see in a .s file.
 MCStreamer has one method per directive, such as EmitLabel, EmitSymbolAttribute,
-SwitchSection, EmitValue (for .byte, .word), etc, which directly correspond to
+switchSection, emitValue (for .byte, .word), etc, which directly correspond to
 assembly level directives.  It also has an EmitInstruction method, which is used
 to output an MCInst to the streamer.
 
@@ -1580,7 +1580,7 @@ labels, directives, and instructions.  A key class used at this time is the
 MCStreamer class.  This is an abstract API that is implemented in different ways
 (e.g. to output a .s file, output an ELF .o file, etc) that is effectively an
 "assembler API".  MCStreamer has one method per directive, such as EmitLabel,
-EmitSymbolAttribute, SwitchSection, etc, which directly correspond to assembly
+EmitSymbolAttribute, switchSection, etc, which directly correspond to assembly
 level directives.
 
 If you are interested in implementing a code generator for a target, there are
@@ -2283,7 +2283,7 @@ taken when considering them.
 Instruction naming
 ^^^^^^^^^^^^^^^^^^
 
-An instruction name consists of the base name, a default operand size, and a a
+An instruction name consists of the base name, a default operand size, and a
 character per operand with an optional special size. For example:
 
 ::

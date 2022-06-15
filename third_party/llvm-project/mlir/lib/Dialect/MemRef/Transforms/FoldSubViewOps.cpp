@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "PassDetail.h"
 #include "mlir/Dialect/Affine/IR/AffineOps.h"
 #include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
@@ -95,10 +96,12 @@ static Value getMemRefOperand(LoadOrStoreOpTy op) {
   return op.memref();
 }
 
-static Value getMemRefOperand(vector::TransferReadOp op) { return op.source(); }
+static Value getMemRefOperand(vector::TransferReadOp op) {
+  return op.getSource();
+}
 
 static Value getMemRefOperand(vector::TransferWriteOp op) {
-  return op.source();
+  return op.getSource();
 }
 
 /// Given the permutation map of the original
@@ -174,9 +177,9 @@ void LoadOpOfSubViewFolder<vector::TransferReadOp>::replaceOp(
       transferReadOp, transferReadOp.getVectorType(), subViewOp.source(),
       sourceIndices,
       getPermutationMapAttr(rewriter.getContext(), subViewOp,
-                            transferReadOp.permutation_map()),
-      transferReadOp.padding(),
-      /*mask=*/Value(), transferReadOp.in_boundsAttr());
+                            transferReadOp.getPermutationMap()),
+      transferReadOp.getPadding(),
+      /*mask=*/Value(), transferReadOp.getInBoundsAttr());
 }
 
 template <typename StoreOpTy>
@@ -195,11 +198,11 @@ void StoreOpOfSubViewFolder<vector::TransferWriteOp>::replaceOp(
   if (transferWriteOp.getTransferRank() == 0)
     return;
   rewriter.replaceOpWithNewOp<vector::TransferWriteOp>(
-      transferWriteOp, transferWriteOp.vector(), subViewOp.source(),
+      transferWriteOp, transferWriteOp.getVector(), subViewOp.source(),
       sourceIndices,
       getPermutationMapAttr(rewriter.getContext(), subViewOp,
-                            transferWriteOp.permutation_map()),
-      transferWriteOp.in_boundsAttr());
+                            transferWriteOp.getPermutationMap()),
+      transferWriteOp.getInBoundsAttr());
 }
 } // namespace
 
@@ -214,7 +217,7 @@ LoadOpOfSubViewFolder<OpTy>::matchAndRewrite(OpTy loadOp,
 
   SmallVector<Value, 4> sourceIndices;
   if (failed(resolveSourceIndices(loadOp.getLoc(), rewriter, subViewOp,
-                                  loadOp.indices(), sourceIndices)))
+                                  loadOp.getIndices(), sourceIndices)))
     return failure();
 
   replaceOp(loadOp, subViewOp, sourceIndices, rewriter);
@@ -232,7 +235,7 @@ StoreOpOfSubViewFolder<OpTy>::matchAndRewrite(OpTy storeOp,
 
   SmallVector<Value, 4> sourceIndices;
   if (failed(resolveSourceIndices(storeOp.getLoc(), rewriter, subViewOp,
-                                  storeOp.indices(), sourceIndices)))
+                                  storeOp.getIndices(), sourceIndices)))
     return failure();
 
   replaceOp(storeOp, subViewOp, sourceIndices, rewriter);
@@ -255,9 +258,6 @@ void memref::populateFoldSubViewOpPatterns(RewritePatternSet &patterns) {
 
 namespace {
 
-#define GEN_PASS_CLASSES
-#include "mlir/Dialect/MemRef/Transforms/Passes.h.inc"
-
 struct FoldSubViewOpsPass final
     : public FoldSubViewOpsBase<FoldSubViewOpsPass> {
   void runOnOperation() override;
@@ -268,8 +268,7 @@ struct FoldSubViewOpsPass final
 void FoldSubViewOpsPass::runOnOperation() {
   RewritePatternSet patterns(&getContext());
   memref::populateFoldSubViewOpPatterns(patterns);
-  (void)applyPatternsAndFoldGreedily(getOperation()->getRegions(),
-                                     std::move(patterns));
+  (void)applyPatternsAndFoldGreedily(getOperation(), std::move(patterns));
 }
 
 std::unique_ptr<Pass> memref::createFoldSubViewOpsPass() {

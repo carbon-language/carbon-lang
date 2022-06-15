@@ -171,6 +171,25 @@ public:
                   sys::fs::file_type::symlink_file, sys::fs::all_all);
     addEntry(Path, S);
   }
+
+protected:
+  void printImpl(raw_ostream &OS, PrintType Type,
+                 unsigned IndentLevel) const override {
+    printIndent(OS, IndentLevel);
+    OS << "DummyFileSystem (";
+    switch (Type) {
+    case vfs::FileSystem::PrintType::Summary:
+      OS << "Summary";
+      break;
+    case vfs::FileSystem::PrintType::Contents:
+      OS << "Contents";
+      break;
+    case vfs::FileSystem::PrintType::RecursiveContents:
+      OS << "RecursiveContents";
+      break;
+    }
+    OS << ")\n";
+  }
 };
 
 class ErrorDummyFileSystem : public DummyFileSystem {
@@ -180,7 +199,7 @@ class ErrorDummyFileSystem : public DummyFileSystem {
 };
 
 /// Replace back-slashes by front-slashes.
-std::string getPosixPath(std::string S) {
+std::string getPosixPath(const Twine &S) {
   SmallString<128> Result;
   llvm::sys::path::native(S, Result, llvm::sys::path::Style::posix);
   return std::string(Result.str());
@@ -848,6 +867,36 @@ TEST(VirtualFileSystemTest, HiddenInIteration) {
   }
 }
 
+TEST(OverlayFileSystemTest, PrintOutput) {
+  auto Dummy = makeIntrusiveRefCnt<DummyFileSystem>();
+  auto Overlay1 = makeIntrusiveRefCnt<vfs::OverlayFileSystem>(Dummy);
+  Overlay1->pushOverlay(Dummy);
+  auto Overlay2 = makeIntrusiveRefCnt<vfs::OverlayFileSystem>(Overlay1);
+  Overlay2->pushOverlay(Dummy);
+
+  SmallString<0> Output;
+  raw_svector_ostream OuputStream{Output};
+
+  Overlay2->print(OuputStream, vfs::FileSystem::PrintType::Summary);
+  ASSERT_EQ("OverlayFileSystem\n", Output);
+
+  Output.clear();
+  Overlay2->print(OuputStream, vfs::FileSystem::PrintType::Contents);
+  ASSERT_EQ("OverlayFileSystem\n"
+            "  DummyFileSystem (Summary)\n"
+            "  OverlayFileSystem\n",
+            Output);
+
+  Output.clear();
+  Overlay2->print(OuputStream, vfs::FileSystem::PrintType::RecursiveContents);
+  ASSERT_EQ("OverlayFileSystem\n"
+            "  DummyFileSystem (RecursiveContents)\n"
+            "  OverlayFileSystem\n"
+            "    DummyFileSystem (RecursiveContents)\n"
+            "    DummyFileSystem (RecursiveContents)\n",
+            Output);
+}
+
 TEST(ProxyFileSystemTest, Basic) {
   IntrusiveRefCntPtr<vfs::InMemoryFileSystem> Base(
       new vfs::InMemoryFileSystem());
@@ -874,11 +923,11 @@ TEST(ProxyFileSystemTest, Basic) {
 
   auto PWD = PFS.getCurrentWorkingDirectory();
   ASSERT_FALSE(PWD.getError());
-  ASSERT_EQ("/", *PWD);
+  ASSERT_EQ("/", getPosixPath(*PWD));
 
   SmallString<16> Path;
   ASSERT_FALSE(PFS.getRealPath("a", Path));
-  ASSERT_EQ("/a", Path);
+  ASSERT_EQ("/a", getPosixPath(Path));
 
   bool Local = true;
   ASSERT_FALSE(PFS.isLocal("/a", Local));
@@ -1294,7 +1343,8 @@ TEST_F(InMemoryFileSystemTest, UniqueID) {
   EXPECT_NE(FS.status("/a")->getUniqueID(), FS.status("/e")->getUniqueID());
 
   // Recreating the "same" FS yields the same UniqueIDs.
-  vfs::InMemoryFileSystem FS2;
+  // Note: FS2 should match FS with respect to path normalization.
+  vfs::InMemoryFileSystem FS2(/*UseNormalizedPath=*/false);
   ASSERT_TRUE(FS2.addFile("/a/b", 0, MemoryBuffer::getMemBuffer("text")));
   EXPECT_EQ(FS.status("/a/b")->getUniqueID(),
             FS2.status("/a/b")->getUniqueID());
@@ -1394,11 +1444,13 @@ TEST_F(VFSFromYAMLTest, MappedFiles) {
   ASSERT_FALSE(S.getError());
   EXPECT_EQ("//root/foo/bar/a", S->getName());
   EXPECT_TRUE(S->IsVFSMapped);
+  EXPECT_TRUE(S->ExposesExternalVFSPath);
 
   ErrorOr<vfs::Status> SLower = O->status("//root/foo/bar/a");
   EXPECT_EQ("//root/foo/bar/a", SLower->getName());
   EXPECT_TRUE(S->equivalent(*SLower));
   EXPECT_FALSE(SLower->IsVFSMapped);
+  EXPECT_FALSE(SLower->ExposesExternalVFSPath);
 
   // file after opening
   auto OpenedF = O->openFileForRead("//root/file1");
@@ -1407,6 +1459,7 @@ TEST_F(VFSFromYAMLTest, MappedFiles) {
   ASSERT_FALSE(OpenedS.getError());
   EXPECT_EQ("//root/foo/bar/a", OpenedS->getName());
   EXPECT_TRUE(OpenedS->IsVFSMapped);
+  EXPECT_TRUE(OpenedS->ExposesExternalVFSPath);
 
   // directory
   S = O->status("//root/");
@@ -1419,26 +1472,30 @@ TEST_F(VFSFromYAMLTest, MappedFiles) {
   ASSERT_FALSE(S.getError());
   EXPECT_TRUE(S->isDirectory());
   EXPECT_TRUE(S->IsVFSMapped);
+  EXPECT_TRUE(S->ExposesExternalVFSPath);
   EXPECT_TRUE(S->equivalent(*O->status("//root/foo/bar")));
 
   SLower = O->status("//root/foo/bar");
   EXPECT_EQ("//root/foo/bar", SLower->getName());
   EXPECT_TRUE(S->equivalent(*SLower));
   EXPECT_FALSE(SLower->IsVFSMapped);
+  EXPECT_FALSE(SLower->ExposesExternalVFSPath);
 
   // file in remapped directory
   S = O->status("//root/mappeddir/a");
   ASSERT_FALSE(S.getError());
-  ASSERT_FALSE(S->isDirectory());
-  ASSERT_TRUE(S->IsVFSMapped);
-  ASSERT_EQ("//root/foo/bar/a", S->getName());
+  EXPECT_FALSE(S->isDirectory());
+  EXPECT_TRUE(S->IsVFSMapped);
+  EXPECT_TRUE(S->ExposesExternalVFSPath);
+  EXPECT_EQ("//root/foo/bar/a", S->getName());
 
   // file in remapped directory, with use-external-name=false
   S = O->status("//root/mappeddir2/a");
   ASSERT_FALSE(S.getError());
-  ASSERT_FALSE(S->isDirectory());
-  ASSERT_TRUE(S->IsVFSMapped);
-  ASSERT_EQ("//root/mappeddir2/a", S->getName());
+  EXPECT_FALSE(S->isDirectory());
+  EXPECT_TRUE(S->IsVFSMapped);
+  EXPECT_FALSE(S->ExposesExternalVFSPath);
+  EXPECT_EQ("//root/mappeddir2/a", S->getName());
 
   // file contents in remapped directory
   OpenedF = O->openFileForRead("//root/mappeddir/a");
@@ -1447,6 +1504,7 @@ TEST_F(VFSFromYAMLTest, MappedFiles) {
   ASSERT_FALSE(OpenedS.getError());
   EXPECT_EQ("//root/foo/bar/a", OpenedS->getName());
   EXPECT_TRUE(OpenedS->IsVFSMapped);
+  EXPECT_TRUE(OpenedS->ExposesExternalVFSPath);
 
   // file contents in remapped directory, with use-external-name=false
   OpenedF = O->openFileForRead("//root/mappeddir2/a");
@@ -1455,6 +1513,7 @@ TEST_F(VFSFromYAMLTest, MappedFiles) {
   ASSERT_FALSE(OpenedS.getError());
   EXPECT_EQ("//root/mappeddir2/a", OpenedS->getName());
   EXPECT_TRUE(OpenedS->IsVFSMapped);
+  EXPECT_FALSE(OpenedS->ExposesExternalVFSPath);
 
   // broken mapping
   EXPECT_EQ(O->status("//root/file2").getError(),
@@ -1487,11 +1546,13 @@ TEST_F(VFSFromYAMLTest, MappedRoot) {
   ASSERT_FALSE(S.getError());
   EXPECT_EQ("//root/foo/bar/a", S->getName());
   EXPECT_TRUE(S->IsVFSMapped);
+  EXPECT_TRUE(S->ExposesExternalVFSPath);
 
   ErrorOr<vfs::Status> SLower = O->status("//root/foo/bar/a");
   EXPECT_EQ("//root/foo/bar/a", SLower->getName());
   EXPECT_TRUE(S->equivalent(*SLower));
   EXPECT_FALSE(SLower->IsVFSMapped);
+  EXPECT_FALSE(SLower->ExposesExternalVFSPath);
 
   // file after opening
   auto OpenedF = O->openFileForRead("//mappedroot/a");
@@ -1500,6 +1561,7 @@ TEST_F(VFSFromYAMLTest, MappedRoot) {
   ASSERT_FALSE(OpenedS.getError());
   EXPECT_EQ("//root/foo/bar/a", OpenedS->getName());
   EXPECT_TRUE(OpenedS->IsVFSMapped);
+  EXPECT_TRUE(OpenedS->ExposesExternalVFSPath);
 
   EXPECT_EQ(0, NumDiagnostics);
 }
@@ -1648,11 +1710,13 @@ TEST_F(VFSFromYAMLTest, ReturnsRequestedPathVFSMiss) {
   ASSERT_FALSE(OpenedS.getError());
   EXPECT_EQ("a", OpenedS->getName());
   EXPECT_FALSE(OpenedS->IsVFSMapped);
+  EXPECT_FALSE(OpenedS->ExposesExternalVFSPath);
 
   auto DirectS = RemappedFS->status("a");
   ASSERT_FALSE(DirectS.getError());
   EXPECT_EQ("a", DirectS->getName());
   EXPECT_FALSE(DirectS->IsVFSMapped);
+  EXPECT_FALSE(DirectS->ExposesExternalVFSPath);
 
   EXPECT_EQ(0, NumDiagnostics);
 }
@@ -1688,11 +1752,13 @@ TEST_F(VFSFromYAMLTest, ReturnsExternalPathVFSHit) {
   ASSERT_FALSE(OpenedS.getError());
   EXPECT_EQ("realname", OpenedS->getName());
   EXPECT_TRUE(OpenedS->IsVFSMapped);
+  EXPECT_TRUE(OpenedS->ExposesExternalVFSPath);
 
   auto DirectS = FS->status("vfsname");
   ASSERT_FALSE(DirectS.getError());
   EXPECT_EQ("realname", DirectS->getName());
   EXPECT_TRUE(DirectS->IsVFSMapped);
+  EXPECT_TRUE(DirectS->ExposesExternalVFSPath);
 
   EXPECT_EQ(0, NumDiagnostics);
 }
@@ -1728,11 +1794,13 @@ TEST_F(VFSFromYAMLTest, ReturnsInternalPathVFSHit) {
   ASSERT_FALSE(OpenedS.getError());
   EXPECT_EQ("vfsname", OpenedS->getName());
   EXPECT_TRUE(OpenedS->IsVFSMapped);
+  EXPECT_FALSE(OpenedS->ExposesExternalVFSPath);
 
   auto DirectS = FS->status("vfsname");
   ASSERT_FALSE(DirectS.getError());
   EXPECT_EQ("vfsname", DirectS->getName());
   EXPECT_TRUE(DirectS->IsVFSMapped);
+  EXPECT_FALSE(DirectS->ExposesExternalVFSPath);
 
   EXPECT_EQ(0, NumDiagnostics);
 }
@@ -2094,7 +2162,7 @@ TEST_F(VFSFromYAMLTest, DirectoryIteration) {
 TEST_F(VFSFromYAMLTest, DirectoryIterationSameDirMultipleEntries) {
   // https://llvm.org/bugs/show_bug.cgi?id=27725
   if (!supportsSameDirMultipleYAMLEntries())
-    return;
+    GTEST_SKIP();
 
   IntrusiveRefCntPtr<DummyFileSystem> Lower(new DummyFileSystem());
   Lower->addDirectory("//root/zab");
@@ -2927,4 +2995,81 @@ TEST(VFSFromRemappedFilesTest, LastMappingWins) {
   ASSERT_TRUE(BufferExternalA);
   EXPECT_EQ("contents of c", (*BufferKeepA)->getBuffer());
   EXPECT_EQ("contents of c", (*BufferExternalA)->getBuffer());
+}
+
+TEST(RedirectingFileSystemTest, PrintOutput) {
+  auto Buffer =
+      MemoryBuffer::getMemBuffer("{\n"
+                                 "  'version': 0,\n"
+                                 "  'roots': [\n"
+                                 "    {\n"
+                                 "      'type': 'directory-remap',\n"
+                                 "      'name': '/dremap',\n"
+                                 "      'external-contents': '/a',\n"
+                                 "    },"
+                                 "    {\n"
+                                 "      'type': 'directory',\n"
+                                 "      'name': '/vdir',\n"
+                                 "      'contents': ["
+                                 "        {\n"
+                                 "          'type': 'directory-remap',\n"
+                                 "          'name': 'dremap',\n"
+                                 "          'external-contents': '/b'\n"
+                                 "          'use-external-name': 'true'\n"
+                                 "        },\n"
+                                 "        {\n"
+                                 "          'type': 'file',\n"
+                                 "          'name': 'vfile',\n"
+                                 "          'external-contents': '/c'\n"
+                                 "          'use-external-name': 'false'\n"
+                                 "        }]\n"
+                                 "    }]\n"
+                                 "}");
+
+  auto Dummy = makeIntrusiveRefCnt<DummyFileSystem>();
+  auto Redirecting = vfs::RedirectingFileSystem::create(
+      std::move(Buffer), nullptr, "", nullptr, Dummy);
+
+  SmallString<0> Output;
+  raw_svector_ostream OuputStream{Output};
+
+  Redirecting->print(OuputStream, vfs::FileSystem::PrintType::Summary);
+  ASSERT_EQ("RedirectingFileSystem (UseExternalNames: true)\n", Output);
+
+  Output.clear();
+  Redirecting->print(OuputStream, vfs::FileSystem::PrintType::Contents);
+  ASSERT_EQ("RedirectingFileSystem (UseExternalNames: true)\n"
+            "'/'\n"
+            "  'dremap' -> '/a'\n"
+            "  'vdir'\n"
+            "    'dremap' -> '/b' (UseExternalName: true)\n"
+            "    'vfile' -> '/c' (UseExternalName: false)\n"
+            "ExternalFS:\n"
+            "  DummyFileSystem (Summary)\n",
+            Output);
+
+  Output.clear();
+  Redirecting->print(OuputStream, vfs::FileSystem::PrintType::Contents, 1);
+  ASSERT_EQ("  RedirectingFileSystem (UseExternalNames: true)\n"
+            "  '/'\n"
+            "    'dremap' -> '/a'\n"
+            "    'vdir'\n"
+            "      'dremap' -> '/b' (UseExternalName: true)\n"
+            "      'vfile' -> '/c' (UseExternalName: false)\n"
+            "  ExternalFS:\n"
+            "    DummyFileSystem (Summary)\n",
+            Output);
+
+  Output.clear();
+  Redirecting->print(OuputStream,
+                     vfs::FileSystem::PrintType::RecursiveContents);
+  ASSERT_EQ("RedirectingFileSystem (UseExternalNames: true)\n"
+            "'/'\n"
+            "  'dremap' -> '/a'\n"
+            "  'vdir'\n"
+            "    'dremap' -> '/b' (UseExternalName: true)\n"
+            "    'vfile' -> '/c' (UseExternalName: false)\n"
+            "ExternalFS:\n"
+            "  DummyFileSystem (RecursiveContents)\n",
+            Output);
 }

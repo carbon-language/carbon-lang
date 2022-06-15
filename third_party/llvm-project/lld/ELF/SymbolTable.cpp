@@ -15,6 +15,7 @@
 
 #include "SymbolTable.h"
 #include "Config.h"
+#include "InputFiles.h"
 #include "Symbols.h"
 #include "lld/Common/ErrorHandler.h"
 #include "lld/Common/Memory.h"
@@ -38,7 +39,15 @@ void SymbolTable::wrap(Symbol *sym, Symbol *real, Symbol *wrap) {
   idx2 = idx1;
   idx1 = idx3;
 
-  if (!real->isUsedInRegularObj && sym->isUndefined())
+  // Propagate symbol usage information to the redirected symbols.
+  if (sym->isUsedInRegularObj)
+    wrap->isUsedInRegularObj = true;
+  if (real->isUsedInRegularObj)
+    sym->isUsedInRegularObj = true;
+  else if (!sym->isDefined())
+    // Now that all references to sym have been redirected to wrap, if there are
+    // no references to real (which has been redirected to sym), we only need to
+    // keep sym if it was defined, otherwise it's unused and can be dropped.
     sym->isUsedInRegularObj = false;
 
   // Now renaming is complete, and no one refers to real. We drop real from
@@ -109,6 +118,7 @@ Symbol *SymbolTable::addAndCheckDuplicate(const Defined &newSym) {
   if (sym->isDefined())
     sym->checkDuplicate(newSym);
   sym->resolve(newSym);
+  sym->isUsedInRegularObj = true;
   return sym;
 }
 

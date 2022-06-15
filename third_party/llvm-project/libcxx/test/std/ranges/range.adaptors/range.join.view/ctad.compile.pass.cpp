@@ -7,13 +7,13 @@
 //===----------------------------------------------------------------------===//
 
 // UNSUPPORTED: c++03, c++11, c++14, c++17
-// UNSUPPORTED: libcpp-no-concepts
 // UNSUPPORTED: libcpp-has-no-incomplete-ranges
 
 // template<class R>
 //   explicit join_view(R&&) -> join_view<views::all_t<R>>;
 
 #include <ranges>
+#include <utility>
 
 struct Child {
   int *begin() const;
@@ -36,6 +36,11 @@ struct BorrowedRange {
 };
 template<>
 inline constexpr bool std::ranges::enable_borrowed_range<BorrowedRange> = true;
+
+struct NestedChildren : std::ranges::view_base {
+  View* begin() const;
+  View* end() const;
+};
 
 void testCTAD() {
     View v;
@@ -66,4 +71,13 @@ void testCTAD() {
         decltype(std::ranges::join_view(std::move(br))),
         std::ranges::join_view<std::ranges::owning_view<BorrowedRange>>
     >);
+
+    NestedChildren n;
+    std::ranges::join_view jv(n);
+
+    // CTAD generated from the copy constructor instead of joining the join_view
+    static_assert(std::same_as< decltype(std::ranges::join_view(jv)), decltype(jv) >);
+
+    // CTAD generated from the move constructor instead of joining the join_view
+    static_assert(std::same_as< decltype(std::ranges::join_view(std::move(jv))), decltype(jv) >);
 }

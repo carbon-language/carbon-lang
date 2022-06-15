@@ -67,10 +67,18 @@ end
 * If both the `COUNT=` and the `COUNT_MAX=` optional arguments are
   present on the same call to the intrinsic subroutine `SYSTEM_CLOCK`,
   we require that their types have the same integer kind, since the
-  kind of these arguments is used to select the clock rate.
-  In common with some other compilers, the clock is in milliseconds
-  for kinds <= 4 and nanoseconds otherwise where the target system
-  supports these rates.
+  kind of these arguments is used to select the clock rate.  In common
+  with some other compilers, the clock rate varies from tenths of a
+  second to nanoseconds depending on argument kind and platform support.
+* If a dimension of a descriptor has zero extent in a call to
+  `CFI_section`, `CFI_setpointer` or `CFI_allocate`, the lower
+  bound on that dimension will be set to 1 for consistency with
+  the `LBOUND()` intrinsic function.
+* `-2147483648_4` is, strictly speaking, a non-conforming literal
+  constant on a machine with 32-bit two's-complement integers as
+  kind 4, because the grammar of Fortran expressions parses it as a
+  negation of a literal constant, not a negative literal constant.
+  This compiler accepts it with a portability warning.
 
 ## Extensions, deletions, and legacy features supported by default
 
@@ -79,13 +87,15 @@ end
 * `$` and `@` as legal characters in names
 * Initialization in type declaration statements using `/values/`
 * Kind specification with `*`, e.g. `REAL*4`
-* `DOUBLE COMPLEX`
+* `DOUBLE COMPLEX` as a synonym for `COMPLEX(KIND(0.D0))` --
+  but not when spelled `TYPE(DOUBLECOMPLEX)`.
 * Signed complex literal constants
 * DEC `STRUCTURE`, `RECORD`, with '%FILL'; but `UNION`, and `MAP`
   are not yet supported throughout compilation, and elicit a
   "not yet implemented" message.
 * Structure field access with `.field`
-* `BYTE` as synonym for `INTEGER(KIND=1)`
+* `BYTE` as synonym for `INTEGER(KIND=1)`; but not when spelled `TYPE(BYTE)`.
+* When kind-param is used for REAL literals, allow a matching exponent letter
 * Quad precision REAL literals with `Q`
 * `X` prefix/suffix as synonym for `Z` on hexadecimal literals
 * `B`, `O`, `Z`, and `X` accepted as suffixes as well as prefixes
@@ -202,6 +212,7 @@ end
 * External unit 0 is predefined and connected to the standard error output,
   and defined as `ERROR_UNIT` in the intrinsic `ISO_FORTRAN_ENV` module.
 * Objects in blank COMMON may be initialized.
+* Initialization of COMMON blocks outside of BLOCK DATA subprograms.
 * Multiple specifications of the SAVE attribute on the same object
   are allowed, with a warning.
 * Specific intrinsic functions BABS, IIABS, JIABS, KIABS, ZABS, and CDABS.
@@ -217,6 +228,13 @@ end
 * At runtime, `NAMELIST` input will skip over `NAMELIST` groups
   with other names, and will treat text before and between groups
   as if they were comment lines, even if not begun with `!`.
+* Commas are required in FORMAT statements and character variables
+  only when they prevent ambiguity.
+* Legacy names `AND`, `OR`, and `XOR` are accepted as aliases for
+  the standard intrinsic functions `IAND`, `IOR`, and `IEOR`
+  respectively.
+* A digit count of d=0 is accepted in Ew.0, Dw.0, and Gw.0 output
+  editing if no nonzero scale factor (kP) is in effect.
 
 ### Extensions supported when enabled by options
 
@@ -266,6 +284,8 @@ end
 * USE association of a procedure interface within that same procedure's definition
 * NULL() as a structure constructor expression for an ALLOCATABLE component (PGI).
 * Conversion of LOGICAL to INTEGER in expressions.
+* Use of INTEGER data with the intrinsic logical operators `.NOT.`, `.AND.`, `.OR.`,
+  and `.XOR.`.
 * IF (integer expression) THEN ... END IF  (PGI/Intel)
 * Comparsion of LOGICAL with ==/.EQ. rather than .EQV. (also .NEQV.) (PGI/Intel)
 * Procedure pointers in COMMON blocks (PGI/Intel)

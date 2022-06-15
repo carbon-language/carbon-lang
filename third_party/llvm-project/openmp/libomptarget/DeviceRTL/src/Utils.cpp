@@ -15,13 +15,13 @@
 #include "Interface.h"
 #include "Mapping.h"
 
-#pragma omp declare target
+#pragma omp begin declare target device_type(nohost)
 
 using namespace _OMP;
 
 namespace _OMP {
 /// Helper to keep code alive without introducing a performance penalty.
-__attribute__((used, retain, weak, optnone, cold)) void keepAlive() {
+__attribute__((weak, optnone, cold)) KEEP_ALIVE void keepAlive() {
   __kmpc_get_hardware_thread_id_in_block();
   __kmpc_get_hardware_num_threads_in_block();
   __kmpc_get_warp_size();
@@ -31,6 +31,9 @@ __attribute__((used, retain, weak, optnone, cold)) void keepAlive() {
 } // namespace _OMP
 
 namespace impl {
+
+void Unpack(uint64_t Val, uint32_t *LowBits, uint32_t *HighBits);
+uint64_t Pack(uint32_t LowBits, uint32_t HighBits);
 
 /// AMDGCN Implementation
 ///
@@ -71,6 +74,10 @@ uint64_t Pack(uint32_t LowBits, uint32_t HighBits) {
 }
 
 #pragma omp end declare variant
+
+int32_t shuffle(uint64_t Mask, int32_t Var, int32_t SrcLane);
+int32_t shuffleDown(uint64_t Mask, int32_t Var, uint32_t LaneDelta,
+                    int32_t Width);
 
 /// AMDGCN Implementation
 ///

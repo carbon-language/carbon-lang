@@ -60,6 +60,8 @@
 ; CHECK-NEXT:       Expand vector predication intrinsics
 ; CHECK-NEXT:       Scalarize Masked Memory Intrinsics
 ; CHECK-NEXT:       Expand reduction intrinsics
+; CHECK-NEXT:       Natural Loop Information
+; CHECK-NEXT:       TLS Variable Hoist
 ; CHECK-NEXT:       Interleaved Access Pass
 ; CHECK-NEXT:       X86 Partial Reduction
 ; CHECK-NEXT:       Expand indirectbr instructions
@@ -105,6 +107,7 @@
 ; CHECK-NEXT:       Machine Block Frequency Analysis
 ; CHECK-NEXT:       Machine Common Subexpression Elimination
 ; CHECK-NEXT:       MachinePostDominator Tree Construction
+; CHECK-NEXT:       Machine Cycle Info Analysis
 ; CHECK-NEXT:       Machine code sinking
 ; CHECK-NEXT:       Peephole Optimizations
 ; CHECK-NEXT:       Remove dead machine instructions

@@ -1,6 +1,6 @@
 # The LLVM Compiler Infrastructure
 
-This directory and its sub-directories contain source code for LLVM,
+This directory and its sub-directories contain the source code for LLVM,
 a toolkit for the construction of highly optimized compilers,
 optimizers, and run-time environments.
 
@@ -11,7 +11,7 @@ take a look at the
 
 ## Getting Started with the LLVM System
 
-Taken from https://llvm.org/docs/GettingStarted.html.
+Taken from [here](https://llvm.org/docs/GettingStarted.html).
 
 ### Overview
 
@@ -20,10 +20,10 @@ Welcome to the LLVM project!
 The LLVM project has multiple components. The core of the project is
 itself called "LLVM". This contains all of the tools, libraries, and header
 files needed to process intermediate representations and convert them into
-object files.  Tools include an assembler, disassembler, bitcode analyzer, and
-bitcode optimizer.  It also contains basic regression tests.
+object files. Tools include an assembler, disassembler, bitcode analyzer, and
+bitcode optimizer. It also contains basic regression tests.
 
-C-like languages use the [Clang](http://clang.llvm.org/) front end.  This
+C-like languages use the [Clang](http://clang.llvm.org/) frontend. This
 component compiles C, C++, Objective-C, and Objective-C++ code into LLVM bitcode
 -- and from there into object files, using LLVM.
 
@@ -33,7 +33,7 @@ the [LLD linker](https://lld.llvm.org), and more.
 
 ### Getting the Source Code and Building LLVM
 
-The LLVM Getting Started documentation may be out of date.  The [Clang
+The LLVM Getting Started documentation may be out of date. The [Clang
 Getting Started](http://clang.llvm.org/get_started.html) page might have more
 accurate information.
 
@@ -100,12 +100,13 @@ This is an example work-flow and configuration to get and build the LLVM source:
         * CMake will generate targets for each tool and library, and most
           LLVM sub-projects generate their own ``check-<project>`` target.
 
-        * Running a serial build will be **slow**.  To improve speed, try running a
-          parallel build.  That's done by default in Ninja; for ``make``, use the option
-          ``-j NNN``, where ``NNN`` is the number of parallel jobs, e.g. the number of
-          CPUs you have.
+        * Running a serial build will be **slow**. To improve speed, try running a
+          parallel build. That's done by default in Ninja; for ``make``, use the option
+          ``-j NNN``, where ``NNN`` is the number of parallel jobs to run.
+          In most cases, you get the best performance if you specify the number of CPU threads you have.
+          On some Unix systems, you can specify this with ``-j$(nproc)``.
 
-      * For more information see [CMake](https://llvm.org/docs/CMake.html)
+      * For more information see [CMake](https://llvm.org/docs/CMake.html).
 
 Consult the
 [Getting Started with LLVM](https://llvm.org/docs/GettingStarted.html#getting-started-with-llvm)

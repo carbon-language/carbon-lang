@@ -1,4 +1,4 @@
-//===- Shape.td - Shape operations definition --------------*- tablegen -*-===//
+//===- ShapeOps.td - Shape operations definition -----------*- tablegen -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -14,11 +14,13 @@
 #define SHAPE_OPS
 
 include "mlir/Dialect/Shape/IR/ShapeBase.td"
+include "mlir/Interfaces/CallInterfaces.td"
 include "mlir/Interfaces/CastInterfaces.td"
 include "mlir/Interfaces/ControlFlowInterfaces.td"
 include "mlir/Interfaces/InferTypeOpInterface.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 include "mlir/IR/OpAsmInterface.td"
+include "mlir/IR/FunctionInterfaces.td"
 include "mlir/IR/SymbolInterfaces.td"
 
 //===----------------------------------------------------------------------===//
@@ -552,7 +554,7 @@ def Shape_ReduceOp : Shape_Op<"reduce",
     number of elements can be computed as follows:
 
     ```mlir
-    func @reduce(%shape : !shape.shape, %init : !shape.size) -> !shape.size {
+    func.func @reduce(%shape : !shape.shape, %init : !shape.size) -> !shape.size {
       %num_elements = shape.reduce(%shape, %init) -> !shape.size  {
         ^bb0(%index: index, %dim: !shape.size, %acc: !shape.size):
           %updated_acc = "shape.mul"(%acc, %dim) :
@@ -662,7 +664,7 @@ def Shape_WithOp : Shape_Op<"with_shape", [NoSideEffect]> {
     and/or call one shape function from another. E.g.,
 
     ```mlir
-    func @shape_foobah(%a: !shape.value_shape,
+    func.func @shape_foobah(%a: !shape.value_shape,
                        %b: !shape.value_shape,
                        %c: !shape.value_shape) -> !shape.shape {
       %0 = call @shape_foo(%a, %b) :
@@ -764,10 +766,13 @@ def Shape_ConcatOp : Shape_Op<"concat", [NoSideEffect]> {
     concat([], [4,5,6]) -> [4,5,6]
   }];
 
-  let arguments = (ins Shape_ShapeType:$lhs, Shape_ShapeType:$rhs);
-  let results = (outs Shape_ShapeType:$result);
+  let arguments = (ins Shape_ShapeOrExtentTensorType:$lhs, Shape_ShapeOrExtentTensorType:$rhs);
+  let results = (outs Shape_ShapeOrExtentTensorType:$result);
 
-  let assemblyFormat = "$lhs `,` $rhs attr-dict";
+  let assemblyFormat = [{
+    $lhs `,` $rhs attr-dict `:` type($lhs) `,` type($rhs) `->` type($result)
+  }];
+
   let hasFolder = 1;
 }
 
@@ -865,7 +870,6 @@ def Shape_AssumingOp : Shape_Op<"assuming", [
 
   let hasCanonicalizer = 1;
   let hasCustomAssemblyFormat = 1;
-  let hasVerifier = 1;
 }
 
 def Shape_AssumingYieldOp : Shape_Op<"assuming_yield",
@@ -996,7 +1000,7 @@ def Shape_CstrRequireOp : Shape_Op<"cstr_require", []> {
 
 def Shape_FunctionLibraryOp : Shape_Op<"function_library",
     [AffineScope, IsolatedFromAbove, NoRegionArguments, SymbolTable, Symbol,
-     NoTerminator, SingleBlock]> {
+     NoTerminator, OpAsmOpInterface, SingleBlock]> {
   let summary = "Represents shape functions and corresponding ops";
   let description = [{
     Represents a list of shape functions and the ops whose shape transfer
@@ -1007,7 +1011,7 @@ def Shape_FunctionLibraryOp : Shape_Op<"function_library",
     ```mlir
     shape.function_library {
       func @same_result_shape(%arg: !shape.value_shape) -> !shape.shape {
-        %0 = shape.shape_of %arg : !shape.value_shape -> !shape.shape
+        %0 = shape_of %arg : !shape.value_shape -> !shape.shape
         return %0 : !shape.shape
       }
     } mapping {
@@ -1024,11 +1028,90 @@ def Shape_FunctionLibraryOp : Shape_Op<"function_library",
   let extraClassDeclaration = [{
     /// Returns an associated shape function for an operation if defined.
     FuncOp getShapeFunction(Operation *op);
+
+    //===------------------------------------------------------------------===//
+    // OpAsmOpInterface
+    //===------------------------------------------------------------------===//
+
+    // This will filter the `shape.` prefix in front of operations inside the
+    // func body.
+    static StringRef getDefaultDialect() { return "shape";}
   }];
 
   let builders = [OpBuilder<(ins "StringRef":$name)>];
   let skipDefaultBuilders = 1;
   let hasCustomAssemblyFormat = 1;
+}
+
+def Shape_FuncOp : Shape_Op<"func",
+    [AffineScope, AutomaticAllocationScope, CallableOpInterface,
+     FunctionOpInterface, IsolatedFromAbove, OpAsmOpInterface, Symbol]> {
+  let summary = "Shape function";
+  let description = [{
+    An operation with a name containing a single `SSACFG` region which
+    represents a shape transfer function or helper function for shape transfer
+    function.
+  }];
+
+  let arguments = (ins SymbolNameAttr:$sym_name,
+                       TypeAttrOf<FunctionType>:$function_type,
+                       OptionalAttr<StrAttr>:$sym_visibility);
+  let regions = (region AnyRegion:$body);
+
+  let extraClassDeclaration = [{
+    //===------------------------------------------------------------------===//
+    // CallableOpInterface
+    //===------------------------------------------------------------------===//
+
+    /// Returns the region on the current operation that is callable. This may
+    /// return null in the case of an external callable object, e.g. an external
+    /// function.
+    ::mlir::Region *getCallableRegion() { return isExternal() ? nullptr : &getBody(); }
+
+    /// Returns the results types that the callable region produces when
+    /// executed.
+    ArrayRef<Type> getCallableResults() { return getFunctionType().getResults(); }
+
+    //===------------------------------------------------------------------===//
+    // FunctionOpInterface Methods
+    //===------------------------------------------------------------------===//
+
+    /// Returns the argument types of this function.
+    ArrayRef<Type> getArgumentTypes() { return getFunctionType().getInputs(); }
+
+    /// Returns the result types of this function.
+    ArrayRef<Type> getResultTypes() { return getFunctionType().getResults(); }
+
+    //===------------------------------------------------------------------===//
+    // OpAsmOpInterface
+    //===------------------------------------------------------------------===//
+
+    // This will filter the `shape.` prefix in front of operations inside the
+    // func body.
+    static StringRef getDefaultDialect() { return "shape";}
+
+    //===------------------------------------------------------------------===//
+    // SymbolOpInterface Methods
+    //===------------------------------------------------------------------===//
+
+    bool isDeclaration() { return isExternal(); }
+  }];
+  let hasCustomAssemblyFormat = 1;
+}
+
+def Shape_ReturnOp : Shape_Op<"return",
+    [NoSideEffect, HasParent<"FuncOp">, ReturnLike, Terminator]> {
+  let summary = "Shape function return operation";
+  let description = [{
+    The `shape.return` operation represents a return operation within a function.
+    The operation takes variable number of operands and produces no results.
+  }];
+
+  let arguments = (ins Variadic<AnyType>:$operands);
+
+  let assemblyFormat = "attr-dict ($operands^ `:` type($operands))?";
+
+  // TODO: Tighten verification.
 }
 
 #endif // SHAPE_OPS

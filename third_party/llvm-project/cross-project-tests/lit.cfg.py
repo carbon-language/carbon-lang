@@ -3,7 +3,9 @@ import platform
 import re
 import subprocess
 import sys
-from distutils.version import StrictVersion
+
+# TODO: LooseVersion is undocumented; use something else.
+from distutils.version import LooseVersion
 
 import lit.formats
 import lit.util
@@ -80,11 +82,6 @@ llvm_config.use_lld(required=('lld' in config.llvm_enabled_projects))
 
 if 'compiler-rt' in config.llvm_enabled_projects:
   config.available_features.add('compiler-rt')
-
-if config.llvm_use_sanitizer:
-    # Propagate path to symbolizer for ASan/MSan.
-    llvm_config.with_system_environment(
-        ['ASAN_SYMBOLIZER_PATH', 'MSAN_SYMBOLIZER_PATH'])
 
 # Check which debuggers are available:
 lldb_path = llvm_config.use_llvm_tool('lldb', search_env='LLDB')
@@ -246,7 +243,7 @@ dwarf_version_string = get_clang_default_dwarf_version_string(config.host_triple
 gdb_version_string = get_gdb_version_string()
 if dwarf_version_string and gdb_version_string:
   if int(dwarf_version_string) >= 5:
-    if StrictVersion(gdb_version_string) < StrictVersion('10.1'):
+    if LooseVersion(gdb_version_string) < LooseVersion('10.1'):
       # Example for llgdb-tests, which use lldb on darwin but gdb elsewhere:
       # XFAIL: !system-darwin && gdb-clang-incompatibility
       config.available_features.add('gdb-clang-incompatibility')
@@ -255,3 +252,7 @@ if dwarf_version_string and gdb_version_string:
 llvm_config.feature_config(
     [('--build-mode', {'Debug|RelWithDebInfo': 'debug-info'})]
 )
+
+# Allow 'REQUIRES: XXX-registered-target' in tests.
+for arch in config.targets_to_build:
+    config.available_features.add(arch.lower() + '-registered-target')

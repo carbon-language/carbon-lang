@@ -11,13 +11,15 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "mlir/Dialect/Affine/IR/AffineOps.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/Linalg/Transforms/Transforms.h"
 #include "mlir/Pass/Pass.h"
 #include "mlir/Pass/PassManager.h"
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
 #include "llvm/ADT/TypeSwitch.h"
 
-namespace mlir {
+using namespace mlir;
 
 static void addOperands(Operation *op, SetVector<Value> &operandSet) {
   if (!op)
@@ -46,7 +48,10 @@ static bool setFusedOpOperandLimit(const OpResult &producer,
 
 namespace {
 struct TestLinalgElementwiseFusion
-    : public PassWrapper<TestLinalgElementwiseFusion, OperationPass<FuncOp>> {
+    : public PassWrapper<TestLinalgElementwiseFusion,
+                         OperationPass<func::FuncOp>> {
+  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(TestLinalgElementwiseFusion)
+
   TestLinalgElementwiseFusion() = default;
   TestLinalgElementwiseFusion(const TestLinalgElementwiseFusion &pass)
       : PassWrapper(pass) {}
@@ -66,16 +71,16 @@ struct TestLinalgElementwiseFusion
       llvm::cl::desc("Test fusion of generic operations."),
       llvm::cl::init(false)};
 
+  Option<bool> fuseWithReshapeByExpansion{
+      *this, "fuse-with-reshape-by-expansion",
+      llvm::cl::desc(
+          "Test fusion of generic operations with reshape by expansion"),
+      llvm::cl::init(false)};
+
   Option<bool> controlFuseByExpansion{
       *this, "control-fusion-by-expansion",
       llvm::cl::desc(
           "Test controlling fusion of reshape with generic op by expansion"),
-      llvm::cl::init(false)};
-
-  Option<bool> pushExpandingReshape{
-      *this, "push-expanding-reshape",
-      llvm::cl::desc("Test linalg expand_shape -> generic "
-                     "to generic -> expand_shape pattern"),
       llvm::cl::init(false)};
 
   Option<bool> fuseWithReshapeByCollapsing{
@@ -93,24 +98,33 @@ struct TestLinalgElementwiseFusion
 
   void runOnOperation() override {
     MLIRContext *context = &this->getContext();
-    FuncOp funcOp = this->getOperation();
+    func::FuncOp funcOp = this->getOperation();
 
     if (fuseGenericOps) {
       RewritePatternSet fusionPatterns(context);
-      linalg::populateElementwiseOpsFusionPatterns(
-          fusionPatterns,
-          linalg::LinalgElementwiseFusionOptions()
-              .setControlElementwiseOpsFusionFn(setFusedOpOperandLimit<4>));
+      linalg::populateElementwiseOpsFusionPatterns(fusionPatterns,
+                                                   setFusedOpOperandLimit<4>);
 
       (void)applyPatternsAndFoldGreedily(funcOp.getBody(),
                                          std::move(fusionPatterns));
       return;
     }
 
+    if (fuseWithReshapeByExpansion) {
+      RewritePatternSet fusionPatterns(context);
+      linalg::populateFoldReshapeOpsByExpansionPatterns(
+          fusionPatterns, [](const OpResult & /*producer*/,
+                             OpOperand & /*consumer*/) { return true; });
+      if (failed(applyPatternsAndFoldGreedily(funcOp.getBody(),
+                                              std::move(fusionPatterns))))
+        return signalPassFailure();
+      return;
+    }
+
     if (controlFuseByExpansion) {
       RewritePatternSet fusionPatterns(context);
 
-      linalg::ControlElementwiseOpsFusionFn controlReshapeFusionFn =
+      linalg::ControlFusionFn controlReshapeFusionFn =
           [](const OpResult &producer, OpOperand &consumer) {
             if (auto collapseOp =
                     producer.getDefiningOp<tensor::CollapseShapeOp>()) {
@@ -126,8 +140,9 @@ struct TestLinalgElementwiseFusion
                 if (linalgOp && linalgOp.isOutputTensor(&use))
                   return true;
               }
+              return false;
             }
-            return linalg::skipUnitDimReshape(producer, consumer);
+            return true;
           };
 
       linalg::populateFoldReshapeOpsByExpansionPatterns(fusionPatterns,
@@ -137,22 +152,18 @@ struct TestLinalgElementwiseFusion
       return;
     }
 
-    if (pushExpandingReshape) {
-      RewritePatternSet patterns(context);
-      linalg::populatePushReshapeOpsPatterns(patterns);
-      (void)applyPatternsAndFoldGreedily(funcOp.getBody(), std::move(patterns));
-    }
-
     if (fuseWithReshapeByCollapsing) {
       RewritePatternSet patterns(context);
-      linalg::populateFoldReshapeOpsByCollapsingPatterns(patterns);
+      linalg::populateFoldReshapeOpsByCollapsingPatterns(
+          patterns, [](const OpResult & /*producer*/,
+                       OpOperand & /*consumer*/) { return true; });
       (void)applyPatternsAndFoldGreedily(funcOp.getBody(), std::move(patterns));
     }
 
     if (fuseWithReshapeByCollapsingWithControlFn) {
       RewritePatternSet patterns(context);
-      linalg::ControlElementwiseOpsFusionFn controlFn =
-          [](const OpResult &producer, OpOperand &consumer) -> bool {
+      linalg::ControlFusionFn controlFn = [](const OpResult &producer,
+                                             OpOperand &consumer) -> bool {
         if (isa<tensor::ExpandShapeOp>(producer.getDefiningOp())) {
           // Skip fusing the first operand.
           return consumer.getOperandNumber();
@@ -167,10 +178,10 @@ struct TestLinalgElementwiseFusion
 
 } // namespace
 
+namespace mlir {
 namespace test {
 void registerTestLinalgElementwiseFusion() {
   PassRegistration<TestLinalgElementwiseFusion>();
 }
 } // namespace test
-
 } // namespace mlir

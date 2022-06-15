@@ -49,7 +49,6 @@
 #include "llvm/Transforms/IPO/Attributor.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/CallGraphUpdater.h"
-#include "llvm/Transforms/Utils/CodeExtractor.h"
 
 #include <algorithm>
 
@@ -59,17 +58,16 @@ using namespace omp;
 #define DEBUG_TYPE "openmp-opt"
 
 static cl::opt<bool> DisableOpenMPOptimizations(
-    "openmp-opt-disable", cl::ZeroOrMore,
-    cl::desc("Disable OpenMP specific optimizations."), cl::Hidden,
-    cl::init(false));
+    "openmp-opt-disable", cl::desc("Disable OpenMP specific optimizations."),
+    cl::Hidden, cl::init(false));
 
 static cl::opt<bool> EnableParallelRegionMerging(
-    "openmp-opt-enable-merging", cl::ZeroOrMore,
+    "openmp-opt-enable-merging",
     cl::desc("Enable the OpenMP region merging optimization."), cl::Hidden,
     cl::init(false));
 
 static cl::opt<bool>
-    DisableInternalization("openmp-opt-disable-internalization", cl::ZeroOrMore,
+    DisableInternalization("openmp-opt-disable-internalization",
                            cl::desc("Disable function internalization."),
                            cl::Hidden, cl::init(false));
 
@@ -85,42 +83,47 @@ static cl::opt<bool> HideMemoryTransferLatency(
     cl::Hidden, cl::init(false));
 
 static cl::opt<bool> DisableOpenMPOptDeglobalization(
-    "openmp-opt-disable-deglobalization", cl::ZeroOrMore,
+    "openmp-opt-disable-deglobalization",
     cl::desc("Disable OpenMP optimizations involving deglobalization."),
     cl::Hidden, cl::init(false));
 
 static cl::opt<bool> DisableOpenMPOptSPMDization(
-    "openmp-opt-disable-spmdization", cl::ZeroOrMore,
+    "openmp-opt-disable-spmdization",
     cl::desc("Disable OpenMP optimizations involving SPMD-ization."),
     cl::Hidden, cl::init(false));
 
 static cl::opt<bool> DisableOpenMPOptFolding(
-    "openmp-opt-disable-folding", cl::ZeroOrMore,
+    "openmp-opt-disable-folding",
     cl::desc("Disable OpenMP optimizations involving folding."), cl::Hidden,
     cl::init(false));
 
 static cl::opt<bool> DisableOpenMPOptStateMachineRewrite(
-    "openmp-opt-disable-state-machine-rewrite", cl::ZeroOrMore,
+    "openmp-opt-disable-state-machine-rewrite",
     cl::desc("Disable OpenMP optimizations that replace the state machine."),
     cl::Hidden, cl::init(false));
 
 static cl::opt<bool> DisableOpenMPOptBarrierElimination(
-    "openmp-opt-disable-barrier-elimination", cl::ZeroOrMore,
+    "openmp-opt-disable-barrier-elimination",
     cl::desc("Disable OpenMP optimizations that eliminate barriers."),
     cl::Hidden, cl::init(false));
 
 static cl::opt<bool> PrintModuleAfterOptimizations(
-    "openmp-opt-print-module", cl::ZeroOrMore,
+    "openmp-opt-print-module-after",
     cl::desc("Print the current module after OpenMP optimizations."),
     cl::Hidden, cl::init(false));
 
+static cl::opt<bool> PrintModuleBeforeOptimizations(
+    "openmp-opt-print-module-before",
+    cl::desc("Print the current module before OpenMP optimizations."),
+    cl::Hidden, cl::init(false));
+
 static cl::opt<bool> AlwaysInlineDeviceFunctions(
-    "openmp-opt-inline-device", cl::ZeroOrMore,
+    "openmp-opt-inline-device",
     cl::desc("Inline all applicible functions on the device."), cl::Hidden,
     cl::init(false));
 
 static cl::opt<bool>
-    EnableVerboseRemarks("openmp-opt-verbose-remarks", cl::ZeroOrMore,
+    EnableVerboseRemarks("openmp-opt-verbose-remarks",
                          cl::desc("Enables more verbose remarks."), cl::Hidden,
                          cl::init(false));
 
@@ -931,8 +934,7 @@ private:
     SmallDenseMap<BasicBlock *, SmallPtrSet<Instruction *, 4>> BB2PRMap;
 
     BasicBlock *StartBB = nullptr, *EndBB = nullptr;
-    auto BodyGenCB = [&](InsertPointTy AllocaIP, InsertPointTy CodeGenIP,
-                         BasicBlock &ContinuationIP) {
+    auto BodyGenCB = [&](InsertPointTy AllocaIP, InsertPointTy CodeGenIP) {
       BasicBlock *CGStartBB = CodeGenIP.getBlock();
       BasicBlock *CGEndBB =
           SplitBlock(CGStartBB, &*CodeGenIP.getPoint(), DT, LI);
@@ -971,8 +973,7 @@ private:
       const DebugLoc DL = ParentBB->getTerminator()->getDebugLoc();
       ParentBB->getTerminator()->eraseFromParent();
 
-      auto BodyGenCB = [&](InsertPointTy AllocaIP, InsertPointTy CodeGenIP,
-                           BasicBlock &ContinuationIP) {
+      auto BodyGenCB = [&](InsertPointTy AllocaIP, InsertPointTy CodeGenIP) {
         BasicBlock *CGStartBB = CodeGenIP.getBlock();
         BasicBlock *CGEndBB =
             SplitBlock(CGStartBB, &*CodeGenIP.getPoint(), DT, LI);
@@ -1112,10 +1113,8 @@ private:
       // callbacks.
       SmallVector<Value *, 8> Args;
       for (auto *CI : MergableCIs) {
-        Value *Callee =
-            CI->getArgOperand(CallbackCalleeOperand)->stripPointerCasts();
-        FunctionType *FT =
-            cast<FunctionType>(Callee->getType()->getPointerElementType());
+        Value *Callee = CI->getArgOperand(CallbackCalleeOperand);
+        FunctionType *FT = OMPInfoCache.OMPBuilder.ParallelTask;
         Args.clear();
         Args.push_back(OutlinedFn->getArg(0));
         Args.push_back(OutlinedFn->getArg(1));
@@ -2474,7 +2473,8 @@ struct AAICVTrackerFunction : public AAICVTracker {
 
     if (ICVTrackingAA.isAssumedTracked()) {
       Optional<Value *> URV = ICVTrackingAA.getUniqueReplacementValue(ICV);
-      if (!URV || (*URV && AA::isValidAtPosition(**URV, I, OMPInfoCache)))
+      if (!URV || (*URV && AA::isValidAtPosition(AA::ValueAndContext(**URV, I),
+                                                 OMPInfoCache)))
         return URV;
     }
 
@@ -2657,7 +2657,7 @@ struct AAICVTrackerCallSite : AAICVTracker {
     if (!ReplVal.hasValue() || !ReplVal.getValue())
       return ChangeStatus::UNCHANGED;
 
-    A.changeValueAfterManifest(*getCtxI(), **ReplVal);
+    A.changeAfterManifest(IRPosition::inst(*getCtxI()), **ReplVal);
     A.deleteAfterManifest(*getCtxI());
 
     return ChangeStatus::CHANGED;
@@ -2795,7 +2795,7 @@ struct AAExecutionDomainFunction : public AAExecutionDomain {
   SmallSetVector<const BasicBlock *, 16> SingleThreadedBBs;
 
   /// Total number of basic blocks in this function.
-  long unsigned NumBBs;
+  long unsigned NumBBs = 0;
 };
 
 ChangeStatus AAExecutionDomainFunction::updateImpl(Attributor &A) {
@@ -2958,12 +2958,23 @@ struct AAHeapToSharedFunction : public AAHeapToShared {
   }
 
   void initialize(Attributor &A) override {
+    if (DisableOpenMPOptDeglobalization) {
+      indicatePessimisticFixpoint();
+      return;
+    }
+
     auto &OMPInfoCache = static_cast<OMPInformationCache &>(A.getInfoCache());
     auto &RFI = OMPInfoCache.RFIs[OMPRTL___kmpc_alloc_shared];
 
+    Attributor::SimplifictionCallbackTy SCB =
+        [](const IRPosition &, const AbstractAttribute *,
+           bool &) -> Optional<Value *> { return nullptr; };
     for (User *U : RFI.Declaration->users())
-      if (CallBase *CB = dyn_cast<CallBase>(U))
+      if (CallBase *CB = dyn_cast<CallBase>(U)) {
         MallocCalls.insert(CB);
+        A.registerSimplificationCallback(IRPosition::callsite_returned(*CB),
+                                         SCB);
+      }
 
     findPotentialRemovedFreeCalls(A);
   }
@@ -3043,7 +3054,7 @@ struct AAHeapToSharedFunction : public AAHeapToShared {
              "HeapToShared on allocation without alignment attribute");
       SharedMem->setAlignment(MaybeAlign(Alignment));
 
-      A.changeValueAfterManifest(*CB, *NewBuffer);
+      A.changeAfterManifest(IRPosition::callsite_returned(*CB), *NewBuffer);
       A.deleteAfterManifest(*CB);
       A.deleteAfterManifest(*FreeCalls.front());
 
@@ -3154,12 +3165,6 @@ struct AAKernelInfoFunction : AAKernelInfo {
     auto &OMPInfoCache = static_cast<OMPInformationCache &>(A.getInfoCache());
 
     Function *Fn = getAnchorScope();
-    if (!OMPInfoCache.Kernels.count(Fn))
-      return;
-
-    // Add itself to the reaching kernel and set IsKernelEntry.
-    ReachingKernelEntries.insert(Fn);
-    IsKernelEntry = true;
 
     OMPInformationCache::RuntimeFunctionInfo &InitRFI =
         OMPInfoCache.RFIs[OMPRTL___kmpc_target_init];
@@ -3193,10 +3198,12 @@ struct AAKernelInfoFunction : AAKernelInfo {
         Fn);
 
     // Ignore kernels without initializers such as global constructors.
-    if (!KernelInitCB || !KernelDeinitCB) {
-      indicateOptimisticFixpoint();
+    if (!KernelInitCB || !KernelDeinitCB)
       return;
-    }
+
+    // Add itself to the reaching kernel and set IsKernelEntry.
+    ReachingKernelEntries.insert(Fn);
+    IsKernelEntry = true;
 
     // For kernels we might need to initialize/finalize the IsSPMD state and
     // we need to register a simplification callback so that the Attributor
@@ -3362,8 +3369,17 @@ struct AAKernelInfoFunction : AAKernelInfo {
       return false;
     }
 
-    // Check if the kernel is already in SPMD mode, if so, return success.
+    // Get the actual kernel, could be the caller of the anchor scope if we have
+    // a debug wrapper.
     Function *Kernel = getAnchorScope();
+    if (Kernel->hasLocalLinkage()) {
+      assert(Kernel->hasOneUse() && "Unexpected use of debug kernel wrapper.");
+      auto *CB = cast<CallBase>(Kernel->user_back());
+      Kernel = CB->getCaller();
+    }
+    assert(OMPInfoCache.Kernels.count(Kernel) && "Expected kernel function!");
+
+    // Check if the kernel is already in SPMD mode, if so, return success.
     GlobalVariable *ExecMode = Kernel->getParent()->getGlobalVariable(
         (Kernel->getName() + "_exec_mode").str());
     assert(ExecMode && "Kernel without exec mode?");
@@ -3728,9 +3744,9 @@ struct AAKernelInfoFunction : AAKernelInfo {
     //                         __kmpc_get_hardware_num_threads_in_block();
     //                       WarpSize = __kmpc_get_warp_size();
     //                       BlockSize = BlockHwSize - WarpSize;
-    //                       if (InitCB >= BlockSize) return;
-    // IsWorkerCheckBB:      bool IsWorker = InitCB >= 0;
+    // IsWorkerCheckBB:      bool IsWorker = InitCB != -1;
     //                       if (IsWorker) {
+    //                         if (InitCB >= BlockSize) return;
     // SMBeginBB:               __kmpc_barrier_simple_generic(...);
     //                         void *WorkFn;
     //                         bool Active = __kmpc_kernel_parallel(&WorkFn);
@@ -3787,6 +3803,13 @@ struct AAKernelInfoFunction : AAKernelInfo {
     ReturnInst::Create(Ctx, StateMachineFinishedBB)->setDebugLoc(DLoc);
     InitBB->getTerminator()->eraseFromParent();
 
+    Instruction *IsWorker =
+        ICmpInst::Create(ICmpInst::ICmp, llvm::CmpInst::ICMP_NE, KernelInitCB,
+                         ConstantInt::get(KernelInitCB->getType(), -1),
+                         "thread.is_worker", InitBB);
+    IsWorker->setDebugLoc(DLoc);
+    BranchInst::Create(IsWorkerCheckBB, UserCodeEntryBB, IsWorker, InitBB);
+
     Module &M = *Kernel->getParent();
     auto &OMPInfoCache = static_cast<OMPInformationCache &>(A.getInfoCache());
     FunctionCallee BlockHwSizeFn =
@@ -3796,29 +3819,22 @@ struct AAKernelInfoFunction : AAKernelInfo {
         OMPInfoCache.OMPBuilder.getOrCreateRuntimeFunction(
             M, OMPRTL___kmpc_get_warp_size);
     CallInst *BlockHwSize =
-        CallInst::Create(BlockHwSizeFn, "block.hw_size", InitBB);
+        CallInst::Create(BlockHwSizeFn, "block.hw_size", IsWorkerCheckBB);
     OMPInfoCache.setCallingConvention(BlockHwSizeFn, BlockHwSize);
     BlockHwSize->setDebugLoc(DLoc);
-    CallInst *WarpSize = CallInst::Create(WarpSizeFn, "warp.size", InitBB);
+    CallInst *WarpSize =
+        CallInst::Create(WarpSizeFn, "warp.size", IsWorkerCheckBB);
     OMPInfoCache.setCallingConvention(WarpSizeFn, WarpSize);
     WarpSize->setDebugLoc(DLoc);
-    Instruction *BlockSize =
-        BinaryOperator::CreateSub(BlockHwSize, WarpSize, "block.size", InitBB);
+    Instruction *BlockSize = BinaryOperator::CreateSub(
+        BlockHwSize, WarpSize, "block.size", IsWorkerCheckBB);
     BlockSize->setDebugLoc(DLoc);
-    Instruction *IsMainOrWorker =
-        ICmpInst::Create(ICmpInst::ICmp, llvm::CmpInst::ICMP_SLT, KernelInitCB,
-                         BlockSize, "thread.is_main_or_worker", InitBB);
+    Instruction *IsMainOrWorker = ICmpInst::Create(
+        ICmpInst::ICmp, llvm::CmpInst::ICMP_SLT, KernelInitCB, BlockSize,
+        "thread.is_main_or_worker", IsWorkerCheckBB);
     IsMainOrWorker->setDebugLoc(DLoc);
-    BranchInst::Create(IsWorkerCheckBB, StateMachineFinishedBB, IsMainOrWorker,
-                       InitBB);
-
-    Instruction *IsWorker =
-        ICmpInst::Create(ICmpInst::ICmp, llvm::CmpInst::ICMP_NE, KernelInitCB,
-                         ConstantInt::get(KernelInitCB->getType(), -1),
-                         "thread.is_worker", IsWorkerCheckBB);
-    IsWorker->setDebugLoc(DLoc);
-    BranchInst::Create(StateMachineBeginBB, UserCodeEntryBB, IsWorker,
-                       IsWorkerCheckBB);
+    BranchInst::Create(StateMachineBeginBB, StateMachineFinishedBB,
+                       IsMainOrWorker, IsWorkerCheckBB);
 
     // Create local storage for the work function pointer.
     const DataLayout &DL = M.getDataLayout();
@@ -4258,10 +4274,10 @@ struct AAKernelInfoCallSite : AAKernelInfo {
       unsigned ScheduleTypeVal =
           ScheduleTypeCI ? ScheduleTypeCI->getZExtValue() : 0;
       switch (OMPScheduleType(ScheduleTypeVal)) {
-      case OMPScheduleType::Static:
-      case OMPScheduleType::StaticChunked:
-      case OMPScheduleType::Distribute:
-      case OMPScheduleType::DistributeChunked:
+      case OMPScheduleType::UnorderedStatic:
+      case OMPScheduleType::UnorderedStaticChunked:
+      case OMPScheduleType::OrderedDistribute:
+      case OMPScheduleType::OrderedDistributeChunked:
         break;
       default:
         SPMDCompatibilityTracker.indicatePessimisticFixpoint();
@@ -4480,7 +4496,7 @@ struct AAFoldRuntimeCallCallSiteReturned : AAFoldRuntimeCall {
 
     if (SimplifiedValue.hasValue() && SimplifiedValue.getValue()) {
       Instruction &I = *getCtxI();
-      A.changeValueAfterManifest(I, **SimplifiedValue);
+      A.changeAfterManifest(IRPosition::inst(I), **SimplifiedValue);
       A.deleteAfterManifest(I);
 
       CallBase *CB = dyn_cast<CallBase>(&I);
@@ -4717,18 +4733,23 @@ void OpenMPOpt::registerFoldRuntimeCall(RuntimeFunction RF) {
 
 void OpenMPOpt::registerAAs(bool IsModulePass) {
   if (SCC.empty())
-
     return;
+
   if (IsModulePass) {
     // Ensure we create the AAKernelInfo AAs first and without triggering an
     // update. This will make sure we register all value simplification
     // callbacks before any other AA has the chance to create an AAValueSimplify
     // or similar.
-    for (Function *Kernel : OMPInfoCache.Kernels)
+    auto CreateKernelInfoCB = [&](Use &, Function &Kernel) {
       A.getOrCreateAAFor<AAKernelInfo>(
-          IRPosition::function(*Kernel), /* QueryingAA */ nullptr,
+          IRPosition::function(Kernel), /* QueryingAA */ nullptr,
           DepClassTy::NONE, /* ForceUpdate */ false,
           /* UpdateAfterInit */ false);
+      return false;
+    };
+    OMPInformationCache::RuntimeFunctionInfo &InitRFI =
+        OMPInfoCache.RFIs[OMPRTL___kmpc_target_init];
+    InitRFI.foreachUse(SCC, CreateKernelInfoCB);
 
     registerFoldRuntimeCall(OMPRTL___kmpc_is_generic_main_thread_id);
     registerFoldRuntimeCall(OMPRTL___kmpc_is_spmd_exec_mode);
@@ -4916,6 +4937,9 @@ PreservedAnalyses OpenMPOptPass::run(Module &M, ModuleAnalysisManager &AM) {
       AM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
   KernelSet Kernels = getDeviceKernels(M);
 
+  if (PrintModuleBeforeOptimizations)
+    LLVM_DEBUG(dbgs() << TAG << "Module before OpenMPOpt Module Pass:\n" << M);
+
   auto IsCalled = [&](Function &F) {
     if (Kernels.contains(&F))
       return true;
@@ -4975,8 +4999,15 @@ PreservedAnalyses OpenMPOptPass::run(Module &M, ModuleAnalysisManager &AM) {
 
   unsigned MaxFixpointIterations =
       (isOpenMPDevice(M)) ? SetFixpointIterations : 32;
-  Attributor A(Functions, InfoCache, CGUpdater, nullptr, true, false,
-               MaxFixpointIterations, OREGetter, DEBUG_TYPE);
+
+  AttributorConfig AC(CGUpdater);
+  AC.DefaultInitializeLiveInternals = false;
+  AC.RewriteSignatures = false;
+  AC.MaxFixpointIterations = MaxFixpointIterations;
+  AC.OREGetter = OREGetter;
+  AC.PassName = DEBUG_TYPE;
+
+  Attributor A(Functions, InfoCache, AC);
 
   OpenMPOpt OMPOpt(SCC, CGUpdater, OREGetter, InfoCache, A);
   bool Changed = OMPOpt.run(true);
@@ -5018,6 +5049,9 @@ PreservedAnalyses OpenMPOptCGSCCPass::run(LazyCallGraph::SCC &C,
 
   Module &M = *C.begin()->getFunction().getParent();
 
+  if (PrintModuleBeforeOptimizations)
+    LLVM_DEBUG(dbgs() << TAG << "Module before OpenMPOpt CGSCC Pass:\n" << M);
+
   KernelSet Kernels = getDeviceKernels(M);
 
   FunctionAnalysisManager &FAM =
@@ -5039,8 +5073,16 @@ PreservedAnalyses OpenMPOptCGSCCPass::run(LazyCallGraph::SCC &C,
 
   unsigned MaxFixpointIterations =
       (isOpenMPDevice(M)) ? SetFixpointIterations : 32;
-  Attributor A(Functions, InfoCache, CGUpdater, nullptr, false, true,
-               MaxFixpointIterations, OREGetter, DEBUG_TYPE);
+
+  AttributorConfig AC(CGUpdater);
+  AC.DefaultInitializeLiveInternals = false;
+  AC.IsModulePass = false;
+  AC.RewriteSignatures = false;
+  AC.MaxFixpointIterations = MaxFixpointIterations;
+  AC.OREGetter = OREGetter;
+  AC.PassName = DEBUG_TYPE;
+
+  Attributor A(Functions, InfoCache, AC);
 
   OpenMPOpt OMPOpt(SCC, CGUpdater, OREGetter, InfoCache, A);
   bool Changed = OMPOpt.run(false);
@@ -5110,8 +5152,16 @@ struct OpenMPOptCGSCCLegacyPass : public CallGraphSCCPass {
 
     unsigned MaxFixpointIterations =
         (isOpenMPDevice(M)) ? SetFixpointIterations : 32;
-    Attributor A(Functions, InfoCache, CGUpdater, nullptr, false, true,
-                 MaxFixpointIterations, OREGetter, DEBUG_TYPE);
+
+    AttributorConfig AC(CGUpdater);
+    AC.DefaultInitializeLiveInternals = false;
+    AC.IsModulePass = false;
+    AC.RewriteSignatures = false;
+    AC.MaxFixpointIterations = MaxFixpointIterations;
+    AC.OREGetter = OREGetter;
+    AC.PassName = DEBUG_TYPE;
+
+    Attributor A(Functions, InfoCache, AC);
 
     OpenMPOpt OMPOpt(SCC, CGUpdater, OREGetter, InfoCache, A);
     bool Result = OMPOpt.run(false);

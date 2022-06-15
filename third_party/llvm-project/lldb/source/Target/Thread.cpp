@@ -989,7 +989,7 @@ Vote Thread::ShouldReportStop(Event *event_ptr) {
     // the last plan, regardless of whether it is private or not.
     LLDB_LOGF(log,
               "Thread::ShouldReportStop() tid = 0x%4.4" PRIx64
-              ": returning vote  for complete stack's back plan",
+              ": returning vote for complete stack's back plan",
               GetID());
     return GetPlans().GetCompletedPlan(false)->ShouldReportStop(event_ptr);
   } else {
@@ -1091,7 +1091,7 @@ void Thread::PopPlan() {
 
 void Thread::DiscardPlan() {
   Log *log = GetLog(LLDBLog::Step);
-  ThreadPlanSP discarded_plan_sp = GetPlans().PopPlan();
+  ThreadPlanSP discarded_plan_sp = GetPlans().DiscardPlan();
 
   LLDB_LOGF(log, "Discarding plan: \"%s\", tid = 0x%4.4" PRIx64 ".",
             discarded_plan_sp->GetName(), 
@@ -1953,7 +1953,7 @@ Status Thread::StepOver(bool source_step,
   return error;
 }
 
-Status Thread::StepOut() {
+Status Thread::StepOut(uint32_t frame_idx) {
   Status error;
   Process *process = GetProcess().get();
   if (StateIsStoppedState(process->GetState(), true)) {
@@ -1963,7 +1963,7 @@ Status Thread::StepOut() {
 
     ThreadPlanSP new_plan_sp(QueueThreadPlanForStepOut(
         abort_other_plans, nullptr, first_instruction, stop_other_threads,
-        eVoteYes, eVoteNoOpinion, 0, error));
+        eVoteYes, eVoteNoOpinion, frame_idx, error));
 
     new_plan_sp->SetIsControllingPlan(true);
     new_plan_sp->SetOkayToDiscard(false);

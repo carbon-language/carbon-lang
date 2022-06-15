@@ -13,6 +13,8 @@
 #ifndef TOY_OPS
 #define TOY_OPS
 
+include "mlir/IR/FunctionInterfaces.td"
+include "mlir/IR/SymbolInterfaces.td"
 include "mlir/Interfaces/CallInterfaces.td"
 include "mlir/Interfaces/CastInterfaces.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
@@ -23,10 +25,15 @@ include "toy/ShapeInferenceInterface.td"
 def Toy_Dialect : Dialect {
   let name = "toy";
   let cppNamespace = "::mlir::toy";
+  let emitAccessorPrefix = kEmitAccessorPrefix_Prefixed;
 
   // We set this bit to generate a declaration of the `materializeConstant`
   // method so that we can materialize constants for our toy operations.
   let hasConstantMaterializer = 1;
+
+  // We set this bit to generate the declarations for the dialect's type parsing
+  // and printing hooks.
+  let useDefaultTypePrinterParser = 1;
 }
 
 // Base class for toy dialect operations. This operation inherits from the base
@@ -49,6 +56,10 @@ def Toy_Type : AnyTypeOf<[F64Tensor, Toy_StructType]>;
 
 //===----------------------------------------------------------------------===//
 // Toy Operations
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+// ConstantOp
 //===----------------------------------------------------------------------===//
 
 // We define a toy operation by inheriting from our base 'Toy_Op' class above.
@@ -100,6 +111,10 @@ def ConstantOp : Toy_Op<"constant",
   let hasFolder = 1;
 }
 
+//===----------------------------------------------------------------------===//
+// AddOp
+//===----------------------------------------------------------------------===//
+
 def AddOp : Toy_Op<"add",
     [NoSideEffect, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
   let summary = "element-wise addition operation";
@@ -119,6 +134,10 @@ def AddOp : Toy_Op<"add",
     OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
   ];
 }
+
+//===----------------------------------------------------------------------===//
+// CastOp
+//===----------------------------------------------------------------------===//
 
 def CastOp : Toy_Op<"cast", [
      DeclareOpInterfaceMethods<CastOpInterface>,
@@ -140,6 +159,60 @@ def CastOp : Toy_Op<"cast", [
 
   let assemblyFormat = "$input attr-dict `:` type($input) `to` type($output)";
 }
+
+//===----------------------------------------------------------------------===//
+// FuncOp
+//===----------------------------------------------------------------------===//
+
+def FuncOp : Toy_Op<"func", [
+    DeclareOpInterfaceMethods<CallableOpInterface>, FunctionOpInterface,
+    IsolatedFromAbove, Symbol
+  ]> {
+  let summary = "user defined function operation";
+  let description = [{
+    The "toy.func" operation represents a user defined function. These are
+    callable SSA-region operations that contain toy computations.
+
+    Example:
+
+    ```mlir
+    toy.func @main() {
+      %0 = toy.constant dense<5.500000e+00> : tensor<f64>
+      %1 = toy.reshape(%0 : tensor<f64>) to tensor<2x2xf64>
+      toy.print %1 : tensor<2x2xf64>
+      toy.return
+    }
+    ```
+  }];
+
+  let arguments = (ins
+    SymbolNameAttr:$sym_name,
+    TypeAttrOf<FunctionType>:$function_type
+  );
+  let regions = (region AnyRegion:$body);
+
+  let builders = [OpBuilder<(ins
+    "StringRef":$name, "FunctionType":$type,
+    CArg<"ArrayRef<NamedAttribute>", "{}">:$attrs)
+  >];
+  let extraClassDeclaration = [{
+    //===------------------------------------------------------------------===//
+    // FunctionOpInterface Methods
+    //===------------------------------------------------------------------===//
+
+    /// Returns the argument types of this function.
+    ArrayRef<Type> getArgumentTypes() { return getFunctionType().getInputs(); }
+
+    /// Returns the result types of this function.
+    ArrayRef<Type> getResultTypes() { return getFunctionType().getResults(); }
+  }];
+  let hasCustomAssemblyFormat = 1;
+  let skipDefaultBuilders = 1;
+}
+
+//===----------------------------------------------------------------------===//
+// GenericCallOp
+//===----------------------------------------------------------------------===//
 
 def GenericCallOp : Toy_Op<"generic_call",
     [DeclareOpInterfaceMethods<CallOpInterface>]> {
@@ -178,6 +251,10 @@ def GenericCallOp : Toy_Op<"generic_call",
   ];
 }
 
+//===----------------------------------------------------------------------===//
+// MulOp
+//===----------------------------------------------------------------------===//
+
 def MulOp : Toy_Op<"mul",
     [NoSideEffect, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
   let summary = "element-wise multiplication operation";
@@ -198,6 +275,10 @@ def MulOp : Toy_Op<"mul",
   ];
 }
 
+//===----------------------------------------------------------------------===//
+// PrintOp
+//===----------------------------------------------------------------------===//
+
 def PrintOp : Toy_Op<"print"> {
   let summary = "print operation";
   let description = [{
@@ -211,6 +292,10 @@ def PrintOp : Toy_Op<"print"> {
 
   let assemblyFormat = "$input attr-dict `:` type($input)";
 }
+
+//===----------------------------------------------------------------------===//
+// ReshapeOp
+//===----------------------------------------------------------------------===//
 
 def ReshapeOp : Toy_Op<"reshape", [NoSideEffect]> {
   let summary = "tensor reshape operation";
@@ -236,6 +321,10 @@ def ReshapeOp : Toy_Op<"reshape", [NoSideEffect]> {
   let results = (outs StaticShapeTensorOf<[F64]>);
 }
 
+//===----------------------------------------------------------------------===//
+// ReturnOp
+//===----------------------------------------------------------------------===//
+
 def ReturnOp : Toy_Op<"return", [NoSideEffect, HasParent<"FuncOp">,
                                  Terminator]> {
   let summary = "return operation";
@@ -246,7 +335,7 @@ def ReturnOp : Toy_Op<"return", [NoSideEffect, HasParent<"FuncOp">,
     the operation. For example:
 
     ```mlir
-      func @foo() -> tensor<2xf64> {
+      toy.func @foo() -> tensor<2xf64> {
         ...
         toy.return %0 : tensor<2xf64>
       }
@@ -274,6 +363,10 @@ def ReturnOp : Toy_Op<"return", [NoSideEffect, HasParent<"FuncOp">,
   let hasVerifier = 1;
 }
 
+//===----------------------------------------------------------------------===//
+// StructAccessOp
+//===----------------------------------------------------------------------===//
+
 def StructAccessOp : Toy_Op<"struct_access", [NoSideEffect]> {
   let summary = "struct access";
   let description = [{
@@ -299,6 +392,10 @@ def StructAccessOp : Toy_Op<"struct_access", [NoSideEffect]> {
   let hasFolder = 1;
 }
 
+//===----------------------------------------------------------------------===//
+// StructConstantOp
+//===----------------------------------------------------------------------===//
+
 def StructConstantOp : Toy_Op<"struct_constant", [ConstantLike, NoSideEffect]> {
   let summary = "struct constant";
   let description = [{
@@ -322,6 +419,10 @@ def StructConstantOp : Toy_Op<"struct_constant", [ConstantLike, NoSideEffect]> {
   let hasVerifier = 1;
   let hasFolder = 1;
 }
+
+//===----------------------------------------------------------------------===//
+// TransposeOp
+//===----------------------------------------------------------------------===//
 
 def TransposeOp : Toy_Op<"transpose",
     [NoSideEffect, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {

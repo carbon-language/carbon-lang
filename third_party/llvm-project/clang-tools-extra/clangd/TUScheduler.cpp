@@ -47,6 +47,7 @@
 // requests will receive latest build preamble, which might possibly be stale.
 
 #include "TUScheduler.h"
+#include "CompileCommands.h"
 #include "Compiler.h"
 #include "Diagnostics.h"
 #include "GlobalCompilationDatabase.h"
@@ -97,6 +98,40 @@ namespace clangd {
 using std::chrono::steady_clock;
 
 namespace {
+// Tracks latency (in seconds) of FS operations done during a preamble build.
+// build_type allows to split by expected VFS cache state (cold on first
+// preamble, somewhat warm after that when building first preamble for new file,
+// likely ~everything cached on preamble rebuild.
+constexpr trace::Metric
+    PreambleBuildFilesystemLatency("preamble_fs_latency",
+                                   trace::Metric::Distribution, "build_type");
+// Tracks latency of FS operations done during a preamble build as a ratio of
+// preamble build time. build_type is same as above.
+constexpr trace::Metric PreambleBuildFilesystemLatencyRatio(
+    "preamble_fs_latency_ratio", trace::Metric::Distribution, "build_type");
+
+constexpr trace::Metric PreambleBuildSize("preamble_build_size",
+                                          trace::Metric::Distribution);
+constexpr trace::Metric PreambleSerializedSize("preamble_serialized_size",
+                                               trace::Metric::Distribution);
+
+void reportPreambleBuild(const PreambleBuildStats &Stats,
+                         bool IsFirstPreamble) {
+  auto RecordWithLabel = [&Stats](llvm::StringRef Label) {
+    PreambleBuildFilesystemLatency.record(Stats.FileSystemTime, Label);
+    if (Stats.TotalBuildTime > 0) // Avoid division by zero.
+      PreambleBuildFilesystemLatencyRatio.record(
+          Stats.FileSystemTime / Stats.TotalBuildTime, Label);
+  };
+
+  static llvm::once_flag OnceFlag;
+  llvm::call_once(OnceFlag, [&] { RecordWithLabel("first_build"); });
+  RecordWithLabel(IsFirstPreamble ? "first_build_for_file" : "rebuild");
+
+  PreambleBuildSize.record(Stats.BuildSize);
+  PreambleSerializedSize.record(Stats.SerializedSize);
+}
+
 class ASTWorker;
 } // namespace
 
@@ -763,7 +798,7 @@ ASTWorker::~ASTWorker() {
 
 void ASTWorker::update(ParseInputs Inputs, WantDiagnostics WantDiags,
                        bool ContentChanged) {
-  std::string TaskName = llvm::formatv("Update ({0})", Inputs.Version);
+  llvm::StringLiteral TaskName = "Update";
   auto Task = [=]() mutable {
     // Get the actual command as `Inputs` does not have a command.
     // FIXME: some build systems like Bazel will take time to preparing
@@ -974,13 +1009,20 @@ void PreambleThread::build(Request Req) {
     crashDumpParseInputs(llvm::errs(), Inputs);
   });
 
+  PreambleBuildStats Stats;
+  bool IsFirstPreamble = !LatestBuild;
   LatestBuild = clang::clangd::buildPreamble(
       FileName, *Req.CI, Inputs, StoreInMemory,
-      [this, Version(Inputs.Version)](ASTContext &Ctx, Preprocessor &PP,
-                                      const CanonicalIncludes &CanonIncludes) {
-        Callbacks.onPreambleAST(FileName, Version, Ctx, PP, CanonIncludes);
-      });
-  if (LatestBuild && isReliable(LatestBuild->CompileCommand))
+      [&](ASTContext &Ctx, Preprocessor &PP,
+          const CanonicalIncludes &CanonIncludes) {
+        Callbacks.onPreambleAST(FileName, Inputs.Version, *Req.CI, Ctx, PP,
+                                CanonIncludes);
+      },
+      &Stats);
+  if (!LatestBuild)
+    return;
+  reportPreambleBuild(Stats, IsFirstPreamble);
+  if (isReliable(LatestBuild->CompileCommand))
     HeaderIncluders.update(FileName, LatestBuild->Includes.allHeaders());
 }
 
@@ -1503,7 +1545,7 @@ TUScheduler::TUScheduler(const GlobalCompilationDatabase &CDB,
                          const Options &Opts,
                          std::unique_ptr<ParsingCallbacks> Callbacks)
     : CDB(CDB), Opts(Opts),
-      Callbacks(Callbacks ? move(Callbacks)
+      Callbacks(Callbacks ? std::move(Callbacks)
                           : std::make_unique<ParsingCallbacks>()),
       Barrier(Opts.AsyncThreadsCount), QuickRunBarrier(Opts.AsyncThreadsCount),
       IdleASTs(

@@ -83,10 +83,9 @@ def Inliner : Pass<"inline"> {
   let options = [
     Option<"defaultPipelineStr", "default-pipeline", "std::string",
            /*default=*/"", "The default optimizer pipeline used for callables">,
-    ListOption<"opPipelineStrs", "op-pipelines", "std::string",
+    ListOption<"opPipelineList", "op-pipelines", "OpPassManager",
                "Callable operation specific optimizer pipelines (in the form "
-               "of `dialect.op(pipeline)`)",
-               "llvm::cl::MiscFlags::CommaSeparated">,
+               "of `dialect.op(pipeline)`)">,
     Option<"maxInliningIterations", "max-iterations", "unsigned",
            /*default=*/"4",
            "Maximum number of iterations when inlining within an SCC">,
@@ -146,6 +145,10 @@ def LoopInvariantCodeMotion : Pass<"loop-invariant-code-motion"> {
 def PrintOpStats : Pass<"print-op-stats"> {
   let summary = "Print statistics of operations";
   let constructor = "mlir::createPrintOpStatsPass()";
+  let options = [
+    Option<"printAsJSON", "json", "bool", /*default=*/"false",
+           "print the stats as JSON">
+  ];
 }
 
 def SCCP : Pass<"sccp"> {
@@ -185,11 +188,11 @@ def SymbolDCE : Pass<"symbol-dce"> {
     For example, consider the following input:
 
     ```mlir
-    func private @dead_private_function()
-    func private @live_private_function()
+    func.func private @dead_private_function()
+    func.func private @live_private_function()
 
     // Note: The `public` isn't necessary here, as this is the default.
-    func public @public_function() {
+    func.func public @public_function() {
       "foo.return"() {uses = [@live_private_function]} : () -> ()
     }
     ```
@@ -201,9 +204,9 @@ def SymbolDCE : Pass<"symbol-dce"> {
     are no links to known-live operations. After running, we get the expected:
 
     ```mlir
-    func private @live_private_function()
+    func.func private @live_private_function()
 
-    func public @public_function() {
+    func.func public @public_function() {
       "foo.return"() {uses = [@live_private_function]} : () -> ()
     }
     ```
@@ -212,6 +215,10 @@ def SymbolDCE : Pass<"symbol-dce"> {
     information on `Symbols`.
   }];
   let constructor = "mlir::createSymbolDCEPass()";
+
+  let statistics = [
+    Statistic<"numDCE", "num-dce'd", "Number of symbols DCE'd">,
+  ];
 }
 
 def SymbolPrivatize : Pass<"symbol-privatize"> {
@@ -222,8 +229,7 @@ def SymbolPrivatize : Pass<"symbol-privatize"> {
   }];
   let options = [
     ListOption<"exclude", "exclude", "std::string",
-       "Comma separated list of symbols that should not be marked private",
-       "llvm::cl::MiscFlags::CommaSeparated">
+       "Comma separated list of symbols that should not be marked private">
   ];
   let constructor = "mlir::createSymbolPrivatizePass()";
 }
@@ -256,6 +262,23 @@ def ViewOpGraph : Pass<"view-op-graph"> {
             /*default=*/"true", "Print result types of operations">
   ];
   let constructor = "mlir::createPrintOpGraphPass()";
+}
+
+def TopologicalSort : Pass<"topological-sort"> {
+  let summary = "Sort regions without SSA dominance in topological order";
+  let description = [{
+    Recursively sorts all nested regions without SSA dominance in topological
+    order. The main purpose is readability, as well as potentially processing of
+    certain transformations and analyses. The function sorts the operations in
+    all nested regions such that, as much as possible, all users appear after
+    their producers.
+
+    This sort is stable. If the block is already topologically sorted, the IR
+    is not changed. Operations that form a cycle are moved to the end of the
+    regions in a stable order.
+  }];
+
+  let constructor = "mlir::createTopologicalSortPass()";
 }
 
 #endif // MLIR_TRANSFORMS_PASSES

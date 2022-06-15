@@ -843,7 +843,8 @@ EmitPhysRegCopy(SUnit *SU, DenseMap<SUnit*, Register> &VRBaseMap,
 /// not necessarily refer to returned BB. The emitter may split blocks.
 MachineBasicBlock *ScheduleDAGSDNodes::
 EmitSchedule(MachineBasicBlock::iterator &InsertPos) {
-  InstrEmitter Emitter(DAG->getTarget(), BB, InsertPos);
+  InstrEmitter Emitter(DAG->getTarget(), BB, InsertPos,
+                       DAG->getUseInstrRefDebugInfo());
   DenseMap<SDValue, Register> VRBaseMap;
   DenseMap<SUnit*, Register> CopyVRBaseMap;
   SmallVector<std::pair<unsigned, MachineInstr*>, 32> Orders;
@@ -883,7 +884,7 @@ EmitSchedule(MachineBasicBlock::iterator &InsertPos) {
 
     if (MI->isCandidateForCallSiteEntry() &&
         DAG->getTarget().Options.EmitCallSiteInfo)
-      MF.addCallArgsForwardingRegs(MI, DAG->getSDCallSiteInfo(Node));
+      MF.addCallArgsForwardingRegs(MI, DAG->getCallSiteInfo(Node));
 
     if (DAG->getNoMergeSiteInfo(Node)) {
       MI->setFlag(MachineInstr::MIFlag::NoMerge);

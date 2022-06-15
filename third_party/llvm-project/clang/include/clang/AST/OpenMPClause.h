@@ -4746,14 +4746,24 @@ class OMPDependClause final
   friend OMPVarListClause;
   friend TrailingObjects;
 
-  /// Dependency type (one of in, out, inout).
-  OpenMPDependClauseKind DepKind = OMPC_DEPEND_unknown;
+public:
+  struct DependDataTy final {
+    /// Dependency type (one of in, out, inout).
+    OpenMPDependClauseKind DepKind = OMPC_DEPEND_unknown;
 
-  /// Dependency type location.
-  SourceLocation DepLoc;
+    /// Dependency type location.
+    SourceLocation DepLoc;
 
-  /// Colon location.
-  SourceLocation ColonLoc;
+    /// Colon location.
+    SourceLocation ColonLoc;
+
+    /// Location of 'omp_all_memory'.
+    SourceLocation OmpAllMemoryLoc;
+  };
+
+private:
+  /// Dependency type and source locations.
+  DependDataTy Data;
 
   /// Number of loops, associated with the depend clause.
   unsigned NumLoops = 0;
@@ -4784,13 +4794,16 @@ class OMPDependClause final
         NumLoops(NumLoops) {}
 
   /// Set dependency kind.
-  void setDependencyKind(OpenMPDependClauseKind K) { DepKind = K; }
+  void setDependencyKind(OpenMPDependClauseKind K) { Data.DepKind = K; }
 
   /// Set dependency kind and its location.
-  void setDependencyLoc(SourceLocation Loc) { DepLoc = Loc; }
+  void setDependencyLoc(SourceLocation Loc) { Data.DepLoc = Loc; }
 
   /// Set colon location.
-  void setColonLoc(SourceLocation Loc) { ColonLoc = Loc; }
+  void setColonLoc(SourceLocation Loc) { Data.ColonLoc = Loc; }
+
+  /// Set the 'omp_all_memory' location.
+  void setOmpAllMemoryLoc(SourceLocation Loc) { Data.OmpAllMemoryLoc = Loc; }
 
   /// Sets optional dependency modifier.
   void setModifier(Expr *DepModifier);
@@ -4802,18 +4815,15 @@ public:
   /// \param StartLoc Starting location of the clause.
   /// \param LParenLoc Location of '('.
   /// \param EndLoc Ending location of the clause.
-  /// \param DepKind Dependency type.
-  /// \param DepLoc Location of the dependency type.
-  /// \param ColonLoc Colon location.
+  /// \param Data Dependency type and source locations.
   /// \param VL List of references to the variables.
   /// \param NumLoops Number of loops that is associated with this depend
   /// clause.
   static OMPDependClause *Create(const ASTContext &C, SourceLocation StartLoc,
                                  SourceLocation LParenLoc,
-                                 SourceLocation EndLoc, Expr *DepModifier,
-                                 OpenMPDependClauseKind DepKind,
-                                 SourceLocation DepLoc, SourceLocation ColonLoc,
-                                 ArrayRef<Expr *> VL, unsigned NumLoops);
+                                 SourceLocation EndLoc, DependDataTy Data,
+                                 Expr *DepModifier, ArrayRef<Expr *> VL,
+                                 unsigned NumLoops);
 
   /// Creates an empty clause with \a N variables.
   ///
@@ -4825,19 +4835,22 @@ public:
                                       unsigned NumLoops);
 
   /// Get dependency type.
-  OpenMPDependClauseKind getDependencyKind() const { return DepKind; }
+  OpenMPDependClauseKind getDependencyKind() const { return Data.DepKind; }
+
+  /// Get dependency type location.
+  SourceLocation getDependencyLoc() const { return Data.DepLoc; }
+
+  /// Get colon location.
+  SourceLocation getColonLoc() const { return Data.ColonLoc; }
+
+  /// Get 'omp_all_memory' location.
+  SourceLocation getOmpAllMemoryLoc() const { return Data.OmpAllMemoryLoc; }
 
   /// Return optional depend modifier.
   Expr *getModifier();
   const Expr *getModifier() const {
     return const_cast<OMPDependClause *>(this)->getModifier();
   }
-
-  /// Get dependency type location.
-  SourceLocation getDependencyLoc() const { return DepLoc; }
-
-  /// Get colon location.
-  SourceLocation getColonLoc() const { return ColonLoc; }
 
   /// Get number of loops associated with the clause.
   unsigned getNumLoops() const { return NumLoops; }
@@ -7413,6 +7426,110 @@ public:
 
   static bool classof(const OMPClause *T) {
     return T->getClauseKind() == llvm::omp::OMPC_is_device_ptr;
+  }
+};
+
+/// This represents clause 'has_device_ptr' in the '#pragma omp ...'
+/// directives.
+///
+/// \code
+/// #pragma omp target has_device_addr(a,b)
+/// \endcode
+/// In this example directive '#pragma omp target' has clause
+/// 'has_device_ptr' with the variables 'a' and 'b'.
+class OMPHasDeviceAddrClause final
+    : public OMPMappableExprListClause<OMPHasDeviceAddrClause>,
+      private llvm::TrailingObjects<
+          OMPHasDeviceAddrClause, Expr *, ValueDecl *, unsigned,
+          OMPClauseMappableExprCommon::MappableComponent> {
+  friend class OMPClauseReader;
+  friend OMPMappableExprListClause;
+  friend OMPVarListClause;
+  friend TrailingObjects;
+
+  /// Build clause with number of variables \a NumVars.
+  ///
+  /// \param Locs Locations needed to build a mappable clause. It includes 1)
+  /// StartLoc: starting location of the clause (the clause keyword); 2)
+  /// LParenLoc: location of '('; 3) EndLoc: ending location of the clause.
+  /// \param Sizes All required sizes to build a mappable clause. It includes 1)
+  /// NumVars: number of expressions listed in this clause; 2)
+  /// NumUniqueDeclarations: number of unique base declarations in this clause;
+  /// 3) NumComponentLists: number of component lists in this clause; and 4)
+  /// NumComponents: total number of expression components in the clause.
+  explicit OMPHasDeviceAddrClause(const OMPVarListLocTy &Locs,
+                                  const OMPMappableExprListSizeTy &Sizes)
+      : OMPMappableExprListClause(llvm::omp::OMPC_has_device_addr, Locs,
+                                  Sizes) {}
+
+  /// Build an empty clause.
+  ///
+  /// \param Sizes All required sizes to build a mappable clause. It includes 1)
+  /// NumVars: number of expressions listed in this clause; 2)
+  /// NumUniqueDeclarations: number of unique base declarations in this clause;
+  /// 3) NumComponentLists: number of component lists in this clause; and 4)
+  /// NumComponents: total number of expression components in the clause.
+  explicit OMPHasDeviceAddrClause(const OMPMappableExprListSizeTy &Sizes)
+      : OMPMappableExprListClause(llvm::omp::OMPC_has_device_addr,
+                                  OMPVarListLocTy(), Sizes) {}
+
+  /// Define the sizes of each trailing object array except the last one. This
+  /// is required for TrailingObjects to work properly.
+  size_t numTrailingObjects(OverloadToken<Expr *>) const {
+    return varlist_size();
+  }
+  size_t numTrailingObjects(OverloadToken<ValueDecl *>) const {
+    return getUniqueDeclarationsNum();
+  }
+  size_t numTrailingObjects(OverloadToken<unsigned>) const {
+    return getUniqueDeclarationsNum() + getTotalComponentListNum();
+  }
+
+public:
+  /// Creates clause with a list of variables \a Vars.
+  ///
+  /// \param C AST context.
+  /// \param Locs Locations needed to build a mappable clause. It includes 1)
+  /// StartLoc: starting location of the clause (the clause keyword); 2)
+  /// LParenLoc: location of '('; 3) EndLoc: ending location of the clause.
+  /// \param Vars The original expression used in the clause.
+  /// \param Declarations Declarations used in the clause.
+  /// \param ComponentLists Component lists used in the clause.
+  static OMPHasDeviceAddrClause *
+  Create(const ASTContext &C, const OMPVarListLocTy &Locs,
+         ArrayRef<Expr *> Vars, ArrayRef<ValueDecl *> Declarations,
+         MappableExprComponentListsRef ComponentLists);
+
+  /// Creates an empty clause with the place for \a NumVars variables.
+  ///
+  /// \param C AST context.
+  /// \param Sizes All required sizes to build a mappable clause. It includes 1)
+  /// NumVars: number of expressions listed in this clause; 2)
+  /// NumUniqueDeclarations: number of unique base declarations in this clause;
+  /// 3) NumComponentLists: number of component lists in this clause; and 4)
+  /// NumComponents: total number of expression components in the clause.
+  static OMPHasDeviceAddrClause *
+  CreateEmpty(const ASTContext &C, const OMPMappableExprListSizeTy &Sizes);
+
+  child_range children() {
+    return child_range(reinterpret_cast<Stmt **>(varlist_begin()),
+                       reinterpret_cast<Stmt **>(varlist_end()));
+  }
+
+  const_child_range children() const {
+    auto Children = const_cast<OMPHasDeviceAddrClause *>(this)->children();
+    return const_child_range(Children.begin(), Children.end());
+  }
+
+  child_range used_children() {
+    return child_range(child_iterator(), child_iterator());
+  }
+  const_child_range used_children() const {
+    return const_child_range(const_child_iterator(), const_child_iterator());
+  }
+
+  static bool classof(const OMPClause *T) {
+    return T->getClauseKind() == llvm::omp::OMPC_has_device_addr;
   }
 };
 

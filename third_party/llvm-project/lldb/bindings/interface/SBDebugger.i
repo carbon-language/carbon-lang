@@ -119,18 +119,19 @@ class SBDebugger
 public:
     enum
     {
-        eBroadcastBitProgress = (1 << 0)
+        eBroadcastBitProgress = (1 << 0),
+        eBroadcastBitWarning = (1 << 1),
+        eBroadcastBitError = (1 << 2),
     };
 
 
-    %apply uint64_t& INOUT { uint64_t& progress_id };
-    %apply uint64_t& INOUT { uint64_t& completed };
-    %apply uint64_t& INOUT { uint64_t& total };
-    %apply bool& INOUT { bool& is_debugger_specific };
     static const char *GetProgressFromEvent(const lldb::SBEvent &event,
-                                        uint64_t &progress_id,
-                                        uint64_t &completed, uint64_t &total,
-                                        bool &is_debugger_specific);
+                                        uint64_t &OUTPUT,
+                                        uint64_t &OUTPUT,
+                                        uint64_t &OUTPUT,
+                                        bool &OUTPUT);
+
+    static lldb::SBStructuredData GetDiagnosticFromEvent(const lldb::SBEvent &event);
 
     SBBroadcaster GetBroadcaster();
 
@@ -139,6 +140,8 @@ public:
 
     static SBError
     InitializeWithErrorHandling();
+
+    static void PrintStackTraceOnError();
 
     static void
     Terminate();

@@ -391,6 +391,8 @@ public:
   create(MemoryBufferRef Object, bool IsLittleEndian, bool Is64Bits,
          uint32_t UniversalCputype = 0, uint32_t UniversalIndex = 0);
 
+  static bool isMachOPairedReloc(uint64_t RelocType, uint64_t Arch);
+
   void moveSymbolNext(DataRefImpl &Symb) const override;
 
   uint64_t getNValue(DataRefImpl Sym) const;
@@ -683,6 +685,9 @@ public:
   ArrayRef<uint8_t> getDyldInfoBindOpcodes() const;
   ArrayRef<uint8_t> getDyldInfoWeakBindOpcodes() const;
   ArrayRef<uint8_t> getDyldInfoLazyBindOpcodes() const;
+  /// If the optional is None, no header was found, but the object was well-formed.
+  Expected<Optional<MachO::dyld_chained_fixups_header>>
+  getChainedFixupsHeader() const;
   Expected<std::vector<ChainedFixupTarget>> getDyldChainedFixupTargets() const;
   ArrayRef<uint8_t> getDyldInfoExportsTrie() const;
   SmallVector<uint64_t> getFunctionStarts() const;

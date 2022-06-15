@@ -8,7 +8,7 @@
 
 // <string>
 
-// basic_string(const basic_string& str, const Allocator& alloc);
+// basic_string(const basic_string& str, const Allocator& alloc); // constexpr since C++20
 
 #include <string>
 #include <cassert>
@@ -21,7 +21,7 @@
 struct alloc_imp {
     bool active;
 
-    alloc_imp() : active(true) {}
+    TEST_CONSTEXPR alloc_imp() : active(true) {}
 
     template <class T>
     T* allocate(std::size_t n)
@@ -45,10 +45,10 @@ struct poca_alloc {
 
     alloc_imp *imp;
 
-    poca_alloc(alloc_imp *imp_) : imp (imp_) {}
+    TEST_CONSTEXPR poca_alloc(alloc_imp *imp_) : imp (imp_) {}
 
     template <class U>
-    poca_alloc(const poca_alloc<U>& other) : imp(other.imp) {}
+    TEST_CONSTEXPR poca_alloc(const poca_alloc<U>& other) : imp(other.imp) {}
 
     T*   allocate  (std::size_t n)       { return imp->allocate<T>(n);}
     void deallocate(T* p, std::size_t n) { imp->deallocate(p, n); }
@@ -67,7 +67,7 @@ bool operator!=(const poca_alloc<T>& lhs, const poca_alloc<U>& rhs)
 }
 
 template <class S>
-void test_assign(S &s1, const S& s2)
+TEST_CONSTEXPR_CXX20 void test_assign(S &s1, const S& s2)
 {
     try { s1 = s2; }
     catch ( std::bad_alloc &) { return; }
@@ -78,7 +78,7 @@ void test_assign(S &s1, const S& s2)
 
 
 template <class S>
-void
+TEST_CONSTEXPR_CXX20 void
 test(S s1, const typename S::allocator_type& a)
 {
     S s2(s1, a);
@@ -88,7 +88,7 @@ test(S s1, const typename S::allocator_type& a)
     assert(s2.get_allocator() == a);
 }
 
-bool test() {
+TEST_CONSTEXPR_CXX20 bool test() {
   {
     typedef test_allocator<char> A;
     typedef std::basic_string<char, std::char_traits<char>, A> S;
@@ -106,7 +106,7 @@ bool test() {
   }
 
 #ifndef TEST_HAS_NO_EXCEPTIONS
-  {
+  if (!TEST_IS_CONSTANT_EVALUATED) {
     typedef poca_alloc<char> A;
     typedef std::basic_string<char, std::char_traits<char>, A> S;
     const char * p1 = "This is my first string";
@@ -135,7 +135,7 @@ int main(int, char**)
 {
   test();
 #if TEST_STD_VER > 17
-  // static_assert(test());
+  static_assert(test());
 #endif
 
   return 0;

@@ -289,14 +289,12 @@ void IRInstructionMapper::convertToUnsignedVec(
     }
   }
 
-  if (HaveLegalRange) {
-    if (AddedIllegalLastTime)
-      mapToIllegalUnsigned(It, IntegerMappingForBB, InstrListForBB, true);
-    for (IRInstructionData *ID : InstrListForBB)
-      this->IDL->push_back(*ID);
-    llvm::append_range(InstrList, InstrListForBB);
-    llvm::append_range(IntegerMapping, IntegerMappingForBB);
-  }
+  if (AddedIllegalLastTime)
+    mapToIllegalUnsigned(It, IntegerMappingForBB, InstrListForBB, true);
+  for (IRInstructionData *ID : InstrListForBB)
+    this->IDL->push_back(*ID);
+  llvm::append_range(InstrList, InstrListForBB);
+  llvm::append_range(IntegerMapping, IntegerMappingForBB);
 }
 
 // TODO: This is the same as the MachineOutliner, and should be consolidated
@@ -461,6 +459,18 @@ IRSimilarityCandidate::IRSimilarityCandidate(unsigned StartIdx, unsigned Len,
   // that both of these instructions are not nullptrs.
   FirstInst = FirstInstIt;
   LastInst = LastInstIt;
+
+  // Add the basic blocks contained in the set into the global value numbering.
+  DenseSet<BasicBlock *> BBSet;
+  getBasicBlocks(BBSet);
+  for (BasicBlock *BB : BBSet) {
+    if (ValueToNumber.find(BB) != ValueToNumber.end())
+      continue;
+    
+    ValueToNumber.try_emplace(BB, LocalValNumber);
+    NumberToValue.try_emplace(LocalValNumber, BB);
+    LocalValNumber++;
+  }
 }
 
 bool IRSimilarityCandidate::isSimilar(const IRSimilarityCandidate &A,
@@ -516,19 +526,13 @@ static bool checkNumberingAndReplaceCommutative(
   for (Value *V : SourceOperands) {
     ArgVal = SourceValueToNumberMapping.find(V)->second;
 
+    // Instead of finding a current mapping, we attempt to insert a set.
     std::tie(ValueMappingIt, WasInserted) = CurrentSrcTgtNumberMapping.insert(
         std::make_pair(ArgVal, TargetValueNumbers));
 
-    // Instead of finding a current mapping, we inserted a set.  This means a
-    // mapping did not exist for the source Instruction operand, it has no
-    // current constraints we need to check.
-    if (WasInserted)
-      continue;
-
-    // If a mapping already exists for the source operand to the values in the
-    // other IRSimilarityCandidate we need to iterate over the items in other
-    // IRSimilarityCandidate's Instruction to determine whether there is a valid
-    // mapping of Value to Value.
+    // We need to iterate over the items in other IRSimilarityCandidate's
+    // Instruction to determine whether there is a valid mapping of
+    // Value to Value.
     DenseSet<unsigned> NewSet;
     for (unsigned &Curr : ValueMappingIt->second)
       // If we can find the value in the mapping, we add it to the new set.
@@ -547,7 +551,6 @@ static bool checkNumberingAndReplaceCommutative(
     // any items from the other operands, so we move to check the next operand.
     if (ValueMappingIt->second.size() != 1)
       continue;
-
 
     unsigned ValToRemove = *ValueMappingIt->second.begin();
     // When there is only one item left in the mapping for and operand, remove
@@ -1009,6 +1012,40 @@ void IRSimilarityCandidate::createCanonicalRelationFrom(
     CanonNumToNumber.insert(std::make_pair(CanonNum, SourceGVN));
     NumberToCanonNum.insert(std::make_pair(SourceGVN, CanonNum));
   }
+
+  DenseSet<BasicBlock *> BBSet;
+  getBasicBlocks(BBSet);
+  // Find canonical numbers for the BasicBlocks in the current candidate.
+  // This is done by finding the corresponding value for the first instruction
+  // in the block in the current candidate, finding the matching value in the
+  // source candidate.  Then by finding the parent of this value, use the
+  // canonical number of the block in the source candidate for the canonical
+  // number in the current candidate.
+  for (BasicBlock *BB : BBSet) {
+    unsigned BBGVNForCurrCand = ValueToNumber.find(BB)->second;
+
+    // We can skip the BasicBlock if the canonical numbering has already been
+    // found in a separate instruction.
+    if (NumberToCanonNum.find(BBGVNForCurrCand) != NumberToCanonNum.end())
+      continue;
+
+    // If the basic block is the starting block, then the shared instruction may
+    // not be the first instruction in the block, it will be the first
+    // instruction in the similarity region.
+    Value *FirstOutlineInst = BB == getStartBB()
+                                  ? frontInstruction()
+                                  : &*BB->instructionsWithoutDebug().begin();
+
+    unsigned FirstInstGVN = *getGVN(FirstOutlineInst);
+    unsigned FirstInstCanonNum = *getCanonicalNum(FirstInstGVN);
+    unsigned SourceGVN = *SourceCand.fromCanonicalNum(FirstInstCanonNum);
+    Value *SourceV = *SourceCand.fromGVN(SourceGVN);
+    BasicBlock *SourceBB = cast<Instruction>(SourceV)->getParent();
+    unsigned SourceBBGVN = *SourceCand.getGVN(SourceBB);
+    unsigned SourceCanonBBGVN = *SourceCand.getCanonicalNum(SourceBBGVN);
+    CanonNumToNumber.insert(std::make_pair(SourceCanonBBGVN, BBGVNForCurrCand));
+    NumberToCanonNum.insert(std::make_pair(BBGVNForCurrCand, SourceCanonBBGVN));
+  }
 }
 
 void IRSimilarityCandidate::createCanonicalMappingFor(
@@ -1163,6 +1200,7 @@ SimilarityGroupList &IRSimilarityIdentifier::findSimilarity(
   Mapper.InstClassifier.EnableIndirectCalls = EnableIndirectCalls;
   Mapper.EnableMatchCallsByName = EnableMatchingCallsByName;
   Mapper.InstClassifier.EnableIntrinsics = EnableIntrinsics;
+  Mapper.InstClassifier.EnableMustTailCalls = EnableMustTailCalls;
 
   populateMapper(Modules, InstrList, IntegerMapping);
   findCandidates(InstrList, IntegerMapping);
@@ -1176,6 +1214,7 @@ SimilarityGroupList &IRSimilarityIdentifier::findSimilarity(Module &M) {
   Mapper.InstClassifier.EnableIndirectCalls = EnableIndirectCalls;
   Mapper.EnableMatchCallsByName = EnableMatchingCallsByName;
   Mapper.InstClassifier.EnableIntrinsics = EnableIntrinsics;
+  Mapper.InstClassifier.EnableMustTailCalls = EnableMustTailCalls;
 
   std::vector<IRInstructionData *> InstrList;
   std::vector<unsigned> IntegerMapping;
@@ -1197,7 +1236,8 @@ IRSimilarityIdentifierWrapperPass::IRSimilarityIdentifierWrapperPass()
 
 bool IRSimilarityIdentifierWrapperPass::doInitialization(Module &M) {
   IRSI.reset(new IRSimilarityIdentifier(!DisableBranches, !DisableIndirectCalls,
-                                        MatchCallsByName, !DisableIntrinsics));
+                                        MatchCallsByName, !DisableIntrinsics,
+                                        false));
   return false;
 }
 
@@ -1215,7 +1255,8 @@ AnalysisKey IRSimilarityAnalysis::Key;
 IRSimilarityIdentifier IRSimilarityAnalysis::run(Module &M,
                                                  ModuleAnalysisManager &) {
   auto IRSI = IRSimilarityIdentifier(!DisableBranches, !DisableIndirectCalls,
-                                     MatchCallsByName, !DisableIntrinsics);
+                                     MatchCallsByName, !DisableIntrinsics,
+                                     false);
   IRSI.findSimilarity(M);
   return IRSI;
 }

@@ -1310,7 +1310,7 @@ auto HexagonVectorCombine::calculatePointerDifference(Value *Ptr0,
   auto Simplify = [&](Value *V) {
     if (auto *I = dyn_cast<Instruction>(V)) {
       SimplifyQuery Q(DL, &TLI, &DT, &AC, I);
-      if (Value *S = SimplifyInstruction(I, Q))
+      if (Value *S = simplifyInstruction(I, Q))
         return S;
     }
     return V;
@@ -1404,7 +1404,7 @@ auto HexagonVectorCombine::isSafeToMoveBeforeInBB(const Instruction &In,
   if (isa<PHINode>(In) || (To != Block.end() && isa<PHINode>(*To)))
     return false;
 
-  if (!mayBeMemoryDependent(In))
+  if (!mayHaveNonDefUseDependency(In))
     return true;
   bool MayWrite = In.mayWriteToMemory();
   auto MaybeLoc = getLocOrNone(In);

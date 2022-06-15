@@ -98,16 +98,10 @@ namespace {
       (void) llvm::createDeadCodeEliminationPass();
       (void) llvm::createDeadStoreEliminationPass();
       (void) llvm::createDependenceAnalysisWrapperPass();
-      (void) llvm::createDomOnlyPrinterPass();
-      (void) llvm::createDomPrinterPass();
-      (void) llvm::createDomOnlyViewerPass();
-      (void) llvm::createDomViewerPass();
-      (void) llvm::createGCOVProfilerPass();
-      (void) llvm::createPGOInstrumentationGenLegacyPass();
-      (void) llvm::createPGOInstrumentationUseLegacyPass();
-      (void) llvm::createPGOInstrumentationGenCreateVarLegacyPass();
-      (void) llvm::createPGOIndirectCallPromotionLegacyPass();
-      (void) llvm::createPGOMemOPSizeOptLegacyPass();
+      (void) llvm::createDomOnlyPrinterWrapperPassPass();
+      (void) llvm::createDomPrinterWrapperPassPass();
+      (void) llvm::createDomOnlyViewerWrapperPassPass();
+      (void) llvm::createDomViewerWrapperPassPass();
       (void) llvm::createInstrProfilingLegacyPass();
       (void) llvm::createFunctionImportPass();
       (void) llvm::createFunctionInliningPass();
@@ -139,12 +133,12 @@ namespace {
       (void) llvm::createLoopRerollPass();
       (void) llvm::createLoopUnrollPass();
       (void) llvm::createLoopUnrollAndJamPass();
-      (void) llvm::createLoopUnswitchPass();
       (void) llvm::createLoopVersioningLICMPass();
       (void) llvm::createLoopIdiomPass();
       (void) llvm::createLoopRotatePass();
       (void) llvm::createLowerConstantIntrinsicsPass();
       (void) llvm::createLowerExpectIntrinsicPass();
+      (void) llvm::createLowerGlobalDtorsLegacyPass();
       (void) llvm::createLowerInvokePass();
       (void) llvm::createLowerSwitchPass();
       (void) llvm::createNaryReassociatePass();
@@ -157,10 +151,10 @@ namespace {
       (void) llvm::createPromoteMemoryToRegisterPass();
       (void) llvm::createDemoteRegisterToMemoryPass();
       (void) llvm::createPruneEHPass();
-      (void) llvm::createPostDomOnlyPrinterPass();
-      (void) llvm::createPostDomPrinterPass();
-      (void) llvm::createPostDomOnlyViewerPass();
-      (void) llvm::createPostDomViewerPass();
+      (void)llvm::createPostDomOnlyPrinterWrapperPassPass();
+      (void)llvm::createPostDomPrinterWrapperPassPass();
+      (void)llvm::createPostDomOnlyViewerWrapperPassPass();
+      (void)llvm::createPostDomViewerWrapperPassPass();
       (void) llvm::createReassociatePass();
       (void) llvm::createRedundantDbgInstEliminationPass();
       (void) llvm::createRegionInfoPass();
@@ -177,6 +171,7 @@ namespace {
       (void) llvm::createStripDeadDebugInfoPass();
       (void) llvm::createStripDeadPrototypesPass();
       (void) llvm::createTailCallEliminationPass();
+      (void)llvm::createTLSVariableHoistPass();
       (void) llvm::createJumpThreadingPass();
       (void) llvm::createDFAJumpThreadingPass();
       (void) llvm::createUnifyFunctionExitNodesPass();
@@ -237,6 +232,7 @@ namespace {
       (void) llvm::createUnifyLoopExitsPass();
       (void) llvm::createFixIrreduciblePass();
       (void)llvm::createFunctionSpecializationPass();
+      (void)llvm::createSelectOptimizePass();
 
       (void)new llvm::IntervalPartition();
       (void)new llvm::ScalarEvolutionWrapperPass();

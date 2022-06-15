@@ -26,14 +26,10 @@
 #include "Headers.h"
 #include "Preamble.h"
 #include "index/CanonicalIncludes.h"
-#include "support/Path.h"
 #include "clang/Frontend/FrontendAction.h"
-#include "clang/Frontend/PrecompiledPreamble.h"
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Tooling/CompilationDatabase.h"
 #include "clang/Tooling/Syntax/Tokens.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/None.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringRef.h"
 #include <memory>
@@ -41,6 +37,7 @@
 #include <vector>
 
 namespace clang {
+class Sema;
 namespace clangd {
 class HeuristicResolver;
 
@@ -66,6 +63,8 @@ public:
   /// from the main file to be in the AST.
   ASTContext &getASTContext();
   const ASTContext &getASTContext() const;
+
+  Sema &getSema();
 
   Preprocessor &getPreprocessor();
   std::shared_ptr<Preprocessor> getPreprocessorPtr();

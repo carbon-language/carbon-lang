@@ -17,6 +17,7 @@
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/DialectImplementation.h"
+#include "mlir/IR/FunctionImplementation.h"
 #include "mlir/IR/Matchers.h"
 #include "mlir/IR/PatternMatch.h"
 #include "mlir/IR/TypeUtilities.h"
@@ -257,7 +258,7 @@ ParseResult AssumingOp::parse(OpAsmParser &parser, OperationState &result) {
   Region *doRegion = result.addRegion();
 
   auto &builder = parser.getBuilder();
-  OpAsmParser::OperandType cond;
+  OpAsmParser::UnresolvedOperand cond;
   if (parser.parseOperand(cond) ||
       parser.resolveOperand(cond, builder.getType<WitnessType>(),
                             result.operands))
@@ -415,10 +416,6 @@ void AssumingOp::build(
   result.addTypes(assumingTypes);
 }
 
-LogicalResult AssumingOp::verify() {
-  return RegionBranchOpInterface::verifyTypes(*this);
-}
-
 //===----------------------------------------------------------------------===//
 // AddOp
 //===----------------------------------------------------------------------===//
@@ -473,8 +470,8 @@ struct MergeAssumingAllOps : public OpRewritePattern<AssumingAllOp> {
     SmallVector<Value> operands;
 
     for (Value operand : op.getInputs()) {
-      if (auto assume_all = operand.getDefiningOp<AssumingAllOp>())
-        operands.append(assume_all.operand_begin(), assume_all->operand_end());
+      if (auto assumeAll = operand.getDefiningOp<AssumingAllOp>())
+        operands.append(assumeAll.operand_begin(), assumeAll->operand_end());
       else
         operands.push_back(operand);
     }
@@ -534,8 +531,8 @@ struct AssumingAllOfCstrBroadcastable : public OpRewritePattern<AssumingAllOp> {
     // Collect shapes checked by `cstr_broadcastable` operands.
     SmallVector<std::pair<CstrBroadcastableOp, DenseSet<Value>>> shapes;
     for (auto cstr : operands) {
-      DenseSet<Value> shapes_set(cstr->operand_begin(), cstr->operand_end());
-      shapes.emplace_back(cstr, std::move(shapes_set));
+      DenseSet<Value> shapesSet(cstr->operand_begin(), cstr->operand_end());
+      shapes.emplace_back(cstr, std::move(shapesSet));
     }
 
     // Sort by the number of shape operands (larger to smaller).
@@ -547,7 +544,7 @@ struct AssumingAllOfCstrBroadcastable : public OpRewritePattern<AssumingAllOp> {
     // shape operands, and remove redundant `cst_broadcastable` operations. We
     // do this until we find a set of `cst_broadcastable` operations with
     // non-overlapping constraints.
-    SmallVector<CstrBroadcastableOp> marked_for_erase;
+    SmallVector<CstrBroadcastableOp> markedForErase;
 
     for (unsigned i = 0; i < shapes.size(); ++i) {
       auto isSubset = [&](auto pair) {
@@ -557,24 +554,24 @@ struct AssumingAllOfCstrBroadcastable : public OpRewritePattern<AssumingAllOp> {
       // Keep redundant `cstr_broadcastable` operations to be erased.
       auto *it = std::remove_if(shapes.begin() + i + 1, shapes.end(), isSubset);
       for (auto *it0 = it; it0 < shapes.end(); ++it0)
-        marked_for_erase.push_back(it0->first);
+        markedForErase.push_back(it0->first);
       shapes.erase(it, shapes.end());
     }
 
     // We didn't find any operands that could be removed.
-    if (marked_for_erase.empty())
+    if (markedForErase.empty())
       return failure();
 
     // Collect non-overlapping `cst_broadcastable` constraints.
-    SmallVector<Value> unique_constraints;
+    SmallVector<Value> uniqueConstraints;
     for (auto &shape : shapes)
-      unique_constraints.push_back(shape.first.getResult());
+      uniqueConstraints.push_back(shape.first.getResult());
 
     // Replace with a new `assuming_all` operation ...
-    rewriter.replaceOpWithNewOp<AssumingAllOp>(op, unique_constraints);
+    rewriter.replaceOpWithNewOp<AssumingAllOp>(op, uniqueConstraints);
 
     // ... and maybe erase `cstr_broadcastable` ops without uses.
-    for (auto &op : marked_for_erase)
+    for (auto &op : markedForErase)
       if (op->use_empty())
         rewriter.eraseOp(op);
 
@@ -1242,6 +1239,24 @@ void FunctionLibraryOp::print(OpAsmPrinter &p) {
 }
 
 //===----------------------------------------------------------------------===//
+// FuncOp
+//===----------------------------------------------------------------------===//
+
+ParseResult FuncOp::parse(OpAsmParser &parser, OperationState &result) {
+  auto buildFuncType =
+      [](Builder &builder, ArrayRef<Type> argTypes, ArrayRef<Type> results,
+         function_interface_impl::VariadicFlag,
+         std::string &) { return builder.getFunctionType(argTypes, results); };
+
+  return function_interface_impl::parseFunctionOp(
+      parser, result, /*allowVariadic=*/false, buildFuncType);
+}
+
+void FuncOp::print(OpAsmPrinter &p) {
+  function_interface_impl::printFunctionOp(p, *this, /*isVariadic=*/false);
+}
+
+//===----------------------------------------------------------------------===//
 // GetExtentOp
 //===----------------------------------------------------------------------===//
 
@@ -1836,7 +1851,7 @@ LogicalResult ReduceOp::verify() {
 
 ParseResult ReduceOp::parse(OpAsmParser &parser, OperationState &result) {
   // Parse operands.
-  SmallVector<OpAsmParser::OperandType, 3> operands;
+  SmallVector<OpAsmParser::UnresolvedOperand, 3> operands;
   Type shapeOrExtentTensorType;
   if (parser.parseOperandList(operands, /*requiredOperandCount=*/-1,
                               OpAsmParser::Delimiter::Paren) ||

@@ -12,7 +12,9 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/BinaryFormat/COFF.h"
+#include "llvm/ObjCopy/CommonConfig.h"
 #include "llvm/ObjCopy/ConfigManager.h"
+#include "llvm/ObjCopy/MachO/MachOConfig.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Support/CRC.h"
@@ -365,41 +367,6 @@ static Error addSymbolsFromFile(NameMatcher &Symbols, BumpPtrAllocator &Alloc,
   return Error::success();
 }
 
-Expected<NameOrPattern>
-NameOrPattern::create(StringRef Pattern, MatchStyle MS,
-                      function_ref<Error(Error)> ErrorCallback) {
-  switch (MS) {
-  case MatchStyle::Literal:
-    return NameOrPattern(Pattern);
-  case MatchStyle::Wildcard: {
-    SmallVector<char, 32> Data;
-    bool IsPositiveMatch = true;
-    if (Pattern[0] == '!') {
-      IsPositiveMatch = false;
-      Pattern = Pattern.drop_front();
-    }
-    Expected<GlobPattern> GlobOrErr = GlobPattern::create(Pattern);
-
-    // If we couldn't create it as a glob, report the error, but try again with
-    // a literal if the error reporting is non-fatal.
-    if (!GlobOrErr) {
-      if (Error E = ErrorCallback(GlobOrErr.takeError()))
-        return std::move(E);
-      return create(Pattern, MatchStyle::Literal, ErrorCallback);
-    }
-
-    return NameOrPattern(std::make_shared<GlobPattern>(*GlobOrErr),
-                         IsPositiveMatch);
-  }
-  case MatchStyle::Regex: {
-    SmallVector<char, 32> Data;
-    return NameOrPattern(std::make_shared<Regex>(
-        ("^" + Pattern.ltrim('^').rtrim('$') + "$").toStringRef(Data)));
-  }
-  }
-  llvm_unreachable("Unhandled llvm.objcopy.MatchStyle enum");
-}
-
 static Error addSymbolsToRenameFromFile(StringMap<StringRef> &SymbolsToRename,
                                         BumpPtrAllocator &Alloc,
                                         StringRef Filename) {
@@ -558,8 +525,34 @@ static Expected<NewSymbolInfo> parseNewSymbolInfo(StringRef FlagValue) {
   return SI;
 }
 
-// ParseObjcopyOptions returns the config and sets the input arguments. If a
-// help flag is set then ParseObjcopyOptions will print the help messege and
+// Parse input option \p ArgValue and load section data. This function
+// extracts section name and name of the file keeping section data from
+// ArgValue, loads data from the file, and stores section name and data
+// into the vector of new sections \p NewSections.
+static Error loadNewSectionData(StringRef ArgValue, StringRef OptionName,
+                                std::vector<NewSectionInfo> &NewSections) {
+  if (!ArgValue.contains('='))
+    return createStringError(errc::invalid_argument,
+                             "bad format for " + OptionName + ": missing '='");
+
+  std::pair<StringRef, StringRef> SecPair = ArgValue.split("=");
+  if (SecPair.second.empty())
+    return createStringError(errc::invalid_argument, "bad format for " +
+                                                         OptionName +
+                                                         ": missing file name");
+
+  ErrorOr<std::unique_ptr<MemoryBuffer>> BufOrErr =
+      MemoryBuffer::getFile(SecPair.second);
+  if (!BufOrErr)
+    return createFileError(SecPair.second,
+                           errorCodeToError(BufOrErr.getError()));
+
+  NewSections.push_back({SecPair.first, std::move(*BufOrErr)});
+  return Error::success();
+}
+
+// parseObjcopyOptions returns the config and sets the input arguments. If a
+// help flag is set then parseObjcopyOptions will print the help messege and
 // exit.
 Expected<DriverConfig>
 objcopy::parseObjcopyOptions(ArrayRef<const char *> RawArgsArr,
@@ -848,26 +841,14 @@ objcopy::parseObjcopyOptions(ArrayRef<const char *> RawArgsArr,
             Arg->getValue(), SectionMatchStyle, ErrorCallback)))
       return std::move(E);
   for (auto Arg : InputArgs.filtered(OBJCOPY_add_section)) {
-    StringRef ArgValue(Arg->getValue());
-    if (!ArgValue.contains('='))
-      return createStringError(errc::invalid_argument,
-                               "bad format for --add-section: missing '='");
-    if (ArgValue.split("=").second.empty())
-      return createStringError(
-          errc::invalid_argument,
-          "bad format for --add-section: missing file name");
-    Config.AddSection.push_back(ArgValue);
+    if (Error Err = loadNewSectionData(Arg->getValue(), "--add-section",
+                                       Config.AddSection))
+      return std::move(Err);
   }
   for (auto Arg : InputArgs.filtered(OBJCOPY_update_section)) {
-    StringRef ArgValue(Arg->getValue());
-    if (!ArgValue.contains('='))
-      return createStringError(errc::invalid_argument,
-                               "bad format for --update-section: missing '='");
-    if (ArgValue.split("=").second.empty())
-      return createStringError(
-          errc::invalid_argument,
-          "bad format for --update-section: missing file name");
-    Config.UpdateSection.push_back(ArgValue);
+    if (Error Err = loadNewSectionData(Arg->getValue(), "--update-section",
+                                       Config.UpdateSection))
+      return std::move(Err);
   }
   for (auto *Arg : InputArgs.filtered(OBJCOPY_dump_section)) {
     StringRef Value(Arg->getValue());
@@ -889,11 +870,12 @@ objcopy::parseObjcopyOptions(ArrayRef<const char *> RawArgsArr,
       InputArgs.hasArg(OBJCOPY_extract_main_partition);
   ELFConfig.LocalizeHidden = InputArgs.hasArg(OBJCOPY_localize_hidden);
   Config.Weaken = InputArgs.hasArg(OBJCOPY_weaken);
-  if (InputArgs.hasArg(OBJCOPY_discard_all, OBJCOPY_discard_locals))
-    Config.DiscardMode =
-        InputArgs.hasFlag(OBJCOPY_discard_all, OBJCOPY_discard_locals)
-            ? DiscardType::All
-            : DiscardType::Locals;
+  if (auto *Arg =
+          InputArgs.getLastArg(OBJCOPY_discard_all, OBJCOPY_discard_locals)) {
+    Config.DiscardMode = Arg->getOption().matches(OBJCOPY_discard_all)
+                             ? DiscardType::All
+                             : DiscardType::Locals;
+  }
   Config.OnlyKeepDebug = InputArgs.hasArg(OBJCOPY_only_keep_debug);
   ELFConfig.KeepFileSymbols = InputArgs.hasArg(OBJCOPY_keep_file_symbols);
   MachOConfig.KeepUndefined = InputArgs.hasArg(OBJCOPY_keep_undefined);
@@ -1031,8 +1013,8 @@ objcopy::parseObjcopyOptions(ArrayRef<const char *> RawArgsArr,
   return std::move(DC);
 }
 
-// ParseInstallNameToolOptions returns the config and sets the input arguments.
-// If a help flag is set then ParseInstallNameToolOptions will print the help
+// parseInstallNameToolOptions returns the config and sets the input arguments.
+// If a help flag is set then parseInstallNameToolOptions will print the help
 // messege and exit.
 Expected<DriverConfig>
 objcopy::parseInstallNameToolOptions(ArrayRef<const char *> ArgsArr) {
@@ -1169,10 +1151,12 @@ objcopy::parseInstallNameToolOptions(ArrayRef<const char *> ArgsArr) {
 }
 
 Expected<DriverConfig>
-objcopy::parseBitcodeStripOptions(ArrayRef<const char *> ArgsArr) {
+objcopy::parseBitcodeStripOptions(ArrayRef<const char *> ArgsArr,
+                                  function_ref<Error(Error)> ErrorCallback) {
   DriverConfig DC;
   ConfigManager ConfigMgr;
   CommonConfig &Config = ConfigMgr.Common;
+  MachOConfig &MachOConfig = ConfigMgr.MachO;
   BitcodeStripOptTable T;
   unsigned MissingArgumentIndex, MissingArgumentCount;
   opt::InputArgList InputArgs =
@@ -1207,14 +1191,28 @@ objcopy::parseBitcodeStripOptions(ArrayRef<const char *> ArgsArr) {
                              "llvm-bitcode-strip expects a single input file");
   assert(!Positional.empty());
   Config.InputFilename = Positional[0];
-  Config.OutputFilename = Positional[0];
+
+  if (!InputArgs.hasArg(BITCODE_STRIP_output)) {
+    return createStringError(errc::invalid_argument,
+                             "-o is a required argument");
+  }
+  Config.OutputFilename = InputArgs.getLastArgValue(BITCODE_STRIP_output);
+
+  if (!InputArgs.hasArg(BITCODE_STRIP_remove))
+    return createStringError(errc::invalid_argument, "no action specified");
+
+  // We only support -r for now, which removes all bitcode sections and
+  // the __LLVM segment if it's now empty.
+  cantFail(Config.ToRemove.addMatcher(NameOrPattern::create(
+      "__LLVM,__bundle", MatchStyle::Literal, ErrorCallback)));
+  MachOConfig.EmptySegmentsToRemove.insert("__LLVM");
 
   DC.CopyConfigs.push_back(std::move(ConfigMgr));
   return std::move(DC);
 }
 
-// ParseStripOptions returns the config and sets the input arguments. If a
-// help flag is set then ParseStripOptions will print the help messege and
+// parseStripOptions returns the config and sets the input arguments. If a
+// help flag is set then parseStripOptions will print the help messege and
 // exit.
 Expected<DriverConfig>
 objcopy::parseStripOptions(ArrayRef<const char *> RawArgsArr,
@@ -1280,11 +1278,10 @@ objcopy::parseStripOptions(ArrayRef<const char *> RawArgsArr,
   ELFConfig.AllowBrokenLinks = InputArgs.hasArg(STRIP_allow_broken_links);
   Config.StripDebug = InputArgs.hasArg(STRIP_strip_debug);
 
-  if (InputArgs.hasArg(STRIP_discard_all, STRIP_discard_locals))
-    Config.DiscardMode =
-        InputArgs.hasFlag(STRIP_discard_all, STRIP_discard_locals)
-            ? DiscardType::All
-            : DiscardType::Locals;
+  if (auto *Arg = InputArgs.getLastArg(STRIP_discard_all, STRIP_discard_locals))
+    Config.DiscardMode = Arg->getOption().matches(STRIP_discard_all)
+                             ? DiscardType::All
+                             : DiscardType::Locals;
   Config.StripSections = InputArgs.hasArg(STRIP_strip_sections);
   Config.StripUnneeded = InputArgs.hasArg(STRIP_strip_unneeded);
   if (auto Arg = InputArgs.getLastArg(STRIP_strip_all, STRIP_no_strip_all))
@@ -1316,8 +1313,9 @@ objcopy::parseStripOptions(ArrayRef<const char *> RawArgsArr,
       return std::move(E);
 
   if (!InputArgs.hasArg(STRIP_no_strip_all) && !Config.StripDebug &&
-      !Config.StripUnneeded && Config.DiscardMode == DiscardType::None &&
-      !Config.StripAllGNU && Config.SymbolsToRemove.empty())
+      !Config.OnlyKeepDebug && !Config.StripUnneeded &&
+      Config.DiscardMode == DiscardType::None && !Config.StripAllGNU &&
+      Config.SymbolsToRemove.empty())
     Config.StripAll = true;
 
   if (Config.DiscardMode == DiscardType::All) {

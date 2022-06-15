@@ -3,8 +3,6 @@
 // RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +sve2 -fallow-half-arguments-and-returns -S -O1 -Werror -Wall -emit-llvm -o - -x c++ %s | FileCheck %s -check-prefix=CPP-CHECK
 // RUN: %clang_cc1 -DSVE_OVERLOADED_FORMS -triple aarch64-none-linux-gnu -target-feature +sve2 -fallow-half-arguments-and-returns -S -O1 -Werror -Wall -emit-llvm -o - %s | FileCheck %s
 // RUN: %clang_cc1 -DSVE_OVERLOADED_FORMS -triple aarch64-none-linux-gnu -target-feature +sve2 -fallow-half-arguments-and-returns -S -O1 -Werror -Wall -emit-llvm -o - -x c++ %s | FileCheck %s -check-prefix=CPP-CHECK
-// RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +sve -fallow-half-arguments-and-returns -fsyntax-only -verify -verify-ignore-unexpected=error %s
-// RUN: %clang_cc1 -DSVE_OVERLOADED_FORMS -triple aarch64-none-linux-gnu -target-feature +sve -fallow-half-arguments-and-returns -fsyntax-only -verify=overload -verify-ignore-unexpected=error %s
 
 // REQUIRES: aarch64-registered-target
 
@@ -31,8 +29,6 @@
 //
 svuint32_t test_svrecpe_u32_z(svbool_t pg, svuint32_t op)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svrecpe_z'}}
-  // expected-warning@+1 {{implicit declaration of function 'svrecpe_u32_z'}}
   return SVE_ACLE_FUNC(svrecpe,_u32,_z,)(pg, op);
 }
 
@@ -50,8 +46,6 @@ svuint32_t test_svrecpe_u32_z(svbool_t pg, svuint32_t op)
 //
 svuint32_t test_svrecpe_u32_m(svuint32_t inactive, svbool_t pg, svuint32_t op)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svrecpe_m'}}
-  // expected-warning@+1 {{implicit declaration of function 'svrecpe_u32_m'}}
   return SVE_ACLE_FUNC(svrecpe,_u32,_m,)(inactive, pg, op);
 }
 
@@ -69,7 +63,5 @@ svuint32_t test_svrecpe_u32_m(svuint32_t inactive, svbool_t pg, svuint32_t op)
 //
 svuint32_t test_svrecpe_u32_x(svbool_t pg, svuint32_t op)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svrecpe_x'}}
-  // expected-warning@+1 {{implicit declaration of function 'svrecpe_u32_x'}}
   return SVE_ACLE_FUNC(svrecpe,_u32,_x,)(pg, op);
 }

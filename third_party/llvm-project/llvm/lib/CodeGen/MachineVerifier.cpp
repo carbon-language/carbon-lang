@@ -32,10 +32,10 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Analysis/EHPersonalities.h"
-#include "llvm/CodeGen/GlobalISel/RegisterBank.h"
+#include "llvm/CodeGen/CodeGenCommonISel.h"
 #include "llvm/CodeGen/LiveInterval.h"
-#include "llvm/CodeGen/LiveIntervalCalc.h"
 #include "llvm/CodeGen/LiveIntervals.h"
+#include "llvm/CodeGen/LiveRangeCalc.h"
 #include "llvm/CodeGen/LiveStacks.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -48,6 +48,8 @@
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
+#include "llvm/CodeGen/RegisterBank.h"
+#include "llvm/CodeGen/RegisterBankInfo.h"
 #include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/CodeGen/StackMaps.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
@@ -62,6 +64,7 @@
 #include "llvm/InitializePasses.h"
 #include "llvm/MC/LaneBitmask.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCTargetOptions.h"
@@ -96,6 +99,7 @@ namespace {
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
     const MachineRegisterInfo *MRI;
+    const RegisterBankInfo *RBI;
 
     unsigned foundErrors;
 
@@ -371,6 +375,7 @@ unsigned MachineVerifier::verify(const MachineFunction &MF) {
   TM = &MF.getTarget();
   TII = MF.getSubtarget().getInstrInfo();
   TRI = MF.getSubtarget().getRegisterInfo();
+  RBI = MF.getSubtarget().getRegBankInfo();
   MRI = &MF.getRegInfo();
 
   const bool isFunctionFailedISel = MF.getProperties().hasProperty(
@@ -443,7 +448,7 @@ unsigned MachineVerifier::verify(const MachineFunction &MF) {
       for (unsigned I = 0, E = MI.getNumOperands(); I != E; ++I) {
         const MachineOperand &Op = MI.getOperand(I);
         if (Op.getParent() != &MI) {
-          // Make sure to use correct addOperand / RemoveOperand / ChangeTo
+          // Make sure to use correct addOperand / removeOperand / ChangeTo
           // functions when replacing operands of a MachineInstr.
           report("Instruction has operand with wrong parent set", &MI);
         }
@@ -1001,17 +1006,23 @@ void MachineVerifier::verifyPreISelGenericInstruction(const MachineInstr *MI) {
       break;
     }
 
-    if (MRI->getRegBankOrNull(Src) != MRI->getRegBankOrNull(Dst)) {
-      report(
-          Twine(OpcName, " source and destination register banks must match"),
-          MI);
+    const RegisterBank *SrcRB = RBI->getRegBank(Src, *MRI, *TRI);
+    const RegisterBank *DstRB = RBI->getRegBank(Dst, *MRI, *TRI);
+
+    // Allow only the source bank to be set.
+    if ((SrcRB && DstRB && SrcRB != DstRB) || (DstRB && !SrcRB)) {
+      report(Twine(OpcName, " cannot change register bank"), MI);
       break;
     }
 
-    if (MRI->getRegClassOrNull(Src) != MRI->getRegClassOrNull(Dst))
+    // Don't allow a class change. Do allow member class->regbank.
+    const TargetRegisterClass *DstRC = MRI->getRegClassOrNull(Dst);
+    if (DstRC && DstRC != MRI->getRegClassOrNull(Src)) {
       report(
           Twine(OpcName, " source and destination register classes must match"),
           MI);
+      break;
+    }
 
     break;
   }
@@ -1072,6 +1083,18 @@ void MachineVerifier::verifyPreISelGenericInstruction(const MachineInstr *MI) {
       } else if (MI->getOpcode() == TargetOpcode::G_STORE) {
         if (ValTy.getSizeInBytes() < MMO.getSize())
           report("store memory size cannot exceed value size", MI);
+      }
+
+      const AtomicOrdering Order = MMO.getSuccessOrdering();
+      if (Opc == TargetOpcode::G_STORE) {
+        if (Order == AtomicOrdering::Acquire ||
+            Order == AtomicOrdering::AcquireRelease)
+          report("atomic store cannot use acquire ordering", MI);
+
+      } else {
+        if (Order == AtomicOrdering::Release ||
+            Order == AtomicOrdering::AcquireRelease)
+          report("atomic load cannot use release ordering", MI);
       }
     }
 
@@ -1629,6 +1652,43 @@ void MachineVerifier::verifyPreISelGenericInstruction(const MachineInstr *MI) {
     verifyAllRegOpsScalar(*MI, *MRI);
     break;
   }
+  case TargetOpcode::G_IS_FPCLASS: {
+    LLT DestTy = MRI->getType(MI->getOperand(0).getReg());
+    LLT DestEltTy = DestTy.getScalarType();
+    if (!DestEltTy.isScalar()) {
+      report("Destination must be a scalar or vector of scalars", MI);
+      break;
+    }
+    LLT SrcTy = MRI->getType(MI->getOperand(1).getReg());
+    LLT SrcEltTy = SrcTy.getScalarType();
+    if (!SrcEltTy.isScalar()) {
+      report("Source must be a scalar or vector of scalars", MI);
+      break;
+    }
+    if (!verifyVectorElementMatch(DestTy, SrcTy, MI))
+      break;
+    const MachineOperand &TestMO = MI->getOperand(2);
+    if (!TestMO.isImm()) {
+      report("floating-point class set (operand 2) must be an immediate", MI);
+      break;
+    }
+    int64_t Test = TestMO.getImm();
+    if (Test < 0 || Test > fcAllFlags) {
+      report("Incorrect floating-point class set (operand 2)", MI);
+      break;
+    }
+    const MachineOperand &SemanticsMO = MI->getOperand(3);
+    if (!SemanticsMO.isImm()) {
+      report("floating-point semantics (operand 3) must be an immediate", MI);
+      break;
+    }
+    int64_t Semantics = SemanticsMO.getImm();
+    if (Semantics < 0 || Semantics > APFloat::S_MaxSemantics) {
+      report("Incorrect floating-point semantics (operand 3)", MI);
+      break;
+    }
+    break;
+  }
   default:
     break;
   }
@@ -1913,6 +1973,10 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
     if (MRI->tracksLiveness() && !MI->isDebugInstr())
       checkLiveness(MO, MONum);
 
+    if (MO->isDef() && MO->isUndef() && !MO->getSubReg() &&
+        MO->getReg().isVirtual()) // TODO: Apply to physregs too
+      report("Undef virtual register def operands require a subregister", MO, MONum);
+
     // Verify the consistency of tied operands.
     if (MO->isTied()) {
       unsigned OtherIdx = MI->findTiedOperandIdx(MONum);
@@ -2147,6 +2211,11 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
         errs() << "Live stack: " << LI << '\n';
       }
     }
+    break;
+
+  case MachineOperand::MO_CFIIndex:
+    if (MO->getCFIIndex() >= MF->getFrameInstructions().size())
+      report("CFI instruction has invalid index", MO, MONum);
     break;
 
   default:

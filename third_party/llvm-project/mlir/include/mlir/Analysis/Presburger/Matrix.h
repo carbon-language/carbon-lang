@@ -21,6 +21,7 @@
 #include <cassert>
 
 namespace mlir {
+namespace presburger {
 
 /// This is a class to represent a resizable matrix.
 ///
@@ -47,10 +48,23 @@ public:
   static Matrix identity(unsigned dimension);
 
   /// Access the element at the specified row and column.
-  int64_t &at(unsigned row, unsigned column);
-  int64_t at(unsigned row, unsigned column) const;
-  int64_t &operator()(unsigned row, unsigned column);
-  int64_t operator()(unsigned row, unsigned column) const;
+  int64_t &at(unsigned row, unsigned column) {
+    assert(row < nRows && "Row outside of range");
+    assert(column < nColumns && "Column outside of range");
+    return data[row * nReservedColumns + column];
+  }
+
+  int64_t at(unsigned row, unsigned column) const {
+    assert(row < nRows && "Row outside of range");
+    assert(column < nColumns && "Column outside of range");
+    return data[row * nReservedColumns + column];
+  }
+
+  int64_t &operator()(unsigned row, unsigned column) { return at(row, column); }
+
+  int64_t operator()(unsigned row, unsigned column) const {
+    return at(row, column);
+  }
 
   /// Swap the given columns.
   void swapColumns(unsigned column, unsigned otherColumn);
@@ -58,20 +72,21 @@ public:
   /// Swap the given rows.
   void swapRows(unsigned row, unsigned otherRow);
 
-  unsigned getNumRows() const;
+  unsigned getNumRows() const { return nRows; }
 
-  unsigned getNumColumns() const;
+  unsigned getNumColumns() const { return nColumns; }
 
   /// Return the maximum number of rows/columns that can be added without
   /// incurring a reallocation.
   unsigned getNumReservedRows() const;
-  unsigned getNumReservedColumns() const;
+  unsigned getNumReservedColumns() const { return nReservedColumns; }
 
   /// Reserve enough space to resize to the specified number of rows without
   /// reallocations.
   void reserveRows(unsigned rows);
 
-  /// Get an ArrayRef corresponding to the specified row.
+  /// Get a [Mutable]ArrayRef corresponding to the specified row.
+  MutableArrayRef<int64_t> getRow(unsigned row);
   ArrayRef<int64_t> getRow(unsigned row) const;
 
   /// Insert columns having positions pos, pos + 1, ... pos + count - 1.
@@ -117,6 +132,16 @@ public:
   /// Negate the specified column.
   void negateColumn(unsigned column);
 
+  /// Negate the specified row.
+  void negateRow(unsigned row);
+
+  /// Divide the first `nCols` of the specified row by their GCD.
+  /// Returns the GCD of the first `nCols` of the specified row.
+  int64_t normalizeRow(unsigned row, unsigned nCols);
+  /// Divide the columns of the specified row by their GCD.
+  /// Returns the GCD of the columns of the specified row.
+  int64_t normalizeRow(unsigned row);
+
   /// The given vector is interpreted as a row vector v. Post-multiply v with
   /// this matrix, say M, and return vM.
   SmallVector<int64_t, 8> preMultiplyWithRow(ArrayRef<int64_t> rowVec) const;
@@ -139,6 +164,9 @@ public:
 
   /// Add an extra row at the bottom of the matrix and return its position.
   unsigned appendExtraRow();
+  /// Same as above, but copy the given elements into the row. The length of
+  /// `elems` must be equal to the number of columns.
+  unsigned appendExtraRow(ArrayRef<int64_t> elems);
 
   /// Print the matrix.
   void print(raw_ostream &os) const;
@@ -160,6 +188,7 @@ private:
   SmallVector<int64_t, 64> data;
 };
 
+} // namespace presburger
 } // namespace mlir
 
 #endif // MLIR_ANALYSIS_PRESBURGER_MATRIX_H

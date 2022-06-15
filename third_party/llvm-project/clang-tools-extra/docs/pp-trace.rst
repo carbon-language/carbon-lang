@@ -49,7 +49,6 @@ Command Line Options
 
   * FileChanged
   * FileSkipped
-  * FileNotFound
   * InclusionDirective
   * moduleImport
   * EndOfMainFile
@@ -200,26 +199,6 @@ Example:::
     FilenameTok: "filename.h"
     FileType: C_User
 
-`FileNotFound <https://clang.llvm.org/doxygen/classclang_1_1PPCallbacks.html#a3045151545f987256bfa8d978916ef00>`_ Callback
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-FileNotFound is called when an inclusion directive results in a file-not-found error.
-
-Argument descriptions:
-
-==============   ==================================================   ============================== =====================================================================================================================================
-Argument Name    Argument Value Syntax                                Clang C++ Type                 Description
-==============   ==================================================   ============================== =====================================================================================================================================
-FileName         "(file)"                                             StringRef                      The name of the file being included, as written in the source code.
-RecoveryPath     (path)                                               SmallVectorImpl<char>          If this client indicates that it can recover from this missing file, the client should set this as an additional header search patch.
-==============   ==================================================   ============================== =====================================================================================================================================
-
-Example:::
-
-  - Callback: FileNotFound
-    FileName: "/path/filename.h"
-    RecoveryPath:
-
 `InclusionDirective <https://clang.llvm.org/doxygen/classclang_1_1PPCallbacks.html#a557d9738c329793513a6f57d6b60de52>`_ Callback
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -244,6 +223,7 @@ Imported         ((module name)|(null))                               const Modu
 Example:::
 
   - Callback: InclusionDirective
+    HashLoc: "D:/Clang/llvmnewmod/clang-tools-extra/test/pp-trace/pp-trace-include.cpp:4:1"
     IncludeTok: include
     FileName: "Input/Level1B.h"
     IsAngled: false

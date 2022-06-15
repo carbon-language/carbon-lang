@@ -80,7 +80,7 @@ class CStringChecker : public Checker< eval::Call,
                                          check::RegionChanges
                                          > {
   mutable std::unique_ptr<BugType> BT_Null, BT_Bounds, BT_Overlap,
-      BT_NotCString, BT_AdditionOverflow;
+      BT_NotCString, BT_AdditionOverflow, BT_UninitRead;
 
   mutable const char *CurrentFunctionDescription;
 
@@ -88,15 +88,17 @@ public:
   /// The filter is used to filter out the diagnostics which are not enabled by
   /// the user.
   struct CStringChecksFilter {
-    DefaultBool CheckCStringNullArg;
-    DefaultBool CheckCStringOutOfBounds;
-    DefaultBool CheckCStringBufferOverlap;
-    DefaultBool CheckCStringNotNullTerm;
+    bool CheckCStringNullArg = false;
+    bool CheckCStringOutOfBounds = false;
+    bool CheckCStringBufferOverlap = false;
+    bool CheckCStringNotNullTerm = false;
+    bool CheckCStringUninitializedRead = false;
 
     CheckerNameRef CheckNameCStringNullArg;
     CheckerNameRef CheckNameCStringOutOfBounds;
     CheckerNameRef CheckNameCStringBufferOverlap;
     CheckerNameRef CheckNameCStringNotNullTerm;
+    CheckerNameRef CheckNameCStringUninitializedRead;
   };
 
   CStringChecksFilter Filter;
@@ -257,6 +259,8 @@ public:
   void emitNotCStringBug(CheckerContext &C, ProgramStateRef State,
                          const Stmt *S, StringRef WarningMsg) const;
   void emitAdditionOverflowBug(CheckerContext &C, ProgramStateRef State) const;
+  void emitUninitializedReadBug(CheckerContext &C, ProgramStateRef State,
+                             const Expr *E) const;
   ProgramStateRef checkAdditionOverflow(CheckerContext &C,
                                             ProgramStateRef state,
                                             NonLoc left,
@@ -351,8 +355,8 @@ ProgramStateRef CStringChecker::CheckLocation(CheckerContext &C,
   // Get the index of the accessed element.
   DefinedOrUnknownSVal Idx = ER->getIndex().castAs<DefinedOrUnknownSVal>();
 
-  ProgramStateRef StInBound = state->assumeInBound(Idx, Size, true);
-  ProgramStateRef StOutBound = state->assumeInBound(Idx, Size, false);
+  ProgramStateRef StInBound, StOutBound;
+  std::tie(StInBound, StOutBound) = state->assumeInBoundDual(Idx, Size);
   if (StOutBound && !StInBound) {
     // These checks are either enabled by the CString out-of-bounds checker
     // explicitly or implicitly by the Malloc checker.
@@ -365,6 +369,15 @@ ProgramStateRef CStringChecker::CheckLocation(CheckerContext &C,
         createOutOfBoundErrorMsg(CurrentFunctionDescription, Access);
     emitOutOfBoundsBug(C, StOutBound, Buffer.Expression, Message);
     return nullptr;
+  }
+
+  // Ensure that we wouldn't read uninitialized value.
+  if (Access == AccessKind::read) {
+    if (Filter.CheckCStringUninitializedRead &&
+        StInBound->getSVal(ER).isUndef()) {
+      emitUninitializedReadBug(C, StInBound, Buffer.Expression);
+      return nullptr;
+    }
   }
 
   // Array bound check succeeded.  From this point forward the array bound
@@ -446,6 +459,11 @@ ProgramStateRef CStringChecker::CheckOverlap(CheckerContext &C,
     return nullptr;
 
   ProgramStateRef stateTrue, stateFalse;
+
+  // Assume different address spaces cannot overlap.
+  if (First.Expression->getType()->getPointeeType().getAddressSpace() !=
+      Second.Expression->getType()->getPointeeType().getAddressSpace())
+    return state;
 
   // Get the buffer values and make sure they're known locations.
   const LocationContext *LCtx = C.getLocationContext();
@@ -574,6 +592,26 @@ void CStringChecker::emitNullArgBug(CheckerContext &C, ProgramStateRef State,
     Report->addRange(S->getSourceRange());
     if (const auto *Ex = dyn_cast<Expr>(S))
       bugreporter::trackExpressionValue(N, Ex, *Report);
+    C.emitReport(std::move(Report));
+  }
+}
+
+void CStringChecker::emitUninitializedReadBug(CheckerContext &C,
+                                              ProgramStateRef State,
+                                              const Expr *E) const {
+  if (ExplodedNode *N = C.generateErrorNode(State)) {
+    const char *Msg =
+        "Bytes string function accesses uninitialized/garbage values";
+    if (!BT_UninitRead)
+      BT_UninitRead.reset(
+          new BuiltinBug(Filter.CheckNameCStringUninitializedRead,
+                         "Accessing unitialized/garbage values", Msg));
+
+    BuiltinBug *BT = static_cast<BuiltinBug *>(BT_UninitRead.get());
+
+    auto Report = std::make_unique<PathSensitiveBugReport>(*BT, Msg, N);
+    Report->addRange(E->getSourceRange());
+    bugreporter::trackExpressionValue(N, E, *Report);
     C.emitReport(std::move(Report));
   }
 }
@@ -1008,23 +1046,20 @@ bool CStringChecker::SummarizeRegion(raw_ostream &os, ASTContext &Ctx,
   case MemRegion::CXXThisRegionKind:
   case MemRegion::CXXTempObjectRegionKind:
     os << "a C++ temp object of type "
-       << cast<TypedValueRegion>(MR)->getValueType().getAsString();
+       << cast<TypedValueRegion>(MR)->getValueType();
     return true;
   case MemRegion::NonParamVarRegionKind:
-    os << "a variable of type"
-       << cast<TypedValueRegion>(MR)->getValueType().getAsString();
+    os << "a variable of type" << cast<TypedValueRegion>(MR)->getValueType();
     return true;
   case MemRegion::ParamVarRegionKind:
-    os << "a parameter of type"
-       << cast<TypedValueRegion>(MR)->getValueType().getAsString();
+    os << "a parameter of type" << cast<TypedValueRegion>(MR)->getValueType();
     return true;
   case MemRegion::FieldRegionKind:
-    os << "a field of type "
-       << cast<TypedValueRegion>(MR)->getValueType().getAsString();
+    os << "a field of type " << cast<TypedValueRegion>(MR)->getValueType();
     return true;
   case MemRegion::ObjCIvarRegionKind:
     os << "an instance variable of type "
-       << cast<TypedValueRegion>(MR)->getValueType().getAsString();
+       << cast<TypedValueRegion>(MR)->getValueType();
     return true;
   default:
     return false;
@@ -2458,3 +2493,4 @@ REGISTER_CHECKER(CStringNullArg)
 REGISTER_CHECKER(CStringOutOfBounds)
 REGISTER_CHECKER(CStringBufferOverlap)
 REGISTER_CHECKER(CStringNotNullTerm)
+REGISTER_CHECKER(CStringUninitializedRead)

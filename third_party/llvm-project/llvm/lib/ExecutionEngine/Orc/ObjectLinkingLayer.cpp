@@ -78,9 +78,12 @@ private:
   }
 
   static bool hasELFInitSection(LinkGraph &G) {
-    for (auto &Sec : G.sections())
-      if (Sec.getName() == ".init_array")
+    for (auto &Sec : G.sections()) {
+      auto SecName = Sec.getName();
+      if (SecName.consume_front(".init_array") &&
+          (SecName.empty() || SecName[0] == '.'))
         return true;
+    }
     return false;
   }
 
@@ -226,12 +229,13 @@ public:
       }
 
     for (auto *Sym : G.absolute_symbols())
-      if (Sym->hasName()) {
+      if (Sym->hasName() && Sym->getScope() != Scope::Local) {
         auto InternedName = ES.intern(Sym->getName());
         JITSymbolFlags Flags;
-        Flags |= JITSymbolFlags::Absolute;
         if (Sym->isCallable())
           Flags |= JITSymbolFlags::Callable;
+        if (Sym->getScope() == Scope::Default)
+          Flags |= JITSymbolFlags::Exported;
         if (Sym->getLinkage() == Linkage::Weak)
           Flags |= JITSymbolFlags::Weak;
         InternedResult[InternedName] =

@@ -1,12 +1,9 @@
-// RUN: mlir-opt %s -convert-vector-to-scf -lower-affine -convert-scf-to-cf \
-// RUN:   -memref-expand -arith-expand -convert-vector-to-llvm \
-// RUN:   -convert-memref-to-llvm -convert-std-to-llvm \
-// RUN:   -reconcile-unrealized-casts | \
+// RUN: mlir-opt %s -pass-pipeline="func.func(convert-vector-to-scf,lower-affine,convert-scf-to-cf,memref-expand,arith-expand),convert-vector-to-llvm,convert-memref-to-llvm,convert-func-to-llvm,reconcile-unrealized-casts" | \
 // RUN: mlir-cpu-runner -e entry -entry-point-result=void  \
 // RUN:   -shared-libs=%mlir_integration_test_dir/libmlir_c_runner_utils%shlibext | \
 // RUN: FileCheck %s
 
-func @transfer_read_2d(%A : memref<40xi32>, %base1: index) {
+func.func @transfer_read_2d(%A : memref<40xi32>, %base1: index) {
   %i42 = arith.constant -42: i32
   %f = vector.transfer_read %A[%base1], %i42
       {permutation_map = affine_map<(d0) -> (d0)>} :
@@ -15,7 +12,7 @@ func @transfer_read_2d(%A : memref<40xi32>, %base1: index) {
   return
 }
 
-func @entry() {
+func.func @entry() {
   %c0 = arith.constant 0: index
   %c20 = arith.constant 20: i32
   %c10 = arith.constant 10: i32

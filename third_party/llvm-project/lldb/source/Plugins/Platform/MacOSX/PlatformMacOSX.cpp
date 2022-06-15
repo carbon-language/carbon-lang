@@ -96,7 +96,7 @@ PlatformSP PlatformMacOSX::CreateInstance(bool force, const ArchSpec *arch) {
 }
 
 /// Default Constructor
-PlatformMacOSX::PlatformMacOSX() : PlatformDarwin(true) {}
+PlatformMacOSX::PlatformMacOSX() : PlatformDarwinDevice(true) {}
 
 ConstString PlatformMacOSX::GetSDKDirectory(lldb_private::Target &target) {
   ModuleSP exe_module_sp(target.GetExecutableModule());
@@ -133,19 +133,34 @@ ConstString PlatformMacOSX::GetSDKDirectory(lldb_private::Target &target) {
   return {};
 }
 
-std::vector<ArchSpec> PlatformMacOSX::GetSupportedArchitectures() {
+std::vector<ArchSpec>
+PlatformMacOSX::GetSupportedArchitectures(const ArchSpec &process_host_arch) {
   std::vector<ArchSpec> result;
 #if defined(__arm__) || defined(__arm64__) || defined(__aarch64__)
-  // macOS for ARM64 support both native and translated x86_64 processes
-  ARMGetSupportedArchitectures(result, llvm::Triple::MacOSX);
+  // When cmdline lldb is run on iOS, watchOS, etc, it is still
+  // using "PlatformMacOSX".
+  llvm::Triple::OSType host_os = GetHostOSType();
+  ARMGetSupportedArchitectures(result, host_os);
 
-  // We can't use x86GetSupportedArchitectures() because it uses
-  // the system architecture for some of its return values and also
-  // has a 32bits variant.
-  result.push_back(ArchSpec("x86_64-apple-macosx"));
-  result.push_back(ArchSpec("x86_64-apple-ios-macabi"));
-  result.push_back(ArchSpec("arm64-apple-ios-macabi"));
-  result.push_back(ArchSpec("arm64e-apple-ios-macabi"));
+  if (host_os == llvm::Triple::MacOSX) {
+    // We can't use x86GetSupportedArchitectures() because it uses
+    // the system architecture for some of its return values and also
+    // has a 32bits variant.
+    result.push_back(ArchSpec("x86_64-apple-macosx"));
+    result.push_back(ArchSpec("x86_64-apple-ios-macabi"));
+    result.push_back(ArchSpec("arm64-apple-ios-macabi"));
+    result.push_back(ArchSpec("arm64e-apple-ios-macabi"));
+
+    // On Apple Silicon, the host platform is compatible with iOS triples to
+    // support unmodified "iPhone and iPad Apps on Apple Silicon Macs". Because
+    // the binaries are identical, we must rely on the host architecture to
+    // tell them apart and mark the host platform as compatible or not.
+    if (!process_host_arch ||
+        process_host_arch.GetTriple().getOS() == llvm::Triple::MacOSX) {
+      result.push_back(ArchSpec("arm64-apple-ios"));
+      result.push_back(ArchSpec("arm64e-apple-ios"));
+    }
+  }
 #else
   x86GetSupportedArchitectures(result);
   result.push_back(ArchSpec("x86_64-apple-ios-macabi"));
@@ -196,3 +211,9 @@ lldb_private::Status PlatformMacOSX::GetSharedModule(
   }
   return error;
 }
+
+llvm::StringRef PlatformMacOSX::GetDeviceSupportDirectoryName() {
+  return "macOS DeviceSupport";
+}
+
+llvm::StringRef PlatformMacOSX::GetPlatformName() { return "MacOSX.platform"; }

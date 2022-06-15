@@ -167,10 +167,8 @@ XCoreTargetLowering::XCoreTargetLowering(const TargetMachine &TM,
     = MaxStoresPerMemcpy = MaxStoresPerMemcpyOptSize = 2;
 
   // We have target-specific dag combine patterns for the following nodes:
-  setTargetDAGCombine(ISD::STORE);
-  setTargetDAGCombine(ISD::ADD);
-  setTargetDAGCombine(ISD::INTRINSIC_VOID);
-  setTargetDAGCombine(ISD::INTRINSIC_W_CHAIN);
+  setTargetDAGCombine(
+      {ISD::STORE, ISD::ADD, ISD::INTRINSIC_VOID, ISD::INTRINSIC_W_CHAIN});
 
   setMinFunctionAlignment(Align(2));
   setPrefFunctionAlignment(Align(4));
@@ -442,7 +440,7 @@ SDValue XCoreTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
     }
   }
 
-  if (LD->getAlignment() == 2) {
+  if (LD->getAlign() == Align(2)) {
     SDValue Low = DAG.getExtLoad(ISD::ZEXTLOAD, DL, MVT::i32, Chain, BasePtr,
                                  LD->getPointerInfo(), MVT::i16, Align(2),
                                  LD->getMemOperand()->getFlags());
@@ -497,7 +495,7 @@ SDValue XCoreTargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
   SDValue Value = ST->getValue();
   SDLoc dl(Op);
 
-  if (ST->getAlignment() == 2) {
+  if (ST->getAlign() == Align(2)) {
     SDValue Low = Value;
     SDValue High = DAG.getNode(ISD::SRL, dl, MVT::i32, Value,
                                DAG.getConstant(16, dl, MVT::i32));
@@ -941,25 +939,25 @@ LowerATOMIC_LOAD(SDValue Op, SelectionDAG &DAG) const {
           N->getSuccessOrdering() == AtomicOrdering::Monotonic) &&
          "setInsertFencesForAtomic(true) expects unordered / monotonic");
   if (N->getMemoryVT() == MVT::i32) {
-    if (N->getAlignment() < 4)
+    if (N->getAlign() < Align(4))
       report_fatal_error("atomic load must be aligned");
     return DAG.getLoad(getPointerTy(DAG.getDataLayout()), SDLoc(Op),
                        N->getChain(), N->getBasePtr(), N->getPointerInfo(),
-                       N->getAlignment(), N->getMemOperand()->getFlags(),
+                       N->getAlign(), N->getMemOperand()->getFlags(),
                        N->getAAInfo(), N->getRanges());
   }
   if (N->getMemoryVT() == MVT::i16) {
-    if (N->getAlignment() < 2)
+    if (N->getAlign() < Align(2))
       report_fatal_error("atomic load must be aligned");
     return DAG.getExtLoad(ISD::EXTLOAD, SDLoc(Op), MVT::i32, N->getChain(),
                           N->getBasePtr(), N->getPointerInfo(), MVT::i16,
-                          N->getAlignment(), N->getMemOperand()->getFlags(),
+                          N->getAlign(), N->getMemOperand()->getFlags(),
                           N->getAAInfo());
   }
   if (N->getMemoryVT() == MVT::i8)
     return DAG.getExtLoad(ISD::EXTLOAD, SDLoc(Op), MVT::i32, N->getChain(),
                           N->getBasePtr(), N->getPointerInfo(), MVT::i8,
-                          N->getAlignment(), N->getMemOperand()->getFlags(),
+                          N->getAlign(), N->getMemOperand()->getFlags(),
                           N->getAAInfo());
   return SDValue();
 }
@@ -972,24 +970,24 @@ LowerATOMIC_STORE(SDValue Op, SelectionDAG &DAG) const {
           N->getSuccessOrdering() == AtomicOrdering::Monotonic) &&
          "setInsertFencesForAtomic(true) expects unordered / monotonic");
   if (N->getMemoryVT() == MVT::i32) {
-    if (N->getAlignment() < 4)
+    if (N->getAlign() < Align(4))
       report_fatal_error("atomic store must be aligned");
     return DAG.getStore(N->getChain(), SDLoc(Op), N->getVal(), N->getBasePtr(),
-                        N->getPointerInfo(), N->getAlignment(),
+                        N->getPointerInfo(), N->getAlign(),
                         N->getMemOperand()->getFlags(), N->getAAInfo());
   }
   if (N->getMemoryVT() == MVT::i16) {
-    if (N->getAlignment() < 2)
+    if (N->getAlign() < Align(2))
       report_fatal_error("atomic store must be aligned");
     return DAG.getTruncStore(N->getChain(), SDLoc(Op), N->getVal(),
                              N->getBasePtr(), N->getPointerInfo(), MVT::i16,
-                             N->getAlignment(), N->getMemOperand()->getFlags(),
+                             N->getAlign(), N->getMemOperand()->getFlags(),
                              N->getAAInfo());
   }
   if (N->getMemoryVT() == MVT::i8)
     return DAG.getTruncStore(N->getChain(), SDLoc(Op), N->getVal(),
                              N->getBasePtr(), N->getPointerInfo(), MVT::i8,
-                             N->getAlignment(), N->getMemOperand()->getFlags(),
+                             N->getAlign(), N->getMemOperand()->getFlags(),
                              N->getAAInfo());
   return SDValue();
 }
@@ -1791,17 +1789,17 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
     unsigned StoreBits = ST->getMemoryVT().getStoreSizeInBits();
     assert((StoreBits % 8) == 0 &&
            "Store size in bits must be a multiple of 8");
-    unsigned Alignment = ST->getAlignment();
+    Align Alignment = ST->getAlign();
 
     if (LoadSDNode *LD = dyn_cast<LoadSDNode>(ST->getValue())) {
       if (LD->hasNUsesOfValue(1, 0) && ST->getMemoryVT() == LD->getMemoryVT() &&
-        LD->getAlignment() == Alignment &&
+        LD->getAlign() == Alignment &&
         !LD->isVolatile() && !LD->isIndexed() &&
         Chain.reachesChainWithoutSideEffects(SDValue(LD, 1))) {
         bool isTail = isInTailCallPosition(DAG, ST, Chain);
         return DAG.getMemmove(Chain, dl, ST->getBasePtr(), LD->getBasePtr(),
                               DAG.getConstant(StoreBits / 8, dl, MVT::i32),
-                              Align(Alignment), false, isTail,
+                              Alignment, false, isTail,
                               ST->getPointerInfo(), LD->getPointerInfo());
       }
     }

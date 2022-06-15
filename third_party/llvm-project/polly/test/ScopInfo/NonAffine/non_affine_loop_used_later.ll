@@ -1,11 +1,5 @@
-; RUN: opt %loadPolly -polly-scops \
-; RUN:     -polly-allow-nonaffine -polly-allow-nonaffine-branches \
-; RUN:     -polly-allow-nonaffine-loops -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-scops -polly-allow-nonaffine \
-; RUN:     -polly-unprofitable-scalar-accs=true \
-; RUN:     -polly-process-unprofitable=false \
-; RUN:     -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops \
-; RUN:     -analyze < %s | FileCheck %s --check-prefix=PROFIT
+; RUN: opt %loadPolly -polly-allow-nonaffine -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops                                                                        -polly-print-scops -disable-output < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-allow-nonaffine -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops -polly-unprofitable-scalar-accs=true -polly-process-unprofitable=false -polly-print-scops -disable-output < %s | FileCheck %s --check-prefix=PROFIT
 ;
 ; Verify that we over approximate the read acces of A[j] in the last statement as j is
 ; computed in a non-affine loop we do not model.
@@ -73,7 +67,7 @@
 ; CHECK-NEXT:         ReadAccess :=    [Reduction Type: NONE] [Scalar: 1]
 ; CHECK-NEXT:             [N] -> { Stmt_bb18[i0] -> MemRef_j_2__phi[] };
 ; CHECK-NEXT:         ReadAccess :=    [Reduction Type: NONE] [Scalar: 0]
-; CHECK-NEXT:             [N] -> { Stmt_bb18[i0] -> MemRef_A[o0] : 0 <= o0 <= 2147483647 };
+; CHECK-NEXT:             [N] -> { Stmt_bb18[i0] -> MemRef_A[o0] };
 ; CHECK-NEXT:         MustWriteAccess :=    [Reduction Type: NONE] [Scalar: 0]
 ; CHECK-NEXT:             [N] -> { Stmt_bb18[i0] -> MemRef_A[i0] };
 ; CHECK-NEXT:     Stmt_bb23

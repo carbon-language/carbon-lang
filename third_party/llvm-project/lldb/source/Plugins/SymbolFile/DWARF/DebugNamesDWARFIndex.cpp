@@ -16,6 +16,7 @@
 
 using namespace lldb_private;
 using namespace lldb;
+using namespace lldb_private::dwarf;
 
 llvm::Expected<std::unique_ptr<DebugNamesDWARFIndex>>
 DebugNamesDWARFIndex::Create(Module &module, DWARFDataExtractor debug_names,
@@ -64,8 +65,8 @@ bool DebugNamesDWARFIndex::ProcessEntry(
   llvm::Optional<DIERef> ref = ToDIERef(entry);
   if (!ref)
     return true;
-  SymbolFileDWARF &dwarf =
-      *llvm::cast<SymbolFileDWARF>(m_module.GetSymbolFile());
+  SymbolFileDWARF &dwarf = *llvm::cast<SymbolFileDWARF>(
+      m_module.GetSymbolFile()->GetBackingSymbolFile());
   DWARFDIE die = dwarf.GetDIE(*ref);
   if (!die)
     return true;

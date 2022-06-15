@@ -50,8 +50,8 @@ for.end:
 ; CHECK:       %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
 ; CHECK:       %offset.idx = sub i64 %n, %index
 ; CHECK-NOT:   getelementptr
-; CHECK:       %[[G0:.+]] = getelementptr inbounds i32, i32* %a, i64 -3
-; CHECK:       getelementptr inbounds i32, i32* %[[G0]], i64 %offset.idx
+; CHECK:       %[[G0:.+]] = getelementptr i32, i32* %a, i64 -3
+; CHECK:       getelementptr i32, i32* %[[G0]], i64 %offset.idx
 ; CHECK-NOT:   getelementptr
 ; CHECK:       br i1 {{.*}}, label %middle.block, label %vector.body
 ;
@@ -65,7 +65,7 @@ for.body:
   %tmp1 = getelementptr inbounds i32, i32* %a, i64 %i
   %tmp2 = load i32, i32* %tmp1, align 8
   %tmp3 = add i32 %tmp0, %tmp2
-  %i.next = add nuw nsw i64 %i, -1
+  %i.next = add nsw i64 %i, -1
   %cond = icmp sgt i64 %i.next, 0
   br i1 %cond, label %for.body, label %for.end
 
@@ -181,7 +181,7 @@ for.body:
   %tmp4 = load i32, i32* %tmp2, align 8
   %tmp5 = add i32 %tmp3, %tmp4
   %tmp6 = add i32 %tmp0, %tmp5
-  %i.next = add nuw nsw i64 %i, -1
+  %i.next = add nsw i64 %i, -1
   %cond = icmp sgt i64 %i.next, 0
   br i1 %cond, label %for.body, label %for.end
 
@@ -445,6 +445,7 @@ for.end:
 ; INTER-NEXT:  LV: Found uniform instruction: %tmp0 = getelementptr inbounds i64, i64* %A, i64 %i
 ; INTER-NEXT:  LV: Found uniform instruction: %i = phi i64 [ 0, %entry ], [ %i.next, %for.body ]
 ; INTER-NEXT:  LV: Found uniform instruction: %i.next = add nuw nsw i64 %i, 1
+; INTER:       define void @bitcast_pointer_operand(
 ; INTER:       vector.body:
 ; INTER-NEXT:    [[INDEX:%.*]] = phi i64 [ 0, %vector.ph ], [ [[INDEX_NEXT:%.*]], %vector.body ]
 ; INTER-NEXT:    [[TMP4:%.*]] = getelementptr inbounds i64, i64* %A, i64 [[INDEX]]

@@ -17,7 +17,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/CostModel.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/Function.h"
@@ -25,7 +24,6 @@
 #include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -119,7 +117,7 @@ void CostModelAnalysis::print(raw_ostream &OS, const Module*) const {
 PreservedAnalyses CostModelPrinterPass::run(Function &F,
                                             FunctionAnalysisManager &AM) {
   auto &TTI = AM.getResult<TargetIRAnalysis>(F);
-  OS << "Cost Model for function '" << F.getName() << "'\n";
+  OS << "Printing analysis 'Cost Model Analysis' for function '" << F.getName() << "':\n";
   for (BasicBlock &B : F) {
     for (Instruction &Inst : B) {
       // TODO: Use a pass parameter instead of cl::opt CostKind to determine

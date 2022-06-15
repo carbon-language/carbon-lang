@@ -200,8 +200,6 @@ namespace options {
   static std::vector<const char *> extra;
   // Sample profile file path
   static std::string sample_profile;
-  // New pass manager
-  static bool new_pass_manager = LLVM_ENABLE_NEW_PASS_MANAGER;
   // Debug new pass manager
   static bool debug_pass_manager = false;
   // Directory to store the .dwo files.
@@ -210,6 +208,8 @@ namespace options {
   static std::string stats_file;
   // Asserts that LTO link has whole program visibility
   static bool whole_program_visibility = false;
+  // Use opaque pointer types.
+  static bool opaque_pointers = true;
 
   // Optimization remarks filename, accepted passes and hotness options
   static std::string RemarksFilename;
@@ -287,9 +287,7 @@ namespace options {
     } else if (opt.consume_front("cs-profile-path=")) {
       cs_profile_path = std::string(opt);
     } else if (opt == "new-pass-manager") {
-      new_pass_manager = true;
-    } else if (opt == "legacy-pass-manager") {
-      new_pass_manager = false;
+      // We always use the new pass manager.
     } else if (opt == "debug-pass-manager") {
       debug_pass_manager = true;
     } else if (opt == "whole-program-visibility") {
@@ -312,6 +310,10 @@ namespace options {
       RemarksFormat = std::string(opt);
     } else if (opt.consume_front("stats-file=")) {
       stats_file = std::string(opt);
+    } else if (opt == "opaque-pointers") {
+      opaque_pointers = true;
+    } else if (opt == "no-opaque-pointers") {
+      opaque_pointers = false;
     } else {
       // Save this option to pass to the code generator.
       // ParseCommandLineOptions() expects argv[0] to be program name. Lazily
@@ -956,12 +958,12 @@ static std::unique_ptr<LTO> createLTO(IndexWriteCallback OnIndexWrite,
   Conf.RemarksHotnessThreshold = options::RemarksHotnessThreshold;
   Conf.RemarksFormat = options::RemarksFormat;
 
-  // Use new pass manager if set in driver
-  Conf.UseNewPM = options::new_pass_manager;
   // Debug new pass manager if requested
   Conf.DebugPassManager = options::debug_pass_manager;
 
   Conf.HasWholeProgramVisibility = options::whole_program_visibility;
+
+  Conf.OpaquePointers = options::opaque_pointers;
 
   Conf.StatsFile = options::stats_file;
   return std::make_unique<LTO>(std::move(Conf), Backend,

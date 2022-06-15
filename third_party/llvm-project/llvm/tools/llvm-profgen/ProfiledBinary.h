@@ -13,6 +13,7 @@
 #include "ErrorHandling.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/DebugInfo/Symbolize/Symbolize.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -217,6 +218,9 @@ class ProfiledBinary {
   // A map of mapping function name to BinaryFunction info.
   std::unordered_map<std::string, BinaryFunction> BinaryFunctions;
 
+  // A list of binary functions that have samples.
+  std::unordered_set<const BinaryFunction *> ProfiledFunctions;
+
   // An ordered map of mapping function's start offset to function range
   // relevant info. Currently to determine if the offset of ELF is the start of
   // a real function, we leverage the function range info from DWARF.
@@ -235,6 +239,8 @@ class ProfiledBinary {
   std::unordered_set<uint64_t> CallOffsets;
   // A set of return instruction offsets. Used by virtual unwinding.
   std::unordered_set<uint64_t> RetOffsets;
+  // An ordered set of unconditional branch instruction offsets.
+  std::set<uint64_t> UncondBranchOffsets;
   // A set of branch instruction offsets.
   std::unordered_set<uint64_t> BranchOffsets;
 
@@ -277,6 +283,8 @@ class ProfiledBinary {
   template <class ELFT>
   void setPreferredTextSegmentAddresses(const ELFFile<ELFT> &Obj, StringRef FileName);
 
+  void checkPseudoProbe(const ELFObjectFileBase *Obj);
+
   void decodePseudoProbe(const ELFObjectFileBase *Obj);
 
   void
@@ -289,6 +297,9 @@ class ProfiledBinary {
 
   // Load debug info of subprograms from DWARF section.
   void loadSymbolsFromDWARF(ObjectFile &Obj);
+
+  // Load debug info from DWARF unit.
+  void loadSymbolsFromDWARFUnit(DWARFUnit &CompilationUnit);
 
   // A function may be spilt into multiple non-continuous address ranges. We use
   // this to set whether start offset of a function is the real entry of the
@@ -327,6 +338,9 @@ public:
     setupSymbolizer();
     load();
   }
+
+  void decodePseudoProbe();
+
   uint64_t virtualAddrToOffset(uint64_t VirtualAddress) const {
     return VirtualAddress - BaseAddress;
   }
@@ -381,6 +395,13 @@ public:
   bool offsetIsTransfer(uint64_t Offset) {
     return BranchOffsets.count(Offset) || RetOffsets.count(Offset) ||
            CallOffsets.count(Offset);
+  }
+
+  bool rangeCrossUncondBranch(uint64_t Start, uint64_t End) {
+    if (Start >= End)
+      return false;
+    auto R = UncondBranchOffsets.lower_bound(Start);
+    return R != UncondBranchOffsets.end() && *R < End;
   }
 
   uint64_t getAddressforIndex(uint64_t Index) const {
@@ -447,6 +468,14 @@ public:
   const std::unordered_map<std::string, BinaryFunction> &
   getAllBinaryFunctions() {
     return BinaryFunctions;
+  }
+
+  std::unordered_set<const BinaryFunction *> &getProfiledFunctions() {
+    return ProfiledFunctions;
+  }
+
+  void setProfiledFunctions(std::unordered_set<const BinaryFunction *> &Funcs) {
+    ProfiledFunctions = Funcs;
   }
 
   BinaryFunction *getBinaryFunction(StringRef FName) {

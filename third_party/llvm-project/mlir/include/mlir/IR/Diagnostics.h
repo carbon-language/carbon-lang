@@ -265,6 +265,16 @@ public:
   /// Allow a diagnostic to be converted to 'failure'.
   operator LogicalResult() const;
 
+  /// Allow a diagnostic to be converted to 'failure'.
+  operator ParseResult() const { return ParseResult(LogicalResult(*this)); }
+
+  /// Allow a diagnostic to be converted to FailureOr<T>. Always results in
+  /// 'failure' because this cast cannot possibly return an object of 'T'.
+  template <typename T>
+  operator FailureOr<T>() const {
+    return failure();
+  }
+
 private:
   Diagnostic(const Diagnostic &rhs) = delete;
   Diagnostic &operator=(const Diagnostic &rhs) = delete;
@@ -347,6 +357,18 @@ public:
   /// 'success' if this is an empty diagnostic.
   operator LogicalResult() const;
 
+  /// Allow an inflight diagnostic to be converted to 'failure', otherwise
+  /// 'success' if this is an empty diagnostic.
+  operator ParseResult() const { return ParseResult(LogicalResult(*this)); }
+
+  /// Allow an inflight diagnostic to be converted to FailureOr<T>. Always
+  /// results in 'failure' because this cast cannot possibly return an object of
+  /// 'T'.
+  template <typename T>
+  operator FailureOr<T>() const {
+    return failure();
+  }
+
 private:
   InFlightDiagnostic &operator=(const InFlightDiagnostic &) = delete;
   InFlightDiagnostic &operator=(InFlightDiagnostic &&) = delete;
@@ -395,7 +417,7 @@ public:
   /// The handler type for MLIR diagnostics. This function takes a diagnostic as
   /// input, and returns success if the handler has fully processed this
   /// diagnostic. Returns failure otherwise.
-  using HandlerTy = std::function<LogicalResult(Diagnostic &)>;
+  using HandlerTy = llvm::unique_function<LogicalResult(Diagnostic &)>;
 
   /// A handle to a specific registered handler object.
   using HandlerID = uint64_t;
@@ -405,7 +427,7 @@ public:
   /// handlers will process diagnostics first. This function returns a unique
   /// identifier for the registered handler, which can be used to unregister
   /// this handler at a later time.
-  HandlerID registerHandler(const HandlerTy &handler);
+  HandlerID registerHandler(HandlerTy handler);
 
   /// Set the diagnostic handler with a function that returns void. This is a
   /// convenient wrapper for handlers that always completely process the given

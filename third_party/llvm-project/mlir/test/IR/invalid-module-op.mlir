@@ -2,8 +2,8 @@
 
 // -----
 
-func @module_op() {
-  // expected-error@+1 {{Operations with a 'SymbolTable' must have exactly one block}}
+func.func @module_op() {
+  // expected-error@+1 {{'builtin.module' op expects region #0 to have 0 or 1 blocks}}
   builtin.module {
   ^bb1:
     "test.dummy"() : () -> ()
@@ -15,7 +15,7 @@ func @module_op() {
 
 // -----
 
-func @module_op() {
+func.func @module_op() {
   // expected-error@+1 {{region should have no arguments}}
   builtin.module {
   ^bb1(%arg: i32):

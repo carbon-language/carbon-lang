@@ -1,6 +1,6 @@
 // RUN: mlir-opt %s -convert-vector-to-scf -lower-affine -convert-scf-to-cf \
 // RUN:  -arith-bufferize -convert-vector-to-llvm="enable-amx" \
-// RUN:  -convert-memref-to-llvm -convert-std-to-llvm -reconcile-unrealized-casts | \
+// RUN:  -convert-memref-to-llvm -convert-func-to-llvm -reconcile-unrealized-casts | \
 // RUN: mlir-translate -mlir-to-llvmir | \
 // RUN: %lli --entry-function=entry --mattr="+amx-tile,+amx-int8,+amx-bf16" \
 // RUN:  --dlopen=%mlir_integration_test_dir/libmlir_c_runner_utils%shlibext | \
@@ -9,7 +9,7 @@
 // Note: To run this test, your CPU must support AMX.
 
 // Multiply full size tiles into zero destination.
-func @kernel(%arg0: memref<16x32xbf16>,
+func.func @kernel(%arg0: memref<16x32xbf16>,
              %arg1: memref<16x32xbf16>,
              %arg2: memref<16x16xf32>) {
   %0 = arith.constant 0 : index
@@ -21,7 +21,7 @@ func @kernel(%arg0: memref<16x32xbf16>,
   return
 }
 
-func @entry() -> i32 {
+func.func @entry() -> i32 {
   %fu = arith.constant -1.0: f32
   %c0 = arith.constant 0: index
   %c1 = arith.constant 1: index

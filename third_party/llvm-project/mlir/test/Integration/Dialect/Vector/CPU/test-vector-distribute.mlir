@@ -1,21 +1,19 @@
-// RUN: mlir-opt %s -test-vector-to-forloop -convert-vector-to-scf \
-// RUN:   -lower-affine -convert-scf-to-cf -convert-vector-to-llvm -convert-memref-to-llvm -convert-std-to-llvm -reconcile-unrealized-casts | \
+// RUN: mlir-opt %s -pass-pipeline="func.func(test-vector-to-forloop,convert-vector-to-scf,lower-affine,convert-scf-to-cf),convert-vector-to-llvm,convert-memref-to-llvm,convert-func-to-llvm,reconcile-unrealized-casts" | \
 // RUN: mlir-cpu-runner -e main -entry-point-result=void  \
 // RUN:   -shared-libs=%mlir_integration_test_dir/libmlir_runner_utils%shlibext | \
 // RUN: FileCheck %s
 
-// RUN: mlir-opt %s -convert-vector-to-scf -lower-affine \
-// RUN: -convert-scf-to-cf -convert-vector-to-llvm -convert-memref-to-llvm -convert-std-to-llvm -reconcile-unrealized-casts | mlir-cpu-runner -e main \
+// RUN: mlir-opt %s -pass-pipeline="func.func(convert-vector-to-scf,lower-affine,convert-scf-to-cf),convert-vector-to-llvm,convert-memref-to-llvm,convert-func-to-llvm,reconcile-unrealized-casts" | mlir-cpu-runner -e main \
 // RUN: -entry-point-result=void \
 // RUN: -shared-libs=%mlir_integration_test_dir/libmlir_runner_utils%shlibext | \
 // RUN: FileCheck %s
 
-// RUN: mlir-opt %s -test-vector-to-forloop | FileCheck %s -check-prefix=TRANSFORM
+// RUN: mlir-opt %s -pass-pipeline="func.func(test-vector-to-forloop)" | FileCheck %s -check-prefix=TRANSFORM
 
 
-func private @print_memref_f32(memref<*xf32>)
+func.func private @printMemrefF32(memref<*xf32>)
 
-func @alloc_1d_filled_inc_f32(%arg0: index, %arg1: f32) -> memref<?xf32> {
+func.func @alloc_1d_filled_inc_f32(%arg0: index, %arg1: f32) -> memref<?xf32> {
   %c0 = arith.constant 0 : index
   %c1 = arith.constant 1 : index
   %0 = memref.alloc(%arg0) : memref<?xf32>
@@ -29,7 +27,7 @@ func @alloc_1d_filled_inc_f32(%arg0: index, %arg1: f32) -> memref<?xf32> {
 }
 
 // Large vector addf that can be broken down into a loop of smaller vector addf.
-func @main() {
+func.func @main() {
   %cf0 = arith.constant 0.0 : f32
   %cf1 = arith.constant 1.0 : f32
   %cf2 = arith.constant 2.0 : f32
@@ -52,7 +50,7 @@ func @main() {
   %acc = arith.addf %a, %b: vector<64xf32>
   vector.transfer_write %acc, %out[%c0]: vector<64xf32>, memref<?xf32>
   %converted = memref.cast %out : memref<?xf32> to memref<*xf32>
-  call @print_memref_f32(%converted): (memref<*xf32>) -> ()
+  call @printMemrefF32(%converted): (memref<*xf32>) -> ()
   // CHECK:      Unranked{{.*}}data =
   // CHECK:      [
   // CHECK-SAME:  3,  5,  7,  9,  11,  13,  15,  17,  19,  21,  23,  25,  27,

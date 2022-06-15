@@ -10,7 +10,7 @@
 
 // <string>
 
-// basic_string(initializer_list<charT> il, const Allocator& a = Allocator());
+// basic_string(initializer_list<charT> il, const Allocator& a = Allocator()); // constexpr since C++20
 
 #include <string>
 #include <cassert>
@@ -19,7 +19,7 @@
 #include "test_allocator.h"
 #include "min_allocator.h"
 
-bool test() {
+TEST_CONSTEXPR_CXX20 bool test() {
   {
     std::string s = {'a', 'b', 'c'};
     assert(s == "abc");
@@ -52,7 +52,7 @@ int main(int, char**)
 {
   test();
 #if TEST_STD_VER > 17
-  // static_assert(test());
+  static_assert(test());
 #endif
 
   return 0;

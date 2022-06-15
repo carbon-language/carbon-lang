@@ -65,6 +65,8 @@ def note_consteval_address_accessible : Note<
   "is not a constant expression">;
 def note_constexpr_uninitialized : Note<
   "%select{|sub}0object of type %1 is not initialized">;
+def note_constexpr_static_local : Note<
+  "control flows through the definition of a %select{static|thread_local}0 variable">;
 def note_constexpr_subobject_declared_here : Note<
   "subobject declared here">;
 def note_constexpr_array_index : Note<"cannot refer to element %0 of "
@@ -362,6 +364,8 @@ def note_constexpr_memory_leak : Note<
   "%plural{0:|: (along with %0 other memory leak%s0)}0">;
 def note_constexpr_unsupported_layout : Note<
   "type %0 has unexpected layout">;
+def note_constexpr_unsupported_flexible_array : Note<
+  "flexible array initialization is not yet supported">;
 def err_experimental_clang_interp_failed : Error<
   "the experimental clang interpreter failed to evaluate an expression">;
 

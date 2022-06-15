@@ -20,6 +20,7 @@
 #include "SyntheticSections.h"
 #include "Target.h"
 #include "UnwindInfoSection.h"
+#include "llvm/Support/Parallel.h"
 
 #include "lld/Common/Arrays.h"
 #include "lld/Common/CommonLinkerContext.h"
@@ -458,9 +459,11 @@ public:
     auto *c = reinterpret_cast<build_version_command *>(buf);
     c->cmd = LC_BUILD_VERSION;
     c->cmdsize = getSize();
+
     c->platform = static_cast<uint32_t>(platformInfo.target.Platform);
     c->minos = encodeVersion(platformInfo.minimum);
     c->sdk = encodeVersion(platformInfo.sdk);
+
     c->ntools = ntools;
     auto *t = reinterpret_cast<build_tool_version *>(&c[1]);
     t->tool = TOOL_LD;
@@ -594,6 +597,9 @@ static void prepareBranchTarget(Symbol *sym) {
         in.weakBinding->addEntry(sym, in.lazyPointers->isec,
                                  sym->stubsIndex * target->wordSize);
       }
+    } else if (defined->interposable) {
+      if (in.stubs->addEntry(sym))
+        in.lazyBinding->addEntry(sym);
     }
   } else {
     llvm_unreachable("invalid branch target symbol type");
@@ -605,7 +611,7 @@ static bool needsBinding(const Symbol *sym) {
   if (isa<DylibSymbol>(sym))
     return true;
   if (const auto *defined = dyn_cast<Defined>(sym))
-    return defined->isExternalWeakDef();
+    return defined->isExternalWeakDef() || defined->interposable;
   return false;
 }
 
@@ -653,7 +659,7 @@ void Writer::scanRelocations() {
       }
       if (auto *sym = r.referent.dyn_cast<Symbol *>()) {
         if (auto *undefined = dyn_cast<Undefined>(sym))
-          treatUndefinedSymbol(*undefined);
+          treatUndefinedSymbol(*undefined, isec, r.offset);
         // treatUndefinedSymbol() can replace sym with a DylibSymbol; re-check.
         if (!isa<Undefined>(sym) && validateSymbolRelocation(sym, isec, r))
           prepareSymbolRelocation(sym, isec, r);
@@ -765,6 +771,11 @@ template <class LP> void Writer::createLoadCommands() {
   else
     in.header->addLoadCommand(make<LCMinVersion>(config->platformInfo));
 
+  if (config->secondaryPlatformInfo) {
+    in.header->addLoadCommand(
+        make<LCBuildVersion>(*config->secondaryPlatformInfo));
+  }
+
   // This is down here to match ld64's load command order.
   if (config->outputType == MH_EXECUTE)
     in.header->addLoadCommand(make<LCMain>());
@@ -857,7 +868,7 @@ static void sortSegmentsAndSections() {
   sortOutputSegments();
 
   DenseMap<const InputSection *, size_t> isecPriorities =
-      buildInputSectionPriorities();
+      priorityBuilder.buildInputSectionPriorities();
 
   uint32_t sectionIndex = 0;
   for (OutputSegment *seg : outputSegments) {
@@ -939,8 +950,14 @@ template <class LP> void Writer::createOutputSections() {
     StringRef segname = it.first.first;
     ConcatOutputSection *osec = it.second;
     assert(segname != segment_names::ld);
-    if (osec->isNeeded())
+    if (osec->isNeeded()) {
+      // See comment in ObjFile::splitEhFrames()
+      if (osec->name == section_names::ehFrame &&
+          segname == segment_names::text)
+        osec->align = target->wordSize;
+
       getOrCreateOutputSegment(segname)->addOutputSection(osec);
+    }
   }
 
   for (SyntheticSection *ssec : syntheticSections) {
@@ -969,6 +986,21 @@ template <class LP> void Writer::createOutputSections() {
 void Writer::finalizeAddresses() {
   TimeTraceScope timeScope("Finalize addresses");
   uint64_t pageSize = target->getPageSize();
+
+  // We could parallelize this loop, but local benchmarking indicates it is
+  // faster to do it all in the main thread.
+  for (OutputSegment *seg : outputSegments) {
+    if (seg == linkEditSegment)
+      continue;
+    for (OutputSection *osec : seg->getSections()) {
+      if (!osec->isNeeded())
+        continue;
+      // Other kinds of OutputSections have already been finalized.
+      if (auto concatOsec = dyn_cast<ConcatOutputSection>(osec))
+        concatOsec->finalizeContents();
+    }
+  }
+
   // Ensure that segments (and the sections they contain) are allocated
   // addresses in ascending order, which dyld requires.
   //
@@ -1048,17 +1080,21 @@ void Writer::openFile() {
                                FileOutputBuffer::F_executable);
 
   if (!bufferOrErr)
-    error("failed to open " + config->outputFile + ": " +
+    fatal("failed to open " + config->outputFile + ": " +
           llvm::toString(bufferOrErr.takeError()));
-  else
-    buffer = std::move(*bufferOrErr);
+  buffer = std::move(*bufferOrErr);
+  in.bufferStart = buffer->getBufferStart();
 }
 
 void Writer::writeSections() {
   uint8_t *buf = buffer->getBufferStart();
+  std::vector<const OutputSection *> osecs;
   for (const OutputSegment *seg : outputSegments)
-    for (const OutputSection *osec : seg->getSections())
-      osec->writeTo(buf + osec->fileOff);
+    append_range(osecs, seg->getSections());
+
+  parallelForEach(osecs.begin(), osecs.end(), [&](const OutputSection *osec) {
+    osec->writeTo(buf + osec->fileOff);
+  });
 }
 
 // In order to utilize multiple cores, we first split the buffer into chunks,
@@ -1072,7 +1108,8 @@ void Writer::writeUuid() {
   // Round-up integer division
   size_t chunkSize = (data.size() + chunkCount - 1) / chunkCount;
   std::vector<ArrayRef<uint8_t>> chunks = split(data, chunkSize);
-  std::vector<uint64_t> hashes(chunks.size());
+  // Leave one slot for filename
+  std::vector<uint64_t> hashes(chunks.size() + 1);
   SmallVector<std::shared_future<void>> threadFutures;
   threadFutures.reserve(chunks.size());
   for (size_t i = 0; i < chunks.size(); ++i)
@@ -1080,7 +1117,9 @@ void Writer::writeUuid() {
         [&](size_t j) { hashes[j] = xxHash64(chunks[j]); }, i));
   for (std::shared_future<void> &future : threadFutures)
     future.wait();
-
+  // Append the output filename so that identical binaries with different names
+  // don't get the same UUID.
+  hashes[chunks.size()] = xxHash64(sys::path::filename(config->finalOutput));
   uint64_t digest = xxHash64({reinterpret_cast<uint8_t *>(hashes.data()),
                               hashes.size() * sizeof(uint64_t)});
   uuidCommand->writeUuid(digest);
@@ -1094,6 +1133,7 @@ void Writer::writeCodeSignature() {
 void Writer::writeOutputFile() {
   TimeTraceScope timeScope("Write output file");
   openFile();
+  reportPendingUndefinedSymbols();
   if (errorCount())
     return;
   writeSections();
@@ -1116,6 +1156,7 @@ template <class LP> void Writer::run() {
   scanRelocations();
 
   // Do not proceed if there was an undefined symbol.
+  reportPendingUndefinedSymbols();
   if (errorCount())
     return;
 

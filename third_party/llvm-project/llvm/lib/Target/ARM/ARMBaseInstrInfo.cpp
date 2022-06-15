@@ -343,6 +343,13 @@ ARMBaseInstrInfo::convertToThreeAddress(MachineInstr &MI, LiveVariables *LV,
 }
 
 // Branch analysis.
+// Cond vector output format:
+//   0 elements indicates an unconditional branch
+//   2 elements indicates a conditional branch; the elements are
+//     the condition to check and the CPSR.
+//   3 elements indicates a hardware loop end; the elements
+//     are the opcode, the operand value to test, and a dummy
+//     operand used to pad out to 3 operands.
 bool ARMBaseInstrInfo::analyzeBranch(MachineBasicBlock &MBB,
                                      MachineBasicBlock *&TBB,
                                      MachineBasicBlock *&FBB,
@@ -394,6 +401,17 @@ bool ARMBaseInstrInfo::analyzeBranch(MachineBasicBlock &MBB,
     } else if (I->isReturn()) {
       // Returns can't be analyzed, but we should run cleanup.
       CantAnalyze = true;
+    } else if (I->getOpcode() == ARM::t2LoopEnd &&
+               MBB.getParent()
+                   ->getSubtarget<ARMSubtarget>()
+                   .enableMachinePipeliner()) {
+      if (!Cond.empty())
+        return true;
+      FBB = TBB;
+      TBB = I->getOperand(1).getMBB();
+      Cond.push_back(MachineOperand::CreateImm(I->getOpcode()));
+      Cond.push_back(I->getOperand(0));
+      Cond.push_back(MachineOperand::CreateImm(0));
     } else {
       // We encountered other unrecognized terminator. Bail out immediately.
       return true;
@@ -457,7 +475,7 @@ unsigned ARMBaseInstrInfo::removeBranch(MachineBasicBlock &MBB,
     return 0;
 
   if (!isUncondBranchOpcode(I->getOpcode()) &&
-      !isCondBranchOpcode(I->getOpcode()))
+      !isCondBranchOpcode(I->getOpcode()) && I->getOpcode() != ARM::t2LoopEnd)
     return 0;
 
   // Remove the branch.
@@ -467,7 +485,7 @@ unsigned ARMBaseInstrInfo::removeBranch(MachineBasicBlock &MBB,
 
   if (I == MBB.begin()) return 1;
   --I;
-  if (!isCondBranchOpcode(I->getOpcode()))
+  if (!isCondBranchOpcode(I->getOpcode()) && I->getOpcode() != ARM::t2LoopEnd)
     return 1;
 
   // Remove the branch.
@@ -491,8 +509,8 @@ unsigned ARMBaseInstrInfo::insertBranch(MachineBasicBlock &MBB,
 
   // Shouldn't be a fall through.
   assert(TBB && "insertBranch must not be told to insert a fallthrough");
-  assert((Cond.size() == 2 || Cond.size() == 0) &&
-         "ARM branch conditions have two components!");
+  assert((Cond.size() == 2 || Cond.size() == 0 || Cond.size() == 3) &&
+         "ARM branch conditions have two or three components!");
 
   // For conditional branches, we use addOperand to preserve CPSR flags.
 
@@ -502,19 +520,24 @@ unsigned ARMBaseInstrInfo::insertBranch(MachineBasicBlock &MBB,
         BuildMI(&MBB, DL, get(BOpc)).addMBB(TBB).add(predOps(ARMCC::AL));
       else
         BuildMI(&MBB, DL, get(BOpc)).addMBB(TBB);
-    } else
+    } else if (Cond.size() == 2) {
       BuildMI(&MBB, DL, get(BccOpc))
           .addMBB(TBB)
           .addImm(Cond[0].getImm())
           .add(Cond[1]);
+    } else
+      BuildMI(&MBB, DL, get(Cond[0].getImm())).add(Cond[1]).addMBB(TBB);
     return 1;
   }
 
   // Two-way conditional branch.
-  BuildMI(&MBB, DL, get(BccOpc))
-      .addMBB(TBB)
-      .addImm(Cond[0].getImm())
-      .add(Cond[1]);
+  if (Cond.size() == 2)
+    BuildMI(&MBB, DL, get(BccOpc))
+        .addMBB(TBB)
+        .addImm(Cond[0].getImm())
+        .add(Cond[1]);
+  else if (Cond.size() == 3)
+    BuildMI(&MBB, DL, get(Cond[0].getImm())).add(Cond[1]).addMBB(TBB);
   if (isThumb)
     BuildMI(&MBB, DL, get(BOpc)).addMBB(FBB).add(predOps(ARMCC::AL));
   else
@@ -524,9 +547,12 @@ unsigned ARMBaseInstrInfo::insertBranch(MachineBasicBlock &MBB,
 
 bool ARMBaseInstrInfo::
 reverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
-  ARMCC::CondCodes CC = (ARMCC::CondCodes)(int)Cond[0].getImm();
-  Cond[0].setImm(ARMCC::getOppositeCondition(CC));
-  return false;
+  if (Cond.size() == 2) {
+    ARMCC::CondCodes CC = (ARMCC::CondCodes)(int)Cond[0].getImm();
+    Cond[0].setImm(ARMCC::getOppositeCondition(CC));
+    return false;
+  }
+  return true;
 }
 
 bool ARMBaseInstrInfo::isPredicated(const MachineInstr &MI) const {
@@ -1703,7 +1729,7 @@ bool ARMBaseInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
   // or some other super-register.
   int ImpDefIdx = MI.findRegisterDefOperandIdx(DstRegD);
   if (ImpDefIdx != -1)
-    MI.RemoveOperand(ImpDefIdx);
+    MI.removeOperand(ImpDefIdx);
 
   // Change the opcode and operands.
   MI.setDesc(get(ARM::VMOVD));
@@ -2043,6 +2069,9 @@ bool ARMBaseInstrInfo::isSchedulingBoundary(const MachineInstr &MI,
 
   // INLINEASM_BR can jump to another block
   if (MI.getOpcode() == TargetOpcode::INLINEASM_BR)
+    return true;
+
+  if (isSEHInstruction(MI))
     return true;
 
   // Treat the start of the IT block as a scheduling boundary, but schedule
@@ -2598,7 +2627,7 @@ bool llvm::tryFoldSPUpdateIntoPushPop(const ARMSubtarget &Subtarget,
   // ahead: strip all existing registers off and add them back again
   // in the right order.
   for (int i = MI->getNumOperands() - 1; i >= RegListIdx; --i)
-    MI->RemoveOperand(i);
+    MI->removeOperand(i);
 
   // Add the complete list back in.
   MachineInstrBuilder MIB(MF, &*MI);
@@ -2626,7 +2655,7 @@ bool llvm::rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
       // Turn it into a move.
       MI.setDesc(TII.get(ARM::MOVr));
       MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
-      MI.RemoveOperand(FrameRegIdx+1);
+      MI.removeOperand(FrameRegIdx+1);
       Offset = 0;
       return true;
     } else if (Offset < 0) {
@@ -5103,7 +5132,7 @@ void ARMBaseInstrInfo::setExecutionDomain(MachineInstr &MI,
     SrcReg = MI.getOperand(1).getReg();
 
     for (unsigned i = MI.getDesc().getNumOperands(); i; --i)
-      MI.RemoveOperand(i - 1);
+      MI.removeOperand(i - 1);
 
     // Change to a %DDst = VORRd %DSrc, %DSrc, 14, %noreg (; implicits)
     MI.setDesc(get(ARM::VORRd));
@@ -5122,7 +5151,7 @@ void ARMBaseInstrInfo::setExecutionDomain(MachineInstr &MI,
     SrcReg = MI.getOperand(1).getReg();
 
     for (unsigned i = MI.getDesc().getNumOperands(); i; --i)
-      MI.RemoveOperand(i - 1);
+      MI.removeOperand(i - 1);
 
     DReg = getCorrespondingDRegAndLane(TRI, SrcReg, Lane);
 
@@ -5155,7 +5184,7 @@ void ARMBaseInstrInfo::setExecutionDomain(MachineInstr &MI,
       break;
 
     for (unsigned i = MI.getDesc().getNumOperands(); i; --i)
-      MI.RemoveOperand(i - 1);
+      MI.removeOperand(i - 1);
 
     // Convert to %DDst = VSETLNi32 %DDst, %RSrc, Lane, 14, %noreg (; imps)
     // Again DDst may be undefined at the beginning of this instruction.
@@ -5190,7 +5219,7 @@ void ARMBaseInstrInfo::setExecutionDomain(MachineInstr &MI,
         break;
 
       for (unsigned i = MI.getDesc().getNumOperands(); i; --i)
-        MI.RemoveOperand(i - 1);
+        MI.removeOperand(i - 1);
 
       if (DSrc == DDst) {
         // Destination can be:
@@ -5832,9 +5861,8 @@ outliner::OutlinedFunction ARMBaseInstrInfo::getOutliningCandidateInfo(
 
   // Compute liveness information for each candidate, and set FlagsSetInAll.
   const TargetRegisterInfo &TRI = getRegisterInfo();
-  std::for_each(
-      RepeatedSequenceLocs.begin(), RepeatedSequenceLocs.end(),
-      [&FlagsSetInAll](outliner::Candidate &C) { FlagsSetInAll &= C.Flags; });
+  for (outliner::Candidate &C : RepeatedSequenceLocs)
+    FlagsSetInAll &= C.Flags;
 
   // According to the ARM Procedure Call Standard, the following are
   // undefined on entry/exit from a function call:
@@ -6185,8 +6213,8 @@ bool ARMBaseInstrInfo::isMBBSafeToOutlineFrom(MachineBasicBlock &MBB,
 
   LiveRegUnits LRU(getRegisterInfo());
 
-  std::for_each(MBB.rbegin(), MBB.rend(),
-                [&LRU](MachineInstr &MI) { LRU.accumulate(MI); });
+  for (MachineInstr &MI : llvm::reverse(MBB))
+    LRU.accumulate(MI);
 
   // Check if each of the unsafe registers are available...
   bool R12AvailableInBlock = LRU.available(ARM::R12);
@@ -6720,4 +6748,124 @@ unsigned llvm::gettBLXrOpcode(const MachineFunction &MF) {
 unsigned llvm::getBLXpredOpcode(const MachineFunction &MF) {
   return (MF.getSubtarget<ARMSubtarget>().hardenSlsBlr()) ? ARM::BLX_pred_noip
                                                           : ARM::BLX_pred;
+}
+
+namespace {
+class ARMPipelinerLoopInfo : public TargetInstrInfo::PipelinerLoopInfo {
+  MachineInstr *EndLoop, *LoopCount;
+  MachineFunction *MF;
+  const TargetInstrInfo *TII;
+
+  // Meanings of the various stuff with loop types:
+  // t2Bcc:
+  //   EndLoop = branch at end of original BB that will become a kernel
+  //   LoopCount = CC setter live into branch
+  // t2LoopEnd:
+  //   EndLoop = branch at end of original BB
+  //   LoopCount = t2LoopDec
+public:
+  ARMPipelinerLoopInfo(MachineInstr *EndLoop, MachineInstr *LoopCount)
+      : EndLoop(EndLoop), LoopCount(LoopCount),
+        MF(EndLoop->getParent()->getParent()),
+        TII(MF->getSubtarget().getInstrInfo()) {}
+
+  bool shouldIgnoreForPipelining(const MachineInstr *MI) const override {
+    // Only ignore the terminator.
+    return MI == EndLoop || MI == LoopCount;
+  }
+
+  Optional<bool> createTripCountGreaterCondition(
+      int TC, MachineBasicBlock &MBB,
+      SmallVectorImpl<MachineOperand> &Cond) override {
+
+    if (isCondBranchOpcode(EndLoop->getOpcode())) {
+      Cond.push_back(EndLoop->getOperand(1));
+      Cond.push_back(EndLoop->getOperand(2));
+      if (EndLoop->getOperand(0).getMBB() == EndLoop->getParent()) {
+        TII->reverseBranchCondition(Cond);
+      }
+      return {};
+    } else if (EndLoop->getOpcode() == ARM::t2LoopEnd) {
+      // General case just lets the unrolled t2LoopDec do the subtraction and
+      // therefore just needs to check if zero has been reached.
+      MachineInstr *LoopDec = nullptr;
+      for (auto &I : MBB.instrs())
+        if (I.getOpcode() == ARM::t2LoopDec)
+          LoopDec = &I;
+      assert(LoopDec && "Unable to find copied LoopDec");
+      // Check if we're done with the loop.
+      BuildMI(&MBB, LoopDec->getDebugLoc(), TII->get(ARM::t2CMPri))
+          .addReg(LoopDec->getOperand(0).getReg())
+          .addImm(0)
+          .addImm(ARMCC::AL)
+          .addReg(ARM::NoRegister);
+      Cond.push_back(MachineOperand::CreateImm(ARMCC::EQ));
+      Cond.push_back(MachineOperand::CreateReg(ARM::CPSR, false));
+      return {};
+    } else
+      llvm_unreachable("Unknown EndLoop");
+  }
+
+  void setPreheader(MachineBasicBlock *NewPreheader) override {}
+
+  void adjustTripCount(int TripCountAdjust) override {}
+
+  void disposed() override {}
+};
+} // namespace
+
+std::unique_ptr<TargetInstrInfo::PipelinerLoopInfo>
+ARMBaseInstrInfo::analyzeLoopForPipelining(MachineBasicBlock *LoopBB) const {
+  MachineBasicBlock::iterator I = LoopBB->getFirstTerminator();
+  MachineBasicBlock *Preheader = *LoopBB->pred_begin();
+  if (Preheader == LoopBB)
+    Preheader = *std::next(LoopBB->pred_begin());
+
+  if (I != LoopBB->end() && I->getOpcode() == ARM::t2Bcc) {
+    // If the branch is a Bcc, then the CPSR should be set somewhere within the
+    // block.  We need to determine the reaching definition of CPSR so that
+    // it can be marked as non-pipelineable, allowing the pipeliner to force
+    // it into stage 0 or give up if it cannot or will not do so.
+    MachineInstr *CCSetter = nullptr;
+    for (auto &L : LoopBB->instrs()) {
+      if (L.isCall())
+        return nullptr;
+      if (isCPSRDefined(L))
+        CCSetter = &L;
+    }
+    if (CCSetter)
+      return std::make_unique<ARMPipelinerLoopInfo>(&*I, CCSetter);
+    else
+      return nullptr; // Unable to find the CC setter, so unable to guarantee
+                      // that pipeline will work
+  }
+
+  // Recognize:
+  //   preheader:
+  //     %1 = t2DoopLoopStart %0
+  //   loop:
+  //     %2 = phi %1, <not loop>, %..., %loop
+  //     %3 = t2LoopDec %2, <imm>
+  //     t2LoopEnd %3, %loop
+
+  if (I != LoopBB->end() && I->getOpcode() == ARM::t2LoopEnd) {
+    for (auto &L : LoopBB->instrs())
+      if (L.isCall())
+        return nullptr;
+      else if (isVCTP(&L))
+        return nullptr;
+    Register LoopDecResult = I->getOperand(0).getReg();
+    MachineRegisterInfo &MRI = LoopBB->getParent()->getRegInfo();
+    MachineInstr *LoopDec = MRI.getUniqueVRegDef(LoopDecResult);
+    if (!LoopDec || LoopDec->getOpcode() != ARM::t2LoopDec)
+      return nullptr;
+    MachineInstr *LoopStart = nullptr;
+    for (auto &J : Preheader->instrs())
+      if (J.getOpcode() == ARM::t2DoLoopStart)
+        LoopStart = &J;
+    if (!LoopStart)
+      return nullptr;
+    return std::make_unique<ARMPipelinerLoopInfo>(&*I, LoopDec);
+  }
+  return nullptr;
 }

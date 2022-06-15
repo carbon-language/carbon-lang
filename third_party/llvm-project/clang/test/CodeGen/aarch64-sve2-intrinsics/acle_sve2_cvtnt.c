@@ -3,8 +3,6 @@
 // RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +sve2 -fallow-half-arguments-and-returns -S -O1 -Werror -Wall -emit-llvm -o - -x c++ %s | FileCheck %s -check-prefix=CPP-CHECK
 // RUN: %clang_cc1 -DSVE_OVERLOADED_FORMS -triple aarch64-none-linux-gnu -target-feature +sve2 -fallow-half-arguments-and-returns -S -O1 -Werror -Wall -emit-llvm -o - %s | FileCheck %s
 // RUN: %clang_cc1 -DSVE_OVERLOADED_FORMS -triple aarch64-none-linux-gnu -target-feature +sve2 -fallow-half-arguments-and-returns -S -O1 -Werror -Wall -emit-llvm -o - -x c++ %s | FileCheck %s -check-prefix=CPP-CHECK
-// RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +sve -fallow-half-arguments-and-returns -fsyntax-only -verify -verify-ignore-unexpected=error %s
-// RUN: %clang_cc1 -DSVE_OVERLOADED_FORMS -triple aarch64-none-linux-gnu -target-feature +sve -fallow-half-arguments-and-returns -fsyntax-only -verify=overload -verify-ignore-unexpected=error %s
 
 // REQUIRES: aarch64-registered-target
 
@@ -31,8 +29,6 @@
 //
 svfloat16_t test_svcvtnt_f16_f32_m(svfloat16_t inactive, svbool_t pg, svfloat32_t op)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svcvtnt_f16_m'}}
-  // expected-warning@+1 {{implicit declaration of function 'svcvtnt_f16_f32_m'}}
   return SVE_ACLE_FUNC(svcvtnt_f16,_f32,_m,)(inactive, pg, op);
 }
 
@@ -50,8 +46,6 @@ svfloat16_t test_svcvtnt_f16_f32_m(svfloat16_t inactive, svbool_t pg, svfloat32_
 //
 svfloat32_t test_svcvtnt_f32_f64_m(svfloat32_t inactive, svbool_t pg, svfloat64_t op)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svcvtnt_f32_m'}}
-  // expected-warning@+1 {{implicit declaration of function 'svcvtnt_f32_f64_m'}}
   return SVE_ACLE_FUNC(svcvtnt_f32,_f64,_m,)(inactive, pg, op);
 }
 
@@ -69,8 +63,6 @@ svfloat32_t test_svcvtnt_f32_f64_m(svfloat32_t inactive, svbool_t pg, svfloat64_
 //
 svfloat16_t test_svcvtnt_f16_f32_x(svfloat16_t even, svbool_t pg, svfloat32_t op)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svcvtnt_f16_x'}}
-  // expected-warning@+1 {{implicit declaration of function 'svcvtnt_f16_f32_x'}}
   return SVE_ACLE_FUNC(svcvtnt_f16,_f32,_x,)(even, pg, op);
 }
 
@@ -88,7 +80,5 @@ svfloat16_t test_svcvtnt_f16_f32_x(svfloat16_t even, svbool_t pg, svfloat32_t op
 //
 svfloat32_t test_svcvtnt_f32_f64_x(svfloat32_t even, svbool_t pg, svfloat64_t op)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svcvtnt_f32_x'}}
-  // expected-warning@+1 {{implicit declaration of function 'svcvtnt_f32_f64_x'}}
   return SVE_ACLE_FUNC(svcvtnt_f32,_f64,_x,)(even, pg, op);
 }

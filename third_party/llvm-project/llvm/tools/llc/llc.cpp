@@ -36,6 +36,7 @@
 #include "llvm/IR/Verifier.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/InitializePasses.h"
+#include "llvm/MC/MCTargetOptionsCommandFlags.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Pass.h"
@@ -117,12 +118,10 @@ static cl::opt<bool>
 
 // Determine optimization level.
 static cl::opt<char>
-OptLevel("O",
-         cl::desc("Optimization level. [-O0, -O1, -O2, or -O3] "
-                  "(default = '-O2')"),
-         cl::Prefix,
-         cl::ZeroOrMore,
-         cl::init(' '));
+    OptLevel("O",
+             cl::desc("Optimization level. [-O0, -O1, -O2, or -O3] "
+                      "(default = '-O2')"),
+             cl::Prefix, cl::init(' '));
 
 static cl::opt<std::string>
 TargetTriple("mtriple", cl::desc("Override target triple for module"));
@@ -212,7 +211,7 @@ static RunPassOption RunPassOpt;
 static cl::opt<RunPassOption, true, cl::parser<std::string>> RunPass(
     "run-pass",
     cl::desc("Run compiler only for specified passes (comma separated list)"),
-    cl::value_desc("pass-name"), cl::ZeroOrMore, cl::location(RunPassOpt));
+    cl::value_desc("pass-name"), cl::location(RunPassOpt));
 
 static int compileModule(char **, LLVMContext &);
 
@@ -369,6 +368,7 @@ int main(int argc, char **argv) {
   initializeHardwareLoopsPass(*Registry);
   initializeTransformUtils(*Registry);
   initializeReplaceWithVeclibLegacyPass(*Registry);
+  initializeTLSVariableHoistLegacyPassPass(*Registry);
 
   // Initialize debugging passes.
   initializeScavengerTestPass(*Registry);
@@ -501,11 +501,22 @@ static int compileModule(char **argv, LLVMContext &Context) {
         TargetMachine::parseBinutilsVersion(BinutilsVersion);
     Options.DisableIntegratedAS = NoIntegratedAssembler;
     Options.MCOptions.ShowMCEncoding = ShowMCEncoding;
-    Options.MCOptions.MCUseDwarfDirectory = DwarfDirectory;
     Options.MCOptions.AsmVerbose = AsmVerbose;
     Options.MCOptions.PreserveAsmComments = PreserveComments;
     Options.MCOptions.IASSearchPaths = IncludeDirs;
     Options.MCOptions.SplitDwarfFile = SplitDwarfFile;
+    if (DwarfDirectory.getPosition()) {
+      Options.MCOptions.MCUseDwarfDirectory =
+          DwarfDirectory ? MCTargetOptions::EnableDwarfDirectory
+                         : MCTargetOptions::DisableDwarfDirectory;
+    } else {
+      // -dwarf-directory is not set explicitly. Some assemblers
+      // (e.g. GNU as or ptxas) do not support `.file directory'
+      // syntax prior to DWARFv5. Let the target decide the default
+      // value.
+      Options.MCOptions.MCUseDwarfDirectory =
+          MCTargetOptions::DefaultDwarfDirectory;
+    }
   };
 
   Optional<Reloc::Model> RM = codegen::getExplicitRelocModel();

@@ -220,8 +220,8 @@ template <class T>
 
 */
 
+#include <__assert> // all public C++ headers provide the assertion handler
 #include <__config>
-#include <__debug>
 #include <__tuple>
 #include <__utility/as_const.h>
 #include <__utility/auto_cast.h>
@@ -242,6 +242,7 @@ template <class T>
 #include <__utility/unreachable.h>
 #include <compare>
 #include <initializer_list>
+#include <type_traits>
 #include <version>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)

@@ -142,8 +142,12 @@ static lto::Config createConfig() {
   c.RemarksHotnessThreshold = config->optRemarksHotnessThreshold;
   c.RemarksFormat = std::string(config->optRemarksFormat);
 
+  // Set up output file to emit statistics.
+  c.StatsFile = std::string(config->optStatsFilename);
+
   c.SampleProfile = std::string(config->ltoSampleProfile);
-  c.UseNewPM = config->ltoNewPassManager;
+  for (StringRef pluginFn : config->passPlugins)
+    c.PassPlugins.push_back(std::string(pluginFn));
   c.DebugPassManager = config->ltoDebugPassManager;
   c.DwoDir = std::string(config->dwoDir);
 
@@ -159,6 +163,8 @@ static lto::Config createConfig() {
   c.CSIRProfile = std::string(config->ltoCSProfileFile);
   c.RunCSIRInstr = config->ltoCSProfileGenerate;
   c.PGOWarnMismatch = config->ltoPGOWarnMismatch;
+
+  c.OpaquePointers = config->opaquePointers;
 
   if (config->emitLLVM) {
     c.PostInternalizeModuleHook = [](size_t task, const Module &m) {
@@ -243,15 +249,18 @@ void BitcodeCompiler::add(BitcodeFile &f) {
     //    for doing final link.
     // 2) Symbols that are used in regular objects.
     // 3) C named sections if we have corresponding __start_/__stop_ symbol.
-    // 4) Symbols that are defined in bitcode files and used for dynamic linking.
+    // 4) Symbols that are defined in bitcode files and used for dynamic
+    //    linking.
+    // 5) Symbols that will be referenced after linker wrapping is performed.
     r.VisibleToRegularObj = config->relocatable || sym->isUsedInRegularObj ||
+                            sym->referencedAfterWrap ||
                             (r.Prevailing && sym->includeInDynsym()) ||
                             usedStartStop.count(objSym.getSectionName());
     // Identify symbols exported dynamically, and that therefore could be
     // referenced by a shared library not visible to the linker.
-    r.ExportDynamic = sym->computeBinding() != STB_LOCAL &&
-                      (config->shared || config->exportDynamic ||
-                       sym->exportDynamic || sym->inDynamicList);
+    r.ExportDynamic =
+        sym->computeBinding() != STB_LOCAL &&
+        (config->exportDynamic || sym->exportDynamic || sym->inDynamicList);
     const auto *dr = dyn_cast<Defined>(sym);
     r.FinalDefinitionInLinkageUnit =
         (isExec || sym->visibility != STV_DEFAULT) && dr &&

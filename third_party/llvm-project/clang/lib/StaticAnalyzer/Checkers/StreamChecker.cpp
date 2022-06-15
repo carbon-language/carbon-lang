@@ -549,8 +549,9 @@ void StreamChecker::evalFreopen(const FnDescription *Desc,
       State->BindExpr(CE, C.getLocationContext(), *StreamVal);
   // Generate state for NULL return value.
   // Stream switches to OpenFailed state.
-  ProgramStateRef StateRetNull = State->BindExpr(CE, C.getLocationContext(),
-                                                 C.getSValBuilder().makeNull());
+  ProgramStateRef StateRetNull =
+      State->BindExpr(CE, C.getLocationContext(),
+                      C.getSValBuilder().makeNullWithType(CE->getType()));
 
   StateRetNotNull =
       StateRetNotNull->set<StreamMap>(StreamSym, StreamState::getOpened(Desc));
@@ -671,24 +672,19 @@ void StreamChecker::evalFreadFwrite(const FnDescription *Desc,
   if (!IsFread || (OldSS->ErrorState != ErrorFEof)) {
     ProgramStateRef StateNotFailed =
         State->BindExpr(CE, C.getLocationContext(), *NMembVal);
-    if (StateNotFailed) {
-      StateNotFailed = StateNotFailed->set<StreamMap>(
-          StreamSym, StreamState::getOpened(Desc));
-      C.addTransition(StateNotFailed);
-    }
+    StateNotFailed =
+        StateNotFailed->set<StreamMap>(StreamSym, StreamState::getOpened(Desc));
+    C.addTransition(StateNotFailed);
   }
 
   // Add transition for the failed state.
-  Optional<NonLoc> RetVal = makeRetVal(C, CE).castAs<NonLoc>();
-  assert(RetVal && "Value should be NonLoc.");
+  NonLoc RetVal = makeRetVal(C, CE).castAs<NonLoc>();
   ProgramStateRef StateFailed =
-      State->BindExpr(CE, C.getLocationContext(), *RetVal);
-  if (!StateFailed)
-    return;
-  auto Cond = C.getSValBuilder()
-                  .evalBinOpNN(State, BO_LT, *RetVal, *NMembVal,
-                               C.getASTContext().IntTy)
-                  .getAs<DefinedOrUnknownSVal>();
+      State->BindExpr(CE, C.getLocationContext(), RetVal);
+  auto Cond =
+      C.getSValBuilder()
+          .evalBinOpNN(State, BO_LT, RetVal, *NMembVal, C.getASTContext().IntTy)
+          .getAs<DefinedOrUnknownSVal>();
   if (!Cond)
     return;
   StateFailed = StateFailed->assume(*Cond, true);

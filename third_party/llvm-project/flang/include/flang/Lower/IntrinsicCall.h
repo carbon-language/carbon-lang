@@ -18,6 +18,8 @@ class ExtendedValue;
 
 namespace Fortran::lower {
 
+class StatementContext;
+
 // TODO: Error handling interface ?
 // TODO: Implementation is incomplete. Many intrinsics to tbd.
 
@@ -27,7 +29,8 @@ namespace Fortran::lower {
 fir::ExtendedValue genIntrinsicCall(fir::FirOpBuilder &, mlir::Location,
                                     llvm::StringRef name,
                                     llvm::Optional<mlir::Type> resultType,
-                                    llvm::ArrayRef<fir::ExtendedValue> args);
+                                    llvm::ArrayRef<fir::ExtendedValue> args,
+                                    StatementContext &);
 
 /// Enum specifying how intrinsic argument evaluate::Expr should be
 /// lowered to fir::ExtendedValue to be passed to genIntrinsicCall.
@@ -78,6 +81,34 @@ ArgLoweringRule lowerIntrinsicArgumentAs(mlir::Location,
 
 /// Return place-holder for absent intrinsic arguments.
 fir::ExtendedValue getAbsentIntrinsicArgument();
+
+/// Get SymbolRefAttr of runtime (or wrapper function containing inlined
+// implementation) of an unrestricted intrinsic (defined by its signature
+// and generic name)
+mlir::SymbolRefAttr
+getUnrestrictedIntrinsicSymbolRefAttr(fir::FirOpBuilder &, mlir::Location,
+                                      llvm::StringRef name,
+                                      mlir::FunctionType signature);
+
+//===----------------------------------------------------------------------===//
+// Direct access to intrinsics that may be used by lowering outside
+// of intrinsic call lowering.
+//===----------------------------------------------------------------------===//
+
+/// Generate maximum. There must be at least one argument and all arguments
+/// must have the same type.
+mlir::Value genMax(fir::FirOpBuilder &, mlir::Location,
+                   llvm::ArrayRef<mlir::Value> args);
+
+/// Generate minimum. Same constraints as genMax.
+mlir::Value genMin(fir::FirOpBuilder &, mlir::Location,
+                   llvm::ArrayRef<mlir::Value> args);
+
+/// Generate power function x**y with the given expected
+/// result type.
+mlir::Value genPow(fir::FirOpBuilder &, mlir::Location, mlir::Type resultType,
+                   mlir::Value x, mlir::Value y);
+
 } // namespace Fortran::lower
 
 #endif // FORTRAN_LOWER_INTRINSICCALL_H

@@ -42,10 +42,10 @@ namespace {
                       uint64_t Size = 0, unsigned ByteAlignment = 0,
                       SMLoc Loc = SMLoc()) override {}
     void emitGPRel32Value(const MCExpr *Value) override {}
-    void BeginCOFFSymbolDef(const MCSymbol *Symbol) override {}
-    void EmitCOFFSymbolStorageClass(int StorageClass) override {}
-    void EmitCOFFSymbolType(int Type) override {}
-    void EndCOFFSymbolDef() override {}
+    void beginCOFFSymbolDef(const MCSymbol *Symbol) override {}
+    void emitCOFFSymbolStorageClass(int StorageClass) override {}
+    void emitCOFFSymbolType(int Type) override {}
+    void endCOFFSymbolDef() override {}
     void
     emitXCOFFSymbolLinkageWithVisibility(MCSymbol *Symbol, MCSymbolAttr Linkage,
                                          MCSymbolAttr Visibility) override {}

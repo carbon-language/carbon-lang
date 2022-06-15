@@ -113,7 +113,7 @@ public:
 
   /// Update streamer for a new active section.
   ///
-  /// This is called by PopSection and SwitchSection, if the current
+  /// This is called by popSection and switchSection, if the current
   /// section changes.
   virtual void changeSection(const MCSection *CurSection, MCSection *Section,
                              const MCExpr *SubSection, raw_ostream &OS);
@@ -165,11 +165,22 @@ public:
   virtual void finishAttributeSection();
   virtual void emitInst(uint32_t Inst, char Suffix = '\0');
 
-  virtual void AnnotateTLSDescriptorSequence(const MCSymbolRefExpr *SRE);
+  virtual void annotateTLSDescriptorSequence(const MCSymbolRefExpr *SRE);
 
   virtual void emitThumbSet(MCSymbol *Symbol, const MCExpr *Value);
 
   void emitConstantPools() override;
+
+  virtual void emitARMWinCFIAllocStack(unsigned Size, bool Wide);
+  virtual void emitARMWinCFISaveRegMask(unsigned Mask, bool Wide);
+  virtual void emitARMWinCFISaveSP(unsigned Reg);
+  virtual void emitARMWinCFISaveFRegs(unsigned First, unsigned Last);
+  virtual void emitARMWinCFISaveLR(unsigned Offset);
+  virtual void emitARMWinCFIPrologEnd(bool Fragment);
+  virtual void emitARMWinCFINop(bool Wide);
+  virtual void emitARMWinCFIEpilogStart(unsigned Condition);
+  virtual void emitARMWinCFIEpilogEnd();
+  virtual void emitARMWinCFICustom(unsigned Opcode);
 
   /// Reset any state between object emissions, i.e. the equivalent of
   /// MCStreamer's reset method.
@@ -217,7 +228,7 @@ class MCStreamer {
   DenseMap<const MCSymbol *, unsigned> SymbolOrdering;
 
   /// This is stack of current and previous section values saved by
-  /// PushSection.
+  /// pushSection.
   SmallVector<std::pair<MCSectionSubPair, MCSectionSubPair>, 4> SectionStack;
 
   /// Pointer to the parser's SMLoc if available. This is used to provide
@@ -249,9 +260,9 @@ protected:
     return CurrentWinFrameInfo;
   }
 
-  virtual void EmitWindowsUnwindTables(WinEH::FrameInfo *Frame);
+  virtual void emitWindowsUnwindTables(WinEH::FrameInfo *Frame);
 
-  virtual void EmitWindowsUnwindTables();
+  virtual void emitWindowsUnwindTables();
 
   virtual void emitRawTextImpl(StringRef String);
 
@@ -346,7 +357,7 @@ public:
   /// Return a raw_ostream that comments can be written to. Unlike
   /// AddComment, you are required to terminate comments with \n if you use this
   /// method.
-  virtual raw_ostream &GetCommentOS();
+  virtual raw_ostream &getCommentOS();
 
   /// Print T and prefix it with the comment string (normally #) and
   /// optionally a tab. This prints the comment immediately, not at the end of
@@ -361,8 +372,8 @@ public:
   /// Emit added explicit comments.
   virtual void emitExplicitComments();
 
-  /// AddBlankLine - Emit a blank line to a .s file to pretty it up.
-  virtual void AddBlankLine() {}
+  /// Emit a blank line to a .s file to pretty it up.
+  virtual void addBlankLine() {}
 
   /// @}
 
@@ -386,18 +397,18 @@ public:
 
   /// Returns an index to represent the order a symbol was emitted in.
   /// (zero if we did not emit that symbol)
-  unsigned GetSymbolOrder(const MCSymbol *Sym) const {
+  unsigned getSymbolOrder(const MCSymbol *Sym) const {
     return SymbolOrdering.lookup(Sym);
   }
 
   /// Update streamer for a new active section.
   ///
-  /// This is called by PopSection and SwitchSection, if the current
+  /// This is called by popSection and switchSection, if the current
   /// section changes.
   virtual void changeSection(MCSection *, const MCExpr *);
 
   /// Save the current and previous section on the section stack.
-  void PushSection() {
+  void pushSection() {
     SectionStack.push_back(
         std::make_pair(getCurrentSection(), getPreviousSection()));
   }
@@ -406,7 +417,7 @@ public:
   /// Calls changeSection as needed.
   ///
   /// Returns false if the stack was empty.
-  bool PopSection() {
+  bool popSection() {
     if (SectionStack.size() <= 1)
       return false;
     auto I = SectionStack.end();
@@ -421,11 +432,11 @@ public:
     return true;
   }
 
-  bool SubSection(const MCExpr *Subsection) {
+  bool subSection(const MCExpr *Subsection) {
     if (SectionStack.empty())
       return false;
 
-    SwitchSection(SectionStack.back().first.first, Subsection);
+    switchSection(SectionStack.back().first.first, Subsection);
     return true;
   }
 
@@ -433,13 +444,16 @@ public:
   /// is required to update CurSection.
   ///
   /// This corresponds to assembler directives like .section, .text, etc.
-  virtual void SwitchSection(MCSection *Section,
+  virtual void switchSection(MCSection *Section,
                              const MCExpr *Subsection = nullptr);
+  void SwitchSection(MCSection *Section, const MCExpr *Subsection = nullptr) {
+    switchSection(Section, Subsection);
+  }
 
   /// Set the current section where code is being emitted to \p Section.
   /// This is required to update CurSection. This version does not call
   /// changeSection.
-  void SwitchSectionNoChange(MCSection *Section,
+  void switchSectionNoChange(MCSection *Section,
                              const MCExpr *Subsection = nullptr) {
     assert(Section && "Cannot switch to a null section!");
     MCSectionSubPair curSection = SectionStack.back().first;
@@ -457,7 +471,7 @@ public:
   ///
   /// Each emitted symbol will be tracked in the ordering table,
   /// so we can sort on them later.
-  void AssignFragment(MCSymbol *Symbol, MCFragment *Fragment);
+  void assignFragment(MCSymbol *Symbol, MCFragment *Fragment);
 
   /// Returns the mnemonic for \p MI, if the streamer has access to a
   /// instruction printer and returns an empty string otherwise.
@@ -552,40 +566,40 @@ public:
   /// Start emitting COFF symbol definition
   ///
   /// \param Symbol - The symbol to have its External & Type fields set.
-  virtual void BeginCOFFSymbolDef(const MCSymbol *Symbol);
+  virtual void beginCOFFSymbolDef(const MCSymbol *Symbol);
 
   /// Emit the storage class of the symbol.
   ///
   /// \param StorageClass - The storage class the symbol should have.
-  virtual void EmitCOFFSymbolStorageClass(int StorageClass);
+  virtual void emitCOFFSymbolStorageClass(int StorageClass);
 
   /// Emit the type of the symbol.
   ///
   /// \param Type - A COFF type identifier (see COFF::SymbolType in X86COFF.h)
-  virtual void EmitCOFFSymbolType(int Type);
+  virtual void emitCOFFSymbolType(int Type);
 
   /// Marks the end of the symbol definition.
-  virtual void EndCOFFSymbolDef();
+  virtual void endCOFFSymbolDef();
 
-  virtual void EmitCOFFSafeSEH(MCSymbol const *Symbol);
+  virtual void emitCOFFSafeSEH(MCSymbol const *Symbol);
 
   /// Emits the symbol table index of a Symbol into the current section.
-  virtual void EmitCOFFSymbolIndex(MCSymbol const *Symbol);
+  virtual void emitCOFFSymbolIndex(MCSymbol const *Symbol);
 
   /// Emits a COFF section index.
   ///
   /// \param Symbol - Symbol the section number relocation should point to.
-  virtual void EmitCOFFSectionIndex(MCSymbol const *Symbol);
+  virtual void emitCOFFSectionIndex(MCSymbol const *Symbol);
 
   /// Emits a COFF section relative relocation.
   ///
   /// \param Symbol - Symbol the section relative relocation should point to.
-  virtual void EmitCOFFSecRel32(MCSymbol const *Symbol, uint64_t Offset);
+  virtual void emitCOFFSecRel32(MCSymbol const *Symbol, uint64_t Offset);
 
   /// Emits a COFF image relative relocation.
   ///
   /// \param Symbol - Symbol the image relative relocation should point to.
-  virtual void EmitCOFFImgRel32(MCSymbol const *Symbol, int64_t Offset);
+  virtual void emitCOFFImgRel32(MCSymbol const *Symbol, int64_t Offset);
 
   /// Emits an lcomm directive with XCOFF csect information.
   ///
@@ -915,6 +929,7 @@ public:
                                        unsigned CUID = 0);
 
   virtual void emitCFIBKeyFrame();
+  virtual void emitCFIMTETaggedFrame();
 
   /// This implements the DWARF2 '.loc fileno lineno ...' assembler
   /// directive.
@@ -926,16 +941,16 @@ public:
   /// Associate a filename with a specified logical file number, and also
   /// specify that file's checksum information.  This implements the '.cv_file 4
   /// "foo.c"' assembler directive. Returns true on success.
-  virtual bool EmitCVFileDirective(unsigned FileNo, StringRef Filename,
+  virtual bool emitCVFileDirective(unsigned FileNo, StringRef Filename,
                                    ArrayRef<uint8_t> Checksum,
                                    unsigned ChecksumKind);
 
   /// Introduces a function id for use with .cv_loc.
-  virtual bool EmitCVFuncIdDirective(unsigned FunctionId);
+  virtual bool emitCVFuncIdDirective(unsigned FunctionId);
 
   /// Introduces an inline call site id for use with .cv_loc. Includes
   /// extra information for inline line table generation.
-  virtual bool EmitCVInlineSiteIdDirective(unsigned FunctionId, unsigned IAFunc,
+  virtual bool emitCVInlineSiteIdDirective(unsigned FunctionId, unsigned IAFunc,
                                            unsigned IAFile, unsigned IALine,
                                            unsigned IACol, SMLoc Loc);
 
@@ -991,7 +1006,7 @@ public:
   virtual void emitCVFileChecksumOffsetDirective(unsigned FileNo) {}
 
   /// This implements the CodeView '.cv_fpo_data' assembler directive.
-  virtual void EmitCVFPOData(const MCSymbol *ProcSym, SMLoc Loc = {}) {}
+  virtual void emitCVFPOData(const MCSymbol *ProcSym, SMLoc Loc = {}) {}
 
   /// Emit the absolute difference between two symbols.
   ///
@@ -1030,28 +1045,28 @@ public:
   virtual void emitCFIWindowSave();
   virtual void emitCFINegateRAState();
 
-  virtual void EmitWinCFIStartProc(const MCSymbol *Symbol, SMLoc Loc = SMLoc());
-  virtual void EmitWinCFIEndProc(SMLoc Loc = SMLoc());
+  virtual void emitWinCFIStartProc(const MCSymbol *Symbol, SMLoc Loc = SMLoc());
+  virtual void emitWinCFIEndProc(SMLoc Loc = SMLoc());
   /// This is used on platforms, such as Windows on ARM64, that require function
   /// or funclet sizes to be emitted in .xdata before the End marker is emitted
   /// for the frame.  We cannot use the End marker, as it is not set at the
   /// point of emitting .xdata, in order to indicate that the frame is active.
-  virtual void EmitWinCFIFuncletOrFuncEnd(SMLoc Loc = SMLoc());
-  virtual void EmitWinCFIStartChained(SMLoc Loc = SMLoc());
-  virtual void EmitWinCFIEndChained(SMLoc Loc = SMLoc());
-  virtual void EmitWinCFIPushReg(MCRegister Register, SMLoc Loc = SMLoc());
-  virtual void EmitWinCFISetFrame(MCRegister Register, unsigned Offset,
+  virtual void emitWinCFIFuncletOrFuncEnd(SMLoc Loc = SMLoc());
+  virtual void emitWinCFIStartChained(SMLoc Loc = SMLoc());
+  virtual void emitWinCFIEndChained(SMLoc Loc = SMLoc());
+  virtual void emitWinCFIPushReg(MCRegister Register, SMLoc Loc = SMLoc());
+  virtual void emitWinCFISetFrame(MCRegister Register, unsigned Offset,
                                   SMLoc Loc = SMLoc());
-  virtual void EmitWinCFIAllocStack(unsigned Size, SMLoc Loc = SMLoc());
-  virtual void EmitWinCFISaveReg(MCRegister Register, unsigned Offset,
+  virtual void emitWinCFIAllocStack(unsigned Size, SMLoc Loc = SMLoc());
+  virtual void emitWinCFISaveReg(MCRegister Register, unsigned Offset,
                                  SMLoc Loc = SMLoc());
-  virtual void EmitWinCFISaveXMM(MCRegister Register, unsigned Offset,
+  virtual void emitWinCFISaveXMM(MCRegister Register, unsigned Offset,
                                  SMLoc Loc = SMLoc());
-  virtual void EmitWinCFIPushFrame(bool Code, SMLoc Loc = SMLoc());
-  virtual void EmitWinCFIEndProlog(SMLoc Loc = SMLoc());
-  virtual void EmitWinEHHandler(const MCSymbol *Sym, bool Unwind, bool Except,
+  virtual void emitWinCFIPushFrame(bool Code, SMLoc Loc = SMLoc());
+  virtual void emitWinCFIEndProlog(SMLoc Loc = SMLoc());
+  virtual void emitWinEHHandler(const MCSymbol *Sym, bool Unwind, bool Except,
                                 SMLoc Loc = SMLoc());
-  virtual void EmitWinEHHandlerData(SMLoc Loc = SMLoc());
+  virtual void emitWinEHHandlerData(SMLoc Loc = SMLoc());
 
   virtual void emitCGProfileEntry(const MCSymbolRefExpr *From,
                                   const MCSymbolRefExpr *To, uint64_t Count);
@@ -1107,7 +1122,7 @@ public:
   /// Streamer specific finalization.
   virtual void finishImpl();
   /// Finish emission of machine code.
-  void Finish(SMLoc EndLoc = SMLoc());
+  void finish(SMLoc EndLoc = SMLoc());
 
   virtual bool mayHaveInstructions(MCSection &Sec) const { return true; }
 

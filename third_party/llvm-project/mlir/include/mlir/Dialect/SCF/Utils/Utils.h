@@ -13,13 +13,13 @@
 #ifndef MLIR_DIALECT_SCF_UTILS_UTILS_H_
 #define MLIR_DIALECT_SCF_UTILS_UTILS_H_
 
+#include "mlir/Dialect/SCF/SCF.h"
 #include "mlir/IR/PatternMatch.h"
 #include "mlir/Support/LLVM.h"
 #include "mlir/Support/LogicalResult.h"
 #include "llvm/ADT/STLExtras.h"
 
 namespace mlir {
-class FuncOp;
 class Location;
 class Operation;
 class OpBuilder;
@@ -28,35 +28,48 @@ class RewriterBase;
 class ValueRange;
 class Value;
 
-namespace scf {
-class IfOp;
-class ForOp;
-class ParallelOp;
-} // namespace scf
+namespace func {
+class CallOp;
+class FuncOp;
+} // namespace func
 
-/// Create a clone of `loop` with `newIterOperands` added as new initialization
-/// values and `newYieldedValues` added as new yielded values. The returned
-/// ForOp has `newYieldedValues.size()` new result values.  The `loop` induction
-/// variable and `newIterOperands` are remapped to the new induction variable
-/// and the new entry block arguments respectively.
-///
-/// Additionally, if `replaceLoopResults` is true, all uses of
-/// `loop.getResults()` are replaced with the first `loop.getNumResults()`
-/// return values respectively. This additional replacement is provided as a
-/// convenience to update the consumers of `loop`, in the case e.g. when `loop`
-/// is soon to be deleted.
-///
-/// Return the cloned loop.
-///
-/// This convenience function is useful to factorize common mechanisms related
-/// to hoisting roundtrips to memory into yields. It does not perform any
-/// legality checks.
-///
-/// Prerequisite: `newYieldedValues.size() == newYieldedValues.size()`.
-scf::ForOp cloneWithNewYields(OpBuilder &b, scf::ForOp loop,
-                              ValueRange newIterOperands,
-                              ValueRange newYieldedValues,
-                              bool replaceLoopResults = true);
+/// Replace the `loop` with `newIterOperands` added as new initialization
+/// values. `newYieldValuesFn` is a callback that can be used to specify
+/// the additional values to be yielded by the loop. The number of
+/// values returned by the callback should match the number of new
+/// initialization values. This function
+/// - Moves (i.e. doesnt clone) operations from the `loop` to the newly created
+///   loop
+/// - Replaces the uses of `loop` with the new loop.
+/// - `loop` isnt erased, but is left in a "no-op" state where the body of the
+///   loop just yields the basic block arguments that correspond to the
+///   initialization values of a loop. The loop is dead after this method.
+/// - All uses of the `newIterOperands` within the generated new loop
+///   are replaced with the corresponding `BlockArgument` in the loop body.
+using NewYieldValueFn = std::function<SmallVector<Value>(
+    OpBuilder &b, Location loc, ArrayRef<BlockArgument> newBBArgs)>;
+scf::ForOp replaceLoopWithNewYields(OpBuilder &builder, scf::ForOp loop,
+                                    ValueRange newIterOperands,
+                                    const NewYieldValueFn &newYieldValuesFn);
+
+/// Update a perfectly nested loop nest to yield new values from the innermost
+/// loop and propagating it up through the loop nest. This function
+/// - Expects `loopNest` to be a perfectly nested loop with outer most loop
+///   first and innermost loop last.
+/// - `newIterOperands` are the initialization values to be used for the
+///    outermost loop
+/// - `newYielValueFn` is the callback that generates the new values to be
+///   yielded from within the innermost loop.
+/// - The original loops are not erased,  but are left in a "no-op" state where
+///   the body of the loop just yields the basic block arguments that correspond
+///   to the initialization values of a loop. The original loops are dead after
+///   this method.
+/// - All uses of the `newIterOperands` within the generated new loop
+///   are replaced with the corresponding `BlockArgument` in the loop body.
+SmallVector<scf::ForOp>
+replaceLoopNestWithNewYields(OpBuilder &builder, ArrayRef<scf::ForOp> loopNest,
+                             ValueRange newIterOperands,
+                             NewYieldValueFn newYieldValueFn);
 
 /// Outline a region with a single block into a new FuncOp.
 /// Assumes the FuncOp result types is the type of the yielded operands of the
@@ -65,11 +78,13 @@ scf::ForOp cloneWithNewYields(OpBuilder &b, scf::ForOp loop,
 /// `outlinedFuncBody` to alloc simple canonicalizations.
 /// Creates a new FuncOp and thus cannot be used in a FuncOp pass.
 /// The client is responsible for providing a unique `funcName` that will not
-/// collide with another FuncOp name.
+/// collide with another FuncOp name.  If `callOp` is provided, it will be set
+/// to point to the operation that calls the outlined function.
 // TODO: support more than single-block regions.
 // TODO: more flexible constant handling.
-FailureOr<FuncOp> outlineSingleBlockRegion(RewriterBase &rewriter, Location loc,
-                                           Region &region, StringRef funcName);
+FailureOr<func::FuncOp>
+outlineSingleBlockRegion(RewriterBase &rewriter, Location loc, Region &region,
+                         StringRef funcName, func::CallOp *callOp = nullptr);
 
 /// Outline the then and/or else regions of `ifOp` as follows:
 ///  - if `thenFn` is not null, `thenFnName` must be specified and the `then`
@@ -79,8 +94,8 @@ FailureOr<FuncOp> outlineSingleBlockRegion(RewriterBase &rewriter, Location loc,
 /// Creates new FuncOps and thus cannot be used in a FuncOp pass.
 /// The client is responsible for providing a unique `thenFnName`/`elseFnName`
 /// that will not collide with another FuncOp name.
-LogicalResult outlineIfOp(RewriterBase &b, scf::IfOp ifOp, FuncOp *thenFn,
-                          StringRef thenFnName, FuncOp *elseFn,
+LogicalResult outlineIfOp(RewriterBase &b, scf::IfOp ifOp, func::FuncOp *thenFn,
+                          StringRef thenFnName, func::FuncOp *elseFn,
                           StringRef elseFnName);
 
 /// Get a list of innermost parallel loops contained in `rootOp`. Innermost

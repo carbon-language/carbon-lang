@@ -7,11 +7,11 @@
 module attributes {
   gpu.container_module,
   spv.target_env = #spv.target_env<
-    #spv.vce<v1.0, [Shader], [SPV_KHR_storage_buffer_storage_class]>, {}>
+    #spv.vce<v1.0, [Shader], [SPV_KHR_storage_buffer_storage_class]>, #spv.resource_limits<>>
 } {
   gpu.module @kernels {
     gpu.func @kernel_add(%arg0 : memref<16384xf32>, %arg1 : memref<16384xf32>, %arg2 : memref<16384xf32>)
-      kernel attributes { spv.entry_point_abi = {local_size = dense<[128, 1, 1]>: vector<3xi32> }} {
+      kernel attributes { spv.entry_point_abi = #spv.entry_point_abi<local_size = dense<[128, 1, 1]>: vector<3xi32>>} {
       %bid = gpu.block_id x
       %tid = gpu.thread_id x
       %cst = arith.constant 128 : index
@@ -25,7 +25,7 @@ module attributes {
     }
   }
 
-  func @main() {
+  func.func @main() {
     %arg0 = memref.alloc() : memref<16384xf32>
     %arg1 = memref.alloc() : memref<16384xf32>
     %arg2 = memref.alloc() : memref<16384xf32>
@@ -50,7 +50,7 @@ module attributes {
     %arg6 = memref.cast %arg5 : memref<?xf32> to memref<*xf32>
     return
   }
-  func private @fillResource1DFloat(%0 : memref<?xf32>, %1 : f32)
-  func private @print_memref_f32(%ptr : memref<*xf32>)
+  func.func private @fillResource1DFloat(%0 : memref<?xf32>, %1 : f32)
+  func.func private @printMemrefF32(%ptr : memref<*xf32>)
 }
 

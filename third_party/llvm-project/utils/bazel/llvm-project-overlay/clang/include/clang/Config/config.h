@@ -23,16 +23,28 @@
 #define BUG_REPORT_URL "https://github.com/llvm/llvm-project/issues/"
 
 /* Default to -fPIE and -pie on Linux. */
-#define CLANG_DEFAULT_PIE_ON_LINUX 0
+#define CLANG_DEFAULT_PIE_ON_LINUX 1
 
 /* Default linker to use. */
 #define CLANG_DEFAULT_LINKER ""
 
 /* Default C/ObjC standard to use. */
 /* #undef CLANG_DEFAULT_STD_C */
+/* Always #define something so that missing the config.h #include at use sites
+ * becomes a compile error.
+ */
+#ifndef CLANG_DEFAULT_STD_C
+#define CLANG_DEFAULT_STD_C LangStandard::lang_unspecified
+#endif
 
 /* Default C++/ObjC++ standard to use. */
 /* #undef CLANG_DEFAULT_STD_CXX */
+/* Always #define something so that missing the config.h #include at use sites
+ * becomes a compile error.
+ */
+#ifndef CLANG_DEFAULT_STD_CXX
+#define CLANG_DEFAULT_STD_CXX LangStandard::lang_unspecified
+#endif
 
 /* Default C++ stdlib to use. */
 #define CLANG_DEFAULT_CXX_STDLIB ""
@@ -81,7 +93,7 @@
 /* CLANG_HAVE_RLIMITS defined conditionally below */
 
 /* The LLVM product name and version */
-#define BACKEND_PACKAGE_STRING "LLVM 12.0.0git"
+#define BACKEND_PACKAGE_STRING "LLVM 15.0.0git"
 
 /* Linker version detected at compile time. */
 /* #undef HOST_LINK_VERSION */
@@ -105,6 +117,9 @@
 
 /* Spawn a new process clang.exe for the CC1 tool invocation, when necessary */
 #define CLANG_SPAWN_CC1 0
+
+/* Whether to enable opaque pointers by default */
+#define CLANG_ENABLE_OPAQUE_POINTERS_INTERNAL 1
 
 /* Directly provide definitions here behind platform preprocessor definitions.
  * The preprocessor conditions are sufficient to handle all of the configuration

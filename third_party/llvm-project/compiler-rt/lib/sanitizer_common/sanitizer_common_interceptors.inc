@@ -132,14 +132,84 @@ extern const short *_toupper_tab_;
 extern const short *_tolower_tab_;
 #endif
 
+#if SANITIZER_MUSL && \
+  (defined(__i386__) || defined(__arm__) || SANITIZER_MIPS32 || SANITIZER_PPC32)
+// musl 1.2.0 on existing 32-bit architectures uses new symbol names for the
+// time-related functions that take 64-bit time_t values.  See
+// https://musl.libc.org/time64.html
+#define adjtime __adjtime64
+#define adjtimex __adjtimex_time64
+#define aio_suspend __aio_suspend_time64
+#define clock_adjtime __clock_adjtime64
+#define clock_getres __clock_getres_time64
+#define clock_gettime __clock_gettime64
+#define clock_nanosleep __clock_nanosleep_time64
+#define clock_settime __clock_settime64
+#define cnd_timedwait __cnd_timedwait_time64
+#define ctime __ctime64
+#define ctime_r __ctime64_r
+#define difftime __difftime64
+#define dlsym __dlsym_time64
+#define fstatat __fstatat_time64
+#define fstat __fstat_time64
+#define ftime __ftime64
+#define futimens __futimens_time64
+#define futimesat __futimesat_time64
+#define futimes __futimes_time64
+#define getitimer __getitimer_time64
+#define getrusage __getrusage_time64
+#define gettimeofday __gettimeofday_time64
+#define gmtime __gmtime64
+#define gmtime_r __gmtime64_r
+#define localtime __localtime64
+#define localtime_r __localtime64_r
+#define lstat __lstat_time64
+#define lutimes __lutimes_time64
+#define mktime __mktime64
+#define mq_timedreceive __mq_timedreceive_time64
+#define mq_timedsend __mq_timedsend_time64
+#define mtx_timedlock __mtx_timedlock_time64
+#define nanosleep __nanosleep_time64
+#define ppoll __ppoll_time64
+#define pselect __pselect_time64
+#define pthread_cond_timedwait __pthread_cond_timedwait_time64
+#define pthread_mutex_timedlock __pthread_mutex_timedlock_time64
+#define pthread_rwlock_timedrdlock __pthread_rwlock_timedrdlock_time64
+#define pthread_rwlock_timedwrlock __pthread_rwlock_timedwrlock_time64
+#define pthread_timedjoin_np __pthread_timedjoin_np_time64
+#define recvmmsg __recvmmsg_time64
+#define sched_rr_get_interval __sched_rr_get_interval_time64
+#define select __select_time64
+#define semtimedop __semtimedop_time64
+#define sem_timedwait __sem_timedwait_time64
+#define setitimer __setitimer_time64
+#define settimeofday __settimeofday_time64
+#define sigtimedwait __sigtimedwait_time64
+#define stat __stat_time64
+#define stime __stime64
+#define thrd_sleep __thrd_sleep_time64
+#define timegm __timegm_time64
+#define timerfd_gettime __timerfd_gettime64
+#define timerfd_settime __timerfd_settime64
+#define timer_gettime __timer_gettime64
+#define timer_settime __timer_settime64
+#define timespec_get __timespec_get_time64
+#define time __time64
+#define utimensat __utimensat_time64
+#define utimes __utimes_time64
+#define utime __utime64
+#define wait3 __wait3_time64
+#define wait4 __wait4_time64
+#endif
+
 // Platform-specific options.
-#if SANITIZER_MAC
+#if SANITIZER_APPLE
 #define PLATFORM_HAS_DIFFERENT_MEMCPY_AND_MEMMOVE 0
 #elif SANITIZER_WINDOWS64
 #define PLATFORM_HAS_DIFFERENT_MEMCPY_AND_MEMMOVE 0
 #else
 #define PLATFORM_HAS_DIFFERENT_MEMCPY_AND_MEMMOVE 1
-#endif  // SANITIZER_MAC
+#endif  // SANITIZER_APPLE
 
 #ifndef COMMON_INTERCEPTOR_INITIALIZE_RANGE
 #define COMMON_INTERCEPTOR_INITIALIZE_RANGE(p, size) {}
@@ -315,9 +385,11 @@ extern const short *_tolower_tab_;
   if (common_flags()->intercept_strndup) {                                    \
     COMMON_INTERCEPTOR_READ_STRING(ctx, s, Min(size, copy_length + 1));       \
   }                                                                           \
-  COMMON_INTERCEPTOR_COPY_STRING(ctx, new_mem, s, copy_length);               \
-  internal_memcpy(new_mem, s, copy_length);                                   \
-  new_mem[copy_length] = '\0';                                                \
+  if (new_mem) {                                                              \
+    COMMON_INTERCEPTOR_COPY_STRING(ctx, new_mem, s, copy_length);             \
+    internal_memcpy(new_mem, s, copy_length);                                 \
+    new_mem[copy_length] = '\0';                                              \
+  }                                                                           \
   return new_mem;
 #endif
 
@@ -1264,7 +1336,7 @@ INTERCEPTOR_WITH_SUFFIX(int, fputs, char *s, void *file) {
   // libc file streams can call user-supplied functions, see fopencookie.
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, fputs, s, file);
-  if (!SANITIZER_MAC || s) {  // `fputs(NULL, file)` is supported on Darwin.
+  if (!SANITIZER_APPLE || s) {  // `fputs(NULL, file)` is supported on Darwin.
     COMMON_INTERCEPTOR_READ_RANGE(ctx, s, internal_strlen(s) + 1);
   }
   return REAL(fputs)(s, file);
@@ -1279,7 +1351,7 @@ INTERCEPTOR(int, puts, char *s) {
   // libc file streams can call user-supplied functions, see fopencookie.
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, puts, s);
-  if (!SANITIZER_MAC || s) {  // `puts(NULL)` is supported on Darwin.
+  if (!SANITIZER_APPLE || s) {  // `puts(NULL)` is supported on Darwin.
     COMMON_INTERCEPTOR_READ_RANGE(ctx, s, internal_strlen(s) + 1);
   }
   return REAL(puts)(s);
@@ -1295,12 +1367,21 @@ INTERCEPTOR(int, prctl, int option, unsigned long arg2, unsigned long arg3,
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, prctl, option, arg2, arg3, arg4, arg5);
   static const int PR_SET_NAME = 15;
+  static const int PR_SET_VMA = 0x53564d41;
+  static const int PR_SCHED_CORE = 62;
+  static const int PR_SCHED_CORE_GET = 0;
+  if (option == PR_SET_VMA && arg2 == 0UL) {
+    char *name = (char *)arg5;
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, name, internal_strlen(name) + 1);
+  }
   int res = REAL(prctl(option, arg2, arg3, arg4, arg5));
   if (option == PR_SET_NAME) {
     char buff[16];
     internal_strncpy(buff, (char *)arg2, 15);
     buff[15] = 0;
     COMMON_INTERCEPTOR_SET_THREAD_NAME(ctx, buff);
+  } else if (res != -1 && option == PR_SCHED_CORE && arg2 == PR_SCHED_CORE_GET) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, (u64*)(arg5), sizeof(u64));
   }
   return res;
 }
@@ -1878,7 +1959,7 @@ UNUSED static void unpoison_passwd(void *ctx, __sanitizer_passwd *pwd) {
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, pwd->pw_gecos,
                                      internal_strlen(pwd->pw_gecos) + 1);
 #endif
-#if SANITIZER_MAC || SANITIZER_FREEBSD || SANITIZER_NETBSD
+#if SANITIZER_APPLE || SANITIZER_FREEBSD || SANITIZER_NETBSD
     if (pwd->pw_class)
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, pwd->pw_class,
                                      internal_strlen(pwd->pw_class) + 1);
@@ -2421,6 +2502,52 @@ INTERCEPTOR(int, glob64, const char *pattern, int flags,
 #else  // SANITIZER_INTERCEPT_GLOB64
 #define INIT_GLOB64
 #endif  // SANITIZER_INTERCEPT_GLOB64
+
+#if SANITIZER_INTERCEPT___B64_TO
+INTERCEPTOR(int, __b64_ntop, unsigned char const *src, SIZE_T srclength,
+            char *target, SIZE_T targsize) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, __b64_ntop, src, srclength, target, targsize);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, src, srclength);
+  int res = REAL(__b64_ntop)(src, srclength, target, targsize);
+  if (res >= 0)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, target, res + 1);
+  return res;
+}
+INTERCEPTOR(int, __b64_pton, char const *src, char *target, SIZE_T targsize) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, __b64_pton, src, target, targsize);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, src, internal_strlen(src) + 1);
+  int res = REAL(__b64_pton)(src, target, targsize);
+  if (res >= 0)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, target, res);
+  return res;
+}
+#define INIT___B64_TO                      \
+    COMMON_INTERCEPT_FUNCTION(__b64_ntop); \
+    COMMON_INTERCEPT_FUNCTION(__b64_pton);
+#else  // SANITIZER_INTERCEPT___B64_TO
+#define INIT___B64_TO
+#endif  // SANITIZER_INTERCEPT___B64_TO
+
+#if SANITIZER_INTERCEPT___DN_EXPAND
+  INTERCEPTOR(int, __dn_expand, unsigned char const *base,
+              unsigned char const *end, unsigned char const *src, char *dest,
+              int space) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, __dn_expand, base, end, src, dest, space);
+  // TODO: add read check if __dn_comp intercept added
+  int res = REAL(__dn_expand)(base, end, src, dest, space);
+  if (res >= 0)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dest, res + 1);
+  return res;
+}
+#define INIT___DN_EXPAND                    \
+    COMMON_INTERCEPT_FUNCTION(__dn_expand);
+#else  // SANITIZER_INTERCEPT___DN_EXPAND
+#define INIT___DN_EXPAND
+#endif  // SANITIZER_INTERCEPT___DN_EXPAND
+
 
 #if SANITIZER_INTERCEPT_POSIX_SPAWN
 
@@ -3839,7 +3966,7 @@ INTERCEPTOR(char *, strerror, int errnum) {
 //  * GNU version returns message pointer, which points to either buf or some
 //    static storage.
 #if ((_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && !_GNU_SOURCE) || \
-    SANITIZER_MAC || SANITIZER_ANDROID || SANITIZER_NETBSD ||                 \
+    SANITIZER_APPLE || SANITIZER_ANDROID || SANITIZER_NETBSD ||                 \
     SANITIZER_FREEBSD
 // POSIX version. Spec is not clear on whether buf is NULL-terminated.
 // At least on OSX, buf contents are valid even when the call fails.
@@ -3872,7 +3999,7 @@ INTERCEPTOR(char *, strerror_r, int errnum, char *buf, SIZE_T buflen) {
   return res;
 }
 #endif //(_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && !_GNU_SOURCE ||
-       //SANITIZER_MAC
+       //SANITIZER_APPLE
 #define INIT_STRERROR_R COMMON_INTERCEPT_FUNCTION(strerror_r);
 #else
 #define INIT_STRERROR_R
@@ -4839,6 +4966,27 @@ INTERCEPTOR(int, pthread_attr_getaffinity_np, void *attr, SIZE_T cpusetsize,
   COMMON_INTERCEPT_FUNCTION(pthread_attr_getaffinity_np);
 #else
 #define INIT_PTHREAD_ATTR_GETAFFINITY_NP
+#endif
+
+#if SANITIZER_INTERCEPT_PTHREAD_GETAFFINITY_NP
+INTERCEPTOR(int, pthread_getaffinity_np, void *attr, SIZE_T cpusetsize,
+            void *cpuset) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, pthread_getaffinity_np, attr, cpusetsize,
+                           cpuset);
+  // FIXME: under ASan the call below may write to freed memory and corrupt
+  // its metadata. See
+  // https://github.com/google/sanitizers/issues/321.
+  int res = REAL(pthread_getaffinity_np)(attr, cpusetsize, cpuset);
+  if (!res && cpusetsize && cpuset)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, cpuset, cpusetsize);
+  return res;
+}
+
+#define INIT_PTHREAD_GETAFFINITY_NP \
+  COMMON_INTERCEPT_FUNCTION(pthread_getaffinity_np);
+#else
+#define INIT_PTHREAD_GETAFFINITY_NP
 #endif
 
 #if SANITIZER_INTERCEPT_PTHREAD_MUTEXATTR_GETPSHARED
@@ -6871,6 +7019,23 @@ INTERCEPTOR(int, stat, const char *path, void *buf) {
 #define INIT_STAT
 #endif
 
+#if SANITIZER_INTERCEPT_STAT64
+INTERCEPTOR(int, stat64, const char *path, void *buf) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, stat64, path, buf);
+  if (common_flags()->intercept_stat)
+    COMMON_INTERCEPTOR_READ_STRING(ctx, path, 0);
+  int res = REAL(stat64)(path, buf);
+  if (!res)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, __sanitizer::struct_stat64_sz);
+  return res;
+}
+#define INIT_STAT64 COMMON_INTERCEPT_FUNCTION(stat64)
+#else
+#define INIT_STAT64
+#endif
+
+
 #if SANITIZER_INTERCEPT_LSTAT
 INTERCEPTOR(int, lstat, const char *path, void *buf) {
   void *ctx;
@@ -6885,6 +7050,22 @@ INTERCEPTOR(int, lstat, const char *path, void *buf) {
 #define INIT_LSTAT COMMON_INTERCEPT_FUNCTION(lstat)
 #else
 #define INIT_LSTAT
+#endif
+
+#if SANITIZER_INTERCEPT_STAT64
+INTERCEPTOR(int, lstat64, const char *path, void *buf) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, lstat64, path, buf);
+  if (common_flags()->intercept_stat)
+    COMMON_INTERCEPTOR_READ_STRING(ctx, path, 0);
+  int res = REAL(lstat64)(path, buf);
+  if (!res)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, __sanitizer::struct_stat64_sz);
+  return res;
+}
+#define INIT_LSTAT64 COMMON_INTERCEPT_FUNCTION(lstat64)
+#else
+#define INIT_LSTAT64
 #endif
 
 #if SANITIZER_INTERCEPT___XSTAT
@@ -7904,7 +8085,7 @@ INTERCEPTOR(int, regcomp, void *preg, const char *pattern, int cflags) {
   if (pattern)
     COMMON_INTERCEPTOR_READ_RANGE(ctx, pattern, internal_strlen(pattern) + 1);
   int res = REAL(regcomp)(preg, pattern, cflags);
-  if (!res)
+  if (preg)
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, preg, struct_regex_sz);
   return res;
 }
@@ -10173,6 +10354,42 @@ INTERCEPTOR(int, sigaltstack, void *ss, void *oss) {
 #define INIT_SIGALTSTACK
 #endif
 
+#if SANITIZER_INTERCEPT_PROCCTL
+INTERCEPTOR(int, procctl, int idtype, u64 id, int cmd, uptr data) {
+   void *ctx;
+   COMMON_INTERCEPTOR_ENTER(ctx, procctl, idtype, id, cmd, data);
+   static const int PROC_REAP_ACQUIRE = 2;
+   static const int PROC_REAP_RELEASE = 3;
+   static const int PROC_REAP_STATUS = 4;
+   static const int PROC_REAP_GETPIDS = 5;
+   static const int PROC_REAP_KILL = 6;
+   if (cmd < PROC_REAP_ACQUIRE || cmd > PROC_REAP_KILL) {
+     COMMON_INTERCEPTOR_READ_RANGE(ctx, (void *)data, sizeof(int));
+   } else {
+     // reap_acquire/reap_release bears no arguments.
+     if (cmd > PROC_REAP_RELEASE) {
+       unsigned int reapsz;
+       switch (cmd) {
+       case PROC_REAP_STATUS:
+         reapsz = struct_procctl_reaper_status_sz;
+         break;
+       case PROC_REAP_GETPIDS:
+         reapsz = struct_procctl_reaper_pids_sz;
+         break;
+       case PROC_REAP_KILL:
+         reapsz = struct_procctl_reaper_kill_sz;
+         break;
+       }
+       COMMON_INTERCEPTOR_READ_RANGE(ctx, (void *)data, reapsz);
+     }
+   }
+   return REAL(procctl)(idtype, id, cmd, data);
+}
+#define INIT_PROCCTL COMMON_INTERCEPT_FUNCTION(procctl)
+#else
+#define INIT_PROCCTL
+#endif
+
 #if SANITIZER_INTERCEPT_UNAME
 INTERCEPTOR(int, uname, struct utsname *utsname) {
 #if SANITIZER_LINUX
@@ -10289,6 +10506,8 @@ static void InitializeCommonInterceptors() {
   INIT_TIME;
   INIT_GLOB;
   INIT_GLOB64;
+  INIT___B64_TO;
+  INIT___DN_EXPAND;
   INIT_POSIX_SPAWN;
   INIT_WAIT;
   INIT_WAIT4;
@@ -10378,6 +10597,7 @@ static void InitializeCommonInterceptors() {
   INIT_PTHREAD_ATTR_GET_SCHED;
   INIT_PTHREAD_ATTR_GETINHERITSCHED;
   INIT_PTHREAD_ATTR_GETAFFINITY_NP;
+  INIT_PTHREAD_GETAFFINITY_NP;
   INIT_PTHREAD_MUTEXATTR_GETPSHARED;
   INIT_PTHREAD_MUTEXATTR_GETTYPE;
   INIT_PTHREAD_MUTEXATTR_GETPROTOCOL;
@@ -10446,8 +10666,10 @@ static void InitializeCommonInterceptors() {
   INIT_RECV_RECVFROM;
   INIT_SEND_SENDTO;
   INIT_STAT;
+  INIT_STAT64;
   INIT_EVENTFD_READ_WRITE;
   INIT_LSTAT;
+  INIT_LSTAT64;
   INIT___XSTAT;
   INIT___XSTAT64;
   INIT___LXSTAT;
@@ -10527,6 +10749,7 @@ static void InitializeCommonInterceptors() {
   INIT_QSORT_R;
   INIT_BSEARCH;
   INIT_SIGALTSTACK;
+  INIT_PROCCTL
   INIT_UNAME;
   INIT___XUNAME;
 

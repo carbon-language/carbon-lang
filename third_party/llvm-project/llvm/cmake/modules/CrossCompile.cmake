@@ -26,7 +26,7 @@ function(llvm_create_cross_target project_name target_name toolchain buildtype)
 
   # project specific version of the flags up above
   set(CROSS_TOOLCHAIN_FLAGS_${project_name}_${target_name} ""
-    CACHE STRING "Toolchain configuration for ${Pproject_name}_${target_name}")
+    CACHE STRING "Toolchain configuration for ${project_name}_${target_name}")
 
   if (buildtype)
     set(build_type_flags "-DCMAKE_BUILD_TYPE=${buildtype}")
@@ -77,7 +77,7 @@ function(llvm_create_cross_target project_name target_name toolchain buildtype)
         -DLLVM_TARGET_IS_CROSSCOMPILE_HOST=TRUE
         -DLLVM_TARGETS_TO_BUILD="${targets_to_build_arg}"
         -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD="${experimental_targets_to_build_arg}"
-        -DLLVM_DEFAULT_TARGET_TRIPLE="${TARGET_TRIPLE}"
+        -DLLVM_DEFAULT_TARGET_TRIPLE="${LLVM_TARGET_TRIPLE}"
         -DLLVM_TARGET_ARCH="${LLVM_TARGET_ARCH}"
         -DLLVM_ENABLE_PROJECTS="${llvm_enable_projects_arg}"
         -DLLVM_EXTERNAL_PROJECTS="${llvm_external_projects_arg}"

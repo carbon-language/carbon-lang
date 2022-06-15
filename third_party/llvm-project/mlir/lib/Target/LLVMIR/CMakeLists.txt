@@ -27,9 +27,10 @@ add_mlir_translation_library(MLIRTargetLLVMIRExport
   TransformUtils
 
   LINK_LIBS PUBLIC
-  MLIRLLVMIR
+  MLIRDLTIDialect
+  MLIRLLVMDialect
   MLIRLLVMIRTransforms
-  MLIRTranslation
+  MLIRTranslateLib
   )
 
 add_mlir_translation_library(MLIRToLLVMIRTranslationRegistration
@@ -59,6 +60,7 @@ add_mlir_translation_library(MLIRTargetLLVMIRImport
   IRReader
 
   LINK_LIBS PUBLIC
-  MLIRLLVMIR
-  MLIRTranslation
+  MLIRDLTIDialect
+  MLIRLLVMDialect
+  MLIRTranslateLib
   )

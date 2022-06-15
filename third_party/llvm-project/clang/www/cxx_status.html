@@ -938,7 +938,7 @@ code. This issue is expected to be rectified soon.
       </tr>
       <tr> <!-- from Belfast -->
         <td><a href="https://wg21.link/p1972r0">P1972R0</a></td>
-        <td rowspan="4" class="none" align="center">No</td>
+        <td rowspan="4" class="full" align="center">Clang 10</td>
       </tr>
       <tr>
         <td><a href="https://wg21.link/p1980r0">P1980R0</a></td>
@@ -1009,12 +1009,12 @@ code. This issue is expected to be rectified soon.
       </tr>
       <tr>
         <td><a href="https://wg21.link/p2085r0">P2085R0</a></td>
-        <td class="unreleased" align="center">Clang 14</td>
+        <td class="full" align="center">Clang 14</td>
       </tr>
     <tr>
       <td>Access checking on specializations</td>
       <td><a href="https://wg21.link/p0692r1">P0692R1</a></td>
-      <td class="unreleased" align="center">Clang 14</td>
+      <td class="full" align="center">Clang 14</td>
     </tr>
     <tr>
       <td>Default constructible and assignable stateless lambdas</td>
@@ -1024,7 +1024,11 @@ code. This issue is expected to be rectified soon.
     <tr>
       <td>Lambdas in unevaluated contexts</td>
       <td><a href="https://wg21.link/p0315r4">P0315R4</a></td>
-      <td class="partial" align="center">Partial</td>
+      <td class="partial" align="center">
+        <details><summary>Partial</summary>
+          temp.deduct/9 is not implemented yet.
+        </details>
+      </td>
     </tr>
     <!-- Jacksonville papers -->
     <tr>
@@ -1124,7 +1128,7 @@ code. This issue is expected to be rectified soon.
     </tr>
       <tr> <!-- from Prague -->
         <td><a href="https://wg21.link/p1937r2">P1937R2</a></td>
-        <td class="unreleased" align="center">Clang 14</td>
+        <td class="full" align="center">Clang 14</td>
       </tr>
     <tr>
       <td><tt>std::is_constant_evaluated</tt></td>
@@ -1172,10 +1176,11 @@ code. This issue is expected to be rectified soon.
       </tr>
       <tr>
         <td><a href="https://wg21.link/p1811r0">P1811R0</a></td>
-        <td rowspan="2" class="none" align="center">No</td>
+        <td class="none" align="center">No</td>
       </tr>
       <tr>
         <td><a href="https://wg21.link/p1703r1">P1703R1</a></td>
+        <td class="none" align="center">Subsumed by P1857</td>
       </tr>
       <tr> <!-- from Belfast -->
         <td><a href="https://wg21.link/p1874r1">P1874R1</a></td>
@@ -1247,7 +1252,7 @@ code. This issue is expected to be rectified soon.
     <tr>
       <td>Permit conversions to arrays of unknown bound</td>
       <td><a href="https://wg21.link/p0388r4">P0388R4</a></td>
-      <td class="unreleased" align="center">Clang 14</td>
+      <td class="full" align="center">Clang 14</td>
     </tr>
     <tr>
       <td><tt>constinit</tt></td>
@@ -1310,7 +1315,7 @@ C++20, informally referred to as C++2b.</p>
     <tr>
       <td><tt>if consteval</tt></td>
       <td><a href="https://wg21.link/P1938R3">P1938R3</a></td>
-      <td class="unreleased" align="center">Clang 14</td>
+      <td class="full" align="center">Clang 14</td>
     </tr>
     <tr>
       <td>Allow duplicate attributes</td>
@@ -1320,7 +1325,7 @@ C++20, informally referred to as C++2b.</p>
     <tr>
       <td>Narrowing contextual conversions to bool</td>
       <td><a href="https://wg21.link/P1401R5">P1401R5</a></td>
-      <td class="unreleased" align="center">Clang 14</td>
+      <td class="full" align="center">Clang 14</td>
     </tr>
     <tr>
       <td>Trimming whitespaces before line splicing</td>
@@ -1335,7 +1340,7 @@ C++20, informally referred to as C++2b.</p>
     <tr>
       <td>C++ identifier syntax using UAX 31</td>
       <td><a href="https://wg21.link/P1949R7">P1949R7</a></td>
-      <td class="unreleased" align="center">Clang 14</td>
+      <td class="full" align="center">Clang 14</td>
     </tr>
     <tr>
       <td>Mixed string literal concatenation</td>
@@ -1361,7 +1366,7 @@ C++20, informally referred to as C++2b.</p>
     <tr>
       <td>Non-literal variables (and labels and gotos) in constexpr functions</td>
       <td><a href="https://wg21.link/P2242R3">P2242R3</a></td>
-      <td class="none" align="center">No</td>
+      <td class="unreleased" align="center">Clang 15</td>
     </tr>
     <tr>
       <td>Character encoding of diagnostic text</td>
@@ -1386,7 +1391,12 @@ C++20, informally referred to as C++2b.</p>
     <tr>
       <td>Extend init-statement to allow alias-declaration</td>
       <td><a href="https://wg21.link/P2360R0">P2360R0</a></td>
-      <td class="unreleased" align="center">Clang 14</td>
+      <td class="full" align="center">Clang 14</td>
+    </tr>
+    <tr>
+      <td>auto(x): decay-copy in the language</td>
+      <td><a href="https://wg21.link/P0849R8">P0849R8</a></td>
+      <td class="unreleased" align="center">Clang 15</td>
     </tr>
     <!-- February 2022 papers -->
     <tr>
@@ -1395,7 +1405,7 @@ C++20, informally referred to as C++2b.</p>
       <td class="full" align="center">Clang 13</td>
     </tr>
     <tr>
-      <td><tt>constexpr</tt> for <tt><cmath</tt> and <tt>cstdlib</tt></td>
+      <td><tt>constexpr</tt> for <tt>&lt;cmath&gt;</tt> and <tt>&lt;cstdlib&gt;</tt></td>
       <td><a href="https://wg21.link/P0533R9">P0533R9</a></td>
       <td class="none" align="center">No</td>
     </tr>

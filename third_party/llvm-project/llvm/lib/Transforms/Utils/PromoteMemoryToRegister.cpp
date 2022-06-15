@@ -20,7 +20,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/InstructionSimplify.h"
@@ -32,7 +31,6 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/DebugInfo.h"
-#include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
@@ -678,7 +676,7 @@ void PromoteMem2Reg::run() {
     A->eraseFromParent();
   }
 
-  // Remove alloca's dbg.declare instrinsics from the function.
+  // Remove alloca's dbg.declare intrinsics from the function.
   for (auto &DbgUsers : AllocaDbgUsers) {
     for (auto *DII : DbgUsers)
       if (DII->isAddressOfVariable() || DII->getExpression()->startsWithDeref())
@@ -704,7 +702,7 @@ void PromoteMem2Reg::run() {
       PHINode *PN = I->second;
 
       // If this PHI node merges one value and/or undefs, get the value.
-      if (Value *V = SimplifyInstruction(PN, SQ)) {
+      if (Value *V = simplifyInstruction(PN, SQ)) {
         PN->replaceAllUsesWith(V);
         PN->eraseFromParent();
         NewPhiNodes.erase(I++);

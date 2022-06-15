@@ -26,7 +26,6 @@
 #include "llvm/IR/ValueHandle.h"
 #include <cassert>
 #include <cstddef>
-#include <cstdint>
 #include <iterator>
 #include <vector>
 
@@ -221,10 +220,6 @@ public:
   // Unfortunately, ilist::size() is linear, so we have to add code to keep
   // track of the list's exact size.
   unsigned size() { return SetSize; }
-
-  /// If this alias set is known to contain a single instruction and *only* a
-  /// single unique instruction, return it.  Otherwise, return nullptr.
-  Instruction* getUniqueInstruction();
 
   void print(raw_ostream &OS) const;
   void dump() const;

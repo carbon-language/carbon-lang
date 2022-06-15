@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "mlir/ExecutionEngine/CRunnerUtils.h"
+#include "mlir/ExecutionEngine/Msan.h"
 
 #ifndef _WIN32
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
@@ -44,13 +45,14 @@ extern "C" void printClose() { fputs(" )", stdout); }
 extern "C" void printComma() { fputs(", ", stdout); }
 extern "C" void printNewline() { fputc('\n', stdout); }
 
-extern "C" MLIR_CRUNNERUTILS_EXPORT void
-memrefCopy(int64_t elemSize, UnrankedMemRefType<char> *srcArg,
-           UnrankedMemRefType<char> *dstArg) {
+extern "C" void memrefCopy(int64_t elemSize, UnrankedMemRefType<char> *srcArg,
+                           UnrankedMemRefType<char> *dstArg) {
   DynamicMemRefType<char> src(*srcArg);
   DynamicMemRefType<char> dst(*dstArg);
 
   int64_t rank = src.rank;
+  MLIR_MSAN_MEMORY_IS_INITIALIZED(src.sizes, rank * sizeof(int64_t));
+
   // Handle empty shapes -> nothing to copy.
   for (int rankp = 0; rankp < rank; ++rankp)
     if (src.sizes[rankp] == 0)
@@ -101,7 +103,7 @@ memrefCopy(int64_t elemSize, UnrankedMemRefType<char> *srcArg,
 }
 
 /// Prints GFLOPS rating.
-extern "C" void print_flops(double flops) {
+extern "C" void printFlops(double flops) {
   fprintf(stderr, "%lf GFLOPS\n", flops / 1.0E9);
 }
 

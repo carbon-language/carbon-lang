@@ -16,6 +16,7 @@
 #include "PassDetail.h"
 #include "mlir/Analysis/CallGraph.h"
 #include "mlir/IR/Threading.h"
+#include "mlir/Interfaces/CallInterfaces.h"
 #include "mlir/Interfaces/SideEffectInterfaces.h"
 #include "mlir/Pass/PassManager.h"
 #include "mlir/Transforms/InliningUtils.h"
@@ -584,14 +585,8 @@ InlinerPass::InlinerPass(std::function<void(OpPassManager &)> defaultPipeline,
     return;
 
   // Update the option for the op specific optimization pipelines.
-  for (auto &it : opPipelines) {
-    std::string pipeline;
-    llvm::raw_string_ostream pipelineOS(pipeline);
-    pipelineOS << it.getKey() << "(";
-    it.second.printAsTextualPipeline(pipelineOS);
-    pipelineOS << ")";
-    opPipelineStrs.addValue(pipeline);
-  }
+  for (auto &it : opPipelines)
+    opPipelineList.addValue(it.second);
   this->opPipelines.emplace_back(std::move(opPipelines));
 }
 
@@ -739,6 +734,7 @@ LogicalResult InlinerPass::initializeOptions(StringRef options) {
     return failure();
 
   // Initialize the default pipeline builder to use the option string.
+  // TODO: Use a generic pass manager for default pipelines, and remove this.
   if (!defaultPipelineStr.empty()) {
     std::string defaultPipelineCopy = defaultPipelineStr;
     defaultPipeline = [=](OpPassManager &pm) {
@@ -750,15 +746,9 @@ LogicalResult InlinerPass::initializeOptions(StringRef options) {
 
   // Initialize the op specific pass pipelines.
   llvm::StringMap<OpPassManager> pipelines;
-  for (StringRef pipeline : opPipelineStrs) {
-    // Skip empty pipelines.
-    if (pipeline.empty())
-      continue;
-    FailureOr<OpPassManager> pm = parsePassPipeline(pipeline);
-    if (failed(pm))
-      return failure();
-    pipelines.try_emplace(pm->getOpName(), std::move(*pm));
-  }
+  for (OpPassManager pipeline : opPipelineList)
+    if (!pipeline.empty())
+      pipelines.try_emplace(pipeline.getOpAnchorName(), pipeline);
   opPipelines.assign({std::move(pipelines)});
 
   return success();

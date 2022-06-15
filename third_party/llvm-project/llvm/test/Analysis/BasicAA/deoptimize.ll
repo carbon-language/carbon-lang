@@ -1,4 +1,4 @@
-; RUN: opt < %s -basic-aa -aa-eval -print-all-alias-modref-info -disable-output 2>&1 | FileCheck %s
+; RUN: opt < %s -aa-pipeline=basic-aa -passes=aa-eval -print-all-alias-modref-info -disable-output 2>&1 | FileCheck %s
 target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-f32:32:32-f64:32:32-v64:32:64-v128:32:128-a0:0:32-n32"
 
 @G1 = external global i32
@@ -9,6 +9,7 @@ declare void @llvm.experimental.deoptimize.void(...)
 declare void @unknown_but_readonly() readonly
 
 define void @test1(i8* %p) {
+  load i8, i8* %p
   call void(...) @llvm.experimental.deoptimize.void() [ "deopt"() ]
   ret void
 
@@ -26,6 +27,8 @@ define i32 @test_memcpy_with_deopt() {
 
   %A = alloca i8
   %B = alloca i8
+  load i8, i8* %A
+  load i8, i8* %B
 
   store i32 2, i32* @G1  ;; Not referenced by semantics of memcpy but still may be read due to "deopt"
 
@@ -43,6 +46,8 @@ define i32 @test_memmove_with_deopt() {
 
   %A = alloca i8
   %B = alloca i8
+  load i8, i8* %A
+  load i8, i8* %B
 
   store i32 2, i32* @G1  ;; Not referenced by semantics of memcpy but still may be read due to "deopt"
 

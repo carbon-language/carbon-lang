@@ -23,16 +23,15 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/BlockFrequencyInfo.h"
 #include "llvm/Analysis/BranchProbabilityInfo.h"
-#include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/ProfileSummaryInfo.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Analysis/VectorUtils.h"
 #include "llvm/CodeGen/Analysis.h"
+#include "llvm/CodeGen/BasicBlockSectionsProfileReader.h"
 #include "llvm/CodeGen/ISDOpcodes.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/TargetLowering.h"
@@ -174,12 +173,11 @@ static cl::opt<bool> DisablePreheaderProtect(
     cl::desc("Disable protection against removing loop preheaders"));
 
 static cl::opt<bool> ProfileGuidedSectionPrefix(
-    "profile-guided-section-prefix", cl::Hidden, cl::init(true), cl::ZeroOrMore,
+    "profile-guided-section-prefix", cl::Hidden, cl::init(true),
     cl::desc("Use profile info to add section prefix for hot/cold functions"));
 
 static cl::opt<bool> ProfileUnknownInSpecialSection(
-    "profile-unknown-in-special-section", cl::Hidden, cl::init(false),
-    cl::ZeroOrMore,
+    "profile-unknown-in-special-section", cl::Hidden,
     cl::desc("In profiling mode like sampleFDO, if a function doesn't have "
              "profile, we cannot tell the function is cold for sure because "
              "it may be a function newly added without ever being sampled. "
@@ -187,6 +185,15 @@ static cl::opt<bool> ProfileUnknownInSpecialSection(
              "functions into a special section, so runtime system can choose "
              "to handle it in a different way than .text section, to save "
              "RAM for example. "));
+
+static cl::opt<bool> BBSectionsGuidedSectionPrefix(
+    "bbsections-guided-section-prefix", cl::Hidden, cl::init(true),
+    cl::desc("Use the basic-block-sections profile to determine the text "
+             "section prefix for hot functions. Functions with "
+             "basic-block-sections profile will be placed in `.text.hot` "
+             "regardless of their FDO profile info. Other functions won't be "
+             "impacted, i.e., their prefixes will be decided by FDO/sampleFDO "
+             "profiles."));
 
 static cl::opt<unsigned> FreqRatioToSkipMerge(
     "cgp-freq-ratio-to-skip-merge", cl::Hidden, cl::init(2),
@@ -274,6 +281,7 @@ class TypePromotionTransaction;
     const TargetLowering *TLI = nullptr;
     const TargetRegisterInfo *TRI;
     const TargetTransformInfo *TTI = nullptr;
+    const BasicBlockSectionsProfileReader *BBSectionsProfileReader = nullptr;
     const TargetLibraryInfo *TLInfo;
     const LoopInfo *LI;
     std::unique_ptr<BlockFrequencyInfo> BFI;
@@ -349,6 +357,7 @@ class TypePromotionTransaction;
       AU.addRequired<TargetPassConfig>();
       AU.addRequired<TargetTransformInfoWrapperPass>();
       AU.addRequired<LoopInfoWrapperPass>();
+      AU.addUsedIfAvailable<BasicBlockSectionsProfileReader>();
     }
 
   private:
@@ -401,6 +410,8 @@ class TypePromotionTransaction;
     bool optimizeFunnelShift(IntrinsicInst *Fsh);
     bool optimizeSelectInst(SelectInst *SI);
     bool optimizeShuffleVectorInst(ShuffleVectorInst *SVI);
+    bool optimizeSwitchType(SwitchInst *SI);
+    bool optimizeSwitchPhiConstants(SwitchInst *SI);
     bool optimizeSwitchInst(SwitchInst *SI);
     bool optimizeExtractElementInst(Instruction *Inst);
     bool dupRetToEnableTailCallOpts(BasicBlock *BB, bool &ModifiedDT);
@@ -442,6 +453,7 @@ char CodeGenPrepare::ID = 0;
 
 INITIALIZE_PASS_BEGIN(CodeGenPrepare, DEBUG_TYPE,
                       "Optimize for code generation", false, false)
+INITIALIZE_PASS_DEPENDENCY(BasicBlockSectionsProfileReader)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ProfileSummaryInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
@@ -473,8 +485,14 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   BPI.reset(new BranchProbabilityInfo(F, *LI));
   BFI.reset(new BlockFrequencyInfo(F, *BPI, *LI));
   PSI = &getAnalysis<ProfileSummaryInfoWrapperPass>().getPSI();
+  BBSectionsProfileReader =
+      getAnalysisIfAvailable<BasicBlockSectionsProfileReader>();
   OptSize = F.hasOptSize();
-  if (ProfileGuidedSectionPrefix) {
+  // Use the basic-block-sections profile to promote hot functions to .text.hot if requested.
+  if (BBSectionsGuidedSectionPrefix && BBSectionsProfileReader &&
+      BBSectionsProfileReader->isFunctionHot(F.getName())) {
+    F.setSectionPrefix("hot");
+  } else if (ProfileGuidedSectionPrefix) {
     // The hot attribute overwrites profile count based hotness while profile
     // counts based hotness overwrite the cold attribute.
     // This is a conservative behabvior.
@@ -524,7 +542,8 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
 
   // Split some critical edges where one of the sources is an indirect branch,
   // to help generate sane code for PHIs involving such edges.
-  EverMadeChange |= SplitIndirectBrCriticalEdges(F);
+  EverMadeChange |=
+      SplitIndirectBrCriticalEdges(F, /*IgnoreBlocksWithoutPHI=*/true);
 
   bool MadeChange = true;
   while (MadeChange) {
@@ -2037,7 +2056,8 @@ static bool despeculateCountZeros(IntrinsicInst *CountZeros,
     return false;
 
   // Bail if the value is never zero.
-  if (llvm::isKnownNonZero(CountZeros->getOperand(0), *DL))
+  Use &Op = CountZeros->getOperandUse(0);
+  if (isKnownNonZero(Op, *DL))
     return false;
 
   // The intrinsic will be sunk behind a compare against zero and branch.
@@ -2058,7 +2078,10 @@ static bool despeculateCountZeros(IntrinsicInst *CountZeros,
   // Replace the unconditional branch that was created by the first split with
   // a compare against zero and a conditional branch.
   Value *Zero = Constant::getNullValue(Ty);
-  Value *Cmp = Builder.CreateICmpEQ(CountZeros->getOperand(0), Zero, "cmpz");
+  // Avoid introducing branch on poison. This also replaces the ctz operand.
+  if (!isGuaranteedNotToBeUndefOrPoison(Op))
+    Op = Builder.CreateFreeze(Op, Op->getName() + ".fr");
+  Value *Cmp = Builder.CreateICmpEQ(Op, Zero, "cmpz");
   Builder.CreateCondBr(Cmp, EndBlock, CallBlock);
   StartBlock->getTerminator()->eraseFromParent();
 
@@ -2101,7 +2124,8 @@ bool CodeGenPrepare::optimizeCallInst(CallInst *CI, bool &ModifiedDT) {
 
   // Align the pointer arguments to this call if the target thinks it's a good
   // idea
-  unsigned MinSize, PrefAlign;
+  unsigned MinSize;
+  Align PrefAlign;
   if (TLI->shouldAlignPointerArgs(CI, MinSize, PrefAlign)) {
     for (auto &Arg : CI->args()) {
       // We want to align both objects whose address is used directly and
@@ -2115,12 +2139,12 @@ bool CodeGenPrepare::optimizeCallInst(CallInst *CI, bool &ModifiedDT) {
                    0);
       Value *Val = Arg->stripAndAccumulateInBoundsConstantOffsets(*DL, Offset);
       uint64_t Offset2 = Offset.getLimitedValue();
-      if ((Offset2 & (PrefAlign-1)) != 0)
+      if (!isAligned(PrefAlign, Offset2))
         continue;
       AllocaInst *AI;
-      if ((AI = dyn_cast<AllocaInst>(Val)) && AI->getAlignment() < PrefAlign &&
+      if ((AI = dyn_cast<AllocaInst>(Val)) && AI->getAlign() < PrefAlign &&
           DL->getTypeAllocSize(AI->getAllocatedType()) >= MinSize + Offset2)
-        AI->setAlignment(Align(PrefAlign));
+        AI->setAlignment(PrefAlign);
       // Global variables can only be aligned if they are defined in this
       // object (i.e. they are uniquely initialized in this object), and
       // over-aligning global variables that have an explicit section is
@@ -2130,7 +2154,7 @@ bool CodeGenPrepare::optimizeCallInst(CallInst *CI, bool &ModifiedDT) {
           GV->getPointerAlignment(*DL) < PrefAlign &&
           DL->getTypeAllocSize(GV->getValueType()) >=
               MinSize + Offset2)
-        GV->setAlignment(MaybeAlign(PrefAlign));
+        GV->setAlignment(PrefAlign);
     }
     // If this is a memcpy (or similar) then we may be able to improve the
     // alignment
@@ -3371,7 +3395,7 @@ public:
       if (!Visited.insert(P).second)
         continue;
       if (auto *PI = dyn_cast<Instruction>(P))
-        if (Value *V = SimplifyInstruction(cast<Instruction>(PI), SQ)) {
+        if (Value *V = simplifyInstruction(cast<Instruction>(PI), SQ)) {
           for (auto *U : PI->users())
             WorkList.push_back(cast<Value>(U));
           Put(PI, V);
@@ -4783,7 +4807,6 @@ bool AddressingModeMatcher::matchAddr(Value *Addr, unsigned Depth) {
       }
 
       // It isn't profitable to do this, roll back.
-      //cerr << "NOT FOLDING: " << *I;
       AddrMode = BackupAddrMode;
       AddrModeInsts.resize(OldSize);
       TPT.rollback(LastKnownGood);
@@ -4836,7 +4859,7 @@ static bool IsOperandAMemoryOperand(CallInst *CI, InlineAsm *IA, Value *OpVal,
     TLI.ComputeConstraintToUse(OpInfo, SDValue());
 
     // If this asm operand is our Value*, and if it isn't an indirect memory
-    // operand, we can't fold it!
+    // operand, we can't fold it!  TODO: Also handle C_Address?
     if (OpInfo.CallOperandVal == OpVal &&
         (OpInfo.ConstraintType != TargetLowering::C_Memory ||
          !OpInfo.isIndirect))
@@ -5323,11 +5346,8 @@ bool CodeGenPrepare::optimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
           // SDAG consecutive load/store merging.
           if (ResultPtr->getType() != I8PtrTy)
             ResultPtr = Builder.CreatePointerCast(ResultPtr, I8PtrTy);
-          ResultPtr =
-              AddrMode.InBounds
-                  ? Builder.CreateInBoundsGEP(I8Ty, ResultPtr, ResultIndex,
-                                              "sunkaddr")
-                  : Builder.CreateGEP(I8Ty, ResultPtr, ResultIndex, "sunkaddr");
+          ResultPtr = Builder.CreateGEP(I8Ty, ResultPtr, ResultIndex,
+                                        "sunkaddr", AddrMode.InBounds);
         }
 
         ResultIndex = V;
@@ -5338,11 +5358,8 @@ bool CodeGenPrepare::optimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
       } else {
         if (ResultPtr->getType() != I8PtrTy)
           ResultPtr = Builder.CreatePointerCast(ResultPtr, I8PtrTy);
-        SunkAddr =
-            AddrMode.InBounds
-                ? Builder.CreateInBoundsGEP(I8Ty, ResultPtr, ResultIndex,
-                                            "sunkaddr")
-                : Builder.CreateGEP(I8Ty, ResultPtr, ResultIndex, "sunkaddr");
+        SunkAddr = Builder.CreateGEP(I8Ty, ResultPtr, ResultIndex, "sunkaddr",
+                                     AddrMode.InBounds);
       }
 
       if (SunkAddr->getType() != Addr->getType())
@@ -5619,6 +5636,7 @@ bool CodeGenPrepare::optimizeInlineAsmInst(CallInst *CS) {
     // Compute the constraint code and ConstraintType to use.
     TLI->ComputeConstraintToUse(OpInfo, SDValue());
 
+    // TODO: Also handle C_Address?
     if (OpInfo.ConstraintType == TargetLowering::C_Memory &&
         OpInfo.isIndirect) {
       Value *OpVal = CS->getArgOperand(ArgNo++);
@@ -6979,12 +6997,12 @@ bool CodeGenPrepare::tryToSinkFreeOperands(Instruction *I) {
   return Changed;
 }
 
-bool CodeGenPrepare::optimizeSwitchInst(SwitchInst *SI) {
+bool CodeGenPrepare::optimizeSwitchType(SwitchInst *SI) {
   Value *Cond = SI->getCondition();
   Type *OldType = Cond->getType();
   LLVMContext &Context = Cond->getContext();
   EVT OldVT = TLI->getValueType(*DL, OldType);
-  MVT RegType = TLI->getRegisterType(Context, OldVT);
+  MVT RegType = TLI->getPreferredSwitchConditionType(Context, OldVT);
   unsigned RegWidth = RegType.getSizeInBits();
 
   if (RegWidth <= cast<IntegerType>(OldType)->getBitWidth())
@@ -7019,7 +7037,7 @@ bool CodeGenPrepare::optimizeSwitchInst(SwitchInst *SI) {
   ExtInst->setDebugLoc(SI->getDebugLoc());
   SI->setCondition(ExtInst);
   for (auto Case : SI->cases()) {
-    APInt NarrowConst = Case.getCaseValue()->getValue();
+    const APInt &NarrowConst = Case.getCaseValue()->getValue();
     APInt WideConst = (ExtType == Instruction::ZExt) ?
                       NarrowConst.zext(RegWidth) : NarrowConst.sext(RegWidth);
     Case.setValue(ConstantInt::get(Context, WideConst));
@@ -7028,6 +7046,89 @@ bool CodeGenPrepare::optimizeSwitchInst(SwitchInst *SI) {
   return true;
 }
 
+bool CodeGenPrepare::optimizeSwitchPhiConstants(SwitchInst *SI) {
+  // The SCCP optimization tends to produce code like this:
+  //   switch(x) { case 42: phi(42, ...) }
+  // Materializing the constant for the phi-argument needs instructions; So we
+  // change the code to:
+  //   switch(x) { case 42: phi(x, ...) }
+
+  Value *Condition = SI->getCondition();
+  // Avoid endless loop in degenerate case.
+  if (isa<ConstantInt>(*Condition))
+    return false;
+
+  bool Changed = false;
+  BasicBlock *SwitchBB = SI->getParent();
+  Type *ConditionType = Condition->getType();
+
+  for (const SwitchInst::CaseHandle &Case : SI->cases()) {
+    ConstantInt *CaseValue = Case.getCaseValue();
+    BasicBlock *CaseBB = Case.getCaseSuccessor();
+    // Set to true if we previously checked that `CaseBB` is only reached by
+    // a single case from this switch.
+    bool CheckedForSinglePred = false;
+    for (PHINode &PHI : CaseBB->phis()) {
+      Type *PHIType = PHI.getType();
+      // If ZExt is free then we can also catch patterns like this:
+      //   switch((i32)x) { case 42: phi((i64)42, ...); }
+      // and replace `(i64)42` with `zext i32 %x to i64`.
+      bool TryZExt =
+          PHIType->isIntegerTy() &&
+          PHIType->getIntegerBitWidth() > ConditionType->getIntegerBitWidth() &&
+          TLI->isZExtFree(ConditionType, PHIType);
+      if (PHIType == ConditionType || TryZExt) {
+        // Set to true to skip this case because of multiple preds.
+        bool SkipCase = false;
+        Value *Replacement = nullptr;
+        for (unsigned I = 0, E = PHI.getNumIncomingValues(); I != E; I++) {
+          Value *PHIValue = PHI.getIncomingValue(I);
+          if (PHIValue != CaseValue) {
+            if (!TryZExt)
+              continue;
+            ConstantInt *PHIValueInt = dyn_cast<ConstantInt>(PHIValue);
+            if (!PHIValueInt ||
+                PHIValueInt->getValue() !=
+                    CaseValue->getValue().zext(PHIType->getIntegerBitWidth()))
+              continue;
+          }
+          if (PHI.getIncomingBlock(I) != SwitchBB)
+            continue;
+          // We cannot optimize if there are multiple case labels jumping to
+          // this block.  This check may get expensive when there are many
+          // case labels so we test for it last.
+          if (!CheckedForSinglePred) {
+            CheckedForSinglePred = true;
+            if (SI->findCaseDest(CaseBB) == nullptr) {
+              SkipCase = true;
+              break;
+            }
+          }
+
+          if (Replacement == nullptr) {
+            if (PHIValue == CaseValue) {
+              Replacement = Condition;
+            } else {
+              IRBuilder<> Builder(SI);
+              Replacement = Builder.CreateZExt(Condition, PHIType);
+            }
+          }
+          PHI.setIncomingValue(I, Replacement);
+          Changed = true;
+        }
+        if (SkipCase)
+          break;
+      }
+    }
+  }
+  return Changed;
+}
+
+bool CodeGenPrepare::optimizeSwitchInst(SwitchInst *SI) {
+  bool Changed = optimizeSwitchType(SI);
+  Changed |= optimizeSwitchPhiConstants(SI);
+  return Changed;
+}
 
 namespace {
 
@@ -7777,7 +7878,7 @@ bool CodeGenPrepare::optimizeInst(Instruction *I, bool &ModifiedDT) {
     // It is possible for very late stage optimizations (such as SimplifyCFG)
     // to introduce PHI nodes too late to be cleaned up.  If we detect such a
     // trivial PHI, go ahead and zap it here.
-    if (Value *V = SimplifyInstruction(P, {*DL, TLInfo})) {
+    if (Value *V = simplifyInstruction(P, {*DL, TLInfo})) {
       LargeOffsetGEPMap.erase(P);
       P->replaceAllUsesWith(V);
       P->eraseFromParent();

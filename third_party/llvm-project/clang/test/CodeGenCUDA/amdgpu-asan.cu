@@ -23,7 +23,7 @@
 // REQUIRES: amdgpu-registered-target
 
 // ASAN-DAG: define weak void @__amdgpu_device_library_preserve_asan_functions()
-// ASAN-DAG: @__amdgpu_device_library_preserve_asan_functions_ptr = weak addrspace(1) constant void ()* @__amdgpu_device_library_preserve_asan_functions
+// ASAN-DAG: @__amdgpu_device_library_preserve_asan_functions_ptr = weak addrspace(1) constant ptr @__amdgpu_device_library_preserve_asan_functions
 // ASAN-DAG: @llvm.compiler.used = {{.*}}@__amdgpu_device_library_preserve_asan_functions_ptr
 // ASAN-DAG: define weak void @__asan_report_load1(i64 %{{.*}})
 

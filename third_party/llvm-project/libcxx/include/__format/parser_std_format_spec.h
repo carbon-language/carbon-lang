@@ -34,12 +34,6 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 
 #if _LIBCPP_STD_VER > 17
 
-// TODO FMT Remove this once we require compilers with proper C++20 support.
-// If the compiler has no concepts support, the format header will be disabled.
-// Without concepts support enable_if needs to be used and that too much effort
-// to support compilers with partial C++20 support.
-# if !defined(_LIBCPP_HAS_NO_CONCEPTS)
-
 namespace __format_spec {
 
 /**
@@ -52,6 +46,7 @@ namespace __format_spec {
  * * The format-type filtering needs to be done post parsing in the parser
  *   derived from @ref __parser_std.
  */
+_LIBCPP_PACKED_BYTE_FOR_AIX
 class _LIBCPP_TYPE_VIS _Flags {
 public:
   enum class _LIBCPP_ENUM_VIS _Alignment : uint8_t {
@@ -109,6 +104,7 @@ public:
 
   _Type __type{_Type::__default};
 };
+_LIBCPP_PACKED_BYTE_FOR_AIX_END
 
 namespace __detail {
 template <class _CharT>
@@ -222,7 +218,7 @@ __parse_arg_id(const _CharT* __begin, const _CharT* __end, auto& __parse_ctx) {
 
 template <class _Context>
 _LIBCPP_HIDE_FROM_ABI constexpr uint32_t
-__substitute_arg_id(basic_format_arg<_Context> __arg) {
+__substitute_arg_id(basic_format_arg<_Context> _Arg) {
   return visit_format_arg(
       [](auto __arg) -> uint32_t {
         using _Type = decltype(__arg);
@@ -246,7 +242,7 @@ __substitute_arg_id(basic_format_arg<_Context> __arg) {
           __throw_format_error("A format-spec arg-id replacement argument "
                                "isn't an integral type");
       },
-      __arg);
+      _Arg);
 }
 
 class _LIBCPP_TYPE_VIS __parser_width {
@@ -256,6 +252,13 @@ public:
   /** Determines whether the value stored is a width or an arg-id. */
   uint32_t __width_as_arg : 1 {0};
 
+  /**
+   * Does the supplied width field contain an arg-id?
+   *
+   * If @c true the formatter needs to call @ref __substitute_width_arg_id.
+   */
+  constexpr bool __width_needs_substitution() const noexcept { return __width_as_arg; }
+
 protected:
   /**
    * Does the supplied std-format-spec contain a width field?
@@ -263,18 +266,7 @@ protected:
    * When the field isn't present there's no padding required. This can be used
    * to optimize the formatting.
    */
-  constexpr bool __has_width_field() const noexcept {
-    return __width_as_arg || __width;
-  }
-
-  /**
-   * Does the supplied width field contain an arg-id?
-   *
-   * If @c true the formatter needs to call @ref __substitute_width_arg_id.
-   */
-  constexpr bool __width_needs_substitution() const noexcept {
-    return __width_as_arg;
-  }
+  constexpr bool __has_width_field() const noexcept { return __width_as_arg || __width; }
 
   template <class _CharT>
   _LIBCPP_HIDE_FROM_ABI constexpr const _CharT*
@@ -331,6 +323,15 @@ public:
    */
   uint32_t __precision_as_arg : 1 {1};
 
+  /**
+   * Does the supplied precision field contain an arg-id?
+   *
+   * If @c true the formatter needs to call @ref __substitute_precision_arg_id.
+   */
+  constexpr bool __precision_needs_substitution() const noexcept {
+    return __precision_as_arg && __precision != __format::__number_max;
+  }
+
 protected:
   /**
    * Does the supplied std-format-spec contain a precision field?
@@ -342,15 +343,6 @@ protected:
 
     return __precision_as_arg == 0 ||             // Contains a value?
            __precision != __format::__number_max; // The arg-id is valid?
-  }
-
-  /**
-   * Does the supplied precision field contain an arg-id?
-   *
-   * If @c true the formatter needs to call @ref __substitute_precision_arg_id.
-   */
-  constexpr bool __precision_needs_substitution() const noexcept {
-    return __precision_as_arg && __precision != __format::__number_max;
   }
 
   template <class _CharT>
@@ -1041,7 +1033,7 @@ concept __utf16_or_32_character = __utf16_character<_CharT> || __utf32_character
  * character.
  */
 _LIBCPP_HIDE_FROM_ABI inline constexpr int __column_width_3(uint32_t __c) noexcept {
-  _LIBCPP_ASSERT(__c < 0x1'0000,
+  _LIBCPP_ASSERT(__c < 0x10000,
                  "Use __column_width_4 or __column_width for larger values");
 
   // clang-format off
@@ -1066,7 +1058,7 @@ _LIBCPP_HIDE_FROM_ABI inline constexpr int __column_width_3(uint32_t __c) noexce
  * 4-byte UTF-8 character.
  */
 _LIBCPP_HIDE_FROM_ABI inline constexpr int __column_width_4(uint32_t __c) noexcept {
-  _LIBCPP_ASSERT(__c >= 0x1'0000,
+  _LIBCPP_ASSERT(__c >= 0x10000,
                  "Use __column_width_3 or __column_width for smaller values");
 
   // clang-format off
@@ -1084,7 +1076,7 @@ _LIBCPP_HIDE_FROM_ABI inline constexpr int __column_width_4(uint32_t __c) noexce
  * The general case, accepting all values.
  */
 _LIBCPP_HIDE_FROM_ABI inline constexpr int __column_width(uint32_t __c) noexcept {
-  if (__c < 0x1'0000)
+  if (__c < 0x10000)
     return __column_width_3(__c);
 
   return __column_width_4(__c);
@@ -1244,7 +1236,7 @@ __estimate_column_width(const _CharT* __first, const _CharT* __last,
       __c -= 0xd800;
       __c <<= 10;
       __c += (*(__first + 1) - 0xdc00);
-      __c += 0x10'000;
+      __c += 0x10000;
 
       __result += __column_width_4(__c);
       if (__result > __maximum)
@@ -1271,7 +1263,7 @@ __estimate_column_width(const _CharT* __first, const _CharT* __last,
   size_t __result = 0;
 
   while (__first != __last) {
-    wchar_t __c = *__first;
+    uint32_t __c = *__first;
     __result += __column_width(__c);
 
     if (__result > __maximum)
@@ -1386,8 +1378,6 @@ __get_string_alignment(const _CharT* __first, const _CharT* __last,
 #endif // _LIBCPP_HAS_NO_UNICODE
 
 } // namespace __format_spec
-
-# endif // !defined(_LIBCPP_HAS_NO_CONCEPTS)
 
 #endif //_LIBCPP_STD_VER > 17
 

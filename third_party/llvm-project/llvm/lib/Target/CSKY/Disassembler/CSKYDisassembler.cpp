@@ -15,8 +15,8 @@
 #include "TargetInfo/CSKYTargetInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCDecoderOps.h"
 #include "llvm/MC/MCDisassembler/MCDisassembler.h"
-#include "llvm/MC/MCFixedLenDisassembler.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
@@ -33,7 +33,6 @@ typedef MCDisassembler::DecodeStatus DecodeStatus;
 namespace {
 class CSKYDisassembler : public MCDisassembler {
   std::unique_ptr<MCInstrInfo const> const MCII;
-  mutable bool inDataRegion = false;
   mutable StringRef symbolName;
 
   DecodeStatus handleCROperand(MCInst &Instr) const;
@@ -108,7 +107,7 @@ static const uint16_t FPR128DecoderTable[] = {
 
 static DecodeStatus DecodeGPRRegisterClass(MCInst &Inst, uint64_t RegNo,
                                            uint64_t Address,
-                                           const void *Decoder) {
+                                           const MCDisassembler *Decoder) {
   if (RegNo >= 32)
     return MCDisassembler::Fail;
 
@@ -118,7 +117,7 @@ static DecodeStatus DecodeGPRRegisterClass(MCInst &Inst, uint64_t RegNo,
 
 static DecodeStatus DecodeFPR32RegisterClass(MCInst &Inst, uint64_t RegNo,
                                              uint64_t Address,
-                                             const void *Decoder) {
+                                             const MCDisassembler *Decoder) {
   if (RegNo >= 32)
     return MCDisassembler::Fail;
 
@@ -128,7 +127,7 @@ static DecodeStatus DecodeFPR32RegisterClass(MCInst &Inst, uint64_t RegNo,
 
 static DecodeStatus DecodesFPR32RegisterClass(MCInst &Inst, uint64_t RegNo,
                                               uint64_t Address,
-                                              const void *Decoder) {
+                                              const MCDisassembler *Decoder) {
   if (RegNo >= 16)
     return MCDisassembler::Fail;
 
@@ -138,7 +137,7 @@ static DecodeStatus DecodesFPR32RegisterClass(MCInst &Inst, uint64_t RegNo,
 
 static DecodeStatus DecodesFPR64RegisterClass(MCInst &Inst, uint64_t RegNo,
                                               uint64_t Address,
-                                              const void *Decoder) {
+                                              const MCDisassembler *Decoder) {
   if (RegNo >= 16)
     return MCDisassembler::Fail;
 
@@ -148,7 +147,7 @@ static DecodeStatus DecodesFPR64RegisterClass(MCInst &Inst, uint64_t RegNo,
 
 static DecodeStatus DecodesFPR64_VRegisterClass(MCInst &Inst, uint64_t RegNo,
                                                 uint64_t Address,
-                                                const void *Decoder) {
+                                                const MCDisassembler *Decoder) {
   if (RegNo >= 16)
     return MCDisassembler::Fail;
 
@@ -158,7 +157,7 @@ static DecodeStatus DecodesFPR64_VRegisterClass(MCInst &Inst, uint64_t RegNo,
 
 static DecodeStatus DecodeFPR64RegisterClass(MCInst &Inst, uint64_t RegNo,
                                              uint64_t Address,
-                                             const void *Decoder) {
+                                             const MCDisassembler *Decoder) {
   if (RegNo >= 32)
     return MCDisassembler::Fail;
 
@@ -166,9 +165,11 @@ static DecodeStatus DecodeFPR64RegisterClass(MCInst &Inst, uint64_t RegNo,
   return MCDisassembler::Success;
 }
 
+// TODO
+LLVM_ATTRIBUTE_UNUSED
 static DecodeStatus DecodesFPR128RegisterClass(MCInst &Inst, uint64_t RegNo,
                                                uint64_t Address,
-                                               const void *Decoder) {
+                                               const MCDisassembler *Decoder) {
   if (RegNo >= 16)
     return MCDisassembler::Fail;
 
@@ -178,7 +179,7 @@ static DecodeStatus DecodesFPR128RegisterClass(MCInst &Inst, uint64_t RegNo,
 
 static DecodeStatus DecodesGPRRegisterClass(MCInst &Inst, uint64_t RegNo,
                                             uint64_t Address,
-                                            const void *Decoder) {
+                                            const MCDisassembler *Decoder) {
   if (RegNo >= 16)
     return MCDisassembler::Fail;
 
@@ -188,7 +189,7 @@ static DecodeStatus DecodesGPRRegisterClass(MCInst &Inst, uint64_t RegNo,
 
 static DecodeStatus DecodemGPRRegisterClass(MCInst &Inst, uint64_t RegNo,
                                             uint64_t Address,
-                                            const void *Decoder) {
+                                            const MCDisassembler *Decoder) {
   if (RegNo >= 8)
     return MCDisassembler::Fail;
 
@@ -196,9 +197,11 @@ static DecodeStatus DecodemGPRRegisterClass(MCInst &Inst, uint64_t RegNo,
   return MCDisassembler::Success;
 }
 
+// TODO
+LLVM_ATTRIBUTE_UNUSED
 static DecodeStatus DecodeGPRSPRegisterClass(MCInst &Inst, uint64_t RegNo,
                                              uint64_t Address,
-                                             const void *Decoder) {
+                                             const MCDisassembler *Decoder) {
   if (RegNo != 14)
     return MCDisassembler::Fail;
 
@@ -208,11 +211,9 @@ static DecodeStatus DecodeGPRSPRegisterClass(MCInst &Inst, uint64_t RegNo,
 
 static DecodeStatus DecodeGPRPairRegisterClass(MCInst &Inst, uint64_t RegNo,
                                                uint64_t Address,
-                                               const void *Decoder) {
+                                               const MCDisassembler *Decoder) {
   const FeatureBitset &FeatureBits =
-      static_cast<const MCDisassembler *>(Decoder)
-          ->getSubtargetInfo()
-          .getFeatureBits();
+      Decoder->getSubtargetInfo().getFeatureBits();
   bool hasHighReg = FeatureBits[CSKY::FeatureHighreg];
 
   if (RegNo >= 32 || (!hasHighReg && RegNo >= 16))
@@ -224,7 +225,8 @@ static DecodeStatus DecodeGPRPairRegisterClass(MCInst &Inst, uint64_t RegNo,
 
 template <unsigned N, unsigned S>
 static DecodeStatus decodeUImmOperand(MCInst &Inst, uint64_t Imm,
-                                      int64_t Address, const void *Decoder) {
+                                      int64_t Address,
+                                      const MCDisassembler *Decoder) {
   assert(isUInt<N>(Imm) && "Invalid immediate");
   Inst.addOperand(MCOperand::createImm(Imm << S));
   return MCDisassembler::Success;
@@ -232,14 +234,15 @@ static DecodeStatus decodeUImmOperand(MCInst &Inst, uint64_t Imm,
 
 template <unsigned N>
 static DecodeStatus decodeOImmOperand(MCInst &Inst, uint64_t Imm,
-                                      int64_t Address, const void *Decoder) {
+                                      int64_t Address,
+                                      const MCDisassembler *Decoder) {
   assert(isUInt<N>(Imm) && "Invalid immediate");
   Inst.addOperand(MCOperand::createImm(Imm + 1));
   return MCDisassembler::Success;
 }
 
 static DecodeStatus decodeLRW16Imm8(MCInst &Inst, uint64_t Imm, int64_t Address,
-                                    const void *Decoder) {
+                                    const MCDisassembler *Decoder) {
   assert(isUInt<8>(Imm) && "Invalid immediate");
   if ((Imm >> 7) & 0x1) {
     Inst.addOperand(MCOperand::createImm((Imm & 0x7F) << 2));
@@ -253,7 +256,7 @@ static DecodeStatus decodeLRW16Imm8(MCInst &Inst, uint64_t Imm, int64_t Address,
 
 static DecodeStatus decodeJMPIXImmOperand(MCInst &Inst, uint64_t Imm,
                                           int64_t Address,
-                                          const void *Decoder) {
+                                          const MCDisassembler *Decoder) {
   assert(isUInt<2>(Imm) && "Invalid immediate");
 
   if (Imm == 0)
@@ -271,7 +274,8 @@ static DecodeStatus decodeJMPIXImmOperand(MCInst &Inst, uint64_t Imm,
 }
 
 static DecodeStatus DecodeRegSeqOperand(MCInst &Inst, uint64_t Imm,
-                                        int64_t Address, const void *Decoder) {
+                                        int64_t Address,
+                                        const MCDisassembler *Decoder) {
   assert(isUInt<10>(Imm) && "Invalid immediate");
 
   auto Imm5 = Imm & 0x1f;
@@ -288,7 +292,7 @@ static DecodeStatus DecodeRegSeqOperand(MCInst &Inst, uint64_t Imm,
 
 static DecodeStatus DecodeRegSeqOperandF1(MCInst &Inst, uint64_t Imm,
                                           int64_t Address,
-                                          const void *Decoder) {
+                                          const MCDisassembler *Decoder) {
   assert(isUInt<10>(Imm) && "Invalid immediate");
 
   auto Imm5 = Imm & 0x1f;
@@ -305,7 +309,7 @@ static DecodeStatus DecodeRegSeqOperandF1(MCInst &Inst, uint64_t Imm,
 
 static DecodeStatus DecodeRegSeqOperandD1(MCInst &Inst, uint64_t Imm,
                                           int64_t Address,
-                                          const void *Decoder) {
+                                          const MCDisassembler *Decoder) {
   assert(isUInt<10>(Imm) && "Invalid immediate");
 
   auto Imm5 = Imm & 0x1f;
@@ -322,7 +326,7 @@ static DecodeStatus DecodeRegSeqOperandD1(MCInst &Inst, uint64_t Imm,
 
 static DecodeStatus DecodeRegSeqOperandF2(MCInst &Inst, uint64_t Imm,
                                           int64_t Address,
-                                          const void *Decoder) {
+                                          const MCDisassembler *Decoder) {
   assert(isUInt<10>(Imm) && "Invalid immediate");
 
   auto Imm5 = Imm & 0x1f;
@@ -339,7 +343,7 @@ static DecodeStatus DecodeRegSeqOperandF2(MCInst &Inst, uint64_t Imm,
 
 static DecodeStatus DecodeRegSeqOperandD2(MCInst &Inst, uint64_t Imm,
                                           int64_t Address,
-                                          const void *Decoder) {
+                                          const MCDisassembler *Decoder) {
   assert(isUInt<10>(Imm) && "Invalid immediate");
 
   auto Imm5 = Imm & 0x1f;
@@ -356,14 +360,15 @@ static DecodeStatus DecodeRegSeqOperandD2(MCInst &Inst, uint64_t Imm,
 
 static DecodeStatus decodeImmShiftOpValue(MCInst &Inst, uint64_t Imm,
                                           int64_t Address,
-                                          const void *Decoder) {
+                                          const MCDisassembler *Decoder) {
   Inst.addOperand(MCOperand::createImm(Log2(Imm)));
   return MCDisassembler::Success;
 }
 
 template <unsigned N, unsigned S>
 static DecodeStatus decodeSImmOperand(MCInst &Inst, uint64_t Imm,
-                                      int64_t Address, const void *Decoder) {
+                                      int64_t Address,
+                                      const MCDisassembler *Decoder) {
   assert(isUInt<N>(Imm) && "Invalid immediate");
   // Sign-extend the number in the bottom N bits of Imm
   Inst.addOperand(MCOperand::createImm(SignExtend64<N>(Imm) << S));
@@ -488,7 +493,7 @@ DecodeStatus CSKYDisassembler::handleCROperand(MCInst &MI) const {
 }
 
 static bool decodeFPUV3Instruction(MCInst &MI, uint32_t insn, uint64_t Address,
-                                   const void *DisAsm,
+                                   const MCDisassembler *DisAsm,
                                    const MCSubtargetInfo &STI) {
   LLVM_DEBUG(dbgs() << "Trying CSKY 32-bit fpuv3 table :\n");
   if (!STI.getFeatureBits()[CSKY::FeatureFPUV3_HF] &&

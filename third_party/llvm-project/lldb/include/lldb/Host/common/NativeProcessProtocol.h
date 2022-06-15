@@ -457,9 +457,12 @@ protected:
   ///
   /// Provide a mechanism for a delegate to clear out any exec-
   /// sensitive data.
-  void NotifyDidExec();
+  virtual void NotifyDidExec();
 
   NativeThreadProtocol *GetThreadByIDUnlocked(lldb::tid_t tid);
+
+  /// Notify tracers that the state of the target process has changed.
+  virtual void NotifyTracersProcessStateChanged(lldb::StateType state) {}
 
 private:
   void SynchronouslyNotifyProcessStateChanged(lldb::StateType state);

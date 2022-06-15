@@ -26,7 +26,6 @@ class FunctionPass;
 
 // LLVM IR passes.
 ModulePass *createWebAssemblyLowerEmscriptenEHSjLj();
-ModulePass *createWebAssemblyLowerGlobalDtors();
 ModulePass *createWebAssemblyAddMissingPrototypes();
 ModulePass *createWebAssemblyFixFunctionBitcasts();
 FunctionPass *createWebAssemblyOptimizeReturned();
@@ -41,7 +40,6 @@ FunctionPass *createWebAssemblySetP2AlignOperands();
 // Late passes.
 FunctionPass *createWebAssemblyReplacePhysRegs();
 FunctionPass *createWebAssemblyNullifyDebugValueLists();
-FunctionPass *createWebAssemblyPrepareForLiveIntervals();
 FunctionPass *createWebAssemblyOptimizeLiveIntervals();
 FunctionPass *createWebAssemblyMemIntrinsicResults();
 FunctionPass *createWebAssemblyRegStackify();
@@ -61,14 +59,12 @@ ModulePass *createWebAssemblyMCLowerPrePass();
 // PassRegistry initialization declarations.
 void initializeWebAssemblyAddMissingPrototypesPass(PassRegistry &);
 void initializeWebAssemblyLowerEmscriptenEHSjLjPass(PassRegistry &);
-void initializeLowerGlobalDtorsPass(PassRegistry &);
 void initializeFixFunctionBitcastsPass(PassRegistry &);
 void initializeOptimizeReturnedPass(PassRegistry &);
 void initializeWebAssemblyArgumentMovePass(PassRegistry &);
 void initializeWebAssemblySetP2AlignOperandsPass(PassRegistry &);
 void initializeWebAssemblyReplacePhysRegsPass(PassRegistry &);
 void initializeWebAssemblyNullifyDebugValueListsPass(PassRegistry &);
-void initializeWebAssemblyPrepareForLiveIntervalsPass(PassRegistry &);
 void initializeWebAssemblyOptimizeLiveIntervalsPass(PassRegistry &);
 void initializeWebAssemblyMemIntrinsicResultsPass(PassRegistry &);
 void initializeWebAssemblyRegStackifyPass(PassRegistry &);

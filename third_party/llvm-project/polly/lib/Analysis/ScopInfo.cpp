@@ -126,7 +126,7 @@ static int const MaxDisjunktsInDefinedBehaviourContext = 8;
 static cl::opt<bool> PollyRemarksMinimal(
     "polly-remarks-minimal",
     cl::desc("Do not emit remarks about assumptions that are known"),
-    cl::Hidden, cl::ZeroOrMore, cl::init(false), cl::cat(PollyCategory));
+    cl::Hidden, cl::cat(PollyCategory));
 
 static cl::opt<bool>
     IslOnErrorAbort("polly-on-isl-error-abort",
@@ -155,8 +155,7 @@ bool polly::UseInstructionNames;
 static cl::opt<bool, true> XUseInstructionNames(
     "polly-use-llvm-names",
     cl::desc("Use LLVM-IR names when deriving statement names"),
-    cl::location(UseInstructionNames), cl::Hidden, cl::init(false),
-    cl::ZeroOrMore, cl::cat(PollyCategory));
+    cl::location(UseInstructionNames), cl::Hidden, cl::cat(PollyCategory));
 
 static cl::opt<bool> PollyPrintInstructions(
     "polly-print-instructions", cl::desc("Output instructions per ScopStmt"),
@@ -165,7 +164,7 @@ static cl::opt<bool> PollyPrintInstructions(
 static cl::list<std::string> IslArgs("polly-isl-arg",
                                      cl::value_desc("argument"),
                                      cl::desc("Option passed to ISL"),
-                                     cl::ZeroOrMore, cl::cat(PollyCategory));
+                                     cl::cat(PollyCategory));
 
 //===----------------------------------------------------------------------===//
 
@@ -1358,7 +1357,7 @@ void Scop::setContext(isl::set NewContext) {
 namespace {
 
 /// Remap parameter values but keep AddRecs valid wrt. invariant loads.
-struct SCEVSensitiveParameterRewriter
+class SCEVSensitiveParameterRewriter final
     : public SCEVRewriteVisitor<SCEVSensitiveParameterRewriter> {
   const ValueToValueMap &VMap;
 
@@ -1389,7 +1388,7 @@ public:
 };
 
 /// Check whether we should remap a SCEV expression.
-struct SCEVFindInsideScop : public SCEVTraversal<SCEVFindInsideScop> {
+class SCEVFindInsideScop : public SCEVTraversal<SCEVFindInsideScop> {
   const ValueToValueMap &VMap;
   bool FoundInside = false;
   const Scop *S;
@@ -2643,6 +2642,57 @@ INITIALIZE_PASS_END(ScopInfoRegionPass, "polly-scops",
                     false)
 
 //===----------------------------------------------------------------------===//
+
+namespace {
+
+/// Print result from ScopInfoRegionPass.
+class ScopInfoPrinterLegacyRegionPass final : public RegionPass {
+public:
+  static char ID;
+
+  ScopInfoPrinterLegacyRegionPass() : ScopInfoPrinterLegacyRegionPass(outs()) {}
+
+  explicit ScopInfoPrinterLegacyRegionPass(llvm::raw_ostream &OS)
+      : RegionPass(ID), OS(OS) {}
+
+  bool runOnRegion(Region *R, RGPassManager &RGM) override {
+    ScopInfoRegionPass &P = getAnalysis<ScopInfoRegionPass>();
+
+    OS << "Printing analysis '" << P.getPassName() << "' for region: '"
+       << R->getNameStr() << "' in function '"
+       << R->getEntry()->getParent()->getName() << "':\n";
+    P.print(OS);
+
+    return false;
+  }
+
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    RegionPass::getAnalysisUsage(AU);
+    AU.addRequired<ScopInfoRegionPass>();
+    AU.setPreservesAll();
+  }
+
+private:
+  llvm::raw_ostream &OS;
+};
+
+char ScopInfoPrinterLegacyRegionPass::ID = 0;
+} // namespace
+
+Pass *polly::createScopInfoPrinterLegacyRegionPass(raw_ostream &OS) {
+  return new ScopInfoPrinterLegacyRegionPass(OS);
+}
+
+INITIALIZE_PASS_BEGIN(ScopInfoPrinterLegacyRegionPass, "polly-print-scops",
+                      "Polly - Print polyhedral description of Scops", false,
+                      false);
+INITIALIZE_PASS_DEPENDENCY(ScopInfoRegionPass);
+INITIALIZE_PASS_END(ScopInfoPrinterLegacyRegionPass, "polly-print-scops",
+                    "Polly - Print polyhedral description of Scops", false,
+                    false)
+
+//===----------------------------------------------------------------------===//
+
 ScopInfo::ScopInfo(const DataLayout &DL, ScopDetection &SD, ScalarEvolution &SE,
                    LoopInfo &LI, AliasAnalysis &AA, DominatorTree &DT,
                    AssumptionCache &AC, OptimizationRemarkEmitter &ORE)
@@ -2772,4 +2822,54 @@ INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass);
 INITIALIZE_PASS_END(
     ScopInfoWrapperPass, "polly-function-scops",
     "Polly - Create polyhedral description of all Scops of a function", false,
+    false)
+
+//===----------------------------------------------------------------------===//
+
+namespace {
+/// Print result from ScopInfoWrapperPass.
+class ScopInfoPrinterLegacyFunctionPass final : public FunctionPass {
+public:
+  static char ID;
+
+  ScopInfoPrinterLegacyFunctionPass()
+      : ScopInfoPrinterLegacyFunctionPass(outs()) {}
+  explicit ScopInfoPrinterLegacyFunctionPass(llvm::raw_ostream &OS)
+      : FunctionPass(ID), OS(OS) {}
+
+  bool runOnFunction(Function &F) override {
+    ScopInfoWrapperPass &P = getAnalysis<ScopInfoWrapperPass>();
+
+    OS << "Printing analysis '" << P.getPassName() << "' for function '"
+       << F.getName() << "':\n";
+    P.print(OS);
+
+    return false;
+  }
+
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    FunctionPass::getAnalysisUsage(AU);
+    AU.addRequired<ScopInfoWrapperPass>();
+    AU.setPreservesAll();
+  }
+
+private:
+  llvm::raw_ostream &OS;
+};
+
+char ScopInfoPrinterLegacyFunctionPass::ID = 0;
+} // namespace
+
+Pass *polly::createScopInfoPrinterLegacyFunctionPass(raw_ostream &OS) {
+  return new ScopInfoPrinterLegacyFunctionPass(OS);
+}
+
+INITIALIZE_PASS_BEGIN(
+    ScopInfoPrinterLegacyFunctionPass, "polly-print-function-scops",
+    "Polly - Print polyhedral description of all Scops of a function", false,
+    false);
+INITIALIZE_PASS_DEPENDENCY(ScopInfoWrapperPass);
+INITIALIZE_PASS_END(
+    ScopInfoPrinterLegacyFunctionPass, "polly-print-function-scops",
+    "Polly - Print polyhedral description of all Scops of a function", false,
     false)

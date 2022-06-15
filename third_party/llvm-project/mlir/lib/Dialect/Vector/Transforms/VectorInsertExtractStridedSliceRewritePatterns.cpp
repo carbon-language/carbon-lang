@@ -45,14 +45,14 @@ static Value extractOne(PatternRewriter &rewriter, Location loc, Value vector,
 /// When ranks are different, InsertStridedSlice needs to extract a properly
 /// ranked vector from the destination vector into which to insert. This pattern
 /// only takes care of this extraction part and forwards the rest to
-/// [VectorInsertStridedSliceOpSameRankRewritePattern].
+/// [ConvertSameRankInsertStridedSliceIntoShuffle].
 ///
 /// For a k-D source and n-D destination vector (k < n), we emit:
 ///   1. ExtractOp to extract the (unique) (n-1)-D subvector into which to
 ///      insert the k-D source.
 ///   2. k-D -> (n-1)-D InsertStridedSlice op
 ///   3. InsertOp that is the reverse of 1.
-class VectorInsertStridedSliceOpDifferentRankRewritePattern
+class DecomposeDifferentRankInsertStridedSlice
     : public OpRewritePattern<InsertStridedSliceOp> {
 public:
   using OpRewritePattern<InsertStridedSliceOp>::OpRewritePattern;
@@ -62,7 +62,7 @@ public:
     auto srcType = op.getSourceVectorType();
     auto dstType = op.getDestVectorType();
 
-    if (op.offsets().getValue().empty())
+    if (op.getOffsets().getValue().empty())
       return failure();
 
     auto loc = op.getLoc();
@@ -74,21 +74,21 @@ public:
     int64_t rankRest = dstType.getRank() - rankDiff;
     // Extract / insert the subvector of matching rank and InsertStridedSlice
     // on it.
-    Value extracted =
-        rewriter.create<ExtractOp>(loc, op.dest(),
-                                   getI64SubArray(op.offsets(), /*dropFront=*/0,
-                                                  /*dropBack=*/rankRest));
+    Value extracted = rewriter.create<ExtractOp>(
+        loc, op.getDest(),
+        getI64SubArray(op.getOffsets(), /*dropFront=*/0,
+                       /*dropBack=*/rankRest));
 
     // A different pattern will kick in for InsertStridedSlice with matching
     // ranks.
     auto stridedSliceInnerOp = rewriter.create<InsertStridedSliceOp>(
-        loc, op.source(), extracted,
-        getI64SubArray(op.offsets(), /*dropFront=*/rankDiff),
-        getI64SubArray(op.strides(), /*dropFront=*/0));
+        loc, op.getSource(), extracted,
+        getI64SubArray(op.getOffsets(), /*dropFront=*/rankDiff),
+        getI64SubArray(op.getStrides(), /*dropFront=*/0));
 
     rewriter.replaceOpWithNewOp<InsertOp>(
-        op, stridedSliceInnerOp.getResult(), op.dest(),
-        getI64SubArray(op.offsets(), /*dropFront=*/0,
+        op, stridedSliceInnerOp.getResult(), op.getDest(),
+        getI64SubArray(op.getOffsets(), /*dropFront=*/0,
                        /*dropBack=*/rankRest));
     return success();
   }
@@ -102,7 +102,7 @@ public:
 ///   2. InsertStridedSlice (k-1)-D into (n-1)-D
 ///   3. the destination subvector is inserted back in the proper place
 ///   3. InsertOp that is the reverse of 1.
-class VectorInsertStridedSliceOpSameRankRewritePattern
+class ConvertSameRankInsertStridedSliceIntoShuffle
     : public OpRewritePattern<InsertStridedSliceOp> {
 public:
   using OpRewritePattern<InsertStridedSliceOp>::OpRewritePattern;
@@ -118,7 +118,7 @@ public:
     auto srcType = op.getSourceVectorType();
     auto dstType = op.getDestVectorType();
 
-    if (op.offsets().getValue().empty())
+    if (op.getOffsets().getValue().empty())
       return failure();
 
     int64_t srcRank = srcType.getRank();
@@ -128,18 +128,18 @@ public:
       return failure();
 
     if (srcType == dstType) {
-      rewriter.replaceOp(op, op.source());
+      rewriter.replaceOp(op, op.getSource());
       return success();
     }
 
     int64_t offset =
-        op.offsets().getValue().front().cast<IntegerAttr>().getInt();
+        op.getOffsets().getValue().front().cast<IntegerAttr>().getInt();
     int64_t size = srcType.getShape().front();
     int64_t stride =
-        op.strides().getValue().front().cast<IntegerAttr>().getInt();
+        op.getStrides().getValue().front().cast<IntegerAttr>().getInt();
 
     auto loc = op.getLoc();
-    Value res = op.dest();
+    Value res = op.getDest();
 
     if (srcRank == 1) {
       int nSrc = srcType.getShape().front();
@@ -148,8 +148,8 @@ public:
       SmallVector<int64_t> offsets(nDest, 0);
       for (int64_t i = 0; i < nSrc; ++i)
         offsets[i] = i;
-      Value scaledSource =
-          rewriter.create<ShuffleOp>(loc, op.source(), op.source(), offsets);
+      Value scaledSource = rewriter.create<ShuffleOp>(loc, op.getSource(),
+                                                      op.getSource(), offsets);
 
       // 2. Create a mask where we take the value from scaledSource of dest
       // depending on the offset.
@@ -162,7 +162,7 @@ public:
       }
 
       // 3. Replace with a ShuffleOp.
-      rewriter.replaceOpWithNewOp<ShuffleOp>(op, scaledSource, op.dest(),
+      rewriter.replaceOpWithNewOp<ShuffleOp>(op, scaledSource, op.getDest(),
                                              offsets);
 
       return success();
@@ -172,17 +172,17 @@ public:
     for (int64_t off = offset, e = offset + size * stride, idx = 0; off < e;
          off += stride, ++idx) {
       // 1. extract the proper subvector (or element) from source
-      Value extractedSource = extractOne(rewriter, loc, op.source(), idx);
+      Value extractedSource = extractOne(rewriter, loc, op.getSource(), idx);
       if (extractedSource.getType().isa<VectorType>()) {
         // 2. If we have a vector, extract the proper subvector from destination
         // Otherwise we are at the element level and no need to recurse.
-        Value extractedDest = extractOne(rewriter, loc, op.dest(), off);
+        Value extractedDest = extractOne(rewriter, loc, op.getDest(), off);
         // 3. Reduce the problem to lowering a new InsertStridedSlice op with
         // smaller rank.
         extractedSource = rewriter.create<InsertStridedSliceOp>(
             loc, extractedSource, extractedDest,
-            getI64SubArray(op.offsets(), /* dropFront=*/1),
-            getI64SubArray(op.strides(), /* dropFront=*/1));
+            getI64SubArray(op.getOffsets(), /* dropFront=*/1),
+            getI64SubArray(op.getStrides(), /* dropFront=*/1));
       }
       // 4. Insert the extractedSource into the res vector.
       res = insertOne(rewriter, loc, extractedSource, res, off);
@@ -193,11 +193,48 @@ public:
   }
 };
 
-/// Progressive lowering of ExtractStridedSliceOp to either:
-///   1. single offset extract as a direct vector::ShuffleOp.
-///   2. ExtractOp/ExtractElementOp + lower rank ExtractStridedSliceOp +
-///      InsertOp/InsertElementOp for the n-D case.
-class VectorExtractStridedSliceOpRewritePattern
+/// RewritePattern for ExtractStridedSliceOp where source and destination
+/// vectors are 1-D. For such cases, we can lower it to a ShuffleOp.
+class Convert1DExtractStridedSliceIntoShuffle
+    : public OpRewritePattern<ExtractStridedSliceOp> {
+public:
+  using OpRewritePattern<ExtractStridedSliceOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(ExtractStridedSliceOp op,
+                                PatternRewriter &rewriter) const override {
+    auto dstType = op.getType();
+
+    assert(!op.getOffsets().getValue().empty() && "Unexpected empty offsets");
+
+    int64_t offset =
+        op.getOffsets().getValue().front().cast<IntegerAttr>().getInt();
+    int64_t size =
+        op.getSizes().getValue().front().cast<IntegerAttr>().getInt();
+    int64_t stride =
+        op.getStrides().getValue().front().cast<IntegerAttr>().getInt();
+
+    assert(dstType.getElementType().isSignlessIntOrIndexOrFloat());
+
+    // Single offset can be more efficiently shuffled.
+    if (op.getOffsets().getValue().size() != 1)
+      return failure();
+
+    SmallVector<int64_t, 4> offsets;
+    offsets.reserve(size);
+    for (int64_t off = offset, e = offset + size * stride; off < e;
+         off += stride)
+      offsets.push_back(off);
+    rewriter.replaceOpWithNewOp<ShuffleOp>(op, dstType, op.getVector(),
+                                           op.getVector(),
+                                           rewriter.getI64ArrayAttr(offsets));
+    return success();
+  }
+};
+
+/// RewritePattern for ExtractStridedSliceOp where the source vector is n-D.
+/// For such cases, we can rewrite it to ExtractOp/ExtractElementOp + lower
+/// rank ExtractStridedSliceOp + InsertOp/InsertElementOp for the n-D case.
+class DecomposeNDExtractStridedSlice
     : public OpRewritePattern<ExtractStridedSliceOp> {
 public:
   using OpRewritePattern<ExtractStridedSliceOp>::OpRewritePattern;
@@ -212,30 +249,23 @@ public:
                                 PatternRewriter &rewriter) const override {
     auto dstType = op.getType();
 
-    assert(!op.offsets().getValue().empty() && "Unexpected empty offsets");
+    assert(!op.getOffsets().getValue().empty() && "Unexpected empty offsets");
 
     int64_t offset =
-        op.offsets().getValue().front().cast<IntegerAttr>().getInt();
-    int64_t size = op.sizes().getValue().front().cast<IntegerAttr>().getInt();
+        op.getOffsets().getValue().front().cast<IntegerAttr>().getInt();
+    int64_t size =
+        op.getSizes().getValue().front().cast<IntegerAttr>().getInt();
     int64_t stride =
-        op.strides().getValue().front().cast<IntegerAttr>().getInt();
+        op.getStrides().getValue().front().cast<IntegerAttr>().getInt();
 
     auto loc = op.getLoc();
     auto elemType = dstType.getElementType();
     assert(elemType.isSignlessIntOrIndexOrFloat());
 
-    // Single offset can be more efficiently shuffled.
-    if (op.offsets().getValue().size() == 1) {
-      SmallVector<int64_t, 4> offsets;
-      offsets.reserve(size);
-      for (int64_t off = offset, e = offset + size * stride; off < e;
-           off += stride)
-        offsets.push_back(off);
-      rewriter.replaceOpWithNewOp<ShuffleOp>(op, dstType, op.vector(),
-                                             op.vector(),
-                                             rewriter.getI64ArrayAttr(offsets));
-      return success();
-    }
+    // Single offset can be more efficiently shuffled. It's handled in
+    // Convert1DExtractStridedSliceIntoShuffle.
+    if (op.getOffsets().getValue().size() == 1)
+      return failure();
 
     // Extract/insert on a lower ranked extract strided slice op.
     Value zero = rewriter.create<arith::ConstantOp>(
@@ -243,11 +273,11 @@ public:
     Value res = rewriter.create<SplatOp>(loc, dstType, zero);
     for (int64_t off = offset, e = offset + size * stride, idx = 0; off < e;
          off += stride, ++idx) {
-      Value one = extractOne(rewriter, loc, op.vector(), off);
+      Value one = extractOne(rewriter, loc, op.getVector(), off);
       Value extracted = rewriter.create<ExtractStridedSliceOp>(
-          loc, one, getI64SubArray(op.offsets(), /* dropFront=*/1),
-          getI64SubArray(op.sizes(), /* dropFront=*/1),
-          getI64SubArray(op.strides(), /* dropFront=*/1));
+          loc, one, getI64SubArray(op.getOffsets(), /* dropFront=*/1),
+          getI64SubArray(op.getSizes(), /* dropFront=*/1),
+          getI64SubArray(op.getStrides(), /* dropFront=*/1));
       res = insertOne(rewriter, loc, extracted, res, idx);
     }
     rewriter.replaceOp(op, res);
@@ -255,11 +285,16 @@ public:
   }
 };
 
+void mlir::vector::populateVectorInsertExtractStridedSliceDecompositionPatterns(
+    RewritePatternSet &patterns) {
+  patterns.add<DecomposeDifferentRankInsertStridedSlice,
+               DecomposeNDExtractStridedSlice>(patterns.getContext());
+}
+
 /// Populate the given list with patterns that convert from Vector to LLVM.
 void mlir::vector::populateVectorInsertExtractStridedSliceTransforms(
     RewritePatternSet &patterns) {
-  patterns.add<VectorInsertStridedSliceOpDifferentRankRewritePattern,
-               VectorInsertStridedSliceOpSameRankRewritePattern,
-               VectorExtractStridedSliceOpRewritePattern>(
-      patterns.getContext());
+  populateVectorInsertExtractStridedSliceDecompositionPatterns(patterns);
+  patterns.add<ConvertSameRankInsertStridedSliceIntoShuffle,
+               Convert1DExtractStridedSliceIntoShuffle>(patterns.getContext());
 }

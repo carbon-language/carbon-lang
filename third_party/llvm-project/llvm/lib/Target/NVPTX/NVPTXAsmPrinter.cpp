@@ -45,7 +45,6 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/IR/Attributes.h"
@@ -329,7 +328,7 @@ MCOperand NVPTXAsmPrinter::GetSymbolRef(const MCSymbol *Symbol) {
 void NVPTXAsmPrinter::printReturnValStr(const Function *F, raw_ostream &O) {
   const DataLayout &DL = getDataLayout();
   const NVPTXSubtarget &STI = TM.getSubtarget<NVPTXSubtarget>(*F);
-  const TargetLowering *TLI = STI.getTargetLowering();
+  const auto *TLI = cast<NVPTXTargetLowering>(STI.getTargetLowering());
 
   Type *Ty = F->getReturnType();
 
@@ -363,7 +362,7 @@ void NVPTXAsmPrinter::printReturnValStr(const Function *F, raw_ostream &O) {
       unsigned totalsz = DL.getTypeAllocSize(Ty);
       unsigned retAlignment = 0;
       if (!getAlign(*F, 0, retAlignment))
-        retAlignment = DL.getABITypeAlignment(Ty);
+        retAlignment = TLI->getFunctionParamOptimizedAlign(F, Ty, DL).value();
       O << ".param .align " << retAlignment << " .b8 func_retval0[" << totalsz
         << "]";
     } else
@@ -513,7 +512,7 @@ void NVPTXAsmPrinter::emitImplicitDef(const MachineInstr *MI) const {
     OutStreamer->AddComment(Twine("implicit-def: ") +
                             STI.getRegisterInfo()->getName(RegNo));
   }
-  OutStreamer->AddBlankLine();
+  OutStreamer->addBlankLine();
 }
 
 void NVPTXAsmPrinter::emitKernelFunctionDirectives(const Function &F,
@@ -818,9 +817,13 @@ void NVPTXAsmPrinter::emitGlobals(const Module &M) {
          "Missed a global variable");
   assert(GVVisiting.size() == 0 && "Did not fully process a global variable");
 
+  const NVPTXTargetMachine &NTM = static_cast<const NVPTXTargetMachine &>(TM);
+  const NVPTXSubtarget &STI =
+      *static_cast<const NVPTXSubtarget *>(NTM.getSubtargetImpl());
+
   // Print out module-level global variables in proper order
   for (unsigned i = 0, e = Globals.size(); i != e; ++i)
-    printModuleLevelGV(Globals[i], OS2);
+    printModuleLevelGV(Globals[i], OS2, /*processDemoted=*/false, STI);
 
   OS2 << '\n';
 
@@ -888,17 +891,18 @@ bool NVPTXAsmPrinter::doFinalization(Module &M) {
 
   clearAnnotationCache(&M);
 
-  // Close the last emitted section
-  if (HasDebugInfo) {
-    static_cast<NVPTXTargetStreamer *>(OutStreamer->getTargetStreamer())
-        ->closeLastSection();
-    // Emit empty .debug_loc section for better support of the empty files.
-    OutStreamer->emitRawText("\t.section\t.debug_loc\t{\t}");
-  }
+  if (auto *TS = static_cast<NVPTXTargetStreamer *>(
+          OutStreamer->getTargetStreamer())) {
+    // Close the last emitted section
+    if (HasDebugInfo) {
+      TS->closeLastSection();
+      // Emit empty .debug_loc section for better support of the empty files.
+      OutStreamer->emitRawText("\t.section\t.debug_loc\t{\t}");
+    }
 
-  // Output last DWARF .file directives, if any.
-  static_cast<NVPTXTargetStreamer *>(OutStreamer->getTargetStreamer())
-      ->outputDwarfFileDirectives();
+    // Output last DWARF .file directives, if any.
+    TS->outputDwarfFileDirectives();
+  }
 
   return ret;
 
@@ -957,8 +961,8 @@ void NVPTXAsmPrinter::emitLinkageDirective(const GlobalValue *V,
 }
 
 void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
-                                         raw_ostream &O,
-                                         bool processDemoted) {
+                                         raw_ostream &O, bool processDemoted,
+                                         const NVPTXSubtarget &STI) {
   // Skip meta data
   if (GVar->hasSection()) {
     if (GVar->getSection() == "llvm.metadata")
@@ -1001,7 +1005,7 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
     // (extern) declarations, no definition or initializer
     // Currently the only known declaration is for an automatic __local
     // (.shared) promoted to global.
-    emitPTXGlobalVariable(GVar, O);
+    emitPTXGlobalVariable(GVar, O, STI);
     O << ";\n";
     return;
   }
@@ -1095,6 +1099,10 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
   emitPTXAddressSpace(PTy->getAddressSpace(), O);
 
   if (isManaged(*GVar)) {
+    if (STI.getPTXVersion() < 40 || STI.getSmVersion() < 30) {
+      report_fatal_error(
+          ".attribute(.managed) requires PTX version >= 4.0 and sm_30");
+    }
     O << " .attribute(.managed)";
   }
 
@@ -1214,9 +1222,13 @@ void NVPTXAsmPrinter::emitDemotedVars(const Function *f, raw_ostream &O) {
 
   std::vector<const GlobalVariable *> &gvars = localDecls[f];
 
+  const NVPTXTargetMachine &NTM = static_cast<const NVPTXTargetMachine &>(TM);
+  const NVPTXSubtarget &STI =
+      *static_cast<const NVPTXSubtarget *>(NTM.getSubtargetImpl());
+
   for (const GlobalVariable *GV : gvars) {
     O << "\t// demoted variable\n\t";
-    printModuleLevelGV(GV, O, true);
+    printModuleLevelGV(GV, O, /*processDemoted=*/true, STI);
   }
 }
 
@@ -1282,7 +1294,8 @@ NVPTXAsmPrinter::getPTXFundamentalTypeStr(Type *Ty, bool useB4PTR) const {
 }
 
 void NVPTXAsmPrinter::emitPTXGlobalVariable(const GlobalVariable *GVar,
-                                            raw_ostream &O) {
+                                            raw_ostream &O,
+                                            const NVPTXSubtarget &STI) {
   const DataLayout &DL = getDataLayout();
 
   // GlobalVariables are always constant pointers themselves.
@@ -1290,6 +1303,13 @@ void NVPTXAsmPrinter::emitPTXGlobalVariable(const GlobalVariable *GVar,
 
   O << ".";
   emitPTXAddressSpace(GVar->getType()->getAddressSpace(), O);
+  if (isManaged(*GVar)) {
+    if (STI.getPTXVersion() < 40 || STI.getSmVersion() < 30) {
+      report_fatal_error(
+          ".attribute(.managed) requires PTX version >= 4.0 and sm_30");
+    }
+    O << " .attribute(.managed)";
+  }
   if (MaybeAlign A = GVar->getAlign())
     O << " .align " << A->value();
   else
@@ -1345,7 +1365,8 @@ void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
   const DataLayout &DL = getDataLayout();
   const AttributeList &PAL = F->getAttributes();
   const NVPTXSubtarget &STI = TM.getSubtarget<NVPTXSubtarget>(*F);
-  const TargetLowering *TLI = STI.getTargetLowering();
+  const auto *TLI = cast<NVPTXTargetLowering>(STI.getTargetLowering());
+
   Function::const_arg_iterator I, E;
   unsigned paramIndex = 0;
   bool first = true;
@@ -1402,18 +1423,24 @@ void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
       }
     }
 
+    auto getOptimalAlignForParam = [TLI, &DL, &PAL, F,
+                                    paramIndex](Type *Ty) -> Align {
+      Align TypeAlign = TLI->getFunctionParamOptimizedAlign(F, Ty, DL);
+      MaybeAlign ParamAlign = PAL.getParamAlignment(paramIndex);
+      return max(TypeAlign, ParamAlign);
+    };
+
     if (!PAL.hasParamAttr(paramIndex, Attribute::ByVal)) {
       if (Ty->isAggregateType() || Ty->isVectorTy() || Ty->isIntegerTy(128)) {
         // Just print .param .align <a> .b8 .param[size];
-        // <a> = PAL.getparamalignment
+        // <a>  = optimal alignment for the element type; always multiple of
+        //        PAL.getParamAlignment
         // size = typeallocsize of element type
-        const Align align = DL.getValueOrABITypeAlignment(
-            PAL.getParamAlignment(paramIndex), Ty);
+        Align OptimalAlign = getOptimalAlignForParam(Ty);
 
-        unsigned sz = DL.getTypeAllocSize(Ty);
-        O << "\t.param .align " << align.value() << " .b8 ";
+        O << "\t.param .align " << OptimalAlign.value() << " .b8 ";
         printParamName(I, paramIndex, O);
-        O << "[" << sz << "]";
+        O << "[" << DL.getTypeAllocSize(Ty) << "]";
 
         continue;
       }
@@ -1489,10 +1516,11 @@ void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
 
     if (isABI || isKernelFunc) {
       // Just print .param .align <a> .b8 .param[size];
-      // <a> = PAL.getparamalignment
+      // <a>  = optimal alignment for the element type; always multiple of
+      //        PAL.getParamAlignment
       // size = typeallocsize of element type
-      Align align =
-          DL.getValueOrABITypeAlignment(PAL.getParamAlignment(paramIndex), ETy);
+      Align OptimalAlign = getOptimalAlignForParam(ETy);
+
       // Work around a bug in ptxas. When PTX code takes address of
       // byval parameter with alignment < 4, ptxas generates code to
       // spill argument into memory. Alas on sm_50+ ptxas generates
@@ -1504,10 +1532,10 @@ void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
       // TODO: this will need to be undone when we get to support multi-TU
       // device-side compilation as it breaks ABI compatibility with nvcc.
       // Hopefully ptxas bug is fixed by then.
-      if (!isKernelFunc && align < Align(4))
-        align = Align(4);
+      if (!isKernelFunc && OptimalAlign < Align(4))
+        OptimalAlign = Align(4);
       unsigned sz = DL.getTypeAllocSize(ETy);
-      O << "\t.param .align " << align.value() << " .b8 ";
+      O << "\t.param .align " << OptimalAlign.value() << " .b8 ";
       printParamName(I, paramIndex, O);
       O << "[" << sz << "]";
       continue;

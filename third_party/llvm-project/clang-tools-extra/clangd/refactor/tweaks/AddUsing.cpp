@@ -8,7 +8,6 @@
 
 #include "AST.h"
 #include "Config.h"
-#include "FindTarget.h"
 #include "refactor/Tweak.h"
 #include "support/Logger.h"
 #include "clang/AST/Decl.h"
@@ -79,6 +78,8 @@ public:
   }
 
   bool TraverseDecl(Decl *Node) {
+    if (!Node)
+      return true;
     // There is no need to go deeper into nodes that do not enclose selection,
     // since "using" there will not affect selection, nor would it make a good
     // insertion point.
@@ -236,7 +237,7 @@ bool AddUsing::prepare(const Selection &Inputs) {
   const auto &TB = Inputs.AST->getTokens();
 
   // Do not suggest "using" in header files. That way madness lies.
-  if (isHeaderFile(SM.getFileEntryForID(SM.getMainFileID())->getName(),
+  if (isHeaderFile(SM.getFileEntryRefForID(SM.getMainFileID())->getName(),
                    Inputs.AST->getLangOpts()))
     return false;
 

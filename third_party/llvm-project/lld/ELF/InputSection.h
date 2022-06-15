@@ -43,7 +43,7 @@ template <class ELFT> struct RelsOrRelas {
 // sections.
 class SectionBase {
 public:
-  enum Kind { Regular, EHFrame, Merge, Synthetic, Output };
+  enum Kind { Regular, Synthetic, EHFrame, Merge, Output };
 
   Kind kind() const { return (Kind)sectionKind; }
 
@@ -149,6 +149,8 @@ public:
     bytesDropped -= num;
   }
 
+  mutable ArrayRef<uint8_t> rawData;
+
   void trim() {
     if (bytesDropped) {
       rawData = rawData.drop_back(bytesDropped);
@@ -220,8 +222,6 @@ public:
     return llvm::makeArrayRef<T>((const T *)rawData.data(), s / sizeof(T));
   }
 
-  mutable ArrayRef<uint8_t> rawData;
-
 protected:
   template <typename ELFT>
   void parseCompressedHeader();
@@ -282,8 +282,8 @@ public:
   }
 
   // Returns the SectionPiece at a given input section offset.
-  SectionPiece *getSectionPiece(uint64_t offset);
-  const SectionPiece *getSectionPiece(uint64_t offset) const {
+  SectionPiece &getSectionPiece(uint64_t offset);
+  const SectionPiece &getSectionPiece(uint64_t offset) const {
     return const_cast<MergeInputSection *>(this)->getSectionPiece(offset);
   }
 
@@ -325,6 +325,7 @@ public:
   SmallVector<EhSectionPiece, 0> pieces;
 
   SyntheticSection *getParent() const;
+  uint64_t getParentOffset(uint64_t offset) const;
 };
 
 // This is a section that is added directly to an output section
@@ -339,19 +340,24 @@ public:
   InputSection(ObjFile<ELFT> &f, const typename ELFT::Shdr &header,
                StringRef name);
 
+  static bool classof(const SectionBase *s) {
+    return s->kind() == SectionBase::Regular ||
+           s->kind() == SectionBase::Synthetic;
+  }
+
   // Write this section to a mmap'ed file, assuming Buf is pointing to
   // beginning of the output section.
   template <class ELFT> void writeTo(uint8_t *buf);
 
-  OutputSection *getParent() const;
+  OutputSection *getParent() const {
+    return reinterpret_cast<OutputSection *>(parent);
+  }
 
   // This variable has two usages. Initially, it represents an index in the
   // OutputSection's InputSection list, and is used when ordering SHF_LINK_ORDER
   // sections. After assignAddresses is called, it represents the offset from
   // the beginning of the output section this section was assigned to.
   uint64_t outSecOff = 0;
-
-  static bool classof(const SectionBase *s);
 
   InputSectionBase *getRelocatedSection() const;
 
@@ -381,7 +387,7 @@ static_assert(sizeof(InputSection) <= 160, "InputSection is too big");
 
 inline bool isDebugSection(const InputSectionBase &sec) {
   return (sec.flags & llvm::ELF::SHF_ALLOC) == 0 &&
-         (sec.name.startswith(".debug") || sec.name.startswith(".zdebug"));
+         sec.name.startswith(".debug");
 }
 
 // The list of all input sections.

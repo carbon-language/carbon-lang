@@ -29,6 +29,9 @@ struct FdSync {
 
 struct FdDesc {
   FdSync *sync;
+  // This is used to establish write -> epoll_wait synchronization
+  // where epoll_wait receives notification about the write.
+  atomic_uintptr_t aux_sync;  // FdSync*
   Tid creation_tid;
   StackID creation_stack;
 };
@@ -103,6 +106,10 @@ static void init(ThreadState *thr, uptr pc, int fd, FdSync *s,
     unref(thr, pc, d->sync);
     d->sync = 0;
   }
+  unref(thr, pc,
+        reinterpret_cast<FdSync *>(
+            atomic_load(&d->aux_sync, memory_order_relaxed)));
+  atomic_store(&d->aux_sync, 0, memory_order_relaxed);
   if (flags()->io_sync == 0) {
     unref(thr, pc, s);
   } else if (flags()->io_sync == 1) {
@@ -113,12 +120,17 @@ static void init(ThreadState *thr, uptr pc, int fd, FdSync *s,
   }
   d->creation_tid = thr->tid;
   d->creation_stack = CurrentStackId(thr, pc);
+  // This prevents false positives on fd_close_norace3.cpp test.
+  // The mechanics of the false positive are not completely clear,
+  // but it happens only if global reset is enabled (flush_memory_ms=1)
+  // and may be related to lost writes during asynchronous MADV_DONTNEED.
+  SlotLocker locker(thr);
   if (write) {
     // To catch races between fd usage and open.
     MemoryRangeImitateWrite(thr, pc, (uptr)d, 8);
   } else {
     // See the dup-related comment in FdClose.
-    MemoryAccess(thr, pc, (uptr)d, 8, kAccessRead);
+    MemoryAccess(thr, pc, (uptr)d, 8, kAccessRead | kAccessSlotLocked);
   }
 }
 
@@ -180,6 +192,8 @@ void FdRelease(ThreadState *thr, uptr pc, int fd) {
   MemoryAccess(thr, pc, (uptr)d, 8, kAccessRead);
   if (s)
     Release(thr, pc, (uptr)s);
+  if (uptr aux_sync = atomic_load(&d->aux_sync, memory_order_acquire))
+    Release(thr, pc, aux_sync);
 }
 
 void FdAccess(ThreadState *thr, uptr pc, int fd) {
@@ -195,27 +209,39 @@ void FdClose(ThreadState *thr, uptr pc, int fd, bool write) {
   if (bogusfd(fd))
     return;
   FdDesc *d = fddesc(thr, pc, fd);
-  if (!MustIgnoreInterceptor(thr)) {
-    if (write) {
-      // To catch races between fd usage and close.
-      MemoryAccess(thr, pc, (uptr)d, 8, kAccessWrite);
-    } else {
-      // This path is used only by dup2/dup3 calls.
-      // We do read instead of write because there is a number of legitimate
-      // cases where write would lead to false positives:
-      // 1. Some software dups a closed pipe in place of a socket before closing
-      //    the socket (to prevent races actually).
-      // 2. Some daemons dup /dev/null in place of stdin/stdout.
-      // On the other hand we have not seen cases when write here catches real
-      // bugs.
-      MemoryAccess(thr, pc, (uptr)d, 8, kAccessRead);
+  {
+    // Need to lock the slot to make MemoryAccess and MemoryResetRange atomic
+    // with respect to global reset. See the comment in MemoryRangeFreed.
+    SlotLocker locker(thr);
+    if (!MustIgnoreInterceptor(thr)) {
+      if (write) {
+        // To catch races between fd usage and close.
+        MemoryAccess(thr, pc, (uptr)d, 8,
+                     kAccessWrite | kAccessCheckOnly | kAccessSlotLocked);
+      } else {
+        // This path is used only by dup2/dup3 calls.
+        // We do read instead of write because there is a number of legitimate
+        // cases where write would lead to false positives:
+        // 1. Some software dups a closed pipe in place of a socket before
+        // closing
+        //    the socket (to prevent races actually).
+        // 2. Some daemons dup /dev/null in place of stdin/stdout.
+        // On the other hand we have not seen cases when write here catches real
+        // bugs.
+        MemoryAccess(thr, pc, (uptr)d, 8,
+                     kAccessRead | kAccessCheckOnly | kAccessSlotLocked);
+      }
     }
+    // We need to clear it, because if we do not intercept any call out there
+    // that creates fd, we will hit false postives.
+    MemoryResetRange(thr, pc, (uptr)d, 8);
   }
-  // We need to clear it, because if we do not intercept any call out there
-  // that creates fd, we will hit false postives.
-  MemoryResetRange(thr, pc, (uptr)d, 8);
   unref(thr, pc, d->sync);
   d->sync = 0;
+  unref(thr, pc,
+        reinterpret_cast<FdSync *>(
+            atomic_load(&d->aux_sync, memory_order_relaxed)));
+  atomic_store(&d->aux_sync, 0, memory_order_relaxed);
   d->creation_tid = kInvalidTid;
   d->creation_stack = kInvalidStackID;
 }
@@ -272,6 +298,30 @@ void FdPollCreate(ThreadState *thr, uptr pc, int fd) {
   if (bogusfd(fd))
     return;
   init(thr, pc, fd, allocsync(thr, pc));
+}
+
+void FdPollAdd(ThreadState *thr, uptr pc, int epfd, int fd) {
+  DPrintf("#%d: FdPollAdd(%d, %d)\n", thr->tid, epfd, fd);
+  if (bogusfd(epfd) || bogusfd(fd))
+    return;
+  FdDesc *d = fddesc(thr, pc, fd);
+  // Associate fd with epoll fd only once.
+  // While an fd can be associated with multiple epolls at the same time,
+  // or with different epolls during different phases of lifetime,
+  // synchronization semantics (and examples) of this are unclear.
+  // So we don't support this for now.
+  // If we change the association, it will also create lifetime management
+  // problem for FdRelease which accesses the aux_sync.
+  if (atomic_load(&d->aux_sync, memory_order_relaxed))
+    return;
+  FdDesc *epd = fddesc(thr, pc, epfd);
+  FdSync *s = epd->sync;
+  if (!s)
+    return;
+  uptr cmp = 0;
+  if (atomic_compare_exchange_strong(
+          &d->aux_sync, &cmp, reinterpret_cast<uptr>(s), memory_order_release))
+    ref(s);
 }
 
 void FdSocketCreate(ThreadState *thr, uptr pc, int fd) {

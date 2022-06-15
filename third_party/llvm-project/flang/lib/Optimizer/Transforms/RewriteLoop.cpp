@@ -12,12 +12,13 @@
 #include "flang/Optimizer/Transforms/Passes.h"
 #include "mlir/Dialect/Affine/IR/AffineOps.h"
 #include "mlir/Dialect/ControlFlow/IR/ControlFlowOps.h"
-#include "mlir/Dialect/StandardOps/IR/Ops.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Pass/Pass.h"
 #include "mlir/Transforms/DialectConversion.h"
 #include "llvm/Support/CommandLine.h"
 
 using namespace fir;
+using namespace mlir;
 
 namespace {
 
@@ -154,8 +155,9 @@ public:
     if (ifOp.getNumResults() == 0) {
       continueBlock = remainingOpsBlock;
     } else {
-      continueBlock =
-          rewriter.createBlock(remainingOpsBlock, ifOp.getResultTypes());
+      continueBlock = rewriter.createBlock(
+          remainingOpsBlock, ifOp.getResultTypes(),
+          llvm::SmallVector<mlir::Location>(ifOp.getNumResults(), loc));
       rewriter.create<mlir::cf::BranchOp>(loc, remainingOpsBlock);
     }
 
@@ -304,7 +306,7 @@ public:
         context, forceLoopToExecuteOnce);
     mlir::ConversionTarget target(*context);
     target.addLegalDialect<mlir::AffineDialect, mlir::cf::ControlFlowDialect,
-                           FIROpsDialect, mlir::StandardOpsDialect>();
+                           FIROpsDialect, mlir::func::FuncDialect>();
 
     // apply the patterns
     target.addIllegalOp<ResultOp, DoLoopOp, IfOp, IterWhileOp>();

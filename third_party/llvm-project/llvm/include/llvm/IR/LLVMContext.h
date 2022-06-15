@@ -24,6 +24,7 @@
 
 namespace llvm {
 
+class Any;
 class DiagnosticInfo;
 enum DiagnosticSeverity : char;
 class Function;
@@ -202,6 +203,11 @@ public:
   /// diagnostics.
   void setDiagnosticsHotnessRequested(bool Requested);
 
+  bool getMisExpectWarningRequested() const;
+  void setMisExpectWarningRequested(bool Requested);
+  void setDiagnosticsMisExpectTolerance(Optional<uint64_t> Tolerance);
+  uint64_t getDiagnosticsMisExpectTolerance() const;
+
   /// Return the minimum hotness value a diagnostic would need in order
   /// to be included in optimization diagnostics.
   ///
@@ -305,12 +311,21 @@ public:
   /// LLVMContext is used by compilation.
   void setOptPassGate(OptPassGate&);
 
-  /// Enable opaque pointers. Can only be called before creating the first
-  /// pointer type.
-  void enableOpaquePointers() const;
+  /// Whether we've decided on using opaque pointers or typed pointers yet.
+  bool hasSetOpaquePointersValue() const;
+
+  /// Set whether opaque pointers are enabled. The method may be called multiple
+  /// times, but only with the same value. Note that creating a pointer type or
+  /// otherwise querying the opaque pointer mode performs an implicit set to
+  /// the default value.
+  void setOpaquePointers(bool Enable) const;
 
   /// Whether typed pointers are supported. If false, all pointers are opaque.
   bool supportsTypedPointers() const;
+
+  /// Optionally target-spcific data can be attached to the context for lifetime
+  /// management and bypassing layering restrictions.
+  llvm::Any &getTargetData() const;
 
 private:
   // Module needs access to the add/removeModule methods.

@@ -435,14 +435,8 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, Constant *V,
     if (ConstantFP *FPC = dyn_cast<ConstantFP>(V)) {
       bool ignored;
       APFloat Val = FPC->getValueAPF();
-      Val.convert(DestTy->isHalfTy() ? APFloat::IEEEhalf() :
-                  DestTy->isFloatTy() ? APFloat::IEEEsingle() :
-                  DestTy->isDoubleTy() ? APFloat::IEEEdouble() :
-                  DestTy->isX86_FP80Ty() ? APFloat::x87DoubleExtended() :
-                  DestTy->isFP128Ty() ? APFloat::IEEEquad() :
-                  DestTy->isPPC_FP128Ty() ? APFloat::PPCDoubleDouble() :
-                  APFloat::Bogus(),
-                  APFloat::rmNearestTiesToEven, &ignored);
+      Val.convert(DestTy->getFltSemantics(), APFloat::rmNearestTiesToEven,
+                  &ignored);
       return ConstantFP::get(V->getContext(), Val);
     }
     return nullptr; // Can't fold.
@@ -683,6 +677,11 @@ Constant *llvm::ConstantFoldInsertElementInstruction(Constant *Val,
   if (isa<UndefValue>(Idx))
     return PoisonValue::get(Val->getType());
 
+  // Inserting null into all zeros is still all zeros.
+  // TODO: This is true for undef and poison splats too.
+  if (isa<ConstantAggregateZero>(Val) && Elt->isNullValue())
+    return Val;
+
   ConstantInt *CIdx = dyn_cast<ConstantInt>(Idx);
   if (!CIdx) return nullptr;
 
@@ -724,7 +723,7 @@ Constant *llvm::ConstantFoldShuffleVectorInstruction(Constant *V1, Constant *V2,
 
   // Undefined shuffle mask -> undefined value.
   if (all_of(Mask, [](int Elt) { return Elt == UndefMaskElem; })) {
-    return UndefValue::get(FixedVectorType::get(EltTy, MaskNumElts));
+    return UndefValue::get(VectorType::get(EltTy, MaskEltCount));
   }
 
   // If the mask is all zeros this is a splat, no need to go through all
@@ -2036,8 +2035,18 @@ Constant *llvm::ConstantFoldGetElementPtr(Type *PointeeTy, Constant *C,
     // If inbounds, we can choose an out-of-bounds pointer as a base pointer.
     return InBounds ? PoisonValue::get(GEPTy) : UndefValue::get(GEPTy);
 
-  Constant *Idx0 = cast<Constant>(Idxs[0]);
-  if (Idxs.size() == 1 && (Idx0->isNullValue() || isa<UndefValue>(Idx0)))
+  auto IsNoOp = [&]() {
+    // For non-opaque pointers having multiple indices will change the result
+    // type of the GEP.
+    if (!C->getType()->getScalarType()->isOpaquePointerTy() && Idxs.size() != 1)
+      return false;
+
+    return all_of(Idxs, [](Value *Idx) {
+      Constant *IdxC = cast<Constant>(Idx);
+      return IdxC->isNullValue() || isa<UndefValue>(IdxC);
+    });
+  };
+  if (IsNoOp())
     return GEPTy->isVectorTy() && !C->getType()->isVectorTy()
                ? ConstantVector::getSplat(
                      cast<VectorType>(GEPTy)->getElementCount(), C)
@@ -2090,6 +2099,7 @@ Constant *llvm::ConstantFoldGetElementPtr(Type *PointeeTy, Constant *C,
     //   i32* getelementptr ([3 x i32]* %X, i64 0, i64 0)
     //
     // Don't fold if the cast is changing address spaces.
+    Constant *Idx0 = cast<Constant>(Idxs[0]);
     if (CE->isCast() && Idxs.size() > 1 && Idx0->isNullValue()) {
       PointerType *SrcPtrTy =
         dyn_cast<PointerType>(CE->getOperand(0)->getType());

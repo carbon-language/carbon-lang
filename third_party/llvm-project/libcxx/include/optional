@@ -93,11 +93,11 @@ namespace std {
     template <class U, class... Args>
       constexpr explicit optional(in_place_t, initializer_list<U>, Args &&...);
     template <class U = T>
-      constexpr EXPLICIT optional(U &&);
+      constexpr explicit(see-below) optional(U &&);
     template <class U>
-      EXPLICIT optional(const optional<U> &);   // constexpr in C++20
+      explicit(see-below) optional(const optional<U> &);         // constexpr in C++20
     template <class U>
-      EXPLICIT optional(optional<U> &&);        // constexpr in C++20
+      explicit(see-below) optional(optional<U> &&);              // constexpr in C++20
 
     // 23.6.3.2, destructor
     ~optional(); // constexpr in C++20
@@ -158,23 +158,25 @@ template<class T>
 
 */
 
-#include <__assert>
+#include <__assert> // all public C++ headers provide the assertion handler
 #include <__availability>
 #include <__concepts/invocable.h>
 #include <__config>
+#include <__functional/hash.h>
+#include <__functional/invoke.h>
+#include <__functional/unary_function.h>
+#include <__memory/construct_at.h>
+#include <__tuple>
+#include <__utility/forward.h>
+#include <__utility/in_place.h>
+#include <__utility/move.h>
+#include <__utility/swap.h>
 #include <compare>
-#include <functional>
 #include <initializer_list>
 #include <new>
 #include <stdexcept>
 #include <type_traits>
-#include <utility>
 #include <version>
-
-// TODO: remove these headers
-#include <__memory/allocator_arg_t.h>
-#include <__memory/uses_allocator.h>
-#include <typeinfo>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #  pragma GCC system_header
@@ -386,9 +388,9 @@ struct __optional_storage_base : __optional_destruct_base<_Tp>
     }
 };
 
-// optional<T&> is currently required ill-formed, however it may to be in the
-// future. For this reason it has already been implemented to ensure we can
-// make the change in an ABI compatible manner.
+// optional<T&> is currently required to be ill-formed. However, it may
+// be allowed in the future. For this reason, it has already been implemented
+// to ensure we can make the change in an ABI-compatible manner.
 template <class _Tp>
 struct __optional_storage_base<_Tp, true>
 {

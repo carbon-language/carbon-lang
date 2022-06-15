@@ -7,11 +7,42 @@ set(LLVM_OPTIONAL_SOURCES
   CudaRuntimeWrappers.cpp
   SparseTensorUtils.cpp
   ExecutionEngine.cpp
+  Float16bits.cpp
   RocmRuntimeWrappers.cpp
   RunnerUtils.cpp
   OptUtils.cpp
   JitRunner.cpp
   )
+
+# Use a separate library for OptUtils, to avoid pulling in the entire JIT and
+# codegen infrastructure. Unlike MLIRExecutionEngine, this is part of
+# libMLIR.so.
+add_mlir_library(MLIRExecutionEngineUtils
+  OptUtils.cpp
+
+  ADDITIONAL_HEADER_DIRS
+  ${MLIR_MAIN_INCLUDE_DIR}/mlir/ExecutionEngine
+
+  DEPENDS
+  intrinsics_gen
+
+  LINK_COMPONENTS
+  Analysis
+  Core
+  Coroutines
+  AggressiveInstCombine
+  InstCombine
+  ScalarOpts
+  Vectorize
+  TransformUtils
+  IPO
+  Passes
+  )
+
+# Only enable the ExecutionEngine if the native target is configured in.
+if(NOT TARGET ${LLVM_NATIVE_ARCH})
+  return()
+endif()
 
 if(LLVM_USE_INTEL_JITEVENTS)
   set(LLVM_JIT_LISTENER_LIB
@@ -25,7 +56,6 @@ endif(LLVM_USE_PERF)
 
 add_mlir_library(MLIRExecutionEngine
   ExecutionEngine.cpp
-  OptUtils.cpp
 
   EXCLUDE_FROM_LIBMLIR
 
@@ -52,10 +82,12 @@ add_mlir_library(MLIRExecutionEngine
   TransformUtils
   nativecodegen
   IPO
+  Passes
   ${LLVM_JIT_LISTENER_LIB}
 
   LINK_LIBS PUBLIC
-  MLIRLLVMIR
+  MLIRExecutionEngineUtils
+  MLIRLLVMDialect
   MLIRLLVMToLLVMIRTranslation
   MLIRTargetLLVMIRExport
   )
@@ -77,19 +109,20 @@ add_mlir_library(MLIRJitRunner
   LINK_LIBS PUBLIC
   ${dialect_libs}
   MLIRExecutionEngine
+  MLIRFuncDialect
+  MLIRFuncToLLVM
   MLIRIR
   MLIRParser
-  MLIRStandard
   MLIRLLVMToLLVMIRTranslation
   MLIRTargetLLVMIRExport
   MLIRTransforms
-  MLIRStandardToLLVM
   MLIRSupport
 )
 
 add_mlir_library(mlir_c_runner_utils
   SHARED
   CRunnerUtils.cpp
+  Float16bits.cpp
   SparseTensorUtils.cpp
 
   EXCLUDE_FROM_LIBMLIR
@@ -204,6 +237,33 @@ if(MLIR_ENABLE_ROCM_RUNNER)
 
     EXCLUDE_FROM_LIBMLIR
   )
+
+  # Supress compiler warnings from HIP headers
+  check_cxx_compiler_flag(-Wno-c++98-compat-extra-semi
+    CXX_SUPPORTS_NO_CXX98_COMPAT_EXTRA_SEMI_FLAG)
+  if (CXX_SUPPORTS_CXX98_COMPAT_EXTRA_SEMI_FLAG)
+    target_compile_options(mlir_rocm_runtime PRIVATE
+      "-Wno-c++98-compat-extra-semi")
+  endif()
+  check_cxx_compiler_flag(-Wno-return-type-c-linkage
+      CXX_SUPPORTS_WNO_RETURN_TYPE_C_LINKAGE_FLAG)
+  if (CXX_SUPPORTS_WNO_RETURN_TYPE_C_LINKAGE_FLAG)
+    target_compile_options(mlir_rocm_runtime PRIVATE
+      "-Wno-return-type-c-linkage")
+  endif()
+  check_cxx_compiler_flag(-Wno-nested-anon-types
+    CXX_SUPPORTS_WNO_NESTED_ANON_TYPES_FLAG)
+  if (CXX_SUPPORTS_WNO_NESTED_ANON_TYPES_FLAG)
+    target_compile_options(mlir_rocm_runtime PRIVATE
+      "-Wno-nested-anon-types")
+  endif()
+  check_cxx_compiler_flag(-Wno-gnu-anonymous-struct
+    CXX_SUPPORTS_WNO_GNU_ANONYMOUS_STRUCT_FLAG)
+  if (CXX_SUPPORTS_WNO_GNU_ANONYMOUS_STRUCT_FLAG)
+    target_compile_options(mlir_rocm_runtime PRIVATE
+     "-Wno-gnu-anonymous-struct")
+  endif()
+
   target_compile_definitions(mlir_rocm_runtime
     PRIVATE
     __HIP_PLATFORM_HCC__

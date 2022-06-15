@@ -184,6 +184,9 @@ opt::InputArgList WasmOptTable::parse(ArrayRef<const char *> argv) {
   args = this->ParseArgs(vec, missingIndex, missingCount);
 
   handleColorDiagnostics(args);
+  if (missingCount)
+    error(Twine(args.getArgString(missingIndex)) + ": missing argument");
+
   for (auto *arg : args.filtered(OPT_UNKNOWN))
     error("unknown argument: " + arg->getAsString(args));
   return args;
@@ -335,6 +338,8 @@ static UnresolvedPolicy getUnresolvedSymbolPolicy(opt::InputArgList &args) {
     StringRef s = arg->getValue();
     if (s == "ignore-all")
       return UnresolvedPolicy::Ignore;
+    if (s == "import-dynamic")
+      return UnresolvedPolicy::ImportDynamic;
     if (s == "report-all")
       return errorOrWarn;
     error("unknown --unresolved-symbols value: " + s);
@@ -363,9 +368,6 @@ static void readConfigs(opt::InputArgList &args) {
   config->importUndefined = args.hasArg(OPT_import_undefined);
   config->ltoo = args::getInteger(args, OPT_lto_O, 2);
   config->ltoPartitions = args::getInteger(args, OPT_lto_partitions, 1);
-  config->ltoNewPassManager =
-      args.hasFlag(OPT_no_lto_legacy_pass_manager, OPT_lto_legacy_pass_manager,
-                   LLVM_ENABLE_NEW_PASS_MANAGER);
   config->ltoDebugPassManager = args.hasArg(OPT_lto_debug_pass_manager);
   config->mapFile = args.getLastArgValue(OPT_Map);
   config->optimize = args::getInteger(args, OPT_O, 1);
@@ -527,6 +529,11 @@ static void checkOptions(opt::InputArgList &args) {
     // -pie will change meaning when Module Linking is implemented.
     if (config->pie) {
       warn("creating PIEs, with -pie, is not yet stable");
+    }
+
+    if (config->unresolvedSymbols == UnresolvedPolicy::ImportDynamic) {
+      warn("dynamic imports are not yet stable "
+           "(--unresolved-symbols=import-dynamic)");
     }
   }
 

@@ -20,6 +20,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/VirtualFileSystem.h"
+#include "llvm/Testing/Support/Error.h"
 #include "gmock/gmock-matchers.h"
 #include "gmock/gmock-more-matchers.h"
 #include "gmock/gmock.h"
@@ -58,6 +59,7 @@ MATCHER_P(hasName, Name, "") { return arg.Name == Name; }
 MATCHER_P(templateArgs, TemplArgs, "") {
   return arg.TemplateSpecializationArgs == TemplArgs;
 }
+MATCHER_P(hasKind, Kind, "") { return arg.SymInfo.Kind == Kind; }
 MATCHER_P(declURI, P, "") {
   return StringRef(arg.CanonicalDeclaration.FileURI) == P;
 }
@@ -1013,10 +1015,21 @@ TEST_F(SymbolCollectorTest, SpelledReferences) {
       )cpp",
       "Foo::Foo" /// constructor.
     },
+    { // Unclean identifiers
+      R"cpp(
+        struct Foo {};
+      )cpp",
+      R"cpp(
+        $spelled[[Fo\
+o]] f{};
+      )cpp",
+      "Foo",
+    },
   };
   CollectorOpts.RefFilter = RefKind::All;
   CollectorOpts.RefsInHeaders = false;
   for (const auto& T : TestCases) {
+    SCOPED_TRACE(T.Header + "\n---\n" + T.Main);
     Annotations Header(T.Header);
     Annotations Main(T.Main);
     // Reset the file system.
@@ -1039,10 +1052,14 @@ TEST_F(SymbolCollectorTest, SpelledReferences) {
     }
     const auto SpelledRefs = std::move(SpelledSlabBuilder).build(),
                ImplicitRefs = std::move(ImplicitSlabBuilder).build();
-    EXPECT_THAT(SpelledRefs,
-                Contains(Pair(TargetID, haveRanges(SpelledRanges))));
-    EXPECT_THAT(ImplicitRefs,
-                Contains(Pair(TargetID, haveRanges(ImplicitRanges))));
+    EXPECT_EQ(SpelledRanges.empty(), SpelledRefs.empty());
+    EXPECT_EQ(ImplicitRanges.empty(), ImplicitRefs.empty());
+    if (!SpelledRanges.empty())
+      EXPECT_THAT(SpelledRefs,
+                  Contains(Pair(TargetID, haveRanges(SpelledRanges))));
+    if (!ImplicitRanges.empty())
+      EXPECT_THAT(ImplicitRefs,
+                  Contains(Pair(TargetID, haveRanges(ImplicitRanges))));
   }
 }
 
@@ -1578,15 +1595,22 @@ TEST_F(SymbolCollectorTest, IWYUPragmaWithDoubleQuotes) {
 }
 
 TEST_F(SymbolCollectorTest, SkipIncFileWhenCanonicalizeHeaders) {
-  CollectorOpts.CollectIncludePath = true;
-  CanonicalIncludes Includes;
-  Includes.addMapping(TestHeaderName, "<canonical>");
-  CollectorOpts.Includes = &Includes;
   auto IncFile = testPath("test.inc");
   auto IncURI = URI::create(IncFile).toString();
   InMemoryFileSystem->addFile(IncFile, 0,
                               llvm::MemoryBuffer::getMemBuffer("class X {};"));
-  runSymbolCollector("#include \"test.inc\"\nclass Y {};", /*Main=*/"",
+  llvm::IntrusiveRefCntPtr<FileManager> Files(
+      new FileManager(FileSystemOptions(), InMemoryFileSystem));
+  std::string HeaderCode = "#include \"test.inc\"\nclass Y {};";
+  InMemoryFileSystem->addFile(TestHeaderName, 0,
+                              llvm::MemoryBuffer::getMemBuffer(HeaderCode));
+  auto File = Files->getFileRef(TestHeaderName);
+  ASSERT_THAT_EXPECTED(File, llvm::Succeeded());
+  CanonicalIncludes Includes;
+  Includes.addMapping(*File, "<canonical>");
+  CollectorOpts.CollectIncludePath = true;
+  CollectorOpts.Includes = &Includes;
+  runSymbolCollector(HeaderCode, /*Main=*/"",
                      /*ExtraArgs=*/{"-I", testRoot()});
   EXPECT_THAT(Symbols,
               UnorderedElementsAre(AllOf(qName("X"), declURI(IncURI),
@@ -1937,6 +1961,17 @@ TEST_F(SymbolCollectorTest, Reserved) {
   CollectorOpts.CollectReserved = false;
   runSymbolCollector("", Header); //
   EXPECT_THAT(Symbols, IsEmpty());
+}
+
+TEST_F(SymbolCollectorTest, Concepts) {
+  const char *Header = R"cpp(
+    template <class T>
+    concept A = sizeof(T) <= 8;
+  )cpp";
+  runSymbolCollector("", Header, {"-std=c++20"});
+  EXPECT_THAT(Symbols,
+              UnorderedElementsAre(AllOf(
+                  qName("A"), hasKind(clang::index::SymbolKind::Concept))));
 }
 
 } // namespace

@@ -120,8 +120,7 @@ void AMDGPUMCInstLower::lower(const MachineInstr *MI, MCInst &OutMI) const {
   // FIXME: Should be able to handle this with emitPseudoExpansionLowering. We
   // need to select it to the subtarget specific version, and there's no way to
   // do that with a single pseudo source operation.
-  if (Opcode == AMDGPU::S_SETPC_B64_return ||
-      Opcode == AMDGPU::S_SETPC_B64_return_gfx)
+  if (Opcode == AMDGPU::S_SETPC_B64_return)
     Opcode = AMDGPU::S_SETPC_B64;
   else if (Opcode == AMDGPU::SI_CALL) {
     // SI_CALL is just S_SWAPPC_B64 with an additional operand to track the
@@ -205,6 +204,16 @@ void AMDGPUAsmPrinter::emitInstruction(const MachineInstr *MI) {
     if (MI->getOpcode() == AMDGPU::WAVE_BARRIER) {
       if (isVerbose())
         OutStreamer->emitRawComment(" wave barrier");
+      return;
+    }
+
+    if (MI->getOpcode() == AMDGPU::SCHED_BARRIER) {
+      if (isVerbose()) {
+        std::string HexString;
+        raw_string_ostream HexStream(HexString);
+        HexStream << format_hex(MI->getOperand(0).getImm(), 10, true);
+        OutStreamer->emitRawComment(" sched_barrier mask(" + HexString + ")");
+      }
       return;
     }
 

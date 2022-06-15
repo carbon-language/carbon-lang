@@ -9,7 +9,6 @@
 #include "FileIndex.h"
 #include "CollectMacros.h"
 #include "ParsedAST.h"
-#include "SymbolCollector.h"
 #include "index/CanonicalIncludes.h"
 #include "index/Index.h"
 #include "index/MemIndex.h"
@@ -18,6 +17,7 @@
 #include "index/Relation.h"
 #include "index/Serialization.h"
 #include "index/Symbol.h"
+#include "index/SymbolCollector.h"
 #include "index/SymbolID.h"
 #include "index/SymbolOrigin.h"
 #include "index/dex/Dex.h"
@@ -84,7 +84,7 @@ SlabTuple indexSymbols(ASTContext &AST, Preprocessor &PP,
     Collector.handleMacros(*MacroRefsToIndex);
 
   const auto &SM = AST.getSourceManager();
-  const auto *MainFileEntry = SM.getFileEntryForID(SM.getMainFileID());
+  const auto MainFileEntry = SM.getFileEntryRefForID(SM.getMainFileID());
   std::string FileName =
       std::string(MainFileEntry ? MainFileEntry->getName() : "");
 
@@ -425,12 +425,7 @@ FileIndex::FileIndex()
       MainFileSymbols(IndexContents::All),
       MainFileIndex(std::make_unique<MemIndex>()) {}
 
-void FileIndex::updatePreamble(PathRef Path, llvm::StringRef Version,
-                               ASTContext &AST, Preprocessor &PP,
-                               const CanonicalIncludes &Includes) {
-  IndexFileIn IF;
-  std::tie(IF.Symbols, std::ignore, IF.Relations) =
-      indexHeaderSymbols(Version, AST, PP, Includes);
+void FileIndex::updatePreamble(IndexFileIn IF) {
   FileShardedIndex ShardedIndex(std::move(IF));
   for (auto Uri : ShardedIndex.getAllSources()) {
     auto IF = ShardedIndex.getShard(Uri);
@@ -459,6 +454,15 @@ void FileIndex::updatePreamble(PathRef Path, llvm::StringRef Version,
         "{0} bytes",
         PreambleIndex.estimateMemoryUsage());
   }
+}
+
+void FileIndex::updatePreamble(PathRef Path, llvm::StringRef Version,
+                               ASTContext &AST, Preprocessor &PP,
+                               const CanonicalIncludes &Includes) {
+  IndexFileIn IF;
+  std::tie(IF.Symbols, std::ignore, IF.Relations) =
+      indexHeaderSymbols(Version, AST, PP, Includes);
+  updatePreamble(std::move(IF));
 }
 
 void FileIndex::updateMain(PathRef Path, ParsedAST &AST) {

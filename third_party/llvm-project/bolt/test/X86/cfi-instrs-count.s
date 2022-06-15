@@ -3,7 +3,7 @@
 
 # RUN: llvm-mc -filetype=obj -triple x86_64-unknown-unknown %s -o %t.o
 # RUN: %clang %cflags %t.o -o %t.exe
-# RUN: llvm-bolt %t.exe -o /dev/null -print-cfg 2>&1 | FileCheck %s
+# RUN: llvm-bolt %t.exe -o /dev/null --print-cfg 2>&1 | FileCheck %s
 # 
 # CHECK:  Binary Function "_Z7catchitv" after building cfg {
 # CHECK:    CFI Instrs  : 6
@@ -109,8 +109,3 @@ _Z7catchitv:
 
 	.cfi_endproc
 .size _Z7catchitv, .-_Z7catchitv
-.set "_Z5raisev", 0
-.set _ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc, 0
-.set _ZNSolsEPFRSoS_E, 0
-.set __cxa_begin_catch, 0
-.set __cxa_end_catch, 0

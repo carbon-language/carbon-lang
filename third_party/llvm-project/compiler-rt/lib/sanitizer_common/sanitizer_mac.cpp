@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_platform.h"
-#if SANITIZER_MAC
+#if SANITIZER_APPLE
 #include "sanitizer_mac.h"
 #include "interception/interception.h"
 
@@ -880,6 +880,9 @@ SignalContext::WriteFlag SignalContext::GetWriteFlag() const {
 #if defined(__x86_64__) || defined(__i386__)
   ucontext_t *ucontext = static_cast<ucontext_t*>(context);
   return ucontext->uc_mcontext->__es.__err & 2 /*T_PF_WRITE*/ ? Write : Read;
+#elif defined(__arm64__)
+  ucontext_t *ucontext = static_cast<ucontext_t*>(context);
+  return ucontext->uc_mcontext->__es.__esr & 0x40 /*ISS_DA_WNR*/ ? Write : Read;
 #else
   return Unknown;
 #endif
@@ -903,11 +906,7 @@ static void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
   ucontext_t *ucontext = (ucontext_t*)context;
 # if defined(__aarch64__)
   *pc = AARCH64_GET_REG(pc);
-#   if defined(__IPHONE_8_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_8_0
   *bp = AARCH64_GET_REG(fp);
-#   else
-  *bp = AARCH64_GET_REG(lr);
-#   endif
   *sp = AARCH64_GET_REG(sp);
 # elif defined(__x86_64__)
   *pc = ucontext->uc_mcontext->__ss.__rip;
@@ -1059,12 +1058,12 @@ void MaybeReexec() {
   }
 
   // Verify that interceptors really work.  We'll use dlsym to locate
-  // "pthread_create", if interceptors are working, it should really point to
-  // "wrap_pthread_create" within our own dylib.
-  Dl_info info_pthread_create;
-  void *dlopen_addr = dlsym(RTLD_DEFAULT, "pthread_create");
-  RAW_CHECK(dladdr(dlopen_addr, &info_pthread_create));
-  if (internal_strcmp(info.dli_fname, info_pthread_create.dli_fname) != 0) {
+  // "puts", if interceptors are working, it should really point to
+  // "wrap_puts" within our own dylib.
+  Dl_info info_puts;
+  void *dlopen_addr = dlsym(RTLD_DEFAULT, "puts");
+  RAW_CHECK(dladdr(dlopen_addr, &info_puts));
+  if (internal_strcmp(info.dli_fname, info_puts.dli_fname) != 0) {
     Report(
         "ERROR: Interceptors are not working. This may be because %s is "
         "loaded too late (e.g. via dlopen). Please launch the executable "
@@ -1404,7 +1403,7 @@ void DumpProcessMap() {
     char uuid_str[128];
     FormatUUID(uuid_str, sizeof(uuid_str), modules[i].uuid());
     Printf("0x%zx-0x%zx %s (%s) %s\n", modules[i].base_address(),
-           modules[i].max_executable_address(), modules[i].full_name(),
+           modules[i].max_address(), modules[i].full_name(),
            ModuleArchToString(modules[i].arch()), uuid_str);
   }
   Printf("End of module map.\n");
@@ -1430,4 +1429,4 @@ void InitializePlatformCommonFlags(CommonFlags *cf) {}
 
 }  // namespace __sanitizer
 
-#endif  // SANITIZER_MAC
+#endif  // SANITIZER_APPLE

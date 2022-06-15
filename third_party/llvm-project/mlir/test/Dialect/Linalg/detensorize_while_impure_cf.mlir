@@ -1,5 +1,5 @@
-// RUN: mlir-opt %s -pass-pipeline="builtin.func(linalg-detensorize{aggressive-mode})" | FileCheck %s -check-prefix=DET-ALL
-// RUN: mlir-opt %s -pass-pipeline="builtin.func(linalg-detensorize)" | FileCheck %s -check-prefix=DET-CF
+// RUN: mlir-opt %s -pass-pipeline="func.func(linalg-detensorize{aggressive-mode})" | FileCheck %s -check-prefix=DET-ALL
+// RUN: mlir-opt %s -pass-pipeline="func.func(linalg-detensorize)" | FileCheck %s -check-prefix=DET-CF
 
 #map0 = affine_map<() -> ()>
 #map1 = affine_map<(i) -> ()>
@@ -21,7 +21,7 @@
   iterator_types = ["parallel"]
 }
 
-func @main(%farg0: tensor<10xi32>, %farg1: tensor<i32>) -> tensor<i32> attributes {} {
+func.func @main(%farg0: tensor<10xi32>, %farg1: tensor<i32>) -> tensor<i32> attributes {} {
   cf.br ^bb1(%farg0 : tensor<10xi32>)
 
 ^bb1(%0: tensor<10xi32>):  // 2 preds: ^bb0, ^bb2

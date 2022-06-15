@@ -23,7 +23,7 @@ void fir::runtime::genRaggedArrayAllocate(mlir::Location loc,
   auto i64Ty = builder.getIntegerType(64);
   auto func =
       fir::runtime::getRuntimeFunc<mkRTKey(RaggedArrayAllocate)>(loc, builder);
-  auto fTy = func.getType();
+  auto fTy = func.getFunctionType();
   auto i1Ty = builder.getIntegerType(1);
   fir::SequenceType::Shape shape = {
       static_cast<fir::SequenceType::Extent>(rank)};
@@ -35,7 +35,7 @@ void fir::runtime::genRaggedArrayAllocate(mlir::Location loc,
   auto ptrTy = builder.getRefType(eleTy.cast<mlir::TupleType>().getType(1));
   auto ptr = builder.create<fir::CoordinateOp>(loc, ptrTy, header, one);
   auto heap = builder.create<fir::LoadOp>(loc, ptr);
-  auto cmp = builder.genIsNull(loc, heap);
+  auto cmp = builder.genIsNullAddr(loc, heap);
   builder.genIfThen(loc, cmp)
       .genThen([&]() {
         auto asHeadersVal = builder.createIntegerConstant(loc, i1Ty, asHeaders);
@@ -61,7 +61,7 @@ void fir::runtime::genRaggedArrayDeallocate(mlir::Location loc,
                                             mlir::Value header) {
   auto func = fir::runtime::getRuntimeFunc<mkRTKey(RaggedArrayDeallocate)>(
       loc, builder);
-  auto fTy = func.getType();
+  auto fTy = func.getFunctionType();
   auto args = fir::runtime::createArguments(builder, loc, fTy, header);
   builder.create<fir::CallOp>(loc, func, args);
 }

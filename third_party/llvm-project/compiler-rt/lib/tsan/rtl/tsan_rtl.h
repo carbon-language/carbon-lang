@@ -235,7 +235,7 @@ struct ThreadState {
 } ALIGNED(SANITIZER_CACHE_LINE_SIZE);
 
 #if !SANITIZER_GO
-#if SANITIZER_MAC || SANITIZER_ANDROID
+#if SANITIZER_APPLE || SANITIZER_ANDROID
 ThreadState *cur_thread();
 void set_cur_thread(ThreadState *thr);
 void cur_thread_finalize();
@@ -256,7 +256,7 @@ inline void set_cur_thread(ThreadState *thr) {
   reinterpret_cast<ThreadState *>(cur_thread_placeholder)->current = thr;
 }
 inline void cur_thread_finalize() { }
-#  endif  // SANITIZER_MAC || SANITIZER_ANDROID
+#  endif  // SANITIZER_APPLE || SANITIZER_ANDROID
 #endif  // SANITIZER_GO
 
 class ThreadContext final : public ThreadContextBase {
@@ -376,6 +376,7 @@ class ScopedReportBase {
   void AddLocation(uptr addr, uptr size);
   void AddSleep(StackID stack_id);
   void SetCount(int count);
+  void SetSigNum(int sig);
 
   const ReportDesc *GetReport() const;
 

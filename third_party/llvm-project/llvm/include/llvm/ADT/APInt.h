@@ -1218,7 +1218,7 @@ public:
   /// Truncate to new width.
   ///
   /// Truncate the APInt to a specified width. It is an error to specify a width
-  /// that is greater than or equal to the current width.
+  /// that is greater than the current width.
   APInt trunc(unsigned width) const;
 
   /// Truncate to new width with unsigned saturation.
@@ -1238,7 +1238,7 @@ public:
   ///
   /// This operation sign extends the APInt to a new width. If the high order
   /// bit is set, the fill on the left will be done with 1 bits, otherwise zero.
-  /// It is an error to specify a width that is less than or equal to the
+  /// It is an error to specify a width that is less than the
   /// current width.
   APInt sext(unsigned width) const;
 
@@ -1246,7 +1246,7 @@ public:
   ///
   /// This operation zero extends the APInt to a new width. The high order bits
   /// are filled with 0 bits.  It is an error to specify a width that is less
-  /// than or equal to the current width.
+  /// than the current width.
   APInt zext(unsigned width) const;
 
   /// Sign extend or truncate to width
@@ -1260,24 +1260,6 @@ public:
   /// Make this APInt have the bit width given by \p width. The value is zero
   /// extended, truncated, or left alone to make it that width.
   APInt zextOrTrunc(unsigned width) const;
-
-  /// Truncate to width
-  ///
-  /// Make this APInt have the bit width given by \p width. The value is
-  /// truncated or left alone to make it that width.
-  APInt truncOrSelf(unsigned width) const;
-
-  /// Sign extend or truncate to width
-  ///
-  /// Make this APInt have the bit width given by \p width. The value is sign
-  /// extended, or left alone to make it that width.
-  APInt sextOrSelf(unsigned width) const;
-
-  /// Zero extend or truncate to width
-  ///
-  /// Make this APInt have the bit width given by \p width. The value is zero
-  /// extended, or left alone to make it that width.
-  APInt zextOrSelf(unsigned width) const;
 
   /// @}
   /// \name Bit Manipulation Operators
@@ -1505,6 +1487,11 @@ public:
   /// This method determines how many bits are required to hold the APInt
   /// equivalent of the string given by \p str.
   static unsigned getBitsNeeded(StringRef str, uint8_t radix);
+
+  /// Get the bits that are sufficient to represent the string value. This may
+  /// over estimate the amount of bits required, but it does not require
+  /// parsing the value in the string.
+  static unsigned getSufficientBitsNeeded(StringRef Str, uint8_t Radix);
 
   /// The APInt version of the countLeadingZeros functions in
   ///   MathExtras.h.

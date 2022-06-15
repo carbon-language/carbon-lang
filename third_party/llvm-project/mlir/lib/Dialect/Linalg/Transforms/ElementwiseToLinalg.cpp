@@ -13,7 +13,6 @@
 #include "mlir/Dialect/Linalg/IR/Linalg.h"
 #include "mlir/Dialect/Linalg/Transforms/Transforms.h"
 #include "mlir/Dialect/Linalg/Utils/Utils.h"
-#include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/Transforms/DialectConversion.h"
 
 using namespace mlir;
@@ -99,16 +98,14 @@ struct ConvertAnyElementwiseMappableOpOnRankedTensors : public RewritePattern {
         /*iteratorTypes=*/iteratorTypes,
         /*bodyBuilder=*/
         [&](OpBuilder &builder, Location loc, ValueRange regionArgs) {
-          OperationState state(loc, op->getName());
-          state.addAttributes(op->getAttrs());
-          // Only take the input operands in the cloned elementwise op.
-          state.addOperands(regionArgs.take_front(op->getNumOperands()));
           auto resultTypes = llvm::to_vector<6>(
               llvm::map_range(op->getResultTypes(), [](Type type) {
                 return type.cast<TensorType>().getElementType();
               }));
-          state.addTypes(resultTypes);
-          auto *scalarOp = builder.createOperation(state);
+          auto *scalarOp =
+              builder.create(loc, op->getName().getIdentifier(),
+                             regionArgs.take_front(op->getNumOperands()),
+                             resultTypes, op->getAttrs());
           builder.create<linalg::YieldOp>(loc, scalarOp->getResults());
         });
     return success();

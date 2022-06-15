@@ -14,6 +14,7 @@
 #ifndef BUILTIN_ATTRIBUTES
 #define BUILTIN_ATTRIBUTES
 
+include "mlir/IR/AttrTypeBase.td"
 include "mlir/IR/BuiltinDialect.td"
 include "mlir/IR/BuiltinAttributeInterfaces.td"
 include "mlir/IR/SubElementInterfaces.td"
@@ -152,7 +153,8 @@ def Builtin_DenseIntOrFPElementsAttr : Builtin_Attr<
     Syntax:
 
     ```
-    dense-intorfloat-elements-attribute ::= `dense` `<` attribute-value `>` `:`
+    tensor-literal ::= integer-literal | float-literal | bool-literal | [] | [tensor-literal (, tensor-literal)* ]
+    dense-intorfloat-elements-attribute ::= `dense` `<` tensor-literal `>` `:`
                                             ( tensor-type | vector-type )
     ```
 
@@ -234,19 +236,27 @@ def Builtin_DenseIntOrFPElementsAttr : Builtin_Attr<
     /// values. Each APFloat value is expected to have the same bitwidth as the
     /// element type of 'type'. 'type' must be a vector or tensor with static
     /// shape.
+    ///
+    /// If the `values` array only has a single element, then this constructs
+    /// splat of that value.
     static DenseElementsAttr getRaw(ShapedType type, size_t storageWidth,
-                                    ArrayRef<APFloat> values, bool isSplat);
+                                    ArrayRef<APFloat> values);
 
     /// Constructs a dense elements attribute from an array of raw APInt values.
     /// Each APInt value is expected to have the same bitwidth as the element
     /// type of 'type'. 'type' must be a vector or tensor with static shape.
+    ///
+    /// If the `values` array only has a single element, then this constructs
+    /// splat of that value.
     static DenseElementsAttr getRaw(ShapedType type, size_t storageWidth,
-                                    ArrayRef<APInt> values, bool isSplat);
+                                    ArrayRef<APInt> values);
 
     /// Get or create a new dense elements attribute instance with the given raw
     /// data buffer. 'type' must be a vector or tensor with static shape.
-    static DenseElementsAttr getRaw(ShapedType type, ArrayRef<char> data,
-                                    bool isSplat);
+    ///
+    /// If the `values` array only has a single element, then this constructs
+    /// splat of that value.
+    static DenseElementsAttr getRaw(ShapedType type, ArrayRef<char> data);
 
     /// Overload of the raw 'get' method that asserts that the given type is of
     /// complex type. This method is used to verify type invariants that the
@@ -262,7 +272,6 @@ def Builtin_DenseIntOrFPElementsAttr : Builtin_Attr<
                                               ArrayRef<char> data,
                                               int64_t dataEltSize, bool isInt,
                                               bool isSigned);
-
   public:
   }];
   let genAccessors = 0;
@@ -1098,11 +1107,11 @@ def Builtin_UnitAttr : Builtin_Attr<"Unit"> {
 
     ```mlir
     // A unit attribute defined with the `unit` value specifier.
-    func @verbose_form() attributes {dialectName.unitAttr = unit}
+    func.func @verbose_form() attributes {dialectName.unitAttr = unit}
 
     // A unit attribute in an attribute dictionary can also be defined without
     // the value specifier.
-    func @simple_form() attributes {dialectName.unitAttr}
+    func.func @simple_form() attributes {dialectName.unitAttr}
     ```
   }];
   let extraClassDeclaration = [{

@@ -235,6 +235,8 @@ void macho::addNonLazyBindingEntries(const Symbol *sym,
     in.rebase->addEntry(isec, offset);
     if (defined->isExternalWeakDef())
       in.weakBinding->addEntry(sym, isec, offset, addend);
+    else if (defined->interposable)
+      in.binding->addEntry(sym, isec, offset, addend);
   } else {
     // Undefined symbols are filtered out in scanRelocations(); we should never
     // get here
@@ -417,6 +419,13 @@ static int16_t ordinalForDylibSymbol(const DylibSymbol &dysym) {
   return dysym.getFile()->ordinal;
 }
 
+static int16_t ordinalForSymbol(const Symbol &sym) {
+  if (const auto *dysym = dyn_cast<DylibSymbol>(&sym))
+    return ordinalForDylibSymbol(*dysym);
+  assert(cast<Defined>(&sym)->interposable);
+  return BIND_SPECIAL_DYLIB_FLAT_LOOKUP;
+}
+
 static void encodeDylibOrdinal(int16_t ordinal, raw_svector_ostream &os) {
   if (ordinal <= 0) {
     os << static_cast<uint8_t>(BIND_OPCODE_SET_DYLIB_SPECIAL_IMM |
@@ -486,14 +495,14 @@ void BindingSection::finalizeContents() {
   int16_t lastOrdinal = 0;
 
   for (auto &p : sortBindings(bindingsMap)) {
-    const DylibSymbol *sym = p.first;
+    const Symbol *sym = p.first;
     std::vector<BindingEntry> &bindings = p.second;
     uint8_t flags = BIND_OPCODE_SET_SYMBOL_TRAILING_FLAGS_IMM;
     if (sym->isWeakRef())
       flags |= BIND_SYMBOL_FLAGS_WEAK_IMPORT;
     os << flags << sym->getName() << '\0'
        << static_cast<uint8_t>(BIND_OPCODE_SET_TYPE_IMM | BIND_TYPE_POINTER);
-    int16_t ordinal = ordinalForDylibSymbol(*sym);
+    int16_t ordinal = ordinalForSymbol(*sym);
     if (ordinal != lastOrdinal) {
       encodeDylibOrdinal(ordinal, os);
       lastOrdinal = ordinal;
@@ -596,7 +605,7 @@ bool StubHelperSection::isNeeded() const { return in.lazyBinding->isNeeded(); }
 void StubHelperSection::writeTo(uint8_t *buf) const {
   target->writeStubHelperHeader(buf);
   size_t off = target->stubHelperHeaderSize;
-  for (const DylibSymbol *sym : in.lazyBinding->getEntries()) {
+  for (const Symbol *sym : in.lazyBinding->getEntries()) {
     target->writeStubHelperEntry(buf + off, *sym, addr + off);
     off += target->stubHelperEntrySize;
   }
@@ -625,6 +634,7 @@ void StubHelperSection::setup() {
       make<Defined>("__dyld_private", nullptr, in.imageLoaderCache, 0, 0,
                     /*isWeakDef=*/false,
                     /*isExternal=*/false, /*isPrivateExtern=*/false,
+                    /*includeInSymtab=*/true,
                     /*isThumb=*/false, /*isReferencedDynamically=*/false,
                     /*noDeadStrip=*/false);
   dyldPrivate->used = true;
@@ -667,7 +677,7 @@ LazyBindingSection::LazyBindingSection()
 void LazyBindingSection::finalizeContents() {
   // TODO: Just precompute output size here instead of writing to a temporary
   // buffer
-  for (DylibSymbol *sym : entries)
+  for (Symbol *sym : entries)
     sym->lazyBindOffset = encode(*sym);
 }
 
@@ -675,11 +685,11 @@ void LazyBindingSection::writeTo(uint8_t *buf) const {
   memcpy(buf, contents.data(), contents.size());
 }
 
-void LazyBindingSection::addEntry(DylibSymbol *dysym) {
-  if (entries.insert(dysym)) {
-    dysym->stubsHelperIndex = entries.size() - 1;
+void LazyBindingSection::addEntry(Symbol *sym) {
+  if (entries.insert(sym)) {
+    sym->stubsHelperIndex = entries.size() - 1;
     in.rebase->addEntry(in.lazyPointers->isec,
-                        dysym->stubsIndex * target->wordSize);
+                        sym->stubsIndex * target->wordSize);
   }
 }
 
@@ -689,15 +699,15 @@ void LazyBindingSection::addEntry(DylibSymbol *dysym) {
 // BIND_OPCODE_DONE terminator. As such, unlike in the non-lazy-binding case,
 // we cannot encode just the differences between symbols; we have to emit the
 // complete bind information for each symbol.
-uint32_t LazyBindingSection::encode(const DylibSymbol &sym) {
+uint32_t LazyBindingSection::encode(const Symbol &sym) {
   uint32_t opstreamOffset = contents.size();
   OutputSegment *dataSeg = in.lazyPointers->parent;
   os << static_cast<uint8_t>(BIND_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB |
                              dataSeg->index);
-  uint64_t offset = in.lazyPointers->addr - dataSeg->addr +
-                    sym.stubsIndex * target->wordSize;
+  uint64_t offset =
+      in.lazyPointers->addr - dataSeg->addr + sym.stubsIndex * target->wordSize;
   encodeULEB128(offset, os);
-  encodeDylibOrdinal(ordinalForDylibSymbol(sym), os);
+  encodeDylibOrdinal(ordinalForSymbol(sym), os);
 
   uint8_t flags = BIND_OPCODE_SET_SYMBOL_TRAILING_FLAGS_IMM;
   if (sym.isWeakRef())
@@ -761,7 +771,7 @@ static std::vector<MachO::data_in_code_entry> collectDataInCodeEntries() {
             [](const MachO::data_in_code_entry &entry, uint64_t addr) {
               return entry.offset < addr;
             });
-        const uint64_t endAddr = beginAddr + isec->getFileSize();
+        const uint64_t endAddr = beginAddr + isec->getSize();
         for (const auto end = entries.end();
              it != end && it->offset + it->length <= endAddr; ++it)
           dataInCodeEntries.push_back(
@@ -880,32 +890,46 @@ void SymtabSection::emitStabs() {
     stabs.emplace_back(std::move(astStab));
   }
 
-  std::vector<Defined *> symbolsNeedingStabs;
+  // Cache the file ID for each symbol in an std::pair for faster sorting.
+  using SortingPair = std::pair<Defined *, int>;
+  std::vector<SortingPair> symbolsNeedingStabs;
   for (const SymtabEntry &entry :
        concat<SymtabEntry>(localSymbols, externalSymbols)) {
     Symbol *sym = entry.sym;
     assert(sym->isLive() &&
            "dead symbols should not be in localSymbols, externalSymbols");
     if (auto *defined = dyn_cast<Defined>(sym)) {
+      // Excluded symbols should have been filtered out in finalizeContents().
+      assert(defined->includeInSymtab);
+
       if (defined->isAbsolute())
         continue;
+
+      // Constant-folded symbols go in the executable's symbol table, but don't
+      // get a stabs entry.
+      if (defined->wasIdenticalCodeFolded)
+        continue;
+
       InputSection *isec = defined->isec;
       ObjFile *file = dyn_cast_or_null<ObjFile>(isec->getFile());
       if (!file || !file->compileUnit)
         continue;
-      symbolsNeedingStabs.push_back(defined);
+
+      symbolsNeedingStabs.emplace_back(defined, defined->isec->getFile()->id);
     }
   }
 
-  llvm::stable_sort(symbolsNeedingStabs, [&](Defined *a, Defined *b) {
-    return a->isec->getFile()->id < b->isec->getFile()->id;
-  });
+  llvm::stable_sort(symbolsNeedingStabs,
+                    [&](const SortingPair &a, const SortingPair &b) {
+                      return a.second < b.second;
+                    });
 
   // Emit STABS symbols so that dsymutil and/or the debugger can map address
   // regions in the final binary to the source and object files from which they
   // originated.
   InputFile *lastFile = nullptr;
-  for (Defined *defined : symbolsNeedingStabs) {
+  for (SortingPair &pair : symbolsNeedingStabs) {
+    Defined *defined = pair.first;
     InputSection *isec = defined->isec;
     ObjFile *file = cast<ObjFile>(isec->getFile());
 
@@ -943,16 +967,42 @@ void SymtabSection::finalizeContents() {
     symbols.push_back({sym, strx});
   };
 
+  std::function<void(Symbol *)> localSymbolsHandler;
+  switch (config->localSymbolsPresence) {
+  case SymtabPresence::All:
+    localSymbolsHandler = [&](Symbol *sym) { addSymbol(localSymbols, sym); };
+    break;
+  case SymtabPresence::None:
+    localSymbolsHandler = [&](Symbol *) { /* Do nothing*/ };
+    break;
+  case SymtabPresence::SelectivelyIncluded:
+    localSymbolsHandler = [&](Symbol *sym) {
+      if (config->localSymbolPatterns.match(sym->getName()))
+        addSymbol(localSymbols, sym);
+    };
+    break;
+  case SymtabPresence::SelectivelyExcluded:
+    localSymbolsHandler = [&](Symbol *sym) {
+      if (!config->localSymbolPatterns.match(sym->getName()))
+        addSymbol(localSymbols, sym);
+    };
+    break;
+  }
+
   // Local symbols aren't in the SymbolTable, so we walk the list of object
   // files to gather them.
-  for (const InputFile *file : inputFiles) {
-    if (auto *objFile = dyn_cast<ObjFile>(file)) {
-      for (Symbol *sym : objFile->symbols) {
-        if (auto *defined = dyn_cast_or_null<Defined>(sym)) {
-          if (!defined->isExternal() && defined->isLive()) {
-            StringRef name = defined->getName();
-            if (!name.startswith("l") && !name.startswith("L"))
-              addSymbol(localSymbols, sym);
+  // But if `-x` is set, then we don't need to. localSymbolsHandler() will do
+  // the right thing regardless, but this check is a perf optimization because
+  // iterating through all the input files and their symbols is expensive.
+  if (config->localSymbolsPresence != SymtabPresence::None) {
+    for (const InputFile *file : inputFiles) {
+      if (auto *objFile = dyn_cast<ObjFile>(file)) {
+        for (Symbol *sym : objFile->symbols) {
+          if (auto *defined = dyn_cast_or_null<Defined>(sym)) {
+            if (defined->isExternal() || !defined->isLive() ||
+                !defined->includeInSymtab)
+              continue;
+            localSymbolsHandler(sym);
           }
         }
       }
@@ -962,7 +1012,7 @@ void SymtabSection::finalizeContents() {
   // __dyld_private is a local symbol too. It's linker-created and doesn't
   // exist in any object file.
   if (Defined *dyldPrivate = in.stubHelper->dyldPrivate)
-    addSymbol(localSymbols, dyldPrivate);
+    localSymbolsHandler(dyldPrivate);
 
   for (Symbol *sym : symtab->getSymbols()) {
     if (!sym->isLive())
@@ -972,7 +1022,7 @@ void SymtabSection::finalizeContents() {
         continue;
       assert(defined->isExternal());
       if (defined->privateExtern)
-        addSymbol(localSymbols, defined);
+        localSymbolsHandler(defined);
       else
         addSymbol(externalSymbols, defined);
     } else if (auto *dysym = dyn_cast<DylibSymbol>(sym)) {
@@ -1193,7 +1243,7 @@ void CodeSignatureSection::writeHashes(uint8_t *buf) const {
                     std::min(codeEnd - code, static_cast<ssize_t>(blockSize)));
     SHA256 hasher;
     hasher.update(block);
-    StringRef hash = hasher.final();
+    std::array<uint8_t, 32> hash = hasher.final();
     assert(hash.size() == hashSize);
     memcpy(hashes, hash.data(), hashSize);
     code += blockSize;
@@ -1341,7 +1391,10 @@ void CStringSection::finalizeContents() {
     for (size_t i = 0, e = isec->pieces.size(); i != e; ++i) {
       if (!isec->pieces[i].live)
         continue;
-      uint32_t pieceAlign = MinAlign(isec->pieces[i].inSecOff, align);
+      // See comment above DeduplicatedCStringSection for how alignment is
+      // handled.
+      uint32_t pieceAlign =
+          1 << countTrailingZeros(isec->align | isec->pieces[i].inSecOff);
       offset = alignTo(offset, pieceAlign);
       isec->pieces[i].outSecOff = offset;
       isec->isFinal = true;
@@ -1351,45 +1404,89 @@ void CStringSection::finalizeContents() {
   }
   size = offset;
 }
+
 // Mergeable cstring literals are found under the __TEXT,__cstring section. In
 // contrast to ELF, which puts strings that need different alignments into
 // different sections, clang's Mach-O backend puts them all in one section.
 // Strings that need to be aligned have the .p2align directive emitted before
-// them, which simply translates into zero padding in the object file.
+// them, which simply translates into zero padding in the object file. In other
+// words, we have to infer the desired alignment of these cstrings from their
+// addresses.
 //
-// I *think* ld64 extracts the desired per-string alignment from this data by
-// preserving each string's offset from the last section-aligned address. I'm
-// not entirely certain since it doesn't seem consistent about doing this, and
-// in fact doesn't seem to be correct in general: we can in fact can induce ld64
-// to produce a crashing binary just by linking in an additional object file
-// that only contains a duplicate cstring at a different alignment. See PR50563
-// for details.
+// We differ slightly from ld64 in how we've chosen to align these cstrings.
+// Both LLD and ld64 preserve the number of trailing zeros in each cstring's
+// address in the input object files. When deduplicating identical cstrings,
+// both linkers pick the cstring whose address has more trailing zeros, and
+// preserve the alignment of that address in the final binary. However, ld64
+// goes a step further and also preserves the offset of the cstring from the
+// last section-aligned address.  I.e. if a cstring is at offset 18 in the
+// input, with a section alignment of 16, then both LLD and ld64 will ensure the
+// final address is 2-byte aligned (since 18 == 16 + 2). But ld64 will also
+// ensure that the final address is of the form 16 * k + 2 for some k.
 //
-// On x86_64, the cstrings we've seen so far that require special alignment are
-// all accessed by SIMD operations -- x86_64 requires SIMD accesses to be
-// 16-byte-aligned. arm64 also seems to require 16-byte-alignment in some cases
-// (PR50791), but I haven't tracked down the root cause. So for now, I'm just
-// aligning all strings to 16 bytes.  This is indeed wasteful, but
-// implementation-wise it's simpler than preserving per-string
-// alignment+offsets. It also avoids the aforementioned crash after
-// deduplication of differently-aligned strings.  Finally, the overhead is not
-// huge: using 16-byte alignment (vs no alignment) is only a 0.5% size overhead
-// when linking chromium_framework on x86_64.
-DeduplicatedCStringSection::DeduplicatedCStringSection()
-    : builder(StringTableBuilder::RAW, /*Alignment=*/16) {}
-
+// Note that ld64's heuristic means that a dedup'ed cstring's final address is
+// dependent on the order of the input object files. E.g. if in addition to the
+// cstring at offset 18 above, we have a duplicate one in another file with a
+// `.cstring` section alignment of 2 and an offset of zero, then ld64 will pick
+// the cstring from the object file earlier on the command line (since both have
+// the same number of trailing zeros in their address). So the final cstring may
+// either be at some address `16 * k + 2` or at some address `2 * k`.
+//
+// I've opted not to follow this behavior primarily for implementation
+// simplicity, and secondarily to save a few more bytes. It's not clear to me
+// that preserving the section alignment + offset is ever necessary, and there
+// are many cases that are clearly redundant. In particular, if an x86_64 object
+// file contains some strings that are accessed via SIMD instructions, then the
+// .cstring section in the object file will be 16-byte-aligned (since SIMD
+// requires its operand addresses to be 16-byte aligned). However, there will
+// typically also be other cstrings in the same file that aren't used via SIMD
+// and don't need this alignment. They will be emitted at some arbitrary address
+// `A`, but ld64 will treat them as being 16-byte aligned with an offset of `16
+// % A`.
 void DeduplicatedCStringSection::finalizeContents() {
-  // Add all string pieces to the string table builder to create section
-  // contents.
-  for (CStringInputSection *isec : inputs) {
-    for (size_t i = 0, e = isec->pieces.size(); i != e; ++i)
-      if (isec->pieces[i].live)
-        isec->pieces[i].outSecOff =
-            builder.add(isec->getCachedHashStringRef(i));
-    isec->isFinal = true;
+  // Find the largest alignment required for each string.
+  for (const CStringInputSection *isec : inputs) {
+    for (size_t i = 0, e = isec->pieces.size(); i != e; ++i) {
+      const StringPiece &piece = isec->pieces[i];
+      if (!piece.live)
+        continue;
+      auto s = isec->getCachedHashStringRef(i);
+      assert(isec->align != 0);
+      uint8_t trailingZeros = countTrailingZeros(isec->align | piece.inSecOff);
+      auto it = stringOffsetMap.insert(
+          std::make_pair(s, StringOffset(trailingZeros)));
+      if (!it.second && it.first->second.trailingZeros < trailingZeros)
+        it.first->second.trailingZeros = trailingZeros;
+    }
   }
 
-  builder.finalizeInOrder();
+  // Assign an offset for each string and save it to the corresponding
+  // StringPieces for easy access.
+  for (CStringInputSection *isec : inputs) {
+    for (size_t i = 0, e = isec->pieces.size(); i != e; ++i) {
+      if (!isec->pieces[i].live)
+        continue;
+      auto s = isec->getCachedHashStringRef(i);
+      auto it = stringOffsetMap.find(s);
+      assert(it != stringOffsetMap.end());
+      StringOffset &offsetInfo = it->second;
+      if (offsetInfo.outSecOff == UINT64_MAX) {
+        offsetInfo.outSecOff = alignTo(size, 1ULL << offsetInfo.trailingZeros);
+        size = offsetInfo.outSecOff + s.size();
+      }
+      isec->pieces[i].outSecOff = offsetInfo.outSecOff;
+    }
+    isec->isFinal = true;
+  }
+}
+
+void DeduplicatedCStringSection::writeTo(uint8_t *buf) const {
+  for (const auto &p : stringOffsetMap) {
+    StringRef data = p.first.val();
+    uint64_t off = p.second.outSecOff;
+    if (!data.empty())
+      memcpy(buf + off, data.data(), data.size());
+  }
 }
 
 // This section is actually emitted as __TEXT,__const by ld64, but clang may

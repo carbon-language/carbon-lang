@@ -513,6 +513,9 @@ namespace {
       return Subtarget->getInstrInfo();
     }
 
+    /// Return a condition code of the given SDNode
+    X86::CondCode getCondFromNode(SDNode *N) const;
+
     /// Address-mode matching performs shift-of-and to and-of-shift
     /// reassociation in order to expose more scaled addressing
     /// opportunities.
@@ -529,7 +532,7 @@ namespace {
 
       unsigned StoreSize = N->getMemoryVT().getStoreSize();
 
-      if (N->getAlignment() < StoreSize)
+      if (N->getAlign().value() < StoreSize)
         return false;
 
       switch (StoreSize) {
@@ -2428,6 +2431,14 @@ bool X86DAGToDAGISel::matchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
       return false;
     break;
 
+  case ISD::XOR:
+    // We want to look through a transform in InstCombine that
+    // turns 'add' with min_signed_val into 'xor', so we can treat this 'xor'
+    // exactly like an 'add'.
+    if (isMinSignedConstant(N.getOperand(1)) && !matchAdd(N, AM, Depth))
+      return false;
+    break;
+
   case ISD::AND: {
     // Perform some heroic transforms on an and of a constant-count shift
     // with a constant to enable use of the scaled offset field.
@@ -2927,24 +2938,15 @@ bool X86DAGToDAGISel::isSExtAbsoluteSymbolRef(unsigned Width, SDNode *N) const {
          CR->getSignedMax().slt(1ull << Width);
 }
 
-static X86::CondCode getCondFromNode(SDNode *N) {
+X86::CondCode X86DAGToDAGISel::getCondFromNode(SDNode *N) const {
   assert(N->isMachineOpcode() && "Unexpected node");
-  X86::CondCode CC = X86::COND_INVALID;
   unsigned Opc = N->getMachineOpcode();
-  if (Opc == X86::JCC_1)
-    CC = static_cast<X86::CondCode>(N->getConstantOperandVal(1));
-  else if (Opc == X86::SETCCr)
-    CC = static_cast<X86::CondCode>(N->getConstantOperandVal(0));
-  else if (Opc == X86::SETCCm)
-    CC = static_cast<X86::CondCode>(N->getConstantOperandVal(5));
-  else if (Opc == X86::CMOV16rr || Opc == X86::CMOV32rr ||
-           Opc == X86::CMOV64rr)
-    CC = static_cast<X86::CondCode>(N->getConstantOperandVal(2));
-  else if (Opc == X86::CMOV16rm || Opc == X86::CMOV32rm ||
-           Opc == X86::CMOV64rm)
-    CC = static_cast<X86::CondCode>(N->getConstantOperandVal(6));
+  const MCInstrDesc &MCID = getInstrInfo()->get(Opc);
+  int CondNo = X86::getCondSrcNoFromDesc(MCID);
+  if (CondNo < 0)
+    return X86::COND_INVALID;
 
-  return CC;
+  return static_cast<X86::CondCode>(N->getConstantOperandVal(CondNo));
 }
 
 /// Test whether the given X86ISD::CMP node has any users that use a flag
@@ -5514,7 +5516,7 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
     MVT CmpVT = N0.getSimpleValueType();
 
     // Floating point needs special handling if we don't have FCOMI.
-    if (Subtarget->hasCMov())
+    if (Subtarget->canUseCMOV())
       break;
 
     bool IsSignaling = Node->getOpcode() == X86ISD::STRICT_FCMPS;
@@ -5554,7 +5556,7 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
 
     // Move AH into flags.
     // Some 64-bit targets lack SAHF support, but they do support FCOMI.
-    assert(Subtarget->hasLAHFSAHF() &&
+    assert(Subtarget->canUseLAHFSAHF() &&
            "Target doesn't support SAHF or FCOMI?");
     SDValue AH = CurDAG->getCopyToReg(Chain, dl, X86::AH, Extract, SDValue());
     Chain = AH;
@@ -5603,40 +5605,86 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
     // Look for (X86cmp (and $op, $imm), 0) and see if we can convert it to
     // use a smaller encoding.
     // Look past the truncate if CMP is the only use of it.
-    if (N0.getOpcode() == ISD::AND &&
-        N0.getNode()->hasOneUse() &&
+    if (N0.getOpcode() == ISD::AND && N0.getNode()->hasOneUse() &&
         N0.getValueType() != MVT::i8) {
-      ConstantSDNode *C = dyn_cast<ConstantSDNode>(N0.getOperand(1));
-      if (!C) break;
-      uint64_t Mask = C->getZExtValue();
+      auto *MaskC = dyn_cast<ConstantSDNode>(N0.getOperand(1));
+      if (!MaskC)
+        break;
+
       // We may have looked through a truncate so mask off any bits that
       // shouldn't be part of the compare.
+      uint64_t Mask = MaskC->getZExtValue();
       Mask &= maskTrailingOnes<uint64_t>(CmpVT.getScalarSizeInBits());
 
-      // Check if we can replace AND+IMM64 with a shift. This is possible for
-      // masks/ like 0xFF000000 or 0x00FFFFFF and if we care only about the zero
-      // flag.
-      if (CmpVT == MVT::i64 && !isInt<32>(Mask) &&
+      // Check if we can replace AND+IMM{32,64} with a shift. This is possible
+      // for masks like 0xFF000000 or 0x00FFFFFF and if we care only about the
+      // zero flag.
+      if (CmpVT == MVT::i64 && !isInt<8>(Mask) && isShiftedMask_64(Mask) &&
           onlyUsesZeroFlag(SDValue(Node, 0))) {
-        if (isMask_64(~Mask)) {
-          unsigned TrailingZeros = countTrailingZeros(Mask);
-          SDValue Imm = CurDAG->getTargetConstant(TrailingZeros, dl, MVT::i64);
-          SDValue Shift =
-            SDValue(CurDAG->getMachineNode(X86::SHR64ri, dl, MVT::i64, MVT::i32,
-                                           N0.getOperand(0), Imm), 0);
-          MachineSDNode *Test = CurDAG->getMachineNode(X86::TEST64rr, dl,
-                                                       MVT::i32, Shift, Shift);
-          ReplaceNode(Node, Test);
-          return;
+        unsigned ShiftOpcode = ISD::DELETED_NODE;
+        unsigned ShiftAmt;
+        unsigned SubRegIdx;
+        MVT SubRegVT;
+        unsigned TestOpcode;
+        unsigned LeadingZeros = countLeadingZeros(Mask);
+        unsigned TrailingZeros = countTrailingZeros(Mask);
+
+        // With leading/trailing zeros, the transform is profitable if we can
+        // eliminate a movabsq or shrink a 32-bit immediate to 8-bit without
+        // incurring any extra register moves.
+        bool SavesBytes = !isInt<32>(Mask) || N0.getOperand(0).hasOneUse();
+        if (LeadingZeros == 0 && SavesBytes) {
+          // If the mask covers the most significant bit, then we can replace
+          // TEST+AND with a SHR and check eflags.
+          // This emits a redundant TEST which is subsequently eliminated.
+          ShiftOpcode = X86::SHR64ri;
+          ShiftAmt = TrailingZeros;
+          SubRegIdx = 0;
+          TestOpcode = X86::TEST64rr;
+        } else if (TrailingZeros == 0 && SavesBytes) {
+          // If the mask covers the least significant bit, then we can replace
+          // TEST+AND with a SHL and check eflags.
+          // This emits a redundant TEST which is subsequently eliminated.
+          ShiftOpcode = X86::SHL64ri;
+          ShiftAmt = LeadingZeros;
+          SubRegIdx = 0;
+          TestOpcode = X86::TEST64rr;
+        } else if (MaskC->hasOneUse() && !isInt<32>(Mask)) {
+          // If the shifted mask extends into the high half and is 8/16/32 bits
+          // wide, then replace it with a SHR and a TEST8rr/TEST16rr/TEST32rr.
+          unsigned PopCount = 64 - LeadingZeros - TrailingZeros;
+          if (PopCount == 8) {
+            ShiftOpcode = X86::SHR64ri;
+            ShiftAmt = TrailingZeros;
+            SubRegIdx = X86::sub_8bit;
+            SubRegVT = MVT::i8;
+            TestOpcode = X86::TEST8rr;
+          } else if (PopCount == 16) {
+            ShiftOpcode = X86::SHR64ri;
+            ShiftAmt = TrailingZeros;
+            SubRegIdx = X86::sub_16bit;
+            SubRegVT = MVT::i16;
+            TestOpcode = X86::TEST16rr;
+          } else if (PopCount == 32) {
+            ShiftOpcode = X86::SHR64ri;
+            ShiftAmt = TrailingZeros;
+            SubRegIdx = X86::sub_32bit;
+            SubRegVT = MVT::i32;
+            TestOpcode = X86::TEST32rr;
+          }
         }
-        if (isMask_64(Mask)) {
-          unsigned LeadingZeros = countLeadingZeros(Mask);
-          SDValue Imm = CurDAG->getTargetConstant(LeadingZeros, dl, MVT::i64);
-          SDValue Shift =
-            SDValue(CurDAG->getMachineNode(X86::SHL64ri, dl, MVT::i64, MVT::i32,
-                                           N0.getOperand(0), Imm), 0);
-          MachineSDNode *Test = CurDAG->getMachineNode(X86::TEST64rr, dl,
-                                                       MVT::i32, Shift, Shift);
+        if (ShiftOpcode != ISD::DELETED_NODE) {
+          SDValue ShiftC = CurDAG->getTargetConstant(ShiftAmt, dl, MVT::i64);
+          SDValue Shift = SDValue(
+              CurDAG->getMachineNode(ShiftOpcode, dl, MVT::i64, MVT::i32,
+                                     N0.getOperand(0), ShiftC),
+              0);
+          if (SubRegIdx != 0) {
+            Shift =
+                CurDAG->getTargetExtractSubreg(SubRegIdx, dl, SubRegVT, Shift);
+          }
+          MachineSDNode *Test =
+              CurDAG->getMachineNode(TestOpcode, dl, MVT::i32, Shift, Shift);
           ReplaceNode(Node, Test);
           return;
         }
@@ -6128,6 +6176,7 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
   case InlineAsm::Constraint_v: // not offsetable    ??
   case InlineAsm::Constraint_m: // memory
   case InlineAsm::Constraint_X:
+  case InlineAsm::Constraint_p: // address
     if (!selectAddr(nullptr, Op, Op0, Op1, Op2, Op3, Op4))
       return true;
     break;

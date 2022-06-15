@@ -11,7 +11,7 @@ assert(!use_goma || goma_dir != "",
 
 template("unix_toolchain") {
   toolchain(target_name) {
-    # https://groups.google.com/a/chromium.org/d/msg/gn-dev/F_lv5T-tNDM
+    # https://groups.google.com/a/chromium.org/g/gn-dev/c/F_lv5T-tNDM
     forward_variables_from(invoker.toolchain_args, "*")
     not_needed("*")
 
@@ -174,7 +174,11 @@ template("unix_toolchain") {
 
 unix_toolchain("unix") {
   if (current_os != "ios" && current_os != "mac") {
-    ar = "ar"
+    if (clang_base_path != "") {
+      ar = rebase_path(clang_base_path, root_build_dir) + "/bin/llvm-ar"
+    } else {
+      ar = "ar"
+    }
   }
 
   toolchain_args = {
@@ -198,7 +202,8 @@ template("stage2_unix_toolchain") {
       "//:clang($host_toolchain)",
       "//:lld($host_toolchain)",
     ]
-    if (current_os != "ios" && current_os != "mac") {
+    if (toolchain_args.current_os != "ios" &&
+        toolchain_args.current_os != "mac") {
       ar = "bin/llvm-ar"
       deps += [ "//:llvm-ar($host_toolchain)" ]
     }
@@ -241,6 +246,13 @@ if (host_os == "mac") {
       current_os = "ios"
       current_cpu = "x64"
     }
+  }
+}
+
+stage2_unix_toolchain("stage2_baremetal_aarch64") {
+  toolchain_args = {
+    current_os = "baremetal"
+    current_cpu = "arm64"
   }
 }
 

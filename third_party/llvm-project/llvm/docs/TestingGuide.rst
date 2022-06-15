@@ -569,6 +569,18 @@ RUN lines:
 
    Expands to the path separator, i.e. ``:`` (or ``;`` on Windows).
 
+``${fs-src-root}``
+   Expands to the root component of file system paths for the source directory,
+   i.e. ``/`` on Unix systems or ``C:\`` (or another drive) on Windows.
+
+``${fs-tmp-root}``
+   Expands to the root component of file system paths for the test's temporary
+   directory, i.e. ``/`` on Unix systems or ``C:\`` (or another drive) on
+   Windows.
+
+``${fs-sep}``
+   Expands to the file system separator, i.e. ``/`` or ``\`` on Windows.
+
 ``%/s, %/S, %/t, %/T:``
 
   Act like the corresponding substitution above but replace any ``\``
@@ -599,6 +611,13 @@ RUN lines:
    Example: ``Linux %errc_ENOENT: No such file or directory``
 
    Example: ``Windows %errc_ENOENT: no such file or directory``
+
+``%if feature %{<if branch>%} %else %{<else branch>%}``
+
+ Conditional substitution: if ``feature`` is available it expands to
+ ``<if branch>``, otherwise it expands to ``<else branch>``.
+ ``%else %{<else branch>%}`` is optional and treated like ``%else %{%}``
+ if not present.
 
 **LLVM-specific substitutions:**
 

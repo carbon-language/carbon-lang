@@ -5,8 +5,6 @@
 // RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +sve2-aes -fallow-half-arguments-and-returns -S -O1 -Werror -Wall -emit-llvm -o - -x c++ %s | FileCheck %s -check-prefix=CPP-CHECK
 // RUN: %clang_cc1 -DSVE_OVERLOADED_FORMS -triple aarch64-none-linux-gnu -target-feature +sve2-aes -fallow-half-arguments-and-returns -S -O1 -Werror -Wall -emit-llvm -o - %s | FileCheck %s
 // RUN: %clang_cc1 -DSVE_OVERLOADED_FORMS -triple aarch64-none-linux-gnu -target-feature +sve2-aes -fallow-half-arguments-and-returns -S -O1 -Werror -Wall -emit-llvm -o - -x c++ %s | FileCheck %s -check-prefix=CPP-CHECK
-// RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +sve -fallow-half-arguments-and-returns -fsyntax-only -verify -verify-ignore-unexpected=error %s
-// RUN: %clang_cc1 -DSVE_OVERLOADED_FORMS -triple aarch64-none-linux-gnu -target-feature +sve -fallow-half-arguments-and-returns -fsyntax-only -verify=overload -verify-ignore-unexpected=error %s
 
 #include <arm_sve.h>
 
@@ -29,8 +27,6 @@
 //
 svuint64_t test_svpmullb_pair_u64(svuint64_t op1, svuint64_t op2)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svpmullb_pair'}}
-  // expected-warning@+1 {{implicit declaration of function 'svpmullb_pair_u64'}}
   return SVE_ACLE_FUNC(svpmullb_pair,_u64,,)(op1, op2);
 }
 
@@ -50,7 +46,5 @@ svuint64_t test_svpmullb_pair_u64(svuint64_t op1, svuint64_t op2)
 //
 svuint64_t test_svpmullb_pair_n_u64(svuint64_t op1, uint64_t op2)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svpmullb_pair'}}
-  // expected-warning@+1 {{implicit declaration of function 'svpmullb_pair_n_u64'}}
   return SVE_ACLE_FUNC(svpmullb_pair,_n_u64,,)(op1, op2);
 }

@@ -20,7 +20,7 @@
 #include "mlir/IR/Types.h"
 #include "mlir/IR/Verifier.h"
 #include "mlir/Interfaces/InferTypeOpInterface.h"
-#include "mlir/Parser.h"
+#include "mlir/Parser/Parser.h"
 
 #include "llvm/Support/Debug.h"
 #include <cstddef>
@@ -195,7 +195,7 @@ MlirModule mlirModuleCreateEmpty(MlirLocation location) {
 
 MlirModule mlirModuleCreateParse(MlirContext context, MlirStringRef module) {
   OwningOpRef<ModuleOp> owning =
-      parseSourceString(unwrap(module), unwrap(context));
+      parseSourceString<ModuleOp>(unwrap(module), unwrap(context));
   if (!owning)
     return MlirModule{nullptr};
   return MlirModule{owning.release().getOperation()};
@@ -634,6 +634,11 @@ void mlirBlockInsertOwnedOperationBefore(MlirBlock block,
 
 void mlirBlockDestroy(MlirBlock block) { delete unwrap(block); }
 
+void mlirBlockDetach(MlirBlock block) {
+  Block *b = unwrap(block);
+  b->getParent()->getBlocks().remove(b);
+}
+
 intptr_t mlirBlockGetNumArguments(MlirBlock block) {
   return static_cast<intptr_t>(unwrap(block)->getNumArguments());
 }
@@ -785,18 +790,6 @@ bool mlirIdentifierEqual(MlirIdentifier ident, MlirIdentifier other) {
 
 MlirStringRef mlirIdentifierStr(MlirIdentifier ident) {
   return wrap(unwrap(ident).strref());
-}
-
-//===----------------------------------------------------------------------===//
-// TypeID API.
-//===----------------------------------------------------------------------===//
-
-bool mlirTypeIDEqual(MlirTypeID typeID1, MlirTypeID typeID2) {
-  return unwrap(typeID1) == unwrap(typeID2);
-}
-
-size_t mlirTypeIDHashValue(MlirTypeID typeID) {
-  return hash_value(unwrap(typeID));
 }
 
 //===----------------------------------------------------------------------===//

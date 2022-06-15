@@ -41,12 +41,27 @@ struct SparseCompilerOptions
   PassOptions::Option<bool> enableSIMDIndex32{
       *this, "enable-simd-index32",
       desc("Enable i32 indexing into vectors (for efficiency)"), init(false)};
+  PassOptions::Option<bool> enableVLAVectorization{
+      *this, "enable-vla-vectorization",
+      desc("Enable vector length agnostic vectorization"), init(false)};
 
   /// Projects out the options for `createSparsificationPass`.
   SparsificationOptions sparsificationOptions() const {
     return SparsificationOptions(sparseParallelizationStrategy(parallelization),
                                  sparseVectorizationStrategy(vectorization),
-                                 vectorLength, enableSIMDIndex32);
+                                 vectorLength, enableSIMDIndex32,
+                                 enableVLAVectorization);
+  }
+
+  // These options must be kept in sync with `SparseTensorConversionBase`.
+  PassOptions::Option<int32_t> sparseToSparse{
+      *this, "s2s-strategy",
+      desc("Set the strategy for sparse-to-sparse conversion"), init(0)};
+
+  /// Projects out the options for `createSparsificationPass`.
+  SparseTensorConversionOptions sparseTensorConversionOptions() const {
+    return SparseTensorConversionOptions(
+        sparseToSparseConversionStrategy(sparseToSparse));
   }
 
   // These options must be kept in sync with `ConvertVectorToLLVMBase`.

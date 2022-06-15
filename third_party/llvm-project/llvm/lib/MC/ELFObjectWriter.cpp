@@ -221,8 +221,6 @@ class ELFObjectWriter : public MCObjectWriter {
   DenseMap<const MCSymbolELF *, const MCSymbolELF *> Renames;
 
   bool SeenGnuAbi = false;
-  bool EmitAddrsigSection = false;
-  std::vector<const MCSymbol *> AddrsigSyms;
 
   bool hasRelocationAddend() const;
 
@@ -262,10 +260,6 @@ public:
 
   void markGnuAbi() override { SeenGnuAbi = true; }
   bool seenGnuAbi() const { return SeenGnuAbi; }
-  void emitAddrsigSection() override { EmitAddrsigSection = true; }
-  void addAddrsigSymbol(const MCSymbol *Sym) override {
-    AddrsigSyms.push_back(Sym);
-  }
 
   friend struct ELFWriter;
 };
@@ -547,8 +541,26 @@ void ELFWriter::writeSymbol(SymbolTableWriter &Writer, uint32_t StringIndex,
   uint64_t Size = 0;
 
   const MCExpr *ESize = MSD.Symbol->getSize();
-  if (!ESize && Base)
+  if (!ESize && Base) {
+    // For expressions like .set y, x+1, if y's size is unset, inherit from x.
     ESize = Base->getSize();
+
+    // For `.size x, 2; y = x; .size y, 1; z = y; z1 = z; .symver y, y@v1`, z,
+    // z1, and y@v1's st_size equals y's. However, `Base` is `x` which will give
+    // us 2. Follow the MCSymbolRefExpr assignment chain, which covers most
+    // needs. MCBinaryExpr is not handled.
+    const MCSymbolELF *Sym = &Symbol;
+    while (Sym->isVariable()) {
+      if (auto *Expr =
+              dyn_cast<MCSymbolRefExpr>(Sym->getVariableValue(false))) {
+        Sym = cast<MCSymbolELF>(&Expr->getSymbol());
+        if (!Sym->getSize())
+          continue;
+        ESize = Sym->getSize();
+      }
+      break;
+    }
+  }
 
   if (ESize) {
     int64_t Res;
@@ -848,13 +860,9 @@ void ELFWriter::writeSectionData(const MCAssembler &Asm, MCSection &Sec,
   auto &MC = Asm.getContext();
   const auto &MAI = MC.getAsmInfo();
 
-  // Compressing debug_frame requires handling alignment fragments which is
-  // more work (possibly generalizing MCAssembler.cpp:writeFragment to allow
-  // for writing to arbitrary buffers) for little benefit.
   bool CompressionEnabled =
       MAI->compressDebugSections() != DebugCompressionType::None;
-  if (!CompressionEnabled || !SectionName.startswith(".debug_") ||
-      SectionName == ".debug_frame") {
+  if (!CompressionEnabled || !SectionName.startswith(".debug_")) {
     Asm.writeSectionData(W.OS, &Section, Layout);
     return;
   }
@@ -868,13 +876,8 @@ void ELFWriter::writeSectionData(const MCAssembler &Asm, MCSection &Sec,
   Asm.writeSectionData(VecOS, &Section, Layout);
 
   SmallVector<char, 128> CompressedContents;
-  if (Error E = zlib::compress(
-          StringRef(UncompressedData.data(), UncompressedData.size()),
-          CompressedContents)) {
-    consumeError(std::move(E));
-    W.OS << UncompressedData;
-    return;
-  }
+  zlib::compress(StringRef(UncompressedData.data(), UncompressedData.size()),
+                 CompressedContents);
 
   bool ZlibStyle = MAI->compressDebugSections() == DebugCompressionType::Z;
   if (!maybeWriteCompression(UncompressedData.size(), CompressedContents,
@@ -1334,6 +1337,7 @@ bool ELFObjectWriter::shouldRelocateWithSymbol(const MCAssembler &Asm,
     // can update it.
     return true;
   case ELF::STB_GLOBAL:
+  case ELF::STB_GNU_UNIQUE:
     // Global ELF symbols can be preempted by the dynamic linker. The relocation
     // has to point to the symbol for a reason analogous to the STB_WEAK case.
     return true;

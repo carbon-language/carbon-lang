@@ -30,6 +30,7 @@ namespace elf {
 
 class InputFile;
 class InputSectionBase;
+class Symbol;
 
 enum ELFKind : uint8_t {
   ELFNoneKind,
@@ -121,6 +122,7 @@ struct Configuration {
   llvm::Optional<uint64_t> optRemarksHotnessThreshold = 0;
   llvm::StringRef optRemarksPasses;
   llvm::StringRef optRemarksFormat;
+  llvm::StringRef optStatsFilename;
   llvm::StringRef progName;
   llvm::StringRef printArchiveStats;
   llvm::StringRef printSymbolOrder;
@@ -138,6 +140,7 @@ struct Configuration {
   std::vector<VersionDefinition> versionDefinitions;
   std::vector<llvm::StringRef> auxiliaryList;
   std::vector<llvm::StringRef> filterList;
+  std::vector<llvm::StringRef> passPlugins;
   std::vector<llvm::StringRef> searchPaths;
   std::vector<llvm::StringRef> symbolOrderingFile;
   std::vector<llvm::StringRef> thinLTOModulesToCompile;
@@ -148,7 +151,7 @@ struct Configuration {
                   uint64_t>
       callGraphProfile;
   bool allowMultipleDefinition;
-  bool androidPackDynRelocs;
+  bool androidPackDynRelocs = false;
   bool armHasBlx = false;
   bool armHasMovtMovw = false;
   bool armJ1J2BranchEncoding = false;
@@ -184,7 +187,6 @@ struct Configuration {
   bool ltoPGOWarnMismatch;
   bool ltoDebugPassManager;
   bool ltoEmitAsm;
-  bool ltoNewPassManager;
   bool ltoUniqueBasicBlockSectionNames;
   bool ltoWholeProgramVisibility;
   bool mergeArmExidx;
@@ -196,6 +198,7 @@ struct Configuration {
   bool nostdlib;
   bool oFormatBinary;
   bool omagic;
+  bool opaquePointers;
   bool optEB = false;
   bool optEL = false;
   bool optimizeBBJumps;
@@ -206,7 +209,8 @@ struct Configuration {
   bool printIcfSections;
   bool relax;
   bool relocatable;
-  bool relrPackDynRelocs;
+  bool relrGlibc = false;
+  bool relrPackDynRelocs = false;
   bool saveTemps;
   std::vector<std::pair<llvm::GlobPattern, uint32_t>> shuffleSections;
   bool singleRoRx;
@@ -343,10 +347,42 @@ struct Configuration {
 
   // 4 for ELF32, 8 for ELF64.
   int wordsize;
+
+  // Mode of MTE to write to the ELF note. Should be one of NT_MEMTAG_ASYNC (for
+  // async), NT_MEMTAG_SYNC (for sync), or NT_MEMTAG_LEVEL_NONE (for none). If
+  // async or sync is enabled, write the ELF note specifying the default MTE
+  // mode.
+  int androidMemtagMode;
+  // Signal to the dynamic loader to enable heap MTE.
+  bool androidMemtagHeap;
+  // Signal to the dynamic loader that this binary expects stack MTE. Generally,
+  // this means to map the primary and thread stacks as PROT_MTE. Note: This is
+  // not supported on Android 11 & 12.
+  bool androidMemtagStack;
 };
 
 // The only instance of Configuration struct.
 extern std::unique_ptr<Configuration> config;
+
+struct DuplicateSymbol {
+  const Symbol *sym;
+  const InputFile *file;
+  InputSectionBase *section;
+  uint64_t value;
+};
+
+struct Ctx {
+  // Duplicate symbol candidates.
+  SmallVector<DuplicateSymbol, 0> duplicates;
+  // Symbols in a non-prevailing COMDAT group which should be changed to an
+  // Undefined.
+  SmallVector<std::pair<Symbol *, unsigned>, 0> nonPrevailingSyms;
+  // True if SHT_LLVM_SYMPART is used.
+  std::atomic<bool> hasSympart{false};
+};
+
+// The only instance of Ctx struct.
+extern std::unique_ptr<Ctx> ctx;
 
 // The first two elements of versionDefinitions represent VER_NDX_LOCAL and
 // VER_NDX_GLOBAL. This helper returns other elements.

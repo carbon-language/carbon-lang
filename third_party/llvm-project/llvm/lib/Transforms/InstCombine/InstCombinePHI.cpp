@@ -658,6 +658,10 @@ static bool isSafeAndProfitableToSinkLoad(LoadInst *L) {
 Instruction *InstCombinerImpl::foldPHIArgLoadIntoPHI(PHINode &PN) {
   LoadInst *FirstLI = cast<LoadInst>(PN.getIncomingValue(0));
 
+  // Can't forward swifterror through a phi.
+  if (FirstLI->getOperand(0)->isSwiftError())
+    return nullptr;
+
   // FIXME: This is overconservative; this transform is allowed in some cases
   // for atomic operations.
   if (FirstLI->isAtomic())
@@ -692,6 +696,10 @@ Instruction *InstCombinerImpl::foldPHIArgLoadIntoPHI(PHINode &PN) {
     // Make sure all arguments are the same type of operation.
     if (LI->isVolatile() != IsVolatile ||
         LI->getPointerAddressSpace() != LoadAddrSpace)
+      return nullptr;
+
+    // Can't forward swifterror through a phi.
+    if (LI->getOperand(0)->isSwiftError())
       return nullptr;
 
     // We can't sink the load if the loaded value could be modified between
@@ -1113,6 +1121,13 @@ Instruction *InstCombinerImpl::SliceUpIllegalIntegerPHI(PHINode &FirstPhi) {
       return nullptr;
     }
 
+    // If the incoming value is a PHI node before a catchswitch, we cannot
+    // extract the value within that BB because we cannot insert any non-PHI
+    // instructions in the BB.
+    for (auto *Pred : PN->blocks())
+      if (isa<CatchSwitchInst>(Pred->getFirstNonPHI()))
+        return nullptr;
+
     for (User *U : PN->users()) {
       Instruction *UserI = cast<Instruction>(U);
 
@@ -1261,12 +1276,12 @@ static Value *simplifyUsingControlFlow(InstCombiner &Self, PHINode &PN,
   //      ...      ...
   //       \       /
   //    phi [true] [false]
-  if (!PN.getType()->isIntegerTy(1))
-    return nullptr;
-
-  if (PN.getNumOperands() != 2)
-    return nullptr;
-
+  // and
+  //        switch (cond)
+  // case v1: /       \ case v2:
+  //         ...      ...
+  //          \       /
+  //       phi [v1] [v2]
   // Make sure all inputs are constants.
   if (!all_of(PN.operands(), [](Value *V) { return isa<ConstantInt>(V); }))
     return nullptr;
@@ -1276,50 +1291,77 @@ static Value *simplifyUsingControlFlow(InstCombiner &Self, PHINode &PN,
   if (!DT.isReachableFromEntry(BB))
     return nullptr;
 
-  // Same inputs.
-  if (PN.getOperand(0) == PN.getOperand(1))
-    return PN.getOperand(0);
-
-  BasicBlock *TruePred = nullptr, *FalsePred = nullptr;
-  for (auto *Pred : predecessors(BB)) {
-    auto *Input = cast<ConstantInt>(PN.getIncomingValueForBlock(Pred));
-    if (Input->isAllOnesValue())
-      TruePred = Pred;
-    else
-      FalsePred = Pred;
-  }
-  assert(TruePred && FalsePred && "Must be!");
-
-  // Check which edge of the dominator dominates the true input. If it is the
-  // false edge, we should invert the condition.
+  // Determine which value the condition of the idom has for which successor.
+  LLVMContext &Context = PN.getContext();
   auto *IDom = DT.getNode(BB)->getIDom()->getBlock();
-  auto *BI = dyn_cast<BranchInst>(IDom->getTerminator());
-  if (!BI || BI->isUnconditional())
+  Value *Cond;
+  SmallDenseMap<ConstantInt *, BasicBlock *, 8> SuccForValue;
+  SmallDenseMap<BasicBlock *, unsigned, 8> SuccCount;
+  auto AddSucc = [&](ConstantInt *C, BasicBlock *Succ) {
+    SuccForValue[C] = Succ;
+    ++SuccCount[Succ];
+  };
+  if (auto *BI = dyn_cast<BranchInst>(IDom->getTerminator())) {
+    if (BI->isUnconditional())
+      return nullptr;
+
+    Cond = BI->getCondition();
+    AddSucc(ConstantInt::getTrue(Context), BI->getSuccessor(0));
+    AddSucc(ConstantInt::getFalse(Context), BI->getSuccessor(1));
+  } else if (auto *SI = dyn_cast<SwitchInst>(IDom->getTerminator())) {
+    Cond = SI->getCondition();
+    ++SuccCount[SI->getDefaultDest()];
+    for (auto Case : SI->cases())
+      AddSucc(Case.getCaseValue(), Case.getCaseSuccessor());
+  } else {
+    return nullptr;
+  }
+
+  if (Cond->getType() != PN.getType())
     return nullptr;
 
   // Check that edges outgoing from the idom's terminators dominate respective
   // inputs of the Phi.
-  BasicBlockEdge TrueOutEdge(IDom, BI->getSuccessor(0));
-  BasicBlockEdge FalseOutEdge(IDom, BI->getSuccessor(1));
+  Optional<bool> Invert;
+  for (auto Pair : zip(PN.incoming_values(), PN.blocks())) {
+    auto *Input = cast<ConstantInt>(std::get<0>(Pair));
+    BasicBlock *Pred = std::get<1>(Pair);
+    auto IsCorrectInput = [&](ConstantInt *Input) {
+      // The input needs to be dominated by the corresponding edge of the idom.
+      // This edge cannot be a multi-edge, as that would imply that multiple
+      // different condition values follow the same edge.
+      auto It = SuccForValue.find(Input);
+      return It != SuccForValue.end() && SuccCount[It->second] == 1 &&
+             DT.dominates(BasicBlockEdge(IDom, It->second),
+                          BasicBlockEdge(Pred, BB));
+    };
 
-  BasicBlockEdge TrueIncEdge(TruePred, BB);
-  BasicBlockEdge FalseIncEdge(FalsePred, BB);
+    // Depending on the constant, the condition may need to be inverted.
+    bool NeedsInvert;
+    if (IsCorrectInput(Input))
+      NeedsInvert = false;
+    else if (IsCorrectInput(cast<ConstantInt>(ConstantExpr::getNot(Input))))
+      NeedsInvert = true;
+    else
+      return nullptr;
 
-  auto *Cond = BI->getCondition();
-  if (DT.dominates(TrueOutEdge, TrueIncEdge) &&
-      DT.dominates(FalseOutEdge, FalseIncEdge))
-    // This Phi is actually equivalent to branching condition of IDom.
+    // Make sure the inversion requirement is always the same.
+    if (Invert && *Invert != NeedsInvert)
+      return nullptr;
+
+    Invert = NeedsInvert;
+  }
+
+  if (!*Invert)
     return Cond;
-  if (DT.dominates(TrueOutEdge, FalseIncEdge) &&
-      DT.dominates(FalseOutEdge, TrueIncEdge)) {
-    // This Phi is actually opposite to branching condition of IDom. We invert
-    // the condition that will potentially open up some opportunities for
-    // sinking.
-    auto InsertPt = BB->getFirstInsertionPt();
-    if (InsertPt != BB->end()) {
-      Self.Builder.SetInsertPoint(&*InsertPt);
-      return Self.Builder.CreateNot(Cond);
-    }
+
+  // This Phi is actually opposite to branching condition of IDom. We invert
+  // the condition that will potentially open up some opportunities for
+  // sinking.
+  auto InsertPt = BB->getFirstInsertionPt();
+  if (InsertPt != BB->end()) {
+    Self.Builder.SetInsertPoint(&*InsertPt);
+    return Self.Builder.CreateNot(Cond);
   }
 
   return nullptr;
@@ -1328,7 +1370,7 @@ static Value *simplifyUsingControlFlow(InstCombiner &Self, PHINode &PN,
 // PHINode simplification
 //
 Instruction *InstCombinerImpl::visitPHINode(PHINode &PN) {
-  if (Value *V = SimplifyInstruction(&PN, SQ.getWithInstruction(&PN)))
+  if (Value *V = simplifyInstruction(&PN, SQ.getWithInstruction(&PN)))
     return replaceInstUsesWith(PN, V);
 
   if (Instruction *Result = foldPHIArgZextsIntoPHI(PN))

@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -x c -fblocks -debug-info-kind=standalone -emit-llvm -O0 \
+// RUN: %clang_cc1 -no-opaque-pointers -x c -std=c89 -fblocks -debug-info-kind=standalone -emit-llvm -O0 \
 // RUN:   -triple x86_64-apple-darwin -o - %s | FileCheck %s
-// RUN: %clang_cc1 -x c -fblocks -debug-info-kind=standalone -emit-llvm -O1 \
+// RUN: %clang_cc1 -no-opaque-pointers -x c -std=c89 -fblocks -debug-info-kind=standalone -emit-llvm -O1 \
 // RUN:   -triple x86_64-apple-darwin -o - %s \
 // RUN:   | FileCheck --check-prefix=CHECK-OPT %s
 
@@ -11,7 +11,10 @@
 // CHECK: call void @llvm.dbg.declare(metadata i8** %.block_descriptor.addr,
 // CHECK-SAME:                        metadata !DIExpression())
 // CHECK-OPT-NOT: alloca
-// CHECK-OPT: call void @llvm.dbg.value(metadata i8* %.block_descriptor,
+// Since the block address is not used anywhere in this function,
+// the optimizer (DeadArgElim) has replaced all the false uses
+// (i.e., metadata users) with poison.
+// CHECK-OPT: call void @llvm.dbg.value(metadata i8* poison,
 // CHECK-OPT-SAME:                      metadata !DIExpression())
 void f(void) {
   a(^{

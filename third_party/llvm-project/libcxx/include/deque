@@ -169,14 +169,20 @@ template <class T, class Allocator, class Predicate>
 #include <__algorithm/remove.h>
 #include <__algorithm/remove_if.h>
 #include <__algorithm/unwrap_iter.h>
-#include <__assert>
+#include <__assert> // all public C++ headers provide the assertion handler
 #include <__config>
+#include <__format/enable_insertable.h>
 #include <__iterator/iterator_traits.h>
+#include <__iterator/next.h>
+#include <__iterator/prev.h>
+#include <__iterator/reverse_iterator.h>
 #include <__split_buffer>
 #include <__utility/forward.h>
+#include <__utility/move.h>
+#include <__utility/swap.h>
 #include <compare>
 #include <initializer_list>
-#include <iterator>
+#include <iterator> // TODO: Remove this include
 #include <limits>
 #include <stdexcept>
 #include <type_traits>
@@ -450,7 +456,7 @@ public:
         {return !(__x < __y);}
 
 private:
-    _LIBCPP_INLINE_VISIBILITY __deque_iterator(__map_iterator __m, pointer __p) _NOEXCEPT
+    _LIBCPP_INLINE_VISIBILITY explicit __deque_iterator(__map_iterator __m, pointer __p) _NOEXCEPT
         : __m_iter_(__m), __ptr_(__p) {}
 
     template <class _Tp, class _Ap> friend class __deque_base;
@@ -1312,7 +1318,7 @@ public:
         deque(_InputIter __f, _InputIter __l, const allocator_type& __a,
               typename enable_if<__is_cpp17_input_iterator<_InputIter>::value>::type* = 0);
     deque(const deque& __c);
-    deque(const deque& __c, const __identity_t<allocator_type>& __a);
+    deque(const deque& __c, const __type_identity_t<allocator_type>& __a);
 
     deque& operator=(const deque& __c);
 
@@ -1326,7 +1332,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     deque(deque&& __c) _NOEXCEPT_(is_nothrow_move_constructible<__base>::value);
     _LIBCPP_INLINE_VISIBILITY
-    deque(deque&& __c, const __identity_t<allocator_type>& __a);
+    deque(deque&& __c, const __type_identity_t<allocator_type>& __a);
     _LIBCPP_INLINE_VISIBILITY
     deque& operator=(deque&& __c)
         _NOEXCEPT_(__alloc_traits::propagate_on_container_move_assignment::value &&
@@ -1648,7 +1654,7 @@ deque<_Tp, _Allocator>::deque(const deque& __c)
 }
 
 template <class _Tp, class _Allocator>
-deque<_Tp, _Allocator>::deque(const deque& __c, const __identity_t<allocator_type>& __a)
+deque<_Tp, _Allocator>::deque(const deque& __c, const __type_identity_t<allocator_type>& __a)
     : __base(__a)
 {
     __append(__c.begin(), __c.end());
@@ -1691,7 +1697,7 @@ deque<_Tp, _Allocator>::deque(deque&& __c)
 
 template <class _Tp, class _Allocator>
 inline
-deque<_Tp, _Allocator>::deque(deque&& __c, const __identity_t<allocator_type>& __a)
+deque<_Tp, _Allocator>::deque(deque&& __c, const __type_identity_t<allocator_type>& __a)
     : __base(_VSTD::move(__c), __a)
 {
     if (__a != __c.__alloc())
@@ -3027,8 +3033,15 @@ erase_if(deque<_Tp, _Allocator>& __c, _Predicate __pred) {
   __c.erase(_VSTD::remove_if(__c.begin(), __c.end(), __pred), __c.end());
   return __old_size - __c.size();
 }
+
+template <>
+inline constexpr bool __format::__enable_insertable<std::deque<char>> = true;
+#ifndef _LIBCPP_HAS_NO_WIDE_CHARACTERS
+template <>
+inline constexpr bool __format::__enable_insertable<std::deque<wchar_t>> = true;
 #endif
 
+#endif // _LIBCPP_STD_VER > 17
 
 _LIBCPP_END_NAMESPACE_STD
 

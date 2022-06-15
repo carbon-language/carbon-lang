@@ -11,6 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "flang/Optimizer/Builder/BoxValue.h"
+#include "flang/Optimizer/Builder/FIRBuilder.h"
+#include "flang/Optimizer/Builder/Todo.h"
 #include "mlir/IR/BuiltinTypes.h"
 #include "llvm/Support/Debug.h"
 
@@ -38,16 +40,11 @@ fir::ExtendedValue fir::substBase(const fir::ExtendedValue &exv,
                                   mlir::Value base) {
   return exv.match(
       [=](const fir::UnboxedValue &x) { return fir::ExtendedValue(base); },
-      [=](const fir::BoxValue &) -> fir::ExtendedValue {
-        llvm::report_fatal_error("TODO: substbase of BoxValue");
-      },
-      [=](const fir::MutableBoxValue &) -> fir::ExtendedValue {
-        llvm::report_fatal_error("TODO: substbase of MutableBoxValue");
-      },
       [=](const auto &x) { return fir::ExtendedValue(x.clone(base)); });
 }
 
-llvm::SmallVector<mlir::Value> fir::getTypeParams(const ExtendedValue &exv) {
+llvm::SmallVector<mlir::Value>
+fir::getTypeParams(const fir::ExtendedValue &exv) {
   using RT = llvm::SmallVector<mlir::Value>;
   auto baseTy = fir::getBase(exv).getType();
   if (auto t = fir::dyn_cast_ptrEleTy(baseTy))
@@ -60,15 +57,13 @@ llvm::SmallVector<mlir::Value> fir::getTypeParams(const ExtendedValue &exv) {
       [](const fir::CharBoxValue &x) -> RT { return {x.getLen()}; },
       [](const fir::CharArrayBoxValue &x) -> RT { return {x.getLen()}; },
       [&](const fir::BoxValue &) -> RT {
-        LLVM_DEBUG(mlir::emitWarning(
-            loc, "TODO: box value is missing type parameters"));
+        TODO(loc, "box value is missing type parameters");
         return {};
       },
       [&](const fir::MutableBoxValue &) -> RT {
         // In this case, the type params may be bound to the variable in an
         // ALLOCATE statement as part of a type-spec.
-        LLVM_DEBUG(mlir::emitWarning(
-            loc, "TODO: mutable box value is missing type parameters"));
+        TODO(loc, "mutable box value is missing type parameters");
         return {};
       },
       [](const auto &) -> RT { return {}; });
@@ -187,15 +182,13 @@ llvm::raw_ostream &fir::operator<<(llvm::raw_ostream &os,
 /// always be called, so it should not have any functional side effects,
 /// the const is here to enforce that.
 bool fir::MutableBoxValue::verify() const {
-  auto type = fir::dyn_cast_ptrEleTy(getAddr().getType());
+  mlir::Type type = fir::dyn_cast_ptrEleTy(getAddr().getType());
   if (!type)
     return false;
   auto box = type.dyn_cast<fir::BoxType>();
   if (!box)
     return false;
-  auto eleTy = box.getEleTy();
-  if (!eleTy.isa<fir::PointerType>() && !eleTy.isa<fir::HeapType>())
-    return false;
+  // A boxed value always takes a memory reference,
 
   auto nParams = lenParams.size();
   if (isCharacter()) {
@@ -225,4 +218,32 @@ bool fir::BoxValue::verify() const {
   if (isCharacter() && explicitParams.size() > 1)
     return false;
   return true;
+}
+
+/// Get exactly one extent for any array-like extended value, \p exv. If \p exv
+/// is not an array or has rank less then \p dim, the result will be a nullptr.
+mlir::Value fir::factory::getExtentAtDimension(mlir::Location loc,
+                                               fir::FirOpBuilder &builder,
+                                               const fir::ExtendedValue &exv,
+                                               unsigned dim) {
+  auto extents = fir::factory::getExtents(loc, builder, exv);
+  if (dim < extents.size())
+    return extents[dim];
+  return {};
+}
+
+static inline bool isUndefOp(mlir::Value v) {
+  return mlir::isa_and_nonnull<fir::UndefOp>(v.getDefiningOp());
+}
+
+bool fir::ExtendedValue::isAssumedSize() const {
+  return match(
+      [](const fir::ArrayBoxValue &box) -> bool {
+        return !box.getExtents().empty() && isUndefOp(box.getExtents().back());
+        ;
+      },
+      [](const fir::CharArrayBoxValue &box) -> bool {
+        return !box.getExtents().empty() && isUndefOp(box.getExtents().back());
+      },
+      [](const auto &box) -> bool { return false; });
 }

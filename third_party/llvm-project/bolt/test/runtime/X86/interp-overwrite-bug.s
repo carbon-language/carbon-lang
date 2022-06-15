@@ -10,9 +10,10 @@
 
 # RUN: llvm-mc -filetype=obj -triple x86_64-unknown-unknown %s -o %t.o
 # RUN: llvm-strip --strip-unneeded %t.o
-# RUN: %clang %cflags -nostartfiles -nostdlib -lc %t.o -o %t.exe
+# RUN: %clang %cflags -no-pie -nostartfiles -nostdlib -lc %t.o -o %t.exe
 
-# RUN: llvm-bolt %t.exe -o %t.exe.bolt -relocs=0 -lite=0 -reorder-blocks=reverse
+# RUN: llvm-bolt %t.exe -o %t.exe.bolt --relocs=0 --lite=0 \
+# RUN:   --reorder-blocks=reverse
 
 # RUN: %t.exe.bolt 1 2 3
 

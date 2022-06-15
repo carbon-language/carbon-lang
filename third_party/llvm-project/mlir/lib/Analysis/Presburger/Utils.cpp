@@ -11,12 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "mlir/Analysis/Presburger/Utils.h"
-#include "mlir/Analysis/Presburger/IntegerPolyhedron.h"
+#include "mlir/Analysis/Presburger/IntegerRelation.h"
 #include "mlir/Support/LogicalResult.h"
 #include "mlir/Support/MathExtras.h"
 
 using namespace mlir;
-using namespace presburger_utils;
+using namespace presburger;
 
 /// Normalize a division's `dividend` and the `divisor` by their GCD. For
 /// example: if the dividend and divisor are [2,0,4] and 4 respectively,
@@ -87,7 +87,7 @@ static void normalizeDivisionByGCD(SmallVectorImpl<int64_t> &dividend,
 /// If successful, `expr` is set to dividend of the division and `divisor` is
 /// set to the denominator of the division. The final division expression is
 /// normalized by GCD.
-static LogicalResult getDivRepr(const IntegerPolyhedron &cst, unsigned pos,
+static LogicalResult getDivRepr(const IntegerRelation &cst, unsigned pos,
                                 unsigned ubIneq, unsigned lbIneq,
                                 SmallVector<int64_t, 8> &expr,
                                 unsigned &divisor) {
@@ -151,7 +151,7 @@ static LogicalResult getDivRepr(const IntegerPolyhedron &cst, unsigned pos,
 /// If successful, `expr` is set to dividend of the division and `divisor` is
 /// set to the denominator of the division. The final division expression is
 /// normalized by GCD.
-static LogicalResult getDivRepr(const IntegerPolyhedron &cst, unsigned pos,
+static LogicalResult getDivRepr(const IntegerRelation &cst, unsigned pos,
                                 unsigned eqInd, SmallVector<int64_t, 8> &expr,
                                 unsigned &divisor) {
 
@@ -182,7 +182,7 @@ static LogicalResult getDivRepr(const IntegerPolyhedron &cst, unsigned pos,
 
 // Returns `false` if the constraints depends on a variable for which an
 // explicit representation has not been found yet, otherwise returns `true`.
-static bool checkExplicitRepresentation(const IntegerPolyhedron &cst,
+static bool checkExplicitRepresentation(const IntegerRelation &cst,
                                         ArrayRef<bool> foundRepr,
                                         ArrayRef<int64_t> dividend,
                                         unsigned pos) {
@@ -213,8 +213,8 @@ static bool checkExplicitRepresentation(const IntegerPolyhedron &cst,
 /// the representation could be computed, `dividend` and `denominator` are set.
 /// If the representation could not be computed, the kind attribute in
 /// `MaybeLocalRepr` is set to None.
-MaybeLocalRepr presburger_utils::computeSingleVarRepr(
-    const IntegerPolyhedron &cst, ArrayRef<bool> foundRepr, unsigned pos,
+MaybeLocalRepr presburger::computeSingleVarRepr(
+    const IntegerRelation &cst, ArrayRef<bool> foundRepr, unsigned pos,
     SmallVector<int64_t, 8> &dividend, unsigned &divisor) {
   assert(pos < cst.getNumIds() && "invalid position");
   assert(foundRepr.size() == cst.getNumIds() &&
@@ -253,7 +253,7 @@ MaybeLocalRepr presburger_utils::computeSingleVarRepr(
   return repr;
 }
 
-void presburger_utils::removeDuplicateDivs(
+void presburger::removeDuplicateDivs(
     std::vector<SmallVector<int64_t, 8>> &divs,
     SmallVectorImpl<unsigned> &denoms, unsigned localOffset,
     llvm::function_ref<bool(unsigned i, unsigned j)> merge) {
@@ -302,4 +302,81 @@ void presburger_utils::removeDuplicateDivs(
       --j;
     }
   }
+}
+
+void presburger::mergeLocalIds(
+    IntegerRelation &relA, IntegerRelation &relB,
+    llvm::function_ref<bool(unsigned i, unsigned j)> merge) {
+  assert(relA.getSpace().isCompatible(relB.getSpace()) &&
+         "Spaces should be compatible.");
+
+  // Merge local ids of relA and relB without using division information,
+  // i.e. append local ids of `relB` to `relA` and insert local ids of `relA`
+  // to `relB` at start of its local ids.
+  unsigned initLocals = relA.getNumLocalIds();
+  relA.insertId(IdKind::Local, relA.getNumLocalIds(), relB.getNumLocalIds());
+  relB.insertId(IdKind::Local, 0, initLocals);
+
+  // Get division representations from each rel.
+  std::vector<SmallVector<int64_t, 8>> divsA, divsB;
+  SmallVector<unsigned, 4> denomsA, denomsB;
+  relA.getLocalReprs(divsA, denomsA);
+  relB.getLocalReprs(divsB, denomsB);
+
+  // Copy division information for relB into `divsA` and `denomsA`, so that
+  // these have the combined division information of both rels. Since newly
+  // added local variables in relA and relB have no constraints, they will not
+  // have any division representation.
+  std::copy(divsB.begin() + initLocals, divsB.end(),
+            divsA.begin() + initLocals);
+  std::copy(denomsB.begin() + initLocals, denomsB.end(),
+            denomsA.begin() + initLocals);
+
+  // Merge all divisions by removing duplicate divisions.
+  unsigned localOffset = relA.getIdKindOffset(IdKind::Local);
+  presburger::removeDuplicateDivs(divsA, denomsA, localOffset, merge);
+}
+
+int64_t presburger::gcdRange(ArrayRef<int64_t> range) {
+  int64_t gcd = 0;
+  for (int64_t elem : range) {
+    gcd = llvm::GreatestCommonDivisor64(gcd, std::abs(elem));
+    if (gcd == 1)
+      return gcd;
+  }
+  return gcd;
+}
+
+int64_t presburger::normalizeRange(MutableArrayRef<int64_t> range) {
+  int64_t gcd = gcdRange(range);
+  if (gcd == 0 || gcd == 1)
+    return gcd;
+  for (int64_t &elem : range)
+    elem /= gcd;
+  return gcd;
+}
+
+void presburger::normalizeDiv(MutableArrayRef<int64_t> num, int64_t &denom) {
+  assert(denom > 0 && "denom must be positive!");
+  int64_t gcd = llvm::greatestCommonDivisor(gcdRange(num), denom);
+  for (int64_t &coeff : num)
+    coeff /= gcd;
+  denom /= gcd;
+}
+
+SmallVector<int64_t, 8> presburger::getNegatedCoeffs(ArrayRef<int64_t> coeffs) {
+  SmallVector<int64_t, 8> negatedCoeffs;
+  negatedCoeffs.reserve(coeffs.size());
+  for (int64_t coeff : coeffs)
+    negatedCoeffs.emplace_back(-coeff);
+  return negatedCoeffs;
+}
+
+SmallVector<int64_t, 8> presburger::getComplementIneq(ArrayRef<int64_t> ineq) {
+  SmallVector<int64_t, 8> coeffs;
+  coeffs.reserve(ineq.size());
+  for (int64_t coeff : ineq)
+    coeffs.emplace_back(-coeff);
+  --coeffs.back();
+  return coeffs;
 }

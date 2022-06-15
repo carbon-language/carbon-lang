@@ -5,6 +5,7 @@ add_llvm_library(LLVMBOLTPasses
   AsmDump.cpp
   BinaryPasses.cpp
   BinaryFunctionCallGraph.cpp
+  CMOVConversion.cpp
   CacheMetrics.cpp
   CallGraph.cpp
   CallGraphWalker.cpp
@@ -50,8 +51,12 @@ add_llvm_library(LLVMBOLTPasses
 
   LINK_COMPONENTS
   AsmPrinter
-  BOLTCore
-  BOLTUtils
   MC
   Support
+  )
+
+target_link_libraries(LLVMBOLTPasses
+  PRIVATE
+  LLVMBOLTCore
+  LLVMBOLTUtils
   )

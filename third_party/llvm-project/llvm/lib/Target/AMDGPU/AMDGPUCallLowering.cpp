@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/FunctionLoweringInfo.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/IR/IntrinsicsAMDGPU.h"
 
 #define DEBUG_TYPE "amdgpu-call-lowering"
@@ -349,7 +350,6 @@ bool AMDGPUCallLowering::lowerReturn(MachineIRBuilder &B, const Value *Val,
                                      FunctionLoweringInfo &FLI) const {
 
   MachineFunction &MF = B.getMF();
-  MachineRegisterInfo &MRI = MF.getRegInfo();
   SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
   MFI->setIfReturnsVoid(!Val);
 
@@ -365,39 +365,14 @@ bool AMDGPUCallLowering::lowerReturn(MachineIRBuilder &B, const Value *Val,
     return true;
   }
 
-  auto const &ST = MF.getSubtarget<GCNSubtarget>();
-
-  unsigned ReturnOpc = 0;
-  if (IsShader)
-    ReturnOpc = AMDGPU::SI_RETURN_TO_EPILOG;
-  else if (CC == CallingConv::AMDGPU_Gfx)
-    ReturnOpc = AMDGPU::S_SETPC_B64_return_gfx;
-  else
-    ReturnOpc = AMDGPU::S_SETPC_B64_return;
-
+  unsigned ReturnOpc =
+      IsShader ? AMDGPU::SI_RETURN_TO_EPILOG : AMDGPU::SI_RETURN;
   auto Ret = B.buildInstrNoInsert(ReturnOpc);
-  Register ReturnAddrVReg;
-  if (ReturnOpc == AMDGPU::S_SETPC_B64_return) {
-    ReturnAddrVReg = MRI.createVirtualRegister(&AMDGPU::CCR_SGPR_64RegClass);
-    Ret.addUse(ReturnAddrVReg);
-  } else if (ReturnOpc == AMDGPU::S_SETPC_B64_return_gfx) {
-    ReturnAddrVReg =
-        MRI.createVirtualRegister(&AMDGPU::Gfx_CCR_SGPR_64RegClass);
-    Ret.addUse(ReturnAddrVReg);
-  }
 
   if (!FLI.CanLowerReturn)
     insertSRetStores(B, Val->getType(), VRegs, FLI.DemoteRegister);
   else if (!lowerReturnVal(B, Val, VRegs, Ret))
     return false;
-
-  if (ReturnOpc == AMDGPU::S_SETPC_B64_return ||
-      ReturnOpc == AMDGPU::S_SETPC_B64_return_gfx) {
-    const SIRegisterInfo *TRI = ST.getRegisterInfo();
-    Register LiveInReturn = MF.addLiveIn(TRI->getReturnAddressReg(MF),
-                                         &AMDGPU::SGPR_64RegClass);
-    B.buildCopy(ReturnAddrVReg, LiveInReturn);
-  }
 
   // TODO: Handle CalleeSavedRegsViaCopy.
 
@@ -479,7 +454,7 @@ static void allocateHSAUserSGPRs(CCState &CCInfo,
     CCInfo.AllocateReg(DispatchPtrReg);
   }
 
-  if (Info.hasQueuePtr()) {
+  if (Info.hasQueuePtr() && AMDGPU::getAmdhsaCodeObjectVersion() < 5) {
     Register QueuePtrReg = Info.addQueuePtr(TRI);
     MF.addLiveIn(QueuePtrReg, &AMDGPU::SGPR_64RegClass);
     CCInfo.AllocateReg(QueuePtrReg);
@@ -523,7 +498,7 @@ bool AMDGPUCallLowering::lowerFormalArgumentsKernel(
   const SITargetLowering &TLI = *getTLI<SITargetLowering>();
   const DataLayout &DL = F.getParent()->getDataLayout();
 
-  Info->allocateModuleLDSGlobal(F.getParent());
+  Info->allocateModuleLDSGlobal(F);
 
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(F.getCallingConv(), F.isVarArg(), MF, ArgLocs, F.getContext());
@@ -608,18 +583,10 @@ bool AMDGPUCallLowering::lowerFormalArguments(
   const SIRegisterInfo *TRI = Subtarget.getRegisterInfo();
   const DataLayout &DL = F.getParent()->getDataLayout();
 
-  Info->allocateModuleLDSGlobal(F.getParent());
+  Info->allocateModuleLDSGlobal(F);
 
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CC, F.isVarArg(), MF, ArgLocs, F.getContext());
-
-  if (!IsEntryFunc) {
-    Register ReturnAddrReg = TRI->getReturnAddressReg(MF);
-    Register LiveInReturn = MF.addLiveIn(ReturnAddrReg,
-                                         &AMDGPU::SGPR_64RegClass);
-    MBB.addLiveIn(ReturnAddrReg);
-    B.buildCopy(LiveInReturn, ReturnAddrReg);
-  }
 
   if (Info->hasImplicitBufferPtr()) {
     Register ImplicitBufferPtrReg = Info->addImplicitBufferPtr(*TRI);

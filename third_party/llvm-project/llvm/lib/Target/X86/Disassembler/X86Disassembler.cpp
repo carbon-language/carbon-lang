@@ -493,16 +493,15 @@ static int readPrefixes(struct InternalInstruction *insn) {
     insn->displacementSize = (insn->hasAdSize ? 2 : 4);
     insn->immediateSize = (insn->hasOpSize ? 2 : 4);
   } else if (insn->mode == MODE_64BIT) {
+    insn->displacementSize = 4;
     if (insn->rexPrefix && wFromREX(insn->rexPrefix)) {
       insn->registerSize = 8;
       insn->addressSize = (insn->hasAdSize ? 4 : 8);
-      insn->displacementSize = 4;
       insn->immediateSize = 4;
       insn->hasOpSize = false;
     } else {
       insn->registerSize = (insn->hasOpSize ? 2 : 4);
       insn->addressSize = (insn->hasAdSize ? 4 : 8);
-      insn->displacementSize = (insn->hasOpSize ? 2 : 4);
       insn->immediateSize = (insn->hasOpSize ? 2 : 4);
     }
   }
@@ -1722,13 +1721,13 @@ X86GenericDisassembler::X86GenericDisassembler(
                                          std::unique_ptr<const MCInstrInfo> MII)
   : MCDisassembler(STI, Ctx), MII(std::move(MII)) {
   const FeatureBitset &FB = STI.getFeatureBits();
-  if (FB[X86::Mode16Bit]) {
+  if (FB[X86::Is16Bit]) {
     fMode = MODE_16BIT;
     return;
-  } else if (FB[X86::Mode32Bit]) {
+  } else if (FB[X86::Is32Bit]) {
     fMode = MODE_32BIT;
     return;
-  } else if (FB[X86::Mode64Bit]) {
+  } else if (FB[X86::Is64Bit]) {
     fMode = MODE_64BIT;
     return;
   }
@@ -1799,46 +1798,6 @@ static void translateRegister(MCInst &mcInst, Reg reg) {
 
   MCPhysReg llvmRegnum = llvmRegnums[reg];
   mcInst.addOperand(MCOperand::createReg(llvmRegnum));
-}
-
-/// tryAddingSymbolicOperand - trys to add a symbolic operand in place of the
-/// immediate Value in the MCInst.
-///
-/// @param Value      - The immediate Value, has had any PC adjustment made by
-///                     the caller.
-/// @param isBranch   - If the instruction is a branch instruction
-/// @param Address    - The starting address of the instruction
-/// @param Offset     - The byte offset to this immediate in the instruction
-/// @param Width      - The byte width of this immediate in the instruction
-///
-/// If the getOpInfo() function was set when setupForSymbolicDisassembly() was
-/// called then that function is called to get any symbolic information for the
-/// immediate in the instruction using the Address, Offset and Width.  If that
-/// returns non-zero then the symbolic information it returns is used to create
-/// an MCExpr and that is added as an operand to the MCInst.  If getOpInfo()
-/// returns zero and isBranch is true then a symbol look up for immediate Value
-/// is done and if a symbol is found an MCExpr is created with that, else
-/// an MCExpr with the immediate Value is created.  This function returns true
-/// if it adds an operand to the MCInst and false otherwise.
-static bool tryAddingSymbolicOperand(int64_t Value, bool isBranch,
-                                     uint64_t Address, uint64_t Offset,
-                                     uint64_t Width, MCInst &MI,
-                                     const MCDisassembler *Dis) {
-  return Dis->tryAddingSymbolicOperand(MI, Value, Address, isBranch,
-                                       Offset, Width);
-}
-
-/// tryAddingPcLoadReferenceComment - trys to add a comment as to what is being
-/// referenced by a load instruction with the base register that is the rip.
-/// These can often be addresses in a literal pool.  The Address of the
-/// instruction and its immediate Value are used to determine the address
-/// being referenced in the literal pool entry.  The SymbolLookUp call back will
-/// return a pointer to a literal 'C' string if the referenced address is an
-/// address into a section with 'C' string literals.
-static void tryAddingPcLoadReferenceComment(uint64_t Address, uint64_t Value,
-                                            const void *Decoder) {
-  const MCDisassembler *Dis = static_cast<const MCDisassembler*>(Decoder);
-  Dis->tryAddingPcLoadReferenceComment(Value, Address);
 }
 
 static const uint8_t segmentRegnums[SEG_OVERRIDE_max] = {
@@ -1914,8 +1873,7 @@ static void translateImmediate(MCInst &mcInst, uint64_t immediate,
   uint64_t pcrel = 0;
   if (type == TYPE_REL) {
     isBranch = true;
-    pcrel = insn.startLocation +
-            insn.immediateOffset + insn.immediateSize;
+    pcrel = insn.startLocation + insn.length;
     switch (operand.encoding) {
     default:
       break;
@@ -1990,9 +1948,9 @@ static void translateImmediate(MCInst &mcInst, uint64_t immediate,
     break;
   }
 
-  if(!tryAddingSymbolicOperand(immediate + pcrel, isBranch, insn.startLocation,
-                               insn.immediateOffset, insn.immediateSize,
-                               mcInst, Dis))
+  if (!Dis->tryAddingSymbolicOperand(
+          mcInst, immediate + pcrel, insn.startLocation, isBranch,
+          insn.immediateOffset, insn.immediateSize, insn.length))
     mcInst.addOperand(MCOperand::createImm(immediate));
 
   if (type == TYPE_MOFFS) {
@@ -2129,11 +2087,10 @@ static bool translateRMMemory(MCInst &mcInst, InternalInstruction &insn,
         return true;
       }
       if (insn.mode == MODE_64BIT){
-        pcrel = insn.startLocation +
-                insn.displacementOffset + insn.displacementSize;
-        tryAddingPcLoadReferenceComment(insn.startLocation +
-                                        insn.displacementOffset,
-                                        insn.displacement + pcrel, Dis);
+        pcrel = insn.startLocation + insn.length;
+        Dis->tryAddingPcLoadReferenceComment(insn.displacement + pcrel,
+                                             insn.startLocation +
+                                                 insn.displacementOffset);
         // Section 2.2.1.6
         baseReg = MCOperand::createReg(insn.addressSize == 4 ? X86::EIP :
                                                                X86::RIP);
@@ -2193,9 +2150,13 @@ static bool translateRMMemory(MCInst &mcInst, InternalInstruction &insn,
   mcInst.addOperand(baseReg);
   mcInst.addOperand(scaleAmount);
   mcInst.addOperand(indexReg);
-  if(!tryAddingSymbolicOperand(insn.displacement + pcrel, false,
-                               insn.startLocation, insn.displacementOffset,
-                               insn.displacementSize, mcInst, Dis))
+
+  const uint8_t dispSize =
+      (insn.eaDisplacement == EA_DISP_NONE) ? 0 : insn.displacementSize;
+
+  if (!Dis->tryAddingSymbolicOperand(
+          mcInst, insn.displacement + pcrel, insn.startLocation, false,
+          insn.displacementOffset, dispSize, insn.length))
     mcInst.addOperand(displacement);
   mcInst.addOperand(segmentReg);
   return false;

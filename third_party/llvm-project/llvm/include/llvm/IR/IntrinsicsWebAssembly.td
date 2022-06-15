@@ -31,6 +31,10 @@ def int_wasm_memory_grow : Intrinsic<[llvm_anyint_ty],
 //===----------------------------------------------------------------------===//
 def int_wasm_ref_null_extern : Intrinsic<[llvm_externref_ty], [], [IntrNoMem]>;
 def int_wasm_ref_null_func : Intrinsic<[llvm_funcref_ty], [], [IntrNoMem]>;
+def int_wasm_ref_is_null_extern : Intrinsic<[llvm_i32_ty], [llvm_externref_ty],
+                                            [IntrNoMem], "llvm.wasm.ref.is_null.extern">;
+def int_wasm_ref_is_null_func : Intrinsic<[llvm_i32_ty], [llvm_funcref_ty],
+                                          [IntrNoMem], "llvm.wasm.ref.is_null.func">;
 
 //===----------------------------------------------------------------------===//
 // Table intrinsics
@@ -256,16 +260,30 @@ def int_wasm_relaxed_trunc_unsigned:
             [llvm_v4f32_ty],
             [IntrNoMem, IntrSpeculatable]>;
 
-def int_wasm_relaxed_trunc_zero_signed:
+def int_wasm_relaxed_trunc_signed_zero:
   Intrinsic<[llvm_v4i32_ty],
             [llvm_v2f64_ty],
             [IntrNoMem, IntrSpeculatable]>;
 
-def int_wasm_relaxed_trunc_zero_unsigned:
+def int_wasm_relaxed_trunc_unsigned_zero:
   Intrinsic<[llvm_v4i32_ty],
             [llvm_v2f64_ty],
             [IntrNoMem, IntrSpeculatable]>;
 
+def int_wasm_relaxed_q15mulr_signed:
+  Intrinsic<[llvm_v8i16_ty],
+            [llvm_v8i16_ty, llvm_v8i16_ty],
+            [IntrNoMem, IntrSpeculatable]>;
+
+def int_wasm_dot_i8x16_i7x16_signed:
+  Intrinsic<[llvm_v8i16_ty],
+            [llvm_v16i8_ty, llvm_v16i8_ty],
+            [IntrNoMem, IntrSpeculatable]>;
+
+def int_wasm_dot_i8x16_i7x16_add_signed:
+  Intrinsic<[llvm_v4i32_ty],
+            [llvm_v16i8_ty, llvm_v16i8_ty, llvm_v4i32_ty],
+            [IntrNoMem, IntrSpeculatable]>;
 
 //===----------------------------------------------------------------------===//
 // Thread-local storage intrinsics

@@ -32,8 +32,6 @@
 using namespace llvm;
 using namespace llvm::object;
 
-static LLVMContext LLVMCtx;
-
 class NewArchiveMemberList;
 typedef std::map<uint64_t, NewArchiveMemberList> MembersPerArchitectureMap;
 
@@ -45,12 +43,12 @@ static cl::opt<std::string> OutputFile("o", cl::desc("Specify output filename"),
 
 static cl::list<std::string> InputFiles(cl::Positional,
                                         cl::desc("<input files>"),
-                                        cl::ZeroOrMore,
                                         cl::cat(LibtoolCategory));
 
-static cl::opt<std::string> ArchType(
-    "arch_only", cl::desc("Specify architecture type for output library"),
-    cl::value_desc("arch_type"), cl::ZeroOrMore, cl::cat(LibtoolCategory));
+static cl::opt<std::string>
+    ArchType("arch_only",
+             cl::desc("Specify architecture type for output library"),
+             cl::value_desc("arch_type"), cl::cat(LibtoolCategory));
 
 enum class Operation { None, Static };
 
@@ -80,14 +78,14 @@ static cl::list<std::string> Libraries(
         "l<x> searches for the library libx.a in the library search path. If"
         " the string 'x' ends with '.o', then the library 'x' is searched for"
         " without prepending 'lib' or appending '.a'"),
-    cl::ZeroOrMore, cl::Prefix, cl::cat(LibtoolCategory));
+    cl::Prefix, cl::cat(LibtoolCategory));
 
 static cl::list<std::string> LibrarySearchDirs(
     "L",
     cl::desc(
         "L<dir> adds <dir> to the list of directories in which to search for"
         " libraries"),
-    cl::ZeroOrMore, cl::Prefix, cl::cat(LibtoolCategory));
+    cl::Prefix, cl::cat(LibtoolCategory));
 
 static cl::opt<bool>
     VersionOption("V", cl::desc("Print the version number and exit"),
@@ -269,7 +267,8 @@ public:
 // the user.
 class MembersBuilder {
 public:
-  MembersBuilder(const Config &C) : C(C) {}
+  MembersBuilder(LLVMContext &LLVMCtx, const Config &C)
+      : LLVMCtx(LLVMCtx), C(C) {}
 
   Expected<MembersData> build() {
     for (StringRef FileName : InputFiles)
@@ -396,7 +395,7 @@ private:
     Error verifyAndAddIRObject(NewArchiveMember Member) {
       auto MBRef = Member.Buf->getMemBufferRef();
       Expected<std::unique_ptr<object::IRObjectFile>> IROrErr =
-          object::IRObjectFile::create(MBRef, LLVMCtx);
+          object::IRObjectFile::create(MBRef, Builder.LLVMCtx);
 
       // Throw error if not a valid IR object file.
       if (!IROrErr)
@@ -488,7 +487,7 @@ private:
         }
 
         Expected<std::unique_ptr<IRObjectFile>> IRObjectOrError =
-            O.getAsIRObject(LLVMCtx);
+            O.getAsIRObject(Builder.LLVMCtx);
         if (IRObjectOrError) {
           // A universal file member can be a MachOObjectFile, an IRObject or an
           // Archive. In case we can successfully cast the member as an
@@ -533,11 +532,13 @@ private:
   };
 
   MembersData Data;
+  LLVMContext &LLVMCtx;
   const Config &C;
 };
 
 static Expected<SmallVector<Slice, 2>>
-buildSlices(ArrayRef<OwningBinary<Archive>> OutputBinaries) {
+buildSlices(LLVMContext &LLVMCtx,
+            ArrayRef<OwningBinary<Archive>> OutputBinaries) {
   SmallVector<Slice, 2> Slices;
 
   for (const auto &OB : OutputBinaries) {
@@ -585,8 +586,8 @@ checkForDuplicates(const MembersPerArchitectureMap &MembersPerArch) {
   return Error::success();
 }
 
-static Error createStaticLibrary(const Config &C) {
-  MembersBuilder Builder(C);
+static Error createStaticLibrary(LLVMContext &LLVMCtx, const Config &C) {
+  MembersBuilder Builder(LLVMCtx, C);
   auto DataOrError = Builder.build();
   if (auto Error = DataOrError.takeError())
     return Error;
@@ -627,7 +628,7 @@ static Error createStaticLibrary(const Config &C) {
         OwningBinary<Archive>(std::move(A), std::move(OutputBuffer)));
   }
 
-  Expected<SmallVector<Slice, 2>> Slices = buildSlices(OutputBinaries);
+  Expected<SmallVector<Slice, 2>> Slices = buildSlices(LLVMCtx, OutputBinaries);
   if (!Slices)
     return Slices.takeError();
 
@@ -702,12 +703,13 @@ int main(int Argc, char **Argv) {
   llvm::InitializeAllTargetMCs();
   llvm::InitializeAllAsmParsers();
 
+  LLVMContext LLVMCtx;
   Config C = *ConfigOrErr;
   switch (LibraryOperation) {
   case Operation::None:
     break;
   case Operation::Static:
-    if (Error E = createStaticLibrary(C)) {
+    if (Error E = createStaticLibrary(LLVMCtx, C)) {
       WithColor::defaultErrorHandler(std::move(E));
       return EXIT_FAILURE;
     }

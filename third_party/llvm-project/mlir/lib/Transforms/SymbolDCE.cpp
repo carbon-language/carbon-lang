@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PassDetail.h"
+#include "mlir/IR/SymbolTable.h"
 #include "mlir/Transforms/Passes.h"
 
 using namespace mlir;
@@ -62,8 +63,10 @@ void SymbolDCE::runOnOperation() {
       return;
     for (auto &block : nestedSymbolTable->getRegion(0)) {
       for (Operation &op : llvm::make_early_inc_range(block)) {
-        if (isa<SymbolOpInterface>(&op) && !liveSymbols.count(&op))
+        if (isa<SymbolOpInterface>(&op) && !liveSymbols.count(&op)) {
           op.erase();
+          ++numDCE;
+        }
       }
     }
   });

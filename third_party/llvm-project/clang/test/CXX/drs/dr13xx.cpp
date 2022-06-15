@@ -13,6 +13,16 @@ namespace std {
   };
 }
 
+#if __cplusplus >= 201103L
+namespace dr1305 { // dr1305: yes
+struct Incomplete; // expected-note {{forward declaration of 'dr1305::Incomplete'}}
+struct Complete {};
+
+int incomplete = alignof(Incomplete(&)[]); // expected-error {{invalid application of 'alignof' to an incomplete type 'dr1305::Incomplete'}}
+int complete = alignof(Complete(&)[]);
+}
+#endif
+
 namespace dr1310 { // dr1310: 5
   struct S {} * sp = new S::S; // expected-error {{qualified reference to 'S' is a constructor name}}
   void f() {
@@ -438,6 +448,13 @@ namespace dr1391 { // dr1391: partial
     int test_c1 = c(0); // ok
     int test_c2 = c<int>(0); // FIXME: apparently ambiguous
   }
+}
+
+namespace dr1394 { // dr1394: 15
+#if __cplusplus >= 201103L
+struct Incomplete;
+Incomplete f(Incomplete) = delete; // well-formed
+#endif
 }
 
 namespace dr1399 { // dr1399: dup 1388

@@ -1,4 +1,4 @@
-//===-- flang/unittests/RuntimeGTest/Format.cpp -----------------*- C++ -*-===//
+//===-- flang/unittests/Runtime/Format.cpp ----------------------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -107,8 +107,7 @@ TEST(FormatTests, FormatStringTraversal) {
           ResultsTy{"'PI='", "F9.7", "'PI='", "F9.7", "'done'"}, 1},
       {2, "(3('PI=',F9.7,:),'tooFar')",
           ResultsTy{"'PI='", "F9.7", "'PI='", "F9.7"}, 1},
-      {2, "(*('PI=',F9.7,:),'tooFar')",
-          ResultsTy{"'PI='", "F9.7", "'PI='", "F9.7"}, 1},
+      {2, "(*('PI=',F9.7,:))", ResultsTy{"'PI='", "F9.7", "'PI='", "F9.7"}, 1},
       {1, "(3F9.7)", ResultsTy{"2*F9.7"}, 2},
   };
 

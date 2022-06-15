@@ -7,13 +7,13 @@
 //===----------------------------------------------------------------------===//
 //
 // TODO: This pass is only necessary because the main inlining pass
-// has no abstracted away the call+callee relationship. When the inlining
+// has not abstracted away the call+callee relationship. When the inlining
 // interface has this support, this pass should be removed.
 //
 //===----------------------------------------------------------------------===//
 
 #include "TestDialect.h"
-#include "mlir/Dialect/StandardOps/IR/Ops.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/IR/BlockAndValueMapping.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/Pass/Pass.h"
@@ -24,7 +24,9 @@ using namespace mlir;
 using namespace test;
 
 namespace {
-struct Inliner : public PassWrapper<Inliner, OperationPass<FuncOp>> {
+struct Inliner : public PassWrapper<Inliner, OperationPass<func::FuncOp>> {
+  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(Inliner)
+
   StringRef getArgument() const final { return "test-inline"; }
   StringRef getDescription() const final {
     return "Test inlining region calls";
@@ -34,8 +36,9 @@ struct Inliner : public PassWrapper<Inliner, OperationPass<FuncOp>> {
     auto function = getOperation();
 
     // Collect each of the direct function calls within the module.
-    SmallVector<CallIndirectOp, 16> callers;
-    function.walk([&](CallIndirectOp caller) { callers.push_back(caller); });
+    SmallVector<func::CallIndirectOp, 16> callers;
+    function.walk(
+        [&](func::CallIndirectOp caller) { callers.push_back(caller); });
 
     // Build the inliner interface.
     InlinerInterface interface(&getContext());

@@ -542,11 +542,10 @@ class CompressedSection : public SectionBase {
   SmallVector<char, 128> CompressedData;
 
 public:
-  static Expected<CompressedSection>
-  create(const SectionBase &Sec, DebugCompressionType CompressionType);
-  static Expected<CompressedSection> create(ArrayRef<uint8_t> CompressedData,
-                                            uint64_t DecompressedSize,
-                                            uint64_t DecompressedAlign);
+  CompressedSection(const SectionBase &Sec,
+                    DebugCompressionType CompressionType);
+  CompressedSection(ArrayRef<uint8_t> CompressedData, uint64_t DecompressedSize,
+                    uint64_t DecompressedAlign);
 
   uint64_t getDecompressedSize() const { return DecompressedSize; }
   uint64_t getDecompressedAlign() const { return DecompressedAlign; }
@@ -558,12 +557,6 @@ public:
     return (S->OriginalFlags & ELF::SHF_COMPRESSED) ||
            (StringRef(S->Name).startswith(".zdebug"));
   }
-
-private:
-  CompressedSection(const SectionBase &Sec,
-                    DebugCompressionType CompressionType, Error &Err);
-  CompressedSection(ArrayRef<uint8_t> CompressedData, uint64_t DecompressedSize,
-                    uint64_t DecompressedAlign);
 };
 
 class DecompressedSection : public SectionBase {
@@ -628,6 +621,11 @@ enum SymbolShndxType {
   SYMBOL_HEXAGON_SCOMMON_2 = ELF::SHN_HEXAGON_SCOMMON_2,
   SYMBOL_HEXAGON_SCOMMON_4 = ELF::SHN_HEXAGON_SCOMMON_4,
   SYMBOL_HEXAGON_SCOMMON_8 = ELF::SHN_HEXAGON_SCOMMON_8,
+  SYMBOL_MIPS_ACOMMON = ELF::SHN_MIPS_ACOMMON,
+  SYMBOL_MIPS_TEXT = ELF::SHN_MIPS_TEXT,
+  SYMBOL_MIPS_DATA = ELF::SHN_MIPS_DATA,
+  SYMBOL_MIPS_SCOMMON = ELF::SHN_MIPS_SCOMMON,
+  SYMBOL_MIPS_SUNDEFINED = ELF::SHN_MIPS_SUNDEFINED,
   SYMBOL_HIPROC = ELF::SHN_HIPROC,
   SYMBOL_LOOS = ELF::SHN_LOOS,
   SYMBOL_HIOS = ELF::SHN_HIOS,

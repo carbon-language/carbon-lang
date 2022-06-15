@@ -34,13 +34,13 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/BlockFrequencyInfoImpl.h"
 #include "llvm/Analysis/ProfileSummaryInfo.h"
+#include "llvm/CodeGen/MBFIWrapper.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineBlockFrequencyInfo.h"
 #include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
-#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachinePostDominators.h"
 #include "llvm/CodeGen/MachineSizeOpts.h"
 #include "llvm/CodeGen/TailDuplicator.h"
@@ -201,6 +201,7 @@ static cl::opt<unsigned> TriangleChainCount(
     cl::Hidden);
 
 extern cl::opt<bool> EnableExtTspBlockPlacement;
+extern cl::opt<bool> ApplyExtTspWithoutProfile;
 
 namespace llvm {
 extern cl::opt<unsigned> StaticLikelyProb;
@@ -3419,7 +3420,8 @@ bool MachineBlockPlacement::runOnMachineFunction(MachineFunction &MF) {
   }
 
   // Apply a post-processing optimizing block placement.
-  if (MF.size() >= 3 && EnableExtTspBlockPlacement) {
+  if (MF.size() >= 3 && EnableExtTspBlockPlacement &&
+      (ApplyExtTspWithoutProfile || MF.getFunction().hasProfileData())) {
     // Find a new placement and modify the layout of the blocks in the function.
     applyExtTsp();
 

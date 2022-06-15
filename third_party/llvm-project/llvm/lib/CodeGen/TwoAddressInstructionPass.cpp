@@ -28,7 +28,6 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/iterator_range.h"
@@ -50,7 +49,6 @@
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/MC/MCInstrDesc.h"
-#include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Support/CommandLine.h"
@@ -163,6 +161,7 @@ class TwoAddressInstructionPass : public MachineFunctionPass {
   bool collectTiedOperands(MachineInstr *MI, TiedOperandMap&);
   void processTiedPairs(MachineInstr *MI, TiedPairList&, unsigned &Dist);
   void eliminateRegSequence(MachineBasicBlock::iterator&);
+  bool processStatepoint(MachineInstr *MI, TiedOperandMap &TiedOperands);
 
 public:
   static char ID; // Pass identification, replacement for typeid
@@ -1629,6 +1628,61 @@ TwoAddressInstructionPass::processTiedPairs(MachineInstr *MI,
   }
 }
 
+// For every tied operand pair this function transforms statepoint from
+//    RegA = STATEPOINT ... RegB(tied-def N)
+// to
+//    RegB = STATEPOINT ... RegB(tied-def N)
+// and replaces all uses of RegA with RegB.
+// No extra COPY instruction is necessary because tied use is killed at
+// STATEPOINT.
+bool TwoAddressInstructionPass::processStatepoint(
+    MachineInstr *MI, TiedOperandMap &TiedOperands) {
+
+  bool NeedCopy = false;
+  for (auto &TO : TiedOperands) {
+    Register RegB = TO.first;
+    if (TO.second.size() != 1) {
+      NeedCopy = true;
+      continue;
+    }
+
+    unsigned SrcIdx = TO.second[0].first;
+    unsigned DstIdx = TO.second[0].second;
+
+    MachineOperand &DstMO = MI->getOperand(DstIdx);
+    Register RegA = DstMO.getReg();
+
+    assert(RegB == MI->getOperand(SrcIdx).getReg());
+
+    if (RegA == RegB)
+      continue;
+
+    MRI->replaceRegWith(RegA, RegB);
+
+    if (LIS) {
+      VNInfo::Allocator &A = LIS->getVNInfoAllocator();
+      LiveInterval &LI = LIS->getInterval(RegB);
+      for (auto &S : LIS->getInterval(RegA)) {
+        VNInfo *VNI = LI.getNextValue(S.start, A);
+        LiveRange::Segment NewSeg(S.start, S.end, VNI);
+        LI.addSegment(NewSeg);
+      }
+      LIS->removeInterval(RegA);
+    }
+
+    if (LV) {
+      if (MI->getOperand(SrcIdx).isKill())
+        LV->removeVirtualRegisterKilled(RegB, *MI);
+      LiveVariables::VarInfo &SrcInfo = LV->getVarInfo(RegB);
+      LiveVariables::VarInfo &DstInfo = LV->getVarInfo(RegA);
+      SrcInfo.AliveBlocks |= DstInfo.AliveBlocks;
+      for (auto *KillMI : DstInfo.Kills)
+        LV->addVirtualRegisterKilled(RegB, *KillMI, false);
+    }
+  }
+  return !NeedCopy;
+}
+
 /// Reduce two-address instructions to two operands.
 bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &Func) {
   MF = &Func;
@@ -1722,6 +1776,14 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &Func) {
         }
       }
 
+      if (mi->getOpcode() == TargetOpcode::STATEPOINT &&
+          processStatepoint(&*mi, TiedOperands)) {
+        TiedOperands.clear();
+        LLVM_DEBUG(dbgs() << "\t\trewrite to:\t" << *mi);
+        mi = nmi;
+        continue;
+      }
+
       // Now iterate over the information collected above.
       for (auto &TO : TiedOperands) {
         processTiedPairs(&*mi, TO.second, Dist);
@@ -1733,11 +1795,11 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &Func) {
         // From %reg = INSERT_SUBREG %reg, %subreg, subidx
         // To   %reg:subidx = COPY %subreg
         unsigned SubIdx = mi->getOperand(3).getImm();
-        mi->RemoveOperand(3);
+        mi->removeOperand(3);
         assert(mi->getOperand(0).getSubReg() == 0 && "Unexpected subreg idx");
         mi->getOperand(0).setSubReg(SubIdx);
         mi->getOperand(0).setIsUndef(mi->getOperand(1).isUndef());
-        mi->RemoveOperand(1);
+        mi->removeOperand(1);
         mi->setDesc(TII->get(TargetOpcode::COPY));
         LLVM_DEBUG(dbgs() << "\t\tconvert to:\t" << *mi);
 
@@ -1858,7 +1920,7 @@ eliminateRegSequence(MachineBasicBlock::iterator &MBBI) {
     LLVM_DEBUG(dbgs() << "Turned: " << MI << " into an IMPLICIT_DEF");
     MI.setDesc(TII->get(TargetOpcode::IMPLICIT_DEF));
     for (int j = MI.getNumOperands() - 1, ee = 0; j > ee; --j)
-      MI.RemoveOperand(j);
+      MI.removeOperand(j);
   } else {
     if (LIS)
       LIS->RemoveMachineInstrFromMaps(MI);

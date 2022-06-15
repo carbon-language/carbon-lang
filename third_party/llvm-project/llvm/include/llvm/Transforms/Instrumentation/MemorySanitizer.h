@@ -13,10 +13,15 @@
 #ifndef LLVM_TRANSFORMS_INSTRUMENTATION_MEMORYSANITIZER_H
 #define LLVM_TRANSFORMS_INSTRUMENTATION_MEMORYSANITIZER_H
 
+#include "llvm/ADT/STLFunctionalExtras.h"
 #include "llvm/IR/PassManager.h"
-#include "llvm/Pass.h"
 
 namespace llvm {
+class Function;
+class FunctionPass;
+class Module;
+class StringRef;
+class raw_ostream;
 
 struct MemorySanitizerOptions {
   MemorySanitizerOptions() : MemorySanitizerOptions(0, false, false, false){};
@@ -29,10 +34,6 @@ struct MemorySanitizerOptions {
   bool Recover;
   bool EagerChecks;
 };
-
-// Insert MemorySanitizer instrumentation (detection of uninitialized reads)
-FunctionPass *
-createMemorySanitizerLegacyPassPass(MemorySanitizerOptions Options = {});
 
 /// A function pass for msan instrumentation.
 ///

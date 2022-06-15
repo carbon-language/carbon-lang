@@ -23,6 +23,8 @@
 
 namespace llvm {
 
+class MachineFunction;
+
 struct Chunk {
   int Begin;
   int End;
@@ -85,6 +87,8 @@ public:
   int count() { return Index; }
 };
 
+using ReductionFunc = function_ref<void(Oracle &, ReducerWorkItem &)>;
+
 /// This function implements the Delta Debugging algorithm, it receives a
 /// number of Targets (e.g. Functions, Instructions, Basic Blocks, etc.) and
 /// splits them in half; these chunks of targets are then tested while ignoring
@@ -103,12 +107,7 @@ public:
 ///
 /// Other implementations of the Delta Debugging algorithm can also be found in
 /// the CReduce, Delta, and Lithium projects.
-void runDeltaPass(
-    TestRunner &Test,
-    function_ref<void(Oracle &, Module &)> ExtractChunksFromModule);
-void runDeltaPass(
-    TestRunner &Test,
-    function_ref<void(Oracle &, MachineFunction &)> ExtractChunksFromModule);
+void runDeltaPass(TestRunner &Test, ReductionFunc ExtractChunksFromModule);
 } // namespace llvm
 
 #endif

@@ -85,6 +85,10 @@ struct ModuleDeps {
   /// on, not including transitive dependencies.
   llvm::StringSet<> FileDeps;
 
+  /// A collection of absolute paths to module map files that this module needs
+  /// to know about.
+  std::vector<std::string> ModuleMapFileDeps;
+
   /// A collection of prebuilt modular dependencies this module directly depends
   /// on, not including transitive dependencies.
   std::vector<PrebuiltModuleDep> PrebuiltModuleDeps;
@@ -109,29 +113,13 @@ struct ModuleDeps {
   ///                      arguments and the "-o" argument. It needs to return
   ///                      a path for where the PCM for the given module is to
   ///                      be located.
-  /// \param LookupModuleDeps This function is called to collect the full
-  ///                         transitive set of dependencies for this
-  ///                         compilation and fill in "-fmodule-map-file="
-  ///                         arguments.
   std::vector<std::string> getCanonicalCommandLine(
-      std::function<StringRef(ModuleID)> LookupPCMPath,
-      std::function<const ModuleDeps &(ModuleID)> LookupModuleDeps) const;
+      std::function<StringRef(ModuleID)> LookupPCMPath) const;
 
   /// Gets the canonical command line suitable for passing to clang, excluding
-  /// arguments containing modules-related paths: "-fmodule-file=", "-o",
-  /// "-fmodule-map-file=".
+  /// "-fmodule-file=" and "-o" arguments.
   std::vector<std::string> getCanonicalCommandLineWithoutModulePaths() const;
 };
-
-namespace detail {
-/// Collect the paths of PCM and module map files for the modules in \c Modules
-/// transitively.
-void collectPCMAndModuleMapPaths(
-    llvm::ArrayRef<ModuleID> Modules,
-    std::function<StringRef(ModuleID)> LookupPCMPath,
-    std::function<const ModuleDeps &(ModuleID)> LookupModuleDeps,
-    std::vector<std::string> &PCMPaths, std::vector<std::string> &ModMapPaths);
-} // namespace detail
 
 class ModuleDepCollector;
 
@@ -148,9 +136,9 @@ public:
                    FileID PrevFID) override;
   void InclusionDirective(SourceLocation HashLoc, const Token &IncludeTok,
                           StringRef FileName, bool IsAngled,
-                          CharSourceRange FilenameRange, const FileEntry *File,
-                          StringRef SearchPath, StringRef RelativePath,
-                          const Module *Imported,
+                          CharSourceRange FilenameRange,
+                          Optional<FileEntryRef> File, StringRef SearchPath,
+                          StringRef RelativePath, const Module *Imported,
                           SrcMgr::CharacteristicKind FileType) override;
   void moduleImport(SourceLocation ImportLoc, ModuleIdPath Path,
                     const Module *Imported) override;
@@ -161,9 +149,9 @@ private:
   /// The parent dependency collector.
   ModuleDepCollector &MDC;
   /// Working set of direct modular dependencies.
-  llvm::DenseSet<const Module *> DirectModularDeps;
+  llvm::SetVector<const Module *> DirectModularDeps;
   /// Working set of direct modular dependencies that have already been built.
-  llvm::DenseSet<const Module *> DirectPrebuiltModularDeps;
+  llvm::SetVector<const Module *> DirectPrebuiltModularDeps;
 
   void handleImport(const Module *Imported);
 
@@ -211,7 +199,7 @@ private:
   /// textually included header files.
   std::vector<std::string> FileDeps;
   /// Direct and transitive modular dependencies of the main source file.
-  std::unordered_map<const Module *, ModuleDeps> ModularDeps;
+  llvm::MapVector<const Module *, std::unique_ptr<ModuleDeps>> ModularDeps;
   /// Options that control the dependency output generation.
   std::unique_ptr<DependencyOutputOptions> Opts;
   /// The original Clang invocation passed to dependency scanner.

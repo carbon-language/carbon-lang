@@ -17,11 +17,10 @@
 // CHECK: llvm.atomicrmw fadd %[[ARG0]], %[[RHS]] monotonic
 
 // CHECK-LABEL: @reduction1
-func @reduction1(%arg0 : index, %arg1 : index, %arg2 : index,
+func.func @reduction1(%arg0 : index, %arg1 : index, %arg2 : index,
                  %arg3 : index, %arg4 : index) {
   // CHECK: %[[CST:.*]] = arith.constant 0.0
   // CHECK: %[[ONE:.*]] = llvm.mlir.constant(1
-  // CHECK: llvm.intr.stacksave
   // CHECK: %[[BUF:.*]] = llvm.alloca %[[ONE]] x f32
   // CHECK: llvm.store %[[CST]], %[[BUF]]
   %step = arith.constant 1 : index
@@ -29,6 +28,7 @@ func @reduction1(%arg0 : index, %arg1 : index, %arg2 : index,
   // CHECK: omp.parallel
   // CHECK: omp.wsloop
   // CHECK-SAME: reduction(@[[$REDF]] -> %[[BUF]]
+  // CHECK: memref.alloca_scope
   scf.parallel (%i0, %i1) = (%arg0, %arg1) to (%arg2, %arg3)
                             step (%arg4, %step) init (%zero) -> (f32) {
     // CHECK: %[[CST_INNER:.*]] = arith.constant 1.0
@@ -43,7 +43,6 @@ func @reduction1(%arg0 : index, %arg1 : index, %arg2 : index,
   }
   // CHECK: omp.terminator
   // CHECK: llvm.load %[[BUF]]
-  // CHECK: llvm.intr.stackrestore
   return
 }
 
@@ -64,7 +63,7 @@ func @reduction1(%arg0 : index, %arg1 : index, %arg2 : index,
 // CHECK-NOT: atomic
 
 // CHECK-LABEL: @reduction2
-func @reduction2(%arg0 : index, %arg1 : index, %arg2 : index,
+func.func @reduction2(%arg0 : index, %arg1 : index, %arg2 : index,
                  %arg3 : index, %arg4 : index) {
   %step = arith.constant 1 : index
   %zero = arith.constant 0.0 : f32
@@ -98,7 +97,7 @@ func @reduction2(%arg0 : index, %arg1 : index, %arg2 : index,
 // CHECK-NOT: atomic
 
 // CHECK-LABEL: @reduction3
-func @reduction3(%arg0 : index, %arg1 : index, %arg2 : index,
+func.func @reduction3(%arg0 : index, %arg1 : index, %arg2 : index,
                  %arg3 : index, %arg4 : index) {
   %step = arith.constant 1 : index
   %zero = arith.constant 0.0 : f32
@@ -149,7 +148,7 @@ func @reduction3(%arg0 : index, %arg1 : index, %arg2 : index,
 // CHECK: llvm.atomicrmw max %[[ARG0]], %[[RHS]] monotonic
 
 // CHECK-LABEL: @reduction4
-func @reduction4(%arg0 : index, %arg1 : index, %arg2 : index,
+func.func @reduction4(%arg0 : index, %arg1 : index, %arg2 : index,
                  %arg3 : index, %arg4 : index) -> (f32, i64) {
   %step = arith.constant 1 : index
   // CHECK: %[[ZERO:.*]] = arith.constant 0.0
@@ -165,6 +164,7 @@ func @reduction4(%arg0 : index, %arg1 : index, %arg2 : index,
   // CHECK: omp.wsloop
   // CHECK-SAME: reduction(@[[$REDF1]] -> %[[BUF1]]
   // CHECK-SAME:           @[[$REDF2]] -> %[[BUF2]]
+  // CHECK: memref.alloca_scope
   %res:2 = scf.parallel (%i0, %i1) = (%arg0, %arg1) to (%arg2, %arg3)
                         step (%arg4, %step) init (%zero, %ione) -> (f32, i64) {
     %one = arith.constant 1.0 : f32

@@ -10,6 +10,7 @@
 #include "R600.h"
 #include "R600RegisterInfo.h"
 #include "R600Subtarget.h"
+#include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -740,6 +741,7 @@ bool R600MachineCFGStructurizer::run() {
     ++NumIter;
     LLVM_DEBUG(dbgs() << "numIter = " << NumIter
                       << ", numRemaintedBlk = " << NumRemainedBlk << "\n";);
+    (void)NumIter;
 
     SmallVectorImpl<MachineBasicBlock *>::const_iterator It =
         OrderedBlks.begin();
@@ -780,6 +782,7 @@ bool R600MachineCFGStructurizer::run() {
           LLVM_DEBUG(dbgs() << "Can't reduce SCC " << getSCCNum(MBB)
                             << ", sccNumIter = " << SccNumIter;
                      dbgs() << "doesn't make any progress\n";);
+          (void)SccNumIter;
           ContNextScc = true;
         } else if (sccRemainedNumBlk != 1 && sccRemainedNumBlk < SccNumBlk) {
           SccNumBlk = sccRemainedNumBlk;

@@ -1,22 +1,22 @@
-// RUN: %clang_cc1 -verify -fopenmp -fopenmp-version=45 -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -emit-llvm-bc %s -o %t-ppc-host.bc -DLOAD
-// RUN: %clang_cc1 -verify -fopenmp -fopenmp-version=45 -x c++ -triple powerpc64le-unknown-unknown -emit-llvm %s -fopenmp-is-device -fvisibility protected -fopenmp-host-ir-file-path %t-ppc-host.bc -o - -DLOAD | FileCheck %s
-// RUN: %clang_cc1 -verify -fopenmp -fopenmp-version=45 -x c++ -triple powerpc64le-unknown-unknown -emit-llvm %s -fopenmp-is-device -fvisibility protected -fopenmp-host-ir-file-path %t-ppc-host.bc -emit-pch -o %t
-// RUN: %clang_cc1 -verify -fopenmp -fopenmp-version=45 -x c++ -triple powerpc64le-unknown-unknown -emit-llvm %s -fopenmp-is-device -fvisibility protected -fopenmp-host-ir-file-path %t-ppc-host.bc -include-pch %t -o - -DLOAD | FileCheck %s
+// RUN: %clang_cc1 -no-opaque-pointers -verify -fopenmp -fopenmp-version=45 -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -emit-llvm-bc %s -o %t-ppc-host.bc -DLOAD
+// RUN: %clang_cc1 -no-opaque-pointers -verify -fopenmp -fopenmp-version=45 -x c++ -triple powerpc64le-unknown-unknown -emit-llvm %s -fopenmp-is-device -fvisibility protected -fopenmp-host-ir-file-path %t-ppc-host.bc -o - -DLOAD | FileCheck %s
+// RUN: %clang_cc1 -no-opaque-pointers -verify -fopenmp -fopenmp-version=45 -x c++ -triple powerpc64le-unknown-unknown -emit-llvm %s -fopenmp-is-device -fvisibility protected -fopenmp-host-ir-file-path %t-ppc-host.bc -emit-pch -o %t
+// RUN: %clang_cc1 -no-opaque-pointers -verify -fopenmp -fopenmp-version=45 -x c++ -triple powerpc64le-unknown-unknown -emit-llvm %s -fopenmp-is-device -fvisibility protected -fopenmp-host-ir-file-path %t-ppc-host.bc -include-pch %t -o - -DLOAD | FileCheck %s
 
-// RUN: %clang_cc1 -verify -fopenmp -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -emit-llvm %s -o - -DOMP5 | FileCheck %s --check-prefix HOST5
-// RUN: %clang_cc1 -verify -fopenmp -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -emit-llvm-bc %s -o %t-ppc-host.bc -DOMP5
-// RUN: %clang_cc1 -verify -fopenmp -x c++ -triple powerpc64le-unknown-unknown -emit-llvm %s -fopenmp-is-device -fvisibility protected -fopenmp-host-ir-file-path %t-ppc-host.bc -o - -DOMP5 | FileCheck %s --check-prefix DEV5
+// RUN: %clang_cc1 -no-opaque-pointers -verify -fopenmp -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -emit-llvm %s -o - -DOMP5 | FileCheck %s --check-prefix HOST5
+// RUN: %clang_cc1 -no-opaque-pointers -verify -fopenmp -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -emit-llvm-bc %s -o %t-ppc-host.bc -DOMP5
+// RUN: %clang_cc1 -no-opaque-pointers -verify -fopenmp -x c++ -triple powerpc64le-unknown-unknown -emit-llvm %s -fopenmp-is-device -fvisibility protected -fopenmp-host-ir-file-path %t-ppc-host.bc -o - -DOMP5 | FileCheck %s --check-prefix DEV5
 
-// RUN: %clang_cc1 -verify -fopenmp -x c++ -triple powerpc64le-unknown-unknown -emit-llvm %s -o - -DOMP5 | FileCheck %s --check-prefix KMPC-ONLY
+// RUN: %clang_cc1 -no-opaque-pointers -verify -fopenmp -x c++ -triple powerpc64le-unknown-unknown -emit-llvm %s -o - -DOMP5 | FileCheck %s --check-prefix KMPC-ONLY
 
-// RUN: %clang_cc1 -verify -fopenmp-simd -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -emit-llvm %s -o - -DOMP5 | FileCheck %s --check-prefix SIMD-ONLY
-// RUN: %clang_cc1 -verify -fopenmp-simd -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -emit-llvm-bc %s -o %t-ppc-host.bc -DOMP5
-// RUN: %clang_cc1 -verify -fopenmp-simd -x c++ -triple powerpc64le-unknown-unknown -emit-llvm %s -fopenmp-is-device -fvisibility protected -fopenmp-host-ir-file-path %t-ppc-host.bc -o - -DOMP5 | FileCheck %s --check-prefix SIMD-ONLY
+// RUN: %clang_cc1 -no-opaque-pointers -verify -fopenmp-simd -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -emit-llvm %s -o - -DOMP5 | FileCheck %s --check-prefix SIMD-ONLY
+// RUN: %clang_cc1 -no-opaque-pointers -verify -fopenmp-simd -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -emit-llvm-bc %s -o %t-ppc-host.bc -DOMP5
+// RUN: %clang_cc1 -no-opaque-pointers -verify -fopenmp-simd -x c++ -triple powerpc64le-unknown-unknown -emit-llvm %s -fopenmp-is-device -fvisibility protected -fopenmp-host-ir-file-path %t-ppc-host.bc -o - -DOMP5 | FileCheck %s --check-prefix SIMD-ONLY
 
-// RUN: %clang_cc1 -verify -fopenmp-simd -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -emit-llvm-bc %s -o %t-ppc-host.bc -fopenmp-version=45
-// RUN: %clang_cc1 -verify -fopenmp-simd -x c++ -triple powerpc64le-unknown-unknown -emit-llvm %s -fopenmp-is-device -fvisibility protected -fopenmp-host-ir-file-path %t-ppc-host.bc -o - -fopenmp-version=45 | FileCheck %s --check-prefix SIMD-ONLY
-// RUN: %clang_cc1 -verify -fopenmp-simd -x c++ -triple powerpc64le-unknown-unknown -emit-llvm %s -fopenmp-is-device -fvisibility protected -fopenmp-host-ir-file-path %t-ppc-host.bc -emit-pch -o %t -fopenmp-version=45
-// RUN: %clang_cc1 -verify -fopenmp-simd -x c++ -triple powerpc64le-unknown-unknown -emit-llvm %s -fopenmp-is-device -fvisibility protected -fopenmp-host-ir-file-path %t-ppc-host.bc -include-pch %t -verify -o - -fopenmp-version=45 | FileCheck %s --check-prefix SIMD-ONLY
+// RUN: %clang_cc1 -no-opaque-pointers -verify -fopenmp-simd -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -emit-llvm-bc %s -o %t-ppc-host.bc -fopenmp-version=45
+// RUN: %clang_cc1 -no-opaque-pointers -verify -fopenmp-simd -x c++ -triple powerpc64le-unknown-unknown -emit-llvm %s -fopenmp-is-device -fvisibility protected -fopenmp-host-ir-file-path %t-ppc-host.bc -o - -fopenmp-version=45 | FileCheck %s --check-prefix SIMD-ONLY
+// RUN: %clang_cc1 -no-opaque-pointers -verify -fopenmp-simd -x c++ -triple powerpc64le-unknown-unknown -emit-llvm %s -fopenmp-is-device -fvisibility protected -fopenmp-host-ir-file-path %t-ppc-host.bc -emit-pch -o %t -fopenmp-version=45
+// RUN: %clang_cc1 -no-opaque-pointers -verify -fopenmp-simd -x c++ -triple powerpc64le-unknown-unknown -emit-llvm %s -fopenmp-is-device -fvisibility protected -fopenmp-host-ir-file-path %t-ppc-host.bc -include-pch %t -verify -o - -fopenmp-version=45 | FileCheck %s --check-prefix SIMD-ONLY
 
 // expected-no-diagnostics
 
@@ -46,7 +46,6 @@
 // CHECK-DAG: [[STAT:@.+stat]] = internal global %struct.S zeroinitializer,
 // CHECK-DAG: [[STAT_REF:@.+]] = internal constant %struct.S* [[STAT]]
 // CHECK-DAG: @out_decl_target ={{ protected | }}global i32 0,
-// CHECK-DAG: @llvm.used = appending global [2 x i8*] [i8* bitcast (void ()* @__omp_offloading__{{.+}}_globals_l[[@LINE+84]]_ctor to i8*), i8* bitcast (void ()* @__omp_offloading__{{.+}}_stat_l[[@LINE+85]]_ctor to i8*)],
 // CHECK-DAG: @llvm.compiler.used = appending global [1 x i8*] [i8* bitcast (%struct.S** [[STAT_REF]] to i8*)],
 
 // CHECK-DAG: define {{.*}}i32 @{{.*}}{{foo|bar|baz2|baz3|FA|f_method}}{{.*}}()
@@ -140,7 +139,7 @@ int bar() { return 1 + foo() + bar() + baz1() + baz2(); }
 int maini1() {
   int a;
   static long aa = 32 + bbb + ccc + fff + ggg;
-// CHECK-DAG: define weak void @__omp_offloading_{{.*}}maini1{{.*}}_l[[@LINE+1]](i32* noundef nonnull align {{[0-9]+}} dereferenceable({{[0-9]+}}) %{{.*}}, i64 {{.*}}, i64 {{.*}})
+// CHECK-DAG: define weak_odr void @__omp_offloading_{{.*}}maini1{{.*}}_l[[@LINE+1]](i32* noundef nonnull align {{[0-9]+}} dereferenceable({{[0-9]+}}) %{{.*}}, i64 {{.*}}, i64 {{.*}})
 #pragma omp target map(tofrom \
                        : a, b)
   {
@@ -153,7 +152,7 @@ int maini1() {
 
 int baz3() { return 2 + baz2(); }
 int baz2() {
-// CHECK-DAG: define weak void @__omp_offloading_{{.*}}baz2{{.*}}_l[[@LINE+1]](i64 {{.*}})
+// CHECK-DAG: define weak_odr void @__omp_offloading_{{.*}}baz2{{.*}}_l[[@LINE+1]](i64 {{.*}})
 #pragma omp target parallel
   ++c;
   return 2 + baz3();
@@ -165,7 +164,7 @@ static __typeof(create) __t_create __attribute__((__weakref__("__create")));
 
 int baz5() {
   bool a;
-// CHECK-DAG: define weak void @__omp_offloading_{{.*}}baz5{{.*}}_l[[@LINE+1]](i64 {{.*}})
+// CHECK-DAG: define weak_odr void @__omp_offloading_{{.*}}baz5{{.*}}_l[[@LINE+1]](i64 {{.*}})
 #pragma omp target
   a = __extension__(void *) & __t_create != 0;
   return a;

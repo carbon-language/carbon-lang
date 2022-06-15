@@ -24,30 +24,46 @@ def BranchOpInterface : OpInterface<"BranchOpInterface"> {
   let description = [{
     This interface provides information for branching terminator operations,
     i.e. terminator operations with successors.
+
+    This interface is meant to model well-defined cases of control-flow of
+    value propagation, where what occurs along control-flow edges is assumed to
+    be side-effect free. For example, corresponding successor operands and
+    successor block arguments may have different types. In such cases,
+    `areTypesCompatible` can be implemented to compare types along control-flow
+    edges. By default, type equality is used.
   }];
   let cppNamespace = "::mlir";
 
   let methods = [
     InterfaceMethod<[{
-        Returns a mutable range of operands that correspond to the arguments of
-        successor at the given index. Returns None if the operands to the
-        successor are non-materialized values, i.e. they are internal to the
-        operation.
+        Returns the operands that correspond to the arguments of the successor
+        at the given index. It consists of a number of operands that are
+        internally produced by the operation, followed by a range of operands
+        that are forwarded. An example operation making use of produced
+        operands would be:
+
+        ```mlir
+        invoke %function(%0)
+            label ^success ^error(%1 : i32)
+
+        ^error(%e: !error, %arg0: i32):
+            ...
+        ```
+
+        The operand that would map to the `^error`s `%e` operand is produced
+        by the `invoke` operation, while `%1` is a forwarded operand that maps
+        to `%arg0` in the successor.
+
+        Produced operands always map to the first few block arguments of the
+        successor, followed by the forwarded operands. Mapping them in any
+        other order is not supported by the interface.
+
+        By having the forwarded operands last allows users of the interface
+        to append more forwarded operands to the branch operation without
+        interfering with other successor operands.
       }],
-      "::mlir::Optional<::mlir::MutableOperandRange>", "getMutableSuccessorOperands",
+      "::mlir::SuccessorOperands", "getSuccessorOperands",
       (ins "unsigned":$index)
-    >,
-    InterfaceMethod<[{
-        Returns a range of operands that correspond to the arguments of
-        successor at the given index. Returns None if the operands to the
-        successor are non-materialized values, i.e. they are internal to the
-        operation.
-      }],
-      "::mlir::Optional<::mlir::OperandRange>", "getSuccessorOperands",
-      (ins "unsigned":$index), [{}], [{
-        auto operands = $_op.getMutableSuccessorOperands(index);
-        return operands ? ::mlir::Optional<::mlir::OperandRange>(*operands) : ::llvm::None;
-      }]
     >,
     InterfaceMethod<[{
         Returns the `BlockArgument` corresponding to operand `operandIndex` in
@@ -73,13 +89,21 @@ def BranchOpInterface : OpInterface<"BranchOpInterface"> {
       "::mlir::Block *", "getSuccessorForOperands",
       (ins "::mlir::ArrayRef<::mlir::Attribute>":$operands), [{}],
       /*defaultImplementation=*/[{ return nullptr; }]
-    >
+    >,
+    InterfaceMethod<[{
+        This method is called to compare types along control-flow edges. By
+        default, the types are checked as equal.
+      }],
+      "bool", "areTypesCompatible",
+      (ins "::mlir::Type":$lhs, "::mlir::Type":$rhs), [{}],
+       [{ return lhs == rhs; }]
+    >,
   ];
 
   let verify = [{
     auto concreteOp = ::mlir::cast<ConcreteOp>($_op);
     for (unsigned i = 0, e = $_op->getNumSuccessors(); i != e; ++i) {
-      ::mlir::Optional<OperandRange> operands = concreteOp.getSuccessorOperands(i);
+      ::mlir::SuccessorOperands operands = concreteOp.getSuccessorOperands(i);
       if (::mlir::failed(::mlir::detail::verifyBranchSuccessorOperands($_op, i, operands)))
         return ::mlir::failure();
     }
@@ -96,6 +120,13 @@ def RegionBranchOpInterface : OpInterface<"RegionBranchOpInterface"> {
     This interface provides information for region operations that contain
     branching behavior between held regions, i.e. this interface allows for
     expressing control flow information for region holding operations.
+
+    This interface is meant to model well-defined cases of control-flow of
+    value propagation, where what occurs along control-flow edges is assumed to
+    be side-effect free. For example, corresponding successor operands and
+    successor block arguments may have different types. In such cases,
+    `areTypesCompatible` can be implemented to compare types along control-flow
+    edges. By default, type equality is used.
   }];
   let cppNamespace = "::mlir";
 
@@ -103,12 +134,14 @@ def RegionBranchOpInterface : OpInterface<"RegionBranchOpInterface"> {
     InterfaceMethod<[{
         Returns the operands of this operation used as the entry arguments when
         entering the region at `index`, which was specified as a successor of
-        this operation by `getSuccessorRegions`. These operands should
-        correspond 1-1 with the successor inputs specified in
+        this operation by `getSuccessorRegions`, or the operands forwarded to
+        the operation's results when it branches back to itself. These operands
+        should correspond 1-1 with the successor inputs specified in
         `getSuccessorRegions`.
       }],
       "::mlir::OperandRange", "getSuccessorEntryOperands",
-      (ins "unsigned":$index), [{}], /*defaultImplementation=*/[{
+      (ins "::llvm::Optional<unsigned>":$index), [{}], 
+      /*defaultImplementation=*/[{
         auto operandEnd = this->getOperation()->operand_end();
         return ::mlir::OperandRange(operandEnd, operandEnd);
       }]
@@ -130,7 +163,7 @@ def RegionBranchOpInterface : OpInterface<"RegionBranchOpInterface"> {
       "void", "getSuccessorRegions",
       (ins "::mlir::Optional<unsigned>":$index,
            "::mlir::ArrayRef<::mlir::Attribute>":$operands,
-           "::mlir::SmallVectorImpl<::mlir::RegionSuccessor> &":$regions)
+           "::llvm::SmallVectorImpl<::mlir::RegionSuccessor> &":$regions)
     >,
     InterfaceMethod<[{
         Populates `invocationBounds` with the minimum and maximum number of
@@ -156,26 +189,32 @@ def RegionBranchOpInterface : OpInterface<"RegionBranchOpInterface"> {
        [{ invocationBounds.append($_op->getNumRegions(),
                                   ::mlir::InvocationBounds::getUnknown()); }]
     >,
+    InterfaceMethod<[{
+        This method is called to compare types along control-flow edges. By
+        default, the types are checked as equal.
+      }],
+      "bool", "areTypesCompatible",
+      (ins "::mlir::Type":$lhs, "::mlir::Type":$rhs), [{}],
+       [{ return lhs == rhs; }]
+    >,
   ];
 
   let verify = [{
-    static_assert(!ConcreteOp::template hasTrait<OpTrait::ZeroRegion>(),
+    static_assert(!ConcreteOp::template hasTrait<OpTrait::ZeroRegions>(),
                   "expected operation to have non-zero regions");
-    return success();
+    return detail::verifyTypesAlongControlFlowEdges($_op);
   }];
+  let verifyWithRegions = 1;
 
   let extraClassDeclaration = [{
     /// Convenience helper in case none of the operands is known.
     void getSuccessorRegions(Optional<unsigned> index,
-                             SmallVectorImpl<RegionSuccessor> &regions) {
-       SmallVector<Attribute, 2> nullAttrs(getOperation()->getNumOperands());
-       getSuccessorRegions(index, nullAttrs, regions);
-    }
+                             SmallVectorImpl<RegionSuccessor> &regions);
 
-    /// Verify types along control flow edges described by this interface.
-    static LogicalResult verifyTypes(Operation *op) {
-      return detail::verifyTypesAlongControlFlowEdges(op);
-    }
+    /// Return `true` if control flow originating from the given region may
+    /// eventually branch back to the same region. (Maybe after passing through
+    /// other regions.)
+    bool isRepetitiveRegion(unsigned index);
   }];
 }
 
@@ -219,9 +258,9 @@ def RegionBranchTerminatorOpInterface :
   let verify = [{
     static_assert(ConcreteOp::template hasTrait<OpTrait::IsTerminator>(),
                   "expected operation to be a terminator");
-    static_assert(ConcreteOp::template hasTrait<OpTrait::ZeroResult>(),
+    static_assert(ConcreteOp::template hasTrait<OpTrait::ZeroResults>(),
                   "expected operation to have zero results");
-    static_assert(ConcreteOp::template hasTrait<OpTrait::ZeroSuccessor>(),
+    static_assert(ConcreteOp::template hasTrait<OpTrait::ZeroSuccessors>(),
                   "expected operation to have zero successors");
     return success();
   }];

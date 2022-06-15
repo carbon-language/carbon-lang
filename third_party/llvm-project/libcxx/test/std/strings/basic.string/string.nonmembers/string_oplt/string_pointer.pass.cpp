@@ -9,7 +9,7 @@
 // <string>
 
 // template<class charT, class traits, class Allocator>
-//   bool operator<(const basic_string<charT,traits,Allocator>& lhs, const charT* rhs);
+//   bool operator<(const basic_string<charT,traits,Allocator>& lhs, const charT* rhs); // constexpr since C++20
 
 #include <string>
 #include <cassert>
@@ -24,7 +24,7 @@ test(const S& lhs, const typename S::value_type* rhs, bool x)
     assert((lhs < rhs) == x);
 }
 
-bool test() {
+TEST_CONSTEXPR_CXX20 bool test() {
   {
     typedef std::string S;
     test(S(""), "", false);
@@ -73,7 +73,7 @@ int main(int, char**)
 {
   test();
 #if TEST_STD_VER > 17
-  // static_assert(test());
+  static_assert(test());
 #endif
 
   return 0;

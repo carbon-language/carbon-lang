@@ -1,9 +1,9 @@
-// RUN: mlir-opt %s -convert-scf-to-cf -convert-vector-to-llvm="enable-x86vector" -convert-std-to-llvm -reconcile-unrealized-casts  | \
+// RUN: mlir-opt %s -convert-scf-to-cf -convert-vector-to-llvm="enable-x86vector" -convert-func-to-llvm -reconcile-unrealized-casts  | \
 // RUN: mlir-translate  --mlir-to-llvmir | \
 // RUN: %lli --entry-function=entry --mattr="avx512bw" --dlopen=%mlir_integration_test_dir/libmlir_c_runner_utils%shlibext | \
 // RUN: FileCheck %s
 
-func @entry() -> i32 {
+func.func @entry() -> i32 {
   %i0 = arith.constant 0 : i32
 
   %a = arith.constant dense<[1., 0., 0., 2., 4., 3., 5., 7., 8., 1., 5., 5., 3., 1., 0., 7.]> : vector<16xf32>

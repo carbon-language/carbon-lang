@@ -16,10 +16,12 @@
 #include "CSKYTargetMachine.h"
 #include "MCTargetDesc/CSKYInstPrinter.h"
 #include "MCTargetDesc/CSKYMCExpr.h"
+#include "MCTargetDesc/CSKYTargetStreamer.h"
 #include "TargetInfo/CSKYTargetInfo.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -40,7 +42,15 @@ CSKYAsmPrinter::CSKYAsmPrinter(llvm::TargetMachine &TM,
 
 bool CSKYAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   MCP = MF.getConstantPool();
-  Subtarget = &MF.getSubtarget<CSKYSubtarget>();
+  TII = MF.getSubtarget().getInstrInfo();
+
+  // Set the current MCSubtargetInfo to a copy which has the correct
+  // feature bits for the current MachineFunction
+  MCSubtargetInfo &NewSTI =
+      OutStreamer->getContext().getSubtargetCopy(*TM.getMCSubtargetInfo());
+  NewSTI.setFeatureBits(MF.getSubtarget().getFeatureBits());
+  Subtarget = &NewSTI;
+
   return AsmPrinter::runOnMachineFunction(MF);
 }
 
@@ -59,8 +69,6 @@ void CSKYAsmPrinter::EmitToStreamer(MCStreamer &S, const MCInst &Inst) {
 #include "CSKYGenMCPseudoLowering.inc"
 
 void CSKYAsmPrinter::expandTLSLA(const MachineInstr *MI) {
-  const CSKYInstrInfo *TII = Subtarget->getInstrInfo();
-
   DebugLoc DL = MI->getDebugLoc();
 
   MCSymbol *PCLabel = OutContext.getOrCreateSymbol(
@@ -117,6 +125,19 @@ void CSKYAsmPrinter::emitFunctionBodyEnd() {
   if (!InConstantPool)
     return;
   InConstantPool = false;
+}
+
+void CSKYAsmPrinter::emitStartOfAsmFile(Module &M) {
+  if (TM.getTargetTriple().isOSBinFormatELF())
+    emitAttributes();
+}
+
+void CSKYAsmPrinter::emitEndOfAsmFile(Module &M) {
+  CSKYTargetStreamer &CTS =
+      static_cast<CSKYTargetStreamer &>(*OutStreamer->getTargetStreamer());
+
+  if (TM.getTargetTriple().isOSBinFormatELF())
+    CTS.finishAttributeSection();
 }
 
 void CSKYAsmPrinter::emitInstruction(const MachineInstr *MI) {
@@ -216,6 +237,21 @@ void CSKYAsmPrinter::emitMachineConstantPoolValue(
                             OutContext);
 
   OutStreamer->emitValue(Expr, Size);
+}
+
+void CSKYAsmPrinter::emitAttributes() {
+  CSKYTargetStreamer &CTS =
+      static_cast<CSKYTargetStreamer &>(*OutStreamer->getTargetStreamer());
+
+  const Triple &TT = TM.getTargetTriple();
+  StringRef CPU = TM.getTargetCPU();
+  StringRef FS = TM.getTargetFeatureString();
+  const CSKYTargetMachine &CTM = static_cast<const CSKYTargetMachine &>(TM);
+  /* TuneCPU doesn't impact emission of ELF attributes, ELF attributes only
+     care about arch related features, so we can set TuneCPU as CPU.  */
+  const CSKYSubtarget STI(TT, CPU, /*TuneCPU=*/CPU, FS, CTM);
+
+  CTS.emitTargetAttributes(STI);
 }
 
 bool CSKYAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,

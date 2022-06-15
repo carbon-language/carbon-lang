@@ -13,7 +13,7 @@
 #ifndef LLD_ELF_SYMBOLS_H
 #define LLD_ELF_SYMBOLS_H
 
-#include "InputFiles.h"
+#include "Config.h"
 #include "lld/Common/LLVM.h"
 #include "lld/Common/Memory.h"
 #include "llvm/ADT/DenseMap.h"
@@ -21,6 +21,9 @@
 #include <tuple>
 
 namespace lld {
+namespace elf {
+class Symbol;
+}
 // Returns a string representation for a symbol for diagnostics.
 std::string toString(const elf::Symbol &);
 
@@ -29,9 +32,12 @@ class CommonSymbol;
 class Defined;
 class OutputSection;
 class SectionBase;
+class InputSectionBase;
 class SharedSymbol;
 class Symbol;
 class Undefined;
+class LazyObject;
+class InputFile;
 
 // Some index properties of a symbol are stored separately in this auxiliary
 // struct to decrease sizeof(SymbolUnion) in the majority of cases.
@@ -67,15 +73,19 @@ protected:
   uint32_t nameSize;
 
 public:
+  // The next three fields have the same meaning as the ELF symbol attributes.
+  // type and binding are placed in this order to optimize generating st_info,
+  // which is defined as (binding << 4) + (type & 0xf), on a little-endian
+  // system.
+  uint8_t type : 4; // symbol type
+
   // Symbol binding. This is not overwritten by replace() to track
   // changes during resolution. In particular:
   //  - An undefined weak is still weak when it resolves to a shared library.
   //  - An undefined weak will not extract archive members, but we have to
   //    remember it is weak.
-  uint8_t binding;
+  uint8_t binding : 4;
 
-  // The following fields have the same meaning as the ELF symbol attributes.
-  uint8_t type;    // symbol type
   uint8_t stOther; // st_other field value
 
   uint8_t symbolKind;
@@ -121,9 +131,12 @@ public:
   // Used to track if there has been at least one undefined reference to the
   // symbol. For Undefined and SharedSymbol, the binding may change to STB_WEAK
   // if the first undefined reference from a non-shared object is weak.
-  //
-  // This is also used to retain __wrap_foo when foo is referenced.
   uint8_t referenced : 1;
+
+  // Used to track if this symbol will be referenced after wrapping is performed
+  // (i.e. this will be true for foo if __real_foo is referenced, and will be
+  // true for __wrap_foo if foo is referenced).
+  uint8_t referencedAfterWrap : 1;
 
   // True if this symbol is specified by --trace-symbol option.
   uint8_t traced : 1;
@@ -135,6 +148,7 @@ public:
 
   bool includeInDynsym() const;
   uint8_t computeBinding() const;
+  bool isGlobal() const { return binding == llvm::ELF::STB_GLOBAL; }
   bool isWeak() const { return binding == llvm::ELF::STB_WEAK; }
 
   bool isUndefined() const { return symbolKind == UndefinedKind; }
@@ -219,27 +233,27 @@ private:
   void resolveUndefined(const Undefined &other);
   void resolveCommon(const CommonSymbol &other);
   void resolveDefined(const Defined &other);
-  template <class LazyT> void resolveLazy(const LazyT &other);
+  void resolveLazy(const LazyObject &other);
   void resolveShared(const SharedSymbol &other);
 
-  int compare(const Symbol *other) const;
+  bool shouldReplace(const Defined &other) const;
 
   inline size_t getSymbolSize() const;
 
 protected:
   Symbol(Kind k, InputFile *file, StringRef name, uint8_t binding,
          uint8_t stOther, uint8_t type)
-      : file(file), nameData(name.data()), nameSize(name.size()),
-        binding(binding), type(type), stOther(stOther), symbolKind(k),
+      : file(file), nameData(name.data()), nameSize(name.size()), type(type),
+        binding(binding), stOther(stOther), symbolKind(k),
         visibility(stOther & 3), isPreemptible(false),
-        isUsedInRegularObj(!file || file->kind() == InputFile::ObjKind),
-        used(false), exportDynamic(false), inDynamicList(false),
-        referenced(false), traced(false), hasVersionSuffix(false),
-        isInIplt(false), gotInIgot(false), folded(false),
-        needsTocRestore(false), scriptDefined(false), needsCopy(false),
-        needsGot(false), needsPlt(false), needsTlsDesc(false),
-        needsTlsGd(false), needsTlsGdToIe(false), needsGotDtprel(false),
-        needsTlsIe(false), hasDirectReloc(false) {}
+        isUsedInRegularObj(false), used(false), exportDynamic(false),
+        inDynamicList(false), referenced(false), referencedAfterWrap(false),
+        traced(false), hasVersionSuffix(false), isInIplt(false),
+        gotInIgot(false), folded(false), needsTocRestore(false),
+        scriptDefined(false), needsCopy(false), needsGot(false),
+        needsPlt(false), needsTlsDesc(false), needsTlsGd(false),
+        needsTlsGdToIe(false), needsGotDtprel(false), needsTlsIe(false),
+        hasDirectReloc(false) {}
 
 public:
   // True if this symbol is in the Iplt sub-section of the Plt and the Igot
@@ -314,7 +328,7 @@ public:
           uint8_t type, uint64_t value, uint64_t size, SectionBase *section)
       : Symbol(DefinedKind, file, name, binding, stOther, type), value(value),
         size(size), section(section) {
-    exportDynamic = config->shared || config->exportDynamic;
+    exportDynamic = config->exportDynamic;
   }
 
   static bool classof(const Symbol *s) { return s->isDefined(); }
@@ -351,7 +365,7 @@ public:
                uint8_t stOther, uint8_t type, uint64_t alignment, uint64_t size)
       : Symbol(CommonKind, file, name, binding, stOther, type),
         alignment(alignment), size(size) {
-    exportDynamic = config->shared || config->exportDynamic;
+    exportDynamic = config->exportDynamic;
   }
 
   static bool classof(const Symbol *s) { return s->isCommon(); }
@@ -371,6 +385,7 @@ public:
 
   // The section index if in a discarded section, 0 otherwise.
   uint32_t discardedSecIdx;
+  bool nonPrevailing = false;
 };
 
 class SharedSymbol : public Symbol {
@@ -403,8 +418,6 @@ public:
       this->type = llvm::ELF::STT_FUNC;
   }
 
-  SharedFile &getFile() const { return *cast<SharedFile>(file); }
-
   uint64_t value; // st_value
   uint64_t size;  // st_size
   uint32_t alignment;
@@ -423,9 +436,7 @@ class LazyObject : public Symbol {
 public:
   LazyObject(InputFile &file)
       : Symbol(LazyObjectKind, &file, {}, llvm::ELF::STB_GLOBAL,
-               llvm::ELF::STV_DEFAULT, llvm::ELF::STT_NOTYPE) {
-    isUsedInRegularObj = false;
-  }
+               llvm::ELF::STV_DEFAULT, llvm::ELF::STT_NOTYPE) {}
 
   static bool classof(const Symbol *s) { return s->kind() == LazyObjectKind; }
 };
@@ -472,6 +483,10 @@ struct ElfSym {
 // A buffer class that is large enough to hold any Symbol-derived
 // object. We allocate memory using this class and instantiate a symbol
 // using the placement new.
+
+// It is important to keep the size of SymbolUnion small for performance and
+// memory usage reasons. 64 bytes is a soft limit based on the size of Defined
+// on a 64-bit system. This is enforced by a static_assert in Symbols.cpp.
 union SymbolUnion {
   alignas(Defined) char a[sizeof(Defined)];
   alignas(CommonSymbol) char b[sizeof(CommonSymbol)];
@@ -479,27 +494,6 @@ union SymbolUnion {
   alignas(SharedSymbol) char d[sizeof(SharedSymbol)];
   alignas(LazyObject) char e[sizeof(LazyObject)];
 };
-
-// It is important to keep the size of SymbolUnion small for performance and
-// memory usage reasons. 64 bytes is a soft limit based on the size of Defined
-// on a 64-bit system.
-static_assert(sizeof(SymbolUnion) <= 64, "SymbolUnion too large");
-
-template <typename T> struct AssertSymbol {
-  static_assert(std::is_trivially_destructible<T>(),
-                "Symbol types must be trivially destructible");
-  static_assert(sizeof(T) <= sizeof(SymbolUnion), "SymbolUnion too small");
-  static_assert(alignof(T) <= alignof(SymbolUnion),
-                "SymbolUnion not aligned enough");
-};
-
-static inline void assertSymbols() {
-  AssertSymbol<Defined>();
-  AssertSymbol<CommonSymbol>();
-  AssertSymbol<Undefined>();
-  AssertSymbol<SharedSymbol>();
-  AssertSymbol<LazyObject>();
-}
 
 void printTraceSymbol(const Symbol &sym, StringRef name);
 
@@ -525,21 +519,6 @@ size_t Symbol::getSymbolSize() const {
 // it over to "this". This function is called as a result of name
 // resolution, e.g. to replace an undefind symbol with a defined symbol.
 void Symbol::replace(const Symbol &other) {
-  using llvm::ELF::STT_TLS;
-
-  // st_value of STT_TLS represents the assigned offset, not the actual address
-  // which is used by STT_FUNC and STT_OBJECT. STT_TLS symbols can only be
-  // referenced by special TLS relocations. It is usually an error if a STT_TLS
-  // symbol is replaced by a non-STT_TLS symbol, vice versa. There are two
-  // exceptions: (a) a STT_NOTYPE lazy/undefined symbol can be replaced by a
-  // STT_TLS symbol, (b) a STT_TLS undefined symbol can be replaced by a
-  // STT_NOTYPE lazy symbol.
-  if (symbolKind != PlaceholderKind && !other.isLazy() &&
-      (type == STT_TLS) != (other.type == STT_TLS) &&
-      type != llvm::ELF::STT_NOTYPE)
-    error("TLS attribute mismatch: " + toString(*this) + "\n>>> defined in " +
-          toString(other.file) + "\n>>> defined in " + toString(file));
-
   Symbol old = *this;
   memcpy(this, &other, other.getSymbolSize());
 
@@ -571,22 +550,11 @@ template <typename... T> Defined *makeDefined(T &&...args) {
       Defined(std::forward<T>(args)...);
 }
 
-void reportDuplicate(const Symbol &sym, InputFile *newFile,
+void reportDuplicate(const Symbol &sym, const InputFile *newFile,
                      InputSectionBase *errSec, uint64_t errOffset);
 void maybeWarnUnorderableSymbol(const Symbol *sym);
 bool computeIsPreemptible(const Symbol &sym);
 void reportBackrefs();
-
-// A mapping from a symbol to an InputFile referencing it backward. Used by
-// --warn-backrefs.
-extern llvm::DenseMap<const Symbol *,
-                      std::pair<const InputFile *, const InputFile *>>
-    backwardReferences;
-
-// A tuple of (reference, extractedFile, sym). Used by --why-extract=.
-extern SmallVector<std::tuple<std::string, const InputFile *, const Symbol &>,
-                   0>
-    whyExtract;
 
 } // namespace elf
 } // namespace lld

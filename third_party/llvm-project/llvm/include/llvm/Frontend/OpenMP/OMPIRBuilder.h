@@ -23,6 +23,52 @@
 namespace llvm {
 class CanonicalLoopInfo;
 
+/// Move the instruction after an InsertPoint to the beginning of another
+/// BasicBlock.
+///
+/// The instructions after \p IP are moved to the beginning of \p New which must
+/// not have any PHINodes. If \p CreateBranch is true, a branch instruction to
+/// \p New will be added such that there is no semantic change. Otherwise, the
+/// \p IP insert block remains degenerate and it is up to the caller to insert a
+/// terminator.
+void spliceBB(IRBuilderBase::InsertPoint IP, BasicBlock *New,
+              bool CreateBranch);
+
+/// Splice a BasicBlock at an IRBuilder's current insertion point. Its new
+/// insert location will stick to after the instruction before the insertion
+/// point (instead of moving with the instruction the InsertPoint stores
+/// internally).
+void spliceBB(IRBuilder<> &Builder, BasicBlock *New, bool CreateBranch);
+
+/// Split a BasicBlock at an InsertPoint, even if the block is degenerate
+/// (missing the terminator).
+///
+/// llvm::SplitBasicBlock and BasicBlock::splitBasicBlock require a well-formed
+/// BasicBlock. \p Name is used for the new successor block. If \p CreateBranch
+/// is true, a branch to the new successor will new created such that
+/// semantically there is no change; otherwise the block of the insertion point
+/// remains degenerate and it is the caller's responsibility to insert a
+/// terminator. Returns the new successor block.
+BasicBlock *splitBB(IRBuilderBase::InsertPoint IP, bool CreateBranch,
+                    llvm::Twine Name = {});
+
+/// Split a BasicBlock at \p Builder's insertion point, even if the block is
+/// degenerate (missing the terminator).  Its new insert location will stick to
+/// after the instruction before the insertion point (instead of moving with the
+/// instruction the InsertPoint stores internally).
+BasicBlock *splitBB(IRBuilderBase &Builder, bool CreateBranch,
+                    llvm::Twine Name = {});
+
+/// Split a BasicBlock at \p Builder's insertion point, even if the block is
+/// degenerate (missing the terminator).  Its new insert location will stick to
+/// after the instruction before the insertion point (instead of moving with the
+/// instruction the InsertPoint stores internally).
+BasicBlock *splitBB(IRBuilder<> &Builder, bool CreateBranch, llvm::Twine Name);
+
+/// Like splitBB, but reuses the current block's name for the new name.
+BasicBlock *splitBBWithSuffix(IRBuilderBase &Builder, bool CreateBranch,
+                              llvm::Twine Suffix = ".split");
+
 /// An interface to create LLVM-IR for OpenMP directives.
 ///
 /// Each OpenMP directive has a corresponding public generator method.
@@ -87,27 +133,36 @@ public:
   /// Callback type for body (=inner region) code generation
   ///
   /// The callback takes code locations as arguments, each describing a
-  /// location at which code might need to be generated or a location that is
-  /// the target of control transfer.
+  /// location where additional instructions can be inserted.
+  ///
+  /// The CodeGenIP may be in the middle of a basic block or point to the end of
+  /// it. The basic block may have a terminator or be degenerate. The callback
+  /// function may just insert instructions at that position, but also split the
+  /// block (without the Before argument of BasicBlock::splitBasicBlock such
+  /// that the identify of the split predecessor block is preserved) and insert
+  /// additional control flow, including branches that do not lead back to what
+  /// follows the CodeGenIP. Note that since the callback is allowed to split
+  /// the block, callers must assume that InsertPoints to positions in the
+  /// BasicBlock after CodeGenIP including CodeGenIP itself are invalidated. If
+  /// such InsertPoints need to be preserved, it can split the block itself
+  /// before calling the callback.
+  ///
+  /// AllocaIP and CodeGenIP must not point to the same position.
   ///
   /// \param AllocaIP is the insertion point at which new alloca instructions
-  ///                 should be placed.
+  ///                 should be placed. The BasicBlock it is pointing to must
+  ///                 not be split.
   /// \param CodeGenIP is the insertion point at which the body code should be
   ///                  placed.
-  /// \param ContinuationBB is the basic block target to leave the body.
-  ///
-  /// Note that all blocks pointed to by the arguments have terminators.
   using BodyGenCallbackTy =
-      function_ref<void(InsertPointTy AllocaIP, InsertPointTy CodeGenIP,
-                        BasicBlock &ContinuationBB)>;
+      function_ref<void(InsertPointTy AllocaIP, InsertPointTy CodeGenIP)>;
 
   // This is created primarily for sections construct as llvm::function_ref
   // (BodyGenCallbackTy) is not storable (as described in the comments of
   // function_ref class - function_ref contains non-ownable reference
   // to the callable.
   using StorableBodyGenCallbackTy =
-      std::function<void(InsertPointTy AllocaIP, InsertPointTy CodeGenIP,
-                         BasicBlock &ContinuationBB)>;
+      std::function<void(InsertPointTy AllocaIP, InsertPointTy CodeGenIP)>;
 
   /// Callback type for loop body code generation.
   ///
@@ -344,6 +399,7 @@ public:
                                    ArrayRef<CanonicalLoopInfo *> Loops,
                                    InsertPointTy ComputeIP);
 
+private:
   /// Modifies the canonical loop to be a statically-scheduled workshare loop.
   ///
   /// This takes a \p LoopInfo representing a canonical loop, such as the one
@@ -353,14 +409,6 @@ public:
   /// the current thread, updates the relevant instructions in the canonical
   /// loop and calls to an OpenMP runtime finalization function after the loop.
   ///
-  /// TODO: Workshare loops with static scheduling may contain up to two loops
-  /// that fulfill the requirements of an OpenMP canonical loop. One for
-  /// iterating over all iterations of a chunk and another one for iterating
-  /// over all chunks that are executed on the same thread. Returning
-  /// CanonicalLoopInfo objects representing them may eventually be useful for
-  /// the apply clause planned in OpenMP 6.0, but currently whether these are
-  /// canonical loops is irrelevant.
-  ///
   /// \param DL       Debug location for instructions added for the
   ///                 workshare-loop construct itself.
   /// \param CLI      A descriptor of the canonical loop to workshare.
@@ -368,14 +416,30 @@ public:
   ///                 preheader of the loop.
   /// \param NeedsBarrier Indicates whether a barrier must be inserted after
   ///                     the loop.
-  /// \param Chunk    The size of loop chunk considered as a unit when
-  ///                 scheduling. If \p nullptr, defaults to 1.
   ///
   /// \returns Point where to insert code after the workshare construct.
   InsertPointTy applyStaticWorkshareLoop(DebugLoc DL, CanonicalLoopInfo *CLI,
                                          InsertPointTy AllocaIP,
-                                         bool NeedsBarrier,
-                                         Value *Chunk = nullptr);
+                                         bool NeedsBarrier);
+
+  /// Modifies the canonical loop a statically-scheduled workshare loop with a
+  /// user-specified chunk size.
+  ///
+  /// \param DL           Debug location for instructions added for the
+  ///                     workshare-loop construct itself.
+  /// \param CLI          A descriptor of the canonical loop to workshare.
+  /// \param AllocaIP     An insertion point for Alloca instructions usable in
+  ///                     the preheader of the loop.
+  /// \param NeedsBarrier Indicates whether a barrier must be inserted after the
+  ///                     loop.
+  /// \param ChunkSize    The user-specified chunk size.
+  ///
+  /// \returns Point where to insert code after the workshare construct.
+  InsertPointTy applyStaticChunkedWorkshareLoop(DebugLoc DL,
+                                                CanonicalLoopInfo *CLI,
+                                                InsertPointTy AllocaIP,
+                                                bool NeedsBarrier,
+                                                Value *ChunkSize);
 
   /// Modifies the canonical loop to be a dynamically-scheduled workshare loop.
   ///
@@ -403,6 +467,7 @@ public:
                                           bool NeedsBarrier,
                                           Value *Chunk = nullptr);
 
+public:
   /// Modifies the canonical loop to be a workshare loop.
   ///
   /// This takes a \p LoopInfo representing a canonical loop, such as the one
@@ -412,6 +477,10 @@ public:
   /// the current thread, updates the relevant instructions in the canonical
   /// loop and calls to an OpenMP runtime finalization function after the loop.
   ///
+  /// The concrete transformation is done by applyStaticWorkshareLoop,
+  /// applyStaticChunkedWorkshareLoop, or applyDynamicWorkshareLoop, depending
+  /// on the value of \p SchedKind and \p ChunkSize.
+  ///
   /// \param DL       Debug location for instructions added for the
   ///                 workshare-loop construct itself.
   /// \param CLI      A descriptor of the canonical loop to workshare.
@@ -419,10 +488,25 @@ public:
   ///                 preheader of the loop.
   /// \param NeedsBarrier Indicates whether a barrier must be insterted after
   ///                     the loop.
+  /// \param SchedKind Scheduling algorithm to use.
+  /// \param ChunkSize The chunk size for the inner loop.
+  /// \param HasSimdModifier Whether the simd modifier is present in the
+  ///                        schedule clause.
+  /// \param HasMonotonicModifier Whether the monotonic modifier is present in
+  ///                             the schedule clause.
+  /// \param HasNonmonotonicModifier Whether the nonmonotonic modifier is
+  ///                                present in the schedule clause.
+  /// \param HasOrderedClause Whether the (parameterless) ordered clause is
+  ///                         present.
   ///
   /// \returns Point where to insert code after the workshare construct.
-  InsertPointTy applyWorkshareLoop(DebugLoc DL, CanonicalLoopInfo *CLI,
-                                   InsertPointTy AllocaIP, bool NeedsBarrier);
+  InsertPointTy applyWorkshareLoop(
+      DebugLoc DL, CanonicalLoopInfo *CLI, InsertPointTy AllocaIP,
+      bool NeedsBarrier,
+      llvm::omp::ScheduleKind SchedKind = llvm::omp::OMP_SCHEDULE_Default,
+      Value *ChunkSize = nullptr, bool HasSimdModifier = false,
+      bool HasMonotonicModifier = false, bool HasNonmonotonicModifier = false,
+      bool HasOrderedClause = false);
 
   /// Tile a loop nest.
   ///
@@ -533,6 +617,18 @@ public:
   ///
   /// \param Loc The location where the taskyield directive was encountered.
   void createTaskyield(const LocationDescription &Loc);
+
+  /// Generator for `#omp task`
+  ///
+  /// \param Loc The location where the task construct was encountered.
+  /// \param AllocaIP The insertion point to be used for alloca instructions.
+  /// \param BodyGenCB Callback that will generate the region code.
+  /// \param Tied True if the task is tied, false if the task is untied.
+  /// \param Final i1 value which is `true` if the task is final, `false` if the
+  ///              task is not final.
+  InsertPointTy createTask(const LocationDescription &Loc,
+                           InsertPointTy AllocaIP, BodyGenCallbackTy BodyGenCB,
+                           bool Tied = true, Value *Final = nullptr);
 
   /// Functions used to generate reductions. Such functions take two Values
   /// representing LHS and RHS of the reduction, respectively, and a reference
@@ -695,6 +791,27 @@ public:
   /// Value.
   GlobalValue *createGlobalFlag(unsigned Value, StringRef Name);
 
+  /// Create an offloading section struct used to register this global at
+  /// runtime.
+  ///
+  /// Type struct __tgt_offload_entry{
+  ///   void    *addr;      // Pointer to the offload entry info.
+  ///                       // (function or global)
+  ///   char    *name;      // Name of the function or global.
+  ///   size_t  size;       // Size of the entry info (0 if it a function).
+  ///   int32_t flags;
+  ///   int32_t reserved;
+  /// };
+  ///
+  /// \param Addr The pointer to the global being registered.
+  /// \param Name The symbol name associated with the global.
+  /// \param Size The size in bytes of the global (0 for functions).
+  /// \param Flags Flags associated with the entry.
+  /// \param SectionName The section this entry will be placed at.
+  void emitOffloadingEntry(Constant *Addr, StringRef Name, uint64_t Size,
+                           int32_t Flags,
+                           StringRef SectionName = "omp_offloading_entries");
+
   /// Generate control flow and cleanup for cancellation.
   ///
   /// \param CancelFlag Flag indicating if the cancellation is performed.
@@ -767,7 +884,7 @@ public:
   struct OutlineInfo {
     using PostOutlineCBTy = std::function<void(Function &)>;
     PostOutlineCBTy PostOutlineCB;
-    BasicBlock *EntryBB, *ExitBB;
+    BasicBlock *EntryBB, *ExitBB, *OuterAllocaBB;
     SmallVector<Value *, 2> ExcludeArgsFromAggregate;
 
     /// Collect all blocks in between EntryBB and ExitBB in both the given
@@ -850,12 +967,14 @@ public:
   /// \param Loc The source location description.
   /// \param BodyGenCB Callback that will generate the region code.
   /// \param FiniCB Callback to finalize variable copies.
+  /// \param IsNowait If false, a barrier is emitted.
   /// \param DidIt Local variable used as a flag to indicate 'single' thread
   ///
   /// \returns The insertion position *after* the single call.
   InsertPointTy createSingle(const LocationDescription &Loc,
                              BodyGenCallbackTy BodyGenCB,
-                             FinalizeCallbackTy FiniCB, llvm::Value *DidIt);
+                             FinalizeCallbackTy FiniCB, bool IsNowait,
+                             llvm::Value *DidIt);
 
   /// Generator for '#omp master'
   ///
@@ -1345,7 +1464,7 @@ public:
                       bool IsPostfixUpdate, bool IsXBinopExpr);
 
   /// Emit atomic compare for constructs: --- Only scalar data types
-  /// cond-update-atomic:
+  /// cond-expr-stmt:
   /// x = x ordop expr ? expr : x;
   /// x = expr ordop x ? expr : x;
   /// x = x == e ? d : x;
@@ -1355,9 +1474,21 @@ public:
   /// if (expr ordop x) { x = expr; }
   /// if (x == e) { x = d; }
   /// if (e == x) { x = d; } (this one is not in the spec)
+  /// conditional-update-capture-atomic:
+  /// v = x; cond-update-stmt; (IsPostfixUpdate=true, IsFailOnly=false)
+  /// cond-update-stmt; v = x; (IsPostfixUpdate=false, IsFailOnly=false)
+  /// if (x == e) { x = d; } else { v = x; } (IsPostfixUpdate=false,
+  ///                                         IsFailOnly=true)
+  /// r = x == e; if (r) { x = d; } (IsPostfixUpdate=false, IsFailOnly=false)
+  /// r = x == e; if (r) { x = d; } else { v = x; } (IsPostfixUpdate=false,
+  ///                                                IsFailOnly=true)
   ///
   /// \param Loc          The insert and source location description.
   /// \param X            The target atomic pointer to be updated.
+  /// \param V            Memory address where to store captured value (for
+  ///                     compare capture only).
+  /// \param R            Memory address where to store comparison result
+  ///                     (for compare capture with '==' only).
   /// \param E            The expected value ('e') for forms that use an
   ///                     equality comparison or an expression ('expr') for
   ///                     forms that use 'ordop' (logically an atomic maximum or
@@ -1369,13 +1500,19 @@ public:
   /// \param Op           Atomic compare operation. It can only be ==, <, or >.
   /// \param IsXBinopExpr True if the conditional statement is in the form where
   ///                     x is on LHS. It only matters for < or >.
+  /// \param IsPostfixUpdate  True if original value of 'x' must be stored in
+  ///                         'v', not an updated one (for compare capture
+  ///                         only).
+  /// \param IsFailOnly   True if the original value of 'x' is stored to 'v'
+  ///                     only when the comparison fails. This is only valid for
+  ///                     the case the comparison is '=='.
   ///
   /// \return Insertion point after generated atomic capture IR.
-  InsertPointTy createAtomicCompare(const LocationDescription &Loc,
-                                    AtomicOpValue &X, Value *E, Value *D,
-                                    AtomicOrdering AO,
-                                    omp::OMPAtomicCompareOp Op,
-                                    bool IsXBinopExpr);
+  InsertPointTy
+  createAtomicCompare(const LocationDescription &Loc, AtomicOpValue &X,
+                      AtomicOpValue &V, AtomicOpValue &R, Value *E, Value *D,
+                      AtomicOrdering AO, omp::OMPAtomicCompareOp Op,
+                      bool IsXBinopExpr, bool IsPostfixUpdate, bool IsFailOnly);
 
   /// Create the control flow structure of a canonical OpenMP loop.
   ///
@@ -1516,6 +1653,27 @@ private:
   /// their content is (mostly) not under CanonicalLoopInfo's control.
   /// Re-evaluated whether this makes sense.
   void collectControlBlocks(SmallVectorImpl<BasicBlock *> &BBs);
+
+  /// Sets the number of loop iterations to the given value. This value must be
+  /// valid in the condition block (i.e., defined in the preheader) and is
+  /// interpreted as an unsigned integer.
+  void setTripCount(Value *TripCount);
+
+  /// Replace all uses of the canonical induction variable in the loop body with
+  /// a new one.
+  ///
+  /// The intended use case is to update the induction variable for an updated
+  /// iteration space such that it can stay normalized in the 0...tripcount-1
+  /// range.
+  ///
+  /// The \p Updater is called with the (presumable updated) current normalized
+  /// induction variable and is expected to return the value that uses of the
+  /// pre-updated induction values should use instead, typically dependent on
+  /// the new induction variable. This is a lambda (instead of e.g. just passing
+  /// the new value) to be able to distinguish the uses of the pre-updated
+  /// induction variable and uses of the induction varible to compute the
+  /// updated induction variable value.
+  void mapIndVar(llvm::function_ref<Value *(Instruction *)> Updater);
 
 public:
   /// Returns whether this object currently represents the IR of a loop. If

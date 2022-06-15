@@ -17,13 +17,11 @@
 #include "mlir/Dialect/Affine/Analysis/Utils.h"
 #include "mlir/Dialect/Affine/IR/AffineOps.h"
 #include "mlir/Dialect/Affine/IR/AffineValueMap.h"
-#include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
-#include "mlir/Dialect/StandardOps/IR/Ops.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/IR/AffineExprVisitor.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/IntegerSet.h"
-#include "mlir/Support/MathExtras.h"
-#include "llvm/ADT/DenseMap.h"
+#include "mlir/Interfaces/ViewLikeInterface.h"
 #include "llvm/ADT/TypeSwitch.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -31,6 +29,7 @@
 #define DEBUG_TYPE "affine-analysis"
 
 using namespace mlir;
+using namespace presburger;
 
 /// Get the value that is being reduced by `pos`-th reduction in the loop if
 /// such a reduction can be performed by affine parallel loops. This assumes
@@ -115,18 +114,51 @@ bool mlir::isLoopParallel(AffineForOp forOp,
   return isLoopMemoryParallel(forOp);
 }
 
-/// Returns true if `forOp' doesn't have memory dependences preventing
-/// parallelization. This function doesn't check iter_args and should be used
-/// only as a building block for full parallel-checking functions.
+/// Returns true if `op` is an alloc-like op, i.e., one allocating memrefs.
+static bool isAllocLikeOp(Operation *op) {
+  auto memEffects = dyn_cast<MemoryEffectOpInterface>(op);
+  return memEffects && memEffects.hasEffect<MemoryEffects::Allocate>();
+}
+
+/// Returns true if `v` is allocated locally to `enclosingOp` -- i.e., it is
+/// allocated by an operation nested within `enclosingOp`.
+static bool isLocallyDefined(Value v, Operation *enclosingOp) {
+  Operation *defOp = v.getDefiningOp();
+  if (!defOp)
+    return false;
+
+  if (isAllocLikeOp(defOp) && enclosingOp->isProperAncestor(defOp))
+    return true;
+
+  // Aliasing ops.
+  auto viewOp = dyn_cast<ViewLikeOpInterface>(defOp);
+  return viewOp && isLocallyDefined(viewOp.getViewSource(), enclosingOp);
+}
+
 bool mlir::isLoopMemoryParallel(AffineForOp forOp) {
+  // Any memref-typed iteration arguments are treated as serializing.
+  if (llvm::any_of(forOp.getResultTypes(),
+                   [](Type type) { return type.isa<BaseMemRefType>(); }))
+    return false;
+
   // Collect all load and store ops in loop nest rooted at 'forOp'.
   SmallVector<Operation *, 8> loadAndStoreOps;
   auto walkResult = forOp.walk([&](Operation *op) -> WalkResult {
-    if (isa<AffineReadOpInterface, AffineWriteOpInterface>(op))
-      loadAndStoreOps.push_back(op);
-    else if (!isa<AffineForOp, AffineYieldOp, AffineIfOp>(op) &&
-             !MemoryEffectOpInterface::hasNoEffect(op))
+    if (auto readOp = dyn_cast<AffineReadOpInterface>(op)) {
+      // Memrefs that are allocated inside `forOp` need not be considered.
+      if (!isLocallyDefined(readOp.getMemRef(), forOp))
+        loadAndStoreOps.push_back(op);
+    } else if (auto writeOp = dyn_cast<AffineWriteOpInterface>(op)) {
+      // Filter out stores the same way as above.
+      if (!isLocallyDefined(writeOp.getMemRef(), forOp))
+        loadAndStoreOps.push_back(op);
+    } else if (!isa<AffineForOp, AffineYieldOp, AffineIfOp>(op) &&
+               !isAllocLikeOp(op) &&
+               !MemoryEffectOpInterface::hasNoEffect(op)) {
+      // Alloc-like ops inside `forOp` are fine (they don't impact parallelism)
+      // as long as they don't escape the loop (which has been checked above).
       return WalkResult::interrupt();
+    }
 
     return WalkResult::advance();
   });
@@ -294,7 +326,7 @@ static Block *getCommonBlock(const MemRefAccess &srcAccess,
 
   if (numCommonLoops == 0) {
     Block *block = srcAccess.opInst->getBlock();
-    while (!llvm::isa<FuncOp>(block->getParentOp())) {
+    while (!llvm::isa<func::FuncOp>(block->getParentOp())) {
       block = block->getParentOp()->getBlock();
     }
     return block;
@@ -414,12 +446,10 @@ static void computeDirectionVector(
   dependenceComponents->resize(numCommonLoops);
   for (unsigned j = 0; j < numCommonLoops; ++j) {
     (*dependenceComponents)[j].op = commonLoops[j].getOperation();
-    auto lbConst =
-        dependenceDomain->getConstantBound(FlatAffineConstraints::LB, j);
+    auto lbConst = dependenceDomain->getConstantBound(IntegerPolyhedron::LB, j);
     (*dependenceComponents)[j].lb =
         lbConst.getValueOr(std::numeric_limits<int64_t>::min());
-    auto ubConst =
-        dependenceDomain->getConstantBound(FlatAffineConstraints::UB, j);
+    auto ubConst = dependenceDomain->getConstantBound(IntegerPolyhedron::UB, j);
     (*dependenceComponents)[j].ub =
         ubConst.getValueOr(std::numeric_limits<int64_t>::max());
   }

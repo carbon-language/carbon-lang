@@ -134,7 +134,6 @@ void llvm::computeLTOCacheKey(
   AddUnsigned(Conf.CGOptLevel);
   AddUnsigned(Conf.CGFileType);
   AddUnsigned(Conf.OptLevel);
-  AddUnsigned(Conf.UseNewPM);
   AddUnsigned(Conf.Freestanding);
   AddString(Conf.OptPipeline);
   AddString(Conf.AAPipeline);
@@ -885,8 +884,7 @@ Error LTO::linkRegularLTO(RegularLTOState::AddedModule Mod,
     Keep.push_back(GV);
   }
 
-  return RegularLTO.Mover->move(std::move(Mod.M), Keep,
-                                [](GlobalValue &, IRMover::ValueAdder) {},
+  return RegularLTO.Mover->move(std::move(Mod.M), Keep, nullptr,
                                 /* IsPerformingImport */ false);
 }
 

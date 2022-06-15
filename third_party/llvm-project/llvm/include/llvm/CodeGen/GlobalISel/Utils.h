@@ -15,18 +15,20 @@
 #define LLVM_CODEGEN_GLOBALISEL_UTILS_H
 
 #include "GISelWorkList.h"
-#include "LostDebugLocObserver.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/Register.h"
+#include "llvm/IR/DebugLoc.h"
 #include "llvm/Support/Alignment.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/LowLevelTypeImpl.h"
 #include <cstdint>
 
 namespace llvm {
 
 class AnalysisUsage;
+class LostDebugLocObserver;
+class MachineBasicBlock;
 class BlockFrequencyInfo;
 class GISelKnownBits;
 class MachineFunction;
@@ -267,13 +269,10 @@ Optional<APFloat> ConstantFoldFPBinOp(unsigned Opcode, const Register Op1,
                                       const MachineRegisterInfo &MRI);
 
 /// Tries to constant fold a vector binop with sources \p Op1 and \p Op2.
-/// If successful, returns the G_BUILD_VECTOR representing the folded vector
-/// constant. \p MIB should have an insertion point already set to create new
-/// G_CONSTANT instructions as needed.
-Register ConstantFoldVectorBinop(unsigned Opcode, const Register Op1,
-                                 const Register Op2,
-                                 const MachineRegisterInfo &MRI,
-                                 MachineIRBuilder &MIB);
+/// Returns an empty vector on failure.
+SmallVector<APInt> ConstantFoldVectorBinop(unsigned Opcode, const Register Op1,
+                                           const Register Op2,
+                                           const MachineRegisterInfo &MRI);
 
 Optional<APInt> ConstantFoldExtOp(unsigned Opcode, const Register Op1,
                                   uint64_t Imm, const MachineRegisterInfo &MRI);
@@ -374,9 +373,23 @@ public:
 /// If \p MI is not a splat, returns None.
 Optional<int> getSplatIndex(MachineInstr &MI);
 
-/// Returns a scalar constant of a G_BUILD_VECTOR splat if it exists.
-Optional<int64_t> getBuildVectorConstantSplat(const MachineInstr &MI,
-                                              const MachineRegisterInfo &MRI);
+/// \returns the scalar integral splat value of \p Reg if possible.
+Optional<APInt> getIConstantSplatVal(const Register Reg,
+                                     const MachineRegisterInfo &MRI);
+
+/// \returns the scalar integral splat value defined by \p MI if possible.
+Optional<APInt> getIConstantSplatVal(const MachineInstr &MI,
+                                     const MachineRegisterInfo &MRI);
+
+/// \returns the scalar sign extended integral splat value of \p Reg if
+/// possible.
+Optional<int64_t> getIConstantSplatSExtVal(const Register Reg,
+                                           const MachineRegisterInfo &MRI);
+
+/// \returns the scalar sign extended integral splat value defined by \p MI if
+/// possible.
+Optional<int64_t> getIConstantSplatSExtVal(const MachineInstr &MI,
+                                           const MachineRegisterInfo &MRI);
 
 /// Returns a floating point scalar constant of a build vector splat if it
 /// exists. When \p AllowUndef == true some elements can be undef but not all.

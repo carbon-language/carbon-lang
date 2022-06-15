@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// UNSUPPORTED: libcpp-has-no-threads
+// UNSUPPORTED: no-threads
 // UNSUPPORTED: c++03
 
 // <future>
@@ -20,10 +20,11 @@
 //     async(launch policy, F&& f, Args&&... args);
 
 
-#include <future>
 #include <atomic>
-#include <memory>
 #include <cassert>
+#include <chrono>
+#include <future>
+#include <memory>
 
 #include "test_macros.h"
 

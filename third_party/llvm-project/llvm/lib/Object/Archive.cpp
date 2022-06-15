@@ -22,6 +22,7 @@
 #include "llvm/Support/Error.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Host.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
@@ -255,6 +256,14 @@ Expected<StringRef> ArchiveMemberHeader::getName(uint64_t Size) const {
     if (Name.size() == 1) // Linker member.
       return Name;
     if (Name.size() == 2 && Name[1] == '/') // String table.
+      return Name;
+    // System libraries from the Windows SDK for Windows 11 contain this symbol.
+    // It looks like a CFG guard: we just skip it for now.
+    if (Name.equals("/<XFGHASHMAP>/"))
+      return Name;
+    // Some libraries (e.g., arm64rt.lib) from the Windows WDK
+    // (version 10.0.22000.0) contain this undocumented special member.
+    if (Name.equals("/<ECSYMBOLS>/"))
       return Name;
     // It's a long name.
     // Get the string table offset.
@@ -919,6 +928,14 @@ Archive::Archive(MemoryBufferRef Source, Error &Err)
 
   setFirstRegular(*C);
   Err = Error::success();
+}
+
+object::Archive::Kind Archive::getDefaultKindForHost() {
+  Triple HostTriple(sys::getProcessTriple());
+  return HostTriple.isOSDarwin()
+             ? object::Archive::K_DARWIN
+             : (HostTriple.isOSAIX() ? object::Archive::K_AIXBIG
+                                     : object::Archive::K_GNU);
 }
 
 Archive::child_iterator Archive::child_begin(Error &Err,

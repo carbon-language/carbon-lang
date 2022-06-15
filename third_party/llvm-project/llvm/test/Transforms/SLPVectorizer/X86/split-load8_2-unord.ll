@@ -7,31 +7,17 @@ define dso_local void @_Z4testP1S(%struct.S* %p) local_unnamed_addr {
 ; CHECK-LABEL: @_Z4testP1S(
 ; CHECK-NEXT:  entry:
 ; CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [[STRUCT_S:%.*]], %struct.S* [[P:%.*]], i64 0, i32 1, i64 0
-; CHECK-NEXT:    [[ARRAYIDX2:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 0, i64 0
-; CHECK-NEXT:    [[ARRAYIDX4:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 1, i64 1
-; CHECK-NEXT:    [[ARRAYIDX9:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 0, i64 1
-; CHECK-NEXT:    [[ARRAYIDX11:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 1, i64 2
-; CHECK-NEXT:    [[ARRAYIDX16:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 0, i64 2
-; CHECK-NEXT:    [[ARRAYIDX18:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 1, i64 3
-; CHECK-NEXT:    [[ARRAYIDX23:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 0, i64 3
-; CHECK-NEXT:    [[ARRAYIDX25:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 1, i64 4
-; CHECK-NEXT:    [[ARRAYIDX30:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 0, i64 4
-; CHECK-NEXT:    [[ARRAYIDX32:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 1, i64 5
-; CHECK-NEXT:    [[ARRAYIDX37:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 0, i64 5
-; CHECK-NEXT:    [[ARRAYIDX39:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 1, i64 6
-; CHECK-NEXT:    [[ARRAYIDX44:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 0, i64 6
-; CHECK-NEXT:    [[ARRAYIDX46:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 1, i64 7
-; CHECK-NEXT:    [[ARRAYIDX51:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 0, i64 7
 ; CHECK-NEXT:    [[ARRAYIDX1:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 2, i64 15
+; CHECK-NEXT:    [[ARRAYIDX2:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 0, i64 0
 ; CHECK-NEXT:    [[ARRAYIDX6:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 2, i64 7
 ; CHECK-NEXT:    [[ARRAYIDX13:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 2, i64 6
 ; CHECK-NEXT:    [[ARRAYIDX20:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 2, i64 4
 ; CHECK-NEXT:    [[ARRAYIDX27:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 2, i64 12
 ; CHECK-NEXT:    [[ARRAYIDX34:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 2, i64 13
 ; CHECK-NEXT:    [[ARRAYIDX41:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 2, i64 14
+; CHECK-NEXT:    [[ARRAYIDX48:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 2, i64 5
 ; CHECK-NEXT:    [[TMP0:%.*]] = bitcast i32* [[ARRAYIDX]] to <8 x i32>*
 ; CHECK-NEXT:    [[TMP1:%.*]] = load <8 x i32>, <8 x i32>* [[TMP0]], align 4
-; CHECK-NEXT:    [[ARRAYIDX48:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 2, i64 5
 ; CHECK-NEXT:    [[TMP2:%.*]] = insertelement <8 x i32*> poison, i32* [[ARRAYIDX1]], i32 0
 ; CHECK-NEXT:    [[TMP3:%.*]] = insertelement <8 x i32*> [[TMP2]], i32* [[ARRAYIDX6]], i32 1
 ; CHECK-NEXT:    [[TMP4:%.*]] = insertelement <8 x i32*> [[TMP3]], i32* [[ARRAYIDX13]], i32 2
@@ -118,31 +104,18 @@ define dso_local void @test_unordered_splits(%struct.S* nocapture %p) local_unna
 ; CHECK-NEXT:    [[P1:%.*]] = alloca [16 x i32], align 16
 ; CHECK-NEXT:    [[P2:%.*]] = alloca [16 x i32], align 16
 ; CHECK-NEXT:    [[G10:%.*]] = getelementptr inbounds [16 x i32], [16 x i32]* [[P1]], i32 0, i64 4
-; CHECK-NEXT:    [[G11:%.*]] = getelementptr inbounds [16 x i32], [16 x i32]* [[P1]], i32 0, i64 5
-; CHECK-NEXT:    [[G12:%.*]] = getelementptr inbounds [16 x i32], [16 x i32]* [[P1]], i32 0, i64 6
-; CHECK-NEXT:    [[G13:%.*]] = getelementptr inbounds [16 x i32], [16 x i32]* [[P1]], i32 0, i64 7
 ; CHECK-NEXT:    [[G20:%.*]] = getelementptr inbounds [16 x i32], [16 x i32]* [[P2]], i32 0, i64 12
-; CHECK-NEXT:    [[G21:%.*]] = getelementptr inbounds [16 x i32], [16 x i32]* [[P2]], i32 0, i64 13
-; CHECK-NEXT:    [[G22:%.*]] = getelementptr inbounds [16 x i32], [16 x i32]* [[P2]], i32 0, i64 14
-; CHECK-NEXT:    [[G23:%.*]] = getelementptr inbounds [16 x i32], [16 x i32]* [[P2]], i32 0, i64 15
 ; CHECK-NEXT:    [[ARRAYIDX2:%.*]] = getelementptr inbounds [[STRUCT_S:%.*]], %struct.S* [[P:%.*]], i64 0, i32 0, i64 0
-; CHECK-NEXT:    [[ARRAYIDX9:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 0, i64 1
-; CHECK-NEXT:    [[ARRAYIDX16:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 0, i64 2
-; CHECK-NEXT:    [[ARRAYIDX23:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 0, i64 3
-; CHECK-NEXT:    [[ARRAYIDX30:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 0, i64 4
-; CHECK-NEXT:    [[ARRAYIDX37:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 0, i64 5
-; CHECK-NEXT:    [[ARRAYIDX44:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 0, i64 6
-; CHECK-NEXT:    [[ARRAYIDX51:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 0, i64 7
 ; CHECK-NEXT:    [[TMP0:%.*]] = bitcast i32* [[G10]] to <4 x i32>*
 ; CHECK-NEXT:    [[TMP1:%.*]] = load <4 x i32>, <4 x i32>* [[TMP0]], align 4
 ; CHECK-NEXT:    [[TMP2:%.*]] = bitcast i32* [[G20]] to <4 x i32>*
 ; CHECK-NEXT:    [[TMP3:%.*]] = load <4 x i32>, <4 x i32>* [[TMP2]], align 4
-; CHECK-NEXT:    [[TMP4:%.*]] = shufflevector <4 x i32> [[TMP1]], <4 x i32> poison, <8 x i32> <i32 1, i32 0, i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef>
-; CHECK-NEXT:    [[TMP5:%.*]] = shufflevector <8 x i32> poison, <8 x i32> [[TMP4]], <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 4, i32 5, i32 6, i32 7>
-; CHECK-NEXT:    [[TMP6:%.*]] = shufflevector <4 x i32> [[TMP3]], <4 x i32> poison, <8 x i32> <i32 3, i32 1, i32 2, i32 0, i32 undef, i32 undef, i32 undef, i32 undef>
-; CHECK-NEXT:    [[TMP7:%.*]] = shufflevector <8 x i32> [[TMP5]], <8 x i32> [[TMP6]], <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 8, i32 9, i32 10, i32 11>
-; CHECK-NEXT:    [[TMP8:%.*]] = bitcast i32* [[ARRAYIDX2]] to <8 x i32>*
-; CHECK-NEXT:    store <8 x i32> [[TMP7]], <8 x i32>* [[TMP8]], align 4
+; CHECK-NEXT:    [[TMP4:%.*]] = shufflevector <4 x i32> [[TMP1]], <4 x i32> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef>
+; CHECK-NEXT:    [[TMP5:%.*]] = shufflevector <4 x i32> [[TMP3]], <4 x i32> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef>
+; CHECK-NEXT:    [[TMP6:%.*]] = shufflevector <8 x i32> [[TMP4]], <8 x i32> [[TMP5]], <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 8, i32 9, i32 10, i32 11>
+; CHECK-NEXT:    [[SHUFFLE:%.*]] = shufflevector <8 x i32> [[TMP6]], <8 x i32> poison, <8 x i32> <i32 1, i32 0, i32 2, i32 3, i32 7, i32 5, i32 6, i32 4>
+; CHECK-NEXT:    [[TMP7:%.*]] = bitcast i32* [[ARRAYIDX2]] to <8 x i32>*
+; CHECK-NEXT:    store <8 x i32> [[SHUFFLE]], <8 x i32>* [[TMP7]], align 4
 ; CHECK-NEXT:    ret void
 ;
 entry:
@@ -191,21 +164,10 @@ define dso_local void @test_cost_splits(%struct.S* nocapture %p) local_unnamed_a
 ; CHECK-NEXT:    [[P3:%.*]] = alloca [16 x i32], align 16
 ; CHECK-NEXT:    [[P4:%.*]] = alloca [16 x i32], align 16
 ; CHECK-NEXT:    [[G10:%.*]] = getelementptr inbounds [16 x i32], [16 x i32]* [[P1]], i32 0, i64 4
-; CHECK-NEXT:    [[G11:%.*]] = getelementptr inbounds [16 x i32], [16 x i32]* [[P1]], i32 0, i64 5
 ; CHECK-NEXT:    [[G12:%.*]] = getelementptr inbounds [16 x i32], [16 x i32]* [[P2]], i32 0, i64 6
-; CHECK-NEXT:    [[G13:%.*]] = getelementptr inbounds [16 x i32], [16 x i32]* [[P2]], i32 0, i64 7
 ; CHECK-NEXT:    [[G20:%.*]] = getelementptr inbounds [16 x i32], [16 x i32]* [[P3]], i32 0, i64 12
-; CHECK-NEXT:    [[G21:%.*]] = getelementptr inbounds [16 x i32], [16 x i32]* [[P3]], i32 0, i64 13
 ; CHECK-NEXT:    [[G22:%.*]] = getelementptr inbounds [16 x i32], [16 x i32]* [[P4]], i32 0, i64 14
-; CHECK-NEXT:    [[G23:%.*]] = getelementptr inbounds [16 x i32], [16 x i32]* [[P4]], i32 0, i64 15
 ; CHECK-NEXT:    [[ARRAYIDX2:%.*]] = getelementptr inbounds [[STRUCT_S:%.*]], %struct.S* [[P:%.*]], i64 0, i32 0, i64 0
-; CHECK-NEXT:    [[ARRAYIDX9:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 0, i64 1
-; CHECK-NEXT:    [[ARRAYIDX16:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 0, i64 2
-; CHECK-NEXT:    [[ARRAYIDX23:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 0, i64 3
-; CHECK-NEXT:    [[ARRAYIDX30:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 0, i64 4
-; CHECK-NEXT:    [[ARRAYIDX37:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 0, i64 5
-; CHECK-NEXT:    [[ARRAYIDX44:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 0, i64 6
-; CHECK-NEXT:    [[ARRAYIDX51:%.*]] = getelementptr inbounds [[STRUCT_S]], %struct.S* [[P]], i64 0, i32 0, i64 7
 ; CHECK-NEXT:    [[TMP0:%.*]] = bitcast i32* [[G10]] to <2 x i32>*
 ; CHECK-NEXT:    [[TMP1:%.*]] = load <2 x i32>, <2 x i32>* [[TMP0]], align 4
 ; CHECK-NEXT:    [[TMP2:%.*]] = bitcast i32* [[G12]] to <2 x i32>*

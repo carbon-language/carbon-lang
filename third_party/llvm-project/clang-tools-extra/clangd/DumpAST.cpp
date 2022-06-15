@@ -13,7 +13,6 @@
 #include "clang/AST/ASTTypeTraits.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
-#include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/RecursiveASTVisitor.h"
@@ -185,6 +184,7 @@ class DumpVisitor : public RecursiveASTVisitor<DumpVisitor> {
       TEMPLATE_KIND(DependentTemplate);
       TEMPLATE_KIND(SubstTemplateTemplateParm);
       TEMPLATE_KIND(SubstTemplateTemplateParmPack);
+      TEMPLATE_KIND(UsingTemplate);
 #undef TEMPLATE_KIND
     }
     llvm_unreachable("Unhandled NameKind enum");

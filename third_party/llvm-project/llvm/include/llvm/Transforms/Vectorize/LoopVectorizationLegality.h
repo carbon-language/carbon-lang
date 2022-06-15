@@ -28,12 +28,26 @@
 
 #include "llvm/ADT/MapVector.h"
 #include "llvm/Analysis/LoopAccessAnalysis.h"
-#include "llvm/Analysis/OptimizationRemarkEmitter.h"
-#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Support/TypeSize.h"
 #include "llvm/Transforms/Utils/LoopUtils.h"
 
 namespace llvm {
+class AAResults;
+class AssumptionCache;
+class BasicBlock;
+class BlockFrequencyInfo;
+class DemandedBits;
+class DominatorTree;
+class Function;
+class Loop;
+class LoopInfo;
+class Metadata;
+class OptimizationRemarkEmitter;
+class PredicatedScalarEvolution;
+class ProfileSummaryInfo;
+class TargetLibraryInfo;
+class TargetTransformInfo;
+class Type;
 
 /// Utility class for getting and setting loop vectorizer hints in the form
 /// of loop metadata.
@@ -207,7 +221,6 @@ public:
 
   void addRuntimePointerChecks(unsigned Num) { NumRuntimePointerChecks = Num; }
 
-
   Instruction *getExactFPInst() { return ExactFPMathInst; }
 
   unsigned getNumRuntimePointerChecks() const {
@@ -294,12 +307,24 @@ public:
   /// Returns the widest induction type.
   Type *getWidestInductionType() { return WidestIndTy; }
 
+  /// Returns True if given store is a final invariant store of one of the
+  /// reductions found in the loop.
+  bool isInvariantStoreOfReduction(StoreInst *SI);
+
+  /// Returns True if given address is invariant and is used to store recurrent
+  /// expression
+  bool isInvariantAddressOfReduction(Value *V);
+
   /// Returns True if V is a Phi node of an induction variable in this loop.
   bool isInductionPhi(const Value *V) const;
 
   /// Returns a pointer to the induction descriptor, if \p Phi is an integer or
   /// floating point induction.
   const InductionDescriptor *getIntOrFpInductionDescriptor(PHINode *Phi) const;
+
+  /// Returns a pointer to the induction descriptor, if \p Phi is pointer
+  /// induction.
+  const InductionDescriptor *getPointerInductionDescriptor(PHINode *Phi) const;
 
   /// Returns True if V is a cast that is part of an induction def-use chain,
   /// and had been proven to be redundant under a runtime guard (in other

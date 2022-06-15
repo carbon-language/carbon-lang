@@ -17,7 +17,10 @@
 #include "llvm/ADT/None.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/SmallBitVector.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/FunctionLoweringInfo.h"
 #include "llvm/CodeGen/GCMetadata.h"
@@ -27,6 +30,7 @@
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/RuntimeLibcalls.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/StackMaps.h"
 #include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
@@ -168,7 +172,7 @@ static Optional<int> findPreviousSpillSlot(const Value *Val,
     const auto &RelocationMap =
         Builder.FuncInfo.StatepointRelocationMaps[Relocate->getStatepoint()];
 
-    auto It = RelocationMap.find(Relocate->getDerivedPtr());
+    auto It = RelocationMap.find(Relocate);
     if (It == RelocationMap.end())
       return None;
 
@@ -880,8 +884,9 @@ SDValue SelectionDAGBuilder::LowerAsSTATEPOINT(
     DAG.getMachineNode(TargetOpcode::STATEPOINT, getCurSDLoc(), NodeTys, Ops);
   DAG.setNodeMemRefs(StatepointMCNode, MemRefs);
 
-  // For values lowered to tied-defs, create the virtual registers.  Note that
-  // for simplicity, we *always* create a vreg even within a single block.
+  // For values lowered to tied-defs, create the virtual registers if used
+  // in other blocks. For local gc.relocate record appropriate statepoint
+  // result in StatepointLoweringState.
   DenseMap<SDValue, Register> VirtRegs;
   for (const auto *Relocate : SI.GCRelocates) {
     Value *Derived = Relocate->getDerivedPtr();
@@ -889,11 +894,22 @@ SDValue SelectionDAGBuilder::LowerAsSTATEPOINT(
     if (!LowerAsVReg.count(SD))
       continue;
 
+    SDValue Relocated = SDValue(StatepointMCNode, LowerAsVReg[SD]);
+
+    // Handle local relocate. Note that different relocates might
+    // map to the same SDValue.
+    if (SI.StatepointInstr->getParent() == Relocate->getParent()) {
+      SDValue Res = StatepointLowering.getLocation(SD);
+      if (Res)
+        assert(Res == Relocated);
+      else
+        StatepointLowering.setLocation(SD, Relocated);
+      continue;
+    }
+
     // Handle multiple gc.relocates of the same input efficiently.
     if (VirtRegs.count(SD))
       continue;
-
-    SDValue Relocated = SDValue(StatepointMCNode, LowerAsVReg[SD]);
 
     auto *RetTy = Relocate->getType();
     Register Reg = FuncInfo.CreateRegs(RetTy);
@@ -915,8 +931,13 @@ SDValue SelectionDAGBuilder::LowerAsSTATEPOINT(
     SDValue SDV = getValue(V);
     SDValue Loc = StatepointLowering.getLocation(SDV);
 
+    bool IsLocal = (Relocate->getParent() == StatepointInstr->getParent());
+
     RecordType Record;
-    if (LowerAsVReg.count(SDV)) {
+    if (IsLocal && LowerAsVReg.count(SDV)) {
+      // Result is already stored in StatepointLowering
+      Record.type = RecordType::SDValueNode;
+    } else if (LowerAsVReg.count(SDV)) {
       Record.type = RecordType::VReg;
       assert(VirtRegs.count(SDV));
       Record.payload.Reg = VirtRegs[SDV];
@@ -932,7 +953,7 @@ SDValue SelectionDAGBuilder::LowerAsSTATEPOINT(
       if (Relocate->getParent() != StatepointInstr->getParent())
         ExportFromCurrentBlock(V);
     }
-    RelocationMap[V] = Record;
+    RelocationMap[Relocate] = Record;
   }
 
   
@@ -1210,11 +1231,19 @@ void SelectionDAGBuilder::visitGCRelocate(const GCRelocateInst &Relocate) {
   const Value *DerivedPtr = Relocate.getDerivedPtr();
   auto &RelocationMap =
     FuncInfo.StatepointRelocationMaps[Relocate.getStatepoint()];
-  auto SlotIt = RelocationMap.find(DerivedPtr);
+  auto SlotIt = RelocationMap.find(&Relocate);
   assert(SlotIt != RelocationMap.end() && "Relocating not lowered gc value");
   const RecordType &Record = SlotIt->second;
 
   // If relocation was done via virtual register..
+  if (Record.type == RecordType::SDValueNode) {
+    assert(Relocate.getStatepoint()->getParent() == Relocate.getParent() &&
+           "Nonlocal gc.relocate mapped via SDValue");
+    SDValue SDV = StatepointLowering.getLocation(getValue(DerivedPtr));
+    assert(SDV.getNode() && "empty SDValue");
+    setValue(&Relocate, SDV);
+    return;
+  }
   if (Record.type == RecordType::VReg) {
     Register InReg = Record.payload.Reg;
     RegsForValue RFV(*DAG.getContext(), DAG.getTargetLoweringInfo(),

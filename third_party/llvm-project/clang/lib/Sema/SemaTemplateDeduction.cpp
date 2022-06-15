@@ -4769,12 +4769,13 @@ Sema::DeduceAutoType(TypeLoc Type, Expr *&Init, QualType &Result,
       return DAR_FailedAlreadyDiagnosed;
   }
 
-  if (const auto *AT = Type.getType()->getAs<AutoType>()) {
+  QualType MaybeAuto = Type.getType().getNonReferenceType();
+  while (MaybeAuto->isPointerType())
+    MaybeAuto = MaybeAuto->getPointeeType();
+  if (const auto *AT = MaybeAuto->getAs<AutoType>()) {
     if (AT->isConstrained() && !IgnoreConstraints) {
-      auto ConstraintsResult =
-          CheckDeducedPlaceholderConstraints(*this, *AT,
-                                             Type.getContainedAutoTypeLoc(),
-                                             DeducedType);
+      auto ConstraintsResult = CheckDeducedPlaceholderConstraints(
+          *this, *AT, Type.getContainedAutoTypeLoc(), DeducedType);
       if (ConstraintsResult != DAR_Succeeded)
         return ConstraintsResult;
     }
@@ -5142,18 +5143,20 @@ static bool isVariadicFunctionTemplate(FunctionTemplateDecl *FunTmpl) {
 /// candidate with a reversed parameter order. In this case, the corresponding
 /// P/A pairs between FT1 and FT2 are reversed.
 ///
+/// \param AllowOrderingByConstraints If \c is false, don't check whether one
+/// of the templates is more constrained than the other. Default is true.
+///
 /// \returns the more specialized function template. If neither
 /// template is more specialized, returns NULL.
-FunctionTemplateDecl *
-Sema::getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,
-                                 FunctionTemplateDecl *FT2,
-                                 SourceLocation Loc,
-                                 TemplatePartialOrderingContext TPOC,
-                                 unsigned NumCallArguments1,
-                                 unsigned NumCallArguments2,
-                                 bool Reversed) {
+FunctionTemplateDecl *Sema::getMoreSpecializedTemplate(
+    FunctionTemplateDecl *FT1, FunctionTemplateDecl *FT2, SourceLocation Loc,
+    TemplatePartialOrderingContext TPOC, unsigned NumCallArguments1,
+    unsigned NumCallArguments2, bool Reversed,
+    bool AllowOrderingByConstraints) {
 
-  auto JudgeByConstraints = [&] () -> FunctionTemplateDecl * {
+  auto JudgeByConstraints = [&]() -> FunctionTemplateDecl * {
+    if (!AllowOrderingByConstraints)
+      return nullptr;
     llvm::SmallVector<const Expr *, 3> AC1, AC2;
     FT1->getAssociatedConstraints(AC1);
     FT2->getAssociatedConstraints(AC2);

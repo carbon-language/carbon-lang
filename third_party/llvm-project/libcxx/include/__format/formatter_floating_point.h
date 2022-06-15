@@ -19,6 +19,7 @@
 #include <__algorithm/transform.h>
 #include <__assert>
 #include <__concepts/arithmetic.h>
+#include <__concepts/same_as.h>
 #include <__config>
 #include <__format/format_error.h>
 #include <__format/format_fwd.h>
@@ -26,6 +27,7 @@
 #include <__format/formatter.h>
 #include <__format/formatter_integral.h>
 #include <__format/parser_std_format_spec.h>
+#include <__memory/allocator.h>
 #include <__utility/move.h>
 #include <__utility/unreachable.h>
 #include <charconv>
@@ -45,12 +47,6 @@ _LIBCPP_PUSH_MACROS
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 #if _LIBCPP_STD_VER > 17
-
-// TODO FMT Remove this once we require compilers with proper C++20 support.
-// If the compiler has no concepts support, the format header will be disabled.
-// Without concepts support enable_if needs to be used and that too much effort
-// to support compilers with partial C++20 support.
-#  if !defined(_LIBCPP_HAS_NO_CONCEPTS)
 
 namespace __format_spec {
 
@@ -706,8 +702,6 @@ struct _LIBCPP_TEMPLATE_VIS _LIBCPP_AVAILABILITY_FORMAT formatter<double, _CharT
 template <__formatter::__char_type _CharT>
 struct _LIBCPP_TEMPLATE_VIS _LIBCPP_AVAILABILITY_FORMAT formatter<long double, _CharT>
     : public __format_spec::__formatter_floating_point<_CharT> {};
-
-#  endif // !defined(_LIBCPP_HAS_NO_CONCEPTS)
 
 #endif //_LIBCPP_STD_VER > 17
 

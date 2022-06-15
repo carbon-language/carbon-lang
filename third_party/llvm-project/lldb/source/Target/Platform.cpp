@@ -19,6 +19,7 @@
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamFile.h"
+#include "lldb/Host/FileCache.h"
 #include "lldb/Host/FileSystem.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostInfo.h"
@@ -38,6 +39,7 @@
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/Status.h"
 #include "lldb/Utility/StructuredData.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 
@@ -48,8 +50,6 @@
 
 using namespace lldb;
 using namespace lldb_private;
-
-static uint32_t g_initialize_count = 0;
 
 // Use a singleton function for g_local_platform_sp to avoid init constructors
 // since LLDB is often part of a shared library
@@ -135,26 +135,9 @@ void PlatformProperties::SetDefaultModuleCacheDirectory(
 /// or attaching to processes unless another platform is specified.
 PlatformSP Platform::GetHostPlatform() { return GetHostPlatformSP(); }
 
-static std::vector<PlatformSP> &GetPlatformList() {
-  static std::vector<PlatformSP> g_platform_list;
-  return g_platform_list;
-}
+void Platform::Initialize() {}
 
-static std::recursive_mutex &GetPlatformListMutex() {
-  static std::recursive_mutex g_mutex;
-  return g_mutex;
-}
-
-void Platform::Initialize() { g_initialize_count++; }
-
-void Platform::Terminate() {
-  if (g_initialize_count > 0) {
-    if (--g_initialize_count == 0) {
-      std::lock_guard<std::recursive_mutex> guard(GetPlatformListMutex());
-      GetPlatformList().clear();
-    }
-  }
-}
+void Platform::Terminate() {}
 
 PlatformProperties &Platform::GetGlobalPlatformProperties() {
   static PlatformProperties g_settings;
@@ -165,11 +148,6 @@ void Platform::SetHostPlatform(const lldb::PlatformSP &platform_sp) {
   // The native platform should use its static void Platform::Initialize()
   // function to register itself as the native platform.
   GetHostPlatformSP() = platform_sp;
-
-  if (platform_sp) {
-    std::lock_guard<std::recursive_mutex> guard(GetPlatformListMutex());
-    GetPlatformList().push_back(platform_sp);
-  }
 }
 
 Status Platform::GetFileWithUUID(const FileSpec &platform_file,
@@ -272,108 +250,15 @@ bool Platform::GetModuleSpec(const FileSpec &module_file_spec,
                                              module_spec);
 }
 
-PlatformSP Platform::Find(ConstString name) {
-  if (name) {
-    static ConstString g_host_platform_name("host");
-    if (name == g_host_platform_name)
-      return GetHostPlatform();
-
-    std::lock_guard<std::recursive_mutex> guard(GetPlatformListMutex());
-    for (const auto &platform_sp : GetPlatformList()) {
-      if (platform_sp->GetName() == name)
-        return platform_sp;
-    }
-  }
-  return PlatformSP();
-}
-
-PlatformSP Platform::Create(ConstString name, Status &error) {
-  PlatformCreateInstance create_callback = nullptr;
+PlatformSP Platform::Create(llvm::StringRef name) {
   lldb::PlatformSP platform_sp;
-  if (name) {
-    static ConstString g_host_platform_name("host");
-    if (name == g_host_platform_name)
-      return GetHostPlatform();
+  if (name == GetHostPlatformName())
+    return GetHostPlatform();
 
-    create_callback = PluginManager::GetPlatformCreateCallbackForPluginName(
-        name.GetStringRef());
-    if (create_callback)
-      platform_sp = create_callback(true, nullptr);
-    else
-      error.SetErrorStringWithFormat(
-          "unable to find a plug-in for the platform named \"%s\"",
-          name.GetCString());
-  } else
-    error.SetErrorString("invalid platform name");
-
-  if (platform_sp) {
-    std::lock_guard<std::recursive_mutex> guard(GetPlatformListMutex());
-    GetPlatformList().push_back(platform_sp);
-  }
-
-  return platform_sp;
-}
-
-PlatformSP Platform::Create(const ArchSpec &arch, ArchSpec *platform_arch_ptr,
-                            Status &error) {
-  lldb::PlatformSP platform_sp;
-  if (arch.IsValid()) {
-    // Scope for locker
-    {
-      // First try exact arch matches across all platforms already created
-      std::lock_guard<std::recursive_mutex> guard(GetPlatformListMutex());
-      for (const auto &platform_sp : GetPlatformList()) {
-        if (platform_sp->IsCompatibleArchitecture(arch, true,
-                                                  platform_arch_ptr))
-          return platform_sp;
-      }
-
-      // Next try compatible arch matches across all platforms already created
-      for (const auto &platform_sp : GetPlatformList()) {
-        if (platform_sp->IsCompatibleArchitecture(arch, false,
-                                                  platform_arch_ptr))
-          return platform_sp;
-      }
-    }
-
-    PlatformCreateInstance create_callback;
-    // First try exact arch matches across all platform plug-ins
-    uint32_t idx;
-    for (idx = 0; (create_callback =
-                       PluginManager::GetPlatformCreateCallbackAtIndex(idx));
-         ++idx) {
-      if (create_callback) {
-        platform_sp = create_callback(false, &arch);
-        if (platform_sp &&
-            platform_sp->IsCompatibleArchitecture(arch, true,
-                                                  platform_arch_ptr)) {
-          std::lock_guard<std::recursive_mutex> guard(GetPlatformListMutex());
-          GetPlatformList().push_back(platform_sp);
-          return platform_sp;
-        }
-      }
-    }
-    // Next try compatible arch matches across all platform plug-ins
-    for (idx = 0; (create_callback =
-                       PluginManager::GetPlatformCreateCallbackAtIndex(idx));
-         ++idx) {
-      if (create_callback) {
-        platform_sp = create_callback(false, &arch);
-        if (platform_sp &&
-            platform_sp->IsCompatibleArchitecture(arch, false,
-                                                  platform_arch_ptr)) {
-          std::lock_guard<std::recursive_mutex> guard(GetPlatformListMutex());
-          GetPlatformList().push_back(platform_sp);
-          return platform_sp;
-        }
-      }
-    }
-  } else
-    error.SetErrorString("invalid platform name");
-  if (platform_arch_ptr)
-    platform_arch_ptr->Clear();
-  platform_sp.reset();
-  return platform_sp;
+  if (PlatformCreateInstance create_callback =
+          PluginManager::GetPlatformCreateCallbackForPluginName(name))
+    return create_callback(true, nullptr);
+  return nullptr;
 }
 
 ArchSpec Platform::GetAugmentedArchSpec(Platform *platform, llvm::StringRef triple) {
@@ -786,7 +671,55 @@ Status Platform::SetFilePermissions(const FileSpec &file_spec,
   }
 }
 
-ConstString Platform::GetName() { return ConstString(GetPluginName()); }
+user_id_t Platform::OpenFile(const FileSpec &file_spec,
+                                   File::OpenOptions flags, uint32_t mode,
+                                   Status &error) {
+  if (IsHost())
+    return FileCache::GetInstance().OpenFile(file_spec, flags, mode, error);
+  return UINT64_MAX;
+}
+
+bool Platform::CloseFile(user_id_t fd, Status &error) {
+  if (IsHost())
+    return FileCache::GetInstance().CloseFile(fd, error);
+  return false;
+}
+
+user_id_t Platform::GetFileSize(const FileSpec &file_spec) {
+  if (!IsHost())
+    return UINT64_MAX;
+
+  uint64_t Size;
+  if (llvm::sys::fs::file_size(file_spec.GetPath(), Size))
+    return 0;
+  return Size;
+}
+
+uint64_t Platform::ReadFile(lldb::user_id_t fd, uint64_t offset, void *dst,
+                            uint64_t dst_len, Status &error) {
+  if (IsHost())
+    return FileCache::GetInstance().ReadFile(fd, offset, dst, dst_len, error);
+  error.SetErrorStringWithFormatv(
+      "Platform::ReadFile() is not supported in the {0} platform",
+      GetPluginName());
+  return -1;
+}
+
+uint64_t Platform::WriteFile(lldb::user_id_t fd, uint64_t offset,
+                             const void *src, uint64_t src_len, Status &error) {
+  if (IsHost())
+    return FileCache::GetInstance().WriteFile(fd, offset, src, src_len, error);
+  error.SetErrorStringWithFormatv(
+      "Platform::WriteFile() is not supported in the {0} platform",
+      GetPluginName());
+  return -1;
+}
+
+UserIDResolver &Platform::GetUserIDResolver() {
+  if (IsHost())
+    return HostInfo::GetUserIDResolver();
+  return UserIDResolver::GetNoopResolver();
+}
 
 const char *Platform::GetHostname() {
   if (IsHost())
@@ -847,7 +780,9 @@ Platform::ResolveExecutable(const ModuleSpec &module_spec,
       // architectures that we should be using (in the correct order) and see
       // if we can find a match that way
       ModuleSpec arch_module_spec(module_spec);
-      for (const ArchSpec &arch : GetSupportedArchitectures()) {
+      ArchSpec process_host_arch;
+      for (const ArchSpec &arch :
+           GetSupportedArchitectures(process_host_arch)) {
         arch_module_spec.GetArchitecture() = arch;
         error = ModuleList::GetSharedModule(arch_module_spec, exe_module_sp,
                                             module_search_paths_ptr, nullptr,
@@ -894,7 +829,8 @@ Platform::ResolveRemoteExecutable(const ModuleSpec &module_spec,
     // correct order) and see if we can find a match that way
     StreamString arch_names;
     llvm::ListSeparator LS;
-    for (const ArchSpec &arch : GetSupportedArchitectures()) {
+    ArchSpec process_host_arch;
+    for (const ArchSpec &arch : GetSupportedArchitectures(process_host_arch)) {
       resolved_module_spec.GetArchitecture() = arch;
       error = ModuleList::GetSharedModule(resolved_module_spec, exe_module_sp,
                                           module_search_paths_ptr, nullptr,
@@ -992,7 +928,7 @@ ArchSpec Platform::GetAugmentedArchSpec(llvm::StringRef triple) {
 
   ArchSpec compatible_arch;
   ArchSpec raw_arch(triple);
-  if (!IsCompatibleArchitecture(raw_arch, false, &compatible_arch))
+  if (!IsCompatibleArchitecture(raw_arch, {}, false, &compatible_arch))
     return raw_arch;
 
   if (!compatible_arch.IsValid())
@@ -1202,16 +1138,6 @@ lldb::ProcessSP Platform::DebugProcess(ProcessLaunchInfo &launch_info,
   return process_sp;
 }
 
-lldb::PlatformSP
-Platform::GetPlatformForArchitecture(const ArchSpec &arch,
-                                     ArchSpec *platform_arch_ptr) {
-  lldb::PlatformSP platform_sp;
-  Status error;
-  if (arch.IsValid())
-    platform_sp = Platform::Create(arch, platform_arch_ptr, error);
-  return platform_sp;
-}
-
 std::vector<ArchSpec>
 Platform::CreateArchList(llvm::ArrayRef<llvm::Triple::ArchType> archs,
                          llvm::Triple::OSType os) {
@@ -1228,6 +1154,7 @@ Platform::CreateArchList(llvm::ArrayRef<llvm::Triple::ArchType> archs,
 /// Lets a platform answer if it is compatible with a given
 /// architecture and the target triple contained within.
 bool Platform::IsCompatibleArchitecture(const ArchSpec &arch,
+                                        const ArchSpec &process_host_arch,
                                         bool exact_arch_match,
                                         ArchSpec *compatible_arch_ptr) {
   // If the architecture is invalid, we must answer true...
@@ -1235,7 +1162,8 @@ bool Platform::IsCompatibleArchitecture(const ArchSpec &arch,
     ArchSpec platform_arch;
     auto match = exact_arch_match ? &ArchSpec::IsExactMatch
                                   : &ArchSpec::IsCompatibleMatch;
-    for (const ArchSpec &platform_arch : GetSupportedArchitectures()) {
+    for (const ArchSpec &platform_arch :
+         GetSupportedArchitectures(process_host_arch)) {
       if ((arch.*match)(platform_arch)) {
         if (compatible_arch_ptr)
           *compatible_arch_ptr = platform_arch;
@@ -1278,7 +1206,7 @@ Status Platform::PutFile(const FileSpec &source, const FileSpec &destination,
     return error;
   if (dest_file == UINT64_MAX)
     return Status("unable to open target file");
-  lldb::DataBufferSP buffer_sp(new DataBufferHeap(1024 * 16, 0));
+  lldb::WritableDataBufferSP buffer_sp(new DataBufferHeap(1024 * 16, 0));
   uint64_t offset = 0;
   for (;;) {
     size_t bytes_read = buffer_sp->GetByteSize();
@@ -1317,17 +1245,21 @@ Status
 Platform::CreateSymlink(const FileSpec &src, // The name of the link is in src
                         const FileSpec &dst) // The symlink points to dst
 {
-  Status error("unimplemented");
-  return error;
+  if (IsHost())
+    return FileSystem::Instance().Symlink(src, dst);
+  return Status("unimplemented");
 }
 
 bool Platform::GetFileExists(const lldb_private::FileSpec &file_spec) {
+  if (IsHost())
+    return FileSystem::Instance().Exists(file_spec);
   return false;
 }
 
 Status Platform::Unlink(const FileSpec &path) {
-  Status error("unimplemented");
-  return error;
+  if (IsHost())
+    return llvm::sys::fs::remove(path.GetPath());
+  return Status("unimplemented");
 }
 
 MmapArgList Platform::GetMmapArgumentList(const ArchSpec &arch, addr_t addr,
@@ -1373,8 +1305,7 @@ lldb_private::Status Platform::RunShellCommand(
   if (IsHost())
     return Host::RunShellCommand(shell, command, working_dir, status_ptr,
                                  signo_ptr, command_output, timeout);
-  else
-    return Status("unimplemented");
+  return Status("unable to run a remote command without a platform");
 }
 
 bool Platform::CalculateMD5(const FileSpec &file_spec, uint64_t &low,
@@ -1533,7 +1464,11 @@ lldb_private::Status OptionGroupPlatformCaching::SetOptionValue(
   return error;
 }
 
-Environment Platform::GetEnvironment() { return Environment(); }
+Environment Platform::GetEnvironment() {
+  if (IsHost())
+    return Host::GetEnvironment();
+  return Environment();
+}
 
 const std::vector<ConstString> &Platform::GetTrapHandlerSymbolNames() {
   if (!m_calculated_trap_handlers) {
@@ -1573,8 +1508,10 @@ Status Platform::GetRemoteSharedModule(const ModuleSpec &module_spec,
                                        bool *did_create_ptr) {
   // Get module information from a target.
   ModuleSpec resolved_module_spec;
+  ArchSpec process_host_arch;
   bool got_module_spec = false;
   if (process) {
+    process_host_arch = process->GetSystemArchitecture();
     // Try to get module information from the process
     if (process->GetModuleSpec(module_spec.GetFileSpec(),
                                module_spec.GetArchitecture(),
@@ -1592,7 +1529,7 @@ Status Platform::GetRemoteSharedModule(const ModuleSpec &module_spec,
     // architectures that we should be using (in the correct order) and see if
     // we can find a match that way
     ModuleSpec arch_module_spec(module_spec);
-    for (const ArchSpec &arch : GetSupportedArchitectures()) {
+    for (const ArchSpec &arch : GetSupportedArchitectures(process_host_arch)) {
       arch_module_spec.GetArchitecture() = arch;
       error = ModuleList::GetSharedModule(arch_module_spec, module_sp, nullptr,
                                           nullptr, nullptr);
@@ -1728,7 +1665,7 @@ Status Platform::DownloadSymbolFile(const lldb::ModuleSP &module_sp,
 
 FileSpec Platform::GetModuleCacheRoot() {
   auto dir_spec = GetGlobalPlatformProperties().GetModuleCacheDirectory();
-  dir_spec.AppendPathComponent(GetName().AsCString());
+  dir_spec.AppendPathComponent(GetPluginName());
   return dir_spec;
 }
 
@@ -2006,4 +1943,134 @@ size_t Platform::GetSoftwareBreakpointTrapOpcode(Target &target,
 
 CompilerType Platform::GetSiginfoType(const llvm::Triple& triple) {
   return CompilerType();
+}
+
+Args Platform::GetExtraStartupCommands() {
+  return {};
+}
+
+PlatformSP PlatformList::GetOrCreate(llvm::StringRef name) {
+  std::lock_guard<std::recursive_mutex> guard(m_mutex);
+  for (const PlatformSP &platform_sp : m_platforms) {
+    if (platform_sp->GetName() == name)
+      return platform_sp;
+  }
+  return Create(name);
+}
+
+PlatformSP PlatformList::GetOrCreate(const ArchSpec &arch,
+                                     const ArchSpec &process_host_arch,
+                                     ArchSpec *platform_arch_ptr,
+                                     Status &error) {
+  std::lock_guard<std::recursive_mutex> guard(m_mutex);
+  // First try exact arch matches across all platforms already created
+  for (const auto &platform_sp : m_platforms) {
+    if (platform_sp->IsCompatibleArchitecture(arch, process_host_arch, true,
+                                              platform_arch_ptr))
+      return platform_sp;
+  }
+
+  // Next try compatible arch matches across all platforms already created
+  for (const auto &platform_sp : m_platforms) {
+    if (platform_sp->IsCompatibleArchitecture(arch, process_host_arch, false,
+                                              platform_arch_ptr))
+      return platform_sp;
+  }
+
+  PlatformCreateInstance create_callback;
+  // First try exact arch matches across all platform plug-ins
+  uint32_t idx;
+  for (idx = 0;
+       (create_callback = PluginManager::GetPlatformCreateCallbackAtIndex(idx));
+       ++idx) {
+    PlatformSP platform_sp = create_callback(false, &arch);
+    if (platform_sp && platform_sp->IsCompatibleArchitecture(
+                           arch, process_host_arch, true, platform_arch_ptr)) {
+      m_platforms.push_back(platform_sp);
+      return platform_sp;
+    }
+  }
+  // Next try compatible arch matches across all platform plug-ins
+  for (idx = 0;
+       (create_callback = PluginManager::GetPlatformCreateCallbackAtIndex(idx));
+       ++idx) {
+    PlatformSP platform_sp = create_callback(false, &arch);
+    if (platform_sp && platform_sp->IsCompatibleArchitecture(
+                           arch, process_host_arch, false, platform_arch_ptr)) {
+      m_platforms.push_back(platform_sp);
+      return platform_sp;
+    }
+  }
+  if (platform_arch_ptr)
+    platform_arch_ptr->Clear();
+  return nullptr;
+}
+
+PlatformSP PlatformList::GetOrCreate(const ArchSpec &arch,
+                                     const ArchSpec &process_host_arch,
+                                     ArchSpec *platform_arch_ptr) {
+  Status error;
+  if (arch.IsValid())
+    return GetOrCreate(arch, process_host_arch, platform_arch_ptr, error);
+  return nullptr;
+}
+
+PlatformSP PlatformList::GetOrCreate(llvm::ArrayRef<ArchSpec> archs,
+                                     const ArchSpec &process_host_arch,
+                                     std::vector<PlatformSP> &candidates) {
+  candidates.clear();
+  candidates.reserve(archs.size());
+
+  if (archs.empty())
+    return nullptr;
+
+  PlatformSP host_platform_sp = Platform::GetHostPlatform();
+
+  // Prefer the selected platform if it matches at least one architecture.
+  if (m_selected_platform_sp) {
+    for (const ArchSpec &arch : archs) {
+      if (m_selected_platform_sp->IsCompatibleArchitecture(
+              arch, process_host_arch, false, nullptr))
+        return m_selected_platform_sp;
+    }
+  }
+
+  // Prefer the host platform if it matches at least one architecture.
+  if (host_platform_sp) {
+    for (const ArchSpec &arch : archs) {
+      if (host_platform_sp->IsCompatibleArchitecture(arch, process_host_arch,
+                                                     false, nullptr))
+        return host_platform_sp;
+    }
+  }
+
+  // Collect a list of candidate platforms for the architectures.
+  for (const ArchSpec &arch : archs) {
+    if (PlatformSP platform = GetOrCreate(arch, process_host_arch, nullptr))
+      candidates.push_back(platform);
+  }
+
+  // The selected or host platform didn't match any of the architectures. If
+  // the same platform supports all architectures then that's the obvious next
+  // best thing.
+  if (candidates.size() == archs.size()) {
+    if (std::all_of(candidates.begin(), candidates.end(),
+                    [&](const PlatformSP &p) -> bool {
+                      return p->GetName() == candidates.front()->GetName();
+                    })) {
+      return candidates.front();
+    }
+  }
+
+  // At this point we either have no platforms that match the given
+  // architectures or multiple platforms with no good way to disambiguate
+  // between them.
+  return nullptr;
+}
+
+PlatformSP PlatformList::Create(llvm::StringRef name) {
+  std::lock_guard<std::recursive_mutex> guard(m_mutex);
+  PlatformSP platform_sp = Platform::Create(name);
+  m_platforms.push_back(platform_sp);
+  return platform_sp;
 }

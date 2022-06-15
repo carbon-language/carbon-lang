@@ -57,14 +57,14 @@ void ConcatOutputSection::addInput(ConcatInputSection *input) {
 // implement thunks. TODO: Adding support for branch islands!
 //
 // Internally -- as expressed in LLD's data structures -- a
-// branch-range-extension thunk comprises ...
+// branch-range-extension thunk consists of:
 //
-// (1) new Defined privateExtern symbol for the thunk named
+// (1) new Defined symbol for the thunk named
 //     <FUNCTION>.thunk.<SEQUENCE>, which references ...
 // (2) new InputSection, which contains ...
 // (3.1) new data for the instructions to load & branch to the far address +
 // (3.2) new Relocs on instructions to load the far address, which reference ...
-// (4.1) existing Defined extern symbol for the real function in __text, or
+// (4.1) existing Defined symbol for the real function in __text, or
 // (4.2) existing DylibSymbol for the real function in a dylib
 //
 // Nearly-optimal thunk-placement algorithm features:
@@ -84,15 +84,17 @@ void ConcatOutputSection::addInput(ConcatInputSection *input) {
 //   distant call sites might be unable to reach the same thunk, so multiple
 //   thunks are necessary to serve all call sites in a very large program. A
 //   thunkInfo stores state for all thunks associated with a particular
-//   function: (a) thunk symbol, (b) input section containing stub code, and
-//   (c) sequence number for the active thunk incarnation. When an old thunk
-//   goes out of range, we increment the sequence number and create a new
-//   thunk named <FUNCTION>.thunk.<SEQUENCE>.
+//   function:
+//     (a) thunk symbol
+//     (b) input section containing stub code, and
+//     (c) sequence number for the active thunk incarnation.
+//   When an old thunk goes out of range, we increment the sequence number and
+//   create a new thunk named <FUNCTION>.thunk.<SEQUENCE>.
 //
-// * A thunk incarnation comprises (a) private-extern Defined symbol pointing
-//   to (b) an InputSection holding machine instructions (similar to a MachO
-//   stub), and (c) Reloc(s) that reference the real function for fixing-up
-//   the stub code.
+// * A thunk consists of
+//     (a) a Defined symbol pointing to
+//     (b) an InputSection holding machine code (similar to a MachO stub), and
+//     (c) relocs referencing the real function for fixing up the stub code.
 //
 // * std::vector<InputSection *> MergedInputSection::thunks: A vector parallel
 //   to the inputs vector. We store new thunks via cheap vector append, rather
@@ -119,7 +121,7 @@ DenseMap<Symbol *, ThunkInfo> lld::macho::thunkMap;
 // instructions, whereas CISC (i.e., x86) generally doesn't. RISC only needs
 // thunks for programs so large that branch source & destination addresses
 // might differ more than the range of branch instruction(s).
-bool ConcatOutputSection::needsThunks() const {
+bool TextOutputSection::needsThunks() const {
   if (!target->usesThunks())
     return false;
   uint64_t isecAddr = addr;
@@ -136,7 +138,7 @@ bool ConcatOutputSection::needsThunks() const {
       auto *sym = r.referent.get<Symbol *>();
       // Pre-populate the thunkMap and memoize call site counts for every
       // InputSection and ThunkInfo. We do this for the benefit of
-      // ConcatOutputSection::estimateStubsInRangeVA()
+      // estimateStubsInRangeVA().
       ThunkInfo &thunkInfo = thunkMap[sym];
       // Knowing ThunkInfo call site count will help us know whether or not we
       // might need to create more for this referent at the time we are
@@ -152,7 +154,7 @@ bool ConcatOutputSection::needsThunks() const {
 // Since __stubs is placed after __text, we must estimate the address
 // beyond which stubs are within range of a simple forward branch.
 // This is called exactly once, when the last input section has been finalized.
-uint64_t ConcatOutputSection::estimateStubsInRangeVA(size_t callIdx) const {
+uint64_t TextOutputSection::estimateStubsInRangeVA(size_t callIdx) const {
   // Tally the functions which still have call sites remaining to process,
   // which yields the maximum number of thunks we might yet place.
   size_t maxPotentialThunks = 0;
@@ -191,23 +193,24 @@ uint64_t ConcatOutputSection::estimateStubsInRangeVA(size_t callIdx) const {
   return stubsInRangeVA;
 }
 
-void ConcatOutputSection::finalize() {
-  uint64_t isecAddr = addr;
-  uint64_t isecFileOff = fileOff;
-  auto finalizeOne = [&](ConcatInputSection *isec) {
-    isecAddr = alignTo(isecAddr, isec->align);
-    isecFileOff = alignTo(isecFileOff, isec->align);
-    isec->outSecOff = isecAddr - addr;
-    isec->isFinal = true;
-    isecAddr += isec->getSize();
-    isecFileOff += isec->getFileSize();
-  };
+void ConcatOutputSection::finalizeOne(ConcatInputSection *isec) {
+  size = alignTo(size, isec->align);
+  fileSize = alignTo(fileSize, isec->align);
+  isec->outSecOff = size;
+  isec->isFinal = true;
+  size += isec->getSize();
+  fileSize += isec->getFileSize();
+}
 
+void ConcatOutputSection::finalizeContents() {
+  for (ConcatInputSection *isec : inputs)
+    finalizeOne(isec);
+}
+
+void TextOutputSection::finalize() {
   if (!needsThunks()) {
     for (ConcatInputSection *isec : inputs)
       finalizeOne(isec);
-    size = isecAddr - addr;
-    fileSize = isecFileOff - fileOff;
     return;
   }
 
@@ -223,7 +226,7 @@ void ConcatOutputSection::finalize() {
   // Walk all sections in order. Finalize all sections that are less than
   // forwardBranchRange in front of it.
   // isecVA is the address of the current section.
-  // isecAddr is the start address of the first non-finalized section.
+  // addr + size is the start address of the first non-finalized section.
 
   // inputs[finalIdx] is for finalization (address-assignment)
   size_t finalIdx = 0;
@@ -244,7 +247,7 @@ void ConcatOutputSection::finalize() {
     // from the current position to the position where the thunks are inserted
     // grows. So leave room for a bunch of thunks.
     unsigned slop = 256 * thunkSize;
-    while (finalIdx < endIdx && isecAddr + inputs[finalIdx]->getSize() <
+    while (finalIdx < endIdx && addr + size + inputs[finalIdx]->getSize() <
                                     isecVA + forwardBranchRange - slop)
       finalizeOne(inputs[finalIdx++]);
 
@@ -305,7 +308,7 @@ void ConcatOutputSection::finalize() {
         }
       }
       // ... otherwise, create a new thunk.
-      if (isecAddr > highVA) {
+      if (addr + size > highVA) {
         // There were too many consecutive branch instructions for `slop`
         // above. If you hit this: For the current algorithm, just bumping up
         // slop above and trying again is probably simplest. (See also PR51578
@@ -323,11 +326,20 @@ void ConcatOutputSection::finalize() {
 
       StringRef thunkName = saver().save(funcSym->getName() + ".thunk." +
                                          std::to_string(thunkInfo.sequence++));
-      r.referent = thunkInfo.sym = symtab->addDefined(
-          thunkName, /*file=*/nullptr, thunkInfo.isec, /*value=*/0,
-          /*size=*/thunkSize, /*isWeakDef=*/false, /*isPrivateExtern=*/true,
-          /*isThumb=*/false, /*isReferencedDynamically=*/false,
-          /*noDeadStrip=*/false, /*isWeakDefCanBeHidden=*/false);
+      if (!isa<Defined>(funcSym) || cast<Defined>(funcSym)->isExternal()) {
+        r.referent = thunkInfo.sym = symtab->addDefined(
+            thunkName, /*file=*/nullptr, thunkInfo.isec, /*value=*/0, thunkSize,
+            /*isWeakDef=*/false, /*isPrivateExtern=*/true,
+            /*isThumb=*/false, /*isReferencedDynamically=*/false,
+            /*noDeadStrip=*/false, /*isWeakDefCanBeHidden=*/false);
+      } else {
+        r.referent = thunkInfo.sym = make<Defined>(
+            thunkName, /*file=*/nullptr, thunkInfo.isec, /*value=*/0, thunkSize,
+            /*isWeakDef=*/false, /*isExternal=*/false, /*isPrivateExtern=*/true,
+            /*includeInSymtab=*/true, /*isThumb=*/false,
+            /*isReferencedDynamically=*/false, /*noDeadStrip=*/false,
+            /*isWeakDefCanBeHidden=*/false);
+      }
       thunkInfo.sym->used = true;
       target->populateThunk(thunkInfo.isec, funcSym);
       finalizeOne(thunkInfo.isec);
@@ -335,8 +347,6 @@ void ConcatOutputSection::finalize() {
       ++thunkCount;
     }
   }
-  size = isecAddr - addr;
-  fileSize = isecFileOff - fileOff;
 
   log("thunks for " + parent->name + "," + name +
       ": funcs = " + std::to_string(thunkMap.size()) +
@@ -347,6 +357,11 @@ void ConcatOutputSection::finalize() {
 }
 
 void ConcatOutputSection::writeTo(uint8_t *buf) const {
+  for (ConcatInputSection *isec : inputs)
+    isec->writeTo(buf + isec->outSecOff);
+}
+
+void TextOutputSection::writeTo(uint8_t *buf) const {
   // Merge input sections from thunk & ordinary vectors
   size_t i = 0, ie = inputs.size();
   size_t t = 0, te = thunks.size();
@@ -391,8 +406,14 @@ ConcatOutputSection *
 ConcatOutputSection::getOrCreateForInput(const InputSection *isec) {
   NamePair names = maybeRenameSection({isec->getSegName(), isec->getName()});
   ConcatOutputSection *&osec = concatOutputSections[names];
-  if (!osec)
-    osec = make<ConcatOutputSection>(names.second);
+  if (!osec) {
+    if (isec->getSegName() == segment_names::text &&
+        isec->getName() != section_names::gccExceptTab &&
+        isec->getName() != section_names::ehFrame)
+      osec = make<TextOutputSection>(names.second);
+    else
+      osec = make<ConcatOutputSection>(names.second);
+  }
   return osec;
 }
 

@@ -10,7 +10,6 @@
 #include "../clang-tidy/ClangTidyCheck.h"
 #include "../clang-tidy/ClangTidyDiagnosticConsumer.h"
 #include "../clang-tidy/ClangTidyModuleRegistry.h"
-#include "../clang-tidy/NoLintDirectiveHandler.h"
 #include "AST.h"
 #include "Compiler.h"
 #include "Config.h"
@@ -47,7 +46,6 @@
 #include "clang/Tooling/Syntax/Tokens.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include <algorithm>
@@ -213,7 +211,6 @@ private:
       SynthesizedFilenameTok.setKind(tok::header_name);
       SynthesizedFilenameTok.setLiteralData(Inc.Written.data());
 
-      const FileEntry *FE = File ? &File->getFileEntry() : nullptr;
       llvm::StringRef WrittenFilename =
           llvm::StringRef(Inc.Written).drop_front().drop_back();
       Delegate->InclusionDirective(
@@ -222,7 +219,7 @@ private:
           syntax::FileRange(SM, SynthesizedFilenameTok.getLocation(),
                             SynthesizedFilenameTok.getEndLoc())
               .toCharRange(SM),
-          FE, "SearchPath", "RelPath",
+          File, "SearchPath", "RelPath",
           /*Imported=*/nullptr, Inc.FileKind);
       if (File)
         Delegate->FileSkipped(*File, SynthesizedFilenameTok, Inc.FileKind);
@@ -236,12 +233,69 @@ private:
   std::vector<syntax::Token> MainFileTokens;
 };
 
+// Filter for clang diagnostics groups enabled by CTOptions.Checks.
+//
+// These are check names like clang-diagnostics-unused.
+// Note that unlike -Wunused, clang-diagnostics-unused does not imply
+// subcategories like clang-diagnostics-unused-function.
+//
+// This is used to determine which diagnostics can be enabled by ExtraArgs in
+// the clang-tidy configuration.
+class TidyDiagnosticGroups {
+  // Whether all diagnostic groups are enabled by default.
+  // True if we've seen clang-diagnostic-*.
+  bool Default = false;
+  // Set of diag::Group whose enablement != Default.
+  // If Default is false, this is foo where we've seen clang-diagnostic-foo.
+  llvm::DenseSet<unsigned> Exceptions;
+
+public:
+  TidyDiagnosticGroups(llvm::StringRef Checks) {
+    constexpr llvm::StringLiteral CDPrefix = "clang-diagnostic-";
+
+    llvm::StringRef Check;
+    while (!Checks.empty()) {
+      std::tie(Check, Checks) = Checks.split(',');
+      if (Check.empty())
+        continue;
+
+      bool Enable = !Check.consume_front("-");
+      bool Glob = Check.consume_back("*");
+      if (Glob) {
+        // Is this clang-diagnostic-*, or *, or so?
+        // (We ignore all other types of globs).
+        if (CDPrefix.startswith(Check)) {
+          Default = Enable;
+          Exceptions.clear();
+        }
+        continue;
+      }
+
+      // In "*,clang-diagnostic-foo", the latter is a no-op.
+      if (Default == Enable)
+        continue;
+      // The only non-glob entries we care about are clang-diagnostic-foo.
+      if (!Check.consume_front(CDPrefix))
+        continue;
+
+      if (auto Group = DiagnosticIDs::getGroupForWarningOption(Check))
+        Exceptions.insert(static_cast<unsigned>(*Group));
+    }
+  }
+
+  bool operator()(diag::Group GroupID) const {
+    return Exceptions.contains(static_cast<unsigned>(GroupID)) ? !Default
+                                                               : Default;
+  }
+};
+
 // Find -W<group> and -Wno-<group> options in ExtraArgs and apply them to Diags.
 //
 // This is used to handle ExtraArgs in clang-tidy configuration.
 // We don't use clang's standard handling of this as we want slightly different
 // behavior (e.g. we want to exclude these from -Wno-error).
 void applyWarningOptions(llvm::ArrayRef<std::string> ExtraArgs,
+                         llvm::function_ref<bool(diag::Group)> EnabledGroups,
                          DiagnosticsEngine &Diags) {
   for (llvm::StringRef Group : ExtraArgs) {
     // Only handle args that are of the form -W[no-]<group>.
@@ -262,6 +316,9 @@ void applyWarningOptions(llvm::ArrayRef<std::string> ExtraArgs,
       if (Enable) {
         if (Diags.getDiagnosticLevel(ID, SourceLocation()) <
             DiagnosticsEngine::Warning) {
+          auto Group = DiagnosticIDs::getGroupForDiag(ID);
+          if (!Group || !EnabledGroups(*Group))
+            continue;
           Diags.setSeverity(ID, diag::Severity::Warning, SourceLocation());
           if (Diags.getWarningsAsErrors())
             NeedsWerrorExclusion = true;
@@ -357,18 +414,25 @@ ParsedAST::build(llvm::StringRef Filename, const ParseInputs &Inputs,
     //   - ExtraArgs: ["-Wfoo"] causes clang to produce the warnings
     //   - Checks: "clang-diagnostic-foo" prevents clang-tidy filtering them out
     //
-    // We treat these as clang warnings, so the Checks part is not relevant.
-    // We must enable the warnings specified in ExtraArgs.
+    // In clang-tidy, diagnostics are emitted if they pass both checks.
+    // When groups contain subgroups, -Wparent includes the child, but
+    // clang-diagnostic-parent does not.
     //
-    // We *don't* want to change the compile command directly. this can have
+    // We *don't* want to change the compile command directly. This can have
     // too many unexpected effects: breaking the command, interactions with
     // -- and -Werror, etc. Besides, we've already parsed the command.
     // Instead we parse the -W<group> flags and handle them directly.
+    //
+    // Similarly, we don't want to use Checks to filter clang diagnostics after
+    // they are generated, as this spreads clang-tidy emulation everywhere.
+    // Instead, we just use these to filter which extra diagnostics we enable.
     auto &Diags = Clang->getDiagnostics();
+    TidyDiagnosticGroups TidyGroups(ClangTidyOpts.Checks ? *ClangTidyOpts.Checks
+                                                         : llvm::StringRef());
     if (ClangTidyOpts.ExtraArgsBefore)
-      applyWarningOptions(*ClangTidyOpts.ExtraArgsBefore, Diags);
+      applyWarningOptions(*ClangTidyOpts.ExtraArgsBefore, TidyGroups, Diags);
     if (ClangTidyOpts.ExtraArgs)
-      applyWarningOptions(*ClangTidyOpts.ExtraArgs, Diags);
+      applyWarningOptions(*ClangTidyOpts.ExtraArgs, TidyGroups, Diags);
   } else {
     // Skips some analysis.
     Clang->getDiagnosticOpts().IgnoreWarnings = true;
@@ -415,10 +479,8 @@ ParsedAST::build(llvm::StringRef Filename, const ParseInputs &Inputs,
     CTContext->setDiagnosticsEngine(&Clang->getDiagnostics());
     CTContext->setASTContext(&Clang->getASTContext());
     CTContext->setCurrentFile(Filename);
-    CTChecks = CTFactories.createChecks(CTContext.getPointer());
-    llvm::erase_if(CTChecks, [&](const auto &Check) {
-      return !Check->isLanguageVersionSupported(CTContext->getLangOpts());
-    });
+    CTContext->setSelfContainedDiags(true);
+    CTChecks = CTFactories.createChecksForLanguage(CTContext.getPointer());
     Preprocessor *PP = &Clang->getPreprocessor();
     for (const auto &Check : CTChecks) {
       Check->registerPPCallbacks(Clang->getSourceManager(), PP, PP);
@@ -430,7 +492,8 @@ ParsedAST::build(llvm::StringRef Filename, const ParseInputs &Inputs,
     // this is an error. (The actual typo correction is nice too).
     // We restore the original severity in the level adjuster.
     // FIXME: It would be better to have a real API for this, but what?
-    for (auto ID : {diag::ext_implicit_function_decl,
+    for (auto ID : {diag::ext_implicit_function_decl_c99,
+                    diag::ext_implicit_lib_function_decl_c99,
                     diag::warn_implicit_function_decl}) {
       OverriddenSeverity.try_emplace(
           ID, Clang->getDiagnostics().getDiagnosticLevel(ID, SourceLocation()));
@@ -469,7 +532,7 @@ ParsedAST::build(llvm::StringRef Filename, const ParseInputs &Inputs,
           if (IsInsideMainFile && CTContext->shouldSuppressDiagnostic(
                                       DiagLevel, Info, TidySuppressedErrors,
                                       /*AllowIO=*/false,
-                                      /*EnableNolintBlocks=*/false)) {
+                                      /*EnableNolintBlocks=*/true)) {
             // FIXME: should we expose the suppression error (invalid use of
             // NOLINT comments)?
             return DiagnosticsEngine::Ignored;
@@ -551,6 +614,12 @@ ParsedAST::build(llvm::StringRef Filename, const ParseInputs &Inputs,
   // Collect tokens of the main file.
   syntax::TokenCollector CollectTokens(Clang->getPreprocessor());
 
+  // To remain consistent with preamble builds, these callbacks must be called
+  // exactly here, after preprocessor is initialized and BeginSourceFile() was
+  // called already.
+  for (const auto &L : ASTListeners)
+    L->beforeExecute(*Clang);
+
   if (llvm::Error Err = Action->Execute())
     log("Execute() failed when building AST for {0}: {1}", MainInput.getFile(),
         toString(std::move(Err)));
@@ -630,6 +699,8 @@ ASTContext &ParsedAST::getASTContext() { return Clang->getASTContext(); }
 const ASTContext &ParsedAST::getASTContext() const {
   return Clang->getASTContext();
 }
+
+Sema &ParsedAST::getSema() { return Clang->getSema(); }
 
 Preprocessor &ParsedAST::getPreprocessor() { return Clang->getPreprocessor(); }
 

@@ -6,8 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "mlir/Dialect/StandardOps/IR/Ops.h"
+#include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
 #include "mlir/IR/BuiltinOps.h"
+#include "mlir/IR/FunctionInterfaces.h"
 #include "mlir/IR/Matchers.h"
 #include "mlir/Pass/Pass.h"
 
@@ -15,7 +16,10 @@ using namespace mlir;
 
 namespace {
 /// This is a test pass for verifying matchers.
-struct TestMatchers : public PassWrapper<TestMatchers, OperationPass<FuncOp>> {
+struct TestMatchers
+    : public PassWrapper<TestMatchers, InterfacePass<FunctionOpInterface>> {
+  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(TestMatchers)
+
   void runOnOperation() override;
   StringRef getArgument() const final { return "test-matchers"; }
   StringRef getDescription() const final {
@@ -26,7 +30,7 @@ struct TestMatchers : public PassWrapper<TestMatchers, OperationPass<FuncOp>> {
 
 // This could be done better but is not worth the variadic template trouble.
 template <typename Matcher>
-static unsigned countMatches(FuncOp f, Matcher &matcher) {
+static unsigned countMatches(FunctionOpInterface f, Matcher &matcher) {
   unsigned count = 0;
   f.walk([&count, &matcher](Operation *op) {
     if (matcher.match(op))
@@ -37,7 +41,7 @@ static unsigned countMatches(FuncOp f, Matcher &matcher) {
 
 using mlir::matchers::m_Any;
 using mlir::matchers::m_Val;
-static void test1(FuncOp f) {
+static void test1(FunctionOpInterface f) {
   assert(f.getNumArguments() == 3 && "matcher test funcs must have 3 args");
 
   auto a = m_Val(f.getArgument(0));
@@ -128,7 +132,7 @@ static void test1(FuncOp f) {
                << countMatches(f, p17) << " times\n";
 }
 
-void test2(FuncOp f) {
+void test2(FunctionOpInterface f) {
   auto a = m_Val(f.getArgument(0));
   FloatAttr floatAttr;
   auto p =

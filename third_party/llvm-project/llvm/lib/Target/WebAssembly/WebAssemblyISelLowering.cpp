@@ -19,6 +19,8 @@
 #include "WebAssemblySubtarget.h"
 #include "WebAssemblyTargetMachine.h"
 #include "llvm/CodeGen/CallingConvLower.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
@@ -159,22 +161,17 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
     setTargetDAGCombine(ISD::VECTOR_SHUFFLE);
 
     // Combine extends of extract_subvectors into widening ops
-    setTargetDAGCombine(ISD::SIGN_EXTEND);
-    setTargetDAGCombine(ISD::ZERO_EXTEND);
+    setTargetDAGCombine({ISD::SIGN_EXTEND, ISD::ZERO_EXTEND});
 
     // Combine int_to_fp or fp_extend of extract_vectors and vice versa into
     // conversions ops
-    setTargetDAGCombine(ISD::SINT_TO_FP);
-    setTargetDAGCombine(ISD::UINT_TO_FP);
-    setTargetDAGCombine(ISD::FP_EXTEND);
-    setTargetDAGCombine(ISD::EXTRACT_SUBVECTOR);
+    setTargetDAGCombine({ISD::SINT_TO_FP, ISD::UINT_TO_FP, ISD::FP_EXTEND,
+                         ISD::EXTRACT_SUBVECTOR});
 
     // Combine fp_to_{s,u}int_sat or fp_round of concat_vectors or vice versa
     // into conversion ops
-    setTargetDAGCombine(ISD::FP_TO_SINT_SAT);
-    setTargetDAGCombine(ISD::FP_TO_UINT_SAT);
-    setTargetDAGCombine(ISD::FP_ROUND);
-    setTargetDAGCombine(ISD::CONCAT_VECTORS);
+    setTargetDAGCombine({ISD::FP_TO_SINT_SAT, ISD::FP_TO_UINT_SAT,
+                         ISD::FP_ROUND, ISD::CONCAT_VECTORS});
 
     setTargetDAGCombine(ISD::TRUNCATE);
 
@@ -577,7 +574,7 @@ LowerCallResults(MachineInstr &CallResults, DebugLoc DL, MachineBasicBlock *BB,
   // Move the function pointer to the end of the arguments for indirect calls
   if (IsIndirect) {
     auto FnPtr = CallParams.getOperand(0);
-    CallParams.RemoveOperand(0);
+    CallParams.removeOperand(0);
 
     // For funcrefs, call_indirect is done through __funcref_call_table and the
     // funcref is always installed in slot 0 of the table, therefore instead of having
@@ -907,6 +904,30 @@ WebAssemblyTargetLowering::getPreferredVectorAction(MVT VT) const {
   }
 
   return TargetLoweringBase::getPreferredVectorAction(VT);
+}
+
+bool WebAssemblyTargetLowering::shouldSimplifyDemandedVectorElts(
+    SDValue Op, const TargetLoweringOpt &TLO) const {
+  // ISel process runs DAGCombiner after legalization; this step is called
+  // SelectionDAG optimization phase. This post-legalization combining process
+  // runs DAGCombiner on each node, and if there was a change to be made,
+  // re-runs legalization again on it and its user nodes to make sure
+  // everythiing is in a legalized state.
+  //
+  // The legalization calls lowering routines, and we do our custom lowering for
+  // build_vectors (LowerBUILD_VECTOR), which converts undef vector elements
+  // into zeros. But there is a set of routines in DAGCombiner that turns unused
+  // (= not demanded) nodes into undef, among which SimplifyDemandedVectorElts
+  // turns unused vector elements into undefs. But this routine does not work
+  // with our custom LowerBUILD_VECTOR, which turns undefs into zeros. This
+  // combination can result in a infinite loop, in which undefs are converted to
+  // zeros in legalization and back to undefs in combining.
+  //
+  // So after DAG is legalized, we prevent SimplifyDemandedVectorElts from
+  // running for build_vectors.
+  if (Op.getOpcode() == ISD::BUILD_VECTOR && TLO.LegalOps && TLO.LegalTys)
+    return false;
+  return true;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2110,8 +2131,7 @@ SDValue WebAssemblyTargetLowering::LowerBUILD_VECTOR(SDValue Op,
 
   auto GetMostCommon = [](auto &Counts) {
     auto CommonIt =
-        std::max_element(Counts.begin(), Counts.end(),
-                         [](auto A, auto B) { return A.second < B.second; });
+        std::max_element(Counts.begin(), Counts.end(), llvm::less_second());
     assert(CommonIt != Counts.end() && "Unexpected all-undef build_vector");
     return *CommonIt;
   };

@@ -14,7 +14,6 @@
 #include "index/Index.h"
 #include "index/Relation.h"
 #include "index/Serialization.h"
-#include "index/dex/Dex.h"
 #include "index/remote/Client.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/SmallVector.h"
@@ -414,6 +413,13 @@ int main(int argc, const char *argv[]) {
   using namespace clang::clangd;
 
   llvm::cl::ParseCommandLineOptions(argc, argv, Overview);
+
+  // Preserve global options when flag parser is reset, so commands can use
+  // them.
+  IndexLocation.setValue(IndexLocation, /*initial=*/true);
+  ExecCommand.setValue(ExecCommand, /*initial=*/true);
+  ProjectRoot.setValue(ProjectRoot, /*initial=*/true);
+
   llvm::cl::ResetCommandLineParser(); // We reuse it for REPL commands.
   llvm::sys::PrintStackTraceOnErrorSignal(argv[0]);
 

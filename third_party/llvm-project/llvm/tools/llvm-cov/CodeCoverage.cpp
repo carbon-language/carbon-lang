@@ -621,14 +621,14 @@ int CodeCoverageTool::run(Command Cmd, int argc, const char **argv) {
       cl::Positional, cl::desc("Covered executable or object file."));
 
   cl::list<std::string> CovFilenames(
-      "object", cl::desc("Coverage executable or object file"), cl::ZeroOrMore);
+      "object", cl::desc("Coverage executable or object file"));
 
   cl::opt<bool> DebugDumpCollectedObjects(
       "dump-collected-objects", cl::Optional, cl::Hidden,
       cl::desc("Show the collected coverage object files"));
 
-  cl::list<std::string> InputSourceFiles(
-      cl::Positional, cl::desc("<Source files>"), cl::ZeroOrMore);
+  cl::list<std::string> InputSourceFiles(cl::Positional,
+                                         cl::desc("<Source files>"));
 
   cl::opt<bool> DebugDumpCollectedPaths(
       "dump-collected-paths", cl::Optional, cl::Hidden,
@@ -665,32 +665,32 @@ int CodeCoverageTool::run(Command Cmd, int argc, const char **argv) {
   cl::list<std::string> NameFilters(
       "name", cl::Optional,
       cl::desc("Show code coverage only for functions with the given name"),
-      cl::ZeroOrMore, cl::cat(FilteringCategory));
+      cl::cat(FilteringCategory));
 
   cl::list<std::string> NameFilterFiles(
       "name-allowlist", cl::Optional,
       cl::desc("Show code coverage only for functions listed in the given "
                "file"),
-      cl::ZeroOrMore, cl::cat(FilteringCategory));
+      cl::cat(FilteringCategory));
 
   // Allow for accepting previous option name.
   cl::list<std::string> NameFilterFilesDeprecated(
       "name-whitelist", cl::Optional, cl::Hidden,
       cl::desc("Show code coverage only for functions listed in the given "
                "file. Deprecated, use -name-allowlist instead"),
-      cl::ZeroOrMore, cl::cat(FilteringCategory));
+      cl::cat(FilteringCategory));
 
   cl::list<std::string> NameRegexFilters(
       "name-regex", cl::Optional,
       cl::desc("Show code coverage only for functions that match the given "
                "regular expression"),
-      cl::ZeroOrMore, cl::cat(FilteringCategory));
+      cl::cat(FilteringCategory));
 
   cl::list<std::string> IgnoreFilenameRegexFilters(
       "ignore-filename-regex", cl::Optional,
       cl::desc("Skip source code files with file paths that match the given "
                "regular expression"),
-      cl::ZeroOrMore, cl::cat(FilteringCategory));
+      cl::cat(FilteringCategory));
 
   cl::opt<double> RegionCoverageLtFilter(
       "region-coverage-lt", cl::Optional,
@@ -883,6 +883,9 @@ int CodeCoverageTool::run(Command Cmd, int argc, const char **argv) {
         }
         CoverageArches.emplace_back(Arch);
       }
+      if (CoverageArches.size() == 1)
+        CoverageArches.insert(CoverageArches.end(), ObjectFilenames.size() - 1,
+                              CoverageArches[0]);
       if (CoverageArches.size() != ObjectFilenames.size()) {
         error("Number of architectures doesn't match the number of objects");
         return 1;
@@ -973,6 +976,11 @@ int CodeCoverageTool::doShow(int argc, const char **argv,
       "project-title", cl::Optional,
       cl::desc("Set project title for the coverage report"));
 
+  cl::opt<std::string> CovWatermark(
+      "coverage-watermark", cl::Optional,
+      cl::desc("<high>,<low> value indicate thresholds for high and low"
+               "coverage watermark"));
+
   auto Err = commandLineParser(argc, argv);
   if (Err)
     return Err;
@@ -980,6 +988,47 @@ int CodeCoverageTool::doShow(int argc, const char **argv,
   if (ViewOpts.Format == CoverageViewOptions::OutputFormat::Lcov) {
     error("Lcov format should be used with 'llvm-cov export'.");
     return 1;
+  }
+
+  ViewOpts.HighCovWatermark = 100.0;
+  ViewOpts.LowCovWatermark = 80.0;
+  if (!CovWatermark.empty()) {
+    auto WaterMarkPair = StringRef(CovWatermark).split(',');
+    if (WaterMarkPair.first.empty() || WaterMarkPair.second.empty()) {
+      error("invalid argument '" + CovWatermark +
+                "', must be in format 'high,low'",
+            "-coverage-watermark");
+      return 1;
+    }
+
+    char *EndPointer = nullptr;
+    ViewOpts.HighCovWatermark =
+        strtod(WaterMarkPair.first.begin(), &EndPointer);
+    if (EndPointer != WaterMarkPair.first.end()) {
+      error("invalid number '" + WaterMarkPair.first +
+                "', invalid value for 'high'",
+            "-coverage-watermark");
+      return 1;
+    }
+
+    ViewOpts.LowCovWatermark =
+        strtod(WaterMarkPair.second.begin(), &EndPointer);
+    if (EndPointer != WaterMarkPair.second.end()) {
+      error("invalid number '" + WaterMarkPair.second +
+                "', invalid value for 'low'",
+            "-coverage-watermark");
+      return 1;
+    }
+
+    if (ViewOpts.HighCovWatermark > 100 || ViewOpts.LowCovWatermark < 0 ||
+        ViewOpts.HighCovWatermark <= ViewOpts.LowCovWatermark) {
+      error(
+          "invalid number range '" + CovWatermark +
+              "', must be both high and low should be between 0-100, and high "
+              "> low",
+          "-coverage-watermark");
+      return 1;
+    }
   }
 
   ViewOpts.ShowLineNumbers = true;

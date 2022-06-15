@@ -6,7 +6,6 @@
 //===----------------------------------------------------------------------===//
 
 // UNSUPPORTED: c++03, c++11, c++14, c++17
-// UNSUPPORTED: libcpp-no-concepts
 // UNSUPPORTED: libcpp-has-no-incomplete-format
 
 // <format>
@@ -124,6 +123,7 @@ void test_P0645() {
 
   assert_formatter_is_enabled<CharT*, CharT>();
   assert_formatter_is_enabled<const CharT*, CharT>();
+  assert_formatter_is_enabled<CharT[42], CharT>();
   assert_formatter_is_enabled<const CharT[42], CharT>();
   assert_formatter_is_enabled<std::basic_string<CharT>, CharT>();
   assert_formatter_is_enabled<std::basic_string_view<CharT>, CharT>();

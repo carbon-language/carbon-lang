@@ -1,11 +1,11 @@
-// RUN: mlir-opt %s -convert-scf-to-cf -convert-arith-to-llvm -convert-memref-to-llvm -convert-std-to-llvm='use-bare-ptr-memref-call-conv=1' -reconcile-unrealized-casts | mlir-cpu-runner -shared-libs=%linalg_test_lib_dir/libmlir_c_runner_utils%shlibext -entry-point-result=void | FileCheck %s
+// RUN: mlir-opt %s -pass-pipeline="func.func(convert-scf-to-cf,convert-arith-to-llvm),convert-memref-to-llvm,convert-func-to-llvm{use-bare-ptr-memref-call-conv=1}" -reconcile-unrealized-casts | mlir-cpu-runner -shared-libs=%linalg_test_lib_dir/libmlir_c_runner_utils%shlibext -entry-point-result=void | FileCheck %s
 
 // Verify bare pointer memref calling convention. `simple_add1_add2_test`
 // gets two 2xf32 memrefs, adds 1.0f to the first one and 2.0f to the second
 // one. 'main' calls 'simple_add1_add2_test' with {1, 1} and {2, 2} so {2, 2}
 // and {4, 4} are the expected outputs.
 
-func @simple_add1_add2_test(%arg0: memref<2xf32>, %arg1: memref<2xf32>) {
+func.func @simple_add1_add2_test(%arg0: memref<2xf32>, %arg1: memref<2xf32>) {
   %c2 = arith.constant 2 : index
   %c0 = arith.constant 0 : index
   %c1 = arith.constant 1 : index
@@ -28,11 +28,11 @@ func @simple_add1_add2_test(%arg0: memref<2xf32>, %arg1: memref<2xf32>) {
 // External declarations.
 llvm.func @malloc(i64) -> !llvm.ptr<i8>
 llvm.func @free(!llvm.ptr<i8>)
-func private @printF32(%arg0: f32)
-func private @printComma()
-func private @printNewline()
+func.func private @printF32(%arg0: f32)
+func.func private @printComma()
+func.func private @printNewline()
 
-func @main()
+func.func @main()
 {
   %c2 = arith.constant 2 : index
   %c0 = arith.constant 0 : index

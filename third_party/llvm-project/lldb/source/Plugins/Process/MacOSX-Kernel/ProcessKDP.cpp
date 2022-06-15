@@ -74,7 +74,7 @@ public:
     m_collection_sp->Initialize(g_processkdp_properties);
   }
 
-  virtual ~PluginProperties() = default;
+  ~PluginProperties() override = default;
 
   uint64_t GetPacketTimeout() {
     const uint32_t idx = ePropertyKDPPacketTimeout;
@@ -290,8 +290,11 @@ Status ProcessKDP::DoConnectRemote(llvm::StringRef remote_url) {
                 }
               }
               if (!module_spec.GetSymbolFileSpec() ||
-                  !module_spec.GetSymbolFileSpec())
-                Symbols::DownloadObjectAndSymbolFile(module_spec, true);
+                  !module_spec.GetSymbolFileSpec()) {
+                Status symbl_error;
+                Symbols::DownloadObjectAndSymbolFile(module_spec, symbl_error,
+                                                     true);
+              }
 
               if (FileSystem::Instance().Exists(module_spec.GetFileSpec())) {
                 ModuleSP module_sp(new Module(module_spec));
@@ -724,7 +727,7 @@ bool ProcessKDP::StartAsyncThread() {
     return true;
 
   llvm::Expected<HostThread> async_thread = ThreadLauncher::LaunchThread(
-      "<lldb.process.kdp-remote.async>", ProcessKDP::AsyncThread, this);
+      "<lldb.process.kdp-remote.async>", [this] { return AsyncThread(); });
   if (!async_thread) {
     LLDB_LOG_ERROR(GetLog(LLDBLog::Host), async_thread.takeError(),
                    "failed to launch host thread: {}");
@@ -746,25 +749,21 @@ void ProcessKDP::StopAsyncThread() {
     m_async_thread.Join(nullptr);
 }
 
-void *ProcessKDP::AsyncThread(void *arg) {
-  ProcessKDP *process = (ProcessKDP *)arg;
-
-  const lldb::pid_t pid = process->GetID();
+void *ProcessKDP::AsyncThread() {
+  const lldb::pid_t pid = GetID();
 
   Log *log = GetLog(KDPLog::Process);
   LLDB_LOGF(log,
-            "ProcessKDP::AsyncThread (arg = %p, pid = %" PRIu64
-            ") thread starting...",
-            arg, pid);
+            "ProcessKDP::AsyncThread(pid = %" PRIu64 ") thread starting...",
+            pid);
 
   ListenerSP listener_sp(Listener::MakeListener("ProcessKDP::AsyncThread"));
   EventSP event_sp;
   const uint32_t desired_event_mask =
       eBroadcastBitAsyncContinue | eBroadcastBitAsyncThreadShouldExit;
 
-  if (listener_sp->StartListeningForEvents(&process->m_async_broadcaster,
-                                           desired_event_mask) ==
-      desired_event_mask) {
+  if (listener_sp->StartListeningForEvents(
+          &m_async_broadcaster, desired_event_mask) == desired_event_mask) {
     bool done = false;
     while (!done) {
       LLDB_LOGF(log,
@@ -787,9 +786,9 @@ void *ProcessKDP::AsyncThread(void *arg) {
           switch (event_type) {
           case eBroadcastBitAsyncContinue: {
             is_running = true;
-            if (process->m_comm.WaitForPacketWithTimeoutMicroSeconds(
+            if (m_comm.WaitForPacketWithTimeoutMicroSeconds(
                     exc_reply_packet, 1 * USEC_PER_SEC)) {
-              ThreadSP thread_sp(process->GetKernelThread());
+              ThreadSP thread_sp(GetKernelThread());
               if (thread_sp) {
                 lldb::RegisterContextSP reg_ctx_sp(
                     thread_sp->GetRegisterContext());
@@ -801,7 +800,7 @@ void *ProcessKDP::AsyncThread(void *arg) {
 
               // TODO: parse the stop reply packet
               is_running = false;
-              process->SetPrivateState(eStateStopped);
+              SetPrivateState(eStateStopped);
             } else {
               // Check to see if we are supposed to exit. There is no way to
               // interrupt a running kernel, so all we can do is wait for an
@@ -843,12 +842,10 @@ void *ProcessKDP::AsyncThread(void *arg) {
     }
   }
 
-  LLDB_LOGF(log,
-            "ProcessKDP::AsyncThread (arg = %p, pid = %" PRIu64
-            ") thread exiting...",
-            arg, pid);
+  LLDB_LOGF(log, "ProcessKDP::AsyncThread(pid = %" PRIu64 ") thread exiting...",
+            pid);
 
-  process->m_async_thread.Reset();
+  m_async_thread.Reset();
   return NULL;
 }
 
@@ -883,7 +880,7 @@ public:
     m_option_group.Finalize();
   }
 
-  ~CommandObjectProcessKDPPacketSend() = default;
+  ~CommandObjectProcessKDPPacketSend() override = default;
 
   bool DoExecute(Args &command, CommandReturnObject &result) override {
     const size_t argc = command.GetArgumentCount();
@@ -984,7 +981,7 @@ public:
         CommandObjectSP(new CommandObjectProcessKDPPacketSend(interpreter)));
   }
 
-  ~CommandObjectProcessKDPPacket() = default;
+  ~CommandObjectProcessKDPPacket() override = default;
 };
 
 class CommandObjectMultiwordProcessKDP : public CommandObjectMultiword {
@@ -998,7 +995,7 @@ public:
                                  interpreter)));
   }
 
-  ~CommandObjectMultiwordProcessKDP() = default;
+  ~CommandObjectMultiwordProcessKDP() override = default;
 };
 
 CommandObject *ProcessKDP::GetPluginCommandObject() {

@@ -8,7 +8,7 @@
 
 // <string>
 
-// size_type find_first_not_of(basic_string_view sv, size_type pos = 0) const;
+// size_type find_first_not_of(basic_string_view sv, size_type pos = 0) const; // constexpr since C++20
 
 #include <string>
 #include <cassert>
@@ -142,7 +142,7 @@ TEST_CONSTEXPR_CXX20 void test1()
     test(S("pniotcfrhqsmgdkjbael"), SV("htaobedqikfplcgjsmrn"), S::npos);
 }
 
-bool test() {
+TEST_CONSTEXPR_CXX20 bool test() {
   {
     typedef std::string S;
     typedef std::string_view SV;
@@ -165,7 +165,7 @@ int main(int, char**)
 {
   test();
 #if TEST_STD_VER > 17
-  // static_assert(test());
+  static_assert(test());
 #endif
 
   return 0;

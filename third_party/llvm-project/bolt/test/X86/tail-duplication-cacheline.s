@@ -7,9 +7,9 @@
 # RUN:   %s -o %t.o
 # RUN: link_fdata %s %t.o %t.fdata
 # RUN: llvm-strip --strip-unneeded %t.o
-# RUN: %clang %cflags %t.o -o %t.exe -Wl,-q -nostdlib
-# RUN: llvm-bolt %t.exe -o %t.out -data %t.fdata -relocs \
-# RUN:   -tail-duplication=1 -tail-duplication-aggressive=1
+# RUN: %clang %cflags -no-pie %t.o -o %t.exe -Wl,-q -nostdlib
+# RUN: llvm-bolt %t.exe -o %t.out --data %t.fdata --relocs \
+# RUN:   --tail-duplication=aggressive
   .globl _start
 _start:
   jmp	d

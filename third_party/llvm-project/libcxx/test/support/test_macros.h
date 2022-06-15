@@ -23,11 +23,6 @@
 #include <ciso646>
 #endif
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wvariadic-macros"
-#endif
-
 #define TEST_STRINGIZE_IMPL(x) #x
 #define TEST_STRINGIZE(x) TEST_STRINGIZE_IMPL(x)
 
@@ -311,8 +306,7 @@ inline void DoNotOptimize(Tp const& value) {
 #define TEST_NOT_WIN32(...) __VA_ARGS__
 #endif
 
-#if (defined(_WIN32) && !defined(_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS)) ||   \
-    defined(__MVS__) || defined(_AIX)
+#if defined(TEST_WINDOWS_DLL) ||defined(__MVS__) || defined(_AIX)
 // Macros for waiving cases when we can't count allocations done within
 // the library implementation.
 //
@@ -330,8 +324,7 @@ inline void DoNotOptimize(Tp const& value) {
 #define TEST_SUPPORTS_LIBRARY_INTERNAL_ALLOCATIONS 1
 #endif
 
-#if (defined(_WIN32) && !defined(_MSC_VER) &&                                  \
-     !defined(_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS)) ||                      \
+#if (defined(TEST_WINDOWS_DLL) && !defined(_MSC_VER)) ||                      \
     defined(__MVS__)
 // Normally, a replaced e.g. 'operator new' ends up used if the user code
 // does a call to e.g. 'operator new[]'; it's enough to replace the base
@@ -370,10 +363,6 @@ inline void DoNotOptimize(Tp const& value) {
 #   define TEST_HAS_NO_INT128
 #endif
 
-#if defined(_LIBCPP_HAS_NO_UNICODE_CHARS)
-#   define TEST_HAS_NO_UNICODE_CHARS
-#endif
-
 #if defined(_LIBCPP_HAS_NO_LOCALIZATION)
 #  define TEST_HAS_NO_LOCALIZATION
 #endif
@@ -394,8 +383,38 @@ inline void DoNotOptimize(Tp const& value) {
 #  define TEST_HAS_NO_FGETPOS_FSETPOS
 #endif
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
+#if defined(TEST_COMPILER_CLANG)
+#  define TEST_DIAGNOSTIC_PUSH _Pragma("clang diagnostic push")
+#  define TEST_DIAGNOSTIC_POP _Pragma("clang diagnostic pop")
+#  define TEST_CLANG_DIAGNOSTIC_IGNORED(str) _Pragma(TEST_STRINGIZE(clang diagnostic ignored str))
+#  define TEST_GCC_DIAGNOSTIC_IGNORED(str)
+#  define TEST_MSVC_DIAGNOSTIC_IGNORED(num)
+#elif defined(TEST_COMPILER_GCC)
+#  define TEST_DIAGNOSTIC_PUSH _Pragma("GCC diagnostic push")
+#  define TEST_DIAGNOSTIC_POP _Pragma("GCC diagnostic pop")
+#  define TEST_CLANG_DIAGNOSTIC_IGNORED(str)
+#  define TEST_GCC_DIAGNOSTIC_IGNORED(str) _Pragma(TEST_STRINGIZE(GCC diagnostic ignored str))
+#  define TEST_MSVC_DIAGNOSTIC_IGNORED(num)
+#elif defined(TEST_COMPILER_MSVC)
+#  define TEST_DIAGNOSTIC_PUSH _Pragma("warning(push)")
+#  define TEST_DIAGNOSTIC_POP _Pragma("warning(pop)")
+#  define TEST_CLANG_DIAGNOSTIC_IGNORED(str)
+#  define TEST_GCC_DIAGNOSTIC_IGNORED(str)
+#  define TEST_MSVC_DIAGNOSTIC_IGNORED(num) _Pragma(TEST_STRINGIZE(warning(disable: num)))
+#else
+#  define TEST_DIAGNOSTIC_PUSH
+#  define TEST_DIAGNOSTIC_POP
+#  define TEST_CLANG_DIAGNOSTIC_IGNORED(str)
+#  define TEST_GCC_DIAGNOSTIC_IGNORED(str)
+#  define TEST_MSVC_DIAGNOSTIC_IGNORED(num)
+#endif
+
+#if __has_cpp_attribute(msvc::no_unique_address)
+#define TEST_NO_UNIQUE_ADDRESS [[msvc::no_unique_address]]
+#elif __has_cpp_attribute(no_unique_address)
+#define TEST_NO_UNIQUE_ADDRESS [[no_unique_address]]
+#else
+#define TEST_NO_UNIQUE_ADDRESS
 #endif
 
 #endif // SUPPORT_TEST_MACROS_HPP

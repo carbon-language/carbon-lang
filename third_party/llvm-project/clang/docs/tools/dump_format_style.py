@@ -118,7 +118,7 @@ class NestedStruct(object):
     self.values = []
 
   def __str__(self):
-    return '\n'.join(map(str, self.values))
+    return self.comment + '\n' + '\n'.join(map(str, self.values))
 
 class NestedField(object):
   def __init__(self, name, comment):
@@ -267,6 +267,9 @@ class OptionsReader:
           name = re.sub(r'struct\s+(\w+)\s*\{', '\\1', line)
           nested_struct = NestedStruct(name, comment)
         elif line.endswith(';'):
+          prefix = '// '
+          if line.startswith(prefix):
+            line = line[len(prefix):]
           state = State.InStruct
           field_type, field_name = re.match(r'([<>:\w(,\s)]+)\s+(\w+);',
                                             line).groups()

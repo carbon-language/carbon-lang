@@ -13,14 +13,15 @@
 
 #include "llvm/Analysis/InlineAdvisor.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/InlineCost.h"
 #include "llvm/Analysis/OptimizationRemarkEmitter.h"
 #include "llvm/Analysis/ProfileSummaryInfo.h"
 #include "llvm/Analysis/ReplayInlineAdvisor.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/Analysis/Utils/ImportedFunctionsInliningStatistics.h"
 #include "llvm/IR/DebugInfoMetadata.h"
-#include "llvm/IR/Instructions.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
@@ -80,7 +81,8 @@ private:
   void recordUnsuccessfulInliningImpl(const InlineResult &Result) override {
     if (IsInliningRecommended)
       ORE.emit([&]() {
-        return OptimizationRemarkMissed(DEBUG_TYPE, "NotInlined", DLoc, Block)
+        return OptimizationRemarkMissed(Advisor->getAnnotatedInlinePassName(),
+                                        "NotInlined", DLoc, Block)
                << "'" << NV("Callee", Callee) << "' is not AlwaysInline into '"
                << NV("Caller", Caller)
                << "': " << NV("Reason", Result.getFailureReason());
@@ -99,7 +101,8 @@ void DefaultInlineAdvice::recordUnsuccessfulInliningImpl(
   llvm::setInlineRemark(*OriginalCB, std::string(Result.getFailureReason()) +
                                          "; " + inlineCostStr(*OIC));
   ORE.emit([&]() {
-    return OptimizationRemarkMissed(DEBUG_TYPE, "NotInlined", DLoc, Block)
+    return OptimizationRemarkMissed(Advisor->getAnnotatedInlinePassName(),
+                                    "NotInlined", DLoc, Block)
            << "'" << NV("Callee", Callee) << "' is not inlined into '"
            << NV("Caller", Caller)
            << "': " << NV("Reason", Result.getFailureReason());
@@ -108,12 +111,16 @@ void DefaultInlineAdvice::recordUnsuccessfulInliningImpl(
 
 void DefaultInlineAdvice::recordInliningWithCalleeDeletedImpl() {
   if (EmitRemarks)
-    emitInlinedIntoBasedOnCost(ORE, DLoc, Block, *Callee, *Caller, *OIC);
+    emitInlinedIntoBasedOnCost(ORE, DLoc, Block, *Callee, *Caller, *OIC,
+                               /* ForProfileContext= */ false,
+                               Advisor->getAnnotatedInlinePassName());
 }
 
 void DefaultInlineAdvice::recordInliningImpl() {
   if (EmitRemarks)
-    emitInlinedIntoBasedOnCost(ORE, DLoc, Block, *Callee, *Caller, *OIC);
+    emitInlinedIntoBasedOnCost(ORE, DLoc, Block, *Callee, *Caller, *OIC,
+                               /* ForProfileContext= */ false,
+                               Advisor->getAnnotatedInlinePassName());
 }
 
 llvm::Optional<llvm::InlineCost> static getDefaultInlineAdvice(
@@ -442,7 +449,7 @@ std::string llvm::formatCallSiteLocation(DebugLoc DLoc,
 }
 
 void llvm::addLocationToRemarks(OptimizationRemark &Remark, DebugLoc DLoc) {
-  if (!DLoc.get()) {
+  if (!DLoc) {
     return;
   }
 
@@ -499,8 +506,9 @@ void llvm::emitInlinedIntoBasedOnCost(
       PassName);
 }
 
-InlineAdvisor::InlineAdvisor(Module &M, FunctionAnalysisManager &FAM)
-    : M(M), FAM(FAM) {
+InlineAdvisor::InlineAdvisor(Module &M, FunctionAnalysisManager &FAM,
+                             Optional<InlineContext> IC)
+    : M(M), FAM(FAM), IC(IC) {
   if (InlinerFunctionImportStats != InlinerFunctionImportStatsOpts::No) {
     ImportedFunctionsStats =
         std::make_unique<ImportedFunctionsInliningStatistics>();
@@ -520,6 +528,60 @@ std::unique_ptr<InlineAdvice> InlineAdvisor::getMandatoryAdvice(CallBase &CB,
                                                                 bool Advice) {
   return std::make_unique<MandatoryInlineAdvice>(this, CB, getCallerORE(CB),
                                                  Advice);
+}
+
+static inline const char *getLTOPhase(ThinOrFullLTOPhase LTOPhase) {
+  switch (LTOPhase) {
+  case (ThinOrFullLTOPhase::None):
+    return "main";
+  case (ThinOrFullLTOPhase::ThinLTOPreLink):
+  case (ThinOrFullLTOPhase::FullLTOPreLink):
+    return "prelink";
+  case (ThinOrFullLTOPhase::ThinLTOPostLink):
+  case (ThinOrFullLTOPhase::FullLTOPostLink):
+    return "postlink";
+  }
+  llvm_unreachable("unreachable");
+}
+
+static inline const char *getInlineAdvisorContext(InlinePass IP) {
+  switch (IP) {
+  case (InlinePass::AlwaysInliner):
+    return "always-inline";
+  case (InlinePass::CGSCCInliner):
+    return "cgscc-inline";
+  case (InlinePass::EarlyInliner):
+    return "early-inline";
+  case (InlinePass::MLInliner):
+    return "ml-inline";
+  case (InlinePass::ModuleInliner):
+    return "module-inline";
+  case (InlinePass::ReplayCGSCCInliner):
+    return "replay-cgscc-inline";
+  case (InlinePass::ReplaySampleProfileInliner):
+    return "replay-sample-profile-inline";
+  case (InlinePass::SampleProfileInliner):
+    return "sample-profile-inline";
+  }
+
+  llvm_unreachable("unreachable");
+}
+
+std::string llvm::AnnotateInlinePassName(InlineContext IC) {
+  return std::string(getLTOPhase(IC.LTOPhase)) + "-" +
+         std::string(getInlineAdvisorContext(IC.Pass));
+}
+
+const char *InlineAdvisor::getAnnotatedInlinePassName() {
+  if (!IC.hasValue())
+    return DEBUG_TYPE;
+
+  // IC is constant and initialized in constructor, so compute the annotated
+  // name only once.
+  static const std::string PassName =
+      llvm::AnnotateInlinePassName(IC.getValue());
+
+  return PassName.c_str();
 }
 
 InlineAdvisor::MandatoryInliningKind
@@ -562,6 +624,25 @@ OptimizationRemarkEmitter &InlineAdvisor::getCallerORE(CallBase &CB) {
 PreservedAnalyses
 InlineAdvisorAnalysisPrinterPass::run(Module &M, ModuleAnalysisManager &MAM) {
   const auto *IA = MAM.getCachedResult<InlineAdvisorAnalysis>(M);
+  if (!IA)
+    OS << "No Inline Advisor\n";
+  else
+    IA->getAdvisor()->print(OS);
+  return PreservedAnalyses::all();
+}
+
+PreservedAnalyses InlineAdvisorAnalysisPrinterPass::run(
+    LazyCallGraph::SCC &InitialC, CGSCCAnalysisManager &AM, LazyCallGraph &CG,
+    CGSCCUpdateResult &UR) {
+  const auto &MAMProxy =
+      AM.getResult<ModuleAnalysisManagerCGSCCProxy>(InitialC, CG);
+
+  if (InitialC.size() == 0) {
+    OS << "SCC is empty!\n";
+    return PreservedAnalyses::all();
+  }
+  Module &M = *InitialC.begin()->getFunction().getParent();
+  const auto *IA = MAMProxy.getCachedResult<InlineAdvisorAnalysis>(M);
   if (!IA)
     OS << "No Inline Advisor\n";
   else

@@ -1,4 +1,4 @@
-// RUN: mlir-opt %s -convert-vector-to-scf='lower-permutation-maps=true' -split-input-file | FileCheck %s
+// RUN: mlir-opt %s -pass-pipeline="func.func(convert-vector-to-scf{lower-permutation-maps=true})" -split-input-file | FileCheck %s
 
 // Ensure that the permutation map is lowered (by inserting a transpose op)
 // before lowering the vector.transfer_read.
@@ -22,7 +22,7 @@
 //       CHECK:   return %[[RESULT_T]] : vector<9x4xf32>
 
 // Vector load with mask + transpose.
-func @transfer_read_2d_mask_transposed(
+func.func @transfer_read_2d_mask_transposed(
     %A : memref<?x?xf32>, %base1: index, %base2: index) -> (vector<9x4xf32>) {
   %fm42 = arith.constant -42.0: f32
   %mask = arith.constant dense<[[1, 0, 1, 0], [0, 0, 1, 0],

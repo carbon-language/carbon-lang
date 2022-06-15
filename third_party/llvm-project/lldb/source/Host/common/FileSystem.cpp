@@ -8,6 +8,7 @@
 
 #include "lldb/Host/FileSystem.h"
 
+#include "lldb/Utility/DataBufferLLVM.h"
 #include "lldb/Utility/LLDBAssert.h"
 #include "lldb/Utility/TildeExpressionResolver.h"
 
@@ -47,27 +48,6 @@ FileSystem &FileSystem::Instance() { return *InstanceImpl(); }
 void FileSystem::Initialize() {
   lldbassert(!InstanceImpl() && "Already initialized.");
   InstanceImpl().emplace();
-}
-
-void FileSystem::Initialize(std::shared_ptr<FileCollectorBase> collector) {
-  lldbassert(!InstanceImpl() && "Already initialized.");
-  InstanceImpl().emplace(collector);
-}
-
-llvm::Error FileSystem::Initialize(const FileSpec &mapping) {
-  lldbassert(!InstanceImpl() && "Already initialized.");
-
-  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer =
-      llvm::vfs::getRealFileSystem()->getBufferForFile(mapping.GetPath());
-
-  if (!buffer)
-    return llvm::errorCodeToError(buffer.getError());
-
-  InstanceImpl().emplace(llvm::vfs::getVFSFromYAML(std::move(buffer.get()),
-                                                   nullptr, mapping.GetPath()),
-                         true);
-
-  return llvm::Error::success();
 }
 
 void FileSystem::Initialize(IntrusiveRefCntPtr<vfs::FileSystem> fs) {
@@ -293,35 +273,55 @@ void FileSystem::Resolve(FileSpec &file_spec) {
   file_spec.SetIsResolved(true);
 }
 
-std::shared_ptr<DataBufferLLVM>
-FileSystem::CreateDataBuffer(const llvm::Twine &path, uint64_t size,
-                             uint64_t offset) {
-  Collect(path);
-
-  const bool is_volatile = !IsLocal(path);
-  const ErrorOr<std::string> external_path = GetExternalPath(path);
-
-  if (!external_path)
-    return nullptr;
-
-  std::unique_ptr<llvm::WritableMemoryBuffer> buffer;
+template <typename T>
+static std::unique_ptr<T> GetMemoryBuffer(const llvm::Twine &path,
+                                          uint64_t size, uint64_t offset,
+                                          bool is_volatile) {
+  std::unique_ptr<T> buffer;
   if (size == 0) {
-    auto buffer_or_error =
-        llvm::WritableMemoryBuffer::getFile(*external_path, is_volatile);
+    auto buffer_or_error = T::getFile(path, is_volatile);
     if (!buffer_or_error)
       return nullptr;
     buffer = std::move(*buffer_or_error);
   } else {
-    auto buffer_or_error = llvm::WritableMemoryBuffer::getFileSlice(
-        *external_path, size, offset, is_volatile);
+    auto buffer_or_error = T::getFileSlice(path, size, offset, is_volatile);
     if (!buffer_or_error)
       return nullptr;
     buffer = std::move(*buffer_or_error);
   }
+  return buffer;
+}
+
+std::shared_ptr<WritableDataBuffer>
+FileSystem::CreateWritableDataBuffer(const llvm::Twine &path, uint64_t size,
+                                     uint64_t offset) {
+  const bool is_volatile = !IsLocal(path);
+  auto buffer = GetMemoryBuffer<llvm::WritableMemoryBuffer>(path, size, offset,
+                                                            is_volatile);
+  if (!buffer)
+    return {};
+  return std::shared_ptr<WritableDataBufferLLVM>(
+      new WritableDataBufferLLVM(std::move(buffer)));
+}
+
+std::shared_ptr<DataBuffer>
+FileSystem::CreateDataBuffer(const llvm::Twine &path, uint64_t size,
+                             uint64_t offset) {
+  const bool is_volatile = !IsLocal(path);
+  auto buffer =
+      GetMemoryBuffer<llvm::MemoryBuffer>(path, size, offset, is_volatile);
+  if (!buffer)
+    return {};
   return std::shared_ptr<DataBufferLLVM>(new DataBufferLLVM(std::move(buffer)));
 }
 
-std::shared_ptr<DataBufferLLVM>
+std::shared_ptr<WritableDataBuffer>
+FileSystem::CreateWritableDataBuffer(const FileSpec &file_spec, uint64_t size,
+                                     uint64_t offset) {
+  return CreateWritableDataBuffer(file_spec.GetPath(), size, offset);
+}
+
+std::shared_ptr<DataBuffer>
 FileSystem::CreateDataBuffer(const FileSpec &file_spec, uint64_t size,
                              uint64_t offset) {
   return CreateDataBuffer(file_spec.GetPath(), size, offset);
@@ -450,18 +450,14 @@ static mode_t GetOpenMode(uint32_t permissions) {
 Expected<FileUP> FileSystem::Open(const FileSpec &file_spec,
                                   File::OpenOptions options,
                                   uint32_t permissions, bool should_close_fd) {
-  Collect(file_spec.GetPath());
-
   const int open_flags = GetOpenFlags(options);
   const mode_t open_mode =
       (open_flags & O_CREAT) ? GetOpenMode(permissions) : 0;
 
-  auto path = GetExternalPath(file_spec);
-  if (!path)
-    return errorCodeToError(path.getError());
+  auto path = file_spec.GetPath();
 
   int descriptor = llvm::sys::RetryAfterSignal(
-      -1, OpenWithFS, *this, path->c_str(), open_flags, open_mode);
+      -1, OpenWithFS, *this, path.c_str(), open_flags, open_mode);
 
   if (!File::DescriptorIsValid(descriptor))
     return llvm::errorCodeToError(
@@ -471,43 +467,6 @@ Expected<FileUP> FileSystem::Open(const FileSpec &file_spec,
       new NativeFile(descriptor, options, should_close_fd));
   assert(file->IsValid());
   return std::move(file);
-}
-
-ErrorOr<std::string> FileSystem::GetExternalPath(const llvm::Twine &path) {
-  if (!m_mapped)
-    return path.str();
-
-  // If VFS mapped we know the underlying FS is a RedirectingFileSystem.
-  ErrorOr<vfs::RedirectingFileSystem::LookupResult> Result =
-      static_cast<vfs::RedirectingFileSystem &>(*m_fs).lookupPath(path.str());
-  if (!Result) {
-    if (Result.getError() == llvm::errc::no_such_file_or_directory) {
-      return path.str();
-    }
-    return Result.getError();
-  }
-
-  if (Optional<StringRef> ExtRedirect = Result->getExternalRedirect())
-    return std::string(*ExtRedirect);
-  return make_error_code(llvm::errc::not_supported);
-}
-
-ErrorOr<std::string> FileSystem::GetExternalPath(const FileSpec &file_spec) {
-  return GetExternalPath(file_spec.GetPath());
-}
-
-void FileSystem::Collect(const FileSpec &file_spec) {
-  Collect(file_spec.GetPath());
-}
-
-void FileSystem::Collect(const llvm::Twine &file) {
-  if (!m_collector)
-    return;
-
-  if (llvm::sys::fs::is_directory(file))
-    m_collector->addDirectory(file);
-  else
-    m_collector->addFile(file);
 }
 
 void FileSystem::SetHomeDirectory(std::string home_directory) {

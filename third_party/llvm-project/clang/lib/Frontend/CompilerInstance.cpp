@@ -232,7 +232,7 @@ static void collectIncludePCH(CompilerInstance &CI,
 
   StringRef PCHInclude = PPOpts.ImplicitPCHInclude;
   FileManager &FileMgr = CI.getFileManager();
-  auto PCHDir = FileMgr.getDirectory(PCHInclude);
+  auto PCHDir = FileMgr.getOptionalDirectoryRef(PCHInclude);
   if (!PCHDir) {
     MDC->addFile(PCHInclude);
     return;
@@ -240,7 +240,7 @@ static void collectIncludePCH(CompilerInstance &CI,
 
   std::error_code EC;
   SmallString<128> DirNative;
-  llvm::sys::path::native((*PCHDir)->getName(), DirNative);
+  llvm::sys::path::native(PCHDir->getName(), DirNative);
   llvm::vfs::FileSystem &FS = FileMgr.getVirtualFileSystem();
   SimpleASTReaderListener Validator(CI.getPreprocessor());
   for (llvm::vfs::directory_iterator Dir = FS.dir_begin(DirNative, EC), DirEnd;
@@ -710,13 +710,10 @@ static bool EnableCodeCompletion(Preprocessor &PP,
 void CompilerInstance::createCodeCompletionConsumer() {
   const ParsedSourceLocation &Loc = getFrontendOpts().CodeCompletionAt;
   if (!CompletionConsumer) {
-    setCodeCompletionConsumer(
-      createCodeCompletionConsumer(getPreprocessor(),
-                                   Loc.FileName, Loc.Line, Loc.Column,
-                                   getFrontendOpts().CodeCompleteOpts,
-                                   llvm::outs()));
-    if (!CompletionConsumer)
-      return;
+    setCodeCompletionConsumer(createCodeCompletionConsumer(
+        getPreprocessor(), Loc.FileName, Loc.Line, Loc.Column,
+        getFrontendOpts().CodeCompleteOpts, llvm::outs()));
+    return;
   } else if (EnableCodeCompletion(getPreprocessor(), Loc.FileName,
                                   Loc.Line, Loc.Column)) {
     setCodeCompletionConsumer(nullptr);

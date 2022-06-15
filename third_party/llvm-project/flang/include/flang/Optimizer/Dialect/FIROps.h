@@ -11,11 +11,9 @@
 
 #include "flang/Optimizer/Dialect/FIRType.h"
 #include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
-#include "mlir/Dialect/StandardOps/IR/Ops.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Interfaces/LoopLikeInterface.h"
 #include "mlir/Interfaces/SideEffectInterfaces.h"
-
-using namespace mlir;
 
 namespace fir {
 
@@ -29,17 +27,20 @@ void buildCmpCOp(mlir::OpBuilder &builder, mlir::OperationState &result,
 unsigned getCaseArgumentOffset(llvm::ArrayRef<mlir::Attribute> cases,
                                unsigned dest);
 DoLoopOp getForInductionVarOwner(mlir::Value val);
-bool isReferenceLike(mlir::Type type);
 mlir::ParseResult isValidCaseAttr(mlir::Attribute attr);
 mlir::ParseResult parseCmpcOp(mlir::OpAsmParser &parser,
                               mlir::OperationState &result);
 mlir::ParseResult parseSelector(mlir::OpAsmParser &parser,
                                 mlir::OperationState &result,
-                                mlir::OpAsmParser::OperandType &selector,
+                                mlir::OpAsmParser::UnresolvedOperand &selector,
                                 mlir::Type &type);
 
 static constexpr llvm::StringRef getAdaptToByRefAttrName() {
   return "adapt.valuebyref";
+}
+
+static constexpr llvm::StringRef getNormalizedLowerBoundAttrName() {
+  return "normalized.lb";
 }
 
 } // namespace fir

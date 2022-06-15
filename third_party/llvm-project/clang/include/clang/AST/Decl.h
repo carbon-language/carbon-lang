@@ -1041,7 +1041,7 @@ protected:
   };
 
   VarDecl(Kind DK, ASTContext &C, DeclContext *DC, SourceLocation StartLoc,
-          SourceLocation IdLoc, IdentifierInfo *Id, QualType T,
+          SourceLocation IdLoc, const IdentifierInfo *Id, QualType T,
           TypeSourceInfo *TInfo, StorageClass SC);
 
   using redeclarable_base = Redeclarable<VarDecl>;
@@ -1071,8 +1071,8 @@ public:
 
   static VarDecl *Create(ASTContext &C, DeclContext *DC,
                          SourceLocation StartLoc, SourceLocation IdLoc,
-                         IdentifierInfo *Id, QualType T, TypeSourceInfo *TInfo,
-                         StorageClass S);
+                         const IdentifierInfo *Id, QualType T,
+                         TypeSourceInfo *TInfo, StorageClass S);
 
   static VarDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
@@ -1591,6 +1591,20 @@ public:
   /// kind?
   QualType::DestructionKind needsDestruction(const ASTContext &Ctx) const;
 
+  /// Whether this variable has a flexible array member initialized with one
+  /// or more elements. This can only be called for declarations where
+  /// hasInit() is true.
+  ///
+  /// (The standard doesn't allow initializing flexible array members; this is
+  /// a gcc/msvc extension.)
+  bool hasFlexibleArrayInit(const ASTContext &Ctx) const;
+
+  /// If hasFlexibleArrayInit is true, compute the number of additional bytes
+  /// necessary to store those elements. Otherwise, returns zero.
+  ///
+  /// This can only be called for declarations where hasInit() is true.
+  CharUnits getFlexibleArrayInitChars(const ASTContext &Ctx) const;
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) { return K >= firstVar && K <= lastVar; }
@@ -1618,6 +1632,9 @@ public:
 
     /// Parameter for captured context
     CapturedContext,
+
+    /// Parameter for Thread private variable
+    ThreadPrivateVar,
 
     /// Other implicit parameter
     Other,
@@ -4051,6 +4068,12 @@ public:
     RecordDeclBits.ParamDestroyedInCallee = V;
   }
 
+  bool isRandomized() const { return RecordDeclBits.IsRandomized; }
+
+  void setIsRandomized(bool V) { RecordDeclBits.IsRandomized = V; }
+
+  void reorderDecls(const SmallVectorImpl<Decl *> &Decls);
+
   /// Determines whether this declaration represents the
   /// injected class name.
   ///
@@ -4465,6 +4488,16 @@ public:
 /// An import declaration imports the named module (or submodule). For example:
 /// \code
 ///   @import std.vector;
+/// \endcode
+///
+/// A C++20 module import declaration imports the named module or partition.
+/// Periods are permitted in C++20 module names, but have no semantic meaning.
+/// For example:
+/// \code
+///   import NamedModule;
+///   import :SomePartition; // Must be a partition of the current module.
+///   import Names.Like.this; // Allowed.
+///   import :and.Also.Partition.names;
 /// \endcode
 ///
 /// Import declarations can also be implicitly generated from

@@ -22,6 +22,76 @@ define void @gep_cse(ptr %p) {
   ret void
 }
 
+define void @gep_cse_offset_canonicalization(ptr %p, i64 %idx, i64 %idx2) {
+; CHECK-LABEL: @gep_cse_offset_canonicalization(
+; CHECK-NEXT:    [[GEP1:%.*]] = getelementptr i64, ptr [[P:%.*]], i64 1
+; CHECK-NEXT:    [[GEP1_DIFFERENT:%.*]] = getelementptr i8, ptr [[P]], i64 12
+; CHECK-NEXT:    call void @use(ptr [[GEP1]])
+; CHECK-NEXT:    call void @use(ptr [[GEP1]])
+; CHECK-NEXT:    call void @use(ptr [[GEP1]])
+; CHECK-NEXT:    call void @use(ptr [[GEP1_DIFFERENT]])
+; CHECK-NEXT:    [[GEP2:%.*]] = getelementptr i64, ptr [[P]], i64 [[IDX:%.*]]
+; CHECK-NEXT:    [[GEP2_DIFFERENT:%.*]] = getelementptr { i32, i32, i32 }, ptr [[P]], i64 [[IDX]]
+; CHECK-NEXT:    call void @use(ptr [[GEP2]])
+; CHECK-NEXT:    call void @use(ptr [[GEP2]])
+; CHECK-NEXT:    call void @use(ptr [[GEP2_DIFFERENT]])
+; CHECK-NEXT:    [[GEP3:%.*]] = getelementptr { [0 x i32], [0 x i32] }, ptr [[P]], i64 0, i32 0, i64 [[IDX]]
+; CHECK-NEXT:    [[GEP3_DIFFERENT:%.*]] = getelementptr { [0 x i32], [0 x i32] }, ptr [[P]], i64 0, i32 0, i64 [[IDX2:%.*]]
+; CHECK-NEXT:    call void @use(ptr [[GEP3]])
+; CHECK-NEXT:    call void @use(ptr [[GEP3]])
+; CHECK-NEXT:    call void @use(ptr [[GEP3]])
+; CHECK-NEXT:    call void @use(ptr [[GEP3_DIFFERENT]])
+; CHECK-NEXT:    [[GEP4:%.*]] = getelementptr [4 x i32], ptr [[P]], i64 [[IDX]], i64 [[IDX2]]
+; CHECK-NEXT:    [[GEP4_DIFFERENT:%.*]] = getelementptr [4 x float], ptr [[P]], i64 [[IDX2]], i64 [[IDX]]
+; CHECK-NEXT:    call void @use(ptr [[GEP4]])
+; CHECK-NEXT:    call void @use(ptr [[GEP4]])
+; CHECK-NEXT:    call void @use(ptr [[GEP4_DIFFERENT]])
+; CHECK-NEXT:    [[GEP5:%.*]] = getelementptr <vscale x 2 x i32>, ptr [[P]], i64 1
+; CHECK-NEXT:    [[GEP5_SAME:%.*]] = getelementptr <vscale x 2 x float>, ptr [[P]], i64 1
+; CHECK-NEXT:    [[GEP5_DIFFERENT:%.*]] = getelementptr <vscale x 2 x i64>, ptr [[P]], i64 1
+; CHECK-NEXT:    call void @use(ptr [[GEP5]])
+; CHECK-NEXT:    call void @use(ptr [[GEP5_SAME]])
+; CHECK-NEXT:    call void @use(ptr [[GEP5_DIFFERENT]])
+; CHECK-NEXT:    ret void
+;
+  %gep1 = getelementptr i64, ptr %p, i64 1
+  %gep1.same1 = getelementptr i32, ptr %p, i64 2
+  %gep1.same2 = getelementptr i8, ptr %p, i64 8
+  %gep1.different = getelementptr i8, ptr %p, i64 12
+  call void @use(ptr %gep1)
+  call void @use(ptr %gep1.same1)
+  call void @use(ptr %gep1.same2)
+  call void @use(ptr %gep1.different)
+  %gep2 = getelementptr i64, ptr %p, i64 %idx
+  %gep2.same = getelementptr { i32, i32 }, ptr %p, i64 %idx
+  %gep2.different = getelementptr { i32, i32, i32 }, ptr %p, i64 %idx
+  call void @use(ptr %gep2)
+  call void @use(ptr %gep2.same)
+  call void @use(ptr %gep2.different)
+  %gep3 = getelementptr { [0 x i32], [0 x i32] }, ptr %p, i64 0, i32 0, i64 %idx
+  %gep3.same1 = getelementptr { [0 x i32], [0 x i32] }, ptr %p, i64 0, i32 1, i64 %idx
+  %gep3.same2 = getelementptr { [0 x i32], [0 x i32] }, ptr %p, i64 1, i32 0, i64 %idx
+  %gep3.different = getelementptr { [0 x i32], [0 x i32] }, ptr %p, i64 0, i32 0, i64 %idx2
+  call void @use(ptr %gep3)
+  call void @use(ptr %gep3.same1)
+  call void @use(ptr %gep3.same2)
+  call void @use(ptr %gep3.different)
+  %gep4 = getelementptr [4 x i32], ptr %p, i64 %idx, i64 %idx2
+  %gep4.same = getelementptr [4 x float], ptr %p, i64 %idx, i64 %idx2
+  %gep4.different = getelementptr [4 x float], ptr %p, i64 %idx2, i64 %idx
+  call void @use(ptr %gep4)
+  call void @use(ptr %gep4.same)
+  call void @use(ptr %gep4.different)
+  ; TODO: %gep5 and %gep5.same are equivalent as well.
+  %gep5 = getelementptr <vscale x 2 x i32>, ptr %p, i64 1
+  %gep5.same = getelementptr <vscale x 2 x float>, ptr %p, i64 1
+  %gep5.different = getelementptr <vscale x 2 x i64>, ptr %p, i64 1
+  call void @use(ptr %gep5)
+  call void @use(ptr %gep5.same)
+  call void @use(ptr %gep5.different)
+  ret void
+}
+
 define i32 @phi_trans(i1 %c, ptr %p1, ptr %p2) {
 ; CHECK-LABEL: @phi_trans(
 ; CHECK-NEXT:    br i1 [[C:%.*]], label [[IF:%.*]], label [[ELSE:%.*]]
@@ -102,4 +172,38 @@ join:
   %gep = getelementptr i32, ptr %phi, i64 1
   %v = load i32, ptr %gep
   ret i32 %v
+}
+
+define i32 @select_pre(ptr %px, ptr %py) {
+; CHECK-LABEL: @select_pre(
+; CHECK-NEXT:    [[T2:%.*]] = load i32, ptr [[PY:%.*]], align 4
+; CHECK-NEXT:    [[T3:%.*]] = load i32, ptr [[PX:%.*]], align 4
+; CHECK-NEXT:    [[CMP:%.*]] = icmp slt i32 [[T2]], [[T3]]
+; CHECK-NEXT:    [[TMP1:%.*]] = select i1 [[CMP]], i32 [[T3]], i32 [[T2]]
+; CHECK-NEXT:    [[SELECT:%.*]] = select i1 [[CMP]], ptr [[PX]], ptr [[PY]]
+; CHECK-NEXT:    ret i32 [[TMP1]]
+;
+  %t2 = load i32, ptr %py, align 4
+  %t3 = load i32, ptr %px, align 4
+  %cmp = icmp slt i32 %t2, %t3
+  %select = select i1 %cmp, ptr %px, ptr %py
+  %r = load i32, ptr %select, align 4
+  ret i32 %r
+}
+
+define i64 @select_pre_different_types(ptr %px, ptr %py) {
+; CHECK-LABEL: @select_pre_different_types(
+; CHECK-NEXT:    [[T2:%.*]] = load i32, ptr [[PY:%.*]], align 4
+; CHECK-NEXT:    [[T3:%.*]] = load i32, ptr [[PX:%.*]], align 4
+; CHECK-NEXT:    [[CMP:%.*]] = icmp slt i32 [[T2]], [[T3]]
+; CHECK-NEXT:    [[SELECT:%.*]] = select i1 [[CMP]], ptr [[PX]], ptr [[PY]]
+; CHECK-NEXT:    [[R:%.*]] = load i64, ptr [[SELECT]], align 4
+; CHECK-NEXT:    ret i64 [[R]]
+;
+  %t2 = load i32, ptr %py, align 4
+  %t3 = load i32, ptr %px, align 4
+  %cmp = icmp slt i32 %t2, %t3
+  %select = select i1 %cmp, ptr %px, ptr %py
+  %r = load i64, ptr %select, align 4
+  ret i64 %r
 }

@@ -1,4 +1,4 @@
-add_mlir_dialect_library(MLIRQuant
+add_mlir_dialect_library(MLIRQuantDialect
   QuantOps.cpp
   QuantTypes.cpp
   TypeDetail.h
@@ -12,6 +12,7 @@ add_mlir_dialect_library(MLIRQuant
 
   LINK_LIBS PUBLIC
   MLIRIR
+  MLIRInferTypeOpInterface
   MLIRSideEffectInterfaces
   MLIRSupport
   )

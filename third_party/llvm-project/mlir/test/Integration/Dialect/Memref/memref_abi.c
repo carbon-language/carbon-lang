@@ -4,7 +4,7 @@
 // Compile the MLIR file to LLVM:
 // RUN: mlir-opt %t/input.mlir \
 // RUN:  -lower-affine  -convert-scf-to-cf  -convert-memref-to-llvm \
-// RUN:  -convert-std-to-llvm -reconcile-unrealized-casts \
+// RUN:  -convert-func-to-llvm -reconcile-unrealized-casts \
 // RUN: | mlir-translate --mlir-to-llvmir -o %t.ll
 
 // Generate an object file for the MLIR code
@@ -19,7 +19,7 @@
 /* MLIR_BEGIN
 //--- input.mlir
 // Performs: arg0[i, j] = arg0[i, j] + arg1[i, j]
-func private @add_memref(%arg0: memref<?x?xf64>, %arg1: memref<?x?xf64>) -> i64
+func.func private @add_memref(%arg0: memref<?x?xf64>, %arg1: memref<?x?xf64>) -> i64
    attributes {llvm.emit_c_interface} {
   %c0 = arith.constant 0 : index
   %c1 = arith.constant 1 : index

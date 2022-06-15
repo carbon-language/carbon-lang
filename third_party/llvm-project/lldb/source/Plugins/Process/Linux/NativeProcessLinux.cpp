@@ -312,7 +312,7 @@ NativeProcessLinux::NativeProcessLinux(::pid_t pid, int terminal_fd,
                                        const ArchSpec &arch, MainLoop &mainloop,
                                        llvm::ArrayRef<::pid_t> tids)
     : NativeProcessELF(pid, terminal_fd, delegate), m_arch(arch),
-      m_main_loop(mainloop), m_intel_pt_manager(pid) {
+      m_main_loop(mainloop), m_intel_pt_collector(*this) {
   if (m_terminal_fd != -1) {
     Status status = EnsureFDFlags(m_terminal_fd, O_NONBLOCK);
     assert(status.Success());
@@ -447,13 +447,7 @@ void NativeProcessLinux::MonitorCallback(NativeThreadLinux &thread,
     // This is a thread that exited.  Ensure we're not tracking it anymore.
     StopTrackingThread(thread);
 
-    if (is_main_thread) {
-      // The main thread exited.  We're done monitoring.  Report to delegate.
-      SetExitStatus(status, true);
-
-      // Notify delegate that our process has exited.
-      SetState(StateType::eStateExited, true);
-    }
+    assert(!is_main_thread && "Main thread exits handled elsewhere");
     return;
   }
 
@@ -610,6 +604,13 @@ void NativeProcessLinux::MonitorSIGTRAP(const siginfo_t &info,
       state = eStateRunning;
     }
     ResumeThread(thread, state, LLDB_INVALID_SIGNAL_NUMBER);
+
+    if (is_main_thread) {
+      // Main thread report the read (WIFEXITED) event only after all threads in
+      // the process exit, so we need to stop tracking it here instead of in
+      // MonitorCallback
+      StopTrackingThread(thread);
+    }
 
     break;
   }
@@ -983,7 +984,7 @@ Status NativeProcessLinux::Detach() {
           e; // Save the error, but still attempt to detach from other threads.
   }
 
-  m_intel_pt_manager.Clear();
+  m_intel_pt_collector.Clear();
 
   return error;
 }
@@ -1177,11 +1178,11 @@ Status NativeProcessLinux::PopulateMemoryRegionCache() {
 
   // Linux kernel since 2.6.14 has /proc/{pid}/smaps
   // if CONFIG_PROC_PAGE_MONITOR is enabled
-  auto BufferOrError = getProcFile(GetID(), "smaps");
+  auto BufferOrError = getProcFile(GetID(), GetCurrentThreadID(), "smaps");
   if (BufferOrError)
     ParseLinuxSMapRegions(BufferOrError.get()->getBuffer(), callback);
   else {
-    BufferOrError = getProcFile(GetID(), "maps");
+    BufferOrError = getProcFile(GetID(), GetCurrentThreadID(), "maps");
     if (!BufferOrError) {
       m_supports_mem_region = LazyBool::eLazyBoolNo;
       return BufferOrError.getError();
@@ -1232,14 +1233,14 @@ NativeProcessLinux::Syscall(llvm::ArrayRef<uint64_t> args) {
 
   addr_t exe_addr = region_it->first.GetRange().GetRangeBase();
 
-  NativeThreadLinux &thread = *GetThreadByID(GetID());
+  NativeThreadLinux &thread = *GetCurrentThread();
   assert(thread.GetState() == eStateStopped);
   NativeRegisterContextLinux &reg_ctx = thread.GetRegisterContext();
 
   NativeRegisterContextLinux::SyscallData syscall_data =
       *reg_ctx.GetSyscallData();
 
-  DataBufferSP registers_sp;
+  WritableDataBufferSP registers_sp;
   if (llvm::Error Err = reg_ctx.ReadAllRegisterValues(registers_sp).ToError())
     return std::move(Err);
   auto restore_regs = llvm::make_scope_exit(
@@ -1384,8 +1385,9 @@ Status NativeProcessLinux::ReadMemoryTags(int32_t type, lldb::addr_t addr,
     tags_iovec.iov_len = num_tags;
 
     Status error = NativeProcessLinux::PtraceWrapper(
-        details->ptrace_read_req, GetID(), reinterpret_cast<void *>(read_addr),
-        static_cast<void *>(&tags_iovec), 0, nullptr);
+        details->ptrace_read_req, GetCurrentThreadID(),
+        reinterpret_cast<void *>(read_addr), static_cast<void *>(&tags_iovec),
+        0, nullptr);
 
     if (error.Fail()) {
       // Discard partial reads
@@ -1453,7 +1455,7 @@ Status NativeProcessLinux::WriteMemoryTags(int32_t type, lldb::addr_t addr,
     tags_vec.iov_len = num_tags;
 
     Status error = NativeProcessLinux::PtraceWrapper(
-        details->ptrace_write_req, GetID(),
+        details->ptrace_write_req, GetCurrentThreadID(),
         reinterpret_cast<void *>(write_addr), static_cast<void *>(&tags_vec), 0,
         nullptr);
 
@@ -1525,15 +1527,14 @@ Status NativeProcessLinux::ReadMemory(lldb::addr_t addr, void *buf, size_t size,
     // The process_vm_readv path is about 50 times faster than ptrace api. We
     // want to use this syscall if it is supported.
 
-    const ::pid_t pid = GetID();
-
     struct iovec local_iov, remote_iov;
     local_iov.iov_base = buf;
     local_iov.iov_len = size;
     remote_iov.iov_base = reinterpret_cast<void *>(addr);
     remote_iov.iov_len = size;
 
-    bytes_read = process_vm_readv(pid, &local_iov, 1, &remote_iov, 1, 0);
+    bytes_read = process_vm_readv(GetCurrentThreadID(), &local_iov, 1,
+                                  &remote_iov, 1, 0);
     const bool success = bytes_read == size;
 
     Log *log = GetLog(POSIXLog::Process);
@@ -1557,7 +1558,7 @@ Status NativeProcessLinux::ReadMemory(lldb::addr_t addr, void *buf, size_t size,
 
   for (bytes_read = 0; bytes_read < size; bytes_read += remainder) {
     Status error = NativeProcessLinux::PtraceWrapper(
-        PTRACE_PEEKDATA, GetID(), (void *)addr, nullptr, 0, &data);
+        PTRACE_PEEKDATA, GetCurrentThreadID(), (void *)addr, nullptr, 0, &data);
     if (error.Fail())
       return error;
 
@@ -1592,8 +1593,8 @@ Status NativeProcessLinux::WriteMemory(lldb::addr_t addr, const void *buf,
       memcpy(&data, src, k_ptrace_word_size);
 
       LLDB_LOG(log, "[{0:x}]:{1:x}", addr, data);
-      error = NativeProcessLinux::PtraceWrapper(PTRACE_POKEDATA, GetID(),
-                                                (void *)addr, (void *)data);
+      error = NativeProcessLinux::PtraceWrapper(
+          PTRACE_POKEDATA, GetCurrentThreadID(), (void *)addr, (void *)data);
       if (error.Fail())
         return error;
     } else {
@@ -1664,9 +1665,14 @@ void NativeProcessLinux::StopTrackingThread(NativeThreadLinux &thread) {
   SignalIfAllThreadsStopped();
 }
 
+void NativeProcessLinux::NotifyTracersProcessStateChanged(
+    lldb::StateType state) {
+  m_intel_pt_collector.OnProcessStateChanged(state);
+}
+
 Status NativeProcessLinux::NotifyTracersOfNewThread(lldb::tid_t tid) {
   Log *log = GetLog(POSIXLog::Thread);
-  Status error(m_intel_pt_manager.OnThreadCreated(tid));
+  Status error(m_intel_pt_collector.OnThreadCreated(tid));
   if (error.Fail())
     LLDB_LOG(log, "Failed to trace a new thread with intel-pt, tid = {0}. {1}",
              tid, error.AsCString());
@@ -1675,7 +1681,7 @@ Status NativeProcessLinux::NotifyTracersOfNewThread(lldb::tid_t tid) {
 
 Status NativeProcessLinux::NotifyTracersOfThreadDestroyed(lldb::tid_t tid) {
   Log *log = GetLog(POSIXLog::Thread);
-  Status error(m_intel_pt_manager.OnThreadDestroyed(tid));
+  Status error(m_intel_pt_collector.OnThreadDestroyed(tid));
   if (error.Fail())
     LLDB_LOG(log,
              "Failed to stop a destroyed thread with intel-pt, tid = {0}. {1}",
@@ -1857,46 +1863,64 @@ void NativeProcessLinux::ThreadWasCreated(NativeThreadLinux &thread) {
   }
 }
 
+static llvm::Optional<WaitStatus> HandlePid(::pid_t pid) {
+  Log *log = GetLog(POSIXLog::Process);
+
+  int status;
+  ::pid_t wait_pid = llvm::sys::RetryAfterSignal(
+      -1, ::waitpid, pid, &status, __WALL | __WNOTHREAD | WNOHANG);
+
+  if (wait_pid == 0)
+    return llvm::None;
+
+  if (wait_pid == -1) {
+    Status error(errno, eErrorTypePOSIX);
+    LLDB_LOG(log, "waitpid({0}, &status, _) failed: {1}", pid,
+             error);
+    return llvm::None;
+  }
+
+  assert(wait_pid == pid);
+
+  WaitStatus wait_status = WaitStatus::Decode(status);
+
+  LLDB_LOG(log, "waitpid({0})  got status = {1}", pid, wait_status);
+  return wait_status;
+}
+
 void NativeProcessLinux::SigchldHandler() {
   Log *log = GetLog(POSIXLog::Process);
 
   // Threads can appear or disappear as a result of event processing, so gather
   // the events upfront.
   llvm::DenseMap<lldb::tid_t, WaitStatus> tid_events;
+  bool checked_main_thread = false;
   for (const auto &thread_up : m_threads) {
-    int status = -1;
-    ::pid_t wait_pid =
-        llvm::sys::RetryAfterSignal(-1, ::waitpid, thread_up->GetID(), &status,
-                                    __WALL | __WNOTHREAD | WNOHANG);
+    if (thread_up->GetID() == GetID())
+      checked_main_thread = true;
 
-    if (wait_pid == 0)
-      continue; // Nothing to do for this thread.
-
-    if (wait_pid == -1) {
-      Status error(errno, eErrorTypePOSIX);
-      LLDB_LOG(log, "waitpid({0}, &status, _) failed: {1}", thread_up->GetID(),
-               error);
-      continue;
-    }
-
-    assert(wait_pid == static_cast<::pid_t>(thread_up->GetID()));
-
-    WaitStatus wait_status = WaitStatus::Decode(status);
-
-    LLDB_LOG(log, "waitpid({0})  got status = {1}", thread_up->GetID(),
-             wait_status);
-    tid_events.try_emplace(thread_up->GetID(), wait_status);
+    if (llvm::Optional<WaitStatus> status = HandlePid(thread_up->GetID()))
+      tid_events.try_emplace(thread_up->GetID(), *status);
+  }
+  // Check the main thread even when we're not tracking it as process exit
+  // events are reported that way.
+  if (!checked_main_thread) {
+    if (llvm::Optional<WaitStatus> status = HandlePid(GetID()))
+      tid_events.try_emplace(GetID(), *status);
   }
 
   for (auto &KV : tid_events) {
     LLDB_LOG(log, "processing {0}({1}) ...", KV.first, KV.second);
-    NativeThreadLinux *thread = GetThreadByID(KV.first);
-    if (thread) {
-      MonitorCallback(*thread, KV.second);
-    } else {
-      // This can happen if one of the events is an main thread exit.
-      LLDB_LOG(log, "... but the thread has disappeared");
+    if (KV.first == GetID() && (KV.second.type == WaitStatus::Exit ||
+                                KV.second.type == WaitStatus::Signal)) {
+
+      // The process exited.  We're done monitoring.  Report to delegate.
+      SetExitStatus(KV.second, true);
+      return;
     }
+    NativeThreadLinux *thread = GetThreadByID(KV.first);
+    assert(thread && "Why did this thread disappear?");
+    MonitorCallback(*thread, KV.second);
   }
 }
 
@@ -1938,7 +1962,7 @@ Status NativeProcessLinux::PtraceWrapper(int req, lldb::pid_t pid, void *addr,
 }
 
 llvm::Expected<TraceSupportedResponse> NativeProcessLinux::TraceSupported() {
-  if (IntelPTManager::IsSupported())
+  if (IntelPTCollector::IsSupported())
     return TraceSupportedResponse{"intel-pt", "Intel Processor Trace"};
   return NativeProcessProtocol::TraceSupported();
 }
@@ -1948,10 +1972,7 @@ Error NativeProcessLinux::TraceStart(StringRef json_request, StringRef type) {
     if (Expected<TraceIntelPTStartRequest> request =
             json::parse<TraceIntelPTStartRequest>(json_request,
                                                   "TraceIntelPTStartRequest")) {
-      std::vector<lldb::tid_t> process_threads;
-      for (auto &thread : m_threads)
-        process_threads.push_back(thread->GetID());
-      return m_intel_pt_manager.TraceStart(*request, process_threads);
+      return m_intel_pt_collector.TraceStart(*request);
     } else
       return request.takeError();
   }
@@ -1961,19 +1982,19 @@ Error NativeProcessLinux::TraceStart(StringRef json_request, StringRef type) {
 
 Error NativeProcessLinux::TraceStop(const TraceStopRequest &request) {
   if (request.type == "intel-pt")
-    return m_intel_pt_manager.TraceStop(request);
+    return m_intel_pt_collector.TraceStop(request);
   return NativeProcessProtocol::TraceStop(request);
 }
 
 Expected<json::Value> NativeProcessLinux::TraceGetState(StringRef type) {
   if (type == "intel-pt")
-    return m_intel_pt_manager.GetState();
+    return m_intel_pt_collector.GetState();
   return NativeProcessProtocol::TraceGetState(type);
 }
 
 Expected<std::vector<uint8_t>> NativeProcessLinux::TraceGetBinaryData(
     const TraceGetBinaryDataRequest &request) {
   if (request.type == "intel-pt")
-    return m_intel_pt_manager.GetBinaryData(request);
+    return m_intel_pt_collector.GetBinaryData(request);
   return NativeProcessProtocol::TraceGetBinaryData(request);
 }

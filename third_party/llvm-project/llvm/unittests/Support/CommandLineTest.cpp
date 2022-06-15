@@ -237,12 +237,42 @@ TEST(CommandLineTest, TokenizeWindowsCommandLine2) {
 }
 
 TEST(CommandLineTest, TokenizeWindowsCommandLineQuotedLastArgument) {
+  // Whitespace at the end of the command line doesn't cause an empty last word
+  const char Input0[] = R"(a b c d )";
+  const char *const Output0[] = {"a", "b", "c", "d"};
+  testCommandLineTokenizer(cl::TokenizeWindowsCommandLine, Input0, Output0);
+
+  // But an explicit "" does
   const char Input1[] = R"(a b c d "")";
   const char *const Output1[] = {"a", "b", "c", "d", ""};
   testCommandLineTokenizer(cl::TokenizeWindowsCommandLine, Input1, Output1);
+
+  // An unterminated quoted string is also emitted as an argument word, empty
+  // or not
   const char Input2[] = R"(a b c d ")";
-  const char *const Output2[] = {"a", "b", "c", "d"};
+  const char *const Output2[] = {"a", "b", "c", "d", ""};
   testCommandLineTokenizer(cl::TokenizeWindowsCommandLine, Input2, Output2);
+  const char Input3[] = R"(a b c d "text)";
+  const char *const Output3[] = {"a", "b", "c", "d", "text"};
+  testCommandLineTokenizer(cl::TokenizeWindowsCommandLine, Input3, Output3);
+}
+
+TEST(CommandLineTest, TokenizeWindowsCommandLineExeName) {
+  const char Input1[] =
+      R"("C:\Program Files\Whatever\"clang.exe z.c -DY=\"x\")";
+  const char *const Output1[] = {"C:\\Program Files\\Whatever\\clang.exe",
+                                 "z.c", "-DY=\"x\""};
+  testCommandLineTokenizer(cl::TokenizeWindowsCommandLineFull, Input1, Output1);
+
+  const char Input2[] = "\"a\\\"b c\\\"d\n\"e\\\"f g\\\"h\n";
+  const char *const Output2[] = {"a\\b", "c\"d", nullptr,
+                                 "e\\f", "g\"h", nullptr};
+  testCommandLineTokenizer(cl::TokenizeWindowsCommandLineFull, Input2, Output2,
+                           /*MarkEOLs=*/true);
+
+  const char Input3[] = R"(\\server\share\subdir\clang.exe)";
+  const char *const Output3[] = {"\\\\server\\share\\subdir\\clang.exe"};
+  testCommandLineTokenizer(cl::TokenizeWindowsCommandLineFull, Input3, Output3);
 }
 
 TEST(CommandLineTest, TokenizeAndMarkEOLs) {
@@ -391,7 +421,8 @@ TEST(CommandLineTest, HideUnrelatedOptions) {
 
   StringMap<cl::Option *> &Map =
       cl::getRegisteredOptions(*cl::TopLevelSubCommand);
-  ASSERT_EQ(cl::NotHidden, Map["help"]->getOptionHiddenFlag())
+  ASSERT_TRUE(Map.count("help") == (size_t)0 ||
+              cl::NotHidden == Map["help"]->getOptionHiddenFlag())
       << "Hid default option that should be visable.";
 }
 
@@ -416,8 +447,17 @@ TEST(CommandLineTest, HideUnrelatedOptionsMulti) {
 
   StringMap<cl::Option *> &Map =
       cl::getRegisteredOptions(*cl::TopLevelSubCommand);
-  ASSERT_EQ(cl::NotHidden, Map["help"]->getOptionHiddenFlag())
+  ASSERT_TRUE(Map.count("help") == (size_t)0 ||
+              cl::NotHidden == Map["help"]->getOptionHiddenFlag())
       << "Hid default option that should be visable.";
+}
+
+TEST(CommandLineTest, SetMultiValues) {
+  StackOption<int> Option("option");
+  const char *args[] = {"prog", "-option=1", "-option=2"};
+  EXPECT_TRUE(cl::ParseCommandLineOptions(array_lengthof(args), args,
+                                          StringRef(), &llvm::nulls()));
+  EXPECT_EQ(Option, 2);
 }
 
 TEST(CommandLineTest, SetValueInSubcategories) {
@@ -763,7 +803,7 @@ TEST(CommandLineTest, ResponseFileWindows) {
     GTEST_SKIP();
 
   StackOption<std::string, cl::list<std::string>> InputFilenames(
-      cl::Positional, cl::desc("<input files>"), cl::ZeroOrMore);
+      cl::Positional, cl::desc("<input files>"));
   StackOption<bool> TopLevelOpt("top-level", cl::init(false));
 
   // Create response file.
@@ -1114,10 +1154,10 @@ TEST(CommandLineTest, PositionalEatArgsError) {
 
   StackOption<std::string, cl::list<std::string>> PosEatArgs(
       "positional-eat-args", cl::Positional, cl::desc("<arguments>..."),
-      cl::ZeroOrMore, cl::PositionalEatsArgs);
+      cl::PositionalEatsArgs);
   StackOption<std::string, cl::list<std::string>> PosEatArgs2(
       "positional-eat-args2", cl::Positional, cl::desc("Some strings"),
-      cl::ZeroOrMore, cl::PositionalEatsArgs);
+      cl::PositionalEatsArgs);
 
   const char *args[] = {"prog", "-positional-eat-args=XXXX"};
   const char *args2[] = {"prog", "-positional-eat-args=XXXX", "-foo"};
@@ -1934,8 +1974,9 @@ TEST(CommandLineTest, ConsumeAfterTwoPositionals) {
 TEST(CommandLineTest, ResetAllOptionOccurrences) {
   cl::ResetCommandLineParser();
 
-  // -option -enableA -enableC [sink] input [args]
+  // -option -str -enableA -enableC [sink] input [args]
   StackOption<bool> Option("option");
+  StackOption<std::string> Str("str");
   enum Vals { ValA, ValB, ValC };
   StackOption<Vals, cl::bits<Vals>> Bits(
       cl::values(clEnumValN(ValA, "enableA", "Enable A"),
@@ -1945,15 +1986,16 @@ TEST(CommandLineTest, ResetAllOptionOccurrences) {
   StackOption<std::string> Input(cl::Positional);
   StackOption<std::string, cl::list<std::string>> ExtraArgs(cl::ConsumeAfter);
 
-  const char *Args[] = {"prog",     "-option", "-enableA", "-enableC",
-                        "-unknown", "input",   "-arg"};
+  const char *Args[] = {"prog",     "-option",  "-str=STR", "-enableA",
+                        "-enableC", "-unknown", "input",    "-arg"};
 
   std::string Errs;
   raw_string_ostream OS(Errs);
-  EXPECT_TRUE(cl::ParseCommandLineOptions(7, Args, StringRef(), &OS));
+  EXPECT_TRUE(cl::ParseCommandLineOptions(8, Args, StringRef(), &OS));
   EXPECT_TRUE(OS.str().empty());
 
   EXPECT_TRUE(Option);
+  EXPECT_EQ("STR", Str);
   EXPECT_EQ((1u << ValA) | (1u << ValC), Bits.getBits());
   EXPECT_EQ(1u, Sink.size());
   EXPECT_EQ("-unknown", Sink[0]);
@@ -1963,10 +2005,67 @@ TEST(CommandLineTest, ResetAllOptionOccurrences) {
 
   cl::ResetAllOptionOccurrences();
   EXPECT_FALSE(Option);
+  EXPECT_EQ("", Str);
   EXPECT_EQ(0u, Bits.getBits());
   EXPECT_EQ(0u, Sink.size());
   EXPECT_EQ(0, Input.getNumOccurrences());
   EXPECT_EQ(0u, ExtraArgs.size());
+}
+
+TEST(CommandLineTest, DefaultValue) {
+  cl::ResetCommandLineParser();
+
+  StackOption<bool> BoolOption("bool-option");
+  StackOption<std::string> StrOption("str-option");
+  StackOption<bool> BoolInitOption("bool-init-option", cl::init(true));
+  StackOption<std::string> StrInitOption("str-init-option",
+                                         cl::init("str-default-value"));
+
+  const char *Args[] = {"prog"}; // no options
+
+  std::string Errs;
+  raw_string_ostream OS(Errs);
+  EXPECT_TRUE(cl::ParseCommandLineOptions(1, Args, StringRef(), &OS));
+  EXPECT_TRUE(OS.str().empty());
+
+  EXPECT_TRUE(!BoolOption);
+  EXPECT_FALSE(BoolOption.Default.hasValue());
+  EXPECT_EQ(0, BoolOption.getNumOccurrences());
+
+  EXPECT_EQ("", StrOption);
+  EXPECT_FALSE(StrOption.Default.hasValue());
+  EXPECT_EQ(0, StrOption.getNumOccurrences());
+
+  EXPECT_TRUE(BoolInitOption);
+  EXPECT_TRUE(BoolInitOption.Default.hasValue());
+  EXPECT_EQ(0, BoolInitOption.getNumOccurrences());
+
+  EXPECT_EQ("str-default-value", StrInitOption);
+  EXPECT_TRUE(StrInitOption.Default.hasValue());
+  EXPECT_EQ(0, StrInitOption.getNumOccurrences());
+
+  const char *Args2[] = {"prog", "-bool-option", "-str-option=str-value",
+                         "-bool-init-option=0",
+                         "-str-init-option=str-init-value"};
+
+  EXPECT_TRUE(cl::ParseCommandLineOptions(5, Args2, StringRef(), &OS));
+  EXPECT_TRUE(OS.str().empty());
+
+  EXPECT_TRUE(BoolOption);
+  EXPECT_FALSE(BoolOption.Default.hasValue());
+  EXPECT_EQ(1, BoolOption.getNumOccurrences());
+
+  EXPECT_EQ("str-value", StrOption);
+  EXPECT_FALSE(StrOption.Default.hasValue());
+  EXPECT_EQ(1, StrOption.getNumOccurrences());
+
+  EXPECT_FALSE(BoolInitOption);
+  EXPECT_TRUE(BoolInitOption.Default.hasValue());
+  EXPECT_EQ(1, BoolInitOption.getNumOccurrences());
+
+  EXPECT_EQ("str-init-value", StrInitOption);
+  EXPECT_TRUE(StrInitOption.Default.hasValue());
+  EXPECT_EQ(1, StrInitOption.getNumOccurrences());
 }
 
 } // anonymous namespace

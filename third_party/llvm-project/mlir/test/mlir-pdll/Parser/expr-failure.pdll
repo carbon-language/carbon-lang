@@ -1,4 +1,4 @@
-// RUN: not mlir-pdll %s -split-input-file 2>&1 | FileCheck %s
+// RUN: not mlir-pdll %s -I %S -I %S/../../../include -split-input-file 2>&1 | FileCheck %s
 
 //===----------------------------------------------------------------------===//
 // Reference Expr
@@ -206,7 +206,7 @@ Pattern {
 Pattern {
   // CHECK: expected `)` after operation operand list
   let value: Value;
-  let foo = op<builtin.func>(value<;
+  let foo = op<func.func>(value<;
 }
 
 // -----
@@ -214,7 +214,7 @@ Pattern {
 Pattern {
   // CHECK: unable to convert expression of type `Attr` to the expected type of `ValueRange`
   let attr: Attr;
-  let foo = op<builtin.func>(attr);
+  let foo = op<func.func>(attr);
 }
 
 // -----
@@ -272,6 +272,56 @@ Pattern {
   // CHECK: expected `)` after operation result type list
   let value: TypeRange;
   let foo = op<> -> (value<;
+}
+
+// -----
+
+#include "include/ops.td"
+
+Pattern {
+  // CHECK: invalid number of operand groups for `test.all_empty`; expected 0, but got 2
+  // CHECK: see the definition of `test.all_empty` here
+  let foo = op<test.all_empty>(operand1: Value, operand2: Value);
+}
+
+// -----
+
+#include "include/ops.td"
+
+Pattern {
+  // CHECK: invalid number of result groups for `test.all_empty`; expected 0, but got 2
+  // CHECK: see the definition of `test.all_empty` here
+  let foo = op<test.all_empty> -> (result1: Type, result2: Type);
+}
+
+// -----
+
+Pattern {
+  // CHECK: warning: operation result types are marked to be inferred, but
+  // CHECK-SAME: `test.unknown_inferred_result_op` is unknown.
+  // CHECK-SAME: Ensure that `test.unknown_inferred_result_op` supports zero
+  // CHECK-SAME: results or implements `InferTypeOpInterface`.
+  // CHECK-SAME: Include the ODS definition of this operation to remove this
+  // CHECK-SAME: warning.
+  rewrite _: Op with {
+    op<test.unknown_inferred_result_op>;
+  };
+}
+
+// -----
+
+#include "include/ops.td"
+
+Pattern {
+  // CHECK: warning: operation result types are marked to be inferred, but
+  // CHECK-SAME: `test.multiple_single_result` does not provide an implementation
+  // CHECK-SAME: of `InferTypeOpInterface`. Ensure that `test.multiple_single_result`
+  // CHECK-SAME: attaches `InferTypeOpInterface` at runtime, or add support
+  // CHECK-SAME: to the ODS definition to remove this warning.
+  // CHECK: see the definition of `test.multiple_single_result` here
+  rewrite _: Op with {
+    op<test.multiple_single_result>;
+  };
 }
 
 // -----

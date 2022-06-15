@@ -35,9 +35,11 @@ add_llvm_component_library(LLVMCodeGen
   BranchRelaxation.cpp
   BreakFalseDeps.cpp
   BasicBlockSections.cpp
+  BasicBlockSectionsProfileReader.cpp
   CalcSpillWeights.cpp
   CallingConvLower.cpp
   CFGuardLongjmp.cpp
+  CFIFixup.cpp
   CFIInstrInserter.cpp
   CodeGen.cpp
   CodeGenCommonISel.cpp
@@ -196,6 +198,7 @@ add_llvm_component_library(LLVMCodeGen
   ScheduleDAGInstrs.cpp
   ScheduleDAGPrinter.cpp
   ScoreboardHazardRecognizer.cpp
+  SelectOptimize.cpp
   ShadowStackGCLowering.cpp
   ShrinkWrap.cpp
   SjLjEHPrepare.cpp

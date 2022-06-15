@@ -24,6 +24,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/ProfileSummaryInfo.h"
 #include "llvm/CodeGen/Analysis.h"
+#include "llvm/CodeGen/MBFIWrapper.h"
 #include "llvm/CodeGen/MachineBlockFrequencyInfo.h"
 #include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -32,11 +33,9 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
-#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/MachineSizeOpts.h"
-#include "llvm/CodeGen/MBFIWrapper.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
@@ -104,6 +103,11 @@ namespace {
       AU.addRequired<ProfileSummaryInfoWrapperPass>();
       AU.addRequired<TargetPassConfig>();
       MachineFunctionPass::getAnalysisUsage(AU);
+    }
+
+    MachineFunctionProperties getRequiredProperties() const override {
+      return MachineFunctionProperties().set(
+          MachineFunctionProperties::Property::NoPHIs);
     }
   };
 

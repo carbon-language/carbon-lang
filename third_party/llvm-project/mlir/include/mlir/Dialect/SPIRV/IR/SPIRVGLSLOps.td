@@ -979,7 +979,7 @@ def SPV_GLSLFClampOp : SPV_GLSLTernaryArithmeticOp<"FClamp", 43, SPV_Float> {
 
 // -----
 
-def SPV_GLSLUClampOp : SPV_GLSLTernaryArithmeticOp<"UClamp", 44, SPV_SignlessOrUnsignedInt> {
+def SPV_GLSLUClampOp : SPV_GLSLTernaryArithmeticOp<"UClamp", 44, SPV_Integer> {
   let summary = "Clamp x between min and max values.";
 
   let description = [{
@@ -1008,7 +1008,7 @@ def SPV_GLSLUClampOp : SPV_GLSLTernaryArithmeticOp<"UClamp", 44, SPV_SignlessOrU
 
 // -----
 
-def SPV_GLSLSClampOp : SPV_GLSLTernaryArithmeticOp<"SClamp", 45, SPV_SignedInt> {
+def SPV_GLSLSClampOp : SPV_GLSLTernaryArithmeticOp<"SClamp", 45, SPV_Integer> {
   let summary = "Clamp x between min and max values.";
 
   let description = [{
@@ -1219,6 +1219,22 @@ def SPV_GLSLFMixOp :
   }];
 
   let hasVerifier = 0;
+}
+
+def SPV_GLSLFindUMsbOp : SPV_GLSLUnaryArithmeticOp<"FindUMsb", 75, SPV_Int32> {
+  let summary = "Unsigned-integer most-significant bit";
+
+  let description = [{
+    Results in the bit number of the most-significant 1-bit in the binary
+    representation of Value. If Value is 0, the result is -1.
+
+    Result Type and the type of Value must both be integer scalar or
+    integer vector types. Result Type and operand types must have the
+    same number of components with the same component width. Results are
+    computed per component.
+
+    This instruction is currently limited to 32-bit width components.
+  }];
 }
 
 #endif // MLIR_DIALECT_SPIRV_IR_GLSL_OPS

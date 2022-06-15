@@ -21,7 +21,7 @@
 #include "mlir/IR/MLIRContext.h"
 #include "mlir/IR/Verifier.h"
 #include "mlir/InitAllDialects.h"
-#include "mlir/Parser.h"
+#include "mlir/Parser/Parser.h"
 #include "mlir/Pass/Pass.h"
 #include "mlir/Pass/PassManager.h"
 #include "mlir/Transforms/Passes.h"
@@ -98,7 +98,7 @@ int loadMLIR(llvm::SourceMgr &sourceMgr, mlir::MLIRContext &context,
 
   // Parse the input mlir.
   sourceMgr.AddNewSourceBuffer(std::move(*fileOrErr), llvm::SMLoc());
-  module = mlir::parseSourceFile(sourceMgr, &context);
+  module = mlir::parseSourceFile<mlir::ModuleOp>(sourceMgr, &context);
   if (!module) {
     llvm::errs() << "Error can't load file " << inputFilename << "\n";
     return 3;
@@ -130,17 +130,18 @@ int dumpMLIR() {
 
     // Now that there is only one function, we can infer the shapes of each of
     // the operations.
-    mlir::OpPassManager &optPM = pm.nest<mlir::FuncOp>();
+    mlir::OpPassManager &optPM = pm.nest<mlir::toy::FuncOp>();
     optPM.addPass(mlir::toy::createShapeInferencePass());
     optPM.addPass(mlir::createCanonicalizerPass());
     optPM.addPass(mlir::createCSEPass());
   }
 
   if (isLoweringToAffine) {
-    mlir::OpPassManager &optPM = pm.nest<mlir::FuncOp>();
+    // Partially lower the toy dialect.
+    pm.addPass(mlir::toy::createLowerToAffinePass());
 
-    // Partially lower the toy dialect with a few cleanups afterwards.
-    optPM.addPass(mlir::toy::createLowerToAffinePass());
+    // Add a few cleanups post lowering.
+    mlir::OpPassManager &optPM = pm.nest<mlir::func::FuncOp>();
     optPM.addPass(mlir::createCanonicalizerPass());
     optPM.addPass(mlir::createCSEPass());
 

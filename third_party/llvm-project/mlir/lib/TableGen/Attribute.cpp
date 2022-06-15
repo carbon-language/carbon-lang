@@ -153,8 +153,6 @@ EnumAttrCase::EnumAttrCase(const llvm::Record *record) : Attribute(record) {
 EnumAttrCase::EnumAttrCase(const llvm::DefInit *init)
     : EnumAttrCase(init->getDef()) {}
 
-bool EnumAttrCase::isStrCase() const { return isSubClassOf("StrEnumAttrCase"); }
-
 StringRef EnumAttrCase::getSymbol() const {
   return def->getValueAsString("symbol");
 }
@@ -235,6 +233,10 @@ llvm::Record *EnumAttr::getBaseAttrClass() const {
 
 StringRef EnumAttr::getSpecializedAttrClassName() const {
   return def->getValueAsString("specializedAttrClassName");
+}
+
+bool EnumAttr::printBitEnumPrimaryGroups() const {
+  return def->getValueAsBit("printBitEnumPrimaryGroups");
 }
 
 StructFieldAttr::StructFieldAttr(const llvm::Record *record) : def(record) {

@@ -46,10 +46,8 @@ struct _LIBCPP_TEMPLATE_VIS default_delete {
                      0) _NOEXCEPT {}
 
   _LIBCPP_INLINE_VISIBILITY void operator()(_Tp* __ptr) const _NOEXCEPT {
-    static_assert(sizeof(_Tp) > 0,
-                  "default_delete can not delete incomplete type");
-    static_assert(!is_void<_Tp>::value,
-                  "default_delete can not delete incomplete type");
+    static_assert(sizeof(_Tp) >= 0, "cannot delete an incomplete type");
+    static_assert(!is_void<_Tp>::value, "cannot delete an incomplete type");
     delete __ptr;
   }
 };
@@ -77,10 +75,7 @@ public:
   _LIBCPP_INLINE_VISIBILITY
   typename _EnableIfConvertible<_Up>::type
   operator()(_Up* __ptr) const _NOEXCEPT {
-    static_assert(sizeof(_Tp) > 0,
-                  "default_delete can not delete incomplete type");
-    static_assert(!is_void<_Tp>::value,
-                  "default_delete can not delete void type");
+    static_assert(sizeof(_Up) >= 0, "cannot delete an incomplete type");
     delete[] __ptr;
   }
 };
@@ -143,7 +138,7 @@ private:
       typename __dependent_type<_DeleterSFINAE, _Dummy>::__bad_rval_ref_type;
 
   template <bool _Dummy, class _Deleter = typename __dependent_type<
-                             __identity<deleter_type>, _Dummy>::type>
+                             __type_identity<deleter_type>, _Dummy>::type>
   using _EnableIfDeleterDefaultConstructible _LIBCPP_NODEBUG =
       typename enable_if<is_default_constructible<_Deleter>::value &&
                          !is_pointer<_Deleter>::value>::type;
@@ -357,7 +352,7 @@ private:
       typename __dependent_type<_DeleterSFINAE, _Dummy>::__bad_rval_ref_type;
 
   template <bool _Dummy, class _Deleter = typename __dependent_type<
-                             __identity<deleter_type>, _Dummy>::type>
+                             __type_identity<deleter_type>, _Dummy>::type>
   using _EnableIfDeleterDefaultConstructible _LIBCPP_NODEBUG =
       typename enable_if<is_default_constructible<_Deleter>::value &&
                          !is_pointer<_Deleter>::value>::type;

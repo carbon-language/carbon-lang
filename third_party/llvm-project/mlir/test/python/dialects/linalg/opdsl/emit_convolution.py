@@ -2,8 +2,8 @@
 
 from mlir.ir import *
 from mlir.dialects import builtin
+from mlir.dialects import func
 from mlir.dialects import linalg
-from mlir.dialects import std
 
 from mlir.dialects.linalg.opdsl.lang import *
 
@@ -19,9 +19,9 @@ def conv_poly(
     strides=IndexAttrDef(S.SH, S.SW, default=[1, 1]),
     dilations=IndexAttrDef(S.DH, S.DW, default=[1, 2])):
   domain(D.n, D.oh, D.ow, D.kh, D.kw, D.c)
-  O[D.n, D.oh, D.ow, D.c] += TypeFn.cast(
+  O[D.n, D.oh, D.ow, D.c] += TypeFn.cast_signed(
       U, I[D.n, D.oh * S.SH + D.kh * S.DH, D.ow * S.SW + D.kw * S.DW,
-           D.c]) * TypeFn.cast(U, K[D.kh, D.kw, D.c])
+           D.c]) * TypeFn.cast_signed(U, K[D.kh, D.kw, D.c])
 
 
 with Context() as ctx, Location.unknown():
@@ -46,7 +46,7 @@ with Context() as ctx, Location.unknown():
     # CHECK-NEXT:   %[[SUM:.+]] = arith.addi %[[OUT]], %[[PROD]] : i32
     # CHECK-NEXT:   linalg.yield %[[SUM]] : i32
     # CHECK-NEXT: -> tensor<1x2x4x1xi32>
-    @builtin.FuncOp.from_py_func(
+    @func.FuncOp.from_py_func(
         RankedTensorType.get((1, 4, 16, 1), f32),
         RankedTensorType.get((2, 2, 1), f32),
         RankedTensorType.get((1, 2, 4, 1), i32))

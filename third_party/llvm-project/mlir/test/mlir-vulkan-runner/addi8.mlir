@@ -4,11 +4,11 @@
 module attributes {
   gpu.container_module,
   spv.target_env = #spv.target_env<
-    #spv.vce<v1.0, [Shader], [SPV_KHR_storage_buffer_storage_class, SPV_KHR_8bit_storage]>, {}>
+    #spv.vce<v1.0, [Shader], [SPV_KHR_storage_buffer_storage_class, SPV_KHR_8bit_storage]>, #spv.resource_limits<>>
 } {
   gpu.module @kernels {
     gpu.func @kernel_addi(%arg0 : memref<8xi8>, %arg1 : memref<8x8xi8>, %arg2 : memref<8x8x8xi32>)
-      kernel attributes { spv.entry_point_abi = {local_size = dense<[1, 1, 1]>: vector<3xi32>}} {
+      kernel attributes { spv.entry_point_abi = #spv.entry_point_abi<local_size = dense<[1, 1, 1]>: vector<3xi32>>} {
       %x = gpu.block_id x
       %y = gpu.block_id y
       %z = gpu.block_id z
@@ -21,7 +21,7 @@ module attributes {
     }
   }
 
-  func @main() {
+  func.func @main() {
     %arg0 = memref.alloc() : memref<8xi8>
     %arg1 = memref.alloc() : memref<8x8xi8>
     %arg2 = memref.alloc() : memref<8x8x8xi32>
@@ -41,11 +41,11 @@ module attributes {
         blocks in (%cst8, %cst8, %cst8) threads in (%cst1, %cst1, %cst1)
         args(%arg0 : memref<8xi8>, %arg1 : memref<8x8xi8>, %arg2 : memref<8x8x8xi32>)
     %arg6 = memref.cast %arg5 : memref<?x?x?xi32> to memref<*xi32>
-    call @print_memref_i32(%arg6) : (memref<*xi32>) -> ()
+    call @printMemrefI32(%arg6) : (memref<*xi32>) -> ()
     return
   }
-  func private @fillResource1DInt8(%0 : memref<?xi8>, %1 : i8)
-  func private @fillResource2DInt8(%0 : memref<?x?xi8>, %1 : i8)
-  func private @fillResource3DInt(%0 : memref<?x?x?xi32>, %1 : i32)
-  func private @print_memref_i32(%ptr : memref<*xi32>)
+  func.func private @fillResource1DInt8(%0 : memref<?xi8>, %1 : i8)
+  func.func private @fillResource2DInt8(%0 : memref<?x?xi8>, %1 : i8)
+  func.func private @fillResource3DInt(%0 : memref<?x?x?xi32>, %1 : i32)
+  func.func private @printMemrefI32(%ptr : memref<*xi32>)
 }

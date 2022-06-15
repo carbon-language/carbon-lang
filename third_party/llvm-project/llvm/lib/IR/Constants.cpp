@@ -27,7 +27,6 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/PatternMatch.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
@@ -353,26 +352,14 @@ Constant *Constant::getNullValue(Type *Ty) {
   case Type::IntegerTyID:
     return ConstantInt::get(Ty, 0);
   case Type::HalfTyID:
-    return ConstantFP::get(Ty->getContext(),
-                           APFloat::getZero(APFloat::IEEEhalf()));
   case Type::BFloatTyID:
-    return ConstantFP::get(Ty->getContext(),
-                           APFloat::getZero(APFloat::BFloat()));
   case Type::FloatTyID:
-    return ConstantFP::get(Ty->getContext(),
-                           APFloat::getZero(APFloat::IEEEsingle()));
   case Type::DoubleTyID:
-    return ConstantFP::get(Ty->getContext(),
-                           APFloat::getZero(APFloat::IEEEdouble()));
   case Type::X86_FP80TyID:
-    return ConstantFP::get(Ty->getContext(),
-                           APFloat::getZero(APFloat::x87DoubleExtended()));
   case Type::FP128TyID:
-    return ConstantFP::get(Ty->getContext(),
-                           APFloat::getZero(APFloat::IEEEquad()));
   case Type::PPC_FP128TyID:
-    return ConstantFP::get(Ty->getContext(), APFloat(APFloat::PPCDoubleDouble(),
-                                                     APInt::getZero(128)));
+    return ConstantFP::get(Ty->getContext(),
+                           APFloat::getZero(Ty->getFltSemantics()));
   case Type::PointerTyID:
     return ConstantPointerNull::get(cast<PointerType>(Ty));
   case Type::StructTyID:
@@ -577,20 +564,24 @@ void llvm::deleteConstant(Constant *C) {
 }
 
 static bool canTrapImpl(const Constant *C,
-                        SmallPtrSetImpl<const ConstantExpr *> &NonTrappingOps) {
-  assert(C->getType()->isFirstClassType() && "Cannot evaluate aggregate vals!");
-  // The only thing that could possibly trap are constant exprs.
+                        SmallPtrSetImpl<const Constant *> &NonTrappingOps) {
+  assert(C->getType()->isFirstClassType() &&
+         "Cannot evaluate non-first-class types!");
+  // ConstantExpr or ConstantAggregate trap if any operands can trap.
+  if (isa<ConstantExpr>(C) || isa<ConstantAggregate>(C)) {
+    for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i) {
+      const Constant *Op = cast<Constant>(C->getOperand(i));
+      if (isa<ConstantExpr>(Op) || isa<ConstantAggregate>(Op)) {
+        if (NonTrappingOps.insert(Op).second && canTrapImpl(Op, NonTrappingOps))
+          return true;
+      }
+    }
+  }
+
+  // The only leafs that can trap are constant expressions.
   const ConstantExpr *CE = dyn_cast<ConstantExpr>(C);
   if (!CE)
     return false;
-
-  // ConstantExpr traps if any operands can trap.
-  for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i) {
-    if (ConstantExpr *Op = dyn_cast<ConstantExpr>(CE->getOperand(i))) {
-      if (NonTrappingOps.insert(Op).second && canTrapImpl(Op, NonTrappingOps))
-        return true;
-    }
-  }
 
   // Otherwise, only specific operations can trap.
   switch (CE->getOpcode()) {
@@ -608,7 +599,7 @@ static bool canTrapImpl(const Constant *C,
 }
 
 bool Constant::canTrap() const {
-  SmallPtrSet<const ConstantExpr *, 4> NonTrappingOps;
+  SmallPtrSet<const Constant *, 4> NonTrappingOps;
   return canTrapImpl(this, NonTrappingOps);
 }
 
@@ -742,9 +733,13 @@ static bool constantIsDead(const Constant *C, bool RemoveDeadUsers) {
       ++I;
   }
 
-  if (RemoveDeadUsers)
+  if (RemoveDeadUsers) {
+    // If C is only used by metadata, it should not be preserved but should
+    // have its uses replaced.
+    ReplaceableMetadataImpl::SalvageDebugInfo(*C);
     const_cast<Constant *>(C)->destroyConstant();
-
+  }
+  
   return true;
 }
 
@@ -1046,9 +1041,9 @@ Constant *ConstantFP::getSNaN(Type *Ty, bool Negative, APInt *Payload) {
   return C;
 }
 
-Constant *ConstantFP::getNegativeZero(Type *Ty) {
+Constant *ConstantFP::getZero(Type *Ty, bool Negative) {
   const fltSemantics &Semantics = Ty->getScalarType()->getFltSemantics();
-  APFloat NegZero = APFloat::getZero(Semantics, /*Negative=*/true);
+  APFloat NegZero = APFloat::getZero(Semantics, Negative);
   Constant *C = get(Ty->getContext(), NegZero);
 
   if (VectorType *VTy = dyn_cast<VectorType>(Ty))
@@ -1056,7 +1051,6 @@ Constant *ConstantFP::getNegativeZero(Type *Ty) {
 
   return C;
 }
-
 
 Constant *ConstantFP::getZeroValueForNegation(Type *Ty) {
   if (Ty->isFPOrFPVectorTy())
@@ -2065,6 +2059,17 @@ Constant *ConstantExpr::getTruncOrBitCast(Constant *C, Type *Ty) {
   return getTrunc(C, Ty);
 }
 
+Constant *ConstantExpr::getSExtOrTrunc(Constant *C, Type *Ty) {
+  assert(C->getType()->isIntOrIntVectorTy() && Ty->isIntOrIntVectorTy() &&
+         "Can only sign extend/truncate integers!");
+  Type *CTy = C->getType();
+  if (CTy->getScalarSizeInBits() < Ty->getScalarSizeInBits())
+    return getSExt(C, Ty);
+  if (CTy->getScalarSizeInBits() > Ty->getScalarSizeInBits())
+    return getTrunc(C, Ty);
+  return C;
+}
+
 Constant *ConstantExpr::getPointerCast(Constant *S, Type *Ty) {
   assert(S->getType()->isPtrOrPtrVectorTy() && "Invalid cast");
   assert((Ty->isIntOrIntVectorTy() || Ty->isPtrOrPtrVectorTy()) &&
@@ -2233,8 +2238,8 @@ Constant *ConstantExpr::getPtrToInt(Constant *C, Type *DstTy,
          "PtrToInt destination must be integer or integer vector");
   assert(isa<VectorType>(C->getType()) == isa<VectorType>(DstTy));
   if (isa<VectorType>(C->getType()))
-    assert(cast<FixedVectorType>(C->getType())->getNumElements() ==
-               cast<FixedVectorType>(DstTy)->getNumElements() &&
+    assert(cast<VectorType>(C->getType())->getElementCount() ==
+               cast<VectorType>(DstTy)->getElementCount() &&
            "Invalid cast between a different number of vector elements");
   return getFoldedCast(Instruction::PtrToInt, C, DstTy, OnlyIfReduced);
 }
@@ -2833,7 +2838,7 @@ Constant *ConstantExpr::getExactLogBase2(Constant *C) {
 }
 
 Constant *ConstantExpr::getBinOpIdentity(unsigned Opcode, Type *Ty,
-                                         bool AllowRHSConstant) {
+                                         bool AllowRHSConstant, bool NSZ) {
   assert(Instruction::isBinaryOp(Opcode) && "Only binops allowed");
 
   // Commutative opcodes: it does not matter if AllowRHSConstant is set.
@@ -2848,8 +2853,7 @@ Constant *ConstantExpr::getBinOpIdentity(unsigned Opcode, Type *Ty,
       case Instruction::And: // X & -1 = X
         return Constant::getAllOnesValue(Ty);
       case Instruction::FAdd: // X + -0.0 = X
-        // TODO: If the fadd has 'nsz', should we return +0.0?
-        return ConstantFP::getNegativeZero(Ty);
+        return ConstantFP::getZero(Ty, !NSZ);
       case Instruction::FMul: // X * 1.0 = X
         return ConstantFP::get(Ty, 1.0);
       default:

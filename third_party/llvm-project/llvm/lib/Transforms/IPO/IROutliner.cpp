@@ -16,8 +16,9 @@
 #include "llvm/Analysis/OptimizationRemarkEmitter.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/Attributes.h"
-#include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/DIBuilder.h"
+#include "llvm/IR/DebugInfo.h"
+#include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/IR/PassManager.h"
@@ -25,8 +26,6 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Transforms/IPO.h"
-#include <map>
-#include <set>
 #include <vector>
 
 #define DEBUG_TYPE "iroutliner"
@@ -190,6 +189,19 @@ Value *OutlinableRegion::findCorrespondingValueIn(const OutlinableRegion &Other,
   return FoundValueOpt.getValueOr(nullptr);
 }
 
+BasicBlock *
+OutlinableRegion::findCorrespondingBlockIn(const OutlinableRegion &Other,
+                                           BasicBlock *BB) {
+  Instruction *FirstNonPHI = BB->getFirstNonPHI();
+  assert(FirstNonPHI && "block is empty?");
+  Value *CorrespondingVal = findCorrespondingValueIn(Other, FirstNonPHI);
+  if (!CorrespondingVal)
+    return nullptr;
+  BasicBlock *CorrespondingBlock =
+      cast<Instruction>(CorrespondingVal)->getParent();
+  return CorrespondingBlock;
+}
+
 /// Rewrite the BranchInsts in the incoming blocks to \p PHIBlock that are found
 /// in \p Included to branch to BasicBlock \p Replace if they currently branch
 /// to the BasicBlock \p Find.  This is used to fix up the incoming basic blocks
@@ -264,13 +276,33 @@ void OutlinableRegion::splitCandidate() {
   // We iterate over the instructions in the region, if we find a PHINode, we
   // check if there are predecessors outside of the region, if there are,
   // we ignore this region since we are unable to handle the severing of the
-  // phi node right now. 
+  // phi node right now.
+
+  // TODO: Handle extraneous inputs for PHINodes through variable number of
+  // inputs, similar to how outputs are handled.
   BasicBlock::iterator It = StartInst->getIterator();
+  EndBB = BackInst->getParent();
+  BasicBlock *IBlock;
+  BasicBlock *PHIPredBlock = nullptr;
+  bool EndBBTermAndBackInstDifferent = EndBB->getTerminator() != BackInst;
   while (PHINode *PN = dyn_cast<PHINode>(&*It)) {
     unsigned NumPredsOutsideRegion = 0;
-    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-      if (!BBSet.contains(PN->getIncomingBlock(i)))
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+      if (!BBSet.contains(PN->getIncomingBlock(i))) {
+        PHIPredBlock = PN->getIncomingBlock(i);
         ++NumPredsOutsideRegion;
+        continue;
+      }
+
+      // We must consider the case there the incoming block to the PHINode is
+      // the same as the final block of the OutlinableRegion.  If this is the
+      // case, the branch from this block must also be outlined to be valid.
+      IBlock = PN->getIncomingBlock(i);
+      if (IBlock == EndBB && EndBBTermAndBackInstDifferent) {
+        PHIPredBlock = PN->getIncomingBlock(i);
+        ++NumPredsOutsideRegion;
+      }
+    }
 
     if (NumPredsOutsideRegion > 1)
       return;
@@ -285,11 +317,9 @@ void OutlinableRegion::splitCandidate() {
   
   // If the region ends with a PHINode, but does not contain all of the phi node
   // instructions of the region, we ignore it for now.
-  if (isa<PHINode>(BackInst)) {
-    EndBB = BackInst->getParent();
-    if (BackInst != &*std::prev(EndBB->getFirstInsertionPt()))
-      return;
-  }
+  if (isa<PHINode>(BackInst) &&
+      BackInst != &*std::prev(EndBB->getFirstInsertionPt()))
+    return;
 
   // The basic block gets split like so:
   // block:                 block:
@@ -310,6 +340,10 @@ void OutlinableRegion::splitCandidate() {
 
   StartBB = PrevBB->splitBasicBlock(StartInst, OriginalName + "_to_outline");
   PrevBB->replaceSuccessorsPhiUsesWith(PrevBB, StartBB);
+  // If there was a PHINode with an incoming block outside the region,
+  // make sure is correctly updated in the newly split block.
+  if (PHIPredBlock)
+    PrevBB->replaceSuccessorsPhiUsesWith(PHIPredBlock, PrevBB);
 
   CandidateSplit = true;
   if (!BackInst->isTerminator()) {
@@ -353,6 +387,25 @@ void OutlinableRegion::reattachCandidate() {
   assert(StartBB != nullptr && "StartBB for Candidate is not defined!");
 
   assert(PrevBB->getTerminator() && "Terminator removed from PrevBB!");
+  // Make sure PHINode references to the block we are merging into are
+  // updated to be incoming blocks from the predecessor to the current block.
+
+  // NOTE: If this is updated such that the outlined block can have more than
+  // one incoming block to a PHINode, this logic will have to updated
+  // to handle multiple precessors instead.
+
+  // We only need to update this if the outlined section contains a PHINode, if
+  // it does not, then the incoming block was never changed in the first place.
+  // On the other hand, if PrevBB has no predecessors, it means that all
+  // incoming blocks to the first block are contained in the region, and there
+  // will be nothing to update.
+  Instruction *StartInst = (*Candidate->begin()).Inst;
+  if (isa<PHINode>(StartInst) && !PrevBB->hasNPredecessors(0)) {
+    assert(!PrevBB->hasNPredecessorsOrMore(2) &&
+         "PrevBB has more than one predecessor. Should be 0 or 1.");
+    BasicBlock *BeforePrevBB = PrevBB->getSinglePredecessor();
+    PrevBB->replaceSuccessorsPhiUsesWith(PrevBB, BeforePrevBB);
+  }
   PrevBB->getTerminator()->eraseFromParent();
 
   // If we reattaching after outlining, we iterate over the phi nodes to
@@ -666,6 +719,18 @@ static void moveFunctionData(Function &Old, Function &New,
       if (!isa<CallInst>(&Val)) {
         // Remove the debug information for outlined functions.
         Val.setDebugLoc(DebugLoc());
+
+        // Loop info metadata may contain line locations. Update them to have no
+        // value in the new subprogram since the outlined code could be from
+        // several locations.
+        auto updateLoopInfoLoc = [&New](Metadata *MD) -> Metadata * {
+          if (DISubprogram *SP = New.getSubprogram())
+            if (auto *Loc = dyn_cast_or_null<DILocation>(MD))
+              return DILocation::get(New.getContext(), Loc->getLine(),
+                                     Loc->getColumn(), SP, nullptr);
+          return MD;
+        };
+        updateLoopMetadataDebugLocations(Val, updateLoopInfoLoc);
         continue;
       }
 
@@ -691,8 +756,6 @@ static void moveFunctionData(Function &Old, Function &New,
     for (Instruction *I : DebugInsts)
       I->eraseFromParent();
   }
-
-  assert(NewEnds.size() > 0 && "No return instruction for new function?");
 }
 
 /// Find the the constants that will need to be lifted into arguments
@@ -1097,30 +1160,72 @@ static hash_code encodePHINodeData(PHINodeData &PND) {
 ///
 /// \param Region - The region that \p PN is an output for.
 /// \param PN - The PHINode we are analyzing.
+/// \param Blocks - The blocks for the region we are analyzing.
 /// \param AggArgIdx - The argument \p PN will be stored into.
 /// \returns An optional holding the assigned canonical number, or None if
 /// there is some attribute of the PHINode blocking it from being used.
 static Optional<unsigned> getGVNForPHINode(OutlinableRegion &Region,
-                                           PHINode *PN, unsigned AggArgIdx) {
+                                           PHINode *PN,
+                                           DenseSet<BasicBlock *> &Blocks,
+                                           unsigned AggArgIdx) {
   OutlinableGroup &Group = *Region.Parent;
   IRSimilarityCandidate &Cand = *Region.Candidate;
   BasicBlock *PHIBB = PN->getParent();
   CanonList PHIGVNs;
-  for (Value *Incoming : PN->incoming_values()) {
-    // If we cannot find a GVN, this means that the input to the PHINode is
-    // not included in the region we are trying to analyze, meaning, that if
-    // it was outlined, we would be adding an extra input.  We ignore this
-    // case for now, and so ignore the region.
+  Value *Incoming;
+  BasicBlock *IncomingBlock;
+  for (unsigned Idx = 0, EIdx = PN->getNumIncomingValues(); Idx < EIdx; Idx++) {
+    Incoming = PN->getIncomingValue(Idx);
+    IncomingBlock = PN->getIncomingBlock(Idx);
+    // If we cannot find a GVN, and the incoming block is included in the region
+    // this means that the input to the PHINode is not included in the region we
+    // are trying to analyze, meaning, that if it was outlined, we would be
+    // adding an extra input.  We ignore this case for now, and so ignore the
+    // region.
     Optional<unsigned> OGVN = Cand.getGVN(Incoming);
-    if (!OGVN.hasValue()) {
+    if (!OGVN.hasValue() && Blocks.contains(IncomingBlock)) {
       Region.IgnoreRegion = true;
       return None;
     }
+
+    // If the incoming block isn't in the region, we don't have to worry about
+    // this incoming value.
+    if (!Blocks.contains(IncomingBlock))
+      continue;
 
     // Collect the canonical numbers of the values in the PHINode.
     unsigned GVN = OGVN.getValue();
     OGVN = Cand.getCanonicalNum(GVN);
     assert(OGVN.hasValue() && "No GVN found for incoming value?");
+    PHIGVNs.push_back(*OGVN);
+
+    // Find the incoming block and use the canonical numbering as well to define
+    // the hash for the PHINode.
+    OGVN = Cand.getGVN(IncomingBlock);
+
+    // If there is no number for the incoming block, it is becaause we have
+    // split the candidate basic blocks.  So we use the previous block that it
+    // was split from to find the valid global value numbering for the PHINode.
+    if (!OGVN.hasValue()) {
+      assert(Cand.getStartBB() == IncomingBlock &&
+             "Unknown basic block used in exit path PHINode.");
+
+      BasicBlock *PrevBlock = nullptr;
+      // Iterate over the predecessors to the incoming block of the
+      // PHINode, when we find a block that is not contained in the region
+      // we know that this is the first block that we split from, and should
+      // have a valid global value numbering.
+      for (BasicBlock *Pred : predecessors(IncomingBlock))
+        if (!Blocks.contains(Pred)) {
+          PrevBlock = Pred;
+          break;
+        }
+      assert(PrevBlock && "Expected a predecessor not in the reigon!");
+      OGVN = Cand.getGVN(PrevBlock);
+    }
+    GVN = OGVN.getValue();
+    OGVN = Cand.getCanonicalNum(GVN);
+    assert(OGVN.hasValue() && "No GVN found for incoming block?");
     PHIGVNs.push_back(*OGVN);
   }
 
@@ -1261,9 +1366,9 @@ findExtractedOutputToOverallOutputMapping(OutlinableRegion &Region,
 
       // If two PHINodes have the same canonical values, but different aggregate
       // argument locations, then they will have distinct Canonical Values.
-      GVN = getGVNForPHINode(Region, PN, AggArgIdx);
+      GVN = getGVNForPHINode(Region, PN, BlocksInRegion, AggArgIdx);
       if (!GVN.hasValue())
-        return; 
+        return;
     } else {
       // If we do not have a PHINode we use the global value numbering for the
       // output value, to find the canonical number to add to the set of stored
@@ -1519,17 +1624,18 @@ getPassedArgumentAndAdjustArgumentLocation(const Argument *A,
 /// \param OutputMappings [in] - The mapping of output values from outlined
 /// region to their original values.
 /// \param CanonNums [out] - The canonical numbering for the incoming values to
-/// \p PN.
+/// \p PN paired with their incoming block.
 /// \param ReplacedWithOutlinedCall - A flag to use the extracted function call
 /// of \p Region rather than the overall function's call.
-static void
-findCanonNumsForPHI(PHINode *PN, OutlinableRegion &Region,
-                    const DenseMap<Value *, Value *> &OutputMappings,
-                    DenseSet<unsigned> &CanonNums,
-                    bool ReplacedWithOutlinedCall = true) {
+static void findCanonNumsForPHI(
+    PHINode *PN, OutlinableRegion &Region,
+    const DenseMap<Value *, Value *> &OutputMappings,
+    SmallVector<std::pair<unsigned, BasicBlock *>> &CanonNums,
+    bool ReplacedWithOutlinedCall = true) {
   // Iterate over the incoming values.
   for (unsigned Idx = 0, EIdx = PN->getNumIncomingValues(); Idx < EIdx; Idx++) {
     Value *IVal = PN->getIncomingValue(Idx);
+    BasicBlock *IBlock = PN->getIncomingBlock(Idx);
     // If we have an argument as incoming value, we need to grab the passed
     // value from the call itself.
     if (Argument *A = dyn_cast<Argument>(IVal)) {
@@ -1547,7 +1653,7 @@ findCanonNumsForPHI(PHINode *PN, OutlinableRegion &Region,
     assert(GVN.hasValue() && "No GVN for incoming value");
     Optional<unsigned> CanonNum = Region.Candidate->getCanonicalNum(*GVN);
     assert(CanonNum.hasValue() && "No Canonical Number for GVN");
-    CanonNums.insert(*CanonNum);
+    CanonNums.push_back(std::make_pair(*CanonNum, IBlock));
   }
 }
 
@@ -1556,19 +1662,26 @@ findCanonNumsForPHI(PHINode *PN, OutlinableRegion &Region,
 /// function.
 ///
 /// \param PN [in] - The PHINode that we are finding the canonical numbers for.
-/// \param Region [in] - The OutlinableRegion containing \p PN. 
+/// \param Region [in] - The OutlinableRegion containing \p PN.
 /// \param OverallPhiBlock [in] - The overall PHIBlock we are trying to find
 /// \p PN in.
 /// \param OutputMappings [in] - The mapping of output values from outlined
 /// region to their original values.
+/// \param UsedPHIs [in, out] - The PHINodes in the block that have already been
+/// matched.
 /// \return the newly found or created PHINode in \p OverallPhiBlock.
 static PHINode*
 findOrCreatePHIInBlock(PHINode &PN, OutlinableRegion &Region,
                        BasicBlock *OverallPhiBlock,
-                       const DenseMap<Value *, Value *> &OutputMappings) {
+                       const DenseMap<Value *, Value *> &OutputMappings,
+                       DenseSet<PHINode *> &UsedPHIs) {
   OutlinableGroup &Group = *Region.Parent;
   
-  DenseSet<unsigned> PNCanonNums;
+  
+  // A list of the canonical numbering assigned to each incoming value, paired
+  // with the incoming block for the PHINode passed into this function.
+  SmallVector<std::pair<unsigned, BasicBlock *>> PNCanonNums;
+
   // We have to use the extracted function since we have merged this region into
   // the overall function yet.  We make sure to reassign the argument numbering
   // since it is possible that the argument ordering is different between the
@@ -1577,18 +1690,61 @@ findOrCreatePHIInBlock(PHINode &PN, OutlinableRegion &Region,
                       /* ReplacedWithOutlinedCall = */ false);
 
   OutlinableRegion *FirstRegion = Group.Regions[0];
-  DenseSet<unsigned> CurrentCanonNums;
+
+  // A list of the canonical numbering assigned to each incoming value, paired
+  // with the incoming block for the PHINode that we are currently comparing
+  // the passed PHINode to.
+  SmallVector<std::pair<unsigned, BasicBlock *>> CurrentCanonNums;
+
   // Find the Canonical Numbering for each PHINode, if it matches, we replace
   // the uses of the PHINode we are searching for, with the found PHINode.
   for (PHINode &CurrPN : OverallPhiBlock->phis()) {
+    // If this PHINode has already been matched to another PHINode to be merged,
+    // we skip it.
+    if (UsedPHIs.contains(&CurrPN))
+      continue;
+
     CurrentCanonNums.clear();
     findCanonNumsForPHI(&CurrPN, *FirstRegion, OutputMappings, CurrentCanonNums,
                         /* ReplacedWithOutlinedCall = */ true);
 
-    if (all_of(PNCanonNums, [&CurrentCanonNums](unsigned CanonNum) {
-          return CurrentCanonNums.contains(CanonNum);
-        }))
+    // If the list of incoming values is not the same length, then they cannot
+    // match since there is not an analogue for each incoming value.
+    if (PNCanonNums.size() != CurrentCanonNums.size())
+      continue;
+
+    bool FoundMatch = true;
+
+    // We compare the canonical value for each incoming value in the passed
+    // in PHINode to one already present in the outlined region.  If the
+    // incoming values do not match, then the PHINodes do not match.
+
+    // We also check to make sure that the incoming block matches as well by
+    // finding the corresponding incoming block in the combined outlined region
+    // for the current outlined region.
+    for (unsigned Idx = 0, Edx = PNCanonNums.size(); Idx < Edx; ++Idx) {
+      std::pair<unsigned, BasicBlock *> ToCompareTo = CurrentCanonNums[Idx];
+      std::pair<unsigned, BasicBlock *> ToAdd = PNCanonNums[Idx];
+      if (ToCompareTo.first != ToAdd.first) {
+        FoundMatch = false;
+        break;
+      }
+
+      BasicBlock *CorrespondingBlock =
+          Region.findCorrespondingBlockIn(*FirstRegion, ToAdd.second);
+      assert(CorrespondingBlock && "Found block is nullptr");
+      if (CorrespondingBlock != ToCompareTo.second) {
+        FoundMatch = false;
+        break;
+      }
+    }
+
+    // If all incoming values and branches matched, then we can merge
+    // into the found PHINode.
+    if (FoundMatch) {
+      UsedPHIs.insert(&CurrPN);
       return &CurrPN;
+    }
   }
 
   // If we've made it here, it means we weren't able to replace the PHINode, so
@@ -1602,12 +1758,8 @@ findOrCreatePHIInBlock(PHINode &PN, OutlinableRegion &Region,
 
     // Find corresponding basic block in the overall function for the incoming
     // block.
-    Instruction *FirstNonPHI = IncomingBlock->getFirstNonPHI();
-    assert(FirstNonPHI && "Incoming block is empty?");
-    Value *CorrespondingVal =
-        Region.findCorrespondingValueIn(*FirstRegion, FirstNonPHI);
-    assert(CorrespondingVal && "Value is nullptr?");
-    BasicBlock *BlockToUse = cast<Instruction>(CorrespondingVal)->getParent();
+    BasicBlock *BlockToUse =
+        Region.findCorrespondingBlockIn(*FirstRegion, IncomingBlock);
     NewPN->setIncomingBlock(Idx, BlockToUse);
 
     // If we have an argument we make sure we replace using the argument from
@@ -1622,6 +1774,10 @@ findOrCreatePHIInBlock(PHINode &PN, OutlinableRegion &Region,
     IncomingVal = findOutputMapping(OutputMappings, IncomingVal);
     Value *Val = Region.findCorrespondingValueIn(*FirstRegion, IncomingVal);
     assert(Val && "Value is nullptr?");
+    DenseMap<Value *, Value *>::iterator RemappedIt =
+        FirstRegion->RemappedArguments.find(Val);
+    if (RemappedIt != FirstRegion->RemappedArguments.end())
+      Val = RemappedIt->second;
     NewPN->setIncomingValue(Idx, Val);
   }
   return NewPN;
@@ -1648,6 +1804,7 @@ replaceArgumentUses(OutlinableRegion &Region,
   if (FirstFunction)
     DominatingFunction = Group.OutlinedFunction;
   DominatorTree DT(*DominatingFunction);
+  DenseSet<PHINode *> UsedPHIs;
 
   for (unsigned ArgIdx = 0; ArgIdx < Region.ExtractedFunction->arg_size();
        ArgIdx++) {
@@ -1664,6 +1821,8 @@ replaceArgumentUses(OutlinableRegion &Region,
                         << *Region.ExtractedFunction << " with " << *AggArg
                         << " in function " << *Group.OutlinedFunction << "\n");
       Arg->replaceAllUsesWith(AggArg);
+      Value *V = Region.Call->getArgOperand(ArgIdx);
+      Region.RemappedArguments.insert(std::make_pair(V, AggArg));
       continue;
     }
 
@@ -1747,8 +1906,8 @@ replaceArgumentUses(OutlinableRegion &Region,
       // For our PHINode, we find the combined canonical numbering, and
       // attempt to find a matching PHINode in the overall PHIBlock.  If we
       // cannot, we copy the PHINode and move it into this new block.
-      PHINode *NewPN =
-          findOrCreatePHIInBlock(*PN, Region, OverallPhiBlock, OutputMappings);
+      PHINode *NewPN = findOrCreatePHIInBlock(*PN, Region, OverallPhiBlock,
+                                              OutputMappings, UsedPHIs);
       NewI->setOperand(0, NewPN);
     }
 
@@ -2278,6 +2437,9 @@ void IROutliner::pruneIncompatibleRegions(
     if (BBHasAddressTaken)
       continue;
 
+    if (IRSC.getFunction()->hasOptNone())
+      continue;
+
     if (IRSC.front()->Inst->getFunction()->hasLinkOnceODRLinkage() &&
         !OutlineFromLinkODRs)
       continue;
@@ -2679,7 +2841,7 @@ unsigned IROutliner::doOutline(Module &M) {
       OS->Candidate->getBasicBlocks(BlocksInRegion, BE);
       OS->CE = new (ExtractorAllocator.Allocate())
           CodeExtractor(BE, nullptr, false, nullptr, nullptr, nullptr, false,
-                        false, "outlined");
+                        false, nullptr, "outlined");
       findAddInputsOutputs(M, *OS, NotSame);
       if (!OS->IgnoreRegion)
         OutlinedRegions.push_back(OS);
@@ -2790,7 +2952,7 @@ unsigned IROutliner::doOutline(Module &M) {
       OS->Candidate->getBasicBlocks(BlocksInRegion, BE);
       OS->CE = new (ExtractorAllocator.Allocate())
           CodeExtractor(BE, nullptr, false, nullptr, nullptr, nullptr, false,
-                        false, "outlined");
+                        false, nullptr, "outlined");
       bool FunctionOutlined = extractSection(*OS);
       if (FunctionOutlined) {
         unsigned StartIdx = OS->Candidate->getStartIdx();
@@ -2873,7 +3035,7 @@ bool IROutlinerLegacyPass::runOnModule(Module &M) {
   std::unique_ptr<OptimizationRemarkEmitter> ORE;
   auto GORE = [&ORE](Function &F) -> OptimizationRemarkEmitter & {
     ORE.reset(new OptimizationRemarkEmitter(&F));
-    return *ORE.get();
+    return *ORE;
   };
 
   auto GTTI = [this](Function &F) -> TargetTransformInfo & {
@@ -2904,7 +3066,7 @@ PreservedAnalyses IROutlinerPass::run(Module &M, ModuleAnalysisManager &AM) {
   std::function<OptimizationRemarkEmitter &(Function &)> GORE =
       [&ORE](Function &F) -> OptimizationRemarkEmitter & {
     ORE.reset(new OptimizationRemarkEmitter(&F));
-    return *ORE.get();
+    return *ORE;
   };
 
   if (IROutliner(GTTI, GIRSI, GORE).run(M))

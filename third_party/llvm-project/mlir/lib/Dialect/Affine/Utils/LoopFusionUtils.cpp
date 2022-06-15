@@ -18,6 +18,7 @@
 #include "mlir/Dialect/Affine/Analysis/Utils.h"
 #include "mlir/Dialect/Affine/IR/AffineOps.h"
 #include "mlir/Dialect/Affine/LoopUtils.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/IR/AffineExpr.h"
 #include "mlir/IR/AffineMap.h"
 #include "mlir/IR/BlockAndValueMapping.h"
@@ -481,7 +482,7 @@ bool mlir::getLoopNestStats(AffineForOp forOpRoot, LoopNestStats *stats) {
   auto walkResult = forOpRoot.walk([&](AffineForOp forOp) {
     auto *childForOp = forOp.getOperation();
     auto *parentForOp = forOp->getParentOp();
-    if (!llvm::isa<FuncOp>(parentForOp)) {
+    if (!llvm::isa<func::FuncOp>(parentForOp)) {
       if (!isa<AffineForOp>(parentForOp)) {
         LLVM_DEBUG(llvm::dbgs() << "Expected parent AffineForOp\n");
         return WalkResult::interrupt();

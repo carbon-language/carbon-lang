@@ -470,6 +470,33 @@ void Sema::ActOnPragmaDetectMismatch(SourceLocation Loc, StringRef Name,
   Consumer.HandleTopLevelDecl(DeclGroupRef(PDMD));
 }
 
+void Sema::ActOnPragmaFPEvalMethod(SourceLocation Loc,
+                                   LangOptions::FPEvalMethodKind Value) {
+  FPOptionsOverride NewFPFeatures = CurFPFeatureOverrides();
+  switch (Value) {
+  default:
+    llvm_unreachable("invalid pragma eval_method kind");
+  case LangOptions::FEM_Source:
+    NewFPFeatures.setFPEvalMethodOverride(LangOptions::FEM_Source);
+    break;
+  case LangOptions::FEM_Double:
+    NewFPFeatures.setFPEvalMethodOverride(LangOptions::FEM_Double);
+    break;
+  case LangOptions::FEM_Extended:
+    NewFPFeatures.setFPEvalMethodOverride(LangOptions::FEM_Extended);
+    break;
+  }
+  if (getLangOpts().ApproxFunc)
+    Diag(Loc, diag::err_setting_eval_method_used_in_unsafe_context) << 0 << 0;
+  if (getLangOpts().AllowFPReassoc)
+    Diag(Loc, diag::err_setting_eval_method_used_in_unsafe_context) << 0 << 1;
+  if (getLangOpts().AllowRecip)
+    Diag(Loc, diag::err_setting_eval_method_used_in_unsafe_context) << 0 << 2;
+  FpPragmaStack.Act(Loc, PSK_Set, StringRef(), NewFPFeatures);
+  CurFPFeatures = NewFPFeatures.applyOverrides(getLangOpts());
+  PP.setCurrentFPEvalMethod(Loc, Value);
+}
+
 void Sema::ActOnPragmaFloatControl(SourceLocation Loc,
                                    PragmaMsStackAction Action,
                                    PragmaFloatControlKind Value) {
@@ -487,6 +514,13 @@ void Sema::ActOnPragmaFloatControl(SourceLocation Loc,
   case PFC_Precise:
     NewFPFeatures.setFPPreciseEnabled(true);
     FpPragmaStack.Act(Loc, Action, StringRef(), NewFPFeatures);
+    if (PP.getCurrentFPEvalMethod() ==
+            LangOptions::FPEvalMethodKind::FEM_Indeterminable &&
+        PP.getLastFPEvalPragmaLocation().isValid())
+      // A preceding `pragma float_control(precise,off)` has changed
+      // the value of the evaluation method.
+      // Set it back to its old value.
+      PP.setCurrentFPEvalMethod(SourceLocation(), PP.getLastFPEvalMethod());
     break;
   case PFC_NoPrecise:
     if (CurFPFeatures.getFPExceptionMode() == LangOptions::FPE_Strict)
@@ -496,6 +530,10 @@ void Sema::ActOnPragmaFloatControl(SourceLocation Loc,
     else
       NewFPFeatures.setFPPreciseEnabled(false);
     FpPragmaStack.Act(Loc, Action, StringRef(), NewFPFeatures);
+    PP.setLastFPEvalMethod(PP.getCurrentFPEvalMethod());
+    // `AllowFPReassoc` or `AllowReciprocal` option is enabled.
+    PP.setCurrentFPEvalMethod(
+        Loc, LangOptions::FPEvalMethodKind::FEM_Indeterminable);
     break;
   case PFC_Except:
     if (!isPreciseFPEnabled())
@@ -519,6 +557,12 @@ void Sema::ActOnPragmaFloatControl(SourceLocation Loc,
     }
     FpPragmaStack.Act(Loc, Action, StringRef(), NewFPFeatures);
     NewFPFeatures = FpPragmaStack.CurrentValue;
+    if (CurFPFeatures.getAllowFPReassociate() ||
+        CurFPFeatures.getAllowReciprocal())
+      // Since we are popping the pragma, we don't want to be passing
+      // a location here.
+      PP.setCurrentFPEvalMethod(SourceLocation(),
+                                CurFPFeatures.getFPEvalMethod());
     break;
   }
   CurFPFeatures = NewFPFeatures.applyOverrides(getLangOpts());
@@ -695,6 +739,37 @@ void Sema::ActOnPragmaMSInitSeg(SourceLocation PragmaLocation,
   // tacking on unnecessary attributes.
   CurInitSeg = SegmentName->getString() == ".CRT$XCU" ? nullptr : SegmentName;
   CurInitSegLoc = PragmaLocation;
+}
+
+void Sema::ActOnPragmaMSAllocText(
+    SourceLocation PragmaLocation, StringRef Section,
+    const SmallVector<std::tuple<IdentifierInfo *, SourceLocation>>
+        &Functions) {
+  if (!CurContext->getRedeclContext()->isFileContext()) {
+    Diag(PragmaLocation, diag::err_pragma_expected_file_scope) << "alloc_text";
+    return;
+  }
+
+  for (auto &Function : Functions) {
+    IdentifierInfo *II;
+    SourceLocation Loc;
+    std::tie(II, Loc) = Function;
+
+    DeclarationName DN(II);
+    NamedDecl *ND = LookupSingleName(TUScope, DN, Loc, LookupOrdinaryName);
+    if (!ND) {
+      Diag(Loc, diag::err_undeclared_use) << II->getName();
+      return;
+    }
+
+    DeclContext *DC = ND->getDeclContext();
+    if (getLangOpts().CPlusPlus && !DC->isExternCContext()) {
+      Diag(Loc, diag::err_pragma_alloc_text_c_linkage);
+      return;
+    }
+
+    FunctionToSectionMap[II->getName()] = std::make_tuple(Section, Loc);
+  }
 }
 
 void Sema::ActOnPragmaUnused(const Token &IdTok, Scope *curScope,
@@ -1021,11 +1096,37 @@ void Sema::ActOnPragmaOptimize(bool On, SourceLocation PragmaLoc) {
     OptimizeOffPragmaLocation = PragmaLoc;
 }
 
+void Sema::ActOnPragmaMSFunction(
+    SourceLocation Loc, const llvm::SmallVectorImpl<StringRef> &NoBuiltins) {
+  if (!CurContext->getRedeclContext()->isFileContext()) {
+    Diag(Loc, diag::err_pragma_expected_file_scope) << "function";
+    return;
+  }
+
+  MSFunctionNoBuiltins.insert(NoBuiltins.begin(), NoBuiltins.end());
+}
+
 void Sema::AddRangeBasedOptnone(FunctionDecl *FD) {
   // In the future, check other pragmas if they're implemented (e.g. pragma
   // optimize 0 will probably map to this functionality too).
   if(OptimizeOffPragmaLocation.isValid())
     AddOptnoneAttributeIfNoConflicts(FD, OptimizeOffPragmaLocation);
+}
+
+void Sema::AddSectionMSAllocText(FunctionDecl *FD) {
+  if (!FD->getIdentifier())
+    return;
+
+  StringRef Name = FD->getName();
+  auto It = FunctionToSectionMap.find(Name);
+  if (It != FunctionToSectionMap.end()) {
+    StringRef Section;
+    SourceLocation Loc;
+    std::tie(Section, Loc) = It->second;
+
+    if (!FD->hasAttr<SectionAttr>())
+      FD->addAttr(SectionAttr::CreateImplicit(Context, Section));
+  }
 }
 
 void Sema::AddOptnoneAttributeIfNoConflicts(FunctionDecl *FD,
@@ -1040,6 +1141,13 @@ void Sema::AddOptnoneAttributeIfNoConflicts(FunctionDecl *FD,
     FD->addAttr(OptimizeNoneAttr::CreateImplicit(Context, Loc));
   if (!FD->hasAttr<NoInlineAttr>())
     FD->addAttr(NoInlineAttr::CreateImplicit(Context, Loc));
+}
+
+void Sema::AddImplicitMSFunctionNoBuiltinAttr(FunctionDecl *FD) {
+  SmallVector<StringRef> V(MSFunctionNoBuiltins.begin(),
+                           MSFunctionNoBuiltins.end());
+  if (!MSFunctionNoBuiltins.empty())
+    FD->addAttr(NoBuiltinAttr::CreateImplicit(Context, V.data(), V.size()));
 }
 
 typedef std::vector<std::pair<unsigned, SourceLocation> > VisStack;
@@ -1115,6 +1223,23 @@ void Sema::ActOnPragmaFPContract(SourceLocation Loc,
 }
 
 void Sema::ActOnPragmaFPReassociate(SourceLocation Loc, bool IsEnabled) {
+  if (IsEnabled) {
+    // For value unsafe context, combining this pragma with eval method
+    // setting is not recommended. See comment in function FixupInvocation#506.
+    int Reason = -1;
+    if (getLangOpts().getFPEvalMethod() != LangOptions::FEM_UnsetOnCommandLine)
+      // Eval method set using the option 'ffp-eval-method'.
+      Reason = 1;
+    if (PP.getLastFPEvalPragmaLocation().isValid())
+      // Eval method set using the '#pragma clang fp eval_method'.
+      // We could have both an option and a pragma used to the set the eval
+      // method. The pragma overrides the option in the command line. The Reason
+      // of the diagnostic is overriden too.
+      Reason = 0;
+    if (Reason != -1)
+      Diag(Loc, diag::err_setting_eval_method_used_in_unsafe_context)
+          << Reason << 4;
+  }
   FPOptionsOverride NewFPFeatures = CurFPFeatureOverrides();
   NewFPFeatures.setAllowFPReassociateOverride(IsEnabled);
   FpPragmaStack.Act(Loc, PSK_Set, StringRef(), NewFPFeatures);

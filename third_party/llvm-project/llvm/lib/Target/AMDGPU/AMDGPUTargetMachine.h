@@ -64,6 +64,8 @@ public:
 
   std::pair<const Value *, unsigned>
   getPredicatedAddrSpace(const Value *V) const override;
+
+  unsigned getAddressSpaceForPseudoSourceKind(unsigned Kind) const override;
 };
 
 //===----------------------------------------------------------------------===//
@@ -84,7 +86,7 @@ public:
 
   const TargetSubtargetInfo *getSubtargetImpl(const Function &) const override;
 
-  TargetTransformInfo getTargetTransformInfo(const Function &F) override;
+  TargetTransformInfo getTargetTransformInfo(const Function &F) const override;
 
   bool useIPRA() const override {
     return true;

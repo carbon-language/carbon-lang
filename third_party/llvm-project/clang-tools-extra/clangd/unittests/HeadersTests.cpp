@@ -15,12 +15,11 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/FrontendActions.h"
-#include "clang/Lex/PreprocessorOptions.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/ScopedPrinter.h"
+#include "llvm/Testing/Support/Error.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -70,8 +69,8 @@ protected:
   IncludeStructure::HeaderID getID(StringRef Filename,
                                    IncludeStructure &Includes) {
     auto &SM = Clang->getSourceManager();
-    auto Entry = SM.getFileManager().getFile(Filename);
-    EXPECT_TRUE(Entry);
+    auto Entry = SM.getFileManager().getFileRef(Filename);
+    EXPECT_THAT_EXPECTED(Entry, llvm::Succeeded());
     return Includes.getOrCreateID(*Entry);
   }
 
@@ -384,6 +383,7 @@ TEST_F(HeadersTest, SelfContainedHeaders) {
 #include "nonguarded.h"
 #include "pp_depend.h"
 #include "pragmaguarded.h"
+#include "recursive.h"
 )cpp";
   FS.Files["pragmaguarded.h"] = R"cpp(
 #pragma once
@@ -401,12 +401,48 @@ void foo();
   # error You have to have PP directive set to include this one!
   #endif
 )cpp";
+  FS.Files["recursive.h"] = R"cpp(
+  #ifndef RECURSIVE_H
+  #define RECURSIVE_H
+
+  #include "recursive.h"
+
+  #endif // RECURSIVE_H
+)cpp";
 
   auto Includes = collectIncludes();
   EXPECT_TRUE(Includes.isSelfContained(getID("pragmaguarded.h", Includes)));
   EXPECT_TRUE(Includes.isSelfContained(getID("includeguarded.h", Includes)));
+  EXPECT_TRUE(Includes.isSelfContained(getID("recursive.h", Includes)));
   EXPECT_FALSE(Includes.isSelfContained(getID("nonguarded.h", Includes)));
   EXPECT_FALSE(Includes.isSelfContained(getID("pp_depend.h", Includes)));
+}
+
+TEST_F(HeadersTest, HasIWYUPragmas) {
+  FS.Files[MainFile] = R"cpp(
+#include "export.h"
+#include "begin_exports.h"
+#include "none.h"
+)cpp";
+  FS.Files["export.h"] = R"cpp(
+#pragma once
+#include "none.h" // IWYU pragma: export
+)cpp";
+  FS.Files["begin_exports.h"] = R"cpp(
+#pragma once
+// IWYU pragma: begin_exports
+#include "none.h"
+// IWYU pragma: end_exports
+)cpp";
+  FS.Files["none.h"] = R"cpp(
+#pragma once
+// Not a pragma.
+)cpp";
+
+  auto Includes = collectIncludes();
+  EXPECT_TRUE(Includes.hasIWYUExport(getID("export.h", Includes)));
+  EXPECT_TRUE(Includes.hasIWYUExport(getID("begin_exports.h", Includes)));
+  EXPECT_FALSE(Includes.hasIWYUExport(getID("none.h", Includes)));
 }
 
 } // namespace

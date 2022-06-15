@@ -272,3 +272,101 @@ bb.3:
 }
 
 declare void @use(i1)
+
+define i1 @sub_nuw_i16_simp(i16 %a) {
+; CHECK-LABEL: @sub_nuw_i16_simp(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    [[NEG2:%.*]] = sub nuw i16 [[A:%.*]], 305
+; CHECK-NEXT:    [[C_1:%.*]] = icmp ugt i16 0, [[NEG2]]
+; CHECK-NEXT:    br i1 [[C_1]], label [[EXIT_1:%.*]], label [[EXIT_2:%.*]]
+; CHECK:       exit.1:
+; CHECK-NEXT:    [[C_2:%.*]] = icmp ugt i16 [[A]], 0
+; CHECK-NEXT:    ret i1 [[C_2]]
+; CHECK:       exit.2:
+; CHECK-NEXT:    [[C_3:%.*]] = icmp ugt i16 [[A]], 0
+; CHECK-NEXT:    ret i1 true
+;
+entry:
+  %neg2 = sub nuw i16 %a, 305
+  %c.1 = icmp ugt i16 0, %neg2
+  br i1 %c.1, label %exit.1, label %exit.2
+
+exit.1:
+  %c.2 = icmp ugt i16 %a, 0
+  ret i1 %c.2
+
+exit.2:
+  %c.3 = icmp ugt i16 %a, 0
+  ret i1 %c.3
+}
+
+define i1 @sub_nuw_i64_simp(i64 %a) {
+; CHECK-LABEL: @sub_nuw_i64_simp(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    [[NEG2:%.*]] = sub nuw i64 [[A:%.*]], 305
+; CHECK-NEXT:    [[C_1:%.*]] = icmp ugt i64 0, [[NEG2]]
+; CHECK-NEXT:    br i1 [[C_1]], label [[EXIT_1:%.*]], label [[EXIT_2:%.*]]
+; CHECK:       exit.1:
+; CHECK-NEXT:    [[C_2:%.*]] = icmp ugt i64 [[A]], 0
+; CHECK-NEXT:    ret i1 [[C_2]]
+; CHECK:       exit.2:
+; CHECK-NEXT:    [[C_3:%.*]] = icmp ugt i64 [[A]], 0
+; CHECK-NEXT:    ret i1 true
+;
+entry:
+  %neg2 = sub nuw i64 %a, 305
+  %c.1 = icmp ugt i64 0, %neg2
+  br i1 %c.1, label %exit.1, label %exit.2
+
+exit.1:
+  %c.2 = icmp ugt i64 %a, 0
+  ret i1 %c.2
+
+exit.2:
+  %c.3 = icmp ugt i64 %a, 0
+  ret i1 %c.3
+}
+
+define i1 @sub_nuw_neg_i16(i16 %a) {
+; CHECK-LABEL: @sub_nuw_neg_i16(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    [[NEG2:%.*]] = sub nuw i16 [[A:%.*]], -305
+; CHECK-NEXT:    [[C_1:%.*]] = icmp ugt i16 0, [[NEG2]]
+; CHECK-NEXT:    br i1 [[C_1]], label [[EXIT_1:%.*]], label [[EXIT_2:%.*]]
+; CHECK:       exit.1:
+; CHECK-NEXT:    [[C_2:%.*]] = icmp ugt i16 [[A]], 0
+; CHECK-NEXT:    ret i1 false
+; CHECK:       exit.2:
+; CHECK-NEXT:    [[C_3:%.*]] = icmp ugt i16 [[A]], 0
+; CHECK-NEXT:    ret i1 [[C_3]]
+;
+entry:
+  %neg2 = sub nuw i16 %a, -305
+  %c.1 = icmp ugt i16 0, %neg2
+  br i1 %c.1, label %exit.1, label %exit.2
+
+exit.1:
+  %c.2 = icmp ugt i16 %a, 0
+  ret i1 %c.2
+
+exit.2:
+  %c.3 = icmp ugt i16 %a, 0
+  ret i1 %c.3
+}
+
+declare void @llvm.assume(i1)
+
+define i1 @wrapping_offset_sum(i64 %x) {
+; CHECK-LABEL: @wrapping_offset_sum(
+; CHECK-NEXT:    [[NON_ZERO:%.*]] = icmp ugt i64 [[X:%.*]], 0
+; CHECK-NEXT:    call void @llvm.assume(i1 [[NON_ZERO]])
+; CHECK-NEXT:    [[ADD:%.*]] = sub nuw i64 [[X]], 9223372036854775802
+; CHECK-NEXT:    [[ULT:%.*]] = icmp ugt i64 200, [[ADD]]
+; CHECK-NEXT:    ret i1 [[ULT]]
+;
+  %non.zero = icmp ugt i64 %x, 0
+  call void @llvm.assume(i1 %non.zero)
+  %add = sub nuw i64 %x, 9223372036854775802
+  %ult = icmp ugt i64 200, %add
+  ret i1 %ult
+}

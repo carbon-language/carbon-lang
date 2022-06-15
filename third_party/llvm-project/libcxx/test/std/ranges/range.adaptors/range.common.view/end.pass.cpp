@@ -7,7 +7,6 @@
 //===----------------------------------------------------------------------===//
 
 // UNSUPPORTED: c++03, c++11, c++14, c++17
-// UNSUPPORTED: libcpp-no-concepts
 // UNSUPPORTED: libcpp-has-no-incomplete-ranges
 
 // constexpr auto end();
@@ -30,7 +29,7 @@ constexpr bool test() {
     SizedRandomAccessView view{buf, buf + 8};
     std::ranges::common_view<SizedRandomAccessView> common(view);
     std::same_as<RandomAccessIter> auto end = common.end(); // Note this should NOT be the sentinel type.
-    assert(end.base() == buf + 8);
+    assert(base(end) == buf + 8);
   }
 
   // const version
@@ -38,7 +37,7 @@ constexpr bool test() {
     SizedRandomAccessView view{buf, buf + 8};
     std::ranges::common_view<SizedRandomAccessView> const common(view);
     std::same_as<RandomAccessIter> auto end = common.end(); // Note this should NOT be the sentinel type.
-    assert(end.base() == buf + 8);
+    assert(base(end) == buf + 8);
   }
 
   return true;

@@ -19,6 +19,7 @@
 #include "GCNSubtarget.h"
 #include "SIMachineFunctionInfo.h"
 #include "llvm/CodeGen/Analysis.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/IntrinsicsAMDGPU.h"
 #include "llvm/Support/CommandLine.h"
@@ -127,49 +128,27 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(const TargetMachine &TM,
 
   // There are no 64-bit extloads. These should be done as a 32-bit extload and
   // an extension to 64-bit.
-  for (MVT VT : MVT::integer_valuetypes()) {
-    setLoadExtAction(ISD::EXTLOAD, MVT::i64, VT, Expand);
-    setLoadExtAction(ISD::SEXTLOAD, MVT::i64, VT, Expand);
-    setLoadExtAction(ISD::ZEXTLOAD, MVT::i64, VT, Expand);
-  }
+  for (MVT VT : MVT::integer_valuetypes())
+    setLoadExtAction({ISD::EXTLOAD, ISD::SEXTLOAD, ISD::ZEXTLOAD}, MVT::i64, VT,
+                     Expand);
 
   for (MVT VT : MVT::integer_valuetypes()) {
     if (VT == MVT::i64)
       continue;
 
-    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i1, Promote);
-    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i8, Legal);
-    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i16, Legal);
-    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i32, Expand);
-
-    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i1, Promote);
-    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i8, Legal);
-    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i16, Legal);
-    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i32, Expand);
-
-    setLoadExtAction(ISD::EXTLOAD, VT, MVT::i1, Promote);
-    setLoadExtAction(ISD::EXTLOAD, VT, MVT::i8, Legal);
-    setLoadExtAction(ISD::EXTLOAD, VT, MVT::i16, Legal);
-    setLoadExtAction(ISD::EXTLOAD, VT, MVT::i32, Expand);
+    for (auto Op : {ISD::SEXTLOAD, ISD::ZEXTLOAD, ISD::EXTLOAD}) {
+      setLoadExtAction(Op, VT, MVT::i1, Promote);
+      setLoadExtAction(Op, VT, MVT::i8, Legal);
+      setLoadExtAction(Op, VT, MVT::i16, Legal);
+      setLoadExtAction(Op, VT, MVT::i32, Expand);
+    }
   }
 
-  for (MVT VT : MVT::integer_fixedlen_vector_valuetypes()) {
-    setLoadExtAction(ISD::EXTLOAD, VT, MVT::v2i8, Expand);
-    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v2i8, Expand);
-    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::v2i8, Expand);
-    setLoadExtAction(ISD::EXTLOAD, VT, MVT::v4i8, Expand);
-    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v4i8, Expand);
-    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::v4i8, Expand);
-    setLoadExtAction(ISD::EXTLOAD, VT, MVT::v2i16, Expand);
-    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v2i16, Expand);
-    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::v2i16, Expand);
-    setLoadExtAction(ISD::EXTLOAD, VT, MVT::v3i16, Expand);
-    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v3i16, Expand);
-    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::v3i16, Expand);
-    setLoadExtAction(ISD::EXTLOAD, VT, MVT::v4i16, Expand);
-    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v4i16, Expand);
-    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::v4i16, Expand);
-  }
+  for (MVT VT : MVT::integer_fixedlen_vector_valuetypes())
+    for (auto MemVT :
+         {MVT::v2i8, MVT::v4i8, MVT::v2i16, MVT::v3i16, MVT::v4i16})
+      setLoadExtAction({ISD::SEXTLOAD, ISD::ZEXTLOAD, ISD::EXTLOAD}, VT, MemVT,
+                       Expand);
 
   setLoadExtAction(ISD::EXTLOAD, MVT::f32, MVT::f16, Expand);
   setLoadExtAction(ISD::EXTLOAD, MVT::v2f32, MVT::v2f16, Expand);
@@ -304,229 +283,125 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(const TargetMachine &TM,
   setTruncStoreAction(MVT::v16i64, MVT::v16i8, Expand);
   setTruncStoreAction(MVT::v16i64, MVT::v16i1, Expand);
 
-  setOperationAction(ISD::Constant, MVT::i32, Legal);
-  setOperationAction(ISD::Constant, MVT::i64, Legal);
-  setOperationAction(ISD::ConstantFP, MVT::f32, Legal);
-  setOperationAction(ISD::ConstantFP, MVT::f64, Legal);
+  setOperationAction(ISD::Constant, {MVT::i32, MVT::i64}, Legal);
+  setOperationAction(ISD::ConstantFP, {MVT::f32, MVT::f64}, Legal);
 
-  setOperationAction(ISD::BR_JT, MVT::Other, Expand);
-  setOperationAction(ISD::BRIND, MVT::Other, Expand);
+  setOperationAction({ISD::BR_JT, ISD::BRIND}, MVT::Other, Expand);
 
   // This is totally unsupported, just custom lower to produce an error.
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Custom);
 
   // Library functions.  These default to Expand, but we have instructions
   // for them.
-  setOperationAction(ISD::FCEIL,  MVT::f32, Legal);
-  setOperationAction(ISD::FEXP2,  MVT::f32, Legal);
-  setOperationAction(ISD::FPOW,   MVT::f32, Legal);
-  setOperationAction(ISD::FLOG2,  MVT::f32, Legal);
-  setOperationAction(ISD::FABS,   MVT::f32, Legal);
-  setOperationAction(ISD::FFLOOR, MVT::f32, Legal);
-  setOperationAction(ISD::FRINT,  MVT::f32, Legal);
-  setOperationAction(ISD::FTRUNC, MVT::f32, Legal);
-  setOperationAction(ISD::FMINNUM, MVT::f32, Legal);
-  setOperationAction(ISD::FMAXNUM, MVT::f32, Legal);
+  setOperationAction({ISD::FCEIL, ISD::FEXP2, ISD::FPOW, ISD::FLOG2, ISD::FABS,
+                      ISD::FFLOOR, ISD::FRINT, ISD::FTRUNC, ISD::FMINNUM,
+                      ISD::FMAXNUM},
+                     MVT::f32, Legal);
 
-  setOperationAction(ISD::FROUND, MVT::f32, Custom);
-  setOperationAction(ISD::FROUND, MVT::f64, Custom);
+  setOperationAction(ISD::FROUND, {MVT::f32, MVT::f64}, Custom);
 
-  setOperationAction(ISD::FLOG, MVT::f32, Custom);
-  setOperationAction(ISD::FLOG10, MVT::f32, Custom);
-  setOperationAction(ISD::FEXP, MVT::f32, Custom);
+  setOperationAction({ISD::FLOG, ISD::FLOG10, ISD::FEXP}, MVT::f32, Custom);
 
+  setOperationAction(ISD::FNEARBYINT, {MVT::f32, MVT::f64}, Custom);
 
-  setOperationAction(ISD::FNEARBYINT, MVT::f32, Custom);
-  setOperationAction(ISD::FNEARBYINT, MVT::f64, Custom);
-
-  setOperationAction(ISD::FREM, MVT::f16, Custom);
-  setOperationAction(ISD::FREM, MVT::f32, Custom);
-  setOperationAction(ISD::FREM, MVT::f64, Custom);
+  setOperationAction(ISD::FREM, {MVT::f16, MVT::f32, MVT::f64}, Custom);
 
   // Expand to fneg + fadd.
   setOperationAction(ISD::FSUB, MVT::f64, Expand);
 
-  setOperationAction(ISD::CONCAT_VECTORS, MVT::v3i32, Custom);
-  setOperationAction(ISD::CONCAT_VECTORS, MVT::v3f32, Custom);
-  setOperationAction(ISD::CONCAT_VECTORS, MVT::v4i32, Custom);
-  setOperationAction(ISD::CONCAT_VECTORS, MVT::v4f32, Custom);
-  setOperationAction(ISD::CONCAT_VECTORS, MVT::v5i32, Custom);
-  setOperationAction(ISD::CONCAT_VECTORS, MVT::v5f32, Custom);
-  setOperationAction(ISD::CONCAT_VECTORS, MVT::v6i32, Custom);
-  setOperationAction(ISD::CONCAT_VECTORS, MVT::v6f32, Custom);
-  setOperationAction(ISD::CONCAT_VECTORS, MVT::v7i32, Custom);
-  setOperationAction(ISD::CONCAT_VECTORS, MVT::v7f32, Custom);
-  setOperationAction(ISD::CONCAT_VECTORS, MVT::v8i32, Custom);
-  setOperationAction(ISD::CONCAT_VECTORS, MVT::v8f32, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v2f16, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v2i16, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v4f16, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v4i16, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v2f32, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v2i32, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v3f32, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v3i32, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v4f32, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v4i32, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v5f32, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v5i32, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v6f32, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v6i32, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v7f32, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v7i32, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v8f32, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v8i32, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v16f32, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v16i32, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v32f32, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v32i32, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v2f64, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v2i64, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v3f64, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v3i64, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v4f64, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v4i64, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v8f64, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v8i64, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v16f64, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v16i64, Custom);
+  setOperationAction(ISD::CONCAT_VECTORS,
+                     {MVT::v3i32, MVT::v3f32, MVT::v4i32, MVT::v4f32,
+                      MVT::v5i32, MVT::v5f32, MVT::v6i32, MVT::v6f32,
+                      MVT::v7i32, MVT::v7f32, MVT::v8i32, MVT::v8f32},
+                     Custom);
+  setOperationAction(ISD::EXTRACT_SUBVECTOR,
+                     {MVT::v2f16,  MVT::v2i16,  MVT::v4f16,  MVT::v4i16,
+                      MVT::v2f32,  MVT::v2i32,  MVT::v3f32,  MVT::v3i32,
+                      MVT::v4f32,  MVT::v4i32,  MVT::v5f32,  MVT::v5i32,
+                      MVT::v6f32,  MVT::v6i32,  MVT::v7f32,  MVT::v7i32,
+                      MVT::v8f32,  MVT::v8i32,  MVT::v16f32, MVT::v16i32,
+                      MVT::v32f32, MVT::v32i32, MVT::v2f64,  MVT::v2i64,
+                      MVT::v3f64,  MVT::v3i64,  MVT::v4f64,  MVT::v4i64,
+                      MVT::v8f64,  MVT::v8i64,  MVT::v16f64, MVT::v16i64},
+                     Custom);
 
   setOperationAction(ISD::FP16_TO_FP, MVT::f64, Expand);
-  setOperationAction(ISD::FP_TO_FP16, MVT::f64, Custom);
-  setOperationAction(ISD::FP_TO_FP16, MVT::f32, Custom);
+  setOperationAction(ISD::FP_TO_FP16, {MVT::f64, MVT::f32}, Custom);
 
   const MVT ScalarIntVTs[] = { MVT::i32, MVT::i64 };
   for (MVT VT : ScalarIntVTs) {
     // These should use [SU]DIVREM, so set them to expand
-    setOperationAction(ISD::SDIV, VT, Expand);
-    setOperationAction(ISD::UDIV, VT, Expand);
-    setOperationAction(ISD::SREM, VT, Expand);
-    setOperationAction(ISD::UREM, VT, Expand);
+    setOperationAction({ISD::SDIV, ISD::UDIV, ISD::SREM, ISD::UREM}, VT,
+                       Expand);
 
     // GPU does not have divrem function for signed or unsigned.
-    setOperationAction(ISD::SDIVREM, VT, Custom);
-    setOperationAction(ISD::UDIVREM, VT, Custom);
+    setOperationAction({ISD::SDIVREM, ISD::UDIVREM}, VT, Custom);
 
     // GPU does not have [S|U]MUL_LOHI functions as a single instruction.
-    setOperationAction(ISD::SMUL_LOHI, VT, Expand);
-    setOperationAction(ISD::UMUL_LOHI, VT, Expand);
+    setOperationAction({ISD::SMUL_LOHI, ISD::UMUL_LOHI}, VT, Expand);
 
-    setOperationAction(ISD::BSWAP, VT, Expand);
-    setOperationAction(ISD::CTTZ, VT, Expand);
-    setOperationAction(ISD::CTLZ, VT, Expand);
+    setOperationAction({ISD::BSWAP, ISD::CTTZ, ISD::CTLZ}, VT, Expand);
 
     // AMDGPU uses ADDC/SUBC/ADDE/SUBE
-    setOperationAction(ISD::ADDC, VT, Legal);
-    setOperationAction(ISD::SUBC, VT, Legal);
-    setOperationAction(ISD::ADDE, VT, Legal);
-    setOperationAction(ISD::SUBE, VT, Legal);
+    setOperationAction({ISD::ADDC, ISD::SUBC, ISD::ADDE, ISD::SUBE}, VT, Legal);
   }
 
   // The hardware supports 32-bit FSHR, but not FSHL.
   setOperationAction(ISD::FSHR, MVT::i32, Legal);
 
   // The hardware supports 32-bit ROTR, but not ROTL.
-  setOperationAction(ISD::ROTL, MVT::i32, Expand);
-  setOperationAction(ISD::ROTL, MVT::i64, Expand);
+  setOperationAction(ISD::ROTL, {MVT::i32, MVT::i64}, Expand);
   setOperationAction(ISD::ROTR, MVT::i64, Expand);
 
-  setOperationAction(ISD::MULHU, MVT::i16, Expand);
-  setOperationAction(ISD::MULHS, MVT::i16, Expand);
+  setOperationAction({ISD::MULHU, ISD::MULHS}, MVT::i16, Expand);
 
-  setOperationAction(ISD::MUL, MVT::i64, Expand);
-  setOperationAction(ISD::MULHU, MVT::i64, Expand);
-  setOperationAction(ISD::MULHS, MVT::i64, Expand);
-  setOperationAction(ISD::UINT_TO_FP, MVT::i64, Custom);
-  setOperationAction(ISD::SINT_TO_FP, MVT::i64, Custom);
-  setOperationAction(ISD::FP_TO_SINT, MVT::i64, Custom);
-  setOperationAction(ISD::FP_TO_UINT, MVT::i64, Custom);
+  setOperationAction({ISD::MUL, ISD::MULHU, ISD::MULHS}, MVT::i64, Expand);
+  setOperationAction(
+      {ISD::UINT_TO_FP, ISD::SINT_TO_FP, ISD::FP_TO_SINT, ISD::FP_TO_UINT},
+      MVT::i64, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::i64, Expand);
 
-  setOperationAction(ISD::SMIN, MVT::i32, Legal);
-  setOperationAction(ISD::UMIN, MVT::i32, Legal);
-  setOperationAction(ISD::SMAX, MVT::i32, Legal);
-  setOperationAction(ISD::UMAX, MVT::i32, Legal);
+  setOperationAction({ISD::SMIN, ISD::UMIN, ISD::SMAX, ISD::UMAX}, MVT::i32,
+                     Legal);
 
-  setOperationAction(ISD::CTTZ, MVT::i64, Custom);
-  setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i64, Custom);
-  setOperationAction(ISD::CTLZ, MVT::i64, Custom);
-  setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i64, Custom);
+  setOperationAction(
+      {ISD::CTTZ, ISD::CTTZ_ZERO_UNDEF, ISD::CTLZ, ISD::CTLZ_ZERO_UNDEF},
+      MVT::i64, Custom);
 
   static const MVT::SimpleValueType VectorIntTypes[] = {
       MVT::v2i32, MVT::v3i32, MVT::v4i32, MVT::v5i32, MVT::v6i32, MVT::v7i32};
 
   for (MVT VT : VectorIntTypes) {
     // Expand the following operations for the current type by default.
-    setOperationAction(ISD::ADD,  VT, Expand);
-    setOperationAction(ISD::AND,  VT, Expand);
-    setOperationAction(ISD::FP_TO_SINT, VT, Expand);
-    setOperationAction(ISD::FP_TO_UINT, VT, Expand);
-    setOperationAction(ISD::MUL,  VT, Expand);
-    setOperationAction(ISD::MULHU, VT, Expand);
-    setOperationAction(ISD::MULHS, VT, Expand);
-    setOperationAction(ISD::OR,   VT, Expand);
-    setOperationAction(ISD::SHL,  VT, Expand);
-    setOperationAction(ISD::SRA,  VT, Expand);
-    setOperationAction(ISD::SRL,  VT, Expand);
-    setOperationAction(ISD::ROTL, VT, Expand);
-    setOperationAction(ISD::ROTR, VT, Expand);
-    setOperationAction(ISD::SUB,  VT, Expand);
-    setOperationAction(ISD::SINT_TO_FP, VT, Expand);
-    setOperationAction(ISD::UINT_TO_FP, VT, Expand);
-    setOperationAction(ISD::SDIV, VT, Expand);
-    setOperationAction(ISD::UDIV, VT, Expand);
-    setOperationAction(ISD::SREM, VT, Expand);
-    setOperationAction(ISD::UREM, VT, Expand);
-    setOperationAction(ISD::SMUL_LOHI, VT, Expand);
-    setOperationAction(ISD::UMUL_LOHI, VT, Expand);
-    setOperationAction(ISD::SDIVREM, VT, Expand);
-    setOperationAction(ISD::UDIVREM, VT, Expand);
-    setOperationAction(ISD::SELECT, VT, Expand);
-    setOperationAction(ISD::VSELECT, VT, Expand);
-    setOperationAction(ISD::SELECT_CC, VT, Expand);
-    setOperationAction(ISD::XOR,  VT, Expand);
-    setOperationAction(ISD::BSWAP, VT, Expand);
-    setOperationAction(ISD::CTPOP, VT, Expand);
-    setOperationAction(ISD::CTTZ, VT, Expand);
-    setOperationAction(ISD::CTLZ, VT, Expand);
-    setOperationAction(ISD::VECTOR_SHUFFLE, VT, Expand);
-    setOperationAction(ISD::SETCC, VT, Expand);
+    setOperationAction({ISD::ADD,        ISD::AND,     ISD::FP_TO_SINT,
+                        ISD::FP_TO_UINT, ISD::MUL,     ISD::MULHU,
+                        ISD::MULHS,      ISD::OR,      ISD::SHL,
+                        ISD::SRA,        ISD::SRL,     ISD::ROTL,
+                        ISD::ROTR,       ISD::SUB,     ISD::SINT_TO_FP,
+                        ISD::UINT_TO_FP, ISD::SDIV,    ISD::UDIV,
+                        ISD::SREM,       ISD::UREM,    ISD::SMUL_LOHI,
+                        ISD::UMUL_LOHI,  ISD::SDIVREM, ISD::UDIVREM,
+                        ISD::SELECT,     ISD::VSELECT, ISD::SELECT_CC,
+                        ISD::XOR,        ISD::BSWAP,   ISD::CTPOP,
+                        ISD::CTTZ,       ISD::CTLZ,    ISD::VECTOR_SHUFFLE,
+                        ISD::SETCC},
+                       VT, Expand);
   }
 
   static const MVT::SimpleValueType FloatVectorTypes[] = {
       MVT::v2f32, MVT::v3f32, MVT::v4f32, MVT::v5f32, MVT::v6f32, MVT::v7f32};
 
   for (MVT VT : FloatVectorTypes) {
-    setOperationAction(ISD::FABS, VT, Expand);
-    setOperationAction(ISD::FMINNUM, VT, Expand);
-    setOperationAction(ISD::FMAXNUM, VT, Expand);
-    setOperationAction(ISD::FADD, VT, Expand);
-    setOperationAction(ISD::FCEIL, VT, Expand);
-    setOperationAction(ISD::FCOS, VT, Expand);
-    setOperationAction(ISD::FDIV, VT, Expand);
-    setOperationAction(ISD::FEXP2, VT, Expand);
-    setOperationAction(ISD::FEXP, VT, Expand);
-    setOperationAction(ISD::FLOG2, VT, Expand);
-    setOperationAction(ISD::FREM, VT, Expand);
-    setOperationAction(ISD::FLOG, VT, Expand);
-    setOperationAction(ISD::FLOG10, VT, Expand);
-    setOperationAction(ISD::FPOW, VT, Expand);
-    setOperationAction(ISD::FFLOOR, VT, Expand);
-    setOperationAction(ISD::FTRUNC, VT, Expand);
-    setOperationAction(ISD::FMUL, VT, Expand);
-    setOperationAction(ISD::FMA, VT, Expand);
-    setOperationAction(ISD::FRINT, VT, Expand);
-    setOperationAction(ISD::FNEARBYINT, VT, Expand);
-    setOperationAction(ISD::FSQRT, VT, Expand);
-    setOperationAction(ISD::FSIN, VT, Expand);
-    setOperationAction(ISD::FSUB, VT, Expand);
-    setOperationAction(ISD::FNEG, VT, Expand);
-    setOperationAction(ISD::VSELECT, VT, Expand);
-    setOperationAction(ISD::SELECT_CC, VT, Expand);
-    setOperationAction(ISD::FCOPYSIGN, VT, Expand);
-    setOperationAction(ISD::VECTOR_SHUFFLE, VT, Expand);
-    setOperationAction(ISD::SETCC, VT, Expand);
-    setOperationAction(ISD::FCANONICALIZE, VT, Expand);
+    setOperationAction(
+        {ISD::FABS,    ISD::FMINNUM,      ISD::FMAXNUM,   ISD::FADD,
+         ISD::FCEIL,   ISD::FCOS,         ISD::FDIV,      ISD::FEXP2,
+         ISD::FEXP,    ISD::FLOG2,        ISD::FREM,      ISD::FLOG,
+         ISD::FLOG10,  ISD::FPOW,         ISD::FFLOOR,    ISD::FTRUNC,
+         ISD::FMUL,    ISD::FMA,          ISD::FRINT,     ISD::FNEARBYINT,
+         ISD::FSQRT,   ISD::FSIN,         ISD::FSUB,      ISD::FNEG,
+         ISD::VSELECT, ISD::SELECT_CC,    ISD::FCOPYSIGN, ISD::VECTOR_SHUFFLE,
+         ISD::SETCC,   ISD::FCANONICALIZE},
+        VT, Expand);
   }
 
   // This causes using an unrolled select operation rather than expansion with
@@ -590,26 +465,16 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(const TargetMachine &TM,
   if (AMDGPUBypassSlowDiv)
     addBypassSlowDiv(64, 32);
 
-  setTargetDAGCombine(ISD::BITCAST);
-  setTargetDAGCombine(ISD::SHL);
-  setTargetDAGCombine(ISD::SRA);
-  setTargetDAGCombine(ISD::SRL);
-  setTargetDAGCombine(ISD::TRUNCATE);
-  setTargetDAGCombine(ISD::MUL);
-  setTargetDAGCombine(ISD::SMUL_LOHI);
-  setTargetDAGCombine(ISD::UMUL_LOHI);
-  setTargetDAGCombine(ISD::MULHU);
-  setTargetDAGCombine(ISD::MULHS);
-  setTargetDAGCombine(ISD::SELECT);
-  setTargetDAGCombine(ISD::SELECT_CC);
-  setTargetDAGCombine(ISD::STORE);
-  setTargetDAGCombine(ISD::FADD);
-  setTargetDAGCombine(ISD::FSUB);
-  setTargetDAGCombine(ISD::FNEG);
-  setTargetDAGCombine(ISD::FABS);
-  setTargetDAGCombine(ISD::AssertZext);
-  setTargetDAGCombine(ISD::AssertSext);
-  setTargetDAGCombine(ISD::INTRINSIC_WO_CHAIN);
+  setTargetDAGCombine({ISD::BITCAST,    ISD::SHL,
+                       ISD::SRA,        ISD::SRL,
+                       ISD::TRUNCATE,   ISD::MUL,
+                       ISD::SMUL_LOHI,  ISD::UMUL_LOHI,
+                       ISD::MULHU,      ISD::MULHS,
+                       ISD::SELECT,     ISD::SELECT_CC,
+                       ISD::STORE,      ISD::FADD,
+                       ISD::FSUB,       ISD::FNEG,
+                       ISD::FABS,       ISD::AssertZext,
+                       ISD::AssertSext, ISD::INTRINSIC_WO_CHAIN});
 }
 
 bool AMDGPUTargetLowering::mayIgnoreSignedZero(SDValue Op) const {
@@ -785,11 +650,11 @@ bool AMDGPUTargetLowering::shouldReduceLoadWidth(SDNode *N,
   unsigned AS = MN->getAddressSpace();
   // Do not shrink an aligned scalar load to sub-dword.
   // Scalar engine cannot do sub-dword loads.
-  if (OldSize >= 32 && NewSize < 32 && MN->getAlignment() >= 4 &&
+  if (OldSize >= 32 && NewSize < 32 && MN->getAlign() >= Align(4) &&
       (AS == AMDGPUAS::CONSTANT_ADDRESS ||
        AS == AMDGPUAS::CONSTANT_ADDRESS_32BIT ||
-       (isa<LoadSDNode>(N) &&
-        AS == AMDGPUAS::GLOBAL_ADDRESS && MN->isInvariant())) &&
+       (isa<LoadSDNode>(N) && AS == AMDGPUAS::GLOBAL_ADDRESS &&
+        MN->isInvariant())) &&
       AMDGPUInstrInfo::isUniformMMO(MN->getMemOperand()))
     return false;
 
@@ -855,6 +720,8 @@ bool AMDGPUTargetLowering::isSDNodeAlwaysUniform(const SDNode *N) const {
         AMDGPUAS::CONSTANT_ADDRESS_32BIT)
       return true;
     return false;
+  case AMDGPUISD::SETCC: // ballot-style instruction
+    return true;
   }
   return false;
 }
@@ -1589,8 +1456,8 @@ SDValue AMDGPUTargetLowering::SplitVectorLoad(const SDValue Op,
   std::tie(Lo, Hi) = splitVector(Op, SL, LoVT, HiVT, DAG);
 
   unsigned Size = LoMemVT.getStoreSize();
-  unsigned BaseAlign = Load->getAlignment();
-  unsigned HiAlign = MinAlign(BaseAlign, Size);
+  Align BaseAlign = Load->getAlign();
+  Align HiAlign = commonAlignment(BaseAlign, Size);
 
   SDValue LoLoad = DAG.getExtLoad(Load->getExtensionType(), SL, LoVT,
                                   Load->getChain(), BasePtr, SrcValue, LoMemVT,
@@ -1628,13 +1495,13 @@ SDValue AMDGPUTargetLowering::WidenOrSplitVectorLoad(SDValue Op,
   EVT MemVT = Load->getMemoryVT();
   SDLoc SL(Op);
   const MachinePointerInfo &SrcValue = Load->getMemOperand()->getPointerInfo();
-  unsigned BaseAlign = Load->getAlignment();
+  Align BaseAlign = Load->getAlign();
   unsigned NumElements = MemVT.getVectorNumElements();
 
   // Widen from vec3 to vec4 when the load is at least 8-byte aligned
   // or 16-byte fully dereferenceable. Otherwise, split the vector load.
   if (NumElements != 3 ||
-      (BaseAlign < 8 &&
+      (BaseAlign < Align(8) &&
        !SrcValue.isDereferenceable(16, *DAG.getContext(), DAG.getDataLayout())))
     return SplitVectorLoad(Op, DAG);
 
@@ -1681,9 +1548,9 @@ SDValue AMDGPUTargetLowering::SplitVectorStore(SDValue Op,
   SDValue HiPtr = DAG.getObjectPtrOffset(SL, BasePtr, LoMemVT.getStoreSize());
 
   const MachinePointerInfo &SrcValue = Store->getMemOperand()->getPointerInfo();
-  unsigned BaseAlign = Store->getAlignment();
+  Align BaseAlign = Store->getAlign();
   unsigned Size = LoMemVT.getStoreSize();
-  unsigned HiAlign = MinAlign(BaseAlign, Size);
+  Align HiAlign = commonAlignment(BaseAlign, Size);
 
   SDValue LoStore =
       DAG.getTruncStore(Chain, SL, Lo, BasePtr, SrcValue, LoMemVT, BaseAlign,
@@ -3003,12 +2870,11 @@ SDValue AMDGPUTargetLowering::performLoadCombine(SDNode *N,
     // the bytes again are not eliminated in the case of an unaligned copy.
     if (!allowsMisalignedMemoryAccesses(
             VT, AS, Alignment, LN->getMemOperand()->getFlags(), &IsFast)) {
-      SDValue Ops[2];
-
       if (VT.isVector())
-        std::tie(Ops[0], Ops[1]) = scalarizeVectorLoad(LN, DAG);
-      else
-        std::tie(Ops[0], Ops[1]) = expandUnalignedLoad(LN, DAG);
+        return SplitVectorLoad(SDValue(LN, 0), DAG);
+
+      SDValue Ops[2];
+      std::tie(Ops[0], Ops[1]) = expandUnalignedLoad(LN, DAG);
 
       return DAG.getMergeValues(Ops, SDLoc(N));
     }
@@ -3059,7 +2925,7 @@ SDValue AMDGPUTargetLowering::performStoreCombine(SDNode *N,
     if (!allowsMisalignedMemoryAccesses(
             VT, AS, Alignment, SN->getMemOperand()->getFlags(), &IsFast)) {
       if (VT.isVector())
-        return scalarizeVectorStore(SN, DAG);
+        return SplitVectorStore(SDValue(SN, 0), DAG);
 
       return expandUnalignedStore(SN, DAG);
     }
@@ -4381,10 +4247,14 @@ uint32_t AMDGPUTargetLowering::getImplicitParameterOffset(
   uint64_t ArgOffset = alignTo(MFI->getExplicitKernArgSize(), Alignment) +
                        ExplicitArgOffset;
   switch (Param) {
-  case GRID_DIM:
+  case FIRST_IMPLICIT:
     return ArgOffset;
-  case GRID_OFFSET:
-    return ArgOffset + 4;
+  case PRIVATE_BASE:
+    return ArgOffset + AMDGPU::ImplicitArg::PRIVATE_BASE_OFFSET;
+  case SHARED_BASE:
+    return ArgOffset + AMDGPU::ImplicitArg::SHARED_BASE_OFFSET;
+  case QUEUE_PTR:
+    return ArgOffset + AMDGPU::ImplicitArg::QUEUE_PTR_OFFSET;
   }
   llvm_unreachable("unexpected implicit parameter type");
 }
@@ -4406,7 +4276,6 @@ const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const {
   NODE_NAME_CASE(TC_RETURN)
   NODE_NAME_CASE(TRAP)
   NODE_NAME_CASE(RET_FLAG)
-  NODE_NAME_CASE(RET_GFX_FLAG)
   NODE_NAME_CASE(RETURN_TO_EPILOG)
   NODE_NAME_CASE(ENDPGM)
   NODE_NAME_CASE(DWORDADDR)
@@ -4583,6 +4452,19 @@ SDValue AMDGPUTargetLowering::getRecipEstimate(SDValue Operand,
   return SDValue();
 }
 
+static unsigned workitemIntrinsicDim(unsigned ID) {
+  switch (ID) {
+  case Intrinsic::amdgcn_workitem_id_x:
+    return 0;
+  case Intrinsic::amdgcn_workitem_id_y:
+    return 1;
+  case Intrinsic::amdgcn_workitem_id_z:
+    return 2;
+  default:
+    llvm_unreachable("not a workitem intrinsic");
+  }
+}
+
 void AMDGPUTargetLowering::computeKnownBitsForTargetNode(
     const SDValue Op, KnownBits &Known,
     const APInt &DemandedElts, const SelectionDAG &DAG, unsigned Depth) const {
@@ -4717,6 +4599,14 @@ void AMDGPUTargetLowering::computeKnownBitsForTargetNode(
       // These return at most the wavefront size - 1.
       unsigned Size = Op.getValueType().getSizeInBits();
       Known.Zero.setHighBits(Size - ST.getWavefrontSizeLog2());
+      break;
+    }
+    case Intrinsic::amdgcn_workitem_id_x:
+    case Intrinsic::amdgcn_workitem_id_y:
+    case Intrinsic::amdgcn_workitem_id_z: {
+      unsigned MaxValue = Subtarget->getMaxWorkitemID(
+          DAG.getMachineFunction().getFunction(), workitemIntrinsicDim(IID));
+      Known.Zero.setHighBits(countLeadingZeros(MaxValue));
       break;
     }
     default:

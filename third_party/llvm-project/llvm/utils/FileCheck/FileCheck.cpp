@@ -18,7 +18,9 @@
 #include "llvm/FileCheck/FileCheck.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/InitLLVM.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Process.h"
+#include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/WithColor.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cmath>
@@ -79,7 +81,7 @@ static cl::opt<bool> AllowEmptyInput(
              "checks that some error message does not occur, for example."));
 
 static cl::opt<bool> AllowUnusedPrefixes(
-    "allow-unused-prefixes", cl::init(false), cl::ZeroOrMore,
+    "allow-unused-prefixes",
     cl::desc("Allow prefixes to be specified but not appear in the test."));
 
 static cl::opt<bool> MatchFullLines(
@@ -102,12 +104,12 @@ static cl::opt<bool> AllowDeprecatedDagOverlap(
              "non-overlapping CHECK-DAG implementation.\n"));
 
 static cl::opt<bool> Verbose(
-    "v", cl::init(false), cl::ZeroOrMore,
+    "v",
     cl::desc("Print directive pattern matches, or add them to the input dump\n"
              "if enabled.\n"));
 
 static cl::opt<bool> VerboseVerbose(
-    "vv", cl::init(false), cl::ZeroOrMore,
+    "vv",
     cl::desc("Print information helpful in diagnosing internal FileCheck\n"
              "issues, or add it to the input dump if enabled.  Implies\n"
              "-v.\n"));
@@ -367,6 +369,8 @@ static std::string GetCheckTypeAbbreviation(Check::FileCheckType Ty) {
     return "bad-not";
   case Check::CheckBadCount:
     return "bad-count";
+  case Check::CheckMisspelled:
+    return "misspelled";
   case Check::CheckNone:
     llvm_unreachable("invalid FileCheckType");
   }

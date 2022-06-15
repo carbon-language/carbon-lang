@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -fmath-errno -emit-llvm -o - %s -triple i386-unknown-unknown | FileCheck -check-prefix CHECK-YES %s
-// RUN: %clang_cc1 -emit-llvm -o - %s -triple i386-unknown-unknown | FileCheck -check-prefix CHECK-NO %s
-// RUN: %clang_cc1 -menable-unsafe-fp-math -emit-llvm -o - %s -triple i386-unknown-unknown | FileCheck -check-prefix CHECK-FAST %s
+// RUN: %clang_cc1 -Wno-implicit-function-declaration -fmath-errno -emit-llvm -o - %s -triple i386-unknown-unknown | FileCheck -check-prefix CHECK-YES %s
+// RUN: %clang_cc1 -Wno-implicit-function-declaration -emit-llvm -o - %s -triple i386-unknown-unknown | FileCheck -check-prefix CHECK-NO %s
+// RUN: %clang_cc1 -Wno-implicit-function-declaration -menable-unsafe-fp-math -emit-llvm -o - %s -triple i386-unknown-unknown | FileCheck -check-prefix CHECK-FAST %s
 
 // CHECK-YES-LABEL: define{{.*}} void @test_sqrt
 // CHECK-NO-LABEL: define{{.*}} void @test_sqrt
@@ -125,4 +125,4 @@ void test_builtins(double d, float f, long double ld) {
 
 // CHECK-YES: attributes [[NUW]] = { nounwind "frame-pointer"="none" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-features"="+cx8,+x87" }
 // CHECK-NO-DAG: attributes [[NUW_RN]] = { nounwind readnone{{.*}} }
-// CHECK-NO-DAG: attributes [[NUW_RNI]] = { nofree nosync nounwind readnone speculatable willreturn }
+// CHECK-NO-DAG: attributes [[NUW_RNI]] = { nocallback nofree nosync nounwind readnone speculatable willreturn }

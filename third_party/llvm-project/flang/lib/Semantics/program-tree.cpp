@@ -88,7 +88,7 @@ static ProgramTree BuildSubprogramTree(const parser::Name &name, const T &x) {
   if (subps) {
     for (const auto &subp :
         std::get<std::list<parser::InternalSubprogram>>(subps->t)) {
-      std::visit(
+      common::visit(
           [&](const auto &y) { node.AddChild(ProgramTree::Build(y.value())); },
           subp.u);
     }
@@ -111,7 +111,7 @@ static ProgramTree BuildModuleTree(const parser::Name &name, const T &x) {
   if (subps) {
     for (const auto &subp :
         std::get<std::list<parser::ModuleSubprogram>>(subps->t)) {
-      std::visit(
+      common::visit(
           [&](const auto &y) { node.AddChild(ProgramTree::Build(y.value())); },
           subp.u);
     }
@@ -120,7 +120,7 @@ static ProgramTree BuildModuleTree(const parser::Name &name, const T &x) {
 }
 
 ProgramTree ProgramTree::Build(const parser::ProgramUnit &x) {
-  return std::visit([](const auto &y) { return Build(y.value()); }, x.u);
+  return common::visit([](const auto &y) { return Build(y.value()); }, x.u);
 }
 
 ProgramTree ProgramTree::Build(const parser::MainProgram &x) {
@@ -137,14 +137,32 @@ ProgramTree ProgramTree::Build(const parser::FunctionSubprogram &x) {
   const auto &stmt{std::get<parser::Statement<parser::FunctionStmt>>(x.t)};
   const auto &end{std::get<parser::Statement<parser::EndFunctionStmt>>(x.t)};
   const auto &name{std::get<parser::Name>(stmt.statement.t)};
-  return BuildSubprogramTree(name, x).set_stmt(stmt).set_endStmt(end);
+  const parser::LanguageBindingSpec *bindingSpec{};
+  if (const auto &suffix{
+          std::get<std::optional<parser::Suffix>>(stmt.statement.t)}) {
+    if (suffix->binding) {
+      bindingSpec = &*suffix->binding;
+    }
+  }
+  return BuildSubprogramTree(name, x)
+      .set_stmt(stmt)
+      .set_endStmt(end)
+      .set_bindingSpec(bindingSpec);
 }
 
 ProgramTree ProgramTree::Build(const parser::SubroutineSubprogram &x) {
   const auto &stmt{std::get<parser::Statement<parser::SubroutineStmt>>(x.t)};
   const auto &end{std::get<parser::Statement<parser::EndSubroutineStmt>>(x.t)};
   const auto &name{std::get<parser::Name>(stmt.statement.t)};
-  return BuildSubprogramTree(name, x).set_stmt(stmt).set_endStmt(end);
+  const parser::LanguageBindingSpec *bindingSpec{};
+  if (const auto &binding{std::get<std::optional<parser::LanguageBindingSpec>>(
+          stmt.statement.t)}) {
+    bindingSpec = &*binding;
+  }
+  return BuildSubprogramTree(name, x)
+      .set_stmt(stmt)
+      .set_endStmt(end)
+      .set_bindingSpec(bindingSpec);
 }
 
 ProgramTree ProgramTree::Build(const parser::SeparateModuleSubprogram &x) {
@@ -200,17 +218,17 @@ Symbol::Flag ProgramTree::GetSubpFlag() const {
 
 bool ProgramTree::HasModulePrefix() const {
   using ListType = std::list<parser::PrefixSpec>;
-  const auto *prefixes{
-      std::visit(common::visitors{
-                     [](const parser::Statement<parser::FunctionStmt> *x) {
-                       return &std::get<ListType>(x->statement.t);
-                     },
-                     [](const parser::Statement<parser::SubroutineStmt> *x) {
-                       return &std::get<ListType>(x->statement.t);
-                     },
-                     [](const auto *) -> const ListType * { return nullptr; },
-                 },
-          stmt_)};
+  const auto *prefixes{common::visit(
+      common::visitors{
+          [](const parser::Statement<parser::FunctionStmt> *x) {
+            return &std::get<ListType>(x->statement.t);
+          },
+          [](const parser::Statement<parser::SubroutineStmt> *x) {
+            return &std::get<ListType>(x->statement.t);
+          },
+          [](const auto *) -> const ListType * { return nullptr; },
+      },
+      stmt_)};
   if (prefixes) {
     for (const auto &prefix : *prefixes) {
       if (std::holds_alternative<parser::PrefixSpec::Module>(prefix.u)) {
@@ -222,7 +240,7 @@ bool ProgramTree::HasModulePrefix() const {
 }
 
 ProgramTree::Kind ProgramTree::GetKind() const {
-  return std::visit(
+  return common::visit(
       common::visitors{
           [](const parser::Statement<parser::ProgramStmt> *) {
             return Kind::Program;

@@ -11,10 +11,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/SCF/SCF.h"
 #include "mlir/Dialect/SCF/Transforms.h"
 #include "mlir/Dialect/SCF/Utils/Utils.h"
-#include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/PatternMatch.h"
 #include "mlir/Pass/Pass.h"
@@ -25,41 +25,54 @@
 using namespace mlir;
 
 namespace {
-class TestSCFForUtilsPass
-    : public PassWrapper<TestSCFForUtilsPass, OperationPass<FuncOp>> {
-public:
+struct TestSCFForUtilsPass
+    : public PassWrapper<TestSCFForUtilsPass, OperationPass<func::FuncOp>> {
+  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(TestSCFForUtilsPass)
+
   StringRef getArgument() const final { return "test-scf-for-utils"; }
   StringRef getDescription() const final { return "test scf.for utils"; }
   explicit TestSCFForUtilsPass() = default;
+  TestSCFForUtilsPass(const TestSCFForUtilsPass &pass) : PassWrapper(pass) {}
+
+  Option<bool> testReplaceWithNewYields{
+      *this, "test-replace-with-new-yields",
+      llvm::cl::desc("Test replacing a loop with a new loop that returns new "
+                     "additional yeild values"),
+      llvm::cl::init(false)};
 
   void runOnOperation() override {
-    FuncOp func = getOperation();
+    func::FuncOp func = getOperation();
     SmallVector<scf::ForOp, 4> toErase;
 
-    func.walk([&](Operation *fakeRead) {
-      if (fakeRead->getName().getStringRef() != "fake_read")
-        return;
-      auto *fakeCompute = fakeRead->getResult(0).use_begin()->getOwner();
-      auto *fakeWrite = fakeCompute->getResult(0).use_begin()->getOwner();
-      auto loop = fakeRead->getParentOfType<scf::ForOp>();
-
-      OpBuilder b(loop);
-      (void)loop.moveOutOfLoop({fakeRead});
-      fakeWrite->moveAfter(loop);
-      auto newLoop = cloneWithNewYields(b, loop, fakeRead->getResult(0),
-                                        fakeCompute->getResult(0));
-      fakeCompute->getResult(0).replaceAllUsesWith(
-          newLoop.getResults().take_back()[0]);
-      toErase.push_back(loop);
-    });
-    for (auto loop : llvm::reverse(toErase))
-      loop.erase();
+    if (testReplaceWithNewYields) {
+      func.walk([&](scf::ForOp forOp) {
+        if (forOp.getNumResults() == 0)
+          return;
+        auto newInitValues = forOp.getInitArgs();
+        if (newInitValues.empty())
+          return;
+        NewYieldValueFn fn = [&](OpBuilder &b, Location loc,
+                                 ArrayRef<BlockArgument> newBBArgs) {
+          Block *block = newBBArgs.front().getOwner();
+          SmallVector<Value> newYieldValues;
+          for (auto yieldVal :
+               cast<scf::YieldOp>(block->getTerminator()).getResults()) {
+            newYieldValues.push_back(
+                b.create<arith::AddFOp>(loc, yieldVal, yieldVal));
+          }
+          return newYieldValues;
+        };
+        OpBuilder b(forOp);
+        replaceLoopWithNewYields(b, forOp, newInitValues, fn);
+      });
+    }
   }
 };
 
-class TestSCFIfUtilsPass
+struct TestSCFIfUtilsPass
     : public PassWrapper<TestSCFIfUtilsPass, OperationPass<ModuleOp>> {
-public:
+  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(TestSCFIfUtilsPass)
+
   StringRef getArgument() const final { return "test-scf-if-utils"; }
   StringRef getDescription() const final { return "test scf.if utils"; }
   explicit TestSCFIfUtilsPass() = default;
@@ -68,7 +81,7 @@ public:
     int count = 0;
     getOperation().walk([&](scf::IfOp ifOp) {
       auto strCount = std::to_string(count++);
-      FuncOp thenFn, elseFn;
+      func::FuncOp thenFn, elseFn;
       OpBuilder b(ifOp);
       IRRewriter rewriter(b);
       if (failed(outlineIfOp(rewriter, ifOp, &thenFn,
@@ -86,7 +99,8 @@ static const StringLiteral kTestPipeliningLoopMarker =
     "__test_pipelining_loop__";
 static const StringLiteral kTestPipeliningStageMarker =
     "__test_pipelining_stage__";
-/// Marker to express the order in which operations should be after pipelining.
+/// Marker to express the order in which operations should be after
+/// pipelining.
 static const StringLiteral kTestPipeliningOpOrderMarker =
     "__test_pipelining_op_order__";
 
@@ -95,9 +109,10 @@ static const StringLiteral kTestPipeliningAnnotationPart =
 static const StringLiteral kTestPipeliningAnnotationIteration =
     "__test_pipelining_iteration";
 
-class TestSCFPipeliningPass
-    : public PassWrapper<TestSCFPipeliningPass, OperationPass<FuncOp>> {
-public:
+struct TestSCFPipeliningPass
+    : public PassWrapper<TestSCFPipeliningPass, OperationPass<func::FuncOp>> {
+  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(TestSCFPipeliningPass)
+
   TestSCFPipeliningPass() = default;
   TestSCFPipeliningPass(const TestSCFPipeliningPass &) {}
   StringRef getArgument() const final { return "test-scf-pipelining"; }
@@ -106,6 +121,11 @@ public:
   Option<bool> annotatePipeline{
       *this, "annotate",
       llvm::cl::desc("Annote operations during loop pipelining transformation"),
+      llvm::cl::init(false)};
+
+  Option<bool> noEpiloguePeeling{
+      *this, "no-epilogue-peeling",
+      llvm::cl::desc("Use predicates instead of peeling the epilogue."),
       llvm::cl::init(false)};
 
   static void
@@ -124,6 +144,29 @@ public:
             std::make_pair(op, unsigned(attrStage.getInt()));
       }
     });
+  }
+
+  /// Helper to generate "predicated" version of `op`. For simplicity we just
+  /// wrap the operation in a scf.ifOp operation.
+  static Operation *predicateOp(Operation *op, Value pred,
+                                PatternRewriter &rewriter) {
+    Location loc = op->getLoc();
+    auto ifOp =
+        rewriter.create<scf::IfOp>(loc, op->getResultTypes(), pred, true);
+    // True branch.
+    op->moveBefore(&ifOp.getThenRegion().front(),
+                   ifOp.getThenRegion().front().end());
+    rewriter.setInsertionPointAfter(op);
+    rewriter.create<scf::YieldOp>(loc, op->getResults());
+    // False branch.
+    rewriter.setInsertionPointToStart(&ifOp.getElseRegion().front());
+    SmallVector<Value> zeros;
+    for (Type type : op->getResultTypes()) {
+      zeros.push_back(
+          rewriter.create<arith::ConstantOp>(loc, rewriter.getZeroAttr(type)));
+    }
+    rewriter.create<scf::YieldOp>(loc, zeros);
+    return ifOp.getOperation();
   }
 
   static void annotate(Operation *op,
@@ -146,7 +189,7 @@ public:
   }
 
   void getDependentDialects(DialectRegistry &registry) const override {
-    registry.insert<arith::ArithmeticDialect, StandardOpsDialect>();
+    registry.insert<arith::ArithmeticDialect>();
   }
 
   void runOnOperation() override {
@@ -155,6 +198,10 @@ public:
     options.getScheduleFn = getSchedule;
     if (annotatePipeline)
       options.annotateFn = annotate;
+    if (noEpiloguePeeling) {
+      options.peelEpilogue = false;
+      options.predicateFn = predicateOp;
+    }
     scf::populateSCFLoopPipeliningPatterns(patterns, options);
     (void)applyPatternsAndFoldGreedily(getOperation(), std::move(patterns));
     getOperation().walk([](Operation *op) {

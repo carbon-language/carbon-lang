@@ -24,6 +24,8 @@ executable("llvm-reduce") {
     "deltas/ReduceGlobalValues.cpp",
     "deltas/ReduceGlobalVarInitializers.cpp",
     "deltas/ReduceGlobalVars.cpp",
+    "deltas/ReduceIRReferences.cpp",
+    "deltas/ReduceInstructionFlagsMIR.cpp",
     "deltas/ReduceInstructions.cpp",
     "deltas/ReduceInstructionsMIR.cpp",
     "deltas/ReduceMetadata.cpp",
@@ -32,7 +34,9 @@ executable("llvm-reduce") {
     "deltas/ReduceOperands.cpp",
     "deltas/ReduceOperandsSkip.cpp",
     "deltas/ReduceOperandsToArgs.cpp",
+    "deltas/ReduceRegisterUses.cpp",
     "deltas/ReduceSpecialGlobals.cpp",
+    "deltas/ReduceVirtualRegisters.cpp",
     "llvm-reduce.cpp",
   ]
 }

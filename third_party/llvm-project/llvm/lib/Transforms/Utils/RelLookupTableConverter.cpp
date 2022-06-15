@@ -18,9 +18,6 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
-#include "llvm/InitializePasses.h"
-#include "llvm/Pass.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 using namespace llvm;
 
@@ -146,7 +143,7 @@ static void convertToRelLookupTable(GlobalVariable &LookupTable) {
   Value *Offset =
       Builder.CreateShl(Index, ConstantInt::get(IntTy, 2), "reltable.shift");
 
-  // Insert the call to load.relative instrinsic before LOAD.
+  // Insert the call to load.relative intrinsic before LOAD.
   // GEP might not be immediately followed by a LOAD, like it can be hoisted
   // outside the loop or another instruction might be inserted them in between.
   Builder.SetInsertPoint(Load);
@@ -173,13 +170,17 @@ static void convertToRelLookupTable(GlobalVariable &LookupTable) {
 // Convert lookup tables to relative lookup tables in the module.
 static bool convertToRelativeLookupTables(
     Module &M, function_ref<TargetTransformInfo &(Function &)> GetTTI) {
-  Module::iterator FI = M.begin();
-  if (FI == M.end())
-    return false;
+  for (Function &F : M) {
+    if (F.isDeclaration())
+      continue;
 
-  // Check if we have a target that supports relative lookup tables.
-  if (!GetTTI(*FI).shouldBuildRelLookupTables())
-    return false;
+    // Check if we have a target that supports relative lookup tables.
+    if (!GetTTI(F).shouldBuildRelLookupTables())
+      return false;
+
+    // We assume that the result is independent of the checked function.
+    break;
+  }
 
   bool Changed = false;
 

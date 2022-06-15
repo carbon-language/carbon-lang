@@ -73,18 +73,23 @@ def _check_expected_version(comparison, expected, actual):
 
 _re_pattern_type = type(re.compile(''))
 def _match_decorator_property(expected, actual):
-    if actual is None or expected is None:
+    if expected is None:
         return True
+
+    if actual is None :
+        return False
 
     if isinstance(expected, no_match):
         return not _match_decorator_property(expected.item, actual)
-    elif isinstance(expected, (_re_pattern_type,) + six.string_types):
+
+    if isinstance(expected, (_re_pattern_type,) + six.string_types):
         return re.search(expected, actual) is not None
-    elif hasattr(expected, "__iter__"):
+
+    if hasattr(expected, "__iter__"):
         return any([x is not None and _match_decorator_property(x, actual)
                     for x in expected])
-    else:
-        return expected == actual
+
+    return expected == actual
 
 
 def _compiler_supports(compiler,
@@ -279,7 +284,7 @@ def expectedFailureAll(bugnumber=None,
                          archs=archs, triple=triple,
                          debug_info=debug_info,
                          swig_version=swig_version, py_version=py_version,
-                         macos_version=None,
+                         macos_version=macos_version,
                          remote=remote,dwarf_version=dwarf_version,
                          setting=setting)
 
@@ -373,8 +378,8 @@ def apple_simulator_test(platform):
     The SDK identifiers for simulators are iphonesimulator, appletvsimulator, watchsimulator
     """
     def should_skip_simulator_test():
-        if lldbplatformutil.getHostPlatform() != 'darwin':
-            return "simulator tests are run only on darwin hosts"
+        if lldbplatformutil.getHostPlatform() not in ['darwin', 'macosx']:
+            return "simulator tests are run only on darwin hosts."
         try:
             DEVNULL = open(os.devnull, 'w')
             output = subprocess.check_output(["xcodebuild", "-showsdks"], stderr=DEVNULL).decode("utf-8")

@@ -17,25 +17,26 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/CallingConvLower.h"
-#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/TargetCallingConv.h"
-#include "llvm/IR/Attributes.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/LowLevelTypeImpl.h"
 #include "llvm/Support/MachineValueType.h"
 #include <cstdint>
 #include <functional>
 
 namespace llvm {
 
+class AttributeList;
 class CallBase;
 class DataLayout;
 class Function;
 class FunctionLoweringInfo;
 class MachineIRBuilder;
+class MachineFunction;
 struct MachinePointerInfo;
 class MachineRegisterInfo;
 class TargetLowering;

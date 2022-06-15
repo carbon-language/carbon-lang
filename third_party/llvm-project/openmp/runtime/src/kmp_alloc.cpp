@@ -1242,7 +1242,6 @@ static void **mk_hbw_preferred_hugetlb;
 static void **mk_dax_kmem;
 static void **mk_dax_kmem_all;
 static void **mk_dax_kmem_preferred;
-// Preview of target memory support
 static void *(*kmp_target_alloc_host)(size_t size, int device);
 static void *(*kmp_target_alloc_shared)(size_t size, int device);
 static void *(*kmp_target_alloc_device)(size_t size, int device);
@@ -1257,7 +1256,7 @@ static bool __kmp_target_mem_available;
    MA == llvm_omp_target_shared_mem_alloc ||                                   \
    MA == llvm_omp_target_device_mem_alloc)
 
-#if KMP_OS_UNIX && KMP_DYNAMIC_LIB
+#if KMP_OS_UNIX && KMP_DYNAMIC_LIB && !KMP_OS_DARWIN
 static inline void chk_kind(void ***pkind) {
   KMP_DEBUG_ASSERT(pkind);
   if (*pkind) // symbol found
@@ -1268,7 +1267,7 @@ static inline void chk_kind(void ***pkind) {
 
 void __kmp_init_memkind() {
 // as of 2018-07-31 memkind does not support Windows*, exclude it for now
-#if KMP_OS_UNIX && KMP_DYNAMIC_LIB
+#if KMP_OS_UNIX && KMP_DYNAMIC_LIB && !KMP_OS_DARWIN
   // use of statically linked memkind is problematic, as it depends on libnuma
   kmp_mk_lib_name = "libmemkind.so";
   h_memkind = dlopen(kmp_mk_lib_name, RTLD_LAZY);
@@ -1352,7 +1351,7 @@ void __kmp_fini_memkind() {
   mk_dax_kmem_preferred = NULL;
 #endif
 }
-// Preview of target memory support
+
 void __kmp_init_target_mem() {
   *(void **)(&kmp_target_alloc_host) = KMP_DLSYM("llvm_omp_target_alloc_host");
   *(void **)(&kmp_target_alloc_shared) =

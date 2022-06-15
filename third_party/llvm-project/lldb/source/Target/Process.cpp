@@ -436,8 +436,8 @@ Process::Process(lldb::TargetSP target_sp, ListenerSP listener_sp,
       m_private_run_lock(), m_finalizing(false),
       m_clear_thread_plans_on_stop(false), m_force_next_event_delivery(false),
       m_last_broadcast_state(eStateInvalid), m_destroy_in_process(false),
-      m_can_interpret_function_calls(false), m_warnings_issued(),
-      m_run_thread_plan_lock(), m_can_jit(eCanJITDontKnow) {
+      m_can_interpret_function_calls(false), m_run_thread_plan_lock(),
+      m_can_jit(eCanJITDontKnow) {
   CheckInWithManager();
 
   Log *log = GetLog(LLDBLog::Object);
@@ -1919,6 +1919,9 @@ Status Process::DisableSoftwareBreakpoint(BreakpointSite *bp_site) {
 //#define VERIFY_MEMORY_READS
 
 size_t Process::ReadMemory(addr_t addr, void *buf, size_t size, Status &error) {
+  if (ABISP abi_sp = GetABI())
+    addr = abi_sp->FixAnyAddress(addr);
+
   error.Clear();
   if (!GetDisableMemoryCache()) {
 #if defined(VERIFY_MEMORY_READS)
@@ -2031,6 +2034,9 @@ size_t Process::ReadMemoryFromInferior(addr_t addr, void *buf, size_t size,
                                        Status &error) {
   LLDB_SCOPED_TIMER();
 
+  if (ABISP abi_sp = GetABI())
+    addr = abi_sp->FixAnyAddress(addr);
+
   if (buf == nullptr || size == 0)
     return 0;
 
@@ -2113,6 +2119,9 @@ size_t Process::WriteMemoryPrivate(addr_t addr, const void *buf, size_t size,
 
 size_t Process::WriteMemory(addr_t addr, const void *buf, size_t size,
                             Status &error) {
+  if (ABISP abi_sp = GetABI())
+    addr = abi_sp->FixAnyAddress(addr);
+
 #if defined(ENABLE_MEMORY_CACHING)
   m_memory_cache.Flush(addr, size);
 #endif
@@ -2557,6 +2566,13 @@ Status Process::LaunchPrivate(ProcessLaunchInfo &launch_info, StateType &state,
 
   if (state == eStateStopped || state == eStateCrashed) {
     DidLaunch();
+    
+    // Now that we know the process type, update its signal responses from the 
+    // ones stored in the Target:
+    if (m_unix_signals_sp) {
+      StreamSP warning_strm = GetTarget().GetDebugger().GetAsyncErrorStream();
+      GetTarget().UpdateSignalsFromDummy(m_unix_signals_sp, warning_strm);
+    }
 
     DynamicLoader *dyld = GetDynamicLoader();
     if (dyld)
@@ -2885,21 +2901,22 @@ void Process::CompleteAttach() {
   // switch architectures.
   PlatformSP platform_sp(GetTarget().GetPlatform());
   assert(platform_sp);
+  ArchSpec process_host_arch = GetSystemArchitecture();
   if (platform_sp) {
     const ArchSpec &target_arch = GetTarget().GetArchitecture();
     if (target_arch.IsValid() &&
-        !platform_sp->IsCompatibleArchitecture(target_arch, false, nullptr)) {
+        !platform_sp->IsCompatibleArchitecture(target_arch, process_host_arch,
+                                               false, nullptr)) {
       ArchSpec platform_arch;
-      platform_sp =
-          platform_sp->GetPlatformForArchitecture(target_arch, &platform_arch);
+      platform_sp = GetTarget().GetDebugger().GetPlatformList().GetOrCreate(
+          target_arch, process_host_arch, &platform_arch);
       if (platform_sp) {
         GetTarget().SetPlatform(platform_sp);
         GetTarget().SetArchitecture(platform_arch);
-        LLDB_LOGF(log,
-                  "Process::%s switching platform to %s and architecture "
-                  "to %s based on info from attach",
-                  __FUNCTION__, platform_sp->GetName().AsCString(""),
-                  platform_arch.GetTriple().getTriple().c_str());
+        LLDB_LOG(log,
+                 "switching platform to {0} and architecture to {1} based on "
+                 "info from attach",
+                 platform_sp->GetName(), platform_arch.GetTriple().getTriple());
       }
     } else if (!process_arch.IsValid()) {
       ProcessInstanceInfo process_info;
@@ -2917,6 +2934,12 @@ void Process::CompleteAttach() {
                   GetID());
       }
     }
+  }
+  // Now that we know the process type, update its signal responses from the 
+  // ones stored in the Target:
+  if (m_unix_signals_sp) {
+    StreamSP warning_strm = GetTarget().GetDebugger().GetAsyncErrorStream();
+    GetTarget().UpdateSignalsFromDummy(m_unix_signals_sp, warning_strm);
   }
 
   // We have completed the attach, now it is time to find the dynamic loader
@@ -3509,12 +3532,13 @@ bool Process::StartPrivateStateThread(bool is_secondary_thread) {
                "<lldb.process.internal-state(pid=%" PRIu64 ")>", GetID());
   }
 
-  // Create the private state thread, and start it running.
-  PrivateStateThreadArgs *args_ptr =
-      new PrivateStateThreadArgs(this, is_secondary_thread);
   llvm::Expected<HostThread> private_state_thread =
-      ThreadLauncher::LaunchThread(thread_name, Process::PrivateStateThread,
-                                   (void *)args_ptr, 8 * 1024 * 1024);
+      ThreadLauncher::LaunchThread(
+          thread_name,
+          [this, is_secondary_thread] {
+            return RunPrivateStateThread(is_secondary_thread);
+          },
+          8 * 1024 * 1024);
   if (!private_state_thread) {
     LLDB_LOG(GetLog(LLDBLog::Host), "failed to launch host thread: {}",
              llvm::toString(private_state_thread.takeError()));
@@ -3729,14 +3753,6 @@ Status Process::HaltPrivate() {
   return error;
 }
 
-thread_result_t Process::PrivateStateThread(void *arg) {
-  std::unique_ptr<PrivateStateThreadArgs> args_up(
-      static_cast<PrivateStateThreadArgs *>(arg));
-  thread_result_t result =
-      args_up->process->RunPrivateStateThread(args_up->is_secondary_thread);
-  return result;
-}
-
 thread_result_t Process::RunPrivateStateThread(bool is_secondary_thread) {
   bool control_only = true;
 
@@ -3868,8 +3884,7 @@ Process::ProcessEventData::ProcessEventData() : EventData(), m_process_wp() {}
 
 Process::ProcessEventData::ProcessEventData(const ProcessSP &process_sp,
                                             StateType state)
-    : EventData(), m_process_wp(), m_state(state), m_restarted(false),
-      m_update_state(0), m_interrupted(false) {
+    : EventData(), m_process_wp(), m_state(state) {
   if (process_sp)
     m_process_wp = process_sp;
 }
@@ -4318,6 +4333,12 @@ public:
 
   ~IOHandlerProcessSTDIO() override = default;
 
+  void SetIsRunning(bool running) {
+    std::lock_guard<std::mutex> guard(m_mutex);
+    SetIsDone(!running);
+    m_is_running = running;
+  }
+
   // Each IOHandler gets to run until it is done. It should read data from the
   // "in" and place output into "out" and "err and return when done.
   void Run() override {
@@ -4337,49 +4358,52 @@ public:
 // FD_ZERO, FD_SET are not supported on windows
 #ifndef _WIN32
     const int pipe_read_fd = m_pipe.GetReadFileDescriptor();
-    m_is_running = true;
-    while (!GetIsDone()) {
+    SetIsRunning(true);
+    while (true) {
+      {
+        std::lock_guard<std::mutex> guard(m_mutex);
+        if (GetIsDone())
+          break;
+      }
+
       SelectHelper select_helper;
       select_helper.FDSetRead(read_fd);
       select_helper.FDSetRead(pipe_read_fd);
       Status error = select_helper.Select();
 
-      if (error.Fail()) {
-        SetIsDone(true);
-      } else {
-        char ch = 0;
-        size_t n;
-        if (select_helper.FDIsSetRead(read_fd)) {
-          n = 1;
-          if (m_read_file.Read(&ch, n).Success() && n == 1) {
-            if (m_write_file.Write(&ch, n).Fail() || n != 1)
-              SetIsDone(true);
-          } else
-            SetIsDone(true);
-        }
-        if (select_helper.FDIsSetRead(pipe_read_fd)) {
-          size_t bytes_read;
-          // Consume the interrupt byte
-          Status error = m_pipe.Read(&ch, 1, bytes_read);
-          if (error.Success()) {
-            switch (ch) {
-            case 'q':
-              SetIsDone(true);
-              break;
-            case 'i':
-              if (StateIsRunningState(m_process->GetState()))
-                m_process->SendAsyncInterrupt();
-              break;
-            }
-          }
+      if (error.Fail())
+        break;
+
+      char ch = 0;
+      size_t n;
+      if (select_helper.FDIsSetRead(read_fd)) {
+        n = 1;
+        if (m_read_file.Read(&ch, n).Success() && n == 1) {
+          if (m_write_file.Write(&ch, n).Fail() || n != 1)
+            break;
+        } else
+          break;
+      }
+
+      if (select_helper.FDIsSetRead(pipe_read_fd)) {
+        size_t bytes_read;
+        // Consume the interrupt byte
+        Status error = m_pipe.Read(&ch, 1, bytes_read);
+        if (error.Success()) {
+          if (ch == 'q')
+            break;
+          if (ch == 'i')
+            if (StateIsRunningState(m_process->GetState()))
+              m_process->SendAsyncInterrupt();
         }
       }
     }
-    m_is_running = false;
+    SetIsRunning(false);
 #endif
   }
 
   void Cancel() override {
+    std::lock_guard<std::mutex> guard(m_mutex);
     SetIsDone(true);
     // Only write to our pipe to cancel if we are in
     // IOHandlerProcessSTDIO::Run(). We can end up with a python command that
@@ -4436,7 +4460,8 @@ protected:
   NativeFile m_write_file; // Write to this file (usually the primary pty for
                            // getting io to debuggee)
   Pipe m_pipe;
-  std::atomic<bool> m_is_running{false};
+  std::mutex m_mutex;
+  bool m_is_running = false;
 };
 
 void Process::SetSTDIOFileDescriptor(int fd) {
@@ -4503,7 +4528,7 @@ namespace {
 class RestorePlanState {
 public:
   RestorePlanState(lldb::ThreadPlanSP thread_plan_sp)
-      : m_thread_plan_sp(thread_plan_sp), m_already_reset(false) {
+      : m_thread_plan_sp(thread_plan_sp) {
     if (m_thread_plan_sp) {
       m_private = m_thread_plan_sp->GetPrivate();
       m_is_controlling = m_thread_plan_sp->IsControllingPlan();
@@ -4524,7 +4549,7 @@ public:
 
 private:
   lldb::ThreadPlanSP m_thread_plan_sp;
-  bool m_already_reset;
+  bool m_already_reset = false;
   bool m_private;
   bool m_is_controlling;
   bool m_okay_to_discard;
@@ -5694,48 +5719,12 @@ void Process::ModulesDidLoad(ModuleList &module_list) {
   }
 }
 
-void Process::PrintWarning(uint64_t warning_type, const void *repeat_key,
-                           const char *fmt, ...) {
-  bool print_warning = true;
-
-  StreamSP stream_sp = GetTarget().GetDebugger().GetAsyncOutputStream();
-  if (!stream_sp)
-    return;
-
-  if (repeat_key != nullptr) {
-    WarningsCollection::iterator it = m_warnings_issued.find(warning_type);
-    if (it == m_warnings_issued.end()) {
-      m_warnings_issued[warning_type] = WarningsPointerSet();
-      m_warnings_issued[warning_type].insert(repeat_key);
-    } else {
-      if (it->second.find(repeat_key) != it->second.end()) {
-        print_warning = false;
-      } else {
-        it->second.insert(repeat_key);
-      }
-    }
-  }
-
-  if (print_warning) {
-    va_list args;
-    va_start(args, fmt);
-    stream_sp->PrintfVarArg(fmt, args);
-    va_end(args);
-  }
-}
-
 void Process::PrintWarningOptimization(const SymbolContext &sc) {
   if (!GetWarningsOptimization())
     return;
-  if (!sc.module_sp)
+  if (!sc.module_sp || !sc.function || !sc.function->GetIsOptimized())
     return;
-  if (!sc.module_sp->GetFileSpec().GetFilename().IsEmpty() && sc.function &&
-      sc.function->GetIsOptimized()) {
-    PrintWarning(Process::Warnings::eWarningsOptimization, sc.module_sp.get(),
-                 "%s was compiled with optimization - stepping may behave "
-                 "oddly; variables may not be available.\n",
-                 sc.module_sp->GetFileSpec().GetFilename().GetCString());
-  }
+  sc.module_sp->ReportWarningOptimization(GetTarget().GetDebugger().GetID());
 }
 
 void Process::PrintWarningUnsupportedLanguage(const SymbolContext &sc) {
@@ -5748,13 +5737,10 @@ void Process::PrintWarningUnsupportedLanguage(const SymbolContext &sc) {
     return;
   LanguageSet plugins =
       PluginManager::GetAllTypeSystemSupportedLanguagesForTypes();
-  if (!plugins[language]) {
-    PrintWarning(Process::Warnings::eWarningsUnsupportedLanguage,
-                 sc.module_sp.get(),
-                 "This version of LLDB has no plugin for the language \"%s\". "
-                 "Inspection of frame variables will be limited.\n",
-                 Language::GetNameForLanguageType(language));
-  }
+  if (plugins[language])
+    return;
+  sc.module_sp->ReportWarningUnsupportedLanguage(
+      language, GetTarget().GetDebugger().GetID());
 }
 
 bool Process::GetProcessInfo(ProcessInstanceInfo &info) {
@@ -5867,7 +5853,7 @@ Process::AdvanceAddressToNextBranchInstruction(Address default_stop_addr,
 Status Process::GetMemoryRegionInfo(lldb::addr_t load_addr,
                                     MemoryRegionInfo &range_info) {
   if (const lldb::ABISP &abi = GetABI())
-    load_addr = abi->FixDataAddress(load_addr);
+    load_addr = abi->FixAnyAddress(load_addr);
   return DoGetMemoryRegionInfo(load_addr, range_info);
 }
 
@@ -5902,7 +5888,7 @@ Status Process::GetMemoryRegions(lldb_private::MemoryRegionInfos &region_list) {
       range_end != LLDB_INVALID_ADDRESS &&
       // If we have non-address bits and some are set then the end
       // is at or beyond the end of mappable memory.
-      !(abi && (abi->FixDataAddress(range_end) != range_end)));
+      !(abi && (abi->FixAnyAddress(range_end) != range_end)));
 
   return error;
 }

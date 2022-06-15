@@ -8,7 +8,7 @@
 
 // <string>
 
-// void resize(size_type n, charT c);
+// void resize(size_type n, charT c); // constexpr since C++20
 
 #include <string>
 #include <stdexcept>
@@ -18,7 +18,7 @@
 #include "min_allocator.h"
 
 template <class S>
-void
+TEST_CONSTEXPR_CXX20 void
 test(S s, typename S::size_type n, typename S::value_type c, S expected)
 {
     if (n <= s.max_size())
@@ -28,7 +28,7 @@ test(S s, typename S::size_type n, typename S::value_type c, S expected)
         assert(s == expected);
     }
 #ifndef TEST_HAS_NO_EXCEPTIONS
-    else
+    else if (!TEST_IS_CONSTANT_EVALUATED)
     {
         try
         {
@@ -43,7 +43,7 @@ test(S s, typename S::size_type n, typename S::value_type c, S expected)
 #endif
 }
 
-bool test() {
+TEST_CONSTEXPR_CXX20 bool test() {
   {
     typedef std::string S;
     test(S(), 0, 'a', S());
@@ -92,7 +92,7 @@ int main(int, char**)
 {
   test();
 #if TEST_STD_VER > 17
-  // static_assert(test());
+  static_assert(test());
 #endif
 
   return 0;

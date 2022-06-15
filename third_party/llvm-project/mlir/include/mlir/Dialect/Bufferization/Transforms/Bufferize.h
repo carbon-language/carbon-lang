@@ -1,4 +1,4 @@
-//===- Bufferize.h - Bufferization utilities --------------------*- C++ -*-===//
+//===- Bufferize.h - Bufferization Utilities --------------------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -9,14 +9,10 @@
 // We use the term "bufferize" to mean conversion from tensor types to
 // memref types.
 //
-// Generally speaking, for each op that operates on tensor types, a conversion
-// pattern needs to be written. The infrastructure in this file assists in
-// defining these conversion patterns in a composable way.
-//
-// Bufferization conversion patterns should generally use the ordinary
-// conversion pattern classes (e.g. OpConversionPattern). A TypeConverter
-// (accessible with getTypeConverter()) is available if needed for converting
-// types.
+// Generally speaking, for each op that operates on tensor types, the
+// `BufferizableOpInterface` needs to be implemented. This file contains the
+// bufferization driver that is responsible for bufferizing the ops in the right
+// order, etc.
 //
 //===----------------------------------------------------------------------===//
 
@@ -28,8 +24,10 @@
 namespace mlir {
 namespace bufferization {
 
-class BufferizationState;
+class AnalysisState;
+struct BufferizationState;
 struct BufferizationOptions;
+class OpFilter;
 
 /// A helper type converter class that automatically populates the relevant
 /// materializations and type conversions for bufferization.
@@ -67,7 +65,7 @@ void populateEliminateBufferizeMaterializationsPatterns(
 /// layouts after transformations. Combinations of memref.cast +
 /// canonicalization are responsible for clean ups.
 // TODO: Extract `options` from `state` and pass as separate argument.
-LogicalResult bufferizeOp(Operation *op, const BufferizationState &state);
+LogicalResult bufferizeOp(Operation *op, const AnalysisState &analysisState);
 
 /// Bufferize `op` and its nested ops that implement `BufferizableOpInterface`.
 /// Buffers are duplicated and copied before any tensor use that bufferizes to
@@ -77,12 +75,18 @@ LogicalResult bufferizeOp(Operation *op, const BufferizationState &state);
 /// can be used to implement partial bufferization passes.
 LogicalResult bufferizeOp(Operation *op, const BufferizationOptions &options);
 
-/// Populate the pattern set with a pattern that bufferizes ops that implement
-/// `BufferizableOpInterface`.
-void populateBufferizationPattern(const BufferizationState &state,
-                                  RewritePatternSet &patterns);
-
 BufferizationOptions getPartialBufferizationOptions();
+
+//===----------------------------------------------------------------------===//
+// Helper functions for extending Bufferization
+//===----------------------------------------------------------------------===//
+
+/// Bufferize `op` and its nested ops that implement `BufferizableOpInterface`.
+/// Reuse an existing `BufferizationState`.
+///
+/// Note: This function overload is useful for extending the bufferization.
+LogicalResult bufferizeOp(Operation *op, BufferizationState &bufferizationState,
+                          const OpFilter *opFilter = nullptr);
 
 } // namespace bufferization
 } // namespace mlir

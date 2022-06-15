@@ -10,8 +10,6 @@
 #define LLVM_CLANG_TOOLS_EXTRA_CLANGD_CLANGDLSPSERVER_H
 
 #include "ClangdServer.h"
-#include "DraftStore.h"
-#include "FindSymbols.h"
 #include "GlobalCompilationDatabase.h"
 #include "LSPBinder.h"
 #include "Protocol.h"
@@ -20,9 +18,7 @@
 #include "support/MemoryTree.h"
 #include "support/Path.h"
 #include "support/Threading.h"
-#include "clang/Tooling/Core/Replacement.h"
 #include "llvm/ADT/Optional.h"
-#include "llvm/ADT/StringSet.h"
 #include "llvm/Support/JSON.h"
 #include <chrono>
 #include <cstddef>
@@ -148,7 +144,9 @@ private:
   void onCallHierarchyOutgoingCalls(
       const CallHierarchyOutgoingCallsParams &,
       Callback<std::vector<CallHierarchyOutgoingCall>>);
-  void onInlayHints(const InlayHintsParams &, Callback<std::vector<InlayHint>>);
+  void onClangdInlayHints(const InlayHintsParams &,
+                          Callback<llvm::json::Value>);
+  void onInlayHint(const InlayHintsParams &, Callback<std::vector<InlayHint>>);
   void onChangeConfiguration(const DidChangeConfigurationParams &);
   void onSymbolInfo(const TextDocumentPositionParams &,
                     Callback<std::vector<SymbolDetails>>);

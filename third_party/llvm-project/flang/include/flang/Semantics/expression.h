@@ -13,6 +13,7 @@
 #include "flang/Common/Fortran.h"
 #include "flang/Common/indirection.h"
 #include "flang/Common/restorer.h"
+#include "flang/Common/visit.h"
 #include "flang/Evaluate/characteristics.h"
 #include "flang/Evaluate/check-expression.h"
 #include "flang/Evaluate/expression.h"
@@ -254,7 +255,7 @@ protected:
   int IntegerTypeSpecKind(const parser::IntegerTypeSpec &);
 
 private:
-  MaybeExpr Analyze(const parser::IntLiteralConstant &);
+  MaybeExpr Analyze(const parser::IntLiteralConstant &, bool negated = false);
   MaybeExpr Analyze(const parser::RealLiteralConstant &);
   MaybeExpr Analyze(const parser::ComplexPart &);
   MaybeExpr Analyze(const parser::ComplexLiteralConstant &);
@@ -299,11 +300,7 @@ private:
     return Analyze(x.u); // default case
   }
   template <typename... As> MaybeExpr Analyze(const std::variant<As...> &u) {
-    return std::visit(
-        [&](const auto &x) {
-          return Analyze(x);
-        },
-        u);
+    return common::visit([&](const auto &x) { return Analyze(x); }, u);
   }
 
   // Analysis subroutines
@@ -311,7 +308,8 @@ private:
       const std::optional<parser::KindParam> &, int defaultKind);
   template <typename PARSED>
   MaybeExpr ExprOrVariable(const PARSED &, parser::CharBlock source);
-  template <typename PARSED> MaybeExpr IntLiteralConstant(const PARSED &);
+  template <typename PARSED>
+  MaybeExpr IntLiteralConstant(const PARSED &, bool negated = false);
   MaybeExpr AnalyzeString(std::string &&, int kind);
   std::optional<Expr<SubscriptInteger>> AsSubscript(MaybeExpr &&);
   std::optional<Expr<SubscriptInteger>> TripletPart(
@@ -324,7 +322,7 @@ private:
       DataRef &&, const Symbol &, const semantics::Scope &);
   MaybeExpr CompleteSubscripts(ArrayRef &&);
   MaybeExpr ApplySubscripts(DataRef &&, std::vector<Subscript> &&);
-  MaybeExpr TopLevelChecks(DataRef &&);
+  bool CheckRanks(const DataRef &); // Return false if error exists.
   std::optional<Expr<SubscriptInteger>> GetSubstringBound(
       const std::optional<parser::ScalarIntExpr> &);
   MaybeExpr AnalyzeDefinedOp(const parser::Name &, ActualArguments &&);
@@ -338,7 +336,7 @@ private:
   };
 
   std::optional<CalleeAndArguments> AnalyzeProcedureComponentRef(
-      const parser::ProcComponentRef &, ActualArguments &&);
+      const parser::ProcComponentRef &, ActualArguments &&, bool isSubroutine);
   std::optional<characteristics::Procedure> CheckCall(
       parser::CharBlock, const ProcedureDesignator &, ActualArguments &);
   using AdjustActuals =
@@ -346,7 +344,7 @@ private:
   bool ResolveForward(const Symbol &);
   std::pair<const Symbol *, bool /* failure due to NULL() actuals */>
   ResolveGeneric(const Symbol &, const ActualArguments &, const AdjustActuals &,
-      bool mightBeStructureConstructor = false);
+      bool isSubroutine, bool mightBeStructureConstructor = false);
   void EmitGenericResolutionError(const Symbol &, bool dueToNullActuals);
   const Symbol &AccessSpecific(
       const Symbol &originalGeneric, const Symbol &specific);
@@ -478,6 +476,12 @@ public:
   void Post(const parser::WhereBodyConstruct &) {
     --whereDepth_;
     exprAnalyzer_.set_inWhereBody(InWhereBody());
+  }
+
+  bool Pre(const parser::ComponentDefStmt &) {
+    // Already analyzed in name resolution and PDT instantiation;
+    // do not attempt to re-analyze now without type parameters.
+    return false;
   }
 
   template <typename A> bool Pre(const parser::Scalar<A> &x) {

@@ -33,7 +33,11 @@ public:
 
 class LLDB_API SBDebugger {
 public:
-  FLAGS_ANONYMOUS_ENUM(){eBroadcastBitProgress = (1 << 0)};
+  FLAGS_ANONYMOUS_ENUM(){
+      eBroadcastBitProgress = (1 << 0),
+      eBroadcastBitWarning = (1 << 1),
+      eBroadcastBitError = (1 << 2),
+  };
 
   SBDebugger();
 
@@ -79,11 +83,16 @@ public:
                                           uint64_t &completed, uint64_t &total,
                                           bool &is_debugger_specific);
 
+  static lldb::SBStructuredData
+  GetDiagnosticFromEvent(const lldb::SBEvent &event);
+
   lldb::SBDebugger &operator=(const lldb::SBDebugger &rhs);
 
   static void Initialize();
 
   static lldb::SBError InitializeWithErrorHandling();
+
+  static void PrintStackTraceOnError();
 
   static void Terminate();
 

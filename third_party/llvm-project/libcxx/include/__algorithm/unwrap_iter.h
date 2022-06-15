@@ -10,8 +10,8 @@
 #define _LIBCPP___ALGORITHM_UNWRAP_ITER_H
 
 #include <__config>
+#include <__iterator/iterator_traits.h>
 #include <__memory/pointer_traits.h>
-#include <iterator>
 #include <type_traits>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
@@ -43,7 +43,7 @@ struct __unwrap_iter_impl {
     }
 };
 
-#if _LIBCPP_DEBUG_LEVEL < 2
+#ifndef _LIBCPP_ENABLE_DEBUG_MODE
 
 template <class _Iter>
 struct __unwrap_iter_impl<_Iter, true> {
@@ -53,7 +53,7 @@ struct __unwrap_iter_impl<_Iter, true> {
     }
 };
 
-#endif // _LIBCPP_DEBUG_LEVEL < 2
+#endif // !_LIBCPP_ENABLE_DEBUG_MODE
 
 template<class _Iter, class _Impl = __unwrap_iter_impl<_Iter> >
 inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
@@ -64,14 +64,14 @@ __unwrap_iter(_Iter __i) _NOEXCEPT
 }
 
 template<class _OrigIter>
-_LIBCPP_HIDE_FROM_ABI
+_LIBCPP_HIDE_FROM_ABI _LIBCPP_CONSTEXPR
 _OrigIter __rewrap_iter(_OrigIter, _OrigIter __result)
 {
     return __result;
 }
 
 template<class _OrigIter, class _UnwrappedIter>
-_LIBCPP_HIDE_FROM_ABI
+_LIBCPP_HIDE_FROM_ABI _LIBCPP_CONSTEXPR
 _OrigIter __rewrap_iter(_OrigIter __first, _UnwrappedIter __result)
 {
     // Precondition: __result is reachable from __first

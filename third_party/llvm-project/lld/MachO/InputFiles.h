@@ -60,7 +60,8 @@ struct Subsection {
 using Subsections = std::vector<Subsection>;
 class InputFile;
 
-struct Section {
+class Section {
+public:
   InputFile *file;
   StringRef segname;
   StringRef name;
@@ -76,6 +77,13 @@ struct Section {
   Section &operator=(const Section &) = delete;
   Section(Section &&) = delete;
   Section &operator=(Section &&) = delete;
+
+private:
+  // Whether we have already split this section into individual subsections.
+  // For sections that cannot be split (e.g. literal sections), this is always
+  // false.
+  bool doneSplitting = false;
+  friend class ObjFile;
 };
 
 // Represents a call graph profile edge.
@@ -135,6 +143,12 @@ private:
   static int idCount;
 };
 
+struct FDE {
+  uint32_t funcLength;
+  Symbol *personality;
+  InputSection *lsda;
+};
+
 // .o file
 class ObjFile final : public InputFile {
 public:
@@ -146,13 +160,13 @@ public:
   static bool classof(const InputFile *f) { return f->kind() == ObjKind; }
 
   llvm::DWARFUnit *compileUnit = nullptr;
+  Section *addrSigSection = nullptr;
   const uint32_t modTime;
   std::vector<ConcatInputSection *> debugSections;
   std::vector<CallGraphEntry> callGraph;
+  llvm::DenseMap<ConcatInputSection *, FDE> fdes;
 
 private:
-  Section *compactUnwindSection = nullptr;
-
   template <class LP> void parseLazy();
   template <class SectionHeader> void parseSections(ArrayRef<SectionHeader>);
   template <class LP>
@@ -163,9 +177,11 @@ private:
   Symbol *parseNonSectionSymbol(const NList &sym, StringRef name);
   template <class SectionHeader>
   void parseRelocations(ArrayRef<SectionHeader> sectionHeaders,
-                        const SectionHeader &, Subsections &);
+                        const SectionHeader &, Section &);
   void parseDebugInfo();
-  void registerCompactUnwind();
+  void splitEhFrames(ArrayRef<uint8_t> dataArr, Section &ehFrameSection);
+  void registerCompactUnwind(Section &compactUnwindSection);
+  void registerEhFrames(Section &ehFrameSection);
 };
 
 // command-line -sectcreate file
@@ -186,10 +202,10 @@ public:
   // to the root. On the other hand, if a dylib is being directly loaded
   // (through an -lfoo flag), then `umbrella` should be a nullptr.
   explicit DylibFile(MemoryBufferRef mb, DylibFile *umbrella,
-                     bool isBundleLoader = false);
+                     bool isBundleLoader, bool explicitlyLinked);
   explicit DylibFile(const llvm::MachO::InterfaceFile &interface,
-                     DylibFile *umbrella = nullptr,
-                     bool isBundleLoader = false);
+                     DylibFile *umbrella, bool isBundleLoader,
+                     bool explicitlyLinked);
 
   void parseLoadCommands(MemoryBufferRef mb);
   void parseReexports(const llvm::MachO::InterfaceFile &interface);
@@ -307,6 +323,7 @@ std::vector<const CommandType *> findCommands(const void *anyHdr,
 } // namespace macho
 
 std::string toString(const macho::InputFile *file);
+std::string toString(const macho::Section &);
 } // namespace lld
 
 #endif

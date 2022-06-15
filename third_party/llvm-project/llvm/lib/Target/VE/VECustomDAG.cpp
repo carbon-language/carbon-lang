@@ -61,6 +61,10 @@ bool isMaskArithmetic(SDValue Op) {
 /// \returns the VVP_* SDNode opcode corresponsing to \p OC.
 Optional<unsigned> getVVPOpcode(unsigned Opcode) {
   switch (Opcode) {
+  case ISD::MLOAD:
+    return VEISD::VVP_LOAD;
+  case ISD::MSTORE:
+    return VEISD::VVP_STORE;
 #define HANDLE_VP_TO_VVP(VPOPC, VVPNAME)                                       \
   case ISD::VPOPC:                                                             \
     return VEISD::VVPNAME;
@@ -69,6 +73,11 @@ Optional<unsigned> getVVPOpcode(unsigned Opcode) {
   case ISD::SDNAME:                                                            \
     return VEISD::VVPNAME;
 #include "VVPNodes.def"
+  // TODO: Map those in VVPNodes.def too
+  case ISD::EXPERIMENTAL_VP_STRIDED_LOAD:
+    return VEISD::VVP_LOAD;
+  case ISD::EXPERIMENTAL_VP_STRIDED_STORE:
+    return VEISD::VVP_STORE;
   }
   return None;
 }
@@ -124,12 +133,31 @@ bool isVVPOrVEC(unsigned Opcode) {
   return false;
 }
 
+bool isVVPUnaryOp(unsigned VVPOpcode) {
+  switch (VVPOpcode) {
+#define ADD_UNARY_VVP_OP(VVPNAME, ...)                                         \
+  case VEISD::VVPNAME:                                                         \
+    return true;
+#include "VVPNodes.def"
+  }
+  return false;
+}
+
 bool isVVPBinaryOp(unsigned VVPOpcode) {
   switch (VVPOpcode) {
 #define ADD_BINARY_VVP_OP(VVPNAME, ...)                                        \
   case VEISD::VVPNAME:                                                         \
     return true;
 #include "VVPNodes.def"
+  }
+  return false;
+}
+
+bool isVVPReductionOp(unsigned Opcode) {
+  switch (Opcode) {
+#define ADD_REDUCE_VVP_OP(VVP_NAME, SDNAME) case VEISD::VVP_NAME:
+#include "VVPNodes.def"
+    return true;
   }
   return false;
 }
@@ -151,6 +179,10 @@ Optional<int> getAVLPos(unsigned Opc) {
     return 1;
   case VEISD::VVP_SELECT:
     return 3;
+  case VEISD::VVP_LOAD:
+    return 4;
+  case VEISD::VVP_STORE:
+    return 5;
   }
 
   return None;
@@ -166,8 +198,12 @@ Optional<int> getMaskPos(unsigned Opc) {
   if (isVVPBinaryOp(Opc))
     return 2;
 
-  // VM Opcodes.
+  // Other opcodes.
   switch (Opc) {
+  case ISD::MSTORE:
+    return 4;
+  case ISD::MLOAD:
+    return 3;
   case VEISD::VVP_SELECT:
     return 2;
   }
@@ -176,6 +212,175 @@ Optional<int> getMaskPos(unsigned Opc) {
 }
 
 bool isLegalAVL(SDValue AVL) { return AVL->getOpcode() == VEISD::LEGALAVL; }
+
+/// Node Properties {
+
+SDValue getNodeChain(SDValue Op) {
+  if (MemSDNode *MemN = dyn_cast<MemSDNode>(Op.getNode()))
+    return MemN->getChain();
+
+  switch (Op->getOpcode()) {
+  case VEISD::VVP_LOAD:
+  case VEISD::VVP_STORE:
+    return Op->getOperand(0);
+  }
+  return SDValue();
+}
+
+SDValue getMemoryPtr(SDValue Op) {
+  if (auto *MemN = dyn_cast<MemSDNode>(Op.getNode()))
+    return MemN->getBasePtr();
+
+  switch (Op->getOpcode()) {
+  case VEISD::VVP_LOAD:
+    return Op->getOperand(1);
+  case VEISD::VVP_STORE:
+    return Op->getOperand(2);
+  }
+  return SDValue();
+}
+
+Optional<EVT> getIdiomaticVectorType(SDNode *Op) {
+  unsigned OC = Op->getOpcode();
+
+  // For memory ops -> the transfered data type
+  if (auto MemN = dyn_cast<MemSDNode>(Op))
+    return MemN->getMemoryVT();
+
+  switch (OC) {
+  // Standard ISD.
+  case ISD::SELECT: // not aliased with VVP_SELECT
+  case ISD::CONCAT_VECTORS:
+  case ISD::EXTRACT_SUBVECTOR:
+  case ISD::VECTOR_SHUFFLE:
+  case ISD::BUILD_VECTOR:
+  case ISD::SCALAR_TO_VECTOR:
+    return Op->getValueType(0);
+  }
+
+  // Translate to VVP where possible.
+  unsigned OriginalOC = OC;
+  if (auto VVPOpc = getVVPOpcode(OC))
+    OC = *VVPOpc;
+
+  if (isVVPReductionOp(OC))
+    return Op->getOperand(hasReductionStartParam(OriginalOC) ? 1 : 0)
+        .getValueType();
+
+  switch (OC) {
+  default:
+  case VEISD::VVP_SETCC:
+    return Op->getOperand(0).getValueType();
+
+  case VEISD::VVP_SELECT:
+#define ADD_BINARY_VVP_OP(VVP_NAME, ...) case VEISD::VVP_NAME:
+#include "VVPNodes.def"
+    return Op->getValueType(0);
+
+  case VEISD::VVP_LOAD:
+    return Op->getValueType(0);
+
+  case VEISD::VVP_STORE:
+    return Op->getOperand(1)->getValueType(0);
+
+  // VEC
+  case VEISD::VEC_BROADCAST:
+    return Op->getValueType(0);
+  }
+}
+
+SDValue getLoadStoreStride(SDValue Op, VECustomDAG &CDAG) {
+  switch (Op->getOpcode()) {
+  case VEISD::VVP_STORE:
+    return Op->getOperand(3);
+  case VEISD::VVP_LOAD:
+    return Op->getOperand(2);
+  }
+
+  if (auto *StoreN = dyn_cast<VPStridedStoreSDNode>(Op.getNode()))
+    return StoreN->getStride();
+  if (auto *StoreN = dyn_cast<VPStridedLoadSDNode>(Op.getNode()))
+    return StoreN->getStride();
+
+  if (isa<MemSDNode>(Op.getNode())) {
+    // Regular MLOAD/MSTORE/LOAD/STORE
+    // No stride argument -> use the contiguous element size as stride.
+    uint64_t ElemStride = getIdiomaticVectorType(Op.getNode())
+                              ->getVectorElementType()
+                              .getStoreSize();
+    return CDAG.getConstant(ElemStride, MVT::i64);
+  }
+  return SDValue();
+}
+
+SDValue getGatherScatterIndex(SDValue Op) {
+  if (auto *N = dyn_cast<MaskedGatherScatterSDNode>(Op.getNode()))
+    return N->getIndex();
+  if (auto *N = dyn_cast<VPGatherScatterSDNode>(Op.getNode()))
+    return N->getIndex();
+  return SDValue();
+}
+
+SDValue getGatherScatterScale(SDValue Op) {
+  if (auto *N = dyn_cast<MaskedGatherScatterSDNode>(Op.getNode()))
+    return N->getScale();
+  if (auto *N = dyn_cast<VPGatherScatterSDNode>(Op.getNode()))
+    return N->getScale();
+  return SDValue();
+}
+
+SDValue getStoredValue(SDValue Op) {
+  switch (Op->getOpcode()) {
+  case ISD::EXPERIMENTAL_VP_STRIDED_STORE:
+  case VEISD::VVP_STORE:
+    return Op->getOperand(1);
+  }
+  if (auto *StoreN = dyn_cast<StoreSDNode>(Op.getNode()))
+    return StoreN->getValue();
+  if (auto *StoreN = dyn_cast<MaskedStoreSDNode>(Op.getNode()))
+    return StoreN->getValue();
+  if (auto *StoreN = dyn_cast<VPStridedStoreSDNode>(Op.getNode()))
+    return StoreN->getValue();
+  if (auto *StoreN = dyn_cast<VPStoreSDNode>(Op.getNode()))
+    return StoreN->getValue();
+  if (auto *StoreN = dyn_cast<MaskedScatterSDNode>(Op.getNode()))
+    return StoreN->getValue();
+  if (auto *StoreN = dyn_cast<VPScatterSDNode>(Op.getNode()))
+    return StoreN->getValue();
+  return SDValue();
+}
+
+SDValue getNodePassthru(SDValue Op) {
+  if (auto *N = dyn_cast<MaskedLoadSDNode>(Op.getNode()))
+    return N->getPassThru();
+  if (auto *N = dyn_cast<MaskedGatherSDNode>(Op.getNode()))
+    return N->getPassThru();
+
+  return SDValue();
+}
+
+bool hasReductionStartParam(unsigned OPC) {
+  // TODO: Ordered reduction opcodes.
+  if (ISD::isVPReduction(OPC))
+    return true;
+  return false;
+}
+
+unsigned getScalarReductionOpcode(unsigned VVPOC, bool IsMask) {
+  assert(!IsMask && "Mask reduction isel");
+
+  switch (VVPOC) {
+#define HANDLE_VVP_REDUCE_TO_SCALAR(VVP_RED_ISD, REDUCE_ISD)                   \
+  case VEISD::VVP_RED_ISD:                                                     \
+    return ISD::REDUCE_ISD;
+#include "VVPNodes.def"
+  default:
+    break;
+  }
+  llvm_unreachable("Cannot not scalarize this reduction Opcode!");
+}
+
+/// } Node Properties
 
 SDValue getNodeAVL(SDValue Op) {
   auto PosOpt = getAVLPos(Op->getOpcode());
@@ -311,6 +516,74 @@ VETargetMasks VECustomDAG::getTargetSplitMask(SDValue RawMask, SDValue RawAVL,
     NewMask = getUnpack(MVT::v256i1, RawMask, Part, NewAVL);
 
   return VETargetMasks(NewMask, NewAVL);
+}
+
+SDValue VECustomDAG::getSplitPtrOffset(SDValue Ptr, SDValue ByteStride,
+                                       PackElem Part) const {
+  // High starts at base ptr but has more significant bits in the 64bit vector
+  // element.
+  if (Part == PackElem::Hi)
+    return Ptr;
+  return getNode(ISD::ADD, MVT::i64, {Ptr, ByteStride});
+}
+
+SDValue VECustomDAG::getSplitPtrStride(SDValue PackStride) const {
+  if (auto ConstBytes = dyn_cast<ConstantSDNode>(PackStride))
+    return getConstant(2 * ConstBytes->getSExtValue(), MVT::i64);
+  return getNode(ISD::SHL, MVT::i64, {PackStride, getConstant(1, MVT::i32)});
+}
+
+SDValue VECustomDAG::getGatherScatterAddress(SDValue BasePtr, SDValue Scale,
+                                             SDValue Index, SDValue Mask,
+                                             SDValue AVL) const {
+  EVT IndexVT = Index.getValueType();
+
+  // Apply scale.
+  SDValue ScaledIndex;
+  if (!Scale || isOneConstant(Scale))
+    ScaledIndex = Index;
+  else {
+    SDValue ScaleBroadcast = getBroadcast(IndexVT, Scale, AVL);
+    ScaledIndex =
+        getNode(VEISD::VVP_MUL, IndexVT, {Index, ScaleBroadcast, Mask, AVL});
+  }
+
+  // Add basePtr.
+  if (isNullConstant(BasePtr))
+    return ScaledIndex;
+
+  // re-constitute pointer vector (basePtr + index * scale)
+  SDValue BaseBroadcast = getBroadcast(IndexVT, BasePtr, AVL);
+  auto ResPtr =
+      getNode(VEISD::VVP_ADD, IndexVT, {BaseBroadcast, ScaledIndex, Mask, AVL});
+  return ResPtr;
+}
+
+SDValue VECustomDAG::getLegalReductionOpVVP(unsigned VVPOpcode, EVT ResVT,
+                                            SDValue StartV, SDValue VectorV,
+                                            SDValue Mask, SDValue AVL,
+                                            SDNodeFlags Flags) const {
+
+  // Optionally attach the start param with a scalar op (where it is
+  // unsupported).
+  bool scalarizeStartParam = StartV && !hasReductionStartParam(VVPOpcode);
+  bool IsMaskReduction = isMaskType(VectorV.getValueType());
+  assert(!IsMaskReduction && "TODO Implement");
+  auto AttachStartValue = [&](SDValue ReductionResV) {
+    if (!scalarizeStartParam)
+      return ReductionResV;
+    auto ScalarOC = getScalarReductionOpcode(VVPOpcode, IsMaskReduction);
+    return getNode(ScalarOC, ResVT, {StartV, ReductionResV});
+  };
+
+  // Fixup: Always Use sequential 'fmul' reduction.
+  if (!scalarizeStartParam && StartV) {
+    assert(hasReductionStartParam(VVPOpcode));
+    return AttachStartValue(
+        getNode(VVPOpcode, ResVT, {StartV, VectorV, Mask, AVL}, Flags));
+  } else
+    return AttachStartValue(
+        getNode(VVPOpcode, ResVT, {VectorV, Mask, AVL}, Flags));
 }
 
 } // namespace llvm

@@ -21,9 +21,19 @@
 #include "llvm/IR/IntrinsicsNVPTX.h"
 
 #include "mlir/Dialect/LLVMIR/NVVMOpsEnums.h.inc"
+#include "mlir/Dialect/LLVMIR/NVVMOpsStructs.h.inc"
 
 namespace mlir {
 namespace NVVM {
+
+/// NVVM memory space identifiers.
+enum NVVMMemorySpace {
+  /// Global memory space identifier.
+  kGlobalMemorySpace = 1,
+  /// Shared memory space identifier.
+  kSharedMemorySpace = 3
+};
+
 /// Return the element type and number of elements associated with a wmma matrix
 /// of given chracteristics. This matches the logic in IntrinsicsNVVM.td
 /// WMMA_REGS structure.

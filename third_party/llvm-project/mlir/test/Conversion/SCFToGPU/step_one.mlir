@@ -1,9 +1,9 @@
-// RUN: mlir-opt -convert-affine-for-to-gpu="gpu-block-dims=1 gpu-thread-dims=1" %s | FileCheck --check-prefix=CHECK-11 %s
-// RUN: mlir-opt -convert-affine-for-to-gpu="gpu-block-dims=2 gpu-thread-dims=2" %s | FileCheck --check-prefix=CHECK-22 %s
+// RUN: mlir-opt -pass-pipeline="func.func(convert-affine-for-to-gpu{gpu-block-dims=1 gpu-thread-dims=1})" %s | FileCheck --check-prefix=CHECK-11 %s
+// RUN: mlir-opt -pass-pipeline="func.func(convert-affine-for-to-gpu{gpu-block-dims=2 gpu-thread-dims=2})" %s | FileCheck --check-prefix=CHECK-22 %s
 
 // CHECK-11-LABEL: @step_1
 // CHECK-22-LABEL: @step_1
-func @step_1(%A : memref<?x?x?x?xf32>, %B : memref<?x?x?x?xf32>) {
+func.func @step_1(%A : memref<?x?x?x?xf32>, %B : memref<?x?x?x?xf32>) {
   // Bounds of the loop, its range and step.
   // CHECK-11-NEXT: %{{.*}} = arith.constant 0 : index
   // CHECK-11-NEXT: %{{.*}} = arith.constant 42 : index

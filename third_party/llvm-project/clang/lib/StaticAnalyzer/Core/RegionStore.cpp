@@ -318,29 +318,6 @@ RegionBindingsRef RegionBindingsRef::removeBinding(const MemRegion *R,
 }
 
 //===----------------------------------------------------------------------===//
-// Fine-grained control of RegionStoreManager.
-//===----------------------------------------------------------------------===//
-
-namespace {
-struct minimal_features_tag {};
-struct maximal_features_tag {};
-
-class RegionStoreFeatures {
-  bool SupportsFields;
-public:
-  RegionStoreFeatures(minimal_features_tag) :
-    SupportsFields(false) {}
-
-  RegionStoreFeatures(maximal_features_tag) :
-    SupportsFields(true) {}
-
-  void enableFields(bool t) { SupportsFields = t; }
-
-  bool supportsFields() const { return SupportsFields; }
-};
-}
-
-//===----------------------------------------------------------------------===//
 // Main RegionStore logic.
 //===----------------------------------------------------------------------===//
 
@@ -349,8 +326,6 @@ class InvalidateRegionsWorker;
 
 class RegionStoreManager : public StoreManager {
 public:
-  const RegionStoreFeatures Features;
-
   RegionBindings::Factory RBFactory;
   mutable ClusterBindings::Factory CBFactory;
 
@@ -377,15 +352,13 @@ private:
                         InvalidatedRegions *TopLevelRegions);
 
 public:
-  RegionStoreManager(ProgramStateManager& mgr, const RegionStoreFeatures &f)
-    : StoreManager(mgr), Features(f),
-      RBFactory(mgr.getAllocator()), CBFactory(mgr.getAllocator()),
-      SmallStructLimit(0) {
+  RegionStoreManager(ProgramStateManager &mgr)
+      : StoreManager(mgr), RBFactory(mgr.getAllocator()),
+        CBFactory(mgr.getAllocator()), SmallStructLimit(0) {
     ExprEngine &Eng = StateMgr.getOwningEngine();
     AnalyzerOptions &Options = Eng.getAnalysisManager().options;
     SmallStructLimit = Options.RegionStoreSmallStructLimit;
   }
-
 
   /// setImplicitDefaultValue - Set the default binding for the provided
   ///  MemRegion to the value implicitly defined for compound literals when
@@ -674,17 +647,8 @@ public: // Part of public interface to class.
 
 std::unique_ptr<StoreManager>
 ento::CreateRegionStoreManager(ProgramStateManager &StMgr) {
-  RegionStoreFeatures F = maximal_features_tag();
-  return std::make_unique<RegionStoreManager>(StMgr, F);
+  return std::make_unique<RegionStoreManager>(StMgr);
 }
-
-std::unique_ptr<StoreManager>
-ento::CreateFieldsOnlyRegionStoreManager(ProgramStateManager &StMgr) {
-  RegionStoreFeatures F = minimal_features_tag();
-  F.enableFields(true);
-  return std::make_unique<RegionStoreManager>(StMgr, F);
-}
-
 
 //===----------------------------------------------------------------------===//
 // Region Cluster analysis.
@@ -1983,15 +1947,9 @@ SVal RegionStoreManager::getBindingForField(RegionBindingsConstRef B,
   if (const Optional<SVal> &V = B.getDirectBinding(R))
     return *V;
 
-  // Is the field declared constant and has an in-class initializer?
+  // If the containing record was initialized, try to get its constant value.
   const FieldDecl *FD = R->getDecl();
   QualType Ty = FD->getType();
-  if (Ty.isConstQualified())
-    if (const Expr *Init = FD->getInClassInitializer())
-      if (Optional<SVal> V = svalBuilder.getConstantVal(Init))
-        return *V;
-
-  // If the containing record was initialized, try to get its constant value.
   const MemRegion* superR = R->getSuperRegion();
   if (const auto *VR = dyn_cast<VarRegion>(superR)) {
     const VarDecl *VD = VR->getDecl();
@@ -2153,8 +2111,13 @@ RegionStoreManager::getBindingForFieldOrElementCommon(RegionBindingsConstRef B,
       return UnknownVal();
 
     // Additionally allow introspection of a block's internal layout.
-    if (!hasPartialLazyBinding && !isa<BlockDataRegion>(R->getBaseRegion()))
+    // Try to get direct binding if all other attempts failed thus far.
+    // Else, return UndefinedVal()
+    if (!hasPartialLazyBinding && !isa<BlockDataRegion>(R->getBaseRegion())) {
+      if (const Optional<SVal> &V = B.getDefaultBinding(R))
+        return *V;
       return UndefinedVal();
+    }
   }
 
   // All other values are symbolic.
@@ -2410,7 +2373,7 @@ RegionStoreManager::setImplicitDefaultValue(RegionBindingsConstRef B,
   SVal V;
 
   if (Loc::isLocType(T))
-    V = svalBuilder.makeNull();
+    V = svalBuilder.makeNullWithType(T);
   else if (T->isIntegralOrEnumerationType())
     V = svalBuilder.makeZeroVal(T);
   else if (T->isStructureOrClassType() || T->isArrayType()) {
@@ -2570,11 +2533,8 @@ RegionStoreManager::tryBindSmallStruct(RegionBindingsConstRef B,
 }
 
 RegionBindingsRef RegionStoreManager::bindStruct(RegionBindingsConstRef B,
-                                                 const TypedValueRegion* R,
+                                                 const TypedValueRegion *R,
                                                  SVal V) {
-  if (!Features.supportsFields())
-    return B;
-
   QualType T = R->getValueType();
   assert(T->isStructureOrClassType());
 

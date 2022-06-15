@@ -89,6 +89,14 @@ protected:
     return internal::test(Ctx, Cond, LHS, RHS, LHSStr, RHSStr, File, Line);
   }
 
+  template <typename ValType,
+            cpp::EnableIfType<cpp::IsEnum<ValType>::Value, int> = 0>
+  bool test(TestCondition Cond, ValType LHS, ValType RHS, const char *LHSStr,
+            const char *RHSStr, const char *File, unsigned long Line) {
+    return internal::test(Ctx, Cond, (long long)LHS, (long long)RHS, LHSStr,
+                          RHSStr, File, Line);
+  }
+
   template <
       typename ValType,
       cpp::EnableIfType<cpp::IsPointerType<ValType>::Value, ValType> = nullptr>
@@ -387,19 +395,16 @@ template <typename... Types> using TypeList = internal::TypeList<Types...>;
 #define UNIQUE_VAR(prefix) __CAT(prefix, __LINE__)
 
 #define EXPECT_THAT(MATCH, MATCHER)                                            \
-  do {                                                                         \
+  [&]() -> bool {                                                              \
     auto UNIQUE_VAR(__matcher) = (MATCHER);                                    \
-    this->testMatch(UNIQUE_VAR(__matcher).match((MATCH)),                      \
-                    UNIQUE_VAR(__matcher), #MATCH, #MATCHER, __FILE__,         \
-                    __LINE__);                                                 \
-  } while (0)
+    return this->testMatch(UNIQUE_VAR(__matcher).match((MATCH)),               \
+                           UNIQUE_VAR(__matcher), #MATCH, #MATCHER, __FILE__,  \
+                           __LINE__);                                          \
+  }()
 
 #define ASSERT_THAT(MATCH, MATCHER)                                            \
   do {                                                                         \
-    auto UNIQUE_VAR(__matcher) = (MATCHER);                                    \
-    if (!this->testMatch(UNIQUE_VAR(__matcher).match((MATCH)),                 \
-                         UNIQUE_VAR(__matcher), #MATCH, #MATCHER, __FILE__,    \
-                         __LINE__))                                            \
+    if (!EXPECT_THAT(MATCH, MATCHER))                                          \
       return;                                                                  \
   } while (0)
 

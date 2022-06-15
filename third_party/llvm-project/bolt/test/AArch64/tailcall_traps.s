@@ -3,8 +3,8 @@
 # RUN: llvm-mc -filetype=obj -triple aarch64-unknown-unknown \
 # RUN:   %s -o %t.o
 # RUN: %clang %cflags %t.o -o %t.exe -Wl,-q
-# RUN: llvm-bolt %t.exe -o %t.bolt -peepholes=tailcall-traps \
-# RUN:   -print-peepholes -funcs=foo,bar 2>&1 | FileCheck %s
+# RUN: llvm-bolt %t.exe -o %t.bolt --peepholes=tailcall-traps \
+# RUN:   --print-peepholes --funcs=foo,bar 2>&1 | FileCheck %s
 
 # CHECK:  Binary Function "foo"
 # CHECK:        br     x0  # TAILCALL
@@ -17,12 +17,12 @@
 
   .text
   .align 4
-  .global main
-  .type main, %function
-main:
+  .global _start
+  .type _start, %function
+_start:
   nop
   ret
-  .size main, .-main
+  .size _start, .-_start
 
   .global foo
   .type foo, %function

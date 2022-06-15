@@ -124,7 +124,8 @@ add_gen_header(
   GEN_HDR stdio.h
   DEPENDS
     .llvm_libc_common_h
-    .llvm-libc-macros.stdio_macros
+    .llvm-libc-macros.file_seek_macros
+    .llvm-libc-types.cookie_io_functions_t
     .llvm-libc-types.FILE
     .llvm-libc-types.size_t
 )
@@ -150,8 +151,22 @@ add_gen_header(
   GEN_HDR unistd.h
   DEPENDS
     .llvm_libc_common_h
+    .llvm-libc-macros.file_seek_macros
     .llvm-libc-types.size_t
     .llvm-libc-types.ssize_t
+)
+
+add_gen_header(
+  pthread
+  DEF_FILE pthread.h.def
+  GEN_HDR pthread.h
+  DEPENDS
+    .llvm_libc_common_h
+    .llvm-libc-types.__pthread_start_t
+    .llvm-libc-types.pthread_attr_t
+    .llvm-libc-types.pthread_mutex_t
+    .llvm-libc-types.pthread_mutexattr_t
+    .llvm-libc-types.pthread_t
 )
 
 # TODO: Not all platforms will have a include/sys directory. Add the sys

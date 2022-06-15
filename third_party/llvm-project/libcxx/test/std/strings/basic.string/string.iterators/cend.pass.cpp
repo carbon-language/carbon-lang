@@ -8,7 +8,7 @@
 
 // <string>
 
-// const_iterator cend() const;
+// const_iterator cend() const; // constexpr since C++20
 
 #include <string>
 #include <cassert>
@@ -17,14 +17,14 @@
 #include "min_allocator.h"
 
 template <class S>
-void
+TEST_CONSTEXPR_CXX20 void
 test(const S& s)
 {
     typename S::const_iterator ce = s.cend();
     assert(ce == s.end());
 }
 
-bool test() {
+TEST_CONSTEXPR_CXX20 bool test() {
   {
     typedef std::string S;
     test(S());
@@ -45,7 +45,7 @@ int main(int, char**)
 {
   test();
 #if TEST_STD_VER > 17
-  // static_assert(test());
+  static_assert(test());
 #endif
   return 0;
 }

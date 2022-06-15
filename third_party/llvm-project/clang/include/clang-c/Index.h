@@ -2189,7 +2189,17 @@ enum CXCursorKind {
    */
   CXCursor_CXXAddrspaceCastExpr = 152,
 
-  CXCursor_LastExpr = CXCursor_CXXAddrspaceCastExpr,
+  /**
+   * Expression that references a C++20 concept.
+   */
+  CXCursor_ConceptSpecializationExpr = 153,
+
+  /**
+   * Expression that references a C++20 concept.
+   */
+  CXCursor_RequiresExpr = 154,
+
+  CXCursor_LastExpr = CXCursor_RequiresExpr,
 
   /* Statements */
   CXCursor_FirstStmt = 200,
@@ -2600,7 +2610,23 @@ enum CXCursorKind {
    */
   CXCursor_OMPGenericLoopDirective = 295,
 
-  CXCursor_LastStmt = CXCursor_OMPGenericLoopDirective,
+  /** OpenMP teams loop directive.
+   */
+  CXCursor_OMPTeamsGenericLoopDirective = 296,
+
+  /** OpenMP target teams loop directive.
+   */
+  CXCursor_OMPTargetTeamsGenericLoopDirective = 297,
+
+  /** OpenMP parallel loop directive.
+   */
+  CXCursor_OMPParallelGenericLoopDirective = 298,
+
+  /** OpenMP target parallel loop directive.
+   */
+  CXCursor_OMPTargetParallelGenericLoopDirective = 299,
+
+  CXCursor_LastStmt = CXCursor_OMPTargetParallelGenericLoopDirective,
 
   /**
    * Cursor that represents the translation unit itself.
@@ -2684,8 +2710,13 @@ enum CXCursorKind {
    * a friend declaration.
    */
   CXCursor_FriendDecl = 603,
+  /**
+   * a concept declaration.
+   */
+  CXCursor_ConceptDecl = 604,
+
   CXCursor_FirstExtraDecl = CXCursor_ModuleImportDecl,
-  CXCursor_LastExtraDecl = CXCursor_FriendDecl,
+  CXCursor_LastExtraDecl = CXCursor_ConceptDecl,
 
   /**
    * A code completion overload candidate.
@@ -3401,7 +3432,8 @@ enum CXTypeKind {
   CXType_OCLIntelSubgroupAVCImeDualRefStreamin = 175,
 
   CXType_ExtVector = 176,
-  CXType_Atomic = 177
+  CXType_Atomic = 177,
+  CXType_BTFTagAttributed = 178
 };
 
 /**
@@ -3428,6 +3460,7 @@ enum CXCallingConv {
   CXCallingConv_PreserveAll = 15,
   CXCallingConv_AArch64VectorCall = 16,
   CXCallingConv_SwiftAsync = 17,
+  CXCallingConv_AArch64SVEPCS = 18,
 
   CXCallingConv_Invalid = 100,
   CXCallingConv_Unexposed = 200
@@ -6301,7 +6334,8 @@ typedef enum {
   CXIdxEntity_CXXDestructor = 23,
   CXIdxEntity_CXXConversionFunction = 24,
   CXIdxEntity_CXXTypeAlias = 25,
-  CXIdxEntity_CXXInterface = 26
+  CXIdxEntity_CXXInterface = 26,
+  CXIdxEntity_CXXConcept = 27
 
 } CXIdxEntityKind;
 

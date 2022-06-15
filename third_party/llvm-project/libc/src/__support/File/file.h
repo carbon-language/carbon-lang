@@ -9,6 +9,8 @@
 #ifndef LLVM_LIBC_SRC_SUPPORT_OSUTIL_FILE_H
 #define LLVM_LIBC_SRC_SUPPORT_OSUTIL_FILE_H
 
+#include "src/__support/threads/mutex.h"
+
 #include <stddef.h>
 #include <stdint.h>
 
@@ -19,6 +21,8 @@ namespace __llvm_libc {
 // suitable for their platform.
 class File {
 public:
+  static constexpr size_t DEFAULT_BUFFER_SIZE = 1024;
+
   using LockFunc = void(File *);
   using UnlockFunc = void(File *);
 
@@ -39,6 +43,7 @@ public:
     READ = 0x1,
     WRITE = 0x2,
     APPEND = 0x4,
+    PLUS = 0x8,
   };
 
   // Denotes a file opened in binary mode (which is specified by including
@@ -64,10 +69,7 @@ private:
   CloseFunc *platform_close;
   FlushFunc *platform_flush;
 
-  // Platform specific functions to lock and unlock file for mutually exclusive
-  // access from threads in a multi-threaded application.
-  LockFunc *platform_lock;
-  UnlockFunc *platform_unlock;
+  Mutex mutex;
 
   void *buf;      // Pointer to the stream buffer for buffered streams
   size_t bufsize; // Size of the buffer pointed to by |buf|.
@@ -95,14 +97,29 @@ private:
   bool eof;
   bool err;
 
+  // This is a convenience RAII class to lock and unlock file objects.
+  class FileLock {
+    File *file;
+
+  public:
+    explicit FileLock(File *f) : file(f) { file->lock(); }
+
+    ~FileLock() { file->unlock(); }
+
+    FileLock(const FileLock &) = delete;
+    FileLock(FileLock &&) = delete;
+  };
+
 protected:
   bool write_allowed() const {
     return mode & (static_cast<ModeFlags>(OpenMode::WRITE) |
-                   static_cast<ModeFlags>(OpenMode::APPEND));
+                   static_cast<ModeFlags>(OpenMode::APPEND) |
+                   static_cast<ModeFlags>(OpenMode::PLUS));
   }
 
   bool read_allowed() const {
-    return mode & static_cast<ModeFlags>(OpenMode::READ);
+    return mode & (static_cast<ModeFlags>(OpenMode::READ) |
+                   static_cast<ModeFlags>(OpenMode::PLUS));
   }
 
 public:
@@ -110,28 +127,26 @@ public:
   // like stdout do not require invocation of the constructor which can
   // potentially lead to static initialization order fiasco.
   constexpr File(WriteFunc *wf, ReadFunc *rf, SeekFunc *sf, CloseFunc *cf,
-                 FlushFunc *ff, LockFunc *lf, UnlockFunc *ulf, void *buffer,
-                 size_t buffer_size, int buffer_mode, bool owned,
-                 ModeFlags modeflags)
+                 FlushFunc *ff, void *buffer, size_t buffer_size,
+                 int buffer_mode, bool owned, ModeFlags modeflags)
       : platform_write(wf), platform_read(rf), platform_seek(sf),
-        platform_close(cf), platform_flush(ff), platform_lock(lf),
-        platform_unlock(ulf), buf(buffer), bufsize(buffer_size),
-        bufmode(buffer_mode), own_buf(owned), mode(modeflags), pos(0),
-        prev_op(FileOp::NONE), read_limit(0), eof(false), err(false) {}
+        platform_close(cf), platform_flush(ff), mutex(false, false, false),
+        buf(buffer), bufsize(buffer_size), bufmode(buffer_mode), own_buf(owned),
+        mode(modeflags), pos(0), prev_op(FileOp::NONE), read_limit(0),
+        eof(false), err(false) {}
 
   // This function helps initialize the various fields of the File data
   // structure after a allocating memory for it via a call to malloc.
   static void init(File *f, WriteFunc *wf, ReadFunc *rf, SeekFunc *sf,
-                   CloseFunc *cf, FlushFunc *ff, LockFunc *lf, UnlockFunc *ulf,
-                   void *buffer, size_t buffer_size, int buffer_mode,
-                   bool owned, ModeFlags modeflags) {
+                   CloseFunc *cf, FlushFunc *ff, void *buffer,
+                   size_t buffer_size, int buffer_mode, bool owned,
+                   ModeFlags modeflags) {
+    Mutex::init(&f->mutex, false, false, false);
     f->platform_write = wf;
     f->platform_read = rf;
     f->platform_seek = sf;
     f->platform_close = cf;
     f->platform_flush = ff;
-    f->platform_lock = lf;
-    f->platform_unlock = ulf;
     f->buf = reinterpret_cast<uint8_t *>(buffer);
     f->bufsize = buffer_size;
     f->bufmode = buffer_mode;
@@ -143,17 +158,34 @@ public:
     f->eof = f->err = false;
   }
 
-  // Buffered write of |len| bytes from |data|.
-  size_t write(const void *data, size_t len);
+  // Buffered write of |len| bytes from |data| without the file lock.
+  size_t write_unlocked(const void *data, size_t len);
 
-  // Buffered read of |len| bytes into |data|.
-  size_t read(void *data, size_t len);
+  // Buffered write of |len| bytes from |data| under the file lock.
+  size_t write(const void *data, size_t len) {
+    FileLock l(this);
+    return write_unlocked(data, len);
+  }
+
+  // Buffered read of |len| bytes into |data| without the file lock.
+  size_t read_unlocked(void *data, size_t len);
+
+  // Buffered read of |len| bytes into |data| under the file lock.
+  size_t read(void *data, size_t len) {
+    FileLock l(this);
+    return read_unlocked(data, len);
+  }
 
   int seek(long offset, int whence);
 
   // If buffer has data written to it, flush it out. Does nothing if the
   // buffer is currently being used as a read buffer.
-  int flush();
+  int flush() {
+    FileLock lock(this);
+    return flush_unlocked();
+  }
+
+  int flush_unlocked();
 
   // Sets the internal buffer to |buffer| with buffering mode |mode|.
   // |size| is the size of |buffer|. This new |buffer| is owned by the
@@ -163,30 +195,46 @@ public:
   // Closes the file stream and frees up all resources owned by it.
   int close();
 
-  void lock() { platform_lock(this); }
-  void unlock() { platform_unlock(this); }
+  void lock() { mutex.lock(); }
+  void unlock() { mutex.unlock(); }
 
-  bool error() const { return err; }
-  void clearerr() { err = false; }
-  bool iseof() const { return eof; }
+  bool error_unlocked() const { return err; }
+
+  bool error() {
+    FileLock l(this);
+    return error_unlocked();
+  }
+
+  void clearerr_unlocked() { err = false; }
+
+  void clearerr() {
+    FileLock l(this);
+    clearerr_unlocked();
+  }
+
+  bool iseof_unlocked() { return eof; }
+
+  bool iseof() {
+    FileLock l(this);
+    return iseof_unlocked();
+  }
 
   // Returns an bit map of flags corresponding to enumerations of
   // OpenMode, ContentType and CreateType.
   static ModeFlags mode_flags(const char *mode);
+
+private:
+  size_t write_unlocked_lbf(const void *data, size_t len);
+  size_t write_unlocked_fbf(const void *data, size_t len);
+  size_t write_unlocked_nbf(const void *data, size_t len);
 };
 
-// This is a convenience RAII class to lock and unlock file objects.
-class FileLock {
-  File *file;
+// The implementaiton of this function is provided by the platfrom_file
+// library.
+File *openfile(const char *path, const char *mode);
 
-public:
-  explicit FileLock(File *f) : file(f) { file->lock(); }
-
-  ~FileLock() { file->unlock(); }
-
-  FileLock(const FileLock &) = delete;
-  FileLock(FileLock &&) = delete;
-};
+extern File *stdout;
+extern File *stderr;
 
 } // namespace __llvm_libc
 

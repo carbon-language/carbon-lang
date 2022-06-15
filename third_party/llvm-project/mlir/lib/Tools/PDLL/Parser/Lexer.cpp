@@ -9,6 +9,7 @@
 #include "Lexer.h"
 #include "mlir/Support/LogicalResult.h"
 #include "mlir/Tools/PDLL/AST/Diagnostic.h"
+#include "mlir/Tools/PDLL/Parser/CodeComplete.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/SourceMgr.h"
@@ -21,11 +22,15 @@ using namespace mlir::pdll;
 //===----------------------------------------------------------------------===//
 
 std::string Token::getStringValue() const {
-  assert(getKind() == string || getKind() == string_block);
+  assert(getKind() == string || getKind() == string_block ||
+         getKind() == code_complete_string);
 
   // Start by dropping the quotes.
-  StringRef bytes = getSpelling().drop_front().drop_back();
-  if (is(string_block)) bytes = bytes.drop_front().drop_back();
+  StringRef bytes = getSpelling();
+  if (is(string))
+    bytes = bytes.drop_front().drop_back();
+  else if (is(string_block))
+    bytes = bytes.drop_front(2).drop_back(2);
 
   std::string result;
   result.reserve(bytes.size());
@@ -67,11 +72,19 @@ std::string Token::getStringValue() const {
 // Lexer
 //===----------------------------------------------------------------------===//
 
-Lexer::Lexer(llvm::SourceMgr &mgr, ast::DiagnosticEngine &diagEngine)
-    : srcMgr(mgr), diagEngine(diagEngine), addedHandlerToDiagEngine(false) {
+Lexer::Lexer(llvm::SourceMgr &mgr, ast::DiagnosticEngine &diagEngine,
+             CodeCompleteContext *codeCompleteContext)
+    : srcMgr(mgr), diagEngine(diagEngine), addedHandlerToDiagEngine(false),
+      codeCompletionLocation(nullptr) {
   curBufferID = mgr.getMainFileID();
   curBuffer = srcMgr.getMemoryBuffer(curBufferID)->getBuffer();
   curPtr = curBuffer.begin();
+
+  // Set the code completion location if necessary.
+  if (codeCompleteContext) {
+    codeCompletionLocation =
+        codeCompleteContext->getCodeCompleteLoc().getPointer();
+  }
 
   // If the diag engine has no handler, add a default that emits to the
   // SourceMgr.
@@ -91,11 +104,12 @@ Lexer::~Lexer() {
   if (addedHandlerToDiagEngine) diagEngine.setHandlerFn(nullptr);
 }
 
-LogicalResult Lexer::pushInclude(StringRef filename) {
+LogicalResult Lexer::pushInclude(StringRef filename, SMRange includeLoc) {
   std::string includedFile;
-  int bufferID = srcMgr.AddIncludeFile(
-      filename.str(), SMLoc::getFromPointer(curPtr), includedFile);
-  if (!bufferID) return failure();
+  int bufferID =
+      srcMgr.AddIncludeFile(filename.str(), includeLoc.End, includedFile);
+  if (!bufferID)
+    return failure();
 
   curBufferID = bufferID;
   curBuffer = srcMgr.getMemoryBuffer(curBufferID)->getBuffer();
@@ -146,6 +160,10 @@ int Lexer::getNextChar() {
 Token Lexer::lexToken() {
   while (true) {
     const char *tokStart = curPtr;
+
+    // Check to see if this token is at the code completion location.
+    if (tokStart == codeCompletionLocation)
+      return formToken(Token::code_complete, tokStart);
 
     // This always consumes at least one character.
     int curChar = getNextChar();
@@ -323,23 +341,42 @@ Token Lexer::lexNumber(const char *tokStart) {
 
 Token Lexer::lexString(const char *tokStart, bool isStringBlock) {
   while (true) {
+    // Check to see if there is a code completion location within the string. In
+    // these cases we generate a completion location and place the currently
+    // lexed string within the token (without the quotes). This allows for the
+    // parser to use the partially lexed string when computing the completion
+    // results.
+    if (curPtr == codeCompletionLocation) {
+      return formToken(Token::code_complete_string,
+                       tokStart + (isStringBlock ? 2 : 1));
+    }
+
     switch (*curPtr++) {
       case '"':
         // If this is a string block, we only end the string when we encounter a
         // `}]`.
-        if (!isStringBlock) return formToken(Token::string, tokStart);
+        if (!isStringBlock)
+          return formToken(Token::string, tokStart);
         continue;
       case '}':
         // If this is a string block, we only end the string when we encounter a
         // `}]`.
-        if (!isStringBlock || *curPtr != ']') continue;
+        if (!isStringBlock || *curPtr != ']')
+          continue;
         ++curPtr;
         return formToken(Token::string_block, tokStart);
-      case 0:
+      case 0: {
         // If this is a random nul character in the middle of a string, just
-        // include it.  If it is the end of file, then it is an error.
-        if (curPtr - 1 != curBuffer.end()) continue;
-        LLVM_FALLTHROUGH;
+        // include it. If it is the end of file, then it is an error.
+        if (curPtr - 1 != curBuffer.end())
+          continue;
+        --curPtr;
+
+        StringRef expectedEndStr = isStringBlock ? "}]" : "\"";
+        return emitError(curPtr - 1,
+                         "expected '" + expectedEndStr + "' in string literal");
+      }
+
       case '\n':
       case '\v':
       case '\f':

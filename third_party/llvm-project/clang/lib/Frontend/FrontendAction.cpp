@@ -331,7 +331,7 @@ static std::error_code collectModuleHeaderIncludes(
     return std::error_code();
 
   // Resolve all lazy header directives to header files.
-  ModMap.resolveHeaderDirectives(Module);
+  ModMap.resolveHeaderDirectives(Module, /*File=*/llvm::None);
 
   // If any headers are missing, we can't build this module. In most cases,
   // diagnostics for this should have already been produced; we only get here
@@ -413,11 +413,7 @@ static std::error_code collectModuleHeaderIncludes(
 
     // Sort header paths and make the header inclusion order deterministic
     // across different OSs and filesystems.
-    llvm::sort(Headers.begin(), Headers.end(), [](
-      const std::pair<std::string, const FileEntry *> &LHS,
-      const std::pair<std::string, const FileEntry *> &RHS) {
-        return LHS.first < RHS.first;
-    });
+    llvm::sort(Headers.begin(), Headers.end(), llvm::less_first());
     for (auto &H : Headers) {
       // Include this header as part of the umbrella directory.
       Module->addTopHeader(H.second);
@@ -464,6 +460,15 @@ static bool loadModuleMapForModuleBuild(CompilerInstance &CI, bool IsSystem,
 
   if (SrcMgr.getBufferOrFake(ModuleMapID).getBufferSize() == Offset)
     Offset = 0;
+
+  // Infer framework module if possible.
+  if (HS.getModuleMap().canInferFrameworkModule(ModuleMap->getDir())) {
+    SmallString<128> InferredFrameworkPath = ModuleMap->getDir()->getName();
+    llvm::sys::path::append(InferredFrameworkPath,
+                            CI.getLangOpts().ModuleName + ".framework");
+    if (auto Dir = CI.getFileManager().getDirectory(InferredFrameworkPath))
+      (void)HS.getModuleMap().inferFrameworkModule(*Dir, IsSystem, nullptr);
+  }
 
   return false;
 }
@@ -752,10 +757,10 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
     PreprocessorOptions &PPOpts = CI.getPreprocessorOpts();
     StringRef PCHInclude = PPOpts.ImplicitPCHInclude;
     std::string SpecificModuleCachePath = CI.getSpecificModuleCachePath();
-    if (auto PCHDir = FileMgr.getDirectory(PCHInclude)) {
+    if (auto PCHDir = FileMgr.getOptionalDirectoryRef(PCHInclude)) {
       std::error_code EC;
       SmallString<128> DirNative;
-      llvm::sys::path::native((*PCHDir)->getName(), DirNative);
+      llvm::sys::path::native(PCHDir->getName(), DirNative);
       bool Found = false;
       llvm::vfs::FileSystem &FS = FileMgr.getVirtualFileSystem();
       for (llvm::vfs::directory_iterator Dir = FS.dir_begin(DirNative, EC),
@@ -789,9 +794,65 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
                                            &CI.getPreprocessor());
   HasBegunSourceFile = true;
 
-  // Initialize the main file entry.
+  // Handle C++20 header units.
+  // Here, the user has the option to specify that the header name should be
+  // looked up in the pre-processor search paths (and the main filename as
+  // passed by the driver might therefore be incomplete until that look-up).
+  if (CI.getLangOpts().CPlusPlusModules && Input.getKind().isHeaderUnit() &&
+      !Input.getKind().isPreprocessed()) {
+    StringRef FileName = Input.getFile();
+    InputKind Kind = Input.getKind();
+    if (Kind.getHeaderUnitKind() != InputKind::HeaderUnit_Abs) {
+      assert(CI.hasPreprocessor() &&
+             "trying to build a header unit without a Pre-processor?");
+      HeaderSearch &HS = CI.getPreprocessor().getHeaderSearchInfo();
+      // Relative searches begin from CWD.
+      const DirectoryEntry *Dir = nullptr;
+      if (auto DirOrErr = CI.getFileManager().getDirectory("."))
+        Dir = *DirOrErr;
+      SmallVector<std::pair<const FileEntry *, const DirectoryEntry *>, 1> CWD;
+      CWD.push_back({nullptr, Dir});
+      Optional<FileEntryRef> FE =
+          HS.LookupFile(FileName, SourceLocation(),
+                        /*Angled*/ Input.getKind().getHeaderUnitKind() ==
+                            InputKind::HeaderUnit_System,
+                        nullptr, nullptr, CWD, nullptr, nullptr, nullptr,
+                        nullptr, nullptr, nullptr);
+      if (!FE) {
+        CI.getDiagnostics().Report(diag::err_module_header_file_not_found)
+            << FileName;
+        return false;
+      }
+      // We now have the filename...
+      FileName = FE->getFileEntry().getName();
+      // ... still a header unit, but now use the path as written.
+      Kind = Input.getKind().withHeaderUnit(InputKind::HeaderUnit_Abs);
+      Input = FrontendInputFile(FileName, Kind, Input.isSystem());
+    }
+    // Unless the user has overridden the name, the header unit module name is
+    // the pathname for the file.
+    if (CI.getLangOpts().ModuleName.empty())
+      CI.getLangOpts().ModuleName = std::string(FileName);
+    CI.getLangOpts().CurrentModule = CI.getLangOpts().ModuleName;
+  }
+
   if (!CI.InitializeSourceManager(Input))
     return false;
+
+  if (CI.getLangOpts().CPlusPlusModules && Input.getKind().isHeaderUnit() &&
+      Input.getKind().isPreprocessed() && !usesPreprocessorOnly()) {
+    // We have an input filename like foo.iih, but we want to find the right
+    // module name (and original file, to build the map entry).
+    // Check if the first line specifies the original source file name with a
+    // linemarker.
+    std::string PresumedInputFile = std::string(getCurrentFileOrBufferName());
+    ReadOriginalFileName(CI, PresumedInputFile);
+    // Unless the user overrides this, the module name is the name by which the
+    // original file was known.
+    if (CI.getLangOpts().ModuleName.empty())
+      CI.getLangOpts().ModuleName = std::string(PresumedInputFile);
+    CI.getLangOpts().CurrentModule = CI.getLangOpts().ModuleName;
+  }
 
   // For module map files, we first parse the module map and synthesize a
   // "<module-includes>" buffer before more conventional processing.

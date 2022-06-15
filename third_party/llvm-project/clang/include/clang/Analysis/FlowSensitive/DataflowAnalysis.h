@@ -106,8 +106,9 @@ template <typename LatticeT> struct DataflowAnalysisState {
 };
 
 /// Performs dataflow analysis and returns a mapping from basic block IDs to
-/// dataflow analysis states that model the respective basic blocks. Indices
-/// of the returned vector correspond to basic block IDs. Returns an error if
+/// dataflow analysis states that model the respective basic blocks. The
+/// returned vector, if any, will have the same size as the number of CFG
+/// blocks, with indices corresponding to basic block IDs. Returns an error if
 /// the dataflow analysis cannot be performed successfully.
 template <typename AnalysisT>
 llvm::Expected<std::vector<
@@ -135,6 +136,15 @@ runDataflowAnalysis(const ControlFlowContext &CFCtx, AnalysisT &Analysis,
                   });
   return BlockStates;
 }
+
+/// Abstract base class for dataflow "models": reusable analysis components that
+/// model a particular aspect of program semantics in the `Environment`. For
+/// example, a model may capture a type and its related functions.
+class DataflowModel : public Environment::ValueModel {
+public:
+  /// Return value indicates whether the model processed the `Stmt`.
+  virtual bool transfer(const Stmt *Stmt, Environment &Env) = 0;
+};
 
 } // namespace dataflow
 } // namespace clang

@@ -10,10 +10,8 @@
 
 // Test std::nth_element stability randomization
 
-// UNSUPPORTED: libcxx-no-debug-mode
 // UNSUPPORTED: c++03
-
-// ADDITIONAL_COMPILE_FLAGS: -D_LIBCPP_DEBUG=1
+// ADDITIONAL_COMPILE_FLAGS: -D_LIBCPP_DEBUG_RANDOMIZE_UNSPECIFIED_STABILITY
 
 #include <algorithm>
 #include <array>

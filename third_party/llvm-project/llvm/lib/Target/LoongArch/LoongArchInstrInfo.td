@@ -15,13 +15,19 @@
 //===----------------------------------------------------------------------===//
 
 // TODO: Add LoongArch specific DAG Nodes
+// Target-dependent nodes.
+def loongarch_ret : SDNode<"LoongArchISD::RET", SDTNone,
+                           [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 
 //===----------------------------------------------------------------------===//
 // Operand and SDNode transformation definitions.
 //===----------------------------------------------------------------------===//
-class ImmAsmOperand<string prefix, int width, string suffix> : AsmOperandClass {
+
+class ImmAsmOperand<string prefix, int width, string suffix>
+    : AsmOperandClass {
   let Name = prefix # "Imm" # width # suffix;
   let DiagnosticType = !strconcat("Invalid", Name);
+  let RenderMethod = "addImmOperands";
 }
 
 class SImmAsmOperand<int width, string suffix = "">
@@ -32,127 +38,189 @@ class UImmAsmOperand<int width, string suffix = "">
     : ImmAsmOperand<"U", width, suffix> {
 }
 
-def uimm2 : Operand<GRLenVT>;
-def uimm2_plus1 : Operand<GRLenVT>;
-def uimm3 : Operand<GRLenVT>;
-def uimm5 : Operand<GRLenVT>;
-def uimm6 : Operand<GRLenVT>;
-def uimm12 : Operand<GRLenVT>;
-def uimm15 : Operand<GRLenVT>;
-def simm12 : Operand<GRLenVT>, ImmLeaf<GRLenVT, [{return isInt<12>(Imm);}]>;
-def simm14 : Operand<GRLenVT>;
-def simm14_lsl2 : Operand<GRLenVT>;
-def simm16 : Operand<GRLenVT>;
-def simm16_lsl2 : Operand<GRLenVT>;
-def simm20 : Operand<GRLenVT>;
-def simm21_lsl2 : Operand<GRLenVT>;
-def simm26_lsl2 : Operand<GRLenVT>;
+def uimm2 : Operand<GRLenVT> {
+  let ParserMatchClass = UImmAsmOperand<2>;
+}
+
+def uimm2_plus1 : Operand<GRLenVT> {
+  let ParserMatchClass = UImmAsmOperand<2, "plus1">;
+  let EncoderMethod = "getImmOpValueSub1";
+  let DecoderMethod = "decodeUImmOperand<2, 1>";
+}
+
+def uimm3 : Operand<GRLenVT> {
+  let ParserMatchClass = UImmAsmOperand<3>;
+}
+
+def uimm5 : Operand<GRLenVT> {
+  let ParserMatchClass = UImmAsmOperand<5>;
+}
+
+def uimm6 : Operand<GRLenVT> {
+  let ParserMatchClass = UImmAsmOperand<6>;
+}
+
+def uimm8 : Operand<GRLenVT> {
+  let ParserMatchClass = UImmAsmOperand<8>;
+}
+
+def uimm12 : Operand<GRLenVT> {
+  let ParserMatchClass = UImmAsmOperand<12>;
+}
+
+def uimm14 : Operand<GRLenVT> {
+  let ParserMatchClass = UImmAsmOperand<14>;
+}
+
+def uimm15 : Operand<GRLenVT> {
+  let ParserMatchClass = UImmAsmOperand<15>;
+}
+
+def simm12 : Operand<GRLenVT>, ImmLeaf<GRLenVT, [{return isInt<12>(Imm);}]> {
+  let ParserMatchClass = SImmAsmOperand<12>;
+  let DecoderMethod = "decodeSImmOperand<12>";
+}
+
+def simm14_lsl2 : Operand<GRLenVT> {
+  let ParserMatchClass = SImmAsmOperand<14, "lsl2">;
+  let EncoderMethod = "getImmOpValueAsr2";
+  let DecoderMethod = "decodeSImmOperand<14, 2>";
+}
+
+def simm16 : Operand<GRLenVT> {
+  let ParserMatchClass = SImmAsmOperand<16>;
+  let DecoderMethod = "decodeSImmOperand<16>";
+}
+
+def simm16_lsl2 : Operand<GRLenVT> {
+  let ParserMatchClass = SImmAsmOperand<16, "lsl2">;
+  let EncoderMethod = "getImmOpValueAsr2";
+  let DecoderMethod = "decodeSImmOperand<16, 2>";
+}
+
+def simm20 : Operand<GRLenVT> {
+  let ParserMatchClass = SImmAsmOperand<20>;
+  let DecoderMethod = "decodeSImmOperand<20>";
+}
+
+def simm21_lsl2 : Operand<GRLenVT> {
+  let ParserMatchClass = SImmAsmOperand<21, "lsl2">;
+  let EncoderMethod = "getImmOpValueAsr2";
+  let DecoderMethod = "decodeSImmOperand<21, 2>";
+}
+
+def simm26_lsl2 : Operand<GRLenVT> {
+  let ParserMatchClass = SImmAsmOperand<26, "lsl2">;
+  let EncoderMethod = "getImmOpValueAsr2";
+  let DecoderMethod = "decodeSImmOperand<26, 2>";
+}
 
 //===----------------------------------------------------------------------===//
 // Instruction Formats
 //===----------------------------------------------------------------------===//
 
 include "LoongArchInstrFormats.td"
+include "LoongArchFloatInstrFormats.td"
 
 //===----------------------------------------------------------------------===//
 // Instruction Class Templates
 //===----------------------------------------------------------------------===//
+
 class ALU_3R<bits<17> op, string opstr>
-    : Fmt3R<op, (outs GPR:$rd), (ins GPR:$rj, GPR:$rk),
-            !strconcat(opstr, "\t$rd, $rj, $rk")>;
+    : Fmt3R<op, (outs GPR:$rd), (ins GPR:$rj, GPR:$rk), opstr, "$rd, $rj, $rk">;
 class ALU_2R<bits<22> op, string opstr>
-    : Fmt2R<op, (outs GPR:$rd), (ins GPR:$rj),
-            !strconcat(opstr, "\t$rd, $rj")>;
+    : Fmt2R<op, (outs GPR:$rd), (ins GPR:$rj), opstr, "$rd, $rj">;
 
 class ALU_3RI2<bits<15> op, string opstr, Operand ImmOpnd>
-    : Fmt3RI2<op, (outs GPR:$rd), (ins GPR:$rj, GPR:$rk, ImmOpnd:$imm2),
-              !strconcat(opstr, "\t$rd, $rj, $rk, $imm2")>;
+    : Fmt3RI2<op, (outs GPR:$rd), (ins GPR:$rj, GPR:$rk, ImmOpnd:$imm2), opstr,
+              "$rd, $rj, $rk, $imm2">;
 class ALU_3RI3<bits<14> op, string opstr, Operand ImmOpnd>
-    : Fmt3RI3<op, (outs GPR:$rd), (ins GPR:$rj, GPR:$rk, ImmOpnd:$imm3),
-              !strconcat(opstr, "\t$rd, $rj, $rk, $imm3")>;
+    : Fmt3RI3<op, (outs GPR:$rd), (ins GPR:$rj, GPR:$rk, ImmOpnd:$imm3), opstr,
+              "$rd, $rj, $rk, $imm3">;
 class ALU_2RI5<bits<17> op, string opstr, Operand ImmOpnd>
-    : Fmt2RI5<op, (outs GPR:$rd), (ins GPR:$rj, ImmOpnd:$imm5),
-              !strconcat(opstr, "\t$rd, $rj, $imm5")>;
+    : Fmt2RI5<op, (outs GPR:$rd), (ins GPR:$rj, ImmOpnd:$imm5), opstr,
+              "$rd, $rj, $imm5">;
 class ALU_2RI6<bits<16> op, string opstr, Operand ImmOpnd>
-    : Fmt2RI6<op, (outs GPR:$rd), (ins GPR:$rj, ImmOpnd:$imm6),
-              !strconcat(opstr, "\t$rd, $rj, $imm6")>;
+    : Fmt2RI6<op, (outs GPR:$rd), (ins GPR:$rj, ImmOpnd:$imm6), opstr,
+              "$rd, $rj, $imm6">;
 class ALU_2RI12<bits<10> op, string opstr, Operand ImmOpnd>
-    : Fmt2RI12<op, (outs GPR:$rd), (ins GPR:$rj, ImmOpnd:$imm12),
-               !strconcat(opstr, "\t$rd, $rj, $imm12")>;
+    : Fmt2RI12<op, (outs GPR:$rd), (ins GPR:$rj, ImmOpnd:$imm12), opstr,
+               "$rd, $rj, $imm12">;
 class ALU_2RI16<bits<6> op, string opstr, Operand ImmOpnd>
-    : Fmt2RI16<op, (outs GPR:$rd), (ins GPR:$rj, ImmOpnd:$imm16),
-               !strconcat(opstr, "\t$rd, $rj, $imm16")>;
+    : Fmt2RI16<op, (outs GPR:$rd), (ins GPR:$rj, ImmOpnd:$imm16), opstr,
+               "$rd, $rj, $imm16">;
 class ALU_1RI20<bits<7> op, string opstr, Operand ImmOpnd>
-    : Fmt1RI20<op, (outs GPR:$rd), (ins ImmOpnd:$imm20),
-               !strconcat(opstr, "\t$rd, $imm20")>;
+    : Fmt1RI20<op, (outs GPR:$rd), (ins ImmOpnd:$imm20), opstr, "$rd, $imm20">;
 
 class MISC_I15<bits<17> op, string opstr>
-    : FmtI15<op, (outs), (ins uimm15:$imm15), !strconcat(opstr, "\t$imm15")>;
+    : FmtI15<op, (outs), (ins uimm15:$imm15), opstr, "$imm15">;
 
 class RDTIME_2R<bits<22> op, string opstr>
-    : Fmt2R<op, (outs GPR:$rd, GPR:$rj), (ins),
-                 !strconcat(opstr, "\t$rd, $rj")>;
+    : Fmt2R<op, (outs GPR:$rd, GPR:$rj), (ins), opstr, "$rd, $rj">;
 
 class BrCC_2RI16<bits<6> op, string opstr>
-    : Fmt2RI16<op, (outs), (ins GPR:$rj, GPR:$rd, simm16_lsl2:$imm16),
-               !strconcat(opstr, "\t$rj, $rd, $imm16")> {
+    : Fmt2RI16<op, (outs), (ins GPR:$rj, GPR:$rd, simm16_lsl2:$imm16), opstr,
+               "$rj, $rd, $imm16"> {
   let isBranch = 1;
   let isTerminator = 1;
 }
 class BrCCZ_1RI21<bits<6> op, string opstr>
-    : Fmt1RI21<op, (outs), (ins GPR:$rj, simm21_lsl2:$imm21),
-               !strconcat(opstr, "\t$rj, $imm21")> {
+    : Fmt1RI21<op, (outs), (ins GPR:$rj, simm21_lsl2:$imm21), opstr,
+               "$rj, $imm21"> {
   let isBranch = 1;
   let isTerminator = 1;
 }
 class Br_I26<bits<6> op, string opstr>
-    : FmtI26<op, (outs), (ins simm26_lsl2:$imm26),
-             !strconcat(opstr, "\t$imm26")> {
+    : FmtI26<op, (outs), (ins simm26_lsl2:$imm26), opstr, "$imm26"> {
   let isBranch = 1;
   let isTerminator = 1;
 }
 
 let mayLoad = 1 in {
 class LOAD_3R<bits<17> op, string opstr>
-    : Fmt3R<op, (outs GPR:$rd), (ins GPR:$rj, GPR:$rk),
-            !strconcat(opstr, "\t$rd, $rj, $rk")>;
+    : Fmt3R<op, (outs GPR:$rd), (ins GPR:$rj, GPR:$rk), opstr, "$rd, $rj, $rk">;
 class LOAD_2RI12<bits<10> op, string opstr>
-    : Fmt2RI12<op, (outs GPR:$rd), (ins GPR:$rj, simm12:$imm12),
-               !strconcat(opstr, "\t$rd, $rj, $imm12")>;
+    : Fmt2RI12<op, (outs GPR:$rd), (ins GPR:$rj, simm12:$imm12), opstr,
+               "$rd, $rj, $imm12">;
 class LOAD_2RI14<bits<8> op, string opstr>
-    : Fmt2RI14<op, (outs GPR:$rd), (ins GPR:$rj, simm14_lsl2:$imm14),
-               !strconcat(opstr, "\t$rd, $rj, $imm14")>;
+    : Fmt2RI14<op, (outs GPR:$rd), (ins GPR:$rj, simm14_lsl2:$imm14), opstr,
+               "$rd, $rj, $imm14">;
 } // mayLoad = 1
 
 let mayStore = 1 in {
 class STORE_3R<bits<17> op, string opstr>
-    : Fmt3R<op, (outs), (ins GPR:$rd, GPR:$rj, GPR:$rk),
-            !strconcat(opstr, "\t$rd, $rj, $rk")>;
+    : Fmt3R<op, (outs), (ins GPR:$rd, GPR:$rj, GPR:$rk), opstr,
+            "$rd, $rj, $rk">;
 class STORE_2RI12<bits<10> op, string opstr>
-    : Fmt2RI12<op, (outs), (ins GPR:$rd, GPR:$rj, simm12:$imm12),
-               !strconcat(opstr, "\t$rd, $rj, $imm12")>;
+    : Fmt2RI12<op, (outs), (ins GPR:$rd, GPR:$rj, simm12:$imm12), opstr,
+               "$rd, $rj, $imm12">;
 class STORE_2RI14<bits<8> op, string opstr>
-    : Fmt2RI14<op, (outs), (ins GPR:$rd, GPR:$rj, simm14_lsl2:$imm14),
-               !strconcat(opstr, "\t$rd, $rj, $imm14")>;
+    : Fmt2RI14<op, (outs), (ins GPR:$rd, GPR:$rj, simm14_lsl2:$imm14), opstr,
+               "$rd, $rj, $imm14">;
 } // mayStore = 1
 
 let mayLoad = 1, mayStore = 1 in
 class AM_3R<bits<17> op, string opstr>
-    : Fmt3R<op, (outs GPR:$rd), (ins GPR:$rk, GPR:$rj),
-            !strconcat(opstr, "\t$rd, $rk, $rj")>;
+    : Fmt3R<op, (outs GPR:$rd), (ins GPR:$rk, GPR:$rj), opstr, "$rd, $rk, $rj">;
 
 let mayLoad = 1 in
 class LLBase<bits<8> op, string opstr>
-    : Fmt2RI14<op, (outs GPR:$rd), (ins GPR:$rj, simm14_lsl2:$imm14),
-               !strconcat(opstr, "\t$rd, $rj, $imm14")>;
+    : Fmt2RI14<op, (outs GPR:$rd), (ins GPR:$rj, simm14_lsl2:$imm14), opstr,
+               "$rd, $rj, $imm14">;
 
 let mayStore = 1, Constraints = "$rd = $dst" in
 class SCBase<bits<8> op, string opstr>
     : Fmt2RI14<op, (outs GPR:$dst), (ins GPR:$rd, GPR:$rj, simm14_lsl2:$imm14),
-               !strconcat(opstr, "\t$rd, $rj, $imm14")>;
+               opstr, "$rd, $rj, $imm14">;
+
+class IOCSRRD<bits<22> op, string opstr>
+    : Fmt2R<op, (outs GPR:$rd), (ins GPR:$rj), opstr, "$rd, $rj">;
+
+class IOCSRWR<bits<22> op, string opstr>
+    : Fmt2R<op, (outs), (ins GPR:$rd, GPR:$rj), opstr, "$rd, $rj">;
 
 //===----------------------------------------------------------------------===//
-// Instructions
+// Basic Integer Instructions
 //===----------------------------------------------------------------------===//
 
 // Arithmetic Operation Instructions
@@ -210,11 +278,11 @@ def BITREV_W  : ALU_2R<0b0000000000000000010100, "bitrev.w">;
 let Constraints = "$rd = $dst" in {
 def BSTRINS_W  : FmtBSTR_W<0b000000000110, (outs GPR:$dst),
                            (ins GPR:$rd, GPR:$rj, uimm5:$msbw, uimm5:$lsbw),
-                           "bstrins.w\t$rd, $rj, $msbw, $lsbw">;
+                           "bstrins.w", "$rd, $rj, $msbw, $lsbw">;
 }
 def BSTRPICK_W : FmtBSTR_W<0b000000000111, (outs GPR:$rd),
                            (ins GPR:$rj, uimm5:$msbw, uimm5:$lsbw),
-                           "bstrpick.w\t$rd, $rj, $msbw, $lsbw">;
+                           "bstrpick.w", "$rd, $rj, $msbw, $lsbw">;
 def MASKEQZ : ALU_3R<0b00000000000100110, "maskeqz">;
 def MASKNEZ : ALU_3R<0b00000000000100111, "masknez">;
 
@@ -230,10 +298,10 @@ def BNEZ : BrCCZ_1RI21<0b010001, "bnez">;
 def B : Br_I26<0b010100, "b">;
 
 let isCall = 1 in
-def BL : FmtI26<0b010101, (outs), (ins simm26_lsl2:$imm26), "bl\t$imm26">;
+def BL : FmtI26<0b010101, (outs), (ins simm26_lsl2:$imm26), "bl", "$imm26">;
 def JIRL : Fmt2RI16<0b010011, (outs GPR:$rd),
-                    (ins GPR:$rj, simm16_lsl2:$imm16),
-                    "jirl\t$rd, $rj, $imm16">;
+                    (ins GPR:$rj, simm16_lsl2:$imm16), "jirl",
+                    "$rd, $rj, $imm16">;
 
 // Common Memory Access Instructions
 def LD_B  : LOAD_2RI12<0b0010100000, "ld.b">;
@@ -244,8 +312,8 @@ def LD_HU : LOAD_2RI12<0b0010101001, "ld.hu">;
 def ST_B : STORE_2RI12<0b0010100100, "st.b">;
 def ST_H : STORE_2RI12<0b0010100101, "st.h">;
 def ST_W : STORE_2RI12<0b0010100110, "st.w">;
-def PRELD : FmtPRELD<(outs), (ins uimm5:$imm5, GPR:$rj, simm12:$imm12),
-                     "preld\t$imm5, $rj, $imm12">;
+def PRELD : FmtPRELD<(outs), (ins uimm5:$imm5, GPR:$rj, simm12:$imm12), "preld",
+                     "$imm5, $rj, $imm12">;
 
 // Atomic Memory Access Instructions
 def LL_W : LLBase<0b00100000, "ll.w">;
@@ -263,6 +331,7 @@ def RDTIMEH_W : RDTIME_2R<0b0000000000000000011001, "rdtimeh.w">;
 def CPUCFG : ALU_2R<0b0000000000000000011011, "cpucfg">;
 
 /// LA64 instructions
+
 let Predicates = [IsLA64] in {
 
 // Arithmetic Operation Instructions for 64-bits
@@ -272,7 +341,11 @@ def ADDI_D : ALU_2RI12<0b0000001011, "addi.d", simm12>;
 def ADDU16I_D : ALU_2RI16<0b000100, "addu16i.d", simm16>;
 def ALSL_WU : ALU_3RI2<0b000000000000011, "alsl.wu", uimm2_plus1>;
 def ALSL_D  : ALU_3RI2<0b000000000010110, "alsl.d", uimm2_plus1>;
-def LU32I_D : ALU_1RI20<0b0001011, "lu32i.d", simm20>;
+let Constraints = "$rd = $dst" in {
+def LU32I_D : Fmt1RI20<0b0001011, (outs GPR:$dst),
+                       (ins GPR:$rd, simm20:$imm20), "lu32i.d",
+                       "$rd, $imm20">;
+}
 def LU52I_D : ALU_2RI12<0b0000001100, "lu52i.d", simm12>;
 def PCADDU18I : ALU_1RI20<0b0001111, "pcaddu18i", simm20>;
 def MUL_D     : ALU_3R<0b00000000000111011, "mul.d">;
@@ -311,14 +384,15 @@ def BITREV_D  : ALU_2R<0b0000000000000000010101, "bitrev.d">;
 let Constraints = "$rd = $dst" in {
 def BSTRINS_D  : FmtBSTR_D<0b0000000010, (outs GPR:$dst),
                            (ins GPR:$rd, GPR:$rj, uimm6:$msbd, uimm6:$lsbd),
-                           "bstrins.d\t$rd, $rj, $msbd, $lsbd">;
+                           "bstrins.d", "$rd, $rj, $msbd, $lsbd">;
 }
 def BSTRPICK_D : FmtBSTR_D<0b0000000011, (outs GPR:$rd),
                            (ins GPR:$rj, uimm6:$msbd, uimm6:$lsbd),
-                           "bstrpick.d\t$rd, $rj, $msbd, $lsbd">;
+                           "bstrpick.d", "$rd, $rj, $msbd, $lsbd">;
 
 // Common Memory Access Instructions for 64-bits
 def LD_WU : LOAD_2RI12<0b0010101010, "ld.wu">;
+def LD_D  : LOAD_2RI12<0b0010100011, "ld.d">;
 def ST_D : STORE_2RI12<0b0010100111, "st.d">;
 def LDX_B  : LOAD_3R<0b00111000000000000, "ldx.b">;
 def LDX_H  : LOAD_3R<0b00111000000001000, "ldx.h">;
@@ -335,8 +409,8 @@ def LDPTR_W : LOAD_2RI14<0b00100100, "ldptr.w">;
 def LDPTR_D : LOAD_2RI14<0b00100110, "ldptr.d">;
 def STPTR_W : STORE_2RI14<0b00100101, "stptr.w">;
 def STPTR_D : STORE_2RI14<0b00100111, "stptr.d">;
-def PRELDX : FmtPRELDX<(outs), (ins uimm5:$imm5, GPR:$rj, GPR:$rk),
-                       "preldx\t$imm5, $rj, $rk">;
+def PRELDX : FmtPRELDX<(outs), (ins uimm5:$imm5, GPR:$rj, GPR:$rk), "preldx",
+                       "$imm5, $rj, $rk">;
 
 // Bound Check Memory Access Instructions
 def LDGT_B : LOAD_3R<0b00111000011110000, "ldgt.b">;
@@ -408,9 +482,9 @@ def CRCC_W_D_W : ALU_3R<0b00000000001001111, "crcc.w.d.w">;
 
 // Other Miscellaneous Instructions for 64-bits
 def ASRTLE_D : FmtASRT<0b00000000000000010, (outs), (ins GPR:$rj, GPR:$rk),
-                       "asrtle.d\t$rj, $rk">;
+                       "asrtle.d", "$rj, $rk">;
 def ASRTGT_D : FmtASRT<0b00000000000000011, (outs), (ins GPR:$rj, GPR:$rk),
-                       "asrtgt.d\t$rj, $rk">;
+                       "asrtgt.d", "$rj, $rk">;
 def RDTIME_D : RDTIME_2R<0b0000000000000000011010, "rdtime.d">;
 } // Predicates = [IsLA64]
 
@@ -439,13 +513,21 @@ def : PatGprGpr<and, AND>;
 def : PatGprGpr<or, OR>;
 def : PatGprGpr<xor, XOR>;
 
+/// Branches and jumps
+
+let isBarrier = 1, isReturn = 1, isTerminator = 1 in
+def PseudoRET : Pseudo<(outs), (ins), [(loongarch_ret)]>,
+                PseudoInstExpansion<(JIRL R0, R1, 0)>;
+
 /// LA32 patterns
+
 let Predicates = [IsLA32] in {
 def : PatGprGpr<add, ADD_W>;
 def : PatGprImm<add, ADDI_W, simm12>;
 } // Predicates = [IsLA32]
 
 /// LA64 patterns
+
 let Predicates = [IsLA64] in {
 def : Pat<(sext_inreg GPR:$rj, i32), (ADDI_W GPR:$rj, 0)>;
 
@@ -459,5 +541,65 @@ def : PatGprImm_32<add, ADDI_W, simm12>;
 //===----------------------------------------------------------------------===//
 // Assembler Pseudo Instructions
 //===----------------------------------------------------------------------===//
+
 def : InstAlias<"nop", (ANDI R0, R0, 0)>;
 def : InstAlias<"move $dst, $src", (OR GPR:$dst, GPR:$src, R0)>;
+
+//===----------------------------------------------------------------------===//
+// Basic Floating-Point Instructions
+//===----------------------------------------------------------------------===//
+
+include "LoongArchFloat32InstrInfo.td"
+include "LoongArchFloat64InstrInfo.td"
+
+//===----------------------------------------------------------------------===//
+// Privilege Instructions
+//===----------------------------------------------------------------------===//
+
+// CSR Access Instructions
+def CSRRD : FmtCSR<0b0000010000000, (outs GPR:$rd), (ins uimm14:$csr_num),
+                   "csrrd", "$rd, $csr_num">;
+let Constraints = "$rd = $dst" in {
+def CSRWR : FmtCSR<0b0000010000001, (outs GPR:$dst),
+                   (ins GPR:$rd, uimm14:$csr_num), "csrwr", "$rd, $csr_num">;
+def CSRXCHG : FmtCSRXCHG<0b00000100, (outs GPR:$dst),
+                         (ins GPR:$rd, GPR:$rj, uimm14:$csr_num),
+                         "csrxchg", "$rd, $rj, $csr_num">;
+} // Constraints = "$rd = $dst"
+
+// IOCSR Access Instructions
+def IOCSRRD_B : IOCSRRD<0b0000011001001000000000, "iocsrrd.b">;
+def IOCSRRD_H : IOCSRRD<0b0000011001001000000001, "iocsrrd.h">;
+def IOCSRRD_W : IOCSRRD<0b0000011001001000000010, "iocsrrd.w">;
+def IOCSRWR_B : IOCSRWR<0b0000011001001000000100, "iocsrwr.b">;
+def IOCSRWR_H : IOCSRWR<0b0000011001001000000101, "iocsrwr.h">;
+def IOCSRWR_W : IOCSRWR<0b0000011001001000000110, "iocsrwr.w">;
+let Predicates = [IsLA64] in {
+def IOCSRRD_D : IOCSRRD<0b0000011001001000000011, "iocsrrd.d">;
+def IOCSRWR_D : IOCSRWR<0b0000011001001000000111, "iocsrwr.d">;
+} // Predicates = [IsLA64]
+
+// Cache Maintenance Instructions
+def CACOP : FmtCACOP<(outs), (ins uimm5:$op, GPR:$rj, simm12:$imm12), "cacop",
+                     "$op, $rj, $imm12">;
+
+// TLB Maintenance Instructions
+def TLBSRCH  : FmtI32<0b00000110010010000010100000000000, "tlbsrch">;
+def TLBRD    : FmtI32<0b00000110010010000010110000000000, "tlbrd">;
+def TLBWR    : FmtI32<0b00000110010010000011000000000000, "tlbwr">;
+def TLBFILL  : FmtI32<0b00000110010010000011010000000000, "tlbfill">;
+def TLBCLR   : FmtI32<0b00000110010010000010000000000000, "tlbclr">;
+def TLBFLUSH : FmtI32<0b00000110010010000010010000000000, "tlbflush">;
+def INVTLB : FmtINVTLB<(outs), (ins GPR:$rk, GPR:$rj, uimm5:$op), "invtlb",
+                       "$op, $rj, $rk">;
+
+// Software Page Walking Instructions
+def LDDIR : Fmt2RI8<0b00000110010000, (outs GPR:$rd),
+                    (ins GPR:$rj, uimm8:$imm8), "lddir", "$rd, $rj, $imm8">;
+def LDPTE : FmtLDPTE<(outs), (ins GPR:$rj, uimm8:$seq), "ldpte", "$rj, $seq">;
+
+
+// Other Miscellaneous Instructions
+def ERTN : FmtI32<0b00000110010010000011100000000000, "ertn">;
+def DBCL : MISC_I15<0b00000000001010101, "dbcl">;
+def IDLE : MISC_I15<0b00000110010010001, "idle">;

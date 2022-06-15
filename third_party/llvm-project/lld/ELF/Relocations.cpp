@@ -42,6 +42,7 @@
 
 #include "Relocations.h"
 #include "Config.h"
+#include "InputFiles.h"
 #include "LinkerScript.h"
 #include "OutputSections.h"
 #include "SymbolTable.h"
@@ -247,7 +248,7 @@ template <class ELFT> static bool isReadOnly(SharedSymbol &ss) {
   using Elf_Phdr = typename ELFT::Phdr;
 
   // Determine if the symbol is read-only by scanning the DSO's program headers.
-  const SharedFile &file = ss.getFile();
+  const auto &file = cast<SharedFile>(*ss.file);
   for (const Elf_Phdr &phdr :
        check(file.template getObj<ELFT>().program_headers()))
     if ((phdr.p_type == ELF::PT_LOAD || phdr.p_type == ELF::PT_GNU_RELRO) &&
@@ -266,7 +267,7 @@ template <class ELFT>
 static SmallSet<SharedSymbol *, 4> getSymbolsAt(SharedSymbol &ss) {
   using Elf_Sym = typename ELFT::Sym;
 
-  SharedFile &file = ss.getFile();
+  const auto &file = cast<SharedFile>(*ss.file);
 
   SmallSet<SharedSymbol *, 4> ret;
   for (const Elf_Sym &s : file.template getGlobalELFSyms<ELFT>()) {
@@ -350,7 +351,7 @@ static void replaceWithDefined(Symbol &sym, SectionBase &sec, uint64_t value,
 // to the variable in .bss. This kind of issue is sometimes very hard to
 // debug. What's a solution? Instead of exporting a variable V from a DSO,
 // define an accessor getV().
-template <class ELFT> static void addCopyRelSymbolImpl(SharedSymbol &ss) {
+template <class ELFT> static void addCopyRelSymbol(SharedSymbol &ss) {
   // Copy relocation against zero-sized symbol doesn't make sense.
   uint64_t symSize = ss.getSize();
   if (symSize == 0 || ss.alignment == 0)
@@ -379,26 +380,6 @@ template <class ELFT> static void addCopyRelSymbolImpl(SharedSymbol &ss) {
     replaceWithDefined(*sym, *sec, 0, sym->size);
 
   mainPart->relaDyn->addSymbolReloc(target->copyRel, *sec, 0, ss);
-}
-
-static void addCopyRelSymbol(SharedSymbol &ss) {
-  const SharedFile &file = ss.getFile();
-  switch (file.ekind) {
-  case ELF32LEKind:
-    addCopyRelSymbolImpl<ELF32LE>(ss);
-    break;
-  case ELF32BEKind:
-    addCopyRelSymbolImpl<ELF32BE>(ss);
-    break;
-  case ELF64LEKind:
-    addCopyRelSymbolImpl<ELF64LE>(ss);
-    break;
-  case ELF64BEKind:
-    addCopyRelSymbolImpl<ELF64BE>(ss);
-    break;
-  default:
-    llvm_unreachable("");
-  }
 }
 
 // .eh_frame sections are mergeable input sections, so their input
@@ -564,9 +545,16 @@ static std::string maybeReportDiscarded(Undefined &sym) {
   // If the discarded section is a COMDAT.
   StringRef signature = file->getShtGroupSignature(objSections, elfSec);
   if (const InputFile *prevailing =
-          symtab->comdatGroups.lookup(CachedHashStringRef(signature)))
+          symtab->comdatGroups.lookup(CachedHashStringRef(signature))) {
     msg += "\n>>> section group signature: " + signature.str() +
            "\n>>> prevailing definition is in " + toString(prevailing);
+    if (sym.nonPrevailing) {
+      msg += "\n>>> or the symbol in the prevailing group had STB_WEAK "
+             "binding and the symbol in a non-prevailing group had STB_GLOBAL "
+             "binding. Mixing groups with STB_WEAK and STB_GLOBAL binding "
+             "signature is not supported";
+    }
+  }
   return msg;
 }
 
@@ -955,7 +943,7 @@ static bool canDefineSymbolInExecutable(Symbol &sym) {
 }
 
 // Returns true if a given relocation can be computed at link-time.
-// This only handles relocation types expected in processRelocAux.
+// This only handles relocation types expected in processAux.
 //
 // For instance, we know the offset from a relocation to its target at
 // link-time if the relocation is PC-relative and refers a
@@ -1621,7 +1609,7 @@ void elf::postScanRelocations() {
       addPltEntry(*in.plt, *in.gotPlt, *in.relaPlt, target->pltRel, sym);
     if (sym.needsCopy) {
       if (sym.isObject()) {
-        addCopyRelSymbol(cast<SharedSymbol>(sym));
+        invokeELFT(addCopyRelSymbol, cast<SharedSymbol>(sym));
         // needsCopy is cleared for sym and its aliases so that in later
         // iterations aliases won't cause redundant copies.
         assert(!sym.needsCopy);
@@ -1874,6 +1862,19 @@ void ThunkCreator::mergeThunks(ArrayRef<OutputSection *> outputSections) {
       });
 }
 
+static int64_t getPCBias(RelType type) {
+  if (config->emachine != EM_ARM)
+    return 0;
+  switch (type) {
+  case R_ARM_THM_JUMP19:
+  case R_ARM_THM_JUMP24:
+  case R_ARM_THM_CALL:
+    return 4;
+  default:
+    return 8;
+  }
+}
+
 // Find or create a ThunkSection within the InputSectionDescription (ISD) that
 // is in range of Src. An ISD maps to a range of InputSections described by a
 // linker script section pattern such as { .text .text.* }.
@@ -1882,10 +1883,12 @@ ThunkSection *ThunkCreator::getISDThunkSec(OutputSection *os,
                                            InputSectionDescription *isd,
                                            const Relocation &rel,
                                            uint64_t src) {
+  // See the comment in getThunk for -pcBias below.
+  const int64_t pcBias = getPCBias(rel.type);
   for (std::pair<ThunkSection *, uint32_t> tp : isd->thunkSections) {
     ThunkSection *ts = tp.first;
-    uint64_t tsBase = os->addr + ts->outSecOff + rel.addend;
-    uint64_t tsLimit = tsBase + ts->getSize() + rel.addend;
+    uint64_t tsBase = os->addr + ts->outSecOff - pcBias;
+    uint64_t tsLimit = tsBase + ts->getSize();
     if (target->inBranchRange(rel.type, src,
                               (src > tsLimit) ? tsBase : tsLimit))
       return ts;
@@ -2034,19 +2037,6 @@ static bool isThunkSectionCompatible(InputSection *source,
   if (source->partition != target->partition)
     return target->partition == 1;
   return true;
-}
-
-static int64_t getPCBias(RelType type) {
-  if (config->emachine != EM_ARM)
-    return 0;
-  switch (type) {
-  case R_ARM_THM_JUMP19:
-  case R_ARM_THM_JUMP24:
-  case R_ARM_THM_CALL:
-    return 4;
-  default:
-    return 8;
-  }
 }
 
 std::pair<Thunk *, bool> ThunkCreator::getThunk(InputSection *isec,

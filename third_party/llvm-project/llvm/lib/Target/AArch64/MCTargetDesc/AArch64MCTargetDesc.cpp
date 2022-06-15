@@ -52,21 +52,14 @@ static MCSubtargetInfo *
 createAArch64MCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS) {
   if (CPU.empty()) {
     CPU = "generic";
+    if (FS.empty())
+      FS = "+v8a";
 
     if (TT.isArm64e())
       CPU = "apple-a12";
   }
 
-  // Most of the NEON instruction set isn't supported in streaming mode on SME
-  // targets, disable NEON unless explicitly requested.
-  bool RequestedNEON = FS.contains("neon");
-  bool RequestedStreamingSVE = FS.contains("streaming-sve");
-  MCSubtargetInfo *STI =
-      createAArch64MCSubtargetInfoImpl(TT, CPU, /*TuneCPU*/ CPU, FS);
-  if (RequestedStreamingSVE && !RequestedNEON &&
-      STI->hasFeature(AArch64::FeatureNEON))
-    STI->ToggleFeature(AArch64::FeatureNEON);
-  return STI;
+  return createAArch64MCSubtargetInfoImpl(TT, CPU, /*TuneCPU*/ CPU, FS);
 }
 
 void AArch64_MC::initLLVMToCVRegMapping(MCRegisterInfo *MRI) {

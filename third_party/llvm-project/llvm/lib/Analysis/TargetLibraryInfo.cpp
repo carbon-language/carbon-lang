@@ -659,12 +659,12 @@ static void initialize(TargetLibraryInfoImpl &TLI, const Triple &T,
     TLI.setUnavailable(LibFunc_stpncpy);
   }
 
-  if (T.isPS4()) {
-    // PS4 does have memalign.
+  if (T.isPS()) {
+    // PS4/PS5 do have memalign.
     TLI.setAvailable(LibFunc_memalign);
 
-    // PS4 does not have new/delete with "unsigned int" size parameter;
-    // it only has the "unsigned long" versions.
+    // PS4/PS5 do not have new/delete with "unsigned int" size parameter;
+    // they only have the "unsigned long" versions.
     TLI.setUnavailable(LibFunc_ZdaPvj);
     TLI.setUnavailable(LibFunc_ZdaPvjSt11align_val_t);
     TLI.setUnavailable(LibFunc_ZdlPvj);
@@ -1110,9 +1110,11 @@ bool TargetLibraryInfoImpl::isValidProtoForLibFunc(const FunctionType &FTy,
   case LibFunc_system:
     return (NumParams == 1 && FTy.getParamType(0)->isPointerTy());
   case LibFunc___kmpc_alloc_shared:
+    return NumParams == 1 && FTy.getReturnType()->isPointerTy();
   case LibFunc_malloc:
   case LibFunc_vec_malloc:
-    return (NumParams == 1 && FTy.getReturnType()->isPointerTy());
+    return NumParams == 1 && FTy.getParamType(0)->isIntegerTy(SizeTBits) &&
+           FTy.getReturnType()->isPointerTy();
   case LibFunc_memcmp:
     return NumParams == 3 && FTy.getReturnType()->isIntegerTy(32) &&
            FTy.getParamType(0)->isPointerTy() &&

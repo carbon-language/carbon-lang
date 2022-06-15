@@ -1,6 +1,5 @@
 // RUN: mlir-opt -split-input-file %s | mlir-opt
-// Verify the generic form can be parsed.
-// RUN: mlir-opt -split-input-file -mlir-print-op-generic %s | mlir-opt
+// RUN: mlir-opt -split-input-file -mlir-print-op-generic -mlir-print-local-scope %s | FileCheck %s --check-prefix=CHECK-GENERIC
 
 // -----
 
@@ -27,21 +26,6 @@ pdl.pattern @rewrite_with_args : benefit(1) {
 
 // -----
 
-pdl.pattern @rewrite_with_params : benefit(1) {
-  %root = operation
-  rewrite %root with "rewriter"["I am param"]
-}
-
-// -----
-
-pdl.pattern @rewrite_with_args_and_params : benefit(1) {
-  %input = operand
-  %root = operation(%input : !pdl.value)
-  rewrite %root with "rewriter"["I am param"](%input : !pdl.value)
-}
-
-// -----
-
 pdl.pattern @rewrite_multi_root_optimal : benefit(2) {
   %input1 = operand
   %input2 = operand
@@ -52,7 +36,7 @@ pdl.pattern @rewrite_multi_root_optimal : benefit(2) {
   %op2 = operation(%input2 : !pdl.value) -> (%type : !pdl.type)
   %val2 = result 0 of %op2
   %root2 = operation(%val1, %val2 : !pdl.value, !pdl.value)
-  rewrite with "rewriter"["I am param"](%root1, %root2 : !pdl.operation, !pdl.operation)
+  rewrite with "rewriter"(%root1, %root2 : !pdl.operation, !pdl.operation)
 }
 
 // -----
@@ -67,7 +51,7 @@ pdl.pattern @rewrite_multi_root_forced : benefit(2) {
   %op2 = operation(%input2 : !pdl.value) -> (%type : !pdl.type)
   %val2 = result 0 of %op2
   %root2 = operation(%val1, %val2 : !pdl.value, !pdl.value)
-  rewrite %root1 with "rewriter"["I am param"](%root2 : !pdl.operation)
+  rewrite %root1 with "rewriter"(%root2 : !pdl.operation)
 }
 
 // -----
@@ -153,7 +137,21 @@ pdl.pattern @apply_rewrite_with_no_results : benefit(1) {
 pdl.pattern @attribute_with_dict : benefit(1) {
   %root = operation
   rewrite %root {
-    %attr = attribute {some_unit_attr} attributes {pdl.special_attribute}
+    %attr = attribute = {some_unit_attr} attributes {pdl.special_attribute}
     apply_native_rewrite "NativeRewrite"(%attr : !pdl.attribute)
   }
+}
+
+// -----
+
+// Check that we don't treat the trailing location of a pdl.attribute as the
+// attribute value.
+
+pdl.pattern @attribute_with_loc : benefit(1) {
+  // CHECK-GENERIC: "pdl.attribute"
+  // CHECK-GENERIC-NOT: value = loc
+  %attr = attribute loc("bar")
+  
+  %root = operation {"attribute" = %attr}
+  rewrite %root with "rewriter"
 }

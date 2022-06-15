@@ -14,7 +14,11 @@
 #define FORTRAN_OPTIMIZER_BUILDER_CHARACTER_H
 
 #include "flang/Optimizer/Builder/BoxValue.h"
-#include "flang/Optimizer/Builder/FIRBuilder.h"
+#include "flang/Optimizer/Builder/LowLevelIntrinsics.h"
+
+namespace fir {
+class FirOpBuilder;
+}
 
 namespace fir::factory {
 
@@ -22,7 +26,7 @@ namespace fir::factory {
 class CharacterExprHelper {
 public:
   /// Constructor.
-  explicit CharacterExprHelper(fir::FirOpBuilder &builder, mlir::Location loc)
+  explicit CharacterExprHelper(FirOpBuilder &builder, mlir::Location loc)
       : builder{builder}, loc{loc} {}
   CharacterExprHelper(const CharacterExprHelper &) = delete;
 
@@ -107,7 +111,15 @@ public:
   /// Extract the kind of a character or array of character type.
   static fir::KindTy getCharacterOrSequenceKind(mlir::Type type);
 
-  /// Determine the base character type
+  // TODO: Do we really need all these flavors of unwrapping to get the fir.char
+  // type? Or can we merge these? It would be better to merge them and eliminate
+  // the confusion.
+
+  /// Determine the inner character type. Unwraps references, boxes, and
+  /// sequences to find the !fir.char element type.
+  static fir::CharacterType getCharType(mlir::Type type);
+
+  /// Get fir.char<kind> type with the same kind as inside str.
   static fir::CharacterType getCharacterType(mlir::Type type);
   static fir::CharacterType getCharacterType(const fir::CharBoxValue &box);
   static fir::CharacterType getCharacterType(mlir::Value str);
@@ -177,15 +189,10 @@ private:
   void createAssign(const fir::CharBoxValue &lhs, const fir::CharBoxValue &rhs);
   mlir::Value createBlankConstantCode(fir::CharacterType type);
 
+private:
   FirOpBuilder &builder;
   mlir::Location loc;
 };
-
-// FIXME: Move these to Optimizer
-mlir::FuncOp getLlvmMemcpy(FirOpBuilder &builder);
-mlir::FuncOp getLlvmMemmove(FirOpBuilder &builder);
-mlir::FuncOp getLlvmMemset(FirOpBuilder &builder);
-mlir::FuncOp getRealloc(FirOpBuilder &builder);
 
 //===----------------------------------------------------------------------===//
 // Tools to work with Character dummy procedures
@@ -196,18 +203,9 @@ mlir::FuncOp getRealloc(FirOpBuilder &builder);
 /// one provided by \p funcPointerType.
 mlir::Type getCharacterProcedureTupleType(mlir::Type funcPointerType);
 
-/// Is this tuple type holding a character function and its result length ?
-bool isCharacterProcedureTuple(mlir::Type type);
-
-/// Is \p tuple a value holding a character function address and its result
-/// length ?
-inline bool isCharacterProcedureTuple(mlir::Value tuple) {
-  return isCharacterProcedureTuple(tuple.getType());
-}
-
 /// Create a tuple<addr, len> given \p addr and \p len as well as the tuple
-/// type \p argTy. \p addr must be any function address, and \p len must be
-/// any integer. Converts will be inserted if needed if \addr and \p len
+/// type \p argTy. \p addr must be any function address, and \p len may be any
+/// integer or nullptr. Converts will be inserted if needed if \addr and \p len
 /// types are not the same as the one inside the tuple type \p tupleType.
 mlir::Value createCharacterProcedureTuple(fir::FirOpBuilder &builder,
                                           mlir::Location loc,

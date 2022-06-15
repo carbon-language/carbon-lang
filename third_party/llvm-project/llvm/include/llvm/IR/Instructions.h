@@ -126,9 +126,6 @@ public:
     setSubclassData<AlignmentField>(Log2(Align));
   }
 
-  // FIXME: Remove this one transition to Align is over.
-  uint64_t getAlignment() const { return getAlign().value(); }
-
   /// Return true if this alloca is in the entry block of the function and is a
   /// constant size. If so, the code generator will fold it into the
   /// prolog/epilog code, so it is basically free.
@@ -214,11 +211,6 @@ public:
 
   /// Specify whether this is a volatile load or not.
   void setVolatile(bool V) { setSubclassData<VolatileField>(V); }
-
-  /// Return the alignment of the access that is being performed.
-  /// FIXME: Remove this function once transition to Align is over.
-  /// Use getAlign() instead.
-  uint64_t getAlignment() const { return getAlign().value(); }
 
   /// Return the alignment of the access that is being performed.
   Align getAlign() const {
@@ -345,11 +337,6 @@ public:
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
-
-  /// Return the alignment of the access that is being performed
-  /// FIXME: Remove this function once transition to Align is over.
-  /// Use getAlign() instead.
-  uint64_t getAlignment() const { return getAlign().value(); }
 
   Align getAlign() const {
     return Align(1ULL << (getSubclassData<AlignmentField>()));
@@ -2137,6 +2124,12 @@ public:
   static bool isIdentityMask(ArrayRef<int> Mask);
   static bool isIdentityMask(const Constant *Mask) {
     assert(Mask->getType()->isVectorTy() && "Shuffle needs vector constant.");
+
+    // Not possible to express a shuffle mask for a scalable vector for this
+    // case.
+    if (isa<ScalableVectorType>(Mask->getType()))
+      return false;
+
     SmallVector<int, 16> MaskAsInts;
     getShuffleMask(Mask, MaskAsInts);
     return isIdentityMask(MaskAsInts);
@@ -2147,6 +2140,11 @@ public:
   /// from its input vectors.
   /// Example: shufflevector <4 x n> A, <4 x n> B, <4,undef,6,undef>
   bool isIdentity() const {
+    // Not possible to express a shuffle mask for a scalable vector for this
+    // case.
+    if (isa<ScalableVectorType>(getType()))
+      return false;
+
     return !changesLength() && isIdentityMask(ShuffleMask);
   }
 
@@ -5310,6 +5308,10 @@ public:
   }
 };
 
+//===----------------------------------------------------------------------===//
+//                          Helper functions
+//===----------------------------------------------------------------------===//
+
 /// A helper function that returns the pointer operand of a load or store
 /// instruction. Returns nullptr if not load or store.
 inline const Value *getLoadStorePointerOperand(const Value *V) {
@@ -5363,6 +5365,24 @@ inline Type *getLoadStoreType(Value *I) {
   if (auto *LI = dyn_cast<LoadInst>(I))
     return LI->getType();
   return cast<StoreInst>(I)->getValueOperand()->getType();
+}
+
+/// A helper function that returns an atomic operation's sync scope; returns
+/// None if it is not an atomic operation.
+inline Optional<SyncScope::ID> getAtomicSyncScopeID(const Instruction *I) {
+  if (!I->isAtomic())
+    return None;
+  if (auto *AI = dyn_cast<LoadInst>(I))
+    return AI->getSyncScopeID();
+  if (auto *AI = dyn_cast<StoreInst>(I))
+    return AI->getSyncScopeID();
+  if (auto *AI = dyn_cast<FenceInst>(I))
+    return AI->getSyncScopeID();
+  if (auto *AI = dyn_cast<AtomicCmpXchgInst>(I))
+    return AI->getSyncScopeID();
+  if (auto *AI = dyn_cast<AtomicRMWInst>(I))
+    return AI->getSyncScopeID();
+  llvm_unreachable("unhandled atomic operation");
 }
 
 //===----------------------------------------------------------------------===//

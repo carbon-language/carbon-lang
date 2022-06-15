@@ -9,9 +9,8 @@
 #ifndef __LLVM_LIBC_TYPES_MTX_T_H__
 #define __LLVM_LIBC_TYPES_MTX_T_H__
 
-typedef struct {
-  unsigned char __internal_data[4];
-  int __mtx_type;
-} mtx_t;
+#include <llvm-libc-types/__mutex_type.h>
+
+typedef __mutex_type mtx_t;
 
 #endif // __LLVM_LIBC_TYPES_MTX_T_H__

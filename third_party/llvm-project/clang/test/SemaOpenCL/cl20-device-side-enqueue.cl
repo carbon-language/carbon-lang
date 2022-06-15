@@ -11,7 +11,7 @@
 
 typedef struct {int a;} ndrange_t;
 // Diagnostic tests for different overloads of enqueue_kernel from Table 6.13.17.1 of OpenCL 2.0 Spec.
-kernel void enqueue_kernel_tests() {
+kernel void enqueue_kernel_tests(void) {
   queue_t default_queue;
   unsigned flags = 0;
   QUALS ndrange_t ndrange;
@@ -169,7 +169,7 @@ kernel void enqueue_kernel_tests() {
 }
 
 // Diagnostic tests for get_kernel_work_group_size and allowed block parameter types in dynamic parallelism.
-kernel void work_group_size_tests() {
+kernel void work_group_size_tests(void) {
   void (^const block_A)(void) = ^{
     return;
   };

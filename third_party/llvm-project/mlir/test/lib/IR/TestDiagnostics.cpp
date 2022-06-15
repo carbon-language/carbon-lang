@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "mlir/IR/SymbolTable.h"
 #include "mlir/Pass/Pass.h"
 #include "llvm/Support/SourceMgr.h"
 
@@ -18,7 +19,10 @@ using namespace mlir;
 
 namespace {
 struct TestDiagnosticFilterPass
-    : public PassWrapper<TestDiagnosticFilterPass, OperationPass<FuncOp>> {
+    : public PassWrapper<TestDiagnosticFilterPass,
+                         InterfacePass<SymbolOpInterface>> {
+  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(TestDiagnosticFilterPass)
+
   StringRef getArgument() const final { return "test-diagnostic-filter"; }
   StringRef getDescription() const final {
     return "Test diagnostic filtering support.";
@@ -53,7 +57,7 @@ struct TestDiagnosticFilterPass
   }
 
   ListOption<std::string> filters{
-      *this, "filters", llvm::cl::MiscFlags::CommaSeparated,
+      *this, "filters",
       llvm::cl::desc("Specifies the diagnostic file name filters.")};
 };
 

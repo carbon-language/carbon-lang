@@ -400,10 +400,12 @@ bool DynamicLoaderMacOSXDYLD::NotifyBreakpointHit(
       }
     }
   } else {
-    process->GetTarget().GetDebugger().GetAsyncErrorStream()->Printf(
-        "No ABI plugin located for triple %s -- shared libraries will not be "
-        "registered!\n",
-        process->GetTarget().GetArchitecture().GetTriple().getTriple().c_str());
+    Target &target = process->GetTarget();
+    Debugger::ReportWarning(
+        "no ABI plugin located for triple " +
+            target.GetArchitecture().GetTriple().getTriple() +
+            ": shared libraries will not be registered",
+        target.GetDebugger().GetID());
   }
 
   // Return true to stop the target, false to just let the target run
@@ -802,7 +804,8 @@ bool DynamicLoaderMacOSXDYLD::ReadMachHeader(lldb::addr_t addr,
         return true; // We were able to read the mach_header and weren't asked
                      // to read the load command bytes
 
-      DataBufferSP load_cmd_data_sp(new DataBufferHeap(header->sizeofcmds, 0));
+      WritableDataBufferSP load_cmd_data_sp(
+          new DataBufferHeap(header->sizeofcmds, 0));
 
       size_t load_cmd_bytes_read =
           m_process->ReadMemory(load_cmd_addr, load_cmd_data_sp->GetBytes(),

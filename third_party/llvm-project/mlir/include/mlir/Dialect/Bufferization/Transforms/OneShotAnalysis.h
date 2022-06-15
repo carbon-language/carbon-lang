@@ -10,39 +10,22 @@
 #define MLIR_DIALECT_BUFFERIZATION_TRANSFORMS_ONESHOTANALYSIS_H
 
 #include "mlir/Dialect/Bufferization/IR/BufferizableOpInterface.h"
-#include "mlir/IR/BuiltinOps.h"
 #include "llvm/ADT/EquivalenceClasses.h"
 
 namespace mlir {
 namespace bufferization {
 
-class AnalysisBufferizationState;
+struct OneShotBufferizationOptions;
 class BufferizationAliasInfo;
-struct AnalysisBufferizationOptions;
-
-/// PostAnalysisStepFns can be registered with `BufferizationOptions` and are
-/// executed after the analysis, but before bufferization. They can be used to
-/// implement custom dialect-specific optimizations. They may modify the IR, but
-/// must keep `aliasInfo` consistent. Newly created operations and operations
-/// that should be re-analyzed must be added to `newOps`.
-using PostAnalysisStepFn = std::function<LogicalResult(
-    Operation *, BufferizationState &, BufferizationAliasInfo &,
-    SmallVector<Operation *> &)>;
-
-using PostAnalysisStepList = SmallVector<PostAnalysisStepFn>;
+class OneShotAnalysisState;
 
 /// Options for analysis-enabled bufferization.
-struct AnalysisBufferizationOptions : public BufferizationOptions {
-  AnalysisBufferizationOptions() = default;
+struct OneShotBufferizationOptions : public BufferizationOptions {
+  OneShotBufferizationOptions() = default;
 
-  /// Register a "post analysis" step. Such steps are executed after the
-  /// analysis, but before bufferization.
-  void addPostAnalysisStep(PostAnalysisStepFn fn) {
-    postAnalysisSteps.push_back(fn);
-  }
-
-  /// Registered post analysis steps.
-  PostAnalysisStepList postAnalysisSteps;
+  /// Specifies whether returning newly allocated memrefs should be allowed.
+  /// Otherwise, a pass failure is triggered.
+  bool allowReturnAllocs = false;
 };
 
 /// The BufferizationAliasInfo class maintains a list of buffer aliases and
@@ -68,10 +51,15 @@ public:
 
   /// Set the inPlace bufferization spec to true.
   /// Merge result's and operand's aliasing sets and iterate to a fixed point.
-  void bufferizeInPlace(OpOperand &operand, BufferizationState &state);
+  void bufferizeInPlace(OpOperand &operand, AnalysisState &state);
 
   /// Set the inPlace bufferization spec to false.
   void bufferizeOutOfPlace(OpOperand &operand);
+
+  /// Return true if `v1` and `v2` may bufferize to aliasing buffers.
+  bool areAliasingBufferizedValues(Value v1, Value v2) const {
+    return aliasInfo.isEquivalent(v1, v2);
+  }
 
   /// Return true if `v1` and `v2` bufferize to equivalent buffers.
   bool areEquivalentBufferizedValues(Value v1, Value v2) const {
@@ -135,14 +123,14 @@ private:
 /// State for analysis-enabled bufferization. This class keeps track of alias
 /// (via BufferizationAliasInfo) to decide if tensor OpOperands should bufferize
 /// in-place.
-class AnalysisBufferizationState : public BufferizationState {
+class OneShotAnalysisState : public AnalysisState {
 public:
-  AnalysisBufferizationState(Operation *op,
-                             const AnalysisBufferizationOptions &options);
+  OneShotAnalysisState(Operation *op,
+                       const OneShotBufferizationOptions &options);
 
-  AnalysisBufferizationState(const AnalysisBufferizationState &) = delete;
+  OneShotAnalysisState(const OneShotAnalysisState &) = delete;
 
-  virtual ~AnalysisBufferizationState() = default;
+  virtual ~OneShotAnalysisState() = default;
 
   /// Return a reference to the BufferizationAliasInfo.
   BufferizationAliasInfo &getAliasInfo() { return aliasInfo; }
@@ -153,19 +141,51 @@ public:
   /// Return true if `v1` and `v2` bufferize to equivalent buffers.
   bool areEquivalentBufferizedValues(Value v1, Value v2) const override;
 
+  /// Return true if `v1` and `v2` may bufferize to aliasing buffers.
+  bool areAliasingBufferizedValues(Value v1, Value v2) const override;
+
+  /// Return `true` if the given tensor has undefined contents.
+  bool hasUndefinedContents(OpOperand *opOperand) const override;
+
+  /// Return true if the given tensor (or an aliasing tensor) is yielded from
+  /// the containing block. Also include all aliasing tensors in the same block.
+  bool isTensorYielded(Value tensor) const override;
+
+  /// Find all tensor values in the given operation that have undefined contents
+  /// and store them in `undefinedTensorUses`.
+  void gatherUndefinedTensorUses(Operation *op);
+
+  /// Find all tensors that are yielded/returned from a block and store them in
+  /// `yieldedTensors`. Also include all aliasing tensors in the same block.
+  void gatherYieldedTensors(Operation *op);
+
+  /// Return true if the buffer of the given tensor value is written to. Must
+  /// not be called for values inside not yet analyzed functions.
+  bool isValueWritten(Value value) const;
+
+  /// Return true if the buffer of the given tensor value is writable.
+  bool isWritable(Value value) const;
+
 private:
   /// `aliasInfo` keeps track of aliasing and equivalent values. Only internal
   /// functions and `runOneShotBufferize` may access this object.
   BufferizationAliasInfo aliasInfo;
+
+  /// A set of all tensors (and maybe aliasing tensors) that yielded from a
+  /// block.
+  DenseSet<Value> yieldedTensors;
+
+  /// A set of uses of tensors that have undefined contents.
+  DenseSet<OpOperand *> undefinedTensorUses;
 };
 
 /// Analyze `op` and its nested ops. Bufferization decisions are stored in
 /// `state`.
-LogicalResult analyzeOp(Operation *op, AnalysisBufferizationState &state);
+LogicalResult analyzeOp(Operation *op, OneShotAnalysisState &state);
 
 /// Run One-Shot Bufferize on the given op: Analysis + Bufferization
 LogicalResult runOneShotBufferize(Operation *op,
-                                  const AnalysisBufferizationOptions &options);
+                                  const OneShotBufferizationOptions &options);
 
 } // namespace bufferization
 } // namespace mlir

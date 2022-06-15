@@ -90,7 +90,7 @@ if(LLVM_INTEGRATED_CRT_ALLOC)
     add_definitions(-DENABLE_OVERRIDE -DENABLE_PRELOAD)
     set(ALLOCATOR_FILES "${LLVM_INTEGRATED_CRT_ALLOC}/rpmalloc/rpmalloc.c")
   elseif(LLVM_INTEGRATED_CRT_ALLOC MATCHES "snmalloc$")
-    set(ALLOCATOR_FILES "${LLVM_INTEGRATED_CRT_ALLOC}/src/override/malloc.cc" "${LLVM_INTEGRATED_CRT_ALLOC}/src/override/new.cc")
+    set(ALLOCATOR_FILES "${LLVM_INTEGRATED_CRT_ALLOC}/src/snmalloc/override/new.cc")
     set(system_libs ${system_libs} "mincore.lib" "-INCLUDE:malloc")
   elseif(LLVM_INTEGRATED_CRT_ALLOC MATCHES "mimalloc$")
     set(MIMALLOC_LIB "${LLVM_INTEGRATED_CRT_ALLOC}/out/msvc-x64/Release/mimalloc-static.lib")
@@ -101,7 +101,10 @@ if(LLVM_INTEGRATED_CRT_ALLOC)
   endif()
 endif()
 
+add_subdirectory(BLAKE3)
+
 add_llvm_component_library(LLVMSupport
+  AddressRanges.cpp
   AArch64TargetParser.cpp
   ABIBreak.cpp
   ARMTargetParser.cpp
@@ -134,6 +137,9 @@ add_llvm_component_library(LLVMSupport
   ConvertUTF.cpp
   ConvertUTFWrapper.cpp
   CrashRecoveryContext.cpp
+  CSKYAttributes.cpp
+  CSKYAttributeParser.cpp
+  CSKYTargetParser.cpp
   DataExtractor.cpp
   Debug.cpp
   DebugCounter.cpp
@@ -232,6 +238,7 @@ add_llvm_component_library(LLVMSupport
   Z3Solver.cpp
 
   ${ALLOCATOR_FILES}
+  $<TARGET_OBJECTS:LLVMSupportBlake3>
 
 # System
   Atomic.cpp

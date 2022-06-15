@@ -15,11 +15,35 @@
 #include "mlir/Dialect/SPIRV/IR/SPIRVDialect.h"
 #include "mlir/Dialect/SPIRV/IR/SPIRVOps.h"
 #include "mlir/Dialect/SPIRV/Transforms/SPIRVConversion.h"
+#include "mlir/IR/BuiltinTypes.h"
+#include "mlir/Transforms/DialectConversion.h"
 #include "llvm/Support/Debug.h"
 
 #define DEBUG_TYPE "math-to-spirv-pattern"
 
 using namespace mlir;
+
+//===----------------------------------------------------------------------===//
+// Utility functions
+//===----------------------------------------------------------------------===//
+
+/// Creates a 32-bit scalar/vector integer constant. Returns nullptr if the
+/// given type is not a 32-bit scalar/vector type.
+static Value getScalarOrVectorI32Constant(Type type, int value,
+                                          OpBuilder &builder, Location loc) {
+  if (auto vectorType = type.dyn_cast<VectorType>()) {
+    if (!vectorType.getElementType().isInteger(32))
+      return nullptr;
+    SmallVector<int> values(vectorType.getNumElements(), value);
+    return builder.create<spirv::ConstantOp>(loc, type,
+                                             builder.getI32VectorAttr(values));
+  }
+  if (type.isInteger(32))
+    return builder.create<spirv::ConstantOp>(loc, type,
+                                             builder.getI32IntegerAttr(value));
+
+  return nullptr;
+}
 
 //===----------------------------------------------------------------------===//
 // Operation conversion
@@ -30,14 +54,110 @@ using namespace mlir;
 // normal RewritePattern.
 
 namespace {
+/// Converts math.copysign to SPIR-V ops.
+class CopySignPattern final : public OpConversionPattern<math::CopySignOp> {
+  using OpConversionPattern::OpConversionPattern;
+
+  LogicalResult
+  matchAndRewrite(math::CopySignOp copySignOp, OpAdaptor adaptor,
+                  ConversionPatternRewriter &rewriter) const override {
+    auto type = getTypeConverter()->convertType(copySignOp.getType());
+    if (!type)
+      return failure();
+
+    FloatType floatType;
+    if (auto scalarType = copySignOp.getType().dyn_cast<FloatType>()) {
+      floatType = scalarType;
+    } else if (auto vectorType = copySignOp.getType().dyn_cast<VectorType>()) {
+      floatType = vectorType.getElementType().cast<FloatType>();
+    } else {
+      return failure();
+    }
+
+    Location loc = copySignOp.getLoc();
+    int bitwidth = floatType.getWidth();
+    Type intType = rewriter.getIntegerType(bitwidth);
+    uint64_t intValue = uint64_t(1) << (bitwidth - 1);
+
+    Value signMask = rewriter.create<spirv::ConstantOp>(
+        loc, intType, rewriter.getIntegerAttr(intType, intValue));
+    Value valueMask = rewriter.create<spirv::ConstantOp>(
+        loc, intType, rewriter.getIntegerAttr(intType, intValue - 1u));
+
+    if (auto vectorType = copySignOp.getType().dyn_cast<VectorType>()) {
+      assert(vectorType.getRank() == 1);
+      int count = vectorType.getNumElements();
+      intType = VectorType::get(count, intType);
+
+      SmallVector<Value> signSplat(count, signMask);
+      signMask =
+          rewriter.create<spirv::CompositeConstructOp>(loc, intType, signSplat);
+
+      SmallVector<Value> valueSplat(count, valueMask);
+      valueMask = rewriter.create<spirv::CompositeConstructOp>(loc, intType,
+                                                               valueSplat);
+    }
+
+    Value lhsCast =
+        rewriter.create<spirv::BitcastOp>(loc, intType, adaptor.getLhs());
+    Value rhsCast =
+        rewriter.create<spirv::BitcastOp>(loc, intType, adaptor.getRhs());
+
+    Value value = rewriter.create<spirv::BitwiseAndOp>(
+        loc, intType, ValueRange{lhsCast, valueMask});
+    Value sign = rewriter.create<spirv::BitwiseAndOp>(
+        loc, intType, ValueRange{rhsCast, signMask});
+
+    Value result = rewriter.create<spirv::BitwiseOrOp>(loc, intType,
+                                                       ValueRange{value, sign});
+    rewriter.replaceOpWithNewOp<spirv::BitcastOp>(copySignOp, type, result);
+    return success();
+  }
+};
+
+/// Converts math.ctlz to SPIR-V ops.
+///
+/// SPIR-V does not have a direct operations for counting leading zeros. If
+/// Shader capability is supported, we can leverage GLSL FindUMsb to calculate
+/// it.
+class CountLeadingZerosPattern final
+    : public OpConversionPattern<math::CountLeadingZerosOp> {
+  using OpConversionPattern::OpConversionPattern;
+
+  LogicalResult
+  matchAndRewrite(math::CountLeadingZerosOp countOp, OpAdaptor adaptor,
+                  ConversionPatternRewriter &rewriter) const override {
+    auto type = getTypeConverter()->convertType(countOp.getType());
+    if (!type)
+      return failure();
+
+    // We can only support 32-bit integer types for now.
+    unsigned bitwidth = 0;
+    if (type.isa<IntegerType>())
+      bitwidth = type.getIntOrFloatBitWidth();
+    if (auto vectorType = type.dyn_cast<VectorType>())
+      bitwidth = vectorType.getElementTypeBitWidth();
+    if (bitwidth != 32)
+      return failure();
+
+    Location loc = countOp.getLoc();
+    Value val31 = getScalarOrVectorI32Constant(type, 31, rewriter, loc);
+    Value msb =
+        rewriter.create<spirv::GLSLFindUMsbOp>(loc, adaptor.getOperand());
+    // We need to subtract from 31 given that the index is from the least
+    // significant bit.
+    rewriter.replaceOpWithNewOp<spirv::ISubOp>(countOp, val31, msb);
+    return success();
+  }
+};
+
 /// Converts math.expm1 to SPIR-V ops.
 ///
 /// SPIR-V does not have a direct operations for exp(x)-1. Explicitly lower to
 /// these operations.
 template <typename ExpOp>
-class ExpM1OpPattern final : public OpConversionPattern<math::ExpM1Op> {
-public:
-  using OpConversionPattern<math::ExpM1Op>::OpConversionPattern;
+struct ExpM1OpPattern final : public OpConversionPattern<math::ExpM1Op> {
+  using OpConversionPattern::OpConversionPattern;
 
   LogicalResult
   matchAndRewrite(math::ExpM1Op operation, OpAdaptor adaptor,
@@ -57,9 +177,8 @@ public:
 /// SPIR-V does not have a direct operations for log(1+x). Explicitly lower to
 /// these operations.
 template <typename LogOp>
-class Log1pOpPattern final : public OpConversionPattern<math::Log1pOp> {
-public:
-  using OpConversionPattern<math::Log1pOp>::OpConversionPattern;
+struct Log1pOpPattern final : public OpConversionPattern<math::Log1pOp> {
+  using OpConversionPattern::OpConversionPattern;
 
   LogicalResult
   matchAndRewrite(math::Log1pOp operation, OpAdaptor adaptor,
@@ -83,10 +202,13 @@ public:
 namespace mlir {
 void populateMathToSPIRVPatterns(SPIRVTypeConverter &typeConverter,
                                  RewritePatternSet &patterns) {
+  // Core patterns
+  patterns.add<CopySignPattern>(typeConverter, patterns.getContext());
 
   // GLSL patterns
   patterns
-      .add<Log1pOpPattern<spirv::GLSLLogOp>, ExpM1OpPattern<spirv::GLSLExpOp>,
+      .add<CountLeadingZerosPattern, Log1pOpPattern<spirv::GLSLLogOp>,
+           ExpM1OpPattern<spirv::GLSLExpOp>,
            spirv::ElementwiseOpPattern<math::AbsOp, spirv::GLSLFAbsOp>,
            spirv::ElementwiseOpPattern<math::CeilOp, spirv::GLSLCeilOp>,
            spirv::ElementwiseOpPattern<math::CosOp, spirv::GLSLCosOp>,

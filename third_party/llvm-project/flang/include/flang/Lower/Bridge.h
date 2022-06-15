@@ -5,13 +5,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
-///
-/// \file
-/// Implements lowering. Convert Fortran source to
-/// [MLIR](https://github.com/tensorflow/mlir).
-///
-/// [Coding style](https://llvm.org/docs/CodingStandards.html)
-///
+//
+// Coding style: https://mlir.llvm.org/getting_started/DeveloperGuide/
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef FORTRAN_LOWER_BRIDGE_H
@@ -64,10 +60,10 @@ public:
   //===--------------------------------------------------------------------===//
 
   mlir::MLIRContext &getMLIRContext() { return context; }
-  mlir::ModuleOp &getModule() {
-    assert(module && "This bridge is missing an MLIR module");
-    return *module.get();
-  }
+
+  /// Get the ModuleOp. It can never be null, which is asserted in the ctor.
+  mlir::ModuleOp &getModule() { return *module.get(); }
+
   const Fortran::common::IntrinsicTypeDefaultKinds &getDefaultKinds() const {
     return defaultKinds;
   }
@@ -84,7 +80,7 @@ public:
   /// Create a folding context. Careful: this is very expensive.
   Fortran::evaluate::FoldingContext createFoldingContext() const;
 
-  bool validModule() { return (module != nullptr); }
+  bool validModule() { return getModule(); }
 
   //===--------------------------------------------------------------------===//
   // Perform the creation of an mlir::ModuleOp

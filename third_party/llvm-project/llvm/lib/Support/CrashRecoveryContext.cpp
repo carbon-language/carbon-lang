@@ -9,16 +9,13 @@
 #include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Config/llvm-config.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/ExitCodes.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/ThreadLocal.h"
 #include "llvm/Support/thread.h"
 #include <mutex>
 #include <setjmp.h>
-
-#if !defined(_MSC_VER) && !defined(_WIN32)
-#include "llvm/Support/ExitCodes.h"
-#endif
 
 using namespace llvm;
 
@@ -445,7 +442,7 @@ bool CrashRecoveryContext::RunSafely(function_ref<void()> Fn) {
   llvm_unreachable("Most likely setjmp wasn't called!");
 }
 
-bool CrashRecoveryContext::throwIfCrash(int RetCode) {
+bool CrashRecoveryContext::isCrash(int RetCode) {
 #if defined(_WIN32)
   // On Windows, the high bits are reserved for kernel return codes. Values
   // starting with 0x80000000 are reserved for "warnings"; values of 0xC0000000
@@ -454,12 +451,21 @@ bool CrashRecoveryContext::throwIfCrash(int RetCode) {
   unsigned Code = ((unsigned)RetCode & 0xF0000000) >> 28;
   if (Code != 0xC && Code != 8)
     return false;
-  ::RaiseException(RetCode, 0, 0, NULL);
 #else
   // On Unix, signals are represented by return codes of 128 or higher.
   // Exit code 128 is a reserved value and should not be raised as a signal.
   if (RetCode <= 128)
     return false;
+#endif
+  return true;
+}
+
+bool CrashRecoveryContext::throwIfCrash(int RetCode) {
+  if (!isCrash(RetCode))
+    return false;
+#if defined(_WIN32)
+  ::RaiseException(RetCode, 0, 0, NULL);
+#else
   llvm::sys::unregisterHandlers();
   raise(RetCode - 128);
 #endif

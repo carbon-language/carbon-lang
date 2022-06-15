@@ -103,7 +103,7 @@ define void @buildvec_vid_step2_add1_v4i8(<4 x i8>* %z0, <4 x i8>* %z1, <4 x i8>
 ; FIXME: This could generate vrsub.vi but the (ISD::MUL X, -1) we generate
 ; while lowering ISD::BUILD_VECTOR is custom-lowered to RISCVISD::MUL_VL before
 ; being combined.
-define void @buildvec_vid_stepn1_add0_v4i8(<4 x i8>* %z0, <4 x i8>* %z1, <4 x
+define void @buildvec_vid_stepn1_add0_v4i8(<4 x i8>* %z0, <4 x i8>* %z1, <4 x i8>* %z2, <4 x i8>* %z3) {
 ; CHECK-LABEL: buildvec_vid_stepn1_add0_v4i8:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vsetivli zero, 4, e8, mf4, ta, mu
@@ -114,7 +114,6 @@ define void @buildvec_vid_stepn1_add0_v4i8(<4 x i8>* %z0, <4 x i8>* %z1, <4 x
 ; CHECK-NEXT:    vse8.v v8, (a2)
 ; CHECK-NEXT:    vse8.v v8, (a3)
 ; CHECK-NEXT:    ret
-i8>* %z2, <4 x i8>* %z3) {
   store <4 x i8> <i8 0, i8 -1, i8 -2, i8 -3>, <4 x i8>* %z0
   store <4 x i8> <i8 undef, i8 -1, i8 -2, i8 -3>, <4 x i8>* %z1
   store <4 x i8> <i8 undef, i8 undef, i8 -2, i8 -3>, <4 x i8>* %z2
@@ -460,9 +459,9 @@ define void @buildvec_seq_v16i8_v2i64(<16 x i8>* %x) {
 ; RV64-LABEL: buildvec_seq_v16i8_v2i64:
 ; RV64:       # %bb.0:
 ; RV64-NEXT:    lui a1, %hi(.LCPI24_0)
-; RV64-NEXT:    ld a1, %lo(.LCPI24_0)(a1)
+; RV64-NEXT:    addi a1, a1, %lo(.LCPI24_0)
 ; RV64-NEXT:    vsetivli zero, 2, e64, m1, ta, mu
-; RV64-NEXT:    vmv.v.x v8, a1
+; RV64-NEXT:    vlse64.v v8, (a1), zero
 ; RV64-NEXT:    vsetivli zero, 16, e8, m1, ta, mu
 ; RV64-NEXT:    vse8.v v8, (a0)
 ; RV64-NEXT:    ret
@@ -538,29 +537,53 @@ define void @buildvec_seq_v4i16_v2i32(<4 x i16>* %x) {
 }
 
 define void @buildvec_vid_step1o2_v4i32(<4 x i32>* %z0, <4 x i32>* %z1, <4 x i32>* %z2, <4 x i32>* %z3, <4 x i32>* %z4, <4 x i32>* %z5, <4 x i32>* %z6) {
-; CHECK-LABEL: buildvec_vid_step1o2_v4i32:
-; CHECK:       # %bb.0:
-; CHECK-NEXT:    vsetivli zero, 4, e32, m1, ta, mu
-; CHECK-NEXT:    vid.v v8
-; CHECK-NEXT:    vsrl.vi v8, v8, 1
-; CHECK-NEXT:    vse32.v v8, (a0)
-; CHECK-NEXT:    vse32.v v8, (a1)
-; CHECK-NEXT:    vse32.v v8, (a2)
-; CHECK-NEXT:    vse32.v v8, (a3)
-; CHECK-NEXT:    vse32.v v8, (a4)
-; CHECK-NEXT:    vmv.s.x v8, zero
-; CHECK-NEXT:    vmv.v.i v9, 1
-; CHECK-NEXT:    vsetivli zero, 2, e32, m1, tu, mu
-; CHECK-NEXT:    vslideup.vi v9, v8, 1
-; CHECK-NEXT:    vsetivli zero, 4, e32, m1, ta, mu
-; CHECK-NEXT:    vse32.v v9, (a5)
-; CHECK-NEXT:    li a0, 1
-; CHECK-NEXT:    vmv.s.x v8, a0
-; CHECK-NEXT:    vmv.v.i v9, 0
-; CHECK-NEXT:    vsetvli zero, zero, e32, m1, tu, mu
-; CHECK-NEXT:    vslideup.vi v9, v8, 3
-; CHECK-NEXT:    vse32.v v9, (a6)
-; CHECK-NEXT:    ret
+; RV32-LABEL: buildvec_vid_step1o2_v4i32:
+; RV32:       # %bb.0:
+; RV32-NEXT:    vsetivli zero, 4, e32, m1, ta, mu
+; RV32-NEXT:    vid.v v8
+; RV32-NEXT:    vsrl.vi v8, v8, 1
+; RV32-NEXT:    vse32.v v8, (a0)
+; RV32-NEXT:    vse32.v v8, (a1)
+; RV32-NEXT:    vmv.v.i v9, 1
+; RV32-NEXT:    vse32.v v8, (a2)
+; RV32-NEXT:    vse32.v v8, (a3)
+; RV32-NEXT:    vse32.v v8, (a4)
+; RV32-NEXT:    vmv.s.x v8, zero
+; RV32-NEXT:    vsetivli zero, 2, e32, m1, tu, mu
+; RV32-NEXT:    vslideup.vi v9, v8, 1
+; RV32-NEXT:    vsetivli zero, 4, e32, m1, ta, mu
+; RV32-NEXT:    vse32.v v9, (a5)
+; RV32-NEXT:    li a0, 1
+; RV32-NEXT:    vmv.s.x v8, a0
+; RV32-NEXT:    vmv.v.i v9, 0
+; RV32-NEXT:    vsetvli zero, zero, e32, m1, tu, mu
+; RV32-NEXT:    vslideup.vi v9, v8, 3
+; RV32-NEXT:    vse32.v v9, (a6)
+; RV32-NEXT:    ret
+;
+; RV64-LABEL: buildvec_vid_step1o2_v4i32:
+; RV64:       # %bb.0:
+; RV64-NEXT:    vsetivli zero, 4, e32, m1, ta, mu
+; RV64-NEXT:    vid.v v8
+; RV64-NEXT:    vsrl.vi v8, v8, 1
+; RV64-NEXT:    vse32.v v8, (a0)
+; RV64-NEXT:    vmv.v.i v9, 1
+; RV64-NEXT:    vse32.v v8, (a1)
+; RV64-NEXT:    vse32.v v8, (a2)
+; RV64-NEXT:    vse32.v v8, (a3)
+; RV64-NEXT:    vse32.v v8, (a4)
+; RV64-NEXT:    vmv.s.x v8, zero
+; RV64-NEXT:    vsetivli zero, 2, e32, m1, tu, mu
+; RV64-NEXT:    vslideup.vi v9, v8, 1
+; RV64-NEXT:    vsetivli zero, 4, e32, m1, ta, mu
+; RV64-NEXT:    vse32.v v9, (a5)
+; RV64-NEXT:    li a0, 1
+; RV64-NEXT:    vmv.s.x v8, a0
+; RV64-NEXT:    vmv.v.i v9, 0
+; RV64-NEXT:    vsetvli zero, zero, e32, m1, tu, mu
+; RV64-NEXT:    vslideup.vi v9, v8, 3
+; RV64-NEXT:    vse32.v v9, (a6)
+; RV64-NEXT:    ret
   store <4 x i32> <i32 0, i32 0, i32 1, i32 1>, <4 x i32>* %z0
   store <4 x i32> <i32 0, i32 0, i32 1, i32 undef>, <4 x i32>* %z1
   store <4 x i32> <i32 0, i32 undef, i32 1, i32 1>, <4 x i32>* %z2
@@ -581,20 +604,20 @@ define void @buildvec_vid_step1o2_add3_v4i16(<4 x i16>* %z0, <4 x i16>* %z1, <4 
 ; CHECK-NEXT:    vsrl.vi v8, v8, 1
 ; CHECK-NEXT:    vadd.vi v8, v8, 3
 ; CHECK-NEXT:    vse16.v v8, (a0)
+; CHECK-NEXT:    vmv.v.i v9, 3
 ; CHECK-NEXT:    vse16.v v8, (a1)
 ; CHECK-NEXT:    vse16.v v8, (a2)
 ; CHECK-NEXT:    vse16.v v8, (a3)
 ; CHECK-NEXT:    vse16.v v8, (a4)
 ; CHECK-NEXT:    li a0, 3
 ; CHECK-NEXT:    vmv.s.x v8, a0
-; CHECK-NEXT:    vmv.v.i v9, 4
+; CHECK-NEXT:    vmv.v.i v10, 4
 ; CHECK-NEXT:    vsetivli zero, 2, e16, mf2, tu, mu
-; CHECK-NEXT:    vslideup.vi v9, v8, 1
+; CHECK-NEXT:    vslideup.vi v10, v8, 1
 ; CHECK-NEXT:    vsetivli zero, 4, e16, mf2, ta, mu
-; CHECK-NEXT:    vse16.v v9, (a5)
+; CHECK-NEXT:    vse16.v v10, (a5)
 ; CHECK-NEXT:    li a0, 4
 ; CHECK-NEXT:    vmv.s.x v8, a0
-; CHECK-NEXT:    vmv.v.i v9, 3
 ; CHECK-NEXT:    vsetvli zero, zero, e16, mf2, tu, mu
 ; CHECK-NEXT:    vslideup.vi v9, v8, 3
 ; CHECK-NEXT:    vse16.v v9, (a6)
@@ -699,4 +722,41 @@ define <8 x i16> @splat_idx_v8i16(<8 x i16> %v, i64 %idx) {
   %ins = insertelement <8 x i16> poison, i16 %x, i32 0
   %splat = shufflevector <8 x i16> %ins, <8 x i16> poison, <8 x i32> zeroinitializer
   ret <8 x i16> %splat
+}
+
+define <4 x i8> @buildvec_not_vid_v4i8_1() {
+; CHECK-LABEL: buildvec_not_vid_v4i8_1:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    lui a0, %hi(.LCPI37_0)
+; CHECK-NEXT:    addi a0, a0, %lo(.LCPI37_0)
+; CHECK-NEXT:    vsetivli zero, 4, e8, mf4, ta, mu
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    ret
+  ret <4 x i8> <i8 0, i8 0, i8 2, i8 3>
+}
+
+define <4 x i8> @buildvec_not_vid_v4i8_2() {
+; CHECK-LABEL: buildvec_not_vid_v4i8_2:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    lui a0, %hi(.LCPI38_0)
+; CHECK-NEXT:    addi a0, a0, %lo(.LCPI38_0)
+; CHECK-NEXT:    vsetivli zero, 4, e8, mf4, ta, mu
+; CHECK-NEXT:    vle8.v v8, (a0)
+; CHECK-NEXT:    ret
+  ret <4 x i8> <i8 3, i8 3, i8 1, i8 0>
+}
+
+; We match this as a VID sequence (-3 / 8) + 5 but choose not to introduce
+; division to compute it.
+define <16 x i8> @buildvec_not_vid_v16i8() {
+; CHECK-LABEL: buildvec_not_vid_v16i8:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    li a0, 3
+; CHECK-NEXT:    vsetivli zero, 16, e8, m1, ta, mu
+; CHECK-NEXT:    vmv.s.x v9, a0
+; CHECK-NEXT:    vmv.v.i v8, 0
+; CHECK-NEXT:    vsetivli zero, 7, e8, m1, tu, mu
+; CHECK-NEXT:    vslideup.vi v8, v9, 6
+; CHECK-NEXT:    ret
+  ret <16 x i8> <i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 3, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 0, i8 0>
 }

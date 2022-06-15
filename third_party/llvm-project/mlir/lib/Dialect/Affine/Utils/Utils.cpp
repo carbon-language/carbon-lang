@@ -17,6 +17,7 @@
 #include "mlir/Dialect/Affine/IR/AffineOps.h"
 #include "mlir/Dialect/Affine/IR/AffineValueMap.h"
 #include "mlir/Dialect/Affine/LoopUtils.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/IR/AffineExprVisitor.h"
 #include "mlir/IR/BlockAndValueMapping.h"
@@ -27,6 +28,7 @@
 #define DEBUG_TYPE "affine-utils"
 
 using namespace mlir;
+using namespace presburger;
 
 namespace {
 /// Visit affine expressions recursively and build the sequence of operations
@@ -258,7 +260,7 @@ static Operation *getOutermostInvariantForOp(AffineIfOp ifOp) {
   // Walk up the parents past all for op that this conditional is invariant on.
   auto ifOperands = ifOp.getOperands();
   auto *res = ifOp.getOperation();
-  while (!isa<FuncOp>(res->getParentOp())) {
+  while (!isa<func::FuncOp>(res->getParentOp())) {
     auto *parentOp = res->getParentOp();
     if (auto forOp = dyn_cast<AffineForOp>(parentOp)) {
       if (llvm::is_contained(ifOperands, forOp.getInductionVar()))
@@ -618,6 +620,11 @@ LogicalResult mlir::normalizeAffineFor(AffineForOp op) {
       AffineMap::get(origLbMap.getNumDims() + origUbMap.getNumDims(),
                      origLbMap.getNumSymbols() + origUbMap.getNumSymbols(),
                      newUbExprs, opBuilder.getContext());
+  canonicalizeMapAndOperands(&newUbMap, &ubOperands);
+
+  SmallVector<Value, 4> lbOperands(lb.getOperands().begin(),
+                                   lb.getOperands().begin() +
+                                       lb.getMap().getNumDims());
 
   // Normalize the loop.
   op.setUpperBound(ubOperands, newUbMap);
@@ -627,9 +634,6 @@ LogicalResult mlir::normalizeAffineFor(AffineForOp op) {
   // Calculate the Value of new loopIV. Create affine.apply for the value of
   // the loopIV in normalized loop.
   opBuilder.setInsertionPointToStart(op.getBody());
-  SmallVector<Value, 4> lbOperands(lb.getOperands().begin(),
-                                   lb.getOperands().begin() +
-                                       lb.getMap().getNumDims());
   // Add an extra dim operand for loopIV.
   lbOperands.push_back(op.getInductionVar());
   // Add symbol operands from lower bound.
@@ -640,6 +644,7 @@ LogicalResult mlir::normalizeAffineFor(AffineForOp op) {
   AffineExpr newIVExpr = origIVExpr * origLoopStep + origLbMap.getResult(0);
   AffineMap ivMap = AffineMap::get(origLbMap.getNumDims() + 1,
                                    origLbMap.getNumSymbols(), newIVExpr);
+  canonicalizeMapAndOperands(&ivMap, &lbOperands);
   Operation *newIV = opBuilder.create<AffineApplyOp>(loc, ivMap, lbOperands);
   op.getInductionVar().replaceAllUsesExcept(newIV->getResult(0), newIV);
   return success();
@@ -1016,7 +1021,7 @@ static void loadCSE(AffineReadOpInterface loadA,
 // currently only eliminates the stores only if no other loads/uses (other
 // than dealloc) remain.
 //
-void mlir::affineScalarReplace(FuncOp f, DominanceInfo &domInfo,
+void mlir::affineScalarReplace(func::FuncOp f, DominanceInfo &domInfo,
                                PostDominanceInfo &postDomInfo) {
   // Load op's whose results were replaced by those forwarded from stores.
   SmallVector<Operation *, 8> opsToErase;
@@ -1239,7 +1244,7 @@ LogicalResult mlir::replaceAllMemRefUsesWith(Value oldMemRef, Value newMemRef,
   }
 
   // Create the new operation.
-  auto *repOp = builder.createOperation(state);
+  auto *repOp = builder.create(state);
   op->replaceAllUsesWith(repOp);
   op->erase();
 
@@ -1273,12 +1278,12 @@ LogicalResult mlir::replaceAllMemRefUsesWith(
   std::unique_ptr<DominanceInfo> domInfo;
   std::unique_ptr<PostDominanceInfo> postDomInfo;
   if (domOpFilter)
-    domInfo =
-        std::make_unique<DominanceInfo>(domOpFilter->getParentOfType<FuncOp>());
+    domInfo = std::make_unique<DominanceInfo>(
+        domOpFilter->getParentOfType<func::FuncOp>());
 
   if (postDomOpFilter)
     postDomInfo = std::make_unique<PostDominanceInfo>(
-        postDomOpFilter->getParentOfType<FuncOp>());
+        postDomOpFilter->getParentOfType<func::FuncOp>());
 
   // Walk all uses of old memref; collect ops to perform replacement. We use a
   // DenseSet since an operation could potentially have multiple uses of a
@@ -1754,14 +1759,14 @@ MemRefType mlir::normalizeMemRefType(MemRefType memrefType, OpBuilder b,
   // We have a single map that is not an identity map. Create a new memref
   // with the right shape and an identity layout map.
   ArrayRef<int64_t> shape = memrefType.getShape();
-  // FlatAffineConstraint may later on use symbolicOperands.
-  FlatAffineConstraints fac(rank, numSymbolicOperands);
+  // FlatAffineValueConstraint may later on use symbolicOperands.
+  FlatAffineValueConstraints fac(rank, numSymbolicOperands);
   SmallVector<unsigned, 4> memrefTypeDynDims;
   for (unsigned d = 0; d < rank; ++d) {
     // Use constraint system only in static dimensions.
     if (shape[d] > 0) {
-      fac.addBound(FlatAffineConstraints::LB, d, 0);
-      fac.addBound(FlatAffineConstraints::UB, d, shape[d] - 1);
+      fac.addBound(IntegerPolyhedron::LB, d, 0);
+      fac.addBound(IntegerPolyhedron::UB, d, shape[d] - 1);
     } else {
       memrefTypeDynDims.emplace_back(d);
     }
@@ -1783,7 +1788,7 @@ MemRefType mlir::normalizeMemRefType(MemRefType memrefType, OpBuilder b,
       newShape[d] = -1;
     } else {
       // The lower bound for the shape is always zero.
-      auto ubConst = fac.getConstantBound(FlatAffineConstraints::UB, d);
+      auto ubConst = fac.getConstantBound(IntegerPolyhedron::UB, d);
       // For a static memref and an affine map with no symbols, this is
       // always bounded.
       assert(ubConst.hasValue() && "should always have an upper bound");

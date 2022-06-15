@@ -62,15 +62,11 @@ ABI computeTargetABI(const Triple &TT, FeatureBitset FeatureBits,
   if (TargetABI != ABI_Unknown)
     return TargetABI;
 
-  // For now, default to the ilp32/ilp32e/lp64 ABI if no explicit ABI is given
-  // or an invalid/unrecognised string is given. In the future, it might be
-  // worth changing this to default to ilp32f/lp64f and ilp32d/lp64d when
-  // hardware support for floating point is present.
-  if (IsRV32E)
-    return ABI_ILP32E;
-  if (IsRV64)
-    return ABI_LP64;
-  return ABI_ILP32;
+  // If no explicit ABI is given, try to compute the default ABI.
+  auto ISAInfo = RISCVFeatures::parseFeatureBits(IsRV64, FeatureBits);
+  if (!ISAInfo)
+    report_fatal_error(ISAInfo.takeError());
+  return getTargetABI((*ISAInfo)->computeDefaultABI());
 }
 
 ABI getTargetABI(StringRef ABIName) {
@@ -135,7 +131,7 @@ unsigned RISCVVType::encodeVTYPE(RISCVII::VLMUL VLMUL, unsigned SEW,
                                  bool TailAgnostic, bool MaskAgnostic) {
   assert(isValidSEW(SEW) && "Invalid SEW");
   unsigned VLMULBits = static_cast<unsigned>(VLMUL);
-  unsigned VSEWBits = Log2_32(SEW) - 3;
+  unsigned VSEWBits = encodeSEW(SEW);
   unsigned VTypeI = (VSEWBits << 3) | (VLMULBits & 0x7);
   if (TailAgnostic)
     VTypeI |= 0x40;

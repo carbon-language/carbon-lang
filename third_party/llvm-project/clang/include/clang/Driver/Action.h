@@ -59,6 +59,7 @@ public:
     PreprocessJobClass,
     PrecompileJobClass,
     HeaderModulePrecompileJobClass,
+    ExtractAPIJobClass,
     AnalyzeJobClass,
     MigrateJobClass,
     CompileJobClass,
@@ -73,6 +74,7 @@ public:
     OffloadBundlingJobClass,
     OffloadUnbundlingJobClass,
     OffloadWrapperJobClass,
+    OffloadPackagerJobClass,
     LinkerWrapperJobClass,
     StaticLibJobClass,
 
@@ -126,6 +128,9 @@ protected:
 
   /// The Offloading architecture associated with this action.
   const char *OffloadingArch = nullptr;
+
+  /// The Offloading toolchain associated with this device action.
+  const ToolChain *OffloadingToolChain = nullptr;
 
   Action(ActionClass Kind, types::ID Type) : Action(Kind, ActionList(), Type) {}
   Action(ActionClass Kind, Action *Input, types::ID Type)
@@ -183,11 +188,17 @@ public:
 
   /// Set the device offload info of this action and propagate it to its
   /// dependences.
-  void propagateDeviceOffloadInfo(OffloadKind OKind, const char *OArch);
+  void propagateDeviceOffloadInfo(OffloadKind OKind, const char *OArch,
+                                  const ToolChain *OToolChain);
 
   /// Append the host offload info of this action and propagate it to its
   /// dependences.
   void propagateHostOffloadInfo(unsigned OKinds, const char *OArch);
+
+  void setHostOffloadInfo(unsigned OKinds, const char *OArch) {
+    ActiveOffloadKindMask |= OKinds;
+    OffloadingArch = OArch;
+  }
 
   /// Set the offload info of this action to be the same as the provided action,
   /// and propagate it to its dependences.
@@ -199,10 +210,13 @@ public:
 
   OffloadKind getOffloadingDeviceKind() const { return OffloadingDeviceKind; }
   const char *getOffloadingArch() const { return OffloadingArch; }
+  const ToolChain *getOffloadingToolChain() const {
+    return OffloadingToolChain;
+  }
 
   /// Check if this action have any offload kinds. Note that host offload kinds
   /// are only set if the action is a dependence to a host offload action.
-  bool isHostOffloading(OffloadKind OKind) const {
+  bool isHostOffloading(unsigned int OKind) const {
     return ActiveOffloadKindMask & OKind;
   }
   bool isDeviceOffloading(OffloadKind OKind) const {
@@ -438,6 +452,19 @@ public:
   const char *getModuleName() const { return ModuleName; }
 };
 
+class ExtractAPIJobAction : public JobAction {
+  void anchor() override;
+
+public:
+  ExtractAPIJobAction(Action *Input, types::ID OutputType);
+
+  static bool classof(const Action *A) {
+    return A->getKind() == ExtractAPIJobClass;
+  }
+
+  void addHeaderInput(Action *Input) { getInputs().push_back(Input); }
+};
+
 class AnalyzeJobAction : public JobAction {
   void anchor() override;
 
@@ -640,6 +667,17 @@ public:
 
   static bool classof(const Action *A) {
     return A->getKind() == OffloadWrapperJobClass;
+  }
+};
+
+class OffloadPackagerJobAction : public JobAction {
+  void anchor() override;
+
+public:
+  OffloadPackagerJobAction(ActionList &Inputs, types::ID Type);
+
+  static bool classof(const Action *A) {
+    return A->getKind() == OffloadPackagerJobClass;
   }
 };
 

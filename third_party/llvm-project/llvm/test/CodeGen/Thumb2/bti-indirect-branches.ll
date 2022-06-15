@@ -9,7 +9,6 @@ define internal i32 @table_switch(i32 %x) {
 ; CHECK-NEXT:    cmp r1, #3
 ; CHECK-NEXT:    bhi .LBB0_4
 ; CHECK-NEXT:  @ %bb.1: @ %entry
-; CHECK-NEXT:    movs r0, #1
 ; CHECK-NEXT:  .LCPI0_0:
 ; CHECK-NEXT:    tbb [pc, r1]
 ; CHECK-NEXT:  @ %bb.2:
@@ -132,4 +131,4 @@ return:
 }
 
 !llvm.module.flags = !{!1}
-!1 = !{i32 1, !"branch-target-enforcement", i32 1}
+!1 = !{i32 8, !"branch-target-enforcement", i32 1}

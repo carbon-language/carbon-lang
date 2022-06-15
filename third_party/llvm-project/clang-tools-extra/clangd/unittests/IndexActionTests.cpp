@@ -9,6 +9,7 @@
 #include "Headers.h"
 #include "TestFS.h"
 #include "index/IndexAction.h"
+#include "index/Serialization.h"
 #include "clang/Tooling/Tooling.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -270,7 +271,7 @@ TEST_F(IndexActionTest, SkipFiles) {
     auto unskippable2() { return S(); }
   )cpp");
   Opts.FileFilter = [](const SourceManager &SM, FileID F) {
-    return !SM.getFileEntryForID(F)->getName().endswith("bad.h");
+    return !SM.getFileEntryRefForID(F)->getName().endswith("bad.h");
   };
   IndexFileIn IndexFile = runIndexingAction(MainFilePath, {"-std=c++14"});
   EXPECT_THAT(*IndexFile.Symbols,

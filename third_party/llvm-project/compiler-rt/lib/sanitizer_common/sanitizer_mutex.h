@@ -101,7 +101,7 @@ enum {
 // THREADLOCAL variables they are not usable early on during process init when
 // `__sanitizer::Mutex` is used.
 #define SANITIZER_CHECK_DEADLOCKS \
-  (SANITIZER_DEBUG && !SANITIZER_GO && SANITIZER_SUPPORTS_THREADLOCAL && !SANITIZER_MAC)
+  (SANITIZER_DEBUG && !SANITIZER_GO && SANITIZER_SUPPORTS_THREADLOCAL && !SANITIZER_APPLE)
 
 #if SANITIZER_CHECK_DEADLOCKS
 struct MutexMeta {
@@ -205,6 +205,20 @@ class SANITIZER_MUTEX Mutex : CheckedMutex {
       reset_mask = ~kWriterSpinWait;
       state = atomic_load(&state_, memory_order_relaxed);
       DCHECK_NE(state & kWriterSpinWait, 0);
+    }
+  }
+
+  bool TryLock() SANITIZER_TRY_ACQUIRE(true) {
+    u64 state = atomic_load_relaxed(&state_);
+    for (;;) {
+      if (UNLIKELY(state & (kWriterLock | kReaderLockMask)))
+        return false;
+      // The mutex is not read-/write-locked, try to lock.
+      if (LIKELY(atomic_compare_exchange_weak(
+              &state_, &state, state | kWriterLock, memory_order_acquire))) {
+        CheckedMutex::Lock();
+        return true;
+      }
     }
   }
 

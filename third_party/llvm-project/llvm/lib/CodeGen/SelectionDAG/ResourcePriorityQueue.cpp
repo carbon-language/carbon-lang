@@ -20,7 +20,6 @@
 
 #include "llvm/CodeGen/ResourcePriorityQueue.h"
 #include "llvm/CodeGen/DFAPacketizer.h"
-#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
@@ -28,21 +27,18 @@
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetMachine.h"
 
 using namespace llvm;
 
 #define DEBUG_TYPE "scheduler"
 
-static cl::opt<bool> DisableDFASched("disable-dfa-sched", cl::Hidden,
-  cl::ZeroOrMore, cl::init(false),
-  cl::desc("Disable use of DFA during scheduling"));
+static cl::opt<bool>
+    DisableDFASched("disable-dfa-sched", cl::Hidden,
+                    cl::desc("Disable use of DFA during scheduling"));
 
 static cl::opt<int> RegPressureThreshold(
-  "dfa-sched-reg-pressure-threshold", cl::Hidden, cl::ZeroOrMore, cl::init(5),
-  cl::desc("Track reg pressure and switch priority to in-depth"));
+    "dfa-sched-reg-pressure-threshold", cl::Hidden, cl::init(5),
+    cl::desc("Track reg pressure and switch priority to in-depth"));
 
 ResourcePriorityQueue::ResourcePriorityQueue(SelectionDAGISel *IS)
     : Picker(this), InstrItins(IS->MF->getSubtarget().getInstrItineraryData()) {

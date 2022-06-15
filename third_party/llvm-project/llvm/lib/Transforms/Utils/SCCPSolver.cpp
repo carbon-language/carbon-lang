@@ -15,14 +15,12 @@
 #include "llvm/Transforms/Utils/SCCPSolver.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/InstructionSimplify.h"
-#include "llvm/Analysis/ValueTracking.h"
-#include "llvm/InitializePasses.h"
-#include "llvm/Pass.h"
+#include "llvm/Analysis/ValueLattice.h"
+#include "llvm/IR/InstVisitor.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Transforms/Utils/Local.h"
 #include <cassert>
 #include <utility>
 #include <vector>
@@ -452,7 +450,8 @@ public:
     return TrackingIncomingArguments;
   }
 
-  void markArgInFuncSpecialization(Function *F, Argument *A, Constant *C);
+  void markArgInFuncSpecialization(Function *F,
+                                   const SmallVectorImpl<ArgInfo> &Args);
 
   void markFunctionUnreachable(Function *F) {
     for (auto &BB : *F)
@@ -526,29 +525,38 @@ Constant *SCCPInstVisitor::getConstant(const ValueLatticeElement &LV) const {
   return nullptr;
 }
 
-void SCCPInstVisitor::markArgInFuncSpecialization(Function *F, Argument *A,
-                                                  Constant *C) {
-  assert(F->arg_size() == A->getParent()->arg_size() &&
+void SCCPInstVisitor::markArgInFuncSpecialization(
+    Function *F, const SmallVectorImpl<ArgInfo> &Args) {
+  assert(!Args.empty() && "Specialization without arguments");
+  assert(F->arg_size() == Args[0].Formal->getParent()->arg_size() &&
          "Functions should have the same number of arguments");
 
-  // Mark the argument constant in the new function.
-  markConstant(A, C);
+  auto Iter = Args.begin();
+  Argument *NewArg = F->arg_begin();
+  Argument *OldArg = Args[0].Formal->getParent()->arg_begin();
+  for (auto End = F->arg_end(); NewArg != End; ++NewArg, ++OldArg) {
 
-  // For the remaining arguments in the new function, copy the lattice state
-  // over from the old function.
-  for (auto I = F->arg_begin(), J = A->getParent()->arg_begin(),
-            E = F->arg_end();
-       I != E; ++I, ++J)
-    if (J != A && ValueState.count(I)) {
+    LLVM_DEBUG(dbgs() << "SCCP: Marking argument "
+                      << NewArg->getNameOrAsOperand() << "\n");
+
+    if (Iter != Args.end() && OldArg == Iter->Formal) {
+      // Mark the argument constants in the new function.
+      markConstant(NewArg, Iter->Actual);
+      ++Iter;
+    } else if (ValueState.count(OldArg)) {
+      // For the remaining arguments in the new function, copy the lattice state
+      // over from the old function.
+      //
       // Note: This previously looked like this:
-      // ValueState[J] = ValueState[I];
+      // ValueState[NewArg] = ValueState[OldArg];
       // This is incorrect because the DenseMap class may resize the underlying
-      // memory when inserting `J`, which will invalidate the reference to `I`.
-      // Instead, we make sure `J` exists, then set it to `I` afterwards.
-      auto &NewValue = ValueState[J];
-      NewValue = ValueState[I];
-      pushToWorkList(NewValue, J);
+      // memory when inserting `NewArg`, which will invalidate the reference to
+      // `OldArg`. Instead, we make sure `NewArg` exists before setting it.
+      auto &NewValue = ValueState[NewArg];
+      NewValue = ValueState[OldArg];
+      pushToWorkList(NewValue, NewArg);
     }
+  }
 }
 
 void SCCPInstVisitor::visitInstruction(Instruction &I) {
@@ -988,7 +996,7 @@ void SCCPInstVisitor::visitBinaryOperator(Instruction &I) {
   if ((V1State.isConstant() || V2State.isConstant())) {
     Value *V1 = isConstant(V1State) ? getConstant(V1State) : I.getOperand(0);
     Value *V2 = isConstant(V2State) ? getConstant(V2State) : I.getOperand(1);
-    Value *R = SimplifyBinOp(I.getOpcode(), V1, V2, SimplifyQuery(DL));
+    Value *R = simplifyBinOp(I.getOpcode(), V1, V2, SimplifyQuery(DL));
     auto *C = dyn_cast_or_null<Constant>(R);
     if (C) {
       // X op Y -> undef.
@@ -1287,17 +1295,6 @@ void SCCPInstVisitor::handleCallResult(CallBase &CB) {
         return;
       }
 
-      // TODO: Actually filp MayIncludeUndef for the created range to false,
-      // once most places in the optimizer respect the branches on
-      // undef/poison are UB rule. The reason why the new range cannot be
-      // undef is as follows below:
-      // The new range is based on a branch condition. That guarantees that
-      // neither of the compare operands can be undef in the branch targets,
-      // unless we have conditions that are always true/false (e.g. icmp ule
-      // i32, %a, i32_max). For the latter overdefined/empty range will be
-      // inferred, but the branch will get folded accordingly anyways.
-      bool MayIncludeUndef = !isa<PredicateAssume>(PI);
-
       ValueLatticeElement CondVal = getValueState(OtherOp);
       ValueLatticeElement &IV = ValueState[&CB];
       if (CondVal.isConstantRange() || CopyOfVal.isConstantRange()) {
@@ -1322,9 +1319,15 @@ void SCCPInstVisitor::handleCallResult(CallBase &CB) {
         if (!CopyOfCR.contains(NewCR) && CopyOfCR.getSingleMissingElement())
           NewCR = CopyOfCR;
 
+        // The new range is based on a branch condition. That guarantees that
+        // neither of the compare operands can be undef in the branch targets,
+        // unless we have conditions that are always true/false (e.g. icmp ule
+        // i32, %a, i32_max). For the latter overdefined/empty range will be
+        // inferred, but the branch will get folded accordingly anyways.
         addAdditionalUser(OtherOp, &CB);
-        mergeInValue(IV, &CB,
-                     ValueLatticeElement::getRange(NewCR, MayIncludeUndef));
+        mergeInValue(
+            IV, &CB,
+            ValueLatticeElement::getRange(NewCR, /*MayIncludeUndef*/ false));
         return;
       } else if (Pred == CmpInst::ICMP_EQ && CondVal.isConstant()) {
         // For non-integer values or integer constant expressions, only
@@ -1332,8 +1335,7 @@ void SCCPInstVisitor::handleCallResult(CallBase &CB) {
         addAdditionalUser(OtherOp, &CB);
         mergeInValue(IV, &CB, CondVal);
         return;
-      } else if (Pred == CmpInst::ICMP_NE && CondVal.isConstant() &&
-                 !MayIncludeUndef) {
+      } else if (Pred == CmpInst::ICMP_NE && CondVal.isConstant()) {
         // Propagate inequalities.
         addAdditionalUser(OtherOp, &CB);
         mergeInValue(IV, &CB,
@@ -1713,9 +1715,9 @@ SmallPtrSetImpl<Function *> &SCCPSolver::getArgumentTrackedFunctions() {
   return Visitor->getArgumentTrackedFunctions();
 }
 
-void SCCPSolver::markArgInFuncSpecialization(Function *F, Argument *A,
-                                             Constant *C) {
-  Visitor->markArgInFuncSpecialization(F, A, C);
+void SCCPSolver::markArgInFuncSpecialization(
+    Function *F, const SmallVectorImpl<ArgInfo> &Args) {
+  Visitor->markArgInFuncSpecialization(F, Args);
 }
 
 void SCCPSolver::markFunctionUnreachable(Function *F) {

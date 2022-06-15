@@ -87,7 +87,12 @@ InputFile *createObjectFile(MemoryBufferRef mb, StringRef archiveName,
   if (magic == file_magic::bitcode)
     return make<BitcodeFile>(mb, archiveName, offsetInArchive);
 
-  fatal("unknown file type: " + mb.getBufferIdentifier());
+  std::string name = mb.getBufferIdentifier().str();
+  if (!archiveName.empty()) {
+    name = archiveName.str() + "(" + name + ")";
+  }
+
+  fatal("unknown file type: " + name);
 }
 
 // Relocations contain either symbol or type indices.  This function takes a
@@ -106,7 +111,7 @@ uint32_t ObjFile::calcNewIndex(const WasmRelocation &reloc) const {
 
 // Relocations can contain addend for combined sections. This function takes a
 // relocation and returns updated addend by offset in the output section.
-uint64_t ObjFile::calcNewAddend(const WasmRelocation &reloc) const {
+int64_t ObjFile::calcNewAddend(const WasmRelocation &reloc) const {
   switch (reloc.Type) {
   case R_WASM_MEMORY_ADDR_LEB:
   case R_WASM_MEMORY_ADDR_LEB64:
@@ -407,10 +412,12 @@ void ObjFile::parse(bool ignoreComdats) {
   tableEntries.resize(totalFunctions);
   for (const WasmElemSegment &seg : wasmObj->elements()) {
     int64_t offset;
-    if (seg.Offset.Opcode == WASM_OPCODE_I32_CONST)
-      offset = seg.Offset.Value.Int32;
-    else if (seg.Offset.Opcode == WASM_OPCODE_I64_CONST)
-      offset = seg.Offset.Value.Int64;
+    if (seg.Offset.Extended)
+      fatal(toString(this) + ": extended init exprs not supported");
+    else if (seg.Offset.Inst.Opcode == WASM_OPCODE_I32_CONST)
+      offset = seg.Offset.Inst.Value.Int32;
+    else if (seg.Offset.Inst.Opcode == WASM_OPCODE_I64_CONST)
+      offset = seg.Offset.Inst.Value.Int64;
     else
       fatal(toString(this) + ": invalid table elements");
     for (size_t index = 0; index < seg.Functions.size(); index++) {
@@ -682,6 +689,7 @@ void ArchiveFile::parse() {
     ++count;
   }
   LLVM_DEBUG(dbgs() << "Read " << count << " symbols\n");
+  (void) count;
 }
 
 void ArchiveFile::addMember(const Archive::Symbol *sym) {

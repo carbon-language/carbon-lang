@@ -1,11 +1,11 @@
 // RUN: mlir-opt %s -convert-scf-to-cf \
 // RUN:             -convert-vector-to-llvm='reassociate-fp-reductions' \
-// RUN:             -convert-std-to-llvm -reconcile-unrealized-casts | \
+// RUN:             -convert-func-to-llvm -reconcile-unrealized-casts | \
 // RUN: mlir-cpu-runner -e entry -entry-point-result=void  \
 // RUN:   -shared-libs=%mlir_integration_test_dir/libmlir_c_runner_utils%shlibext | \
 // RUN: FileCheck %s
 
-func @entry() {
+func.func @entry() {
   // Construct test vector, numerically very stable.
   %f1 = arith.constant 1.0: f32
   %f2 = arith.constant 2.0: f32

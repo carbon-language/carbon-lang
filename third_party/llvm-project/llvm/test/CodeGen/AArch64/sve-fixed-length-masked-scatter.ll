@@ -351,22 +351,21 @@ define void @masked_scatter_v8i32(<8 x i32>* %a, <8 x i32*>* %b) #0 {
 ; VBITS_EQ_256-NEXT:    ptrue p0.s, vl8
 ; VBITS_EQ_256-NEXT:    mov x8, #4
 ; VBITS_EQ_256-NEXT:    ld1w { z0.s }, p0/z, [x0]
-; VBITS_EQ_256-NEXT:    cmpeq p0.s, p0/z, z0.s, #0
-; VBITS_EQ_256-NEXT:    punpklo p1.h, p0.b
-; VBITS_EQ_256-NEXT:    mov z4.s, p0/z, #-1 // =0xffffffffffffffff
-; VBITS_EQ_256-NEXT:    mov z1.d, p1/z, #-1 // =0xffffffffffffffff
 ; VBITS_EQ_256-NEXT:    ptrue p1.d, vl4
-; VBITS_EQ_256-NEXT:    ld1d { z2.d }, p1/z, [x1, x8, lsl #3]
+; VBITS_EQ_256-NEXT:    ld1d { z1.d }, p1/z, [x1, x8, lsl #3]
 ; VBITS_EQ_256-NEXT:    ld1d { z3.d }, p1/z, [x1]
-; VBITS_EQ_256-NEXT:    ext z4.b, z4.b, z4.b, #16
-; VBITS_EQ_256-NEXT:    cmpne p0.d, p1/z, z1.d, #0
-; VBITS_EQ_256-NEXT:    uunpklo z1.d, z0.s
-; VBITS_EQ_256-NEXT:    sunpklo z4.d, z4.s
+; VBITS_EQ_256-NEXT:    cmpeq p0.s, p0/z, z0.s, #0
+; VBITS_EQ_256-NEXT:    uunpklo z4.d, z0.s
+; VBITS_EQ_256-NEXT:    mov z2.s, p0/z, #-1 // =0xffffffffffffffff
+; VBITS_EQ_256-NEXT:    punpklo p0.h, p0.b
+; VBITS_EQ_256-NEXT:    ext z2.b, z2.b, z2.b, #16
 ; VBITS_EQ_256-NEXT:    ext z0.b, z0.b, z0.b, #16
-; VBITS_EQ_256-NEXT:    cmpne p1.d, p1/z, z4.d, #0
+; VBITS_EQ_256-NEXT:    sunpklo z2.d, z2.s
+; VBITS_EQ_256-NEXT:    and p0.b, p0/z, p0.b, p1.b
+; VBITS_EQ_256-NEXT:    cmpne p1.d, p1/z, z2.d, #0
 ; VBITS_EQ_256-NEXT:    uunpklo z0.d, z0.s
-; VBITS_EQ_256-NEXT:    st1w { z1.d }, p0, [z3.d]
-; VBITS_EQ_256-NEXT:    st1w { z0.d }, p1, [z2.d]
+; VBITS_EQ_256-NEXT:    st1w { z4.d }, p0, [z3.d]
+; VBITS_EQ_256-NEXT:    st1w { z0.d }, p1, [z1.d]
 ; VBITS_EQ_256-NEXT:    ret
 ; VBITS_GE_512-LABEL: masked_scatter_v8i32:
 ; VBITS_GE_512:       // %bb.0:
@@ -872,20 +871,17 @@ define void @masked_scatter_v32f64(<32 x double>* %a, <32 x double*>* %b) #0 {
 ; The above tests test the types, the below tests check that the addressing
 ; modes still function
 
-; NOTE: This produces an non-optimal addressing mode due to a temporary workaround
 define void @masked_scatter_32b_scaled_sext_f16(<32 x half>* %a, <32 x i32>* %b, half* %base) #0 {
 ; VBITS_GE_2048-LABEL: masked_scatter_32b_scaled_sext_f16:
 ; VBITS_GE_2048:       // %bb.0:
 ; VBITS_GE_2048-NEXT:    ptrue p0.h, vl32
-; VBITS_GE_2048-NEXT:    ptrue p1.d, vl32
+; VBITS_GE_2048-NEXT:    ptrue p1.s, vl32
 ; VBITS_GE_2048-NEXT:    ld1h { z0.h }, p0/z, [x0]
-; VBITS_GE_2048-NEXT:    ld1sw { z1.d }, p1/z, [x1]
+; VBITS_GE_2048-NEXT:    ld1w { z1.s }, p1/z, [x1]
 ; VBITS_GE_2048-NEXT:    fcmeq p0.h, p0/z, z0.h, #0.0
 ; VBITS_GE_2048-NEXT:    uunpklo z0.s, z0.h
 ; VBITS_GE_2048-NEXT:    punpklo p0.h, p0.b
-; VBITS_GE_2048-NEXT:    uunpklo z0.d, z0.s
-; VBITS_GE_2048-NEXT:    punpklo p0.h, p0.b
-; VBITS_GE_2048-NEXT:    st1h { z0.d }, p0, [x2, z1.d, lsl #1]
+; VBITS_GE_2048-NEXT:    st1h { z0.s }, p0, [x2, z1.s, sxtw #1]
 ; VBITS_GE_2048-NEXT:    ret
   %vals = load <32 x half>, <32 x half>* %a
   %idxs = load <32 x i32>, <32 x i32>* %b
@@ -896,18 +892,14 @@ define void @masked_scatter_32b_scaled_sext_f16(<32 x half>* %a, <32 x i32>* %b,
   ret void
 }
 
-; NOTE: This produces an non-optimal addressing mode due to a temporary workaround
 define void @masked_scatter_32b_scaled_sext_f32(<32 x float>* %a, <32 x i32>* %b, float* %base) #0 {
 ; VBITS_GE_2048-LABEL: masked_scatter_32b_scaled_sext_f32:
 ; VBITS_GE_2048:       // %bb.0:
 ; VBITS_GE_2048-NEXT:    ptrue p0.s, vl32
-; VBITS_GE_2048-NEXT:    ptrue p1.d, vl32
 ; VBITS_GE_2048-NEXT:    ld1w { z0.s }, p0/z, [x0]
-; VBITS_GE_2048-NEXT:    ld1sw { z1.d }, p1/z, [x1]
+; VBITS_GE_2048-NEXT:    ld1w { z1.s }, p0/z, [x1]
 ; VBITS_GE_2048-NEXT:    fcmeq p0.s, p0/z, z0.s, #0.0
-; VBITS_GE_2048-NEXT:    uunpklo z0.d, z0.s
-; VBITS_GE_2048-NEXT:    punpklo p0.h, p0.b
-; VBITS_GE_2048-NEXT:    st1w { z0.d }, p0, [x2, z1.d, lsl #2]
+; VBITS_GE_2048-NEXT:    st1w { z0.s }, p0, [x2, z1.s, sxtw #2]
 ; VBITS_GE_2048-NEXT:    ret
   %vals = load <32 x float>, <32 x float>* %a
   %idxs = load <32 x i32>, <32 x i32>* %b
@@ -918,7 +910,6 @@ define void @masked_scatter_32b_scaled_sext_f32(<32 x float>* %a, <32 x i32>* %b
   ret void
 }
 
-; NOTE: This produces an non-optimal addressing mode due to a temporary workaround
 define void @masked_scatter_32b_scaled_sext_f64(<32 x double>* %a, <32 x i32>* %b, double* %base) #0 {
 ; VBITS_GE_2048-LABEL: masked_scatter_32b_scaled_sext_f64:
 ; VBITS_GE_2048:       // %bb.0:
@@ -937,20 +928,17 @@ define void @masked_scatter_32b_scaled_sext_f64(<32 x double>* %a, <32 x i32>* %
   ret void
 }
 
-; NOTE: This produces an non-optimal addressing mode due to a temporary workaround
 define void @masked_scatter_32b_scaled_zext(<32 x half>* %a, <32 x i32>* %b, half* %base) #0 {
 ; VBITS_GE_2048-LABEL: masked_scatter_32b_scaled_zext:
 ; VBITS_GE_2048:       // %bb.0:
 ; VBITS_GE_2048-NEXT:    ptrue p0.h, vl32
-; VBITS_GE_2048-NEXT:    ptrue p1.d, vl32
+; VBITS_GE_2048-NEXT:    ptrue p1.s, vl32
 ; VBITS_GE_2048-NEXT:    ld1h { z0.h }, p0/z, [x0]
-; VBITS_GE_2048-NEXT:    ld1w { z1.d }, p1/z, [x1]
+; VBITS_GE_2048-NEXT:    ld1w { z1.s }, p1/z, [x1]
 ; VBITS_GE_2048-NEXT:    fcmeq p0.h, p0/z, z0.h, #0.0
 ; VBITS_GE_2048-NEXT:    uunpklo z0.s, z0.h
 ; VBITS_GE_2048-NEXT:    punpklo p0.h, p0.b
-; VBITS_GE_2048-NEXT:    uunpklo z0.d, z0.s
-; VBITS_GE_2048-NEXT:    punpklo p0.h, p0.b
-; VBITS_GE_2048-NEXT:    st1h { z0.d }, p0, [x2, z1.d, lsl #1]
+; VBITS_GE_2048-NEXT:    st1h { z0.s }, p0, [x2, z1.s, uxtw #1]
 ; VBITS_GE_2048-NEXT:    ret
   %vals = load <32 x half>, <32 x half>* %a
   %idxs = load <32 x i32>, <32 x i32>* %b
@@ -961,20 +949,17 @@ define void @masked_scatter_32b_scaled_zext(<32 x half>* %a, <32 x i32>* %b, hal
   ret void
 }
 
-; NOTE: This produces an non-optimal addressing mode due to a temporary workaround
 define void @masked_scatter_32b_unscaled_sext(<32 x half>* %a, <32 x i32>* %b, i8* %base) #0 {
 ; VBITS_GE_2048-LABEL: masked_scatter_32b_unscaled_sext:
 ; VBITS_GE_2048:       // %bb.0:
 ; VBITS_GE_2048-NEXT:    ptrue p0.h, vl32
-; VBITS_GE_2048-NEXT:    ptrue p1.d, vl32
+; VBITS_GE_2048-NEXT:    ptrue p1.s, vl32
 ; VBITS_GE_2048-NEXT:    ld1h { z0.h }, p0/z, [x0]
-; VBITS_GE_2048-NEXT:    ld1sw { z1.d }, p1/z, [x1]
+; VBITS_GE_2048-NEXT:    ld1w { z1.s }, p1/z, [x1]
 ; VBITS_GE_2048-NEXT:    fcmeq p0.h, p0/z, z0.h, #0.0
 ; VBITS_GE_2048-NEXT:    uunpklo z0.s, z0.h
 ; VBITS_GE_2048-NEXT:    punpklo p0.h, p0.b
-; VBITS_GE_2048-NEXT:    uunpklo z0.d, z0.s
-; VBITS_GE_2048-NEXT:    punpklo p0.h, p0.b
-; VBITS_GE_2048-NEXT:    st1h { z0.d }, p0, [x2, z1.d]
+; VBITS_GE_2048-NEXT:    st1h { z0.s }, p0, [x2, z1.s, sxtw]
 ; VBITS_GE_2048-NEXT:    ret
   %vals = load <32 x half>, <32 x half>* %a
   %idxs = load <32 x i32>, <32 x i32>* %b
@@ -986,20 +971,17 @@ define void @masked_scatter_32b_unscaled_sext(<32 x half>* %a, <32 x i32>* %b, i
   ret void
 }
 
-; NOTE: This produces an non-optimal addressing mode due to a temporary workaround
 define void @masked_scatter_32b_unscaled_zext(<32 x half>* %a, <32 x i32>* %b, i8* %base) #0 {
 ; VBITS_GE_2048-LABEL: masked_scatter_32b_unscaled_zext:
 ; VBITS_GE_2048:       // %bb.0:
 ; VBITS_GE_2048-NEXT:    ptrue p0.h, vl32
-; VBITS_GE_2048-NEXT:    ptrue p1.d, vl32
+; VBITS_GE_2048-NEXT:    ptrue p1.s, vl32
 ; VBITS_GE_2048-NEXT:    ld1h { z0.h }, p0/z, [x0]
-; VBITS_GE_2048-NEXT:    ld1w { z1.d }, p1/z, [x1]
+; VBITS_GE_2048-NEXT:    ld1w { z1.s }, p1/z, [x1]
 ; VBITS_GE_2048-NEXT:    fcmeq p0.h, p0/z, z0.h, #0.0
 ; VBITS_GE_2048-NEXT:    uunpklo z0.s, z0.h
 ; VBITS_GE_2048-NEXT:    punpklo p0.h, p0.b
-; VBITS_GE_2048-NEXT:    uunpklo z0.d, z0.s
-; VBITS_GE_2048-NEXT:    punpklo p0.h, p0.b
-; VBITS_GE_2048-NEXT:    st1h { z0.d }, p0, [x2, z1.d]
+; VBITS_GE_2048-NEXT:    st1h { z0.s }, p0, [x2, z1.s, uxtw]
 ; VBITS_GE_2048-NEXT:    ret
   %vals = load <32 x half>, <32 x half>* %a
   %idxs = load <32 x i32>, <32 x i32>* %b
@@ -1052,7 +1034,6 @@ define void @masked_scatter_64b_unscaled(<32 x float>* %a, <32 x i64>* %b, i8* %
   ret void
 }
 
-; FIXME: This case does not yet codegen well due to deficiencies in opcode selection
 define void @masked_scatter_vec_plus_reg(<32 x float>* %a, <32 x i8*>* %b, i64 %off) #0 {
 ; VBITS_GE_2048-LABEL: masked_scatter_vec_plus_reg:
 ; VBITS_GE_2048:       // %bb.0:
@@ -1060,12 +1041,10 @@ define void @masked_scatter_vec_plus_reg(<32 x float>* %a, <32 x i8*>* %b, i64 %
 ; VBITS_GE_2048-NEXT:    ptrue p1.d, vl32
 ; VBITS_GE_2048-NEXT:    ld1w { z0.s }, p0/z, [x0]
 ; VBITS_GE_2048-NEXT:    ld1d { z1.d }, p1/z, [x1]
-; VBITS_GE_2048-NEXT:    mov z2.d, x2
 ; VBITS_GE_2048-NEXT:    fcmeq p0.s, p0/z, z0.s, #0.0
-; VBITS_GE_2048-NEXT:    add z1.d, z1.d, z2.d
 ; VBITS_GE_2048-NEXT:    uunpklo z0.d, z0.s
 ; VBITS_GE_2048-NEXT:    punpklo p0.h, p0.b
-; VBITS_GE_2048-NEXT:    st1w { z0.d }, p0, [z1.d]
+; VBITS_GE_2048-NEXT:    st1w { z0.d }, p0, [x2, z1.d]
 ; VBITS_GE_2048-NEXT:    ret
   %vals = load <32 x float>, <32 x float>* %a
   %bases = load <32 x i8*>, <32 x i8*>* %b
@@ -1076,7 +1055,6 @@ define void @masked_scatter_vec_plus_reg(<32 x float>* %a, <32 x i8*>* %b, i64 %
   ret void
 }
 
-; FIXME: This case does not yet codegen well due to deficiencies in opcode selection
 define void @masked_scatter_vec_plus_imm(<32 x float>* %a, <32 x i8*>* %b) #0 {
 ; VBITS_GE_2048-LABEL: masked_scatter_vec_plus_imm:
 ; VBITS_GE_2048:       // %bb.0:
@@ -1085,10 +1063,9 @@ define void @masked_scatter_vec_plus_imm(<32 x float>* %a, <32 x i8*>* %b) #0 {
 ; VBITS_GE_2048-NEXT:    ld1w { z0.s }, p0/z, [x0]
 ; VBITS_GE_2048-NEXT:    ld1d { z1.d }, p1/z, [x1]
 ; VBITS_GE_2048-NEXT:    fcmeq p0.s, p0/z, z0.s, #0.0
-; VBITS_GE_2048-NEXT:    add z1.d, z1.d, #4
 ; VBITS_GE_2048-NEXT:    uunpklo z0.d, z0.s
 ; VBITS_GE_2048-NEXT:    punpklo p0.h, p0.b
-; VBITS_GE_2048-NEXT:    st1w { z0.d }, p0, [z1.d]
+; VBITS_GE_2048-NEXT:    st1w { z0.d }, p0, [z1.d, #4]
 ; VBITS_GE_2048-NEXT:    ret
   %vals = load <32 x float>, <32 x float>* %a
   %bases = load <32 x i8*>, <32 x i8*>* %b

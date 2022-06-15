@@ -14,6 +14,10 @@
 
 namespace mlir {
 namespace pdll {
+namespace ods {
+class Operation;
+} // namespace ods
+
 namespace ast {
 class Context;
 
@@ -151,10 +155,15 @@ public:
   /// Return an instance of the Operation type with an optional operation name.
   /// If no name is provided, this type may refer to any operation.
   static OperationType get(Context &context,
-                           Optional<StringRef> name = llvm::None);
+                           Optional<StringRef> name = llvm::None,
+                           const ods::Operation *odsOp = nullptr);
 
   /// Return the name of this operation type, or None if it doesn't have on.
   Optional<StringRef> getName() const;
+
+  /// Return the ODS operation that this type refers to, or nullptr if the ODS
+  /// operation is unknown.
+  const ods::Operation *getODSOperation() const;
 };
 
 //===----------------------------------------------------------------------===//
@@ -276,6 +285,15 @@ public:
 } // namespace ast
 } // namespace pdll
 } // namespace mlir
+
+MLIR_DECLARE_EXPLICIT_TYPE_ID(mlir::pdll::ast::detail::AttributeTypeStorage)
+MLIR_DECLARE_EXPLICIT_TYPE_ID(mlir::pdll::ast::detail::ConstraintTypeStorage)
+MLIR_DECLARE_EXPLICIT_TYPE_ID(mlir::pdll::ast::detail::OperationTypeStorage)
+MLIR_DECLARE_EXPLICIT_TYPE_ID(mlir::pdll::ast::detail::RangeTypeStorage)
+MLIR_DECLARE_EXPLICIT_TYPE_ID(mlir::pdll::ast::detail::RewriteTypeStorage)
+MLIR_DECLARE_EXPLICIT_TYPE_ID(mlir::pdll::ast::detail::TupleTypeStorage)
+MLIR_DECLARE_EXPLICIT_TYPE_ID(mlir::pdll::ast::detail::TypeTypeStorage)
+MLIR_DECLARE_EXPLICIT_TYPE_ID(mlir::pdll::ast::detail::ValueTypeStorage)
 
 namespace llvm {
 template <> struct DenseMapInfo<mlir::pdll::ast::Type> {

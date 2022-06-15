@@ -2,9 +2,11 @@
 
 // Currently hangs on amdgpu
 // UNSUPPORTED: amdgcn-amd-amdhsa
-// UNSUPPORTED: amdgcn-amd-amdhsa-newDriver
+// UNSUPPORTED: amdgcn-amd-amdhsa-oldDriver
+// UNSUPPORTED: amdgcn-amd-amdhsa-LTO
 // UNSUPPORTED: x86_64-pc-linux-gnu
-// UNSUPPORTED: x86_64-pc-linux-gnu-newDriver
+// UNSUPPORTED: x86_64-pc-linux-gnu-oldDriver
+// UNSUPPORTED: x86_64-pc-linux-gnu-LTO
 
 #include <cassert>
 #include <cmath>
@@ -73,7 +75,7 @@ public:
 };
 
 constexpr const int BS = 16;
-constexpr const int N = 16;
+constexpr const int N = 256;
 
 int BlockMatMul_TargetNowait(BlockMatrix &A, BlockMatrix &B, BlockMatrix &C) {
 #pragma omp parallel

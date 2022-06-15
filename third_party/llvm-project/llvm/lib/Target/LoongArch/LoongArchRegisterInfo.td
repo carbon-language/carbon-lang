@@ -24,7 +24,8 @@ class LoongArchReg32<bits<16> Enc, string n, list<string> alt = []>
 }
 
 def sub_32 : SubRegIndex<32>;
-class LoongArchReg64<LoongArchReg32 subreg> : Register<""> {
+class LoongArchReg64<LoongArchReg32 subreg>
+    : Register<""> {
   let HWEncoding = subreg.HWEncoding;
   let SubRegs = [subreg];
   let SubRegIndices = [sub_32];
@@ -141,3 +142,18 @@ let RegAltNameIndices = [RegAliasName] in {
 // The order of registers represents the preferred allocation sequence.
 def FPR32 : RegisterClass<"LoongArch", [f32], 32, (sequence "F%u", 0, 31)>;
 def FPR64 : RegisterClass<"LoongArch", [f64], 64, (sequence "F%u_64", 0, 31)>;
+
+// Condition flag registers
+
+foreach I = 0-7 in
+def FCC#I : LoongArchReg<I, "fcc"#I>;
+
+def CFR : RegisterClass<"LoongArch", [i32], 32, (sequence "FCC%u", 0, 7)>;
+
+// Control and status registers
+
+foreach I = 0-3 in
+def FCSR#I : LoongArchReg<I, "fcsr"#I>;
+
+let isAllocatable = false in
+def FCSR : RegisterClass<"LoongArch", [i32], 32, (sequence "FCSR%u", 0, 3)>;

@@ -19,7 +19,6 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/MapVector.h"
-#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SetVector.h"
@@ -32,6 +31,7 @@
 #include "llvm/Analysis/CFG.h"
 #include "llvm/Analysis/DomTreeUpdater.h"
 #include "llvm/Analysis/GlobalsModRef.h"
+#include "llvm/Analysis/InstructionPrecedenceTracking.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
@@ -42,12 +42,10 @@
 #include "llvm/Analysis/PHITransAddr.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
-#include "llvm/Config/llvm-config.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/Constants.h"
-#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
@@ -55,11 +53,9 @@
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
-#include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/Operator.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/IR/Type.h"
@@ -72,7 +68,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Transforms/Utils.h"
 #include "llvm/Transforms/Utils/AssumeBundleBuilder.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -112,16 +107,16 @@ static cl::opt<bool> GVNEnableLoadInLoopPRE("enable-load-in-loop-pre",
                                             cl::init(true));
 static cl::opt<bool>
 GVNEnableSplitBackedgeInLoadPRE("enable-split-backedge-in-load-pre",
-                                cl::init(true));
+                                cl::init(false));
 static cl::opt<bool> GVNEnableMemDep("enable-gvn-memdep", cl::init(true));
 
 static cl::opt<uint32_t> MaxNumDeps(
-    "gvn-max-num-deps", cl::Hidden, cl::init(100), cl::ZeroOrMore,
+    "gvn-max-num-deps", cl::Hidden, cl::init(100),
     cl::desc("Max number of dependences to attempt Load PRE (default = 100)"));
 
 // This is based on IsValueFullyAvailableInBlockNumSpeculationsMax stat.
 static cl::opt<uint32_t> MaxBBSpeculations(
-    "gvn-max-block-speculations", cl::Hidden, cl::init(600), cl::ZeroOrMore,
+    "gvn-max-block-speculations", cl::Hidden, cl::init(600),
     cl::desc("Max number of blocks we're willing to speculate on (and recurse "
              "into) when deducing if a value is fully available or not in GVN "
              "(default = 600)"));
@@ -312,13 +307,7 @@ struct llvm::gvn::AvailableValueInBlock {
 
 GVNPass::Expression GVNPass::ValueTable::createExpr(Instruction *I) {
   Expression e;
-  // For GEPs, disambiguate based on the source element type, which is not
-  // implied by the result type with opaque pointers. (Conversely, the source
-  // element type together with the operand types does imply the result type.)
-  if (const auto *GEP = dyn_cast<GetElementPtrInst>(I))
-    e.type = GEP->getSourceElementType();
-  else
-    e.type = I->getType();
+  e.type = I->getType();
   e.opcode = I->getOpcode();
   if (const GCRelocateInst *GCR = dyn_cast<GCRelocateInst>(I)) {
     // gc.relocate is 'special' call: its second and third operands are
@@ -407,6 +396,39 @@ GVNPass::ValueTable::createExtractvalueExpr(ExtractValueInst *EI) {
   append_range(e.varargs, EI->indices());
 
   return e;
+}
+
+GVNPass::Expression GVNPass::ValueTable::createGEPExpr(GetElementPtrInst *GEP) {
+  Expression E;
+  Type *PtrTy = GEP->getType()->getScalarType();
+  const DataLayout &DL = GEP->getModule()->getDataLayout();
+  unsigned BitWidth = DL.getIndexTypeSizeInBits(PtrTy);
+  MapVector<Value *, APInt> VariableOffsets;
+  APInt ConstantOffset(BitWidth, 0);
+  if (PtrTy->isOpaquePointerTy() &&
+      GEP->collectOffset(DL, BitWidth, VariableOffsets, ConstantOffset)) {
+    // For opaque pointers, convert into offset representation, to recognize
+    // equivalent address calculations that use different type encoding.
+    LLVMContext &Context = GEP->getContext();
+    E.opcode = GEP->getOpcode();
+    E.type = nullptr;
+    E.varargs.push_back(lookupOrAdd(GEP->getPointerOperand()));
+    for (const auto &Pair : VariableOffsets) {
+      E.varargs.push_back(lookupOrAdd(Pair.first));
+      E.varargs.push_back(lookupOrAdd(ConstantInt::get(Context, Pair.second)));
+    }
+    if (!ConstantOffset.isZero())
+      E.varargs.push_back(
+          lookupOrAdd(ConstantInt::get(Context, ConstantOffset)));
+  } else {
+    // If converting to offset representation fails (for typed pointers and
+    // scalable vectors), fall back to type-based implementation:
+    E.opcode = GEP->getOpcode();
+    E.type = GEP->getSourceElementType();
+    for (Use &Op : GEP->operands())
+      E.varargs.push_back(lookupOrAdd(Op));
+  }
+  return E;
 }
 
 //===----------------------------------------------------------------------===//
@@ -592,8 +614,10 @@ uint32_t GVNPass::ValueTable::lookupOrAdd(Value *V) {
     case Instruction::InsertElement:
     case Instruction::ShuffleVector:
     case Instruction::InsertValue:
-    case Instruction::GetElementPtr:
       exp = createExpr(I);
+      break;
+    case Instruction::GetElementPtr:
+      exp = createGEPExpr(cast<GetElementPtrInst>(I));
       break;
     case Instruction::ExtractValue:
       exp = createExtractvalueExpr(cast<ExtractValueInst>(I));
@@ -927,11 +951,12 @@ ConstructSSAForLoadSet(LoadInst *Load,
   return SSAUpdate.GetValueInMiddleOfBlock(Load->getParent());
 }
 
-static LoadInst *findDominatingLoad(Value *Ptr, SelectInst *Sel,
+static LoadInst *findDominatingLoad(Value *Ptr, Type *LoadTy, SelectInst *Sel,
                                     DominatorTree &DT) {
   for (Value *U : Ptr->users()) {
     auto *LI = dyn_cast<LoadInst>(U);
-    if (LI && LI->getParent() == Sel->getParent() && DT.dominates(LI, Sel))
+    if (LI && LI->getType() == LoadTy && LI->getParent() == Sel->getParent() &&
+        DT.dominates(LI, Sel))
       return LI;
   }
   return nullptr;
@@ -980,10 +1005,10 @@ Value *AvailableValue::MaterializeAdjustedValue(LoadInst *Load,
   } else if (isSelectValue()) {
     // Introduce a new value select for a load from an eligible pointer select.
     SelectInst *Sel = getSelectValue();
-    LoadInst *L1 =
-        findDominatingLoad(Sel->getOperand(1), Sel, gvn.getDominatorTree());
-    LoadInst *L2 =
-        findDominatingLoad(Sel->getOperand(2), Sel, gvn.getDominatorTree());
+    LoadInst *L1 = findDominatingLoad(Sel->getOperand(1), LoadTy, Sel,
+                                      gvn.getDominatorTree());
+    LoadInst *L2 = findDominatingLoad(Sel->getOperand(2), LoadTy, Sel,
+                                      gvn.getDominatorTree());
     assert(L1 && L2 &&
            "must be able to obtain dominating loads for both value operands of "
            "the select");
@@ -1083,14 +1108,15 @@ static void reportMayClobberedLoad(LoadInst *Load, MemDepResult DepInfo,
 /// clobber the loads.
 static Optional<AvailableValue>
 tryToConvertLoadOfPtrSelect(BasicBlock *DepBB, BasicBlock::iterator End,
-                            Value *Address, DominatorTree &DT, AAResults *AA) {
+                            Value *Address, Type *LoadTy, DominatorTree &DT,
+                            AAResults *AA) {
 
   auto *Sel = dyn_cast_or_null<SelectInst>(Address);
   if (!Sel || DepBB != Sel->getParent())
     return None;
 
-  LoadInst *L1 = findDominatingLoad(Sel->getOperand(1), Sel, DT);
-  LoadInst *L2 = findDominatingLoad(Sel->getOperand(2), Sel, DT);
+  LoadInst *L1 = findDominatingLoad(Sel->getOperand(1), LoadTy, Sel, DT);
+  LoadInst *L2 = findDominatingLoad(Sel->getOperand(2), LoadTy, Sel, DT);
   if (!L1 || !L2)
     return None;
 
@@ -1113,8 +1139,8 @@ bool GVNPass::AnalyzeLoadAvailability(LoadInst *Load, MemDepResult DepInfo,
   if (!DepInfo.isDef() && !DepInfo.isClobber()) {
     assert(isa<SelectInst>(Address));
     if (auto R = tryToConvertLoadOfPtrSelect(
-            Load->getParent(), Load->getIterator(), Address, getDominatorTree(),
-            getAliasAnalysis())) {
+            Load->getParent(), Load->getIterator(), Address, Load->getType(),
+            getDominatorTree(), getAliasAnalysis())) {
       Res = *R;
       return true;
     }
@@ -1279,9 +1305,9 @@ void GVNPass::AnalyzeLoadAvailability(LoadInst *Load, LoadDepVect &Deps,
     Value *Address = Deps[i].getAddress();
 
     if (!DepInfo.isDef() && !DepInfo.isClobber()) {
-      if (auto R = tryToConvertLoadOfPtrSelect(DepBB, DepBB->end(), Address,
-                                               getDominatorTree(),
-                                               getAliasAnalysis())) {
+      if (auto R = tryToConvertLoadOfPtrSelect(
+              DepBB, DepBB->end(), Address, Load->getType(), getDominatorTree(),
+              getAliasAnalysis())) {
         ValuesPerBlock.push_back(
             AvailableValueInBlock::get(DepBB, std::move(*R)));
         continue;
@@ -2429,7 +2455,7 @@ bool GVNPass::processInstruction(Instruction *I) {
   // example if it determines that %y is equal to %x then the instruction
   // "%z = and i32 %x, %y" becomes "%z = and i32 %x, %x" which we now simplify.
   const DataLayout &DL = I->getModule()->getDataLayout();
-  if (Value *V = SimplifyInstruction(I, {DL, TLI, DT, AC})) {
+  if (Value *V = simplifyInstruction(I, {DL, TLI, DT, AC})) {
     bool Changed = false;
     if (!I->use_empty()) {
       // Simplification can cause a special instruction to become not special.
@@ -2596,6 +2622,7 @@ bool GVNPass::runImpl(Function &F, AssumptionCache &RunAC, DominatorTree &RunDT,
   unsigned Iteration = 0;
   while (ShouldContinue) {
     LLVM_DEBUG(dbgs() << "GVN iteration: " << Iteration << "\n");
+    (void) Iteration;
     ShouldContinue = iterateOnFunction(F);
     Changed |= ShouldContinue;
     ++Iteration;

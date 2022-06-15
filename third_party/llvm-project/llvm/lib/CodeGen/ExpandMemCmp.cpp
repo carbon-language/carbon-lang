@@ -19,7 +19,6 @@
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
-#include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/IR/Dominators.h"
@@ -31,6 +30,10 @@
 #include "llvm/Transforms/Utils/SizeOpts.h"
 
 using namespace llvm;
+
+namespace llvm {
+class TargetLowering;
+}
 
 #define DEBUG_TYPE "expandmemcmp"
 
@@ -737,7 +740,7 @@ Value *MemCmpExpansion::getMemCmpExpansion() {
 static bool expandMemCmp(CallInst *CI, const TargetTransformInfo *TTI,
                          const TargetLowering *TLI, const DataLayout *DL,
                          ProfileSummaryInfo *PSI, BlockFrequencyInfo *BFI,
-                         DomTreeUpdater *DTU) {
+                         DomTreeUpdater *DTU, const bool IsBCmp) {
   NumMemCmpCalls++;
 
   // Early exit from expansion if -Oz.
@@ -757,7 +760,8 @@ static bool expandMemCmp(CallInst *CI, const TargetTransformInfo *TTI,
   }
   // TTI call to check if target would like to expand memcmp. Also, get the
   // available load sizes.
-  const bool IsUsedForZeroCmp = isOnlyUsedInZeroEqualityComparison(CI);
+  const bool IsUsedForZeroCmp =
+      IsBCmp || isOnlyUsedInZeroEqualityComparison(CI);
   bool OptForSize = CI->getFunction()->hasOptSize() ||
                     llvm::shouldOptimizeForSize(CI->getParent(), PSI, BFI);
   auto Options = TTI->enableMemCmpExpansion(OptForSize,
@@ -861,7 +865,7 @@ bool ExpandMemCmpPass::runOnBlock(BasicBlock &BB, const TargetLibraryInfo *TLI,
     LibFunc Func;
     if (TLI->getLibFunc(*CI, Func) &&
         (Func == LibFunc_memcmp || Func == LibFunc_bcmp) &&
-        expandMemCmp(CI, TTI, TL, &DL, PSI, BFI, DTU)) {
+        expandMemCmp(CI, TTI, TL, &DL, PSI, BFI, DTU, Func == LibFunc_bcmp)) {
       return true;
     }
   }

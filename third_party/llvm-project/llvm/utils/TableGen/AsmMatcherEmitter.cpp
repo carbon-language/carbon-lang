@@ -95,6 +95,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "CodeGenInstruction.h"
 #include "CodeGenTarget.h"
 #include "SubtargetFeatureInfo.h"
 #include "Types.h"
@@ -3394,7 +3395,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
                         StringTable.GetOrAddStringOffset(LenMnemonic, false));
   }
 
-  OS << "static const char *const MnemonicTable =\n";
+  OS << "static const char MnemonicTable[] =\n";
   StringTable.EmitString(OS);
   OS << ";\n\n";
 

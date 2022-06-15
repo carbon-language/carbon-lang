@@ -32,7 +32,7 @@
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-#if !defined(_LIBCPP_HAS_NO_CONCEPTS)
+#if _LIBCPP_STD_VER > 17
 
 namespace ranges {
 
@@ -67,8 +67,6 @@ namespace ranges {
 
   template <range _Rp>
   using range_rvalue_reference_t = iter_rvalue_reference_t<iterator_t<_Rp>>;
-
-#if !defined(_LIBCPP_HAS_NO_INCOMPLETE_RANGES)
 
   // [range.sized]
   template <class _Tp>
@@ -135,11 +133,9 @@ namespace ranges {
       (is_lvalue_reference_v<_Tp> ||
        (movable<remove_reference_t<_Tp>> && !__is_std_initializer_list<remove_cvref_t<_Tp>>))));
 
-#endif // !defined(_LIBCPP_HAS_NO_INCOMPLETE_RANGES)
-
 } // namespace ranges
 
-#endif // !defined(_LIBCPP_HAS_NO_CONCEPTS)
+#endif // _LIBCPP_STD_VER > 17
 
 _LIBCPP_END_NAMESPACE_STD
 

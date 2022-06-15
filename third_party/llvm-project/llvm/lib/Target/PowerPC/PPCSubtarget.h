@@ -19,7 +19,7 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/CodeGen/GlobalISel/CallLowering.h"
 #include "llvm/CodeGen/GlobalISel/LegalizerInfo.h"
-#include "llvm/CodeGen/GlobalISel/RegisterBankInfo.h"
+#include "llvm/CodeGen/RegisterBankInfo.h"
 #include "llvm/CodeGen/SelectionDAGTargetInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/IR/DataLayout.h"
@@ -160,6 +160,7 @@ protected:
   bool IsISA2_07;
   bool IsISA3_0;
   bool IsISA3_1;
+  bool IsISAFuture;
   bool UseLongCalls;
   bool SecurePlt;
   bool VectorsUseTwoUnits;
@@ -336,6 +337,7 @@ public:
   bool isISA2_07() const { return IsISA2_07; }
   bool isISA3_0() const { return IsISA3_0; }
   bool isISA3_1() const { return IsISA3_1; }
+  bool isISAFuture() const { return IsISAFuture; }
   bool useLongCalls() const { return UseLongCalls; }
   bool hasFusion() const { return HasFusion; }
   bool hasStoreFusion() const { return HasStoreFusion; }

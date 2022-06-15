@@ -18,6 +18,7 @@
 #include "R600Defines.h"
 #include "R600Subtarget.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 
 using namespace llvm;
 
@@ -1468,22 +1469,4 @@ void R600InstrInfo::clearFlag(MachineInstr &MI, unsigned Operand,
     InstFlags &= ~(Flag << (NUM_MO_FLAGS * Operand));
     FlagOp.setImm(InstFlags);
   }
-}
-
-unsigned R600InstrInfo::getAddressSpaceForPseudoSourceKind(
-    unsigned Kind) const {
-  switch (Kind) {
-  case PseudoSourceValue::Stack:
-  case PseudoSourceValue::FixedStack:
-    return AMDGPUAS::PRIVATE_ADDRESS;
-  case PseudoSourceValue::ConstantPool:
-  case PseudoSourceValue::GOT:
-  case PseudoSourceValue::JumpTable:
-  case PseudoSourceValue::GlobalValueCallEntry:
-  case PseudoSourceValue::ExternalSymbolCallEntry:
-  case PseudoSourceValue::TargetCustom:
-    return AMDGPUAS::CONSTANT_ADDRESS;
-  }
-
-  llvm_unreachable("Invalid pseudo source kind");
 }

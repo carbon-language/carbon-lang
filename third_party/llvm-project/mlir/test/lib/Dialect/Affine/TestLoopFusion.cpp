@@ -14,7 +14,7 @@
 #include "mlir/Dialect/Affine/IR/AffineOps.h"
 #include "mlir/Dialect/Affine/LoopFusionUtils.h"
 #include "mlir/Dialect/Affine/LoopUtils.h"
-#include "mlir/Dialect/StandardOps/IR/Ops.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Pass/Pass.h"
 
 #define DEBUG_TYPE "test-loop-fusion"
@@ -41,7 +41,9 @@ static llvm::cl::opt<bool> clTestLoopFusionTransformation(
 namespace {
 
 struct TestLoopFusion
-    : public PassWrapper<TestLoopFusion, OperationPass<FuncOp>> {
+    : public PassWrapper<TestLoopFusion, OperationPass<func::FuncOp>> {
+  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(TestLoopFusion)
+
   StringRef getArgument() const final { return "test-loop-fusion"; }
   StringRef getDescription() const final {
     return "Tests loop fusion utility functions.";

@@ -68,7 +68,6 @@
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/GetElementPtrTypeIterator.h"
 #include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
@@ -683,24 +682,16 @@ void StraightLineStrengthReduce::rewriteCandidateWithBasis(
         unsigned AS = Basis.Ins->getType()->getPointerAddressSpace();
         Type *CharTy = Type::getInt8PtrTy(Basis.Ins->getContext(), AS);
         Reduced = Builder.CreateBitCast(Basis.Ins, CharTy);
-        if (InBounds)
-          Reduced =
-              Builder.CreateInBoundsGEP(Builder.getInt8Ty(), Reduced, Bump);
-        else
-          Reduced = Builder.CreateGEP(Builder.getInt8Ty(), Reduced, Bump);
+        Reduced =
+            Builder.CreateGEP(Builder.getInt8Ty(), Reduced, Bump, "", InBounds);
         Reduced = Builder.CreateBitCast(Reduced, C.Ins->getType());
       } else {
         // C = gep Basis, Bump
         // Canonicalize bump to pointer size.
         Bump = Builder.CreateSExtOrTrunc(Bump, IntPtrTy);
-        if (InBounds)
-          Reduced = Builder.CreateInBoundsGEP(
-              cast<GetElementPtrInst>(Basis.Ins)->getResultElementType(),
-              Basis.Ins, Bump);
-        else
-          Reduced = Builder.CreateGEP(
-              cast<GetElementPtrInst>(Basis.Ins)->getResultElementType(),
-              Basis.Ins, Bump);
+        Reduced = Builder.CreateGEP(
+            cast<GetElementPtrInst>(Basis.Ins)->getResultElementType(),
+            Basis.Ins, Bump, "", InBounds);
       }
       break;
     }

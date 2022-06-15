@@ -20,6 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MarkLive.h"
+#include "InputFiles.h"
 #include "InputSection.h"
 #include "LinkerScript.h"
 #include "SymbolTable.h"
@@ -118,7 +119,7 @@ void MarkLive<ELFT>::resolveReloc(InputSectionBase &sec, RelTy &rel,
 
   if (auto *ss = dyn_cast<SharedSymbol>(&sym))
     if (!ss->isWeak())
-      ss->getFile().isNeeded = true;
+      cast<SharedFile>(ss->file)->isNeeded = true;
 
   for (InputSectionBase *sec : cNamedSections.lookup(sym.getName()))
     enqueue(sec, 0);
@@ -197,7 +198,7 @@ void MarkLive<ELFT>::enqueue(InputSectionBase *sec, uint64_t offset) {
   // (splittable) sections, each piece of data has independent liveness bit.
   // So we explicitly tell it which offset is in use.
   if (auto *ms = dyn_cast<MergeInputSection>(sec))
-    ms->getSectionPiece(offset)->live = true;
+    ms->getSectionPiece(offset).live = true;
 
   // Set Sec->Partition to the meet (i.e. the "minimum") of Partition and
   // Sec->Partition in the following lattice: 1 < other < 0. If Sec->Partition
@@ -373,7 +374,7 @@ template <class ELFT> void elf::markLive() {
     for (Symbol *sym : symtab->symbols())
       if (auto *s = dyn_cast<SharedSymbol>(sym))
         if (s->isUsedInRegularObj && !s->isWeak())
-          s->getFile().isNeeded = true;
+          cast<SharedFile>(s->file)->isNeeded = true;
     return;
   }
 

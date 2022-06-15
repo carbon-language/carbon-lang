@@ -14,7 +14,7 @@
 #ifndef SANITIZER_PLATFORM_LIMITS_POSIX_H
 #define SANITIZER_PLATFORM_LIMITS_POSIX_H
 
-#if SANITIZER_LINUX || SANITIZER_MAC
+#if SANITIZER_LINUX || SANITIZER_APPLE
 
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_platform.h"
@@ -322,7 +322,7 @@ struct __sanitizer_ifaddrs {
 };
 #endif  // !SANITIZER_ANDROID
 
-#if SANITIZER_MAC
+#if SANITIZER_APPLE
 typedef unsigned long __sanitizer_pthread_key_t;
 #else
 typedef unsigned __sanitizer_pthread_key_t;
@@ -349,7 +349,7 @@ struct __sanitizer_passwd {
   char *pw_passwd;
   int pw_uid;
   int pw_gid;
-#if SANITIZER_MAC
+#if SANITIZER_APPLE
   long pw_change;
   char *pw_class;
 #endif
@@ -358,7 +358,7 @@ struct __sanitizer_passwd {
 #endif
   char *pw_dir;
   char *pw_shell;
-#if SANITIZER_MAC
+#if SANITIZER_APPLE
   long pw_expire;
 #endif
 };
@@ -370,7 +370,8 @@ struct __sanitizer_group {
   char **gr_mem;
 };
 
-#  if (defined(__x86_64__) && !defined(_LP64)) || defined(__hexagon__)
+#  if (SANITIZER_LINUX && !SANITIZER_GLIBC && !SANITIZER_ANDROID) || \
+      (defined(__x86_64__) && !defined(_LP64)) || defined(__hexagon__)
 typedef long long __sanitizer_time_t;
 #else
 typedef long __sanitizer_time_t;
@@ -430,7 +431,7 @@ struct __sanitizer_file_handle {
 };
 #endif
 
-#if SANITIZER_MAC
+#if SANITIZER_APPLE
 struct __sanitizer_msghdr {
   void *msg_name;
   unsigned msg_namelen;
@@ -471,14 +472,15 @@ struct __sanitizer_mmsghdr {
 };
 #endif
 
-#if SANITIZER_MAC
+#if SANITIZER_APPLE
 struct __sanitizer_dirent {
   unsigned long long d_ino;
   unsigned long long d_seekoff;
   unsigned short d_reclen;
   // more fields that we don't care about
 };
-#  elif SANITIZER_ANDROID || defined(__x86_64__) || defined(__hexagon__)
+#  elif (SANITIZER_LINUX && !SANITIZER_GLIBC) || defined(__x86_64__) || \
+      defined(__hexagon__)
 struct __sanitizer_dirent {
   unsigned long long d_ino;
   unsigned long long d_off;
@@ -555,7 +557,7 @@ typedef unsigned long __sanitizer_sigset_t[16 / sizeof(unsigned long)];
 # else
 typedef unsigned long __sanitizer_sigset_t;
 # endif
-#elif SANITIZER_MAC
+#elif SANITIZER_APPLE
 typedef unsigned __sanitizer_sigset_t;
 #elif SANITIZER_LINUX
 struct __sanitizer_sigset_t {
@@ -727,7 +729,7 @@ struct __sanitizer_addrinfo {
   int ai_family;
   int ai_socktype;
   int ai_protocol;
-#if SANITIZER_ANDROID || SANITIZER_MAC
+#if SANITIZER_ANDROID || SANITIZER_APPLE
   unsigned ai_addrlen;
   char *ai_canonname;
   void *ai_addr;
@@ -753,7 +755,7 @@ struct __sanitizer_pollfd {
   short revents;
 };
 
-#if SANITIZER_ANDROID || SANITIZER_MAC
+#if SANITIZER_ANDROID || SANITIZER_APPLE
 typedef unsigned __sanitizer_nfds_t;
 #else
 typedef unsigned long __sanitizer_nfds_t;
@@ -853,7 +855,7 @@ extern int shmctl_shm_info;
 extern int shmctl_shm_stat;
 #endif
 
-#if !SANITIZER_MAC && !SANITIZER_FREEBSD
+#if !SANITIZER_APPLE && !SANITIZER_FREEBSD
 extern unsigned struct_utmp_sz;
 #endif
 #if !SANITIZER_ANDROID
@@ -868,7 +870,7 @@ struct __sanitizer_ifconf {
   union {
     void *ifcu_req;
   } ifc_ifcu;
-#if SANITIZER_MAC
+#if SANITIZER_APPLE
 } __attribute__((packed));
 #else
 };
@@ -1021,7 +1023,7 @@ extern unsigned struct_audio_buf_info_sz;
 extern unsigned struct_ppp_stats_sz;
 #endif  // (SANITIZER_LINUX || SANITIZER_FREEBSD) && !SANITIZER_ANDROID
 
-#if !SANITIZER_ANDROID && !SANITIZER_MAC
+#if !SANITIZER_ANDROID && !SANITIZER_APPLE
 extern unsigned struct_sioc_sg_req_sz;
 extern unsigned struct_sioc_vif_req_sz;
 #endif
@@ -1108,6 +1110,14 @@ extern unsigned IOCTL_BLKRASET;
 extern unsigned IOCTL_BLKROGET;
 extern unsigned IOCTL_BLKROSET;
 extern unsigned IOCTL_BLKRRPART;
+extern unsigned IOCTL_BLKFRASET;
+extern unsigned IOCTL_BLKFRAGET;
+extern unsigned IOCTL_BLKSECTSET;
+extern unsigned IOCTL_BLKSECTGET;
+extern unsigned IOCTL_BLKSSZGET;
+extern unsigned IOCTL_BLKBSZGET;
+extern unsigned IOCTL_BLKBSZSET;
+extern unsigned IOCTL_BLKGETSIZE64;
 extern unsigned IOCTL_CDROMAUDIOBUFSIZ;
 extern unsigned IOCTL_CDROMEJECT;
 extern unsigned IOCTL_CDROMEJECT_SW;
@@ -1454,6 +1464,6 @@ extern const int si_SEGV_ACCERR;
 
 #define SIGACTION_SYMNAME sigaction
 
-#endif  // SANITIZER_LINUX || SANITIZER_MAC
+#endif  // SANITIZER_LINUX || SANITIZER_APPLE
 
 #endif

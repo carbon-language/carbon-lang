@@ -14,23 +14,18 @@
 
 #include "InstrEmitter.h"
 #include "SDNodeDbgValue.h"
-#include "llvm/ADT/Statistic.h"
 #include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/StackMaps.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
-#include "llvm/IR/DataLayout.h"
-#include "llvm/IR/DebugInfo.h"
+#include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/PseudoProbe.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
@@ -1342,11 +1337,12 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
 /// InstrEmitter - Construct an InstrEmitter and set it to start inserting
 /// at the given position in the given block.
 InstrEmitter::InstrEmitter(const TargetMachine &TM, MachineBasicBlock *mbb,
-                           MachineBasicBlock::iterator insertpos)
+                           MachineBasicBlock::iterator insertpos,
+                           bool UseInstrRefDebugInfo)
     : MF(mbb->getParent()), MRI(&MF->getRegInfo()),
       TII(MF->getSubtarget().getInstrInfo()),
       TRI(MF->getSubtarget().getRegisterInfo()),
       TLI(MF->getSubtarget().getTargetLowering()), MBB(mbb),
       InsertPos(insertpos) {
-  EmitDebugInstrRefs = MF->useDebugInstrRef();
+  EmitDebugInstrRefs = UseInstrRefDebugInfo;
 }

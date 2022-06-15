@@ -21,11 +21,11 @@
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
-#include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
@@ -511,6 +511,18 @@ void GlobalsAAResult::AnalyzeCallGraph(CallGraph &CG, Module &M) {
     Handles.front().I = Handles.begin();
     bool KnowNothing = false;
 
+    // Intrinsics, like any other synchronizing function, can make effects
+    // of other threads visible. Without nosync we know nothing really.
+    // Similarly, if `nocallback` is missing the function, or intrinsic,
+    // can call into the module arbitrarily. If both are set the function
+    // has an effect but will not interact with accesses of internal
+    // globals inside the module. We are conservative here for optnone
+    // functions, might not be necessary.
+    auto MaySyncOrCallIntoModule = [](const Function &F) {
+      return !F.isDeclaration() || !F.hasNoSync() ||
+             !F.hasFnAttribute(Attribute::NoCallback);
+    };
+
     // Collect the mod/ref properties due to called functions.  We only compute
     // one mod-ref set.
     for (unsigned i = 0, e = SCC.size(); i != e && !KnowNothing; ++i) {
@@ -525,7 +537,7 @@ void GlobalsAAResult::AnalyzeCallGraph(CallGraph &CG, Module &M) {
           // Can't do better than that!
         } else if (F->onlyReadsMemory()) {
           FI.addModRefInfo(ModRefInfo::Ref);
-          if (!F->isIntrinsic() && !F->onlyAccessesArgMemory())
+          if (!F->onlyAccessesArgMemory() && MaySyncOrCallIntoModule(*F))
             // This function might call back into the module and read a global -
             // consider every global as possibly being read by this function.
             FI.setMayReadAnyGlobal();
@@ -533,7 +545,7 @@ void GlobalsAAResult::AnalyzeCallGraph(CallGraph &CG, Module &M) {
           FI.addModRefInfo(ModRefInfo::ModRef);
           if (!F->onlyAccessesArgMemory())
             FI.setMayReadAnyGlobal();
-          if (!F->isIntrinsic()) {
+          if (MaySyncOrCallIntoModule(*F)) {
             KnowNothing = true;
             break;
           }
@@ -1008,6 +1020,24 @@ GlobalsAAResult GlobalsAA::run(Module &M, ModuleAnalysisManager &AM) {
   };
   return GlobalsAAResult::analyzeModule(M, GetTLI,
                                         AM.getResult<CallGraphAnalysis>(M));
+}
+
+PreservedAnalyses RecomputeGlobalsAAPass::run(Module &M,
+                                              ModuleAnalysisManager &AM) {
+  if (auto *G = AM.getCachedResult<GlobalsAA>(M)) {
+    auto &CG = AM.getResult<CallGraphAnalysis>(M);
+    G->NonAddressTakenGlobals.clear();
+    G->UnknownFunctionsWithLocalLinkage = false;
+    G->IndirectGlobals.clear();
+    G->AllocsForIndirectGlobals.clear();
+    G->FunctionInfos.clear();
+    G->FunctionToSCCMap.clear();
+    G->Handles.clear();
+    G->CollectSCCMembership(CG);
+    G->AnalyzeGlobals(M);
+    G->AnalyzeCallGraph(CG, M);
+  }
+  return PreservedAnalyses::all();
 }
 
 char GlobalsAAWrapperPass::ID = 0;

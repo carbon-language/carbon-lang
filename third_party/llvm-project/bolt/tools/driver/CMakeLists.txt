@@ -1,8 +1,5 @@
 set(LLVM_LINK_COMPONENTS
   ${LLVM_TARGETS_TO_BUILD}
-  BOLTProfile
-  BOLTRewrite
-  BOLTUtils
   MC
   Object
   Support
@@ -21,6 +18,13 @@ add_llvm_tool(llvm-bolt
   ${BOLT_DRIVER_DEPS}
   )
 
+target_link_libraries(llvm-bolt
+  PRIVATE
+  LLVMBOLTProfile
+  LLVMBOLTRewrite
+  LLVMBOLTUtils
+  )
+
 add_llvm_tool_symlink(perf2bolt llvm-bolt)
 add_llvm_tool_symlink(llvm-boltdiff llvm-bolt)
 
@@ -35,7 +39,7 @@ install(PROGRAMS
   ${CMAKE_BINARY_DIR}/bin/llvm-bolt
   ${CMAKE_BINARY_DIR}/bin/perf2bolt
   ${CMAKE_BINARY_DIR}/bin/llvm-boltdiff
-  TYPE BIN
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
   COMPONENT bolt
   )
 add_llvm_install_targets(install-bolt DEPENDS bolt COMPONENT bolt)

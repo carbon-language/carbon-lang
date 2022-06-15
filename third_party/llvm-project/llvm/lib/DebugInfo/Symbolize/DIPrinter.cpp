@@ -16,9 +16,7 @@
 #include "llvm/DebugInfo/DIContext.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/Format.h"
-#include "llvm/Support/LineIterator.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cmath>
@@ -208,6 +206,10 @@ void PlainPrinterBase::print(const Request &Request, const DIGlobal &Global) {
     Name = DILineInfo::Addr2LineBadString;
   OS << Name << "\n";
   OS << Global.Start << " " << Global.Size << "\n";
+  if (Global.DeclFile.empty())
+    OS << "??:?\n";
+  else
+    OS << Global.DeclFile << ":" << Global.DeclLine << "\n";
   printFooter();
 }
 

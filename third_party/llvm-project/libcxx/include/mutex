@@ -186,12 +186,12 @@ template<class Callable, class ...Args>
 
 */
 
+#include <__assert> // all public C++ headers provide the assertion handler
 #include <__config>
 #include <__mutex_base>
 #include <__threading_support>
 #include <__utility/forward.h>
 #include <cstdint>
-#include <functional>
 #include <memory>
 #ifndef _LIBCPP_CXX03_LANG
 # include <tuple>

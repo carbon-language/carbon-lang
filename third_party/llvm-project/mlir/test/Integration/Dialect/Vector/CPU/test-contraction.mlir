@@ -1,4 +1,4 @@
-// RUN: mlir-opt %s -convert-scf-to-cf -convert-vector-to-llvm -convert-std-to-llvm -reconcile-unrealized-casts | \
+// RUN: mlir-opt %s -convert-scf-to-cf -convert-vector-to-llvm -convert-func-to-llvm -reconcile-unrealized-casts | \
 // RUN: mlir-cpu-runner -e entry -entry-point-result=void  \
 // RUN:   -shared-libs=%mlir_integration_test_dir/libmlir_c_runner_utils%shlibext | \
 // RUN: FileCheck %s
@@ -133,7 +133,7 @@
   iterator_types = ["parallel", "parallel", "reduction"]
 }
 
-func @entry() {
+func.func @entry() {
   %f0 = arith.constant 0.0: f32
   %f1 = arith.constant 1.0: f32
   %f2 = arith.constant 2.0: f32

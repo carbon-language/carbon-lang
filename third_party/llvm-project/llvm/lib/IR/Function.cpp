@@ -927,25 +927,25 @@ std::string Intrinsic::getNameNoUnnamedTypes(ID Id, ArrayRef<Type *> Tys) {
 enum IIT_Info {
   // Common values should be encoded with 0-15.
   IIT_Done = 0,
-  IIT_I1   = 1,
-  IIT_I8   = 2,
-  IIT_I16  = 3,
-  IIT_I32  = 4,
-  IIT_I64  = 5,
-  IIT_F16  = 6,
-  IIT_F32  = 7,
-  IIT_F64  = 8,
-  IIT_V2   = 9,
-  IIT_V4   = 10,
-  IIT_V8   = 11,
-  IIT_V16  = 12,
-  IIT_V32  = 13,
-  IIT_PTR  = 14,
-  IIT_ARG  = 15,
+  IIT_I1 = 1,
+  IIT_I8 = 2,
+  IIT_I16 = 3,
+  IIT_I32 = 4,
+  IIT_I64 = 5,
+  IIT_F16 = 6,
+  IIT_F32 = 7,
+  IIT_F64 = 8,
+  IIT_V2 = 9,
+  IIT_V4 = 10,
+  IIT_V8 = 11,
+  IIT_V16 = 12,
+  IIT_V32 = 13,
+  IIT_PTR = 14,
+  IIT_ARG = 15,
 
   // Values from 16+ are only encodable with the inefficient encoding.
-  IIT_V64  = 16,
-  IIT_MMX  = 17,
+  IIT_V64 = 16,
+  IIT_MMX = 17,
   IIT_TOKEN = 18,
   IIT_METADATA = 19,
   IIT_EMPTYSTRUCT = 20,
@@ -956,7 +956,7 @@ enum IIT_Info {
   IIT_EXTEND_ARG = 25,
   IIT_TRUNC_ARG = 26,
   IIT_ANYPTR = 27,
-  IIT_V1   = 28,
+  IIT_V1 = 28,
   IIT_VARARG = 29,
   IIT_HALF_VEC_ARG = 30,
   IIT_SAME_VEC_WIDTH_ARG = 31,
@@ -979,11 +979,14 @@ enum IIT_Info {
   IIT_BF16 = 48,
   IIT_STRUCT9 = 49,
   IIT_V256 = 50,
-  IIT_AMX  = 51,
+  IIT_AMX = 51,
   IIT_PPCF128 = 52,
   IIT_V3 = 53,
   IIT_EXTERNREF = 54,
-  IIT_FUNCREF = 55
+  IIT_FUNCREF = 55,
+  IIT_ANYPTR_TO_ELT = 56,
+  IIT_I2 = 57,
+  IIT_I4 = 58,
 };
 
 static void DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
@@ -1035,6 +1038,12 @@ static void DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
     return;
   case IIT_I1:
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::Integer, 1));
+    return;
+  case IIT_I2:
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Integer, 2));
+    return;
+  case IIT_I4:
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Integer, 4));
     return;
   case IIT_I8:
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::Integer, 8));
@@ -1155,6 +1164,13 @@ static void DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
   case IIT_PTR_TO_ELT: {
     unsigned ArgInfo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::PtrToElt, ArgInfo));
+    return;
+  }
+  case IIT_ANYPTR_TO_ELT: {
+    unsigned short ArgNo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
+    unsigned short RefNo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
+    OutputTable.push_back(
+        IITDescriptor::get(IITDescriptor::AnyPtrToElt, ArgNo, RefNo));
     return;
   }
   case IIT_VEC_OF_ANYPTRS_TO_ELT: {
@@ -1348,6 +1364,9 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
   case IITDescriptor::VecOfAnyPtrsToElt:
     // Return the overloaded type (which determines the pointers address space)
     return Tys[D.getOverloadArgNumber()];
+  case IITDescriptor::AnyPtrToElt:
+    // Return the overloaded type (which determines the pointers address space)
+    return Tys[D.getOverloadArgNumber()];
   }
   llvm_unreachable("unhandled");
 }
@@ -1464,19 +1483,37 @@ static bool matchIntrinsicType(
       PointerType *PT = dyn_cast<PointerType>(Ty);
       if (!PT || PT->getAddressSpace() != D.Pointer_AddressSpace)
         return true;
-      if (!PT->isOpaque())
+      if (!PT->isOpaque()) {
+        /* Manually consume a pointer to empty struct descriptor, which is
+         * used for externref. We don't want to enforce that the struct is
+         * anonymous in this case. (This renders externref intrinsics
+         * non-unique, but this will go away with opaque pointers anyway.) */
+        if (Infos.front().Kind == IITDescriptor::Struct &&
+            Infos.front().Struct_NumElements == 0) {
+          Infos = Infos.slice(1);
+          return false;
+        }
         return matchIntrinsicType(PT->getNonOpaquePointerElementType(), Infos,
                                   ArgTys, DeferredChecks, IsDeferredCheck);
+      }
       // Consume IIT descriptors relating to the pointer element type.
-      while (Infos.front().Kind == IITDescriptor::Pointer)
+      // FIXME: Intrinsic type matching of nested single value types or even
+      // aggregates doesn't work properly with opaque pointers but hopefully
+      // doesn't happen in practice.
+      while (Infos.front().Kind == IITDescriptor::Pointer ||
+             Infos.front().Kind == IITDescriptor::Vector)
         Infos = Infos.slice(1);
+      assert((Infos.front().Kind != IITDescriptor::Argument ||
+              Infos.front().getArgumentKind() == IITDescriptor::AK_MatchType) &&
+             "Unsupported polymorphic pointer type with opaque pointer");
       Infos = Infos.slice(1);
       return false;
     }
 
     case IITDescriptor::Struct: {
       StructType *ST = dyn_cast<StructType>(Ty);
-      if (!ST || ST->getNumElements() != D.Struct_NumElements)
+      if (!ST || !ST->isLiteral() || ST->isPacked() ||
+          ST->getNumElements() != D.Struct_NumElements)
         return true;
 
       for (unsigned i = 0, e = D.Struct_NumElements; i != e; ++i)
@@ -1583,6 +1620,30 @@ static bool matchIntrinsicType(
         dyn_cast<VectorType> (ArgTys[D.getArgumentNumber()]);
       PointerType *ThisArgType = dyn_cast<PointerType>(Ty);
 
+      if (!ThisArgType || !ReferenceType)
+        return true;
+      return !ThisArgType->isOpaqueOrPointeeTypeMatches(
+          ReferenceType->getElementType());
+    }
+    case IITDescriptor::AnyPtrToElt: {
+      unsigned RefArgNumber = D.getRefArgNumber();
+      if (RefArgNumber >= ArgTys.size()) {
+        if (IsDeferredCheck)
+          return true;
+        // If forward referencing, already add the pointer type and
+        // defer the checks for later.
+        ArgTys.push_back(Ty);
+        return DeferCheck(Ty);
+      }
+
+      if (!IsDeferredCheck) {
+        assert(D.getOverloadArgNumber() == ArgTys.size() &&
+               "Table consistency error");
+        ArgTys.push_back(Ty);
+      }
+
+      auto *ReferenceType = dyn_cast<VectorType>(ArgTys[RefArgNumber]);
+      auto *ThisArgType = dyn_cast<PointerType>(Ty);
       if (!ThisArgType || !ReferenceType)
         return true;
       return !ThisArgType->isOpaqueOrPointeeTypeMatches(
@@ -1803,7 +1864,7 @@ bool Function::hasAddressTaken(const User **PutOffender,
         *PutOffender = FU;
       return true;
     }
-    if (!Call->isCallee(&U)) {
+    if (!Call->isCallee(&U) || Call->getFunctionType() != getFunctionType()) {
       if (IgnoreARCAttachedCall &&
           Call->isOperandBundleOfType(LLVMContext::OB_clang_arc_attachedcall,
                                       U.getOperandNo()))

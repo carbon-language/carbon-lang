@@ -67,7 +67,7 @@ private:
 
   Value *simplify(Instruction *I, const TargetLibraryInfo *TLI,
                   const DominatorTree *DT) {
-    return SimplifyInstruction(I, {*TD, TLI, DT});
+    return simplifyInstruction(I, {*TD, TLI, DT});
   }
 
   const DataLayout *TD;
@@ -562,15 +562,6 @@ bool AMDGPUPrintfRuntimeBindingImpl::run(Module &M) {
 
   if (Printfs.empty())
     return false;
-
-  if (auto HostcallFunction = M.getFunction("__ockl_hostcall_internal")) {
-    for (auto &U : HostcallFunction->uses()) {
-      if (auto *CI = dyn_cast<CallInst>(U.getUser())) {
-        M.getContext().emitError(
-            CI, "Cannot use both printf and hostcall in the same module");
-      }
-    }
-  }
 
   TD = &M.getDataLayout();
 

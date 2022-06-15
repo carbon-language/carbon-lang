@@ -62,3 +62,51 @@ define <3 x half> @nan_v3f64_trunc() {
   %f = fptrunc <3 x double> <double 0x7FF0020000000000, double 0x7FF003FFFFFFFFFF, double 0x7FF8000000000001> to <3 x half>
   ret <3 x half> %f
 }
+
+define bfloat @nan_bf16_trunc() {
+; CHECK-LABEL: @nan_bf16_trunc(
+; CHECK-NEXT:    ret bfloat 0xR7FC0
+;
+  %f = fptrunc double 0x7FF0000000000001 to bfloat
+  ret bfloat %f
+}
+
+define float @trunc_denorm_lost_fraction0() {
+; CHECK-LABEL: @trunc_denorm_lost_fraction0(
+; CHECK-NEXT:    ret float 0.000000e+00
+;
+  %b = fptrunc double 0x0000000010000000 to float
+  ret float %b
+}
+
+define float @trunc_denorm_lost_fraction1() {
+; CHECK-LABEL: @trunc_denorm_lost_fraction1(
+; CHECK-NEXT:    ret float 0.000000e+00
+;
+  %b = fptrunc double 0x0000000010000001 to float
+  ret float %b
+}
+
+define float @trunc_denorm_lost_fraction2() {
+; CHECK-LABEL: @trunc_denorm_lost_fraction2(
+; CHECK-NEXT:    ret float 0.000000e+00
+;
+  %b = fptrunc double 0x000000001fffffff to float
+  ret float %b
+}
+
+define float @trunc_denorm_lost_fraction3() {
+; CHECK-LABEL: @trunc_denorm_lost_fraction3(
+; CHECK-NEXT:    ret float 0.000000e+00
+;
+  %b = fptrunc double 0x0000000020000000 to float
+  ret float %b
+}
+
+define float @trunc_denorm_lost_fraction4() {
+; CHECK-LABEL: @trunc_denorm_lost_fraction4(
+; CHECK-NEXT:    ret float -0.000000e+00
+;
+  %b = fptrunc double 0x8000000010000001 to float
+  ret float %b
+}

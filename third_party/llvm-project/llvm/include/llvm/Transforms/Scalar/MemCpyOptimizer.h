@@ -16,8 +16,6 @@
 
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/PassManager.h"
-#include <cstdint>
-#include <functional>
 
 namespace llvm {
 
@@ -63,7 +61,7 @@ private:
   bool processMemMove(MemMoveInst *M);
   bool performCallSlotOptzn(Instruction *cpyLoad, Instruction *cpyStore,
                             Value *cpyDst, Value *cpySrc, TypeSize cpyLen,
-                            Align cpyAlign, CallInst *C);
+                            Align cpyAlign, std::function<CallInst *()> GetC);
   bool processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep);
   bool processMemSetMemCpyDependence(MemCpyInst *MemCpy, MemSetInst *MemSet);
   bool performMemCpyToMemSetOptzn(MemCpyInst *MemCpy, MemSetInst *MemSet);

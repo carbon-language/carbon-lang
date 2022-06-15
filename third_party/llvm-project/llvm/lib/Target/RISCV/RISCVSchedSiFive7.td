@@ -229,6 +229,11 @@ defm : UnsupportedSchedZba;
 defm : UnsupportedSchedZbb;
 defm : UnsupportedSchedZbc;
 defm : UnsupportedSchedZbs;
+defm : UnsupportedSchedZbe;
 defm : UnsupportedSchedZbf;
+defm : UnsupportedSchedZbm;
+defm : UnsupportedSchedZbp;
+defm : UnsupportedSchedZbr;
+defm : UnsupportedSchedZbt;
 defm : UnsupportedSchedZfh;
 }

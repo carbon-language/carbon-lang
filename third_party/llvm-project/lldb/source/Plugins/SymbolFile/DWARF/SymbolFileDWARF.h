@@ -56,7 +56,7 @@ class SymbolFileDWARFDwp;
 
 #define DIE_IS_BEING_PARSED ((lldb_private::Type *)1)
 
-class SymbolFileDWARF : public lldb_private::SymbolFile,
+class SymbolFileDWARF : public lldb_private::SymbolFileCommon,
                         public lldb_private::UserID {
   /// LLVM RTTI support.
   static char ID;
@@ -65,7 +65,7 @@ public:
   /// LLVM RTTI support.
   /// \{
   bool isA(const void *ClassID) const override {
-    return ClassID == &ID || SymbolFile::isA(ClassID);
+    return ClassID == &ID || SymbolFileCommon::isA(ClassID);
   }
   static bool classof(const SymbolFile *obj) { return obj->isA(&ID); }
   /// \}
@@ -560,6 +560,7 @@ protected:
   /// address in the module.
   lldb::addr_t m_first_code_address = LLDB_INVALID_ADDRESS;
   lldb_private::StatsDuration m_parse_time;
+  std::atomic_flag m_dwo_warning_issued = ATOMIC_FLAG_INIT;
 };
 
 #endif // LLDB_SOURCE_PLUGINS_SYMBOLFILE_DWARF_SYMBOLFILEDWARF_H

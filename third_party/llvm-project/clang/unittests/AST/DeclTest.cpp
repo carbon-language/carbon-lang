@@ -171,3 +171,73 @@ TEST(Decl, IsInExportDeclContext) {
       selectFirst<FunctionDecl>("f", match(functionDecl().bind("f"), Ctx));
   EXPECT_TRUE(f->isInExportDeclContext());
 }
+
+TEST(Decl, InConsistLinkageForTemplates) {
+  llvm::Annotations Code(R"(
+    export module m;
+    export template <class T>
+    void f() {}
+
+    template <>
+    void f<int>() {})");
+
+  auto AST =
+      tooling::buildASTFromCodeWithArgs(Code.code(), /*Args=*/{"-std=c++20"});
+  ASTContext &Ctx = AST->getASTContext();
+
+  llvm::SmallVector<ast_matchers::BoundNodes, 2> Funcs =
+      match(functionDecl().bind("f"), Ctx);
+
+  EXPECT_EQ(Funcs.size(), 2U);
+  const FunctionDecl *TemplateF = Funcs[0].getNodeAs<FunctionDecl>("f");
+  const FunctionDecl *SpecializedF = Funcs[1].getNodeAs<FunctionDecl>("f");
+  EXPECT_EQ(TemplateF->getLinkageInternal(),
+            SpecializedF->getLinkageInternal());
+}
+
+TEST(Decl, ModuleAndInternalLinkage) {
+  llvm::Annotations Code(R"(
+    export module M;
+    static int a;
+    static int f(int x);
+
+    int b;
+    int g(int x);)");
+
+  auto AST =
+      tooling::buildASTFromCodeWithArgs(Code.code(), /*Args=*/{"-std=c++20"});
+  ASTContext &Ctx = AST->getASTContext();
+
+  const auto *a =
+      selectFirst<VarDecl>("a", match(varDecl(hasName("a")).bind("a"), Ctx));
+  const auto *f = selectFirst<FunctionDecl>(
+      "f", match(functionDecl(hasName("f")).bind("f"), Ctx));
+
+  EXPECT_EQ(a->getLinkageInternal(), InternalLinkage);
+  EXPECT_EQ(f->getLinkageInternal(), InternalLinkage);
+
+  const auto *b =
+      selectFirst<VarDecl>("b", match(varDecl(hasName("b")).bind("b"), Ctx));
+  const auto *g = selectFirst<FunctionDecl>(
+      "g", match(functionDecl(hasName("g")).bind("g"), Ctx));
+
+  EXPECT_EQ(b->getLinkageInternal(), ModuleLinkage);
+  EXPECT_EQ(g->getLinkageInternal(), ModuleLinkage);
+
+  AST = tooling::buildASTFromCodeWithArgs(
+      Code.code(), /*Args=*/{"-std=c++20", "-fmodules-ts"});
+  ASTContext &CtxTS = AST->getASTContext();
+  a = selectFirst<VarDecl>("a", match(varDecl(hasName("a")).bind("a"), CtxTS));
+  f = selectFirst<FunctionDecl>(
+      "f", match(functionDecl(hasName("f")).bind("f"), CtxTS));
+
+  EXPECT_EQ(a->getLinkageInternal(), ModuleInternalLinkage);
+  EXPECT_EQ(f->getLinkageInternal(), ModuleInternalLinkage);
+
+  b = selectFirst<VarDecl>("b", match(varDecl(hasName("b")).bind("b"), CtxTS));
+  g = selectFirst<FunctionDecl>(
+      "g", match(functionDecl(hasName("g")).bind("g"), CtxTS));
+
+  EXPECT_EQ(b->getLinkageInternal(), ModuleLinkage);
+  EXPECT_EQ(g->getLinkageInternal(), ModuleLinkage);
+}

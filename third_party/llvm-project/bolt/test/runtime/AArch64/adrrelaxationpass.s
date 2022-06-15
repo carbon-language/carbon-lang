@@ -6,7 +6,7 @@
 # RUN: llvm-mc -filetype=obj -triple aarch64-unknown-unknown \
 # RUN:   %s -o %t.o
 # RUN: %clang %cflags %t.o -o %t.exe -Wl,-q
-# RUN: llvm-bolt %t.exe -o %t.bolt -adr-relaxation=true
+# RUN: llvm-bolt %t.exe -o %t.bolt --adr-relaxation=true
 # RUN: llvm-objdump -d --disassemble-symbols=main %t.bolt | FileCheck %s
 # RUN: %t.bolt
 
@@ -41,9 +41,9 @@ br:
   .word 0xff
 
 # CHECK: <main>:
-# CHECK-NEXT: adr x0, #28
+# CHECK-NEXT: adr x0, #{{[0-9][0-9]*}}
 # CHECK-NEXT: adrp x1, 0x{{[1-8a-f][0-9a-f]*}}
 # CHECK-NEXT: add x1, x1, #{{[1-8a-f][0-9a-f]*}}
 # CHECK-NEXT: adrp x2, 0x{{[1-8a-f][0-9a-f]*}}
 # CHECK-NEXT: add x2, x2, #{{[1-8a-f][0-9a-f]*}}
-# CHECK-NEXT: adr x3, #4
+# CHECK-NEXT: adr x3, #{{[0-9][0-9]*}}

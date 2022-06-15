@@ -55,8 +55,18 @@
 #  define SANITIZER_SOLARIS 0
 #endif
 
+// - SANITIZER_APPLE: all Apple code
+//   - TARGET_OS_OSX: macOS
+//   - SANITIZER_IOS: devices (iOS and iOS-like)
+//     - SANITIZER_WATCHOS
+//     - SANITIZER_TVOS
+//   - SANITIZER_IOSSIM: simulators (iOS and iOS-like)
+//   - SANITIZER_DRIVERKIT
 #if defined(__APPLE__)
-#  define SANITIZER_MAC 1
+#  define SANITIZER_APPLE 1
+// SANITIZER_MAC will be deprecated/removed in the future
+#  define SANITIZER_MAC \
+     error "SANITIZER_MAC will be removed, please use SANITIZER_APPLE"
 #  include <TargetConditionals.h>
 #  if TARGET_OS_OSX
 #    define SANITIZER_OSX 1
@@ -68,28 +78,36 @@
 #  else
 #    define SANITIZER_IOS 0
 #  endif
+#  if TARGET_OS_WATCH
+#    define SANITIZER_WATCHOS 1
+#  else
+#    define SANITIZER_WATCHOS 0
+#  endif
+#  if TARGET_OS_TV
+#    define SANITIZER_TVOS 1
+#  else
+#    define SANITIZER_TVOS 0
+#  endif
 #  if TARGET_OS_SIMULATOR
 #    define SANITIZER_IOSSIM 1
 #  else
 #    define SANITIZER_IOSSIM 0
 #  endif
+#  if TARGET_OS_DRIVERKIT
+#    define SANITIZER_DRIVERKIT 1
+#  else
+#    define SANITIZER_DRIVERKIT 0
+#  endif
 #else
-#  define SANITIZER_MAC 0
-#  define SANITIZER_IOS 0
-#  define SANITIZER_IOSSIM 0
+#  define SANITIZER_APPLE 0
+#  define SANITIZER_MAC \
+     error "SANITIZER_MAC will be removed, please use SANITIZER_APPLE"
 #  define SANITIZER_OSX 0
-#endif
-
-#if defined(__APPLE__) && TARGET_OS_IPHONE && TARGET_OS_WATCH
-#  define SANITIZER_WATCHOS 1
-#else
+#  define SANITIZER_IOS 0
 #  define SANITIZER_WATCHOS 0
-#endif
-
-#if defined(__APPLE__) && TARGET_OS_IPHONE && TARGET_OS_TV
-#  define SANITIZER_TVOS 1
-#else
 #  define SANITIZER_TVOS 0
+#  define SANITIZER_IOSSIM 0
+#  define SANITIZER_DRIVERKIT 0
 #endif
 
 #if defined(_WIN32)
@@ -116,8 +134,15 @@
 #  define SANITIZER_FUCHSIA 0
 #endif
 
+// Assume linux that is not glibc or android is musl libc.
+#if SANITIZER_LINUX && !SANITIZER_GLIBC && !SANITIZER_ANDROID
+#  define SANITIZER_MUSL 1
+#else
+#  define SANITIZER_MUSL 0
+#endif
+
 #define SANITIZER_POSIX                                     \
-  (SANITIZER_FREEBSD || SANITIZER_LINUX || SANITIZER_MAC || \
+  (SANITIZER_FREEBSD || SANITIZER_LINUX || SANITIZER_APPLE || \
    SANITIZER_NETBSD || SANITIZER_SOLARIS)
 
 #if __LP64__ || defined(_WIN64)
@@ -178,6 +203,21 @@
 #  define SANITIZER_S390 0
 #  define SANITIZER_S390_31 0
 #  define SANITIZER_S390_64 0
+#endif
+
+#if defined(__sparc__)
+#  define SANITIZER_SPARC 1
+#  if defined(__arch64__)
+#    define SANITIZER_SPARC32 0
+#    define SANITIZER_SPARC64 1
+#  else
+#    define SANITIZER_SPARC32 1
+#    define SANITIZER_SPARC64 0
+#  endif
+#else
+#  define SANITIZER_SPARC 0
+#  define SANITIZER_SPARC32 0
+#  define SANITIZER_SPARC64 0
 #endif
 
 #if defined(__powerpc__)
@@ -245,7 +285,8 @@
 #ifndef SANITIZER_CAN_USE_ALLOCATOR64
 #  if (SANITIZER_ANDROID && defined(__aarch64__)) || SANITIZER_FUCHSIA
 #    define SANITIZER_CAN_USE_ALLOCATOR64 1
-#  elif defined(__mips64) || defined(__aarch64__)
+#  elif defined(__mips64) || defined(__aarch64__) || defined(__i386__) || \
+      defined(__arm__) || SANITIZER_RISCV64 || defined(__hexagon__)
 #    define SANITIZER_CAN_USE_ALLOCATOR64 0
 #  else
 #    define SANITIZER_CAN_USE_ALLOCATOR64 (SANITIZER_WORDSIZE == 64)
@@ -264,7 +305,7 @@
 #elif SANITIZER_RISCV64
 #  define SANITIZER_MMAP_RANGE_SIZE FIRST_32_SECOND_64(1ULL << 32, 1ULL << 38)
 #elif defined(__aarch64__)
-#  if SANITIZER_MAC
+#  if SANITIZER_APPLE
 #    if SANITIZER_OSX || SANITIZER_IOSSIM
 #      define SANITIZER_MMAP_RANGE_SIZE \
         FIRST_32_SECOND_64(1ULL << 32, 1ULL << 47)
@@ -289,18 +330,6 @@
 #  define SANITIZER_SIGN_EXTENDED_ADDRESSES 1
 #else
 #  define SANITIZER_SIGN_EXTENDED_ADDRESSES 0
-#endif
-
-// The AArch64 and RISC-V linux ports use the canonical syscall set as
-// mandated by the upstream linux community for all new ports. Other ports
-// may still use legacy syscalls.
-#ifndef SANITIZER_USES_CANONICAL_LINUX_SYSCALLS
-#  if (defined(__aarch64__) || defined(__riscv) || defined(__hexagon__)) && \
-      SANITIZER_LINUX
-#    define SANITIZER_USES_CANONICAL_LINUX_SYSCALLS 1
-#  else
-#    define SANITIZER_USES_CANONICAL_LINUX_SYSCALLS 0
-#  endif
 #endif
 
 // udi16 syscalls can only be used when the following conditions are
@@ -333,7 +362,7 @@
 #  define MSC_PREREQ(version) 0
 #endif
 
-#if SANITIZER_MAC && !(defined(__arm64__) && SANITIZER_IOS)
+#if SANITIZER_APPLE && defined(__x86_64__)
 #  define SANITIZER_NON_UNIQUE_TYPEINFO 0
 #else
 #  define SANITIZER_NON_UNIQUE_TYPEINFO 1
@@ -361,7 +390,7 @@
 #  define SANITIZER_SUPPRESS_LEAK_ON_PTHREAD_EXIT 0
 #endif
 
-#if SANITIZER_FREEBSD || SANITIZER_MAC || SANITIZER_NETBSD || SANITIZER_SOLARIS
+#if SANITIZER_FREEBSD || SANITIZER_APPLE || SANITIZER_NETBSD || SANITIZER_SOLARIS
 #  define SANITIZER_MADVISE_DONTNEED MADV_FREE
 #else
 #  define SANITIZER_MADVISE_DONTNEED MADV_DONTNEED
@@ -385,7 +414,7 @@
 // Enable ability to support sanitizer initialization that is
 // compatible with the sanitizer library being loaded via
 // `dlopen()`.
-#if SANITIZER_MAC
+#if SANITIZER_APPLE
 #  define SANITIZER_SUPPORTS_INIT_FOR_DLOPEN 1
 #else
 #  define SANITIZER_SUPPORTS_INIT_FOR_DLOPEN 0

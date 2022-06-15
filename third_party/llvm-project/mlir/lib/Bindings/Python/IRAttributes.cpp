@@ -258,8 +258,13 @@ public:
         "Gets an uniqued integer attribute associated to a type");
     c.def_property_readonly(
         "value",
-        [](PyIntegerAttribute &self) {
-          return mlirIntegerAttrGetValueInt(self);
+        [](PyIntegerAttribute &self) -> py::int_ {
+          MlirType type = mlirAttributeGetType(self);
+          if (mlirTypeIsAIndex(type) || mlirIntegerTypeIsSignless(type))
+            return mlirIntegerAttrGetValueInt(self);
+          if (mlirIntegerTypeIsSigned(type))
+            return mlirIntegerAttrGetValueSInt(self);
+          return mlirIntegerAttrGetValueUInt(self);
         },
         "Returns the value of the integer attribute");
   }
@@ -312,6 +317,43 @@ public:
           return py::str(stringRef.data, stringRef.length);
         },
         "Returns the value of the FlatSymbolRef attribute as a string");
+  }
+};
+
+class PyOpaqueAttribute : public PyConcreteAttribute<PyOpaqueAttribute> {
+public:
+  static constexpr IsAFunctionTy isaFunction = mlirAttributeIsAOpaque;
+  static constexpr const char *pyClassName = "OpaqueAttr";
+  using PyConcreteAttribute::PyConcreteAttribute;
+
+  static void bindDerived(ClassTy &c) {
+    c.def_static(
+        "get",
+        [](std::string dialectNamespace, py::buffer buffer, PyType &type,
+           DefaultingPyMlirContext context) {
+          const py::buffer_info bufferInfo = buffer.request();
+          intptr_t bufferSize = bufferInfo.size;
+          MlirAttribute attr = mlirOpaqueAttrGet(
+              context->get(), toMlirStringRef(dialectNamespace), bufferSize,
+              static_cast<char *>(bufferInfo.ptr), type);
+          return PyOpaqueAttribute(context->getRef(), attr);
+        },
+        py::arg("dialect_namespace"), py::arg("buffer"), py::arg("type"),
+        py::arg("context") = py::none(), "Gets an Opaque attribute.");
+    c.def_property_readonly(
+        "dialect_namespace",
+        [](PyOpaqueAttribute &self) {
+          MlirStringRef stringRef = mlirOpaqueAttrGetDialectNamespace(self);
+          return py::str(stringRef.data, stringRef.length);
+        },
+        "Returns the dialect namespace for the Opaque attribute as a string");
+    c.def_property_readonly(
+        "data",
+        [](PyOpaqueAttribute &self) {
+          MlirStringRef stringRef = mlirOpaqueAttrGetData(self);
+          return py::str(stringRef.data, stringRef.length);
+        },
+        "Returns the data for the Opaqued attributes as a string");
   }
 };
 
@@ -857,6 +899,7 @@ void mlir::python::populateIRAttributes(py::module &m) {
   PyDenseIntElementsAttribute::bind(m);
   PyDictAttribute::bind(m);
   PyFlatSymbolRefAttribute::bind(m);
+  PyOpaqueAttribute::bind(m);
   PyFloatAttribute::bind(m);
   PyIntegerAttribute::bind(m);
   PyStringAttribute::bind(m);

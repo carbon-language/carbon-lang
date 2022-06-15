@@ -62,14 +62,13 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/GetElementPtrTypeIterator.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
-#include "llvm/IR/User.h"
 #include "llvm/IR/Value.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
@@ -497,7 +496,7 @@ bool Vectorizer::lookThroughComplexAddresses(Value *PtrA, Value *PtrB,
   if (PtrDelta.urem(Stride) != 0)
     return false;
   unsigned IdxBitWidth = OpA->getType()->getScalarSizeInBits();
-  APInt IdxDiff = PtrDelta.udiv(Stride).zextOrSelf(IdxBitWidth);
+  APInt IdxDiff = PtrDelta.udiv(Stride).zext(IdxBitWidth);
 
   // Only look through a ZExt/SExt.
   if (!isa<SExtInst>(OpA) && !isa<ZExtInst>(OpA))
@@ -1298,10 +1297,16 @@ bool Vectorizer::vectorizeLoadChain(
     CV->replaceAllUsesWith(V);
   }
 
-  // Bitcast might not be an Instruction, if the value being loaded is a
-  // constant. In that case, no need to reorder anything.
-  if (Instruction *BitcastInst = dyn_cast<Instruction>(Bitcast))
-    reorder(BitcastInst);
+  // Since we might have opaque pointers we might end up using the pointer
+  // operand of the first load (wrt. memory loaded) for the vector load. Since
+  // this first load might not be the first in the block we potentially need to
+  // reorder the pointer operand (and its operands). If we have a bitcast though
+  // it might be before the load and should be the reorder start instruction.
+  // "Might" because for opaque pointers the "bitcast" is just the first loads
+  // pointer operand, as oppposed to something we inserted at the right position
+  // ourselves.
+  Instruction *BCInst = dyn_cast<Instruction>(Bitcast);
+  reorder((BCInst && BCInst != L0->getPointerOperand()) ? BCInst : LI);
 
   eraseInstructions(Chain);
 

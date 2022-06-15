@@ -29,7 +29,6 @@
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
-#include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/User.h"
@@ -37,7 +36,6 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include <iterator>
 
 #define DEBUG_TYPE "evaluator"
 
@@ -631,6 +629,8 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB,
 /// function.
 bool Evaluator::EvaluateFunction(Function *F, Constant *&RetVal,
                                  const SmallVectorImpl<Constant*> &ActualArgs) {
+  assert(ActualArgs.size() == F->arg_size() && "wrong number of arguments");
+
   // Check to see if this function is already executing (recursion).  If so,
   // bail out.  TODO: we might want to accept limited recursion.
   if (is_contained(CallStack, F))

@@ -1,6 +1,6 @@
 // REQUIRES: powerpc-registered-target
-// RUN: %clang_cc1 -target-feature +altivec -target-feature +vsx -triple powerpc64-unknown-unknown -emit-llvm %s -o - | FileCheck %s
-// RUN: %clang_cc1 -target-feature +altivec -target-feature +vsx -triple powerpc64le-unknown-unknown -emit-llvm %s -o - | FileCheck %s -check-prefix=CHECK-LE
+// RUN: %clang_cc1 -no-opaque-pointers -target-feature +altivec -target-feature +vsx -triple powerpc64-unknown-unknown -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -no-opaque-pointers -target-feature +altivec -target-feature +vsx -triple powerpc64le-unknown-unknown -emit-llvm %s -o - | FileCheck %s -check-prefix=CHECK-LE
 #include <altivec.h>
 
 vector bool char vbc = { 0, 1, 0, 1, 0, 1, 0, 1,
@@ -894,20 +894,12 @@ void test1() {
 // CHECK-LE-NEXT: fneg <2 x double> %[[FM]]
 
   res_vf = vec_nmsub(vf, vf, vf);
-// CHECK: fneg <4 x float> %{{[0-9]+}}
-// CHECK-NEXT: call <4 x float> @llvm.fma.v4f32(<4 x float> %{{[0-9]+}}, <4 x float> %{{[0-9]+}}, <4 x float>
-// CHECK: fneg <4 x float> %{{[0-9]+}}
-// CHECK-LE: fneg <4 x float> %{{[0-9]+}}
-// CHECK-LE-NEXT: call <4 x float> @llvm.fma.v4f32(<4 x float> %{{[0-9]+}}, <4 x float> %{{[0-9]+}}, <4 x float>
-// CHECK-LE: fneg <4 x float> %{{[0-9]+}}
+// CHECK: call <4 x float> @llvm.ppc.fnmsub.v4f32(<4 x float> %{{[0-9]+}}, <4 x float> %{{[0-9]+}}, <4 x float>
+// CHECK-LE: call <4 x float> @llvm.ppc.fnmsub.v4f32(<4 x float> %{{[0-9]+}}, <4 x float> %{{[0-9]+}}, <4 x float>
 
   res_vd = vec_nmsub(vd, vd, vd);
-// CHECK: fneg <2 x double> %{{[0-9]+}}
-// CHECK-NEXT: [[FM:[0-9]+]] = call <2 x double> @llvm.fma.v2f64(<2 x double> %{{[0-9]+}}, <2 x double> %{{[0-9]+}}, <2 x double>
-// CHECK-NEXT: fneg <2 x double> %[[FM]]
-// CHECK-LE: fneg <2 x double> %{{[0-9]+}}
-// CHECK-LE-NEXT: [[FM:[0-9]+]] = call <2 x double> @llvm.fma.v2f64(<2 x double> %{{[0-9]+}}, <2 x double> %{{[0-9]+}}, <2 x double>
-// CHECK-LE-NEXT: fneg <2 x double> %[[FM]]
+// CHECK: [[FM:[0-9]+]] = call <2 x double> @llvm.ppc.fnmsub.v2f64(<2 x double> %{{[0-9]+}}, <2 x double> %{{[0-9]+}}, <2 x double>
+// CHECK-LE: [[FM:[0-9]+]] = call <2 x double> @llvm.ppc.fnmsub.v2f64(<2 x double> %{{[0-9]+}}, <2 x double> %{{[0-9]+}}, <2 x double>
 
   /* vec_nor */
   res_vsll = vec_nor(vsll, vsll);
@@ -2221,8 +2213,6 @@ vector double xxsldwi_should_not_assert(vector double a, vector double b) {
 
 void test_vector_cpsgn_float(vector float a, vector float b) {
 // CHECK-LABEL: test_vector_cpsgn_float
-// CHECK-DAG: load{{.*}}%__a
-// CHECK-DAG: load{{.*}}%__b
 // CHECK-NOT: SEPARATOR
 // CHECK-DAG: [[RA:%[0-9]+]] = load <4 x float>, <4 x float>* %__a.addr
 // CHECK-DAG: [[RB:%[0-9]+]] = load <4 x float>, <4 x float>* %__b.addr
@@ -2232,8 +2222,6 @@ void test_vector_cpsgn_float(vector float a, vector float b) {
 
 void test_vector_cpsgn_double(vector double a, vector double b) {
 // CHECK-LABEL: test_vector_cpsgn_double
-// CHECK-DAG: load{{.*}}%__a
-// CHECK-DAG: load{{.*}}%__b
 // CHECK-NOT: SEPARATOR
 // CHECK-DAG: [[RA:%[0-9]+]] = load <2 x double>, <2 x double>* %__a.addr
 // CHECK-DAG: [[RB:%[0-9]+]] = load <2 x double>, <2 x double>* %__b.addr
@@ -2243,8 +2231,6 @@ void test_vector_cpsgn_double(vector double a, vector double b) {
 
 void test_builtin_xvcpsgnsp(vector float a, vector float b) {
 // CHECK-LABEL: test_builtin_xvcpsgnsp
-// CHECK-DAG: load{{.*}}%a
-// CHECK-DAG: load{{.*}}%b
 // CHECK-NOT: SEPARATOR
 // CHECK-DAG: [[RA:%[0-9]+]] = load <4 x float>, <4 x float>* %a.addr
 // CHECK-DAG: [[RB:%[0-9]+]] = load <4 x float>, <4 x float>* %b.addr
@@ -2254,8 +2240,6 @@ void test_builtin_xvcpsgnsp(vector float a, vector float b) {
 
 void test_builtin_xvcpsgndp(vector double a, vector double b) {
 // CHECK-LABEL: test_builtin_xvcpsgndp
-// CHECK-DAG: load{{.*}}%a
-// CHECK-DAG: load{{.*}}%b
 // CHECK-NOT: SEPARATOR
 // CHECK-DAG: [[RA:%[0-9]+]] = load <2 x double>, <2 x double>* %a.addr
 // CHECK-DAG: [[RB:%[0-9]+]] = load <2 x double>, <2 x double>* %b.addr

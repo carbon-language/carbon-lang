@@ -3,8 +3,6 @@
 // RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +sve2 -fallow-half-arguments-and-returns -S -O1 -Werror -Wall -emit-llvm -o - -x c++ %s | FileCheck %s -check-prefix=CPP-CHECK
 // RUN: %clang_cc1 -DSVE_OVERLOADED_FORMS -triple aarch64-none-linux-gnu -target-feature +sve2 -fallow-half-arguments-and-returns -S -O1 -Werror -Wall -emit-llvm -o - %s | FileCheck %s
 // RUN: %clang_cc1 -DSVE_OVERLOADED_FORMS -triple aarch64-none-linux-gnu -target-feature +sve2 -fallow-half-arguments-and-returns -S -O1 -Werror -Wall -emit-llvm -o - -x c++ %s | FileCheck %s -check-prefix=CPP-CHECK
-// RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +sve -fallow-half-arguments-and-returns -fsyntax-only -verify -verify-ignore-unexpected=error %s
-// RUN: %clang_cc1 -DSVE_OVERLOADED_FORMS -triple aarch64-none-linux-gnu -target-feature +sve -fallow-half-arguments-and-returns -fsyntax-only -verify=overload -verify-ignore-unexpected=error %s
 
 // REQUIRES: aarch64-registered-target
 
@@ -31,8 +29,6 @@
 //
 svint16_t test_svlogb_f16_z(svbool_t pg, svfloat16_t op)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svlogb_z'}}
-  // expected-warning@+1 {{implicit declaration of function 'svlogb_f16_z'}}
   return SVE_ACLE_FUNC(svlogb,_f16,_z,)(pg, op);
 }
 
@@ -50,8 +46,6 @@ svint16_t test_svlogb_f16_z(svbool_t pg, svfloat16_t op)
 //
 svint32_t test_svlogb_f32_z(svbool_t pg, svfloat32_t op)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svlogb_z'}}
-  // expected-warning@+1 {{implicit declaration of function 'svlogb_f32_z'}}
   return SVE_ACLE_FUNC(svlogb,_f32,_z,)(pg, op);
 }
 
@@ -69,8 +63,6 @@ svint32_t test_svlogb_f32_z(svbool_t pg, svfloat32_t op)
 //
 svint64_t test_svlogb_f64_z(svbool_t pg, svfloat64_t op)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svlogb_z'}}
-  // expected-warning@+1 {{implicit declaration of function 'svlogb_f64_z'}}
   return SVE_ACLE_FUNC(svlogb,_f64,_z,)(pg, op);
 }
 
@@ -88,8 +80,6 @@ svint64_t test_svlogb_f64_z(svbool_t pg, svfloat64_t op)
 //
 svint16_t test_svlogb_f16_m(svint16_t inactive, svbool_t pg, svfloat16_t op)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svlogb_m'}}
-  // expected-warning@+1 {{implicit declaration of function 'svlogb_f16_m'}}
   return SVE_ACLE_FUNC(svlogb,_f16,_m,)(inactive, pg, op);
 }
 
@@ -107,8 +97,6 @@ svint16_t test_svlogb_f16_m(svint16_t inactive, svbool_t pg, svfloat16_t op)
 //
 svint32_t test_svlogb_f32_m(svint32_t inactive, svbool_t pg, svfloat32_t op)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svlogb_m'}}
-  // expected-warning@+1 {{implicit declaration of function 'svlogb_f32_m'}}
   return SVE_ACLE_FUNC(svlogb,_f32,_m,)(inactive, pg, op);
 }
 
@@ -126,8 +114,6 @@ svint32_t test_svlogb_f32_m(svint32_t inactive, svbool_t pg, svfloat32_t op)
 //
 svint64_t test_svlogb_f64_m(svint64_t inactive, svbool_t pg, svfloat64_t op)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svlogb_m'}}
-  // expected-warning@+1 {{implicit declaration of function 'svlogb_f64_m'}}
   return SVE_ACLE_FUNC(svlogb,_f64,_m,)(inactive, pg, op);
 }
 
@@ -145,8 +131,6 @@ svint64_t test_svlogb_f64_m(svint64_t inactive, svbool_t pg, svfloat64_t op)
 //
 svint16_t test_svlogb_f16_x(svbool_t pg, svfloat16_t op)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svlogb_x'}}
-  // expected-warning@+1 {{implicit declaration of function 'svlogb_f16_x'}}
   return SVE_ACLE_FUNC(svlogb,_f16,_x,)(pg, op);
 }
 
@@ -164,8 +148,6 @@ svint16_t test_svlogb_f16_x(svbool_t pg, svfloat16_t op)
 //
 svint32_t test_svlogb_f32_x(svbool_t pg, svfloat32_t op)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svlogb_x'}}
-  // expected-warning@+1 {{implicit declaration of function 'svlogb_f32_x'}}
   return SVE_ACLE_FUNC(svlogb,_f32,_x,)(pg, op);
 }
 
@@ -183,7 +165,5 @@ svint32_t test_svlogb_f32_x(svbool_t pg, svfloat32_t op)
 //
 svint64_t test_svlogb_f64_x(svbool_t pg, svfloat64_t op)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svlogb_x'}}
-  // expected-warning@+1 {{implicit declaration of function 'svlogb_f64_x'}}
   return SVE_ACLE_FUNC(svlogb,_f64,_x,)(pg, op);
 }

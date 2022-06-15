@@ -52,6 +52,7 @@ class MCSectionCOFF;
 class MCSectionELF;
 class MCSectionGOFF;
 class MCSectionMachO;
+class MCSectionSPIRV;
 class MCSectionWasm;
 class MCSectionXCOFF;
 class MCStreamer;
@@ -66,6 +67,7 @@ template <typename T> class SmallVectorImpl;
 class SMDiagnostic;
 class SMLoc;
 class SourceMgr;
+enum class EmitDwarfUnwindType;
 
 /// Context object for machine code objects.  This class owns all of the
 /// sections that it creates.
@@ -76,7 +78,16 @@ public:
   using DiagHandlerTy =
       std::function<void(const SMDiagnostic &, bool, const SourceMgr &,
                          std::vector<const MDNode *> &)>;
-  enum Environment { IsMachO, IsELF, IsGOFF, IsCOFF, IsWasm, IsXCOFF };
+  enum Environment {
+    IsMachO,
+    IsELF,
+    IsGOFF,
+    IsCOFF,
+    IsSPIRV,
+    IsWasm,
+    IsXCOFF,
+    IsDXContainer
+  };
 
 private:
   Environment Env;
@@ -121,6 +132,7 @@ private:
   SpecificBumpPtrAllocator<MCSectionELF> ELFAllocator;
   SpecificBumpPtrAllocator<MCSectionMachO> MachOAllocator;
   SpecificBumpPtrAllocator<MCSectionGOFF> GOFFAllocator;
+  SpecificBumpPtrAllocator<MCSectionSPIRV> SPIRVAllocator;
   SpecificBumpPtrAllocator<MCSectionWasm> WasmAllocator;
   SpecificBumpPtrAllocator<MCSectionXCOFF> XCOFFAllocator;
   SpecificBumpPtrAllocator<MCInst> MCInstAllocator;
@@ -602,7 +614,8 @@ public:
                                               unsigned Flags,
                                               unsigned EntrySize);
 
-  MCSectionGOFF *getGOFFSection(StringRef Section, SectionKind Kind);
+  MCSectionGOFF *getGOFFSection(StringRef Section, SectionKind Kind,
+                                MCSection *Parent, const MCExpr *SubsectionId);
 
   MCSectionCOFF *getCOFFSection(StringRef Section, unsigned Characteristics,
                                 SectionKind Kind, StringRef COMDATSymName,
@@ -621,6 +634,8 @@ public:
   MCSectionCOFF *
   getAssociativeCOFFSection(MCSectionCOFF *Sec, const MCSymbol *KeySym,
                             unsigned UniqueID = GenericSectionID);
+
+  MCSectionSPIRV *getSPIRVSection();
 
   MCSectionWasm *getWasmSection(const Twine &Section, SectionKind K,
                                 unsigned Flags = 0) {
@@ -758,6 +773,7 @@ public:
   bool getGenDwarfForAssembly() { return GenDwarfForAssembly; }
   void setGenDwarfForAssembly(bool Value) { GenDwarfForAssembly = Value; }
   unsigned getGenDwarfFileNumber() { return GenDwarfFileNumber; }
+  EmitDwarfUnwindType emitDwarfUnwindInfo() const;
 
   void setGenDwarfFileNumber(unsigned FileNumber) {
     GenDwarfFileNumber = FileNumber;

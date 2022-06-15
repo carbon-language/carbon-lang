@@ -5129,6 +5129,7 @@ let hasNoSchedulingInfo = 1 in
 def TSB : AInoP<(outs), (ins tsb_opt:$opt), MiscFrm, NoItinerary,
                 "tsb", "\t$opt", []>, Requires<[IsARM, HasV8_4a]> {
   let Inst{31-0} = 0xe320f012;
+  let DecoderMethod = "DecodeTSBInstruction";
 }
 
 }
@@ -6387,7 +6388,7 @@ def : ARMInstAlias<"neg${s}${p} $Rd, $Rm",
                    (RSBri GPR:$Rd, GPR:$Rm, 0, pred:$p, cc_out:$s)>;
 
 // Pre-v6, 'mov r0, r0' was used as a NOP encoding.
-def : InstAlias<"nop${p}", (MOVr R0, R0, pred:$p, zero_reg)>,
+def : InstAlias<"nop${p}", (MOVr R0, R0, pred:$p, zero_reg), 0>,
          Requires<[IsARM, NoV6]>;
 
 // MUL/UMLAL/SMLAL/UMULL/SMULL are available on all arches, but
@@ -6474,4 +6475,25 @@ def CompilerBarrier : PseudoInst<(outs), (ins i32imm:$ordering), NoItinerary,
   let Size = 0;
   let AsmString = "@ COMPILER BARRIER";
   let hasNoSchedulingInfo = 1;
+}
+
+//===----------------------------------------------------------------------===//
+// Instructions used for emitting unwind opcodes on Windows.
+//===----------------------------------------------------------------------===//
+let isPseudo = 1 in {
+  def SEH_StackAlloc : PseudoInst<(outs), (ins i32imm:$size, i32imm:$wide), NoItinerary, []>, Sched<[]>;
+  def SEH_SaveRegs : PseudoInst<(outs), (ins i32imm:$mask, i32imm:$wide), NoItinerary, []>, Sched<[]>;
+  let isTerminator = 1 in
+  def SEH_SaveRegs_Ret : PseudoInst<(outs), (ins i32imm:$mask, i32imm:$wide), NoItinerary, []>, Sched<[]>;
+  def SEH_SaveSP : PseudoInst<(outs), (ins i32imm:$reg), NoItinerary, []>, Sched<[]>;
+  def SEH_SaveFRegs : PseudoInst<(outs), (ins i32imm:$first, i32imm:$last), NoItinerary, []>, Sched<[]>;
+  let isTerminator = 1 in
+  def SEH_SaveLR : PseudoInst<(outs), (ins i32imm:$offst), NoItinerary, []>, Sched<[]>;
+  def SEH_Nop : PseudoInst<(outs), (ins i32imm:$wide), NoItinerary, []>, Sched<[]>;
+  let isTerminator = 1 in
+  def SEH_Nop_Ret : PseudoInst<(outs), (ins i32imm:$wide), NoItinerary, []>, Sched<[]>;
+  def SEH_PrologEnd : PseudoInst<(outs), (ins), NoItinerary, []>, Sched<[]>;
+  def SEH_EpilogStart : PseudoInst<(outs), (ins), NoItinerary, []>, Sched<[]>;
+  let isTerminator = 1 in
+  def SEH_EpilogEnd : PseudoInst<(outs), (ins), NoItinerary, []>, Sched<[]>;
 }

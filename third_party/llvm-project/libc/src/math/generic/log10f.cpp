@@ -9,7 +9,7 @@
 #include "src/math/log10f.h"
 #include "common_constants.h" // Lookup table for (1/f)
 #include "src/__support/FPUtil/BasicOperations.h"
-#include "src/__support/FPUtil/FEnvUtils.h"
+#include "src/__support/FPUtil/FEnvImpl.h"
 #include "src/__support/FPUtil/FMA.h"
 #include "src/__support/FPUtil/FPBits.h"
 #include "src/__support/FPUtil/PolyEval.h"
@@ -101,7 +101,6 @@ static constexpr double LOG10_F[128] = {
     0x1.2b7b9e258e422p-2, 0x1.2d404b073e27ep-2, 0x1.2f032cf56a5bep-2,
     0x1.30c4478f0835fp-2, 0x1.32839e681fc62p-2};
 
-INLINE_FMA
 LLVM_LIBC_FUNCTION(float, log10f, (float x)) {
   constexpr double LOG10_2 = 0x1.34413509f79ffp-2;
 
@@ -170,7 +169,7 @@ LLVM_LIBC_FUNCTION(float, log10f, (float x)) {
   double d = static_cast<float>(xbits) - static_cast<float>(f);
   d *= ONE_OVER_F[f_index];
 
-  double extra_factor = fputil::fma(m, LOG10_2, LOG10_F[f_index]);
+  double extra_factor = fputil::multiply_add(m, LOG10_2, LOG10_F[f_index]);
 
   double r = fputil::polyeval(d, extra_factor, 0x1.bcb7b1526e4c5p-2,
                               -0x1.bcb7b1518a5e9p-3, 0x1.287a72a6f716p-3,

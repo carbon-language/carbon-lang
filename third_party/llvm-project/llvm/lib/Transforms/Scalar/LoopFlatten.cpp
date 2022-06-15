@@ -54,6 +54,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/LoopNestAnalysis.h"
 #include "llvm/Analysis/MemorySSAUpdater.h"
 #include "llvm/Analysis/OptimizationRemarkEmitter.h"
 #include "llvm/Analysis/ScalarEvolution.h"
@@ -64,12 +65,12 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/PatternMatch.h"
-#include "llvm/IR/Verifier.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Scalar/LoopPassManager.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/LoopUtils.h"
 #include "llvm/Transforms/Utils/ScalarEvolutionExpander.h"
@@ -210,8 +211,9 @@ struct FlattenInfo {
     if (!MatchedItCount)
       return false;
 
-    // Look through extends if the IV has been widened.
-    if (Widened &&
+    // Look through extends if the IV has been widened. Don't look through
+    // extends if we already looked through a trunc.
+    if (Widened && IsAdd &&
         (isa<SExtInst>(MatchedItCount) || isa<ZExtInst>(MatchedItCount))) {
       assert(MatchedItCount->getType() == InnerInductionPHI->getType() &&
              "Unexpected type mismatch in types after widening");
@@ -410,7 +412,7 @@ static bool findLoopComponents(
   // pre-header and one from the latch. The incoming latch value is the
   // increment variable.
   Increment =
-      dyn_cast<BinaryOperator>(InductionPHI->getIncomingValueForBlock(Latch));
+      cast<BinaryOperator>(InductionPHI->getIncomingValueForBlock(Latch));
   if (Increment->hasNUsesOrMore(3)) {
     LLVM_DEBUG(dbgs() << "Could not find valid increment\n");
     return false;

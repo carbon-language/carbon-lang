@@ -54,7 +54,7 @@ static ParseResult parseRegions(OpAsmParser &parser, OperationState &state,
 
 static ParseResult
 parseOperandList(OpAsmParser &parser, StringRef keyword,
-                 SmallVectorImpl<OpAsmParser::OperandType> &args,
+                 SmallVectorImpl<OpAsmParser::UnresolvedOperand> &args,
                  SmallVectorImpl<Type> &argTypes, OperationState &result) {
   if (failed(parser.parseOptionalKeyword(keyword)))
     return success();
@@ -66,18 +66,19 @@ parseOperandList(OpAsmParser &parser, StringRef keyword,
   if (succeeded(parser.parseOptionalRParen()))
     return success();
 
-  do {
-    OpAsmParser::OperandType arg;
-    Type type;
+  if (failed(parser.parseCommaSeparatedList([&]() {
+        OpAsmParser::UnresolvedOperand arg;
+        Type type;
 
-    if (parser.parseRegionArgument(arg) || parser.parseColonType(type))
-      return failure();
+        if (parser.parseOperand(arg, /*allowResultNumber=*/false) ||
+            parser.parseColonType(type))
+          return failure();
 
-    args.push_back(arg);
-    argTypes.push_back(type);
-  } while (succeeded(parser.parseOptionalComma()));
-
-  if (failed(parser.parseRParen()))
+        args.push_back(arg);
+        argTypes.push_back(type);
+        return success();
+      })) ||
+      failed(parser.parseRParen()))
     return failure();
 
   return parser.resolveOperands(args, argTypes, parser.getCurrentLocation(),
@@ -97,7 +98,7 @@ static void printOperandList(Operation::operand_range operands,
 }
 
 static ParseResult parseOptionalOperand(OpAsmParser &parser, StringRef keyword,
-                                        OpAsmParser::OperandType &operand,
+                                        OpAsmParser::UnresolvedOperand &operand,
                                         Type type, bool &hasOptional,
                                         OperationState &result) {
   hasOptional = false;
@@ -113,7 +114,7 @@ static ParseResult parseOptionalOperand(OpAsmParser &parser, StringRef keyword,
 
 static ParseResult parseOperandAndType(OpAsmParser &parser,
                                        OperationState &result) {
-  OpAsmParser::OperandType operand;
+  OpAsmParser::UnresolvedOperand operand;
   Type type;
   if (parser.parseOperand(operand) || parser.parseColonType(type) ||
       parser.resolveOperand(operand, type, result.operands))
@@ -128,7 +129,7 @@ static ParseResult parseOperandAndType(OpAsmParser &parser,
 static OptionalParseResult parseOptionalOperandAndType(OpAsmParser &parser,
                                                        StringRef keyword,
                                                        OperationState &result) {
-  OpAsmParser::OperandType operand;
+  OpAsmParser::UnresolvedOperand operand;
   if (succeeded(parser.parseOptionalKeyword(keyword))) {
     return failure(parser.parseLParen() ||
                    parseOperandAndType(parser, result) || parser.parseRParen());
@@ -153,8 +154,9 @@ static OptionalParseResult parseOptionalOperandAndType(OpAsmParser &parser,
 static OptionalParseResult parserOptionalOperandAndTypeWithPrefix(
     OpAsmParser &parser, OperationState &result, StringRef prefixKeyword) {
   if (succeeded(parser.parseOptionalKeyword(prefixKeyword))) {
-    parser.parseEqual();
-    return parseOperandAndType(parser, result);
+    if (parser.parseEqual() || parseOperandAndType(parser, result))
+      return failure();
+    return success();
   }
   return llvm::None;
 }
@@ -220,7 +222,7 @@ struct RemoveConstantIfCondition : public OpRewritePattern<OpTy> {
 ///                             region attr-dict?
 ParseResult ParallelOp::parse(OpAsmParser &parser, OperationState &result) {
   Builder &builder = parser.getBuilder();
-  SmallVector<OpAsmParser::OperandType, 8> privateOperands,
+  SmallVector<OpAsmParser::UnresolvedOperand, 8> privateOperands,
       firstprivateOperands, copyOperands, copyinOperands,
       copyinReadonlyOperands, copyoutOperands, copyoutZeroOperands,
       createOperands, createZeroOperands, noCreateOperands, presentOperands,
@@ -233,7 +235,7 @@ ParseResult ParallelOp::parse(OpAsmParser &parser, OperationState &result) {
       firstprivateOperandTypes;
 
   SmallVector<Type, 8> operandTypes;
-  OpAsmParser::OperandType ifCond, selfCond;
+  OpAsmParser::UnresolvedOperand ifCond, selfCond;
   bool hasIfCond = false, hasSelfCond = false;
   OptionalParseResult async, numGangs, numWorkers, vectorLength;
   Type i1Type = builder.getI1Type();
@@ -516,8 +518,9 @@ ParseResult LoopOp::parse(OpAsmParser &parser, OperationState &result) {
   Builder &builder = parser.getBuilder();
   unsigned executionMapping = OpenACCExecMapping::NONE;
   SmallVector<Type, 8> operandTypes;
-  SmallVector<OpAsmParser::OperandType, 8> privateOperands, reductionOperands;
-  SmallVector<OpAsmParser::OperandType, 8> tileOperands;
+  SmallVector<OpAsmParser::UnresolvedOperand, 8> privateOperands,
+      reductionOperands;
+  SmallVector<OpAsmParser::UnresolvedOperand, 8> tileOperands;
   OptionalParseResult gangNum, gangStatic, worker, vector;
 
   // gang?
@@ -530,12 +533,14 @@ ParseResult LoopOp::parse(OpAsmParser &parser, OperationState &result) {
         parser, result, LoopOp::getGangNumKeyword());
     if (gangNum.hasValue() && failed(*gangNum))
       return failure();
-    parser.parseOptionalComma();
+    // FIXME: Comma should require subsequent operands.
+    (void)parser.parseOptionalComma();
     gangStatic = parserOptionalOperandAndTypeWithPrefix(
         parser, result, LoopOp::getGangStaticKeyword());
     if (gangStatic.hasValue() && failed(*gangStatic))
       return failure();
-    parser.parseOptionalComma();
+    // FIXME: Why allow optional last commas?
+    (void)parser.parseOptionalComma();
     if (failed(parser.parseRParen()))
       return failure();
   }

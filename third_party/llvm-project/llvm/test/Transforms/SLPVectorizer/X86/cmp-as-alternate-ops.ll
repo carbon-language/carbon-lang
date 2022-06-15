@@ -4,21 +4,20 @@
 define void @test(double* %0, double %1) {
 ; CHECK-LABEL: @test(
 ; CHECK-NEXT:    [[TMP3:%.*]] = getelementptr inbounds double, double* [[TMP0:%.*]], i32 6
-; CHECK-NEXT:    [[TMP4:%.*]] = getelementptr inbounds double, double* [[TMP0]], i32 7
-; CHECK-NEXT:    br label [[TMP5:%.*]]
-; CHECK:       5:
-; CHECK-NEXT:    [[TMP6:%.*]] = insertelement <2 x double> <double 0.000000e+00, double poison>, double [[TMP1:%.*]], i32 1
-; CHECK-NEXT:    br label [[TMP7:%.*]]
-; CHECK:       7:
-; CHECK-NEXT:    [[TMP8:%.*]] = load double, double* null, align 8
-; CHECK-NEXT:    [[TMP9:%.*]] = insertelement <2 x double> <double 0.000000e+00, double poison>, double [[TMP8]], i32 1
-; CHECK-NEXT:    [[TMP10:%.*]] = fcmp olt <2 x double> [[TMP6]], [[TMP9]]
-; CHECK-NEXT:    [[TMP11:%.*]] = select <2 x i1> [[TMP10]], <2 x double> zeroinitializer, <2 x double> zeroinitializer
-; CHECK-NEXT:    [[TMP12:%.*]] = fmul <2 x double> [[TMP11]], zeroinitializer
-; CHECK-NEXT:    [[TMP13:%.*]] = fadd <2 x double> zeroinitializer, [[TMP12]]
-; CHECK-NEXT:    [[TMP14:%.*]] = bitcast double* [[TMP3]] to <2 x double>*
-; CHECK-NEXT:    store <2 x double> [[TMP13]], <2 x double>* [[TMP14]], align 8
-; CHECK-NEXT:    br label [[TMP7]]
+; CHECK-NEXT:    br label [[TMP4:%.*]]
+; CHECK:       4:
+; CHECK-NEXT:    [[TMP5:%.*]] = insertelement <2 x double> <double 0.000000e+00, double poison>, double [[TMP1:%.*]], i32 1
+; CHECK-NEXT:    br label [[TMP6:%.*]]
+; CHECK:       6:
+; CHECK-NEXT:    [[TMP7:%.*]] = load double, double* null, align 8
+; CHECK-NEXT:    [[TMP8:%.*]] = insertelement <2 x double> <double 0.000000e+00, double poison>, double [[TMP7]], i32 1
+; CHECK-NEXT:    [[TMP9:%.*]] = fcmp olt <2 x double> [[TMP5]], [[TMP8]]
+; CHECK-NEXT:    [[TMP10:%.*]] = select <2 x i1> [[TMP9]], <2 x double> zeroinitializer, <2 x double> zeroinitializer
+; CHECK-NEXT:    [[TMP11:%.*]] = fmul <2 x double> [[TMP10]], zeroinitializer
+; CHECK-NEXT:    [[TMP12:%.*]] = fadd <2 x double> zeroinitializer, [[TMP11]]
+; CHECK-NEXT:    [[TMP13:%.*]] = bitcast double* [[TMP3]] to <2 x double>*
+; CHECK-NEXT:    store <2 x double> [[TMP12]], <2 x double>* [[TMP13]], align 8
+; CHECK-NEXT:    br label [[TMP6]]
 ;
   %3 = getelementptr inbounds double, double* %0, i32 6
   %4 = getelementptr inbounds double, double* %0, i32 7
@@ -53,16 +52,12 @@ define { <2 x float>, <2 x float> } @test1(i32 %conv.i32.i.i.i) {
 ; CHECK-NEXT:    [[TMP4:%.*]] = shufflevector <4 x i1> [[TMP2]], <4 x i1> [[TMP3]], <4 x i32> <i32 0, i32 1, i32 6, i32 3>
 ; CHECK-NEXT:    [[TMP5:%.*]] = select <4 x i1> [[TMP4]], <4 x float> zeroinitializer, <4 x float> zeroinitializer
 ; CHECK-NEXT:    [[TMP6:%.*]] = fadd <4 x float> [[TMP5]], zeroinitializer
-; CHECK-NEXT:    [[TMP7:%.*]] = extractelement <4 x float> [[TMP6]], i32 0
-; CHECK-NEXT:    [[RETVAL_SROA_0_0_VEC_INSERT4:%.*]] = insertelement <2 x float> zeroinitializer, float [[TMP7]], i64 0
-; CHECK-NEXT:    [[TMP8:%.*]] = extractelement <4 x float> [[TMP6]], i32 1
-; CHECK-NEXT:    [[RETVAL_SROA_0_4_VEC_INSERT7:%.*]] = insertelement <2 x float> [[RETVAL_SROA_0_0_VEC_INSERT4]], float [[TMP8]], i64 1
-; CHECK-NEXT:    [[TMP9:%.*]] = extractelement <4 x float> [[TMP6]], i32 2
-; CHECK-NEXT:    [[RETVAL_SROA_7_8_VEC_INSERT11:%.*]] = insertelement <2 x float> zeroinitializer, float [[TMP9]], i64 0
-; CHECK-NEXT:    [[TMP10:%.*]] = extractelement <4 x float> [[TMP6]], i32 3
-; CHECK-NEXT:    [[RETVAL_SROA_7_12_VEC_INSERT13:%.*]] = insertelement <2 x float> [[RETVAL_SROA_7_8_VEC_INSERT11]], float [[TMP10]], i64 1
-; CHECK-NEXT:    [[DOTFCA_0_INSERT:%.*]] = insertvalue { <2 x float>, <2 x float> } zeroinitializer, <2 x float> [[RETVAL_SROA_0_4_VEC_INSERT7]], 0
-; CHECK-NEXT:    [[DOTFCA_1_INSERT:%.*]] = insertvalue { <2 x float>, <2 x float> } [[DOTFCA_0_INSERT]], <2 x float> [[RETVAL_SROA_7_12_VEC_INSERT13]], 1
+; CHECK-NEXT:    [[TMP7:%.*]] = shufflevector <4 x float> [[TMP6]], <4 x float> poison, <2 x i32> <i32 0, i32 1>
+; CHECK-NEXT:    [[TMP8:%.*]] = shufflevector <2 x float> zeroinitializer, <2 x float> [[TMP7]], <2 x i32> <i32 2, i32 3>
+; CHECK-NEXT:    [[TMP9:%.*]] = shufflevector <4 x float> [[TMP6]], <4 x float> poison, <2 x i32> <i32 2, i32 3>
+; CHECK-NEXT:    [[TMP10:%.*]] = shufflevector <2 x float> zeroinitializer, <2 x float> [[TMP9]], <2 x i32> <i32 2, i32 3>
+; CHECK-NEXT:    [[DOTFCA_0_INSERT:%.*]] = insertvalue { <2 x float>, <2 x float> } zeroinitializer, <2 x float> [[TMP8]], 0
+; CHECK-NEXT:    [[DOTFCA_1_INSERT:%.*]] = insertvalue { <2 x float>, <2 x float> } [[DOTFCA_0_INSERT]], <2 x float> [[TMP10]], 1
 ; CHECK-NEXT:    ret { <2 x float>, <2 x float> } zeroinitializer
 ;
 entry:

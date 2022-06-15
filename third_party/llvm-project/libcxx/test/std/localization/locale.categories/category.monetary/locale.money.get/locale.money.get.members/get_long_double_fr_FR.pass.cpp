@@ -28,6 +28,7 @@
 #include <cassert>
 #include "test_iterators.h"
 
+#include "locale_helpers.h"
 #include "platform_support.h" // locale name macros
 #include "test_macros.h"
 
@@ -52,36 +53,8 @@ public:
         : Fw(refs) {}
 };
 
-// GLIBC 2.27 and newer use U+202F NARROW NO-BREAK SPACE as a thousands separator.
-// This function converts the spaces in string inputs to U+202F if need
-// be. FreeBSD's locale data also uses U+202F, since 2018.
-// Windows uses U+00A0 NO-BREAK SPACE.
 static std::wstring convert_thousands_sep(std::wstring const& in) {
-#if defined(_CS_GNU_LIBC_VERSION) || defined(__FreeBSD__) || defined(_WIN32)
-#if defined(_CS_GNU_LIBC_VERSION)
-  if (glibc_version_less_than("2.27"))
-    return in;
-#endif
-  std::wstring out;
-  unsigned I = 0;
-  bool seen_decimal = false;
-  for (; I < in.size(); ++I) {
-    if (seen_decimal || in[I] != L' ') {
-      seen_decimal |= in[I] == L',';
-      out.push_back(in[I]);
-      continue;
-    }
-    assert(in[I] == L' ');
-#if defined(_WIN32)
-    out.push_back(L'\u00A0');
-#else
-    out.push_back(L'\u202F');
-#endif
-  }
-  return out;
-#else
-  return in;
-#endif
+  return LocaleHelpers::convert_thousands_sep_fr_FR(in);
 }
 #endif // TEST_HAS_NO_WIDE_CHARACTERS
 
@@ -109,7 +82,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == 0);
         }
@@ -120,7 +93,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == -1);
         }
@@ -131,7 +104,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == 123456789);
         }
@@ -142,7 +115,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == -123456789);
         }
@@ -153,7 +126,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == -123456789);
         }
@@ -165,7 +138,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == 0);
         }
@@ -177,7 +150,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == 0);
         }
@@ -188,7 +161,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == -1);
         }
@@ -200,7 +173,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == -1);
         }
@@ -211,7 +184,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == 123456789);
         }
@@ -223,7 +196,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == 123456789);
             std::noshowbase(ios);
@@ -236,7 +209,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == -123456789);
             std::noshowbase(ios);
@@ -249,7 +222,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + 13);
+            assert(base(iter) == v.data() + 13);
             assert(err == std::ios_base::failbit);
             std::noshowbase(ios);
         }
@@ -260,7 +233,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + 13);
+            assert(base(iter) == v.data() + 13);
             assert(err == std::ios_base::goodbit);
             assert(ex == 123456789);
         }
@@ -276,7 +249,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == 0);
         }
@@ -287,7 +260,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == -1);
         }
@@ -298,7 +271,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == 123456789);
         }
@@ -309,7 +282,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == -123456789);
         }
@@ -320,7 +293,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == -123456789);
         }
@@ -332,7 +305,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == 0);
         }
@@ -344,7 +317,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == 0);
         }
@@ -355,7 +328,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == -1);
         }
@@ -367,7 +340,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == -1);
         }
@@ -378,7 +351,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == 123456789);
         }
@@ -390,7 +363,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == 123456789);
             std::noshowbase(ios);
@@ -403,7 +376,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == -123456789);
             std::noshowbase(ios);
@@ -416,7 +389,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + 14);
+            assert(base(iter) == v.data() + 14);
             assert(err == std::ios_base::failbit);
             std::noshowbase(ios);
         }
@@ -427,7 +400,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + 13);
+            assert(base(iter) == v.data() + 13);
             assert(err == std::ios_base::goodbit);
             assert(ex == 123456789);
         }
@@ -443,7 +416,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == 0);
         }
@@ -454,7 +427,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == -1);
         }
@@ -465,7 +438,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == 123456789);
         }
@@ -476,7 +449,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == -123456789);
         }
@@ -487,7 +460,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == -123456789);
         }
@@ -499,7 +472,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == 0);
         }
@@ -511,7 +484,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == 0);
         }
@@ -522,7 +495,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == -1);
         }
@@ -534,7 +507,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == -1);
         }
@@ -545,7 +518,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == 123456789);
         }
@@ -557,7 +530,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == 123456789);
             std::noshowbase(ios);
@@ -570,7 +543,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == -123456789);
             std::noshowbase(ios);
@@ -583,7 +556,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + 13);
+            assert(base(iter) == v.data() + 13);
             assert(err == std::ios_base::failbit);
             std::noshowbase(ios);
         }
@@ -594,7 +567,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 false, ios, err, ex);
-            assert(iter.base() == v.data() + 13);
+            assert(base(iter) == v.data() + 13);
             assert(err == std::ios_base::goodbit);
             assert(ex == 123456789);
         }
@@ -609,7 +582,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == 0);
         }
@@ -620,7 +593,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == -1);
         }
@@ -631,7 +604,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == 123456789);
         }
@@ -642,7 +615,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == -123456789);
         }
@@ -653,7 +626,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == -123456789);
         }
@@ -665,7 +638,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == 0);
         }
@@ -677,7 +650,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == 0);
         }
@@ -688,7 +661,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == -1);
         }
@@ -700,7 +673,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == -1);
         }
@@ -711,7 +684,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == 123456789);
         }
@@ -723,7 +696,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == 123456789);
             std::noshowbase(ios);
@@ -736,7 +709,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + v.size());
+            assert(base(iter) == v.data() + v.size());
             assert(err == std::ios_base::eofbit);
             assert(ex == -123456789);
             std::noshowbase(ios);
@@ -749,7 +722,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + 14);
+            assert(base(iter) == v.data() + 14);
             assert(err == std::ios_base::failbit);
             std::noshowbase(ios);
         }
@@ -760,7 +733,7 @@ int main(int, char**)
             std::ios_base::iostate err = std::ios_base::goodbit;
             I iter = f.get(I(v.data()), I(v.data() + v.size()),
                                                 true, ios, err, ex);
-            assert(iter.base() == v.data() + 13);
+            assert(base(iter) == v.data() + 13);
             assert(err == std::ios_base::goodbit);
             assert(ex == 123456789);
         }

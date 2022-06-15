@@ -10,6 +10,8 @@ def ConstStructSigactionPtr : ConstType<StructSigactionPtr>;
 def RestrictedStructSigactionPtr : RestrictedPtrType<StructSigaction>;
 def ConstRestrictedStructSigactionPtr : ConstType<RestrictedStructSigactionPtr>;
 
+def PThreadStartT : NamedType<"__pthread_start_t">;
+
 def POSIX : StandardSpec<"POSIX"> {
   PtrType CharPtr = PtrType<CharType>;
   RestrictedPtrType RestrictedCharPtr = RestrictedPtrType<CharType>;
@@ -20,6 +22,28 @@ def POSIX : StandardSpec<"POSIX"> {
   NamedType ModeTType = NamedType<"mode_t">;
   NamedType OffTType = NamedType<"off_t">;
   NamedType SSizeTType = NamedType<"ssize_t">;
+
+  NamedType PThreadAttrTType = NamedType<"pthread_attr_t">;
+  PtrType PThreadAttrTPtr = PtrType<PThreadAttrTType>;
+  RestrictedPtrType RestrictedPThreadAttrTPtr = RestrictedPtrType<PThreadAttrTType>;
+  ConstType ConstPThreadAttrTPtr = ConstType<PThreadAttrTPtr>;
+  ConstType ConstRestrictedPThreadAttrTPtr = ConstType<RestrictedPThreadAttrTPtr>;
+
+  NamedType PThreadMutexAttrTType = NamedType<"pthread_mutexattr_t">;
+  PtrType PThreadMutexAttrTPtr = PtrType<PThreadMutexAttrTType>;
+  RestrictedPtrType RestrictedPThreadMutexAttrTPtr = RestrictedPtrType<PThreadMutexAttrTType>;
+  ConstType ConstPThreadMutexAttrTPtr = ConstType<PThreadMutexAttrTPtr>;
+  ConstType ConstRestrictedPThreadMutexAttrTPtr = ConstType<RestrictedPThreadMutexAttrTPtr>;
+
+  NamedType PThreadMutexTType = NamedType<"pthread_mutex_t">;
+  PtrType PThreadMutexTPtr = PtrType<PThreadMutexTType>;
+  RestrictedPtrType RestrictedPThreadMutexTPtr = RestrictedPtrType<PThreadMutexTType>;
+  ConstType ConstPThreadMutexTPtr = ConstType<PThreadMutexTPtr>;
+  ConstType ConstRestrictedPThreadMutexTPtr = ConstType<RestrictedPThreadMutexTPtr>;
+
+  NamedType PThreadTType = NamedType<"pthread_t">;
+  PtrType PThreadTPtr = PtrType<PThreadTType>;
+  RestrictedPtrType RestrictedPThreadTPtr = RestrictedPtrType<PThreadTType>;
 
   HeaderSpec Errno = HeaderSpec<
       "errno.h",
@@ -222,6 +246,7 @@ def POSIX : StandardSpec<"POSIX"> {
     "unistd.h",
     [], // Macros
     [
+      OffTType,
       SSizeTType,
       SizeTType,
     ],
@@ -236,6 +261,11 @@ def POSIX : StandardSpec<"POSIX"> {
           "fsync",
           RetValSpec<IntType>,
           [ArgSpec<IntType>]
+        >,
+        FunctionSpec<
+          "lseek",
+          RetValSpec<OffTType>,
+          [ArgSpec<IntType>, ArgSpec<OffTType>, ArgSpec<IntType>]
         >,
         FunctionSpec<
           "read",
@@ -365,11 +395,186 @@ def POSIX : StandardSpec<"POSIX"> {
     ]
   >;
 
+  HeaderSpec PThread = HeaderSpec<
+    "pthread.h",
+    [], // Macros
+    [PThreadAttrTType, PThreadMutexAttrTType, PThreadMutexTType, PThreadStartT, PThreadTType], // Types
+    [], // Enumerations
+    [
+      FunctionSpec<
+          "pthread_attr_init",
+          RetValSpec<IntType>,
+          [ArgSpec<PThreadAttrTPtr>]
+      >,
+      FunctionSpec<
+          "pthread_attr_destroy",
+          RetValSpec<IntType>,
+          [ArgSpec<PThreadAttrTPtr>]
+      >,
+      FunctionSpec<
+          "pthread_attr_getdetachstate",
+          RetValSpec<IntType>,
+          [ArgSpec<ConstPThreadAttrTPtr>, ArgSpec<IntPtr>]
+      >,
+      FunctionSpec<
+          "pthread_attr_setdetachstate",
+          RetValSpec<IntType>,
+          [ArgSpec<PThreadAttrTPtr>, ArgSpec<IntType>]
+      >,
+      FunctionSpec<
+          "pthread_attr_getguardsize",
+          RetValSpec<IntType>,
+          [ArgSpec<ConstRestrictedPThreadAttrTPtr>, ArgSpec<RestrictedSizeTPtr>]
+      >,
+      FunctionSpec<
+          "pthread_attr_setguardsize",
+          RetValSpec<IntType>,
+          [ArgSpec<PThreadAttrTPtr>, ArgSpec<SizeTType>]
+      >,
+      FunctionSpec<
+          "pthread_attr_getstacksize",
+          RetValSpec<IntType>,
+          [ArgSpec<ConstRestrictedPThreadAttrTPtr>, ArgSpec<RestrictedSizeTPtr>]
+      >,
+      FunctionSpec<
+          "pthread_attr_setstacksize",
+          RetValSpec<IntType>,
+          [ArgSpec<PThreadAttrTPtr>, ArgSpec<SizeTType>]
+      >,
+      FunctionSpec<
+          "pthread_attr_getstack",
+          RetValSpec<IntType>,
+          [ArgSpec<ConstRestrictedPThreadAttrTPtr>, ArgSpec<RestrictedVoidPtrPtr>, ArgSpec<RestrictedSizeTPtr>]
+      >,
+      FunctionSpec<
+          "pthread_attr_setstack",
+          RetValSpec<IntType>,
+          [ArgSpec<PThreadAttrTPtr>, ArgSpec<VoidPtr>, ArgSpec<SizeTType>]
+      >,
+      FunctionSpec<
+          "pthread_create",
+          RetValSpec<IntType>,
+          [ArgSpec<RestrictedPThreadTPtr>, ArgSpec<ConstRestrictedPThreadAttrTPtr>, ArgSpec<PThreadStartT>, ArgSpec<VoidPtr>]
+      >,
+      FunctionSpec<
+          "pthread_join",
+          RetValSpec<IntType>,
+          [ArgSpec<PThreadTType>, ArgSpec<VoidPtrPtr>]
+      >,
+      FunctionSpec<
+          "pthread_detach",
+          RetValSpec<IntType>,
+          [ArgSpec<PThreadTType>]
+      >,
+      FunctionSpec<
+          "pthread_mutexattr_init",
+          RetValSpec<IntType>,
+          [ArgSpec<PThreadMutexAttrTPtr>]
+      >,
+      FunctionSpec<
+          "pthread_mutexattr_destroy",
+          RetValSpec<IntType>,
+          [ArgSpec<PThreadMutexAttrTPtr>]
+      >,
+      FunctionSpec<
+          "pthread_mutexattr_gettype",
+          RetValSpec<IntType>,
+          [ArgSpec<ConstRestrictedPThreadMutexAttrTPtr>, ArgSpec<RestrictedIntPtr>]
+      >,
+      FunctionSpec<
+          "pthread_mutexattr_settype",
+          RetValSpec<IntType>,
+          [ArgSpec<RestrictedPThreadMutexAttrTPtr>, ArgSpec<IntType>]
+      >,
+      FunctionSpec<
+          "pthread_mutexattr_getrobust",
+          RetValSpec<IntType>,
+          [ArgSpec<ConstRestrictedPThreadMutexAttrTPtr>, ArgSpec<RestrictedIntPtr>]
+      >,
+      FunctionSpec<
+          "pthread_mutexattr_setrobust",
+          RetValSpec<IntType>,
+          [ArgSpec<RestrictedPThreadMutexAttrTPtr>, ArgSpec<IntType>]
+      >,
+      FunctionSpec<
+          "pthread_mutexattr_getpshared",
+          RetValSpec<IntType>,
+          [ArgSpec<ConstRestrictedPThreadMutexAttrTPtr>, ArgSpec<RestrictedIntPtr>]
+      >,
+      FunctionSpec<
+          "pthread_mutexattr_setpshared",
+          RetValSpec<IntType>,
+          [ArgSpec<RestrictedPThreadMutexAttrTPtr>, ArgSpec<IntType>]
+      >,
+      FunctionSpec<
+          "pthread_mutexattr_getprotocol",
+          RetValSpec<IntType>,
+          [ArgSpec<ConstRestrictedPThreadMutexAttrTPtr>, ArgSpec<RestrictedIntPtr>]
+      >,
+      FunctionSpec<
+          "pthread_mutexattr_setprotocol",
+          RetValSpec<IntType>,
+          [ArgSpec<RestrictedPThreadMutexAttrTPtr>, ArgSpec<IntType>]
+      >,
+      FunctionSpec<
+          "pthread_mutexattr_getprioceiling",
+          RetValSpec<IntType>,
+          [ArgSpec<ConstRestrictedPThreadMutexAttrTPtr>, ArgSpec<RestrictedIntPtr>]
+      >,
+      FunctionSpec<
+          "pthread_mutexattr_setprioceiling",
+          RetValSpec<IntType>,
+          [ArgSpec<RestrictedPThreadMutexAttrTPtr>, ArgSpec<IntType>]
+      >,
+      FunctionSpec<
+          "pthread_mutex_init",
+          RetValSpec<IntType>,
+          [ArgSpec<RestrictedPThreadMutexTPtr>, ArgSpec<ConstRestrictedPThreadMutexAttrTPtr>]
+      >,
+      FunctionSpec<
+          "pthread_mutex_destroy",
+          RetValSpec<IntType>,
+          [ArgSpec<PThreadMutexTPtr>]
+      >,
+      FunctionSpec<
+          "pthread_mutex_lock",
+          RetValSpec<IntType>,
+          [ArgSpec<PThreadMutexTPtr>]
+      >,
+      FunctionSpec<
+          "pthread_mutex_unlock",
+          RetValSpec<IntType>,
+          [ArgSpec<PThreadMutexTPtr>]
+      >,
+    ]
+  >;
+
+  HeaderSpec StdIO = HeaderSpec<
+      "stdio.h",
+      [], // Macros
+      [], // Types
+      [], // Enumerations
+      [
+          FunctionSpec<
+              "flockfile",
+              RetValSpec<VoidType>,
+              [ArgSpec<FILEPtr>]
+          >,
+          FunctionSpec<
+              "funlockfile",
+              RetValSpec<VoidType>,
+              [ArgSpec<FILEPtr>]
+          >,
+      ]
+  >;
+
   let Headers = [
     CType,
     Errno,
     FCntl,
+    PThread,
     Signal,
+    StdIO,
     StdLib,
     SysMMan,
     SysStat,

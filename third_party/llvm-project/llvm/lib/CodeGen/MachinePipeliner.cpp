@@ -29,6 +29,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/CodeGen/MachinePipeliner.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
@@ -43,6 +44,7 @@
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/MemoryLocation.h"
+#include "llvm/Analysis/OptimizationRemarkEmitter.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/CodeGen/DFAPacketizer.h"
 #include "llvm/CodeGen/LiveIntervals.h"
@@ -55,7 +57,6 @@
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineOperand.h"
-#include "llvm/CodeGen/MachinePipeliner.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/ModuloSchedule.h"
 #include "llvm/CodeGen/RegisterPressure.h"
@@ -66,7 +67,6 @@
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/Config/llvm-config.h"
 #include "llvm/IR/Attributes.h"
-#include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/Function.h"
 #include "llvm/MC/LaneBitmask.h"
 #include "llvm/MC/MCInstrDesc.h"
@@ -109,7 +109,6 @@ STATISTIC(NumFailLargeMaxStage, "Pipeliner abort due to too many stages");
 
 /// A command line option to turn software pipelining on or off.
 static cl::opt<bool> EnableSWP("enable-pipeliner", cl::Hidden, cl::init(true),
-                               cl::ZeroOrMore,
                                cl::desc("Enable Software Pipelining"));
 
 /// A command line option to enable SWP at -Os.
@@ -147,8 +146,8 @@ static cl::opt<int> SwpLoopLimit("pipeliner-max", cl::Hidden, cl::init(-1));
 #endif
 
 static cl::opt<bool> SwpIgnoreRecMII("pipeliner-ignore-recmii",
-                                     cl::ReallyHidden, cl::init(false),
-                                     cl::ZeroOrMore, cl::desc("Ignore RecMII"));
+                                     cl::ReallyHidden,
+                                     cl::desc("Ignore RecMII"));
 
 static cl::opt<bool> SwpShowResMask("pipeliner-show-mask", cl::Hidden,
                                     cl::init(false));
@@ -169,10 +168,9 @@ static cl::opt<bool> ExperimentalCodeGen(
 namespace llvm {
 
 // A command line option to enable the CopyToPhi DAG mutation.
-cl::opt<bool>
-    SwpEnableCopyToPhi("pipeliner-enable-copytophi", cl::ReallyHidden,
-                       cl::init(true), cl::ZeroOrMore,
-                       cl::desc("Enable CopyToPhi DAG Mutation"));
+cl::opt<bool> SwpEnableCopyToPhi("pipeliner-enable-copytophi", cl::ReallyHidden,
+                                 cl::init(true),
+                                 cl::desc("Enable CopyToPhi DAG Mutation"));
 
 } // end namespace llvm
 
@@ -255,6 +253,7 @@ bool MachinePipeliner::scheduleLoop(MachineLoop &L) {
              << "Failed to pipeline loop";
     });
 
+    LI.LoopPipelinerInfo.reset();
     return Changed;
   }
 
@@ -262,6 +261,7 @@ bool MachinePipeliner::scheduleLoop(MachineLoop &L) {
 
   Changed = swingModuloScheduler(L);
 
+  LI.LoopPipelinerInfo.reset();
   return Changed;
 }
 
@@ -354,7 +354,8 @@ bool MachinePipeliner::canPipelineLoop(MachineLoop &L) {
 
   LI.LoopInductionVar = nullptr;
   LI.LoopCompare = nullptr;
-  if (!TII->analyzeLoopForPipelining(L.getTopBlock())) {
+  LI.LoopPipelinerInfo = TII->analyzeLoopForPipelining(L.getTopBlock());
+  if (!LI.LoopPipelinerInfo) {
     LLVM_DEBUG(dbgs() << "Unable to analyzeLoop, can NOT pipeline Loop\n");
     NumFailLoop++;
     ORE->emit([&]() {
@@ -419,7 +420,7 @@ bool MachinePipeliner::swingModuloScheduler(MachineLoop &L) {
   assert(L.getBlocks().size() == 1 && "SMS works on single blocks only.");
 
   SwingSchedulerDAG SMS(*this, L, getAnalysis<LiveIntervals>(), RegClassInfo,
-                        II_setByPragma);
+                        II_setByPragma, LI.LoopPipelinerInfo.get());
 
   MachineBasicBlock *MBB = L.getHeader();
   // The kernel should not include any terminator instructions.  These
@@ -513,7 +514,7 @@ void SwingSchedulerDAG::schedule() {
   // Don't pipeline large loops.
   if (SwpMaxMii != -1 && (int)MII > SwpMaxMii) {
     LLVM_DEBUG(dbgs() << "MII > " << SwpMaxMii
-                      << ", we don't pipleline large loops\n");
+                      << ", we don't pipeline large loops\n");
     NumFailLargeMaxMII++;
     Pass.ORE->emit([&]() {
       return MachineOptimizationRemarkAnalysis(
@@ -1422,7 +1423,7 @@ void SwingSchedulerDAG::CopyToPhiMutation::apply(ScheduleDAGInstrs *DAG) {
 /// We ignore the back-edge recurrence in order to avoid unbounded recursion
 /// in the calculation of the ASAP, ALAP, etc functions.
 static bool ignoreDependence(const SDep &D, bool isPred) {
-  if (D.isArtificial())
+  if (D.isArtificial() || D.getSUnit()->isBoundaryNode())
     return true;
   return D.getKind() == SDep::Anti && isPred;
 }
@@ -1471,6 +1472,8 @@ void SwingSchedulerDAG::computeNodeFunctions(NodeSetType &NodeSets) {
     SUnit *SU = &SUnits[I];
     for (const SDep &S : SU->Succs) {
       SUnit *succ = S.getSUnit();
+      if (succ->isBoundaryNode())
+        continue;
       if (S.getLatency() == 0)
         zeroLatencyHeight =
             std::max(zeroLatencyHeight, getZeroLatencyHeight(succ) + 1);
@@ -1575,7 +1578,9 @@ static bool computePath(SUnit *Cur, SetVector<SUnit *> &Path,
     return Path.contains(Cur);
   bool FoundPath = false;
   for (auto &SI : Cur->Succs)
-    FoundPath |= computePath(SI.getSUnit(), Path, DestNodes, Exclude, Visited);
+    if (!ignoreDependence(SI, false))
+      FoundPath |=
+          computePath(SI.getSUnit(), Path, DestNodes, Exclude, Visited);
   for (auto &PI : Cur->Preds)
     if (PI.getKind() == SDep::Anti)
       FoundPath |=
@@ -1663,7 +1668,7 @@ void SwingSchedulerDAG::registerPressureFilter(NodeSetType &NodeSets) {
         LLVM_DEBUG(
             dbgs() << "Excess register pressure: SU(" << SU->NodeNum << ") "
                    << TRI->getRegPressureSetName(RPDelta.Excess.getPSet())
-                   << ":" << RPDelta.Excess.getUnitInc());
+                   << ":" << RPDelta.Excess.getUnitInc() << "\n");
         NS.setExceedPressure(SU);
         break;
       }
@@ -1718,7 +1723,7 @@ void SwingSchedulerDAG::checkNodeSets(NodeSetType &NodeSets) {
 }
 
 /// Add the nodes that do not belong to a recurrence set into groups
-/// based upon connected componenets.
+/// based upon connected components.
 void SwingSchedulerDAG::groupRemainingNodes(NodeSetType &NodeSets) {
   SetVector<SUnit *> NodesAdded;
   SmallPtrSet<SUnit *, 8> Visited;
@@ -1788,7 +1793,8 @@ void SwingSchedulerDAG::addConnectedNodes(SUnit *SU, NodeSet &NewSet,
   NodesAdded.insert(SU);
   for (auto &SI : SU->Succs) {
     SUnit *Successor = SI.getSUnit();
-    if (!SI.isArtificial() && NodesAdded.count(Successor) == 0)
+    if (!SI.isArtificial() && !Successor->isBoundaryNode() &&
+        NodesAdded.count(Successor) == 0)
       addConnectedNodes(Successor, NewSet, NodesAdded);
   }
   for (auto &PI : SU->Preds) {
@@ -1803,8 +1809,7 @@ void SwingSchedulerDAG::addConnectedNodes(SUnit *SU, NodeSet &NewSet,
 static bool isIntersect(SmallSetVector<SUnit *, 8> &Set1, const NodeSet &Set2,
                         SmallSetVector<SUnit *, 8> &Result) {
   Result.clear();
-  for (unsigned i = 0, e = Set1.size(); i != e; ++i) {
-    SUnit *SU = Set1[i];
+  for (SUnit *SU : Set1) {
     if (Set2.count(SU) != 0)
       Result.insert(SU);
   }
@@ -2080,6 +2085,11 @@ bool SwingSchedulerDAG::schedulePipeline(SMSchedule &Schedule) {
       });
     } while (++NI != NE && scheduleFound);
 
+    // If a schedule is found, ensure non-pipelined instructions are in stage 0
+    if (scheduleFound)
+      scheduleFound =
+          Schedule.normalizeNonPipelinedInstructions(this, LoopPipelinerInfo);
+
     // If a schedule is found, check if it is a valid schedule too.
     if (scheduleFound)
       scheduleFound = Schedule.isValidSchedule(this);
@@ -2263,7 +2273,7 @@ MachineInstr *SwingSchedulerDAG::findDefInLoop(Register Reg) {
 bool SwingSchedulerDAG::isLoopCarriedDep(SUnit *Source, const SDep &Dep,
                                          bool isSucc) {
   if ((Dep.getKind() != SDep::Order && Dep.getKind() != SDep::Output) ||
-      Dep.isArtificial())
+      Dep.isArtificial() || Dep.getSUnit()->isBoundaryNode())
     return false;
 
   if (!SwpPruneLoopCarried)
@@ -2430,7 +2440,7 @@ int SMSchedule::latestCycleInChain(const SDep &Dep) {
   while (!Worklist.empty()) {
     const SDep &Cur = Worklist.pop_back_val();
     SUnit *SuccSU = Cur.getSUnit();
-    if (Visited.count(SuccSU))
+    if (Visited.count(SuccSU) || SuccSU->isBoundaryNode())
       continue;
     std::map<SUnit *, int>::const_iterator it = InstrToCycle.find(SuccSU);
     if (it == InstrToCycle.end())
@@ -2697,21 +2707,91 @@ bool SMSchedule::isLoopCarriedDefOfUse(SwingSchedulerDAG *SSD,
   return false;
 }
 
+/// Determine transitive dependences of unpipelineable instructions
+SmallSet<SUnit *, 8> SMSchedule::computeUnpipelineableNodes(
+    SwingSchedulerDAG *SSD, TargetInstrInfo::PipelinerLoopInfo *PLI) {
+  SmallSet<SUnit *, 8> DoNotPipeline;
+  SmallVector<SUnit *, 8> Worklist;
+
+  for (auto &SU : SSD->SUnits)
+    if (SU.isInstr() && PLI->shouldIgnoreForPipelining(SU.getInstr()))
+      Worklist.push_back(&SU);
+
+  while (!Worklist.empty()) {
+    auto SU = Worklist.pop_back_val();
+    if (DoNotPipeline.count(SU))
+      continue;
+    LLVM_DEBUG(dbgs() << "Do not pipeline SU(" << SU->NodeNum << ")\n");
+    DoNotPipeline.insert(SU);
+    for (auto &Dep : SU->Preds)
+      Worklist.push_back(Dep.getSUnit());
+    if (SU->getInstr()->isPHI())
+      for (auto &Dep : SU->Succs)
+        if (Dep.getKind() == SDep::Anti)
+          Worklist.push_back(Dep.getSUnit());
+  }
+  return DoNotPipeline;
+}
+
+// Determine all instructions upon which any unpipelineable instruction depends
+// and ensure that they are in stage 0.  If unable to do so, return false.
+bool SMSchedule::normalizeNonPipelinedInstructions(
+    SwingSchedulerDAG *SSD, TargetInstrInfo::PipelinerLoopInfo *PLI) {
+  SmallSet<SUnit *, 8> DNP = computeUnpipelineableNodes(SSD, PLI);
+
+  int NewLastCycle = INT_MIN;
+  for (SUnit &SU : SSD->SUnits) {
+    if (!SU.isInstr())
+      continue;
+    if (!DNP.contains(&SU) || stageScheduled(&SU) == 0) {
+      NewLastCycle = std::max(NewLastCycle, InstrToCycle[&SU]);
+      continue;
+    }
+
+    // Put the non-pipelined instruction as early as possible in the schedule
+    int NewCycle = getFirstCycle();
+    for (auto &Dep : SU.Preds)
+      NewCycle = std::max(InstrToCycle[Dep.getSUnit()], NewCycle);
+
+    int OldCycle = InstrToCycle[&SU];
+    if (OldCycle != NewCycle) {
+      InstrToCycle[&SU] = NewCycle;
+      auto &OldS = getInstructions(OldCycle);
+      llvm::erase_value(OldS, &SU);
+      getInstructions(NewCycle).emplace_back(&SU);
+      LLVM_DEBUG(dbgs() << "SU(" << SU.NodeNum
+                        << ") is not pipelined; moving from cycle " << OldCycle
+                        << " to " << NewCycle << " Instr:" << *SU.getInstr());
+    }
+    NewLastCycle = std::max(NewLastCycle, NewCycle);
+  }
+  LastCycle = NewLastCycle;
+  return true;
+}
+
 // Check if the generated schedule is valid. This function checks if
 // an instruction that uses a physical register is scheduled in a
 // different stage than the definition. The pipeliner does not handle
 // physical register values that may cross a basic block boundary.
+// Furthermore, if a physical def/use pair is assigned to the same
+// cycle, orderDependence does not guarantee def/use ordering, so that
+// case should be considered invalid.  (The test checks for both
+// earlier and same-cycle use to be more robust.)
 bool SMSchedule::isValidSchedule(SwingSchedulerDAG *SSD) {
   for (SUnit &SU : SSD->SUnits) {
     if (!SU.hasPhysRegDefs)
       continue;
     int StageDef = stageScheduled(&SU);
+    int CycleDef = InstrToCycle[&SU];
     assert(StageDef != -1 && "Instruction should have been scheduled.");
     for (auto &SI : SU.Succs)
-      if (SI.isAssignedRegDep())
-        if (Register::isPhysicalRegister(SI.getReg()))
+      if (SI.isAssignedRegDep() && !SI.getSUnit()->isBoundaryNode())
+        if (Register::isPhysicalRegister(SI.getReg())) {
           if (stageScheduled(SI.getSUnit()) != StageDef)
             return false;
+          if (InstrToCycle[SI.getSUnit()] <= CycleDef)
+            return false;
+        }
   }
   return true;
 }
@@ -2998,7 +3078,7 @@ bool ResourceManager::canReserveResources(const MCInstrDesc *MID) const {
   if (!SCDesc->isValid()) {
     LLVM_DEBUG({
       dbgs() << "No valid Schedule Class Desc for schedClass!\n";
-      dbgs() << "isPseduo:" << MID->isPseudo() << "\n";
+      dbgs() << "isPseudo:" << MID->isPseudo() << "\n";
     });
     return true;
   }
@@ -3038,7 +3118,7 @@ void ResourceManager::reserveResources(const MCInstrDesc *MID) {
   if (!SCDesc->isValid()) {
     LLVM_DEBUG({
       dbgs() << "No valid Schedule Class Desc for schedClass!\n";
-      dbgs() << "isPseduo:" << MID->isPseudo() << "\n";
+      dbgs() << "isPseudo:" << MID->isPseudo() << "\n";
     });
     return;
   }

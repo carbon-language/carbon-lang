@@ -170,6 +170,7 @@ Status ScriptedProcess::DoLaunch(Module *exe_module,
 void ScriptedProcess::DidLaunch() {
   CheckInterpreterAndScriptObject();
   m_pid = GetInterface().GetProcessID();
+  GetLoadedDynamicLibrariesInfos();
 }
 
 Status ScriptedProcess::DoResume() {
@@ -303,35 +304,55 @@ bool ScriptedProcess::DoUpdateThreadList(ThreadList &old_thread_list,
 
   StructuredData::DictionarySP thread_info_sp = GetInterface().GetThreadsInfo();
 
-  // FIXME: Need to sort the dictionary otherwise the thread ids won't match the
-  // thread indices.
-
   if (!thread_info_sp)
     return ScriptedInterface::ErrorWithMessage<bool>(
         LLVM_PRETTY_FUNCTION,
         "Couldn't fetch thread list from Scripted Process.", error);
 
+  // Because `StructuredData::Dictionary` uses a `std::map<ConstString,
+  // ObjectSP>` for storage, each item is sorted based on the key alphabetical
+  // order. Since `GetThreadsInfo` provides thread indices as the key element,
+  // thread info comes ordered alphabetically, instead of numerically, so we
+  // need to sort the thread indices before creating thread.
+
+  StructuredData::ArraySP keys = thread_info_sp->GetKeys();
+
+  std::map<size_t, StructuredData::ObjectSP> sorted_threads;
+  auto sort_keys = [&sorted_threads,
+                    &thread_info_sp](StructuredData::Object *item) -> bool {
+    if (!item)
+      return false;
+
+    llvm::StringRef key = item->GetStringValue();
+    size_t idx = 0;
+
+    // Make sure the provided index is actually an integer
+    if (!llvm::to_integer(key, idx))
+      return false;
+
+    sorted_threads[idx] = thread_info_sp->GetValueForKey(key);
+    return true;
+  };
+
+  size_t thread_count = thread_info_sp->GetSize();
+
+  if (!keys->ForEach(sort_keys) || sorted_threads.size() != thread_count)
+    // Might be worth showing the unsorted thread list instead of return early.
+    return ScriptedInterface::ErrorWithMessage<bool>(
+        LLVM_PRETTY_FUNCTION, "Couldn't sort thread list.", error);
+
   auto create_scripted_thread =
-      [this, &old_thread_list, &error,
-       &new_thread_list](ConstString key, StructuredData::Object *val) -> bool {
-    if (!val)
+      [this, &error, &new_thread_list](
+          const std::pair<size_t, StructuredData::ObjectSP> pair) -> bool {
+    size_t idx = pair.first;
+    StructuredData::ObjectSP object_sp = pair.second;
+
+    if (!object_sp)
       return ScriptedInterface::ErrorWithMessage<bool>(
           LLVM_PRETTY_FUNCTION, "Invalid thread info object", error);
 
-    lldb::tid_t tid = LLDB_INVALID_THREAD_ID;
-    if (!llvm::to_integer(key.AsCString(), tid))
-      return ScriptedInterface::ErrorWithMessage<bool>(
-          LLVM_PRETTY_FUNCTION, "Invalid thread id", error);
-
-    if (ThreadSP thread_sp =
-            old_thread_list.FindThreadByID(tid, false /*=can_update*/)) {
-      // If the thread was already in the old_thread_list,
-      // just add it back to the new_thread_list.
-      new_thread_list.AddThread(thread_sp);
-      return true;
-    }
-
-    auto thread_or_error = ScriptedThread::Create(*this, val->GetAsGeneric());
+    auto thread_or_error =
+        ScriptedThread::Create(*this, object_sp->GetAsGeneric());
 
     if (!thread_or_error)
       return ScriptedInterface::ErrorWithMessage<bool>(
@@ -344,8 +365,7 @@ bool ScriptedProcess::DoUpdateThreadList(ThreadList &old_thread_list,
     if (!reg_ctx_sp)
       return ScriptedInterface::ErrorWithMessage<bool>(
           LLVM_PRETTY_FUNCTION,
-          llvm::Twine("Invalid Register Context for thread " +
-                      llvm::Twine(key.AsCString()))
+          llvm::Twine("Invalid Register Context for thread " + llvm::Twine(idx))
               .str(),
           error);
 
@@ -354,7 +374,7 @@ bool ScriptedProcess::DoUpdateThreadList(ThreadList &old_thread_list,
     return true;
   };
 
-  thread_info_sp->ForEach(create_scripted_thread);
+  llvm::for_each(sorted_threads, create_scripted_thread);
 
   return new_thread_list.GetSize(false) > 0;
 }
@@ -376,6 +396,93 @@ bool ScriptedProcess::GetProcessInfo(ProcessInstanceInfo &info) {
                            add_exe_file_as_first_arg);
   }
   return true;
+}
+
+lldb_private::StructuredData::ObjectSP
+ScriptedProcess::GetLoadedDynamicLibrariesInfos() {
+  CheckInterpreterAndScriptObject();
+
+  Status error;
+  auto error_with_message = [&error](llvm::StringRef message) {
+    return ScriptedInterface::ErrorWithMessage<bool>(LLVM_PRETTY_FUNCTION,
+                                                     message.data(), error);
+  };
+
+  StructuredData::ArraySP loaded_images_sp = GetInterface().GetLoadedImages();
+
+  if (!loaded_images_sp || !loaded_images_sp->GetSize())
+    return GetInterface().ErrorWithMessage<StructuredData::ObjectSP>(
+        LLVM_PRETTY_FUNCTION, "No loaded images.", error);
+
+  ModuleList module_list;
+  Target &target = GetTarget();
+
+  auto reload_image = [&target, &module_list, &error_with_message](
+                          StructuredData::Object *obj) -> bool {
+    StructuredData::Dictionary *dict = obj->GetAsDictionary();
+
+    if (!dict)
+      return error_with_message("Couldn't cast image object into dictionary.");
+
+    ModuleSpec module_spec;
+    llvm::StringRef value;
+
+    bool has_path = dict->HasKey("path");
+    bool has_uuid = dict->HasKey("uuid");
+    if (!has_path && !has_uuid)
+      return error_with_message("Dictionary should have key 'path' or 'uuid'");
+    if (!dict->HasKey("load_addr"))
+      return error_with_message("Dictionary is missing key 'load_addr'");
+
+    if (has_path) {
+      dict->GetValueForKeyAsString("path", value);
+      module_spec.GetFileSpec().SetPath(value);
+    }
+
+    if (has_uuid) {
+      dict->GetValueForKeyAsString("uuid", value);
+      module_spec.GetUUID().SetFromStringRef(value);
+    }
+    module_spec.GetArchitecture() = target.GetArchitecture();
+
+    ModuleSP module_sp =
+        target.GetOrCreateModule(module_spec, true /* notify */);
+
+    if (!module_sp)
+      return error_with_message("Couldn't create or get module.");
+
+    lldb::addr_t load_addr = LLDB_INVALID_ADDRESS;
+    lldb::addr_t slide = LLDB_INVALID_OFFSET;
+    dict->GetValueForKeyAsInteger("load_addr", load_addr);
+    dict->GetValueForKeyAsInteger("slide", slide);
+    if (load_addr == LLDB_INVALID_ADDRESS)
+      return error_with_message(
+          "Couldn't get valid load address or slide offset.");
+
+    if (slide != LLDB_INVALID_OFFSET)
+      load_addr += slide;
+
+    bool changed = false;
+    module_sp->SetLoadAddress(target, load_addr, false /*=value_is_offset*/,
+                              changed);
+
+    if (!changed && !module_sp->GetObjectFile())
+      return error_with_message("Couldn't set the load address for module.");
+
+    dict->GetValueForKeyAsString("path", value);
+    FileSpec objfile(value);
+    module_sp->SetFileSpecAndObjectName(objfile, objfile.GetFilename());
+
+    return module_list.AppendIfNeeded(module_sp);
+  };
+
+  if (!loaded_images_sp->ForEach(reload_image))
+    return GetInterface().ErrorWithMessage<StructuredData::ObjectSP>(
+        LLVM_PRETTY_FUNCTION, "Couldn't reload all images.", error);
+
+  target.ModulesDidLoad(module_list);
+
+  return loaded_images_sp;
 }
 
 ScriptedProcessInterface &ScriptedProcess::GetInterface() const {

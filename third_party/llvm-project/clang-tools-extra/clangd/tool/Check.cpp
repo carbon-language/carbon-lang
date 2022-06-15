@@ -26,11 +26,14 @@
 
 #include "ClangdLSPServer.h"
 #include "CodeComplete.h"
+#include "CompileCommands.h"
 #include "Config.h"
 #include "GlobalCompilationDatabase.h"
 #include "Hover.h"
+#include "InlayHints.h"
 #include "ParsedAST.h"
 #include "Preamble.h"
+#include "Protocol.h"
 #include "SourceCode.h"
 #include "XRefs.h"
 #include "index/CanonicalIncludes.h"
@@ -39,13 +42,11 @@
 #include "support/ThreadsafeFS.h"
 #include "support/Trace.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/Basic/DiagnosticIDs.h"
 #include "clang/Format/Format.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Tooling/CompilationDatabase.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Path.h"
 
 namespace clang {
@@ -127,6 +128,8 @@ public:
     Inputs.CompileCommand = Cmd;
     Inputs.TFS = &TFS;
     Inputs.ClangTidyProvider = Opts.ClangTidyProvider;
+    Inputs.Opts.PreambleParseForwardingFunctions =
+        Opts.PreambleParseForwardingFunctions;
     if (Contents.hasValue()) {
       Inputs.Contents = *Contents;
       log("Imaginary source file contents:\n{0}", Inputs.Contents);
@@ -191,10 +194,19 @@ public:
     return true;
   }
 
+  // Build Inlay Hints for the entire AST or the specified range
+  void buildInlayHints(llvm::Optional<Range> LineRange) {
+    log("Building inlay hints");
+    auto Hints = inlayHints(*AST, LineRange);
+
+    for (const auto &Hint : Hints) {
+      vlog("  {0} {1} {2}", Hint.kind, Hint.position, Hint.label);
+    }
+  }
+
   // Run AST-based features at each token in the file.
-  void testLocationFeatures(
-      llvm::function_ref<bool(const Position &)> ShouldCheckLine,
-      const bool EnableCodeCompletion) {
+  void testLocationFeatures(llvm::Optional<Range> LineRange,
+                            const bool EnableCodeCompletion) {
     trace::Span Trace("testLocationFeatures");
     log("Testing features at each token (may be slow in large files)");
     auto &SM = AST->getSourceManager();
@@ -208,7 +220,7 @@ public:
       unsigned End = Start + Tok.length();
       Position Pos = offsetToPosition(Inputs.Contents, Start);
 
-      if (!ShouldCheckLine(Pos))
+      if (LineRange && !LineRange->contains(Pos))
         continue;
 
       trace::Span Trace("Token");
@@ -243,6 +255,9 @@ public:
       auto Hover = getHover(*AST, Pos, Style, &Index);
       vlog("    hover: {0}", Hover.hasValue());
 
+      unsigned DocHighlights = findDocumentHighlights(*AST, Pos).size();
+      vlog("    documentHighlight: {0}", DocHighlights);
+
       if (EnableCodeCompletion) {
         Position EndPos = offsetToPosition(Inputs.Contents, End);
         auto CC = codeComplete(File, EndPos, Preamble.get(), Inputs, CCOpts);
@@ -255,8 +270,7 @@ public:
 
 } // namespace
 
-bool check(llvm::StringRef File,
-           llvm::function_ref<bool(const Position &)> ShouldCheckLine,
+bool check(llvm::StringRef File, llvm::Optional<Range> LineRange,
            const ThreadsafeFS &TFS, const ClangdLSPServer::Options &Opts,
            bool EnableCodeCompletion) {
   llvm::SmallString<0> FakeFile;
@@ -285,7 +299,8 @@ bool check(llvm::StringRef File,
   if (!C.buildCommand(TFS) || !C.buildInvocation(TFS, Contents) ||
       !C.buildAST())
     return false;
-  C.testLocationFeatures(ShouldCheckLine, EnableCodeCompletion);
+  C.buildInlayHints(LineRange);
+  C.testLocationFeatures(LineRange, EnableCodeCompletion);
 
   log("All checks completed, {0} errors", C.ErrCount);
   return C.ErrCount == 0;

@@ -266,11 +266,21 @@ CoreSimulatorSupport::Device PlatformAppleSimulator::GetSimulatorDevice() {
 }
 #endif
 
-std::vector<ArchSpec> PlatformAppleSimulator::GetSupportedArchitectures() {
+std::vector<ArchSpec> PlatformAppleSimulator::GetSupportedArchitectures(
+    const ArchSpec &process_host_arch) {
   std::vector<ArchSpec> result(m_supported_triples.size());
   llvm::transform(m_supported_triples, result.begin(),
                   [](llvm::StringRef triple) { return ArchSpec(triple); });
   return result;
+}
+
+static llvm::StringRef GetXcodeSDKDir(std::string preferred,
+                                      std::string secondary) {
+  llvm::StringRef sdk;
+  sdk = HostInfo::GetXcodeSDKPath(XcodeSDK(std::move(preferred)));
+  if (sdk.empty())
+    sdk = HostInfo::GetXcodeSDKPath(XcodeSDK(std::move(secondary)));
+  return sdk;
 }
 
 PlatformSP PlatformAppleSimulator::CreateInstance(
@@ -279,7 +289,8 @@ PlatformSP PlatformAppleSimulator::CreateInstance(
     llvm::Triple::OSType preferred_os,
     llvm::SmallVector<llvm::Triple::OSType, 4> supported_os,
     llvm::SmallVector<llvm::StringRef, 4> supported_triples,
-    llvm::StringRef sdk, lldb_private::XcodeSDK::Type sdk_type,
+    std::string sdk_name_preferred, std::string sdk_name_secondary,
+    lldb_private::XcodeSDK::Type sdk_type,
     CoreSimulatorSupport::DeviceType::ProductFamilyID kind, bool force,
     const ArchSpec *arch) {
   Log *log = GetLog(LLDBLog::Platform);
@@ -337,6 +348,8 @@ PlatformSP PlatformAppleSimulator::CreateInstance(
   if (create) {
     LLDB_LOGF(log, "%s::%s() creating platform", class_name, __FUNCTION__);
 
+    llvm::StringRef sdk =
+        GetXcodeSDKDir(sdk_name_preferred, sdk_name_secondary);
     return PlatformSP(new PlatformAppleSimulator(
         class_name, description, plugin_name, preferred_os, supported_triples,
         sdk, sdk_type, kind));
@@ -382,7 +395,7 @@ Status PlatformAppleSimulator::ResolveExecutable(
     StreamString arch_names;
     llvm::ListSeparator LS;
     ArchSpec platform_arch;
-    for (const ArchSpec &arch : GetSupportedArchitectures()) {
+    for (const ArchSpec &arch : GetSupportedArchitectures({})) {
       resolved_module_spec.GetArchitecture() = arch;
 
       // Only match x86 with x86 and x86_64 with x86_64...
@@ -513,15 +526,6 @@ static bool shouldSkipSimulatorPlatform(bool force, const ArchSpec *arch) {
          !arch->TripleEnvironmentWasSpecified();
 }
 
-static llvm::StringRef GetXcodeSDKDir(std::string preferred,
-                                      std::string secondary) {
-  llvm::StringRef sdk;
-  sdk = HostInfo::GetXcodeSDKPath(XcodeSDK(std::move(preferred)));
-  if (sdk.empty())
-    sdk = HostInfo::GetXcodeSDKPath(XcodeSDK(std::move(secondary)));
-  return sdk;
-}
-
 static const char *g_ios_plugin_name = "ios-simulator";
 static const char *g_ios_description = "iPhone simulator platform plug-in.";
 
@@ -539,10 +543,6 @@ struct PlatformiOSSimulator {
   static PlatformSP CreateInstance(bool force, const ArchSpec *arch) {
     if (shouldSkipSimulatorPlatform(force, arch))
       return nullptr;
-    llvm::StringRef sdk;
-    sdk = HostInfo::GetXcodeSDKPath(XcodeSDK("iPhoneSimulator.Internal.sdk"));
-    if (sdk.empty())
-      sdk = HostInfo::GetXcodeSDKPath(XcodeSDK("iPhoneSimulator.sdk"));
 
     return PlatformAppleSimulator::CreateInstance(
         "PlatformiOSSimulator", g_ios_description,
@@ -565,7 +565,7 @@ struct PlatformiOSSimulator {
 #endif
 #endif
         },
-        GetXcodeSDKDir("iPhoneSimulator.Internal.sdk", "iPhoneSimulator.sdk"),
+        "iPhoneSimulator.Internal.sdk", "iPhoneSimulator.sdk",
         XcodeSDK::Type::iPhoneSimulator,
         CoreSimulatorSupport::DeviceType::ProductFamilyID::iPhone, force, arch);
   }
@@ -603,7 +603,7 @@ struct PlatformAppleTVSimulator {
 #endif
 #endif
         },
-        GetXcodeSDKDir("AppleTVSimulator.Internal.sdk", "AppleTVSimulator.sdk"),
+        "AppleTVSimulator.Internal.sdk", "AppleTVSimulator.sdk",
         XcodeSDK::Type::AppleTVSimulator,
         CoreSimulatorSupport::DeviceType::ProductFamilyID::appleTV, force,
         arch);
@@ -645,7 +645,7 @@ struct PlatformAppleWatchSimulator {
 #endif
 #endif
         },
-        GetXcodeSDKDir("WatchSimulator.Internal.sdk", "WatchSimulator.sdk"),
+        "WatchSimulator.Internal.sdk", "WatchSimulator.sdk",
         XcodeSDK::Type::WatchSimulator,
         CoreSimulatorSupport::DeviceType::ProductFamilyID::appleWatch, force,
         arch);

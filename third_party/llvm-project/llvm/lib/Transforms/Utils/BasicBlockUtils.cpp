@@ -21,7 +21,6 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/Analysis/MemorySSAUpdater.h"
-#include "llvm/Analysis/PostDominators.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Constants.h"
@@ -33,7 +32,6 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/PseudoProbe.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/User.h"
 #include "llvm/IR/Value.h"
@@ -1164,7 +1162,11 @@ SplitBlockPredecessorsImpl(BasicBlock *BB, ArrayRef<BasicBlock *> Preds,
     if (NewLatch != OldLatch) {
       MDNode *MD = OldLatch->getTerminator()->getMetadata("llvm.loop");
       NewLatch->getTerminator()->setMetadata("llvm.loop", MD);
-      OldLatch->getTerminator()->setMetadata("llvm.loop", nullptr);
+      // It's still possible that OldLatch is the latch of another inner loop,
+      // in which case we do not remove the metadata.
+      Loop *IL = LI->getLoopFor(OldLatch);
+      if (IL && IL->getLoopLatch() != OldLatch)
+        OldLatch->getTerminator()->setMetadata("llvm.loop", nullptr);
     }
   }
 

@@ -188,6 +188,10 @@ private:
                          SDValue &VOffset, SDValue &Offset) const;
   bool SelectScratchSAddr(SDNode *N, SDValue Addr, SDValue &SAddr,
                           SDValue &Offset) const;
+  bool checkFlatScratchSVSSwizzleBug(SDValue VAddr, SDValue SAddr,
+                                     uint64_t ImmOffset) const;
+  bool SelectScratchSVAddr(SDNode *N, SDValue Addr, SDValue &VAddr,
+                           SDValue &SAddr, SDValue &Offset) const;
 
   bool SelectSMRDOffset(SDValue ByteOffsetNode, SDValue &Offset,
                         bool &Imm) const;
@@ -217,7 +221,9 @@ private:
   bool SelectVOP3OMods(SDValue In, SDValue &Src, SDValue &Clamp,
                        SDValue &Omod) const;
 
-  bool SelectVOP3PMods(SDValue In, SDValue &Src, SDValue &SrcMods) const;
+  bool SelectVOP3PMods(SDValue In, SDValue &Src, SDValue &SrcMods,
+                       bool IsDOT = false) const;
+  bool SelectVOP3PModsDOT(SDValue In, SDValue &Src, SDValue &SrcMods) const;
 
   bool SelectVOP3OpSel(SDValue In, SDValue &Src, SDValue &SrcMods) const;
 
@@ -245,7 +251,6 @@ private:
   bool isCBranchSCC(const SDNode *N) const;
   void SelectBRCOND(SDNode *N);
   void SelectFMAD_FMA(SDNode *N);
-  void SelectATOMIC_CMP_SWAP(SDNode *N);
   void SelectDSAppendConsume(SDNode *N, unsigned IntrID);
   void SelectDS_GWS(SDNode *N, unsigned IntrID);
   void SelectInterpP1F16(SDNode *N);

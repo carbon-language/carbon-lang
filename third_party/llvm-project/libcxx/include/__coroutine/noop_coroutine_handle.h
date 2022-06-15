@@ -66,7 +66,7 @@ private:
     friend coroutine_handle<noop_coroutine_promise> noop_coroutine() noexcept;
 
 #if __has_builtin(__builtin_coro_noop)
-    _LIBCPP_HIDE_FROM_ABI coroutine_handle() noexcept { 
+    _LIBCPP_HIDE_FROM_ABI coroutine_handle() noexcept {
         this->__handle_ = __builtin_coro_noop();
     }
 

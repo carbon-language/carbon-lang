@@ -484,12 +484,12 @@ TEST(Support, HomeDirectory) {
 #endif
   // Do not try to test it if we don't know what to expect.
   // On Windows we use something better than env vars.
-  if (!expected.empty()) {
-    SmallString<128> HomeDir;
-    auto status = path::home_directory(HomeDir);
-    EXPECT_TRUE(status);
-    EXPECT_EQ(expected, HomeDir);
-  }
+  if (expected.empty())
+    GTEST_SKIP();
+  SmallString<128> HomeDir;
+  auto status = path::home_directory(HomeDir);
+  EXPECT_TRUE(status);
+  EXPECT_EQ(expected, HomeDir);
 }
 
 // Apple has their own solution for this.
@@ -564,21 +564,21 @@ TEST(Support, ConfigDirectory) {
 TEST(Support, ConfigDirectory) {
   std::string Expected = getEnvWin(L"LOCALAPPDATA");
   // Do not try to test it if we don't know what to expect.
-  if (!Expected.empty()) {
-    SmallString<128> CacheDir;
-    EXPECT_TRUE(path::user_config_directory(CacheDir));
-    EXPECT_EQ(Expected, CacheDir);
-  }
+  if (Expected.empty())
+    GTEST_SKIP();
+  SmallString<128> CacheDir;
+  EXPECT_TRUE(path::user_config_directory(CacheDir));
+  EXPECT_EQ(Expected, CacheDir);
 }
 
 TEST(Support, CacheDirectory) {
   std::string Expected = getEnvWin(L"LOCALAPPDATA");
   // Do not try to test it if we don't know what to expect.
-  if (!Expected.empty()) {
-    SmallString<128> CacheDir;
-    EXPECT_TRUE(path::cache_directory(CacheDir));
-    EXPECT_EQ(Expected, CacheDir);
-  }
+  if (Expected.empty())
+    GTEST_SKIP();
+  SmallString<128> CacheDir;
+  EXPECT_TRUE(path::cache_directory(CacheDir));
+  EXPECT_EQ(Expected, CacheDir);
 }
 #endif
 
@@ -1544,16 +1544,14 @@ TEST(Support, RemoveDots) {
   EXPECT_EQ("C:\\a\\c", remove_dots("C:\\foo\\bar//..\\..\\a\\c", true,
                                     path::Style::windows));
 
-  // FIXME: These leading forward slashes are emergent behavior. VFS depends on
-  // this behavior now.
-  EXPECT_EQ("C:/bar",
+  EXPECT_EQ("C:\\bar",
             remove_dots("C:/foo/../bar", true, path::Style::windows));
-  EXPECT_EQ("C:/foo\\bar",
+  EXPECT_EQ("C:\\foo\\bar",
             remove_dots("C:/foo/bar", true, path::Style::windows));
-  EXPECT_EQ("C:/foo\\bar",
+  EXPECT_EQ("C:\\foo\\bar",
             remove_dots("C:/foo\\bar", true, path::Style::windows));
-  EXPECT_EQ("/", remove_dots("/", true, path::Style::windows));
-  EXPECT_EQ("C:/", remove_dots("C:/", true, path::Style::windows));
+  EXPECT_EQ("\\", remove_dots("/", true, path::Style::windows));
+  EXPECT_EQ("C:\\", remove_dots("C:/", true, path::Style::windows));
 
   // Some clients of remove_dots expect it to remove trailing slashes. Again,
   // this is emergent behavior that VFS relies on, and not inherently part of
@@ -1564,7 +1562,8 @@ TEST(Support, RemoveDots) {
             remove_dots("/foo/bar/", true, path::Style::posix));
 
   // A double separator is rewritten.
-  EXPECT_EQ("C:/foo\\bar", remove_dots("C:/foo//bar", true, path::Style::windows));
+  EXPECT_EQ("C:\\foo\\bar",
+            remove_dots("C:/foo//bar", true, path::Style::windows));
 
   SmallString<64> Path1(".\\.\\c");
   EXPECT_TRUE(path::remove_dots(Path1, true, path::Style::windows));
@@ -2316,7 +2315,7 @@ TEST_F(FileSystemTest, widenPath) {
   for (size_t i = 0; i < NumChars; ++i)
     Input += Pi;
   // Check that UTF-8 length already exceeds MAX_PATH.
-  EXPECT_GT(Input.size(), MAX_PATH);
+  EXPECT_GT(Input.size(), (size_t)MAX_PATH);
   SmallVector<wchar_t, MAX_PATH + 16> Result;
   ASSERT_NO_ERROR(windows::widenPath(Input, Result));
   // Result should not start with the long path prefix.

@@ -17,6 +17,7 @@
 #include "ConstantsContext.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
+#include "llvm/ADT/Any.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseMapInfo.h"
@@ -709,6 +710,7 @@ template <> struct MDNodeKeyImpl<DISubprogram> {
   Metadata *RetainedNodes;
   Metadata *ThrownTypes;
   Metadata *Annotations;
+  MDString *TargetFuncName;
 
   MDNodeKeyImpl(Metadata *Scope, MDString *Name, MDString *LinkageName,
                 Metadata *File, unsigned Line, Metadata *Type,
@@ -716,14 +718,15 @@ template <> struct MDNodeKeyImpl<DISubprogram> {
                 unsigned VirtualIndex, int ThisAdjustment, unsigned Flags,
                 unsigned SPFlags, Metadata *Unit, Metadata *TemplateParams,
                 Metadata *Declaration, Metadata *RetainedNodes,
-                Metadata *ThrownTypes, Metadata *Annotations)
+                Metadata *ThrownTypes, Metadata *Annotations,
+                MDString *TargetFuncName)
       : Scope(Scope), Name(Name), LinkageName(LinkageName), File(File),
         Line(Line), Type(Type), ScopeLine(ScopeLine),
         ContainingType(ContainingType), VirtualIndex(VirtualIndex),
         ThisAdjustment(ThisAdjustment), Flags(Flags), SPFlags(SPFlags),
         Unit(Unit), TemplateParams(TemplateParams), Declaration(Declaration),
         RetainedNodes(RetainedNodes), ThrownTypes(ThrownTypes),
-        Annotations(Annotations) {}
+        Annotations(Annotations), TargetFuncName(TargetFuncName) {}
   MDNodeKeyImpl(const DISubprogram *N)
       : Scope(N->getRawScope()), Name(N->getRawName()),
         LinkageName(N->getRawLinkageName()), File(N->getRawFile()),
@@ -736,7 +739,8 @@ template <> struct MDNodeKeyImpl<DISubprogram> {
         Declaration(N->getRawDeclaration()),
         RetainedNodes(N->getRawRetainedNodes()),
         ThrownTypes(N->getRawThrownTypes()),
-        Annotations(N->getRawAnnotations()) {}
+        Annotations(N->getRawAnnotations()),
+        TargetFuncName(N->getRawTargetFuncName()) {}
 
   bool isKeyOf(const DISubprogram *RHS) const {
     return Scope == RHS->getRawScope() && Name == RHS->getRawName() &&
@@ -752,7 +756,8 @@ template <> struct MDNodeKeyImpl<DISubprogram> {
            Declaration == RHS->getRawDeclaration() &&
            RetainedNodes == RHS->getRawRetainedNodes() &&
            ThrownTypes == RHS->getRawThrownTypes() &&
-           Annotations == RHS->getRawAnnotations();
+           Annotations == RHS->getRawAnnotations() &&
+           TargetFuncName == RHS->getRawTargetFuncName();
   }
 
   bool isDefinition() const { return SPFlags & DISubprogram::SPFlagDefinition; }
@@ -1380,11 +1385,18 @@ public:
   /// If threshold option is not specified, it is disabled (0) by default.
   Optional<uint64_t> DiagnosticsHotnessThreshold = 0;
 
+  /// The percentage of difference between profiling branch weights and
+  // llvm.expect branch weights to tolerate when emiting MisExpect diagnostics
+  Optional<uint64_t> DiagnosticsMisExpectTolerance = 0;
+  bool MisExpectWarningRequested = false;
+
   /// The specialized remark streamer used by LLVM's OptimizationRemarkEmitter.
   std::unique_ptr<LLVMRemarkStreamer> LLVMRS;
 
   LLVMContext::YieldCallbackTy YieldCallback = nullptr;
   void *YieldOpaqueHandle = nullptr;
+
+  DenseMap<const Value *, ValueName *> ValueNames;
 
   using IntMapTy =
       DenseMap<APInt, std::unique_ptr<ConstantInt>, DenseMapAPIntKeyInfo>;
@@ -1401,8 +1413,6 @@ public:
   StringMap<MDString, BumpPtrAllocator> MDStringCache;
   DenseMap<Value *, ValueAsMetadata *> ValuesAsMetadata;
   DenseMap<Metadata *, MetadataAsValue *> MetadataAsValues;
-
-  DenseMap<const Value *, ValueName *> ValueNames;
 
 #define HANDLE_MDNODE_LEAF_UNIQUABLE(CLASS)                                    \
   DenseSet<CLASS *, CLASS##Info> CLASS##s;
@@ -1450,13 +1460,13 @@ public:
   ConstantInt *TheTrueVal = nullptr;
   ConstantInt *TheFalseVal = nullptr;
 
-  std::unique_ptr<ConstantTokenNone> TheNoneToken;
-
   // Basic type instances.
   Type VoidTy, LabelTy, HalfTy, BFloatTy, FloatTy, DoubleTy, MetadataTy,
       TokenTy;
   Type X86_FP80Ty, FP128Ty, PPC_FP128Ty, X86_MMXTy, X86_AMXTy;
   IntegerType Int1Ty, Int8Ty, Int16Ty, Int32Ty, Int64Ty, Int128Ty;
+
+  std::unique_ptr<ConstantTokenNone> TheNoneToken;
 
   BumpPtrAllocator Alloc;
   UniqueStringSaver Saver{Alloc};
@@ -1492,6 +1502,9 @@ public:
 
   /// Collection of per-GlobalValue partitions used in this context.
   DenseMap<const GlobalValue *, StringRef> GlobalValuePartitions;
+
+  DenseMap<const GlobalValue *, GlobalValue::SanitizerMetadata>
+      GlobalValueSanitizerMetadata;
 
   /// DiscriminatorTable - This table maps file:line locations to an
   /// integer representing the next DWARF path discriminator to assign to
@@ -1555,7 +1568,10 @@ public:
   // TODO: clean up the following after we no longer support non-opaque pointer
   // types.
   bool getOpaquePointers();
+  bool hasOpaquePointersValue();
   void setOpaquePointers(bool OP);
+
+  llvm::Any TargetDataStorage;
 
 private:
   Optional<bool> OpaquePointers;

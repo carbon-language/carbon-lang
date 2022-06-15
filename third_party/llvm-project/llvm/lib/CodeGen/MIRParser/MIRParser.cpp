@@ -13,13 +13,10 @@
 
 #include "llvm/CodeGen/MIRParser/MIRParser.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/AsmParser/SlotMapping.h"
-#include "llvm/CodeGen/GlobalISel/RegisterBank.h"
-#include "llvm/CodeGen/GlobalISel/RegisterBankInfo.h"
 #include "llvm/CodeGen/MIRParser/MIParser.h"
 #include "llvm/CodeGen/MIRYamlMapping.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -29,7 +26,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/DebugInfo.h"
+#include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
@@ -46,6 +43,8 @@
 using namespace llvm;
 
 namespace llvm {
+class MDNode;
+class RegisterBank;
 
 /// This class implements the parsing of LLVM IR that's embedded inside a MIR
 /// file.
@@ -459,6 +458,12 @@ MIRParserImpl::initializeMachineFunction(const yaml::MachineFunction &YamlMF,
   MF.setExposesReturnsTwice(YamlMF.ExposesReturnsTwice);
   MF.setHasWinCFI(YamlMF.HasWinCFI);
 
+  MF.setCallsEHReturn(YamlMF.CallsEHReturn);
+  MF.setCallsUnwindInit(YamlMF.CallsUnwindInit);
+  MF.setHasEHCatchret(YamlMF.HasEHCatchret);
+  MF.setHasEHScopes(YamlMF.HasEHScopes);
+  MF.setHasEHFunclets(YamlMF.HasEHFunclets);
+
   if (YamlMF.Legalized)
     MF.getProperties().set(MachineFunctionProperties::Property::Legalized);
   if (YamlMF.RegBankSelected)
@@ -826,6 +831,15 @@ bool MIRParserImpl::initializeFrameInfo(PerFunctionMIParsingState &PFS,
       return error(Error, YamlMFI.StackProtector.SourceRange);
     MFI.setStackProtectorIndex(FI);
   }
+
+  if (!YamlMFI.FunctionContext.Value.empty()) {
+    SMDiagnostic Error;
+    int FI;
+    if (parseStackObjectReference(PFS, FI, YamlMFI.FunctionContext.Value, Error))
+      return error(Error, YamlMFI.FunctionContext.SourceRange);
+    MFI.setFunctionContextIndex(FI);
+  }
+
   return false;
 }
 

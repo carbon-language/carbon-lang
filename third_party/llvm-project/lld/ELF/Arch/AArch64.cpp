@@ -198,6 +198,11 @@ int64_t AArch64::getImplicitAddend(const uint8_t *buf, RelType type) const {
     return read64(buf + 8);
   case R_AARCH64_NONE:
     return 0;
+  case R_AARCH64_PREL32:
+    return SignExtend64<32>(read32(buf));
+  case R_AARCH64_ABS64:
+  case R_AARCH64_PREL64:
+    return read64(buf);
   default:
     internalLinkerError(getErrorLocation(buf),
                         "cannot read addend for relocation " + toString(type));
@@ -250,9 +255,11 @@ void AArch64::writePlt(uint8_t *buf, const Symbol &sym,
 bool AArch64::needsThunk(RelExpr expr, RelType type, const InputFile *file,
                          uint64_t branchAddr, const Symbol &s,
                          int64_t a) const {
-  // If s is an undefined weak symbol and does not have a PLT entry then it
-  // will be resolved as a branch to the next instruction.
-  if (s.isUndefWeak() && !s.isInPlt())
+  // If s is an undefined weak symbol and does not have a PLT entry then it will
+  // be resolved as a branch to the next instruction. If it is hidden, its
+  // binding has been converted to local, so we just check isUndefined() here. A
+  // undefined non-weak symbol will have been errored.
+  if (s.isUndefined() && !s.isInPlt())
     return false;
   // ELF for the ARM 64-bit architecture, section Call and Jump relocations
   // only permits range extension thunks for R_AARCH64_CALL26 and

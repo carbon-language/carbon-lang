@@ -1,4 +1,3 @@
-// REQUIRES: clang-driver
 // REQUIRES: x86-registered-target
 // REQUIRES: amdgpu-registered-target
 
@@ -116,7 +115,7 @@
 // CHECK: [[BUNDLER:".*clang-offload-bundler"]] "-type=o"
 // CHECK-SAME: "-bundle-align=4096"
 // CHECK-SAME: "-targets={{.*}},hipv4-amdgcn-amd-amdhsa--gfx803,hipv4-amdgcn-amd-amdhsa--gfx900"
-// CHECK-SAME: "-inputs={{.*}},[[IMG_DEV1]],[[IMG_DEV2]]" "-outputs=[[BUNDLE]]"
+// CHECK-SAME: "-input={{.*}}" "-input=[[IMG_DEV1]]" "-input=[[IMG_DEV2]]" "-output=[[BUNDLE]]"
 
 // CHECK: [[MC:".*llvm-mc.*"]] "-triple" [[HOST]] "-o" [[OBJBUNDLE:".*o"]] "{{.*}}.mcin" "--filetype=obj"
 

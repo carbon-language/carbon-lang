@@ -65,12 +65,12 @@ using namespace llvm;
 #define DEBUG_TYPE "aarch64-stack-tagging"
 
 static cl::opt<bool> ClMergeInit(
-    "stack-tagging-merge-init", cl::Hidden, cl::init(true), cl::ZeroOrMore,
+    "stack-tagging-merge-init", cl::Hidden, cl::init(true),
     cl::desc("merge stack variable initializers with tagging when possible"));
 
 static cl::opt<bool>
     ClUseStackSafety("stack-tagging-use-stack-safety", cl::Hidden,
-                     cl::init(true), cl::ZeroOrMore,
+                     cl::init(true),
                      cl::desc("Use Stack Safety analysis results"));
 
 static cl::opt<unsigned> ClScanLimit("stack-tagging-merge-init-scan-limit",
@@ -549,16 +549,16 @@ bool AArch64StackTagging::runOnFunction(Function &Fn) {
     Info.AI->replaceAllUsesWith(TagPCall);
     TagPCall->setOperand(0, Info.AI);
 
-    bool StandardLifetime =
-        SInfo.UnrecognizedLifetimes.empty() &&
-        memtag::isStandardLifetime(Info.LifetimeStart, Info.LifetimeEnd, DT,
-                                   ClMaxLifetimes);
     // Calls to functions that may return twice (e.g. setjmp) confuse the
     // postdominator analysis, and will leave us to keep memory tagged after
     // function return. Work around this by always untagging at every return
     // statement if return_twice functions are called.
-    if (SInfo.UnrecognizedLifetimes.empty() && StandardLifetime &&
-        !SInfo.CallsReturnTwice) {
+    bool StandardLifetime =
+        SInfo.UnrecognizedLifetimes.empty() &&
+        memtag::isStandardLifetime(Info.LifetimeStart, Info.LifetimeEnd, DT,
+                                   ClMaxLifetimes) &&
+        !SInfo.CallsReturnTwice;
+    if (StandardLifetime) {
       IntrinsicInst *Start = Info.LifetimeStart[0];
       uint64_t Size =
           cast<ConstantInt>(Start->getArgOperand(0))->getZExtValue();
@@ -593,7 +593,7 @@ bool AArch64StackTagging::runOnFunction(Function &Fn) {
   }
 
   // If we have instrumented at least one alloca, all unrecognized lifetime
-  // instrinsics have to go.
+  // intrinsics have to go.
   for (auto &I : SInfo.UnrecognizedLifetimes)
     I->eraseFromParent();
 

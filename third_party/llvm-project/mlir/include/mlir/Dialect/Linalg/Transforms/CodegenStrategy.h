@@ -17,8 +17,6 @@
 
 namespace mlir {
 
-class FuncOp;
-
 namespace linalg {
 
 /// Abstract Transformation class applied in a sequence that also handles state
@@ -141,6 +139,26 @@ struct Decompose : public Transformation {
                          LinalgTransformationFilter m) const override {
     pm.addPass(createLinalgStrategyDecomposePass(m));
   }
+};
+
+/// Represent one application of createLinalgStrategyPeelPass.
+struct Peel : public Transformation {
+  explicit Peel(linalg::LinalgPeelOptions options,
+                LinalgTransformationFilter::FilterFunction f = nullptr)
+      : Transformation(std::move(f)), opName(), options(options) {}
+
+  Peel(StringRef name, linalg::LinalgPeelOptions options,
+       LinalgTransformationFilter::FilterFunction f = nullptr)
+      : Transformation(std::move(f)), opName(name), options(options) {}
+
+  void addToPassPipeline(OpPassManager &pm,
+                         LinalgTransformationFilter m) const override {
+    pm.addPass(createLinalgStrategyPeelPass(opName, options, m));
+  }
+
+private:
+  std::string opName;
+  linalg::LinalgPeelOptions options;
 };
 
 /// Represent one application of createLinalgStrategyVectorizePass.
@@ -289,6 +307,20 @@ struct CodegenStrategy {
   CodegenStrategy &
   decomposeIf(bool b, LinalgTransformationFilter::FilterFunction f = nullptr) {
     return b ? decompose(std::move(f)) : *this;
+  }
+  /// Append a pattern to peel 'LinalgOpType'.
+  CodegenStrategy &
+  peel(StringRef opName, const LinalgPeelOptions &options,
+       const LinalgTransformationFilter::FilterFunction &f = nullptr) {
+    transformationSequence.emplace_back(
+        std::make_unique<Peel>(opName, options, f));
+    return *this;
+  }
+  /// Conditionally append a pattern to peel 'LinalgOpType'.
+  CodegenStrategy &
+  peelIf(bool b, StringRef opName, const LinalgPeelOptions &options,
+         LinalgTransformationFilter::FilterFunction f = nullptr) {
+    return b ? peel(opName, options, std::move(f)) : *this;
   }
   /// Append a pattern to rewrite `LinalgOpType` as a vector operation.
   CodegenStrategy &

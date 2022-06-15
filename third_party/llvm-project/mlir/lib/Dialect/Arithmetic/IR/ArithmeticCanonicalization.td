@@ -9,6 +9,7 @@
 #ifndef ARITHMETIC_PATTERNS
 #define ARITHMETIC_PATTERNS
 
+include "mlir/IR/PatternBase.td"
 include "mlir/Dialect/Arithmetic/IR/ArithmeticOps.td"
 
 // Add two integer attributes and create a new one with the result.
@@ -107,6 +108,28 @@ def XOrINotCmpI :
         (Arith_CmpIOp (InvertPredicate $pred), $a, $b)>;
 
 //===----------------------------------------------------------------------===//
+// CmpIOp
+//===----------------------------------------------------------------------===//
+
+// cmpi(== or !=, a ext iNN, b ext iNN) == cmpi(== or !=, a, b)
+def CmpIExtSI :
+    Pat<(Arith_CmpIOp $pred,
+          (Arith_ExtSIOp $a),
+          (Arith_ExtSIOp $b)),
+        (Arith_CmpIOp $pred, $a, $b),
+        [(Constraint<CPred<"$0.getType() == $1.getType()">> $a, $b),
+         (Constraint<CPred<"$0.getValue() == arith::CmpIPredicate::eq || $0.getValue() == arith::CmpIPredicate::ne">> $pred)]>;
+
+// cmpi(== or !=, a ext iNN, b ext iNN) == cmpi(== or !=, a, b)
+def CmpIExtUI :
+    Pat<(Arith_CmpIOp $pred,
+          (Arith_ExtUIOp $a),
+          (Arith_ExtUIOp $b)),
+        (Arith_CmpIOp $pred, $a, $b),
+        [(Constraint<CPred<"$0.getType() == $1.getType()">> $a, $b),
+         (Constraint<CPred<"$0.getValue() == arith::CmpIPredicate::eq || $0.getValue() == arith::CmpIPredicate::ne">> $pred)]>;
+
+//===----------------------------------------------------------------------===//
 // IndexCastOp
 //===----------------------------------------------------------------------===//
 
@@ -162,6 +185,24 @@ def OrOfExtUI :
 // or extsi(x), extsi(y) -> extsi(or(x,y))
 def OrOfExtSI :
     Pat<(Arith_OrIOp (Arith_ExtSIOp $x), (Arith_ExtSIOp $y)), (Arith_ExtSIOp (Arith_OrIOp $x, $y)),
+      [(Constraint<CPred<"$0.getType() == $1.getType()">> $x, $y)]>;
+
+//===----------------------------------------------------------------------===//
+// MulFOp
+//===----------------------------------------------------------------------===//
+
+// mulf(negf(x), negf(y)) -> mulf(x,y)
+def MulFOfNegF :
+    Pat<(Arith_MulFOp (Arith_NegFOp $x), (Arith_NegFOp $y)), (Arith_MulFOp $x, $y),
+      [(Constraint<CPred<"$0.getType() == $1.getType()">> $x, $y)]>;
+
+//===----------------------------------------------------------------------===//
+// DivFOp
+//===----------------------------------------------------------------------===//
+
+// divf(negf(x), negf(y)) -> divf(x,y)
+def DivFOfNegF :
+    Pat<(Arith_DivFOp (Arith_NegFOp $x), (Arith_NegFOp $y)), (Arith_DivFOp $x, $y),
       [(Constraint<CPred<"$0.getType() == $1.getType()">> $x, $y)]>;
 
 #endif // ARITHMETIC_PATTERNS

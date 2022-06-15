@@ -179,6 +179,10 @@ struct t12 {
   t11<LocalEnum, LocalEnum1> v1;
 };
 
+template<decltype(ns::AnonEnum1)>
+void f10() {
+}
+
 int main() {
   struct { } A;
   auto L = []{};
@@ -323,9 +327,32 @@ int main() {
   f1<const unsigned _BitInt(5)>();
   f1<void(t1<>, t1<>)>();
   f1<int t1<>::*>();
+  void fcc() __attribute__((swiftcall));
+  f1<decltype(fcc)>();
+  int fnrt() __attribute__((noreturn));
+  f1<decltype(fnrt)>();
+  f10<ns::AnonEnum1>();
 }
 void t8::mem() {
   struct t7 { };
   f1<t7>();
   f1<decltype(&t8::mem)>();
+}
+namespace complex_type_units {
+void external_function();
+namespace {
+struct internal_type;
+}
+template <void (*)() = external_function> struct t2;
+template <typename = t2<>> class t3 {};
+template <typename = internal_type, typename = t3<>>
+struct t4 {
+};
+struct t5 {
+    t4<> v1;
+};
+void f1() {
+  t5 v1;
+  t3<> v2;
+}
 }

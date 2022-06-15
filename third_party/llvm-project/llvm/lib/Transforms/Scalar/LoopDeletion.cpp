@@ -17,12 +17,12 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/CFG.h"
-#include "llvm/Analysis/GlobalsModRef.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopIterator.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/MemorySSA.h"
 #include "llvm/Analysis/OptimizationRemarkEmitter.h"
+#include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/IR/Dominators.h"
 
 #include "llvm/IR/PatternMatch.h"
@@ -192,13 +192,13 @@ getValueOnFirstIteration(Value *V, DenseMap<Value *, Value *> &FirstIterValue,
         getValueOnFirstIteration(BO->getOperand(0), FirstIterValue, SQ);
     Value *RHS =
         getValueOnFirstIteration(BO->getOperand(1), FirstIterValue, SQ);
-    FirstIterV = SimplifyBinOp(BO->getOpcode(), LHS, RHS, SQ);
+    FirstIterV = simplifyBinOp(BO->getOpcode(), LHS, RHS, SQ);
   } else if (auto *Cmp = dyn_cast<ICmpInst>(V)) {
     Value *LHS =
         getValueOnFirstIteration(Cmp->getOperand(0), FirstIterValue, SQ);
     Value *RHS =
         getValueOnFirstIteration(Cmp->getOperand(1), FirstIterValue, SQ);
-    FirstIterV = SimplifyICmpInst(Cmp->getPredicate(), LHS, RHS, SQ);
+    FirstIterV = simplifyICmpInst(Cmp->getPredicate(), LHS, RHS, SQ);
   } else if (auto *Select = dyn_cast<SelectInst>(V)) {
     Value *Cond =
         getValueOnFirstIteration(Select->getCondition(), FirstIterValue, SQ);

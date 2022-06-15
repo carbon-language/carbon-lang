@@ -13,7 +13,6 @@
 #include "llvm/Analysis/BlockFrequencyInfoImpl.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/None.h"
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/Config/llvm-config.h"
@@ -22,8 +21,8 @@
 #include "llvm/Support/BranchProbability.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/ScaledNumber.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/ScaledNumber.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cassert>
@@ -48,7 +47,7 @@ cl::opt<bool> CheckBFIUnknownBlockQueries(
              "for debugging missed BFI updates"));
 
 cl::opt<bool> UseIterativeBFIInference(
-    "use-iterative-bfi-inference", cl::init(false), cl::Hidden, cl::ZeroOrMore,
+    "use-iterative-bfi-inference", cl::Hidden,
     cl::desc("Apply an iterative post-processing to infer correct BFI counts"));
 
 cl::opt<unsigned> IterativeBFIMaxIterationsPerBlock(

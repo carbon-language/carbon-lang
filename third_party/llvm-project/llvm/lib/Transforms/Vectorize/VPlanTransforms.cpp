@@ -13,6 +13,8 @@
 
 #include "VPlanTransforms.h"
 #include "llvm/ADT/PostOrderIterator.h"
+#include "llvm/ADT/SetVector.h"
+#include "llvm/Analysis/IVDescriptors.h"
 
 using namespace llvm;
 
@@ -22,17 +24,15 @@ void VPlanTransforms::VPInstructionsToVPRecipes(
         GetIntOrFpInductionDescriptor,
     SmallPtrSetImpl<Instruction *> &DeadInstructions, ScalarEvolution &SE) {
 
-  auto *TopRegion = cast<VPRegionBlock>(Plan->getEntry());
-  ReversePostOrderTraversal<VPBlockBase *> RPOT(TopRegion->getEntry());
-
-  for (VPBlockBase *Base : RPOT) {
-    // Do not widen instructions in pre-header and exit blocks.
-    if (Base->getNumPredecessors() == 0 || Base->getNumSuccessors() == 0)
-      continue;
-
-    VPBasicBlock *VPBB = Base->getEntryBasicBlock();
+  ReversePostOrderTraversal<VPBlockRecursiveTraversalWrapper<VPBlockBase *>>
+      RPOT(Plan->getEntry());
+  for (VPBasicBlock *VPBB : VPBlockUtils::blocksOnly<VPBasicBlock>(RPOT)) {
+    VPRecipeBase *Term = VPBB->getTerminator();
+    auto EndIter = Term ? Term->getIterator() : VPBB->end();
     // Introduce each ingredient into VPlan.
-    for (VPRecipeBase &Ingredient : llvm::make_early_inc_range(*VPBB)) {
+    for (VPRecipeBase &Ingredient :
+         make_early_inc_range(make_range(VPBB->begin(), EndIter))) {
+
       VPValue *VPV = Ingredient.getVPSingleValue();
       Instruction *Inst = cast<Instruction>(VPV->getUnderlyingValue());
       if (DeadInstructions.count(Inst)) {
@@ -47,8 +47,10 @@ void VPlanTransforms::VPInstructionsToVPRecipes(
         auto *Phi = cast<PHINode>(VPPhi->getUnderlyingValue());
         if (const auto *II = GetIntOrFpInductionDescriptor(Phi)) {
           VPValue *Start = Plan->getOrAddVPValue(II->getStartValue());
+          VPValue *Step =
+              vputils::getOrCreateVPValueForSCEVExpr(*Plan, II->getStep(), SE);
           NewRecipe =
-              new VPWidenIntOrFpInductionRecipe(Phi, Start, *II, false, true);
+              new VPWidenIntOrFpInductionRecipe(Phi, Start, Step, *II, true);
         } else {
           Plan->addVPValue(Phi, VPPhi);
           continue;
@@ -295,14 +297,19 @@ bool VPlanTransforms::mergeReplicateRegions(VPlan &Plan) {
 }
 
 void VPlanTransforms::removeRedundantInductionCasts(VPlan &Plan) {
-  SmallVector<std::pair<VPRecipeBase *, VPValue *>> CastsToRemove;
-  for (auto &Phi : Plan.getEntry()->getEntryBasicBlock()->phis()) {
+  for (auto &Phi : Plan.getVectorLoopRegion()->getEntryBasicBlock()->phis()) {
     auto *IV = dyn_cast<VPWidenIntOrFpInductionRecipe>(&Phi);
     if (!IV || IV->getTruncInst())
       continue;
 
-    // Visit all casts connected to IV and in Casts. Collect them.
-    // remember them for removal.
+    // A sequence of IR Casts has potentially been recorded for IV, which
+    // *must be bypassed* when the IV is vectorized, because the vectorized IV
+    // will produce the desired casted value. This sequence forms a def-use
+    // chain and is provided in reverse order, ending with the cast that uses
+    // the IV phi. Search for the recipe of the last cast in the chain and
+    // replace it with the original IV. Note that only the final cast is
+    // expected to have users outside the cast-chain and the dead casts left
+    // over will be cleaned up later.
     auto &Casts = IV->getInductionDescriptor().getCastInsts();
     VPValue *FindMyCast = IV;
     for (Instruction *IRCast : reverse(Casts)) {
@@ -315,14 +322,9 @@ void VPlanTransforms::removeRedundantInductionCasts(VPlan &Plan) {
           break;
         }
       }
-      assert(FoundUserCast && "Missing a cast to remove");
-      CastsToRemove.emplace_back(FoundUserCast, IV);
       FindMyCast = FoundUserCast->getVPSingleValue();
     }
-  }
-  for (auto &E : CastsToRemove) {
-    E.first->getVPSingleValue()->replaceAllUsesWith(E.second);
-    E.first->eraseFromParent();
+    FindMyCast->replaceAllUsesWith(IV);
   }
 }
 
@@ -356,5 +358,69 @@ void VPlanTransforms::removeRedundantCanonicalIVs(VPlan &Plan) {
       WidenNewIV->eraseFromParent();
       return;
     }
+  }
+}
+
+void VPlanTransforms::removeDeadRecipes(VPlan &Plan) {
+  VPBasicBlock *Header = Plan.getVectorLoopRegion()->getEntryBasicBlock();
+  // Remove dead recipes in header block. The recipes in the block are processed
+  // in reverse order, to catch chains of dead recipes.
+  // TODO: Remove dead recipes across whole plan.
+  for (VPRecipeBase &R : make_early_inc_range(reverse(*Header))) {
+    if (R.mayHaveSideEffects() || any_of(R.definedValues(), [](VPValue *V) {
+          return V->getNumUsers() > 0;
+        }))
+      continue;
+    R.eraseFromParent();
+  }
+}
+
+void VPlanTransforms::optimizeInductions(VPlan &Plan, ScalarEvolution &SE) {
+  SmallVector<VPRecipeBase *> ToRemove;
+  VPBasicBlock *HeaderVPBB = Plan.getVectorLoopRegion()->getEntryBasicBlock();
+  for (VPRecipeBase &Phi : HeaderVPBB->phis()) {
+    auto *IV = dyn_cast<VPWidenIntOrFpInductionRecipe>(&Phi);
+    if (!IV ||
+        all_of(IV->users(), [IV](VPUser *U) { return !U->usesScalars(IV); }))
+      continue;
+
+    const InductionDescriptor &ID = IV->getInductionDescriptor();
+    VPValue *Step =
+        vputils::getOrCreateVPValueForSCEVExpr(Plan, ID.getStep(), SE);
+    Instruction *TruncI = IV->getTruncInst();
+    VPScalarIVStepsRecipe *Steps = new VPScalarIVStepsRecipe(
+        IV->getPHINode()->getType(), ID, Plan.getCanonicalIV(),
+        IV->getStartValue(), Step, TruncI ? TruncI->getType() : nullptr);
+    HeaderVPBB->insert(Steps, HeaderVPBB->getFirstNonPhi());
+
+    // Update scalar users of IV to use Step instead. Use SetVector to ensure
+    // the list of users doesn't contain duplicates.
+    SetVector<VPUser *> Users(IV->user_begin(), IV->user_end());
+    for (VPUser *U : Users) {
+      if (!U->usesScalars(IV))
+        continue;
+      for (unsigned I = 0, E = U->getNumOperands(); I != E; I++) {
+        if (U->getOperand(I) != IV)
+          continue;
+        U->setOperand(I, Steps);
+      }
+    }
+  }
+}
+
+void VPlanTransforms::removeRedundantExpandSCEVRecipes(VPlan &Plan) {
+  DenseMap<const SCEV *, VPValue *> SCEV2VPV;
+
+  for (VPRecipeBase &R :
+       make_early_inc_range(*Plan.getEntry()->getEntryBasicBlock())) {
+    auto *ExpR = dyn_cast<VPExpandSCEVRecipe>(&R);
+    if (!ExpR)
+      continue;
+
+    auto I = SCEV2VPV.insert({ExpR->getSCEV(), ExpR});
+    if (I.second)
+      continue;
+    ExpR->replaceAllUsesWith(I.first->second);
+    ExpR->eraseFromParent();
   }
 }

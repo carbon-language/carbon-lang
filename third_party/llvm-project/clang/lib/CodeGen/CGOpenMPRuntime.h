@@ -218,6 +218,11 @@ public:
   /// Returns true if the initialization of the reduction item uses initializer
   /// from declare reduction construct.
   bool usesReductionInitializer(unsigned N) const;
+  /// Return the type of the private item.
+  QualType getPrivateType(unsigned N) const {
+    return cast<VarDecl>(cast<DeclRefExpr>(ClausesData[N].Private)->getDecl())
+        ->getType();
+  }
 };
 
 class CGOpenMPRuntime {
@@ -513,15 +518,6 @@ private:
   ///  kmp_int64 st; // stride
   /// };
   QualType KmpDimTy;
-  /// Type struct __tgt_offload_entry{
-  ///   void      *addr;       // Pointer to the offload entry info.
-  ///                          // (function or global)
-  ///   char      *name;       // Name of the function or global.
-  ///   size_t     size;       // Size of the entry info (0 if it a function).
-  ///   int32_t flags;
-  ///   int32_t reserved;
-  /// };
-  QualType TgtOffloadEntryQTy;
   /// Entity that registers the offloading constants that were emitted so
   /// far.
   class OffloadEntriesInfoManagerTy {
@@ -777,9 +773,6 @@ private:
   /// metadata.
   void loadOffloadInfoMetadata();
 
-  /// Returns __tgt_offload_entry type.
-  QualType getTgtOffloadEntryQTy();
-
   /// Start scanning from statement \a S and and emit all target regions
   /// found along the way.
   /// \param S Starting statement.
@@ -914,6 +907,14 @@ private:
   std::pair<llvm::Value *, LValue> getDepobjElements(CodeGenFunction &CGF,
                                                      LValue DepobjLVal,
                                                      SourceLocation Loc);
+
+  SmallVector<llvm::Value *, 4>
+  emitDepobjElementsSizes(CodeGenFunction &CGF, QualType &KmpDependInfoTy,
+                          const OMPTaskDataTy::DependData &Data);
+
+  void emitDepobjElements(CodeGenFunction &CGF, QualType &KmpDependInfoTy,
+                          LValue PosLVal, const OMPTaskDataTy::DependData &Data,
+                          Address DependenciesArray);
 
 public:
   explicit CGOpenMPRuntime(CodeGenModule &CGM)
@@ -1406,14 +1407,14 @@ public:
                                     bool HasCancel = false);
 
   /// Emits reduction function.
-  /// \param ArgsType Array type containing pointers to reduction variables.
+  /// \param ArgsElemType Array type containing pointers to reduction variables.
   /// \param Privates List of private copies for original reduction arguments.
   /// \param LHSExprs List of LHS in \a ReductionOps reduction operations.
   /// \param RHSExprs List of RHS in \a ReductionOps reduction operations.
   /// \param ReductionOps List of reduction operations in form 'LHS binop RHS'
   /// or 'operator binop(LHS, RHS)'.
   llvm::Function *emitReductionFunction(SourceLocation Loc,
-                                        llvm::Type *ArgsType,
+                                        llvm::Type *ArgsElemType,
                                         ArrayRef<const Expr *> Privates,
                                         ArrayRef<const Expr *> LHSExprs,
                                         ArrayRef<const Expr *> RHSExprs,

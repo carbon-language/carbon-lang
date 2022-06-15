@@ -15,17 +15,19 @@
 #include "mlir/Analysis/SliceAnalysis.h"
 #include "mlir/Dialect/Affine/Analysis/AffineStructures.h"
 #include "mlir/Dialect/Affine/IR/AffineValueMap.h"
+#include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/Linalg/IR/Linalg.h"
 #include "mlir/Dialect/Linalg/Transforms/Transforms.h"
 #include "mlir/Dialect/SCF/SCF.h"
 #include "mlir/Dialect/SCF/Utils/Utils.h"
-#include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
 #include "mlir/Dialect/Vector/IR/VectorOps.h"
 #include "mlir/Dialect/Vector/Utils/VectorUtils.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/Dominance.h"
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
+#include "mlir/Transforms/LoopInvariantCodeMotionUtils.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Debug.h"
 
@@ -148,7 +150,7 @@ static HoistableRead findMatchingTransferRead(HoistableWrite write,
     LLVM_DEBUG(DBGS() << "maybeTransferReadUser: " << *maybeTransferReadUser
                       << "\n");
     auto read = dyn_cast<vector::TransferReadOp>(maybeTransferReadUser);
-    if (read && read.indices() == write.transferWriteOp.indices() &&
+    if (read && read.getIndices() == write.transferWriteOp.getIndices() &&
         read.getVectorType() == write.transferWriteOp.getVectorType())
       return HoistableRead{read, sliceOp};
   }
@@ -223,7 +225,7 @@ getLoopInvariantTransferWriteOpDefining(scf::ForOp forOp,
   Value v = yieldOperand.get();
   if (auto write = v.getDefiningOp<vector::TransferWriteOp>()) {
     // Indexing must not depend on `forOp`.
-    for (Value operand : write.indices())
+    for (Value operand : write.getIndices())
       if (!forOp.isDefinedOutsideOfLoop(operand))
         return HoistableWrite();
 
@@ -271,12 +273,11 @@ static void hoistReadWrite(HoistableRead read, HoistableWrite write,
                     << "\nInvolving: " << tensorBBArg << "\n");
 
   // If a read slice is present, hoist it.
-  if (read.extractSliceOp && failed(forOp.moveOutOfLoop({read.extractSliceOp})))
-    llvm_unreachable("Unexpected failure moving extract_slice out of loop");
+  if (read.extractSliceOp)
+    forOp.moveOutOfLoop(read.extractSliceOp);
 
   // Hoist the transfer_read op.
-  if (failed(forOp.moveOutOfLoop({read.transferReadOp})))
-    llvm_unreachable("Unexpected failure moving transfer read out of loop");
+  forOp.moveOutOfLoop(read.transferReadOp);
 
   // TODO: don't hardcode /*numIvs=*/1.
   assert(tensorBBArg.getArgNumber() >= /*numIvs=*/1);
@@ -287,7 +288,7 @@ static void hoistReadWrite(HoistableRead read, HoistableWrite write,
     read.extractSliceOp.sourceMutable().assign(
         forOp.getInitArgs()[initArgNumber]);
   else
-    read.transferReadOp.sourceMutable().assign(
+    read.transferReadOp.getSourceMutable().assign(
         forOp.getInitArgs()[initArgNumber]);
 
   // Hoist write after.
@@ -300,12 +301,17 @@ static void hoistReadWrite(HoistableRead read, HoistableWrite write,
   if (write.insertSliceOp)
     yieldOp->setOperand(initArgNumber, write.insertSliceOp.dest());
   else
-    yieldOp->setOperand(initArgNumber, write.transferWriteOp.source());
+    yieldOp->setOperand(initArgNumber, write.transferWriteOp.getSource());
 
   // Rewrite `loop` with additional new yields.
   OpBuilder b(read.transferReadOp);
-  auto newForOp = cloneWithNewYields(b, forOp, read.transferReadOp.vector(),
-                                     write.transferWriteOp.vector());
+  NewYieldValueFn yieldFn = [&](OpBuilder &b, Location loc,
+                                ArrayRef<BlockArgument> newBBArgs) {
+    return SmallVector<Value>{write.transferWriteOp.getVector()};
+  };
+  auto newForOp = replaceLoopWithNewYields(
+      b, forOp, read.transferReadOp.getVector(), yieldFn);
+
   // Transfer write has been hoisted, need to update the vector and tensor
   // source. Replace the result of the loop to use the new tensor created
   // outside the loop.
@@ -314,17 +320,18 @@ static void hoistReadWrite(HoistableRead read, HoistableWrite write,
   if (write.insertSliceOp) {
     newForOp.getResult(initArgNumber)
         .replaceAllUsesWith(write.insertSliceOp.getResult());
-    write.transferWriteOp.sourceMutable().assign(read.extractSliceOp.result());
+    write.transferWriteOp.getSourceMutable().assign(
+        read.extractSliceOp.result());
     write.insertSliceOp.destMutable().assign(read.extractSliceOp.source());
   } else {
     newForOp.getResult(initArgNumber)
         .replaceAllUsesWith(write.transferWriteOp.getResult());
-    write.transferWriteOp.sourceMutable().assign(
+    write.transferWriteOp.getSourceMutable().assign(
         newForOp.getResult(initArgNumber));
   }
 
   // Always update with the newly yield tensor and vector.
-  write.transferWriteOp.vectorMutable().assign(newForOp.getResults().back());
+  write.transferWriteOp.getVectorMutable().assign(newForOp.getResults().back());
 }
 
 // To hoist transfer op on tensor the logic can be significantly simplified
@@ -338,7 +345,7 @@ static void hoistReadWrite(HoistableRead read, HoistableWrite write,
 // 4. Hoist the tensor_read/tensor_write and update the tensor SSA links.
 // After this transformation the scf.forOp may have unused arguments that can be
 // remove by the canonicalization pass.
-void mlir::linalg::hoistRedundantVectorTransfersOnTensor(FuncOp func) {
+void mlir::linalg::hoistRedundantVectorTransfersOnTensor(func::FuncOp func) {
   bool changed = true;
   while (changed) {
     changed = false;
@@ -356,7 +363,7 @@ void mlir::linalg::hoistRedundantVectorTransfersOnTensor(FuncOp func) {
         if (write.insertSliceOp)
           LLVM_DEBUG(DBGS() << "Candidate insert_slice for hoisting: "
                             << *write.insertSliceOp.getOperation() << "\n");
-        if (llvm::any_of(write.transferWriteOp.indices(),
+        if (llvm::any_of(write.transferWriteOp.getIndices(),
                          [&forOp](Value index) {
                            return !forOp.isDefinedOutsideOfLoop(index);
                          }))
@@ -390,17 +397,14 @@ void mlir::linalg::hoistRedundantVectorTransfersOnTensor(FuncOp func) {
   }
 }
 
-void mlir::linalg::hoistRedundantVectorTransfers(FuncOp func) {
+void mlir::linalg::hoistRedundantVectorTransfers(func::FuncOp func) {
   bool changed = true;
   while (changed) {
     changed = false;
     // First move loop invariant ops outside of their loop. This needs to be
-    // done before as we cannot move ops without interputing the function walk.
-    func.walk([&](LoopLikeOpInterface loopLike) {
-      if (failed(moveLoopInvariantCode(loopLike)))
-        llvm_unreachable(
-            "Unexpected failure to move invariant code out of loop");
-    });
+    // done before as we cannot move ops without interrupting the function walk.
+    func.walk(
+        [&](LoopLikeOpInterface loopLike) { moveLoopInvariantCode(loopLike); });
 
     func.walk([&](vector::TransferReadOp transferRead) {
       if (!transferRead.getShapedType().isa<MemRefType>())
@@ -425,7 +429,8 @@ void mlir::linalg::hoistRedundantVectorTransfers(FuncOp func) {
       vector::TransferWriteOp transferWrite;
       for (auto *sliceOp : llvm::reverse(forwardSlice)) {
         auto candidateWrite = dyn_cast<vector::TransferWriteOp>(sliceOp);
-        if (!candidateWrite || candidateWrite.source() != transferRead.source())
+        if (!candidateWrite ||
+            candidateWrite.getSource() != transferRead.getSource())
           continue;
         transferWrite = candidateWrite;
       }
@@ -447,7 +452,7 @@ void mlir::linalg::hoistRedundantVectorTransfers(FuncOp func) {
       //   2. no other operations in the loop access the same memref except
       //      for transfer_read/transfer_write accessing statically disjoint
       //      slices.
-      if (transferRead.indices() != transferWrite.indices() &&
+      if (transferRead.getIndices() != transferWrite.getIndices() &&
           transferRead.getVectorType() == transferWrite.getVectorType())
         return WalkResult::advance();
 
@@ -456,7 +461,7 @@ void mlir::linalg::hoistRedundantVectorTransfers(FuncOp func) {
       DominanceInfo dom(loop);
       if (!dom.properlyDominates(transferRead.getOperation(), transferWrite))
         return WalkResult::advance();
-      for (auto &use : transferRead.source().getUses()) {
+      for (auto &use : transferRead.getSource().getUses()) {
         if (!loop->isAncestor(use.getOwner()))
           continue;
         if (use.getOwner() == transferRead.getOperation() ||
@@ -484,22 +489,23 @@ void mlir::linalg::hoistRedundantVectorTransfers(FuncOp func) {
       }
 
       // Hoist read before.
-      if (failed(loop.moveOutOfLoop({transferRead})))
-        llvm_unreachable(
-            "Unexpected failure to move transfer read out of loop");
+      loop.moveOutOfLoop(transferRead);
 
       // Hoist write after.
       transferWrite->moveAfter(loop);
 
       // Rewrite `loop` with new yields by cloning and erase the original loop.
       OpBuilder b(transferRead);
-      auto newForOp = cloneWithNewYields(b, loop, transferRead.vector(),
-                                         transferWrite.vector());
+      NewYieldValueFn yieldFn = [&](OpBuilder &b, Location loc,
+                                    ArrayRef<BlockArgument> newBBArgs) {
+        return SmallVector<Value>{transferWrite.getVector()};
+      };
+      auto newForOp =
+          replaceLoopWithNewYields(b, loop, transferRead.getVector(), yieldFn);
 
-      // Transfer write has been hoisted, need to update the written value to
+      // Transfer write has been hoisted, need to update the written vector by
       // the value yielded by the newForOp.
-      transferWrite.vector().replaceAllUsesWith(
-          newForOp.getResults().take_back()[0]);
+      transferWrite.getVectorMutable().assign(newForOp.getResults().back());
 
       changed = true;
       loop.erase();

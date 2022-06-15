@@ -49,7 +49,6 @@
 
 namespace __llvm_libc {
 
-INLINE_FMA
 LLVM_LIBC_FUNCTION(float, logf, (float x)) {
   constexpr double LOG_2 = 0x1.62e42fefa39efp-1;
   using FPBits = typename fputil::FPBits<float>;
@@ -120,7 +119,7 @@ LLVM_LIBC_FUNCTION(float, logf, (float x)) {
   d *= ONE_OVER_F[f_index];
 
   double extra_factor =
-      fputil::fma(static_cast<double>(m), LOG_2, LOG_F[f_index]);
+      fputil::multiply_add(static_cast<double>(m), LOG_2, LOG_F[f_index]);
 
   double r = __llvm_libc::fputil::polyeval(
       d, extra_factor, 0x1.fffffffffffacp-1, -0x1.fffffffef9cb2p-2,

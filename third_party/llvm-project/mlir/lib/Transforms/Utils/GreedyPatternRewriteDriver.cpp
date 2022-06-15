@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
+#include "mlir/IR/Matchers.h"
 #include "mlir/Interfaces/SideEffectInterfaces.h"
 #include "mlir/Rewrite/PatternApplicator.h"
 #include "mlir/Transforms/FoldUtils.h"
@@ -42,7 +43,7 @@ public:
   bool simplify(MutableArrayRef<Region> regions);
 
   /// Add the given operation to the worklist.
-  void addToWorklist(Operation *op);
+  virtual void addToWorklist(Operation *op);
 
   /// Pop the next operation from the worklist.
   Operation *popFromWorklist();
@@ -59,8 +60,7 @@ protected:
   // be re-added to the worklist. This function should be called when an
   // operation is modified or removed, as it may trigger further
   // simplifications.
-  template <typename Operands>
-  void addToWorklist(Operands &&operands);
+  void addOperandsToWorklist(ValueRange operands);
 
   // If an operation is about to be removed, make sure it is not in our
   // worklist anymore because we'd get dangling references to it.
@@ -76,7 +76,7 @@ protected:
 
   /// PatternRewriter hook for notifying match failure reasons.
   LogicalResult
-  notifyMatchFailure(Operation *op,
+  notifyMatchFailure(Location loc,
                      function_ref<void(Diagnostic &)> reasonCallback) override;
 
   /// The low-level pattern applicator.
@@ -132,6 +132,16 @@ bool GreedyPatternRewriteDriver::simplify(MutableArrayRef<Region> regions) {
   };
 #endif
 
+  auto insertKnownConstant = [&](Operation *op) {
+    // Check for existing constants when populating the worklist. This avoids
+    // accidentally reversing the constant order during processing.
+    Attribute constValue;
+    if (matchPattern(op, m_Constant(&constValue)))
+      if (!folder.insertKnownConstant(op, constValue))
+        return true;
+    return false;
+  };
+
   bool changed = false;
   unsigned iteration = 0;
   do {
@@ -140,13 +150,23 @@ bool GreedyPatternRewriteDriver::simplify(MutableArrayRef<Region> regions) {
 
     if (!config.useTopDownTraversal) {
       // Add operations to the worklist in postorder.
-      for (auto &region : regions)
-        region.walk([this](Operation *op) { addToWorklist(op); });
+      for (auto &region : regions) {
+        region.walk([&](Operation *op) {
+          if (!insertKnownConstant(op))
+            addToWorklist(op);
+        });
+      }
     } else {
       // Add all nested operations to the worklist in preorder.
-      for (auto &region : regions)
-        region.walk<WalkOrder::PreOrder>(
-            [this](Operation *op) { worklist.push_back(op); });
+      for (auto &region : regions) {
+        region.walk<WalkOrder::PreOrder>([&](Operation *op) {
+          if (!insertKnownConstant(op)) {
+            worklist.push_back(op);
+            return WalkResult::advance();
+          }
+          return WalkResult::skip();
+        });
+      }
 
       // Reverse the list so our pop-back loop processes them in-order.
       std::reverse(worklist.begin(), worklist.end());
@@ -198,7 +218,7 @@ bool GreedyPatternRewriteDriver::simplify(MutableArrayRef<Region> regions) {
       originalOperands.assign(op->operand_begin(), op->operand_end());
       auto preReplaceAction = [&](Operation *op) {
         // Add the operands to the worklist for visitation.
-        addToWorklist(originalOperands);
+        addOperandsToWorklist(originalOperands);
 
         // Add all the users of the result to the worklist so we make sure
         // to revisit them.
@@ -263,7 +283,7 @@ bool GreedyPatternRewriteDriver::simplify(MutableArrayRef<Region> regions) {
     if (config.enableRegionSimplification)
       changed |= succeeded(simplifyRegions(*this, regions));
   } while (changed &&
-           (++iteration < config.maxIterations ||
+           (iteration++ < config.maxIterations ||
             config.maxIterations == GreedyRewriteConfig::kNoIterationLimit));
 
   // Whether the rewrite converges, i.e. wasn't changed in the last iteration.
@@ -306,8 +326,7 @@ void GreedyPatternRewriteDriver::notifyOperationInserted(Operation *op) {
   addToWorklist(op);
 }
 
-template <typename Operands>
-void GreedyPatternRewriteDriver::addToWorklist(Operands &&operands) {
+void GreedyPatternRewriteDriver::addOperandsToWorklist(ValueRange operands) {
   for (Value operand : operands) {
     // If the use count of this operand is now < 2, we re-add the defining
     // operation to the worklist.
@@ -322,7 +341,7 @@ void GreedyPatternRewriteDriver::addToWorklist(Operands &&operands) {
 }
 
 void GreedyPatternRewriteDriver::notifyOperationRemoved(Operation *op) {
-  addToWorklist(op->getOperands());
+  addOperandsToWorklist(op->getOperands());
   op->walk([this](Operation *operation) {
     removeFromWorklist(operation);
     folder.notifyRemoval(operation);
@@ -348,9 +367,9 @@ void GreedyPatternRewriteDriver::eraseOp(Operation *op) {
 }
 
 LogicalResult GreedyPatternRewriteDriver::notifyMatchFailure(
-    Operation *op, function_ref<void(Diagnostic &)> reasonCallback) {
+    Location loc, function_ref<void(Diagnostic &)> reasonCallback) {
   LLVM_DEBUG({
-    Diagnostic diag(op->getLoc(), DiagnosticSeverity::Remark);
+    Diagnostic diag(loc, DiagnosticSeverity::Remark);
     reasonCallback(diag);
     logger.startLine() << "** Failure : " << diag.str() << "\n";
   });
@@ -502,20 +521,16 @@ public:
 
   bool simplifyLocally(ArrayRef<Operation *> op);
 
+  void addToWorklist(Operation *op) override {
+    if (!strictMode || strictModeFilteredOps.contains(op))
+      GreedyPatternRewriteDriver::addToWorklist(op);
+  }
+
 private:
-  // Look over the provided operands for any defining operations that should
-  // be re-added to the worklist. This function should be called when an
-  // operation is modified or removed, as it may trigger further
-  // simplifications. If `strict` is set to true, only ops in
-  // `strictModeFilteredOps` are considered.
-  template <typename Operands>
-  void addOperandsToWorklist(Operands &&operands) {
-    for (Value operand : operands) {
-      if (auto *defOp = operand.getDefiningOp()) {
-        if (!strictMode || strictModeFilteredOps.contains(defOp))
-          addToWorklist(defOp);
-      }
-    }
+  void notifyOperationInserted(Operation *op) override {
+    GreedyPatternRewriteDriver::notifyOperationInserted(op);
+    if (strictMode)
+      strictModeFilteredOps.insert(op);
   }
 
   void notifyOperationRemoved(Operation *op) override {
@@ -577,6 +592,9 @@ bool MultiOpPatternRewriteDriver::simplifyLocally(ArrayRef<Operation *> ops) {
     if (op == nullptr)
       continue;
 
+    assert((!strictMode || strictModeFilteredOps.contains(op)) &&
+           "unexpected op was inserted under strict mode");
+
     // If the operation is trivially dead - remove it.
     if (isOpTriviallyDead(op)) {
       notifyOperationRemoved(op);
@@ -594,22 +612,17 @@ bool MultiOpPatternRewriteDriver::simplifyLocally(ArrayRef<Operation *> ops) {
 
       // Add all the users of the result to the worklist so we make sure
       // to revisit them.
-      for (Value result : op->getResults())
-        for (Operation *userOp : result.getUsers()) {
-          if (!strictMode || strictModeFilteredOps.contains(userOp))
-            addToWorklist(userOp);
-        }
+      for (Value result : op->getResults()) {
+        for (Operation *userOp : result.getUsers())
+          addToWorklist(userOp);
+      }
+
       notifyOperationRemoved(op);
     };
 
     // Add the given operation generated by the folder to the worklist.
     auto processGeneratedConstants = [this](Operation *op) {
-      // Newly created ops are also simplified -- these are also "local".
-      addToWorklist(op);
-      // When strict mode is off, we don't need to maintain
-      // strictModeFilteredOps.
-      if (strictMode)
-        strictModeFilteredOps.insert(op);
+      notifyOperationInserted(op);
     };
 
     // Try to fold this op.

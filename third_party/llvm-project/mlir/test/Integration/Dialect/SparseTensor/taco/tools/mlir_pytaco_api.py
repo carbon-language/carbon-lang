@@ -16,6 +16,8 @@ from . import mlir_pytaco
 from . import mlir_pytaco_io
 
 # Functions defined by PyTACO API.
+ceil = mlir_pytaco.ceil
+floor = mlir_pytaco.floor
 get_index_vars = mlir_pytaco.get_index_vars
 from_array = mlir_pytaco.Tensor.from_array
 read = mlir_pytaco_io.read
@@ -33,6 +35,7 @@ index_expression = mlir_pytaco.IndexExpr
 access = mlir_pytaco.Access
 
 # Data type constants defined by PyTACO API.
+int8 = mlir_pytaco.DType(mlir_pytaco.Type.INT8)
 int16 = mlir_pytaco.DType(mlir_pytaco.Type.INT16)
 int32 = mlir_pytaco.DType(mlir_pytaco.Type.INT32)
 int64 = mlir_pytaco.DType(mlir_pytaco.Type.INT64)

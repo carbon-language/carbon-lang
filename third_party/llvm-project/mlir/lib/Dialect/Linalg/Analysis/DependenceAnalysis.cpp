@@ -12,8 +12,8 @@
 
 #include "mlir/Dialect/Linalg/Analysis/DependenceAnalysis.h"
 #include "mlir/Dialect/Bufferization/IR/Bufferization.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/Linalg/IR/Linalg.h"
-#include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/IR/BuiltinOps.h"
 
 #include "llvm/Support/CommandLine.h"
@@ -94,7 +94,7 @@ StringRef LinalgDependenceGraph::getDependenceTypeStr(DependenceType depType) {
 }
 
 LinalgDependenceGraph
-LinalgDependenceGraph::buildDependenceGraph(Aliases &aliases, FuncOp f) {
+LinalgDependenceGraph::buildDependenceGraph(Aliases &aliases, func::FuncOp f) {
   SmallVector<LinalgOp, 8> linalgOps;
   f.walk([&](LinalgOp op) { linalgOps.push_back(op); });
   return LinalgDependenceGraph(aliases, linalgOps);

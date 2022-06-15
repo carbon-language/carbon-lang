@@ -19,6 +19,7 @@
 #include "CSKYSubtarget.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/CallingConvLower.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Support/Debug.h"
 
@@ -103,9 +104,7 @@ CSKYTargetLowering::CSKYTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::UDIV, MVT::i32, Expand);
   }
 
-  if (!Subtarget.has3r2E3r3()) {
-    setOperationAction(ISD::ATOMIC_FENCE, MVT::Other, Expand);
-  }
+  setOperationAction(ISD::ATOMIC_FENCE, MVT::Other, Expand);
 
   // Float
 
@@ -1022,6 +1021,12 @@ CSKYTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   switch (MI.getOpcode()) {
   default:
     llvm_unreachable("Unexpected instr type to insert");
+  case CSKY::FSELS:
+  case CSKY::FSELD:
+    if (Subtarget.hasE2())
+      return emitSelectPseudo(MI, BB, CSKY::BT32);
+    else
+      return emitSelectPseudo(MI, BB, CSKY::BT16);
   case CSKY::ISEL32:
     return emitSelectPseudo(MI, BB, CSKY::BT32);
   case CSKY::ISEL16:

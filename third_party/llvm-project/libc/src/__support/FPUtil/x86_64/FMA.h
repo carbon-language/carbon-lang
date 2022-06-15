@@ -15,6 +15,10 @@
 #error "Invalid include"
 #endif
 
+#if !defined(LIBC_TARGET_HAS_FMA)
+#error "FMA instructions are not supported"
+#endif
+
 #include "src/__support/CPP/TypeTraits.h"
 #include <immintrin.h>
 
@@ -22,8 +26,8 @@ namespace __llvm_libc {
 namespace fputil {
 
 template <typename T>
-INLINE_FMA static inline cpp::EnableIfType<cpp::IsSame<T, float>::Value, T>
-fma(T x, T y, T z) {
+static inline cpp::EnableIfType<cpp::IsSame<T, float>::Value, T> fma(T x, T y,
+                                                                     T z) {
   float result;
   __m128 xmm = _mm_load_ss(&x);           // NOLINT
   __m128 ymm = _mm_load_ss(&y);           // NOLINT
@@ -34,8 +38,8 @@ fma(T x, T y, T z) {
 }
 
 template <typename T>
-INLINE_FMA static inline cpp::EnableIfType<cpp::IsSame<T, double>::Value, T>
-fma(T x, T y, T z) {
+static inline cpp::EnableIfType<cpp::IsSame<T, double>::Value, T> fma(T x, T y,
+                                                                      T z) {
   double result;
   __m128d xmm = _mm_load_sd(&x);           // NOLINT
   __m128d ymm = _mm_load_sd(&y);           // NOLINT

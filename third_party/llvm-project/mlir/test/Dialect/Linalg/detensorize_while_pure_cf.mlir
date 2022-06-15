@@ -1,4 +1,4 @@
-// RUN: mlir-opt %s -allow-unregistered-dialect -pass-pipeline="builtin.func(linalg-detensorize)" | FileCheck %s
+// RUN: mlir-opt %s -allow-unregistered-dialect -pass-pipeline="func.func(linalg-detensorize)" | FileCheck %s
 
 #map0 = affine_map<() -> ()>
 
@@ -7,7 +7,7 @@
   iterator_types = []
 }
 
-func @main() -> () attributes {} {
+func.func @main() -> () attributes {} {
   %c0 = arith.constant 0 : i32
   %0 = tensor.from_elements %c0 : tensor<1xi32>
   %reshaped0 = tensor.collapse_shape %0 [] : tensor<1xi32> into tensor<i32>

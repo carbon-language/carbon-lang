@@ -295,9 +295,8 @@ define i32 @test17(i1 %x) {
 
 define i32 @test18(i16 %x) {
 ; CHECK-LABEL: @test18(
-; CHECK-NEXT:    [[TMP1:%.*]] = icmp sgt i16 [[X:%.*]], 0
-; CHECK-NEXT:    [[SEL:%.*]] = select i1 [[TMP1]], i16 [[X]], i16 0
-; CHECK-NEXT:    [[EXT:%.*]] = zext i16 [[SEL]] to i32
+; CHECK-NEXT:    [[TMP1:%.*]] = call i16 @llvm.smax.i16(i16 [[X:%.*]], i16 0)
+; CHECK-NEXT:    [[EXT:%.*]] = zext i16 [[TMP1]] to i32
 ; CHECK-NEXT:    ret i32 [[EXT]]
 ;
   %cmp = icmp slt i16 %x, 0
@@ -382,17 +381,45 @@ define i32 @smear_set_bit_wrong_shift_amount(i32 %x) {
   ret i32 %s
 }
 
-; TODO: this could be mask+compare+sext or shifts+trunc
-
 define i16 @smear_set_bit_different_dest_type(i32 %x) {
 ; CHECK-LABEL: @smear_set_bit_different_dest_type(
-; CHECK-NEXT:    [[T:%.*]] = trunc i32 [[X:%.*]] to i8
-; CHECK-NEXT:    [[A:%.*]] = ashr i8 [[T]], 7
-; CHECK-NEXT:    [[S:%.*]] = sext i8 [[A]] to i16
+; CHECK-NEXT:    [[TMP1:%.*]] = shl i32 [[X:%.*]], 24
+; CHECK-NEXT:    [[TMP2:%.*]] = ashr i32 [[TMP1]], 31
+; CHECK-NEXT:    [[S:%.*]] = trunc i32 [[TMP2]] to i16
 ; CHECK-NEXT:    ret i16 [[S]]
 ;
   %t = trunc i32 %x to i8
   %a = ashr i8 %t, 7
   %s = sext i8 %a to i16
   ret i16 %s
+}
+
+; negative test - extra use
+
+define i16 @smear_set_bit_different_dest_type_extra_use(i32 %x) {
+; CHECK-LABEL: @smear_set_bit_different_dest_type_extra_use(
+; CHECK-NEXT:    [[T:%.*]] = trunc i32 [[X:%.*]] to i8
+; CHECK-NEXT:    call void @use(i8 [[T]])
+; CHECK-NEXT:    [[A:%.*]] = ashr i8 [[T]], 7
+; CHECK-NEXT:    [[S:%.*]] = sext i8 [[A]] to i16
+; CHECK-NEXT:    ret i16 [[S]]
+;
+  %t = trunc i32 %x to i8
+  call void @use(i8 %t)
+  %a = ashr i8 %t, 7
+  %s = sext i8 %a to i16
+  ret i16 %s
+}
+
+define i64 @smear_set_bit_different_dest_type_wider_dst(i32 %x) {
+; CHECK-LABEL: @smear_set_bit_different_dest_type_wider_dst(
+; CHECK-NEXT:    [[TMP1:%.*]] = shl i32 [[X:%.*]], 24
+; CHECK-NEXT:    [[TMP2:%.*]] = ashr i32 [[TMP1]], 31
+; CHECK-NEXT:    [[S:%.*]] = sext i32 [[TMP2]] to i64
+; CHECK-NEXT:    ret i64 [[S]]
+;
+  %t = trunc i32 %x to i8
+  %a = ashr i8 %t, 7
+  %s = sext i8 %a to i64
+  ret i64 %s
 }

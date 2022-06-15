@@ -128,6 +128,17 @@ void __dfsan_unimplemented(char *fname) {
            fname);
 }
 
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE void __dfsan_wrapper_extern_weak_null(
+    const void *addr, char *fname) {
+  if (!addr)
+    Report(
+        "ERROR: DataFlowSanitizer: dfsan generated wrapper calling null "
+        "extern_weak function %s\nIf this only happens with dfsan, the "
+        "dfsan instrumentation pass may be accidentally optimizing out a "
+        "null check\n",
+        fname);
+}
+
 // Use '-mllvm -dfsan-debug-nonzero-labels' and break on this function
 // to try to figure out where labels are being introduced in a nominally
 // label-free program.
@@ -937,6 +948,20 @@ void dfsan_clear_thread_local_state() {
   }
 }
 
+SANITIZER_INTERFACE_ATTRIBUTE
+void dfsan_set_arg_tls(uptr offset, dfsan_label label) {
+  // 2x to match ShadowTLSAlignment.
+  // ShadowTLSAlignment should probably be changed.
+  // TODO: Consider reducing ShadowTLSAlignment to 1.
+  // Aligning to 2 bytes is probably a remnant of fast16 mode.
+  ((dfsan_label *)__dfsan_arg_tls)[offset * 2] = label;
+}
+
+SANITIZER_INTERFACE_ATTRIBUTE
+void dfsan_set_arg_origin_tls(uptr offset, dfsan_origin o) {
+  __dfsan_arg_origin_tls[offset] = o;
+}
+
 extern "C" void dfsan_flush() {
   const uptr maxVirtualAddress = GetMaxUserVirtualAddress();
   for (unsigned i = 0; i < kMemoryLayoutSize; ++i) {
@@ -1106,7 +1131,7 @@ static void DFsanInit(int argc, char **argv, char **envp) {
 
   dfsan_allocator_init();
 
-  DFsanThread *main_thread = DFsanThread::Create(nullptr, nullptr, nullptr);
+  DFsanThread *main_thread = DFsanThread::Create(nullptr, nullptr);
   SetCurrentThread(main_thread);
   main_thread->Init();
 

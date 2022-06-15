@@ -36,7 +36,7 @@
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-#if !defined(_LIBCPP_HAS_NO_CONCEPTS) && !defined(_LIBCPP_HAS_NO_INCOMPLETE_RANGES)
+#if _LIBCPP_STD_VER > 17 && !defined(_LIBCPP_HAS_NO_INCOMPLETE_RANGES)
 
 namespace ranges {
   template<class _From, class _To>
@@ -77,8 +77,11 @@ namespace ranges {
   class _LIBCPP_TEMPLATE_VIS subrange
     : public view_interface<subrange<_Iter, _Sent, _Kind>>
   {
-  private:
+  public:
+    // Note: this is an internal implementation detail that is public only for internal usage.
     static constexpr bool _StoreSize = (_Kind == subrange_kind::sized && !sized_sentinel_for<_Sent, _Iter>);
+
+  private:
     static constexpr bool _MustProvideSizeAtConstruction = !_StoreSize; // just to improve compiler diagnostics
     struct _Empty { constexpr _Empty(auto) noexcept { } };
     using _Size = conditional_t<_StoreSize, make_unsigned_t<iter_difference_t<_Iter>>, _Empty>;
@@ -282,7 +285,7 @@ struct tuple_element<1, const ranges::subrange<_Ip, _Sp, _Kp>> {
   using type = _Sp;
 };
 
-#endif // !defined(_LIBCPP_HAS_NO_CONCEPTS) && !defined(_LIBCPP_HAS_NO_INCOMPLETE_RANGES)
+#endif // _LIBCPP_STD_VER > 17 && !defined(_LIBCPP_HAS_NO_INCOMPLETE_RANGES)
 
 _LIBCPP_END_NAMESPACE_STD
 

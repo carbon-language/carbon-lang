@@ -312,6 +312,7 @@ void NativeProcessProtocol::SynchronouslyNotifyProcessStateChanged(
   Log *log = GetLog(LLDBLog::Process);
 
   m_delegate.ProcessStateChanged(this, state);
+  NotifyTracersProcessStateChanged(state);
 
   LLDB_LOG(log, "sent state notification [{0}] from process {1}", state,
            GetID());
@@ -320,6 +321,8 @@ void NativeProcessProtocol::SynchronouslyNotifyProcessStateChanged(
 void NativeProcessProtocol::NotifyDidExec() {
   Log *log = GetLog(LLDBLog::Process);
   LLDB_LOG(log, "process {0} exec()ed", GetID());
+
+  m_software_breakpoints.clear();
 
   m_delegate.DidExec(this);
 }

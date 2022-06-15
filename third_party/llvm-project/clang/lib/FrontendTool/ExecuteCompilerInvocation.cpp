@@ -15,6 +15,7 @@
 #include "clang/CodeGen/CodeGenAction.h"
 #include "clang/Config/config.h"
 #include "clang/Driver/Options.h"
+#include "clang/ExtractAPI/FrontendActions.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/FrontendActions.h"
@@ -66,6 +67,8 @@ CreateFrontendBaseAction(CompilerInstance &CI) {
     return std::make_unique<GenerateModuleInterfaceAction>();
   case GenerateHeaderModule:
     return std::make_unique<GenerateHeaderModuleAction>();
+  case GenerateHeaderUnit:
+    return std::make_unique<GenerateHeaderUnitAction>();
   case GeneratePCH:            return std::make_unique<GeneratePCHAction>();
   case GenerateInterfaceStubs:
     return std::make_unique<GenerateInterfaceStubsAction>();

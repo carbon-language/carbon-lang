@@ -9,9 +9,10 @@
 #include "Serialization.h"
 #include "Headers.h"
 #include "RIFF.h"
-#include "SymbolLocation.h"
-#include "SymbolOrigin.h"
-#include "dex/Dex.h"
+#include "index/MemIndex.h"
+#include "index/SymbolLocation.h"
+#include "index/SymbolOrigin.h"
+#include "index/dex/Dex.h"
 #include "support/Logger.h"
 #include "support/Trace.h"
 #include "clang/Tooling/CompilationDatabase.h"
@@ -191,7 +192,7 @@ public:
     }
     if (llvm::zlib::isAvailable()) {
       llvm::SmallString<1> Compressed;
-      llvm::cantFail(llvm::zlib::compress(RawTable, Compressed));
+      llvm::zlib::compress(RawTable, Compressed);
       write32(RawTable.size(), OS);
       OS << Compressed;
     } else {

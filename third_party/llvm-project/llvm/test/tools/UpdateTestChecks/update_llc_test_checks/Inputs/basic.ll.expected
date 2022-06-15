@@ -31,8 +31,8 @@ define i8 @test_i8(i8 %a) nounwind {
 define i16 @test_i16(i16 %a) nounwind {
 ; X86-NO-CMOV-LABEL: test_i16:
 ; X86-NO-CMOV:       # %bb.0:
-; X86-NO-CMOV-NEXT:    movswl {{[0-9]+}}(%esp), %eax
-; X86-NO-CMOV-NEXT:    movl %eax, %ecx
+; X86-NO-CMOV-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
+; X86-NO-CMOV-NEXT:    movswl %ax, %ecx
 ; X86-NO-CMOV-NEXT:    sarl $15, %ecx
 ; X86-NO-CMOV-NEXT:    xorl %ecx, %eax
 ; X86-NO-CMOV-NEXT:    subl %ecx, %eax
@@ -95,11 +95,11 @@ define i64 @test_i64(i64 %a) nounwind {
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %edx
 ; X86-NEXT:    movl %edx, %ecx
 ; X86-NEXT:    sarl $31, %ecx
-; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X86-NEXT:    addl %ecx, %eax
-; X86-NEXT:    adcl %ecx, %edx
 ; X86-NEXT:    xorl %ecx, %edx
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X86-NEXT:    xorl %ecx, %eax
+; X86-NEXT:    subl %ecx, %eax
+; X86-NEXT:    sbbl %ecx, %edx
 ; X86-NEXT:    retl
 ;
 ; X64-LABEL: test_i64:

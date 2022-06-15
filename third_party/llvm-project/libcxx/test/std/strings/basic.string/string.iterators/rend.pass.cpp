@@ -8,8 +8,8 @@
 
 // <string>
 
-//       reverse_iterator rend();
-// const_reverse_iterator rend() const;
+//       reverse_iterator rend(); // constexpr since C++20
+// const_reverse_iterator rend() const; // constexpr since C++20
 
 #include <string>
 #include <cassert>
@@ -19,7 +19,7 @@
 #include "min_allocator.h"
 
 template <class S>
-void
+TEST_CONSTEXPR_CXX20 void
 test(S s)
 {
     const S& cs = s;
@@ -34,7 +34,7 @@ test(S s)
     assert(static_cast<std::size_t>(ce - cs.rbegin()) == cs.size());
 }
 
-bool test() {
+TEST_CONSTEXPR_CXX20 bool test() {
   {
     typedef std::string S;
     test(S());
@@ -55,7 +55,7 @@ int main(int, char**)
 {
   test();
 #if TEST_STD_VER > 17
-  // static_assert(test());
+  static_assert(test());
 #endif
 
   return 0;

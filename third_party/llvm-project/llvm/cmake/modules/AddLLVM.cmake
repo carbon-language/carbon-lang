@@ -177,11 +177,17 @@ if (NOT DEFINED LLVM_LINKER_DETECTED AND NOT WIN32)
     set(version_flag "-Wl,--version")
   endif()
 
+  if (CMAKE_HOST_WIN32)
+    set(DEVNULL "NUL")
+  else()
+    set(DEVNULL "/dev/null")
+  endif()
+
   if(LLVM_USE_LINKER)
-    set(command ${CMAKE_C_COMPILER} -fuse-ld=${LLVM_USE_LINKER} ${version_flag})
+    set(command ${CMAKE_C_COMPILER} -fuse-ld=${LLVM_USE_LINKER} ${version_flag} -o ${DEVNULL})
   else()
     separate_arguments(flags UNIX_COMMAND "${CMAKE_EXE_LINKER_FLAGS}")
-    set(command ${CMAKE_C_COMPILER} ${flags} ${version_flag})
+    set(command ${CMAKE_C_COMPILER} ${flags} ${version_flag} -o ${DEVNULL})
   endif()
   execute_process(
     COMMAND ${command}
@@ -859,7 +865,7 @@ endmacro(add_llvm_library name)
 
 macro(add_llvm_executable name)
   cmake_parse_arguments(ARG
-    "DISABLE_LLVM_LINK_LLVM_DYLIB;IGNORE_EXTERNALIZE_DEBUGINFO;NO_INSTALL_RPATH;SUPPORT_PLUGINS"
+    "DISABLE_LLVM_LINK_LLVM_DYLIB;IGNORE_EXTERNALIZE_DEBUGINFO;NO_INSTALL_RPATH;SUPPORT_PLUGINS;GENERATE_DRIVER"
     "ENTITLEMENTS;BUNDLE_PATH"
     "DEPENDS"
     ${ARGN})
@@ -869,7 +875,7 @@ macro(add_llvm_executable name)
   list(APPEND LLVM_COMMON_DEPENDS ${ARG_DEPENDS})
 
   # Generate objlib
-  if(LLVM_ENABLE_OBJLIB)
+  if(LLVM_ENABLE_OBJLIB OR ARG_GENERATE_DRIVER)
     # Generate an obj library for both targets.
     set(obj_name "obj.${name}")
     add_library(${obj_name} OBJECT EXCLUDE_FROM_ALL
@@ -877,8 +883,33 @@ macro(add_llvm_executable name)
       )
     llvm_update_compile_flags(${obj_name})
     set(ALL_FILES "$<TARGET_OBJECTS:${obj_name}>")
+    if(ARG_DEPENDS)
+      add_dependencies(${obj_name} ${ARG_DEPENDS})
+    endif()
 
     set_target_properties(${obj_name} PROPERTIES FOLDER "Object Libraries")
+  endif()
+
+  if (ARG_GENERATE_DRIVER)
+    string(REPLACE "-" "_" TOOL_NAME ${name})
+    foreach(path ${CMAKE_MODULE_PATH})
+      if(EXISTS ${path}/llvm-driver-template.cpp.in)
+        configure_file(
+          ${path}/llvm-driver-template.cpp.in
+          ${CMAKE_CURRENT_BINARY_DIR}/${name}-driver.cpp)
+        break()
+      endif()
+    endforeach()
+
+    list(APPEND ALL_FILES ${CMAKE_CURRENT_BINARY_DIR}/${name}-driver.cpp)
+
+    set_property(GLOBAL APPEND PROPERTY LLVM_DRIVER_COMPONENTS ${LLVM_LINK_COMPONENTS})
+    set_property(GLOBAL APPEND PROPERTY LLVM_DRIVER_DEPS ${ARG_DEPENDS} ${LLVM_COMMON_DEPENDS})
+    set_property(GLOBAL APPEND PROPERTY LLVM_DRIVER_OBJLIBS "${obj_name}")
+    
+    set_property(GLOBAL APPEND PROPERTY LLVM_DRIVER_TOOLS ${name})
+    target_link_libraries(${obj_name} ${LLVM_PTHREAD_LIB})
+    llvm_config(${obj_name} ${USE_SHARED} ${LLVM_LINK_COMPONENTS} )
   endif()
 
   add_windows_version_resource_file(ALL_FILES ${ALL_FILES})
@@ -942,6 +973,9 @@ macro(add_llvm_executable name)
   llvm_config( ${name} ${USE_SHARED} ${LLVM_LINK_COMPONENTS} )
   if( LLVM_COMMON_DEPENDS )
     add_dependencies( ${name} ${LLVM_COMMON_DEPENDS} )
+    foreach(objlib ${obj_name})
+      add_dependencies(${objlib} ${LLVM_COMMON_DEPENDS})
+    endforeach()
   endif( LLVM_COMMON_DEPENDS )
 
   if(NOT ARG_IGNORE_EXTERNALIZE_DEBUGINFO)
@@ -1446,6 +1480,12 @@ function(llvm_add_implicit_projects project)
   foreach(dir ${sub-dirs})
     if(IS_DIRECTORY "${dir}" AND EXISTS "${dir}/CMakeLists.txt")
       canonicalize_tool_name(${dir} name)
+      # I don't like special casing things by order, but the llvm-driver ends up
+      # linking the object libraries from all the tools that opt-in, so adding
+      # it separately at the end is probably the simplest case.
+      if("${name}" STREQUAL "LLVM_DRIVER")
+        continue()
+      endif()
       if (${project}_TOOL_${name}_BUILD)
         get_filename_component(fn "${dir}" NAME)
         list(APPEND list_of_implicit_subdirs "${fn}")
@@ -1502,7 +1542,7 @@ function(add_unittest test_suite test_name)
   # libpthreads overrides some standard library symbols, so main
   # executable must be linked with it in order to provide consistent
   # API for all shared libaries loaded by this executable.
-  target_link_libraries(${test_name} PRIVATE gtest_main gtest ${LLVM_PTHREAD_LIB})
+  target_link_libraries(${test_name} PRIVATE llvm_gtest_main llvm_gtest ${LLVM_PTHREAD_LIB})
 
   add_dependencies(${test_suite} ${test_name})
   get_target_property(test_suite_folder ${test_suite} FOLDER)
@@ -1614,14 +1654,11 @@ string(CONCAT LLVM_LIT_PATH_FUNCTION
 # path back to absolute form. This makes it possible to move a build directory
 # containing lit.cfg.py files from one machine to another.
 function(configure_lit_site_cfg site_in site_out)
-  cmake_parse_arguments(ARG "" "" "MAIN_CONFIG;OUTPUT_MAPPING;PATHS" ${ARGN})
+  cmake_parse_arguments(ARG "" "" "MAIN_CONFIG;PATHS" ${ARGN})
 
   if ("${ARG_MAIN_CONFIG}" STREQUAL "")
     get_filename_component(INPUT_DIR ${site_in} DIRECTORY)
     set(ARG_MAIN_CONFIG "${INPUT_DIR}/lit.cfg")
-  endif()
-  if ("${ARG_OUTPUT_MAPPING}" STREQUAL "")
-    set(ARG_OUTPUT_MAPPING "${site_out}")
   endif()
 
   foreach(c ${LLVM_TARGETS_TO_BUILD})
@@ -1633,13 +1670,15 @@ function(configure_lit_site_cfg site_in site_out)
 
   set_llvm_build_mode()
 
-  # The below might not be the build tree but provided binary tree.
+  # For standalone builds of subprojects, these might not be the build tree but
+  # a provided binary tree.
   set(LLVM_SOURCE_DIR ${LLVM_MAIN_SRC_DIR})
   set(LLVM_BINARY_DIR ${LLVM_BINARY_DIR})
   string(REPLACE "${CMAKE_CFG_INTDIR}" "${LLVM_BUILD_MODE}" LLVM_TOOLS_DIR "${LLVM_TOOLS_BINARY_DIR}")
   string(REPLACE "${CMAKE_CFG_INTDIR}" "${LLVM_BUILD_MODE}" LLVM_LIBS_DIR  "${LLVM_LIBRARY_DIR}")
-
-  # SHLIBDIR points the build tree.
+  # Like LLVM_{TOOLS,LIBS}_DIR, but pointing at the build tree.
+  string(REPLACE "${CMAKE_CFG_INTDIR}" "${LLVM_BUILD_MODE}" CURRENT_TOOLS_DIR "${LLVM_RUNTIME_OUTPUT_INTDIR}")
+  string(REPLACE "${CMAKE_CFG_INTDIR}" "${LLVM_BUILD_MODE}" CURRENT_LIBS_DIR  "${LLVM_LIBRARY_OUTPUT_INTDIR}")
   string(REPLACE "${CMAKE_CFG_INTDIR}" "${LLVM_BUILD_MODE}" SHLIBDIR "${LLVM_SHLIB_OUTPUT_INTDIR}")
 
   # FIXME: "ENABLE_SHARED" doesn't make sense, since it is used just for
@@ -1674,11 +1713,11 @@ function(configure_lit_site_cfg site_in site_out)
     string(CONCAT LIT_SITE_CFG_IN_HEADER "${LIT_SITE_CFG_IN_HEADER}"
       "import os\n"
       "target_env = \"${LLVM_TARGET_TRIPLE_ENV}\"\n"
-      "config.target_triple = config.environment[target_env] = os.environ.get(target_env, \"${TARGET_TRIPLE}\")\n"
+      "config.target_triple = config.environment[target_env] = os.environ.get(target_env, \"${LLVM_TARGET_TRIPLE}\")\n"
       )
 
     # This is expanded to; config.target_triple = ""+config.target_triple+""
-    set(TARGET_TRIPLE "\"+config.target_triple+\"")
+    set(LLVM_TARGET_TRIPLE "\"+config.target_triple+\"")
   endif()
 
   if (ARG_PATHS)
@@ -1825,17 +1864,62 @@ function(add_lit_target target comment)
   set_target_properties(${target} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD ON)
 endfunction()
 
+# Convert a target name like check-clang to a variable name like CLANG.
+function(umbrella_lit_testsuite_var target outvar)
+  if (NOT target MATCHES "^check-")
+    message(FATAL_ERROR "umbrella lit suites must be check-*, not '${target}'")
+  endif()
+  string(SUBSTRING "${target}" 6 -1 var)
+  string(REPLACE "-" "_" var ${var})
+  string(TOUPPER "${var}" var)
+  set(${outvar} "${var}" PARENT_SCOPE)
+endfunction()
+
+# Start recording all lit test suites for a combined 'check-foo' target.
+# The recording continues until umbrella_lit_testsuite_end() creates the target.
+function(umbrella_lit_testsuite_begin target)
+  umbrella_lit_testsuite_var(${target} name)
+  set_property(GLOBAL APPEND PROPERTY LLVM_LIT_UMBRELLAS ${name})
+endfunction()
+
+# Create a combined 'check-foo' target for a set of related test suites.
+# It runs all suites added since the matching umbrella_lit_testsuite_end() call.
+# Tests marked EXCLUDE_FROM_CHECK_ALL are not gathered.
+function(umbrella_lit_testsuite_end target)
+  umbrella_lit_testsuite_var(${target} name)
+
+  get_property(testsuites GLOBAL PROPERTY LLVM_${name}_LIT_TESTSUITES)
+  get_property(params GLOBAL PROPERTY LLVM_${name}_LIT_PARAMS)
+  get_property(depends GLOBAL PROPERTY LLVM_${name}_LIT_DEPENDS)
+  get_property(extra_args GLOBAL PROPERTY LLVM_${name}_LIT_EXTRA_ARGS)
+  # Additional test targets are not gathered, but may be set externally.
+  get_property(additional_test_targets
+               GLOBAL PROPERTY LLVM_${name}_ADDITIONAL_TEST_TARGETS)
+
+  string(TOLOWER ${name} name)
+  add_lit_target(${target}
+    "Running ${name} regression tests"
+    ${testsuites}
+    PARAMS ${params}
+    DEPENDS ${depends} ${additional_test_targets}
+    ARGS ${extra_args}
+    )
+endfunction()
+
 # A function to add a set of lit test suites to be driven through 'check-*' targets.
 function(add_lit_testsuite target comment)
   cmake_parse_arguments(ARG "EXCLUDE_FROM_CHECK_ALL" "" "PARAMS;DEPENDS;ARGS" ${ARGN})
 
   # EXCLUDE_FROM_ALL excludes the test ${target} out of check-all.
   if(NOT ARG_EXCLUDE_FROM_CHECK_ALL)
-    # Register the testsuites, params and depends for the global check rule.
-    set_property(GLOBAL APPEND PROPERTY LLVM_LIT_TESTSUITES ${ARG_UNPARSED_ARGUMENTS})
-    set_property(GLOBAL APPEND PROPERTY LLVM_LIT_PARAMS ${ARG_PARAMS})
-    set_property(GLOBAL APPEND PROPERTY LLVM_LIT_DEPENDS ${ARG_DEPENDS})
-    set_property(GLOBAL APPEND PROPERTY LLVM_LIT_EXTRA_ARGS ${ARG_ARGS})
+    get_property(gather_names GLOBAL PROPERTY LLVM_LIT_UMBRELLAS)
+    foreach(name ${gather_names})
+    # Register the testsuites, params and depends for the umbrella check rule.
+      set_property(GLOBAL APPEND PROPERTY LLVM_${name}_LIT_TESTSUITES ${ARG_UNPARSED_ARGUMENTS})
+      set_property(GLOBAL APPEND PROPERTY LLVM_${name}_LIT_PARAMS ${ARG_PARAMS})
+      set_property(GLOBAL APPEND PROPERTY LLVM_${name}_LIT_DEPENDS ${ARG_DEPENDS})
+      set_property(GLOBAL APPEND PROPERTY LLVM_${name}_LIT_EXTRA_ARGS ${ARG_ARGS})
+    endforeach()
   endif()
 
   # Produce a specific suffixed check rule.
@@ -1951,6 +2035,16 @@ endfunction()
 
 function(add_llvm_tool_symlink link_name target)
   cmake_parse_arguments(ARG "ALWAYS_GENERATE" "OUTPUT_DIR" "" ${ARGN})
+
+  get_property(LLVM_DRIVER_TOOLS GLOBAL PROPERTY LLVM_DRIVER_TOOLS)
+
+  if (${target} IN_LIST LLVM_DRIVER_TOOLS)
+    string(REPLACE "-" "_" tool_entry ${target})
+    string(REPLACE "-" "_" key ${link_name})
+    string(REPLACE "llvm-" "" tool_name ${link_name})
+    set_property(GLOBAL APPEND_STRING PROPERTY
+                 LLVM_EXTRA_DRIVER_ENTRIES "LLVM_DRIVER_TOOL(\"${tool_name}\", ${tool_entry})\n")
+  endif()
   set(dest_binary "$<TARGET_FILE:${target}>")
 
   # This got a bit gross... For multi-configuration generators the target

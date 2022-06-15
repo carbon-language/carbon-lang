@@ -288,12 +288,12 @@ static void convertFunctionLineTable(raw_ostream &Log, CUInfo &CUI,
     // linker problems or LTO or other DWARF re-linking so it is worth emitting
     // an error, but not worth stopping the creation of the GSYM.
     if (!FI.Range.contains(RowAddress)) {
-      if (RowAddress < FI.Range.Start) {
+      if (RowAddress < FI.Range.start()) {
         Log << "error: DIE has a start address whose LowPC is between the "
           "line table Row[" << RowIndex << "] with address "
           << HEX64(RowAddress) << " and the next one.\n";
         Die.dump(Log, 0, DIDumpOptions::getForSingleDIE());
-        RowAddress = FI.Range.Start;
+        RowAddress = FI.Range.start();
       } else {
         continue;
       }
@@ -404,8 +404,7 @@ void DwarfTransformer::handleDie(raw_ostream &OS, CUInfo &CUI, DWARFDie Die) {
       }
 
       FunctionInfo FI;
-      FI.setStartAddress(Range.LowPC);
-      FI.setEndAddress(Range.HighPC);
+      FI.Range = {Range.LowPC, Range.HighPC};
       FI.Name = *NameIndex;
       if (CUI.LineTable) {
         convertFunctionLineTable(OS, CUI, Die, Gsym, FI);
@@ -449,7 +448,7 @@ Error DwarfTransformer::convert(uint32_t NumThreads) {
     // Parse all DWARF data from this thread, use the same string/file table
     // for everything
     for (const auto &CU : DICtx.compile_units()) {
-      DWARFDie Die = getDie(*CU.get());
+      DWARFDie Die = getDie(*CU);
       CUInfo CUI(DICtx, dyn_cast<DWARFCompileUnit>(CU.get()));
       handleDie(Log, CUI, Die);
     }
@@ -474,7 +473,7 @@ Error DwarfTransformer::convert(uint32_t NumThreads) {
     // Now convert all DWARF to GSYM in a thread pool.
     std::mutex LogMutex;
     for (const auto &CU : DICtx.compile_units()) {
-      DWARFDie Die = getDie(*CU.get());
+      DWARFDie Die = getDie(*CU);
       if (Die) {
         CUInfo CUI(DICtx, dyn_cast<DWARFCompileUnit>(CU.get()));
         pool.async([this, CUI, &LogMutex, Die]() mutable {

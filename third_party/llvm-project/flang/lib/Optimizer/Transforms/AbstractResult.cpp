@@ -7,11 +7,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "PassDetail.h"
+#include "flang/Optimizer/Builder/Todo.h"
 #include "flang/Optimizer/Dialect/FIRDialect.h"
 #include "flang/Optimizer/Dialect/FIROps.h"
 #include "flang/Optimizer/Dialect/FIRType.h"
 #include "flang/Optimizer/Transforms/Passes.h"
-#include "mlir/Dialect/StandardOps/IR/Ops.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/IR/Diagnostics.h"
 #include "mlir/Pass/Pass.h"
 #include "mlir/Transforms/DialectConversion.h"
@@ -30,13 +31,6 @@ struct AbstractResultOptions {
   // an abstract result.
   mlir::Value newArg;
 };
-
-static bool mustConvertCallOrFunc(mlir::FunctionType type) {
-  if (type.getNumResults() == 0)
-    return false;
-  auto resultType = type.getResult(0);
-  return resultType.isa<fir::SequenceType, fir::BoxType, fir::RecordType>();
-}
 
 static mlir::Type getResultArgumentType(mlir::Type resultType,
                                         const AbstractResultOptions &options) {
@@ -149,14 +143,14 @@ public:
   }
 };
 
-class ReturnOpConversion : public mlir::OpRewritePattern<mlir::ReturnOp> {
+class ReturnOpConversion : public mlir::OpRewritePattern<mlir::func::ReturnOp> {
 public:
   using OpRewritePattern::OpRewritePattern;
   ReturnOpConversion(mlir::MLIRContext *context,
                      const AbstractResultOptions &opt)
       : OpRewritePattern(context), options{opt} {}
   mlir::LogicalResult
-  matchAndRewrite(mlir::ReturnOp ret,
+  matchAndRewrite(mlir::func::ReturnOp ret,
                   mlir::PatternRewriter &rewriter) const override {
     rewriter.setInsertionPoint(ret);
     auto returnedValue = ret.getOperand(0);
@@ -177,7 +171,7 @@ public:
     if (!replacedStorage)
       rewriter.create<fir::StoreOp>(ret.getLoc(), returnedValue,
                                     options.newArg);
-    rewriter.replaceOpWithNewOp<mlir::ReturnOp>(ret);
+    rewriter.replaceOpWithNewOp<mlir::func::ReturnOp>(ret);
     return mlir::success();
   }
 
@@ -222,8 +216,8 @@ public:
                                   /*newArg=*/{}};
 
     // Convert function type itself if it has an abstract result
-    auto funcTy = func.getType().cast<mlir::FunctionType>();
-    if (mustConvertCallOrFunc(funcTy)) {
+    auto funcTy = func.getFunctionType().cast<mlir::FunctionType>();
+    if (hasAbstractResult(funcTy)) {
       func.setType(getNewFunctionType(funcTy, options));
       unsigned zero = 0;
       if (!func.empty()) {
@@ -239,8 +233,8 @@ public:
               rewriter.create<fir::BoxAddrOp>(loc, bufferType, options.newArg);
         }
         patterns.insert<ReturnOpConversion>(context, options);
-        target.addDynamicallyLegalOp<mlir::ReturnOp>(
-            [](mlir::ReturnOp ret) { return ret.operands().empty(); });
+        target.addDynamicallyLegalOp<mlir::func::ReturnOp>(
+            [](mlir::func::ReturnOp ret) { return ret.operands().empty(); });
       }
     }
 
@@ -249,14 +243,14 @@ public:
 
     // Convert the calls and, if needed,  the ReturnOp in the function body.
     target.addLegalDialect<fir::FIROpsDialect, mlir::arith::ArithmeticDialect,
-                           mlir::StandardOpsDialect>();
+                           mlir::func::FuncDialect>();
     target.addIllegalOp<fir::SaveResultOp>();
     target.addDynamicallyLegalOp<fir::CallOp>([](fir::CallOp call) {
-      return !mustConvertCallOrFunc(call.getFunctionType());
+      return !hasAbstractResult(call.getFunctionType());
     });
     target.addDynamicallyLegalOp<fir::AddrOfOp>([](fir::AddrOfOp addrOf) {
       if (auto funTy = addrOf.getType().dyn_cast<mlir::FunctionType>())
-        return !mustConvertCallOrFunc(funTy);
+        return !hasAbstractResult(funTy);
       return true;
     });
     target.addDynamicallyLegalOp<fir::DispatchOp>([](fir::DispatchOp dispatch) {
@@ -264,8 +258,7 @@ public:
         return true;
       auto resultType = dispatch->getResult(0).getType();
       if (resultType.isa<fir::SequenceType, fir::BoxType, fir::RecordType>()) {
-        mlir::emitError(dispatch.getLoc(),
-                        "TODO: dispatchOp with abstract results");
+        TODO(dispatch.getLoc(), "dispatchOp with abstract results");
         return false;
       }
       return true;

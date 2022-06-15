@@ -7,11 +7,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "Annotations.h"
-#include "ClangdServer.h"
 #include "Protocol.h"
 #include "SemanticHighlighting.h"
 #include "SourceCode.h"
-#include "TestFS.h"
 #include "TestTU.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
@@ -617,7 +615,14 @@ sizeof...($TemplateParameter[[Elements]]);
         void $Method_decl[[bar1]]() {
           $Class[[Foo]]<$TemplateParameter[[U]]>().$Field_dependentName[[Waldo]];
         }
+
+        void $Method_decl[[Overload]]();
+        void $Method_decl_readonly[[Overload]]() const;
       };
+      template <typename $TemplateParameter_decl[[T]]>
+      void $Function_decl[[baz]]($Class[[Foo]]<$TemplateParameter[[T]]> $Parameter_decl[[o]]) {
+        $Parameter[[o]].$Method_readonly_dependentName[[Overload]]();
+      }
     )cpp",
       // Concepts
       R"cpp(
@@ -790,7 +795,32 @@ sizeof...($TemplateParameter[[Elements]]);
         typedef int $Primitive_decl[[MyTypedef]];
         enum $Enum_decl[[MyEnum]] : $Primitive[[MyTypedef]] {};
       )cpp",
-  };
+      // Issue 1096
+      R"cpp(
+        void $Function_decl[[Foo]]();
+        // Use <: :> digraphs for deprecated attribute to avoid conflict with annotation syntax
+        <:<:deprecated:>:> void $Function_decl_deprecated[[Foo]](int* $Parameter_decl[[x]]);
+        void $Function_decl[[Foo]](int $Parameter_decl[[x]]);
+        template <typename $TemplateParameter_decl[[T]]>
+        void $Function_decl[[Bar]]($TemplateParameter[[T]] $Parameter_decl[[x]]) {
+            $Function_deprecated[[Foo]]($Parameter[[x]]); 
+            $Function_deprecated[[Foo]]($Parameter[[x]]); 
+            $Function_deprecated[[Foo]]($Parameter[[x]]); 
+        }
+      )cpp",
+      // Explicit template specialization
+      R"cpp(
+        struct $Class_decl[[Base]]{};
+        template <typename $TemplateParameter_decl[[T]]>
+        struct $Class_decl[[S]] : public $Class[[Base]] {};
+        template <> 
+        struct $Class_decl[[S]]<void> : public $Class[[Base]] {};
+
+        template <typename $TemplateParameter_decl[[T]]>
+        $TemplateParameter[[T]] $Variable_decl[[x]] = {};
+        template <>
+        int $Variable_decl[[x]]<int> = (int)sizeof($Class[[Base]]);
+      )cpp"};
   for (const auto &TestCase : TestCases)
     // Mask off scope modifiers to keep the tests manageable.
     // They're tested separately.

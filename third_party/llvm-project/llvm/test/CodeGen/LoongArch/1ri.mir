@@ -29,7 +29,7 @@ body: |
 name: test_LU32I_D
 body: |
   bb.0:
-    $r4 = LU32I_D 196
+    $r4 = LU32I_D $r4, 196
 ...
 ---
 # CHECK-LABEL: test_PCADDI:
@@ -80,17 +80,17 @@ body: |
 ---
 # CHECK-LABEL: test_BEQZ:
 # CHECK-ENC: 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 1 1 1 0 0 1 0 0 0 0 0 0 0
-# CHECK-ASM: beqz	$a0, 23
+# CHECK-ASM: beqz	$a0, 92
 name: test_BEQZ
 body: |
   bb.0:
-    BEQZ $r4, 23
+    BEQZ $r4, 92
 ...
 ---
 # CHECK-LABEL: test_BNEZ:
 # CHECK-ENC: 0 1 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0 1 0 1 0 0 1 0 0 0 0 0 0 0
-# CHECK-ASM: bnez	$a0, 21
+# CHECK-ASM: bnez	$a0, 84
 name: test_BNEZ
 body: |
   bb.0:
-    BNEZ $r4, 21
+    BNEZ $r4, 84

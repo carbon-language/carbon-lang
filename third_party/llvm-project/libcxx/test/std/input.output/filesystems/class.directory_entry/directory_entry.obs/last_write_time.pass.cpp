@@ -10,7 +10,7 @@
 
 // The string reported on errors changed, which makes those tests fail when run
 // against already-released libc++'s.
-// XFAIL: use_system_cxx_lib && target={{.+}}-apple-macosx10.15
+// XFAIL: use_system_cxx_lib && target={{.+}}-apple-macosx{{10.15|11.0}}
 
 // <filesystem>
 
@@ -18,9 +18,6 @@
 
 // file_time_type last_write_time() const;
 // file_time_type last_write_time(error_code const&) const noexcept;
-
-// Disable min() and max() macros in <windows.h> on Windows.
-// ADDITIONAL_COMPILE_FLAGS: -DNOMINMAX
 
 #include "filesystem_include.h"
 #include <type_traits>

@@ -106,6 +106,7 @@ public:
     VPVFirstOrderRecurrencePHISC,
     VPVWidenPHISC,
     VPVWidenIntOrFpInductionSC,
+    VPVWidenPointerInductionSC,
     VPVPredInstPHI,
     VPVReductionPHISC,
   };
@@ -207,9 +208,7 @@ public:
   /// Subclass identifier (for isa/dyn_cast).
   enum class VPUserID {
     Recipe,
-    // TODO: Currently VPUsers are used in VPBlockBase, but in the future the
-    // only VPUsers should either be recipes or live-outs.
-    Block
+    LiveOut,
   };
 
 private:
@@ -286,6 +285,22 @@ public:
 
   /// Method to support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const VPDef *Recipe);
+
+  /// Returns true if the VPUser uses scalars of operand \p Op. Conservatively
+  /// returns if only first (scalar) lane is used, as default.
+  virtual bool usesScalars(const VPValue *Op) const {
+    assert(is_contained(operands(), Op) &&
+           "Op must be an operand of the recipe");
+    return onlyFirstLaneUsed(Op);
+  }
+
+  /// Returns true if the VPUser only uses the first lane of operand \p Op.
+  /// Conservatively returns false.
+  virtual bool onlyFirstLaneUsed(const VPValue *Op) const {
+    assert(is_contained(operands(), Op) &&
+           "Op must be an operand of the recipe");
+    return false;
+  }
 };
 
 /// This class augments a recipe with a set of VPValues defined by the recipe.
@@ -327,10 +342,12 @@ public:
   /// type identification.
   using VPRecipeTy = enum {
     VPBranchOnMaskSC,
+    VPExpandSCEVSC,
     VPInstructionSC,
     VPInterleaveSC,
     VPReductionSC,
     VPReplicateSC,
+    VPScalarIVStepsSC,
     VPWidenCallSC,
     VPWidenCanonicalIVSC,
     VPWidenGEPSC,
@@ -344,6 +361,7 @@ public:
     VPFirstOrderRecurrencePHISC,
     VPWidenPHISC,
     VPWidenIntOrFpInductionSC,
+    VPWidenPointerInductionSC,
     VPPredInstPHISC,
     VPReductionPHISC,
     VPFirstPHISC = VPBlendSC,

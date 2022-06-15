@@ -14,21 +14,21 @@
 
 #include "llvm/Transforms/IPO/Inliner.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/None.h"
 #include "llvm/ADT/Optional.h"
+#include "llvm/ADT/PriorityWorklist.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/BasicAliasAnalysis.h"
 #include "llvm/Analysis/BlockFrequencyInfo.h"
 #include "llvm/Analysis/CGSCCPassManager.h"
 #include "llvm/Analysis/CallGraph.h"
-#include "llvm/Analysis/GlobalsModRef.h"
 #include "llvm/Analysis/InlineAdvisor.h"
 #include "llvm/Analysis/InlineCost.h"
 #include "llvm/Analysis/InlineOrder.h"
@@ -37,11 +37,9 @@
 #include "llvm/Analysis/ProfileSummaryInfo.h"
 #include "llvm/Analysis/ReplayInlineAdvisor.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
-#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/Utils/ImportedFunctionsInliningStatistics.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/DiagnosticInfo.h"
@@ -67,8 +65,6 @@
 #include <algorithm>
 #include <cassert>
 #include <functional>
-#include <sstream>
-#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -92,10 +88,27 @@ static cl::opt<bool>
     DisableInlinedAllocaMerging("disable-inlined-alloca-merging",
                                 cl::init(false), cl::Hidden);
 
+static cl::opt<int> IntraSCCCostMultiplier(
+    "intra-scc-cost-multiplier", cl::init(2), cl::Hidden,
+    cl::desc(
+        "Cost multiplier to multiply onto inlined call sites where the "
+        "new call was previously an intra-SCC call (not relevant when the "
+        "original call was already intra-SCC). This can accumulate over "
+        "multiple inlinings (e.g. if a call site already had a cost "
+        "multiplier and one of its inlined calls was also subject to "
+        "this, the inlined call would have the original multiplier "
+        "multiplied by intra-scc-cost-multiplier). This is to prevent tons of "
+        "inlining through a child SCC which can cause terrible compile times"));
+
 /// A flag for test, so we can print the content of the advisor when running it
 /// as part of the default (e.g. -O3) pipeline.
 static cl::opt<bool> KeepAdvisorForPrinting("keep-inline-advisor-for-printing",
                                             cl::init(false), cl::Hidden);
+
+/// Allows printing the contents of the advisor after each SCC inliner pass.
+static cl::opt<bool>
+    EnablePostSCCAdvisorPrinting("enable-scc-inline-advisor-printing",
+                                 cl::init(false), cl::Hidden);
 
 extern cl::opt<InlinerFunctionImportStatsOpts> InlinerFunctionImportStats;
 
@@ -149,10 +162,6 @@ static cl::opt<CallSiteFormat::Format> CGSCCInlineReplayFormat(
                    "LineColumnDiscriminator",
                    "<Line Number>:<Column Number>.<Discriminator> (default)")),
     cl::desc("How cgscc inline replay file is formatted"), cl::Hidden);
-
-static cl::opt<bool> InlineEnablePriorityOrder(
-    "inline-enable-priority-order", cl::Hidden, cl::init(false),
-    cl::desc("Enable the priority inline order for the inliner"));
 
 LegacyInlinerBase::LegacyInlinerBase(char &ID) : CallGraphSCCPass(ID) {}
 
@@ -773,12 +782,7 @@ PreservedAnalyses InlinerPass::run(LazyCallGraph::SCC &InitialC,
   // this model, but it is uniformly spread across all the functions in the SCC
   // and eventually they all become too large to inline, rather than
   // incrementally maknig a single function grow in a super linear fashion.
-  std::unique_ptr<InlineOrder<std::pair<CallBase *, int>>> Calls;
-  if (InlineEnablePriorityOrder)
-    Calls = std::make_unique<PriorityInlineOrder<InlineSizePriority>>();
-  else
-    Calls = std::make_unique<DefaultInlineOrder<std::pair<CallBase *, int>>>();
-  assert(Calls != nullptr && "Expected an initialized InlineOrder");
+  DefaultInlineOrder<std::pair<CallBase *, int>> Calls;
 
   // Populate the initial list of calls in this SCC.
   for (auto &N : InitialC) {
@@ -793,7 +797,7 @@ PreservedAnalyses InlinerPass::run(LazyCallGraph::SCC &InitialC,
       if (auto *CB = dyn_cast<CallBase>(&I))
         if (Function *Callee = CB->getCalledFunction()) {
           if (!Callee->isDeclaration())
-            Calls->push({CB, -1});
+            Calls.push({CB, -1});
           else if (!isa<IntrinsicInst>(I)) {
             using namespace ore;
             setInlineRemark(*CB, "unavailable definition");
@@ -807,7 +811,7 @@ PreservedAnalyses InlinerPass::run(LazyCallGraph::SCC &InitialC,
           }
         }
   }
-  if (Calls->empty())
+  if (Calls.empty())
     return PreservedAnalyses::all();
 
   // Capture updatable variable for the current SCC.
@@ -833,15 +837,15 @@ PreservedAnalyses InlinerPass::run(LazyCallGraph::SCC &InitialC,
   SmallVector<Function *, 4> DeadFunctionsInComdats;
 
   // Loop forward over all of the calls.
-  while (!Calls->empty()) {
+  while (!Calls.empty()) {
     // We expect the calls to typically be batched with sequences of calls that
     // have the same caller, so we first set up some shared infrastructure for
     // this caller. We also do any pruning we can at this layer on the caller
     // alone.
-    Function &F = *Calls->front().first->getCaller();
+    Function &F = *Calls.front().first->getCaller();
     LazyCallGraph::Node &N = *CG.lookup(F);
     if (CG.lookupSCC(N) != C) {
-      Calls->pop();
+      Calls.pop();
       continue;
     }
 
@@ -857,8 +861,8 @@ PreservedAnalyses InlinerPass::run(LazyCallGraph::SCC &InitialC,
     // We bail out as soon as the caller has to change so we can update the
     // call graph and prepare the context of that new caller.
     bool DidInline = false;
-    while (!Calls->empty() && Calls->front().first->getCaller() == &F) {
-      auto P = Calls->pop();
+    while (!Calls.empty() && Calls.front().first->getCaller() == &F) {
+      auto P = Calls.pop();
       CallBase *CB = P.first;
       const int InlineHistoryID = P.second;
       Function &Callee = *CB->getCalledFunction();
@@ -876,8 +880,8 @@ PreservedAnalyses InlinerPass::run(LazyCallGraph::SCC &InitialC,
       // trigger infinite inlining, much like is prevented within the inliner
       // itself by the InlineHistory above, but spread across CGSCC iterations
       // and thus hidden from the full inline history.
-      if (CG.lookupSCC(*CG.lookup(Callee)) == C &&
-          UR.InlinedInternalEdges.count({&N, C})) {
+      LazyCallGraph::SCC *CalleeSCC = CG.lookupSCC(*CG.lookup(Callee));
+      if (CalleeSCC == C && UR.InlinedInternalEdges.count({&N, C})) {
         LLVM_DEBUG(dbgs() << "Skipping inlining internal SCC edge from a node "
                              "previously split out of this SCC by inlining: "
                           << F.getName() << " -> " << Callee.getName() << "\n");
@@ -896,6 +900,11 @@ PreservedAnalyses InlinerPass::run(LazyCallGraph::SCC &InitialC,
         Advice->recordUnattemptedInlining();
         continue;
       }
+
+      int CBCostMult =
+          getStringFnAttrAsInt(
+              *CB, InlineConstants::FunctionInlineCostMultiplierAttributeName)
+              .getValueOr(1);
 
       // Setup the data structure used to plumb customization into the
       // `InlineFunction` routine.
@@ -935,9 +944,28 @@ PreservedAnalyses InlinerPass::run(LazyCallGraph::SCC &InitialC,
             if (tryPromoteCall(*ICB))
               NewCallee = ICB->getCalledFunction();
           }
-          if (NewCallee)
-            if (!NewCallee->isDeclaration())
-              Calls->push({ICB, NewHistoryID});
+          if (NewCallee) {
+            if (!NewCallee->isDeclaration()) {
+              Calls.push({ICB, NewHistoryID});
+              // Continually inlining through an SCC can result in huge compile
+              // times and bloated code since we arbitrarily stop at some point
+              // when the inliner decides it's not profitable to inline anymore.
+              // We attempt to mitigate this by making these calls exponentially
+              // more expensive.
+              // This doesn't apply to calls in the same SCC since if we do
+              // inline through the SCC the function will end up being
+              // self-recursive which the inliner bails out on, and inlining
+              // within an SCC is necessary for performance.
+              if (CalleeSCC != C &&
+                  CalleeSCC == CG.lookupSCC(CG.get(*NewCallee))) {
+                Attribute NewCBCostMult = Attribute::get(
+                    M.getContext(),
+                    InlineConstants::FunctionInlineCostMultiplierAttributeName,
+                    itostr(CBCostMult * IntraSCCCostMultiplier));
+                ICB->addFnAttr(NewCBCostMult);
+              }
+            }
+          }
         }
       }
 
@@ -953,7 +981,7 @@ PreservedAnalyses InlinerPass::run(LazyCallGraph::SCC &InitialC,
       if (Callee.isDiscardableIfUnused() && Callee.hasZeroLiveUses() &&
           !CG.isLibFunction(Callee)) {
         if (Callee.hasLocalLinkage() || !Callee.hasComdat()) {
-          Calls->erase_if([&](const std::pair<CallBase *, int> &Call) {
+          Calls.erase_if([&](const std::pair<CallBase *, int> &Call) {
             return Call.first->getCaller() == &Callee;
           });
           // Clear the body and queue the function itself for deletion when we
@@ -1091,9 +1119,14 @@ ModuleInlinerWrapperPass::ModuleInlinerWrapperPass(InlineParams Params,
   // into the callers so that our optimizations can reflect that.
   // For PreLinkThinLTO pass, we disable hot-caller heuristic for sample PGO
   // because it makes profile annotation in the backend inaccurate.
-  if (MandatoryFirst)
+  if (MandatoryFirst) {
     PM.addPass(InlinerPass(/*OnlyMandatory*/ true));
+    if (EnablePostSCCAdvisorPrinting)
+      PM.addPass(InlineAdvisorAnalysisPrinterPass(dbgs()));
+  }
   PM.addPass(InlinerPass());
+  if (EnablePostSCCAdvisorPrinting)
+    PM.addPass(InlineAdvisorAnalysisPrinterPass(dbgs()));
 }
 
 PreservedAnalyses ModuleInlinerWrapperPass::run(Module &M,

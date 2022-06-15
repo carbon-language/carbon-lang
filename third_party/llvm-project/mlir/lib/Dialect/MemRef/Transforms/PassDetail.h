@@ -9,12 +9,13 @@
 #ifndef DIALECT_MEMREF_TRANSFORMS_PASSDETAIL_H_
 #define DIALECT_MEMREF_TRANSFORMS_PASSDETAIL_H_
 
+#include "mlir/IR/BuiltinOps.h"
+#include "mlir/IR/DialectRegistry.h"
 #include "mlir/Pass/Pass.h"
 
 namespace mlir {
 
 class AffineDialect;
-class StandardOpsDialect;
 
 // Forward declaration from Dialect.h
 template <typename ConcreteDialect>
@@ -23,6 +24,10 @@ void registerDialect(DialectRegistry &registry);
 namespace arith {
 class ArithmeticDialect;
 } // namespace arith
+
+namespace func {
+class FuncDialect;
+} // namespace func
 
 namespace memref {
 class MemRefDialect;

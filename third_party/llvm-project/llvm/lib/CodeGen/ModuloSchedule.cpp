@@ -11,6 +11,7 @@
 #include "llvm/Analysis/MemoryLocation.h"
 #include "llvm/CodeGen/LiveIntervals.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/MC/MCContext.h"
@@ -157,7 +158,7 @@ void ModuloScheduleExpander::generatePipelinedLoop() {
 
   SmallVector<MachineBasicBlock *, 4> EpilogBBs;
   // Generate the epilog instructions to complete the pipeline.
-  generateEpilog(MaxStageCount, KernelBB, VRMap, EpilogBBs, PrologBBs);
+  generateEpilog(MaxStageCount, KernelBB, BB, VRMap, EpilogBBs, PrologBBs);
 
   // We need this step because the register allocation doesn't handle some
   // situations well, so we insert copies to help out.
@@ -239,11 +240,9 @@ void ModuloScheduleExpander::generateProlog(unsigned LastStage,
 /// Generate the pipeline epilog code. The epilog code finishes the iterations
 /// that were started in either the prolog or the kernel.  We create a basic
 /// block for each stage that needs to complete.
-void ModuloScheduleExpander::generateEpilog(unsigned LastStage,
-                                            MachineBasicBlock *KernelBB,
-                                            ValueMapTy *VRMap,
-                                            MBBVectorTy &EpilogBBs,
-                                            MBBVectorTy &PrologBBs) {
+void ModuloScheduleExpander::generateEpilog(
+    unsigned LastStage, MachineBasicBlock *KernelBB, MachineBasicBlock *OrigBB,
+    ValueMapTy *VRMap, MBBVectorTy &EpilogBBs, MBBVectorTy &PrologBBs) {
   // We need to change the branch from the kernel to the first epilog block, so
   // this call to analyze branch uses the kernel rather than the original BB.
   MachineBasicBlock *TBB = nullptr, *FBB = nullptr;
@@ -313,7 +312,12 @@ void ModuloScheduleExpander::generateEpilog(unsigned LastStage,
   // Create a branch to the new epilog from the kernel.
   // Remove the original branch and add a new branch to the epilog.
   TII->removeBranch(*KernelBB);
-  TII->insertBranch(*KernelBB, KernelBB, EpilogStart, Cond, DebugLoc());
+  assert((OrigBB == TBB || OrigBB == FBB) &&
+         "Unable to determine looping branch direction");
+  if (OrigBB != TBB)
+    TII->insertBranch(*KernelBB, EpilogStart, KernelBB, Cond, DebugLoc());
+  else
+    TII->insertBranch(*KernelBB, KernelBB, EpilogStart, Cond, DebugLoc());
   // Add a branch to the loop exit.
   if (EpilogBBs.size() > 0) {
     MachineBasicBlock *LastEpilogBB = EpilogBBs.back();
@@ -813,8 +817,8 @@ static void removePhis(MachineBasicBlock *BB, MachineBasicBlock *Incoming) {
       break;
     for (unsigned i = 1, e = MI.getNumOperands(); i != e; i += 2)
       if (MI.getOperand(i + 1).getMBB() == Incoming) {
-        MI.RemoveOperand(i + 1);
-        MI.RemoveOperand(i);
+        MI.removeOperand(i + 1);
+        MI.removeOperand(i);
         break;
       }
   }
@@ -999,7 +1003,7 @@ MachineInstr *ModuloScheduleExpander::cloneAndChangeInstr(
 }
 
 /// Update the machine instruction with new virtual registers.  This
-/// function may change the defintions and/or uses.
+/// function may change the definitions and/or uses.
 void ModuloScheduleExpander::updateInstruction(MachineInstr *NewMI,
                                                bool LastDef,
                                                unsigned CurStageNum,
@@ -1793,10 +1797,10 @@ void PeelingModuloScheduleExpander::peelPrologAndEpilogs() {
 
   // Iterate in reverse order over all instructions, remapping as we go.
   for (MachineBasicBlock *B : reverse(Blocks)) {
-    for (auto I = B->getFirstInstrTerminator()->getReverseIterator();
+    for (auto I = B->instr_rbegin();
          I != std::next(B->getFirstNonPHI()->getReverseIterator());) {
-      MachineInstr *MI = &*I++;
-      rewriteUsesOf(MI);
+      MachineBasicBlock::reverse_instr_iterator MI = I++;
+      rewriteUsesOf(&*MI);
     }
   }
   for (auto *MI : IllegalPhisToDelete) {
@@ -1929,8 +1933,8 @@ void PeelingModuloScheduleExpander::fixupBranches() {
       // blocks. Leave it to unreachable-block-elim to clean up.
       Prolog->removeSuccessor(Fallthrough);
       for (MachineInstr &P : Fallthrough->phis()) {
-        P.RemoveOperand(2);
-        P.RemoveOperand(1);
+        P.removeOperand(2);
+        P.removeOperand(1);
       }
       TII->insertUnconditionalBranch(*Prolog, Epilog, DebugLoc());
       KernelDisposed = true;
@@ -1939,8 +1943,8 @@ void PeelingModuloScheduleExpander::fixupBranches() {
       // Prolog always falls through; remove incoming values in epilog.
       Prolog->removeSuccessor(Epilog);
       for (MachineInstr &P : Epilog->phis()) {
-        P.RemoveOperand(4);
-        P.RemoveOperand(3);
+        P.removeOperand(4);
+        P.removeOperand(3);
       }
     }
   }

@@ -213,15 +213,16 @@ public:
   static bool hasFormat(const MemoryBuffer &Buffer);
 
   bool isIRLevelProfile() const override {
-    return static_cast<bool>(ProfileKind & InstrProfKind::IR);
+    return static_cast<bool>(ProfileKind & InstrProfKind::IRInstrumentation);
   }
 
   bool hasCSIRLevelProfile() const override {
-    return static_cast<bool>(ProfileKind & InstrProfKind::CS);
+    return static_cast<bool>(ProfileKind & InstrProfKind::ContextSensitive);
   }
 
   bool instrEntryBBEnabled() const override {
-    return static_cast<bool>(ProfileKind & InstrProfKind::BB);
+    return static_cast<bool>(ProfileKind &
+                             InstrProfKind::FunctionEntryInstrumentation);
   }
 
   bool hasSingleByteCoverage() const override {
@@ -472,8 +473,10 @@ struct InstrProfReaderIndexBase {
 using OnDiskHashTableImplV3 =
     OnDiskIterableChainedHashTable<InstrProfLookupTrait>;
 
-using MemProfHashTable =
-    OnDiskIterableChainedHashTable<memprof::MemProfRecordLookupTrait>;
+using MemProfRecordHashTable =
+    OnDiskIterableChainedHashTable<memprof::RecordLookupTrait>;
+using MemProfFrameHashTable =
+    OnDiskIterableChainedHashTable<memprof::FrameLookupTrait>;
 
 template <typename HashTableImpl>
 class InstrProfReaderItaniumRemapper;
@@ -562,8 +565,10 @@ private:
   std::unique_ptr<ProfileSummary> CS_Summary;
   /// MemProf profile schema (if available).
   memprof::MemProfSchema Schema;
-  /// MemProf profile data on-disk indexed via llvm::md5(FunctionName).
-  std::unique_ptr<MemProfHashTable> MemProfTable;
+  /// MemProf record profile data on-disk indexed via llvm::md5(FunctionName).
+  std::unique_ptr<MemProfRecordHashTable> MemProfRecordTable;
+  /// MemProf frame profile data on-disk indexed via frame id.
+  std::unique_ptr<MemProfFrameHashTable> MemProfFrameTable;
 
   // Index to the current record in the record array.
   unsigned RecordIndex;
@@ -618,10 +623,9 @@ public:
   Expected<InstrProfRecord> getInstrProfRecord(StringRef FuncName,
                                                uint64_t FuncHash);
 
-  /// Return the memprof records for the function identified by
+  /// Return the memprof record for the function identified by
   /// llvm::md5(Name).
-  Expected<ArrayRef<memprof::MemProfRecord>>
-  getMemProfRecord(uint64_t FuncNameHash);
+  Expected<memprof::MemProfRecord> getMemProfRecord(uint64_t FuncNameHash);
 
   /// Fill Counts with the profile data for the given function name.
   Error getFunctionCounts(StringRef FuncName, uint64_t FuncHash,

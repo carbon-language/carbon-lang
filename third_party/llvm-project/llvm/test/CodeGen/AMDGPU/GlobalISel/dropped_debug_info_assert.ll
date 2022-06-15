@@ -45,7 +45,7 @@ define amdgpu_kernel void @call_debug_loc() {
   ; CHECK-NEXT:   $vgpr31 = COPY [[V_OR3_B32_e64_]], debug-location !6
   ; CHECK-NEXT:   [[SI_PC_ADD_REL_OFFSET:%[0-9]+]]:sreg_64 = SI_PC_ADD_REL_OFFSET target-flags(amdgpu-gotprel32-lo) @callee + 4, target-flags(amdgpu-gotprel32-hi) @callee + 12, implicit-def $scc, debug-location !6
   ; CHECK-NEXT:   [[S_LOAD_DWORDX2_IMM:%[0-9]+]]:sreg_64_xexec = S_LOAD_DWORDX2_IMM [[SI_PC_ADD_REL_OFFSET]], 0, 0, debug-location !6 :: (dereferenceable invariant load (p0) from got, addrspace 4)
-  ; CHECK-NEXT:   $sgpr30_sgpr31 = SI_CALL [[S_LOAD_DWORDX2_IMM]], @callee, csr_amdgpu_highregs, implicit $sgpr0_sgpr1_sgpr2_sgpr3, implicit $sgpr4_sgpr5, implicit $sgpr6_sgpr7, implicit $sgpr8_sgpr9, implicit $sgpr10_sgpr11, implicit $sgpr12, implicit $sgpr13, implicit $sgpr14, implicit $vgpr31, debug-location !6
+  ; CHECK-NEXT:   $sgpr30_sgpr31 = SI_CALL [[S_LOAD_DWORDX2_IMM]], @callee, csr_amdgpu, implicit $sgpr0_sgpr1_sgpr2_sgpr3, implicit $sgpr4_sgpr5, implicit $sgpr6_sgpr7, implicit $sgpr8_sgpr9, implicit $sgpr10_sgpr11, implicit $sgpr12, implicit $sgpr13, implicit $sgpr14, implicit $vgpr31, debug-location !6
   ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $scc, debug-location !6
   ; CHECK-NEXT:   S_ENDPGM 0
 entry:
@@ -58,15 +58,13 @@ define void @returnaddress_debug_loc(i8* addrspace(1)* %ptr) {
   ; CHECK: bb.1.entry:
   ; CHECK-NEXT:   liveins: $vgpr0, $vgpr1, $sgpr30_sgpr31
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:vgpr_32 = COPY $vgpr0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:vgpr_32 = COPY $vgpr1
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:vreg_64 = REG_SEQUENCE [[COPY]], %subreg.sub0, [[COPY1]], %subreg.sub1
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:sgpr_64 = COPY $sgpr30_sgpr31
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:sreg_64 = COPY [[COPY2]], debug-location !6
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:vreg_64 = COPY [[COPY3]]
-  ; CHECK-NEXT:   GLOBAL_STORE_DWORDX2 [[REG_SEQUENCE]], [[COPY4]], 0, 0, implicit $exec :: (store (p0) into %ir.ptr, addrspace 1)
-  ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:ccr_sgpr_64 = COPY [[COPY2]]
-  ; CHECK-NEXT:   S_SETPC_B64_return [[COPY5]]
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:sreg_64 = COPY $sgpr30_sgpr31, debug-location !6
+  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:vgpr_32 = COPY $vgpr0
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:vgpr_32 = COPY $vgpr1
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:vreg_64 = REG_SEQUENCE [[COPY1]], %subreg.sub0, [[COPY2]], %subreg.sub1
+  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:vreg_64 = COPY [[COPY]]
+  ; CHECK-NEXT:   GLOBAL_STORE_DWORDX2 [[REG_SEQUENCE]], [[COPY3]], 0, 0, implicit $exec :: (store (p0) into %ir.ptr, addrspace 1)
+  ; CHECK-NEXT:   SI_RETURN
 entry:
   %returnaddr = call i8* @llvm.returnaddress(i32 0), !dbg !6
   store i8* %returnaddr, i8* addrspace(1)* %ptr, align 8

@@ -1,9 +1,9 @@
-// RUN: mlir-opt %s -convert-scf-to-cf -convert-vector-to-llvm -convert-memref-to-llvm -convert-std-to-llvm -reconcile-unrealized-casts | \
+// RUN: mlir-opt %s -convert-scf-to-cf -convert-vector-to-llvm -convert-memref-to-llvm -convert-func-to-llvm -reconcile-unrealized-casts | \
 // RUN: mlir-cpu-runner -e entry -entry-point-result=void \
 // RUN:   -shared-libs=%mlir_integration_test_dir/libmlir_c_runner_utils%shlibext | \
 // RUN: FileCheck %s
 
-func @maskedload16(%base: memref<?xf32>, %mask: vector<16xi1>,
+func.func @maskedload16(%base: memref<?xf32>, %mask: vector<16xi1>,
                    %pass_thru: vector<16xf32>) -> vector<16xf32> {
   %c0 = arith.constant 0: index
   %ld = vector.maskedload %base[%c0], %mask, %pass_thru
@@ -11,7 +11,7 @@ func @maskedload16(%base: memref<?xf32>, %mask: vector<16xi1>,
   return %ld : vector<16xf32>
 }
 
-func @maskedload16_at8(%base: memref<?xf32>, %mask: vector<16xi1>,
+func.func @maskedload16_at8(%base: memref<?xf32>, %mask: vector<16xi1>,
                        %pass_thru: vector<16xf32>) -> vector<16xf32> {
   %c8 = arith.constant 8: index
   %ld = vector.maskedload %base[%c8], %mask, %pass_thru
@@ -19,7 +19,7 @@ func @maskedload16_at8(%base: memref<?xf32>, %mask: vector<16xi1>,
   return %ld : vector<16xf32>
 }
 
-func @entry() {
+func.func @entry() {
   // Set up memory.
   %c0 = arith.constant 0: index
   %c1 = arith.constant 1: index

@@ -1526,6 +1526,10 @@ public:
            T->getStmtClass() == OMPMasterTaskLoopDirectiveClass ||
            T->getStmtClass() == OMPMasterTaskLoopSimdDirectiveClass ||
            T->getStmtClass() == OMPGenericLoopDirectiveClass ||
+           T->getStmtClass() == OMPTeamsGenericLoopDirectiveClass ||
+           T->getStmtClass() == OMPTargetTeamsGenericLoopDirectiveClass ||
+           T->getStmtClass() == OMPParallelGenericLoopDirectiveClass ||
+           T->getStmtClass() == OMPTargetParallelGenericLoopDirectiveClass ||
            T->getStmtClass() == OMPParallelMasterTaskLoopDirectiveClass ||
            T->getStmtClass() == OMPParallelMasterTaskLoopSimdDirectiveClass ||
            T->getStmtClass() == OMPDistributeDirectiveClass ||
@@ -2823,25 +2827,31 @@ public:
 class OMPAtomicDirective : public OMPExecutableDirective {
   friend class ASTStmtReader;
   friend class OMPExecutableDirective;
-  /// Used for 'atomic update' or 'atomic capture' constructs. They may
-  /// have atomic expressions of forms
-  /// \code
-  /// x = x binop expr;
-  /// x = expr binop x;
-  /// \endcode
-  /// This field is true for the first form of the expression and false for the
-  /// second. Required for correct codegen of non-associative operations (like
-  /// << or >>).
-  bool IsXLHSInRHSPart = false;
-  /// Used for 'atomic update' or 'atomic capture' constructs. They may
-  /// have atomic expressions of forms
-  /// \code
-  /// v = x; <update x>;
-  /// <update x>; v = x;
-  /// \endcode
-  /// This field is true for the first(postfix) form of the expression and false
-  /// otherwise.
-  bool IsPostfixUpdate = false;
+
+  struct FlagTy {
+    /// Used for 'atomic update' or 'atomic capture' constructs. They may
+    /// have atomic expressions of forms:
+    /// \code
+    /// x = x binop expr;
+    /// x = expr binop x;
+    /// \endcode
+    /// This field is 1 for the first form of the expression and 0 for the
+    /// second. Required for correct codegen of non-associative operations (like
+    /// << or >>).
+    uint8_t IsXLHSInRHSPart : 1;
+    /// Used for 'atomic update' or 'atomic capture' constructs. They may
+    /// have atomic expressions of forms:
+    /// \code
+    /// v = x; <update x>;
+    /// <update x>; v = x;
+    /// \endcode
+    /// This field is 1 for the first(postfix) form of the expression and 0
+    /// otherwise.
+    uint8_t IsPostfixUpdate : 1;
+    /// 1 if 'v' is updated only when the condition is false (compare capture
+    /// only).
+    uint8_t IsFailOnly : 1;
+  } Flags;
 
   /// Build directive with the given start and end location.
   ///
@@ -2865,6 +2875,7 @@ class OMPAtomicDirective : public OMPExecutableDirective {
     POS_UpdateExpr,
     POS_D,
     POS_Cond,
+    POS_R,
   };
 
   /// Set 'x' part of the associated expression/statement.
@@ -2877,6 +2888,8 @@ class OMPAtomicDirective : public OMPExecutableDirective {
   }
   /// Set 'v' part of the associated expression/statement.
   void setV(Expr *V) { Data->getChildren()[DataPositionTy::POS_V] = V; }
+  /// Set 'r' part of the associated expression/statement.
+  void setR(Expr *R) { Data->getChildren()[DataPositionTy::POS_R] = R; }
   /// Set 'expr' part of the associated expression/statement.
   void setExpr(Expr *E) { Data->getChildren()[DataPositionTy::POS_E] = E; }
   /// Set 'd' part of the associated expression/statement.
@@ -2885,6 +2898,32 @@ class OMPAtomicDirective : public OMPExecutableDirective {
   void setCond(Expr *C) { Data->getChildren()[DataPositionTy::POS_Cond] = C; }
 
 public:
+  struct Expressions {
+    /// 'x' part of the associated expression/statement.
+    Expr *X = nullptr;
+    /// 'v' part of the associated expression/statement.
+    Expr *V = nullptr;
+    // 'r' part of the associated expression/statement.
+    Expr *R = nullptr;
+    /// 'expr' part of the associated expression/statement.
+    Expr *E = nullptr;
+    /// UE Helper expression of the form:
+    /// 'OpaqueValueExpr(x) binop OpaqueValueExpr(expr)' or
+    /// 'OpaqueValueExpr(expr) binop OpaqueValueExpr(x)'.
+    Expr *UE = nullptr;
+    /// 'd' part of the associated expression/statement.
+    Expr *D = nullptr;
+    /// Conditional expression in `atomic compare` construct.
+    Expr *Cond = nullptr;
+    /// True if UE has the first form and false if the second.
+    bool IsXLHSInRHSPart;
+    /// True if original value of 'x' must be stored in 'v', not an updated one.
+    bool IsPostfixUpdate;
+    /// True if 'v' is updated only when the condition is false (compare capture
+    /// only).
+    bool IsFailOnly;
+  };
+
   /// Creates directive with a list of \a Clauses and 'x', 'v' and 'expr'
   /// parts of the atomic construct (see Section 2.12.6, atomic Construct, for
   /// detailed description of 'x', 'v' and 'expr').
@@ -2894,23 +2933,12 @@ public:
   /// \param EndLoc Ending Location of the directive.
   /// \param Clauses List of clauses.
   /// \param AssociatedStmt Statement, associated with the directive.
-  /// \param X 'x' part of the associated expression/statement.
-  /// \param V 'v' part of the associated expression/statement.
-  /// \param E 'expr' part of the associated expression/statement.
-  /// \param UE Helper expression of the form
-  /// 'OpaqueValueExpr(x) binop OpaqueValueExpr(expr)' or
-  /// 'OpaqueValueExpr(expr) binop OpaqueValueExpr(x)'.
-  /// \param D 'd' part of the associated expression/statement.
-  /// \param Cond Conditional expression in `atomic compare` construct.
-  /// \param IsXLHSInRHSPart true if \a UE has the first form and false if the
-  /// second.
-  /// \param IsPostfixUpdate true if original value of 'x' must be stored in
-  /// 'v', not an updated one.
-  static OMPAtomicDirective *
-  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
-         ArrayRef<OMPClause *> Clauses, Stmt *AssociatedStmt, Expr *X, Expr *V,
-         Expr *E, Expr *UE, Expr *D, Expr *Cond, bool IsXLHSInRHSPart,
-         bool IsPostfixUpdate);
+  /// \param Exprs Associated expressions or statements.
+  static OMPAtomicDirective *Create(const ASTContext &C,
+                                    SourceLocation StartLoc,
+                                    SourceLocation EndLoc,
+                                    ArrayRef<OMPClause *> Clauses,
+                                    Stmt *AssociatedStmt, Expressions Exprs);
 
   /// Creates an empty directive with the place for \a NumClauses
   /// clauses.
@@ -2942,16 +2970,26 @@ public:
   /// Return true if helper update expression has form
   /// 'OpaqueValueExpr(x) binop OpaqueValueExpr(expr)' and false if it has form
   /// 'OpaqueValueExpr(expr) binop OpaqueValueExpr(x)'.
-  bool isXLHSInRHSPart() const { return IsXLHSInRHSPart; }
+  bool isXLHSInRHSPart() const { return Flags.IsXLHSInRHSPart; }
   /// Return true if 'v' expression must be updated to original value of
   /// 'x', false if 'v' must be updated to the new value of 'x'.
-  bool isPostfixUpdate() const { return IsPostfixUpdate; }
+  bool isPostfixUpdate() const { return Flags.IsPostfixUpdate; }
+  /// Return true if 'v' is updated only when the condition is evaluated false
+  /// (compare capture only).
+  bool isFailOnly() const { return Flags.IsFailOnly; }
   /// Get 'v' part of the associated expression/statement.
   Expr *getV() {
     return cast_or_null<Expr>(Data->getChildren()[DataPositionTy::POS_V]);
   }
   const Expr *getV() const {
     return cast_or_null<Expr>(Data->getChildren()[DataPositionTy::POS_V]);
+  }
+  /// Get 'r' part of the associated expression/statement.
+  Expr *getR() {
+    return cast_or_null<Expr>(Data->getChildren()[DataPositionTy::POS_R]);
+  }
+  const Expr *getR() const {
+    return cast_or_null<Expr>(Data->getChildren()[DataPositionTy::POS_R]);
   }
   /// Get 'expr' part of the associated expression/statement.
   Expr *getExpr() {
@@ -5569,6 +5607,266 @@ public:
   }
 };
 
+/// This represents '#pragma omp teams loop' directive.
+///
+/// \code
+/// #pragma omp teams loop private(a,b) order(concurrent)
+/// \endcode
+/// In this example directive '#pragma omp teams loop' has
+/// clauses 'private' with the variables 'a' and 'b', and order(concurrent).
+///
+class OMPTeamsGenericLoopDirective final : public OMPLoopDirective {
+  friend class ASTStmtReader;
+  friend class OMPExecutableDirective;
+  /// Build directive with the given start and end location.
+  ///
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending location of the directive.
+  /// \param CollapsedNum Number of collapsed nested loops.
+  ///
+  OMPTeamsGenericLoopDirective(SourceLocation StartLoc, SourceLocation EndLoc,
+                               unsigned CollapsedNum)
+      : OMPLoopDirective(OMPTeamsGenericLoopDirectiveClass,
+                         llvm::omp::OMPD_teams_loop, StartLoc, EndLoc,
+                         CollapsedNum) {}
+
+  /// Build an empty directive.
+  ///
+  /// \param CollapsedNum Number of collapsed nested loops.
+  ///
+  explicit OMPTeamsGenericLoopDirective(unsigned CollapsedNum)
+      : OMPLoopDirective(OMPTeamsGenericLoopDirectiveClass,
+                         llvm::omp::OMPD_teams_loop, SourceLocation(),
+                         SourceLocation(), CollapsedNum) {}
+
+public:
+  /// Creates directive with a list of \p Clauses.
+  ///
+  /// \param C AST context.
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending Location of the directive.
+  /// \param CollapsedNum Number of collapsed loops.
+  /// \param Clauses List of clauses.
+  /// \param AssociatedStmt Statement, associated with the directive.
+  /// \param Exprs Helper expressions for CodeGen.
+  ///
+  static OMPTeamsGenericLoopDirective *
+  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
+         unsigned CollapsedNum, ArrayRef<OMPClause *> Clauses,
+         Stmt *AssociatedStmt, const HelperExprs &Exprs);
+
+  /// Creates an empty directive with the place
+  /// for \a NumClauses clauses.
+  ///
+  /// \param C AST context.
+  /// \param CollapsedNum Number of collapsed nested loops.
+  /// \param NumClauses Number of clauses.
+  ///
+  static OMPTeamsGenericLoopDirective *CreateEmpty(const ASTContext &C,
+                                                   unsigned NumClauses,
+                                                   unsigned CollapsedNum,
+                                                   EmptyShell);
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == OMPTeamsGenericLoopDirectiveClass;
+  }
+};
+
+/// This represents '#pragma omp target teams loop' directive.
+///
+/// \code
+/// #pragma omp target teams loop private(a,b) order(concurrent)
+/// \endcode
+/// In this example directive '#pragma omp target teams loop' has
+/// clauses 'private' with the variables 'a' and 'b', and order(concurrent).
+///
+class OMPTargetTeamsGenericLoopDirective final : public OMPLoopDirective {
+  friend class ASTStmtReader;
+  friend class OMPExecutableDirective;
+  /// Build directive with the given start and end location.
+  ///
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending location of the directive.
+  /// \param CollapsedNum Number of collapsed nested loops.
+  ///
+  OMPTargetTeamsGenericLoopDirective(SourceLocation StartLoc,
+                                     SourceLocation EndLoc,
+                                     unsigned CollapsedNum)
+      : OMPLoopDirective(OMPTargetTeamsGenericLoopDirectiveClass,
+                         llvm::omp::OMPD_target_teams_loop, StartLoc, EndLoc,
+                         CollapsedNum) {}
+
+  /// Build an empty directive.
+  ///
+  /// \param CollapsedNum Number of collapsed nested loops.
+  ///
+  explicit OMPTargetTeamsGenericLoopDirective(unsigned CollapsedNum)
+      : OMPLoopDirective(OMPTargetTeamsGenericLoopDirectiveClass,
+                         llvm::omp::OMPD_target_teams_loop, SourceLocation(),
+                         SourceLocation(), CollapsedNum) {}
+
+public:
+  /// Creates directive with a list of \p Clauses.
+  ///
+  /// \param C AST context.
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending Location of the directive.
+  /// \param CollapsedNum Number of collapsed loops.
+  /// \param Clauses List of clauses.
+  /// \param AssociatedStmt Statement, associated with the directive.
+  /// \param Exprs Helper expressions for CodeGen.
+  ///
+  static OMPTargetTeamsGenericLoopDirective *
+  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
+         unsigned CollapsedNum, ArrayRef<OMPClause *> Clauses,
+         Stmt *AssociatedStmt, const HelperExprs &Exprs);
+
+  /// Creates an empty directive with the place
+  /// for \a NumClauses clauses.
+  ///
+  /// \param C AST context.
+  /// \param CollapsedNum Number of collapsed nested loops.
+  /// \param NumClauses Number of clauses.
+  ///
+  static OMPTargetTeamsGenericLoopDirective *CreateEmpty(const ASTContext &C,
+                                                         unsigned NumClauses,
+                                                         unsigned CollapsedNum,
+                                                         EmptyShell);
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == OMPTargetTeamsGenericLoopDirectiveClass;
+  }
+};
+
+/// This represents '#pragma omp parallel loop' directive.
+///
+/// \code
+/// #pragma omp parallel loop private(a,b) order(concurrent)
+/// \endcode
+/// In this example directive '#pragma omp parallel loop' has
+/// clauses 'private' with the variables 'a' and 'b', and order(concurrent).
+///
+class OMPParallelGenericLoopDirective final : public OMPLoopDirective {
+  friend class ASTStmtReader;
+  friend class OMPExecutableDirective;
+  /// Build directive with the given start and end location.
+  ///
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending location of the directive.
+  /// \param CollapsedNum Number of collapsed nested loops.
+  ///
+  OMPParallelGenericLoopDirective(SourceLocation StartLoc,
+                                  SourceLocation EndLoc, unsigned CollapsedNum)
+      : OMPLoopDirective(OMPParallelGenericLoopDirectiveClass,
+                         llvm::omp::OMPD_parallel_loop, StartLoc, EndLoc,
+                         CollapsedNum) {}
+
+  /// Build an empty directive.
+  ///
+  /// \param CollapsedNum Number of collapsed nested loops.
+  ///
+  explicit OMPParallelGenericLoopDirective(unsigned CollapsedNum)
+      : OMPLoopDirective(OMPParallelGenericLoopDirectiveClass,
+                         llvm::omp::OMPD_parallel_loop, SourceLocation(),
+                         SourceLocation(), CollapsedNum) {}
+
+public:
+  /// Creates directive with a list of \p Clauses.
+  ///
+  /// \param C AST context.
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending Location of the directive.
+  /// \param CollapsedNum Number of collapsed loops.
+  /// \param Clauses List of clauses.
+  /// \param AssociatedStmt Statement, associated with the directive.
+  /// \param Exprs Helper expressions for CodeGen.
+  ///
+  static OMPParallelGenericLoopDirective *
+  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
+         unsigned CollapsedNum, ArrayRef<OMPClause *> Clauses,
+         Stmt *AssociatedStmt, const HelperExprs &Exprs);
+
+  /// Creates an empty directive with the place
+  /// for \a NumClauses clauses.
+  ///
+  /// \param C AST context.
+  /// \param CollapsedNum Number of collapsed nested loops.
+  /// \param NumClauses Number of clauses.
+  ///
+  static OMPParallelGenericLoopDirective *CreateEmpty(const ASTContext &C,
+                                                      unsigned NumClauses,
+                                                      unsigned CollapsedNum,
+                                                      EmptyShell);
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == OMPParallelGenericLoopDirectiveClass;
+  }
+};
+
+/// This represents '#pragma omp target parallel loop' directive.
+///
+/// \code
+/// #pragma omp target parallel loop private(a,b) order(concurrent)
+/// \endcode
+/// In this example directive '#pragma omp target parallel loop' has
+/// clauses 'private' with the variables 'a' and 'b', and order(concurrent).
+///
+class OMPTargetParallelGenericLoopDirective final : public OMPLoopDirective {
+  friend class ASTStmtReader;
+  friend class OMPExecutableDirective;
+  /// Build directive with the given start and end location.
+  ///
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending location of the directive.
+  /// \param CollapsedNum Number of collapsed nested loops.
+  ///
+  OMPTargetParallelGenericLoopDirective(SourceLocation StartLoc,
+                                        SourceLocation EndLoc,
+                                        unsigned CollapsedNum)
+      : OMPLoopDirective(OMPTargetParallelGenericLoopDirectiveClass,
+                         llvm::omp::OMPD_target_parallel_loop, StartLoc, EndLoc,
+                         CollapsedNum) {}
+
+  /// Build an empty directive.
+  ///
+  /// \param CollapsedNum Number of collapsed nested loops.
+  ///
+  explicit OMPTargetParallelGenericLoopDirective(unsigned CollapsedNum)
+      : OMPLoopDirective(OMPTargetParallelGenericLoopDirectiveClass,
+                         llvm::omp::OMPD_target_parallel_loop, SourceLocation(),
+                         SourceLocation(), CollapsedNum) {}
+
+public:
+  /// Creates directive with a list of \p Clauses.
+  ///
+  /// \param C AST context.
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending Location of the directive.
+  /// \param CollapsedNum Number of collapsed loops.
+  /// \param Clauses List of clauses.
+  /// \param AssociatedStmt Statement, associated with the directive.
+  /// \param Exprs Helper expressions for CodeGen.
+  ///
+  static OMPTargetParallelGenericLoopDirective *
+  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
+         unsigned CollapsedNum, ArrayRef<OMPClause *> Clauses,
+         Stmt *AssociatedStmt, const HelperExprs &Exprs);
+
+  /// Creates an empty directive with the place
+  /// for \a NumClauses clauses.
+  ///
+  /// \param C AST context.
+  /// \param CollapsedNum Number of collapsed nested loops.
+  /// \param NumClauses Number of clauses.
+  ///
+  static OMPTargetParallelGenericLoopDirective *
+  CreateEmpty(const ASTContext &C, unsigned NumClauses, unsigned CollapsedNum,
+              EmptyShell);
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == OMPTargetParallelGenericLoopDirectiveClass;
+  }
+};
 } // end namespace clang
 
 #endif

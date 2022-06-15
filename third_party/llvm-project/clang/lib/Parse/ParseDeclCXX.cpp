@@ -10,15 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Parse/Parser.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/PrettyDeclStackTrace.h"
+#include "clang/Basic/AttributeCommonInfo.h"
 #include "clang/Basic/Attributes.h"
 #include "clang/Basic/CharInfo.h"
 #include "clang/Basic/OperatorKinds.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Parse/ParseDiagnostic.h"
+#include "clang/Parse/Parser.h"
 #include "clang/Parse/RAIIObjectsForParser.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/ParsedTemplate.h"
@@ -73,16 +74,28 @@ Parser::DeclGroupPtrTy Parser::ParseNamespace(DeclaratorContext Context,
   InnerNamespaceInfoList ExtraNSs;
   SourceLocation FirstNestedInlineLoc;
 
-  ParsedAttributesWithRange attrs(AttrFactory);
-  SourceLocation attrLoc;
-  if (getLangOpts().CPlusPlus11 && isCXX11AttributeSpecifier()) {
-    Diag(Tok.getLocation(), getLangOpts().CPlusPlus17
-                                ? diag::warn_cxx14_compat_ns_enum_attribute
-                                : diag::ext_ns_enum_attribute)
-      << 0 /*namespace*/;
-    attrLoc = Tok.getLocation();
-    ParseCXX11Attributes(attrs);
-  }
+  ParsedAttributes attrs(AttrFactory);
+
+  auto ReadAttributes = [&] {
+    bool MoreToParse;
+    do {
+      MoreToParse = false;
+      if (Tok.is(tok::kw___attribute)) {
+        ParseGNUAttributes(attrs);
+        MoreToParse = true;
+      }
+      if (getLangOpts().CPlusPlus11 && isCXX11AttributeSpecifier()) {
+        Diag(Tok.getLocation(), getLangOpts().CPlusPlus17
+                                    ? diag::warn_cxx14_compat_ns_enum_attribute
+                                    : diag::ext_ns_enum_attribute)
+            << 0 /*namespace*/;
+        ParseCXX11Attributes(attrs);
+        MoreToParse = true;
+      }
+    } while (MoreToParse);
+  };
+
+  ReadAttributes();
 
   if (Tok.is(tok::identifier)) {
     Ident = Tok.getIdentifierInfo();
@@ -108,15 +121,13 @@ Parser::DeclGroupPtrTy Parser::ParseNamespace(DeclaratorContext Context,
     }
   }
 
+  ReadAttributes();
+
+  SourceLocation attrLoc = attrs.Range.getBegin();
+
   // A nested namespace definition cannot have attributes.
   if (!ExtraNSs.empty() && attrLoc.isValid())
     Diag(attrLoc, diag::err_unexpected_nested_namespace_attribute);
-
-  // Read label attributes, if present.
-  if (Tok.is(tok::kw___attribute)) {
-    attrLoc = Tok.getLocation();
-    ParseGNUAttributes(attrs);
-  }
 
   if (Tok.is(tok::equal)) {
     if (!Ident) {
@@ -241,9 +252,9 @@ void Parser::ParseInnerNamespace(const InnerNamespaceInfoList &InnerNSs,
   if (index == InnerNSs.size()) {
     while (!tryParseMisplacedModuleImport() && Tok.isNot(tok::r_brace) &&
            Tok.isNot(tok::eof)) {
-      ParsedAttributesWithRange attrs(AttrFactory);
-      MaybeParseCXX11Attributes(attrs);
-      ParseExternalDeclaration(attrs);
+      ParsedAttributes Attrs(AttrFactory);
+      MaybeParseCXX11Attributes(Attrs);
+      ParseExternalDeclaration(Attrs);
     }
 
     // The caller is what called check -- we are simply calling
@@ -344,7 +355,7 @@ Decl *Parser::ParseLinkage(ParsingDeclSpec &DS, DeclaratorContext Context) {
                 getCurScope(), DS.getSourceRange().getBegin(), Lang.get(),
                 Tok.is(tok::l_brace) ? Tok.getLocation() : SourceLocation());
 
-  ParsedAttributesWithRange attrs(AttrFactory);
+  ParsedAttributes attrs(AttrFactory);
   MaybeParseCXX11Attributes(attrs);
 
   if (Tok.isNot(tok::l_brace)) {
@@ -394,9 +405,9 @@ Decl *Parser::ParseLinkage(ParsingDeclSpec &DS, DeclaratorContext Context) {
         break;
       LLVM_FALLTHROUGH;
     default:
-      ParsedAttributesWithRange attrs(AttrFactory);
-      MaybeParseCXX11Attributes(attrs);
-      ParseExternalDeclaration(attrs);
+      ParsedAttributes Attrs(AttrFactory);
+      MaybeParseCXX11Attributes(Attrs);
+      ParseExternalDeclaration(Attrs);
       continue;
     }
 
@@ -426,9 +437,8 @@ Decl *Parser::ParseExportDeclaration() {
 
   if (Tok.isNot(tok::l_brace)) {
     // FIXME: Factor out a ParseExternalDeclarationWithAttrs.
-    ParsedAttributesWithRange Attrs(AttrFactory);
+    ParsedAttributes Attrs(AttrFactory);
     MaybeParseCXX11Attributes(Attrs);
-    MaybeParseMicrosoftAttributes(Attrs);
     ParseExternalDeclaration(Attrs);
     return Actions.ActOnFinishExportDecl(getCurScope(), ExportDecl,
                                          SourceLocation());
@@ -446,9 +456,8 @@ Decl *Parser::ParseExportDeclaration() {
 
   while (!tryParseMisplacedModuleImport() && Tok.isNot(tok::r_brace) &&
          Tok.isNot(tok::eof)) {
-    ParsedAttributesWithRange Attrs(AttrFactory);
+    ParsedAttributes Attrs(AttrFactory);
     MaybeParseCXX11Attributes(Attrs);
-    MaybeParseMicrosoftAttributes(Attrs);
     ParseExternalDeclaration(Attrs);
   }
 
@@ -459,11 +468,9 @@ Decl *Parser::ParseExportDeclaration() {
 
 /// ParseUsingDirectiveOrDeclaration - Parse C++ using using-declaration or
 /// using-directive. Assumes that current token is 'using'.
-Parser::DeclGroupPtrTy
-Parser::ParseUsingDirectiveOrDeclaration(DeclaratorContext Context,
-                                         const ParsedTemplateInfo &TemplateInfo,
-                                         SourceLocation &DeclEnd,
-                                         ParsedAttributesWithRange &attrs) {
+Parser::DeclGroupPtrTy Parser::ParseUsingDirectiveOrDeclaration(
+    DeclaratorContext Context, const ParsedTemplateInfo &TemplateInfo,
+    SourceLocation &DeclEnd, ParsedAttributes &Attrs) {
   assert(Tok.is(tok::kw_using) && "Not using token");
   ObjCDeclContextSwitch ObjCDC(*this);
 
@@ -492,12 +499,12 @@ Parser::ParseUsingDirectiveOrDeclaration(DeclaratorContext Context,
         << 0 /* directive */ << R << FixItHint::CreateRemoval(R);
     }
 
-    Decl *UsingDir = ParseUsingDirective(Context, UsingLoc, DeclEnd, attrs);
+    Decl *UsingDir = ParseUsingDirective(Context, UsingLoc, DeclEnd, Attrs);
     return Actions.ConvertDeclToDeclGroup(UsingDir);
   }
 
   // Otherwise, it must be a using-declaration or an alias-declaration.
-  return ParseUsingDeclaration(Context, TemplateInfo, UsingLoc, DeclEnd, attrs,
+  return ParseUsingDeclaration(Context, TemplateInfo, UsingLoc, DeclEnd, Attrs,
                                AS_none);
 }
 
@@ -672,11 +679,10 @@ bool Parser::ParseUsingDeclarator(DeclaratorContext Context,
 ///
 ///     elaborated-enum-specifier:
 ///       'enum' nested-name-specifier[opt] identifier
-Parser::DeclGroupPtrTy
-Parser::ParseUsingDeclaration(
+Parser::DeclGroupPtrTy Parser::ParseUsingDeclaration(
     DeclaratorContext Context, const ParsedTemplateInfo &TemplateInfo,
     SourceLocation UsingLoc, SourceLocation &DeclEnd,
-    ParsedAttributesWithRange &PrefixAttrs, AccessSpecifier AS) {
+    ParsedAttributes &PrefixAttrs, AccessSpecifier AS) {
   SourceLocation UELoc;
   bool InInitStatement = Context == DeclaratorContext::SelectionInit ||
                          Context == DeclaratorContext::ForInit;
@@ -714,7 +720,7 @@ Parser::ParseUsingDeclaration(
 
   // Check for misplaced attributes before the identifier in an
   // alias-declaration.
-  ParsedAttributesWithRange MisplacedAttrs(AttrFactory);
+  ParsedAttributes MisplacedAttrs(AttrFactory);
   MaybeParseCXX11Attributes(MisplacedAttrs);
 
   if (InInitStatement && Tok.isNot(tok::identifier))
@@ -723,7 +729,7 @@ Parser::ParseUsingDeclaration(
   UsingDeclarator D;
   bool InvalidDeclarator = ParseUsingDeclarator(Context, D);
 
-  ParsedAttributesWithRange Attrs(AttrFactory);
+  ParsedAttributes Attrs(AttrFactory);
   MaybeParseAttributes(PAKM_GNU | PAKM_CXX11, Attrs);
 
   // If we had any misplaced attributes from earlier, this is where they
@@ -1030,10 +1036,9 @@ SourceLocation Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
     }
 
     // Check for C++1y 'decltype(auto)'.
-    if (Tok.is(tok::kw_auto)) {
-      // No need to disambiguate here: an expression can't start with 'auto',
-      // because the typename-specifier in a function-style cast operation can't
-      // be 'auto'.
+    if (Tok.is(tok::kw_auto) && NextToken().is(tok::r_paren)) {
+      // the typename-specifier in a function-style cast expression may
+      // be 'auto' since C++2b.
       Diag(Tok.getLocation(),
            getLangOpts().CPlusPlus14
              ? diag::warn_cxx11_compat_decltype_auto_type_specifier
@@ -1462,9 +1467,9 @@ bool Parser::isValidAfterTypeSpecifier(bool CouldBeBitfield) {
 void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                  SourceLocation StartLoc, DeclSpec &DS,
                                  const ParsedTemplateInfo &TemplateInfo,
-                                 AccessSpecifier AS,
-                                 bool EnteringContext, DeclSpecContext DSC,
-                                 ParsedAttributesWithRange &Attributes) {
+                                 AccessSpecifier AS, bool EnteringContext,
+                                 DeclSpecContext DSC,
+                                 ParsedAttributes &Attributes) {
   DeclSpec::TST TagType;
   if (TagTokKind == tok::kw_struct)
     TagType = DeclSpec::TST_struct;
@@ -1495,7 +1500,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       (TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate);
   SuppressAccessChecks diagsFromTag(*this, shouldDelayDiagsInTag);
 
-  ParsedAttributesWithRange attrs(AttrFactory);
+  ParsedAttributes attrs(AttrFactory);
   // If attributes exist after tag, parse them.
   MaybeParseAttributes(PAKM_CXX11 | PAKM_Declspec | PAKM_GNU, attrs);
 
@@ -1747,11 +1752,13 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
 
   const PrintingPolicy &Policy = Actions.getASTContext().getPrintingPolicy();
   Sema::TagUseKind TUK;
-  if (isDefiningTypeSpecifierContext(DSC) == AllowDefiningTypeSpec::No ||
+  if (isDefiningTypeSpecifierContext(DSC, getLangOpts().CPlusPlus) ==
+          AllowDefiningTypeSpec::No ||
       (getLangOpts().OpenMP && OpenMPDirectiveParsing))
     TUK = Sema::TUK_Reference;
   else if (Tok.is(tok::l_brace) ||
-           (getLangOpts().CPlusPlus && Tok.is(tok::colon)) ||
+           (DSC != DeclSpecContext::DSC_association &&
+            getLangOpts().CPlusPlus && Tok.is(tok::colon)) ||
            (isClassCompatibleKeyword() &&
             (NextToken().is(tok::l_brace) || NextToken().is(tok::colon)))) {
     if (DS.isFriendSpecified()) {
@@ -2043,8 +2050,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       // Parse the definition body.
       ParseStructUnionBody(StartLoc, TagType, cast<RecordDecl>(D));
       if (SkipBody.CheckSameAsPrevious &&
-          !Actions.ActOnDuplicateDefinition(DS, TagOrTempResult.get(),
-                                            SkipBody)) {
+          !Actions.ActOnDuplicateDefinition(TagOrTempResult.get(), SkipBody)) {
         DS.SetTypeSpecError();
         return;
       }
@@ -2154,7 +2160,7 @@ BaseResult Parser::ParseBaseSpecifier(Decl *ClassDecl) {
   bool IsVirtual = false;
   SourceLocation StartLoc = Tok.getLocation();
 
-  ParsedAttributesWithRange Attributes(AttrFactory);
+  ParsedAttributes Attributes(AttrFactory);
   MaybeParseCXX11Attributes(Attributes);
 
   // Parse the 'virtual' keyword.
@@ -2165,8 +2171,11 @@ BaseResult Parser::ParseBaseSpecifier(Decl *ClassDecl) {
 
   // Parse an (optional) access specifier.
   AccessSpecifier Access = getAccessSpecifierIfPresent();
-  if (Access != AS_none)
+  if (Access != AS_none) {
     ConsumeToken();
+    if (getLangOpts().HLSL)
+      Diag(Tok.getLocation(), diag::ext_hlsl_access_specifiers);
+  }
 
   CheckMisplacedCXX11Attribute(Attributes, StartLoc);
 
@@ -2671,8 +2680,8 @@ Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
                                           TemplateInfo, TemplateDiags);
   }
 
-  ParsedAttributesWithRange attrs(AttrFactory);
-  ParsedAttributesViewWithRange FnAttrs;
+  ParsedAttributes attrs(AttrFactory);
+  ParsedAttributesView FnAttrs;
   // Optional C++11 attribute-specifier
   MaybeParseCXX11Attributes(attrs);
 
@@ -3167,7 +3176,7 @@ void Parser::SkipCXXMemberSpecification(SourceLocation RecordLoc,
 
     // Diagnose any C++11 attributes after 'final' keyword.
     // We deliberately discard these attributes.
-    ParsedAttributesWithRange Attrs(AttrFactory);
+    ParsedAttributes Attrs(AttrFactory);
     CheckMisplacedCXX11Attribute(Attrs, AttrFixitLoc);
 
     // This can only happen if we had malformed misplaced attributes;
@@ -3207,14 +3216,15 @@ void Parser::SkipCXXMemberSpecification(SourceLocation RecordLoc,
   T.skipToEnd();
 
   // Parse and discard any trailing attributes.
-  ParsedAttributes Attrs(AttrFactory);
-  if (Tok.is(tok::kw___attribute))
+  if (Tok.is(tok::kw___attribute)) {
+    ParsedAttributes Attrs(AttrFactory);
     MaybeParseGNUAttributes(Attrs);
+  }
 }
 
 Parser::DeclGroupPtrTy Parser::ParseCXXClassMemberDeclarationWithPragmas(
-    AccessSpecifier &AS, ParsedAttributesWithRange &AccessAttrs,
-    DeclSpec::TST TagType, Decl *TagDecl) {
+    AccessSpecifier &AS, ParsedAttributes &AccessAttrs, DeclSpec::TST TagType,
+    Decl *TagDecl) {
   ParenBraceBracketBalancer BalancerRAIIObj(*this);
 
   switch (Tok.getKind()) {
@@ -3264,6 +3274,8 @@ Parser::DeclGroupPtrTy Parser::ParseCXXClassMemberDeclarationWithPragmas(
     LLVM_FALLTHROUGH;
   case tok::kw_public:
   case tok::kw_protected: {
+    if (getLangOpts().HLSL)
+      Diag(Tok.getLocation(), diag::ext_hlsl_access_specifiers);
     AccessSpecifier NewAS = getAccessSpecifierIfPresent();
     assert(NewAS != AS_none);
     // Current token is a C++ access specifier.
@@ -3324,7 +3336,7 @@ Parser::DeclGroupPtrTy Parser::ParseCXXClassMemberDeclarationWithPragmas(
 ///
 void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
                                          SourceLocation AttrFixitLoc,
-                                         ParsedAttributesWithRange &Attrs,
+                                         ParsedAttributes &Attrs,
                                          unsigned TagType, Decl *TagDecl) {
   assert((TagType == DeclSpec::TST_struct ||
          TagType == DeclSpec::TST_interface ||
@@ -3360,7 +3372,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
         break;
       }
 
-      if ((S->getFlags() & Scope::FnScope))
+      if (S->isFunctionScope())
         // If we're in a function or function template then this is a local
         // class rather than a nested class.
         break;
@@ -3503,12 +3515,13 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   // C++ 11p3: Members of a class defined with the keyword class are private
   // by default. Members of a class defined with the keywords struct or union
   // are public by default.
+  // HLSL: In HLSL members of a class are public by default.
   AccessSpecifier CurAS;
-  if (TagType == DeclSpec::TST_class)
+  if (TagType == DeclSpec::TST_class && !getLangOpts().HLSL)
     CurAS = AS_private;
   else
     CurAS = AS_public;
-  ParsedAttributesWithRange AccessAttrs(AttrFactory);
+  ParsedAttributes AccessAttrs(AttrFactory);
 
   if (TagDecl) {
     // While we still have something to read, read the member-declarations.
@@ -4296,10 +4309,20 @@ bool Parser::ParseCXX11AttributeArgs(IdentifierInfo *AttrName,
   ParsedAttr::Syntax Syntax =
       LO.CPlusPlus ? ParsedAttr::AS_CXX11 : ParsedAttr::AS_C2x;
 
+  // Try parsing microsoft attributes
+  if (getLangOpts().MicrosoftExt || getLangOpts().HLSL) {
+    if (hasAttribute(AttributeCommonInfo::Syntax::AS_Microsoft, ScopeName,
+                     AttrName, getTargetInfo(), getLangOpts()))
+      Syntax = ParsedAttr::AS_Microsoft;
+  }
+
   // If the attribute isn't known, we will not attempt to parse any
   // arguments.
-  if (!hasAttribute(LO.CPlusPlus ? AttrSyntax::CXX : AttrSyntax::C, ScopeName,
-                    AttrName, getTargetInfo(), getLangOpts())) {
+  if (Syntax != ParsedAttr::AS_Microsoft &&
+      !hasAttribute(LO.CPlusPlus ? AttributeCommonInfo::Syntax::AS_CXX11
+                                 : AttributeCommonInfo::Syntax::AS_C2x,
+                    ScopeName, AttrName, getTargetInfo(), getLangOpts())) {
+    if (getLangOpts().MicrosoftExt || getLangOpts().HLSL) {}
     // Eat the left paren, then skip to the ending right paren.
     ConsumeParen();
     SkipUntil(tok::r_paren);
@@ -4361,7 +4384,7 @@ bool Parser::ParseCXX11AttributeArgs(IdentifierInfo *AttrName,
   return true;
 }
 
-/// ParseCXX11AttributeSpecifier - Parse a C++11 or C2x attribute-specifier.
+/// Parse a C++11 or C2x attribute-specifier.
 ///
 /// [C++11] attribute-specifier:
 ///         '[' '[' attribute-list ']' ']'
@@ -4514,19 +4537,17 @@ void Parser::ParseCXX11AttributeSpecifierInternal(ParsedAttributes &Attrs,
 ///
 /// attribute-specifier-seq:
 ///       attribute-specifier-seq[opt] attribute-specifier
-void Parser::ParseCXX11Attributes(ParsedAttributesWithRange &attrs,
-                                  SourceLocation *endLoc) {
+void Parser::ParseCXX11Attributes(ParsedAttributes &Attrs) {
   assert(standardAttributesAllowed());
 
-  SourceLocation StartLoc = Tok.getLocation(), Loc;
-  if (!endLoc)
-    endLoc = &Loc;
+  SourceLocation StartLoc = Tok.getLocation();
+  SourceLocation EndLoc = StartLoc;
 
   do {
-    ParseCXX11AttributeSpecifier(attrs, endLoc);
+    ParseCXX11AttributeSpecifier(Attrs, &EndLoc);
   } while (isCXX11AttributeSpecifier());
 
-  attrs.Range = SourceRange(StartLoc, *endLoc);
+  Attrs.Range = SourceRange(StartLoc, EndLoc);
 }
 
 void Parser::DiagnoseAndSkipCXX11Attributes() {
@@ -4659,10 +4680,11 @@ void Parser::ParseMicrosoftUuidAttributeArgs(ParsedAttributes &Attrs) {
 /// [MS] ms-attribute-seq:
 ///             ms-attribute[opt]
 ///             ms-attribute ms-attribute-seq
-void Parser::ParseMicrosoftAttributes(ParsedAttributes &attrs,
-                                      SourceLocation *endLoc) {
+void Parser::ParseMicrosoftAttributes(ParsedAttributes &Attrs) {
   assert(Tok.is(tok::l_square) && "Not a Microsoft attribute list");
 
+  SourceLocation StartLoc = Tok.getLocation();
+  SourceLocation EndLoc = StartLoc;
   do {
     // FIXME: If this is actually a C++11 attribute, parse it as one.
     BalancedDelimiterTracker T(*this, tok::l_square);
@@ -4682,15 +4704,37 @@ void Parser::ParseMicrosoftAttributes(ParsedAttributes &attrs,
       if (Tok.isNot(tok::identifier)) // ']', but also eof
         break;
       if (Tok.getIdentifierInfo()->getName() == "uuid")
-        ParseMicrosoftUuidAttributeArgs(attrs);
-      else
+        ParseMicrosoftUuidAttributeArgs(Attrs);
+      else {
+        IdentifierInfo *II = Tok.getIdentifierInfo();
+        SourceLocation NameLoc = Tok.getLocation();
         ConsumeToken();
+        ParsedAttr::Kind AttrKind =
+            ParsedAttr::getParsedKind(II, nullptr, ParsedAttr::AS_Microsoft);
+        // For HLSL we want to handle all attributes, but for MSVC compat, we
+        // silently ignore unknown Microsoft attributes.
+        if (getLangOpts().HLSL || AttrKind != ParsedAttr::UnknownAttribute) {
+          bool AttrParsed = false;
+          if (Tok.is(tok::l_paren)) {
+            CachedTokens OpenMPTokens;
+            AttrParsed =
+                ParseCXX11AttributeArgs(II, NameLoc, Attrs, &EndLoc, nullptr,
+                                        SourceLocation(), OpenMPTokens);
+            ReplayOpenMPAttributeTokens(OpenMPTokens);
+          }
+          if (!AttrParsed) {
+            Attrs.addNew(II, NameLoc, nullptr, SourceLocation(), nullptr, 0,
+                         ParsedAttr::AS_Microsoft);
+          }
+        }
+      }
     }
 
     T.consumeClose();
-    if (endLoc)
-      *endLoc = T.getCloseLocation();
+    EndLoc = T.getCloseLocation();
   } while (Tok.is(tok::l_square));
+
+  Attrs.Range = SourceRange(StartLoc, EndLoc);
 }
 
 void Parser::ParseMicrosoftIfExistsClassDeclaration(

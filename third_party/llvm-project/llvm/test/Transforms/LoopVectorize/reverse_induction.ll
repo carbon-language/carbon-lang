@@ -1,4 +1,4 @@
-; RUN: opt < %s -loop-vectorize -force-vector-interleave=2 -force-vector-width=4 -S | FileCheck %s
+; RUN: opt < %s -passes=loop-vectorize -force-vector-interleave=2 -force-vector-width=4 -S | FileCheck %s
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
 
@@ -32,9 +32,9 @@ loopend:
 
 ; CHECK-LABEL: @reverse_induction_i128(
 ; CHECK: %index = phi i128 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-; CHECK: %offset.idx = sub i128 %startval, %index
-; CHECK: %[[a0:.+]] = add i128 %offset.idx, 0
-; CHECK: %[[a4:.+]] = add i128 %offset.idx, -4
+; CHECK: [[OFFSET_IDX:%.+]] = sub i128 %startval, %index
+; CHECK: %[[a0:.+]] = add i128 [[OFFSET_IDX]], 0
+; CHECK: %[[a4:.+]] = add i128 [[OFFSET_IDX]], -4
 
 define i32 @reverse_induction_i128(i128 %startval, i32 * %ptr) {
 entry:

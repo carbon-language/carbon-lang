@@ -4,6 +4,7 @@ module LLVM_Analysis {
   module * { export * }
 
   // This is intended for (repeated) textual inclusion.
+  textual header "Analysis/ScalarFuncs.def"
   textual header "Analysis/TargetLibraryInfo.def"
   textual header "Analysis/VecFuncs.def"
 }
@@ -254,6 +255,7 @@ module LLVM_intrinsic_gen {
   module IR_InstrTypes { header "IR/InstrTypes.h" export * }
   module IR_Instructions { header "IR/Instructions.h" export * }
   module IR_TypeFinder { header "IR/TypeFinder.h" export * }
+  module IR_VectorBuilder { header "IR/VectorBuilder.h" export * }
 
 
   // Intrinsics.h
@@ -332,7 +334,6 @@ module LLVM_MC {
 module LLVM_MC_TableGen {
   requires cplusplus
   module MC_LaneBitmask { header "MC/LaneBitmask.h" export * }
-  module MC_FixedLenDisassembler { header "MC/MCFixedLenDisassembler.h" export * }
   module MC_InstrItineraries { header "MC/MCInstrItineraries.h" export * }
   module MC_Schedule { header "MC/MCSchedule.h" export * }
   module MC_SubtargetFeature { header "MC/SubtargetFeature.h" export * }
@@ -412,6 +413,7 @@ module LLVM_Utils {
     // These are intended for textual inclusion.
     textual header "Support/AArch64TargetParser.def"
     textual header "Support/ARMTargetParser.def"
+    textual header "Support/CSKYTargetParser.def"
     textual header "Support/RISCVTargetParser.def"
     textual header "Support/TargetOpcodes.def"
     textual header "Support/X86TargetParser.def"

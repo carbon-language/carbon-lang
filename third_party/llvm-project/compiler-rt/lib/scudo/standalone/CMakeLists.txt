@@ -36,6 +36,7 @@ list(APPEND SCUDO_LINK_FLAGS -ffunction-sections -fdata-sections -Wl,--gc-sectio
 
 # We don't use the C++ standard library, so avoid including it by mistake.
 append_list_if(COMPILER_RT_HAS_NOSTDLIBXX_FLAG -nostdlib++ SCUDO_LINK_FLAGS)
+append_list_if(CXX_SUPPORTS_UNWINDLIB_NONE_FLAG --unwindlib=none SCUDO_LINK_FLAGS)
 
 if(ANDROID)
   list(APPEND SCUDO_CFLAGS -fno-emulated-tls)
@@ -97,8 +98,11 @@ set(SCUDO_SOURCES
   string_utils.cpp
   )
 
-# Enable the SSE 4.2 instruction set for crc32_hw.cpp, if available.
-if (COMPILER_RT_HAS_MSSE4_2_FLAG)
+# Enable the necessary instruction set for scudo_crc32.cpp, if available.
+# Newer compiler versions use -mcrc32 rather than -msse4.2.
+if (COMPILER_RT_HAS_MCRC32_FLAG)
+  set_source_files_properties(crc32_hw.cpp PROPERTIES COMPILE_FLAGS -mcrc32)
+elseif (COMPILER_RT_HAS_MSSE4_2_FLAG)
   set_source_files_properties(crc32_hw.cpp PROPERTIES COMPILE_FLAGS -msse4.2)
 endif()
 
@@ -136,6 +140,10 @@ set(SCUDO_LINK_LIBS)
 append_list_if(COMPILER_RT_HAS_LIBPTHREAD -pthread SCUDO_LINK_FLAGS)
 
 append_list_if(FUCHSIA zircon SCUDO_LINK_LIBS)
+
+if(COMPILER_RT_DEFAULT_TARGET_ARCH MATCHES "mips|mips64|mipsel|mips64el")
+  list(APPEND SCUDO_LINK_LIBS atomic)
+endif()
 
 if(COMPILER_RT_HAS_SCUDO_STANDALONE)
   add_compiler_rt_object_libraries(RTScudoStandalone

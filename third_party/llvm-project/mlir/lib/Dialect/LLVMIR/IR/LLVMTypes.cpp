@@ -156,6 +156,8 @@ LLVMFunctionType::verify(function_ref<InFlightDiagnostic()> emitError,
 //===----------------------------------------------------------------------===//
 
 bool LLVMPointerType::isValidElementType(Type type) {
+  if (!type)
+    return true;
   return isCompatibleOuterType(type)
              ? !type.isa<LLVMVoidType, LLVMTokenType, LLVMMetadataType,
                          LLVMLabelType>()
@@ -163,8 +165,14 @@ bool LLVMPointerType::isValidElementType(Type type) {
 }
 
 LLVMPointerType LLVMPointerType::get(Type pointee, unsigned addressSpace) {
-  assert(pointee && "expected non-null subtype");
+  assert(pointee && "expected non-null subtype, pass the context instead if "
+                    "the opaque pointer type is desired");
   return Base::get(pointee.getContext(), pointee, addressSpace);
+}
+
+LLVMPointerType LLVMPointerType::get(MLIRContext *context,
+                                     unsigned addressSpace) {
+  return Base::get(context, Type(), addressSpace);
 }
 
 LLVMPointerType
@@ -174,7 +182,15 @@ LLVMPointerType::getChecked(function_ref<InFlightDiagnostic()> emitError,
                           addressSpace);
 }
 
+LLVMPointerType
+LLVMPointerType::getChecked(function_ref<InFlightDiagnostic()> emitError,
+                            MLIRContext *context, unsigned addressSpace) {
+  return Base::getChecked(emitError, context, Type(), addressSpace);
+}
+
 Type LLVMPointerType::getElementType() const { return getImpl()->pointeeType; }
+
+bool LLVMPointerType::isOpaque() const { return !getImpl()->pointeeType; }
 
 unsigned LLVMPointerType::getAddressSpace() const {
   return getImpl()->addressSpace;
@@ -245,6 +261,8 @@ LLVMPointerType::getTypeSizeInBits(const DataLayout &dataLayout,
 
   // For other memory spaces, use the size of the pointer to the default memory
   // space.
+  if (isOpaque())
+    return dataLayout.getTypeSizeInBits(get(getContext()));
   return dataLayout.getTypeSizeInBits(get(getElementType()));
 }
 
@@ -254,6 +272,8 @@ unsigned LLVMPointerType::getABIAlignment(const DataLayout &dataLayout,
           getPointerDataLayoutEntry(params, *this, DLEntryPos::Abi))
     return *alignment;
 
+  if (isOpaque())
+    return dataLayout.getTypeABIAlignment(get(getContext()));
   return dataLayout.getTypeABIAlignment(get(getElementType()));
 }
 
@@ -264,6 +284,8 @@ LLVMPointerType::getPreferredAlignment(const DataLayout &dataLayout,
           getPointerDataLayoutEntry(params, *this, DLEntryPos::Preferred))
     return *alignment;
 
+  if (isOpaque())
+    return dataLayout.getTypePreferredAlignment(get(getContext()));
   return dataLayout.getTypePreferredAlignment(get(getElementType()));
 }
 
@@ -318,7 +340,7 @@ LogicalResult LLVMPointerType::verifyEntries(DataLayoutEntryListRef entries,
              << " to be a dense integer elements attribute with 3 or 4 "
                 "elements";
     }
-    if (!key.getElementType().isInteger(8)) {
+    if (key.getElementType() && !key.getElementType().isInteger(8)) {
       return emitError(loc) << "unexpected layout attribute for pointer to "
                             << key.getElementType();
     }
@@ -722,9 +744,13 @@ static bool isCompatibleImpl(Type type, SetVector<Type> &callstack) {
       .Case<VectorType>([&](auto vecType) {
         return vecType.getRank() == 1 && isCompatible(vecType.getElementType());
       })
+      .Case<LLVMPointerType>([&](auto pointerType) {
+        if (pointerType.isOpaque())
+          return true;
+        return isCompatible(pointerType.getElementType());
+      })
       // clang-format off
       .Case<
-          LLVMPointerType,
           LLVMFixedVectorType,
           LLVMScalableVectorType,
           LLVMArrayType

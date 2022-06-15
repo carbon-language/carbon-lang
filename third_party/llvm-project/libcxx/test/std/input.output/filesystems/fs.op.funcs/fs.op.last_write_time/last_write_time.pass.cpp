@@ -12,7 +12,7 @@
 
 // The string reported on errors changed, which makes those tests fail when run
 // against already-released libc++'s.
-// XFAIL: use_system_cxx_lib && target={{.+}}-apple-macosx10.15
+// XFAIL: use_system_cxx_lib && target={{.+}}-apple-macosx{{10.15|11.0}}
 
 // <filesystem>
 
@@ -21,9 +21,6 @@
 // void last_write_time(const path& p, file_time_type new_time);
 // void last_write_time(const path& p, file_time_type new_type,
 //                      std::error_code& ec) noexcept;
-
-// Disable min() and max() macros in <windows.h> on Windows.
-// ADDITIONAL_COMPILE_FLAGS: -DNOMINMAX
 
 #include "filesystem_include.h"
 #include <chrono>
@@ -199,14 +196,9 @@ Times GetSymlinkTimes(path const& p) {
 namespace {
 
 // In some configurations, the comparison is tautological and the test is valid.
-// We disable the warning so that we can actually test it regardless. Also, that
-// diagnostic is pretty new, so also don't fail if old clang does not support it
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunknown-warning-option"
-#pragma clang diagnostic ignored "-Wunknown-pragmas"
-#pragma clang diagnostic ignored "-Wtautological-constant-compare"
-#endif
+// We disable the warning so that we can actually test it regardless.
+TEST_DIAGNOSTIC_PUSH
+TEST_CLANG_DIAGNOSTIC_IGNORED("-Wtautological-constant-compare")
 
 static const bool SupportsNegativeTimes = [] {
   using namespace std::chrono;
@@ -371,9 +363,7 @@ inline bool TimeIsRepresentableByFilesystem(file_time_type tp) {
   return true;
 }
 
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
+TEST_DIAGNOSTIC_POP
 
 // Create a sub-second duration using the smallest period the filesystem supports.
 file_time_type::duration SubSec(long long val) {

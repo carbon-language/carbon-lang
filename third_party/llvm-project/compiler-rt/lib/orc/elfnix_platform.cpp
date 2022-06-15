@@ -15,6 +15,7 @@
 #include "error.h"
 #include "wrapper_function_utils.h"
 
+#include <algorithm>
 #include <map>
 #include <mutex>
 #include <sstream>
@@ -29,10 +30,10 @@ ORC_RT_JIT_DISPATCH_TAG(__orc_rt_elfnix_get_initializers_tag)
 ORC_RT_JIT_DISPATCH_TAG(__orc_rt_elfnix_get_deinitializers_tag)
 ORC_RT_JIT_DISPATCH_TAG(__orc_rt_elfnix_symbol_lookup_tag)
 
-// eh-frame registration functions.
-// We expect these to be available for all processes.
-extern "C" void __register_frame(const void *);
-extern "C" void __deregister_frame(const void *);
+// eh-frame registration functions, made available via aliases
+// installed by the Platform
+extern "C" void __orc_rt_register_eh_frame_section(const void *);
+extern "C" void __orc_rt_deregister_eh_frame_section(const void *);
 
 namespace {
 
@@ -133,12 +134,6 @@ private:
 
   static ELFNixPlatformRuntimeState *MOPS;
 
-  using InitSectionHandler =
-      Error (*)(const std::vector<ExecutorAddrRange> &Sections,
-                const ELFNixJITDylibInitializers &MOJDIs);
-  const std::vector<std::pair<const char *, InitSectionHandler>> InitSections =
-      {{".init_array", runInitArray}};
-
   void *PlatformJDDSOHandle;
 
   // FIXME: Move to thread-state.
@@ -172,7 +167,8 @@ void ELFNixPlatformRuntimeState::destroy() {
 Error ELFNixPlatformRuntimeState::registerObjectSections(
     ELFNixPerObjectSectionsToRegister POSR) {
   if (POSR.EHFrameSection.Start)
-    __register_frame(POSR.EHFrameSection.Start.toPtr<const char *>());
+    __orc_rt_register_eh_frame_section(
+        POSR.EHFrameSection.Start.toPtr<const char *>());
 
   if (POSR.ThreadDataSection.Start) {
     if (auto Err = registerThreadDataSection(
@@ -186,7 +182,8 @@ Error ELFNixPlatformRuntimeState::registerObjectSections(
 Error ELFNixPlatformRuntimeState::deregisterObjectSections(
     ELFNixPerObjectSectionsToRegister POSR) {
   if (POSR.EHFrameSection.Start)
-    __deregister_frame(POSR.EHFrameSection.Start.toPtr<const char *>());
+    __orc_rt_deregister_eh_frame_section(
+        POSR.EHFrameSection.Start.toPtr<const char *>());
 
   return Error::success();
 }
@@ -376,21 +373,29 @@ Expected<void *> ELFNixPlatformRuntimeState::dlopenInitialize(string_view Path,
   return JDS->Header;
 }
 
+long getPriority(const std::string &name) {
+  auto pos = name.find_last_not_of("0123456789");
+  if (pos == name.size() - 1)
+    return 65535;
+  else
+    return std::strtol(name.c_str() + pos + 1, nullptr, 10);
+}
+
 Error ELFNixPlatformRuntimeState::initializeJITDylib(
     ELFNixJITDylibInitializers &MOJDIs) {
 
   auto &JDS = getOrCreateJITDylibState(MOJDIs);
   ++JDS.RefCount;
 
-  for (auto &KV : InitSections) {
-    const auto &Name = KV.first;
-    const auto &Handler = KV.second;
-    auto I = MOJDIs.InitSections.find(Name);
-    if (I != MOJDIs.InitSections.end()) {
-      if (auto Err = Handler(I->second, MOJDIs))
-        return Err;
-    }
-  }
+  using SectionList = std::vector<ExecutorAddrRange>;
+  std::sort(MOJDIs.InitSections.begin(), MOJDIs.InitSections.end(),
+            [](const std::pair<std::string, SectionList> &LHS,
+               const std::pair<std::string, SectionList> &RHS) -> bool {
+              return getPriority(LHS.first) < getPriority(RHS.first);
+            });
+  for (auto &Entry : MOJDIs.InitSections)
+    if (auto Err = runInitArray(Entry.second, MOJDIs))
+      return Err;
 
   return Error::success();
 }

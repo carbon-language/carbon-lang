@@ -31,7 +31,7 @@ SymbolContext::SymbolContext() : target_sp(), module_sp(), line_entry() {}
 SymbolContext::SymbolContext(const ModuleSP &m, CompileUnit *cu, Function *f,
                              Block *b, LineEntry *le, Symbol *s)
     : target_sp(), module_sp(m), comp_unit(cu), function(f), block(b),
-      line_entry(), symbol(s), variable(nullptr) {
+      line_entry(), symbol(s) {
   if (le)
     line_entry = *le;
 }
@@ -40,14 +40,13 @@ SymbolContext::SymbolContext(const TargetSP &t, const ModuleSP &m,
                              CompileUnit *cu, Function *f, Block *b,
                              LineEntry *le, Symbol *s)
     : target_sp(t), module_sp(m), comp_unit(cu), function(f), block(b),
-      line_entry(), symbol(s), variable(nullptr) {
+      line_entry(), symbol(s) {
   if (le)
     line_entry = *le;
 }
 
 SymbolContext::SymbolContext(SymbolContextScope *sc_scope)
-    : target_sp(), module_sp(), comp_unit(nullptr), function(nullptr),
-      block(nullptr), line_entry(), symbol(nullptr), variable(nullptr) {
+    : target_sp(), module_sp(), line_entry() {
   sc_scope->CalculateSymbolContext(this);
 }
 
@@ -961,8 +960,9 @@ bool SymbolContextSpecifier::AddSpecification(const char *spec_string,
     // See if we can find the Module, if so stick it in the SymbolContext.
     FileSpec module_file_spec(spec_string);
     ModuleSpec module_spec(module_file_spec);
-    lldb::ModuleSP module_sp(
-        m_target_sp->GetImages().FindFirstModule(module_spec));
+    lldb::ModuleSP module_sp =
+        m_target_sp ? m_target_sp->GetImages().FindFirstModule(module_spec)
+                    : nullptr;
     m_type |= eModuleSpecified;
     if (module_sp)
       m_module_sp = module_sp;

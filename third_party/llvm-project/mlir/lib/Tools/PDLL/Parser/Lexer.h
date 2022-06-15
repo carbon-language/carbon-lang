@@ -21,6 +21,8 @@ namespace mlir {
 struct LogicalResult;
 
 namespace pdll {
+class CodeCompleteContext;
+
 namespace ast {
 class DiagnosticEngine;
 } // namespace ast
@@ -32,21 +34,25 @@ class DiagnosticEngine;
 class Token {
 public:
   enum Kind {
-    // Markers.
+    /// Markers.
     eof,
     error,
+    /// Token signifying a code completion location.
+    code_complete,
+    /// Token signifying a code completion location within a string.
+    code_complete_string,
 
-    // Keywords.
+    /// Keywords.
     KW_BEGIN,
-    // Dependent keywords, i.e. those that are treated as keywords depending on
-    // the current parser context.
+    /// Dependent keywords, i.e. those that are treated as keywords depending on
+    /// the current parser context.
     KW_DEPENDENT_BEGIN,
     kw_attr,
     kw_op,
     kw_type,
     KW_DEPENDENT_END,
 
-    // General keywords.
+    /// General keywords.
     kw_Attr,
     kw_erase,
     kw_let,
@@ -65,7 +71,7 @@ public:
     kw_with,
     KW_END,
 
-    // Punctuation.
+    /// Punctuation.
     arrow,
     colon,
     comma,
@@ -73,7 +79,7 @@ public:
     equal,
     equal_arrow,
     semicolon,
-    // Paired punctuation.
+    /// Paired punctuation.
     less,
     greater,
     l_brace,
@@ -84,7 +90,7 @@ public:
     r_square,
     underscore,
 
-    // Tokens.
+    /// Tokens.
     directive,
     identifier,
     integer,
@@ -162,7 +168,8 @@ private:
 
 class Lexer {
 public:
-  Lexer(llvm::SourceMgr &mgr, ast::DiagnosticEngine &diagEngine);
+  Lexer(llvm::SourceMgr &mgr, ast::DiagnosticEngine &diagEngine,
+        CodeCompleteContext *codeCompleteContext);
   ~Lexer();
 
   /// Return a reference to the source manager used by the lexer.
@@ -174,7 +181,7 @@ public:
   /// Push an include of the given file. This will cause the lexer to start
   /// processing the provided file. Returns failure if the file could not be
   /// opened, success otherwise.
-  LogicalResult pushInclude(StringRef filename);
+  LogicalResult pushInclude(StringRef filename, SMRange includeLoc);
 
   /// Lex the next token and return it.
   Token lexToken();
@@ -215,6 +222,9 @@ private:
   /// A flag indicating if we added a default diagnostic handler to the provided
   /// diagEngine.
   bool addedHandlerToDiagEngine;
+
+  /// The optional code completion point within the input file.
+  const char *codeCompletionLocation;
 };
 } // namespace pdll
 } // namespace mlir

@@ -15,7 +15,6 @@
 #include "mlir/Dialect/SCF/Passes.h"
 #include "mlir/Dialect/SCF/SCF.h"
 #include "mlir/Dialect/SCF/Transforms.h"
-#include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/IR/PatternMatch.h"
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
 
@@ -101,7 +100,7 @@ struct ForLoopLoweringPattern : public OpRewritePattern<ForOp> {
 
 struct ForToWhileLoop : public SCFForToWhileLoopBase<ForToWhileLoop> {
   void runOnOperation() override {
-    FuncOp funcOp = getOperation();
+    func::FuncOp funcOp = getOperation();
     MLIRContext *ctx = funcOp.getContext();
     RewritePatternSet patterns(ctx);
     patterns.add<ForLoopLoweringPattern>(ctx);

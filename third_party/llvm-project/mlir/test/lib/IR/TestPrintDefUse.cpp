@@ -6,7 +6,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/Pass/Pass.h"
 
@@ -16,6 +15,8 @@ namespace {
 /// This pass illustrates the IR def-use chains through printing.
 struct TestPrintDefUsePass
     : public PassWrapper<TestPrintDefUsePass, OperationPass<>> {
+  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(TestPrintDefUsePass)
+
   StringRef getArgument() const final { return "test-print-defuse"; }
   StringRef getDescription() const final { return "Test various printing."; }
   void runOnOperation() override {

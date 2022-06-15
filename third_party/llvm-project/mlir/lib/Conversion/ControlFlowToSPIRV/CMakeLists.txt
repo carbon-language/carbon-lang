@@ -1,5 +1,6 @@
 add_mlir_conversion_library(MLIRControlFlowToSPIRV
   ControlFlowToSPIRV.cpp
+  ControlFlowToSPIRVPass.cpp
 
   ADDITIONAL_HEADER_DIRS
   ${MLIR_MAIN_INCLUDE_DIR}/mlir/Dialect/SPIRV
@@ -10,9 +11,9 @@ add_mlir_conversion_library(MLIRControlFlowToSPIRV
 
   LINK_LIBS PUBLIC
   MLIRIR
-  MLIRControlFlow
+  MLIRControlFlowDialect
   MLIRPass
-  MLIRSPIRV
+  MLIRSPIRVDialect
   MLIRSPIRVConversion
   MLIRSupport
   MLIRTransformUtils

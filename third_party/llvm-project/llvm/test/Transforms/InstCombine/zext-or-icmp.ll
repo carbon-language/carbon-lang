@@ -118,6 +118,38 @@ block2:
   ret i1 %r
 }
 
+; PR43261
+
+define i32 @zext_or_eq_ult_add(i32 %i) {
+; CHECK-LABEL: @zext_or_eq_ult_add(
+; CHECK-NEXT:    [[TMP1:%.*]] = add i32 [[I:%.*]], -3
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp ult i32 [[TMP1]], 3
+; CHECK-NEXT:    [[R:%.*]] = zext i1 [[TMP2]] to i32
+; CHECK-NEXT:    ret i32 [[R]]
+;
+  %a = add i32 %i, -3
+  %c1 = icmp ult i32 %a, 3
+  %c2 = icmp eq i32 %i, 5
+  %o = or i1 %c1, %c2
+  %r = zext i1 %o to i32
+  ret i32 %r
+}
+
+define i32 @select_zext_or_eq_ult_add(i32 %i) {
+; CHECK-LABEL: @select_zext_or_eq_ult_add(
+; CHECK-NEXT:    [[TMP1:%.*]] = add i32 [[I:%.*]], -3
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp ult i32 [[TMP1]], 3
+; CHECK-NEXT:    [[R:%.*]] = zext i1 [[TMP2]] to i32
+; CHECK-NEXT:    ret i32 [[R]]
+;
+  %a = add i32 %i, -3
+  %c1 = icmp ult i32 %a, 2
+  %c2 = icmp eq i32 %i, 5
+  %z = zext i1 %c2 to i32
+  %r = select i1 %c1, i32 1, i32 %z
+  ret i32 %r
+}
+
 ; This should not end with more instructions than it started from.
 
 define i32 @PR49475(i32 %x, i16 %y) {
@@ -185,13 +217,13 @@ define i8 @PR49475_infloop(i32 %t0, i16 %insert, i64 %e, i8 %i162) {
 ; This would infinite loop because knownbits changed between checking
 ; if a transform was profitable and actually doing the transform.
 
-define i1 @PR51762(i32 *%i, i32 %t0, i16 %t1, i64* %p, i32* %d, i32* %f, i32 %p2) {
+define i1 @PR51762(i32 *%i, i32 %t0, i16 %t1, i64* %p, i32* %d, i32* %f, i32 %p2, i1 %c1) {
 ; CHECK-LABEL: @PR51762(
 ; CHECK-NEXT:  entry:
 ; CHECK-NEXT:    br label [[FOR_COND:%.*]]
 ; CHECK:       for.cond:
-; CHECK-NEXT:    [[I_SROA_8_0:%.*]] = phi i32 [ undef, [[ENTRY:%.*]] ], [ [[I_SROA_8_0_EXTRACT_TRUNC:%.*]], [[COND_TRUE:%.*]] ]
-; CHECK-NEXT:    br i1 undef, label [[COND_TRUE]], label [[FOR_END11:%.*]]
+; CHECK-NEXT:    [[I_SROA_8_0:%.*]] = phi i32 [ poison, [[ENTRY:%.*]] ], [ [[I_SROA_8_0_EXTRACT_TRUNC:%.*]], [[COND_TRUE:%.*]] ]
+; CHECK-NEXT:    br i1 [[C1:%.*]], label [[COND_TRUE]], label [[FOR_END11:%.*]]
 ; CHECK:       cond.true:
 ; CHECK-NEXT:    [[I_SROA_8_0_EXTRACT_TRUNC]] = ashr i32 [[T0:%.*]], 31
 ; CHECK-NEXT:    br label [[FOR_COND]]
@@ -225,8 +257,8 @@ entry:
   br label %for.cond
 
 for.cond:
-  %i.sroa.8.0 = phi i32 [ undef, %entry ], [ %i.sroa.8.0.extract.trunc, %cond.true ]
-  br i1 undef, label %cond.true, label %for.end11
+  %i.sroa.8.0 = phi i32 [ poison, %entry ], [ %i.sroa.8.0.extract.trunc, %cond.true ]
+  br i1 %c1, label %cond.true, label %for.end11
 
 cond.true:
   %i.sroa.8.0.extract.trunc = ashr i32 %t0, 31

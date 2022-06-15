@@ -37,9 +37,10 @@ using namespace lto;
 static codegen::RegisterCodeGenFlags CGF;
 
 static cl::opt<char>
-    OptLevel("O", cl::desc("Optimization level. [-O0, -O1, -O2, or -O3] "
-                           "(default = '-O2')"),
-             cl::Prefix, cl::ZeroOrMore, cl::init('2'));
+    OptLevel("O",
+             cl::desc("Optimization level. [-O0, -O1, -O2, or -O3] "
+                      "(default = '-O2')"),
+             cl::Prefix, cl::init('2'));
 
 static cl::opt<char> CGOptLevel(
     "cg-opt-level",
@@ -89,8 +90,7 @@ static cl::list<std::string> SymbolResolutions(
              "     runtime and is known to be in this linkage unit\n"
              " x - externally visible: the definition of this symbol is\n"
              "     visible outside of the LTO unit\n"
-             "A resolution for each symbol must be specified."),
-    cl::ZeroOrMore);
+             "A resolution for each symbol must be specified"));
 
 static cl::opt<std::string> OverrideTriple(
     "override-triple",
@@ -143,10 +143,9 @@ static cl::opt<bool>
                  cl::desc("Run PGO context sensitive IR instrumentation"),
                  cl::init(false), cl::Hidden);
 
-static cl::opt<bool>
-    UseNewPM("use-new-pm",
-             cl::desc("Run LTO passes using the new pass manager"),
-             cl::init(LLVM_ENABLE_NEW_PASS_MANAGER), cl::Hidden);
+static cl::opt<bool> LtoOpaquePointers("lto-opaque-pointers",
+                                       cl::desc("Enable opaque pointer types"),
+                                       cl::init(true), cl::Hidden);
 
 static cl::opt<bool>
     DebugPassManager("debug-pass-manager", cl::init(false), cl::Hidden,
@@ -267,7 +266,6 @@ static int run(int argc, char **argv) {
   Conf.AAPipeline = AAPipeline;
 
   Conf.OptLevel = OptLevel - '0';
-  Conf.UseNewPM = UseNewPM;
   Conf.Freestanding = EnableFreestanding;
   for (auto &PluginFN : PassPlugins)
     Conf.PassPlugins.push_back(PluginFN);
@@ -297,6 +295,7 @@ static int run(int argc, char **argv) {
   Conf.StatsFile = StatsFile;
   Conf.PTO.LoopVectorization = Conf.OptLevel > 1;
   Conf.PTO.SLPVectorization = Conf.OptLevel > 1;
+  Conf.OpaquePointers = LtoOpaquePointers;
 
   ThinBackend Backend;
   if (ThinLTODistributedIndexes)

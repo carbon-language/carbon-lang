@@ -48,6 +48,10 @@ def warn_fe_backend_unsupported_fp_exceptions : Warning<
     "overriding currently unsupported use of floating point exceptions "
     "on this target">, InGroup<UnsupportedFPOpt>;
 
+def err_incompatible_fp_eval_method_options : Error<
+    "option 'ffp-eval-method' cannot be used with option "
+    "%select{'fapprox-func'|'mreassociate'|'freciprocal'}0">;
+
 def remark_fe_backend_optimization_remark : Remark<"%0">, BackendInfo,
     InGroup<BackendOptimizationRemark>;
 def remark_fe_backend_optimization_remark_missed : Remark<"%0">, BackendInfo,
@@ -311,6 +315,11 @@ def warn_profile_data_missing : Warning<
 def warn_profile_data_unprofiled : Warning<
   "no profile data available for file \"%0\"">,
   InGroup<ProfileInstrUnprofiled>;
+def warn_profile_data_misexpect : Warning<
+  "Potential performance regression from use of __builtin_expect(): "
+  "Annotation was correct on %0 of profiled executions.">,
+  BackendInfo,
+  InGroup<MisExpect>;
 } // end of instrumentation issue category
 
 }

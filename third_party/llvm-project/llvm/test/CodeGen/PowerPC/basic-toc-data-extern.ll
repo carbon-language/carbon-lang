@@ -1,11 +1,12 @@
 ; RUN: llc -mtriple powerpc-ibm-aix-xcoff -verify-machineinstrs < %s | FileCheck %s
 ; RUN: not --crash llc -filetype=obj -mtriple powerpc-ibm-aix-xcoff  \
 ; RUN:                 -verify-machineinstrs < %s 2>&1 | \
-; RUN:   FileCheck %s --check-prefix=OBJ32
+; RUN:   FileCheck %s --check-prefix=OBJ
+
 ; RUN: llc -mtriple powerpc64-ibm-aix-xcoff -verify-machineinstrs < %s | FileCheck %s
 ; RUN: not --crash llc -filetype=obj -mtriple powerpc64-ibm-aix-xcoff  \
 ; RUN:                 -verify-machineinstrs < %s 2>&1 | \
-; RUN:   FileCheck %s --check-prefix=OBJ64
+; RUN:   FileCheck %s --check-prefix=OBJ
 
 @i = external global i32, align 4  #0
 
@@ -19,7 +20,6 @@ define i32* @get() {
 ; CHECK:        .toc
 ; CHECK-NEXT:   .extern i[TD]
 
-; OBJ32: LLVM ERROR:  toc-data not yet supported when writing object files.
-; OBJ64: LLVM ERROR:  64-bit XCOFF object files are not supported yet.
+; OBJ: LLVM ERROR:  toc-data not yet supported when writing object files.
 
 attributes #0 = { "toc-data" }

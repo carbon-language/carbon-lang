@@ -16,14 +16,14 @@
 #include "llvm/CodeGen/GlobalISel/GISelChangeObserver.h"
 #include "llvm/CodeGen/GlobalISel/GISelKnownBits.h"
 #include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
+#include "llvm/CodeGen/GlobalISel/LostDebugLocObserver.h"
 #include "llvm/CodeGen/GlobalISel/MIPatternMatch.h"
-#include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
-#include "llvm/CodeGen/GlobalISel/RegisterBankInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
-#include "llvm/CodeGen/MachineSizeOpts.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/MachineSizeOpts.h"
+#include "llvm/CodeGen/RegisterBankInfo.h"
 #include "llvm/CodeGen/StackProtector.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetLowering.h"
@@ -31,6 +31,7 @@
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Transforms/Utils/SizeOpts.h"
 
 #define DEBUG_TYPE "globalisel-utils"
 
@@ -56,6 +57,11 @@ Register llvm::constrainOperandRegClass(
   // Assume physical registers are properly constrained.
   assert(Register::isVirtualRegister(Reg) && "PhysReg not implemented");
 
+  // Save the old register class to check whether
+  // the change notifications will be required.
+  // TODO: A better approach would be to pass
+  // the observers to constrainRegToClass().
+  auto *OldRegClass = MRI.getRegClassOrNull(Reg);
   Register ConstrainedReg = constrainRegToClass(MRI, TII, RBI, Reg, RegClass);
   // If we created a new virtual register because the class is not compatible
   // then create a copy between the new and the old register.
@@ -81,7 +87,7 @@ Register llvm::constrainOperandRegClass(
     if (GISelChangeObserver *Observer = MF.getObserver()) {
       Observer->changedInstr(*RegMO.getParent());
     }
-  } else {
+  } else if (OldRegClass != MRI.getRegClassOrNull(Reg)) {
     if (GISelChangeObserver *Observer = MF.getObserver()) {
       if (!RegMO.isDef()) {
         MachineInstr *RegDef = MRI.getVRegDef(Reg);
@@ -601,33 +607,27 @@ Optional<APFloat> llvm::ConstantFoldFPBinOp(unsigned Opcode, const Register Op1,
   return None;
 }
 
-Register llvm::ConstantFoldVectorBinop(unsigned Opcode, const Register Op1,
-                                       const Register Op2,
-                                       const MachineRegisterInfo &MRI,
-                                       MachineIRBuilder &MIB) {
+SmallVector<APInt>
+llvm::ConstantFoldVectorBinop(unsigned Opcode, const Register Op1,
+                              const Register Op2,
+                              const MachineRegisterInfo &MRI) {
   auto *SrcVec2 = getOpcodeDef<GBuildVector>(Op2, MRI);
   if (!SrcVec2)
-    return Register();
+    return SmallVector<APInt>();
 
   auto *SrcVec1 = getOpcodeDef<GBuildVector>(Op1, MRI);
   if (!SrcVec1)
-    return Register();
+    return SmallVector<APInt>();
 
-  const LLT EltTy = MRI.getType(SrcVec1->getSourceReg(0));
-
-  SmallVector<Register, 16> FoldedElements;
+  SmallVector<APInt> FoldedElements;
   for (unsigned Idx = 0, E = SrcVec1->getNumSources(); Idx < E; ++Idx) {
     auto MaybeCst = ConstantFoldBinOp(Opcode, SrcVec1->getSourceReg(Idx),
                                       SrcVec2->getSourceReg(Idx), MRI);
     if (!MaybeCst)
-      return Register();
-    auto FoldedCstReg = MIB.buildConstant(EltTy, *MaybeCst).getReg(0);
-    FoldedElements.emplace_back(FoldedCstReg);
+      return SmallVector<APInt>();
+    FoldedElements.push_back(*MaybeCst);
   }
-  // Create the new vector constant.
-  auto CstVec =
-      MIB.buildBuildVector(MRI.getType(SrcVec1->getReg(0)), FoldedElements);
-  return CstVec.getReg(0);
+  return FoldedElements;
 }
 
 bool llvm::isKnownNeverNaN(Register Val, const MachineRegisterInfo &MRI,
@@ -1070,13 +1070,36 @@ bool llvm::isBuildVectorConstantSplat(const MachineInstr &MI,
                                     AllowUndef);
 }
 
-Optional<int64_t>
-llvm::getBuildVectorConstantSplat(const MachineInstr &MI,
-                                  const MachineRegisterInfo &MRI) {
+Optional<APInt> llvm::getIConstantSplatVal(const Register Reg,
+                                           const MachineRegisterInfo &MRI) {
   if (auto SplatValAndReg =
-          getAnyConstantSplat(MI.getOperand(0).getReg(), MRI, false))
+          getAnyConstantSplat(Reg, MRI, /* AllowUndef */ false)) {
+    Optional<ValueAndVReg> ValAndVReg =
+        getIConstantVRegValWithLookThrough(SplatValAndReg->VReg, MRI);
+    return ValAndVReg->Value;
+  }
+
+  return None;
+}
+
+Optional<APInt> getIConstantSplatVal(const MachineInstr &MI,
+                                     const MachineRegisterInfo &MRI) {
+  return getIConstantSplatVal(MI.getOperand(0).getReg(), MRI);
+}
+
+Optional<int64_t>
+llvm::getIConstantSplatSExtVal(const Register Reg,
+                               const MachineRegisterInfo &MRI) {
+  if (auto SplatValAndReg =
+          getAnyConstantSplat(Reg, MRI, /* AllowUndef */ false))
     return getIConstantVRegSExtVal(SplatValAndReg->VReg, MRI);
   return None;
+}
+
+Optional<int64_t>
+llvm::getIConstantSplatSExtVal(const MachineInstr &MI,
+                               const MachineRegisterInfo &MRI) {
+  return getIConstantSplatSExtVal(MI.getOperand(0).getReg(), MRI);
 }
 
 Optional<FPValueAndVReg> llvm::getFConstantSplat(Register VReg,
@@ -1104,7 +1127,7 @@ Optional<RegOrConstant> llvm::getVectorSplat(const MachineInstr &MI,
   unsigned Opc = MI.getOpcode();
   if (!isBuildVectorOp(Opc))
     return None;
-  if (auto Splat = getBuildVectorConstantSplat(MI, MRI))
+  if (auto Splat = getIConstantSplatSExtVal(MI, MRI))
     return RegOrConstant(*Splat);
   auto Reg = MI.getOperand(1).getReg();
   if (any_of(make_range(MI.operands_begin() + 2, MI.operands_end()),
@@ -1175,7 +1198,7 @@ llvm::isConstantOrConstantSplatVector(MachineInstr &MI,
   Register Def = MI.getOperand(0).getReg();
   if (auto C = getIConstantVRegValWithLookThrough(Def, MRI))
     return C->Value;
-  auto MaybeCst = getBuildVectorConstantSplat(MI, MRI);
+  auto MaybeCst = getIConstantSplatSExtVal(MI, MRI);
   if (!MaybeCst)
     return None;
   const unsigned ScalarSize = MRI.getType(Def).getScalarSizeInBits();

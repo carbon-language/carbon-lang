@@ -11,6 +11,7 @@
 
 #include "src/__support/CPP/Limits.h"
 #include "src/__support/FPUtil/FPBits.h"
+#include "src/__support/FPUtil/builtin_wrappers.h"
 #include "src/__support/ctype_utils.h"
 #include "src/__support/detailed_powers_of_ten.h"
 #include "src/__support/high_precision_decimal.h"
@@ -21,8 +22,6 @@ namespace __llvm_libc {
 namespace internal {
 
 template <class T> uint32_t inline leading_zeroes(T inputNumber) {
-  // TODO(michaelrj): investigate the portability of using something like
-  // __builtin_clz for specific types.
   constexpr uint32_t BITS_IN_T = sizeof(T) * 8;
   if (inputNumber == 0) {
     return BITS_IN_T;
@@ -52,11 +51,11 @@ template <class T> uint32_t inline leading_zeroes(T inputNumber) {
 }
 
 template <> uint32_t inline leading_zeroes<uint32_t>(uint32_t inputNumber) {
-  return inputNumber == 0 ? 32 : __builtin_clz(inputNumber);
+  return inputNumber == 0 ? 32 : fputil::clz(inputNumber);
 }
 
 template <> uint32_t inline leading_zeroes<uint64_t>(uint64_t inputNumber) {
-  return inputNumber == 0 ? 64 : __builtin_clzll(inputNumber);
+  return inputNumber == 0 ? 64 : fputil::clz(inputNumber);
 }
 
 static inline uint64_t low64(__uint128_t num) {
@@ -460,8 +459,9 @@ public:
 #if defined(LONG_DOUBLE_IS_DOUBLE)
 template <> class ClingerConsts<long double> {
 public:
-  static constexpr long double POWERS_OF_TEN_ARRAY[] =
-      ClingerConsts<double>::POWERS_OF_TEN_ARRAY;
+  static constexpr long double POWERS_OF_TEN_ARRAY[] = {
+      1e0,  1e1,  1e2,  1e3,  1e4,  1e5,  1e6,  1e7,  1e8,  1e9,  1e10, 1e11,
+      1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19, 1e20, 1e21, 1e22};
   static constexpr int32_t EXACT_POWERS_OF_TEN =
       ClingerConsts<double>::EXACT_POWERS_OF_TEN;
   static constexpr int32_t DIGITS_IN_MANTISSA =

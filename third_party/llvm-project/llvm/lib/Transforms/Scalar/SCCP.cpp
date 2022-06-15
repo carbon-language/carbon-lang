@@ -17,20 +17,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar/SCCP.h"
-#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/MapVector.h"
-#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/DomTreeUpdater.h"
 #include "llvm/Analysis/GlobalsModRef.h"
-#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/ValueLattice.h"
 #include "llvm/Analysis/ValueLatticeUtils.h"
@@ -38,14 +33,13 @@
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/Constants.h"
-#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalVariable.h"
-#include "llvm/IR/InstVisitor.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/Type.h"
@@ -59,7 +53,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Transforms/Utils/PredicateInfo.h"
+#include "llvm/Transforms/Utils/SCCPSolver.h"
 #include <cassert>
 #include <utility>
 #include <vector>
@@ -97,6 +91,18 @@ static bool isOverdefined(const ValueLatticeElement &LV) {
   return !LV.isUnknownOrUndef() && !isConstant(LV);
 }
 
+static bool canRemoveInstruction(Instruction *I) {
+  if (wouldInstructionBeTriviallyDead(I))
+    return true;
+
+  // Some instructions can be handled but are rejected above. Catch
+  // those cases by falling through to here.
+  // TODO: Mark globals as being constant earlier, so
+  // TODO: wouldInstructionBeTriviallyDead() knows that atomic loads
+  // TODO: are safe to remove.
+  return isa<LoadInst>(I);
+}
+
 static bool tryToReplaceWithConstant(SCCPSolver &Solver, Value *V) {
   Constant *Const = nullptr;
   if (V->getType()->isStructTy()) {
@@ -127,7 +133,8 @@ static bool tryToReplaceWithConstant(SCCPSolver &Solver, Value *V) {
   // Calls with "clang.arc.attachedcall" implicitly use the return value and
   // those uses cannot be updated with a constant.
   CallBase *CB = dyn_cast<CallBase>(V);
-  if (CB && ((CB->isMustTailCall() && !CB->isSafeToRemove()) ||
+  if (CB && ((CB->isMustTailCall() &&
+              !canRemoveInstruction(CB)) ||
              CB->getOperandBundle(LLVMContext::OB_clang_arc_attachedcall))) {
     Function *F = CB->getCalledFunction();
 
@@ -156,7 +163,7 @@ static bool simplifyInstsInBlock(SCCPSolver &Solver, BasicBlock &BB,
     if (Inst.getType()->isVoidTy())
       continue;
     if (tryToReplaceWithConstant(Solver, &Inst)) {
-      if (Inst.isSafeToRemove())
+      if (canRemoveInstruction(&Inst))
         Inst.eraseFromParent();
 
       MadeChanges = true;
@@ -170,6 +177,7 @@ static bool simplifyInstsInBlock(SCCPSolver &Solver, BasicBlock &BB,
         continue;
       if (IV.getConstantRange().isAllNonNegative()) {
         auto *ZExt = new ZExtInst(ExtOp, Inst.getType(), "", &Inst);
+        ZExt->takeName(&Inst);
         InsertedValues.insert(ZExt);
         Inst.replaceAllUsesWith(ZExt);
         Solver.removeLatticeValueFor(&Inst);
@@ -342,7 +350,8 @@ static void findReturnsToZap(Function &F,
 }
 
 static bool removeNonFeasibleEdges(const SCCPSolver &Solver, BasicBlock *BB,
-                                   DomTreeUpdater &DTU) {
+                                   DomTreeUpdater &DTU,
+                                   BasicBlock *&NewUnreachableBB) {
   SmallPtrSet<BasicBlock *, 8> FeasibleSuccessors;
   bool HasNonFeasibleEdges = false;
   for (BasicBlock *Succ : successors(BB)) {
@@ -385,6 +394,23 @@ static bool removeNonFeasibleEdges(const SCCPSolver &Solver, BasicBlock *BB,
   } else if (FeasibleSuccessors.size() > 1) {
     SwitchInstProfUpdateWrapper SI(*cast<SwitchInst>(TI));
     SmallVector<DominatorTree::UpdateType, 8> Updates;
+
+    // If the default destination is unfeasible it will never be taken. Replace
+    // it with a new block with a single Unreachable instruction.
+    BasicBlock *DefaultDest = SI->getDefaultDest();
+    if (!FeasibleSuccessors.contains(DefaultDest)) {
+      if (!NewUnreachableBB) {
+        NewUnreachableBB =
+            BasicBlock::Create(DefaultDest->getContext(), "default.unreachable",
+                               DefaultDest->getParent(), DefaultDest);
+        new UnreachableInst(DefaultDest->getContext(), NewUnreachableBB);
+      }
+
+      SI->setDefaultDest(NewUnreachableBB);
+      Updates.push_back({DominatorTree::Delete, BB, DefaultDest});
+      Updates.push_back({DominatorTree::Insert, BB, NewUnreachableBB});
+    }
+
     for (auto CI = SI->case_begin(); CI != SI->case_end();) {
       if (FeasibleSuccessors.contains(CI->getCaseSuccessor())) {
         ++CI;
@@ -532,11 +558,13 @@ bool llvm::runIPSCCP(
       NumInstRemoved += changeToUnreachable(F.front().getFirstNonPHI(),
                                             /*PreserveLCSSA=*/false, &DTU);
 
+    BasicBlock *NewUnreachableBB = nullptr;
     for (BasicBlock &BB : F)
-      MadeChanges |= removeNonFeasibleEdges(Solver, &BB, DTU);
+      MadeChanges |= removeNonFeasibleEdges(Solver, &BB, DTU, NewUnreachableBB);
 
     for (BasicBlock *DeadBB : BlocksToErase)
-      DTU.deleteBB(DeadBB);
+      if (!DeadBB->hasAddressTaken())
+        DTU.deleteBB(DeadBB);
 
     for (BasicBlock &BB : F) {
       for (Instruction &Inst : llvm::make_early_inc_range(BB)) {

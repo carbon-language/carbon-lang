@@ -21,7 +21,6 @@
 #include "llvm/CodeGen/DIE.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
@@ -166,7 +165,9 @@ DIE *DwarfCompileUnit::getOrCreateGlobalVariableDIE(
   } else {
     DeclContext = GV->getScope();
     // Add name and type.
-    addString(*VariableDIE, dwarf::DW_AT_name, GV->getDisplayName());
+    StringRef DisplayName = GV->getDisplayName();
+    if (!DisplayName.empty())
+      addString(*VariableDIE, dwarf::DW_AT_name, GV->getDisplayName());
     if (GTy)
       addType(*VariableDIE, GTy);
 

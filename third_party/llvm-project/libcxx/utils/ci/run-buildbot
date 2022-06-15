@@ -84,7 +84,9 @@ function generate-cmake-base() {
           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
           -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}" \
           -DLIBCXX_ENABLE_WERROR=YES \
-          -DLLVM_LIT_ARGS="-sv --show-unsupported --xunit-xml-output test-results.xml" \
+          -DLIBCXXABI_ENABLE_WERROR=YES \
+          -DLIBUNWIND_ENABLE_WERROR=YES \
+          -DLLVM_LIT_ARGS="-sv --show-unsupported --xunit-xml-output test-results.xml --timeout=1500 --time-tests" \
           "${@}"
 }
 
@@ -191,106 +193,90 @@ check-generated-output)
 ;;
 generic-cxx03)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-cxx03.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-cxx03.cmake"
     check-runtimes
     check-abi-list
 ;;
 generic-cxx11)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-cxx11.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-cxx11.cmake"
     check-runtimes
     check-abi-list
 ;;
 generic-cxx14)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-cxx14.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-cxx14.cmake"
     check-runtimes
     check-abi-list
 ;;
 generic-cxx17)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-cxx17.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-cxx17.cmake"
     check-runtimes
     check-abi-list
 ;;
 generic-cxx20)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-cxx20.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-cxx20.cmake"
     check-runtimes
     check-abi-list
 ;;
 generic-cxx2b)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-cxx2b.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-cxx2b.cmake"
     check-runtimes
     check-abi-list
 ;;
 generic-assertions)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-assertions.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-assertions.cmake"
     check-runtimes
     check-abi-list
 ;;
-generic-debug-iterators)
+generic-debug-mode)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-debug-iterators.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-debug-mode.cmake"
     check-runtimes
     check-abi-list
 ;;
 generic-noexceptions)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-noexceptions.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-noexceptions.cmake"
     check-runtimes
     check-abi-list
 ;;
 generic-modules)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-modules.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-modules.cmake"
     check-runtimes
     check-abi-list
 ;;
 generic-static)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-static.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-static.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-static.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-static.cmake"
     check-runtimes
 ;;
-generic-clang-12)
-    export CC=clang-12
-    export CXX=clang++-12
+generic-merged)
     clean
-    generate-cmake -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-merged.cmake" \
+                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
+                   -DLIBCXXABI_TEST_CONFIG="llvm-libc++abi-merged.cfg.in" \
+                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-merged.cfg.in"
     check-runtimes
-    check-abi-list
 ;;
 generic-clang-13)
     export CC=clang-13
     export CXX=clang++-13
     clean
-    generate-cmake -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake
+    check-runtimes
+    check-abi-list
+;;
+generic-clang-14)
+    export CC=clang-14
+    export CXX=clang++-14
+    clean
+    generate-cmake
     check-runtimes
     check-abi-list
 ;;
@@ -298,9 +284,9 @@ generic-gcc)
     export CC=gcc-11
     export CXX=g++-11
     clean
-    generate-cmake -DLIBCXX_TEST_CONFIG="llvm-libc++-shared-gcc.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in" \
-                   -DLIBCXX_ENABLE_WERROR=NO
+    generate-cmake -DLIBCXX_ENABLE_WERROR=NO \
+                   -DLIBCXXABI_ENABLE_WERROR=NO \
+                   -DLIBUNWIND_ENABLE_WERROR=NO
     check-runtimes
 ;;
 generic-gcc-cxx11)
@@ -308,109 +294,75 @@ generic-gcc-cxx11)
     export CXX=g++-11
     clean
     generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-cxx11.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared-gcc.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in" \
-                   -DLIBCXX_ENABLE_WERROR=NO
+                   -DLIBCXX_ENABLE_WERROR=NO \
+                   -DLIBCXXABI_ENABLE_WERROR=NO \
+                   -DLIBUNWIND_ENABLE_WERROR=NO
     check-runtimes
 ;;
 generic-asan)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-asan.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-asan.cmake"
     check-runtimes
 ;;
 generic-msan)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-msan.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-msan.cmake"
     check-runtimes
 ;;
 generic-tsan)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-tsan.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-tsan.cmake"
     check-runtimes
 ;;
 generic-ubsan)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-ubsan.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-ubsan.cmake"
     check-runtimes
 ;;
 generic-with_llvm_unwinder)
     clean
-    generate-cmake -DLIBCXXABI_USE_LLVM_UNWINDER=ON \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -DLIBCXXABI_USE_LLVM_UNWINDER=ON
     check-runtimes
 ;;
-generic-singlethreaded)
+generic-no-threads)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-singlethreaded.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-no-threads.cmake"
     check-runtimes
-;;
-generic-no-debug)
-    clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-no-debug.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
-    check-runtimes
-    check-abi-list
 ;;
 generic-no-filesystem)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-no-filesystem.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-no-filesystem.cmake"
     check-runtimes
 ;;
 generic-no-random_device)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-no-random_device.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-no-random_device.cmake"
     check-runtimes
 ;;
 generic-no-localization)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-no-localization.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-no-localization.cmake"
     check-runtimes
 ;;
 generic-no-unicode)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-no-unicode.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-no-unicode.cmake"
     check-runtimes
 ;;
 generic-no-wide-characters)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-no-wide-characters.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-no-wide-characters.cmake"
     check-runtimes
 ;;
 generic-no-experimental)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-no-experimental.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-no-experimental.cmake"
     check-runtimes
     check-abi-list
 ;;
 generic-abi-unstable)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-abi-unstable.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-abi-unstable.cmake"
     check-runtimes
 ;;
 apple-system)
@@ -434,7 +386,7 @@ apple-system-backdeployment-*)
 
     if [[ "${OSX_ROOTS}" == "" ]]; then
         echo "--- Downloading previous macOS dylibs"
-        PREVIOUS_DYLIBS_URL="https://dl.dropboxusercontent.com/s/liu4fmc53qzlfly/libcxx-roots.tar.gz"
+        PREVIOUS_DYLIBS_URL="https://dl.dropboxusercontent.com/s/gmcfxwgl9f9n6pu/libcxx-roots.tar.gz"
         OSX_ROOTS="${BUILD_DIR}/macos-roots"
         mkdir -p "${OSX_ROOTS}"
         curl "${PREVIOUS_DYLIBS_URL}" | tar -xz --strip-components=1 -C "${OSX_ROOTS}"
@@ -442,10 +394,13 @@ apple-system-backdeployment-*)
 
     DEPLOYMENT_TARGET="${BUILDER#apple-system-backdeployment-}"
 
-    # TODO: On Apple platforms, we never produce libc++abi.1.dylib, always libc++abi.dylib.
-    #       Fix that in the build so that the tests stop searching for @rpath/libc++abi.1.dylib.
+    # TODO: On Apple platforms, we never produce libc++abi.1.dylib or libunwind.1.dylib,
+    #       only libc++abi.dylib and libunwind.dylib. Fix that in the build so that the
+    #       tests stop searching for @rpath/libc++abi.1.dylib and @rpath/libunwind.1.dylib.
     cp "${OSX_ROOTS}/macOS/libc++abi/${DEPLOYMENT_TARGET}/libc++abi.dylib" \
        "${OSX_ROOTS}/macOS/libc++abi/${DEPLOYMENT_TARGET}/libc++abi.1.dylib"
+    cp "${OSX_ROOTS}/macOS/libunwind/${DEPLOYMENT_TARGET}/libunwind.dylib" \
+       "${OSX_ROOTS}/macOS/libunwind/${DEPLOYMENT_TARGET}/libunwind.1.dylib"
 
     arch="$(uname -m)"
     PARAMS="target_triple=${arch}-apple-macosx${DEPLOYMENT_TARGET}"
@@ -454,19 +409,19 @@ apple-system-backdeployment-*)
     PARAMS+=";unwind_runtime_root=${OSX_ROOTS}/macOS/libunwind/${DEPLOYMENT_TARGET}"
     PARAMS+=";use_system_cxx_lib=True"
 
-    # TODO: We should run the libunwind tests using the back-deployment dylibs too.
     generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Apple.cmake" \
                    -DLIBCXX_TEST_CONFIG="apple-libc++-backdeployment.cfg.in" \
                    -DLIBCXXABI_TEST_CONFIG="apple-libc++abi-backdeployment.cfg.in" \
+                   -DLIBUNWIND_TEST_CONFIG="apple-libunwind-backdeployment.cfg.in" \
                    -DLIBCXX_TEST_PARAMS="${PARAMS}" \
-                   -DLIBCXXABI_TEST_PARAMS="${PARAMS}"
+                   -DLIBCXXABI_TEST_PARAMS="${PARAMS}" \
+                   -DLIBUNWIND_TEST_PARAMS="${PARAMS}"
 
     check-runtimes
 ;;
 benchmarks)
     clean
-    generate-cmake -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake
     check-cxx-benchmarks
 ;;
 documentation)
@@ -480,10 +435,6 @@ bootstrapping-build)
     clean
 
     echo "--- Generating CMake"
-    # TODO: We currently enable modules and assertions in the bootstrapping build
-    #       because that provides coverage for some specific Clang failures
-    #       we've been seeing recently, however it would be better to instead
-    #       run all CI configurations against a Clang that has assertions enabled.
     ${CMAKE} \
           -S "${MONOREPO_ROOT}/llvm" \
           -B "${BUILD_DIR}" \
@@ -491,14 +442,11 @@ bootstrapping-build)
           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
           -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}" \
           -DLLVM_ENABLE_PROJECTS="clang" \
-          -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi" \
+          -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" \
           -DLLVM_RUNTIME_TARGETS="$(c++ --print-target-triple)" \
           -DLLVM_TARGETS_TO_BUILD="host" \
           -DRUNTIMES_BUILD_ALLOW_DARWIN=ON \
-          -DLLVM_ENABLE_ASSERTIONS=ON \
-          -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Generic-modules.cmake" \
-          -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-          -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+          -DLLVM_ENABLE_ASSERTIONS=ON
 
     echo "+++ Running the libc++ and libc++abi tests"
     ${NINJA} -C "${BUILD_DIR}" check-runtimes
@@ -508,7 +456,9 @@ bootstrapping-build)
 ;;
 legacy-test-config)
     clean
-    generate-cmake -DLIBCXX_TEST_CONFIG="legacy.cfg.in"
+    generate-cmake -DLIBCXX_TEST_CONFIG="legacy.cfg.in" \
+                   -DLIBCXXABI_TEST_CONFIG="${MONOREPO_ROOT}/libcxxabi/test/lit.site.cfg.in" \
+                   -DLIBUNWIND_TEST_CONFIG="${MONOREPO_ROOT}/libunwind/test/lit.site.cfg.in"
     check-runtimes
 ;;
 legacy-project-build)
@@ -522,54 +472,42 @@ legacy-project-build)
           -GNinja -DCMAKE_MAKE_PROGRAM="${NINJA}" \
           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
           -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}" \
-          -DLLVM_LIT_ARGS="-sv --show-unsupported --xunit-xml-output test-results.xml" \
+          -DLLVM_LIT_ARGS="-sv --show-unsupported --xunit-xml-output test-results.xml --timeout=1500" \
           -DLIBCXX_CXX_ABI=libcxxabi
     check-runtimes
 ;;
 aarch64)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/AArch64.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/AArch64.cmake"
     check-runtimes
 ;;
 aarch64-noexceptions)
     clean
     generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/AArch64.cmake" \
                    -DLIBCXX_ENABLE_EXCEPTIONS=OFF \
-                   -DLIBCXXABI_ENABLE_EXCEPTIONS=OFF \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+                   -DLIBCXXABI_ENABLE_EXCEPTIONS=OFF
     check-runtimes
 ;;
 # Aka Armv8 32 bit
 armv8)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Armv8Arm.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Armv8Arm.cmake"
     check-runtimes
 ;;
 armv8-noexceptions)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Armv8Thumb-noexceptions.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Armv8Thumb-noexceptions.cmake"
     check-runtimes
 ;;
 # Armv7 32 bit. One building Arm only one Thumb only code.
 armv7)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Armv7Arm.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Armv7Arm.cmake"
     check-runtimes
 ;;
 armv7-noexceptions)
     clean
-    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Armv7Thumb-noexceptions.cmake" \
-                   -DLIBCXX_TEST_CONFIG="llvm-libc++-shared.cfg.in" \
-                   -DLIBUNWIND_TEST_CONFIG="llvm-libunwind-shared.cfg.in"
+    generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/Armv7Thumb-noexceptions.cmake"
     check-runtimes
 ;;
 clang-cl-dll)
@@ -580,15 +518,13 @@ clang-cl-dll)
     # correctly when libc++ visibility attributes indicate dllimport linkage
     # anyway), thus just disable the experimental library. Remove this
     # setting when cmake and the test driver does the right thing automatically.
-    generate-cmake-libcxx-win -DLIBCXX_ENABLE_EXPERIMENTAL_LIBRARY=OFF \
-                              -DLIBCXX_TEST_CONFIG="llvm-libc++-shared-clangcl.cfg.in"
+    generate-cmake-libcxx-win -DLIBCXX_ENABLE_EXPERIMENTAL_LIBRARY=OFF
     echo "+++ Running the libc++ tests"
     ${NINJA} -vC "${BUILD_DIR}" check-cxx
 ;;
 clang-cl-static)
     clean
-    generate-cmake-libcxx-win -DLIBCXX_ENABLE_SHARED=OFF \
-                              -DLIBCXX_TEST_CONFIG="llvm-libc++-static-clangcl.cfg.in"
+    generate-cmake-libcxx-win -DLIBCXX_ENABLE_SHARED=OFF
     echo "+++ Running the libc++ tests"
     ${NINJA} -vC "${BUILD_DIR}" check-cxx
 ;;
@@ -602,7 +538,6 @@ mingw-dll)
     generate-cmake \
           -DCMAKE_C_COMPILER=x86_64-w64-mingw32-clang \
           -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-clang++ \
-          -DLIBCXX_TEST_CONFIG="llvm-libc++-mingw.cfg.in" \
           -C "${MONOREPO_ROOT}/libcxx/cmake/caches/MinGW.cmake"
     echo "+++ Running the libc++ tests"
     ${NINJA} -vC "${BUILD_DIR}" check-cxx
@@ -612,24 +547,31 @@ mingw-static)
     generate-cmake \
           -DCMAKE_C_COMPILER=x86_64-w64-mingw32-clang \
           -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-clang++ \
-          -DLIBCXX_TEST_CONFIG="llvm-libc++-mingw.cfg.in" \
           -C "${MONOREPO_ROOT}/libcxx/cmake/caches/MinGW.cmake" \
           -DLIBCXX_ENABLE_SHARED=OFF \
           -DLIBUNWIND_ENABLE_SHARED=OFF
     echo "+++ Running the libc++ tests"
     ${NINJA} -vC "${BUILD_DIR}" check-cxx
 ;;
+mingw-dll-i686)
+    clean
+    generate-cmake \
+          -DCMAKE_C_COMPILER=i686-w64-mingw32-clang \
+          -DCMAKE_CXX_COMPILER=i686-w64-mingw32-clang++ \
+          -C "${MONOREPO_ROOT}/libcxx/cmake/caches/MinGW.cmake"
+    echo "+++ Running the libc++ tests"
+    ${NINJA} -vC "${BUILD_DIR}" check-cxx
+;;
 aix)
-    export CC=ibm-clang
-    export CXX=ibm-clang++_r
+    export CC=clang
+    export CXX=clang++
     clean
     generate-cmake -C "${MONOREPO_ROOT}/libcxx/cmake/caches/AIX.cmake" \
                    -DLIBCXX_TEST_CONFIG="ibm-libc++-shared.cfg.in" \
                    -DLIBCXXABI_TEST_CONFIG="ibm-libc++abi-shared.cfg.in" \
-                   -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi"
-    # TODO: use check-runtimes once libunwind builds cleanly on AIX.
-    ${NINJA} -vC "${BUILD_DIR}" install-cxx install-cxxabi
-    ${NINJA} -vC "${BUILD_DIR}" check-cxx check-cxxabi
+                   -DLIBUNWIND_TEST_CONFIG="ibm-libunwind-shared.cfg.in"
+    check-abi-list
+    check-runtimes
 ;;
 #################################################################
 # Insert vendor-specific internal configurations below.

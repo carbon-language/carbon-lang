@@ -24,10 +24,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/StackMaps.h"
-#include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/IR/Statepoint.h"
 #include "llvm/InitializePasses.h"
@@ -156,12 +153,17 @@ static Register performCopyPropagation(Register Reg,
   RI = ++MachineBasicBlock::iterator(Def);
   IsKill = DestSrc->Source->isKill();
 
-  // There are no uses of original register between COPY and STATEPOINT.
-  // There can't be any after STATEPOINT, so we can eliminate Def.
   if (!Use) {
+    // There are no uses of original register between COPY and STATEPOINT.
+    // There can't be any after STATEPOINT, so we can eliminate Def.
     LLVM_DEBUG(dbgs() << "spillRegisters: removing dead copy " << *Def);
     Def->eraseFromParent();
+  } else if (IsKill) {
+    // COPY will remain in place, spill will be inserted *after* it, so it is
+    // not a kill of source anymore.
+    const_cast<MachineOperand *>(DestSrc->Source)->setIsKill(false);
   }
+
   return SrcReg;
 }
 

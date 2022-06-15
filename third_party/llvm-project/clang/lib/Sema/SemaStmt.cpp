@@ -341,7 +341,7 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S, unsigned DiagID) {
       return DiagnoseUnusedExprResult(POE->getSemanticExpr(0), DiagID);
     if (isa<ObjCSubscriptRefExpr>(Source))
       DiagID = diag::warn_unused_container_subscript_expr;
-    else
+    else if (isa<ObjCPropertyRefExpr>(Source))
       DiagID = diag::warn_unused_property_expr;
   } else if (const CXXFunctionalCastExpr *FC
                                        = dyn_cast<CXXFunctionalCastExpr>(E)) {
@@ -587,7 +587,7 @@ StmtResult Sema::BuildAttributedStmt(SourceLocation AttrsLoc,
   return AttributedStmt::Create(Context, AttrsLoc, Attrs, SubStmt);
 }
 
-StmtResult Sema::ActOnAttributedStmt(const ParsedAttributesWithRange &Attrs,
+StmtResult Sema::ActOnAttributedStmt(const ParsedAttributes &Attrs,
                                      Stmt *SubStmt) {
   SmallVector<const Attr *, 1> SemanticAttrs;
   ProcessStmtAttributes(SubStmt, Attrs, SemanticAttrs);
@@ -3312,7 +3312,7 @@ Sema::ActOnContinueStmt(SourceLocation ContinueLoc, Scope *CurScope) {
     // C99 6.8.6.2p1: A break shall appear only in or as a loop body.
     return StmtError(Diag(ContinueLoc, diag::err_continue_not_in_loop));
   }
-  if (S->getFlags() & Scope::ConditionVarScope) {
+  if (S->isConditionVarScope()) {
     // We cannot 'continue;' from within a statement expression in the
     // initializer of a condition variable because we would jump past the
     // initialization of that variable.
@@ -3762,8 +3762,8 @@ TypeLoc Sema::getReturnTypeLoc(FunctionDecl *FD) const {
 bool Sema::DeduceFunctionTypeFromReturnExpr(FunctionDecl *FD,
                                             SourceLocation ReturnLoc,
                                             Expr *&RetExpr,
-                                            AutoType *AT) {
-  // If this is the conversion function for a lambda, we choose to deduce it
+                                            const AutoType *AT) {
+  // If this is the conversion function for a lambda, we choose to deduce its
   // type from the corresponding call operator, not from the synthesized return
   // statement within it. See Sema::DeduceReturnType.
   if (isLambdaConversionOperator(FD))
@@ -3808,19 +3808,26 @@ bool Sema::DeduceFunctionTypeFromReturnExpr(FunctionDecl *FD,
     LocalTypedefNameReferencer Referencer(*this);
     Referencer.TraverseType(RetExpr->getType());
   } else {
-    //  In the case of a return with no operand, the initializer is considered
-    //  to be void().
-    //
-    // Deduction here can only succeed if the return type is exactly 'cv auto'
-    // or 'decltype(auto)', so just check for that case directly.
+    // For a function with a deduced result type to return void,
+    // the result type as written must be 'auto' or 'decltype(auto)',
+    // possibly cv-qualified or constrained, but not ref-qualified.
     if (!OrigResultType.getType()->getAs<AutoType>()) {
       Diag(ReturnLoc, diag::err_auto_fn_return_void_but_not_auto)
         << OrigResultType.getType();
       return true;
     }
-    // We always deduce U = void in this case.
-    Deduced = SubstAutoType(OrigResultType.getType(), Context.VoidTy);
-    if (Deduced.isNull())
+    // In the case of a return with no operand, the initializer is considered
+    // to be 'void()'.
+    Expr *Dummy = new (Context) CXXScalarValueInitExpr(
+        Context.VoidTy,
+        Context.getTrivialTypeSourceInfo(Context.VoidTy, ReturnLoc), ReturnLoc);
+    DeduceAutoResult DAR = DeduceAutoType(OrigResultType, Dummy, Deduced);
+
+    if (DAR == DAR_Failed && !FD->isInvalidDecl())
+      Diag(ReturnLoc, diag::err_auto_fn_deduction_failure)
+          << OrigResultType.getType() << Dummy->getType();
+
+    if (DAR != DAR_Succeeded)
       return true;
   }
 

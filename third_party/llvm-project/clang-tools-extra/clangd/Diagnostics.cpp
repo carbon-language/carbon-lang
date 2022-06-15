@@ -12,10 +12,9 @@
 #include "Protocol.h"
 #include "SourceCode.h"
 #include "support/Logger.h"
-#include "clang/Basic/AllDiagnostics.h"
+#include "clang/Basic/AllDiagnostics.h" // IWYU pragma: keep
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticIDs.h"
-#include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Lexer.h"
@@ -29,12 +28,10 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/Support/Capacity.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/ScopedPrinter.h"
-#include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
+#include <cassert>
 #include <cstddef>
 #include <vector>
 
@@ -199,16 +196,16 @@ bool tryMoveToMainFile(Diag &D, FullSourceLoc DiagLoc) {
     return false;
 
   // Add a note that will point to real diagnostic.
-  const auto *FE = SM.getFileEntryForID(SM.getFileID(DiagLoc));
+  auto FE = SM.getFileEntryRefForID(SM.getFileID(DiagLoc)).getValue();
   D.Notes.emplace(D.Notes.begin());
   Note &N = D.Notes.front();
-  N.AbsFile = std::string(FE->tryGetRealPathName());
-  N.File = std::string(FE->getName());
+  N.AbsFile = std::string(FE.getFileEntry().tryGetRealPathName());
+  N.File = std::string(FE.getName());
   N.Message = "error occurred here";
   N.Range = D.Range;
 
   // Update diag to point at include inside main file.
-  D.File = SM.getFileEntryForID(SM.getMainFileID())->getName().str();
+  D.File = SM.getFileEntryRefForID(SM.getMainFileID())->getName().str();
   D.Range = std::move(R);
   D.InsideMainFile = true;
   // Update message to mention original file.
@@ -467,7 +464,8 @@ void toLSPDiags(
 
   // Main diagnostic should always refer to a range inside main file. If a
   // diagnostic made it so for, it means either itself or one of its notes is
-  // inside main file.
+  // inside main file. It's also possible that there's a fix in the main file,
+  // but we preserve fixes iff primary diagnostic is in the main file.
   if (D.InsideMainFile) {
     Main.range = D.Range;
   } else {
@@ -479,6 +477,10 @@ void toLSPDiags(
   }
 
   Main.code = D.Name;
+  if (auto URI = getDiagnosticDocURI(D.Source, D.ID, D.Name)) {
+    Main.codeDescription.emplace();
+    Main.codeDescription->href = std::move(*URI);
+  }
   switch (D.Source) {
   case Diag::Clang:
     Main.source = "clang";
@@ -705,13 +707,12 @@ void StoreDiags::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
     return;
   }
 
-  bool InsideMainFile = isInsideMainFile(Info);
   SourceManager &SM = Info.getSourceManager();
 
   auto FillDiagBase = [&](DiagBase &D) {
     fillNonLocationData(DiagLevel, Info, D);
 
-    D.InsideMainFile = InsideMainFile;
+    D.InsideMainFile = isInsideMainFile(Info);
     D.Range = diagnosticRange(Info, *LangOpts);
     D.File = std::string(SM.getFilename(Info.getLocation()));
     D.AbsFile = getCanonicalPath(
@@ -723,9 +724,9 @@ void StoreDiags::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
   auto AddFix = [&](bool SyntheticMessage) -> bool {
     assert(!Info.getFixItHints().empty() &&
            "diagnostic does not have attached fix-its");
-    if (!InsideMainFile)
+    // No point in generating fixes, if the diagnostic is for a different file.
+    if (!LastDiag->InsideMainFile)
       return false;
-
     // Copy as we may modify the ranges.
     auto FixIts = Info.getFixItHints().vec();
     llvm::SmallVector<TextEdit, 1> Edits;
@@ -904,6 +905,32 @@ llvm::StringRef normalizeSuppressedCode(llvm::StringRef Code) {
   Code.consume_front("err_");
   Code.consume_front("-W");
   return Code;
+}
+
+llvm::Optional<std::string> getDiagnosticDocURI(Diag::DiagSource Source,
+                                                unsigned ID,
+                                                llvm::StringRef Name) {
+  switch (Source) {
+  case Diag::Unknown:
+    break;
+  case Diag::Clang:
+    // There is a page listing many warning flags, but it provides too little
+    // information to be worth linking.
+    // https://clang.llvm.org/docs/DiagnosticsReference.html
+    break;
+  case Diag::ClangTidy:
+    return {("https://clang.llvm.org/extra/clang-tidy/checks/" + Name + ".html")
+                .str()};
+  case Diag::Clangd:
+    if (Name == "unused-includes")
+      return {"https://clangd.llvm.org/guides/include-cleaner"};
+    break;
+  case Diag::ClangdConfig:
+    // FIXME: we should link to https://clangd.llvm.org/config
+    // However we have no diagnostic codes, which the link should describe!
+    break;
+  }
+  return llvm::None;
 }
 
 } // namespace clangd

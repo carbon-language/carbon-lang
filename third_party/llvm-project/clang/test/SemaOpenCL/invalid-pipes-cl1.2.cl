@@ -10,7 +10,7 @@ void foo(read_only pipe int p);
 // expected-error@-5 {{C++ for OpenCL version 2021 does not support the 'pipe' type qualifier}}
 // expected-error@-6 {{access qualifier can only be used for pipe and image type}}
 #else
-// expected-warning@-8 {{type specifier missing, defaults to 'int'}}
+// expected-error@-8 {{type specifier missing, defaults to 'int'}}
 // expected-error@-9 {{access qualifier can only be used for pipe and image type}}
 // expected-error@-10 {{expected ')'}} expected-note@-10 {{to match this '('}}
 #endif
@@ -25,7 +25,7 @@ typedef int pipe;
 // expected-warning@-6 {{typedef requires a name}}
 #endif
 
-void bar() {
+void bar(void) {
  reserve_id_t r;
 #if defined(__OPENCL_C_VERSION__)
 // expected-error@-2 {{use of undeclared identifier 'reserve_id_t'}}

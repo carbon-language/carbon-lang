@@ -40,26 +40,30 @@ class TestStopAtEntry(TestBase):
         return None
 
     @skipUnlessDarwin
+    @skipIfRemote
     def test_stop_default_platform_sync(self):
         self.do_test_stop_at_entry(True, False)
 
     @skipUnlessDarwin
+    @skipIfRemote
     def test_stop_default_platform_async(self):
         self.do_test_stop_at_entry(False, False)
 
     @skipUnlessDarwin
+    @skipIfRemote
     @expectedFailureIfFn(no_debugserver)
     @expectedFailureIfFn(port_not_available)
     def test_stop_remote_platform_sync(self):
         self.do_test_stop_at_entry(True, True)
 
     @skipUnlessDarwin
+    @skipIfRemote
     @expectedFailureIfFn(no_debugserver)
     @expectedFailureIfFn(port_not_available)
     def test_stop_remote_platform_async(self):
         self.do_test_stop_at_entry(False, True)
 
-    def do_test_stop_at_entry(self, synchronous, remote):        
+    def do_test_stop_at_entry(self, synchronous, remote):
         """Test the normal launch path in either sync or async mode"""
         self.build()
 
@@ -94,7 +98,7 @@ class TestStopAtEntry(TestBase):
             result = listener.WaitForEvent(30, event)
             self.assertTrue(result, "Timed out waiting for event from process")
             state = lldb.SBProcess.GetStateFromEvent(event)
-            self.assertEqual(state, lldb.eStateStopped, "Didn't get a stopped state after launch")
+            self.assertState(state, lldb.eStateStopped, "Didn't get a stopped state after launch")
 
         # Okay, we should be stopped.  Make sure we are indeed at the
         # entry point.  I only know how to do this on darwin:
@@ -123,13 +127,13 @@ class TestStopAtEntry(TestBase):
                 self.assertTrue(result, "Timed out waiting for running")
                 state = lldb.SBProcess.GetStateFromEvent(event)
                 if num_running == 1:
-                    self.assertEqual(state, lldb.eStateRunning, "Got running event")
+                    self.assertState(state, lldb.eStateRunning, "Got running event")
             # The last event we should get is the exited event
-            self.assertEqual(state, lldb.eStateExited, "Got running event")
+            self.assertState(state, lldb.eStateExited, "Got exit event")
         else:
             # Make sure that the process has indeed exited
             state = process.GetState()
-            self.assertEqual(state, lldb.eStateExited);
+            self.assertState(state, lldb.eStateExited);
 
     def setup_remote_platform(self):
         return

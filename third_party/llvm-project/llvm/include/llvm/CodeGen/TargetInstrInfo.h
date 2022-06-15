@@ -734,12 +734,16 @@ public:
     virtual bool shouldIgnoreForPipelining(const MachineInstr *MI) const = 0;
 
     /// Create a condition to determine if the trip count of the loop is greater
-    /// than TC.
+    /// than TC, where TC is always one more than for the previous prologue or
+    /// 0 if this is being called for the outermost prologue.
     ///
     /// If the trip count is statically known to be greater than TC, return
     /// true. If the trip count is statically known to be not greater than TC,
     /// return false. Otherwise return nullopt and fill out Cond with the test
     /// condition.
+    ///
+    /// Note: This hook is guaranteed to be called from the innermost to the
+    /// outermost prologue of the loop being software pipelined.
     virtual Optional<bool>
     createTripCountGreaterCondition(int TC, MachineBasicBlock &MBB,
                                     SmallVectorImpl<MachineOperand> &Cond) = 0;
@@ -1279,13 +1283,6 @@ protected:
   }
 
 public:
-  /// getAddressSpaceForPseudoSourceKind - Given the kind of memory
-  /// (e.g. stack) the target returns the corresponding address space.
-  virtual unsigned
-  getAddressSpaceForPseudoSourceKind(unsigned Kind) const {
-    return 0;
-  }
-
   /// unfoldMemoryOperand - Separate a single instruction which folded a load or
   /// a store or a load and a store into two or more instruction. If this is
   /// possible, returns true as well as the new instructions by reference.
@@ -1939,25 +1936,6 @@ public:
   /// and returns any target-specific information in \p Flags.
   virtual bool isMBBSafeToOutlineFrom(MachineBasicBlock &MBB,
                                       unsigned &Flags) const;
-
-  /// Optional target hook which partitions \p MBB into outlinable ranges for
-  /// instruction mapping purposes. Each range is defined by two iterators:
-  /// [start, end).
-  ///
-  /// Ranges are expected to be ordered top-down. That is, ranges closer to the
-  /// top of the block should come before ranges closer to the end of the block.
-  ///
-  /// Ranges cannot overlap.
-  ///
-  /// If an entire block is mappable, then its range is [MBB.begin(), MBB.end())
-  ///
-  /// All instructions not present in an outlinable range are considered
-  /// illegal.
-  virtual SmallVector<
-      std::pair<MachineBasicBlock::iterator, MachineBasicBlock::iterator>>
-  getOutlinableRanges(MachineBasicBlock &MBB, unsigned &Flags) const {
-    return {std::make_pair(MBB.begin(), MBB.end())};
-  }
 
   /// Insert a custom frame for outlined functions.
   virtual void buildOutlinedFrame(MachineBasicBlock &MBB, MachineFunction &MF,

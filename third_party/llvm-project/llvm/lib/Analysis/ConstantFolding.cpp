@@ -57,7 +57,6 @@
 #include <cerrno>
 #include <cfenv>
 #include <cmath>
-#include <cstddef>
 #include <cstdint>
 
 using namespace llvm;
@@ -92,7 +91,7 @@ static Constant *foldConstVectorToAPInt(APInt &Result, Type *DestTy,
       return ConstantExpr::getBitCast(C, DestTy);
 
     Result <<= BitShift;
-    Result |= ElementCI->getValue().zextOrSelf(Result.getBitWidth());
+    Result |= ElementCI->getValue().zext(Result.getBitWidth());
   }
 
   return nullptr;
@@ -867,21 +866,6 @@ Constant *SymbolicallyEvaluateGEP(const GEPOperator *GEP,
 
   Type *IntIdxTy = DL.getIndexType(Ptr->getType());
 
-  // If this is "gep i8* Ptr, (sub 0, V)", fold this as:
-  // "inttoptr (sub (ptrtoint Ptr), V)"
-  if (Ops.size() == 2 && ResElemTy->isIntegerTy(8)) {
-    auto *CE = dyn_cast<ConstantExpr>(Ops[1]);
-    assert((!CE || CE->getType() == IntIdxTy) &&
-           "CastGEPIndices didn't canonicalize index types!");
-    if (CE && CE->getOpcode() == Instruction::Sub &&
-        CE->getOperand(0)->isNullValue()) {
-      Constant *Res = ConstantExpr::getPtrToInt(Ptr, CE->getType());
-      Res = ConstantExpr::getSub(Res, CE->getOperand(1));
-      Res = ConstantExpr::getIntToPtr(Res, ResTy);
-      return ConstantFoldConstant(Res, DL, TLI);
-    }
-  }
-
   for (unsigned i = 1, e = Ops.size(); i != e; ++i)
     if (!isa<ConstantInt>(Ops[i]))
       return nullptr;
@@ -1337,6 +1321,19 @@ Constant *llvm::ConstantFoldCastOperand(unsigned Opcode, Constant *C,
             DL, BaseOffset, /*AllowNonInbounds=*/true));
         if (Base->isNullValue()) {
           FoldedValue = ConstantInt::get(CE->getContext(), BaseOffset);
+        } else {
+          // ptrtoint (gep i8, Ptr, (sub 0, V)) -> sub (ptrtoint Ptr), V
+          if (GEP->getNumIndices() == 1 &&
+              GEP->getSourceElementType()->isIntegerTy(8)) {
+            auto *Ptr = cast<Constant>(GEP->getPointerOperand());
+            auto *Sub = dyn_cast<ConstantExpr>(GEP->getOperand(1));
+            Type *IntIdxTy = DL.getIndexType(Ptr->getType());
+            if (Sub && Sub->getType() == IntIdxTy &&
+                Sub->getOpcode() == Instruction::Sub &&
+                Sub->getOperand(0)->isNullValue())
+              FoldedValue = ConstantExpr::getSub(
+                  ConstantExpr::getPtrToInt(Ptr, IntIdxTy), Sub->getOperand(1));
+          }
         }
       }
       if (FoldedValue) {
@@ -1388,6 +1385,8 @@ Constant *llvm::ConstantFoldCastOperand(unsigned Opcode, Constant *C,
 
 bool llvm::canConstantFoldCallTo(const CallBase *Call, const Function *F) {
   if (Call->isNoBuiltin())
+    return false;
+  if (Call->getFunctionType() != F->getFunctionType())
     return false;
   switch (F->getIntrinsicID()) {
   // Operations that do not operate floating-point numbers and do not depend on
@@ -2306,12 +2305,11 @@ static Constant *ConstantFoldScalarCall1(StringRef Name,
   return nullptr;
 }
 
-static Constant *evaluateCompare(const ConstrainedFPIntrinsic *Call) {
+static Constant *evaluateCompare(const APFloat &Op1, const APFloat &Op2,
+                                 const ConstrainedFPIntrinsic *Call) {
   APFloat::opStatus St = APFloat::opOK;
   auto *FCmp = cast<ConstrainedFPCmpIntrinsic>(Call);
   FCmpInst::Predicate Cond = FCmp->getPredicate();
-  const APFloat &Op1 = cast<ConstantFP>(FCmp->getOperand(0))->getValueAPF();
-  const APFloat &Op2 = cast<ConstantFP>(FCmp->getOperand(1))->getValueAPF();
   if (FCmp->isSignaling()) {
     if (Op1.isNaN() || Op2.isNaN())
       St = APFloat::opInvalidOp;
@@ -2321,7 +2319,7 @@ static Constant *evaluateCompare(const ConstrainedFPIntrinsic *Call) {
   }
   bool Result = FCmpInst::compare(Op1, Op2, Cond);
   if (mayFoldConstrained(const_cast<ConstrainedFPCmpIntrinsic *>(FCmp), St))
-    return ConstantInt::get(Call->getType(), Result);
+    return ConstantInt::get(Call->getType()->getScalarType(), Result);
   return nullptr;
 }
 
@@ -2384,7 +2382,7 @@ static Constant *ConstantFoldScalarCall2(StringRef Name,
           break;
         case Intrinsic::experimental_constrained_fcmp:
         case Intrinsic::experimental_constrained_fcmps:
-          return evaluateCompare(ConstrIntr);
+          return evaluateCompare(Op1V, Op2V, ConstrIntr);
         }
         if (mayFoldConstrained(const_cast<ConstrainedFPIntrinsic *>(ConstrIntr),
                                St))
@@ -2880,11 +2878,11 @@ static Constant *ConstantFoldScalarCall3(StringRef Name,
     unsigned Width = C0->getBitWidth();
     assert(Scale < Width && "Illegal scale.");
     unsigned ExtendedWidth = Width * 2;
-    APInt Product = (C0->sextOrSelf(ExtendedWidth) *
-                     C1->sextOrSelf(ExtendedWidth)).ashr(Scale);
+    APInt Product =
+        (C0->sext(ExtendedWidth) * C1->sext(ExtendedWidth)).ashr(Scale);
     if (IntrinsicID == Intrinsic::smul_fix_sat) {
-      APInt Max = APInt::getSignedMaxValue(Width).sextOrSelf(ExtendedWidth);
-      APInt Min = APInt::getSignedMinValue(Width).sextOrSelf(ExtendedWidth);
+      APInt Max = APInt::getSignedMaxValue(Width).sext(ExtendedWidth);
+      APInt Min = APInt::getSignedMinValue(Width).sext(ExtendedWidth);
       Product = APIntOps::smin(Product, Max);
       Product = APIntOps::smax(Product, Min);
     }
@@ -3038,7 +3036,7 @@ static Constant *ConstantFoldFixedVectorCall(
     // Gather a column of constants.
     for (unsigned J = 0, JE = Operands.size(); J != JE; ++J) {
       // Some intrinsics use a scalar type for certain arguments.
-      if (hasVectorInstrinsicScalarOpd(IntrinsicID, J)) {
+      if (isVectorIntrinsicWithScalarOpAtArg(IntrinsicID, J)) {
         Lane[J] = Operands[J];
         continue;
       }

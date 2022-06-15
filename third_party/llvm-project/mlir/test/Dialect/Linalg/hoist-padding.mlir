@@ -1,12 +1,12 @@
 // RUN: mlir-opt %s -test-linalg-codegen-strategy="anchor-op=linalg.matvec pad hoist-paddings=1,1,0 run-enable-pass=false" -cse -canonicalize -split-input-file | FileCheck %s --check-prefix=MATVEC
-// RUN: mlir-opt %s -test-linalg-codegen-strategy="anchor-op=linalg.matvec pad hoist-paddings=1,1,0 transpose-paddings=1:0,0,0 run-enable-pass=false" -cse -canonicalize -split-input-file | FileCheck %s --check-prefix=TRANSP
+// RUN: mlir-opt %s -test-linalg-codegen-strategy="anchor-op=linalg.matvec pad hoist-paddings=1,1,0 transpose-paddings=[1,0],[0],[0] run-enable-pass=false" -cse -canonicalize -split-input-file | FileCheck %s --check-prefix=TRANSP
 // RUN: mlir-opt %s -test-linalg-codegen-strategy="anchor-op=linalg.matmul pad hoist-paddings=1,2,1 run-enable-pass=false" -cse -canonicalize -split-input-file | FileCheck %s --check-prefix=MATMUL
 
 //  MATVEC-DAG: #[[DIV4:[0-9a-z]+]] = affine_map<(d0) -> (d0 ceildiv 4)>
 
 //      MATVEC:  static_size_divisible
 // MATVEC-SAME:    %[[ARG1:[0-9a-zA-Z]*]]: tensor<12xf32>
-func @static_size_divisible(%arg0: tensor<24x12xf32>,
+func.func @static_size_divisible(%arg0: tensor<24x12xf32>,
                             %arg1: tensor<12xf32>,
                             %arg2: tensor<24xf32>) -> tensor<24xf32> {
   %cst = arith.constant 0.000000e+00 : f32
@@ -45,7 +45,7 @@ func @static_size_divisible(%arg0: tensor<24x12xf32>,
 
 // -----
 
-// MATVEC-DAG: #[[MAP0:[0-9a-z]+]] = affine_map<(d0) -> (5, -d0 + 12)>
+// MATVEC-DAG: #[[MAP0:[0-9a-z]+]] = affine_map<(d0) -> (-d0 + 12, 5)>
 // MATVEC-DAG: #[[MAP1:[0-9a-z]+]] = affine_map<(d0) -> (-d0 + 5)>
 // MATVEC-DAG: #[[DIV5:[0-9a-z]+]] = affine_map<(d0) -> (d0 ceildiv 5)>
 #map0 = affine_map<(d0) -> (5, -d0 + 12)>
@@ -53,7 +53,7 @@ func @static_size_divisible(%arg0: tensor<24x12xf32>,
 
 //      MATVEC:  static_size_not_divisible
 // MATVEC-SAME:    %[[ARG1:[0-9a-zA-Z]*]]: tensor<12xf32>
-func @static_size_not_divisible(%arg0: tensor<24x12xf32>,
+func.func @static_size_not_divisible(%arg0: tensor<24x12xf32>,
                                 %arg1: tensor<12xf32>,
                                 %arg2: tensor<24xf32>) -> tensor<24xf32> {
   %cst = arith.constant 0.000000e+00 : f32
@@ -102,14 +102,14 @@ func @static_size_not_divisible(%arg0: tensor<24x12xf32>,
 
 // MATVEC-DAG: #[[SDIV4:[0-9a-z]+]] = affine_map<()[s0] -> (s0 ceildiv 4)>
 // MATVEC-DAG: #[[DDIV4:[0-9a-z]+]] = affine_map<(d0) -> (d0 ceildiv 4)>
-// MATVEC-DAG: #[[MAP0:[0-9a-z]+]] = affine_map<(d0)[s0] -> (4, -d0 + s0)>
+// MATVEC-DAG: #[[MAP0:[0-9a-z]+]] = affine_map<(d0)[s0] -> (-d0 + s0, 4)>
 // MATVEC-DAG: #[[MAP1:[0-9a-z]+]] = affine_map<(d0) -> (-d0 + 4)>
 #map0 = affine_map<(d0)[s0] -> (4, -d0 + s0)>
 #map1 = affine_map<(d0) -> (-d0 + 4)>
 
 //      MATVEC:  dynamic_size
 // MATVEC-SAME:    %[[ARG1:[0-9a-zA-Z]*]]: tensor<?xf32>
-func @dynamic_size(%arg0: tensor<24x?xf32>,
+func.func @dynamic_size(%arg0: tensor<24x?xf32>,
                    %arg1: tensor<?xf32>,
                    %arg2: tensor<24xf32>) -> tensor<24xf32> {
   %cst = arith.constant 0.000000e+00 : f32
@@ -162,7 +162,7 @@ func @dynamic_size(%arg0: tensor<24x?xf32>,
 
 //      MATVEC:  non_constant_padding
 // MATVEC-SAME:    %[[ARG1:[0-9a-zA-Z]*]]: tensor<12xf32>
-func @non_constant_padding(%arg0: tensor<24x12xf32>,
+func.func @non_constant_padding(%arg0: tensor<24x12xf32>,
                    %arg1: tensor<12xf32>,
                    %arg2: tensor<24xf32>) -> tensor<24xf32> {
   %c4 = arith.constant 4 : index
@@ -196,7 +196,7 @@ func @non_constant_padding(%arg0: tensor<24x12xf32>,
 
 //      MATVEC:  non_constant_op_padding
 // MATVEC-SAME:    %[[ARG1:[0-9a-zA-Z]*]]: tensor<12xf32>
-func @non_constant_op_padding(%arg0: tensor<24x12xf32>,
+func.func @non_constant_op_padding(%arg0: tensor<24x12xf32>,
                       %arg1: tensor<12xf32>,
                       %arg2: tensor<24xf32>) -> tensor<24xf32> {
   %c0 = arith.constant 0 : index
@@ -232,7 +232,7 @@ func @non_constant_op_padding(%arg0: tensor<24x12xf32>,
 //      MATVEC:  non_index_operand
 // MATVEC-SAME:    %[[ARG1:[0-9a-zA-Z]*]]: tensor<12xf32>
 // MATVEC-SAME:    %[[ARG3:[0-9a-zA-Z]*]]: i32
-func @non_index_operand(%arg0: tensor<24x12xf32>,
+func.func @non_index_operand(%arg0: tensor<24x12xf32>,
                         %arg1: tensor<12xf32>,
                         %arg2: tensor<24xf32>,
                         %arg3: i32) -> tensor<24xf32> {
@@ -269,7 +269,7 @@ func @non_index_operand(%arg0: tensor<24x12xf32>,
 //      MATVEC:  memory_effect
 // MATVEC-SAME:    %[[ARG1:[0-9a-zA-Z]*]]: tensor<12xf32>
 // MATVEC-SAME:    %[[ARG3:[0-9a-zA-Z]*]]: memref<?xindex>
-func @memory_effect(%arg0: tensor<24x12xf32>,
+func.func @memory_effect(%arg0: tensor<24x12xf32>,
                     %arg1: tensor<12xf32>,
                     %arg2: tensor<24xf32>,
                     %arg3: memref<?xindex>) -> tensor<24xf32> {
@@ -306,7 +306,7 @@ func @memory_effect(%arg0: tensor<24x12xf32>,
 //      MATVEC:  index_result_loop
 // MATVEC-SAME:    %[[ARG1:[0-9a-zA-Z]*]]: tensor<12xf32>
 // MATVEC-SAME:    %[[ARG3:[0-9a-zA-Z]*]]: index
-func @index_result_loop(%arg0: tensor<24x12xf32>,
+func.func @index_result_loop(%arg0: tensor<24x12xf32>,
                         %arg1: tensor<12xf32>,
                         %arg2: tensor<24xf32>,
                         %arg3: index) -> tensor<24xf32> {
@@ -343,13 +343,13 @@ func @index_result_loop(%arg0: tensor<24x12xf32>,
 
 // -----
 
-#map0 = affine_map<(d0) -> (5, -d0 + 12)>
+#map0 = affine_map<(d0) -> (-d0 + 12, 5)>
 #map1 = affine_map<(d0) -> (-d0 + 5)>
 
 //      MATMUL:  tile_and_fuse
 // MATMUL-SAME:    %[[ARG0:[0-9a-zA-Z]*]]: tensor<12x6xf32>
 // MATMUL-SAME:    %[[ARG1:[0-9a-zA-Z]*]]: tensor<6x24xf32>
-func @tile_and_fuse(%arg0: tensor<12x6xf32>,
+func.func @tile_and_fuse(%arg0: tensor<12x6xf32>,
                     %arg1: tensor<6x24xf32>,
                     %arg2: tensor<12x24xf32>) -> tensor<12x24xf32> {
   %c6 = arith.constant 6 : index
@@ -377,7 +377,7 @@ func @tile_and_fuse(%arg0: tensor<12x6xf32>,
     ^bb0(%arg5: index, %arg6: index):
       tensor.yield %cst : f32
     } : tensor<?x24xf32> to tensor<5x24xf32>
-    %5 = linalg.fill(%cst, %4) : f32, tensor<5x24xf32> -> tensor<5x24xf32>
+    %5 = linalg.fill ins(%cst : f32) outs(%4 : tensor<5x24xf32>) -> tensor<5x24xf32>
     %6 = tensor.extract_slice %5[0, 0] [%1, 24] [1, 1] : tensor<5x24xf32> to tensor<?x24xf32>
 
     // Check the first input operand is hoisted by one loop nest.
@@ -425,12 +425,12 @@ func @tile_and_fuse(%arg0: tensor<12x6xf32>,
 
 // -----
 
-#map0 = affine_map<(d0)[s0] -> (4, -d0 + s0)>
+#map0 = affine_map<(d0)[s0] -> (-d0 + s0, 4)>
 #map1 = affine_map<(d0) -> (-d0 + 4)>
 
 //      TRANSP:  transpose
 // TRANSP-SAME:    %[[ARG0:[0-9a-zA-Z]*]]: tensor<24x?xf32>
-func @transpose(%arg0: tensor<24x?xf32>,
+func.func @transpose(%arg0: tensor<24x?xf32>,
                 %arg1: tensor<?xf32>,
                 %arg2: tensor<24xf32>) -> tensor<24xf32> {
   %cst = arith.constant 0.000000e+00 : f32

@@ -24,6 +24,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -33,6 +34,7 @@
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineDominators.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -2108,7 +2110,7 @@ bool ARMLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
     return false;
 
   MF = &Fn;
-  STI = &static_cast<const ARMSubtarget &>(Fn.getSubtarget());
+  STI = &Fn.getSubtarget<ARMSubtarget>();
   TL = STI->getTargetLowering();
   AFI = Fn.getInfo<ARMFunctionInfo>();
   TII = STI->getInstrInfo();
@@ -2199,7 +2201,7 @@ bool ARMPreAllocLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
     return false;
 
   TD = &Fn.getDataLayout();
-  STI = &static_cast<const ARMSubtarget &>(Fn.getSubtarget());
+  STI = &Fn.getSubtarget<ARMSubtarget>();
   TII = STI->getInstrInfo();
   TRI = STI->getRegisterInfo();
   MRI = &Fn.getRegInfo();

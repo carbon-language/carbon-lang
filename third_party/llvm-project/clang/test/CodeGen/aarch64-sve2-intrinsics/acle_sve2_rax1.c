@@ -3,8 +3,6 @@
 // RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +sve2-sha3 -fallow-half-arguments-and-returns -S -O1 -Werror -Wall -emit-llvm -o - -x c++ %s | FileCheck %s -check-prefix=CPP-CHECK
 // RUN: %clang_cc1 -DSVE_OVERLOADED_FORMS -triple aarch64-none-linux-gnu -target-feature +sve2-sha3 -fallow-half-arguments-and-returns -S -O1 -Werror -Wall -emit-llvm -o - %s | FileCheck %s
 // RUN: %clang_cc1 -DSVE_OVERLOADED_FORMS -triple aarch64-none-linux-gnu -target-feature +sve2-sha3 -fallow-half-arguments-and-returns -S -O1 -Werror -Wall -emit-llvm -o - -x c++ %s | FileCheck %s -check-prefix=CPP-CHECK
-// RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +sve -fallow-half-arguments-and-returns -fsyntax-only -verify -verify-ignore-unexpected=error %s
-// RUN: %clang_cc1 -DSVE_OVERLOADED_FORMS -triple aarch64-none-linux-gnu -target-feature +sve -fallow-half-arguments-and-returns -fsyntax-only -verify=overload -verify-ignore-unexpected=error %s
 
 // REQUIRES: aarch64-registered-target
 
@@ -29,8 +27,6 @@
 //
 svint64_t test_svrax1_s64(svint64_t op1, svint64_t op2)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svrax1'}}
-  // expected-warning@+1 {{implicit declaration of function 'svrax1_s64'}}
   return SVE_ACLE_FUNC(svrax1,_s64,,)(op1, op2);
 }
 
@@ -46,7 +42,5 @@ svint64_t test_svrax1_s64(svint64_t op1, svint64_t op2)
 //
 svuint64_t test_svrax1_u64(svuint64_t op1, svuint64_t op2)
 {
-  // overload-warning@+2 {{implicit declaration of function 'svrax1'}}
-  // expected-warning@+1 {{implicit declaration of function 'svrax1_u64'}}
   return SVE_ACLE_FUNC(svrax1,_u64,,)(op1, op2);
 }
