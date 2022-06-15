@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_SEMANTICS_NODES_META_NODE_H_
-#define CARBON_TOOLCHAIN_SEMANTICS_NODES_META_NODE_H_
+#ifndef CARBON_TOOLCHAIN_SEMANTICS_META_NODE_H_
+#define CARBON_TOOLCHAIN_SEMANTICS_META_NODE_H_
 
 #include <cstdint>
 #include <tuple>
@@ -112,4 +112,4 @@ using Expression = MetaNode<ExpressionKind, ExpressionStore>;
 
 }  // namespace Carbon::Semantics
 
-#endif  // CARBON_TOOLCHAIN_SEMANTICS_NODES_META_NODE_H_
+#endif  // CARBON_TOOLCHAIN_SEMANTICS_META_NODE_H_

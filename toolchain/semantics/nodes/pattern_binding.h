@@ -7,8 +7,8 @@
 
 #include "common/ostream.h"
 #include "toolchain/parser/parse_tree.h"
+#include "toolchain/semantics/meta_node.h"
 #include "toolchain/semantics/nodes/declared_name.h"
-#include "toolchain/semantics/nodes/meta_node.h"
 
 namespace Carbon::Semantics {
 

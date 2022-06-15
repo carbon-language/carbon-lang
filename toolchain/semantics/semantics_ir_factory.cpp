@@ -11,8 +11,8 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
+#include "toolchain/semantics/meta_node_block.h"
 #include "toolchain/semantics/nodes/expression_statement.h"
-#include "toolchain/semantics/nodes/meta_node_block.h"
 #include "toolchain/semantics/parse_subtree_consumer.h"
 
 namespace Carbon {
@@ -134,7 +134,7 @@ auto SemanticsIRFactory::TransformFunctionDeclaration(ParseTree::Node node)
   auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
   auto body =
       TransformCodeBlock(subtree.RequireConsume(ParseNodeKind::CodeBlock()));
-  llvm::Optional<Semantics::Expression> return_expr;
+  llvm::Optional<Semantics::Expression> return_type_expr;
   if (auto return_type_node = subtree.TryConsume(ParseNodeKind::ReturnType())) {
     return_type_expr = TransformReturnType(*return_type_node);
   }
@@ -143,7 +143,7 @@ auto SemanticsIRFactory::TransformFunctionDeclaration(ParseTree::Node node)
   auto name = TransformDeclaredName(
       subtree.RequireConsume(ParseNodeKind::DeclaredName()));
   auto decl = semantics_.declarations_.Store(
-      Semantics::Function(node, name, params, return_expr, body));
+      Semantics::Function(node, name, params, return_type_expr, body));
   return std::make_tuple(parse_tree().GetNodeText(name.node()), decl);
 }
 

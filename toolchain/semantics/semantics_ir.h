@@ -7,11 +7,11 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/parser/parse_tree.h"
+#include "toolchain/semantics/meta_node_block.h"
 #include "toolchain/semantics/nodes/expression_statement.h"
 #include "toolchain/semantics/nodes/function.h"
 #include "toolchain/semantics/nodes/infix_operator.h"
 #include "toolchain/semantics/nodes/literal.h"
-#include "toolchain/semantics/nodes/meta_node_block.h"
 #include "toolchain/semantics/nodes/pattern_binding.h"
 #include "toolchain/semantics/nodes/return.h"
 

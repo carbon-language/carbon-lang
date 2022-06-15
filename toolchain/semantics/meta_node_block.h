@@ -2,13 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_SEMANTICS_NODES_META_NODE_BLOCK_H_
-#define CARBON_TOOLCHAIN_SEMANTICS_NODES_META_NODE_BLOCK_H_
+#ifndef CARBON_TOOLCHAIN_SEMANTICS_META_NODE_BLOCK_H_
+#define CARBON_TOOLCHAIN_SEMANTICS_META_NODE_BLOCK_H_
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
-#include "toolchain/semantics/nodes/meta_node.h"
+#include "toolchain/semantics/meta_node.h"
 
 namespace Carbon::Semantics {
 
@@ -35,4 +35,4 @@ using StatementBlock = MetaNodeBlock<Statement>;
 
 }  // namespace Carbon::Semantics
 
-#endif  // CARBON_TOOLCHAIN_SEMANTICS_NODES_META_NODE_BLOCK_H_
+#endif  // CARBON_TOOLCHAIN_SEMANTICS_META_NODE_BLOCK_H_
