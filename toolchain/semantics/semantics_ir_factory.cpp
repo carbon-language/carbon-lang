@@ -136,7 +136,7 @@ auto SemanticsIRFactory::TransformFunctionDeclaration(ParseTree::Node node)
       TransformCodeBlock(subtree.RequireConsume(ParseNodeKind::CodeBlock()));
   llvm::Optional<Semantics::Expression> return_expr;
   if (auto return_type_node = subtree.TryConsume(ParseNodeKind::ReturnType())) {
-    return_expr = TransformReturnType(*return_type_node);
+    return_type_expr = TransformReturnType(*return_type_node);
   }
   auto params = TransformParameterList(
       subtree.RequireConsume(ParseNodeKind::ParameterList()));
