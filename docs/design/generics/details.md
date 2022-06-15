@@ -3606,15 +3606,11 @@ class Vector(T:! Type) {
 ```
 
 An impl may be declared [external](#external-impl) by adding an `external`
-keyword before `impl`. External impls may also be declared out-of-line:
+keyword before `impl`. External impls may also be declared out-of-line, but all
+parameters must be declared in a `forall` clause:
 
 ```
-external impl [T:! Type] Vector(T) as Iterable
-    where .ElementType = T {
-  ...
-}
-// This syntax is also allowed:
-external impl Vector(T:! Type) as Iterable
+external impl forall [T:! Type] Vector(T) as Iterable
     where .ElementType = T {
   ...
 }
@@ -3634,16 +3630,10 @@ or externally out-of-line:
 
 ```
 class HashMap(Key:! Hashable, Value:! Type) { ... }
-external impl [Key:! Hashable, Value:! Type]
+external impl forall [Key:! Hashable, Value:! Type]
     HashMap(Key, Value) as Has(Key) { ... }
-external impl [Key:! Hashable, Value:! Type]
+external impl forall [Key:! Hashable, Value:! Type]
     HashMap(Key, Value) as Contains(HashSet(Key)) { ... }
-
-// This syntax is also allowed:
-external impl HashMap(Key:! Hashable, Value:! Type)
-    as Has(Key) { ... }
-external impl HashMap(Key:! Hashable, Value:! Type)
-    as Contains(HashSet(Key)) { ... }
 ```
 
 ### Conditional conformance
@@ -3672,7 +3662,7 @@ class Vector(T:! Type) { ... }
 
 // By saying "T:! Printable" instead of "T:! Type" here,
 // we constrain T to be Printable for this impl.
-external impl [T:! Printable] Vector(T) as Printable {
+external impl forall [T:! Printable] Vector(T) as Printable {
   fn Print[me: Self]() {
     for (let a: T in me) {
       // Can call `Print` on `a` since the constraint
@@ -3681,18 +3671,14 @@ external impl [T:! Printable] Vector(T) as Printable {
     }
   }
 }
-// This syntax is also allowed:
-external impl Vector(T:! Printable) as Printable { ... }
 ```
 
-To define these `impl`s inline in a `class` definition, include a more-specific
-type between the `impl` and `as` keywords.
+To define these `impl`s inline in a `class` definition, include a `forall`
+clause with a more-specific type between the `impl` and `as` keywords.
 
 ```
 class Array(T:! Type, template N:! Int) {
-  // These are both allowed:
-  impl [P:! Printable] Array(P, N) as Printable { ... }
-  impl Array(P:! Printable, N) as Printable { ... }
+  impl forall [P:! Printable] Array(P, N) as Printable { ... }
 }
 ```
 
@@ -3712,7 +3698,7 @@ equal.
 ```
 interface Foo(T:! Type) { ... }
 class Pair(T:! Type, U:! Type) { ... }
-external impl [T:! Type] Pair(T, T) as Foo(T) { ... }
+external impl forall [T:! Type] Pair(T, T) as Foo(T) { ... }
 ```
 
 You may also define the `impl` inline, in which case it can be internal:
@@ -3799,13 +3785,13 @@ where blanket impls arise:
     `PartiallyOrdered`.
 
     ```
-    external impl [T:! Ordered] T as PartiallyOrdered { ... }
+    external impl forall [T:! Ordered] T as PartiallyOrdered { ... }
     ```
 
 -   `T` implements `CommonType(T)` for all `T`
 
     ```
-    external impl [T:! Type] T as CommonType(T)
+    external impl forall [T:! Type] T as CommonType(T)
         where .Result = T { }
     ```
 
@@ -3836,14 +3822,10 @@ to `i32` and then add the `i32` to the `BigInt` value.
 
 ```
 class BigInt {
-  extern impl [T:! ImplicitAs(i32)] as AddTo(T) { ... }
-  // Or:
-  extern impl as AddTo(T:! ImplicitAs(i32)) { ... }
+  external impl forall [T:! ImplicitAs(i32)] as AddTo(T) { ... }
 }
 // Or out-of-line:
-extern impl [T:! ImplicitAs(i32)] BigInt as AddTo(T) { ... }
-// Or:
-extern impl BigInt as AddTo(T:! ImplicitAs(i32)) { ... }
+external impl forall [T:! ImplicitAs(i32)] BigInt as AddTo(T) { ... }
 ```
 
 Wildcard impls must always be [external](#external-impl), to avoid having the
@@ -3855,7 +3837,7 @@ The different kinds of parameters to impls may be combined. For example, if `T`
 implements `As(U)`, then this implements `As(Optional(U))` for `Optional(T)`:
 
 ```
-external impl [U:! Type, T:! As(U)]
+external impl forall [U:! Type, T:! As(U)]
   Optional(T) as As(Optional(U)) { ... }
 ```
 
@@ -3887,7 +3869,7 @@ parameters and replacing type parameters by a `?`. The type structure of this
 declaration:
 
 ```
-impl [T:! ..., U:! ...] Foo(T, i32) as Bar(String, U) { ... }
+impl forall [T:! ..., U:! ...] Foo(T, i32) as Bar(String, U) { ... }
 ```
 
 is:
@@ -3903,6 +3885,7 @@ parameters are replaced the declarations are normalized as follows:
     between the `impl` and `as` keywords if the type is left out.
 -   Pointer types `T*` are replaced with `Ptr(T)`.
 -   The `external` keyword is removed, if present.
+-   The `forall` clause introducing type parameters is removed, if present.
 -   Any `where` clauses that are setting associated constants or types are
     removed.
 
@@ -3974,8 +3957,8 @@ declarations inside matching curly braces `{` ... `}`.
 ```
 match_first {
   // If T is Foo prioritized ahead of T is Bar
-  impl [T:! Foo] T as Bar { ... }
-  impl [T:! Baz] T as Bar { ... }
+  impl forall [T:! Foo] T as Bar { ... }
+  impl forall [T:! Baz] T as Bar { ... }
 }
 ```
 
@@ -4018,15 +4001,15 @@ erase too much information when considering this graph, that these impls are not
 considered to form cycles with themselves:
 
 ```
-impl [T:! Printable] Optional(T) as Printable;
-impl [T:! Type, U:! ComparableTo(T)] U as ComparableTo(Optional(T));
+impl forall [T:! Printable] Optional(T) as Printable;
+impl forall [T:! Type, U:! ComparableTo(T)] U as ComparableTo(Optional(T));
 ```
 
 **Example:** If `T` implements `ComparableWith(U)`, then `U` should implement
 `ComparableWith(T)`.
 
 ```
-external impl [U:! Type, T:! ComparableWith(U)]
+external impl forall [U:! Type, T:! ComparableWith(U)]
     U as ComparableWith(T);
 ```
 
@@ -4044,9 +4027,9 @@ interface True {}
 impl Y as True {}
 interface Z(T:! Type) { let Cond:! Type; }
 match_first {
-  impl [T:! Type, U:! Z(T) where .Cond is True] T as Z(U)
+  impl forall [T:! Type, U:! Z(T) where .Cond is True] T as Z(U)
       where .Cond = N { }
-  impl [T:! Type, U:! Type] T as Z(U)
+  impl forall [T:! Type, U:! Type] T as Z(U)
       where .Cond = Y { }
 }
 ```
@@ -4073,11 +4056,11 @@ class B {}
 class C {}
 interface D(T:! Type) { let Cond:! Type; }
 match_first {
-  impl [T:! Type, U:! D(T) where .Cond = B] T as D(U)
+  impl forall [T:! Type, U:! D(T) where .Cond = B] T as D(U)
       where .Cond = C { }
-  impl [T:! Type, U:! D(T) where .Cond = A] T as D(U)
+  impl forall [T:! Type, U:! D(T) where .Cond = A] T as D(U)
       where .Cond = B { }
-  impl [T:! Type, U:! Type] T as D(U)
+  impl forall [T:! Type, U:! Type] T as D(U)
       where .Cond = A { }
 }
 ```
@@ -4127,7 +4110,7 @@ determining whether a type implements an interface could run forever.
 the result of a single impl:
 
 ```
-impl [A:! Type where Optional(.Self) is B] A as B { ... }
+impl forall [A:! Type where Optional(.Self) is B] A as B { ... }
 ```
 
 This problem can also result from a chain of impls, as in `A is B` if `A* is C`,
@@ -4742,7 +4725,7 @@ interface TotalOrder {
   impl as PartialOrder;
 }
 
-external impl [T:! TotalOrder] T as PartialOrder {
+external impl forall [T:! TotalOrder] T as PartialOrder {
   fn PartialLess[me: Self](right: Self) -> bool {
     return me.TotalLess(right);
   }
@@ -4888,14 +4871,14 @@ fn ProcessVector(v: Vector(i32)) {
 
 // Satisfies the requirement that `Vector(i32)` must
 // implement `Equatable` since `i32` is `Equatable`.
-external impl Vector(T:! Equatable) as Equatable { ... }
+external impl forall [T:! Equatable] Vector(T) as Equatable { ... }
 ```
 
 In some cases, the interface's requirement can be trivially satisfied by the
 implementation itself, as in:
 
 ```
-impl [T:! Type] T as CommonTypeWith(T) { ... }
+impl forall [T:! Type] T as CommonTypeWith(T) { ... }
 ```
 
 Here is an example where the requirement of interface `Iterable` that the type
@@ -4907,7 +4890,8 @@ class Foo(T:! Type) {}
 // This is allowed because we know that an `impl Foo(T) as Equatable`
 // will exist for all types `T` for which this impl is used, even
 // though there's neither an imported impl nor an impl in this file.
-external impl Foo(T:! Type where Foo(T) is Equatable) as Iterable {}
+external impl forall [T:! Type where Foo(T) is Equatable]
+    Foo(T) as Iterable {}
 ```
 
 This might be used to provide an implementation of `Equatable` for types that
@@ -5013,9 +4997,9 @@ interface B { }
 interface C { }
 interface D { }
 
-impl [T:! A] T as B { }
-impl [T:! B] T as C { }
-impl [T:! C] T as D { }
+impl forall [T:! A] T as B { }
+impl forall [T:! B] T as C { }
+impl forall [T:! C] T as D { }
 
 fn RequiresD(T:! D)(x: T);
 fn RequiresB(T:! B)(x: T);
@@ -5153,16 +5137,16 @@ external impl EvenInt as IntLike;
 external impl EvenInt as ComparableWith(EvenInt);
 // Allow `EvenInt` to be compared with anything that
 // implements `IntLike`, in either order.
-external impl [T:! IntLike] EvenInt as ComparableWith(T);
-external impl [T:! IntLike] T as ComparableWith(EvenInt);
+external impl forall [T:! IntLike] EvenInt as ComparableWith(T);
+external impl forall [T:! IntLike] T as ComparableWith(EvenInt);
 
 class PositiveInt { ... }
 external impl PositiveInt as IntLike;
 external impl PositiveInt as ComparableWith(PositiveInt);
 // Allow `PositiveInt` to be compared with anything that
 // implements `IntLike`, in either order.
-external impl [T:! IntLike] PositiveInt as ComparableWith(T);
-external impl [T:! IntLike] T as ComparableWith(PositiveInt);
+external impl forall [T:! IntLike] PositiveInt as ComparableWith(T);
+external impl forall [T:! IntLike] T as ComparableWith(PositiveInt);
 ```
 
 Then it will favor selecting the implementation based on the type of the
@@ -5218,7 +5202,7 @@ conversion. The implementation is for types that implement the
 
 ```
 // "Implementation Two"
-external impl [T:! ImplicitAs(f64)]
+external impl forall [T:! ImplicitAs(f64)]
     Meters as MultipliableWith(T) where .Result = Meters {
   fn Multiply[me: Self](other: T) -> Result {
     // Carbon will implicitly convert `other` from type
@@ -5276,7 +5260,7 @@ external impl like Meters as MultipliableWith(like f64)
 is equivalent to "implementation one", "implementation two", and:
 
 ```
-external impl [T:! ImplicitAs(Meters)]
+external impl forall [T:! ImplicitAs(Meters)]
     T as MultipliableWith(f64) where .Result = Meters {
   fn Multiply[me: Self](other: f64) -> Result {
     // Will implicitly convert `me` to `Meters` in order to
@@ -5304,13 +5288,13 @@ external impl Meters as MultipliableWith(f64)
     where .Result = Meters;
 
 // First `like` replaced with a wildcard.
-external impl [T:! ImplicitAs(Meters)]
+external impl forall [T:! ImplicitAs(Meters)]
     T as MultipliableWith(f64) where .Result = Meters;
 
 // Second `like` replaced with a wildcard. Same as the
 // declaration part of "implementation two", without the
 // body of the definition.
-external impl [T:! ImplicitAs(f64)]
+external impl forall [T:! ImplicitAs(f64)]
     Meters as MultipliableWith(T) where .Result = Meters;
 ```
 
@@ -5333,8 +5317,8 @@ Which will generate implementations with declarations:
 
 ```
 external impl Vector(String) as Printable;
-external impl [T:! ImplicitAs(Vector(String))] T as Printable;
-external impl [T:! ImplicitAs(String)] Vector(T) as Printable;
+external impl forall [T:! ImplicitAs(Vector(String))] T as Printable;
+external impl forall [T:! ImplicitAs(String)] Vector(T) as Printable;
 ```
 
 The generated implementations must be legal or the `like` is illegal. For
@@ -5365,11 +5349,11 @@ parameters must be able to be determined due to being repeated outside of the
 external impl like Meters as Printable;
 
 // ❌ Illegal: No other way to determine `T`
-external impl [T:! IntLike] like T as Printable;
+external impl forall [T:! IntLike] like T as Printable;
 
 // ❌ Illegal: `T` being used in a `where` clause
 //             is insufficient.
-external impl [T:! IntLike] like T
+external impl forall [T:! IntLike] like T
     as MultipliableWith(i64) where .Result = T;
 
 // ❌ Illegal: `like` can't be used in a `where`
@@ -5379,14 +5363,14 @@ external impl Meters as MultipliableWith(f64)
 
 // ✅ Allowed: `T` can be determined by another
 //             part of the query.
-external impl [T:! IntLike] like T
+external impl forall [T:! IntLike] like T
     as MultipliableWith(T) where .Result = T;
-external impl [T:! IntLike] T
+external impl forall [T:! IntLike] T
     as MultipliableWith(like T) where .Result = T;
 
 // ✅ Allowed: Only one `like` used at a time, so this
 //             is equivalent to the above two examples.
-external impl [T:! IntLike] like T
+external impl forall [T:! IntLike] like T
     as MultipliableWith(like T) where .Result = T;
 ```
 
@@ -5478,7 +5462,7 @@ The default implementation of this interface is provided by a
 
 ```
 // Default blanket implementation
-impl [T:! Movable] T as OptionalStorage
+impl forall [T:! Movable] T as OptionalStorage
     where .Storage = (bool, T) {
   ...
 }
@@ -5490,7 +5474,7 @@ patterns:
 
 ```
 // Specialization for pointers, using nullptr == None
-final external impl [T:! Type] T* as OptionalStorage
+final external impl forall [T:! Type] T* as OptionalStorage
     where .Storage = Array(Byte, sizeof(T*)) {
   ...
 }
@@ -5669,3 +5653,4 @@ parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 -   [#1088: Generic details 10: interface-implemented requirements](https://github.com/carbon-language/carbon-lang/pull/1088)
 -   [#1144: Generic details 11: operator overloading](https://github.com/carbon-language/carbon-lang/pull/1144)
 -   [#1146: Generic details 12: parameterized types](https://github.com/carbon-language/carbon-lang/pull/1146)
+-   [#1327: Generics: `impl forall`](https://github.com/carbon-language/carbon-lang/pull/1327)
