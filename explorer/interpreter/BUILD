@@ -91,6 +91,7 @@ cc_library(
     deps = [
         "//common:ostream",
         "//explorer/ast",
+        "//explorer/ast:member",
         "//explorer/ast:static_scope",
         "@llvm-project//llvm:Support",
     ],

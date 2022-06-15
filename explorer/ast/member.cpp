@@ -36,4 +36,3 @@ auto Member::declaration() const -> std::optional<Nonnull<const Declaration*>> {
 }
 
 }  // namespace Carbon
-

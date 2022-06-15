@@ -59,8 +59,7 @@ class FieldPath {
   };
 
   // Constructs a FieldPath consisting of a single step.
-  explicit FieldPath(Member member)
-      : components_({Component(member)}) {}
+  explicit FieldPath(Member member) : components_({Component(member)}) {}
   explicit FieldPath(const Component& f) : components_({f}) {}
 
   FieldPath(const FieldPath&) = default;
