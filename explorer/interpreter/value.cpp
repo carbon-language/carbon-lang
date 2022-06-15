@@ -46,14 +46,12 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
           const auto& fun_decl = cast<FunctionDeclaration>(**mem_decl);
           if (fun_decl.is_method()) {
             return arena->New<BoundMethodValue>(&fun_decl, v,
-                                                impl_witness->type_args(),
-                                                impl_witness->witnesses());
+                                                &impl_witness->bindings());
           } else {
             // Class function.
             auto* fun = cast<FunctionValue>(*fun_decl.constant_value());
             return arena->New<FunctionValue>(&fun->declaration(),
-                                             impl_witness->type_args(),
-                                             impl_witness->witnesses());
+                                             &impl_witness->bindings());
           }
         } else {
           return CompilationError(source_loc)
@@ -101,13 +99,11 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
           // Found a method. Turn it into a bound method.
           const FunctionValue& m = cast<FunctionValue>(**func);
           return arena->New<BoundMethodValue>(&m.declaration(), me_value,
-                                              class_type.type_args(),
-                                              class_type.witnesses());
+                                              &class_type.bindings());
         } else {
           // Found a class function
           return arena->New<FunctionValue>(&(*func)->declaration(),
-                                           class_type.type_args(),
-                                           class_type.witnesses());
+                                           &class_type.bindings());
         }
       }
     }
@@ -129,8 +125,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                << "class function " << f << " not in " << *v;
       }
       return arena->New<FunctionValue>(&(*fun)->declaration(),
-                                       class_type.type_args(),
-                                       class_type.witnesses());
+                                       &class_type.bindings());
     }
     default:
       CARBON_FATAL() << "field access not allowed for value " << *v;

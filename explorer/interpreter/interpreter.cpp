@@ -112,7 +112,7 @@ class Interpreter {
   // Call the function `fun` with the given `arg` and the `witnesses`
   // for the function's impl bindings.
   auto CallFunction(const CallExpression& call, Nonnull<const Value*> fun,
-                    Nonnull<const Value*> arg, const ImplWitnessMap& witnesses)
+                    Nonnull<const Value*> arg, ImplWitnessMap witnesses)
       -> ErrorOr<Success>;
 
   void PrintState(llvm::raw_ostream& out);
@@ -476,8 +476,10 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
                                   EvalExpRecursively(&sym->impl_expression()));
         }
       }
-      return arena_->New<NominalClassType>(&class_type.declaration(),
-                                           inst_type_args, witnesses);
+      return arena_->New<NominalClassType>(
+          &class_type.declaration(),
+          arena_->New<Bindings>(std::move(inst_type_args),
+                                std::move(witnesses)));
     }
     default:
       return type;
@@ -609,8 +611,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
 auto Interpreter::CallFunction(const CallExpression& call,
                                Nonnull<const Value*> fun,
                                Nonnull<const Value*> arg,
-                               const ImplWitnessMap& witnesses)
-    -> ErrorOr<Success> {
+                               ImplWitnessMap witnesses) -> ErrorOr<Success> {
   if (trace_stream_) {
     **trace_stream_ << "calling function: " << *fun << "\n";
   }
@@ -703,13 +704,18 @@ auto Interpreter::CallFunction(const CallExpression& call,
       CARBON_CHECK(PatternMatch(&name.params().value(), arg, call.source_loc(),
                                 &params_scope, generic_args, trace_stream_,
                                 this->arena_));
+      Nonnull<const Bindings*> bindings =
+          generic_args.empty() && witnesses.empty()
+              ? Bindings::None()
+              : arena_->New<Bindings>(std::move(generic_args),
+                                      std::move(witnesses));
       switch (decl.kind()) {
         case DeclarationKind::ClassDeclaration:
           return todo_.FinishAction(arena_->New<NominalClassType>(
-              &cast<ClassDeclaration>(decl), generic_args, witnesses));
+              &cast<ClassDeclaration>(decl), bindings));
         case DeclarationKind::InterfaceDeclaration:
           return todo_.FinishAction(arena_->New<InterfaceType>(
-              &cast<InterfaceDeclaration>(decl), generic_args, witnesses));
+              &cast<InterfaceDeclaration>(decl), bindings));
         default:
           CARBON_FATAL() << "unknown kind of ParameterizedEntityName " << decl;
       }
@@ -751,7 +757,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           ++i;
         }
         return todo_.FinishAction(arena_->New<ImplWitness>(
-            &generic_witness->declaration(), inst_impl.type_args(), witnesses));
+            &generic_witness->declaration(),
+            arena_->New<Bindings>(inst_impl.type_args(),
+                                  std::move(witnesses))));
       }
     }
     case ExpressionKind::IndexExpression: {
@@ -1000,7 +1008,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           }
         }
         return CallFunction(call, act.results()[0], act.results()[1],
-                            witnesses);
+                            std::move(witnesses));
       } else if (act.pos() == 3 + int(num_impls)) {
         if (act.results().size() < 3 + num_impls) {
           // Control fell through without explicit return.

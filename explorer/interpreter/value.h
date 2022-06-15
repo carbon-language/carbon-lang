@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "common/ostream.h"
+#include "explorer/ast/bindings.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/member.h"
 #include "explorer/ast/statement.h"
@@ -127,9 +128,6 @@ class IntValue : public Value {
   int value_;
 };
 
-using ImplWitnessMap =
-    std::map<Nonnull<const ImplBinding*>, Nonnull<const Value*>>;
-
 // A function value.
 class FunctionValue : public Value {
  public:
@@ -137,12 +135,10 @@ class FunctionValue : public Value {
       : Value(Kind::FunctionValue), declaration_(declaration) {}
 
   explicit FunctionValue(Nonnull<const FunctionDeclaration*> declaration,
-                         const BindingMap& type_args,
-                         const ImplWitnessMap& wits)
+                         Nonnull<const Bindings*> bindings)
       : Value(Kind::FunctionValue),
         declaration_(declaration),
-        type_args_(type_args),
-        witnesses_(wits) {}
+        bindings_(bindings) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionValue;
@@ -152,14 +148,17 @@ class FunctionValue : public Value {
     return *declaration_;
   }
 
-  auto type_args() const -> const BindingMap& { return type_args_; }
+  auto bindings() const -> const Bindings& { return *bindings_; }
 
-  auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
+  auto type_args() const -> const BindingMap& { return bindings_->args(); }
+
+  auto witnesses() const -> const ImplWitnessMap& {
+    return bindings_->witnesses();
+  }
 
  private:
   Nonnull<const FunctionDeclaration*> declaration_;
-  BindingMap type_args_;
-  ImplWitnessMap witnesses_;
+  Nonnull<const Bindings*> bindings_ = Bindings::None();
 };
 
 // A bound method value. It includes the receiver object.
@@ -173,13 +172,11 @@ class BoundMethodValue : public Value {
 
   explicit BoundMethodValue(Nonnull<const FunctionDeclaration*> declaration,
                             Nonnull<const Value*> receiver,
-                            const BindingMap& type_args,
-                            const ImplWitnessMap& wits)
+                            Nonnull<const Bindings*> bindings)
       : Value(Kind::BoundMethodValue),
         declaration_(declaration),
         receiver_(receiver),
-        type_args_(type_args),
-        witnesses_(wits) {}
+        bindings_(bindings) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::BoundMethodValue;
@@ -191,15 +188,18 @@ class BoundMethodValue : public Value {
 
   auto receiver() const -> Nonnull<const Value*> { return receiver_; }
 
-  auto type_args() const -> const BindingMap& { return type_args_; }
+  auto bindings() const -> const Bindings& { return *bindings_; }
 
-  auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
+  auto type_args() const -> const BindingMap& { return bindings_->args(); }
+
+  auto witnesses() const -> const ImplWitnessMap& {
+    return bindings_->witnesses();
+  }
 
  private:
   Nonnull<const FunctionDeclaration*> declaration_;
   Nonnull<const Value*> receiver_;
-  BindingMap type_args_;
-  ImplWitnessMap witnesses_;
+  Nonnull<const Bindings*> bindings_ = Bindings::None();
 };
 
 // The value of a location in memory.
@@ -549,40 +549,32 @@ class NominalClassType : public Value {
         << "missing arguments for parameterized class type";
   }
 
-  // Construct a class type that represents the result of applying the
-  // given generic class to the `type_args`.
-  explicit NominalClassType(Nonnull<const ClassDeclaration*> declaration,
-                            const BindingMap& type_args)
-      : Value(Kind::NominalClassType),
-        declaration_(declaration),
-        type_args_(type_args) {}
-
   // Construct a fully instantiated generic class type to represent the
   // run-time type of an object.
   explicit NominalClassType(Nonnull<const ClassDeclaration*> declaration,
-                            const BindingMap& type_args,
-                            const ImplWitnessMap& wits)
+                            Nonnull<const Bindings*> bindings)
       : Value(Kind::NominalClassType),
         declaration_(declaration),
-        type_args_(type_args),
-        witnesses_(wits) {}
+        bindings_(bindings) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassType;
   }
 
   auto declaration() const -> const ClassDeclaration& { return *declaration_; }
-  auto type_args() const -> const BindingMap& { return type_args_; }
 
-  // Maps each of the class's impl bindings to the witness table
-  // for the corresponding argument. Should only be called on a fully
-  // instantiated runtime type of a generic class.
-  auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
+  auto bindings() const -> const Bindings& { return *bindings_; }
+
+  auto type_args() const -> const BindingMap& { return bindings_->args(); }
+
+  auto witnesses() const -> const ImplWitnessMap& {
+    return bindings_->witnesses();
+  }
 
   // Returns whether this a parameterized class. That is, a class with
   // parameters and no corresponding arguments.
   auto IsParameterized() const -> bool {
-    return declaration_->type_params().has_value() && type_args_.empty();
+    return declaration_->type_params().has_value() && type_args().empty();
   }
 
   // Returns the value of the function named `name` in this class, or
@@ -592,8 +584,7 @@ class NominalClassType : public Value {
 
  private:
   Nonnull<const ClassDeclaration*> declaration_;
-  BindingMap type_args_;
-  ImplWitnessMap witnesses_;
+  Nonnull<const Bindings*> bindings_ = Bindings::None();
 };
 
 // Return the declaration of the member with the given name.
@@ -602,7 +593,6 @@ auto FindMember(std::string_view name,
     -> std::optional<Nonnull<const Declaration*>>;
 
 // An interface type.
-// TODO: Consider removing this once ConstraintType is ready.
 class InterfaceType : public Value {
  public:
   explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration)
@@ -611,14 +601,10 @@ class InterfaceType : public Value {
         << "missing arguments for parameterized interface type";
   }
   explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration,
-                         const BindingMap& args)
-      : Value(Kind::InterfaceType), declaration_(declaration), args_(args) {}
-  explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration,
-                         const BindingMap& args, const ImplWitnessMap& wits)
+                         Nonnull<const Bindings*> bindings)
       : Value(Kind::InterfaceType),
         declaration_(declaration),
-        args_(args),
-        witnesses_(wits) {}
+        bindings_(bindings) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::InterfaceType;
@@ -627,15 +613,18 @@ class InterfaceType : public Value {
   auto declaration() const -> const InterfaceDeclaration& {
     return *declaration_;
   }
-  auto args() const -> const BindingMap& { return args_; }
 
-  // TODO: These aren't used for anything yet.
-  auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
+  auto bindings() const -> const Bindings& { return *bindings_; }
+
+  auto args() const -> const BindingMap& { return bindings_->args(); }
+
+  auto witnesses() const -> const ImplWitnessMap& {
+    return bindings_->witnesses();
+  }
 
  private:
   Nonnull<const InterfaceDeclaration*> declaration_;
-  BindingMap args_;
-  ImplWitnessMap witnesses_;
+  Nonnull<const Bindings*> bindings_ = Bindings::None();
 };
 
 // A type-of-type for an unknown constrained type.
@@ -733,26 +722,27 @@ class ImplWitness : public Witness {
 
   // Construct an instantiated generic impl.
   explicit ImplWitness(Nonnull<const ImplDeclaration*> declaration,
-                       const BindingMap& type_args, const ImplWitnessMap& wits)
+                       Nonnull<const Bindings*> bindings)
       : Witness(Kind::ImplWitness),
         declaration_(declaration),
-        type_args_(type_args),
-        witnesses_(wits) {}
+        bindings_(bindings) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ImplWitness;
   }
   auto declaration() const -> const ImplDeclaration& { return *declaration_; }
-  auto type_args() const -> const BindingMap& { return type_args_; }
-  // Maps each of the impl's impl bindings to the witness table
-  // for the corresponding argument. Should only be called on a fully
-  // instantiated runtime type of a generic class.
-  auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
+
+  auto bindings() const -> const Bindings& { return *bindings_; }
+
+  auto type_args() const -> const BindingMap& { return bindings_->args(); }
+
+  auto witnesses() const -> const ImplWitnessMap& {
+    return bindings_->witnesses();
+  }
 
  private:
   Nonnull<const ImplDeclaration*> declaration_;
-  BindingMap type_args_;
-  ImplWitnessMap witnesses_;
+  Nonnull<const Bindings*> bindings_ = Bindings::None();
 };
 
 // A witness table whose concrete value cannot be determined yet.

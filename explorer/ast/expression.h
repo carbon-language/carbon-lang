@@ -13,6 +13,7 @@
 
 #include "common/ostream.h"
 #include "explorer/ast/ast_node.h"
+#include "explorer/ast/bindings.h"
 #include "explorer/ast/member.h"
 #include "explorer/ast/paren_contents.h"
 #include "explorer/ast/static_scope.h"
@@ -509,11 +510,6 @@ class PrimitiveOperatorExpression : public Expression {
   Operator op_;
   std::vector<Nonnull<Expression*>> arguments_;
 };
-
-class GenericBinding;
-
-using BindingMap =
-    std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>;
 
 using ImplExpMap = std::map<Nonnull<const ImplBinding*>, Nonnull<Expression*>>;
 

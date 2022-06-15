@@ -448,14 +448,17 @@ auto TypeChecker::GetBuiltinInterfaceType(SourceLocation source_loc,
   if (has_parameters != has_arguments) {
     return bad_builtin();
   }
-  BindingMap bindings;
+  BindingMap binding_args;
   if (has_arguments) {
     TupleValue args(interface.arguments);
     if (!PatternMatch(&iface_decl->params().value()->value(), &args, source_loc,
-                      std::nullopt, bindings, trace_stream_, this->arena_)) {
+                      std::nullopt, binding_args, trace_stream_,
+                      this->arena_)) {
       return bad_builtin();
     }
   }
+  Nonnull<const Bindings*> bindings =
+      arena_->New<Bindings>(std::move(binding_args), Bindings::NoWitnesses);
   return arena_->New<InterfaceType>(iface_decl, bindings);
 }
 
@@ -875,12 +878,13 @@ class ConstraintTypeBuilder {
 auto TypeChecker::Substitute(
     const std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>& dict,
     Nonnull<const Value*> type) const -> Nonnull<const Value*> {
-  auto SubstituteIntoBindingMap = [&](const BindingMap& map) -> BindingMap {
+  auto SubstituteIntoBindings =
+      [&](const Bindings& bindings) -> Nonnull<const Bindings*> {
     BindingMap result;
-    for (const auto& [name, value] : map) {
+    for (const auto& [name, value] : bindings.args()) {
       result[name] = Substitute(dict, value);
     }
-    return result;
+    return arena_->New<Bindings>(std::move(result), Bindings::NoWitnesses);
   };
 
   switch (type->kind()) {
@@ -971,14 +975,14 @@ auto TypeChecker::Substitute(
       Nonnull<const NominalClassType*> new_class_type =
           arena_->New<NominalClassType>(
               &class_type.declaration(),
-              SubstituteIntoBindingMap(class_type.type_args()));
+              SubstituteIntoBindings(class_type.bindings()));
       return new_class_type;
     }
     case Value::Kind::InterfaceType: {
       const auto& iface_type = cast<InterfaceType>(*type);
       Nonnull<const InterfaceType*> new_iface_type = arena_->New<InterfaceType>(
           &iface_type.declaration(),
-          SubstituteIntoBindingMap(iface_type.args()));
+          SubstituteIntoBindings(iface_type.bindings()));
       return new_iface_type;
     }
     case Value::Kind::ConstraintType: {
@@ -1976,13 +1980,15 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           CARBON_RETURN_IF_ERROR(DeduceCallBindings(
               call, &param_name.params().static_type(), generic_parameters,
               /*deduced_bindings=*/llvm::None, impl_bindings, impl_scope));
+          Nonnull<const Bindings*> bindings =
+              arena_->New<Bindings>(call.deduced_args(), Bindings::NoWitnesses);
 
           const Declaration& decl = param_name.declaration();
           switch (decl.kind()) {
             case DeclarationKind::ClassDeclaration: {
               Nonnull<NominalClassType*> inst_class_type =
                   arena_->New<NominalClassType>(&cast<ClassDeclaration>(decl),
-                                                call.deduced_args());
+                                                bindings);
               call.set_static_type(
                   arena_->New<TypeOfClassType>(inst_class_type));
               call.set_value_category(ValueCategory::Let);
@@ -1991,7 +1997,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             case DeclarationKind::InterfaceDeclaration: {
               Nonnull<InterfaceType*> inst_iface_type =
                   arena_->New<InterfaceType>(&cast<InterfaceDeclaration>(decl),
-                                             call.deduced_args());
+                                             bindings);
               call.set_static_type(
                   arena_->New<TypeOfInterfaceType>(inst_iface_type));
               call.set_value_category(ValueCategory::Let);
@@ -2893,8 +2899,9 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     // above and/or by any enclosing generic classes.
     generic_args[binding] = *binding->symbolic_identity();
   }
-  Nonnull<NominalClassType*> self_type =
-      arena_->New<NominalClassType>(class_decl, generic_args);
+  Nonnull<NominalClassType*> self_type = arena_->New<NominalClassType>(
+      class_decl,
+      arena_->New<Bindings>(std::move(generic_args), Bindings::NoWitnesses));
   SetConstantValue(self, self_type);
   self->set_static_type(arena_->New<TypeOfClassType>(self_type));
 
