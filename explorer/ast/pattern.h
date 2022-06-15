@@ -56,6 +56,7 @@ class Pattern : public AstNode {
     CARBON_CHECK(static_type_.has_value());
     return **static_type_;
   }
+  auto has_static_type() const -> bool { return static_type_.has_value(); }
 
   // Sets the static type of this expression. Can only be called once, during
   // typechecking.
@@ -76,6 +77,12 @@ class Pattern : public AstNode {
   // during typechecking: before typechecking it's guaranteed to be false,
   // and after typechecking it's guaranteed to be true.
   auto has_value() const -> bool { return value_.has_value(); }
+
+  // Determines whether the pattern has already been type-checked. Should
+  // only be used by type-checking.
+  auto is_type_checked() const -> bool {
+    return static_type_.has_value() && value_.has_value();
+  }
 
  protected:
   // Constructs a Pattern representing syntax at the given line number.
@@ -184,6 +191,23 @@ class BindingPattern : public Pattern {
   std::optional<ValueCategory> value_category_;
 };
 
+class AddrPattern : public Pattern {
+ public:
+  explicit AddrPattern(SourceLocation source_loc,
+                       Nonnull<BindingPattern*> binding)
+      : Pattern(AstNodeKind::AddrPattern, source_loc), binding_(binding) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromAddrPattern(node->kind());
+  }
+
+  auto binding() const -> const BindingPattern& { return *binding_; }
+  auto binding() -> BindingPattern& { return *binding_; }
+
+ private:
+  Nonnull<BindingPattern*> binding_;
+};
+
 // A pattern that matches a tuple value field-wise.
 class TuplePattern : public Pattern {
  public:
@@ -249,11 +273,32 @@ class GenericBinding : public Pattern {
     impl_binding_ = binding;
   }
 
+  // Return the original generic binding.
+  auto original() const -> Nonnull<const GenericBinding*> {
+    if (original_.has_value())
+      return *original_;
+    else
+      return this;
+  }
+  // Set the original generic binding.
+  void set_original(Nonnull<const GenericBinding*> orig) { original_ = orig; }
+
+  // Returns whether this binding has been named as a type within its own type
+  // expression via `.Self`. Set by type-checking.
+  auto named_as_type_via_dot_self() const -> bool {
+    return named_as_type_via_dot_self_;
+  }
+  // Set that this binding was named as a type within its own type expression
+  // via `.Self`. May only be called during type-checking.
+  void set_named_as_type_via_dot_self() { named_as_type_via_dot_self_ = true; }
+
  private:
   std::string name_;
   Nonnull<Expression*> type_;
   std::optional<Nonnull<const Value*>> symbolic_identity_;
   std::optional<Nonnull<const ImplBinding*>> impl_binding_;
+  std::optional<Nonnull<const GenericBinding*>> original_;
+  bool named_as_type_via_dot_self_ = false;
 };
 
 // Converts paren_contents to a Pattern, interpreting the parentheses as
@@ -285,11 +330,11 @@ class AlternativePattern : public Pattern {
                      Nonnull<Expression*> alternative,
                      Nonnull<TuplePattern*> arguments)
       -> ErrorOr<Nonnull<AlternativePattern*>> {
-    CARBON_ASSIGN_OR_RETURN(Nonnull<FieldAccessExpression*> field_access,
-                            RequireFieldAccess(alternative));
-    return arena->New<AlternativePattern>(source_loc,
-                                          &field_access->aggregate(),
-                                          field_access->field(), arguments);
+    CARBON_ASSIGN_OR_RETURN(
+        Nonnull<SimpleMemberAccessExpression*> member_access,
+        RequireSimpleMemberAccess(alternative));
+    return arena->New<AlternativePattern>(source_loc, &member_access->object(),
+                                          member_access->member(), arguments);
   }
 
   // Constructs an AlternativePattern that matches a value of the type
@@ -317,8 +362,8 @@ class AlternativePattern : public Pattern {
   auto arguments() -> TuplePattern& { return *arguments_; }
 
  private:
-  static auto RequireFieldAccess(Nonnull<Expression*> alternative)
-      -> ErrorOr<Nonnull<FieldAccessExpression*>>;
+  static auto RequireSimpleMemberAccess(Nonnull<Expression*> alternative)
+      -> ErrorOr<Nonnull<SimpleMemberAccessExpression*>>;
 
   Nonnull<Expression*> choice_type_;
   std::string alternative_name_;

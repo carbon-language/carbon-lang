@@ -15,21 +15,19 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Community and culture](#community-and-culture)
     -   [Language tools and ecosystem](#language-tools-and-ecosystem)
 -   [Language goals and priorities](#language-goals-and-priorities)
-    -   [Goals in detail](#goals-in-detail)
-        -   [Performance-critical software](#performance-critical-software)
-        -   [Software and language evolution](#software-and-language-evolution)
-        -   [Code that is easy to read, understand, and write](#code-that-is-easy-to-read-understand-and-write)
-        -   [Practical safety and testing mechanisms](#practical-safety-and-testing-mechanisms)
-        -   [Fast and scalable development](#fast-and-scalable-development)
-        -   [Modern OS platforms, hardware architectures, and environments](#modern-os-platforms-hardware-architectures-and-environments)
-        -   [Interoperability with and migration from existing C++ code](#interoperability-with-and-migration-from-existing-c-code)
-    -   [Non-goals](#non-goals)
-        -   [Stable language and library ABI](#stable-language-and-library-abi)
-        -   [Backwards or forwards compatibility](#backwards-or-forwards-compatibility)
-        -   [Legacy compiled libraries without source code or ability to rebuild](#legacy-compiled-libraries-without-source-code-or-ability-to-rebuild)
-        -   [Support for existing compilation and linking models](#support-for-existing-compilation-and-linking-models)
-        -   [Idiomatic migration of non-modern, non-idiomatic C++ code](#idiomatic-migration-of-non-modern-non-idiomatic-c-code)
-    -   [Principles](#principles)
+    -   [Performance-critical software](#performance-critical-software)
+    -   [Software and language evolution](#software-and-language-evolution)
+    -   [Code that is easy to read, understand, and write](#code-that-is-easy-to-read-understand-and-write)
+    -   [Practical safety and testing mechanisms](#practical-safety-and-testing-mechanisms)
+    -   [Fast and scalable development](#fast-and-scalable-development)
+    -   [Modern OS platforms, hardware architectures, and environments](#modern-os-platforms-hardware-architectures-and-environments)
+    -   [Interoperability with and migration from existing C++ code](#interoperability-with-and-migration-from-existing-c-code)
+-   [Non-goals](#non-goals)
+    -   [Stable language and library ABI](#stable-language-and-library-abi)
+    -   [Backwards or forwards compatibility](#backwards-or-forwards-compatibility)
+    -   [Legacy compiled libraries without source code or ability to rebuild](#legacy-compiled-libraries-without-source-code-or-ability-to-rebuild)
+    -   [Support for existing compilation and linking models](#support-for-existing-compilation-and-linking-models)
+    -   [Idiomatic migration of non-modern, non-idiomatic C++ code](#idiomatic-migration-of-non-modern-non-idiomatic-c-code)
 -   [Prioritization beyond goals](#prioritization-beyond-goals)
 -   [Acknowledgements](#acknowledgements)
 
@@ -54,6 +52,9 @@ adopt, even in individual libraries both using and used from C++ code. We expect
 this depends on having high-performance bidirectional interoperability with C++,
 excellent migration tooling, and an easy ramp-up for experienced C++ software
 developers.
+
+[Principles](principles/README.md) are provided to clarify these goals.
+Principles do not supersede goals and priorities.
 
 ## Project goals
 
@@ -152,29 +153,25 @@ exact form this ends up taking.
 
 ## Language goals and priorities
 
-We believe Carbon must support:
+We are designing Carbon to support:
 
-1.  Performance-critical software.
-2.  Software and language evolution.
-3.  Code that is easy to read, understand, and write.
-4.  Practical safety and testing mechanisms.
-5.  Fast and scalable development.
-6.  Modern OS platforms, hardware architectures, and environments.
-7.  Interoperability with and migration from existing C++ code.
+-   Performance-critical software
+-   Software and language evolution
+-   Code that is easy to read, understand, and write
+-   Practical safety and testing mechanisms
+-   Fast and scalable development
+-   Modern OS platforms, hardware architectures, and environments
+-   Interoperability with and migration from existing C++ code
 
-While many languages share subsets of these goals, what distinguishes Carbon is
-their combination. For the Carbon project, they are prioritized in the above
-order to help make clear what tradeoffs we intend to make. However, each and
-every goal remains critically important: **Carbon _must_ have excellent C++
-interoperability and migration to be successful.**
-
-### Goals in detail
+Many languages share subsets of these goals, but what distinguishes Carbon is
+their combination. Where it is necessary to make tradeoffs between these goals,
+we intend to prioritize them in this order.
 
 Each goal is broad, and has several facets to consider when making decisions.
 Below, we discuss all of these goals in more detail to give a deeper
 understanding of both the nature and motivation of these goals.
 
-#### Performance-critical software
+### Performance-critical software
 
 All software consumes resources: time, memory, compute, power, binary size, and
 so on. In many cases, raw resource usage is not the biggest concern. Instead,
@@ -212,7 +209,7 @@ brittle baseline performance that cannot be reliably sustained.
 leave the rules and structure of Carbon, whether to gain control over
 performance problems or to gain access to hardware facilities.
 
-#### Software and language evolution
+### Software and language evolution
 
 Titus Winters writes in "Non-Atomic Refactoring and Software Sustainability":
 
@@ -266,7 +263,7 @@ many options open, such as dedicated and potentially slower features, it does
 limit the degree to which legacy use cases beyond source code should shape the
 Carbon design.
 
-#### Code that is easy to read, understand, and write
+### Code that is easy to read, understand, and write
 
 While this is perhaps the least unique among programming languages of the goals
 we list here, we feel it is important to state it, explain all of what we mean
@@ -366,7 +363,7 @@ make the features easier to understand. It's also often the best way to ensure
 predictable performance, although supporting peak performance may require
 options for more complex implementation behavior.
 
-#### Practical safety and testing mechanisms
+### Practical safety and testing mechanisms
 
 Our goal is to add as much language-level safety and security to Carbon as
 possible, using a hybrid strategy to balance other goals. We will do as many
@@ -399,7 +396,7 @@ this can be seen in facilities that allow indexing into an array: such
 facilities should be designed to have the bounds of the array available to
 implement bounds checking when desirable.
 
-#### Fast and scalable development
+### Fast and scalable development
 
 Software development iteration has a critical "edit, test, debug" cycle.
 Developers will use IDEs, editors, compilers, and other tools that need
@@ -430,7 +427,7 @@ requires separate compilation of source files, and potentially other incremental
 build strategies. Separate compilation also enables better scalability options
 for build systems of large software.
 
-#### Modern OS platforms, hardware architectures, and environments
+### Modern OS platforms, hardware architectures, and environments
 
 Carbon must have strong support for all of the major, modern OS platforms, the
 hardware architectures they run on, and the environments in which their software
@@ -459,7 +456,7 @@ platforms.
 For examples, please see Carbon's
 [success criteria](principles/success_criteria.md#modern-os-platforms-hardware-architectures-and-environments).
 
-#### Interoperability with and migration from existing C++ code
+### Interoperability with and migration from existing C++ code
 
 We want developers working within existing C++ ecosystems to easily start using
 Carbon, without starting from scratch. Adopting Carbon should not require
@@ -513,14 +510,14 @@ given piece code only needs to be migrated once, we expect interoperability to
 be invoked continuously to support migrated code and will thus remain important
 for most developers.
 
-### Non-goals
+## Non-goals
 
 There are common or expected goals of many programming languages that we
 explicitly call out as non-goals for Carbon. That doesn't make these things bad
 in any way, but reflects the fact that they do not provide meaningful value to
 us and come with serious costs and/or risks.
 
-#### Stable language and library ABI
+### Stable language and library ABI
 
 We would prefer to provide better, dedicated mechanisms to decompose software
 subsystems in ways that scale over time rather than providing a stable ABI
@@ -545,7 +542,7 @@ or Swift's ["resilience"](https://swift.org/blog/library-evolution/) model. The
 specific approach should be designed around the goals outlined above in order to
 fit the Carbon language.
 
-#### Backwards or forwards compatibility
+### Backwards or forwards compatibility
 
 Our goals are focused on _migration_ from one version of Carbon to the next
 rather than _compatibility_ between them. This is rooted in our experience with
@@ -556,7 +553,7 @@ require some manual intervention despite our best efforts, due to
 [Hyrum's Law](http://www.hyrumslaw.com), and so we should acknowledge that
 upgrades require active migrations.
 
-#### Legacy compiled libraries without source code or ability to rebuild
+### Legacy compiled libraries without source code or ability to rebuild
 
 We consider it a non-goal to support legacy code for which the source code is no
 longer available, though we do sympathize with such use cases and would like the
@@ -565,7 +562,7 @@ Similarly, plugin ABIs aren’t our particular concern, yet we’re interested i
 seeing tooling which can help bridge between programs and plugins which use
 different ABIs.
 
-#### Support for existing compilation and linking models
+### Support for existing compilation and linking models
 
 While it is essential to have interoperability with C++, we are willing to
 change the compilation and linking model of C++ itself to enable this if
@@ -576,7 +573,7 @@ have been implemented thus far in compilers and linkers.
 As a concrete example, Carbon will not support platforms that cannot update
 their compiler and linker alongside the language.
 
-#### Idiomatic migration of non-modern, non-idiomatic C++ code
+### Idiomatic migration of non-modern, non-idiomatic C++ code
 
 While large-scale, tool-assisted migration of C++ code to Carbon is an explicit
 goal, handling all C++ code with this is expressly not a goal. There is likely a
@@ -587,11 +584,6 @@ reproducing exact C++ semantics even if bizarre, even this is not guaranteed and
 improving on it is not a goal. Migration support will prioritize code that
 adheres to reasonable C++ best practices, such as avoiding undefined behavior,
 maintaining good test coverage, and validating tests with sanitizers.
-
-### Principles
-
-[Principles](principles/README.md) are provided to clarify these goals.
-Principles do not supersede goals and priorities.
 
 ## Prioritization beyond goals
 

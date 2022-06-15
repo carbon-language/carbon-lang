@@ -1913,7 +1913,7 @@ C++ constructors to initialize their base class:
 
 ##### Virtual base classes
 
-FIXME: Ask zygoloid to fill this in.
+TODO: Ask zygoloid to fill this in.
 
 Carbon won't support declaring virtual base classes, and the C++ interop use
 cases Carbon needs to support are limited. This will allow us to simplify the

@@ -12,12 +12,12 @@
 package ExplorerTest api;
 
 fn CompareStr(s: String) -> i32 {
-  if (s == "str;") {
+  if (s == "str;\x07") {
     return 0;
   }
   return 1;
 }
 
 fn Main() -> i32 {
-  return CompareStr("\x73\x74\x72\x3B");
+  return CompareStr("\x73\x74\x72\x3B\x07");
 }

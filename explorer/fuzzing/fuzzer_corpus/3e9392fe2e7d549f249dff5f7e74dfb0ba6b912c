@@ -1,0 +1,22 @@
+compilation_unit {
+  declarations {
+    function {
+      body {
+        statements {
+          continuation {
+            body {
+              statements {
+                run {
+                  argument {
+                    identifier {
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

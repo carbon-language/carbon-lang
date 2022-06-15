@@ -26,7 +26,6 @@ cc_library(
         "//common:ostream",
         "//explorer/ast:declaration",
         "//explorer/ast:expression",
-        "//explorer/ast:pattern",
         "//explorer/ast:statement",
         "//explorer/common:arena",
         "//explorer/common:error_builders",
@@ -141,7 +140,6 @@ cc_library(
         "//explorer/ast",
         "//explorer/ast:declaration",
         "//explorer/ast:expression",
-        "//explorer/ast:pattern",
         "//explorer/common:arena",
         "//explorer/common:error_builders",
         "@llvm-project//llvm:Support",
@@ -174,7 +172,6 @@ cc_library(
         "//explorer/ast",
         "//explorer/ast:declaration",
         "//explorer/ast:expression",
-        "//explorer/ast:pattern",
         "//explorer/ast:return_term",
         "//explorer/ast:statement",
         "//explorer/ast:static_scope",
@@ -192,10 +189,12 @@ cc_library(
 cc_library(
     name = "type_checker",
     srcs = [
+        "builtins.cpp",
         "impl_scope.cpp",
         "type_checker.cpp",
     ],
     hdrs = [
+        "builtins.h",
         "impl_scope.h",
         "type_checker.h",
     ],
@@ -203,6 +202,7 @@ cc_library(
         ":action_and_value",
         ":dictionary",
         ":interpreter",
+        "//common:error",
         "//common:ostream",
         "//explorer/ast",
         "//explorer/ast:declaration",
@@ -211,6 +211,7 @@ cc_library(
         "//explorer/common:arena",
         "//explorer/common:error_builders",
         "//explorer/common:nonnull",
+        "//explorer/common:source_location",
         "@llvm-project//llvm:Support",
     ],
 )

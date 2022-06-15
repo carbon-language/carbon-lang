@@ -53,7 +53,8 @@ auto InterpPattern(Nonnull<const Pattern*> p, Nonnull<Arena*> arena,
 [[nodiscard]] auto PatternMatch(
     Nonnull<const Value*> p, Nonnull<const Value*> v, SourceLocation source_loc,
     std::optional<Nonnull<RuntimeScope*>> bindings, BindingMap& generic_args,
-    std::optional<Nonnull<llvm::raw_ostream*>> trace_stream) -> bool;
+    std::optional<Nonnull<llvm::raw_ostream*>> trace_stream,
+    Nonnull<Arena*> arena) -> bool;
 
 }  // namespace Carbon
 

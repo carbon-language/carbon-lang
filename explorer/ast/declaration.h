@@ -24,6 +24,8 @@
 
 namespace Carbon {
 
+class ConstraintType;
+
 // Abstract base class of all AST nodes representing patterns.
 //
 // Declaration and its derived classes support LLVM-style RTTI, including
@@ -104,7 +106,7 @@ class FunctionDeclaration : public Declaration {
   static auto Create(Nonnull<Arena*> arena, SourceLocation source_loc,
                      std::string name,
                      std::vector<Nonnull<AstNode*>> deduced_params,
-                     std::optional<Nonnull<BindingPattern*>> me_pattern,
+                     std::optional<Nonnull<Pattern*>> me_pattern,
                      Nonnull<TuplePattern*> param_pattern,
                      ReturnTerm return_term,
                      std::optional<Nonnull<Block*>> body)
@@ -113,7 +115,7 @@ class FunctionDeclaration : public Declaration {
   // Use `Create()` instead. This is public only so Arena::New() can call it.
   FunctionDeclaration(SourceLocation source_loc, std::string name,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,
-                      std::optional<Nonnull<BindingPattern*>> me_pattern,
+                      std::optional<Nonnull<Pattern*>> me_pattern,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
                       std::optional<Nonnull<Block*>> body)
@@ -139,8 +141,8 @@ class FunctionDeclaration : public Declaration {
   auto deduced_parameters() -> llvm::ArrayRef<Nonnull<GenericBinding*>> {
     return deduced_parameters_;
   }
-  auto me_pattern() const -> const BindingPattern& { return **me_pattern_; }
-  auto me_pattern() -> BindingPattern& { return **me_pattern_; }
+  auto me_pattern() const -> const Pattern& { return **me_pattern_; }
+  auto me_pattern() -> Pattern& { return **me_pattern_; }
   auto param_pattern() const -> const TuplePattern& { return *param_pattern_; }
   auto param_pattern() -> TuplePattern& { return *param_pattern_; }
   auto return_term() const -> const ReturnTerm& { return return_term_; }
@@ -155,7 +157,7 @@ class FunctionDeclaration : public Declaration {
  private:
   std::string name_;
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
-  std::optional<Nonnull<BindingPattern*>> me_pattern_;
+  std::optional<Nonnull<Pattern*>> me_pattern_;
   Nonnull<TuplePattern*> param_pattern_;
   ReturnTerm return_term_;
   std::optional<Nonnull<Block*>> body_;
@@ -220,7 +222,7 @@ class ClassDeclaration : public Declaration {
 class AlternativeSignature : public AstNode {
  public:
   AlternativeSignature(SourceLocation source_loc, std::string name,
-                       Nonnull<Expression*> signature)
+                       Nonnull<TupleLiteral*> signature)
       : AstNode(AstNodeKind::AlternativeSignature, source_loc),
         name_(std::move(name)),
         signature_(signature) {}
@@ -233,12 +235,12 @@ class AlternativeSignature : public AstNode {
   }
 
   auto name() const -> const std::string& { return name_; }
-  auto signature() const -> const Expression& { return *signature_; }
-  auto signature() -> Expression& { return *signature_; }
+  auto signature() const -> const TupleLiteral& { return *signature_; }
+  auto signature() -> TupleLiteral& { return *signature_; }
 
  private:
   std::string name_;
-  Nonnull<Expression*> signature_;
+  Nonnull<TupleLiteral*> signature_;
 };
 
 class ChoiceDeclaration : public Declaration {
@@ -295,6 +297,12 @@ class VariableDeclaration : public Declaration {
 
   auto has_initializer() const -> bool { return initializer_.has_value(); }
 
+  // Can only be called by type-checking, if a conversion was required.
+  void set_initializer(Nonnull<Expression*> initializer) {
+    CARBON_CHECK(has_initializer()) << "should not add a new initializer";
+    initializer_ = initializer;
+  }
+
  private:
   // TODO: split this into a non-optional name and a type, initialized by
   // a constructor that takes a BindingPattern and handles errors like a
@@ -346,8 +354,6 @@ enum class ImplKind { InternalImpl, ExternalImpl };
 
 class ImplDeclaration : public Declaration {
  public:
-  using ImplementsCarbonValueNode = void;
-
   static auto Create(Nonnull<Arena*> arena, SourceLocation source_loc,
                      ImplKind kind, Nonnull<Expression*> impl_type,
                      Nonnull<Expression*> interface,
@@ -380,11 +386,11 @@ class ImplDeclaration : public Declaration {
   // Return the interface that is being implemented.
   auto interface() const -> const Expression& { return *interface_; }
   auto interface() -> Expression& { return *interface_; }
-  void set_interface_type(Nonnull<const Value*> iface_type) {
-    interface_type_ = iface_type;
+  void set_constraint_type(Nonnull<const ConstraintType*> constraint_type) {
+    constraint_type_ = constraint_type;
   }
-  auto interface_type() const -> Nonnull<const Value*> {
-    return *interface_type_;
+  auto constraint_type() const -> Nonnull<const ConstraintType*> {
+    return *constraint_type_;
   }
   auto deduced_parameters() const
       -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
@@ -411,10 +417,34 @@ class ImplDeclaration : public Declaration {
   Nonnull<Expression*> impl_type_;
   Nonnull<SelfDeclaration*> self_decl_;
   Nonnull<Expression*> interface_;
-  std::optional<Nonnull<const Value*>> interface_type_;
+  std::optional<Nonnull<const ConstraintType*>> constraint_type_;
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
   std::vector<Nonnull<Declaration*>> members_;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings_;
+};
+
+class AliasDeclaration : public Declaration {
+ public:
+  using ImplementsCarbonValueNode = void;
+
+  explicit AliasDeclaration(SourceLocation source_loc, const std::string& name,
+                            Nonnull<Expression*> target)
+      : Declaration(AstNodeKind::AliasDeclaration, source_loc),
+        name_(name),
+        target_(target) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromAliasDeclaration(node->kind());
+  }
+
+  auto name() const -> const std::string { return name_; }
+  auto target() const -> const Expression& { return *target_; }
+  auto target() -> Expression& { return *target_; }
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+
+ private:
+  std::string name_;
+  Nonnull<Expression*> target_;
 };
 
 // Return the name of a declaration, if it has one.

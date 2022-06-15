@@ -101,6 +101,9 @@ class Assign : public Statement {
   auto rhs() const -> const Expression& { return *rhs_; }
   auto rhs() -> Expression& { return *rhs_; }
 
+  // Can only be called by type-checking, if a conversion was required.
+  void set_rhs(Nonnull<Expression*> rhs) { rhs_ = rhs; }
+
  private:
   Nonnull<Expression*> lhs_;
   Nonnull<Expression*> rhs_;
@@ -124,6 +127,9 @@ class VariableDefinition : public Statement {
   auto init() const -> const Expression& { return *init_; }
   auto init() -> Expression& { return *init_; }
   auto value_category() const -> ValueCategory { return value_category_; }
+
+  // Can only be called by type-checking, if a conversion was required.
+  void set_init(Nonnull<Expression*> init) { init_ = init; }
 
  private:
   Nonnull<Pattern*> pattern_;
@@ -152,6 +158,9 @@ class If : public Statement {
     return else_block_;
   }
   auto else_block() -> std::optional<Nonnull<Block*>> { return else_block_; }
+
+  // Can only be called by type-checking, if a conversion was required.
+  void set_condition(Nonnull<Expression*> condition) { condition_ = condition; }
 
  private:
   Nonnull<Expression*> condition_;
@@ -186,6 +195,11 @@ class Return : public Statement {
   auto function() const -> const FunctionDeclaration& { return **function_; }
   auto function() -> FunctionDeclaration& { return **function_; }
 
+  // Can only be called by type-checking, if a conversion was required.
+  void set_expression(Nonnull<Expression*> expression) {
+    expression_ = expression;
+  }
+
   // Can only be called once, by ResolveControlFlow.
   void set_function(Nonnull<FunctionDeclaration*> function) {
     CARBON_CHECK(!function_.has_value());
@@ -214,6 +228,9 @@ class While : public Statement {
   auto condition() -> Expression& { return *condition_; }
   auto body() const -> const Block& { return *body_; }
   auto body() -> Block& { return *body_; }
+
+  // Can only be called by type-checking, if a conversion was required.
+  void set_condition(Nonnull<Expression*> condition) { condition_ = condition; }
 
  private:
   Nonnull<Expression*> condition_;
@@ -306,6 +323,11 @@ class Match : public Statement {
   auto clauses() const -> llvm::ArrayRef<Clause> { return clauses_; }
   auto clauses() -> llvm::MutableArrayRef<Clause> { return clauses_; }
 
+  // Can only be called by type-checking, if a conversion was required.
+  void set_expression(Nonnull<Expression*> expression) {
+    expression_ = expression;
+  }
+
  private:
   Nonnull<Expression*> expression_;
   std::vector<Clause> clauses_;
@@ -375,6 +397,9 @@ class Run : public Statement {
 
   auto argument() const -> const Expression& { return *argument_; }
   auto argument() -> Expression& { return *argument_; }
+
+  // Can only be called by type-checking, if a conversion was required.
+  void set_argument(Nonnull<Expression*> argument) { argument_ = argument; }
 
  private:
   Nonnull<Expression*> argument_;

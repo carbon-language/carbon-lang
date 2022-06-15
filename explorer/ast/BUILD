@@ -16,7 +16,7 @@ cc_library(
 
 cc_library(
     name = "ast_node",
-    srcs = ["ast_node.cpp"],
+    srcs = ["ast_node.cpp", "ast_rtti.cpp",],
     hdrs = [
         "ast_node.h",
         "ast_rtti.h",
@@ -30,9 +30,11 @@ cc_library(
 genrule(
     name = "ast_rtti",
     srcs = ["ast_rtti.txt"],
-    outs = ["ast_rtti.h"],
+    outs = ["ast_rtti.h", "ast_rtti.cpp"],
     cmd = "./$(location //explorer:gen_rtti)" +
-          " $(location ast_rtti.txt) > \"$@\"",
+          " $(location ast_rtti.txt)" +
+          " $(location ast_rtti.h) $(location ast_rtti.cpp)" +
+          " $(rootpath ast_rtti.h)",
     tools = ["//explorer:gen_rtti"],
 )
 
@@ -62,7 +64,6 @@ cc_test(
         ":ast_test_matchers",
         ":declaration",
         ":expression",
-        ":pattern",
         ":statement",
         "//common:gtest_main",
         "//explorer/common:arena",
@@ -77,7 +78,7 @@ cc_library(
     ],
     deps = [
         ":ast_node",
-        ":pattern",
+        ":expression",
         ":value_category",
         "//common:check",
         "//common:ostream",
@@ -96,7 +97,7 @@ cc_library(
     deps = [
         ":ast_node",
         ":impl_binding",
-        ":pattern",
+        ":expression",
         ":return_term",
         ":statement",
         ":static_scope",
@@ -123,8 +124,8 @@ cc_library(
 
 cc_library(
     name = "expression",
-    srcs = ["expression.cpp"],
-    hdrs = ["expression.h"],
+    srcs = ["expression.cpp", "pattern.cpp"],
+    hdrs = ["expression.h", "pattern.h"],
     deps = [
         ":ast_node",
         ":paren_contents",
@@ -166,30 +167,12 @@ cc_library(
     ],
 )
 
-cc_library(
-    name = "pattern",
-    srcs = ["pattern.cpp"],
-    hdrs = ["pattern.h"],
-    deps = [
-        ":ast_node",
-        ":expression",
-        ":static_scope",
-        ":value_category",
-        "//common:ostream",
-        "//explorer/common:arena",
-        "//explorer/common:error_builders",
-        "//explorer/common:source_location",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
 cc_test(
     name = "pattern_test",
     srcs = ["pattern_test.cpp"],
     deps = [
         ":expression",
         ":paren_contents",
-        ":pattern",
         "//common:gtest_main",
         "//explorer/common:arena",
         "@com_google_googletest//:gtest",
@@ -220,7 +203,6 @@ cc_library(
     deps = [
         ":ast_node",
         ":expression",
-        ":pattern",
         ":return_term",
         ":static_scope",
         ":value_category",

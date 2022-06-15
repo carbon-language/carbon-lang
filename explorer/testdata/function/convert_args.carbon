@@ -1,0 +1,42 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// RUN: %{explorer} %s 2>&1 | \
+// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
+// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
+// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: %{explorer} %s
+// CHECK: result: 123
+
+package ExplorerTest api;
+
+class One {
+  impl One as ImplicitAs(i32) {
+    fn Convert[me: Self]() -> i32 { return 1; }
+  }
+}
+
+class Two {
+  impl Two as ImplicitAs(i32) {
+    fn Convert[me: Self]() -> i32 { return 2; }
+  }
+}
+
+class N {
+  impl N as ImplicitAs(i32) {
+    fn Convert[me: Self]() -> i32 { return me.n; }
+  }
+  var n: i32;
+}
+
+fn Get(a: i32, b: i32, c: i32) -> i32 {
+  return 100 * a + 10 * b + c;
+}
+
+fn Main() -> i32 {
+  var i: One = {};
+  var ii: Two = {};
+  var iii: N = {.n = 3};
+  return Get(i, ii, iii);
+}

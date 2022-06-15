@@ -24,8 +24,8 @@ auto Heap::AllocateValue(Nonnull<const Value*> v) -> AllocationId {
 auto Heap::Read(const Address& a, SourceLocation source_loc) const
     -> ErrorOr<Nonnull<const Value*>> {
   CARBON_RETURN_IF_ERROR(this->CheckAlive(a.allocation_, source_loc));
-  return values_[a.allocation_.index_]->GetField(arena_, a.field_path_,
-                                                 source_loc);
+  Nonnull<const Value*> value = values_[a.allocation_.index_];
+  return value->GetMember(arena_, a.field_path_, source_loc, value);
 }
 
 auto Heap::Write(const Address& a, Nonnull<const Value*> v,
@@ -56,10 +56,13 @@ void Heap::Deallocate(AllocationId allocation) {
   }
 }
 
+void Heap::Deallocate(const Address& a) { Deallocate(a.allocation_); }
+
 void Heap::Print(llvm::raw_ostream& out) const {
   llvm::ListSeparator sep;
   for (size_t i = 0; i < values_.size(); ++i) {
     out << sep;
+    out << i << ": ";
     if (!alive_[i]) {
       out << "!!";
     }

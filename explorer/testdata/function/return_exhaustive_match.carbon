@@ -13,7 +13,7 @@ package ExplorerTest api;
 
 fn Main() -> i32 {
   match (0) {
-    case _: auto => return 1;
+    case _: auto => { return 1; }
   }
   // We don't need a `return` here because the match is exhaustive.
 }

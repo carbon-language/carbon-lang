@@ -7,6 +7,7 @@
 #include <map>
 #include <optional>
 
+#include "explorer/ast/pattern.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "llvm/ADT/StringExtras.h"
@@ -21,8 +22,10 @@ using llvm::isa;
 auto IntrinsicExpression::FindIntrinsic(std::string_view name,
                                         SourceLocation source_loc)
     -> ErrorOr<Intrinsic> {
-  static const auto& intrinsic_map =
-      *new std::map<std::string_view, Intrinsic>({{"print", Intrinsic::Print}});
+  static const auto& intrinsic_map = *new std::map<std::string_view, Intrinsic>(
+      {{"print", Intrinsic::Print},
+       {"new", Intrinsic::Alloc},
+       {"delete", Intrinsic::Dealloc}});
   name.remove_prefix(std::strlen("__intrinsic_"));
   auto it = intrinsic_map.find(name);
   if (it == intrinsic_map.end()) {
@@ -55,6 +58,7 @@ auto ToString(Operator op) -> std::string_view {
     case Operator::Add:
       return "+";
     case Operator::AddressOf:
+    case Operator::Combine:
       return "&";
     case Operator::Neg:
     case Operator::Sub:
@@ -87,16 +91,16 @@ void Expression::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
     case ExpressionKind::IndexExpression: {
       const auto& index = cast<IndexExpression>(*this);
-      out << index.aggregate() << "[" << index.offset() << "]";
+      out << index.object() << "[" << index.offset() << "]";
       break;
     }
-    case ExpressionKind::FieldAccessExpression: {
-      const auto& access = cast<FieldAccessExpression>(*this);
-      out << access.aggregate() << "." << access.field();
+    case ExpressionKind::SimpleMemberAccessExpression: {
+      const auto& access = cast<SimpleMemberAccessExpression>(*this);
+      out << access.object() << "." << access.member();
       break;
     }
-    case ExpressionKind::CompoundFieldAccessExpression: {
-      const auto& access = cast<CompoundFieldAccessExpression>(*this);
+    case ExpressionKind::CompoundMemberAccessExpression: {
+      const auto& access = cast<CompoundMemberAccessExpression>(*this);
       out << access.object() << ".(" << access.path() << ")";
       break;
     }
@@ -156,18 +160,36 @@ void Expression::Print(llvm::raw_ostream& out) const {
       out << "fn " << fn.parameter() << " -> " << fn.return_type();
       break;
     }
-    case ExpressionKind::IntrinsicExpression:
-      out << "intrinsic_expression(";
+    case ExpressionKind::IntrinsicExpression: {
+      const auto& iexp = cast<IntrinsicExpression>(*this);
+      out << "intrinsic_";
       switch (cast<IntrinsicExpression>(*this).intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print:
           out << "print";
+          break;
+        case IntrinsicExpression::Intrinsic::Alloc:
+          out << "new";
+          break;
+        case IntrinsicExpression::Intrinsic::Dealloc:
+          out << "delete";
+          break;
       }
-      out << ")";
+      out << iexp.args();
       break;
+    }
     case ExpressionKind::IfExpression: {
       const auto& if_expr = cast<IfExpression>(*this);
       out << "if " << if_expr.condition() << " then "
           << if_expr.then_expression() << " else " << if_expr.else_expression();
+      break;
+    }
+    case ExpressionKind::WhereExpression: {
+      const auto& where = cast<WhereExpression>(*this);
+      out << where.self_binding().type() << " where ";
+      llvm::ListSeparator sep(" and ");
+      for (const WhereClause* clause : where.clauses()) {
+        out << sep << *clause;
+      }
       break;
     }
     case ExpressionKind::InstantiateImpl: {
@@ -192,6 +214,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
       break;
     }
     case ExpressionKind::IdentifierExpression:
+    case ExpressionKind::DotSelfExpression:
     case ExpressionKind::IntLiteral:
     case ExpressionKind::BoolLiteral:
     case ExpressionKind::BoolTypeLiteral:
@@ -200,6 +223,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
     case ExpressionKind::ContinuationTypeLiteral:
+    case ExpressionKind::ValueLiteral:
       PrintID(out);
       break;
   }
@@ -209,6 +233,9 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
   switch (kind()) {
     case ExpressionKind::IdentifierExpression:
       out << cast<IdentifierExpression>(*this).name();
+      break;
+    case ExpressionKind::DotSelfExpression:
+      out << ".Self";
       break;
     case ExpressionKind::IntLiteral:
       out << cast<IntLiteral>(*this).value();
@@ -236,10 +263,15 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
     case ExpressionKind::ContinuationTypeLiteral:
       out << "Continuation";
       break;
+    case ExpressionKind::ValueLiteral:
+      // TODO: For layering reasons, we can't print out the value from here.
+      out << "ValueLiteral";
+      break;
     case ExpressionKind::IndexExpression:
-    case ExpressionKind::FieldAccessExpression:
-    case ExpressionKind::CompoundFieldAccessExpression:
+    case ExpressionKind::SimpleMemberAccessExpression:
+    case ExpressionKind::CompoundMemberAccessExpression:
     case ExpressionKind::IfExpression:
+    case ExpressionKind::WhereExpression:
     case ExpressionKind::TupleLiteral:
     case ExpressionKind::StructLiteral:
     case ExpressionKind::StructTypeLiteral:
@@ -254,5 +286,24 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
       break;
   }
 }
+
+WhereClause::~WhereClause() = default;
+
+void WhereClause::Print(llvm::raw_ostream& out) const {
+  switch (kind()) {
+    case WhereClauseKind::IsWhereClause: {
+      auto& clause = cast<IsWhereClause>(*this);
+      out << clause.type() << " is " << clause.constraint();
+      break;
+    }
+    case WhereClauseKind::EqualsWhereClause: {
+      auto& clause = cast<EqualsWhereClause>(*this);
+      out << clause.lhs() << " == " << clause.rhs();
+      break;
+    }
+  }
+}
+
+void WhereClause::PrintID(llvm::raw_ostream& out) const { out << "..."; }
 
 }  // namespace Carbon

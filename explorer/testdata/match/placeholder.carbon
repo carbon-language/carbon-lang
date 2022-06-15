@@ -14,8 +14,9 @@ package ExplorerTest api;
 fn Main() -> i32 {
   var t: auto = (1, 2, 3, 4);
   match (t) {
-    case (_: i32, _: auto, x: i32, y: auto) =>
+    case (_: i32, _: auto, x: i32, y: auto) => {
       return y - x - 1;
+    }
   }
   return 1;
 }

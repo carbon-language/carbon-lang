@@ -88,6 +88,11 @@ class ActionStack {
   auto Spawn(std::unique_ptr<Action> child, RuntimeScope scope)
       -> ErrorOr<Success>;
 
+  // Start a new recursive action.
+  auto BeginRecursiveAction() {
+    todo_.Push(std::make_unique<RecursiveAction>());
+  }
+
   // Advances the current action one step.
   auto RunAgain() -> ErrorOr<Success>;
 

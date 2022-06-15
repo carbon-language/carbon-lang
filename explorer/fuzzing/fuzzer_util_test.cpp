@@ -5,7 +5,6 @@
 #include "explorer/fuzzing/fuzzer_util.h"
 
 #include <gmock/gmock.h>
-#include <google/protobuf/text_format.h>
 #include <gtest/gtest.h>
 
 #include <fstream>
@@ -27,10 +26,10 @@ TEST(FuzzerUtilTest, RunFuzzerOnCorpus) {
     ASSERT_TRUE(file.is_open());
     std::stringstream contents;
     contents << file.rdbuf();
-    Fuzzing::Carbon carbon_proto;
-    ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(contents.str(),
-                                                              &carbon_proto));
-    ParseAndExecute(carbon_proto.compilation_unit());
+    const ErrorOr<Fuzzing::Carbon> carbon_proto =
+        ParseCarbonTextProto(contents.str());
+    ASSERT_TRUE(carbon_proto.ok()) << "couldn't parse text proto in " << f;
+    ParseAndExecute(carbon_proto->compilation_unit());
     ++file_count;
   }
   EXPECT_GT(file_count, 0);
@@ -42,6 +41,24 @@ TEST(FuzzerUtilTest, GetRunfilesFile) {
               testing::EndsWith("/empty.textproto"));
   EXPECT_THAT(Internal::GetRunfilesFile("nonexistent-file").error().message(),
               testing::EndsWith("doesn't exist"));
+}
+
+TEST(FuzzerUtilTest, ParseCarbonTextProtoWithUnknownField) {
+  const ErrorOr<Fuzzing::Carbon> carbon_proto =
+      ParseCarbonTextProto(R"(
+    compilation_unit {
+      garbage: "value"
+      declarations {
+        choice {
+          name: "Ch"
+        }
+      }
+    })",
+                           /*allow_unknown=*/true);
+  ASSERT_TRUE(carbon_proto.ok());
+  // No EqualsProto in gmock - https://github.com/google/googletest/issues/1761.
+  EXPECT_EQ(carbon_proto->compilation_unit().declarations(0).choice().name(),
+            "Ch");
 }
 
 }  // namespace

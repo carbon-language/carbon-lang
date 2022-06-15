@@ -13,6 +13,7 @@
 namespace Carbon {
 
 using ::llvm::cast;
+using ::llvm::isa;
 
 static auto ExpressionToProto(const Expression& expression)
     -> Fuzzing::Expression;
@@ -56,6 +57,8 @@ static auto OperatorToProtoEnum(const Operator op)
       return Fuzzing::PrimitiveOperatorExpression::Or;
     case Operator::Sub:
       return Fuzzing::PrimitiveOperatorExpression::Sub;
+    case Operator::Combine:
+      return Fuzzing::PrimitiveOperatorExpression::Combine;
   }
 }
 
@@ -80,8 +83,9 @@ static auto ExpressionToProto(const Expression& expression)
     -> Fuzzing::Expression {
   Fuzzing::Expression expression_proto;
   switch (expression.kind()) {
-    case ExpressionKind::InstantiateImpl: {
-      // UNDER CONSTRUCTION
+    case ExpressionKind::InstantiateImpl:
+    case ExpressionKind::ValueLiteral: {
+      // These do not correspond to source syntax.
       break;
     }
     case ExpressionKind::CallExpression: {
@@ -96,37 +100,46 @@ static auto ExpressionToProto(const Expression& expression)
       const auto& fun_type = cast<FunctionTypeLiteral>(expression);
       auto* fun_type_proto = expression_proto.mutable_function_type();
       *fun_type_proto->mutable_parameter() =
-          ExpressionToProto(fun_type.parameter());
+          TupleLiteralExpressionToProto(fun_type.parameter());
       *fun_type_proto->mutable_return_type() =
           ExpressionToProto(fun_type.return_type());
       break;
     }
 
-    case ExpressionKind::FieldAccessExpression: {
-      const auto& field_access = cast<FieldAccessExpression>(expression);
-      auto* field_access_proto = expression_proto.mutable_field_access();
-      field_access_proto->set_field(field_access.field());
-      *field_access_proto->mutable_aggregate() =
-          ExpressionToProto(field_access.aggregate());
+    case ExpressionKind::SimpleMemberAccessExpression: {
+      const auto& simple_member_access =
+          cast<SimpleMemberAccessExpression>(expression);
+      if (isa<DotSelfExpression>(simple_member_access.object())) {
+        // The parser rewrites `.Foo` into `.Self.Foo`. Undo this
+        // transformation.
+        auto* designator_proto = expression_proto.mutable_designator();
+        designator_proto->set_name(simple_member_access.member());
+        break;
+      }
+      auto* simple_member_access_proto =
+          expression_proto.mutable_simple_member_access();
+      simple_member_access_proto->set_field(simple_member_access.member());
+      *simple_member_access_proto->mutable_object() =
+          ExpressionToProto(simple_member_access.object());
       break;
     }
 
-    case ExpressionKind::CompoundFieldAccessExpression: {
-      const auto& field_access =
-          cast<CompoundFieldAccessExpression>(expression);
-      auto* field_access_proto =
-          expression_proto.mutable_compound_field_access();
-      *field_access_proto->mutable_object() =
-          ExpressionToProto(field_access.object());
-      *field_access_proto->mutable_path() =
-          ExpressionToProto(field_access.path());
+    case ExpressionKind::CompoundMemberAccessExpression: {
+      const auto& simple_member_access =
+          cast<CompoundMemberAccessExpression>(expression);
+      auto* simple_member_access_proto =
+          expression_proto.mutable_compound_member_access();
+      *simple_member_access_proto->mutable_object() =
+          ExpressionToProto(simple_member_access.object());
+      *simple_member_access_proto->mutable_path() =
+          ExpressionToProto(simple_member_access.path());
       break;
     }
 
     case ExpressionKind::IndexExpression: {
       const auto& index = cast<IndexExpression>(expression);
       auto* index_proto = expression_proto.mutable_index();
-      *index_proto->mutable_aggregate() = ExpressionToProto(index.aggregate());
+      *index_proto->mutable_object() = ExpressionToProto(index.object());
       *index_proto->mutable_offset() = ExpressionToProto(index.offset());
       break;
     }
@@ -174,12 +187,54 @@ static auto ExpressionToProto(const Expression& expression)
       break;
     }
 
+    case ExpressionKind::WhereExpression: {
+      const auto& where = cast<WhereExpression>(expression);
+      auto* where_proto = expression_proto.mutable_where();
+      *where_proto->mutable_base() =
+          ExpressionToProto(where.self_binding().type());
+      for (const WhereClause* where : where.clauses()) {
+        Fuzzing::WhereClause clause_proto;
+        switch (where->kind()) {
+          case WhereClauseKind::IsWhereClause: {
+            auto* is_proto = clause_proto.mutable_is();
+            *is_proto->mutable_type() =
+                ExpressionToProto(cast<IsWhereClause>(where)->type());
+            *is_proto->mutable_constraint() =
+                ExpressionToProto(cast<IsWhereClause>(where)->constraint());
+            break;
+          }
+          case WhereClauseKind::EqualsWhereClause: {
+            auto* equals_proto = clause_proto.mutable_equals();
+            *equals_proto->mutable_lhs() =
+                ExpressionToProto(cast<EqualsWhereClause>(where)->lhs());
+            *equals_proto->mutable_rhs() =
+                ExpressionToProto(cast<EqualsWhereClause>(where)->rhs());
+            break;
+          }
+        }
+        *where_proto->add_clauses() = clause_proto;
+      }
+      break;
+    }
+
+    case ExpressionKind::DotSelfExpression: {
+      auto* designator_proto = expression_proto.mutable_designator();
+      designator_proto->set_name("Self");
+      break;
+    }
+
     case ExpressionKind::IntrinsicExpression: {
       const auto& intrinsic = cast<IntrinsicExpression>(expression);
       auto* intrinsic_proto = expression_proto.mutable_intrinsic();
       switch (intrinsic.intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print:
           intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::Print);
+          break;
+        case IntrinsicExpression::Intrinsic::Alloc:
+          intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::Alloc);
+          break;
+        case IntrinsicExpression::Intrinsic::Dealloc:
+          intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::Dealloc);
           break;
       }
       *intrinsic_proto->mutable_argument() =
@@ -318,6 +373,10 @@ static auto PatternToProto(const Pattern& pattern) -> Fuzzing::Pattern {
     case PatternKind::VarPattern:
       *pattern_proto.mutable_var_pattern()->mutable_pattern() =
           PatternToProto(cast<VarPattern>(pattern).pattern());
+      break;
+    case PatternKind::AddrPattern:
+      *pattern_proto.mutable_addr_pattern()->mutable_binding_pattern() =
+          BindingPatternToProto(cast<AddrPattern>(pattern).binding());
       break;
   }
   return pattern_proto;
@@ -476,8 +535,23 @@ static auto DeclarationToProto(const Declaration& declaration)
             GenericBindingToProto(*binding);
       }
       if (function.is_method()) {
-        *function_proto->mutable_me_pattern() =
-            BindingPatternToProto(function.me_pattern());
+        switch (function.me_pattern().kind()) {
+          case PatternKind::AddrPattern:
+            *function_proto->mutable_me_pattern() =
+                PatternToProto(cast<AddrPattern>(function.me_pattern()));
+            break;
+          case PatternKind::BindingPattern:
+            *function_proto->mutable_me_pattern() =
+                PatternToProto(cast<BindingPattern>(function.me_pattern()));
+            break;
+          default:
+            // Parser shouldn't allow me_pattern to be anything other than
+            // AddrPattern or BindingPattern
+            CARBON_FATAL() << "me_pattern in method declaration can be either "
+                              "AddrPattern or BindingPattern. Actual pattern: "
+                           << function.me_pattern();
+            break;
+        }
       }
       *function_proto->mutable_param_pattern() =
           TuplePatternToProto(function.param_pattern());
@@ -513,7 +587,7 @@ static auto DeclarationToProto(const Declaration& declaration)
         auto* alternative_proto = choice_proto->add_alternatives();
         alternative_proto->set_name(alternative->name());
         *alternative_proto->mutable_signature() =
-            ExpressionToProto(alternative->signature());
+            TupleLiteralExpressionToProto(alternative->signature());
       }
       break;
     }
@@ -562,6 +636,14 @@ static auto DeclarationToProto(const Declaration& declaration)
 
     case DeclarationKind::SelfDeclaration: {
       CARBON_FATAL() << "Unreachable SelfDeclaration in DeclarationToProto().";
+    }
+
+    case DeclarationKind::AliasDeclaration: {
+      const auto& alias = cast<AliasDeclaration>(declaration);
+      auto* alias_proto = declaration_proto.mutable_alias();
+      alias_proto->set_name(alias.name());
+      *alias_proto->mutable_target() = ExpressionToProto(alias.target());
+      break;
     }
   }
   return declaration_proto;
