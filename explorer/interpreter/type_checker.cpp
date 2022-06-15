@@ -3053,40 +3053,27 @@ auto TypeChecker::CheckAndAddImplBindings(
       impl_decl->source_loc(), arena_->New<ImplWitness>(impl_decl),
       arena_->New<TypeType>(), ValueCategory::Let);
 
-  // Check that the interface is satisfied by the impl members and bring the
-  // impl into scope.
-  auto implement_interface =
-      [&](const InterfaceType* iface_type) -> ErrorOr<Success> {
-    CARBON_RETURN_IF_ERROR(CheckImplIsDeducible(
-        impl_decl->source_loc(), impl_type, iface_type, deduced_bindings,
-        *scope_info.innermost_scope));
+  // Each interface that is a lookup context is required to be implemented by
+  // the impl members. Other constraints are required to be satisfied by
+  // either those impls or impls available elsewhere.
+  const ConstraintType* constraint = impl_decl->constraint_type();
+  for (auto lookup : constraint->lookup_contexts()) {
+    if (auto* iface_type = dyn_cast<InterfaceType>(lookup.context)) {
+      CARBON_RETURN_IF_ERROR(
+          CheckImplIsDeducible(impl_decl->source_loc(), impl_type, iface_type,
+                               deduced_bindings, *scope_info.innermost_scope));
 
-    CARBON_RETURN_IF_ERROR(
-        CheckImplIsComplete(iface_type, impl_decl, impl_type));
+      CARBON_RETURN_IF_ERROR(
+          CheckImplIsComplete(iface_type, impl_decl, impl_type));
 
-    scope_info.innermost_non_class_scope->Add(
-        iface_type, deduced_bindings, impl_type,
-        impl_decl->impl_bindings(), impl_expr, *this);
-    return Success();
-  };
-
-  auto* constraint_type = impl_decl->interface_type();
-  if (auto* iface_type = dyn_cast<InterfaceType>(constraint_type)) {
-    CARBON_RETURN_IF_ERROR(implement_interface(iface_type));
-  } else {
-    // For a constraint, each interface that is a lookup context is required to
-    // be implemented by the impl members. Other constraints are required to be
-    // satisfied by either those impls or impls available elsewhere.
-    auto& constraint = cast<ConstraintType>(*constraint_type);
-    for (auto lookup : constraint.lookup_contexts()) {
-      if (auto* iface_type = dyn_cast<InterfaceType>(lookup.context)) {
-        CARBON_RETURN_IF_ERROR(implement_interface(iface_type));
-      } else {
-        // TODO: Add support for implementing `adapter`s.
-        return CompilationError(impl_decl->source_loc())
-               << "cannot implement a constraint whose lookup context includes "
-               << *lookup.context;
-      }
+      scope_info.innermost_non_class_scope->Add(
+          iface_type, deduced_bindings, impl_type, impl_decl->impl_bindings(),
+          impl_expr, *this);
+    } else {
+      // TODO: Add support for implementing `adapter`s.
+      return CompilationError(impl_decl->source_loc())
+             << "cannot implement a constraint whose lookup context includes "
+             << *lookup.context;
     }
   }
   return Success();
@@ -3126,13 +3113,16 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   CARBON_ASSIGN_OR_RETURN(
       Nonnull<const Value*> constraint_type,
       TypeCheckTypeExp(&impl_decl->interface(), impl_scope));
-  if (!isa<InterfaceType, ConstraintType>(constraint_type)) {
+  if (auto* iface_type = dyn_cast<InterfaceType>(constraint_type)) {
+    constraint_type = MakeConstraintForInterface(
+        impl_decl->interface().source_loc(), iface_type);
+  }
+  if (!isa<ConstraintType>(constraint_type)) {
     return CompilationError(impl_decl->interface().source_loc())
            << "expected constraint after `as`, found value of type "
            << *constraint_type;
   }
-
-  impl_decl->set_interface_type(constraint_type);
+  impl_decl->set_constraint_type(cast<ConstraintType>(constraint_type));
 
   // Declare the impl members.
   ScopeInfo impl_scope_info = ScopeInfo::ForNonClassScope(&impl_scope);
