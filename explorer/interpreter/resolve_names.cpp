@@ -166,6 +166,15 @@ static auto ResolveNames(Expression& expression,
       identifier.set_value_node(value_node);
       break;
     }
+    case ExpressionKind::DotSelfExpression: {
+      auto& dot_self = cast<DotSelfExpression>(expression);
+      CARBON_ASSIGN_OR_RETURN(
+          const auto value_node,
+          enclosing_scope.Resolve(".Self", dot_self.source_loc()));
+      dot_self.set_self_binding(const_cast<GenericBinding*>(
+          &cast<GenericBinding>(value_node.base())));
+      break;
+    }
     case ExpressionKind::IntrinsicExpression:
       CARBON_RETURN_IF_ERROR(ResolveNames(
           cast<IntrinsicExpression>(expression).args(), enclosing_scope));
@@ -182,13 +191,14 @@ static auto ResolveNames(Expression& expression,
     }
     case ExpressionKind::WhereExpression: {
       auto& where = cast<WhereExpression>(expression);
-      // TODO: Introduce `.Self` into scope?
-      // StaticScope where_scope;
-      // where_scope.AddParent(&enclosing_scope);
-      // where_scope.Add(".Self", ???);
-      CARBON_RETURN_IF_ERROR(ResolveNames(where.base(), enclosing_scope));
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(where.self_binding().type(), enclosing_scope));
+      // Introduce `.Self` into scope on the right of the `where` keyword.
+      StaticScope where_scope;
+      where_scope.AddParent(&enclosing_scope);
+      CARBON_RETURN_IF_ERROR(where_scope.Add(".Self", &where.self_binding()));
       for (Nonnull<WhereClause*> clause : where.clauses()) {
-        CARBON_RETURN_IF_ERROR(ResolveNames(*clause, enclosing_scope));
+        CARBON_RETURN_IF_ERROR(ResolveNames(*clause, where_scope));
       }
       break;
     }
@@ -253,7 +263,11 @@ static auto ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
     }
     case PatternKind::GenericBinding: {
       auto& binding = cast<GenericBinding>(pattern);
-      CARBON_RETURN_IF_ERROR(ResolveNames(binding.type(), enclosing_scope));
+      // `.Self` is in scope in the context of the type.
+      StaticScope self_scope;
+      self_scope.AddParent(&enclosing_scope);
+      CARBON_RETURN_IF_ERROR(self_scope.Add(".Self", &binding));
+      CARBON_RETURN_IF_ERROR(ResolveNames(binding.type(), self_scope));
       if (binding.name() != AnonymousName) {
         CARBON_RETURN_IF_ERROR(enclosing_scope.Add(binding.name(), &binding));
       }
@@ -425,8 +439,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
       StaticScope function_scope;
       function_scope.AddParent(&enclosing_scope);
       for (Nonnull<GenericBinding*> binding : function.deduced_parameters()) {
-        CARBON_RETURN_IF_ERROR(ResolveNames(binding->type(), function_scope));
-        CARBON_RETURN_IF_ERROR(function_scope.Add(binding->name(), binding));
+        CARBON_RETURN_IF_ERROR(ResolveNames(*binding, function_scope));
       }
       if (function.is_method()) {
         CARBON_RETURN_IF_ERROR(

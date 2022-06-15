@@ -7,6 +7,7 @@
 #include <map>
 #include <optional>
 
+#include "explorer/ast/pattern.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "llvm/ADT/StringExtras.h"
@@ -184,7 +185,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
     }
     case ExpressionKind::WhereExpression: {
       const auto& where = cast<WhereExpression>(*this);
-      out << where.base() << " where ";
+      out << where.self_binding().type() << " where ";
       llvm::ListSeparator sep(" and ");
       for (const WhereClause* clause : where.clauses()) {
         out << sep << *clause;
@@ -213,6 +214,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
       break;
     }
     case ExpressionKind::IdentifierExpression:
+    case ExpressionKind::DotSelfExpression:
     case ExpressionKind::IntLiteral:
     case ExpressionKind::BoolLiteral:
     case ExpressionKind::BoolTypeLiteral:
@@ -231,6 +233,9 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
   switch (kind()) {
     case ExpressionKind::IdentifierExpression:
       out << cast<IdentifierExpression>(*this).name();
+      break;
+    case ExpressionKind::DotSelfExpression:
+      out << ".Self";
       break;
     case ExpressionKind::IntLiteral:
       out << cast<IntLiteral>(*this).value();

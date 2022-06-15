@@ -81,7 +81,6 @@ cc_library(
         "//explorer/ast:declaration",
         "//explorer/ast:expression",
         "//explorer/ast:paren_contents",
-        "//explorer/ast:pattern",
         "//explorer/ast:value_category",
         "//explorer/common:arena",
         "//explorer/common:error_builders",

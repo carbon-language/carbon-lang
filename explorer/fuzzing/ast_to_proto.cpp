@@ -13,6 +13,7 @@
 namespace Carbon {
 
 using ::llvm::cast;
+using ::llvm::isa;
 
 static auto ExpressionToProto(const Expression& expression)
     -> Fuzzing::Expression;
@@ -108,6 +109,13 @@ static auto ExpressionToProto(const Expression& expression)
     case ExpressionKind::SimpleMemberAccessExpression: {
       const auto& simple_member_access =
           cast<SimpleMemberAccessExpression>(expression);
+      if (isa<DotSelfExpression>(simple_member_access.object())) {
+        // The parser rewrites `.Foo` into `.Self.Foo`. Undo this
+        // transformation.
+        auto* designator_proto = expression_proto.mutable_designator();
+        designator_proto->set_name(simple_member_access.member());
+        break;
+      }
       auto* simple_member_access_proto =
           expression_proto.mutable_simple_member_access();
       simple_member_access_proto->set_field(simple_member_access.member());
@@ -182,7 +190,8 @@ static auto ExpressionToProto(const Expression& expression)
     case ExpressionKind::WhereExpression: {
       const auto& where = cast<WhereExpression>(expression);
       auto* where_proto = expression_proto.mutable_where();
-      *where_proto->mutable_base() = ExpressionToProto(where.base());
+      *where_proto->mutable_base() =
+          ExpressionToProto(where.self_binding().type());
       for (const WhereClause* where : where.clauses()) {
         Fuzzing::WhereClause clause_proto;
         switch (where->kind()) {
@@ -205,6 +214,12 @@ static auto ExpressionToProto(const Expression& expression)
         }
         *where_proto->add_clauses() = clause_proto;
       }
+      break;
+    }
+
+    case ExpressionKind::DotSelfExpression: {
+      auto* designator_proto = expression_proto.mutable_designator();
+      designator_proto->set_name("Self");
       break;
     }
 

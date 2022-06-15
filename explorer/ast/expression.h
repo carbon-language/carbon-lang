@@ -28,6 +28,7 @@ class MemberName;
 class VariableType;
 class InterfaceType;
 class ImplBinding;
+class GenericBinding;
 
 class Expression : public AstNode {
  public:
@@ -152,6 +153,40 @@ class IdentifierExpression : public Expression {
  private:
   std::string name_;
   std::optional<ValueNodeView> value_node_;
+};
+
+// A `.Self` expression within either a `:!` binding or a standalone `where`
+// expression.
+//
+// In a `:!` binding, the type of `.Self` is always `Type`. For example, in
+// `A:! AddableWith(.Self)`, the expression `.Self` refers to the same type as
+// `A`, but with type `Type`.
+//
+// In a `where` binding, the type of `.Self` is the constraint preceding the
+// `where` keyword. For example, in `Foo where .Result is Bar(.Self)`, the type
+// of `.Self` is `Foo`.
+class DotSelfExpression : public Expression {
+ public:
+  explicit DotSelfExpression(SourceLocation source_loc)
+      : Expression(AstNodeKind::DotSelfExpression, source_loc) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromDotSelfExpression(node->kind());
+  }
+
+  // The self binding. Cannot be called before name resolution.
+  auto self_binding() const -> const GenericBinding& { return **self_binding_; }
+  auto self_binding() -> GenericBinding& { return **self_binding_; }
+
+  // Sets the self binding. Called only once, during name resolution.
+  void set_self_binding(Nonnull<GenericBinding*> self_binding) {
+    CARBON_CHECK(!self_binding_.has_value());
+    self_binding_ = self_binding;
+  }
+
+ private:
+  std::string name_;
+  std::optional<Nonnull<GenericBinding*>> self_binding_;
 };
 
 class SimpleMemberAccessExpression : public Expression {
@@ -741,20 +776,24 @@ class EqualsWhereClause : public WhereClause {
 };
 
 // A `where` expression: `AddableWith(i32) where .Result == i32`.
+//
+// The first operand is rewritten to a generic binding, for example
+// `.Self:! AddableWith(i32)`, which may be used in the clauses.
 class WhereExpression : public Expression {
  public:
-  explicit WhereExpression(SourceLocation source_loc, Nonnull<Expression*> base,
+  explicit WhereExpression(SourceLocation source_loc,
+                           Nonnull<GenericBinding*> self_binding,
                            std::vector<Nonnull<WhereClause*>> clauses)
       : Expression(AstNodeKind::WhereExpression, source_loc),
-        base_(base),
+        self_binding_(self_binding),
         clauses_(std::move(clauses)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromWhereExpression(node->kind());
   }
 
-  auto base() const -> const Expression& { return *base_; }
-  auto base() -> Expression& { return *base_; }
+  auto self_binding() const -> const GenericBinding& { return *self_binding_; }
+  auto self_binding() -> GenericBinding& { return *self_binding_; }
 
   auto clauses() const -> llvm::ArrayRef<Nonnull<const WhereClause*>> {
     return clauses_;
@@ -762,7 +801,7 @@ class WhereExpression : public Expression {
   auto clauses() -> llvm::ArrayRef<Nonnull<WhereClause*>> { return clauses_; }
 
  private:
-  Nonnull<Expression*> base_;
+  Nonnull<GenericBinding*> self_binding_;
   std::vector<Nonnull<WhereClause*>> clauses_;
 };
 
