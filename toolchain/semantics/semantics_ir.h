@@ -6,69 +6,63 @@
 #define CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_IR_H_
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringMap.h"
 #include "toolchain/parser/parse_tree.h"
-#include "toolchain/semantics/function.h"
+#include "toolchain/semantics/meta_node_block.h"
+#include "toolchain/semantics/nodes/expression_statement.h"
+#include "toolchain/semantics/nodes/function.h"
+#include "toolchain/semantics/nodes/infix_operator.h"
+#include "toolchain/semantics/nodes/literal.h"
+#include "toolchain/semantics/nodes/pattern_binding.h"
+#include "toolchain/semantics/nodes/return.h"
+
+namespace Carbon::Testing {
+class SemanticsIRForTest;
+}  // namespace Carbon::Testing
 
 namespace Carbon {
 
 // Provides semantic analysis on a ParseTree.
 class SemanticsIR {
  public:
-  // Provides a link back to a semantic node in a name scope.
-  class Node {
-   public:
-    Node() : Node(Kind::Invalid, -1) {}
+  // File-level declarations.
+  auto root_block() const -> const Semantics::DeclarationBlock& {
+    return *root_block_;
+  }
 
-   private:
-    friend class SemanticsIR;
+  // Debug printer for the parse tree.
+  void Print(llvm::raw_ostream& out, ParseTree::Node node) const;
 
-    // The kind of token. These correspond to the lists on SemanticsIR which
-    // will be indexed into.
-    enum class Kind {
-      Invalid,
-      Function,
-    };
+  // Debug printers for meta nodes.
+  void Print(llvm::raw_ostream& out, Semantics::Declaration decl) const;
+  void Print(llvm::raw_ostream& out, Semantics::Expression expr) const;
+  void Print(llvm::raw_ostream& out, Semantics::Statement stmt) const;
 
-    Node(Kind kind, int32_t index) : kind_(kind), index_(index) {
-      // TODO: kind_ and index_ are currently unused, this suppresses the
-      // warning.
-      kind_ = kind;
-      index_ = index;
-    }
-
-    Kind kind_;
-
-    // The index of the named entity within its list.
-    int32_t index_;
-  };
-
-  struct Block {
-   public:
-    void Add(llvm::StringRef name, Node named_entity);
-
-   private:
-    llvm::SmallVector<Node> ordering_;
-    llvm::StringMap<Node> name_lookup_;
-  };
+  // Debug printers for other nodes.
+  void Print(llvm::raw_ostream& out, const Semantics::DeclaredName& name) const;
+  void Print(llvm::raw_ostream& out,
+             const Semantics::ExpressionStatement& expr) const;
+  void Print(llvm::raw_ostream& out, const Semantics::Function& function) const;
+  void Print(llvm::raw_ostream& out, const Semantics::InfixOperator& op) const;
+  void Print(llvm::raw_ostream& out, const Semantics::Literal& literal) const;
+  void Print(llvm::raw_ostream& out,
+             const Semantics::PatternBinding& binding) const;
+  void Print(llvm::raw_ostream& out, const Semantics::Return& ret) const;
+  void Print(llvm::raw_ostream& out,
+             const Semantics::StatementBlock& block) const;
 
  private:
   friend class SemanticsIRFactory;
+  friend class Testing::SemanticsIRForTest;
 
   explicit SemanticsIR(const ParseTree& parse_tree)
       : parse_tree_(&parse_tree) {}
 
-  // Creates a function, adds it to the enclosing scope, and returns a reference
-  // for further mutations. On a name collision, it will not be added to the
-  // scope, but will still be returned.
-  auto AddFunction(Block& block, ParseTree::Node decl_node,
-                   ParseTree::Node name_node) -> Semantics::Function&;
+  Semantics::DeclarationStore declarations_;
+  Semantics::ExpressionStore expressions_;
+  Semantics::StatementStore statements_;
 
-  // Indexed by Token::Function.
-  llvm::SmallVector<Semantics::Function, 0> functions_;
-
-  // The file-level block.
-  Block root_block_;
+  // The file-level block. Only assigned after initialization is complete.
+  llvm::Optional<Semantics::DeclarationBlock> root_block_;
 
   const ParseTree* parse_tree_;
 };
