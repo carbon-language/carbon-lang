@@ -24,6 +24,8 @@
 
 namespace Carbon {
 
+class ConstraintType;
+
 // Abstract base class of all AST nodes representing patterns.
 //
 // Declaration and its derived classes support LLVM-style RTTI, including
@@ -352,8 +354,6 @@ enum class ImplKind { InternalImpl, ExternalImpl };
 
 class ImplDeclaration : public Declaration {
  public:
-  using ImplementsCarbonValueNode = void;
-
   static auto Create(Nonnull<Arena*> arena, SourceLocation source_loc,
                      ImplKind kind, Nonnull<Expression*> impl_type,
                      Nonnull<Expression*> interface,
@@ -386,11 +386,11 @@ class ImplDeclaration : public Declaration {
   // Return the interface that is being implemented.
   auto interface() const -> const Expression& { return *interface_; }
   auto interface() -> Expression& { return *interface_; }
-  void set_interface_type(Nonnull<const Value*> iface_type) {
-    interface_type_ = iface_type;
+  void set_constraint_type(Nonnull<const ConstraintType*> constraint_type) {
+    constraint_type_ = constraint_type;
   }
-  auto interface_type() const -> Nonnull<const Value*> {
-    return *interface_type_;
+  auto constraint_type() const -> Nonnull<const ConstraintType*> {
+    return *constraint_type_;
   }
   auto deduced_parameters() const
       -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
@@ -417,7 +417,7 @@ class ImplDeclaration : public Declaration {
   Nonnull<Expression*> impl_type_;
   Nonnull<SelfDeclaration*> self_decl_;
   Nonnull<Expression*> interface_;
-  std::optional<Nonnull<const Value*>> interface_type_;
+  std::optional<Nonnull<const ConstraintType*>> constraint_type_;
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
   std::vector<Nonnull<Declaration*>> members_;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings_;
