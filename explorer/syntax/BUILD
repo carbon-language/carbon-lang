@@ -44,7 +44,7 @@ cc_library(
     deps = [
         ":syntax",
         "//common:error",
-        "//explorer/ast:declaration",
+        "//explorer/ast",
         "//explorer/common:arena",
         "//explorer/common:nonnull",
     ],
@@ -78,8 +78,6 @@ cc_library(
         "//common:ostream",
         "//common:string_helpers",
         "//explorer/ast",
-        "//explorer/ast:declaration",
-        "//explorer/ast:expression",
         "//explorer/ast:paren_contents",
         "//explorer/ast:value_category",
         "//explorer/common:arena",
