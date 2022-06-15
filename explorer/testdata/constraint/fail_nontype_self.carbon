@@ -10,16 +10,9 @@
 
 package ExplorerTest api;
 
-interface I {}
-impl i32 as I {}
+class X(T:! Type) {}
 
-fn F(A:! i32, B:! i32, C:! i32, D:! i32, E:! i32,
-     T:! I where A == B and C == D and C == E and B == D) {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/combine_equality.carbon:[[@LINE+1]]: member access, F not in constraint interface I where .Self:! I is interface I, A:! i32 == B:! i32 == E:! i32 == C:! i32 == D:! i32
-  T.F();
-}
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/fail_nontype_self.carbon:[[@LINE+1]]: `.Self` used in type of non-type binding `T`
+fn F[T:! X(.Self)](x: T) {}
 
-fn Main() -> i32 {
-  F(1, 1, 1, 1, 1, i32);
-  return 0;
-}
+fn Main() -> i32 { return 0; }

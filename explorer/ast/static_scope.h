@@ -163,7 +163,7 @@ class StaticScope {
 
   // Make `parent` a parent of this scope.
   // REQUIRES: `parent` is not already a parent of this scope.
-  void AddParent(Nonnull<StaticScope*> parent) {
+  void AddParent(Nonnull<const StaticScope*> parent) {
     parent_scopes_.push_back(parent);
   }
 
@@ -188,7 +188,7 @@ class StaticScope {
   std::unordered_map<std::string, Entry> declared_names_;
 
   // A list of scopes used for name lookup within this scope.
-  std::vector<Nonnull<StaticScope*>> parent_scopes_;
+  std::vector<Nonnull<const StaticScope*>> parent_scopes_;
 };
 
 }  // namespace Carbon

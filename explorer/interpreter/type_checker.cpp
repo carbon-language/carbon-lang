@@ -757,11 +757,6 @@ class ConstraintTypeBuilder {
             source_loc, ".Self", arena->New<TypeTypeLiteral>(source_loc))) {}
   ConstraintTypeBuilder(Nonnull<const GenericBinding*> self_binding)
       : self_binding_(self_binding) {}
-  ConstraintTypeBuilder(Nonnull<const ConstraintType*> constraint)
-      : self_binding_(constraint->self_binding()),
-        impl_constraints_(constraint->impl_constraints()),
-        equality_constraints_(constraint->equality_constraints()),
-        lookup_contexts_(constraint->lookup_contexts()) {}
 
   // Produce a type that refers to the `.Self` type of the constraint.
   auto MakeSelfType(Nonnull<Arena*> arena) const
@@ -1090,8 +1085,6 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
     return std::nullopt;
   }
 
-  // TODO: If the `interface` is a ConstraintType, for every impl_constraint,
-  // try deduction against that.
   if (ErrorOr<Success> e = ArgumentDeduction(
           source_loc, "match", impl.deduced, deduced_args, impl.interface,
           &iface, /*allow_implicit_conversion=*/false, impl_scope);
@@ -1258,6 +1251,8 @@ auto TypeChecker::DeduceCallBindings(
   CARBON_RETURN_IF_ERROR(SatisfyImpls(
       impl_bindings, impl_scope, call.source_loc(), generic_bindings, impls));
   call.set_impls(impls);
+
+  // TODO: Ensure any equality constraints are satisfied.
 
   // Convert the arguments to the parameter type.
   Nonnull<const Value*> param_type = Substitute(generic_bindings, params_type);
@@ -1778,6 +1773,17 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       ident.set_value_category(ident.value_node().value_category());
       return Success();
     }
+    case ExpressionKind::DotSelfExpression: {
+      auto& dot_self = cast<DotSelfExpression>(*e);
+      if (dot_self.self_binding().is_type_checked()) {
+        dot_self.set_static_type(&dot_self.self_binding().static_type());
+      } else {
+        dot_self.set_static_type(arena_->New<TypeType>());
+        dot_self.self_binding().set_named_as_type_via_dot_self();
+      }
+      dot_self.set_value_category(ValueCategory::Let);
+      return Success();
+    }
     case ExpressionKind::IntLiteral:
       e->set_value_category(ValueCategory::Let);
       e->set_static_type(arena_->New<IntType>());
@@ -2074,28 +2080,38 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     }
     case ExpressionKind::WhereExpression: {
       auto& where = cast<WhereExpression>(*e);
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&where.base(), impl_scope));
+      ImplScope inner_impl_scope;
+      inner_impl_scope.AddParent(&impl_scope);
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&where.self_binding(),
+                                              std::nullopt, inner_impl_scope,
+                                              ValueCategory::Let));
       for (Nonnull<WhereClause*> clause : where.clauses()) {
-        CARBON_RETURN_IF_ERROR(TypeCheckWhereClause(clause, impl_scope));
+        CARBON_RETURN_IF_ERROR(TypeCheckWhereClause(clause, inner_impl_scope));
       }
 
-      const ConstraintType* base;
-      const Value& base_type = where.base().static_type();
-      if (auto* constraint_type_type =
-              dyn_cast<TypeOfConstraintType>(&base_type)) {
-        base = &constraint_type_type->constraint_type();
-      } else if (auto* interface_type_type =
-                     dyn_cast<TypeOfInterfaceType>(&base_type)) {
-        base = MakeConstraintForInterface(
-            e->source_loc(), &interface_type_type->interface_type());
+      std::optional<Nonnull<const ConstraintType*>> base;
+      const Value& base_type = where.self_binding().static_type();
+      if (auto* constraint_type = dyn_cast<ConstraintType>(&base_type)) {
+        base = constraint_type;
+      } else if (auto* interface_type = dyn_cast<InterfaceType>(&base_type)) {
+        base = MakeConstraintForInterface(e->source_loc(), interface_type);
+      } else if (isa<TypeType>(base_type)) {
+        // Start with an unconstrained type.
       } else {
         return CompilationError(e->source_loc())
                << "expected constraint as first operand of `where` expression, "
                << "found " << base_type;
       }
 
+      // Start with the given constraint, if any.
+      ConstraintTypeBuilder builder(&where.self_binding());
+      if (base) {
+        BindingMap map;
+        map[(*base)->self_binding()] = builder.MakeSelfType(arena_);
+        builder.Add(cast<ConstraintType>(Substitute(map, *base)));
+      }
+
       // Apply the `where` clauses.
-      ConstraintTypeBuilder builder(base);
       for (Nonnull<const WhereClause*> clause : where.clauses()) {
         switch (clause->kind()) {
           case WhereClauseKind::IsWhereClause: {
@@ -2340,6 +2356,11 @@ auto TypeChecker::TypeCheckPattern(
                << binding;
       }
       binding.set_static_type(type);
+      if (binding.named_as_type_via_dot_self() && !IsTypeOfType(type)) {
+        return CompilationError(binding.type().source_loc())
+               << "`.Self` used in type of non-type binding `" << binding.name()
+               << "`";
+      }
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> val,
                               InterpPattern(&binding, arena_, trace_stream_));
       binding.set_symbolic_identity(val);

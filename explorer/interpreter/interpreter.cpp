@@ -408,6 +408,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
     case ExpressionKind::IntrinsicExpression:
     case ExpressionKind::IfExpression:
     case ExpressionKind::WhereExpression:
+    case ExpressionKind::DotSelfExpression:
     case ExpressionKind::ArrayTypeLiteral:
     case ExpressionKind::InstantiateImpl:
       CARBON_FATAL() << "Can't treat expression as lvalue: " << exp;
@@ -926,6 +927,14 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             value, heap_.Read(lvalue->address(), exp.source_loc()));
       }
       return todo_.FinishAction(value);
+    }
+    case ExpressionKind::DotSelfExpression: {
+      // `.Self` always symbolically resolves to the self binding, even if it's
+      // not yet been type-checked.
+      CARBON_CHECK(act.pos() == 0);
+      const auto& dot_self = cast<DotSelfExpression>(exp);
+      return todo_.FinishAction(
+          arena_->New<VariableType>(&dot_self.self_binding()));
     }
     case ExpressionKind::IntLiteral:
       CARBON_CHECK(act.pos() == 0);
