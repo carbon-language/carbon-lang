@@ -1961,8 +1961,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               call, &param_name.params().static_type(), generic_parameters,
               /*deduced_bindings=*/llvm::None, impl_bindings, impl_scope));
 
-          // TODO: Nothing cares about which class type is stored in a
-          // TypeOfClassType type. Consider replacing it with simply TypeType.
           const Declaration& decl = param_name.declaration();
           switch (decl.kind()) {
             case DeclarationKind::ClassDeclaration: {
