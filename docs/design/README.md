@@ -2461,7 +2461,10 @@ provided by `<stdint.h>` or `<cstdint>`. The basic C and C++ integer types like
 `int`, `char`, and `unsigned long` are available in Carbon inside the `Cpp`
 namespace given an `import Cpp;` declaration, with names like `Cpp.int`,
 `Cpp.char`, and `Cpp.unsigned_long`. C++ types are considered different if C++
-considers them different, so C++ overloads are resolved the same way.
+considers them different, so C++ overloads are resolved the same way. Carbon
+[conventions for implicit conversions between integer types](expressions/implicit_conversions.md#data-types)
+apply here, allowing them whenever the numerical value for all inputs may be
+preserved by the conversion.
 
 Other C and C++ types are equal to Carbon types as follows:
 
