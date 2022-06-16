@@ -2364,7 +2364,7 @@ usable from Carbon. This includes types, function, and constants. Some entities,
 such as Carbon interfaces, won't be able to be translated directly.
 
 C and C++ macros that are defining constants will be imported as constants.
-Otherwise, C and C++ macros will be unavailable in Carbon. C and C++ typedefs
+Otherwise, C and C++ macros will be unavailable in Carbon. C and C++ `typedef`s
 would be translated into type constants, as if declared using a
 [`let`](#constant-let-declarations).
 
