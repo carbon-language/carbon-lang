@@ -84,7 +84,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Generic type equality and `observe` declarations](#generic-type-equality-and-observe-declarations)
     -   [Operator overloading](#operator-overloading)
         -   [Common type](#common-type)
--   [Bidirectional interoperability with C/C++](#bidirectional-interoperability-with-cc)
+-   [Bidirectional interoperability with C and C++](#bidirectional-interoperability-with-c-and-c)
     -   [Goals](#goals)
     -   [Non-goals](#non-goals)
     -   [Importing and `#include`](#importing-and-include)
@@ -1084,7 +1084,7 @@ This is instead of
 
 #### `match`
 
-`match` is a control flow similar to `switch` of C/C++ and mirrors similar
+`match` is a control flow similar to `switch` of C and C++ and mirrors similar
 constructs in other languages, such as Swift. The `match` keyword is followed by
 an expression in parentheses, whose value is matched against the `case`
 declarations, each of which contains a [refutable pattern](#refutable-patterns),
@@ -2258,7 +2258,7 @@ The common type is required to be a type that both types have an
 > -   Question-for-leads issue
 >     [#1077: find a way to permit impls of CommonTypeWith where the LHS and RHS type overlap](https://github.com/carbon-language/carbon-lang/issues/1077)
 
-## Bidirectional interoperability with C/C++
+## Bidirectional interoperability with C and C++
 
 Interoperability, or _interop_, is the ability to call C and C++ code from
 Carbon code and the other way around. This ability achieves two goals:
@@ -2364,8 +2364,8 @@ usable from Carbon. This includes types, function, and constants. Some entities,
 such as Carbon interfaces, won't be able to be translated directly.
 
 C and C++ macros that are defining constants will be imported as constants.
-Otherwise, C/C++ macros will be unavailable in Carbon. C and C++ typedefs would
-be translated into type constants, as if declared using a
+Otherwise, C and C++ macros will be unavailable in Carbon. C and C++ typedefs
+would be translated into type constants, as if declared using a
 [`let`](#constant-let-declarations).
 
 Carbon functions and types that satisfy some restrictions may be annotated as
@@ -2598,7 +2598,7 @@ This leads to Carbon's incremental path to safety:
 
 Carbon provides metaprogramming facilities that look similar to regular Carbon
 code. These are structured, and do not offer arbitrary inclusion or
-preprocessing of source text such as C/C++ does.
+preprocessing of source text such as C and C++ do.
 
 > References: [Metaprogramming](metaprogramming.md)
 
