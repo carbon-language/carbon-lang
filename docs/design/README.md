@@ -92,7 +92,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Operator overloading](#operator-overloading-1)
     -   [Templates](#templates)
     -   [Inheritance](#inheritance-1)
-    -   [Standard library types](#standard-library-types)
+    -   [Standard types](#standard-types)
     -   [Enums](#enums)
 -   [Unfinished tales](#unfinished-tales)
     -   [Safety](#safety)
@@ -2383,43 +2383,70 @@ will be supported.
 
 ### Operator overloading
 
-[Operator overloading](#operator-overloading)
+[Operator overloading](#operator-overloading) is supported in Carbon, but is
+done by [implementing an interface](#interfaces-and-implementations) instead of
+defining a method or nonmember function as in C++.
 
--   Carbon types implementing an operator overload using an interface should get
-    the corresponding operator overload in C++. So implementing `ModWith(U)` in
-    Carbon for a type effectively implements `operator%` in C++ for that type.
--   C++ types implementing an operator overload are automatically considered to
-    implement the corresponding Carbon interface. So implementing `operator%` in
-    C++ for a type also implements interface `ModWith(U)` in Carbon.
--   In some cases, the operation might be written differently in the two
-    languages. In those cases, they are matched according to which operation has
-    the most similar semantics rather than using the same symbols. For example,
-    `^x` in Carbon corresponds to `~x` in C++.
--   Some operators will only exist or be overridable in C++, such as logical
-    operators or the comma operator. In the unlikely situation where those
-    operators need to be overridden for a Carbon type, that can be done with a
-    nonmember C++ function.
--   Carbon intefaces with no C++ equivalent, such as
-    [`CommonTypeWith(U)`](#common-type), may be implemented for C++ types
-    externally in Carbon code. To satisfy the orphan rule
-    ([1](generics/details.md#impl-lookup),
-    [2](generics/details.md#orphan-rule)), each C++ library will have a
-    corresponding Carbon wrapper library that must be imported instead of the
-    C++ library if the Carbon wrapper exists. **TODO:** Perhaps it will
-    automatically be imported, so a wrapper may be added without requiring
-    changes to importers?
+Carbon types implementing an operator overload using an interface should get the
+corresponding operator overload in C++. So implementing `ModWith(U)` in Carbon
+for a type effectively implements `operator%` in C++ for that type. This also
+works in the other direction, so C++ types implementing an operator overload are
+automatically considered to implement the corresponding Carbon interface. So
+implementing `operator%` in C++ for a type also implements interface
+`ModWith(U)` in Carbon.
+
+In some cases, the operation might be written differently in the two languages.
+In those cases, they are matched according to which operation has the most
+similar semantics rather than using the same symbols. For example, the `^x`
+operation and `BitComplement` interface in Carbon corresponds to the `~x`
+operation and `operator~` function in C++. Similarly, the `ImplicitAs(U)` Carbon
+interface corresponds to implicit constructors in C++. Other
+[C++ customization points](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html)
+like `swap` will correspond to a Carbon interface, on a case-by-case basis.
+
+Some operators will only exist or be overridable in C++, such as logical
+operators or the comma operator. In the unlikely situation where those operators
+need to be overridden for a Carbon type, that can be done with a nonmember C++
+function.
+
+Carbon intefaces with no C++ equivalent, such as
+[`CommonTypeWith(U)`](#common-type), may be implemented for C++ types externally
+in Carbon code. To satisfy the orphan rule
+([1](generics/details.md#impl-lookup), [2](generics/details.md#orphan-rule)),
+each C++ library will have a corresponding Carbon wrapper library that must be
+imported instead of the C++ library if the Carbon wrapper exists. **TODO:**
+Perhaps it will automatically be imported, so a wrapper may be added without
+requiring changes to importers?
 
 ### Templates
 
--   Ability to call C++ templates, and use C++ templated types from Carbon.
-    Instantiate a C++ template with a Carbon type.
--   Call a Carbon generic from C++ as if it were a template.
--   Instanitate a Carbon generic with a C++ type.
--   Carbon has template support so C++ code can be migrated
--   [C++ customization points](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html)
-    like `swap` will correspond to a Carbon interface, on a case-by-case basis.
+Carbon supports both
+[checked and template generics](#checked-and-template-parameters). This provides
+a migration path for C++ template code:
+
+-   C++ template -> Carbon template: This involves migrating the code from C++
+    to Carbon. If that migration is faithful, the change should be transparent
+    to callers.
+-   -> Carbon template with constraints: Constraints may be added one at a time.
+    Adding a constraint never changes the meaning of the code as long as it
+    continues to compile. Compile errors will point to types for which an
+    implementation of missing interfaces is needed. A temporary template
+    implementation of that interface can act as a bridge during the transition.
+-   -> Carbon checked generic: Once all callers work after all constraints have
+    been added, the template parameter may be switched to a checked generic.
+
+The Carbon toolchain will support compiling C++ code. It will contain a
+customized C++ compiler that enables some more advanced interoperability
+features:
+
+-   Ability to call C++ templates and use C++ templated types from Carbon.
+-   Ability to instantiate a C++ template with a Carbon type.
+-   Ability to call a Carbon generic from C++ as if it were a C++ template.
+-   Ability to instanitate a Carbon generic with a C++ type.
 
 ### Inheritance
+
+**FIXME:**
 
 -   Carbon has single inheritance so C++ code can be migrated
 -   Carbon classes may inherit from C++ classes, and the other way around.
@@ -2427,10 +2454,13 @@ will be supported.
 -   Carbon dyn-safe interfaces may be exported to C++ as an
     [abstract base class](<https://en.wikipedia.org/wiki/Class_(computer_programming)#Abstract_and_concrete>)
 
-### Standard library types
+### Standard types
+
+**FIXME:**
 
 -   Carbon types will be usable from C++ and C++ types will be usable from
     Carbon.
+-
 -   There will exist Carbon types that correspond to C/C++ primitive types that
     have an implementation-specified size, like `Cpp.int`, `Cpp.char`, and so
     on. C/C++ types with a fixed size, like `uint32_t`, will map to the
@@ -2443,7 +2473,7 @@ will be supported.
     `std::span`, by value across the boundary to get equivalent Carbon types.
 -   C++ references will map to Carbon pointer types. C++ pointers will map to
     Carbon optional pointer types.
--   C++ `std::unique_ptr<T>` will map to Carbon `Box(T)`
+-   C++ `std::unique_ptr<T>` will map to Carbon `Optional(Box(T))`
 -   Copying an owning container, like C++'s `std::vector<T>` or the Carbon
     equivalent, by value will involve a copy, independent of the languages
     involved in the call.
