@@ -109,6 +109,12 @@ class Interpreter {
   auto InstantiateType(Nonnull<const Value*> type, SourceLocation source_loc)
       -> ErrorOr<Nonnull<const Value*>>;
 
+  // Instantiate a set of bindings by replacing all type variables that occur
+  // within it by the current values of those variables.
+  auto InstantiateBindings(Nonnull<const Bindings*> bindings,
+                           SourceLocation source_loc)
+      -> ErrorOr<Nonnull<const Bindings*>>;
+
   // Call the function `fun` with the given `arg` and the `witnesses`
   // for the function's impl bindings.
   auto CallFunction(const CallExpression& call, Nonnull<const Value*> fun,
@@ -464,26 +470,41 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
     }
     case Value::Kind::NominalClassType: {
       const auto& class_type = cast<NominalClassType>(*type);
-      BindingMap inst_type_args;
-      for (const auto& [ty_var, ty_arg] : class_type.type_args()) {
-        CARBON_ASSIGN_OR_RETURN(inst_type_args[ty_var],
-                                InstantiateType(ty_arg, source_loc));
-      }
-      ImplWitnessMap witnesses = class_type.witnesses();
-      for (auto& [bind, witness] : witnesses) {
-        if (auto* sym = dyn_cast<SymbolicWitness>(witness)) {
-          CARBON_ASSIGN_OR_RETURN(witness,
-                                  EvalExpRecursively(&sym->impl_expression()));
-        }
-      }
-      return arena_->New<NominalClassType>(
-          &class_type.declaration(),
-          arena_->New<Bindings>(std::move(inst_type_args),
-                                std::move(witnesses)));
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Bindings*> bindings,
+          InstantiateBindings(&class_type.bindings(), source_loc));
+      return arena_->New<NominalClassType>(&class_type.declaration(), bindings);
     }
     default:
       return type;
   }
+}
+
+auto Interpreter::InstantiateBindings(Nonnull<const Bindings*> bindings,
+                                      SourceLocation source_loc)
+    -> ErrorOr<Nonnull<const Bindings*>> {
+  bool changed_any = false;
+
+  BindingMap args;
+  for (const auto& [var, orig_arg] : bindings->args()) {
+    CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inst_arg,
+                            InstantiateType(orig_arg, source_loc));
+    changed_any |= inst_arg != orig_arg;
+    args[var] = inst_arg;
+  }
+
+  ImplWitnessMap witnesses = bindings->witnesses();
+  for (auto& [bind, witness] : witnesses) {
+    if (auto* sym = dyn_cast<SymbolicWitness>(witness)) {
+      CARBON_ASSIGN_OR_RETURN(witness,
+                              EvalExpRecursively(&sym->impl_expression()));
+      changed_any |= witness != sym;
+    }
+  }
+
+  return changed_any
+             ? arena_->New<Bindings>(std::move(args), std::move(witnesses))
+             : bindings;
 }
 
 auto Interpreter::Convert(Nonnull<const Value*> value,
