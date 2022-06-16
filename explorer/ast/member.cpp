@@ -8,13 +8,15 @@
 
 namespace Carbon {
 
-Member::Member(const Declaration* declaration) : member_(declaration) {}
+Member::Member(Nonnull<const Declaration*> declaration)
+    : member_(declaration) {}
 
-Member::Member(const NamedValue* struct_member) : member_(struct_member) {}
+Member::Member(Nonnull<const NamedValue*> struct_member)
+    : member_(struct_member) {}
 
-auto Member::name() const -> std::string {
+auto Member::name() const -> const std::string& {
   if (const Declaration* decl = member_.dyn_cast<const Declaration*>()) {
-    return GetName(*decl).value();
+    return *GetNamePtr(*decl).value();
   } else {
     return member_.get<const NamedValue*>()->name;
   }

@@ -31,11 +31,11 @@ struct NamedValue {
 // member of a struct with no declaration.
 class Member {
  public:
-  explicit Member(const Declaration* declaration);
-  explicit Member(const NamedValue* struct_member);
+  explicit Member(Nonnull<const Declaration*> declaration);
+  explicit Member(Nonnull<const NamedValue*> struct_member);
 
   // The name of the member.
-  auto name() const -> std::string;
+  auto name() const -> const std::string&;
   // The declared type of the member, which might include type variables.
   auto type() const -> const Value&;
   // A declaration of the member, if any exists.

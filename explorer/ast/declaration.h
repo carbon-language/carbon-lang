@@ -172,7 +172,7 @@ class SelfDeclaration : public Declaration {
     return InheritsFromSelfDeclaration(node->kind());
   }
 
-  auto name() const -> const std::string { return "Self"; }
+  static auto name() -> const std::string&;
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 };
 
@@ -437,7 +437,7 @@ class AliasDeclaration : public Declaration {
     return InheritsFromAliasDeclaration(node->kind());
   }
 
-  auto name() const -> const std::string { return name_; }
+  auto name() const -> const std::string& { return name_; }
   auto target() const -> const Expression& { return *target_; }
   auto target() -> Expression& { return *target_; }
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
@@ -449,6 +449,8 @@ class AliasDeclaration : public Declaration {
 
 // Return the name of a declaration, if it has one.
 auto GetName(const Declaration&) -> std::optional<std::string>;
+auto GetNamePtr(const Declaration&)
+    -> std::optional<Nonnull<const std::string*>>;
 
 }  // namespace Carbon
 

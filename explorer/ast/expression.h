@@ -194,10 +194,10 @@ class SimpleMemberAccessExpression : public Expression {
  public:
   explicit SimpleMemberAccessExpression(SourceLocation source_loc,
                                         Nonnull<Expression*> object,
-                                        std::string member)
+                                        std::string member_name)
       : Expression(AstNodeKind::SimpleMemberAccessExpression, source_loc),
         object_(object),
-        member_name_(std::move(member)) {}
+        member_name_(std::move(member_name)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromSimpleMemberAccessExpression(node->kind());
