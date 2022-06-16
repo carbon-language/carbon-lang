@@ -2351,18 +2351,27 @@ This adds the names from `circle.h` into the `Cpp` namespace. If `circle.h`
 defines some names in a `namespace shapes { ... }` scope, those will be found in
 Carbon's `Cpp.shapes` namespace.
 
-C and C++ macros that are defining constants will be imported as constants.
-Otherwise, C/C++ macros will be unavailable in Carbon. C and C++ typedefs would
-be translated into type constants, as if declared using a
-[`let`](#constant-let-declarations).
-
-Similarly, Carbon packages can export a header file to be `#include`d from C++
-files.
+In the other direction, Carbon packages can export a header file to be
+`#include`d from C++ files.
 
 ```c++
 // like `import Geometry` in Carbon
 #include "geometry.carbon.h"
 ```
+
+Generally Carbon entities will be usable from C++ and C++ entities will be
+usable from Carbon. This includes types, function, and constants. Some entities,
+such as Carbon interfaces, won't be able to be translated directly.
+
+C and C++ macros that are defining constants will be imported as constants.
+Otherwise, C/C++ macros will be unavailable in Carbon. C and C++ typedefs would
+be translated into type constants, as if declared using a
+[`let`](#constant-let-declarations).
+
+Carbon functions and types that satisfy some restrictions may be annotated as
+exported to C as well, like C++'s
+[`extern "C"`](https://en.wikipedia.org/wiki/Compatibility_of_C_and_C%2B%2B#Linking_C_and_C++_code)
+marker.
 
 ### ABI and dynamic linking
 
@@ -2446,30 +2455,38 @@ features:
 
 ### Standard types
 
-**FIXME:**
+The Carbon integer types, like `i32` and `u64`, are considered equal to the
+corresponding fixed-width integer types in C++, like `int32_t` and `uint64_t`,
+provided by `<stdint.h>` or `<cstdint>`. The basic C and C++ integer types like
+`int`, `char`, and `unsigned long` are available in Carbon inside the `Cpp`
+namespace given an `import Cpp;` declaration, with names like `Cpp.int`,
+`Cpp.char`, and `Cpp.unsigned_long`. C++ types are considered different if C++
+considers them different, so C++ overloads are resolved the same way.
 
--   Carbon types will be usable from C++ and C++ types will be usable from
-    Carbon.
--
--   There will exist Carbon types that correspond to C/C++ primitive types that
-    have an implementation-specified size, like `Cpp.int`, `Cpp.char`, and so
-    on. C/C++ types with a fixed size, like `uint32_t`, will map to the
-    equivalent Carbon type, like `u32`. Carbon overflow behavior is within the
-    bounds allowed for the C/C++ equivalent types. Floating point types and
-    `bool` are also just aliases. C++ types are considered different if C++
-    considers them different (like `char` and `unsigned char`), so C++ overloads
-    are resolved the same way.
--   Will be able to pass non-owning types, such as `std::string_view` or
-    `std::span`, by value across the boundary to get equivalent Carbon types.
--   C++ references will map to Carbon pointer types. C++ pointers will map to
-    Carbon optional pointer types.
--   C++ `std::unique_ptr<T>` will map to Carbon `Optional(Box(T))`
--   Copying an owning container, like C++'s `std::vector<T>` or the Carbon
-    equivalent, by value will involve a copy, independent of the languages
-    involved in the call.
--   Carbon specialization preserves API to enable generic code to be type
-    checked. This means that Carbon's equivalent of `std::vector<T>` doesn't
-    have a different API when `T == bool`.
+Other C and C++ types are equal to Carbon types as follows:
+
+| C or C++ | Carbon         |
+| -------- | -------------- |
+| `bool`   | `bool`         |
+| `float`  | `f32`          |
+| `double` | `f64`          |
+| `T*`     | `Optional(T*)` |
+| `T[4]`   | `[T; 4]`       |
+
+Further, C++ reference types like `T&` will be translated to `T*` in Carbon,
+which is Carbon's non-null pointer type.
+
+The Carbon standard library will have equivalents for C++ standard library
+types, like `std::vector<T>`. However, the Carbon versions will use checked
+generics, and so will have a consistent API even if the implementation is
+specialized for some type parameters. This means that there will be a separate
+Carbon `BitVector` type that matches `std::vector<bool>`.
+
+Carbon will have its own adapter types for simple C++ non-owning types like
+`std::string_view` and `std::span`. This means that the data representations
+will match, but they will have different APIs to give a native experience. Since
+the representation match, values may be converted between the types without a
+copy, and pointers to one can be converted to pointers to the other.
 
 ### Inheritance
 
