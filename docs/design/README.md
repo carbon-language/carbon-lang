@@ -462,6 +462,10 @@ type `Optional(T*)`.
 Pointers are the main Carbon mechanism for allowing a function to modify a
 variable of the caller.
 
+**TODO:** Perhaps Carbon will have
+[stricter pointer provenance](https://www.ralfj.de/blog/2022/04/11/provenance-exposed.html)
+or restrictions on casts between pointers and integers.
+
 > References:
 >
 > -   Question-for-leads issue
@@ -2188,6 +2192,8 @@ The interfaces that correspond to each operator are given by:
         [`As(U)`](expressions/as_expressions.md#extensibility) interface
     -   Implicit conversions use
         [`ImplicitAs(U)`](expressions/implicit_conversions.md#extensibility)
+-   **TODO:** [Assignment](#assignment-statements): `x = y`, `++x`, `x += y`,
+    and so on
 -   **TODO:** Dereference: `*p`
 -   **TODO:** Indexing: `a[3]`
 -   **TODO:** Function call: `f(4)`
@@ -2263,9 +2269,9 @@ Carbon code and the other way around. This ability achieves two goals:
 Carbon's approach to interopp is most similar to
 [Java/Kotlin interop](interoperability/philosophy_and_goals.md#other-interoperability-layers),
 where the two languages are different, but share enough of runtime model that
-data from one side can be used from the other.
-
-**FIXME:** Memory model
+data from one side can be used from the other. For example, C++ and Carbon will
+use the same
+[memory model](https://en.cppreference.com/w/cpp/language/memory_model).
 
 The design for interoperability between Carbon and C++ hinges on:
 
@@ -2360,19 +2366,48 @@ files.
 
 ### ABI and dynamic linking
 
--   No support for C++ ABI, interop requires building the binary together from
-    source code.
--   Support for calling and exporting C ABIs. All dynamic linking is through C
-    ABIs. No support for
-    [vtables](https://en.wikipedia.org/wiki/Virtual_method_table),
-    [exceptions](https://en.wikipedia.org/wiki/Exception_handling), and so on
-    across these ABI boundaries.
+Carbon will not support the C++
+[ABI](https://en.wikipedia.org/wiki/Application_binary_interface). Interop with
+C++ will require building from source code.
+
+Carbon will support the C ABI on an opt-in basis. All dynamic linking with
+Carbon is through C ABIs. This means individual function calls and types can be
+annotated, like C++'s
+[`extern "C"`](https://en.wikipedia.org/wiki/Compatibility_of_C_and_C%2B%2B#Linking_C_and_C++_code)
+marker, as long as those declarations use only features available in C. This
+means there is no support for
+[vtables](https://en.wikipedia.org/wiki/Virtual_method_table),
+[exceptions](https://en.wikipedia.org/wiki/Exception_handling), and so on across
+these ABI boundaries. Subject to those restrictions, calls in both directions
+will be supported.
 
 ### Operator overloading
 
+[Operator overloading](#operator-overloading)
+
 -   Carbon types implementing an operator overload using an interface should get
-    the corresponding operator overload in C++, where `^x` in Carbon corresponds
-    to `~x` in C++.
+    the corresponding operator overload in C++. So implementing `ModWith(U)` in
+    Carbon for a type effectively implements `operator%` in C++ for that type.
+-   C++ types implementing an operator overload are automatically considered to
+    implement the corresponding Carbon interface. So implementing `operator%` in
+    C++ for a type also implements interface `ModWith(U)` in Carbon.
+-   In some cases, the operation might be written differently in the two
+    languages. In those cases, they are matched according to which operation has
+    the most similar semantics rather than using the same symbols. For example,
+    `^x` in Carbon corresponds to `~x` in C++.
+-   Some operators will only exist or be overridable in C++, such as logical
+    operators or the comma operator. In the unlikely situation where those
+    operators need to be overridden for a Carbon type, that can be done with a
+    nonmember C++ function.
+-   Carbon intefaces with no C++ equivalent, such as
+    [`CommonTypeWith(U)`](#common-type), may be implemented for C++ types
+    externally in Carbon code. To satisfy the orphan rule
+    ([1](generics/details.md#impl-lookup),
+    [2](generics/details.md#orphan-rule)), each C++ library will have a
+    corresponding Carbon wrapper library that must be imported instead of the
+    C++ library if the Carbon wrapper exists. **TODO:** Perhaps it will
+    automatically be imported, so a wrapper may be added without requiring
+    changes to importers?
 
 ### Templates
 
