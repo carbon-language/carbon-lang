@@ -1516,8 +1516,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           }
         }
         case Value::Kind::TypeOfChoiceType: {
-          const ChoiceType& choice =
-              cast<TypeOfChoiceType>(object_type).choice_type();
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> type,
+              InterpExp(&access.object(), arena_, trace_stream_));
+          const ChoiceType& choice = cast<ChoiceType>(*type);
           std::optional<Nonnull<const Value*>> parameter_types =
               choice.FindAlternative(access.member());
           if (!parameter_types.has_value()) {
@@ -1531,8 +1533,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           return Success();
         }
         case Value::Kind::TypeOfClassType: {
-          const NominalClassType& class_type =
-              cast<TypeOfClassType>(object_type).class_type();
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> type,
+              InterpExp(&access.object(), arena_, trace_stream_));
+          const NominalClassType& class_type = cast<NominalClassType>(*type);
           if (std::optional<Nonnull<const Declaration*>> member = FindMember(
                   access.member(), class_type.declaration().members());
               member.has_value()) {
@@ -1563,12 +1567,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         case Value::Kind::TypeOfInterfaceType:
         case Value::Kind::TypeOfConstraintType: {
-          const Value* type;
-          if (isa<TypeOfInterfaceType>(object_type)) {
-            type = &cast<TypeOfInterfaceType>(object_type).interface_type();
-          } else {
-            type = &cast<TypeOfConstraintType>(object_type).constraint_type();
-          }
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> type,
+              InterpExp(&access.object(), arena_, trace_stream_));
           CARBON_ASSIGN_OR_RETURN(
               ConstraintLookupResult result,
               LookupInConstraint(e->source_loc(), type, access.member()));
@@ -1961,6 +1962,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               call, &param_name.params().static_type(), generic_parameters,
               /*deduced_bindings=*/llvm::None, impl_bindings, impl_scope));
 
+          // TODO: Nothing cares about which class type is stored in a
+          // TypeOfClassType type. Consider replacing it with simply TypeType.
           const Declaration& decl = param_name.declaration();
           switch (decl.kind()) {
             case DeclarationKind::ClassDeclaration: {
