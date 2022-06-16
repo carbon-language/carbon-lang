@@ -91,8 +91,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [ABI and dynamic linking](#abi-and-dynamic-linking)
     -   [Operator overloading](#operator-overloading-1)
     -   [Templates](#templates)
-    -   [Inheritance](#inheritance-1)
     -   [Standard types](#standard-types)
+    -   [Inheritance](#inheritance-1)
     -   [Enums](#enums)
 -   [Unfinished tales](#unfinished-tales)
     -   [Safety](#safety)
@@ -2444,16 +2444,6 @@ features:
 -   Ability to call a Carbon generic from C++ as if it were a C++ template.
 -   Ability to instanitate a Carbon generic with a C++ type.
 
-### Inheritance
-
-**FIXME:**
-
--   Carbon has single inheritance so C++ code can be migrated
--   Carbon classes may inherit from C++ classes, and the other way around.
--   C++ multiple inheritance and CRTP will be migrated to Carbon mixins.
--   Carbon dyn-safe interfaces may be exported to C++ as an
-    [abstract base class](<https://en.wikipedia.org/wiki/Class_(computer_programming)#Abstract_and_concrete>)
-
 ### Standard types
 
 **FIXME:**
@@ -2480,6 +2470,25 @@ features:
 -   Carbon specialization preserves API to enable generic code to be type
     checked. This means that Carbon's equivalent of `std::vector<T>` doesn't
     have a different API when `T == bool`.
+
+### Inheritance
+
+[Carbon has single inheritance](#inheritance) allowing C++ classes using
+inheritance to be migrated. The data representation will be consistent so that
+Carbon classes may inherit from C++ classes, and the other way around, even with
+virtual methods.
+
+C++ [multiple inheritance](https://en.wikipedia.org/wiki/Multiple_inheritance)
+and [CRTP](https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern)
+will be migrated using a combination of Carbon features. Carbon mixins support
+implementation reuse and Carbon interfaces allow a type to implement multiple
+APIs.
+
+Carbon dyn-safe interfaces may be exported to C++ as an
+[abstract base class](<https://en.wikipedia.org/wiki/Class_(computer_programming)#Abstract_and_concrete>).
+The reverse operation is also possible using a proxy object implementing a C++
+abstract base class and holding a pointer to a type implementing the
+corresponding interface.
 
 ### Enums
 
