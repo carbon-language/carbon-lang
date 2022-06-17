@@ -3070,114 +3070,6 @@ auto TypeChecker::CheckImplIsDeducible(
   return Success();
 }
 
-// Determine whether the given value is independent of the specified generic
-// binding, that is, doesn't symbolically depend on the value of that binding.
-static auto IsIndependentOf(Nonnull<const Value*> value,
-                            Nonnull<const GenericBinding*> base) {
-  // TODO: Need to check the BindingMaps in many of the cases below.
-  switch (value->kind()) {
-    case Value::Kind::IntValue:
-    case Value::Kind::FunctionValue:
-    case Value::Kind::PointerValue:
-    case Value::Kind::LValue:
-    case Value::Kind::BoolValue:
-    case Value::Kind::ImplWitness:
-    case Value::Kind::SymbolicWitness:
-    case Value::Kind::IntType:
-    case Value::Kind::BoolType:
-    case Value::Kind::TypeType:
-    case Value::Kind::AutoType:
-    case Value::Kind::NominalClassType:
-    case Value::Kind::InterfaceType:
-    case Value::Kind::ChoiceType:
-    case Value::Kind::ContinuationType:
-    case Value::Kind::ParameterizedEntityName:
-    case Value::Kind::MemberName:
-    case Value::Kind::BindingPlaceholderValue:
-    case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::ContinuationValue:
-    case Value::Kind::StringType:
-    case Value::Kind::StringValue:
-    case Value::Kind::TypeOfMemberName:
-      return true;
-    case Value::Kind::BoundMethodValue:
-      return IsIndependentOf(cast<BoundMethodValue>(value)->receiver(), base);
-    case Value::Kind::StructValue: {
-      for (auto [name, val] : cast<StructValue>(value)->elements()) {
-        if (!IsIndependentOf(val, base)) {
-          return false;
-        }
-      }
-      return true;
-    }
-    case Value::Kind::NominalClassValue:
-      return IsIndependentOf(&cast<NominalClassValue>(value)->inits(), base);
-    case Value::Kind::AlternativeValue:
-      return IsIndependentOf(&cast<AlternativeValue>(value)->argument(), base);
-    case Value::Kind::TupleValue: {
-      for (auto* val : cast<TupleValue>(value)->elements()) {
-        if (!IsIndependentOf(val, base)) {
-          return false;
-        }
-      }
-      return true;
-    }
-    case Value::Kind::FunctionType:
-      return IsIndependentOf(&cast<FunctionType>(value)->parameters(), base) &&
-             IsIndependentOf(&cast<FunctionType>(value)->return_type(), base);
-    case Value::Kind::PointerType:
-      return IsIndependentOf(&cast<PointerType>(value)->type(), base);
-    case Value::Kind::StructType: {
-      for (auto [name, type] : cast<StructType>(value)->fields()) {
-        if (!IsIndependentOf(type, base)) {
-          return false;
-        }
-      }
-      return true;
-    }
-    case Value::Kind::ConstraintType:
-      // TODO: What do we need to check here?
-      return true;
-    case Value::Kind::VariableType:
-      return &cast<VariableType>(value)->binding() != base;
-    case Value::Kind::AssociatedConstant:
-      // TODO: If this constant is in an equivalence set with something
-      // independent of the base, should that be OK? Eg:
-      //  impl i32 as X where .A = i32, .B = .A* {}
-      return IsIndependentOf(&cast<AssociatedConstant>(value)->base(), base);
-    case Value::Kind::AddrValue:
-      return IsIndependentOf(&cast<AddrValue>(value)->pattern(), base);
-    case Value::Kind::TypeOfClassType:
-      return IsIndependentOf(&cast<TypeOfClassType>(value)->class_type(), base);
-    case Value::Kind::TypeOfInterfaceType:
-      return IsIndependentOf(
-          &cast<TypeOfInterfaceType>(value)->interface_type(), base);
-    case Value::Kind::TypeOfConstraintType:
-      return IsIndependentOf(
-          &cast<TypeOfConstraintType>(value)->constraint_type(), base);
-    case Value::Kind::TypeOfChoiceType:
-      return IsIndependentOf(&cast<TypeOfChoiceType>(value)->choice_type(),
-                             base);
-    case Value::Kind::TypeOfParameterizedEntityName:
-      return IsIndependentOf(
-          &cast<TypeOfParameterizedEntityName>(value)->name(), base);
-    case Value::Kind::StaticArrayType:
-      return IsIndependentOf(&cast<StaticArrayType>(value)->element_type(),
-                             base);
-  }
-}
-
-static auto HasValueIndependentOf(
-    const ConstraintType::EqualityConstraint& constraint,
-    Nonnull<const GenericBinding*> base) -> bool {
-  for (Nonnull<const Value*> value : constraint.values) {
-    if (IsIndependentOf(value, base)) {
-      return true;
-    }
-  }
-  return false;
-}
-
 auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
                                       Nonnull<const ImplDeclaration*> impl_decl,
                                       Nonnull<const Value*> self_type)
@@ -3185,24 +3077,48 @@ auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
   const auto& iface_decl = iface_type->declaration();
   for (Nonnull<Declaration*> m : iface_decl.members()) {
     if (auto* assoc = dyn_cast<AssociatedConstantDeclaration>(m)) {
+      // An associated constant must be given exactly one value.
       Nonnull<const GenericBinding*> symbolic_self =
           impl_decl->constraint_type()->self_binding();
       Nonnull<const Value*> expected = arena_->New<AssociatedConstant>(
           &symbolic_self->value(), assoc, iface_type->args(),
           arena_->New<ImplWitness>(impl_decl));
-      std::optional<Nonnull<const ConstraintType::EqualityConstraint*>>
-          equality = FindEqualityConstraintContaining(
-              impl_decl->constraint_type(), expected);
-      if (!equality.has_value()) {
+
+      bool found_any = false;
+      std::optional<Nonnull<const Value*>> found_value;
+      std::optional<Nonnull<const Value*>> second_value;
+      auto visitor = [&](Nonnull<const Value*> equal_value) {
+        found_any = true;
+        if (!isa<AssociatedConstant>(equal_value)) {
+          if (!found_value || ValueEqual(equal_value, *found_value)) {
+            found_value = equal_value;
+          } else {
+            second_value = equal_value;
+            return false;
+          }
+        }
+        return true;
+      };
+      VisitEqualValues(impl_decl->constraint_type(), expected, visitor);
+      if (!found_any) {
         return CompilationError(impl_decl->source_loc())
                << "implementation missing " << *expected;
-      }
-      if (!HasValueIndependentOf(**equality, symbolic_self)) {
+      } else if (!found_value) {
+        // TODO: It's not clear what the right rule is here. Clearly
+        //   impl T as HasX & HasY where .X == .Y {}
+        // ... is insufficient to establish a value for either X or Y.
+        // But perhaps we can allow
+        //   impl forall [T:! HasX] T as HasY where .Y = .X {}
         return CompilationError(impl_decl->source_loc())
                << "implementation doesn't provide a concrete value for "
                << *expected;
+      } else if (second_value) {
+        return CompilationError(impl_decl->source_loc())
+               << "implementation provides multiple values for " << *expected
+               << ": " << **found_value << " and " << **second_value;
       }
     } else {
+      // Every member function must be declared.
       std::optional<std::string_view> mem_name = GetName(*m);
       CARBON_CHECK(mem_name.has_value()) << "unnamed interface member " << *m;
 

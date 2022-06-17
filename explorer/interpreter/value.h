@@ -707,30 +707,20 @@ class ConstraintType : public Value {
   std::vector<LookupContext> lookup_contexts_;
 };
 
-// Find the given value in the given list of equality constraints, returning
-// the index of the constraint that contains it, if any.
-inline auto FindInEqualityConstraints(
+// Visit the values in the given set of equality constraints that are a single
+// step away from the given value. Stops and returns `false` if the visitor
+// returns `false`, otherwise returns `true`.
+auto VisitEqualValues(
     llvm::ArrayRef<ConstraintType::EqualityConstraint> constraints,
-    Nonnull<const Value*> value) -> std::optional<size_t> {
-  for (size_t i = 0; i != constraints.size(); ++i) {
-    for (const Value* v : constraints[i].values) {
-      if (ValueEqual(value, v)) {
-        return i;
-      }
-    }
-  }
-  return std::nullopt;
-}
+    Nonnull<const Value*> value,
+    llvm::function_ref<bool(Nonnull<const Value*>)> visitor) -> bool;
 
-// Find the equality constraint containing the given value, if any.
-inline auto FindEqualityConstraintContaining(
-    Nonnull<const ConstraintType*> constraint, Nonnull<const Value*> value)
-    -> std::optional<Nonnull<const ConstraintType::EqualityConstraint*>> {
-  if (std::optional<size_t> index = FindInEqualityConstraints(
-          constraint->equality_constraints(), value)) {
-    return &constraint->equality_constraints()[*index];
-  }
-  return std::nullopt;
+// Find the values, as constrained by the given constraint type, that are a
+// single step away from the given value.
+inline auto VisitEqualValues(
+    Nonnull<const ConstraintType*> constraint, Nonnull<const Value*> value,
+    llvm::function_ref<bool(Nonnull<const Value*>)> visitor) -> bool {
+  return VisitEqualValues(constraint->equality_constraints(), value, visitor);
 }
 
 // A witness table.

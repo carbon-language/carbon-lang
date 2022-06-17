@@ -649,28 +649,27 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
                << " is not known";
       }
       auto& impl_witness = cast<ImplWitness>(*witness);
-      // TODO: Substitute impl_witness.type_args() into this!
-      // TODO: Substitute assoc.base() for the self in the constraint.
       Nonnull<const ConstraintType*> constraint =
           impl_witness.declaration().constraint_type();
-      // TODO: This is a workaround for the lack of substitute.
       Nonnull<const Value*> expected = arena_->New<AssociatedConstant>(
-          arena_->New<VariableType>(constraint->self_binding()),
-          &assoc.constant(), assoc.args(), &impl_witness);
-      if (std::optional<Nonnull<const ConstraintType::EqualityConstraint*>>
-              equality =
-                  FindEqualityConstraintContaining(constraint, expected)) {
-        for (Nonnull<const Value*> equal_value : (*equality)->values) {
-          if (!isa<AssociatedConstant, VariableType>(equal_value)) {
-            // TODO: This makes an arbitrary choice if there's more than one
-            // possibility. Should we disallow that case earlier?
-            // Eg, `Addable where .Result == i32 and .Result == i64`.
-            return Convert(equal_value, destination_type, source_loc);
-          }
+          &constraint->self_binding()->value(), &assoc.constant(), assoc.args(),
+          &impl_witness);
+      std::optional<ErrorOr<Nonnull<const Value*>>> result;
+      VisitEqualValues(constraint, expected, [&](Nonnull<const Value*> equal_value) {
+        // TODO: Need to substitute impl_witness.type_args() into the value.
+        if (isa<AssociatedConstant>(equal_value)) {
+          return true;
         }
+        // TODO: This makes an arbitrary choice if there's more than one
+        // equal value. It's not clear how to handle that case.
+        result.emplace(Convert(equal_value, destination_type, source_loc));
+        return false;
+      });
+      if (!result) {
+        CARBON_FATAL() << impl_witness.declaration()
+                       << " is missing value for associated constant " << assoc;
       }
-      CARBON_FATAL() << impl_witness.declaration()
-                     << " is missing value for associated constant " << assoc;
+      return std::move(*result);
     }
   }
 }
