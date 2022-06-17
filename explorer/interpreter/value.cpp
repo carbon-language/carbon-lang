@@ -18,6 +18,7 @@ namespace Carbon {
 
 using llvm::cast;
 using llvm::dyn_cast;
+using llvm::dyn_cast_or_null;
 
 auto StructValue::FindField(std::string_view name) const
     -> std::optional<Nonnull<const Value*>> {
@@ -37,6 +38,16 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
 
   if (field.witness().has_value()) {
     Nonnull<const Witness*> witness = cast<Witness>(*field.witness());
+
+    // Associated constants.
+    if (auto* assoc_const = dyn_cast_or_null<AssociatedConstantDeclaration>(
+            field.member().declaration().value_or(nullptr))) {
+      // TODO: Track the binding map in Member.
+      return arena->New<AssociatedConstant>(v, assoc_const, BindingMap{},
+                                            witness);
+    }
+
+    // Associated functions.
     switch (witness->kind()) {
       case Value::Kind::ImplWitness: {
         auto* impl_witness = cast<ImplWitness>(witness);
@@ -453,6 +464,11 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::VariableType:
       out << cast<VariableType>(*this).binding();
       break;
+    case Value::Kind::AssociatedConstant: {
+      const auto& assoc = cast<AssociatedConstant>(*this);
+      out << assoc.base() << "." << assoc.constant().binding().name();
+      break;
+    }
     case Value::Kind::ContinuationValue: {
       out << cast<ContinuationValue>(*this).stack();
       break;
@@ -591,6 +607,9 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
       return iface1.declaration().name() == iface2.declaration().name() &&
              BindingMapEqual(iface1.args(), iface2.args());
     }
+    case Value::Kind::AssociatedConstant:
+      // Associated constants are sometimes types.
+      return ValueEqual(t1, t2);
     case Value::Kind::ConstraintType: {
       const auto& constraint1 = cast<ConstraintType>(*t1);
       const auto& constraint2 = cast<ConstraintType>(*t2);
@@ -772,6 +791,16 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
       CARBON_CHECK(name1.has_value() && name2.has_value())
           << "parameterized name refers to unnamed declaration";
       return *name1 == *name2;
+    }
+    case Value::Kind::AssociatedConstant: {
+      // Note, this function computes symbolic identity, not taking into
+      // account any equality constraints that are in scope. The witness value
+      // is not part of determining value equality.
+      const auto& assoc1 = cast<AssociatedConstant>(*v1);
+      const auto& assoc2 = cast<AssociatedConstant>(*v2);
+      return &assoc1.constant() == &assoc2.constant() &&
+             BindingMapEqual(assoc1.args(), assoc2.args()) &&
+             TypeEqual(&assoc1.base(), &assoc2.base());
     }
     case Value::Kind::IntType:
     case Value::Kind::BoolType:

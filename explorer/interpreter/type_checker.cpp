@@ -105,6 +105,7 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
       return false;
     case Value::Kind::AutoType:
     case Value::Kind::VariableType:
+    case Value::Kind::AssociatedConstant:
       // A value of one of these types could be a type, but isn't known to be.
       return false;
     case Value::Kind::TypeType:
@@ -179,6 +180,15 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
     }
     case Value::Kind::PointerType: {
       return IsType(&cast<PointerType>(*value).type(), concrete);
+    }
+    case Value::Kind::AssociatedConstant: {
+      // An associated type is an associated constant whose type is a
+      // type-of-type.
+      const auto& assoc = cast<AssociatedConstant>(*value);
+      // TODO: Should we substitute in the arguments? Given
+      //   interface I(T:! Type) { let V:! T; }
+      // ... is T.(I(Type).V) considered to be a type?
+      return IsTypeOfType(&assoc.constant().static_type());
     }
   }
 }
@@ -509,6 +519,7 @@ auto TypeChecker::ArgumentDeduction(
     BindingMap& deduced, Nonnull<const Value*> param, Nonnull<const Value*> arg,
     bool allow_implicit_conversion, const ImplScope& impl_scope) const
     -> ErrorOr<Success> {
+  // TODO: Look for equivalences in non-deduced cases.
   if (trace_stream_) {
     **trace_stream_ << "deducing " << *param << " from " << *arg << "\n";
     **trace_stream_ << "bindings: ";
@@ -704,6 +715,7 @@ auto TypeChecker::ArgumentDeduction(
     case Value::Kind::ContinuationType:
     case Value::Kind::ChoiceType:
     case Value::Kind::ConstraintType:
+    case Value::Kind::AssociatedConstant:
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
@@ -756,15 +768,13 @@ auto TypeChecker::ArgumentDeduction(
 class ConstraintTypeBuilder {
  public:
   ConstraintTypeBuilder(Nonnull<Arena*> arena, SourceLocation source_loc)
-      : self_binding_(arena->New<GenericBinding>(
-            source_loc, ".Self", arena->New<TypeTypeLiteral>(source_loc))) {}
+      : self_binding_(MakeSelfBinding(arena, source_loc)) {}
   ConstraintTypeBuilder(Nonnull<const GenericBinding*> self_binding)
       : self_binding_(self_binding) {}
 
   // Produce a type that refers to the `.Self` type of the constraint.
-  auto MakeSelfType(Nonnull<Arena*> arena) const
-      -> Nonnull<const VariableType*> {
-    return arena->New<VariableType>(self_binding_);
+  auto GetSelfType(Nonnull<Arena*> arena) const -> Nonnull<const Value*> {
+    return &self_binding_->value();
   }
 
   // Add an `impl` constraint -- `T is C` if not already present.
@@ -787,8 +797,8 @@ class ConstraintTypeBuilder {
     {
       size_t kept = 0;
       for (size_t i = 0; i != equal.values.size(); ++i) {
-        if (std::optional<size_t> found_in =
-                FindInEqualityConstraints(equal.values[i])) {
+        if (std::optional<size_t> found_in = FindInEqualityConstraints(
+                equality_constraints_, equal.values[i])) {
           merged_constraints.insert(*found_in);
         } else {
           equal.values[kept++] = equal.values[i];
@@ -855,17 +865,16 @@ class ConstraintTypeBuilder {
   }
 
  private:
-  // Find the given value in the equality constraints, returning the index of
-  // the constraint that contains it, if any.
-  auto FindInEqualityConstraints(const Value* value) -> std::optional<size_t> {
-    for (size_t i = 0; i != equality_constraints_.size(); ++i) {
-      for (const Value* v : equality_constraints_[i].values) {
-        if (ValueEqual(value, v)) {
-          return i;
-        }
-      }
-    }
-    return std::nullopt;
+  // Make a generic binding to serve as the `.Self` of this constraint type.
+  static auto MakeSelfBinding(Nonnull<Arena*> arena, SourceLocation source_loc)
+      -> Nonnull<const GenericBinding*> {
+    Nonnull<GenericBinding*> self_binding = arena->New<GenericBinding>(
+        source_loc, ".Self", arena->New<TypeTypeLiteral>(source_loc));
+    Nonnull<const Value*> self = arena->New<VariableType>(self_binding);
+    // TODO: Do we really need both of these?
+    self_binding->set_symbolic_identity(self);
+    self_binding->set_value(self);
+    return self_binding;
   }
 
  private:
@@ -895,6 +904,14 @@ auto TypeChecker::Substitute(
       } else {
         return it->second;
       }
+    }
+    case Value::Kind::AssociatedConstant: {
+      const auto& assoc = cast<AssociatedConstant>(*type);
+      Nonnull<const Value*> base = Substitute(dict, &assoc.base());
+      BindingMap args = SubstituteIntoBindingMap(assoc.args());
+      Nonnull<const Value*> witness = Substitute(dict, &assoc.witness());
+      return arena_->New<AssociatedConstant>(base, &assoc.constant(), args,
+                                             cast<Witness>(witness));
     }
     case Value::Kind::TupleValue: {
       std::vector<Nonnull<const Value*>> elts;
@@ -1173,7 +1190,7 @@ auto TypeChecker::MakeConstraintForInterface(
     -> Nonnull<const ConstraintType*> {
   ConstraintTypeBuilder builder(arena_, source_loc);
   builder.AddImplConstraint(
-      {.type = builder.MakeSelfType(arena_), .interface = iface_type});
+      {.type = builder.GetSelfType(arena_), .interface = iface_type});
   builder.AddLookupContext({.context = iface_type});
   return std::move(builder).Build(arena_);
 }
@@ -1183,7 +1200,7 @@ auto TypeChecker::CombineConstraints(
     llvm::ArrayRef<Nonnull<const ConstraintType*>> constraints)
     -> Nonnull<const ConstraintType*> {
   ConstraintTypeBuilder builder(arena_, source_loc);
-  auto* self = builder.MakeSelfType(arena_);
+  auto* self = builder.GetSelfType(arena_);
   for (Nonnull<const ConstraintType*> constraint : constraints) {
     BindingMap map;
     map[constraint->self_binding()] = self;
@@ -1547,30 +1564,41 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           access.set_impl(impl);
           access.set_found_in_interface(result.interface);
 
+          bool is_instance_member;
           switch (result.member->kind()) {
-            case DeclarationKind::FunctionDeclaration: {
-              const auto& func = cast<FunctionDeclaration>(*result.member);
-              if (func.is_method()) {
-                break;
-              }
-              const Value& member_type = func.static_type();
-              BindingMap binding_map = result.interface->args();
-              binding_map[result.interface->declaration().self()] = type;
-              Nonnull<const Value*> inst_member_type =
-                  Substitute(binding_map, &member_type);
-              access.set_static_type(inst_member_type);
-              return Success();
-            }
+            case DeclarationKind::FunctionDeclaration:
+              is_instance_member =
+                  cast<FunctionDeclaration>(*result.member).is_method();
+              break;
+            case DeclarationKind::AssociatedConstantDeclaration:
+              is_instance_member = false;
+              break;
             default:
+              CARBON_FATAL()
+                  << "unexpected kind for interface member " << *result.member;
               break;
           }
-          // TODO: Consider setting the static type of all interface member
-          // declarations and instance member declarations to be member name
-          // types, rather than special-casing member accesses that name
-          // them.
-          access.set_static_type(
-              arena_->New<TypeOfMemberName>(Member(result.member)));
-          access.set_value_category(ValueCategory::Let);
+
+          if (is_instance_member) {
+            // This is a member name denoting an instance member.
+            // TODO: Consider setting the static type of all instance member
+            // declarations to be member name types, rather than special-casing
+            // member accesses that name them.
+            access.set_static_type(
+                arena_->New<TypeOfMemberName>(Member(result.member)));
+            access.set_value_category(ValueCategory::Let);
+          } else {
+            // This is a non-instance member whose value is found directly via
+            // the witness table, such as a non-method function or an
+            // associated constant.
+            const Value& member_type = result.member->static_type();
+            BindingMap binding_map = result.interface->args();
+            binding_map[result.interface->declaration().self()] = type;
+            Nonnull<const Value*> inst_member_type =
+                Substitute(binding_map, &member_type);
+            access.set_static_type(inst_member_type);
+            access.set_value_category(ValueCategory::Let);
+          }
           return Success();
         }
         case Value::Kind::TypeType:
@@ -1765,6 +1793,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           }
           break;
         }
+        case DeclarationKind::AssociatedConstantDeclaration:
+          access.set_static_type(SubstituteIntoMemberType());
+          access.set_value_category(access.object().value_category());
+          return Success();
         default:
           CARBON_FATAL() << "member " << member_name
                          << " is not a field or method";
@@ -2128,7 +2160,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       ConstraintTypeBuilder builder(&where.self_binding());
       if (base) {
         BindingMap map;
-        map[(*base)->self_binding()] = builder.MakeSelfType(arena_);
+        map[(*base)->self_binding()] = builder.GetSelfType(arena_);
         builder.Add(cast<ConstraintType>(Substitute(map, *base)));
       }
 
@@ -3067,31 +3099,159 @@ auto TypeChecker::CheckImplIsDeducible(
   return Success();
 }
 
+// Determine whether the given value is independent of the specified generic
+// binding, that is, doesn't symbolically depend on the value of that binding.
+static auto IsIndependentOf(Nonnull<const Value*> value,
+                            Nonnull<const GenericBinding*> base) {
+  // TODO: Need to check the BindingMaps in many of the cases below.
+  switch (value->kind()) {
+    case Value::Kind::IntValue:
+    case Value::Kind::FunctionValue:
+    case Value::Kind::PointerValue:
+    case Value::Kind::LValue:
+    case Value::Kind::BoolValue:
+    case Value::Kind::ImplWitness:
+    case Value::Kind::SymbolicWitness:
+    case Value::Kind::IntType:
+    case Value::Kind::BoolType:
+    case Value::Kind::TypeType:
+    case Value::Kind::AutoType:
+    case Value::Kind::NominalClassType:
+    case Value::Kind::InterfaceType:
+    case Value::Kind::ChoiceType:
+    case Value::Kind::ContinuationType:
+    case Value::Kind::ParameterizedEntityName:
+    case Value::Kind::MemberName:
+    case Value::Kind::BindingPlaceholderValue:
+    case Value::Kind::AlternativeConstructorValue:
+    case Value::Kind::ContinuationValue:
+    case Value::Kind::StringType:
+    case Value::Kind::StringValue:
+    case Value::Kind::TypeOfMemberName:
+      return true;
+    case Value::Kind::BoundMethodValue:
+      return IsIndependentOf(cast<BoundMethodValue>(value)->receiver(), base);
+    case Value::Kind::StructValue: {
+      for (auto [name, val] : cast<StructValue>(value)->elements()) {
+        if (!IsIndependentOf(val, base)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    case Value::Kind::NominalClassValue:
+      return IsIndependentOf(&cast<NominalClassValue>(value)->inits(), base);
+    case Value::Kind::AlternativeValue:
+      return IsIndependentOf(&cast<AlternativeValue>(value)->argument(), base);
+    case Value::Kind::TupleValue: {
+      for (auto* val : cast<TupleValue>(value)->elements()) {
+        if (!IsIndependentOf(val, base)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    case Value::Kind::FunctionType:
+      return IsIndependentOf(&cast<FunctionType>(value)->parameters(), base) &&
+             IsIndependentOf(&cast<FunctionType>(value)->return_type(), base);
+    case Value::Kind::PointerType:
+      return IsIndependentOf(&cast<PointerType>(value)->type(), base);
+    case Value::Kind::StructType: {
+      for (auto [name, type] : cast<StructType>(value)->fields()) {
+        if (!IsIndependentOf(type, base)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    case Value::Kind::ConstraintType:
+      // TODO: What do we need to check here?
+      return true;
+    case Value::Kind::VariableType:
+      return &cast<VariableType>(value)->binding() != base;
+    case Value::Kind::AssociatedConstant:
+      // TODO: If this constant is in an equivalence set with something
+      // independent of the base, should that be OK? Eg:
+      //  impl i32 as X where .A = i32, .B = .A* {}
+      return IsIndependentOf(&cast<AssociatedConstant>(value)->base(), base);
+    case Value::Kind::AddrValue:
+      return IsIndependentOf(&cast<AddrValue>(value)->pattern(), base);
+    case Value::Kind::TypeOfClassType:
+      return IsIndependentOf(&cast<TypeOfClassType>(value)->class_type(), base);
+    case Value::Kind::TypeOfInterfaceType:
+      return IsIndependentOf(
+          &cast<TypeOfInterfaceType>(value)->interface_type(), base);
+    case Value::Kind::TypeOfConstraintType:
+      return IsIndependentOf(
+          &cast<TypeOfConstraintType>(value)->constraint_type(), base);
+    case Value::Kind::TypeOfChoiceType:
+      return IsIndependentOf(&cast<TypeOfChoiceType>(value)->choice_type(),
+                             base);
+    case Value::Kind::TypeOfParameterizedEntityName:
+      return IsIndependentOf(
+          &cast<TypeOfParameterizedEntityName>(value)->name(), base);
+    case Value::Kind::StaticArrayType:
+      return IsIndependentOf(&cast<StaticArrayType>(value)->element_type(),
+                             base);
+  }
+}
+
+static auto HasValueIndependentOf(
+    const ConstraintType::EqualityConstraint& constraint,
+    Nonnull<const GenericBinding*> base) -> bool {
+  for (Nonnull<const Value*> value : constraint.values) {
+    if (IsIndependentOf(value, base)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
                                       Nonnull<const ImplDeclaration*> impl_decl,
                                       Nonnull<const Value*> self_type)
     -> ErrorOr<Success> {
   const auto& iface_decl = iface_type->declaration();
   for (Nonnull<Declaration*> m : iface_decl.members()) {
-    std::optional<std::string_view> mem_name = GetName(*m);
-    CARBON_CHECK(mem_name.has_value()) << "unnamed interface member " << *m;
+    if (auto* assoc = dyn_cast<AssociatedConstantDeclaration>(m)) {
+      Nonnull<const GenericBinding*> symbolic_self =
+          impl_decl->constraint_type()->self_binding();
+      Nonnull<const Value*> expected = arena_->New<AssociatedConstant>(
+          &symbolic_self->value(), assoc, iface_type->args(),
+          arena_->New<ImplWitness>(impl_decl));
+      std::optional<Nonnull<const ConstraintType::EqualityConstraint*>>
+          equality = FindEqualityConstraintContaining(
+              impl_decl->constraint_type(), expected);
+      if (!equality.has_value()) {
+        return CompilationError(impl_decl->source_loc())
+               << "implementation missing " << *expected;
+      }
+      if (!HasValueIndependentOf(**equality, symbolic_self)) {
+        return CompilationError(impl_decl->source_loc())
+               << "implementation doesn't provide a concrete value for "
+               << *expected;
+      }
+    } else {
+      std::optional<std::string_view> mem_name = GetName(*m);
+      CARBON_CHECK(mem_name.has_value()) << "unnamed interface member " << *m;
 
-    std::optional<Nonnull<const Declaration*>> mem =
-        FindMember(*mem_name, impl_decl->members());
-    if (!mem.has_value()) {
-      return CompilationError(impl_decl->source_loc())
-             << "implementation missing " << *mem_name;
+      std::optional<Nonnull<const Declaration*>> mem =
+          FindMember(*mem_name, impl_decl->members());
+      if (!mem.has_value()) {
+        return CompilationError(impl_decl->source_loc())
+               << "implementation missing " << *mem_name;
+      }
+
+      BindingMap binding_map = iface_type->args();
+      binding_map[iface_decl.self()] = self_type;
+      Nonnull<const Value*> iface_mem_type =
+          Substitute(binding_map, &m->static_type());
+      // TODO: How should the signature in the implementation be permitted
+      // to differ from the signature in the interface?
+      CARBON_RETURN_IF_ERROR(
+          ExpectExactType((*mem)->source_loc(), "member of implementation",
+                          iface_mem_type, &(*mem)->static_type()));
     }
-
-    BindingMap binding_map = iface_type->args();
-    binding_map[iface_decl.self()] = self_type;
-    Nonnull<const Value*> iface_mem_type =
-        Substitute(binding_map, &m->static_type());
-    // TODO: How should the signature in the implementation be permitted
-    // to differ from the signature in the interface?
-    CARBON_RETURN_IF_ERROR(
-        ExpectExactType((*mem)->source_loc(), "member of implementation",
-                        iface_mem_type, &(*mem)->static_type()));
   }
   return Success();
 }
@@ -3287,6 +3447,7 @@ static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::StringType:
+    case Value::Kind::AssociatedConstant:
       return false;
 
     case Value::Kind::FunctionType:
@@ -3389,6 +3550,8 @@ auto TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d,
       }
       return Success();
     }
+    case DeclarationKind::AssociatedConstantDeclaration:
+      return Success();
     case DeclarationKind::SelfDeclaration: {
       CARBON_FATAL() << "Unreachable TypeChecker `Self` declaration";
     }
@@ -3448,6 +3611,19 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> declared_type,
                               InterpExp(&type, arena_, trace_stream_));
       var.set_static_type(declared_type);
+      break;
+    }
+
+    case DeclarationKind::AssociatedConstantDeclaration: {
+      auto& let = cast<AssociatedConstantDeclaration>(*d);
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&let.binding(), std::nullopt,
+                                              *scope_info.innermost_scope,
+                                              let.value_category()));
+      let.set_static_type(&let.binding().static_type());
+      // TODO:
+      // let.binding().set_symbolic_identity(
+      // associated constant X within Self
+      // )
       break;
     }
 

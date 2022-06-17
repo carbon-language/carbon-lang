@@ -1,0 +1,32 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// RUN: %{explorer} %s 2>&1 | \
+// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
+// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
+// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: %{explorer} %s
+
+package ExplorerTest api;
+
+interface Frob {
+  let Result:! Type;
+  fn F[me: Self]() -> Result;
+}
+
+fn Use[T:! Frob](x: T) -> T.Result {
+  var v: T.Result = x.F();
+  return v;
+}
+
+impl i32 as Frob where .Result == i32 {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/simple_equality.carbon:[[@LINE+3]]: type error in member of implementation
+  // CHECK: expected: fn () -> Result:! Type
+  // CHECK: actual: fn () -> i32
+  fn F[me: Self]() -> i32 { return 0; }
+}
+
+fn Main() -> i32 {
+  return Use(0);
+}

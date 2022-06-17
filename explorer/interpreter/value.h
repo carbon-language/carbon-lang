@@ -61,6 +61,7 @@ class Value {
     ChoiceType,
     ContinuationType,  // The type of a continuation.
     VariableType,      // e.g., generic type parameters.
+    AssociatedConstant,
     ParameterizedEntityName,
     MemberName,
     BindingPlaceholderValue,
@@ -112,6 +113,9 @@ class Value {
  private:
   const Kind kind_;
 };
+
+auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool;
+auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool;
 
 // An integer value.
 class IntValue : public Value {
@@ -703,6 +707,32 @@ class ConstraintType : public Value {
   std::vector<LookupContext> lookup_contexts_;
 };
 
+// Find the given value in the given list of equality constraints, returning
+// the index of the constraint that contains it, if any.
+inline auto FindInEqualityConstraints(
+    llvm::ArrayRef<ConstraintType::EqualityConstraint> constraints,
+    Nonnull<const Value*> value) -> std::optional<size_t> {
+  for (size_t i = 0; i != constraints.size(); ++i) {
+    for (const Value* v : constraints[i].values) {
+      if (ValueEqual(value, v)) {
+        return i;
+      }
+    }
+  }
+  return std::nullopt;
+}
+
+// Find the equality constraint containing the given value, if any.
+inline auto FindEqualityConstraintContaining(
+    Nonnull<const ConstraintType*> constraint, Nonnull<const Value*> value)
+    -> std::optional<Nonnull<const ConstraintType::EqualityConstraint*>> {
+  if (std::optional<size_t> index = FindInEqualityConstraints(
+          constraint->equality_constraints(), value)) {
+    return &constraint->equality_constraints()[*index];
+  }
+  return std::nullopt;
+}
+
 // A witness table.
 class Witness : public Value {
  protected:
@@ -880,6 +910,47 @@ class MemberName : public Value {
   std::optional<Nonnull<const Value*>> base_type_;
   std::optional<Nonnull<const InterfaceType*>> interface_;
   Member member_;
+};
+
+// A symbolic value representing an associated constant.
+//
+// This is a value of the form `A.B` or `A.B.C` or similar, where `A` is a
+// `VariableType`.
+class AssociatedConstant : public Value {
+ public:
+  explicit AssociatedConstant(
+      Nonnull<const Value*> base,
+      Nonnull<const AssociatedConstantDeclaration*> constant, BindingMap args,
+      Nonnull<const Witness*> witness)
+      : Value(Kind::AssociatedConstant),
+        base_(base),
+        constant_(constant),
+        args_(args),
+        witness_(witness) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::AssociatedConstant;
+  }
+
+  // The type for which we denote an associated constant.
+  auto base() const -> const Value& { return *base_; }
+
+  // The associated constant whose value is being denoted.
+  auto constant() const -> const AssociatedConstantDeclaration& {
+    return *constant_;
+  }
+
+  // Mapping from the bindings of the enclosing interface to their values.
+  auto args() const -> const BindingMap& { return args_; }
+
+  // Witness within which the constant's value can be found.
+  auto witness() const -> const Witness& { return *witness_; }
+
+ private:
+  Nonnull<const Value*> base_;
+  Nonnull<const AssociatedConstantDeclaration*> constant_;
+  BindingMap args_;
+  Nonnull<const Witness*> witness_;
 };
 
 // A first-class continuation representation of a fragment of the stack.
@@ -1099,9 +1170,6 @@ class StaticArrayType : public Value {
   Nonnull<const Value*> element_type_;
   size_t size_;
 };
-
-auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool;
-auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool;
 
 }  // namespace Carbon
 

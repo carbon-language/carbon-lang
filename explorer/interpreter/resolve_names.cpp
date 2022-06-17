@@ -58,6 +58,14 @@ static auto AddExposedNames(const Declaration& declaration,
       }
       break;
     }
+    case DeclarationKind::AssociatedConstantDeclaration: {
+      auto& let = cast<AssociatedConstantDeclaration>(declaration);
+      if (let.binding().name() != AnonymousName) {
+        CARBON_RETURN_IF_ERROR(
+            enclosing_scope.Add(let.binding().name(), &let.binding()));
+      }
+      break;
+    }
     case DeclarationKind::SelfDeclaration: {
       auto& self = cast<SelfDeclaration>(declaration);
       CARBON_RETURN_IF_ERROR(enclosing_scope.Add("Self", &self));
@@ -555,6 +563,11 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
         CARBON_RETURN_IF_ERROR(
             ResolveNames(var.initializer(), enclosing_scope));
       }
+      break;
+    }
+    case DeclarationKind::AssociatedConstantDeclaration: {
+      auto& let = cast<AssociatedConstantDeclaration>(declaration);
+      CARBON_RETURN_IF_ERROR(ResolveNames(let.binding(), enclosing_scope));
       break;
     }
 

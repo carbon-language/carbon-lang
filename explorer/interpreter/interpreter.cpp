@@ -475,6 +475,19 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
           InstantiateBindings(&class_type.bindings(), source_loc));
       return arena_->New<NominalClassType>(&class_type.declaration(), bindings);
     }
+    case Value::Kind::AssociatedConstant: {
+      const auto& assoc_const = cast<AssociatedConstant>(*type);
+      Nonnull<const Value*> witness = &assoc_const.witness();
+      if (auto* sym = dyn_cast<SymbolicWitness>(witness)) {
+        CARBON_ASSIGN_OR_RETURN(witness,
+                                EvalExpRecursively(&sym->impl_expression()));
+      }
+      if (auto* impl = dyn_cast<ImplWitness>(witness)) {
+        // TODO: Pull the corresponding value out of the witness and return it.
+        (void)impl;
+      }
+      return type;
+    }
     default:
       return type;
   }
@@ -620,6 +633,44 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
         new_elements.push_back(val);
       }
       return arena_->New<TupleValue>(std::move(new_elements));
+    }
+    case Value::Kind::AssociatedConstant: {
+      auto& assoc = cast<AssociatedConstant>(*value);
+      Nonnull<const Value*> witness = &assoc.witness();
+      if (auto* sym = dyn_cast<SymbolicWitness>(witness)) {
+        CARBON_ASSIGN_OR_RETURN(witness,
+                                EvalExpRecursively(&sym->impl_expression()));
+      }
+      if (!isa<ImplWitness>(witness)) {
+        CARBON_CHECK(phase() == Phase::CompileTime)
+            << "symbolic witnesses should only be used at compile time";
+        return CompilationError(source_loc)
+               << "value of associated constant " << assoc
+               << " is not known";
+      }
+      auto& impl_witness = cast<ImplWitness>(*witness);
+      // TODO: Substitute impl_witness.type_args() into this!
+      // TODO: Substitute assoc.base() for the self in the constraint.
+      Nonnull<const ConstraintType*> constraint =
+          impl_witness.declaration().constraint_type();
+      // TODO: This is a workaround for the lack of substitute.
+      Nonnull<const Value*> expected = arena_->New<AssociatedConstant>(
+          arena_->New<VariableType>(constraint->self_binding()),
+          &assoc.constant(), assoc.args(), &impl_witness);
+      if (std::optional<Nonnull<const ConstraintType::EqualityConstraint*>>
+              equality =
+                  FindEqualityConstraintContaining(constraint, expected)) {
+        for (Nonnull<const Value*> equal_value : (*equality)->values) {
+          if (!isa<AssociatedConstant, VariableType>(equal_value)) {
+            // TODO: This makes an arbitrary choice if there's more than one
+            // possibility. Should we disallow that case earlier?
+            // Eg, `Addable where .Result == i32 and .Result == i64`.
+            return Convert(equal_value, destination_type, source_loc);
+          }
+        }
+      }
+      CARBON_FATAL() << impl_witness.declaration()
+                     << " is missing value for associated constant " << assoc;
     }
   }
 }
@@ -1504,6 +1555,7 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
     case DeclarationKind::ClassDeclaration:
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::InterfaceDeclaration:
+    case DeclarationKind::AssociatedConstantDeclaration:
     case DeclarationKind::ImplDeclaration:
     case DeclarationKind::SelfDeclaration:
     case DeclarationKind::AliasDeclaration:
