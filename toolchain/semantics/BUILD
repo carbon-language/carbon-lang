@@ -5,9 +5,34 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "function",
-    hdrs = ["function.h"],
-    deps = ["//toolchain/parser:parse_tree"],
+    name = "nodes",
+    hdrs = [
+        "nodes/declared_name.h",
+        "nodes/expression_statement.h",
+        "nodes/function.h",
+        "nodes/infix_operator.h",
+        "nodes/literal.h",
+        "meta_node.h",
+        "meta_node_block.h",
+        "nodes/pattern_binding.h",
+        "nodes/return.h",
+    ],
+    deps = [
+        "//common:check",
+        "//common:ostream",
+        "//toolchain/parser:parse_tree",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "parse_subtree_consumer",
+    srcs = ["parse_subtree_consumer.cpp"],
+    hdrs = ["parse_subtree_consumer.h"],
+    deps = [
+        "//common:check",
+        "//toolchain/parser:parse_tree",
+    ],
 )
 
 cc_library(
@@ -15,7 +40,7 @@ cc_library(
     srcs = ["semantics_ir.cpp"],
     hdrs = ["semantics_ir.h"],
     deps = [
-        ":function",
+        ":nodes",
         "//common:check",
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_tree",
@@ -28,11 +53,37 @@ cc_library(
     srcs = ["semantics_ir_factory.cpp"],
     hdrs = ["semantics_ir_factory.h"],
     deps = [
+        ":nodes",
+        ":parse_subtree_consumer",
         ":semantics_ir",
         "//common:check",
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_node_kind",
         "//toolchain/parser:parse_tree",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "semantics_ir_test_helpers",
+    testonly = 1,
+    srcs = ["semantics_ir_for_test.cpp"],
+    hdrs = [
+        "nodes/declared_name_test_matchers.h",
+        "nodes/function_test_matchers.h",
+        "nodes/infix_operator_test_matchers.h",
+        "nodes/literal_test_matchers.h",
+        "nodes/pattern_binding_test_matchers.h",
+        "nodes/return_test_matchers.h",
+        "semantics_ir_for_test.h",
+        "semantics_ir_test_helpers.h",
+    ],
+    deps = [
+        ":nodes",
+        ":semantics_ir",
+        "//common:check",
+        "//common:ostream",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -43,6 +94,7 @@ cc_test(
     srcs = ["semantics_ir_factory_test.cpp"],
     deps = [
         ":semantics_ir_factory",
+        ":semantics_ir_test_helpers",
         "//common:gtest_main",
         "//toolchain/diagnostics:mocks",
         "//toolchain/lexer:tokenized_buffer",

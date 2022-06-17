@@ -37,6 +37,7 @@ external impl Point as Vector {
   fn Scale[me: Point](v: i32) -> Point {
       return {.x = me.x * v, .y = me.y * v};
   }
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_ambiguous_impl.carbon:[[@LINE+1]]: ambiguous implementations of interface Vector for class Point
 }
 
 fn AddAndScaleGeneric[T:! Vector](a: T, b: T, s: i32) -> T {
@@ -46,7 +47,6 @@ fn AddAndScaleGeneric[T:! Vector](a: T, b: T, s: i32) -> T {
 fn Main() -> i32 {
   var a: Point = {.x = 1, .y = 1};
   var b: Point = {.x = 2, .y = 3};
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_ambiguous_impl.carbon:[[@LINE+1]]: ambiguous implementations of interface Vector for class Point
   var p: Point = AddAndScaleGeneric(a, b, 5);
   return p.x - 15;
 }
