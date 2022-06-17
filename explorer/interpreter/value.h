@@ -567,6 +567,10 @@ class NominalClassType : public Value {
 
   auto type_args() const -> const BindingMap& { return bindings_->args(); }
 
+  // Witnesses for each of the class's impl bindings. These will not in general
+  // be set for class types that are only intended to be used within
+  // type-checking and not at runtime, such as in the static_type() of an
+  // expression or the type in a TypeOfClassType.
   auto witnesses() const -> const ImplWitnessMap& {
     return bindings_->witnesses();
   }

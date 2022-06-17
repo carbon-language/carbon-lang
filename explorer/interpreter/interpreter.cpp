@@ -118,7 +118,7 @@ class Interpreter {
   // Call the function `fun` with the given `arg` and the `witnesses`
   // for the function's impl bindings.
   auto CallFunction(const CallExpression& call, Nonnull<const Value*> fun,
-                    Nonnull<const Value*> arg, ImplWitnessMap witnesses)
+                    Nonnull<const Value*> arg, ImplWitnessMap&& witnesses)
       -> ErrorOr<Success>;
 
   void PrintState(llvm::raw_ostream& out);
@@ -483,14 +483,9 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
 auto Interpreter::InstantiateBindings(Nonnull<const Bindings*> bindings,
                                       SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Bindings*>> {
-  bool changed_any = false;
-
-  BindingMap args;
-  for (const auto& [var, orig_arg] : bindings->args()) {
-    CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inst_arg,
-                            InstantiateType(orig_arg, source_loc));
-    changed_any |= inst_arg != orig_arg;
-    args[var] = inst_arg;
+  BindingMap args = bindings->args();
+  for (auto& [var, arg] : args) {
+    CARBON_ASSIGN_OR_RETURN(arg, InstantiateType(arg, source_loc));
   }
 
   ImplWitnessMap witnesses = bindings->witnesses();
@@ -498,13 +493,13 @@ auto Interpreter::InstantiateBindings(Nonnull<const Bindings*> bindings,
     if (auto* sym = dyn_cast<SymbolicWitness>(witness)) {
       CARBON_ASSIGN_OR_RETURN(witness,
                               EvalExpRecursively(&sym->impl_expression()));
-      changed_any |= witness != sym;
     }
   }
 
-  return changed_any
-             ? arena_->New<Bindings>(std::move(args), std::move(witnesses))
-             : bindings;
+  if (args == bindings->args() && witnesses == bindings->witnesses()) {
+    return bindings;
+  }
+  return arena_->New<Bindings>(std::move(args), std::move(witnesses));
 }
 
 auto Interpreter::Convert(Nonnull<const Value*> value,
@@ -632,7 +627,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
 auto Interpreter::CallFunction(const CallExpression& call,
                                Nonnull<const Value*> fun,
                                Nonnull<const Value*> arg,
-                               ImplWitnessMap witnesses) -> ErrorOr<Success> {
+                               ImplWitnessMap&& witnesses) -> ErrorOr<Success> {
   if (trace_stream_) {
     **trace_stream_ << "calling function: " << *fun << "\n";
   }
@@ -726,10 +721,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
                                 &params_scope, generic_args, trace_stream_,
                                 this->arena_));
       Nonnull<const Bindings*> bindings =
-          generic_args.empty() && witnesses.empty()
-              ? Bindings::None()
-              : arena_->New<Bindings>(std::move(generic_args),
-                                      std::move(witnesses));
+          arena_->New<Bindings>(std::move(generic_args), std::move(witnesses));
       switch (decl.kind()) {
         case DeclarationKind::ClassDeclaration:
           return todo_.FinishAction(arena_->New<NominalClassType>(
