@@ -25,7 +25,7 @@ class StringLexHelper {
   auto Advance() -> bool;
   // Returns the last scanned char.
   auto last_char() -> int { return str_.back(); };
-  // Returns scanned string.
+  // Returns the scanned string.
   auto str() -> const std::string& { return str_; };
 
   auto is_eof() -> bool { return is_eof_; };
