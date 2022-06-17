@@ -2451,7 +2451,7 @@ features:
 -   Ability to call C++ templates and use C++ templated types from Carbon.
 -   Ability to instantiate a C++ template with a Carbon type.
 -   Ability to call a Carbon generic from C++ as if it were a C++ template.
--   Ability to instanitate a Carbon generic with a C++ type.
+-   Ability to instantiate a Carbon generic with a C++ type.
 
 ### Standard types
 
