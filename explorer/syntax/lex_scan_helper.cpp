@@ -11,6 +11,7 @@
 namespace Carbon {
 
 auto StringLexHelper::Advance() -> bool {
+  CARBON_CHECK(is_eof_ == false);
   int c = ReadChar(yyscanner_, context_);
   if (c <= 0) {
     is_eof_ = true;
