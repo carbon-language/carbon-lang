@@ -266,7 +266,7 @@ operand_start         [(A-Za-z0-9_\"]
   // yytext and chars scanned by str_lex_helper hold the source text, not the
   // string the source represents.
   Carbon::StringLexHelper str_lex_helper(yytext, yyscanner, context);
-  std::string s = str_lex_helper.str();
+  const std::string& s = str_lex_helper.str();
   const int hashtag_num = std::count(s.begin(), s.end(), '#');
   const int leading_quotes = std::count(s.begin(), s.end(), '"');
   if (leading_quotes == 3 && hashtag_num > 0) {
