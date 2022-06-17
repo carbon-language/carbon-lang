@@ -45,7 +45,7 @@ class FieldPath {
 
     auto member() const -> Member { return member_; }
 
-    auto name() const -> std::string { return member_.name(); }
+    auto name() const -> std::string_view { return member_.name(); }
 
     auto witness() const -> std::optional<Nonnull<const Witness*>> {
       return witness_;

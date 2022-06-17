@@ -14,9 +14,9 @@ Member::Member(Nonnull<const Declaration*> declaration)
 Member::Member(Nonnull<const NamedValue*> struct_member)
     : member_(struct_member) {}
 
-auto Member::name() const -> const std::string& {
+auto Member::name() const -> std::string_view {
   if (const Declaration* decl = member_.dyn_cast<const Declaration*>()) {
-    return *GetNamePtr(*decl).value();
+    return GetName(*decl).value();
   } else {
     return member_.get<const NamedValue*>()->name;
   }

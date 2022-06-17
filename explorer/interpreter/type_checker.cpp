@@ -3084,7 +3084,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   }
   // Check that the interface is satisfied by the impl members.
   for (Nonnull<Declaration*> m : iface_decl.members()) {
-    if (std::optional<std::string> mem_name = GetName(*m);
+    if (std::optional<std::string_view> mem_name = GetName(*m);
         mem_name.has_value()) {
       if (std::optional<Nonnull<const Declaration*>> mem =
               FindMember(*mem_name, impl_decl->members());

@@ -272,7 +272,7 @@ class StructValue : public Value {
 
   // Returns the value of the field named `name` in this struct, or
   // nullopt if there is no such field.
-  auto FindField(const std::string& name) const
+  auto FindField(std::string_view name) const
       -> std::optional<Nonnull<const Value*>>;
 
  private:
@@ -300,7 +300,8 @@ class NominalClassValue : public Value {
 // An alternative constructor value.
 class AlternativeConstructorValue : public Value {
  public:
-  AlternativeConstructorValue(std::string alt_name, std::string choice_name)
+  AlternativeConstructorValue(std::string_view alt_name,
+                              std::string_view choice_name)
       : Value(Kind::AlternativeConstructorValue),
         alt_name_(std::move(alt_name)),
         choice_name_(std::move(choice_name)) {}
@@ -320,7 +321,7 @@ class AlternativeConstructorValue : public Value {
 // An alternative value.
 class AlternativeValue : public Value {
  public:
-  AlternativeValue(std::string alt_name, std::string choice_name,
+  AlternativeValue(std::string_view alt_name, std::string_view choice_name,
                    Nonnull<const Value*> argument)
       : Value(Kind::AlternativeValue),
         alt_name_(std::move(alt_name)),
@@ -586,7 +587,7 @@ class NominalClassType : public Value {
 
   // Returns the value of the function named `name` in this class, or
   // nullopt if there is no such function.
-  auto FindFunction(const std::string& name) const
+  auto FindFunction(std::string_view name) const
       -> std::optional<Nonnull<const FunctionValue*>>;
 
  private:
@@ -596,7 +597,7 @@ class NominalClassType : public Value {
 };
 
 // Return the declaration of the member with the given name.
-auto FindMember(const std::string& name,
+auto FindMember(std::string_view name,
                 llvm::ArrayRef<Nonnull<Declaration*>> members)
     -> std::optional<Nonnull<const Declaration*>>;
 
@@ -879,7 +880,7 @@ class MemberName : public Value {
   // The member.
   auto member() const -> Member { return member_; }
   // The name of the member.
-  auto name() const -> std::string { return member().name(); }
+  auto name() const -> std::string_view { return member().name(); }
 
  private:
   std::optional<Nonnull<const Value*>> base_type_;

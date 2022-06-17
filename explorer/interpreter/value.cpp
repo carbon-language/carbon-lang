@@ -19,7 +19,7 @@ namespace Carbon {
 using llvm::cast;
 using llvm::dyn_cast;
 
-auto StructValue::FindField(const std::string& name) const
+auto StructValue::FindField(std::string_view name) const
     -> std::optional<Nonnull<const Value*>> {
   for (const NamedValue& element : elements_) {
     if (element.name == name) {
@@ -33,7 +33,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                       const FieldPath::Component& field,
                       SourceLocation source_loc, Nonnull<const Value*> me_value)
     -> ErrorOr<Nonnull<const Value*>> {
-  const std::string& f = field.name();
+  std::string_view f = field.name();
 
   if (field.witness().has_value()) {
     Nonnull<const Witness*> witness = cast<Witness>(*field.witness());
@@ -185,7 +185,7 @@ static auto SetFieldImpl(
       std::vector<Nonnull<const Value*>> elements =
           cast<TupleValue>(*value).elements();
       // TODO(geoffromer): update FieldPath to hold integers as well as strings.
-      int index = std::stoi((*path_begin).name());
+      int index = std::stoi(std::string((*path_begin).name()));
       if (index < 0 || static_cast<size_t>(index) >= elements.size()) {
         return RuntimeError(source_loc) << "index " << (*path_begin).name()
                                         << " out of range in " << *value;
@@ -770,9 +770,9 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::StringValue:
       return cast<StringValue>(*v1).value() == cast<StringValue>(*v2).value();
     case Value::Kind::ParameterizedEntityName: {
-      std::optional<std::string> name1 =
+      std::optional<std::string_view> name1 =
           GetName(cast<ParameterizedEntityName>(v1)->declaration());
-      std::optional<std::string> name2 =
+      std::optional<std::string_view> name2 =
           GetName(cast<ParameterizedEntityName>(v2)->declaration());
       CARBON_CHECK(name1.has_value() && name2.has_value())
           << "parameterized name refers to unnamed declaration";
@@ -828,7 +828,7 @@ auto ChoiceType::FindAlternative(std::string_view name) const
   return std::nullopt;
 }
 
-auto NominalClassType::FindFunction(const std::string& name) const
+auto NominalClassType::FindFunction(std::string_view name) const
     -> std::optional<Nonnull<const FunctionValue*>> {
   for (const auto& member : declaration().members()) {
     switch (member->kind()) {
@@ -846,11 +846,11 @@ auto NominalClassType::FindFunction(const std::string& name) const
   return std::nullopt;
 }
 
-auto FindMember(const std::string& name,
+auto FindMember(std::string_view name,
                 llvm::ArrayRef<Nonnull<Declaration*>> members)
     -> std::optional<Nonnull<const Declaration*>> {
   for (Nonnull<const Declaration*> member : members) {
-    if (std::optional<std::string> mem_name = GetName(*member);
+    if (std::optional<std::string_view> mem_name = GetName(*member);
         mem_name.has_value()) {
       if (*mem_name == name) {
         return member;

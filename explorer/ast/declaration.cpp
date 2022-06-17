@@ -143,35 +143,27 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
   }
 }
 
-auto GetNamePtr(const Declaration& declaration)
-    -> std::optional<Nonnull<const std::string*>> {
+auto GetName(const Declaration& declaration)
+    -> std::optional<std::string_view> {
   switch (declaration.kind()) {
     case DeclarationKind::FunctionDeclaration:
-      return &cast<FunctionDeclaration>(declaration).name();
+      return cast<FunctionDeclaration>(declaration).name();
     case DeclarationKind::ClassDeclaration:
-      return &cast<ClassDeclaration>(declaration).name();
+      return cast<ClassDeclaration>(declaration).name();
     case DeclarationKind::ChoiceDeclaration:
-      return &cast<ChoiceDeclaration>(declaration).name();
+      return cast<ChoiceDeclaration>(declaration).name();
     case DeclarationKind::InterfaceDeclaration:
-      return &cast<InterfaceDeclaration>(declaration).name();
+      return cast<InterfaceDeclaration>(declaration).name();
     case DeclarationKind::VariableDeclaration:
-      return &cast<VariableDeclaration>(declaration).binding().name();
+      return cast<VariableDeclaration>(declaration).binding().name();
     case DeclarationKind::ImplDeclaration:
       return std::nullopt;
     case DeclarationKind::SelfDeclaration:
-      return &cast<SelfDeclaration>(declaration).name();
+      return cast<SelfDeclaration>(declaration).name();
     case DeclarationKind::AliasDeclaration: {
-      return &cast<AliasDeclaration>(declaration).name();
+      return cast<AliasDeclaration>(declaration).name();
     }
   }
-}
-
-auto GetName(const Declaration& declaration) -> std::optional<std::string> {
-  if (std::optional<Nonnull<const std::string*>> name_ptr =
-          GetNamePtr(declaration)) {
-    return **name_ptr;
-  }
-  return std::nullopt;
 }
 
 void GenericBinding::Print(llvm::raw_ostream& out) const {
@@ -257,11 +249,6 @@ void FunctionDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
   } else {
     out << ";\n";
   }
-}
-
-auto SelfDeclaration::name() -> const std::string& {
-  static const std::string* self_name = new std::string("Self");
-  return *self_name;
 }
 
 auto ImplDeclaration::Create(Nonnull<Arena*> arena, SourceLocation source_loc,

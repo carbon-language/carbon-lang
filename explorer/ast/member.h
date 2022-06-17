@@ -35,7 +35,7 @@ class Member {
   explicit Member(Nonnull<const NamedValue*> struct_member);
 
   // The name of the member.
-  auto name() const -> const std::string&;
+  auto name() const -> std::string_view;
   // The declared type of the member, which might include type variables.
   auto type() const -> const Value&;
   // A declaration of the member, if any exists.
