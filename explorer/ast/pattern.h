@@ -334,7 +334,8 @@ class AlternativePattern : public Pattern {
         Nonnull<SimpleMemberAccessExpression*> member_access,
         RequireSimpleMemberAccess(alternative));
     return arena->New<AlternativePattern>(source_loc, &member_access->object(),
-                                          member_access->member(), arguments);
+                                          member_access->member_name(),
+                                          arguments);
   }
 
   // Constructs an AlternativePattern that matches a value of the type

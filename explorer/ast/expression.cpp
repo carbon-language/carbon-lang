@@ -96,7 +96,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
     }
     case ExpressionKind::SimpleMemberAccessExpression: {
       const auto& access = cast<SimpleMemberAccessExpression>(*this);
-      out << access.object() << "." << access.member();
+      out << access.object() << "." << access.member_name();
       break;
     }
     case ExpressionKind::CompoundMemberAccessExpression: {

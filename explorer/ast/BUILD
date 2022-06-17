@@ -9,6 +9,7 @@ cc_library(
     hdrs = ["ast.h"],
     deps = [
         ":declaration",
+        ":member_impl",
         ":library_name",
         "//explorer/common:nonnull",
     ],
@@ -110,6 +111,30 @@ cc_library(
 )
 
 cc_library(
+    name = "member",
+    hdrs = [
+        "member.h",
+    ],
+    deps = [
+        "//explorer/common:nonnull",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+# TODO: This is split out to resolve a cyclic implementation dependency between
+# this and :declaration. Consider folding all of the "ast" target together.
+cc_library(
+    name = "member_impl",
+    srcs = ["member.cpp"],
+    deps = [
+        ":declaration",
+        ":member",
+        "//explorer/common:nonnull",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "return_term",
     hdrs = ["return_term.h"],
     deps = [
@@ -128,6 +153,7 @@ cc_library(
     hdrs = ["expression.h", "pattern.h"],
     deps = [
         ":ast_node",
+        ":member",
         ":paren_contents",
         ":static_scope",
         ":value_category",
