@@ -408,7 +408,7 @@ void Value::Print(llvm::raw_ostream& out) const {
         out << combine << *ctx.context;
       }
       out << " where ";
-      llvm::ListSeparator sep;
+      llvm::ListSeparator sep(" and ");
       for (const ConstraintType::ImplConstraint& impl :
            constraint.impl_constraints()) {
         // TODO: Skip cases where `impl.type` is `.Self` and the interface is

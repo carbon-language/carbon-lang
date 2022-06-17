@@ -788,45 +788,16 @@ class ConstraintTypeBuilder {
     impl_constraints_.push_back(std::move(impl));
   }
 
-  // Add an `impl` constraint -- `A == B`, merging as necessary.
+  // Add an equality constraint -- `A == B`.
   void AddEqualityConstraint(ConstraintType::EqualityConstraint equal) {
-    // Check to see if any of the given values are already part of an equality
-    // constraint. If so, discard the value and note that we'll merge that
-    // constraint into the new one.
-    llvm::SmallDenseSet<size_t> merged_constraints;
-    {
-      size_t kept = 0;
-      for (size_t i = 0; i != equal.values.size(); ++i) {
-        if (std::optional<size_t> found_in = FindInEqualityConstraints(
-                equality_constraints_, equal.values[i])) {
-          merged_constraints.insert(*found_in);
-        } else {
-          equal.values[kept++] = equal.values[i];
-        }
-      }
-      equal.values.resize(kept);
-    }
+    CARBON_CHECK(equal.values.size() >= 2) << "degenerate equality constraint";
 
-    // Merge and discard any constraints that overlapped `equal`.
-    if (!merged_constraints.empty()) {
-      size_t kept = 0;
-      for (size_t i = 0; i != equality_constraints_.size(); ++i) {
-        if (merged_constraints.contains(i)) {
-          equal.values.insert(equal.values.end(),
-                              equality_constraints_[i].values.begin(),
-                              equality_constraints_[i].values.end());
-        } else {
-          if (kept != i) {
-            equality_constraints_[kept] = std::move(equality_constraints_[i]);
-          }
-          ++kept;
-        }
-      }
-      equality_constraints_[kept++] = std::move(equal);
-      equality_constraints_.resize(kept);
-    } else {
-      equality_constraints_.push_back(std::move(equal));
-    }
+    // TODO: Check to see if this constraint is already present and deduplicate
+    // if so. We could also look for a superset / subset and keep the larger
+    // one. We could in theory detect `A == B and B == C and C == A` and merge
+    // into a single `A == B == C` constraint, but that's more work than it's
+    // worth doing here.
+    equality_constraints_.push_back(std::move(equal));
   }
 
   // Add a context for qualified name lookup, if not already present.
@@ -3376,6 +3347,10 @@ auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
     **trace_stream_ << "checking " << *impl_decl << "\n";
   }
   // Bring the impls from the parameters into scope.
+  // TODO: Within a method in an `impl` that implements `Interface`, we should
+  // assume that `Self as Interface` is implemented by this `impl`, so the
+  // corresponding associated constant values from the `impl` declaration can
+  // be used.
   ImplScope impl_scope;
   impl_scope.AddParent(&enclosing_scope);
   BringImplsIntoScope(impl_decl->impl_bindings(), impl_scope);

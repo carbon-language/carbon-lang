@@ -13,7 +13,7 @@ package ExplorerTest api;
 interface A { fn F() -> i32; }
 interface B { fn G() -> i32; }
 
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/missing_member.carbon:[[@LINE+1]]: member access, H not in constraint interface A & interface B where .Self:! Type is interface A, .Self:! Type is interface B
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/missing_member.carbon:[[@LINE+1]]: member access, H not in constraint interface A & interface B where .Self:! Type is interface A and .Self:! Type is interface B
 fn Get[T:! A & B](n: T) -> i32 { return n.H(); }
 
 impl i32 as A {
