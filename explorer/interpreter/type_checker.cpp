@@ -1104,6 +1104,9 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
     **trace_stream_ << "}\n";
   }
 
+  CARBON_CHECK(impl.deduced.size() == deduced_args.size())
+      << "failed to deduce all expected deduced arguments";
+
   // Ensure the constraints on the `impl` are satisfied by the deduced
   // arguments.
   ImplExpMap impls;
@@ -1431,24 +1434,26 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       switch (object_type.kind()) {
         case Value::Kind::StructType: {
           const auto& struct_type = cast<StructType>(object_type);
-          for (const auto& [field_name, field_type] : struct_type.fields()) {
-            if (access.member() == field_name) {
-              access.set_static_type(field_type);
+          for (const auto& field : struct_type.fields()) {
+            if (access.member_name() == field.name) {
+              access.set_member(Member(&field));
+              access.set_static_type(field.value);
               access.set_value_category(access.object().value_category());
               return Success();
             }
           }
           return CompilationError(access.source_loc())
                  << "struct " << struct_type << " does not have a field named "
-                 << access.member();
+                 << access.member_name();
         }
         case Value::Kind::NominalClassType: {
           const auto& t_class = cast<NominalClassType>(object_type);
-          if (std::optional<Nonnull<const Declaration*>> member =
-                  FindMember(access.member(), t_class.declaration().members());
+          if (std::optional<Nonnull<const Declaration*>> member = FindMember(
+                  access.member_name(), t_class.declaration().members());
               member.has_value()) {
             Nonnull<const Value*> field_type =
                 Substitute(t_class.type_args(), &(*member)->static_type());
+            access.set_member(Member(member.value()));
             access.set_static_type(field_type);
             switch ((*member)->kind()) {
               case DeclarationKind::VariableDeclaration:
@@ -1467,7 +1472,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                       &access.object().static_type(), &impl_scope));
                   if (access.object().value_category() != ValueCategory::Var) {
                     return CompilationError(e->source_loc())
-                           << "method " << access.member()
+                           << "method " << access.member_name()
                            << " requires its receiver to be an lvalue";
                   }
                 }
@@ -1475,7 +1480,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 break;
               }
               default:
-                CARBON_FATAL() << "member " << access.member()
+                CARBON_FATAL() << "member " << access.member_name()
                                << " is not a field or method";
                 break;
             }
@@ -1483,7 +1488,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           } else {
             return CompilationError(e->source_loc())
                    << "class " << t_class.declaration().name()
-                   << " does not have a field named " << access.member();
+                   << " does not have a field named " << access.member_name();
           }
         }
         case Value::Kind::VariableType: {
@@ -1496,13 +1501,14 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           CARBON_ASSIGN_OR_RETURN(
               ConstraintLookupResult result,
               LookupInConstraint(e->source_loc(), &typeof_var,
-                                 access.member()));
+                                 access.member_name()));
 
           const Value& member_type = result.member->static_type();
           BindingMap binding_map = result.interface->args();
           binding_map[result.interface->declaration().self()] = &object_type;
           Nonnull<const Value*> inst_member_type =
               Substitute(binding_map, &member_type);
+          access.set_member(Member(result.member));
           access.set_found_in_interface(result.interface);
           access.set_static_type(inst_member_type);
 
@@ -1529,10 +1535,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           CARBON_ASSIGN_OR_RETURN(
               ConstraintLookupResult result,
               LookupInConstraint(e->source_loc(), &object_type,
-                                 access.member()));
+                                 access.member_name()));
           CARBON_ASSIGN_OR_RETURN(Nonnull<Expression*> impl,
                                   impl_scope.Resolve(result.interface, type,
                                                      e->source_loc(), *this));
+          access.set_member(Member(result.member));
           access.set_impl(impl);
           access.set_found_in_interface(result.interface);
 
@@ -1575,7 +1582,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           switch (type->kind()) {
             case Value::Kind::StructType: {
               for (const auto& field : cast<StructType>(type)->fields()) {
-                if (access.member() == field.name) {
+                if (access.member_name() == field.name) {
+                  access.set_member(Member(&field));
                   access.set_static_type(
                       arena_->New<TypeOfMemberName>(Member(&field)));
                   access.set_value_category(ValueCategory::Let);
@@ -1584,21 +1592,26 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               }
               return CompilationError(access.source_loc())
                      << "struct " << *type << " does not have a field named "
-                     << access.member();
+                     << " does not have a field named " << access.member_name();
             }
             case Value::Kind::ChoiceType: {
               const ChoiceType& choice = cast<ChoiceType>(*type);
               std::optional<Nonnull<const Value*>> parameter_types =
-                  choice.FindAlternative(access.member());
+                  choice.FindAlternative(access.member_name());
               if (!parameter_types.has_value()) {
                 return CompilationError(e->source_loc())
                        << "choice " << choice.name()
                        << " does not have an alternative named "
-                       << access.member();
+                       << access.member_name();
               }
-              access.set_static_type(
+              Nonnull<const Value*> type =
                   arena_->New<FunctionType>(*parameter_types, llvm::None,
-                                            &choice, llvm::None, llvm::None));
+                                            &choice, llvm::None, llvm::None);
+              // TODO: Should there be a Declaration corresponding to each
+              // choice type alternative?
+              access.set_member(Member(arena_->New<NamedValue>(
+                  NamedValue{access.member_name(), type})));
+              access.set_static_type(type);
               access.set_value_category(ValueCategory::Let);
               return Success();
             }
@@ -1606,9 +1619,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               const NominalClassType& class_type =
                   cast<NominalClassType>(*type);
               if (std::optional<Nonnull<const Declaration*>> member =
-                      FindMember(access.member(),
+                      FindMember(access.member_name(),
                                  class_type.declaration().members());
                   member.has_value()) {
+                access.set_member(Member(member.value()));
                 switch ((*member)->kind()) {
                   case DeclarationKind::FunctionDeclaration: {
                     const auto& func = cast<FunctionDeclaration>(*member);
@@ -1631,14 +1645,15 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               } else {
                 return CompilationError(access.source_loc())
                        << class_type << " does not have a member named "
-                       << access.member();
+                       << access.member_name();
               }
             }
             case Value::Kind::InterfaceType:
             case Value::Kind::ConstraintType: {
-              CARBON_ASSIGN_OR_RETURN(
-                  ConstraintLookupResult result,
-                  LookupInConstraint(e->source_loc(), type, access.member()));
+              CARBON_ASSIGN_OR_RETURN(ConstraintLookupResult result,
+                                      LookupInConstraint(e->source_loc(), type,
+                                                         access.member_name()));
+              access.set_member(Member(result.member));
               access.set_found_in_interface(result.interface);
               access.set_static_type(
                   arena_->New<TypeOfMemberName>(Member(result.member)));
@@ -3002,6 +3017,103 @@ auto TypeChecker::TypeCheckInterfaceDeclaration(
   return Success();
 }
 
+auto TypeChecker::CheckImplIsDeducible(
+    SourceLocation source_loc, Nonnull<const Value*> impl_type,
+    Nonnull<const InterfaceType*> impl_iface,
+    llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings,
+    const ImplScope& impl_scope) -> ErrorOr<Success> {
+  BindingMap deduced_args;
+  CARBON_RETURN_IF_ERROR(ArgumentDeduction(
+      source_loc, "impl", deduced_bindings, deduced_args, impl_type, impl_type,
+      /*allow_implicit_conversion=*/false, impl_scope));
+  CARBON_RETURN_IF_ERROR(ArgumentDeduction(source_loc, "impl", deduced_bindings,
+                                           deduced_args, impl_iface, impl_iface,
+                                           /*allow_implicit_conversion=*/false,
+                                           impl_scope));
+  for (auto* expected_deduced : deduced_bindings) {
+    if (!deduced_args.count(expected_deduced)) {
+      return CompilationError(source_loc)
+             << "parameter `" << *expected_deduced
+             << "` is not deducible from `impl " << *impl_type << " as "
+             << *impl_iface << "`";
+    }
+  }
+  return Success();
+}
+
+auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
+                                      Nonnull<const ImplDeclaration*> impl_decl,
+                                      Nonnull<const Value*> self_type)
+    -> ErrorOr<Success> {
+  const auto& iface_decl = iface_type->declaration();
+  for (Nonnull<Declaration*> m : iface_decl.members()) {
+    std::optional<std::string_view> mem_name = GetName(*m);
+    CARBON_CHECK(mem_name.has_value()) << "unnamed interface member " << *m;
+
+    std::optional<Nonnull<const Declaration*>> mem =
+        FindMember(*mem_name, impl_decl->members());
+    if (!mem.has_value()) {
+      return CompilationError(impl_decl->source_loc())
+             << "implementation missing " << *mem_name;
+    }
+
+    BindingMap binding_map = iface_type->args();
+    binding_map[iface_decl.self()] = self_type;
+    Nonnull<const Value*> iface_mem_type =
+        Substitute(binding_map, &m->static_type());
+    // TODO: How should the signature in the implementation be permitted
+    // to differ from the signature in the interface?
+    CARBON_RETURN_IF_ERROR(
+        ExpectExactType((*mem)->source_loc(), "member of implementation",
+                        iface_mem_type, &(*mem)->static_type()));
+  }
+  return Success();
+}
+
+auto TypeChecker::CheckAndAddImplBindings(
+    Nonnull<const ImplDeclaration*> impl_decl, Nonnull<const Value*> impl_type,
+    const ScopeInfo& scope_info) -> ErrorOr<Success> {
+  // The deduced bindings are the parameters for all enclosing classes followed
+  // by any deduced parameters written on the `impl` declaration itself.
+  std::vector<Nonnull<const GenericBinding*>> deduced_bindings =
+      scope_info.bindings;
+  deduced_bindings.insert(deduced_bindings.end(),
+                          impl_decl->deduced_parameters().begin(),
+                          impl_decl->deduced_parameters().end());
+
+  // An expression that evaluates to this impl's witness.
+  // TODO: Store witnesses as `Witness*` rather than `Expression*` everywhere
+  // so we don't need to create this.
+  auto* impl_expr = arena_->New<ValueLiteral>(
+      impl_decl->source_loc(), arena_->New<ImplWitness>(impl_decl),
+      arena_->New<TypeType>(), ValueCategory::Let);
+
+  // Each interface that is a lookup context is required to be implemented by
+  // the impl members. Other constraints are required to be satisfied by
+  // either those impls or impls available elsewhere.
+  const ConstraintType* constraint = impl_decl->constraint_type();
+  for (auto lookup : constraint->lookup_contexts()) {
+    if (auto* iface_type = dyn_cast<InterfaceType>(lookup.context)) {
+      CARBON_RETURN_IF_ERROR(
+          CheckImplIsDeducible(impl_decl->source_loc(), impl_type, iface_type,
+                               deduced_bindings, *scope_info.innermost_scope));
+
+      CARBON_RETURN_IF_ERROR(
+          CheckImplIsComplete(iface_type, impl_decl, impl_type));
+
+      scope_info.innermost_non_class_scope->Add(
+          iface_type, deduced_bindings, impl_type, impl_decl->impl_bindings(),
+          impl_expr, *this);
+    } else {
+      // TODO: Add support for implementing `adapter`s.
+      return CompilationError(impl_decl->source_loc())
+             << "cannot implement a constraint whose lookup context includes "
+             << *lookup.context;
+    }
+  }
+  return Success();
+}
+
 auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
                                          const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
@@ -3034,64 +3146,36 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
 
   // Check and interpret the interface.
   CARBON_ASSIGN_OR_RETURN(
-      Nonnull<const Value*> written_iface_type,
+      Nonnull<const Value*> constraint_type,
       TypeCheckTypeExp(&impl_decl->interface(), impl_scope));
-  const auto* iface_type = dyn_cast<InterfaceType>(written_iface_type);
-  if (!iface_type) {
+  if (auto* iface_type = dyn_cast<InterfaceType>(constraint_type)) {
+    constraint_type = MakeConstraintForInterface(
+        impl_decl->interface().source_loc(), iface_type);
+  }
+  if (!isa<ConstraintType>(constraint_type)) {
     return CompilationError(impl_decl->interface().source_loc())
            << "expected constraint after `as`, found value of type "
-           << *written_iface_type;
+           << *constraint_type;
   }
-
-  const auto& iface_decl = iface_type->declaration();
-  impl_decl->set_interface_type(iface_type);
-
-  // Bring this impl into the enclosing non-class scope.
-  auto impl_id =
-      arena_->New<IdentifierExpression>(impl_decl->source_loc(), "impl");
-  impl_id->set_value_node(impl_decl);
-  {
-    // The deduced bindings are the parameters for all enclosing classes
-    // followed by any deduced parameters written on the `impl` declaration
-    // itself.
-    std::vector<Nonnull<const GenericBinding*>> deduced_bindings =
-        scope_info.bindings;
-    deduced_bindings.insert(deduced_bindings.end(),
-                            impl_decl->deduced_parameters().begin(),
-                            impl_decl->deduced_parameters().end());
-    scope_info.innermost_non_class_scope->Add(
-        iface_type, std::move(deduced_bindings), impl_type_value, impl_bindings,
-        impl_id, *this);
-  }
+  impl_decl->set_constraint_type(cast<ConstraintType>(constraint_type));
 
   // Declare the impl members.
   ScopeInfo impl_scope_info = ScopeInfo::ForNonClassScope(&impl_scope);
   for (Nonnull<Declaration*> m : impl_decl->members()) {
     CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, impl_scope_info));
   }
-  // Check that the interface is satisfied by the impl members.
-  for (Nonnull<Declaration*> m : iface_decl.members()) {
-    if (std::optional<std::string> mem_name = GetName(*m);
-        mem_name.has_value()) {
-      if (std::optional<Nonnull<const Declaration*>> mem =
-              FindMember(*mem_name, impl_decl->members());
-          mem.has_value()) {
-        BindingMap binding_map = iface_type->args();
-        binding_map[iface_decl.self()] = impl_type_value;
-        Nonnull<const Value*> iface_mem_type =
-            Substitute(binding_map, &m->static_type());
-        // TODO: How should the signature in the implementation be permitted
-        // to differ from the signature in the interface?
-        CARBON_RETURN_IF_ERROR(
-            ExpectExactType((*mem)->source_loc(), "member of implementation",
-                            iface_mem_type, &(*mem)->static_type()));
-      } else {
-        return CompilationError(impl_decl->source_loc())
-               << "implementation missing " << *mem_name;
-      }
-    }
-  }
-  impl_decl->set_constant_value(arena_->New<ImplWitness>(impl_decl));
+
+  // Create the implied impl bindings.
+  CARBON_RETURN_IF_ERROR(
+      CheckAndAddImplBindings(impl_decl, impl_type_value, scope_info));
+
+  // Check the constraint is satisfied by the `impl`s we just created. This
+  // serves a couple of purposes:
+  //  - It ensures that any constraints in a `ConstraintType` are met.
+  //  - It rejects `impl`s that immediately introduce ambiguity.
+  CARBON_RETURN_IF_ERROR(impl_scope.Resolve(constraint_type, impl_type_value,
+                                            impl_decl->source_loc(), *this));
+
   if (trace_stream_) {
     **trace_stream_ << "** finished declaring impl " << *impl_decl->impl_type()
                     << " as " << impl_decl->interface() << "\n";

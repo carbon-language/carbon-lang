@@ -181,6 +181,27 @@ class TypeChecker {
                                    const ScopeInfo& scope_info)
       -> ErrorOr<Success>;
 
+  // Check that the deduced parameters of an impl are actually deducible from
+  // the form of the interface, for a declaration of the form
+  // `impl forall [deduced_bindings] impl_type as impl_iface`.
+  auto CheckImplIsDeducible(
+      SourceLocation source_loc, Nonnull<const Value*> impl_type,
+      Nonnull<const InterfaceType*> impl_iface,
+      llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings,
+      const ImplScope& impl_scope) -> ErrorOr<Success>;
+
+  // Check that each required declaration in an implementation of the given
+  // interface is present in the given `impl`.
+  auto CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
+                           Nonnull<const ImplDeclaration*> impl_decl,
+                           Nonnull<const Value*> self_type) -> ErrorOr<Success>;
+
+  // Check that an `impl` declaration satisfies its constraints and add the
+  // corresponding `ImplBinding`s to the impl scope.
+  auto CheckAndAddImplBindings(Nonnull<const ImplDeclaration*> impl_decl,
+                               Nonnull<const Value*> impl_type,
+                               const ScopeInfo& scope_info) -> ErrorOr<Success>;
+
   auto DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
                               const ScopeInfo& scope_info) -> ErrorOr<Success>;
 

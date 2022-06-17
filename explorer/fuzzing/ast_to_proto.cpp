@@ -113,12 +113,12 @@ static auto ExpressionToProto(const Expression& expression)
         // The parser rewrites `.Foo` into `.Self.Foo`. Undo this
         // transformation.
         auto* designator_proto = expression_proto.mutable_designator();
-        designator_proto->set_name(simple_member_access.member());
+        designator_proto->set_name(simple_member_access.member_name());
         break;
       }
       auto* simple_member_access_proto =
           expression_proto.mutable_simple_member_access();
-      simple_member_access_proto->set_field(simple_member_access.member());
+      simple_member_access_proto->set_field(simple_member_access.member_name());
       *simple_member_access_proto->mutable_object() =
           ExpressionToProto(simple_member_access.object());
       break;
