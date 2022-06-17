@@ -7,7 +7,6 @@
 #include <optional>
 
 #include "explorer/common/error_builders.h"
-#include "explorer/common/source_location.h"
 #include "llvm/Support/Error.h"
 
 namespace Carbon {

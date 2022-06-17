@@ -202,7 +202,6 @@ class Return : public Statement {
   auto function() -> FunctionDeclaration& { return **function_; }
 
   // Can only be called by type-checking, if a conversion was required.
-  // Or by resolve_names, to match return var with returned var in scope.
   void set_expression(Nonnull<Expression*> expression) {
     expression_ = expression;
   }

@@ -811,7 +811,7 @@ return_var_empty_expression:
 ;
 return_expression:
   // Empty
-    { $$ = {arena->New<TupleLiteral>(context.source_loc()), true}; };
+    { $$ = {arena->New<TupleLiteral>(context.source_loc()), true}; }
 | expression
     { $$ = {$1, false}; }
 ;
