@@ -10,6 +10,7 @@
 #include "explorer/syntax/parse_and_lex_context.h"
 #include "explorer/syntax/parser.h"
 
+// Exposes yyinput; defined in lexer.lpp.
 extern auto YyinputWrapper(yyscan_t yyscanner) -> int;
 
 namespace Carbon {
