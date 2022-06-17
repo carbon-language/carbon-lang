@@ -6,6 +6,7 @@
 #define CARBON_EXPLORER_AST_DECLARATION_H_
 
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -174,7 +175,7 @@ class SelfDeclaration : public Declaration {
     return InheritsFromSelfDeclaration(node->kind());
   }
 
-  auto name() const -> const std::string { return "Self"; }
+  static auto name() -> std::string_view { return "Self"; }
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 };
 
@@ -437,7 +438,7 @@ class AliasDeclaration : public Declaration {
     return InheritsFromAliasDeclaration(node->kind());
   }
 
-  auto name() const -> const std::string { return name_; }
+  auto name() const -> const std::string& { return name_; }
   auto target() const -> const Expression& { return *target_; }
   auto target() -> Expression& { return *target_; }
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
@@ -448,7 +449,7 @@ class AliasDeclaration : public Declaration {
 };
 
 // Return the name of a declaration, if it has one.
-auto GetName(const Declaration&) -> std::optional<std::string>;
+auto GetName(const Declaration&) -> std::optional<std::string_view>;
 
 }  // namespace Carbon
 

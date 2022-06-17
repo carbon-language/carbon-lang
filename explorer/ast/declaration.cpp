@@ -143,7 +143,8 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
   }
 }
 
-auto GetName(const Declaration& declaration) -> std::optional<std::string> {
+auto GetName(const Declaration& declaration)
+    -> std::optional<std::string_view> {
   switch (declaration.kind()) {
     case DeclarationKind::FunctionDeclaration:
       return cast<FunctionDeclaration>(declaration).name();

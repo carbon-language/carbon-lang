@@ -26,6 +26,7 @@ cc_library(
         "//common:ostream",
         "//explorer/ast:declaration",
         "//explorer/ast:expression",
+        "//explorer/ast:member",
         "//explorer/ast:statement",
         "//explorer/common:arena",
         "//explorer/common:error_builders",
@@ -90,6 +91,7 @@ cc_library(
     deps = [
         "//common:ostream",
         "//explorer/ast",
+        "//explorer/ast:member",
         "//explorer/ast:static_scope",
         "@llvm-project//llvm:Support",
     ],

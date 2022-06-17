@@ -352,7 +352,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
             Convert(act.results()[0], *access.member().base_type(),
                     exp.source_loc()));
         Address object = cast<LValue>(*val).address();
-        Address field = object.SubobjectAddress(access.member().name());
+        Address field = object.SubobjectAddress(access.member().member());
         return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
@@ -370,9 +370,14 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         //    { v :: [][i] :: C, E, F} :: S, H}
         // -> { { &v[i] :: C, E, F} :: S, H }
         Address object = cast<LValue>(*act.results()[0]).address();
+        // TODO: Add support to `Member` for naming tuple fields rather than
+        // pretending we have struct fields with numerical names.
         std::string f =
             std::to_string(cast<IntValue>(*act.results()[1]).value());
-        Address field = object.SubobjectAddress(f);
+        auto* tuple_field_as_struct_field =
+            arena_->New<NamedValue>(NamedValue{f, &exp.static_type()});
+        Address field =
+            object.SubobjectAddress(Member(tuple_field_as_struct_field));
         return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
@@ -907,7 +912,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                 object, Convert(object, *access.member().base_type(),
                                 exp.source_loc()));
           }
-          FieldPath::Component field(access.member().name(), witness);
+          FieldPath::Component field(access.member().member(), witness);
           CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> member,
                                   object->GetMember(arena_, FieldPath(field),
                                                     exp.source_loc(), object));
