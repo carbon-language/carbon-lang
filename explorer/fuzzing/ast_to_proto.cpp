@@ -172,6 +172,11 @@ static auto ExpressionToProto(const Expression& expression)
       break;
     }
 
+    case ExpressionKind::ReturnVarExpression: {
+      // TODO: Add handling of ReturnVarExpression.
+      break;
+    }
+
     case ExpressionKind::IdentifierExpression: {
       const auto& identifier = cast<IdentifierExpression>(expression);
       auto* identifier_proto = expression_proto.mutable_identifier();

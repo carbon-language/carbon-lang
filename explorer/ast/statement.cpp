@@ -50,6 +50,9 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       break;
     case StatementKind::VariableDefinition: {
       const auto& var = cast<VariableDefinition>(*this);
+      if (var.is_returned()) {
+        out << "returned ";
+      }
       out << "var " << var.pattern() << " = " << var.init() << ";";
       break;
     }

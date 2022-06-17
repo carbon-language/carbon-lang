@@ -73,28 +73,27 @@ auto StaticScope::TryResolve(const std::string& name,
   return result;
 }
 
-auto StaticScope::AddReturnedVar(const SourceLocation& returned_var_loc)
+auto StaticScope::AddReturnedVar(ValueNodeView returned_var_def_view)
     -> ErrorOr<Success> {
-  std::optional<Carbon::SourceLocation> resolved_returned_var_loc =
-      ResolveReturned();
-  if (resolved_returned_var_loc.has_value()) {
-    return CompilationError(returned_var_loc)
+  std::optional<ValueNodeView> resolved_returned_var = ResolveReturned();
+  if (resolved_returned_var.has_value()) {
+    return CompilationError(returned_var_def_view.base().source_loc())
            << "Duplicate definition of returned var also found at "
-           << *resolved_returned_var_loc;
+           << resolved_returned_var->base().source_loc();
   }
-  returned_var_loc_ = returned_var_loc;
+  returned_var_def_view_ = std::move(returned_var_def_view);
   return Success();
 }
 
-auto StaticScope::ResolveReturned() const -> std::optional<SourceLocation> {
-  if (returned_var_loc_.has_value()) {
-    return returned_var_loc_;
+auto StaticScope::ResolveReturned() const -> std::optional<ValueNodeView> {
+  if (returned_var_def_view_.has_value()) {
+    return returned_var_def_view_;
   }
   for (Nonnull<const StaticScope*> parent : parent_scopes_) {
-    std::optional<Carbon::SourceLocation> parent_returned_var_loc =
+    std::optional<ValueNodeView> parent_returned_var =
         parent->ResolveReturned();
-    if (parent_returned_var_loc.has_value()) {
-      return parent_returned_var_loc;
+    if (parent_returned_var.has_value()) {
+      return parent_returned_var;
     }
   }
   return std::nullopt;

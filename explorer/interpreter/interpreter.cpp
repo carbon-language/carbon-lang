@@ -330,6 +330,16 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
       CARBON_CHECK(isa<LValue>(value)) << *value;
       return todo_.FinishAction(value);
     }
+    case ExpressionKind::ReturnVarExpression: {
+      //    { {x :: C, E, F} :: S, H}
+      // -> { {E(x) :: C, E, F} :: S, H}
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> value,
+          todo_.ValueOfNode(cast<ReturnVarExpression>(exp).value_node(),
+                            exp.source_loc()));
+      CARBON_CHECK(isa<LValue>(value)) << *value;
+      return todo_.FinishAction(value);
+    }
     case ExpressionKind::SimpleMemberAccessExpression: {
       if (act.pos() == 0) {
         //    { {e.f :: C, E, F} :: S, H}
@@ -919,6 +929,19 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           return todo_.FinishAction(member);
         }
       }
+    }
+    case ExpressionKind::ReturnVarExpression: {
+      CARBON_CHECK(act.pos() == 0);
+      const auto& returned_var = cast<ReturnVarExpression>(exp);
+      // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
+      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> value,
+                              todo_.ValueOfNode(returned_var.value_node(),
+                                                returned_var.source_loc()));
+      if (const auto* lvalue = dyn_cast<LValue>(value)) {
+        CARBON_ASSIGN_OR_RETURN(
+            value, heap_.Read(lvalue->address(), exp.source_loc()));
+      }
+      return todo_.FinishAction(value);
     }
     case ExpressionKind::IdentifierExpression: {
       CARBON_CHECK(act.pos() == 0);

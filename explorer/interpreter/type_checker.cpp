@@ -1712,6 +1712,13 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       access.set_value_category(ValueCategory::Let);
       return Success();
     }
+    case ExpressionKind::ReturnVarExpression: {
+      auto& returned_var = cast<ReturnVarExpression>(*e);
+      returned_var.set_static_type(&returned_var.value_node().static_type());
+      returned_var.set_value_category(
+          returned_var.value_node().value_category());
+      return Success();
+    }
     case ExpressionKind::IdentifierExpression: {
       auto& ident = cast<IdentifierExpression>(*e);
       if (ident.value_node().base().kind() ==

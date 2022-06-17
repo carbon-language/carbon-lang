@@ -166,6 +166,15 @@ static auto ResolveNames(Expression& expression,
       identifier.set_value_node(value_node);
       break;
     }
+    case ExpressionKind::ReturnVarExpression: {
+      auto& returned_identifier = cast<ReturnVarExpression>(expression);
+      CARBON_ASSIGN_OR_RETURN(
+          const auto value_node,
+          enclosing_scope.Resolve(returned_identifier.name(),
+                                  returned_identifier.source_loc()));
+      returned_identifier.set_value_node(value_node);
+      break;
+    }
     case ExpressionKind::IntrinsicExpression:
       CARBON_RETURN_IF_ERROR(ResolveNames(
           cast<IntrinsicExpression>(expression).args(), enclosing_scope));
@@ -308,8 +317,11 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
       CARBON_RETURN_IF_ERROR(ResolveNames(def.init(), enclosing_scope));
       CARBON_RETURN_IF_ERROR(ResolveNames(def.pattern(), enclosing_scope));
       if (def.is_returned()) {
-        CARBON_RETURN_IF_ERROR(
-            enclosing_scope.AddReturnedVar(def.pattern().source_loc()));
+        CARBON_CHECK(def.pattern().kind() == PatternKind::BindingPattern)
+            << def.pattern().source_loc()
+            << "returned var definition can only be a binding pattern";
+        CARBON_RETURN_IF_ERROR(enclosing_scope.AddReturnedVar(
+            ValueNodeView(&cast<BindingPattern>(def.pattern()))));
       }
       break;
     }
@@ -325,10 +337,35 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
       }
       break;
     }
-    case StatementKind::Return:
+    case StatementKind::Return: {
+      auto& ret_stmt = cast<Return>(statement);
+      std::optional<ValueNodeView> returned_var_def_view =
+          enclosing_scope.ResolveReturned();
+      if (ret_stmt.is_return_var() && !returned_var_def_view.has_value()) {
+        return CompilationError(ret_stmt.source_loc())
+               << "Statement `return var` is not allowed without a returned "
+                  "variable defined in scope.";
+      }
+      if (!ret_stmt.is_return_var() && returned_var_def_view.has_value()) {
+        return CompilationError(ret_stmt.source_loc())
+               << "Statement `return <expression>` is not allowed with a "
+                  "returned variable defined in scope: "
+               << returned_var_def_view->base().source_loc();
+      }
+      if (ret_stmt.is_return_var()) {
+        CARBON_CHECK(ret_stmt.expression().kind() ==
+                     ExpressionKind::ReturnVarExpression)
+            << ret_stmt.source_loc()
+            << "Statement 'return var' can only have ReturnVarExpression";
+        cast<ReturnVarExpression>(ret_stmt.expression())
+            .set_name(
+                cast<BindingPattern>(returned_var_def_view->base()).name());
+      }
+
       CARBON_RETURN_IF_ERROR(
-          ResolveNames(cast<Return>(statement).expression(), enclosing_scope));
+          ResolveNames(ret_stmt.expression(), enclosing_scope));
       break;
+    }
     case StatementKind::Block: {
       auto& block = cast<Block>(statement);
       StaticScope block_scope;

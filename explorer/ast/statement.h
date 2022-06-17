@@ -177,10 +177,11 @@ class Return : public Statement {
   Return(Nonnull<Arena*> arena, SourceLocation source_loc)
       : Return(source_loc, arena->New<TupleLiteral>(source_loc), true) {}
   Return(SourceLocation source_loc, Nonnull<Expression*> expression,
-         bool is_omitted_expression)
+         bool is_omitted_expression, bool is_return_var = false)
       : Statement(AstNodeKind::Return, source_loc),
         expression_(expression),
-        is_omitted_expression_(is_omitted_expression) {}
+        is_omitted_expression_(is_omitted_expression),
+        is_return_var_(is_return_var) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromReturn(node->kind());
@@ -189,6 +190,7 @@ class Return : public Statement {
   auto expression() const -> const Expression& { return *expression_; }
   auto expression() -> Expression& { return *expression_; }
   auto is_omitted_expression() const -> bool { return is_omitted_expression_; }
+  auto is_return_var() const -> bool { return is_return_var_; }
 
   // The AST node representing the function body this statement returns from.
   // Can only be called after ResolveControlFlow has visited this node.
@@ -200,6 +202,7 @@ class Return : public Statement {
   auto function() -> FunctionDeclaration& { return **function_; }
 
   // Can only be called by type-checking, if a conversion was required.
+  // Or by resolve_names, to match return var with returned var in scope.
   void set_expression(Nonnull<Expression*> expression) {
     expression_ = expression;
   }
@@ -214,6 +217,7 @@ class Return : public Statement {
   Nonnull<Expression*> expression_;
   bool is_omitted_expression_;
   std::optional<Nonnull<FunctionDeclaration*>> function_;
+  const bool is_return_var_;
 };
 
 class While : public Statement {

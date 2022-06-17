@@ -113,6 +113,7 @@
 %type <Nonnull<Statement*>> statement
 %type <Nonnull<If*>> if_statement
 %type <std::optional<Nonnull<Block*>>> optional_else
+%type <Nonnull<Expression*>> return_var_empty_expression
 %type <std::pair<Nonnull<Expression*>, bool>> return_expression
 %type <Nonnull<Block*>> block
 %type <std::vector<Nonnull<Statement*>>> statement_list
@@ -774,6 +775,11 @@ statement:
       auto [return_exp, is_omitted_exp] = $2;
       $$ = arena->New<Return>(context.source_loc(), return_exp, is_omitted_exp);
     }
+| RETURN VAR return_var_empty_expression SEMICOLON
+    {
+      $$ = arena->New<Return>(context.source_loc(), $3,
+                              /*is_omitted_exp*/ false, /*is_return_var*/ true);
+    }
 | MATCH LEFT_PARENTHESIS expression RIGHT_PARENTHESIS LEFT_CURLY_BRACE
   clause_list RIGHT_CURLY_BRACE
     { $$ = arena->New<Match>(context.source_loc(), $3, $6); }
@@ -799,9 +805,13 @@ optional_else:
 | ELSE block
     { $$ = $2; }
 ;
+return_var_empty_expression:
+  // Empty
+    { $$ = arena->New<ReturnVarExpression>(context.source_loc()); }
+;
 return_expression:
   // Empty
-    { $$ = {arena->New<TupleLiteral>(context.source_loc()), true}; }
+    { $$ = {arena->New<TupleLiteral>(context.source_loc()), true}; };
 | expression
     { $$ = {$1, false}; }
 ;
