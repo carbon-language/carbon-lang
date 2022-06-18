@@ -261,6 +261,12 @@ class TypeChecker {
                                      const ImplScope& impl_scope)
       -> ErrorOr<Success>;
 
+  // Bring the associated constants in `constraint` that constrain the
+  // implementation of `interface` for `self` into `scope`.
+  auto BringAssociatedConstantsIntoScope(
+      Nonnull<const ConstraintType*> constraint, Nonnull<const Value*> self,
+      Nonnull<const InterfaceType*> interface, ImplScope& scope);
+
   // Type check all the members of the implementation.
   auto TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
                                 const ImplScope& impl_scope)

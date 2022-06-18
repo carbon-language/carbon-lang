@@ -1262,14 +1262,14 @@ auto TypeChecker::DeduceCallBindings(
 struct ConstraintLookupResult {
   Nonnull<const InterfaceType*> interface;
   Nonnull<const Declaration*> member;
-  Nonnull<const Expression*> impl;
 };
 
 /// Look up a member name in a constraint, which might be a single interface or
 /// a compound constraint.
 static auto LookupInConstraint(SourceLocation source_loc,
+                               std::string_view lookup_kind,
                                Nonnull<const Value*> type,
-                               const std::string& member_name)
+                               std::string_view member_name)
     -> ErrorOr<ConstraintLookupResult> {
   // Find the set of lookup contexts.
   llvm::ArrayRef<ConstraintType::LookupContext> lookup_contexts;
@@ -1304,8 +1304,8 @@ static auto LookupInConstraint(SourceLocation source_loc,
         // TODO: If we resolve to the same member either way, this
         // is not ambiguous.
         return CompilationError(source_loc)
-               << "ambiguous member access, " << member_name << " found in "
-               << *found->interface << " and " << iface_type;
+               << "ambiguous " << lookup_kind << ", " << member_name
+               << " found in " << *found->interface << " and " << iface_type;
       }
       found = {.interface = &iface_type, .member = member.value()};
     }
@@ -1314,10 +1314,10 @@ static auto LookupInConstraint(SourceLocation source_loc,
   if (!found) {
     if (isa<TypeType>(type)) {
       return CompilationError(source_loc)
-             << "member access into unconstrained type";
+             << lookup_kind << " in unconstrained type";
     }
     return CompilationError(source_loc)
-           << "member access, " << member_name << " not in " << *type;
+           << lookup_kind << ", " << member_name << " not in " << *type;
   }
   return found.value();
 }
@@ -1492,7 +1492,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               cast<VariableType>(object_type).binding().static_type();
           CARBON_ASSIGN_OR_RETURN(
               ConstraintLookupResult result,
-              LookupInConstraint(e->source_loc(), &typeof_var,
+              LookupInConstraint(e->source_loc(), "member access", &typeof_var,
                                  access.member_name()));
 
           const Value& member_type = result.member->static_type();
@@ -1526,7 +1526,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               InterpExp(&access.object(), arena_, trace_stream_));
           CARBON_ASSIGN_OR_RETURN(
               ConstraintLookupResult result,
-              LookupInConstraint(e->source_loc(), &object_type,
+              LookupInConstraint(e->source_loc(), "member access", &object_type,
                                  access.member_name()));
           CARBON_ASSIGN_OR_RETURN(Nonnull<Expression*> impl,
                                   impl_scope.Resolve(result.interface, type,
@@ -1653,9 +1653,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             }
             case Value::Kind::InterfaceType:
             case Value::Kind::ConstraintType: {
-              CARBON_ASSIGN_OR_RETURN(ConstraintLookupResult result,
-                                      LookupInConstraint(e->source_loc(), type,
-                                                         access.member_name()));
+              CARBON_ASSIGN_OR_RETURN(
+                  ConstraintLookupResult result,
+                  LookupInConstraint(e->source_loc(), "member access", type,
+                                     access.member_name()));
               access.set_member(Member(result.member));
               access.set_found_in_interface(result.interface);
               access.set_static_type(
@@ -3099,7 +3100,7 @@ auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
         }
         return true;
       };
-      VisitEqualValues(impl_decl->constraint_type(), expected, visitor);
+      impl_decl->constraint_type()->VisitEqualValues(expected, visitor);
       if (!found_any) {
         return CompilationError(impl_decl->source_loc())
                << "implementation missing " << *expected;
@@ -3256,12 +3257,48 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   return Success();
 }
 
+auto TypeChecker::BringAssociatedConstantsIntoScope(
+    Nonnull<const ConstraintType*> constraint, Nonnull<const Value*> self,
+    Nonnull<const InterfaceType*> interface, ImplScope& scope) {
+  std::set<Nonnull<const AssociatedConstantDeclaration*>> assocs_in_interface;
+  for (Nonnull<Declaration*> m : interface->declaration().members()) {
+    if (auto* assoc = dyn_cast<AssociatedConstantDeclaration>(m)) {
+      assocs_in_interface.insert(assoc);
+    }
+  }
+
+  for (const auto& eq : constraint->equality_constraints()) {
+    for (Nonnull<const Value*> value : eq.values) {
+      if (auto* assoc = dyn_cast<AssociatedConstant>(value)) {
+        // TODO: Also compare the binding map.
+        // TODO: Should an AssociatedConstant store an InterfaceType instead of
+        // a binding map?
+        if (assocs_in_interface.count(&assoc->constant()) &&
+            ValueEqual(&assoc->base(), self)) {
+          // This equality constraint mentions an associated constant that is
+          // part of interface. Bring it into scope.
+          scope.AddEqualityConstraint(&eq);
+          break;
+        }
+      }
+    }
+  }
+}
+
 auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
                                            const ImplScope& enclosing_scope)
     -> ErrorOr<Success> {
   if (trace_stream_) {
     **trace_stream_ << "checking " << *impl_decl << "\n";
   }
+
+  // Form the resolved constraint type by substituting `Self` for `.Self`.
+  Nonnull<const Value*> self = *impl_decl->self()->constant_value();
+  BindingMap constraint_self_map;
+  constraint_self_map[impl_decl->constraint_type()->self_binding()] = self;
+  Nonnull<const Value*> constraint =
+      Substitute(constraint_self_map, impl_decl->constraint_type());
+
   // Bring the impls from the parameters into scope.
   // TODO: Within a method in an `impl` that implements `Interface`, we should
   // assume that `Self as Interface` is implemented by this `impl`, so the
@@ -3271,7 +3308,15 @@ auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   impl_scope.AddParent(&enclosing_scope);
   BringImplsIntoScope(impl_decl->impl_bindings(), impl_scope);
   for (Nonnull<Declaration*> m : impl_decl->members()) {
-    CARBON_RETURN_IF_ERROR(TypeCheckDeclaration(m, impl_scope));
+    CARBON_ASSIGN_OR_RETURN(
+        ConstraintLookupResult result,
+        LookupInConstraint(m->source_loc(), "member impl declaration",
+                           constraint, GetName(*m).value()));
+    ImplScope member_scope;
+    member_scope.AddParent(&impl_scope);
+    BringAssociatedConstantsIntoScope(cast<ConstraintType>(constraint), self,
+                                      result.interface, member_scope);
+    CARBON_RETURN_IF_ERROR(TypeCheckDeclaration(m, member_scope));
   }
   if (trace_stream_) {
     **trace_stream_ << "finished checking impl\n";

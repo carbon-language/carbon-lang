@@ -655,16 +655,17 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
           &constraint->self_binding()->value(), &assoc.constant(), assoc.args(),
           &impl_witness);
       std::optional<ErrorOr<Nonnull<const Value*>>> result;
-      VisitEqualValues(constraint, expected, [&](Nonnull<const Value*> equal_value) {
-        // TODO: Need to substitute impl_witness.type_args() into the value.
-        if (isa<AssociatedConstant>(equal_value)) {
-          return true;
-        }
-        // TODO: This makes an arbitrary choice if there's more than one
-        // equal value. It's not clear how to handle that case.
-        result.emplace(Convert(equal_value, destination_type, source_loc));
-        return false;
-      });
+      constraint->VisitEqualValues(
+          expected, [&](Nonnull<const Value*> equal_value) {
+            // TODO: Need to substitute impl_witness.type_args() into the value.
+            if (isa<AssociatedConstant>(equal_value)) {
+              return true;
+            }
+            // TODO: This makes an arbitrary choice if there's more than one
+            // equal value. It's not clear how to handle that case.
+            result.emplace(Convert(equal_value, destination_type, source_loc));
+            return false;
+          });
       if (!result) {
         CARBON_FATAL() << impl_witness.declaration()
                        << " is missing value for associated constant " << assoc;

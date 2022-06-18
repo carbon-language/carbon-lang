@@ -77,6 +77,22 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
   CARBON_FATAL() << "expected a constraint, not " << *constraint_type;
 }
 
+auto ImplScope::VisitEqualValues(
+    Nonnull<const Value*> value,
+    llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const -> bool {
+  for (Nonnull<const ConstraintType::EqualityConstraint*> eq : equals_) {
+    if (!eq->VisitEqualValues(value, visitor)) {
+      return false;
+    }
+  }
+  for (Nonnull<const ImplScope*> parent : parent_scopes_) {
+    if (!parent->VisitEqualValues(value, visitor)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 auto ImplScope::ResolveInterface(Nonnull<const InterfaceType*> iface_type,
                                  Nonnull<const Value*> type,
                                  SourceLocation source_loc,

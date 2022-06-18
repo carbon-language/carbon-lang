@@ -842,28 +842,37 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
   }
 }
 
-auto VisitEqualValues(
-    llvm::ArrayRef<ConstraintType::EqualityConstraint> constraints,
+auto EqualityConstraint::VisitEqualValues(
     Nonnull<const Value*> value,
-    llvm::function_ref<bool(Nonnull<const Value*>)> visitor) -> bool {
-  for (const auto &eq : constraints) {
-    if (auto equal_it = std::find_if(eq.values.begin(), eq.values.end(),
-                                     [value](Nonnull<const Value*> val) {
-                                       return ValueEqual(value, val);
-                                     });
-        equal_it != eq.values.end()) {
-      // The value is in this group; pass all non-identical values in the group
-      // to the visitor.
-      for (auto it = eq.values.begin(), end = eq.values.end(); it != end;
-           ++it) {
-        if (it == equal_it ||
-            (it > equal_it && ValueEqual(value, *it))) {
-          continue;
-        }
-        if (!visitor(*it)) {
-          return false;
-        }
-      }
+    llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const -> bool {
+  // See if the given value is part of this constraint.
+  auto first_equal = std::find_if(
+      values.begin(), values.end(),
+      [value](Nonnull<const Value*> val) { return ValueEqual(value, val); });
+  if (first_equal == values.end()) {
+    return true;
+  }
+
+  // The value is in this group; pass all non-identical values in the group
+  // to the visitor.
+  for (auto it = values.begin(), end = values.end(); it != end; ++it) {
+    if (it == first_equal ||
+        (it > first_equal && ValueEqual(value, *it))) {
+      continue;
+    }
+    if (!visitor(*it)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+auto ConstraintType::VisitEqualValues(
+    Nonnull<const Value*> value,
+    llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const -> bool {
+  for (const auto &eq : equality_constraints()) {
+    if (!eq.VisitEqualValues(value, visitor)) {
+      return false;
     }
   }
   return true;

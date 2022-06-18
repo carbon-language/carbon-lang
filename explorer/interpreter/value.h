@@ -635,6 +635,18 @@ class InterfaceType : public Value {
   Nonnull<const Bindings*> bindings_ = Bindings::None();
 };
 
+// A collection of values that are known to be the same.
+struct EqualityConstraint {
+  std::vector<Nonnull<const Value*>> values;
+
+  // Visit the values in this equality constraint that are a single step away
+  // from the given value. Stops and returns `false` if the visitor returns
+  // `false`, otherwise returns `true`.
+  auto VisitEqualValues(
+      Nonnull<const Value*> value,
+      llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const -> bool;
+};
+
 // A type-of-type for an unknown constrained type.
 //
 // These types are formed by the `&` operator that combines constraints and by
@@ -659,10 +671,7 @@ class ConstraintType : public Value {
     Nonnull<const InterfaceType*> interface;
   };
 
-  // A collection of values that are known to be the same.
-  struct EqualityConstraint {
-    std::vector<Nonnull<const Value*>> values;
-  };
+  using EqualityConstraint = Carbon::EqualityConstraint;
 
   // A context in which we might look up a name.
   struct LookupContext {
@@ -700,28 +709,19 @@ class ConstraintType : public Value {
     return lookup_contexts_;
   }
 
+  // Visit the values in that are a single step away from the given value
+  // according to constraints in this constraint type. Stops and returns
+  // `false` if the visitor returns `false`, otherwise returns `true`.
+  auto VisitEqualValues(
+      Nonnull<const Value*> value,
+      llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const -> bool;
+
  private:
   Nonnull<const GenericBinding*> self_binding_;
   std::vector<ImplConstraint> impl_constraints_;
   std::vector<EqualityConstraint> equality_constraints_;
   std::vector<LookupContext> lookup_contexts_;
 };
-
-// Visit the values in the given set of equality constraints that are a single
-// step away from the given value. Stops and returns `false` if the visitor
-// returns `false`, otherwise returns `true`.
-auto VisitEqualValues(
-    llvm::ArrayRef<ConstraintType::EqualityConstraint> constraints,
-    Nonnull<const Value*> value,
-    llvm::function_ref<bool(Nonnull<const Value*>)> visitor) -> bool;
-
-// Find the values, as constrained by the given constraint type, that are a
-// single step away from the given value.
-inline auto VisitEqualValues(
-    Nonnull<const ConstraintType*> constraint, Nonnull<const Value*> value,
-    llvm::function_ref<bool(Nonnull<const Value*>)> visitor) -> bool {
-  return VisitEqualValues(constraint->equality_constraints(), value, visitor);
-}
 
 // A witness table.
 class Witness : public Value {
