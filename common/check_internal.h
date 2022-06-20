@@ -5,7 +5,7 @@
 #ifndef CARBON_COMMON_CHECK_INTERNAL_H_
 #define CARBON_COMMON_CHECK_INTERNAL_H_
 
-#include <unistd.h>
+#include <cstdlib>
 
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Signals.h"
@@ -24,12 +24,6 @@ class ExitingStream {
 
   // Internal type used in macros to dispatch to the `operator|` overload.
   struct Helper {};
-
-  ExitingStream() {
-    // Start all messages with a stack trace.
-    llvm::errs() << "Stack trace:\n";
-    llvm::sys::PrintStackTrace(llvm::errs());
-  }
 
   [[noreturn]] ~ExitingStream() {
     llvm_unreachable(
@@ -61,14 +55,10 @@ class ExitingStream {
   // Low-precedence binary operator overload used in check.h macros to flush the
   // output and exit the program. We do this in a binary operator rather than
   // the destructor to ensure good debug info and backtraces for errors.
-  [[noreturn]] friend auto operator|(Helper /*helper*/,
-                                     ExitingStream& /*rhs*/) {
+  [[noreturn]] friend auto operator|(Helper /*helper*/, ExitingStream& rhs) {
     // Finish with a newline.
     llvm::errs() << "\n";
-    // We assume LLVM's exit handling is installed, which will stack trace on
-    // std::abort(). We print a stack trace on construction, so this avoids that
-    // stack trace on exit.
-    _exit(1);
+    std::abort();
   }
 
  private:

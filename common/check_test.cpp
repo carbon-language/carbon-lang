@@ -12,11 +12,14 @@ namespace {
 TEST(CheckTest, CheckTrue) { CARBON_CHECK(true); }
 
 TEST(CheckTest, CheckFalse) {
-  // TODO: figure out why we can't use \\d+ instead of .+ in these patterns.
+  // TODO: Carbon version of googletest uses Posix RE, so can't use \d.
+  // RE2 was added to googletest in e33c2b24ca3e13df961ed369f7ed21e4cfcf9eec.
   ASSERT_DEATH({ CARBON_CHECK(false); },
-               "Stack trace:\n"
-               ".+\n"
-               "CHECK failure at common/check_test.cpp:.+: false\n");
+               "CHECK failure at common/check_test.cpp:[0-9]+: false\n"
+               "Please report issues to "
+               "https://github.com/carbon-language/carbon-lang/issues and "
+               "include the crash backtrace.\n"
+               ".*Stack dump:\n");
 }
 
 TEST(CheckTest, CheckTrueCallbackNotUsed) {
