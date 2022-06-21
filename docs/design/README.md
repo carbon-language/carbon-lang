@@ -2375,21 +2375,11 @@ marker.
 
 ### ABI and dynamic linking
 
-Carbon will not support the C++
-[ABI](https://en.wikipedia.org/wiki/Application_binary_interface). Interop with
-C++ will require building from source code.
+Carbon itself will not have a stable ABI for the language as a whole, and most language features will be designed around not having any ABI stability. Instead, we expect to add dedicated language features that are specifically designed to provide an ABI-stable boundary between two separate parts of a Carbon program. These ABI-resilient language features and API boundaries will be opt-in and explicit. They may also have functionality restrictions to make them easy to implement with strong ABI resilience.
 
-Carbon will support the C ABI on an opt-in basis. All dynamic linking with
-Carbon is through C ABIs. This means individual function calls and types can be
-annotated, like C++'s
-[`extern "C"`](https://en.wikipedia.org/wiki/Compatibility_of_C_and_C%2B%2B#Linking_C_and_C++_code)
-marker, as long as those declarations use only features available in C. This
-means there is no support for
-[vtables](https://en.wikipedia.org/wiki/Virtual_method_table),
-[exceptions](https://en.wikipedia.org/wiki/Exception_handling), and so on across
-these ABI boundaries. Subject to those restrictions, calls in both directions
-will be supported.
+When interoperating with already compiled C++ object code or shared libraries, the C++ interop may be significantly less feature rich than otherwise. This is an open area for us to explore, but we expect to potentially require re-compiling C++ code in order to get the full ergonomics and performance when interoperating with Carbon.
 
+However, we expect to have full support for the C ABI when interoperating with already compiled C object code or shared libraries. We expect Carbon's bridge code functionality to cover similar use cases as C++'s [`extern "C"`](https://en.wikipedia.org/wiki/Compatibility_of_C_and_C%2B%2B#Linking_C_and_C++_code) marker in order to provide full bi-directional support here. The functionality available across this interop boundary will of course be restricted to what is expressible in the C ABI, and types may need explicit markers to have guaranteed ABI compatibility.
 ### Operator overloading
 
 [Operator overloading](#operator-overloading) is supported in Carbon, but is
@@ -2409,7 +2399,7 @@ In those cases, they are matched according to which operation has the most
 similar semantics rather than using the same symbols. For example, the `^x`
 operation and `BitComplement` interface in Carbon corresponds to the `~x`
 operation and `operator~` function in C++. Similarly, the `ImplicitAs(U)` Carbon
-interface corresponds to implicit constructors in C++. Other
+interface corresponds to implicit conversions in C++, which can be written in multiple different ways. Other
 [C++ customization points](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html)
 like `swap` will correspond to a Carbon interface, on a case-by-case basis.
 
@@ -2479,17 +2469,11 @@ Other C and C++ types are equal to Carbon types as follows:
 Further, C++ reference types like `T&` will be translated to `T*` in Carbon,
 which is Carbon's non-null pointer type.
 
-The Carbon standard library will have equivalents for C++ standard library
-types, like `std::vector<T>`. However, the Carbon versions will use checked
-generics, and so will have a consistent API even if the implementation is
-specialized for some type parameters. This means that there will be a separate
-Carbon `BitVector` type that matches `std::vector<bool>`.
+Carbon will work to have idiomatic vocabulary *view* types for common data structures like `std::string_view` and `std::span` map transparently between C++ and the Carbon equivalents, including data layout so that even pointers to these types translate seamlessly. This will be contingent on a suitable C++ ABI for those types (potentially by re-compiling the C++ code with a customized ABI). We will also explore how to expand coverage to similar view types in other libraries.
 
-Carbon will have its own adapter types for simple C++ non-owning types like
-`std::string_view` and `std::span`. This means that the data representations
-will match, but they will have different APIs to give a native experience. Since
-the representation match, values may be converted between the types without a
-copy, and pointers to one can be converted to pointers to the other.
+However, Carbon's containers will be distinct from the C++ standard library containers in order to maximize our ability to improve performance and leverage language features like checked generics in their design and implementation.
+
+Where possible, we will also try to provide implementations of Carbon's standard library container *interfaces* for the relevant C++ container types so that they can be directly used with generic code. This should allow generic code in Carbon to work seamlessly with both Carbon and C++ containers without performance loss or constraining the Carbon container implementations.
 
 ### Inheritance
 
@@ -2502,7 +2486,7 @@ C++ [multiple inheritance](https://en.wikipedia.org/wiki/Multiple_inheritance)
 and [CRTP](https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern)
 will be migrated using a combination of Carbon features. Carbon mixins support
 implementation reuse and Carbon interfaces allow a type to implement multiple
-APIs.
+APIs. However, there may be limits on the degree of interop available with multiple inheritance across the C++ <-> Carbon boundaries.
 
 Carbon dyn-safe interfaces may be exported to C++ as an
 [abstract base class](<https://en.wikipedia.org/wiki/Class_(computer_programming)#Abstract_and_concrete>).
