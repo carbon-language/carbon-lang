@@ -2385,12 +2385,12 @@ implement with strong ABI resilience.
 
 When interoperating with already compiled C++ object code or shared libraries,
 the C++ interop may be significantly less feature rich than otherwise. This is
-an open area for us to explore, but we expect to potentially require
-re-compiling C++ code in order to get the full ergonomics and performance when
-interoperating with Carbon.
+an open area for us to explore, but we expect to require re-compiling C++ code
+in order to get the full ergonomic and performance benefits when interoperating
+with Carbon.
 
 However, we expect to have full support for the C ABI when interoperating with
-already compiled C object code or shared libraries. We expect Carbon's bridge
+already-compiled C object code or shared libraries. We expect Carbon's bridge
 code functionality to cover similar use cases as C++'s
 [`extern "C"`](https://en.wikipedia.org/wiki/Compatibility_of_C_and_C%2B%2B#Linking_C_and_C++_code)
 marker in order to provide full bi-directional support here. The functionality
@@ -2489,11 +2489,11 @@ Further, C++ reference types like `T&` will be translated to `T*` in Carbon,
 which is Carbon's non-null pointer type.
 
 Carbon will work to have idiomatic vocabulary _view_ types for common data
-structures like `std::string_view` and `std::span` map transparently between C++
-and the Carbon equivalents, including data layout so that even pointers to these
-types translate seamlessly. This will be contingent on a suitable C++ ABI for
-those types (potentially by re-compiling the C++ code with a customized ABI). We
-will also explore how to expand coverage to similar view types in other
+structures, like `std::string_view` and `std::span`, map transparently between
+C++ and the Carbon equivalents. This will include data layout so that even
+pointers to these types translate seamlessly, contingent on a suitable C++ ABI
+for those types, potentially by re-compiling the C++ code with a customized ABI.
+We will also explore how to expand coverage to similar view types in other
 libraries.
 
 However, Carbon's containers will be distinct from the C++ standard library
@@ -2502,9 +2502,11 @@ language features like checked generics in their design and implementation.
 
 Where possible, we will also try to provide implementations of Carbon's standard
 library container _interfaces_ for the relevant C++ container types so that they
-can be directly used with generic code. This should allow generic code in Carbon
-to work seamlessly with both Carbon and C++ containers without performance loss
-or constraining the Carbon container implementations.
+can be directly used with generic Carbon code. This should allow generic code in
+Carbon to work seamlessly with both Carbon and C++ containers without
+performance loss or constraining the Carbon container implementations. In the
+other direction, Carbon containers will satisfy C++ container requirements, so
+templated C++ code can operate directly on Carbon containers as well.
 
 ### Inheritance
 
