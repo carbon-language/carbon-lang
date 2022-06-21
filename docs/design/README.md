@@ -2277,7 +2277,7 @@ The design for interoperability between Carbon and C++ hinges on:
 
 1.  The ability to interoperate with a wide variety of code, such as
     classes/structs and
-    [templates](<https://en.wikipedia.org/wiki/Template_(C%2B%2B)>), not just
+    [templates](https://en.wikipedia.org/wiki/Template_(C%2B%2B)), not just
     free functions.
 2.  A willingness to expose the idioms of C++ into Carbon code, and the other
     way around, when necessary to maximize performance of the interoperability
@@ -2285,7 +2285,7 @@ The design for interoperability between Carbon and C++ hinges on:
 3.  The use of wrappers and generic programming, including templates, to
     minimize or eliminate runtime overhead.
 
-This feature will have some restrictions, only a subset of Carbon APIs will be
+This feature will have some restrictions; only a subset of Carbon APIs will be
 available to C++ and a subset of C++ APIs will be available to Carbon.
 
 -   To achieve simplification in Carbon, its programming model will exclude some
