@@ -12,7 +12,7 @@ namespace Carbon {
 
 auto StringLexHelper::Advance() -> bool {
   CARBON_CHECK(is_eof_ == false);
-  int c = ReadChar(yyscanner_, context_);
+  const char c = ReadChar(yyscanner_, context_);
   if (c <= 0) {
     is_eof_ = true;
     return false;
@@ -21,7 +21,7 @@ auto StringLexHelper::Advance() -> bool {
   return true;
 }
 
-auto ReadChar(yyscan_t yyscanner, Carbon::ParseAndLexContext& context) -> int {
+auto ReadChar(yyscan_t yyscanner, Carbon::ParseAndLexContext& context) -> char {
   const int c = YyinputWrapper(yyscanner);
   if (c <= 0) {
     context.RecordSyntaxError("Unexpected end of file");
@@ -50,8 +50,11 @@ auto ProcessSingleLineString(llvm::StringRef str,
   std::optional<std::string> unescaped =
       Carbon::UnescapeStringLiteral(str, hashtag_num);
   if (unescaped == std::nullopt) {
+    std::string str_with_quote = str.str();
+    str_with_quote.insert(0, 1, '\"');
+    str_with_quote.push_back('\"');
     return context.RecordSyntaxError(
-        llvm::formatv("Invalid escaping in string: {0}", str));
+        llvm::formatv("Invalid escaping in string: {0}", str_with_quote));
   }
   return CARBON_ARG_TOKEN(string_literal, *unescaped);
 }

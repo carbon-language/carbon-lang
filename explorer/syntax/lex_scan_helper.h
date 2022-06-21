@@ -24,7 +24,7 @@ class StringLexHelper {
   // EOF.
   auto Advance() -> bool;
   // Returns the last scanned char.
-  auto last_char() -> int { return str_.back(); };
+  auto last_char() -> char { return str_.back(); };
   // Returns the scanned string.
   auto str() -> const std::string& { return str_; };
 
@@ -39,9 +39,9 @@ class StringLexHelper {
 };
 
 // Reads and returns a single character. Reports an error on EOF.
-auto ReadChar(yyscan_t yyscanner, Carbon::ParseAndLexContext& context) -> int;
+auto ReadChar(yyscan_t yyscanner, Carbon::ParseAndLexContext& context) -> char;
 
-// Tries to Read [hashtag_num] hashtags. Returns true on success.
+// Tries to Read `hashtag_num` hashtags. Returns true on success.
 auto ReadHashTags(Carbon::StringLexHelper& scan_helper, size_t hashtag_num)
     -> bool;
 
