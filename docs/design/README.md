@@ -2410,7 +2410,8 @@ for a type effectively implements `operator%` in C++ for that type. This also
 works in the other direction, so C++ types implementing an operator overload are
 automatically considered to implement the corresponding Carbon interface. So
 implementing `operator%` in C++ for a type also implements interface
-`ModWith(U)` in Carbon.
+`ModWith(U)` in Carbon. However, there may be edge cases around implicit
+conversions or overload selection that don't map completely into Carbon.
 
 In some cases, the operation might be written differently in the two languages.
 In those cases, they are matched according to which operation has the most
