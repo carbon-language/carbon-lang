@@ -266,14 +266,27 @@ def _impl(ctx):
     # both are enabled.
     minimal_optimization_flags = feature(
         name = "minimal_optimization_flags",
-        flag_sets = [flag_set(
-            actions = codegen_compile_actions,
-            flag_groups = [flag_group(flags = [
-                "-O1",
-                "-mllvm",
-                "-fast-isel",
-            ])],
-        )],
+        flag_sets = [
+            flag_set(
+                actions = codegen_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    "-O1",
+                ])],
+            ),
+            # Use a conditional flag set for enabling the fast instruction
+            # selector to work around an LLVM bug:
+            # https://github.com/llvm/llvm-project/issues/56133
+            flag_set(
+                actions = codegen_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    "-mllvm",
+                    "-fast-isel",
+                ])],
+                with_features = [
+                    with_feature_set(not_features = ["fuzzer"]),
+                ],
+            ),
+        ],
     )
     default_optimization_flags = feature(
         name = "default_optimization_flags",
