@@ -38,10 +38,9 @@ class StringLexHelper {
   bool is_eof_;
 };
 
-// Reads and returns a single character. Reports an error on EOF.
-auto ReadChar(yyscan_t yyscanner, Carbon::ParseAndLexContext& context) -> char;
-
 // Tries to Read `hashtag_num` hashtags. Returns true on success.
+// Reads `hashtag_num` characters on success, and number of consecutive hashtags
+// (< `hashtag_num`) + 1 characters on failure.
 auto ReadHashTags(Carbon::StringLexHelper& scan_helper, size_t hashtag_num)
     -> bool;
 

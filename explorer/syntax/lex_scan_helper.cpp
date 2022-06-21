@@ -12,21 +12,14 @@ namespace Carbon {
 
 auto StringLexHelper::Advance() -> bool {
   CARBON_CHECK(is_eof_ == false);
-  const char c = ReadChar(yyscanner_, context_);
+  const char c = YyinputWrapper(yyscanner_);
   if (c <= 0) {
+    context_.RecordSyntaxError("Unexpected end of file");
     is_eof_ = true;
     return false;
   }
   str_.push_back(c);
   return true;
-}
-
-auto ReadChar(yyscan_t yyscanner, Carbon::ParseAndLexContext& context) -> char {
-  const int c = YyinputWrapper(yyscanner);
-  if (c <= 0) {
-    context.RecordSyntaxError("Unexpected end of file");
-  }
-  return c;
 }
 
 auto ReadHashTags(Carbon::StringLexHelper& scan_helper,
