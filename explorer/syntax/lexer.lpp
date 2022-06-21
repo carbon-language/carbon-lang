@@ -263,12 +263,12 @@ operand_start         [(A-Za-z0-9_\"]
 
 #*(\"\"\"|\") {
   // Raw string literal.
-  // yytext and chars scanned by str_lex_helper hold the source text, not the
-  // string the source represents.
+  // yytext (the token that matches the above regex) and chars scanned by
+  // str_lex_helper hold the source text, not the string the source represents.
   Carbon::StringLexHelper str_lex_helper(yytext, yyscanner, context);
   const std::string& s = str_lex_helper.str();
-  const int hashtag_num = std::count(s.begin(), s.end(), '#');
-  const int leading_quotes = std::count(s.begin(), s.end(), '"');
+  const int hashtag_num = s.find_first_of('"');
+  const int leading_quotes = s.size() - hashtag_num;
   if (leading_quotes == 3 && hashtag_num > 0) {
     // Check if it's a single-line string, like #"""#.
     if (Carbon::ReadHashTags(str_lex_helper, hashtag_num)) {
@@ -280,6 +280,8 @@ operand_start         [(A-Za-z0-9_\"]
   } else if (!str_lex_helper.Advance()) {
     return CARBON_SIMPLE_TOKEN(END_OF_FILE);
   }
+  // 3 quotes indicates multi-line, otherwise it'll be one.
+  const bool multi_line = leading_quotes == 3;
 
   while (!str_lex_helper.is_eof()) {
     switch (str_lex_helper.last_char()) {
@@ -287,7 +289,7 @@ operand_start         [(A-Za-z0-9_\"]
       case '\v':  // Fall through.
       case '\f':  // Fall through.
       case '\r':
-        if (leading_quotes == 1) {
+        if (!multi_line) {
           return context.RecordSyntaxError(
               llvm::formatv("missing closing quote in single-line string: {0}",
                             str_lex_helper.str()));
@@ -295,7 +297,7 @@ operand_start         [(A-Za-z0-9_\"]
         str_lex_helper.Advance();
         break;
       case '"':
-        if (leading_quotes == 3) {
+        if (multi_line) {
           // Check for 2 more '"'s on block string.
           if (!(str_lex_helper.Advance() &&
                 str_lex_helper.last_char() == '"')) {
