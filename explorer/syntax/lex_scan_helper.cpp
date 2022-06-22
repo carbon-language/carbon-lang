@@ -37,7 +37,7 @@ auto ProcessSingleLineString(llvm::StringRef str,
                              const size_t hashtag_num)
     -> Carbon::Parser::symbol_type {
   std::string hashtags(hashtag_num, '#');
-  auto str_with_quote = str;
+  const auto str_with_quote = str;
   CARBON_CHECK(str.consume_front(hashtags + "\"") &&
                str.consume_back("\"" + hashtags));
 
