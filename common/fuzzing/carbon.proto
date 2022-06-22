@@ -75,9 +75,7 @@ message StructTypeLiteralExpression {
   repeated FieldInitializer fields = 1;
 }
 
-message ReturnVarExpression {
-  optional string name = 1;
-}
+message ReturnVarExpression {}
 
 message IdentifierExpression {
   optional string name = 1;
