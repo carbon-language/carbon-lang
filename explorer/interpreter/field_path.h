@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "common/ostream.h"
+#include "explorer/ast/member.h"
 #include "explorer/ast/static_scope.h"
 #include "llvm/Support/Compiler.h"
 
@@ -38,26 +39,27 @@ class FieldPath {
   // need `witness`, a pointer to the witness table containing that field.
   class Component {
    public:
-    explicit Component(std::string name) : name_(std::move(name)) {}
-    Component(std::string name, std::optional<Nonnull<const Witness*>> witness)
-        : name_(std::move(name)), witness_(witness) {}
+    explicit Component(Member member) : member_(member) {}
+    Component(Member member, std::optional<Nonnull<const Witness*>> witness)
+        : member_(member), witness_(witness) {}
 
-    auto name() const -> const std::string& { return name_; }
+    auto member() const -> Member { return member_; }
+
+    auto name() const -> std::string_view { return member_.name(); }
 
     auto witness() const -> std::optional<Nonnull<const Witness*>> {
       return witness_;
     }
 
-    void Print(llvm::raw_ostream& out) const { out << name_; }
+    void Print(llvm::raw_ostream& out) const { out << name(); }
 
    private:
-    std::string name_;
+    Member member_;
     std::optional<Nonnull<const Witness*>> witness_;
   };
 
   // Constructs a FieldPath consisting of a single step.
-  explicit FieldPath(std::string name)
-      : components_({Component(std::move(name))}) {}
+  explicit FieldPath(Member member) : components_({Component(member)}) {}
   explicit FieldPath(const Component& f) : components_({f}) {}
 
   FieldPath(const FieldPath&) = default;
@@ -68,9 +70,9 @@ class FieldPath {
   // Returns whether *this is empty.
   auto IsEmpty() const -> bool { return components_.empty(); }
 
-  // Appends `name` to the end of *this.
-  auto Append(std::string name) -> void {
-    components_.push_back(Component(std::move(name)));
+  // Appends `member` to the end of *this.
+  auto Append(Member member) -> void {
+    components_.push_back(Component(member));
   }
 
   void Print(llvm::raw_ostream& out) const {

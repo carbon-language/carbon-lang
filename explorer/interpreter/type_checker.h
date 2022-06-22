@@ -49,6 +49,13 @@ class TypeChecker {
       Nonnull<const Value*> arg, bool allow_implicit_conversion,
       const ImplScope& impl_scope) const -> ErrorOr<Success>;
 
+  // Construct a type that is the same as `type` except that occurrences
+  // of type variables (aka. `GenericBinding`) are replaced by their
+  // corresponding type in `dict`.
+  auto Substitute(const std::map<Nonnull<const GenericBinding*>,
+                                 Nonnull<const Value*>>& dict,
+                  Nonnull<const Value*> type) const -> Nonnull<const Value*>;
+
   // If `impl` can be an implementation of interface `iface` for the
   // given `type`, then return an expression that will produce the witness
   // for this `impl` (at runtime). Otherwise return std::nullopt.
@@ -56,6 +63,19 @@ class TypeChecker {
                  const ImplScope::Impl& impl, const ImplScope& impl_scope,
                  SourceLocation source_loc) const
       -> std::optional<Nonnull<Expression*>>;
+
+  // Given the witnesses for the components of a constraint, form a witness for
+  // the constraint.
+  auto MakeConstraintWitness(
+      const ConstraintType& constraint,
+      std::vector<Nonnull<Expression*>> impl_constraint_witnesses,
+      SourceLocation source_loc) const -> Nonnull<Expression*>;
+
+  // Given the witnesses for the components of a constraint, form a witness for
+  // the constraint.
+  auto MakeConstraintWitnessAccess(Nonnull<Expression*> witness,
+                                   size_t impl_offset) const
+      -> Nonnull<Expression*>;
 
  private:
   // Information about the currently enclosing scopes.
@@ -98,6 +118,11 @@ class TypeChecker {
   auto TypeCheckTypeExp(Nonnull<Expression*> type_expression,
                         const ImplScope& impl_scope, bool concrete = true)
       -> ErrorOr<Nonnull<const Value*>>;
+
+  // Type checks and interprets `clause`, and validates it represents a valid
+  // `where` clause.
+  auto TypeCheckWhereClause(Nonnull<WhereClause*> clause,
+                            const ImplScope& impl_scope) -> ErrorOr<Success>;
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `p`.
   //
@@ -155,6 +180,27 @@ class TypeChecker {
   auto DeclareInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl,
                                    const ScopeInfo& scope_info)
       -> ErrorOr<Success>;
+
+  // Check that the deduced parameters of an impl are actually deducible from
+  // the form of the interface, for a declaration of the form
+  // `impl forall [deduced_bindings] impl_type as impl_iface`.
+  auto CheckImplIsDeducible(
+      SourceLocation source_loc, Nonnull<const Value*> impl_type,
+      Nonnull<const InterfaceType*> impl_iface,
+      llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings,
+      const ImplScope& impl_scope) -> ErrorOr<Success>;
+
+  // Check that each required declaration in an implementation of the given
+  // interface is present in the given `impl`.
+  auto CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
+                           Nonnull<const ImplDeclaration*> impl_decl,
+                           Nonnull<const Value*> self_type) -> ErrorOr<Success>;
+
+  // Check that an `impl` declaration satisfies its constraints and add the
+  // corresponding `ImplBinding`s to the impl scope.
+  auto CheckAndAddImplBindings(Nonnull<const ImplDeclaration*> impl_decl,
+                               Nonnull<const Value*> impl_type,
+                               const ScopeInfo& scope_info) -> ErrorOr<Success>;
 
   auto DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
                               const ScopeInfo& scope_info) -> ErrorOr<Success>;
@@ -271,9 +317,9 @@ class TypeChecker {
   //
   // If `impl_scope` is `std::nullopt`, only built-in conversions are
   // considered.
-  // FIXME: Remove this behavior.
+  // TODO: Remove this behavior.
   //
-  // FIXME: Does not actually perform the conversion if a user-defined
+  // TODO: Does not actually perform the conversion if a user-defined
   // conversion is needed. Should be used very rarely for that reason.
   auto ExpectType(SourceLocation source_loc, const std::string& context,
                   Nonnull<const Value*> expected, Nonnull<const Value*> actual,
@@ -305,13 +351,6 @@ class TypeChecker {
                                BuiltinInterfaceName interface) const
       -> ErrorOr<Nonnull<const InterfaceType*>>;
 
-  // Construct a type that is the same as `type` except that occurrences
-  // of type variables (aka. `GenericBinding`) are replaced by their
-  // corresponding type in `dict`.
-  auto Substitute(const std::map<Nonnull<const GenericBinding*>,
-                                 Nonnull<const Value*>>& dict,
-                  Nonnull<const Value*> type) const -> Nonnull<const Value*>;
-
   // Find impls that satisfy all of the `impl_bindings`, but with the
   // type variables in the `impl_bindings` replaced by the argument
   // type in `deduced_type_args`.  The results are placed in the
@@ -320,6 +359,17 @@ class TypeChecker {
                     const ImplScope& impl_scope, SourceLocation source_loc,
                     const BindingMap& deduced_type_args,
                     ImplExpMap& impls) const -> ErrorOr<Success>;
+
+  // Given an interface type, form a corresponding constraint type.
+  auto MakeConstraintForInterface(SourceLocation source_loc,
+                                  Nonnull<const InterfaceType*> iface_type)
+      -> Nonnull<const ConstraintType*>;
+
+  // Given a list of constraint types, form the combined constraint.
+  auto CombineConstraints(
+      SourceLocation source_loc,
+      llvm::ArrayRef<Nonnull<const ConstraintType*>> constraints)
+      -> Nonnull<const ConstraintType*>;
 
   // Sets value_node.constant_value() to `value`. Can be called multiple
   // times on the same value_node, so long as it is always called with

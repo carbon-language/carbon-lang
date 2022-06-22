@@ -6,6 +6,7 @@
 #define CARBON_EXPLORER_AST_DECLARATION_H_
 
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -23,6 +24,8 @@
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
+
+class ConstraintType;
 
 // Abstract base class of all AST nodes representing patterns.
 //
@@ -172,7 +175,7 @@ class SelfDeclaration : public Declaration {
     return InheritsFromSelfDeclaration(node->kind());
   }
 
-  auto name() const -> const std::string { return "Self"; }
+  static auto name() -> std::string_view { return "Self"; }
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 };
 
@@ -352,8 +355,6 @@ enum class ImplKind { InternalImpl, ExternalImpl };
 
 class ImplDeclaration : public Declaration {
  public:
-  using ImplementsCarbonValueNode = void;
-
   static auto Create(Nonnull<Arena*> arena, SourceLocation source_loc,
                      ImplKind kind, Nonnull<Expression*> impl_type,
                      Nonnull<Expression*> interface,
@@ -386,11 +387,11 @@ class ImplDeclaration : public Declaration {
   // Return the interface that is being implemented.
   auto interface() const -> const Expression& { return *interface_; }
   auto interface() -> Expression& { return *interface_; }
-  void set_interface_type(Nonnull<const Value*> iface_type) {
-    interface_type_ = iface_type;
+  void set_constraint_type(Nonnull<const ConstraintType*> constraint_type) {
+    constraint_type_ = constraint_type;
   }
-  auto interface_type() const -> Nonnull<const Value*> {
-    return *interface_type_;
+  auto constraint_type() const -> Nonnull<const ConstraintType*> {
+    return *constraint_type_;
   }
   auto deduced_parameters() const
       -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
@@ -417,7 +418,7 @@ class ImplDeclaration : public Declaration {
   Nonnull<Expression*> impl_type_;
   Nonnull<SelfDeclaration*> self_decl_;
   Nonnull<Expression*> interface_;
-  std::optional<Nonnull<const Value*>> interface_type_;
+  std::optional<Nonnull<const ConstraintType*>> constraint_type_;
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
   std::vector<Nonnull<Declaration*>> members_;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings_;
@@ -437,7 +438,7 @@ class AliasDeclaration : public Declaration {
     return InheritsFromAliasDeclaration(node->kind());
   }
 
-  auto name() const -> const std::string { return name_; }
+  auto name() const -> const std::string& { return name_; }
   auto target() const -> const Expression& { return *target_; }
   auto target() -> Expression& { return *target_; }
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
@@ -448,7 +449,7 @@ class AliasDeclaration : public Declaration {
 };
 
 // Return the name of a declaration, if it has one.
-auto GetName(const Declaration&) -> std::optional<std::string>;
+auto GetName(const Declaration&) -> std::optional<std::string_view>;
 
 }  // namespace Carbon
 

@@ -52,6 +52,7 @@ message PrimitiveOperatorExpression {
     Or = 9;
     Sub = 10;
     Ptr = 11;
+    Combine = 12;
   }
   optional Operator op = 1;
   repeated Expression arguments = 2;
@@ -78,10 +79,16 @@ message IdentifierExpression {
   optional string name = 1;
 }
 
+message DesignatorExpression {
+  optional string name = 1;
+}
+
 message IntrinsicExpression {
   enum Intrinsic {
     UnknownIntrinsic = 0;
     Print = 1;
+    Alloc = 2;
+    Dealloc = 3;
   }
   optional Intrinsic intrinsic = 1;
   optional TupleLiteralExpression argument = 2;
@@ -120,6 +127,28 @@ message ArrayTypeLiteral {
   optional Expression size = 2;
 }
 
+message IsWhereClause {
+  optional Expression type = 1;
+  optional Expression constraint = 2;
+}
+
+message EqualsWhereClause {
+  optional Expression lhs = 1;
+  optional Expression rhs = 2;
+}
+
+message WhereClause {
+  oneof kind {
+    IsWhereClause is = 1;
+    EqualsWhereClause equals = 2;
+  }
+}
+
+message WhereExpression {
+  optional Expression base = 1;
+  repeated WhereClause clauses = 2;
+}
+
 message Expression {
   oneof kind {
     CallExpression call = 1;
@@ -144,6 +173,8 @@ message Expression {
     UnimplementedExpression unimplemented_expression = 20;
     ArrayTypeLiteral array_type_literal = 21;
     CompoundMemberAccessExpression compound_member_access = 22;
+    WhereExpression where = 23;
+    DesignatorExpression designator = 24;
   }
 }
 

@@ -65,6 +65,7 @@ IF                   "if"
 IMPL                 "impl"
 IMPORT               "import"
 INTERFACE            "interface"
+IS                   "is"
 LEFT_CURLY_BRACE     "{"
 LEFT_PARENTHESIS     "("
 LEFT_SQUARE_BRACKET  "["
@@ -92,6 +93,7 @@ TYPE                 "Type"
 UNDERSCORE           "_"
 UNIMPL_EXAMPLE       "__unimplemented_example_infix"
 VAR                  "var"
+WHERE                "where"
 WHILE                "while"
 /* table-end */
 
@@ -149,6 +151,7 @@ operand_start         [(A-Za-z0-9_\"]
 {IMPL}                { return CARBON_SIMPLE_TOKEN(IMPL);                }
 {IMPORT}              { return CARBON_SIMPLE_TOKEN(IMPORT);              }
 {INTERFACE}           { return CARBON_SIMPLE_TOKEN(INTERFACE);           }
+{IS}                  { return CARBON_SIMPLE_TOKEN(IS);                  }
 {LEFT_CURLY_BRACE}    { return CARBON_SIMPLE_TOKEN(LEFT_CURLY_BRACE);    }
 {LEFT_PARENTHESIS}    { return CARBON_SIMPLE_TOKEN(LEFT_PARENTHESIS);    }
 {LEFT_SQUARE_BRACKET} { return CARBON_SIMPLE_TOKEN(LEFT_SQUARE_BRACKET); }
@@ -173,6 +176,7 @@ operand_start         [(A-Za-z0-9_\"]
 {UNDERSCORE}          { return CARBON_SIMPLE_TOKEN(UNDERSCORE);          }
 {UNIMPL_EXAMPLE}      { return CARBON_SIMPLE_TOKEN(UNIMPL_EXAMPLE);      }
 {VAR}                 { return CARBON_SIMPLE_TOKEN(VAR);                 }
+{WHERE}               { return CARBON_SIMPLE_TOKEN(WHERE);               }
 {WHILE}               { return CARBON_SIMPLE_TOKEN(WHILE);               }
  /* table-end */
 

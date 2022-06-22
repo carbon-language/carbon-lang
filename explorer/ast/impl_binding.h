@@ -53,7 +53,11 @@ class ImplBinding : public AstNode {
     return std::nullopt;
   }
   auto symbolic_identity() const -> std::optional<Nonnull<const Value*>> {
-    return std::nullopt;
+    return symbolic_identity_;
+  }
+  void set_symbolic_identity(Nonnull<const Value*> value) {
+    CARBON_CHECK(!symbolic_identity_.has_value());
+    symbolic_identity_ = value;
   }
 
   // The static type of the impl. Cannot be called before typechecking.
@@ -67,10 +71,23 @@ class ImplBinding : public AstNode {
   }
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
+  // Return the original impl binding.
+  auto original() const -> Nonnull<const ImplBinding*> {
+    if (original_.has_value())
+      return *original_;
+    else
+      return this;
+  }
+
+  // Set the original impl binding.
+  void set_original(Nonnull<const ImplBinding*> orig) { original_ = orig; }
+
  private:
   Nonnull<const GenericBinding*> type_var_;
   Nonnull<const Value*> iface_;
+  std::optional<Nonnull<const Value*>> symbolic_identity_;
   std::optional<Nonnull<const Value*>> static_type_;
+  std::optional<Nonnull<const ImplBinding*>> original_;
 };
 
 }  // namespace Carbon

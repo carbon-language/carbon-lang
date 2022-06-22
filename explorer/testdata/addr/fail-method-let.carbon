@@ -7,7 +7,6 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/addr/fail-method-let.carbon:32: method GetSetX requires its receiver to be an lvalue
 
 package ExplorerTest api;
 
@@ -29,6 +28,7 @@ class Point {
 
 fn Main() -> i32 {
   let p: Point = Point.Origin();
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/addr/fail-method-let.carbon:[[@LINE+1]]: method GetSetX requires its receiver to be an lvalue
   var x: auto = p.GetSetX(42);
   if (p.x == 42) {
     return x;

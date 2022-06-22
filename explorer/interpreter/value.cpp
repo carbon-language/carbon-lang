@@ -19,7 +19,7 @@ namespace Carbon {
 using llvm::cast;
 using llvm::dyn_cast;
 
-auto StructValue::FindField(const std::string& name) const
+auto StructValue::FindField(std::string_view name) const
     -> std::optional<Nonnull<const Value*>> {
   for (const NamedValue& element : elements_) {
     if (element.name == name) {
@@ -33,30 +33,35 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                       const FieldPath::Component& field,
                       SourceLocation source_loc, Nonnull<const Value*> me_value)
     -> ErrorOr<Nonnull<const Value*>> {
-  const std::string& f = field.name();
+  std::string_view f = field.name();
 
   if (field.witness().has_value()) {
-    Nonnull<const Witness*> witness = *field.witness();
+    Nonnull<const Witness*> witness = cast<Witness>(*field.witness());
     switch (witness->kind()) {
-      case Value::Kind::Witness: {
+      case Value::Kind::ImplWitness: {
+        auto* impl_witness = cast<ImplWitness>(witness);
         if (std::optional<Nonnull<const Declaration*>> mem_decl =
-                FindMember(f, witness->declaration().members());
+                FindMember(f, impl_witness->declaration().members());
             mem_decl.has_value()) {
           const auto& fun_decl = cast<FunctionDeclaration>(**mem_decl);
           if (fun_decl.is_method()) {
-            return arena->New<BoundMethodValue>(
-                &fun_decl, v, witness->type_args(), witness->witnesses());
+            return arena->New<BoundMethodValue>(&fun_decl, v,
+                                                &impl_witness->bindings());
           } else {
             // Class function.
-            auto fun = cast<FunctionValue>(*fun_decl.constant_value());
+            auto* fun = cast<FunctionValue>(*fun_decl.constant_value());
             return arena->New<FunctionValue>(&fun->declaration(),
-                                             witness->type_args(),
-                                             witness->witnesses());
+                                             &impl_witness->bindings());
           }
         } else {
           return CompilationError(source_loc)
                  << "member " << f << " not in " << *witness;
         }
+      }
+      case Value::Kind::SymbolicWitness: {
+        return RuntimeError(source_loc)
+               << "member lookup for " << f << " in symbolic " << *witness
+               << " not implemented yet";
       }
       default:
         CARBON_FATAL() << "expected Witness, not " << *witness;
@@ -94,13 +99,11 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
           // Found a method. Turn it into a bound method.
           const FunctionValue& m = cast<FunctionValue>(**func);
           return arena->New<BoundMethodValue>(&m.declaration(), me_value,
-                                              class_type.type_args(),
-                                              class_type.witnesses());
+                                              &class_type.bindings());
         } else {
           // Found a class function
           return arena->New<FunctionValue>(&(*func)->declaration(),
-                                           class_type.type_args(),
-                                           class_type.witnesses());
+                                           &class_type.bindings());
         }
       }
     }
@@ -122,8 +125,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                << "class function " << f << " not in " << *v;
       }
       return arena->New<FunctionValue>(&(*fun)->declaration(),
-                                       class_type.type_args(),
-                                       class_type.witnesses());
+                                       &class_type.bindings());
     }
     default:
       CARBON_FATAL() << "field access not allowed for value " << *v;
@@ -168,14 +170,17 @@ static auto SetFieldImpl(
       return arena->New<StructValue>(elements);
     }
     case Value::Kind::NominalClassValue: {
-      return SetFieldImpl(arena, &cast<NominalClassValue>(*value).inits(),
-                          path_begin, path_end, field_value, source_loc);
+      const NominalClassValue& object = cast<NominalClassValue>(*value);
+      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inits,
+                              SetFieldImpl(arena, &object.inits(), path_begin,
+                                           path_end, field_value, source_loc));
+      return arena->New<NominalClassValue>(&object.type(), inits);
     }
     case Value::Kind::TupleValue: {
       std::vector<Nonnull<const Value*>> elements =
           cast<TupleValue>(*value).elements();
       // TODO(geoffromer): update FieldPath to hold integers as well as strings.
-      int index = std::stoi((*path_begin).name());
+      int index = std::stoi(std::string((*path_begin).name()));
       if (index < 0 || static_cast<size_t>(index) >= elements.size()) {
         return RuntimeError(source_loc) << "index " << (*path_begin).name()
                                         << " out of range in " << *value;
@@ -197,6 +202,21 @@ auto Value::SetField(Nonnull<Arena*> arena, const FieldPath& path,
   return SetFieldImpl(arena, Nonnull<const Value*>(this),
                       path.components_.begin(), path.components_.end(),
                       field_value, source_loc);
+}
+
+static auto PrintNameWithBindings(llvm::raw_ostream& out,
+                                  Nonnull<const Declaration*> declaration,
+                                  const BindingMap& args) {
+  out << GetName(*declaration).value_or("(anonymous)");
+  // TODO: Print '()' if declaration is parameterized but no args are provided.
+  if (!args.empty()) {
+    out << "(";
+    llvm::ListSeparator sep;
+    for (const auto& [bind, val] : args) {
+      out << sep << bind->name() << " = " << *val;
+    }
+    out << ")";
+  }
 }
 
 void Value::Print(llvm::raw_ostream& out) const {
@@ -258,13 +278,48 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::BoolValue:
       out << (cast<BoolValue>(*this).value() ? "true" : "false");
       break;
-    case Value::Kind::FunctionValue:
-      out << "fun<" << cast<FunctionValue>(*this).declaration().name() << ">";
+    case Value::Kind::FunctionValue: {
+      const FunctionValue& fun = cast<FunctionValue>(*this);
+      out << "fun<" << fun.declaration().name() << ">";
+      if (!fun.type_args().empty()) {
+        out << "[";
+        llvm::ListSeparator sep;
+        for (const auto& [ty_var, ty_arg] : fun.type_args()) {
+          out << sep << *ty_var << "=" << *ty_arg;
+        }
+        out << "]";
+      }
+      if (!fun.witnesses().empty()) {
+        out << "{|";
+        llvm::ListSeparator sep;
+        for (const auto& [impl_bind, witness] : fun.witnesses()) {
+          out << sep << *witness;
+        }
+        out << "|}";
+      }
       break;
-    case Value::Kind::BoundMethodValue:
-      out << "bound_method<"
-          << cast<BoundMethodValue>(*this).declaration().name() << ">";
+    }
+    case Value::Kind::BoundMethodValue: {
+      const BoundMethodValue& method = cast<BoundMethodValue>(*this);
+      out << "bound_method<" << method.declaration().name() << ">";
+      if (!method.type_args().empty()) {
+        out << "[";
+        llvm::ListSeparator sep;
+        for (const auto& [ty_var, ty_arg] : method.type_args()) {
+          out << sep << *ty_var << "=" << *ty_arg;
+        }
+        out << "]";
+      }
+      if (!method.witnesses().empty()) {
+        out << "{|";
+        llvm::ListSeparator sep;
+        for (const auto& [impl_bind, witness] : method.witnesses()) {
+          out << sep << *witness;
+        }
+        out << "|}";
+      }
       break;
+    }
     case Value::Kind::PointerValue:
       out << "ptr<" << cast<PointerValue>(*this).address() << ">";
       break;
@@ -294,14 +349,10 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "fn ";
       if (!fn_type.deduced_bindings().empty()) {
         out << "[";
-        unsigned int i = 0;
+        llvm::ListSeparator sep;
         for (Nonnull<const GenericBinding*> deduced :
              fn_type.deduced_bindings()) {
-          if (i != 0) {
-            out << ", ";
-          }
-          out << deduced->name() << ":! " << deduced->type();
-          ++i;
+          out << sep << *deduced;
         }
         out << "]";
       }
@@ -319,22 +370,9 @@ void Value::Print(llvm::raw_ostream& out) const {
     }
     case Value::Kind::NominalClassType: {
       const auto& class_type = cast<NominalClassType>(*this);
-      out << "class " << class_type.declaration().name();
-      if (!class_type.type_args().empty()) {
-        out << "(";
-        llvm::ListSeparator sep;
-        for (const auto& [bind, val] : class_type.type_args()) {
-          out << sep << bind->name() << " = " << *val;
-        }
-        out << ")";
-      }
-      if (!class_type.impls().empty()) {
-        out << " impls ";
-        llvm::ListSeparator sep;
-        for (const auto& [impl_bind, impl] : class_type.impls()) {
-          out << sep << *impl;
-        }
-      }
+      out << "class ";
+      PrintNameWithBindings(out, &class_type.declaration(),
+                            class_type.type_args());
       if (!class_type.witnesses().empty()) {
         out << " witnesses ";
         llvm::ListSeparator sep;
@@ -346,21 +384,45 @@ void Value::Print(llvm::raw_ostream& out) const {
     }
     case Value::Kind::InterfaceType: {
       const auto& iface_type = cast<InterfaceType>(*this);
-      out << "interface " << iface_type.declaration().name();
-      if (!iface_type.args().empty()) {
-        out << "(";
-        llvm::ListSeparator sep;
-        for (const auto& [bind, val] : iface_type.args()) {
-          out << sep << bind->name() << " = " << *val;
+      out << "interface ";
+      PrintNameWithBindings(out, &iface_type.declaration(), iface_type.args());
+      break;
+    }
+    case Value::Kind::ConstraintType: {
+      const auto& constraint = cast<ConstraintType>(*this);
+      out << "constraint ";
+      llvm::ListSeparator combine(" & ");
+      for (const ConstraintType::LookupContext& ctx :
+           constraint.lookup_contexts()) {
+        out << combine << *ctx.context;
+      }
+      out << " where ";
+      llvm::ListSeparator sep;
+      for (const ConstraintType::ImplConstraint& impl :
+           constraint.impl_constraints()) {
+        // TODO: Skip cases where `impl.type` is `.Self` and the interface is
+        // in `lookup_contexts()`.
+        out << sep << *impl.type << " is " << *impl.interface;
+      }
+      for (const ConstraintType::EqualityConstraint& equality :
+           constraint.equality_constraints()) {
+        out << sep;
+        llvm::ListSeparator equal(" == ");
+        for (Nonnull<const Value*> value : equality.values) {
+          out << equal << *value;
         }
-        out << ")";
       }
       break;
     }
-    case Value::Kind::Witness: {
-      const auto& witness = cast<Witness>(*this);
+    case Value::Kind::ImplWitness: {
+      const auto& witness = cast<ImplWitness>(*this);
       out << "witness " << *witness.declaration().impl_type() << " as "
           << witness.declaration().interface();
+      break;
+    }
+    case Value::Kind::SymbolicWitness: {
+      const auto& witness = cast<SymbolicWitness>(*this);
+      out << "witness " << witness.impl_expression();
       break;
     }
     case Value::Kind::ParameterizedEntityName:
@@ -412,6 +474,10 @@ void Value::Print(llvm::raw_ostream& out) const {
                  .interface_type()
                  .declaration()
                  .name()
+          << ")";
+      break;
+    case Value::Kind::TypeOfConstraintType:
+      out << "typeof(" << cast<TypeOfConstraintType>(*this).constraint_type()
           << ")";
       break;
     case Value::Kind::TypeOfChoiceType:
@@ -472,6 +538,19 @@ void ContinuationValue::StackFragment::Print(llvm::raw_ostream& out) const {
   out << "}";
 }
 
+// Check whether two binding maps, which are assumed to have the same keys, are
+// equal.
+static auto BindingMapEqual(const BindingMap& map1, const BindingMap& map2)
+    -> bool {
+  CARBON_CHECK(map1.size() == map2.size()) << "maps should have same keys";
+  for (const auto& [key, value] : map1) {
+    if (!ValueEqual(value, map2.at(key))) {
+      return false;
+    }
+  }
+  return true;
+}
+
 auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
   if (t1->kind() != t2->kind()) {
     return false;
@@ -500,30 +579,58 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
       }
       return true;
     }
-    case Value::Kind::NominalClassType:
-      if (cast<NominalClassType>(*t1).declaration().name() !=
-          cast<NominalClassType>(*t2).declaration().name()) {
+    case Value::Kind::NominalClassType: {
+      const auto& class1 = cast<NominalClassType>(*t1);
+      const auto& class2 = cast<NominalClassType>(*t2);
+      return class1.declaration().name() == class2.declaration().name() &&
+             BindingMapEqual(class1.type_args(), class2.type_args());
+    }
+    case Value::Kind::InterfaceType: {
+      const auto& iface1 = cast<InterfaceType>(*t1);
+      const auto& iface2 = cast<InterfaceType>(*t2);
+      return iface1.declaration().name() == iface2.declaration().name() &&
+             BindingMapEqual(iface1.args(), iface2.args());
+    }
+    case Value::Kind::ConstraintType: {
+      const auto& constraint1 = cast<ConstraintType>(*t1);
+      const auto& constraint2 = cast<ConstraintType>(*t2);
+      if (constraint1.impl_constraints().size() !=
+              constraint2.impl_constraints().size() ||
+          constraint1.equality_constraints().size() !=
+              constraint2.equality_constraints().size() ||
+          constraint1.lookup_contexts().size() !=
+              constraint2.lookup_contexts().size()) {
         return false;
       }
-      for (const auto& [ty_var1, ty1] :
-           cast<NominalClassType>(*t1).type_args()) {
-        if (!ValueEqual(ty1,
-                        cast<NominalClassType>(*t2).type_args().at(ty_var1))) {
+      for (size_t i = 0; i < constraint1.impl_constraints().size(); ++i) {
+        const auto& impl1 = constraint1.impl_constraints()[i];
+        const auto& impl2 = constraint2.impl_constraints()[i];
+        if (!TypeEqual(impl1.type, impl2.type) ||
+            !TypeEqual(impl1.interface, impl2.interface)) {
+          return false;
+        }
+      }
+      for (size_t i = 0; i < constraint1.equality_constraints().size(); ++i) {
+        const auto& equality1 = constraint1.equality_constraints()[i];
+        const auto& equality2 = constraint2.equality_constraints()[i];
+        if (equality1.values.size() != equality2.values.size()) {
+          return false;
+        }
+        for (size_t j = 0; j < equality1.values.size(); ++j) {
+          if (!ValueEqual(equality1.values[i], equality2.values[i])) {
+            return false;
+          }
+        }
+      }
+      for (size_t i = 0; i < constraint1.lookup_contexts().size(); ++i) {
+        const auto& context1 = constraint1.lookup_contexts()[i];
+        const auto& context2 = constraint2.lookup_contexts()[i];
+        if (!TypeEqual(context1.context, context2.context)) {
           return false;
         }
       }
       return true;
-    case Value::Kind::InterfaceType:
-      if (cast<InterfaceType>(*t1).declaration().name() !=
-          cast<InterfaceType>(*t2).declaration().name()) {
-        return false;
-      }
-      for (const auto& [ty_var1, ty1] : cast<InterfaceType>(*t1).args()) {
-        if (!ValueEqual(ty1, cast<InterfaceType>(*t2).args().at(ty_var1))) {
-          return false;
-        }
-      }
-      return true;
+    }
     case Value::Kind::ChoiceType:
       return cast<ChoiceType>(*t1).name() == cast<ChoiceType>(*t2).name();
     case Value::Kind::TupleValue: {
@@ -554,6 +661,9 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::TypeOfInterfaceType:
       return TypeEqual(&cast<TypeOfInterfaceType>(*t1).interface_type(),
                        &cast<TypeOfInterfaceType>(*t2).interface_type());
+    case Value::Kind::TypeOfConstraintType:
+      return TypeEqual(&cast<TypeOfConstraintType>(*t1).constraint_type(),
+                       &cast<TypeOfConstraintType>(*t2).constraint_type());
     case Value::Kind::TypeOfChoiceType:
       return TypeEqual(&cast<TypeOfChoiceType>(*t1).choice_type(),
                        &cast<TypeOfChoiceType>(*t2).choice_type());
@@ -584,7 +694,8 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
       CARBON_FATAL() << "TypeEqual used to compare non-type values\n"
                      << *t1 << "\n"
                      << *t2;
-    case Value::Kind::Witness:
+    case Value::Kind::ImplWitness:
+    case Value::Kind::SymbolicWitness:
       CARBON_FATAL() << "TypeEqual: unexpected Witness";
       break;
     case Value::Kind::AutoType:
@@ -654,9 +765,9 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::StringValue:
       return cast<StringValue>(*v1).value() == cast<StringValue>(*v2).value();
     case Value::Kind::ParameterizedEntityName: {
-      std::optional<std::string> name1 =
+      std::optional<std::string_view> name1 =
           GetName(cast<ParameterizedEntityName>(v1)->declaration());
-      std::optional<std::string> name2 =
+      std::optional<std::string_view> name2 =
           GetName(cast<ParameterizedEntityName>(v2)->declaration());
       CARBON_CHECK(name1.has_value() && name2.has_value())
           << "parameterized name refers to unnamed declaration";
@@ -671,13 +782,16 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::StructType:
     case Value::Kind::NominalClassType:
     case Value::Kind::InterfaceType:
-    case Value::Kind::Witness:
+    case Value::Kind::ConstraintType:
+    case Value::Kind::ImplWitness:
+    case Value::Kind::SymbolicWitness:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
     case Value::Kind::StringType:
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
+    case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
@@ -709,7 +823,7 @@ auto ChoiceType::FindAlternative(std::string_view name) const
   return std::nullopt;
 }
 
-auto NominalClassType::FindFunction(const std::string& name) const
+auto NominalClassType::FindFunction(std::string_view name) const
     -> std::optional<Nonnull<const FunctionValue*>> {
   for (const auto& member : declaration().members()) {
     switch (member->kind()) {
@@ -727,11 +841,11 @@ auto NominalClassType::FindFunction(const std::string& name) const
   return std::nullopt;
 }
 
-auto FindMember(const std::string& name,
+auto FindMember(std::string_view name,
                 llvm::ArrayRef<Nonnull<Declaration*>> members)
     -> std::optional<Nonnull<const Declaration*>> {
   for (Nonnull<const Declaration*> member : members) {
-    if (std::optional<std::string> mem_name = GetName(*member);
+    if (std::optional<std::string_view> mem_name = GetName(*member);
         mem_name.has_value()) {
       if (*mem_name == name) {
         return member;
@@ -739,22 +853,6 @@ auto FindMember(const std::string& name,
     }
   }
   return std::nullopt;
-}
-
-auto Member::name() const -> std::string {
-  if (const Declaration* decl = member_.dyn_cast<const Declaration*>()) {
-    return GetName(*decl).value();
-  } else {
-    return member_.get<const NamedValue*>()->name;
-  }
-}
-
-auto Member::type() const -> const Value& {
-  if (const Declaration* decl = member_.dyn_cast<const Declaration*>()) {
-    return decl->static_type();
-  } else {
-    return *member_.get<const NamedValue*>()->value;
-  }
 }
 
 void ImplBinding::Print(llvm::raw_ostream& out) const {

@@ -56,10 +56,13 @@ void Heap::Deallocate(AllocationId allocation) {
   }
 }
 
+void Heap::Deallocate(const Address& a) { Deallocate(a.allocation_); }
+
 void Heap::Print(llvm::raw_ostream& out) const {
   llvm::ListSeparator sep;
   for (size_t i = 0; i < values_.size(); ++i) {
     out << sep;
+    out << i << ": ";
     if (!alive_[i]) {
       out << "!!";
     }

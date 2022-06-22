@@ -10,11 +10,9 @@
 
 package ExplorerTest api;
 
-fn Main() -> i32 {
-  match (0) {
-    case x: i32 =>
-      // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/name_lookup/fail_match_duplicate.carbon:[[@LINE+1]]: Duplicate name `x` also found at {{.*}}/explorer/testdata/name_lookup/fail_match_duplicate.carbon:15
-      var x: i32 = 0;
-  }
-  return 0;
+interface Bad {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_bad_member_kind.carbon:[[@LINE+1]]: syntax error, unexpected VAR, expecting FN or RIGHT_CURLY_BRACE
+  var V: i32;
 }
+
+fn Main() -> i32 { return 0; }
