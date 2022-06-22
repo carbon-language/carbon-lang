@@ -75,6 +75,10 @@ message StructTypeLiteralExpression {
   repeated FieldInitializer fields = 1;
 }
 
+message ReturnVarExpression {
+  optional string name = 1;
+}
+
 message IdentifierExpression {
   optional string name = 1;
 }
@@ -234,6 +238,7 @@ message AssignStatement {
 message VariableDefinitionStatement {
   optional Pattern pattern = 1;
   optional Expression init = 2;
+  optional bool is_returned = 3;
 }
 
 message IfStatement {
@@ -245,6 +250,7 @@ message IfStatement {
 message ReturnStatement {
   optional Expression expression = 1;  // Can be omitted.
   optional bool is_omitted_expression = 2;
+  optional bool is_return_var = 3;
 }
 
 message BlockStatement {

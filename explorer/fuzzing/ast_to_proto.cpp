@@ -173,7 +173,6 @@ static auto ExpressionToProto(const Expression& expression)
     }
 
     case ExpressionKind::ReturnVarExpression: {
-      // TODO: Add handling of ReturnVarExpression.
       break;
     }
 
@@ -396,6 +395,7 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
       auto* def_proto = statement_proto.mutable_variable_definition();
       *def_proto->mutable_pattern() = PatternToProto(def.pattern());
       *def_proto->mutable_init() = ExpressionToProto(def.init());
+      def_proto->set_is_returned(def.is_returned());
       break;
     }
 
@@ -420,6 +420,7 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
       } else {
         ret_proto->set_is_omitted_expression(true);
       }
+      ret_proto->set_is_return_var(ret.is_return_var());
       break;
     }
 
