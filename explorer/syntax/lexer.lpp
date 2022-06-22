@@ -271,6 +271,8 @@ operand_start         [(A-Za-z0-9_\"]
   const int leading_quotes = s.size() - hashtag_num;
   if (leading_quotes == 3 && hashtag_num > 0) {
     // Check if it's a single-line string, like #"""#.
+    // TODO: Extend with other sinle-line string cases, like #""""#, based on
+    // the definition of block string in the design doc.
     if (Carbon::ReadHashTags(str_lex_helper, hashtag_num)) {
       return Carbon::ProcessSingleLineString(str_lex_helper.str(), context,
                                              hashtag_num);
