@@ -2277,7 +2277,7 @@ The design for interoperability between Carbon and C++ hinges on:
 
 1.  The ability to interoperate with a wide variety of code, such as
     classes/structs and
-    [templates](https://en.wikipedia.org/wiki/Template_(C%2B%2B)), not just
+    [templates](<https://en.wikipedia.org/wiki/Template_(C%2B%2B)>), not just
     free functions.
 2.  A willingness to expose the idioms of C++ into Carbon code, and the other
     way around, when necessary to maximize performance of the interoperability
