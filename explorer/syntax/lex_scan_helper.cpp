@@ -37,15 +37,13 @@ auto ProcessSingleLineString(llvm::StringRef str,
                              const size_t hashtag_num)
     -> Carbon::Parser::symbol_type {
   std::string hashtags(hashtag_num, '#');
+  auto str_with_quote = str;
   CARBON_CHECK(str.consume_front(hashtags + "\"") &&
                str.consume_back("\"" + hashtags));
 
   std::optional<std::string> unescaped =
       Carbon::UnescapeStringLiteral(str, hashtag_num);
   if (unescaped == std::nullopt) {
-    std::string str_with_quote = str.str();
-    str_with_quote.insert(0, 1, '\"');
-    str_with_quote.push_back('\"');
     return context.RecordSyntaxError(
         llvm::formatv("Invalid escaping in string: {0}", str_with_quote));
   }
