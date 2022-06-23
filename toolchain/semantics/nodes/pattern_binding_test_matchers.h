@@ -16,7 +16,7 @@ namespace Carbon::Testing {
 
 inline auto PatternBinding(
     ::testing::Matcher<llvm::StringRef> name_matcher,
-    ::testing::Matcher<Semantics::Expression> type_matcher)
+    ::testing::Matcher<Semantics::Statement> type_matcher)
     -> ::testing::Matcher<Semantics::PatternBinding> {
   return ::testing::AllOf(
       ::testing::Property("name", &Semantics::PatternBinding::name,

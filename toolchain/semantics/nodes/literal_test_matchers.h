@@ -17,8 +17,8 @@ MATCHER_P(
     Literal, text_matcher,
     llvm::formatv("Literal {0}",
                   ::testing::DescribeMatcher<llvm::StringRef>(text_matcher))) {
-  const Semantics::Expression& expr = arg;
-  if (auto lit = SemanticsIRForTest::GetExpression<Semantics::Literal>(expr)) {
+  const Semantics::Statement& expr = arg;
+  if (auto lit = SemanticsIRForTest::GetStatement<Semantics::Literal>(expr)) {
     return ExplainMatchResult(text_matcher,
                               SemanticsIRForTest::GetNodeText(lit->node()),
                               result_listener);

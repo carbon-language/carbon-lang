@@ -14,19 +14,19 @@ namespace Carbon::Semantics {
 // Represents an infix operator, such as `+` in `1 + 2`.
 class InfixOperator {
  public:
-  static constexpr ExpressionKind MetaNodeKind = ExpressionKind::InfixOperator;
+  static constexpr StatementKind MetaNodeKind = StatementKind::InfixOperator;
 
-  explicit InfixOperator(ParseTree::Node node, Expression lhs, Expression rhs)
+  explicit InfixOperator(ParseTree::Node node, Statement lhs, Statement rhs)
       : node_(node), lhs_(lhs), rhs_(rhs) {}
 
   auto node() const -> ParseTree::Node { return node_; }
-  auto lhs() const -> Expression { return lhs_; }
-  auto rhs() const -> Expression { return rhs_; }
+  auto lhs() const -> Statement { return lhs_; }
+  auto rhs() const -> Statement { return rhs_; }
 
  private:
   ParseTree::Node node_;
-  Expression lhs_;
-  Expression rhs_;
+  Statement lhs_;
+  Statement rhs_;
 };
 
 }  // namespace Carbon::Semantics

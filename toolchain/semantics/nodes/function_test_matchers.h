@@ -37,7 +37,7 @@ MATCHER_P4(
         ::testing::DescribeMatcher<llvm::StringRef>(name_matcher),
         ::testing::DescribeMatcher<llvm::ArrayRef<Semantics::PatternBinding>>(
             param_matcher),
-        ::testing::DescribeMatcher<llvm::Optional<Semantics::Expression>>(
+        ::testing::DescribeMatcher<llvm::Optional<Semantics::Statement>>(
             return_matcher),
         ::testing::DescribeMatcher<Semantics::StatementBlock>(body_matcher))) {
   const Semantics::Declaration& decl = arg;

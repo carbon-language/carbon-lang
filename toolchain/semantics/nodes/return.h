@@ -16,15 +16,15 @@ class Return {
  public:
   static constexpr StatementKind MetaNodeKind = StatementKind::Return;
 
-  Return(ParseTree::Node node, llvm::Optional<Expression> expr)
+  Return(ParseTree::Node node, llvm::Optional<Statement> expr)
       : node_(node), expr_(expr) {}
 
   auto node() const -> ParseTree::Node { return node_; }
-  auto expression() const -> const llvm::Optional<Expression>& { return expr_; }
+  auto expression() const -> const llvm::Optional<Statement>& { return expr_; }
 
  private:
   ParseTree::Node node_;
-  llvm::Optional<Expression> expr_;
+  llvm::Optional<Statement> expr_;
 };
 
 }  // namespace Carbon::Semantics

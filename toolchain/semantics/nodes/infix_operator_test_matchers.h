@@ -13,16 +13,15 @@
 
 namespace Carbon::Testing {
 
-MATCHER_P3(
-    InfixOperator, lhs_matcher, op_matcher, rhs_matcher,
-    llvm::formatv(
-        "InfixOperator {0} {1} {2}",
-        ::testing::DescribeMatcher<Semantics::Expression>(lhs_matcher),
-        ::testing::DescribeMatcher<llvm::StringRef>(op_matcher),
-        ::testing::DescribeMatcher<Semantics::Expression>(rhs_matcher))) {
-  const Semantics::Expression& expr = arg;
+MATCHER_P3(InfixOperator, lhs_matcher, op_matcher, rhs_matcher,
+           llvm::formatv(
+               "InfixOperator {0} {1} {2}",
+               ::testing::DescribeMatcher<Semantics::Statement>(lhs_matcher),
+               ::testing::DescribeMatcher<llvm::StringRef>(op_matcher),
+               ::testing::DescribeMatcher<Semantics::Statement>(rhs_matcher))) {
+  const Semantics::Statement& expr = arg;
   if (auto infix =
-          SemanticsIRForTest::GetExpression<Semantics::InfixOperator>(expr)) {
+          SemanticsIRForTest::GetStatement<Semantics::InfixOperator>(expr)) {
     return ExplainMatchResult(op_matcher,
                               SemanticsIRForTest::GetNodeText(infix->node()),
                               result_listener) &&

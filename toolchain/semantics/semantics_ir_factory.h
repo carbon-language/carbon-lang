@@ -30,17 +30,17 @@ class SemanticsIRFactory {
   // its type. These functions are per ParseNodeKind.
   auto TransformCodeBlock(ParseTree::Node node) -> Semantics::StatementBlock;
   auto TransformDeclaredName(ParseTree::Node node) -> Semantics::DeclaredName;
-  auto TransformExpression(ParseTree::Node node) -> Semantics::Expression;
+  auto TransformExpression(ParseTree::Node node) -> Semantics::Statement;
   auto TransformExpressionStatement(ParseTree::Node node)
       -> Semantics::Statement;
   auto TransformFunctionDeclaration(ParseTree::Node node)
       -> std::tuple<llvm::StringRef, Semantics::Declaration>;
-  auto TransformInfixOperator(ParseTree::Node node) -> Semantics::InfixOperator;
+  auto TransformInfixOperator(ParseTree::Node node) -> Semantics::Statement;
   auto TransformParameterList(ParseTree::Node node)
       -> llvm::SmallVector<Semantics::PatternBinding, 0>;
   auto TransformPatternBinding(ParseTree::Node node)
       -> Semantics::PatternBinding;
-  auto TransformReturnType(ParseTree::Node node) -> Semantics::Expression;
+  auto TransformReturnType(ParseTree::Node node) -> Semantics::Statement;
   auto TransformReturnStatement(ParseTree::Node node) -> Semantics::Statement;
 
   // Convenience accessor.

@@ -16,7 +16,7 @@ namespace Carbon::Testing {
 MATCHER_P(Return, expr_matcher,
           llvm::formatv(
               "Return {0}",
-              ::testing::DescribeMatcher<llvm::Optional<Semantics::Expression>>(
+              ::testing::DescribeMatcher<llvm::Optional<Semantics::Statement>>(
                   expr_matcher))) {
   const Semantics::Statement& stmt = arg;
   if (auto ret = SemanticsIRForTest::GetStatement<Semantics::Return>(stmt)) {

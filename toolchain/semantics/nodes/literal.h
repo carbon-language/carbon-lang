@@ -14,7 +14,7 @@ namespace Carbon::Semantics {
 // Represents all kinds of literals: `1`, `i32`, etc.
 class Literal {
  public:
-  static constexpr ExpressionKind MetaNodeKind = ExpressionKind::Literal;
+  static constexpr StatementKind MetaNodeKind = StatementKind::Literal;
 
   explicit Literal(ParseTree::Node node) : node_(node) {}
 

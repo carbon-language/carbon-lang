@@ -22,8 +22,7 @@ class Function {
 
   Function(ParseTree::Node node, DeclaredName name,
            llvm::SmallVector<PatternBinding, 0> params,
-           llvm::Optional<Semantics::Expression> return_expr,
-           StatementBlock body)
+           llvm::Optional<Statement> return_expr, StatementBlock body)
       : node_(node),
         name_(name),
         params_(std::move(params)),
@@ -33,9 +32,7 @@ class Function {
   auto node() const -> ParseTree::Node { return node_; }
   auto name() const -> const DeclaredName& { return name_; }
   auto params() const -> llvm::ArrayRef<PatternBinding> { return params_; }
-  auto return_expr() const -> llvm::Optional<Semantics::Expression> {
-    return return_expr_;
-  }
+  auto return_expr() const -> llvm::Optional<Statement> { return return_expr_; }
 
   auto body() const -> const StatementBlock& { return body_; }
 
@@ -50,7 +47,7 @@ class Function {
   llvm::SmallVector<PatternBinding, 0> params_;
 
   // The return expression.
-  llvm::Optional<Semantics::Expression> return_expr_;
+  llvm::Optional<Statement> return_expr_;
 
   StatementBlock body_;
 };

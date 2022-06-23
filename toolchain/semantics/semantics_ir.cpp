@@ -7,7 +7,6 @@
 #include "common/check.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/lexer/tokenized_buffer.h"
-#include "toolchain/semantics/nodes/expression_statement.h"
 
 namespace Carbon {
 
@@ -27,24 +26,13 @@ void SemanticsIR::Print(llvm::raw_ostream& out,
 }
 
 void SemanticsIR::Print(llvm::raw_ostream& out,
-                        Semantics::Expression expr) const {
-  switch (expr.kind()) {
-    case Semantics::ExpressionKind::InfixOperator:
-      Print(out, expressions_.Get<Semantics::InfixOperator>(expr));
-      return;
-    case Semantics::ExpressionKind::Literal:
-      Print(out, expressions_.Get<Semantics::Literal>(expr));
-      return;
-    case Semantics::ExpressionKind::Invalid:
-      CARBON_FATAL() << "Invalid expression type";
-  }
-}
-
-void SemanticsIR::Print(llvm::raw_ostream& out,
                         Semantics::Statement stmt) const {
   switch (stmt.kind()) {
-    case Semantics::StatementKind::ExpressionStatement:
-      Print(out, statements_.Get<Semantics::ExpressionStatement>(stmt));
+    case Semantics::StatementKind::InfixOperator:
+      Print(out, statements_.Get<Semantics::InfixOperator>(stmt));
+      return;
+    case Semantics::StatementKind::Literal:
+      Print(out, statements_.Get<Semantics::Literal>(stmt));
       return;
     case Semantics::StatementKind::Return:
       Print(out, statements_.Get<Semantics::Return>(stmt));
@@ -58,11 +46,6 @@ void SemanticsIR::Print(llvm::raw_ostream& out,
 void SemanticsIR::Print(llvm::raw_ostream& out,
                         const Semantics::DeclaredName& name) const {
   Print(out, name.node());
-}
-
-void SemanticsIR::Print(llvm::raw_ostream& out,
-                        const Semantics::ExpressionStatement& expr) const {
-  Print(out, expr.expression());
 }
 
 void SemanticsIR::Print(llvm::raw_ostream& out,

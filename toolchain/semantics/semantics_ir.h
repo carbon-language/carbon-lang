@@ -8,7 +8,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/meta_node_block.h"
-#include "toolchain/semantics/nodes/expression_statement.h"
 #include "toolchain/semantics/nodes/function.h"
 #include "toolchain/semantics/nodes/infix_operator.h"
 #include "toolchain/semantics/nodes/literal.h"
@@ -34,13 +33,10 @@ class SemanticsIR {
 
   // Debug printers for meta nodes.
   void Print(llvm::raw_ostream& out, Semantics::Declaration decl) const;
-  void Print(llvm::raw_ostream& out, Semantics::Expression expr) const;
   void Print(llvm::raw_ostream& out, Semantics::Statement stmt) const;
 
   // Debug printers for other nodes.
   void Print(llvm::raw_ostream& out, const Semantics::DeclaredName& name) const;
-  void Print(llvm::raw_ostream& out,
-             const Semantics::ExpressionStatement& expr) const;
   void Print(llvm::raw_ostream& out, const Semantics::Function& function) const;
   void Print(llvm::raw_ostream& out, const Semantics::InfixOperator& op) const;
   void Print(llvm::raw_ostream& out, const Semantics::Literal& literal) const;
@@ -58,7 +54,6 @@ class SemanticsIR {
       : parse_tree_(&parse_tree) {}
 
   Semantics::DeclarationStore declarations_;
-  Semantics::ExpressionStore expressions_;
   Semantics::StatementStore statements_;
 
   // The file-level block. Only assigned after initialization is complete.

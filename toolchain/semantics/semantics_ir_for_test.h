@@ -33,15 +33,6 @@ class SemanticsIRForTest {
   }
 
   template <typename NodeT>
-  static auto GetExpression(Semantics::Expression expr)
-      -> llvm::Optional<NodeT> {
-    if (expr.kind() != NodeT::MetaNodeKind) {
-      return llvm::None;
-    }
-    return semantics().expressions_.Get<NodeT>(expr);
-  }
-
-  template <typename NodeT>
   static auto GetStatement(Semantics::Statement expr) -> llvm::Optional<NodeT> {
     if (expr.kind() != NodeT::MetaNodeKind) {
       return llvm::None;
@@ -84,18 +75,12 @@ namespace Carbon::Semantics {
 inline void PrintTo(const Declaration& node, std::ostream* out) {
   Carbon::Testing::SemanticsIRForTest::PrintTo(node, out);
 }
-inline void PrintTo(const Expression& node, std::ostream* out) {
-  Carbon::Testing::SemanticsIRForTest::PrintTo(node, out);
-}
 inline void PrintTo(const Statement& node, std::ostream* out) {
   Carbon::Testing::SemanticsIRForTest::PrintTo(node, out);
 }
 
 // Other node printers.
 inline void PrintTo(const DeclaredName& node, std::ostream* out) {
-  Carbon::Testing::SemanticsIRForTest::PrintTo(node, out);
-}
-inline void PrintTo(const ExpressionStatement& node, std::ostream* out) {
   Carbon::Testing::SemanticsIRForTest::PrintTo(node, out);
 }
 inline void PrintTo(const Function& node, std::ostream* out) {

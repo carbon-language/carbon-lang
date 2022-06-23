@@ -15,17 +15,17 @@ namespace Carbon::Semantics {
 // Represents `name: type`.
 class PatternBinding {
  public:
-  PatternBinding(ParseTree::Node node, DeclaredName name, Expression type)
+  PatternBinding(ParseTree::Node node, DeclaredName name, Statement type)
       : node_(node), name_(name), type_(type) {}
 
   auto node() const -> ParseTree::Node { return node_; }
   auto name() const -> const DeclaredName& { return name_; }
-  auto type() const -> const Expression& { return type_; }
+  auto type() const -> const Statement& { return type_; }
 
  private:
   ParseTree::Node node_;
   DeclaredName name_;
-  Expression type_;
+  Statement type_;
 };
 
 }  // namespace Carbon::Semantics

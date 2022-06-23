@@ -87,28 +87,20 @@ class Function;
 using DeclarationStore = MetaNodeStore<DeclarationKind, Function>;
 using Declaration = MetaNode<DeclarationKind, DeclarationStore>;
 
-// Meta node information for statements.
+// Meta node information for statements. Note that complex expressions are
+// translated into simple statements.
 enum class StatementKind {
-  ExpressionStatement,
-  Return,
-  Invalid,
-};
-class ExpressionStatement;
-class Return;
-using StatementStore =
-    MetaNodeStore<StatementKind, ExpressionStatement, Return>;
-using Statement = MetaNode<StatementKind, StatementStore>;
-
-// Meta node information for declarations.
-enum class ExpressionKind {
   InfixOperator,
   Literal,
+  Return,
   Invalid,
 };
 class InfixOperator;
 class Literal;
-using ExpressionStore = MetaNodeStore<ExpressionKind, InfixOperator, Literal>;
-using Expression = MetaNode<ExpressionKind, ExpressionStore>;
+class Return;
+using StatementStore =
+    MetaNodeStore<StatementKind, InfixOperator, Literal, Return>;
+using Statement = MetaNode<StatementKind, StatementStore>;
 
 }  // namespace Carbon::Semantics
 
