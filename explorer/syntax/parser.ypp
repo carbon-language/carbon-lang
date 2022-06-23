@@ -745,19 +745,21 @@ statement:
     { $$ = arena->New<Assign>(context.source_loc(), $1, $3); }
 | VAR pattern EQUAL expression SEMICOLON
     {
-      $$ = arena->New<VariableDefinition>(context.source_loc(), $2, $4,
-                                          ValueCategory::Var);
+      $$ = arena->New<VariableDefinition>(
+          context.source_loc(), $2, $4, ValueCategory::Var,
+          VariableDefinition::DefinitionType::Var);
     }
 | RETURNED VAR variable_declaration EQUAL expression SEMICOLON
     {
-      $$ = arena->New<VariableDefinition>(context.source_loc(), $3, $5,
-                                          ValueCategory::Var,
-                                          /*is_returned=*/true);
+      $$ = arena->New<VariableDefinition>(
+          context.source_loc(), $3, $5, ValueCategory::Var,
+          VariableDefinition::DefinitionType::Returned);
     }
 | LET pattern EQUAL expression SEMICOLON
     {
-      $$ = arena->New<VariableDefinition>(context.source_loc(), $2, $4,
-                                          ValueCategory::Let);
+      $$ = arena->New<VariableDefinition>(
+          context.source_loc(), $2, $4, ValueCategory::Let,
+          VariableDefinition::DefinitionType::Var);
     }
 | statement_expression SEMICOLON
     { $$ = arena->New<ExpressionStatement>(context.source_loc(), $1); }
@@ -772,14 +774,15 @@ statement:
 | RETURN return_expression SEMICOLON
     {
       auto [return_exp, is_omitted_exp] = $2;
-      $$ = arena->New<Return>(context.source_loc(), return_exp, is_omitted_exp);
+      $$ = arena->New<Return>(context.source_loc(), return_exp, is_omitted_exp,
+                              Return::ReturnType::ReturnExpression);
     }
 | RETURN VAR SEMICOLON
     {
       $$ = arena->New<Return>(
           context.source_loc(),
           arena->New<ReturnVarExpression>(context.source_loc()),
-          /*is_omitted_exp=*/false, /*is_return_var=*/true);
+          /*is_omitted_exp=*/false, Return::ReturnType::ReturnVar);
     }
 | MATCH LEFT_PARENTHESIS expression RIGHT_PARENTHESIS LEFT_CURLY_BRACE
   clause_list RIGHT_CURLY_BRACE
