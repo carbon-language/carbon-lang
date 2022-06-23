@@ -13,6 +13,11 @@
 #include "toolchain/semantics/nodes/declared_name.h"
 #include "toolchain/semantics/nodes/pattern_binding.h"
 
+// TODO: StatementBlock has some circularity in its forward declarations that
+// needs to be fixed. These includes are a workaround.
+#include "toolchain/semantics/nodes/expression_statement.h"
+#include "toolchain/semantics/nodes/return.h"
+
 namespace Carbon::Semantics {
 
 // Represents `fn name(params...) [-> return_expr] body`.

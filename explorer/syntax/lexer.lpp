@@ -9,14 +9,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
   #include "common/check.h"
   #include "common/error.h"
-  #include "common/string_helpers.h"
+  #include "explorer/syntax/lex_helper.h"
+  #include "explorer/syntax/lex_scan_helper.h"
   #include "explorer/syntax/parse_and_lex_context.h"
   #include "explorer/syntax/parser.h"
   #include "llvm/ADT/StringExtras.h"
   #include "llvm/Support/FormatVariadic.h"
-
-  // Reads and returns a single character. Reports an error on EOF.
-  auto ReadChar(yyscan_t yyscanner, Carbon::ParseAndLexContext& context) -> int;
 %}
 
 /* Turn off legacy bits we don't need. */
@@ -109,28 +107,6 @@ whitespace            [ \t\r\n]
 one_line_comment      \/\/[^\n]*\n
 operand_start         [(A-Za-z0-9_\"]
 
-/* Single-line string literals should reject vertical whitespace. */
-string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
-
-%{
-  // This macro is expanded immediately before each action specified below.
-  //
-  // Advances the current token position by yyleng columns without changing
-  // the line number, and takes us out of the after-whitespace / after-operand
-  // state.
-  #define YY_USER_ACTION                                             \
-    context.current_token_position.columns(yyleng);                  \
-    if (YY_START == AFTER_WHITESPACE || YY_START == AFTER_OPERAND) { \
-      BEGIN(INITIAL);                                                \
-    }
-
-  #define SIMPLE_TOKEN(name) \
-    Carbon::Parser::make_##name(context.current_token_position);
-
-  #define ARG_TOKEN(name, arg) \
-    Carbon::Parser::make_##name(arg, context.current_token_position);
-%}
-
 %%
 
 %{
@@ -141,83 +117,83 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 %}
 
  /* table-begin */
-{ADDR}                { return SIMPLE_TOKEN(ADDR);                }
-{ALIAS}               { return SIMPLE_TOKEN(ALIAS);               }
-{AMPERSAND}           { return SIMPLE_TOKEN(AMPERSAND);           }
-{AND}                 { return SIMPLE_TOKEN(AND);                 }
-{API}                 { return SIMPLE_TOKEN(API);                 }
-{ARROW}               { return SIMPLE_TOKEN(ARROW);               }
-{AS}                  { return SIMPLE_TOKEN(AS);                  }
-{AUTO}                { return SIMPLE_TOKEN(AUTO);                }
-{AWAIT}               { return SIMPLE_TOKEN(AWAIT);               }
-{BOOL}                { return SIMPLE_TOKEN(BOOL);                }
-{BREAK}               { return SIMPLE_TOKEN(BREAK);               }
-{CASE}                { return SIMPLE_TOKEN(CASE);                }
-{CHOICE}              { return SIMPLE_TOKEN(CHOICE);              }
-{CLASS}               { return SIMPLE_TOKEN(CLASS);               }
-{COLON_BANG}          { return SIMPLE_TOKEN(COLON_BANG);          }
-{COLON}               { return SIMPLE_TOKEN(COLON);               }
-{COMMA}               { return SIMPLE_TOKEN(COMMA);               }
-{CONTINUATION_TYPE}   { return SIMPLE_TOKEN(CONTINUATION_TYPE);   }
-{CONTINUATION}        { return SIMPLE_TOKEN(CONTINUATION);        }
-{CONTINUE}            { return SIMPLE_TOKEN(CONTINUE);            }
-{DEFAULT}             { return SIMPLE_TOKEN(DEFAULT);             }
-{DOUBLE_ARROW}        { return SIMPLE_TOKEN(DOUBLE_ARROW);        }
-{ELSE}                { return SIMPLE_TOKEN(ELSE);                }
-{EQUAL_EQUAL}         { return SIMPLE_TOKEN(EQUAL_EQUAL);         }
-{EQUAL}               { return SIMPLE_TOKEN(EQUAL);               }
-{EXTERNAL}            { return SIMPLE_TOKEN(EXTERNAL);            }
-{FALSE}               { return SIMPLE_TOKEN(FALSE);               }
-{FN_TYPE}             { return SIMPLE_TOKEN(FN_TYPE);             }
-{FN}                  { return SIMPLE_TOKEN(FN);                  }
-{FORALL}              { return SIMPLE_TOKEN(FORALL);              }
-{IF}                  { return SIMPLE_TOKEN(IF);                  }
-{IMPL}                { return SIMPLE_TOKEN(IMPL);                }
-{IMPORT}              { return SIMPLE_TOKEN(IMPORT);              }
-{INTERFACE}           { return SIMPLE_TOKEN(INTERFACE);           }
-{IS}                  { return SIMPLE_TOKEN(IS);                  }
-{LEFT_CURLY_BRACE}    { return SIMPLE_TOKEN(LEFT_CURLY_BRACE);    }
-{LEFT_PARENTHESIS}    { return SIMPLE_TOKEN(LEFT_PARENTHESIS);    }
-{LEFT_SQUARE_BRACKET} { return SIMPLE_TOKEN(LEFT_SQUARE_BRACKET); }
-{LET}                 { return SIMPLE_TOKEN(LET);                 }
-{LIBRARY}             { return SIMPLE_TOKEN(LIBRARY);             }
-{MATCH}               { return SIMPLE_TOKEN(MATCH);               }
-{MINUS}               { return SIMPLE_TOKEN(MINUS);               }
-{NOT}                 { return SIMPLE_TOKEN(NOT);                 }
-{OR}                  { return SIMPLE_TOKEN(OR);                  }
-{PACKAGE}             { return SIMPLE_TOKEN(PACKAGE);             }
-{PERIOD}              { return SIMPLE_TOKEN(PERIOD);              }
-{PLUS}                { return SIMPLE_TOKEN(PLUS);                }
-{RETURN}              { return SIMPLE_TOKEN(RETURN);              }
-{RUN}                 { return SIMPLE_TOKEN(RUN);                 }
-{SELF}                { return SIMPLE_TOKEN(SELF);                }
-{SEMICOLON}           { return SIMPLE_TOKEN(SEMICOLON);           }
-{SLASH}               { return SIMPLE_TOKEN(SLASH);               }
-{STRING}              { return SIMPLE_TOKEN(STRING);              }
-{THEN}                { return SIMPLE_TOKEN(THEN);                }
-{TRUE}                { return SIMPLE_TOKEN(TRUE);                }
-{TYPE}                { return SIMPLE_TOKEN(TYPE);                }
-{UNDERSCORE}          { return SIMPLE_TOKEN(UNDERSCORE);          }
-{UNIMPL_EXAMPLE}      { return SIMPLE_TOKEN(UNIMPL_EXAMPLE);      }
-{VAR}                 { return SIMPLE_TOKEN(VAR);                 }
-{WHERE}               { return SIMPLE_TOKEN(WHERE);               }
-{WHILE}               { return SIMPLE_TOKEN(WHILE);               }
+{ADDR}                { return CARBON_SIMPLE_TOKEN(ADDR);                }
+{ALIAS}               { return CARBON_SIMPLE_TOKEN(ALIAS);               }
+{AMPERSAND}           { return CARBON_SIMPLE_TOKEN(AMPERSAND);           }
+{AND}                 { return CARBON_SIMPLE_TOKEN(AND);                 }
+{API}                 { return CARBON_SIMPLE_TOKEN(API);                 }
+{ARROW}               { return CARBON_SIMPLE_TOKEN(ARROW);               }
+{AS}                  { return CARBON_SIMPLE_TOKEN(AS);                  }
+{AUTO}                { return CARBON_SIMPLE_TOKEN(AUTO);                }
+{AWAIT}               { return CARBON_SIMPLE_TOKEN(AWAIT);               }
+{BOOL}                { return CARBON_SIMPLE_TOKEN(BOOL);                }
+{BREAK}               { return CARBON_SIMPLE_TOKEN(BREAK);               }
+{CASE}                { return CARBON_SIMPLE_TOKEN(CASE);                }
+{CHOICE}              { return CARBON_SIMPLE_TOKEN(CHOICE);              }
+{CLASS}               { return CARBON_SIMPLE_TOKEN(CLASS);               }
+{COLON_BANG}          { return CARBON_SIMPLE_TOKEN(COLON_BANG);          }
+{COLON}               { return CARBON_SIMPLE_TOKEN(COLON);               }
+{COMMA}               { return CARBON_SIMPLE_TOKEN(COMMA);               }
+{CONTINUATION_TYPE}   { return CARBON_SIMPLE_TOKEN(CONTINUATION_TYPE);   }
+{CONTINUATION}        { return CARBON_SIMPLE_TOKEN(CONTINUATION);        }
+{CONTINUE}            { return CARBON_SIMPLE_TOKEN(CONTINUE);            }
+{DEFAULT}             { return CARBON_SIMPLE_TOKEN(DEFAULT);             }
+{DOUBLE_ARROW}        { return CARBON_SIMPLE_TOKEN(DOUBLE_ARROW);        }
+{ELSE}                { return CARBON_SIMPLE_TOKEN(ELSE);                }
+{EQUAL_EQUAL}         { return CARBON_SIMPLE_TOKEN(EQUAL_EQUAL);         }
+{EQUAL}               { return CARBON_SIMPLE_TOKEN(EQUAL);               }
+{EXTERNAL}            { return CARBON_SIMPLE_TOKEN(EXTERNAL);            }
+{FALSE}               { return CARBON_SIMPLE_TOKEN(FALSE);               }
+{FN_TYPE}             { return CARBON_SIMPLE_TOKEN(FN_TYPE);             }
+{FN}                  { return CARBON_SIMPLE_TOKEN(FN);                  }
+{FORALL}              { return CARBON_SIMPLE_TOKEN(FORALL);              }
+{IF}                  { return CARBON_SIMPLE_TOKEN(IF);                  }
+{IMPL}                { return CARBON_SIMPLE_TOKEN(IMPL);                }
+{IMPORT}              { return CARBON_SIMPLE_TOKEN(IMPORT);              }
+{INTERFACE}           { return CARBON_SIMPLE_TOKEN(INTERFACE);           }
+{IS}                  { return CARBON_SIMPLE_TOKEN(IS);                  }
+{LEFT_CURLY_BRACE}    { return CARBON_SIMPLE_TOKEN(LEFT_CURLY_BRACE);    }
+{LEFT_PARENTHESIS}    { return CARBON_SIMPLE_TOKEN(LEFT_PARENTHESIS);    }
+{LEFT_SQUARE_BRACKET} { return CARBON_SIMPLE_TOKEN(LEFT_SQUARE_BRACKET); }
+{LET}                 { return CARBON_SIMPLE_TOKEN(LET);                 }
+{LIBRARY}             { return CARBON_SIMPLE_TOKEN(LIBRARY);             }
+{MATCH}               { return CARBON_SIMPLE_TOKEN(MATCH);               }
+{MINUS}               { return CARBON_SIMPLE_TOKEN(MINUS);               }
+{NOT}                 { return CARBON_SIMPLE_TOKEN(NOT);                 }
+{OR}                  { return CARBON_SIMPLE_TOKEN(OR);                  }
+{PACKAGE}             { return CARBON_SIMPLE_TOKEN(PACKAGE);             }
+{PERIOD}              { return CARBON_SIMPLE_TOKEN(PERIOD);              }
+{PLUS}                { return CARBON_SIMPLE_TOKEN(PLUS);                }
+{RETURN}              { return CARBON_SIMPLE_TOKEN(RETURN);              }
+{RUN}                 { return CARBON_SIMPLE_TOKEN(RUN);                 }
+{SELF}                { return CARBON_SIMPLE_TOKEN(SELF);                }
+{SEMICOLON}           { return CARBON_SIMPLE_TOKEN(SEMICOLON);           }
+{SLASH}               { return CARBON_SIMPLE_TOKEN(SLASH);               }
+{STRING}              { return CARBON_SIMPLE_TOKEN(STRING);              }
+{THEN}                { return CARBON_SIMPLE_TOKEN(THEN);                }
+{TRUE}                { return CARBON_SIMPLE_TOKEN(TRUE);                }
+{TYPE}                { return CARBON_SIMPLE_TOKEN(TYPE);                }
+{UNDERSCORE}          { return CARBON_SIMPLE_TOKEN(UNDERSCORE);          }
+{UNIMPL_EXAMPLE}      { return CARBON_SIMPLE_TOKEN(UNIMPL_EXAMPLE);      }
+{VAR}                 { return CARBON_SIMPLE_TOKEN(VAR);                 }
+{WHERE}               { return CARBON_SIMPLE_TOKEN(WHERE);               }
+{WHILE}               { return CARBON_SIMPLE_TOKEN(WHILE);               }
  /* table-end */
 
  /* More modern Bisons provide make_EOF. */
-<<EOF>>               { return SIMPLE_TOKEN(END_OF_FILE); }
+<<EOF>>               { return CARBON_SIMPLE_TOKEN(END_OF_FILE); }
 
 {RIGHT_PARENTHESIS} {
   BEGIN(AFTER_OPERAND);
-  return SIMPLE_TOKEN(RIGHT_PARENTHESIS);
+  return CARBON_SIMPLE_TOKEN(RIGHT_PARENTHESIS);
 }
 {RIGHT_CURLY_BRACE} {
   BEGIN(AFTER_OPERAND);
-  return SIMPLE_TOKEN(RIGHT_CURLY_BRACE);
+  return CARBON_SIMPLE_TOKEN(RIGHT_CURLY_BRACE);
 }
 {RIGHT_SQUARE_BRACKET} {
   BEGIN(AFTER_OPERAND);
-  return SIMPLE_TOKEN(RIGHT_SQUARE_BRACKET);
+  return CARBON_SIMPLE_TOKEN(RIGHT_SQUARE_BRACKET);
 }
 
  /*
@@ -244,23 +220,23 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
  /* `*` operator case 1: */
 <AFTER_WHITESPACE>"*"{whitespace}+ {
   BEGIN(AFTER_WHITESPACE);
-  return SIMPLE_TOKEN(BINARY_STAR);
+  return CARBON_SIMPLE_TOKEN(BINARY_STAR);
 }
  /* `*` operator case 2: */
-<AFTER_OPERAND>"*"/{operand_start} { return SIMPLE_TOKEN(BINARY_STAR); }
+<AFTER_OPERAND>"*"/{operand_start} { return CARBON_SIMPLE_TOKEN(BINARY_STAR); }
  /* `*` operator case 3: */
-<AFTER_WHITESPACE>"*" { return SIMPLE_TOKEN(PREFIX_STAR); }
+<AFTER_WHITESPACE>"*" { return CARBON_SIMPLE_TOKEN(PREFIX_STAR); }
  /* `*` operator case 4: */
 <INITIAL,AFTER_OPERAND>"*"{whitespace}+ {
   BEGIN(AFTER_WHITESPACE);
-  return SIMPLE_TOKEN(POSTFIX_STAR);
+  return CARBON_SIMPLE_TOKEN(POSTFIX_STAR);
 }
  /* `*` operator case 5: */
-<INITIAL,AFTER_OPERAND>"*" { return SIMPLE_TOKEN(UNARY_STAR); }
+<INITIAL,AFTER_OPERAND>"*" { return CARBON_SIMPLE_TOKEN(UNARY_STAR); }
 
 {sized_type_literal} {
   BEGIN(AFTER_OPERAND);
-  return ARG_TOKEN(sized_type_literal, yytext);
+  return CARBON_ARG_TOKEN(sized_type_literal, yytext);
 }
 
 {intrinsic_identifier} {
@@ -268,7 +244,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   Carbon::ErrorOr<Carbon::IntrinsicExpression::Intrinsic> intrinsic =
       Carbon::IntrinsicExpression::FindIntrinsic(yytext, context.source_loc());
   if (intrinsic.ok()) {
-    return ARG_TOKEN(intrinsic_identifier, *intrinsic);
+    return CARBON_ARG_TOKEN(intrinsic_identifier, *intrinsic);
   } else {
     return context.RecordSyntaxError(intrinsic.error().message());
   }
@@ -276,7 +252,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 
 {identifier} {
   BEGIN(AFTER_OPERAND);
-  return ARG_TOKEN(identifier, yytext);
+  return CARBON_ARG_TOKEN(identifier, yytext);
 }
 
 {integer_literal} {
@@ -286,69 +262,86 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
     return context.RecordSyntaxError(
         llvm::formatv("Invalid integer literal: {0}", yytext));
   }
-  return ARG_TOKEN(integer_literal, val);
+  return CARBON_ARG_TOKEN(integer_literal, val);
 }
 
-{string_literal} {
-  llvm::StringRef str(yytext);
-  CARBON_CHECK(str.consume_front("\"") && str.consume_back("\""));
-  std::optional<std::string> unescaped = Carbon::UnescapeStringLiteral(str);
-  if (unescaped == std::nullopt) {
-    return context.RecordSyntaxError(
-        llvm::formatv("Invalid escaping in string: {0}", yytext));
+#*(\"\"\"|\") {
+  // Raw string literal.
+  // yytext (the token that matches the above regex) and chars scanned by
+  // str_lex_helper hold the source text, not the string the source represents.
+  Carbon::StringLexHelper str_lex_helper(yytext, yyscanner, context);
+  const std::string& s = str_lex_helper.str();
+  const int hashtag_num = s.find_first_of('"');
+  const int leading_quotes = s.size() - hashtag_num;
+  if (leading_quotes == 3 && hashtag_num > 0) {
+    // Check if it's a single-line string, like #"""#.
+    // TODO: Extend with other single-line string cases, like #""""#, based on
+    // the definition of block string in the design doc.
+    if (Carbon::ReadHashTags(str_lex_helper, hashtag_num)) {
+      return Carbon::ProcessSingleLineString(str_lex_helper.str(), context,
+                                             hashtag_num);
+    } else if (str_lex_helper.is_eof()) {
+      return CARBON_SIMPLE_TOKEN(END_OF_FILE);
+    }
+  } else if (!str_lex_helper.Advance()) {
+    return CARBON_SIMPLE_TOKEN(END_OF_FILE);
   }
-  return ARG_TOKEN(string_literal, *unescaped);
-}
+  // 3 quotes indicates multi-line, otherwise it'll be one.
+  const bool multi_line = leading_quotes == 3;
 
-\"\"\" {
-  // Block string literal.
-  std::string s(yytext);
-  // Scans for the closing """, checking for possible escape sequences
-  // like \""".
-  for (;;) {
-    int c = ReadChar(yyscanner, context);
-    if (c <= 0) {
-      return SIMPLE_TOKEN(END_OF_FILE);
-    }
-    s.push_back(c);
-    if (c != '"' && c != '\\') {
-      continue;
-    }
-    if (c == '\\') {
-      // \" in \""" is not a terminator.
-      c = ReadChar(yyscanner, context);
-      if (c <= 0) {
-        return SIMPLE_TOKEN(END_OF_FILE);
-      }
-      s.push_back(c);
-      continue;
-    }
+  while (!str_lex_helper.is_eof()) {
+    switch (str_lex_helper.last_char()) {
+      case '\n':  // Fall through.
+      case '\v':  // Fall through.
+      case '\f':  // Fall through.
+      case '\r':
+        if (!multi_line) {
+          return context.RecordSyntaxError(
+              llvm::formatv("missing closing quote in single-line string: {0}",
+                            str_lex_helper.str()));
+        }
+        str_lex_helper.Advance();
+        break;
+      case '"':
+        if (multi_line) {
+          // Check for 2 more '"'s on block string.
+          if (!(str_lex_helper.Advance() &&
+                str_lex_helper.last_char() == '"')) {
+            continue;
+          }
+          if (!(str_lex_helper.Advance() &&
+                str_lex_helper.last_char() == '"')) {
+            continue;
+          }
+          // Now we are at the last " of """.
+        }
 
-    c = ReadChar(yyscanner, context);
-    if (c <= 0) {
-      return SIMPLE_TOKEN(END_OF_FILE);
-    }
-    s.push_back(c);
-    if (c != '"') {
-      continue;
-    }
-
-    c = ReadChar(yyscanner, context);
-    if (c <= 0) {
-      return SIMPLE_TOKEN(END_OF_FILE);
-    }
-    s.push_back(c);
-    if (c == '"') {
-      break;
+        if (Carbon::ReadHashTags(str_lex_helper, hashtag_num)) {
+          // Reach closing quotes, break out of the loop.
+          if (leading_quotes == 3) {
+            return Carbon::ProcessMultiLineString(str_lex_helper.str(), context,
+                                                  hashtag_num);
+          } else {
+            return Carbon::ProcessSingleLineString(str_lex_helper.str(),
+                                                   context, hashtag_num);
+          }
+        }
+        break;
+      case '\\':
+        if (Carbon::ReadHashTags(str_lex_helper, hashtag_num)) {
+          // Read the escaped char.
+          if (!str_lex_helper.Advance()) {
+            continue;
+          }
+          // Read the next char.
+          str_lex_helper.Advance();
+        }
+        break;
+      default:
+        str_lex_helper.Advance();
     }
   }
-  Carbon::ErrorOr<std::string> block_string =
-      Carbon::ParseBlockStringLiteral(s);
-  if (!block_string.ok()) {
-    return context.RecordSyntaxError(llvm::formatv(
-        "Invalid block string: {0}", block_string.error().message()));
-  }
-  return ARG_TOKEN(string_literal, *block_string);
+  return CARBON_SIMPLE_TOKEN(END_OF_FILE);
 }
 
 {one_line_comment} {
@@ -380,10 +373,4 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 
 %%
 
-auto ReadChar(yyscan_t yyscanner, Carbon::ParseAndLexContext& context) -> int {
-  const int c = yyinput(yyscanner);
-  if (c <= 0) {
-    context.RecordSyntaxError("Unexpected end of file");
-  }
-  return c;
-}
+auto YyinputWrapper(yyscan_t yyscanner) -> int { return yyinput(yyscanner); }
