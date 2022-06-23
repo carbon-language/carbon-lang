@@ -12,7 +12,7 @@ package ExplorerTest api;
 
 fn AddInt(a: i32, b: i32) -> i32 {
   // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/returned_var/fail_returned_var_type_mismatch.carbon:[[@LINE+1]]: type error in name binding: 'i32' is not implicitly convertible to 'Bool'
-  returned var ret : Bool = a + b;
+  returned var ret: Bool = a + b;
   return var;
 }
 

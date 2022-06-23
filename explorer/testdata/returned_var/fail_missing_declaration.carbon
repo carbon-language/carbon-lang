@@ -11,7 +11,7 @@
 package ExplorerTest api;
 
 fn AddInt(a: i32, b: i32) -> i32 {
-  var ret : i32 = a + b;
+  var ret: i32 = a + b;
   // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/returned_var/fail_missing_declaration.carbon:[[@LINE+1]]: Statement `return var` is not allowed without a returned variable defined in scope.
   return var;
 }

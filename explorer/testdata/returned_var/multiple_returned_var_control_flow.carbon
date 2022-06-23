@@ -13,10 +13,10 @@ package ExplorerTest api;
 
 fn IntDiff(a: i32, b: i32) -> i32 {
   if (a == b) {
-    returned var ret : i32 = a - b;
+    returned var ret: i32 = a - b;
     return var;
   } else {
-    returned var ret : i32 = b - a;
+    returned var ret: i32 = b - a;
     return var;
   }
 }

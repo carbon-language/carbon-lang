@@ -753,7 +753,7 @@ statement:
     {
       $$ = arena->New<VariableDefinition>(context.source_loc(), $3, $5,
                                           ValueCategory::Var,
-                                          /*is_returned*/ true);
+                                          /*is_returned=*/true);
     }
 | LET pattern EQUAL expression SEMICOLON
     {
@@ -778,7 +778,7 @@ statement:
 | RETURN VAR return_var_empty_expression SEMICOLON
     {
       $$ = arena->New<Return>(context.source_loc(), $3,
-                              /*is_omitted_exp*/ false, /*is_return_var*/ true);
+                              /*is_omitted_exp=*/false, /*is_return_var=*/true);
     }
 | MATCH LEFT_PARENTHESIS expression RIGHT_PARENTHESIS LEFT_CURLY_BRACE
   clause_list RIGHT_CURLY_BRACE

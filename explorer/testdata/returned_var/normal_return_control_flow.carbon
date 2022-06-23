@@ -13,7 +13,7 @@ package ExplorerTest api;
 
 fn AddInt(a: i32, b: i32) -> i32 {
   if (a == b) {
-    returned var ret : i32 = a + b;
+    returned var ret: i32 = a + b;
     return var;
   } else {
     return a + b;
