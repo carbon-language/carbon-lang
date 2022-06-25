@@ -90,6 +90,15 @@ cc_library(
 )
 
 cc_library(
+    name = "bindings",
+    srcs = ["bindings.cpp"],
+    hdrs = ["bindings.h"],
+    deps = [
+        "//explorer/common:nonnull",
+    ],
+)
+
+cc_library(
     name = "declaration",
     srcs = ["declaration.cpp"],
     hdrs = [
@@ -153,6 +162,7 @@ cc_library(
     hdrs = ["expression.h", "pattern.h"],
     deps = [
         ":ast_node",
+        ":bindings",
         ":member",
         ":paren_contents",
         ":static_scope",

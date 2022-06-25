@@ -24,6 +24,7 @@ cc_library(
         ":stack",
         "//common:check",
         "//common:ostream",
+        "//explorer/ast:bindings",
         "//explorer/ast:declaration",
         "//explorer/ast:expression",
         "//explorer/ast:member",
