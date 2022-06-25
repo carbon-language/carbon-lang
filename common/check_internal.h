@@ -26,7 +26,10 @@ class ExitingStream {
   struct Helper {};
 
   ExitingStream() {
-    // Start all messages with a stack trace.
+    // Start all messages with a stack trace. Printing this first ensures the
+    // error message is the last thing written which makes it easier to find. It
+    // also helps ensure we report the most useful stack trace and location
+    // information.
     llvm::errs() << "Stack trace:\n";
     llvm::sys::PrintStackTrace(llvm::errs());
   }
@@ -66,9 +69,14 @@ class ExitingStream {
     // Finish with a newline.
     llvm::errs() << "\n";
     // We assume LLVM's exit handling is installed, which will stack trace on
-    // std::abort(). We print a stack trace on construction, so this avoids that
-    // stack trace on exit.
-    _exit(1);
+    // `std::abort()`. We print a more user friendly stack trace on
+    // construction, but it is still useful to exit the program with
+    // `std::abort()` for integration with debuggers and other tools. We also
+    // want to do any pending cleanups. So we replicate the signal handling here
+    // and unregister LLVM's handlers right before we abort.
+    llvm::sys::RunInterruptHandlers();
+    llvm::sys::unregisterHandlers();
+    std::abort();
   }
 
  private:
