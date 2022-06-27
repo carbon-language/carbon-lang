@@ -22,7 +22,7 @@ class BinaryOperator {
 
   explicit BinaryOperator(ParseTree::Node node, int32_t id, Op op,
                           int32_t lhs_id, int32_t rhs_id)
-      : node_(node), op_(op), lhs_id_(lhs_id), rhs_id_(rhs_id) {}
+      : node_(node), id_(id), op_(op), lhs_id_(lhs_id), rhs_id_(rhs_id) {}
 
   void Print(llvm::raw_ostream& out) const {
     out << "BinaryOperator(%" << id_ << ", ";
