@@ -10,10 +10,14 @@
 
 package ExplorerTest api;
 
+fn CompareStr(s: String) -> i32 {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/string/fail_raw_block_single_line.carbon:[[@LINE+1]]: Invalid block string: Too few lines
+  if (s == #"""raw string literal starting with """#) {
+    return 0;
+  }
+  return 1;
+}
+
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/string/fail_newline.carbon:[[@LINE+2]]: missing closing quote in single-line string: "new
-  // CHECK-EMPTY:
-  Print("new
-line");
-  return 0;
+  return CompareStr("\"\"raw string literal starting with \"\"");
 }

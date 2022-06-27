@@ -28,6 +28,8 @@ TEST(UnescapeStringLiteral, Valid) {
   EXPECT_THAT(UnescapeStringLiteral("test\\\\n"), Optional(Eq("test\\n")));
   EXPECT_THAT(UnescapeStringLiteral("\\xAA"), Optional(Eq("\xAA")));
   EXPECT_THAT(UnescapeStringLiteral("\\x12"), Optional(Eq("\x12")));
+  EXPECT_THAT(UnescapeStringLiteral("test", 1), Optional(Eq("test")));
+  EXPECT_THAT(UnescapeStringLiteral("test\\#n", 1), Optional(Eq("test\n")));
 }
 
 TEST(UnescapeStringLiteral, Invalid) {
@@ -43,6 +45,7 @@ TEST(UnescapeStringLiteral, Invalid) {
   EXPECT_THAT(UnescapeStringLiteral("\\xaa"), Eq(std::nullopt));
   // Reserved.
   EXPECT_THAT(UnescapeStringLiteral("\\00"), Eq(std::nullopt));
+  EXPECT_THAT(UnescapeStringLiteral("\\#00", 1), Eq(std::nullopt));
 }
 
 TEST(UnescapeStringLiteral, Nul) {
@@ -90,6 +93,11 @@ TEST(ParseBlockStringLiteral, FailInvalidEscaping) {
      """)";
   EXPECT_THAT(ParseBlockStringLiteral(Input).error().message(),
               Eq("Invalid escaping in \\q"));
+  constexpr char InputRaw[] = R"("""
+     \#q
+     """)";
+  EXPECT_THAT(ParseBlockStringLiteral(InputRaw, 1).error().message(),
+              Eq("Invalid escaping in \\#q"));
 }
 
 TEST(ParseBlockStringLiteral, OkEmptyString) {

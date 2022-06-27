@@ -55,6 +55,7 @@ cc_library(
     ],
     deps = [
         ":ast_node",
+        ":bindings",
         ":library_name",
         ":paren_contents",
         ":static_scope",
@@ -95,6 +96,15 @@ cc_test(
         "//common:gtest_main",
         "//explorer/common:arena",
         "@com_google_googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "bindings",
+    srcs = ["bindings.cpp"],
+    hdrs = ["bindings.h"],
+    deps = [
+        "//explorer/common:nonnull",
     ],
 )
 

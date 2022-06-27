@@ -448,14 +448,17 @@ auto TypeChecker::GetBuiltinInterfaceType(SourceLocation source_loc,
   if (has_parameters != has_arguments) {
     return bad_builtin();
   }
-  BindingMap bindings;
+  BindingMap binding_args;
   if (has_arguments) {
     TupleValue args(interface.arguments);
     if (!PatternMatch(&iface_decl->params().value()->value(), &args, source_loc,
-                      std::nullopt, bindings, trace_stream_, this->arena_)) {
+                      std::nullopt, binding_args, trace_stream_,
+                      this->arena_)) {
       return bad_builtin();
     }
   }
+  Nonnull<const Bindings*> bindings =
+      arena_->New<Bindings>(std::move(binding_args), Bindings::NoWitnesses);
   return arena_->New<InterfaceType>(iface_decl, bindings);
 }
 
@@ -875,12 +878,13 @@ class ConstraintTypeBuilder {
 auto TypeChecker::Substitute(
     const std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>& dict,
     Nonnull<const Value*> type) const -> Nonnull<const Value*> {
-  auto SubstituteIntoBindingMap = [&](const BindingMap& map) -> BindingMap {
+  auto SubstituteIntoBindings =
+      [&](const Bindings& bindings) -> Nonnull<const Bindings*> {
     BindingMap result;
-    for (const auto& [name, value] : map) {
+    for (const auto& [name, value] : bindings.args()) {
       result[name] = Substitute(dict, value);
     }
-    return result;
+    return arena_->New<Bindings>(std::move(result), Bindings::NoWitnesses);
   };
 
   switch (type->kind()) {
@@ -971,14 +975,14 @@ auto TypeChecker::Substitute(
       Nonnull<const NominalClassType*> new_class_type =
           arena_->New<NominalClassType>(
               &class_type.declaration(),
-              SubstituteIntoBindingMap(class_type.type_args()));
+              SubstituteIntoBindings(class_type.bindings()));
       return new_class_type;
     }
     case Value::Kind::InterfaceType: {
       const auto& iface_type = cast<InterfaceType>(*type);
       Nonnull<const InterfaceType*> new_iface_type = arena_->New<InterfaceType>(
           &iface_type.declaration(),
-          SubstituteIntoBindingMap(iface_type.args()));
+          SubstituteIntoBindings(iface_type.bindings()));
       return new_iface_type;
     }
     case Value::Kind::ConstraintType: {
@@ -1446,36 +1450,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                  << "struct " << struct_type << " does not have a field named "
                  << access.member_name();
         }
-        case Value::Kind::TypeType: {
-          CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Value*> type,
-              InterpExp(&access.object(), arena_, trace_stream_));
-          if (const auto* struct_type = dyn_cast<StructType>(type)) {
-            for (const auto& field : struct_type->fields()) {
-              if (access.member_name() == field.name) {
-                access.set_member(Member(&field));
-                access.set_static_type(
-                    arena_->New<TypeOfMemberName>(Member(&field)));
-                access.set_value_category(ValueCategory::Let);
-                return Success();
-              }
-            }
-            return CompilationError(access.source_loc())
-                   << "struct " << *struct_type
-                   << " does not have a field named " << access.member_name();
-          }
-          // TODO: We should handle all types here, not only structs. For
-          // example:
-          //   fn Main() -> i32 {
-          //     class Class { var n: i32; };
-          //     let T:! Type = Class;
-          //     let x: T = {.n = 0};
-          //     return x.(T.n);
-          //   }
-          // is valid, and the type of `T` here is `Type`, not `typeof(Class)`.
-          return CompilationError(access.source_loc())
-                 << "unsupported member access into type " << *type;
-        }
         case Value::Kind::NominalClassType: {
           const auto& t_class = cast<NominalClassType>(object_type);
           if (std::optional<Nonnull<const Declaration*>> member = FindMember(
@@ -1521,77 +1495,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                    << " does not have a field named " << access.member_name();
           }
         }
-        case Value::Kind::TypeOfChoiceType: {
-          const ChoiceType& choice =
-              cast<TypeOfChoiceType>(object_type).choice_type();
-          std::optional<Nonnull<const Value*>> parameter_types =
-              choice.FindAlternative(access.member_name());
-          if (!parameter_types.has_value()) {
-            return CompilationError(e->source_loc())
-                   << "choice " << choice.name()
-                   << " does not have an alternative named "
-                   << access.member_name();
-          }
-          Nonnull<const Value*> type = arena_->New<FunctionType>(
-              *parameter_types, llvm::None, &choice, llvm::None, llvm::None);
-          // TODO: Should there be a Declaration corresponding to each choice
-          // type alternative?
-          access.set_member(Member(
-              arena_->New<NamedValue>(NamedValue{access.member_name(), type})));
-          access.set_static_type(type);
-          access.set_value_category(ValueCategory::Let);
-          return Success();
-        }
-        case Value::Kind::TypeOfClassType: {
-          const NominalClassType& class_type =
-              cast<TypeOfClassType>(object_type).class_type();
-          if (std::optional<Nonnull<const Declaration*>> member = FindMember(
-                  access.member_name(), class_type.declaration().members());
-              member.has_value()) {
-            access.set_member(Member(member.value()));
-            switch ((*member)->kind()) {
-              case DeclarationKind::FunctionDeclaration: {
-                const auto& func = cast<FunctionDeclaration>(*member);
-                if (func->is_method()) {
-                  break;
-                }
-                Nonnull<const Value*> field_type = Substitute(
-                    class_type.type_args(), &(*member)->static_type());
-                access.set_static_type(field_type);
-                access.set_value_category(ValueCategory::Let);
-                return Success();
-              }
-              default:
-                break;
-            }
-            access.set_static_type(
-                arena_->New<TypeOfMemberName>(Member(*member)));
-            access.set_value_category(ValueCategory::Let);
-            return Success();
-          } else {
-            return CompilationError(access.source_loc())
-                   << class_type << " does not have a member named "
-                   << access.member_name();
-          }
-        }
-        case Value::Kind::TypeOfInterfaceType:
-        case Value::Kind::TypeOfConstraintType: {
-          const Value* type;
-          if (isa<TypeOfInterfaceType>(object_type)) {
-            type = &cast<TypeOfInterfaceType>(object_type).interface_type();
-          } else {
-            type = &cast<TypeOfConstraintType>(object_type).constraint_type();
-          }
-          CARBON_ASSIGN_OR_RETURN(
-              ConstraintLookupResult result,
-              LookupInConstraint(e->source_loc(), type, access.member_name()));
-          access.set_member(Member(result.member));
-          access.set_found_in_interface(result.interface);
-          access.set_static_type(
-              arena_->New<TypeOfMemberName>(Member(result.member)));
-          access.set_value_category(ValueCategory::Let);
-          return Success();
-        }
         case Value::Kind::VariableType: {
           // This case handles access to a method on a receiver whose type
           // is a type variable. For example, `x.foo` where the type of
@@ -1622,10 +1525,14 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         case Value::Kind::InterfaceType:
         case Value::Kind::ConstraintType: {
-          // This case handles access to a class function from a type variable.
-          // If `T` is a type variable and `foo` is a class function in an
-          // interface implemented by `T`, then `T.foo` accesses the `foo` class
-          // function of `T`.
+          // This case handles access to a class function from a constrained
+          // type variable. If `T` is a type variable and `foo` is a class
+          // function in an interface implemented by `T`, then `T.foo` accesses
+          // the `foo` class function of `T`.
+          //
+          // TODO: Per the language rules, we are supposed to also perform
+          // lookup into `type` and report an ambiguity if the name is found in
+          // both places.
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> type,
               InterpExp(&access.object(), arena_, trace_stream_));
@@ -1665,6 +1572,102 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               arena_->New<TypeOfMemberName>(Member(result.member)));
           access.set_value_category(ValueCategory::Let);
           return Success();
+        }
+        case Value::Kind::TypeType:
+        case Value::Kind::TypeOfChoiceType:
+        case Value::Kind::TypeOfClassType:
+        case Value::Kind::TypeOfConstraintType:
+        case Value::Kind::TypeOfInterfaceType: {
+          // This is member access into an unconstrained type. Evaluate it and
+          // perform lookup in the result.
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> type,
+              InterpExp(&access.object(), arena_, trace_stream_));
+          switch (type->kind()) {
+            case Value::Kind::StructType: {
+              for (const auto& field : cast<StructType>(type)->fields()) {
+                if (access.member_name() == field.name) {
+                  access.set_member(Member(&field));
+                  access.set_static_type(
+                      arena_->New<TypeOfMemberName>(Member(&field)));
+                  access.set_value_category(ValueCategory::Let);
+                  return Success();
+                }
+              }
+              return CompilationError(access.source_loc())
+                     << "struct " << *type << " does not have a field named "
+                     << " does not have a field named " << access.member_name();
+            }
+            case Value::Kind::ChoiceType: {
+              const ChoiceType& choice = cast<ChoiceType>(*type);
+              std::optional<Nonnull<const Value*>> parameter_types =
+                  choice.FindAlternative(access.member_name());
+              if (!parameter_types.has_value()) {
+                return CompilationError(e->source_loc())
+                       << "choice " << choice.name()
+                       << " does not have an alternative named "
+                       << access.member_name();
+              }
+              Nonnull<const Value*> type =
+                  arena_->New<FunctionType>(*parameter_types, llvm::None,
+                                            &choice, llvm::None, llvm::None);
+              // TODO: Should there be a Declaration corresponding to each
+              // choice type alternative?
+              access.set_member(Member(arena_->New<NamedValue>(
+                  NamedValue{access.member_name(), type})));
+              access.set_static_type(type);
+              access.set_value_category(ValueCategory::Let);
+              return Success();
+            }
+            case Value::Kind::NominalClassType: {
+              const NominalClassType& class_type =
+                  cast<NominalClassType>(*type);
+              if (std::optional<Nonnull<const Declaration*>> member =
+                      FindMember(access.member_name(),
+                                 class_type.declaration().members());
+                  member.has_value()) {
+                access.set_member(Member(member.value()));
+                switch ((*member)->kind()) {
+                  case DeclarationKind::FunctionDeclaration: {
+                    const auto& func = cast<FunctionDeclaration>(*member);
+                    if (func->is_method()) {
+                      break;
+                    }
+                    Nonnull<const Value*> field_type = Substitute(
+                        class_type.type_args(), &(*member)->static_type());
+                    access.set_static_type(field_type);
+                    access.set_value_category(ValueCategory::Let);
+                    return Success();
+                  }
+                  default:
+                    break;
+                }
+                access.set_static_type(
+                    arena_->New<TypeOfMemberName>(Member(*member)));
+                access.set_value_category(ValueCategory::Let);
+                return Success();
+              } else {
+                return CompilationError(access.source_loc())
+                       << class_type << " does not have a member named "
+                       << access.member_name();
+              }
+            }
+            case Value::Kind::InterfaceType:
+            case Value::Kind::ConstraintType: {
+              CARBON_ASSIGN_OR_RETURN(ConstraintLookupResult result,
+                                      LookupInConstraint(e->source_loc(), type,
+                                                         access.member_name()));
+              access.set_member(Member(result.member));
+              access.set_found_in_interface(result.interface);
+              access.set_static_type(
+                  arena_->New<TypeOfMemberName>(Member(result.member)));
+              access.set_value_category(ValueCategory::Let);
+              return Success();
+            }
+            default:
+              return CompilationError(access.source_loc())
+                     << "unsupported member access into type " << *type;
+          }
         }
         default:
           return CompilationError(e->source_loc())
@@ -1976,13 +1979,15 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           CARBON_RETURN_IF_ERROR(DeduceCallBindings(
               call, &param_name.params().static_type(), generic_parameters,
               /*deduced_bindings=*/llvm::None, impl_bindings, impl_scope));
+          Nonnull<const Bindings*> bindings =
+              arena_->New<Bindings>(call.deduced_args(), Bindings::NoWitnesses);
 
           const Declaration& decl = param_name.declaration();
           switch (decl.kind()) {
             case DeclarationKind::ClassDeclaration: {
               Nonnull<NominalClassType*> inst_class_type =
                   arena_->New<NominalClassType>(&cast<ClassDeclaration>(decl),
-                                                call.deduced_args());
+                                                bindings);
               call.set_static_type(
                   arena_->New<TypeOfClassType>(inst_class_type));
               call.set_value_category(ValueCategory::Let);
@@ -1991,7 +1996,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             case DeclarationKind::InterfaceDeclaration: {
               Nonnull<InterfaceType*> inst_iface_type =
                   arena_->New<InterfaceType>(&cast<InterfaceDeclaration>(decl),
-                                             call.deduced_args());
+                                             bindings);
               call.set_static_type(
                   arena_->New<TypeOfInterfaceType>(inst_iface_type));
               call.set_value_category(ValueCategory::Let);
@@ -2426,14 +2431,14 @@ auto TypeChecker::TypeCheckPattern(
       auto& alternative = cast<AlternativePattern>(*p);
       CARBON_RETURN_IF_ERROR(
           TypeCheckExp(&alternative.choice_type(), impl_scope));
-      if (alternative.choice_type().static_type().kind() !=
-          Value::Kind::TypeOfChoiceType) {
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> type,
+          InterpExp(&alternative.choice_type(), arena_, trace_stream_));
+      if (!isa<ChoiceType>(type)) {
         return CompilationError(alternative.source_loc())
                << "alternative pattern does not name a choice type.";
       }
-      const ChoiceType& choice_type =
-          cast<TypeOfChoiceType>(alternative.choice_type().static_type())
-              .choice_type();
+      const ChoiceType& choice_type = cast<ChoiceType>(*type);
       if (expected) {
         CARBON_RETURN_IF_ERROR(ExpectType(alternative.source_loc(),
                                           "alternative pattern", &choice_type,
@@ -2893,8 +2898,9 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     // above and/or by any enclosing generic classes.
     generic_args[binding] = *binding->symbolic_identity();
   }
-  Nonnull<NominalClassType*> self_type =
-      arena_->New<NominalClassType>(class_decl, generic_args);
+  Nonnull<NominalClassType*> self_type = arena_->New<NominalClassType>(
+      class_decl,
+      arena_->New<Bindings>(std::move(generic_args), Bindings::NoWitnesses));
   SetConstantValue(self, self_type);
   self->set_static_type(arena_->New<TypeOfClassType>(self_type));
 
