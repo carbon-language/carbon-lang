@@ -12,8 +12,6 @@ cc_library(
     deps = [
         "//common/fuzzing:carbon_cc_proto",
         "//explorer/ast",
-        "//explorer/ast:declaration",
-        "//explorer/ast:expression",
         "@llvm-project//llvm:Support",
     ],
 )
