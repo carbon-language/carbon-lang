@@ -21,12 +21,10 @@ fn Use[T:! Frob](x: T) -> T.Result {
 }
 
 impl i32 as Frob where .Result == i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/simple_equality.carbon:[[@LINE+3]]: type error in member of implementation
-  // CHECK: expected: fn () -> Result:! Type
-  // CHECK: actual: fn () -> i32
   fn F[me: Self]() -> i32 { return 0; }
 }
 
 fn Main() -> i32 {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/simple_equality.carbon:[[@LINE+1]]: type error in return value: 'i32.Result' is not implicitly convertible to 'i32'
   return Use(0);
 }

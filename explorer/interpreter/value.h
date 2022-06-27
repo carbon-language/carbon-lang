@@ -24,6 +24,7 @@
 namespace Carbon {
 
 class Action;
+class ImplScope;
 
 // Abstract base class of all AST nodes representing values.
 //
@@ -114,8 +115,25 @@ class Value {
   const Kind kind_;
 };
 
-auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool;
-auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool;
+// Base class for types holding contextual information by which we can
+// determine whether values are equal.
+class EqualityContext {
+ public:
+  virtual auto VisitEqualValues(
+      Nonnull<const Value*> value,
+      llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const
+      -> bool = 0;
+
+ protected:
+  ~EqualityContext() = default;
+};
+
+auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
+               std::optional<Nonnull<const EqualityContext*>> equal_ctx =
+                   std::nullopt) -> bool;
+auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
+                std::optional<Nonnull<const EqualityContext*>> equal_ctx =
+                    std::nullopt) -> bool;
 
 // An integer value.
 class IntValue : public Value {

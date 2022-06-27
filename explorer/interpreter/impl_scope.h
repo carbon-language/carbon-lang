@@ -6,13 +6,11 @@
 #define CARBON_EXPLORER_INTERPRETER_IMPL_SCOPE_H_
 
 #include "explorer/ast/declaration.h"
+#include "explorer/interpreter/value.h"
 
 namespace Carbon {
 
-class Value;
 class TypeChecker;
-class InterfaceType;
-struct EqualityConstraint;
 
 // The `ImplScope` class is responsible for mapping a type and
 // interface to the location of the witness table for the `impl` for
@@ -42,7 +40,7 @@ struct EqualityConstraint;
 //
 // `ImplScope` also tracks the type equalities that are known in a particular
 // scope.
-class ImplScope {
+class ImplScope : public EqualityContext {
  public:
   // Associates `iface` and `type` with the `impl` in this scope.
   void Add(Nonnull<const Value*> iface, Nonnull<const Value*> type,
@@ -74,9 +72,9 @@ class ImplScope {
   // Visits the values that are equal to the given value and a single step away
   // according to an equality constraint that is in scope. Stops and returns
   // `false` if the visitor returns `false`, otherwise returns `true`.
-  auto VisitEqualValues(
-      Nonnull<const Value*> value,
-      llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const -> bool;
+  auto VisitEqualValues(Nonnull<const Value*> value,
+                        llvm::function_ref<bool(Nonnull<const Value*>)> visitor)
+      const -> bool override;
 
   void Print(llvm::raw_ostream& out) const;
 

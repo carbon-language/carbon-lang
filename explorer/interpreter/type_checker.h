@@ -194,7 +194,8 @@ class TypeChecker {
   // interface is present in the given `impl`.
   auto CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
                            Nonnull<const ImplDeclaration*> impl_decl,
-                           Nonnull<const Value*> self_type) -> ErrorOr<Success>;
+                           Nonnull<const Value*> self_type,
+                           const ImplScope& impl_scope) -> ErrorOr<Success>;
 
   // Check that an `impl` declaration satisfies its constraints and add the
   // corresponding `ImplBinding`s to the impl scope.
@@ -263,7 +264,7 @@ class TypeChecker {
 
   // Bring the associated constants in `constraint` that constrain the
   // implementation of `interface` for `self` into `scope`.
-  auto BringAssociatedConstantsIntoScope(
+  void BringAssociatedConstantsIntoScope(
       Nonnull<const ConstraintType*> constraint, Nonnull<const Value*> self,
       Nonnull<const InterfaceType*> interface, ImplScope& scope);
 
@@ -309,6 +310,11 @@ class TypeChecker {
   auto IsImplicitlyConvertible(
       Nonnull<const Value*> source, Nonnull<const Value*> destination,
       std::optional<Nonnull<const ImplScope*>> impl_scope) const -> bool;
+
+  // Attempt to resolve a type that might be symbolic into a concrete type.
+  auto ResolveType(SourceLocation source_loc, Nonnull<const Value*> type,
+                   const ImplScope& impl_scope)
+      -> ErrorOr<Nonnull<const Value*>>;
 
   // Attempt to implicitly convert type-checked expression `source` to the type
   // `destination`.

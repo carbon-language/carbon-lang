@@ -19,6 +19,7 @@ namespace Carbon {
 using llvm::cast;
 using llvm::dyn_cast;
 using llvm::dyn_cast_or_null;
+using llvm::isa;
 
 auto StructValue::FindField(std::string_view name) const
     -> std::optional<Nonnull<const Value*>> {
@@ -556,30 +557,35 @@ void ContinuationValue::StackFragment::Print(llvm::raw_ostream& out) const {
 
 // Check whether two binding maps, which are assumed to have the same keys, are
 // equal.
-static auto BindingMapEqual(const BindingMap& map1, const BindingMap& map2)
+static auto BindingMapEqual(const BindingMap& map1, const BindingMap& map2,
+                            std::optional<Nonnull<const EqualityContext*>> equal_ctx)
     -> bool {
   CARBON_CHECK(map1.size() == map2.size()) << "maps should have same keys";
   for (const auto& [key, value] : map1) {
-    if (!ValueEqual(value, map2.at(key))) {
+    if (!ValueEqual(value, map2.at(key), equal_ctx)) {
       return false;
     }
   }
   return true;
 }
 
-auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
+auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
+               std::optional<Nonnull<const EqualityContext*>> equal_ctx) -> bool {
   if (t1->kind() != t2->kind()) {
+    if (isa<AssociatedConstant>(t1) || isa<AssociatedConstant>(t2)) {
+      return ValueEqual(t1, t2, equal_ctx);
+    }
     return false;
   }
   switch (t1->kind()) {
     case Value::Kind::PointerType:
       return TypeEqual(&cast<PointerType>(*t1).type(),
-                       &cast<PointerType>(*t2).type());
+                       &cast<PointerType>(*t2).type(), equal_ctx);
     case Value::Kind::FunctionType: {
       const auto& fn1 = cast<FunctionType>(*t1);
       const auto& fn2 = cast<FunctionType>(*t2);
-      return TypeEqual(&fn1.parameters(), &fn2.parameters()) &&
-             TypeEqual(&fn1.return_type(), &fn2.return_type());
+      return TypeEqual(&fn1.parameters(), &fn2.parameters(), equal_ctx) &&
+             TypeEqual(&fn1.return_type(), &fn2.return_type(), equal_ctx);
     }
     case Value::Kind::StructType: {
       const auto& struct1 = cast<StructType>(*t1);
@@ -589,7 +595,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
       }
       for (size_t i = 0; i < struct1.fields().size(); ++i) {
         if (struct1.fields()[i].name != struct2.fields()[i].name ||
-            !TypeEqual(struct1.fields()[i].value, struct2.fields()[i].value)) {
+            !TypeEqual(struct1.fields()[i].value, struct2.fields()[i].value, equal_ctx)) {
           return false;
         }
       }
@@ -599,17 +605,17 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
       const auto& class1 = cast<NominalClassType>(*t1);
       const auto& class2 = cast<NominalClassType>(*t2);
       return class1.declaration().name() == class2.declaration().name() &&
-             BindingMapEqual(class1.type_args(), class2.type_args());
+             BindingMapEqual(class1.type_args(), class2.type_args(), equal_ctx);
     }
     case Value::Kind::InterfaceType: {
       const auto& iface1 = cast<InterfaceType>(*t1);
       const auto& iface2 = cast<InterfaceType>(*t2);
       return iface1.declaration().name() == iface2.declaration().name() &&
-             BindingMapEqual(iface1.args(), iface2.args());
+             BindingMapEqual(iface1.args(), iface2.args(), equal_ctx);
     }
     case Value::Kind::AssociatedConstant:
       // Associated constants are sometimes types.
-      return ValueEqual(t1, t2);
+      return ValueEqual(t1, t2, equal_ctx);
     case Value::Kind::ConstraintType: {
       const auto& constraint1 = cast<ConstraintType>(*t1);
       const auto& constraint2 = cast<ConstraintType>(*t2);
@@ -624,8 +630,8 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
       for (size_t i = 0; i < constraint1.impl_constraints().size(); ++i) {
         const auto& impl1 = constraint1.impl_constraints()[i];
         const auto& impl2 = constraint2.impl_constraints()[i];
-        if (!TypeEqual(impl1.type, impl2.type) ||
-            !TypeEqual(impl1.interface, impl2.interface)) {
+        if (!TypeEqual(impl1.type, impl2.type, equal_ctx) ||
+            !TypeEqual(impl1.interface, impl2.interface, equal_ctx)) {
           return false;
         }
       }
@@ -636,7 +642,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
           return false;
         }
         for (size_t j = 0; j < equality1.values.size(); ++j) {
-          if (!ValueEqual(equality1.values[i], equality2.values[i])) {
+          if (!ValueEqual(equality1.values[i], equality2.values[i], equal_ctx)) {
             return false;
           }
         }
@@ -644,7 +650,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
       for (size_t i = 0; i < constraint1.lookup_contexts().size(); ++i) {
         const auto& context1 = constraint1.lookup_contexts()[i];
         const auto& context2 = constraint2.lookup_contexts()[i];
-        if (!TypeEqual(context1.context, context2.context)) {
+        if (!TypeEqual(context1.context, context2.context, equal_ctx)) {
           return false;
         }
       }
@@ -659,7 +665,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
         return false;
       }
       for (size_t i = 0; i < tup1.elements().size(); ++i) {
-        if (!TypeEqual(tup1.elements()[i], tup2.elements()[i])) {
+        if (!TypeEqual(tup1.elements()[i], tup2.elements()[i], equal_ctx)) {
           return false;
         }
       }
@@ -676,20 +682,20 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
              &cast<VariableType>(*t2).binding();
     case Value::Kind::TypeOfClassType:
       return TypeEqual(&cast<TypeOfClassType>(*t1).class_type(),
-                       &cast<TypeOfClassType>(*t2).class_type());
+                       &cast<TypeOfClassType>(*t2).class_type(), equal_ctx);
     case Value::Kind::TypeOfInterfaceType:
       return TypeEqual(&cast<TypeOfInterfaceType>(*t1).interface_type(),
-                       &cast<TypeOfInterfaceType>(*t2).interface_type());
+                       &cast<TypeOfInterfaceType>(*t2).interface_type(), equal_ctx);
     case Value::Kind::TypeOfConstraintType:
       return TypeEqual(&cast<TypeOfConstraintType>(*t1).constraint_type(),
-                       &cast<TypeOfConstraintType>(*t2).constraint_type());
+                       &cast<TypeOfConstraintType>(*t2).constraint_type(), equal_ctx);
     case Value::Kind::TypeOfChoiceType:
       return TypeEqual(&cast<TypeOfChoiceType>(*t1).choice_type(),
-                       &cast<TypeOfChoiceType>(*t2).choice_type());
+                       &cast<TypeOfChoiceType>(*t2).choice_type(), equal_ctx);
     case Value::Kind::StaticArrayType: {
       const auto& array1 = cast<StaticArrayType>(*t1);
       const auto& array2 = cast<StaticArrayType>(*t2);
-      return TypeEqual(&array1.element_type(), &array2.element_type()) &&
+      return TypeEqual(&array1.element_type(), &array2.element_type(), equal_ctx) &&
              array1.size() == array2.size();
     }
     case Value::Kind::IntValue:
@@ -723,10 +729,11 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
   }
 }
 
-// Returns true if the two values are equal and returns false otherwise.
-//
-// This function implements the `==` operator of Carbon.
-auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
+// Returns true if the two values are known to be equal and are written in the
+// same way at the top level.
+auto ValueStructurallyEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
+                            std::optional<Nonnull<const EqualityContext*>> equal_ctx)
+    -> bool {
   if (v1->kind() != v2->kind()) {
     return false;
   }
@@ -748,7 +755,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
       const auto& m2 = cast<BoundMethodValue>(*v2);
       std::optional<Nonnull<const Statement*>> body1 = m1.declaration().body();
       std::optional<Nonnull<const Statement*>> body2 = m2.declaration().body();
-      return ValueEqual(m1.receiver(), m2.receiver()) &&
+      return ValueEqual(m1.receiver(), m2.receiver(), equal_ctx) &&
              body1.has_value() == body2.has_value() &&
              (!body1.has_value() || *body1 == *body2);
     }
@@ -761,7 +768,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
         return false;
       }
       for (size_t i = 0; i < elements1.size(); ++i) {
-        if (!ValueEqual(elements1[i], elements2[i])) {
+        if (!ValueEqual(elements1[i], elements2[i], equal_ctx)) {
           return false;
         }
       }
@@ -775,7 +782,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
         CARBON_CHECK(struct_v1.elements()[i].name ==
                      struct_v2.elements()[i].name);
         if (!ValueEqual(struct_v1.elements()[i].value,
-                        struct_v2.elements()[i].value)) {
+                        struct_v2.elements()[i].value, equal_ctx)) {
           return false;
         }
       }
@@ -793,14 +800,12 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
       return *name1 == *name2;
     }
     case Value::Kind::AssociatedConstant: {
-      // Note, this function computes symbolic identity, not taking into
-      // account any equality constraints that are in scope. The witness value
-      // is not part of determining value equality.
+      // The witness value is not part of determining value equality.
       const auto& assoc1 = cast<AssociatedConstant>(*v1);
       const auto& assoc2 = cast<AssociatedConstant>(*v2);
       return &assoc1.constant() == &assoc2.constant() &&
-             BindingMapEqual(assoc1.args(), assoc2.args()) &&
-             TypeEqual(&assoc1.base(), &assoc2.base());
+             BindingMapEqual(assoc1.args(), assoc2.args(), equal_ctx) &&
+             TypeEqual(&assoc1.base(), &assoc2.base(), equal_ctx);
     }
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
@@ -825,7 +830,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
     case Value::Kind::StaticArrayType:
-      return TypeEqual(v1, v2);
+      return TypeEqual(v1, v2, equal_ctx);
     case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:
     case Value::Kind::BindingPlaceholderValue:
@@ -842,13 +847,45 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
   }
 }
 
+// Returns true if the two values are equal and returns false otherwise.
+//
+// This function implements the `==` operator of Carbon.
+auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
+                std::optional<Nonnull<const EqualityContext*>> equal_ctx) -> bool {
+  // If we're given an equality context, check to see if it knows these values
+  // are equal. Only perform the check if one or the other value is an
+  // associated constant; otherwise we should be able to do better by looking
+  // at the structures of the values.
+  if (equal_ctx) {
+    if (isa<AssociatedConstant>(v1)) {
+      auto visitor = [&](Nonnull<const Value*> maybe_v2) {
+        return !ValueStructurallyEqual(v2, maybe_v2, equal_ctx);
+      };
+      if (!(*equal_ctx)->VisitEqualValues(v1, visitor)) {
+        return true;
+      }
+    }
+    if (isa<AssociatedConstant>(v2)) {
+      auto visitor = [&](Nonnull<const Value*> maybe_v1) {
+        return !ValueStructurallyEqual(v1, maybe_v1, equal_ctx);
+      };
+      if (!(*equal_ctx)->VisitEqualValues(v2, visitor)) {
+        return true;
+      }
+    }
+  }
+
+  return ValueStructurallyEqual(v1, v2, equal_ctx);
+}
+
 auto EqualityConstraint::VisitEqualValues(
     Nonnull<const Value*> value,
     llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const -> bool {
   // See if the given value is part of this constraint.
-  auto first_equal = std::find_if(
-      values.begin(), values.end(),
-      [value](Nonnull<const Value*> val) { return ValueEqual(value, val); });
+  auto first_equal = std::find_if(values.begin(), values.end(),
+                                  [value](Nonnull<const Value*> val) {
+                                    return ValueEqual(value, val, std::nullopt);
+                                  });
   if (first_equal == values.end()) {
     return true;
   }
@@ -857,7 +894,7 @@ auto EqualityConstraint::VisitEqualValues(
   // to the visitor.
   for (auto it = values.begin(), end = values.end(); it != end; ++it) {
     if (it == first_equal ||
-        (it > first_equal && ValueEqual(value, *it))) {
+        (it > first_equal && ValueEqual(value, *it, std::nullopt))) {
       continue;
     }
     if (!visitor(*it)) {
