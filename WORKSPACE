@@ -84,10 +84,18 @@ http_archive(
 # LLVM libraries
 ###############################################################################
 
-new_local_repository(
+# We pin to specific upstream commits and try to track top-of-tree reasonably
+# closely rather than pinning to a specific release.
+llvm_version = "e2f627e5e3855309f3a7421f6786b401efb6b7c7"
+
+http_archive(
     name = "llvm-raw",
     build_file_content = "# empty",
-    path = "third_party/llvm-project",
+    patch_args = ["-p1"],
+    patches = ["@//:bazel/llvm-patches/0001-Patch-for-mallinfo2-when-using-Bazel-build-system.patch"],
+    sha256 = "228c37eecf8a8027ab32ac466b988712136191a0076d80750c646a3a9b1dc5d2",
+    strip_prefix = "llvm-project-%s" % llvm_version,
+    urls = ["https://github.com/llvm/llvm-project/archive/%s.tar.gz" % llvm_version],
 )
 
 load("@llvm-raw//utils/bazel:configure.bzl", "llvm_configure")
