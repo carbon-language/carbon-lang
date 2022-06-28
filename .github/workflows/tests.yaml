@@ -59,7 +59,7 @@ jobs:
           go get github.com/bazelbuild/bazelisk
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
-      # Setup to the latest LLVM and Clang release on Linux runners.
+      # Setup to the latest LLVM and Clang release.
       #
       # Ideally we would use the pre-installed versions in the image, but the
       # debian packages for LLVM-12 are broken due to several bugs:
@@ -69,21 +69,13 @@ jobs:
       # For now, we rely on Homebrew to manage installing a correctly built
       # toolchain. We also take some care to be as resilient as possible to
       # issues fetching and installing the toolchain.
-      - name: Setup LLVM and Clang on Ubuntu
-        if: matrix.os == 'ubuntu-latest'
+      - name: Setup LLVM and Clang
         run: |
           brew update
           brew install --force-bottle --only-dependencies llvm
           brew install --force-bottle --force --verbose llvm
           brew info llvm
           brew config
-          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
-
-      # Just add the Homebrew installed LLVM to the path on macOS, the image has
-      # LLVM-12 pre-installed.
-      - name: Setup LLVM and Clang on macOS
-        if: matrix.os == 'macos-latest'
-        run: |
           echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
 
       # Print the various tool paths and versions to help in debugging.
@@ -98,8 +90,6 @@ jobs:
           clang --version
           which clang++
           clang++ --version
-          which clang-format
-          clang-format --version
 
       # Extract our access key for our build cache.
       - name: Extract access key
