@@ -525,12 +525,15 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
       break;
     }
 
-    case Fuzzing::Statement::kReturnStatement: {
-      const auto& ret = statement.return_statement();
+    case Fuzzing::Statement::kReturnVarStatement: {
+      out << "return var;";
+      break;
+    }
+
+    case Fuzzing::Statement::kReturnExpressionStatement: {
+      const auto& ret = statement.return_expression_statement();
       out << "return";
-      if (ret.is_return_var()) {
-        out << " var";
-      } else if (!ret.is_omitted_expression()) {
+      if (!ret.is_omitted_expression()) {
         out << " ";
         ExpressionToCarbon(ret.expression(), out);
       }

@@ -74,8 +74,12 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       }
       break;
     }
-    case StatementKind::Return: {
-      const auto& ret = cast<Return>(*this);
+    case StatementKind::ReturnVar: {
+      out << "return var;";
+      break;
+    }
+    case StatementKind::ReturnExpression: {
+      const auto& ret = cast<ReturnExpression>(*this);
       if (ret.is_omitted_expression()) {
         out << "return;";
       } else {

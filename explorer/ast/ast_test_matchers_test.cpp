@@ -87,15 +87,15 @@ TEST(MatchesBinaryOpTest, BasicUsage) {
 
 TEST(MatchesReturnTest, BasicUsage) {
   TupleLiteral unit(DummyLoc);
-  Return empty_return(DummyLoc, &unit, /*is_omitted_expression=*/true,
-                      Return::ReturnType::ReturnExpression);
+  ReturnExpression empty_return(DummyLoc, &unit,
+                                /*is_omitted_expression=*/true);
   EXPECT_THAT(empty_return, MatchesEmptyReturn());
   EXPECT_THAT(&empty_return, MatchesEmptyReturn());
   EXPECT_THAT(empty_return, Not(MatchesReturn(_)));
 
   IntLiteral int_val(DummyLoc, 42);
-  Return explicit_return(DummyLoc, &int_val, /*is_omitted_expression=*/false,
-                         Return::ReturnType::ReturnExpression);
+  ReturnExpression explicit_return(DummyLoc, &int_val,
+                                   /*is_omitted_expression=*/false);
   EXPECT_THAT(explicit_return, MatchesReturn(MatchesLiteral(42)));
   EXPECT_THAT(explicit_return, Not(MatchesEmptyReturn()));
 

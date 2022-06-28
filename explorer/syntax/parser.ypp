@@ -774,16 +774,11 @@ statement:
 | RETURN return_expression SEMICOLON
     {
       auto [return_exp, is_omitted_exp] = $2;
-      $$ = arena->New<Return>(context.source_loc(), return_exp, is_omitted_exp,
-                              Return::ReturnType::ReturnExpression);
+      $$ = arena->New<ReturnExpression>(context.source_loc(), return_exp,
+                                        is_omitted_exp);
     }
 | RETURN VAR SEMICOLON
-    {
-      $$ = arena->New<Return>(
-          context.source_loc(),
-          arena->New<ReturnVarExpression>(context.source_loc()),
-          /*is_omitted_exp=*/false, Return::ReturnType::ReturnVar);
-    }
+    { $$ = arena->New<ReturnVar>(context.source_loc()); }
 | MATCH LEFT_PARENTHESIS expression RIGHT_PARENTHESIS LEFT_CURLY_BRACE
   clause_list RIGHT_CURLY_BRACE
     { $$ = arena->New<Match>(context.source_loc(), $3, $6); }

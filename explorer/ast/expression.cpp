@@ -202,7 +202,6 @@ void Expression::Print(llvm::raw_ostream& out) const {
       break;
     }
     case ExpressionKind::IdentifierExpression:
-    case ExpressionKind::ReturnVarExpression:
     case ExpressionKind::IntLiteral:
     case ExpressionKind::BoolLiteral:
     case ExpressionKind::BoolTypeLiteral:
@@ -251,9 +250,6 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
     case ExpressionKind::ValueLiteral:
       // TODO: For layering reasons, we can't print out the value from here.
       out << "ValueLiteral";
-      break;
-    case ExpressionKind::ReturnVarExpression:
-      out << "var";
       break;
     case ExpressionKind::IndexExpression:
     case ExpressionKind::SimpleMemberAccessExpression:

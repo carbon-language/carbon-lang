@@ -1712,13 +1712,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       access.set_value_category(ValueCategory::Let);
       return Success();
     }
-    case ExpressionKind::ReturnVarExpression: {
-      auto& returned_var = cast<ReturnVarExpression>(*e);
-      returned_var.set_static_type(&returned_var.value_node().static_type());
-      returned_var.set_value_category(
-          returned_var.value_node().value_category());
-      return Success();
-    }
     case ExpressionKind::IdentifierExpression: {
       auto& ident = cast<IdentifierExpression>(*e);
       if (ident.value_node().base().kind() ==
@@ -2516,8 +2509,26 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       }
       return Success();
     }
-    case StatementKind::Return: {
-      auto& ret = cast<Return>(*s);
+    case StatementKind::ReturnVar: {
+      auto& ret = cast<ReturnVar>(*s);
+      ReturnTerm& return_term = ret.function().return_term();
+      if (return_term.is_auto()) {
+        return_term.set_static_type(&ret.value_node().static_type());
+      } else {
+        CARBON_CHECK(IsConcreteType(&return_term.static_type()));
+        CARBON_CHECK(IsConcreteType(&ret.value_node().static_type()));
+        if (!TypeEqual(&return_term.static_type(),
+                       &ret.value_node().static_type())) {
+          return CompilationError(ret.value_node().base().source_loc())
+                 << "type of returned var `" << ret.value_node().static_type()
+                 << "` does not match return type `"
+                 << return_term.static_type() << "`";
+        }
+      }
+      return Success();
+    }
+    case StatementKind::ReturnExpression: {
+      auto& ret = cast<ReturnExpression>(*s);
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&ret.expression(), impl_scope));
       ReturnTerm& return_term = ret.function().return_term();
       if (return_term.is_auto()) {
@@ -2614,7 +2625,8 @@ auto TypeChecker::ExpectReturnOnAllPaths(
           ExpectReturnOnAllPaths(if_stmt.else_block(), stmt->source_loc()));
       return Success();
     }
-    case StatementKind::Return:
+    case StatementKind::ReturnVar:  // Fall through.
+    case StatementKind::ReturnExpression:
       return Success();
     case StatementKind::Continuation:
     case StatementKind::Run:

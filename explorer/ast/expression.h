@@ -154,45 +154,6 @@ class IdentifierExpression : public Expression {
   std::optional<ValueNodeView> value_node_;
 };
 
-class ReturnVarExpression : public Expression {
- public:
-  explicit ReturnVarExpression(SourceLocation source_loc)
-      : Expression(AstNodeKind::ReturnVarExpression, source_loc) {}
-
-  static auto classof(const AstNode* node) -> bool {
-    return InheritsFromReturnVarExpression(node->kind());
-  }
-
-  // Returns the identifier name of returned var. Cannot be called
-  // before name resolution.
-  auto name() const -> const std::string& {
-    CARBON_CHECK(name_.has_value());
-    return *name_;
-  }
-
-  // Sets the identifier name of returned var. Can be called only once,
-  // during name resolution.
-  void set_name(const std::string& name) {
-    CARBON_CHECK(!name_.has_value());
-    name_ = name;
-  }
-
-  // Returns the ValueNodeView the identifier of returned var refers to. Cannot
-  // be called before name resolution.
-  auto value_node() const -> const ValueNodeView& { return *value_node_; }
-
-  // Sets the value returned by value_node. Can be called only once,
-  // during name resolution.
-  void set_value_node(ValueNodeView value_node) {
-    CARBON_CHECK(!value_node_.has_value());
-    value_node_ = std::move(value_node);
-  }
-
- private:
-  std::optional<std::string> name_;
-  std::optional<ValueNodeView> value_node_;
-};
-
 class SimpleMemberAccessExpression : public Expression {
  public:
   explicit SimpleMemberAccessExpression(SourceLocation source_loc,

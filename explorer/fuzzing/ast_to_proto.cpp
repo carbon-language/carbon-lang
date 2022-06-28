@@ -8,6 +8,7 @@
 
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/expression.h"
+#include "explorer/ast/pattern.h"
 #include "llvm/Support/Casting.h"
 
 namespace Carbon {
@@ -169,10 +170,6 @@ static auto ExpressionToProto(const Expression& expression)
         *struct_type_literal_proto->add_fields() =
             FieldInitializerToProto(field);
       }
-      break;
-    }
-
-    case ExpressionKind::ReturnVarExpression: {
       break;
     }
 
@@ -412,15 +409,19 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
       break;
     }
 
-    case StatementKind::Return: {
-      const auto& ret = cast<Return>(statement);
-      auto* ret_proto = statement_proto.mutable_return_statement();
+    case StatementKind::ReturnVar: {
+      statement_proto.mutable_return_var_statement();
+      break;
+    }
+
+    case StatementKind::ReturnExpression: {
+      const auto& ret = cast<ReturnExpression>(statement);
+      auto* ret_proto = statement_proto.mutable_return_expression_statement();
       if (!ret.is_omitted_expression()) {
         *ret_proto->mutable_expression() = ExpressionToProto(ret.expression());
       } else {
         ret_proto->set_is_omitted_expression(true);
       }
-      ret_proto->set_is_return_var(ret.is_return_var());
       break;
     }
 

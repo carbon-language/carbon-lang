@@ -31,6 +31,7 @@ cc_library(
         "//explorer/common:arena",
         "//explorer/common:error_builders",
         "//explorer/common:nonnull",
+        "//explorer/common:source_location",
         "@llvm-project//llvm:Support",
     ],
 )

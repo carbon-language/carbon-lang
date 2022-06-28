@@ -14,6 +14,7 @@
 #include "common/check.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/expression.h"
+#include "explorer/ast/pattern.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "explorer/interpreter/action.h"
@@ -71,6 +72,8 @@ class Interpreter {
 
   // State transitions for expressions.
   auto StepExp() -> ErrorOr<Success>;
+  // State transitions for returned var.
+  auto StepVar() -> ErrorOr<Success>;
   // State transitions for lvalues.
   auto StepLvalue() -> ErrorOr<Success>;
   // State transitions for patterns.
@@ -326,16 +329,6 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> value,
           todo_.ValueOfNode(cast<IdentifierExpression>(exp).value_node(),
-                            exp.source_loc()));
-      CARBON_CHECK(isa<LValue>(value)) << *value;
-      return todo_.FinishAction(value);
-    }
-    case ExpressionKind::ReturnVarExpression: {
-      //    { {x :: C, E, F} :: S, H}
-      // -> { {E(x) :: C, E, F} :: S, H}
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> value,
-          todo_.ValueOfNode(cast<ReturnVarExpression>(exp).value_node(),
                             exp.source_loc()));
       CARBON_CHECK(isa<LValue>(value)) << *value;
       return todo_.FinishAction(value);
@@ -737,6 +730,31 @@ auto Interpreter::CallFunction(const CallExpression& call,
   }
 }
 
+auto Interpreter::StepVar() -> ErrorOr<Success> {
+  Action& act = todo_.CurrentAction();
+  auto& return_var_action = cast<ReturnVarAction>(act);
+  const ValueNodeView& value_node = return_var_action.value_node();
+  if (trace_stream_) {
+    **trace_stream_ << "--- step returned var "
+                    << cast<BindingPattern>(value_node.base()).name() << " ."
+                    << act.pos() << "."
+                    << " (" << return_var_action.return_source_location()
+                    << ") --->\n";
+  }
+
+  CARBON_CHECK(act.pos() == 0);
+  // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
+  CARBON_ASSIGN_OR_RETURN(
+      Nonnull<const Value*> value,
+      todo_.ValueOfNode(value_node,
+                        return_var_action.return_source_location()));
+  if (const auto* lvalue = dyn_cast<LValue>(value)) {
+    CARBON_ASSIGN_OR_RETURN(
+        value, heap_.Read(lvalue->address(), value_node.base().source_loc()));
+  }
+  return todo_.FinishAction(value);
+}
+
 auto Interpreter::StepExp() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<ExpressionAction>(act).expression();
@@ -929,19 +947,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           return todo_.FinishAction(member);
         }
       }
-    }
-    case ExpressionKind::ReturnVarExpression: {
-      CARBON_CHECK(act.pos() == 0);
-      const auto& returned_var = cast<ReturnVarExpression>(exp);
-      // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
-      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> value,
-                              todo_.ValueOfNode(returned_var.value_node(),
-                                                returned_var.source_loc()));
-      if (const auto* lvalue = dyn_cast<LValue>(value)) {
-        CARBON_ASSIGN_OR_RETURN(
-            value, heap_.Read(lvalue->address(), exp.source_loc()));
-      }
-      return todo_.FinishAction(value);
     }
     case ExpressionKind::IdentifierExpression: {
       CARBON_CHECK(act.pos() == 0);
@@ -1387,12 +1392,28 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       } else {
         return todo_.FinishAction();
       }
-    case StatementKind::Return:
+    case StatementKind::ReturnVar:
+      if (act.pos() == 0) {
+        //    { {return e :: C, E, F} :: S, H}
+        // -> { {e :: return [] :: C, E, F} :: S, H}
+        return todo_.Spawn(std::make_unique<ReturnVarAction>(
+            cast<ReturnVar>(stmt).value_node(), stmt.source_loc()));
+      } else {
+        //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
+        // -> { {v :: C', E', F'} :: S, H}
+        const FunctionDeclaration& function = cast<Return>(stmt).function();
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<const Value*> return_value,
+            Convert(act.results()[0], &function.return_term().static_type(),
+                    stmt.source_loc()));
+        return todo_.UnwindPast(*function.body(), return_value);
+      }
+    case StatementKind::ReturnExpression:
       if (act.pos() == 0) {
         //    { {return e :: C, E, F} :: S, H}
         // -> { {e :: return [] :: C, E, F} :: S, H}
         return todo_.Spawn(std::make_unique<ExpressionAction>(
-            &cast<Return>(stmt).expression()));
+            &cast<ReturnExpression>(stmt).expression()));
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
         // -> { {v :: C', E', F'} :: S, H}
@@ -1476,6 +1497,9 @@ auto Interpreter::Step() -> ErrorOr<Success> {
   switch (act.kind()) {
     case Action::Kind::LValAction:
       CARBON_RETURN_IF_ERROR(StepLvalue());
+      break;
+    case Action::Kind::ReturnVarAction:
+      CARBON_RETURN_IF_ERROR(StepVar());
       break;
     case Action::Kind::ExpressionAction:
       CARBON_RETURN_IF_ERROR(StepExp());
