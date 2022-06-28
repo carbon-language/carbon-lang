@@ -2454,14 +2454,13 @@ a migration path for C++ template code:
 -   -> Carbon checked generic: Once all callers work after all constraints have
     been added, the template parameter may be switched to a checked generic.
 
-The Carbon toolchain will support compiling C++ code. It will contain a
-customized C++ compiler that enables some more advanced interoperability
-features:
+Carbon will also provide direct interop with C++ templates in many ways:
 
 -   Ability to call C++ templates and use C++ templated types from Carbon.
 -   Ability to instantiate a C++ template with a Carbon type.
--   Ability to call a Carbon generic from C++ as if it were a C++ template.
 -   Ability to instantiate a Carbon generic with a C++ type.
+
+We expect the best interop in these areas to be based on a Carbon-provided C++ toolchain. However, even when using Carbon's generated C++ headers for interop, we will include the ability where possible to use a Carbon generic from C++ as if it were a C++ template.
 
 ### Standard types
 
