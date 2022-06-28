@@ -2460,7 +2460,10 @@ Carbon will also provide direct interop with C++ templates in many ways:
 -   Ability to instantiate a C++ template with a Carbon type.
 -   Ability to instantiate a Carbon generic with a C++ type.
 
-We expect the best interop in these areas to be based on a Carbon-provided C++ toolchain. However, even when using Carbon's generated C++ headers for interop, we will include the ability where possible to use a Carbon generic from C++ as if it were a C++ template.
+We expect the best interop in these areas to be based on a Carbon-provided C++
+toolchain. However, even when using Carbon's generated C++ headers for interop,
+we will include the ability where possible to use a Carbon generic from C++ as
+if it were a C++ template.
 
 ### Standard types
 
