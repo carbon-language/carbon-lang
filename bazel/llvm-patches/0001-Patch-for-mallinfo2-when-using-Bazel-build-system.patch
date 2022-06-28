@@ -1,0 +1,32 @@
+From 80f5475adfe179739a45d42850f8c06a630bc3a0 Mon Sep 17 00:00:00 2001
+From: Chandler Carruth <chandlerc@gmail.com>
+Date: Fri, 17 Jun 2022 09:10:41 +0000
+Subject: [PATCH] Patch for mallinfo2 when using Bazel build system.
+
+This detects and defines the `HAVE_MALLINFO2` macro based on the glibc
+version to allow easy use of the Bazel build on systems with modern
+glibc installs.
+---
+ llvm/lib/Support/Unix/Process.inc | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/llvm/lib/Support/Unix/Process.inc b/llvm/lib/Support/Unix/Process.inc
+index d3d9fb7d7187..da3e721146f6 100644
+--- a/llvm/lib/Support/Unix/Process.inc
++++ b/llvm/lib/Support/Unix/Process.inc
+@@ -31,6 +31,13 @@
+ #if HAVE_SIGNAL_H
+ #include <signal.h>
+ #endif
++// When glibc is in use, detect mallinfo2 to address mallinfo deprecation
++// warnings.
++#if !defined(HAVE_MALLINFO2) && defined(__GLIBC_PREREQ)
++#if __GLIBC_PREREQ(2, 33)
++#define HAVE_MALLINFO2
++#endif  // __GLIBC_PREREQ(2, 33)
++#endif  // !defined(HAVE_MALLINFO2) && defined(__GLIBC_PREREQ)
+ #if defined(HAVE_MALLINFO) || defined(HAVE_MALLINFO2)
+ #include <malloc.h>
+ #endif
+--
+2.36.1
