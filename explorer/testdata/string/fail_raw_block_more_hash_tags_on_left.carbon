@@ -11,9 +11,10 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/string/fail_newline.carbon:[[@LINE+2]]: missing closing quote in single-line string: "new
-  // CHECK-EMPTY:
-  Print("new
-line");
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/string/fail_raw_block_more_hash_tags_on_left.carbon:[[@LINE+1]]: Unexpected end of file
+  var s: String = ##"""
+    error: there are more #s on the left than the right.
+  """#;
+
   return 0;
 }

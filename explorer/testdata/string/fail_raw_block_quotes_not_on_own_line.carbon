@@ -11,9 +11,10 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/string/fail_newline.carbon:[[@LINE+2]]: missing closing quote in single-line string: "new
-  // CHECK-EMPTY:
-  Print("new
-line");
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/string/fail_raw_block_quotes_not_on_own_line.carbon:[[@LINE+1]]: Invalid block string: Should end with triple quotes: error: closing """
+  var s: String = #"""
+    error: closing """# is not on its own line.
+  """#;
+
   return 0;
 }

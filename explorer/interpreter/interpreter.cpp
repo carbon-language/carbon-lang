@@ -109,10 +109,16 @@ class Interpreter {
   auto InstantiateType(Nonnull<const Value*> type, SourceLocation source_loc)
       -> ErrorOr<Nonnull<const Value*>>;
 
+  // Instantiate a set of bindings by replacing all type variables that occur
+  // within it by the current values of those variables.
+  auto InstantiateBindings(Nonnull<const Bindings*> bindings,
+                           SourceLocation source_loc)
+      -> ErrorOr<Nonnull<const Bindings*>>;
+
   // Call the function `fun` with the given `arg` and the `witnesses`
   // for the function's impl bindings.
   auto CallFunction(const CallExpression& call, Nonnull<const Value*> fun,
-                    Nonnull<const Value*> arg, const ImplWitnessMap& witnesses)
+                    Nonnull<const Value*> arg, ImplWitnessMap&& witnesses)
       -> ErrorOr<Success>;
 
   void PrintState(llvm::raw_ostream& out);
@@ -464,24 +470,36 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
     }
     case Value::Kind::NominalClassType: {
       const auto& class_type = cast<NominalClassType>(*type);
-      BindingMap inst_type_args;
-      for (const auto& [ty_var, ty_arg] : class_type.type_args()) {
-        CARBON_ASSIGN_OR_RETURN(inst_type_args[ty_var],
-                                InstantiateType(ty_arg, source_loc));
-      }
-      ImplWitnessMap witnesses = class_type.witnesses();
-      for (auto& [bind, witness] : witnesses) {
-        if (auto* sym = dyn_cast<SymbolicWitness>(witness)) {
-          CARBON_ASSIGN_OR_RETURN(witness,
-                                  EvalExpRecursively(&sym->impl_expression()));
-        }
-      }
-      return arena_->New<NominalClassType>(&class_type.declaration(),
-                                           inst_type_args, witnesses);
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Bindings*> bindings,
+          InstantiateBindings(&class_type.bindings(), source_loc));
+      return arena_->New<NominalClassType>(&class_type.declaration(), bindings);
     }
     default:
       return type;
   }
+}
+
+auto Interpreter::InstantiateBindings(Nonnull<const Bindings*> bindings,
+                                      SourceLocation source_loc)
+    -> ErrorOr<Nonnull<const Bindings*>> {
+  BindingMap args = bindings->args();
+  for (auto& [var, arg] : args) {
+    CARBON_ASSIGN_OR_RETURN(arg, InstantiateType(arg, source_loc));
+  }
+
+  ImplWitnessMap witnesses = bindings->witnesses();
+  for (auto& [bind, witness] : witnesses) {
+    if (auto* sym = dyn_cast<SymbolicWitness>(witness)) {
+      CARBON_ASSIGN_OR_RETURN(witness,
+                              EvalExpRecursively(&sym->impl_expression()));
+    }
+  }
+
+  if (args == bindings->args() && witnesses == bindings->witnesses()) {
+    return bindings;
+  }
+  return arena_->New<Bindings>(std::move(args), std::move(witnesses));
 }
 
 auto Interpreter::Convert(Nonnull<const Value*> value,
@@ -609,8 +627,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
 auto Interpreter::CallFunction(const CallExpression& call,
                                Nonnull<const Value*> fun,
                                Nonnull<const Value*> arg,
-                               const ImplWitnessMap& witnesses)
-    -> ErrorOr<Success> {
+                               ImplWitnessMap&& witnesses) -> ErrorOr<Success> {
   if (trace_stream_) {
     **trace_stream_ << "calling function: " << *fun << "\n";
   }
@@ -703,13 +720,15 @@ auto Interpreter::CallFunction(const CallExpression& call,
       CARBON_CHECK(PatternMatch(&name.params().value(), arg, call.source_loc(),
                                 &params_scope, generic_args, trace_stream_,
                                 this->arena_));
+      Nonnull<const Bindings*> bindings =
+          arena_->New<Bindings>(std::move(generic_args), std::move(witnesses));
       switch (decl.kind()) {
         case DeclarationKind::ClassDeclaration:
           return todo_.FinishAction(arena_->New<NominalClassType>(
-              &cast<ClassDeclaration>(decl), generic_args, witnesses));
+              &cast<ClassDeclaration>(decl), bindings));
         case DeclarationKind::InterfaceDeclaration:
           return todo_.FinishAction(arena_->New<InterfaceType>(
-              &cast<InterfaceDeclaration>(decl), generic_args, witnesses));
+              &cast<InterfaceDeclaration>(decl), bindings));
         default:
           CARBON_FATAL() << "unknown kind of ParameterizedEntityName " << decl;
       }
@@ -751,7 +770,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           ++i;
         }
         return todo_.FinishAction(arena_->New<ImplWitness>(
-            &generic_witness->declaration(), inst_impl.type_args(), witnesses));
+            &generic_witness->declaration(),
+            arena_->New<Bindings>(inst_impl.type_args(),
+                                  std::move(witnesses))));
       }
     }
     case ExpressionKind::IndexExpression: {
@@ -1000,7 +1021,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           }
         }
         return CallFunction(call, act.results()[0], act.results()[1],
-                            witnesses);
+                            std::move(witnesses));
       } else if (act.pos() == 3 + int(num_impls)) {
         if (act.results().size() < 3 + num_impls) {
           // Control fell through without explicit return.

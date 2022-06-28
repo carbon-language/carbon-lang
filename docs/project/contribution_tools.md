@@ -127,10 +127,9 @@ brew install bazelisk
 ### Clang and LLVM
 
 [Clang](https://clang.llvm.org/) and [LLVM](https://llvm.org/) are used to
-compile and link Carbon as part of its build. Their source code are also
-provided in a [third_party subtree](/third_party/llvm-project) for incorporation
-into Carbon or Carbon tools as libraries. While the subtree tracks upstream
-LLVM, the project expects the LLVM 12 release (or newer) to be installed with
+compile and link Carbon as part of its build. Bazel will also download and build
+against a specific upstream LLVM commit. While the Bazel uses upstream LLVM
+sources, the project expects the LLVM 12 release (or newer) to be installed with
 Clang and other tools in your `PATH` for use in building Carbon itself.
 
 Our recommended way of installing is:

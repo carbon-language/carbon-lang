@@ -44,7 +44,7 @@ cc_library(
     deps = [
         ":syntax",
         "//common:error",
-        "//explorer/ast:declaration",
+        "//explorer/ast",
         "//explorer/common:arena",
         "//explorer/common:nonnull",
     ],
@@ -53,6 +53,9 @@ cc_library(
 cc_library(
     name = "syntax",
     srcs = [
+        "lex_helper.h",
+        "lex_scan_helper.cpp",
+        "lex_scan_helper.h",
         "lexer.cpp",
         "lexer.h",
         "parse.cpp",
@@ -78,8 +81,6 @@ cc_library(
         "//common:ostream",
         "//common:string_helpers",
         "//explorer/ast",
-        "//explorer/ast:declaration",
-        "//explorer/ast:expression",
         "//explorer/ast:paren_contents",
         "//explorer/ast:value_category",
         "//explorer/common:arena",

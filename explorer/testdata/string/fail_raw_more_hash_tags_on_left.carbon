@@ -10,10 +10,15 @@
 
 package ExplorerTest api;
 
-fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/string/fail_newline.carbon:[[@LINE+2]]: missing closing quote in single-line string: "new
+fn CompareStr(s: String) -> i32 {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/string/fail_raw_more_hash_tags_on_left.carbon:[[@LINE+2]]: missing closing quote in single-line string: ##"str"#) {
   // CHECK-EMPTY:
-  Print("new
-line");
-  return 0;
+  if (s == ##"str"#) {
+    return 0;
+  }
+  return 1;
+}
+
+fn Main() -> i32 {
+  return CompareStr("str");
 }
