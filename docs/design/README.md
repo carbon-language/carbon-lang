@@ -84,7 +84,16 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Generic type equality and `observe` declarations](#generic-type-equality-and-observe-declarations)
     -   [Operator overloading](#operator-overloading)
         -   [Common type](#common-type)
--   [Bidirectional interoperability with C/C++](#bidirectional-interoperability-with-cc)
+-   [Bidirectional interoperability with C and C++](#bidirectional-interoperability-with-c-and-c)
+    -   [Goals](#goals)
+    -   [Non-goals](#non-goals)
+    -   [Importing and `#include`](#importing-and-include)
+    -   [ABI and dynamic linking](#abi-and-dynamic-linking)
+    -   [Operator overloading](#operator-overloading-1)
+    -   [Templates](#templates)
+    -   [Standard types](#standard-types)
+    -   [Inheritance](#inheritance-1)
+    -   [Enums](#enums)
 -   [Unfinished tales](#unfinished-tales)
     -   [Safety](#safety)
     -   [Pattern matching as function overload resolution](#pattern-matching-as-function-overload-resolution)
@@ -452,6 +461,10 @@ type `Optional(T*)`.
 
 Pointers are the main Carbon mechanism for allowing a function to modify a
 variable of the caller.
+
+**TODO:** Perhaps Carbon will have
+[stricter pointer provenance](https://www.ralfj.de/blog/2022/04/11/provenance-exposed.html)
+or restrictions on casts between pointers and integers.
 
 > References:
 >
@@ -1071,7 +1084,7 @@ This is instead of
 
 #### `match`
 
-`match` is a control flow similar to `switch` of C/C++ and mirrors similar
+`match` is a control flow similar to `switch` of C and C++ and mirrors similar
 constructs in other languages, such as Swift. The `match` keyword is followed by
 an expression in parentheses, whose value is matched against the `case`
 declarations, each of which contains a [refutable pattern](#refutable-patterns),
@@ -1553,7 +1566,7 @@ This type can be used from another package:
 ```carbon
 package ExampleUser;
 
-import Geometry library("OneSide");
+import Geometry library "OneSide";
 
 fn Foo(Geometry.Shapes.Flat.Circle circle) { ... }
 ```
@@ -2179,6 +2192,8 @@ The interfaces that correspond to each operator are given by:
         [`As(U)`](expressions/as_expressions.md#extensibility) interface
     -   Implicit conversions use
         [`ImplicitAs(U)`](expressions/implicit_conversions.md#extensibility)
+-   **TODO:** [Assignment](#assignment-statements): `x = y`, `++x`, `x += y`,
+    and so on
 -   **TODO:** Dereference: `*p`
 -   **TODO:** Indexing: `a[3]`
 -   **TODO:** Function call: `f(4)`
@@ -2243,17 +2258,283 @@ The common type is required to be a type that both types have an
 > -   Question-for-leads issue
 >     [#1077: find a way to permit impls of CommonTypeWith where the LHS and RHS type overlap](https://github.com/carbon-language/carbon-lang/issues/1077)
 
-## Bidirectional interoperability with C/C++
+## Bidirectional interoperability with C and C++
 
-> **TODO:** Needs a detailed design and a high level summary provided inline.
+Interoperability, or _interop_, is the ability to call C and C++ code from
+Carbon code and the other way around. This ability achieves two goals:
+
+-   Allows sharing a code and library ecosystem with C and C++.
+-   Allows incremental migration to Carbon from C and C++.
+
+Carbon's approach to interopp is most similar to
+[Java/Kotlin interop](interoperability/philosophy_and_goals.md#other-interoperability-layers),
+where the two languages are different, but share enough of runtime model that
+data from one side can be used from the other. For example, C++ and Carbon will
+use the same
+[memory model](https://en.cppreference.com/w/cpp/language/memory_model).
+
+The design for interoperability between Carbon and C++ hinges on:
+
+1.  The ability to interoperate with a wide variety of code, such as
+    classes/structs and
+    [templates](<https://en.wikipedia.org/wiki/Template_(C%2B%2B)>), not just
+    free functions.
+2.  A willingness to expose the idioms of C++ into Carbon code, and the other
+    way around, when necessary to maximize performance of the interoperability
+    layer.
+3.  The use of wrappers and generic programming, including templates, to
+    minimize or eliminate runtime overhead.
+
+This feature will have some restrictions; only a subset of Carbon APIs will be
+available to C++ and a subset of C++ APIs will be available to Carbon.
+
+-   To achieve simplification in Carbon, its programming model will exclude some
+    rarely used and complex features of C++. For example, there will be
+    limitations on
+    [multiple inheritance](https://en.wikipedia.org/wiki/Multiple_inheritance).
+-   C or C++ features that compromise the performance of code that don't use
+    that feature, like
+    [RTTI](https://en.wikipedia.org/wiki/Run-time_type_information) and
+    [exceptions](https://en.wikipedia.org/wiki/Exception_handling), are in
+    particular subject to revision in Carbon.
 
 > References:
 >
 > -   [Bidirectional interoperability with C/C++](interoperability/README.md)
 > -   Proposal
 >     [#175: C++ interoperability goals](https://github.com/carbon-language/carbon-lang/pull/175)
+
+### Goals
+
+The [goals for interop](interoperability/philosophy_and_goals.md#goals) include:
+
+-   [Support mixing Carbon and C++ toolchains](interoperability/philosophy_and_goals.md#support-mixing-carbon-and-c-toolchains)
+-   [Compatibility with the C++ memory model](interoperability/philosophy_and_goals.md#compatibility-with-the-c-memory-model)
+-   [Minimize bridge code](interoperability/philosophy_and_goals.md#minimize-bridge-code)
+-   [Unsurprising mappings between C++ and Carbon types](interoperability/philosophy_and_goals.md#unsurprising-mappings-between-c-and-carbon-types)
+-   [Allow C++ bridge code in Carbon files](interoperability/philosophy_and_goals.md#allow-c-bridge-code-in-carbon-files)
+-   [Carbon inheritance from C++ types](interoperability/philosophy_and_goals.md#carbon-inheritance-from-c-types)
+-   [Support use of advanced C++ features](interoperability/philosophy_and_goals.md#support-use-of-advanced-c-features)
+-   [Support basic C interoperability](interoperability/philosophy_and_goals.md#support-basic-c-interoperability)
+
+> References:
 >
-> **TODO:** References need to be evolved.
+> -   [Interoperability: Goals](interoperability/philosophy_and_goals.md#goals)
+
+### Non-goals
+
+The [non-goals for interop](interoperability/philosophy_and_goals.md#non-goals)
+include:
+
+-   [Full parity between a Carbon-only toolchain and mixing C++/Carbon toolchains](interoperability/philosophy_and_goals.md#full-parity-between-a-carbon-only-toolchain-and-mixing-ccarbon-toolchains)
+-   [Never require bridge code](interoperability/philosophy_and_goals.md#never-require-bridge-code)
+-   [Convert all C++ types to Carbon types](interoperability/philosophy_and_goals.md#convert-all-c-types-to-carbon-types)
+-   [Support for C++ exceptions without bridge code](interoperability/philosophy_and_goals.md#support-for-c-exceptions-without-bridge-code)
+-   [Cross-language metaprogramming](interoperability/philosophy_and_goals.md#cross-language-metaprogramming)
+-   [Offer equivalent support for languages other than C++](interoperability/philosophy_and_goals.md#offer-equivalent-support-for-languages-other-than-c)
+
+> References:
+>
+> -   [Interoperability: Non-goals](interoperability/philosophy_and_goals.md#non-goals)
+
+### Importing and `#include`
+
+A C++ library header file may be [imported](#packages-libraries-namespaces) into
+Carbon using an `import` declaration of the special `Cpp` package.
+
+```carbon
+// like `#include "circle.h"` in C++
+import Cpp library "circle.h"
+```
+
+This adds the names from `circle.h` into the `Cpp` namespace. If `circle.h`
+defines some names in a `namespace shapes { ... }` scope, those will be found in
+Carbon's `Cpp.shapes` namespace.
+
+In the other direction, Carbon packages can export a header file to be
+`#include`d from C++ files.
+
+```c++
+// like `import Geometry` in Carbon
+#include "geometry.carbon.h"
+```
+
+Generally Carbon entities will be usable from C++ and C++ entities will be
+usable from Carbon. This includes types, function, and constants. Some entities,
+such as Carbon interfaces, won't be able to be translated directly.
+
+C and C++ macros that are defining constants will be imported as constants.
+Otherwise, C and C++ macros will be unavailable in Carbon. C and C++ `typedef`s
+would be translated into type constants, as if declared using a
+[`let`](#constant-let-declarations).
+
+Carbon functions and types that satisfy some restrictions may be annotated as
+exported to C as well, like C++'s
+[`extern "C"`](https://en.wikipedia.org/wiki/Compatibility_of_C_and_C%2B%2B#Linking_C_and_C++_code)
+marker.
+
+### ABI and dynamic linking
+
+Carbon itself will not have a stable ABI for the language as a whole, and most
+language features will be designed around not having any ABI stability. Instead,
+we expect to add dedicated language features that are specifically designed to
+provide an ABI-stable boundary between two separate parts of a Carbon program.
+These ABI-resilient language features and API boundaries will be opt-in and
+explicit. They may also have functionality restrictions to make them easy to
+implement with strong ABI resilience.
+
+When interoperating with already compiled C++ object code or shared libraries,
+the C++ interop may be significantly less feature rich than otherwise. This is
+an open area for us to explore, but we expect to require re-compiling C++ code
+in order to get the full ergonomic and performance benefits when interoperating
+with Carbon. For example, recompilation lets us ensure Carbon and C++ can use
+the same representation for key vocabulary types.
+
+However, we expect to have full support for the C ABI when interoperating with
+already-compiled C object code or shared libraries. We expect Carbon's bridge
+code functionality to cover similar use cases as C++'s
+[`extern "C"`](https://en.wikipedia.org/wiki/Compatibility_of_C_and_C%2B%2B#Linking_C_and_C++_code)
+marker in order to provide full bi-directional support here. The functionality
+available across this interop boundary will of course be restricted to what is
+expressible in the C ABI, and types may need explicit markers to have guaranteed
+ABI compatibility.
+
+### Operator overloading
+
+[Operator overloading](#operator-overloading) is supported in Carbon, but is
+done by [implementing an interface](#interfaces-and-implementations) instead of
+defining a method or nonmember function as in C++.
+
+Carbon types implementing an operator overload using an interface should get the
+corresponding operator overload in C++. So implementing `ModWith(U)` in Carbon
+for a type effectively implements `operator%` in C++ for that type. This also
+works in the other direction, so C++ types implementing an operator overload are
+automatically considered to implement the corresponding Carbon interface. So
+implementing `operator%` in C++ for a type also implements interface
+`ModWith(U)` in Carbon. However, there may be edge cases around implicit
+conversions or overload selection that don't map completely into Carbon.
+
+In some cases, the operation might be written differently in the two languages.
+In those cases, they are matched according to which operation has the most
+similar semantics rather than using the same symbols. For example, the `^x`
+operation and `BitComplement` interface in Carbon corresponds to the `~x`
+operation and `operator~` function in C++. Similarly, the `ImplicitAs(U)` Carbon
+interface corresponds to implicit conversions in C++, which can be written in
+multiple different ways. Other
+[C++ customization points](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html)
+like `swap` will correspond to a Carbon interface, on a case-by-case basis.
+
+Some operators will only exist or be overridable in C++, such as logical
+operators or the comma operator. In the unlikely situation where those operators
+need to be overridden for a Carbon type, that can be done with a nonmember C++
+function.
+
+Carbon intefaces with no C++ equivalent, such as
+[`CommonTypeWith(U)`](#common-type), may be implemented for C++ types externally
+in Carbon code. To satisfy the orphan rule
+([1](generics/details.md#impl-lookup), [2](generics/details.md#orphan-rule)),
+each C++ library will have a corresponding Carbon wrapper library that must be
+imported instead of the C++ library if the Carbon wrapper exists. **TODO:**
+Perhaps it will automatically be imported, so a wrapper may be added without
+requiring changes to importers?
+
+### Templates
+
+Carbon supports both
+[checked and template generics](#checked-and-template-parameters). This provides
+a migration path for C++ template code:
+
+-   C++ template -> Carbon template: This involves migrating the code from C++
+    to Carbon. If that migration is faithful, the change should be transparent
+    to callers.
+-   -> Carbon template with constraints: Constraints may be added one at a time.
+    Adding a constraint never changes the meaning of the code as long as it
+    continues to compile. Compile errors will point to types for which an
+    implementation of missing interfaces is needed. A temporary template
+    implementation of that interface can act as a bridge during the transition.
+-   -> Carbon checked generic: Once all callers work after all constraints have
+    been added, the template parameter may be switched to a checked generic.
+
+Carbon will also provide direct interop with C++ templates in many ways:
+
+-   Ability to call C++ templates and use C++ templated types from Carbon.
+-   Ability to instantiate a C++ template with a Carbon type.
+-   Ability to instantiate a Carbon generic with a C++ type.
+
+We expect the best interop in these areas to be based on a Carbon-provided C++
+toolchain. However, even when using Carbon's generated C++ headers for interop,
+we will include the ability where possible to use a Carbon generic from C++ as
+if it were a C++ template.
+
+### Standard types
+
+The Carbon integer types, like `i32` and `u64`, are considered equal to the
+corresponding fixed-width integer types in C++, like `int32_t` and `uint64_t`,
+provided by `<stdint.h>` or `<cstdint>`. The basic C and C++ integer types like
+`int`, `char`, and `unsigned long` are available in Carbon inside the `Cpp`
+namespace given an `import Cpp;` declaration, with names like `Cpp.int`,
+`Cpp.char`, and `Cpp.unsigned_long`. C++ types are considered different if C++
+considers them different, so C++ overloads are resolved the same way. Carbon
+[conventions for implicit conversions between integer types](expressions/implicit_conversions.md#data-types)
+apply here, allowing them whenever the numerical value for all inputs may be
+preserved by the conversion.
+
+Other C and C++ types are equal to Carbon types as follows:
+
+| C or C++ | Carbon         |
+| -------- | -------------- |
+| `bool`   | `bool`         |
+| `float`  | `f32`          |
+| `double` | `f64`          |
+| `T*`     | `Optional(T*)` |
+| `T[4]`   | `[T; 4]`       |
+
+Further, C++ reference types like `T&` will be translated to `T*` in Carbon,
+which is Carbon's non-null pointer type.
+
+Carbon will work to have idiomatic vocabulary _view_ types for common data
+structures, like `std::string_view` and `std::span`, map transparently between
+C++ and the Carbon equivalents. This will include data layout so that even
+pointers to these types translate seamlessly, contingent on a suitable C++ ABI
+for those types, potentially by re-compiling the C++ code with a customized ABI.
+We will also explore how to expand coverage to similar view types in other
+libraries.
+
+However, Carbon's containers will be distinct from the C++ standard library
+containers in order to maximize our ability to improve performance and leverage
+language features like checked generics in their design and implementation.
+
+Where possible, we will also try to provide implementations of Carbon's standard
+library container _interfaces_ for the relevant C++ container types so that they
+can be directly used with generic Carbon code. This should allow generic code in
+Carbon to work seamlessly with both Carbon and C++ containers without
+performance loss or constraining the Carbon container implementations. In the
+other direction, Carbon containers will satisfy C++ container requirements, so
+templated C++ code can operate directly on Carbon containers as well.
+
+### Inheritance
+
+[Carbon has single inheritance](#inheritance) allowing C++ classes using
+inheritance to be migrated. The data representation will be consistent so that
+Carbon classes may inherit from C++ classes, and the other way around, even with
+virtual methods.
+
+C++ [multiple inheritance](https://en.wikipedia.org/wiki/Multiple_inheritance)
+and [CRTP](https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern)
+will be migrated using a combination of Carbon features. Carbon mixins support
+implementation reuse and Carbon interfaces allow a type to implement multiple
+APIs. However, there may be limits on the degree of interop available with
+multiple inheritance across the C++ <-> Carbon boundaries.
+
+Carbon dyn-safe interfaces may be exported to C++ as an
+[abstract base class](<https://en.wikipedia.org/wiki/Class_(computer_programming)#Abstract_and_concrete>).
+The reverse operation is also possible using a proxy object implementing a C++
+abstract base class and holding a pointer to a type implementing the
+corresponding interface.
+
+### Enums
+
+> **TODO**
 
 ## Unfinished tales
 
@@ -2342,7 +2623,7 @@ This leads to Carbon's incremental path to safety:
 
 Carbon provides metaprogramming facilities that look similar to regular Carbon
 code. These are structured, and do not offer arbitrary inclusion or
-preprocessing of source text such as C/C++ does.
+preprocessing of source text such as C and C++ do.
 
 > References: [Metaprogramming](metaprogramming.md)
 

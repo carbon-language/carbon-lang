@@ -4,20 +4,26 @@
 
 package(default_visibility = ["//explorer:__subpackages__"])
 
-cc_library(
-    name = "ast",
-    hdrs = ["ast.h"],
-    deps = [
-        ":declaration",
-        ":member_impl",
-        ":library_name",
-        "//explorer/common:nonnull",
+genrule(
+    name = "ast_rtti",
+    srcs = ["ast_rtti.txt"],
+    outs = [
+        "ast_rtti.h",
+        "ast_rtti.cpp",
     ],
+    cmd = "./$(location //explorer:gen_rtti)" +
+          " $(location ast_rtti.txt)" +
+          " $(location ast_rtti.h) $(location ast_rtti.cpp)" +
+          " $(rootpath ast_rtti.h)",
+    tools = ["//explorer:gen_rtti"],
 )
 
 cc_library(
     name = "ast_node",
-    srcs = ["ast_node.cpp", "ast_rtti.cpp",],
+    srcs = [
+        "ast_node.cpp",
+        "ast_rtti.cpp",
+    ],
     hdrs = [
         "ast_node.h",
         "ast_rtti.h",
@@ -28,15 +34,41 @@ cc_library(
     ],
 )
 
-genrule(
-    name = "ast_rtti",
-    srcs = ["ast_rtti.txt"],
-    outs = ["ast_rtti.h", "ast_rtti.cpp"],
-    cmd = "./$(location //explorer:gen_rtti)" +
-          " $(location ast_rtti.txt)" +
-          " $(location ast_rtti.h) $(location ast_rtti.cpp)" +
-          " $(rootpath ast_rtti.h)",
-    tools = ["//explorer:gen_rtti"],
+cc_library(
+    name = "ast",
+    srcs = [
+        "declaration.cpp",
+        "expression.cpp",
+        "member.cpp",
+        "pattern.cpp",
+        "statement.cpp",
+    ],
+    hdrs = [
+        "ast.h",
+        "declaration.h",
+        "expression.h",
+        "impl_binding.h",
+        "member.h",
+        "pattern.h",
+        "return_term.h",
+        "statement.h",
+    ],
+    deps = [
+        ":ast_node",
+        ":bindings",
+        ":library_name",
+        ":paren_contents",
+        ":static_scope",
+        ":value_category",
+        "//common:check",
+        "//common:indirect_value",
+        "//common:ostream",
+        "//explorer/common:arena",
+        "//explorer/common:error_builders",
+        "//explorer/common:nonnull",
+        "//explorer/common:source_location",
+        "@llvm-project//llvm:Support",
+    ],
 )
 
 cc_library(
@@ -50,9 +82,6 @@ cc_library(
     deps = [
         ":ast",
         ":ast_node",
-        ":declaration",
-        ":expression",
-        ":statement",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -62,30 +91,11 @@ cc_test(
     name = "ast_test_matchers_test",
     srcs = ["ast_test_matchers_test.cpp"],
     deps = [
+        ":ast",
         ":ast_test_matchers",
-        ":declaration",
-        ":expression",
-        ":statement",
         "//common:gtest_main",
         "//explorer/common:arena",
         "@com_google_googletest//:gtest",
-    ],
-)
-
-cc_library(
-    name = "impl_binding",
-    hdrs = [
-        "impl_binding.h",
-    ],
-    deps = [
-        ":ast_node",
-        ":expression",
-        ":value_category",
-        "//common:check",
-        "//common:ostream",
-        "//explorer/common:nonnull",
-        "//explorer/common:source_location",
-        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -98,89 +108,11 @@ cc_library(
     ],
 )
 
-cc_library(
-    name = "declaration",
-    srcs = ["declaration.cpp"],
-    hdrs = [
-        "declaration.h",
-    ],
-    deps = [
-        ":ast_node",
-        ":impl_binding",
-        ":expression",
-        ":return_term",
-        ":statement",
-        ":static_scope",
-        ":value_category",
-        "//common:ostream",
-        "//explorer/common:nonnull",
-        "//explorer/common:source_location",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "member",
-    hdrs = [
-        "member.h",
-    ],
-    deps = [
-        "//explorer/common:nonnull",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-# TODO: This is split out to resolve a cyclic implementation dependency between
-# this and :declaration. Consider folding all of the "ast" target together.
-cc_library(
-    name = "member_impl",
-    srcs = ["member.cpp"],
-    deps = [
-        ":declaration",
-        ":member",
-        "//explorer/common:nonnull",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "return_term",
-    hdrs = ["return_term.h"],
-    deps = [
-        ":expression",
-        "//common:check",
-        "//common:ostream",
-        "//explorer/common:nonnull",
-        "//explorer/common:source_location",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "expression",
-    srcs = ["expression.cpp", "pattern.cpp"],
-    hdrs = ["expression.h", "pattern.h"],
-    deps = [
-        ":ast_node",
-        ":bindings",
-        ":member",
-        ":paren_contents",
-        ":static_scope",
-        ":value_category",
-        "//common:indirect_value",
-        "//common:ostream",
-        "//explorer/common:arena",
-        "//explorer/common:error_builders",
-        "//explorer/common:source_location",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
 cc_test(
     name = "expression_test",
     srcs = ["expression_test.cpp"],
     deps = [
-        ":expression",
+        ":ast",
         ":paren_contents",
         "//common:gtest_main",
         "//explorer/common:arena",
@@ -207,7 +139,7 @@ cc_test(
     name = "pattern_test",
     srcs = ["pattern_test.cpp"],
     deps = [
-        ":expression",
+        ":ast",
         ":paren_contents",
         "//common:gtest_main",
         "//explorer/common:arena",
@@ -227,24 +159,6 @@ cc_library(
         "//common:error",
         "//explorer/common:error_builders",
         "//explorer/common:nonnull",
-        "//explorer/common:source_location",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "statement",
-    srcs = ["statement.cpp"],
-    hdrs = ["statement.h"],
-    deps = [
-        ":ast_node",
-        ":expression",
-        ":return_term",
-        ":static_scope",
-        ":value_category",
-        "//common:check",
-        "//common:ostream",
-        "//explorer/common:arena",
         "//explorer/common:source_location",
         "@llvm-project//llvm:Support",
     ],
