@@ -2387,7 +2387,8 @@ When interoperating with already compiled C++ object code or shared libraries,
 the C++ interop may be significantly less feature rich than otherwise. This is
 an open area for us to explore, but we expect to require re-compiling C++ code
 in order to get the full ergonomic and performance benefits when interoperating
-with Carbon. For example, recompilation lets us ensure Carbon and C++ can use the same representation for key vocabulary types.
+with Carbon. For example, recompilation lets us ensure Carbon and C++ can use
+the same representation for key vocabulary types.
 
 However, we expect to have full support for the C ABI when interoperating with
 already-compiled C object code or shared libraries. We expect Carbon's bridge
