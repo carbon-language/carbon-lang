@@ -71,6 +71,7 @@ jobs:
       # issues fetching and installing the toolchain.
       - name: Setup LLVM and Clang
         run: |
+          brew update
           brew install --force-bottle --only-dependencies llvm
           brew install --force-bottle --force --verbose llvm
           brew info llvm
