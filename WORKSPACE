@@ -86,14 +86,14 @@ http_archive(
 
 # We pin to specific upstream commits and try to track top-of-tree reasonably
 # closely rather than pinning to a specific release.
-llvm_version = "e2f627e5e3855309f3a7421f6786b401efb6b7c7"
+llvm_version = "aa58b7b1e30fbbd9c8c2bf6ba291f1742f53afed"
 
 http_archive(
     name = "llvm-raw",
     build_file_content = "# empty",
     patch_args = ["-p1"],
     patches = ["@//:bazel/llvm-patches/0001-Patch-for-mallinfo2-when-using-Bazel-build-system.patch"],
-    sha256 = "228c37eecf8a8027ab32ac466b988712136191a0076d80750c646a3a9b1dc5d2",
+    sha256 = "06b852838ad07aade4a3365c656b59c5d63ddd2f52a787b45c3bc23121d1fd5c",
     strip_prefix = "llvm-project-%s" % llvm_version,
     urls = ["https://github.com/llvm/llvm-project/archive/%s.tar.gz" % llvm_version],
 )
