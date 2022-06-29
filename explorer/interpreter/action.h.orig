@@ -81,7 +81,6 @@ class Action {
   enum class Kind {
     LValAction,
     ExpressionAction,
-    ReturnVarAction,
     PatternAction,
     StatementAction,
     DeclarationAction,
@@ -181,32 +180,6 @@ class ExpressionAction : public Action {
 
  private:
   Nonnull<const Expression*> expression_;
-};
-
-// An Action which implements evaluation of the definition of returned var. The
-// result is expressed as a Value.
-class ReturnVarAction : public Action {
- public:
-  ReturnVarAction(ValueNodeView value_node, SourceLocation source_location)
-      : Action(Kind::ReturnVarAction),
-        value_node_(std::move(value_node)),
-        return_source_location_(source_location) {}
-
-  static auto classof(const Action* action) -> bool {
-    return action->kind() == Kind::ReturnVarAction;
-  }
-
-  // The value node of the returned var definition this Action evaluates.
-  auto value_node() const -> const ValueNodeView& { return value_node_; }
-
-  // The source location of the ReturnVar statement this Action evaluates.
-  auto return_source_location() const -> SourceLocation {
-    return return_source_location_;
-  };
-
- private:
-  const ValueNodeView value_node_;
-  const SourceLocation return_source_location_;
 };
 
 // An Action which implements evaluation of a Pattern. The result is expressed

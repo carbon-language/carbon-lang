@@ -173,6 +173,15 @@ class StaticScope {
   auto Resolve(const std::string& name, SourceLocation source_loc) const
       -> ErrorOr<ValueNodeView>;
 
+  // Returns the value node of the BindingPattern of the returned var definition
+  // if it exists in the ancestor graph.
+  auto ResolveReturned() const -> std::optional<ValueNodeView>;
+
+  // Adds the value node of the BindingPattern of the returned var definition to
+  // this scope. Throws a compilation error when there is an existing returned
+  // var in the ancestor graph.
+  auto AddReturnedVar(ValueNodeView returned_var_def_view) -> ErrorOr<Success>;
+
  private:
   // Equivalent to Resolve, but returns `nullopt` instead of raising an error
   // if no definition can be found. Still raises a compilation error if more
@@ -189,6 +198,9 @@ class StaticScope {
 
   // A list of scopes used for name lookup within this scope.
   std::vector<Nonnull<const StaticScope*>> parent_scopes_;
+
+  // Stores the value node of the BindingPattern of the returned var definition.
+  std::optional<ValueNodeView> returned_var_def_view_;
 };
 
 }  // namespace Carbon

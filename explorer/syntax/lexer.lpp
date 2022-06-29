@@ -79,6 +79,7 @@ PACKAGE              "package"
 PERIOD               "."
 PLUS                 "+"
 RETURN               "return"
+RETURNED             "returned"
 RIGHT_CURLY_BRACE    "}"
 RIGHT_PARENTHESIS    ")"
 RIGHT_SQUARE_BRACKET "]"
@@ -164,6 +165,7 @@ operand_start         [(A-Za-z0-9_\"]
 {PACKAGE}             { return CARBON_SIMPLE_TOKEN(PACKAGE);             }
 {PERIOD}              { return CARBON_SIMPLE_TOKEN(PERIOD);              }
 {PLUS}                { return CARBON_SIMPLE_TOKEN(PLUS);                }
+{RETURNED}            { return CARBON_SIMPLE_TOKEN(RETURNED);            }
 {RETURN}              { return CARBON_SIMPLE_TOKEN(RETURN);              }
 {RUN}                 { return CARBON_SIMPLE_TOKEN(RUN);                 }
 {SELF}                { return CARBON_SIMPLE_TOKEN(SELF);                }

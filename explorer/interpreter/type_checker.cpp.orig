@@ -2630,26 +2630,8 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       }
       return Success();
     }
-    case StatementKind::ReturnVar: {
-      auto& ret = cast<ReturnVar>(*s);
-      ReturnTerm& return_term = ret.function().return_term();
-      if (return_term.is_auto()) {
-        return_term.set_static_type(&ret.value_node().static_type());
-      } else {
-        CARBON_CHECK(IsConcreteType(&return_term.static_type()));
-        CARBON_CHECK(IsConcreteType(&ret.value_node().static_type()));
-        if (!TypeEqual(&return_term.static_type(),
-                       &ret.value_node().static_type())) {
-          return CompilationError(ret.value_node().base().source_loc())
-                 << "type of returned var `" << ret.value_node().static_type()
-                 << "` does not match return type `"
-                 << return_term.static_type() << "`";
-        }
-      }
-      return Success();
-    }
-    case StatementKind::ReturnExpression: {
-      auto& ret = cast<ReturnExpression>(*s);
+    case StatementKind::Return: {
+      auto& ret = cast<Return>(*s);
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&ret.expression(), impl_scope));
       ReturnTerm& return_term = ret.function().return_term();
       if (return_term.is_auto()) {
@@ -2746,8 +2728,7 @@ auto TypeChecker::ExpectReturnOnAllPaths(
           ExpectReturnOnAllPaths(if_stmt.else_block(), stmt->source_loc()));
       return Success();
     }
-    case StatementKind::ReturnVar:  // Fall through.
-    case StatementKind::ReturnExpression:
+    case StatementKind::Return:
       return Success();
     case StatementKind::Continuation:
     case StatementKind::Run:
