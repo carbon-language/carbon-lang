@@ -8,7 +8,6 @@
 
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/expression.h"
-#include "explorer/ast/pattern.h"
 #include "llvm/Support/Casting.h"
 
 namespace Carbon {

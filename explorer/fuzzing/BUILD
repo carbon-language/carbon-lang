@@ -14,7 +14,6 @@ cc_library(
         "//explorer/ast",
         "//explorer/ast:declaration",
         "//explorer/ast:expression",
-        "//explorer/ast:pattern",
         "@llvm-project//llvm:Support",
     ],
 )

@@ -6,14 +6,12 @@
 #define CARBON_EXPLORER_INTERPRETER_ACTION_H_
 
 #include <map>
-#include <utility>
 #include <vector>
 
 #include "common/ostream.h"
 #include "explorer/ast/expression.h"
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/statement.h"
-#include "explorer/common/source_location.h"
 #include "explorer/interpreter/dictionary.h"
 #include "explorer/interpreter/heap_allocation_interface.h"
 #include "explorer/interpreter/stack.h"

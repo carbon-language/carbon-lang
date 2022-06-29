@@ -16,7 +16,7 @@ fn IntDiff(a: i32, b: i32) -> i32 {
     returned var ret: i32 = a - b;
     return var;
   } else {
-    returned var ret: i32 = b - a;
+    returned var ret2: i32 = b - a;
     return var;
   }
 }

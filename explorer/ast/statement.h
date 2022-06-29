@@ -215,8 +215,8 @@ class ReturnVar : public Return {
     return InheritsFromReturnVar(node->kind());
   }
 
-  // Returns the ValueNodeView of the definition of the returned var. Cannot be
-  // called before name resolution.
+  // Returns the value node of the BindingPattern of the returned var
+  // definition. Cannot be called before name resolution.
   auto value_node() const -> const ValueNodeView& { return *value_node_; }
 
   // Can only be called once, by ResolveNames.
@@ -226,7 +226,7 @@ class ReturnVar : public Return {
   }
 
  private:
-  // The value
+  // The value node of the BindingPattern of the returned var definition.
   std::optional<ValueNodeView> value_node_;
 };
 
