@@ -25,15 +25,10 @@ load(
     "sysroot_dir",
 )
 
-all_compile_actions = [
+all_c_compile_actions = [
     ACTION_NAMES.c_compile,
-    ACTION_NAMES.cpp_compile,
-    ACTION_NAMES.linkstamp_compile,
     ACTION_NAMES.assemble,
     ACTION_NAMES.preprocess_assemble,
-    ACTION_NAMES.cpp_header_parsing,
-    ACTION_NAMES.cpp_module_compile,
-    ACTION_NAMES.cpp_module_codegen,
 ]
 
 all_cpp_compile_actions = [
@@ -43,6 +38,8 @@ all_cpp_compile_actions = [
     ACTION_NAMES.cpp_module_compile,
     ACTION_NAMES.cpp_module_codegen,
 ]
+
+all_compile_actions = all_c_compile_actions + all_cpp_compile_actions
 
 preprocessor_compile_actions = [
     ACTION_NAMES.c_compile,
@@ -84,7 +81,7 @@ def _impl(ctx):
 
     action_configs = [
         action_config(action_name = name, enabled = True, tools = [tool(path = llvm_bindir + "/clang")])
-        for name in [ACTION_NAMES.c_compile]
+        for name in all_c_compile_actions
     ] + [
         action_config(action_name = name, enabled = True, tools = [tool(path = llvm_bindir + "/clang++")])
         for name in all_cpp_compile_actions
