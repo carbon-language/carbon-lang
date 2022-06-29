@@ -10,13 +10,9 @@
 
 package ExplorerTest api;
 
-// Test that a global variable may not depend on a later global.
-// Error expected.
-
-// CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/global_variable/fail_init_order.carbon:[[@LINE+1]]: could not find `y: i32`
-var x: i32 = y;
-
-var y: i32 = 0;
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/name_lookup/fail_class_use_in_params.carbon:[[@LINE+1]]: 'A' is not usable until after it has been completely declared
+class A(X:! A(i32)) {
+}
 
 fn Main() -> i32 {
   return x;

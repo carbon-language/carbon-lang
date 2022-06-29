@@ -20,15 +20,12 @@ namespace Carbon {
 
 // Adds the names exposed by the given AST node to enclosing_scope.
 static auto AddExposedNames(const Declaration& declaration,
-                            StaticScope& enclosing_scope) -> ErrorOr<Success>;
-
-static auto AddExposedNames(const Declaration& declaration,
                             StaticScope& enclosing_scope) -> ErrorOr<Success> {
   switch (declaration.kind()) {
     case DeclarationKind::InterfaceDeclaration: {
       auto& iface_decl = cast<InterfaceDeclaration>(declaration);
-      CARBON_RETURN_IF_ERROR(
-          enclosing_scope.Add(iface_decl.name(), &iface_decl));
+      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(iface_decl.name(), &iface_decl,
+                                                 /*usable=*/false));
       break;
     }
     case DeclarationKind::ImplDeclaration: {
@@ -37,13 +34,14 @@ static auto AddExposedNames(const Declaration& declaration,
     }
     case DeclarationKind::FunctionDeclaration: {
       auto& func = cast<FunctionDeclaration>(declaration);
-      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(func.name(), &func));
+      CARBON_RETURN_IF_ERROR(
+          enclosing_scope.Add(func.name(), &func, /*usable=*/false));
       break;
     }
     case DeclarationKind::ClassDeclaration: {
       auto& class_decl = cast<ClassDeclaration>(declaration);
-      CARBON_RETURN_IF_ERROR(
-          enclosing_scope.Add(class_decl.name(), &class_decl));
+      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(class_decl.name(), &class_decl,
+                                                 /*usable=*/false));
       break;
     }
     case DeclarationKind::ChoiceDeclaration: {
@@ -55,8 +53,8 @@ static auto AddExposedNames(const Declaration& declaration,
     case DeclarationKind::VariableDeclaration: {
       auto& var = cast<VariableDeclaration>(declaration);
       if (var.binding().name() != AnonymousName) {
-        CARBON_RETURN_IF_ERROR(
-            enclosing_scope.Add(var.binding().name(), &var.binding()));
+        CARBON_RETURN_IF_ERROR(enclosing_scope.Add(
+            var.binding().name(), &var.binding(), /*usable=*/false));
       }
       break;
     }
@@ -95,8 +93,18 @@ static auto ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
     -> ErrorOr<Success>;
 static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
     -> ErrorOr<Success>;
-static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
-    -> ErrorOr<Success>;
+namespace {
+  enum class FunctionBodies {
+    // Do not resolve names in function bodies.
+    Skip,
+    // Resolve names in function bodies and everywhere else.
+    Resolve,
+    // Resolve names in function bodies only.
+    Only
+  };
+}
+static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
+                         FunctionBodies bodies) -> ErrorOr<Success>;
 
 static auto ResolveNames(Expression& expression,
                          const StaticScope& enclosing_scope)
@@ -389,8 +397,8 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
   return Success();
 }
 
-static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
-    -> ErrorOr<Success> {
+static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
+                         FunctionBodies bodies) -> ErrorOr<Success> {
   switch (declaration.kind()) {
     case DeclarationKind::InterfaceDeclaration: {
       auto& iface = cast<InterfaceDeclaration>(declaration);
@@ -399,12 +407,22 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
       if (iface.params().has_value()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(**iface.params(), iface_scope));
       }
+      enclosing_scope.MarkUsable(iface.name());
       CARBON_RETURN_IF_ERROR(iface_scope.Add("Self", iface.self()));
       for (Nonnull<Declaration*> member : iface.members()) {
         CARBON_RETURN_IF_ERROR(AddExposedNames(*member, iface_scope));
       }
-      for (Nonnull<Declaration*> member : iface.members()) {
-        CARBON_RETURN_IF_ERROR(ResolveNames(*member, iface_scope));
+      if (bodies != FunctionBodies::Only) {
+        for (Nonnull<Declaration*> member : iface.members()) {
+          CARBON_RETURN_IF_ERROR(
+              ResolveNames(*member, iface_scope, FunctionBodies::Skip));
+        }
+      }
+      if (bodies != FunctionBodies::Skip) {
+        for (Nonnull<Declaration*> member : iface.members()) {
+          CARBON_RETURN_IF_ERROR(
+              ResolveNames(*member, iface_scope, FunctionBodies::Only));
+        }
       }
       break;
     }
@@ -429,8 +447,17 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
       for (Nonnull<Declaration*> member : impl.members()) {
         CARBON_RETURN_IF_ERROR(AddExposedNames(*member, impl_scope));
       }
-      for (Nonnull<Declaration*> member : impl.members()) {
-        CARBON_RETURN_IF_ERROR(ResolveNames(*member, impl_scope));
+      if (bodies != FunctionBodies::Only) {
+        for (Nonnull<Declaration*> member : impl.members()) {
+          CARBON_RETURN_IF_ERROR(
+              ResolveNames(*member, impl_scope, FunctionBodies::Skip));
+        }
+      }
+      if (bodies != FunctionBodies::Skip) {
+        for (Nonnull<Declaration*> member : impl.members()) {
+          CARBON_RETURN_IF_ERROR(
+              ResolveNames(*member, impl_scope, FunctionBodies::Only));
+        }
       }
       break;
     }
@@ -451,7 +478,8 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
         CARBON_RETURN_IF_ERROR(ResolveNames(
             **function.return_term().type_expression(), function_scope));
       }
-      if (function.body().has_value()) {
+      enclosing_scope.MarkUsable(function.name());
+      if (function.body().has_value() && bodies != FunctionBodies::Skip) {
         CARBON_RETURN_IF_ERROR(ResolveNames(**function.body(), function_scope));
       }
       break;
@@ -460,22 +488,27 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
       auto& class_decl = cast<ClassDeclaration>(declaration);
       StaticScope class_scope;
       class_scope.AddParent(&enclosing_scope);
-      CARBON_RETURN_IF_ERROR(class_scope.Add(class_decl.name(), &class_decl));
-      CARBON_RETURN_IF_ERROR(AddExposedNames(*class_decl.self(), class_scope));
       if (class_decl.type_params().has_value()) {
         CARBON_RETURN_IF_ERROR(
             ResolveNames(**class_decl.type_params(), class_scope));
       }
+      enclosing_scope.MarkUsable(class_decl.name());
+      CARBON_RETURN_IF_ERROR(AddExposedNames(*class_decl.self(), class_scope));
 
-      // TODO: Disable unqualified access of members by other members for now.
-      // Put it back later, but in a way that turns unqualified accesses
-      // into qualified ones, so that generic classes and impls
-      // behave the in the right way. -Jeremy
-      // for (Nonnull<Declaration*> member : class_decl.members()) {
-      //   AddExposedNames(*member, class_scope);
-      // }
       for (Nonnull<Declaration*> member : class_decl.members()) {
-        CARBON_RETURN_IF_ERROR(ResolveNames(*member, class_scope));
+        CARBON_RETURN_IF_ERROR(AddExposedNames(*member, class_scope));
+      }
+      if (bodies != FunctionBodies::Only) {
+        for (Nonnull<Declaration*> member : class_decl.members()) {
+          CARBON_RETURN_IF_ERROR(
+              ResolveNames(*member, class_scope, FunctionBodies::Skip));
+        }
+      }
+      if (bodies != FunctionBodies::Skip) {
+        for (Nonnull<Declaration*> member : class_decl.members()) {
+          CARBON_RETURN_IF_ERROR(
+              ResolveNames(*member, class_scope, FunctionBodies::Only));
+        }
       }
       break;
     }
@@ -527,7 +560,8 @@ auto ResolveNames(AST& ast) -> ErrorOr<Success> {
     CARBON_RETURN_IF_ERROR(AddExposedNames(*declaration, file_scope));
   }
   for (auto declaration : ast.declarations) {
-    CARBON_RETURN_IF_ERROR(ResolveNames(*declaration, file_scope));
+    CARBON_RETURN_IF_ERROR(
+        ResolveNames(*declaration, file_scope, FunctionBodies::Resolve));
   }
   return ResolveNames(**ast.main_call, file_scope);
 }
