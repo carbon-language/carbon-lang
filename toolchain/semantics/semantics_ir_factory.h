@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_IR_FACTORY_H_
 
 #include "toolchain/parser/parse_tree.h"
+#include "toolchain/semantics/parse_subtree_consumer.h"
 #include "toolchain/semantics/semantics_ir.h"
 
 namespace Carbon {
@@ -14,11 +15,13 @@ namespace Carbon {
 class SemanticsIRFactory {
  public:
   // Builds the SemanticsIR without doing any substantial semantic analysis.
-  static auto Build(const ParseTree& parse_tree) -> SemanticsIR;
+  static auto Build(const TokenizedBuffer& tokens, const ParseTree& parse_tree)
+      -> SemanticsIR;
 
  private:
-  explicit SemanticsIRFactory(const ParseTree& parse_tree)
-      : semantics_(parse_tree) {}
+  explicit SemanticsIRFactory(const TokenizedBuffer& tokens,
+                              const ParseTree& parse_tree)
+      : tokens_(&tokens), semantics_(parse_tree) {}
 
   void Build();
 
@@ -26,27 +29,48 @@ class SemanticsIRFactory {
   // otherwise checked.
   void RequireNodeEmpty(ParseTree::Node node);
 
+  // Transforms a block subtree, such as a file or CodeBlock, into its semantic
+  // nodes.
+  auto TransformBlockSubtree(ParseSubtreeConsumer& subtree,
+                             ParseNodeKind end_kind)
+      -> llvm::SmallVector<Semantics::NodeRef, 0>;
+
   // Each of these takes a parse tree node and does a transformation based on
   // its type. These functions are per ParseNodeKind.
-  auto TransformCodeBlock(ParseTree::Node node) -> Semantics::StatementBlock;
-  auto TransformDeclaredName(ParseTree::Node node) -> Semantics::DeclaredName;
-  auto TransformExpression(ParseTree::Node node) -> Semantics::Expression;
-  auto TransformExpressionStatement(ParseTree::Node node)
-      -> Semantics::Statement;
-  auto TransformFunctionDeclaration(ParseTree::Node node)
-      -> std::tuple<llvm::StringRef, Semantics::Declaration>;
-  auto TransformInfixOperator(ParseTree::Node node) -> Semantics::InfixOperator;
-  auto TransformParameterList(ParseTree::Node node)
-      -> llvm::SmallVector<Semantics::PatternBinding, 0>;
-  auto TransformPatternBinding(ParseTree::Node node)
-      -> Semantics::PatternBinding;
-  auto TransformReturnType(ParseTree::Node node) -> Semantics::Expression;
-  auto TransformReturnStatement(ParseTree::Node node) -> Semantics::Statement;
+  auto TransformCodeBlock(ParseTree::Node node)
+      -> llvm::SmallVector<Semantics::NodeRef, 0>;
+  void TransformDeclaredName(llvm::SmallVector<Semantics::NodeRef, 0>& nodes,
+                             ParseTree::Node node, int32_t target_id);
+  void TransformExpression(llvm::SmallVector<Semantics::NodeRef, 0>& nodes,
+                           ParseTree::Node node, int32_t target_id);
+  // auto TransformExpressionStatement(ParseTree::Node node)
+  //   -> Semantics::Statement;
+  void TransformFunctionDeclaration(
+      llvm::SmallVector<Semantics::NodeRef, 0>& nodes, ParseTree::Node node);
+  void TransformInfixOperator(llvm::SmallVector<Semantics::NodeRef, 0>& nodes,
+                              ParseTree::Node node, int32_t target_id);
+  // auto TransformParameterList(ParseTree::Node node)
+  //   -> llvm::SmallVector<Semantics::PatternBinding, 0>
+  // auto TransformPatternBinding(ParseTree::Node node)
+  //   -> Semantics::PatternBinding;
+  // auto TransformReturnType(ParseTree::Node node) -> Semantics::Statement;
+  void TransformReturnStatement(llvm::SmallVector<Semantics::NodeRef, 0>& nodes,
+                                ParseTree::Node node);
+
+  // Returns a unique ID for the SemanticsIR.
+  auto next_id() -> int32_t { return id_counter_++; }
 
   // Convenience accessor.
   auto parse_tree() -> const ParseTree& { return *semantics_.parse_tree_; }
 
+  // Tokens for getting data on literals.
+  const TokenizedBuffer* tokens_;
+
+  // The SemanticsIR being constructed.
   SemanticsIR semantics_;
+
+  // A counter for unique IDs.
+  int32_t id_counter_ = 0;
 };
 
 }  // namespace Carbon
