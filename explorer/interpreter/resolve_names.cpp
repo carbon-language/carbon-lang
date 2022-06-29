@@ -73,16 +73,33 @@ static auto AddExposedNames(const Declaration& declaration,
   return Success();
 }
 
+namespace {
+enum class ResolveFunctionBodies {
+  // Do not resolve names in function bodies.
+  Skip,
+  // Resolve all names. When visiting a declaration with members, resolve
+  // names in member function bodies after resolving the names in all member
+  // declarations, as if the bodies appeared after all the declarations.
+  AfterDeclarations,
+  // Resolve names in function bodies immediately. This is appropriate when
+  // the declarations of all members of enclosing classes, interfaces, and
+  // similar have already been resolved.
+  Immediately,
+};
+}  // namespace
+
 // Traverses the sub-AST rooted at the given node, resolving all names within
 // it using enclosing_scope, and updating enclosing_scope to add names to
 // it as they become available. In scopes where names are only visible below
 // their point of declaration (such as block scopes in C++), this is implemented
 // as a single pass, recursively calling ResolveNames on the elements of the
 // scope in order. In scopes where names are also visible above their point of
-// declaration (such as class scopes in C++), this requires two passes: first
+// declaration (such as class scopes in C++), this requires three passes: first
 // calling AddExposedNames on each element of the scope to populate a
 // StaticScope, and then calling ResolveNames on each element, passing it the
-// already-populated StaticScope.
+// already-populated StaticScope but skipping member function bodies, and
+// finally calling ResolvedNames again on each element, and this time resolving
+// member function bodies.
 static auto ResolveNames(Expression& expression,
                          const StaticScope& enclosing_scope)
     -> ErrorOr<Success>;
@@ -93,18 +110,8 @@ static auto ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
     -> ErrorOr<Success>;
 static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
     -> ErrorOr<Success>;
-namespace {
-  enum class FunctionBodies {
-    // Do not resolve names in function bodies.
-    Skip,
-    // Resolve names in function bodies and everywhere else.
-    Resolve,
-    // Resolve names in function bodies only.
-    Only
-  };
-}
 static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
-                         FunctionBodies bodies) -> ErrorOr<Success>;
+                         ResolveFunctionBodies bodies) -> ErrorOr<Success>;
 
 static auto ResolveNames(Expression& expression,
                          const StaticScope& enclosing_scope)
@@ -397,8 +404,29 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
   return Success();
 }
 
+static auto ResolveMemberNames(llvm::ArrayRef<Nonnull<Declaration*>> members,
+                               StaticScope& scope, ResolveFunctionBodies bodies)
+    -> ErrorOr<Success> {
+  for (Nonnull<Declaration*> member : members) {
+    CARBON_RETURN_IF_ERROR(AddExposedNames(*member, scope));
+  }
+  if (bodies != ResolveFunctionBodies::Immediately) {
+    for (Nonnull<Declaration*> member : members) {
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(*member, scope, ResolveFunctionBodies::Skip));
+    }
+  }
+  if (bodies != ResolveFunctionBodies::Skip) {
+    for (Nonnull<Declaration*> member : members) {
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(*member, scope, ResolveFunctionBodies::Immediately));
+    }
+  }
+  return Success();
+}
+
 static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
-                         FunctionBodies bodies) -> ErrorOr<Success> {
+                         ResolveFunctionBodies bodies) -> ErrorOr<Success> {
   switch (declaration.kind()) {
     case DeclarationKind::InterfaceDeclaration: {
       auto& iface = cast<InterfaceDeclaration>(declaration);
@@ -409,21 +437,8 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
       }
       enclosing_scope.MarkUsable(iface.name());
       CARBON_RETURN_IF_ERROR(iface_scope.Add("Self", iface.self()));
-      for (Nonnull<Declaration*> member : iface.members()) {
-        CARBON_RETURN_IF_ERROR(AddExposedNames(*member, iface_scope));
-      }
-      if (bodies != FunctionBodies::Only) {
-        for (Nonnull<Declaration*> member : iface.members()) {
-          CARBON_RETURN_IF_ERROR(
-              ResolveNames(*member, iface_scope, FunctionBodies::Skip));
-        }
-      }
-      if (bodies != FunctionBodies::Skip) {
-        for (Nonnull<Declaration*> member : iface.members()) {
-          CARBON_RETURN_IF_ERROR(
-              ResolveNames(*member, iface_scope, FunctionBodies::Only));
-        }
-      }
+      CARBON_RETURN_IF_ERROR(
+          ResolveMemberNames(iface.members(), iface_scope, bodies));
       break;
     }
     case DeclarationKind::ImplDeclaration: {
@@ -444,21 +459,8 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
         CARBON_RETURN_IF_ERROR(AddExposedNames(*impl.self(), impl_scope));
       }
       CARBON_RETURN_IF_ERROR(ResolveNames(impl.interface(), impl_scope));
-      for (Nonnull<Declaration*> member : impl.members()) {
-        CARBON_RETURN_IF_ERROR(AddExposedNames(*member, impl_scope));
-      }
-      if (bodies != FunctionBodies::Only) {
-        for (Nonnull<Declaration*> member : impl.members()) {
-          CARBON_RETURN_IF_ERROR(
-              ResolveNames(*member, impl_scope, FunctionBodies::Skip));
-        }
-      }
-      if (bodies != FunctionBodies::Skip) {
-        for (Nonnull<Declaration*> member : impl.members()) {
-          CARBON_RETURN_IF_ERROR(
-              ResolveNames(*member, impl_scope, FunctionBodies::Only));
-        }
-      }
+      CARBON_RETURN_IF_ERROR(
+          ResolveMemberNames(impl.members(), impl_scope, bodies));
       break;
     }
     case DeclarationKind::FunctionDeclaration: {
@@ -479,7 +481,8 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
             **function.return_term().type_expression(), function_scope));
       }
       enclosing_scope.MarkUsable(function.name());
-      if (function.body().has_value() && bodies != FunctionBodies::Skip) {
+      if (function.body().has_value() &&
+          bodies != ResolveFunctionBodies::Skip) {
         CARBON_RETURN_IF_ERROR(ResolveNames(**function.body(), function_scope));
       }
       break;
@@ -494,22 +497,8 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
       }
       enclosing_scope.MarkUsable(class_decl.name());
       CARBON_RETURN_IF_ERROR(AddExposedNames(*class_decl.self(), class_scope));
-
-      for (Nonnull<Declaration*> member : class_decl.members()) {
-        CARBON_RETURN_IF_ERROR(AddExposedNames(*member, class_scope));
-      }
-      if (bodies != FunctionBodies::Only) {
-        for (Nonnull<Declaration*> member : class_decl.members()) {
-          CARBON_RETURN_IF_ERROR(
-              ResolveNames(*member, class_scope, FunctionBodies::Skip));
-        }
-      }
-      if (bodies != FunctionBodies::Skip) {
-        for (Nonnull<Declaration*> member : class_decl.members()) {
-          CARBON_RETURN_IF_ERROR(
-              ResolveNames(*member, class_scope, FunctionBodies::Only));
-        }
-      }
+      CARBON_RETURN_IF_ERROR(
+          ResolveMemberNames(class_decl.members(), class_scope, bodies));
       break;
     }
     case DeclarationKind::ChoiceDeclaration: {
@@ -560,8 +549,8 @@ auto ResolveNames(AST& ast) -> ErrorOr<Success> {
     CARBON_RETURN_IF_ERROR(AddExposedNames(*declaration, file_scope));
   }
   for (auto declaration : ast.declarations) {
-    CARBON_RETURN_IF_ERROR(
-        ResolveNames(*declaration, file_scope, FunctionBodies::Resolve));
+    CARBON_RETURN_IF_ERROR(ResolveNames(
+        *declaration, file_scope, ResolveFunctionBodies::AfterDeclarations));
   }
   return ResolveNames(**ast.main_call, file_scope);
 }
