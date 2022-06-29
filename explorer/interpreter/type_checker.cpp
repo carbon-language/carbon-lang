@@ -413,7 +413,7 @@ auto TypeChecker::ResolveType(SourceLocation source_loc,
                               const ImplScope& impl_scope)
     -> ErrorOr<Nonnull<const Value*>> {
   if (auto* assoc = dyn_cast<AssociatedConstant>(type)) {
-    const ConstraintType* constraint_type = nullptr; // FIXME
+    const ConstraintType* constraint_type = nullptr;  // FIXME
     CARBON_ASSIGN_OR_RETURN(
         Nonnull<const Expression*> witness_expr,
         impl_scope.Resolve(constraint_type, &assoc->base(), source_loc, *this));
@@ -472,8 +472,8 @@ auto TypeChecker::ImplicitlyConvert(const std::string& context,
     // We couldn't find a matching `impl`.
     return CompilationError(source->source_loc())
            << "type error in " << context << ": "
-           << "'" << *source_type
-           << "' is not implicitly convertible to '" << *destination << "'";
+           << "'" << *source_type << "' is not implicitly convertible to '"
+           << *destination << "'";
   }
   return *converted;
 }
@@ -3060,7 +3060,7 @@ auto TypeChecker::DeclareInterfaceDeclaration(
   for (Nonnull<Declaration*> m : iface_decl->members()) {
     CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, iface_scope_info));
 
-    if (auto *assoc = dyn_cast<AssociatedConstantDeclaration>(m)) {
+    if (auto* assoc = dyn_cast<AssociatedConstantDeclaration>(m)) {
       // TODO: Symbolic binding map for the interface?
       BindingMap args;
       // TODO: The witness should be optional in AssociatedConstant.

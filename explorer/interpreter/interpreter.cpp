@@ -645,8 +645,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
         CARBON_CHECK(phase() == Phase::CompileTime)
             << "symbolic witnesses should only be used at compile time";
         return CompilationError(source_loc)
-               << "value of associated constant " << assoc
-               << " is not known";
+               << "value of associated constant " << assoc << " is not known";
       }
       auto& impl_witness = cast<ImplWitness>(*witness);
       Nonnull<const ConstraintType*> constraint =
