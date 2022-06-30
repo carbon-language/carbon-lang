@@ -61,6 +61,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Inheritance](#inheritance)
         -   [Access control](#access-control)
         -   [Destructors](#destructors)
+        -   [Mixins](#mixins)
     -   [Choice types](#choice-types)
 -   [Names](#names)
     -   [Packages, libraries, namespaces](#packages-libraries-namespaces)
@@ -145,14 +146,19 @@ fn Fibonacci(limit: i64) {
 ```
 
 Carbon is a language that should feel familiar to C++ and C developers. This
-example has familiar constructs like imports, function definitions, typed
-arguments, and curly braces.
+example has familiar constructs like imports,
 
-A few other features that are unlike C or C++ may stand out. First, declarations
-start with introducer keywords. `fn` introduces a function declaration, and
-`var` introduces a variable declaration. You can also see a _tuple_, a composite
-type written as a comma-separated list inside parentheses. Unlike, say, Python,
-these types are strongly-typed as well.
+<!-- FIXME: [imports](#imports), -->
+
+[function definitions](#functions), [typed arguments](#binding-patterns), and
+[curly braces](#blocks-and-statements).
+
+A few other features that are unlike C or C++ may stand out. First,
+[declarations](#declarations-definitions-and-scopes) start with introducer
+keywords. `fn` introduces a function declaration, and `var` introduces a
+[variable declaration](#variable-var-declarations). You can also see a
+[_tuple_](#tuples), a composite type written as a comma-separated list inside
+parentheses. Unlike, say, Python, these types are strongly-typed as well.
 
 ## Code and comments
 
@@ -1314,6 +1320,13 @@ two methods `Distance` and `Offset`:
 
 #### Inheritance
 
+The philosophy of inheritance support in Carbon is to focus on use cases where
+inheritance is a good match, and use other features for other cases. For
+example, [mixins](#mixins) for implementation reuse and [generics](#generics)
+for separating interface from implementation. This allows Carbon to move away
+from [multiple inheritance](https://en.wikipedia.org/wiki/Multiple_inheritance),
+which doesn't has as efficient of an implementation strategy.
+
 Classes by default are
 [_final_](<https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)#Non-subclassable_classes>),
 which means they may not be extended. A class may be declared as allowing
@@ -1474,6 +1487,17 @@ type, use `UnsafeDelete`.
 > -   [Destructors](classes.md#destructors)
 > -   Proposal
 >     [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
+
+#### Mixins
+
+Mixins allow reuse with different trade-offs compared to
+[inheritance](#inheritance). Mixins focus on implementation reuse, such as might
+be done using
+[CRTP](https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern) or
+[multiple inheritance](https://en.wikipedia.org/wiki/Multiple_inheritance) in
+C++.
+
+**TODO:** The design for mixins is still under development.
 
 ### Choice types
 
@@ -1756,6 +1780,11 @@ Carbon templates follow the same fundamental paradigm as
 [C++ templates](<https://en.wikipedia.org/wiki/Template_(C%2B%2B)>): they are
 instantiated when called, resulting in late type checking, duck typing, and lazy
 binding.
+
+One difference from C++ templates, Carbon template instantiation is not
+controlled by the
+[SFINAE rule of C++](https://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error),
+but by explicit `if` clauses evaluated at compile-time.
 
 Member lookup into a template type parameter is done in the actual type value
 provided by the caller, _in addition_ to any constraints. This means member name
