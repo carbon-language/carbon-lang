@@ -19,26 +19,27 @@ static std::vector<llvm::StringRef>* carbon_files = nullptr;
 
 // A workaround for https://github.com/carbon-language/carbon-lang/issues/1208.
 TEST(FuzzerUtilTest, RunFuzzerOnCorpus) {
-  int file_count = 0;
+  int parsed_file_count = 0;
   for (const llvm::StringRef f : *carbon_files) {
     llvm::outs() << "Processing " << f << "\n";
     std::ifstream file(f.str(), std::ios::in);
     ASSERT_TRUE(file.is_open());
     std::stringstream contents;
     contents << file.rdbuf();
-    const ErrorOr<Fuzzing::Carbon> carbon_proto =
-        ParseCarbonTextProto(contents.str());
-    ASSERT_TRUE(carbon_proto.ok()) << "couldn't parse text proto in " << f;
-    ParseAndExecute(carbon_proto->compilation_unit());
-    ++file_count;
+    // Parsing errors are ignored to make the fuzzer inputs less brittle as the
+    // exlorer code changes. This also matches standard fuzzer behavior.
+    if (auto carbon_proto = ParseCarbonTextProto(contents.str());
+        carbon_proto.ok()) {
+      ParseAndExecute(carbon_proto->compilation_unit());
+      ++parsed_file_count;
+    }
   }
-  EXPECT_GT(file_count, 0);
+  EXPECT_GT(parsed_file_count, 0);
 }
 
 TEST(FuzzerUtilTest, GetRunfilesFile) {
-  EXPECT_THAT(*Internal::GetRunfilesFile(
-                  "carbon/explorer/fuzzing/fuzzer_corpus/empty.textproto"),
-              testing::EndsWith("/empty.textproto"));
+  EXPECT_THAT(*Internal::GetRunfilesFile("carbon/explorer/data/prelude.carbon"),
+              testing::EndsWith("/prelude.carbon"));
   EXPECT_THAT(Internal::GetRunfilesFile("nonexistent-file").error().message(),
               testing::EndsWith("doesn't exist"));
 }
