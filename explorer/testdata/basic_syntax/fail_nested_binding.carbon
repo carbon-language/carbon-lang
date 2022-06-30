@@ -11,7 +11,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_nested_binding.carbon:[[@LINE+1]]: The type of a binding pattern cannot contain bindings.
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_nested_binding.carbon:[[@LINE+1]]: binding pattern is not allowed on the right hand side of a variable definition
   var x: (T: Type) = 1;
   return 1;
 }

@@ -11,18 +11,9 @@
 
 package ExplorerTest api;
 
-choice Ints {
-  None,
-  One(i32),
-  Two(i32, i32)
-}
-
 fn Main() -> i32 {
-  let (var Ints.Two(a1: auto, var a2: auto),
-       ((b: auto, var c: auto), var (d: auto, e: auto))) =
-      (Ints.Two(1, 10), ((2, 3), (4, 5)));
-  a1 = 0;
-  a2 = 0;
+  let (((b: auto, var c: auto), var (d: auto, e: auto))) =
+      (((2, 3), (4, 5)));
   c = 0;
   d = 0;
   e = 0;
