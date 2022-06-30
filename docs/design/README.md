@@ -1784,9 +1784,12 @@ instantiated when called, resulting in late type checking, duck typing, and lazy
 binding.
 
 One difference from C++ templates, Carbon template instantiation is not
-controlled by the
-[SFINAE rule of C++](https://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error),
-but by explicit `if` clauses evaluated at compile-time.
+controlled by the SFINAE rule of C++
+([1](https://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error),
+[2](https://en.cppreference.com/w/cpp/language/sfinae)) but by explicit `if`
+clauses evaluated at compile-time. The `if` clause is at the end of the
+declaration, and the condition can only use constant values known at
+type-checking time, including `template` parameters.
 
 ```carbon
 class Array(template T:! Type, template N:! i64)
