@@ -41,17 +41,18 @@ class StringLexHelper {
 // Tries to Read `hashtag_num` hashtags. Returns true on success.
 // Reads `hashtag_num` characters on success, and number of consecutive hashtags
 // (< `hashtag_num`) + 1 characters on failure.
-auto ReadHashTags(Carbon::StringLexHelper& scan_helper, size_t hashtag_num)
+auto ReadHashTags(Carbon::StringLexHelper& scan_helper, int hashtag_num)
     -> bool;
 
 // Removes quotes and escapes a single line string. Reports an error on
 // invalid escaping.
 auto ProcessSingleLineString(llvm::StringRef str,
                              Carbon::ParseAndLexContext& context,
-                             size_t hashtag_num) -> Carbon::Parser::symbol_type;
+                             int hashtag_num, int leading_quotes)
+    -> Carbon::Parser::symbol_type;
 auto ProcessMultiLineString(llvm::StringRef str,
                             Carbon::ParseAndLexContext& context,
-                            size_t hashtag_num) -> Carbon::Parser::symbol_type;
+                            int hashtag_num) -> Carbon::Parser::symbol_type;
 
 }  // namespace Carbon
 

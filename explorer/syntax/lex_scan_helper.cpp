@@ -10,6 +10,8 @@
 
 namespace Carbon {
 
+static constexpr llvm::StringRef VerticalWhitespaceChars = "\n\v\f\r";
+
 auto StringLexHelper::Advance() -> bool {
   CARBON_CHECK(is_eof_ == false);
   const char c = YyinputWrapper(yyscanner_);
@@ -22,9 +24,9 @@ auto StringLexHelper::Advance() -> bool {
   return true;
 }
 
-auto ReadHashTags(Carbon::StringLexHelper& scan_helper,
-                  const size_t hashtag_num) -> bool {
-  for (size_t i = 0; i < hashtag_num; ++i) {
+auto ReadHashTags(Carbon::StringLexHelper& scan_helper, const int hashtag_num)
+    -> bool {
+  for (int i = 0; i < hashtag_num; ++i) {
     if (!scan_helper.Advance() || scan_helper.last_char() != '#') {
       return false;
     }
@@ -34,8 +36,18 @@ auto ReadHashTags(Carbon::StringLexHelper& scan_helper,
 
 auto ProcessSingleLineString(llvm::StringRef str,
                              Carbon::ParseAndLexContext& context,
-                             const size_t hashtag_num)
+                             const int hashtag_num, const int leading_quotes)
     -> Carbon::Parser::symbol_type {
+  // """some content" is not a valid string.
+  if (hashtag_num == 0 && leading_quotes == 3) {
+    return context.RecordSyntaxError(llvm::formatv(
+        "single-line string cannot start with `\"\"\"`: {0}", str));
+  }
+  if (str.find_first_of(VerticalWhitespaceChars) != llvm::StringRef::npos) {
+    return context.RecordSyntaxError(llvm::formatv(
+        "vertical whiltespace is not allowed in single-line string: {0}", str));
+  }
+
   std::string hashtags(hashtag_num, '#');
   const auto str_with_quote = str;
   CARBON_CHECK(str.consume_front(hashtags + "\"") &&
@@ -52,7 +64,7 @@ auto ProcessSingleLineString(llvm::StringRef str,
 
 auto ProcessMultiLineString(llvm::StringRef str,
                             Carbon::ParseAndLexContext& context,
-                            const size_t hashtag_num)
+                            const int hashtag_num)
     -> Carbon::Parser::symbol_type {
   std::string hashtags(hashtag_num, '#');
   CARBON_CHECK(str.consume_front(hashtags) && str.consume_back(hashtags));
