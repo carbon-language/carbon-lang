@@ -273,38 +273,41 @@ operand_start         [(A-Za-z0-9_\"]
   const std::string& s = str_lex_helper.str();
   const int hashtag_num = s.find_first_of('"');
   const int leading_quotes = s.size() - hashtag_num;
-  if (leading_quotes == 3 && hashtag_num > 0) {
-    // Check if it's a single-line string, like #"""#.
-    // TODO: Extend with other single-line string cases, like #""""#, based on
-    // the definition of block string in the design doc.
-    if (Carbon::ReadHashTags(str_lex_helper, hashtag_num)) {
-      return Carbon::ProcessSingleLineString(str_lex_helper.str(), context,
-                                             hashtag_num);
-    } else if (str_lex_helper.is_eof()) {
-      return CARBON_SIMPLE_TOKEN(END_OF_FILE);
-    }
-  } else if (!str_lex_helper.Advance()) {
-    return CARBON_SIMPLE_TOKEN(END_OF_FILE);
-  }
-  // 3 quotes indicates multi-line, otherwise it'll be one.
-  const bool multi_line = leading_quotes == 3;
+  // Indicates that we are scanning the first line. Will be set to false after
+  // '\n' is scanned.
+  bool first_line = true;
 
+  str_lex_helper.Advance();
   while (!str_lex_helper.is_eof()) {
     switch (str_lex_helper.last_char()) {
       case '\n':  // Fall through.
+        first_line = false;
       case '\v':  // Fall through.
       case '\f':  // Fall through.
       case '\r':
-        if (!multi_line) {
+        // Only single-line string is possible to start with 1 leading quote.
+        // And in this case, vertical whitespace is not allowed.
+        if (leading_quotes == 1) {
           return context.RecordSyntaxError(
               llvm::formatv("missing closing quote in single-line string: {0}",
                             str_lex_helper.str()));
         }
         str_lex_helper.Advance();
         break;
+      case '\\':
+        if (Carbon::ReadHashTags(str_lex_helper, hashtag_num)) {
+          // Read the escaped char.
+          if (!str_lex_helper.Advance()) {
+            continue;
+          }
+          // Read the next char.
+          str_lex_helper.Advance();
+        }
+        // ReadHashTags() stops at next charZ on failure.
+        break;
       case '"':
-        if (multi_line) {
-          // Check for 2 more '"'s on block string.
+        if (!first_line) {
+          // Multi-line string can only end with `"""`, check for 2 more '"'s.
           if (!(str_lex_helper.Advance() &&
                 str_lex_helper.last_char() == '"')) {
             continue;
@@ -315,26 +318,15 @@ operand_start         [(A-Za-z0-9_\"]
           }
           // Now we are at the last " of """.
         }
-
         if (Carbon::ReadHashTags(str_lex_helper, hashtag_num)) {
-          // Reach closing quotes, break out of the loop.
-          if (leading_quotes == 3) {
+          // Break out of the loop and further process/validate the string.
+          if (first_line) {
+            return Carbon::ProcessSingleLineString(
+                str_lex_helper.str(), context, hashtag_num, leading_quotes);
+          } else {
             return Carbon::ProcessMultiLineString(str_lex_helper.str(), context,
                                                   hashtag_num);
-          } else {
-            return Carbon::ProcessSingleLineString(str_lex_helper.str(),
-                                                   context, hashtag_num);
           }
-        }
-        break;
-      case '\\':
-        if (Carbon::ReadHashTags(str_lex_helper, hashtag_num)) {
-          // Read the escaped char.
-          if (!str_lex_helper.Advance()) {
-            continue;
-          }
-          // Read the next char.
-          str_lex_helper.Advance();
         }
         break;
       default:
