@@ -572,7 +572,10 @@ declare a name in an [api file](#files-libraries-packages) that is defined in an
 [impl file](#files-libraries-packages). Forward declarations also allow entities
 to be used before they are defined, such as to allow cyclic references. A name
 that has been declared but not defined is called _incomplete_, and in some cases
-there are limitations on what can be done with an incomplete name.
+there are limitations on what can be done with an incomplete name. Within a
+definition, the defined name is incomplete until the end of the definition is
+reached, but is complete in the bodies of member functions because they are
+[parsed as if they appeared after the definition](#class-functions-and-factory-functions).
 
 A name is valid until the end of the innermost enclosing
 [_scope_](<https://en.wikipedia.org/wiki/Scope_(computer_science)>). There are a
@@ -1568,8 +1571,10 @@ choice LikeABoolean { False, True }
 
 Names are introduced by [declarations](#declarations-definitions-and-scopes) and
 are valid until the end of the scope in which they appear. Code may not refer to
-names earlier in the source than they are declared except inline class member
-function bodies are
+names earlier in the source than they are declared. In executable scopes such as
+function bodies, names declared later are not found. In declarative scopes such as
+packages, classes, and interfaces, it is an error to refer to names declared later,
+except that inline class member function bodies are
 [parsed as if they appeared after the class](#class-functions-and-factory-functions).
 
 A name in Carbon is formed from a sequence of letters, numbers, and underscores,
@@ -1611,7 +1616,7 @@ to coordinate to avoid name conflicts, but not across packages.
 
 ### Package declaration
 
-Files start with a package declaration, consisting of:
+Files start with an optional package declaration, consisting of:
 
 -   the `package` keyword introducer,
 -   an optional identifier specifying the package name,
@@ -1635,9 +1640,11 @@ Parts of this declaration may be omitted:
     the default package.
 -   If the library keyword is not specified, as in `package Geometry api;`, this
     file contributes to the default library.
--   If a file has no package declaration at all, it is an `api` file belonging
+-   If a file has no package declaration at all, it is the `api` file belonging
     to the default package and default library. This is particularly for tests
-    and smaller examples.
+    and smaller examples. No other library can import this library even from
+    within the default package. It can be split across multiple `impl` files
+    using a `package impl;` package declaration.
 
 A program need not use the default package, but if it does, it should contain
 the `Main` entry-point function.
@@ -1711,7 +1718,7 @@ The names visible from an imported library are determined by these rules:
     must be marked with a `private` prefix.
 -   Private names don't conflict with names outside the region they're private
     to: two different libraries can have different private names `foo` without
-    conflict.
+    conflict, but a private name conflicts with a public name in the same scope.
 
 At most one `api` file in a package transitively used in a program may declare a
 given name public.
