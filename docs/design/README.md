@@ -97,13 +97,15 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Enums](#enums)
 -   [Unfinished tales](#unfinished-tales)
     -   [Safety](#safety)
-    -   [Pattern matching as function overload resolution](#pattern-matching-as-function-overload-resolution)
     -   [Lifetime and move semantics](#lifetime-and-move-semantics)
     -   [Metaprogramming](#metaprogramming)
+    -   [Pattern matching as function overload resolution](#pattern-matching-as-function-overload-resolution)
+    -   [Error handling](#error-handling)
     -   [Execution abstractions](#execution-abstractions)
         -   [Abstract machine and execution model](#abstract-machine-and-execution-model)
         -   [Lambdas](#lambdas)
         -   [Co-routines](#co-routines)
+        -   [Concurrency](#concurrency)
 
 <!-- tocstop -->
 
@@ -2634,13 +2636,6 @@ This leads to Carbon's incremental path to safety:
 
 > References: [Safety strategy](/docs/project/principles/safety_strategy.md)
 
-### Pattern matching as function overload resolution
-
-> **TODO:** References need to be evolved. Needs a detailed design and a high
-> level summary provided inline.
-
-> References: [Pattern matching](pattern_matching.md)
-
 ### Lifetime and move semantics
 
 > **TODO:**
@@ -2656,6 +2651,23 @@ preprocessing of source text such as C and C++ do.
 
 > References: [Metaprogramming](metaprogramming.md)
 
+### Pattern matching as function overload resolution
+
+> **TODO:** References need to be evolved. Needs a detailed design and a high
+> level summary provided inline.
+
+> References: [Pattern matching](pattern_matching.md)
+
+### Error handling
+
+For now, Carbon does not have language features dedicated to error handling, but
+we would consider adding some in the future. At this point, errors are
+represented using [choice types](#choice-types) like `Result` and `Optional`.
+
+This is similar to the story for Rust, which started using `Result` with a
+`try!` macro, then replaced the macro with a more convenient `?` operator, and
+is [now considering](https://yaah.dev/try-blocks) adding more.
+
 ### Execution abstractions
 
 Carbon provides some higher-order abstractions of program execution, as well as
@@ -2670,5 +2682,9 @@ the critical underpinnings of such abstractions.
 > **TODO:**
 
 #### Co-routines
+
+> **TODO:**
+
+#### Concurrency
 
 > **TODO:**
