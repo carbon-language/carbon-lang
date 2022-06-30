@@ -1788,6 +1788,11 @@ controlled by the
 [SFINAE rule of C++](https://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error),
 but by explicit `if` clauses evaluated at compile-time.
 
+```carbon
+class Array(template T:! Type, template N:! i64)
+    if N >= 0 and N < MaxArraySize / sizeof(T);
+```
+
 Member lookup into a template type parameter is done in the actual type value
 provided by the caller, _in addition_ to any constraints. This means member name
 lookup and type checking for anything
