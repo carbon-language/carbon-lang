@@ -150,16 +150,14 @@ fn Fibonacci(limit: i64) {
 ```
 
 Carbon is a language that should feel familiar to C++ and C developers. This
-example has familiar constructs like [imports](#imports),
-[function definitions](#functions), [typed arguments](#binding-patterns), and
-[curly braces](#blocks-and-statements).
+example has familiar constructs like imports, function definitions, typed
+arguments, and curly braces.
 
-A few other features that are unlike C or C++ may stand out. First,
-[declarations](#declarations-definitions-and-scopes) start with introducer
-keywords. `fn` introduces a function declaration, and `var` introduces a
-[variable declaration](#variable-var-declarations). You can also see a
-[_tuple_](#tuples), a composite type written as a comma-separated list inside
-parentheses. Unlike, say, Python, these types are strongly-typed as well.
+A few other features that are unlike C or C++ may stand out. First, declarations
+start with introducer keywords. `fn` introduces a function declaration, and
+`var` introduces a variable declaration. You can also see a _tuple_, a composite
+type written as a comma-separated list inside parentheses. Unlike, say, Python,
+these types are strongly-typed as well.
 
 ## Code and comments
 
