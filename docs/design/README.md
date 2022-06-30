@@ -1572,9 +1572,9 @@ choice LikeABoolean { False, True }
 Names are introduced by [declarations](#declarations-definitions-and-scopes) and
 are valid until the end of the scope in which they appear. Code may not refer to
 names earlier in the source than they are declared. In executable scopes such as
-function bodies, names declared later are not found. In declarative scopes such as
-packages, classes, and interfaces, it is an error to refer to names declared later,
-except that inline class member function bodies are
+function bodies, names declared later are not found. In declarative scopes such
+as packages, classes, and interfaces, it is an error to refer to names declared
+later, except that inline class member function bodies are
 [parsed as if they appeared after the class](#class-functions-and-factory-functions).
 
 A name in Carbon is formed from a sequence of letters, numbers, and underscores,
