@@ -2068,11 +2068,6 @@ Carbon templates follow the same fundamental paradigm as
 instantiated when called, resulting in late type checking, duck typing, and lazy
 binding.
 
-**TODO:** Difference from C++, Carbon template instantiation is not controlled
-by the
-[SFINAE rule of C++](https://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error),
-but by explicit `if` clauses evaluated at compile-time.
-
 Member lookup into a template type parameter is done in the actual type value
 provided by the caller, _in addition_ to any constraints. This means member name
 lookup and type checking for anything
