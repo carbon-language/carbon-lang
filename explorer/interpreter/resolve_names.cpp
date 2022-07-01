@@ -349,7 +349,7 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
       if (!returned_var_def_view.has_value()) {
         return CompilationError(ret_var_stmt.source_loc())
                << "Statement `return var` is not allowed without a returned "
-                  "variable defined in scope.";
+                  "var defined in scope.";
       }
       ret_var_stmt.set_value_node(*returned_var_def_view);
       break;
