@@ -131,8 +131,6 @@ auto ActionStack::FinishAction() -> ErrorOr<Success> {
     case Action::Kind::ExpressionAction:
     case Action::Kind::LValAction:
     case Action::Kind::PatternAction:
-    case Action::Kind::ReturnVarAction:
-      CARBON_FATAL() << "This kind of action must produce a result: " << *act;
     case Action::Kind::ScopeAction:
       CARBON_FATAL() << "ScopeAction at top of stack";
     case Action::Kind::StatementAction:
@@ -156,7 +154,6 @@ auto ActionStack::FinishAction(Nonnull<const Value*> result)
     case Action::Kind::ExpressionAction:
     case Action::Kind::LValAction:
     case Action::Kind::PatternAction:
-    case Action::Kind::ReturnVarAction:
       PopScopes();
       SetResult(result);
   }

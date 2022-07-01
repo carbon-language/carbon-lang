@@ -114,9 +114,6 @@ void Action::Print(llvm::raw_ostream& out) const {
       cast<DeclarationAction>(*this).declaration().Print(out);
       out << " ";
       break;
-    case Action::Kind::ReturnVarAction:
-      out << "var ";
-      break;
     case Action::Kind::ScopeAction:
       break;
     case Action::Kind::RecursiveAction:
