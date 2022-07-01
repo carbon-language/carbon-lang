@@ -2746,7 +2746,7 @@ auto TypeChecker::ExpectReturnOnAllPaths(
           ExpectReturnOnAllPaths(if_stmt.else_block(), stmt->source_loc()));
       return Success();
     }
-    case StatementKind::ReturnVar:  // Fall through.
+    case StatementKind::ReturnVar:
     case StatementKind::ReturnExpression:
       return Success();
     case StatementKind::Continuation:
