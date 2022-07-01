@@ -1518,7 +1518,7 @@ call is the same, but without the `addr` column.
 
 For types that are movable but non-copyable:
 
-| Call         | `fn M[me: Self]()      | fn M[addr me: Self\*]()` | `fn M[var me: Self]()` |
+| Call         | `fn M[me: Self]()`     | `fn M[addr me: Self*]()` | `fn M[var me: Self]()` |
 | ------------ | ---------------------- | ------------------------ | ---------------------- |
 | `a.M()`      | const-ref              | by address               | error                  |
 | `GetA().M()` | move or const-ref      | error                    | move                   |
