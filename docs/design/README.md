@@ -63,6 +63,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Inheritance](#inheritance)
         -   [Access control](#access-control)
         -   [Destructors](#destructors)
+        -   [`const`](#const)
         -   [Unformed state](#unformed-state)
         -   [Move](#move)
         -   [Argument passing](#argument-passing)
@@ -766,8 +767,8 @@ Breaking this apart:
 -   `fn` is the keyword used to introduce a function.
 -   Its name is `Add`. This is the name added to the enclosing
     [scope](#declarations-definitions-and-scopes).
--   The parameter list in parentheses (`(`...`)`) is a comma-separated list of
-    [irrefutable patterns](#patterns).
+-   The [parameter list](#parameters) in parentheses (`(`...`)`) is a
+    comma-separated list of [irrefutable patterns](#patterns).
 -   It returns an `i64` result. Functions that return nothing omit the `->` and
     return type.
 
@@ -785,13 +786,6 @@ fn Add(a: i64, b: i64) -> i64 {
 The names of the parameters are in scope until the end of the definition or
 declaration.
 
-The bindings in the parameter list default to
-[`let` bindings](#binding-patterns), and so the parameter names are treated as
-[r-values](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>). If
-the `var` keyword is added before the binding, then the arguments will be copied
-to new storage, and so can be mutated in the function body. The copy ensures
-that any mutations will not be visible to the caller.
-
 > References:
 >
 > -   [Functions](functions.md)
@@ -805,6 +799,13 @@ that any mutations will not be visible to the caller.
 ### Parameters
 
 FIXME
+
+The bindings in the parameter list default to
+[`let` bindings](#binding-patterns), and so the parameter names are treated as
+[r-values](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>). If
+the `var` keyword is added before the binding, then the arguments will be copied
+to new storage, and so can be mutated in the function body. The copy ensures
+that any mutations will not be visible to the caller.
 
 ### `auto` return type
 
@@ -1287,14 +1288,14 @@ class Point {
     var dy: i32 = y2 - me.y;
     return Math.Sqrt(dx * dx - dy * dy);
   }
-  // Mutating method
+  // Mutating method declaration
   fn Offset[addr me: Self*](dx: i32, dy: i32);
 
   var x: i32;
   var y: i32;
 }
 
-// Out-of-line definition of method declared inline.
+// Out-of-line definition of method declared inline
 fn Point.Offset[addr me: Self*](dx: i32, dy: i32) {
   me->x += dx;
   me->y += dy;
@@ -1318,7 +1319,9 @@ two methods `Distance` and `Offset`:
     modifying the `Point`. This is signified using `[me: Self]` in the method
     declaration.
 -   `origin.Offset(`...`)` does modify the value of `origin`. This is signified
-    using `[addr me: Self*]` in the method declaration.
+    using `[addr me: Self*]` in the method declaration. Since calling this
+    method requires taking the address of `origin`, it may only be called on
+    [non-`const`](#const) l-values.
 -   Methods may be declared lexically inline like `Distance`, or lexically out
     of line like `Offset`.
 
@@ -1490,6 +1493,45 @@ type, use `UnsafeDelete`.
 > -   [Destructors](classes.md#destructors)
 > -   Proposal
 >     [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
+
+#### `const`
+
+For every type `MyClass`, there is the type `const MyClass` such that:
+
+-   The data representation is the same, so a `MyClass*` value may be implicitly
+    converted to a `(const MyClass)*`.
+-   A `const MyClass` l-value may automatically convert to a `MyClass` r-value,
+    the same way that a `MyClass` l-value can.
+-   If member `x` of `MyClass` has type `T`, then member `x` of `const MyClass`
+    has type `const T`.
+-   The API of a `const MyClass` is a subset of `MyClass`, excluding all methods
+    taking `[addr me: Self*]`.
+
+Note that `const` binds more tightly than postfix-`*` for forming a pointer
+type, so `const MyClass*` is equal to `(const MyClass)*`.
+
+This example uses the definition of `Point` from the
+["methods" section](#methods):
+
+```carbon
+var origin: Point = {.x = 0, .y = 0};
+
+// ✅ Allowed conversion from `Point*` to
+// `const Point*`:
+let p: const Point* = &origin;
+
+// ✅ Allowed conversion of `const Point` l-value
+// to `Point` r-value.
+let five: f32 = p->Distance(3, 4);
+
+// ❌ Error: mutating method `Offset` excluded
+// from `const Point` API.
+p->Offset(3, 4);
+
+// ❌ Error: mutating method `AssignAdd.Op`
+// excluded from `const i32` API.
+p->x += 2;
+```
 
 #### Unformed state
 
