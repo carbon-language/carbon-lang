@@ -55,14 +55,12 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
       }
       auto& ret = cast<Return>(*statement);
       ret.set_function((*function)->declaration);
-      if (statement->kind() == StatementKind::ReturnVar) {
-        if (function_return.is_omitted()) {
-          return CompilationError(statement->source_loc())
-                 << *statement
-                 << " should not provide a return value, to match the "
-                    "function's "
-                    "signature.";
-        }
+      if (statement->kind() == StatementKind::ReturnVar &&
+          function_return.is_omitted()) {
+        return CompilationError(statement->source_loc())
+               << *statement
+               << " should not provide a return value, to match the function's "
+                  "signature.";
       }
       if (statement->kind() == StatementKind::ReturnExpression) {
         auto& ret_exp = cast<ReturnExpression>(*statement);
