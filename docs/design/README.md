@@ -24,6 +24,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Floating-point literals](#floating-point-literals)
     -   [String types](#string-types)
         -   [String literals](#string-literals)
+-   [Value categories](#value-categories)
 -   [Composite types](#composite-types)
     -   [Tuples](#tuples)
     -   [Struct types](#struct-types)
@@ -40,6 +41,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Variable `var` declarations](#variable-var-declarations)
     -   [`auto`](#auto)
 -   [Functions](#functions)
+    -   [Parameters](#parameters)
     -   [`auto` return type](#auto-return-type)
     -   [Blocks and statements](#blocks-and-statements)
     -   [Assignment statements](#assignment-statements)
@@ -61,6 +63,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Inheritance](#inheritance)
         -   [Access control](#access-control)
         -   [Destructors](#destructors)
+        -   [Unformed state](#unformed-state)
+        -   [Move](#move)
+        -   [Argument passing](#argument-passing)
+            -   [Copyable types](#copyable-types)
+            -   [Move-only types](#move-only-types)
     -   [Choice types](#choice-types)
 -   [Names](#names)
     -   [Packages, libraries, namespaces](#packages-libraries-namespaces)
@@ -376,6 +383,10 @@ are available for representing strings with `\`s and `"`s.
 > -   Proposal
 >     [#199: String literals](https://github.com/carbon-language/carbon-lang/pull/199)
 
+## Value categories
+
+FIXME
+
 ## Composite types
 
 ### Tuples
@@ -529,6 +540,7 @@ Some common expressions in Carbon include:
     -   [Indexing](#arrays-and-slices): `a[3]`
     -   [Function](#functions) call: `f(4)`
     -   [Pointer](#pointer-types): `*p`, `p->m`, `&x`
+    -   FIXME: Move: `~x`
 
 -   [Conditionals](expressions/if.md): `if c then t else f`
 -   Parentheses: `(7 + 8) * (3 - 1)`
@@ -789,6 +801,10 @@ that any mutations will not be visible to the caller.
 >     [#438: Add statement syntax for function declarations](https://github.com/carbon-language/carbon-lang/pull/438)
 > -   Question-for-leads issue
 >     [#476: Optional argument names (unused arguments)](https://github.com/carbon-language/carbon-lang/issues/476)
+
+### Parameters
+
+FIXME
 
 ### `auto` return type
 
@@ -1474,6 +1490,39 @@ type, use `UnsafeDelete`.
 > -   [Destructors](classes.md#destructors)
 > -   Proposal
 >     [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
+
+#### Unformed state
+
+FIXME
+
+#### Move
+
+FIXME
+
+#### Argument passing
+
+##### Copyable types
+
+For types that are copyable and movable:
+
+| Call         | `fn M[me: Self]()`     | `fn M[addr me: Self*]()` | `fn M[var me: Self]()` |
+| ------------ | ---------------------- | ------------------------ | ---------------------- |
+| `a.M()`      | copy or const-ref      | by address               | copy                   |
+| `GetA().M()` | move or const-ref      | error                    | copy or move           |
+| `(~a).M()`   | move or move+const-ref | error                    | move                   |
+
+Note that this last column would be unusual. Pass as the argument in a function
+call is the same, but without the `addr` column.
+
+##### Move-only types
+
+For types that are movable but non-copyable:
+
+| Call         | `fn M[me: Self]()      | fn M[addr me: Self\*]()` | `fn M[var me: Self]()` |
+| ------------ | ---------------------- | ------------------------ | ---------------------- |
+| `a.M()`      | const-ref              | by address               | error                  |
+| `GetA().M()` | move or const-ref      | error                    | move                   |
+| `(~a).M()`   | move or move+const-ref | error                    | move                   |
 
 ### Choice types
 
@@ -2200,6 +2249,14 @@ The interfaces that correspond to each operator are given by:
 
 The
 [logical operators can not be overloaded](expressions/logical_operators.md#overloading).
+
+Operators that result in l-values, such as dereferencing `*p` and indexing
+`a[3]`, have interfaces that return the address of the value. Carbon
+automatically dereferences the pointer to get the l-value.
+
+Operators that can take multiple arguments, such as function calling operator
+`f(4)`, have a [variadic](generics/details.md#variadic-arguments) parameter
+list.
 
 > References:
 >
