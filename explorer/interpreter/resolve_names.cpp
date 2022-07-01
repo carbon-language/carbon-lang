@@ -361,7 +361,7 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
       if (returned_var_def_view.has_value()) {
         return CompilationError(ret_exp_stmt.source_loc())
                << "Statement `return <expression>` is not allowed with a "
-                  "returned variable defined in scope: "
+                  "returned var defined in scope: "
                << returned_var_def_view->base().source_loc();
       }
       CARBON_RETURN_IF_ERROR(
