@@ -21,6 +21,7 @@ auto StaticScope::Add(const std::string& name, ValueNodeView entity,
     CARBON_CHECK(usable || !it->second.usable)
         << entity.base().source_loc() << " attempting to mark a usable name `"
         << name << "` as unusable";
+    it->second.usable |= usable;
   }
   return Success();
 }
