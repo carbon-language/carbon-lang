@@ -178,7 +178,7 @@ class StaticScope {
   auto ResolveReturned() const -> std::optional<ValueNodeView>;
 
   // Adds the value node of the BindingPattern of the returned var definition to
-  // this scope. Throws a compilation error when there is an existing returned
+  // this scope. Returns a compilation error when there is an existing returned
   // var in the ancestor graph.
   auto AddReturnedVar(ValueNodeView returned_var_def_view) -> ErrorOr<Success>;
 
