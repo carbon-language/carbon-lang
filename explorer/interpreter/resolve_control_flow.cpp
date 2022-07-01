@@ -37,7 +37,7 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
                                std::optional<Nonnull<FunctionData*>> function)
     -> ErrorOr<Success> {
   switch (statement->kind()) {
-    case StatementKind::ReturnVar:  // Fall through.
+    case StatementKind::ReturnVar:
     case StatementKind::ReturnExpression: {
       if (!function.has_value()) {
         return CompilationError(statement->source_loc())
@@ -55,6 +55,15 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
       }
       auto& ret = cast<Return>(*statement);
       ret.set_function((*function)->declaration);
+      if (statement->kind() == StatementKind::ReturnVar) {
+        if (function_return.is_omitted()) {
+          return CompilationError(statement->source_loc())
+                 << *statement
+                 << " should not provide a return value, to match the "
+                    "function's "
+                    "signature.";
+        }
+      }
       if (statement->kind() == StatementKind::ReturnExpression) {
         auto& ret_exp = cast<ReturnExpression>(*statement);
         if (ret_exp.is_omitted_expression() != function_return.is_omitted()) {

@@ -754,8 +754,6 @@ auto Interpreter::StepVar() -> ErrorOr<Success> {
   }
 
   CARBON_CHECK(act.pos() == 0);
-  // TODO(slaterlatiao): Fix the comment.
-  // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
   CARBON_ASSIGN_OR_RETURN(
       Nonnull<const Value*> value,
       todo_.ValueOfNode(value_node,
@@ -1433,15 +1431,9 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       }
     case StatementKind::ReturnVar:
       if (act.pos() == 0) {
-        // TODO(slaterlatiao): Fix the comment.
-        //    { {return e :: C, E, F} :: S, H}
-        // -> { {e :: return [] :: C, E, F} :: S, H}
         return todo_.Spawn(std::make_unique<ReturnVarAction>(
             cast<ReturnVar>(stmt).value_node(), stmt.source_loc()));
       } else {
-        // TODO(slaterlatiao): Fix the comment.
-        //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
-        // -> { {v :: C', E', F'} :: S, H}
         const FunctionDeclaration& function = cast<Return>(stmt).function();
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> return_value,
