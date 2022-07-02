@@ -1916,7 +1916,7 @@ class ContactInfo {
 ### Name lookup
 
 The general principle of Carbon name lookup is that we look up names in all
-relevant places, and report an error if the name is found to refer to more than
+relevant scopes, and report an error if the name is found to refer to more than
 one different entity. So Carbon requires disambiguation by adding qualifiers
 instead of doing any
 [shadowing](https://en.wikipedia.org/wiki/Variable_shadowing) of names. For an
