@@ -13,7 +13,6 @@ about how the project works, goals, and community information belong here.
     goals
 -   [Roadmap](roadmap.md) and the [process](roadmap_process.md) for updating it
 -   Carbon's process for [evolution and governance](evolution.md)
--   [Criteria for Carbon to go public](going_public.md)
 -   [Groups](groups.md) used for contacting key contributors and determining
     access
 -   Contributing to Carbon:
