@@ -24,8 +24,9 @@ static auto AddExposedNames(const Declaration& declaration,
   switch (declaration.kind()) {
     case DeclarationKind::InterfaceDeclaration: {
       auto& iface_decl = cast<InterfaceDeclaration>(declaration);
-      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(iface_decl.name(), &iface_decl,
-                                                 /*usable=*/false));
+      CARBON_RETURN_IF_ERROR(
+          enclosing_scope.Add(iface_decl.name(), &iface_decl,
+                              StaticScope::NameStatus::KnownButNotDeclared));
       break;
     }
     case DeclarationKind::ImplDeclaration: {
@@ -34,27 +35,30 @@ static auto AddExposedNames(const Declaration& declaration,
     }
     case DeclarationKind::FunctionDeclaration: {
       auto& func = cast<FunctionDeclaration>(declaration);
-      CARBON_RETURN_IF_ERROR(
-          enclosing_scope.Add(func.name(), &func, /*usable=*/false));
+      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(
+          func.name(), &func, StaticScope::NameStatus::KnownButNotDeclared));
       break;
     }
     case DeclarationKind::ClassDeclaration: {
       auto& class_decl = cast<ClassDeclaration>(declaration);
-      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(class_decl.name(), &class_decl,
-                                                 /*usable=*/false));
+      CARBON_RETURN_IF_ERROR(
+          enclosing_scope.Add(class_decl.name(), &class_decl,
+                              StaticScope::NameStatus::KnownButNotDeclared));
       break;
     }
     case DeclarationKind::ChoiceDeclaration: {
       auto& choice = cast<ChoiceDeclaration>(declaration);
       CARBON_RETURN_IF_ERROR(
-          enclosing_scope.Add(choice.name(), &choice, /*usable=*/false));
+          enclosing_scope.Add(choice.name(), &choice,
+                              StaticScope::NameStatus::KnownButNotDeclared));
       break;
     }
     case DeclarationKind::VariableDeclaration: {
       auto& var = cast<VariableDeclaration>(declaration);
       if (var.binding().name() != AnonymousName) {
-        CARBON_RETURN_IF_ERROR(enclosing_scope.Add(
-            var.binding().name(), &var.binding(), /*usable=*/false));
+        CARBON_RETURN_IF_ERROR(
+            enclosing_scope.Add(var.binding().name(), &var.binding(),
+                                StaticScope::NameStatus::KnownButNotDeclared));
       }
       break;
     }
@@ -65,8 +69,8 @@ static auto AddExposedNames(const Declaration& declaration,
     }
     case DeclarationKind::AliasDeclaration: {
       auto& alias = cast<AliasDeclaration>(declaration);
-      CARBON_RETURN_IF_ERROR(
-          enclosing_scope.Add(alias.name(), &alias, /*usable=*/false));
+      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(
+          alias.name(), &alias, StaticScope::NameStatus::KnownButNotDeclared));
       break;
     }
   }
@@ -383,8 +387,9 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
     }
     case StatementKind::Continuation: {
       auto& continuation = cast<Continuation>(statement);
-      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(
-          continuation.name(), &continuation, /*usable=*/false));
+      CARBON_RETURN_IF_ERROR(
+          enclosing_scope.Add(continuation.name(), &continuation,
+                              StaticScope::NameStatus::DeclaredButNotUsable));
       StaticScope continuation_scope;
       continuation_scope.AddParent(&enclosing_scope);
       CARBON_RETURN_IF_ERROR(ResolveNames(cast<Continuation>(statement).body(),
@@ -432,6 +437,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
       auto& iface = cast<InterfaceDeclaration>(declaration);
       StaticScope iface_scope;
       iface_scope.AddParent(&enclosing_scope);
+      enclosing_scope.MarkDeclared(iface.name());
       if (iface.params().has_value()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(**iface.params(), iface_scope));
       }
@@ -467,6 +473,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
       auto& function = cast<FunctionDeclaration>(declaration);
       StaticScope function_scope;
       function_scope.AddParent(&enclosing_scope);
+      enclosing_scope.MarkDeclared(function.name());
       for (Nonnull<GenericBinding*> binding : function.deduced_parameters()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(*binding, function_scope));
       }
@@ -491,6 +498,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
       auto& class_decl = cast<ClassDeclaration>(declaration);
       StaticScope class_scope;
       class_scope.AddParent(&enclosing_scope);
+      enclosing_scope.MarkDeclared(class_decl.name());
       if (class_decl.type_params().has_value()) {
         CARBON_RETURN_IF_ERROR(
             ResolveNames(**class_decl.type_params(), class_scope));
@@ -503,6 +511,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
     }
     case DeclarationKind::ChoiceDeclaration: {
       auto& choice = cast<ChoiceDeclaration>(declaration);
+      enclosing_scope.MarkDeclared(choice.name());
       // Alternative names are never used unqualified, so we don't need to
       // add the alternatives to a scope, or introduce a new scope; we only
       // need to check for duplicates.
@@ -535,6 +544,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
 
     case DeclarationKind::AliasDeclaration: {
       auto& alias = cast<AliasDeclaration>(declaration);
+      enclosing_scope.MarkDeclared(alias.name());
       CARBON_RETURN_IF_ERROR(ResolveNames(alias.target(), enclosing_scope));
       enclosing_scope.MarkUsable(alias.name());
       break;

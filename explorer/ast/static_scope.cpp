@@ -10,26 +10,32 @@
 namespace Carbon {
 
 auto StaticScope::Add(const std::string& name, ValueNodeView entity,
-                      bool usable) -> ErrorOr<Success> {
-  auto [it, inserted] = declared_names_.insert({name, {entity, usable}});
+                      NameStatus status) -> ErrorOr<Success> {
+  auto [it, inserted] = declared_names_.insert({name, {entity, status}});
   if (!inserted) {
     if (it->second.entity != entity) {
       return CompilationError(entity.base().source_loc())
              << "Duplicate name `" << name << "` also found at "
              << it->second.entity.base().source_loc();
     }
-    CARBON_CHECK(usable || !it->second.usable)
-        << entity.base().source_loc() << " attempting to mark a usable name `"
-        << name << "` as unusable";
-    it->second.usable |= usable;
+    if (static_cast<int>(status) > static_cast<int>(it->second.status)) {
+      it->second.status = status;
+    }
   }
   return Success();
+}
+
+void StaticScope::MarkDeclared(const std::string& name) {
+  auto it = declared_names_.find(name);
+  CARBON_CHECK(it != declared_names_.end()) << name << " not found";
+  if (it->second.status == NameStatus::KnownButNotDeclared)
+    it->second.status = NameStatus::DeclaredButNotUsable;
 }
 
 void StaticScope::MarkUsable(const std::string& name) {
   auto it = declared_names_.find(name);
   CARBON_CHECK(it != declared_names_.end()) << name << " not found";
-  it->second.usable = true;
+  it->second.status = NameStatus::Usable;
 }
 
 auto StaticScope::Resolve(const std::string& name,
@@ -48,12 +54,17 @@ auto StaticScope::TryResolve(const std::string& name,
     -> ErrorOr<std::optional<ValueNodeView>> {
   auto it = declared_names_.find(name);
   if (it != declared_names_.end()) {
-    if (!it->second.usable) {
-      return CompilationError(source_loc)
-             << "'" << name
-             << "' is not usable until after it has been completely declared";
+    switch (it->second.status) {
+      case NameStatus::KnownButNotDeclared:
+        return CompilationError(source_loc)
+               << "'" << name << "' has not been declared yet";
+      case NameStatus::DeclaredButNotUsable:
+        return CompilationError(source_loc)
+               << "'" << name
+               << "' is not usable until after it has been completely declared";
+      case NameStatus::Usable:
+        return std::make_optional(it->second.entity);
     }
-    return std::make_optional(it->second.entity);
   }
   std::optional<ValueNodeView> result;
   for (Nonnull<const StaticScope*> parent : parent_scopes_) {
