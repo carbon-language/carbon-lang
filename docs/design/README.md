@@ -393,17 +393,19 @@ FIXME
 -   R-values: no dedicated storage, may be stored in registers, may not take the
     address, may not be modified, may be silently copied, may silently be a
     const reference.
--   Constant: when the value is known at type-checking time. Examples: literals,
-    expressions in terns of constants, values of `template` parameters (FIXME:
-    link).
--   Erased constant: checked generics (FIXME: link), the value is known at
-    compile-time, but not type-checking time.
+-   Constant: when the value is known at type-checking time. Examples: literals
+    ([integer](#integer-literals), [floating-point](#floating-point-literals),
+    [string](#string-literals)), expressions in terns of constants, values of
+    [`template` parameters](#checked-and-template-parameters).
+-   Erased constant: [checked generics](#checked-and-template-parameters), the
+    value is known at compile-time, but not type-checking time.
 
-Automatic conversions
+Carbon will automatically convert from a constant to an erased constant, or from
+any value category to R-value:
 
 ```mermaid
 graph TD;
-    A(Erased constant)-->B(Constant)-->C(R-value);
+    A(Constant)-->B(Erased constant)-->C(R-value);
     D(L-value)-->C;
 ```
 
