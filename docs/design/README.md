@@ -402,10 +402,9 @@ FIXME
 Automatic conversions
 
 ```mermaid
-  graph TD;
-      Erased constant-->Constant;
-      Constant-->R-value;
-      L-value-->R-value;
+graph TD;
+    A(Erased constant)-->B(Constant)-->C(R-value);
+    D(L-value)-->C;
 ```
 
 ## Composite types
