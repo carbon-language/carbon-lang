@@ -388,6 +388,26 @@ are available for representing strings with `\`s and `"`s.
 
 FIXME
 
+-   L-values: have storage and a stable address. May be modified, assuming type
+    is not [`const`](#const).
+-   R-values: no dedicated storage, may be stored in registers, may not take the
+    address, may not be modified, may be silently copied, may silently be a
+    const reference.
+-   Constant: when the value is known at type-checking time. Examples: literals,
+    expressions in terns of constants, values of `template` parameters (FIXME:
+    link).
+-   Erased constant: checked generics (FIXME: link), the value is known at
+    compile-time, but not type-checking time.
+
+Automatic conversions
+
+```mermaid
+  graph TD;
+      Erased constant-->Constant;
+      Constant-->R-value;
+      L-value-->R-value;
+```
+
 ## Composite types
 
 ### Tuples
