@@ -69,6 +69,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Argument passing](#argument-passing)
             -   [Copyable types](#copyable-types)
             -   [Move-only types](#move-only-types)
+            -   [Unmovable types](#unmovable-types)
     -   [Choice types](#choice-types)
 -   [Names](#names)
     -   [Packages, libraries, namespaces](#packages-libraries-namespaces)
@@ -1564,6 +1565,11 @@ FIXME
 
 #### Argument passing
 
+```carbon
+var a: AType;
+fn GetA() -> AType;
+```
+
 ##### Copyable types
 
 For types that are copyable and movable:
@@ -1586,6 +1592,16 @@ For types that are movable but non-copyable:
 | `a.M()`      | const-ref              | by address               | error                  |
 | `GetA().M()` | move or const-ref      | error                    | move                   |
 | `(~a).M()`   | move or move+const-ref | error                    | move                   |
+
+##### Unmovable types
+
+For types that are neither movable nor copyable:
+
+| Call         | `fn M[me: Self]()` | `fn M[addr me: Self*]()` | `fn M[var me: Self]()` |
+| ------------ | ------------------ | ------------------------ | ---------------------- |
+| `a.M()`      | const-ref          | by address               | error                  |
+| `GetA().M()` | const-ref          | error                    | error                  |
+| `(~a).M()`   | error              | error                    | error                  |
 
 ### Choice types
 
