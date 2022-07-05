@@ -1572,20 +1572,23 @@ fn GetA() -> AType;
 
 ##### Copyable types
 
-For types that are copyable and movable:
+For types that are copyable and movable, like [integer](#integer-types) and
+[floating-point](#floating-point-types) types:
 
-| Call         | `fn M[me: Self]()`     | `fn M[addr me: Self*]()` | `fn M[var me: Self]()` |
-| ------------ | ---------------------- | ------------------------ | ---------------------- |
-| `a.M()`      | copy or const-ref      | by address               | copy                   |
-| `GetA().M()` | move or const-ref      | error                    | copy or move           |
-| `(~a).M()`   | move or move+const-ref | error                    | move                   |
+| Call         | `fn M[me: Self]()`        | `fn M[addr me: Self*]()` | `fn M[var me: Self]()` |
+| ------------ | ------------------------- | ------------------------ | ---------------------- |
+| `a.M()`      | copy or const-ref         | by address               | copy                   |
+| `GetA().M()` | copy or move or const-ref | error                    | copy or move           |
+| `(~a).M()`   | move or move+const-ref    | error                    | move                   |
 
 Note that this last column would be unusual. Pass as the argument in a function
 call is the same, but without the `addr` column.
 
 ##### Move-only types
 
-For types that are movable but non-copyable:
+For types that are movable but non-copyable, like types representing resources,
+such as `Box(T)` (Carbon's equivalent of
+[C++'s `std::unique_ptr<T>`](https://en.cppreference.com/w/cpp/memory/unique_ptr)):
 
 | Call         | `fn M[me: Self]()`     | `fn M[addr me: Self*]()` | `fn M[var me: Self]()` |
 | ------------ | ---------------------- | ------------------------ | ---------------------- |
@@ -1595,7 +1598,7 @@ For types that are movable but non-copyable:
 
 ##### Unmovable types
 
-For types that are neither movable nor copyable:
+For types that are neither movable nor copyable, like `Mutex`:
 
 | Call         | `fn M[me: Self]()` | `fn M[addr me: Self*]()` | `fn M[var me: Self]()` |
 | ------------ | ------------------ | ------------------------ | ---------------------- |
