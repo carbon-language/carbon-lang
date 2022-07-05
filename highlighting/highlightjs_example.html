@@ -23,6 +23,7 @@ import Carbon library "Printing";
 fn Partition[T:! Comparable & Movable](s: Slice(T))
       -> i64 {
   var i: i64 = -1;
+  let (x: i64, var y: i64) = (1, 2);
 
   for (e: T in s) {
     if (e <= s.Last()) {
@@ -49,7 +50,7 @@ constraint WidgetC {
 }
 
 base class Widget {
-  fn Print[addr me: Self*](var i: i64, x: f32, _: bool);
+  fn Print[addr me: Self*](var i: i64, x: f32 = 4.2, _: bool);
 }
 
 fn Widget.Print[addr me: Self*](var i: i64, x: f32, _: bool, 47) {

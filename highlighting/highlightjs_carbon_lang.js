@@ -9,7 +9,6 @@
  * Category: common, system
  * Website: https://github.com/carbon-language/carbon-lang/
  *
- * TODO: local `var` and `let` declarations.
  * TODO: struct literals.
  * TODO: abstract, virtual, impl on methods.
  * TODO: private, protected.
@@ -88,7 +87,7 @@ export default function (hljs) {
   // But it is harmless to give them nicer syntax highlighting. Eventually, as
   // the language settles, we can explore specifically highlighting operators
   // that aren't valid as errors.
-  const PUNCTUATION = [/->/, /\./, /:!?/, /;/];
+  const PUNCTUATION = [/->/, /\./];
   const OPERATORS = [
     />>=/,
     /<=>/,
@@ -117,7 +116,6 @@ export default function (hljs) {
     /&/,
     /\\/,
     /\^/,
-    /=/,
     /!/,
     />/,
     /</,
@@ -130,6 +128,13 @@ export default function (hljs) {
     /\*/,
     /~/,
   ];
+
+  const COMMA_SEPARATOR = {
+    begin: [/,/, /\s*/],
+    beginScope: {
+      1: 'punctuation',
+    },
+  };
 
   // The core expression patterns.
   const NUMBER_LITERAL = {
@@ -204,15 +209,20 @@ export default function (hljs) {
     beginScope: 'punctuation',
     end: /\)/,
     endScope: 'punctuation',
-    contains: ['self', ...UNPARENTHESIZED_EXPRESSION],
+    contains: [
+      'self',
+      // Tuple literals are comma-separated parenthesized expressions.
+      COMMA_SEPARATOR,
+      ...UNPARENTHESIZED_EXPRESSION,
+    ],
   };
   const EXPRESSION = [PARENTHESIZED_EXPRESSION, ...UNPARENTHESIZED_EXPRESSION];
 
   // The pattern patterns, including comma-separated sequences.
   const VALUE_PATTERN = {
     scope: 'carbon-value-pattern',
-    begin: /(?!,|\)|\])/,
-    end: /,|\)|\]/,
+    begin: /(?![=,;\)\]\}])/,
+    end: /\s*[=,;\)\]\}]/,
     returnEnd: true,
     contains: [...EXPRESSION],
   };
@@ -236,7 +246,7 @@ export default function (hljs) {
         },
       },
     ],
-    end: /,|\)|\]/,
+    end: /\s*[=,;\)\]\}]/,
     returnEnd: true,
     contains: [...EXPRESSION],
   };
@@ -248,7 +258,7 @@ export default function (hljs) {
       3: 'keyword',
       4: 'punctuation',
     },
-    end: /,|\)|\]/,
+    end: /[=,;\)\]\}]/,
     returnEnd: true,
     contains: [...EXPRESSION],
   };
@@ -259,27 +269,44 @@ export default function (hljs) {
     beginScope: 'punctuation',
     end: /\)/,
     endScope: 'punctuation',
-    contains: [
-      'self',
-      {
-        begin: [/,/, /\s*/],
-        beginScope: {
-          1: 'punctuation',
-        },
-      },
-      ...UNPARENTHESIZED_PATTERNS,
-    ],
+    contains: ['self', ...UNPARENTHESIZED_PATTERNS],
   };
   const PATTERN_SEQUENCE = [
-    {
-      begin: [/,/, /\s*/],
-      beginScope: {
-        1: 'punctuation',
-      },
-    },
+    COMMA_SEPARATOR,
     PARENTHESIZED_PATTERN,
     ...UNPARENTHESIZED_PATTERNS,
   ];
+
+  // Both variable and `let` value declarations.
+  const INITIALIZER = {
+    scope: 'carbon-initializer',
+    begin: [/\s*/, /=/, /\s*/],
+    beginScope: {
+      2: 'punctuation',
+    },
+    end: /[,;\)\]\}]/,
+    //end: /,|\)|\]|;/,
+    returnEnd: true,
+    contains: [...EXPRESSION],
+  };
+  const VARIABLE = {
+    variants: [
+      {
+        scope: 'carbon-var-declaration',
+        begin: [/\bvar/, /\s+/],
+      },
+      {
+        scope: 'carbon-let-declaration',
+        begin: [/\blet/, /\s+/],
+      },
+    ],
+    beginScope: {
+      1: 'keyword',
+    },
+    end: /;/,
+    endScope: 'punctuation',
+    contains: [PARENTHESIZED_PATTERN, BINDING_PATTERN, INITIALIZER],
+  };
 
   // Parameters.
   const PARAMETER_LIST = {
@@ -297,7 +324,7 @@ export default function (hljs) {
     ],
     beginScope: 'punctuation',
     endScope: 'punctuation',
-    contains: [...PATTERN_SEQUENCE],
+    contains: [INITIALIZER, ...PATTERN_SEQUENCE],
   };
 
   // Functions.
@@ -384,8 +411,14 @@ export default function (hljs) {
   // Statements -- very loosely. We bundle together top-level declaration
   // constructs, blocks, and statements.
   const STATEMENTS = [
+    VARIABLE,
     FUNCTION,
     CLASS,
+    {
+      // We only match the assignment operator at the statement level.
+      scope: 'operator',
+      match: /=/,
+    },
     {
       scope: 'punctuation',
       match: /;/,
