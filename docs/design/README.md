@@ -1992,10 +1992,9 @@ fn F();
 #### Name lookup for common types
 
 Common types that we expect to be used universally will be provided for every
-file, including `i32` and `bool`. By the
-["all APIs are library APIs" principle](/docs/project/principles/library_apis_only.md),
-this is as if there was a special "prelude" package that was imported
-automatically into every `api` file that declared these names.
+file are made available as if there was a special "prelude" package that was imported
+automatically into every `api` file. Dedicated type literal syntaxes like `i32` and `bool` refer to types defined within this package, based on the
+["all APIs are library APIs" principle](/docs/project/principles/library_apis_only.md).
 
 > References:
 >
