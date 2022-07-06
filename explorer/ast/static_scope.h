@@ -151,14 +151,29 @@ class ValueNodeView {
 // child scope.
 class StaticScope {
  public:
+  // The status of a name. Later enumerators with higher values correspond to
+  // more completely declared names.
+  enum class NameStatus {
+    // The name is known to exist in this scope, and any lookups finding it
+    // should be rejected because it's not declared yet.
+    KnownButNotDeclared,
+    // We've started processing a declaration of this name, but it's not yet
+    // fully declared, so any lookups finding it should be rejected.
+    DeclaredButNotUsable,
+    // The name is usable in this context.
+    Usable,
+  };
+
   // Defines `name` to be `entity` in this scope, or reports a compilation error
   // if `name` is already defined to be a different entity in this scope.
   // If `usable` is `false`, `name` cannot yet be referenced and `Resolve()`
   // methods will fail for it.
-  auto Add(const std::string& name, ValueNodeView entity, bool usable = true)
-      -> ErrorOr<Success>;
+  auto Add(const std::string& name, ValueNodeView entity,
+           NameStatus status = NameStatus::Usable) -> ErrorOr<Success>;
 
-  // Marks `name` as usable.
+  // Marks `name` as being past its point of declaration.
+  void MarkDeclared(const std::string& name);
+  // Marks `name` as being completely declared and hence usable.
   void MarkUsable(const std::string& name);
 
   // Make `parent` a parent of this scope.
@@ -191,7 +206,7 @@ class StaticScope {
 
   struct Entry {
     ValueNodeView entity;
-    bool usable = false;
+    NameStatus status;
   };
   // Maps locally declared names to their entities.
   std::unordered_map<std::string, Entry> declared_names_;
