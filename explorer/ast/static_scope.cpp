@@ -28,8 +28,9 @@ auto StaticScope::Add(const std::string& name, ValueNodeView entity,
 void StaticScope::MarkDeclared(const std::string& name) {
   auto it = declared_names_.find(name);
   CARBON_CHECK(it != declared_names_.end()) << name << " not found";
-  if (it->second.status == NameStatus::KnownButNotDeclared)
+  if (it->second.status == NameStatus::KnownButNotDeclared) {
     it->second.status = NameStatus::DeclaredButNotUsable;
+  }
 }
 
 void StaticScope::MarkUsable(const std::string& name) {
