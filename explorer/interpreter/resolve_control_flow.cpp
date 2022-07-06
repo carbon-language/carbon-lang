@@ -37,7 +37,8 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
                                std::optional<Nonnull<FunctionData*>> function)
     -> ErrorOr<Success> {
   switch (statement->kind()) {
-    case StatementKind::Return: {
+    case StatementKind::ReturnVar:
+    case StatementKind::ReturnExpression: {
       if (!function.has_value()) {
         return CompilationError(statement->source_loc())
                << "return is not within a function body";
@@ -54,11 +55,22 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
       }
       auto& ret = cast<Return>(*statement);
       ret.set_function((*function)->declaration);
-      if (ret.is_omitted_expression() != function_return.is_omitted()) {
-        return CompilationError(ret.source_loc())
-               << ret << " should"
-               << (function_return.is_omitted() ? " not" : "")
-               << " provide a return value, to match the function's signature.";
+      if (statement->kind() == StatementKind::ReturnVar &&
+          function_return.is_omitted()) {
+        return CompilationError(statement->source_loc())
+               << *statement
+               << " should not provide a return value, to match the function's "
+                  "signature.";
+      }
+      if (statement->kind() == StatementKind::ReturnExpression) {
+        auto& ret_exp = cast<ReturnExpression>(*statement);
+        if (ret_exp.is_omitted_expression() != function_return.is_omitted()) {
+          return CompilationError(ret_exp.source_loc())
+                 << ret_exp << " should"
+                 << (function_return.is_omitted() ? " not" : "")
+                 << " provide a return value, to match the function's "
+                    "signature.";
+        }
       }
       return Success();
     }

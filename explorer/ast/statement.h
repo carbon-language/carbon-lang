@@ -111,12 +111,19 @@ class Assign : public Statement {
 
 class VariableDefinition : public Statement {
  public:
+  enum DefinitionType {
+    Var,
+    Returned,
+  };
+
   VariableDefinition(SourceLocation source_loc, Nonnull<Pattern*> pattern,
-                     Nonnull<Expression*> init, ValueCategory value_category)
+                     Nonnull<Expression*> init, ValueCategory value_category,
+                     DefinitionType def_type)
       : Statement(AstNodeKind::VariableDefinition, source_loc),
         pattern_(pattern),
         init_(init),
-        value_category_(value_category) {}
+        value_category_(value_category),
+        def_type_(def_type) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromVariableDefinition(node->kind());
@@ -127,6 +134,7 @@ class VariableDefinition : public Statement {
   auto init() const -> const Expression& { return *init_; }
   auto init() -> Expression& { return *init_; }
   auto value_category() const -> ValueCategory { return value_category_; }
+  auto is_returned() const -> bool { return def_type_ == Returned; };
 
   // Can only be called by type-checking, if a conversion was required.
   void set_init(Nonnull<Expression*> init) { init_ = init; }
@@ -135,6 +143,7 @@ class VariableDefinition : public Statement {
   Nonnull<Pattern*> pattern_;
   Nonnull<Expression*> init_;
   ValueCategory value_category_;
+  const DefinitionType def_type_;
 };
 
 class If : public Statement {
@@ -170,21 +179,9 @@ class If : public Statement {
 
 class Return : public Statement {
  public:
-  Return(Nonnull<Arena*> arena, SourceLocation source_loc)
-      : Return(source_loc, arena->New<TupleLiteral>(source_loc), true) {}
-  Return(SourceLocation source_loc, Nonnull<Expression*> expression,
-         bool is_omitted_expression)
-      : Statement(AstNodeKind::Return, source_loc),
-        expression_(expression),
-        is_omitted_expression_(is_omitted_expression) {}
-
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromReturn(node->kind());
   }
-
-  auto expression() const -> const Expression& { return *expression_; }
-  auto expression() -> Expression& { return *expression_; }
-  auto is_omitted_expression() const -> bool { return is_omitted_expression_; }
 
   // The AST node representing the function body this statement returns from.
   // Can only be called after ResolveControlFlow has visited this node.
@@ -195,21 +192,71 @@ class Return : public Statement {
   auto function() const -> const FunctionDeclaration& { return **function_; }
   auto function() -> FunctionDeclaration& { return **function_; }
 
-  // Can only be called by type-checking, if a conversion was required.
-  void set_expression(Nonnull<Expression*> expression) {
-    expression_ = expression;
-  }
-
   // Can only be called once, by ResolveControlFlow.
   void set_function(Nonnull<FunctionDeclaration*> function) {
     CARBON_CHECK(!function_.has_value());
     function_ = function;
   }
 
+ protected:
+  Return(AstNodeKind node_kind, SourceLocation source_loc)
+      : Statement(node_kind, source_loc) {}
+
+ private:
+  std::optional<Nonnull<FunctionDeclaration*>> function_;
+};
+
+class ReturnVar : public Return {
+ public:
+  explicit ReturnVar(SourceLocation source_loc)
+      : Return(AstNodeKind::ReturnVar, source_loc) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromReturnVar(node->kind());
+  }
+
+  // Returns the value node of the BindingPattern of the returned var
+  // definition. Cannot be called before name resolution.
+  auto value_node() const -> const ValueNodeView& { return *value_node_; }
+
+  // Can only be called once, by ResolveNames.
+  void set_value_node(ValueNodeView value_node) {
+    CARBON_CHECK(!value_node_.has_value());
+    value_node_ = value_node;
+  }
+
+ private:
+  // The value node of the BindingPattern of the returned var definition.
+  std::optional<ValueNodeView> value_node_;
+};
+
+class ReturnExpression : public Return {
+ public:
+  ReturnExpression(Nonnull<Arena*> arena, SourceLocation source_loc)
+      : ReturnExpression(source_loc, arena->New<TupleLiteral>(source_loc),
+                         true) {}
+  ReturnExpression(SourceLocation source_loc, Nonnull<Expression*> expression,
+                   bool is_omitted_expression)
+      : Return(AstNodeKind::ReturnExpression, source_loc),
+        expression_(expression),
+        is_omitted_expression_(is_omitted_expression) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromReturnExpression(node->kind());
+  }
+
+  auto expression() const -> const Expression& { return *expression_; }
+  auto expression() -> Expression& { return *expression_; }
+  auto is_omitted_expression() const -> bool { return is_omitted_expression_; }
+
+  // Can only be called by type-checking, if a conversion was required.
+  void set_expression(Nonnull<Expression*> expression) {
+    expression_ = expression;
+  }
+
  private:
   Nonnull<Expression*> expression_;
   bool is_omitted_expression_;
-  std::optional<Nonnull<FunctionDeclaration*>> function_;
 };
 
 class While : public Statement {
