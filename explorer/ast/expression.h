@@ -145,10 +145,10 @@ class IdentifierExpression : public Expression {
   // before name resolution.
   auto value_node() const -> const ValueNodeView& { return *value_node_; }
 
-  // Sets the value returned by value_node. Can be called only once,
-  // during name resolution.
+  // Sets the value returned by value_node. Can be called only during name
+  // resolution.
   void set_value_node(ValueNodeView value_node) {
-    CARBON_CHECK(!value_node_.has_value());
+    CARBON_CHECK(!value_node_.has_value() || value_node_ == value_node);
     value_node_ = std::move(value_node);
   }
 
@@ -180,9 +180,9 @@ class DotSelfExpression : public Expression {
   auto self_binding() const -> const GenericBinding& { return **self_binding_; }
   auto self_binding() -> GenericBinding& { return **self_binding_; }
 
-  // Sets the self binding. Called only once, during name resolution.
+  // Sets the self binding. Called only during name resolution.
   void set_self_binding(Nonnull<GenericBinding*> self_binding) {
-    CARBON_CHECK(!self_binding_.has_value());
+    CARBON_CHECK(!self_binding_.has_value() || self_binding_ == self_binding);
     self_binding_ = self_binding;
   }
 
