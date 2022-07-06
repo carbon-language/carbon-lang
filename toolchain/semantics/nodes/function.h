@@ -21,7 +21,7 @@ class Function {
 
   Function(ParseTree::Node node, int32_t id,
            // llvm::SmallVector<PatternBinding, 0> params,
-           llvm::SmallVector < llvm::SmallVector<NodeRef, 0> return_type,
+           // llvm::SmallVector<NodeRef, 0> return_type,
            llvm::SmallVector<NodeRef, 0> body)
       : node_(node),
         id_(id),

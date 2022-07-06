@@ -97,12 +97,14 @@ TEST_F(SemanticsIRFactoryTest, FunctionParams) {
 }
 */
 
+/*
 TEST_F(SemanticsIRFactoryTest, FunctionReturnType) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
   Build("fn Foo() -> i32 {}");
-  EXPECT_THAT(root_block(), ElementsAre(Function(0, IsEmpty(), IsEmpty()),
+  EXPECT_THAT(root_block(), ElementsAre(Function(0, IsEmpty()),
                                         SetName(StrEq("Foo"), 0)));
 }
+*/
 
 TEST_F(SemanticsIRFactoryTest, FunctionOrder) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
