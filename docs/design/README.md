@@ -565,7 +565,7 @@ are applied to convert the expression to the target type.
 _Declarations_ introduce a new [name](#names) and say what that name represents.
 For some kinds of entities, like [functions](#functions), there are two kinds of
 declarations: _forward declarations_ and _definitions_. For those entities,
-there should be exactly one definition for the name, but there can be additional
+there should be exactly one definition for the name, and at most one additional
 forward declarations that introduce the name before it is defined. Forward
 declarations can be used to separate interface from implementation, such as to
 declare a name in an [api file](#files-libraries-packages) that is defined in an
