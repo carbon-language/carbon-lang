@@ -923,7 +923,9 @@ auto TypeChecker::Substitute(
     case Value::Kind::AssociatedConstant: {
       const auto& assoc = cast<AssociatedConstant>(*type);
       Nonnull<const Value*> base = Substitute(dict, &assoc.base());
-      BindingMap args = SubstituteIntoBindingMap(assoc.args());
+      BindingMap args =
+          SubstituteIntoBindings(Bindings(assoc.args(), Bindings::NoWitnesses))
+              ->args();
       Nonnull<const Value*> witness = Substitute(dict, &assoc.witness());
       return arena_->New<AssociatedConstant>(base, &assoc.constant(), args,
                                              cast<Witness>(witness));
