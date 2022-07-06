@@ -151,10 +151,7 @@ fn Fibonacci(limit: i64) {
 ```
 
 Carbon is a language that should feel familiar to C++ and C developers. This
-example has familiar constructs like imports,
-
-<!-- FIXME: [imports](#imports), -->
-
+example has familiar constructs like [imports](#imports),
 [function definitions](#functions), [typed arguments](#binding-patterns), and
 [curly braces](#blocks-and-statements).
 
