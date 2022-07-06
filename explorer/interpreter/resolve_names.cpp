@@ -336,6 +336,13 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
       auto& def = cast<VariableDefinition>(statement);
       CARBON_RETURN_IF_ERROR(ResolveNames(def.init(), enclosing_scope));
       CARBON_RETURN_IF_ERROR(ResolveNames(def.pattern(), enclosing_scope));
+      if (def.is_returned()) {
+        CARBON_CHECK(def.pattern().kind() == PatternKind::BindingPattern)
+            << def.pattern().source_loc()
+            << "returned var definition can only be a binding pattern";
+        CARBON_RETURN_IF_ERROR(enclosing_scope.AddReturnedVar(
+            ValueNodeView(&cast<BindingPattern>(def.pattern()))));
+      }
       break;
     }
     case StatementKind::If: {
@@ -350,10 +357,32 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
       }
       break;
     }
-    case StatementKind::Return:
-      CARBON_RETURN_IF_ERROR(
-          ResolveNames(cast<Return>(statement).expression(), enclosing_scope));
+    case StatementKind::ReturnVar: {
+      auto& ret_var_stmt = cast<ReturnVar>(statement);
+      std::optional<ValueNodeView> returned_var_def_view =
+          enclosing_scope.ResolveReturned();
+      if (!returned_var_def_view.has_value()) {
+        return CompilationError(ret_var_stmt.source_loc())
+               << "`return var` is not allowed without a returned var defined "
+                  "in scope.";
+      }
+      ret_var_stmt.set_value_node(*returned_var_def_view);
       break;
+    }
+    case StatementKind::ReturnExpression: {
+      auto& ret_exp_stmt = cast<ReturnExpression>(statement);
+      std::optional<ValueNodeView> returned_var_def_view =
+          enclosing_scope.ResolveReturned();
+      if (returned_var_def_view.has_value()) {
+        return CompilationError(ret_exp_stmt.source_loc())
+               << "`return <expression>` is not allowed with a returned var "
+                  "defined in scope: "
+               << returned_var_def_view->base().source_loc();
+      }
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(ret_exp_stmt.expression(), enclosing_scope));
+      break;
+    }
     case StatementKind::Block: {
       auto& block = cast<Block>(statement);
       StaticScope block_scope;
