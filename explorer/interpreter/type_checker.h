@@ -78,6 +78,8 @@ class TypeChecker {
       -> Nonnull<Expression*>;
 
  private:
+  struct SingleStepTypeEqualityContext;
+
   // Information about the currently enclosing scopes.
   struct ScopeInfo {
     static auto ForNonClassScope(Nonnull<ImplScope*> impl_scope) -> ScopeInfo {
@@ -303,18 +305,16 @@ class TypeChecker {
   // must be types.
   auto FieldTypesImplicitlyConvertible(
       llvm::ArrayRef<NamedValue> source_fields,
-      llvm::ArrayRef<NamedValue> destination_fields) const -> bool;
+      llvm::ArrayRef<NamedValue> destination_fields,
+      const ImplScope& impl_scope) const -> bool;
 
   // Returns true if *source is implicitly convertible to *destination. *source
   // and *destination must be concrete types.
-  auto IsImplicitlyConvertible(
-      Nonnull<const Value*> source, Nonnull<const Value*> destination,
-      std::optional<Nonnull<const ImplScope*>> impl_scope) const -> bool;
-
-  // Attempt to resolve a type that might be symbolic into a concrete type.
-  auto ResolveType(SourceLocation source_loc, Nonnull<const Value*> type,
-                   const ImplScope& impl_scope)
-      -> ErrorOr<Nonnull<const Value*>>;
+  auto IsImplicitlyConvertible(Nonnull<const Value*> source,
+                               Nonnull<const Value*> destination,
+                               const ImplScope& impl_scope,
+                               bool allow_user_defined_conversions = true) const
+      -> bool;
 
   // Attempt to implicitly convert type-checked expression `source` to the type
   // `destination`.
@@ -327,16 +327,11 @@ class TypeChecker {
   // Check whether `actual` is implicitly convertible to `expected`
   // and halt with a fatal compilation error if it is not.
   //
-  // If `impl_scope` is `std::nullopt`, only built-in conversions are
-  // considered.
-  // TODO: Remove this behavior.
-  //
   // TODO: Does not actually perform the conversion if a user-defined
   // conversion is needed. Should be used very rarely for that reason.
   auto ExpectType(SourceLocation source_loc, const std::string& context,
                   Nonnull<const Value*> expected, Nonnull<const Value*> actual,
-                  std::optional<Nonnull<const ImplScope*>> impl_scope) const
-      -> ErrorOr<Success>;
+                  const ImplScope& impl_scope) const -> ErrorOr<Success>;
 
   // The name of a builtin interface, with any arguments.
   struct BuiltinInterfaceName {

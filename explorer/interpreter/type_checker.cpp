@@ -30,6 +30,49 @@ using llvm::isa;
 
 namespace Carbon {
 
+struct TypeChecker::SingleStepTypeEqualityContext : public EqualityContext {
+ public:
+  SingleStepTypeEqualityContext(Nonnull<const TypeChecker*> type_checker,
+                                Nonnull<const ImplScope*> impl_scope)
+      : type_checker_(type_checker), impl_scope_(impl_scope) {}
+
+  // Visits the values that are equal to the given value and a single step away
+  // according to an equality constraint that is either scope or within a final
+  // impl corresponding to an associated constant. Stops and returns `false` if
+  // the visitor returns `false`, otherwise returns `true`.
+  auto VisitEqualValues(Nonnull<const Value*> value,
+                        llvm::function_ref<bool(Nonnull<const Value*>)> visitor)
+      const -> bool override {
+    if (!impl_scope_->VisitEqualValues(value, visitor)) {
+      return false;
+    }
+
+    // Visit the corresponding impl if this is an associated constant.
+    if (auto* assoc = dyn_cast<AssociatedConstant>(value)) {
+      if (auto* impl_witness = dyn_cast<ImplWitness>(&assoc->witness())) {
+        // Instantiate the impl to find the concrete constraint it implements.
+        Nonnull<const ConstraintType*> constraint =
+            impl_witness->declaration().constraint_type();
+        BindingMap bindings = impl_witness->type_args();
+        bindings[constraint->self_binding()] = &assoc->base();
+        constraint = cast<ConstraintType>(
+            type_checker_->Substitute(bindings, constraint));
+
+        // Look for the value of this constant within that constraint.
+        constraint->VisitEqualValues(value, visitor);
+      } else {
+        // TODO: We need to try to resolve in this case.
+      }
+    }
+
+    return true;
+  }
+
+ private:
+  Nonnull<const TypeChecker*> type_checker_;
+  Nonnull<const ImplScope*> impl_scope_;
+};
+
 static void SetValue(Nonnull<Pattern*> pattern, Nonnull<const Value*> value) {
   // TODO: find some way to CHECK that `value` is identical to pattern->value(),
   // if it's already set. Unclear if `ValueEqual` is suitable, because it
@@ -238,7 +281,8 @@ static auto FindField(llvm::ArrayRef<NamedValue> fields,
 
 auto TypeChecker::FieldTypesImplicitlyConvertible(
     llvm::ArrayRef<NamedValue> source_fields,
-    llvm::ArrayRef<NamedValue> destination_fields) const -> bool {
+    llvm::ArrayRef<NamedValue> destination_fields,
+    const ImplScope& impl_scope) const -> bool {
   if (source_fields.size() != destination_fields.size()) {
     return false;
   }
@@ -248,11 +292,12 @@ auto TypeChecker::FieldTypesImplicitlyConvertible(
     if (!destination_field.has_value() ||
         !IsImplicitlyConvertible(source_field.value,
                                  destination_field.value().value,
+                                 impl_scope,
                                  // TODO: We don't have a way to perform
                                  // user-defined conversions of a struct field
                                  // yet, because we can't write a suitable impl
                                  // for ImplicitAs.
-                                 std::nullopt)) {
+                                 /*allow_user_defined_conversions=*/false)) {
       return false;
     }
   }
@@ -281,29 +326,33 @@ auto TypeChecker::FieldTypes(const NominalClassType& class_type) const
 
 auto TypeChecker::IsImplicitlyConvertible(
     Nonnull<const Value*> source, Nonnull<const Value*> destination,
-    std::optional<Nonnull<const ImplScope*>> impl_scope) const -> bool {
+    const ImplScope& impl_scope,
+    bool allow_user_defined_conversions /*= true*/) const -> bool {
   // Check for an exact match or for an implicit conversion.
   // TODO: `impl`s of `ImplicitAs` should be provided to cover these
   // conversions.
   CARBON_CHECK(IsConcreteType(source));
   CARBON_CHECK(IsConcreteType(destination));
-  if (TypeEqual(source, destination, impl_scope)) {
+  SingleStepTypeEqualityContext equal_ctx(this, &impl_scope);
+  if (TypeEqual(source, destination, &equal_ctx)) {
     return true;
   }
+
   switch (source->kind()) {
     case Value::Kind::StructType:
       switch (destination->kind()) {
         case Value::Kind::StructType:
           if (FieldTypesImplicitlyConvertible(
                   cast<StructType>(*source).fields(),
-                  cast<StructType>(*destination).fields())) {
+                  cast<StructType>(*destination).fields(), impl_scope)) {
             return true;
           }
           break;
         case Value::Kind::NominalClassType:
           if (FieldTypesImplicitlyConvertible(
                   cast<StructType>(*source).fields(),
-                  FieldTypes(cast<NominalClassType>(*destination)))) {
+                  FieldTypes(cast<NominalClassType>(*destination)),
+                  impl_scope)) {
             return true;
           }
           break;
@@ -322,9 +371,9 @@ auto TypeChecker::IsImplicitlyConvertible(
           }
           bool all_ok = true;
           for (size_t i = 0; i < source_tuple.elements().size(); ++i) {
-            if (!IsImplicitlyConvertible(source_tuple.elements()[i],
-                                         destination_tuple.elements()[i],
-                                         impl_scope)) {
+            if (!IsImplicitlyConvertible(
+                    source_tuple.elements()[i], destination_tuple.elements()[i],
+                    impl_scope, /*allow_user_defined_conversions=*/false)) {
               all_ok = false;
               break;
             }
@@ -341,9 +390,9 @@ auto TypeChecker::IsImplicitlyConvertible(
           }
           bool all_ok = true;
           for (Nonnull<const Value*> source_element : source_tuple.elements()) {
-            if (!IsImplicitlyConvertible(source_element,
-                                         &destination_array.element_type(),
-                                         impl_scope)) {
+            if (!IsImplicitlyConvertible(
+                    source_element, &destination_array.element_type(),
+                    impl_scope, /*allow_user_defined_conversions=*/false)) {
               all_ok = false;
               break;
             }
@@ -356,8 +405,9 @@ auto TypeChecker::IsImplicitlyConvertible(
         case Value::Kind::TypeType: {
           bool all_types = true;
           for (Nonnull<const Value*> source_element : source_tuple.elements()) {
-            if (!IsImplicitlyConvertible(source_element, destination,
-                                         impl_scope)) {
+            if (!IsImplicitlyConvertible(
+                    source_element, destination, impl_scope,
+                    /*allow_user_defined_conversions=*/false)) {
               all_types = false;
               break;
             }
@@ -394,8 +444,8 @@ auto TypeChecker::IsImplicitlyConvertible(
       break;
   }
 
-  // If we weren't given an impl scope, only look for builtin conversions.
-  if (!impl_scope.has_value()) {
+  // If we're not supposed to look for a user-defined conversion, we're done.
+  if (!allow_user_defined_conversions) {
     return false;
   }
 
@@ -405,45 +455,7 @@ auto TypeChecker::IsImplicitlyConvertible(
   ErrorOr<Nonnull<const InterfaceType*>> iface_type = GetBuiltinInterfaceType(
       source_loc, BuiltinInterfaceName{Builtins::ImplicitAs, destination});
   return iface_type.ok() &&
-         (*impl_scope)->Resolve(*iface_type, source, source_loc, *this).ok();
-}
-
-auto TypeChecker::ResolveType(SourceLocation source_loc,
-                              Nonnull<const Value*> type,
-                              const ImplScope& impl_scope)
-    -> ErrorOr<Nonnull<const Value*>> {
-  if (auto* assoc = dyn_cast<AssociatedConstant>(type)) {
-    const ConstraintType* constraint_type = nullptr;  // FIXME
-    CARBON_ASSIGN_OR_RETURN(
-        Nonnull<const Expression*> witness_expr,
-        impl_scope.Resolve(constraint_type, &assoc->base(), source_loc, *this));
-    CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> witness_value,
-                            InterpExp(witness_expr, arena_, trace_stream_));
-    if (auto* impl_witness = dyn_cast<ImplWitness>(witness_value)) {
-      Nonnull<const ConstraintType*> constraint =
-          impl_witness->declaration().constraint_type();
-      Nonnull<const Value*> expected = arena_->New<AssociatedConstant>(
-          &constraint->self_binding()->value(), &assoc->constant(),
-          assoc->args(), impl_witness);
-      std::optional<Nonnull<const Value*>> result;
-      constraint->VisitEqualValues(
-          expected, [&](Nonnull<const Value*> equal_value) {
-            equal_value = Substitute(impl_witness->type_args(), equal_value);
-            if (isa<AssociatedConstant>(equal_value)) {
-              return true;
-            }
-            // TODO: This makes an arbitrary choice if there's more than one
-            // equal value. It's not clear how to handle that case.
-            result = equal_value;
-            return false;
-          });
-      if (result) {
-        return *result;
-      }
-    }
-  }
-
-  return type;
+         impl_scope.Resolve(*iface_type, source, source_loc, *this).ok();
 }
 
 auto TypeChecker::ImplicitlyConvert(const std::string& context,
@@ -451,17 +463,13 @@ auto TypeChecker::ImplicitlyConvert(const std::string& context,
                                     Nonnull<Expression*> source,
                                     Nonnull<const Value*> destination)
     -> ErrorOr<Nonnull<Expression*>> {
-  CARBON_ASSIGN_OR_RETURN(
-      Nonnull<const Value*> source_type,
-      ResolveType(source->source_loc(), &source->static_type(), impl_scope));
-  CARBON_ASSIGN_OR_RETURN(
-      destination, ResolveType(source->source_loc(), destination, impl_scope));
+  Nonnull<const Value*> source_type = &source->static_type();
   // TODO: If a builtin conversion works, for now we don't create any
   // expression to do the conversion and rely on the interpreter to know how to
   // do it.
   // TODO: This doesn't work for cases of combined built-in and user-defined
   // conversion, such as converting a struct element via an `ImplicitAs` impl.
-  if (IsImplicitlyConvertible(source_type, destination, std::nullopt)) {
+  if (IsImplicitlyConvertible(source_type, destination, impl_scope)) {
     return source;
   }
   ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
@@ -542,10 +550,11 @@ auto TypeChecker::BuildBuiltinMethodCall(const ImplScope& impl_scope,
   return {call};
 }
 
-auto TypeChecker::ExpectType(
-    SourceLocation source_loc, const std::string& context,
-    Nonnull<const Value*> expected, Nonnull<const Value*> actual,
-    std::optional<Nonnull<const ImplScope*>> impl_scope) const
+auto TypeChecker::ExpectType(SourceLocation source_loc,
+                             const std::string& context,
+                             Nonnull<const Value*> expected,
+                             Nonnull<const Value*> actual,
+                             const ImplScope& impl_scope) const
     -> ErrorOr<Success> {
   if (!IsImplicitlyConvertible(actual, expected, impl_scope)) {
     return CompilationError(source_loc)
@@ -589,7 +598,7 @@ auto TypeChecker::ArgumentDeduction(
     const Value* subst_param_type = Substitute(deduced, param);
     return allow_implicit_conversion
                ? ExpectType(source_loc, context, subst_param_type, arg,
-                            &impl_scope)
+                            impl_scope)
                : ExpectExactType(source_loc, context, subst_param_type, arg);
   };
 
@@ -1507,7 +1516,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                  &func_decl->me_pattern().static_type());
                   CARBON_RETURN_IF_ERROR(ExpectType(
                       e->source_loc(), "method access, receiver type", me_type,
-                      &access.object().static_type(), &impl_scope));
+                      &access.object().static_type(), impl_scope));
                   if (access.object().value_category() != ValueCategory::Var) {
                     return CompilationError(e->source_loc())
                            << "method " << access.member_name()
@@ -1940,7 +1949,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         case Operator::Ptr:
           CARBON_RETURN_IF_ERROR(ExpectType(e->source_loc(), "*",
                                             arena_->New<TypeType>(), ts[0],
-                                            &impl_scope));
+                                            impl_scope));
           op.set_static_type(arena_->New<TypeType>());
           op.set_value_category(ValueCategory::Let);
           return Success();
@@ -2392,7 +2401,7 @@ auto TypeChecker::TypeCheckPattern(
       if (expected) {
         if (IsConcreteType(type)) {
           CARBON_RETURN_IF_ERROR(ExpectType(p->source_loc(), "name binding",
-                                            type, *expected, &impl_scope));
+                                            type, *expected, impl_scope));
         } else {
           BindingMap generic_args;
           if (!PatternMatch(type, *expected, binding.type().source_loc(),
@@ -2492,7 +2501,7 @@ auto TypeChecker::TypeCheckPattern(
       if (expected) {
         CARBON_RETURN_IF_ERROR(ExpectType(alternative.source_loc(),
                                           "alternative pattern", &choice_type,
-                                          *expected, &impl_scope));
+                                          *expected, impl_scope));
       }
       std::optional<Nonnull<const Value*>> parameter_types =
           choice_type.FindAlternative(alternative.alternative_name());
