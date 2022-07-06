@@ -1649,7 +1649,8 @@ Parts of this declaration may be omitted:
     using a `package impl;` package declaration.
 
 A program need not use the default package, but if it does, it should contain
-the `Main` entry-point function.
+the entry-point function. By default, the entry-point function is `Run` from the
+default package.
 
 > References:
 >
