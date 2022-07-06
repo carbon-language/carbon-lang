@@ -566,7 +566,9 @@ _Declarations_ introduce a new [name](#names) and say what that name represents.
 For some kinds of entities, like [functions](#functions), there are two kinds of
 declarations: _forward declarations_ and _definitions_. For those entities,
 there should be exactly one definition for the name, and at most one additional
-forward declarations that introduce the name before it is defined. Forward
+forward declaration that introduces the name before it is defined, plus any
+number of declarations in a
+[`match_first` block](generics/details.md#prioritization-rule). Forward
 declarations can be used to separate interface from implementation, such as to
 declare a name in an [api file](#files-libraries-packages) that is defined in an
 [impl file](#files-libraries-packages). Forward declarations also allow entities
