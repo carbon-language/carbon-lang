@@ -1718,7 +1718,10 @@ The names visible from an imported library are determined by these rules:
     first declaration.
 -   A name declared in an `impl` file and not the corresponding `api` file is
     _file private_, meaning visible in just that file. Its first declaration
-    must be marked with a `private` prefix.
+    must be marked with a `private` prefix. **TODO:** This needs to be finalized
+    in a proposal to resolve inconsistency between
+    [#665](https://github.com/carbon-language/carbon-lang/issues/665#issuecomment-914661914)
+    and [#1136](https://github.com/carbon-language/carbon-lang/issues/1136).
 -   Private names don't conflict with names outside the region they're private
     to: two different libraries can have different private names `foo` without
     conflict, but a private name conflicts with a public name in the same scope.
