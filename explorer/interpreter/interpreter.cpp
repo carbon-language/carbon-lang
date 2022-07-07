@@ -651,8 +651,8 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
       Nonnull<const ConstraintType*> constraint =
           impl_witness.declaration().constraint_type();
       Nonnull<const Value*> expected = arena_->New<AssociatedConstant>(
-          &constraint->self_binding()->value(), &assoc.constant(), assoc.args(),
-          &impl_witness);
+          &constraint->self_binding()->value(), &assoc.interface(),
+          &assoc.constant(), &impl_witness);
       std::optional<ErrorOr<Nonnull<const Value*>>> result;
       constraint->VisitEqualValues(
           expected, [&](Nonnull<const Value*> equal_value) {
@@ -904,6 +904,14 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             std::make_unique<ExpressionAction>(access.impl().value()));
       } else {
         // Finally, produce the result.
+        std::optional<Nonnull<const InterfaceType*>> found_in_interface =
+            access.found_in_interface();
+        if (found_in_interface) {
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> instantiated,
+              InstantiateType(*found_in_interface, exp.source_loc()));
+          found_in_interface = cast<InterfaceType>(instantiated);
+        }
         if (const auto* member_name_type =
                 dyn_cast<TypeOfMemberName>(&access.static_type())) {
           // The result is a member name, such as in `Type.field_name`. Form a
@@ -914,9 +922,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           if (!isa<InterfaceType, ConstraintType>(act.results()[0])) {
             type_result = act.results()[0];
           }
-          MemberName* member_name =
-              arena_->New<MemberName>(type_result, access.found_in_interface(),
-                                      member_name_type->member());
+          MemberName* member_name = arena_->New<MemberName>(
+              type_result, found_in_interface, member_name_type->member());
           return todo_.FinishAction(member_name);
         } else {
           // The result is the value of the named field, such as in
@@ -925,7 +932,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           if (access.impl().has_value()) {
             witness = cast<Witness>(act.results()[1]);
           }
-          FieldPath::Component member(access.member(), witness);
+          FieldPath::Component member(access.member(), found_in_interface,
+                                      witness);
           const Value* aggregate;
           if (const auto* lvalue = dyn_cast<LValue>(act.results()[0])) {
             CARBON_ASSIGN_OR_RETURN(
@@ -957,6 +965,14 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             std::make_unique<ExpressionAction>(access.impl().value()));
       } else {
         // Finally, produce the result.
+        std::optional<Nonnull<const InterfaceType*>> found_in_interface =
+            access.member().interface();
+        if (found_in_interface) {
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> instantiated,
+              InstantiateType(*found_in_interface, exp.source_loc()));
+          found_in_interface = cast<InterfaceType>(instantiated);
+        }
         if (forming_member_name) {
           // If we're forming a member name, we must be in the outer evaluation
           // in `Type.(Interface.method)`. Produce the same method name with
@@ -967,8 +983,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               << "compound member access forming a member name should be "
                  "performing impl lookup";
           auto* member_name = arena_->New<MemberName>(
-              act.results()[0], access.member().interface(),
-              access.member().member());
+              act.results()[0], found_in_interface, access.member().member());
           return todo_.FinishAction(member_name);
         } else {
           // Access the object to find the named member.
@@ -983,7 +998,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                 object, Convert(object, *access.member().base_type(),
                                 exp.source_loc()));
           }
-          FieldPath::Component field(access.member().member(), witness);
+          FieldPath::Component field(access.member().member(),
+                                     found_in_interface, witness);
           CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> member,
                                   object->GetMember(arena_, FieldPath(field),
                                                     exp.source_loc(), object));

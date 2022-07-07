@@ -469,7 +469,8 @@ auto TypeChecker::ImplicitlyConvert(const std::string& context,
   // do it.
   // TODO: This doesn't work for cases of combined built-in and user-defined
   // conversion, such as converting a struct element via an `ImplicitAs` impl.
-  if (IsImplicitlyConvertible(source_type, destination, impl_scope)) {
+  if (IsImplicitlyConvertible(source_type, destination, impl_scope,
+                              /*allow_user_defined_conversions=*/false)) {
     return source;
   }
   ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
@@ -932,12 +933,11 @@ auto TypeChecker::Substitute(
     case Value::Kind::AssociatedConstant: {
       const auto& assoc = cast<AssociatedConstant>(*type);
       Nonnull<const Value*> base = Substitute(dict, &assoc.base());
-      BindingMap args =
-          SubstituteIntoBindings(Bindings(assoc.args(), Bindings::NoWitnesses))
-              ->args();
+      Nonnull<const Value*> interface = Substitute(dict, &assoc.interface());
       Nonnull<const Value*> witness = Substitute(dict, &assoc.witness());
-      return arena_->New<AssociatedConstant>(base, &assoc.constant(), args,
-                                             cast<Witness>(witness));
+      return arena_->New<AssociatedConstant>(
+          base, cast<InterfaceType>(interface), &assoc.constant(),
+          cast<Witness>(witness));
     }
     case Value::Kind::TupleValue: {
       std::vector<Nonnull<const Value*>> elts;
@@ -3045,6 +3045,7 @@ auto TypeChecker::DeclareInterfaceDeclaration(
   ImplScope iface_scope;
   iface_scope.AddParent(scope_info.innermost_scope);
 
+  Nonnull<InterfaceType*> iface_type;
   if (iface_decl->params().has_value()) {
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(*iface_decl->params(), std::nullopt,
                                             iface_scope, ValueCategory::Let));
@@ -3057,8 +3058,21 @@ auto TypeChecker::DeclareInterfaceDeclaration(
     SetConstantValue(iface_decl, param_name);
     iface_decl->set_static_type(
         arena_->New<TypeOfParameterizedEntityName>(param_name));
+
+    // Form the full symbolic type of the interface. This is used as part of
+    // the value of associated constants, if they're referenced within the
+    // interface itself.
+    std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
+    CollectGenericBindingsInPattern(*iface_decl->params(), bindings);
+    BindingMap generic_args;
+    for (auto* binding : bindings) {
+      generic_args[binding] = *binding->symbolic_identity();
+    }
+    iface_type = arena_->New<InterfaceType>(
+        iface_decl,
+        arena_->New<Bindings>(std::move(generic_args), Bindings::NoWitnesses));
   } else {
-    Nonnull<InterfaceType*> iface_type = arena_->New<InterfaceType>(iface_decl);
+    iface_type = arena_->New<InterfaceType>(iface_decl);
     SetConstantValue(iface_decl, iface_type);
     iface_decl->set_static_type(arena_->New<TypeOfInterfaceType>(iface_type));
   }
@@ -3072,13 +3086,11 @@ auto TypeChecker::DeclareInterfaceDeclaration(
     CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, iface_scope_info));
 
     if (auto* assoc = dyn_cast<AssociatedConstantDeclaration>(m)) {
-      // TODO: Symbolic binding map for the interface?
-      BindingMap args;
       // TODO: The witness should be optional in AssociatedConstant.
       Nonnull<const Expression*> witness_expr =
           arena_->New<DotSelfExpression>(iface_decl->source_loc());
       assoc->binding().set_symbolic_identity(arena_->New<AssociatedConstant>(
-          &iface_decl->self()->value(), assoc, args,
+          &iface_decl->self()->value(), iface_type, assoc,
           arena_->New<SymbolicWitness>(witness_expr)));
     }
   }
@@ -3149,7 +3161,7 @@ auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
       Nonnull<const GenericBinding*> symbolic_self =
           impl_decl->constraint_type()->self_binding();
       Nonnull<const Value*> expected = arena_->New<AssociatedConstant>(
-          &symbolic_self->value(), assoc, iface_type->args(),
+          &symbolic_self->value(), iface_type, assoc,
           arena_->New<ImplWitness>(impl_decl));
 
       bool found_any = false;

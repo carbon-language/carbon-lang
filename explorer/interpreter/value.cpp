@@ -43,8 +43,8 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
     // Associated constants.
     if (auto* assoc_const = dyn_cast_or_null<AssociatedConstantDeclaration>(
             field.member().declaration().value_or(nullptr))) {
-      // TODO: Track the binding map in Member.
-      return arena->New<AssociatedConstant>(v, assoc_const, BindingMap{},
+      CARBON_CHECK(field.interface()) << "have witness but no interface";
+      return arena->New<AssociatedConstant>(v, *field.interface(), assoc_const,
                                             witness);
     }
 
@@ -810,8 +810,8 @@ auto ValueStructurallyEqual(
       const auto& assoc1 = cast<AssociatedConstant>(*v1);
       const auto& assoc2 = cast<AssociatedConstant>(*v2);
       return &assoc1.constant() == &assoc2.constant() &&
-             BindingMapEqual(assoc1.args(), assoc2.args(), equal_ctx) &&
-             TypeEqual(&assoc1.base(), &assoc2.base(), equal_ctx);
+             TypeEqual(&assoc1.base(), &assoc2.base(), equal_ctx) &&
+             TypeEqual(&assoc1.interface(), &assoc2.interface(), equal_ctx);
     }
     case Value::Kind::IntType:
     case Value::Kind::BoolType:

@@ -928,12 +928,13 @@ class AssociatedConstant : public Value {
  public:
   explicit AssociatedConstant(
       Nonnull<const Value*> base,
-      Nonnull<const AssociatedConstantDeclaration*> constant, BindingMap args,
+      Nonnull<const InterfaceType*> interface,
+      Nonnull<const AssociatedConstantDeclaration*> constant,
       Nonnull<const Witness*> witness)
       : Value(Kind::AssociatedConstant),
         base_(base),
+        interface_(interface),
         constant_(constant),
-        args_(args),
         witness_(witness) {}
 
   static auto classof(const Value* value) -> bool {
@@ -943,21 +944,23 @@ class AssociatedConstant : public Value {
   // The type for which we denote an associated constant.
   auto base() const -> const Value& { return *base_; }
 
+  // The interface within which the constant was declared.
+  auto interface() const -> const InterfaceType& {
+    return *interface_;
+  }
+
   // The associated constant whose value is being denoted.
   auto constant() const -> const AssociatedConstantDeclaration& {
     return *constant_;
   }
-
-  // Mapping from the bindings of the enclosing interface to their values.
-  auto args() const -> const BindingMap& { return args_; }
 
   // Witness within which the constant's value can be found.
   auto witness() const -> const Witness& { return *witness_; }
 
  private:
   Nonnull<const Value*> base_;
+  Nonnull<const InterfaceType*> interface_;
   Nonnull<const AssociatedConstantDeclaration*> constant_;
-  BindingMap args_;
   Nonnull<const Witness*> witness_;
 };
 
