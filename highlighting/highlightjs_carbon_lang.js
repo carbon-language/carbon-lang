@@ -55,6 +55,7 @@ export default function (hljs) {
       'is',
       'let',
       'library',
+      'like',
       'match',
       'me',
       'namespace',
@@ -74,7 +75,6 @@ export default function (hljs) {
       'virtual',
       'where',
       'while',
-      'xor',
     ],
     literal: ['false', 'true'],
     type: ['bool'],
@@ -141,7 +141,7 @@ export default function (hljs) {
   };
   const ESCAPE_SEQUENCE = {
     scope: 'char.escape',
-    match: /\\([tnr'"\\0]|0[0-9]|x[0-9A-F]{2}|u\{[0-9A-F]{4,}\})/,
+    match: /\\([tnr'"0\\0]|x[0-9A-F]{2}|u\{[0-9A-F]{4,}\})/,
   };
   const BLOCK_STRING_LITERAL = {
     scope: 'string',
