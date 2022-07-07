@@ -8,6 +8,7 @@ addAssignees: false
 reviewers:
   - geoffromer
   - jonmeow
+  - jsiek
   - zygoloid
 
 # A number of reviewers added to the pull request
