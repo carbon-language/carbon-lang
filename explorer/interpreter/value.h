@@ -927,8 +927,7 @@ class MemberName : public Value {
 class AssociatedConstant : public Value {
  public:
   explicit AssociatedConstant(
-      Nonnull<const Value*> base,
-      Nonnull<const InterfaceType*> interface,
+      Nonnull<const Value*> base, Nonnull<const InterfaceType*> interface,
       Nonnull<const AssociatedConstantDeclaration*> constant,
       Nonnull<const Witness*> witness)
       : Value(Kind::AssociatedConstant),
@@ -945,9 +944,7 @@ class AssociatedConstant : public Value {
   auto base() const -> const Value& { return *base_; }
 
   // The interface within which the constant was declared.
-  auto interface() const -> const InterfaceType& {
-    return *interface_;
-  }
+  auto interface() const -> const InterfaceType& { return *interface_; }
 
   // The associated constant whose value is being denoted.
   auto constant() const -> const AssociatedConstantDeclaration& {

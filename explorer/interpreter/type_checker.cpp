@@ -71,7 +71,8 @@ struct TypeChecker::SingleStepTypeEqualityContext : public EqualityContext {
       const -> bool override {
     if (type_checker_->trace_stream_) {
       **type_checker_->trace_stream_ << "looking for values equal to " << *value
-                                     << " in\n" << *impl_scope_;
+                                     << " in\n"
+                                     << *impl_scope_;
     }
 
     if (!impl_scope_->VisitEqualValues(value, visitor)) {
@@ -336,8 +337,7 @@ auto TypeChecker::FieldTypesImplicitlyConvertible(
         FindField(destination_fields, source_field.name);
     if (!destination_field.has_value() ||
         !IsImplicitlyConvertible(source_field.value,
-                                 destination_field.value().value,
-                                 impl_scope,
+                                 destination_field.value().value, impl_scope,
                                  // TODO: We don't have a way to perform
                                  // user-defined conversions of a struct field
                                  // yet, because we can't write a suitable impl
@@ -663,8 +663,8 @@ auto TypeChecker::ArgumentDeduction(
           if (!TypeEqual(it->second, arg, std::nullopt)) {
             return CompilationError(source_loc)
                    << "deduced multiple different values for "
-                   << var_type.binding() << ":\n  "
-                   << *it->second << "\n  " << *arg;
+                   << var_type.binding() << ":\n  " << *it->second << "\n  "
+                   << *arg;
           }
         }
       } else {
