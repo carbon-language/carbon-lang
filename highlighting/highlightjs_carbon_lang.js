@@ -9,7 +9,6 @@
  * Category: common, system
  * Website: https://github.com/carbon-language/carbon-lang/
  *
- * TODO: struct literals.
  * TODO: abstract, virtual, impl on methods.
  * TODO: private, protected.
  * TODO: Dedicated package and import highlighting.
@@ -199,20 +198,35 @@ export default function (hljs) {
       keywords: KEYWORDS,
     },
   ];
-  // Use a nesting structure so that we directly track balanced parentheses and
+  const STRUCT_LITERAL_DESIGNATOR = {
+    begin: [/\./, /[a-zA-Z]\w*/, /\s*/, /[:=]/, /\s*/],
+    beginScope: {
+      1: 'punctuation',
+      2: 'symbol',
+      4: 'punctuation',
+    },
+  };
+  // Use a nesting structure so that we directly track balanced delimiters and
   // consume them. This allows patterns below to reliably "end" on closing
   // delimiters without being confused by others in the expression stream.
-  // TODO: Extend this to balanced `[]`s and `{}`s.
+  // Sadly, Highlight.js doesn't support indirect mode recursion so we have to
+  // fuse all the delimited modes into a single one to support arbitrary
+  // recursing. We use callbacks to make sure that the closing delimiters match
+  // the opening ones.
   const PARENTHESIZED_EXPRESSION = {
-    scope: 'carbon-parenthesized-expression',
-    begin: /\(/,
+    scope: 'carbon-delimited-expression',
+    begin: /(\(|\{(?=\s*\.[a-zA-Z]\w*\s*[:=])|\[)/,
     beginScope: 'punctuation',
-    end: /\)/,
+    end: /(\)|\}|\])/,
     endScope: 'punctuation',
     contains: [
       'self',
-      // Tuple literals are comma-separated parenthesized expressions.
+      // Tuple literals and struct literals are comma-separated parenthesized
+      // expressions.
       COMMA_SEPARATOR,
+      // Struct literals include designators. These aren't allowed in tuple
+      // literals, but included here because we fuse into a single recursive mode.
+      STRUCT_LITERAL_DESIGNATOR,
       ...UNPARENTHESIZED_EXPRESSION,
     ],
   };
@@ -269,7 +283,7 @@ export default function (hljs) {
     beginScope: 'punctuation',
     end: /\)/,
     endScope: 'punctuation',
-    contains: ['self', ...UNPARENTHESIZED_PATTERNS],
+    contains: ['self', COMMA_SEPARATOR, ...UNPARENTHESIZED_PATTERNS],
   };
   const PATTERN_SEQUENCE = [
     COMMA_SEPARATOR,

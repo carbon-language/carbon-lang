@@ -23,7 +23,7 @@ import Carbon library "Printing";
 fn Partition[T:! Comparable & Movable](s: Slice(T))
       -> i64 {
   var i: i64 = -1;
-  let (x: i64, var y: i64) = (1, 2);
+  let (x: i64, var y: auto) = (1, {.x = {.a = (1, {.k = 42}), .b = 13}, .y = "..."});
 
   for (e: T in s) {
     if (e <= s.Last()) {
