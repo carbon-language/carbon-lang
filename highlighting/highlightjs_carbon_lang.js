@@ -22,7 +22,8 @@
 /** @type LanguageFn */
 export default function (hljs) {
   // Common keywords definition used in various contexts to at least highlight
-  // these correctly.
+  // these correctly. Note that some of these aren't yet used in Carbon but are
+  // anticipated and we go ahead and syntax-highlight them.
   const KEYWORDS = {
     keyword: [
       'abstract',
@@ -82,7 +83,11 @@ export default function (hljs) {
   };
 
   // Punctuation and operator regex lists that are expanded into the expression
-  // context.
+  // context. Note that we don't necessarily use all of these in Carbon today.
+  // There are a number of operators in particular that aren't yet being used.
+  // But it is harmless to give them nicer syntax highlighting. Eventually, as
+  // the language settles, we can explore specifically highlighting operators
+  // that aren't valid as errors.
   const PUNCTUATION = [/->/, /\./, /:!?/, /;/];
   const OPERATORS = [
     />>=/,
