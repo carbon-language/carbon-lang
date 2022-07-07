@@ -2995,8 +2995,9 @@ represented using [choice types](#choice-types) like `Result` and `Optional`.
 
 This is similar to the story for Rust, which started using `Result`, then added
 [`?` operator](https://doc.rust-lang.org/reference/expressions/operator-expr.html#the-question-mark-operator)
-for convenience, and is [now considering](https://yaah.dev/try-blocks) adding
-more.
+for convenience, and is now considering ([1](https://yaah.dev/try-blocks),
+[2](https://doc.rust-lang.org/beta/unstable-book/language-features/try-blocks.html))
+adding more.
 
 ### Execution abstractions
 
