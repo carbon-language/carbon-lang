@@ -18,9 +18,9 @@ it after you load highlight.js:
 
 ```html
 <script type="module">
-  import Carbon from "./highlightjs_carbon_lang.js";
-  hljs.registerLanguage("Carbon", Carbon);
-  hljs.highlightAll();
+    import Carbon from './highlightjs_carbon_lang.js';
+    hljs.registerLanguage('Carbon', Carbon);
+    hljs.highlightAll();
 </script>
 ```
 
