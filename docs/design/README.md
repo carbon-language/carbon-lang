@@ -645,7 +645,8 @@ Binding patterns default to _`let` bindings_ except inside a context where the
 
 -   The result of a `let` binding is the name is bound to an
     [non-l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>).
-    This means the value can not be modified, and its address cannot be taken.
+    This means the value can not be modified, and its address generally cannot
+    be taken.
 -   A `var` binding has dedicated storage, and so the name is an
     [l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>)
     which can be modified and has a stable address.
@@ -738,10 +739,9 @@ var x: i64 = 42;
 x = 7;
 ```
 
-Variables with a type that has
-[an unformed state](https://github.com/carbon-language/carbon-lang/pull/257) do
-not need to be initialized in the variable declaration, but do need to be
-assigned before they are used.
+Variables with a type that has [an unformed state](#unformed-state) do not need
+to be initialized in the variable declaration, but do need to be assigned before
+they are used.
 
 > References:
 >
@@ -1557,7 +1557,33 @@ p->x += 2;
 
 #### Unformed state
 
-FIXME
+Types indicate that they support unformed states by
+[implementing an interface](#interfaces-and-implementations), otherwise
+variables of that type must be explicitly initialized when they are declared.
+
+An unformed state for an object is one that satisfies the following properties:
+
+-   Assignment from a fully formed value is correct using the normal assignment
+    implementation for the type.
+-   Destruction must be correct using the type's normal destruction
+    implementation.
+-   Destruction must be optional. The behavior of the program must be equivalent
+    whether the destructor is run or not for an unformed object, including not
+    leaking resources.
+
+A type might have more than one in-memory representation for the unformed state,
+and those representations may be the same as valid fully formed values for that
+type. For example, all values are legal representations of the unformed state
+for any type with a trivial destructor like `i32`.
+
+Any operation on an unformed object _other_ than destruction or assignment to a
+fully formed value is an error, even if its in-memory representation is that of
+a valid value for that type.
+
+> References:
+>
+> -   Proposal
+>     [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
 
 #### Move
 
