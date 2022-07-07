@@ -69,6 +69,11 @@ struct TypeChecker::SingleStepTypeEqualityContext : public EqualityContext {
   auto VisitEqualValues(Nonnull<const Value*> value,
                         llvm::function_ref<bool(Nonnull<const Value*>)> visitor)
       const -> bool override {
+    if (type_checker_->trace_stream_) {
+      **type_checker_->trace_stream_ << "looking for values equal to " << *value
+                                     << " in\n" << *impl_scope_;
+    }
+
     if (!impl_scope_->VisitEqualValues(value, visitor)) {
       return false;
     }
@@ -98,7 +103,7 @@ struct TypeChecker::SingleStepTypeEqualityContext : public EqualityContext {
         if (type_checker_->trace_stream_) {
           **type_checker_->trace_stream_
               << "Could not resolve associated constant " << *assoc << ": "
-              << impl_witness.error();
+              << impl_witness.error() << "\n";
         }
       }
     }
@@ -650,13 +655,17 @@ auto TypeChecker::ArgumentDeduction(
                     &var_type.binding()) != bindings_to_deduce.end()) {
         auto [it, success] = deduced.insert({&var_type.binding(), arg});
         if (!success) {
-          // All deductions are required to produce the same value.
-          // TODO: Non-transitive type equality seems problematic here: we
-          // require the types to be equal to whatever we deduced first, not
-          // necessarily to each other.
-          CARBON_RETURN_IF_ERROR(ExpectExactType(source_loc,
-                                                 "repeated argument deduction",
-                                                 it->second, arg, impl_scope));
+          // All deductions are required to produce the same value. Note that
+          // we intentionally don't consider type equality here; we need the
+          // same symbolic type, otherwise it would be ambiguous which spelling
+          // should be used, and we'd need to check all pairs of types for
+          // equality because our notion of equality is non-transitive.
+          if (!TypeEqual(it->second, arg, std::nullopt)) {
+            return CompilationError(source_loc)
+                   << "deduced multiple different values for "
+                   << var_type.binding() << ":\n  "
+                   << *it->second << "\n  " << *arg;
+          }
         }
       } else {
         return handle_non_deduced_type();

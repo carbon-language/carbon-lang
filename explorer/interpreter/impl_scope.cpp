@@ -26,14 +26,18 @@ void ImplScope::Add(Nonnull<const Value*> iface,
                     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
                     Nonnull<Expression*> impl_expr,
                     const TypeChecker& type_checker) {
-  if (auto* constraint = dyn_cast<ConstraintType>(iface)) {
+  if (auto* orig_constraint = dyn_cast<ConstraintType>(iface)) {
     BindingMap map;
-    map[constraint->self_binding()] = type;
+    map[orig_constraint->self_binding()] = type;
+    const ConstraintType* constraint =
+        cast<ConstraintType>(type_checker.Substitute(map, orig_constraint));
     for (size_t i = 0; i != constraint->impl_constraints().size(); ++i) {
       ConstraintType::ImplConstraint impl = constraint->impl_constraints()[i];
-      Add(cast<InterfaceType>(type_checker.Substitute(map, impl.interface)),
-          deduced, type_checker.Substitute(map, impl.type), impl_bindings,
+      Add(impl.interface, deduced, impl.type, impl_bindings,
           type_checker.MakeConstraintWitnessAccess(impl_expr, i), type_checker);
+    }
+    for (size_t i = 0; i != constraint->equality_constraints().size(); ++i) {
+      equals_.push_back(&constraint->equality_constraints()[i]);
     }
     return;
   }
@@ -162,6 +166,13 @@ void ImplScope::Print(llvm::raw_ostream& out) const {
   llvm::ListSeparator sep;
   for (const Impl& impl : impls_) {
     out << sep << *(impl.type) << " as " << *(impl.interface);
+  }
+  for (Nonnull<const ConstraintType::EqualityConstraint*> eq : equals_) {
+    out << sep;
+    llvm::ListSeparator equal(" == ");
+    for (Nonnull<const Value*> value : eq->values) {
+      out << equal << *value;
+    }
   }
   out << "\n";
   for (const Nonnull<const ImplScope*>& parent : parent_scopes_) {

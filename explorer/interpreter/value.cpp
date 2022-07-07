@@ -467,7 +467,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       break;
     case Value::Kind::AssociatedConstant: {
       const auto& assoc = cast<AssociatedConstant>(*this);
-      out << assoc.base() << "." << assoc.constant().binding().name();
+      out << "(" << assoc.base() << ")." << assoc.constant().binding().name();
       break;
     }
     case Value::Kind::ContinuationValue: {
