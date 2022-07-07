@@ -24,32 +24,32 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Overview
 
 Carbon supports both simple literals that are single-line using one double
-quotation mark (`"`) and block literals that are multi-line using three double
-quotation marks (`"""`). A block string literal may have a file type indicator
-after the first `"""`; this does not affect the string itself, but may assist
-other tooling. For example:
+quotation mark (`"`) and block literals that are multi-line using a hashtags
+followed by three double quotation marks (`#"""`). A block string literal may
+have a file type indicator after the first `#"""`; this does not affect the
+string itself, but may assist other tooling. For example:
 
 ```carbon
 // Simple string literal:
 var simple: String = "example";
 
 // Block string literal:
-var block: String = """
+var block: String = #"""
     The winds grow high; so do your stomachs, lords.
     How irksome is this music to my heart!
     When such strings jar, what hope of harmony?
     I pray, my lords, let me compound this strife.
         -- History of Henry VI, Part II, Act II, Scene 1, W. Shakespeare
-    """;
+    """#;
 
 // Block string literal with file type indicator:
-var code_block: String = """cpp
+var code_block: String = #"""cpp
     #include <iostream>
     int main() {
         std::cout << "Hello world!";
         return 0;
     }
-    """
+    """#
 ```
 
 The indentation of a block string literal's terminating line is removed from all
@@ -62,7 +62,9 @@ character or code unit sequences, such as `\n` for a newline character. Raw
 string literals are additionally delimited with one or more `#`; these require
 an equal number of hash symbols (`#`) after the `\` to indicate an escape
 sequence. Raw string literals are used to more easily write literal `\`s in
-strings. Both simple and block string literals have raw forms. For example:
+strings. Block string literals are raw string literals and have other raw forms
+by additionally delimited with one or more `#`. Simple string literals also have
+raw forms. For example:
 
 ```carbon
 // Raw simple string literal with newline escape sequence:
@@ -98,16 +100,16 @@ This sequence is enclosed in `"`s. For example, this is a simple string literal:
 var String: lucius = "The strings, my lord, are false.";
 ```
 
-A _block string literal_ starts with `"""`, followed by an optional file type
-indicator, followed by a newline, and ends at the next instance of three double
-quotation marks whose first `"` is not part of a `\"` escape sequence. The
-closing `"""` shall be the first non-whitespace characters on that line. The
-lines between the opening line and the closing line (exclusive) are _content
-lines_. The content lines shall not contain `\` characters that do not form part
-of an escape sequence.
+`#"""` marks the start of a _block string literal_, which ends at the next
+instance of `"""#` quotation marks whose first `"` is not part of a `\"` escape
+sequence. The starting `#"""` is followed by an optional file type indicator and
+a newline. The closing `"""#` shall be the first non-whitespace characters on
+its line. The lines between the opening line and the closing line (exclusive)
+are _content lines_. The content lines shall not contain `\#` characters that do
+not form part of an escape sequence.
 
 The _indentation_ of a block string literal is the sequence of horizontal
-whitespace preceding the closing `"""`. Each non-empty content line shall begin
+whitespace preceding the closing `"""#`. Each non-empty content line shall begin
 with the indentation of the string literal. The content of the literal is formed
 as follows:
 
@@ -122,16 +124,16 @@ as follows:
 A content line is considered empty if it contains only whitespace characters.
 
 ```carbon
-var String: w = """
+var String: w = #"""
   This is a string literal. Its first character is 'T' and its last character is
   a newline character. It contains another newline between 'is' and 'a'.
-  """;
+  """#;
 
-// This string literal is invalid because the """ after 'closing' terminates
+// This string literal is invalid because the """# after 'closing' terminates
 // the literal, but is not at the start of the line.
-var String: invalid = """
-  error: closing """ is not on its own line.
-  """;
+var String: invalid = #"""
+  error: closing """# is not on its own line.
+  """#;
 ```
 
 A _file type indicator_ is any sequence of non-whitespace characters other than
@@ -143,10 +145,10 @@ the string literal's content.
 ```carbon
 // This is a block string literal. Its first two characters are spaces, and its
 // last character is a line feed. It has a file type of 'c++'.
-var String: starts_with_whitespace = """c++
+var String: starts_with_whitespace = #"""c++
     int x = 1; // This line starts with two spaces.
     int y = 2; // This line starts with two spaces.
-  """;
+  """#;
 ```
 
 The file type indicator might contain semantic information beyond the file type
@@ -219,14 +221,14 @@ where a null byte should be followed by a decimal digit, `\x00` can be used
 instead: `"foo\x00123"`. The intent is to preserve the possibility of permitting
 decimal escape sequences in the future.
 
-A backslash followed by a line feed character is an escape sequence that
-produces no string contents. This escape sequence is _experimental_, and can
-only appear in block string literals. This escape sequence is processed after
-trailing whitespace is replaced by a line feed character, so a `\` followed by
+A `\#` followed by a line feed character is an escape sequence that produces no
+string contents. This escape sequence is _experimental_, and can only appear in
+block string literals. This escape sequence is processed after trailing
+whitespace is replaced by a line feed character, so a `\#` followed by
 horizontal whitespace followed by a line terminator removes the whitespace up to
 and including the line terminator. Unlike in Rust, but like in Swift, leading
 whitespace on the line after an escaped newline is not removed, other than
-whitespace that matches the indentation of the terminating `"""`.
+whitespace that matches the indentation of the terminating `"""#`.
 
 A character sequence starting with a backslash that doesn't match any known
 escape sequence is invalid. Whitespace characters other than space and, for
@@ -248,15 +250,15 @@ var String: fret = "I would 'twere something that would fret the string,\n" +
 var String: password = "\u{1F3F9}2";
 
 // This string contains no newline characters.
-var String: type_mismatch = """
+var String: type_mismatch = #"""
   Shall I compare thee to a summer's day? Thou art \
   more lovely and more temperate.\
-  """;
+  """#;
 
-var String: trailing_whitespace = """
+var String: trailing_whitespace = #"""
   This line ends in a space followed by a newline. \n\
       This line starts with four spaces.
-  """;
+  """#;
 ```
 
 ### Raw string literals
@@ -271,7 +273,7 @@ special meaning.
 
 | Opening delimiter | Escape sequence introducer    | Closing delimiter |
 | ----------------- | ----------------------------- | ----------------- |
-| `"` / `"""`       | `\` (for example, `\n`)       | `"` / `"""`       |
+| `"`               | `\` (for example, `\n`)       | `"`               |
 | `#"` / `#"""`     | `\#` (for example, `\#n`)     | `"#` / `"""#`     |
 | `##"` / `##"""`   | `\##` (for example, `\##n`)   | `"##` / `"""##`   |
 | `###"` / `###"""` | `\###` (for example, `\###n`) | `"###` / `"""###` |
@@ -280,41 +282,16 @@ special meaning.
 For example:
 
 ```carbon
-var String: x = #"""
+var String: x = ##"""
   This is the content of the string. The 'T' is the first character
   of the string.
   """ <-- This is not the end of the string.
-  """#;
+  """##;
   // But the preceding line does end the string.
 // OK, final character is \
 var String: y = #"Hello\"#;
 var String: z = ##"Raw strings #"nesting"#"##;
 var String: w = #"Tab is expressed as \t. Example: '\#t'"#;
-```
-
-Note that both a raw simple string literal and a raw block string literal can
-begin with `#"""`. These cases can be distinguished by the presence or absence
-of additional `"`s later in the same line:
-
--   In a raw simple string literal, there must be a `"` and one or more `#`s
-    later in the same line terminating the string.
--   In a raw block string literal, the rest of the line is a file type
-    indicator, which can contain neither `"` nor `#`.
-
-```carbon
-// This string is a single-line raw string literal.
-// The contents of this string start and end with exactly two "s.
-var String: ambig1 = #"""This is a raw string literal starting with """#;
-
-// This string is a raw block string literal with file-type 'This', whose
-// contents start with "is a ".
-var String: ambig2 = #"""This
-  is a block string literal with file type 'This', first character 'i',
-  and last character 'X': X\#
-  """#;
-
-// This is a single-line raw string literal, equivalent to "\"".
-var String: ambig3 = #"""#;
 ```
 
 ### Encoding
@@ -347,3 +324,5 @@ string in the type system. In such string literals, we should consider rejecting
 
 -   Proposal
     [#199: String literals](https://github.com/carbon-language/carbon-lang/pull/199)
+-   Proposal
+    [#1360: Change raw string literal syntax: requiring """ to only be used for block strings](https://github.com/SlaterLatiao/carbon-lang/blob/raw_string_literal_proposal/proposals/p1360.md)
