@@ -2994,7 +2994,7 @@ we would consider adding some in the future. At this point, errors are
 represented using [choice types](#choice-types) like `Result` and `Optional`.
 
 This is similar to the story for Rust, which started using `Result` with a
-`try!` macro, then replaced the macro with a more convenient `?` operator, and
+[`try!` macro](https://doc.rust-lang.org/std/macro.try.html), then replaced the macro with a more convenient [`?` operator](https://doc.rust-lang.org/reference/expressions/operator-expr.html#the-question-mark-operator), and
 is [now considering](https://yaah.dev/try-blocks) adding more.
 
 ### Execution abstractions
