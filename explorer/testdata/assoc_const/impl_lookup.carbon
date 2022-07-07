@@ -7,7 +7,7 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: result: 0
+// CHECK: result: 1
 
 package ExplorerTest api;
 
@@ -21,10 +21,26 @@ fn Use[T:! Frob](x: T) -> T.Result {
   return v;
 }
 
-impl i32 as Frob where .Result == i32 {
-  fn F[me: Self]() -> i32 { return 0; }
+class AlmostI32 {
+  var val: i32;
+  impl as ImplicitAs(i32) {
+    fn Convert[me: Self]() -> i32 { return me.val; }
+  }
+}
+
+// Erase the type-of-type of AlmostI32 so we can use it in the
+// constraint below.
+// TODO: This shouldn't be necessary, but we don't have a common type
+// mechanism yet.
+fn AsType(T: Type) -> Type { return T; }
+
+impl i32 as Frob where .Result == AsType(AlmostI32) {
+  fn F[me: Self]() -> AlmostI32 { return {.val = me}; }
 }
 
 fn Main() -> i32 {
-  return Use(0);
+  // Ensure that lookup for
+  //   i32.(Frob.Result) as ImplicitAs(i32)
+  // finds `impl AlmostI32 as ImplicitAs(i32)`.
+  return Use(1);
 }

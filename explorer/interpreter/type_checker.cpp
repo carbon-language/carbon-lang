@@ -36,6 +36,32 @@ struct TypeChecker::SingleStepTypeEqualityContext : public EqualityContext {
                                 Nonnull<const ImplScope*> impl_scope)
       : type_checker_(type_checker), impl_scope_(impl_scope) {}
 
+  // Attempt to resolve the witness for the given associated constant in the
+  // in-scope `impl`s.
+  auto TryResolveWitness(Nonnull<const AssociatedConstant*> assoc,
+                         SourceLocation source_loc) const
+      -> ErrorOr<Nonnull<const ImplWitness*>> {
+    auto* impl_witness = dyn_cast<ImplWitness>(&assoc->witness());
+    if (impl_witness) {
+      return impl_witness;
+    }
+
+    CARBON_ASSIGN_OR_RETURN(
+        Nonnull<const Expression*> witness_expr,
+        impl_scope_->Resolve(&assoc->interface(), &assoc->base(), source_loc,
+                             *type_checker_));
+    CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> witness_value,
+                            InterpExp(witness_expr, type_checker_->arena_,
+                                      type_checker_->trace_stream_));
+    impl_witness = dyn_cast<ImplWitness>(witness_value);
+    if (impl_witness) {
+      return impl_witness;
+    }
+    return CompilationError(source_loc)
+           << "value of associated constant " << *assoc
+           << " depends on a generic parameter";
+  }
+
   // Visits the values that are equal to the given value and a single step away
   // according to an equality constraint that is either scope or within a final
   // impl corresponding to an associated constant. Stops and returns `false` if
@@ -47,21 +73,33 @@ struct TypeChecker::SingleStepTypeEqualityContext : public EqualityContext {
       return false;
     }
 
-    // Visit the corresponding impl if this is an associated constant.
+    // Also look up and visit the corresponding impl if this is an associated
+    // constant.
     if (auto* assoc = dyn_cast<AssociatedConstant>(value)) {
-      if (auto* impl_witness = dyn_cast<ImplWitness>(&assoc->witness())) {
+      // Perform an impl lookup to see if we can resolve this constant.
+      // The source location doesn't matter, we're discarding the diagnostics.
+      SourceLocation source_loc("", 0);
+      ErrorOr<Nonnull<const ImplWitness*>> impl_witness =
+          TryResolveWitness(assoc, source_loc);
+      if (impl_witness.ok()) {
         // Instantiate the impl to find the concrete constraint it implements.
         Nonnull<const ConstraintType*> constraint =
-            impl_witness->declaration().constraint_type();
-        BindingMap bindings = impl_witness->type_args();
+            (*impl_witness)->declaration().constraint_type();
+        BindingMap bindings = (*impl_witness)->type_args();
         bindings[constraint->self_binding()] = &assoc->base();
         constraint = cast<ConstraintType>(
             type_checker_->Substitute(bindings, constraint));
 
         // Look for the value of this constant within that constraint.
-        constraint->VisitEqualValues(value, visitor);
+        if (!constraint->VisitEqualValues(value, visitor)) {
+          return false;
+        }
       } else {
-        // TODO: We need to try to resolve in this case.
+        if (type_checker_->trace_stream_) {
+          **type_checker_->trace_stream_
+              << "Could not resolve associated constant " << *assoc << ": "
+              << impl_witness.error();
+        }
       }
     }
 
@@ -83,12 +121,14 @@ static void SetValue(Nonnull<Pattern*> pattern, Nonnull<const Value*> value) {
   }
 }
 
-static auto ExpectExactType(
-    SourceLocation source_loc, const std::string& context,
-    Nonnull<const Value*> expected, Nonnull<const Value*> actual,
-    std::optional<Nonnull<const EqualityContext*>> equal_ctx = std::nullopt)
+auto TypeChecker::ExpectExactType(SourceLocation source_loc,
+                                  const std::string& context,
+                                  Nonnull<const Value*> expected,
+                                  Nonnull<const Value*> actual,
+                                  const ImplScope& impl_scope) const
     -> ErrorOr<Success> {
-  if (!TypeEqual(expected, actual, equal_ctx)) {
+  SingleStepTypeEqualityContext equal_ctx(this, &impl_scope);
+  if (!TypeEqual(expected, actual, &equal_ctx)) {
     return CompilationError(source_loc) << "type error in " << context << "\n"
                                         << "expected: " << *expected << "\n"
                                         << "actual: " << *actual;
@@ -573,7 +613,6 @@ auto TypeChecker::ArgumentDeduction(
     BindingMap& deduced, Nonnull<const Value*> param, Nonnull<const Value*> arg,
     bool allow_implicit_conversion, const ImplScope& impl_scope) const
     -> ErrorOr<Success> {
-  // TODO: Look for equivalences in non-deduced cases.
   if (trace_stream_) {
     **trace_stream_ << "deducing " << *param << " from " << *arg << "\n";
     **trace_stream_ << "bindings: ";
@@ -600,7 +639,8 @@ auto TypeChecker::ArgumentDeduction(
     return allow_implicit_conversion
                ? ExpectType(source_loc, context, subst_param_type, arg,
                             impl_scope)
-               : ExpectExactType(source_loc, context, subst_param_type, arg);
+               : ExpectExactType(source_loc, context, subst_param_type, arg,
+                                 impl_scope);
   };
 
   switch (param->kind()) {
@@ -611,8 +651,12 @@ auto TypeChecker::ArgumentDeduction(
         auto [it, success] = deduced.insert({&var_type.binding(), arg});
         if (!success) {
           // All deductions are required to produce the same value.
-          CARBON_RETURN_IF_ERROR(ExpectExactType(
-              source_loc, "repeated argument deduction", it->second, arg));
+          // TODO: Non-transitive type equality seems problematic here: we
+          // require the types to be equal to whatever we deduced first, not
+          // necessarily to each other.
+          CARBON_RETURN_IF_ERROR(ExpectExactType(source_loc,
+                                                 "repeated argument deduction",
+                                                 it->second, arg, impl_scope));
         }
       } else {
         return handle_non_deduced_type();
@@ -802,6 +846,7 @@ auto TypeChecker::ArgumentDeduction(
       // Argument deduction within the parameters of a parameterized class type
       // or interface type can compare values, rather than types.
       // TODO: Deduce within the values where possible.
+      // TODO: Consider in-scope value equalities here.
       if (!ValueEqual(param, arg)) {
         return CompilationError(source_loc)
                << "mismatch in non-type values, `" << *arg << "` != `" << *param
@@ -1404,9 +1449,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       switch (object_type.kind()) {
         case Value::Kind::TupleValue: {
           const auto& tuple_type = cast<TupleValue>(object_type);
-          CARBON_RETURN_IF_ERROR(ExpectExactType(
-              index.offset().source_loc(), "tuple index",
-              arena_->New<IntType>(), &index.offset().static_type()));
+          CARBON_RETURN_IF_ERROR(
+              ExpectExactType(index.offset().source_loc(), "tuple index",
+                              arena_->New<IntType>(),
+                              &index.offset().static_type(), impl_scope));
           CARBON_ASSIGN_OR_RETURN(
               auto offset_value,
               InterpExp(&index.offset(), arena_, trace_stream_));
@@ -1421,9 +1467,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           return Success();
         }
         case Value::Kind::StaticArrayType: {
-          CARBON_RETURN_IF_ERROR(ExpectExactType(
-              index.offset().source_loc(), "array index",
-              arena_->New<IntType>(), &index.offset().static_type()));
+          CARBON_RETURN_IF_ERROR(
+              ExpectExactType(index.offset().source_loc(), "array index",
+                              arena_->New<IntType>(),
+                              &index.offset().static_type(), impl_scope));
           index.set_static_type(
               &cast<StaticArrayType>(object_type).element_type());
           index.set_value_category(index.object().value_category());
@@ -1879,64 +1926,72 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       }
       switch (op.op()) {
         case Operator::Neg:
-          CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "negation", arena_->New<IntType>(), ts[0]));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "negation",
+                                                 arena_->New<IntType>(), ts[0],
+                                                 impl_scope));
           op.set_static_type(arena_->New<IntType>());
           op.set_value_category(ValueCategory::Let);
           return Success();
         case Operator::Add:
-          CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "addition(1)", arena_->New<IntType>(), ts[0]));
-          CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "addition(2)", arena_->New<IntType>(), ts[1]));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "addition(1)",
+                                                 arena_->New<IntType>(), ts[0],
+                                                 impl_scope));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "addition(2)",
+                                                 arena_->New<IntType>(), ts[1],
+                                                 impl_scope));
           op.set_static_type(arena_->New<IntType>());
           op.set_value_category(ValueCategory::Let);
           return Success();
         case Operator::Sub:
           CARBON_RETURN_IF_ERROR(
               ExpectExactType(e->source_loc(), "subtraction(1)",
-                              arena_->New<IntType>(), ts[0]));
+                              arena_->New<IntType>(), ts[0], impl_scope));
           CARBON_RETURN_IF_ERROR(
               ExpectExactType(e->source_loc(), "subtraction(2)",
-                              arena_->New<IntType>(), ts[1]));
+                              arena_->New<IntType>(), ts[1], impl_scope));
           op.set_static_type(arena_->New<IntType>());
           op.set_value_category(ValueCategory::Let);
           return Success();
         case Operator::Mul:
           CARBON_RETURN_IF_ERROR(
               ExpectExactType(e->source_loc(), "multiplication(1)",
-                              arena_->New<IntType>(), ts[0]));
+                              arena_->New<IntType>(), ts[0], impl_scope));
           CARBON_RETURN_IF_ERROR(
               ExpectExactType(e->source_loc(), "multiplication(2)",
-                              arena_->New<IntType>(), ts[1]));
+                              arena_->New<IntType>(), ts[1], impl_scope));
           op.set_static_type(arena_->New<IntType>());
           op.set_value_category(ValueCategory::Let);
           return Success();
         case Operator::And:
-          CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "&&(1)", arena_->New<BoolType>(), ts[0]));
-          CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "&&(2)", arena_->New<BoolType>(), ts[1]));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "&&(1)",
+                                                 arena_->New<BoolType>(), ts[0],
+                                                 impl_scope));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "&&(2)",
+                                                 arena_->New<BoolType>(), ts[1],
+                                                 impl_scope));
           op.set_static_type(arena_->New<BoolType>());
           op.set_value_category(ValueCategory::Let);
           return Success();
         case Operator::Or:
-          CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "||(1)", arena_->New<BoolType>(), ts[0]));
-          CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "||(2)", arena_->New<BoolType>(), ts[1]));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "||(1)",
+                                                 arena_->New<BoolType>(), ts[0],
+                                                 impl_scope));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "||(2)",
+                                                 arena_->New<BoolType>(), ts[1],
+                                                 impl_scope));
           op.set_static_type(arena_->New<BoolType>());
           op.set_value_category(ValueCategory::Let);
           return Success();
         case Operator::Not:
-          CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "!", arena_->New<BoolType>(), ts[0]));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "!",
+                                                 arena_->New<BoolType>(), ts[0],
+                                                 impl_scope));
           op.set_static_type(arena_->New<BoolType>());
           op.set_value_category(ValueCategory::Let);
           return Success();
         case Operator::Eq:
           CARBON_RETURN_IF_ERROR(
-              ExpectExactType(e->source_loc(), "==", ts[0], ts[1]));
+              ExpectExactType(e->source_loc(), "==", ts[0], ts[1], impl_scope));
           op.set_static_type(arena_->New<BoolType>());
           op.set_value_category(ValueCategory::Let);
           return Success();
@@ -2100,7 +2155,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           CARBON_RETURN_IF_ERROR(ExpectExactType(
               e->source_loc(), "__intrinsic_print argument",
               arena_->New<StringType>(),
-              &intrinsic_exp.args().fields()[0]->static_type()));
+              &intrinsic_exp.args().fields()[0]->static_type(), impl_scope));
           e->set_static_type(TupleValue::Empty());
           e->set_value_category(ValueCategory::Let);
           return Success();
@@ -2150,10 +2205,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           TypeCheckExp(&if_expr.then_expression(), impl_scope));
       CARBON_RETURN_IF_ERROR(
           TypeCheckExp(&if_expr.else_expression(), impl_scope));
-      CARBON_RETURN_IF_ERROR(
-          ExpectExactType(e->source_loc(), "expression of `if` expression",
-                          &if_expr.then_expression().static_type(),
-                          &if_expr.else_expression().static_type()));
+      CARBON_RETURN_IF_ERROR(ExpectExactType(
+          e->source_loc(), "expression of `if` expression",
+          &if_expr.then_expression().static_type(),
+          &if_expr.else_expression().static_type(), impl_scope));
       e->set_static_type(&if_expr.then_expression().static_type());
       e->set_value_category(ValueCategory::Let);
       return Success();
@@ -2252,10 +2307,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
 
       CARBON_RETURN_IF_ERROR(
           TypeCheckExp(&array_literal.size_expression(), impl_scope));
-      CARBON_RETURN_IF_ERROR(
-          ExpectExactType(array_literal.size_expression().source_loc(),
-                          "array size", arena_->New<IntType>(),
-                          &array_literal.size_expression().static_type()));
+      CARBON_RETURN_IF_ERROR(ExpectExactType(
+          array_literal.size_expression().source_loc(), "array size",
+          arena_->New<IntType>(),
+          &array_literal.size_expression().static_type(), impl_scope));
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> size_value,
           InterpExp(&array_literal.size_expression(), arena_, trace_stream_));
@@ -2360,7 +2415,7 @@ auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
       CARBON_RETURN_IF_ERROR(ExpectExactType(
           clause->source_loc(), "values in `where ==` constraint",
           &equals_clause.lhs().static_type(),
-          &equals_clause.rhs().static_type()));
+          &equals_clause.rhs().static_type(), impl_scope));
       return Success();
     }
   }
@@ -2593,9 +2648,10 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
           // that's not the same type as the scrutinee, we will convert the
           // scrutinee. We might want to instead allow a different conversion
           // to be performed for each pattern.
-          CARBON_RETURN_IF_ERROR(ExpectExactType(
-              clause.pattern().source_loc(), "`match` pattern type",
-              expected_type.value(), &clause.pattern().static_type()));
+          CARBON_RETURN_IF_ERROR(
+              ExpectExactType(clause.pattern().source_loc(),
+                              "`match` pattern type", expected_type.value(),
+                              &clause.pattern().static_type(), impl_scope));
         } else {
           expected_type = &clause.pattern().static_type();
         }
@@ -2695,10 +2751,12 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       if (return_term.is_auto()) {
         return_term.set_static_type(&ret.value_node().static_type());
       } else {
+        // TODO: Consider using `ExpectExactType` here.
         CARBON_CHECK(IsConcreteType(&return_term.static_type()));
         CARBON_CHECK(IsConcreteType(&ret.value_node().static_type()));
+        SingleStepTypeEqualityContext equal_ctx(this, &impl_scope);
         if (!TypeEqual(&return_term.static_type(),
-                       &ret.value_node().static_type())) {
+                       &ret.value_node().static_type(), &equal_ctx)) {
           return CompilationError(ret.value_node().base().source_loc())
                  << "type of returned var `" << ret.value_node().static_type()
                  << "` does not match return type `"
@@ -2905,9 +2963,10 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
       return CompilationError(f->return_term().source_loc())
              << "`Main` must have an explicit return type";
     }
-    CARBON_RETURN_IF_ERROR(ExpectExactType(
-        f->return_term().source_loc(), "return type of `Main`",
-        arena_->New<IntType>(), &f->return_term().static_type()));
+    CARBON_RETURN_IF_ERROR(
+        ExpectExactType(f->return_term().source_loc(), "return type of `Main`",
+                        arena_->New<IntType>(), &f->return_term().static_type(),
+                        function_scope));
     // TODO: Check that main doesn't have any parameters.
   }
 
@@ -3217,7 +3276,7 @@ auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
       // to differ from the signature in the interface?
       CARBON_RETURN_IF_ERROR(
           ExpectExactType((*mem)->source_loc(), "member of implementation",
-                          iface_mem_type, &(*mem)->static_type(), &impl_scope));
+                          iface_mem_type, &(*mem)->static_type(), impl_scope));
     }
   }
   return Success();

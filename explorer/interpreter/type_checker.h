@@ -333,6 +333,13 @@ class TypeChecker {
                   Nonnull<const Value*> expected, Nonnull<const Value*> actual,
                   const ImplScope& impl_scope) const -> ErrorOr<Success>;
 
+  // Check whether `actual` is the same type as `expected` and halt with a
+  // fatal compilation error if it is not.
+  auto ExpectExactType(SourceLocation source_loc, const std::string& context,
+                       Nonnull<const Value*> expected,
+                       Nonnull<const Value*> actual,
+                       const ImplScope& impl_scope) const -> ErrorOr<Success>;
+
   // The name of a builtin interface, with any arguments.
   struct BuiltinInterfaceName {
     Builtins::Builtin builtin;
