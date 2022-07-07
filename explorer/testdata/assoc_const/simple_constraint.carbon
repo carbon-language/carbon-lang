@@ -7,7 +7,7 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: result: 1
+// CHECK: result: 3
 
 package ExplorerTest api;
 
@@ -16,25 +16,15 @@ interface Frob {
   fn F[me: Self]() -> Result;
 }
 
-fn Use[T:! Frob](x: T) -> T.Result {
-  var v: T.Result = x.F();
+fn Use[T:! Frob where .Result == .Self](x: T) -> T {
+  var v: T = x.F();
   return v;
 }
 
-class AlmostI32 {
-  var val: i32;
-  impl as ImplicitAs(i32) {
-    fn Convert[me: Self]() -> i32 { return me.val; }
-  }
-}
-
-impl i32 as Frob where .Result == AlmostI32 {
-  fn F[me: Self]() -> AlmostI32 { return {.val = me}; }
+impl i32 as Frob where .Result == i32 {
+  fn F[me: Self]() -> i32 { return me + 1; }
 }
 
 fn Main() -> i32 {
-  // Ensure that lookup for
-  //   i32.(Frob.Result) as ImplicitAs(i32)
-  // finds `impl AlmostI32 as ImplicitAs(i32)`.
-  return Use(1);
+  return Use(2);
 }

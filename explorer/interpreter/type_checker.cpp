@@ -2421,10 +2421,21 @@ auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
       auto& equals_clause = cast<EqualsWhereClause>(*clause);
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&equals_clause.lhs(), impl_scope));
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&equals_clause.rhs(), impl_scope));
-      CARBON_RETURN_IF_ERROR(ExpectExactType(
-          clause->source_loc(), "values in `where ==` constraint",
-          &equals_clause.lhs().static_type(),
-          &equals_clause.rhs().static_type(), impl_scope));
+
+      // TODO: It's not clear what level of type compatibility is required
+      // between the operands. For now we require a builtin no-op implicit
+      // conversion.
+      Nonnull<const Value*> lhs_type = &equals_clause.lhs().static_type();
+      Nonnull<const Value*> rhs_type = &equals_clause.rhs().static_type();
+      if (!IsImplicitlyConvertible(lhs_type, rhs_type, impl_scope,
+                                   /*allow_user_defined_conversions=*/false) &&
+          !IsImplicitlyConvertible(rhs_type, lhs_type, impl_scope,
+                                   /*allow_user_defined_conversions=*/false)) {
+        return CompilationError(clause->source_loc())
+               << "type mismatch between values in `where ==` constraint\n"
+               << "  first type: " << *lhs_type << "\n"
+               << "  second type: " << *rhs_type << "\n";
+      }
       return Success();
     }
   }
