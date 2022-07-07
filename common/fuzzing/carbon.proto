@@ -353,6 +353,12 @@ message VariableDeclaration {
   optional Expression initializer = 2;
 }
 
+message LetDeclaration {
+  optional Pattern pattern = 1;
+  // TODO: Add `optional Expression initializer = 2;` once explorer supports
+  // `let` declarations in general.
+}
+
 message InterfaceDeclaration {
   optional string name = 1;
   repeated Declaration members = 2;
@@ -386,6 +392,7 @@ message Declaration {
     InterfaceDeclaration interface = 5;
     ImplDeclaration impl = 6;
     AliasDeclaration alias = 7;
+    LetDeclaration let = 8;
   }
 }
 
