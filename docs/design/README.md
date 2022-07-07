@@ -66,10 +66,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [`const`](#const)
         -   [Unformed state](#unformed-state)
         -   [Move](#move)
-        -   [Argument passing](#argument-passing)
-            -   [Copyable types](#copyable-types)
-            -   [Move-only types](#move-only-types)
-            -   [Unmovable types](#unmovable-types)
     -   [Choice types](#choice-types)
 -   [Names](#names)
     -   [Packages, libraries, namespaces](#packages-libraries-namespaces)
@@ -563,7 +559,7 @@ Some common expressions in Carbon include:
     -   [Indexing](#arrays-and-slices): `a[3]`
     -   [Function](#functions) call: `f(4)`
     -   [Pointer](#pointer-types): `*p`, `p->m`, `&x`
-    -   FIXME: Move: `~x`
+    -   [Move](#move): `~x`
 
 -   [Conditionals](expressions/if.md): `if c then t else f`
 -   Parentheses: `(7 + 8) * (3 - 1)`
@@ -1587,50 +1583,10 @@ a valid value for that type.
 
 #### Move
 
-FIXME
-
-#### Argument passing
-
-```carbon
-var a: AType;
-fn GetA() -> AType;
-```
-
-##### Copyable types
-
-For types that are copyable and movable, like [integer](#integer-types) and
-[floating-point](#floating-point-types) types:
-
-| Call         | `fn M[me: Self]()`        | `fn M[addr me: Self*]()` | `fn M[var me: Self]()` |
-| ------------ | ------------------------- | ------------------------ | ---------------------- |
-| `a.M()`      | copy or const-ref         | by address               | copy                   |
-| `GetA().M()` | copy or move or const-ref | error                    | copy or move           |
-| `(~a).M()`   | move or move+const-ref    | error                    | move                   |
-
-Note that this last column would be unusual. Pass as the argument in a function
-call is the same, but without the `addr` column.
-
-##### Move-only types
-
-For types that are movable but non-copyable, like types representing resources,
-such as `Box(T)` (Carbon's equivalent of
-[C++'s `std::unique_ptr<T>`](https://en.cppreference.com/w/cpp/memory/unique_ptr)):
-
-| Call         | `fn M[me: Self]()`     | `fn M[addr me: Self*]()` | `fn M[var me: Self]()` |
-| ------------ | ---------------------- | ------------------------ | ---------------------- |
-| `a.M()`      | const-ref              | by address               | error                  |
-| `GetA().M()` | move or const-ref      | error                    | move                   |
-| `(~a).M()`   | move or move+const-ref | error                    | move                   |
-
-##### Unmovable types
-
-For types that are neither movable nor copyable, like `Mutex`:
-
-| Call         | `fn M[me: Self]()` | `fn M[addr me: Self*]()` | `fn M[var me: Self]()` |
-| ------------ | ------------------ | ------------------------ | ---------------------- |
-| `a.M()`      | const-ref          | by address               | error                  |
-| `GetA().M()` | const-ref          | error                    | error                  |
-| `(~a).M()`   | error              | error                    | error                  |
+Carbon will allow types to define if and how they are moved. This can happen
+when returning a value from a function or by using the _move operator_ `~x`.
+This leaves `x` in an [unformed state](#unformed-state) and returns its old
+value.
 
 ### Choice types
 
