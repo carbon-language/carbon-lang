@@ -40,7 +40,7 @@ class TypeChecker;
 //
 // `ImplScope` also tracks the type equalities that are known in a particular
 // scope.
-class ImplScope : public EqualityContext {
+class ImplScope {
  public:
   // Associates `iface` and `type` with the `impl` in this scope.
   void Add(Nonnull<const Value*> iface, Nonnull<const Value*> type,
@@ -74,7 +74,7 @@ class ImplScope : public EqualityContext {
   // `false` if the visitor returns `false`, otherwise returns `true`.
   auto VisitEqualValues(Nonnull<const Value*> value,
                         llvm::function_ref<bool(Nonnull<const Value*>)> visitor)
-      const -> bool override;
+      const -> bool;
 
   void Print(llvm::raw_ostream& out) const;
 

@@ -36,8 +36,13 @@ void ImplScope::Add(Nonnull<const Value*> iface,
       Add(impl.interface, deduced, impl.type, impl_bindings,
           type_checker.MakeConstraintWitnessAccess(impl_expr, i), type_checker);
     }
-    for (size_t i = 0; i != constraint->equality_constraints().size(); ++i) {
-      equals_.push_back(&constraint->equality_constraints()[i]);
+    // A paremterized impl declaration doesn't contribute any equality
+    // constraints to the scope. Instead, we'll resolve the equality
+    // constraints by resolving a witness when needed.
+    if (deduced.empty()) {
+      for (size_t i = 0; i != constraint->equality_constraints().size(); ++i) {
+        equals_.push_back(&constraint->equality_constraints()[i]);
+      }
     }
     return;
   }
