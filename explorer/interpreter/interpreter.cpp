@@ -99,6 +99,23 @@ class Interpreter {
   auto EvalExpRecursively(Nonnull<const Expression*> exp)
       -> ErrorOr<Nonnull<const Value*>>;
 
+  // Evaluate an associated constant by evaluating its witness and looking
+  // inside the impl for the corresponding value.
+  //
+  // TODO: This approach doesn't provide values that are known because they
+  // appear in constraints:
+  //
+  //   interface Iface { let N:! i32; }
+  //   fn PickType(N: i32) -> Type { return i32; }
+  //   fn F[T:! Iface where .N = 5](x: T) {
+  //     var x: PickType(T.N) = 0;
+  //   }
+  //
+  // ... will fail because we can't resolve T.N to 5 at compile time.
+  auto EvalAssociatedConstant(Nonnull<const AssociatedConstant*> assoc,
+                              SourceLocation source_loc)
+      -> ErrorOr<Nonnull<const Value*>>;
+
   // Instantiate a type by replacing all type variables that occur inside the
   // type by the current values of those variables.
   //
@@ -454,6 +471,48 @@ auto Interpreter::EvalExpRecursively(Nonnull<const Expression*> exp)
   return result;
 }
 
+auto Interpreter::EvalAssociatedConstant(
+    Nonnull<const AssociatedConstant*> assoc, SourceLocation source_loc)
+    -> ErrorOr<Nonnull<const Value*>> {
+  // Find the witness.
+  Nonnull<const Value*> witness = &assoc->witness();
+  if (auto* sym = dyn_cast<SymbolicWitness>(witness)) {
+    CARBON_ASSIGN_OR_RETURN(witness,
+                            EvalExpRecursively(&sym->impl_expression()));
+  }
+  if (!isa<ImplWitness>(witness)) {
+    CARBON_CHECK(phase() == Phase::CompileTime)
+        << "symbolic witnesses should only be formed at compile time";
+    return CompilationError(source_loc)
+           << "value of associated constant " << *assoc << " is not known";
+  }
+
+  auto& impl_witness = cast<ImplWitness>(*witness);
+  Nonnull<const ConstraintType*> constraint =
+      impl_witness.declaration().constraint_type();
+  Nonnull<const Value*> expected = arena_->New<AssociatedConstant>(
+      &constraint->self_binding()->value(), &assoc->interface(),
+      &assoc->constant(), &impl_witness);
+  std::optional<Nonnull<const Value*>> result;
+  constraint->VisitEqualValues(
+      expected, [&](Nonnull<const Value*> equal_value) {
+        // TODO: The value might depend on the parameters of the impl. We need
+        // to substitute impl_witness.type_args() into the value.
+        if (isa<AssociatedConstant>(equal_value)) {
+          return true;
+        }
+        // TODO: This makes an arbitrary choice if there's more than one
+        // equal value. It's not clear how to handle that case.
+        result.emplace(equal_value);
+        return false;
+      });
+  if (!result) {
+    CARBON_FATAL() << impl_witness.declaration()
+                   << " is missing value for associated constant " << *assoc;
+  }
+  return *result;
+}
+
 auto Interpreter::InstantiateType(Nonnull<const Value*> type,
                                   SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
@@ -476,17 +535,10 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
       return arena_->New<NominalClassType>(&class_type.declaration(), bindings);
     }
     case Value::Kind::AssociatedConstant: {
-      const auto& assoc_const = cast<AssociatedConstant>(*type);
-      Nonnull<const Value*> witness = &assoc_const.witness();
-      if (auto* sym = dyn_cast<SymbolicWitness>(witness)) {
-        CARBON_ASSIGN_OR_RETURN(witness,
-                                EvalExpRecursively(&sym->impl_expression()));
-      }
-      if (auto* impl = dyn_cast<ImplWitness>(witness)) {
-        // TODO: Pull the corresponding value out of the witness and return it.
-        (void)impl;
-      }
-      return type;
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> type_value,
+          EvalAssociatedConstant(cast<AssociatedConstant>(type), source_loc));
+      return InstantiateType(type_value, source_loc);
     }
     default:
       return type;
@@ -579,7 +631,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
           return arena_->New<StructValue>(std::move(new_elements));
         }
         case Value::Kind::NominalClassType: {
-          // Instantiate the `destintation_type` to obtain the runtime
+          // Instantiate the `destination_type` to obtain the runtime
           // type of the object.
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> inst_dest,
@@ -635,41 +687,10 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
       return arena_->New<TupleValue>(std::move(new_elements));
     }
     case Value::Kind::AssociatedConstant: {
-      auto& assoc = cast<AssociatedConstant>(*value);
-      Nonnull<const Value*> witness = &assoc.witness();
-      if (auto* sym = dyn_cast<SymbolicWitness>(witness)) {
-        CARBON_ASSIGN_OR_RETURN(witness,
-                                EvalExpRecursively(&sym->impl_expression()));
-      }
-      if (!isa<ImplWitness>(witness)) {
-        CARBON_CHECK(phase() == Phase::CompileTime)
-            << "symbolic witnesses should only be used at compile time";
-        return CompilationError(source_loc)
-               << "value of associated constant " << assoc << " is not known";
-      }
-      auto& impl_witness = cast<ImplWitness>(*witness);
-      Nonnull<const ConstraintType*> constraint =
-          impl_witness.declaration().constraint_type();
-      Nonnull<const Value*> expected = arena_->New<AssociatedConstant>(
-          &constraint->self_binding()->value(), &assoc.interface(),
-          &assoc.constant(), &impl_witness);
-      std::optional<ErrorOr<Nonnull<const Value*>>> result;
-      constraint->VisitEqualValues(
-          expected, [&](Nonnull<const Value*> equal_value) {
-            // TODO: Need to substitute impl_witness.type_args() into the value.
-            if (isa<AssociatedConstant>(equal_value)) {
-              return true;
-            }
-            // TODO: This makes an arbitrary choice if there's more than one
-            // equal value. It's not clear how to handle that case.
-            result.emplace(Convert(equal_value, destination_type, source_loc));
-            return false;
-          });
-      if (!result) {
-        CARBON_FATAL() << impl_witness.declaration()
-                       << " is missing value for associated constant " << assoc;
-      }
-      return std::move(*result);
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> value,
+          EvalAssociatedConstant(cast<AssociatedConstant>(value), source_loc));
+      return Convert(value, destination_type, source_loc);
     }
   }
 }
