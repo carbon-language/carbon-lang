@@ -24,10 +24,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Guidelines
 
-The Carbon community works to be welcoming and kind among itself and to others, with a deep
-commitment to psychological safety, and we want to ensure that doesn’t change as
-we grow and evolve. To that end, we have a few ground rules that we ask all
-community members to adhere to:
+The Carbon community works to be welcoming and kind among itself and to others,
+with a deep commitment to psychological safety, and we want to ensure that
+doesn’t change as we grow and evolve. To that end, we have a few ground rules
+that we ask all community members to adhere to:
 
 -   be welcoming,
 -   be friendly and patient,
@@ -79,13 +79,13 @@ spaces:
     Remember that we’re a world-wide community, so you might not be
     communicating in someone else’s primary language.
 
--   **Be kind.** Not all of us will agree all the time, but disagreement
-    is no excuse for poor behavior and hurtful words. We might all experience
-    some frustration now and then, but we cannot allow that frustration to turn
-    into a personal attack. It’s important to remember that a community where
-    people feel uncomfortable or threatened is not a productive one. Members of
-    our community should be kind when dealing with other members as well
-    as with people outside the Carbon community.
+-   **Be kind.** Not all of us will agree all the time, but disagreement is no
+    excuse for poor behavior and hurtful words. We might all experience some
+    frustration now and then, but we cannot allow that frustration to turn into
+    a personal attack. It’s important to remember that a community where people
+    feel uncomfortable or threatened is not a productive one. Members of our
+    community should be kind when dealing with other members as well as with
+    people outside the Carbon community.
 
 -   **Be careful in the words that you choose and be kind to others.** Do not
     insult or put down other participants. Harassment and other exclusionary
