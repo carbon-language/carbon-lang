@@ -70,7 +70,7 @@ spaces:
     our community by keeping its atmosphere friendly and positive. This is
     especially important because many of our communication tools on the Internet
     are low-fidelity and make it difficult to understand each other. Be patient,
-    assume good intent, and stay supportive so that we can learn how to
+    acknowledge that we are all on a learning journey, and stay supportive so that we can learn how to
     collaborate effectively as a group.
 
 -   **Be considerate.** Your work will be used by other people, and you in turn
