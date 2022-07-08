@@ -10,14 +10,17 @@
 
 package ExplorerTest api;
 
-// Test that a global variable may not depend on a later global.
-// Error expected.
-
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/name_lookup/fail_var_use_before_declaration.carbon:[[@LINE+1]]: 'y' has not been declared yet
-var x: i32 = y;
-
-var y: i32 = 0;
+fn Foo(a: i32, b: i32) -> auto {
+  returned var ret: i32 = a + b;
+  if (b == a) {
+    ret = b - a;
+    return var;
+  }
+  ret = a - b;
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/returned_var/fail_returned_var_multi_auto.carbon:[[@LINE+1]]: Only one return is allowed in a function with an `auto` return type.
+  return var;
+}
 
 fn Main() -> i32 {
-  return x;
+  return Foo(1, 2);
 }

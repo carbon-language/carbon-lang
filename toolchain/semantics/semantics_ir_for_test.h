@@ -12,7 +12,7 @@
 
 #include "common/check.h"
 #include "llvm/ADT/StringExtras.h"
-#include "toolchain/semantics/nodes/infix_operator.h"
+//#include "toolchain/semantics/nodes/infix_operator.h"
 #include "toolchain/semantics/semantics_ir.h"
 
 namespace Carbon::Testing {
@@ -24,39 +24,11 @@ namespace Carbon::Testing {
 class SemanticsIRForTest {
  public:
   template <typename NodeT>
-  static auto GetDeclaration(Semantics::Declaration decl)
-      -> llvm::Optional<NodeT> {
-    if (decl.kind() != NodeT::MetaNodeKind) {
+  static auto GetNode(Semantics::NodeRef node_ref) -> llvm::Optional<NodeT> {
+    if (node_ref.kind() != NodeT::Kind) {
       return llvm::None;
     }
-    return semantics().declarations_.Get<NodeT>(decl);
-  }
-
-  template <typename NodeT>
-  static auto GetExpression(Semantics::Expression expr)
-      -> llvm::Optional<NodeT> {
-    if (expr.kind() != NodeT::MetaNodeKind) {
-      return llvm::None;
-    }
-    return semantics().expressions_.Get<NodeT>(expr);
-  }
-
-  template <typename NodeT>
-  static auto GetStatement(Semantics::Statement expr) -> llvm::Optional<NodeT> {
-    if (expr.kind() != NodeT::MetaNodeKind) {
-      return llvm::None;
-    }
-    return semantics().statements_.Get<NodeT>(expr);
-  }
-
-  static auto GetNodeText(ParseTree::Node node) -> llvm::StringRef {
-    return semantics().parse_tree_->GetNodeText(node);
-  }
-
-  template <typename PrintableT>
-  static void PrintTo(const PrintableT& printable, std::ostream* out) {
-    llvm::raw_os_ostream wrapped_out(*out);
-    semantics().Print(wrapped_out, printable);
+    return semantics().nodes_.Get<NodeT>(node_ref);
   }
 
   static auto semantics() -> const SemanticsIR& {
@@ -80,65 +52,11 @@ class SemanticsIRForTest {
 
 namespace Carbon::Semantics {
 
-// Meta node printers.
-inline void PrintTo(const Declaration& node, std::ostream* out) {
-  Carbon::Testing::SemanticsIRForTest::PrintTo(node, out);
-}
-inline void PrintTo(const Expression& node, std::ostream* out) {
-  Carbon::Testing::SemanticsIRForTest::PrintTo(node, out);
-}
-inline void PrintTo(const Statement& node, std::ostream* out) {
-  Carbon::Testing::SemanticsIRForTest::PrintTo(node, out);
-}
-
-// Other node printers.
-inline void PrintTo(const DeclaredName& node, std::ostream* out) {
-  Carbon::Testing::SemanticsIRForTest::PrintTo(node, out);
-}
-inline void PrintTo(const ExpressionStatement& node, std::ostream* out) {
-  Carbon::Testing::SemanticsIRForTest::PrintTo(node, out);
-}
-inline void PrintTo(const Function& node, std::ostream* out) {
-  Carbon::Testing::SemanticsIRForTest::PrintTo(node, out);
-}
-inline void PrintTo(const InfixOperator& node, std::ostream* out) {
-  Carbon::Testing::SemanticsIRForTest::PrintTo(node, out);
-}
-inline void PrintTo(const Literal& node, std::ostream* out) {
-  Carbon::Testing::SemanticsIRForTest::PrintTo(node, out);
-}
-inline void PrintTo(const PatternBinding& node, std::ostream* out) {
-  Carbon::Testing::SemanticsIRForTest::PrintTo(node, out);
-}
-inline void PrintTo(const Return& node, std::ostream* out) {
-  Carbon::Testing::SemanticsIRForTest::PrintTo(node, out);
-}
-inline void PrintTo(const StatementBlock& node, std::ostream* out) {
-  Carbon::Testing::SemanticsIRForTest::PrintTo(node, out);
+inline void PrintTo(const NodeRef& node_ref, std::ostream* out) {
+  llvm::raw_os_ostream wrapped_out(*out);
+  Carbon::Testing::SemanticsIRForTest::semantics().Print(wrapped_out, node_ref);
 }
 
 }  // namespace Carbon::Semantics
-
-namespace llvm {
-
-// Prints a StringMapEntry for gmock.
-inline void PrintTo(
-    const llvm::StringMapEntry<Carbon::Semantics::Declaration>& entry,
-    std::ostream* out) {
-  *out << "StringMapEntry(" << entry.getKey() << ", ";
-  Carbon::Testing::SemanticsIRForTest::PrintTo(entry.getValue(), out);
-  *out << ")";
-}
-
-// Prints a StringMapEntry for gmock.
-inline void PrintTo(
-    const llvm::StringMapEntry<Carbon::Semantics::Statement>& entry,
-    std::ostream* out) {
-  *out << "StringMapEntry(" << entry.getKey() << ", ";
-  Carbon::Testing::SemanticsIRForTest::PrintTo(entry.getValue(), out);
-  *out << ")";
-}
-
-}  // namespace llvm
 
 #endif  // CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_IR_FOR_TEST_H_

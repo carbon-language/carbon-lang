@@ -74,7 +74,7 @@ void BinaryOperatorExpressionMatcher::DescribeToImpl(std::ostream* out,
 auto MatchesReturnMatcher::MatchAndExplainImpl(
     const AstNode* node, ::testing::MatchResultListener* listener) const
     -> bool {
-  const auto* ret = llvm::dyn_cast<Return>(node);
+  const auto* ret = llvm::dyn_cast<ReturnExpression>(node);
   if (ret == nullptr) {
     *listener << "which is not a return statement";
     return false;

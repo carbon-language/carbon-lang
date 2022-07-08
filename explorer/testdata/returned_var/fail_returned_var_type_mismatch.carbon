@@ -10,14 +10,12 @@
 
 package ExplorerTest api;
 
-// Test that a global variable may not depend on a later global.
-// Error expected.
-
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/name_lookup/fail_var_use_before_declaration.carbon:[[@LINE+1]]: 'y' has not been declared yet
-var x: i32 = y;
-
-var y: i32 = 0;
+fn AddInt(a: i32, b: i32) -> i32 {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/returned_var/fail_returned_var_type_mismatch.carbon:[[@LINE+1]]: type of returned var `Bool` does not match return type `i32`
+  returned var ret: Bool = true;
+  return var;
+}
 
 fn Main() -> i32 {
-  return x;
+  return AddInt(1, 2);
 }

@@ -10,14 +10,15 @@
 
 package ExplorerTest api;
 
-// Test that a global variable may not depend on a later global.
-// Error expected.
-
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/name_lookup/fail_var_use_before_declaration.carbon:[[@LINE+1]]: 'y' has not been declared yet
-var x: i32 = y;
-
-var y: i32 = 0;
+fn AddInt(a: i32, b: i32) -> i32 {
+  returned var ret: i32 = a + b;
+  if (a == b) {
+    // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/returned_var/fail_duplicate_return_var.carbon:[[@LINE+1]]: Duplicate definition of returned var also found at {{.*}}/explorer/testdata/returned_var/fail_duplicate_return_var.carbon:14
+    returned var ret2: i32 = a + b;
+  }
+  return var;
+}
 
 fn Main() -> i32 {
-  return x;
+  return AddInt(1, 2);
 }

@@ -241,6 +241,7 @@ message AssignStatement {
 message VariableDefinitionStatement {
   optional Pattern pattern = 1;
   optional Expression init = 2;
+  optional bool is_returned = 3;
 }
 
 message IfStatement {
@@ -249,7 +250,9 @@ message IfStatement {
   optional BlockStatement else_block = 3;
 }
 
-message ReturnStatement {
+message ReturnVarStatement {}
+
+message ReturnExpressionStatement {
   optional Expression expression = 1;  // Can be omitted.
   optional bool is_omitted_expression = 2;
 }
@@ -294,15 +297,16 @@ message Statement {
     AssignStatement assign = 2;
     VariableDefinitionStatement variable_definition = 3;
     IfStatement if_statement = 4;
-    ReturnStatement return_statement = 5;
-    BlockStatement block = 6;
-    WhileStatement while_statement = 7;
-    MatchStatement match = 8;
-    ContinuationStatement continuation = 9;
-    RunStatement run = 10;
-    AwaitStatement await_statement = 11;
-    BreakStatement break_statement = 12;
-    ContinueStatement continue_statement = 13;
+    ReturnVarStatement return_var_statement = 5;
+    ReturnExpressionStatement return_expression_statement = 6;
+    BlockStatement block = 7;
+    WhileStatement while_statement = 8;
+    MatchStatement match = 9;
+    ContinuationStatement continuation = 10;
+    RunStatement run = 11;
+    AwaitStatement await_statement = 12;
+    BreakStatement break_statement = 13;
+    ContinueStatement continue_statement = 14;
   }
 }
 
