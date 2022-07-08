@@ -70,8 +70,9 @@ spaces:
     our community in a constructive manner, so we can keep a friendly
     atmosphere. This is especially important because many of our communication
     tools on the Internet are low-fidelity and make it difficult to understand
-    each other. Be patient, assume good intent, and stay supportive so that we
-    can learn how to collaborate effectively as a group.
+    each other. Be patient, acknowledge that we are all on a learning journey,
+    and stay supportive so that we can learn how to collaborate effectively as a
+    group.
 
 -   **Be considerate.** Your work will be used by other people, and you in turn
     will depend on the work of others. Any decision you make will affect users
