@@ -67,7 +67,7 @@ spaces:
     lack thereof, and mental and physical ability.
 
 -   **Be friendly and patient.** We want to encourage people to participate in
-    our community by keeping its atmosphere friendly and positive. This is
+    our community in a constructive manner, so we can keep a friendly atmosphere. This is
     especially important because many of our communication tools on the Internet
     are low-fidelity and make it difficult to understand each other. Be patient,
     assume good intent, and stay supportive so that we can learn how to
