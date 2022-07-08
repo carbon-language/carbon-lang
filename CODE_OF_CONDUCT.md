@@ -95,7 +95,7 @@ spaces:
     -   Discriminatory jokes and language.
     -   Posting sexually explicit or violent material.
     -   Posting, or threatening to post, other people’s personally identifying
-        information ("doxing") without their explicit permission.
+        information without their explicit permission ("doxing").
     -   Personal insults, especially those using racist or sexist terms.
     -   Unwelcome sexual attention.
     -   Advocating for, or encouraging, any of the above behavior.
