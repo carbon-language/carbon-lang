@@ -635,8 +635,8 @@ name. It can only match values that may be
 underscore (`_`) may be used instead of the name to match a value but without
 binding any name to it.
 
-Binding patterns default to _`let` bindings_ except inside a context where the
-`var` keyword is used to make it a _`var` binding_:
+Binding patterns default to _`let` bindings_. The `var` keyword is used to make
+it a _`var` binding_.
 
 -   The result of a `let` binding is the name is bound to an
     [non-l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>).
