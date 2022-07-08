@@ -137,7 +137,7 @@ fn Add(a: i64, b: i64) -> i64 {
   return a + b;
 }
 
-fn Main() {
+fn Run() {
   Add(1, 2);
 }
 ```

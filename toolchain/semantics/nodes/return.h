@@ -6,25 +6,40 @@
 #define CARBON_TOOLCHAIN_SEMANTICS_NODES_RETURN_H_
 
 #include "common/ostream.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringExtras.h"
 #include "toolchain/parser/parse_tree.h"
-#include "toolchain/semantics/meta_node.h"
+#include "toolchain/semantics/node_kind.h"
+#include "toolchain/semantics/node_ref.h"
 
 namespace Carbon::Semantics {
 
 // Represents `return [expr];`
 class Return {
  public:
-  static constexpr StatementKind MetaNodeKind = StatementKind::Return;
+  static constexpr NodeKind Kind = NodeKind::Return;
 
-  Return(ParseTree::Node node, llvm::Optional<Expression> expr)
-      : node_(node), expr_(expr) {}
+  Return(ParseTree::Node node, llvm::Optional<int32_t> target_id)
+      : node_(node), target_id_(target_id) {}
+
+  void Print(llvm::raw_ostream& out) const {
+    out << "Return(";
+    if (target_id_) {
+      out << "%" << *target_id_;
+    } else {
+      out << "None";
+    }
+    out << ")";
+  }
 
   auto node() const -> ParseTree::Node { return node_; }
-  auto expression() const -> const llvm::Optional<Expression>& { return expr_; }
+  auto target_id() const -> const llvm::Optional<int32_t>& {
+    return target_id_;
+  }
 
  private:
   ParseTree::Node node_;
-  llvm::Optional<Expression> expr_;
+  llvm::Optional<int32_t> target_id_;
 };
 
 }  // namespace Carbon::Semantics

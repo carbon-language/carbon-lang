@@ -5,7 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEMANTICS_NODES_RETURN_TEST_MATCHERS_H_
 #define CARBON_TOOLCHAIN_SEMANTICS_NODES_RETURN_TEST_MATCHERS_H_
 
-#include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 #include "llvm/ADT/StringExtras.h"
 #include "toolchain/semantics/nodes/return.h"
@@ -13,16 +13,16 @@
 
 namespace Carbon::Testing {
 
-MATCHER_P(Return, expr_matcher,
-          llvm::formatv(
-              "Return {0}",
-              ::testing::DescribeMatcher<llvm::Optional<Semantics::Expression>>(
-                  expr_matcher))) {
-  const Semantics::Statement& stmt = arg;
-  if (auto ret = SemanticsIRForTest::GetStatement<Semantics::Return>(stmt)) {
-    return ExplainMatchResult(expr_matcher, ret->expression(), result_listener);
+MATCHER_P(Return, target_id_matcher,
+          llvm::formatv("Return({0})",
+                        ::testing::DescribeMatcher<llvm::Optional<int32_t>>(
+                            target_id_matcher))) {
+  const Semantics::NodeRef& node_ref = arg;
+  if (auto ret = SemanticsIRForTest::GetNode<Semantics::Return>(node_ref)) {
+    return ExplainMatchResult(target_id_matcher, ret->target_id(),
+                              result_listener);
   } else {
-    *result_listener << "node is not a function";
+    *result_listener << "node is not a Return";
     return result_listener;
   }
 }

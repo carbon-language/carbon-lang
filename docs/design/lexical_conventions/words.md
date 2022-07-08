@@ -53,10 +53,12 @@ The following words are interpreted as keywords:
 -   `final`
 -   `fn`
 -   `for`
+-   `forall`
 -   `friend`
 -   `if`
 -   `impl`
 -   `import`
+-   `in`
 -   `interface`
 -   `is`
 -   `let`
