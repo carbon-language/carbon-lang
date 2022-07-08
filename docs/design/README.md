@@ -61,6 +61,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Inheritance](#inheritance)
         -   [Access control](#access-control)
         -   [Destructors](#destructors)
+        -   [Mixins](#mixins)
     -   [Choice types](#choice-types)
 -   [Names](#names)
     -   [Files, libraries, packages](#files-libraries-packages)
@@ -99,13 +100,15 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Enums](#enums)
 -   [Unfinished tales](#unfinished-tales)
     -   [Safety](#safety)
-    -   [Pattern matching as function overload resolution](#pattern-matching-as-function-overload-resolution)
     -   [Lifetime and move semantics](#lifetime-and-move-semantics)
     -   [Metaprogramming](#metaprogramming)
+    -   [Pattern matching as function overload resolution](#pattern-matching-as-function-overload-resolution)
+    -   [Error handling](#error-handling)
     -   [Execution abstractions](#execution-abstractions)
         -   [Abstract machine and execution model](#abstract-machine-and-execution-model)
         -   [Lambdas](#lambdas)
         -   [Co-routines](#co-routines)
+        -   [Concurrency](#concurrency)
 
 <!-- tocstop -->
 
@@ -148,14 +151,16 @@ fn Fibonacci(limit: i64) {
 ```
 
 Carbon is a language that should feel familiar to C++ and C developers. This
-example has familiar constructs like imports, function definitions, typed
-arguments, and curly braces.
+example has familiar constructs like [imports](#imports),
+[function definitions](#functions), [typed arguments](#binding-patterns), and
+[curly braces](#blocks-and-statements).
 
-A few other features that are unlike C or C++ may stand out. First, declarations
-start with introducer keywords. `fn` introduces a function declaration, and
-`var` introduces a variable declaration. You can also see a _tuple_, a composite
-type written as a comma-separated list inside parentheses. Unlike, say, Python,
-these types are strongly-typed as well.
+A few other features that are unlike C or C++ may stand out. First,
+[declarations](#declarations-definitions-and-scopes) start with introducer
+keywords. `fn` introduces a function declaration, and `var` introduces a
+[variable declaration](#variable-var-declarations). You can also see a
+[_tuple_](#tuples), a composite type written as a comma-separated list inside
+parentheses. Unlike, say, Python, these types are strongly-typed as well.
 
 ## Code and comments
 
@@ -630,8 +635,8 @@ name. It can only match values that may be
 underscore (`_`) may be used instead of the name to match a value but without
 binding any name to it.
 
-Binding patterns default to _`let` bindings_ except inside a context where the
-`var` keyword is used to make it a _`var` binding_:
+Binding patterns default to _`let` bindings_. The `var` keyword is used to make
+it a _`var` binding_.
 
 -   The result of a `let` binding is the name is bound to an
     [non-l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>).
@@ -1344,6 +1349,13 @@ two methods `Distance` and `Offset`:
 
 #### Inheritance
 
+The philosophy of inheritance support in Carbon is to focus on use cases where
+inheritance is a good match, and use other features for other cases. For
+example, [mixins](#mixins) for implementation reuse and [generics](#generics)
+for separating interface from implementation. This allows Carbon to move away
+from [multiple inheritance](https://en.wikipedia.org/wiki/Multiple_inheritance),
+which doesn't has as efficient of an implementation strategy.
+
 Classes by default are
 [_final_](<https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)#Non-subclassable_classes>),
 which means they may not be extended. A class may be declared as allowing
@@ -1504,6 +1516,17 @@ type, use `UnsafeDelete`.
 > -   [Destructors](classes.md#destructors)
 > -   Proposal
 >     [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
+
+#### Mixins
+
+Mixins allow reuse with different trade-offs compared to
+[inheritance](#inheritance). Mixins focus on implementation reuse, such as might
+be done using
+[CRTP](https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern) or
+[multiple inheritance](https://en.wikipedia.org/wiki/Multiple_inheritance) in
+C++.
+
+**TODO:** The design for mixins is still under development.
 
 ### Choice types
 
@@ -2076,6 +2099,19 @@ Carbon templates follow the same fundamental paradigm as
 [C++ templates](<https://en.wikipedia.org/wiki/Template_(C%2B%2B)>): they are
 instantiated when called, resulting in late type checking, duck typing, and lazy
 binding.
+
+One difference from C++ templates, Carbon template instantiation is not
+controlled by the SFINAE rule of C++
+([1](https://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error),
+[2](https://en.cppreference.com/w/cpp/language/sfinae)) but by explicit `if`
+clauses evaluated at compile-time. The `if` clause is at the end of the
+declaration, and the condition can only use constant values known at
+type-checking time, including `template` parameters.
+
+```carbon
+class Array(template T:! Type, template N:! i64)
+    if N >= 0 and N < MaxArraySize / sizeof(T);
+```
 
 Member lookup into a template type parameter is done in the actual type value
 provided by the caller, _in addition_ to any constraints. This means member name
@@ -2929,13 +2965,6 @@ This leads to Carbon's incremental path to safety:
 
 > References: [Safety strategy](/docs/project/principles/safety_strategy.md)
 
-### Pattern matching as function overload resolution
-
-> **TODO:** References need to be evolved. Needs a detailed design and a high
-> level summary provided inline.
-
-> References: [Pattern matching](pattern_matching.md)
-
 ### Lifetime and move semantics
 
 > **TODO:**
@@ -2951,6 +2980,25 @@ preprocessing of source text such as C and C++ do.
 
 > References: [Metaprogramming](metaprogramming.md)
 
+### Pattern matching as function overload resolution
+
+> **TODO:** References need to be evolved. Needs a detailed design and a high
+> level summary provided inline.
+
+> References: [Pattern matching](pattern_matching.md)
+
+### Error handling
+
+For now, Carbon does not have language features dedicated to error handling, but
+we would consider adding some in the future. At this point, errors are
+represented using [choice types](#choice-types) like `Result` and `Optional`.
+
+This is similar to the story for Rust, which started using `Result`, then added
+[`?` operator](https://doc.rust-lang.org/reference/expressions/operator-expr.html#the-question-mark-operator)
+for convenience, and is now considering ([1](https://yaah.dev/try-blocks),
+[2](https://doc.rust-lang.org/beta/unstable-book/language-features/try-blocks.html))
+adding more.
+
 ### Execution abstractions
 
 Carbon provides some higher-order abstractions of program execution, as well as
@@ -2965,5 +3013,9 @@ the critical underpinnings of such abstractions.
 > **TODO:**
 
 #### Co-routines
+
+> **TODO:**
+
+#### Concurrency
 
 > **TODO:**
