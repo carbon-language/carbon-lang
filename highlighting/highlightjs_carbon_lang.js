@@ -221,6 +221,11 @@ export default function (hljs) {
   // The pattern patterns, including comma-separated sequences.
   const VALUE_PATTERN = {
     scope: 'carbon-value-pattern',
+    // This begins to match on *any* (zero-length) input that *isn't* one of the
+    // terminating sequences. This is important so that once we end one of these
+    // patterns we don't immediately begin it again. The mode that introduces
+    // this has already determined that a value pattern can start immediately,
+    // so we don't need other characters in the beginning.
     begin: /(?![=,;\)\]\}])/,
     end: /\s*[=,;\)\]\}]/,
     returnEnd: true,
@@ -285,7 +290,6 @@ export default function (hljs) {
       2: 'punctuation',
     },
     end: /[,;\)\]\}]/,
-    //end: /,|\)|\]|;/,
     returnEnd: true,
     contains: [...EXPRESSION],
   };
