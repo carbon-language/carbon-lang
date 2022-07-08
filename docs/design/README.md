@@ -24,7 +24,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Floating-point literals](#floating-point-literals)
     -   [String types](#string-types)
         -   [String literals](#string-literals)
--   [Value categories](#value-categories)
+-   [Value categories and value phases](#value-categories-and-value-phases)
 -   [Composite types](#composite-types)
     -   [Tuples](#tuples)
     -   [Struct types](#struct-types)
@@ -381,29 +381,41 @@ are available for representing strings with `\`s and `"`s.
 > -   Proposal
 >     [#199: String literals](https://github.com/carbon-language/carbon-lang/pull/199)
 
-## Value categories
+## Value categories and value phases
 
-FIXME
+FIXME:
+[wikipedia](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>)
 
--   L-values: have storage and a stable address. May be modified, assuming type
-    is not [`const`](#const).
--   R-values: no dedicated storage, may be stored in registers, may not take the
-    address, may not be modified, may be silently copied, may silently be a
-    const reference.
--   Constant: when the value is known at type-checking time. Examples: literals
-    ([integer](#integer-literals), [floating-point](#floating-point-literals),
-    [string](#string-literals)), expressions in terns of constants, values of
+Values are either _l-values_ or _r-values_. Carbon will automatically convert an
+l-value to an r-value, but not in the other direction.
+
+L-values have storage and a stable address. They may be modified, assuming their
+type is not [`const`](#const).
+
+R-values may not have dedicated storage. This means they can not be modified and
+their address generally cannot be taken. R-values are broken down into three
+kinds, called _value phases_:
+
+-   A _constant_ has value known at compile time, and that value is available
+    during type checking, for example to use as the size of an array. These
+    include literals ([integer](#integer-literals),
+    [floating-point](#floating-point-literals), [string](#string-literals)),
+    expressions in terms of constants, and values of
     [`template` parameters](#checked-and-template-parameters).
--   Erased constant: [checked generics](#checked-and-template-parameters), the
-    value is known at compile-time, but not type-checking time.
+-   A _symbolic value_ has a value that will be known at the code generation
+    stage of compilation when
+    [monomorphization](https://en.wikipedia.org/wiki/Monomorphization) happens,
+    but is not known during type checking. This includes
+    [checked generic parameters](#checked-and-template-parameters).
+-   A _runtime value_ has a dynamic value only known at runtime.
 
-Carbon will automatically convert from a constant to an erased constant, or from
-any value category to R-value:
+Carbon will automatically convert a constant to a symbolic value, or any value
+to a runtime value:
 
 ```mermaid
 graph TD;
-    A(Constant)-->B(Erased constant)-->C(R-value);
-    D(L-value)-->C;
+    A(constant)-->B(symbolic value)-->C(runtime value);
+    D(l-value)-->C;
 ```
 
 ## Composite types
@@ -479,11 +491,10 @@ not support
 the only pointer [operations](#expressions) are:
 
 -   Dereference: given a pointer `p`, `*p` gives the value `p` points to as an
-    [l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>).
-    `p->m` is syntactic sugar for `(*p).m`.
--   Address-of: given an
-    [l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>)
-    `x`, `&x` returns a pointer to `x`.
+    [l-value](#value-categories-and-value-phases). `p->m` is syntactic sugar for
+    `(*p).m`.
+-   Address-of: given an [l-value](#value-categories-and-value-phases) `x`, `&x`
+    returns a pointer to `x`.
 
 There are no [null pointers](https://en.wikipedia.org/wiki/Null_pointer) in
 Carbon. To represent a pointer that may not refer to a valid object, use the
@@ -636,19 +647,25 @@ name. It can only match values that may be
 underscore (`_`) may be used instead of the name to match a value but without
 binding any name to it.
 
-Binding patterns default to _`let` bindings_ except inside a context where the
-`var` keyword is used to make it a _`var` binding_:
+Binding patterns default to _`let` bindings_. The `var` keyword is used to make
+it a _`var` binding_.
 
 -   The result of a `let` binding is the name is bound to an
-    [non-l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>).
-    This means the value can not be modified, and its address generally cannot
-    be taken.
+    [r-value](#value-categories-and-value-phases). This means the value can not
+    be modified, and its address generally cannot be taken.
 -   A `var` binding has dedicated storage, and so the name is an
-    [l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>)
-    which can be modified and has a stable address.
+    [l-value](#value-categories-and-value-phases) which can be modified and has
+    a stable address.
+
+FIXME: have to be a const-reference or copy; which one must not be observable to
+the programmer
+
+FIXME: aspects of the type can determine whether to copy, for example a type
+that is not copyable will always use a const-reference
 
 A [generic binding](#checked-and-template-parameters) uses `:!` instead of a
-colon (`:`) and can only match compile-time values.
+colon (`:`) and can only match compile-time values, either a
+[constant or symbolic value](#value-categories-and-value-phases).
 
 The keyword `auto` may be used in place of the type in a binding pattern, as
 long as the type can be deduced from the type of a value in the same
@@ -727,8 +744,8 @@ introduced into the enclosing [scope](#declarations-definitions-and-scopes).
 ### Variable `var` declarations
 
 A `var` declaration is similar, except with `var` bindings, so `x` here is an
-[l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>) with
-storage and an address, and so may be modified:
+[l-value](#value-categories-and-value-phases) with storage and an address, and
+so may be modified:
 
 ```carbon
 var x: i64 = 42;
@@ -820,10 +837,10 @@ FIXME
 
 The bindings in the parameter list default to
 [`let` bindings](#binding-patterns), and so the parameter names are treated as
-[r-values](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>). If
-the `var` keyword is added before the binding, then the arguments will be copied
-to new storage, and so can be mutated in the function body. The copy ensures
-that any mutations will not be visible to the caller.
+[r-values](#value-categories-and-value-phases). If the `var` keyword is added
+before the binding, then the arguments will be copied to new storage, and so can
+be mutated in the function body. The copy ensures that any mutations will not be
+visible to the caller.
 
 ### `auto` return type
 
@@ -882,8 +899,8 @@ fn Foo() {
 ### Assignment statements
 
 Assignment statements mutate the value of the
-[l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>)
-described on the left-hand side of the assignment.
+[l-value](#value-categories-and-value-phases) described on the left-hand side of
+the assignment.
 
 -   Assignment: `x = y;`. `x` is assigned the value of `y`.
 -   Increment and decrement: `++i;`, `--j;`. `i` is set to `i + 1`, `j` is set
@@ -1339,7 +1356,7 @@ two methods `Distance` and `Offset`:
 -   `origin.Offset(`...`)` does modify the value of `origin`. This is signified
     using `[addr me: Self*]` in the method declaration. Since calling this
     method requires taking the address of `origin`, it may only be called on
-    [non-`const`](#const) l-values.
+    [non-`const`](#const) [l-values](#value-categories-and-value-phases).
 -   Methods may be declared lexically inline like `Distance`, or lexically out
     of line like `Offset`.
 
@@ -1518,8 +1535,9 @@ For every type `MyClass`, there is the type `const MyClass` such that:
 
 -   The data representation is the same, so a `MyClass*` value may be implicitly
     converted to a `(const MyClass)*`.
--   A `const MyClass` l-value may automatically convert to a `MyClass` r-value,
-    the same way that a `MyClass` l-value can.
+-   A `const MyClass` [l-value](#value-categories-and-value-phases) may
+    automatically convert to a `MyClass` r-value, the same way that a `MyClass`
+    l-value can.
 -   If member `x` of `MyClass` has type `T`, then member `x` of `const MyClass`
     has type `const T`.
 -   The API of a `const MyClass` is a subset of `MyClass`, excluding all methods
@@ -2314,13 +2332,16 @@ The interfaces that correspond to each operator are given by:
 The
 [logical operators can not be overloaded](expressions/logical_operators.md#overloading).
 
-Operators that result in l-values, such as dereferencing `*p` and indexing
-`a[3]`, have interfaces that return the address of the value. Carbon
-automatically dereferences the pointer to get the l-value.
+Operators that result in [l-values](#value-categories-and-value-phases), such as
+dereferencing `*p` and indexing `a[3]`, have interfaces that return the address
+of the value. Carbon automatically dereferences the pointer to get the l-value.
 
 Operators that can take multiple arguments, such as function calling operator
 `f(4)`, have a [variadic](generics/details.md#variadic-arguments) parameter
 list.
+
+FIXME: Other operations on types not associated with operators like copy, move,
+unformed, swap, etc.
 
 > References:
 >
