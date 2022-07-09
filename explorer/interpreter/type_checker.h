@@ -310,10 +310,14 @@ class TypeChecker {
 
   // Returns true if *source is implicitly convertible to *destination. *source
   // and *destination must be concrete types.
+  //
+  // If \p allow_user_defined_conversions, conversions requiring a user-defined
+  // `ImplicitAs` implementation are not considered, and only builtin
+  // conversions will be allowed.
   auto IsImplicitlyConvertible(Nonnull<const Value*> source,
                                Nonnull<const Value*> destination,
                                const ImplScope& impl_scope,
-                               bool allow_user_defined_conversions = true) const
+                               bool allow_user_defined_conversions) const
       -> bool;
 
   // Attempt to implicitly convert type-checked expression `source` to the type

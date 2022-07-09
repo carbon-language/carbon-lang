@@ -55,7 +55,7 @@ class ImplScope {
 
   // Add a type equality constraint.
   void AddEqualityConstraint(Nonnull<const EqualityConstraint*> equal) {
-    equals_.push_back(equal);
+    equalities_.push_back(equal);
   }
 
   // Make `parent` a parent of this scope.
@@ -128,7 +128,7 @@ class ImplScope {
       -> ErrorOr<std::optional<Nonnull<Expression*>>>;
 
   std::vector<Impl> impls_;
-  std::vector<Nonnull<const EqualityConstraint*>> equals_;
+  std::vector<Nonnull<const EqualityConstraint*>> equalities_;
   std::vector<Nonnull<const ImplScope*>> parent_scopes_;
 };
 

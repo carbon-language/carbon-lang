@@ -10,11 +10,9 @@
 
 package ExplorerTest api;
 
-interface A {}
-
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/fail_where_equals_different_types.carbon:[[@LINE+3]]: type mismatch between values in `where LHS == RHS`
-// CHECK:   LHS type: i32
-// CHECK:   RHS type: Type
-alias B = A where 4 == i32;
+interface Iface {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_anonymous.carbon:[[@LINE+1]]: syntax error, unexpected UNDERSCORE, expecting identifier
+  let _:! Type;
+}
 
 fn Main() -> i32 { return 0; }

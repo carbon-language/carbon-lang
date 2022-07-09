@@ -133,8 +133,8 @@ auto TypeChecker::ExpectExactType(SourceLocation source_loc,
                                   Nonnull<const Value*> actual,
                                   const ImplScope& impl_scope) const
     -> ErrorOr<Success> {
-  SingleStepTypeEqualityContext equal_ctx(this, &impl_scope);
-  if (!TypeEqual(expected, actual, &equal_ctx)) {
+  SingleStepTypeEqualityContext equality_ctx(this, &impl_scope);
+  if (!TypeEqual(expected, actual, &equality_ctx)) {
     return CompilationError(source_loc) << "type error in " << context << "\n"
                                         << "expected: " << *expected << "\n"
                                         << "actual: " << *actual;
@@ -372,14 +372,14 @@ auto TypeChecker::FieldTypes(const NominalClassType& class_type) const
 auto TypeChecker::IsImplicitlyConvertible(
     Nonnull<const Value*> source, Nonnull<const Value*> destination,
     const ImplScope& impl_scope,
-    bool allow_user_defined_conversions /*= true*/) const -> bool {
+    bool allow_user_defined_conversions) const -> bool {
   // Check for an exact match or for an implicit conversion.
   // TODO: `impl`s of `ImplicitAs` should be provided to cover these
   // conversions.
   CARBON_CHECK(IsConcreteType(source));
   CARBON_CHECK(IsConcreteType(destination));
-  SingleStepTypeEqualityContext equal_ctx(this, &impl_scope);
-  if (TypeEqual(source, destination, &equal_ctx)) {
+  SingleStepTypeEqualityContext equality_ctx(this, &impl_scope);
+  if (TypeEqual(source, destination, &equality_ctx)) {
     return true;
   }
 
@@ -602,7 +602,8 @@ auto TypeChecker::ExpectType(SourceLocation source_loc,
                              Nonnull<const Value*> actual,
                              const ImplScope& impl_scope) const
     -> ErrorOr<Success> {
-  if (!IsImplicitlyConvertible(actual, expected, impl_scope)) {
+  if (!IsImplicitlyConvertible(actual, expected, impl_scope,
+                               /*allow_user_defined_conversions=*/true)) {
     return CompilationError(source_loc)
            << "type error in " << context << ": "
            << "'" << *actual << "' is not implicitly convertible to '"
@@ -2432,9 +2433,9 @@ auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
           !IsImplicitlyConvertible(rhs_type, lhs_type, impl_scope,
                                    /*allow_user_defined_conversions=*/false)) {
         return CompilationError(clause->source_loc())
-               << "type mismatch between values in `where ==` constraint\n"
-               << "  first type: " << *lhs_type << "\n"
-               << "  second type: " << *rhs_type;
+               << "type mismatch between values in `where LHS == RHS`\n"
+               << "  LHS type: " << *lhs_type << "\n"
+               << "  RHS type: " << *rhs_type;
       }
       return Success();
     }
@@ -2774,9 +2775,9 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
         // TODO: Consider using `ExpectExactType` here.
         CARBON_CHECK(IsConcreteType(&return_term.static_type()));
         CARBON_CHECK(IsConcreteType(&ret.value_node().static_type()));
-        SingleStepTypeEqualityContext equal_ctx(this, &impl_scope);
+        SingleStepTypeEqualityContext equality_ctx(this, &impl_scope);
         if (!TypeEqual(&return_term.static_type(),
-                       &ret.value_node().static_type(), &equal_ctx)) {
+                       &ret.value_node().static_type(), &equality_ctx)) {
           return CompilationError(ret.value_node().base().source_loc())
                  << "type of returned var `" << ret.value_node().static_type()
                  << "` does not match return type `"

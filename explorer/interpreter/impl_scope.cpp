@@ -41,7 +41,7 @@ void ImplScope::Add(Nonnull<const Value*> iface,
     // constraints by resolving a witness when needed.
     if (deduced.empty()) {
       for (size_t i = 0; i != constraint->equality_constraints().size(); ++i) {
-        equals_.push_back(&constraint->equality_constraints()[i]);
+        equalities_.push_back(&constraint->equality_constraints()[i]);
       }
     }
     return;
@@ -89,7 +89,7 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
 auto ImplScope::VisitEqualValues(
     Nonnull<const Value*> value,
     llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const -> bool {
-  for (Nonnull<const ConstraintType::EqualityConstraint*> eq : equals_) {
+  for (Nonnull<const ConstraintType::EqualityConstraint*> eq : equalities_) {
     if (!eq->VisitEqualValues(value, visitor)) {
       return false;
     }
@@ -172,7 +172,7 @@ void ImplScope::Print(llvm::raw_ostream& out) const {
   for (const Impl& impl : impls_) {
     out << sep << *(impl.type) << " as " << *(impl.interface);
   }
-  for (Nonnull<const ConstraintType::EqualityConstraint*> eq : equals_) {
+  for (Nonnull<const ConstraintType::EqualityConstraint*> eq : equalities_) {
     out << sep;
     llvm::ListSeparator equal(" == ");
     for (Nonnull<const Value*> value : eq->values) {

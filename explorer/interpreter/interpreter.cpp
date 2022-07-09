@@ -503,7 +503,7 @@ auto Interpreter::EvalAssociatedConstant(
         }
         // TODO: This makes an arbitrary choice if there's more than one
         // equal value. It's not clear how to handle that case.
-        result.emplace(equal_value);
+        result = equal_value;
         return false;
       });
   if (!result) {
