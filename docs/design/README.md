@@ -393,6 +393,10 @@ are available for representing strings with `\`s and `"`s.
 
 FIXME:
 [wikipedia](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>)
+[cppreference](https://en.cppreference.com/w/cpp/language/value_category)
+
+**FIXME:** Should this be moved together with
+[Types are values](#types-are-values)?
 
 Values are either _l-values_ or _r-values_. Carbon will automatically convert an
 l-value to an r-value, but not in the other direction.
@@ -408,13 +412,15 @@ kinds, called _value phases_:
     during type checking, for example to use as the size of an array. These
     include literals ([integer](#integer-literals),
     [floating-point](#floating-point-literals), [string](#string-literals)),
-    expressions in terms of constants, and values of
+    concrete type values (like `f64` or `Optional(i32*)`), expressions in terms
+    of constants, and values of
     [`template` parameters](#checked-and-template-parameters).
 -   A _symbolic value_ has a value that will be known at the code generation
     stage of compilation when
     [monomorphization](https://en.wikipedia.org/wiki/Monomorphization) happens,
     but is not known during type checking. This includes
-    [checked generic parameters](#checked-and-template-parameters).
+    [checked-generic parameters](#checked-and-template-parameters), and type
+    expressions with checked-generic arguments, like `Optional(T*)`.
 -   A _runtime value_ has a dynamic value only known at runtime.
 
 Carbon will automatically convert a constant to a symbolic value, or any value
