@@ -107,7 +107,7 @@ class Interpreter {
   //
   //   interface Iface { let N:! i32; }
   //   fn PickType(N: i32) -> Type { return i32; }
-  //   fn F[T:! Iface where .N = 5](x: T) {
+  //   fn F[T:! Iface where .N == 5](x: T) {
   //     var x: PickType(T.N) = 0;
   //   }
   //

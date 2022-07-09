@@ -3267,7 +3267,7 @@ auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
         //   impl T as HasX & HasY where .X == .Y {}
         // ... is insufficient to establish a value for either X or Y.
         // But perhaps we can allow
-        //   impl forall [T:! HasX] T as HasY where .Y = .X {}
+        //   impl forall [T:! HasX] T as HasY where .Y == .X {}
         return CompilationError(impl_decl->source_loc())
                << "implementation doesn't provide a concrete value for "
                << *expected;
