@@ -2434,7 +2434,7 @@ auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
         return CompilationError(clause->source_loc())
                << "type mismatch between values in `where ==` constraint\n"
                << "  first type: " << *lhs_type << "\n"
-               << "  second type: " << *rhs_type << "\n";
+               << "  second type: " << *rhs_type;
       }
       return Success();
     }

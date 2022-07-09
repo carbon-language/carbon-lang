@@ -12,10 +12,9 @@ package ExplorerTest api;
 
 interface A {}
 
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/fail_where_equals_different_types.carbon:[[@LINE+4]]: type mismatch between values in `where ==` constraint
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/fail_where_equals_different_types.carbon:[[@LINE+3]]: type mismatch between values in `where ==` constraint
 // CHECK:   first type: i32
 // CHECK:   second type: Type
-// CHECK-EMPTY:
 alias B = A where 4 == i32;
 
 fn Main() -> i32 { return 0; }
