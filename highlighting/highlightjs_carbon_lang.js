@@ -371,8 +371,8 @@ export default function (hljs) {
   };
   const FUNCTION = {
     scope: 'carbon-function',
-    begin: /fn/,
-    beginScope: 'keyword',
+    begin: [/(\b(virtual|abstract|impl)\b)?/, /\s*/, /\bfn\b/],
+    beginScope: { 1: 'keyword', 3: 'keyword' },
     end: /\s*[;{]/,
     returnEnd: true,
     contains: [FUNCTION_NAME_COMPONENT, RETURN_SPECIFIER],
@@ -406,7 +406,7 @@ export default function (hljs) {
     variants: [
       {
         scope: 'carbon-class',
-        begin: [/(base|abstract)?/, /\s*/, /class/],
+        begin: [/(\b(base|abstract)\b)?/, /\s*/, /\bclass\b/],
         beginScope: {
           1: 'keyword',
           3: 'keyword',
