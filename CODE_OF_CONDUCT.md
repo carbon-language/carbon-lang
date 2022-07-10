@@ -24,16 +24,16 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Guidelines
 
-The Carbon community works to be welcoming and respectful, with a deep
-commitment to psychological safety, and we want to ensure that doesn’t change as
-we grow and evolve. To that end, we have a few ground rules that we ask all
-community members to adhere to:
+The Carbon community works to be welcoming and kind among itself and to others,
+with a deep commitment to psychological safety, and we want to ensure that
+doesn’t change as we grow and evolve. To that end, we have a few ground rules
+that we ask all community members to adhere to:
 
 -   be welcoming,
 -   be friendly and patient,
 -   be considerate,
--   be respectful,
--   be careful in the words that you choose and be kind to others,
+-   be kind,
+-   be careful in the words that you choose,
 -   when we disagree, try to understand why, and
 -   recognize when progress has stopped, and take a step back.
 
@@ -67,11 +67,12 @@ spaces:
     lack thereof, and mental and physical ability.
 
 -   **Be friendly and patient.** We want to encourage people to participate in
-    our community by keeping its atmosphere friendly and positive. This is
-    especially important because many of our communication tools on the Internet
-    are low-fidelity and make it difficult to understand each other. Be patient,
-    assume good intent, and stay supportive so that we can learn how to
-    collaborate effectively as a group.
+    our community in a constructive manner, so we can keep a friendly
+    atmosphere. This is especially important because many of our communication
+    tools on the Internet are low-fidelity and make it difficult to understand
+    each other. Be patient, acknowledge that we are all on a learning journey,
+    and stay supportive so that we can learn how to collaborate effectively as a
+    group.
 
 -   **Be considerate.** Your work will be used by other people, and you in turn
     will depend on the work of others. Any decision you make will affect users
@@ -79,13 +80,13 @@ spaces:
     Remember that we’re a world-wide community, so you might not be
     communicating in someone else’s primary language.
 
--   **Be respectful.** Not all of us will agree all the time, but disagreement
-    is no excuse for poor behavior and poor manners. We might all experience
-    some frustration now and then, but we cannot allow that frustration to turn
-    into a personal attack. It’s important to remember that a community where
-    people feel uncomfortable or threatened is not a productive one. Members of
-    our community should be respectful when dealing with other members as well
-    as with people outside the Carbon community.
+-   **Be kind.** Not all of us will agree all the time, but disagreement is no
+    excuse for poor behavior and hurtful words. We might all experience some
+    frustration now and then, but we cannot allow that frustration to turn into
+    a personal attack. It’s important to remember that a community where people
+    feel uncomfortable or threatened is not a productive one. Members of our
+    community should be kind when dealing with other members as well as with
+    people outside the Carbon community.
 
 -   **Be careful in the words that you choose and be kind to others.** Do not
     insult or put down other participants. Harassment and other exclusionary
@@ -95,7 +96,7 @@ spaces:
     -   Discriminatory jokes and language.
     -   Posting sexually explicit or violent material.
     -   Posting, or threatening to post, other people’s personally identifying
-        information ("doxing") without their explicit permission.
+        information without their explicit permission ("doxing").
     -   Personal insults, especially those using racist or sexist terms.
     -   Unwelcome sexual attention.
     -   Advocating for, or encouraging, any of the above behavior.
