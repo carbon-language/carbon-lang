@@ -104,7 +104,15 @@ quotation marks whose first `"` is not part of a `\"` escape sequence. The
 closing `"""` shall be the first non-whitespace characters on that line. The
 lines between the opening line and the closing line (exclusive) are _content
 lines_. The content lines shall not contain `\` characters that do not form part
-of an escape sequence.
+of an escape sequence. Three consecutive quotes (`"""`) always start a _block
+string literal_. For example, this is an invalid block string literal, rather
+than 3 simple literals.
+
+```carbon
+// This string literal is invalid because it starts with `"""` but does not contain
+//  a new line. It does not represent the three tokens `""`, `"abc"` and `""`.
+var String: lucius = """abc""";
+```
 
 The _indentation_ of a block string literal is the sequence of horizontal
 whitespace preceding the closing `"""`. Each non-empty content line shall begin
@@ -292,29 +300,19 @@ var String: z = ##"Raw strings #"nesting"#"##;
 var String: w = #"Tab is expressed as \t. Example: '\#t'"#;
 ```
 
-Note that both a raw simple string literal and a raw block string literal can
-begin with `#"""`. These cases can be distinguished by the presence or absence
-of additional `"`s later in the same line:
-
--   In a raw simple string literal, there must be a `"` and one or more `#`s
-    later in the same line terminating the string.
--   In a raw block string literal, the rest of the line is a file type
-    indicator, which can contain neither `"` nor `#`.
+Note that only a raw block string literal can begin with `#"""`.
 
 ```carbon
-// This string is a single-line raw string literal.
-// The contents of this string start and end with exactly two "s.
-var String: ambig1 = #"""This is a raw string literal starting with """#;
+// This is an invalid raw block string literal with no new line.
+// It is not equivalent to "\"\"Invalid raw block string literal\"\"".
+var String: ambig1 = #"""Invalid raw block string literal"""#;
 
-// This string is a raw block string literal with file-type 'This', whose
-// contents start with "is a ".
-var String: ambig2 = #"""This
-  is a block string literal with file type 'This', first character 'i',
-  and last character 'X': X\#
-  """#;
+// This is an invalid raw block string literal with no closing `"""#`.
+// It is not equivalent to "\"".
+var String: ambig2 = #"""#;
 
 // This is a single-line raw string literal, equivalent to "\"".
-var String: ambig3 = #"""#;
+var String: clear = #"\#""#;
 ```
 
 ### Encoding
