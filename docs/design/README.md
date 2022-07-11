@@ -2699,6 +2699,7 @@ The interfaces that correspond to each operator are given by:
 -   **TODO:** [Assignment](#assignment-statements): `x = y`, `++x`, `x += y`,
     and so on
 -   **TODO:** Dereference: `*p`
+-   **TODO:** [Move](#move): `~x`
 -   **TODO:** Indexing: `a[3]`
 -   **TODO:** Function call: `f(4)`
 
@@ -2713,8 +2714,9 @@ Operators that can take multiple arguments, such as function calling operator
 `f(4)`, have a [variadic](generics/details.md#variadic-arguments) parameter
 list.
 
-FIXME: Other operations on types not associated with operators like copy, move,
-unformed, swap, etc.
+Whether and how a value supports other operations, such as being copied,
+swapped, or set into an [unformed state](#unformed-state), is also determined by
+implementing corresponding interfaces for the value's type.
 
 > References:
 >
