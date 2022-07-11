@@ -1320,8 +1320,12 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       if (act.pos() == 0) {
         //    { {(var x = e) :: C, E, F} :: S, H}
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
-        return todo_.Spawn(
-            std::make_unique<ExpressionAction>(&definition.init()));
+        if (definition.has_init()) {
+          return todo_.Spawn(
+              std::make_unique<ExpressionAction>(&definition.init()));
+        } else {
+          return todo_.FinishAction();
+        }
       } else {
         //    { { v :: (x = []) :: C, E, F} :: S, H}
         // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
