@@ -391,14 +391,13 @@ are available for representing strings with `\`s and `"`s.
 
 ## Value categories and value phases
 
-FIXME:
-[wikipedia](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>)
-[cppreference](https://en.cppreference.com/w/cpp/language/value_category)
-
 **FIXME:** Should this be moved together with
 [Types are values](#types-are-values)?
 
-Values are either _l-values_ or _r-values_. Carbon will automatically convert an
+Every value has a
+[value category](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>),
+similar to [C++](https://en.cppreference.com/w/cpp/language/value_category),
+that is either _l-value_ or _r-value_. Carbon will automatically convert an
 l-value to an r-value, but not in the other direction.
 
 L-values have storage and a stable address. They may be modified, assuming their
@@ -513,9 +512,6 @@ the only pointer [operations](#expressions) are:
 There are no [null pointers](https://en.wikipedia.org/wiki/Null_pointer) in
 Carbon. To represent a pointer that may not refer to a valid object, use the
 type `Optional(T*)`.
-
-Pointers are the main Carbon mechanism for allowing a function to modify a
-variable of the caller.
 
 **TODO:** Perhaps Carbon will have
 [stricter pointer provenance](https://www.ralfj.de/blog/2022/04/11/provenance-exposed.html)
@@ -693,11 +689,14 @@ it a _`var` binding_.
     [l-value](#value-categories-and-value-phases) which can be modified and has
     a stable address.
 
-FIXME: have to be a const-reference or copy; which one must not be observable to
-the programmer
-
-FIXME: aspects of the type can determine whether to copy, for example a type
-that is not copyable will always use a const-reference
+A `let`-binding may trigger a copy of the original value, or a move if the
+original value a temporary, or the binding may be a pointer to the original
+value, like a
+[`const` reference in C++](<https://en.wikipedia.org/wiki/Reference_(C%2B%2B)>).
+Which option must not be observable to the programmer. For example, Carbon will
+not allow modifications to the original value when it is through a pointer. This
+choice may also be influenced by the type. For example, types that don't support
+being copied will be passed by pointer instead.
 
 A [generic binding](#checked-and-template-parameters) uses `:!` instead of a
 colon (`:`) and can only match compile-time values, either a
@@ -855,17 +854,8 @@ fn Add(a: i64, b: i64) -> i64 {
 ```
 
 The names of the parameters are in scope until the end of the definition or
-declaration.
-
-The bindings in the parameter list default to
-[`let` bindings](#binding-patterns), and so the parameter names are treated as
-[r-values](#value-categories-and-value-phases). If the `var` keyword is added
-before the binding, then the arguments will be copied to new storage, and so can
-be mutated in the function body. The copy ensures that any mutations will not be
-visible to the caller.
-
-The parameter names in a forward declaration may be omitted using `_`, but must
-match the definition if they are specified.
+declaration. The parameter names in a forward declaration may be omitted using
+`_`, but must match the definition if they are specified.
 
 > References:
 >
@@ -881,14 +871,24 @@ match the definition if they are specified.
 
 ### Parameters
 
-FIXME
-
 The bindings in the parameter list default to
 [`let` bindings](#binding-patterns), and so the parameter names are treated as
-[r-values](#value-categories-and-value-phases). If the `var` keyword is added
-before the binding, then the arguments will be copied to new storage, and so can
-be mutated in the function body. The copy ensures that any mutations will not be
-visible to the caller.
+[r-values](#value-categories-and-value-phases). This is appropriate for input
+parameters. This binding will be implemented using a const reference, unless it
+is legal to copy and copying is cheaper.
+
+If the `var` keyword is added before the binding, then the arguments will be
+copied to new storage, and so can be mutated in the function body. The copy
+ensures that any mutations will not be visible to the caller.
+
+Use a [pointer](#pointer-types) parameter type to represent an
+[input/output parameter](<https://en.wikipedia.org/wiki/Parameter_(computer_programming)#Output_parameters>),
+allowing a function to modify a variable of the caller's. This makes the
+possibility of those modifications visible: by taking the address using `&` in
+the caller, and dereferencing using `*` in the callee.
+
+Outputs of a function should prefer to be returned. Multiple values may be
+returned using a [tuple](#tuples) or [struct](#struct-types) type.
 
 ### `auto` return type
 
