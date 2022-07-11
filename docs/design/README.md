@@ -1643,7 +1643,9 @@ An unformed state for an object is one that satisfies the following properties:
 A type might have more than one in-memory representation for the unformed state,
 and those representations may be the same as valid fully formed values for that
 type. For example, all values are legal representations of the unformed state
-for any type with a trivial destructor like `i32`.
+for any type with a trivial destructor like `i32`. Types may define additional
+initialization for [hardened build mode](#build-modes). For example, this causes
+integers to be set to `0` when in unformed state in this mode.
 
 Any operation on an unformed object _other_ than destruction or assignment to a
 fully formed value is an error, even if its in-memory representation is that of
