@@ -111,7 +111,7 @@ than 3 simple literals.
 ```carbon
 // This string literal is invalid because it starts with `"""` but does not contain
 //  a new line. It does not represent the three tokens `""`, `"abc"` and `""`.
-var String: lucius = """abc""";
+var String: block = """abc""";
 ```
 
 The _indentation_ of a block string literal is the sequence of horizontal
