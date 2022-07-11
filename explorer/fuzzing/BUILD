@@ -122,12 +122,9 @@ cc_fuzz_test(
     testonly = 1,
     srcs = ["explorer_fuzzer.cpp"],
     corpus = glob(["fuzzer_corpus/*"]),
-    linkopts = ["-fno-sanitize=fuzzer",
-                "-fsanitize=fuzzer-no-link"],
     deps = [
         ":fuzzer_util",
         "@com_google_libprotobuf_mutator//:libprotobuf_mutator",
         "@llvm-project//llvm:Support",
-        "@llvm-project//compiler-rt:Fuzzer",
     ],
 )
