@@ -23,3 +23,6 @@ compile_commands.json
 # Emacs temporary files
 *~
 \#*\#
+
+# vim temporary files
+.*.swp

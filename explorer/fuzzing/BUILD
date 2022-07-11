@@ -86,6 +86,7 @@ cc_test(
     ],
     data = [
         ":fuzzer_corpus_files",
+        "//explorer:standard_libraries",
     ],
     deps = [
         ":fuzzer_util",

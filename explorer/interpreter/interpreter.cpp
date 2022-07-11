@@ -1403,12 +1403,34 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       } else {
         return todo_.FinishAction();
       }
-    case StatementKind::Return:
+    case StatementKind::ReturnVar: {
+      const ValueNodeView& value_node = cast<ReturnVar>(stmt).value_node();
+      if (trace_stream_) {
+        **trace_stream_ << "--- step returned var "
+                        << cast<BindingPattern>(value_node.base()).name()
+                        << " ." << act.pos() << "."
+                        << " (" << stmt.source_loc() << ") --->\n";
+      }
+      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> value,
+                              todo_.ValueOfNode(value_node, stmt.source_loc()));
+      if (const auto* lvalue = dyn_cast<LValue>(value)) {
+        CARBON_ASSIGN_OR_RETURN(
+            value,
+            heap_.Read(lvalue->address(), value_node.base().source_loc()));
+      }
+      const FunctionDeclaration& function = cast<Return>(stmt).function();
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> return_value,
+          Convert(value, &function.return_term().static_type(),
+                  stmt.source_loc()));
+      return todo_.UnwindPast(*function.body(), return_value);
+    }
+    case StatementKind::ReturnExpression:
       if (act.pos() == 0) {
         //    { {return e :: C, E, F} :: S, H}
         // -> { {e :: return [] :: C, E, F} :: S, H}
         return todo_.Spawn(std::make_unique<ExpressionAction>(
-            &cast<Return>(stmt).expression()));
+            &cast<ReturnExpression>(stmt).expression()));
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
         // -> { {v :: C', E', F'} :: S, H}

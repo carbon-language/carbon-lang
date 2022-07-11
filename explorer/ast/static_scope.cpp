@@ -4,31 +4,42 @@
 
 #include "explorer/ast/static_scope.h"
 
+#include <optional>
+
 #include "explorer/common/error_builders.h"
 #include "llvm/Support/Error.h"
 
 namespace Carbon {
 
 auto StaticScope::Add(const std::string& name, ValueNodeView entity,
-                      bool usable) -> ErrorOr<Success> {
-  auto [it, inserted] = declared_names_.insert({name, {entity, usable}});
+                      NameStatus status /* = NameStatus::Usable*/)
+    -> ErrorOr<Success> {
+  auto [it, inserted] = declared_names_.insert({name, {entity, status}});
   if (!inserted) {
     if (it->second.entity != entity) {
       return CompilationError(entity.base().source_loc())
              << "Duplicate name `" << name << "` also found at "
              << it->second.entity.base().source_loc();
     }
-    CARBON_CHECK(usable || !it->second.usable)
-        << entity.base().source_loc() << " attempting to mark a usable name `"
-        << name << "` as unusable";
+    if (static_cast<int>(status) > static_cast<int>(it->second.status)) {
+      it->second.status = status;
+    }
   }
   return Success();
+}
+
+void StaticScope::MarkDeclared(const std::string& name) {
+  auto it = declared_names_.find(name);
+  CARBON_CHECK(it != declared_names_.end()) << name << " not found";
+  if (it->second.status == NameStatus::KnownButNotDeclared) {
+    it->second.status = NameStatus::DeclaredButNotUsable;
+  }
 }
 
 void StaticScope::MarkUsable(const std::string& name) {
   auto it = declared_names_.find(name);
   CARBON_CHECK(it != declared_names_.end()) << name << " not found";
-  it->second.usable = true;
+  it->second.status = NameStatus::Usable;
 }
 
 auto StaticScope::Resolve(const std::string& name,
@@ -47,12 +58,17 @@ auto StaticScope::TryResolve(const std::string& name,
     -> ErrorOr<std::optional<ValueNodeView>> {
   auto it = declared_names_.find(name);
   if (it != declared_names_.end()) {
-    if (!it->second.usable) {
-      return CompilationError(source_loc)
-             << "'" << name
-             << "' is not usable until after it has been completely declared";
+    switch (it->second.status) {
+      case NameStatus::KnownButNotDeclared:
+        return CompilationError(source_loc)
+               << "'" << name << "' has not been declared yet";
+      case NameStatus::DeclaredButNotUsable:
+        return CompilationError(source_loc)
+               << "'" << name
+               << "' is not usable until after it has been completely declared";
+      case NameStatus::Usable:
+        return std::make_optional(it->second.entity);
     }
-    return std::make_optional(it->second.entity);
   }
   std::optional<ValueNodeView> result;
   for (Nonnull<const StaticScope*> parent : parent_scopes_) {
@@ -68,6 +84,32 @@ auto StaticScope::TryResolve(const std::string& name,
     result = parent_result;
   }
   return result;
+}
+
+auto StaticScope::AddReturnedVar(ValueNodeView returned_var_def_view)
+    -> ErrorOr<Success> {
+  std::optional<ValueNodeView> resolved_returned_var = ResolveReturned();
+  if (resolved_returned_var.has_value()) {
+    return CompilationError(returned_var_def_view.base().source_loc())
+           << "Duplicate definition of returned var also found at "
+           << resolved_returned_var->base().source_loc();
+  }
+  returned_var_def_view_ = std::move(returned_var_def_view);
+  return Success();
+}
+
+auto StaticScope::ResolveReturned() const -> std::optional<ValueNodeView> {
+  if (returned_var_def_view_.has_value()) {
+    return returned_var_def_view_;
+  }
+  for (Nonnull<const StaticScope*> parent : parent_scopes_) {
+    std::optional<ValueNodeView> parent_returned_var =
+        parent->ResolveReturned();
+    if (parent_returned_var.has_value()) {
+      return parent_returned_var;
+    }
+  }
+  return std::nullopt;
 }
 
 }  // namespace Carbon

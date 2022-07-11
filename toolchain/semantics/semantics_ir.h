@@ -7,13 +7,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/parser/parse_tree.h"
-#include "toolchain/semantics/meta_node_block.h"
-#include "toolchain/semantics/nodes/expression_statement.h"
-#include "toolchain/semantics/nodes/function.h"
-#include "toolchain/semantics/nodes/infix_operator.h"
-#include "toolchain/semantics/nodes/literal.h"
-#include "toolchain/semantics/nodes/pattern_binding.h"
-#include "toolchain/semantics/nodes/return.h"
+#include "toolchain/semantics/node_store.h"
 
 namespace Carbon::Testing {
 class SemanticsIRForTest;
@@ -25,30 +19,12 @@ namespace Carbon {
 class SemanticsIR {
  public:
   // File-level declarations.
-  auto root_block() const -> const Semantics::DeclarationBlock& {
-    return *root_block_;
+  auto root_block() const -> llvm::ArrayRef<Semantics::NodeRef> {
+    return root_block_;
   }
 
-  // Debug printer for the parse tree.
-  void Print(llvm::raw_ostream& out, ParseTree::Node node) const;
-
-  // Debug printers for meta nodes.
-  void Print(llvm::raw_ostream& out, Semantics::Declaration decl) const;
-  void Print(llvm::raw_ostream& out, Semantics::Expression expr) const;
-  void Print(llvm::raw_ostream& out, Semantics::Statement stmt) const;
-
-  // Debug printers for other nodes.
-  void Print(llvm::raw_ostream& out, const Semantics::DeclaredName& name) const;
-  void Print(llvm::raw_ostream& out,
-             const Semantics::ExpressionStatement& expr) const;
-  void Print(llvm::raw_ostream& out, const Semantics::Function& function) const;
-  void Print(llvm::raw_ostream& out, const Semantics::InfixOperator& op) const;
-  void Print(llvm::raw_ostream& out, const Semantics::Literal& literal) const;
-  void Print(llvm::raw_ostream& out,
-             const Semantics::PatternBinding& binding) const;
-  void Print(llvm::raw_ostream& out, const Semantics::Return& ret) const;
-  void Print(llvm::raw_ostream& out,
-             const Semantics::StatementBlock& block) const;
+  // Prints the node information.
+  void Print(llvm::raw_ostream& out, Semantics::NodeRef node_ref) const;
 
  private:
   friend class SemanticsIRFactory;
@@ -57,12 +33,8 @@ class SemanticsIR {
   explicit SemanticsIR(const ParseTree& parse_tree)
       : parse_tree_(&parse_tree) {}
 
-  Semantics::DeclarationStore declarations_;
-  Semantics::ExpressionStore expressions_;
-  Semantics::StatementStore statements_;
-
-  // The file-level block. Only assigned after initialization is complete.
-  llvm::Optional<Semantics::DeclarationBlock> root_block_;
+  Semantics::NodeStore nodes_;
+  llvm::SmallVector<Semantics::NodeRef, 0> root_block_;
 
   const ParseTree* parse_tree_;
 };
