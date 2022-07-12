@@ -449,7 +449,7 @@ export default function (hljs) {
     beginScope: 'punctuation',
     end: /\}/,
     endScope: 'punctuation',
-    contains: ['self', ...STATEMENTS],
+    contains: ['self', hljs.C_LINE_COMMENT_MODE, ...STATEMENTS],
   };
 
   // Stitch everything together into the language definition.
