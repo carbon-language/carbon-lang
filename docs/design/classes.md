@@ -865,25 +865,25 @@ var p2: Point = p1.CreateCentered();
 
 [Method](<https://en.wikipedia.org/wiki/Method_(computer_programming)>)
 declarations are distinguished from [class function](#class-functions)
-declarations by having a `me` parameter in square brackets `[`...`]` before the
-explicit parameter list in parens `(`...`)`. There is no implicit member access
-in methods, so inside the method body members are accessed through the `me`
-parameter. Methods may be written lexically inline or after the class
+declarations by having a `self` parameter in square brackets `[`...`]` before
+the explicit parameter list in parens `(`...`)`. There is no implicit member
+access in methods, so inside the method body members are accessed through the
+`self` parameter. Methods may be written lexically inline or after the class
 declaration.
 
 ```carbon
 class Circle {
-  fn Diameter[me: Self]() -> f32 {
-    return me.radius * 2;
+  fn Diameter[self: Self]() -> f32 {
+    return self.radius * 2;
   }
-  fn Expand[addr me: Self*](distance: f32);
+  fn Expand[addr self: Self*](distance: f32);
 
   var center: Point;
   var radius: f32;
 }
 
-fn Circle.Expand[addr me: Self*](distance: f32) {
-  me->radius += distance;
+fn Circle.Expand[addr self: Self*](distance: f32) {
+  self->radius += distance;
 }
 
 var c: Circle = {.center = Point.Origin(), .radius = 1.5 };
@@ -895,10 +895,10 @@ Assert(Math.Abs(c.Diameter() - 4.0) < 0.001);
 -   Methods are called using using the dot `.` member syntax, `c.Diameter()` and
     `c.Expand(`...`)`.
 -   `Diameter` computes and returns the diameter of the circle without modifying
-    the `Circle` instance. This is signified using `[me: Self]` in the method
+    the `Circle` instance. This is signified using `[self: Self]` in the method
     declaration.
 -   `c.Expand(`...`)` does modify the value of `c`. This is signified using
-    `[addr me: Self*]` in the method declaration.
+    `[addr self: Self*]` in the method declaration.
 
 The pattern '`addr` _patt_' means "first take the address of the argument, which
 must be an
@@ -907,8 +907,8 @@ then match pattern _patt_ against it".
 
 If the method declaration also includes
 [deduced generic parameters](/docs/design/generics/overview.md#deduced-parameters),
-the `me` parameter must be in the same list in square brackets `[`...`]`. The
-`me` parameter may appear in any position in that list, as long as it appears
+the `self` parameter must be in the same list in square brackets `[`...`]`. The
+`self` parameter may appear in any position in that list, as long as it appears
 after any names needed to describe its type.
 
 #### Name lookup in member function definitions
@@ -916,17 +916,17 @@ after any names needed to describe its type.
 When defining a member function lexically inline, we delay type checking of the
 function body until the definition of the current type is complete. This means
 that name lookup _for members of objects_ is also delayed. That means that you
-can reference `me.F()` in a lexically inline method definition even before the
+can reference `self.F()` in a lexically inline method definition even before the
 declaration of `F` in that class definition. However, other names still need to
 be declared before they are used. This includes unqualified names, names within
 namespaces, and names _for members of types_.
 
 ```
 class Point {
-  fn Distance[me: Self]() -> f32 {
+  fn Distance[self: Self]() -> f32 {
     // ✅ Allowed: `x` and `y` are names for members of an object,
-    // and so lookup is delayed until `type_of(me) == Self` is complete.
-    return Math.Sqrt(me.x * me.x + me.y * me.y);
+    // and so lookup is delayed until `type_of(self) == Self` is complete.
+    return Math.Sqrt(self.x * self.x + self.y * self.y);
   }
 
   fn CreatePolarInvalid(r: f32, theta: f32) -> Point {
@@ -955,7 +955,7 @@ class Point {
 
   fn CreateXAxis(x: f32) -> Point;
 
-  fn Angle[me: Self]() -> f32;
+  fn Angle[self: Self]() -> f32;
 
   var x: f32;
   var y: f32;
@@ -967,10 +967,10 @@ fn Point.CreateXAxis(x: f32) -> Point;
   return Create(x, 0);
 }
 
-fn Point.Angle[me: Self]() -> f32 {
+fn Point.Angle[self: Self]() -> f32 {
   // ✅ Allowed: `Point` type is complete.
   // Function is checked immediately.
-  return Math.ATan2(me.y, me.x);
+  return Math.ATan2(self.y, self.x);
 }
 ```
 
@@ -1127,7 +1127,7 @@ declaration before `fn`.
 
 ```
 base class MyBaseClass {
-  virtual fn Overridable[me: Self]() -> i32 { return 7; }
+  virtual fn Overridable[self: Self]() -> i32 { return 7; }
 }
 ```
 
@@ -1418,7 +1418,7 @@ the `destructor` keyword:
 
 ```carbon
 class MyClass {
-  destructor [me: Self] { ... }
+  destructor [self: Self] { ... }
 }
 ```
 
@@ -1426,13 +1426,13 @@ or:
 
 ```carbon
 class MyClass {
-  // Can modify `me` in the body.
-  destructor [addr me: Self*] { ... }
+  // Can modify `self` in the body.
+  destructor [addr self: Self*] { ... }
 }
 ```
 
 If a class has no `destructor` declaration, it gets the default destructor,
-which is equivalent to `destructor [me: Self] { }`.
+which is equivalent to `destructor [self: Self] { }`.
 
 The destructor for a class is run before the destructors of its data members.
 The data members are destroyed in reverse order of declaration. Derived classes
@@ -1450,9 +1450,9 @@ Destructors may be declared in class scope and then defined out-of-line:
 
 ```carbon
 class MyClass {
-  destructor [addr me: Self*];
+  destructor [addr self: Self*];
 }
-destructor MyClass [addr me: Self*] { ... }
+destructor MyClass [addr self: Self*] { ... }
 ```
 
 It is illegal to delete an instance of a derived class through a pointer to one
@@ -1464,11 +1464,11 @@ must be `impl`:
 
 ```carbon
 base class MyBaseClass {
-  virtual destructor [addr me: Self*] { ... }
+  virtual destructor [addr self: Self*] { ... }
 }
 
 class MyDerivedClass extends MyBaseClass {
-  impl destructor [addr me: Self*] { ... }
+  impl destructor [addr self: Self*] { ... }
 }
 ```
 
@@ -1518,8 +1518,8 @@ call the `UnsafeDelete` method instead. Note that you may not call
 ```
 interface Allocator {
   // ...
-  fn Delete[T:! Deletable, addr me: Self*](p: T*);
-  fn UnsafeDelete[T:! Destructible, addr me: Self*](p: T*);
+  fn Delete[T:! Deletable, addr self: Self*](p: T*);
+  fn UnsafeDelete[T:! Destructible, addr self: Self*](p: T*);
 }
 ```
 
@@ -1566,7 +1566,7 @@ could potentially fail must be performed before the destructor is called.
 Unhandled failure during a destructor call will abort the program.
 
 **Future work:** Allow or require destructors to be declared as taking
-`[var me: Self]`.
+`[var self: Self]`.
 
 **Alternatives considered:**
 
@@ -1630,7 +1630,7 @@ As in C++, `private` means only accessible to members of the class and any
 
 ```carbon
 class Point {
-  fn Distance[me: Self]() -> f32;
+  fn Distance[self: Self]() -> f32;
   // These are only accessible to members of `Point`.
   private var x: f32;
   private var y: f32;
@@ -1668,15 +1668,15 @@ derived classes, and any [friends](#friends).
 ```
 base class MyBaseClass {
   protected fn HelperClassFunction(x: i32) -> i32;
-  protected fn HelperMethod[me: Self](x: i32) -> i32;
+  protected fn HelperMethod[self: Self](x: i32) -> i32;
   protected var data: i32;
 }
 
 class MyDerivedClass extends MyBaseClass {
-  fn UsesProtected[addr me: Self*]() {
+  fn UsesProtected[addr self: Self*]() {
     // Can access protected members in derived class
     var x: i32 = HelperClassFunction(3);
-    me->data = me->HelperMethod(x);
+    self->data = self->HelperMethod(x);
   }
 }
 ```

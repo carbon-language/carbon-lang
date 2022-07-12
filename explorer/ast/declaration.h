@@ -107,7 +107,7 @@ class FunctionDeclaration : public Declaration {
   static auto Create(Nonnull<Arena*> arena, SourceLocation source_loc,
                      std::string name,
                      std::vector<Nonnull<AstNode*>> deduced_params,
-                     std::optional<Nonnull<Pattern*>> me_pattern,
+                     std::optional<Nonnull<Pattern*>> self_pattern,
                      Nonnull<TuplePattern*> param_pattern,
                      ReturnTerm return_term,
                      std::optional<Nonnull<Block*>> body)
@@ -116,14 +116,14 @@ class FunctionDeclaration : public Declaration {
   // Use `Create()` instead. This is public only so Arena::New() can call it.
   FunctionDeclaration(SourceLocation source_loc, std::string name,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,
-                      std::optional<Nonnull<Pattern*>> me_pattern,
+                      std::optional<Nonnull<Pattern*>> self_pattern,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
                       std::optional<Nonnull<Block*>> body)
       : Declaration(AstNodeKind::FunctionDeclaration, source_loc),
         name_(std::move(name)),
         deduced_parameters_(std::move(deduced_params)),
-        me_pattern_(me_pattern),
+        me_pattern_(self_pattern),
         param_pattern_(param_pattern),
         return_term_(return_term),
         body_(body) {}
@@ -142,8 +142,8 @@ class FunctionDeclaration : public Declaration {
   auto deduced_parameters() -> llvm::ArrayRef<Nonnull<GenericBinding*>> {
     return deduced_parameters_;
   }
-  auto me_pattern() const -> const Pattern& { return **me_pattern_; }
-  auto me_pattern() -> Pattern& { return **me_pattern_; }
+  auto self_pattern() const -> const Pattern& { return **me_pattern_; }
+  auto self_pattern() -> Pattern& { return **me_pattern_; }
   auto param_pattern() const -> const TuplePattern& { return *param_pattern_; }
   auto param_pattern() -> TuplePattern& { return *param_pattern_; }
   auto return_term() const -> const ReturnTerm& { return return_term_; }

@@ -56,7 +56,7 @@ export default function (hljs) {
       'library',
       'like',
       'match',
-      'me',
+      'self',
       'namespace',
       'not',
       'observe',
@@ -269,8 +269,8 @@ export default function (hljs) {
     returnEnd: true,
     contains: [...EXPRESSION],
   };
-  const ME_PATTERN = {
-    scope: 'carbon-me-pattern',
+  const SELF_PATTERN = {
+    scope: 'carbon-self-pattern',
     begin: [/(\b(addr|var)\b)?/, /\s*/, /\bme/, /:/, /\s*/],
     beginScope: {
       1: 'keyword',
@@ -281,7 +281,11 @@ export default function (hljs) {
     returnEnd: true,
     contains: [...EXPRESSION],
   };
-  const UNPARENTHESIZED_PATTERNS = [ME_PATTERN, BINDING_PATTERN, VALUE_PATTERN];
+  const UNPARENTHESIZED_PATTERNS = [
+    SELF_PATTERN,
+    BINDING_PATTERN,
+    VALUE_PATTERN,
+  ];
   const PARENTHESIZED_PATTERN = {
     scope: 'carbon-parenthesized-pattern',
     begin: /\(/,

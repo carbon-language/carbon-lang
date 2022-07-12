@@ -25,11 +25,11 @@ class InterfaceType;
 //
 //     class C(U:! Type, T:! Type)  {
 //       class D(V:! Type where U is Fooable(T)) {
-//         fn bar[me: Self](x: U, y : T) -> T{
+//         fn bar[self: Self](x: U, y : T) -> T{
 //           return x.foo(y)
 //         }
 //       }
-//       fn baz[me: Self](x: U, y : T) -> T {
+//       fn baz[self: Self](x: U, y : T) -> T {
 //         return x.foo(y);
 //       }
 //     }

@@ -221,7 +221,7 @@ class SimpleMemberAccessExpression : public Expression {
     member_ = member;
   }
 
-  // Returns true if the field is a method that has a "me" declaration in an
+  // Returns true if the field is a method that has a "self" declaration in an
   // AddrPattern.
   auto is_field_addr_me_method() const -> bool {
     return is_field_addr_me_method_;
