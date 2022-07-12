@@ -78,7 +78,7 @@ class TypeChecker {
       -> Nonnull<Expression*>;
 
  private:
-  struct SingleStepTypeEqualityContext;
+  struct SingleStepEqualityContext;
 
   // Information about the currently enclosing scopes.
   struct ScopeInfo {

@@ -30,9 +30,9 @@ using llvm::isa;
 
 namespace Carbon {
 
-struct TypeChecker::SingleStepTypeEqualityContext : public EqualityContext {
+struct TypeChecker::SingleStepEqualityContext : public EqualityContext {
  public:
-  SingleStepTypeEqualityContext(Nonnull<const TypeChecker*> type_checker,
+  SingleStepEqualityContext(Nonnull<const TypeChecker*> type_checker,
                                 Nonnull<const ImplScope*> impl_scope)
       : type_checker_(type_checker), impl_scope_(impl_scope) {}
 
@@ -133,7 +133,7 @@ auto TypeChecker::ExpectExactType(SourceLocation source_loc,
                                   Nonnull<const Value*> actual,
                                   const ImplScope& impl_scope) const
     -> ErrorOr<Success> {
-  SingleStepTypeEqualityContext equality_ctx(this, &impl_scope);
+  SingleStepEqualityContext equality_ctx(this, &impl_scope);
   if (!TypeEqual(expected, actual, &equality_ctx)) {
     return CompilationError(source_loc) << "type error in " << context << "\n"
                                         << "expected: " << *expected << "\n"
@@ -378,7 +378,7 @@ auto TypeChecker::IsImplicitlyConvertible(
   // conversions.
   CARBON_CHECK(IsConcreteType(source));
   CARBON_CHECK(IsConcreteType(destination));
-  SingleStepTypeEqualityContext equality_ctx(this, &impl_scope);
+  SingleStepEqualityContext equality_ctx(this, &impl_scope);
   if (TypeEqual(source, destination, &equality_ctx)) {
     return true;
   }
@@ -857,7 +857,7 @@ auto TypeChecker::ArgumentDeduction(
       // or interface type can compare values, rather than types.
       // TODO: Deduce within the values where possible.
       // TODO: Consider in-scope value equalities here.
-      if (!ValueEqual(param, arg)) {
+      if (!ValueEqual(param, arg, std::nullopt)) {
         return CompilationError(source_loc)
                << "mismatch in non-type values, `" << *arg << "` != `" << *param
                << "`";
@@ -889,8 +889,8 @@ class ConstraintTypeBuilder {
   // Add an `impl` constraint -- `T is C` if not already present.
   void AddImplConstraint(ConstraintType::ImplConstraint impl) {
     for (ConstraintType::ImplConstraint existing : impl_constraints_) {
-      if (TypeEqual(existing.type, impl.type) &&
-          TypeEqual(existing.interface, impl.interface)) {
+      if (TypeEqual(existing.type, impl.type, std::nullopt) &&
+          TypeEqual(existing.interface, impl.interface, std::nullopt)) {
         return;
       }
     }
@@ -912,7 +912,7 @@ class ConstraintTypeBuilder {
   // Add a context for qualified name lookup, if not already present.
   void AddLookupContext(ConstraintType::LookupContext context) {
     for (ConstraintType::LookupContext existing : lookup_contexts_) {
-      if (ValueEqual(existing.context, context.context)) {
+      if (ValueEqual(existing.context, context.context, std::nullopt)) {
         return;
       }
     }
@@ -1099,7 +1099,7 @@ auto TypeChecker::Substitute(
         for (const Value* value : equality_constraint.values) {
           // Ensure we don't create any duplicates through substitution.
           if (std::find_if(values.begin(), values.end(), [&](const Value* v) {
-                return ValueEqual(v, value);
+                return ValueEqual(v, value, std::nullopt);
               }) == values.end()) {
             values.push_back(Substitute(dict, value));
           }
@@ -1408,7 +1408,7 @@ static auto LookupInConstraint(SourceLocation source_loc,
             FindMember(member_name, iface_type.declaration().members());
         member.has_value()) {
       if (found.has_value()) {
-        if (ValueEqual(found->interface, &iface_type)) {
+        if (ValueEqual(found->interface, &iface_type, std::nullopt)) {
           continue;
         }
         // TODO: If we resolve to the same member either way, this
@@ -2295,7 +2295,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const Value*> rhs,
                 InterpExp(&equals_clause.rhs(), arena_, trace_stream_));
-            if (!ValueEqual(lhs, rhs)) {
+            if (!ValueEqual(lhs, rhs, std::nullopt)) {
               builder.AddEqualityConstraint({.values = {lhs, rhs}});
             }
             break;
@@ -2775,7 +2775,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
         // TODO: Consider using `ExpectExactType` here.
         CARBON_CHECK(IsConcreteType(&return_term.static_type()));
         CARBON_CHECK(IsConcreteType(&ret.value_node().static_type()));
-        SingleStepTypeEqualityContext equality_ctx(this, &impl_scope);
+        SingleStepEqualityContext equality_ctx(this, &impl_scope);
         if (!TypeEqual(&return_term.static_type(),
                        &ret.value_node().static_type(), &equality_ctx)) {
           return CompilationError(ret.value_node().base().source_loc())
@@ -3250,7 +3250,8 @@ auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
       auto visitor = [&](Nonnull<const Value*> equal_value) {
         found_any = true;
         if (!isa<AssociatedConstant>(equal_value)) {
-          if (!found_value || ValueEqual(equal_value, *found_value)) {
+          if (!found_value ||
+              ValueEqual(equal_value, *found_value, std::nullopt)) {
             found_value = equal_value;
           } else {
             second_value = equal_value;
@@ -3443,11 +3444,9 @@ void TypeChecker::BringAssociatedConstantsIntoScope(
   for (const auto& eq : constraint->equality_constraints()) {
     for (Nonnull<const Value*> value : eq.values) {
       if (auto* assoc = dyn_cast<AssociatedConstant>(value)) {
-        // TODO: Also compare the binding map.
-        // TODO: Should an AssociatedConstant store an InterfaceType instead of
-        // a binding map?
         if (assocs_in_interface.count(&assoc->constant()) &&
-            ValueEqual(&assoc->base(), self)) {
+            ValueEqual(&assoc->base(), self, std::nullopt) &&
+            ValueEqual(&assoc->interface(), interface, std::nullopt)) {
           // This equality constraint mentions an associated constant that is
           // part of interface. Bring it into scope.
           scope.AddEqualityConstraint(&eq);

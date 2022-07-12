@@ -198,7 +198,7 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
       return arena_->New<BoolValue>(cast<BoolValue>(*args[0]).value() ||
                                     cast<BoolValue>(*args[1]).value());
     case Operator::Eq:
-      return arena_->New<BoolValue>(ValueEqual(args[0], args[1]));
+      return arena_->New<BoolValue>(ValueEqual(args[0], args[1], std::nullopt));
     case Operator::Ptr:
       return arena_->New<PointerType>(args[0]);
     case Operator::Deref:
@@ -326,7 +326,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       // on the typechecker to ensure that `v` is a type.
       return true;
     default:
-      return ValueEqual(p, v);
+      return ValueEqual(p, v, std::nullopt);
   }
 }
 

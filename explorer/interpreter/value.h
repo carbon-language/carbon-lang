@@ -129,11 +129,11 @@ class EqualityContext {
 };
 
 auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
-               std::optional<Nonnull<const EqualityContext*>> equality_ctx =
-                   std::nullopt) -> bool;
+               std::optional<Nonnull<const EqualityContext*>> equality_ctx)
+    -> bool;
 auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
-                std::optional<Nonnull<const EqualityContext*>> equality_ctx =
-                    std::nullopt) -> bool;
+                std::optional<Nonnull<const EqualityContext*>> equality_ctx)
+    -> bool;
 
 // An integer value.
 class IntValue : public Value {
