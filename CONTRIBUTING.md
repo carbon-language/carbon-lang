@@ -121,10 +121,10 @@ code and discussion), Google Docs, and Discord.
 
 #### Future CLA plans
 
-At present, we are using Google's CLA. In the future, we expect the Carbon
-ownership and IP to formally transfer from Google to a Carbon-specific
-foundation or other neutral third-party. When that happens, the foundation will
-take ownership of providing a CLA.
+Initially, Carbon is bootstrapping using Google's CLA. We are planning to create
+an open source foundation and transfer all Carbon-related rights to it; our goal
+is for the foundation setup to be similar to other open source projects, such as
+LLVM or Kubernetes.
 
 ### Collaboration systems
 
