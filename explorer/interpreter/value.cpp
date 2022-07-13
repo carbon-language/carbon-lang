@@ -7,7 +7,6 @@
 #include <algorithm>
 
 #include "common/check.h"
-#include "explorer/ast/expression.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "explorer/interpreter/action.h"
