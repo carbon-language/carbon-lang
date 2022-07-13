@@ -431,6 +431,10 @@ graph TD;
     D(l-value)-->C;
 ```
 
+Symbolic values will generally convert into runtime values if an operation is
+performed on them. Operations on just constant values will generally result in
+constants.
+
 ## Composite types
 
 ### Tuples
@@ -2268,6 +2272,9 @@ type. When the constraint is just `Type`, this gives semantics similar to C++
 templates. Constraints can then be added incrementally, with the compiler
 verifying that the semantics stay the same. Once all constraints have been
 added, removing the word `template` to switch to a checked parameter is safe.
+
+The [value phase](#value-categories-and-value-phases) of a checked parameter is
+a symbolic value whereas the value phase of a template parameter is constant.
 
 Although checked generics are generally preferred, templates enable translation
 of code between C++ and Carbon, and address some cases where the type checking
