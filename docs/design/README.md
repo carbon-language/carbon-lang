@@ -1591,6 +1591,9 @@ type, use `UnsafeDelete`.
 
 #### `const`
 
+**Note:** This is provisional, no design for `const` has been through the
+proposal process yet.
+
 For every type `MyClass`, there is the type `const MyClass` such that:
 
 -   The data representation is the same, so a `MyClass*` value may be implicitly
