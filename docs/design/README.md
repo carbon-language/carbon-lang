@@ -704,8 +704,8 @@ being copied will be passed by pointer instead.
 
 A [generic binding](#checked-and-template-parameters) uses `:!` instead of a
 colon (`:`) and can only match
-[constant or symbolic values](#value-categories-and-value-phases),
-not run-time values.
+[constant or symbolic values](#value-categories-and-value-phases), not run-time
+values.
 
 The keyword `auto` may be used in place of the type in a binding pattern, as
 long as the type can be deduced from the type of a value in the same
@@ -879,8 +879,8 @@ declaration. The parameter names in a forward declaration may be omitted using
 The bindings in the parameter list default to
 [`let` bindings](#binding-patterns), and so the parameter names are treated as
 [r-values](#value-categories-and-value-phases). This is appropriate for input
-parameters. This binding will be implemented using a pointer, unless it
-is legal to copy and copying is cheaper.
+parameters. This binding will be implemented using a pointer, unless it is legal
+to copy and copying is cheaper.
 
 If the `var` keyword is added before the binding, then the arguments will be
 copied to new storage, and so can be mutated in the function body. The copy
@@ -1632,8 +1632,9 @@ p->x += 2;
 #### Unformed state
 
 Types indicate that they support unformed states by
-[implementing a particular interface](#interfaces-and-implementations), otherwise
-variables of that type must be explicitly initialized when they are declared.
+[implementing a particular interface](#interfaces-and-implementations),
+otherwise variables of that type must be explicitly initialized when they are
+declared.
 
 An unformed state for an object is one that satisfies the following properties:
 
@@ -1649,12 +1650,12 @@ A type might have more than one in-memory representation for the unformed state,
 and those representations may be the same as valid fully formed values for that
 type. For example, all values are legal representations of the unformed state
 for any type with a trivial destructor like `i32`. Types may define additional
-initialization for the [hardened build mode](#build-modes). For example, this causes
-integers to be set to `0` when in unformed state in this mode.
+initialization for the [hardened build mode](#build-modes). For example, this
+causes integers to be set to `0` when in unformed state in this mode.
 
-Any operation on an unformed object _other_ than destruction or assignment from a
-fully formed value is an error, even if its in-memory representation is that of
-a valid value for that type.
+Any operation on an unformed object _other_ than destruction or assignment from
+a fully formed value is an error, even if its in-memory representation is that
+of a valid value for that type.
 
 > References:
 >
