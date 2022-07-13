@@ -46,6 +46,7 @@ class Value {
     NominalClassValue,
     AlternativeValue,
     TupleValue,
+    UninitializedValue,
     ImplWitness,
     SymbolicWitness,
     IntType,
@@ -404,6 +405,16 @@ class AddrValue : public Value {
 
  private:
   Nonnull<const Value*> pattern_;
+};
+
+// Value for uninitialized local variables.
+class UninitializedValue : public Value {
+ public:
+  UninitializedValue() : Value(Kind::UninitializedValue) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::UninitializedValue;
+  }
 };
 
 // The int type.

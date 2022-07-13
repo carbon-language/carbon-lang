@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <iterator>
 #include <map>
+#include <optional>
 #include <set>
 #include <vector>
 
@@ -82,6 +83,7 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
+    case Value::Kind::UninitializedValue:
     case Value::Kind::ImplWitness:
     case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
@@ -138,6 +140,7 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
+    case Value::Kind::UninitializedValue:
     case Value::Kind::ImplWitness:
     case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
@@ -732,7 +735,8 @@ auto TypeChecker::ArgumentDeduction(
     case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
-    case Value::Kind::StringValue: {
+    case Value::Kind::StringValue:
+    case Value::Kind::UninitializedValue: {
       // Argument deduction within the parameters of a parameterized class type
       // or interface type can compare values, rather than types.
       // TODO: Deduce within the values where possible.
@@ -1057,6 +1061,7 @@ auto TypeChecker::Substitute(
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
+    case Value::Kind::UninitializedValue:
       // This can happen when substituting into the arguments of a class or
       // interface.
       // TODO: Implement substitution for these cases.
@@ -2575,6 +2580,8 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
     }
     case StatementKind::VariableDefinition: {
       auto& var = cast<VariableDefinition>(*s);
+      ImplScope var_scope;
+      var_scope.AddParent(&impl_scope);
       if (var.has_init()) {
         CARBON_RETURN_IF_ERROR(TypeCheckExp(&var.init(), impl_scope));
         const Value& rhs_ty = var.init().static_type();
@@ -2585,8 +2592,6 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
         // // Is the `impl T as Widget` in scope here?
         // a.(Widget.F)();
         // ```
-        ImplScope var_scope;
-        var_scope.AddParent(&impl_scope);
         CARBON_RETURN_IF_ERROR(TypeCheckPattern(
             &var.pattern(), &rhs_ty, var_scope, var.value_category()));
         CARBON_ASSIGN_OR_RETURN(
@@ -2595,6 +2600,8 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
                               &var.init(), &var.pattern().static_type()));
         var.set_init(converted_init);
       } else {
+        CARBON_RETURN_IF_ERROR(TypeCheckPattern(
+            &var.pattern(), std::nullopt, var_scope, var.value_category()));
       }
       return Success();
     }
@@ -3275,6 +3282,7 @@ static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
+    case Value::Kind::UninitializedValue:
       CARBON_FATAL() << "type of alias target is not a type";
 
     case Value::Kind::AutoType:

@@ -7,6 +7,7 @@
 #include <algorithm>
 
 #include "common/check.h"
+#include "explorer/ast/expression.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "explorer/interpreter/action.h"
@@ -368,6 +369,9 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "}";
       break;
     }
+    case Value::Kind::UninitializedValue: {
+      break;
+    }
     case Value::Kind::NominalClassType: {
       const auto& class_type = cast<NominalClassType>(*this);
       out << "class ";
@@ -687,6 +691,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::ContinuationValue:
+    case Value::Kind::UninitializedValue:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::TypeOfParameterizedEntityName:
@@ -805,6 +810,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::ContinuationValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LValue:
+    case Value::Kind::UninitializedValue:
     case Value::Kind::MemberName:
       // TODO: support pointer comparisons once we have a clearer distinction
       // between pointers and lvalues.

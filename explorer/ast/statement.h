@@ -131,12 +131,17 @@ class VariableDefinition : public Statement {
 
   auto pattern() const -> const Pattern& { return *pattern_; }
   auto pattern() -> Pattern& { return *pattern_; }
-  auto init() const -> const Expression& { return **init_; }
-  auto init() -> Expression& { return **init_; }
   auto value_category() const -> ValueCategory { return value_category_; }
   auto is_returned() const -> bool { return def_type_ == Returned; };
   auto has_init() const -> bool { return init_.has_value(); }
-
+  auto init() const -> const Expression& {
+    CARBON_CHECK(has_init());
+    return **init_;
+  }
+  auto init() -> Expression& {
+    CARBON_CHECK(has_init());
+    return **init_;
+  }
   // Can only be called by type-checking, if a conversion was required.
   void set_init(Nonnull<Expression*> init) {
     CARBON_CHECK(has_init()) << "should not add a new initializer";

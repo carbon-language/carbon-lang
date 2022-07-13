@@ -2,19 +2,20 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
+// RUN: %{not} %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
+// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: result: 1
 
 package ExplorerTest api;
 
-// Test that assignment performs a copy and does not create an alias.
+fn AddInt(a: i32, b: i32) -> auto {
+  return a + b;
+}
 
 fn Main() -> i32 {
   var x: i32;
-  x = 1;
-  return x;
+  // CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/uninitialized/fail_uninitialized_param.carbon:[[@LINE+1]]: undefined behavior: access to uninitialized value
+  return AddInt(x, 2);
 }

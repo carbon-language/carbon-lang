@@ -285,6 +285,9 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
           CARBON_FATAL() << "expected a choice alternative in pattern, not "
                          << *v;
       }
+    case Value::Kind::UninitializedValue:
+      // UninitializedValue matches any type.
+      return true;
     case Value::Kind::FunctionType:
       switch (v->kind()) {
         case Value::Kind::FunctionType: {
@@ -515,6 +518,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::BoolValue:
     case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:
+    case Value::Kind::UninitializedValue:
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
@@ -1317,22 +1321,23 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
     }
     case StatementKind::VariableDefinition: {
       const auto& definition = cast<VariableDefinition>(stmt);
-      if (act.pos() == 0) {
+      if (act.pos() == 0 && definition.has_init()) {
         //    { {(var x = e) :: C, E, F} :: S, H}
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
-        if (definition.has_init()) {
-          return todo_.Spawn(
-              std::make_unique<ExpressionAction>(&definition.init()));
-        } else {
-          return todo_.FinishAction();
-        }
+        return todo_.Spawn(
+            std::make_unique<ExpressionAction>(&definition.init()));
       } else {
         //    { { v :: (x = []) :: C, E, F} :: S, H}
         // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
-        CARBON_ASSIGN_OR_RETURN(
-            Nonnull<const Value*> v,
-            Convert(act.results()[0], &definition.pattern().static_type(),
-                    stmt.source_loc()));
+        Nonnull<const Value*> v;
+        if (definition.has_init()) {
+          CARBON_ASSIGN_OR_RETURN(
+              v, Convert(act.results()[0], &definition.pattern().static_type(),
+                         stmt.source_loc()));
+        } else {
+          v = arena_->New<UninitializedValue>();
+        }
+
         Nonnull<const Value*> p =
             &cast<VariableDefinition>(stmt).pattern().value();
 
