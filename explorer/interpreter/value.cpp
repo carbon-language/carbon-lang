@@ -898,13 +898,17 @@ auto EqualityConstraint::VisitEqualValues(
   }
 
   // The value is in this group; pass all non-identical values in the group
-  // to the visitor.
-  for (auto it = values.begin(), end = values.end(); it != end; ++it) {
-    if (it == first_equal ||
-        (it > first_equal && ValueEqual(value, *it, std::nullopt))) {
-      continue;
+  // to the visitor. First visit the values we already compared.
+  for (auto* val : llvm::make_range(values.begin(), first_equal)) {
+    if (!visitor(val)) {
+      return false;
     }
-    if (!visitor(*it)) {
+  }
+  // Then visit any remaining non-identical values, skipping the one we already
+  // found was identical.
+  ++first_equal;
+  for (auto* val : llvm::make_range(first_equal, values.end())) {
+    if (!ValueEqual(value, val, std::nullopt) && !visitor(val)) {
       return false;
     }
   }

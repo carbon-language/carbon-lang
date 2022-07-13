@@ -40,8 +40,8 @@ void ImplScope::Add(Nonnull<const Value*> iface,
     // constraints to the scope. Instead, we'll resolve the equality
     // constraints by resolving a witness when needed.
     if (deduced.empty()) {
-      for (size_t i = 0; i != constraint->equality_constraints().size(); ++i) {
-        equalities_.push_back(&constraint->equality_constraints()[i]);
+      for (auto& equality_constraint : constraint->equality_constraints()) {
+        equalities_.push_back(&equality_constraint);
       }
     }
     return;
