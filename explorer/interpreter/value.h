@@ -655,14 +655,14 @@ class InterfaceType : public Value {
 
 // A collection of values that are known to be the same.
 struct EqualityConstraint {
-  std::vector<Nonnull<const Value*>> values;
-
   // Visit the values in this equality constraint that are a single step away
   // from the given value. Stops and returns `false` if the visitor returns
   // `false`, otherwise returns `true`.
   auto VisitEqualValues(
       Nonnull<const Value*> value,
       llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const -> bool;
+
+  std::vector<Nonnull<const Value*>> values;
 };
 
 // A type-of-type for an unknown constrained type.
