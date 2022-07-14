@@ -307,8 +307,9 @@ example, #"""# begins a raw block string literal with a file type indicator of
 is true even when the file type indicator is invalid, as with #"""foo"""#.
 
 ```carbon
-// This is an invalid raw block string literal with no new line before
-// the closing `"""#`.
+// This is an invalid raw block string literal with the first `"` of
+// the closing `"""#` not being the first non-whitespace character
+// of its line.
 // It is not equivalent to "\"\"Invalid raw block string literal\"\"".
 var String: ambig1 = #"""Invalid raw block string literal"""#;
 
