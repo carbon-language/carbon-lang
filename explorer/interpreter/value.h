@@ -656,8 +656,13 @@ class InterfaceType : public Value {
 // A collection of values that are known to be the same.
 struct EqualityConstraint {
   // Visit the values in this equality constraint that are a single step away
-  // from the given value. Stops and returns `false` if the visitor returns
-  // `false`, otherwise returns `true`.
+  // from the given value according to this equality constraint. That is: if
+  // `value` is identical to a value in `values`, then call the visitor on all
+  // values in `values` that are not identical to `value`. Otherwise, do not
+  // call the visitor.
+  //
+  // Stops and returns `false` if any call to the visitor returns `false`,
+  // otherwise returns `true`.
   auto VisitEqualValues(
       Nonnull<const Value*> value,
       llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const -> bool;
@@ -728,8 +733,12 @@ class ConstraintType : public Value {
   }
 
   // Visit the values in that are a single step away from the given value
-  // according to constraints in this constraint type. Stops and returns
-  // `false` if the visitor returns `false`, otherwise returns `true`.
+  // according to equality constraints in this constraint type, that is, the
+  // values `v` that are not identical to `value` but for which we have a
+  // `value == v` equality constraint in this constraint type.
+  //
+  // Stops and returns `false` if any call to the visitor returns `false`,
+  // otherwise returns `true`.
   auto VisitEqualValues(
       Nonnull<const Value*> value,
       llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const -> bool;

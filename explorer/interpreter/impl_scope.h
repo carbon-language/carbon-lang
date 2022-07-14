@@ -69,9 +69,12 @@ class ImplScope {
                SourceLocation source_loc, const TypeChecker& type_checker) const
       -> ErrorOr<Nonnull<Expression*>>;
 
-  // Visits the values that are equal to the given value and a single step away
-  // according to an equality constraint that is in scope. Stops and returns
-  // `false` if the visitor returns `false`, otherwise returns `true`.
+  // Visits the values that are a single step away from `value` according to an
+  // equality constraint that is in scope. That is, the values `v` such that we
+  // have a `value == v` equality constraint in scope.
+  //
+  // Stops and returns `false` if any call to the visitor returns `false`,
+  // otherwise returns `true`.
   auto VisitEqualValues(Nonnull<const Value*> value,
                         llvm::function_ref<bool(Nonnull<const Value*>)> visitor)
       const -> bool;
