@@ -251,6 +251,18 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
           }  // for
           return true;
         }
+        case Value::Kind::UninitializedValue: {
+          const auto& p_tup = cast<TupleValue>(*p);
+          for (size_t i = 0; i < p_tup.elements().size(); ++i) {
+            if (!PatternMatch(
+                    p_tup.elements()[i],
+                    arena->New<UninitializedValue>(p_tup.elements()[i]),
+                    source_loc, bindings, generic_args, trace_stream, arena)) {
+              return false;
+            }
+          }
+          return true;
+        }
         default:
           CARBON_FATAL() << "expected a tuple value in pattern, not " << *v;
       }
