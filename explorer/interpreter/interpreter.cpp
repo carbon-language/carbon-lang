@@ -494,18 +494,21 @@ auto Interpreter::EvalAssociatedConstant(
       &constraint->self_binding()->value(), &assoc->interface(),
       &assoc->constant(), &impl_witness);
   std::optional<Nonnull<const Value*>> result;
-  constraint->VisitEqualValues(
-      expected, [&](Nonnull<const Value*> equal_value) {
-        // TODO: The value might depend on the parameters of the impl. We need
-        // to substitute impl_witness.type_args() into the value.
-        if (isa<AssociatedConstant>(equal_value)) {
-          return true;
-        }
-        // TODO: This makes an arbitrary choice if there's more than one
-        // equal value. It's not clear how to handle that case.
-        result = equal_value;
-        return false;
-      });
+  constraint->VisitEqualValues(expected,
+                               [&](Nonnull<const Value*> equal_value) {
+                                 // TODO: The value might depend on the
+                                 // parameters of the impl. We need to
+                                 // substitute impl_witness.type_args() into the
+                                 // value.
+                                 if (isa<AssociatedConstant>(equal_value)) {
+                                   return true;
+                                 }
+                                 // TODO: This makes an arbitrary choice if
+                                 // there's more than one equal value. It's not
+                                 // clear how to handle that case.
+                                 result = equal_value;
+                                 return false;
+                               });
   if (!result) {
     CARBON_FATAL() << impl_witness.declaration()
                    << " is missing value for associated constant " << *assoc;

@@ -10,8 +10,8 @@
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "explorer/interpreter/action.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Error.h"
 
@@ -608,7 +608,8 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
       const auto& class1 = cast<NominalClassType>(*t1);
       const auto& class2 = cast<NominalClassType>(*t2);
       return class1.declaration().name() == class2.declaration().name() &&
-             BindingMapEqual(class1.type_args(), class2.type_args(), equality_ctx);
+             BindingMapEqual(class1.type_args(), class2.type_args(),
+                             equality_ctx);
     }
     case Value::Kind::InterfaceType: {
       const auto& iface1 = cast<InterfaceType>(*t1);
@@ -697,7 +698,8 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
                        equality_ctx);
     case Value::Kind::TypeOfChoiceType:
       return TypeEqual(&cast<TypeOfChoiceType>(*t1).choice_type(),
-                       &cast<TypeOfChoiceType>(*t2).choice_type(), equality_ctx);
+                       &cast<TypeOfChoiceType>(*t2).choice_type(),
+                       equality_ctx);
     case Value::Kind::StaticArrayType: {
       const auto& array1 = cast<StaticArrayType>(*t1);
       const auto& array2 = cast<StaticArrayType>(*t2);

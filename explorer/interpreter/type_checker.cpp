@@ -33,7 +33,7 @@ namespace Carbon {
 struct TypeChecker::SingleStepEqualityContext : public EqualityContext {
  public:
   SingleStepEqualityContext(Nonnull<const TypeChecker*> type_checker,
-                                Nonnull<const ImplScope*> impl_scope)
+                            Nonnull<const ImplScope*> impl_scope)
       : type_checker_(type_checker), impl_scope_(impl_scope) {}
 
   // Attempt to resolve the witness for the given associated constant in the
@@ -371,8 +371,8 @@ auto TypeChecker::FieldTypes(const NominalClassType& class_type) const
 
 auto TypeChecker::IsImplicitlyConvertible(
     Nonnull<const Value*> source, Nonnull<const Value*> destination,
-    const ImplScope& impl_scope,
-    bool allow_user_defined_conversions) const -> bool {
+    const ImplScope& impl_scope, bool allow_user_defined_conversions) const
+    -> bool {
   // Check for an exact match or for an implicit conversion.
   // TODO: `impl`s of `ImplicitAs` should be provided to cover these
   // conversions.

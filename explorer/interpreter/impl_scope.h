@@ -75,9 +75,9 @@ class ImplScope {
   //
   // Stops and returns `false` if any call to the visitor returns `false`,
   // otherwise returns `true`.
-  auto VisitEqualValues(Nonnull<const Value*> value,
-                        llvm::function_ref<bool(Nonnull<const Value*>)> visitor)
-      const -> bool;
+  auto VisitEqualValues(
+      Nonnull<const Value*> value,
+      llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const -> bool;
 
   void Print(llvm::raw_ostream& out) const;
 
