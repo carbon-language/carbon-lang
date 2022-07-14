@@ -2875,7 +2875,7 @@ A C++ library header file may be [imported](#imports) into Carbon using an
 
 ```carbon
 // like `#include "circle.h"` in C++
-import Cpp library "circle.h"
+import Cpp library "circle.h";
 ```
 
 This adds the names from `circle.h` into the `Cpp` namespace. If `circle.h`
