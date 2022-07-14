@@ -129,49 +129,32 @@ take ownership of providing a CLA.
 ### Collaboration systems
 
 We use a few systems for collaboration which contributors should be aware of.
-Membership is currently invite-only.
 
 Before using these systems, everyone must sign the CLA. They are all governed by
 the Code of Conduct.
 
--   [The GitHub carbon-language organization](https://github.com/orgs/carbon-language)
-    is used for our repositories. **To join:**
-
-    1.  Ask [an admin](docs/project/groups.md#admins) to send an invite,
-        providing your GitHub account.
-    2.  Check your email to accept the invite, or try the standard
-        [accept link](https://github.com/orgs/carbon-language/invitation?via_email=1)
-        if you don't see the email.
-
--   [Discord](https://discord.com/app) is used for chat. **To join:**
-
-    1.  Ask [an admin](docs/project/groups.md#admins) for an invite link.
-        -   Please do not re-share the invite links: they're our only way to
-            restrict access.
-    2.  You will be prompted with the Code of Conduct. After reading it, click
-        the check mark reaction icon at the bottom.
-
+-   [The GitHub carbon-language organization](https://github.com/carbon-language)
+    is used for our repositories.
+-   [Discord](https://discord.gg/ZjVdShJDAs) is used for chat.
 -   [A shared Google Drive](https://drive.google.com/corp/drive/folders/0ALTu5Y6kc39XUk9PVA)
-    is used for all of our Google Docs, particularly proposal drafts. **To
-    join:**
-
-    1.  Ask [an admin](docs/project/groups.md#admins) to invite you, providing
-        your Google account email.
-    2.  The admin will add you to the
-        [Google Group](https://groups.google.com/g/carbon-lang-contributors)
-        used for access.
-
+    is used for all of our Google Docs, particularly proposal drafts.
 -   [Google Calendar](https://calendar.google.com/calendar/embed?src=c_07td7k4qjq0ssb4gdl6bmbnkik%40group.calendar.google.com)
     is used for meeting invites and project reminders. Contributors may add
     calendar entries for meetings added to discuss details. Standard entries
     are:
 
     -   The
-        [weekly sync](https://docs.google.com/document/d/1K_5uig1HHMsfEl-6eSMjM1qjwX-7PsbkBuRp36knxlQ/edit),
+        [weekly sync](https://docs.google.com/document/d/1pYq5MssjOi8c-wBJaHEDcsVMirFeC3iv2uFUOwsI3-M/edit),
         where everyone is welcome.
-    -   [Open discussions](https://docs.google.com/document/d/1QCdKQ33rki-kCDrxi8UHy3a36dtW0WdMqpUzluGSrz4/edit?resourcekey=0-bZmNUiueOiH_sysJNqnT9A)
+    -   [Open discussions](https://docs.google.com/document/d/1NnFKOUNh_BCbVD29JiNqQ0JzC5VfE6YUq6CfKqFkouQ/edit),
         which are unstructured meeting slots used for discussing proposals,
         tooling, and other Carbon topics based on who attends.
+
+Note that commenting on Google Docs and some label changes in GitHub will
+require some contributor access: make sure you've
+[signed the CLA](#contributor-license-agreements-clas) then ask for access on
+[#getting-started](https://discord.com/channels/655572317891461132/655577725347561492)
+on Discord.
 
 ### Contribution tools
 
