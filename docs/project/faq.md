@@ -360,5 +360,7 @@ LLVM or Kubernetes.
 ### Who pays for Carbon's infrastructure?
 
 Carbon is currently bootstrapping infrastructure with the help of Google. As
-soon as a foundation is ready to oversee infrastructure, such as CI and the CLA,
+soon as a foundation is ready to oversee infrastructure, such as
+[continuous integration](https://en.wikipedia.org/wiki/Continuous_integration)
+and the CLA,
 they'll be transferred and run by the community in an open way.
