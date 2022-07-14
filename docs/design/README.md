@@ -53,6 +53,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [`return`](#return)
             -   [`returned var`](#returned-var)
         -   [`match`](#match)
+        -   [`let`...`else` and `var`...`else`](#letelse-and-varelse)
 -   [User-defined types](#user-defined-types)
     -   [Classes](#classes)
         -   [Assignment](#assignment)
@@ -1159,6 +1160,39 @@ fn Foo() -> f32 {
 > -   Question-for-leads issue
 >     [#1283: how should pattern matching and implicit conversion interact?](https://github.com/carbon-language/carbon-lang/issues/1283)
 
+#### `let`...`else` and `var`...`else`
+
+**Note:** This is provisional, this design has not been through the proposal
+process yet.
+
+A [`let`](#constant-let-declarations) or [`var`](#variable-var-declarations)
+declaration may be used with a [refutable pattern](#refutable-patterns) if an
+`else` clause is supplied, as in:
+
+```carbon
+let (x: i32, true) = F(1) else {
+  // Can't use `x` here.
+  return false;
+}
+// `x` is an r-value
+
+var (y: i32, true) = F(x) else {
+  return false;
+}
+// `y` is an l-value
+y += 2;
+```
+
+If the pattern successfully matches the runtime value, values are bound
+according to the pattern, and execution skips over the `else` code block and
+proceeds to the next statement.
+
+If the pattern does not match, the `else` code block will be executed. None of
+the bindings from the pattern will be in scope in the `else` code block. No
+control flow path in the `else` code block may continue to the statement after.
+All paths must end with a `break`, `continue`, `return`, or call to a function
+that never returns.
+
 ## User-defined types
 
 > **TODO:** Maybe rename to "nominal types"?
@@ -1561,7 +1595,8 @@ fn ParseAsInt(s: String) -> IntResult {
 }
 ```
 
-Choice type values may be consumed using a [`match` statement](#match):
+Choice type values may be consumed using a [`match` statement](#match) or
+[`else` at the end of a `var` or `let` declaration](#letelse-and-varelse):
 
 ```carbon
 match (ParseAsInt(s)) {
@@ -1575,6 +1610,16 @@ match (ParseAsInt(s)) {
     Terminate();
   }
 }
+
+let .Success(r_value: i32) = ParseAsInt(s) else {
+  return false;
+}
+// `r_value` is an r-value
+
+var .Success(l_value: i32) = ParseAsInt(s) else {
+  return false;
+}
+// `l_value` is an l-value
 ```
 
 They can also represent an
