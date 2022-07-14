@@ -127,9 +127,9 @@ Performance is critical for many users today. A few reasons are:
 
 ### What level of C++ interoperability is expected?
 
-Carbon code can call C++, and the other way around, without overhead. You will
-be able to migrate a single library to Carbon within a C++ application, or write
-new Carbon on top of their existing C++ investment.
+Carbon code will be able to call C++, and the other way around, without
+overhead. You will be able to migrate a single library to Carbon within a C++
+application, or write new Carbon on top of their existing C++ investment.
 
 While Carbon's interoperability may not cover every last case, most C++ style
 guides (such as the C++ Core Guidelines or Google C++ Style Guide) steer
@@ -221,8 +221,8 @@ Carbon is being built using LLVM, and is expected to have Clang dependencies for
 
 ### How will Carbon's bidirectional C++ interoperability work?
 
-The Carbon toolchain will compile both Carbon and C++ code together,
-in order to make the interoperability
+The Carbon toolchain will compile both Carbon and C++ code together, in order to
+make the interoperability
 [seamless](#what-level-of-c-interoperability-is-expected).
 
 For example, for `import Cpp library "<vector>"`, Carbon will:
@@ -251,7 +251,7 @@ languages: Rust, Swift, Go, Kotlin, Java, and so on).
 The key difference between the two is that template arguments can only finish
 type-checking _during_ instantiation, whereas generics specify an interface with
 which arguments can finish type-checking _without_ instantiation. This has a
-couple important consequences:
+couple important benefits:
 
 -   Type-checking errors for generics happen earlier, making it easier for the
     compiler to produce helpful diagnostics.
@@ -265,6 +265,7 @@ migration of C++ code.
 
 References:
 
+-   [Generics: Goals: Better compiler experience](/docs/design/generics/goals.md#better-compiler-experience)
 -   [Generic versus template parameters](/docs/design/generics/terminology.md?cl=head#generic-versus-template-parameters)
 
 ### What is Carbon's memory model?
@@ -362,5 +363,4 @@ LLVM or Kubernetes.
 Carbon is currently bootstrapping infrastructure with the help of Google. As
 soon as a foundation is ready to oversee infrastructure, such as
 [continuous integration](https://en.wikipedia.org/wiki/Continuous_integration)
-and the CLA,
-they'll be transferred and run by the community in an open way.
+and the CLA, they'll be transferred and run by the community in an open way.
