@@ -98,19 +98,19 @@ This sequence is enclosed in `"`s. For example, this is a simple string literal:
 var String: lucius = "The strings, my lord, are false.";
 ```
 
-A _block string literal_ starts with `"""`, followed by an optional file type
-indicator, followed by a newline, and ends at the next instance of three double
-quotation marks whose first `"` is not part of a `\"` escape sequence. The
-closing `"""` shall be the first non-whitespace characters on that line. The
-lines between the opening line and the closing line (exclusive) are _content
-lines_. The content lines shall not contain `\` characters that do not form part
-of an escape sequence. Three consecutive quotes (`"""`) always start a _block
-string literal_. For example, this is an invalid block string literal, rather
-than 3 simple literals.
+A _block string_ literal starts with `"""`. Characters on the same line
+following the `"""` are an optional file type indicator. The literal ends at the
+next instance of three double quotation marks whose first `"` is not part of a
+`\"` escape sequence. The closing `"""` shall be the first non-whitespace
+characters on that line. The lines between the opening line and the closing line
+(exclusive) are _content lines_. The content lines shall not contain `\`
+characters that do not form part of an escape sequence.
+
+This is an invalid block string literal, rather than 3 simple literals.
 
 ```carbon
-// This string literal is invalid because it starts with `"""` but does not contain
-//  a new line. It does not represent the three tokens `""`, `"abc"` and `""`.
+// This string literal is invalid because `abc"""` does not form a valid file
+// type indicator. It does not represent the three tokens `""`, `"abc"` and `""`.
 var String: block = """abc""";
 ```
 
@@ -300,10 +300,15 @@ var String: z = ##"Raw strings #"nesting"#"##;
 var String: w = #"Tab is expressed as \t. Example: '\#t'"#;
 ```
 
-Note that only a raw block string literal can begin with `#"""`.
+Extending simple block string literals, a valid raw block string literal opening
+delimiter (for example, #""") always results in block string handling. For
+example, #"""# begins a raw block string literal with a file type indicator of
+#, rather than the possible interpretation as a raw simple string literal. This
+is true even when the file type indicator is invalid, as with #"""foo"""#.
 
 ```carbon
-// This is an invalid raw block string literal with no new line.
+// This is an invalid raw block string literal with no new line before
+// the closing `"""#`.
 // It is not equivalent to "\"\"Invalid raw block string literal\"\"".
 var String: ambig1 = #"""Invalid raw block string literal"""#;
 
