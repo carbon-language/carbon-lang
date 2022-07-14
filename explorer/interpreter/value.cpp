@@ -369,6 +369,8 @@ void Value::Print(llvm::raw_ostream& out) const {
       break;
     }
     case Value::Kind::UninitializedValue: {
+      const auto& uninit = cast<UninitializedValue>(*this);
+      out << "Uninit<" << uninit.pattern() << ">";
       break;
     }
     case Value::Kind::NominalClassType: {

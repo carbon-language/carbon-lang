@@ -286,7 +286,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
                          << *v;
       }
     case Value::Kind::UninitializedValue:
-      CARBON_FATAL() << "uninitialized value is not allowed in pattern";
+      CARBON_FATAL() << "uninitialized value is not allowed in pattern " << *v;
     case Value::Kind::FunctionType:
       switch (v->kind()) {
         case Value::Kind::FunctionType: {
@@ -1328,17 +1328,16 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       } else {
         //    { { v :: (x = []) :: C, E, F} :: S, H}
         // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
+        Nonnull<const Value*> p =
+            &cast<VariableDefinition>(stmt).pattern().value();
         Nonnull<const Value*> v;
         if (definition.has_init()) {
           CARBON_ASSIGN_OR_RETURN(
               v, Convert(act.results()[0], &definition.pattern().static_type(),
                          stmt.source_loc()));
         } else {
-          v = arena_->New<UninitializedValue>();
+          v = arena_->New<UninitializedValue>(p);
         }
-
-        Nonnull<const Value*> p =
-            &cast<VariableDefinition>(stmt).pattern().value();
 
         RuntimeScope matches(&heap_);
         BindingMap generic_args;

@@ -410,11 +410,17 @@ class AddrValue : public Value {
 // Value for uninitialized local variables.
 class UninitializedValue : public Value {
  public:
-  UninitializedValue() : Value(Kind::UninitializedValue) {}
+  explicit UninitializedValue(Nonnull<const Value*> pattern)
+      : Value(Kind::UninitializedValue), pattern_(pattern) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::UninitializedValue;
   }
+
+  auto pattern() const -> const Value& { return *pattern_; }
+
+ private:
+  Nonnull<const Value*> pattern_;
 };
 
 // The int type.
