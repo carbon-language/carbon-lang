@@ -221,8 +221,8 @@ Carbon is being built using LLVM, and is expected to have Clang dependencies for
 
 ### How will Carbon's bidirectional C++ interoperability work?
 
-Carbon will be compiling both Carbon and C++ code together, using the same
-toolchain, in order to make the interoperability
+The Carbon toolchain will compile both Carbon and C++ code together,
+in order to make the interoperability
 [seamless](#what-level-of-c-interoperability-is-expected).
 
 For example, for `import Cpp library "<vector>"`, Carbon will:
