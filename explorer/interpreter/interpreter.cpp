@@ -286,8 +286,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
                          << *v;
       }
     case Value::Kind::UninitializedValue:
-      // UninitializedValue matches any type.
-      return true;
+      CARBON_FATAL() << "uninitialized value is not allowed in pattern";
     case Value::Kind::FunctionType:
       switch (v->kind()) {
         case Value::Kind::FunctionType: {
