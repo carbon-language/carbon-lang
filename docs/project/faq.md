@@ -227,7 +227,7 @@ in order to make the interoperability
 
 For example, for `import Cpp library "<vector>"`, Carbon will:
 
--   Call into Clang to load the AST of STL's `vector`.
+-   Call into Clang to load the AST of the `vector` header file.
 -   Analyze the AST for public APIs, which will be turned into names that can be
     accessed from Carbon; for example, `std::vector` is `Cpp.std.vector` in
     Carbon.
