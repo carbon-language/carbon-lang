@@ -99,6 +99,23 @@ class Interpreter {
   auto EvalExpRecursively(Nonnull<const Expression*> exp)
       -> ErrorOr<Nonnull<const Value*>>;
 
+  // Evaluate an associated constant by evaluating its witness and looking
+  // inside the impl for the corresponding value.
+  //
+  // TODO: This approach doesn't provide values that are known because they
+  // appear in constraints:
+  //
+  //   interface Iface { let N:! i32; }
+  //   fn PickType(N: i32) -> Type { return i32; }
+  //   fn F[T:! Iface where .N == 5](x: T) {
+  //     var x: PickType(T.N) = 0;
+  //   }
+  //
+  // ... will fail because we can't resolve T.N to 5 at compile time.
+  auto EvalAssociatedConstant(Nonnull<const AssociatedConstant*> assoc,
+                              SourceLocation source_loc)
+      -> ErrorOr<Nonnull<const Value*>>;
+
   // Instantiate a type by replacing all type variables that occur inside the
   // type by the current values of those variables.
   //
@@ -181,7 +198,7 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
       return arena_->New<BoolValue>(cast<BoolValue>(*args[0]).value() ||
                                     cast<BoolValue>(*args[1]).value());
     case Operator::Eq:
-      return arena_->New<BoolValue>(ValueEqual(args[0], args[1]));
+      return arena_->New<BoolValue>(ValueEqual(args[0], args[1], std::nullopt));
     case Operator::Ptr:
       return arena_->New<PointerType>(args[0]);
     case Operator::Deref:
@@ -309,7 +326,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       // on the typechecker to ensure that `v` is a type.
       return true;
     default:
-      return ValueEqual(p, v);
+      return ValueEqual(p, v, std::nullopt);
   }
 }
 
@@ -454,6 +471,51 @@ auto Interpreter::EvalExpRecursively(Nonnull<const Expression*> exp)
   return result;
 }
 
+auto Interpreter::EvalAssociatedConstant(
+    Nonnull<const AssociatedConstant*> assoc, SourceLocation source_loc)
+    -> ErrorOr<Nonnull<const Value*>> {
+  // Find the witness.
+  Nonnull<const Value*> witness = &assoc->witness();
+  if (auto* sym = dyn_cast<SymbolicWitness>(witness)) {
+    CARBON_ASSIGN_OR_RETURN(witness,
+                            EvalExpRecursively(&sym->impl_expression()));
+  }
+  if (!isa<ImplWitness>(witness)) {
+    CARBON_CHECK(phase() == Phase::CompileTime)
+        << "symbolic witnesses should only be formed at compile time";
+    return CompilationError(source_loc)
+           << "value of associated constant " << *assoc << " is not known";
+  }
+
+  auto& impl_witness = cast<ImplWitness>(*witness);
+  Nonnull<const ConstraintType*> constraint =
+      impl_witness.declaration().constraint_type();
+  Nonnull<const Value*> expected = arena_->New<AssociatedConstant>(
+      &constraint->self_binding()->value(), &assoc->interface(),
+      &assoc->constant(), &impl_witness);
+  std::optional<Nonnull<const Value*>> result;
+  constraint->VisitEqualValues(expected,
+                               [&](Nonnull<const Value*> equal_value) {
+                                 // TODO: The value might depend on the
+                                 // parameters of the impl. We need to
+                                 // substitute impl_witness.type_args() into the
+                                 // value.
+                                 if (isa<AssociatedConstant>(equal_value)) {
+                                   return true;
+                                 }
+                                 // TODO: This makes an arbitrary choice if
+                                 // there's more than one equal value. It's not
+                                 // clear how to handle that case.
+                                 result = equal_value;
+                                 return false;
+                               });
+  if (!result) {
+    CARBON_FATAL() << impl_witness.declaration()
+                   << " is missing value for associated constant " << *assoc;
+  }
+  return *result;
+}
+
 auto Interpreter::InstantiateType(Nonnull<const Value*> type,
                                   SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
@@ -474,6 +536,12 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
           Nonnull<const Bindings*> bindings,
           InstantiateBindings(&class_type.bindings(), source_loc));
       return arena_->New<NominalClassType>(&class_type.declaration(), bindings);
+    }
+    case Value::Kind::AssociatedConstant: {
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> type_value,
+          EvalAssociatedConstant(cast<AssociatedConstant>(type), source_loc));
+      return InstantiateType(type_value, source_loc);
     }
     default:
       return type;
@@ -566,7 +634,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
           return arena_->New<StructValue>(std::move(new_elements));
         }
         case Value::Kind::NominalClassType: {
-          // Instantiate the `destintation_type` to obtain the runtime
+          // Instantiate the `destination_type` to obtain the runtime
           // type of the object.
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> inst_dest,
@@ -620,6 +688,12 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
         new_elements.push_back(val);
       }
       return arena_->New<TupleValue>(std::move(new_elements));
+    }
+    case Value::Kind::AssociatedConstant: {
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> value,
+          EvalAssociatedConstant(cast<AssociatedConstant>(value), source_loc));
+      return Convert(value, destination_type, source_loc);
     }
   }
 }
@@ -854,6 +928,14 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             std::make_unique<ExpressionAction>(access.impl().value()));
       } else {
         // Finally, produce the result.
+        std::optional<Nonnull<const InterfaceType*>> found_in_interface =
+            access.found_in_interface();
+        if (found_in_interface) {
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> instantiated,
+              InstantiateType(*found_in_interface, exp.source_loc()));
+          found_in_interface = cast<InterfaceType>(instantiated);
+        }
         if (const auto* member_name_type =
                 dyn_cast<TypeOfMemberName>(&access.static_type())) {
           // The result is a member name, such as in `Type.field_name`. Form a
@@ -864,9 +946,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           if (!isa<InterfaceType, ConstraintType>(act.results()[0])) {
             type_result = act.results()[0];
           }
-          MemberName* member_name =
-              arena_->New<MemberName>(type_result, access.found_in_interface(),
-                                      member_name_type->member());
+          MemberName* member_name = arena_->New<MemberName>(
+              type_result, found_in_interface, member_name_type->member());
           return todo_.FinishAction(member_name);
         } else {
           // The result is the value of the named field, such as in
@@ -875,7 +956,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           if (access.impl().has_value()) {
             witness = cast<Witness>(act.results()[1]);
           }
-          FieldPath::Component member(access.member(), witness);
+          FieldPath::Component member(access.member(), found_in_interface,
+                                      witness);
           const Value* aggregate;
           if (const auto* lvalue = dyn_cast<LValue>(act.results()[0])) {
             CARBON_ASSIGN_OR_RETURN(
@@ -907,6 +989,14 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             std::make_unique<ExpressionAction>(access.impl().value()));
       } else {
         // Finally, produce the result.
+        std::optional<Nonnull<const InterfaceType*>> found_in_interface =
+            access.member().interface();
+        if (found_in_interface) {
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> instantiated,
+              InstantiateType(*found_in_interface, exp.source_loc()));
+          found_in_interface = cast<InterfaceType>(instantiated);
+        }
         if (forming_member_name) {
           // If we're forming a member name, we must be in the outer evaluation
           // in `Type.(Interface.method)`. Produce the same method name with
@@ -917,8 +1007,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               << "compound member access forming a member name should be "
                  "performing impl lookup";
           auto* member_name = arena_->New<MemberName>(
-              act.results()[0], access.member().interface(),
-              access.member().member());
+              act.results()[0], found_in_interface, access.member().member());
           return todo_.FinishAction(member_name);
         } else {
           // Access the object to find the named member.
@@ -933,7 +1022,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                 object, Convert(object, *access.member().base_type(),
                                 exp.source_loc()));
           }
-          FieldPath::Component field(access.member().member(), witness);
+          FieldPath::Component field(access.member().member(),
+                                     found_in_interface, witness);
           CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> member,
                                   object->GetMember(arena_, FieldPath(field),
                                                     exp.source_loc(), object));
@@ -1403,12 +1493,34 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       } else {
         return todo_.FinishAction();
       }
-    case StatementKind::Return:
+    case StatementKind::ReturnVar: {
+      const ValueNodeView& value_node = cast<ReturnVar>(stmt).value_node();
+      if (trace_stream_) {
+        **trace_stream_ << "--- step returned var "
+                        << cast<BindingPattern>(value_node.base()).name()
+                        << " ." << act.pos() << "."
+                        << " (" << stmt.source_loc() << ") --->\n";
+      }
+      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> value,
+                              todo_.ValueOfNode(value_node, stmt.source_loc()));
+      if (const auto* lvalue = dyn_cast<LValue>(value)) {
+        CARBON_ASSIGN_OR_RETURN(
+            value,
+            heap_.Read(lvalue->address(), value_node.base().source_loc()));
+      }
+      const FunctionDeclaration& function = cast<Return>(stmt).function();
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> return_value,
+          Convert(value, &function.return_term().static_type(),
+                  stmt.source_loc()));
+      return todo_.UnwindPast(*function.body(), return_value);
+    }
+    case StatementKind::ReturnExpression:
       if (act.pos() == 0) {
         //    { {return e :: C, E, F} :: S, H}
         // -> { {e :: return [] :: C, E, F} :: S, H}
         return todo_.Spawn(std::make_unique<ExpressionAction>(
-            &cast<Return>(stmt).expression()));
+            &cast<ReturnExpression>(stmt).expression()));
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
         // -> { {v :: C', E', F'} :: S, H}
@@ -1482,6 +1594,7 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
     case DeclarationKind::ClassDeclaration:
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::InterfaceDeclaration:
+    case DeclarationKind::AssociatedConstantDeclaration:
     case DeclarationKind::ImplDeclaration:
     case DeclarationKind::SelfDeclaration:
     case DeclarationKind::AliasDeclaration:

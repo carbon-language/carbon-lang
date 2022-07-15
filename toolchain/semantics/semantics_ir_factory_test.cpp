@@ -18,10 +18,9 @@ namespace {
 
 using ::testing::_;
 using ::testing::ElementsAre;
-using ::testing::Eq;
 using ::testing::IsEmpty;
 using ::testing::Optional;
-using ::testing::UnorderedElementsAre;
+using ::testing::StrEq;
 
 class SemanticsIRFactoryTest : public ::testing::Test {
  protected:
@@ -31,17 +30,14 @@ class SemanticsIRFactoryTest : public ::testing::Test {
     EXPECT_FALSE(tokenized_buffer->has_errors());
     parse_tree = ParseTree::Parse(*tokenized_buffer, consumer);
     EXPECT_FALSE(parse_tree->has_errors());
-    SemanticsIRForTest::set_semantics(SemanticsIRFactory::Build(*parse_tree));
+    SemanticsIRForTest::set_semantics(
+        SemanticsIRFactory::Build(*tokenized_buffer, *parse_tree));
   }
 
   ~SemanticsIRFactoryTest() override { SemanticsIRForTest::clear(); }
 
-  void ExpectRootBlock(
-      ::testing::Matcher<llvm::ArrayRef<Semantics::Declaration>> decls,
-      ::testing::Matcher<llvm::StringMap<Semantics::Declaration>> name_lookup) {
-    EXPECT_THAT(SemanticsIRForTest::semantics().root_block().nodes(), decls);
-    EXPECT_THAT(SemanticsIRForTest::semantics().root_block().name_lookup(),
-                name_lookup);
+  auto root_block() const -> llvm::ArrayRef<Semantics::NodeRef> {
+    return SemanticsIRForTest::semantics().root_block();
   }
 
   llvm::Optional<SourceBuffer> source_buffer;
@@ -65,33 +61,30 @@ TEST_F(SemanticsIRFactoryTest, SimpleProgram) {
              return x;
            }
           )");
-  ExpectRootBlock(
-      ElementsAre(
-          Function(
-              Eq("Add"),
-              ElementsAre(PatternBinding(Eq("x"), Literal("i32")),
-                          PatternBinding(Eq("y"), Literal("i32"))),
-              Optional(Literal("i32"))),
-          Function(Eq("Main"), IsEmpty(), Optional(Literal("i32")))),
-      UnorderedElementsAre(MappedNode("Add", FunctionName("Add")),
-                           MappedNode("Main", FunctionName("Main"))));
+  EXPECT_THAT(
+      SemanticsIRForTest::semantics().root_block(),
+      ElementsAre(Function(Eq("Add"),
+                           ElementsAre(PatternBinding(Eq("x"), Literal("i32")),
+                                       PatternBinding(Eq("y"), Literal("i32"))),
+                           Optional(Literal("i32"))),
+                  Function(Eq("Main"), IsEmpty(), Optional(Literal("i32")))));
 }
 */
 
 TEST_F(SemanticsIRFactoryTest, Empty) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
   Build("");
-  ExpectRootBlock(IsEmpty(), IsEmpty());
+  EXPECT_THAT(root_block(), IsEmpty());
 }
 
 TEST_F(SemanticsIRFactoryTest, FunctionBasic) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
   Build("fn Foo() {}");
-  ExpectRootBlock(ElementsAre(Function(Eq("Foo"), IsEmpty(), IsNone(),
-                                       StatementBlock(IsEmpty(), IsEmpty()))),
-                  UnorderedElementsAre(MappedNode("Foo", FunctionName("Foo"))));
+  EXPECT_THAT(root_block(),
+              ElementsAre(Function(0, IsEmpty()), SetName(StrEq("Foo"), 0)));
 }
 
+/*
 TEST_F(SemanticsIRFactoryTest, FunctionParams) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
   Build("fn Foo(x: i32, y: i64) {}");
@@ -102,33 +95,27 @@ TEST_F(SemanticsIRFactoryTest, FunctionParams) {
                            IsNone(), StatementBlock(IsEmpty(), IsEmpty()))),
       UnorderedElementsAre(MappedNode("Foo", FunctionName("Foo"))));
 }
+*/
 
+/*
 TEST_F(SemanticsIRFactoryTest, FunctionReturnType) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
   Build("fn Foo() -> i32 {}");
-  ExpectRootBlock(
-      ElementsAre(Function(Eq("Foo"), IsEmpty(), Optional(Literal("i32")),
-                           StatementBlock(IsEmpty(), IsEmpty()))),
-      UnorderedElementsAre(MappedNode("Foo", FunctionName("Foo"))));
+  EXPECT_THAT(root_block(), ElementsAre(Function(0, IsEmpty()),
+                                        SetName(StrEq("Foo"), 0)));
 }
-
-TEST_F(SemanticsIRFactoryTest, FunctionDuplicate) {
-  EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
-  Build(R"(fn Foo() {}
-           fn Foo() {}
-          )");
-  ExpectRootBlock(ElementsAre(FunctionName("Foo"), FunctionName("Foo")),
-                  UnorderedElementsAre(MappedNode("Foo", FunctionName("Foo"))));
-}
+*/
 
 TEST_F(SemanticsIRFactoryTest, FunctionOrder) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
   Build(R"(fn Foo() {}
            fn Bar() {}
+           fn Bar() {}
           )");
-  ExpectRootBlock(ElementsAre(FunctionName("Foo"), FunctionName("Bar")),
-                  UnorderedElementsAre(MappedNode("Bar", FunctionName("Bar")),
-                                       MappedNode("Foo", FunctionName("Foo"))));
+  EXPECT_THAT(root_block(),
+              ElementsAre(Function(2, IsEmpty()), SetName(StrEq("Foo"), 2),
+                          Function(1, IsEmpty()), SetName(StrEq("Bar"), 1),
+                          Function(0, IsEmpty()), SetName(StrEq("Bar"), 0)));
 }
 
 TEST_F(SemanticsIRFactoryTest, TrivialReturn) {
@@ -137,40 +124,38 @@ TEST_F(SemanticsIRFactoryTest, TrivialReturn) {
              return;
            }
           )");
-  ExpectRootBlock(
-      ElementsAre(
-          Function(Eq("Main"), IsEmpty(), IsNone(),
-                   StatementBlock(ElementsAre(Return(IsNone())), IsEmpty()))),
-      UnorderedElementsAre(MappedNode("Main", FunctionName("Main"))));
+  EXPECT_THAT(root_block(),
+              ElementsAre(Function(0, ElementsAre(Return(IsNone()))),
+                          SetName(StrEq("Main"), 0)));
 }
 
 TEST_F(SemanticsIRFactoryTest, ReturnLiteral) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
   Build(R"(fn Main() {
-             return 1;
+             return 12;
            }
           )");
-  ExpectRootBlock(
-      ElementsAre(
-          Function(Eq("Main"), IsEmpty(), IsNone(),
-                   StatementBlock(ElementsAre(Return(Optional(Literal("1")))),
-                                  IsEmpty()))),
-      UnorderedElementsAre(MappedNode("Main", FunctionName("Main"))));
+  EXPECT_THAT(root_block(),
+              ElementsAre(Function(0, ElementsAre(IntegerLiteral(1, 12),
+                                                  Return(Optional(1)))),
+                          SetName(StrEq("Main"), 0)));
 }
 
 TEST_F(SemanticsIRFactoryTest, ReturnArithmetic) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
   Build(R"(fn Main() {
-             return 1 + 2;
+             return 12 + 34;
            }
           )");
-  ExpectRootBlock(
+  EXPECT_THAT(
+      root_block(),
       ElementsAre(
-          Function(Eq("Main"), IsEmpty(), IsNone(),
-                   StatementBlock(ElementsAre(Return(Optional(InfixOperator(
-                                      Literal("1"), "+", Literal("2"))))),
-                                  IsEmpty()))),
-      UnorderedElementsAre(MappedNode("Main", FunctionName("Main"))));
+          Function(0,
+                   ElementsAre(IntegerLiteral(3, 12), IntegerLiteral(2, 34),
+                               BinaryOperator(
+                                   1, Semantics::BinaryOperator::Op::Add, 3, 2),
+                               Return(Optional(1)))),
+          SetName(StrEq("Main"), 0)));
 }
 
 }  // namespace

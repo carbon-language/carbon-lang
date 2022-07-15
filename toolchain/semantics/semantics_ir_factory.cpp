@@ -9,10 +9,11 @@
 #include "common/check.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "toolchain/lexer/token_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
-#include "toolchain/semantics/meta_node_block.h"
-#include "toolchain/semantics/nodes/expression_statement.h"
+//#include "toolchain/semantics/meta_node_block.h"
+#include "toolchain/semantics/nodes/binary_operator.h"
 #include "toolchain/semantics/parse_subtree_consumer.h"
 
 namespace Carbon {
@@ -25,34 +26,17 @@ static void FixReverseOrdering(T& container) {
   std::reverse(container.begin(), container.end());
 }
 
-auto SemanticsIRFactory::Build(const ParseTree& parse_tree) -> SemanticsIR {
-  SemanticsIRFactory builder(parse_tree);
+auto SemanticsIRFactory::Build(const TokenizedBuffer& tokens,
+                               const ParseTree& parse_tree) -> SemanticsIR {
+  SemanticsIRFactory builder(tokens, parse_tree);
   builder.Build();
   return builder.semantics_;
 }
 
 void SemanticsIRFactory::Build() {
   auto subtree = ParseSubtreeConsumer::ForTree(parse_tree());
-  // FileEnd is a placeholder node which can be discarded.
-  RequireNodeEmpty(subtree.RequireConsume(ParseNodeKind::FileEnd()));
-  llvm::SmallVector<Semantics::Declaration, 0> nodes;
-  llvm::StringMap<Semantics::Declaration> name_lookup;
-  while (llvm::Optional<ParseTree::Node> node = subtree.TryConsume()) {
-    switch (auto node_kind = parse_tree().node_kind(*node)) {
-      case ParseNodeKind::FunctionDeclaration(): {
-        auto [name, decl] = TransformFunctionDeclaration(*node);
-        nodes.push_back(decl);
-        name_lookup[name] = decl;
-        break;
-      }
-      default:
-        CARBON_FATAL() << "At index " << node->index() << ", unexpected "
-                       << node_kind;
-    }
-  }
-  FixReverseOrdering(nodes);
   semantics_.root_block_ =
-      Semantics::DeclarationBlock(std::move(nodes), std::move(name_lookup));
+      TransformBlockSubtree(subtree, ParseNodeKind::FileEnd());
 }
 
 void SemanticsIRFactory::RequireNodeEmpty(ParseTree::Node node) {
@@ -63,58 +47,81 @@ void SemanticsIRFactory::RequireNodeEmpty(ParseTree::Node node) {
       << "would have subtree_size of 1, but was " << subtree_size;
 }
 
-auto SemanticsIRFactory::TransformCodeBlock(ParseTree::Node node)
-    -> Semantics::StatementBlock {
-  CARBON_CHECK(parse_tree().node_kind(node) == ParseNodeKind::CodeBlock());
+auto SemanticsIRFactory::TransformBlockSubtree(ParseSubtreeConsumer& subtree,
+                                               ParseNodeKind end_kind)
+    -> llvm::SmallVector<Semantics::NodeRef, 0> {
+  RequireNodeEmpty(subtree.RequireConsume(end_kind));
 
-  auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
-  RequireNodeEmpty(subtree.RequireConsume(ParseNodeKind::CodeBlockEnd()));
-
-  llvm::SmallVector<Semantics::Statement, 0> nodes;
+  llvm::SmallVector<Semantics::NodeRef, 0> nodes;
   while (llvm::Optional<ParseTree::Node> child = subtree.TryConsume()) {
     switch (auto child_kind = parse_tree().node_kind(*child)) {
-      case ParseNodeKind::ExpressionStatement():
-        nodes.push_back(TransformExpressionStatement(*child));
+      case ParseNodeKind::FunctionDeclaration(): {
+        TransformFunctionDeclaration(nodes, *child);
         break;
+      }
+      // case ParseNodeKind::ExpressionStatement():
+      //   nodes.push_back(TransformExpressionStatement(*child));
+      //   break;
       case ParseNodeKind::ReturnStatement():
-        nodes.push_back(TransformReturnStatement(*child));
+        TransformReturnStatement(nodes, *child);
         break;
-      case ParseNodeKind::VariableDeclaration():
-        // TODO: Handle.
-        break;
+      // case ParseNodeKind::VariableDeclaration():
+      //   // TODO: Handle.
+      //   break;
       default:
         CARBON_FATAL() << "At index " << child->index() << ", unexpected "
                        << child_kind;
     }
   }
   FixReverseOrdering(nodes);
-  return Semantics::StatementBlock(std::move(nodes),
-                                   /*name_lookup=*/{});
+  return nodes;
 }
 
-auto SemanticsIRFactory::TransformDeclaredName(ParseTree::Node node)
-    -> Semantics::DeclaredName {
+auto SemanticsIRFactory::TransformCodeBlock(ParseTree::Node node)
+    -> llvm::SmallVector<Semantics::NodeRef, 0> {
+  CARBON_CHECK(parse_tree().node_kind(node) == ParseNodeKind::CodeBlock());
+
+  auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
+  return TransformBlockSubtree(subtree, ParseNodeKind::CodeBlockEnd());
+}
+
+void SemanticsIRFactory::TransformDeclaredName(
+    llvm::SmallVector<Semantics::NodeRef, 0>& nodes, ParseTree::Node node,
+    int32_t target_id) {
   CARBON_CHECK(parse_tree().node_kind(node) == ParseNodeKind::DeclaredName());
   RequireNodeEmpty(node);
 
-  return Semantics::DeclaredName(node);
+  nodes.push_back(semantics_.nodes_.Store(
+      Semantics::SetName(node, parse_tree().GetNodeText(node), target_id)));
 }
 
-auto SemanticsIRFactory::TransformExpression(ParseTree::Node node)
-    -> Semantics::Expression {
+void SemanticsIRFactory::TransformExpression(
+    llvm::SmallVector<Semantics::NodeRef, 0>& nodes, ParseTree::Node node,
+    int32_t target_id) {
   switch (auto node_kind = parse_tree().node_kind(node)) {
-    case ParseNodeKind::Literal():
+    case ParseNodeKind::Literal(): {
       RequireNodeEmpty(node);
-      return semantics_.expressions_.Store(Semantics::Literal(node));
+      auto token = parse_tree().node_token(node);
+      switch (auto token_kind = tokens_->GetKind(token)) {
+        case TokenKind::IntegerLiteral(): {
+          nodes.push_back(semantics_.nodes_.Store(Semantics::IntegerLiteral(
+              node, target_id, tokens_->GetIntegerLiteral(token))));
+          break;
+        }
+        default:
+          CARBON_FATAL() << "Unhandled kind: " << token_kind.Name();
+      }
+      break;
+    }
     case ParseNodeKind::InfixOperator():
-      return semantics_.expressions_.Store(TransformInfixOperator(node));
+      return TransformInfixOperator(nodes, node, target_id);
     default:
       CARBON_FATAL() << "At index " << node.index() << ", unexpected "
                      << node_kind;
-      break;
   }
 }
 
+/*
 auto SemanticsIRFactory::TransformExpressionStatement(ParseTree::Node node)
     -> Semantics::Statement {
   CARBON_CHECK(parse_tree().node_kind(node) ==
@@ -122,44 +129,65 @@ auto SemanticsIRFactory::TransformExpressionStatement(ParseTree::Node node)
 
   auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
   RequireNodeEmpty(subtree.RequireConsume(ParseNodeKind::StatementEnd()));
-  return semantics_.statements_.Store(Semantics::ExpressionStatement(
-      TransformExpression(subtree.RequireConsume())));
+  return TransformExpression(subtree.RequireConsume());
 }
+*/
 
-auto SemanticsIRFactory::TransformFunctionDeclaration(ParseTree::Node node)
-    -> std::tuple<llvm::StringRef, Semantics::Declaration> {
+void SemanticsIRFactory::TransformFunctionDeclaration(
+    llvm::SmallVector<Semantics::NodeRef, 0>& nodes, ParseTree::Node node) {
   CARBON_CHECK(parse_tree().node_kind(node) ==
                ParseNodeKind::FunctionDeclaration());
 
+  auto id = next_id();
   auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
   auto body =
       TransformCodeBlock(subtree.RequireConsume(ParseNodeKind::CodeBlock()));
-  llvm::Optional<Semantics::Expression> return_type_expr;
-  if (auto return_type_node = subtree.TryConsume(ParseNodeKind::ReturnType())) {
-    return_type_expr = TransformReturnType(*return_type_node);
-  }
-  auto params = TransformParameterList(
-      subtree.RequireConsume(ParseNodeKind::ParameterList()));
-  auto name = TransformDeclaredName(
-      subtree.RequireConsume(ParseNodeKind::DeclaredName()));
-  auto decl = semantics_.declarations_.Store(
-      Semantics::Function(node, name, params, return_type_expr, body));
-  return std::make_tuple(parse_tree().GetNodeText(name.node()), decl);
+  // llvm::Optional<Semantics::Statement> return_type_expr;
+  // if (auto return_type_node =
+  //   subtree.TryConsume(ParseNodeKind::ReturnType())) {
+  //   return_type_expr = TransformReturnType(*return_type_node);
+  // }
+  (void)subtree.RequireConsume(ParseNodeKind::ParameterList());
+  // auto params = TransformParameterList(
+  //   subtree.RequireConsume(ParseNodeKind::ParameterList()));
+  TransformDeclaredName(
+      nodes, subtree.RequireConsume(ParseNodeKind::DeclaredName()), id);
+  nodes.push_back(
+      semantics_.nodes_.Store(Semantics::Function(node, id, std::move(body))));
 }
 
-auto SemanticsIRFactory::TransformInfixOperator(ParseTree::Node node)
-    -> Semantics::InfixOperator {
+static auto GetBinaryOp(TokenKind kind) -> Semantics::BinaryOperator::Op {
+  switch (kind) {
+    case TokenKind::Plus():
+      return Semantics::BinaryOperator::Op::Add;
+    default:
+      CARBON_FATAL() << "Unrecognized token kind: " << kind.Name();
+  }
+}
+
+void SemanticsIRFactory::TransformInfixOperator(
+    llvm::SmallVector<Semantics::NodeRef, 0>& nodes, ParseTree::Node node,
+    int32_t target_id) {
   CARBON_CHECK(parse_tree().node_kind(node) == ParseNodeKind::InfixOperator());
 
+  auto token = parse_tree().node_token(node);
+  auto token_kind = tokens_->GetKind(token);
+  auto op = GetBinaryOp(token_kind);
+
+  auto rhs_id = next_id();
+  auto lhs_id = next_id();
+  nodes.push_back(semantics_.nodes_.Store(
+      Semantics::BinaryOperator(node, target_id, op, lhs_id, rhs_id)));
   auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
-  auto rhs = TransformExpression(subtree.RequireConsume());
-  auto lhs = TransformExpression(subtree.RequireConsume());
-  return Semantics::InfixOperator(node, lhs, rhs);
+  TransformExpression(nodes, subtree.RequireConsume(), rhs_id);
+  TransformExpression(nodes, subtree.RequireConsume(), lhs_id);
 }
 
+/*
 auto SemanticsIRFactory::TransformParameterList(ParseTree::Node node)
     -> llvm::SmallVector<Semantics::PatternBinding, 0> {
-  CARBON_CHECK(parse_tree().node_kind(node) == ParseNodeKind::ParameterList());
+  CARBON_CHECK(parse_tree().node_kind(node) ==
+ParseNodeKind::ParameterList());
 
   auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
   RequireNodeEmpty(subtree.RequireConsume(ParseNodeKind::ParameterListEnd()));
@@ -182,7 +210,8 @@ auto SemanticsIRFactory::TransformParameterList(ParseTree::Node node)
 
 auto SemanticsIRFactory::TransformPatternBinding(ParseTree::Node node)
     -> Semantics::PatternBinding {
-  CARBON_CHECK(parse_tree().node_kind(node) == ParseNodeKind::PatternBinding());
+  CARBON_CHECK(parse_tree().node_kind(node) ==
+ParseNodeKind::PatternBinding());
 
   auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
   auto type = TransformExpression(subtree.RequireConsume());
@@ -190,9 +219,10 @@ auto SemanticsIRFactory::TransformPatternBinding(ParseTree::Node node)
       subtree.RequireConsume(ParseNodeKind::DeclaredName()));
   return Semantics::PatternBinding(node, name, type);
 }
+*/
 
-auto SemanticsIRFactory::TransformReturnStatement(ParseTree::Node node)
-    -> Semantics::Statement {
+void SemanticsIRFactory::TransformReturnStatement(
+    llvm::SmallVector<Semantics::NodeRef, 0>& nodes, ParseTree::Node node) {
   CARBON_CHECK(parse_tree().node_kind(node) ==
                ParseNodeKind::ReturnStatement());
 
@@ -202,20 +232,24 @@ auto SemanticsIRFactory::TransformReturnStatement(ParseTree::Node node)
   auto expr = subtree.TryConsume();
   if (expr) {
     // return expr;
-    return semantics_.statements_.Store(
-        Semantics::Return(node, TransformExpression(*expr)));
+    auto id = next_id();
+    nodes.push_back(semantics_.nodes_.Store(Semantics::Return(node, id)));
+    TransformExpression(nodes, *expr, id);
   } else {
     // return;
-    return semantics_.statements_.Store(Semantics::Return(node, llvm::None));
+    nodes.push_back(
+        semantics_.nodes_.Store(Semantics::Return(node, llvm::None)));
   }
 }
 
+/*
 auto SemanticsIRFactory::TransformReturnType(ParseTree::Node node)
-    -> Semantics::Expression {
+    -> Semantics::Statement {
   CARBON_CHECK(parse_tree().node_kind(node) == ParseNodeKind::ReturnType());
 
   auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
   return TransformExpression(subtree.RequireConsume());
 }
+*/
 
 }  // namespace Carbon

@@ -7,15 +7,13 @@ package(default_visibility = ["//visibility:public"])
 cc_library(
     name = "nodes",
     hdrs = [
-        "nodes/declared_name.h",
-        "nodes/expression_statement.h",
+        "node_kind.h",
+        "node_ref.h",
+        "nodes/binary_operator.h",
         "nodes/function.h",
-        "nodes/infix_operator.h",
-        "nodes/literal.h",
-        "meta_node.h",
-        "meta_node_block.h",
-        "nodes/pattern_binding.h",
+        "nodes/integer_literal.h",
         "nodes/return.h",
+        "nodes/set_name.h",
     ],
     deps = [
         "//common:check",
@@ -38,7 +36,10 @@ cc_library(
 cc_library(
     name = "semantics_ir",
     srcs = ["semantics_ir.cpp"],
-    hdrs = ["semantics_ir.h"],
+    hdrs = [
+        "node_store.h",
+        "semantics_ir.h",
+    ],
     deps = [
         ":nodes",
         "//common:check",
@@ -57,6 +58,7 @@ cc_library(
         ":parse_subtree_consumer",
         ":semantics_ir",
         "//common:check",
+        "//toolchain/lexer:token_kind",
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_node_kind",
         "//toolchain/parser:parse_tree",
@@ -69,12 +71,11 @@ cc_library(
     testonly = 1,
     srcs = ["semantics_ir_for_test.cpp"],
     hdrs = [
-        "nodes/declared_name_test_matchers.h",
+        "nodes/binary_operator_test_matchers.h",
         "nodes/function_test_matchers.h",
-        "nodes/infix_operator_test_matchers.h",
-        "nodes/literal_test_matchers.h",
-        "nodes/pattern_binding_test_matchers.h",
+        "nodes/integer_literal_test_matchers.h",
         "nodes/return_test_matchers.h",
+        "nodes/set_name_test_matchers.h",
         "semantics_ir_for_test.h",
         "semantics_ir_test_helpers.h",
     ],

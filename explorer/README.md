@@ -72,11 +72,11 @@ boilerplate at the top:
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: explorer %s 2>&1 | \
-// RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
-// RUN: explorer --trace %s 2>&1 | \
-// RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: explorer %s
+// RUN: %{explorer} %s 2>&1 | \
+// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
+// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
+// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: %{explorer} %s
 // CHECK: result: 0
 
 package ExplorerTest api;
@@ -86,11 +86,11 @@ To explain this boilerplate:
 
 -   The standard copyright is expected.
 -   The `RUN` lines indicate two commands for `lit` to execute using the file:
-    one without `--trace` output, one with.
+    one without trace and debug output, one with.
     -   Output is piped to `FileCheck` for verification.
     -   Setting `-allow-unused-prefixes` to false when processing the ordinary
-        output, and true when handling the `--trace` output, allows us to omit
-        the tracing output from the `CHECK` lines, while ensuring they cover all
+        output, and true when handling the trace output, allows us to omit the
+        tracing output from the `CHECK` lines, while ensuring they cover all
         non-tracing output.
     -   Setting `-match-full-lines` in both cases indicates that each `CHECK`
         line must match a complete output line, with no extra characters before

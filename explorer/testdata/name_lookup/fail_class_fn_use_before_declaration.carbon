@@ -21,7 +21,7 @@ class A {
     return 0;
   }
 
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/name_lookup/fail_class_fn_use_before_declaration.carbon:[[@LINE+1]]: 'I' is not usable until after it has been completely declared
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/name_lookup/fail_class_fn_use_before_declaration.carbon:[[@LINE+1]]: 'I' has not been declared yet
   fn H() -> I() {
     return 0;
   }

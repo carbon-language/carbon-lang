@@ -78,6 +78,8 @@ class TypeChecker {
       -> Nonnull<Expression*>;
 
  private:
+  struct SingleStepEqualityContext;
+
   // Information about the currently enclosing scopes.
   struct ScopeInfo {
     static auto ForNonClassScope(Nonnull<ImplScope*> impl_scope) -> ScopeInfo {
@@ -194,7 +196,8 @@ class TypeChecker {
   // interface is present in the given `impl`.
   auto CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
                            Nonnull<const ImplDeclaration*> impl_decl,
-                           Nonnull<const Value*> self_type) -> ErrorOr<Success>;
+                           Nonnull<const Value*> self_type,
+                           const ImplScope& impl_scope) -> ErrorOr<Success>;
 
   // Check that an `impl` declaration satisfies its constraints and add the
   // corresponding `ImplBinding`s to the impl scope.
@@ -261,6 +264,12 @@ class TypeChecker {
                                      const ImplScope& impl_scope)
       -> ErrorOr<Success>;
 
+  // Bring the associated constants in `constraint` that constrain the
+  // implementation of `interface` for `self` into `scope`.
+  void BringAssociatedConstantsIntoScope(
+      Nonnull<const ConstraintType*> constraint, Nonnull<const Value*> self,
+      Nonnull<const InterfaceType*> interface, ImplScope& scope);
+
   // Type check all the members of the implementation.
   auto TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
                                 const ImplScope& impl_scope)
@@ -296,13 +305,20 @@ class TypeChecker {
   // must be types.
   auto FieldTypesImplicitlyConvertible(
       llvm::ArrayRef<NamedValue> source_fields,
-      llvm::ArrayRef<NamedValue> destination_fields) const -> bool;
+      llvm::ArrayRef<NamedValue> destination_fields,
+      const ImplScope& impl_scope) const -> bool;
 
   // Returns true if *source is implicitly convertible to *destination. *source
   // and *destination must be concrete types.
-  auto IsImplicitlyConvertible(
-      Nonnull<const Value*> source, Nonnull<const Value*> destination,
-      std::optional<Nonnull<const ImplScope*>> impl_scope) const -> bool;
+  //
+  // If allow_user_defined_conversions, conversions requiring a user-defined
+  // `ImplicitAs` implementation are not considered, and only builtin
+  // conversions will be allowed.
+  auto IsImplicitlyConvertible(Nonnull<const Value*> source,
+                               Nonnull<const Value*> destination,
+                               const ImplScope& impl_scope,
+                               bool allow_user_defined_conversions) const
+      -> bool;
 
   // Attempt to implicitly convert type-checked expression `source` to the type
   // `destination`.
@@ -315,16 +331,18 @@ class TypeChecker {
   // Check whether `actual` is implicitly convertible to `expected`
   // and halt with a fatal compilation error if it is not.
   //
-  // If `impl_scope` is `std::nullopt`, only built-in conversions are
-  // considered.
-  // TODO: Remove this behavior.
-  //
   // TODO: Does not actually perform the conversion if a user-defined
   // conversion is needed. Should be used very rarely for that reason.
   auto ExpectType(SourceLocation source_loc, const std::string& context,
                   Nonnull<const Value*> expected, Nonnull<const Value*> actual,
-                  std::optional<Nonnull<const ImplScope*>> impl_scope) const
-      -> ErrorOr<Success>;
+                  const ImplScope& impl_scope) const -> ErrorOr<Success>;
+
+  // Check whether `actual` is the same type as `expected` and halt with a
+  // fatal compilation error if it is not.
+  auto ExpectExactType(SourceLocation source_loc, const std::string& context,
+                       Nonnull<const Value*> expected,
+                       Nonnull<const Value*> actual,
+                       const ImplScope& impl_scope) const -> ErrorOr<Success>;
 
   // The name of a builtin interface, with any arguments.
   struct BuiltinInterfaceName {

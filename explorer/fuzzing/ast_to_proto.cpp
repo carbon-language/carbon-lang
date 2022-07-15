@@ -412,6 +412,7 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
       auto* def_proto = statement_proto.mutable_variable_definition();
       *def_proto->mutable_pattern() = PatternToProto(def.pattern());
       *def_proto->mutable_init() = ExpressionToProto(def.init());
+      def_proto->set_is_returned(def.is_returned());
       break;
     }
 
@@ -428,9 +429,14 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
       break;
     }
 
-    case StatementKind::Return: {
-      const auto& ret = cast<Return>(statement);
-      auto* ret_proto = statement_proto.mutable_return_statement();
+    case StatementKind::ReturnVar: {
+      statement_proto.mutable_return_var_statement();
+      break;
+    }
+
+    case StatementKind::ReturnExpression: {
+      const auto& ret = cast<ReturnExpression>(statement);
+      auto* ret_proto = statement_proto.mutable_return_expression_statement();
       if (!ret.is_omitted_expression()) {
         *ret_proto->mutable_expression() = ExpressionToProto(ret.expression());
       } else {
@@ -600,6 +606,13 @@ static auto DeclarationToProto(const Declaration& declaration)
         *var_proto->mutable_initializer() =
             ExpressionToProto(var.initializer());
       }
+      break;
+    }
+
+    case DeclarationKind::AssociatedConstantDeclaration: {
+      const auto& assoc = cast<AssociatedConstantDeclaration>(declaration);
+      auto* let_proto = declaration_proto.mutable_let();
+      *let_proto->mutable_pattern() = PatternToProto(assoc.binding());
       break;
     }
 
