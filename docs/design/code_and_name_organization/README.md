@@ -769,13 +769,14 @@ Currently, we do not support cross-language imports. In the future, we will
 likely want to support imports from other languages, particularly for C++
 interoperability.
 
-Although we're not designing this right now, it could fit into the proposed
-syntax. For example:
+To fit into the proposed `import` syntax, we are provisionally using a special
+`Cpp` package to import headers from C++ code, as in:
 
 ```carbon
-import Cpp file("myproject/myclass.h");
+import Cpp library "<map>";
+import Cpp library "myproject/myclass.h";
 
-fn MyCarbonCall(x: Cpp.MyProject.MyClass);
+fn MyCarbonCall(x: Cpp.std.map(Cpp.MyProject.MyClass));
 ```
 
 ### Imports from URLs
