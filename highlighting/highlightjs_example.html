@@ -1,0 +1,89 @@
+<!--
+Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
+SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-->
+
+<!-- Grab a released highlight.js from one of its CDNs. -->
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/ir-black.min.css"
+/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
+<script type="module">
+  import Carbon from './highlightjs_carbon_lang.js';
+  hljs.registerLanguage('Carbon', Carbon);
+  hljs.highlightAll();
+</script>
+
+<pre><code class="language-carbon">
+package Sorting api;
+import Carbon library "Printing";
+
+fn Partition[T:! Comparable & Movable](s: Slice(T))
+      -> i64 {
+  var i: i64 = -1;
+  let (x: i64, var y: auto) = (1, {.x = {.a = (1, {.k = 42}), .b = 13}, .y = "..."});
+
+  for (e: T in s) {
+    if (e <= s.Last()) {
+      ++i;
+      Swap(&s[i], &e);
+    }
+  }
+  return i;
+}
+
+fn QuickSort[T:! Comparable & Movable](s: Slice(T)) {
+  if (s.Size() <= 1) {
+    return;
+  }
+  let p: i64 = Partition(s);
+  QuickSort(s[:p - 1]));
+  QuickSort(s[p + 1:]));
+}
+
+interface WidgetI {
+}
+
+constraint WidgetC {
+}
+
+abstract class Abstract {
+  abstract fn DoSomething[me: Self]();
+}
+
+base class Widget {
+  virtual fn Print[addr me: Self*](var i: i64, x: f32 = 4.2, _: bool);
+}
+
+fn Widget.Print[addr me: Self*](var i: i64, x: f32, _: bool, 47) {
+  Carbon.Print("test" + "t\u{FFFF}his");
+  Carbon.Print(
+      """
+      testing more
+      with weird stuff \
+      that does stuff
+      """);
+  Carbon.Print(
+      """c++
+      template &lt;typename T&gt; class C {};
+      """);
+}
+
+class FancyWidget(T:! Type) extends Widget {
+  impl fn Print[me: Self]();
+
+  impl as Add(T) {
+    fn Op[me: Self]();
+  }
+}
+
+fn FancyWidget(T:! Type).Print[me: Self]() {
+  Carbon.Print("more test");
+}
+
+impl forall [T:! Type] FancyWidget(T) as Printable {
+  alias Print = FancyWidget(T).Print;
+}
+</code></pre>

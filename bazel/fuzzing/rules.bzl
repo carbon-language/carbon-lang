@@ -13,6 +13,7 @@ def cc_fuzz_test(
         data = [],
         features = [],
         tags = [],
+        deps = [],
         **kwargs):
     """Macro for C++ fuzzing test.
 
@@ -28,6 +29,8 @@ def cc_fuzz_test(
         features: Will have the "fuzzer" feature added and passed down to the
             fuzz test.
         tags: Will have "fuzz_test" added and passed down to the fuzz test.
+        deps: Will have "@llvm-project//compiler-rt:FuzzerMain" added and passed
+            down to the fuzz test.
         **kwargs: Remaining arguments passed down to the fuzz test.
     """
 
@@ -36,6 +39,8 @@ def cc_fuzz_test(
         tags = tags + ["fuzz_test"]
     if "fuzzer" not in features:
         features = features + ["fuzzer"]
+    if "@llvm-project//compiler-rt:FuzzerMain" not in deps:
+      deps = deps + ["@llvm-project//compiler-rt:FuzzerMain"]
 
     # Append the corpus files to the test arguments. When run on a list of
     # files rather than a directory, libFuzzer-based fuzzers will perform a
@@ -49,5 +54,6 @@ def cc_fuzz_test(
         data = data,
         features = features,
         tags = tags,
+        deps = deps,
         **kwargs
     )

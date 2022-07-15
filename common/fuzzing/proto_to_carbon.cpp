@@ -513,6 +513,9 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
 
     case Fuzzing::Statement::kVariableDefinition: {
       const auto& def = statement.variable_definition();
+      if (def.is_returned()) {
+        out << "returned ";
+      }
       out << "var ";
       PatternToCarbon(def.pattern(), out);
       out << " = ";
@@ -535,8 +538,13 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
       break;
     }
 
-    case Fuzzing::Statement::kReturnStatement: {
-      const auto& ret = statement.return_statement();
+    case Fuzzing::Statement::kReturnVarStatement: {
+      out << "return var;";
+      break;
+    }
+
+    case Fuzzing::Statement::kReturnExpressionStatement: {
+      const auto& ret = statement.return_expression_statement();
       out << "return";
       if (!ret.is_omitted_expression()) {
         out << " ";
@@ -709,6 +717,22 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
         out << " = ";
         ExpressionToCarbon(var.initializer(), out);
       }
+      out << ";";
+      break;
+    }
+
+    case Fuzzing::Declaration::kLet: {
+      const auto& let = declaration.let();
+      out << "let ";
+      PatternToCarbon(let.pattern(), out);
+
+      // TODO: Print out the initializer once it's supported.
+      /*
+      if (let.has_initializer()) {
+        out << " = ";
+        ExpressionToCarbon(let.initializer(), out);
+      }
+      */
       out << ";";
       break;
     }

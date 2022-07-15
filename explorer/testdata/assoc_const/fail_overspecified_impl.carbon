@@ -10,14 +10,11 @@
 
 package ExplorerTest api;
 
-// Test that a global variable may not depend on a later global.
-// Error expected.
-
-// CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/global_variable/fail_init_order.carbon:[[@LINE+1]]: could not find `y: i32`
-var x: i32 = y;
-
-var y: i32 = 0;
-
-fn Main() -> i32 {
-  return x;
+interface HasType {
+  let T:! Type;
 }
+
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_overspecified_impl.carbon:[[@LINE+1]]: implementation provides multiple values for (.Self:! HasType).T: i32 and {.a: i32}
+external impl i32 as HasType where .T == i32 and .T == {.a: i32} {}
+
+fn Main() -> i32 { return 0; }
