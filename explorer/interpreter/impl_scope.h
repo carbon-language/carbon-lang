@@ -6,12 +6,11 @@
 #define CARBON_EXPLORER_INTERPRETER_IMPL_SCOPE_H_
 
 #include "explorer/ast/declaration.h"
+#include "explorer/interpreter/value.h"
 
 namespace Carbon {
 
-class Value;
 class TypeChecker;
-class InterfaceType;
 
 // The `ImplScope` class is responsible for mapping a type and
 // interface to the location of the witness table for the `impl` for
@@ -38,6 +37,9 @@ class InterfaceType;
 //  impl is visible in the body of `bar`. In contrast, the call to
 //  `x.foo` in `baz` is not valid because there is no visible impl for
 //  `U` and `Fooable` in that scope.
+//
+// `ImplScope` also tracks the type equalities that are known in a particular
+// scope.
 class ImplScope {
  public:
   // Associates `iface` and `type` with the `impl` in this scope.
@@ -51,6 +53,11 @@ class ImplScope {
            llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
            Nonnull<Expression*> impl, const TypeChecker& type_checker);
 
+  // Add a type equality constraint.
+  void AddEqualityConstraint(Nonnull<const EqualityConstraint*> equal) {
+    equalities_.push_back(equal);
+  }
+
   // Make `parent` a parent of this scope.
   // REQUIRES: `parent` is not already a parent of this scope.
   void AddParent(Nonnull<const ImplScope*> parent);
@@ -61,6 +68,16 @@ class ImplScope {
   auto Resolve(Nonnull<const Value*> constraint, Nonnull<const Value*> type,
                SourceLocation source_loc, const TypeChecker& type_checker) const
       -> ErrorOr<Nonnull<Expression*>>;
+
+  // Visits the values that are a single step away from `value` according to an
+  // equality constraint that is in scope. That is, the values `v` such that we
+  // have a `value == v` equality constraint in scope.
+  //
+  // Stops and returns `false` if any call to the visitor returns `false`,
+  // otherwise returns `true`.
+  auto VisitEqualValues(
+      Nonnull<const Value*> value,
+      llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const -> bool;
 
   void Print(llvm::raw_ostream& out) const;
 
@@ -114,6 +131,7 @@ class ImplScope {
       -> ErrorOr<std::optional<Nonnull<Expression*>>>;
 
   std::vector<Impl> impls_;
+  std::vector<Nonnull<const EqualityConstraint*>> equalities_;
   std::vector<Nonnull<const ImplScope*>> parent_scopes_;
 };
 

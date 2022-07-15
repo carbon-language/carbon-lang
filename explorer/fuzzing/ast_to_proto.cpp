@@ -609,6 +609,13 @@ static auto DeclarationToProto(const Declaration& declaration)
       break;
     }
 
+    case DeclarationKind::AssociatedConstantDeclaration: {
+      const auto& assoc = cast<AssociatedConstantDeclaration>(declaration);
+      auto* let_proto = declaration_proto.mutable_let();
+      *let_proto->mutable_pattern() = PatternToProto(assoc.binding());
+      break;
+    }
+
     case DeclarationKind::InterfaceDeclaration: {
       const auto& interface = cast<InterfaceDeclaration>(declaration);
       auto* interface_proto = declaration_proto.mutable_interface();

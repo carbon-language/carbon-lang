@@ -2,17 +2,26 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
+// RUN: %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
+// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
+// CHECK: result: 2
 
 package ExplorerTest api;
 
-interface Bad {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_bad_member_kind.carbon:[[@LINE+1]]: syntax error, unexpected VAR, expecting FN or LET or RIGHT_CURLY_BRACE
-  var V: i32;
+interface Vector {
+  let Dim:! i32;
 }
 
-fn Main() -> i32 { return 0; }
+class Point {
+  var x: i32;
+  var y: i32;
+  impl as Vector where .Dim == 2 {}
+}
+
+fn Main() -> i32 {
+  var a: Point = {.x = 2, .y = 1};
+  return a.(Vector.Dim);
+}

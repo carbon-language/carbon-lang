@@ -15,6 +15,7 @@
 
 namespace Carbon {
 
+class InterfaceType;
 class Witness;
 
 // Given some initial Value, a FieldPath identifies a sub-Value within it,
@@ -40,12 +41,18 @@ class FieldPath {
   class Component {
    public:
     explicit Component(Member member) : member_(member) {}
-    Component(Member member, std::optional<Nonnull<const Witness*>> witness)
-        : member_(member), witness_(witness) {}
+    Component(Member member,
+              std::optional<Nonnull<const InterfaceType*>> interface,
+              std::optional<Nonnull<const Witness*>> witness)
+        : member_(member), interface_(interface), witness_(witness) {}
 
     auto member() const -> Member { return member_; }
 
     auto name() const -> std::string_view { return member_.name(); }
+
+    auto interface() const -> std::optional<Nonnull<const InterfaceType*>> {
+      return interface_;
+    }
 
     auto witness() const -> std::optional<Nonnull<const Witness*>> {
       return witness_;
@@ -55,6 +62,7 @@ class FieldPath {
 
    private:
     Member member_;
+    std::optional<Nonnull<const InterfaceType*>> interface_;
     std::optional<Nonnull<const Witness*>> witness_;
   };
 

@@ -487,7 +487,7 @@ def _impl(ctx):
         flag_sets = [flag_set(
             actions = all_compile_actions + all_link_actions,
             flag_groups = [flag_group(flags = [
-                "-fsanitize=fuzzer",
+                "-fsanitize=fuzzer-no-link",
             ])],
         )],
     )
@@ -496,11 +496,7 @@ def _impl(ctx):
         name = "proto-fuzzer",
         enabled = False,
         requires = [feature_set(["nonhost"])],
-
-        # TODO: this should really be `fuzzer`, but `-fsanitize=fuzzer` triggers
-        # a clang crash when running `bazel test --config=fuzzer ...`. See
-        # https://github.com/carbon-language/carbon-lang/issues/1173
-        implies = ["asan"],
+        implies = ["fuzzer"],
     )
 
     linux_flags_feature = feature(
@@ -549,12 +545,7 @@ def _impl(ctx):
                     "-D_LIBCPP_DEBUG=1",
                 ])],
                 with_features = [
-                    # _LIBCPP_DEBUG=1 causes protobuf code to crash when linked
-                    # with `-fsanitize=fuzzer`, possibly because of ODR
-                    # violations caused by Carbon source and pre-compiled llvm
-                    # Fuzzer driver library built with different _LIBCPP_DEBUG
-                    # values.
-                    with_feature_set(not_features = ["opt", "proto-fuzzer"]),
+                    with_feature_set(not_features = ["opt"]),
                 ],
             ),
         ],

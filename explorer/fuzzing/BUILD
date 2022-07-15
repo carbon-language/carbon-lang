@@ -118,12 +118,11 @@ cc_test(
     ],
 )
 
-# Needs `--config=proto-fuzzer` for `bazel build`.
-cc_binary(
+cc_fuzz_test(
     name = "explorer_fuzzer",
     testonly = 1,
     srcs = ["explorer_fuzzer.cpp"],
-    features = ["fuzzer"],
+    corpus = glob(["fuzzer_corpus/*"]),
     deps = [
         ":fuzzer_util",
         "@com_google_libprotobuf_mutator//:libprotobuf_mutator",

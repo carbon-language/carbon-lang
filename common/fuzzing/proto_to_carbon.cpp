@@ -721,6 +721,22 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
       break;
     }
 
+    case Fuzzing::Declaration::kLet: {
+      const auto& let = declaration.let();
+      out << "let ";
+      PatternToCarbon(let.pattern(), out);
+
+      // TODO: Print out the initializer once it's supported.
+      /*
+      if (let.has_initializer()) {
+        out << " = ";
+        ExpressionToCarbon(let.initializer(), out);
+      }
+      */
+      out << ";";
+      break;
+    }
+
     case Fuzzing::Declaration::kInterface: {
       const auto& interface = declaration.interface();
       out << "interface ";
