@@ -403,7 +403,7 @@ l-value to an r-value, but not in the other direction.
 L-values have storage and a stable address. They may be modified, assuming their
 type is not [`const`](#const).
 
-R-values may not have dedicated storage. This means they can not be modified and
+R-values may not have dedicated storage. This means they cannot be modified and
 their address generally cannot be taken. R-values are broken down into three
 kinds, called _value phases_:
 
@@ -431,9 +431,10 @@ graph TD;
     D(l-value)-->C;
 ```
 
-Symbolic values will generally convert into runtime values if an operation is
-performed on them. Operations on just constant values will generally result in
-constants.
+Constants convert to symbolic values and to runtime values. Symbolic values
+will generally convert into runtime values if an operation that inspects the
+value is performed on them. Runtime values will convert into constants or to
+symbolic values if constant evaluation of the runtime expression succeeds.
 
 ## Composite types
 
@@ -687,7 +688,7 @@ Binding patterns default to _`let` bindings_. The `var` keyword is used to make
 it a _`var` binding_.
 
 -   The result of a `let` binding is the name is bound to an
-    [r-value](#value-categories-and-value-phases). This means the value can not
+    [r-value](#value-categories-and-value-phases). This means the value cannot
     be modified, and its address generally cannot be taken.
 -   A `var` binding has dedicated storage, and so the name is an
     [l-value](#value-categories-and-value-phases) which can be modified and has
@@ -883,7 +884,7 @@ parameters. This binding will be implemented using a pointer, unless it is legal
 to copy and copying is cheaper.
 
 If the `var` keyword is added before the binding, then the arguments will be
-copied to new storage, and so can be mutated in the function body. The copy
+copied (or moved from a temporary) to new storage, and so can be mutated in the function body. The copy
 ensures that any mutations will not be visible to the caller.
 
 Use a [pointer](#pointer-types) parameter type to represent an
