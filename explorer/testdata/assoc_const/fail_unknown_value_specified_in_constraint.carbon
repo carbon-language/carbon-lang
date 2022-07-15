@@ -10,20 +10,19 @@
 
 package ExplorerTest api;
 
-class Point(T:! Type) {
-  var x: T;
-  var y: T;
+interface Iface { let N:! i32; }
+
+fn PickType(N: i32) -> Type { return i32; }
+
+fn F[T:! Iface where .N == 5](x: T) -> i32 {
+  // TODO: This should be valid: the value of T.N is known to be 5 here.
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_unknown_value_specified_in_constraint.carbon:[[@LINE+1]]: value of associated constant (T:! Iface where .Self.N == 5).N is not known
+  var x: PickType(T.N) = 0;
+  return x;
 }
 
-fn FirstOfTwoPoints[T:! Type](a: Point(T), b: Point(T)) -> Point(T) {
-  return a;
-}
+impl i32 as Iface where .N == 5 {}
 
 fn Main() -> i32 {
-  var p: Point(i32) = {.x = 0, .y = 1};
-  var q: Point(Bool) = {.x = true, .y = false};
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_argument_deduction.carbon:[[@LINE+3]]: deduced multiple different values for T:! Type:
-  // CHECK:   i32
-  // CHECK:   Bool
-  return FirstOfTwoPoints(p, q).x;
+  return F(0);
 }

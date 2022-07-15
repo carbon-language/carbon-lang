@@ -10,9 +10,18 @@
 
 package ExplorerTest api;
 
-interface Bad {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_bad_member_kind.carbon:[[@LINE+1]]: syntax error, unexpected VAR, expecting FN or LET or RIGHT_CURLY_BRACE
-  var V: i32;
+interface Iface { let N:! i32; }
+
+fn PickType(N: i32) -> Type { return i32; }
+
+fn F[T:! Iface](x: T) -> i32 {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_unknown_value.carbon:[[@LINE+1]]: value of associated constant (T:! Iface).N is not known
+  var x: PickType(T.N) = 0;
+  return x;
 }
 
-fn Main() -> i32 { return 0; }
+impl i32 as Iface where .N == 5 {}
+
+fn Main() -> i32 {
+  return F(0);
+}

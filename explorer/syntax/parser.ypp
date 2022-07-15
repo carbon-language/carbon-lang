@@ -1034,6 +1034,12 @@ interface_body:
       $$ = $1;
       $$.push_back($2);
     }
+| interface_body LET generic_binding SEMICOLON
+    {
+      $$ = $1;
+      $$.push_back(
+          arena->New<AssociatedConstantDeclaration>(context.source_loc(), $3));
+    }
 ;
 impl_body:
   // Empty

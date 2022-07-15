@@ -2,17 +2,29 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
+// RUN: %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
+// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
+// CHECK: result: 0
 
 package ExplorerTest api;
 
-interface Bad {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_bad_member_kind.carbon:[[@LINE+1]]: syntax error, unexpected VAR, expecting FN or LET or RIGHT_CURLY_BRACE
-  var V: i32;
+interface Frob {
+  let Result:! Type;
+  fn F[me: Self]() -> Result;
 }
 
-fn Main() -> i32 { return 0; }
+fn Use[T:! Frob](x: T) -> T.Result {
+  var v: T.Result = x.F();
+  return v;
+}
+
+impl i32 as Frob where .Result == i32 {
+  fn F[me: Self]() -> i32 { return 0; }
+}
+
+fn Main() -> i32 {
+  return Use(0);
+}

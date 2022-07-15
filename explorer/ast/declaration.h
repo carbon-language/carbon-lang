@@ -351,6 +351,26 @@ class InterfaceDeclaration : public Declaration {
   std::vector<Nonnull<Declaration*>> members_;
 };
 
+class AssociatedConstantDeclaration : public Declaration {
+ public:
+  AssociatedConstantDeclaration(SourceLocation source_loc,
+                                Nonnull<GenericBinding*> binding)
+      : Declaration(AstNodeKind::AssociatedConstantDeclaration, source_loc),
+        binding_(binding) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromAssociatedConstantDeclaration(node->kind());
+  }
+
+  auto binding() const -> const GenericBinding& { return *binding_; }
+  auto binding() -> GenericBinding& { return *binding_; }
+
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+
+ private:
+  Nonnull<GenericBinding*> binding_;
+};
+
 enum class ImplKind { InternalImpl, ExternalImpl };
 
 class ImplDeclaration : public Declaration {

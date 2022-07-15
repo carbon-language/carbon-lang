@@ -7,32 +7,34 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: result: 1234
+// CHECK: result: 1
 
 package ExplorerTest api;
 
-interface A {
-  fn F() -> i32;
-}
-interface B {
-  fn F() -> i32;
-  fn G() -> i32;
-}
-interface C(T:! Type) {
-  fn H() -> T;
+interface Frob {
+  let Result:! Type;
+  fn F[me: Self]() -> Result;
 }
 
-external impl i32 as A {
-  fn F() -> i32 { return 1; }
+fn Use[T:! Frob](x: T) -> T.Result {
+  var v: T.Result = x.F();
+  return v;
 }
 
-external impl i32 as B & C(i32) where .Self is A {
-  fn F() -> i32 { return 2; }
-  fn G() -> i32 { return 3; }
-  fn H() -> i32 { return 4; }
+class AlmostI32 {
+  var val: i32;
+  impl as ImplicitAs(i32) {
+    fn Convert[me: Self]() -> i32 { return me.val; }
+  }
+}
+
+impl i32 as Frob where .Result == AlmostI32 {
+  fn F[me: Self]() -> AlmostI32 { return {.val = me}; }
 }
 
 fn Main() -> i32 {
-  let n: i32 = 0;
-  return n.(A.F)() * 1000 + n.(B.F)() * 100 + n.(B.G)() * 10 + n.(C(i32).H)();
+  // Ensure that lookup for
+  //   i32.(Frob.Result) as ImplicitAs(i32)
+  // finds `impl AlmostI32 as ImplicitAs(i32)`.
+  return Use(1);
 }

@@ -10,9 +10,10 @@
 
 package ExplorerTest api;
 
-interface Bad {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_bad_member_kind.carbon:[[@LINE+1]]: syntax error, unexpected VAR, expecting FN or LET or RIGHT_CURLY_BRACE
-  var V: i32;
+interface Iface {
+  let T:! Type;
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_redefined.carbon:[[@LINE+1]]: Duplicate name `T` also found at {{.*}}/explorer/testdata/assoc_const/fail_redefined.carbon:14
+  let T:! Type;
 }
 
 fn Main() -> i32 { return 0; }
