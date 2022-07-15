@@ -10,9 +10,9 @@
 
 package ExplorerTest api;
 
-interface Bad {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_bad_member_kind.carbon:[[@LINE+1]]: syntax error, unexpected VAR, expecting FN or LET or RIGHT_CURLY_BRACE
-  var V: i32;
+interface Iface {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_anonymous.carbon:[[@LINE+1]]: syntax error, unexpected UNDERSCORE, expecting identifier
+  let _:! Type;
 }
 
 fn Main() -> i32 { return 0; }

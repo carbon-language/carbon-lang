@@ -84,9 +84,9 @@ spaces:
     excuse for poor behavior and hurtful words. We might all experience some
     frustration now and then, but we cannot allow that frustration to turn into
     a personal attack. It’s important to remember that a community where people
-    feel uncomfortable or threatened is not a productive one. Members of our
-    community should be kind when dealing with other members as well as with
-    people outside the Carbon community.
+    feel threatened is not a productive one. Members of our community should be
+    kind when dealing with other members as well as with people outside the
+    Carbon community.
 
 -   **Be careful in the words that you choose and be kind to others.** Do not
     insult or put down other participants. Harassment and other exclusionary
