@@ -259,9 +259,26 @@ semantics onto C++ such as Rust-inspired
 You can get started playing with Carbon by checking out the codebase and using
 the Carbon explorer:
 
+```shell
+# Install bazelisk using Homebrew.
+$ brew install bazelisk
+
+# Install Clang/LLVM using Homebrew.
+# Many Clang/LLVM releases aren't built with options we rely on.
+$ brew install llvm
+$ export PATH="$(brew --prefix llvm)/bin:${PATH}"
+
+# Download Carbon's code.
+$ git clone https://github.com/carbon-language/carbon-lang
+$ cd carbon-lang
+
+# Build and run the explorer.
+$ bazel run //explorer -- ./explorer/testdata/basic_syntax/print.carbon
 ```
-TODO: write exact steps to check out, build, and run the explorer on sample Carbon code
-```
+
+These instructions assume [Homebrew](https://brew.sh/); see our
+[contribution tools documentation](/docs/project/contribution_tools.md) for more
+extensive tooling instructions.
 
 Learn more about the Carbon project:
 
@@ -282,4 +299,4 @@ contribute.
 -   See our [code of conduct](CODE_OF_CONDUCT.md) and
     [contributing guidelines](CONTRIBUTING.md) for information about the Carbon
     development community.
--   We discuss Carbon on Discord; a public link will be forthcoming.
+-   We discuss Carbon on [Discord](https://discord.gg/ZjVdShJDAs).
