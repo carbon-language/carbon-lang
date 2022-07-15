@@ -120,7 +120,8 @@ Specifically, one pull request cannot serve as the _base_ for another pull
 request, so each pull request will include all of the commits and diffs of the
 preceding pull requests in the stack.
 
-We suggest a specific workflow to address this:
+We suggest a specific workflow to address this (note, commit access is
+required):
 
 1.  Create your initial pull request from a branch of your fork, nothing special
     is needed at this step. Let's say you have a branch `feature-basic` in your
@@ -157,9 +158,6 @@ We suggest a specific workflow to address this:
     the name matches `pull-*`, skipping pull request review processes. They can
     be force pushed as necessary and deleted. These branch names should only be
     used for this ephemeral purpose. All other branch names are protected.
-
-    If you don't yet have this permission, just ask an [admin](groups.md#admins)
-    for help.
 
 3.  Create your stacked branch on your fork:
 
