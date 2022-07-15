@@ -32,21 +32,18 @@ jobs:
         if: steps.changes.outputs.leads == 'true'
         uses: kentaro-m/auto-assign-action@v1.2.1
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
           configuration-path: '.github/assign_prs/leads.yaml'
 
       - id: assign-explorer
         if: steps.changes.outputs.explorer == 'true'
         uses: kentaro-m/auto-assign-action@v1.2.1
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
           configuration-path: '.github/assign_prs/explorer.yaml'
 
       - id: assign-toolchain
         if: steps.changes.outputs.toolchain == 'true'
         uses: kentaro-m/auto-assign-action@v1.2.1
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
           configuration-path: '.github/assign_prs/toolchain.yaml'
 
       - id: assign-fallback
@@ -56,5 +53,4 @@ jobs:
           steps.changes.outputs.toolchain != 'true'
         uses: kentaro-m/auto-assign-action@v1.2.1
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
           configuration-path: '.github/assign_prs/fallback.yaml'
