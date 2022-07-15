@@ -728,9 +728,13 @@ implements an interface:
 -   [Interfaces](#interfaces) are types of witness tables.
 -   [Impls](#implementing-interfaces) are witness table values.
 
-Type checking is done with just the interface. The impl is used during
-[monomorphization](https://en.wikipedia.org/wiki/Monomorphization) when code is
-actually generated.
+Type checking is done with just the interface. The impl is used during code
+generation time, possibly using
+[monomorphization](https://en.wikipedia.org/wiki/Monomorphization) to have a
+separate instantiation of the function for each combination of the generic
+argument values. The compiler is free to use other implementation strategies,
+though, such as passing the witness table for any needed implementations, if
+that can be predicted.
 
 For the example above, [the Vector interface](#interfaces) could be thought of
 defining a witness table type like:
