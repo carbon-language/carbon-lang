@@ -32,6 +32,7 @@ jobs:
         if: steps.changes.outputs.leads == 'true'
         uses: hkusu/review-assign-action@v1.3.0
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           reviewers: KateGregory, chandlerc, zygoloid
           max-num-of-reviewers: 1
 
@@ -39,6 +40,7 @@ jobs:
         if: steps.changes.outputs.explorer == 'true'
         uses: hkusu/review-assign-action@v1.3.0
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           reviewers: geoffromer, jonmeow, jsiek, zygoloid
           max-num-of-reviewers: 1
 
@@ -46,6 +48,7 @@ jobs:
         if: steps.changes.outputs.toolchain == 'true'
         uses: hkusu/review-assign-action@v1.3.0
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           reviewers: chandlerc, jonmeow, zygoloid
           max-num-of-reviewers: 1
 
@@ -56,5 +59,6 @@ jobs:
           steps.changes.outputs.toolchain != 'true'
         uses: hkusu/review-assign-action@v1.3.0
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           reviewers: chandlerc, jonmeow, josh11b, zygoloid
           max-num-of-reviewers: 1
