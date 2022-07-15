@@ -431,10 +431,10 @@ graph TD;
     D(l-value)-->C;
 ```
 
-Constants convert to symbolic values and to runtime values. Symbolic values
-will generally convert into runtime values if an operation that inspects the
-value is performed on them. Runtime values will convert into constants or to
-symbolic values if constant evaluation of the runtime expression succeeds.
+Constants convert to symbolic values and to runtime values. Symbolic values will
+generally convert into runtime values if an operation that inspects the value is
+performed on them. Runtime values will convert into constants or to symbolic
+values if constant evaluation of the runtime expression succeeds.
 
 ## Composite types
 
@@ -884,8 +884,9 @@ parameters. This binding will be implemented using a pointer, unless it is legal
 to copy and copying is cheaper.
 
 If the `var` keyword is added before the binding, then the arguments will be
-copied (or moved from a temporary) to new storage, and so can be mutated in the function body. The copy
-ensures that any mutations will not be visible to the caller.
+copied (or moved from a temporary) to new storage, and so can be mutated in the
+function body. The copy ensures that any mutations will not be visible to the
+caller.
 
 Use a [pointer](#pointer-types) parameter type to represent an
 [input/output parameter](<https://en.wikipedia.org/wiki/Parameter_(computer_programming)#Output_parameters>),
