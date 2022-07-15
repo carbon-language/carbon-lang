@@ -1,3 +1,7 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
 name: 'Auto Assign'
 on:
   pull_request:
@@ -11,9 +15,18 @@ jobs:
         uses: dorny/paths-filter@v2
         with:
           filters: |
-            leads: 'proposals/*.md'
-            explorer: 'explorer/**'
-            toolchain: 'toolchain/**'
+            leads:
+              - '*.md'
+              - 'LICENSE'
+              - 'docs/project/principles/*'
+              - 'docs/project/evolution.md'
+              - 'docs/project/goals.md'
+              - 'docs/project/roadmap.md'
+              - 'proposals/*.md'
+            explorer:
+              - 'explorer/**'
+            toolchain:
+              - 'toolchain/**'
 
       - id: assign-leads
         if: steps.changes.outputs.leads == 'true'
