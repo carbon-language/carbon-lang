@@ -136,7 +136,7 @@ the Code of Conduct.
 -   [The GitHub carbon-language organization](https://github.com/carbon-language)
     is used for our repositories.
 -   [Discord](https://discord.gg/ZjVdShJDAs) is used for chat.
--   [A shared Google Drive](https://drive.google.com/corp/drive/folders/0ALTu5Y6kc39XUk9PVA)
+-   [A shared Google Drive](https://drive.google.com/corp/drive/folders/18AFPsUWNXfAloZx0tRHTsrdCWUlJLpeW)
     is used for all of our Google Docs, particularly proposal drafts.
 -   [Google Calendar](https://calendar.google.com/calendar/embed?src=c_07td7k4qjq0ssb4gdl6bmbnkik%40group.calendar.google.com)
     is used for meeting invites and project reminders. Contributors may add
