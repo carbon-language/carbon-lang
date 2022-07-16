@@ -30,19 +30,19 @@ jobs:
 
       - id: assign-leads
         if: steps.changes.outputs.leads == 'true'
-        uses: shufo/auto-assign-reviewer-by-files@v1.1.3
+        uses: kentaro-m/auto-assign-action@v1.2.1
         with:
           configuration-path: '.github/assign_prs/leads.yaml'
 
       - id: assign-explorer
         if: steps.changes.outputs.explorer == 'true'
-        uses: shufo/auto-assign-reviewer-by-files@v1.1.3
+        uses: kentaro-m/auto-assign-action@v1.2.1
         with:
           configuration-path: '.github/assign_prs/explorer.yaml'
 
       - id: assign-toolchain
         if: steps.changes.outputs.toolchain == 'true'
-        uses: shufo/auto-assign-reviewer-by-files@v1.1.3
+        uses: kentaro-m/auto-assign-action@v1.2.1
         with:
           configuration-path: '.github/assign_prs/toolchain.yaml'
 
@@ -51,6 +51,39 @@ jobs:
           steps.changes.outputs.leads != 'true' &&
           steps.changes.outputs.explorer != 'true' &&
           steps.changes.outputs.toolchain != 'true'
-        uses: shufo/auto-assign-reviewer-by-files@v1.1.3
+        uses: kentaro-m/auto-assign-action@v1.2.1
         with:
           configuration-path: '.github/assign_prs/fallback.yaml'
+# TODO: Consider the below. While private it currently fails more sharply, but
+# may be a better post-public choice.
+#
+#      - id: assign-leads
+#        if: steps.changes.outputs.leads == 'true'
+#        uses: hkusu/review-assign-action@v1.3.0
+#        with:
+#          reviewers: KateGregory, chandlerc, zygoloid
+#          max-num-of-reviewers: 1
+#
+#      - id: assign-explorer
+#        if: steps.changes.outputs.explorer == 'true'
+#        uses: hkusu/review-assign-action@v1.3.0
+#        with:
+#          reviewers: geoffromer, jonmeow, jsiek, zygoloid
+#          max-num-of-reviewers: 1
+#
+#      - id: assign-toolchain
+#        if: steps.changes.outputs.toolchain == 'true'
+#        uses: hkusu/review-assign-action@v1.3.0
+#        with:
+#          reviewers: chandlerc, jonmeow, zygoloid
+#          max-num-of-reviewers: 1
+#
+#      - id: assign-fallback
+#        if:
+#          steps.changes.outputs.leads != 'true' &&
+#          steps.changes.outputs.explorer != 'true' &&
+#          steps.changes.outputs.toolchain != 'true'
+#        uses: hkusu/review-assign-action@v1.3.0
+#        with:
+#          reviewers: chandlerc, jonmeow, josh11b, zygoloid
+#          max-num-of-reviewers: 1
