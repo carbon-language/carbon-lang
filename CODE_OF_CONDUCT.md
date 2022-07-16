@@ -134,9 +134,15 @@ and when the project grows, along with more communication systems for reports.
 
 ### Reporting conduct
 
-If you believe someone is violating the code of conduct, you can always report
-it to the conduct team by emailing all members of the conduct team. **All
-reports will be kept confidential.**
+If you believe someone is violating the code of conduct, you can report it
+several ways:
+
+-   Asking for help on
+    [#community-help](https://discord.com/channels/655572317891461132/996113200464543804).
+-   Messsaging a moderator on Discord.
+-   Emailing the conduct team directly. [TODO: how?]
+
+**All reports will be kept confidential.**
 
 Please send reports concerning a member of the conduct team directly to other
 members of the conduct team. This allows discussion of the complaint to more
