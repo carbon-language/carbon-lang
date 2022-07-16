@@ -260,7 +260,7 @@ couple important benefits:
     -   For comparison, template instantiations are a major factor for C++
         compilation latency.
 
-Although Carbon will prefer generics over templates, templates are needed for
+Although Carbon will prefer generics over templates, templates are provided for
 migration of C++ code.
 
 References:
