@@ -160,8 +160,7 @@ https://drive.google.com/corp/drive/folders/1CsbHo3vamrxmBwHkoyz1kU0sGFqAh688
 
 References:
 
--   [Interoperability philosophy and goals](Interoperability philosophy and
-    goals/docs/design/interoperability/philosophy_and_goals.md)
+-   [Interoperability philosophy and goals](/docs/design/interoperability/philosophy_and_goals.md)
 -   [How will Carbon's bidirectional C++ interoperability work?](#how-will-carbons-bidirectional-c-interoperability-work)
 
 ### What would migrating C++ code to Carbon look like?
