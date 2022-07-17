@@ -139,7 +139,8 @@ several ways:
 
 -   Asking for help on
     [#community-help](https://discord.com/channels/655572317891461132/996113200464543804).
--   Messsaging a moderator on Discord.
+-   Messaging a moderator on Discord. Look under the Moderator list, and click
+    on a name to send a message.
 -   Emailing the conduct team directly. [TODO: needs to be set up.]
 
 **All reports will be kept confidential.**
