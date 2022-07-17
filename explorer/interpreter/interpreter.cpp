@@ -22,6 +22,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Error.h"
+#include "llvm/Support/FormatVariadic.h"
 
 using llvm::cast;
 using llvm::dyn_cast;
@@ -1132,9 +1133,19 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       switch (cast<IntrinsicExpression>(exp).intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print: {
-          const auto& args = cast<TupleValue>(*act.results()[0]);
-          // TODO: This could eventually use something like llvm::formatv.
-          llvm::outs() << cast<StringValue>(*args.elements()[0]).value();
+          const auto& args = cast<TupleValue>(*act.results()[0]).elements();
+          switch (args.size()) {
+            case 1:
+              llvm::outs() << llvm::formatv(cast<StringValue>(*args[0]).value().c_str());
+              break;
+            case 2:
+              llvm::outs() << llvm::formatv(cast<StringValue>(*args[0]).value().c_str(), cast<IntValue>(*args[1]).value());
+              break;
+            default:
+              CARBON_FATAL() << "Unexpected arg count: " << args.size();
+          }
+          // Implicit newline; currently no way to disable it.
+          llvm::outs() << "\n";
           return todo_.FinishAction(TupleValue::Empty());
         }
         case IntrinsicExpression::Intrinsic::Alloc: {

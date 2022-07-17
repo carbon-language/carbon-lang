@@ -2156,35 +2156,42 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     case ExpressionKind::IntrinsicExpression: {
       auto& intrinsic_exp = cast<IntrinsicExpression>(*e);
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&intrinsic_exp.args(), impl_scope));
+          const auto& args = intrinsic_exp.args().fields();
       switch (cast<IntrinsicExpression>(*e).intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print:
-          if (intrinsic_exp.args().fields().size() != 1) {
+          if (args.size() < 1 || args.size() > 2) {
             return CompilationError(e->source_loc())
-                   << "__intrinsic_print takes 1 argument";
+                   << "__intrinsic_print takes 1 or 2 arguments, received " << args.size();
           }
           CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "__intrinsic_print argument",
+              e->source_loc(), "__intrinsic_print argument 0",
               arena_->New<StringType>(),
-              &intrinsic_exp.args().fields()[0]->static_type(), impl_scope));
+              &args[0]->static_type(), impl_scope));
+          if (args.size() >= 2) {
+            CARBON_RETURN_IF_ERROR(ExpectExactType(
+                e->source_loc(), "__intrinsic_print argument 1",
+                arena_->New<IntType>(),
+                &args[1]->static_type(), impl_scope));
+          }
           e->set_static_type(TupleValue::Empty());
           e->set_value_category(ValueCategory::Let);
           return Success();
         case IntrinsicExpression::Intrinsic::Alloc: {
-          if (intrinsic_exp.args().fields().size() != 1) {
+          if (args.size() != 1) {
             return CompilationError(e->source_loc())
                    << "__intrinsic_new takes 1 argument";
           }
-          auto arg_type = &intrinsic_exp.args().fields()[0]->static_type();
+          auto arg_type = &args[0]->static_type();
           e->set_static_type(arena_->New<PointerType>(arg_type));
           e->set_value_category(ValueCategory::Let);
           return Success();
         }
         case IntrinsicExpression::Intrinsic::Dealloc: {
-          if (intrinsic_exp.args().fields().size() != 1) {
+          if (args.size() != 1) {
             return CompilationError(e->source_loc())
                    << "__intrinsic_new takes 1 argument";
           }
-          auto arg_type = &intrinsic_exp.args().fields()[0]->static_type();
+          auto arg_type = &args[0]->static_type();
           CARBON_RETURN_IF_ERROR(
               ExpectPointerType(e->source_loc(), "*", arg_type));
           e->set_static_type(TupleValue::Empty());
