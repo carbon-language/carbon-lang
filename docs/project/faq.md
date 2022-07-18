@@ -25,6 +25,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Why not improve C++?](#why-not-improve-c)
     -   [Why not fork C++?](#why-not-fork-c)
     -   [Why not Rust?](#why-not-rust)
+        -   [If you can use Rust, ignore Carbon](#if-you-can-use-rust-ignore-carbon)
+        -   [Why is adopting Rust difficult for C++ codebases?](#why-is-adopting-rust-difficult-for-c-codebases)
     -   [Why not a garbage collected language, like Java, Kotlin, or Go?](#why-not-a-garbage-collected-language-like-java-kotlin-or-go)
 -   [How will Carbon work?](#how-will-carbon-work)
     -   [What compiler infrastructure is Carbon using?](#what-compiler-infrastructure-is-carbon-using)
@@ -51,10 +53,13 @@ effort to explore a possible future direction for the C++ language given the
 
 ## What is Carbon's status?
 
-Carbon is still an experiment. There remain significant open questions that we
-need to answer before the project can consider becoming a production effort. For
-now, we're focused on exploring this direction and gaining information to begin
-answering these questions.
+[Carbon is still an experiment.](/README.md#project-status) There remain
+significant open questions that we need to answer before the project can
+consider becoming a production effort. For now, we're focused on exploring this
+direction and gaining information to begin answering these questions.
+
+-   [Project status](/README.md#project-status)
+-   [Roadmap](roadmap.md)
 
 ### How soon can we use Carbon?
 
@@ -197,7 +202,73 @@ retaining the existing C++ ecosystem investments.
 
 ### Why not Rust?
 
-TODO: WIP (should add before merging)
+#### If you can use Rust, ignore Carbon
+
+If you want to use Rust, and it is technically and economically viable for your
+project, you should use Rust. In fact, if you can use Rust or any other
+established programming language, you should. Carbon is for organizations and
+projects that heavily depend on C++; for example, projects that have a lot of
+C++ code or use many third-party C++ libraries.
+
+We believe that Rust is an excellent choice for writing software within the pure
+Rust ecosystem. Software written in Rust has properties that neither C++ nor
+Carbon have. When you need to call other languages from Rust, RPCs are a good
+option. Rust is also good for using APIs implemented in a different language
+in-process, when the cost of maintaining the FFI boundary is reasonable.
+
+When the foreign language API is large, constantly changes, uses advanced C++
+features, or
+[makes architectural choices that are incompatible with safe Rust](#why-is-adopting-rust-difficult-for-c-codebases),
+maintaining a C++/Rust FFI may not be economically viable today (but it is an
+area of active research: [cxx](https://crates.io/crates/cxx),
+[autocxx](https://crates.io/crates/autocxx),
+[Crubit](https://github.com/google/crubit/blob/main/docs/design.md)).
+
+The Carbon community is looking for a language that existing, large, monolithic
+C++ codebases can incrementally adopt and have a prospect of migrating away from
+C++ completely. We would be very happy if Rust could be this language. However,
+we are not certain that:
+
+-   Idiomatic, safe Rust can seamlessly integrate into an existing C++ codebase,
+    similarly to how TypeScript code can be added to a large existing JavaScript
+    codebase.
+-   Developers can incrementally migrate existing C++ code to Rust, just like
+    they can migrate JavaScript to TypeScript one file at a time, while keeping
+    the project working.
+
+See
+[Carbon's goals](/docs/project/goals.md#interoperability-with-and-migration-from-existing-c-code)
+for an in-depth discussion of Carbon's vision for C++/Carbon interop and
+migration.
+
+#### Why is adopting Rust difficult for C++ codebases?
+
+Large existing C++ codebases almost certainly made architectural choices that
+are incompatible with safe Rust. Specifically:
+
+-   Seamless interop where existing, unmodified **C++ APIs are made callable
+    from safe Rust** requires the C++ code to follow borrow checking rules at
+    the API boundary.
+    -   To reduce the amount of Rust-side compile-time checking that makes
+        interop difficult, C++ APIs can be exposed to Rust with pointers instead
+        of references. However, that forces users to write _unsafe_ Rust, which
+        can be even more tricky to write than C++ because it has new kinds of UB
+        compared to C++; for example,
+        [stacked borrows violations](https://github.com/rust-lang/unsafe-code-guidelines/blob/master/wip/stacked-borrows.md).
+-   Seamless interop where **safe Rust APIs are made callable from C++**
+    requires C++ users to follow Rust borrow checking rules.
+-   **Incremental migration of C++ to safe Rust** means that C++ code gets
+    converted to Rust without major changes to the architecture, data
+    structures, or APIs. However Rust imposes stricter rules than C++,
+    disallowing some design choices that were valid in C++. Therefore, the
+    original C++ code must follow Rust rules before attempting a conversion.
+    -   Original C++ code must be structured in such a way that the resulting
+        Rust code passes borrow checking. C++ APIs and data structures are not
+        designed with this in mind.
+    -   Migrating C++ to _unsafe_ Rust would still require the code to follow
+        Rust's
+        [reference exclusivity](https://doc.rust-lang.org/book/ch04-02-references-and-borrowing.html#the-rules-of-references)
+        and stacked borrows rules.
 
 ### Why not a garbage collected language, like Java, Kotlin, or Go?
 
@@ -362,4 +433,4 @@ LLVM or Kubernetes.
 Carbon is currently bootstrapping infrastructure with the help of Google. As
 soon as a foundation is ready to oversee infrastructure, such as
 [continuous integration](https://en.wikipedia.org/wiki/Continuous_integration)
-and the CLA, they'll be transferred and run by the community in an open way.
+and the CLA, we plan to transfer them so they are run by the community.
