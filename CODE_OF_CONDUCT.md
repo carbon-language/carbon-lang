@@ -135,9 +135,12 @@ and when the project grows, along with more communication systems for reports.
 The conduct team can be emailed at carbon-lang-conduct@googlegroups.com, and
 currently has the following members:
 
--   Chandler Carruth (@chandlerc on discord and github)
--   Kate Gregory (@KateGregory on discord and github)
--   Richard Smith (@zygoloid on discord and github)
+-   Chandler Carruth (@chandlerc on Discord and
+    [GitHub](https://github.com/chandlerc))
+-   Kate Gregory (@KateGregory on Discord and
+    [GitHub](https://github.com/KateGregory))
+-   Richard Smith (@zygoloid on Discord and
+    [GitHub](https://github.com/zygoloid))
 
 ### Reporting conduct
 
