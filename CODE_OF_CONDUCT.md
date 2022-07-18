@@ -132,7 +132,12 @@ At present, the [Carbon leads](docs/project/evolution.md#carbon-leads-1) will
 serve as the conduct team. We expect to establish a dedicated conduct team if
 and when the project grows, along with more communication systems for reports.
 
-The conduct team can be emailed at carbon-lang-conduct@googlegroups.com.
+The conduct team can be emailed at carbon-lang-conduct@googlegroups.com, and
+currently has the following members:
+
+-   Chandler Carruth (@chandlerc on discord and github)
+-   Kate Gregory (@KateGregory on discord and github)
+-   Richard Smith (@zygoloid on discord and github)
 
 ### Reporting conduct
 
