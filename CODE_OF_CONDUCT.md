@@ -120,10 +120,10 @@ spaces:
     give a fresh perspective. Maybe meet over VC instead. Switching approaches
     can help resume progress.
 
-No weapons are allowed at Carbon events. Weapons include, but are not limited to,
-explosives (including fireworks), guns, and large knives such as those used for
-hunting or display, as well as any other item used for the purpose of causing
-injury or harm to others.
+No weapons are allowed at Carbon events. Weapons include, but are not limited
+to, explosives (including fireworks), guns, and large knives such as those used
+for hunting or display, as well as any other item used for the purpose of
+causing injury or harm to others.
 
 In rare cases, violations of this code _outside_ of these spaces may affect, and
 be detrimental to, a person’s ability to participate _within_ these spaces.
