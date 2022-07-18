@@ -2159,7 +2159,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       const auto& args = intrinsic_exp.args().fields();
       switch (cast<IntrinsicExpression>(*e).intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print:
-          // TODO: Remove Print special casing once we have variadics o
+          // TODO: Remove Print special casing once we have variadics or
           // overloads. Here, that's the name Print instead of __intrinsic_print
           // in errors.
           if (args.size() < 1 || args.size() > 2) {
