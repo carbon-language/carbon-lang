@@ -13,6 +13,6 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  PrintInt("Printing {0}", 1);
+  Print("Printing {0}", 1);
   return 0;
 }

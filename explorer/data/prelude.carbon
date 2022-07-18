@@ -36,14 +36,10 @@ impl forall [U1:! Type, U2:! Type, U3:! Type,
 
 // Note that Print is experimental, and not part of an accepted proposal, but
 // is included here for printing state in tests.
-fn Print(format_str: String) {
-  __intrinsic_print(format_str);
-}
-
-// Neither overloads nor variadics are supported, so using a different name.
-fn PrintInt(format_str: String, arg0: i32) {
-  __intrinsic_print(format_str, arg0);
-}
+// TODO: Remove Print special casing once we have variadics or overloads.
+// fn Print(format_str: String) {
+//   __intrinsic_print(format_str);
+// }
 
 class Heap {
   fn New[T:! Type, me: Self](x : T) -> T* {

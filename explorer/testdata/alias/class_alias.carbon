@@ -39,8 +39,8 @@ fn Main() -> i32 {
   var d: GenericClassAlias(i32) = c;
   var e: ClassSpecializationAlias = c;
 
-  PrintInt("b.n: {0}", b.n);
-  PrintInt("d.Get(0): {0}", d.Get(0));
-  PrintInt("e.Get(1): {0}", e.Get(1));
+  Print("b.n: {0}", b.n);
+  Print("d.Get(0): {0}", d.Get(0));
+  Print("e.Get(1): {0}", e.Get(1));
   return 0;
 }

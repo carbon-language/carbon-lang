@@ -22,6 +22,10 @@ using llvm::isa;
 auto IntrinsicExpression::FindIntrinsic(std::string_view name,
                                         SourceLocation source_loc)
     -> ErrorOr<Intrinsic> {
+  // TODO: Remove Print special casing once we have variadics or overloads.
+  if (name == "Print") {
+    return Intrinsic::Print;
+  }
   static const auto& intrinsic_map = *new std::map<std::string_view, Intrinsic>(
       {{"print", Intrinsic::Print},
        {"new", Intrinsic::Alloc},

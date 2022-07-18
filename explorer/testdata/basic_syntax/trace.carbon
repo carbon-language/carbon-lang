@@ -10,11 +10,11 @@
 //
 // NOAUTOUPDATE
 // CHECK: ********** source program **********
-// CHECK: fn Print (format_str: String) {
+// CHECK: interface ImplicitAs {
 // CHECK: ********** type checking **********
-// CHECK: checking tuple pattern (format_str: String)
+// CHECK: ** declaring interface ImplicitAs
 // CHECK: ********** type checking complete **********
-// CHECK: fn Print (format_str: String) {
+// CHECK: interface ImplicitAs {
 // CHECK: ********** starting execution **********
 // CHECK: ********** initializing globals **********
 // CHECK: ********** calling main function **********
