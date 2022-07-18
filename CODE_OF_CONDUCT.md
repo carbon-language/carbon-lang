@@ -132,16 +132,20 @@ At present, the [Carbon leads](docs/project/evolution.md#carbon-leads-1) will
 serve as the conduct team. We expect to establish a dedicated conduct team if
 and when the project grows, along with more communication systems for reports.
 
+The conduct team can be emailed at carbon-lang-conduct@googlegroups.com.
+
 ### Reporting conduct
 
 If you believe someone is violating the code of conduct, you can report it
-several ways:
+several ways, including:
 
--   Asking for help on
-    [#community-help](https://discord.com/channels/655572317891461132/996113200464543804).
--   Direct messaging a moderator on Discord. Look under the Moderator list, and
-    click on a moderator's name to send a message.
--   Emailing the conduct team directly. [TODO: needs to be set up.]
+-   Ask for help on
+    [#community-help](https://discord.com/channels/655572317891461132/996113200464543804) and an available moderator will respond.
+    -   If you want to privately ask for moderation, direct message a moderator
+	on Discord.  Look under the Moderator list, and click on a moderator's
+        name to send a message.
+-   Emailing the [conduct team](#conduct-team) directly at
+    carbon-lang-conduct@googlegroups.com.
 
 **All reports will be kept confidential.**
 
