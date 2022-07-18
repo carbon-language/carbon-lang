@@ -2,16 +2,18 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
+// RUN: %{not} %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
+// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_print_no_args.carbon:[[@LINE+1]]: __intrinsic_print takes 1 or 2 arguments, received 0
-  Print();
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/print/fail_type.carbon:[[@LINE+3]]: type error in __intrinsic_print argument 1
+  // CHECK: expected: i32
+  // CHECK: actual: {.x: i32}
+  Print("{0}", {.x = 1});
   return 0;
 }
