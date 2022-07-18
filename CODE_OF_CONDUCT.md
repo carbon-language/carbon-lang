@@ -139,9 +139,9 @@ The conduct team can be emailed at carbon-lang-conduct@googlegroups.com.
 If you believe someone is violating the code of conduct, you can report it
 several ways, including:
 
--   Ask for help on
-    [#community-help](https://discord.com/channels/655572317891461132/996113200464543804)
-    and an available moderator will respond privately.
+-   Asking for help on
+    [#community-help](https://discord.com/channels/655572317891461132/996113200464543804).
+    An available moderator will respond privately.
     -   If you want to privately ask for moderator assistance, direct message a
         moderator on Discord. Look under the Moderator list for logged in
         moderators, and click on a moderator's name to send a message.
