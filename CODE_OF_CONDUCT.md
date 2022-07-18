@@ -142,6 +142,9 @@ currently has the following members:
 -   Richard Smith (@zygoloid on Discord and
     [GitHub](https://github.com/zygoloid))
 
+If the composition of the code of conduct team changes, reports will not be
+shared with new members without the permission of the reporter.
+
 ### Reporting conduct
 
 If you believe someone is violating the code of conduct, you can report it
