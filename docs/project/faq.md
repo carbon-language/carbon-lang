@@ -346,7 +346,7 @@ property and licensing with a broad and diverse group of contributors.
 Carbon [uses a CLA](/CONTRIBUTING.md#contributor-license-agreements-clas)
 (Contributor License Agreement) in case we need to fix issues with the license
 structure in the future, something which has proven to be important in other
-projects, [such as LLVM](https://foundation.llvm.org/docs/relicensing/).
+projects.
 
 Any changes to the license of Carbon would be made very carefully and subject to
 the exact same decision making process as any other change to the overall
