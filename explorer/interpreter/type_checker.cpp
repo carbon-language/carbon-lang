@@ -2156,22 +2156,21 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     case ExpressionKind::IntrinsicExpression: {
       auto& intrinsic_exp = cast<IntrinsicExpression>(*e);
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&intrinsic_exp.args(), impl_scope));
-          const auto& args = intrinsic_exp.args().fields();
+      const auto& args = intrinsic_exp.args().fields();
       switch (cast<IntrinsicExpression>(*e).intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print:
           if (args.size() < 1 || args.size() > 2) {
             return CompilationError(e->source_loc())
-                   << "__intrinsic_print takes 1 or 2 arguments, received " << args.size();
+                   << "__intrinsic_print takes 1 or 2 arguments, received "
+                   << args.size();
           }
           CARBON_RETURN_IF_ERROR(ExpectExactType(
               e->source_loc(), "__intrinsic_print argument 0",
-              arena_->New<StringType>(),
-              &args[0]->static_type(), impl_scope));
+              arena_->New<StringType>(), &args[0]->static_type(), impl_scope));
           if (args.size() >= 2) {
             CARBON_RETURN_IF_ERROR(ExpectExactType(
                 e->source_loc(), "__intrinsic_print argument 1",
-                arena_->New<IntType>(),
-                &args[1]->static_type(), impl_scope));
+                arena_->New<IntType>(), &args[1]->static_type(), impl_scope));
           }
           e->set_static_type(TupleValue::Empty());
           e->set_value_category(ValueCategory::Let);

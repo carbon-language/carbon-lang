@@ -1136,10 +1136,13 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           const auto& args = cast<TupleValue>(*act.results()[0]).elements();
           switch (args.size()) {
             case 1:
-              llvm::outs() << llvm::formatv(cast<StringValue>(*args[0]).value().c_str());
+              llvm::outs() << llvm::formatv(
+                  cast<StringValue>(*args[0]).value().c_str());
               break;
             case 2:
-              llvm::outs() << llvm::formatv(cast<StringValue>(*args[0]).value().c_str(), cast<IntValue>(*args[1]).value());
+              llvm::outs() << llvm::formatv(
+                  cast<StringValue>(*args[0]).value().c_str(),
+                  cast<IntValue>(*args[1]).value());
               break;
             default:
               CARBON_FATAL() << "Unexpected arg count: " << args.size();
