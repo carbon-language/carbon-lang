@@ -11,7 +11,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/print/fail_no_args.carbon:[[@LINE+1]]: __intrinsic_print takes 1 or 2 arguments, received 0
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/print/fail_no_args.carbon:[[@LINE+1]]: Print takes 1 or 2 arguments, received 0
   Print();
   return 0;
 }

@@ -166,8 +166,13 @@ void Expression::Print(llvm::raw_ostream& out) const {
     }
     case ExpressionKind::IntrinsicExpression: {
       const auto& iexp = cast<IntrinsicExpression>(*this);
+      // TODO: Remove Print special casing once we have variadics or overloads.
+      if (iexp.intrinsic() == IntrinsicExpression::Intrinsic::Print) {
+        out << "Print" << iexp.args();
+        break;
+      }
       out << "intrinsic_";
-      switch (cast<IntrinsicExpression>(*this).intrinsic()) {
+      switch (iexp.intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print:
           out << "print";
           break;
