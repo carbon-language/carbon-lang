@@ -123,6 +123,7 @@ def _impl(ctx):
                             "-Wself-assign",
                             "-Wimplicit-fallthrough",
                             "-Wctad-maybe-unsupported",
+                            "-Wnon-virtual-dtor",
                             # Unfortunately, LLVM isn't clean for this warning.
                             "-Wno-unused-parameter",
                             # Compile actions shouldn't link anything.
