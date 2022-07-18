@@ -40,7 +40,7 @@ fn Print(format_str: String) {
   __intrinsic_print(format_str);
 }
 
-// Overloads currently aren't supported.
+// Neither overloads nor variadics are supported, so using a different name.
 fn PrintInt(format_str: String, arg0: i32) {
   __intrinsic_print(format_str, arg0);
 }
