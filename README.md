@@ -285,6 +285,7 @@ Learn more about the Carbon project:
 -   [Project goals](/docs/project/goals.md)
 -   [Language design overview](/docs/design)
 -   [Carbon Explorer](/explorer)
+-   [FAQ](/docs/project/faq.md)
 
 ## Join us
 
