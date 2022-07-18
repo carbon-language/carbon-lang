@@ -7,13 +7,12 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: Hello world!
+// CHECK: Printing 1
 // CHECK: result: 0
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  var s: auto = "Hello world!";
-  Print(s);
+  PrintInt("Printing {0}", 1);
   return 0;
 }

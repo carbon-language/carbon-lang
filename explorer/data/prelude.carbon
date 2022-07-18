@@ -40,6 +40,11 @@ fn Print(format_str: String) {
   __intrinsic_print(format_str);
 }
 
+// Neither overloads nor variadics are supported, so using a different name.
+fn PrintInt(format_str: String, arg0: i32) {
+  __intrinsic_print(format_str, arg0);
+}
+
 class Heap {
   fn New[T:! Type, me: Self](x : T) -> T* {
     return __intrinsic_new(x);
