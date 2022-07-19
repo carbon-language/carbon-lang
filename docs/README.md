@@ -52,5 +52,5 @@ documentation for developers writing programs in Carbon.
 
 The [`spec/` directory](spec/) contains the **to-be-written** formal
 specification of the Carbon language. This is for implementers of compilers or
-other tooling. This is intended to complement the interactive language explorer
-tool (TODO: link).
+other tooling. This is intended to complement the interactive [language explorer
+tool](/explorer/).
