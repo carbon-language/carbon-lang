@@ -106,8 +106,6 @@ characters on that line. The lines between the opening line and the closing line
 (exclusive) are _content lines_. The content lines shall not contain `\`
 characters that do not form part of an escape sequence.
 
-This is an invalid block string literal, rather than 3 simple literals.
-
 ```carbon
 // This string literal is invalid because `abc"""` does not form a valid file
 // type indicator. It does not represent the three tokens `""`, `"abc"` and `""`.
@@ -305,21 +303,6 @@ delimiter (for example, #""") always results in block string handling. For
 example, #"""# begins a raw block string literal with a file type indicator of
 #, rather than the possible interpretation as a raw simple string literal. This
 is true even when the file type indicator is invalid, as with #"""foo"""#.
-
-```carbon
-// This is an invalid raw block string literal with the first `"` of
-// the closing `"""#` not being the first non-whitespace character
-// of its line.
-// It is not equivalent to "\"\"Invalid raw block string literal\"\"".
-var String: ambig1 = #"""Invalid raw block string literal"""#;
-
-// This is an invalid raw block string literal with no closing `"""#`.
-// It is not equivalent to "\"".
-var String: ambig2 = #"""#;
-
-// This is a single-line raw string literal, equivalent to "\"".
-var String: clear = #"\#""#;
-```
 
 ### Encoding
 
