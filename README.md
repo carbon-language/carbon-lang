@@ -16,7 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 <a href="docs/images/snippets.md#quicksort">
 <!--
 Edit snippet in docs/images/snippets.md and:
-https://drive.google.com/corp/drive/folders/1CsbHo3vamrxmBwHkoyz1kU0sGFqAh688
+https://drive.google.com/drive/folders/1-rsUjiya7dSZ87L8kpZmu3MZghRVxzLA
 -->
 <img src="docs/images/quicksort_snippet.svg" align="right" width="575"
      alt="Quicksort code in Carbon. Follow the link to read more.">
@@ -162,7 +162,7 @@ C++ code like this:
 <a href="docs/images/snippets.md#c">
 <!--
 Edit snippet in docs/images/snippets.md and:
-https://drive.google.com/corp/drive/folders/1CsbHo3vamrxmBwHkoyz1kU0sGFqAh688
+https://drive.google.com/drive/folders/1-rsUjiya7dSZ87L8kpZmu3MZghRVxzLA
 -->
 <img src="docs/images/cpp_snippet.svg" width="600"
      alt="A snippet of C++ code. Follow the link to read it.">
@@ -173,7 +173,7 @@ corresponds to this Carbon code:
 <a href="docs/images/snippets.md#carbon">
 <!--
 Edit snippet in docs/images/snippets.md and:
-https://drive.google.com/corp/drive/folders/1CsbHo3vamrxmBwHkoyz1kU0sGFqAh688
+https://drive.google.com/drive/folders/1-rsUjiya7dSZ87L8kpZmu3MZghRVxzLA
 -->
 <img src="docs/images/carbon_snippet.svg" width="600"
      alt="A snippet of converted Carbon code. Follow the link to read it.">
@@ -186,7 +186,7 @@ new Carbon on top of your existing C++ investment. For example:
 <a href="docs/images/snippets.md#mixed">
 <!--
 Edit snippet in docs/images/snippets.md and:
-https://drive.google.com/corp/drive/folders/1CsbHo3vamrxmBwHkoyz1kU0sGFqAh688
+https://drive.google.com/drive/folders/1-rsUjiya7dSZ87L8kpZmu3MZghRVxzLA
 -->
 <img src="docs/images/mixed_snippet.svg" width="600"
      alt="A snippet of mixed Carbon and C++ code. Follow the link to read it.">
