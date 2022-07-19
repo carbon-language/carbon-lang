@@ -1240,7 +1240,7 @@ fn Foo() -> f32 {
 _Nominal classes_, or just
 [_classes_](<https://en.wikipedia.org/wiki/Class_(computer_programming)>), are a
 way for users to define their own
-[data strutures](https://en.wikipedia.org/wiki/Data_structure) or
+[data structures](https://en.wikipedia.org/wiki/Data_structure) or
 [record types](<https://en.wikipedia.org/wiki/Record_(computer_science)>).
 
 This is an example of a class
@@ -2962,7 +2962,7 @@ operators or the comma operator. In the unlikely situation where those operators
 need to be overridden for a Carbon type, that can be done with a nonmember C++
 function.
 
-Carbon intefaces with no C++ equivalent, such as
+Carbon interfaces with no C++ equivalent, such as
 [`CommonTypeWith(U)`](#common-type), may be implemented for C++ types externally
 in Carbon code. To satisfy the orphan rule
 ([1](generics/details.md#impl-lookup), [2](generics/details.md#orphan-rule)),

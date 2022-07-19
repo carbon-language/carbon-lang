@@ -163,7 +163,7 @@ avoid copies.
 
 > **TODO:** Have some discussion of RVO and NRVO as they are found in C++ here,
 > and the fact that Carbon provides the essential part of these as first-class
-> featuers and therefore they are never "optimizations" or done implicitly or
+> features and therefore they are never "optimizations" or done implicitly or
 > optionally.
 
 ## Alternatives considered

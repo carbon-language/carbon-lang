@@ -24,7 +24,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Libraries](#libraries)
         -   [Exporting entities from an API file](#exporting-entities-from-an-api-file)
         -   [Granularity of libraries](#granularity-of-libraries)
-        -   [Exporting namespces](#exporting-namespces)
+        -   [Exporting namespaces](#exporting-namespaces)
     -   [Imports](#imports-1)
         -   [Imports from the current package](#imports-from-the-current-package)
     -   [Namespaces](#namespaces)
@@ -392,7 +392,7 @@ possibly containing only a single class. The choice of only allowing a single
 `api` file per library should help encourage developers to write small
 libraries.
 
-#### Exporting namespces
+#### Exporting namespaces
 
 Any entity may be marked with `api` except for namespace and package entities.
 That is, `api namespace Sha256;` is invalid code. Instead, namespaces are

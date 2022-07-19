@@ -409,7 +409,7 @@ base class. In the cases where such access is needed, the workaround is to
 access them through C++ functions.
 
 We do not expect idiomatic Carbon-only code to use multiple inheritance.
-Extending this design to support interopating with C++ types using multiple
+Extending this design to support interoperating with C++ types using multiple
 inheritance is future work.
 
 ### Mixins
