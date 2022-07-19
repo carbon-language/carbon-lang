@@ -45,9 +45,7 @@ includes chat systems, forums, emails (on lists or between members), issue
 trackers, events, and any other spaces that the community uses for
 communication. It applies to all of your communication and conduct in these
 spaces, including emails, chats, things you say, slides, videos, posters, signs,
-or even t-shirts you display in these spaces. In rare cases, violations of this
-code _outside_ of these spaces may affect a person’s ability to participate
-_within_ these spaces.
+or even t-shirts you display in these spaces.
 
 All community members should help support our standards of acceptable behavior.
 Everyone is encouraged to speak up in response to any behavior that they deem
@@ -121,6 +119,25 @@ spaces:
     before responding again. Consider pulling in another community member to
     give a fresh perspective. Maybe meet over VC instead. Switching approaches
     can help resume progress.
+
+No weapons are allowed at Carbon events. Weapons include, but are not limited
+to, explosives (including fireworks), guns, and large knives such as those used
+for hunting or display, as well as any other item used for the purpose of
+causing injury or harm to others.
+
+In rare cases, violations of this code _outside_ of these spaces may affect, and
+be detrimental to, a person’s ability to participate _within_ these spaces.
+Important examples include, but are not limited to,
+[sexual and gender-based violence and/or harassment](https://hr.un.org/sites/hr.un.org/files/SEA%20Glossary%20%20%5BSecond%20Edition%20-%202017%5D%20-%20English_0.pdf),
+[hate crimes](https://hatecrime.osce.org/), and
+[hate speech](https://www.un.org/en/genocideprevention/documents/UN%20Strategy%20and%20Plan%20of%20Action%20on%20Hate%20Speech%2018%20June%20SYNOPSIS.pdf).
+Although we do not conduct proactive research, we have an obligation to respond
+to reported and, to the extent possible, corroborated concerns. Our motivations
+are not rooted in responding punitively, or holding people accountable. Instead,
+our response will be focused on how the continued participation of the person at
+issue could impact the community's safety, well-being, and inclusivity. It is
+our priority to remain a welcoming community to victims as well as groups
+subjected to systemic marginalization or underrepresentation.
 
 If you have questions, please feel free to ask on Discord,
 [GitHub](https://github.com/carbon-language/carbon-lang/discussions), or contact
