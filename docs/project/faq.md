@@ -359,7 +359,7 @@ References:
 ### Where does development occur?
 
 Carbon is using GitHub for its repository and code reviews. Most non-review
-discussion occurs on our Discord server (TODO: link).
+discussion occurs on our [Discord server](https://discord.gg/ZjVdShJDAs).
 
 If you're interested in contributing, you can find more information in our
 [Contributing file](/CONTRIBUTING.md).
