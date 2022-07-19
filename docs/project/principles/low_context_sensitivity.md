@@ -190,7 +190,7 @@ if (x != None) {
 // x is back to type Optional(Int).
 ```
 
-This can be taken farther, this example has `x` taking on three different types:
+This can be taken further, this example has `x` taking on three different types:
 
 ```
 var x: Optional(Optional(Int)) = ...;
