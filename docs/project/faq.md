@@ -347,7 +347,7 @@ space.
 
 ### How will Carbon achieve memory safety?
 
-See [memory safety in the project README](/#memory-safety).
+See [memory safety in the project README](/README.md#memory-safety).
 
 References:
 
