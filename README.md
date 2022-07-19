@@ -273,7 +273,7 @@ $ git clone https://github.com/carbon-language/carbon-lang
 $ cd carbon-lang
 
 # Build and run the explorer.
-$ bazel run //explorer -- ./explorer/testdata/basic_syntax/print.carbon
+$ bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
 ```
 
 These instructions assume [Homebrew](https://brew.sh/); see our
