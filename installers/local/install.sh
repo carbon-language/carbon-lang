@@ -47,7 +47,7 @@ SCRIPT=$(cat <<EOF
   done
 
   # Add symlinks in bin.
-  ln -fs "${INSTALL_PATH}/lib/carbon/carbon" \
+  ln -fs "../lib/carbon/carbon" \
     "${INSTALL_PATH}/bin/carbon-explorer"
 EOF
 )
