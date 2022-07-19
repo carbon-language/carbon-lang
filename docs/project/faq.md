@@ -109,8 +109,8 @@ $ bazel run //explorer -- ./explorer/testdata/basic_syntax/print.carbon
 Example source files can be found under
 [/explorer/testdata](/explorer/testdata).
 
-We're also working on making Carbon available on
-[https://compiler-explorer.com](https://compiler-explorer.com/).
+Carbon can also be explored interactively on
+[https://carbon.compiler-explorer.com](https://carbon.compiler-explorer.com/).
 
 ## Why build Carbon?
 
