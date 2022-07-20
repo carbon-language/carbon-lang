@@ -53,6 +53,7 @@ message PrimitiveOperatorExpression {
     Sub = 10;
     Ptr = 11;
     Combine = 12;
+    As = 13;
   }
   optional Operator op = 1;
   repeated Expression arguments = 2;

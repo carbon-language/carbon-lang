@@ -20,9 +20,10 @@ class Builtins {
  public:
   explicit Builtins() {}
 
-  enum class Builtin { ImplicitAs, Last = ImplicitAs };
+  enum class Builtin { ImplicitAs, As, Last = As };
   // TODO: In C++20, replace with `using enum Builtin;`.
   static constexpr Builtin ImplicitAs = Builtin::ImplicitAs;
+  static constexpr Builtin As = Builtin::As;
 
   // Register a declaration that might be a builtin.
   void Register(Nonnull<const Declaration*> decl);
@@ -38,7 +39,7 @@ class Builtins {
 
  private:
   static constexpr int NumBuiltins = static_cast<int>(Builtin::Last) + 1;
-  static constexpr const char* BuiltinNames[NumBuiltins] = {"ImplicitAs"};
+  static constexpr const char* BuiltinNames[NumBuiltins] = {"ImplicitAs", "As"};
 
   std::optional<Nonnull<const Declaration*>> builtins_[NumBuiltins] = {};
 };
