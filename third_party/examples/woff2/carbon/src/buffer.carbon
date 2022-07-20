@@ -52,7 +52,7 @@ inline bool Failure(const char *f, int l, const char *fn) {
 // -----------------------------------------------------------------------------
 // Buffer helper class
 //
-// This class perform some trivial buffer operations while checking for
+// This class perform some trival buffer operations while checking for
 // out-of-bounds errors. As a family they return false if anything is amiss,
 // updating the current offset otherwise.
 // -----------------------------------------------------------------------------
