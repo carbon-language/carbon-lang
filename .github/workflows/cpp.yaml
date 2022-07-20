@@ -1,0 +1,33 @@
+name: C++
+
+on:
+  push:
+    branches: [ trunk ]
+    paths:
+      # Conservatively run the tests. However, skip them if the only paths in
+      # the pull request match files that we know don't impact the build.
+      - '**'
+      - '!**/*.md'
+      - '!LICENSE'
+      - '!CODEOWNERS'
+      - '!.git*'
+  pull_request:
+    paths:
+      # Conservatively run the tests. However, skip them if the only paths in
+      # the pull request match files that we know don't impact the build.
+      - '**'
+      - '!**/*.md'
+      - '!LICENSE'
+      - '!CODEOWNERS'
+      - '!.git*'
+
+jobs:
+  clang-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run clang-format style check
+        uses: jidicula/clang-format-action@v4.6.2
+        with:
+          clang-format-version: '14'
