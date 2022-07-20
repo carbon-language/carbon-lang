@@ -36,8 +36,8 @@ fn QuickSort[T:! Comparable & Movable](s: Slice(T)) {
     return;
   }
   let p: i64 = Partition(s);
-  QuickSort(s[:p - 1]));
-  QuickSort(s[p + 1:]));
+  QuickSort(s[:p - 1]);
+  QuickSort(s[p + 1:]);
 }
 ```
 
