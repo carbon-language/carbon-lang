@@ -63,6 +63,14 @@ typical tool setup flow is:
 
 <!-- google-doc-style-resume -->
 
+An alternative to manually configuring tooling to is to use a cloud development
+environment such as Gitpod which automates the setup instructions below. A
+pre-configured Gitpod workspace can be launched by pressing the button below.
+
+<a href="https://gitpod.io#https://github.com/carbon-language/carbon-lang">
+  <img src="https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod" alt="Contribute with Gitpod" />
+</a>
+
 ## Package managers
 
 Instructions for installing tools can be helpful for installing tooling. These

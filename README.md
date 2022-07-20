@@ -280,6 +280,11 @@ These instructions assume [Homebrew](https://brew.sh/); see our
 [contribution tools documentation](/docs/project/contribution_tools.md) for more
 extensive tooling instructions.
 
+If you do not wish to install software on your computer to try out or contribute
+to Carbon then you can also
+[open the project in Gitpod](https://gitpod.io#https://github.com/carbon-language/carbon-lang)
+which automates all of the steps above.
+
 Learn more about the Carbon project:
 
 -   [Project goals](/docs/project/goals.md)
