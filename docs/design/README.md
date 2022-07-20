@@ -927,7 +927,7 @@ semicolon or block. [Expressions](#expressions) and
 [`var`](#variable-var-declarations) and [`let`](#constant-let-declarations) are
 valid statements.
 
-Statements within a block are normally executed in the order the appear in the
+Statements within a block are normally executed in the order they appear in the
 source code, except when modified by control-flow statements.
 
 The body of a function is defined by a block, and some
@@ -1062,15 +1062,13 @@ Console.Print("Done!");
 ##### `for`
 
 `for` statements support range-based looping, typically over containers. For
-example, this prints all names in `names`:
+example, this prints each `String` value in `names`:
 
 ```carbon
 for (var name: String in names) {
   Console.Print(name);
 }
 ```
-
-This prints each `String` value in `names`.
 
 > References:
 >
@@ -1428,7 +1426,7 @@ inheritance is a good match, and use other features for other cases. For
 example, [mixins](#mixins) for implementation reuse and [generics](#generics)
 for separating interface from implementation. This allows Carbon to move away
 from [multiple inheritance](https://en.wikipedia.org/wiki/Multiple_inheritance),
-which doesn't has as efficient of an implementation strategy.
+which doesn't have as efficient of an implementation strategy.
 
 Classes by default are
 [_final_](<https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)#Non-subclassable_classes>),
@@ -1441,7 +1439,7 @@ instantiated.
 base class MyBaseClass { ... }
 ```
 
-Either kind of base class maybe _extended_ to get a _derived class_. Derived
+Either kind of base class may be _extended_ to get a _derived class_. Derived
 classes are final unless they are themselved declared `base` or `abstract`.
 Classes may only extend a single class. Carbon only supports single inheritance,
 and will use mixins instead of multiple inheritance.
@@ -1455,7 +1453,7 @@ class FinalDerived extends MiddleDerived { ... }
 A base class may define
 [virtual methods](https://en.wikipedia.org/wiki/Virtual_function). These are
 methods whose implementation may be overridden in a derived class. By default
-methods are _non-virtual_, the declaration of a virtual methods must be prefixed
+methods are _non-virtual_, the declaration of a virtual method must be prefixed
 by one of these three keywords:
 
 -   A method marked `virtual` has a definition in this class but not in any
@@ -1577,7 +1575,7 @@ The destructor for a class is run before the destructors of its data members.
 The data members are destroyed in reverse order of declaration. Derived classes
 are destroyed before their base classes.
 
-A destructor in a abstract or base class may be declared `virtual` like with
+A destructor in an abstract or base class may be declared `virtual` like with
 [methods](#inheritance). Destructors in classes derived from one with a virtual
 destructor must be declared with the `impl` keyword prefix. It is illegal to
 delete an instance of a derived class through a pointer to a base class unless
@@ -1760,7 +1758,7 @@ later, except that inline class member function bodies are
 [parsed as if they appeared after the class](#class-functions-and-factory-functions).
 
 A name in Carbon is formed from a sequence of letters, numbers, and underscores,
-and which starts with a letter. We intend to follow
+and starts with a letter. We intend to follow
 [Unicode's Annex 31](https://unicode.org/reports/tr31/) in selecting valid
 identifier characters, but a concrete set of valid characters has not been
 selected yet.
