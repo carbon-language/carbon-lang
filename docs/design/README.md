@@ -80,7 +80,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Name lookup](#name-lookup)
         -   [Name lookup for common types](#name-lookup-for-common-types)
 -   [Generics](#generics)
-    -   [Checked and template parameters](#checked-and-template-parameters)
+    -   [Checked and unchecked parameters](#checked-and-unchecked-parameters)
     -   [Interfaces and implementations](#interfaces-and-implementations)
     -   [Combining constraints](#combining-constraints)
     -   [Associated types](#associated-types)
@@ -2226,18 +2226,21 @@ being passed as a separate explicit argument.
 > -   Proposal
 >     [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
 
-### Checked and template parameters
+### Checked and unchecked parameters
 
-The `:!` indicates that `T` is a _checked_ parameter passed at compile time.
-"Checked" here means that the body of `Min` is type checked when the function is
+The `:!` indicates that `T` is a type that is bound at compile time. There are
+two forms of parameters: checked and unchecked. A parameter declared with the
+`template` keyword is an _unchecked parameter_, a parameter declared without the
+`template` keyword is a _checked parameter_. 
+
+"Checked" here means that the body of `Min` (above) is type checked when the function is
 defined, independent of the specific type values `T` is instantiated with, and
 name lookup is delegated to the constraint on `T` (`Ordered` in this case). This
 type checking is equivalent to saying the function would pass type checking
-given any type `T` that implements the `Ordered` interface. Then calls to `Min`
+given any type `T` that implements the `Ordered` interface. Subsequent calls to `Min`
 only need to check that the deduced type value of `T` implements `Ordered`.
 
-The parameter could alternatively be declared to be a _template_ parameter by
-prefixing with the `template` keyword, as in `template T:! Type`.
+The following example uses an unchecked template parameter, `U`:
 
 ```carbon
 fn Convert[template T:! Type](source: T, template U:! Type) -> U {
@@ -2251,6 +2254,17 @@ fn Foo(i: i32) -> f32 {
   return Convert(i, f32);
 }
 ```
+
+An unchecked parameter can still use a constraint. The earlier example could have
+been declared as:
+
+```carbon
+fn Min[template T:! Ordered](x: T, y: T) -> T {
+  return if x <= y then x else y;
+}
+```
+
+This defers checking to the point of instantiation (similar to C++ templates). 
 
 Carbon templates follow the same fundamental paradigm as
 [C++ templates](<https://en.wikipedia.org/wiki/Template_(C%2B%2B)>): they are
