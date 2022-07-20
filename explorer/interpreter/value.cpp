@@ -381,6 +381,11 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "}";
       break;
     }
+    case Value::Kind::UninitializedValue: {
+      const auto& uninit = cast<UninitializedValue>(*this);
+      out << "Uninit<" << uninit.pattern() << ">";
+      break;
+    }
     case Value::Kind::NominalClassType: {
       const auto& class_type = cast<NominalClassType>(*this);
       out << "class ";
@@ -721,6 +726,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::ContinuationValue:
+    case Value::Kind::UninitializedValue:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::TypeOfParameterizedEntityName:
@@ -848,6 +854,7 @@ auto ValueStructurallyEqual(
     case Value::Kind::ContinuationValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LValue:
+    case Value::Kind::UninitializedValue:
     case Value::Kind::MemberName:
       // TODO: support pointer comparisons once we have a clearer distinction
       // between pointers and lvalues.

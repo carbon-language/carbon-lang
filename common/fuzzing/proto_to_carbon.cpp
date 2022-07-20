@@ -518,8 +518,10 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
       }
       out << "var ";
       PatternToCarbon(def.pattern(), out);
-      out << " = ";
-      ExpressionToCarbon(def.init(), out);
+      if (def.has_init()) {
+        out << " = ";
+        ExpressionToCarbon(def.init(), out);
+      }
       out << ";";
       break;
     }
