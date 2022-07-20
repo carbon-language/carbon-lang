@@ -9,7 +9,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Images
 
 Images are managed in
-[Google Drive](https://drive.google.com/corp/drive/folders/1CsbHo3vamrxmBwHkoyz1kU0sGFqAh688).
+[Google Drive](https://drive.google.com/drive/folders/1-rsUjiya7dSZ87L8kpZmu3MZghRVxzLA).
 
 ## Quicksort
 
@@ -36,8 +36,8 @@ fn QuickSort[T:! Comparable & Movable](s: Slice(T)) {
     return;
   }
   let p: i64 = Partition(s);
-  QuickSort(s[:p - 1]));
-  QuickSort(s[p + 1:]));
+  QuickSort(s[:p - 1]);
+  QuickSort(s[p + 1:]);
 }
 ```
 

@@ -109,8 +109,8 @@ $ bazel run //explorer -- ./explorer/testdata/basic_syntax/print.carbon
 Example source files can be found under
 [/explorer/testdata](/explorer/testdata).
 
-We're also working on making Carbon available on
-[https://compiler-explorer.com](https://compiler-explorer.com/).
+Carbon can also be explored interactively on
+[https://carbon.compiler-explorer.com](https://carbon.compiler-explorer.com/).
 
 ## Why build Carbon?
 
@@ -146,7 +146,7 @@ For example, considering a pure C++ application:
 <a href="/docs/images/snippets.md#c">
 <!--
 Edit snippet in /docs/images/snippets.md and:
-https://drive.google.com/corp/drive/folders/1CsbHo3vamrxmBwHkoyz1kU0sGFqAh688
+https://drive.google.com/drive/folders/1-rsUjiya7dSZ87L8kpZmu3MZghRVxzLA
 -->
 <img src="/docs/images/cpp_snippet.svg" width="600"
      alt="A snippet of C++ code. Follow the link to read it.">
@@ -157,7 +157,7 @@ It's possible to migrate a single function to Carbon:
 <a href="/docs/images/snippets.md#mixed">
 <!--
 Edit snippet in /docs/images/snippets.md and:
-https://drive.google.com/corp/drive/folders/1CsbHo3vamrxmBwHkoyz1kU0sGFqAh688
+https://drive.google.com/drive/folders/1-rsUjiya7dSZ87L8kpZmu3MZghRVxzLA
 -->
 <img src="/docs/images/mixed_snippet.svg" width="600"
      alt="A snippet of mixed Carbon and C++ code. Follow the link to read it.">
@@ -347,7 +347,7 @@ space.
 
 ### How will Carbon achieve memory safety?
 
-See [memory safety in the project README](/#memory-safety).
+See [memory safety in the project README](/README.md#memory-safety).
 
 References:
 

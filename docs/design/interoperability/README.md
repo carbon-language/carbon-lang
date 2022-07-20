@@ -10,12 +10,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [Philsophy and goals](#philsophy-and-goals)
+-   [Philosophy and goals](#philosophy-and-goals)
 -   [Overview](#overview)
 
 <!-- tocstop -->
 
-## Philsophy and goals
+## Philosophy and goals
 
 The C++ interoperability layer of Carbon allows a subset of C++ APIs to be
 accessed from Carbon code, and similarly a subset of Carbon APIs to be accessed
