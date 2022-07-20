@@ -144,9 +144,9 @@ the Code of Conduct.
     are:
 
     -   The
-        [weekly sync](https://docs.google.com/document/d/1pYq5MssjOi8c-wBJaHEDcsVMirFeC3iv2uFUOwsI3-M/edit),
+        [weekly sync](https://docs.google.com/document/d/1dwS2sJ8tsN3LwxqmZSv9OvqutYhP71dK9Dmr1IXQFTs/edit?resourcekey=0-NxBWgL9h05yD2GOR3wUisg),
         where everyone is welcome.
-    -   [Open discussions](https://docs.google.com/document/d/1NnFKOUNh_BCbVD29JiNqQ0JzC5VfE6YUq6CfKqFkouQ/edit),
+    -   [Open discussions](https://docs.google.com/document/d/1tEt4iM6vfcY0O0DG0uOEMIbaXcZXlNREc2ChNiEtn_w/edit),
         which are unstructured meeting slots used for discussing proposals,
         tooling, and other Carbon topics based on who attends.
 
