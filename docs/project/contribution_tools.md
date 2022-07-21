@@ -73,7 +73,7 @@ instructions will try to rely on a minimum of managers.
 #### Homebrew
 
 [Homebrew](https://brew.sh/) is a package manager, and can help install several
-tools that we recommend. See the
+tools that we recommend.
 
 Our recommended way of installing is to run
 [the canonical install command](https://brew.sh/).
