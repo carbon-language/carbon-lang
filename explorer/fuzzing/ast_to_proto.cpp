@@ -147,8 +147,7 @@ static auto ExpressionToProto(const Expression& expression)
     }
 
     case ExpressionKind::OperatorExpression: {
-      const auto& operator_expr =
-          cast<OperatorExpression>(expression);
+      const auto& operator_expr = cast<OperatorExpression>(expression);
       auto* operator_proto = expression_proto.mutable_operator_();
       operator_proto->set_op(OperatorToProtoEnum(operator_expr.op()));
       for (Nonnull<const Expression*> arg : operator_expr.arguments()) {

@@ -488,9 +488,8 @@ class StructTypeLiteral : public Expression {
 
 class OperatorExpression : public Expression {
  public:
-  explicit OperatorExpression(
-      SourceLocation source_loc, Operator op,
-      std::vector<Nonnull<Expression*>> arguments)
+  explicit OperatorExpression(SourceLocation source_loc, Operator op,
+                              std::vector<Nonnull<Expression*>> arguments)
       : Expression(AstNodeKind::OperatorExpression, source_loc),
         op_(op),
         arguments_(std::move(arguments)) {}

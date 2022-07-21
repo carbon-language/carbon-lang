@@ -84,9 +84,8 @@ static auto BinaryOperatorToCarbon(const Fuzzing::Expression& lhs,
   ExpressionToCarbon(rhs, out);
 }
 
-static auto OperatorToCarbon(
-    const Fuzzing::OperatorExpression& operator_expr,
-    llvm::raw_ostream& out) -> void {
+static auto OperatorToCarbon(const Fuzzing::OperatorExpression& operator_expr,
+                             llvm::raw_ostream& out) -> void {
   const Fuzzing::Expression& arg0 =
       !operator_expr.arguments().empty()
           ? operator_expr.arguments(0)

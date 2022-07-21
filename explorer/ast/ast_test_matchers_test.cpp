@@ -68,21 +68,16 @@ TEST(MatchesBinaryOpTest, BasicUsage) {
   // Testing of MatchesMul provides most of the coverage for these matchers,
   // since they are thin wrappers around a common implementation. We only test
   // the others enough to detect copy-paste errors in the wrappers.
-  EXPECT_THAT(
-      OperatorExpression(DummyLoc, Operator::Add, {&two, &three}),
-      MatchesAdd(MatchesLiteral(2), MatchesLiteral(3)));
-  EXPECT_THAT(
-      OperatorExpression(DummyLoc, Operator::And, {&two, &three}),
-      MatchesAnd(MatchesLiteral(2), MatchesLiteral(3)));
-  EXPECT_THAT(
-      OperatorExpression(DummyLoc, Operator::Eq, {&two, &three}),
-      MatchesEq(MatchesLiteral(2), MatchesLiteral(3)));
-  EXPECT_THAT(
-      OperatorExpression(DummyLoc, Operator::Or, {&two, &three}),
-      MatchesOr(MatchesLiteral(2), MatchesLiteral(3)));
-  EXPECT_THAT(
-      OperatorExpression(DummyLoc, Operator::Sub, {&two, &three}),
-      MatchesSub(MatchesLiteral(2), MatchesLiteral(3)));
+  EXPECT_THAT(OperatorExpression(DummyLoc, Operator::Add, {&two, &three}),
+              MatchesAdd(MatchesLiteral(2), MatchesLiteral(3)));
+  EXPECT_THAT(OperatorExpression(DummyLoc, Operator::And, {&two, &three}),
+              MatchesAnd(MatchesLiteral(2), MatchesLiteral(3)));
+  EXPECT_THAT(OperatorExpression(DummyLoc, Operator::Eq, {&two, &three}),
+              MatchesEq(MatchesLiteral(2), MatchesLiteral(3)));
+  EXPECT_THAT(OperatorExpression(DummyLoc, Operator::Or, {&two, &three}),
+              MatchesOr(MatchesLiteral(2), MatchesLiteral(3)));
+  EXPECT_THAT(OperatorExpression(DummyLoc, Operator::Sub, {&two, &three}),
+              MatchesSub(MatchesLiteral(2), MatchesLiteral(3)));
 }
 
 TEST(MatchesReturnTest, BasicUsage) {
