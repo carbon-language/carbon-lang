@@ -48,8 +48,7 @@ auto ReadHashTags(Carbon::StringLexHelper& scan_helper, int hashtag_num)
 // invalid escaping.
 auto ProcessSingleLineString(llvm::StringRef str,
                              Carbon::ParseAndLexContext& context,
-                             int hashtag_num, int leading_quotes)
-    -> Carbon::Parser::symbol_type;
+                             int hashtag_num) -> Carbon::Parser::symbol_type;
 auto ProcessMultiLineString(llvm::StringRef str,
                             Carbon::ParseAndLexContext& context,
                             int hashtag_num) -> Carbon::Parser::symbol_type;
