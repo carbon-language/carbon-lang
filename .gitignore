@@ -28,4 +28,4 @@ compile_commands.json
 .*.swp
 
 # Website build directory
-/docs/dist
+/site
