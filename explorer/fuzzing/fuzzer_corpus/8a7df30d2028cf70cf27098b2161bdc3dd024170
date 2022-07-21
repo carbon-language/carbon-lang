@@ -106,7 +106,7 @@ compilation_unit {
         statements {
           if_statement {
             condition {
-              primitive_operator {
+              operator {
                 op: Eq
                 arguments {
                   identifier {

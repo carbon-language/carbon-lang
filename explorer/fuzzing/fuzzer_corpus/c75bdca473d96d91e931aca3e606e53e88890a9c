@@ -84,10 +84,10 @@ compilation_unit {
         statements {
           return_statement {
             expression {
-              primitive_operator {
+              operator {
                 op: Sub
                 arguments {
-                  primitive_operator {
+                  operator {
                     op: Add
                     arguments {
                       index {

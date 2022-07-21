@@ -46,7 +46,7 @@ compilation_unit {
                 type {
                   expression_pattern {
                     expression {
-                      primitive_operator {
+                      operator {
                         op: Ptr
                         arguments {
                           int_type_literal {
@@ -59,7 +59,7 @@ compilation_unit {
               }
             }
             init {
-              primitive_operator {
+              operator {
                 op: AddressOf
                 arguments {
                   int_literal {

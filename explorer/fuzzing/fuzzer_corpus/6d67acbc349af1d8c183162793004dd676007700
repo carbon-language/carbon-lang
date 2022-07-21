@@ -113,7 +113,7 @@ compilation_unit {
                       }
                     }
                     then_expression {
-                      primitive_operator {
+                      operator {
                         op: Or
                         arguments {
                           bool_literal {
@@ -128,7 +128,7 @@ compilation_unit {
                       }
                     }
                     else_expression {
-                      primitive_operator {
+                      operator {
                         op: And
                         arguments {
                           bool_literal {
@@ -147,7 +147,7 @@ compilation_unit {
                 then_expression {
                   if_expression {
                     condition {
-                      primitive_operator {
+                      operator {
                         op: Not
                         arguments {
                           identifier {
@@ -157,7 +157,7 @@ compilation_unit {
                       }
                     }
                     then_expression {
-                      primitive_operator {
+                      operator {
                         op: Add
                         arguments {
                           int_literal {
@@ -172,7 +172,7 @@ compilation_unit {
                       }
                     }
                     else_expression {
-                      primitive_operator {
+                      operator {
                         op: Mul
                         arguments {
                           int_literal {
@@ -191,7 +191,7 @@ compilation_unit {
                 else_expression {
                   if_expression {
                     condition {
-                      primitive_operator {
+                      operator {
                         op: Not
                         arguments {
                           identifier {
@@ -201,7 +201,7 @@ compilation_unit {
                       }
                     }
                     then_expression {
-                      primitive_operator {
+                      operator {
                         op: Add
                         arguments {
                           int_literal {
@@ -216,7 +216,7 @@ compilation_unit {
                       }
                     }
                     else_expression {
-                      primitive_operator {
+                      operator {
                         op: Mul
                         arguments {
                           int_literal {

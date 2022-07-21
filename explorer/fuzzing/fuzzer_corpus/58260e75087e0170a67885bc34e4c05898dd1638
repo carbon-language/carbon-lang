@@ -21,7 +21,7 @@ compilation_unit {
                     }
                     parameter {
                       fields {
-                        primitive_operator {
+                        operator {
                           op: Neg
                           arguments {
                             bool_literal {

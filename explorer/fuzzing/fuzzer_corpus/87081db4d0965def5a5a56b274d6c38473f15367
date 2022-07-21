@@ -91,7 +91,7 @@ compilation_unit {
                 statements {
                   return_statement {
                     expression {
-                      primitive_operator {
+                      operator {
                         op: Eq
                         arguments {
                           simple_member_access {
@@ -228,7 +228,7 @@ compilation_unit {
                           }
                         }
                         fields {
-                          primitive_operator {
+                          operator {
                             op: Add
                             arguments {
                               int_literal {

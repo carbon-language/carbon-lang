@@ -1931,8 +1931,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       e->set_value_category(ValueCategory::Let);
       e->set_static_type(arena_->New<BoolType>());
       return Success();
-    case ExpressionKind::PrimitiveOperatorExpression: {
-      auto& op = cast<PrimitiveOperatorExpression>(*e);
+    case ExpressionKind::OperatorExpression: {
+      auto& op = cast<OperatorExpression>(*e);
       std::vector<Nonnull<const Value*>> ts;
       for (Nonnull<Expression*> argument : op.arguments()) {
         CARBON_RETURN_IF_ERROR(TypeCheckExp(argument, impl_scope));

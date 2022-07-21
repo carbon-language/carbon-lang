@@ -172,7 +172,7 @@ compilation_unit {
                         fields {
                           name: "n"
                           expression {
-                            primitive_operator {
+                            operator {
                               op: Add
                               arguments {
                                 simple_member_access {
@@ -696,16 +696,16 @@ compilation_unit {
         statements {
           return_statement {
             expression {
-              primitive_operator {
+              operator {
                 op: Add
                 arguments {
-                  primitive_operator {
+                  operator {
                     op: Add
                     arguments {
-                      primitive_operator {
+                      operator {
                         op: Add
                         arguments {
-                          primitive_operator {
+                          operator {
                             op: Mul
                             arguments {
                               identifier {
@@ -720,7 +720,7 @@ compilation_unit {
                           }
                         }
                         arguments {
-                          primitive_operator {
+                          operator {
                             op: Mul
                             arguments {
                               identifier {
@@ -737,7 +737,7 @@ compilation_unit {
                       }
                     }
                     arguments {
-                      primitive_operator {
+                      operator {
                         op: Mul
                         arguments {
                           identifier {

@@ -486,17 +486,17 @@ class StructTypeLiteral : public Expression {
   std::vector<FieldInitializer> fields_;
 };
 
-class PrimitiveOperatorExpression : public Expression {
+class OperatorExpression : public Expression {
  public:
-  explicit PrimitiveOperatorExpression(
+  explicit OperatorExpression(
       SourceLocation source_loc, Operator op,
       std::vector<Nonnull<Expression*>> arguments)
-      : Expression(AstNodeKind::PrimitiveOperatorExpression, source_loc),
+      : Expression(AstNodeKind::OperatorExpression, source_loc),
         op_(op),
         arguments_(std::move(arguments)) {}
 
   static auto classof(const AstNode* node) -> bool {
-    return InheritsFromPrimitiveOperatorExpression(node->kind());
+    return InheritsFromOperatorExpression(node->kind());
   }
 
   auto op() const -> Operator { return op_; }

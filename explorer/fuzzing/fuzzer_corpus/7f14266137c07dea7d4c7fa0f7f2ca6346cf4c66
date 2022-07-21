@@ -31,7 +31,7 @@ compilation_unit {
                 type {
                   expression_pattern {
                     expression {
-                      primitive_operator {
+                      operator {
                         op: Ptr
                         arguments {
                           identifier {
@@ -83,7 +83,7 @@ compilation_unit {
                   simple_member_access {
                     field: "x"
                     object {
-                      primitive_operator {
+                      operator {
                         op: Deref
                         arguments {
                           identifier {
@@ -102,7 +102,7 @@ compilation_unit {
                   simple_member_access {
                     field: "x"
                     object {
-                      primitive_operator {
+                      operator {
                         op: Deref
                         arguments {
                           identifier {
@@ -272,7 +272,7 @@ compilation_unit {
         statements {
           if_statement {
             condition {
-              primitive_operator {
+              operator {
                 op: Eq
                 arguments {
                   simple_member_access {

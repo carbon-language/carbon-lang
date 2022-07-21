@@ -107,16 +107,16 @@ compilation_unit {
               statement {
                 return_statement {
                   expression {
-                    primitive_operator {
+                    operator {
                       op: Add
                       arguments {
-                        primitive_operator {
+                        operator {
                           op: Sub
                           arguments {
-                            primitive_operator {
+                            operator {
                               op: Add
                               arguments {
-                                primitive_operator {
+                                operator {
                                   op: Sub
                                   arguments {
                                     identifier {

@@ -367,13 +367,13 @@ postfix_expression:
     { $$ = arena->New<CallExpression>(context.source_loc(), $1, $2); }
 | postfix_expression POSTFIX_STAR
     {
-      $$ = arena->New<PrimitiveOperatorExpression>(
+      $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::Ptr,
           std::vector<Nonnull<Expression*>>({$1}));
     }
 | postfix_expression UNARY_STAR
     {
-      $$ = arena->New<PrimitiveOperatorExpression>(
+      $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::Ptr,
           std::vector<Nonnull<Expression*>>({$1}));
     }
@@ -382,19 +382,19 @@ ref_deref_expression:
   postfix_expression
 | PREFIX_STAR ref_deref_expression
     {
-      $$ = arena->New<PrimitiveOperatorExpression>(
+      $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::Deref,
           std::vector<Nonnull<Expression*>>({$2}));
     }
 | UNARY_STAR ref_deref_expression
     {
-      $$ = arena->New<PrimitiveOperatorExpression>(
+      $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::Deref,
           std::vector<Nonnull<Expression*>>({$2}));
     }
 | AMPERSAND ref_deref_expression
     {
-      $$ = arena->New<PrimitiveOperatorExpression>(
+      $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::AddressOf,
           std::vector<Nonnull<Expression*>>({$2}));
     }
@@ -410,7 +410,7 @@ combine_lhs:
 combine_expression:
   combine_lhs AMPERSAND ref_deref_expression
     {
-      $$ = arena->New<PrimitiveOperatorExpression>(
+      $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::Combine,
           std::vector<Nonnull<Expression*>>({$1, $3}));
     }
@@ -424,7 +424,7 @@ minus_expression:
   // ref_deref_expression excluded due to precedence diamond.
   MINUS ref_deref_expression
     {
-      $$ = arena->New<PrimitiveOperatorExpression>(
+      $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::Neg,
           std::vector<Nonnull<Expression*>>({$2}));
     }
@@ -441,7 +441,7 @@ multiplicative_expression:
   minus_expression
 | multiplicative_lhs BINARY_STAR multiplicative_operand
     {
-      $$ = arena->New<PrimitiveOperatorExpression>(
+      $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::Mul,
           std::vector<Nonnull<Expression*>>({$1, $3}));
     }
@@ -458,13 +458,13 @@ additive_expression:
   multiplicative_expression
 | additive_lhs PLUS additive_operand
     {
-      $$ = arena->New<PrimitiveOperatorExpression>(
+      $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::Add,
           std::vector<Nonnull<Expression*>>({$1, $3}));
     }
 | additive_lhs MINUS additive_operand
     {
-      $$ = arena->New<PrimitiveOperatorExpression>(
+      $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::Sub,
           std::vector<Nonnull<Expression*>>({$1, $3}));
     }
@@ -476,7 +476,7 @@ as_operand:
 as_expression:
   as_operand AS as_operand
     {
-      $$ = arena->New<PrimitiveOperatorExpression>(
+      $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::As,
           std::vector<Nonnull<Expression*>>{$1, $3});
     }
@@ -505,7 +505,7 @@ comparison_expression:
   value_expression
 | comparison_operand EQUAL_EQUAL comparison_operand
     {
-      $$ = arena->New<PrimitiveOperatorExpression>(
+      $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::Eq,
           std::vector<Nonnull<Expression*>>({$1, $3}));
     }
@@ -513,7 +513,7 @@ comparison_expression:
 not_expression:
   NOT ref_deref_expression
     {
-      $$ = arena->New<PrimitiveOperatorExpression>(
+      $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::Not,
           std::vector<Nonnull<Expression*>>({$2}));
     }
@@ -535,7 +535,7 @@ and_expression:
   // predicate_expression excluded due to precedence diamond.
   and_lhs AND and_or_operand
     {
-      $$ = arena->New<PrimitiveOperatorExpression>(
+      $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::And,
           std::vector<Nonnull<Expression*>>({$1, $3}));
     }
@@ -548,7 +548,7 @@ or_expression:
   // predicate_expression excluded due to precedence diamond.
   or_lhs OR and_or_operand
     {
-      $$ = arena->New<PrimitiveOperatorExpression>(
+      $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::Or,
           std::vector<Nonnull<Expression*>>({$1, $3}));
     }

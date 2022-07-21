@@ -249,7 +249,7 @@ compilation_unit {
         statements {
           return_statement {
             expression {
-              primitive_operator {
+              operator {
                 op: Add
                 arguments {
                   call {

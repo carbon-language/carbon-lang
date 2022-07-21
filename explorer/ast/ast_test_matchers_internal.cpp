@@ -39,9 +39,9 @@ auto MatchesIntLiteralMatcher::MatchAndExplainImpl(
 auto BinaryOperatorExpressionMatcher::MatchAndExplainImpl(
     Nonnull<const AstNode*> node, ::testing::MatchResultListener* out) const
     -> bool {
-  const auto* op = llvm::dyn_cast<PrimitiveOperatorExpression>(node);
+  const auto* op = llvm::dyn_cast<OperatorExpression>(node);
   if (op == nullptr) {
-    *out << "which is not a PrimitiveOperatorExpression";
+    *out << "which is not a OperatorExpression";
     return false;
   }
   if (op->arguments().size() != 2) {

@@ -4,12 +4,12 @@ compilation_unit {
       alternatives {
         signature {
           fields {
-            primitive_operator {
+            operator {
               arguments {
                 intrinsic {
                   argument {
                     fields {
-                      primitive_operator {
+                      operator {
                         arguments {
                           identifier {
                           }

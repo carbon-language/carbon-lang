@@ -37,10 +37,10 @@ compilation_unit {
         statements {
           while_statement {
             condition {
-              primitive_operator {
+              operator {
                 op: Not
                 arguments {
-                  primitive_operator {
+                  operator {
                     op: Eq
                     arguments {
                       identifier {
@@ -65,7 +65,7 @@ compilation_unit {
                     }
                   }
                   rhs {
-                    primitive_operator {
+                    operator {
                       op: Sub
                       arguments {
                         identifier {
@@ -93,7 +93,7 @@ compilation_unit {
                     }
                   }
                   rhs {
-                    primitive_operator {
+                    operator {
                       op: Add
                       arguments {
                         identifier {

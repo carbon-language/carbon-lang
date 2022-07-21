@@ -26,7 +26,7 @@ compilation_unit {
             type {
               expression_pattern {
                 expression {
-                  primitive_operator {
+                  operator {
                     op: Ptr
                     arguments {
                       int_type_literal {
@@ -44,13 +44,13 @@ compilation_unit {
             type {
               expression_pattern {
                 expression {
-                  primitive_operator {
+                  operator {
                     op: Ptr
                     arguments {
-                      primitive_operator {
+                      operator {
                         op: Ptr
                         arguments {
-                          primitive_operator {
+                          operator {
                             op: Ptr
                             arguments {
                               int_type_literal {
@@ -70,7 +70,7 @@ compilation_unit {
       return_term {
         kind: Expression
         type {
-          primitive_operator {
+          operator {
             op: Ptr
             arguments {
               int_type_literal {
@@ -96,7 +96,7 @@ compilation_unit {
               }
             }
             init {
-              primitive_operator {
+              operator {
                 op: Mul
                 arguments {
                   identifier {
@@ -104,7 +104,7 @@ compilation_unit {
                   }
                 }
                 arguments {
-                  primitive_operator {
+                  operator {
                     op: Deref
                     arguments {
                       identifier {
@@ -133,7 +133,7 @@ compilation_unit {
               }
             }
             init {
-              primitive_operator {
+              operator {
                 op: Mul
                 arguments {
                   identifier {
@@ -152,7 +152,7 @@ compilation_unit {
         statements {
           assign {
             lhs {
-              primitive_operator {
+              operator {
                 op: Deref
                 arguments {
                   identifier {
@@ -162,7 +162,7 @@ compilation_unit {
               }
             }
             rhs {
-              primitive_operator {
+              operator {
                 op: Mul
                 arguments {
                   identifier {
@@ -170,7 +170,7 @@ compilation_unit {
                   }
                 }
                 arguments {
-                  primitive_operator {
+                  operator {
                     op: Deref
                     arguments {
                       identifier {
@@ -186,10 +186,10 @@ compilation_unit {
         statements {
           assign {
             lhs {
-              primitive_operator {
+              operator {
                 op: Deref
                 arguments {
-                  primitive_operator {
+                  operator {
                     op: Deref
                     arguments {
                       identifier {
@@ -210,10 +210,10 @@ compilation_unit {
         statements {
           return_statement {
             expression {
-              primitive_operator {
+              operator {
                 op: Deref
                 arguments {
-                  primitive_operator {
+                  operator {
                     op: Deref
                     arguments {
                       identifier {

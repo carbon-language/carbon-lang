@@ -87,7 +87,7 @@ compilation_unit {
                     argument {
                       tuple_literal {
                         fields {
-                          primitive_operator {
+                          operator {
                             op: Add
                             arguments {
                               identifier {

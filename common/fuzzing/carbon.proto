@@ -38,7 +38,7 @@ message IndexExpression {
   optional Expression offset = 2;
 }
 
-message PrimitiveOperatorExpression {
+message OperatorExpression {
   enum Operator {
     UnknownOperator = 0;
     Add = 1;
@@ -156,7 +156,7 @@ message Expression {
     FunctionTypeLiteral function_type = 2;
     SimpleMemberAccessExpression simple_member_access = 3;
     IndexExpression index = 4;
-    PrimitiveOperatorExpression primitive_operator = 5;
+    OperatorExpression operator = 5;
     TupleLiteralExpression tuple_literal = 6;
     StructLiteralExpression struct_literal = 7;
     StructTypeLiteralExpression struct_type_literal = 8;

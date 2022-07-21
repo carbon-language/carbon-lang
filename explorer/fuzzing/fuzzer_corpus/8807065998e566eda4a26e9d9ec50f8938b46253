@@ -55,7 +55,7 @@ compilation_unit {
                     fields {
                       name: "n"
                       expression {
-                        primitive_operator {
+                        operator {
                           op: Add
                           arguments {
                             simple_member_access {

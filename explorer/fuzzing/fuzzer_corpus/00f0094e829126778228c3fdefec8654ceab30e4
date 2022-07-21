@@ -8,7 +8,7 @@ compilation_unit {
               function_type {
                 parameter {
                   fields {
-                    primitive_operator {
+                    operator {
                     }
                   }
                 }

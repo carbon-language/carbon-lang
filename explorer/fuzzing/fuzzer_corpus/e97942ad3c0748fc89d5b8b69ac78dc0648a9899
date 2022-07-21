@@ -54,7 +54,7 @@ compilation_unit {
               statement {
                 return_statement {
                   expression {
-                    primitive_operator {
+                    operator {
                       op: Neg
                       arguments {
                         int_literal {
@@ -79,7 +79,7 @@ compilation_unit {
               statement {
                 return_statement {
                   expression {
-                    primitive_operator {
+                    operator {
                       op: Neg
                       arguments {
                         int_literal {

@@ -49,7 +49,7 @@ compilation_unit {
               statements {
                 if_statement {
                   condition {
-                    primitive_operator {
+                    operator {
                       op: Eq
                       arguments {
                         identifier {
@@ -78,7 +78,7 @@ compilation_unit {
                           }
                         }
                         rhs {
-                          primitive_operator {
+                          operator {
                             op: Sub
                             arguments {
                               identifier {

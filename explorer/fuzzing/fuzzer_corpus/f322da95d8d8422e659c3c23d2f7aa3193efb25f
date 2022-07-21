@@ -170,16 +170,16 @@ compilation_unit {
         statements {
           return_statement {
             expression {
-              primitive_operator {
+              operator {
                 op: Add
                 arguments {
-                  primitive_operator {
+                  operator {
                     op: Add
                     arguments {
-                      primitive_operator {
+                      operator {
                         op: Add
                         arguments {
-                          primitive_operator {
+                          operator {
                             op: Mul
                             arguments {
                               int_literal {
@@ -212,7 +212,7 @@ compilation_unit {
                           }
                         }
                         arguments {
-                          primitive_operator {
+                          operator {
                             op: Mul
                             arguments {
                               int_literal {
@@ -248,7 +248,7 @@ compilation_unit {
                       }
                     }
                     arguments {
-                      primitive_operator {
+                      operator {
                         op: Mul
                         arguments {
                           int_literal {

@@ -30,7 +30,7 @@ compilation_unit {
                           }
                         }
                         size {
-                          primitive_operator {
+                          operator {
                             op: Neg
                             arguments {
                               int_literal {
