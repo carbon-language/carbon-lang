@@ -689,7 +689,7 @@ non_expression_pattern:
       if (alternative_pattern.ok()) {
         $$ = *alternative_pattern;
       } else {
-        context.RecordSyntaxError(alternative_pattern.error().message());
+        context.RecordSyntaxError(std::move(alternative_pattern).error());
         YYERROR;
       }
     }
@@ -923,7 +923,7 @@ function_declaration:
       if (fn.ok()) {
         $$ = *fn;
       } else {
-        context.RecordSyntaxError(fn.error().message());
+        context.RecordSyntaxError(std::move(fn).error());
         YYERROR;
       }
     }
@@ -934,7 +934,7 @@ function_declaration:
       if (fn.ok()) {
         $$ = *fn;
       } else {
-        context.RecordSyntaxError(fn.error().message());
+        context.RecordSyntaxError(std::move(fn).error());
         YYERROR;
       }
     }
@@ -1025,7 +1025,7 @@ declaration:
       if (impl.ok()) {
         $$ = *impl;
       } else {
-        context.RecordSyntaxError(impl.error().message());
+        context.RecordSyntaxError(std::move(impl).error());
         YYERROR;
       }
     }
