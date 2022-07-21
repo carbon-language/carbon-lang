@@ -208,6 +208,8 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
       return arena_->New<PointerValue>(cast<LValue>(*args[0]).address());
     case Operator::Combine:
       return &cast<TypeOfConstraintType>(static_type)->constraint_type();
+    case Operator::As:
+      return Convert(args[0], args[1], source_loc);
   }
 }
 
@@ -420,6 +422,9 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
     }
     case ExpressionKind::PrimitiveOperatorExpression: {
       const auto& op = cast<PrimitiveOperatorExpression>(exp);
+      if (auto rewrite = op.rewritten_form()) {
+        return todo_.ReplaceWith(std::make_unique<LValAction>(*rewrite));
+      }
       if (op.op() != Operator::Deref) {
         CARBON_FATAL()
             << "Can't treat primitive operator expression as lvalue: " << exp;
@@ -1079,6 +1084,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           arena_->New<BoolValue>(cast<BoolLiteral>(exp).value()));
     case ExpressionKind::PrimitiveOperatorExpression: {
       const auto& op = cast<PrimitiveOperatorExpression>(exp);
+      if (auto rewrite = op.rewritten_form()) {
+        return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
+      }
       if (act.pos() != static_cast<int>(op.arguments().size())) {
         //    { {v :: op(vs,[],e,es) :: C, E, F} :: S, H}
         // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}

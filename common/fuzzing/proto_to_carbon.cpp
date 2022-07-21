@@ -106,6 +106,10 @@ static auto PrimitiveOperatorToCarbon(
       PrefixUnaryOperatorToCarbon("&", arg0, out);
       break;
 
+    case Fuzzing::PrimitiveOperatorExpression::As:
+      BinaryOperatorToCarbon(arg0, " as ", arg1, out);
+      break;
+
     case Fuzzing::PrimitiveOperatorExpression::Deref:
       PrefixUnaryOperatorToCarbon("*", arg0, out);
       break;

@@ -115,6 +115,7 @@ enum class Operator {
   Add,
   AddressOf,
   And,
+  As,
   Combine,
   Deref,
   Eq,
@@ -506,9 +507,25 @@ class PrimitiveOperatorExpression : public Expression {
     return arguments_;
   }
 
+  // Set the rewritten form of this expression. Can only be called during type
+  // checking.
+  auto set_rewritten_form(const Expression* rewritten_form) -> void {
+    CARBON_CHECK(!rewritten_form_.has_value()) << "rewritten form set twice";
+    rewritten_form_ = rewritten_form;
+    set_static_type(&rewritten_form->static_type());
+    set_value_category(rewritten_form->value_category());
+  }
+  // Get the rewritten form of this expression. A rewritten form is used when
+  // the expression is rewritten as a function call on an interface. A
+  // rewritten form is not used when providing built-in operator semantics.
+  auto rewritten_form() const -> std::optional<Nonnull<const Expression*>> {
+    return rewritten_form_;
+  }
+
  private:
   Operator op_;
   std::vector<Nonnull<Expression*>> arguments_;
+  std::optional<Nonnull<const Expression*>> rewritten_form_;
 };
 
 using ImplExpMap = std::map<Nonnull<const ImplBinding*>, Nonnull<Expression*>>;

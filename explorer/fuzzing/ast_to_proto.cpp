@@ -37,6 +37,8 @@ static auto OperatorToProtoEnum(const Operator op)
   switch (op) {
     case Operator::AddressOf:
       return Fuzzing::PrimitiveOperatorExpression::AddressOf;
+    case Operator::As:
+      return Fuzzing::PrimitiveOperatorExpression::As;
     case Operator::Deref:
       return Fuzzing::PrimitiveOperatorExpression::Deref;
     case Operator::Neg:

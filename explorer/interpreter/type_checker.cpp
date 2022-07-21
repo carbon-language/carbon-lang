@@ -2052,6 +2052,26 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           op.set_value_category(ValueCategory::Let);
           return Success();
         }
+        case Operator::As: {
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> type,
+              InterpExp(op.arguments()[1], arena_, trace_stream_));
+          CARBON_RETURN_IF_ERROR(
+              ExpectIsConcreteType(op.arguments()[1]->source_loc(), type));
+          ErrorOr<Nonnull<Expression*>> converted =
+              BuildBuiltinMethodCall(impl_scope, op.arguments()[0],
+                                     BuiltinInterfaceName{Builtins::As, type},
+                                     BuiltinMethodCall{"Convert"});
+          if (!converted.ok()) {
+            // We couldn't find a matching `impl`.
+            return CompilationError(e->source_loc())
+                   << "type error in `as`: `" << *ts[0]
+                   << "` is not explicitly convertible to `" << *type << "`:\n"
+                   << converted.error().message();
+          }
+          op.set_rewritten_form(*converted);
+          return Success();
+        }
       }
       break;
     }

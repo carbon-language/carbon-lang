@@ -61,6 +61,8 @@ auto ToString(Operator op) -> std::string_view {
   switch (op) {
     case Operator::Add:
       return "+";
+    case Operator::As:
+      return "as";
     case Operator::AddressOf:
     case Operator::Combine:
       return "&";

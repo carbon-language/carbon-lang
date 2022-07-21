@@ -176,6 +176,15 @@ auto ActionStack::Spawn(std::unique_ptr<Action> child, RuntimeScope scope)
   return Success();
 }
 
+auto ActionStack::ReplaceWith(std::unique_ptr<Action> replacement)
+    -> ErrorOr<Success> {
+  std::unique_ptr<Action> old = todo_.Pop();
+  CARBON_CHECK(replacement->kind() == old->kind())
+      << "ReplaceWith can't change action kind";
+  todo_.Push(std::move(replacement));
+  return Success();
+}
+
 auto ActionStack::RunAgain() -> ErrorOr<Success> {
   Action& action = *todo_.Top();
   action.set_pos(action.pos() + 1);
