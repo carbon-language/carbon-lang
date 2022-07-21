@@ -1,0 +1,8 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+# Legacy key mention for `git-secrets`. The original version was removed but
+# lived on in .gitallowed. We can't get rid of this without a force push which
+# would break forks, probably not worth it for this alone.
+AIzaSyDyAAcQeReDNXVUd_ZdkSzYgqIDJe-kPK8
