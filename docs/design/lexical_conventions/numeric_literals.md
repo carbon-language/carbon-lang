@@ -33,7 +33,8 @@ The following syntaxes are supported:
     -   `123.456` (digits on both sides of the `.`)
     -   `123.456e789` (optional `+` or `-` after the `e`)
     -   `0x1.2p123` (optional `+` or `-` after the `p`)
--   Digit separators (`_`) may be used, but only in conventional locations
+-   Digit separators (`_`) may be used, with
+    [some restrictions](#digit-separators)
 
 Note that real-number literals always contain a `.` with digits on both sides,
 and integer literals never contain a `.`.
