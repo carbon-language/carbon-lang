@@ -2061,8 +2061,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           if (!converted.ok()) {
             // We couldn't find a matching `impl`.
             return CompilationError(e->source_loc())
-                   << "type error in `as`: `" << *ts[0] << "` is not explicitly convertible to `"
-                   << *type << "`:\n" << converted.error().message();
+                   << "type error in `as`: `" << *ts[0]
+                   << "` is not explicitly convertible to `" << *type << "`:\n"
+                   << converted.error().message();
           }
           op.set_rewritten_form(*converted);
           return Success();
