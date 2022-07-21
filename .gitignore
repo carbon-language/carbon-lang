@@ -26,3 +26,6 @@ compile_commands.json
 
 # vim temporary files
 .*.swp
+
+# Website build directory
+/docs/dist
