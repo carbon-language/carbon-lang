@@ -1354,7 +1354,7 @@ instance being created is needed in a factory function, as in:
 
 ```carbon
 class Registered {
-  fn Create() -> Self {
+  fn Make() -> Self {
     returned var result: Self = {...};
     StoreMyPointerSomewhere(&result);
     return var;
@@ -1374,7 +1374,7 @@ class Point {
   fn Distance[me: Self](x2: i32, y2: i32) -> f32 {
     var dx: i32 = x2 - me.x;
     var dy: i32 = y2 - me.y;
-    return Math.Sqrt(dx * dx - dy * dy);
+    return Math.Sqrt(dx * dx + dy * dy);
   }
   // Mutating method declaration
   fn Offset[addr me: Self*](dx: i32, dy: i32);
@@ -1483,8 +1483,8 @@ called `base` with the type of its immediate base class.
 
 ```carbon
 class MyDerivedType extends MyBaseType {
-  fn Create() -> MyDerivedType {
-    return {.base = MyBaseType.Create(), .derived_field = 7};
+  fn Make() -> MyDerivedType {
+    return {.base = MyBaseType.Make(), .derived_field = 7};
   }
   var derived_field: i32;
 }
@@ -1496,7 +1496,7 @@ functions returning `partial Self`. Those functions should be marked
 
 ```carbon
 abstract class AbstractClass {
-  protected fn Create() -> partial Self {
+  protected fn Make() -> partial Self {
     return {.field_1 = 3, .field_2 = 9};
   }
   // ...
@@ -1507,12 +1507,12 @@ abstract class AbstractClass {
 var abc: AbstractClass = ...;
 
 class DerivedFromAbstract extends AbstractClass {
-  fn Create() -> Self {
-    // AbstractClass.Create() returns a
+  fn Make() -> Self {
+    // AbstractClass.Make() returns a
     // `partial AbstractClass` that can be used as
     // the `.base` member when constructing a value
     // of a derived class.
-    return {.base = AbstractClass.Create(),
+    return {.base = AbstractClass.Make(),
             .derived_field = 42 };
   }
 
