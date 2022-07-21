@@ -11,10 +11,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // Error: can't use keyword `Self` as the name of a variable.
-  // TODO: Current error message is unclear, better would be to say
-  // something like: unexpected `Self`, expecting identifier
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_var_named_self.carbon:[[@LINE+1]]: syntax error, unexpected COLON, expecting EQUAL or SEMICOLON
-  var Self : i32 = 0;
-  return Self;
+  var x: i32;
+  // CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/uninitialized/fail_uninitialized_return.carbon:[[@LINE+1]]: undefined behavior: access to uninitialized value Uninit<Placeholder<x>>
+  return x;
 }

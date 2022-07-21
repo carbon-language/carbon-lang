@@ -411,7 +411,9 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
       const auto& def = cast<VariableDefinition>(statement);
       auto* def_proto = statement_proto.mutable_variable_definition();
       *def_proto->mutable_pattern() = PatternToProto(def.pattern());
-      *def_proto->mutable_init() = ExpressionToProto(def.init());
+      if (def.has_init()) {
+        *def_proto->mutable_init() = ExpressionToProto(def.init());
+      }
       def_proto->set_is_returned(def.is_returned());
       break;
     }

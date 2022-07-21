@@ -346,7 +346,9 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
     }
     case StatementKind::VariableDefinition: {
       auto& def = cast<VariableDefinition>(statement);
-      CARBON_RETURN_IF_ERROR(ResolveNames(def.init(), enclosing_scope));
+      if (def.has_init()) {
+        CARBON_RETURN_IF_ERROR(ResolveNames(def.init(), enclosing_scope));
+      }
       CARBON_RETURN_IF_ERROR(ResolveNames(def.pattern(), enclosing_scope));
       if (def.is_returned()) {
         CARBON_CHECK(def.pattern().kind() == PatternKind::BindingPattern)

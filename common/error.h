@@ -6,6 +6,7 @@
 #define CARBON_COMMON_ERROR_H_
 
 #include <string>
+#include <variant>
 
 #include "common/check.h"
 #include "common/ostream.h"

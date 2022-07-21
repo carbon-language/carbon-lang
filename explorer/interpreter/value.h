@@ -47,6 +47,7 @@ class Value {
     NominalClassValue,
     AlternativeValue,
     TupleValue,
+    UninitializedValue,
     ImplWitness,
     SymbolicWitness,
     IntType,
@@ -420,6 +421,22 @@ class AddrValue : public Value {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::AddrValue;
+  }
+
+  auto pattern() const -> const Value& { return *pattern_; }
+
+ private:
+  Nonnull<const Value*> pattern_;
+};
+
+// Value for uninitialized local variables.
+class UninitializedValue : public Value {
+ public:
+  explicit UninitializedValue(Nonnull<const Value*> pattern)
+      : Value(Kind::UninitializedValue), pattern_(pattern) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::UninitializedValue;
   }
 
   auto pattern() const -> const Value& { return *pattern_; }

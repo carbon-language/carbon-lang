@@ -117,8 +117,8 @@ class VariableDefinition : public Statement {
   };
 
   VariableDefinition(SourceLocation source_loc, Nonnull<Pattern*> pattern,
-                     Nonnull<Expression*> init, ValueCategory value_category,
-                     DefinitionType def_type)
+                     std::optional<Nonnull<Expression*>> init,
+                     ValueCategory value_category, DefinitionType def_type)
       : Statement(AstNodeKind::VariableDefinition, source_loc),
         pattern_(pattern),
         init_(init),
@@ -131,17 +131,31 @@ class VariableDefinition : public Statement {
 
   auto pattern() const -> const Pattern& { return *pattern_; }
   auto pattern() -> Pattern& { return *pattern_; }
-  auto init() const -> const Expression& { return *init_; }
-  auto init() -> Expression& { return *init_; }
-  auto value_category() const -> ValueCategory { return value_category_; }
-  auto is_returned() const -> bool { return def_type_ == Returned; };
+
+  auto init() const -> const Expression& {
+    CARBON_CHECK(has_init());
+    return **init_;
+  }
+  auto init() -> Expression& {
+    CARBON_CHECK(has_init());
+    return **init_;
+  }
+
+  auto has_init() const -> bool { return init_.has_value(); }
 
   // Can only be called by type-checking, if a conversion was required.
-  void set_init(Nonnull<Expression*> init) { init_ = init; }
+  void set_init(Nonnull<Expression*> init) {
+    CARBON_CHECK(has_init()) << "should not add a new initializer";
+    init_ = init;
+  }
+
+  auto value_category() const -> ValueCategory { return value_category_; }
+
+  auto is_returned() const -> bool { return def_type_ == Returned; };
 
  private:
   Nonnull<Pattern*> pattern_;
-  Nonnull<Expression*> init_;
+  std::optional<Nonnull<Expression*>> init_;
   ValueCategory value_category_;
   const DefinitionType def_type_;
 };
