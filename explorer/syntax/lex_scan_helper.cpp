@@ -36,13 +36,8 @@ auto ReadHashTags(Carbon::StringLexHelper& scan_helper, const int hashtag_num)
 
 auto ProcessSingleLineString(llvm::StringRef str,
                              Carbon::ParseAndLexContext& context,
-                             const int hashtag_num, const int leading_quotes)
+                             const int hashtag_num)
     -> Carbon::Parser::symbol_type {
-  // """some content" is not a valid string.
-  if (hashtag_num == 0 && leading_quotes == 3) {
-    return context.RecordSyntaxError(llvm::formatv(
-        "single-line string cannot start with `\"\"\"`: {0}", str));
-  }
   if (str.find_first_of(VerticalWhitespaceChars) != llvm::StringRef::npos) {
     return context.RecordSyntaxError(llvm::formatv(
         "vertical whiltespace is not allowed in single-line string: {0}", str));

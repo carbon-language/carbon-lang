@@ -275,22 +275,18 @@ operand_start         [(A-Za-z0-9_\"]
   Carbon::StringLexHelper str_lex_helper(yytext, yyscanner, context);
   const std::string& s = str_lex_helper.str();
   const int hashtag_num = s.find_first_of('"');
-  const int leading_quotes = s.size() - hashtag_num;
-  // Indicates that we are scanning the first line. Will be set to false after
-  // '\n' is scanned.
-  bool first_line = true;
+  const bool is_single_line = s.size() - hashtag_num == 1;
 
   str_lex_helper.Advance();
   while (!str_lex_helper.is_eof()) {
     switch (str_lex_helper.last_char()) {
       case '\n':  // Fall through.
-        first_line = false;
       case '\v':  // Fall through.
       case '\f':  // Fall through.
       case '\r':
         // Only single-line string is possible to start with 1 leading quote.
         // And in this case, vertical whitespace is not allowed.
-        if (leading_quotes == 1) {
+        if (is_single_line) {
           return context.RecordSyntaxError(
               llvm::formatv("missing closing quote in single-line string: {0}",
                             str_lex_helper.str()));
@@ -309,7 +305,7 @@ operand_start         [(A-Za-z0-9_\"]
         // ReadHashTags() stops at next charZ on failure.
         break;
       case '"':
-        if (!first_line) {
+        if (!is_single_line) {
           // Multi-line string can only end with `"""`, check for 2 more '"'s.
           if (!(str_lex_helper.Advance() &&
                 str_lex_helper.last_char() == '"')) {
@@ -323,9 +319,9 @@ operand_start         [(A-Za-z0-9_\"]
         }
         if (Carbon::ReadHashTags(str_lex_helper, hashtag_num)) {
           // Break out of the loop and further process/validate the string.
-          if (first_line) {
-            return Carbon::ProcessSingleLineString(
-                str_lex_helper.str(), context, hashtag_num, leading_quotes);
+          if (is_single_line) {
+            return Carbon::ProcessSingleLineString(str_lex_helper.str(),
+                                                   context, hashtag_num);
           } else {
             return Carbon::ProcessMultiLineString(str_lex_helper.str(), context,
                                                   hashtag_num);
