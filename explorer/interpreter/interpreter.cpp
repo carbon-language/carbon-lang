@@ -1627,6 +1627,9 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
           return todo_.FinishAction();
         }
       } else {
+        Nonnull<const Value*> v =
+            arena_->New<UninitializedValue>(&var_decl.binding().value());
+        todo_.Initialize(&var_decl.binding(), v);
         return todo_.FinishAction();
       }
     }
