@@ -50,7 +50,7 @@ GitHub will autolink `img`, but won't produce a link when `href="#"`.
 -   Batteries-included approach: compiler, libraries, docs, tools, package
     manager, and more
 
-## Why build Carbon?
+## Why Build Carbon?
 
 C++ remains the dominant programming language for performance-critical software,
 with massive and growing codebases and investments. However, it is struggling to
@@ -115,7 +115,7 @@ We also have explicit _non-goals_ for Carbon, notably including:
 Our detailed [goals](/docs/project/goals.md) document fleshes out these ideas
 and provides a deeper view into our goals for the Carbon project and language.
 
-## Project status
+## Project Status
 
 Carbon is currently an experimental project. We want to better understand
 whether we can build a language that meets our successor language criteria, and
@@ -228,7 +228,7 @@ In addition to easy and powerful interop with C++, Carbon templates can be
 constrained and incrementally migrated to checked generics at a fine granularity
 and with a smooth evolutionary path.
 
-## Memory safety
+## Memory Safety
 
 Safety, and especially
 [memory safety](https://en.wikipedia.org/wiki/Memory_safety), remain key
@@ -254,7 +254,7 @@ Meanwhile, we are closely watching and learning from efforts to add memory safe
 semantics onto C++ such as Rust-inspired
 [lifetime annotations](https://discourse.llvm.org/t/rfc-lifetime-annotations-for-c/61377).
 
-## Getting started
+## Getting Started
 
 You can get started playing with Carbon by checking out the codebase and using
 the Carbon explorer:
