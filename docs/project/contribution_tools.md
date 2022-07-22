@@ -23,6 +23,7 @@ contributions.
     -   [Clang and LLVM](#clang-and-llvm)
         -   [Manual installations (not recommended)](#manual-installations-not-recommended)
         -   [Troubleshooting build issues](#troubleshooting-build-issues)
+    -   [ZLib](#zlib)   
     -   [pre-commit](#pre-commit)
 -   [Optional tools](#optional-tools)
     -   [Carbon-maintained](#carbon-maintained)
@@ -198,6 +199,13 @@ grep llvm_bindir $(bazel info workspace)/bazel-execroot/external/bazel_cc_toolch
 These commands will help diagnose potential build issues because they'll expose
 what's occurring with
 [clang detection](/bazel/cc_toolchains/clang_configuration.bzl).
+
+### ZLib
+On **Linux**, you need to have the ZLib development package installed:
+
+```bash
+sudo apt install zlib1g-dev
+```
 
 ### pre-commit
 
