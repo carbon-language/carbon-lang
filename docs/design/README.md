@@ -2797,7 +2797,7 @@ Carbon code and the other way around. This ability achieves two goals:
 -   Allows sharing a code and library ecosystem with C and C++.
 -   Allows incremental migration to Carbon from C and C++.
 
-Carbon's approach to interopp is most similar to
+Carbon's approach to interop is most similar to
 [Java/Kotlin interop](interoperability/philosophy_and_goals.md#other-interoperability-layers),
 where the two languages are different, but share enough of runtime model that
 data from one side can be used from the other. For example, C++ and Carbon will
