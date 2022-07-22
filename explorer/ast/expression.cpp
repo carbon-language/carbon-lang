@@ -81,6 +81,14 @@ auto ToString(Operator op) -> std::string_view {
       return "or";
     case Operator::Eq:
       return "==";
+    case Operator::Lt:
+      return "<";
+    case Operator::Le:
+      return "<=";
+    case Operator::Gt:
+      return ">";
+    case Operator::Ge:
+      return ">=";
   }
 }
 

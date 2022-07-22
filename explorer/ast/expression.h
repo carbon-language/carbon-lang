@@ -119,12 +119,16 @@ enum class Operator {
   Combine,
   Deref,
   Eq,
+  Ge,
+  Gt,
+  Le,
+  Lt,
   Mul,
   Neg,
   Not,
   Or,
-  Sub,
   Ptr,
+  Sub,
 };
 
 // Returns the lexical representation of `op`, such as "+" for `Add`.

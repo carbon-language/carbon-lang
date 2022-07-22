@@ -54,6 +54,10 @@ message OperatorExpression {
     Ptr = 11;
     Combine = 12;
     As = 13;
+    Lt = 14;
+    Le = 15;
+    Gt = 16;
+    Ge = 17;
   }
   optional Operator op = 1;
   repeated Expression arguments = 2;

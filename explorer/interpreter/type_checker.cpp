@@ -2009,6 +2009,30 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           op.set_static_type(arena_->New<BoolType>());
           op.set_value_category(ValueCategory::Let);
           return Success();
+        case Operator::Lt:
+          CARBON_RETURN_IF_ERROR(
+              ExpectExactType(e->source_loc(), "<", ts[0], ts[1], impl_scope));
+          op.set_static_type(arena_->New<BoolType>());
+          op.set_value_category(ValueCategory::Let);
+          return Success();
+        case Operator::Le:
+          CARBON_RETURN_IF_ERROR(
+              ExpectExactType(e->source_loc(), "<=", ts[0], ts[1], impl_scope));
+          op.set_static_type(arena_->New<BoolType>());
+          op.set_value_category(ValueCategory::Let);
+          return Success();
+        case Operator::Gt:
+          CARBON_RETURN_IF_ERROR(
+              ExpectExactType(e->source_loc(), ">", ts[0], ts[1], impl_scope));
+          op.set_static_type(arena_->New<BoolType>());
+          op.set_value_category(ValueCategory::Let);
+          return Success();
+        case Operator::Ge:
+          CARBON_RETURN_IF_ERROR(
+              ExpectExactType(e->source_loc(), ">=", ts[0], ts[1], impl_scope));
+          op.set_static_type(arena_->New<BoolType>());
+          op.set_value_category(ValueCategory::Let);
+          return Success();
         case Operator::Deref:
           CARBON_RETURN_IF_ERROR(
               ExpectPointerType(e->source_loc(), "*", ts[0]));

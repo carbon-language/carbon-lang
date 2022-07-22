@@ -61,6 +61,8 @@ FALSE                "false"
 FN                   "fn"
 FN_TYPE              "__Fn"
 FORALL               "forall"
+GREATER_EQUAL        ">="
+GREATER_THAN         ">"
 IF                   "if"
 IMPL                 "impl"
 IMPORT               "import"
@@ -69,6 +71,8 @@ IS                   "is"
 LEFT_CURLY_BRACE     "{"
 LEFT_PARENTHESIS     "("
 LEFT_SQUARE_BRACKET  "["
+LESS_EQUAL           "<="
+LESS_THAN            "<"
 LET                  "let"
 LIBRARY              "library"
 MATCH                "match"
@@ -149,6 +153,8 @@ operand_start         [(A-Za-z0-9_\"]
 {FN_TYPE}             { return CARBON_SIMPLE_TOKEN(FN_TYPE);             }
 {FN}                  { return CARBON_SIMPLE_TOKEN(FN);                  }
 {FORALL}              { return CARBON_SIMPLE_TOKEN(FORALL);              }
+{GREATER_EQUAL}       { return CARBON_SIMPLE_TOKEN(GREATER_EQUAL);       }
+{GREATER_THAN}        { return CARBON_SIMPLE_TOKEN(GREATER_THAN);        }
 {IF}                  { return CARBON_SIMPLE_TOKEN(IF);                  }
 {IMPL}                { return CARBON_SIMPLE_TOKEN(IMPL);                }
 {IMPORT}              { return CARBON_SIMPLE_TOKEN(IMPORT);              }
@@ -157,6 +163,8 @@ operand_start         [(A-Za-z0-9_\"]
 {LEFT_CURLY_BRACE}    { return CARBON_SIMPLE_TOKEN(LEFT_CURLY_BRACE);    }
 {LEFT_PARENTHESIS}    { return CARBON_SIMPLE_TOKEN(LEFT_PARENTHESIS);    }
 {LEFT_SQUARE_BRACKET} { return CARBON_SIMPLE_TOKEN(LEFT_SQUARE_BRACKET); }
+{LESS_EQUAL}          { return CARBON_SIMPLE_TOKEN(LESS_EQUAL);          }
+{LESS_THAN}           { return CARBON_SIMPLE_TOKEN(LESS_THAN);           }
 {LET}                 { return CARBON_SIMPLE_TOKEN(LET);                 }
 {LIBRARY}             { return CARBON_SIMPLE_TOKEN(LIBRARY);             }
 {MATCH}               { return CARBON_SIMPLE_TOKEN(MATCH);               }
@@ -166,8 +174,8 @@ operand_start         [(A-Za-z0-9_\"]
 {PACKAGE}             { return CARBON_SIMPLE_TOKEN(PACKAGE);             }
 {PERIOD}              { return CARBON_SIMPLE_TOKEN(PERIOD);              }
 {PLUS}                { return CARBON_SIMPLE_TOKEN(PLUS);                }
-{RETURNED}            { return CARBON_SIMPLE_TOKEN(RETURNED);            }
 {RETURN}              { return CARBON_SIMPLE_TOKEN(RETURN);              }
+{RETURNED}            { return CARBON_SIMPLE_TOKEN(RETURNED);            }
 {RUN}                 { return CARBON_SIMPLE_TOKEN(RUN);                 }
 {SELF}                { return CARBON_SIMPLE_TOKEN(SELF);                }
 {SEMICOLON}           { return CARBON_SIMPLE_TOKEN(SEMICOLON);           }
