@@ -13,7 +13,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   <a href="#join-us">Join us</a>
 </p>
 
-**See our [announcement video](https://youtu.be/omrY53kbVoA) from [CppNorth](https://cppnorth.ca/)**
+**See our [announcement video](https://youtu.be/omrY53kbVoA) from
+[CppNorth](https://cppnorth.ca/)**
 
 <a href="docs/images/snippets.md#quicksort">
 <!--
