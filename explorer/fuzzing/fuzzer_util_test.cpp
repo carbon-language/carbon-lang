@@ -27,7 +27,7 @@ TEST(FuzzerUtilTest, RunFuzzerOnCorpus) {
     std::stringstream contents;
     contents << file.rdbuf();
     // Parsing errors are ignored to make the fuzzer inputs less brittle as the
-    // exlorer code changes. This also matches standard fuzzer behavior.
+    // explorer code changes. This also matches standard fuzzer behavior.
     if (auto carbon_proto = ParseCarbonTextProto(contents.str());
         carbon_proto.ok()) {
       ParseAndExecute(carbon_proto->compilation_unit());
