@@ -177,8 +177,8 @@ strategies that allow operations performed through the pointer to the base type
 work independent of which derived type it actually points to. These strategies
 include:
 
--   Arranging for the the data layout of derived types to start with the data
-    layout of the base type as a prefix.
+-   Arranging for the data layout of derived types to start with the data layout
+    of the base type as a prefix.
 -   Putting a pointer to a table of function pointers, a
     [_vtable_](https://en.wikipedia.org/wiki/Virtual_method_table), as the first
     data member of the object. This allows methods to be
@@ -892,7 +892,7 @@ c.Expand(0.5);
 Assert(Math.Abs(c.Diameter() - 4.0) < 0.001);
 ```
 
--   Methods are called using using the dot `.` member syntax, `c.Diameter()` and
+-   Methods are called using the dot `.` member syntax, `c.Diameter()` and
     `c.Expand(`...`)`.
 -   `Diameter` computes and returns the diameter of the circle without modifying
     the `Circle` instance. This is signified using `[me: Self]` in the method

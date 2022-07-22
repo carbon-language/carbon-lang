@@ -1401,8 +1401,8 @@ two methods `Distance` and `Offset`:
 -   Methods are defined as class functions with a `me` parameter inside square
     brackets `[`...`]` before the regular explicit parameter list in parens
     `(`...`)`.
--   Methods are called using using the member syntax, `origin.Distance(`...`)`
-    and `origin.Offset(`...`)`.
+-   Methods are called using the member syntax, `origin.Distance(`...`)` and
+    `origin.Offset(`...`)`.
 -   `Distance` computes and returns the distance to another point, without
     modifying the `Point`. This is signified using `[me: Self]` in the method
     declaration.
@@ -1440,7 +1440,7 @@ base class MyBaseClass { ... }
 ```
 
 Either kind of base class may be _extended_ to get a _derived class_. Derived
-classes are final unless they are themselved declared `base` or `abstract`.
+classes are final unless they are themselves declared `base` or `abstract`.
 Classes may only extend a single class. Carbon only supports single inheritance,
 and will use mixins instead of multiple inheritance.
 
@@ -1458,8 +1458,8 @@ by one of these three keywords:
 
 -   A method marked `virtual` has a definition in this class but not in any
     base.
--   A method marked `abstract` does not have have a definition in this class,
-    but must have a definition in any non-`abstract` derived class.
+-   A method marked `abstract` does not have a definition in this class, but
+    must have a definition in any non-`abstract` derived class.
 -   A method marked `impl` has a definition in this class, overriding any
     definition in a base class.
 
@@ -2797,7 +2797,7 @@ Carbon code and the other way around. This ability achieves two goals:
 -   Allows sharing a code and library ecosystem with C and C++.
 -   Allows incremental migration to Carbon from C and C++.
 
-Carbon's approach to interopp is most similar to
+Carbon's approach to interop is most similar to
 [Java/Kotlin interop](interoperability/philosophy_and_goals.md#other-interoperability-layers),
 where the two languages are different, but share enough of runtime model that
 data from one side can be used from the other. For example, C++ and Carbon will

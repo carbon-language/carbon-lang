@@ -51,7 +51,7 @@ struct Font {
   [[nodiscard]] fn FindTable(tag: uint32_t) const -> const Table*;
 };
 
-// Accomodates both singular (OTF, TTF) and collection (TTC) fonts
+// Accommodates both singular (OTF, TTF) and collection (TTC) fonts
 struct FontCollection {
   uint32_t flavor;
   uint32_t header_version;
