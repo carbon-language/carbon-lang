@@ -219,7 +219,7 @@ required):
     # Synchronize the upstream tracking branch for the first PR.
     git push upstream HEAD:pull-N-feature-basic
 
-    # Merge changes from the the first PR (now including changes from trunk)
+    # Merge changes from the first PR (now including changes from trunk)
     # without disrupting history.
     git checkout next-feature-extension
     git merge feature-basic
