@@ -1440,7 +1440,7 @@ base class MyBaseClass { ... }
 ```
 
 Either kind of base class may be _extended_ to get a _derived class_. Derived
-classes are final unless they are themselved declared `base` or `abstract`.
+classes are final unless they are themselves declared `base` or `abstract`.
 Classes may only extend a single class. Carbon only supports single inheritance,
 and will use mixins instead of multiple inheritance.
 
