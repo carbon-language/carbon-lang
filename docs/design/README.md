@@ -1401,8 +1401,8 @@ two methods `Distance` and `Offset`:
 -   Methods are defined as class functions with a `me` parameter inside square
     brackets `[`...`]` before the regular explicit parameter list in parens
     `(`...`)`.
--   Methods are called using using the member syntax, `origin.Distance(`...`)`
-    and `origin.Offset(`...`)`.
+-   Methods are called using the member syntax, `origin.Distance(`...`)` and
+    `origin.Offset(`...`)`.
 -   `Distance` computes and returns the distance to another point, without
     modifying the `Point`. This is signified using `[me: Self]` in the method
     declaration.

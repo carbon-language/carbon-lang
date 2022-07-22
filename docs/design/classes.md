@@ -892,7 +892,7 @@ c.Expand(0.5);
 Assert(Math.Abs(c.Diameter() - 4.0) < 0.001);
 ```
 
--   Methods are called using using the dot `.` member syntax, `c.Diameter()` and
+-   Methods are called using the dot `.` member syntax, `c.Diameter()` and
     `c.Expand(`...`)`.
 -   `Diameter` computes and returns the diameter of the circle without modifying
     the `Circle` instance. This is signified using `[me: Self]` in the method
