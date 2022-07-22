@@ -1458,8 +1458,8 @@ by one of these three keywords:
 
 -   A method marked `virtual` has a definition in this class but not in any
     base.
--   A method marked `abstract` does not have have a definition in this class,
-    but must have a definition in any non-`abstract` derived class.
+-   A method marked `abstract` does not have a definition in this class, but
+    must have a definition in any non-`abstract` derived class.
 -   A method marked `impl` has a definition in this class, overriding any
     definition in a base class.
 
