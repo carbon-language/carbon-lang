@@ -184,8 +184,9 @@ After installing from Homebrew, you may need to open a new shell to get `$PATH`
 changes. It may also be necessary to run `bazel clean` in order to clean up
 cached state.
 
-If issues continue, please ask on [#build-help](#) TODO link, providing the
-output of the following diagnostic commands:
+If issues continue, please ask on
+[#build-help](https://discord.com/channels/655572317891461132/824137170032787467),
+providing the output of the following diagnostic commands:
 
 ```shell
 brew --prefix llvm
