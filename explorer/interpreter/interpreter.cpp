@@ -1167,7 +1167,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               break;
             case 2:
               llvm::outs() << llvm::formatv(format_string,
-                  cast<IntValue>(*args[1]).value());
+                                            cast<IntValue>(*args[1]).value());
               break;
             default:
               CARBON_FATAL() << "Unexpected arg count: " << args.size();
