@@ -1156,14 +1156,17 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       switch (cast<IntrinsicExpression>(exp).intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print: {
           const auto& args = cast<TupleValue>(*act.results()[0]).elements();
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> format_string_value,
+              Convert(args[0], arena_->New<StringType>(), exp.source_loc()));
+          const char* format_string =
+              cast<StringValue>(*format_string_value).value().c_str();
           switch (args.size()) {
             case 1:
-              llvm::outs() << llvm::formatv(
-                  cast<StringValue>(*args[0]).value().c_str());
+              llvm::outs() << llvm::formatv(format_string);
               break;
             case 2:
-              llvm::outs() << llvm::formatv(
-                  cast<StringValue>(*args[0]).value().c_str(),
+              llvm::outs() << llvm::formatv(format_string,
                   cast<IntValue>(*args[1]).value());
               break;
             default:
