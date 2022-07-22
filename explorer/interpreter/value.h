@@ -126,7 +126,7 @@ class EqualityContext {
       -> bool = 0;
 
  protected:
-  ~EqualityContext() = default;
+  virtual ~EqualityContext() = default;
 };
 
 auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
