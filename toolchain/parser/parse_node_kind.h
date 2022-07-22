@@ -41,7 +41,7 @@ class ParseNodeKind {
   }
 #include "toolchain/parser/parse_node_kind.def"
 
-  // The default constructor is deleted as objects of this type should always be
+  // The default constructor is deleted as the objects of this type should always be
   // constructed using the above factory functions for each unique kind.
   ParseNodeKind() = delete;
 
@@ -57,7 +57,7 @@ class ParseNodeKind {
 
   // Enable conversion to our private enum, including in a `constexpr` context,
   // to enable usage in `switch` and `case`. The enum remains private and
-  // nothing else should be using this.
+  // nothing else should be using it.
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr operator KindEnum() const { return kind_; }
 
