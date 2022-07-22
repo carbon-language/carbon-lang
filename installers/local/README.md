@@ -6,8 +6,9 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-This installs carbon-explorer locally for experimental use on Mac/Linux. Bear in
-mind that Carbon Language is **experimental** and still has no compiler. See
+This installs carbon-explorer locally for experimental use on Mac/Linux. It's
+not recommended for most users. Bear in mind that Carbon Language is
+**experimental** and still has no compiler. See
 [our project status](/README.md#project-status) for more information.
 
 To install to /usr, run:
