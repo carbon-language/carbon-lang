@@ -211,7 +211,7 @@ required):
     # Update your fork (optional).
     git push
 
-    # Merge changes from upstream into your branch without disrpting history.
+    # Merge changes from upstream into your branch without disrupting history.
     git checkout feature-basic
     git merge trunk
     # Push to the first PR on your fork.
