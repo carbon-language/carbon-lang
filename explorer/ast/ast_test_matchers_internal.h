@@ -104,10 +104,10 @@ class MatchesIntLiteralMatcher : public AstNodeMatcherBase {
   int value_;
 };
 
-// Matches a PrimitiveOperatorExpression that has two operands.
+// Matches a OperatorExpression that has two operands.
 class BinaryOperatorExpressionMatcher : public AstNodeMatcherBase {
  public:
-  // Constructs a matcher which matches a PrimitiveOperatorExpression whose
+  // Constructs a matcher which matches a OperatorExpression whose
   // operator is `op`, and which has two operands that match `lhs` and `rhs`
   // respectively.
   explicit BinaryOperatorExpressionMatcher(Operator op,
