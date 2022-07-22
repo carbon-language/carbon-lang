@@ -60,12 +60,12 @@ accumulating decades of technical debt. Incrementally improving C++ is
 the technical debt itself and challenges with its evolution process. The best
 way to address these problems is to avoid inheriting the legacy of C or C++
 directly, and instead start with solid language foundations like a
-[modern generics system](#generics), modular code organization, and consistent,
+[modern generics system](#generics), modular code organization, and consistent
 simple syntax.
 
 Existing modern languages already provide an excellent developer experience: Go,
 Swift, Kotlin, Rust, and many more. **Developers that _can_ use one of these
-existing languages _should_.** Unfortunately, the designs of these languages
+existing languages, _should_.** Unfortunately, the designs of these languages
 present significant barriers to adoption and migration from C++. These barriers
 range from changes in the idiomatic design of software to performance overhead.
 
@@ -203,7 +203,7 @@ code to help you switch an existing C++ codebase to Carbon.
 
 Carbon provides a
 **[modern generics system](/docs/design/generics/overview.md#what-are-generics)**
-with checked definitions, while still **supporting opt-in
+with checked definitions while still **supporting opt-in
 [templates](/docs/design/templates.md) for seamless C++ interop**. Checked
 generics provide several advantages compared to C++ templates:
 
@@ -220,7 +220,7 @@ generics provide several advantages compared to C++ templates:
     implementation details and a clearer contract for consumers.
 
 Without sacrificing these advantages, **Carbon generics support
-specialization**, ensuring it can fully address performance-critical use cases
+specialization** ensures it can fully address performance-critical use cases
 of C++ templates. For more details about Carbon's generics, see their
 [design](/docs/design/generics).
 
@@ -296,7 +296,7 @@ contribute.
     [our Carbon release post on GitHub](https://github.com/carbon-language/carbon-lang/discussions/1020)
     and [star carbon-lang](https://github.com/carbon-language/carbon-lang).
 -   To join the design discussion, join our
-    [our GitHub forum](https://github.com/carbon-language/carbon-lang/discussions).
+    [our Github forum](https://github.com/carbon-language/carbon-lang/discussions).
 -   See our [code of conduct](CODE_OF_CONDUCT.md) and
     [contributing guidelines](CONTRIBUTING.md) for information about the Carbon
     development community.
