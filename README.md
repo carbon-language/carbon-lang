@@ -266,6 +266,7 @@ $ brew install bazelisk
 # Install Clang/LLVM using Homebrew.
 # Many Clang/LLVM releases aren't built with options we rely on.
 $ brew install llvm
+# MacOS only
 $ export PATH="$(brew --prefix llvm)/bin:${PATH}"
 
 # Download Carbon's code.
