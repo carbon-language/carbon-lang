@@ -5,11 +5,11 @@
 #include "explorer/interpreter/type_checker.h"
 
 #include <algorithm>
+#include <iostream>
 #include <iterator>
 #include <map>
 #include <set>
 #include <vector>
-#include <iostream>
 
 #include "common/error.h"
 #include "common/ostream.h"
@@ -434,7 +434,8 @@ auto TypeChecker::IsImplicitlyConvertible(
         case Value::Kind::StaticArrayType: {
           const auto& destination_array = cast<StaticArrayType>(*destination);
           if (destination_array.implicit()) {
-            // mark destination_array explicit and infer source_tuple's elements size to array's size
+            // mark destination_array explicit and infer source_tuple's elements
+            // size to array's size
             destination_array.set_size(source_tuple.elements().size());
             destination_array.set_explicit();
           }

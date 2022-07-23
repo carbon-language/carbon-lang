@@ -1265,7 +1265,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             &array_literal.size_expression()));
       } else {
         return todo_.FinishAction(arena_->New<StaticArrayType>(
-            act.results()[0], cast<IntValue>(act.results()[1])->value(), false)); // mark explicit
+            act.results()[0], cast<IntValue>(act.results()[1])->value(),
+            false));  // mark explicit
       }
     }
     case ExpressionKind::ImplicitSizedArrayTypeLiteral: {
@@ -1275,7 +1276,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             &array_literal.element_type_expression()));
       } else {
         return todo_.FinishAction(arena_->New<StaticArrayType>(
-            act.results()[0], -1, true)); // mark implicit, size needs to be infered
+            act.results()[0], -1,
+            true));  // mark implicit, size needs to be inffered
       }
     }
   }  // switch (exp->kind)
