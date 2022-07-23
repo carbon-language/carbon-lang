@@ -5,7 +5,7 @@
 FROM centos:centos7.9.2009
 
 # install
-RUN yum -y install zlib zlib-devel curl perl-ExtUtils-CBuilder perl-ExtUtils-MakeMaker gcc gcc-c++ curl-devel expat-devel gettext-devel openssl-devel expect make wget gettext zip unzip scl-utils \
+RUN yum -y install which zlib zlib-devel curl perl-ExtUtils-CBuilder perl-ExtUtils-MakeMaker gcc gcc-c++ curl-devel expat-devel gettext-devel openssl-devel expect make wget gettext zip unzip scl-utils \
     && yum -y install centos-release-scl \
     && yum -y install devtoolset-7-gcc* \
     && mkdir -p /data/App \
