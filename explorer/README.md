@@ -225,7 +225,7 @@ so the expected result of this program is `2`.
 
 ```carbon
 fn Main() -> Int {
-  var Int: x = 0;
+  var x: Int = 0;
   __continuation k {
     x = x + 1;
     __await;
