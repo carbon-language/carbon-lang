@@ -357,7 +357,7 @@ class RE2 {
     return f(sp, re, nullptr, 0);
   }
 
-  // TODO (variadics)
+  // TODO: (variadics)
   // TODO: template <typename F, typename SP, typename... A>
   // TODO: static inline bool Apply(F f, SP sp, const RE2& re, const A&... a) {
   // TODO:   const Arg* const args[] = {&a...};
