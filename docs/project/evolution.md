@@ -93,9 +93,9 @@ language are well explained, justified, and reviewed by the community.
     consensus among the contributors outside of the identified blocking issues.
     Contributors should have a reasonable chance to raise concerns, and where
     needed they should become blocking issues. Community consensus isn't
-    intended to be perfect, and is ultimately a judgment call by the
-    lead. When things are missed or mistakes are made here, we should just
-    revert or fix-forward as usual.
+    intended to be perfect, and is ultimately a judgment call by the lead. When
+    things are missed or mistakes are made here, we should just revert or
+    fix-forward as usual.
 
 -   Once a reasonable degree of community consensus is reached and the assigned
     lead finishes code review, the lead should
