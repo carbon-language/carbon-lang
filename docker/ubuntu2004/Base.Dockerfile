@@ -23,10 +23,11 @@ RUN brew install python@3.9
 RUN brew install bazelisk
 RUN brew install llvm
 
-USER root
-
-
 RUN export PATH="$(brew --prefix llvm)/bin:${PATH}"
 
 RUN pip3 install -U pip
 RUN pip3 install pre-commit
+RUN $(brew --prefix)/opt/python/libexec/bin
+
+USER root
+
