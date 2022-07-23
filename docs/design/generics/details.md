@@ -2812,7 +2812,7 @@ function as an argument to a parameterized type, as in the previous case, and in
 addition the function needs the result to implement a specific interface.
 
 ```
-// Some parametized type.
+// Some parameterized type.
 class Vector(T:! Type) { ... }
 
 // Parameterized type implements interface only for some arguments.

@@ -51,7 +51,7 @@ abstract class Expression : AstNode;
   class IntTypeLiteral : Expression;
   class ContinuationTypeLiteral : Expression;
   class IntLiteral : Expression;
-  class PrimitiveOperatorExpression : Expression;
+  class OperatorExpression : Expression;
   class StringLiteral : Expression;
   class StringTypeLiteral : Expression;
   class TupleLiteral : Expression;

@@ -13,6 +13,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   <a href="#join-us">Join us</a>
 </p>
 
+**See our [announcement video](https://youtu.be/omrY53kbVoA) from
+[CppNorth](https://cppnorth.ca/)**
+
 <a href="docs/images/snippets.md#quicksort">
 <!--
 Edit snippet in docs/images/snippets.md and:
@@ -296,7 +299,7 @@ contribute.
     [our Carbon release post on GitHub](https://github.com/carbon-language/carbon-lang/discussions/1020)
     and [star carbon-lang](https://github.com/carbon-language/carbon-lang).
 -   To join the design discussion, join our
-    [our Github forum](https://github.com/carbon-language/carbon-lang/discussions).
+    [our GitHub forum](https://github.com/carbon-language/carbon-lang/discussions).
 -   See our [code of conduct](CODE_OF_CONDUCT.md) and
     [contributing guidelines](CONTRIBUTING.md) for information about the Carbon
     development community.

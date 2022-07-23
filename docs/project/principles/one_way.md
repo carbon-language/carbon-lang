@@ -55,8 +55,8 @@ A couple examples of this in other languages are:
 
 In Carbon, we will prefer providing only one way to do a given thing. That is,
 given a syntax scenario where multiple design options are available, we will
-tend to provide _one_ option rather than than providing several and letting
-users choose. This echoes Python's principle.
+tend to provide _one_ option rather than providing several and letting users
+choose. This echoes Python's principle.
 
 Minimizing choices serves several goals:
 
