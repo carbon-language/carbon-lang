@@ -3,6 +3,7 @@
 
 const lightCodeTheme = require('prism-react-renderer/themes/github');
 const darkCodeTheme = require('prism-react-renderer/themes/dracula');
+const transformLinks = require('./src/plugins/transformLinks');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -35,6 +36,7 @@ const config = {
           routeBasePath: 'design',
           sidebarPath: undefined,
           editUrl: 'https://github.com/carbon-language/carbon-lang/blob/trunk/',
+          beforeDefaultRemarkPlugins: [transformLinks],
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
@@ -52,6 +54,7 @@ const config = {
         routeBasePath: 'spec',
         sidebarPath: undefined,
         editUrl: 'https://github.com/carbon-language/carbon-lang/blob/trunk/',
+        beforeDefaultRemarkPlugins: [transformLinks],
       },
     ],
     [
@@ -62,6 +65,7 @@ const config = {
         routeBasePath: 'project',
         sidebarPath: undefined,
         editUrl: 'https://github.com/carbon-language/carbon-lang/blob/trunk/',
+        beforeDefaultRemarkPlugins: [transformLinks],
       },
     ],
   ],
