@@ -13,32 +13,35 @@ contributions.
 
 ## Table of contents
 
--   [Tool setup flow](#tool-setup-flow)
--   [Package managers](#package-managers)
-    -   [Linux and MacOS](#linux-and-macos)
-        -   [Homebrew](#homebrew)
-        -   [`python3` and `pip3`](#python3-and-pip3)
--   [Main tools](#main-tools)
-    -   [Bazel and Bazelisk](#bazel-and-bazelisk)
-    -   [Clang and LLVM](#clang-and-llvm)
-        -   [Manual installations (not recommended)](#manual-installations-not-recommended)
-        -   [Troubleshooting build issues](#troubleshooting-build-issues)
-    -   [pre-commit](#pre-commit)
--   [Optional tools](#optional-tools)
-    -   [Carbon-maintained](#carbon-maintained)
-        -   [new_proposal.py](#new_proposalpy)
-        -   [pr_comments.py](#pr_commentspy)
-    -   [GitHub](#github)
-        -   [gh CLI](#gh-cli)
-        -   [GitHub Desktop](#github-desktop)
-    -   [`rs-git-fsmonitor` and Watchman](#rs-git-fsmonitor-and-watchman)
-    -   [Vim](#vim)
-        -   [vim-prettier](#vim-prettier)
-    -   [Visual Studio Code](#visual-studio-code)
-    -   [pre-commit enabled tools](#pre-commit-enabled-tools)
-        -   [black](#black)
-        -   [codespell](#codespell)
-        -   [Prettier](#prettier)
+- [Contribution tools](#contribution-tools)
+  - [Table of contents](#table-of-contents)
+  - [Tool setup flow](#tool-setup-flow)
+  - [Package managers](#package-managers)
+    - [Linux and MacOS](#linux-and-macos)
+      - [Homebrew](#homebrew)
+      - [`python3` and `pip3`](#python3-and-pip3)
+  - [Main tools](#main-tools)
+    - [Bazel and Bazelisk](#bazel-and-bazelisk)
+    - [Clang and LLVM](#clang-and-llvm)
+      - [Manual installations (not recommended)](#manual-installations-not-recommended)
+      - [Troubleshooting build issues](#troubleshooting-build-issues)
+      - [Troubleshooting debug issues](#troubleshooting-debug-issues)
+    - [pre-commit](#pre-commit)
+  - [Optional tools](#optional-tools)
+    - [Carbon-maintained](#carbon-maintained)
+      - [new_proposal.py](#new_proposalpy)
+      - [pr_comments.py](#pr_commentspy)
+    - [GitHub](#github)
+      - [gh CLI](#gh-cli)
+      - [GitHub Desktop](#github-desktop)
+    - [`rs-git-fsmonitor` and Watchman](#rs-git-fsmonitor-and-watchman)
+    - [Vim](#vim)
+      - [vim-prettier](#vim-prettier)
+    - [Visual Studio Code](#visual-studio-code)
+    - [pre-commit enabled tools](#pre-commit-enabled-tools)
+      - [black](#black)
+      - [codespell](#codespell)
+      - [Prettier](#prettier)
 
 <!-- tocstop -->
 
@@ -197,6 +200,28 @@ grep llvm_bindir $(bazel info workspace)/bazel-execroot/external/bazel_cc_toolch
 These commands will help diagnose potential build issues because they'll expose
 what's occurring with
 [clang detection](/bazel/cc_toolchains/clang_configuration.bzl).
+
+#### Troubleshooting debug issues
+
+Use the `--compilation_mode=dbg` argument to `bazel build` in order to compile with debugging enabled. For example:
+
+```shell
+bazel build --compilation_mode=dbg //explorer
+```
+
+Then debugging works with GDB:
+
+```shell
+gdb bazel-bin/explorer/explorer
+```
+
+Note that LLVM uses DWARF v5 debug symbols, which means that GDB version 10.1 or newer is required. If you see an error like this:
+
+```shell
+Dwarf Error: DW_FORM_strx1 found in non-DWO CU
+```
+
+It means that the version of GDB used is too old, and does not support the DWARF v5 format.
 
 ### pre-commit
 
