@@ -9,12 +9,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 - ubuntu:20.04
 
 ## Base image
+Building the base image is required .
 ```bash
-docker build -f base.Dockerfile -t carbon-ubuntu2004-base .
+docker build -t carbon-ubuntu2004-base ./base
 ```
 ## Using Git repository
 ```bash
-docker build -f git.Dockerfile -t carbon-example .
+docker build -t carbon-example ./github
 ```
 ```bash
 docker run carbon-example

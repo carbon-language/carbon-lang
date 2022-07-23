@@ -5,7 +5,7 @@
 FROM ubuntu:20.04 as carbon-ubuntu2004-base
 
 RUN apt-get update && \
-    apt-get install libz-dev build-essential curl file git ruby-full locales --no-install-recommends -y && \
+    apt-get install zlib1g-dev build-essential curl file git ruby-full locales --no-install-recommends -y && \
     rm -rf /var/lib/apt/lists/*
 
 RUN localedef -i en_US -f UTF-8 en_US.UTF-8
