@@ -1266,7 +1266,7 @@ To write an interface extending multiple interfaces, use multiple `extends`
 declarations. For example, the
 [`BinaryInteger` protocol in Swift](https://developer.apple.com/documentation/swift/binaryinteger)
 inherits from `CustomStringConvertible`, `Hashable`, `Numeric`, and `Stridable`.
-The [`SetAlgeba` protocol](https://swiftdoc.org/v5.1/protocol/setalgebra/)
+The [`SetAlgebra` protocol](https://swiftdoc.org/v5.1/protocol/setalgebra/)
 extends `Equatable` and `ExpressibleByArrayLiteral`, which would be declared in
 Carbon:
 
@@ -2812,7 +2812,7 @@ function as an argument to a parameterized type, as in the previous case, and in
 addition the function needs the result to implement a specific interface.
 
 ```
-// Some parametized type.
+// Some parameterized type.
 class Vector(T:! Type) { ... }
 
 // Parameterized type implements interface only for some arguments.
@@ -4255,7 +4255,7 @@ Luckily, Rust team members have done a lot of blogging during their design
 process, so Carbon can benefit from the work they have done. However, getting
 specialization to work for Rust is complicated by the need to maintain
 compatibility with existing Rust code. This motivates a number of Rust rules
-where Carbon can be simpler. As a result there are both similarites and
+where Carbon can be simpler. As a result there are both similarities and
 differences between the Carbon and Rust plans:
 
 -   A Rust impl defaults to not being able to be specialized, with a `default`
@@ -4420,7 +4420,7 @@ expressions match:
 
 -   If the type part is omitted, it is rewritten to `Self` in the context of the
     declaration.
--   `Self` is rewritted to its meaning in the scope it is used. In a class
+-   `Self` is rewritten to its meaning in the scope it is used. In a class
     scope, this should match the type name and optional parameter expression
     after `class`. So in `class MyClass extends MyBase { ... }`, `Self` is
     rewritten to `MyClass`. In `class Vector(T:! Movable) { ... }`, `Self` is

@@ -13,10 +13,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   <a href="#join-us">Join us</a>
 </p>
 
+**See our [announcement video](https://youtu.be/omrY53kbVoA) from
+[CppNorth](https://cppnorth.ca/)**
+
 <a href="docs/images/snippets.md#quicksort">
 <!--
 Edit snippet in docs/images/snippets.md and:
-https://drive.google.com/corp/drive/folders/1CsbHo3vamrxmBwHkoyz1kU0sGFqAh688
+https://drive.google.com/drive/folders/1-rsUjiya7dSZ87L8kpZmu3MZghRVxzLA
 -->
 <img src="docs/images/quicksort_snippet.svg" align="right" width="575"
      alt="Quicksort code in Carbon. Follow the link to read more.">
@@ -162,7 +165,7 @@ C++ code like this:
 <a href="docs/images/snippets.md#c">
 <!--
 Edit snippet in docs/images/snippets.md and:
-https://drive.google.com/corp/drive/folders/1CsbHo3vamrxmBwHkoyz1kU0sGFqAh688
+https://drive.google.com/drive/folders/1-rsUjiya7dSZ87L8kpZmu3MZghRVxzLA
 -->
 <img src="docs/images/cpp_snippet.svg" width="600"
      alt="A snippet of C++ code. Follow the link to read it.">
@@ -173,7 +176,7 @@ corresponds to this Carbon code:
 <a href="docs/images/snippets.md#carbon">
 <!--
 Edit snippet in docs/images/snippets.md and:
-https://drive.google.com/corp/drive/folders/1CsbHo3vamrxmBwHkoyz1kU0sGFqAh688
+https://drive.google.com/drive/folders/1-rsUjiya7dSZ87L8kpZmu3MZghRVxzLA
 -->
 <img src="docs/images/carbon_snippet.svg" width="600"
      alt="A snippet of converted Carbon code. Follow the link to read it.">
@@ -186,7 +189,7 @@ new Carbon on top of your existing C++ investment. For example:
 <a href="docs/images/snippets.md#mixed">
 <!--
 Edit snippet in docs/images/snippets.md and:
-https://drive.google.com/corp/drive/folders/1CsbHo3vamrxmBwHkoyz1kU0sGFqAh688
+https://drive.google.com/drive/folders/1-rsUjiya7dSZ87L8kpZmu3MZghRVxzLA
 -->
 <img src="docs/images/mixed_snippet.svg" width="600"
      alt="A snippet of mixed Carbon and C++ code. Follow the link to read it.">
@@ -259,15 +262,33 @@ semantics onto C++ such as Rust-inspired
 You can get started playing with Carbon by checking out the codebase and using
 the Carbon explorer:
 
+```shell
+# Install bazelisk using Homebrew.
+$ brew install bazelisk
+
+# Install Clang/LLVM using Homebrew.
+# Many Clang/LLVM releases aren't built with options we rely on.
+$ brew install llvm
+$ export PATH="$(brew --prefix llvm)/bin:${PATH}"
+
+# Download Carbon's code.
+$ git clone https://github.com/carbon-language/carbon-lang
+$ cd carbon-lang
+
+# Build and run the explorer.
+$ bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
 ```
-TODO: write exact steps to check out, build, and run the explorer on sample Carbon code
-```
+
+These instructions assume [Homebrew](https://brew.sh/); see our
+[contribution tools documentation](/docs/project/contribution_tools.md) for more
+extensive tooling instructions.
 
 Learn more about the Carbon project:
 
 -   [Project goals](/docs/project/goals.md)
 -   [Language design overview](/docs/design)
 -   [Carbon Explorer](/explorer)
+-   [FAQ](/docs/project/faq.md)
 
 ## Join us
 
@@ -278,8 +299,8 @@ contribute.
     [our Carbon release post on GitHub](https://github.com/carbon-language/carbon-lang/discussions/1020)
     and [star carbon-lang](https://github.com/carbon-language/carbon-lang).
 -   To join the design discussion, join our
-    [our Github forum](https://github.com/carbon-language/carbon-lang/discussions).
+    [our GitHub forum](https://github.com/carbon-language/carbon-lang/discussions).
 -   See our [code of conduct](CODE_OF_CONDUCT.md) and
     [contributing guidelines](CONTRIBUTING.md) for information about the Carbon
     development community.
--   We discuss Carbon on Discord; a public link will be forthcoming.
+-   We discuss Carbon on [Discord](https://discord.gg/ZjVdShJDAs).

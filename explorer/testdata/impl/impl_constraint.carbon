@@ -7,7 +7,7 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: result: 1232
+// CHECK: result: 1234
 
 package ExplorerTest api;
 
@@ -19,20 +19,20 @@ interface B {
   fn G() -> i32;
 }
 interface C(T:! Type) {
-  fn F() -> T;
+  fn H() -> T;
 }
 
 external impl i32 as A {
   fn F() -> i32 { return 1; }
 }
 
-// TODO: Use `where .Self is A` once `.Self` support lands.
-external impl i32 as B & C(i32) where i32 is A {
+external impl i32 as B & C(i32) where .Self is A {
   fn F() -> i32 { return 2; }
   fn G() -> i32 { return 3; }
+  fn H() -> i32 { return 4; }
 }
 
 fn Main() -> i32 {
   let n: i32 = 0;
-  return n.(A.F)() * 1000 + n.(B.F)() * 100 + n.(B.G)() * 10 + n.(C(i32).F)();
+  return n.(A.F)() * 1000 + n.(B.F)() * 100 + n.(B.G)() * 10 + n.(C(i32).H)();
 }

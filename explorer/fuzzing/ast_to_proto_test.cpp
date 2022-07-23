@@ -97,7 +97,7 @@ auto GetUnusedFields(const Message& message) -> std::set<std::string> {
 }
 
 // A 'smoke' test to check that each field present in `carbon.proto` is set at
-// least once after converting all Carbon test sources to proto represention.
+// least once after converting all Carbon test sources to proto representation.
 TEST(AstToProtoTest, SetsAllProtoFields) {
   Carbon::Fuzzing::CompilationUnit merged_proto;
   for (const llvm::StringRef f : *carbon_files) {

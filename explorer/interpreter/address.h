@@ -16,7 +16,7 @@
 namespace Carbon {
 
 // An AllocationId identifies an _allocation_ produced by a Heap. An allocation
-// is analogous to the C++ notion of a complete object: the the `Value` in an
+// is analogous to the C++ notion of a complete object: the `Value` in an
 // allocation is not a sub-part of any other `Value`.
 class AllocationId {
  public:

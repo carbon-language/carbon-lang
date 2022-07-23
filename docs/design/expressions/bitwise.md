@@ -174,7 +174,7 @@ integer constant and a value of integer type, as follows:
     converted to the integer type and the computation is performed as described
     [above](#integer-types).
 -   If the second operand of a bit-shift operator is an integer constant and the
-    first opreand is not, and the second operand is between 0 (inclusive) and
+    first operand is not, and the second operand is between 0 (inclusive) and
     the bit-width of the first operand (exclusive), the integer constant is
     converted to an integer type that can hold its value and the computation is
     performed as described above.

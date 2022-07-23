@@ -24,6 +24,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Floating-point literals](#floating-point-literals)
     -   [String types](#string-types)
         -   [String literals](#string-literals)
+-   [Value categories and value phases](#value-categories-and-value-phases)
 -   [Composite types](#composite-types)
     -   [Tuples](#tuples)
     -   [Struct types](#struct-types)
@@ -40,6 +41,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Variable `var` declarations](#variable-var-declarations)
     -   [`auto`](#auto)
 -   [Functions](#functions)
+    -   [Parameters](#parameters)
     -   [`auto` return type](#auto-return-type)
     -   [Blocks and statements](#blocks-and-statements)
     -   [Assignment statements](#assignment-statements)
@@ -61,6 +63,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Inheritance](#inheritance)
         -   [Access control](#access-control)
         -   [Destructors](#destructors)
+        -   [`const`](#const)
+        -   [Unformed state](#unformed-state)
+        -   [Move](#move)
         -   [Mixins](#mixins)
     -   [Choice types](#choice-types)
 -   [Names](#names)
@@ -384,6 +389,53 @@ are available for representing strings with `\`s and `"`s.
 > -   Proposal
 >     [#199: String literals](https://github.com/carbon-language/carbon-lang/pull/199)
 
+## Value categories and value phases
+
+**FIXME:** Should this be moved together with
+[Types are values](#types-are-values)?
+
+Every value has a
+[value category](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>),
+similar to [C++](https://en.cppreference.com/w/cpp/language/value_category),
+that is either _l-value_ or _r-value_. Carbon will automatically convert an
+l-value to an r-value, but not in the other direction.
+
+L-values have storage and a stable address. They may be modified, assuming their
+type is not [`const`](#const).
+
+R-values may not have dedicated storage. This means they cannot be modified and
+their address generally cannot be taken. R-values are broken down into three
+kinds, called _value phases_:
+
+-   A _constant_ has a value known at compile time, and that value is available
+    during type checking, for example to use as the size of an array. These
+    include literals ([integer](#integer-literals),
+    [floating-point](#floating-point-literals), [string](#string-literals)),
+    concrete type values (like `f64` or `Optional(i32*)`), expressions in terms
+    of constants, and values of
+    [`template` parameters](#checked-and-template-parameters).
+-   A _symbolic value_ has a value that will be known at the code generation
+    stage of compilation when
+    [monomorphization](https://en.wikipedia.org/wiki/Monomorphization) happens,
+    but is not known during type checking. This includes
+    [checked-generic parameters](#checked-and-template-parameters), and type
+    expressions with checked-generic arguments, like `Optional(T*)`.
+-   A _runtime value_ has a dynamic value only known at runtime.
+
+Carbon will automatically convert a constant to a symbolic value, or any value
+to a runtime value:
+
+```mermaid
+graph TD;
+    A(constant)-->B(symbolic value)-->C(runtime value);
+    D(l-value)-->C;
+```
+
+Constants convert to symbolic values and to runtime values. Symbolic values will
+generally convert into runtime values if an operation that inspects the value is
+performed on them. Runtime values will convert into constants or to symbolic
+values if constant evaluation of the runtime expression succeeds.
+
 ## Composite types
 
 ### Tuples
@@ -457,18 +509,14 @@ not support
 the only pointer [operations](#expressions) are:
 
 -   Dereference: given a pointer `p`, `*p` gives the value `p` points to as an
-    [l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>).
-    `p->m` is syntactic sugar for `(*p).m`.
--   Address-of: given an
-    [l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>)
-    `x`, `&x` returns a pointer to `x`.
+    [l-value](#value-categories-and-value-phases). `p->m` is syntactic sugar for
+    `(*p).m`.
+-   Address-of: given an [l-value](#value-categories-and-value-phases) `x`, `&x`
+    returns a pointer to `x`.
 
 There are no [null pointers](https://en.wikipedia.org/wiki/Null_pointer) in
 Carbon. To represent a pointer that may not refer to a valid object, use the
 type `Optional(T*)`.
-
-Pointers are the main Carbon mechanism for allowing a function to modify a
-variable of the caller.
 
 **TODO:** Perhaps Carbon will have
 [stricter pointer provenance](https://www.ralfj.de/blog/2022/04/11/provenance-exposed.html)
@@ -537,6 +585,7 @@ Some common expressions in Carbon include:
     -   [Indexing](#arrays-and-slices): `a[3]`
     -   [Function](#functions) call: `f(4)`
     -   [Pointer](#pointer-types): `*p`, `p->m`, `&x`
+    -   [Move](#move): `~x`
 
 -   [Conditionals](expressions/if.md): `if c then t else f`
 -   Parentheses: `(7 + 8) * (3 - 1)`
@@ -639,14 +688,25 @@ Binding patterns default to _`let` bindings_. The `var` keyword is used to make
 it a _`var` binding_.
 
 -   The result of a `let` binding is the name is bound to an
-    [non-l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>).
-    This means the value can not be modified, and its address cannot be taken.
+    [r-value](#value-categories-and-value-phases). This means the value cannot
+    be modified, and its address generally cannot be taken.
 -   A `var` binding has dedicated storage, and so the name is an
-    [l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>)
-    which can be modified and has a stable address.
+    [l-value](#value-categories-and-value-phases) which can be modified and has
+    a stable address.
+
+A `let`-binding may trigger a copy of the original value, or a move if the
+original value is a temporary, or the binding may be a pointer to the original
+value, like a
+[`const` reference in C++](<https://en.wikipedia.org/wiki/Reference_(C%2B%2B)>).
+Which option must not be observable to the programmer. For example, Carbon will
+not allow modifications to the original value when it is through a pointer. This
+choice may also be influenced by the type. For example, types that don't support
+being copied will be passed by pointer instead.
 
 A [generic binding](#checked-and-template-parameters) uses `:!` instead of a
-colon (`:`) and can only match compile-time values.
+colon (`:`) and can only match
+[constant or symbolic values](#value-categories-and-value-phases), not run-time
+values.
 
 The keyword `auto` may be used in place of the type in a binding pattern, as
 long as the type can be deduced from the type of a value in the same
@@ -725,18 +785,17 @@ introduced into the enclosing [scope](#declarations-definitions-and-scopes).
 ### Variable `var` declarations
 
 A `var` declaration is similar, except with `var` bindings, so `x` here is an
-[l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>) with
-storage and an address, and so may be modified:
+[l-value](#value-categories-and-value-phases) with storage and an address, and
+so may be modified:
 
 ```carbon
 var x: i64 = 42;
 x = 7;
 ```
 
-Variables with a type that has
-[an unformed state](https://github.com/carbon-language/carbon-lang/pull/257) do
-not need to be initialized in the variable declaration, but do need to be
-assigned before they are used.
+Variables with a type that has [an unformed state](#unformed-state) do not need
+to be initialized in the variable declaration, but do need to be assigned before
+they are used.
 
 > References:
 >
@@ -784,8 +843,8 @@ Breaking this apart:
 -   `fn` is the keyword used to introduce a function.
 -   Its name is `Add`. This is the name added to the enclosing
     [scope](#declarations-definitions-and-scopes).
--   The parameter list in parentheses (`(`...`)`) is a comma-separated list of
-    [irrefutable patterns](#patterns).
+-   The [parameter list](#parameters) in parentheses (`(`...`)`) is a
+    comma-separated list of [irrefutable patterns](#patterns).
 -   It returns an `i64` result. Functions that return nothing omit the `->` and
     return type.
 
@@ -801,17 +860,8 @@ fn Add(a: i64, b: i64) -> i64 {
 ```
 
 The names of the parameters are in scope until the end of the definition or
-declaration.
-
-The bindings in the parameter list default to
-[`let` bindings](#binding-patterns), and so the parameter names are treated as
-[r-values](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>). If
-the `var` keyword is added before the binding, then the arguments will be copied
-to new storage, and so can be mutated in the function body. The copy ensures
-that any mutations will not be visible to the caller.
-
-The parameter names in a forward declaration may be omitted using `_`, but must
-match the definition if they are specified.
+declaration. The parameter names in a forward declaration may be omitted using
+`_`, but must match the definition if they are specified.
 
 > References:
 >
@@ -824,6 +874,28 @@ match the definition if they are specified.
 >     [#476: Optional argument names (unused arguments)](https://github.com/carbon-language/carbon-lang/issues/476)
 > -   Question-for-leads issue
 >     [#1132: How do we match forward declarations with their definitions?](https://github.com/carbon-language/carbon-lang/issues/1132)
+
+### Parameters
+
+The bindings in the parameter list default to
+[`let` bindings](#binding-patterns), and so the parameter names are treated as
+[r-values](#value-categories-and-value-phases). This is appropriate for input
+parameters. This binding will be implemented using a pointer, unless it is legal
+to copy and copying is cheaper.
+
+If the `var` keyword is added before the binding, then the arguments will be
+copied (or moved from a temporary) to new storage, and so can be mutated in the
+function body. The copy ensures that any mutations will not be visible to the
+caller.
+
+Use a [pointer](#pointer-types) parameter type to represent an
+[input/output parameter](<https://en.wikipedia.org/wiki/Parameter_(computer_programming)#Output_parameters>),
+allowing a function to modify a variable of the caller's. This makes the
+possibility of those modifications visible: by taking the address using `&` in
+the caller, and dereferencing using `*` in the callee.
+
+Outputs of a function should prefer to be returned. Multiple values may be
+returned using a [tuple](#tuples) or [struct](#struct-types) type.
 
 ### `auto` return type
 
@@ -855,7 +927,7 @@ semicolon or block. [Expressions](#expressions) and
 [`var`](#variable-var-declarations) and [`let`](#constant-let-declarations) are
 valid statements.
 
-Statements within a block are normally executed in the order the appear in the
+Statements within a block are normally executed in the order they appear in the
 source code, except when modified by control-flow statements.
 
 The body of a function is defined by a block, and some
@@ -882,8 +954,8 @@ fn Foo() {
 ### Assignment statements
 
 Assignment statements mutate the value of the
-[l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>)
-described on the left-hand side of the assignment.
+[l-value](#value-categories-and-value-phases) described on the left-hand side of
+the assignment.
 
 -   Assignment: `x = y;`. `x` is assigned the value of `y`.
 -   Increment and decrement: `++i;`, `--j;`. `i` is set to `i + 1`, `j` is set
@@ -990,15 +1062,13 @@ Console.Print("Done!");
 ##### `for`
 
 `for` statements support range-based looping, typically over containers. For
-example, this prints all names in `names`:
+example, this prints each `String` value in `names`:
 
 ```carbon
 for (var name: String in names) {
   Console.Print(name);
 }
 ```
-
-This prints each `String` value in `names`.
 
 > References:
 >
@@ -1168,7 +1238,7 @@ fn Foo() -> f32 {
 _Nominal classes_, or just
 [_classes_](<https://en.wikipedia.org/wiki/Class_(computer_programming)>), are a
 way for users to define their own
-[data strutures](https://en.wikipedia.org/wiki/Data_structure) or
+[data structures](https://en.wikipedia.org/wiki/Data_structure) or
 [record types](<https://en.wikipedia.org/wiki/Record_(computer_science)>).
 
 This is an example of a class
@@ -1284,7 +1354,7 @@ instance being created is needed in a factory function, as in:
 
 ```carbon
 class Registered {
-  fn Create() -> Self {
+  fn Make() -> Self {
     returned var result: Self = {...};
     StoreMyPointerSomewhere(&result);
     return var;
@@ -1304,16 +1374,16 @@ class Point {
   fn Distance[self: Self](x2: i32, y2: i32) -> f32 {
     var dx: i32 = x2 - self.x;
     var dy: i32 = y2 - self.y;
-    return Math.Sqrt(dx * dx - dy * dy);
+    return Math.Sqrt(dx * dx + dy * dy);
   }
-  // Mutating method
+  // Mutating method declaration
   fn Offset[addr self: Self*](dx: i32, dy: i32);
 
   var x: i32;
   var y: i32;
 }
 
-// Out-of-line definition of method declared inline.
+// Out-of-line definition of method declared inline
 fn Point.Offset[addr self: Self*](dx: i32, dy: i32) {
   self->x += dx;
   self->y += dy;
@@ -1331,13 +1401,15 @@ two methods `Distance` and `Offset`:
 -   Methods are defined as class functions with a `self` parameter inside square
     brackets `[`...`]` before the regular explicit parameter list in parens
     `(`...`)`.
--   Methods are called using using the member syntax, `origin.Distance(`...`)`
-    and `origin.Offset(`...`)`.
+-   Methods are called using the member syntax, `origin.Distance(`...`)` and
+    `origin.Offset(`...`)`.
 -   `Distance` computes and returns the distance to another point, without
     modifying the `Point`. This is signified using `[self: Self]` in the method
     declaration.
 -   `origin.Offset(`...`)` does modify the value of `origin`. This is signified
-    using `[addr self: Self*]` in the method declaration.
+    using `[addr self: Self*]` in the method declaration. Since calling this
+    method requires taking the address of `origin`, it may only be called on
+    [non-`const`](#const) [l-values](#value-categories-and-value-phases).
 -   Methods may be declared lexically inline like `Distance`, or lexically out
     of line like `Offset`.
 
@@ -1354,7 +1426,7 @@ inheritance is a good match, and use other features for other cases. For
 example, [mixins](#mixins) for implementation reuse and [generics](#generics)
 for separating interface from implementation. This allows Carbon to move away
 from [multiple inheritance](https://en.wikipedia.org/wiki/Multiple_inheritance),
-which doesn't has as efficient of an implementation strategy.
+which doesn't have as efficient of an implementation strategy.
 
 Classes by default are
 [_final_](<https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)#Non-subclassable_classes>),
@@ -1367,8 +1439,8 @@ instantiated.
 base class MyBaseClass { ... }
 ```
 
-Either kind of base class maybe _extended_ to get a _derived class_. Derived
-classes are final unless they are themselved declared `base` or `abstract`.
+Either kind of base class may be _extended_ to get a _derived class_. Derived
+classes are final unless they are themselves declared `base` or `abstract`.
 Classes may only extend a single class. Carbon only supports single inheritance,
 and will use mixins instead of multiple inheritance.
 
@@ -1381,13 +1453,13 @@ class FinalDerived extends MiddleDerived { ... }
 A base class may define
 [virtual methods](https://en.wikipedia.org/wiki/Virtual_function). These are
 methods whose implementation may be overridden in a derived class. By default
-methods are _non-virtual_, the declaration of a virtual methods must be prefixed
+methods are _non-virtual_, the declaration of a virtual method must be prefixed
 by one of these three keywords:
 
 -   A method marked `virtual` has a definition in this class but not in any
     base.
--   A method marked `abstract` does not have have a definition in this class,
-    but must have a definition in any non-`abstract` derived class.
+-   A method marked `abstract` does not have a definition in this class, but
+    must have a definition in any non-`abstract` derived class.
 -   A method marked `impl` has a definition in this class, overriding any
     definition in a base class.
 
@@ -1411,8 +1483,8 @@ called `base` with the type of its immediate base class.
 
 ```carbon
 class MyDerivedType extends MyBaseType {
-  fn Create() -> MyDerivedType {
-    return {.base = MyBaseType.Create(), .derived_field = 7};
+  fn Make() -> MyDerivedType {
+    return {.base = MyBaseType.Make(), .derived_field = 7};
   }
   var derived_field: i32;
 }
@@ -1424,7 +1496,7 @@ functions returning `partial Self`. Those functions should be marked
 
 ```carbon
 abstract class AbstractClass {
-  protected fn Create() -> partial Self {
+  protected fn Make() -> partial Self {
     return {.field_1 = 3, .field_2 = 9};
   }
   // ...
@@ -1435,12 +1507,12 @@ abstract class AbstractClass {
 var abc: AbstractClass = ...;
 
 class DerivedFromAbstract extends AbstractClass {
-  fn Create() -> Self {
-    // AbstractClass.Create() returns a
+  fn Make() -> Self {
+    // AbstractClass.Make() returns a
     // `partial AbstractClass` that can be used as
     // the `.base` member when constructing a value
     // of a derived class.
-    return {.base = AbstractClass.Create(),
+    return {.base = AbstractClass.Make(),
             .derived_field = 42 };
   }
 
@@ -1503,7 +1575,7 @@ The destructor for a class is run before the destructors of its data members.
 The data members are destroyed in reverse order of declaration. Derived classes
 are destroyed before their base classes.
 
-A destructor in a abstract or base class may be declared `virtual` like with
+A destructor in an abstract or base class may be declared `virtual` like with
 [methods](#inheritance). Destructors in classes derived from one with a virtual
 destructor must be declared with the `impl` keyword prefix. It is illegal to
 delete an instance of a derived class through a pointer to a base class unless
@@ -1516,6 +1588,89 @@ type, use `UnsafeDelete`.
 > -   [Destructors](classes.md#destructors)
 > -   Proposal
 >     [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
+
+#### `const`
+
+**Note:** This is provisional, no design for `const` has been through the
+proposal process yet.
+
+For every type `MyClass`, there is the type `const MyClass` such that:
+
+-   The data representation is the same, so a `MyClass*` value may be implicitly
+    converted to a `(const MyClass)*`.
+-   A `const MyClass` [l-value](#value-categories-and-value-phases) may
+    automatically convert to a `MyClass` r-value, the same way that a `MyClass`
+    l-value can.
+-   If member `x` of `MyClass` has type `T`, then member `x` of `const MyClass`
+    has type `const T`.
+-   The API of a `const MyClass` is a subset of `MyClass`, excluding all methods
+    taking `[addr me: Self*]`.
+
+Note that `const` binds more tightly than postfix-`*` for forming a pointer
+type, so `const MyClass*` is equal to `(const MyClass)*`.
+
+This example uses the definition of `Point` from the
+["methods" section](#methods):
+
+```carbon
+var origin: Point = {.x = 0, .y = 0};
+
+// ✅ Allowed conversion from `Point*` to
+// `const Point*`:
+let p: const Point* = &origin;
+
+// ✅ Allowed conversion of `const Point` l-value
+// to `Point` r-value.
+let five: f32 = p->Distance(3, 4);
+
+// ❌ Error: mutating method `Offset` excluded
+// from `const Point` API.
+p->Offset(3, 4);
+
+// ❌ Error: mutating method `AssignAdd.Op`
+// excluded from `const i32` API.
+p->x += 2;
+```
+
+#### Unformed state
+
+Types indicate that they support unformed states by
+[implementing a particular interface](#interfaces-and-implementations),
+otherwise variables of that type must be explicitly initialized when they are
+declared.
+
+An unformed state for an object is one that satisfies the following properties:
+
+-   Assignment from a fully formed value is correct using the normal assignment
+    implementation for the type.
+-   Destruction must be correct using the type's normal destruction
+    implementation.
+-   Destruction must be optional. The behavior of the program must be equivalent
+    whether the destructor is run or not for an unformed object, including not
+    leaking resources.
+
+A type might have more than one in-memory representation for the unformed state,
+and those representations may be the same as valid fully formed values for that
+type. For example, all values are legal representations of the unformed state
+for any type with a trivial destructor like `i32`. Types may define additional
+initialization for the [hardened build mode](#build-modes). For example, this
+causes integers to be set to `0` when in unformed state in this mode.
+
+Any operation on an unformed object _other_ than destruction or assignment from
+a fully formed value is an error, even if its in-memory representation is that
+of a valid value for that type.
+
+> References:
+>
+> -   Proposal
+>     [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
+
+#### Move
+
+Carbon will allow types to define if and how they are moved. This can happen
+when returning a value from a function or by using the _move operator_ `~x`.
+This leaves `x` in an [unformed state](#unformed-state) and returns its old
+value.
 
 #### Mixins
 
@@ -1603,7 +1758,7 @@ later, except that inline class member function bodies are
 [parsed as if they appeared after the class](#class-functions-and-factory-functions).
 
 A name in Carbon is formed from a sequence of letters, numbers, and underscores,
-and which starts with a letter. We intend to follow
+and starts with a letter. We intend to follow
 [Unicode's Annex 31](https://unicode.org/reports/tr31/) in selecting valid
 identifier characters, but a concrete set of valid characters has not been
 selected yet.
@@ -2123,6 +2278,9 @@ templates. Constraints can then be added incrementally, with the compiler
 verifying that the semantics stay the same. Once all constraints have been
 added, removing the word `template` to switch to a checked parameter is safe.
 
+The [value phase](#value-categories-and-value-phases) of a checked parameter is
+a symbolic value whereas the value phase of a template parameter is constant.
+
 Although checked generics are generally preferred, templates enable translation
 of code between C++ and Carbon, and address some cases where the type checking
 rigor of generics are problematic.
@@ -2555,11 +2713,24 @@ The interfaces that correspond to each operator are given by:
 -   **TODO:** [Assignment](#assignment-statements): `x = y`, `++x`, `x += y`,
     and so on
 -   **TODO:** Dereference: `*p`
+-   **TODO:** [Move](#move): `~x`
 -   **TODO:** Indexing: `a[3]`
 -   **TODO:** Function call: `f(4)`
 
 The
 [logical operators can not be overloaded](expressions/logical_operators.md#overloading).
+
+Operators that result in [l-values](#value-categories-and-value-phases), such as
+dereferencing `*p` and indexing `a[3]`, have interfaces that return the address
+of the value. Carbon automatically dereferences the pointer to get the l-value.
+
+Operators that can take multiple arguments, such as function calling operator
+`f(4)`, have a [variadic](generics/details.md#variadic-arguments) parameter
+list.
+
+Whether and how a value supports other operations, such as being copied,
+swapped, or set into an [unformed state](#unformed-state), is also determined by
+implementing corresponding interfaces for the value's type.
 
 > References:
 >
@@ -2626,7 +2797,7 @@ Carbon code and the other way around. This ability achieves two goals:
 -   Allows sharing a code and library ecosystem with C and C++.
 -   Allows incremental migration to Carbon from C and C++.
 
-Carbon's approach to interopp is most similar to
+Carbon's approach to interop is most similar to
 [Java/Kotlin interop](interoperability/philosophy_and_goals.md#other-interoperability-layers),
 where the two languages are different, but share enough of runtime model that
 data from one side can be used from the other. For example, C++ and Carbon will
@@ -2704,7 +2875,7 @@ A C++ library header file may be [imported](#imports) into Carbon using an
 
 ```carbon
 // like `#include "circle.h"` in C++
-import Cpp library "circle.h"
+import Cpp library "circle.h";
 ```
 
 This adds the names from `circle.h` into the `Cpp` namespace. If `circle.h`
@@ -2789,7 +2960,7 @@ operators or the comma operator. In the unlikely situation where those operators
 need to be overridden for a Carbon type, that can be done with a nonmember C++
 function.
 
-Carbon intefaces with no C++ equivalent, such as
+Carbon interfaces with no C++ equivalent, such as
 [`CommonTypeWith(U)`](#common-type), may be implemented for C++ types externally
 in Carbon code. To satisfy the orphan rule
 ([1](generics/details.md#impl-lookup), [2](generics/details.md#orphan-rule)),

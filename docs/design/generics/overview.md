@@ -642,7 +642,7 @@ implement the `Negatable` interface for that type. The interfaces and rewrites
 used for a given operator may be found in the
 [expressions design](/docs/design/expressions/README.md).
 
-As a convenience, there is a shorcut for defining an implementation that
+As a convenience, there is a shortcut for defining an implementation that
 supports any type implicitly convertible to a specified type, using `like`:
 
 ```

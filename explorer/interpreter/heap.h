@@ -19,6 +19,12 @@ namespace Carbon {
 // A Heap represents the abstract machine's dynamically allocated memory.
 class Heap : public HeapAllocationInterface {
  public:
+  enum class ValueState {
+    Uninitialized,
+    Alive,
+    Dead,
+  };
+
   // Constructs an empty Heap.
   explicit Heap(Nonnull<Arena*> arena) : arena_(arena){};
 
@@ -35,7 +41,8 @@ class Heap : public HeapAllocationInterface {
   auto Write(const Address& a, Nonnull<const Value*> v,
              SourceLocation source_loc) -> ErrorOr<Success>;
 
-  // Put the given value on the heap and mark it as alive.
+  // Put the given value on the heap and mark its state.
+  // Mark UninitializedValue as uninitialized and other values as alive.
   auto AllocateValue(Nonnull<const Value*> v) -> AllocationId override;
 
   // Marks this allocation, and all of its sub-objects, as dead.
@@ -54,9 +61,13 @@ class Heap : public HeapAllocationInterface {
   auto CheckAlive(AllocationId allocation, SourceLocation source_loc) const
       -> ErrorOr<Success>;
 
+  // Signal an error if the allocation has not been initialized.
+  auto CheckInit(AllocationId allocation, SourceLocation source_loc) const
+      -> ErrorOr<Success>;
+
   Nonnull<Arena*> arena_;
   std::vector<Nonnull<const Value*>> values_;
-  std::vector<bool> alive_;
+  std::vector<ValueState> states_;
 };
 
 }  // namespace Carbon

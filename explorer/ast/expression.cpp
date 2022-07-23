@@ -22,6 +22,10 @@ using llvm::isa;
 auto IntrinsicExpression::FindIntrinsic(std::string_view name,
                                         SourceLocation source_loc)
     -> ErrorOr<Intrinsic> {
+  // TODO: Remove Print special casing once we have variadics or overloads.
+  if (name == "Print") {
+    return Intrinsic::Print;
+  }
   static const auto& intrinsic_map = *new std::map<std::string_view, Intrinsic>(
       {{"print", Intrinsic::Print},
        {"new", Intrinsic::Alloc},
@@ -57,6 +61,8 @@ auto ToString(Operator op) -> std::string_view {
   switch (op) {
     case Operator::Add:
       return "+";
+    case Operator::As:
+      return "as";
     case Operator::AddressOf:
     case Operator::Combine:
       return "&";
@@ -124,9 +130,9 @@ void Expression::Print(llvm::raw_ostream& out) const {
       PrintFields(out, cast<StructTypeLiteral>(*this).fields(), ": ");
       out << "}";
       break;
-    case ExpressionKind::PrimitiveOperatorExpression: {
+    case ExpressionKind::OperatorExpression: {
       out << "(";
-      const auto& op = cast<PrimitiveOperatorExpression>(*this);
+      const auto& op = cast<OperatorExpression>(*this);
       switch (op.arguments().size()) {
         case 0:
           out << ToString(op.op());
@@ -162,8 +168,13 @@ void Expression::Print(llvm::raw_ostream& out) const {
     }
     case ExpressionKind::IntrinsicExpression: {
       const auto& iexp = cast<IntrinsicExpression>(*this);
+      // TODO: Remove Print special casing once we have variadics or overloads.
+      if (iexp.intrinsic() == IntrinsicExpression::Intrinsic::Print) {
+        out << "Print" << iexp.args();
+        break;
+      }
       out << "intrinsic_";
-      switch (cast<IntrinsicExpression>(*this).intrinsic()) {
+      switch (iexp.intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print:
           out << "print";
           break;
@@ -276,7 +287,7 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
     case ExpressionKind::StructLiteral:
     case ExpressionKind::StructTypeLiteral:
     case ExpressionKind::CallExpression:
-    case ExpressionKind::PrimitiveOperatorExpression:
+    case ExpressionKind::OperatorExpression:
     case ExpressionKind::IntrinsicExpression:
     case ExpressionKind::UnimplementedExpression:
     case ExpressionKind::FunctionTypeLiteral:

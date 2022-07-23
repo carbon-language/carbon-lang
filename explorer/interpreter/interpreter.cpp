@@ -22,6 +22,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Error.h"
+#include "llvm/Support/FormatVariadic.h"
 
 using llvm::cast;
 using llvm::dyn_cast;
@@ -97,6 +98,23 @@ class Interpreter {
   //
   // TODO: Stop using this.
   auto EvalExpRecursively(Nonnull<const Expression*> exp)
+      -> ErrorOr<Nonnull<const Value*>>;
+
+  // Evaluate an associated constant by evaluating its witness and looking
+  // inside the impl for the corresponding value.
+  //
+  // TODO: This approach doesn't provide values that are known because they
+  // appear in constraints:
+  //
+  //   interface Iface { let N:! i32; }
+  //   fn PickType(N: i32) -> Type { return i32; }
+  //   fn F[T:! Iface where .N == 5](x: T) {
+  //     var x: PickType(T.N) = 0;
+  //   }
+  //
+  // ... will fail because we can't resolve T.N to 5 at compile time.
+  auto EvalAssociatedConstant(Nonnull<const AssociatedConstant*> assoc,
+                              SourceLocation source_loc)
       -> ErrorOr<Nonnull<const Value*>>;
 
   // Instantiate a type by replacing all type variables that occur inside the
@@ -181,7 +199,7 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
       return arena_->New<BoolValue>(cast<BoolValue>(*args[0]).value() ||
                                     cast<BoolValue>(*args[1]).value());
     case Operator::Eq:
-      return arena_->New<BoolValue>(ValueEqual(args[0], args[1]));
+      return arena_->New<BoolValue>(ValueEqual(args[0], args[1], std::nullopt));
     case Operator::Ptr:
       return arena_->New<PointerType>(args[0]);
     case Operator::Deref:
@@ -190,6 +208,8 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
       return arena_->New<PointerValue>(cast<LValue>(*args[0]).address());
     case Operator::Combine:
       return &cast<TypeOfConstraintType>(static_type)->constraint_type();
+    case Operator::As:
+      return Convert(args[0], args[1], source_loc);
   }
 }
 
@@ -251,6 +271,17 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
           }  // for
           return true;
         }
+        case Value::Kind::UninitializedValue: {
+          const auto& p_tup = cast<TupleValue>(*p);
+          for (auto& ele : p_tup.elements()) {
+            if (!PatternMatch(ele, arena->New<UninitializedValue>(ele),
+                              source_loc, bindings, generic_args, trace_stream,
+                              arena)) {
+              return false;
+            }
+          }
+          return true;
+        }
         default:
           CARBON_FATAL() << "expected a tuple value in pattern, not " << *v;
       }
@@ -285,6 +316,8 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
           CARBON_FATAL() << "expected a choice alternative in pattern, not "
                          << *v;
       }
+    case Value::Kind::UninitializedValue:
+      CARBON_FATAL() << "uninitialized value is not allowed in pattern " << *v;
     case Value::Kind::FunctionType:
       switch (v->kind()) {
         case Value::Kind::FunctionType: {
@@ -309,7 +342,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       // on the typechecker to ensure that `v` is a type.
       return true;
     default:
-      return ValueEqual(p, v);
+      return ValueEqual(p, v, std::nullopt);
   }
 }
 
@@ -387,8 +420,11 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
-    case ExpressionKind::PrimitiveOperatorExpression: {
-      const auto& op = cast<PrimitiveOperatorExpression>(exp);
+    case ExpressionKind::OperatorExpression: {
+      const auto& op = cast<OperatorExpression>(exp);
+      if (auto rewrite = op.rewritten_form()) {
+        return todo_.ReplaceWith(std::make_unique<LValAction>(*rewrite));
+      }
       if (op.op() != Operator::Deref) {
         CARBON_FATAL()
             << "Can't treat primitive operator expression as lvalue: " << exp;
@@ -454,6 +490,51 @@ auto Interpreter::EvalExpRecursively(Nonnull<const Expression*> exp)
   return result;
 }
 
+auto Interpreter::EvalAssociatedConstant(
+    Nonnull<const AssociatedConstant*> assoc, SourceLocation source_loc)
+    -> ErrorOr<Nonnull<const Value*>> {
+  // Find the witness.
+  Nonnull<const Value*> witness = &assoc->witness();
+  if (auto* sym = dyn_cast<SymbolicWitness>(witness)) {
+    CARBON_ASSIGN_OR_RETURN(witness,
+                            EvalExpRecursively(&sym->impl_expression()));
+  }
+  if (!isa<ImplWitness>(witness)) {
+    CARBON_CHECK(phase() == Phase::CompileTime)
+        << "symbolic witnesses should only be formed at compile time";
+    return CompilationError(source_loc)
+           << "value of associated constant " << *assoc << " is not known";
+  }
+
+  auto& impl_witness = cast<ImplWitness>(*witness);
+  Nonnull<const ConstraintType*> constraint =
+      impl_witness.declaration().constraint_type();
+  Nonnull<const Value*> expected = arena_->New<AssociatedConstant>(
+      &constraint->self_binding()->value(), &assoc->interface(),
+      &assoc->constant(), &impl_witness);
+  std::optional<Nonnull<const Value*>> result;
+  constraint->VisitEqualValues(expected,
+                               [&](Nonnull<const Value*> equal_value) {
+                                 // TODO: The value might depend on the
+                                 // parameters of the impl. We need to
+                                 // substitute impl_witness.type_args() into the
+                                 // value.
+                                 if (isa<AssociatedConstant>(equal_value)) {
+                                   return true;
+                                 }
+                                 // TODO: This makes an arbitrary choice if
+                                 // there's more than one equal value. It's not
+                                 // clear how to handle that case.
+                                 result = equal_value;
+                                 return false;
+                               });
+  if (!result) {
+    CARBON_FATAL() << impl_witness.declaration()
+                   << " is missing value for associated constant " << *assoc;
+  }
+  return *result;
+}
+
 auto Interpreter::InstantiateType(Nonnull<const Value*> type,
                                   SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
@@ -474,6 +555,12 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
           Nonnull<const Bindings*> bindings,
           InstantiateBindings(&class_type.bindings(), source_loc));
       return arena_->New<NominalClassType>(&class_type.declaration(), bindings);
+    }
+    case Value::Kind::AssociatedConstant: {
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> type_value,
+          EvalAssociatedConstant(cast<AssociatedConstant>(type), source_loc));
+      return InstantiateType(type_value, source_loc);
     }
     default:
       return type;
@@ -515,6 +602,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::BoolValue:
     case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:
+    case Value::Kind::UninitializedValue:
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
@@ -566,7 +654,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
           return arena_->New<StructValue>(std::move(new_elements));
         }
         case Value::Kind::NominalClassType: {
-          // Instantiate the `destintation_type` to obtain the runtime
+          // Instantiate the `destination_type` to obtain the runtime
           // type of the object.
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> inst_dest,
@@ -620,6 +708,12 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
         new_elements.push_back(val);
       }
       return arena_->New<TupleValue>(std::move(new_elements));
+    }
+    case Value::Kind::AssociatedConstant: {
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> value,
+          EvalAssociatedConstant(cast<AssociatedConstant>(value), source_loc));
+      return Convert(value, destination_type, source_loc);
     }
   }
 }
@@ -854,6 +948,14 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             std::make_unique<ExpressionAction>(access.impl().value()));
       } else {
         // Finally, produce the result.
+        std::optional<Nonnull<const InterfaceType*>> found_in_interface =
+            access.found_in_interface();
+        if (found_in_interface) {
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> instantiated,
+              InstantiateType(*found_in_interface, exp.source_loc()));
+          found_in_interface = cast<InterfaceType>(instantiated);
+        }
         if (const auto* member_name_type =
                 dyn_cast<TypeOfMemberName>(&access.static_type())) {
           // The result is a member name, such as in `Type.field_name`. Form a
@@ -864,9 +966,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           if (!isa<InterfaceType, ConstraintType>(act.results()[0])) {
             type_result = act.results()[0];
           }
-          MemberName* member_name =
-              arena_->New<MemberName>(type_result, access.found_in_interface(),
-                                      member_name_type->member());
+          MemberName* member_name = arena_->New<MemberName>(
+              type_result, found_in_interface, member_name_type->member());
           return todo_.FinishAction(member_name);
         } else {
           // The result is the value of the named field, such as in
@@ -875,7 +976,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           if (access.impl().has_value()) {
             witness = cast<Witness>(act.results()[1]);
           }
-          FieldPath::Component member(access.member(), witness);
+          FieldPath::Component member(access.member(), found_in_interface,
+                                      witness);
           const Value* aggregate;
           if (const auto* lvalue = dyn_cast<LValue>(act.results()[0])) {
             CARBON_ASSIGN_OR_RETURN(
@@ -907,6 +1009,14 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             std::make_unique<ExpressionAction>(access.impl().value()));
       } else {
         // Finally, produce the result.
+        std::optional<Nonnull<const InterfaceType*>> found_in_interface =
+            access.member().interface();
+        if (found_in_interface) {
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> instantiated,
+              InstantiateType(*found_in_interface, exp.source_loc()));
+          found_in_interface = cast<InterfaceType>(instantiated);
+        }
         if (forming_member_name) {
           // If we're forming a member name, we must be in the outer evaluation
           // in `Type.(Interface.method)`. Produce the same method name with
@@ -917,8 +1027,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               << "compound member access forming a member name should be "
                  "performing impl lookup";
           auto* member_name = arena_->New<MemberName>(
-              act.results()[0], access.member().interface(),
-              access.member().member());
+              act.results()[0], found_in_interface, access.member().member());
           return todo_.FinishAction(member_name);
         } else {
           // Access the object to find the named member.
@@ -933,7 +1042,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                 object, Convert(object, *access.member().base_type(),
                                 exp.source_loc()));
           }
-          FieldPath::Component field(access.member().member(), witness);
+          FieldPath::Component field(access.member().member(),
+                                     found_in_interface, witness);
           CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> member,
                                   object->GetMember(arena_, FieldPath(field),
                                                     exp.source_loc(), object));
@@ -972,8 +1082,11 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       return todo_.FinishAction(
           arena_->New<BoolValue>(cast<BoolLiteral>(exp).value()));
-    case ExpressionKind::PrimitiveOperatorExpression: {
-      const auto& op = cast<PrimitiveOperatorExpression>(exp);
+    case ExpressionKind::OperatorExpression: {
+      const auto& op = cast<OperatorExpression>(exp);
+      if (auto rewrite = op.rewritten_form()) {
+        return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
+      }
       if (act.pos() != static_cast<int>(op.arguments().size())) {
         //    { {v :: op(vs,[],e,es) :: C, E, F} :: S, H}
         // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}
@@ -1042,9 +1155,22 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       switch (cast<IntrinsicExpression>(exp).intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print: {
-          const auto& args = cast<TupleValue>(*act.results()[0]);
-          // TODO: This could eventually use something like llvm::formatv.
-          llvm::outs() << cast<StringValue>(*args.elements()[0]).value();
+          const auto& args = cast<TupleValue>(*act.results()[0]).elements();
+          switch (args.size()) {
+            case 1:
+              llvm::outs() << llvm::formatv(
+                  cast<StringValue>(*args[0]).value().c_str());
+              break;
+            case 2:
+              llvm::outs() << llvm::formatv(
+                  cast<StringValue>(*args[0]).value().c_str(),
+                  cast<IntValue>(*args[1]).value());
+              break;
+            default:
+              CARBON_FATAL() << "Unexpected arg count: " << args.size();
+          }
+          // Implicit newline; currently no way to disable it.
+          llvm::outs() << "\n";
           return todo_.FinishAction(TupleValue::Empty());
         }
         case IntrinsicExpression::Intrinsic::Alloc: {
@@ -1317,7 +1443,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
     }
     case StatementKind::VariableDefinition: {
       const auto& definition = cast<VariableDefinition>(stmt);
-      if (act.pos() == 0) {
+      if (act.pos() == 0 && definition.has_init()) {
         //    { {(var x = e) :: C, E, F} :: S, H}
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
         return todo_.Spawn(
@@ -1325,12 +1451,16 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       } else {
         //    { { v :: (x = []) :: C, E, F} :: S, H}
         // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
-        CARBON_ASSIGN_OR_RETURN(
-            Nonnull<const Value*> v,
-            Convert(act.results()[0], &definition.pattern().static_type(),
-                    stmt.source_loc()));
         Nonnull<const Value*> p =
             &cast<VariableDefinition>(stmt).pattern().value();
+        Nonnull<const Value*> v;
+        if (definition.has_init()) {
+          CARBON_ASSIGN_OR_RETURN(
+              v, Convert(act.results()[0], &definition.pattern().static_type(),
+                         stmt.source_loc()));
+        } else {
+          v = arena_->New<UninitializedValue>(p);
+        }
 
         RuntimeScope matches(&heap_);
         BindingMap generic_args;
@@ -1504,6 +1634,7 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
     case DeclarationKind::ClassDeclaration:
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::InterfaceDeclaration:
+    case DeclarationKind::AssociatedConstantDeclaration:
     case DeclarationKind::ImplDeclaration:
     case DeclarationKind::SelfDeclaration:
     case DeclarationKind::AliasDeclaration:

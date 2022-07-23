@@ -74,6 +74,11 @@ void Declaration::Print(llvm::raw_ostream& out) const {
       break;
     }
 
+    case DeclarationKind::AssociatedConstantDeclaration:
+      PrintID(out);
+      out << ";\n";
+      break;
+
     case DeclarationKind::SelfDeclaration: {
       out << "Self";
       break;
@@ -130,6 +135,12 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
       break;
     }
 
+    case DeclarationKind::AssociatedConstantDeclaration: {
+      const auto& let = cast<AssociatedConstantDeclaration>(*this);
+      out << "let " << let.binding();
+      break;
+    }
+
     case DeclarationKind::SelfDeclaration: {
       out << "Self";
       break;
@@ -156,6 +167,8 @@ auto GetName(const Declaration& declaration)
       return cast<InterfaceDeclaration>(declaration).name();
     case DeclarationKind::VariableDeclaration:
       return cast<VariableDeclaration>(declaration).binding().name();
+    case DeclarationKind::AssociatedConstantDeclaration:
+      return cast<AssociatedConstantDeclaration>(declaration).binding().name();
     case DeclarationKind::ImplDeclaration:
       return std::nullopt;
     case DeclarationKind::SelfDeclaration:

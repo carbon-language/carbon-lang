@@ -11,7 +11,7 @@
 
 package ExplorerTest api;
 
-// The lifetime of a heap-allocated object is until it is explicitely
+// The lifetime of a heap-allocated object is until it is explicitly
 // deleted. Its lifetime is unrelated to the procedure call stack.
 
 fn AllocateInteger() -> i32* {

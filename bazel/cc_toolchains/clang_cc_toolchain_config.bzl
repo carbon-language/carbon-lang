@@ -123,6 +123,7 @@ def _impl(ctx):
                             "-Wself-assign",
                             "-Wimplicit-fallthrough",
                             "-Wctad-maybe-unsupported",
+                            "-Wnon-virtual-dtor",
                             # Unfortunately, LLVM isn't clean for this warning.
                             "-Wno-unused-parameter",
                             # Compile actions shouldn't link anything.
@@ -460,7 +461,7 @@ def _impl(ctx):
                 "-fsanitize=address,undefined,nullability",
                 "-fsanitize-address-use-after-scope",
                 # We don't need the recovery behavior of UBSan as we expect
-                # builds to be clean. Not recoverying is a bit cheaper.
+                # builds to be clean. Not recovering is a bit cheaper.
                 "-fno-sanitize-recover=undefined",
                 # Don't embed the full path name for files. This limits the size
                 # and combined with line numbers is unlikely to result in many
@@ -487,7 +488,7 @@ def _impl(ctx):
         flag_sets = [flag_set(
             actions = all_compile_actions + all_link_actions,
             flag_groups = [flag_group(flags = [
-                "-fsanitize=fuzzer",
+                "-fsanitize=fuzzer-no-link",
             ])],
         )],
     )
@@ -496,11 +497,7 @@ def _impl(ctx):
         name = "proto-fuzzer",
         enabled = False,
         requires = [feature_set(["nonhost"])],
-
-        # TODO: this should really be `fuzzer`, but `-fsanitize=fuzzer` triggers
-        # a clang crash when running `bazel test --config=fuzzer ...`. See
-        # https://github.com/carbon-language/carbon-lang/issues/1173
-        implies = ["asan"],
+        implies = ["fuzzer"],
     )
 
     linux_flags_feature = feature(
@@ -549,12 +546,7 @@ def _impl(ctx):
                     "-D_LIBCPP_DEBUG=1",
                 ])],
                 with_features = [
-                    # _LIBCPP_DEBUG=1 causes protobuf code to crash when linked
-                    # with `-fsanitize=fuzzer`, possibly because of ODR
-                    # violations caused by Carbon source and pre-compiled llvm
-                    # Fuzzer driver library built with different _LIBCPP_DEBUG
-                    # values.
-                    with_feature_set(not_features = ["opt", "proto-fuzzer"]),
+                    with_feature_set(not_features = ["opt"]),
                 ],
             ),
         ],

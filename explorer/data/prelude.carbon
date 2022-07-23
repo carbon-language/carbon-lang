@@ -4,9 +4,24 @@
 
 package Carbon api;
 
+// Explicitly convert `Self` to `T`.
+interface As(T:! Type) {
+  fn Convert[me: Self]() -> T;
+}
+
 // Implicitly convert `Self` to `T`.
 interface ImplicitAs(T:! Type) {
   fn Convert[self: Self]() -> T;
+}
+
+// TODO: ImplicitAs(T) should extend As(T).
+impl forall [T:! Type, U:! ImplicitAs(T)] U as As(T) {
+  fn Convert[me: Self]() -> T { return me.Convert(); }
+}
+
+// Every type implicitly converts to itself.
+impl forall [T:! Type] T as ImplicitAs(T) {
+  fn Convert[me: Self]() -> T { return me; }
 }
 
 // TODO: Simplify this once we have variadics.
@@ -36,9 +51,10 @@ impl forall [U1:! Type, U2:! Type, U3:! Type,
 
 // Note that Print is experimental, and not part of an accepted proposal, but
 // is included here for printing state in tests.
-fn Print(format_str: String) {
-  __intrinsic_print(format_str);
-}
+// TODO: Remove Print special casing once we have variadics or overloads.
+// fn Print(format_str: String) {
+//   __intrinsic_print(format_str);
+// }
 
 class Heap {
   fn New[T:! Type, self: Self](x : T) -> T* {

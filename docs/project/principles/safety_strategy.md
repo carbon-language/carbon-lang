@@ -321,7 +321,7 @@ will adopt a strategy based on three build modes that target key use-cases.
 #### Debug
 
 The debug build mode targets developers who are iterating on code and running
-tests. It will emphasize detection and debugability, especially for safety
+tests. It will emphasize detection and debuggability, especially for safety
 issues.
 
 It needs to perform well enough to be run frequently by developers, but will
@@ -330,7 +330,7 @@ runtime checks for the most common safety issues, but it can make trade-offs
 that improve performance in exchange for less frequent, but still reliable,
 detection. Developers should do most of their testing in this build mode.
 
-The debug build mode will place a premium on the debugability of safety
+The debug build mode will place a premium on the debuggability of safety
 violations. Where safety checks rely on hardening instead of guaranteed safety,
 violations should be detected with a high probability per single occurrence of
 the bug. Detected bugs will be accompanied by a detailed diagnostic report to

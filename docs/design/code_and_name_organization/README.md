@@ -24,7 +24,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Libraries](#libraries)
         -   [Exporting entities from an API file](#exporting-entities-from-an-api-file)
         -   [Granularity of libraries](#granularity-of-libraries)
-        -   [Exporting namespces](#exporting-namespces)
+        -   [Exporting namespaces](#exporting-namespaces)
     -   [Imports](#imports-1)
         -   [Imports from the current package](#imports-from-the-current-package)
     -   [Namespaces](#namespaces)
@@ -180,7 +180,7 @@ For example, to use `Geometry.Circle` from the `Geometry//Shapes` library:
 ```carbon
 import Geometry library "Shapes";
 
-fn Area(Geometry.Circle circle) { ... };
+fn Area(circle: Geometry.Circle) { ... };
 ```
 
 The `library` keyword is optional for `import`, and its use should parallel that
@@ -351,7 +351,7 @@ package Geometry library "Shapes" api;
 struct Circle { ... }
 
 // CircleHelper is private, and so will not be available to other libraries.
-private fn CircleHelper(Circle circle) { ... }
+private fn CircleHelper(circle: Circle) { ... }
 
 // Only entities in namespaces should be marked as an API, not the namespace
 // itself.
@@ -359,7 +359,7 @@ namespace Operations;
 
 // Operations.GetCircumference is an API, and will be available to
 // other libraries as Geometry.Operations.GetCircumference.
-fn Operations.GetCircumference(Circle circle) { ... }
+fn Operations.GetCircumference(circle: Circle) { ... }
 ```
 
 This means that an API file can contain all implementation code for a library.
@@ -392,7 +392,7 @@ possibly containing only a single class. The choice of only allowing a single
 `api` file per library should help encourage developers to write small
 libraries.
 
-#### Exporting namespces
+#### Exporting namespaces
 
 Any entity may be marked with `api` except for namespace and package entities.
 That is, `api namespace Sha256;` is invalid code. Instead, namespaces are
@@ -405,7 +405,7 @@ package Checksums library "Sha" api;
 
 namespaces Sha256;
 
-fn Sha256.HexDigest(Bytes data) -> String { ... }
+fn Sha256.HexDigest(data: Bytes) -> String { ... }
 ```
 
 Calling code may look like:
@@ -415,9 +415,9 @@ package Caller api;
 
 import Checksums library "Sha";
 
-fn Process(Bytes data) {
+fn Process(data: Bytes) {
   ...
-  var String digest = Checksums.Sha256.HexDigest(data);
+  var digest: String = Checksums.Sha256.HexDigest(data);
   ...
 }
 ```
@@ -488,7 +488,7 @@ package Geometry api;
 import Geometry library "Shapes";
 
 // Circle must be referenced using the Geometry namespace of the import.
-fn GetArea(Geometry.Circle c) { ... }
+fn GetArea(c: Geometry.Circle) { ... }
 ```
 
 ### Namespaces
@@ -514,7 +514,7 @@ package Time;
 namespace Timezones.Internal;
 struct Timezones.Internal.RawData { ... }
 
-fn ParseData(Timezones.Internal.RawData data);
+fn ParseData(data: Timezones.Internal.RawData);
 ```
 
 A namespace declaration adds the first identifier in the name path as a name in
@@ -556,7 +556,7 @@ namespace Timezones.Internal;
 alias TI = Timezones.internal;
 
 struct TI.RawData { ... }
-fn ParseData(TI.RawData data);
+fn ParseData(data: TI.RawData);
 ```
 
 ## Caveats
@@ -575,7 +575,7 @@ server for open source packages. Conflicts can also be addressed by renaming one
 of the packages, either at the source, or as a local modification.
 
 We do need to address the case of package names conflicting with other entity
-names. It's possible that a pre-existing entity will conflict with a new import,
+names. It's possible that a preexisting entity will conflict with a new import,
 and that renaming the entity is infeasible to rename due to existing callers.
 Alternately, the entity may be using an idiomatic name that it would contradict
 naming conventions to rename. In either case, this conflict may exist in a
@@ -769,13 +769,14 @@ Currently, we do not support cross-language imports. In the future, we will
 likely want to support imports from other languages, particularly for C++
 interoperability.
 
-Although we're not designing this right now, it could fit into the proposed
-syntax. For example:
+To fit into the proposed `import` syntax, we are provisionally using a special
+`Cpp` package to import headers from C++ code, as in:
 
 ```carbon
-import Cpp file("myproject/myclass.h");
+import Cpp library "<map>";
+import Cpp library "myproject/myclass.h";
 
-fn MyCarbonCall(Cpp.MyProject.MyClass x);
+fn MyCarbonCall(x: Cpp.std.map(Cpp.MyProject.MyClass));
 ```
 
 ### Imports from URLs

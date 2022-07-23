@@ -26,14 +26,23 @@ void ImplScope::Add(Nonnull<const Value*> iface,
                     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
                     Nonnull<Expression*> impl_expr,
                     const TypeChecker& type_checker) {
-  if (auto* constraint = dyn_cast<ConstraintType>(iface)) {
+  if (auto* orig_constraint = dyn_cast<ConstraintType>(iface)) {
     BindingMap map;
-    map[constraint->self_binding()] = type;
+    map[orig_constraint->self_binding()] = type;
+    const ConstraintType* constraint =
+        cast<ConstraintType>(type_checker.Substitute(map, orig_constraint));
     for (size_t i = 0; i != constraint->impl_constraints().size(); ++i) {
       ConstraintType::ImplConstraint impl = constraint->impl_constraints()[i];
-      Add(cast<InterfaceType>(type_checker.Substitute(map, impl.interface)),
-          deduced, type_checker.Substitute(map, impl.type), impl_bindings,
+      Add(impl.interface, deduced, impl.type, impl_bindings,
           type_checker.MakeConstraintWitnessAccess(impl_expr, i), type_checker);
+    }
+    // A parameterized impl declaration doesn't contribute any equality
+    // constraints to the scope. Instead, we'll resolve the equality
+    // constraints by resolving a witness when needed.
+    if (deduced.empty()) {
+      for (auto& equality_constraint : constraint->equality_constraints()) {
+        equalities_.push_back(&equality_constraint);
+      }
     }
     return;
   }
@@ -75,6 +84,22 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
                                               source_loc);
   }
   CARBON_FATAL() << "expected a constraint, not " << *constraint_type;
+}
+
+auto ImplScope::VisitEqualValues(
+    Nonnull<const Value*> value,
+    llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const -> bool {
+  for (Nonnull<const ConstraintType::EqualityConstraint*> eq : equalities_) {
+    if (!eq->VisitEqualValues(value, visitor)) {
+      return false;
+    }
+  }
+  for (Nonnull<const ImplScope*> parent : parent_scopes_) {
+    if (!parent->VisitEqualValues(value, visitor)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 auto ImplScope::ResolveInterface(Nonnull<const InterfaceType*> iface_type,
@@ -146,6 +171,13 @@ void ImplScope::Print(llvm::raw_ostream& out) const {
   llvm::ListSeparator sep;
   for (const Impl& impl : impls_) {
     out << sep << *(impl.type) << " as " << *(impl.interface);
+  }
+  for (Nonnull<const ConstraintType::EqualityConstraint*> eq : equalities_) {
+    out << sep;
+    llvm::ListSeparator equal(" == ");
+    for (Nonnull<const Value*> value : eq->values) {
+      out << equal << *value;
+    }
   }
   out << "\n";
   for (const Nonnull<const ImplScope*>& parent : parent_scopes_) {

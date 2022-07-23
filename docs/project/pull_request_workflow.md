@@ -120,7 +120,8 @@ Specifically, one pull request cannot serve as the _base_ for another pull
 request, so each pull request will include all of the commits and diffs of the
 preceding pull requests in the stack.
 
-We suggest a specific workflow to address this:
+We suggest a specific workflow to address this (note, commit access is
+required):
 
 1.  Create your initial pull request from a branch of your fork, nothing special
     is needed at this step. Let's say you have a branch `feature-basic` in your
@@ -157,9 +158,6 @@ We suggest a specific workflow to address this:
     the name matches `pull-*`, skipping pull request review processes. They can
     be force pushed as necessary and deleted. These branch names should only be
     used for this ephemeral purpose. All other branch names are protected.
-
-    If you don't yet have this permission, just ask an [admin](groups.md#admins)
-    for help.
 
 3.  Create your stacked branch on your fork:
 
@@ -213,7 +211,7 @@ We suggest a specific workflow to address this:
     # Update your fork (optional).
     git push
 
-    # Merge changes from upstream into your bracnh without disrpting history.
+    # Merge changes from upstream into your branch without disrupting history.
     git checkout feature-basic
     git merge trunk
     # Push to the first PR on your fork.
@@ -221,7 +219,7 @@ We suggest a specific workflow to address this:
     # Synchronize the upstream tracking branch for the first PR.
     git push upstream HEAD:pull-N-feature-basic
 
-    # Merge changes from the the first PR (now including changes from trunk)
+    # Merge changes from the first PR (now including changes from trunk)
     # without disrupting history.
     git checkout next-feature-extension
     git merge feature-basic

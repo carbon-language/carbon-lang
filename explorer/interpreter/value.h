@@ -24,6 +24,7 @@
 namespace Carbon {
 
 class Action;
+class ImplScope;
 
 // Abstract base class of all AST nodes representing values.
 //
@@ -46,6 +47,7 @@ class Value {
     NominalClassValue,
     AlternativeValue,
     TupleValue,
+    UninitializedValue,
     ImplWitness,
     SymbolicWitness,
     IntType,
@@ -61,6 +63,7 @@ class Value {
     ChoiceType,
     ContinuationType,  // The type of a continuation.
     VariableType,      // e.g., generic type parameters.
+    AssociatedConstant,
     ParameterizedEntityName,
     MemberName,
     BindingPlaceholderValue,
@@ -112,6 +115,26 @@ class Value {
  private:
   const Kind kind_;
 };
+
+// Base class for types holding contextual information by which we can
+// determine whether values are equal.
+class EqualityContext {
+ public:
+  virtual auto VisitEqualValues(
+      Nonnull<const Value*> value,
+      llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const
+      -> bool = 0;
+
+ protected:
+  virtual ~EqualityContext() = default;
+};
+
+auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
+               std::optional<Nonnull<const EqualityContext*>> equality_ctx)
+    -> bool;
+auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
+                std::optional<Nonnull<const EqualityContext*>> equality_ctx)
+    -> bool;
 
 // An integer value.
 class IntValue : public Value {
@@ -406,6 +429,22 @@ class AddrValue : public Value {
   Nonnull<const Value*> pattern_;
 };
 
+// Value for uninitialized local variables.
+class UninitializedValue : public Value {
+ public:
+  explicit UninitializedValue(Nonnull<const Value*> pattern)
+      : Value(Kind::UninitializedValue), pattern_(pattern) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::UninitializedValue;
+  }
+
+  auto pattern() const -> const Value& { return *pattern_; }
+
+ private:
+  Nonnull<const Value*> pattern_;
+};
+
 // The int type.
 class IntType : public Value {
  public:
@@ -631,6 +670,23 @@ class InterfaceType : public Value {
   Nonnull<const Bindings*> bindings_ = Bindings::None();
 };
 
+// A collection of values that are known to be the same.
+struct EqualityConstraint {
+  // Visit the values in this equality constraint that are a single step away
+  // from the given value according to this equality constraint. That is: if
+  // `value` is identical to a value in `values`, then call the visitor on all
+  // values in `values` that are not identical to `value`. Otherwise, do not
+  // call the visitor.
+  //
+  // Stops and returns `false` if any call to the visitor returns `false`,
+  // otherwise returns `true`.
+  auto VisitEqualValues(
+      Nonnull<const Value*> value,
+      llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const -> bool;
+
+  std::vector<Nonnull<const Value*>> values;
+};
+
 // A type-of-type for an unknown constrained type.
 //
 // These types are formed by the `&` operator that combines constraints and by
@@ -655,10 +711,7 @@ class ConstraintType : public Value {
     Nonnull<const InterfaceType*> interface;
   };
 
-  // A collection of values that are known to be the same.
-  struct EqualityConstraint {
-    std::vector<Nonnull<const Value*>> values;
-  };
+  using EqualityConstraint = Carbon::EqualityConstraint;
 
   // A context in which we might look up a name.
   struct LookupContext {
@@ -695,6 +748,17 @@ class ConstraintType : public Value {
   auto lookup_contexts() const -> llvm::ArrayRef<LookupContext> {
     return lookup_contexts_;
   }
+
+  // Visit the values in that are a single step away from the given value
+  // according to equality constraints in this constraint type, that is, the
+  // values `v` that are not identical to `value` but for which we have a
+  // `value == v` equality constraint in this constraint type.
+  //
+  // Stops and returns `false` if any call to the visitor returns `false`,
+  // otherwise returns `true`.
+  auto VisitEqualValues(
+      Nonnull<const Value*> value,
+      llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const -> bool;
 
  private:
   Nonnull<const GenericBinding*> self_binding_;
@@ -880,6 +944,47 @@ class MemberName : public Value {
   std::optional<Nonnull<const Value*>> base_type_;
   std::optional<Nonnull<const InterfaceType*>> interface_;
   Member member_;
+};
+
+// A symbolic value representing an associated constant.
+//
+// This is a value of the form `A.B` or `A.B.C` or similar, where `A` is a
+// `VariableType`.
+class AssociatedConstant : public Value {
+ public:
+  explicit AssociatedConstant(
+      Nonnull<const Value*> base, Nonnull<const InterfaceType*> interface,
+      Nonnull<const AssociatedConstantDeclaration*> constant,
+      Nonnull<const Witness*> witness)
+      : Value(Kind::AssociatedConstant),
+        base_(base),
+        interface_(interface),
+        constant_(constant),
+        witness_(witness) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::AssociatedConstant;
+  }
+
+  // The type for which we denote an associated constant.
+  auto base() const -> const Value& { return *base_; }
+
+  // The interface within which the constant was declared.
+  auto interface() const -> const InterfaceType& { return *interface_; }
+
+  // The associated constant whose value is being denoted.
+  auto constant() const -> const AssociatedConstantDeclaration& {
+    return *constant_;
+  }
+
+  // Witness within which the constant's value can be found.
+  auto witness() const -> const Witness& { return *witness_; }
+
+ private:
+  Nonnull<const Value*> base_;
+  Nonnull<const InterfaceType*> interface_;
+  Nonnull<const AssociatedConstantDeclaration*> constant_;
+  Nonnull<const Witness*> witness_;
 };
 
 // A first-class continuation representation of a fragment of the stack.
@@ -1099,9 +1204,6 @@ class StaticArrayType : public Value {
   Nonnull<const Value*> element_type_;
   size_t size_;
 };
-
-auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool;
-auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool;
 
 }  // namespace Carbon
 

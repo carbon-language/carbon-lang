@@ -35,7 +35,7 @@ fn GetConstraint() -> Type { return Interface & AnotherInterface; }
 fn TestStruct() {
   var s: GetStruct() = {.n = 1};
   if (s.(GetStruct().n) == 1) {
-    Print("Struct OK\n");
+    Print("Struct OK");
   }
 }
 
@@ -43,28 +43,28 @@ fn TestChoice() {
   var c: GetChoice() = GetChoice().Alternative();
   match (c) {
     case GetChoice().Alternative() => {
-      Print("Choice OK\n");
+      Print("Choice OK");
     }
   }
 }
 
 fn TestClass() {
   if (GetClass().F(1) == 2) {
-    Print("Class OK\n");
+    Print("Class OK");
   }
 }
 
 fn TestInterface() {
   var n: i32 = 1;
   if (n.(GetInterface().G)() == 2) {
-    Print("Interface OK\n");
+    Print("Interface OK");
   }
 }
 
 fn TestConstraint() {
   var n: i32 = 1;
   if (n.(GetConstraint().G)() == 2) {
-    Print("Constraint OK\n");
+    Print("Constraint OK");
   }
 }
 

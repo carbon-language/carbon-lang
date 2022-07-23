@@ -53,7 +53,11 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       if (var.is_returned()) {
         out << "returned ";
       }
-      out << "var " << var.pattern() << " = " << var.init() << ";";
+      out << "var " << var.pattern();
+      if (var.has_init()) {
+        out << " = " << var.init();
+      }
+      out << ";";
       break;
     }
     case StatementKind::ExpressionStatement:

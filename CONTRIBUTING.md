@@ -121,57 +121,40 @@ code and discussion), Google Docs, and Discord.
 
 #### Future CLA plans
 
-At present, we are using Google's CLA. In the future, we expect the Carbon
-ownership and IP to formally transfer from Google to a Carbon-specific
-foundation or other neutral third-party. When that happens, the foundation will
-take ownership of providing a CLA.
+Initially, Carbon is bootstrapping using Google's CLA. We are planning to create
+an open source foundation and transfer all Carbon-related rights to it; our goal
+is for the foundation setup to be similar to other open source projects, such as
+LLVM or Kubernetes.
 
 ### Collaboration systems
 
 We use a few systems for collaboration which contributors should be aware of.
-Membership is currently invite-only.
 
 Before using these systems, everyone must sign the CLA. They are all governed by
 the Code of Conduct.
 
--   [The GitHub carbon-language organization](https://github.com/orgs/carbon-language)
-    is used for our repositories. **To join:**
-
-    1.  Ask [an admin](docs/project/groups.md#admins) to send an invite,
-        providing your GitHub account.
-    2.  Check your email to accept the invite, or try the standard
-        [accept link](https://github.com/orgs/carbon-language/invitation?via_email=1)
-        if you don't see the email.
-
--   [Discord](https://discord.com/app) is used for chat. **To join:**
-
-    1.  Ask [an admin](docs/project/groups.md#admins) for an invite link.
-        -   Please do not re-share the invite links: they're our only way to
-            restrict access.
-    2.  You will be prompted with the Code of Conduct. After reading it, click
-        the check mark reaction icon at the bottom.
-
--   [A shared Google Drive](https://drive.google.com/corp/drive/folders/0ALTu5Y6kc39XUk9PVA)
-    is used for all of our Google Docs, particularly proposal drafts. **To
-    join:**
-
-    1.  Ask [an admin](docs/project/groups.md#admins) to invite you, providing
-        your Google account email.
-    2.  The admin will add you to the
-        [Google Group](https://groups.google.com/g/carbon-lang-contributors)
-        used for access.
-
+-   [The GitHub carbon-language organization](https://github.com/carbon-language)
+    is used for our repositories.
+-   [Discord](https://discord.gg/ZjVdShJDAs) is used for chat.
+-   [A shared Google Drive](https://drive.google.com/corp/drive/folders/18AFPsUWNXfAloZx0tRHTsrdCWUlJLpeW)
+    is used for all of our Google Docs, particularly proposal drafts.
 -   [Google Calendar](https://calendar.google.com/calendar/embed?src=c_07td7k4qjq0ssb4gdl6bmbnkik%40group.calendar.google.com)
     is used for meeting invites and project reminders. Contributors may add
     calendar entries for meetings added to discuss details. Standard entries
     are:
 
     -   The
-        [weekly sync](https://docs.google.com/document/d/1K_5uig1HHMsfEl-6eSMjM1qjwX-7PsbkBuRp36knxlQ/edit),
+        [weekly sync](https://docs.google.com/document/d/1dwS2sJ8tsN3LwxqmZSv9OvqutYhP71dK9Dmr1IXQFTs/edit?resourcekey=0-NxBWgL9h05yD2GOR3wUisg),
         where everyone is welcome.
-    -   [Open discussions](https://docs.google.com/document/d/1QCdKQ33rki-kCDrxi8UHy3a36dtW0WdMqpUzluGSrz4/edit?resourcekey=0-bZmNUiueOiH_sysJNqnT9A)
+    -   [Open discussions](https://docs.google.com/document/d/1tEt4iM6vfcY0O0DG0uOEMIbaXcZXlNREc2ChNiEtn_w/edit),
         which are unstructured meeting slots used for discussing proposals,
         tooling, and other Carbon topics based on who attends.
+
+Note that commenting on Google Docs and some label changes in GitHub will
+require some contributor access: make sure you've
+[signed the CLA](#contributor-license-agreements-clas) then ask for access on
+[#getting-started](https://discord.com/channels/655572317891461132/655577725347561492)
+on Discord.
 
 ### Contribution tools
 
@@ -218,7 +201,7 @@ follow the Carbon documentation and coding styles.
 
     -   New features should have a documented design that has been approved
         through the [evolution process](docs/project/evolution.md). This
-        includes modifications to pre-existing designs.
+        includes modifications to preexisting designs.
     -   Bug fixes and mechanical improvements don't need this.
     -   All new features include unit tests, as they help to (a) document and
         validate concrete usage of the feature and its edge cases, and (b) guard

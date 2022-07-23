@@ -104,7 +104,7 @@ The following implicit numeric conversions are available:
 -   `iN` or `uN` -> `iM` if `M` > `N`
 -   `uN` -> `uM` if `M` > `N`
 -   `fN` -> `fM` if `M` > `N`
--   `iN` or `uN` -> `fM` if every value of type `iN` or `uN` can be represeted
+-   `iN` or `uN` -> `fM` if every value of type `iN` or `uN` can be represented
     in `fM`:
     -   `i12` or `u11` (or smaller) -> `f16`
     -   `i25` or `u24` (or smaller) -> `f32`
@@ -207,7 +207,8 @@ extends
 [the `As` interface used to implement `as` expressions](as_expressions.md#extensibility):
 
 ```
-interface ImplicitAs(Dest:! Type) extends As(Dest) {
+interface ImplicitAs(Dest:! Type) {
+  extends As(Dest);
   // Inherited from As(Dest):
   // fn Convert[self: Self]() -> Dest;
 }

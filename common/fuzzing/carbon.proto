@@ -38,7 +38,7 @@ message IndexExpression {
   optional Expression offset = 2;
 }
 
-message PrimitiveOperatorExpression {
+message OperatorExpression {
   enum Operator {
     UnknownOperator = 0;
     Add = 1;
@@ -53,6 +53,7 @@ message PrimitiveOperatorExpression {
     Sub = 10;
     Ptr = 11;
     Combine = 12;
+    As = 13;
   }
   optional Operator op = 1;
   repeated Expression arguments = 2;
@@ -155,7 +156,7 @@ message Expression {
     FunctionTypeLiteral function_type = 2;
     SimpleMemberAccessExpression simple_member_access = 3;
     IndexExpression index = 4;
-    PrimitiveOperatorExpression primitive_operator = 5;
+    OperatorExpression operator = 5;
     TupleLiteralExpression tuple_literal = 6;
     StructLiteralExpression struct_literal = 7;
     StructTypeLiteralExpression struct_type_literal = 8;
@@ -353,6 +354,12 @@ message VariableDeclaration {
   optional Expression initializer = 2;
 }
 
+message LetDeclaration {
+  optional Pattern pattern = 1;
+  // TODO: Add `optional Expression initializer = 2;` once explorer supports
+  // `let` declarations in general.
+}
+
 message InterfaceDeclaration {
   optional string name = 1;
   repeated Declaration members = 2;
@@ -386,6 +393,7 @@ message Declaration {
     InterfaceDeclaration interface = 5;
     ImplDeclaration impl = 6;
     AliasDeclaration alias = 7;
+    LetDeclaration let = 8;
   }
 }
 
@@ -393,7 +401,7 @@ message CompilationUnit {
   optional LibraryName package_statement = 1;
   optional bool is_api = 2;
   repeated Declaration declarations = 3;
-  // TODO Add support for imports if they are useful in fuzzing.
+  // TODO: Add support for imports if they are useful in fuzzing.
 }
 
 // Top-level fuzzer input.

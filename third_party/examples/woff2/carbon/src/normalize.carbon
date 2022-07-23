@@ -27,7 +27,7 @@ fn FixChecksums(font: Font*) -> bool;
 
 // Parses each of the glyphs in the font and writes them again to the glyf
 // table in normalized form, as defined by the StoreGlyph() function. Changes
-// the loca table accordigly.
+// the loca table accordingly.
 fn NormalizeGlyphs(font: Font*) -> bool;
 
 // Performs all of the normalization steps above.
