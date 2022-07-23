@@ -10,6 +10,6 @@ RUN pre-commit install
 RUN bazel build //explorer
 
 
-FROM carbon-ubuntu2004-build as carbon-ubuntu2004-runner
+FROM carbon-ubuntu2004-build
 
 CMD ["bazel", "run", "//explorer", "--", "./explorer/testdata/print/format_only.carbon"]
