@@ -31,10 +31,24 @@ TEST_F(ForRangeTest, Basic) {
 
 TEST_F(ForRangeTest, NoSpace) {
   // Do not mark `cpp` so that clang-format won't "fix" the `:` spacing.
-  constexpr char Before[] = R"(
+  constexpr char BeforeMiddleColon[] = R"(
     void Foo() {
       int items[] = {1};
       for (int i:items) {
+      }
+    }
+  )";
+  constexpr char BeforeRightColon[] = R"(
+    void Foo() {
+      int items[] = {1};
+      for (int i :items) {
+      }
+    }
+  )";
+  constexpr char BeforeLeftColon[] = R"(
+    void Foo() {
+      int items[] = {1};
+      for (int i: items) {
       }
     }
   )";
@@ -45,7 +59,9 @@ TEST_F(ForRangeTest, NoSpace) {
       }
     }
   )";
-  ExpectReplacement(Before, After);
+  ExpectReplacement(BeforeMiddleColon, After);
+  ExpectReplacement(BeforeRightColon, After);
+  ExpectReplacement(BeforeLeftColon, After);
 }
 
 }  // namespace
