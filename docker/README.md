@@ -12,20 +12,26 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ```bash
 docker build -f base.Dockerfile -t carbon-ubuntu2004-base .
 ```
-## Using Git
+## Using Git repository
 ```bash
-docker build -f git.Dockerfile -t carbon-git-example .
+docker build -f git.Dockerfile -t carbon-example .
 ```
 ```bash
-docker run carbon-git-example
+docker run carbon-example
 ```
 ## Using Copy instruction
 ```bash
-docker build -f Dockerfile -t carbon-copy-example ../..
+docker build -f Dockerfile -t carbon-example ../..
 ```
 ```bash
-docker run carbon-copy-example
+docker run carbon-example
 ```
+
+## Specifying file
+```bash
+docker run run carbon-example bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
+```
+
 ## Using Volume
 
 ```bash
