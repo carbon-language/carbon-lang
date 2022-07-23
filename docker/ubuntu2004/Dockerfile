@@ -4,11 +4,10 @@
 
 FROM carbon-ubuntu2004-base as carbon-ubuntu2004-build
 
-COPY . .
-
+COPY . /carbon-lang
+WORKDIR /carbon-lang
 RUN pre-commit install
 RUN bazel build //explorer
-
 
 FROM carbon-ubuntu2004-build
 
