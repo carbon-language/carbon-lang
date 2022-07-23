@@ -123,7 +123,7 @@ class FunctionDeclaration : public Declaration {
       : Declaration(AstNodeKind::FunctionDeclaration, source_loc),
         name_(std::move(name)),
         deduced_parameters_(std::move(deduced_params)),
-        me_pattern_(self_pattern),
+        self_pattern_(self_pattern),
         param_pattern_(param_pattern),
         return_term_(return_term),
         body_(body) {}
@@ -142,8 +142,8 @@ class FunctionDeclaration : public Declaration {
   auto deduced_parameters() -> llvm::ArrayRef<Nonnull<GenericBinding*>> {
     return deduced_parameters_;
   }
-  auto self_pattern() const -> const Pattern& { return **me_pattern_; }
-  auto self_pattern() -> Pattern& { return **me_pattern_; }
+  auto self_pattern() const -> const Pattern& { return **self_pattern_; }
+  auto self_pattern() -> Pattern& { return **self_pattern_; }
   auto param_pattern() const -> const TuplePattern& { return *param_pattern_; }
   auto param_pattern() -> TuplePattern& { return *param_pattern_; }
   auto return_term() const -> const ReturnTerm& { return return_term_; }
@@ -153,12 +153,12 @@ class FunctionDeclaration : public Declaration {
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
-  auto is_method() const -> bool { return me_pattern_.has_value(); }
+  auto is_method() const -> bool { return self_pattern_.has_value(); }
 
  private:
   std::string name_;
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
-  std::optional<Nonnull<Pattern*>> me_pattern_;
+  std::optional<Nonnull<Pattern*>> self_pattern_;
   Nonnull<TuplePattern*> param_pattern_;
   ReturnTerm return_term_;
   std::optional<Nonnull<Block*>> body_;

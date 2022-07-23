@@ -546,11 +546,11 @@ static auto DeclarationToProto(const Declaration& declaration)
       if (function.is_method()) {
         switch (function.self_pattern().kind()) {
           case PatternKind::AddrPattern:
-            *function_proto->mutable_me_pattern() =
+            *function_proto->mutable_self_pattern() =
                 PatternToProto(cast<AddrPattern>(function.self_pattern()));
             break;
           case PatternKind::BindingPattern:
-            *function_proto->mutable_me_pattern() =
+            *function_proto->mutable_self_pattern() =
                 PatternToProto(cast<BindingPattern>(function.self_pattern()));
             break;
           default:
