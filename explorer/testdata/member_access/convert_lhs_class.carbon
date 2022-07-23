@@ -12,14 +12,14 @@
 package Foo api;
 
 class X {
-  fn F[self: Self](o: Self) -> Self { return {.n = self.n + o.n}; }
+  fn F[me: Self](o: Self) -> Self { return {.n = me.n + o.n}; }
   var n: i32;
 }
 
 class Y {
   var m: i32;
   impl as ImplicitAs(X) {
-    fn Convert[self: Self]() -> X { return {.n = self.m}; }
+    fn Convert[me: Self]() -> X { return {.n = me.m}; }
   }
 }
 

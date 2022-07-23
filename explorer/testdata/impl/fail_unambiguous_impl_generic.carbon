@@ -11,8 +11,8 @@
 package ExplorerTest api;
 
 interface Vector(T:! Type) {
-  fn Add[self: Self](b: Self) -> Self;
-  fn Scale[self: Self](v: T) -> Self;
+  fn Add[me: Self](b: Self) -> Self;
+  fn Scale[me: Self](v: T) -> Self;
 }
 
 class Point(T:! Type) {
@@ -21,20 +21,20 @@ class Point(T:! Type) {
 }
 
 external impl Point(i32) as Vector(i32) {
-  fn Add[self: Self](b: Self) -> Self {
-    return {.x = self.x + b.x, .y = self.y + b.y};
+  fn Add[me: Self](b: Self) -> Self {
+    return {.x = me.x + b.x, .y = me.y + b.y};
   }
-  fn Scale[self: Self](v: i32) -> Self {
-    return {.x = self.x * v, .y = self.y * v};
+  fn Scale[me: Self](v: i32) -> Self {
+    return {.x = me.x * v, .y = me.y * v};
   }
 }
 
 external impl forall [T:! Type] Point(T) as Vector(T) {
-  fn Add[self: Self](b: Self) -> Self {
-    return self;
+  fn Add[me: Self](b: Self) -> Self {
+    return me;
   }
-  fn Scale[self: Self](v: T) -> Self {
-    return self;
+  fn Scale[me: Self](v: T) -> Self {
+    return me;
   }
 }
 

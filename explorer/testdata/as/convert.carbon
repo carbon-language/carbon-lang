@@ -14,7 +14,7 @@ package ExplorerTest api;
 class A { var n: i32; }
 
 external impl A as As(i32) {
-  fn Convert[self: Self]() -> i32 { return self.n; }
+  fn Convert[me: Self]() -> i32 { return me.n; }
 }
 
 fn Main() -> i32 {

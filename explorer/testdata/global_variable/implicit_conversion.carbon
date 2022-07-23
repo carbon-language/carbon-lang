@@ -15,7 +15,7 @@ class A {
   var n: i32;
 }
 impl i32 as ImplicitAs(A) {
-  fn Convert[self: Self]() -> A { return {.n = self}; }
+  fn Convert[me: Self]() -> A { return {.n = me}; }
 }
 
 var a: A = 5;

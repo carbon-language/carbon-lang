@@ -11,7 +11,7 @@
 
 package Foo api;
 class X {
-  fn F[self: Self](o: Self) -> Self { return {.n = self.n + o.n}; }
+  fn F[me: Self](o: Self) -> Self { return {.n = me.n + o.n}; }
   var n: i32;
 }
 fn Main() -> i32 {

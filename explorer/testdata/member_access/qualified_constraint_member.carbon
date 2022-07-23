@@ -11,7 +11,7 @@
 
 package Foo api;
 interface A {
-  fn F[self: Self]() -> i32;
+  fn F[me: Self]() -> i32;
 }
 interface B {
   fn G(o: Self) -> i32;
@@ -19,7 +19,7 @@ interface B {
 alias C = A & B;
 class X {
   impl as A {
-    fn F[self: Self]() -> i32 { return 10 * self.n; }
+    fn F[me: Self]() -> i32 { return 10 * me.n; }
   }
   impl as B {
     fn G(o: Self) -> i32 { return o.n; }

@@ -12,7 +12,7 @@ package ExplorerTest api;
 
 class C {
   fn F() {}
-  fn G[self: Self]() {}
+  fn G[me: Self]() {}
 }
 
 fn ReturnF() -> auto { return C.F; }

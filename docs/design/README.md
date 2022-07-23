@@ -1371,22 +1371,22 @@ Class type definitions can include methods:
 ```carbon
 class Point {
   // Method defined inline
-  fn Distance[self: Self](x2: i32, y2: i32) -> f32 {
-    var dx: i32 = x2 - self.x;
-    var dy: i32 = y2 - self.y;
+  fn Distance[me: Self](x2: i32, y2: i32) -> f32 {
+    var dx: i32 = x2 - me.x;
+    var dy: i32 = y2 - me.y;
     return Math.Sqrt(dx * dx + dy * dy);
   }
   // Mutating method declaration
-  fn Offset[addr self: Self*](dx: i32, dy: i32);
+  fn Offset[addr me: Self*](dx: i32, dy: i32);
 
   var x: i32;
   var y: i32;
 }
 
 // Out-of-line definition of method declared inline
-fn Point.Offset[addr self: Self*](dx: i32, dy: i32) {
-  self->x += dx;
-  self->y += dy;
+fn Point.Offset[addr me: Self*](dx: i32, dy: i32) {
+  me->x += dx;
+  me->y += dy;
 }
 
 var origin: Point = {.x = 0, .y = 0};
@@ -1398,16 +1398,16 @@ Assert(origin.Distance(3, 4) == 0.0);
 This defines a `Point` class type with two integer data members `x` and `y` and
 two methods `Distance` and `Offset`:
 
--   Methods are defined as class functions with a `self` parameter inside square
+-   Methods are defined as class functions with a `me` parameter inside square
     brackets `[`...`]` before the regular explicit parameter list in parens
     `(`...`)`.
 -   Methods are called using the member syntax, `origin.Distance(`...`)` and
     `origin.Offset(`...`)`.
 -   `Distance` computes and returns the distance to another point, without
-    modifying the `Point`. This is signified using `[self: Self]` in the method
+    modifying the `Point`. This is signified using `[me: Self]` in the method
     declaration.
 -   `origin.Offset(`...`)` does modify the value of `origin`. This is signified
-    using `[addr self: Self*]` in the method declaration. Since calling this
+    using `[addr me: Self*]` in the method declaration. Since calling this
     method requires taking the address of `origin`, it may only be called on
     [non-`const`](#const) [l-values](#value-categories-and-value-phases).
 -   Methods may be declared lexically inline like `Distance`, or lexically out
@@ -1553,12 +1553,12 @@ names resolvable by the compiler, and don't act like forward declarations.
 
 A destructor for a class is custom code executed when the lifetime of a value of
 that type ends. They are defined with the `destructor` keyword followed by
-either `[self: Self]` or `[addr self: Self*]` (as is done with
-[methods](#methods)) and the block of code in the class definition, as in:
+either `[me: Self]` or `[addr me: Self*]` (as is done with [methods](#methods))
+and the block of code in the class definition, as in:
 
 ```carbon
 class MyClass {
-  destructor [self: Self] { ... }
+  destructor [me: Self] { ... }
 }
 ```
 
@@ -1566,8 +1566,8 @@ or:
 
 ```carbon
 class MyClass {
-  // Can modify `self` in the body.
-  destructor [addr self: Self*] { ... }
+  // Can modify `me` in the body.
+  destructor [addr me: Self*] { ... }
 }
 ```
 
@@ -1604,7 +1604,7 @@ For every type `MyClass`, there is the type `const MyClass` such that:
 -   If member `x` of `MyClass` has type `T`, then member `x` of `const MyClass`
     has type `const T`.
 -   The API of a `const MyClass` is a subset of `MyClass`, excluding all methods
-    taking `[addr self: Self*]`.
+    taking `[addr me: Self*]`.
 
 Note that `const` binds more tightly than postfix-`*` for forming a pointer
 type, so `const MyClass*` is equal to `(const MyClass)*`.
@@ -2305,7 +2305,7 @@ capabilities that may be assumed of types that satisfy that constraint.
 interface Printable {
   // Inside an interface definition `Self` means
   // "the type implementing this interface".
-  fn Print[self: Self]();
+  fn Print[me: Self]();
 }
 ```
 
@@ -2328,8 +2328,8 @@ class Circle {
   var radius: f32;
 
   impl as Printable {
-    fn Print[self: Self]() {
-      Console.WriteLine("Circle with radius: {0}", self.radius);
+    fn Print[me: Self]() {
+      Console.WriteLine("Circle with radius: {0}", me.radius);
     }
   }
 }
@@ -2422,9 +2422,9 @@ associated type to represent the type of elements stored in the stack.
 ```
 interface StackInterface {
   let ElementType:! Movable;
-  fn Push[addr self: Self*](value: ElementType);
-  fn Pop[addr self: Self*]() -> ElementType;
-  fn IsEmpty[addr self: Self*]() -> bool;
+  fn Push[addr me: Self*](value: ElementType);
+  fn Pop[addr me: Self*]() -> ElementType;
+  fn IsEmpty[addr me: Self*]() -> bool;
 }
 ```
 
@@ -2434,14 +2434,14 @@ values for the `ElementType` member of the interface using a `where` clause:
 ```carbon
 class IntStack {
   impl as StackInterface where .ElementType == i32 {
-    fn Push[addr self: Self*](value: i32);
+    fn Push[addr me: Self*](value: i32);
     // ...
   }
 }
 
 class FruitStack {
   impl as StackInterface where .ElementType == Fruit {
-    fn Push[addr self: Self*](value: Fruit);
+    fn Push[addr me: Self*](value: Fruit);
     // ...
   }
 }
@@ -2469,8 +2469,8 @@ type `T`:
 
 ```carbon
 class Stack(T:! Type) {
-  fn Push[addr self: Self*](value: T);
-  fn Pop[addr self: Self*]() -> T;
+  fn Push[addr me: Self*](value: T);
+  fn Pop[addr me: Self*]() -> T;
 
   var storage: Array(T);
 }
@@ -2671,7 +2671,7 @@ types in the `impl` declaration, as in:
 ```carbon
 external impl like T as AddWith(like U) where .Result == V {
   // `Self` is `T` here
-  fn Op[self: Self](other: U) -> V { ... }
+  fn Op[me: Self](other: U) -> V { ... }
 }
 ```
 
@@ -2680,7 +2680,7 @@ implementing the `Add` interface:
 
 ```carbon
 external impl T as Add {
-  fn Op[self: Self](other: Self) -> Self { ... }
+  fn Op[me: Self](other: Self) -> Self { ... }
 }
 ```
 

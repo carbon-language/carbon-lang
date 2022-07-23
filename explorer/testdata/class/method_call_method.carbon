@@ -16,12 +16,12 @@ class Point {
     return {.x = 0, .y = 0};
   }
 
-  fn GetX[self: Point]() -> i32 {
-    return self.x;
+  fn GetX[me: Point]() -> i32 {
+    return me.x;
   }
 
-  fn GetXY[self: Point]() -> (i32, i32) {
-    return (self.GetX(), self.y);
+  fn GetXY[me: Point]() -> (i32, i32) {
+    return (me.GetX(), me.y);
   }
 
   var x: i32;

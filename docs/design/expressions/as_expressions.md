@@ -165,7 +165,7 @@ Explicit casts can be defined for user-defined types such as
 
 ```
 interface As(Dest:! Type) {
-  fn Convert[self: Self]() -> Dest;
+  fn Convert[me: Self]() -> Dest;
 }
 ```
 

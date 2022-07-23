@@ -232,9 +232,9 @@ with parentheses around the member name:
 -   _expression_ `.` `(` _expression_ `)`
 
 ```
-interface I { fn F[self: Self](); }
+interface I { fn F[me: Self](); }
 class X {}
-external impl X as I { fn F[self: Self]() {} }
+external impl X as I { fn F[me: Self]() {} }
 
 // `x.I.F()` would mean `(x.I).F()`.
 fn Q(x: X) { x.(I.F)(); }

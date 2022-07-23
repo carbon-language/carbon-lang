@@ -17,8 +17,8 @@ class Point(T:! Type) {
     return {.x = zero, .y = zero};
   }
 
-  fn GetX[self: Self]() -> T {
-    return self.x;
+  fn GetX[me: Self]() -> T {
+    return me.x;
   }
 
   var x: T;

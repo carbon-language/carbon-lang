@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 
 package Foo api;
-fn F[self: i32]() {}
+fn F[me: i32]() {}
 fn Main() -> i32 {
   // TODO: It's unclear whether this is valid per the current rules. See
   // https://github.com/carbon-language/carbon-lang/pull/1122

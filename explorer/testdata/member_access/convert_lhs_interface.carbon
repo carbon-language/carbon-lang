@@ -12,12 +12,12 @@
 package Foo api;
 
 interface HasF {
-  fn F[self: Self](o: Self) -> Self;
+  fn F[me: Self](o: Self) -> Self;
 }
 
 class X {
   impl as HasF {
-    fn F[self: Self](o: Self) -> Self { return {.n = self.n + o.n}; }
+    fn F[me: Self](o: Self) -> Self { return {.n = me.n + o.n}; }
   }
   var n: i32;
 }
@@ -25,7 +25,7 @@ class X {
 class Y {
   var m: i32;
   impl as ImplicitAs(X) {
-    fn Convert[self: Self]() -> X { return {.n = self.m}; }
+    fn Convert[me: Self]() -> X { return {.n = me.m}; }
   }
 }
 

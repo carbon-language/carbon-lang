@@ -202,14 +202,14 @@ void ReturnTerm::Print(llvm::raw_ostream& out) const {
 auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
                                  SourceLocation source_loc, std::string name,
                                  std::vector<Nonnull<AstNode*>> deduced_params,
-                                 std::optional<Nonnull<Pattern*>> self_pattern,
+                                 std::optional<Nonnull<Pattern*>> me_pattern,
                                  Nonnull<TuplePattern*> param_pattern,
                                  ReturnTerm return_term,
                                  std::optional<Nonnull<Block*>> body)
     -> ErrorOr<Nonnull<FunctionDeclaration*>> {
   std::vector<Nonnull<GenericBinding*>> resolved_params;
-  // Look for the `self` parameter in the `deduced_parameters`
-  // and put it in the `self_pattern`.
+  // Look for the `me` parameter in the `deduced_parameters`
+  // and put it in the `me_pattern`.
   for (Nonnull<AstNode*> param : deduced_params) {
     switch (param->kind()) {
       case AstNodeKind::GenericBinding:
@@ -217,21 +217,21 @@ auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
         break;
       case AstNodeKind::BindingPattern: {
         Nonnull<BindingPattern*> bp = &cast<BindingPattern>(*param);
-        if (self_pattern.has_value() || bp->name() != "self") {
+        if (me_pattern.has_value() || bp->name() != "me") {
           return CompilationError(source_loc)
                  << "illegal binding pattern in implicit parameter list";
         }
-        self_pattern = bp;
+        me_pattern = bp;
         break;
       }
       case AstNodeKind::AddrPattern: {
         Nonnull<AddrPattern*> abp = &cast<AddrPattern>(*param);
         Nonnull<BindingPattern*> bp = &cast<BindingPattern>(abp->binding());
-        if (self_pattern.has_value() || bp->name() != "self") {
+        if (me_pattern.has_value() || bp->name() != "me") {
           return CompilationError(source_loc)
                  << "illegal binding pattern in implicit parameter list";
         }
-        self_pattern = abp;
+        me_pattern = abp;
         break;
       }
       default:
@@ -239,9 +239,9 @@ auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
                << "illegal AST node in implicit parameter list";
     }
   }
-  return arena->New<FunctionDeclaration>(
-      source_loc, name, std::move(resolved_params), self_pattern, param_pattern,
-      return_term, body);
+  return arena->New<FunctionDeclaration>(source_loc, name,
+                                         std::move(resolved_params), me_pattern,
+                                         param_pattern, return_term, body);
 }
 
 void FunctionDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {

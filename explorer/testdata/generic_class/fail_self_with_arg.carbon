@@ -19,8 +19,8 @@ class Point(T:! Type) {
   }
 
   // Error: wrote `Self(T)` instead of `Self`.
-  fn GetX[self: Self(T)]() -> T {
-    return self.x;
+  fn GetX[me: Self(T)]() -> T {
+    return me.x;
   }
 
   var x: T;

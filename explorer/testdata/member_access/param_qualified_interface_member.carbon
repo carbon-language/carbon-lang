@@ -11,11 +11,11 @@
 
 package Foo api;
 interface A {
-  fn F[self: Self](o: Self) -> Self;
+  fn F[me: Self](o: Self) -> Self;
 }
 class X {
   impl as A {
-    fn F[self: Self](o: Self) -> Self { return {.n = self.n + o.n}; }
+    fn F[me: Self](o: Self) -> Self { return {.n = me.n + o.n}; }
   }
   var n: i32;
 }

@@ -778,8 +778,8 @@ auto Interpreter::CallFunction(const CallExpression& call,
                   call.source_loc()));
       RuntimeScope method_scope(&heap_);
       BindingMap generic_args;
-      // Bind the receiver to the `self` parameter.
-      CARBON_CHECK(PatternMatch(&method.self_pattern().value(), m.receiver(),
+      // Bind the receiver to the `me` parameter.
+      CARBON_CHECK(PatternMatch(&method.me_pattern().value(), m.receiver(),
                                 call.source_loc(), &method_scope, generic_args,
                                 trace_stream_, this->arena_));
       // Bind the arguments to the parameters.

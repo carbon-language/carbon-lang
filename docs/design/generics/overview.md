@@ -159,7 +159,7 @@ Example:
 ```
 interface Comparable {
   // `Less` is an associated method.
-  fn Less[self: Self](rhs: Self) -> Bool;
+  fn Less[me: Self](rhs: Self) -> Bool;
 }
 ```
 
@@ -192,7 +192,7 @@ Consider this interface:
 
 ```
 interface Printable {
-  fn Print[self: Self]();
+  fn Print[me: Self]();
 }
 ```
 
@@ -209,7 +209,7 @@ class Song {
   // as `F`, are included as a part of the `Song` API.
   impl as Printable {
     // Could use `Self` in place of `Song` here.
-    fn Print[self: Song]() { ... }
+    fn Print[me: Song]() { ... }
   }
 }
 
@@ -218,7 +218,7 @@ class Song {
 // the library defining `Song` or `Comparable`.
 external impl Song as Comparable {
   // Could use either `Self` or `Song` here.
-  fn Less[self: Self](rhs: Self) -> Bool { ... }
+  fn Less[me: Self](rhs: Self) -> Bool { ... }
 }
 ```
 
@@ -350,13 +350,13 @@ Interfaces can require other interfaces be implemented:
 
 ```
 interface Equatable {
-  fn IsEqual[self: Self](rhs: Self) -> Bool;
+  fn IsEqual[me: Self](rhs: Self) -> Bool;
 }
 
 // `Iterable` requires that `Equatable` is implemented.
 interface Iterable {
   impl as Equatable;
-  fn Advance[addr self: Self*]();
+  fn Advance[addr me: Self*]();
 }
 ```
 
@@ -369,13 +369,13 @@ interface.
 // `Hashable` extends `Equatable`.
 interface Hashable {
   extends Equatable;
-  fn Hash[self: Self]() -> u64;
+  fn Hash[me: Self]() -> u64;
 }
 // `Hashable` is equivalent to:
 interface Hashable {
   impl as Equatable;
   alias IsEqual = Equatable.IsEqual;
-  fn Hash[self: Self]() -> u64;
+  fn Hash[me: Self]() -> u64;
 }
 ```
 
@@ -386,8 +386,8 @@ methods in the implementation of the derived interface.
 class Key {
   // ...
   impl as Hashable {
-    fn IsEqual[self: Key](rhs: Key) -> Bool { ... }
-    fn Hash[self: Key]() -> u64 { ... }
+    fn IsEqual[me: Key](rhs: Key) -> Bool { ... }
+    fn Hash[me: Key]() -> u64 { ... }
   }
   // No need to separately implement `Equatable`.
 }
@@ -403,14 +403,14 @@ It gives you all the names that don't conflict.
 
 ```
 interface Renderable {
-  fn GetCenter[self: Self]() -> (i32, i32);
+  fn GetCenter[me: Self]() -> (i32, i32);
   // Draw the object to the screen
-  fn Draw[self: Self]();
+  fn Draw[me: Self]();
 }
 interface EndOfGame {
-  fn SetWinner[addr self: Self*](player: i32);
+  fn SetWinner[addr me: Self*](player: i32);
   // Indicate the game was a draw
-  fn Draw[addr self: Self*]();
+  fn Draw[addr me: Self*]();
 }
 
 fn F[T:! Renderable & EndOfGame](game_state: T*) -> (i32, i32) {
@@ -533,9 +533,9 @@ element types:
 ```
 interface Stack {
   let ElementType:! Movable;
-  fn Push[addr self: Self*](value: ElementType);
-  fn Pop[addr self: Self*]() -> ElementType;
-  fn IsEmpty[addr self: Self*]() -> Bool;
+  fn Push[addr me: Self*](value: ElementType);
+  fn Pop[addr me: Self*]() -> ElementType;
+  fn IsEmpty[addr me: Self*]() -> Bool;
 }
 ```
 
@@ -561,7 +561,7 @@ those types to be different. An element in a hash map might have type
 
 ```
 interface Equatable(T:! Type) {
-  fn IsEqual[self: Self](compare_to: T) -> Bool;
+  fn IsEqual[me: Self](compare_to: T) -> Bool;
 }
 ```
 

@@ -14,13 +14,13 @@ package ExplorerTest api;
 class Cell(T:! Type) {
   fn Create(x: T) -> Cell(T) { return { .data = x }; }
 
-  fn Get[self: Self]() -> T {
-    return self.data;
+  fn Get[me: Self]() -> T {
+    return me.data;
   }
-  fn Put[addr self: Self*](x: T) {
-    (*self).data = x;
+  fn Put[addr me: Self*](x: T) {
+    (*me).data = x;
   }
-  fn CreateOther[self: Self, U:! Type](x: U) -> Cell(U) {
+  fn CreateOther[me: Self, U:! Type](x: U) -> Cell(U) {
     return {.data = x};
   }
   var data: T;

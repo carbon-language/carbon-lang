@@ -12,11 +12,11 @@
 package ExplorerTest api;
 
 interface HasValueParam(T:! Type, V:! T) {
-  fn Go[self: Self]() -> T;
+  fn Go[me: Self]() -> T;
 }
 
 impl () as HasValueParam(i32, 5) {
-  fn Go[self: Self]() -> i32 { return 42; }
+  fn Go[me: Self]() -> i32 { return 42; }
 }
 
 fn Main() -> i32 {

@@ -648,8 +648,8 @@ Interface type parameter example:
 
 ```
 interface StackTP(ElementType:! Type)
-  fn Push[addr self: Self*](value: ElementType);
-  fn Pop[addr self: Self*]() -> ElementType;
+  fn Push[addr me: Self*](value: ElementType);
+  fn Pop[addr me: Self*]() -> ElementType;
 }
 ```
 
@@ -658,8 +658,8 @@ Associated type example:
 ```
 interface StackAT {
   let ElementType:! Type;
-  fn Push[addr self: Self*](value: ElementType);
-  fn Pop[addr self: Self*]() -> ElementType;
+  fn Push[addr me: Self*](value: ElementType);
+  fn Pop[addr me: Self*]() -> ElementType;
 }
 ```
 
@@ -675,7 +675,7 @@ interface Container {
   // since this type is determined from the container type.
   let IteratorType:! Iterator;
   ...
-  fn Insert[addr self: Self*](position: IteratorType, value: ElementType);
+  fn Insert[addr me: Self*](position: IteratorType, value: ElementType);
 }
 class ListIterator(ElementType:! Type) {
   ...
@@ -684,7 +684,7 @@ class ListIterator(ElementType:! Type) {
 class List(ElementType:! Type) {
   // Iterator type is determined by the container type.
   impl as Container where .IteratorType = ListIterator(ElementType) {
-    fn Insert[addr self: Self*](position: IteratorType, value: ElementType) {
+    fn Insert[addr me: Self*](position: IteratorType, value: ElementType) {
       ...
     }
   }
@@ -703,7 +703,7 @@ another type:
 ```
 interface Addable(T:! Type) {
   let ResultType:! Type;
-  fn Add[self: Self](rhs: T) -> ResultType;
+  fn Add[me: Self](rhs: T) -> ResultType;
 }
 ```
 

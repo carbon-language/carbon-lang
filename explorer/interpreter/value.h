@@ -88,7 +88,7 @@ class Value {
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   // Returns the sub-Value specified by `path`, which must be a valid field
-  // path for *this. If the sub-Value is a method and its self_pattern is an
+  // path for *this. If the sub-Value is a method and its me_pattern is an
   // AddrPattern, then pass the LValue representing the receiver as `me_value`,
   // otherwise pass `*this`.
   auto GetMember(Nonnull<Arena*> arena, const FieldPath& path,

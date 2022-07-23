@@ -17,8 +17,8 @@ class Point {
   }
 
   // Allowed: `Self` here means `Point`.
-  fn GetX[self: Self]() -> i32 {
-    return self.x;
+  fn GetX[me: Self]() -> i32 {
+    return me.x;
   }
 
   var x: i32;

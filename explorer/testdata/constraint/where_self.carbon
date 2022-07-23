@@ -12,7 +12,7 @@
 package ExplorerTest api;
 
 interface SwizzleWith(T:! Type) {
-  fn Op[self: Self](x: T) -> i32;
+  fn Op[me: Self](x: T) -> i32;
 }
 
 // TODO: There should be some way to write this that includes
@@ -20,7 +20,7 @@ interface SwizzleWith(T:! Type) {
 alias Swizzle = Type where .Self is SwizzleWith(.Self);
 
 impl i32 as SwizzleWith(i32) {
-  fn Op[self: Self](x: Self) -> Self { return self * 10 + x; }
+  fn Op[me: Self](x: Self) -> Self { return me * 10 + x; }
 }
 
 fn F[T:! Swizzle](v: T, w: T) -> i32 {
