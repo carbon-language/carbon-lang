@@ -26,6 +26,3 @@ compile_commands.json
 
 # vim temporary files
 .*.swp
-
-# mkdocs build directory
-/site
