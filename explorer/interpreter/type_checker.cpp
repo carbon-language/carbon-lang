@@ -1569,12 +1569,13 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 break;
               case DeclarationKind::FunctionDeclaration: {
                 auto func_decl = cast<FunctionDeclaration>(*member);
-                if (func_decl->is_method() && func_decl->me_pattern().kind() ==
-                                                  PatternKind::AddrPattern) {
+                if (func_decl->is_method() &&
+                    func_decl->self_pattern().kind() ==
+                        PatternKind::AddrPattern) {
                   access.set_is_field_addr_me_method();
                   Nonnull<const Value*> me_type =
                       Substitute(t_class.type_args(),
-                                 &func_decl->me_pattern().static_type());
+                                 &func_decl->self_pattern().static_type());
                   CARBON_RETURN_IF_ERROR(ExpectType(
                       e->source_loc(), "method access, receiver type", me_type,
                       &access.object().static_type(), impl_scope));
@@ -2961,9 +2962,9 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   // Type check the receiver pattern.
   if (f->is_method()) {
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-        &f->me_pattern(), std::nullopt, function_scope, ValueCategory::Let));
-    CollectGenericBindingsInPattern(&f->me_pattern(), deduced_bindings);
-    CollectImplBindingsInPattern(&f->me_pattern(), impl_bindings);
+        &f->self_pattern(), std::nullopt, function_scope, ValueCategory::Let));
+    CollectGenericBindingsInPattern(&f->self_pattern(), deduced_bindings);
+    CollectImplBindingsInPattern(&f->self_pattern(), impl_bindings);
   }
   // Type check the parameter pattern.
   CARBON_RETURN_IF_ERROR(TypeCheckPattern(&f->param_pattern(), std::nullopt,

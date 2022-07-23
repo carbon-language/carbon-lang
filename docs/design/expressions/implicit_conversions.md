@@ -210,7 +210,7 @@ extends
 interface ImplicitAs(Dest:! Type) {
   extends As(Dest);
   // Inherited from As(Dest):
-  // fn Convert[me: Self]() -> Dest;
+  // fn Convert[self: Self]() -> Dest;
 }
 ```
 
