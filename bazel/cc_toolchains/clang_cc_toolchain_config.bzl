@@ -461,7 +461,7 @@ def _impl(ctx):
                 "-fsanitize=address,undefined,nullability",
                 "-fsanitize-address-use-after-scope",
                 # We don't need the recovery behavior of UBSan as we expect
-                # builds to be clean. Not recoverying is a bit cheaper.
+                # builds to be clean. Not recovering is a bit cheaper.
                 "-fno-sanitize-recover=undefined",
                 # Don't embed the full path name for files. This limits the size
                 # and combined with line numbers is unlikely to result in many

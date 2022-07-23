@@ -54,9 +54,8 @@ typical tool setup flow is:
 2.  Install [main tools](#main-tools) and any desired
     [optional tools](#optional-tools).
 3.  Set up the [git](https://git-scm.com/) repository:
-    -   In GitHub, create a fork for development at
-        https://github.com/carbon-language/carbon-lang.
-    -   `gh repo clone USER/carbon-lang`, or otherwise clone the fork.
+    -   `gh repo fork --clone carbon-language/carbon-lang`: this will both
+        create a GitHub fork and clone the repository locally
     -   `cd carbon-lang` to go into the cloned fork's directory.
     -   `pre-commit install` to set up [pre-commit](#pre-commit) in the clone.
 4.  Validate your installation by invoking `bazel test //...:all' from the

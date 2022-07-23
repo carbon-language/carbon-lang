@@ -201,7 +201,7 @@ follow the Carbon documentation and coding styles.
 
     -   New features should have a documented design that has been approved
         through the [evolution process](docs/project/evolution.md). This
-        includes modifications to pre-existing designs.
+        includes modifications to preexisting designs.
     -   Bug fixes and mechanical improvements don't need this.
     -   All new features include unit tests, as they help to (a) document and
         validate concrete usage of the feature and its edge cases, and (b) guard
