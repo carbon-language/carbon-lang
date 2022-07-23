@@ -29,3 +29,9 @@ compile_commands.json
 
 # Website build directory
 /site
+
+# npm packages
+node_modules
+
+# Built docs
+.docusaurus
