@@ -1,0 +1,374 @@
+compilation_unit {
+  package_statement {
+    package_name: "Foo"
+  }
+  is_api: true
+  declarations {
+    interface {
+      name: "A"
+      members {
+        function {
+          name: "F"
+          me_pattern {
+            binding_pattern {
+              name: "me"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "o"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "Self"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "Self"
+              }
+            }
+          }
+        }
+      }
+      self {
+        name: "Self"
+        type {
+          type_type_literal {
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name: "X"
+      members {
+        impl {
+          kind: InternalImpl
+          impl_type {
+            identifier {
+              name: "Self"
+            }
+          }
+          interface {
+            identifier {
+              name: "A"
+            }
+          }
+          members {
+            function {
+              name: "F"
+              me_pattern {
+                binding_pattern {
+                  name: "me"
+                  type {
+                    expression_pattern {
+                      expression {
+                        identifier {
+                          name: "Self"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              param_pattern {
+                fields {
+                  binding_pattern {
+                    name: "o"
+                    type {
+                      expression_pattern {
+                        expression {
+                          identifier {
+                            name: "Self"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              return_term {
+                kind: Expression
+                type {
+                  identifier {
+                    name: "Self"
+                  }
+                }
+              }
+              body {
+                statements {
+                  return_statement {
+                    expression {
+                      struct_literal {
+                        fields {
+                          name: "n"
+                          expression {
+                            operator {
+                              op: Add
+                              arguments {
+                                simple_member_access {
+                                  field: "n"
+                                  object {
+                                    identifier {
+                                      name: "me"
+                                    }
+                                  }
+                                }
+                              }
+                              arguments {
+                                simple_member_access {
+                                  field: "n"
+                                  object {
+                                    identifier {
+                                      name: "o"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        variable {
+          binding {
+            name: "n"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "F"
+      deduced_parameters {
+        name: "T"
+        type {
+          identifier {
+            name: "A"
+          }
+        }
+      }
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "v"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "T"
+                  }
+                }
+              }
+            }
+          }
+        }
+        fields {
+          binding_pattern {
+            name: "w"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "T"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          identifier {
+            name: "T"
+          }
+        }
+      }
+      body {
+        statements {
+          return_statement {
+            expression {
+              call {
+                function {
+                  compound_member_access {
+                    object {
+                      identifier {
+                        name: "v"
+                      }
+                    }
+                    path {
+                      simple_member_access {
+                        field: "F"
+                        object {
+                          identifier {
+                            name: "T"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "w"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "v"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "X"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              struct_literal {
+                fields {
+                  name: "n"
+                  expression {
+                    int_literal {
+                      value: 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "w"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "X"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              struct_literal {
+                fields {
+                  name: "n"
+                  expression {
+                    int_literal {
+                      value: 2
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          return_statement {
+            expression {
+              simple_member_access {
+                field: "n"
+                object {
+                  call {
+                    function {
+                      identifier {
+                        name: "F"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          identifier {
+                            name: "v"
+                          }
+                        }
+                        fields {
+                          identifier {
+                            name: "w"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
