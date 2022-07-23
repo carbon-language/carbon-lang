@@ -66,7 +66,7 @@ void PrintTo(T* p, std::ostream* out) {
 namespace llvm {
 
 // Injects an `operator<<` overload into the `llvm` namespace which detects LLVM
-// types with `raw_ostream` overloads and uses that to map to a `std::ostream`
+// types with `raw_ostream` overloads and use that to map to a `std::ostream`
 // overload. This allows LLVM types to be printed to `std::ostream` via their
 // `raw_ostream` operator overloads, which is needed both for logging and
 // testing.
@@ -78,7 +78,7 @@ namespace llvm {
 // this, and so we want to prioritize accordingly.
 //
 // It would be slightly cleaner for LLVM itself to provide this overload in
-// `raw_os_ostream.h` so that we wouldn't need to inject into its namespace, but
+// `raw_os_ostream.h` so that we wouldn't need to inject it into its namespace, but
 // supporting `std::ostream` isn't a priority for LLVM so we handle it locally
 // instead.
 template <typename S, typename T,
