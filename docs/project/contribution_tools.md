@@ -201,7 +201,8 @@ what's occurring with
 [clang detection](/bazel/cc_toolchains/clang_configuration.bzl).
 
 ### ZLib
-On **Linux**, you need to have the ZLib development package installed:
+On **Linux**, you need to have the zlib headers installed. For Debian- and
+Ubuntu-based distributions, you can install the development package:
 
 ```bash
 sudo apt install zlib1g-dev
