@@ -937,6 +937,8 @@ class ArrayTypeLiteral : public Expression {
 // context-based.
 class ImplicitSizedArrayTypeLiteral : public Expression {
  public:
+  // Constructs an array type literal which uses the given expressions to
+  // represent the element type.
   ImplicitSizedArrayTypeLiteral(SourceLocation source_loc,
                                 Nonnull<Expression*> element_type_expression)
       : Expression(AstNodeKind::ImplicitSizedArrayTypeLiteral, source_loc),
