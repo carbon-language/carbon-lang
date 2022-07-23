@@ -225,7 +225,7 @@ def _impl(ctx):
                 ],
                 flag_groups = [
                     flag_group(
-                        flags = ["-pie"],
+                        flags = ["-Wl,-pie"],
                         expand_if_available = "force_pic",
                     ),
                 ],
