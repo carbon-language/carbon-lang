@@ -224,6 +224,11 @@ void Expression::Print(llvm::raw_ostream& out) const {
           << array_literal.size_expression() << "]";
       break;
     }
+    case ExpressionKind::ImplicitSizedArrayTypeLiteral: {
+      const auto& array_literal = cast<ImplicitSizedArrayTypeLiteral>(*this);
+      out << "[" << array_literal.element_type_expression() << ";]";
+      break;
+    }
     case ExpressionKind::IdentifierExpression:
     case ExpressionKind::DotSelfExpression:
     case ExpressionKind::IntLiteral:
@@ -292,6 +297,7 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
     case ExpressionKind::UnimplementedExpression:
     case ExpressionKind::FunctionTypeLiteral:
     case ExpressionKind::ArrayTypeLiteral:
+    case ExpressionKind::ImplicitSizedArrayTypeLiteral:
     case ExpressionKind::InstantiateImpl:
       out << "...";
       break;

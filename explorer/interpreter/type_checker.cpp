@@ -9,6 +9,7 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <iostream>
 
 #include "common/error.h"
 #include "common/ostream.h"
@@ -431,7 +432,11 @@ auto TypeChecker::IsImplicitlyConvertible(
           break;
         }
         case Value::Kind::StaticArrayType: {
-          const auto& destination_array = cast<StaticArrayType>(*destination);
+          auto& destination_array = cast<StaticArrayType>(*destination);
+          if (destination_array.implicit()) {
+            destination_array.set_size(source_tuple.elements().size());
+            destination_array.set_explicit();
+          }
           if (destination_array.size() != source_tuple.elements().size()) {
             break;
           }
@@ -2360,6 +2365,14 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         return CompilationError(array_literal.size_expression().source_loc())
                << "Array size cannot be negative";
       }
+      array_literal.set_static_type(arena_->New<TypeType>());
+      array_literal.set_value_category(ValueCategory::Let);
+      return Success();
+    }
+    case ExpressionKind::ImplicitSizedArrayTypeLiteral: {
+      auto& array_literal = cast<ImplicitSizedArrayTypeLiteral>(*e);
+      CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(
+          &array_literal.element_type_expression(), impl_scope));
       array_literal.set_static_type(arena_->New<TypeType>());
       array_literal.set_value_category(ValueCategory::Let);
       return Success();

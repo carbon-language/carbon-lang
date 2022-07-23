@@ -933,6 +933,30 @@ class ArrayTypeLiteral : public Expression {
   Nonnull<Expression*> size_expression_;
 };
 
+// A literal representing a statically-sized array type which it's size is 
+// context-based.
+class ImplicitSizedArrayTypeLiteral : public Expression {
+ public:
+  ImplicitSizedArrayTypeLiteral(SourceLocation source_loc,
+                                Nonnull<Expression*> element_type_expression)
+      : Expression(AstNodeKind::ImplicitSizedArrayTypeLiteral, source_loc),
+        element_type_expression_(element_type_expression) {}
+
+ static auto classof(const AstNode* node) -> bool {
+  return InheritsFromImplicitSizedArrayTypeLiteral(node->kind());
+ }
+
+ auto element_type_expression() const -> const Expression& {
+  return *element_type_expression_;
+ }
+ auto element_type_expression() -> Expression& {
+  return *element_type_expression_;
+ }
+
+ private:
+  Nonnull<Expression*> element_type_expression_;
+};
+
 // Converts paren_contents to an Expression, interpreting the parentheses as
 // grouping if their contents permit that interpretation, or as forming a
 // tuple otherwise.

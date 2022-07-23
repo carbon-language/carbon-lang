@@ -66,6 +66,7 @@ abstract class Expression : AstNode;
   class WhereExpression : Expression;
   class UnimplementedExpression : Expression;
   class ArrayTypeLiteral : Expression;
+  class ImplicitSizedArrayTypeLiteral : Expression;
   class InstantiateImpl : Expression;
 abstract class WhereClause : AstNode;
   class IsWhereClause : WhereClause;

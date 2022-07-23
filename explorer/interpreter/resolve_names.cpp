@@ -237,6 +237,12 @@ static auto ResolveNames(Expression& expression,
           ResolveNames(array_literal.size_expression(), enclosing_scope));
       break;
     }
+    case ExpressionKind::ImplicitSizedArrayTypeLiteral: {
+      auto& array_literal = cast<ImplicitSizedArrayTypeLiteral>(expression);
+      CARBON_RETURN_IF_ERROR(ResolveNames(
+          array_literal.element_type_expression(), enclosing_scope));
+      break;
+    }
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::BoolLiteral:
     case ExpressionKind::IntTypeLiteral:
