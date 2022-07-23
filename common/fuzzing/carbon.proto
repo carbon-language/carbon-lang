@@ -128,6 +128,10 @@ message ArrayTypeLiteral {
   optional Expression size = 2;
 }
 
+message ImplicitSizedArrayTypeLiteral {
+  optional Expression element_type = 1;
+}
+
 message IsWhereClause {
   optional Expression type = 1;
   optional Expression constraint = 2;
@@ -173,9 +177,10 @@ message Expression {
     TypeTypeLiteral type_type_literal = 19;
     UnimplementedExpression unimplemented_expression = 20;
     ArrayTypeLiteral array_type_literal = 21;
-    CompoundMemberAccessExpression compound_member_access = 22;
-    WhereExpression where = 23;
-    DesignatorExpression designator = 24;
+    ImplicitSizedArrayTypeLiteral implicit_sized_array_type_literal = 22;
+    CompoundMemberAccessExpression compound_member_access = 23;
+    WhereExpression where = 24;
+    DesignatorExpression designator = 25;
   }
 }
 

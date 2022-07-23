@@ -304,6 +304,14 @@ static auto ExpressionToProto(const Expression& expression)
           ExpressionToProto(array_literal.size_expression());
       break;
     }
+    case ExpressionKind::ImplicitSizedArrayTypeLiteral: {
+      const auto& array_literal = cast<ImplicitSizedArrayTypeLiteral>(expression);
+      Fuzzing::ImplicitSizedArrayTypeLiteral* array_literal_proto =
+          expression_proto.mutable_implicit_sized_array_type_literal();
+      *array_literal_proto->mutable_element_type() =
+          ExpressionToProto(array_literal.element_type_expression());
+      break;
+    }
   }
   return expression_proto;
 }
