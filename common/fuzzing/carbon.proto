@@ -401,7 +401,7 @@ message CompilationUnit {
   optional LibraryName package_statement = 1;
   optional bool is_api = 2;
   repeated Declaration declarations = 3;
-  // TODO Add support for imports if they are useful in fuzzing.
+  // TODO: Add support for imports if they are useful in fuzzing.
 }
 
 // Top-level fuzzer input.
