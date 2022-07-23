@@ -200,7 +200,8 @@ These commands will help diagnose potential build issues because they'll expose
 what's occurring with
 [clang detection](/bazel/cc_toolchains/clang_configuration.bzl).
 
-### ZLib
+### System development libraries (zlib, etc.)
+
 On **Linux**, you need to have the zlib headers installed. For Debian- and
 Ubuntu-based distributions, you can install the development package:
 
