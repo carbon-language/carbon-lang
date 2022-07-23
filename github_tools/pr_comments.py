@@ -110,7 +110,7 @@ _QUERY_REVIEW_THREADS = """
 """
 
 
-class _Comment(object):
+class _Comment:
     """A comment, either on a review thread or top-level on the PR."""
 
     def __init__(self, author: str, timestamp: str, body: str):
@@ -183,7 +183,7 @@ class _PRComment(_Comment):
         return "%s\n%s" % (self.url, super().format(long))
 
 
-class _Thread(object):
+class _Thread:
     """A review thread on a line of code."""
 
     def __init__(self, parsed_args: argparse.Namespace, thread: Dict):
