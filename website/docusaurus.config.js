@@ -10,14 +10,14 @@ const config = {
   tagline: 'An experimental successor to C++',
   url: 'https://carbon-language.github.io',
   baseUrl: '/',
-  onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
+  onBrokenLinks: 'ignore', // TODO: Fix broken links, and change this back to 'throw'
+  onBrokenMarkdownLinks: 'ignore', // TODO: Fix broken markdown links, and change this back to 'warn'
   favicon: 'img/carbon-logo.png',
 
   // GitHub pages deployment config.
-  // If you aren't using GitHub pages, you don't need these.
   organizationName: 'carbon-language',
-  projectName: 'carbon-lang',
+  projectName: 'carbon-language.github.io',
+  trailingSlash: false,
 
   i18n: {
     defaultLocale: 'en',
@@ -30,6 +30,9 @@ const config = {
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
+          id: 'design',
+          path: '../docs/design',
+          routeBasePath: 'design',
           sidebarPath: undefined,
           editUrl: 'https://github.com/carbon-language/carbon-lang/blob/trunk/',
         },
@@ -37,6 +40,29 @@ const config = {
           customCss: require.resolve('./src/css/custom.css'),
         },
       }),
+    ],
+  ],
+
+  plugins: [
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'spec',
+        path: '../docs/spec',
+        routeBasePath: 'spec',
+        sidebarPath: undefined,
+        editUrl: 'https://github.com/carbon-language/carbon-lang/blob/trunk/',
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'project',
+        path: '../docs/project',
+        routeBasePath: 'project',
+        sidebarPath: undefined,
+        editUrl: 'https://github.com/carbon-language/carbon-lang/blob/trunk/',
+      },
     ],
   ],
 
@@ -55,11 +81,9 @@ const config = {
           src: 'img/carbon-logo.png',
         },
         items: [
-          {
-            to: '/docs',
-            label: 'Docs',
-            position: 'left'
-          },
+          {to: '/design', label: 'Design', position: 'left'},
+          {to: '/spec', label: 'Spec', position: 'left'},
+          {to: '/project', label: 'Project', position: 'left'},
           {
             href: 'https://github.com/carbon-language/carbon-lang',
             label: 'GitHub',

@@ -27,11 +27,5 @@ compile_commands.json
 # vim temporary files
 .*.swp
 
-# Website build directory
+# mkdocs build directory
 /site
-
-# npm packages
-node_modules
-
-# Built docs
-.docusaurus

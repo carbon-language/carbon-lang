@@ -1,6 +1,6 @@
 import React from 'react';
 import Layout from '@theme/Layout';
-import Readme from '../../README.md'
+import Readme from '../../../README.md'
 import styles from './index.module.css';
 
 export default function Home() {
