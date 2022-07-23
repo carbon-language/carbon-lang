@@ -27,7 +27,6 @@ RUN export PATH="$(brew --prefix llvm)/bin:${PATH}"
 
 RUN pip3 install -U pip
 RUN pip3 install pre-commit
-RUN $(brew --prefix)/opt/python/libexec/bin
 
 USER root
 

@@ -8,29 +8,26 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 - ubuntu:20.04
 
-## Base image
+## Build and run image
 Building the base image is required .
-```bash
-docker build -t carbon-ubuntu2004-base ./base
 ```
-## Using Git repository
-```bash
-docker build -t carbon-example ./github
+docker build -t carbon-ubuntu2004-base ./ubuntu2004/base
 ```
+- Build example image using git repository
 ```bash
-docker run carbon-example
+docker build -t carbon ./ubuntu2004/github
 ```
-## Using Copy instruction
+- Run example image
 ```bash
-docker build -f Dockerfile -t carbon-example ../..
+docker run carbon
 ```
+- Build image using copy instruction
 ```bash
-docker run carbon-example
+docker build -f ./ubuntu2004/Dockerfile -t carbon ..
 ```
-
-## Specifying file
+- Specifying file
 ```bash
-docker run run carbon-example bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
+docker run carbon bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
 ```
 
 ## Using Volume
@@ -44,13 +41,13 @@ cd ..
 ```
 -   bash:
 ```bash
-docker run -w /carbon-lang -v $PWD:/carbon-lang carbon-ubuntu2004-base bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
+docker run -w /carbon-lang -v $PWD:/carbon-lang carbon bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
 ```
 -   cmd: 
 ```cmd
-docker run -w /carbon-lang -v %cd%:/carbon-lang carbon-ubuntu2004-base bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
+docker run -w /carbon-lang -v %cd%:/carbon-lang carbon bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
 ```
 -   powershell: 
 ```ps
-docker run -w /carbon-lang -v ${PWD}:/carbon-lang carbon-ubuntu2004-base bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
+docker run -w /carbon-lang -v ${PWD}:/carbon-lang carbon bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
 ```
