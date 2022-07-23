@@ -23,7 +23,7 @@ contributions.
     -   [Clang and LLVM](#clang-and-llvm)
         -   [Manual installations (not recommended)](#manual-installations-not-recommended)
         -   [Troubleshooting build issues](#troubleshooting-build-issues)
-    -   [ZLib](#zlib)   
+    -   [System Development Libraries](#system-development-libraries)   
     -   [pre-commit](#pre-commit)
 -   [Optional tools](#optional-tools)
     -   [Carbon-maintained](#carbon-maintained)
@@ -200,7 +200,7 @@ These commands will help diagnose potential build issues because they'll expose
 what's occurring with
 [clang detection](/bazel/cc_toolchains/clang_configuration.bzl).
 
-### System development libraries (zlib, etc.)
+### System development libraries (zlib, etc.) <a name="system-development-libraries"></a>
 
 On **Linux**, you need to have the zlib headers installed. For Debian- and
 Ubuntu-based distributions, you can install the development package:
