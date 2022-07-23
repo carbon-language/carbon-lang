@@ -46,7 +46,7 @@ This process is designed to:
 -   Create a clear log of the rationale for why the project and language have
     evolved in particular directions.
 
-When there are questions, concerns, or issues with a proposal that needs to be
+When there are questions, concerns, or issues with a proposal that need to be
 resolved, Carbon uses its [governance](#governance-structure) system of
 [Carbon leads](#carbon-leads-1) to decide how to move forward. Leads are
 fundamentally responsible for encouraging Carbon's ongoing and healthy evolution
