@@ -978,7 +978,7 @@ auto ParseTree::Parser::ParseOperatorExpression(
     if (PrecedenceGroup::GetPriority(lhs_precedence, operator_precedence) !=
         OperatorPriority::LeftFirst) {
       // Either the LHS operator and this operator are ambiguous, or the
-      // LHS operaor is a unary operator that can't be nested within
+      // LHS operator is a unary operator that can't be nested within
       // this operator. Either way, parentheses are required.
       emitter_.Emit(*position_, OperatorRequiresParentheses);
       lhs = llvm::None;

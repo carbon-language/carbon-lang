@@ -22,6 +22,8 @@ contributions.
     -   [Bazel and Bazelisk](#bazel-and-bazelisk)
     -   [Clang and LLVM](#clang-and-llvm)
         -   [Manual installations (not recommended)](#manual-installations-not-recommended)
+        -   [Troubleshooting build issues](#troubleshooting-build-issues)
+        -   [Troubleshooting debug issues](#troubleshooting-debug-issues)
     -   [pre-commit](#pre-commit)
 -   [Optional tools](#optional-tools)
     -   [Carbon-maintained](#carbon-maintained)
@@ -53,9 +55,8 @@ typical tool setup flow is:
 2.  Install [main tools](#main-tools) and any desired
     [optional tools](#optional-tools).
 3.  Set up the [git](https://git-scm.com/) repository:
-    -   In GitHub, create a fork for development at
-        https://github.com/carbon-language/carbon-lang.
-    -   `gh repo clone USER/carbon-lang`, or otherwise clone the fork.
+    -   `gh repo fork --clone carbon-language/carbon-lang`: this will both
+        create a GitHub fork and clone the repository locally
     -   `cd carbon-lang` to go into the cloned fork's directory.
     -   `pre-commit install` to set up [pre-commit](#pre-commit) in the clone.
 4.  Validate your installation by invoking `bazel test //...:all' from the
@@ -172,6 +173,56 @@ CMake options to pass in order for this to work reliably include:
 
 However, we primarily test against the Homebrew installation, so if building
 LLVM and Clang yourself you may hit some issues.
+
+#### Troubleshooting build issues
+
+Many build issues result from the particular options `clang` and `llvm` have
+been built with, particularly when it comes to system-installed versions. This
+is why we recommend using [Homebrew's LLVM](#clang-and-llvm).
+
+After installing from Homebrew, you may need to open a new shell to get `$PATH`
+changes. It may also be necessary to run `bazel clean` in order to clean up
+cached state.
+
+If issues continue, please ask on
+[#build-help](https://discord.com/channels/655572317891461132/824137170032787467),
+providing the output of the following diagnostic commands:
+
+```shell
+brew --prefix llvm
+echo $CC
+which clang
+grep llvm_bindir $(bazel info workspace)/bazel-execroot/external/bazel_cc_toolchain/clang_detected_variables.bzl
+```
+
+These commands will help diagnose potential build issues because they'll expose
+what's occurring with
+[clang detection](/bazel/cc_toolchains/clang_configuration.bzl).
+
+#### Troubleshooting debug issues
+
+Use the `--compilation_mode=dbg` argument to `bazel build` in order to compile
+with debugging enabled. For example:
+
+```shell
+bazel build --compilation_mode=dbg //explorer
+```
+
+Then debugging works with GDB:
+
+```shell
+gdb bazel-bin/explorer/explorer
+```
+
+Note that LLVM uses DWARF v5 debug symbols, which means that GDB version 10.1 or
+newer is required. If you see an error like this:
+
+```shell
+Dwarf Error: DW_FORM_strx1 found in non-DWO CU
+```
+
+It means that the version of GDB used is too old, and does not support the DWARF
+v5 format.
 
 ### pre-commit
 
@@ -322,9 +373,9 @@ Our recommended way of installing is to use
 
 ### Visual Studio Code
 
-[Visual Studio Code](https://code.visualstudio.com/) is an IDE used by several
-of us. We provide [recommended extensions](/.vscode/extensions.json) to assist
-Carbon development. Some settings changes must be made separately:
+[Visual Studio Code](https://code.visualstudio.com/) is a code editor used by
+several of us. We provide [recommended extensions](/.vscode/extensions.json) to
+assist Carbon development. Some settings changes must be made separately:
 
 -   Python › Formatting: Provider: `black`
 

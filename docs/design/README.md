@@ -1354,7 +1354,7 @@ instance being created is needed in a factory function, as in:
 
 ```carbon
 class Registered {
-  fn Create() -> Self {
+  fn Make() -> Self {
     returned var result: Self = {...};
     StoreMyPointerSomewhere(&result);
     return var;
@@ -1374,7 +1374,7 @@ class Point {
   fn Distance[me: Self](x2: i32, y2: i32) -> f32 {
     var dx: i32 = x2 - me.x;
     var dy: i32 = y2 - me.y;
-    return Math.Sqrt(dx * dx - dy * dy);
+    return Math.Sqrt(dx * dx + dy * dy);
   }
   // Mutating method declaration
   fn Offset[addr me: Self*](dx: i32, dy: i32);
@@ -1401,8 +1401,8 @@ two methods `Distance` and `Offset`:
 -   Methods are defined as class functions with a `me` parameter inside square
     brackets `[`...`]` before the regular explicit parameter list in parens
     `(`...`)`.
--   Methods are called using using the member syntax, `origin.Distance(`...`)`
-    and `origin.Offset(`...`)`.
+-   Methods are called using the member syntax, `origin.Distance(`...`)` and
+    `origin.Offset(`...`)`.
 -   `Distance` computes and returns the distance to another point, without
     modifying the `Point`. This is signified using `[me: Self]` in the method
     declaration.
@@ -1440,7 +1440,7 @@ base class MyBaseClass { ... }
 ```
 
 Either kind of base class may be _extended_ to get a _derived class_. Derived
-classes are final unless they are themselved declared `base` or `abstract`.
+classes are final unless they are themselves declared `base` or `abstract`.
 Classes may only extend a single class. Carbon only supports single inheritance,
 and will use mixins instead of multiple inheritance.
 
@@ -1458,8 +1458,8 @@ by one of these three keywords:
 
 -   A method marked `virtual` has a definition in this class but not in any
     base.
--   A method marked `abstract` does not have have a definition in this class,
-    but must have a definition in any non-`abstract` derived class.
+-   A method marked `abstract` does not have a definition in this class, but
+    must have a definition in any non-`abstract` derived class.
 -   A method marked `impl` has a definition in this class, overriding any
     definition in a base class.
 
@@ -1483,8 +1483,8 @@ called `base` with the type of its immediate base class.
 
 ```carbon
 class MyDerivedType extends MyBaseType {
-  fn Create() -> MyDerivedType {
-    return {.base = MyBaseType.Create(), .derived_field = 7};
+  fn Make() -> MyDerivedType {
+    return {.base = MyBaseType.Make(), .derived_field = 7};
   }
   var derived_field: i32;
 }
@@ -1496,7 +1496,7 @@ functions returning `partial Self`. Those functions should be marked
 
 ```carbon
 abstract class AbstractClass {
-  protected fn Create() -> partial Self {
+  protected fn Make() -> partial Self {
     return {.field_1 = 3, .field_2 = 9};
   }
   // ...
@@ -1507,12 +1507,12 @@ abstract class AbstractClass {
 var abc: AbstractClass = ...;
 
 class DerivedFromAbstract extends AbstractClass {
-  fn Create() -> Self {
-    // AbstractClass.Create() returns a
+  fn Make() -> Self {
+    // AbstractClass.Make() returns a
     // `partial AbstractClass` that can be used as
     // the `.base` member when constructing a value
     // of a derived class.
-    return {.base = AbstractClass.Create(),
+    return {.base = AbstractClass.Make(),
             .derived_field = 42 };
   }
 
@@ -2797,7 +2797,7 @@ Carbon code and the other way around. This ability achieves two goals:
 -   Allows sharing a code and library ecosystem with C and C++.
 -   Allows incremental migration to Carbon from C and C++.
 
-Carbon's approach to interopp is most similar to
+Carbon's approach to interop is most similar to
 [Java/Kotlin interop](interoperability/philosophy_and_goals.md#other-interoperability-layers),
 where the two languages are different, but share enough of runtime model that
 data from one side can be used from the other. For example, C++ and Carbon will

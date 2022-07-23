@@ -1,0 +1,258 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    function {
+      name: "map"
+      deduced_parameters {
+        name: "T"
+        type {
+          type_type_literal {
+          }
+        }
+      }
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "f"
+            type {
+              expression_pattern {
+                expression {
+                  function_type {
+                    parameter {
+                      fields {
+                        identifier {
+                          name: "T"
+                        }
+                      }
+                    }
+                    return_type {
+                      identifier {
+                        name: "T"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        fields {
+          binding_pattern {
+            name: "tuple"
+            type {
+              expression_pattern {
+                expression {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "T"
+                      }
+                    }
+                    fields {
+                      identifier {
+                        name: "T"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          tuple_literal {
+            fields {
+              identifier {
+                name: "T"
+              }
+            }
+            fields {
+              identifier {
+                name: "T"
+              }
+            }
+          }
+        }
+      }
+      body {
+        statements {
+          return_statement {
+            expression {
+              tuple_literal {
+                fields {
+                  call {
+                    function {
+                      identifier {
+                        name: "f"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          index {
+                            object {
+                              identifier {
+                                name: "tuple"
+                              }
+                            }
+                            offset {
+                              int_literal {
+                                value: 0
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                fields {
+                  call {
+                    function {
+                      identifier {
+                        name: "f"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          index {
+                            object {
+                              identifier {
+                                name: "tuple"
+                              }
+                            }
+                            offset {
+                              int_literal {
+                                value: 1
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "inc"
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "x"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_statement {
+            expression {
+              operator {
+                op: Add
+                arguments {
+                  identifier {
+                    name: "x"
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_statement {
+            expression {
+              index {
+                object {
+                  call {
+                    function {
+                      identifier {
+                        name: "map"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          identifier {
+                            name: "inc"
+                          }
+                        }
+                        fields {
+                          tuple_literal {
+                            fields {
+                              int_literal {
+                                value: 0
+                              }
+                            }
+                            fields {
+                              int_literal {
+                                value: 2
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                offset {
+                  int_literal {
+                    value: 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

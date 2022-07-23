@@ -1,0 +1,28 @@
+compilation_unit {
+  declarations {
+    choice {
+      alternatives {
+        signature {
+          fields {
+            operator {
+              arguments {
+                intrinsic {
+                  argument {
+                    fields {
+                      operator {
+                        arguments {
+                          identifier {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

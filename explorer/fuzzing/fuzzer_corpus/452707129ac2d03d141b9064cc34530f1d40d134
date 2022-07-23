@@ -1,0 +1,152 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "t"
+                type {
+                  tuple_pattern {
+                    fields {
+                      auto_pattern {
+                      }
+                    }
+                    fields {
+                      expression_pattern {
+                        expression {
+                          tuple_literal {
+                            fields {
+                              int_type_literal {
+                              }
+                            }
+                            fields {
+                              int_type_literal {
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              tuple_literal {
+                fields {
+                  tuple_literal {
+                    fields {
+                      int_literal {
+                        value: 1
+                      }
+                    }
+                    fields {
+                      int_literal {
+                        value: 2
+                      }
+                    }
+                  }
+                }
+                fields {
+                  tuple_literal {
+                    fields {
+                      int_literal {
+                        value: 3
+                      }
+                    }
+                    fields {
+                      int_literal {
+                        value: 4
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          return_statement {
+            expression {
+              operator {
+                op: Sub
+                arguments {
+                  operator {
+                    op: Add
+                    arguments {
+                      index {
+                        object {
+                          index {
+                            object {
+                              identifier {
+                                name: "t"
+                              }
+                            }
+                            offset {
+                              int_literal {
+                                value: 0
+                              }
+                            }
+                          }
+                        }
+                        offset {
+                          int_literal {
+                            value: 0
+                          }
+                        }
+                      }
+                    }
+                    arguments {
+                      index {
+                        object {
+                          index {
+                            object {
+                              identifier {
+                                name: "t"
+                              }
+                            }
+                            offset {
+                              int_literal {
+                                value: 1
+                              }
+                            }
+                          }
+                        }
+                        offset {
+                          int_literal {
+                            value: 1
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 5
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

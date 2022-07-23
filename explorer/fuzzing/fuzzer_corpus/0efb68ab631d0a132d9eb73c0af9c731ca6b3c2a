@@ -1,0 +1,494 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    choice {
+      name: "Ints"
+      alternatives {
+        name: "None"
+        signature {
+          tuple_literal {
+          }
+        }
+      }
+      alternatives {
+        name: "One"
+        signature {
+          tuple_literal {
+            fields {
+              int_type_literal {
+              }
+            }
+          }
+        }
+      }
+      alternatives {
+        name: "Two"
+        signature {
+          tuple_literal {
+            fields {
+              int_type_literal {
+              }
+            }
+            fields {
+              int_type_literal {
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "x"
+                type {
+                  auto_pattern {
+                  }
+                }
+              }
+            }
+            init {
+              call {
+                function {
+                  simple_member_access {
+                    field: "None"
+                    object {
+                      identifier {
+                        name: "Ints"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "y"
+                type {
+                  auto_pattern {
+                  }
+                }
+              }
+            }
+            init {
+              call {
+                function {
+                  simple_member_access {
+                    field: "One"
+                    object {
+                      identifier {
+                        name: "Ints"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      int_literal {
+                        value: 42
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "n"
+                type {
+                  auto_pattern {
+                  }
+                }
+              }
+            }
+            init {
+              int_literal {
+                value: 0
+              }
+            }
+          }
+        }
+        statements {
+          match {
+            expression {
+              identifier {
+                name: "y"
+              }
+            }
+            clauses {
+              pattern {
+                expression_pattern {
+                  expression {
+                    simple_member_access {
+                      field: "None"
+                      object {
+                        identifier {
+                          name: "Ints"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              statement {
+                assign {
+                  lhs {
+                    identifier {
+                      name: "n"
+                    }
+                  }
+                  rhs {
+                    operator {
+                      op: Add
+                      arguments {
+                        identifier {
+                          name: "n"
+                        }
+                      }
+                      arguments {
+                        int_literal {
+                          value: 2
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            clauses {
+              pattern {
+                alternative_pattern {
+                  choice_type {
+                    identifier {
+                      name: "Ints"
+                    }
+                  }
+                  alternative_name: "One"
+                  arguments {
+                    fields {
+                      binding_pattern {
+                        name: "x"
+                        type {
+                          auto_pattern {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              statement {
+                assign {
+                  lhs {
+                    identifier {
+                      name: "n"
+                    }
+                  }
+                  rhs {
+                    operator {
+                      op: Sub
+                      arguments {
+                        operator {
+                          op: Add
+                          arguments {
+                            identifier {
+                              name: "x"
+                            }
+                          }
+                          arguments {
+                            int_literal {
+                              value: 1
+                            }
+                          }
+                        }
+                      }
+                      arguments {
+                        int_literal {
+                          value: 42
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            clauses {
+              pattern {
+                alternative_pattern {
+                  choice_type {
+                    identifier {
+                      name: "Ints"
+                    }
+                  }
+                  alternative_name: "Two"
+                  arguments {
+                    fields {
+                      binding_pattern {
+                        name: "a"
+                        type {
+                          auto_pattern {
+                          }
+                        }
+                      }
+                    }
+                    fields {
+                      binding_pattern {
+                        name: "b"
+                        type {
+                          auto_pattern {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              statement {
+                assign {
+                  lhs {
+                    identifier {
+                      name: "n"
+                    }
+                  }
+                  rhs {
+                    int_literal {
+                      value: 2
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          match {
+            expression {
+              identifier {
+                name: "x"
+              }
+            }
+            clauses {
+              pattern {
+                alternative_pattern {
+                  choice_type {
+                    identifier {
+                      name: "Ints"
+                    }
+                  }
+                  alternative_name: "One"
+                  arguments {
+                    fields {
+                      binding_pattern {
+                        name: "x"
+                        type {
+                          auto_pattern {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              statement {
+                assign {
+                  lhs {
+                    identifier {
+                      name: "n"
+                    }
+                  }
+                  rhs {
+                    operator {
+                      op: Add
+                      arguments {
+                        identifier {
+                          name: "x"
+                        }
+                      }
+                      arguments {
+                        int_literal {
+                          value: 2
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            clauses {
+              pattern {
+                expression_pattern {
+                  expression {
+                    call {
+                      function {
+                        simple_member_access {
+                          field: "None"
+                          object {
+                            identifier {
+                              name: "Ints"
+                            }
+                          }
+                        }
+                      }
+                      argument {
+                        tuple_literal {
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              statement {
+                assign {
+                  lhs {
+                    identifier {
+                      name: "n"
+                    }
+                  }
+                  rhs {
+                    operator {
+                      op: Sub
+                      arguments {
+                        identifier {
+                          name: "n"
+                        }
+                      }
+                      arguments {
+                        int_literal {
+                          value: 1
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            clauses {
+              pattern {
+                alternative_pattern {
+                  choice_type {
+                    identifier {
+                      name: "Ints"
+                    }
+                  }
+                  alternative_name: "Two"
+                  arguments {
+                    fields {
+                      binding_pattern {
+                        name: "x"
+                        type {
+                          auto_pattern {
+                          }
+                        }
+                      }
+                    }
+                    fields {
+                      binding_pattern {
+                        name: "y"
+                        type {
+                          auto_pattern {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              statement {
+                assign {
+                  lhs {
+                    identifier {
+                      name: "n"
+                    }
+                  }
+                  rhs {
+                    int_literal {
+                      value: 5
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          return_statement {
+            expression {
+              identifier {
+                name: "n"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    choice {
+      name: "MoreInts"
+      alternatives {
+        name: "None"
+        signature {
+          tuple_literal {
+          }
+        }
+      }
+      alternatives {
+        name: "One"
+        signature {
+          tuple_literal {
+            fields {
+              int_type_literal {
+              }
+            }
+          }
+        }
+      }
+      alternatives {
+        name: "Two"
+        signature {
+          tuple_literal {
+            fields {
+              int_type_literal {
+              }
+            }
+            fields {
+              int_type_literal {
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
