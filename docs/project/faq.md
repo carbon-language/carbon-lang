@@ -143,24 +143,24 @@ expect the vast majority of code to interoperate well.
 
 For example, considering a pure C++ application:
 
-<a href="/docs/images/snippets.md#c">
 <!--
 Edit snippet in /docs/images/snippets.md and:
 https://drive.google.com/drive/folders/1-rsUjiya7dSZ87L8kpZmu3MZghRVxzLA
 -->
+<a href="/docs/images/snippets.md#c">
 <img src="/docs/images/cpp_snippet.svg" width="600"
-     alt="A snippet of C++ code. Follow the link to read it.">
+     alt="A snippet of C++ code. Follow the link to read it."/>
 </a>
 
 It's possible to migrate a single function to Carbon:
 
-<a href="/docs/images/snippets.md#mixed">
 <!--
 Edit snippet in /docs/images/snippets.md and:
 https://drive.google.com/drive/folders/1-rsUjiya7dSZ87L8kpZmu3MZghRVxzLA
 -->
+<a href="/docs/images/snippets.md#mixed">
 <img src="/docs/images/mixed_snippet.svg" width="600"
-     alt="A snippet of mixed Carbon and C++ code. Follow the link to read it.">
+     alt="A snippet of mixed Carbon and C++ code. Follow the link to read it."/>
 </a>
 
 References:
