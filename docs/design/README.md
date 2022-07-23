@@ -1604,7 +1604,7 @@ For every type `MyClass`, there is the type `const MyClass` such that:
 -   If member `x` of `MyClass` has type `T`, then member `x` of `const MyClass`
     has type `const T`.
 -   The API of a `const MyClass` is a subset of `MyClass`, excluding all methods
-    taking `[addr me: Self*]`.
+    taking `[addr self: Self*]`.
 
 Note that `const` binds more tightly than postfix-`*` for forming a pointer
 type, so `const MyClass*` is equal to `(const MyClass)*`.
