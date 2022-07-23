@@ -6,7 +6,7 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-TODO
+**TODO**
 
 ## Names
 
@@ -18,7 +18,6 @@ TODO
 ## Scopes
 
 1.  A _scope_ is one of:
-
     -   The top level in a source file.
     -   A pattern scope.
     -   A block scope.

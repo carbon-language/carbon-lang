@@ -86,7 +86,7 @@ carbon_files = [
 ]
 llvm_files = [
     Path("bazel-execroot/external").joinpath(
-        *f.parts[f.parts.index("llvm-project") :]
+        *f.parts[f.parts.index("llvm-project"):]
     )
     for f in source_files
     if "llvm-project" in f.parts
@@ -132,7 +132,7 @@ subprocess.run(
         "@llvm-project//llvm:LICENSE.TXT",
         "@com_google_absl//:LICENSE",
         "@com_google_googletest//:LICENSE",
-        "@com_github_google_benchmark//:benchmark",
+        "@com_github_google_benchmark//:benchmark"
     ]
 )
 
@@ -143,7 +143,7 @@ def _label_to_path(s: str) -> Path:
     # Map external repositories to their part of the output tree.
     s = re.sub(r"^@([^/]+)//", r"bazel-bin/external/\1/", s)
     # Map this repository to the root of the output tree.
-    s = s if not s.startswith("//") else "bazel-bin/" + s[len("//") :]
+    s = s if not s.startswith("//") else "bazel-bin/" + s[len("//"):]
     # Replace the colon used to mark the package name with a slash.
     s = s.replace(":", "/")
     # Convert to a native path.
@@ -157,7 +157,7 @@ entries = [
     {
         "directory": str(directory),
         "file": str(f),
-        "arguments": arguments + [str(f)],
+        "arguments": arguments + [str(f)]
     }
     for f in carbon_files + llvm_files + generated_files
 ]
