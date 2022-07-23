@@ -5,6 +5,11 @@ const lightCodeTheme = require('prism-react-renderer/themes/github');
 const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 const transformLinks = require('./src/plugins/transformLinks');
 
+const editUrl = ({ versionDocsDirPath, docPath }) => {
+  const docsDirPath = versionDocsDirPath.replace(/^\.\.\//, '')
+  return `https://github.com/carbon-language/carbon-lang/blob/trunk/${docsDirPath}/${docPath}`;
+}
+
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'Carbon Language',
@@ -35,7 +40,7 @@ const config = {
           path: '../docs/design',
           routeBasePath: 'design',
           sidebarPath: undefined,
-          editUrl: 'https://github.com/carbon-language/carbon-lang/blob/trunk/',
+          editUrl,
           beforeDefaultRemarkPlugins: [transformLinks],
         },
         theme: {
@@ -53,7 +58,7 @@ const config = {
         path: '../docs/spec',
         routeBasePath: 'spec',
         sidebarPath: undefined,
-        editUrl: 'https://github.com/carbon-language/carbon-lang/blob/trunk/',
+        editUrl,
         beforeDefaultRemarkPlugins: [transformLinks],
       },
     ],
@@ -64,7 +69,7 @@ const config = {
         path: '../docs/project',
         routeBasePath: 'project',
         sidebarPath: undefined,
-        editUrl: 'https://github.com/carbon-language/carbon-lang/blob/trunk/',
+        editUrl,
         beforeDefaultRemarkPlugins: [transformLinks],
       },
     ],
