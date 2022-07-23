@@ -15,6 +15,9 @@ void Builtins::Register(Nonnull<const Declaration*> decl) {
     if (interface->name() == GetName(Builtin::ImplicitAs)) {
       builtins_[static_cast<int>(Builtin::ImplicitAs)] = interface;
     }
+    if (interface->name() == GetName(Builtin::As)) {
+      builtins_[static_cast<int>(Builtin::As)] = interface;
+    }
   }
 }
 

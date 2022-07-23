@@ -160,9 +160,9 @@ static auto ResolveNames(Expression& expression,
       CARBON_RETURN_IF_ERROR(ResolveNames(index.offset(), enclosing_scope));
       break;
     }
-    case ExpressionKind::PrimitiveOperatorExpression:
+    case ExpressionKind::OperatorExpression:
       for (Nonnull<Expression*> operand :
-           cast<PrimitiveOperatorExpression>(expression).arguments()) {
+           cast<OperatorExpression>(expression).arguments()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(*operand, enclosing_scope));
       }
       break;
@@ -346,7 +346,9 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
     }
     case StatementKind::VariableDefinition: {
       auto& def = cast<VariableDefinition>(statement);
-      CARBON_RETURN_IF_ERROR(ResolveNames(def.init(), enclosing_scope));
+      if (def.has_init()) {
+        CARBON_RETURN_IF_ERROR(ResolveNames(def.init(), enclosing_scope));
+      }
       CARBON_RETURN_IF_ERROR(ResolveNames(def.pattern(), enclosing_scope));
       if (def.is_returned()) {
         CARBON_CHECK(def.pattern().kind() == PatternKind::BindingPattern)

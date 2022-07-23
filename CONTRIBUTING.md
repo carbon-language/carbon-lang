@@ -144,7 +144,7 @@ the Code of Conduct.
     are:
 
     -   The
-        [weekly sync](https://docs.google.com/document/d/1dwS2sJ8tsN3LwxqmZSv9OvqutYhP71dK9Dmr1IXQFTs/edit),
+        [weekly sync](https://docs.google.com/document/d/1dwS2sJ8tsN3LwxqmZSv9OvqutYhP71dK9Dmr1IXQFTs/edit?resourcekey=0-NxBWgL9h05yD2GOR3wUisg),
         where everyone is welcome.
     -   [Open discussions](https://docs.google.com/document/d/1tEt4iM6vfcY0O0DG0uOEMIbaXcZXlNREc2ChNiEtn_w/edit),
         which are unstructured meeting slots used for discussing proposals,
@@ -201,7 +201,7 @@ follow the Carbon documentation and coding styles.
 
     -   New features should have a documented design that has been approved
         through the [evolution process](docs/project/evolution.md). This
-        includes modifications to pre-existing designs.
+        includes modifications to preexisting designs.
     -   Bug fixes and mechanical improvements don't need this.
     -   All new features include unit tests, as they help to (a) document and
         validate concrete usage of the feature and its edge cases, and (b) guard

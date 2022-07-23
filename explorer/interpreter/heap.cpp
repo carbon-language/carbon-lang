@@ -5,6 +5,7 @@
 #include "explorer/interpreter/heap.h"
 
 #include "explorer/common/error_builders.h"
+#include "explorer/interpreter/value.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Error.h"
 
@@ -17,12 +18,17 @@ auto Heap::AllocateValue(Nonnull<const Value*> v) -> AllocationId {
   // or to leave it up to the caller.
   AllocationId a(values_.size());
   values_.push_back(v);
-  alive_.push_back(true);
+  if (v->kind() == Carbon::Value::Kind::UninitializedValue) {
+    states_.push_back(ValueState::Uninitialized);
+  } else {
+    states_.push_back(ValueState::Alive);
+  }
   return a;
 }
 
 auto Heap::Read(const Address& a, SourceLocation source_loc) const
     -> ErrorOr<Nonnull<const Value*>> {
+  CARBON_RETURN_IF_ERROR(this->CheckInit(a.allocation_, source_loc));
   CARBON_RETURN_IF_ERROR(this->CheckAlive(a.allocation_, source_loc));
   Nonnull<const Value*> value = values_[a.allocation_.index_];
   return value->GetMember(arena_, a.field_path_, source_loc, value);
@@ -31,6 +37,9 @@ auto Heap::Read(const Address& a, SourceLocation source_loc) const
 auto Heap::Write(const Address& a, Nonnull<const Value*> v,
                  SourceLocation source_loc) -> ErrorOr<Success> {
   CARBON_RETURN_IF_ERROR(this->CheckAlive(a.allocation_, source_loc));
+  if (states_[a.allocation_.index_] == ValueState::Uninitialized) {
+    states_[a.allocation_.index_] = ValueState::Alive;
+  }
   CARBON_ASSIGN_OR_RETURN(values_[a.allocation_.index_],
                           values_[a.allocation_.index_]->SetField(
                               arena_, a.field_path_, v, source_loc));
@@ -39,7 +48,7 @@ auto Heap::Write(const Address& a, Nonnull<const Value*> v,
 
 auto Heap::CheckAlive(AllocationId allocation, SourceLocation source_loc) const
     -> ErrorOr<Success> {
-  if (!alive_[allocation.index_]) {
+  if (states_[allocation.index_] == ValueState::Dead) {
     return RuntimeError(source_loc)
            << "undefined behavior: access to dead value "
            << *values_[allocation.index_];
@@ -47,9 +56,19 @@ auto Heap::CheckAlive(AllocationId allocation, SourceLocation source_loc) const
   return Success();
 }
 
+auto Heap::CheckInit(AllocationId allocation, SourceLocation source_loc) const
+    -> ErrorOr<Success> {
+  if (states_[allocation.index_] == ValueState::Uninitialized) {
+    return RuntimeError(source_loc)
+           << "undefined behavior: access to uninitialized value "
+           << *values_[allocation.index_];
+  }
+  return Success();
+}
+
 void Heap::Deallocate(AllocationId allocation) {
-  if (alive_[allocation.index_]) {
-    alive_[allocation.index_] = false;
+  if (states_[allocation.index_] != ValueState::Dead) {
+    states_[allocation.index_] = ValueState::Dead;
   } else {
     CARBON_FATAL() << "deallocating an already dead value: "
                    << *values_[allocation.index_];
@@ -63,7 +82,9 @@ void Heap::Print(llvm::raw_ostream& out) const {
   for (size_t i = 0; i < values_.size(); ++i) {
     out << sep;
     out << i << ": ";
-    if (!alive_[i]) {
+    if (states_[i] == ValueState::Uninitialized) {
+      out << "!";
+    } else if (states_[i] == ValueState::Dead) {
       out << "!!";
     }
     out << *values_[i];

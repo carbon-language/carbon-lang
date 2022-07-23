@@ -575,7 +575,7 @@ server for open source packages. Conflicts can also be addressed by renaming one
 of the packages, either at the source, or as a local modification.
 
 We do need to address the case of package names conflicting with other entity
-names. It's possible that a pre-existing entity will conflict with a new import,
+names. It's possible that a preexisting entity will conflict with a new import,
 and that renaming the entity is infeasible to rename due to existing callers.
 Alternately, the entity may be using an idiomatic name that it would contradict
 naming conventions to rename. In either case, this conflict may exist in a

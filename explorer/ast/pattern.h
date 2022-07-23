@@ -66,7 +66,7 @@ class Pattern : public AstNode {
   }
 
   // The value of this pattern. Cannot be called before typechecking.
-  // TODO rename to avoid confusion with BindingPattern::constant_value
+  // TODO: Rename to avoid confusion with BindingPattern::constant_value
   auto value() const -> const Value& { return **value_; }
 
   // Sets the value of this pattern. Can only be called once, during

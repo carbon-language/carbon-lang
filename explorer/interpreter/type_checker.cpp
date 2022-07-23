@@ -173,6 +173,7 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
+    case Value::Kind::UninitializedValue:
     case Value::Kind::ImplWitness:
     case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
@@ -230,6 +231,7 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
+    case Value::Kind::UninitializedValue:
     case Value::Kind::ImplWitness:
     case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
@@ -852,7 +854,8 @@ auto TypeChecker::ArgumentDeduction(
     case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
-    case Value::Kind::StringValue: {
+    case Value::Kind::StringValue:
+    case Value::Kind::UninitializedValue: {
       // Argument deduction within the parameters of a parameterized class type
       // or interface type can compare values, rather than types.
       // TODO: Deduce within the values where possible.
@@ -1155,6 +1158,7 @@ auto TypeChecker::Substitute(
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
+    case Value::Kind::UninitializedValue:
       // This can happen when substituting into the arguments of a class or
       // interface.
       // TODO: Implement substitution for these cases.
@@ -1927,8 +1931,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       e->set_value_category(ValueCategory::Let);
       e->set_static_type(arena_->New<BoolType>());
       return Success();
-    case ExpressionKind::PrimitiveOperatorExpression: {
-      auto& op = cast<PrimitiveOperatorExpression>(*e);
+    case ExpressionKind::OperatorExpression: {
+      auto& op = cast<OperatorExpression>(*e);
       std::vector<Nonnull<const Value*>> ts;
       for (Nonnull<Expression*> argument : op.arguments()) {
         CARBON_RETURN_IF_ERROR(TypeCheckExp(argument, impl_scope));
@@ -2046,6 +2050,26 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               arena_->New<TypeOfConstraintType>(CombineConstraints(
                   e->source_loc(), {*constraints[0], *constraints[1]})));
           op.set_value_category(ValueCategory::Let);
+          return Success();
+        }
+        case Operator::As: {
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> type,
+              InterpExp(op.arguments()[1], arena_, trace_stream_));
+          CARBON_RETURN_IF_ERROR(
+              ExpectIsConcreteType(op.arguments()[1]->source_loc(), type));
+          ErrorOr<Nonnull<Expression*>> converted =
+              BuildBuiltinMethodCall(impl_scope, op.arguments()[0],
+                                     BuiltinInterfaceName{Builtins::As, type},
+                                     BuiltinMethodCall{"Convert"});
+          if (!converted.ok()) {
+            // We couldn't find a matching `impl`.
+            return CompilationError(e->source_loc())
+                   << "type error in `as`: `" << *ts[0]
+                   << "` is not explicitly convertible to `" << *type << "`:\n"
+                   << converted.error().message();
+          }
+          op.set_rewritten_form(*converted);
           return Success();
         }
       }
@@ -2719,24 +2743,29 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
     }
     case StatementKind::VariableDefinition: {
       auto& var = cast<VariableDefinition>(*s);
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&var.init(), impl_scope));
-      const Value& rhs_ty = var.init().static_type();
-      // TODO: If the pattern contains a binding that implies a new impl is
-      // available, should that remain in scope for as long as its binding?
-      // ```
-      // var a: (T:! Widget) = ...;
-      // // Is the `impl T as Widget` in scope here?
-      // a.(Widget.F)();
-      // ```
       ImplScope var_scope;
       var_scope.AddParent(&impl_scope);
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&var.pattern(), &rhs_ty,
-                                              var_scope, var.value_category()));
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<Expression*> converted_init,
-          ImplicitlyConvert("initializer of variable", impl_scope, &var.init(),
-                            &var.pattern().static_type()));
-      var.set_init(converted_init);
+      if (var.has_init()) {
+        CARBON_RETURN_IF_ERROR(TypeCheckExp(&var.init(), impl_scope));
+        const Value& rhs_ty = var.init().static_type();
+        // TODO: If the pattern contains a binding that implies a new impl is
+        // available, should that remain in scope for as long as its binding?
+        // ```
+        // var a: (T:! Widget) = ...;
+        // // Is the `impl T as Widget` in scope here?
+        // a.(Widget.F)();
+        // ```
+        CARBON_RETURN_IF_ERROR(TypeCheckPattern(
+            &var.pattern(), &rhs_ty, var_scope, var.value_category()));
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<Expression*> converted_init,
+            ImplicitlyConvert("initializer of variable", impl_scope,
+                              &var.init(), &var.pattern().static_type()));
+        var.set_init(converted_init);
+      } else {
+        CARBON_RETURN_IF_ERROR(TypeCheckPattern(
+            &var.pattern(), std::nullopt, var_scope, var.value_category()));
+      }
       return Success();
     }
     case StatementKind::Assign: {
@@ -3548,6 +3577,7 @@ static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
+    case Value::Kind::UninitializedValue:
       CARBON_FATAL() << "type of alias target is not a type";
 
     case Value::Kind::AutoType:

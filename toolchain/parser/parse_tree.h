@@ -328,7 +328,7 @@ class ParseTree::PostorderIterator
   Node node_;
 };
 
-// A forward iterator across the silbings at a particular level in the parse
+// A forward iterator across the siblings at a particular level in the parse
 // tree. It produces `ParseTree::Node` objects which are opaque handles and must
 // be used in conjunction with the `ParseTree` itself.
 //

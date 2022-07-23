@@ -36,7 +36,7 @@ void ImplScope::Add(Nonnull<const Value*> iface,
       Add(impl.interface, deduced, impl.type, impl_bindings,
           type_checker.MakeConstraintWitnessAccess(impl_expr, i), type_checker);
     }
-    // A paremterized impl declaration doesn't contribute any equality
+    // A parameterized impl declaration doesn't contribute any equality
     // constraints to the scope. Instead, we'll resolve the equality
     // constraints by resolving a witness when needed.
     if (deduced.empty()) {

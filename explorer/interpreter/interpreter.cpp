@@ -208,6 +208,8 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
       return arena_->New<PointerValue>(cast<LValue>(*args[0]).address());
     case Operator::Combine:
       return &cast<TypeOfConstraintType>(static_type)->constraint_type();
+    case Operator::As:
+      return Convert(args[0], args[1], source_loc);
   }
 }
 
@@ -269,6 +271,17 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
           }  // for
           return true;
         }
+        case Value::Kind::UninitializedValue: {
+          const auto& p_tup = cast<TupleValue>(*p);
+          for (auto& ele : p_tup.elements()) {
+            if (!PatternMatch(ele, arena->New<UninitializedValue>(ele),
+                              source_loc, bindings, generic_args, trace_stream,
+                              arena)) {
+              return false;
+            }
+          }
+          return true;
+        }
         default:
           CARBON_FATAL() << "expected a tuple value in pattern, not " << *v;
       }
@@ -303,6 +316,8 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
           CARBON_FATAL() << "expected a choice alternative in pattern, not "
                          << *v;
       }
+    case Value::Kind::UninitializedValue:
+      CARBON_FATAL() << "uninitialized value is not allowed in pattern " << *v;
     case Value::Kind::FunctionType:
       switch (v->kind()) {
         case Value::Kind::FunctionType: {
@@ -405,8 +420,11 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
-    case ExpressionKind::PrimitiveOperatorExpression: {
-      const auto& op = cast<PrimitiveOperatorExpression>(exp);
+    case ExpressionKind::OperatorExpression: {
+      const auto& op = cast<OperatorExpression>(exp);
+      if (auto rewrite = op.rewritten_form()) {
+        return todo_.ReplaceWith(std::make_unique<LValAction>(*rewrite));
+      }
       if (op.op() != Operator::Deref) {
         CARBON_FATAL()
             << "Can't treat primitive operator expression as lvalue: " << exp;
@@ -584,6 +602,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::BoolValue:
     case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:
+    case Value::Kind::UninitializedValue:
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
@@ -1063,8 +1082,11 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       return todo_.FinishAction(
           arena_->New<BoolValue>(cast<BoolLiteral>(exp).value()));
-    case ExpressionKind::PrimitiveOperatorExpression: {
-      const auto& op = cast<PrimitiveOperatorExpression>(exp);
+    case ExpressionKind::OperatorExpression: {
+      const auto& op = cast<OperatorExpression>(exp);
+      if (auto rewrite = op.rewritten_form()) {
+        return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
+      }
       if (act.pos() != static_cast<int>(op.arguments().size())) {
         //    { {v :: op(vs,[],e,es) :: C, E, F} :: S, H}
         // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}
@@ -1421,7 +1443,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
     }
     case StatementKind::VariableDefinition: {
       const auto& definition = cast<VariableDefinition>(stmt);
-      if (act.pos() == 0) {
+      if (act.pos() == 0 && definition.has_init()) {
         //    { {(var x = e) :: C, E, F} :: S, H}
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
         return todo_.Spawn(
@@ -1429,12 +1451,16 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       } else {
         //    { { v :: (x = []) :: C, E, F} :: S, H}
         // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
-        CARBON_ASSIGN_OR_RETURN(
-            Nonnull<const Value*> v,
-            Convert(act.results()[0], &definition.pattern().static_type(),
-                    stmt.source_loc()));
         Nonnull<const Value*> p =
             &cast<VariableDefinition>(stmt).pattern().value();
+        Nonnull<const Value*> v;
+        if (definition.has_init()) {
+          CARBON_ASSIGN_OR_RETURN(
+              v, Convert(act.results()[0], &definition.pattern().static_type(),
+                         stmt.source_loc()));
+        } else {
+          v = arena_->New<UninitializedValue>(p);
+        }
 
         RuntimeScope matches(&heap_);
         BindingMap generic_args;

@@ -72,7 +72,7 @@ var newline: String = "line one\nline two";
 var raw: String = #"line one\nstill line one"#;
 
 // Raw simple string literal with newline escape sequence:
-var raw_newline: String = "#line one\#nline two"#;
+var raw_newline: String = #"line one\#nline two"#;
 ```
 
 ## Details

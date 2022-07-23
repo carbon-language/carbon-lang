@@ -32,12 +32,10 @@ def _detect_system_clang(repository_ctx):
             fail("The `CC` environment variable is not a Clang compiler.")
         return repository_ctx.path(cc)
 
-    # Try looking on the path. We check for the specific versioned name and then the normal name.
-    system_clang = repository_ctx.which("clang-13")
+    # Try looking on the path. We only check for the normal name.
+    system_clang = repository_ctx.which("clang")
     if not system_clang:
-        system_clang = repository_ctx.which("clang")
-        if not system_clang:
-            fail("Unable to find a `clang` executable on the system path.")
+        fail("Unable to find a `clang` executable on the system path.")
 
     return system_clang
 

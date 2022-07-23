@@ -33,10 +33,6 @@ class Integer {
   var int: i32;
 }
 
-impl Integer as ImplicitAs(Integer) {
-  fn Convert[me: Self]() -> Integer { return me; }
-}
-
 fn Main() -> i32 {
   var i: Integer = {.int = 1};
   var c: Cell(Integer) = Cell(Integer).Create(i); // c contains 1
