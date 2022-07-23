@@ -1276,7 +1276,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             &array_literal.element_type_expression()));
       } else {
         return todo_.FinishAction(arena_->New<StaticArrayType>(
-            act.results()[0], -1,
+            act.results()[0], 0,
             true));  // mark implicit, size needs to be inffered
       }
     }

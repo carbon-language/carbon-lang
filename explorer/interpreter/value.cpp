@@ -517,8 +517,11 @@ void Value::Print(llvm::raw_ostream& out) const {
     }
     case Value::Kind::StaticArrayType: {
       const auto& array_type = cast<StaticArrayType>(*this);
-      out << "[" << array_type.element_type() << "; " << array_type.size()
-          << "]";
+      out << "[" << array_type.element_type() << ";";
+      if (!array_type.implicit()) {
+        out << " " << array_type.size();
+      }
+      out << "]";
       break;
     }
   }
