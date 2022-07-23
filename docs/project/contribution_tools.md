@@ -322,9 +322,9 @@ Our recommended way of installing is to use
 
 ### Visual Studio Code
 
-[Visual Studio Code](https://code.visualstudio.com/) is a code editor used by several
-of us. We provide [recommended extensions](/.vscode/extensions.json) to assist
-Carbon development. Some settings changes must be made separately:
+[Visual Studio Code](https://code.visualstudio.com/) is a code editor used by
+several of us. We provide [recommended extensions](/.vscode/extensions.json) to
+assist Carbon development. Some settings changes must be made separately:
 
 -   Python › Formatting: Provider: `black`
 
