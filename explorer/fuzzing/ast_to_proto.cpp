@@ -33,34 +33,34 @@ static auto LibraryNameToProto(const LibraryName& library_name)
 }
 
 static auto OperatorToProtoEnum(const Operator op)
-    -> Fuzzing::PrimitiveOperatorExpression::Operator {
+    -> Fuzzing::OperatorExpression::Operator {
   switch (op) {
     case Operator::AddressOf:
-      return Fuzzing::PrimitiveOperatorExpression::AddressOf;
+      return Fuzzing::OperatorExpression::AddressOf;
     case Operator::As:
-      return Fuzzing::PrimitiveOperatorExpression::As;
+      return Fuzzing::OperatorExpression::As;
     case Operator::Deref:
-      return Fuzzing::PrimitiveOperatorExpression::Deref;
+      return Fuzzing::OperatorExpression::Deref;
     case Operator::Neg:
-      return Fuzzing::PrimitiveOperatorExpression::Neg;
+      return Fuzzing::OperatorExpression::Neg;
     case Operator::Not:
-      return Fuzzing::PrimitiveOperatorExpression::Not;
+      return Fuzzing::OperatorExpression::Not;
     case Operator::Ptr:
-      return Fuzzing::PrimitiveOperatorExpression::Ptr;
+      return Fuzzing::OperatorExpression::Ptr;
     case Operator::Add:
-      return Fuzzing::PrimitiveOperatorExpression::Add;
+      return Fuzzing::OperatorExpression::Add;
     case Operator::And:
-      return Fuzzing::PrimitiveOperatorExpression::And;
+      return Fuzzing::OperatorExpression::And;
     case Operator::Eq:
-      return Fuzzing::PrimitiveOperatorExpression::Eq;
+      return Fuzzing::OperatorExpression::Eq;
     case Operator::Mul:
-      return Fuzzing::PrimitiveOperatorExpression::Mul;
+      return Fuzzing::OperatorExpression::Mul;
     case Operator::Or:
-      return Fuzzing::PrimitiveOperatorExpression::Or;
+      return Fuzzing::OperatorExpression::Or;
     case Operator::Sub:
-      return Fuzzing::PrimitiveOperatorExpression::Sub;
+      return Fuzzing::OperatorExpression::Sub;
     case Operator::Combine:
-      return Fuzzing::PrimitiveOperatorExpression::Combine;
+      return Fuzzing::OperatorExpression::Combine;
   }
 }
 
@@ -146,12 +146,11 @@ static auto ExpressionToProto(const Expression& expression)
       break;
     }
 
-    case ExpressionKind::PrimitiveOperatorExpression: {
-      const auto& primitive_operator =
-          cast<PrimitiveOperatorExpression>(expression);
-      auto* operator_proto = expression_proto.mutable_primitive_operator();
-      operator_proto->set_op(OperatorToProtoEnum(primitive_operator.op()));
-      for (Nonnull<const Expression*> arg : primitive_operator.arguments()) {
+    case ExpressionKind::OperatorExpression: {
+      const auto& operator_expr = cast<OperatorExpression>(expression);
+      auto* operator_proto = expression_proto.mutable_operator_();
+      operator_proto->set_op(OperatorToProtoEnum(operator_expr.op()));
+      for (Nonnull<const Expression*> arg : operator_expr.arguments()) {
         *operator_proto->add_arguments() = ExpressionToProto(*arg);
       }
       break;

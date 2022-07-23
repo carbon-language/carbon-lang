@@ -259,7 +259,7 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
     case TokenKind::LessEqualGreater():
       return Trailing{.level = Relational, .is_binary = true};
 
-    // Addative operators.
+    // Additive operators.
     case TokenKind::Plus():
     case TokenKind::Minus():
       return Trailing{.level = Additive, .is_binary = true};

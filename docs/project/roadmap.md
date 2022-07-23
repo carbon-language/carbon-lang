@@ -77,7 +77,7 @@ set of perspectives in the evolution of Carbon as possible.
 
 As a proxy for the amount of participation, we will count the number of active
 participants from each organization in 2022, with the aim that each organization
-is represented by less than 50% of all active participatnts.
+is represented by less than 50% of all active participants.
 
 There are many ways in which someone could be an active participant, and when
 the leads come to reflect on this at the end of the year, we expect this to be a

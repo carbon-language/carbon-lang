@@ -160,9 +160,9 @@ static auto ResolveNames(Expression& expression,
       CARBON_RETURN_IF_ERROR(ResolveNames(index.offset(), enclosing_scope));
       break;
     }
-    case ExpressionKind::PrimitiveOperatorExpression:
+    case ExpressionKind::OperatorExpression:
       for (Nonnull<Expression*> operand :
-           cast<PrimitiveOperatorExpression>(expression).arguments()) {
+           cast<OperatorExpression>(expression).arguments()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(*operand, enclosing_scope));
       }
       break;

@@ -1,0 +1,565 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    interface {
+      name: "Number"
+      members {
+        function {
+          name: "Zero"
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "Self"
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name: "Add"
+          me_pattern {
+            binding_pattern {
+            name: "me"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "Self"
+                  }
+                }
+              }
+            }
+            }
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "other"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "Self"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "Self"
+              }
+            }
+          }
+        }
+      }
+      self {
+        name: "Self"
+        type {
+          type_type_literal {
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name: "Point"
+      members {
+        function {
+          name: "Origin"
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              call {
+                function {
+                  identifier {
+                    name: "Point"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "T"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          body {
+            statements {
+              return_statement {
+                expression {
+                  struct_literal {
+                    fields {
+                      name: "x"
+                      expression {
+                        call {
+                          function {
+                            simple_member_access {
+                              field: "Zero"
+                              object {
+                                identifier {
+                                  name: "T"
+                                }
+                              }
+                            }
+                          }
+                          argument {
+                            tuple_literal {
+                            }
+                          }
+                        }
+                      }
+                    }
+                    fields {
+                      name: "y"
+                      expression {
+                        call {
+                          function {
+                            simple_member_access {
+                              field: "Zero"
+                              object {
+                                identifier {
+                                  name: "T"
+                                }
+                              }
+                            }
+                          }
+                          argument {
+                            tuple_literal {
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name: "SumXY"
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "p"
+                type {
+                  expression_pattern {
+                    expression {
+                      call {
+                        function {
+                          identifier {
+                            name: "Point"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              identifier {
+                                name: "T"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "T"
+              }
+            }
+          }
+          body {
+            statements {
+              return_statement {
+                expression {
+                  call {
+                    function {
+                      simple_member_access {
+                        field: "Add"
+                        object {
+                          simple_member_access {
+                            field: "x"
+                            object {
+                              identifier {
+                                name: "p"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          simple_member_access {
+                            field: "y"
+                            object {
+                              identifier {
+                                name: "p"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name: "SumFn"
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              function_type {
+                parameter {
+                  fields {
+                    call {
+                      function {
+                        identifier {
+                          name: "Point"
+                        }
+                      }
+                      argument {
+                        tuple_literal {
+                          fields {
+                            identifier {
+                              name: "T"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                return_type {
+                  identifier {
+                    name: "T"
+                  }
+                }
+              }
+            }
+          }
+          body {
+            statements {
+              return_statement {
+                expression {
+                  simple_member_access {
+                    field: "SumXY"
+                    object {
+                      call {
+                        function {
+                          identifier {
+                            name: "Point"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              identifier {
+                                name: "T"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        variable {
+          binding {
+            name: "x"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "T"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        variable {
+          binding {
+            name: "y"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "T"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      type_params {
+        fields {
+          generic_binding {
+            name: "T"
+            type {
+              identifier {
+                name: "Number"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: ExternalImpl
+      impl_type {
+        int_type_literal {
+        }
+      }
+      interface {
+        identifier {
+          name: "Number"
+        }
+      }
+      members {
+        function {
+          name: "Zero"
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              int_type_literal {
+              }
+            }
+          }
+          body {
+            statements {
+              return_statement {
+                expression {
+                  int_literal {
+                    value: 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name: "Add"
+          me_pattern {
+            binding_pattern {
+            name: "me"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+            }
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "other"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              int_type_literal {
+              }
+            }
+          }
+          body {
+            statements {
+              return_statement {
+                expression {
+                  operator {
+                    op: Add
+                    arguments {
+                      identifier {
+                        name: "me"
+                      }
+                    }
+                    arguments {
+                      identifier {
+                        name: "other"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "p"
+                type {
+                  expression_pattern {
+                    expression {
+                      call {
+                        function {
+                          identifier {
+                            name: "Point"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              int_type_literal {
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              call {
+                function {
+                  simple_member_access {
+                    field: "Origin"
+                    object {
+                      call {
+                        function {
+                          identifier {
+                            name: "Point"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              int_type_literal {
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          return_statement {
+            expression {
+              call {
+                function {
+                  call {
+                    function {
+                      simple_member_access {
+                        field: "SumFn"
+                        object {
+                          identifier {
+                            name: "p"
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "p"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

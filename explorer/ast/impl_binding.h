@@ -48,7 +48,7 @@ class ImplBinding : public AstNode {
   // The interface being implemented.
   auto interface() const -> Nonnull<const Value*> { return iface_; }
 
-  // Required for the the ValueNode interface
+  // Required for the ValueNode interface
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
     return std::nullopt;
   }

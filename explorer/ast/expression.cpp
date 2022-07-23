@@ -130,9 +130,9 @@ void Expression::Print(llvm::raw_ostream& out) const {
       PrintFields(out, cast<StructTypeLiteral>(*this).fields(), ": ");
       out << "}";
       break;
-    case ExpressionKind::PrimitiveOperatorExpression: {
+    case ExpressionKind::OperatorExpression: {
       out << "(";
-      const auto& op = cast<PrimitiveOperatorExpression>(*this);
+      const auto& op = cast<OperatorExpression>(*this);
       switch (op.arguments().size()) {
         case 0:
           out << ToString(op.op());
@@ -287,7 +287,7 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
     case ExpressionKind::StructLiteral:
     case ExpressionKind::StructTypeLiteral:
     case ExpressionKind::CallExpression:
-    case ExpressionKind::PrimitiveOperatorExpression:
+    case ExpressionKind::OperatorExpression:
     case ExpressionKind::IntrinsicExpression:
     case ExpressionKind::UnimplementedExpression:
     case ExpressionKind::FunctionTypeLiteral:

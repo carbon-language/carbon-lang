@@ -60,5 +60,5 @@ escalating to the [Carbon leads](#carbon-leads). Notably, this team is _not_
 responsible for the _design_ of the language itself, only for its
 implementation.
 
--   [Github team](https://github.com/orgs/carbon-language/teams/implementation-team)
+-   [GitHub team](https://github.com/orgs/carbon-language/teams/implementation-team)
 -   Discord role: implementation-team
