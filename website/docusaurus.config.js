@@ -31,9 +31,9 @@ const config = {
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
-          path: '../docs',
+          path: '..',
           routeBasePath: '/',
-          exclude: ['README.md'],
+          include: ['docs/**/*.{md,mdx}', 'README.md'],
           sidebarPath: require.resolve('./sidebars.js'),
           editUrl: 'https://github.com/carbon-language/carbon-lang/blob/trunk/docs',
           beforeDefaultRemarkPlugins: [transformLinks],
@@ -46,7 +46,7 @@ const config = {
   ],
 
   themeConfig:
-    /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
+  /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       colorMode: {
         defaultMode: 'light',
@@ -60,10 +60,10 @@ const config = {
           src: 'img/carbon-logo.png',
         },
         items: [
-          { to: '/design', label: 'Design', position: 'left' },
-          { to: '/project', label: 'Project', position: 'left' },
-          { to: '/guides', label: 'Guides', position: 'left' },
-          { to: '/spec', label: 'Spec', position: 'left' },
+          { to: '/docs/design', label: 'Design', position: 'left' },
+          { to: '/docs/project', label: 'Project', position: 'left' },
+          { to: '/docs/guides', label: 'Guides', position: 'left' },
+          { to: '/docs/spec', label: 'Spec', position: 'left' },
           {
             href: 'https://github.com/carbon-language/carbon-lang',
             label: 'GitHub',
