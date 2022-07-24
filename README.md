@@ -1,4 +1,4 @@
-# Carbon Language: <br/> An experimental successor to C++
+# Carbon Language: an experimental successor to C++
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
