@@ -27,7 +27,7 @@ bazel run -c opt //installers/local:install \
 To uninstall, run:
 
 ```shell
-bazel //installers/local:uninstall
+bazel run //installers/local:uninstall
 ```
 
 The build mode is important for installs, as debug versions may be installed. It
