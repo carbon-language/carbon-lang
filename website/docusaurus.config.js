@@ -4,6 +4,7 @@
 const lightCodeTheme = require('prism-react-renderer/themes/github');
 const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 const transformLinks = require('./src/plugins/transformLinks');
+const transformImageLinks = require('./src/plugins/transformImageLinks');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -37,6 +38,7 @@ const config = {
           sidebarPath: require.resolve('./sidebars.js'),
           editUrl: 'https://github.com/carbon-language/carbon-lang/blob/trunk/docs',
           beforeDefaultRemarkPlugins: [transformLinks],
+          rehypePlugins: [transformImageLinks],
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
