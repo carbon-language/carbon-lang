@@ -6,6 +6,7 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
+<!-- Keep these links on one line so the pipes are spaced correctly on the website. -->
 <p align="center">
   <a href="#why-build-carbon">Why?</a> | <a href="#language-goals">Goals</a> | <a href="#getting-started">Getting started</a> | <a href="#join-us">Join us</a>
 </p>
