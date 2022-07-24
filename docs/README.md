@@ -15,9 +15,9 @@ If you're trying to learn more about Carbon, we recommend starting at
 
 ## Design
 
-The design of the Carbon language, and the rationale for that design, are
-documented in the [`design/` directory](design/README.md). This documentation is
-intended to support the following audiences:
+Carbon language's design and rationale are documented in the
+[`design/` directory](design/README.md). This documentation is intended to
+support the following audiences:
 
 -   People who wish to determine whether Carbon would be the right choice for a
     project compared to other existing languages.
