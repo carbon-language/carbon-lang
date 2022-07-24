@@ -62,7 +62,7 @@ accumulating decades of technical debt. Incrementally improving C++ is
 [extremely difficult](/docs/project/difficulties_improving_cpp.md), both due to
 the technical debt itself and challenges with its evolution process. The best
 way to address these problems is to avoid inheriting the legacy of C or C++
-directly, and instead start with solid language foundations like
+directly, and instead, start with solid language foundations like
 [modern generics system](#generics), modular code organization, and consistent,
 simple syntax.
 
