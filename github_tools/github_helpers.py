@@ -43,7 +43,7 @@ def add_access_token_arg(
     )
 
 
-class Client(object):
+class Client:
     """A GitHub GraphQL client."""
 
     def __init__(self, parsed_args: argparse.Namespace):
