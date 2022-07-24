@@ -75,7 +75,7 @@ auto VarDecl::GetTypeStr(const clang::VarDecl& decl) -> std::string {
           type_str += ' ' + text;
         } else {
           if (!type_str.empty()) {
-            type_str.insert(0, ' ');
+            type_str.insert(0, " ");
           }
           type_str.insert(0, text);
         }
