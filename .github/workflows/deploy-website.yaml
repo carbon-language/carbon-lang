@@ -34,3 +34,5 @@ jobs:
           publish_dir: ./website/build
           external_repository: carbon-language/carbon-language.github.io
           publish_branch: trunk
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
