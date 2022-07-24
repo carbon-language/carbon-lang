@@ -236,7 +236,7 @@ and with a smooth evolutionary path.
 Safety, and especially
 [memory safety](https://en.wikipedia.org/wiki/Memory_safety), remain key
 challenges for C++ and something a successor language needs to address. Our
-initial priority and focus are on immediately addressing important, low-hanging
+initial priority and focus is on immediately addressing important, low-hanging
 fruit in the safety space:
 
 -   Tracking uninitialized states better, increased enforcement of
