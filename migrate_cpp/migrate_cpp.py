@@ -18,7 +18,7 @@ _H_EXTS = {".h", ".hpp"}
 _CPP_EXTS = {".c", ".cc", ".cpp", ".cxx"}
 
 
-class _Workflow(object):
+class _Workflow:
     _parsed_args: argparse.Namespace
     _data_dir: str
     _cpp_files: Optional[List[str]]

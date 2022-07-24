@@ -1,0 +1,174 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    choice {
+      name: "A"
+      alternatives {
+        name: "Value"
+        signature {
+          fields {
+            int_type_literal {
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        int_type_literal {
+        }
+      }
+      interface {
+        call {
+          function {
+            identifier {
+              name: "ImplicitAs"
+            }
+          }
+          argument {
+            tuple_literal {
+              fields {
+                identifier {
+                  name: "A"
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name: "Convert"
+          me_pattern {
+            binding_pattern {
+              name: "me"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "A"
+              }
+            }
+          }
+          body {
+            statements {
+              return_statement {
+                expression {
+                  call {
+                    function {
+                      simple_member_access {
+                        field: "Value"
+                        object {
+                          identifier {
+                            name: "A"
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          operator {
+                            op: Add
+                            arguments {
+                              identifier {
+                                name: "me"
+                              }
+                            }
+                            arguments {
+                              int_literal {
+                                value: 1
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              alternative_pattern {
+                choice_type {
+                  identifier {
+                    name: "A"
+                  }
+                }
+                alternative_name: "Value"
+                arguments {
+                  fields {
+                    binding_pattern {
+                      name: "n"
+                      type {
+                        expression_pattern {
+                          expression {
+                            int_type_literal {
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              int_literal {
+                value: 2
+              }
+            }
+          }
+        }
+        statements {
+          return_statement {
+            expression {
+              identifier {
+                name: "n"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

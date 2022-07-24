@@ -23,7 +23,7 @@ class MatcherTestBase : public ::testing::Test {
     matchers.Register(std::make_unique<MatcherFactoryType>());
   }
 
-  // Expects that that the replacements produced by running the finder result in
+  // Expects that the replacements produced by running the finder result in
   // the specified code transformation.
   void ExpectReplacement(llvm::StringRef before, llvm::StringRef after) {
     auto factory =

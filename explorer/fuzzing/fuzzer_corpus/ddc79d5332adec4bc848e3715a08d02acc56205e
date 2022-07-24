@@ -1,0 +1,22 @@
+compilation_unit {
+  declarations {
+    function {
+      body {
+        statements {
+          match {
+            expression {
+              function_type {
+                parameter {
+                  fields {
+                    operator {
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -43,7 +43,7 @@ This process is designed to:
 -   Ensure these kinds of changes can receive feedback from the entire
     community.
 -   Resolve questions and decide direction efficiently.
--   Create a clear log of rationale for why the project and language have
+-   Create a clear log of the rationale for why the project and language have
     evolved in particular directions.
 
 When there are questions, concerns, or issues with a proposal that need to be
@@ -64,7 +64,7 @@ language are well explained, justified, and reviewed by the community.
     the [`proposals/` directory](/proposals/) following
     [the template](/proposals/scripts/template.md).
 
--   Proposal PRs start out in draft mode. When proposal PRs are ready, click on
+-   Proposal PRs start in draft mode. When proposal PRs are ready, click on
     ["Ready for review"](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request#marking-a-pull-request-as-ready-for-review),
     and change the
     [Proposals project column](https://github.com/carbon-language/carbon-lang/projects/1)
@@ -77,7 +77,7 @@ language are well explained, justified, and reviewed by the community.
         community.
 
 -   Contributors are encouraged to react with a _thumbs-up_ to proposal PRs if
-    they are generally interested and supportive of the high level direction
+    they are generally interested and supportive of the high-level direction
     based on title and summary. Similarly, other reactions are encouraged to
     help surface contributor's sentiment.
 
@@ -93,22 +93,22 @@ language are well explained, justified, and reviewed by the community.
     consensus among the contributors outside of the identified blocking issues.
     Contributors should have a reasonable chance to raise concerns, and where
     needed they should become blocking issues. Community consensus isn't
-    intended to be perfect though, and is ultimately a judgement call by the
-    lead. When things are missed or mistakes are made here, we should just
-    revert or fix-forward as usual.
+    intended to be perfect, and is ultimately a judgment call by the lead. When
+    things are missed or mistakes are made here, we should just revert or
+    fix-forward as usual.
 
 -   Once a reasonable degree of community consensus is reached and the assigned
     lead finishes code review, the lead should
     [approve](/docs/project/code_review.md#approving-the-change) the PR. Any
     outstanding high-level concerns should be handled with blocking issues.
 
--   Optionally, the assigned lead can file a blocking issue for a one week final
+-   Optionally, the assigned lead can file a blocking issue for a one-week final
     comment period when they approve. This is rarely needed, and only when it is
     both useful and important for the proposal to give extra time for community
     comments.
 
 -   The leads are responsible for resolving any blocking issues for a proposal
-    PR, including the one week comment period where resolving it indicates
+    PR, including the one-week comment period where resolving it indicates
     comments arrived which require the proposal to undergo further review.
 
 -   The proposal PR can be merged once the assigned lead approves, all blocking
