@@ -234,7 +234,7 @@ and with a smooth evolutionary path.
 ## Memory safety
 
 Safety, and especially
-[memory safety](https://en.wikipedia.org/wiki/Memory_safety) remains a key
+[memory safety](https://en.wikipedia.org/wiki/Memory_safety), remains a key
 challenge for C++ and something a successor language needs to address. Our
 initial priority and focus is on immediately addressing important, low-hanging
 fruit in the safety space:
