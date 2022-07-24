@@ -20,12 +20,13 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v3
         with:
-          node-version: 18
-          cache: yarn
+          node-version: 16
+          cache: npm
+          cache-dependency-path: website/package-lock.json
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: npm ci
       - name: Build website
-        run: yarn build
+        run: npm run build
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
