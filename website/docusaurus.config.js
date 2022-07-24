@@ -33,6 +33,7 @@ const config = {
         docs: {
           path: '../docs',
           routeBasePath: '/',
+          exclude: ['README.md'],
           sidebarPath: require.resolve('./sidebars.js'),
           editUrl: 'https://github.com/carbon-language/carbon-lang/blob/trunk/docs',
           beforeDefaultRemarkPlugins: [transformLinks],
