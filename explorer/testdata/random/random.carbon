@@ -15,7 +15,7 @@ fn test(para: i32)->Bool{
 }
 fn Main() -> i32 {
   var i : i32 = Rand(0,100);
-  var j : i32 = Rand(0,100); 
+  var j : i32 = Rand(0,100);
   if(i == j){
     Print("HALLO WELT");
   }else{

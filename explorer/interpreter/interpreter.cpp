@@ -29,11 +29,10 @@ using llvm::cast;
 using llvm::dyn_cast;
 using llvm::isa;
 
-
 namespace Carbon {
 
-static std::random_device                  rand_dev;
-static std::mt19937                        generator(rand_dev());
+static std::random_device rand_dev;
+static std::mt19937 generator(rand_dev());
 
 // Constructs an ActionStack suitable for the specified phase.
 static auto MakeTodo(Phase phase, Nonnull<Heap*> heap) -> ActionStack {
@@ -1162,9 +1161,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         case IntrinsicExpression::Intrinsic::Random: {
           const auto& args = cast<TupleValue>(*act.results()[0]).elements();
           CARBON_CHECK(args.size() == 2);
-          
-          const auto & low = cast<IntValue>(*args[0]).value();
-          const auto & high = cast<IntValue>(*args[1]).value();
+
+          const auto& low = cast<IntValue>(*args[0]).value();
+          const auto& high = cast<IntValue>(*args[1]).value();
           std::uniform_int_distribution<> distr(low, high);
           int r = distr(generator);
           return todo_.FinishAction(arena_->New<IntValue>(r));

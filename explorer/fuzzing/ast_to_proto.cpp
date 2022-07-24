@@ -240,7 +240,6 @@ static auto ExpressionToProto(const Expression& expression)
         case IntrinsicExpression::Intrinsic::Random:
           intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::Random);
           break;
-
       }
       *intrinsic_proto->mutable_argument() =
           TupleLiteralExpressionToProto(intrinsic.args());

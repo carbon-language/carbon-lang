@@ -26,7 +26,7 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
   if (name == "Print") {
     return Intrinsic::Print;
   }
-  if(name == "Rand"){
+  if (name == "Rand") {
     return Intrinsic::Random;
   }
   static const auto& intrinsic_map = *new std::map<std::string_view, Intrinsic>(
@@ -180,7 +180,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
         out << "Random" << iexp.args();
         break;
       }
-      
+
       out << "intrinsic_";
       switch (iexp.intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print:
@@ -193,7 +193,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
           out << "delete";
           break;
         case IntrinsicExpression::Intrinsic::Random:
-          out<< "rand";
+          out << "rand";
           break;
       }
       out << iexp.args();
