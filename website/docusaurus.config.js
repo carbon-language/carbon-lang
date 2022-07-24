@@ -5,11 +5,6 @@ const lightCodeTheme = require('prism-react-renderer/themes/github');
 const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 const transformLinks = require('./src/plugins/transformLinks');
 
-const editUrl = ({ versionDocsDirPath, docPath }) => {
-  const docsDirPath = versionDocsDirPath.replace(/^\.\.\//, '')
-  return `https://github.com/carbon-language/carbon-lang/blob/trunk/${docsDirPath}/${docPath}`;
-}
-
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'Carbon Language',
@@ -36,42 +31,16 @@ const config = {
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
-          id: 'design',
-          path: '../docs/design',
-          routeBasePath: 'design',
-          sidebarPath: undefined,
-          editUrl,
+          path: '../docs',
+          routeBasePath: '/',
+          sidebarPath: require.resolve('./sidebars.js'),
+          editUrl: 'https://github.com/carbon-language/carbon-lang/blob/trunk/docs',
           beforeDefaultRemarkPlugins: [transformLinks],
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
         },
       }),
-    ],
-  ],
-
-  plugins: [
-    [
-      '@docusaurus/plugin-content-docs',
-      {
-        id: 'spec',
-        path: '../docs/spec',
-        routeBasePath: 'spec',
-        sidebarPath: undefined,
-        editUrl,
-        beforeDefaultRemarkPlugins: [transformLinks],
-      },
-    ],
-    [
-      '@docusaurus/plugin-content-docs',
-      {
-        id: 'project',
-        path: '../docs/project',
-        routeBasePath: 'project',
-        sidebarPath: undefined,
-        editUrl,
-        beforeDefaultRemarkPlugins: [transformLinks],
-      },
     ],
   ],
 
@@ -90,9 +59,10 @@ const config = {
           src: 'img/carbon-logo.png',
         },
         items: [
-          {to: '/design', label: 'Design', position: 'left'},
-          {to: '/spec', label: 'Spec', position: 'left'},
-          {to: '/project', label: 'Project', position: 'left'},
+          { to: '/design', label: 'Design', position: 'left' },
+          { to: '/project', label: 'Project', position: 'left' },
+          { to: '/guides', label: 'Guides', position: 'left' },
+          { to: '/spec', label: 'Spec', position: 'left' },
           {
             href: 'https://github.com/carbon-language/carbon-lang',
             label: 'GitHub',
@@ -117,7 +87,7 @@ const config = {
               {
                 label: 'Code of Conduct',
                 href: 'https://github.com/carbon-language/carbon-lang/blob/trunk/CODE_OF_CONDUCT.md',
-              }
+              },
             ],
           },
         ],
