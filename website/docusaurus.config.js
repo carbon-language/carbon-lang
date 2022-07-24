@@ -18,7 +18,7 @@ const config = {
   // GitHub pages deployment config.
   organizationName: 'carbon-language',
   projectName: 'carbon-language.github.io',
-  trailingSlash: false,
+  trailingSlash: true, // Fixes relative directory links on e.g. Spec page.
 
   i18n: {
     defaultLocale: 'en',
