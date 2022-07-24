@@ -54,7 +54,7 @@ auto VarDecl::GetTypeStr(const clang::VarDecl& decl) -> std::string {
     } else if (range_str.empty()) {
       segments.push_back({type_loc_class, qual_str});
     } else {
-      segments.push_back({type_loc_class, qual_str + " " + range_str});
+      segments.push_back({type_loc_class, qual_str + ' ' + range_str});
     }
 
     type_loc = type_loc.getNextTypeLoc();
@@ -72,10 +72,10 @@ auto VarDecl::GetTypeStr(const clang::VarDecl& decl) -> std::string {
         break;
       case clang::TypeLoc::Qualified:
         if (prev_class == clang::TypeLoc::Pointer) {
-          type_str += " " + text;
+          type_str += ' ' + text;
         } else {
           if (!type_str.empty()) {
-            type_str.insert(0, " ");
+            type_str.insert(0, ' ');
           }
           type_str.insert(0, text);
         }
