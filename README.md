@@ -295,11 +295,11 @@ Learn more about the Carbon project:
 Carbon is committed to a welcoming and inclusive environment where everyone can
 contribute.
 
--   To watch for major release announcements, subscribe to
-    [our Carbon release post on GitHub](https://github.com/carbon-language/carbon-lang/discussions/1020)
+-   To watch for major release announcements, subscribe to our
+    [Carbon release post on GitHub](https://github.com/carbon-language/carbon-lang/discussions/1020)
     and [star carbon-lang](https://github.com/carbon-language/carbon-lang).
 -   To join the design discussion, join our
-    [our GitHub forum](https://github.com/carbon-language/carbon-lang/discussions).
+    [GitHub forum](https://github.com/carbon-language/carbon-lang/discussions).
 -   See our [code of conduct](CODE_OF_CONDUCT.md) and
     [contributing guidelines](CONTRIBUTING.md) for information about the Carbon
     development community.
