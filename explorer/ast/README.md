@@ -20,7 +20,7 @@ compilation you're in.
 All node types in the AST are derived from [`AstNode`](ast_node.h), and use
 [LLVM-style RTTI](https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html) to support
 safe down-casting and similar operations. Each abstract class `Foo` in the
-hierarchy has a `kind` method which returns a enum `FooKind` that identifies the
+hierarchy has a `kind` method which returns an enum `FooKind` that identifies the
 concrete type of the object, and a `FooKind` value can be safely `static_cast`ed
 to `BarKind` if that value represents a type that's derived from both `Foo` and
 `Bar`.
@@ -36,7 +36,7 @@ representing individual syntactic constructs, such as `If` for if-statements.
 
 Sometimes it is useful to work with a subset of node types that "cuts across"
 the primary class hierarchy. Rather than deal with the pitfalls of multiple
-inheritance, we handle these cases using a form of type erasure: we specify a
+inheritances, we handle these cases using a form of type erasure: we specify a
 notional interface that those types conform to, and then define a "view" class
 that behaves like a pointer to an instance of that interface. Types declare that
 they model an interface `Foo` by defining a public static member named
