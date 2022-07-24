@@ -27,9 +27,9 @@ void FnInserter::Run() {
   llvm::SmallVector<llvm::StringRef> split;
   GetSourceText(range).split(split, ' ', /*MaxSplit=*/-1, /*KeepEmpty=*/false);
   std::string new_text = "fn ";
-  for (llvm::StringRef t : split) {
-    if (t != "auto" && t != "void") {
-      new_text += t.str() + " ";
+  for (llvm::StringRef text : split) {
+    if (text != "auto" && text != "void") {
+      new_text += text.str() + ' ';
     }
   }
   AddReplacement(range, new_text);
