@@ -36,7 +36,7 @@ representing individual syntactic constructs, such as `If` for if-statements.
 
 Sometimes it is useful to work with a subset of node types that "cuts across"
 the primary class hierarchy. Rather than deal with the pitfalls of multiple
-inheritances, we handle these cases using a form of type erasure: we specify a
+inheritance, we handle these cases using a form of type erasure: we specify a
 notional interface that those types conform to, and then define a "view" class
 that behaves like a pointer to an instance of that interface. Types declare that
 they model an interface `Foo` by defining a public static member named
