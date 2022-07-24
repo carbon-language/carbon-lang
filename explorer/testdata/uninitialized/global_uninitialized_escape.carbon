@@ -11,8 +11,8 @@
 
 package ExplorerTest api;
 
-var y: i32;
 // `y` is unformed here.
+var y: i32;
 
 fn AssignIntTo(x: i32, destination: i32*) {
   *destination = x;
