@@ -57,12 +57,12 @@ GitHub will autolink `img`, but won't produce a link when `href="#"`.
 
 C++ remains the dominant programming language for performance-critical software,
 with massive and growing codebases and investments. However, it is struggling to
-improve and meet developers' needs outlined above, in no small part due to
+improve and meet developers' needs, as outlined above, in no small part due to
 accumulating decades of technical debt. Incrementally improving C++ is
 [extremely difficult](/docs/project/difficulties_improving_cpp.md), both due to
 the technical debt itself and challenges with its evolution process. The best
 way to address these problems is to avoid inheriting the legacy of C or C++
-directly, and instead start with solid language foundations like a
+directly, and instead start with solid language foundations like
 [modern generics system](#generics), modular code organization, and consistent,
 simple syntax.
 
