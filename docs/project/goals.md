@@ -142,7 +142,7 @@ we expect to provide tooling to help automate and scale migrating existing
 Carbon code to the new version. The goal is to enable a more rapid evolution of
 the language without the churn tax and version skew becoming unsustainable.
 
-**Developer tooling.** We need developers to be productive in reading and writing
+**Developer tooling.** We need developers to be productive while reading and writing
 Carbon code. We expect to provide a broad suite of development-oriented tools
  ranging from refactoring tools to [LSP](https://langserver.org/) implementations
 and editor integrations. We also plan to provide machine-readable forms of many
