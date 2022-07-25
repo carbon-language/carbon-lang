@@ -14,7 +14,7 @@ const config = {
   url: 'https://carbon-language.github.io',
   baseUrl: '/',
   onBrokenLinks: 'ignore', // TODO: Fix broken links, and change this back to 'throw'
-  onBrokenMarkdownLinks: 'ignore', // TODO: Fix broken markdown links, and change this back to 'warn'
+  onBrokenMarkdownLinks: 'ignore', // These are fixed in `transformLinks`.
   favicon: 'img/carbon-logo.png',
 
   // GitHub pages deployment config.
