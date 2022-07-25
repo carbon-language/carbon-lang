@@ -67,7 +67,7 @@ good language without a good community. As the saying goes,
 ["culture eats strategy for breakfast"](https://techcrunch.com/2014/04/12/culture-eats-strategy-for-breakfast/).
 Carbon's community, including both maintainers and users, needs to last for
 years and be capable of scaling up. It needs to support people working on Carbon
-across a wide range of companies as their full time job, but also people
+across a wide range of companies as their full-time job, but also people
 contributing in small fractions of their time, or as students, teachers, or as a
 hobby. There are several key ingredients to achieving this.
 
@@ -79,14 +79,14 @@ expectations around conduct and behavior need to be clearly articulated both to
 set expectations for people joining, and to help remind and anchor us on
 consistent standards. It is also important that we hold ourselves accountable to
 these expectations and have real and meaningful mechanisms to moderate the
-community. When behavior steps outside of our expectations, we need tools,
-process, and policy for how we will recognize and correct it.
+community. When behavior steps outside of our expectations, we need tools, 
+processes, and policy for how we will recognize and correct it.
 
 **An open, inclusive process for Carbon changes.** The community needs to be
 able to effectively engage in the direction and evolution of the project and
 language, while keeping the process efficient and effective. That means we need
 an open, inclusive process where everyone feels comfortable participating.
-Community members should understand how and why decisions are made, and have the
+Community members should understand how and why decisions are made and have the
 ability to both influence them before they occur and give feedback afterward. We
 want to use this process to also ensure we stick to our language priorities and
 have clear rationales for all of our technical designs and decisions.
@@ -130,17 +130,17 @@ expected to read through the specification to ramp up with Carbon. User guides
 and other documentation will be provided to make it easy to learn how to use
 Carbon.
 
-**Compelling adoption tooling.** We want to provide a compelling suite of tools
-out-of-the-box in order to encourage adoption of Carbon at scale where it can
+**Compelling adoption tooling.** We want to provide a compelling suite of tools 
+out of the box to encourage the adoption of Carbon at a scale where it can
 augment existing C++ codebases. For example, we expect a C++ -> Carbon code
 translator will be important.
 
 **Tooling for updating code when Carbon evolves.** As Carbon evolves over time,
 we expect to provide tooling to help automate and scale migrating existing
-Carbon code to the new version. The goal is to enable more rapid evolution of
+Carbon code to the new version. The goal is to enable a more rapid evolution of
 the language without the churn tax and version skew becoming unsustainable.
 
-**Developer tooling.** We need developers to be productive reading and writing
+**Developer tooling.** We need developers to be productive while reading and writing
 Carbon code. We expect to provide a broad suite of development oriented tools
 ranging from refactoring tools to [LSP](https://langserver.org/) implementations
 and editor integrations. We also plan to provide machine readable forms of many
@@ -167,7 +167,7 @@ Many languages share subsets of these goals, but what distinguishes Carbon is
 their combination. Where it is necessary to make tradeoffs between these goals,
 we intend to prioritize them in this order.
 
-Each goal is broad, and has several facets to consider when making decisions.
+Each goal is broad and has several facets to consider when making decisions.
 Below, we discuss all of these goals in more detail to give a deeper
 understanding of both the nature and motivation of these goals.
 
@@ -188,9 +188,8 @@ overarching goal can be decomposed into a few specific aspects.
 **Provide the developer control over every aspect of performance.** When faced
 with some performance problem, the developer should always have tools within
 Carbon to address it. This does not mean that the developer is necessarily
-concerned with ultimate performance at every moment, but in the most constrained
-scenarios they must be able to "open up the hood" without switching to another
-language.
+concerned with ultimate performance at every moment, but in the most constrained scenarios, 
+they must be able to "open up the hood" without switching to another language.
 
 **Idiomatic code should be fast.** Developers should not regularly be required
 to choose between performance and readability. Although performance tuning may
@@ -199,7 +198,7 @@ regular, idiomatic code usually results in high performance.
 
 **Code should perform predictably.** The reader and writer of code should be
 able to easily understand its expected performance, given sufficient background
-knowledge of the environment in which it will run. This need not be precise, but
+knowledge of the environment in which it will run. This need not be precise, but 
 instead can use heuristics and guidelines to avoid surprise. The key priority is
 that performance, whether good or bad, is unsurprising to developers. Even
 pleasant surprises, when too frequent, can become a problem due to establishing
@@ -250,7 +249,7 @@ extending it are inherently hostile towards long-term maintenance of software.
 not get the design of most language features correct on our first, second, or
 73rd try. As a consequence, there must be a built-in plan and ability to move
 Carbon forward at a reasonable pace and with a reasonable cost. Simultaneously,
-an evolving language must not leave software behind to languish, but bring
+an evolving language must not leave software behind to languish, instead bringing
 software forward. This requirement should not imply compatibility, but instead
 some migratability, likely tool-assisted.
 
@@ -373,8 +372,8 @@ integration and system tests all the way to coverage-directed fuzz testing. We
 have specific criteria that are important for this strategy to be successful:
 
 **Make unsafe or risky aspects of Carbon code explicit and syntactically
-visible.** This will allow the software to use the precise flexibility needed
-and to minimize its exposure, while still aiding the reader. It can also help
+visible.** This will allow the software to use the precise flexibility needed 
+and minimize its exposure, while still aiding the reader. It can also help
 the reader more by indicating the specific nature of risk faced by a given
 construct. More simply, safe things shouldn't look like unsafe things and unsafe
 things should be easily recognized when reading code.
@@ -596,7 +595,7 @@ cost-benefit analysis.
 **Cost-benefit will drive many choices.** We expect to measure both cost,
 including complexity, and benefit using the impact on the project and language
 as a whole. Benefit accumulates over time, which means providing incremental
-solutions earlier will typically increase total benefit. It is also reasonable
+solutions earlier will typically increase the total benefit. It is also reasonable
 for the rationale of a decision to factor in both effort already invested, and
 effort ready to commit to the feature. This should not overwhelm any fundamental
 cost-benefit analysis. However, given two equally impactful features, we should
@@ -604,7 +603,7 @@ focus on the solution that is moving the fastest.
 
 **Domain-motivated libraries and features are an example.** For these, the cost
 function will typically be the effort required to specify and implement the
-feature. Benefit will stem from the number of users and how much utility the
+feature. Benefits will stem from the number of users and how much utility the
 feature provides. We don't expect to have concrete numbers for these, but we
 expect prioritization decisions between features to be expressed using this
 framework.
