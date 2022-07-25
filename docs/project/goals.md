@@ -514,7 +514,7 @@ for most developers.
 
 There are common or expected goals of many programming languages that we
 explicitly call out as non-goals for Carbon. That doesn't make these things bad
-in any way but reflects the fact that they do not provide meaningful value to
+in any way, but instead reflects the fact that they do not provide meaningful value to
 us and come with serious costs and/or risks.
 
 ### Stable language and library ABI
