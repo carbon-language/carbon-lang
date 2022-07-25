@@ -200,7 +200,7 @@ regular, idiomatic code usually results in high performance.
 
 **Code should perform predictably.** The reader and writer of code should be
 able to easily understand its expected performance, given sufficient background
-knowledge of the environment in which it will run. This need not be precise but 
+knowledge of the environment in which it will run. This need not be precise, but 
 instead can use heuristics and guidelines to avoid surprises. The key priority is
 that performance, whether good or bad, is unsurprising to developers. Even
 pleasant surprises, when too frequent, can become a problem due to establishing
