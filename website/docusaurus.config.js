@@ -5,6 +5,7 @@ const lightCodeTheme = require('prism-react-renderer/themes/github');
 const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 const transformLinks = require('./src/plugins/transformLinks');
 const transformImageLinks = require('./src/plugins/transformImageLinks');
+const removeTableOfContents = require('./src/plugins/removeTableOfContents');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -37,7 +38,7 @@ const config = {
           include: ['docs/**/*.{md,mdx}', 'README.md'],
           sidebarPath: require.resolve('./sidebars.js'),
           editUrl: 'https://github.com/carbon-language/carbon-lang/blob/trunk/docs',
-          beforeDefaultRemarkPlugins: [transformLinks],
+          beforeDefaultRemarkPlugins: [removeTableOfContents, transformLinks],
           rehypePlugins: [transformImageLinks],
         },
         theme: {
