@@ -88,7 +88,7 @@ processes, and policy for how we will recognize and correct it.
 able to effectively engage in the direction and evolution of the project and
 language, while keeping the process efficient and effective. That means we need
 an open, inclusive process where everyone feels comfortable participating.
-Community members should understand how and why decisions are made and have the
+Community members should understand how and why decisions are made, and have the
 ability to both influence them before they occur and give feedback afterward. We
 want to use this process to also ensure we stick to our language priorities and
 have clear rationales for all of our technical designs and decisions.
