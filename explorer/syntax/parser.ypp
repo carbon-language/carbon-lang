@@ -209,6 +209,7 @@
   ELSE
   EQUAL
   EQUAL_EQUAL
+  NOT_EQUAL_EQUAL
   EXTERNAL
   FALSE
   FN
@@ -509,6 +510,12 @@ comparison_expression:
           context.source_loc(), Operator::Eq,
           std::vector<Nonnull<Expression*>>({$1, $3}));
     }
+| comparison_operand NOT_EQUAL_EQUAL comparison_operand
+    {
+      $$ = arena->New<OperatorExpression>(
+          context.source_loc(), Operator::Neq,
+          std::vector<Nonnull<Expression*>>({$1, $3}));
+    }
 ;
 not_expression:
   NOT ref_deref_expression
@@ -557,6 +564,8 @@ where_clause:
   comparison_operand IS comparison_operand
     { $$ = arena->New<IsWhereClause>(context.source_loc(), $1, $3); }
 | comparison_operand EQUAL_EQUAL comparison_operand
+    { $$ = arena->New<EqualsWhereClause>(context.source_loc(), $1, $3); }
+| comparison_operand NOT_EQUAL_EQUAL comparison_operand
     { $$ = arena->New<EqualsWhereClause>(context.source_loc(), $1, $3); }
 ;
 where_clause_list:

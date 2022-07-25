@@ -11,6 +11,9 @@
 # Ignore the user's VSCode settings.
 /.vscode/settings.json
 
+# Ignore the user's Idea settings.
+/.idea/
+
 # Directories created by clangd
 /.cache/clangd
 

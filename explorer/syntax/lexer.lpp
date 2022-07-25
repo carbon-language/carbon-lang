@@ -56,6 +56,7 @@ DOUBLE_ARROW         "=>"
 ELSE                 "else"
 EQUAL                "="
 EQUAL_EQUAL          "=="
+NOT_EQUAL_EQUAL      "!="
 EXTERNAL             "external"
 FALSE                "false"
 FN                   "fn"
@@ -143,6 +144,7 @@ operand_start         [(A-Za-z0-9_\"]
 {DOUBLE_ARROW}        { return CARBON_SIMPLE_TOKEN(DOUBLE_ARROW);        }
 {ELSE}                { return CARBON_SIMPLE_TOKEN(ELSE);                }
 {EQUAL_EQUAL}         { return CARBON_SIMPLE_TOKEN(EQUAL_EQUAL);         }
+{NOT_EQUAL_EQUAL}     { return CARBON_SIMPLE_TOKEN(NOT_EQUAL_EQUAL);     }
 {EQUAL}               { return CARBON_SIMPLE_TOKEN(EQUAL);               }
 {EXTERNAL}            { return CARBON_SIMPLE_TOKEN(EXTERNAL);            }
 {FALSE}               { return CARBON_SIMPLE_TOKEN(FALSE);               }

@@ -153,6 +153,10 @@ static auto OperatorToCarbon(const Fuzzing::OperatorExpression& operator_expr,
     case Fuzzing::OperatorExpression::Combine:
       BinaryOperatorToCarbon(arg0, " & ", arg1, out);
       break;
+
+    case Fuzzing::OperatorExpression::Neq:
+      BinaryOperatorToCarbon(arg0, " != ", arg1, out);
+      break;
   }
   out << ")";
 }

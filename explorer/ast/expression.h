@@ -125,6 +125,7 @@ enum class Operator {
   Or,
   Sub,
   Ptr,
+  Neq,
 };
 
 // Returns the lexical representation of `op`, such as "+" for `Add`.

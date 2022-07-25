@@ -200,6 +200,8 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
                                     cast<BoolValue>(*args[1]).value());
     case Operator::Eq:
       return arena_->New<BoolValue>(ValueEqual(args[0], args[1], std::nullopt));
+    case Operator::Neq:
+      return arena_->New<BoolValue>(!ValueEqual(args[0], args[1], std::nullopt));
     case Operator::Ptr:
       return arena_->New<PointerType>(args[0]);
     case Operator::Deref:
