@@ -17,7 +17,7 @@ fn identFn( x: i32 ) -> i32{
 
 fn Main() -> i32 {
   var x : i32 = 7 % 2;
-  
+
   if(  not (x == 1) ){
       return 1;
   }
@@ -30,7 +30,7 @@ fn Main() -> i32 {
   if(  not (x == 1) ){
       return 3;
   }
-  
+
   x = 15 % identFn(2)+1;
   if( not (x == 0)){
       return 4;

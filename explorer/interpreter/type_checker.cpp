@@ -1977,12 +1977,12 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           op.set_value_category(ValueCategory::Let);
           return Success();
         case Operator::Mod:
-          CARBON_RETURN_IF_ERROR(
-              ExpectExactType(e->source_loc(), "modulo(1)",
-                              arena_->New<IntType>(), ts[0], impl_scope));
-          CARBON_RETURN_IF_ERROR(
-              ExpectExactType(e->source_loc(), "modulo(2)",
-                              arena_->New<IntType>(), ts[1], impl_scope));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "modulo(1)",
+                                                 arena_->New<IntType>(), ts[0],
+                                                 impl_scope));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "modulo(2)",
+                                                 arena_->New<IntType>(), ts[1],
+                                                 impl_scope));
           op.set_static_type(arena_->New<IntType>());
           op.set_value_category(ValueCategory::Let);
 
