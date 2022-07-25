@@ -173,7 +173,6 @@ void Interpreter::PrintState(llvm::raw_ostream& out) {
   out << "\nmemory: " << heap_;
   out << "\n}\n";
 }
-
 auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
                            const std::vector<Nonnull<const Value*>>& args,
                            SourceLocation source_loc)
