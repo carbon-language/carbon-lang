@@ -114,6 +114,9 @@ We also have explicit _non-goals_ for Carbon, notably including:
 
 -   A stable ABI for the entire language and library
 -   Perfect backwards or forwards compatibility
+-   Support legacy code for which source code is unavailable
+-   Follow C++'s compilation and linking model
+-   Handling all C++ code
 
 Our detailed [goals](/docs/project/goals.md) document fleshes out these ideas
 and provides a deeper view into our goals for the Carbon project and language.
