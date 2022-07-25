@@ -529,7 +529,7 @@ our stated goals.
 This doesn't preclude having low-level language features or tools to create
 specific and curated stable ABIs, or even serializable protocols. Using any such
 facilities will also cause developers to explicitly state where they are relying
-on ABI and isolate it in source from code that does not need that stability.
+on ABI and isolating it in source from code which does not need that stability.
 However, these facilities would only expose a restricted set of language
 features to avoid coupling the high-level language to particular stabilized
 interfaces. There is a wide range of such facilities that should be explored,
