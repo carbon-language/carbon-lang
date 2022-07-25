@@ -477,7 +477,7 @@ We believe incremental migrations require:
 
 **Familiarity for experienced C++ developers with a gentle learning curve.** We
 need a feasible plan for retraining a C++ workforce to become proficient in
-Carbon. If a long and significant study is required to be minimally proficient,
+Carbon. If long and significant study is required to be minimally proficient,
 meaning able to read, superficially understand, and do limited debugging or
 modifications, then the inertia of C++ will inevitably win. Further, we need a
 gentle and easily traversed learning curve to basic productivity in order for
