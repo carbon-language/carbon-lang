@@ -57,12 +57,12 @@ GitHub will autolink `img`, but won't produce a link when `href="#"`.
 
 C++ remains the dominant programming language for performance-critical software,
 with massive and growing codebases and investments. However, it is struggling to
-improve and meet developers' needs outlined above, in no small part due to
+improve and meet developers' needs, as outlined above, in no small part due to
 accumulating decades of technical debt. Incrementally improving C++ is
 [extremely difficult](/docs/project/difficulties_improving_cpp.md), both due to
 the technical debt itself and challenges with its evolution process. The best
 way to address these problems is to avoid inheriting the legacy of C or C++
-directly, and instead start with solid language foundations like a
+directly, and instead start with solid language foundations like
 [modern generics system](#generics), modular code organization, and consistent,
 simple syntax.
 
@@ -210,15 +210,15 @@ with checked definitions, while still **supporting opt-in
 [templates](/docs/design/templates.md) for seamless C++ interop**. Checked
 generics provide several advantages compared to C++ templates:
 
--   **Generic definitions are fully type checked**, removing the need to
+-   **Generic definitions are fully type-checked**, removing the need to
     instantiate to check for errors and giving greater confidence in code.
-    -   Avoids compile time cost of re-checking the definition for every
+    -   Avoids the compile-time cost of re-checking the definition for every
         instantiation.
     -   When using a definition-checked generic, usage error messages are
         clearer, directly showing which requirements are not met.
 -   **Enables automatic, opt-in type erasure and dynamic dispatch** without a
-    separate implementation. This can reduce binary size and enables constructs
-    like heterogeneous containers.
+    separate implementation. This can reduce the binary size and enables
+    constructs like heterogeneous containers.
 -   **Strong, checked interfaces** mean fewer accidental dependencies on
     implementation details and a clearer contract for consumers.
 
@@ -234,8 +234,8 @@ and with a smooth evolutionary path.
 ## Memory safety
 
 Safety, and especially
-[memory safety](https://en.wikipedia.org/wiki/Memory_safety), remain key
-challenges for C++ and something a successor language needs to address. Our
+[memory safety](https://en.wikipedia.org/wiki/Memory_safety), remains a key
+challenge for C++ and something a successor language needs to address. Our
 initial priority and focus is on immediately addressing important, low-hanging
 fruit in the safety space:
 
@@ -295,8 +295,8 @@ Learn more about the Carbon project:
 Carbon is committed to a welcoming and inclusive environment where everyone can
 contribute.
 
--   To watch for major release announcements, subscribe to
-    [our Carbon release post on GitHub](https://github.com/carbon-language/carbon-lang/discussions/1020)
+-   To watch for major release announcements, subscribe to our
+    [Carbon release post on GitHub](https://github.com/carbon-language/carbon-lang/discussions/1020)
     and [star carbon-lang](https://github.com/carbon-language/carbon-lang).
 -   To join the design discussion, join our
     [GitHub forum](https://github.com/carbon-language/carbon-lang/discussions).
