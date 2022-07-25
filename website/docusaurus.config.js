@@ -56,6 +56,13 @@ const config = {
         disableSwitch: false,
         respectPrefersColorScheme: true,
       },
+      announcementBar: {
+        content: '⚠️ Carbon is experimental and not production-ready, see ' +
+          '<a href="/docs/project/faq#how-soon-can-we-use-carbon">How soon can we use Carbon?</a>',
+        backgroundColor: 'var(--ifm-navbar-background-color)',
+        textColor: 'var(--ifm-font-color-base)',
+        isCloseable: true,
+      },
       navbar: {
         title: 'Carbon Language',
         logo: {

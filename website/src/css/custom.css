@@ -28,3 +28,9 @@
   --ifm-color-primary-lightest: hsl(212deg 100% 82%);;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
+
+/* Fix announcement bar close button color in dark mode. */
+[class^="announcementBar_"] .close {
+  color: var(--ifm-font-color-base);
+  opacity: 1;
+}
