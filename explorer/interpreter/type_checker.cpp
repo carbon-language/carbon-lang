@@ -5,7 +5,6 @@
 #include "explorer/interpreter/type_checker.h"
 
 #include <algorithm>
-#include <iostream>
 #include <iterator>
 #include <map>
 #include <set>
