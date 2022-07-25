@@ -23,6 +23,7 @@ contributions.
     -   [Clang and LLVM](#clang-and-llvm)
         -   [Manual installations (not recommended)](#manual-installations-not-recommended)
         -   [Troubleshooting build issues](#troubleshooting-build-issues)
+        -   [Troubleshooting debug issues](#troubleshooting-debug-issues)
     -   [pre-commit](#pre-commit)
 -   [Optional tools](#optional-tools)
     -   [Carbon-maintained](#carbon-maintained)
@@ -198,6 +199,31 @@ These commands will help diagnose potential build issues because they'll expose
 what's occurring with
 [clang detection](/bazel/cc_toolchains/clang_configuration.bzl).
 
+#### Troubleshooting debug issues
+
+Use the `--compilation_mode=dbg` argument to `bazel build` in order to compile
+with debugging enabled. For example:
+
+```shell
+bazel build --compilation_mode=dbg //explorer
+```
+
+Then debugging works with GDB:
+
+```shell
+gdb bazel-bin/explorer/explorer
+```
+
+Note that LLVM uses DWARF v5 debug symbols, which means that GDB version 10.1 or
+newer is required. If you see an error like this:
+
+```shell
+Dwarf Error: DW_FORM_strx1 found in non-DWO CU
+```
+
+It means that the version of GDB used is too old, and does not support the DWARF
+v5 format.
+
 ### pre-commit
 
 We use [pre-commit](https://pre-commit.com) to run
@@ -347,9 +373,9 @@ Our recommended way of installing is to use
 
 ### Visual Studio Code
 
-[Visual Studio Code](https://code.visualstudio.com/) is an IDE used by several
-of us. We provide [recommended extensions](/.vscode/extensions.json) to assist
-Carbon development. Some settings changes must be made separately:
+[Visual Studio Code](https://code.visualstudio.com/) is a code editor used by
+several of us. We provide [recommended extensions](/.vscode/extensions.json) to
+assist Carbon development. Some settings changes must be made separately:
 
 -   Python › Formatting: Provider: `black`
 
