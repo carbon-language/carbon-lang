@@ -450,7 +450,7 @@ example, concurrency versus parallelism, and desktop versus mobile.
 use a hockey metaphor, we should not skate to where the puck is, much less where
 the puck was twenty years ago. We have existing systems to support those
 platforms where necessary. Instead, Carbon should be forward-leaning in its
-platform support. As these platforms evolve, Carbon will have to
+platform support. As these platforms evolve over time, Carbon will have to
 evolve as well to continue to effectively prioritize the modern and major
 platforms.
 
