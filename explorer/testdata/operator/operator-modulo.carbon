@@ -36,6 +36,22 @@ fn Main() -> i32 {
       return 4;
   }
 
+  x = -15 % 7;
+  if( not (x == 6)){
+      return 5;
+  }
+
+  x = 15 % -7;
+  if( not ( x == -6)){
+    return 6;
+  }
+
+  x = -15 % -identFn(7);
+  if( not (x == -1)){
+    return 7;
+  }
+
+
 
   return 0;
 }
