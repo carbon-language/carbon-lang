@@ -114,7 +114,7 @@ Carbon can also be explored interactively on
 
 ## Why build Carbon?
 
-See the [project README](#why-build-carbon) for an overview of the motivation
+See the [project README](https://github.com/carbon-language/carbon-lang#readme) for an overview of the motivation
 for Carbon. This section dives into specific questions in that space.
 
 ### Why is performance critical?
