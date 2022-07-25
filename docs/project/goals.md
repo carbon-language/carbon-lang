@@ -426,7 +426,7 @@ cycle of development. The language design should enable low-latency build
 strategies, particularly when relatively little has changed. This minimally
 requires the separate compilation of source files, and potentially other incremental
 build strategies. Separate compilation also enables better scalability options for 
-building systems of large software.
+build systems of large software.
 
 ### Modern OS platforms, hardware architectures, and environments
 
