@@ -112,7 +112,9 @@ their combination.
 
 We also have explicit _non-goals_ for Carbon, notably including:
 
--   A stable ABI for the entire language and library
+-   A stable
+    [application binary interface](https://en.wikipedia.org/wiki/Application_binary_interface)
+    (ABI) for the entire language and library
 -   Perfect backwards or forwards compatibility
 
 Our detailed [goals](/docs/project/goals.md) document fleshes out these ideas
