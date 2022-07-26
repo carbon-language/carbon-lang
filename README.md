@@ -9,12 +9,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 <p align="center">
   <a href="#why-build-carbon">Why?</a> |
   <a href="#language-goals">Goals</a> |
+  <a href="#project-status">Status</a> |
   <a href="#getting-started">Getting started</a> |
   <a href="#join-us">Join us</a>
 </p>
 
 **See our [announcement video](https://youtu.be/omrY53kbVoA) from
-[CppNorth](https://cppnorth.ca/)**
+[CppNorth](https://cppnorth.ca/).** Note that Carbon is
+[not yet ready for use](#project-status).
 
 <a href="docs/images/snippets.md#quicksort">
 <!--
