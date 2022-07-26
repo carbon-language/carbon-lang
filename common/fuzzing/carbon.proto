@@ -271,7 +271,7 @@ message WhileStatement {
 message ForStatement {
   optional BindingPattern var_decl = 1;
   optional Expression target = 2;
-  optional Block = 3;
+  optional Block block = 3;
 }
 
 message MatchClause {
