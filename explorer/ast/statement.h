@@ -306,7 +306,11 @@ class For : public Statement {
       : Statement(AstNodeKind::For, source_loc),
         variable_declaration_(variable_declaration),
         loop_target_(loop_target),
-        body_(body) {}
+        body_(body) {
+            arena->New<OperatorExpression>(
+                source_loc(), Operator::Eq,
+                std::vector<Nonnull<Expression*>>({$1, $3}))
+        }
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromFor(node->kind());

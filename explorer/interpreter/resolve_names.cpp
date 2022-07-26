@@ -413,6 +413,13 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
       CARBON_RETURN_IF_ERROR(ResolveNames(while_stmt.body(), enclosing_scope));
       break;
     }
+    case StatementKind::For: {
+      auto& for_stmt = cast<For>(statement);
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(for_stmt.condition(), enclosing_scope));
+      CARBON_RETURN_IF_ERROR(ResolveNames(for_stmt.body(), enclosing_scope));
+      break;
+    }
     case StatementKind::Match: {
       auto& match = cast<Match>(statement);
       CARBON_RETURN_IF_ERROR(ResolveNames(match.expression(), enclosing_scope));

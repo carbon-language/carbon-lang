@@ -1390,6 +1390,10 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         }
       }
     }
+    case StatementKind::For:{
+        //TODO
+        return todo_.FinishAction();
+    }
     case StatementKind::While:
       if (act.pos() % 2 == 0) {
         //    { { (while (e) s) :: C, E, F} :: S, H}

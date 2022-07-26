@@ -2731,6 +2731,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       CARBON_RETURN_IF_ERROR(TypeCheckStmt(&while_stmt.body(), impl_scope));
       return Success();
     }
+    case StatementKind::For:
     case StatementKind::Break:
     case StatementKind::Continue:
       return Success();
@@ -2930,6 +2931,7 @@ auto TypeChecker::ExpectReturnOnAllPaths(
     case StatementKind::Assign:
     case StatementKind::ExpressionStatement:
     case StatementKind::While:
+    case StatementKind::For:
     case StatementKind::Break:
     case StatementKind::Continue:
     case StatementKind::VariableDefinition:
