@@ -577,8 +577,8 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
     case Fuzzing::Statement::kForStatement: {
       const auto& for_statement = statement.for_statement();
       out << "for (";
-      BindingPatternToCarbon(for_statement.variable_declaration, out);
-      ExpressionToCarbon(for_statement.loop_target(), out);
+      BindingPatternToCarbon(for_statement.var_decl(), out);
+      ExpressionToCarbon(for_statement.target(), out);
       out << ") ";
       BlockStatementToCarbon(for_statement.body(), out);
       break;
