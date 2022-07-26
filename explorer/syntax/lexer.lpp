@@ -249,7 +249,7 @@ operand_start         [(A-Za-z0-9_\"]
   if (intrinsic.ok()) {
     return CARBON_ARG_TOKEN(intrinsic_identifier, *intrinsic);
   } else {
-    return context.RecordSyntaxError(intrinsic.error().message());
+    return context.RecordSyntaxError(std::move(intrinsic).error());
   }
 }
 
