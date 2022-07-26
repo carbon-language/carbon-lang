@@ -10,8 +10,6 @@
 
 namespace Carbon {
 
-static constexpr llvm::StringRef VerticalWhitespaceChars = "\n\v\f\r";
-
 auto StringLexHelper::Advance() -> bool {
   CARBON_CHECK(is_eof_ == false);
   const char c = YyinputWrapper(yyscanner_);
@@ -38,11 +36,6 @@ auto ProcessSingleLineString(llvm::StringRef str,
                              Carbon::ParseAndLexContext& context,
                              const int hashtag_num)
     -> Carbon::Parser::symbol_type {
-  if (str.find_first_of(VerticalWhitespaceChars) != llvm::StringRef::npos) {
-    return context.RecordSyntaxError(llvm::formatv(
-        "vertical whiltespace is not allowed in single-line string: {0}", str));
-  }
-
   std::string hashtags(hashtag_num, '#');
   const auto str_with_quote = str;
   CARBON_CHECK(str.consume_front(hashtags + "\"") &&

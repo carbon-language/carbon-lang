@@ -284,8 +284,7 @@ operand_start         [(A-Za-z0-9_\"]
       case '\v':  // Fall through.
       case '\f':  // Fall through.
       case '\r':
-        // Only single-line string is possible to start with 1 leading quote.
-        // And in this case, vertical whitespace is not allowed.
+        // Vertical whitespace is not allowed in single-line string literal.
         if (is_single_line) {
           return context.RecordSyntaxError(
               llvm::formatv("missing closing quote in single-line string: {0}",
@@ -302,11 +301,11 @@ operand_start         [(A-Za-z0-9_\"]
           // Read the next char.
           str_lex_helper.Advance();
         }
-        // ReadHashTags() stops at next charZ on failure.
+        // ReadHashTags() stops at next char on failure.
         break;
       case '"':
         if (!is_single_line) {
-          // Multi-line string can only end with `"""`, check for 2 more '"'s.
+          // Block string literal ends with `"""`, check for 2 more '"'s.
           if (!(str_lex_helper.Advance() &&
                 str_lex_helper.last_char() == '"')) {
             continue;
