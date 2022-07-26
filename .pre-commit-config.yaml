@@ -159,6 +159,11 @@ repos:
           - '// '
           - ''
           - --custom_format
+          - '\.el$' # Emacs Lisp
+          - ''
+          - ';; '
+          - ''
+          - --custom_format
           - '\.(l|lpp|y)$'
           - '/*'
           - ''
