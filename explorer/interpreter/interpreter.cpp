@@ -420,8 +420,8 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
-    case ExpressionKind::PrimitiveOperatorExpression: {
-      const auto& op = cast<PrimitiveOperatorExpression>(exp);
+    case ExpressionKind::OperatorExpression: {
+      const auto& op = cast<OperatorExpression>(exp);
       if (auto rewrite = op.rewritten_form()) {
         return todo_.ReplaceWith(std::make_unique<LValAction>(*rewrite));
       }
@@ -1082,8 +1082,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       return todo_.FinishAction(
           arena_->New<BoolValue>(cast<BoolLiteral>(exp).value()));
-    case ExpressionKind::PrimitiveOperatorExpression: {
-      const auto& op = cast<PrimitiveOperatorExpression>(exp);
+    case ExpressionKind::OperatorExpression: {
+      const auto& op = cast<OperatorExpression>(exp);
       if (auto rewrite = op.rewritten_form()) {
         return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
       }
@@ -1630,6 +1630,9 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
           return todo_.FinishAction();
         }
       } else {
+        Nonnull<const Value*> v =
+            arena_->New<UninitializedValue>(&var_decl.binding().value());
+        todo_.Initialize(&var_decl.binding(), v);
         return todo_.FinishAction();
       }
     }

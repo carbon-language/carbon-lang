@@ -1,0 +1,153 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "t1"
+                type {
+                  expression_pattern {
+                    expression {
+                      struct_type_literal {
+                        fields {
+                          name: "x"
+                          expression {
+                            int_type_literal {
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              struct_literal {
+                fields {
+                  name: "x"
+                  expression {
+                    int_literal {
+                      value: 5
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "t2"
+                type {
+                  expression_pattern {
+                    expression {
+                      struct_type_literal {
+                        fields {
+                          name: "x"
+                          expression {
+                            int_type_literal {
+                            }
+                          }
+                        }
+                        fields {
+                          name: "y"
+                          expression {
+                            int_type_literal {
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              struct_literal {
+                fields {
+                  name: "x"
+                  expression {
+                    int_literal {
+                      value: 2
+                    }
+                  }
+                }
+                fields {
+                  name: "y"
+                  expression {
+                    int_literal {
+                      value: 3
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          return_statement {
+            expression {
+              operator {
+                op: Sub
+                arguments {
+                  operator {
+                    op: Sub
+                    arguments {
+                      simple_member_access {
+                        field: "x"
+                        object {
+                          identifier {
+                            name: "t1"
+                          }
+                        }
+                      }
+                    }
+                    arguments {
+                      simple_member_access {
+                        field: "x"
+                        object {
+                          identifier {
+                            name: "t2"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                arguments {
+                  simple_member_access {
+                    field: "y"
+                    object {
+                      identifier {
+                        name: "t2"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

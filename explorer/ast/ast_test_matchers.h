@@ -35,7 +35,7 @@ inline auto MatchesLiteral(int value) {
   return TestingInternal::MatchesIntLiteralMatcher(value);
 }
 
-// The following functions all match a PrimitiveOperatorExpression with two
+// The following functions all match a OperatorExpression with two
 // operands that match `lhs` and `rhs` (respectively). The name of the function
 // indicates what value of `.op()` they match.
 inline auto MatchesMul(::testing::Matcher<AstNode> lhs,

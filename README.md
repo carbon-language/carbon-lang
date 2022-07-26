@@ -13,6 +13,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   <a href="#join-us">Join us</a>
 </p>
 
+**See our [announcement video](https://youtu.be/omrY53kbVoA) from
+[CppNorth](https://cppnorth.ca/)**
+
 <a href="docs/images/snippets.md#quicksort">
 <!--
 Edit snippet in docs/images/snippets.md and:
@@ -54,12 +57,12 @@ GitHub will autolink `img`, but won't produce a link when `href="#"`.
 
 C++ remains the dominant programming language for performance-critical software,
 with massive and growing codebases and investments. However, it is struggling to
-improve and meet developers' needs outlined above, in no small part due to
+improve and meet developers' needs, as outlined above, in no small part due to
 accumulating decades of technical debt. Incrementally improving C++ is
 [extremely difficult](/docs/project/difficulties_improving_cpp.md), both due to
 the technical debt itself and challenges with its evolution process. The best
 way to address these problems is to avoid inheriting the legacy of C or C++
-directly, and instead start with solid language foundations like a
+directly, and instead start with solid language foundations like
 [modern generics system](#generics), modular code organization, and consistent,
 simple syntax.
 
@@ -109,7 +112,9 @@ their combination.
 
 We also have explicit _non-goals_ for Carbon, notably including:
 
--   A stable ABI for the entire language and library
+-   A stable
+    [application binary interface](https://en.wikipedia.org/wiki/Application_binary_interface)
+    (ABI) for the entire language and library
 -   Perfect backwards or forwards compatibility
 
 Our detailed [goals](/docs/project/goals.md) document fleshes out these ideas
@@ -207,15 +212,15 @@ with checked definitions, while still **supporting opt-in
 [templates](/docs/design/templates.md) for seamless C++ interop**. Checked
 generics provide several advantages compared to C++ templates:
 
--   **Generic definitions are fully type checked**, removing the need to
+-   **Generic definitions are fully type-checked**, removing the need to
     instantiate to check for errors and giving greater confidence in code.
-    -   Avoids compile time cost of re-checking the definition for every
+    -   Avoids the compile-time cost of re-checking the definition for every
         instantiation.
     -   When using a definition-checked generic, usage error messages are
         clearer, directly showing which requirements are not met.
 -   **Enables automatic, opt-in type erasure and dynamic dispatch** without a
-    separate implementation. This can reduce binary size and enables constructs
-    like heterogeneous containers.
+    separate implementation. This can reduce the binary size and enables
+    constructs like heterogeneous containers.
 -   **Strong, checked interfaces** mean fewer accidental dependencies on
     implementation details and a clearer contract for consumers.
 
@@ -231,8 +236,8 @@ and with a smooth evolutionary path.
 ## Memory safety
 
 Safety, and especially
-[memory safety](https://en.wikipedia.org/wiki/Memory_safety), remain key
-challenges for C++ and something a successor language needs to address. Our
+[memory safety](https://en.wikipedia.org/wiki/Memory_safety), remains a key
+challenge for C++ and something a successor language needs to address. Our
 initial priority and focus is on immediately addressing important, low-hanging
 fruit in the safety space:
 
@@ -292,11 +297,11 @@ Learn more about the Carbon project:
 Carbon is committed to a welcoming and inclusive environment where everyone can
 contribute.
 
--   To watch for major release announcements, subscribe to
-    [our Carbon release post on GitHub](https://github.com/carbon-language/carbon-lang/discussions/1020)
+-   To watch for major release announcements, subscribe to our
+    [Carbon release post on GitHub](https://github.com/carbon-language/carbon-lang/discussions/1020)
     and [star carbon-lang](https://github.com/carbon-language/carbon-lang).
 -   To join the design discussion, join our
-    [our Github forum](https://github.com/carbon-language/carbon-lang/discussions).
+    [GitHub forum](https://github.com/carbon-language/carbon-lang/discussions).
 -   See our [code of conduct](CODE_OF_CONDUCT.md) and
     [contributing guidelines](CONTRIBUTING.md) for information about the Carbon
     development community.

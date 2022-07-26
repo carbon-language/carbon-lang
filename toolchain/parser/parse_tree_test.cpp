@@ -366,7 +366,7 @@ TEST_F(ParseTreeTest, BasicFunctionDefinition) {
                          MatchFileEnd()}));
 }
 
-TEST_F(ParseTreeTest, FunctionDefinitionWithIdenifierInStatements) {
+TEST_F(ParseTreeTest, FunctionDefinitionWithIdentifierInStatements) {
   TokenizedBuffer tokens = GetTokenizedBuffer(
       "fn F() {\n"
       "  bar\n"

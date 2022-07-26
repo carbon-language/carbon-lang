@@ -84,74 +84,73 @@ static auto BinaryOperatorToCarbon(const Fuzzing::Expression& lhs,
   ExpressionToCarbon(rhs, out);
 }
 
-static auto PrimitiveOperatorToCarbon(
-    const Fuzzing::PrimitiveOperatorExpression& primitive_operator,
-    llvm::raw_ostream& out) -> void {
+static auto OperatorToCarbon(const Fuzzing::OperatorExpression& operator_expr,
+                             llvm::raw_ostream& out) -> void {
   const Fuzzing::Expression& arg0 =
-      !primitive_operator.arguments().empty()
-          ? primitive_operator.arguments(0)
+      !operator_expr.arguments().empty()
+          ? operator_expr.arguments(0)
           : Fuzzing::Expression::default_instance();
   const Fuzzing::Expression& arg1 =
-      primitive_operator.arguments().size() > 1
-          ? primitive_operator.arguments(1)
+      operator_expr.arguments().size() > 1
+          ? operator_expr.arguments(1)
           : Fuzzing::Expression::default_instance();
   out << "(";
-  switch (primitive_operator.op()) {
-    case Fuzzing::PrimitiveOperatorExpression::UnknownOperator:
+  switch (operator_expr.op()) {
+    case Fuzzing::OperatorExpression::UnknownOperator:
       // `-` is an arbitrary default to avoid getting invalid syntax.
       PrefixUnaryOperatorToCarbon("-", arg0, out);
       break;
 
-    case Fuzzing::PrimitiveOperatorExpression::AddressOf:
+    case Fuzzing::OperatorExpression::AddressOf:
       PrefixUnaryOperatorToCarbon("&", arg0, out);
       break;
 
-    case Fuzzing::PrimitiveOperatorExpression::As:
+    case Fuzzing::OperatorExpression::As:
       BinaryOperatorToCarbon(arg0, " as ", arg1, out);
       break;
 
-    case Fuzzing::PrimitiveOperatorExpression::Deref:
+    case Fuzzing::OperatorExpression::Deref:
       PrefixUnaryOperatorToCarbon("*", arg0, out);
       break;
 
-    case Fuzzing::PrimitiveOperatorExpression::Mul:
+    case Fuzzing::OperatorExpression::Mul:
       BinaryOperatorToCarbon(arg0, " * ", arg1, out);
       break;
 
-    case Fuzzing::PrimitiveOperatorExpression::Ptr:
+    case Fuzzing::OperatorExpression::Ptr:
       PostfixUnaryOperatorToCarbon(arg0, "*", out);
       break;
 
-    case Fuzzing::PrimitiveOperatorExpression::Neg:
+    case Fuzzing::OperatorExpression::Neg:
       PrefixUnaryOperatorToCarbon("-", arg0, out);
       break;
 
-    case Fuzzing::PrimitiveOperatorExpression::Sub:
+    case Fuzzing::OperatorExpression::Sub:
       BinaryOperatorToCarbon(arg0, " - ", arg1, out);
       break;
 
-    case Fuzzing::PrimitiveOperatorExpression::Not:
+    case Fuzzing::OperatorExpression::Not:
       // Needs a space to 'unglue' from the operand.
       PrefixUnaryOperatorToCarbon("not ", arg0, out);
       break;
 
-    case Fuzzing::PrimitiveOperatorExpression::Add:
+    case Fuzzing::OperatorExpression::Add:
       BinaryOperatorToCarbon(arg0, " + ", arg1, out);
       break;
 
-    case Fuzzing::PrimitiveOperatorExpression::And:
+    case Fuzzing::OperatorExpression::And:
       BinaryOperatorToCarbon(arg0, " and ", arg1, out);
       break;
 
-    case Fuzzing::PrimitiveOperatorExpression::Eq:
+    case Fuzzing::OperatorExpression::Eq:
       BinaryOperatorToCarbon(arg0, " == ", arg1, out);
       break;
 
-    case Fuzzing::PrimitiveOperatorExpression::Or:
+    case Fuzzing::OperatorExpression::Or:
       BinaryOperatorToCarbon(arg0, " or ", arg1, out);
       break;
 
-    case Fuzzing::PrimitiveOperatorExpression::Combine:
+    case Fuzzing::OperatorExpression::Combine:
       BinaryOperatorToCarbon(arg0, " & ", arg1, out);
       break;
   }
@@ -240,8 +239,8 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
       break;
     }
 
-    case Fuzzing::Expression::kPrimitiveOperator:
-      PrimitiveOperatorToCarbon(expression.primitive_operator(), out);
+    case Fuzzing::Expression::kOperator:
+      OperatorToCarbon(expression.operator_(), out);
       break;
 
     case Fuzzing::Expression::kTupleLiteral: {

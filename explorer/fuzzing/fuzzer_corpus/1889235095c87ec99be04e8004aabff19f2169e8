@@ -1,0 +1,125 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "x"
+                type {
+                  auto_pattern {
+                  }
+                }
+              }
+            }
+            init {
+              struct_literal {
+                fields {
+                  name: "x"
+                  expression {
+                    int_literal {
+                      value: 10
+                    }
+                  }
+                }
+                fields {
+                  name: "y"
+                  expression {
+                    int_literal {
+                      value: 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "p"
+                type {
+                  expression_pattern {
+                    expression {
+                      operator {
+                        op: Ptr
+                        arguments {
+                          int_type_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              operator {
+                op: AddressOf
+                arguments {
+                  simple_member_access {
+                    field: "x"
+                    object {
+                      identifier {
+                        name: "x"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          assign {
+            lhs {
+              operator {
+                op: Deref
+                arguments {
+                  identifier {
+                    name: "p"
+                  }
+                }
+              }
+            }
+            rhs {
+              int_literal {
+                value: 0
+              }
+            }
+          }
+        }
+        statements {
+          return_statement {
+            expression {
+              simple_member_access {
+                field: "x"
+                object {
+                  identifier {
+                    name: "x"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -39,12 +39,11 @@ available through the [prelude package](README.md#name-lookup-for-common-types).
 
 -   `Bool` - a boolean type with two possible values: `True` and `False`.
 -   `Int` and `UInt` - signed and unsigned 64-bit integer types.
-    -   Standard sizes are available, both signed and unsigned, including
-        `Int8`, `Int16`, `Int32`, `Int128`, and `Int256`.
+    -   Standard sizes are available, both signed and unsigned, including `i8`,
+        `i16`, `i32`, `i64`, `i128`, and `i256`.
     -   Overflow in either direction is an error.
 -   `Float64` - a floating point type with semantics based on IEEE-754.
-    -   Standard sizes are available, including `Float16`, `Float32`, and
-        `Float128`.
+    -   Standard sizes are available, including `f16`, `f32`, and `f128`.
     -   [`BFloat16`](primitive_types.md#bfloat16) is also provided.
 -   `String` - a byte sequence treated as containing UTF-8 encoded text.
     -   `StringView` - a read-only reference to a byte sequence treated as

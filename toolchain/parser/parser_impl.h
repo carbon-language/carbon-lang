@@ -51,7 +51,7 @@ class ParseTree::Parser {
     return NextTokenKind().IsOneOf(kinds);
   }
 
-  // Requires (and asserts) that the current position matches the provide
+  // Requires (and asserts) that the current position matches the provided
   // `Kind`. Returns the current token and advances to the next position.
   auto Consume(TokenKind kind) -> TokenizedBuffer::Token;
 
@@ -71,7 +71,7 @@ class ParseTree::Parser {
   auto ConsumeAndAddLeafNodeIf(TokenKind t_kind, ParseNodeKind n_kind)
       -> llvm::Optional<Node>;
 
-  // Marks the node `N` as having some parse error and that the tree contains
+  // Marks the node `N` as having some parse errors and that the tree contains
   // a node with a parse error.
   auto MarkNodeError(Node n) -> void;
 
@@ -116,7 +116,7 @@ class ParseTree::Parser {
   //
   // The strategy for recognizing when we have likely passed the end of a
   // declaration or statement:
-  // - If we get to close curly brace, we likely ended the entire context.
+  // - If we get to a close curly brace, we likely ended the entire context.
   // - If we get to a semicolon, that should have ended the declaration or
   //   statement.
   // - If we get to a new line from the `SkipRoot` token, but with the same or

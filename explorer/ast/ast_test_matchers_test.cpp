@@ -46,16 +46,16 @@ TEST(MatchesLiteralTest, BasicUsage) {
 TEST(MatchesMulTest, BasicUsage) {
   IntLiteral two(DummyLoc, 2);
   IntLiteral three(DummyLoc, 3);
-  PrimitiveOperatorExpression mul(DummyLoc, Operator::Mul, {&two, &three});
+  OperatorExpression mul(DummyLoc, Operator::Mul, {&two, &three});
   EXPECT_THAT(mul, MatchesMul(MatchesLiteral(2), MatchesLiteral(3)));
   EXPECT_THAT(&mul, MatchesMul(MatchesLiteral(2), MatchesLiteral(3)));
   EXPECT_THAT(mul, MatchesMul(_, _));
   EXPECT_THAT(mul, Not(MatchesMul(MatchesLiteral(2), MatchesLiteral(2))));
   EXPECT_THAT(StringLiteral(DummyLoc, "foo"), Not(MatchesMul(_, _)));
-  EXPECT_THAT(PrimitiveOperatorExpression(DummyLoc, Operator::Deref, {&two}),
+  EXPECT_THAT(OperatorExpression(DummyLoc, Operator::Deref, {&two}),
               Not(MatchesMul(_, _)));
 
-  PrimitiveOperatorExpression nested(DummyLoc, Operator::Mul, {&two, &mul});
+  OperatorExpression nested(DummyLoc, Operator::Mul, {&two, &mul});
   EXPECT_THAT(nested,
               MatchesMul(MatchesLiteral(2),
                          MatchesMul(MatchesLiteral(2), MatchesLiteral(3))));
@@ -68,21 +68,16 @@ TEST(MatchesBinaryOpTest, BasicUsage) {
   // Testing of MatchesMul provides most of the coverage for these matchers,
   // since they are thin wrappers around a common implementation. We only test
   // the others enough to detect copy-paste errors in the wrappers.
-  EXPECT_THAT(
-      PrimitiveOperatorExpression(DummyLoc, Operator::Add, {&two, &three}),
-      MatchesAdd(MatchesLiteral(2), MatchesLiteral(3)));
-  EXPECT_THAT(
-      PrimitiveOperatorExpression(DummyLoc, Operator::And, {&two, &three}),
-      MatchesAnd(MatchesLiteral(2), MatchesLiteral(3)));
-  EXPECT_THAT(
-      PrimitiveOperatorExpression(DummyLoc, Operator::Eq, {&two, &three}),
-      MatchesEq(MatchesLiteral(2), MatchesLiteral(3)));
-  EXPECT_THAT(
-      PrimitiveOperatorExpression(DummyLoc, Operator::Or, {&two, &three}),
-      MatchesOr(MatchesLiteral(2), MatchesLiteral(3)));
-  EXPECT_THAT(
-      PrimitiveOperatorExpression(DummyLoc, Operator::Sub, {&two, &three}),
-      MatchesSub(MatchesLiteral(2), MatchesLiteral(3)));
+  EXPECT_THAT(OperatorExpression(DummyLoc, Operator::Add, {&two, &three}),
+              MatchesAdd(MatchesLiteral(2), MatchesLiteral(3)));
+  EXPECT_THAT(OperatorExpression(DummyLoc, Operator::And, {&two, &three}),
+              MatchesAnd(MatchesLiteral(2), MatchesLiteral(3)));
+  EXPECT_THAT(OperatorExpression(DummyLoc, Operator::Eq, {&two, &three}),
+              MatchesEq(MatchesLiteral(2), MatchesLiteral(3)));
+  EXPECT_THAT(OperatorExpression(DummyLoc, Operator::Or, {&two, &three}),
+              MatchesOr(MatchesLiteral(2), MatchesLiteral(3)));
+  EXPECT_THAT(OperatorExpression(DummyLoc, Operator::Sub, {&two, &three}),
+              MatchesSub(MatchesLiteral(2), MatchesLiteral(3)));
 }
 
 TEST(MatchesReturnTest, BasicUsage) {

@@ -1,0 +1,144 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "x"
+                type {
+                  expression_pattern {
+                    expression {
+                      array_type_literal {
+                        element_type {
+                          int_type_literal {
+                          }
+                        }
+                        size {
+                          int_literal {
+                            value: 2
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              tuple_literal {
+                fields {
+                  int_literal {
+                    value: 0
+                  }
+                }
+                fields {
+                  int_literal {
+                    value: 1
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "index"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              int_literal {
+                value: 1
+              }
+            }
+          }
+        }
+        statements {
+          assign {
+            lhs {
+              index {
+                object {
+                  identifier {
+                    name: "x"
+                  }
+                }
+                offset {
+                  identifier {
+                    name: "index"
+                  }
+                }
+              }
+            }
+            rhs {
+              int_literal {
+                value: 0
+              }
+            }
+          }
+        }
+        statements {
+          return_statement {
+            expression {
+              operator {
+                op: Add
+                arguments {
+                  index {
+                    object {
+                      identifier {
+                        name: "x"
+                      }
+                    }
+                    offset {
+                      int_literal {
+                        value: 0
+                      }
+                    }
+                  }
+                }
+                arguments {
+                  index {
+                    object {
+                      identifier {
+                        name: "x"
+                      }
+                    }
+                    offset {
+                      int_literal {
+                        value: 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

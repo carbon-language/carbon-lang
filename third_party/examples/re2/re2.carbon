@@ -357,7 +357,7 @@ class RE2 {
     return f(sp, re, nullptr, 0);
   }
 
-  // TODO (variadics)
+  // TODO: (variadics)
   // TODO: template <typename F, typename SP, typename... A>
   // TODO: static inline bool Apply(F f, SP sp, const RE2& re, const A&... a) {
   // TODO:   const Arg* const args[] = {&a...};
@@ -608,7 +608,7 @@ class RE2 {
   // Replace(). E.g. if rewrite == "foo \\2,\\1", returns 2.
   fn MaxSubmatch(rewrite: StringPiece) -> i32;
 
-  // Append the "rewrite" string, with backslash subsitutions from "vec",
+  // Append the "rewrite" string, with backslash substitutions from "vec",
   // to string "out".
   // Returns true on success.  This method can fail because of a malformed
   // rewrite string.  CheckRewriteString guarantees that the rewrite will
