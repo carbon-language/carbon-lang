@@ -90,6 +90,8 @@ message IntrinsicExpression {
     Print = 1;
     Alloc = 2;
     Dealloc = 3;
+    IntEq = 4;
+    StrEq = 5;
   }
   optional Intrinsic intrinsic = 1;
   optional TupleLiteralExpression argument = 2;
