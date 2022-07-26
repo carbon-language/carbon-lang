@@ -126,8 +126,7 @@ and provides a deeper view into our goals for the Carbon project and language.
 
 Carbon Language is currently an experimental project. There is no working
 compiler or toolchain. You can see the demo interpreter for Carbon on
-[compiler-explorer.com](http://carbon.compiler-explorer.com/). We are looking
-for language designers to help us finish an initial design of the language.
+[compiler-explorer.com](http://carbon.compiler-explorer.com/). 
 
 We want to better understand whether we can build a language that meets our
 successor language criteria, and whether the resulting language can gather a
