@@ -1943,6 +1943,32 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         CARBON_RETURN_IF_ERROR(TypeCheckExp(argument, impl_scope));
         ts.push_back(&argument->static_type());
       }
+
+      auto handle_binary_arithmetic =
+          [&](Builtins::Builtin builtin) -> ErrorOr<Success> {
+        // Handle a built-in operator first.
+        if (isa<IntType>(ts[0]) && isa<IntType>(ts[1]) &&
+            IsSameType(ts[0], ts[1], impl_scope)) {
+          op.set_static_type(ts[0]);
+          op.set_value_category(ValueCategory::Let);
+          return Success();
+        }
+
+        // Now try an overloaded operator.
+        ErrorOr<Nonnull<Expression*>> result = BuildBuiltinMethodCall(
+            impl_scope, op.arguments()[0],
+            BuiltinInterfaceName{builtin, ts[1]},
+            BuiltinMethodCall{"Op", {op.arguments()[1]}});
+        if (!result.ok()) {
+          // We couldn't find a matching `impl`.
+          return CompilationError(e->source_loc())
+                 << "type error in `" << ToString(op.op()) << "`:\n"
+                 << result.error().message();
+        }
+        op.set_rewritten_form(*result);
+        return Success();
+      };
+
       switch (op.op()) {
         case Operator::Neg: {
           // Handle a built-in negation first.
@@ -1965,33 +1991,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           return Success();
         }
         case Operator::Add:
+          return handle_binary_arithmetic(Builtins::AddWith);
         case Operator::Sub:
-        case Operator::Mul: {
-          // Handle a built-in operator first.
-          if (isa<IntType>(ts[0]) && isa<IntType>(ts[1]) &&
-              IsSameType(ts[0], ts[1], impl_scope)) {
-            op.set_static_type(ts[0]);
-            op.set_value_category(ValueCategory::Let);
-            return Success();
-          }
-          // Now try an overloaded operator.
-          Builtins::Builtin builtin =
-              op.op() == Operator::Add   ? Builtins::AddWith
-              : op.op() == Operator::Sub ? Builtins::SubWith
-                                         : Builtins::MulWith;
-          ErrorOr<Nonnull<Expression*>> result = BuildBuiltinMethodCall(
-              impl_scope, op.arguments()[0],
-              BuiltinInterfaceName{builtin, ts[1]},
-              BuiltinMethodCall{"Op", {op.arguments()[1]}});
-          if (!result.ok()) {
-            // We couldn't find a matching `impl`.
-            return CompilationError(e->source_loc())
-                   << "type error in `" << ToString(op.op()) << "`:\n"
-                   << result.error().message();
-          }
-          op.set_rewritten_form(*result);
-          return Success();
-        }
+          return handle_binary_arithmetic(Builtins::SubWith);
+        case Operator::Mul:
+          return handle_binary_arithmetic(Builtins::MulWith);
         case Operator::And:
           CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "&&(1)",
                                                  arena_->New<BoolType>(), ts[0],
