@@ -2223,6 +2223,18 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           e->set_value_category(ValueCategory::Let);
           return Success();
         }
+        case IntrinsicExpression::Intrinsic::ArraySz:{
+          if(args.size() != 1){
+              return CompilationError(e->source_loc())<<"__intrinsic_array_sz takes 1 argument, received "<<
+              args.size();
+          }
+          /*CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "__intrinsic_array_sz argument 0", arena_->New<StaticArrayType>(),
+              &args[0]->static_type(), impl_scope));
+            */
+          e->set_static_type(arena_->New<IntType>());
+          return Success();
+        }
       }
     }
     case ExpressionKind::IntTypeLiteral:

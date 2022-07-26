@@ -1185,6 +1185,13 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           heap_.Deallocate(cast<PointerValue>(args.elements()[0])->address());
           return todo_.FinishAction(TupleValue::Empty());
         }
+        case IntrinsicExpression::Intrinsic::ArraySz: {
+            const auto& args = cast<TupleValue>(*act.results()[0]).elements();
+            CARBON_CHECK(args.size() == 1);
+            auto & array_parameter = cast<TupleValue>(*args[0]);
+            int sz = array_parameter.elements().vec().size();
+            return todo_.FinishAction(arena_->New<IntValue>(sz));
+        }
       }
     }
     case ExpressionKind::IntTypeLiteral: {
