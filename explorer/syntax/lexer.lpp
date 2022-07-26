@@ -64,6 +64,7 @@ FORALL               "forall"
 IF                   "if"
 IMPL                 "impl"
 IMPORT               "import"
+IN                   "in"
 INTERFACE            "interface"
 IS                   "is"
 LEFT_CURLY_BRACE     "{"
@@ -152,6 +153,7 @@ operand_start         [(A-Za-z0-9_\"]
 {IF}                  { return CARBON_SIMPLE_TOKEN(IF);                  }
 {IMPL}                { return CARBON_SIMPLE_TOKEN(IMPL);                }
 {IMPORT}              { return CARBON_SIMPLE_TOKEN(IMPORT);              }
+{IN}                  { return CARBON_SIMPLE_TOKEN(IN);                  }
 {INTERFACE}           { return CARBON_SIMPLE_TOKEN(INTERFACE);           }
 {IS}                  { return CARBON_SIMPLE_TOKEN(IS);                  }
 {LEFT_CURLY_BRACE}    { return CARBON_SIMPLE_TOKEN(LEFT_CURLY_BRACE);    }
