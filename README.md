@@ -124,7 +124,7 @@ and provides a deeper view into our goals for the Carbon project and language.
 
 ## Project status
 
-Carbon is currently an experimental project. There is no working compiler or
+Carbon Language is currently an experimental project. There is no working compiler or
 toolchain. You can see the demo interpreter for Carbon on
 [compiler-explorer.com](http://carbon.compiler-explorer.com/). We are looking
 for language designers to help us finish an initial design of the language.
