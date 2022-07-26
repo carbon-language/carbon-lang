@@ -1186,11 +1186,11 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           return todo_.FinishAction(TupleValue::Empty());
         }
         case IntrinsicExpression::Intrinsic::ArraySz: {
-            const auto& args = cast<TupleValue>(*act.results()[0]).elements();
-            CARBON_CHECK(args.size() == 1);
-            auto & array_parameter = cast<TupleValue>(*args[0]);
-            int sz = array_parameter.elements().vec().size();
-            return todo_.FinishAction(arena_->New<IntValue>(sz));
+          const auto& args = cast<TupleValue>(*act.results()[0]).elements();
+          CARBON_CHECK(args.size() == 1);
+          auto& array_parameter = cast<TupleValue>(*args[0]);
+          int sz = array_parameter.elements().vec().size();
+          return todo_.FinishAction(arena_->New<IntValue>(sz));
         }
       }
     }
@@ -1397,7 +1397,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         }
       }
     }
-    case StatementKind::For:{
+    case StatementKind::For: {
       const auto& for_statement = cast<For>(stmt);
       if (act.pos() >= static_cast<int>(for_statement.statements().size())) {
         // If the position is past the end of the block, end processing. Note
@@ -1410,8 +1410,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       }
       // Process the next statement in the block. The position will be
       // incremented as part of Spawn.
-      return todo_.Spawn(
-          std::make_unique<StatementAction>(for_statement.statements()[act.pos()]));
+      return todo_.Spawn(std::make_unique<StatementAction>(
+          for_statement.statements()[act.pos()]));
     }
     case StatementKind::While:
       if (act.pos() % 2 == 0) {

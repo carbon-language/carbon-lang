@@ -106,11 +106,10 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
       }
       return Success();
     }
-    case StatementKind::For:{
+    case StatementKind::For: {
       auto& for_statement = cast<For>(*statement);
       for (auto* stmt : for_statement.statements()) {
-        CARBON_RETURN_IF_ERROR(
-            ResolveControlFlow(stmt, loop, function));
+        CARBON_RETURN_IF_ERROR(ResolveControlFlow(stmt, loop, function));
       }
       return Success();
     }

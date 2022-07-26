@@ -150,13 +150,13 @@ operand_start         [(A-Za-z0-9_\"]
 {FALSE}               { return CARBON_SIMPLE_TOKEN(FALSE);               }
 {FN_TYPE}             { return CARBON_SIMPLE_TOKEN(FN_TYPE);             }
 {FN}                  { return CARBON_SIMPLE_TOKEN(FN);                  }
-{FOR}                 { return CARBON_SIMPLE_TOKEN(FOR);                 }
 {FORALL}              { return CARBON_SIMPLE_TOKEN(FORALL);              }
+{FOR}                 { return CARBON_SIMPLE_TOKEN(FOR);                 }
 {IF}                  { return CARBON_SIMPLE_TOKEN(IF);                  }
 {IMPL}                { return CARBON_SIMPLE_TOKEN(IMPL);                }
 {IMPORT}              { return CARBON_SIMPLE_TOKEN(IMPORT);              }
-{IN}                  { return CARBON_SIMPLE_TOKEN(IN);                  }
 {INTERFACE}           { return CARBON_SIMPLE_TOKEN(INTERFACE);           }
+{IN}                  { return CARBON_SIMPLE_TOKEN(IN);                  }
 {IS}                  { return CARBON_SIMPLE_TOKEN(IS);                  }
 {LEFT_CURLY_BRACE}    { return CARBON_SIMPLE_TOKEN(LEFT_CURLY_BRACE);    }
 {LEFT_PARENTHESIS}    { return CARBON_SIMPLE_TOKEN(LEFT_PARENTHESIS);    }

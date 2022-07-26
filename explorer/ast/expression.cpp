@@ -30,7 +30,7 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
       {{"print", Intrinsic::Print},
        {"new", Intrinsic::Alloc},
        {"delete", Intrinsic::Dealloc},
-       {"array_size",Intrinsic::ArraySz}});
+       {"array_size", Intrinsic::ArraySz}});
   name.remove_prefix(std::strlen("__intrinsic_"));
   auto it = intrinsic_map.find(name);
   if (it == intrinsic_map.end()) {
@@ -186,8 +186,8 @@ void Expression::Print(llvm::raw_ostream& out) const {
           out << "delete";
           break;
         case IntrinsicExpression::Intrinsic::ArraySz:
-         out << "array_sz";
-         break;
+          out << "array_sz";
+          break;
       }
       out << iexp.args();
       break;

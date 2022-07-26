@@ -302,6 +302,9 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
         case Fuzzing::IntrinsicExpression::Dealloc:
           out << "__intrinsic_delete";
           break;
+        case Fuzzing::IntrinsicExpression::ArraySz:
+          out << "__intrinsic_array_size";
+          break;
       }
       TupleLiteralExpressionToCarbon(intrinsic.argument(), out);
     } break;
@@ -569,6 +572,15 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
       ExpressionToCarbon(while_statement.condition(), out);
       out << ") ";
       BlockStatementToCarbon(while_statement.body(), out);
+      break;
+    }
+    case Fuzzing::Statement::kForStatement: {
+      const auto& for_statement = statement.for_statement();
+      out << "for (";
+      BindingPatternToCarbon(for_statement.variable_declaration, out);
+      ExpressionToCarbon(for_statement.loop_target(), out);
+      out << ") ";
+      BlockStatementToCarbon(for_statement.body(), out);
       break;
     }
 
