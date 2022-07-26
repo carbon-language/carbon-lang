@@ -11,6 +11,13 @@
 
 package ExplorerTest api;
 
+// TODO: Implement this with some kind of reflection?
+impl {.x: i32, .y: i32} as Eq {
+  fn Equals[me: Self](rhs: Self) -> Bool {
+    return me.x == rhs.x and me.y == rhs.y;
+  }
+}
+
 fn Main() -> i32 {
   var t1: {.x: i32, .y: i32} = {.x = 5, .y = 2};
   var t2: {.x: i32, .y: i32} = {.x = 5, .y = 2};
