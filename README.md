@@ -16,7 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 **See our [announcement video](https://youtu.be/omrY53kbVoA) from
 [CppNorth](https://cppnorth.ca/).** Note that Carbon is
-[not yet ready for use](#project-status).
+[not ready for use](#project-status).
 
 <a href="docs/images/snippets.md#quicksort">
 <!--
@@ -124,10 +124,14 @@ and provides a deeper view into our goals for the Carbon project and language.
 
 ## Project status
 
-Carbon is currently an experimental project. We want to better understand
-whether we can build a language that meets our successor language criteria, and
-whether the resulting language can gather a critical mass of interest within the
-larger C++ industry and community.
+Carbon is currently an experimental project. There is no working compiler or
+toolchain. You can see the demo interpreter for Carbon on
+[compiler-explorer.com](http://carbon.compiler-explorer.com/). We are looking
+for language designers to help us finish an initial design of the language.
+
+We want to better understand whether we can build a language that meets our
+successor language criteria, and whether the resulting language can gather a
+critical mass of interest within the larger C++ industry and community.
 
 Currently, we have fleshed out several core aspects of both Carbon the project
 and the language:
