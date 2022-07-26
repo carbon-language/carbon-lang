@@ -10,12 +10,12 @@
 
 package ExplorerTest api;
 
-fn id[T:! Type](x: T) -> T {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_not_addable.carbon:[[@LINE+2]]: type error in `+`:
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_not_addable.carbon:[[@LINE+1]]: could not find implementation of interface AddWith(U = i32) for T:! Type
-  return x + 0;
-}
+class A {}
 
 fn Main() -> i32 {
-  return id(0);
+  var a: A = {};
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/operators/fail_no_negate.carbon:[[@LINE+2]]: type error in `-`:
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/operators/fail_no_negate.carbon:[[@LINE+1]]: could not find implementation of interface Negate for class A
+  -a;
+  return 0;
 }
