@@ -241,7 +241,7 @@ static auto ExpressionToProto(const Expression& expression)
           intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::IntEq);
           break;
         case IntrinsicExpression::Intrinsic::StrEq:
-          intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::IntEq);
+          intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::StrEq);
           break;
       }
       *intrinsic_proto->mutable_argument() =

@@ -71,6 +71,31 @@ interface Eq {
   fn Equals[me: Self](rhs: Self) -> Bool;
 }
 
+// TODO: Simplify this once we have variadics
+external impl forall [T:! Eq]
+    (T,) as Eq {
+  fn Equals[me: Self](rhs: Self) -> Bool {
+    let (l1: T,) = me;
+    let (r1: T,) = rhs;
+    return l1 == r1;
+  }
+}
+external impl forall [T:! Eq, U:! Eq]
+    (T, U) as Eq {
+  fn Equals[me: Self](rhs: Self) -> Bool {
+    let (l1: T, l2: U) = me;
+    let (r1: T, r2: U) = rhs;
+    return l1 == r1 and l2 == r2;
+  }
+}
+
+// TODO: Implement this with some kind of reflection?
+external impl {.x: i32, .y: i32} as Eq {
+  fn Equals[me: Self](rhs: Self) -> Bool {
+    return me.x == rhs.x and me.y == rhs.y;
+  }
+}
+
 impl i32 as Eq {
   fn Equals[me: Self](rhs: Self) -> Bool {
     return __intrinsic_int_eq(me, rhs);
