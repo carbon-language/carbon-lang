@@ -18,6 +18,9 @@ void Builtins::Register(Nonnull<const Declaration*> decl) {
     if (interface->name() == GetName(Builtin::As)) {
       builtins_[static_cast<int>(Builtin::As)] = interface;
     }
+    if (interface->name() == GetName(Builtin::Eq)) {
+      builtins_[static_cast<int>(Builtin::Eq)] = interface;
+    }
   }
 }
 

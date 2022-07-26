@@ -66,3 +66,19 @@ class Heap {
 }
 
 var heap: Heap = {};
+
+interface Eq {
+  fn Equals[me: Self](rhs: Self) -> Bool;
+}
+
+impl i32 as Eq {
+  fn Equals[me: Self](rhs: Self) -> Bool {
+    return __intrinsic_int_eq(me, rhs);
+  }
+}
+
+impl String as Eq {
+  fn Equals[me: Self](rhs: Self) -> Bool {
+    return __intrinsic_str_eq(me, rhs);
+  }
+}
