@@ -63,6 +63,10 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
     Returns the resulting paths as a list of strings.
     """
 
+    # Create an empty temp file for Clang to use
+    if repository_ctx.os.name.lower().startswith("windows"):
+        repository_ctx.file('_temp', '')
+
     # The only way to get this out of Clang currently is to parse the verbose
     # output of the compiler when it is compiling C++ code.
     cmd = [
@@ -76,10 +80,11 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
         # Force the language to be C++.
         "-x",
         "c++",
-        # Read in an empty input file.
-        # TODO: This is temporary, need to create a file since
-        # windows doesn't like it if you pass a non existent file
-        "C:/Users/ethang/Desktop/test" if repository_ctx.os.name.lower().startswith("windows") else "/dev/null",
+        # Read in an empty input file. If we are building from
+        # Windows, then we create an empty temp file above
+        # for use here. Clang on Windows does not like it
+        # when you pass a non-existent file.
+        repository_ctx.path("_temp") if repository_ctx.os.name.lower().startswith("windows") else "/dev/null",
         # Always use libc++.
         "-stdlib=libc++",
     ]
