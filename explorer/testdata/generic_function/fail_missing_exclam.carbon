@@ -10,11 +10,9 @@
 
 package ExplorerTest api;
 
-class A { var n: i32; }
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_missing_exclam.carbon:[[@LINE+1]]: illegal binding pattern in implicit parameter list
+fn F[T: Type]();
 
 fn Main() -> i32 {
-  var a: A = {.n = 5};
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/as/fail_no_conversion.carbon:[[@LINE+2]]: type error in `as`: `class A` is not explicitly convertible to `i32`:
-  // CHECK: could not find implementation of interface As(T = i32) for class A
-  return a as i32;
+  return 0;
 }

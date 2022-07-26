@@ -33,6 +33,12 @@ class SourceLocation {
   void Print(llvm::raw_ostream& out) const {
     out << filename_ << ":" << line_num_;
   }
+  auto ToString() const -> std::string {
+    std::string result;
+    llvm::raw_string_ostream out(result);
+    Print(out);
+    return result;
+  }
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
  private:
