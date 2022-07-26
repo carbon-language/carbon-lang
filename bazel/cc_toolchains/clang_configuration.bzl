@@ -77,7 +77,9 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
         "-x",
         "c++",
         # Read in an empty input file.
-        "/dev/null",
+        # TODO: This is temporary, need to create a file since
+        # windows doesn't like it if you pass a non existent file
+        "C:/Users/ethang/Desktop/test" if repository_ctx.os.name.lower().startswith("windows") else "/dev/null",
         # Always use libc++.
         "-stdlib=libc++",
     ]
@@ -97,6 +99,7 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
     # space from each path.
     include_begin = output.index("#include <...> search starts here:") + 1
     include_end = output.index("End of search list.", include_begin)
+
     return [
         repository_ctx.path(s.lstrip(" "))
         for s in output[include_begin:include_end]
@@ -127,6 +130,11 @@ def _configure_clang_toolchain_impl(repository_ctx):
         clang,
         sysroot_dir,
     )
+
+    # Fixing windows related paths
+    if repository_ctx.os.name.lower().startswith("windows"):
+        resource_dir = resource_dir.replace("\\", "/")
+        include_dirs = [str(s).replace("\\", "/") for s in include_dirs]
 
     repository_ctx.template(
         "clang_detected_variables.bzl",
