@@ -91,8 +91,8 @@ along existing investments, codebases, and developer populations. There are a
 few languages that have followed this model for other ecosystems, and Carbon
 aims to fill an analogous role for C++:
 
--   JavaScript → TypeScript
--   Java → Kotlin
+-   JavaScript → **_TypeScript_**
+-   Java → **_Kotlin_**
 -   C++ → **_Carbon_**
 
 ## Language Goals
@@ -198,7 +198,7 @@ https://drive.google.com/drive/folders/1-rsUjiya7dSZ87L8kpZmu3MZghRVxzLA
 </a>
 
 Read more about
-[C++ interop in Carbon](/docs/design/interoperability/philosophy_and_goals.md).
+**[C++ interop in Carbon](/docs/design/interoperability/philosophy_and_goals.md)**.
 
 Beyond interoperability between Carbon and C++, we're also planning to support
 migration tools that will mechanically translate idiomatic C++ code into Carbon
@@ -264,7 +264,8 @@ semantics onto C++ such as Rust-inspired
 You can get started playing with Carbon by checking out the codebase and using
 the Carbon explorer:
 
-```shell
+```
+shell
 # Install bazelisk using Homebrew.
 $ brew install bazelisk
 
