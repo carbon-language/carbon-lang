@@ -126,7 +126,7 @@ and provides a deeper view into our goals for the Carbon project and language.
 
 Carbon Language is currently an experimental project. There is no working
 compiler or toolchain. You can see the demo interpreter for Carbon on
-[compiler-explorer.com](http://carbon.compiler-explorer.com/). 
+[compiler-explorer.com](http://carbon.compiler-explorer.com/).
 
 We want to better understand whether we can build a language that meets our
 successor language criteria, and whether the resulting language can gather a
@@ -150,14 +150,14 @@ and the language:
     detailed analysis of the specific semantic model and abstract machine of
     Carbon. We call this the [Carbon Explorer](/explorer/).
 
-We are currently focused on getting more broad feedback and participation from
-the C++ community,
-[completing the 0.1 language design](/docs/project/roadmap.md#completing-the-language-design),
+If you're interested in contributing, we would love help
+[completing the 0.1 language designs](/docs/project/roadmap.md#completing-the-language-design),
 and
 [completing the Carbon Explorer implementation of this design](/docs/project/roadmap.md#demo-implementation-of-core-features-with-working-examples).
-Beyond that, we plan to prioritize C++ interoperability and a realistic
-toolchain that implements the 0.1 language and can be used to evaluate Carbon in
-more detail.
+We are also currently working to get more broad feedback and participation from
+the C++ community. Beyond that, we plan to prioritize C++ interoperability and a
+realistic toolchain that implements the 0.1 language and can be used to evaluate
+Carbon in more detail.
 
 You can see our [full roadmap](/docs/project/roadmap.md) for more details.
 
