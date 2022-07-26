@@ -60,6 +60,7 @@ EXTERNAL             "external"
 FALSE                "false"
 FN                   "fn"
 FN_TYPE              "__Fn"
+FOR                  "for"
 FORALL               "forall"
 IF                   "if"
 IMPL                 "impl"
@@ -149,6 +150,7 @@ operand_start         [(A-Za-z0-9_\"]
 {FALSE}               { return CARBON_SIMPLE_TOKEN(FALSE);               }
 {FN_TYPE}             { return CARBON_SIMPLE_TOKEN(FN_TYPE);             }
 {FN}                  { return CARBON_SIMPLE_TOKEN(FN);                  }
+{FOR}                 { return CARBON_SIMPLE_TOKEN(FOR);                 }
 {FORALL}              { return CARBON_SIMPLE_TOKEN(FORALL);              }
 {IF}                  { return CARBON_SIMPLE_TOKEN(IF);                  }
 {IMPL}                { return CARBON_SIMPLE_TOKEN(IMPL);                }

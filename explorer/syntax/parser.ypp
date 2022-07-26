@@ -213,6 +213,7 @@
   FALSE
   FN
   FN_TYPE
+  FOR
   FORALL
   IF
   IMPL
@@ -828,6 +829,8 @@ statement:
     { $$ = arena->New<Run>(context.source_loc(), $2); }
 | AWAIT SEMICOLON
     { $$ = arena->New<Await>(context.source_loc()); }
+| FOR LEFT_PARENTHESIS variable_declaration IN expression RIGHT_PARENTHESIS block 
+    { ; }
 ;
 if_statement:
   IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS block optional_else
