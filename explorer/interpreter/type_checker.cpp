@@ -2731,7 +2731,13 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       CARBON_RETURN_IF_ERROR(TypeCheckStmt(&while_stmt.body(), impl_scope));
       return Success();
     }
-    case StatementKind::For:
+    case StatementKind::For:{
+        auto& for_statement = cast<For>(*s);
+        for (auto* stmt : for_statement.statements()) {
+          CARBON_RETURN_IF_ERROR(TypeCheckStmt(stmt, impl_scope));
+        }
+        return Success();
+    }
     case StatementKind::Break:
     case StatementKind::Continue:
       return Success();

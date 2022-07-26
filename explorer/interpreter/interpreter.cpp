@@ -1391,8 +1391,20 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       }
     }
     case StatementKind::For:{
-        //TODO
+      const auto& for_statement = cast<For>(stmt);
+      if (act.pos() >= static_cast<int>(for_statement.statements().size())) {
+        // If the position is past the end of the block, end processing. Note
+        // that empty blocks immediately end.
         return todo_.FinishAction();
+      }
+      // Initialize a scope when starting a block.
+      if (act.pos() == 0) {
+        act.StartScope(RuntimeScope(&heap_));
+      }
+      // Process the next statement in the block. The position will be
+      // incremented as part of Spawn.
+      return todo_.Spawn(
+          std::make_unique<StatementAction>(for_statement.statements()[act.pos()]));
     }
     case StatementKind::While:
       if (act.pos() % 2 == 0) {

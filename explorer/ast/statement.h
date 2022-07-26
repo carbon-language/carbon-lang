@@ -307,9 +307,37 @@ class For : public Statement {
         variable_declaration_(variable_declaration),
         loop_target_(loop_target),
         body_(body) {
-            arena->New<OperatorExpression>(
-                source_loc(), Operator::Eq,
-                std::vector<Nonnull<Expression*>>({$1, $3}))
+            Nonnull<Arena*> arena = new Arena();
+            auto index_name = arena->New<IdentifierExpression>(source_loc,"yy_forloop");
+            //auto exp_pattern_index_name = arena->New<ExpressionPattern>(index_name);
+            auto auto_pattern = arena->New<AutoPattern>(source_loc);
+            auto binding_pattern_index_name =
+            arena->New<BindingPattern>(source_loc,"yy_forloop",auto_pattern,std::nullopt);
+
+            auto start_index = arena->New<IntLiteral>(source_loc,0);
+            auto end_index = arena->New<IntLiteral>(source_loc,10);
+            
+
+            
+            auto var_start_def = arena->New<VariableDefinition>(source_loc,binding_pattern_index_name,start_index,ValueCategory::Var,VariableDefinition::DefinitionType::Returned);
+            statements_.push_back(std::move(var_start_def));
+            auto condition_eq =
+            arena->New<OperatorExpression>(source_loc,Operator::Eq,std::vector<Nonnull<Expression*>>({index_name,end_index}));
+            auto condition =
+            arena->New<OperatorExpression>(source_loc,Operator::Not,std::vector<Nonnull<Expression*>>({condition_eq}));
+            
+            
+            auto inc = arena->New<IntLiteral>(source_loc,1);
+            auto increment_index = 
+            arena->New<OperatorExpression>(source_loc,Operator::Add,std::vector<Nonnull<Expression*>>({index_name,inc}));
+            auto increment_index_stmt = arena->New<Assign>(source_loc,index_name,increment_index);
+
+            std::vector<Nonnull<Statement*>> body_stmts{ body_->statements().vec() };
+            body_stmts.push_back(std::move(increment_index_stmt));
+            auto block = arena->New<Block>(source_loc,std::vector<Nonnull<Statement*>>({body_stmts})); 
+            auto while_stmt = arena->New<While>(source_loc,condition,block);
+
+            statements_.push_back(std::move(while_stmt));
         }
 
   static auto classof(const AstNode* node) -> bool {
@@ -326,6 +354,13 @@ class For : public Statement {
   
   auto body() const -> const Block& { return *body_; }
   auto body() -> Block& { return *body_; }
+  
+  auto statements() const -> llvm::ArrayRef<Nonnull<const Statement*>> {
+    return statements_;
+  }
+  auto statements() -> llvm::MutableArrayRef<Nonnull<Statement*>> {
+    return statements_;
+  }
 
   // Can only be called by type-checking, if a conversion was required.
   void set_condition(Nonnull<Expression*> condition) { condition_ = condition; }
@@ -335,6 +370,7 @@ class For : public Statement {
   Nonnull<Expression*> loop_target_;
   Nonnull<Block*> body_; 
   Nonnull<Expression*> condition_;
+  std::vector<Nonnull<Statement*>> statements_;
 };
 
 

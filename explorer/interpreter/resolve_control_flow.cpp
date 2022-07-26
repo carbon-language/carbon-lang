@@ -106,10 +106,14 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
       }
       return Success();
     }
-    case StatementKind::For:
-      CARBON_RETURN_IF_ERROR(ResolveControlFlow(&cast<For>(*statement).body(),
-                                                statement, function));
+    case StatementKind::For:{
+      auto& for_statement = cast<For>(*statement);
+      for (auto* stmt : for_statement.statements()) {
+        CARBON_RETURN_IF_ERROR(
+            ResolveControlFlow(stmt, loop, function));
+      }
       return Success();
+    }
     case StatementKind::While:
       CARBON_RETURN_IF_ERROR(ResolveControlFlow(&cast<While>(*statement).body(),
                                                 statement, function));
