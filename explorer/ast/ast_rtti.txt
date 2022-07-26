@@ -40,6 +40,7 @@ abstract class Statement : AstNode;
   class Continuation : Statement;
   class Run : Statement;
   class Await : Statement;
+  class For : Statement;
 abstract class Expression : AstNode;
   class BoolTypeLiteral : Expression;
   class BoolLiteral : Expression;

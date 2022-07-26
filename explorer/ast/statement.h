@@ -298,6 +298,42 @@ class While : public Statement {
   Nonnull<Block*> body_;
 };
 
+class For : public Statement {
+ public:
+  For(SourceLocation source_loc, Nonnull<BindingPattern*> variable_declaration,
+        Nonnull<Expression*> loop_target,
+        Nonnull<Block*> body)
+      : Statement(AstNodeKind::For, source_loc),
+        variable_declaration_(variable_declaration),
+        loop_target_(loop_target),
+        body_(body) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromFor(node->kind());
+  }
+  auto condition() const -> const Expression& { return *condition_; }
+  auto condition() -> Expression& { return *condition_; }
+  
+  auto variable_declaration() const -> const BindingPattern& { return *variable_declaration_; }
+  auto variable_declaration() -> BindingPattern& { return *variable_declaration_; }
+
+  auto loop_target() const -> const Expression& { return *loop_target_; }
+  auto loop_target() -> Expression& { return *loop_target_; }
+  
+  auto body() const -> const Block& { return *body_; }
+  auto body() -> Block& { return *body_; }
+
+  // Can only be called by type-checking, if a conversion was required.
+  void set_condition(Nonnull<Expression*> condition) { condition_ = condition; }
+
+ private:
+  Nonnull<BindingPattern*> variable_declaration_;
+  Nonnull<Expression*> loop_target_;
+  Nonnull<Block*> body_; 
+  Nonnull<Expression*> condition_;
+};
+
+
 class Break : public Statement {
  public:
   explicit Break(SourceLocation source_loc)

@@ -42,6 +42,12 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       while_stmt.body().PrintDepth(depth - 1, out);
       break;
     }
+    case StatementKind::For:{
+      const auto& for_stmt = cast<For>(*this);
+      out << "for (" << for_stmt.loop_target() << ")\n";
+      for_stmt.body().PrintDepth(depth - 1, out);
+      break;
+    }
     case StatementKind::Break:
       out << "break;";
       break;
