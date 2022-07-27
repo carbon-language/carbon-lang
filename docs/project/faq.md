@@ -107,7 +107,7 @@ Yes! A prototype interpreter demo `explorer` can be used to execute simple
 examples. For example:
 
 ```
-$ bazel run //explorer -- ./explorer/testdata/basic_syntax/print.carbon
+$ bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
 ```
 
 Example source files can be found under
