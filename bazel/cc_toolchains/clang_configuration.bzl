@@ -67,6 +67,15 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
     if repository_ctx.os.name.lower().startswith("windows"):
         repository_ctx.file('_temp', '')
 
+    # Read in an empty input file. If we are building from
+    # Windows, then we create an empty temp file. Clang
+    # on Windows does not like it when you pass a non-existent file.
+    if repository_ctx.os.name.lower().startswith("windows"):
+        repository_ctx.file('_temp', '')
+        input_file = repository_ctx.path('_temp')
+    else:
+        input_file = "/dev/null"
+
     # The only way to get this out of Clang currently is to parse the verbose
     # output of the compiler when it is compiling C++ code.
     cmd = [
@@ -80,11 +89,8 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
         # Force the language to be C++.
         "-x",
         "c++",
-        # Read in an empty input file. If we are building from
-        # Windows, then we create an empty temp file above
-        # for use here. Clang on Windows does not like it
-        # when you pass a non-existent file.
-        repository_ctx.path("_temp") if repository_ctx.os.name.lower().startswith("windows") else "/dev/null",
+        # Read in an empty input file.
+        input_file,
         # Always use libc++.
         "-stdlib=libc++",
     ]
@@ -136,7 +142,9 @@ def _configure_clang_toolchain_impl(repository_ctx):
         sysroot_dir,
     )
 
-    # Fixing windows related paths
+    # By default Windows uses '\' in its paths. These will be
+    # interpreted as escape characters and fail the build, thus
+    # we must manually replace the backslashes with '/'
     if repository_ctx.os.name.lower().startswith("windows"):
         resource_dir = resource_dir.replace("\\", "/")
         include_dirs = [str(s).replace("\\", "/") for s in include_dirs]
