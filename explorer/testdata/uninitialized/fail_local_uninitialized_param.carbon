@@ -10,9 +10,12 @@
 
 package ExplorerTest api;
 
+fn AddInt(a: i32, b: i32) -> auto {
+  return a + b;
+}
+
 fn Main() -> i32 {
   var x: i32;
-  // CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/uninitialized/fail_uninitialized_init.carbon:[[@LINE+1]]: undefined behavior: access to uninitialized value Uninit<Placeholder<x>>
-  var y: i32 = x;
-  return x;
+  // CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/uninitialized/fail_local_uninitialized_param.carbon:[[@LINE+1]]: undefined behavior: access to uninitialized value Uninit<Placeholder<x>>
+  return AddInt(x, 2);
 }

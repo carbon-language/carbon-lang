@@ -153,13 +153,13 @@ pass in `T` explicitly, so it can be a
 [deduced parameters](overview.md#deduced-parameters) in the Generics overview
 doc). Basically, the user passes in a value for `val`, and the type of `val`
 determines `T`. `T` still gets passed into the function though, and it plays an
-important role -- it defines the implementation of the interface. We can think
-of the interface as defining a struct type whose members are function pointers,
-and an implementation of an interface as a value of that struct with actual
-function pointer values. So an implementation is a table of function pointers
-(one per function defined in the interface) that gets passed into a function as
-the type argument. For more on this, see
-[the implementation model section](#implementation-model) below.
+important role -- it defines the key used to look up interface implementations.
+
+We can think of the interface as defining a struct type whose members are
+function pointers, and an implementation of an interface as a value of that
+struct with actual function pointer values. An implementation is a table mapping
+the interface's functions to function pointers. For more on this, see
+[the implementation model section](#implementation-model).
 
 In addition to function pointer members, interfaces can include any constants
 that belong to a type. For example, the
@@ -727,10 +727,14 @@ implements an interface:
 
 -   [Interfaces](#interfaces) are types of witness tables.
 -   [Impls](#implementing-interfaces) are witness table values.
--   The compiler rewrites functions with an implicit type argument
-    (`fn Foo[InterfaceName:! T](...)`) to have an actual argument with type
-    determined by the interface, and supplied at the callsite using a value
-    determined by the impl.
+
+Type checking is done with just the interface. The impl is used during code
+generation time, possibly using
+[monomorphization](https://en.wikipedia.org/wiki/Monomorphization) to have a
+separate instantiation of the function for each combination of the generic
+argument values. The compiler is free to use other implementation strategies,
+such as passing the witness table for any needed implementations, if that can be
+predicted.
 
 For the example above, [the Vector interface](#interfaces) could be thought of
 defining a witness table type like:
@@ -765,26 +769,11 @@ var VectorForPoint: Vector  = {
 };
 ```
 
-Finally we can define a generic function and call it, like
-[`AddAndScaleGeneric` from the "Generics" section](#generics) by making the
-witness table an explicit argument to the function:
-
-```
-fn AddAndScaleGeneric
-    (t:! Vector, a: t.Self, b: t.Self, s: f64) -> t.Self {
-  return t.Scale(t.Add(a, b), s);
-}
-// Point implements Vector.
-var v: Point = AddAndScaleGeneric(VectorForPoint, a, w, 2.5);
-```
-
-The rule is that generic arguments (declared using `:!`) are passed at compile
-time, so the actual value of the `t` argument here can be used to generate the
-code for `AddAndScaleGeneric`. So `AddAndScaleGeneric` is using a
-[static-dispatch witness table](terminology.md#static-dispatch-witness-table).
-
-Note that this implementation strategy only works for impls that the caller
-knows the callee needs.
+Since generic arguments (where the parameter is declared using `:!`) are passed
+at compile time, so the actual value of `VectorForPoint` can be used to generate
+the code for functions using that impl. This is the
+[static-dispatch witness table](terminology.md#static-dispatch-witness-table)
+approach.
 
 ## Interfaces recap
 
