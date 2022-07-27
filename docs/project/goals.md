@@ -80,13 +80,13 @@ set expectations for people joining, and to help remind and anchor us on
 consistent standards. It is also important that we hold ourselves accountable to
 these expectations and have real and meaningful mechanisms to moderate the
 community. When behavior steps outside of our expectations, we need tools, 
-processes, and policy for how we will recognize and correct it.
+processes, and policies for how we will recognize and correct it.
 
 **An open, inclusive process for Carbon changes.** The community needs to be
 able to effectively engage in the direction and evolution of the project and
 language, while keeping the process efficient and effective. That means we need
 an open, inclusive process where everyone feels comfortable participating.
-Community members should understand how and why decisions are made and have the
+Community members should understand how and why decisions are made, and have the
 ability to both influence them before they occur and give feedback afterward. We
 want to use this process to also ensure we stick to our language priorities and
 have clear rationales for all of our technical designs and decisions.
@@ -167,7 +167,7 @@ Many languages share subsets of these goals, but what distinguishes Carbon is
 their combination. Where it is necessary to make tradeoffs between these goals,
 we intend to prioritize them in this order.
 
-Each goal is broad and has several facets to consider when making decisions.
+Each goal is broad, and has several facets to consider when making decisions.
 Below, we discuss all of these goals in more detail to give a deeper
 understanding of both the nature and motivation of these goals.
 
@@ -198,7 +198,7 @@ regular, idiomatic code usually results in high performance.
 
 **Code should perform predictably.** The reader and writer of code should be
 able to easily understand its expected performance, given sufficient background
-knowledge of the environment in which it will run. This need not be precise, but 
+knowledge of the environment in which it will run. This need not be precise, but
 instead can use heuristics and guidelines to avoid surprise. The key priority is
 that performance, whether good or bad, is unsurprising to developers. Even
 pleasant surprises, when too frequent, can become a problem due to establishing
@@ -249,7 +249,7 @@ extending it are inherently hostile towards long-term maintenance of software.
 not get the design of most language features correct on our first, second, or
 73rd try. As a consequence, there must be a built-in plan and ability to move
 Carbon forward at a reasonable pace and with a reasonable cost. Simultaneously,
-an evolving language must not leave software behind to languish, instead bringing
+an evolving language must not leave software behind to languish, instead bring
 software forward. This requirement should not imply compatibility, but instead
 some migratability, likely tool-assisted.
 
