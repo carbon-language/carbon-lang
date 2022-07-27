@@ -157,8 +157,8 @@ important role -- it defines the key used to look up interface implementations.
 
 We can think of the interface as defining a struct type whose members are
 function pointers, and an implementation of an interface as a value of that
-struct with actual function pointer values. So an implementation is a table of
-function pointers, one per function defined in the interface. For more on this,
+struct with actual function pointer values. An implementation is a table mapping
+the interface's function signatures to function pointers. For more on this,
 see [the implementation model section](#implementation-model).
 
 In addition to function pointer members, interfaces can include any constants
@@ -733,7 +733,7 @@ generation time, possibly using
 [monomorphization](https://en.wikipedia.org/wiki/Monomorphization) to have a
 separate instantiation of the function for each combination of the generic
 argument values. The compiler is free to use other implementation strategies,
-though, such as passing the witness table for any needed implementations, if
+such as passing the witness table for any needed implementations, if
 that can be predicted.
 
 For the example above, [the Vector interface](#interfaces) could be thought of
@@ -769,10 +769,10 @@ var VectorForPoint: Vector  = {
 };
 ```
 
-Since generic arguments, where the parameter is declared using `:!`, are passed
+Since generic arguments (where the parameter is declared using `:!`) are passed
 at compile time, so the actual value of `VectorForPoint` can be used to generate
 the code for functions using that impl. This is the
-[static-dispatch witness table](terminology.md#static-dispatch-witness-table).
+[static-dispatch witness table](terminology.md#static-dispatch-witness-table)
 approach.
 
 ## Interfaces recap
