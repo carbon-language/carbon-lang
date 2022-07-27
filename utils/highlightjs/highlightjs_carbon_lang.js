@@ -140,7 +140,7 @@ export default function (hljs) {
     scope: 'number',
     variants: [
       { match: /[1-9][_0-9]*(\.[_0-9]+(e[-+]?[1-9][0-9]*)?)?/ },
-      { match: /0x[_0-9A-F]+(\.[_0-9A-F]+(p[-+]?[1-9][0-9]*)?)?/ },
+      { match: /0x[_0-9a-fA-F]+(\.[_0-9a-fA-F]+(p[-+]?[1-9][0-9]*)?)?/ },
       { match: /0b[_01]+/ },
     ],
   };
@@ -150,7 +150,7 @@ export default function (hljs) {
   };
   const ESCAPE_SEQUENCE = {
     scope: 'char.escape',
-    match: /\\([tnr'"0\\0]|x[0-9A-F]{2}|u\{[0-9A-F]{4,}\})/,
+    match: /\\([tnr'"0\\0]|x[0-9a-fA-F]{2}|u\{[0-9a-fA-F]{4,}\})/,
   };
   const BLOCK_STRING_LITERAL = {
     scope: 'string',
