@@ -41,7 +41,7 @@ class ParseNodeKind {
   }
 #include "toolchain/parser/parse_node_kind.def"
 
-  // The default constructor is deleted as the objects of this type should always be
+  // The default constructor is deleted because objects of this type should always be
   // constructed using the above factory functions for each unique kind.
   ParseNodeKind() = delete;
 
