@@ -59,11 +59,12 @@ information here in our contributing guide, especially the
 ### Help comment on proposals
 
 If you're looking for a quick way to contribute, commenting on proposals is a
-way to provide proposal authors with a breadth of feedback. The "Evolution >
-Ideas" forum is where authors will go for early, high-level feedback. The
-"Evolution > Proposal reviews" forum will have more mature proposals that are
-nearing the decision process. For more about the difference, see the
-[evolution process](docs/project/evolution.md).
+way to provide proposal authors with a breadth of feedback.
+[Issues for leads](https://github.com/carbon-language/carbon-lang/projects/2)
+has questions the community is looking for a decision on. The
+[list of open proposals](https://github.com/carbon-language/carbon-lang/issues?q=is%3Aopen+label%3Aproposal+draft%3Afalse)
+will have more mature proposals that are nearing a decision. For more about the
+difference, see the [evolution process](docs/project/evolution.md).
 
 When giving feedback, please keep comments positive and constructive. Our goal
 is to use community discussion to improve proposals and assist authors.
@@ -145,13 +146,13 @@ the Code of Conduct.
 
     -   The
         [weekly sync](https://docs.google.com/document/d/1dwS2sJ8tsN3LwxqmZSv9OvqutYhP71dK9Dmr1IXQFTs/edit?resourcekey=0-NxBWgL9h05yD2GOR3wUisg),
-        where everyone is welcome.
+        where contributors are welcome.
     -   [Open discussions](https://docs.google.com/document/d/1tEt4iM6vfcY0O0DG0uOEMIbaXcZXlNREc2ChNiEtn_w/edit),
         which are unstructured meeting slots used for discussing proposals,
         tooling, and other Carbon topics based on who attends.
 
-Note that commenting on Google Docs and some label changes in GitHub will
-require some contributor access: make sure you've
+Note that commenting on Google Docs, attending meetings, and some label changes
+in GitHub will require some contributor access: make sure you've
 [signed the CLA](#contributor-license-agreements-clas) then ask for access on
 [#getting-started](https://discord.com/channels/655572317891461132/655577725347561492)
 on Discord.
