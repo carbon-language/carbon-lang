@@ -78,7 +78,7 @@ namespace llvm {
 // this, and so we want to prioritize accordingly.
 //
 // It would be slightly cleaner for LLVM itself to provide this overload in
-// `raw_os_ostream.h` so that we wouldn't need to inject it into its namespace, but
+// `raw_os_ostream.h` so that we wouldn't need to inject into LLVM's namespace, but
 // supporting `std::ostream` isn't a priority for LLVM so we handle it locally
 // instead.
 template <typename S, typename T,
