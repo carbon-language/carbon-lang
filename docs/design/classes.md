@@ -1814,9 +1814,9 @@ Some discussion on this topic has occurred in:
 
 -   [question-for-leads issue #505 on named parameters](https://github.com/carbon-language/carbon-lang/issues/505)
 -   labeled params brainstorming docs
-    [1](https://docs.google.com/document/d/1a1wI8SHGh3HYV8SUWPIKhg48ZW2glUlAMIIS3aec5dY/edit),
-    [2](https://docs.google.com/document/d/1u6GORSkcgThMAiYKOqsgALcEviEtcghGb5TTVT-U-N0/edit)
--   ["match" in syntax choices doc](https://docs.google.com/document/d/1iuytei37LPg_tEd6xe-O6P_bpN7TIbEjNtFMLYW2Nno/edit#heading=h.y566d16ivoy2)
+    [1](https://docs.google.com/document/d/1Ui2OEHLwa9LZ6ktc1joJqE7_N-ZHX2gBvBpaFw6DUy8/edit?usp=sharing&resourcekey=0-6bEnyc03QePVcttPRSFoew),
+    [2](https://docs.google.com/document/d/1kK_tti4DwPqa3Oh5CgA5pWSx0g3bKlZG1yREMpq9uiU/edit?usp=sharing&resourcekey=0-oFV6tXtCVu1bcHz4oCMyMQ)
+-   ["match" in syntax choices doc](https://docs.google.com/document/d/1EhZA3AlY9TaCMho9jz2ynFxK-6eS6BwMAkE5jNYQzEA/edit?usp=sharing&resourcekey=0-QXEoh-b4_sQG2u636gIa1A#heading=h.y566d16ivoy2)
 
 ### Inheritance
 
