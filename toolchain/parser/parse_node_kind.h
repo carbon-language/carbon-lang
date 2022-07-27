@@ -57,7 +57,7 @@ class ParseNodeKind {
 
   // Enable conversion to our private enum, including in a `constexpr` context,
   // to enable usage in `switch` and `case`. The enum remains private and
-  // nothing else should be using it.
+  // nothing else should be using this function.
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr operator KindEnum() const { return kind_; }
 
