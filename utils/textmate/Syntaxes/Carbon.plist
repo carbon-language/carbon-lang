@@ -4,7 +4,7 @@
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
--->
+ -->
 
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
         "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -57,83 +57,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
                 <key>match</key>
                 <string>\b(bool|Carbon\.Int|Carbon\.UInt|f16|f32|f64|f128|i8|i16|i32|i64|i128|i256|Slice|String|StringView|Type|u8|u16|u32|u64|u128|u256)\b</string>
             </dict>
-            <!-- Rule: numbers - derived from c.tmbundle -->
-            <dict>
-                <key>name</key>
-                <string>constant.numeric.carbon</string>
-                <key>captures</key>
-                <dict>
-                    <key>inc</key>
-                    <dict>
-                        <key>name</key>
-                        <string>invalid.illegal.digit-separator-should-not-be-last.carbon</string>
-                    </dict>
-                </dict>
-                <key>match</key>
-                <string>(?x)\b
-                    ( (?i:
-                    0x ( [0-9A-Fa-f]+ ( ' [0-9A-Fa-f]+ )* )? # Hexadecimal
-                    | 0b ( [0-1]+ ( ' [0-1]+ )* )? # Binary
-                    | 0 ( [0-7]+ ( ' [0-7]+ )* ) # Octal
-                    | ( [0-9]+ ( ' [0-9]+ )* ) # Decimal
-                    )
-                    ( ([uUfF] | u?ll? | U?LL?)\b | (?&lt;inc&gt;') | \b )
-                    | ( [0-9]+ ( ' [0-9]+ )* )?
-                    (?i:
-                    \. ( [0-9]+ ( ' [0-9]+ )* ) E(\+|-)? ( [0-9]+ ( ' [0-9]+ )*
-                    )
-                    | \. ( [0-9]+ ( ' [0-9]+ )* )
-                    | E(\+|-)? ( [0-9]+ ( ' [0-9]+ )* )
-                    )
-                    ( (?&lt;inc&gt;') | \b )
-                    )
-                </string>
-            </dict>
-            <!-- Rule: strings - derived from c.tmbundle -->
-            <dict>
-                <key>name</key>
-                <string>string.quoted.double.carbon</string>
-                <key>begin</key>
-                <string>"</string>
-                <key>beginCaptures</key>
-                <dict>
-                </dict>
-                <key>end</key>
-                <string>"</string>
-                <key>endCaptures</key>
-                <key>patterns</key>
-                <array>
-                    <dict>
-                        <key>include</key>
-                        <string>#string_escaped_char</string>
-                    </dict>
-                </array>
-            </dict>
         </array>
 
         <!-- Rule repository -->
         <key>repository</key>
         <dict>
-            <!-- Rule: string escapes -->
-            <key>string_escaped_char</key>
-            <dict>
-                <key>patterns</key>
-                <array>
-                    <dict>
-                        <key>name</key>
-                        <string>constant.character.escape.carbon</string>
-                        <key>match</key>
-                        <string>\\(\\|[abefnprtv'"?]|[0-3]\d{0,2}|[4-7]\d?|x[a-fA-F0-9]{0,2}|u[a-fA-F0-9]{0,4}|U[a-fA-F0-9]{0,8})</string>
-                    </dict>
-                    <dict>
-                        <key>name</key>
-                        <string>invalid.illegal.unknown-escape.carbon</string>
-                        <key>match</key>
-                        <string>\\.</string>
-                    </dict>
-                </array>
-            </dict>
-
             <!-- Rule: comments -->
             <key>comments</key>
             <dict>
