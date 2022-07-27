@@ -21,11 +21,10 @@ class ParseAndLexContext {
                      bool parser_debug)
       : input_file_name_(input_file_name), parser_debug_(parser_debug) {}
 
-  // Formats ands records a lexer error. Returns an error token as a
-  // convenience.
-  auto RecordSyntaxError(const std::string& message,
-                         bool prefix_with_newline = false)
-      -> Parser::symbol_type;
+  // Formats ands records a lexing oor parsing error. Returns an error token as
+  // a convenience.
+  auto RecordSyntaxError(Error error) -> Parser::symbol_type;
+  auto RecordSyntaxError(const std::string& message) -> Parser::symbol_type;
 
   auto source_loc() const -> SourceLocation {
     return SourceLocation(input_file_name_,
@@ -37,8 +36,10 @@ class ParseAndLexContext {
   // The source range of the token being (or just) lex'd.
   location current_token_position;
 
-  auto error_messages() const -> const std::vector<std::string> {
-    return error_messages_;
+  auto take_errors() -> std::vector<Error> {
+    std::vector<Error> errors = std::move(errors_);
+    errors_.clear();
+    return errors;
   }
 
  private:
@@ -48,7 +49,7 @@ class ParseAndLexContext {
 
   bool parser_debug_;
 
-  std::vector<std::string> error_messages_;
+  std::vector<Error> errors_;
 };
 
 }  // namespace Carbon

@@ -22,21 +22,15 @@ namespace Carbon {
 // provided as a fallback for cases that don't fit those classifications.
 
 inline auto CompilationError(SourceLocation loc) -> ErrorBuilder {
-  ErrorBuilder builder;
-  (void)(builder << "COMPILATION ERROR: " << loc << ": ");
-  return builder;
+  return ErrorBuilder("COMPILATION ERROR", loc.ToString());
 }
 
 inline auto ProgramError(SourceLocation loc) -> ErrorBuilder {
-  ErrorBuilder builder;
-  (void)(builder << "PROGRAM ERROR: " << loc << ": ");
-  return builder;
+  return ErrorBuilder("PROGRAM ERROR", loc.ToString());
 }
 
 inline auto RuntimeError(SourceLocation loc) -> ErrorBuilder {
-  ErrorBuilder builder;
-  (void)(builder << "RUNTIME ERROR: " << loc << ": ");
-  return builder;
+  return ErrorBuilder("RUNTIME ERROR", loc.ToString());
 }
 
 }  // namespace Carbon
