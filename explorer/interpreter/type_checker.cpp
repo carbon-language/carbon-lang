@@ -2012,8 +2012,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             // We couldn't find a matching `impl`.
             return CompilationError(e->source_loc())
                    << *ts[0] << " is not equality comparable with " << *ts[1]
-                   << ":\n"
-                   << converted.error().message();
+                   << " (" << converted.error().message() << ")";
           }
           op.set_rewritten_form(*converted);
           return Success();
@@ -2250,13 +2249,13 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         case IntrinsicExpression::Intrinsic::StrEq: {
           if (args.size() != 2) {
             return CompilationError(e->source_loc())
-                   << "__intrinsic_int_eq takes 2 arguments";
+                   << "__intrinsic_str_eq takes 2 arguments";
           }
           CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "__intrinsic_int_eq argument 0",
+              e->source_loc(), "__intrinsic_str_eq argument 0",
               arena_->New<StringType>(), &args[0]->static_type(), impl_scope));
           CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "__intrinsic_int_eq argument 1",
+              e->source_loc(), "__intrinsic_str_eq argument 1",
               arena_->New<StringType>(), &args[1]->static_type(), impl_scope));
           e->set_static_type(arena_->New<BoolType>());
           e->set_value_category(ValueCategory::Let);
