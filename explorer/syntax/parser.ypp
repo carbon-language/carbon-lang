@@ -131,7 +131,6 @@
 %type <Nonnull<Expression*>> additive_lhs
 %type <Nonnull<Expression*>> additive_expression
 %type <Nonnull<Expression*>> modulo_operand
-%type <Nonnull<Expression*>> modulo_lhs
 %type <Nonnull<Expression*>> modulo_expression
 %type <Nonnull<Expression*>> as_operand
 %type <Nonnull<Expression*>> as_expression
@@ -452,15 +451,10 @@ multiplicative_expression:
 ;
 modulo_operand:
   ref_deref_expression
-| additive_expression
-;
-modulo_lhs:
-  ref_deref_expression
-| modulo_expression
+| minus_expression 
 ;
 modulo_expression:
-  additive_expression
-| modulo_lhs MODULO modulo_operand
+  modulo_operand MODULO modulo_operand
     {
       $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::Mod,
@@ -513,7 +507,8 @@ unimpl_expression:
 ;
 value_expression:
   // ref_deref_expression excluded due to precedence diamond.
-  modulo_expression
+  additive_expression 
+| modulo_expression
 | as_expression
 | combine_expression
 | fn_type_expression

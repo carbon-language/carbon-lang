@@ -22,17 +22,17 @@ fn Main() -> i32 {
   if(  not (x == 1) ){
       return 1;
   }
-  x = 3*3 % 3;
+  x = (3*3) % 3;
   if( not (x == 0)){
       return 2;
   }
 
-  x = 4+4+4+4 % 2+1;
+  x = (4+4+4+4) % (2+1);
   if(  not (x == 1) ){
       return 3;
   }
 
-  x = 15 % identFn(2)+1;
+  x = 15 % (identFn(2)+1);
   if( not (x == 0)){
       return 4;
   }
