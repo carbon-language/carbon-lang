@@ -1956,8 +1956,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
 
         // Now try an overloaded operator.
         ErrorOr<Nonnull<Expression*>> result = BuildBuiltinMethodCall(
-            impl_scope, op.arguments()[0],
-            BuiltinInterfaceName{builtin, ts[1]},
+            impl_scope, op.arguments()[0], BuiltinInterfaceName{builtin, ts[1]},
             BuiltinMethodCall{"Op", {op.arguments()[1]}});
         if (!result.ok()) {
           // We couldn't find a matching `impl`.
