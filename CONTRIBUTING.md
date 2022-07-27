@@ -16,6 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Help contribute ideas to Carbon](#help-contribute-ideas-to-carbon)
     -   [Help implement Carbon's design](#help-implement-carbons-design)
     -   [Help address bugs](#help-address-bugs)
+    -   [Good first issues](#good-first-issues)
 -   [How to become a contributor to Carbon](#how-to-become-a-contributor-to-carbon)
     -   [Contributor License Agreements (CLAs)](#contributor-license-agreements-clas)
         -   [Future CLA plans](#future-cla-plans)
@@ -91,9 +92,14 @@ and are very interested in folks joining in to help us with it.
 
 As Carbon's design and eventually implementation begin to take shape, we'll
 inevitably end up with plenty of bugs. Helping us triage, analyze, and address
-them is always a great way to get involved. When we have the bug tracker(s) set
-up for this, we'll update this section with ideas of how to find these and get
-started.
+them is always a great way to get involved. See
+[open issues on GitHub](https://github.com/carbon-language/carbon-lang/issues).
+
+### Good first issues
+
+Some issues have been marked as
+["good first issues"](https://github.com/carbon-language/carbon-lang/labels/good%20first%20issue).
+These are intended to be a good place to start contributing.
 
 ## How to become a contributor to Carbon
 
