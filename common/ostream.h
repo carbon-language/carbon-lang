@@ -66,7 +66,7 @@ void PrintTo(T* p, std::ostream* out) {
 namespace llvm {
 
 // Injects an `operator<<` overload into the `llvm` namespace which detects LLVM
-// types with `raw_ostream` overloads and use that to map to a `std::ostream`
+// types with `raw_ostream` overloads and uses that to map to a `std::ostream`
 // overload. This allows LLVM types to be printed to `std::ostream` via their
 // `raw_ostream` operator overloads, which is needed both for logging and
 // testing.
