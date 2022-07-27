@@ -158,8 +158,8 @@ important role -- it defines the key used to look up interface implementations.
 We can think of the interface as defining a struct type whose members are
 function pointers, and an implementation of an interface as a value of that
 struct with actual function pointer values. An implementation is a table mapping
-the interface's function signatures to function pointers. For more on this,
-see [the implementation model section](#implementation-model).
+the interface's functions to function pointers. For more on this, see
+[the implementation model section](#implementation-model).
 
 In addition to function pointer members, interfaces can include any constants
 that belong to a type. For example, the
@@ -733,8 +733,8 @@ generation time, possibly using
 [monomorphization](https://en.wikipedia.org/wiki/Monomorphization) to have a
 separate instantiation of the function for each combination of the generic
 argument values. The compiler is free to use other implementation strategies,
-such as passing the witness table for any needed implementations, if
-that can be predicted.
+such as passing the witness table for any needed implementations, if that can be
+predicted.
 
 For the example above, [the Vector interface](#interfaces) could be thought of
 defining a witness table type like:
