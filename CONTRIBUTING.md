@@ -42,7 +42,7 @@ contribute, and we appreciate all of them. If you have questions, please feel
 free to ask on Discord or
 [GitHub](https://github.com/carbon-language/carbon-lang/discussions).
 
-Everyone contributing to Carbon is expected to:
+Everyone who contributes to Carbon is expected to:
 
 -   Read and follow the [Code of Conduct](CODE_OF_CONDUCT.md). We expect
     everyone in our community to be welcoming, helpful, and respectful.
