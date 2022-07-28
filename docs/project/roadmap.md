@@ -112,7 +112,7 @@ both measures our progress solidifying Carbon's design and demonstrating the
 value proposition of Carbon.
 
 Note that both woff2 and RE2 libraries are chosen somewhat arbitrarily and could
-easily be replaced with a different, more effective libraries to achieve the
+easily be replaced with a different, more effective library to achieve the
 fundamental result of demonstrating a compelling body of cohesive design and the
 overarching value proposition.
 
@@ -155,7 +155,7 @@ Stretch goals if we can hit the above:
     integrated.
 
 Benchmarking at this stage isn't expected to include extensive optimization.
-Instead, it should focus on letting us track large/high-level impact on
+Instead, it should focus on letting us track large/high-level impacts on
 different phases as they are developed or features are added. They may also help
 illustrate initial high-level performance characteristics of the implementation,
 but the long term focus should be on end-to-end user metrics.

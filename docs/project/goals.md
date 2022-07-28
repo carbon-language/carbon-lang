@@ -76,7 +76,7 @@ community to be welcoming and respectful, with a deep commitment to
 psychological safety. We need consistent expectations for how every community
 member should behave, regardless of their position in the community. These
 expectations around conduct and behavior need to be clearly articulated both to
-set expectations for people joining, and to help remind and anchor us on
+set expectations for people joining, and to help remind and anchor us to
 consistent standards. It is also important that we hold ourselves accountable to
 these expectations and have real and meaningful mechanisms to moderate the
 community. When behavior steps outside of our expectations, we need tools,
