@@ -139,7 +139,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
                 <key>name</key>
                 <string>constant.numeric.carbon</string>
                 <key>match</key>
-                <string>0x[_0-9a-fA-F]+(\.[_0-9a-fA-F]+(p[-+]?[1-9][0-9]*)?)?</string>
+                <string>0x[_0-9A-F]+(\.[_0-9A-F]+(p[-+]?[1-9][0-9]*)?)?</string>
             </dict>
             <!-- Rule: binary number literals -->
             <dict>
@@ -166,7 +166,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
                 <key>name</key>
                 <string>constant.character.escape.carbon</string>
                 <key>match</key>
-                <string>\([tnr'"0\0]|x[0-9a-fA-F]{2}|u\{[0-9a-fA-F]{4,}\})</string>
+                <string>\([tnr'"0\0]|x[0-9A-F]{2}|u\{[0-9A-F]{4,}\})</string>
             </dict>
         </dict>
     </dict>
