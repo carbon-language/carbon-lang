@@ -4,13 +4,7 @@
 
 // More single line comments
 
-/* Multi line and closing comments */
-/* Spans
-   Multiple
-   Lines
-*/
-
-package Carbon /* between */ api;
+package Carbon api;
 
 interface HasValueParam(T:! Type, V:! T) {
   fn Go[me: Self]() -> T;

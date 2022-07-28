@@ -33,42 +33,19 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         <array>
             <!-- Rule: comments -->
             <dict>
+                <key>begin</key>
+                <string>(^[ \t]+)?(?=//)</string>
+                <key>end</key>
+                <string>(?!\G)</string>
                 <key>patterns</key>
                 <array>
-                    <!-- Multi-line comments -->
                     <dict>
                         <key>name</key>
-                        <string>comment.block.carbon</string>
+                        <string>comment.line.carbon</string>
                         <key>begin</key>
-                        <string>/\*</string>
+                        <string>//</string>
                         <key>end</key>
-                        <string>\*/</string>
-                    </dict>
-                    <!-- Unterminated multi-line comments -->
-                    <dict>
-                        <key>name</key>
-                        <string>invalid.illegal.unterminated-multi-line.carbon
-                        </string>
-                        <key>match</key>
-                        <string>\*/</string>
-                    </dict>
-                    <!-- Single-line comments -->
-                    <dict>
-                        <key>begin</key>
-                        <string>(^[ \t]+)?(?=//)</string>
-                        <key>end</key>
-                        <string>(?!\G)</string>
-                        <key>patterns</key>
-                        <array>
-                            <dict>
-                                <key>name</key>
-                                <string>comment.line.carbon</string>
-                                <key>begin</key>
-                                <string>//</string>
-                                <key>end</key>
-                                <string>$</string>
-                            </dict>
-                        </array>
+                        <string>$</string>
                     </dict>
                 </array>
             </dict>
