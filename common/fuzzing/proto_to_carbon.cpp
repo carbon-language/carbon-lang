@@ -303,7 +303,7 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
           out << "__intrinsic_delete";
           break;
         case Fuzzing::IntrinsicExpression::Random:
-          out << "Rand";
+          out << "__intrinsic_rand";
           break;
       }
       TupleLiteralExpressionToCarbon(intrinsic.argument(), out);
