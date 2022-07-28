@@ -83,6 +83,8 @@ auto ToString(Operator op) -> std::string_view {
       return "or";
     case Operator::Eq:
       return "==";
+    case Operator::Mod:
+      return "%";
   }
 }
 
