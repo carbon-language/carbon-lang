@@ -43,7 +43,6 @@ class Builtins {
   static constexpr Builtin MulWith = Builtin::MulWith;
   static constexpr Builtin ModWith = Builtin::ModWith;
 
-
   // Register a declaration that might be a builtin.
   void Register(Nonnull<const Declaration*> decl);
 
@@ -59,7 +58,7 @@ class Builtins {
  private:
   static constexpr int NumBuiltins = static_cast<int>(Builtin::Last) + 1;
   static constexpr const char* BuiltinNames[NumBuiltins] = {
-      "As", "ImplicitAs", "Negate", "AddWith", "SubWith", "MulWith","ModWith"};
+      "As", "ImplicitAs", "Negate", "AddWith", "SubWith", "MulWith", "ModWith"};
 
   std::optional<Nonnull<const Declaration*>> builtins_[NumBuiltins] = {};
 };
