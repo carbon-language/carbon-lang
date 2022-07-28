@@ -208,10 +208,17 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
       return heap_.Read(cast<PointerValue>(*args[0]).address(), source_loc);
     case Operator::AddressOf:
       return arena_->New<PointerValue>(cast<LValue>(*args[0]).address());
-    case Operator::Combine:
+    case Operator::BitwiseAnd:
       return &cast<TypeOfConstraintType>(static_type)->constraint_type();
     case Operator::As:
       return Convert(args[0], args[1], source_loc);
+    case Operator::BitwiseOr:
+    case Operator::BitwiseXor:
+    case Operator::BitShiftLeft:
+    case Operator::BitShiftRight:
+    case Operator::Complement:
+      CARBON_FATAL() << "operator " << ToString(op)
+                     << " should always be rewritten";
   }
 }
 
@@ -1155,9 +1162,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             std::make_unique<ExpressionAction>(&intrinsic.args()));
       }
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
+      const auto& args = cast<TupleValue>(*act.results()[0]).elements();
       switch (cast<IntrinsicExpression>(exp).intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print: {
-          const auto& args = cast<TupleValue>(*act.results()[0]).elements();
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> format_string_value,
               Convert(args[0], arena_->New<StringType>(), exp.source_loc()));
@@ -1179,16 +1186,51 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           return todo_.FinishAction(TupleValue::Empty());
         }
         case IntrinsicExpression::Intrinsic::Alloc: {
-          const auto& args = cast<TupleValue>(*act.results()[0]);
-          CARBON_CHECK(args.elements().size() == 1);
-          Address addr(heap_.AllocateValue(args.elements()[0]));
+          CARBON_CHECK(args.size() == 1);
+          Address addr(heap_.AllocateValue(args[0]));
           return todo_.FinishAction(arena_->New<PointerValue>(addr));
         }
         case IntrinsicExpression::Intrinsic::Dealloc: {
-          const auto& args = cast<TupleValue>(*act.results()[0]);
-          CARBON_CHECK(args.elements().size() == 1);
-          heap_.Deallocate(cast<PointerValue>(args.elements()[0])->address());
+          CARBON_CHECK(args.size() == 1);
+          heap_.Deallocate(cast<PointerValue>(args[0])->address());
           return todo_.FinishAction(TupleValue::Empty());
+        }
+        case IntrinsicExpression::Intrinsic::IntBitComplement: {
+          CARBON_CHECK(args.size() == 1);
+          return todo_.FinishAction(
+              arena_->New<IntValue>(~cast<IntValue>(*args[0]).value()));
+        }
+        case IntrinsicExpression::Intrinsic::IntBitAnd: {
+          CARBON_CHECK(args.size() == 2);
+          return todo_.FinishAction(
+              arena_->New<IntValue>(cast<IntValue>(*args[0]).value() &
+                                    cast<IntValue>(*args[1]).value()));
+        }
+        case IntrinsicExpression::Intrinsic::IntBitOr: {
+          CARBON_CHECK(args.size() == 2);
+          return todo_.FinishAction(
+              arena_->New<IntValue>(cast<IntValue>(*args[0]).value() |
+                                    cast<IntValue>(*args[1]).value()));
+        }
+        case IntrinsicExpression::Intrinsic::IntBitXor: {
+          CARBON_CHECK(args.size() == 2);
+          return todo_.FinishAction(
+              arena_->New<IntValue>(cast<IntValue>(*args[0]).value() ^
+                                    cast<IntValue>(*args[1]).value()));
+        }
+        case IntrinsicExpression::Intrinsic::IntLeftShift: {
+          CARBON_CHECK(args.size() == 2);
+          // TODO: Runtime error if RHS is too large.
+          return todo_.FinishAction(arena_->New<IntValue>(
+              static_cast<uint32_t>(cast<IntValue>(*args[0]).value())
+              << cast<IntValue>(*args[1]).value()));
+        }
+        case IntrinsicExpression::Intrinsic::IntRightShift: {
+          CARBON_CHECK(args.size() == 2);
+          // TODO: Runtime error if RHS is too large.
+          return todo_.FinishAction(
+              arena_->New<IntValue>(cast<IntValue>(*args[0]).value() >>
+                                    cast<IntValue>(*args[1]).value()));
         }
       }
     }

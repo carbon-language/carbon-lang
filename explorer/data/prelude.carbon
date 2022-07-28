@@ -4,6 +4,8 @@
 
 package Carbon api;
 
+// Conversion interfaces.
+
 // Explicitly convert `Self` to `T`.
 interface As(T:! Type) {
   fn Convert[me: Self]() -> T;
@@ -49,6 +51,8 @@ impl forall [U1:! Type, U2:! Type, U3:! Type,
   }
 }
 
+// Arithmetic interfaces.
+
 interface Negate {
   // TODO: = Self
   let Result:! Type;
@@ -88,6 +92,101 @@ external impl i32 as SubWith(i32) where .Result == i32 {
 }
 external impl i32 as MulWith(i32) where .Result == i32 {
   fn Op[me: i32](other: i32) -> i32 { return me * other; }
+}
+
+// Bitwise and bit-shift interfaces.
+
+// Unary `^`.
+interface BitComplement {
+  // TODO: = Self
+  let Result:! Type;
+  fn Op[me: Self]() -> Result;
+}
+
+// Binary `&`.
+interface BitAndWith(U:! Type) {
+  // TODO: = Self
+  let Result:! Type;
+  fn Op[me: Self](other: U) -> Result;
+}
+// TODO:
+// constraint BitAnd {
+//   extends BitAndWith(Self) where .Result == Self;
+// }
+
+// Binary `|`.
+interface BitOrWith(U:! Type) {
+  // TODO: = Self
+  let Result:! Type;
+  fn Op[me: Self](other: U) -> Result;
+}
+// TODO:
+// constraint BitOr {
+//   extends BitOrWith(Self) where .Result == Self;
+// }
+
+// Binary `^`.
+interface BitXorWith(U:! Type) {
+  // TODO: = Self
+  let Result:! Type;
+  fn Op[me: Self](other: U) -> Result;
+}
+// TODO:
+// constraint BitXor {
+//   extends BitXorWith(Self) where .Result == Self;
+// }
+
+// Binary `<<`.
+interface LeftShiftWith(U:! Type) {
+  // TODO: = Self
+  let Result:! Type;
+  fn Op[me: Self](other: U) -> Result;
+}
+// TODO:
+// constraint LeftShift {
+//   extends LeftShiftWith(Self) where .Result == Self;
+// }
+
+// Binary `>>`.
+interface RightShiftWith(U:! Type) {
+  // TODO: = Self
+  let Result:! Type;
+  fn Op[me: Self](other: U) -> Result;
+}
+// TODO:
+// constraint RightShift {
+//   extends RightShiftWith(Self) where .Result == Self;
+// }
+
+external impl i32 as BitComplement where .Result == i32 {
+  fn Op[me: i32]() -> i32 {
+    return __intrinsic_int_bit_complement(me);
+  }
+}
+external impl i32 as BitAndWith(i32) where .Result == i32 {
+  fn Op[me: i32](other: i32) -> i32 {
+    return __intrinsic_int_bit_and(me, other);
+  }
+}
+external impl i32 as BitOrWith(i32) where .Result == i32 {
+  fn Op[me: i32](other: i32) -> i32 {
+    return __intrinsic_int_bit_or(me, other);
+  }
+}
+external impl i32 as BitXorWith(i32) where .Result == i32 {
+  fn Op[me: i32](other: i32) -> i32 {
+    return __intrinsic_int_bit_xor(me, other);
+  }
+}
+external impl i32 as LeftShiftWith(i32) where .Result == i32 {
+  fn Op[me: i32](other: i32) -> i32 {
+    return __intrinsic_int_left_shift(me, other);
+  }
+}
+external impl i32 as RightShiftWith(i32) where .Result == i32 {
+  fn Op[me: i32](other: i32) -> i32 {
+    return __intrinsic_int_right_shift(me, other);
+  }
 }
 
 // Note that Print is experimental, and not part of an accepted proposal, but
