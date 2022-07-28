@@ -42,7 +42,7 @@ This process is designed to:
 
 -   Ensure these kinds of changes can receive feedback from the entire
     community.
--   Resolve questions and decide directions efficiently.
+-   Resolve questions and decide direction efficiently.
 -   Create a clear log of the rationale for why the project and language have
     evolved in particular directions.
 
