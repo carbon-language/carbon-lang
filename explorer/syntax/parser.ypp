@@ -465,7 +465,6 @@ additive_operand:
   ref_deref_expression
 | multiplicative_expression
 ;
-
 additive_lhs:
   ref_deref_expression
 | additive_expression
