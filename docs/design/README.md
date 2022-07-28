@@ -540,7 +540,7 @@ the array may be deduced, it may be omitted, as in:
 ```carbon
 var i: i32 = 1;
 // [i32;N] [i32;N] is an array representing N values, the numerical type of each value is the data type of i32, the size of the array is determined, and new elements cannot be added, nor can the elements of the array be reduced.
-var a:[i32;5] = (2,4,5,7,9);
+   var a:[i32;5] = (2,4,5,7,9);
 // `[i32;]` equivalent to `[i32; 3]` here.
 var a: [i32;] = (i,j,k);
 ```
