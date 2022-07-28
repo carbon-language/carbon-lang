@@ -225,7 +225,7 @@ Dwarf Error: DW_FORM_strx1 found in non-DWO CU
 It means that the version of GDB used is too old, and does not support the DWARF
 v5 format.
 
-### System Development Libraries (zlib, etc.)
+### zlib (Linux-only)
 
 On **Linux**, you need to have the zlib headers installed. For Debian- and
 Ubuntu-based distributions, you can install the development package:
