@@ -43,15 +43,15 @@ GitHub will autolink `img`, but won't produce a link when `href="#"`.
 
 **Modern and evolving**
 
--   Solid language foundations that are easy to learn, especially if you have
+-   Solid language foundations that are easy to learn, primarily if you have
     used C++
 -   Easy, tool-based upgrades between Carbon versions
--   Safer fundamentals, and an incremental path towards a memory-safe subset
+-   Safer fundamentals and an incremental path toward a memory-safe subset
 
 **Welcoming open-source community**
 
 -   Clear goals and priorities with robust governance
--   Community that works to be welcoming, inclusive, and friendly
+-   The Community that works to be welcoming, inclusive, and friendly
 -   Batteries-included approach: compiler, libraries, docs, tools, package
     manager, and more
 
@@ -61,12 +61,7 @@ C++ remains the dominant programming language for performance-critical software,
 with massive and growing codebases and investments. However, it is struggling to
 improve and meet developers' needs, as outlined above, in no small part due to
 accumulating decades of technical debt. Incrementally improving C++ is
-[extremely difficult](/docs/project/difficulties_improving_cpp.md), both due to
-the technical debt itself and challenges with its evolution process. The best
-way to address these problems is to avoid inheriting the legacy of C or C++
-directly, and instead start with solid language foundations like
-[modern generics system](#generics), modular code organization, and consistent,
-simple syntax.
+[complicated](/docs/project/difficulties_improving_cpp.md) due to the technical debt and challenges with its evolution process. The best way to address these problems is to avoid directly inheriting the legacy of C or C++. Instead start with solid language foundations like [modern generics system](#generics), modular code organization, and consistent,simple syntax.
 
 Existing modern languages already provide an excellent developer experience: Go,
 Swift, Kotlin, Rust, and many more. **Developers that _can_ use one of these
@@ -74,8 +69,8 @@ existing languages _should_.** Unfortunately, the designs of these languages
 present significant barriers to adoption and migration from C++. These barriers
 range from changes in the idiomatic design of software to performance overhead.
 
-Carbon is fundamentally **a successor language approach**, rather than an
-attempt to incrementally evolve C++. It is designed around interoperability with
+Carbon is fundamentally **a successor language approach** rather than an
+attempt to evolve C++ incrementally. It is designed around interoperability with
 C++ as well as large-scale adoption and migration for existing C++ codebases and
 developers. A successor language for C++ requires:
 
@@ -88,10 +83,10 @@ developers. A successor language for C++ requires:
 -   **Scalable migration**, with some level of source-to-source translation for
     idiomatic C++ code.
 
-With this approach, we can build on top of C++'s existing ecosystem, and bring
+With this approach, we can build on top of C++'s existing ecosystem and bring
 along existing investments, codebases, and developer populations. There are a
 few languages that have followed this model for other ecosystems, and Carbon
-aims to fill an analogous role for C++:
+aims to fill a similar role for C++:
 
 -   JavaScript → TypeScript
 -   Java → Kotlin
@@ -109,18 +104,17 @@ We are designing Carbon to support:
 -   Modern OS platforms, hardware architectures, and environments
 -   Interoperability with and migration from existing C++ code
 
-While many languages share subsets of these goals, what distinguishes Carbon is
-their combination.
+While many languages share subsets of these goals, their combination distinguishes Carbon.
 
 We also have explicit _non-goals_ for Carbon, notably including:
 
 -   A stable
     [application binary interface](https://en.wikipedia.org/wiki/Application_binary_interface)
     (ABI) for the entire language and library
--   Perfect backwards or forwards compatibility
+-   Perfect backward or forwards compatibility
 
 Our detailed [goals](/docs/project/goals.md) document fleshes out these ideas
-and provides a deeper view into our goals for the Carbon project and language.
+and provides a deeper view into our plans for the Carbon project and language.
 
 ## Project status
 
@@ -137,7 +131,7 @@ and the language:
 
 -   The strategy of the Carbon Language and project.
 -   An open-source project structure, governance model, and evolution process.
--   Critical and foundational aspects of the language design informed by our
+-   Critical and foundational aspects of the language design are informed by our
     experience with C++ and the most difficult challenges we anticipate. This
     includes designs for:
     -   Generics
@@ -146,18 +140,12 @@ and the language:
     -   Operator overloading
     -   Lexical and syntactic structure
     -   Code organization and modular structure
--   A prototype interpreter demo that can both run isolated examples and gives a
-    detailed analysis of the specific semantic model and abstract machine of
-    Carbon. We call this the [Carbon Explorer](/explorer/).
+-   A prototype interpreter demo that can both run isolated examples and gives a detailed analysis of Carbon's specific semantic model and abstract machine. We call this the [Carbon Explorer](/explorer/).
 
 If you're interested in contributing, we would love help
-[completing the 0.1 language designs](/docs/project/roadmap.md#completing-the-language-design),
-and
+[completing the 0.1 language designs](/docs/project/roadmap.md#completing-the-language-design) and
 [completing the Carbon Explorer implementation of this design](/docs/project/roadmap.md#demo-implementation-of-core-features-with-working-examples).
-We are also currently working to get more broad feedback and participation from
-the C++ community. Beyond that, we plan to prioritize C++ interoperability and a
-realistic toolchain that implements the 0.1 language and can be used to evaluate
-Carbon in more detail.
+We are also working on getting more general feedback and participation from the C++ community. Beyond that, we plan to prioritize C++ interoperability and a realistic toolchain that implements the 0.1 languages and can be used to evaluate Carbon in more detail.
 
 You can see our [full roadmap](/docs/project/roadmap.md) for more details.
 
@@ -178,7 +166,7 @@ https://drive.google.com/drive/folders/1-rsUjiya7dSZ87L8kpZmu3MZghRVxzLA
      alt="A snippet of C++ code. Follow the link to read it.">
 </a>
 
-corresponds to this Carbon code:
+Corresponds to this Carbon code:
 
 <a href="docs/images/snippets.md#carbon">
 <!--
@@ -189,8 +177,8 @@ https://drive.google.com/drive/folders/1-rsUjiya7dSZ87L8kpZmu3MZghRVxzLA
      alt="A snippet of converted Carbon code. Follow the link to read it.">
 </a>
 
-You can call Carbon from C++ without overhead and the other way around. This
-means you migrate a single C++ library to Carbon within an application, or write
+You can call Carbon from C++ without the overhead and the other way around. This
+means you migrate a single C++ library to Carbon within an application or write
 new Carbon on top of your existing C++ investment. For example:
 
 <a href="docs/images/snippets.md#mixed">
@@ -213,21 +201,21 @@ code to help you switch an existing C++ codebase to Carbon.
 
 Carbon provides a
 **[modern generics system](/docs/design/generics/overview.md#what-are-generics)**
-with checked definitions, while still **supporting opt-in
+with checked definitions while still **supporting opt-in
 [templates](/docs/design/templates.md) for seamless C++ interop**. Checked
-generics provide several advantages compared to C++ templates:
+generics offer several advantages compared to C++ templates:
 
 -   **Generic definitions are fully type-checked**, removing the need to
     instantiate to check for errors and giving greater confidence in code.
-    -   Avoids the compile-time cost of re-checking the definition for every
+    -   It avoids the compile-time cost of re-checking the definition for every
         instantiation.
     -   When using a definition-checked generic, usage error messages are
-        clearer, directly showing which requirements are not met.
+        more precise, directly showing which requirements are not met.
 -   **Enables automatic, opt-in type erasure and dynamic dispatch** without a
-    separate implementation. This can reduce the binary size and enables
+    separate implementation. This can reduce the binary size and allows
     constructs like heterogeneous containers.
 -   **Strong, checked interfaces** mean fewer accidental dependencies on
-    implementation details and a clearer contract for consumers.
+    implementation details and a more precise contract for consumers.
 
 Without sacrificing these advantages, **Carbon generics support
 specialization**, ensuring it can fully address performance-critical use cases
@@ -240,34 +228,31 @@ and with a smooth evolutionary path.
 
 ## Memory safety
 
-Safety, and especially
-[memory safety](https://en.wikipedia.org/wiki/Memory_safety), remains a key
+Safety, especially
+[memory safety](https://en.wikipedia.org/wiki/Memory_safety), remains a crucial
 challenge for C++ and something a successor language needs to address. Our
-initial priority and focus is on immediately addressing important, low-hanging
+initial priority and focus are on immediately addressing important, low-hanging
 fruit in the safety space:
 
 -   Tracking uninitialized states better, increased enforcement of
     initialization, and systematically providing hardening against
     initialization bugs when desired.
 -   Designing fundamental APIs and idioms to support dynamic bounds checks in
-    debug and hardened builds.
--   Having a default debug build mode that is both cheaper and more
-    comprehensive than existing C++ build modes even when combined with
-    [Address Sanitizer](https://github.com/google/sanitizers/wiki/AddressSanitizer).
+    debugging and hardened builds.
+-   A default debug build mode is cheaper and more comprehensive than existing C++ build modes, even when combined with [Address Sanitizer](https://github.com/google/sanitizers/wiki/AddressSanitizer).
 
 Once we can migrate code into Carbon, we will have a simplified language with
 room in the design space to add any necessary annotations or features, and
 infrastructure like [generics](#generics) to support safer design patterns.
 Longer term, we will build on this to introduce **a safe Carbon subset**. This
-will be a large and complex undertaking, and won't be in the 0.1 design.
-Meanwhile, we are closely watching and learning from efforts to add memory safe
-semantics onto C++ such as Rust-inspired
+will be a large and complex undertaking and won't be in the 0.1 design.
+Meanwhile, we are closely watching and learning from efforts to add memory-safe
+semantics onto C++, such as Rust-inspired
 [lifetime annotations](https://discourse.llvm.org/t/rfc-lifetime-annotations-for-c/61377).
 
 ## Getting started
 
-You can get started playing with Carbon by checking out the codebase and using
-the Carbon explorer:
+You can get started playing with Carbon by checking out the codebase and using Carbon explorer:
 
 ```shell
 # Install bazelisk using Homebrew.
