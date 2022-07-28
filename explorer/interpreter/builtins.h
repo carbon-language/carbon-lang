@@ -32,6 +32,7 @@ class Builtins {
     AddWith,
     SubWith,
     MulWith,
+    ModWith,
 
     // Comparison.
     EqWith,
@@ -45,6 +46,7 @@ class Builtins {
   static constexpr Builtin AddWith = Builtin::AddWith;
   static constexpr Builtin SubWith = Builtin::SubWith;
   static constexpr Builtin MulWith = Builtin::MulWith;
+  static constexpr Builtin ModWith = Builtin::ModWith;
   static constexpr Builtin EqWith = Builtin::EqWith;
 
   // Register a declaration that might be a builtin.
@@ -62,7 +64,8 @@ class Builtins {
  private:
   static constexpr int NumBuiltins = static_cast<int>(Builtin::Last) + 1;
   static constexpr std::array<std::string_view, NumBuiltins> BuiltinNames = {
-      "As", "ImplicitAs", "Negate", "AddWith", "SubWith", "MulWith", "EqWith"};
+      "As",      "ImplicitAs", "Negate",  "AddWith",
+      "SubWith", "MulWith",    "ModWith", "EqWith"};
 
   std::optional<Nonnull<const Declaration*>> builtins_[NumBuiltins] = {};
 };
