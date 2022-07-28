@@ -193,11 +193,9 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
     case Operator::Not:
       return arena_->New<BoolValue>(!cast<BoolValue>(*args[0]).value());
     case Operator::And:
-      return arena_->New<BoolValue>(cast<BoolValue>(*args[0]).value() &&
-                                    cast<BoolValue>(*args[1]).value());
     case Operator::Or:
-      return arena_->New<BoolValue>(cast<BoolValue>(*args[0]).value() ||
-                                    cast<BoolValue>(*args[1]).value());
+      CARBON_FATAL() << "Unreachable: 'and' and 'or' are evaluated in "
+                        "'::StepExp(...) to support short-circuiting.'";
     case Operator::Eq:
       return arena_->New<BoolValue>(ValueEqual(args[0], args[1], std::nullopt));
     case Operator::Ptr:
@@ -1087,7 +1085,23 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       if (auto rewrite = op.rewritten_form()) {
         return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
       }
-      if (act.pos() != static_cast<int>(op.arguments().size())) {
+      if ((op.op() == Operator::And || op.op() == Operator::Or) &&
+          act.pos() >= 1) {
+        auto operand_value =
+            cast<BoolValue>(*act.results()[act.pos() - 1]).value();
+        if ((op.op() == Operator::Or && operand_value) ||
+            (op.op() == Operator::And && !operand_value) || act.pos() == 2) {
+          // Short-circuit evaluation for 'and'/'or'
+          CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> value,
+                                  ErrorOr<Nonnull<const Value*>>(
+                                      arena_->New<BoolValue>(operand_value)));
+          return todo_.FinishAction(value);
+        } else {
+          // No short-circuit, evaluate 2nd operand
+          Nonnull<const Expression*> arg = op.arguments()[act.pos()];
+          return todo_.Spawn(std::make_unique<ExpressionAction>(arg));
+        }
+      } else if (act.pos() != static_cast<int>(op.arguments().size())) {
         //    { {v :: op(vs,[],e,es) :: C, E, F} :: S, H}
         // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}
         Nonnull<const Expression*> arg = op.arguments()[act.pos()];
