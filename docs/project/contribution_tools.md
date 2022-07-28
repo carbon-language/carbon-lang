@@ -311,7 +311,7 @@ used by some scripts.
 Our recommended way of installing is:
 
 ```bash
-brew install github/gh/gh
+brew install gh
 ```
 
 #### GitHub Desktop

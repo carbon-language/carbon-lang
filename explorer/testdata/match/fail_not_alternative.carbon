@@ -7,14 +7,16 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
+// CHECK: PROGRAM ERROR: {{.*}}/explorer/testdata/match/fail_not_alternative.carbon:17: Alternative pattern must have the form of a field access.
 
 package ExplorerTest api;
 
-class A { var n: i32; }
-
 fn Main() -> i32 {
-  var a: A = {.n = 5};
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/as/fail_no_conversion.carbon:[[@LINE+2]]: type error in `as`: `class A` is not explicitly convertible to `i32`:
-  // CHECK: could not find implementation of interface As(T = i32) for class A
-  return a as i32;
+  var x: i32 = 0;
+  match (x) {
+    case i32(n: i32) => {
+      return 1;
+    }
+  }
+  return 0;
 }

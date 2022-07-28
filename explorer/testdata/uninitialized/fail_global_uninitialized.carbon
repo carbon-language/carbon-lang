@@ -10,11 +10,9 @@
 
 package ExplorerTest api;
 
-class A { var n: i32; }
+var x: i32;
 
 fn Main() -> i32 {
-  var a: A = {.n = 5};
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/as/fail_no_conversion.carbon:[[@LINE+2]]: type error in `as`: `class A` is not explicitly convertible to `i32`:
-  // CHECK: could not find implementation of interface As(T = i32) for class A
-  return a as i32;
+  // CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/uninitialized/fail_global_uninitialized.carbon:[[@LINE+1]]: undefined behavior: access to uninitialized value Uninit<Placeholder<x>>
+  return x;
 }

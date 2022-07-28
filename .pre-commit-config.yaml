@@ -23,12 +23,12 @@ repos:
       - id: check-yaml
       - id: detect-private-key
       - id: end-of-file-fixer
-        exclude: '^(.*/fuzzer_corpus/.*)$'
+        exclude: '^(.*/fuzzer_corpus/.*|.*\.svg)$'
       - id: mixed-line-ending
         args: ['--fix=lf']
-        exclude: '^(.*/fuzzer_corpus/.*)$'
+        exclude: '^(.*/fuzzer_corpus/.*|.*\.svg)$'
       - id: trailing-whitespace
-        exclude: '^(.*/fuzzer_corpus/.*|.*/testdata/.*\.golden)$'
+        exclude: '^(.*/fuzzer_corpus/.*|.*/testdata/.*\.golden|.*\.svg)$'
   - repo: https://github.com/google/pre-commit-tool-hooks
     rev: cb78d9293306d9f737c64d9702bbaa88e157caaa # frozen: v1.2.2
     hooks:

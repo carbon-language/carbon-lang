@@ -13,8 +13,8 @@ This directory collects syntax highlighting utilities for use with Carbon code.
 This JavaScript syntax highlighting system is used on webpages or in
 presentation software like [reveal.js](https://revealjs.com/).
 
-The code is in [highlightjs_carbon_lang.js], and you can use it by registering
-it after you load highlight.js:
+The code is in [highlightjs_carbon_lang.js](highlightjs_carbon_lang.js), and you
+can use it by registering it after you load highlight.js:
 
 ```html
 <script type="module">
@@ -24,7 +24,8 @@ it after you load highlight.js:
 </script>
 ```
 
-See [highlightjs_example.html] for a more complete example.
+See [highlightjs_example.html](highlightjs_example.html) for a more complete
+example.
 
 It includes many Carbon-specific markup indicators that may be useful to
 customize display or highlighting of Carbon code.

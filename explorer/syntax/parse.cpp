@@ -29,10 +29,11 @@ static auto ParseImpl(yyscan_t scanner, Nonnull<Arena*> arena,
   }
 
   if (auto syntax_error_code = parser(); syntax_error_code != 0) {
-    const std::string error_message = context.error_messages().empty()
-                                          ? "Unknown parser error"
-                                          : context.error_messages()[0];
-    return Error(error_message);
+    auto errors = context.take_errors();
+    if (errors.empty()) {
+      return Error("Unknown parser erroor");
+    }
+    return std::move(errors.front());
   }
 
   // Return parse results.
