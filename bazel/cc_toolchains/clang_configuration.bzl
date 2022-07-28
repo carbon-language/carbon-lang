@@ -27,23 +27,19 @@ def _detect_system_clang(repository_ctx):
     # the compiler. This should point at the `clang` executable to use.
     cc = repository_ctx.os.environ.get("CC")
     cc_path = None
+    path_source = None
     if cc:
+        path_source = "CC"
         cc_path = repository_ctx.path(cc)
         if not cc_path.exists:
             cc_path = repository_ctx.which(cc)
-        if not cc_path:
-            fail("The `CC` environment variable `%s`, which did not resolve to a file." % cc)
-        version_output = _run(repository_ctx, [cc_path, "--version"]).stdout
-        if "clang" not in version_output:
-            fail("The `CC` environment variable `%s` resolved to `%s` which is not a Clang compiler." % (cc, cc_path))
-        return cc_path
-    
-    cc_path = repository_ctx.which("clang")
-    if not (cc_path and cc_path.exists):
-        fail("Unable to find a `clang` executable on the system path or as the environment variable `CC`.")
+    if not cc_path:
+        cc_path = repository_ctx.which("clang")
+    if not cc_path:
+        fail("Cannot find clang or CC (%s); either correct your path or set the CC environment variable" % cc)
     version_output = _run(repository_ctx, [cc_path, "--version"]).stdout
     if "clang" not in version_output:
-        fail("The `clang` executable on the system path resolved to `%s` which is not a Clang compiler" % cc_path)
+        fail("Searching for clang or CC (%s), and found (%s), which is not a Clang compiler" % (cc, cc_path))
     return cc_path
 
 def _compute_clang_resource_dir(repository_ctx, clang):
