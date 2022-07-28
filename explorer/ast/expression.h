@@ -120,6 +120,7 @@ enum class Operator {
   Deref,
   Eq,
   Mul,
+  Mod,
   Neg,
   Not,
   Or,

@@ -117,6 +117,10 @@ static auto OperatorToCarbon(const Fuzzing::OperatorExpression& operator_expr,
       BinaryOperatorToCarbon(arg0, " * ", arg1, out);
       break;
 
+    case Fuzzing::OperatorExpression::Mod:
+      BinaryOperatorToCarbon(arg0, " % ", arg1, out);
+      break;
+
     case Fuzzing::OperatorExpression::Ptr:
       PostfixUnaryOperatorToCarbon(arg0, "*", out);
       break;
