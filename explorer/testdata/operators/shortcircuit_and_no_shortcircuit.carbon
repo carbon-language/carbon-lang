@@ -18,6 +18,6 @@ fn ReturnTrue() -> Bool {
 }
 
 fn Main() -> i32 {
-  var unused: Bool = ReturnTrue() and ReturnTrue();
-  return call_count;
+  var result: Bool = ReturnTrue() and ReturnTrue();
+  return if result then call_count else -1;
 }
