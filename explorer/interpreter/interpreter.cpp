@@ -1157,7 +1157,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       }
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       switch (cast<IntrinsicExpression>(exp).intrinsic()) {
-        case IntrinsicExpression::Intrinsic::Random: {
+        case IntrinsicExpression::Intrinsic::Rand: {
           const auto& args = cast<TupleValue>(*act.results()[0]).elements();
           CARBON_CHECK(args.size() == 2);
 

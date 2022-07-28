@@ -30,7 +30,7 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
       {{"print", Intrinsic::Print},
        {"new", Intrinsic::Alloc},
        {"delete", Intrinsic::Dealloc},
-       {"rand",Intrinsic::Random}});
+       {"rand",Intrinsic::Rand}});
   name.remove_prefix(std::strlen("__intrinsic_"));
   auto it = intrinsic_map.find(name);
   if (it == intrinsic_map.end()) {
@@ -174,10 +174,6 @@ void Expression::Print(llvm::raw_ostream& out) const {
         out << "Print" << iexp.args();
         break;
       }
-      if (iexp.intrinsic() == IntrinsicExpression::Intrinsic::Random) {
-        out << "Random" << iexp.args();
-        break;
-      }
 
       out << "intrinsic_";
       switch (iexp.intrinsic()) {
@@ -190,7 +186,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
         case IntrinsicExpression::Intrinsic::Dealloc:
           out << "delete";
           break;
-        case IntrinsicExpression::Intrinsic::Random:
+        case IntrinsicExpression::Intrinsic::Rand:
           out << "rand";
           break;
       }

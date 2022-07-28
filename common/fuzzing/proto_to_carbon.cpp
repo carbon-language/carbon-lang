@@ -302,7 +302,7 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
         case Fuzzing::IntrinsicExpression::Dealloc:
           out << "__intrinsic_delete";
           break;
-        case Fuzzing::IntrinsicExpression::Random:
+        case Fuzzing::IntrinsicExpression::Rand:
           out << "__intrinsic_rand";
           break;
       }

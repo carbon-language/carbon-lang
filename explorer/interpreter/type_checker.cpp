@@ -2182,7 +2182,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&intrinsic_exp.args(), impl_scope));
       const auto& args = intrinsic_exp.args().fields();
       switch (cast<IntrinsicExpression>(*e).intrinsic()) {
-        case IntrinsicExpression::Intrinsic::Random: {
+        case IntrinsicExpression::Intrinsic::Rand: {
           if (args.size() != 2) {
             return CompilationError(e->source_loc())
                    << "Rand takes 2 arguments, received " << args.size();

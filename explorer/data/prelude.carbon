@@ -56,7 +56,7 @@ impl forall [U1:! Type, U2:! Type, U3:! Type,
 //   __intrinsic_print(format_str);
 // }
 
-fn Rand(low: i32, high: i32)->i32{
+fn Rand(low: i32, high: i32) -> i32{
     return __intrinsic_rand(low,high);
 }
 

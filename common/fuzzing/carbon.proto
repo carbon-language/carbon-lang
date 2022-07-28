@@ -90,7 +90,7 @@ message IntrinsicExpression {
     Print = 1;
     Alloc = 2;
     Dealloc = 3;
-    Random = 4;
+    Rand = 4;
   }
   optional Intrinsic intrinsic = 1;
   optional TupleLiteralExpression argument = 2;
