@@ -36,6 +36,7 @@ contributions.
     -   [Vim](#vim)
         -   [vim-prettier](#vim-prettier)
     -   [Visual Studio Code](#visual-studio-code)
+        -   [DevContainer](#devcontainer)
     -   [pre-commit enabled tools](#pre-commit-enabled-tools)
         -   [black](#black)
         -   [codespell](#codespell)
@@ -389,6 +390,22 @@ Our recommended way of installing is to use
 > Studio Code to run `bazel`, not both in combination. Visual Studio Code can
 > still be used for other purposes, such as editing files, without interfering
 > with `bazel`.
+
+#### DevContainer
+
+To support developers join the project without deploying the build env, we
+provide VSCode `DevContainer`.
+
+-   Install VSCode and Docker;
+-   Install the plugin `ms-vscode-remote.remote-containers` under VSCode;
+-   Open `Carban` project folder in
+    [VSCode](https://docs.microsoft.com/en-us/azure-sphere/app-development/container-build-vscode#build-and-debug-the-project);
+    <br> Visual Studio Code detects the new files and opens a message box
+    saying:
+    `Folder contains a Dev Container configuration file. Reopen to folder to develop in a container.`
+-   Select the `Reopen in Container` button to reopen the folder in the
+    container created by the `.devcontainer/Dockerfile` file;
+-   And then, you are ready to start writing code.
 
 ### pre-commit enabled tools
 
