@@ -44,7 +44,7 @@ fn Main() -> i32 {
 
   x = 15 % -7;
   if( not ( x == 1)){
-      return x;
+      return 6;
   }
 
   x = -15 % -identFn(7);
