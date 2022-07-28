@@ -127,14 +127,20 @@ static void SetValue(Nonnull<Pattern*> pattern, Nonnull<const Value*> value) {
   }
 }
 
+auto TypeChecker::IsSameType(Nonnull<const Value*> type1,
+                             Nonnull<const Value*> type2,
+                             const ImplScope& impl_scope) const -> bool {
+  SingleStepEqualityContext equality_ctx(this, &impl_scope);
+  return TypeEqual(type1, type2, &equality_ctx);
+}
+
 auto TypeChecker::ExpectExactType(SourceLocation source_loc,
                                   const std::string& context,
                                   Nonnull<const Value*> expected,
                                   Nonnull<const Value*> actual,
                                   const ImplScope& impl_scope) const
     -> ErrorOr<Success> {
-  SingleStepEqualityContext equality_ctx(this, &impl_scope);
-  if (!TypeEqual(expected, actual, &equality_ctx)) {
+  if (!IsSameType(expected, actual, impl_scope)) {
     return CompilationError(source_loc) << "type error in " << context << "\n"
                                         << "expected: " << *expected << "\n"
                                         << "actual: " << *actual;
@@ -380,8 +386,7 @@ auto TypeChecker::IsImplicitlyConvertible(
   // conversions.
   CARBON_CHECK(IsConcreteType(source));
   CARBON_CHECK(IsConcreteType(destination));
-  SingleStepEqualityContext equality_ctx(this, &impl_scope);
-  if (TypeEqual(source, destination, &equality_ctx)) {
+  if (IsSameType(source, destination, impl_scope)) {
     return true;
   }
 
@@ -1938,44 +1943,58 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         CARBON_RETURN_IF_ERROR(TypeCheckExp(argument, impl_scope));
         ts.push_back(&argument->static_type());
       }
+
+      auto handle_binary_arithmetic =
+          [&](Builtins::Builtin builtin) -> ErrorOr<Success> {
+        // Handle a built-in operator first.
+        if (isa<IntType>(ts[0]) && isa<IntType>(ts[1]) &&
+            IsSameType(ts[0], ts[1], impl_scope)) {
+          op.set_static_type(ts[0]);
+          op.set_value_category(ValueCategory::Let);
+          return Success();
+        }
+
+        // Now try an overloaded operator.
+        ErrorOr<Nonnull<Expression*>> result = BuildBuiltinMethodCall(
+            impl_scope, op.arguments()[0], BuiltinInterfaceName{builtin, ts[1]},
+            BuiltinMethodCall{"Op", {op.arguments()[1]}});
+        if (!result.ok()) {
+          // We couldn't find a matching `impl`.
+          return CompilationError(e->source_loc())
+                 << "type error in `" << ToString(op.op()) << "`:\n"
+                 << result.error().message();
+        }
+        op.set_rewritten_form(*result);
+        return Success();
+      };
+
       switch (op.op()) {
-        case Operator::Neg:
-          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "negation",
-                                                 arena_->New<IntType>(), ts[0],
-                                                 impl_scope));
-          op.set_static_type(arena_->New<IntType>());
-          op.set_value_category(ValueCategory::Let);
+        case Operator::Neg: {
+          // Handle a built-in negation first.
+          if (isa<IntType>(ts[0])) {
+            op.set_static_type(arena_->New<IntType>());
+            op.set_value_category(ValueCategory::Let);
+            return Success();
+          }
+          // Now try an overloaded negation.
+          ErrorOr<Nonnull<Expression*>> result = BuildBuiltinMethodCall(
+              impl_scope, op.arguments()[0],
+              BuiltinInterfaceName{Builtins::Negate}, BuiltinMethodCall{"Op"});
+          if (!result.ok()) {
+            // We couldn't find a matching `impl`.
+            return CompilationError(e->source_loc())
+                   << "type error in `" << ToString(op.op()) << "`:\n"
+                   << result.error().message();
+          }
+          op.set_rewritten_form(*result);
           return Success();
+        }
         case Operator::Add:
-          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "addition(1)",
-                                                 arena_->New<IntType>(), ts[0],
-                                                 impl_scope));
-          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "addition(2)",
-                                                 arena_->New<IntType>(), ts[1],
-                                                 impl_scope));
-          op.set_static_type(arena_->New<IntType>());
-          op.set_value_category(ValueCategory::Let);
-          return Success();
+          return handle_binary_arithmetic(Builtins::AddWith);
         case Operator::Sub:
-          CARBON_RETURN_IF_ERROR(
-              ExpectExactType(e->source_loc(), "subtraction(1)",
-                              arena_->New<IntType>(), ts[0], impl_scope));
-          CARBON_RETURN_IF_ERROR(
-              ExpectExactType(e->source_loc(), "subtraction(2)",
-                              arena_->New<IntType>(), ts[1], impl_scope));
-          op.set_static_type(arena_->New<IntType>());
-          op.set_value_category(ValueCategory::Let);
-          return Success();
+          return handle_binary_arithmetic(Builtins::SubWith);
         case Operator::Mul:
-          CARBON_RETURN_IF_ERROR(
-              ExpectExactType(e->source_loc(), "multiplication(1)",
-                              arena_->New<IntType>(), ts[0], impl_scope));
-          CARBON_RETURN_IF_ERROR(
-              ExpectExactType(e->source_loc(), "multiplication(2)",
-                              arena_->New<IntType>(), ts[1], impl_scope));
-          op.set_static_type(arena_->New<IntType>());
-          op.set_value_category(ValueCategory::Let);
-          return Success();
+          return handle_binary_arithmetic(Builtins::MulWith);
         case Operator::And:
           CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "&&(1)",
                                                  arena_->New<BoolType>(), ts[0],
@@ -2812,9 +2831,8 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
         // TODO: Consider using `ExpectExactType` here.
         CARBON_CHECK(IsConcreteType(&return_term.static_type()));
         CARBON_CHECK(IsConcreteType(&ret.value_node().static_type()));
-        SingleStepEqualityContext equality_ctx(this, &impl_scope);
-        if (!TypeEqual(&return_term.static_type(),
-                       &ret.value_node().static_type(), &equality_ctx)) {
+        if (!IsSameType(&return_term.static_type(),
+                        &ret.value_node().static_type(), impl_scope)) {
           return CompilationError(ret.value_node().base().source_loc())
                  << "type of returned var `" << ret.value_node().static_type()
                  << "` does not match return type `"

@@ -12,11 +12,17 @@ namespace Carbon {
 
 void Builtins::Register(Nonnull<const Declaration*> decl) {
   if (auto* interface = dyn_cast<InterfaceDeclaration>(decl)) {
-    if (interface->name() == GetName(Builtin::ImplicitAs)) {
-      builtins_[static_cast<int>(Builtin::ImplicitAs)] = interface;
-    }
-    if (interface->name() == GetName(Builtin::As)) {
-      builtins_[static_cast<int>(Builtin::As)] = interface;
+    static std::map<std::string, int>* builtin_indexes = [] {
+      std::map<std::string, int> builtin_indexes;
+      for (int index = 0; index <= static_cast<int>(Builtin::Last); ++index) {
+        builtin_indexes.emplace(BuiltinNames[index], index);
+      }
+      return new auto(std::move(builtin_indexes));
+    }();
+
+    auto it = builtin_indexes->find(interface->name());
+    if (it != builtin_indexes->end()) {
+      builtins_[it->second] = interface;
     }
   }
 }

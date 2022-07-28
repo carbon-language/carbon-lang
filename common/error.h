@@ -23,19 +23,48 @@ struct Success {};
 class [[nodiscard]] Error {
  public:
   // Represents an error state.
-  explicit Error(llvm::Twine message) : message_(message.str()) {
+  explicit Error(llvm::Twine prefix, llvm::Twine location, llvm::Twine message)
+      : prefix_(prefix.str()),
+        location_(location.str()),
+        message_(message.str()) {
     CARBON_CHECK(!message_.empty()) << "Errors must have a message.";
   }
 
-  Error(Error&& other) noexcept : message_(std::move(other.message_)) {}
+  // Represents an error with no associated prefix or location.
+  // TODO: Consider using two different types.
+  explicit Error(llvm::Twine message) : Error("", "", message) {}
 
-  // Prints the error string. Note this marks as used.
-  void Print(llvm::raw_ostream& out) const { out << message(); }
+  Error(Error&& other) noexcept
+      : prefix_(std::move(other.prefix_)),
+        location_(std::move(other.location_)),
+        message_(std::move(other.message_)) {}
+
+  // Prints the error string.
+  void Print(llvm::raw_ostream& out) const {
+    if (!prefix().empty()) {
+      out << prefix() << ": ";
+    }
+    if (!location().empty()) {
+      out << location() << ": ";
+    }
+    out << message();
+  }
+
+  // Returns the prefix to prepend to the error, such as "ERROR".
+  auto prefix() const -> const std::string& { return prefix_; }
+
+  // Returns a string describing the location of the error, such as
+  // "file.cc:123".
+  auto location() const -> const std::string& { return location_; }
 
   // Returns the error message.
   auto message() const -> const std::string& { return message_; }
 
  private:
+  // A prefix, indicating the kind of error.
+  std::string prefix_;
+  // The location associated with the error.
+  std::string location_;
   // The error message.
   std::string message_;
 };
@@ -109,7 +138,12 @@ class [[nodiscard]] ErrorOr {
 // `Error` and `ErrorOr<T>`.
 class ErrorBuilder {
  public:
-  ErrorBuilder() : out_(std::make_unique<llvm::raw_string_ostream>(message_)) {}
+  explicit ErrorBuilder(std::string prefix, std::string location)
+      : prefix_(std::move(prefix)),
+        location_(std::move(location)),
+        out_(std::make_unique<llvm::raw_string_ostream>(message_)) {}
+
+  explicit ErrorBuilder() : ErrorBuilder("", "") {}
 
   // Accumulates string message.
   template <typename T>
@@ -119,15 +153,17 @@ class ErrorBuilder {
   }
 
   // NOLINTNEXTLINE(google-explicit-constructor): Implicit cast for returns.
-  operator Error() { return Error(message_); }
+  operator Error() { return Error(prefix_, location_, message_); }
 
   template <typename T>
   // NOLINTNEXTLINE(google-explicit-constructor): Implicit cast for returns.
   operator ErrorOr<T>() {
-    return Error(message_);
+    return Error(prefix_, location_, message_);
   }
 
  private:
+  std::string prefix_;
+  std::string location_;
   std::string message_;
   // Use a pointer to allow move construction.
   std::unique_ptr<llvm::raw_string_ostream> out_;

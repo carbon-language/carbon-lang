@@ -49,6 +49,47 @@ impl forall [U1:! Type, U2:! Type, U3:! Type,
   }
 }
 
+interface Negate {
+  // TODO: = Self
+  let Result:! Type;
+  fn Op[me: Self]() -> Result;
+}
+
+interface AddWith(U:! Type) {
+  // TODO: = Self
+  let Result:! Type;
+  fn Op[me: Self](other: U) -> Result;
+}
+// TODO: constraint Add { ... }
+
+interface SubWith(U:! Type) {
+  // TODO: = Self
+  let Result:! Type;
+  fn Op[me: Self](other: U) -> Result;
+}
+// TODO: constraint Sub { ... }
+
+interface MulWith(U:! Type) {
+  // TODO: = Self
+  let Result:! Type;
+  fn Op[me: Self](other: U) -> Result;
+}
+// TODO: constraint Mul { ... }
+
+// Note, these impls use the builtin addition for i32.
+external impl i32 as Negate where .Result == i32 {
+  fn Op[me: i32]() -> i32 { return -me; }
+}
+external impl i32 as AddWith(i32) where .Result == i32 {
+  fn Op[me: i32](other: i32) -> i32 { return me + other; }
+}
+external impl i32 as SubWith(i32) where .Result == i32 {
+  fn Op[me: i32](other: i32) -> i32 { return me - other; }
+}
+external impl i32 as MulWith(i32) where .Result == i32 {
+  fn Op[me: i32](other: i32) -> i32 { return me * other; }
+}
+
 // Note that Print is experimental, and not part of an accepted proposal, but
 // is included here for printing state in tests.
 // TODO: Remove Print special casing once we have variadics or overloads.

@@ -7,12 +7,16 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
+// CHECK: PROGRAM ERROR: {{.*}}/explorer/testdata/match/fail_not_alternative.carbon:17: Alternative pattern must have the form of a field access.
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  var x: i32;
-  // CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/uninitialized/fail_uninitialized_init.carbon:[[@LINE+1]]: undefined behavior: access to uninitialized value Uninit<Placeholder<x>>
-  var y: i32 = x;
-  return x;
+  var x: i32 = 0;
+  match (x) {
+    case i32(n: i32) => {
+      return 1;
+    }
+  }
+  return 0;
 }
