@@ -81,7 +81,7 @@ interface ModWith(U:! Type) {
   let Result:! Type;
   fn Op[me: Self](other: U) -> Result;
 }
-// TODO: constraint Mul { ... }
+// TODO: constraint Mod { ... }
 
 // Note, these impls use the builtin addition for i32.
 external impl i32 as Negate where .Result == i32 {
