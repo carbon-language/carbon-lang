@@ -40,7 +40,7 @@ fn Procedure() -> i32 {
 
 fn Main() -> i32 {
   let str = "Hello world";
-  let hex = 0xabcdef1234567890;
+  let hex = 0xABCDEF1234567890;
   let bin = 0b0000111001010010;
   let dec = 123456789012345678;
 
