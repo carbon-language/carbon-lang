@@ -26,13 +26,11 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
   if (name == "Print") {
     return Intrinsic::Print;
   }
-  if (name == "Rand") {
-    return Intrinsic::Random;
-  }
   static const auto& intrinsic_map = *new std::map<std::string_view, Intrinsic>(
       {{"print", Intrinsic::Print},
        {"new", Intrinsic::Alloc},
-       {"delete", Intrinsic::Dealloc}});
+       {"delete", Intrinsic::Dealloc},
+       {"rand",Intrinsic::Random}});
   name.remove_prefix(std::strlen("__intrinsic_"));
   auto it = intrinsic_map.find(name);
   if (it == intrinsic_map.end()) {

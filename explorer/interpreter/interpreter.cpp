@@ -31,8 +31,7 @@ using llvm::isa;
 
 namespace Carbon {
 
-static std::random_device rand_dev;
-static std::mt19937 generator(rand_dev());
+static std::mt19937 generator(12);
 
 // Constructs an ActionStack suitable for the specified phase.
 static auto MakeTodo(Phase phase, Nonnull<Heap*> heap) -> ActionStack {

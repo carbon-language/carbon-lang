@@ -56,6 +56,10 @@ impl forall [U1:! Type, U2:! Type, U3:! Type,
 //   __intrinsic_print(format_str);
 // }
 
+fn Rand(low: i32, high: i32)->i32{
+    return __intrinsic_rand(low,high);
+}
+
 class Heap {
   fn New[T:! Type, me: Self](x : T) -> T* {
     return __intrinsic_new(x);
