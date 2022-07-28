@@ -13,7 +13,7 @@ package ExplorerTest api;
 // TODO: We should type-check the prelude before the main input so that we can
 // use it within the types of top-level declarations.
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_invalid_fnty.carbon:[[@LINE+2]]: type error in `-`:
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_invalid_fnty.carbon:[[@LINE+1]]: missing declaration for builtin `Negate`
+// CHECK: missing declaration for builtin `Negate`
 fn f(g: __Fn(-true) -> true) {
 }
 
