@@ -2025,8 +2025,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         case Operator::Eq: {
           ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
               impl_scope, op.arguments()[0],
-              BuiltinInterfaceName{Builtins::Eq, {}},
-              BuiltinMethodCall{"Equals", op.arguments()[1]});
+              BuiltinInterfaceName{Builtins::EqWith, ts[1]},
+              BuiltinMethodCall{"Equal", op.arguments()[1]});
           if (!converted.ok()) {
             // We couldn't find a matching `impl`.
             return CompilationError(e->source_loc())
@@ -2256,10 +2256,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                    << "__intrinsic_int_eq takes 2 arguments";
           }
           CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "__intrinsic_int_eq argument 0",
+              e->source_loc(), "__intrinsic_int_eq argument 1",
               arena_->New<IntType>(), &args[0]->static_type(), impl_scope));
           CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "__intrinsic_int_eq argument 1",
+              e->source_loc(), "__intrinsic_int_eq argument 2",
               arena_->New<IntType>(), &args[1]->static_type(), impl_scope));
           e->set_static_type(arena_->New<BoolType>());
           e->set_value_category(ValueCategory::Let);
@@ -2271,10 +2271,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                    << "__intrinsic_str_eq takes 2 arguments";
           }
           CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "__intrinsic_str_eq argument 0",
+              e->source_loc(), "__intrinsic_str_eq argument 1",
               arena_->New<StringType>(), &args[0]->static_type(), impl_scope));
           CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "__intrinsic_str_eq argument 1",
+              e->source_loc(), "__intrinsic_str_eq argument 2",
               arena_->New<StringType>(), &args[1]->static_type(), impl_scope));
           e->set_static_type(arena_->New<BoolType>());
           e->set_value_category(ValueCategory::Let);

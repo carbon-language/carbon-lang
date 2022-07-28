@@ -24,9 +24,6 @@ void Builtins::Register(Nonnull<const Declaration*> decl) {
     if (it != builtin_indexes->end()) {
       builtins_[it->second] = interface;
     }
-    if (interface->name() == GetName(Builtin::Eq)) {
-      builtins_[static_cast<int>(Builtin::Eq)] = interface;
-    }
   }
 }
 

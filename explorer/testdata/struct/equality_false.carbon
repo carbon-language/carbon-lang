@@ -12,9 +12,9 @@
 package ExplorerTest api;
 
 // TODO: Implement this with some kind of reflection?
-impl {.x: i32, .y: i32} as Eq {
-  fn Equals[me: Self](rhs: Self) -> Bool {
-    return me.x == rhs.x and me.y == rhs.y;
+external impl {.x: i32, .y: i32} as EqWith(Self) {
+  fn Equal[me: Self](other: Self) -> Bool {
+    return me.x == other.x and me.y == other.y;
   }
 }
 
