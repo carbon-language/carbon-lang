@@ -10,13 +10,12 @@
 
 package ExplorerTest api;
 
-// TODO: We should type-check the prelude before the main input so that we can
-// use it within the types of top-level declarations.
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_invalid_fnty.carbon:[[@LINE+2]]: type error in `-`:
-// CHECK: missing declaration for builtin `Negate`
-fn f(g: __Fn(-true) -> true) {
-}
+class A {}
 
 fn Main() -> i32 {
+  var a: A = {};
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/operators/fail_no_negate.carbon:[[@LINE+2]]: type error in `-`:
+  // CHECK: could not find implementation of interface Negate for class A
+  -a;
   return 0;
 }
