@@ -7,33 +7,18 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: result: 0
+// CHECK: result: 4
 
 package ExplorerTest api;
 
-interface MyAddWith(T:! Type) {
-  fn Op[me: Self](b: T) -> Self;
-}
+class A { var n: i32; }
 
-class Point {
-  var x: i32;
-  var y: i32;
-}
-
-// Allowed: `Self` means `Point` after `as`
-impl Point as MyAddWith(Self) {
-  fn Op[me: Point](b: Point) -> Point {
-    return {.x = me.x + b.x, .y = me.y + b.y};
-  }
-}
-
-fn DoAddGeneric[T:! Type, U:! MyAddWith(T)](a: U, b: T) -> U {
-  return a.Op(b);
+external impl A as SubWith(i32) where .Result == A {
+  fn Op[me: Self](rhs: i32) -> A { return {.n = me.n - rhs}; }
 }
 
 fn Main() -> i32 {
-  var a: Point = {.x = 2, .y = 1};
-  var b: Point = {.x = 4, .y = 2};
-  var p: Point = DoAddGeneric(a, b);
-  return p.x - p.y - 3;
+  var a: A = {.n = 5};
+  a = a - 1;
+  return a.n;
 }
