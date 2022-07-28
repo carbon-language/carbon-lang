@@ -30,7 +30,7 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
       {{"print", Intrinsic::Print},
        {"new", Intrinsic::Alloc},
        {"delete", Intrinsic::Dealloc},
-       {"rand",Intrinsic::Rand}});
+       {"rand", Intrinsic::Rand}});
   name.remove_prefix(std::strlen("__intrinsic_"));
   auto it = intrinsic_map.find(name);
   if (it == intrinsic_map.end()) {
