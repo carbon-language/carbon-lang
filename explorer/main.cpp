@@ -89,7 +89,7 @@ static auto Main(llvm::StringRef default_prelude_file, int argc, char* argv[])
 auto ExplorerMain(llvm::StringRef default_prelude_file, int argc, char** argv)
     -> int {
   if (auto result = Main(default_prelude_file, argc, argv); !result.ok()) {
-    llvm::errs() << result.error().message() << "\n";
+    llvm::errs() << result.error() << "\n";
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;
