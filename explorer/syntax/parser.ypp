@@ -451,7 +451,7 @@ multiplicative_expression:
 ;
 modulo_operand:
   ref_deref_expression
-| minus_expression 
+| minus_expression
 ;
 modulo_expression:
   modulo_operand MODULO modulo_operand
@@ -507,7 +507,7 @@ unimpl_expression:
 ;
 value_expression:
   // ref_deref_expression excluded due to precedence diamond.
-  additive_expression 
+  additive_expression
 | modulo_expression
 | as_expression
 | combine_expression
