@@ -163,6 +163,11 @@ repos:
           - '/*'
           - ''
           - '*/'
+          - --custom_format
+          - '\.(plist)$'
+          - '<!--'
+          - ''
+          - ' -->'
         exclude: |
           (?x)^(
               .bazelversion|
