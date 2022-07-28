@@ -24,7 +24,7 @@ contributions.
         -   [Manual installations (not recommended)](#manual-installations-not-recommended)
         -   [Troubleshooting build issues](#troubleshooting-build-issues)
         -   [Troubleshooting debug issues](#troubleshooting-debug-issues)
-    -   [System Development Libraries (zlib, etc.)](#system-development-libraries-zlib-etc)
+    -   [zlib (Linux-only)](#zlib-linux-only)
     -   [pre-commit](#pre-commit)
 -   [Optional tools](#optional-tools)
     -   [Carbon-maintained](#carbon-maintained)
