@@ -101,15 +101,15 @@ spaces:
     -   In general, if someone asks you to stop, then stop. Persisting after
         being asked to stop is considered harassment.
 
--   **When we disagree, we try to understand why.** Disagreements, both social and
-    technical, happen all the time, and Carbon is no exception. It is important
-    that we resolve disagreements and differing views constructively. Remember
-    that we’re different. The strength of the project comes from its varied
-    community: people from a wide range of backgrounds. Different people have
-    different perspectives on issues. Being unable to understand why someone
-    holds a viewpoint doesn’t mean that they’re wrong. Don’t forget that it is
-    human to err and blaming each other doesn’t get us anywhere. Instead, focus
-    on helping to resolve issues and learning from mistakes.
+-   **When we disagree, we try to understand why.** Disagreements, both social
+    and technical, happen all the time, and Carbon is no exception. It is
+    important that we resolve disagreements and differing views constructively.
+    Remember that we’re different. The strength of the project comes from its
+    varied community: people from a wide range of backgrounds. Different people
+    have different perspectives on issues. Being unable to understand why
+    someone holds a viewpoint doesn’t mean that they’re wrong. Don’t forget that
+    it is human to err and blaming each other doesn’t get us anywhere. Instead,
+    focus on helping to resolve issues and learning from mistakes.
 
 -   **Recognize when progress has stopped, and take a step back.** Regardless of
     whether you're trying to resolve a disagreement or anything else, think
