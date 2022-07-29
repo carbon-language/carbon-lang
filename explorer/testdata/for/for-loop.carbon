@@ -20,22 +20,11 @@ fn Main() -> i32 {
    var count : i32 = 0;
    for( x: i32 in ar){
       Print("HALLO WELT ", x);
-       count = count +1;
+      count = count +1;
    }
-   for( x: i32 in ar){
-       if( x == 0){
-        Print("HALLO WELT 0");
-       }
-       if( x == 1){
-        Print("HALLO WELT 1");
-       }
-       if( x == 2){
-        Print("HALLO WELT 2");
-       }
-       if( x == 3){
-        Print("HALLO WELT 3");
-       }
-       count = count +1;
+   for( x: i32 in ar){ 
+      Print("HALLO WELT ", x);
+      count = count +1;
     }
     return count;
 }
