@@ -24,6 +24,7 @@ contributions.
         -   [Manual installations (not recommended)](#manual-installations-not-recommended)
         -   [Troubleshooting build issues](#troubleshooting-build-issues)
         -   [Troubleshooting debug issues](#troubleshooting-debug-issues)
+    -   [zlib (Linux-only)](#zlib-linux-only)
     -   [pre-commit](#pre-commit)
 -   [Optional tools](#optional-tools)
     -   [Carbon-maintained](#carbon-maintained)
@@ -224,6 +225,15 @@ Dwarf Error: DW_FORM_strx1 found in non-DWO CU
 
 It means that the version of GDB used is too old, and does not support the DWARF
 v5 format.
+
+### zlib (Linux-only)
+
+On **Linux**, you need to have the zlib headers installed. For Debian- and
+Ubuntu-based distributions, you can install the development package:
+
+```bash
+sudo apt install zlib1g-dev
+```
 
 ### pre-commit
 

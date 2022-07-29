@@ -30,6 +30,7 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
       {{"print", Intrinsic::Print},
        {"new", Intrinsic::Alloc},
        {"delete", Intrinsic::Dealloc},
+       {"rand", Intrinsic::Rand},
        {"int_eq", Intrinsic::IntEq},
        {"str_eq", Intrinsic::StrEq}});
   name.remove_prefix(std::strlen("__intrinsic_"));
@@ -177,6 +178,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
         out << "Print" << iexp.args();
         break;
       }
+
       out << "intrinsic_";
       switch (iexp.intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print:
@@ -188,12 +190,14 @@ void Expression::Print(llvm::raw_ostream& out) const {
         case IntrinsicExpression::Intrinsic::Dealloc:
           out << "delete";
           break;
+        case IntrinsicExpression::Intrinsic::Rand:
+          out << "rand";
+          break;
         case IntrinsicExpression::Intrinsic::IntEq:
           out << "int_eq";
           break;
         case IntrinsicExpression::Intrinsic::StrEq:
           out << "str_eq";
-          break;
       }
       out << iexp.args();
       break;
