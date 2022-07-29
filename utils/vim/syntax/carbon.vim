@@ -14,16 +14,14 @@ syn keyword carbonPreprocess RUN AUTOUPDATE CHECK contained
 
 " carbon primitive types and literals
 syn keyword carbonBooleanType bool
-syn keyword carbonIntType i8 i16 i32 i64 i128
-syn keyword carbonUnsignedIntType u8 u16 u32 u64 u128
-syn keyword carbonFloatType f16 f32 f64
+syn match carbonIntType 'i\d\+'
+syn match carbonUnsignedIntType 'u\d\+'
+syn match carbonFloatType 'f\d\+'
 syn keyword carbonStringType String
 syn keyword carbonBoolean true false
-syn match carbonInt '\<\d\+\>'
-syn match carbonHexLiteral '\<0x[0-9A-F]\+\>'
-syn match carbonBinLiteral '\<0b[01]\+\>'
-syn match carbonFloat '\<\d\+\.\d\+\>'
-syn match carbonFloatExponent '\<\d\+\.\d\+e[+-]\?\d\+\>'
+syn match carbonNumber '\<[0-9][_0-9]*\(\.[_0-9]\+\(e[-+]\?[1-9][0-9]*\)\?\)\?\>'
+syn match carbonHexLiteral '\<0x[_0-9A-F]\+\(\.[_0-9A-F]\+\(p[+-]\?[1-9][0-9]*\)\?\)\?\>'
+syn match carbonBinLiteral '\<0b[_01]\+\>'
 syn region carbonStringLiteral start=+"+ end=+"+ skip=+\\"+
 syn region carbonBlockStringLiteral start=+"""+ end=+"""+ skip=+\\"""+
 
@@ -74,11 +72,8 @@ hi def link carbonFloatType carbonType
 hi def link carbonStringType carbonType
 hi def link carbonType Type
 hi def link carbonBoolean Boolean
-hi def link carbonInt carbonNumber
 hi def link carbonHexLiteral carbonNumber
 hi def link carbonBinLiteral carbonNumber
-hi def link carbonFloat carbonNumber
-hi def link carbonFloatExponent carbonNumber
 hi def link carbonNumber Number
 hi def link carbonStringLiteral carbonString
 hi def link carbonBlockStringLiteral carbonString
