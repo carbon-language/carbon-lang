@@ -41,8 +41,9 @@ class ParseNodeKind {
   }
 #include "toolchain/parser/parse_node_kind.def"
 
-  // The default constructor is deleted because objects of this type should always be
-  // constructed using the above factory functions for each unique kind.
+  // The default constructor is deleted because objects of this type should
+  // always be constructed using the above factory functions for each unique
+  // kind.
   ParseNodeKind() = delete;
 
   friend auto operator==(ParseNodeKind lhs, ParseNodeKind rhs) -> bool {
