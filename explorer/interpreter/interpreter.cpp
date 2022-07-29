@@ -7,6 +7,7 @@
 #include <iterator>
 #include <map>
 #include <optional>
+#include <random>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -29,6 +30,8 @@ using llvm::dyn_cast;
 using llvm::isa;
 
 namespace Carbon {
+
+static std::mt19937 generator(12);
 
 // Constructs an ActionStack suitable for the specified phase.
 static auto MakeTodo(Phase phase, Nonnull<Heap*> heap) -> ActionStack {
@@ -1102,9 +1105,17 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         Nonnull<const Expression*> arg = op.arguments()[act.pos()];
         if (op.op() == Operator::AddressOf) {
           return todo_.Spawn(std::make_unique<LValAction>(arg));
-        } else {
-          return todo_.Spawn(std::make_unique<ExpressionAction>(arg));
+        } else if ((op.op() == Operator::And || op.op() == Operator::Or) &&
+                   act.pos() == 1) {
+          // Short-circuit evaluation for 'and' & 'or'
+          auto operand_value = cast<BoolValue>(act.results()[act.pos() - 1]);
+          if ((op.op() == Operator::Or && operand_value->value()) ||
+              (op.op() == Operator::And && !operand_value->value())) {
+            return todo_.FinishAction(operand_value);
+          }
+          // No short-circuit, fall through to evaluate 2nd operand.
         }
+        return todo_.Spawn(std::make_unique<ExpressionAction>(arg));
       } else {
         //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
         // -> { {eval_prim(op, (vs,v)) :: C, E, F} :: S, H}
@@ -1164,6 +1175,16 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       const auto& args = cast<TupleValue>(*act.results()[0]).elements();
       switch (cast<IntrinsicExpression>(exp).intrinsic()) {
+        case IntrinsicExpression::Intrinsic::Rand: {
+          const auto& args = cast<TupleValue>(*act.results()[0]).elements();
+          CARBON_CHECK(args.size() == 2);
+
+          const auto& low = cast<IntValue>(*args[0]).value();
+          const auto& high = cast<IntValue>(*args[1]).value();
+          std::uniform_int_distribution<> distr(low, high);
+          int r = distr(generator);
+          return todo_.FinishAction(arena_->New<IntValue>(r));
+        }
         case IntrinsicExpression::Intrinsic::Print: {
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> format_string_value,

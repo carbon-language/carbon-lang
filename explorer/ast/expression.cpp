@@ -35,7 +35,8 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
        {"int_bit_or", Intrinsic::IntBitOr},
        {"int_bit_xor", Intrinsic::IntBitXor},
        {"int_left_shift", Intrinsic::IntLeftShift},
-       {"int_right_shift", Intrinsic::IntRightShift}});
+       {"int_right_shift", Intrinsic::IntRightShift},
+       {"rand", Intrinsic::Rand}});
   name.remove_prefix(std::strlen("__intrinsic_"));
   auto it = intrinsic_map.find(name);
   if (it == intrinsic_map.end()) {
@@ -65,6 +66,8 @@ auto IntrinsicExpression::name() const -> std::string_view {
       return "__intrinsic_int_left_shift";
     case IntrinsicExpression::Intrinsic::IntRightShift:
       return "__intrinsic_int_right_shift";
+    case IntrinsicExpression::Intrinsic::Rand:
+      return "__intrinsic_rand";
   }
 }
 

@@ -2008,16 +2008,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         case Operator::Mul:
           return handle_binary_arithmetic(Builtins::MulWith);
         case Operator::Mod:
-          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "modulo(1)",
-                                                 arena_->New<IntType>(), ts[0],
-                                                 impl_scope));
-          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "modulo(2)",
-                                                 arena_->New<IntType>(), ts[1],
-                                                 impl_scope));
-          op.set_static_type(arena_->New<IntType>());
-          op.set_value_category(ValueCategory::Let);
-
-          return Success();
+          return handle_binary_arithmetic(Builtins::ModWith);
         case Operator::BitwiseAnd:
           // `&` between type-of-types performs constraint combination.
           // TODO: Should this be done via an intrinsic?
@@ -2239,6 +2230,23 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&intrinsic_exp.args(), impl_scope));
       const auto& args = intrinsic_exp.args().fields();
       switch (cast<IntrinsicExpression>(*e).intrinsic()) {
+        case IntrinsicExpression::Intrinsic::Rand: {
+          if (args.size() != 2) {
+            return CompilationError(e->source_loc())
+                   << "Rand takes 2 arguments, received " << args.size();
+          }
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "Rand argument 0", arena_->New<IntType>(),
+              &args[0]->static_type(), impl_scope));
+
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "Rand argument 1", arena_->New<IntType>(),
+              &args[1]->static_type(), impl_scope));
+
+          e->set_static_type(arena_->New<IntType>());
+
+          return Success();
+        }
         case IntrinsicExpression::Intrinsic::Print:
           // TODO: Remove Print special casing once we have variadics or
           // overloads. Here, that's the name Print instead of __intrinsic_print
