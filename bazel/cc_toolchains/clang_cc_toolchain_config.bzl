@@ -152,10 +152,14 @@ def _impl(ctx):
                 actions = all_cpp_compile_actions + all_link_actions,
                 flag_groups = ([
                     flag_group(
-                        flags = [
-                            "-std=c++17",
-                            "-stdlib=libc++",
-                        ],
+                        flags = ["-std=c++17"] if ctx.attr.target_cpu == "x64_windows" else ["-std=c++17", "-stdlib=libc++"]
+
+                        #flags = [
+                        #    "-std=c++17",
+                            # Temporarily disabling for testing
+                            # since windows does not use this
+                            #"-stdlib=libc++",
+                        #],
                     ),
                 ]),
             ),
@@ -311,12 +315,16 @@ def _impl(ctx):
     # minimal settings if both are enabled.
     minimal_debug_info_flags = feature(
         name = "minimal_debug_info_flags",
-        flag_sets = [flag_set(
-            actions = codegen_compile_actions,
-            flag_groups = [flag_group(flags = [
-                "-gmlt",
-            ])],
-        )],
+        flag_sets = [
+            flag_set(
+                actions = codegen_compile_actions,
+                flag_groups = [
+                    flag_group(
+                        flags = ["-gmlt"],
+                    ),
+                ],
+            ),
+        ],
     )
     default_debug_info_flags = feature(
         name = "default_debug_info_flags",
@@ -780,6 +788,12 @@ def _impl(ctx):
     # features are order sensitive. We also setup the sysroot here.
     if ctx.attr.target_cpu == "k8":
         features += [linux_flags_feature]
+        sysroot = None
+    elif ctx.attr.target_cpu == "x64_windows":
+        # TODO: Need to figure out if we need to add windows specific features
+        # I think the .pdb debug files will need to be handled differently,
+        # so that might be an example where a feature must be added.
+
         sysroot = None
     elif ctx.attr.target_cpu in ["darwin", "darwin_arm64"]:
         sysroot = sysroot_dir
