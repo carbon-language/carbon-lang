@@ -1098,9 +1098,17 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         Nonnull<const Expression*> arg = op.arguments()[act.pos()];
         if (op.op() == Operator::AddressOf) {
           return todo_.Spawn(std::make_unique<LValAction>(arg));
-        } else {
-          return todo_.Spawn(std::make_unique<ExpressionAction>(arg));
+        } else if ((op.op() == Operator::And || op.op() == Operator::Or) &&
+                   act.pos() == 1) {
+          // Short-circuit evaluation for 'and' & 'or'
+          auto operand_value = cast<BoolValue>(act.results()[act.pos() - 1]);
+          if ((op.op() == Operator::Or && operand_value->value()) ||
+              (op.op() == Operator::And && !operand_value->value())) {
+            return todo_.FinishAction(operand_value);
+          }
+          // No short-circuit, fall through to evaluate 2nd operand.
         }
+        return todo_.Spawn(std::make_unique<ExpressionAction>(arg));
       } else {
         //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
         // -> { {eval_prim(op, (vs,v)) :: C, E, F} :: S, H}
