@@ -1995,6 +1995,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           return handle_binary_arithmetic(Builtins::SubWith);
         case Operator::Mul:
           return handle_binary_arithmetic(Builtins::MulWith);
+        case Operator::Mod:
+          return handle_binary_arithmetic(Builtins::ModWith);
         case Operator::And:
           CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "&&(1)",
                                                  arena_->New<BoolType>(), ts[0],

@@ -2,20 +2,23 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
+// RUN: %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
+// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
+// CHECK: result: 1
 
 package ExplorerTest api;
 
-class A {}
+class A { var n: i32; }
+
+external impl A as ModWith(i32) where .Result == A {
+  fn Op[me: Self](rhs: i32) -> A { return {.n = me.n % rhs}; }
+}
 
 fn Main() -> i32 {
-  var a: A = {};
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/operators/fail_no_mul.carbon:[[@LINE+2]]: type error in `*`:
-  // CHECK: could not find implementation of interface MulWith(U = i32) for class A
-  a * 1;
-  return 0;
+  var a: A = {.n = 5};
+  a = a % 2;
+  return a.n;
 }
