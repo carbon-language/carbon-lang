@@ -286,7 +286,7 @@ $ cd carbon-lang
 $ bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
 ```
 
-These instructions assume [Homebrew](https://brew.sh/); see our
+These instructions assume [Homebrew](https://brew.sh/) is installed; see our
 [contribution tools documentation](/docs/project/contribution_tools.md) for more
 extensive tooling instructions.
 
