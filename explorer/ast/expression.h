@@ -933,11 +933,11 @@ class ArrayTypeLiteral : public Expression {
   Nonnull<Expression*> size_expression_;
 };
 
-// A literal representing a statically-sized array type which it's size is
-// context-based.
+// A literal representing a statically-sized array type whose size is not
+// specified.
 class ImplicitSizedArrayTypeLiteral : public Expression {
  public:
-  // Constructs an array type literal which uses the given expressions to
+  // Constructs an array type literal which uses the given expression to
   // represent the element type.
   ImplicitSizedArrayTypeLiteral(SourceLocation source_loc,
                                 Nonnull<Expression*> element_type_expression)

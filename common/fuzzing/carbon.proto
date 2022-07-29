@@ -177,10 +177,10 @@ message Expression {
     TypeTypeLiteral type_type_literal = 19;
     UnimplementedExpression unimplemented_expression = 20;
     ArrayTypeLiteral array_type_literal = 21;
-    ImplicitSizedArrayTypeLiteral implicit_sized_array_type_literal = 22;
-    CompoundMemberAccessExpression compound_member_access = 23;
-    WhereExpression where = 24;
-    DesignatorExpression designator = 25;
+    CompoundMemberAccessExpression compound_member_access = 22;
+    WhereExpression where = 23;
+    DesignatorExpression designator = 24;
+    ImplicitSizedArrayTypeLiteral implicit_sized_array_type_literal = 25;
   }
 }
 
