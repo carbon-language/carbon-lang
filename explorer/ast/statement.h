@@ -306,6 +306,7 @@ class For : public Statement {
         variable_declaration_(variable_declaration),
         loop_target_(loop_target),
         body_(body) {
+    /*
     Nonnull<Arena*> arena = new Arena();
     auto index_name =
         arena->New<IdentifierExpression>(source_loc, "$yy_forloop");
@@ -367,6 +368,7 @@ class For : public Statement {
     auto while_stmt = arena->New<While>(source_loc, condition, block);
 
     statements_.push_back(std::move(while_stmt));
+    */
   }
 
   static auto classof(const AstNode* node) -> bool {

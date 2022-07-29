@@ -1398,20 +1398,36 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       }
     }
     case StatementKind::For: {
-      const auto& for_statement = cast<For>(stmt);
-      if (act.pos() >= static_cast<int>(for_statement.statements().size())) {
-        // If the position is past the end of the block, end processing. Note
-        // that empty blocks immediately end.
+        llvm::outs()<<"HUHU"<<"\n";
+        StatementAction & stmt_act = dynamic_cast<StatementAction&>(act);
+        if( act.pos() == 0){
+            llvm::outs()<<"pos() = 0"<<"\n";
+            stmt_act.set_loop_start_index(0); 
+            // Create two variables begin and end
+               //Nonnull<const Value*> start_index = arena_->New<IntValue>(0);
+               //Nonnull<const Value*> end_index = arena_->New<IntValue>(4);
+            //   Convert(act.results()[0], &var_decl.binding().static_type(),var_decl.source_loc()));
+          // todo_.Initialize(&var_decl.binding(), v);
+            return todo_.Spawn(std::make_unique<ExpressionAction>(&cast<For>(stmt).loop_target()));
+
+        }
+        if (act.pos()  == 1){
+            llvm::outs()<<"pos() = 1"<<"\n";
+/*
+          const auto& args = cast<TupleValue>(*act.results()[0]).elements();
+          CARBON_CHECK(args.size() == 1);
+          auto& array_parameter = cast<TupleValue>(*args[0]);
+          int sz = array_parameter.elements().vec().size();
+*/
+            Nonnull<const Value*> result  = act.results().back();
+            Nonnull<const TupleValue*> array = cast<const TupleValue>(result);
+            llvm::outs()<<"ELements:"<<array->elements().size()<<"\n";
+            //Convert(act.results().back(), arena_->New<TupleLiteral>(),
+            //        stmt.source_loc()));
+
+        }
         return todo_.FinishAction();
-      }
-      // Initialize a scope when starting a block.
-      if (act.pos() == 0) {
-        act.StartScope(RuntimeScope(&heap_));
-      }
-      // Process the next statement in the block. The position will be
-      // incremented as part of Spawn.
-      return todo_.Spawn(std::make_unique<StatementAction>(
-          for_statement.statements()[act.pos()]));
+
     }
     case StatementKind::While:
       if (act.pos() % 2 == 0) {
