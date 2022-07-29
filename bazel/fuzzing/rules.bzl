@@ -18,7 +18,7 @@ def cc_fuzz_test(
     """Macro for C++ fuzzing test.
 
     In order to run tests on a single file, run the fuzzer binary under
-    bazel-bin directly. That will avoid the args being passed by bazel.
+    bazel-bin directly. That will avoid the args being passed by Bazel.
 
     Args:
         name: The main fuzz test rule name.
