@@ -7,6 +7,7 @@
 #include <iterator>
 #include <map>
 #include <optional>
+#include <random>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -29,6 +30,8 @@ using llvm::dyn_cast;
 using llvm::isa;
 
 namespace Carbon {
+
+static std::mt19937 generator(12);
 
 // Constructs an ActionStack suitable for the specified phase.
 static auto MakeTodo(Phase phase, Nonnull<Heap*> heap) -> ActionStack {
@@ -1156,6 +1159,16 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       }
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       switch (cast<IntrinsicExpression>(exp).intrinsic()) {
+        case IntrinsicExpression::Intrinsic::Rand: {
+          const auto& args = cast<TupleValue>(*act.results()[0]).elements();
+          CARBON_CHECK(args.size() == 2);
+
+          const auto& low = cast<IntValue>(*args[0]).value();
+          const auto& high = cast<IntValue>(*args[1]).value();
+          std::uniform_int_distribution<> distr(low, high);
+          int r = distr(generator);
+          return todo_.FinishAction(arena_->New<IntValue>(r));
+        }
         case IntrinsicExpression::Intrinsic::Print: {
           const auto& args = cast<TupleValue>(*act.results()[0]).elements();
           CARBON_ASSIGN_OR_RETURN(
