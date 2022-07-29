@@ -30,8 +30,9 @@ class Builtins {
     AddWith,
     SubWith,
     MulWith,
+    ModWith,
 
-    Last = MulWith
+    Last = ModWith
   };
   // TODO: In C++20, replace with `using enum Builtin;`.
   static constexpr Builtin As = Builtin::As;
@@ -40,6 +41,7 @@ class Builtins {
   static constexpr Builtin AddWith = Builtin::AddWith;
   static constexpr Builtin SubWith = Builtin::SubWith;
   static constexpr Builtin MulWith = Builtin::MulWith;
+  static constexpr Builtin ModWith = Builtin::ModWith;
 
   // Register a declaration that might be a builtin.
   void Register(Nonnull<const Declaration*> decl);
@@ -56,7 +58,7 @@ class Builtins {
  private:
   static constexpr int NumBuiltins = static_cast<int>(Builtin::Last) + 1;
   static constexpr const char* BuiltinNames[NumBuiltins] = {
-      "As", "ImplicitAs", "Negate", "AddWith", "SubWith", "MulWith"};
+      "As", "ImplicitAs", "Negate", "AddWith", "SubWith", "MulWith", "ModWith"};
 
   std::optional<Nonnull<const Declaration*>> builtins_[NumBuiltins] = {};
 };
