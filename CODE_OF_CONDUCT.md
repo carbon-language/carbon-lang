@@ -33,8 +33,8 @@ that we ask all community members to adhere to:
 -   be friendly and patient,
 -   be considerate,
 -   be kind,
--   be careful in the words that you choose,
--   when we disagree, try to understand why, and
+-   be careful in the words that we choose,
+-   when we disagree, we try to understand why, and
 -   recognize when progress has stopped, and take a step back.
 
 This list isn't exhaustive. Rather, take it in the spirit in which it’s intended
@@ -86,7 +86,7 @@ spaces:
     kind when dealing with other members as well as with people outside the
     Carbon community.
 
--   **Be careful in the words that you choose and be kind to others.** Do not
+-   **Be careful in the words that we choose and be kind to others.** Do not
     insult or put down other participants. Harassment and other exclusionary
     behaviors aren’t acceptable. This includes, but is not limited to:
 
@@ -101,7 +101,7 @@ spaces:
     -   In general, if someone asks you to stop, then stop. Persisting after
         being asked to stop is considered harassment.
 
--   **When we disagree, try to understand why.** Disagreements, both social and
+-   **When we disagree, we try to understand why.** Disagreements, both social and
     technical, happen all the time, and Carbon is no exception. It is important
     that we resolve disagreements and differing views constructively. Remember
     that we’re different. The strength of the project comes from its varied
