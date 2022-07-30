@@ -1394,20 +1394,23 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       }
     }
     case StatementKind::For: {
-        StatementAction & stmt_act = dynamic_cast<StatementAction&>(act);
+        //StatementAction & stmt_act = dynamic_cast<StatementAction&>(act);
         if( act.pos() == 0){
-            //act.StartScope(RuntimeScope(&heap_));
-            stmt_act.set_loop_start_index(0); 
-            return todo_.Spawn(std::make_unique<ExpressionAction>(&cast<For>(stmt).loop_target()));
+            //stmt_act.set_loop_start_index(0); 
+            act.AddResult(arena_->New<IntValue>(0));
+	    return todo_.Spawn(std::make_unique<ExpressionAction>(&cast<For>(stmt).loop_target()));
         }
         if (act.pos()  == 1){
             Nonnull<const Value*> result  = act.results().back();
             Nonnull<const TupleValue*> array = cast<const TupleValue>(result);
             
             auto end_index = static_cast<int>(array->elements().size());
-	    auto start_index = stmt_act.for_loop_start_index();
-	    stmt_act.set_loop_end_index(end_index);
+	    //auto start_index = stmt_act.for_loop_start_index();
+	    auto start_index = cast<IntValue>(act.results()[0])->value();
+	    //stmt_act.set_loop_end_index(end_index);
+ 
 	    if(start_index < end_index){
+            	act.AddResult(arena_->New<IntValue>(end_index));
             	return todo_.Spawn(std::make_unique<PatternAction>(&cast<For>(stmt).variable_declaration()));
 		
 	    }
@@ -1418,24 +1421,29 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
 	    Nonnull<const Value*> result  = act.results().back();
             Nonnull<const BindingPlaceholderValue*> lval = cast<const BindingPlaceholderValue>(result);
             
-	    Nonnull<const Value*> target_array  = act.results()[0];
+	    Nonnull<const Value*> target_array  = act.results()[1];
             Nonnull<const TupleValue*> array = cast<const TupleValue>(target_array);
 
-	    auto start_index = stmt_act.for_loop_start_index();
+	    //auto start_index = stmt_act.for_loop_start_index();
+	    auto start_index = cast<IntValue>(act.results()[0])->value();
 	    todo_.Initialize(*(lval->value_node()), array->elements()[start_index]);
-	    stmt_act.set_loop_start_index(start_index+1);
-            return todo_.Spawn(
+	    //stmt_act.set_loop_start_index(start_index+1);
+            act.ReplaceResult(0,arena_->New<IntValue>(start_index+1));
+	    return todo_.Spawn(
               std::make_unique<StatementAction>(&cast<For>(stmt).body()));
 	    
 	}
         if(act.pos() >= 3){
-            auto end_index = stmt_act.for_loop_end_index();
-	    auto start_index = stmt_act.for_loop_start_index();
+	    auto start_index = cast<IntValue>(act.results()[0])->value();
+	    auto end_index = cast<IntValue>(act.results()[2])->value();
+            
+	    //auto end_index = stmt_act.for_loop_end_index();
+	    //auto start_index = stmt_act.for_loop_start_index();
             if(start_index < end_index){
-            	Nonnull<const Value*> target_array  = act.results()[0];
+            	Nonnull<const Value*> target_array  = act.results()[1];
             	Nonnull<const TupleValue*> array = cast<const TupleValue>(target_array);
 	    
-		Nonnull<const Value*> result  = act.results()[1];
+		Nonnull<const Value*> result  = act.results()[3];
             	Nonnull<const BindingPlaceholderValue*> lval = cast<const BindingPlaceholderValue>(result);
             	
       		CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> LVAL,
@@ -1450,7 +1458,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
 			llvm::outs()<<"Failure in "<<__LINE__<<"\n";
 		}
 		
-		stmt_act.set_loop_start_index(start_index+1);
+		//stmt_act.set_loop_start_index(start_index+1);
+                act.ReplaceResult(0,arena_->New<IntValue>(start_index+1));
             	return todo_.Spawn(
               		std::make_unique<StatementAction>(&cast<For>(stmt).body()));
 			
