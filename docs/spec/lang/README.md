@@ -66,7 +66,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     same library and the same [scope](names.md#scopes) and declare the same
     [name](names.md).
 
-    TODO: Linkage rules for foreign entities. TODO: Ability to declare
+    TODO: Linkage rules for foreign entities. <br> TODO: Ability to declare
     file-local entities.
 
 2.  All declarations of an entity shall use the same type.
