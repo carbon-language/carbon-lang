@@ -1944,17 +1944,23 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         ts.push_back(&argument->static_type());
       }
 
-      auto handle_binary_arithmetic =
+      auto handle_unary_overload_operator =
           [&](Builtins::Builtin builtin) -> ErrorOr<Success> {
-        // Handle a built-in operator first.
-        if (isa<IntType>(ts[0]) && isa<IntType>(ts[1]) &&
-            IsSameType(ts[0], ts[1], impl_scope)) {
-          op.set_static_type(ts[0]);
-          op.set_value_category(ValueCategory::Let);
+            ErrorOr<Nonnull<Expression*>> result = BuildBuiltinMethodCall(
+              impl_scope, op.arguments()[0],
+              BuiltinInterfaceName{builtin}, BuiltinMethodCall{"Op"});
+          if (!result.ok()) {
+            // We couldn't find a matching `impl`.
+            return CompilationError(e->source_loc())
+                   << "type error in `" << ToString(op.op()) << "`:\n"
+                   << result.error().message();
+          }
+          op.set_rewritten_form(*result);
           return Success();
-        }
+      }
 
-        // Now try an overloaded operator.
+      auto handle_binary_overload_operator =
+          [&](Builtins::Builtin builtin) -> ErrorOr<Success> {
         ErrorOr<Nonnull<Expression*>> result = BuildBuiltinMethodCall(
             impl_scope, op.arguments()[0], BuiltinInterfaceName{builtin, ts[1]},
             BuiltinMethodCall{"Op", {op.arguments()[1]}});
@@ -1968,6 +1974,19 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         return Success();
       };
 
+      auto handle_binary_arithmetic =
+          [&](Builtins::Builtin builtin) -> ErrorOr<Success> {
+        // Handle a built-in operator first.
+        if (isa<IntType>(ts[0]) && isa<IntType>(ts[1]) &&
+            IsSameType(ts[0], ts[1], impl_scope)) {
+          op.set_static_type(ts[0]);
+          op.set_value_category(ValueCategory::Let);
+          return Success();
+        }
+        // Now try an overloaded negation.
+        return handle_binary_overload_operator(buildin);
+      };
+
       switch (op.op()) {
         case Operator::Neg: {
           // Handle a built-in negation first.
@@ -1977,17 +1996,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             return Success();
           }
           // Now try an overloaded negation.
-          ErrorOr<Nonnull<Expression*>> result = BuildBuiltinMethodCall(
-              impl_scope, op.arguments()[0],
-              BuiltinInterfaceName{Builtins::Negate}, BuiltinMethodCall{"Op"});
-          if (!result.ok()) {
-            // We couldn't find a matching `impl`.
-            return CompilationError(e->source_loc())
-                   << "type error in `" << ToString(op.op()) << "`:\n"
-                   << result.error().message();
-          }
-          op.set_rewritten_form(*result);
-          return Success();
+          return handle_unary_overload_operator(Builtins::Negate);
         }
         case Operator::Add:
           return handle_binary_arithmetic(Builtins::AddWith);
@@ -1998,32 +2007,27 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         case Operator::Mod:
           return handle_binary_arithmetic(Builtins::ModWith);
         case Operator::And:
-          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "&&(1)",
-                                                 arena_->New<BoolType>(), ts[0],
-                                                 impl_scope));
-          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "&&(2)",
-                                                 arena_->New<BoolType>(), ts[1],
-                                                 impl_scope));
-          op.set_static_type(arena_->New<BoolType>());
-          op.set_value_category(ValueCategory::Let);
-          return Success();
-        case Operator::Or:
-          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "||(1)",
-                                                 arena_->New<BoolType>(), ts[0],
-                                                 impl_scope));
-          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "||(2)",
-                                                 arena_->New<BoolType>(), ts[1],
-                                                 impl_scope));
-          op.set_static_type(arena_->New<BoolType>());
-          op.set_value_category(ValueCategory::Let);
-          return Success();
-        case Operator::Not:
-          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "!",
-                                                 arena_->New<BoolType>(), ts[0],
-                                                 impl_scope));
-          op.set_static_type(arena_->New<BoolType>());
-          op.set_value_category(ValueCategory::Let);
-          return Success();
+        case Operator::Or: {
+          // Handle a built-in operator first.
+          if (isa<BoolType>(ts[0]) && isa<BoolType>(ts[1]) &&
+              IsSameType(ts[0], ts[1], impl_scope)) {
+            op.set_static_type(arena_->New<BoolType>());
+            op.set_value_category(ValueCategory::Let);
+            return Success();
+          }
+          // Now try an overloaded logical and/or.
+          auto builtin = (op.op() == Operator::And) ? Builtins::LogAndWith : Builtins::LogOrWith;
+          return handle_binary_overload_operator(builtin);
+        }
+        case Operator::Not: {
+          if (isa<BoolType>(ts[0])) {
+            op.set_static_type(arena_->New<BoolType>());
+            op.set_value_category(ValueCategory::Let);
+            return Success();
+          }
+          // Now try an overloaded logical (and bitwise?) not.
+          return handle_unary_overload_operator(Builtins::Not);
+        }
         case Operator::Eq:
           CARBON_RETURN_IF_ERROR(
               ExpectExactType(e->source_loc(), "==", ts[0], ts[1], impl_scope));

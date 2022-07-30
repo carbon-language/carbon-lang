@@ -83,6 +83,26 @@ interface ModWith(U:! Type) {
 }
 // TODO: constraint Mod { ... }
 
+interface LogAndWith(U:! Type) {
+  // TODO: = Self
+  let Result:! Type;
+  fn Op[me: Self](other: U) -> Result;
+}
+// TODO: constraint LogAnd { ... }
+
+interface LogOrWith(U:! Type) {
+  // TODO: = Self
+  let Result:! Type;
+  fn Op[me: Self](other: U) -> Result;
+}
+// TODO: constraint LogOr { ... }
+
+interface Not {
+  // TODO: = Self
+  let Result:! Type;
+  fn Op[me: Self]() -> Result;
+}
+
 // Note, these impls use the builtin addition for i32.
 external impl i32 as Negate where .Result == i32 {
   fn Op[me: i32]() -> i32 { return -me; }
@@ -99,6 +119,18 @@ external impl i32 as MulWith(i32) where .Result == i32 {
 external impl i32 as ModWith(i32) where .Result == i32 {
   fn Op[me: i32](other: i32) -> i32 { return me % other; }
 }
+
+// Note, these impls use the builtin logical operators for bool.
+external impl Bool as LogAndWith(Bool) where .Result == Bool {
+  fn Op[me: Bool](other: Bool) -> Bool { return me && other; }
+}
+external impl Bool as LogOrWith(Bool) where .Result == Bool {
+  fn Op[me: Bool](other: Bool) -> Bool { return me || other; }
+}
+external impl Bool as Not where .Result == Bool {
+  fn Op[me: Bool]() -> Bool { return !me; }
+}
+
 // Note that Print is experimental, and not part of an accepted proposal, but
 // is included here for printing state in tests.
 // TODO: Remove Print special casing once we have variadics or overloads.
