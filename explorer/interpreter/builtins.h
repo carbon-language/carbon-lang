@@ -5,7 +5,9 @@
 #ifndef CARBON_EXPLORER_INTERPRETER_BUILTINS_H_
 #define CARBON_EXPLORER_INTERPRETER_BUILTINS_H_
 
+#include <array>
 #include <optional>
+#include <string_view>
 
 #include "common/error.h"
 #include "explorer/ast/declaration.h"
@@ -32,7 +34,10 @@ class Builtins {
     MulWith,
     ModWith,
 
-    Last = ModWith
+    // Comparison.
+    EqWith,
+
+    Last = EqWith
   };
   // TODO: In C++20, replace with `using enum Builtin;`.
   static constexpr Builtin As = Builtin::As;
@@ -42,6 +47,7 @@ class Builtins {
   static constexpr Builtin SubWith = Builtin::SubWith;
   static constexpr Builtin MulWith = Builtin::MulWith;
   static constexpr Builtin ModWith = Builtin::ModWith;
+  static constexpr Builtin EqWith = Builtin::EqWith;
 
   // Register a declaration that might be a builtin.
   void Register(Nonnull<const Declaration*> decl);
@@ -51,14 +57,15 @@ class Builtins {
       -> ErrorOr<Nonnull<const Declaration*>>;
 
   // Get the source name of a builtin.
-  static constexpr auto GetName(Builtin builtin) -> const char* {
+  static constexpr auto GetName(Builtin builtin) -> std::string_view {
     return BuiltinNames[static_cast<int>(builtin)];
   }
 
  private:
   static constexpr int NumBuiltins = static_cast<int>(Builtin::Last) + 1;
-  static constexpr const char* BuiltinNames[NumBuiltins] = {
-      "As", "ImplicitAs", "Negate", "AddWith", "SubWith", "MulWith", "ModWith"};
+  static constexpr std::array<std::string_view, NumBuiltins> BuiltinNames = {
+      "As",      "ImplicitAs", "Negate",  "AddWith",
+      "SubWith", "MulWith",    "ModWith", "EqWith"};
 
   std::optional<Nonnull<const Declaration*>> builtins_[NumBuiltins] = {};
 };

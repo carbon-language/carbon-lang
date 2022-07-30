@@ -203,8 +203,6 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
     case Operator::Or:
       return arena_->New<BoolValue>(cast<BoolValue>(*args[0]).value() ||
                                     cast<BoolValue>(*args[1]).value());
-    case Operator::Eq:
-      return arena_->New<BoolValue>(ValueEqual(args[0], args[1], std::nullopt));
     case Operator::Ptr:
       return arena_->New<PointerType>(args[0]);
     case Operator::Deref:
@@ -214,7 +212,9 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
     case Operator::Combine:
       return &cast<TypeOfConstraintType>(static_type)->constraint_type();
     case Operator::As:
-      return Convert(args[0], args[1], source_loc);
+    case Operator::Eq:
+      CARBON_FATAL() << "These operators should have been rewritten to "
+                        "interface method calls";
   }
 }
 
@@ -1210,6 +1210,22 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           CARBON_CHECK(args.elements().size() == 1);
           heap_.Deallocate(cast<PointerValue>(args.elements()[0])->address());
           return todo_.FinishAction(TupleValue::Empty());
+        }
+        case IntrinsicExpression::Intrinsic::IntEq: {
+          const auto& args = cast<TupleValue>(*act.results()[0]).elements();
+          CARBON_CHECK(args.size() == 2);
+          auto lhs = cast<IntValue>(*args[0]).value();
+          auto rhs = cast<IntValue>(*args[1]).value();
+          auto result = arena_->New<BoolValue>(lhs == rhs);
+          return todo_.FinishAction(result);
+        }
+        case IntrinsicExpression::Intrinsic::StrEq: {
+          const auto& args = cast<TupleValue>(*act.results()[0]).elements();
+          CARBON_CHECK(args.size() == 2);
+          auto& lhs = cast<StringValue>(*args[0]).value();
+          auto& rhs = cast<StringValue>(*args[1]).value();
+          auto result = arena_->New<BoolValue>(lhs == rhs);
+          return todo_.FinishAction(result);
         }
       }
     }
