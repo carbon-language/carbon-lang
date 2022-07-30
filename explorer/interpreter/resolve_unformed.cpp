@@ -26,22 +26,22 @@ struct FlowFact {
 // Traverses the sub-AST rooted at the given node, resolving the formed/unformed
 // states of local variables within it and updating the flow facts.
 static auto ResolveUnformed(
-    Nonnull<Expression*> expression,
+    Nonnull<const Expression*> expression,
     std::unordered_map<ValueNodeView, FlowFact>& flow_facts,
     bool set_formed = false) -> ErrorOr<Success>;
 static auto ResolveUnformed(
-    Nonnull<Pattern*> pattern,
+    Nonnull<const Pattern*> pattern,
     std::unordered_map<ValueNodeView, FlowFact>& flow_facts, bool has_init)
     -> ErrorOr<Success>;
 static auto ResolveUnformed(
-    Nonnull<Statement*> statement,
+    Nonnull<const Statement*> statement,
     std::unordered_map<ValueNodeView, FlowFact>& flow_facts)
     -> ErrorOr<Success>;
-static auto ResolveUnformed(Nonnull<Declaration*> declaration)
+static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
     -> ErrorOr<Success>;
 
 static auto ResolveUnformed(
-    Nonnull<Expression*> expression,
+    Nonnull<const Expression*> expression,
     std::unordered_map<ValueNodeView, FlowFact>& flow_facts,
     const bool set_formed /*=false*/) -> ErrorOr<Success> {
   switch (expression->kind()) {
@@ -67,7 +67,7 @@ static auto ResolveUnformed(
       break;
     }
     case ExpressionKind::TupleLiteral:
-      for (Nonnull<Expression*> field :
+      for (Nonnull<const Expression*> field :
            cast<TupleLiteral>(*expression).fields()) {
         CARBON_RETURN_IF_ERROR(ResolveUnformed(field, flow_facts));
       }
@@ -84,7 +84,7 @@ static auto ResolveUnformed(
             ResolveUnformed(opt_exp.arguments().front(), flow_facts,
                             /*set_formed=*/true));
       } else {
-        for (Nonnull<Expression*> operand : opt_exp.arguments()) {
+        for (Nonnull<const Expression*> operand : opt_exp.arguments()) {
           CARBON_RETURN_IF_ERROR(ResolveUnformed(operand, flow_facts));
         }
       }
@@ -118,7 +118,7 @@ static auto ResolveUnformed(
 }
 
 static auto ResolveUnformed(
-    Nonnull<Pattern*> pattern,
+    Nonnull<const Pattern*> pattern,
     std::unordered_map<ValueNodeView, FlowFact>& flow_facts,
     const bool has_init) -> ErrorOr<Success> {
   switch (pattern->kind()) {
@@ -127,7 +127,8 @@ static auto ResolveUnformed(
           {ValueNodeView(&cast<BindingPattern>(*pattern)), {has_init}});
       break;
     case PatternKind::TuplePattern:
-      for (Nonnull<Pattern*> field : cast<TuplePattern>(*pattern).fields()) {
+      for (Nonnull<const Pattern*> field :
+           cast<TuplePattern>(*pattern).fields()) {
         CARBON_RETURN_IF_ERROR(ResolveUnformed(field, flow_facts, has_init));
       }
       break;
@@ -144,7 +145,7 @@ static auto ResolveUnformed(
 }
 
 static auto ResolveUnformed(
-    Nonnull<Statement*> statement,
+    Nonnull<const Statement*> statement,
     std::unordered_map<ValueNodeView, FlowFact>& flow_facts)
     -> ErrorOr<Success> {
   switch (statement->kind()) {
@@ -196,7 +197,7 @@ static auto ResolveUnformed(
   return Success();
 }
 
-static auto ResolveUnformed(Nonnull<Declaration*> declaration)
+static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
     -> ErrorOr<Success> {
   switch (declaration->kind()) {
     // Checks formed/unformed state introprocedurally.
@@ -224,7 +225,7 @@ static auto ResolveUnformed(Nonnull<Declaration*> declaration)
   return Success();
 }
 
-auto ResolveUnformed(AST& ast) -> ErrorOr<Success> {
+auto ResolveUnformed(const AST& ast) -> ErrorOr<Success> {
   for (auto declaration : ast.declarations) {
     CARBON_RETURN_IF_ERROR(ResolveUnformed(declaration));
   }
