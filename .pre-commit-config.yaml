@@ -30,7 +30,7 @@ repos:
       - id: trailing-whitespace
         exclude: '^(.*/fuzzer_corpus/.*|.*/testdata/.*\.golden|.*\.svg)$'
   - repo: https://github.com/google/pre-commit-tool-hooks
-    rev: cb78d9293306d9f737c64d9702bbaa88e157caaa # frozen: v1.2.2
+    rev: dce83c2d360921b5caa8462c3b6c39cc27e3b2ed # frozen: v1.2.3
     hooks:
       - id: check-google-doc-style
       - id: markdown-toc
@@ -144,7 +144,7 @@ repos:
               .*/fuzzer_corpus/.*
           )$
   - repo: https://github.com/google/pre-commit-tool-hooks
-    rev: cb78d9293306d9f737c64d9702bbaa88e157caaa # frozen: v1.2.2
+    rev: dce83c2d360921b5caa8462c3b6c39cc27e3b2ed # frozen: v1.2.3
     hooks:
       - id: check-copyright
         args:
