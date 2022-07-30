@@ -163,6 +163,7 @@ static auto ResolveUnformed(
       break;
     }
     case StatementKind::ReturnVar:
+      // TODO: @slaterlatiao: Implement this flow.
       break;
     case StatementKind::ReturnExpression: {
       auto& ret_exp_stmt = cast<ReturnExpression>(*statement);
