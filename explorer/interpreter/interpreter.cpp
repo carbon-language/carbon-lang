@@ -1394,20 +1394,15 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       }
     }
     case StatementKind::For: {
-        //StatementAction & stmt_act = dynamic_cast<StatementAction&>(act);
         if( act.pos() == 0){
-            //stmt_act.set_loop_start_index(0); 
             act.AddResult(arena_->New<IntValue>(0));
 	    return todo_.Spawn(std::make_unique<ExpressionAction>(&cast<For>(stmt).loop_target()));
         }
         if (act.pos()  == 1){
-            Nonnull<const Value*> result  = act.results().back();
-            Nonnull<const TupleValue*> array = cast<const TupleValue>(result);
+            Nonnull<const TupleValue*> source_array = cast<const TupleValue>(act.results().back());
             
-            auto end_index = static_cast<int>(array->elements().size());
-	    //auto start_index = stmt_act.for_loop_start_index();
+            auto end_index = static_cast<int>(source_array->elements().size());
 	    auto start_index = cast<IntValue>(act.results()[0])->value();
-	    //stmt_act.set_loop_end_index(end_index);
  
 	    if(start_index < end_index){
             	act.AddResult(arena_->New<IntValue>(end_index));
@@ -1418,48 +1413,37 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
 	
         }
 	if(act.pos() == 2){
-	    Nonnull<const Value*> result  = act.results().back();
-            Nonnull<const BindingPlaceholderValue*> lval = cast<const BindingPlaceholderValue>(result);
-            
-	    Nonnull<const Value*> target_array  = act.results()[1];
-            Nonnull<const TupleValue*> array = cast<const TupleValue>(target_array);
+            Nonnull<const BindingPlaceholderValue*> loop_var = cast<const BindingPlaceholderValue>(act.results().back());
+            Nonnull<const TupleValue*> source_array = cast<const TupleValue>(act.results()[1]);
 
-	    //auto start_index = stmt_act.for_loop_start_index();
 	    auto start_index = cast<IntValue>(act.results()[0])->value();
-	    todo_.Initialize(*(lval->value_node()), array->elements()[start_index]);
-	    //stmt_act.set_loop_start_index(start_index+1);
+	    todo_.Initialize(*(loop_var->value_node()), source_array->elements()[start_index]);
             act.ReplaceResult(0,arena_->New<IntValue>(start_index+1));
 	    return todo_.Spawn(
               std::make_unique<StatementAction>(&cast<For>(stmt).body()));
 	    
 	}
         if(act.pos() >= 3){
-	    auto start_index = cast<IntValue>(act.results()[0])->value();
+	    auto current_index = cast<IntValue>(act.results()[0])->value();
 	    auto end_index = cast<IntValue>(act.results()[2])->value();
             
-	    //auto end_index = stmt_act.for_loop_end_index();
-	    //auto start_index = stmt_act.for_loop_start_index();
-            if(start_index < end_index){
-            	Nonnull<const Value*> target_array  = act.results()[1];
-            	Nonnull<const TupleValue*> array = cast<const TupleValue>(target_array);
-	    
-		Nonnull<const Value*> result  = act.results()[3];
-            	Nonnull<const BindingPlaceholderValue*> lval = cast<const BindingPlaceholderValue>(result);
+            if(current_index < end_index){
+            	Nonnull<const TupleValue*> source_array = cast<const TupleValue>(act.results()[1]);
+            	Nonnull<const BindingPlaceholderValue*> loop_var = cast<const BindingPlaceholderValue>(act.results()[3]);
             	
-      		CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> LVAL,
-				todo_.ValueOfNode(*(lval->value_node()),stmt.source_loc()));
+      		CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> assigned_array_element,
+				todo_.ValueOfNode(*(loop_var->value_node()),stmt.source_loc()));
 
         	
-      		if (const auto* lvalue = dyn_cast<LValue>(LVAL)) {
+      		if (const auto* lvalue = dyn_cast<LValue>(assigned_array_element)) {
 			CARBON_RETURN_IF_ERROR(
             			heap_.Write(lvalue->address(), 
-						array->elements()[start_index], stmt.source_loc()));
+						source_array->elements()[current_index], stmt.source_loc()));
 		}else{
 			llvm::outs()<<"Failure in "<<__LINE__<<"\n";
 		}
 		
-		//stmt_act.set_loop_start_index(start_index+1);
-                act.ReplaceResult(0,arena_->New<IntValue>(start_index+1));
+                act.ReplaceResult(0,arena_->New<IntValue>(current_index+1));
             	return todo_.Spawn(
               		std::make_unique<StatementAction>(&cast<For>(stmt).body()));
 			
