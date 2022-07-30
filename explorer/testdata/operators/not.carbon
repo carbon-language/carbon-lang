@@ -14,12 +14,12 @@ package ExplorerTest api;
 class A { var n: Bool; }
 
 external impl A as Not where .Result == A {
-  fn Op[me: Self]() -> A { return {.n = !me.n}; }
+  fn Op[me: Self]() -> A { return {.n = not me.n}; }
 }
 
 fn Main() -> Bool {
   var a: A = {.n = false};
-  a = !a;
+  a = not a;
   if(a.n) {
     return 0;
   }

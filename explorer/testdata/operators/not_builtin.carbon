@@ -11,7 +11,7 @@
 
 package ExplorerTest api;
 
-fn DoNot[T:! Not where .Result == .Self](x: T) -> T { return !x; }
+fn DoNot[T:! Not where .Result == .Self](x: T) -> T { return not x; }
 
 fn Main() -> i32 {
   return DoNot(true);
