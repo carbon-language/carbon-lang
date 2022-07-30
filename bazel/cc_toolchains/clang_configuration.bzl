@@ -27,9 +27,7 @@ def _detect_system_clang(repository_ctx):
     # the compiler. This should point at the `clang` executable to use.
     cc = repository_ctx.os.environ.get("CC")
     cc_path = None
-    path_source = None
     if cc:
-        path_source = "CC"
         cc_path = repository_ctx.path(cc)
         if not cc_path.exists:
             cc_path = repository_ctx.which(cc)
