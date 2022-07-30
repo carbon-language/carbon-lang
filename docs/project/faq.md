@@ -23,8 +23,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Why is performance critical?](#why-is-performance-critical)
     -   [What level of C++ interoperability is expected?](#what-level-of-c-interoperability-is-expected)
     -   [What would migrating C++ code to Carbon look like?](#what-would-migrating-c-code-to-carbon-look-like)
-    -   [What are the prerequisites for contributing to Carbon Language's design and tools?](#what-are-the-prerequisites-for-contributing-to-carbon-languages-design-and-tools)
-    -   [Why aren't people willing to discuss certain topics, like the file extension or syntax for specific constructs?](#why-arent-people-willing-to-discuss-certain-topics-like-the-file-extension-or-syntax-for-specific-constructs)
 -   [What alternatives did you consider? Why did they not work?](#what-alternatives-did-you-consider-why-did-they-not-work)
     -   [Why not improve C++?](#why-not-improve-c)
     -   [Why not fork C++?](#why-not-fork-c)
@@ -46,6 +44,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Why make Carbon open source?](#why-make-carbon-open-source)
     -   [Why does Carbon have a CLA?](#why-does-carbon-have-a-cla)
     -   [Who pays for Carbon's infrastructure?](#who-pays-for-carbons-infrastructure)
+-   [How can I contribute to Carbon?](#how-can-i-contribute-to-carbon)
+    -   [What are the prerequisites for contributing to Carbon Language's design and tools?](#what-are-the-prerequisites-for-contributing-to-carbon-languages-design-and-tools)
+    -   [Why aren't people willing to discuss certain topics, like the file extension or syntax for specific constructs?](#why-arent-people-willing-to-discuss-certain-topics-like-the-file-extension-or-syntax-for-specific-constructs)
 
 <!-- tocstop -->
 
@@ -206,59 +207,6 @@ If a migration occurs, we anticipate:
     any order they choose without performance concerns or maintaining
     interoperability wrappers.
 -   Test-driven verification that migrations are correct.
-
-### What are the prerequisites for contributing to Carbon Language's design and tools?
-
-**[Carbon Language isn't ready for use](#how-soon-can-we-use-carbon). This
-section is for people wishing to participate in designing and implementing the
-language.**
-
-Carbon is being designed to migrate C++ codebases and to look familiar to C++
-programmers. As such, familiarity with C++ is very important. Carbon is also
-trying to learn from other programming languages, so having broad experience
-with other programming languages will be helpful to see tradeoffs in design
-decisions.
-
-The Carbon toolchain is being implemented in C++, and we also use Python and
-Starlark. As we're building off of the LLVM project, familiarity with Clang and
-other parts of LLVM will be advantageous, but not required.
-
-Our [contribution tools](/docs/project/contribution_tools.md) page documents
-specific tools we use when building.
-
-### Why aren't people willing to discuss certain topics, like the file extension or syntax for specific constructs?
-
-When it comes to designing a language, there are lots of decisions where there
-are many workable options, and all of them will get the job done without serious
-issues. We need to pick _one_ in order to make progress, and no choice is going
-to appeal to everyone's preferences. We try to base the decision on consistent
-rationale, which can be found in the proposals which are linked throughout the
-design.
-
-We understand that many decisions won't be universally popular. Different
-developers weigh factors differently. However, we need to commit to a choice in
-order to make progress on the language design as a whole. This doesn't mean that
-they're _definitely_ right or set in stone, it just means we need to focus our
-time and energy on other issues.
-
-Sometimes, it will be appropriate to revisit a decision; for example, when there
-is new information introduced, a new community joins Carbon, or there is an
-order of magnitude growth in the community. We will do this by filing an issue
-for leads with what new information is available, and we will reevaluate the
-choice.
-
-For example, we're doing this with digit separators: we missed important
-_domain_ conventions and had overly restricted where separators are allowed,
-[an issue was filed with the new information](https://github.com/carbon-language/carbon-lang/issues/1485),
-and we're fixing the choice.
-
-When there is a discussion about options or disagreement with a decision,
-comments saying "I like X" and "I don't like X" do not contribute to the
-conversation. You should use the reactions to signal this kind of sentiment, and
-we'll pay attention to those. Beyond that, we encourage folks to either shrug
-and let quirky syntax be quirky, or look for the objective use case that was
-clearly missed in the previous decision and makes the current state _sharply_
-problematic before pushing for change.
 
 ## What alternatives did you consider? Why did they not work?
 
@@ -512,3 +460,62 @@ Carbon is currently bootstrapping infrastructure with the help of Google. As
 soon as a foundation is ready to oversee infrastructure, such as
 [continuous integration](https://en.wikipedia.org/wiki/Continuous_integration)
 and the CLA, we plan to transfer them so they are run by the community.
+
+## How can I contribute to Carbon?
+
+There are many ways to contribute, and we appreciate all of them. Begin by
+reading the project's [Contributing](/CONTRIBUTING.md) page to learn more about
+how you can contribute.
+
+### What are the prerequisites for contributing to Carbon Language's design and tools?
+
+**[Carbon Language isn't ready for use](#how-soon-can-we-use-carbon). This
+section is for people wishing to participate in designing and implementing the
+language.**
+
+Carbon is being designed to migrate C++ codebases and to look familiar to C++
+programmers. As such, familiarity with C++ is very important. Carbon is also
+trying to learn from other programming languages, so having broad experience
+with other programming languages will be helpful to see tradeoffs in design
+decisions.
+
+The Carbon toolchain is being implemented in C++, and we also use Python and
+Starlark. As we're building off of the LLVM project, familiarity with Clang and
+other parts of LLVM will be advantageous, but not required.
+
+Our [contribution tools](/docs/project/contribution_tools.md) page documents
+specific tools we use when building.
+
+### Why aren't people willing to discuss certain topics, like the file extension or syntax for specific constructs?
+
+When it comes to designing a language, there are lots of decisions where there
+are many workable options, and all of them will get the job done without serious
+issues. We need to pick _one_ in order to make progress, and no choice is going
+to appeal to everyone's preferences. We try to base the decision on consistent
+rationale, which can be found in the proposals which are linked throughout the
+design.
+
+We understand that many decisions won't be universally popular. Different
+developers weigh factors differently. However, we need to commit to a choice in
+order to make progress on the language design as a whole. This doesn't mean that
+they're _definitely_ right or set in stone, it just means we need to focus our
+time and energy on other issues.
+
+Sometimes, it will be appropriate to revisit a decision; for example, when there
+is new information introduced, a new community joins Carbon, or there is an
+order of magnitude growth in the community. We will do this by filing an issue
+for leads with what new information is available, and we will reevaluate the
+choice.
+
+For example, we're doing this with digit separators: we missed important
+_domain_ conventions and had overly restricted where separators are allowed,
+[an issue was filed with the new information](https://github.com/carbon-language/carbon-lang/issues/1485),
+and we're fixing the choice.
+
+When there is a discussion about options or disagreement with a decision,
+comments saying "I like X" and "I don't like X" do not contribute to the
+conversation. You should use the reactions to signal this kind of sentiment, and
+we'll pay attention to those. Beyond that, we encourage folks to either shrug
+and let quirky syntax be quirky, or look for the objective use case that was
+clearly missed in the previous decision and makes the current state _sharply_
+problematic before pushing for change.

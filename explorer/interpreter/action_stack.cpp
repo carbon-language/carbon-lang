@@ -131,6 +131,7 @@ auto ActionStack::FinishAction() -> ErrorOr<Success> {
     case Action::Kind::ExpressionAction:
     case Action::Kind::LValAction:
     case Action::Kind::PatternAction:
+      CARBON_FATAL() << "This kind of action must produce a result: " << *act;
     case Action::Kind::ScopeAction:
       CARBON_FATAL() << "ScopeAction at top of stack";
     case Action::Kind::StatementAction:
