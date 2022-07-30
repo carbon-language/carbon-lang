@@ -14,8 +14,8 @@ class A {}
 
 fn Main() -> i32 {
   var a: A = {};
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/operators/fail_no_logor.carbon:[[@LINE+2]]: type error in `||`:
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/operators/fail_no_logor.carbon:[[@LINE+2]]: type error in `or`:
   // CHECK: could not find implementation of interface LogOrWith(U = i32) for class A
-  a || 1;
+  a or 1;
   return 0;
 }

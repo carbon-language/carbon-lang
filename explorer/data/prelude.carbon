@@ -122,13 +122,13 @@ external impl i32 as ModWith(i32) where .Result == i32 {
 
 // Note, these impls use the builtin logical operators for bool.
 external impl Bool as LogAndWith(Bool) where .Result == Bool {
-  fn Op[me: Bool](other: Bool) -> Bool { return me && other; }
+  fn Op[me: Bool](other: Bool) -> Bool { return me and other; }
 }
 external impl Bool as LogOrWith(Bool) where .Result == Bool {
-  fn Op[me: Bool](other: Bool) -> Bool { return me || other; }
+  fn Op[me: Bool](other: Bool) -> Bool { return me or other; }
 }
 external impl Bool as Not where .Result == Bool {
-  fn Op[me: Bool]() -> Bool { return !me; }
+  fn Op[me: Bool]() -> Bool { return not me; }
 }
 
 // Note that Print is experimental, and not part of an accepted proposal, but

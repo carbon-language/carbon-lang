@@ -14,11 +14,11 @@ package ExplorerTest api;
 class A { var n: Bool; }
 
 external impl A as LogOrWith(Bool) where .Result == A {
-  fn Op[me: Self](rhs: Bool) -> A { return {.n = me.n || rhs}; }
+  fn Op[me: Self](rhs: Bool) -> A { return {.n = me.n or rhs}; }
 }
 
 fn Main() -> i32 {
   var a: A = {.n = true};
-  a = a || false;
+  a = a or false;
   return a.n;
 }

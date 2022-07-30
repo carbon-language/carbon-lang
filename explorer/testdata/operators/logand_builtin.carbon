@@ -12,7 +12,7 @@
 package ExplorerTest api;
 
 // TODO: T:! LogAnd
-fn DoAdd[T:! LogAndWith(.Self) where .Result == .Self](x: T, y: T) -> T { return x && y; }
+fn DoAdd[T:! LogAndWith(.Self) where .Result == .Self](x: T, y: T) -> T { return x and y; }
 
 fn Main() -> i32 {
   return DoAdd(true, true);

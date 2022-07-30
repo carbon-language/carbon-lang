@@ -14,8 +14,8 @@ class A {}
 
 fn Main() -> i32 {
   var a: A = {};
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/operators/fail_no_logand.carbon:[[@LINE+2]]: type error in `&&`:
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/operators/fail_no_logand.carbon:[[@LINE+2]]: type error in `and`:
   // CHECK: could not find implementation of interface LogAndWith(U = i32) for class A
-  a && 1;
+  a and 1;
   return 0;
 }

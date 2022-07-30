@@ -12,7 +12,7 @@
 package ExplorerTest api;
 
 // TODO: T:! LogOr
-fn DoAdd[T:! LogOrWith(.Self) where .Result == .Self](x: T, y: T) -> T { return x || y; }
+fn DoAdd[T:! LogOrWith(.Self) where .Result == .Self](x: T, y: T) -> T { return x or y; }
 
 fn Main() -> i32 {
   return DoAdd(true, false);
