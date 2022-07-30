@@ -34,7 +34,7 @@ auto ReadHashTags(Carbon::StringLexHelper& scan_helper, const int hashtag_num)
 
 auto ProcessSingleLineString(llvm::StringRef str,
                              Carbon::ParseAndLexContext& context,
-                             const size_t hashtag_num)
+                             const int hashtag_num)
     -> Carbon::Parser::symbol_type {
   std::string hashtags(hashtag_num, '#');
   const auto str_with_quote = str;
@@ -52,7 +52,7 @@ auto ProcessSingleLineString(llvm::StringRef str,
 
 auto ProcessMultiLineString(llvm::StringRef str,
                             Carbon::ParseAndLexContext& context,
-                            const size_t hashtag_num)
+                            const int hashtag_num)
     -> Carbon::Parser::symbol_type {
   std::string hashtags(hashtag_num, '#');
   CARBON_CHECK(str.consume_front(hashtags) && str.consume_back(hashtags));
