@@ -220,15 +220,4 @@ class StaticScope {
 
 }  // namespace Carbon
 
-namespace std {
-
-template <>
-struct hash<Carbon::ValueNodeView> {
-  std::size_t operator()(const Carbon::ValueNodeView& v) const {
-    return hash<intptr_t>()((intptr_t)&v.base());
-  }
-};
-
-}  // namespace std
-
 #endif  // CARBON_EXPLORER_AST_STATIC_SCOPE_H_

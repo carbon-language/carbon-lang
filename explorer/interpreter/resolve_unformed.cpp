@@ -10,7 +10,6 @@
 #include "explorer/ast/ast.h"
 #include "explorer/ast/expression.h"
 #include "explorer/ast/pattern.h"
-#include "explorer/ast/static_scope.h"
 #include "explorer/common/error_builders.h"
 #include "explorer/common/nonnull.h"
 
@@ -18,7 +17,7 @@ using llvm::cast;
 
 namespace Carbon {
 
-// Aggregate information about a ValueNodeView being analyzed.
+// Aggregate information about a AstNode being analyzed.
 struct FlowFact {
   bool may_be_formed;
 };
@@ -27,27 +26,27 @@ struct FlowFact {
 // states of local variables within it and updating the flow facts.
 static auto ResolveUnformed(
     Nonnull<const Expression*> expression,
-    std::unordered_map<ValueNodeView, FlowFact>& flow_facts,
+    std::unordered_map<Nonnull<const AstNode*>, FlowFact>& flow_facts,
     bool set_formed = false) -> ErrorOr<Success>;
 static auto ResolveUnformed(
     Nonnull<const Pattern*> pattern,
-    std::unordered_map<ValueNodeView, FlowFact>& flow_facts, bool has_init)
-    -> ErrorOr<Success>;
+    std::unordered_map<Nonnull<const AstNode*>, FlowFact>& flow_facts,
+    bool has_init) -> ErrorOr<Success>;
 static auto ResolveUnformed(
     Nonnull<const Statement*> statement,
-    std::unordered_map<ValueNodeView, FlowFact>& flow_facts)
+    std::unordered_map<Nonnull<const AstNode*>, FlowFact>& flow_facts)
     -> ErrorOr<Success>;
 static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
     -> ErrorOr<Success>;
 
 static auto ResolveUnformed(
     Nonnull<const Expression*> expression,
-    std::unordered_map<ValueNodeView, FlowFact>& flow_facts,
+    std::unordered_map<Nonnull<const AstNode*>, FlowFact>& flow_facts,
     const bool set_formed /*=false*/) -> ErrorOr<Success> {
   switch (expression->kind()) {
     case ExpressionKind::IdentifierExpression: {
       auto& identifier = cast<IdentifierExpression>(*expression);
-      auto fact = flow_facts.find(identifier.value_node());
+      auto fact = flow_facts.find(&identifier.value_node().base());
       // TODO: @slaterlatiao add all available value nodes to flow facts and use
       // CARBON_CHECK on the following line.
       if (fact == flow_facts.end()) {
@@ -57,7 +56,7 @@ static auto ResolveUnformed(
         fact->second.may_be_formed = true;
       } else if (!fact->second.may_be_formed) {
         return CompilationError(identifier.source_loc())
-               << "use of uninitialized variable " << fact->first;
+               << "use of uninitialized variable " << identifier.name();
       }
       break;
     }
@@ -119,12 +118,13 @@ static auto ResolveUnformed(
 
 static auto ResolveUnformed(
     Nonnull<const Pattern*> pattern,
-    std::unordered_map<ValueNodeView, FlowFact>& flow_facts,
+    std::unordered_map<Nonnull<const AstNode*>, FlowFact>& flow_facts,
     const bool has_init) -> ErrorOr<Success> {
   switch (pattern->kind()) {
     case PatternKind::BindingPattern:
       flow_facts.insert(
-          {ValueNodeView(&cast<BindingPattern>(*pattern)), {has_init}});
+          {Nonnull<const AstNode*>(&cast<BindingPattern>(*pattern)),
+           {has_init}});
       break;
     case PatternKind::TuplePattern:
       for (Nonnull<const Pattern*> field :
@@ -146,7 +146,7 @@ static auto ResolveUnformed(
 
 static auto ResolveUnformed(
     Nonnull<const Statement*> statement,
-    std::unordered_map<ValueNodeView, FlowFact>& flow_facts)
+    std::unordered_map<Nonnull<const AstNode*>, FlowFact>& flow_facts)
     -> ErrorOr<Success> {
   switch (statement->kind()) {
     case StatementKind::Block: {
@@ -207,7 +207,7 @@ static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
     case DeclarationKind::FunctionDeclaration: {
       auto& function = cast<FunctionDeclaration>(*declaration);
       if (function.body().has_value()) {
-        std::unordered_map<ValueNodeView, FlowFact> flow_facts;
+        std::unordered_map<Nonnull<const AstNode*>, FlowFact> flow_facts;
         CARBON_RETURN_IF_ERROR(ResolveUnformed(*function.body(), flow_facts));
       }
       break;
