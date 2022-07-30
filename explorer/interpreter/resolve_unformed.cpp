@@ -20,7 +20,7 @@ namespace Carbon {
 
 // Aggregate information about a ValueNodeView being analyzed.
 struct FlowFact {
-  bool is_formed;
+  bool may_be_formed;
 };
 
 // Traverses the sub-AST rooted at the given node, resolving the formed/unformed
@@ -54,8 +54,8 @@ static auto ResolveUnformed(
         break;
       }
       if (set_formed) {
-        fact->second.is_formed = true;
-      } else if (!fact->second.is_formed) {
+        fact->second.may_be_formed = true;
+      } else if (!fact->second.may_be_formed) {
         return CompilationError(identifier.source_loc())
                << "use of uninitialized variable " << fact->first;
       }
