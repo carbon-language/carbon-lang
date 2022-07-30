@@ -2808,10 +2808,13 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       return Success();
     }
     case StatementKind::For: {
-      auto& for_statement = cast<For>(*s);
-      for (auto* stmt : for_statement.statements()) {
-        CARBON_RETURN_IF_ERROR(TypeCheckStmt(stmt, impl_scope));
-      }
+      auto& for_stmt = cast<For>(*s);
+      ImplScope inner_impl_scope;
+      inner_impl_scope.AddParent(&impl_scope);
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&for_stmt.variable_declaration(),
+                                              std::nullopt, inner_impl_scope,
+                                              ValueCategory::Let));
+      CARBON_RETURN_IF_ERROR(TypeCheckStmt(&for_stmt.body(), inner_impl_scope));
       return Success();
     }
     case StatementKind::Break:
