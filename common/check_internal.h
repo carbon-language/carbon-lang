@@ -37,7 +37,7 @@ class ExitingStream {
   [[noreturn]] ~ExitingStream() {
     llvm_unreachable(
         "Exiting streams should only be constructed by check.h macros that "
-        "ensure the special operator| exits the program prior to their "
+        "ensure the `|` operator exits the program prior to their "
         "destruction!");
   }
 
