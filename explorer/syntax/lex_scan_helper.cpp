@@ -22,9 +22,9 @@ auto StringLexHelper::Advance() -> bool {
   return true;
 }
 
-auto ReadHashTags(Carbon::StringLexHelper& scan_helper,
-                  const size_t hashtag_num) -> bool {
-  for (size_t i = 0; i < hashtag_num; ++i) {
+auto ReadHashTags(Carbon::StringLexHelper& scan_helper, const int hashtag_num)
+    -> bool {
+  for (int i = 0; i < hashtag_num; ++i) {
     if (!scan_helper.Advance() || scan_helper.last_char() != '#') {
       return false;
     }
