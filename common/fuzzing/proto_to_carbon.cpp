@@ -302,9 +302,6 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
         case Fuzzing::IntrinsicExpression::Dealloc:
           out << "__intrinsic_delete";
           break;
-        case Fuzzing::IntrinsicExpression::ArraySz:
-          out << "__intrinsic_array_size";
-          break;
       }
       TupleLiteralExpressionToCarbon(intrinsic.argument(), out);
     } break;

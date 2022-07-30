@@ -16,15 +16,14 @@ package ExplorerTest api;
 
 fn Main() -> i32 {
   var ar: [i32; 4] = (0, 1,2,3);
-  var i : i32 = __intrinsic_array_size(ar);
-   var count : i32 = 0;
-   for( x: i32 in ar){
+  var count : i32 = 0;
+  for( x: i32 in ar){
       Print("HALLO WELT ", x);
       count = count +1;
-   }
-   for( x: i32 in ar){ 
+  }
+  for( x: i32 in ar){ 
       Print("HALLO WELT ", x);
       count = count +1;
-    }
-    return count;
+  }
+  return count;
 }

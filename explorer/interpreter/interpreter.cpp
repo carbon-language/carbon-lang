@@ -1055,13 +1055,16 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       CARBON_CHECK(act.pos() == 0);
       const auto& ident = cast<IdentifierExpression>(exp);
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
+      
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> value,
           todo_.ValueOfNode(ident.value_node(), ident.source_loc()));
       if (const auto* lvalue = dyn_cast<LValue>(value)) {
+
         CARBON_ASSIGN_OR_RETURN(
             value, heap_.Read(lvalue->address(), exp.source_loc()));
       }
+
       return todo_.FinishAction(value);
     }
     case ExpressionKind::DotSelfExpression: {
@@ -1184,13 +1187,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           CARBON_CHECK(args.elements().size() == 1);
           heap_.Deallocate(cast<PointerValue>(args.elements()[0])->address());
           return todo_.FinishAction(TupleValue::Empty());
-        }
-        case IntrinsicExpression::Intrinsic::ArraySz: {
-          const auto& args = cast<TupleValue>(*act.results()[0]).elements();
-          CARBON_CHECK(args.size() == 1);
-          auto& array_parameter = cast<TupleValue>(*args[0]);
-          int sz = array_parameter.elements().vec().size();
-          return todo_.FinishAction(arena_->New<IntValue>(sz));
         }
       }
     }
@@ -1398,36 +1394,69 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       }
     }
     case StatementKind::For: {
-        llvm::outs()<<"HUHU"<<"\n";
         StatementAction & stmt_act = dynamic_cast<StatementAction&>(act);
         if( act.pos() == 0){
-            llvm::outs()<<"pos() = 0"<<"\n";
+            //act.StartScope(RuntimeScope(&heap_));
             stmt_act.set_loop_start_index(0); 
-            // Create two variables begin and end
-               //Nonnull<const Value*> start_index = arena_->New<IntValue>(0);
-               //Nonnull<const Value*> end_index = arena_->New<IntValue>(4);
-            //   Convert(act.results()[0], &var_decl.binding().static_type(),var_decl.source_loc()));
-          // todo_.Initialize(&var_decl.binding(), v);
             return todo_.Spawn(std::make_unique<ExpressionAction>(&cast<For>(stmt).loop_target()));
-
         }
         if (act.pos()  == 1){
-            llvm::outs()<<"pos() = 1"<<"\n";
-/*
-          const auto& args = cast<TupleValue>(*act.results()[0]).elements();
-          CARBON_CHECK(args.size() == 1);
-          auto& array_parameter = cast<TupleValue>(*args[0]);
-          int sz = array_parameter.elements().vec().size();
-*/
             Nonnull<const Value*> result  = act.results().back();
             Nonnull<const TupleValue*> array = cast<const TupleValue>(result);
-            llvm::outs()<<"ELements:"<<array->elements().size()<<"\n";
-            //Convert(act.results().back(), arena_->New<TupleLiteral>(),
-            //        stmt.source_loc()));
-
+            
+            auto end_index = static_cast<int>(array->elements().size());
+	    auto start_index = stmt_act.for_loop_start_index();
+	    stmt_act.set_loop_end_index(end_index);
+	    if(start_index < end_index){
+            	return todo_.Spawn(std::make_unique<PatternAction>(&cast<For>(stmt).variable_declaration()));
+		
+	    }
+	    return todo_.FinishAction();	    
+	
         }
-        return todo_.FinishAction();
+	if(act.pos() == 2){
+	    Nonnull<const Value*> result  = act.results().back();
+            Nonnull<const BindingPlaceholderValue*> lval = cast<const BindingPlaceholderValue>(result);
+            
+	    Nonnull<const Value*> target_array  = act.results()[0];
+            Nonnull<const TupleValue*> array = cast<const TupleValue>(target_array);
 
+	    auto start_index = stmt_act.for_loop_start_index();
+	    todo_.Initialize(*(lval->value_node()), array->elements()[start_index]);
+	    stmt_act.set_loop_start_index(start_index+1);
+            return todo_.Spawn(
+              std::make_unique<StatementAction>(&cast<For>(stmt).body()));
+	    
+	}
+        if(act.pos() >= 3){
+            auto end_index = stmt_act.for_loop_end_index();
+	    auto start_index = stmt_act.for_loop_start_index();
+            if(start_index < end_index){
+            	Nonnull<const Value*> target_array  = act.results()[0];
+            	Nonnull<const TupleValue*> array = cast<const TupleValue>(target_array);
+	    
+		Nonnull<const Value*> result  = act.results()[1];
+            	Nonnull<const BindingPlaceholderValue*> lval = cast<const BindingPlaceholderValue>(result);
+            	
+      		CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> LVAL,
+				todo_.ValueOfNode(*(lval->value_node()),stmt.source_loc()));
+
+        	
+      		if (const auto* lvalue = dyn_cast<LValue>(LVAL)) {
+			CARBON_RETURN_IF_ERROR(
+            			heap_.Write(lvalue->address(), 
+						array->elements()[start_index], stmt.source_loc()));
+		}else{
+			llvm::outs()<<"Failure in "<<__LINE__<<"\n";
+		}
+		
+		stmt_act.set_loop_start_index(start_index+1);
+            	return todo_.Spawn(
+              		std::make_unique<StatementAction>(&cast<For>(stmt).body()));
+			
+	    }
+	}
+	return todo_.FinishAction();
     }
     case StatementKind::While:
       if (act.pos() % 2 == 0) {

@@ -306,69 +306,6 @@ class For : public Statement {
         variable_declaration_(variable_declaration),
         loop_target_(loop_target),
         body_(body) {
-    /*
-    Nonnull<Arena*> arena = new Arena();
-    auto index_name =
-        arena->New<IdentifierExpression>(source_loc, "$yy_forloop");
-    auto end_index_name =
-        arena->New<IdentifierExpression>(source_loc, "$yy_forloop_end");
-    auto auto_pattern = arena->New<AutoPattern>(source_loc);
-    auto binding_pattern_index_name = arena->New<BindingPattern>(
-        source_loc, "$yy_forloop", auto_pattern, std::nullopt);
-
-    auto start_index = arena->New<IntLiteral>(source_loc, 0);
-
-    auto var_start_def = arena->New<VariableDefinition>(
-        source_loc, binding_pattern_index_name, start_index, ValueCategory::Var,
-        VariableDefinition::DefinitionType::Var);
-    statements_.push_back(std::move(var_start_def));
-
-    auto auto_pattern2 = arena->New<AutoPattern>(source_loc);
-    auto binding_pattern_size_of_array = arena->New<BindingPattern>(
-        source_loc, "$yy_forloop_end", auto_pattern2, std::nullopt);
-
-    auto parameter_list = arena->New<TupleLiteral>(
-        source_loc, std::vector<Nonnull<Expression*>>({loop_target_}));
-    auto intrinsic_call = arena->New<IntrinsicExpression>(
-        IntrinsicExpression::Intrinsic::ArraySz, parameter_list, source_loc);
-    auto var_end_def = arena->New<VariableDefinition>(
-        source_loc, binding_pattern_size_of_array, intrinsic_call,
-        ValueCategory::Var, VariableDefinition::DefinitionType::Var);
-    statements_.push_back(std::move(var_end_def));
-
-    auto condition_eq = arena->New<OperatorExpression>(
-        source_loc, Operator::Eq,
-        std::vector<Nonnull<Expression*>>({index_name, end_index_name}));
-    auto condition = arena->New<OperatorExpression>(
-        source_loc, Operator::Not,
-        std::vector<Nonnull<Expression*>>({condition_eq}));
-
-    auto inc = arena->New<IntLiteral>(source_loc, 1);
-    auto increment_index = arena->New<OperatorExpression>(
-        source_loc, Operator::Add,
-        std::vector<Nonnull<Expression*>>({index_name, inc}));
-    auto increment_index_stmt =
-        arena->New<Assign>(source_loc, index_name, increment_index);
-
-    auto array_index_expression =
-        arena->New<IndexExpression>(source_loc, loop_target_, index_name);
-    auto destination = arena->New<VariableDefinition>(
-        source_loc, variable_declaration_, array_index_expression,
-        ValueCategory::Var, VariableDefinition::DefinitionType::Var);
-
-    std::vector<Nonnull<Statement*>> body_stmts;
-    body_stmts.push_back(std::move(destination));
-    for (auto iter : body_->statements().vec()) {
-      body_stmts.push_back(iter);
-    };
-    body_stmts.push_back(std::move(increment_index_stmt));
-
-    auto block = arena->New<Block>(
-        source_loc, std::vector<Nonnull<Statement*>>({body_stmts}));
-    auto while_stmt = arena->New<While>(source_loc, condition, block);
-
-    statements_.push_back(std::move(while_stmt));
-    */
   }
 
   static auto classof(const AstNode* node) -> bool {
@@ -388,18 +325,11 @@ class For : public Statement {
   auto body() const -> const Block& { return *body_; }
   auto body() -> Block& { return *body_; }
 
-  auto statements() const -> llvm::ArrayRef<Nonnull<const Statement*>> {
-    return statements_;
-  }
-  auto statements() -> llvm::MutableArrayRef<Nonnull<Statement*>> {
-    return statements_;
-  }
 
  private:
   Nonnull<BindingPattern*> variable_declaration_;
   Nonnull<Expression*> loop_target_;
   Nonnull<Block*> body_;
-  std::vector<Nonnull<Statement*>> statements_;
 };
 
 class Break : public Statement {

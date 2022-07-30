@@ -2223,20 +2223,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           e->set_value_category(ValueCategory::Let);
           return Success();
         }
-        case IntrinsicExpression::Intrinsic::ArraySz: {
-          if (args.size() != 1) {
-            return CompilationError(e->source_loc())
-                   << "__intrinsic_array_sz takes 1 argument, received "
-                   << args.size();
-          }
-          /*CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "__intrinsic_array_sz argument 0",
-             arena_->New<StaticArrayType>(), &args[0]->static_type(),
-             impl_scope));
-            */
-          e->set_static_type(arena_->New<IntType>());
-          return Success();
-        }
       }
     }
     case ExpressionKind::IntTypeLiteral:
@@ -2746,10 +2732,13 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       return Success();
     }
     case StatementKind::For: {
-      auto& for_statement = cast<For>(*s);
-      for (auto* stmt : for_statement.statements()) {
-        CARBON_RETURN_IF_ERROR(TypeCheckStmt(stmt, impl_scope));
-      }
+      auto& for_stmt = cast<For>(*s);
+      ImplScope inner_impl_scope;
+      inner_impl_scope.AddParent(&impl_scope);
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&for_stmt.variable_declaration(),
+                                              std::nullopt, inner_impl_scope,
+                                              ValueCategory::Let));
+      CARBON_RETURN_IF_ERROR(TypeCheckStmt(&for_stmt.body(), inner_impl_scope)); 
       return Success();
     }
     case StatementKind::Break:
