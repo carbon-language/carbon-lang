@@ -139,7 +139,7 @@ one.
 
 ## Why build Carbon?
 
-See the [project README](/README.md#why-build-carbon) for an overview of the 
+See the [project README](/README.md#why-build-carbon) for an overview of the
 motivation for Carbon. This section dives into specific questions in that space.
 
 ### Why is performance critical?
