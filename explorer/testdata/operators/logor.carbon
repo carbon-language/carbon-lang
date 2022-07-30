@@ -7,7 +7,7 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: result: true
+// CHECK: result: 0
 
 package ExplorerTest api;
 
@@ -20,5 +20,8 @@ external impl A as LogOrWith(Bool) where .Result == A {
 fn Main() -> i32 {
   var a: A = {.n = true};
   a = a or false;
-  return a.n;
+  if(a.n) {
+    return 0;
+  }
+  return 1;
 }

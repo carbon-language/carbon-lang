@@ -7,7 +7,7 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: result: true
+// CHECK: result: 0
 
 package ExplorerTest api;
 
@@ -15,5 +15,8 @@ package ExplorerTest api;
 fn DoAdd[T:! LogAndWith(.Self) where .Result == .Self](x: T, y: T) -> T { return x and y; }
 
 fn Main() -> i32 {
-  return DoAdd(true, true);
+  if(DoAdd(true, true)) {
+    return 0;
+  }
+  return 1;
 }

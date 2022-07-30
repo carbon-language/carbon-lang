@@ -17,7 +17,7 @@ external impl A as Not where .Result == A {
   fn Op[me: Self]() -> A { return {.n = not me.n}; }
 }
 
-fn Main() -> Bool {
+fn Main() -> i32 {
   var a: A = {.n = false};
   a = not a;
   if(a.n) {
