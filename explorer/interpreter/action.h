@@ -116,7 +116,7 @@ class Action {
   auto results() const -> const std::vector<Nonnull<const Value*>>& {
     return results_;
   }
-  void ReplaceResult(std::size_t index, Nonnull<const Value*> value){
+  void ReplaceResult(std::size_t index, Nonnull<const Value*> value) {
     CARBON_CHECK(index < results_.size());
     results_[index] = value;
   }
@@ -208,9 +208,10 @@ class PatternAction : public Action {
 class StatementAction : public Action {
  public:
   explicit StatementAction(Nonnull<const Statement*> statement)
-      : Action(Kind::StatementAction), statement_(statement),
-        for_loop_start_index_(0),for_loop_end_index_(0)
-        {}
+      : Action(Kind::StatementAction),
+        statement_(statement),
+        for_loop_start_index_(0),
+        for_loop_end_index_(0) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::StatementAction;
@@ -222,8 +223,8 @@ class StatementAction : public Action {
   int for_loop_start_index() const { return for_loop_start_index_; };
   int for_loop_end_index() const { return for_loop_end_index_; };
 
-  void set_loop_start_index(int index){ for_loop_start_index_ = index;}
-  void set_loop_end_index(int index){ for_loop_end_index_ = index;}
+  void set_loop_start_index(int index) { for_loop_start_index_ = index; }
+  void set_loop_end_index(int index) { for_loop_end_index_ = index; }
 
  private:
   Nonnull<const Statement*> statement_;

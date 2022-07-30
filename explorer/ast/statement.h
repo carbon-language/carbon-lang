@@ -305,8 +305,7 @@ class For : public Statement {
       : Statement(AstNodeKind::For, source_loc),
         variable_declaration_(variable_declaration),
         loop_target_(loop_target),
-        body_(body) {
-  }
+        body_(body) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromFor(node->kind());
@@ -324,7 +323,6 @@ class For : public Statement {
 
   auto body() const -> const Block& { return *body_; }
   auto body() -> Block& { return *body_; }
-
 
  private:
   Nonnull<BindingPattern*> variable_declaration_;

@@ -417,11 +417,11 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
       StaticScope block_scope;
       block_scope.AddParent(&enclosing_scope);
       auto& for_stmt = cast<For>(statement);
-      CARBON_RETURN_IF_ERROR(ResolveNames(for_stmt.variable_declaration(), block_scope));
       CARBON_RETURN_IF_ERROR(
-          ResolveNames(for_stmt.loop_target(), block_scope));
+          ResolveNames(for_stmt.variable_declaration(), block_scope));
+      CARBON_RETURN_IF_ERROR(ResolveNames(for_stmt.loop_target(), block_scope));
       CARBON_RETURN_IF_ERROR(ResolveNames(for_stmt.body(), block_scope));
-      
+
       break;
     }
     case StatementKind::Match: {

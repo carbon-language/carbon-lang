@@ -21,7 +21,7 @@ fn Main() -> i32 {
       Print("HALLO WELT ", x);
       count = count +1;
   }
-  for( x: i32 in ar){ 
+  for( x: i32 in ar){
       Print("HALLO WELT ", x);
       count = count +1;
   }
