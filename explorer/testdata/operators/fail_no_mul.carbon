@@ -10,9 +10,12 @@
 
 package ExplorerTest api;
 
+class A {}
+
 fn Main() -> i32 {
-  var (x: i32, y: i32);
-  x = 1;
-  // CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/uninitialized/fail_uninitialized_pattern.carbon:[[@LINE+1]]: undefined behavior: access to uninitialized value Uninit<Placeholder<y>>
-  return y;
+  var a: A = {};
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/operators/fail_no_mul.carbon:[[@LINE+2]]: type error in `*`:
+  // CHECK: could not find implementation of interface MulWith(U = i32) for class A
+  a * 1;
+  return 0;
 }

@@ -75,6 +75,7 @@ LET                  "let"
 LIBRARY              "library"
 MATCH                "match"
 MINUS                "-"
+MODULO               "%"
 NOT                  "not"
 OR                   "or"
 PACKAGE              "package"
@@ -165,6 +166,7 @@ operand_start         [(A-Za-z0-9_\"]
 {LIBRARY}             { return CARBON_SIMPLE_TOKEN(LIBRARY);             }
 {MATCH}               { return CARBON_SIMPLE_TOKEN(MATCH);               }
 {MINUS}               { return CARBON_SIMPLE_TOKEN(MINUS);               }
+{MODULO}              { return CARBON_SIMPLE_TOKEN(MODULO);              }
 {NOT}                 { return CARBON_SIMPLE_TOKEN(NOT);                 }
 {OR}                  { return CARBON_SIMPLE_TOKEN(OR);                  }
 {PACKAGE}             { return CARBON_SIMPLE_TOKEN(PACKAGE);             }
@@ -253,7 +255,7 @@ operand_start         [(A-Za-z0-9_\"]
   if (intrinsic.ok()) {
     return CARBON_ARG_TOKEN(intrinsic_identifier, *intrinsic);
   } else {
-    return context.RecordSyntaxError(intrinsic.error().message());
+    return context.RecordSyntaxError(std::move(intrinsic).error());
   }
 }
 

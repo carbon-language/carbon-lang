@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!--
+Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
+SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+ -->
+
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <key>contactName</key>
+    <string>Carbon Developers</string>
+
+    <key>description</key>
+    <string>Support for Carbon Language</string>
+
+    <key>name</key>
+    <string>carbon</string>
+
+    <key>ordering</key>
+    <array>
+        <string>04F7F7E3-D5EE-40A4-9899-53CD34D28276</string>
+    </array>
+
+    <key>uuid</key>
+    <string>6152A817-84AE-47A8-96DB-0B50DF2EEC10</string>
+</plist>

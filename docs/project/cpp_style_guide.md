@@ -40,7 +40,7 @@ The baseline style guidance is the
 
 ## Carbon-local guidance
 
-We provide some local guidance beyond the baseline. This are typically motived
+We provide some local guidance beyond the baseline. These are typically motived
 either by specific value provided to the project, or to give simpler and more
 strict guidance for Carbon's narrow use of C++.
 

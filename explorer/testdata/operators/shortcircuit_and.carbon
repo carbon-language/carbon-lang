@@ -2,17 +2,22 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
+// RUN: %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
+// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
+// CHECK: result: 1
 
 package ExplorerTest api;
 
+var call_count: i32 = 0;
+fn ReturnFalse() -> Bool {
+  call_count = call_count + 1;
+  return false;
+}
+
 fn Main() -> i32 {
-  var x: i32;
-  // CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/uninitialized/fail_uninitialized_init.carbon:[[@LINE+1]]: undefined behavior: access to uninitialized value Uninit<Placeholder<x>>
-  var y: i32 = x;
-  return x;
+  var result: Bool = ReturnFalse() and ReturnFalse();
+  return if not result then call_count else -1;
 }

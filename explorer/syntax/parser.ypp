@@ -130,6 +130,8 @@
 %type <Nonnull<Expression*>> additive_operand
 %type <Nonnull<Expression*>> additive_lhs
 %type <Nonnull<Expression*>> additive_expression
+%type <Nonnull<Expression*>> modulo_operand
+%type <Nonnull<Expression*>> modulo_expression
 %type <Nonnull<Expression*>> as_operand
 %type <Nonnull<Expression*>> as_expression
 %type <Nonnull<Expression*>> unimpl_expression
@@ -228,6 +230,7 @@
   LIBRARY
   MATCH
   MINUS
+  MODULO
   NOT
   OR
   PACKAGE
@@ -448,6 +451,18 @@ multiplicative_expression:
           std::vector<Nonnull<Expression*>>({$1, $3}));
     }
 ;
+modulo_operand:
+  ref_deref_expression
+| minus_expression
+;
+modulo_expression:
+  modulo_operand MODULO modulo_operand
+    {
+      $$ = arena->New<OperatorExpression>(
+          context.source_loc(), Operator::Mod,
+          std::vector<Nonnull<Expression*>>({$1, $3}));
+    }
+;
 additive_operand:
   ref_deref_expression
 | multiplicative_expression
@@ -494,6 +509,7 @@ unimpl_expression:
 value_expression:
   // ref_deref_expression excluded due to precedence diamond.
   additive_expression
+| modulo_expression
 | as_expression
 | combine_expression
 | fn_type_expression
@@ -691,7 +707,7 @@ non_expression_pattern:
       if (alternative_pattern.ok()) {
         $$ = *alternative_pattern;
       } else {
-        context.RecordSyntaxError(alternative_pattern.error().message());
+        context.RecordSyntaxError(std::move(alternative_pattern).error());
         YYERROR;
       }
     }
@@ -927,7 +943,7 @@ function_declaration:
       if (fn.ok()) {
         $$ = *fn;
       } else {
-        context.RecordSyntaxError(fn.error().message());
+        context.RecordSyntaxError(std::move(fn).error());
         YYERROR;
       }
     }
@@ -938,7 +954,7 @@ function_declaration:
       if (fn.ok()) {
         $$ = *fn;
       } else {
-        context.RecordSyntaxError(fn.error().message());
+        context.RecordSyntaxError(std::move(fn).error());
         YYERROR;
       }
     }
@@ -1029,7 +1045,7 @@ declaration:
       if (impl.ok()) {
         $$ = *impl;
       } else {
-        context.RecordSyntaxError(impl.error().message());
+        context.RecordSyntaxError(std::move(impl).error());
         YYERROR;
       }
     }
