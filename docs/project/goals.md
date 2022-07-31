@@ -251,7 +251,7 @@ extending it are inherently hostile toward the long-term maintenance of software
 not get the design of most language features correct on our first, second, or
 73rd try. As a consequence, there must be a built-in plan and ability to move
 Carbon forward at a reasonable pace and with a reasonable cost. Simultaneously,
-an evolving language must not leave software behind to languish but bring
+an evolving language must not leave software behind to languish, instead bringing
 software forward. This requirement should not imply compatibility, but instead
 some migratability, likely tool-assisted.
 
