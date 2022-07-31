@@ -140,12 +140,12 @@ we expect to provide tooling to help automate and scale migrating existing
 Carbon code to the new version. The goal is to enable more rapid evolution of
 the language without the churn tax and version skew becoming unsustainable.
 
-**Developer tooling.** We need developers to be productive while reading and writing
-Carbon code. We expect to provide a broad suite of development oriented tools
-ranging from refactoring tools to [LSP](https://langserver.org/) implementations
-and editor integrations. We also plan to provide machine readable forms of many
-parts of the language, such as a grammar, to ensure consistency between tools
-and enable the development of tools by others.
+**Developer tooling.** We need developers to be productive while reading and
+writing Carbon code. We expect to provide a broad suite of development oriented
+tools ranging from refactoring tools to [LSP](https://langserver.org/)
+implementations and editor integrations. We also plan to provide machine
+readable forms of many parts of the language, such as a grammar, to ensure
+consistency between tools and enable the development of tools by others.
 
 **Infrastructure to enable package management and other library ecosystem
 support.** The goal is to support what the ecosystem needs, regardless of the
@@ -596,11 +596,11 @@ cost-benefit analysis.
 **Cost-benefit will drive many choices.** We expect to measure both cost,
 including complexity, and benefit using the impact on the project and language
 as a whole. Benefit accumulates over time, which means providing incremental
-solutions earlier will typically increase the total benefit. It is also reasonable
-for the rationale of a decision to factor in both effort already invested, and
-effort ready to commit to the feature. This should not overwhelm any fundamental
-cost-benefit analysis. However, given two equally impactful features, we should
-focus on the solution that is moving the fastest.
+solutions earlier will typically increase the total benefit. It is also
+reasonable for the rationale of a decision to factor in both effort already
+invested, and effort ready to commit to the feature. This should not overwhelm
+any fundamental cost-benefit analysis. However, given two equally impactful
+features, we should focus on the solution that is moving the fastest.
 
 **Domain-motivated libraries and features are an example.** For these, the cost
 function will typically be the effort required to specify and implement the
