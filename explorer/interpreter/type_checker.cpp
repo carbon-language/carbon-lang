@@ -1957,7 +1957,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           }
           op.set_rewritten_form(*result);
           return Success();
-      }
+      };
 
       auto handle_binary_overload_operator =
           [&](Builtins::Builtin builtin) -> ErrorOr<Success> {
@@ -1984,7 +1984,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           return Success();
         }
         // Now try an overloaded negation.
-        return handle_binary_overload_operator(buildin);
+        return handle_binary_overload_operator(builtin);
       };
 
       switch (op.op()) {
