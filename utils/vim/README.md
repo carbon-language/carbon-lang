@@ -1,10 +1,11 @@
+# Carbon Syntax Highlighting for Vim & Neovim
+
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-# Carbon Syntax Highlighting for Vim & Neovim
 
 For Carbon devs using Vim or Neovim, this plugin provides syntax highlighting for .carbon files found throughout `explorer/testdata`
 
