@@ -331,7 +331,7 @@ software should not be penalized unnecessarily.
 misuse.** Adding arbitrary restrictions to prevent misuse of otherwise general
 features of the language can create problems when they end up interfering with
 unexpected or rare but still appropriate usages. Instead, Carbon should focus on
-enabling appropriate and effective usage of features and creating incentives
+enabling appropriate and effective usage of features, and creating incentives
 around those. What seems initially like a "misuse" of a feature may be critical
 for some rare or future use cases. Put differently, we will not always be able to
 prevent developers from misusing features or writing unnecessarily complex code,
