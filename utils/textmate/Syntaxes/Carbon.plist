@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!--
+Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
+SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+ -->
+
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+        "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <!-- Section metadata -->
+        <key>name</key>
+        <string>carbon</string>
+        <key>uuid</key>
+        <string>04F7F7E3-D5EE-40A4-9899-53CD34D28276</string>
+        <key>scopeName</key>
+        <string>source.carbon</string>
+        <key>fileTypes</key>
+        <array>
+            <string>carbon</string>
+        </array>
+
+        <!-- Folding markers -->
+        <key>foldingStartMarker</key>
+        <string>\{\s*$</string>
+        <key>foldingStopMarker</key>
+        <string>^\s*\}</string>
+
+        <!-- Active patterns from repository -->
+        <key>patterns</key>
+        <array>
+            <!-- Rule: comments -->
+            <dict>
+                <key>begin</key>
+                <string>(^[ \t]+)?(?=//)</string>
+                <key>end</key>
+                <string>(?!\G)</string>
+                <key>patterns</key>
+                <array>
+                    <dict>
+                        <key>name</key>
+                        <string>comment.line.carbon</string>
+                        <key>begin</key>
+                        <string>//</string>
+                        <key>end</key>
+                        <string>$</string>
+                    </dict>
+                </array>
+            </dict>
+            <!-- Rule: control flow keywords -->
+            <dict>
+                <key>name</key>
+                <string>keyword.control.carbon</string>
+                <key>match</key>
+                <string>\b(break|case|continue|default|else|if|for|match|return|then|while)\b</string>
+            </dict>
+            <!-- Rule: other keywords -->
+            <dict>
+                <key>name</key>
+                <string>keyword.other.carbon</string>
+                <key>match</key>
+                <string>\b(abstract|addr|alias|and|api|as|auto|base|choice|class|constraint|destructor|extends|external|final|forall|fn|friend|impl|import|interface|let|library|like|namespace|not|observe|or|override|package|partial|private|protected|returned|template|var|virtual|where|while|_)\b</string>
+            </dict>
+            <!-- Rule: builtin types -->
+            <dict>
+                <key>name</key>
+                <string>storage.type.carbon</string>
+                <key>match</key>
+                <string>\b(As|bool|Carbon\.Int|Carbon\.UInt|f16|f32|f64|f128|i8|i16|i32|i64|i128|i256|Slice|String|StringView|Type|u8|u16|u32|u64|u128|u256)\b</string>
+            </dict>
+            <!-- Rule: boolean literals - has keyword coloring -->
+            <dict>
+                <key>name</key>
+                <string>keyword.other.carbon</string>
+                <key>match</key>
+                <string>\b(true|false)\b</string>
+            </dict>
+            <!-- Rule: block string literals -->
+            <dict>
+                <key>name</key>
+                <string>string.quoted.triple.carbon</string>
+                <key>begin</key>
+                <string>"""</string>
+                <key>end</key>
+                <string>"""</string>
+
+                <key>patterns</key>
+                <array>
+                    <dict>
+                        <key>include</key>
+                        <string>#string_escapes</string>
+                    </dict>
+                </array>
+            </dict>
+            <!-- Rule: basic string literals -->
+            <dict>
+                <key>name</key>
+                <string>string.quoted.double.carbon</string>
+                <key>begin</key>
+                <string>"</string>
+                <key>end</key>
+                <string>"</string>
+
+                <key>patterns</key>
+                <array>
+                    <dict>
+                        <key>include</key>
+                        <string>#string_escapes</string>
+                    </dict>
+                </array>
+            </dict>
+            <!-- Rule: hexadecimal number literals -->
+            <dict>
+                <key>name</key>
+                <string>constant.numeric.carbon</string>
+                <key>match</key>
+                <string>0x[_0-9A-F]+(\.[_0-9A-F]+(p[-+]?[1-9][0-9]*)?)?</string>
+            </dict>
+            <!-- Rule: binary number literals -->
+            <dict>
+                <key>name</key>
+                <string>constant.numeric.carbon</string>
+                <key>match</key>
+                <string>0b[_01]+</string>
+            </dict>
+            <!-- Rule: decimal number literals -->
+            <dict>
+                <key>name</key>
+                <string>constant.numeric.carbon</string>
+                <key>match</key>
+                <string>[1-9][_0-9]*(\.[_0-9]+(e[-+]?[1-9][0-9]*)?)?</string>
+            </dict>
+        </array>
+
+        <!-- Rule repository -->
+        <key>repository</key>
+        <dict>
+            <!-- Rule: string escape sequences -->
+            <key>string_escapes</key>
+            <dict>
+                <key>name</key>
+                <string>constant.character.escape.carbon</string>
+                <key>match</key>
+                <string>\([tnr'"0\0]|x[0-9A-F]{2}|u\{[0-9A-F]{4,}\})</string>
+            </dict>
+        </dict>
+    </dict>
+</plist>

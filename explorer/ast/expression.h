@@ -120,6 +120,7 @@ enum class Operator {
   Deref,
   Eq,
   Mul,
+  Mod,
   Neg,
   Not,
   Or,
@@ -663,7 +664,7 @@ class ValueLiteral : public Expression {
 
 class IntrinsicExpression : public Expression {
  public:
-  enum class Intrinsic { Print, Alloc, Dealloc };
+  enum class Intrinsic { Print, Alloc, Dealloc, Rand, IntEq, StrEq };
 
   // Returns the enumerator corresponding to the intrinsic named `name`,
   // or raises a fatal compile error if there is no such enumerator.

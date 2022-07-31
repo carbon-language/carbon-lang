@@ -16,6 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Help contribute ideas to Carbon](#help-contribute-ideas-to-carbon)
     -   [Help implement Carbon's design](#help-implement-carbons-design)
     -   [Help address bugs](#help-address-bugs)
+    -   [Good first issues](#good-first-issues)
 -   [How to become a contributor to Carbon](#how-to-become-a-contributor-to-carbon)
     -   [Contributor License Agreements (CLAs)](#contributor-license-agreements-clas)
         -   [Future CLA plans](#future-cla-plans)
@@ -42,7 +43,7 @@ contribute, and we appreciate all of them. If you have questions, please feel
 free to ask on Discord or
 [GitHub](https://github.com/carbon-language/carbon-lang/discussions).
 
-Everyone contributing to Carbon is expected to:
+Everyone who contributes to Carbon is expected to:
 
 -   Read and follow the [Code of Conduct](CODE_OF_CONDUCT.md). We expect
     everyone in our community to be welcoming, helpful, and respectful.
@@ -59,11 +60,12 @@ information here in our contributing guide, especially the
 ### Help comment on proposals
 
 If you're looking for a quick way to contribute, commenting on proposals is a
-way to provide proposal authors with a breadth of feedback. The "Evolution >
-Ideas" forum is where authors will go for early, high-level feedback. The
-"Evolution > Proposal reviews" forum will have more mature proposals that are
-nearing the decision process. For more about the difference, see the
-[evolution process](docs/project/evolution.md).
+way to provide proposal authors with a breadth of feedback.
+[Issues for leads](https://github.com/carbon-language/carbon-lang/projects/2)
+has questions the community is looking for a decision on. The
+[list of open proposals](https://github.com/carbon-language/carbon-lang/issues?q=is%3Aopen+label%3Aproposal+draft%3Afalse)
+will have more mature proposals that are nearing a decision. For more about the
+difference, see the [evolution process](docs/project/evolution.md).
 
 When giving feedback, please keep comments positive and constructive. Our goal
 is to use community discussion to improve proposals and assist authors.
@@ -90,9 +92,14 @@ and are very interested in folks joining in to help us with it.
 
 As Carbon's design and eventually implementation begin to take shape, we'll
 inevitably end up with plenty of bugs. Helping us triage, analyze, and address
-them is always a great way to get involved. When we have the bug tracker(s) set
-up for this, we'll update this section with ideas of how to find these and get
-started.
+them is always a great way to get involved. See
+[open issues on GitHub](https://github.com/carbon-language/carbon-lang/issues).
+
+### Good first issues
+
+Some issues have been marked as
+["good first issues"](https://github.com/carbon-language/carbon-lang/labels/good%20first%20issue).
+These are intended to be a good place to start contributing.
 
 ## How to become a contributor to Carbon
 
@@ -145,13 +152,13 @@ the Code of Conduct.
 
     -   The
         [weekly sync](https://docs.google.com/document/d/1dwS2sJ8tsN3LwxqmZSv9OvqutYhP71dK9Dmr1IXQFTs/edit?resourcekey=0-NxBWgL9h05yD2GOR3wUisg),
-        where everyone is welcome.
+        where contributors are welcome.
     -   [Open discussions](https://docs.google.com/document/d/1tEt4iM6vfcY0O0DG0uOEMIbaXcZXlNREc2ChNiEtn_w/edit),
         which are unstructured meeting slots used for discussing proposals,
         tooling, and other Carbon topics based on who attends.
 
-Note that commenting on Google Docs and some label changes in GitHub will
-require some contributor access: make sure you've
+Note that commenting on Google Docs, attending meetings, and some label changes
+in GitHub will require some contributor access: make sure you've
 [signed the CLA](#contributor-license-agreements-clas) then ask for access on
 [#getting-started](https://discord.com/channels/655572317891461132/655577725347561492)
 on Discord.
@@ -175,8 +182,7 @@ follow the Carbon documentation and coding styles.
 
     -   When the Carbon team accepts new documentation or features, to Carbon,
         by default they take on the maintenance burden. This means they'll weigh
-        the benefit of each contribution must be weighed against the cost of
-        maintaining it.
+        the benefit of each contribution against the cost of maintaining it.
     -   The appropriate [style](#style) is applied.
     -   The [license](#license) is present in all contributions.
     -   [Code review](/docs/project/code_review.md) is used to improve the

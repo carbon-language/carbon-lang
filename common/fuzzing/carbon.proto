@@ -54,6 +54,7 @@ message OperatorExpression {
     Ptr = 11;
     Combine = 12;
     As = 13;
+    Mod = 14;
   }
   optional Operator op = 1;
   repeated Expression arguments = 2;
@@ -90,6 +91,9 @@ message IntrinsicExpression {
     Print = 1;
     Alloc = 2;
     Dealloc = 3;
+    Rand = 4;
+    IntEq = 5;
+    StrEq = 6;
   }
   optional Intrinsic intrinsic = 1;
   optional TupleLiteralExpression argument = 2;

@@ -7,6 +7,7 @@
 #include <iterator>
 #include <map>
 #include <optional>
+#include <random>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -29,6 +30,8 @@ using llvm::dyn_cast;
 using llvm::isa;
 
 namespace Carbon {
+
+static std::mt19937 generator(12);
 
 // Constructs an ActionStack suitable for the specified phase.
 static auto MakeTodo(Phase phase, Nonnull<Heap*> heap) -> ActionStack {
@@ -173,7 +176,6 @@ void Interpreter::PrintState(llvm::raw_ostream& out) {
   out << "\nmemory: " << heap_;
   out << "\n}\n";
 }
-
 auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
                            const std::vector<Nonnull<const Value*>>& args,
                            SourceLocation source_loc)
@@ -190,6 +192,9 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
     case Operator::Mul:
       return arena_->New<IntValue>(cast<IntValue>(*args[0]).value() *
                                    cast<IntValue>(*args[1]).value());
+    case Operator::Mod:
+      return arena_->New<IntValue>(cast<IntValue>(*args[0]).value() %
+                                   cast<IntValue>(*args[1]).value());
     case Operator::Not:
       return arena_->New<BoolValue>(!cast<BoolValue>(*args[0]).value());
     case Operator::And:
@@ -198,8 +203,6 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
     case Operator::Or:
       return arena_->New<BoolValue>(cast<BoolValue>(*args[0]).value() ||
                                     cast<BoolValue>(*args[1]).value());
-    case Operator::Eq:
-      return arena_->New<BoolValue>(ValueEqual(args[0], args[1], std::nullopt));
     case Operator::Ptr:
       return arena_->New<PointerType>(args[0]);
     case Operator::Deref:
@@ -209,7 +212,9 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
     case Operator::Combine:
       return &cast<TypeOfConstraintType>(static_type)->constraint_type();
     case Operator::As:
-      return Convert(args[0], args[1], source_loc);
+    case Operator::Eq:
+      CARBON_FATAL() << "These operators should have been rewritten to "
+                        "interface method calls";
   }
 }
 
@@ -1093,9 +1098,17 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         Nonnull<const Expression*> arg = op.arguments()[act.pos()];
         if (op.op() == Operator::AddressOf) {
           return todo_.Spawn(std::make_unique<LValAction>(arg));
-        } else {
-          return todo_.Spawn(std::make_unique<ExpressionAction>(arg));
+        } else if ((op.op() == Operator::And || op.op() == Operator::Or) &&
+                   act.pos() == 1) {
+          // Short-circuit evaluation for 'and' & 'or'
+          auto operand_value = cast<BoolValue>(act.results()[act.pos() - 1]);
+          if ((op.op() == Operator::Or && operand_value->value()) ||
+              (op.op() == Operator::And && !operand_value->value())) {
+            return todo_.FinishAction(operand_value);
+          }
+          // No short-circuit, fall through to evaluate 2nd operand.
         }
+        return todo_.Spawn(std::make_unique<ExpressionAction>(arg));
       } else {
         //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
         // -> { {eval_prim(op, (vs,v)) :: C, E, F} :: S, H}
@@ -1154,17 +1167,30 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       }
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       switch (cast<IntrinsicExpression>(exp).intrinsic()) {
+        case IntrinsicExpression::Intrinsic::Rand: {
+          const auto& args = cast<TupleValue>(*act.results()[0]).elements();
+          CARBON_CHECK(args.size() == 2);
+
+          const auto& low = cast<IntValue>(*args[0]).value();
+          const auto& high = cast<IntValue>(*args[1]).value();
+          std::uniform_int_distribution<> distr(low, high);
+          int r = distr(generator);
+          return todo_.FinishAction(arena_->New<IntValue>(r));
+        }
         case IntrinsicExpression::Intrinsic::Print: {
           const auto& args = cast<TupleValue>(*act.results()[0]).elements();
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> format_string_value,
+              Convert(args[0], arena_->New<StringType>(), exp.source_loc()));
+          const char* format_string =
+              cast<StringValue>(*format_string_value).value().c_str();
           switch (args.size()) {
             case 1:
-              llvm::outs() << llvm::formatv(
-                  cast<StringValue>(*args[0]).value().c_str());
+              llvm::outs() << llvm::formatv(format_string);
               break;
             case 2:
-              llvm::outs() << llvm::formatv(
-                  cast<StringValue>(*args[0]).value().c_str(),
-                  cast<IntValue>(*args[1]).value());
+              llvm::outs() << llvm::formatv(format_string,
+                                            cast<IntValue>(*args[1]).value());
               break;
             default:
               CARBON_FATAL() << "Unexpected arg count: " << args.size();
@@ -1184,6 +1210,22 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           CARBON_CHECK(args.elements().size() == 1);
           heap_.Deallocate(cast<PointerValue>(args.elements()[0])->address());
           return todo_.FinishAction(TupleValue::Empty());
+        }
+        case IntrinsicExpression::Intrinsic::IntEq: {
+          const auto& args = cast<TupleValue>(*act.results()[0]).elements();
+          CARBON_CHECK(args.size() == 2);
+          auto lhs = cast<IntValue>(*args[0]).value();
+          auto rhs = cast<IntValue>(*args[1]).value();
+          auto result = arena_->New<BoolValue>(lhs == rhs);
+          return todo_.FinishAction(result);
+        }
+        case IntrinsicExpression::Intrinsic::StrEq: {
+          const auto& args = cast<TupleValue>(*act.results()[0]).elements();
+          CARBON_CHECK(args.size() == 2);
+          auto& lhs = cast<StringValue>(*args[0]).value();
+          auto& rhs = cast<StringValue>(*args[1]).value();
+          auto result = arena_->New<BoolValue>(lhs == rhs);
+          return todo_.FinishAction(result);
         }
       }
     }

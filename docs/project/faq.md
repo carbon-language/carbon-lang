@@ -17,6 +17,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [How complete is Carbon's design?](#how-complete-is-carbons-design)
     -   [How many people are involved in Carbon?](#how-many-people-are-involved-in-carbon)
     -   [Is there a demo?](#is-there-a-demo)
+    -   [Where should I ask questions about Carbon Language?](#where-should-i-ask-questions-about-carbon-language)
+    -   [Why isn't there a Carbon Language logo?](#why-isnt-there-a-carbon-language-logo)
 -   [Why build Carbon?](#why-build-carbon)
     -   [Why is performance critical?](#why-is-performance-critical)
     -   [What level of C++ interoperability is expected?](#what-level-of-c-interoperability-is-expected)
@@ -42,6 +44,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Why make Carbon open source?](#why-make-carbon-open-source)
     -   [Why does Carbon have a CLA?](#why-does-carbon-have-a-cla)
     -   [Who pays for Carbon's infrastructure?](#who-pays-for-carbons-infrastructure)
+-   [How can I contribute to Carbon?](#how-can-i-contribute-to-carbon)
+    -   [What are the prerequisites for contributing to Carbon Language's design and tools?](#what-are-the-prerequisites-for-contributing-to-carbon-languages-design-and-tools)
+    -   [When do we revisit decisions or reopen discussions?](#when-do-we-revisit-decisions-or-reopen-discussions)
+    -   [What can I do if I disagree with a design decision?](#what-can-i-do-if-i-disagree-with-a-design-decision)
+    -   [How can I best say "I like X" or "I don't like X"?](#how-can-i-best-say-i-like-x-or-i-dont-like-x)
 
 <!-- tocstop -->
 
@@ -103,7 +110,7 @@ Yes! A prototype interpreter demo `explorer` can be used to execute simple
 examples. For example:
 
 ```
-$ bazel run //explorer -- ./explorer/testdata/basic_syntax/print.carbon
+$ bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
 ```
 
 Example source files can be found under
@@ -112,10 +119,31 @@ Example source files can be found under
 Carbon can also be explored interactively on
 [https://carbon.compiler-explorer.com](https://carbon.compiler-explorer.com/).
 
+### Where should I ask questions about Carbon Language?
+
+Please ask questions and hold discussions either by using
+[GitHub Discussions](https://github.com/carbon-language/carbon-lang/discussions)
+or
+[#language-questions on Discord](https://discord.com/channels/655572317891461132/998959756045713438).
+
+GitHub Issues should be reserved for missing features, bugs, and anything else
+that is fixable by way of a Pull Request.
+
+### Why isn't there a Carbon Language logo?
+
+Establishing a Carbon Language logo isn't a priority right now. Remember that
+this project is an _experiment_, and so we think it's best to concentrate
+efforts on ensuring that the language succeeds at its goals instead.
+
+We have a few drafts in the works, but it requires a fair amount of work to get
+right, and getting it wrong is costly, so we won't be adding one in the near
+future. Don't suggest logos, because we need to be careful about how we create
+one.
+
 ## Why build Carbon?
 
-See the [project README](#why-build-carbon) for an overview of the motivation
-for Carbon. This section dives into specific questions in that space.
+See the [project README](/README.md#why-build-carbon) for an overview of the
+motivation for Carbon. This section dives into specific questions in that space.
 
 ### Why is performance critical?
 
@@ -434,3 +462,83 @@ Carbon is currently bootstrapping infrastructure with the help of Google. As
 soon as a foundation is ready to oversee infrastructure, such as
 [continuous integration](https://en.wikipedia.org/wiki/Continuous_integration)
 and the CLA, we plan to transfer them so they are run by the community.
+
+## How can I contribute to Carbon?
+
+There are many ways to contribute, and we appreciate all of them. Begin by
+reading the project's [Contributing](/CONTRIBUTING.md) page to learn more about
+how you can contribute.
+
+### What are the prerequisites for contributing to Carbon Language's design and tools?
+
+**[Carbon Language isn't ready for use](#how-soon-can-we-use-carbon). This
+section is for people wishing to participate in designing and implementing the
+language.**
+
+Carbon is being designed to migrate C++ codebases and to look familiar to C++
+programmers. As such, familiarity with C++ is very important. Carbon is also
+trying to learn from other programming languages, so having broad experience
+with other programming languages will be helpful to see tradeoffs in design
+decisions.
+
+The Carbon toolchain is being implemented in C++, and we also use Python and
+Starlark. As we're building off of the LLVM project, familiarity with Clang and
+other parts of LLVM will be advantageous, but not required.
+
+Our [contribution tools](/docs/project/contribution_tools.md) page documents
+specific tools we use when building.
+
+### When do we revisit decisions or reopen discussions?
+
+Once a decision is made through the [evolution process](evolution.md) the
+community should treat it as _firmly_ decided. This doesn't mean that the
+decision is _definitely_ right or set in stone, it just means we'd like the
+community to focus time and energy on other issues in the name of progress.
+
+Sometimes, it will be appropriate to revisit a decision; for example, when there
+is new information introduced, a new community joins Carbon, or there is an
+order of magnitude growth in the community. These cases are handled as new
+proposals through the [evolution process](evolution.md).
+
+For example, we have done this with digit separators: we missed important
+_domain_ conventions and had overly restricted where separators are allowed,
+[an issue was filed with the new information](https://github.com/carbon-language/carbon-lang/issues/1485),
+and we're fixing the choice.
+
+See also the related questions
+[What happens when a decision was wrong?](#what-happens-when-a-decision-was-wrong),
+[How does Carbon make decisions?](#how-does-carbon-make-decisions), and
+[What can I do if I disagree with a design decision?](#what-can-i-do-if-i-disagree-with-a-design-decision).
+
+### What can I do if I disagree with a design decision?
+
+We invite you to give us constructive feedback. Some of Carbon's design
+decisions are made with the _expectation_ of receiving community feedback. We
+understand that many decisions won't be universally popular, but we'd still like
+to understand the community's reaction to Carbon.
+
+We encourage you to investigate why Carbon came to be the way it is. Designs
+will include links to the proposals and important alternatives considered that
+led to them, typically linked at the bottom. Read through and understand the
+context and rationale behind the decisions you are concerned about. You may find
+that your concerns were already thoroughly discussed. If not, you will be in a
+better place to present your thoughts in a convincing way.
+
+Changing decisions that have come out of the [evolution process](evolution.md)
+involves a formal process. See
+[When do we revisit decisions or reopen discussions?](#when-do-we-revisit-decisions-or-reopen-discussions).
+For these issues in particular, please be aware that other community members may
+choose to not actively engage in detailed discussions, especially if the
+discussion seems to be revisiting points made in the past.
+
+If after reading this answer you are not sure how to proceed please feel free to
+ask (see
+[Where should I ask questions?](#where-should-i-ask-questions-about-carbon-language)).
+
+### How can I best say "I like X" or "I don't like X"?
+
+Both Discord and Github Discussions allow you to give an emoji "reaction" to
+individual posts. If you'd like to amplify what has already been said, please
+use these instead of posting messages that re-state substantially the same
+thing. These make conversations easier to follow and understand general
+sentiment in discussions involving many people.

@@ -55,6 +55,8 @@ static auto OperatorToProtoEnum(const Operator op)
       return Fuzzing::OperatorExpression::Eq;
     case Operator::Mul:
       return Fuzzing::OperatorExpression::Mul;
+    case Operator::Mod:
+      return Fuzzing::OperatorExpression::Mod;
     case Operator::Or:
       return Fuzzing::OperatorExpression::Or;
     case Operator::Sub:
@@ -236,6 +238,15 @@ static auto ExpressionToProto(const Expression& expression)
           break;
         case IntrinsicExpression::Intrinsic::Dealloc:
           intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::Dealloc);
+          break;
+        case IntrinsicExpression::Intrinsic::Rand:
+          intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::Rand);
+          break;
+        case IntrinsicExpression::Intrinsic::IntEq:
+          intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::IntEq);
+          break;
+        case IntrinsicExpression::Intrinsic::StrEq:
+          intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::StrEq);
           break;
       }
       *intrinsic_proto->mutable_argument() =

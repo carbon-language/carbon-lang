@@ -153,13 +153,13 @@ pass in `T` explicitly, so it can be a
 [deduced parameters](overview.md#deduced-parameters) in the Generics overview
 doc). Basically, the user passes in a value for `val`, and the type of `val`
 determines `T`. `T` still gets passed into the function though, and it plays an
-important role -- it defines the implementation of the interface. We can think
-of the interface as defining a struct type whose members are function pointers,
-and an implementation of an interface as a value of that struct with actual
-function pointer values. So an implementation is a table of function pointers
-(one per function defined in the interface) that gets passed into a function as
-the type argument. For more on this, see
-[the implementation model section](#implementation-model) below.
+important role -- it defines the key used to look up interface implementations.
+
+We can think of the interface as defining a struct type whose members are
+function pointers, and an implementation of an interface as a value of that
+struct with actual function pointer values. An implementation is a table mapping
+the interface's functions to function pointers. For more on this, see
+[the implementation model section](#implementation-model).
 
 In addition to function pointer members, interfaces can include any constants
 that belong to a type. For example, the
@@ -727,10 +727,14 @@ implements an interface:
 
 -   [Interfaces](#interfaces) are types of witness tables.
 -   [Impls](#implementing-interfaces) are witness table values.
--   The compiler rewrites functions with an implicit type argument
-    (`fn Foo[InterfaceName:! T](...)`) to have an actual argument with type
-    determined by the interface, and supplied at the callsite using a value
-    determined by the impl.
+
+Type checking is done with just the interface. The impl is used during code
+generation time, possibly using
+[monomorphization](https://en.wikipedia.org/wiki/Monomorphization) to have a
+separate instantiation of the function for each combination of the generic
+argument values. The compiler is free to use other implementation strategies,
+such as passing the witness table for any needed implementations, if that can be
+predicted.
 
 For the example above, [the Vector interface](#interfaces) could be thought of
 defining a witness table type like:
@@ -765,26 +769,11 @@ var VectorForPoint: Vector  = {
 };
 ```
 
-Finally we can define a generic function and call it, like
-[`AddAndScaleGeneric` from the "Generics" section](#generics) by making the
-witness table an explicit argument to the function:
-
-```
-fn AddAndScaleGeneric
-    (t:! Vector, a: t.Self, b: t.Self, s: f64) -> t.Self {
-  return t.Scale(t.Add(a, b), s);
-}
-// Point implements Vector.
-var v: Point = AddAndScaleGeneric(VectorForPoint, a, w, 2.5);
-```
-
-The rule is that generic arguments (declared using `:!`) are passed at compile
-time, so the actual value of the `t` argument here can be used to generate the
-code for `AddAndScaleGeneric`. So `AddAndScaleGeneric` is using a
-[static-dispatch witness table](terminology.md#static-dispatch-witness-table).
-
-Note that this implementation strategy only works for impls that the caller
-knows the callee needs.
+Since generic arguments (where the parameter is declared using `:!`) are passed
+at compile time, so the actual value of `VectorForPoint` can be used to generate
+the code for functions using that impl. This is the
+[static-dispatch witness table](terminology.md#static-dispatch-witness-table)
+approach.
 
 ## Interfaces recap
 
@@ -1134,7 +1123,7 @@ for adding requirements for interfaces used for
 interface is enough to be able to use the operator to access the functionality.
 
 **Alternatives considered:** See
-[Carbon: Access to interface methods](https://docs.google.com/document/d/1u_i_s31OMI_apPur7WmVxcYq6MUXsG3oCiKwH893GRI/edit?usp=sharing&resourcekey=0-0lzSNebBMtUBi4lStL825g).
+[Carbon: Access to interface methods](https://docs.google.com/document/d/17IXDdu384x1t9RimQ01bhx4-nWzs4ZEeke4eO6ImQNc/edit?resourcekey=0-Fe44R-0DhQBlw0gs2ujNJA).
 
 **Comparison with other languages:** This `&` operation on interfaces works very
 similarly to Rust's `+` operation, with the main difference being how you
@@ -1254,7 +1243,7 @@ Examples:
     [Boost.Graph library](https://www.boost.org/doc/libs/1_74_0/libs/graph/doc/)
     [graph concepts](https://www.boost.org/doc/libs/1_74_0/libs/graph/doc/graph_concepts.html#fig:graph-concepts)
     has many refining relationships between concepts.
-    [Carbon generics use case: graph library](https://docs.google.com/document/d/1xk0GLtpBl2OOnf3F_6Z-A3DtTt-r7wdOZ5wPipYUSO0/edit?usp=sharing&resourcekey=0-mBSmwn6b6jwbLaQw2WG6OA)
+    [Carbon generics use case: graph library](https://docs.google.com/document/d/15Brjv8NO_96jseSesqer5HbghqSTJICJ_fTaZOH0Mg4/edit?usp=sharing&resourcekey=0-CYSbd6-xF8vYHv9m1rolEQ)
     shows how those concepts might be translated into Carbon interfaces.
 -   The [C++ concepts](https://en.cppreference.com/w/cpp/named_req) for
     containers, iterators, and concurrency include many requirement
@@ -1383,7 +1372,7 @@ interface MovieCodec {
 #### Diamond dependency issue
 
 Consider this set of interfaces, simplified from
-[this example generic graph library doc](https://docs.google.com/document/d/1xk0GLtpBl2OOnf3F_6Z-A3DtTt-r7wdOZ5wPipYUSO0/edit?resourcekey=0-mBSmwn6b6jwbLaQw2WG6OA#):
+[this example generic graph library doc](https://docs.google.com/document/d/15Brjv8NO_96jseSesqer5HbghqSTJICJ_fTaZOH0Mg4/edit?usp=sharing&resourcekey=0-CYSbd6-xF8vYHv9m1rolEQ):
 
 ```
 interface Graph {

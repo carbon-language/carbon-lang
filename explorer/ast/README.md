@@ -27,7 +27,7 @@ to `BarKind` if that value represents a type that's derived from both `Foo` and
 
 We rely on code generation to help enforce those invariants, so every node type
 must be described in [`ast_rtti.txt`](ast_rtti.txt). See the documentation in
-(`gen_rtti.py`)[../gen_rtti.py], the code generation script, for details about
+[`gen_rtti.py`](../gen_rtti.py), the code generation script, for details about
 the file format and generated code.
 
 The AST class hierarchy is structured in a fairly unsurprising way, with

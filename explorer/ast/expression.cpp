@@ -29,7 +29,10 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
   static const auto& intrinsic_map = *new std::map<std::string_view, Intrinsic>(
       {{"print", Intrinsic::Print},
        {"new", Intrinsic::Alloc},
-       {"delete", Intrinsic::Dealloc}});
+       {"delete", Intrinsic::Dealloc},
+       {"rand", Intrinsic::Rand},
+       {"int_eq", Intrinsic::IntEq},
+       {"str_eq", Intrinsic::StrEq}});
   name.remove_prefix(std::strlen("__intrinsic_"));
   auto it = intrinsic_map.find(name);
   if (it == intrinsic_map.end()) {
@@ -81,6 +84,8 @@ auto ToString(Operator op) -> std::string_view {
       return "or";
     case Operator::Eq:
       return "==";
+    case Operator::Mod:
+      return "%";
   }
 }
 
@@ -173,6 +178,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
         out << "Print" << iexp.args();
         break;
       }
+
       out << "intrinsic_";
       switch (iexp.intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print:
@@ -184,6 +190,14 @@ void Expression::Print(llvm::raw_ostream& out) const {
         case IntrinsicExpression::Intrinsic::Dealloc:
           out << "delete";
           break;
+        case IntrinsicExpression::Intrinsic::Rand:
+          out << "rand";
+          break;
+        case IntrinsicExpression::Intrinsic::IntEq:
+          out << "int_eq";
+          break;
+        case IntrinsicExpression::Intrinsic::StrEq:
+          out << "str_eq";
       }
       out << iexp.args();
       break;

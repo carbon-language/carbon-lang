@@ -24,6 +24,7 @@ contributions.
         -   [Manual installations (not recommended)](#manual-installations-not-recommended)
         -   [Troubleshooting build issues](#troubleshooting-build-issues)
         -   [Troubleshooting debug issues](#troubleshooting-debug-issues)
+    -   [zlib (Linux-only)](#zlib-linux-only)
     -   [pre-commit](#pre-commit)
 -   [Optional tools](#optional-tools)
     -   [Carbon-maintained](#carbon-maintained)
@@ -36,6 +37,7 @@ contributions.
     -   [Vim](#vim)
         -   [vim-prettier](#vim-prettier)
     -   [Visual Studio Code](#visual-studio-code)
+        -   [DevContainer](#devcontainer)
     -   [pre-commit enabled tools](#pre-commit-enabled-tools)
         -   [black](#black)
         -   [codespell](#codespell)
@@ -224,6 +226,15 @@ Dwarf Error: DW_FORM_strx1 found in non-DWO CU
 It means that the version of GDB used is too old, and does not support the DWARF
 v5 format.
 
+### zlib (Linux-only)
+
+On **Linux**, you need to have the zlib headers installed. For Debian- and
+Ubuntu-based distributions, you can install the development package:
+
+```bash
+sudo apt install zlib1g-dev
+```
+
 ### pre-commit
 
 We use [pre-commit](https://pre-commit.com) to run
@@ -311,7 +322,7 @@ used by some scripts.
 Our recommended way of installing is:
 
 ```bash
-brew install github/gh/gh
+brew install gh
 ```
 
 #### GitHub Desktop
@@ -389,6 +400,22 @@ Our recommended way of installing is to use
 > Studio Code to run `bazel`, not both in combination. Visual Studio Code can
 > still be used for other purposes, such as editing files, without interfering
 > with `bazel`.
+
+#### DevContainer
+
+To support developers join the project without deploying the build env, we
+provide VSCode `DevContainer`.
+
+-   Install VSCode and Docker;
+-   Install the plugin `ms-vscode-remote.remote-containers` under VSCode;
+-   Open `Carbon` project folder in
+    [VSCode](https://docs.microsoft.com/en-us/azure-sphere/app-development/container-build-vscode#build-and-debug-the-project);
+    <br> Visual Studio Code detects the new files and opens a message box
+    saying:
+    `Folder contains a Dev Container configuration file. Reopen to folder to develop in a container.`
+-   Select the `Reopen in Container` button to reopen the folder in the
+    container created by the `.devcontainer/Dockerfile` file;
+-   And then, you are ready to start writing code.
 
 ### pre-commit enabled tools
 

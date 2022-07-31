@@ -117,6 +117,10 @@ static auto OperatorToCarbon(const Fuzzing::OperatorExpression& operator_expr,
       BinaryOperatorToCarbon(arg0, " * ", arg1, out);
       break;
 
+    case Fuzzing::OperatorExpression::Mod:
+      BinaryOperatorToCarbon(arg0, " % ", arg1, out);
+      break;
+
     case Fuzzing::OperatorExpression::Ptr:
       PostfixUnaryOperatorToCarbon(arg0, "*", out);
       break;
@@ -301,6 +305,15 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
           break;
         case Fuzzing::IntrinsicExpression::Dealloc:
           out << "__intrinsic_delete";
+          break;
+        case Fuzzing::IntrinsicExpression::Rand:
+          out << "__intrinsic_rand";
+          break;
+        case Fuzzing::IntrinsicExpression::IntEq:
+          out << "__intrinsic_int_eq";
+          break;
+        case Fuzzing::IntrinsicExpression::StrEq:
+          out << "__intrinsic_str_eq";
           break;
       }
       TupleLiteralExpressionToCarbon(intrinsic.argument(), out);

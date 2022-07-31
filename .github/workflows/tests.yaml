@@ -36,22 +36,22 @@ jobs:
       # Checkout the pull request head or the branch.
       - name: Checkout pull request
         if: github.event_name == 'pull_request_target'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Checkout branch
         if: github.event_name != 'pull_request_target'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       # Setup Python and related tools.
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           # Match the min version listed in docs/project/contribution_tools.md
           python-version: '3.9'
 
       # On macOS we need Go and to use it to install Bazelisk.
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v3
         if: matrix.os == 'macos-latest'
       - name: Install bazelisk
         if: matrix.os == 'macos-latest'

@@ -11,7 +11,7 @@
 
 package ExplorerTest api;
 
-interface AddWith(T:! Type) {
+interface MyAddWith(T:! Type) {
   fn Op[me: Self](b: T) -> Self;
 }
 
@@ -21,13 +21,13 @@ class Point {
 }
 
 // Allowed: `Self` means `Point` after `as`
-impl Point as AddWith(Self) {
+impl Point as MyAddWith(Self) {
   fn Op[me: Point](b: Point) -> Point {
     return {.x = me.x + b.x, .y = me.y + b.y};
   }
 }
 
-fn DoAddGeneric[T:! Type, U:! AddWith(T)](a: U, b: T) -> U {
+fn DoAddGeneric[T:! Type, U:! MyAddWith(T)](a: U, b: T) -> U {
   return a.Op(b);
 }
 
