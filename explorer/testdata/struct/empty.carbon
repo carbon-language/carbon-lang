@@ -14,9 +14,6 @@ package ExplorerTest api;
 fn Main() -> i32 {
   var empty: {} = {};
   empty = {};
-  if (not (empty == {})) {
-    return 1;
-  }
   match (empty) {
     case {} => {
       return 0;

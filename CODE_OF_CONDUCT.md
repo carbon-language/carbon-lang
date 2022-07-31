@@ -293,7 +293,7 @@ violation of this Code of Conduct using these guidelines based on the behavior
 involved:
 
 1.  **Correction**
-    -   **Behavior:** Use of inappropriate language or other minor violations
+    -   **Behavior:** Use of inappropriate language or other minor violations of
         the code of conduct.
     -   **Action:** A private, written message providing clarity around the
         nature of the violation and an explanation of why the behavior was

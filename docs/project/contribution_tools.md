@@ -408,7 +408,7 @@ provide VSCode `DevContainer`.
 
 -   Install VSCode and Docker;
 -   Install the plugin `ms-vscode-remote.remote-containers` under VSCode;
--   Open `Carban` project folder in
+-   Open `Carbon` project folder in
     [VSCode](https://docs.microsoft.com/en-us/azure-sphere/app-development/container-build-vscode#build-and-debug-the-project);
     <br> Visual Studio Code detects the new files and opens a message box
     saying:

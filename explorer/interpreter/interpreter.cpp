@@ -203,8 +203,6 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
     case Operator::Or:
       return arena_->New<BoolValue>(cast<BoolValue>(*args[0]).value() ||
                                     cast<BoolValue>(*args[1]).value());
-    case Operator::Eq:
-      return arena_->New<BoolValue>(ValueEqual(args[0], args[1], std::nullopt));
     case Operator::Ptr:
       return arena_->New<PointerType>(args[0]);
     case Operator::Deref:
@@ -215,7 +213,7 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
       // If & wasn't rewritten, it's being used to form a constraint.
       return &cast<TypeOfConstraintType>(static_type)->constraint_type();
     case Operator::As:
-      return Convert(args[0], args[1], source_loc);
+    case Operator::Eq:
     case Operator::BitwiseOr:
     case Operator::BitwiseXor:
     case Operator::BitShiftLeft:
@@ -1176,15 +1174,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       const auto& args = cast<TupleValue>(*act.results()[0]).elements();
       switch (cast<IntrinsicExpression>(exp).intrinsic()) {
-        case IntrinsicExpression::Intrinsic::Rand: {
-          CARBON_CHECK(args.size() == 2);
-
-          const auto& low = cast<IntValue>(*args[0]).value();
-          const auto& high = cast<IntValue>(*args[1]).value();
-          std::uniform_int_distribution<> distr(low, high);
-          int r = distr(generator);
-          return todo_.FinishAction(arena_->New<IntValue>(r));
-        }
         case IntrinsicExpression::Intrinsic::Print: {
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> format_string_value,
@@ -1215,6 +1204,28 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           CARBON_CHECK(args.size() == 1);
           heap_.Deallocate(cast<PointerValue>(args[0])->address());
           return todo_.FinishAction(TupleValue::Empty());
+        }
+        case IntrinsicExpression::Intrinsic::Rand: {
+          CARBON_CHECK(args.size() == 2);
+          const auto& low = cast<IntValue>(*args[0]).value();
+          const auto& high = cast<IntValue>(*args[1]).value();
+          std::uniform_int_distribution<> distr(low, high);
+          int r = distr(generator);
+          return todo_.FinishAction(arena_->New<IntValue>(r));
+        }
+        case IntrinsicExpression::Intrinsic::IntEq: {
+          CARBON_CHECK(args.size() == 2);
+          auto lhs = cast<IntValue>(*args[0]).value();
+          auto rhs = cast<IntValue>(*args[1]).value();
+          auto result = arena_->New<BoolValue>(lhs == rhs);
+          return todo_.FinishAction(result);
+        }
+        case IntrinsicExpression::Intrinsic::StrEq: {
+          CARBON_CHECK(args.size() == 2);
+          auto& lhs = cast<StringValue>(*args[0]).value();
+          auto& rhs = cast<StringValue>(*args[1]).value();
+          auto result = arena_->New<BoolValue>(lhs == rhs);
+          return todo_.FinishAction(result);
         }
         case IntrinsicExpression::Intrinsic::IntBitComplement: {
           CARBON_CHECK(args.size() == 1);

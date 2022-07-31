@@ -30,13 +30,15 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
       {{"print", Intrinsic::Print},
        {"new", Intrinsic::Alloc},
        {"delete", Intrinsic::Dealloc},
+       {"rand", Intrinsic::Rand},
+       {"int_eq", Intrinsic::IntEq},
        {"int_bit_complement", Intrinsic::IntBitComplement},
        {"int_bit_and", Intrinsic::IntBitAnd},
        {"int_bit_or", Intrinsic::IntBitOr},
        {"int_bit_xor", Intrinsic::IntBitXor},
        {"int_left_shift", Intrinsic::IntLeftShift},
        {"int_right_shift", Intrinsic::IntRightShift},
-       {"rand", Intrinsic::Rand}});
+       {"str_eq", Intrinsic::StrEq}});
   name.remove_prefix(std::strlen("__intrinsic_"));
   auto it = intrinsic_map.find(name);
   if (it == intrinsic_map.end()) {
@@ -54,6 +56,10 @@ auto IntrinsicExpression::name() const -> std::string_view {
       return "__intrinsic_new";
     case IntrinsicExpression::Intrinsic::Dealloc:
       return "__intrinsic_delete";
+    case IntrinsicExpression::Intrinsic::Rand:
+      return "__intrinsic_rand";
+    case IntrinsicExpression::Intrinsic::IntEq:
+      return "__intrinsic_int_eq";
     case IntrinsicExpression::Intrinsic::IntBitComplement:
       return "__intrinsic_int_bit_complement";
     case IntrinsicExpression::Intrinsic::IntBitAnd:
@@ -66,8 +72,8 @@ auto IntrinsicExpression::name() const -> std::string_view {
       return "__intrinsic_int_left_shift";
     case IntrinsicExpression::Intrinsic::IntRightShift:
       return "__intrinsic_int_right_shift";
-    case IntrinsicExpression::Intrinsic::Rand:
-      return "__intrinsic_rand";
+    case IntrinsicExpression::Intrinsic::StrEq:
+      return "__intrinsic_str_eq";
   }
 }
 

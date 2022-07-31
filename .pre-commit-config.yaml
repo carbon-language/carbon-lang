@@ -168,6 +168,11 @@ repos:
           - '<!--'
           - ''
           - ' -->'
+          - --custom_format
+          - '\.vim$'
+          - ''
+          - '" '
+          - ''
         exclude: |
           (?x)^(
               .bazelversion|

@@ -2072,12 +2072,20 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           op.set_static_type(arena_->New<BoolType>());
           op.set_value_category(ValueCategory::Let);
           return Success();
-        case Operator::Eq:
-          CARBON_RETURN_IF_ERROR(
-              ExpectExactType(e->source_loc(), "==", ts[0], ts[1], impl_scope));
-          op.set_static_type(arena_->New<BoolType>());
-          op.set_value_category(ValueCategory::Let);
+        case Operator::Eq: {
+          ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
+              impl_scope, op.arguments()[0],
+              BuiltinInterfaceName{Builtins::EqWith, ts[1]},
+              BuiltinMethodCall{"Equal", op.arguments()[1]});
+          if (!converted.ok()) {
+            // We couldn't find a matching `impl`.
+            return CompilationError(e->source_loc())
+                   << *ts[0] << " is not equality comparable with " << *ts[1]
+                   << " (" << converted.error().message() << ")";
+          }
+          op.set_rewritten_form(*converted);
           return Success();
+        }
         case Operator::Deref:
           CARBON_RETURN_IF_ERROR(
               ExpectPointerType(e->source_loc(), "*", ts[0]));
@@ -2230,23 +2238,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&intrinsic_exp.args(), impl_scope));
       const auto& args = intrinsic_exp.args().fields();
       switch (cast<IntrinsicExpression>(*e).intrinsic()) {
-        case IntrinsicExpression::Intrinsic::Rand: {
-          if (args.size() != 2) {
-            return CompilationError(e->source_loc())
-                   << "Rand takes 2 arguments, received " << args.size();
-          }
-          CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "Rand argument 0", arena_->New<IntType>(),
-              &args[0]->static_type(), impl_scope));
-
-          CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "Rand argument 1", arena_->New<IntType>(),
-              &args[1]->static_type(), impl_scope));
-
-          e->set_static_type(arena_->New<IntType>());
-
-          return Success();
-        }
         case IntrinsicExpression::Intrinsic::Print:
           // TODO: Remove Print special casing once we have variadics or
           // overloads. Here, that's the name Print instead of __intrinsic_print
@@ -2285,6 +2276,53 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           CARBON_RETURN_IF_ERROR(
               ExpectPointerType(e->source_loc(), "*", arg_type));
           e->set_static_type(TupleValue::Empty());
+          e->set_value_category(ValueCategory::Let);
+          return Success();
+        }
+        case IntrinsicExpression::Intrinsic::Rand: {
+          if (args.size() != 2) {
+            return CompilationError(e->source_loc())
+                   << "Rand takes 2 arguments, received " << args.size();
+          }
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "Rand argument 0", arena_->New<IntType>(),
+              &args[0]->static_type(), impl_scope));
+
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "Rand argument 1", arena_->New<IntType>(),
+              &args[1]->static_type(), impl_scope));
+
+          e->set_static_type(arena_->New<IntType>());
+
+          return Success();
+        }
+        case IntrinsicExpression::Intrinsic::IntEq: {
+          if (args.size() != 2) {
+            return CompilationError(e->source_loc())
+                   << "__intrinsic_int_eq takes 2 arguments";
+          }
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "__intrinsic_int_eq argument 1",
+              arena_->New<IntType>(), &args[0]->static_type(), impl_scope));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "__intrinsic_int_eq argument 2",
+              arena_->New<IntType>(), &args[1]->static_type(), impl_scope));
+          e->set_static_type(arena_->New<BoolType>());
+          e->set_value_category(ValueCategory::Let);
+          return Success();
+        }
+        case IntrinsicExpression::Intrinsic::StrEq: {
+          if (args.size() != 2) {
+            return CompilationError(e->source_loc())
+                   << "__intrinsic_str_eq takes 2 arguments";
+          }
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "__intrinsic_str_eq argument 1",
+              arena_->New<StringType>(), &args[0]->static_type(), impl_scope));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "__intrinsic_str_eq argument 2",
+              arena_->New<StringType>(), &args[1]->static_type(), impl_scope));
+          e->set_static_type(arena_->New<BoolType>());
           e->set_value_category(ValueCategory::Let);
           return Success();
         }

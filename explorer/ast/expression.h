@@ -673,13 +673,15 @@ class IntrinsicExpression : public Expression {
     Print,
     Alloc,
     Dealloc,
+    Rand,
+    IntEq,
+    StrEq,
     IntBitAnd,
     IntBitOr,
     IntBitXor,
     IntBitComplement,
     IntLeftShift,
     IntRightShift,
-    Rand
   };
 
   // Returns the enumerator corresponding to the intrinsic named `name`,
