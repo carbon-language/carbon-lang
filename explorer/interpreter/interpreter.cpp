@@ -212,6 +212,7 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
     case Operator::AddressOf:
       return arena_->New<PointerValue>(cast<LValue>(*args[0]).address());
     case Operator::BitwiseAnd:
+      // If & wasn't rewritten, it's being used to form a constraint.
       return &cast<TypeOfConstraintType>(static_type)->constraint_type();
     case Operator::As:
       return Convert(args[0], args[1], source_loc);
@@ -1176,7 +1177,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       const auto& args = cast<TupleValue>(*act.results()[0]).elements();
       switch (cast<IntrinsicExpression>(exp).intrinsic()) {
         case IntrinsicExpression::Intrinsic::Rand: {
-          const auto& args = cast<TupleValue>(*act.results()[0]).elements();
           CARBON_CHECK(args.size() == 2);
 
           const auto& low = cast<IntValue>(*args[0]).value();
