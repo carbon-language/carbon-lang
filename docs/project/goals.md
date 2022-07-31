@@ -80,7 +80,7 @@ set expectations for people joining, and to help remind and anchor us on
 consistent standards. It is also important that we hold ourselves accountable to
 these expectations and have real and meaningful mechanisms to moderate the
 community. When behavior steps outside of our expectations, we need tools,
-process, and policy for how we will recognize and correct it.
+processes, and policies for how we will recognize and correct it.
 
 **An open, inclusive process for Carbon changes.** The community needs to be
 able to effectively engage in the direction and evolution of the project and
@@ -140,7 +140,7 @@ we expect to provide tooling to help automate and scale migrating existing
 Carbon code to the new version. The goal is to enable more rapid evolution of
 the language without the churn tax and version skew becoming unsustainable.
 
-**Developer tooling.** We need developers to be productive reading and writing
+**Developer tooling.** We need developers to be productive while reading and writing
 Carbon code. We expect to provide a broad suite of development oriented tools
 ranging from refactoring tools to [LSP](https://langserver.org/) implementations
 and editor integrations. We also plan to provide machine readable forms of many
@@ -596,7 +596,7 @@ cost-benefit analysis.
 **Cost-benefit will drive many choices.** We expect to measure both cost,
 including complexity, and benefit using the impact on the project and language
 as a whole. Benefit accumulates over time, which means providing incremental
-solutions earlier will typically increase total benefit. It is also reasonable
+solutions earlier will typically increase the total benefit. It is also reasonable
 for the rationale of a decision to factor in both effort already invested, and
 effort ready to commit to the feature. This should not overwhelm any fundamental
 cost-benefit analysis. However, given two equally impactful features, we should
@@ -604,7 +604,7 @@ focus on the solution that is moving the fastest.
 
 **Domain-motivated libraries and features are an example.** For these, the cost
 function will typically be the effort required to specify and implement the
-feature. Benefit will stem from the number of users and how much utility the
+feature. Benefits will stem from the number of users and how much utility the
 feature provides. We don't expect to have concrete numbers for these, but we
 expect prioritization decisions between features to be expressed using this
 framework.
