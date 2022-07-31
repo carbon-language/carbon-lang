@@ -205,9 +205,9 @@ that performance, whether good or bad, is unsurprising to developers. Even
 pleasant surprises, when too frequent, can become a problem due to establishing
 brittle baseline performance that cannot be reliably sustained.
 
-**Leave no room for a lower level language.** Developers should not need to
-leave the rules and structure of Carbon, whether to gain control over
-performance problems or to gain access to hardware facilities.
+**No need for a lower level language.** Developers should not need to leave the
+rules and structure of Carbon, whether to gain control over performance problems
+or to gain access to hardware facilities.
 
 ### Software and language evolution
 
