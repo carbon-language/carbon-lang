@@ -52,9 +52,14 @@ message OperatorExpression {
     Or = 9;
     Sub = 10;
     Ptr = 11;
-    Combine = 12;
+    BitwiseAnd = 12;
     As = 13;
     Mod = 14;
+    Complement = 15;
+    BitwiseOr = 16;
+    BitwiseXor = 17;
+    BitShiftLeft = 18;
+    BitShiftRight = 19;
   }
   optional Operator op = 1;
   repeated Expression arguments = 2;
@@ -83,20 +88,6 @@ message IdentifierExpression {
 
 message DesignatorExpression {
   optional string name = 1;
-}
-
-message IntrinsicExpression {
-  enum Intrinsic {
-    UnknownIntrinsic = 0;
-    Print = 1;
-    Alloc = 2;
-    Dealloc = 3;
-    Rand = 4;
-    IntEq = 5;
-    StrEq = 6;
-  }
-  optional Intrinsic intrinsic = 1;
-  optional TupleLiteralExpression argument = 2;
 }
 
 message IfExpression {
@@ -165,7 +156,6 @@ message Expression {
     StructLiteralExpression struct_literal = 7;
     StructTypeLiteralExpression struct_type_literal = 8;
     IdentifierExpression identifier = 9;
-    IntrinsicExpression intrinsic = 10;
     IfExpression if_expression = 11;
     BoolTypeLiteral bool_type_literal = 12;
     BoolLiteral bool_literal = 13;

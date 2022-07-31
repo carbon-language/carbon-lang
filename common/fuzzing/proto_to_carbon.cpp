@@ -154,8 +154,28 @@ static auto OperatorToCarbon(const Fuzzing::OperatorExpression& operator_expr,
       BinaryOperatorToCarbon(arg0, " or ", arg1, out);
       break;
 
-    case Fuzzing::OperatorExpression::Combine:
+    case Fuzzing::OperatorExpression::Complement:
+      PrefixUnaryOperatorToCarbon("^", arg0, out);
+      break;
+
+    case Fuzzing::OperatorExpression::BitwiseAnd:
       BinaryOperatorToCarbon(arg0, " & ", arg1, out);
+      break;
+
+    case Fuzzing::OperatorExpression::BitwiseOr:
+      BinaryOperatorToCarbon(arg0, " | ", arg1, out);
+      break;
+
+    case Fuzzing::OperatorExpression::BitwiseXor:
+      BinaryOperatorToCarbon(arg0, " ^ ", arg1, out);
+      break;
+
+    case Fuzzing::OperatorExpression::BitShiftLeft:
+      BinaryOperatorToCarbon(arg0, " << ", arg1, out);
+      break;
+
+    case Fuzzing::OperatorExpression::BitShiftRight:
+      BinaryOperatorToCarbon(arg0, " >> ", arg1, out);
       break;
   }
   out << ")";
@@ -288,36 +308,6 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
       IdentifierToCarbon(designator.name(), out);
       break;
     }
-
-    case Fuzzing::Expression::kIntrinsic: {
-      const auto& intrinsic = expression.intrinsic();
-      switch (intrinsic.intrinsic()) {
-        case Fuzzing::IntrinsicExpression::UnknownIntrinsic:
-          // Arbitrary default to avoid getting invalid syntax.
-          out << "__intrinsic_print";
-          break;
-
-        case Fuzzing::IntrinsicExpression::Print:
-          out << "__intrinsic_print";
-          break;
-        case Fuzzing::IntrinsicExpression::Alloc:
-          out << "__intrinsic_new";
-          break;
-        case Fuzzing::IntrinsicExpression::Dealloc:
-          out << "__intrinsic_delete";
-          break;
-        case Fuzzing::IntrinsicExpression::Rand:
-          out << "__intrinsic_rand";
-          break;
-        case Fuzzing::IntrinsicExpression::IntEq:
-          out << "__intrinsic_int_eq";
-          break;
-        case Fuzzing::IntrinsicExpression::StrEq:
-          out << "__intrinsic_str_eq";
-          break;
-      }
-      TupleLiteralExpressionToCarbon(intrinsic.argument(), out);
-    } break;
 
     case Fuzzing::Expression::kIfExpression: {
       const auto& if_expression = expression.if_expression();

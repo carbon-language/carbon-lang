@@ -42,6 +42,7 @@ AUTO                 "auto"
 AWAIT                "__await"
 BOOL                 "Bool"
 BREAK                "break"
+CARET                "^"
 CASE                 "case"
 CHOICE               "choice"
 CLASS                "class"
@@ -61,6 +62,7 @@ FALSE                "false"
 FN                   "fn"
 FN_TYPE              "__Fn"
 FORALL               "forall"
+GREATER_GREATER      ">>"
 IF                   "if"
 IMPL                 "impl"
 IMPORT               "import"
@@ -69,15 +71,17 @@ IS                   "is"
 LEFT_CURLY_BRACE     "{"
 LEFT_PARENTHESIS     "("
 LEFT_SQUARE_BRACKET  "["
+LESS_LESS            "<<"
 LET                  "let"
 LIBRARY              "library"
 MATCH                "match"
 MINUS                "-"
-MODULO               "%"
 NOT                  "not"
 OR                   "or"
 PACKAGE              "package"
+PERCENT              "%"
 PERIOD               "."
+PIPE                 "|"
 PLUS                 "+"
 RETURN               "return"
 RETURNED             "returned"
@@ -131,6 +135,7 @@ operand_start         [(A-Za-z0-9_\"]
 {AWAIT}               { return CARBON_SIMPLE_TOKEN(AWAIT);               }
 {BOOL}                { return CARBON_SIMPLE_TOKEN(BOOL);                }
 {BREAK}               { return CARBON_SIMPLE_TOKEN(BREAK);               }
+{CARET}               { return CARBON_SIMPLE_TOKEN(CARET);               }
 {CASE}                { return CARBON_SIMPLE_TOKEN(CASE);                }
 {CHOICE}              { return CARBON_SIMPLE_TOKEN(CHOICE);              }
 {CLASS}               { return CARBON_SIMPLE_TOKEN(CLASS);               }
@@ -150,6 +155,7 @@ operand_start         [(A-Za-z0-9_\"]
 {FN_TYPE}             { return CARBON_SIMPLE_TOKEN(FN_TYPE);             }
 {FN}                  { return CARBON_SIMPLE_TOKEN(FN);                  }
 {FORALL}              { return CARBON_SIMPLE_TOKEN(FORALL);              }
+{GREATER_GREATER}     { return CARBON_SIMPLE_TOKEN(GREATER_GREATER);     }
 {IF}                  { return CARBON_SIMPLE_TOKEN(IF);                  }
 {IMPL}                { return CARBON_SIMPLE_TOKEN(IMPL);                }
 {IMPORT}              { return CARBON_SIMPLE_TOKEN(IMPORT);              }
@@ -158,15 +164,17 @@ operand_start         [(A-Za-z0-9_\"]
 {LEFT_CURLY_BRACE}    { return CARBON_SIMPLE_TOKEN(LEFT_CURLY_BRACE);    }
 {LEFT_PARENTHESIS}    { return CARBON_SIMPLE_TOKEN(LEFT_PARENTHESIS);    }
 {LEFT_SQUARE_BRACKET} { return CARBON_SIMPLE_TOKEN(LEFT_SQUARE_BRACKET); }
+{LESS_LESS}           { return CARBON_SIMPLE_TOKEN(LESS_LESS);           }
 {LET}                 { return CARBON_SIMPLE_TOKEN(LET);                 }
 {LIBRARY}             { return CARBON_SIMPLE_TOKEN(LIBRARY);             }
 {MATCH}               { return CARBON_SIMPLE_TOKEN(MATCH);               }
 {MINUS}               { return CARBON_SIMPLE_TOKEN(MINUS);               }
-{MODULO}              { return CARBON_SIMPLE_TOKEN(MODULO);              }
 {NOT}                 { return CARBON_SIMPLE_TOKEN(NOT);                 }
 {OR}                  { return CARBON_SIMPLE_TOKEN(OR);                  }
 {PACKAGE}             { return CARBON_SIMPLE_TOKEN(PACKAGE);             }
+{PERCENT}             { return CARBON_SIMPLE_TOKEN(PERCENT);             }
 {PERIOD}              { return CARBON_SIMPLE_TOKEN(PERIOD);              }
+{PIPE}                { return CARBON_SIMPLE_TOKEN(PIPE);                }
 {PLUS}                { return CARBON_SIMPLE_TOKEN(PLUS);                }
 {RETURNED}            { return CARBON_SIMPLE_TOKEN(RETURNED);            }
 {RETURN}              { return CARBON_SIMPLE_TOKEN(RETURN);              }
