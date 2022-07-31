@@ -182,8 +182,7 @@ follow the Carbon documentation and coding styles.
 
     -   When the Carbon team accepts new documentation or features, to Carbon,
         by default they take on the maintenance burden. This means they'll weigh
-        the benefit of each contribution must be weighed against the cost of
-        maintaining it.
+        the benefit of each contribution against the cost of maintaining it.
     -   The appropriate [style](#style) is applied.
     -   The [license](#license) is present in all contributions.
     -   [Code review](/docs/project/code_review.md) is used to improve the
