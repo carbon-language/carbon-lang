@@ -71,6 +71,7 @@ IS                   "is"
 LEFT_CURLY_BRACE     "{"
 LEFT_PARENTHESIS     "("
 LEFT_SQUARE_BRACKET  "["
+LESS                 "<"
 LESS_LESS            "<<"
 LET                  "let"
 LIBRARY              "library"
@@ -164,6 +165,7 @@ operand_start         [(A-Za-z0-9_\"]
 {LEFT_CURLY_BRACE}    { return CARBON_SIMPLE_TOKEN(LEFT_CURLY_BRACE);    }
 {LEFT_PARENTHESIS}    { return CARBON_SIMPLE_TOKEN(LEFT_PARENTHESIS);    }
 {LEFT_SQUARE_BRACKET} { return CARBON_SIMPLE_TOKEN(LEFT_SQUARE_BRACKET); }
+{LESS}                { return CARBON_SIMPLE_TOKEN(LESS_LESS);           }
 {LESS_LESS}           { return CARBON_SIMPLE_TOKEN(LESS_LESS);           }
 {LET}                 { return CARBON_SIMPLE_TOKEN(LET);                 }
 {LIBRARY}             { return CARBON_SIMPLE_TOKEN(LIBRARY);             }
