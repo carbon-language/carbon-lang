@@ -788,6 +788,12 @@ statement:
           context.source_loc(), $2, $4, ValueCategory::Var,
           VariableDefinition::DefinitionType::Var);
     }
+| RETURNED VAR variable_declaration SEMICOLON
+    {
+      $$ = arena->New<VariableDefinition>(
+          context.source_loc(), $3, std::nullopt, ValueCategory::Var,
+          VariableDefinition::DefinitionType::Returned);
+    }
 | RETURNED VAR variable_declaration EQUAL expression SEMICOLON
     {
       $$ = arena->New<VariableDefinition>(
