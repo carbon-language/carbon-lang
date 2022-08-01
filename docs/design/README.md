@@ -698,7 +698,7 @@ A `let`-binding may trigger a copy of the original value, or a move if the
 original value is a temporary, or the binding may be a pointer to the original
 value, like a
 [`const` reference in C++](<https://en.wikipedia.org/wiki/Reference_(C%2B%2B)>).
-Which of these options (copy or move or pointer) is selected must not be observable to the programmer. For example, Carbon will
+Which of these options (copy, move, or pointer) is selected must not be observable to the programmer. For example, Carbon will
 not allow modifications to the original value when it is through a pointer. This
 choice may also be influenced by the type. For example, types that don't support
 being copied will be passed by pointer instead.
