@@ -29,7 +29,11 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        # TODO: Figure out how to get llvm on linux again.
+        # We could build from cask instead of using the bottle, but that's
+        # likely a significant slowdown for tests.
+        # os: [ubuntu-latest, macos-latest]
+        os: [macos-latest]
         build_mode: [fastbuild, opt]
     runs-on: ${{ matrix.os }}
     steps:
