@@ -108,7 +108,7 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
     }
     case StatementKind::For: {
       CARBON_RETURN_IF_ERROR(
-          ResolveControlFlow(&cast<For>(*statement).body(), loop, function));
+          ResolveControlFlow(&cast<For>(*statement).body(), statement, function));
       return Success();
     }
     case StatementKind::While:
