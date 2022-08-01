@@ -2870,6 +2870,13 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       CARBON_RETURN_IF_ERROR(TypeCheckPattern(&for_stmt.variable_declaration(),
                                               std::nullopt, inner_impl_scope,
                                               ValueCategory::Let));
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckExp(&for_stmt.loop_target(), inner_impl_scope));
+
+      CARBON_RETURN_IF_ERROR(
+          ImplicitlyConvert("for", impl_scope, &for_stmt.loop_target(),
+                            &for_stmt.variable_declaration().static_type()));
+
       CARBON_RETURN_IF_ERROR(TypeCheckStmt(&for_stmt.body(), inner_impl_scope));
       return Success();
     }
