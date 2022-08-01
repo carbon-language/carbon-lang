@@ -221,6 +221,6 @@ endlessly.
 See these notes from discussions:
 
 -   [Regular equivalence classes 2021-09-23](https://docs.google.com/document/d/1iyL7ZDfWT6ZmDSz6Fp8MrLcl5nOQc4ItQbeL3QlVXYU/edit#)
--   [Carbon minutes (rolling): Open discussions: 2021-09-27](https://docs.google.com/document/d/1cRrhRrmaUf2hVi2lFcHsYo2j0jI6t9RGZoYjWhRxp14/edit?resourcekey=0-xWHBEZ8zIqnJiB4yfBSLfA#heading=h.qh4b1gy7o5el)
--   [Carbon minutes (rolling): Open discussions: 2021-09-28](https://docs.google.com/document/d/1cRrhRrmaUf2hVi2lFcHsYo2j0jI6t9RGZoYjWhRxp14/edit?resourcekey=0-xWHBEZ8zIqnJiB4yfBSLfA#heading=h.9a1r39mla9ho)
+-   [Carbon minutes (rolling): Open discussions: 2021-09-27](https://docs.google.com/document/d/1UelNaT_j61G8rYp6qQZ-biRddTuGcxJtqXxrVbjB9rA/edit#heading=h.qh4b1gy7o5el)
+-   [Carbon minutes (rolling): Open discussions: 2021-09-28](https://docs.google.com/document/d/1UelNaT_j61G8rYp6qQZ-biRddTuGcxJtqXxrVbjB9rA/edit#heading=h.9a1r39mla9ho)
 -   [Regular equivalence classes 2 2021-10-01](https://docs.google.com/document/d/1xGDRSV6q534-CoDZnzuZJmzhty2yPki2ZfDDPLSHYek/edit#)
