@@ -21,7 +21,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Carbon explorer implementation of core features with test cases](#carbon-explorer-implementation-of-core-features-with-test-cases)
 -   [Beyond 2022](#beyond-2022)
     -   [Potential 2023 goals: finish 0.2 language, stop experimenting](#potential-2023-goals-finish-02-language-stop-experimenting)
-    -   [Potential 2024-2025 goals: _ship_ 1.0 language & organization](#potential-2024-2025-goals-_ship_-10-language--organization)
+    -   [Potential 2024-2025 goals: _ship_ 1.0 language & organization](#potential-2024-2025-goals-ship-10-language--organization)
 
 <!-- tocstop -->
 
