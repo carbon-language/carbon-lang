@@ -1944,17 +1944,23 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         ts.push_back(&argument->static_type());
       }
 
-      auto handle_binary_arithmetic =
+      auto handle_unary_operator =
           [&](Builtins::Builtin builtin) -> ErrorOr<Success> {
-        // Handle a built-in operator first.
-        if (isa<IntType>(ts[0]) && isa<IntType>(ts[1]) &&
-            IsSameType(ts[0], ts[1], impl_scope)) {
-          op.set_static_type(ts[0]);
-          op.set_value_category(ValueCategory::Let);
-          return Success();
+        ErrorOr<Nonnull<Expression*>> result = BuildBuiltinMethodCall(
+            impl_scope, op.arguments()[0], BuiltinInterfaceName{builtin},
+            BuiltinMethodCall{"Op"});
+        if (!result.ok()) {
+          // We couldn't find a matching `impl`.
+          return CompilationError(e->source_loc())
+                 << "type error in `" << ToString(op.op()) << "`:\n"
+                 << result.error().message();
         }
+        op.set_rewritten_form(*result);
+        return Success();
+      };
 
-        // Now try an overloaded operator.
+      auto handle_binary_operator =
+          [&](Builtins::Builtin builtin) -> ErrorOr<Success> {
         ErrorOr<Nonnull<Expression*>> result = BuildBuiltinMethodCall(
             impl_scope, op.arguments()[0], BuiltinInterfaceName{builtin, ts[1]},
             BuiltinMethodCall{"Op", {op.arguments()[1]}});
@@ -1968,26 +1974,32 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         return Success();
       };
 
+      auto handle_binary_arithmetic =
+          [&](Builtins::Builtin builtin) -> ErrorOr<Success> {
+        // Handle a built-in operator first.
+        // TODO: Replace this with an intrinsic.
+        if (isa<IntType>(ts[0]) && isa<IntType>(ts[1]) &&
+            IsSameType(ts[0], ts[1], impl_scope)) {
+          op.set_static_type(ts[0]);
+          op.set_value_category(ValueCategory::Let);
+          return Success();
+        }
+
+        // Now try an overloaded operator.
+        return handle_binary_operator(builtin);
+      };
+
       switch (op.op()) {
         case Operator::Neg: {
           // Handle a built-in negation first.
+          // TODO: Replace this with an intrinsic.
           if (isa<IntType>(ts[0])) {
             op.set_static_type(arena_->New<IntType>());
             op.set_value_category(ValueCategory::Let);
             return Success();
           }
           // Now try an overloaded negation.
-          ErrorOr<Nonnull<Expression*>> result = BuildBuiltinMethodCall(
-              impl_scope, op.arguments()[0],
-              BuiltinInterfaceName{Builtins::Negate}, BuiltinMethodCall{"Op"});
-          if (!result.ok()) {
-            // We couldn't find a matching `impl`.
-            return CompilationError(e->source_loc())
-                   << "type error in `" << ToString(op.op()) << "`:\n"
-                   << result.error().message();
-          }
-          op.set_rewritten_form(*result);
-          return Success();
+          return handle_unary_operator(Builtins::Negate);
         }
         case Operator::Add:
           return handle_binary_arithmetic(Builtins::AddWith);
@@ -1997,6 +2009,42 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           return handle_binary_arithmetic(Builtins::MulWith);
         case Operator::Mod:
           return handle_binary_arithmetic(Builtins::ModWith);
+        case Operator::BitwiseAnd:
+          // `&` between type-of-types performs constraint combination.
+          // TODO: Should this be done via an intrinsic?
+          if (IsTypeOfType(ts[0]) && IsTypeOfType(ts[1])) {
+            std::optional<Nonnull<const ConstraintType*>> constraints[2];
+            for (int i : {0, 1}) {
+              if (auto* iface_type_type =
+                      dyn_cast<TypeOfInterfaceType>(ts[i])) {
+                constraints[i] = MakeConstraintForInterface(
+                    e->source_loc(), &iface_type_type->interface_type());
+              } else if (auto* constraint_type_type =
+                             dyn_cast<TypeOfConstraintType>(ts[i])) {
+                constraints[i] = &constraint_type_type->constraint_type();
+              } else {
+                return CompilationError(op.arguments()[i]->source_loc())
+                       << "argument to " << ToString(op.op())
+                       << " should be a constraint, found `" << *ts[i] << "`";
+              }
+            }
+            op.set_static_type(
+                arena_->New<TypeOfConstraintType>(CombineConstraints(
+                    e->source_loc(), {*constraints[0], *constraints[1]})));
+            op.set_value_category(ValueCategory::Let);
+            return Success();
+          }
+          return handle_binary_operator(Builtins::BitAndWith);
+        case Operator::BitwiseOr:
+          return handle_binary_operator(Builtins::BitOrWith);
+        case Operator::BitwiseXor:
+          return handle_binary_operator(Builtins::BitXorWith);
+        case Operator::BitShiftLeft:
+          return handle_binary_operator(Builtins::LeftShiftWith);
+        case Operator::BitShiftRight:
+          return handle_binary_operator(Builtins::RightShiftWith);
+        case Operator::Complement:
+          return handle_unary_operator(Builtins::BitComplement);
         case Operator::And:
           CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "&&(1)",
                                                  arena_->New<BoolType>(), ts[0],
@@ -2060,27 +2108,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           op.set_static_type(arena_->New<PointerType>(ts[0]));
           op.set_value_category(ValueCategory::Let);
           return Success();
-        case Operator::Combine: {
-          std::optional<Nonnull<const ConstraintType*>> constraints[2];
-          for (int i : {0, 1}) {
-            if (auto* iface_type_type = dyn_cast<TypeOfInterfaceType>(ts[i])) {
-              constraints[i] = MakeConstraintForInterface(
-                  e->source_loc(), &iface_type_type->interface_type());
-            } else if (auto* constraint_type_type =
-                           dyn_cast<TypeOfConstraintType>(ts[i])) {
-              constraints[i] = &constraint_type_type->constraint_type();
-            } else {
-              return CompilationError(op.arguments()[i]->source_loc())
-                     << "argument to " << ToString(op.op())
-                     << " should be a constraint, found `" << *ts[i] << "`";
-            }
-          }
-          op.set_static_type(
-              arena_->New<TypeOfConstraintType>(CombineConstraints(
-                  e->source_loc(), {*constraints[0], *constraints[1]})));
-          op.set_value_category(ValueCategory::Let);
-          return Success();
-        }
         case Operator::As: {
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> type,
@@ -2211,23 +2238,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&intrinsic_exp.args(), impl_scope));
       const auto& args = intrinsic_exp.args().fields();
       switch (cast<IntrinsicExpression>(*e).intrinsic()) {
-        case IntrinsicExpression::Intrinsic::Rand: {
-          if (args.size() != 2) {
-            return CompilationError(e->source_loc())
-                   << "Rand takes 2 arguments, received " << args.size();
-          }
-          CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "Rand argument 0", arena_->New<IntType>(),
-              &args[0]->static_type(), impl_scope));
-
-          CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "Rand argument 1", arena_->New<IntType>(),
-              &args[1]->static_type(), impl_scope));
-
-          e->set_static_type(arena_->New<IntType>());
-
-          return Success();
-        }
         case IntrinsicExpression::Intrinsic::Print:
           // TODO: Remove Print special casing once we have variadics or
           // overloads. Here, that's the name Print instead of __intrinsic_print
@@ -2269,6 +2279,23 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           e->set_value_category(ValueCategory::Let);
           return Success();
         }
+        case IntrinsicExpression::Intrinsic::Rand: {
+          if (args.size() != 2) {
+            return CompilationError(e->source_loc())
+                   << "Rand takes 2 arguments, received " << args.size();
+          }
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "Rand argument 0", arena_->New<IntType>(),
+              &args[0]->static_type(), impl_scope));
+
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "Rand argument 1", arena_->New<IntType>(),
+              &args[1]->static_type(), impl_scope));
+
+          e->set_static_type(arena_->New<IntType>());
+
+          return Success();
+        }
         case IntrinsicExpression::Intrinsic::IntEq: {
           if (args.size() != 2) {
             return CompilationError(e->source_loc())
@@ -2299,6 +2326,35 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           e->set_value_category(ValueCategory::Let);
           return Success();
         }
+        case IntrinsicExpression::Intrinsic::IntBitComplement:
+          if (args.size() != 1) {
+            return CompilationError(e->source_loc())
+                   << intrinsic_exp.name() << " takes 1 argument";
+          }
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "complement argument", arena_->New<IntType>(),
+              &args[0]->static_type(), impl_scope));
+          e->set_static_type(arena_->New<IntType>());
+          e->set_value_category(ValueCategory::Let);
+          return Success();
+        case IntrinsicExpression::Intrinsic::IntBitAnd:
+        case IntrinsicExpression::Intrinsic::IntBitOr:
+        case IntrinsicExpression::Intrinsic::IntBitXor:
+        case IntrinsicExpression::Intrinsic::IntLeftShift:
+        case IntrinsicExpression::Intrinsic::IntRightShift:
+          if (args.size() != 2) {
+            return CompilationError(e->source_loc())
+                   << intrinsic_exp.name() << " takes 2 arguments";
+          }
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "argument 1", arena_->New<IntType>(),
+              &args[0]->static_type(), impl_scope));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "argument 2", arena_->New<IntType>(),
+              &args[1]->static_type(), impl_scope));
+          e->set_static_type(arena_->New<IntType>());
+          e->set_value_category(ValueCategory::Let);
+          return Success();
       }
     }
     case ExpressionKind::IntTypeLiteral:

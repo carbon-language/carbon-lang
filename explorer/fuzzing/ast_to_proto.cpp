@@ -61,8 +61,18 @@ static auto OperatorToProtoEnum(const Operator op)
       return Fuzzing::OperatorExpression::Or;
     case Operator::Sub:
       return Fuzzing::OperatorExpression::Sub;
-    case Operator::Combine:
-      return Fuzzing::OperatorExpression::Combine;
+    case Operator::BitwiseAnd:
+      return Fuzzing::OperatorExpression::BitwiseAnd;
+    case Operator::BitwiseOr:
+      return Fuzzing::OperatorExpression::BitwiseOr;
+    case Operator::BitwiseXor:
+      return Fuzzing::OperatorExpression::BitwiseXor;
+    case Operator::BitShiftLeft:
+      return Fuzzing::OperatorExpression::BitShiftLeft;
+    case Operator::BitShiftRight:
+      return Fuzzing::OperatorExpression::BitShiftRight;
+    case Operator::Complement:
+      return Fuzzing::OperatorExpression::Complement;
   }
 }
 
@@ -228,29 +238,10 @@ static auto ExpressionToProto(const Expression& expression)
 
     case ExpressionKind::IntrinsicExpression: {
       const auto& intrinsic = cast<IntrinsicExpression>(expression);
-      auto* intrinsic_proto = expression_proto.mutable_intrinsic();
-      switch (intrinsic.intrinsic()) {
-        case IntrinsicExpression::Intrinsic::Print:
-          intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::Print);
-          break;
-        case IntrinsicExpression::Intrinsic::Alloc:
-          intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::Alloc);
-          break;
-        case IntrinsicExpression::Intrinsic::Dealloc:
-          intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::Dealloc);
-          break;
-        case IntrinsicExpression::Intrinsic::Rand:
-          intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::Rand);
-          break;
-        case IntrinsicExpression::Intrinsic::IntEq:
-          intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::IntEq);
-          break;
-        case IntrinsicExpression::Intrinsic::StrEq:
-          intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::StrEq);
-          break;
-      }
-      *intrinsic_proto->mutable_argument() =
-          TupleLiteralExpressionToProto(intrinsic.args());
+      auto* call_proto = expression_proto.mutable_call();
+      call_proto->mutable_function()->mutable_identifier()->set_name(
+          std::string(intrinsic.name()));
+      *call_proto->mutable_argument() = ExpressionToProto(intrinsic.args());
       break;
     }
 
