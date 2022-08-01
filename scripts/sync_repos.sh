@@ -1,0 +1,70 @@
+#!/bin/bash -eux
+#
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Sync directories in the main Carbon repository into dedicated child
+# repositories to better match repository-oriented installing and tooling.
+
+ORIGIN_DIR="$PWD"
+COMMIT_SHA="$(git rev-parse --short $GITHUB_SHA)"
+COMMIT_SUMMARY="Original $(git show -s --pretty=full "$COMMIT_SHA")
+
+$(git diff --summary "${COMMIT_SHA}^!")
+"
+
+# Setup global git configuration.
+GIT_USERNAME="CarbonInfraBot"
+git config --global user.email "carbon-external-infra@google.com"
+git config --global user.name "$GIT_USERNAME"
+
+declare -A MIRRORS
+MIRRORS["utils/vim"]="vim-carbon-lang"
+
+for dir in "${!MIRRORS[@]}"; do
+  SRC_DIR="$dir"
+  DEST_REPO="${MIRRORS[$SRC_DIR]}"
+  DEST_REPO_URL="https://$GIT_USERNAME:$API_TOKEN_GITHUB@github.com/carbon-language/$DEST_REPO.git"
+  DEST_CLONE_DIR="$(mktemp -d)"
+
+  git clone --single-branch "$DEST_REPO_URL" "$DEST_CLONE_DIR"
+  cd "$DEST_CLONE_DIR"
+
+  # Print out the destination repository.
+  ls -al
+
+  # Remove all the existing files to rebuild it from scratch. We ignore when this
+  # matches no files to handle freshly created repositories.
+  git rm --ignore-unmatch -r .
+  git status
+
+  # Copy the basic framework from the origin repository.
+  cp "$ORIGIN_DIR/.gitignore" \
+    "$ORIGIN_DIR/CODE_OF_CONDUCT.md" \
+    "$ORIGIN_DIR/LICENSE" \
+    .
+
+  # Copy the mirrored directory. We use `rsync` to get a more reliable way of
+  # handling the mirroring of the contents of a directory.
+  rsync -av "$ORIGIN_DIR/$SRC_DIR/" .
+
+  # Add back all the files now.
+  git add -A
+  git status
+
+  # Commit the new state.
+  git commit -F- <<EOF
+Sync $DEST_REPO to carbon-language/carbon-lang@$COMMIT_SHA
+
+$COMMIT_SUMMARY
+EOF
+  git log
+
+  # Push the new commit.
+  git push
+
+  # Cleanup.
+  cd "$ORIGIN_DIR"
+  rm -rf "$DEST_CLONE_DIR"
+done
