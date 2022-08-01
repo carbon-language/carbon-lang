@@ -1863,7 +1863,7 @@ There are some opportunities to improve on and simplify the C++ story:
     aren't friends of the base class.
 
 **References:** This was discussed in
-[the open discussion on 2021-07-12](https://docs.google.com/document/d/1QCdKQ33rki-kCDrxi8UHy3a36dtW0WdMqpUzluGSrz4/edit?resourcekey=0-bZmNUiueOiH_sysJNqnT9A#heading=h.40jlsrcgp8mr).
+[the open discussion on 2021-07-12](https://docs.google.com/document/d/14vAcURDKeH6LZ_TQCMRGpNJrXSZCACQqDy29YH19XGo/edit#heading=h.40jlsrcgp8mr).
 
 #### Interop with C++ inheritance
 
