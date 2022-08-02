@@ -27,7 +27,7 @@ struct FlowFact {
 static auto ResolveUnformed(
     Nonnull<const Expression*> expression,
     std::unordered_map<Nonnull<const AstNode*>, FlowFact>& flow_facts,
-    bool set_formed = false) -> ErrorOr<Success>;
+    bool set_formed) -> ErrorOr<Success>;
 static auto ResolveUnformed(
     Nonnull<const Pattern*> pattern,
     std::unordered_map<Nonnull<const AstNode*>, FlowFact>& flow_facts,
@@ -42,7 +42,7 @@ static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
 static auto ResolveUnformed(
     Nonnull<const Expression*> expression,
     std::unordered_map<Nonnull<const AstNode*>, FlowFact>& flow_facts,
-    const bool set_formed /*=false*/) -> ErrorOr<Success> {
+    const bool set_formed) -> ErrorOr<Success> {
   switch (expression->kind()) {
     case ExpressionKind::IdentifierExpression: {
       auto& identifier = cast<IdentifierExpression>(*expression);
@@ -62,13 +62,15 @@ static auto ResolveUnformed(
     }
     case ExpressionKind::CallExpression: {
       auto& call = cast<CallExpression>(*expression);
-      CARBON_RETURN_IF_ERROR(ResolveUnformed(&call.argument(), flow_facts));
+      CARBON_RETURN_IF_ERROR(
+          ResolveUnformed(&call.argument(), flow_facts, /*set_formed=*/false));
       break;
     }
     case ExpressionKind::TupleLiteral:
       for (Nonnull<const Expression*> field :
            cast<TupleLiteral>(*expression).fields()) {
-        CARBON_RETURN_IF_ERROR(ResolveUnformed(field, flow_facts));
+        CARBON_RETURN_IF_ERROR(
+            ResolveUnformed(field, flow_facts, /*set_formed=*/false));
       }
       break;
     case ExpressionKind::OperatorExpression: {
@@ -84,7 +86,8 @@ static auto ResolveUnformed(
                             /*set_formed=*/true));
       } else {
         for (Nonnull<const Expression*> operand : opt_exp.arguments()) {
-          CARBON_RETURN_IF_ERROR(ResolveUnformed(operand, flow_facts));
+          CARBON_RETURN_IF_ERROR(
+              ResolveUnformed(operand, flow_facts, /*set_formed=*/false));
         }
       }
       break;
@@ -167,21 +170,22 @@ static auto ResolveUnformed(
       break;
     case StatementKind::ReturnExpression: {
       auto& ret_exp_stmt = cast<ReturnExpression>(*statement);
-      CARBON_RETURN_IF_ERROR(
-          ResolveUnformed(&ret_exp_stmt.expression(), flow_facts));
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(&ret_exp_stmt.expression(),
+                                             flow_facts, /*set_formed=*/false));
       break;
     }
     case StatementKind::Assign: {
       auto& assign = cast<Assign>(*statement);
       CARBON_RETURN_IF_ERROR(
           ResolveUnformed(&assign.lhs(), flow_facts, /*set_formed=*/true));
-      CARBON_RETURN_IF_ERROR(ResolveUnformed(&assign.rhs(), flow_facts));
+      CARBON_RETURN_IF_ERROR(
+          ResolveUnformed(&assign.rhs(), flow_facts, /*set_formed=*/false));
       break;
     }
     case StatementKind::ExpressionStatement: {
       auto& exp_stmt = cast<ExpressionStatement>(*statement);
-      CARBON_RETURN_IF_ERROR(
-          ResolveUnformed(&exp_stmt.expression(), flow_facts));
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(&exp_stmt.expression(), flow_facts,
+                                             /*set_formed=*/false));
       break;
     }
     case StatementKind::Break:
