@@ -584,6 +584,7 @@ comparison_operand:
   ref_deref_expression
 | value_expression
 ;
+/* TODO: Add NOT_EQUAL */
 comparison_operator:
   EQUAL_EQUAL
     { $$ = Operator::Eq; }
