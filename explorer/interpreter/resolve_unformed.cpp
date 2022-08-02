@@ -201,7 +201,7 @@ static auto ResolveUnformed(
 static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
     -> ErrorOr<Success> {
   switch (declaration->kind()) {
-    // Checks formed/unformed state introprocedurally.
+    // Checks formed/unformed state intraprocedurally.
     // Can be extended to an interprocedural analysis when a call graph is
     // available.
     case DeclarationKind::FunctionDeclaration: {

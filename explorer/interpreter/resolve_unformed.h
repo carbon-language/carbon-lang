@@ -10,7 +10,7 @@
 
 namespace Carbon {
 
-// An introprocedural forward analysis that checks the may-be-formed states on
+// An intraprocedural forward analysis that checks the may-be-formed states on
 // local variables. Returns compilation error on usage of must-be-unformed
 // variables.
 auto ResolveUnformed(const AST& ast) -> ErrorOr<Success>;
