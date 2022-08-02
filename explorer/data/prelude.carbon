@@ -57,6 +57,10 @@ impl forall [U1:! Type, U2:! Type, U3:! Type,
 // Comparison interfaces.
 // ----------------------
 
+// ----------------------
+// EQUAL
+// ----------------------
+
 interface EqWith(U:! Type) {
   fn Equal[me: Self](other: U) -> Bool;
   // TODO: NotEqual with default impl
@@ -86,9 +90,12 @@ impl String as EqWith(Self) {
   }
 }
 
+// ----------------------
+// LESS
+// ----------------------
+
 interface LessWith(U:! Type) {
   fn Less[me: Self](other: U) -> Bool;
-  // TODO: NotEqual with default impl
 }
 // TODO: constraint Less { ... }
 
@@ -120,9 +127,8 @@ impl String as LessWith(Self) {
 
 interface LessEqWith(U:! Type) {
   fn LessEq[me: Self](other: U) -> Bool;
-  // TODO: NotEqual with default impl
 }
-// TODO: constraint Less { ... }
+// TODO: constraint Less equal { ... }
 
 // TODO: Simplify this once we have variadics
 impl forall [T2:! Type, U2:! Type, T1:! LessEqWith(T2), U1:! LessEqWith(U2)]
@@ -152,9 +158,8 @@ impl String as LessEqWith(Self) {
 
 interface GreaterWith(U:! Type) {
   fn Greater[me: Self](other: U) -> Bool;
-  // TODO: NotEqual with default impl
 }
-// TODO: constraint Less { ... }
+// TODO: constraint Greater { ... }
 
 // TODO: Simplify this once we have variadics
 impl forall [T2:! Type, U2:! Type, T1:! GreaterWith(T2), U1:! GreaterWith(U2)]
@@ -184,9 +189,8 @@ impl String as GreaterWith(Self) {
 
 interface GreaterEqWith(U:! Type) {
   fn GreaterEq[me: Self](other: U) -> Bool;
-  // TODO: NotEqual with default impl
 }
-// TODO: constraint Less { ... }
+// TODO: constraint Greater equal { ... }
 
 // TODO: Simplify this once we have variadics
 impl forall [T2:! Type, U2:! Type, T1:! GreaterEqWith(T2), U1:! GreaterEqWith(U2)]
