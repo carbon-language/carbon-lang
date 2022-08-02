@@ -2867,23 +2867,21 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       auto& for_stmt = cast<For>(*s);
       ImplScope inner_impl_scope;
       inner_impl_scope.AddParent(&impl_scope);
-      
+
       CARBON_RETURN_IF_ERROR(
           TypeCheckExp(&for_stmt.loop_target(), inner_impl_scope));
-     
-      
+
       const Value& rhs = for_stmt.loop_target().static_type();
-      if(rhs.kind() == Value::Kind::StaticArrayType){  
-        CARBON_RETURN_IF_ERROR(TypeCheckPattern(&for_stmt.variable_declaration(),
-                                              &cast<StaticArrayType>(rhs).element_type(), inner_impl_scope,
-                                              ValueCategory::Var));
-      
-      }else{
-             return CompilationError(for_stmt.source_loc())
-            << "expected array type after in, found value of type "
-            << rhs;
+      if (rhs.kind() == Value::Kind::StaticArrayType) {
+        CARBON_RETURN_IF_ERROR(
+            TypeCheckPattern(&for_stmt.variable_declaration(),
+                             &cast<StaticArrayType>(rhs).element_type(),
+                             inner_impl_scope, ValueCategory::Var));
+
+      } else {
+        return CompilationError(for_stmt.source_loc())
+               << "expected array type after in, found value of type " << rhs;
       }
-      
 
       CARBON_RETURN_IF_ERROR(TypeCheckStmt(&for_stmt.body(), inner_impl_scope));
       return Success();
