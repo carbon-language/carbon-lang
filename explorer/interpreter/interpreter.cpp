@@ -1521,7 +1521,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
                 lvalue->address(), source_array->elements()[current_index],
                 stmt.source_loc()));
           } else {
-            llvm::outs() << "Failure in " << __LINE__ << "\n";
+             CARBON_FATAL(); 
           }
 
           act.ReplaceResult(0, arena_->New<IntValue>(current_index + 1));
