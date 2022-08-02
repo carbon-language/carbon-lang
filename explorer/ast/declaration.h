@@ -10,6 +10,7 @@
 #include <utility>
 #include <vector>
 
+#include "common/check.h"
 #include "common/ostream.h"
 #include "explorer/ast/ast_node.h"
 #include "explorer/ast/impl_binding.h"
@@ -179,18 +180,23 @@ class SelfDeclaration : public Declaration {
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 };
 
+enum class ClassPrefix { StandardClass, BaseClass, AbstractClass };
+
 class ClassDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
 
   ClassDeclaration(SourceLocation source_loc, std::string name,
-                   Nonnull<SelfDeclaration*> self_decl,
+                   Nonnull<SelfDeclaration*> self_decl, ClassPrefix prefix,
                    std::optional<Nonnull<TuplePattern*>> type_params,
+                   std::optional<Nonnull<Expression*>> extends,
                    std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::ClassDeclaration, source_loc),
         name_(std::move(name)),
+        prefix_(prefix),
         self_decl_(self_decl),
         type_params_(type_params),
+        extends_(extends),
         members_(std::move(members)) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -198,11 +204,15 @@ class ClassDeclaration : public Declaration {
   }
 
   auto name() const -> const std::string& { return name_; }
+  auto prefix() const -> ClassPrefix { return prefix_; }
   auto type_params() const -> std::optional<Nonnull<const TuplePattern*>> {
     return type_params_;
   }
   auto type_params() -> std::optional<Nonnull<TuplePattern*>> {
     return type_params_;
+  }
+  auto extends() const -> std::optional<Nonnull<Expression*>> {
+    return extends_;
   }
   auto self() const -> Nonnull<const SelfDeclaration*> { return self_decl_; }
   auto self() -> Nonnull<SelfDeclaration*> { return self_decl_; }
@@ -215,8 +225,10 @@ class ClassDeclaration : public Declaration {
 
  private:
   std::string name_;
+  ClassPrefix prefix_;
   Nonnull<SelfDeclaration*> self_decl_;
   std::optional<Nonnull<TuplePattern*>> type_params_;
+  std::optional<Nonnull<Expression*>> extends_;
   std::vector<Nonnull<Declaration*>> members_;
 };
 

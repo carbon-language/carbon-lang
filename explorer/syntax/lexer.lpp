@@ -31,6 +31,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 %s AFTER_OPERAND
 
 /* table-begin */
+ABSTRACT             "abstract"
 ADDR                 "addr"
 ALIAS                "alias"
 AMPERSAND            "&"
@@ -40,6 +41,7 @@ ARROW                "->"
 AS                   "as"
 AUTO                 "auto"
 AWAIT                "__await"
+BASE                 "base"
 BOOL                 "Bool"
 BREAK                "break"
 CARET                "^"
@@ -57,6 +59,7 @@ DOUBLE_ARROW         "=>"
 ELSE                 "else"
 EQUAL                "="
 EQUAL_EQUAL          "=="
+EXTENDS              "extends"
 EXTERNAL             "external"
 FALSE                "false"
 FN                   "fn"
@@ -124,6 +127,7 @@ operand_start         [(A-Za-z0-9_\"]
 %}
 
  /* table-begin */
+{ABSTRACT}            { return CARBON_SIMPLE_TOKEN(ABSTRACT);            }
 {ADDR}                { return CARBON_SIMPLE_TOKEN(ADDR);                }
 {ALIAS}               { return CARBON_SIMPLE_TOKEN(ALIAS);               }
 {AMPERSAND}           { return CARBON_SIMPLE_TOKEN(AMPERSAND);           }
@@ -133,6 +137,7 @@ operand_start         [(A-Za-z0-9_\"]
 {AS}                  { return CARBON_SIMPLE_TOKEN(AS);                  }
 {AUTO}                { return CARBON_SIMPLE_TOKEN(AUTO);                }
 {AWAIT}               { return CARBON_SIMPLE_TOKEN(AWAIT);               }
+{BASE}                { return CARBON_SIMPLE_TOKEN(BASE);                }
 {BOOL}                { return CARBON_SIMPLE_TOKEN(BOOL);                }
 {BREAK}               { return CARBON_SIMPLE_TOKEN(BREAK);               }
 {CARET}               { return CARBON_SIMPLE_TOKEN(CARET);               }
@@ -150,6 +155,7 @@ operand_start         [(A-Za-z0-9_\"]
 {ELSE}                { return CARBON_SIMPLE_TOKEN(ELSE);                }
 {EQUAL_EQUAL}         { return CARBON_SIMPLE_TOKEN(EQUAL_EQUAL);         }
 {EQUAL}               { return CARBON_SIMPLE_TOKEN(EQUAL);               }
+{EXTENDS}             { return CARBON_SIMPLE_TOKEN(EXTENDS);             }
 {EXTERNAL}            { return CARBON_SIMPLE_TOKEN(EXTERNAL);            }
 {FALSE}               { return CARBON_SIMPLE_TOKEN(FALSE);               }
 {FN_TYPE}             { return CARBON_SIMPLE_TOKEN(FN_TYPE);             }
