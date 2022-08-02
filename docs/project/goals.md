@@ -594,10 +594,10 @@ will fall back on rationale such as a required implementation order or a
 cost-benefit analysis.
 
 **Cost-benefit will drive many choices.** We expect to measure both cost,
-including complexity, and benefits using the impact on the project and
-language as a whole. Benefit accumulates over time, which means providing
-incremental solutions earlier will typically increase the total benefit. It is
-also reasonable for the rationale of a decision to factor in both effort already
+including complexity, and benefits using the impact on the project and language
+as a whole. Benefit accumulates over time, which means providing incremental
+solutions earlier will typically increase the total benefit. It is also
+reasonable for the rationale of a decision to factor in both effort already
 invested, and effort ready to commit to the feature. This should not overwhelm
 any fundamental cost-benefit analysis. However, given two equally impactful
 features, we should focus on the solution that is moving the fastest.
