@@ -80,7 +80,7 @@ static auto ResolveUnformed(
             << "OperatorExpression with op & can only have 1 argument";
         CARBON_RETURN_IF_ERROR(
             // When a variable is taken address of, defer the unformed check to
-            // runtime. A more soundy analysis can be implemented when a
+            // runtime. A more sound analysis can be implemented when a
             // points-to analysis is available.
             ResolveUnformed(opt_exp.arguments().front(), flow_facts,
                             /*set_formed=*/true));
