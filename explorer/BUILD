@@ -4,7 +4,6 @@
 
 package(default_visibility = [
     "//bazel/check_deps:__pkg__",
-    "//explorer:__subpackages__",
     "//installers:__subpackages__",
 ])
 
