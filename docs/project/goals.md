@@ -182,8 +182,8 @@ performance is critical: would a performance regression be considered a bug?
 Would it even be noticed?
 
 Our goal is to support software where its performance with respect to some set
-of resource constraints is critical to its successful operations. This
-overarching goals can be decomposed into a few specific aspects.
+of resource constraints is critical to its successful operation. This
+overarching goal can be decomposed into a few specific aspects.
 
 **Provide the developer control over every aspect of performance.** When faced
 with some performance problem, the developer should always have tools within
@@ -594,8 +594,8 @@ will fall back on rationale such as a required implementation order or a
 cost-benefit analysis.
 
 **Cost-benefit will drive many choices.** We expect to measure both cost,
-including complexity, and benefits using the impact on the projects and
-languages as a whole. Benefits accumulates over time, which means providing
+including complexity, and benefits using the impact on the project and
+language as a whole. Benefit accumulates over time, which means providing
 incremental solutions earlier will typically increase the total benefit. It is
 also reasonable for the rationale of a decision to factor in both effort already
 invested, and effort ready to commit to the feature. This should not overwhelm
@@ -604,7 +604,7 @@ features, we should focus on the solution that is moving the fastest.
 
 **Domain-motivated libraries and features are an example.** For these, the cost
 function will typically be the effort required to specify and implement the
-feature. Benefits will stem from the number of users and how much utility the
+feature. The Benefit will stem from the number of users and how much utility the
 feature provides. We don't expect to have concrete numbers for these, but we
 expect prioritization decisions between features to be expressed using this
 framework.
