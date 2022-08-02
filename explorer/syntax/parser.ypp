@@ -188,6 +188,7 @@
 %type <std::vector<Nonnull<AlternativeSignature*>>> alternative_list_contents
 %type <BisonWrap<Match::Clause>> clause
 %type <std::vector<Match::Clause>> clause_list
+%type <Operator> comparison_operator;
 
 %token
   // Most tokens have their spelling defined in lexer.lpp.
@@ -232,6 +233,7 @@
   LEFT_CURLY_BRACE
   LEFT_PARENTHESIS
   LEFT_SQUARE_BRACKET
+  LESS
   LESS_LESS
   LET
   LIBRARY
@@ -579,12 +581,22 @@ comparison_operand:
   ref_deref_expression
 | value_expression
 ;
+comparison_operator:
+  EQUAL_EQUAL
+    {
+        $$ = Operator::Eq;
+    }
+| LESS
+    {
+        $$ = Operator::Less;
+    }
+;
 comparison_expression:
   value_expression
-| comparison_operand EQUAL_EQUAL comparison_operand
+| comparison_operand comparison_operator comparison_operand
     {
       $$ = arena->New<OperatorExpression>(
-          context.source_loc(), Operator::Eq,
+          context.source_loc(), $2,
           std::vector<Nonnull<Expression*>>({$1, $3}));
     }
 ;

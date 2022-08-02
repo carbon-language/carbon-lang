@@ -124,6 +124,7 @@ enum class Operator {
   Complement,
   Deref,
   Eq,
+  Less,
   Mul,
   Mod,
   Neg,

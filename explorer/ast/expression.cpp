@@ -131,6 +131,8 @@ auto ToString(Operator op) -> std::string_view {
       return "==";
     case Operator::Mod:
       return "%";
+    case Operator::Less:
+      return "<";
   }
 }
 

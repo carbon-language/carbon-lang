@@ -86,6 +86,33 @@ impl String as EqWith(Self) {
   }
 }
 
+interface LessWith(U:! Type) {
+  fn Less[me: Self](other: U) -> Bool;
+  // TODO: NotEqual with default impl
+}
+// TODO: constraint Less { ... }
+
+
+// TODO: Simplify this once we have variadics
+impl forall [T2:! Type, U2:! Type, T1:! LessWith(T2), U1:! LessWith(U2)]
+    (T1, U1) as EqWith((T2, U2)) {
+  fn Less[me: Self](other: (T2, U2)) -> Bool {
+    let (l1: T1, l2: U1) = me;
+    let (r1: T2, r2: U2) = other;
+    return l1 < r1 and l2 < r2;
+  }
+}
+
+impl i32 as LessWith(Self) {
+  fn Less[me: Self](other: Self) -> Bool {
+    return __intrinsic_int_less(me, other);
+  }
+}
+
+impl String as LessWith(Self) {
+  fn Equal[me: Self](other: Self) -> Bool {
+    return __intrinsic_str_less(me, other);
+  }
 // ----------------------
 // Arithmetic interfaces.
 // ----------------------
