@@ -32,13 +32,21 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
        {"delete", Intrinsic::Dealloc},
        {"rand", Intrinsic::Rand},
        {"int_eq", Intrinsic::IntEq},
+       {"int_less", Intrinsic::IntLess},
+       {"int_less_eq", Intrinsic::IntLessEq},
+       {"int_greater", Intrinsic::IntGreater},
+       {"int_greater_eq", Intrinsic::IntGreaterEq},
        {"int_bit_complement", Intrinsic::IntBitComplement},
        {"int_bit_and", Intrinsic::IntBitAnd},
        {"int_bit_or", Intrinsic::IntBitOr},
        {"int_bit_xor", Intrinsic::IntBitXor},
        {"int_left_shift", Intrinsic::IntLeftShift},
        {"int_right_shift", Intrinsic::IntRightShift},
-       {"str_eq", Intrinsic::StrEq}});
+       {"str_eq", Intrinsic::StrEq},
+       {"str_less", Intrinsic::StrLess},
+       {"str_less_eq", Intrinsic::StrLessEq},
+       {"str_greater", Intrinsic::StrGreater},
+       {"str_greater_eq", Intrinsic::StrGreaterEq}});
   name.remove_prefix(std::strlen("__intrinsic_"));
   auto it = intrinsic_map.find(name);
   if (it == intrinsic_map.end()) {
@@ -60,6 +68,14 @@ auto IntrinsicExpression::name() const -> std::string_view {
       return "__intrinsic_rand";
     case IntrinsicExpression::Intrinsic::IntEq:
       return "__intrinsic_int_eq";
+    case IntrinsicExpression::Intrinsic::IntLess:
+      return "__intrinsic_int_less";
+    case IntrinsicExpression::Intrinsic::IntLessEq:
+      return "__intrinsic_int_less_eq";
+    case IntrinsicExpression::Intrinsic::IntGreater:
+      return "__intrinsic_int_greater";
+    case IntrinsicExpression::Intrinsic::IntGreaterEq:
+      return "__intrinsic_int_greater_eq";
     case IntrinsicExpression::Intrinsic::IntBitComplement:
       return "__intrinsic_int_bit_complement";
     case IntrinsicExpression::Intrinsic::IntBitAnd:
@@ -74,6 +90,14 @@ auto IntrinsicExpression::name() const -> std::string_view {
       return "__intrinsic_int_right_shift";
     case IntrinsicExpression::Intrinsic::StrEq:
       return "__intrinsic_str_eq";
+    case IntrinsicExpression::Intrinsic::StrLess:
+      return "__intrinsic_str_less";
+    case IntrinsicExpression::Intrinsic::StrLessEq:
+      return "__intrinsic_str_less_eq";
+    case IntrinsicExpression::Intrinsic::StrGreater:
+      return "__intrinsic_str_greater";
+    case IntrinsicExpression::Intrinsic::StrGreaterEq:
+      return "__intrinsic_str_greater_eq";
   }
 }
 
@@ -133,6 +157,12 @@ auto ToString(Operator op) -> std::string_view {
       return "%";
     case Operator::Less:
       return "<";
+    case Operator::LessEq:
+      return "<=";
+    case Operator::Greater:
+      return ">";
+    case Operator::GreaterEq:
+      return ">=";
   }
 }
 

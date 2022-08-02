@@ -224,6 +224,8 @@
   FN
   FN_TYPE
   FORALL
+  GREATER
+  GREATER_EQUAL
   GREATER_GREATER
   IF
   IMPL
@@ -234,6 +236,7 @@
   LEFT_PARENTHESIS
   LEFT_SQUARE_BRACKET
   LESS
+  LESS_EQUAL
   LESS_LESS
   LET
   LIBRARY
@@ -583,13 +586,15 @@ comparison_operand:
 ;
 comparison_operator:
   EQUAL_EQUAL
-    {
-        $$ = Operator::Eq;
-    }
+    { $$ = Operator::Eq; }
 | LESS
-    {
-        $$ = Operator::Less;
-    }
+    { $$ = Operator::Less; }
+| LESS_EQUAL
+    { $$ = Operator::LessEq; }
+|  GREATER
+    { $$ = Operator::Greater; }
+| GREATER_EQUAL
+    { $$ = Operator::GreaterEq; }
 ;
 comparison_expression:
   value_expression

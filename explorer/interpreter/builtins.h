@@ -29,6 +29,10 @@ class Builtins {
 
     // Comparison.
     EqWith,
+    LessWith,
+    LessEqWith,
+    GreaterWith,
+    GreaterEqWith,
 
     // Arithmetic.
     Negate,
@@ -51,6 +55,10 @@ class Builtins {
   static constexpr Builtin As = Builtin::As;
   static constexpr Builtin ImplicitAs = Builtin::ImplicitAs;
   static constexpr Builtin EqWith = Builtin::EqWith;
+  static constexpr Builtin LessWith = Builtin::LessWith;
+  static constexpr Builtin LessEqWith = Builtin::LessEqWith;
+  static constexpr Builtin GreaterWith = Builtin::GreaterWith;
+  static constexpr Builtin GreaterEqWith = Builtin::GreaterEqWith;
   static constexpr Builtin Negate = Builtin::Negate;
   static constexpr Builtin AddWith = Builtin::AddWith;
   static constexpr Builtin SubWith = Builtin::SubWith;
@@ -77,10 +85,24 @@ class Builtins {
 
  private:
   static constexpr int NumBuiltins = static_cast<int>(Builtin::Last) + 1;
-  static constexpr const char* BuiltinNames[NumBuiltins] = {
-      "As",        "ImplicitAs", "EqWith",        "Negate",        "AddWith",
-      "SubWith",   "MulWith",    "ModWith",       "BitComplement", "BitAndWith",
-      "BitOrWith", "BitXorWith", "LeftShiftWith", "RightShiftWith"};
+  static constexpr const char* BuiltinNames[NumBuiltins] = {"As",
+                                                            "ImplicitAs",
+                                                            "EqWith",
+                                                            "LessWith",
+                                                            "LessEqWith",
+                                                            "GreaterWith",
+                                                            "GreaterEqWith",
+                                                            "Negate",
+                                                            "AddWith",
+                                                            "SubWith",
+                                                            "MulWith",
+                                                            "ModWith",
+                                                            "BitComplement",
+                                                            "BitAndWith",
+                                                            "BitOrWith",
+                                                            "BitXorWith",
+                                                            "LeftShiftWith",
+                                                            "RightShiftWith"};
 
   std::optional<Nonnull<const Declaration*>> builtins_[NumBuiltins] = {};
 };

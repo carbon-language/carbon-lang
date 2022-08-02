@@ -92,10 +92,9 @@ interface LessWith(U:! Type) {
 }
 // TODO: constraint Less { ... }
 
-
 // TODO: Simplify this once we have variadics
 impl forall [T2:! Type, U2:! Type, T1:! LessWith(T2), U1:! LessWith(U2)]
-    (T1, U1) as EqWith((T2, U2)) {
+    (T1, U1) as LessWith((T2, U2)) {
   fn Less[me: Self](other: (T2, U2)) -> Bool {
     let (l1: T1, l2: U1) = me;
     let (r1: T2, r2: U2) = other;
@@ -110,9 +109,114 @@ impl i32 as LessWith(Self) {
 }
 
 impl String as LessWith(Self) {
-  fn Equal[me: Self](other: Self) -> Bool {
+  fn Less[me: Self](other: Self) -> Bool {
     return __intrinsic_str_less(me, other);
   }
+}
+
+
+// ----------------------
+// LESS EQ
+// ----------------------
+
+interface LessEqWith(U:! Type) {
+  fn LessEq[me: Self](other: U) -> Bool;
+  // TODO: NotEqual with default impl
+}
+// TODO: constraint Less { ... }
+
+// TODO: Simplify this once we have variadics
+impl forall [T2:! Type, U2:! Type, T1:! LessEqWith(T2), U1:! LessEqWith(U2)]
+    (T1, U1) as LessEqWith((T2, U2)) {
+  fn LessEq[me: Self](other: (T2, U2)) -> Bool {
+    let (l1: T1, l2: U1) = me;
+    let (r1: T2, r2: U2) = other;
+    return l1 <= r1 and l2 <= r2;
+  }
+}
+
+impl i32 as LessEqWith(Self) {
+  fn LessEq[me: Self](other: Self) -> Bool {
+    return __intrinsic_int_less_eq(me, other);
+  }
+}
+
+impl String as LessEqWith(Self) {
+  fn LessEq[me: Self](other: Self) -> Bool {
+    return __intrinsic_str_less_eq(me, other);
+  }
+}
+
+// ----------------------
+// GREATER
+// ----------------------
+
+interface GreaterWith(U:! Type) {
+  fn Greater[me: Self](other: U) -> Bool;
+  // TODO: NotEqual with default impl
+}
+// TODO: constraint Less { ... }
+
+// TODO: Simplify this once we have variadics
+impl forall [T2:! Type, U2:! Type, T1:! GreaterWith(T2), U1:! GreaterWith(U2)]
+    (T1, U1) as GreaterWith((T2, U2)) {
+  fn Greater[me: Self](other: (T2, U2)) -> Bool {
+    let (l1: T1, l2: U1) = me;
+    let (r1: T2, r2: U2) = other;
+    return l1 > r1 and l2 > r2;
+  }
+}
+
+impl i32 as GreaterWith(Self) {
+  fn Greater[me: Self](other: Self) -> Bool {
+    return __intrinsic_int_greater(me, other);
+  }
+}
+
+impl String as GreaterWith(Self) {
+  fn Greater[me: Self](other: Self) -> Bool {
+    return __intrinsic_str_greater(me, other);
+  }
+}
+
+
+
+
+// ----------------------
+// GREATER EQ
+// ----------------------
+
+interface GreaterEqWith(U:! Type) {
+  fn GreaterEq[me: Self](other: U) -> Bool;
+  // TODO: NotEqual with default impl
+}
+// TODO: constraint Less { ... }
+
+// TODO: Simplify this once we have variadics
+impl forall [T2:! Type, U2:! Type, T1:! GreaterEqWith(T2), U1:! GreaterEqWith(U2)]
+    (T1, U1) as GreaterEqWith((T2, U2)) {
+  fn GreaterEq[me: Self](other: (T2, U2)) -> Bool {
+    let (l1: T1, l2: U1) = me;
+    let (r1: T2, r2: U2) = other;
+    return l1 >= r1 and l2 >= r2;
+  }
+}
+
+impl i32 as GreaterEqWith(Self) {
+  fn GreaterEq[me: Self](other: Self) -> Bool {
+    return __intrinsic_int_greater_eq(me, other);
+  }
+}
+
+impl String as GreaterEqWith(Self) {
+  fn GreaterEq[me: Self](other: Self) -> Bool {
+    return __intrinsic_str_greater_eq(me, other);
+  }
+}
+
+
+
+
 // ----------------------
 // Arithmetic interfaces.
 // ----------------------
