@@ -69,9 +69,17 @@ jobs:
       # For now, we rely on Homebrew to manage installing a correctly built
       # toolchain. We also take some care to be as resilient as possible to
       # issues fetching and installing the toolchain.
+      #
+      # TODO: We temporarily force Homebrew to an old version to retain bottles
+      # for LLVM while they are sorting out the GCC 12 update. This should be
+      # removed once things settle down.
       - name: Setup LLVM and Clang
         run: |
+          export HOMEBREW_NO_AUTO_UPDATE=1
           brew update
+          pushd "$(brew --repo homebrew/core)"
+          git checkout bf25543b2ee66033044774eb8d51a0efb1e97a48
+          popd
           brew install --force-bottle --only-dependencies llvm
           brew install --force-bottle --force --verbose llvm
           brew info llvm
