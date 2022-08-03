@@ -6,8 +6,13 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-The toolchain represents the production portion of Carbon. The toolchain's top
-priority is performance: it needs to generate code quickly and scale well.
+The toolchain represents the production portion of Carbon. At a high level, the
+toolchain's top priorities are:
+
+-   Correctness.
+-   Quality of generated code, including its performance.
+-   Compilation performance.
+-   Quality of diagnostics for incorrect or questionable code.
 
 The main compiler is `//toolchain/driver:carbon`. When compiling, the current
 flow of data is:
@@ -23,20 +28,43 @@ flow of data is:
 
 The [TokenizedBuffer](lexer/tokenized_buffer.h) is the central point of lexing.
 
-The entire source buffer is converted into tokens before parsing begins. Tokens are referred to by an opaque handle, `TokenizedBuffer::Token`, which is represented as a 32-bit integer into the token array. The tokenized buffer can be queried to discover information about a token, such as its token kind, its location in the source file, and its spelling.
+The entire source buffer is converted into tokens before parsing begins. Tokens
+are referred to by an opaque handle, `TokenizedBuffer::Token`, which is
+represented as a 32-bit integer into the token array. The tokenized buffer can
+be queried to discover information about a token, such as its token kind, its
+location in the source file, and its spelling.
 
-The lexer ensures that all forms of brackets are matched, and is intended to recover from missing brackets based on contextual cues such as indentation (although this is not yet implemented), inserting matching close bracket tokens where it thinks they belong. After the lexer completes, every opening bracket token has a matching closing bracket token.
+The lexer ensures that all forms of brackets are matched, and is intended to
+recover from missing brackets based on contextual cues such as indentation
+(although this is not yet implemented), inserting matching close bracket tokens
+where it thinks they belong. After the lexer completes, every opening bracket
+token has a matching closing bracket token.
 
 ## Parsing
 
 The [ParseTree](parser/parse_tree.h) is the output of parsing, but most logic is
 in [ParserImpl](parser/parser_impl.h).
 
-The parse tree faithfully represents the tree structure of the source program, interpreted according to the Carbon grammar. No semantics are associated with the tree structure at this level, and no name lookup is performed.
+The parse tree faithfully represents the tree structure of the source program,
+interpreted according to the Carbon grammar. No semantics are associated with
+the tree structure at this level, and no name lookup is performed.
 
-Each parse tree node has an expected structure, corresponding to the grammar of the Carbon language, and the parser ensures that a valid parse tree node always has a valid structure. However, any parse tree node can be marked as invalid, and an invalid parse tree node can contain child nodes of any kind in any order. This is intended to model the situation where parsing failed because the code did not match the grammar, but we were still able to parse some subexpressions, as an aid for non-compiler tools such as syntax highlighters or refactoring tools.
+Each parse tree node has an expected structure, corresponding to the grammar of
+the Carbon language, and the parser ensures that a valid parse tree node always
+has a valid structure. However, any parse tree node can be marked as invalid,
+and an invalid parse tree node can contain child nodes of any kind in any order.
+This is intended to model the situation where parsing failed because the code
+did not match the grammar, but we were still able to parse some subexpressions,
+as an aid for non-compiler tools such as syntax highlighters or refactoring
+tools.
 
-Many functions in the parser return `llvm::Optional<T>`. A return value of `llvm::None` indicates that parsing has failed and an error diagnostic has already been produced, and that the current region of the parse tree might not meet its invariants so that the caller should create an invalid parse tree node. Other return values indicate that parsing was either successful or that any encountered errors have been recovered from, so the caller can create a valid parse tree node.
+Many functions in the parser return `llvm::Optional<T>`. A return value of
+`llvm::None` indicates that parsing has failed and an error diagnostic has
+already been produced, and that the current region of the parse tree might not
+meet its invariants so that the caller should create an invalid parse tree node.
+Other return values indicate that parsing was either successful or that any
+encountered errors have been recovered from, so the caller can create a valid
+parse tree node.
 
 The produced ParseTree is in reverse postorder. For example, given the code:
 
