@@ -59,7 +59,7 @@ Index 11: kind FileEnd
 
 This is done this way in order to allow for more efficient processing of a file.
 As a consequence, the SemanticsIR does a lot of reversal of the ParseTree
-ordering in order to produce a more "natural" ordering of file content.
+ordering in order to visit code in source order.
 
 ### Stack overflow
 
