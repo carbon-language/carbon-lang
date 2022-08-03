@@ -185,9 +185,13 @@ static auto ResolveUnformed(
       }
       break;
     }
-    case StatementKind::ReturnVar:
-      // TODO: @slaterlatiao: Implement this flow.
+    case StatementKind::ReturnVar: {
+      auto& ret_var = cast<ReturnVar>(*statement);
+      CARBON_RETURN_IF_ERROR(
+          ResolveUnformed(&cast<BindingPattern>(ret_var.value_node().base()),
+                          flow_facts, /*has_init=*/false));
       break;
+    }
     case StatementKind::ReturnExpression: {
       auto& ret_exp_stmt = cast<ReturnExpression>(*statement);
       CARBON_RETURN_IF_ERROR(ResolveUnformed(&ret_exp_stmt.expression(),
