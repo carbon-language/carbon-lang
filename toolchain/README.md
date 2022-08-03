@@ -87,11 +87,11 @@ it's a work in progress.
 
 [DiagnosticEmitters](diagnostics/diagnostic_emitter.h) handle the main
 formatting of a message. It's parameterized on a location type, for which a
-DiagnosticLocationTranslator must be provided that can translate the location
-type into a standardized DiagnosticLocation of file, line, and column.
+`DiagnosticLocationTranslator` must be provided that can translate the location
+type into a standardized `DiagnosticLocation` of file, line, and column.
 
 When emitting, the resulting formatted message is passed to a
-DiagnosticConsumer.
+`DiagnosticConsumer`.
 
 ### DiagnosticConsumers
 
