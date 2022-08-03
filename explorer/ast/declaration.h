@@ -180,20 +180,21 @@ class SelfDeclaration : public Declaration {
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 };
 
-enum class ClassPrefix { StandardClass, BaseClass, AbstractClass };
+enum class ClassExtensibility { None, Base, Abstract };
 
 class ClassDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
 
   ClassDeclaration(SourceLocation source_loc, std::string name,
-                   Nonnull<SelfDeclaration*> self_decl, ClassPrefix prefix,
+                   Nonnull<SelfDeclaration*> self_decl,
+                   ClassExtensibility extensibility,
                    std::optional<Nonnull<TuplePattern*>> type_params,
                    std::optional<Nonnull<Expression*>> extends,
                    std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::ClassDeclaration, source_loc),
         name_(std::move(name)),
-        prefix_(prefix),
+        extensibility_(extensibility),
         self_decl_(self_decl),
         type_params_(type_params),
         extends_(extends),
@@ -204,7 +205,7 @@ class ClassDeclaration : public Declaration {
   }
 
   auto name() const -> const std::string& { return name_; }
-  auto prefix() const -> ClassPrefix { return prefix_; }
+  auto extensibility() const -> ClassExtensibility { return extensibility_; }
   auto type_params() const -> std::optional<Nonnull<const TuplePattern*>> {
     return type_params_;
   }
@@ -225,7 +226,7 @@ class ClassDeclaration : public Declaration {
 
  private:
   std::string name_;
-  ClassPrefix prefix_;
+  ClassExtensibility extensibility_;
   Nonnull<SelfDeclaration*> self_decl_;
   std::optional<Nonnull<TuplePattern*>> type_params_;
   std::optional<Nonnull<Expression*>> extends_;

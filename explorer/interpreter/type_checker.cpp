@@ -3205,7 +3205,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   ImplScope class_scope;
   class_scope.AddParent(scope_info.innermost_scope);
 
-  if (class_decl->prefix() != ClassPrefix::StandardClass) {
+  if (class_decl->extensibility() != ClassExtensibility::None) {
     return CompilationError(class_decl->source_loc())
            << "Class prefixes `base` and `abstract` are not supported yet";
   }
