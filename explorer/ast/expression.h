@@ -680,6 +680,8 @@ class IntrinsicExpression : public Expression {
     Rand,
     IntEq,
     StrEq,
+    StrCompare,
+    IntCompare,
     IntLess,
     StrLess,
     IntLessEq,

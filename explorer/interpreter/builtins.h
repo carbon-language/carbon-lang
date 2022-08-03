@@ -33,6 +33,7 @@ class Builtins {
     LessEqWith,
     GreaterWith,
     GreaterEqWith,
+    CompareWith,
 
     // Arithmetic.
     Negate,
@@ -70,6 +71,7 @@ class Builtins {
   static constexpr Builtin BitXorWith = Builtin::BitXorWith;
   static constexpr Builtin LeftShiftWith = Builtin::LeftShiftWith;
   static constexpr Builtin RightShiftWith = Builtin::RightShiftWith;
+  static constexpr Builtin CompareWith = Builtin::CompareWith;
 
   // Register a declaration that might be a builtin.
   void Register(Nonnull<const Declaration*> decl);
@@ -92,6 +94,7 @@ class Builtins {
                                                             "LessEqWith",
                                                             "GreaterWith",
                                                             "GreaterEqWith",
+                                                            "CompareWith",
                                                             "Negate",
                                                             "AddWith",
                                                             "SubWith",

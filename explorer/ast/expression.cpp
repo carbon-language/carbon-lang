@@ -36,6 +36,7 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
        {"int_less_eq", Intrinsic::IntLessEq},
        {"int_greater", Intrinsic::IntGreater},
        {"int_greater_eq", Intrinsic::IntGreaterEq},
+       {"int_compare",Intrinsic::IntCompare},
        {"int_bit_complement", Intrinsic::IntBitComplement},
        {"int_bit_and", Intrinsic::IntBitAnd},
        {"int_bit_or", Intrinsic::IntBitOr},
@@ -46,7 +47,8 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
        {"str_less", Intrinsic::StrLess},
        {"str_less_eq", Intrinsic::StrLessEq},
        {"str_greater", Intrinsic::StrGreater},
-       {"str_greater_eq", Intrinsic::StrGreaterEq}});
+       {"str_greater_eq", Intrinsic::StrGreaterEq},
+       {"str_compare",Intrinsic::StrCompare}});
   name.remove_prefix(std::strlen("__intrinsic_"));
   auto it = intrinsic_map.find(name);
   if (it == intrinsic_map.end()) {
@@ -98,6 +100,10 @@ auto IntrinsicExpression::name() const -> std::string_view {
       return "__intrinsic_str_greater";
     case IntrinsicExpression::Intrinsic::StrGreaterEq:
       return "__intrinsic_str_greater_eq";
+    case IntrinsicExpression::Intrinsic::IntCompare:
+        return "__intrinsic_int_compare";
+    case IntrinsicExpression::Intrinsic::StrCompare:
+        return "__intrinsic_str_compare";
   }
 }
 

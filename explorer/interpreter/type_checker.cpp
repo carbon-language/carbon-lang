@@ -2086,62 +2086,62 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           op.set_rewritten_form(*converted);
           return Success();
         }
-        case Operator::Less: {
-          ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
-              impl_scope, op.arguments()[0],
-              BuiltinInterfaceName{Builtins::LessWith, ts[1]},
-              BuiltinMethodCall{"Less", op.arguments()[1]});
-          if (!converted.ok()) {
-            // We couldn't find a matching `impl`.
-            return CompilationError(e->source_loc())
-                   << *ts[0] << " is not less comparable with " << *ts[1]
-                   << " (" << converted.error().message() << ")";
+          case Operator::Less: {
+              ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
+                      impl_scope, op.arguments()[0],
+                      BuiltinInterfaceName{Builtins::LessWith, ts[1]},
+                      BuiltinMethodCall{"Less", op.arguments()[1]});
+              if (!converted.ok()) {
+                  // We couldn't find a matching `impl`.
+                  return CompilationError(e->source_loc())
+                          << *ts[0] << " is not less comparable with " << *ts[1]
+                          << " (" << converted.error().message() << ")";
+              }
+              op.set_rewritten_form(*converted);
+              return Success();
           }
-          op.set_rewritten_form(*converted);
-          return Success();
-        }
-        case Operator::LessEq: {
-          ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
-              impl_scope, op.arguments()[0],
-              BuiltinInterfaceName{Builtins::LessEqWith, ts[1]},
-              BuiltinMethodCall{"LessEq", op.arguments()[1]});
-          if (!converted.ok()) {
-            // We couldn't find a matching `impl`.
-            return CompilationError(e->source_loc())
-                   << *ts[0] << " is not less equal comparable with " << *ts[1]
-                   << " (" << converted.error().message() << ")";
+          case Operator::LessEq: {
+              ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
+                      impl_scope, op.arguments()[0],
+                      BuiltinInterfaceName{Builtins::LessEqWith, ts[1]},
+                      BuiltinMethodCall{"LessEq", op.arguments()[1]});
+              if (!converted.ok()) {
+                  // We couldn't find a matching `impl`.
+                  return CompilationError(e->source_loc())
+                          << *ts[0] << " is not less equal comparable with " << *ts[1]
+                          << " (" << converted.error().message() << ")";
+              }
+              op.set_rewritten_form(*converted);
+              return Success();
           }
-          op.set_rewritten_form(*converted);
-          return Success();
-        }
-        case Operator::GreaterEq: {
-          ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
-              impl_scope, op.arguments()[0],
-              BuiltinInterfaceName{Builtins::GreaterEqWith, ts[1]},
-              BuiltinMethodCall{"GreaterEq", op.arguments()[1]});
-          if (!converted.ok()) {
-            // We couldn't find a matching `impl`.
-            return CompilationError(e->source_loc())
-                   << *ts[0] << " is not greater equal comparable with "
-                   << *ts[1] << " (" << converted.error().message() << ")";
+          case Operator::GreaterEq: {
+              ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
+                      impl_scope, op.arguments()[0],
+                      BuiltinInterfaceName{Builtins::GreaterEqWith, ts[1]},
+                      BuiltinMethodCall{"GreaterEq", op.arguments()[1]});
+              if (!converted.ok()) {
+                  // We couldn't find a matching `impl`.
+                  return CompilationError(e->source_loc())
+                          << *ts[0] << " is not greater equal comparable with "
+                          << *ts[1] << " (" << converted.error().message() << ")";
+              }
+              op.set_rewritten_form(*converted);
+              return Success();
           }
-          op.set_rewritten_form(*converted);
-          return Success();
-        }
-        case Operator::Greater: {
-          ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
-              impl_scope, op.arguments()[0],
-              BuiltinInterfaceName{Builtins::GreaterWith, ts[1]},
-              BuiltinMethodCall{"Greater", op.arguments()[1]});
-          if (!converted.ok()) {
-            // We couldn't find a matching `impl`.
-            return CompilationError(e->source_loc())
-                   << *ts[0] << " is not greater comparable with " << *ts[1]
-                   << " (" << converted.error().message() << ")";
+          case Operator::Greater: {
+              ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
+                      impl_scope, op.arguments()[0],
+                      BuiltinInterfaceName{Builtins::GreaterWith, ts[1]},
+                      BuiltinMethodCall{"Greater", op.arguments()[1]});
+              if (!converted.ok()) {
+                  // We couldn't find a matching `impl`.
+                  return CompilationError(e->source_loc())
+                          << *ts[0] << " is not greater comparable with " << *ts[1]
+                          << " (" << converted.error().message() << ")";
+              }
+              op.set_rewritten_form(*converted);
+              return Success();
           }
-          op.set_rewritten_form(*converted);
-          return Success();
-        }
         case Operator::Deref:
           CARBON_RETURN_IF_ERROR(
               ExpectPointerType(e->source_loc(), "*", ts[0]));
@@ -2352,11 +2352,27 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
 
           return Success();
         }
+        case IntrinsicExpression::Intrinsic::IntEq: {
+          if (args.size() != 2) {
+              return CompilationError(e->source_loc())
+                      << "__intrinsic_int_eq takes 2 arguments";
+          }
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+                  e->source_loc(), "__intrinsic_int_eq argument 1",
+                  arena_->New<IntType>(), &args[0]->static_type(), impl_scope));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+                  e->source_loc(), "__intrinsic_int_eq argument 2",
+                  arena_->New<IntType>(), &args[1]->static_type(), impl_scope));
+          e->set_static_type(arena_->New<BoolType>());
+          e->set_value_category(ValueCategory::Let);
+          return Success();
+       }
+
         case IntrinsicExpression::Intrinsic::IntGreaterEq:
         case IntrinsicExpression::Intrinsic::IntGreater:
         case IntrinsicExpression::Intrinsic::IntLessEq:
         case IntrinsicExpression::Intrinsic::IntLess:
-        case IntrinsicExpression::Intrinsic::IntEq: {
+        case IntrinsicExpression::Intrinsic::IntCompare:{
           if (args.size() != 2) {
             return CompilationError(e->source_loc())
                    << "__intrinsic_int_eq takes 2 arguments";
@@ -2367,29 +2383,48 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           CARBON_RETURN_IF_ERROR(ExpectExactType(
               e->source_loc(), "__intrinsic_int_eq argument 2",
               arena_->New<IntType>(), &args[1]->static_type(), impl_scope));
-          e->set_static_type(arena_->New<BoolType>());
+          e->set_static_type(arena_->New<IntType>());
           e->set_value_category(ValueCategory::Let);
           return Success();
         }
+      case IntrinsicExpression::Intrinsic::StrEq: {
+          if (args.size() != 2) {
+              return CompilationError(e->source_loc())
+                      << "__intrinsic_str_eq takes 2 arguments";
+          }
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+                  e->source_loc(), "__intrinsic_str_eq argument 1",
+                  arena_->New<StringType>(), &args[0]->static_type(), impl_scope));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+                  e->source_loc(), "__intrinsic_str_eq argument 2",
+                  arena_->New<StringType>(), &args[1]->static_type(), impl_scope));
+          e->set_static_type(arena_->New<BoolType>());
+          e->set_value_category(ValueCategory::Let);
+          return Success();
+      }
+
+
+
         case IntrinsicExpression::Intrinsic::StrGreaterEq:
         case IntrinsicExpression::Intrinsic::StrGreater:
         case IntrinsicExpression::Intrinsic::StrLessEq:
         case IntrinsicExpression::Intrinsic::StrLess:
-        case IntrinsicExpression::Intrinsic::StrEq: {
-          if (args.size() != 2) {
-            return CompilationError(e->source_loc())
-                   << "__intrinsic_str_eq takes 2 arguments";
-          }
-          CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "__intrinsic_str_eq argument 1",
-              arena_->New<StringType>(), &args[0]->static_type(), impl_scope));
-          CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "__intrinsic_str_eq argument 2",
-              arena_->New<StringType>(), &args[1]->static_type(), impl_scope));
-          e->set_static_type(arena_->New<BoolType>());
-          e->set_value_category(ValueCategory::Let);
-          return Success();
+        case IntrinsicExpression::Intrinsic::StrCompare:{
+            if (args.size() != 2) {
+                return CompilationError(e->source_loc())
+                        << "__intrinsic_str_eq takes 2 arguments";
+            }
+            CARBON_RETURN_IF_ERROR(ExpectExactType(
+                    e->source_loc(), "__intrinsic_str_eq argument 1",
+                    arena_->New<StringType>(), &args[0]->static_type(), impl_scope));
+            CARBON_RETURN_IF_ERROR(ExpectExactType(
+                    e->source_loc(), "__intrinsic_str_eq argument 2",
+                    arena_->New<StringType>(), &args[1]->static_type(), impl_scope));
+            e->set_static_type(arena_->New<IntType>());
+            e->set_value_category(ValueCategory::Let);
+            return Success();
         }
+
         case IntrinsicExpression::Intrinsic::IntBitComplement:
           if (args.size() != 1) {
             return CompilationError(e->source_loc())

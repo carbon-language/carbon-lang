@@ -17,6 +17,10 @@ choice Ints {
   Two(i32, i32)
 }
 
+fn test() -> Ints{
+    return Ints.None;
+}
+
 fn Main() -> i32 {
   var x: Ints = Ints.None();
   var y: Ints = Ints.One(42);

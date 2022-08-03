@@ -91,126 +91,180 @@ impl String as EqWith(Self) {
 }
 
 // ----------------------
-// LESS
+// COMPARE
 // ----------------------
+
+choice Ordering {
+  Less,
+  Equivalent,
+  Greater,
+  Incomparable
+}
+
+interface CompareWith(U:! Type) {
+  fn Compare[me: Self](u: U) -> Ordering;
+  // TODO: Add `default fn` for Less, LessOrEquivalent, Greater, and GreaterOrEquivalent once it's available.
+}
+// TODO: constraint Ordered { ... }
+
+impl i32 as CompareWith(Self) {
+  fn Compare[me: Self](other: Self) -> Ordering {
+    var comp: i32 = __intrinsic_int_compare(me, other);
+    if (comp == -1) {
+      return Ordering.Less();
+    }
+    if (comp == 0) {
+      return Ordering.Equivalent();
+    }
+    if (comp == 1) {
+      return Ordering.Greater();
+    }
+    return Ordering.Incomparable();
+
+  }
+}
+
+impl String as CompareWith(Self) {
+  fn Compare[me: Self](other: Self) -> Ordering {
+    var comp: i32 = __intrinsic_str_compare(me, other);
+    if (comp == -1) {
+      return Ordering.Less();
+    }
+    if (comp == 0) {
+      return Ordering.Equivalent();
+    }
+    if (comp == 1) {
+      return Ordering.Greater();
+    }
+    return Ordering.Incomparable();
+  }
+}
+
 
 interface LessWith(U:! Type) {
   fn Less[me: Self](other: U) -> Bool;
 }
-// TODO: constraint Less { ... }
 
-// TODO: Simplify this once we have variadics
-impl forall [T2:! Type, U2:! Type, T1:! LessWith(T2), U1:! LessWith(U2)]
-    (T1, U1) as LessWith((T2, U2)) {
-  fn Less[me: Self](other: (T2, U2)) -> Bool {
-    let (l1: T1, l2: U1) = me;
-    let (r1: T2, r2: U2) = other;
-    return l1 < r1 and l2 < r2;
-  }
+interface LessEqWith(U:! Type) {
+  fn LessEq[me: Self](other: U) -> Bool;
 }
+
+interface GreaterWith(U:! Type) {
+  fn Greater[me: Self](other: U) -> Bool;
+}
+
+interface GreaterEqWith(U:! Type) {
+  fn GreaterEq[me: Self](other: U) -> Bool;
+}
+
+
+
 
 impl i32 as LessWith(Self) {
   fn Less[me: Self](other: Self) -> Bool {
-    return __intrinsic_int_less(me, other);
+    var comp: Ordering =  me.(CompareWith(i32).Compare)(other);
+    match(comp){
+         case Ordering.Less() =>{
+          return true;
+         }
+     }
+     return false;
   }
 }
 
 impl String as LessWith(Self) {
   fn Less[me: Self](other: Self) -> Bool {
-    return __intrinsic_str_less(me, other);
-  }
-}
-
-// ----------------------
-// LESS EQ
-// ----------------------
-
-interface LessEqWith(U:! Type) {
-  fn LessEq[me: Self](other: U) -> Bool;
-}
-// TODO: constraint Less equal { ... }
-
-// TODO: Simplify this once we have variadics
-impl forall [T2:! Type, U2:! Type, T1:! LessEqWith(T2), U1:! LessEqWith(U2)]
-    (T1, U1) as LessEqWith((T2, U2)) {
-  fn LessEq[me: Self](other: (T2, U2)) -> Bool {
-    let (l1: T1, l2: U1) = me;
-    let (r1: T2, r2: U2) = other;
-    return l1 <= r1 and l2 <= r2;
+    var comp: Ordering =  me.(CompareWith(String).Compare)(other);
+    match(comp){
+         case Ordering.Less() =>{
+          return true;
+         }
+     }
+     return false;
   }
 }
 
 impl i32 as LessEqWith(Self) {
   fn LessEq[me: Self](other: Self) -> Bool {
-    return __intrinsic_int_less_eq(me, other);
+    var comp: Ordering =  me.(CompareWith(i32).Compare)(other);
+    match(comp){
+         case Ordering.Less() =>{
+          return true;
+         }
+         case Ordering.Equivalent() =>{
+          return true;
+         }
+     }
+     return false;
   }
 }
 
 impl String as LessEqWith(Self) {
   fn LessEq[me: Self](other: Self) -> Bool {
-    return __intrinsic_str_less_eq(me, other);
-  }
-}
-
-// ----------------------
-// GREATER
-// ----------------------
-
-interface GreaterWith(U:! Type) {
-  fn Greater[me: Self](other: U) -> Bool;
-}
-// TODO: constraint Greater { ... }
-
-// TODO: Simplify this once we have variadics
-impl forall [T2:! Type, U2:! Type, T1:! GreaterWith(T2), U1:! GreaterWith(U2)]
-    (T1, U1) as GreaterWith((T2, U2)) {
-  fn Greater[me: Self](other: (T2, U2)) -> Bool {
-    let (l1: T1, l2: U1) = me;
-    let (r1: T2, r2: U2) = other;
-    return l1 > r1 and l2 > r2;
+    var comp: Ordering =  me.(CompareWith(String).Compare)(other);
+    match(comp){
+         case Ordering.Less() =>{
+          return true;
+         }
+         case Ordering.Equivalent() =>{
+          return true;
+         }
+     }
+     return false;
   }
 }
 
 impl i32 as GreaterWith(Self) {
   fn Greater[me: Self](other: Self) -> Bool {
-    return __intrinsic_int_greater(me, other);
+    var comp: Ordering =  me.(CompareWith(i32).Compare)(other);
+    match(comp){
+         case Ordering.Greater() =>{
+          return true;
+         }
+     }
+     return false;
   }
 }
 
 impl String as GreaterWith(Self) {
   fn Greater[me: Self](other: Self) -> Bool {
-    return __intrinsic_str_greater(me, other);
-  }
-}
-
-// ----------------------
-// GREATER EQ
-// ----------------------
-
-interface GreaterEqWith(U:! Type) {
-  fn GreaterEq[me: Self](other: U) -> Bool;
-}
-// TODO: constraint Greater equal { ... }
-
-// TODO: Simplify this once we have variadics
-impl forall [T2:! Type, U2:! Type, T1:! GreaterEqWith(T2), U1:! GreaterEqWith(U2)]
-    (T1, U1) as GreaterEqWith((T2, U2)) {
-  fn GreaterEq[me: Self](other: (T2, U2)) -> Bool {
-    let (l1: T1, l2: U1) = me;
-    let (r1: T2, r2: U2) = other;
-    return l1 >= r1 and l2 >= r2;
+    var comp: Ordering =  me.(CompareWith(String).Compare)(other);
+    match(comp){
+         case Ordering.Greater() =>{
+          return true;
+         }
+     }
+     return false;
   }
 }
 
 impl i32 as GreaterEqWith(Self) {
   fn GreaterEq[me: Self](other: Self) -> Bool {
-    return __intrinsic_int_greater_eq(me, other);
+    var comp: Ordering =  me.(CompareWith(i32).Compare)(other);
+    match(comp){
+         case Ordering.Greater() =>{
+          return true;
+         }
+         case Ordering.Equivalent() =>{
+          return true;
+         }
+     }
+     return false;
   }
 }
 
 impl String as GreaterEqWith(Self) {
   fn GreaterEq[me: Self](other: Self) -> Bool {
-    return __intrinsic_str_greater_eq(me, other);
+    var comp: Ordering =  me.(CompareWith(String).Compare)(other);
+    match(comp){
+         case Ordering.Greater() =>{
+          return true;
+         }
+         case Ordering.Equivalent() =>{
+          return true;
+         }
+     }
+     return false;
   }
 }
 
