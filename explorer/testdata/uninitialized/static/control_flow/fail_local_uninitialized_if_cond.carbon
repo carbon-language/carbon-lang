@@ -12,7 +12,9 @@ package ExplorerTest api;
 
 fn Main() -> i32 {
   var x: i32;
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/uninitialized/fail_local_uninitialized_init.carbon:[[@LINE+1]]: use of uninitialized variable x
-  var y: i32 = x;
-  return x;
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/uninitialized/static/control_flow/fail_local_uninitialized_if_cond.carbon:[[@LINE+1]]: use of uninitialized variable x
+  if (x == 0) {
+    return 0;
+  }
+  return 1;
 }
