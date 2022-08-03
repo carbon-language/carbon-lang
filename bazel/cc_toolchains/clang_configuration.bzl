@@ -129,8 +129,8 @@ def _configure_clang_toolchain_impl(repository_ctx):
         sysroot_dir,
     )
 
-    # We assume that the LLVM binutils live adjacent to llvm-ar.
-    # First assume llvm-ar is adjacent to clang, so that if found,
+    # We expect that the LLVM binutils live adjacent to llvm-ar.
+    # First look for llvm-ar adjacent to clang, so that if found,
     # it is most likely to match the same version as clang.
     # Otherwise, try PATH.
     arpath = clang.dirname.get_child("llvm-ar")
