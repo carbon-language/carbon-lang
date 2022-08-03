@@ -78,10 +78,10 @@ The Carbon standard library is in the `Carbon` package. A very small subset of
 this standard library is provided implicitly in every file's scope. This is
 called the "prelude".
 
-Names in the prelude will be available without a package qualifier. For
-example, the name `Type` can be directly used in code without a `Carbon.`
-qualifier, even though it belongs to the `Carbon` package, and no import is
-necessary to use the name `Type`.
+Names in the prelude will be available without a package qualifier. For example,
+the name `Type` can be directly used in code without a `Carbon.` qualifier, even
+though it belongs to the `Carbon` package, and no import is necessary to use the
+name `Type`.
 
 ## Open questions
 
