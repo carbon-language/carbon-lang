@@ -95,8 +95,8 @@ When emitting, the resulting formatted message is passed to a
 
 ### DiagnosticConsumers
 
-DiagnosticConsumers handle output of diagnostic messages after they've been
-formatted by an Emitter. Important consumers are:
+`DiagnosticConsumers` handle output of diagnostic messages after they've been
+formatted by an `Emitter`. Important consumers are:
 
 -   [ConsoleDiagnosticConsumer](diagnostics/diagnostic_emitter.h): prints
     diagnostics to console.
