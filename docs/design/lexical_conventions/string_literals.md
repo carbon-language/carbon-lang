@@ -301,8 +301,9 @@ var String: w = #"Tab is expressed as \t. Example: '\#t'"#;
 Extending simple block string literals, a valid raw block string literal opening
 delimiter (for example, `#"""`) always results in block string handling. For
 example, `#"""#` begins a raw block string literal with a file type indicator of
-`#`, rather than the possible interpretation as a raw simple string literal. This
-is true even when the file type indicator is invalid, as with `#"""foo"""#`.
+`#`, rather than the possible interpretation as a raw simple string literal.
+This is true even when the file type indicator is invalid, as with
+`#"""foo"""#`.
 
 ### Encoding
 
