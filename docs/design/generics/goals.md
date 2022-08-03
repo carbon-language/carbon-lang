@@ -381,7 +381,7 @@ There are a few obstacles to supporting dynamic dispatch efficiently, which may
 limit the extent it is used automatically by implementations. For example, the
 following features would benefit substantially from guaranteed monomorphization:
 
--   Field packing in class layout. For example, packing a `Bool` into the lower
+-   Field packing in class layout. For example, packing a `bool` into the lower
     bits of a pointer, or packing bit-fields with generic widths.
 -   Allocating local variables in stack storage. Without monomorphization, we
     would need to perform dynamic memory allocation -- whether on the stack or

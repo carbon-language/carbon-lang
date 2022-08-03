@@ -17,6 +17,6 @@ fn fst[T:! Type](x: T, y: T) -> T {
 fn Main() -> i32 {
   // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_type_deduction_mismatch.carbon:[[@LINE+3]]: deduced multiple different values for T:! Type:
   // CHECK:   i32
-  // CHECK:   Bool
+  // CHECK:   bool
   return fst(0, true);
 }

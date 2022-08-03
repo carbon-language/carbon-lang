@@ -340,7 +340,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "lval<" << cast<LValue>(*this).address() << ">";
       break;
     case Value::Kind::BoolType:
-      out << "Bool";
+      out << "bool";
       break;
     case Value::Kind::IntType:
       out << "i32";

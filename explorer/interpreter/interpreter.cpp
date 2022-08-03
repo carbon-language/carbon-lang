@@ -123,10 +123,10 @@ class Interpreter {
   // Instantiate a type by replacing all type variables that occur inside the
   // type by the current values of those variables.
   //
-  // For example, suppose T=i32 and U=Bool. Then
+  // For example, suppose T=i32 and U=bool. Then
   //     __Fn (Point(T)) -> Point(U)
   // becomes
-  //     __Fn (Point(i32)) -> Point(Bool)
+  //     __Fn (Point(i32)) -> Point(bool)
   auto InstantiateType(Nonnull<const Value*> type, SourceLocation source_loc)
       -> ErrorOr<Nonnull<const Value*>>;
 
