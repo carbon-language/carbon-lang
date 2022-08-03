@@ -32,6 +32,12 @@ The lexer ensures that all forms of brackets are matched, and is intended to rec
 The [ParseTree](parser/parse_tree.h) is the output of parsing, but most logic is
 in [ParserImpl](parser/parser_impl.h).
 
+The parse tree faithfully represents the tree structure of the source program, interpreted according to the Carbon grammar. No semantics are associated with the tree structure at this level, and no name lookup is performed.
+
+Each parse tree node has an expected structure, corresponding to the grammar of the Carbon language, and the parser ensures that a valid parse tree node always has a valid structure. However, any parse tree node can be marked as invalid, and an invalid parse tree node can contain child nodes of any kind in any order. This is intended to model the situation where parsing failed because the code did not match the grammar, but we were still able to parse some subexpressions, as an aid for non-compiler tools such as syntax highlighters or refactoring tools.
+
+Many functions in the parser return `llvm::Optional<T>`. A return value of `llvm::None` indicates that parsing has failed and an error diagnostic has already been produced, and that the current region of the parse tree might not meet its invariants so that the caller should create an invalid parse tree node. Other return values indicate that parsing was either successful or that any encountered errors have been recovered from, so the caller can create a valid parse tree node.
+
 The produced ParseTree is in reverse postorder. For example, given the code:
 
 ```carbon
