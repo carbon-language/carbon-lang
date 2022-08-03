@@ -23,7 +23,9 @@ flow of data is:
 
 The [TokenizedBuffer](lexer/tokenized_buffer.h) is the central point of lexing.
 
-TODO: Not sure what's worth noting here.
+The entire source buffer is converted into tokens before parsing begins. Tokens are referred to by an opaque handle, `TokenizedBuffer::Token`, which is represented as a 32-bit integer into the token array. The tokenized buffer can be queried to discover information about a token, such as its token kind, its location in the source file, and its spelling.
+
+The lexer ensures that all forms of brackets are matched, and is intended to recover from missing brackets based on contextual cues such as indentation (although this is not yet implemented), inserting matching close bracket tokens where it thinks they belong. After the lexer completes, every opening bracket token has a matching closing bracket token.
 
 ## Parsing
 
