@@ -92,6 +92,25 @@ static auto ResolveUnformed(
       }
       break;
     }
+    case ExpressionKind::StructLiteral:
+      for (const FieldInitializer& init :
+           cast<StructLiteral>(*expression).fields()) {
+        CARBON_RETURN_IF_ERROR(ResolveUnformed(&init.expression(), flow_facts,
+                                               /*set_formed=*/false));
+      }
+      break;
+    case ExpressionKind::StructTypeLiteral:
+      for (const FieldInitializer& init :
+           cast<StructTypeLiteral>(*expression).fields()) {
+        CARBON_RETURN_IF_ERROR(ResolveUnformed(&init.expression(), flow_facts,
+                                               /*set_formed=*/false));
+      }
+      break;
+    case ExpressionKind::SimpleMemberAccessExpression:
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(
+          &cast<SimpleMemberAccessExpression>(*expression).object(), flow_facts,
+          /*set_formed=*/false));
+      break;
     case ExpressionKind::DotSelfExpression:
     case ExpressionKind::IntLiteral:
     case ExpressionKind::BoolLiteral:
@@ -103,12 +122,9 @@ static auto ResolveUnformed(
     case ExpressionKind::ContinuationTypeLiteral:
     case ExpressionKind::ValueLiteral:
     case ExpressionKind::IndexExpression:
-    case ExpressionKind::SimpleMemberAccessExpression:
     case ExpressionKind::CompoundMemberAccessExpression:
     case ExpressionKind::IfExpression:
     case ExpressionKind::WhereExpression:
-    case ExpressionKind::StructLiteral:
-    case ExpressionKind::StructTypeLiteral:
     case ExpressionKind::IntrinsicExpression:
     case ExpressionKind::UnimplementedExpression:
     case ExpressionKind::FunctionTypeLiteral:
@@ -163,6 +179,10 @@ static auto ResolveUnformed(
       auto& def = cast<VariableDefinition>(*statement);
       CARBON_RETURN_IF_ERROR(ResolveUnformed(&def.pattern(), flow_facts,
                                              /*has_init=*/def.has_init()));
+      if (def.has_init()) {
+        CARBON_RETURN_IF_ERROR(ResolveUnformed(&def.init(), flow_facts,
+                                               /*has_init=*/false));
+      }
       break;
     }
     case StatementKind::ReturnVar:
@@ -188,11 +208,39 @@ static auto ResolveUnformed(
                                              /*set_formed=*/false));
       break;
     }
+    case StatementKind::If: {
+      auto& if_stmt = cast<If>(*statement);
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(&if_stmt.condition(), flow_facts,
+                                             /*set_formed=*/false));
+      CARBON_RETURN_IF_ERROR(
+          ResolveUnformed(&if_stmt.then_block(), flow_facts));
+      if (if_stmt.else_block().has_value()) {
+        CARBON_RETURN_IF_ERROR(
+            ResolveUnformed(*if_stmt.else_block(), flow_facts));
+      }
+      break;
+    }
+    case StatementKind::While: {
+      auto& while_stmt = cast<While>(*statement);
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(&while_stmt.condition(),
+                                             flow_facts, /*set_formed=*/false));
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(&while_stmt.body(), flow_facts));
+      break;
+    }
+    case StatementKind::Match: {
+      auto& match = cast<Match>(*statement);
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(&match.expression(), flow_facts,
+                                             /*set_formed=*/false));
+      for (auto& clause : match.clauses()) {
+        CARBON_RETURN_IF_ERROR(ResolveUnformed(&clause.pattern(), flow_facts,
+                                               /*set_formed=*/true));
+        CARBON_RETURN_IF_ERROR(
+            ResolveUnformed(&clause.statement(), flow_facts));
+      }
+      break;
+    }
     case StatementKind::Break:
     case StatementKind::Continue:
-    case StatementKind::If:
-    case StatementKind::While:
-    case StatementKind::Match:
     case StatementKind::Continuation:
     case StatementKind::Run:
     case StatementKind::Await:
