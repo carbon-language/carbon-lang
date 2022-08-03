@@ -13,6 +13,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [TODO: Initial proposal setup](#todo-initial-proposal-setup)
+-   [Abstract](#abstract)
 -   [Problem](#problem)
 -   [Background](#background)
 -   [Proposal](#proposal)
@@ -37,6 +38,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 TODOs indicate where content should be updated for a proposal. See
 [Carbon Governance and Evolution](/docs/project/evolution.md) for more details.
+
+## Abstract
+
+TODO: Describe, in a succinct paragraph, the gist of this document. This
+paragraph should be reproduced verbatim in the PR summary.
 
 ## Problem
 
