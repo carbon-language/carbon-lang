@@ -12,6 +12,7 @@
 #include "explorer/interpreter/interpreter.h"
 #include "explorer/interpreter/resolve_control_flow.h"
 #include "explorer/interpreter/resolve_names.h"
+#include "explorer/interpreter/resolve_unformed.h"
 #include "explorer/interpreter/type_checker.h"
 #include "llvm/Support/Error.h"
 
@@ -45,8 +46,11 @@ auto ExecProgram(Nonnull<Arena*> arena, AST ast,
   }
   CARBON_RETURN_IF_ERROR(TypeChecker(arena, trace_stream).TypeCheck(ast));
   if (trace_stream) {
-    **trace_stream << "\n";
-    **trace_stream << "********** type checking complete **********\n";
+    **trace_stream << "********** resolving unformed variables **********\n";
+  }
+  CARBON_RETURN_IF_ERROR(ResolveUnformed(ast));
+  if (trace_stream) {
+    **trace_stream << "********** printing declarations **********\n";
     for (const auto decl : ast.declarations) {
       **trace_stream << *decl;
     }

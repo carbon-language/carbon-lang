@@ -10,10 +10,11 @@
 
 package ExplorerTest api;
 
+abstract class C {
+  fn F() {}
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_abstract_class.carbon:[[@LINE+1]]: Class prefixes `base` and `abstract` are not supported yet
+}
+
 fn Main() -> i32 {
-  var x: i32;
-  var y: i32;
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/uninitialized/fail_local_uninitialized_assign.carbon:[[@LINE+1]]: use of uninitialized variable x
-  y = x;
-  return y;
+  return 0;
 }

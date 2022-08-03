@@ -10,10 +10,15 @@
 
 package ExplorerTest api;
 
+class A {
+  fn F() {}
+}
+
+class B extends A {
+  fn F() {}
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_class_extends.carbon:[[@LINE+1]]: Class extension with `extends` is not supported yet
+}
+
 fn Main() -> i32 {
-  var x: i32;
-  var y: i32;
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/uninitialized/fail_local_uninitialized_assign.carbon:[[@LINE+1]]: use of uninitialized variable x
-  y = x;
-  return y;
+  return 0;
 }
