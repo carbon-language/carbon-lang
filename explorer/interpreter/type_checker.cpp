@@ -2368,20 +2368,16 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           return Success();
        }
 
-        case IntrinsicExpression::Intrinsic::IntGreaterEq:
-        case IntrinsicExpression::Intrinsic::IntGreater:
-        case IntrinsicExpression::Intrinsic::IntLessEq:
-        case IntrinsicExpression::Intrinsic::IntLess:
         case IntrinsicExpression::Intrinsic::IntCompare:{
           if (args.size() != 2) {
             return CompilationError(e->source_loc())
-                   << "__intrinsic_int_eq takes 2 arguments";
+                   << "__intrinsic_int_compare takes 2 arguments";
           }
           CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "__intrinsic_int_eq argument 1",
+              e->source_loc(), "__intrinsic_int_compare argument 1",
               arena_->New<IntType>(), &args[0]->static_type(), impl_scope));
           CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "__intrinsic_int_eq argument 2",
+              e->source_loc(), "__intrinsic_int_compare argument 2",
               arena_->New<IntType>(), &args[1]->static_type(), impl_scope));
           e->set_static_type(arena_->New<IntType>());
           e->set_value_category(ValueCategory::Let);
@@ -2402,23 +2398,16 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           e->set_value_category(ValueCategory::Let);
           return Success();
       }
-
-
-
-        case IntrinsicExpression::Intrinsic::StrGreaterEq:
-        case IntrinsicExpression::Intrinsic::StrGreater:
-        case IntrinsicExpression::Intrinsic::StrLessEq:
-        case IntrinsicExpression::Intrinsic::StrLess:
         case IntrinsicExpression::Intrinsic::StrCompare:{
             if (args.size() != 2) {
                 return CompilationError(e->source_loc())
-                        << "__intrinsic_str_eq takes 2 arguments";
+                        << "__intrinsic_str_compare takes 2 arguments";
             }
             CARBON_RETURN_IF_ERROR(ExpectExactType(
-                    e->source_loc(), "__intrinsic_str_eq argument 1",
+                    e->source_loc(), "__intrinsic_str_compare argument 1",
                     arena_->New<StringType>(), &args[0]->static_type(), impl_scope));
             CARBON_RETURN_IF_ERROR(ExpectExactType(
-                    e->source_loc(), "__intrinsic_str_eq argument 2",
+                    e->source_loc(), "__intrinsic_str_compare argument 2",
                     arena_->New<StringType>(), &args[1]->static_type(), impl_scope));
             e->set_static_type(arena_->New<IntType>());
             e->set_value_category(ValueCategory::Let);

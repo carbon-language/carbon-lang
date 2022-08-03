@@ -1231,62 +1231,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           auto result = arena_->New<BoolValue>(lhs == rhs);
           return todo_.FinishAction(result);
         }
-        case IntrinsicExpression::Intrinsic::IntLess: {
-          CARBON_CHECK(args.size() == 2);
-          auto lhs = cast<IntValue>(*args[0]).value();
-          auto rhs = cast<IntValue>(*args[1]).value();
-          auto result = arena_->New<BoolValue>(lhs < rhs);
-          return todo_.FinishAction(result);
-        }
-        case IntrinsicExpression::Intrinsic::StrLess: {
-          CARBON_CHECK(args.size() == 2);
-          auto& lhs = cast<StringValue>(*args[0]).value();
-          auto& rhs = cast<StringValue>(*args[1]).value();
-          auto result = arena_->New<BoolValue>(lhs < rhs);
-          return todo_.FinishAction(result);
-        }
-        case IntrinsicExpression::Intrinsic::IntLessEq: {
-          CARBON_CHECK(args.size() == 2);
-          auto lhs = cast<IntValue>(*args[0]).value();
-          auto rhs = cast<IntValue>(*args[1]).value();
-          auto result = arena_->New<BoolValue>(lhs <= rhs);
-          return todo_.FinishAction(result);
-        }
-        case IntrinsicExpression::Intrinsic::StrLessEq: {
-          CARBON_CHECK(args.size() == 2);
-          auto& lhs = cast<StringValue>(*args[0]).value();
-          auto& rhs = cast<StringValue>(*args[1]).value();
-          auto result = arena_->New<BoolValue>(lhs <= rhs);
-          return todo_.FinishAction(result);
-        }
-        case IntrinsicExpression::Intrinsic::IntGreater: {
-          CARBON_CHECK(args.size() == 2);
-          auto lhs = cast<IntValue>(*args[0]).value();
-          auto rhs = cast<IntValue>(*args[1]).value();
-          auto result = arena_->New<BoolValue>(lhs > rhs);
-          return todo_.FinishAction(result);
-        }
-        case IntrinsicExpression::Intrinsic::StrGreater: {
-          CARBON_CHECK(args.size() == 2);
-          auto& lhs = cast<StringValue>(*args[0]).value();
-          auto& rhs = cast<StringValue>(*args[1]).value();
-          auto result = arena_->New<BoolValue>(lhs > rhs);
-          return todo_.FinishAction(result);
-        }
-        case IntrinsicExpression::Intrinsic::IntGreaterEq: {
-          CARBON_CHECK(args.size() == 2);
-          auto lhs = cast<IntValue>(*args[0]).value();
-          auto rhs = cast<IntValue>(*args[1]).value();
-          auto result = arena_->New<BoolValue>(lhs >= rhs);
-          return todo_.FinishAction(result);
-        }
-        case IntrinsicExpression::Intrinsic::StrGreaterEq: {
-          CARBON_CHECK(args.size() == 2);
-          auto& lhs = cast<StringValue>(*args[0]).value();
-          auto& rhs = cast<StringValue>(*args[1]).value();
-          auto result = arena_->New<BoolValue>(lhs >= rhs);
-          return todo_.FinishAction(result);
-        }
+
         case IntrinsicExpression::Intrinsic::IntCompare:{
             CARBON_CHECK(args.size() == 2);
             auto lhs = cast<IntValue>(*args[0]).value();
