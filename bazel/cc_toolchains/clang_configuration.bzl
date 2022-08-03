@@ -134,7 +134,7 @@ def _configure_clang_toolchain_impl(repository_ctx):
     # This check isn't exhaustive, only a best attempt at warning the developer.
     llvm_check_result = repository_ctx.execute([
         clang.dirname.get_child("llvm-ar"),
-        "--version"
+        "--version",
     ])
     if llvm_check_result.return_code != 0:
         fail("`llvm-ar` not found beside clang: is LLVM in PATH?")

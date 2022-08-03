@@ -284,6 +284,9 @@ $ cd carbon-lang
 
 # Build and run the explorer.
 $ bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
+
+# Format Bazel files
+$ bazel run //:buildifier
 ```
 
 These instructions assume [Homebrew](https://brew.sh/) is installed; see our
