@@ -129,21 +129,22 @@ def _configure_clang_toolchain_impl(repository_ctx):
         sysroot_dir,
     )
 
-    # Ensure the detected clang path has some LLVM tools in it, in attempt to
-    # warn the user if they don't have these necessary LLVM tools in their PATH.
-    # This check isn't exhaustive, only a best attempt at warning the developer.
-    llvm_check_result = repository_ctx.execute([
-        clang.dirname.get_child("llvm-ar"),
-        "--version"
-    ])
-    if llvm_check_result.return_code != 0:
-        fail("`llvm-ar` not found beside clang: is LLVM in PATH?")
+    # We expect that the LLVM binutils live adjacent to llvm-ar.
+    # First look for llvm-ar adjacent to clang, so that if found,
+    # it is most likely to match the same version as clang.
+    # Otherwise, try PATH.
+    arpath = clang.dirname.get_child("llvm-ar")
+    if not arpath.exists:
+        arpath = repository_ctx.which("llvm-ar")
+        if not arpath:
+            fail("`llvm-ar` not found in PATH or adjacent to clang")
 
     repository_ctx.template(
         "clang_detected_variables.bzl",
         repository_ctx.attr._clang_detected_variables_template,
         substitutions = {
-            "{LLVM_BINDIR}": str(clang.dirname),
+            "{LLVM_BINDIR}": str(arpath.dirname),
+            "{CLANG_BINDIR}": str(clang.dirname),
             "{CLANG_RESOURCE_DIR}": resource_dir,
             "{CLANG_INCLUDE_DIRS_LIST}": str(
                 [str(path) for path in include_dirs],
