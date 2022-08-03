@@ -108,7 +108,7 @@ formatted by an Emitter. Important consumers are:
     diagnostics, particularly for tests.
 
 ### Producing diagnostics
-[2;2R[3;1R[>0;95;0c]10;rgb:c7f1/c7f1/c7f1]11;rgb:0000/0000/0000
+
 Diagnostics are used to surface issues from compilation. A simple diagnostic
 looks like:
 
