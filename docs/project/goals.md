@@ -604,7 +604,7 @@ features, we should focus on the solution that is moving the fastest.
 
 **Domain-motivated libraries and features are an example.** For these, the cost
 function will typically be the effort required to specify and implement the
-feature. The Benefit will stem from the number of users and how much utility the
+feature. The benefit will stem from the number of users and how much utility the
 feature provides. We don't expect to have concrete numbers for these, but we
 expect prioritization decisions between features to be expressed using this
 framework.
