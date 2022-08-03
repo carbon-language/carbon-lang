@@ -124,7 +124,7 @@ Here, `CARBON_DIAGNOSTIC` defines a static instance of a diagnostic named
 
 The `Emit` call produces a single instance of the diagnostic. When emitted,
 `"Code is invalid"` will be the message used. The type of `location` depends on
-the DiagnosticEmitter.
+the `DiagnosticEmitter`.
 
 A diagnostic with an argument looks like:
 
