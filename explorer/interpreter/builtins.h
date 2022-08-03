@@ -87,25 +87,12 @@ class Builtins {
 
  private:
   static constexpr int NumBuiltins = static_cast<int>(Builtin::Last) + 1;
-  static constexpr const char* BuiltinNames[NumBuiltins] = {"As",
-                                                            "ImplicitAs",
-                                                            "EqWith",
-                                                            "LessWith",
-                                                            "LessEqWith",
-                                                            "GreaterWith",
-                                                            "GreaterEqWith",
-                                                            "CompareWith",
-                                                            "Negate",
-                                                            "AddWith",
-                                                            "SubWith",
-                                                            "MulWith",
-                                                            "ModWith",
-                                                            "BitComplement",
-                                                            "BitAndWith",
-                                                            "BitOrWith",
-                                                            "BitXorWith",
-                                                            "LeftShiftWith",
-                                                            "RightShiftWith"};
+  static constexpr const char* BuiltinNames[NumBuiltins] = {
+      "As",         "ImplicitAs",    "EqWith",        "LessWith",
+      "LessEqWith", "GreaterWith",   "GreaterEqWith", "CompareWith",
+      "Negate",     "AddWith",       "SubWith",       "MulWith",
+      "ModWith",    "BitComplement", "BitAndWith",    "BitOrWith",
+      "BitXorWith", "LeftShiftWith", "RightShiftWith"};
 
   std::optional<Nonnull<const Declaration*>> builtins_[NumBuiltins] = {};
 };

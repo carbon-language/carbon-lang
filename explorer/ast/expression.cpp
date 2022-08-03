@@ -32,7 +32,7 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
        {"delete", Intrinsic::Dealloc},
        {"rand", Intrinsic::Rand},
        {"int_eq", Intrinsic::IntEq},
-       {"int_compare",Intrinsic::IntCompare},
+       {"int_compare", Intrinsic::IntCompare},
        {"int_bit_complement", Intrinsic::IntBitComplement},
        {"int_bit_and", Intrinsic::IntBitAnd},
        {"int_bit_or", Intrinsic::IntBitOr},
@@ -40,7 +40,7 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
        {"int_left_shift", Intrinsic::IntLeftShift},
        {"int_right_shift", Intrinsic::IntRightShift},
        {"str_eq", Intrinsic::StrEq},
-       {"str_compare",Intrinsic::StrCompare}});
+       {"str_compare", Intrinsic::StrCompare}});
   name.remove_prefix(std::strlen("__intrinsic_"));
   auto it = intrinsic_map.find(name);
   if (it == intrinsic_map.end()) {
@@ -79,7 +79,7 @@ auto IntrinsicExpression::name() const -> std::string_view {
     case IntrinsicExpression::Intrinsic::StrEq:
       return "__intrinsic_str_eq";
     case IntrinsicExpression::Intrinsic::StrCompare:
-        return "__intrinsic_str_compare";
+      return "__intrinsic_str_compare";
   }
 }
 
