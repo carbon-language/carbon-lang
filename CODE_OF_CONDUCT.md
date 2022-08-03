@@ -86,9 +86,9 @@ spaces:
     kind when dealing with other members as well as with people outside the
     Carbon community.
 
--   **Be careful in the words that we choose and be kind to others.** Do not
-    insult or put down other participants. Harassment and other exclusionary
-    behaviors aren’t acceptable. This includes, but is not limited to:
+-   **Be careful in the words that we choose and be kind to others.** Do not use
+    insults or put downs. Harassment and other exclusionary behaviors aren’t
+    acceptable. This includes, but is not limited to:
 
     -   Violent threats or language directed against another person.
     -   Discriminatory jokes and language.
