@@ -20,7 +20,6 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-
   Print("strings less: {0}", if "hello" < "world" then 1 else 0);
   Print("ints less: {0}", if 1 < 1 then 1 else 0);
   Print("strings less eq: {0}", if "hello" <= "world" then 1 else 0);
