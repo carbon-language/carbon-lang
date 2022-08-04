@@ -461,7 +461,7 @@ complicated rules to picking an implementation when there are many candidates.
 It also has a number of benefits for users:
 
 -   It removes a way packages can conflict with each other.
--   It makes the behaviour of code more consistent and predictable.
+-   It makes the behavior of code more consistent and predictable.
 -   It means there is no need to provide a disambiguation mechanism.
     Disambiguation is particularly problematic since the ambiguous call is often
     in generic code rather than code you control.
