@@ -188,9 +188,10 @@ static auto ResolveUnformed(Nonnull<const Statement*> statement,
     }
     case StatementKind::ReturnVar: {
       auto& ret_var = cast<ReturnVar>(*statement);
-      CARBON_RETURN_IF_ERROR(
-          ResolveUnformed(&cast<BindingPattern>(ret_var.value_node().base()),
-                          flow_facts, action));
+      auto& binding_pattern = cast<BindingPattern>(ret_var.value_node().base());
+      CARBON_RETURN_IF_ERROR(flow_facts.TakeAction(&binding_pattern, action,
+                                                   ret_var.source_loc(),
+                                                   binding_pattern.name()));
       break;
     }
     case StatementKind::ReturnExpression: {
