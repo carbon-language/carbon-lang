@@ -2412,7 +2412,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           e->set_value_category(ValueCategory::Let);
           return Success();
         }
-
         case IntrinsicExpression::Intrinsic::IntBitComplement:
           if (args.size() != 1) {
             return CompilationError(e->source_loc())
