@@ -14,8 +14,9 @@ toolchain's top priorities are:
 -   Compilation performance.
 -   Quality of diagnostics for incorrect or questionable code.
 
-The main compiler is `//toolchain/driver:carbon`. When compiling, the current
-flow of data is:
+The compiler is organized into a collection of libraries that can be used independently. This includes the `//toolchain/driver` libraries that orchestrate the typical and expected compilation flow using the other libraries. The driver also includes the primary command-line tool: `//toolchain/driver:carbon`.
+
+The typical compilation flow of data is:
 
 1. Load the file into a [SourceBuffer](source/source_buffer.h).
 2. Lex a SourceBuffer into a [TokenizedBuffer](lexer/tokenized_buffer.h).
