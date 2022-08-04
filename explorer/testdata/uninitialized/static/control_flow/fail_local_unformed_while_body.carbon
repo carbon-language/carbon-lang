@@ -15,7 +15,7 @@ fn Foo() -> i32;
 fn Main() -> i32 {
   var (x: i32, y: i32);
   while (Foo() == 0) {
-    // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/uninitialized/static/control_flow/fail_local_uninitialized_while_body.carbon:[[@LINE+1]]: use of uninitialized variable x
+    // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/uninitialized/static/control_flow/fail_local_unformed_while_body.carbon:[[@LINE+1]]: use of uninitialized variable x
     y = x;
   }
   return 1;

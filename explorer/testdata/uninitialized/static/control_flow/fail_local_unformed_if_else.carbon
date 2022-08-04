@@ -17,7 +17,7 @@ fn Main() -> i32 {
   if (Foo() == 0) {
     return 0;
   } else {
-    // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/uninitialized/static/control_flow/fail_local_uninitialized_if_else.carbon:[[@LINE+1]]: use of uninitialized variable x
+    // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/uninitialized/static/control_flow/fail_local_unformed_if_else.carbon:[[@LINE+1]]: use of uninitialized variable x
     return x;
   }
 }
