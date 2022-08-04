@@ -320,7 +320,7 @@ class TypeChecker {
                                bool allow_user_defined_conversions) const
       -> bool;
 
-  auto ResolveType(Nonnull<const Value*> source)-> Nonnull<const Value*>;
+  auto ResolveType(Nonnull<const Value*> source) -> Nonnull<const Value*>;
 
   // Attempt to implicitly convert type-checked expression `source` to the type
   // `destination`.
@@ -329,7 +329,6 @@ class TypeChecker {
                          Nonnull<Expression*> source,
                          Nonnull<const Value*> destination)
       -> ErrorOr<Nonnull<Expression*>>;
-
 
   // Determine whether `type1` and `type2` are considered to be the same type
   // in the given scope. This is true if they're structurally identical or if

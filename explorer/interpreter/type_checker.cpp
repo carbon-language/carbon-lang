@@ -515,9 +515,9 @@ auto TypeChecker::ImplicitlyConvert(const std::string& context,
                                     Nonnull<Expression*> source,
                                     Nonnull<const Value*> destination)
     -> ErrorOr<Nonnull<Expression*>> {
-    Nonnull<const Value*> source_type = &source->static_type();
+  Nonnull<const Value*> source_type = &source->static_type();
 
-    // TODO: If a builtin conversion works, for now we don't create any
+  // TODO: If a builtin conversion works, for now we don't create any
   // expression to do the conversion and rely on the interpreter to know how to
   // do it.
   // TODO: This doesn't work for cases of combined built-in and user-defined
@@ -664,7 +664,7 @@ auto TypeChecker::ArgumentDeduction(
                     &var_type.binding()) != bindings_to_deduce.end()) {
         auto [it, success] = deduced.insert({&var_type.binding(), arg});
         if (!success) {
-            // All deductions are required to produce the same value. Note that
+          // All deductions are required to produce the same value. Note that
           // we intentionally don't consider type equality here; we need the
           // same symbolic type, otherwise it would be ambiguous which spelling
           // should be used, and we'd need to check all pairs of types for
@@ -677,7 +677,7 @@ auto TypeChecker::ArgumentDeduction(
           }
         }
       } else {
-          return handle_non_deduced_type();
+        return handle_non_deduced_type();
       }
       return Success();
     }
@@ -842,7 +842,7 @@ auto TypeChecker::ArgumentDeduction(
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName: {
-        return handle_non_deduced_type();
+      return handle_non_deduced_type();
     }
     case Value::Kind::ImplWitness:
     case Value::Kind::SymbolicWitness:
@@ -990,9 +990,9 @@ auto TypeChecker::Substitute(
     case Value::Kind::VariableType: {
       auto it = dict.find(&cast<VariableType>(*type).binding());
       if (it == dict.end()) {
-          return type;
+        return type;
       } else {
-          return it->second;
+        return it->second;
       }
     }
     case Value::Kind::AssociatedConstant: {
@@ -1005,7 +1005,7 @@ auto TypeChecker::Substitute(
           cast<Witness>(witness));
     }
     case Value::Kind::TupleValue: {
-        std::vector<Nonnull<const Value*>> elts;
+      std::vector<Nonnull<const Value*>> elts;
       for (const auto& elt : cast<TupleValue>(*type).elements()) {
         elts.push_back(Substitute(dict, elt));
       }
@@ -1301,18 +1301,19 @@ auto TypeChecker::CombineConstraints(
   return std::move(builder).Build(arena_);
 }
 
-auto TypeChecker::ResolveType(Nonnull<const Value*> source) -> Nonnull<const Value*>{
-    switch(source->kind()){
-        case Value::Kind::VariableType: {
-            const auto & binding = cast<VariableType>(*source).binding();
-            return &binding.static_type();
-        }
-        case Value::Kind::TupleValue: {
-            return ResolveType(cast<TupleValue>(*source).elements()[0]);
-        }
-        default:
-            return source;
+auto TypeChecker::ResolveType(Nonnull<const Value*> source)
+    -> Nonnull<const Value*> {
+  switch (source->kind()) {
+    case Value::Kind::VariableType: {
+      const auto& binding = cast<VariableType>(*source).binding();
+      return &binding.static_type();
     }
+    case Value::Kind::TupleValue: {
+      return ResolveType(cast<TupleValue>(*source).elements()[0]);
+    }
+    default:
+      return source;
+  }
 }
 
 auto TypeChecker::DeduceCallBindings(
@@ -1384,34 +1385,35 @@ auto TypeChecker::DeduceCallBindings(
   // TODO: Ensure any equality constraints are satisfied.
 
   // Convert the arguments to the parameter type.
-    Nonnull<const Value*> param_type = Substitute(generic_bindings, params_type);
+  Nonnull<const Value*> param_type = Substitute(generic_bindings, params_type);
 
-    //Test is substituded param is convertable to the original type.
-    if(params_type->kind() == Value::Kind::TupleValue && param_type->kind() == Value::Kind::TupleValue) {
-        std::size_t i = 0;
-        for (const auto& org_type : cast<TupleValue>(*params_type).elements()) {
-            const auto& sub_type = ResolveType(cast<TupleValue>(*param_type).elements()[i]);
-            if(org_type->kind() == Value::Kind::VariableType) {
-                const auto & binding = cast<VariableType>(*org_type).binding();
-                if(binding.static_type().kind() != Value::Kind::TypeType
-                   && binding.static_type().kind() != Value::Kind::ConstraintType
-                   && binding.static_type().kind() != Value::Kind::InterfaceType) {
-                    if (!IsImplicitlyConvertible(sub_type, &binding.static_type(), impl_scope, true)) {
-                        return CompilationError(call.source_loc())
-                                << "Could not convert argument "
-                                << *sub_type
-                                << " to parameter type "
-                                << binding.static_type()
-                                << " in " << call;
-                    }
-                }
-            }
+  // Test is substituted param is convertible to the original type.
+  if (params_type->kind() == Value::Kind::TupleValue &&
+      param_type->kind() == Value::Kind::TupleValue) {
+    std::size_t i = 0;
+    for (const auto& org_type : cast<TupleValue>(*params_type).elements()) {
+      const auto& sub_type =
+          ResolveType(cast<TupleValue>(*param_type).elements()[i]);
+      if (org_type->kind() == Value::Kind::VariableType) {
+        const auto& binding = cast<VariableType>(*org_type).binding();
+        if (binding.static_type().kind() != Value::Kind::TypeType &&
+            binding.static_type().kind() != Value::Kind::ConstraintType &&
+            binding.static_type().kind() != Value::Kind::InterfaceType) {
+          if (!IsImplicitlyConvertible(sub_type, &binding.static_type(),
+                                       impl_scope, true)) {
+            return CompilationError(call.source_loc())
+                   << "Could not convert argument " << *sub_type
+                   << " to parameter type " << binding.static_type() << " in "
+                   << call;
+          }
         }
+      }
     }
+  }
 
-    CARBON_ASSIGN_OR_RETURN(
-            Nonnull < Expression * > converted_argument,
-            ImplicitlyConvert("call", impl_scope, &call.argument(), param_type));
+  CARBON_ASSIGN_OR_RETURN(
+      Nonnull<Expression*> converted_argument,
+      ImplicitlyConvert("call", impl_scope, &call.argument(), param_type));
 
   call.set_argument(converted_argument);
 
