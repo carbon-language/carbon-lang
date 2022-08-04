@@ -239,8 +239,7 @@ and [`while`](#while), and
 
 The signed-integer type with bit width `N` may be written `Carbon.Int(N)`. For
 convenience and brevity, the common power-of-two sizes may be written with an
-`i` followed by the size: `i8`, `i16`, `i32`, `i64`, or `i128`.
-Signed-integer
+`i` followed by the size: `i8`, `i16`, `i32`, `i64`, or `i128`. Signed-integer
 [overflow](expressions/arithmetic.md#overflow-and-other-error-conditions) is a
 programming error:
 
