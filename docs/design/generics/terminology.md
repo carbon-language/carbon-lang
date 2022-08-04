@@ -192,7 +192,7 @@ overloads:
 
 ```
 fn F[template T:! Type](x: T*) -> T;
-fn F(x: Int) -> Bool;
+fn F(x: Int) -> bool;
 ```
 
 A generic function `G` can call `F` with a type like `T*` that can not possibly

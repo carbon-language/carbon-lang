@@ -32,7 +32,7 @@ way that enables the program to continue running.
 
 A Carbon function that needs to report recoverable failures should return a sum
 type whose alternatives represent the success case and failure cases, such as
-`Optional(T)`, `Result(T, Error)`, or `Bool`. The function's successful return
+`Optional(T)`, `Result(T, Error)`, or `bool`. The function's successful return
 value, and any metadata about the failure, should be embedded in the
 alternatives of the sum type, rather than reported by way of output parameters
 or other side channels. Carbon's design will prioritize making this form of

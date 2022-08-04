@@ -14,8 +14,8 @@ package ExplorerTest api;
 class LazyEq {
   var v1: i32;
   var v2: i32;
-  impl as ImplicitAs(Bool) {
-    fn Convert[me: Self]() -> Bool {
+  impl as ImplicitAs(bool) {
+    fn Convert[me: Self]() -> bool {
       return me.v1 == me.v2;
     }
   }

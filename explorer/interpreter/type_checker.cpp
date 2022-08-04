@@ -3245,6 +3245,15 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   ImplScope class_scope;
   class_scope.AddParent(scope_info.innermost_scope);
 
+  if (class_decl->extensibility() != ClassExtensibility::None) {
+    return CompilationError(class_decl->source_loc())
+           << "Class prefixes `base` and `abstract` are not supported yet";
+  }
+  if (class_decl->extends()) {
+    return CompilationError(class_decl->source_loc())
+           << "Class extension with `extends` is not supported yet";
+  }
+
   std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
   if (class_decl->type_params().has_value()) {
     Nonnull<TuplePattern*> type_params = *class_decl->type_params();

@@ -104,6 +104,8 @@
 %type <std::vector<LibraryName>> import_directives
 %type <std::string> optional_library_path
 %type <bool> api_or_impl
+%type <ClassExtensibility> class_declaration_extensibility
+%type <std::optional<Nonnull<Expression*>>> class_declaration_extends
 %type <Nonnull<Declaration*>> declaration
 %type <Nonnull<FunctionDeclaration*>> function_declaration
 %type <Nonnull<AliasDeclaration*>> alias_declaration
@@ -192,6 +194,7 @@
 %token
   // Most tokens have their spelling defined in lexer.lpp.
   // table-begin
+  ABSTRACT
   ADDR
   ALIAS
   AMPERSAND
@@ -201,6 +204,7 @@
   AS
   AUTO
   AWAIT
+  BASE
   BOOL
   BREAK
   CARET
@@ -218,6 +222,7 @@
   ELSE
   EQUAL
   EQUAL_EQUAL
+  EXTENDS
   EXTERNAL
   FALSE
   FN
@@ -866,6 +871,12 @@ statement:
           context.source_loc(), $2, $4, ValueCategory::Var,
           VariableDefinition::DefinitionType::Var);
     }
+| RETURNED VAR variable_declaration SEMICOLON
+    {
+      $$ = arena->New<VariableDefinition>(
+          context.source_loc(), $3, std::nullopt, ValueCategory::Var,
+          VariableDefinition::DefinitionType::Returned);
+    }
 | RETURNED VAR variable_declaration EQUAL expression SEMICOLON
     {
       $$ = arena->New<VariableDefinition>(
@@ -1059,14 +1070,28 @@ type_params:
 | tuple_pattern
     { $$ = $1; }
 ;
+class_declaration_extensibility:
+  // Empty
+    { $$ = Carbon::ClassExtensibility::None; }
+| ABSTRACT
+    { $$ = Carbon::ClassExtensibility::Abstract; }
+| BASE
+    { $$ = Carbon::ClassExtensibility::Base; }
+;
+class_declaration_extends:
+  // Empty
+    { $$ = std::nullopt; }
+| EXTENDS expression
+    { $$ = $2; }
+;
 declaration:
   function_declaration
     { $$ = $1; }
-| CLASS identifier type_params LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
+| class_declaration_extensibility CLASS identifier type_params class_declaration_extends LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
     {
       $$ = arena->New<ClassDeclaration>(
-          context.source_loc(), $2,
-          arena->New<SelfDeclaration>(context.source_loc()), $3, $5);
+          context.source_loc(), $3,
+          arena->New<SelfDeclaration>(context.source_loc()), $1, $4, $5, $7);
     }
 | CHOICE identifier LEFT_CURLY_BRACE alternative_list RIGHT_CURLY_BRACE
     { $$ = arena->New<ChoiceDeclaration>(context.source_loc(), $2, $4); }

@@ -10,21 +10,8 @@
 
 package ExplorerTest api;
 
-class A(T:! Type) {}
-interface B(T:! Type) {}
-
-external impl forall [T:! Type] A(T) as B(i32) {}
-external impl forall [T:! Type] A(i32) as B(T) {}
-
-fn F[T:! B(i32)](x: T) {}
-fn G[T:! B(bool)](x: T) {}
-
 fn Main() -> i32 {
-  let a: A(bool) = {};
-  let b: A(i32) = {};
-  F(a);
-  G(b);
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_ambiguous_impl_generic.carbon:[[@LINE+1]]: ambiguous implementations of interface B(T = i32) for class A(T = i32)
-  F(b);
-  return 0;
+  // CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/uninitialized/fail_uninitialized_returned_var.carbon:[[@LINE+1]]: undefined behavior: access to uninitialized value Uninit<Placeholder<x>>
+  returned var x: i32;
+  return var;
 }

@@ -1755,8 +1755,8 @@ declaration with all of the optional parameters in an option struct:
 ```
 fn SortIntVector(
     v: Vector(i32)*,
-    options: {.stable: Bool = false,
-              .descending: Bool = false} = {}) {
+    options: {.stable: bool = false,
+              .descending: bool = false} = {}) {
   // Code using `options.stable` and `options.descending`.
 }
 
@@ -1780,7 +1780,7 @@ We might instead support destructuring struct patterns with defaults:
 ```
 fn SortIntVector(
     v: Vector(i32)*,
-    {stable: Bool = false, descending: Bool = false}) {
+    {stable: bool = false, descending: bool = false}) {
   // Code using `stable` and `descending`.
 }
 ```

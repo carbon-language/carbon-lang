@@ -153,7 +153,7 @@ export PATH="$(brew --prefix llvm)/bin:${PATH}"
 Carbon expects the `PATH` to include the installed tooling. If set, `CC` should
 also point at `clang`. Our build environment will detect the `clang` binary
 using `CC` then `PATH`, and will expect the rest of the LLVM toolchain to be
-available in the same directory as `clang`. However, various scripts and tools
+available in the same directory as `llvm-ar`. However, various scripts and tools
 assume that the LLVM toolchain will be in `PATH`, particularly for tools like
 `clang-format` and `clang-tidy`.
 
