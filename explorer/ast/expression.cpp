@@ -288,7 +288,7 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
       out << (cast<BoolLiteral>(*this).value() ? "true" : "false");
       break;
     case ExpressionKind::BoolTypeLiteral:
-      out << "Bool";
+      out << "bool";
       break;
     case ExpressionKind::IntTypeLiteral:
       out << "i32";
