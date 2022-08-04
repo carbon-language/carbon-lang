@@ -30,7 +30,7 @@ The [TokenizedBuffer](lexer/tokenized_buffer.h) is the central point of lexing.
 
 The entire source buffer is converted into tokens before parsing begins. Tokens
 are referred to by an opaque handle, `TokenizedBuffer::Token`, which is
-represented as a 32-bit integer into the token array. The tokenized buffer can
+represented as a dense integer index into the buffer. The tokenized buffer can
 be queried to discover information about a token, such as its token kind, its
 location in the source file, and its spelling.
 
