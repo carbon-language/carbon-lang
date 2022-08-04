@@ -12,10 +12,14 @@ toolchain's top priorities are:
 -   Correctness.
 -   Quality of generated code, including its performance.
 -   Compilation performance.
--   Quality of diagnostics for incorrect or questionable code.
-TODO: Add an expanded document that fully explains the goals and priorities and link to it here.
+-   Quality of diagnostics for incorrect or questionable code. TODO: Add an
+    expanded document that fully explains the goals and priorities and link to
+    it here.
 
-The compiler is organized into a collection of libraries that can be used independently. This includes the `//toolchain/driver` libraries that orchestrate the typical and expected compilation flow using the other libraries. The driver also includes the primary command-line tool: `//toolchain/driver:carbon`.
+The compiler is organized into a collection of libraries that can be used
+independently. This includes the `//toolchain/driver` libraries that orchestrate
+the typical and expected compilation flow using the other libraries. The driver
+also includes the primary command-line tool: `//toolchain/driver:carbon`.
 
 The typical compilation flow of data is:
 
@@ -106,7 +110,9 @@ decrements.
 
 #### Future work
 
-We are interested in eventually exploring ways to adjust the parser design to be non-recursive and remove this limitation, but it hasn't yet been a priority and keeping the code simple seems better until the language design stabilizes.
+We are interested in eventually exploring ways to adjust the parser design to be
+non-recursive and remove this limitation, but it hasn't yet been a priority and
+keeping the code simple seems better until the language design stabilizes.
 
 ## Semantics
 
