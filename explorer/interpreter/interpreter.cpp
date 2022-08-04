@@ -214,6 +214,10 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
       return &cast<TypeOfConstraintType>(static_type)->constraint_type();
     case Operator::As:
     case Operator::Eq:
+    case Operator::Less:
+    case Operator::LessEq:
+    case Operator::Greater:
+    case Operator::GreaterEq:
     case Operator::BitwiseOr:
     case Operator::BitwiseXor:
     case Operator::BitShiftLeft:
@@ -1225,6 +1229,36 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           auto& lhs = cast<StringValue>(*args[0]).value();
           auto& rhs = cast<StringValue>(*args[1]).value();
           auto result = arena_->New<BoolValue>(lhs == rhs);
+          return todo_.FinishAction(result);
+        }
+        case IntrinsicExpression::Intrinsic::IntCompare: {
+          CARBON_CHECK(args.size() == 2);
+          auto lhs = cast<IntValue>(*args[0]).value();
+          auto rhs = cast<IntValue>(*args[1]).value();
+          if (lhs < rhs) {
+            auto result = arena_->New<IntValue>(-1);
+            return todo_.FinishAction(result);
+          }
+          if (lhs == rhs) {
+            auto result = arena_->New<IntValue>(0);
+            return todo_.FinishAction(result);
+          }
+          auto result = arena_->New<IntValue>(1);
+          return todo_.FinishAction(result);
+        }
+        case IntrinsicExpression::Intrinsic::StrCompare: {
+          CARBON_CHECK(args.size() == 2);
+          auto& lhs = cast<StringValue>(*args[0]).value();
+          auto& rhs = cast<StringValue>(*args[1]).value();
+          if (lhs < rhs) {
+            auto result = arena_->New<IntValue>(-1);
+            return todo_.FinishAction(result);
+          }
+          if (lhs == rhs) {
+            auto result = arena_->New<IntValue>(0);
+            return todo_.FinishAction(result);
+          }
+          auto result = arena_->New<IntValue>(1);
           return todo_.FinishAction(result);
         }
         case IntrinsicExpression::Intrinsic::IntBitComplement: {
