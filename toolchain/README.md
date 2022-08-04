@@ -102,6 +102,10 @@ The ParseTree has been prone to stack overflows. As a consequence,
 order to avoid errors. This manages depth increments and, when the scope exits,
 decrements.
 
+#### Future work
+
+We are interested in eventually exploring ways to adjust the parser design to be non-recursive and remove this limitation, but it hasn't yet been a priority and keeping the code simple seems better until the language design stabilizes.
+
 ## Semantics
 
 The [SemanticsIR](semantics/semantics_ir.h) is the output of semantic
