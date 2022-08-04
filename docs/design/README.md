@@ -239,7 +239,7 @@ and [`while`](#while), and
 
 The signed-integer type with bit width `N` may be written `Carbon.Int(N)`. For
 convenience and brevity, the common power-of-two sizes may be written with an
-`i` followed by the size: `i8`, `i16`, `i32`, `i64`, `i128`, or `i256`.
+`i` followed by the size: `i8`, `i16`, `i32`, `i64`, or `i128`.
 Signed-integer
 [overflow](expressions/arithmetic.md#overflow-and-other-error-conditions) is a
 programming error:
@@ -254,7 +254,7 @@ programming error:
     to a mathematically incorrect result, such as a two's complement result or
     zero.
 
-The unsigned-integer types are: `u8`, `u16`, `u32`, `u64`, `u128`, `u256`, and
+The unsigned-integer types are: `u8`, `u16`, `u32`, `u64`, `u128`, and
 `Carbon.UInt(N)`. Unsigned integer types wrap around on overflow, we strongly
 advise that they are not used except when those semantics are desired. These
 types are intended for bit manipulation or modular arithmetic as often found in
