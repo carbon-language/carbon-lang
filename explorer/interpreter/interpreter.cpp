@@ -1231,7 +1231,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           auto result = arena_->New<BoolValue>(lhs == rhs);
           return todo_.FinishAction(result);
         }
-
         case IntrinsicExpression::Intrinsic::IntCompare: {
           CARBON_CHECK(args.size() == 2);
           auto lhs = cast<IntValue>(*args[0]).value();
