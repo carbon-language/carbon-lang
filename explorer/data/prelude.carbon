@@ -140,7 +140,6 @@ impl String as CompareWith(Self) {
   }
 }
 
-
 interface LessWith(U:! Type) {
   fn Less[me: Self](other: U) -> Bool;
 }
@@ -156,9 +155,6 @@ interface GreaterWith(U:! Type) {
 interface GreaterEqWith(U:! Type) {
   fn GreaterEq[me: Self](other: U) -> Bool;
 }
-
-
-
 
 impl i32 as LessWith(Self) {
   fn Less[me: Self](other: Self) -> Bool {
@@ -176,11 +172,11 @@ impl String as LessWith(Self) {
   fn Less[me: Self](other: Self) -> Bool {
     var comp: Ordering =  me.(CompareWith(String).Compare)(other);
     match(comp){
-         case Ordering.Less() =>{
-          return true;
-         }
-     }
-     return false;
+      case Ordering.Less() => {
+        return true;
+      }
+    }
+    return false;
   }
 }
 
@@ -188,14 +184,14 @@ impl i32 as LessEqWith(Self) {
   fn LessEq[me: Self](other: Self) -> Bool {
     var comp: Ordering =  me.(CompareWith(i32).Compare)(other);
     match(comp){
-         case Ordering.Less() =>{
-          return true;
-         }
-         case Ordering.Equivalent() =>{
-          return true;
-         }
-     }
-     return false;
+      case Ordering.Less() => {
+        return true;
+      }
+      case Ordering.Equivalent() => {
+        return true;
+      }
+    }
+    return false;
   }
 }
 
@@ -203,14 +199,14 @@ impl String as LessEqWith(Self) {
   fn LessEq[me: Self](other: Self) -> Bool {
     var comp: Ordering =  me.(CompareWith(String).Compare)(other);
     match(comp){
-         case Ordering.Less() =>{
-          return true;
-         }
-         case Ordering.Equivalent() =>{
-          return true;
-         }
-     }
-     return false;
+      case Ordering.Less() => {
+        return true;
+      }
+      case Ordering.Equivalent() => {
+        return true;
+      }
+    }
+    return false;
   }
 }
 
@@ -218,11 +214,11 @@ impl i32 as GreaterWith(Self) {
   fn Greater[me: Self](other: Self) -> Bool {
     var comp: Ordering =  me.(CompareWith(i32).Compare)(other);
     match(comp){
-         case Ordering.Greater() =>{
-          return true;
-         }
-     }
-     return false;
+      case Ordering.Greater() => {
+        return true;
+      }
+    }
+    return false;
   }
 }
 
@@ -230,11 +226,11 @@ impl String as GreaterWith(Self) {
   fn Greater[me: Self](other: Self) -> Bool {
     var comp: Ordering =  me.(CompareWith(String).Compare)(other);
     match(comp){
-         case Ordering.Greater() =>{
-          return true;
-         }
-     }
-     return false;
+      case Ordering.Greater() => {
+        return true;
+      }
+    }
+    return false;
   }
 }
 
@@ -242,14 +238,14 @@ impl i32 as GreaterEqWith(Self) {
   fn GreaterEq[me: Self](other: Self) -> Bool {
     var comp: Ordering =  me.(CompareWith(i32).Compare)(other);
     match(comp){
-         case Ordering.Greater() =>{
-          return true;
-         }
-         case Ordering.Equivalent() =>{
-          return true;
-         }
-     }
-     return false;
+      case Ordering.Greater() => {
+        return true;
+      }
+      case Ordering.Equivalent() => {
+        return true;
+      }
+    }
+    return false;
   }
 }
 
@@ -257,14 +253,14 @@ impl String as GreaterEqWith(Self) {
   fn GreaterEq[me: Self](other: Self) -> Bool {
     var comp: Ordering =  me.(CompareWith(String).Compare)(other);
     match(comp){
-         case Ordering.Greater() =>{
-          return true;
-         }
-         case Ordering.Equivalent() =>{
-          return true;
-         }
-     }
-     return false;
+      case Ordering.Greater() => {
+        return true;
+      }
+      case Ordering.Equivalent() => {
+        return true;
+      }
+    }
+    return false;
   }
 }
 
