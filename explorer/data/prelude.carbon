@@ -141,23 +141,23 @@ impl String as CompareWith(Self) {
 }
 
 interface LessWith(U:! Type) {
-  fn Less[me: Self](other: U) -> Bool;
+  fn Less[me: Self](other: U) -> bool;
 }
 
 interface LessEqWith(U:! Type) {
-  fn LessEq[me: Self](other: U) -> Bool;
+  fn LessEq[me: Self](other: U) -> bool;
 }
 
 interface GreaterWith(U:! Type) {
-  fn Greater[me: Self](other: U) -> Bool;
+  fn Greater[me: Self](other: U) -> bool;
 }
 
 interface GreaterEqWith(U:! Type) {
-  fn GreaterEq[me: Self](other: U) -> Bool;
+  fn GreaterEq[me: Self](other: U) -> bool;
 }
 
 impl i32 as LessWith(Self) {
-  fn Less[me: Self](other: Self) -> Bool {
+  fn Less[me: Self](other: Self) -> bool {
     var comp: Ordering = me.(CompareWith(i32).Compare)(other);
     match (comp) {
       case Ordering.Less() => {
@@ -169,7 +169,7 @@ impl i32 as LessWith(Self) {
 }
 
 impl String as LessWith(Self) {
-  fn Less[me: Self](other: Self) -> Bool {
+  fn Less[me: Self](other: Self) -> bool {
     var comp: Ordering =  me.(CompareWith(String).Compare)(other);
     match(comp){
       case Ordering.Less() => {
@@ -181,7 +181,7 @@ impl String as LessWith(Self) {
 }
 
 impl i32 as LessEqWith(Self) {
-  fn LessEq[me: Self](other: Self) -> Bool {
+  fn LessEq[me: Self](other: Self) -> bool {
     var comp: Ordering =  me.(CompareWith(i32).Compare)(other);
     match(comp){
       case Ordering.Less() => {
@@ -196,7 +196,7 @@ impl i32 as LessEqWith(Self) {
 }
 
 impl String as LessEqWith(Self) {
-  fn LessEq[me: Self](other: Self) -> Bool {
+  fn LessEq[me: Self](other: Self) -> bool {
     var comp: Ordering =  me.(CompareWith(String).Compare)(other);
     match(comp){
       case Ordering.Less() => {
@@ -211,7 +211,7 @@ impl String as LessEqWith(Self) {
 }
 
 impl i32 as GreaterWith(Self) {
-  fn Greater[me: Self](other: Self) -> Bool {
+  fn Greater[me: Self](other: Self) -> bool {
     var comp: Ordering =  me.(CompareWith(i32).Compare)(other);
     match(comp){
       case Ordering.Greater() => {
@@ -223,7 +223,7 @@ impl i32 as GreaterWith(Self) {
 }
 
 impl String as GreaterWith(Self) {
-  fn Greater[me: Self](other: Self) -> Bool {
+  fn Greater[me: Self](other: Self) -> bool {
     var comp: Ordering =  me.(CompareWith(String).Compare)(other);
     match(comp){
       case Ordering.Greater() => {
@@ -235,7 +235,7 @@ impl String as GreaterWith(Self) {
 }
 
 impl i32 as GreaterEqWith(Self) {
-  fn GreaterEq[me: Self](other: Self) -> Bool {
+  fn GreaterEq[me: Self](other: Self) -> bool {
     var comp: Ordering =  me.(CompareWith(i32).Compare)(other);
     match(comp){
       case Ordering.Greater() => {
@@ -250,7 +250,7 @@ impl i32 as GreaterEqWith(Self) {
 }
 
 impl String as GreaterEqWith(Self) {
-  fn GreaterEq[me: Self](other: Self) -> Bool {
+  fn GreaterEq[me: Self](other: Self) -> bool {
     var comp: Ordering =  me.(CompareWith(String).Compare)(other);
     match(comp){
       case Ordering.Greater() => {
