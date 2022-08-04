@@ -21,21 +21,26 @@ conduct. Senior moderators will have the "senior-moderator" role on Discord.
 
 ## Becoming a moderator
 
-TODO: Need to figure out right process.
+TODO: Need to figure out right process for asking. (i.e., how?)
 
-The Conduct team will review new moderators.
+The Conduct team reviews new moderators. Community members will be considered
+mainly based on their history on the Carbon Language Discord, although
+applicants may also note history on other servers.
+
+Prior to being granted moderation privileges, new moderators will be join a
+workshop in order to help orient them with the Carbon Language community's
+values and moderator expectations.
 
 ## Promotion to senior moderator
 
-Moderators will be considered for promotion to senior moderators when:
+The Conduct team reviews promotions to senior moderator. Moderators will be
+considered for promotion to senior moderators when:
 
 -   They have demonstrated that they will be active moderators.
 -   They are making decisions consistent with the
     [Code of Conduct](/CODE_OF_CONDUCT.md).
 -   Senior moderators are taking actions which require senior moderator
     privileges at the moderator's request.
-
-The Conduct team will review promotions to senior moderator.
 
 ## Moderation powers
 
@@ -82,6 +87,9 @@ these powers.
         Hiding or editing messages is preferred.
 
         -   This cannot be done to the first message in a conversation.
+
+    -   **Delete conversation** (all): Deletes a full GitHub conversation.
+        Hiding or editing messages is preferred.
 
     -   **Block user** (senior): Blocks a user from all repositories.
 
