@@ -2367,7 +2367,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           e->set_value_category(ValueCategory::Let);
           return Success();
         }
-
         case IntrinsicExpression::Intrinsic::IntCompare: {
           if (args.size() != 2) {
             return CompilationError(e->source_loc())
