@@ -1209,8 +1209,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           CARBON_CHECK(args.size() == 2);
           const auto& low = cast<IntValue>(*args[0]).value();
           const auto& high = cast<IntValue>(*args[1]).value();
-          std::uniform_int_distribution<> distr(low, high);
-          int r = distr(generator);
+          // We avoid using std::uniform_int_distribution because it's not
+          // reproducible across builds/platforms.
+          int r = (generator() % (low - high)) + low;
           return todo_.FinishAction(arena_->New<IntValue>(r));
         }
         case IntrinsicExpression::Intrinsic::IntEq: {
