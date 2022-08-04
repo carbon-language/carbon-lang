@@ -1261,7 +1261,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           auto result = arena_->New<IntValue>(1);
           return todo_.FinishAction(result);
         }
-
         case IntrinsicExpression::Intrinsic::IntBitComplement: {
           CARBON_CHECK(args.size() == 1);
           return todo_.FinishAction(
