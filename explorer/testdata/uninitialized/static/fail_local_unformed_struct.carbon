@@ -11,8 +11,8 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  var x: i32;
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/uninitialized/static/fail_local_uninitialized_field_value.carbon:[[@LINE+1]]: use of uninitialized variable x
-  var p: auto = {.x = x,};
+  var p: {.x: i32, .y: i32};
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/uninitialized/static/fail_local_unformed_struct.carbon:[[@LINE+1]]: use of uninitialized variable p
+  p.x = p.y;
   return 0;
 }

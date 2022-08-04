@@ -10,9 +10,16 @@
 
 package ExplorerTest api;
 
-var x: i32;
+fn AddInt(a: i32, b: i32) -> auto {
+  return a + b;
+}
 
 fn Main() -> i32 {
-  // CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/uninitialized/dynaimic/fail_global_uninitialized.carbon:[[@LINE+1]]: undefined behavior: access to uninitialized value Uninit<Placeholder<x>>
-  return x;
+  var x: i32;
+  if (0 == 1) {
+    x = 0;
+  }
+  // Static analysis thinks `x` may be formed, defer the check to run-time.
+  // CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/uninitialized/dynaimic/fail_dynamic_unformed_param.carbon:[[@LINE+1]]: undefined behavior: access to uninitialized value Uninit<Placeholder<x>>
+  return AddInt(x, 2);
 }

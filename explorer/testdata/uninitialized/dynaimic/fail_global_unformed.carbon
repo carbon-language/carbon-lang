@@ -10,10 +10,9 @@
 
 package ExplorerTest api;
 
+var x: i32;
+
 fn Main() -> i32 {
-  var x: i32;
-  var y: i32;
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/uninitialized/static/fail_local_uninitialized_assign.carbon:[[@LINE+1]]: use of uninitialized variable x
-  y = x;
-  return y;
+  // CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/uninitialized/dynaimic/fail_global_unformed.carbon:[[@LINE+1]]: undefined behavior: access to uninitialized value Uninit<Placeholder<x>>
+  return x;
 }

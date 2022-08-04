@@ -13,6 +13,10 @@ package ExplorerTest api;
 fn Main() -> i32 {
   var (x: i32, y: i32);
   x = 1;
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/uninitialized/static/fail_local_uninitialized_pattern.carbon:[[@LINE+1]]: use of uninitialized variable y
+  if (0 == 1) {
+    y = 0;
+  }
+  // Static analysis thinks `y` may be formed, defer the check to run-time.
+  // CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/uninitialized/dynaimic/fail_dynamic_unformed_pattern.carbon:[[@LINE+1]]: undefined behavior: access to uninitialized value Uninit<Placeholder<y>>
   return y;
 }
