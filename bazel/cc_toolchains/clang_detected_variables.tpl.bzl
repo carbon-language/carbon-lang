@@ -9,6 +9,7 @@ This file gets processed by a repository rule, substituting the
 """
 
 llvm_bindir = "{LLVM_BINDIR}"
+clang_bindir = "{CLANG_BINDIR}"
 clang_resource_dir = "{CLANG_RESOURCE_DIR}"
 clang_include_dirs_list = {CLANG_INCLUDE_DIRS_LIST}
 sysroot_dir = "{SYSROOT}"

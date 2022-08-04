@@ -37,33 +37,37 @@ modifying other types. They also have semantics that are defined from first
 principles rather than in terms of other operations. These will be made
 available through the [prelude package](README.md#name-lookup-for-common-types).
 
--   `Bool` - a boolean type with two possible values: `True` and `False`.
--   `Int` and `UInt` - signed and unsigned 64-bit integer types.
+-   `bool` - a boolean type with two possible values: `true` and `false`.
+-   Signed and unsigned 64-bit integer types:
     -   Standard sizes are available, both signed and unsigned, including `i8`,
-        `i16`, `i32`, `i64`, `i128`, and `i256`.
-    -   Overflow in either direction is an error.
--   `Float64` - a floating point type with semantics based on IEEE-754.
-    -   Standard sizes are available, including `f16`, `f32`, and `f128`.
+        `i16`, `i32`, `i64`, and `i128`, and `u8`, `u16`, `u32`, `u64`, and
+        `u128`.
+    -   Signed overflow in either direction is an error.
+-   Floating points type with semantics based on IEEE-754.
+    -   Standard sizes are available, including `f16`, `f32`, and `f64`.
     -   [`BFloat16`](primitive_types.md#bfloat16) is also provided.
 -   `String` - a byte sequence treated as containing UTF-8 encoded text.
     -   `StringView` - a read-only reference to a byte sequence treated as
         containing UTF-8 encoded text.
 
+The names `bool`, `true`, and `false` are keywords, and identifiers of the form
+`i[0-9]*`, `u[0-9]*`, and `f[0-9*]` are _type literals_, resulting in the
+corresponding type.
+
 ### Integers
 
 Integer types can be either signed or unsigned, much like in C++. Signed
 integers are represented using 2's complement and notionally modeled as
-unbounded natural numbers. Overflow in either direction is an error. That
-includes unsigned integers, differing from C++. The default size for both is
-64-bits: `Int` and `UInt`. Specific sizes are also available, for example:
-`Int8`, `Int16`, `Int32`, `Int128`, `UInt256`. Arbitrary powers of two above `8`
-are supported for both (although perhaps we'll want to avoid _huge_ values for
-implementation simplicity).
+unbounded natural numbers. Signed overflow in either direction is an error.
+Specific sizes are available, for example: `i8`, `u16`, `i32`, and `u128`.
+
+There is an upper bound on the size of an integer, most likely initially set to
+128 bits due to LLVM limitations.
 
 ### Floats
 
 Floating point types are based on the binary floating point formats provided by
-IEEE-754. `Float16`, `Float32`, `Float64` and `Float128` correspond exactly to
+IEEE-754. `f16`, `f32`, `f64` and, if available, `f128` correspond exactly to
 those sized IEEE-754 formats, and have the semantics defined by IEEE-754.
 
 ### BFloat16

@@ -12,7 +12,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  var cond: if true then Bool else i32 = true;
+  var cond: if true then bool else i32 = true;
   if (if cond then true else false) {}
   while (if cond then false else true) {}
   return if if cond then true or false else false and true

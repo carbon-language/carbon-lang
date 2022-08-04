@@ -36,7 +36,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [How do Carbon generics differ from templates?](#how-do-carbon-generics-differ-from-templates)
     -   [What is Carbon's memory model?](#what-is-carbons-memory-model)
     -   [How will Carbon achieve memory safety?](#how-will-carbon-achieve-memory-safety)
--   [How will the Carbon _project_ work?](#how-will-the-carbon-_project_-work)
+-   [How will the Carbon _project_ work?](#how-will-the-carbon-project-work)
     -   [Where does development occur?](#where-does-development-occur)
     -   [How does Carbon make decisions?](#how-does-carbon-make-decisions)
     -   [What happens when a decision was wrong?](#what-happens-when-a-decision-was-wrong)
