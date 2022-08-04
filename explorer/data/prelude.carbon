@@ -162,13 +162,13 @@ interface GreaterEqWith(U:! Type) {
 
 impl i32 as LessWith(Self) {
   fn Less[me: Self](other: Self) -> Bool {
-    var comp: Ordering =  me.(CompareWith(i32).Compare)(other);
-    match(comp){
-         case Ordering.Less() =>{
-          return true;
-         }
-     }
-     return false;
+    var comp: Ordering = me.(CompareWith(i32).Compare)(other);
+    match (comp) {
+      case Ordering.Less() => {
+        return true;
+      }
+    }
+    return false;
   }
 }
 
