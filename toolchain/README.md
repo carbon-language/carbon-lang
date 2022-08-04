@@ -13,6 +13,7 @@ toolchain's top priorities are:
 -   Quality of generated code, including its performance.
 -   Compilation performance.
 -   Quality of diagnostics for incorrect or questionable code.
+TODO: Add an expanded document that fully explains the goals and priorities and link to it here.
 
 The compiler is organized into a collection of libraries that can be used independently. This includes the `//toolchain/driver` libraries that orchestrate the typical and expected compilation flow using the other libraries. The driver also includes the primary command-line tool: `//toolchain/driver:carbon`.
 
