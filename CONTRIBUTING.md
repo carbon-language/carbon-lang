@@ -177,6 +177,7 @@ access. All requests require a
         to edit Calendar events.
 -   GitHub Label/project contributor access:
     [ask on #proposal-prs-and-process](https://discord.com/channels/655572317891461132/710222916662591528)
+    -   Don't forget to mention your GitHub username.
     -   Used by the proposal process.
 
 If you simply want to chime in on GitHub or Discord, none of this is needed. If
