@@ -460,8 +460,8 @@ on data-based arguments to the extent they can, minimizing their use of appeals
 to emotion or excessive rhetoric.
 
 None of this should preclude gathering information like polls of opinion among
-groups, or signalling agreement. Where community members stand and how many agree
-with that stance on any issue _is_ information, and useful to surface.
+groups, or signalling agreement. Where community members stand and how many
+agree with that stance on any issue _is_ information, and useful to surface.
 
 ## Governance structure
 
