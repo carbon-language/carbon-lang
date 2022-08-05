@@ -190,7 +190,7 @@ message.
 There is a [registry](diagnostics/diagnostic_registry.def) which all diagnostics
 must be added to. Each diagnostic has a line like:
 
-```cppp
+```cpp
 CARBON_DIAGNOSTIC_KIND(InvalidCode)
 ```
 
