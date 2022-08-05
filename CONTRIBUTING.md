@@ -157,11 +157,31 @@ the Code of Conduct.
         which are unstructured meeting slots used for discussing proposals,
         tooling, and other Carbon topics based on who attends.
 
-Note that commenting on Google Docs, attending meetings, and some label changes
-in GitHub will require some contributor access: make sure you've
-[signed the CLA](#contributor-license-agreements-clas) then ask for access on
-[#getting-started](https://discord.com/channels/655572317891461132/655577725347561492)
-on Discord.
+#### Getting access
+
+Our collaboration systems are all viewable publicly, and most can be joined
+without particular requests. However, some require extra permissions, such as
+editing Google Docs, joining meetings, or some details of the proposal process.
+
+When requesting any of the following access, please provide a reason for the
+access. All requests require a
+[signed CLA](#contributor-license-agreements-clas).
+
+-   Google Docs/Calendar commenter access:
+    [join group](https://groups.google.com/a/carbon-lang.dev/g/commenters)
+    -   Grants commenter access to Carbon Language documents, as well as the
+        ability to view Calendar events.
+-   Google Docs/Calendar contributor access:
+    [join group](https://groups.google.com/a/carbon-lang.dev/g/contributors)
+    -   Grants edit access to Carbon Language documents, as well as the ability
+        to edit Calendar events.
+-   GitHub Label/project contributor access:
+    [ask on #proposal-prs-and-process](https://discord.com/channels/655572317891461132/710222916662591528)
+    -   Used by the proposal process.
+
+If you simply want to chime in on GitHub or Discord, none of this is needed. If
+you're interested in joining meetings, ask for commenter access. If you're
+trying to write proposals, both types of contributor access will help.
 
 ### Contribution tools
 
