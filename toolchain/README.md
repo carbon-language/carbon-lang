@@ -25,9 +25,9 @@ also includes the primary command-line tool: `//toolchain/driver:carbon`.
 The typical compilation flow of data is:
 
 1. Load the file into a [SourceBuffer](source/source_buffer.h).
-2. Lex a SourceBuffer into a [TokenizedBuffer](lexer/tokenized_buffer.h).
-3. Parse a TokenizedBuffer into a [ParseTree](parser/parse_tree.h).
-4. Transform a ParseTree into a [SemanticsIR](semantics/semantics_ir.h).
+2. Lex a `SourceBuffer` into a [TokenizedBuffer](lexer/tokenized_buffer.h).
+3. Parse a `TokenizedBuffer` into a [ParseTree](parser/parse_tree.h).
+4. Transform a `ParseTree` into a [SemanticsIR](semantics/semantics_ir.h).
 5. This flow is still incomplete: code generation, using LLVM, is still
    required.
 
@@ -73,7 +73,7 @@ Other return values indicate that parsing was either successful or that any
 encountered errors have been recovered from, so the caller can create a valid
 parse tree node.
 
-The produced ParseTree is in reverse postorder. For example, given the code:
+The produced `ParseTree` is in reverse postorder. For example, given the code:
 
 ```carbon
 fn foo() -> f64 {
@@ -99,12 +99,12 @@ Index 11: kind FileEnd
 ```
 
 This is done this way in order to allow for more efficient processing of a file.
-As a consequence, the SemanticsIR does a lot of reversal of the ParseTree
+As a consequence, the `SemanticsIR` does a lot of reversal of the ParseTree
 ordering in order to visit code in source order.
 
 ### Stack overflow
 
-The ParseTree has been prone to stack overflows. As a consequence,
+The `ParseTree` has been prone to stack overflows. As a consequence,
 `CARBON_RETURN_IF_STACK_LIMITED` is checked at the start of most functions in
 order to avoid errors. This manages depth increments and, when the scope exits,
 decrements.
@@ -121,9 +121,9 @@ The [SemanticsIR](semantics/semantics_ir.h) is the output of semantic
 processing. It's currently built using
 [a factory](semantics/semantics_ir_factory.h).
 
-The intent is that a SemanticsIR looks closer to a series of instructions than a
-tree. This is in order to better align with the LLVM IR structure which will be
-used for code generation.
+The intent is that a `SemanticsIR` looks closer to a series of instructions than
+a tree. This is in order to better align with the LLVM IR structure which will
+be used for code generation.
 
 This phase should eventually include semantic checking of the SemanticsIR, but
 it's a work in progress.
