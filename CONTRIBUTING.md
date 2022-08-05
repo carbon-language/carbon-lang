@@ -143,7 +143,7 @@ the Code of Conduct.
 -   [The GitHub carbon-language organization](https://github.com/carbon-language)
     is used for our repositories.
 -   [Discord](https://discord.gg/ZjVdShJDAs) is used for chat.
--   [A shared Google Drive](https://drive.google.com/corp/drive/folders/18AFPsUWNXfAloZx0tRHTsrdCWUlJLpeW)
+-   [A shared Google Drive](https://drive.google.com/drive/folders/1aC5JJ5EcI8B7cgVDrLvO7WNw97F0LpS2)
     is used for all of our Google Docs, particularly proposal drafts.
 -   [Google Calendar](https://calendar.google.com/calendar/embed?src=c_07td7k4qjq0ssb4gdl6bmbnkik%40group.calendar.google.com)
     is used for meeting invites and project reminders. Contributors may add
@@ -257,7 +257,7 @@ A license is required at the top of all documents and files.
 ### Google Docs
 
 Google Docs all use
-[this template](https://docs.google.com/document/d/1sqEnIWWZKTrtMz2XgD7_RqvogwbI0tBQjAZIvOabQsw/template/preview).
+[this template](https://docs.google.com/document/d/1tAwE0230PDxweVruHUVY6DSfSnrJF2LnLOWXQYqNJuI/template/preview?usp=sharing&resourcekey=0-zsrwCWP7ictbxhCuePk-fw).
 It puts the license at the top of every page if printed.
 
 ### Markdown
