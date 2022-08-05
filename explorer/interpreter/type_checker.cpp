@@ -620,135 +620,135 @@ auto TypeChecker::ExpectType(SourceLocation source_loc,
     return Success();
   }
 }
-void test(Nonnull<const Value*> type){
-    switch (type->kind()) {
-        case Value::Kind::VariableType:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::TupleValue:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::StructType:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::FunctionType:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::PointerType:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::AutoType:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::NominalClassType:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::InterfaceType:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::StaticArrayType:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::ContinuationType:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::ChoiceType:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::ConstraintType:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::AssociatedConstant:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::IntType:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::BoolType:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::TypeType:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::StringType:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::TypeOfClassType:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::TypeOfInterfaceType:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::TypeOfConstraintType:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::TypeOfChoiceType:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::TypeOfParameterizedEntityName:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::TypeOfMemberName:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::ImplWitness:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::SymbolicWitness:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::ParameterizedEntityName:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::MemberName:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::IntValue:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::BoolValue:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::FunctionValue:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::BoundMethodValue:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::PointerValue:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::LValue:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::StructValue:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::NominalClassValue:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::AlternativeValue:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::BindingPlaceholderValue:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::AddrValue:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::AlternativeConstructorValue:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::ContinuationValue:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::StringValue:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-        case Value::Kind::UninitializedValue:
-            llvm::outs()<<__LINE__<<"\n";
-            break;
-    }
+void test(Nonnull<const Value*> type) {
+  switch (type->kind()) {
+    case Value::Kind::VariableType:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::TupleValue:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::StructType:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::FunctionType:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::PointerType:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::AutoType:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::NominalClassType:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::InterfaceType:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::StaticArrayType:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::ContinuationType:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::ChoiceType:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::ConstraintType:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::AssociatedConstant:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::IntType:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::BoolType:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::TypeType:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::StringType:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::TypeOfClassType:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::TypeOfInterfaceType:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::TypeOfConstraintType:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::TypeOfChoiceType:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::TypeOfParameterizedEntityName:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::TypeOfMemberName:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::ImplWitness:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::SymbolicWitness:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::ParameterizedEntityName:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::MemberName:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::IntValue:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::BoolValue:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::FunctionValue:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::BoundMethodValue:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::PointerValue:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::LValue:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::StructValue:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::NominalClassValue:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::AlternativeValue:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::BindingPlaceholderValue:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::AddrValue:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::AlternativeConstructorValue:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::ContinuationValue:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::StringValue:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+    case Value::Kind::UninitializedValue:
+      llvm::outs() << __LINE__ << "\n";
+      break;
+  }
 }
 
 auto TypeChecker::ArgumentDeduction(
@@ -780,22 +780,21 @@ auto TypeChecker::ArgumentDeduction(
                                           << "actual: " << *arg;
     }
     const Value* subst_param_type = Substitute(deduced, param);
-    if (param->kind() == Value::Kind::VariableType){
-        const auto& binding = cast<VariableType>(*param).binding();
-        if(binding.has_static_type()) {
-            if (binding.static_type().kind() != Value::Kind::TypeType &&
-                binding.static_type().kind() != Value::Kind::ConstraintType &&
-                binding.static_type().kind() != Value::Kind::InterfaceType) {
-                if (!IsImplicitlyConvertible(subst_param_type, &binding.static_type(),
-                                             impl_scope, true)) {
-                    return CompilationError(source_loc)
-                            << "Could not convert argument " << *subst_param_type
-                            << " to parameter type " << binding.static_type();
-                }
-            }
+    if (param->kind() == Value::Kind::VariableType) {
+      const auto& binding = cast<VariableType>(*param).binding();
+      if (binding.has_static_type()) {
+        if (binding.static_type().kind() != Value::Kind::TypeType &&
+            binding.static_type().kind() != Value::Kind::ConstraintType &&
+            binding.static_type().kind() != Value::Kind::InterfaceType) {
+          if (!IsImplicitlyConvertible(subst_param_type, &binding.static_type(),
+                                       impl_scope, true)) {
+            return CompilationError(source_loc)
+                   << "Could not convert argument " << *subst_param_type
+                   << " to parameter type " << binding.static_type();
+          }
         }
+      }
     }
-
 
     return allow_implicit_conversion
                ? ExpectType(source_loc, context, subst_param_type, arg,
