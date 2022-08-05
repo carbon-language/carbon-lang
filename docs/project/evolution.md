@@ -414,7 +414,7 @@ We add blocking issues to the
 under "Blocking issues". Carbon leads use this to locate and prioritize the
 issue for resolution.
 
-These issues can be created at any time and by any one. Issues can be created
+These issues can be created at any time and by anyone. Issues can be created
 while the proposal is being drafted in order to help inform specific content
 that should go into the proposal. It is even fine to create an issue first, even
 before a proposal exists, as an open question about whether to produce a
@@ -445,7 +445,7 @@ these issues and there is no pressure on anyone else to do so.
 
 #### Discussion on blocking issues
 
-Discussion on these issues, especially contentious ones, should endeavor to
+Discussion on these issues, especially contentious ones, should endeavour to
 focus on surfacing information and highlighting the nature of the tradeoff
 implied by the decisions available. This is in contrast to focusing on advocacy
 or persuasion. The goal of the issues shouldn't be to persuade or convince the
@@ -460,7 +460,7 @@ on data-based arguments to the extent they can, minimizing their use of appeals
 to emotion or excessive rhetoric.
 
 None of this should preclude gathering information like polls of opinion among
-groups, or signaling agreement. Where community members stand and how many agree
+groups, or signalling agreement. Where community members stand and how many agree
 with that stance on any issue _is_ information, and useful to surface.
 
 ## Governance structure
