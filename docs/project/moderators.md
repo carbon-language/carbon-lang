@@ -21,7 +21,7 @@ conduct. Senior moderators will have the "senior-moderator" role on Discord.
 
 ## Becoming a moderator
 
-TODO: Need to figure out right process for asking. (i.e., how?)
+TODO: Need to figure out right process for asking. (that is, how?)
 
 The Conduct team reviews new moderators. Community members will be considered
 mainly based on their history on the Carbon Language Discord, although
