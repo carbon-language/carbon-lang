@@ -10,10 +10,14 @@
 
 package Foo api;
 
+class X{
+}
+
 fn Get[T:! ()](n: T) -> i32 {  return 2; }
 
 fn Main() -> i32 {
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_wrong_variable_substituation.carbon:[[@LINE+1]]: Could not convert argument i32 to parameter type () in Get(2)
-  Get(2);
+  var x : X = {};
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_wrong_variable_substituation.carbon:[[@LINE+1]]: Could not convert argument class X to parameter type ()
+  Get(x);
   return 0;
 }
