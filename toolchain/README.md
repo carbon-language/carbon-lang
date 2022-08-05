@@ -12,9 +12,10 @@ toolchain's top priorities are:
 -   Correctness.
 -   Quality of generated code, including its performance.
 -   Compilation performance.
--   Quality of diagnostics for incorrect or questionable code. TODO: Add an
-    expanded document that fully explains the goals and priorities and link to
-    it here.
+-   Quality of diagnostics for incorrect or questionable code.
+
+TODO: Add an expanded document that fully explains the goals and priorities and
+link to it here.
 
 The compiler is organized into a collection of libraries that can be used
 independently. This includes the `//toolchain/driver` libraries that orchestrate
@@ -82,7 +83,7 @@ fn foo() -> f64 {
 
 The node order is (with indentation to indicate nesting):
 
-```carbon
+```
   Index 0: kind DeclaredName
     Index 1: kind ParameterListEnd
   Index 2: kind ParameterList
