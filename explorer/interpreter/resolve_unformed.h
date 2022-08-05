@@ -24,7 +24,7 @@ class FlowFacts {
     Form,
     // Used at AST nodes that uses a variable.
     Check,
-    // Used in traversing children nodes without an acion tp take.
+    // Used in traversing children nodes without an acion to take.
     None,
   };
   // Take action on flow facts based on `ActionType`.
