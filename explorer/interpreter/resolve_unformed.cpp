@@ -31,6 +31,8 @@ auto FlowFacts::TakeAction(Nonnull<const AstNode*> node, ActionType action,
       break;
     case ActionType::Check:
       return CheckFact(node, source_loc, name);
+    case ActionType::None:
+      break;
   }
   return Success();
 }
@@ -93,21 +95,14 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
     case ExpressionKind::StructLiteral:
       for (const FieldInitializer& init :
            cast<StructLiteral>(*expression).fields()) {
-        CARBON_RETURN_IF_ERROR(
-            ResolveUnformed(&init.expression(), flow_facts, action));
-      }
-      break;
-    case ExpressionKind::StructTypeLiteral:
-      for (const FieldInitializer& init :
-           cast<StructTypeLiteral>(*expression).fields()) {
-        CARBON_RETURN_IF_ERROR(
-            ResolveUnformed(&init.expression(), flow_facts, action));
+        CARBON_RETURN_IF_ERROR(ResolveUnformed(&init.expression(), flow_facts,
+                                               FlowFacts::ActionType::Check));
       }
       break;
     case ExpressionKind::SimpleMemberAccessExpression:
       CARBON_RETURN_IF_ERROR(ResolveUnformed(
           &cast<SimpleMemberAccessExpression>(*expression).object(), flow_facts,
-          action));
+          FlowFacts::ActionType::Check));
       break;
     case ExpressionKind::DotSelfExpression:
     case ExpressionKind::IntLiteral:
@@ -123,6 +118,7 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
     case ExpressionKind::CompoundMemberAccessExpression:
     case ExpressionKind::IfExpression:
     case ExpressionKind::WhereExpression:
+    case ExpressionKind::StructTypeLiteral:
     case ExpressionKind::IntrinsicExpression:
     case ExpressionKind::UnimplementedExpression:
     case ExpressionKind::FunctionTypeLiteral:
@@ -178,8 +174,8 @@ static auto ResolveUnformed(Nonnull<const Statement*> statement,
       if (def.has_init()) {
         CARBON_RETURN_IF_ERROR(ResolveUnformed(&def.pattern(), flow_facts,
                                                FlowFacts::ActionType::AddInit));
-        CARBON_RETURN_IF_ERROR(
-            ResolveUnformed(&def.init(), flow_facts, action));
+        CARBON_RETURN_IF_ERROR(ResolveUnformed(&def.init(), flow_facts,
+                                               FlowFacts::ActionType::Check));
       } else {
         CARBON_RETURN_IF_ERROR(ResolveUnformed(
             &def.pattern(), flow_facts, FlowFacts::ActionType::AddUninit));
@@ -189,15 +185,16 @@ static auto ResolveUnformed(Nonnull<const Statement*> statement,
     case StatementKind::ReturnVar: {
       auto& ret_var = cast<ReturnVar>(*statement);
       auto& binding_pattern = cast<BindingPattern>(ret_var.value_node().base());
-      CARBON_RETURN_IF_ERROR(flow_facts.TakeAction(&binding_pattern, action,
-                                                   ret_var.source_loc(),
-                                                   binding_pattern.name()));
+      CARBON_RETURN_IF_ERROR(
+          flow_facts.TakeAction(&binding_pattern, FlowFacts::ActionType::Check,
+                                ret_var.source_loc(), binding_pattern.name()));
       break;
     }
     case StatementKind::ReturnExpression: {
       auto& ret_exp_stmt = cast<ReturnExpression>(*statement);
-      CARBON_RETURN_IF_ERROR(
-          ResolveUnformed(&ret_exp_stmt.expression(), flow_facts, action));
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(&ret_exp_stmt.expression(),
+                                             flow_facts,
+                                             FlowFacts::ActionType::Check));
       break;
     }
     case StatementKind::Assign: {
@@ -206,11 +203,12 @@ static auto ResolveUnformed(Nonnull<const Statement*> statement,
         CARBON_RETURN_IF_ERROR(ResolveUnformed(&assign.lhs(), flow_facts,
                                                FlowFacts::ActionType::Form));
       } else {
-        CARBON_RETURN_IF_ERROR(
-            ResolveUnformed(&assign.lhs(), flow_facts, action));
+        // TODO: Support checking non-identifier lhs expression.
+        CARBON_RETURN_IF_ERROR(ResolveUnformed(&assign.lhs(), flow_facts,
+                                               FlowFacts::ActionType::None));
       }
-      CARBON_RETURN_IF_ERROR(
-          ResolveUnformed(&assign.rhs(), flow_facts, action));
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(&assign.rhs(), flow_facts,
+                                             FlowFacts::ActionType::Check));
       break;
     }
     case StatementKind::ExpressionStatement: {
@@ -221,8 +219,8 @@ static auto ResolveUnformed(Nonnull<const Statement*> statement,
     }
     case StatementKind::If: {
       auto& if_stmt = cast<If>(*statement);
-      CARBON_RETURN_IF_ERROR(
-          ResolveUnformed(&if_stmt.condition(), flow_facts, action));
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(&if_stmt.condition(), flow_facts,
+                                             FlowFacts::ActionType::Check));
       CARBON_RETURN_IF_ERROR(
           ResolveUnformed(&if_stmt.then_block(), flow_facts, action));
       if (if_stmt.else_block().has_value()) {
@@ -233,19 +231,19 @@ static auto ResolveUnformed(Nonnull<const Statement*> statement,
     }
     case StatementKind::While: {
       auto& while_stmt = cast<While>(*statement);
-      CARBON_RETURN_IF_ERROR(
-          ResolveUnformed(&while_stmt.condition(), flow_facts, action));
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(
+          &while_stmt.condition(), flow_facts, FlowFacts::ActionType::Check));
       CARBON_RETURN_IF_ERROR(
           ResolveUnformed(&while_stmt.body(), flow_facts, action));
       break;
     }
     case StatementKind::Match: {
       auto& match = cast<Match>(*statement);
-      CARBON_RETURN_IF_ERROR(
-          ResolveUnformed(&match.expression(), flow_facts, action));
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(&match.expression(), flow_facts,
+                                             FlowFacts::ActionType::Check));
       for (auto& clause : match.clauses()) {
-        CARBON_RETURN_IF_ERROR(
-            ResolveUnformed(&clause.pattern(), flow_facts, action));
+        CARBON_RETURN_IF_ERROR(ResolveUnformed(&clause.pattern(), flow_facts,
+                                               FlowFacts::ActionType::Check));
         CARBON_RETURN_IF_ERROR(
             ResolveUnformed(&clause.statement(), flow_facts, action));
       }
@@ -273,7 +271,7 @@ static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
       if (function.body().has_value()) {
         FlowFacts flow_facts;
         CARBON_RETURN_IF_ERROR(ResolveUnformed(*function.body(), flow_facts,
-                                               FlowFacts::ActionType::Check));
+                                               FlowFacts::ActionType::None));
       }
       break;
     }
