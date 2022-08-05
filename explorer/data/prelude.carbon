@@ -57,6 +57,10 @@ impl forall [U1:! Type, U2:! Type, U3:! Type,
 // Comparison interfaces.
 // ----------------------
 
+// ----------------------
+// EQUAL
+// ----------------------
+
 interface EqWith(U:! Type) {
   fn Equal[me: Self](other: U) -> bool;
   // TODO: NotEqual with default impl
@@ -83,6 +87,180 @@ impl i32 as EqWith(Self) {
 impl String as EqWith(Self) {
   fn Equal[me: Self](other: Self) -> bool {
     return __intrinsic_str_eq(me, other);
+  }
+}
+
+// ----------------------
+// COMPARE
+// ----------------------
+
+choice Ordering {
+  Less,
+  Equivalent,
+  Greater,
+  Incomparable
+}
+
+interface CompareWith(U:! Type) {
+  fn Compare[me: Self](u: U) -> Ordering;
+  // TODO: Add `default fn` for Less, LessOrEquivalent, Greater, and GreaterOrEquivalent once it's available.
+}
+// TODO: constraint Ordered { ... }
+
+impl i32 as CompareWith(Self) {
+  fn Compare[me: Self](other: Self) -> Ordering {
+    var comp: i32 = __intrinsic_int_compare(me, other);
+    if (comp == -1) {
+      return Ordering.Less();
+    }
+    if (comp == 0) {
+      return Ordering.Equivalent();
+    }
+    if (comp == 1) {
+      return Ordering.Greater();
+    }
+    return Ordering.Incomparable();
+
+  }
+}
+
+impl String as CompareWith(Self) {
+  fn Compare[me: Self](other: Self) -> Ordering {
+    var comp: i32 = __intrinsic_str_compare(me, other);
+    if (comp == -1) {
+      return Ordering.Less();
+    }
+    if (comp == 0) {
+      return Ordering.Equivalent();
+    }
+    if (comp == 1) {
+      return Ordering.Greater();
+    }
+    return Ordering.Incomparable();
+  }
+}
+
+interface LessWith(U:! Type) {
+  fn Less[me: Self](other: U) -> bool;
+}
+
+interface LessEqWith(U:! Type) {
+  fn LessEq[me: Self](other: U) -> bool;
+}
+
+interface GreaterWith(U:! Type) {
+  fn Greater[me: Self](other: U) -> bool;
+}
+
+interface GreaterEqWith(U:! Type) {
+  fn GreaterEq[me: Self](other: U) -> bool;
+}
+
+impl i32 as LessWith(Self) {
+  fn Less[me: Self](other: Self) -> bool {
+    var comp: Ordering = me.(CompareWith(i32).Compare)(other);
+    match (comp) {
+      case Ordering.Less() => {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+impl String as LessWith(Self) {
+  fn Less[me: Self](other: Self) -> bool {
+    var comp: Ordering =  me.(CompareWith(String).Compare)(other);
+    match(comp){
+      case Ordering.Less() => {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+impl i32 as LessEqWith(Self) {
+  fn LessEq[me: Self](other: Self) -> bool {
+    var comp: Ordering =  me.(CompareWith(i32).Compare)(other);
+    match(comp){
+      case Ordering.Less() => {
+        return true;
+      }
+      case Ordering.Equivalent() => {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+impl String as LessEqWith(Self) {
+  fn LessEq[me: Self](other: Self) -> bool {
+    var comp: Ordering =  me.(CompareWith(String).Compare)(other);
+    match(comp){
+      case Ordering.Less() => {
+        return true;
+      }
+      case Ordering.Equivalent() => {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+impl i32 as GreaterWith(Self) {
+  fn Greater[me: Self](other: Self) -> bool {
+    var comp: Ordering =  me.(CompareWith(i32).Compare)(other);
+    match(comp){
+      case Ordering.Greater() => {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+impl String as GreaterWith(Self) {
+  fn Greater[me: Self](other: Self) -> bool {
+    var comp: Ordering =  me.(CompareWith(String).Compare)(other);
+    match(comp){
+      case Ordering.Greater() => {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+impl i32 as GreaterEqWith(Self) {
+  fn GreaterEq[me: Self](other: Self) -> bool {
+    var comp: Ordering =  me.(CompareWith(i32).Compare)(other);
+    match(comp){
+      case Ordering.Greater() => {
+        return true;
+      }
+      case Ordering.Equivalent() => {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+impl String as GreaterEqWith(Self) {
+  fn GreaterEq[me: Self](other: Self) -> bool {
+    var comp: Ordering =  me.(CompareWith(String).Compare)(other);
+    match(comp){
+      case Ordering.Greater() => {
+        return true;
+      }
+      case Ordering.Equivalent() => {
+        return true;
+      }
+    }
+    return false;
   }
 }
 
