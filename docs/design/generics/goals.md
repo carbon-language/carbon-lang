@@ -161,7 +161,7 @@ in cases that inheritance struggles with.
 
 ### Use cases
 
-To clarify the expressive range we are aming for, here are some specific use
+To clarify the expressive range we are aiming for, here are some specific use
 cases we expect Carbon generics to cover.
 
 #### Generic programming
