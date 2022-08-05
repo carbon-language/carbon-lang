@@ -1532,15 +1532,18 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         Nonnull<const TupleValue*> source_array =
             cast<const TupleValue>(act.results()[TARGET_VAR_POS]);
 
-        auto start_index = cast<IntValue>(act.results()[CURRENT_INDEX_POS])->value();
+        auto start_index =
+            cast<IntValue>(act.results()[CURRENT_INDEX_POS])->value();
         todo_.Initialize(*(loop_var->value_node()),
                          source_array->elements()[start_index]);
-        act.ReplaceResult(CURRENT_INDEX_POS, arena_->New<IntValue>(start_index + 1));
+        act.ReplaceResult(CURRENT_INDEX_POS,
+                          arena_->New<IntValue>(start_index + 1));
         return todo_.Spawn(
             std::make_unique<StatementAction>(&cast<For>(stmt).body()));
       }
       if (act.pos() >= 3) {
-        auto current_index = cast<IntValue>(act.results()[CURRENT_INDEX_POS])->value();
+        auto current_index =
+            cast<IntValue>(act.results()[CURRENT_INDEX_POS])->value();
         auto end_index = cast<IntValue>(act.results()[END_INDEX_POS])->value();
 
         if (current_index < end_index) {
@@ -1558,7 +1561,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
               lvalue->address(), source_array->elements()[current_index],
               stmt.source_loc()));
 
-          act.ReplaceResult(CURRENT_INDEX_POS, arena_->New<IntValue>(current_index + 1));
+          act.ReplaceResult(CURRENT_INDEX_POS,
+                            arena_->New<IntValue>(current_index + 1));
           return todo_.Spawn(
               std::make_unique<StatementAction>(&cast<For>(stmt).body()));
         }
