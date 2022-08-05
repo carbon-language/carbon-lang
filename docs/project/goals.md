@@ -142,10 +142,11 @@ the language without the churn tax and version skew becoming unsustainable.
 
 **Developer tooling.** We need developers to be productive while reading and
 writing Carbon code. We expect to provide a broad suite of development oriented
-tools ranging from refactoring tools to [LSP](https://langserver.org/)
-implementations and editor integrations. We also plan to provide machine
-readable forms of many parts of the language, such as a grammar, to ensure
-consistency between tools and enable the development of tools by others.
+tools ranging from formatting and refactoring tools to
+[LSP](https://langserver.org/) implementations and editor integrations. We also
+plan to provide machine readable forms of many parts of the language, such as a
+grammar, to ensure consistency between tools and enable the development of tools
+by others.
 
 **Infrastructure to enable package management and other library ecosystem
 support.** The goal is to support what the ecosystem needs, regardless of the
