@@ -19,61 +19,83 @@ All moderators will have the "moderator" role on Discord. Some moderators are
 _senior moderators_, and will have extra privileges to help address harmful
 conduct. Senior moderators will have the "senior-moderator" role on Discord.
 
+## Becoming a moderator
+
+TODO: Need to figure out right process for asking. (that is, how?)
+
+The Conduct team reviews new moderators. Community members will be considered
+mainly based on their history on the Carbon Language Discord, although
+applicants may also note history on other servers.
+
+Prior to being granted moderation privileges, new moderators will need to attend a
+workshop in order to help orient them with the Carbon Language community's
+values and moderator expectations.
+
+## Promotion to senior moderator
+
+The Conduct team reviews promotions to senior moderator. Moderators will be
+considered for promotion to senior moderators when:
+
+-   They have demonstrated that they will be active moderators.
+-   They are making decisions consistent with the
+    [Code of Conduct](/CODE_OF_CONDUCT.md).
+-   Senior moderators are taking actions which require senior moderator
+    privileges at the moderator's request.
+
 ## Moderation powers
 
-### Discord
+There is a moderation playbook for moderators with instructions on how to use
+these powers.
 
-#### Delete message
+-   **Discord**
 
-> Access level: Senior moderators
+    -   **Delete message** (senior): Delete a message owned by another user.
 
-#### Timeout
+    -   **Timeout user** (all): Prevent a user from sending messages on the
+        Discord server for up to a week.
 
-> Access level: All moderators
+    -   **Kick user** (senior): Temporarily remove a user from the Discord
+        server. Note that users can rejoin the server, and so banning is
+        typically preferred.
 
-#### Kick
+    -   **Ban user** (senior): Permanently remove a user from the Discord
+        server.
 
-> Access level: Senior moderators
+    -   **Slow-mode** (senior): Limit the rate of discussion on a channel.
 
-#### Ban
+        -   Slow-mode is tied to the ability to generically edit channels.
+            Moderators are generally expected to use the channel edit power
+            judiciously, preferring to leave channel edits for admins.
 
-> Access level: Senior moderators
+-   **GitHub**
 
-#### Slow-mode
+    -   **Lock conversation** (all): Prevent more discussion on a topic.
 
-> Access level: Senior moderators
+    -   **Hide message** (all): Collapses a message so that its text is not
+        immediately visible, reducing distractions. Recommended for moderators
+        when a particular message is unproductive. Users can still view the
+        original content.
 
-##### Channel editing
+        -   This cannot be done with the first message in a conversation.
 
-Channel editing powers are granted by necessity in order to allow setting
-slow-mode. Moderators are asked to use this power judiciously, and generally
-leave edits for moderators for now.
+    -   **Edit message** (all): Edits content of a message. Users can still view
+        the original content.
 
-### GitHub
+    -   **Edit title** (all): Edits the title of a thread.
 
-#### Lock conversation
+    -   **Delete message** (all): Removes a single message from a conversation.
+        Hiding or editing messages is preferred.
 
-> Access level: All moderators
+        -   This cannot be done to the first message in a conversation.
 
-#### Hide message
+    -   **Delete conversation** (all): Deletes a full GitHub conversation.
+        Hiding or editing messages is preferred.
 
-> Access level: All moderators
+    -   **Block user** (senior): Blocks a user from all repositories.
 
-#### Edit message
+-   **Google Docs**
 
-> Access level: All moderators
-
-#### Delete conversation
-
-> Access level: All moderators
-
-#### Block users
-
-> Access level: Senior moderators
-
-### Google Docs
-
-There are limited powers for moderators on Google Docs, but access to Google
-Docs is already restricted. At present, the right action is to respond or
-comment on an issue as needed, and report to the Conduct team if further steps
-are necessary.
+    -   There are limited powers for moderators on Google Docs, but access to
+        Google Docs is already restricted. At present, the right action is to
+        respond or comment on an issue as needed, and report to the Conduct team
+        if further steps are necessary.
