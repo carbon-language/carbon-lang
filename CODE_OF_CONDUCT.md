@@ -86,9 +86,9 @@ spaces:
     kind when dealing with other members as well as with people outside the
     Carbon community.
 
--   **Be careful in the words that you choose and be kind to others.** Do not
-    insult or put down other participants. Harassment and other exclusionary
-    behaviors aren’t acceptable. This includes, but is not limited to:
+-   **Be careful in the words that we choose and be kind to others.** Do not use
+    insults or put downs. Harassment and other exclusionary behaviors aren’t
+    acceptable. This includes, but is not limited to:
 
     -   Violent threats or language directed against another person.
     -   Discriminatory jokes and language.
@@ -101,15 +101,15 @@ spaces:
     -   In general, if someone asks you to stop, then stop. Persisting after
         being asked to stop is considered harassment.
 
--   **When we disagree, try to understand why.** Disagreements, both social and
-    technical, happen all the time, and Carbon is no exception. It is important
-    that we resolve disagreements and differing views constructively. Remember
-    that we’re different. The strength of the project comes from its varied
-    community: people from a wide range of backgrounds. Different people have
-    different perspectives on issues. Being unable to understand why someone
-    holds a viewpoint doesn’t mean that they’re wrong. Don’t forget that it is
-    human to err and blaming each other doesn’t get us anywhere. Instead, focus
-    on helping to resolve issues and learning from mistakes.
+-   **When we disagree, we try to understand why.** Disagreements, both social
+    and technical, happen all the time, and Carbon is no exception. It is
+    important that we resolve disagreements and differing views constructively.
+    Remember that we’re different. The strength of the project comes from its
+    varied community: people from a wide range of backgrounds. Different people
+    have different perspectives on issues. Being unable to understand why
+    someone holds a viewpoint doesn’t mean that they’re wrong. Don’t forget that
+    it is human to err and blaming each other doesn’t get us anywhere. Instead,
+    focus on helping to resolve issues and learning from mistakes.
 
 -   **Recognize when progress has stopped, and take a step back.** Regardless of
     whether you're trying to resolve a disagreement or anything else, think

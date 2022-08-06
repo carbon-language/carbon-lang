@@ -12,12 +12,12 @@
 package ExplorerTest api;
 
 var call_count: i32 = 0;
-fn ReturnTrue() -> Bool {
+fn ReturnTrue() -> bool {
   call_count = call_count + 1;
   return true;
 }
 
 fn Main() -> i32 {
-  var result: Bool = ReturnTrue() and ReturnTrue();
+  var result: bool = ReturnTrue() and ReturnTrue();
   return if result then call_count else -1;
 }

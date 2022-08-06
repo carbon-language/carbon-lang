@@ -16,6 +16,6 @@ fn AddInt(a: i32, b: i32) -> auto {
 
 fn Main() -> i32 {
   var x: i32;
-  // CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/uninitialized/fail_local_uninitialized_param.carbon:[[@LINE+1]]: undefined behavior: access to uninitialized value Uninit<Placeholder<x>>
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/uninitialized/fail_local_uninitialized_param.carbon:[[@LINE+1]]: use of uninitialized variable x
   return AddInt(x, 2);
 }
