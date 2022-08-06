@@ -6,7 +6,7 @@ name: sync-repos
 
 on:
   push:
-    branches: [trunk, sync-repos]
+    branches: [trunk]
     paths:
       # Minimize where we run this to changes to the top-level files and
       # specific trees that we sync to other repositories.
