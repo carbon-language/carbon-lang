@@ -690,7 +690,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
           break;
         case Value::Kind::StaticArrayType: {
           const auto& array_type = cast<StaticArrayType>(*destination_type);
-          destination_element_types.resize(array_type.size(),
+          destination_element_types.resize(tuple->elements().size(),
                                            &array_type.element_type());
           break;
         }
@@ -1265,8 +1265,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             &array_literal.size_expression()));
       } else {
         return todo_.FinishAction(arena_->New<StaticArrayType>(
-            act.results()[0], cast<IntValue>(act.results()[1])->value(),
-            false));  // mark explicit
+            act.results()[0],
+            cast<IntValue>(act.results()[1])->value()));  // mark explicit
       }
     }
     case ExpressionKind::ImplicitSizedArrayTypeLiteral: {
@@ -1276,8 +1276,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             &array_literal.element_type_expression()));
       } else {
         return todo_.FinishAction(arena_->New<StaticArrayType>(
-            act.results()[0], 0,
-            true));  // mark implicit, size needs to be inffered
+            act.results()[0],
+            std::nullopt));  // mark implicit, size needs to be inffered
       }
     }
   }  // switch (exp->kind)

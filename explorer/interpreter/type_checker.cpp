@@ -5,6 +5,7 @@
 #include "explorer/interpreter/type_checker.h"
 
 #include <algorithm>
+#include <iostream>
 #include <iterator>
 #include <map>
 #include <set>
@@ -431,13 +432,15 @@ auto TypeChecker::IsImplicitlyConvertible(
           break;
         }
         case Value::Kind::StaticArrayType: {
-          const auto& destination_array = cast<StaticArrayType>(*destination);
-          if (destination_array.implicit()) {
-            // mark destination_array explicit and infer source_tuple's elements
-            // size to array's size
-            destination_array.set_size(source_tuple.elements().size());
-            destination_array.set_explicit();
-          }
+          const auto& unchecked_destination_array =
+              cast<StaticArrayType>(*destination);
+          StaticArrayType const& destination_array =
+              !unchecked_destination_array.size()
+                  ? cast<StaticArrayType>(
+                        *(destination = arena_->New<StaticArrayType>(
+                              &unchecked_destination_array.element_type(),
+                              source_tuple.elements().size())))
+                  : unchecked_destination_array;
           if (destination_array.size() != source_tuple.elements().size()) {
             break;
           }
