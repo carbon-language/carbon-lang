@@ -346,7 +346,7 @@ primary_expression:
 | struct_type_literal { $$ = $1; }
 | LEFT_SQUARE_BRACKET expression SEMICOLON RIGHT_SQUARE_BRACKET
     {
-      $$ = arena->New<ImplicitSizedArrayTypeLiteral>(context.source_loc(), $2);
+      $$ = arena->New<ArrayTypeLiteral>(context.source_loc(), $2, std::nullopt);
     }
 | LEFT_SQUARE_BRACKET expression SEMICOLON expression RIGHT_SQUARE_BRACKET
     { $$ = arena->New<ArrayTypeLiteral>(context.source_loc(), $2, $4); }

@@ -128,10 +128,6 @@ message ArrayTypeLiteral {
   optional Expression size = 2;
 }
 
-message ImplicitSizedArrayTypeLiteral {
-  optional Expression element_type = 1;
-}
-
 message IsWhereClause {
   optional Expression type = 1;
   optional Expression constraint = 2;

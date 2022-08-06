@@ -368,15 +368,6 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
       out << "]";
       break;
     }
-    case Fuzzing::Expression::kImplicitSizedArrayTypeLiteral: {
-      const Fuzzing::ImplicitSizedArrayTypeLiteral& array_literal =
-          expression.implicit_sized_array_type_literal();
-      out << "[";
-      ExpressionToCarbon(array_literal.element_type(), out);
-      out << "; ";
-      out << "]";
-      break;
-    }
 
     case Fuzzing::Expression::kWhere: {
       const Fuzzing::WhereExpression& where = expression.where();

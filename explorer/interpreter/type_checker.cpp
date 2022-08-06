@@ -2356,27 +2356,22 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(
           &array_literal.element_type_expression(), impl_scope));
 
-      CARBON_RETURN_IF_ERROR(
-          TypeCheckExp(&array_literal.size_expression(), impl_scope));
-      CARBON_RETURN_IF_ERROR(ExpectExactType(
-          array_literal.size_expression().source_loc(), "array size",
-          arena_->New<IntType>(),
-          &array_literal.size_expression().static_type(), impl_scope));
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> size_value,
-          InterpExp(&array_literal.size_expression(), arena_, trace_stream_));
-      if (cast<IntValue>(size_value)->value() < 0) {
-        return CompilationError(array_literal.size_expression().source_loc())
-               << "Array size cannot be negative";
+      if (array_literal.size_expression()) {
+        CARBON_RETURN_IF_ERROR(
+            TypeCheckExp(&**array_literal.size_expression(), impl_scope));
+        CARBON_RETURN_IF_ERROR(ExpectExactType(
+            (**array_literal.size_expression()).source_loc(), "array size",
+            arena_->New<IntType>(),
+            &(**array_literal.size_expression()).static_type(), impl_scope));
+        CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> size_value,
+                                InterpExp(&(**array_literal.size_expression()),
+                                          arena_, trace_stream_));
+        if (cast<IntValue>(size_value)->value() < 0) {
+          return CompilationError(
+                     (**array_literal.size_expression()).source_loc())
+                 << "Array size cannot be negative";
+        }
       }
-      array_literal.set_static_type(arena_->New<TypeType>());
-      array_literal.set_value_category(ValueCategory::Let);
-      return Success();
-    }
-    case ExpressionKind::ImplicitSizedArrayTypeLiteral: {
-      auto& array_literal = cast<ImplicitSizedArrayTypeLiteral>(*e);
-      CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(
-          &array_literal.element_type_expression(), impl_scope));
       array_literal.set_static_type(arena_->New<TypeType>());
       array_literal.set_value_category(ValueCategory::Let);
       return Success();

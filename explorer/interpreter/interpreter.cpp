@@ -457,7 +457,6 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
     case ExpressionKind::WhereExpression:
     case ExpressionKind::DotSelfExpression:
     case ExpressionKind::ArrayTypeLiteral:
-    case ExpressionKind::ImplicitSizedArrayTypeLiteral:
     case ExpressionKind::InstantiateImpl:
       CARBON_FATAL() << "Can't treat expression as lvalue: " << exp;
     case ExpressionKind::UnimplementedExpression:
@@ -1260,24 +1259,15 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       if (act.pos() == 0) {
         return todo_.Spawn(std::make_unique<ExpressionAction>(
             &array_literal.element_type_expression()));
-      } else if (act.pos() == 1) {
+      } else if (act.pos() == 1 && array_literal.size_expression()) {
         return todo_.Spawn(std::make_unique<ExpressionAction>(
-            &array_literal.size_expression()));
+            *array_literal.size_expression()));
       } else {
         return todo_.FinishAction(arena_->New<StaticArrayType>(
             act.results()[0],
-            cast<IntValue>(act.results()[1])->value()));  // mark explicit
-      }
-    }
-    case ExpressionKind::ImplicitSizedArrayTypeLiteral: {
-      const auto& array_literal = cast<ImplicitSizedArrayTypeLiteral>(exp);
-      if (act.pos() == 0) {
-        return todo_.Spawn(std::make_unique<ExpressionAction>(
-            &array_literal.element_type_expression()));
-      } else {
-        return todo_.FinishAction(arena_->New<StaticArrayType>(
-            act.results()[0],
-            std::nullopt));  // mark implicit, size needs to be inffered
+            array_literal.size_expression()
+                ? std::make_optional(cast<IntValue>(act.results()[1])->value())
+                : std::nullopt));  // mark explicit
       }
     }
   }  // switch (exp->kind)
