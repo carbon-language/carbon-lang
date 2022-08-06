@@ -1188,31 +1188,22 @@ class StaticArrayType : public Value {
  public:
   // Constructs a statically-sized array type with the given element type and
   // size.
-  StaticArrayType(Nonnull<const Value*> element_type, size_t size,
-                  bool implicit)
+  StaticArrayType(Nonnull<const Value*> element_type,
+                  std::optional<size_t> size)
       : Value(Kind::StaticArrayType),
         element_type_(element_type),
-        size_(size),
-        implicit_(implicit) {}
+        size_(size) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::StaticArrayType;
   }
 
   auto element_type() const -> const Value& { return *element_type_; }
-  auto set_size(size_t size) const -> void {
-    const_cast<StaticArrayType*>(this)->size_ = size;
-  }
-  auto size() const -> size_t { return size_; }
-  auto set_explicit() const -> void {
-    const_cast<StaticArrayType*>(this)->implicit_ = false;
-  }
-  auto implicit() const -> bool { return implicit_; }
+  auto size() const -> std::optional<size_t> { return size_; }
 
  private:
   Nonnull<const Value*> element_type_;
-  size_t size_;
-  bool implicit_;
+  std::optional<size_t> size_;
 };
 
 }  // namespace Carbon
