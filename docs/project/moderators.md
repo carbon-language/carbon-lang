@@ -27,8 +27,8 @@ The Conduct team reviews new moderators. Community members will be considered
 mainly based on their history on the Carbon Language Discord, although
 applicants may also note history on other servers.
 
-Prior to being granted moderation privileges, new moderators will need to attend a
-workshop in order to help orient them with the Carbon Language community's
+Prior to being granted moderation privileges, new moderators will need to attend
+a workshop in order to help orient them with the Carbon Language community's
 values and moderator expectations.
 
 ## Promotion to senior moderator
