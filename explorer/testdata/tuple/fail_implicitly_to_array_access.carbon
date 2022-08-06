@@ -14,5 +14,5 @@ fn Main() -> i32 {
     var i: i32 = 1;
     var x: [i32;] = (i, i, i);
     return x[0] + x[1] + x[2] + x[3];
-    // RUNTIME ERROR: {{.*}}/explorer/testdata/tuple/fail_implicitly_to_array_access.carbon:[[@LINE+1]]: index 3 out of range in (1, 1, 1)
+    // CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/tuple/fail_implicitly_to_array_access.carbon:[[@LINE-1]]: index 3 out of range in (1, 1, 1)
 }

@@ -2694,7 +2694,7 @@ static auto HasSize(SourceLocation source_loc,
     return Success();
   } else {
     return CompilationError(source_loc)
-           << ": Unable to infer array size without assigning value from rhs";
+           << "Unable to infer array size without assigning value from rhs";
   }
 }
 

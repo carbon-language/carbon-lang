@@ -12,5 +12,5 @@ package ExplorerTest api;
 
 fn Main() -> i32 {
     var x: [i32;];
-    // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/tuple/fail_implicitly_to_array.carbon:[[@LINE+1]]: Unable to infer array size without assigning value from rhs
+    // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/tuple/fail_implicitly_to_array.carbon:[[@LINE-1]]: Unable to infer array size without assigning value from rhs
 }
