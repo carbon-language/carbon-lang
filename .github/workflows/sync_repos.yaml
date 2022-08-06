@@ -27,5 +27,5 @@ jobs:
       # Run the sync script.
       - name: Sync to other repositories
         env:
-          API_TOKEN_GITHUB: test
+          API_TOKEN_GITHUB: ${{ secrets.SYNC_REPOS_API_TOKEN_GITHUB }}
         run: ./scripts/sync_repos.sh

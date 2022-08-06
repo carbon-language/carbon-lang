@@ -31,7 +31,8 @@ for dir in "${!MIRRORS[@]}"; do
   git clone --single-branch "$DEST_REPO_URL" "$DEST_CLONE_DIR"
   cd "$DEST_CLONE_DIR"
 
-  # Print out the destination repository.
+  # Print out the destination repository to help with debugging failures in
+  # GitHub's actions.
   ls -al
 
   # Remove all the existing files to rebuild it from scratch. We ignore when this
@@ -46,7 +47,8 @@ for dir in "${!MIRRORS[@]}"; do
     .
 
   # Copy the mirrored directory. We use `rsync` to get a more reliable way of
-  # handling the mirroring of the contents of a directory.
+  # handling the mirroring of the contents of a directory. We also make this
+  # verbose to help with debugging action failures on GitHub.
   rsync -av "$ORIGIN_DIR/$SRC_DIR/" .
 
   # Add back all the files now.
