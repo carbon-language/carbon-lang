@@ -42,7 +42,7 @@ AS                   "as"
 AUTO                 "auto"
 AWAIT                "__await"
 BASE                 "base"
-BOOL                 "Bool"
+BOOL                 "bool"
 BREAK                "break"
 CARET                "^"
 CASE                 "case"
@@ -65,6 +65,8 @@ FALSE                "false"
 FN                   "fn"
 FN_TYPE              "__Fn"
 FORALL               "forall"
+GREATER              ">"
+GREATER_EQUAL        ">="
 GREATER_GREATER      ">>"
 IF                   "if"
 IMPL                 "impl"
@@ -74,6 +76,8 @@ IS                   "is"
 LEFT_CURLY_BRACE     "{"
 LEFT_PARENTHESIS     "("
 LEFT_SQUARE_BRACKET  "["
+LESS                 "<"
+LESS_EQUAL           "<="
 LESS_LESS            "<<"
 LET                  "let"
 LIBRARY              "library"
@@ -161,7 +165,9 @@ operand_start         [(A-Za-z0-9_\"]
 {FN_TYPE}             { return CARBON_SIMPLE_TOKEN(FN_TYPE);             }
 {FN}                  { return CARBON_SIMPLE_TOKEN(FN);                  }
 {FORALL}              { return CARBON_SIMPLE_TOKEN(FORALL);              }
+{GREATER_EQUAL}       { return CARBON_SIMPLE_TOKEN(GREATER_EQUAL);       }
 {GREATER_GREATER}     { return CARBON_SIMPLE_TOKEN(GREATER_GREATER);     }
+{GREATER}             { return CARBON_SIMPLE_TOKEN(GREATER);             }
 {IF}                  { return CARBON_SIMPLE_TOKEN(IF);                  }
 {IMPL}                { return CARBON_SIMPLE_TOKEN(IMPL);                }
 {IMPORT}              { return CARBON_SIMPLE_TOKEN(IMPORT);              }
@@ -170,7 +176,9 @@ operand_start         [(A-Za-z0-9_\"]
 {LEFT_CURLY_BRACE}    { return CARBON_SIMPLE_TOKEN(LEFT_CURLY_BRACE);    }
 {LEFT_PARENTHESIS}    { return CARBON_SIMPLE_TOKEN(LEFT_PARENTHESIS);    }
 {LEFT_SQUARE_BRACKET} { return CARBON_SIMPLE_TOKEN(LEFT_SQUARE_BRACKET); }
+{LESS_EQUAL}          { return CARBON_SIMPLE_TOKEN(LESS_EQUAL);          }
 {LESS_LESS}           { return CARBON_SIMPLE_TOKEN(LESS_LESS);           }
+{LESS}                { return CARBON_SIMPLE_TOKEN(LESS);                }
 {LET}                 { return CARBON_SIMPLE_TOKEN(LET);                 }
 {LIBRARY}             { return CARBON_SIMPLE_TOKEN(LIBRARY);             }
 {MATCH}               { return CARBON_SIMPLE_TOKEN(MATCH);               }

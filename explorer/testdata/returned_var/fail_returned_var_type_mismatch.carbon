@@ -11,8 +11,8 @@
 package ExplorerTest api;
 
 fn AddInt(a: i32, b: i32) -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/returned_var/fail_returned_var_type_mismatch.carbon:[[@LINE+1]]: type of returned var `Bool` does not match return type `i32`
-  returned var ret: Bool = true;
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/returned_var/fail_returned_var_type_mismatch.carbon:[[@LINE+1]]: type of returned var `bool` does not match return type `i32`
+  returned var ret: bool = true;
   return var;
 }
 

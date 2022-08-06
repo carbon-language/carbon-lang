@@ -69,7 +69,7 @@ a single one.
 
 ## Generic versus template parameters
 
-When we are distinguishing between generics and templates in Carbon, it is on an
+When we are distinguishing between generics and templates in Carbon, it is on a
 parameter by parameter basis. A single function can take a mix of regular,
 generic, and template parameters.
 
@@ -192,10 +192,10 @@ overloads:
 
 ```
 fn F[template T:! Type](x: T*) -> T;
-fn F(x: Int) -> Bool;
+fn F(x: Int) -> bool;
 ```
 
-A generic function `G` can call `F` with a type like `T*` that can not possibly
+A generic function `G` can call `F` with a type like `T*` that cannot possibly
 call the `F(Int)` overload for `F`, and so it can consistently determine the
 return type of `F`. But `G` can't call `F` with an argument that could match
 either overload.
@@ -267,7 +267,7 @@ complete definition checking. This occurs for
 
 ## Deduced parameter
 
-An deduced parameter is listed in the optional `[` `]` section right after the
+A deduced parameter is listed in the optional `[` `]` section right after the
 function name in a function signature:
 
 `fn` &lt;name> `[` &lt;deduced parameters> `](` &lt;explicit parameters `) ->`

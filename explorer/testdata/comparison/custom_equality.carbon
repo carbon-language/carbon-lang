@@ -16,7 +16,7 @@ class MyType {
   var value: i32;
 
   impl as EqWith(Self) {
-    fn Equal[me: Self](other: Self) -> Bool {
+    fn Equal[me: Self](other: Self) -> bool {
       return me.value == other.value;
     }
   }

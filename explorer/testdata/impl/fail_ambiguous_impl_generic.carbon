@@ -17,10 +17,10 @@ external impl forall [T:! Type] A(T) as B(i32) {}
 external impl forall [T:! Type] A(i32) as B(T) {}
 
 fn F[T:! B(i32)](x: T) {}
-fn G[T:! B(Bool)](x: T) {}
+fn G[T:! B(bool)](x: T) {}
 
 fn Main() -> i32 {
-  let a: A(Bool) = {};
+  let a: A(bool) = {};
   let b: A(i32) = {};
   F(a);
   G(b);

@@ -32,13 +32,15 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
        {"delete", Intrinsic::Dealloc},
        {"rand", Intrinsic::Rand},
        {"int_eq", Intrinsic::IntEq},
+       {"int_compare", Intrinsic::IntCompare},
        {"int_bit_complement", Intrinsic::IntBitComplement},
        {"int_bit_and", Intrinsic::IntBitAnd},
        {"int_bit_or", Intrinsic::IntBitOr},
        {"int_bit_xor", Intrinsic::IntBitXor},
        {"int_left_shift", Intrinsic::IntLeftShift},
        {"int_right_shift", Intrinsic::IntRightShift},
-       {"str_eq", Intrinsic::StrEq}});
+       {"str_eq", Intrinsic::StrEq},
+       {"str_compare", Intrinsic::StrCompare}});
   name.remove_prefix(std::strlen("__intrinsic_"));
   auto it = intrinsic_map.find(name);
   if (it == intrinsic_map.end()) {
@@ -60,6 +62,8 @@ auto IntrinsicExpression::name() const -> std::string_view {
       return "__intrinsic_rand";
     case IntrinsicExpression::Intrinsic::IntEq:
       return "__intrinsic_int_eq";
+    case IntrinsicExpression::Intrinsic::IntCompare:
+      return "__intrinsic_int_compare";
     case IntrinsicExpression::Intrinsic::IntBitComplement:
       return "__intrinsic_int_bit_complement";
     case IntrinsicExpression::Intrinsic::IntBitAnd:
@@ -74,6 +78,8 @@ auto IntrinsicExpression::name() const -> std::string_view {
       return "__intrinsic_int_right_shift";
     case IntrinsicExpression::Intrinsic::StrEq:
       return "__intrinsic_str_eq";
+    case IntrinsicExpression::Intrinsic::StrCompare:
+      return "__intrinsic_str_compare";
   }
 }
 
@@ -131,6 +137,14 @@ auto ToString(Operator op) -> std::string_view {
       return "==";
     case Operator::Mod:
       return "%";
+    case Operator::Less:
+      return "<";
+    case Operator::LessEq:
+      return "<=";
+    case Operator::Greater:
+      return ">";
+    case Operator::GreaterEq:
+      return ">=";
   }
 }
 
@@ -288,7 +302,7 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
       out << (cast<BoolLiteral>(*this).value() ? "true" : "false");
       break;
     case ExpressionKind::BoolTypeLiteral:
-      out << "Bool";
+      out << "bool";
       break;
     case ExpressionKind::IntTypeLiteral:
       out << "i32";

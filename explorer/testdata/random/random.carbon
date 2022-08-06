@@ -10,7 +10,7 @@
 // CHECK: result: 0
 
 package ExplorerTest api;
-fn test(para: i32)->Bool{
+fn test(para: i32)->bool{
   return true;
 }
 fn Main() -> i32 {
