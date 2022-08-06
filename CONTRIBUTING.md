@@ -21,6 +21,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Contributor License Agreements (CLAs)](#contributor-license-agreements-clas)
         -   [Future CLA plans](#future-cla-plans)
     -   [Collaboration systems](#collaboration-systems)
+        -   [Getting access](#getting-access)
     -   [Contribution tools](#contribution-tools)
     -   [Contribution guidelines and standards](#contribution-guidelines-and-standards)
         -   [Guidelines and philosophy for contributions](#guidelines-and-philosophy-for-contributions)
