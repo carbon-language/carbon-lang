@@ -6,8 +6,8 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-For Carbon devs using Vim or Neovim, this plugin provides syntax highlighting
-for .carbon files found throughout `explorer/testdata`
+For Carbon developers using Vim or Neovim, this plugin provides syntax
+highlighting for .carbon files found throughout `explorer/testdata`
 
 ## Repository and contributing
 
