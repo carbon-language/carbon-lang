@@ -35,8 +35,9 @@ for dir in "${!MIRRORS[@]}"; do
   # GitHub's actions.
   ls -al
 
-  # Remove all the existing files to rebuild it from scratch. We ignore when this
-  # matches no files to handle freshly created repositories.
+  # Remove all the existing files to rebuild it from scratch. We ignore when
+  # this matches no files to handle freshly created repositories. Also print the
+  # status afterward for debugging.
   git rm --ignore-unmatch -r .
   git status
 
@@ -51,20 +52,24 @@ for dir in "${!MIRRORS[@]}"; do
   # verbose to help with debugging action failures on GitHub.
   rsync -av "$ORIGIN_DIR/$SRC_DIR/" .
 
-  # Add back all the files now.
+  # Add back all the files now, and print the status for debugging.
   git add -A
   git status
 
-  # Commit the new state.
-  git commit -F- <<EOF
+  # See if there is anything to commit and push. This works the same way as
+  # diff(1) and so exits zero when there are no changes.
+  if ! git diff --cached --quiet; then
+    # Commit the new state.
+    git commit -F- <<EOF
 Sync $DEST_REPO to carbon-language/carbon-lang@$COMMIT_SHA
 
 $COMMIT_SUMMARY
 EOF
-  git log
+    git log
 
-  # Push the new commit.
-  git push
+    # Push the new commit.
+    git push
+  fi
 
   # Cleanup.
   cd "$ORIGIN_DIR"
