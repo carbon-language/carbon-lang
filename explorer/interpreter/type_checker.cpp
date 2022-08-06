@@ -2687,6 +2687,17 @@ auto TypeChecker::TypeCheckPattern(
   }
 }
 
+static auto HasSize(SourceLocation source_loc,
+                    const StaticArrayType& static_array_type)
+    -> ErrorOr<Success> {
+  if (static_array_type.size()) {
+    return Success();
+  } else {
+    return CompilationError(source_loc)
+           << ": Unable to infer array size without assigning value from rhs";
+  }
+}
+
 auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
                                 const ImplScope& impl_scope)
     -> ErrorOr<Success> {
@@ -2777,6 +2788,14 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       } else {
         CARBON_RETURN_IF_ERROR(TypeCheckPattern(
             &var.pattern(), std::nullopt, var_scope, var.value_category()));
+
+        const auto& value = var.pattern().static_type();
+
+        if (value.kind() == Value::Kind::StaticArrayType) {
+          const auto& static_array_type = cast<StaticArrayType>(value);
+
+          CARBON_RETURN_IF_ERROR(HasSize(var.source_loc(), static_array_type));
+        }
       }
       return Success();
     }
