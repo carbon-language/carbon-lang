@@ -95,6 +95,7 @@ aims to fill an analogous role for C++:
 
 -   JavaScript → TypeScript
 -   Java → Kotlin
+-   Ruby → Crystal
 -   C++ → **_Carbon_**
 
 ## Language Goals
