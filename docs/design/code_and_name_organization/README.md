@@ -302,7 +302,7 @@ handled differently.
 
 Every Carbon library consists of one or more files. Each Carbon library has a
 primary file that defines its API, and may optionally contain additional files
-that are implementation.
+that are implemented.
 
 -   An API file's `package` directive will have `api`. For example,
     `package Geometry library "Shapes" api;`
