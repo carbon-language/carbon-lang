@@ -10,13 +10,10 @@
 
 package ExplorerTest api;
 
-class A {
-  fn F() {}
-}
-
-class B extends A {
-  fn F() {}
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_class_extends.carbon:[[@LINE+1]]: Class extension with `extends` is not supported yet
+class C extends i32 {
+  var x: i32;
+  var y: i32;
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_extends_non_class.carbon:[[@LINE+1]]: Attempting to extend non-identifier expression `int type literal`
 }
 
 fn Main() -> i32 {

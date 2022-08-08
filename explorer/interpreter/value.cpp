@@ -7,6 +7,7 @@
 #include <algorithm>
 
 #include "common/check.h"
+#include "explorer/ast/declaration.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "explorer/interpreter/action.h"
@@ -104,7 +105,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         // Look for a method in the object's class
         const auto& class_type = cast<NominalClassType>(object.type());
         std::optional<Nonnull<const FunctionValue*>> func =
-            class_type.FindFunction(f);
+            LookupFunction(f, class_type.declaration());
         if (func == std::nullopt) {
           return RuntimeError(source_loc) << "member " << f << " not in " << *v
                                           << " or its " << class_type;
@@ -132,7 +133,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       // Access a class function.
       const NominalClassType& class_type = cast<NominalClassType>(*v);
       std::optional<Nonnull<const FunctionValue*>> fun =
-          class_type.FindFunction(f);
+          LookupFunction(f, class_type.declaration());
       if (fun == std::nullopt) {
         return RuntimeError(source_loc)
                << "class function " << f << " not in " << *v;
@@ -945,9 +946,10 @@ auto ChoiceType::FindAlternative(std::string_view name) const
   return std::nullopt;
 }
 
-auto NominalClassType::FindFunction(std::string_view name) const
+auto FindFunction(std::string_view name,
+                  llvm::ArrayRef<Nonnull<Declaration*>> members)
     -> std::optional<Nonnull<const FunctionValue*>> {
-  for (const auto& member : declaration().members()) {
+  for (const auto& member : members) {
     switch (member->kind()) {
       case DeclarationKind::FunctionDeclaration: {
         const auto& fun = cast<FunctionDeclaration>(*member);
@@ -963,6 +965,23 @@ auto NominalClassType::FindFunction(std::string_view name) const
   return std::nullopt;
 }
 
+auto LookupFunction(std::string_view name, const ClassDeclaration& class_decl)
+    -> std::optional<Nonnull<const FunctionValue*>> {
+  if (auto fun = FindFunction(name, class_decl.members()); fun.has_value()) {
+    return fun;
+  }
+  if (class_decl.extends()) {
+    const auto* identifier =
+        dyn_cast<IdentifierExpression>(class_decl.extends().value());
+    const auto* t_parent_class =
+        dyn_cast<TypeOfClassType>(&identifier->static_type());
+    if (t_parent_class) {
+      return LookupFunction(name, t_parent_class->class_type().declaration());
+    }
+  }
+  return std::nullopt;
+}
+
 auto FindMember(std::string_view name,
                 llvm::ArrayRef<Nonnull<Declaration*>> members)
     -> std::optional<Nonnull<const Declaration*>> {
@@ -972,6 +991,24 @@ auto FindMember(std::string_view name,
       if (*mem_name == name) {
         return member;
       }
+    }
+  }
+  return std::nullopt;
+}
+
+auto LookupMember(std::string_view name, const ClassDeclaration& class_decl)
+    -> std::optional<Nonnull<const Declaration*>> {
+  if (auto member = FindMember(name, class_decl.members());
+      member.has_value()) {
+    return member;
+  }
+  if (class_decl.extends()) {
+    const auto* identifier =
+        dyn_cast<IdentifierExpression>(class_decl.extends().value());
+    const auto* t_parent_class =
+        dyn_cast<TypeOfClassType>(&identifier->static_type());
+    if (t_parent_class) {
+      return LookupMember(name, t_parent_class->class_type().declaration());
     }
   }
   return std::nullopt;

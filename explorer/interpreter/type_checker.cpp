@@ -13,8 +13,10 @@
 #include "common/error.h"
 #include "common/ostream.h"
 #include "explorer/ast/declaration.h"
+#include "explorer/ast/expression.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
+#include "explorer/common/nonnull.h"
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
 #include "explorer/interpreter/value.h"
@@ -1561,8 +1563,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         case Value::Kind::NominalClassType: {
           const auto& t_class = cast<NominalClassType>(object_type);
-          if (std::optional<Nonnull<const Declaration*>> member = FindMember(
-                  access.member_name(), t_class.declaration().members());
+          if (const auto member =
+                  LookupMember(access.member_name(), t_class.declaration());
               member.has_value()) {
             Nonnull<const Value*> field_type =
                 Substitute(t_class.type_args(), &(*member)->static_type());
@@ -3296,8 +3298,15 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
            << "Class prefixes `base` and `abstract` are not supported yet";
   }
   if (class_decl->extends()) {
-    return CompilationError(class_decl->source_loc())
-           << "Class extension with `extends` is not supported yet";
+    const auto* expr = class_decl->extends().value();
+    const auto* expr_parent = dyn_cast<IdentifierExpression>(expr);
+    if (!expr_parent) {
+      return CompilationError(class_decl->source_loc())
+             << "Attempting to extend non-identifier expression `"
+             << ExpressionKindName(expr->kind()) << "`";
+    }
+    CARBON_RETURN_IF_ERROR(
+        TypeCheckExp(Nonnull<Expression*>(expr_parent), class_scope));
   }
 
   std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;

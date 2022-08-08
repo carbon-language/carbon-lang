@@ -538,6 +538,10 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
       StaticScope class_scope;
       class_scope.AddParent(&enclosing_scope);
       enclosing_scope.MarkDeclared(class_decl.name());
+      if (class_decl.extends().has_value()) {
+        CARBON_RETURN_IF_ERROR(
+            ResolveNames(**class_decl.extends(), class_scope));
+      }
       if (class_decl.type_params().has_value()) {
         CARBON_RETURN_IF_ERROR(
             ResolveNames(**class_decl.type_params(), class_scope));

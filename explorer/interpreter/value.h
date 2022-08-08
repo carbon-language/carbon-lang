@@ -620,19 +620,29 @@ class NominalClassType : public Value {
     return declaration_->type_params().has_value() && type_args().empty();
   }
 
-  // Returns the value of the function named `name` in this class, or
-  // nullopt if there is no such function.
-  auto FindFunction(std::string_view name) const
-      -> std::optional<Nonnull<const FunctionValue*>>;
-
  private:
   Nonnull<const ClassDeclaration*> declaration_;
   Nonnull<const Bindings*> bindings_ = Bindings::None();
 };
 
+// Returns the value of the function named `name` in this class, or
+// nullopt if there is no such function.
+auto FindFunction(std::string_view name,
+                  llvm::ArrayRef<Nonnull<Declaration*>> members)
+    -> std::optional<Nonnull<const FunctionValue*>>;
+// Returns the value of the function named `name` in this class and its
+// parents, or nullopt if there is no such function.
+auto LookupFunction(std::string_view name, const ClassDeclaration& class_decl)
+    -> std::optional<Nonnull<const FunctionValue*>>;
+
 // Return the declaration of the member with the given name.
 auto FindMember(std::string_view name,
                 llvm::ArrayRef<Nonnull<Declaration*>> members)
+    -> std::optional<Nonnull<const Declaration*>>;
+
+// Return the declaration of the member with the given name, from the class and
+// its parents
+auto LookupMember(std::string_view name, const ClassDeclaration& class_decl)
     -> std::optional<Nonnull<const Declaration*>>;
 
 // An interface type.
