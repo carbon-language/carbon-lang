@@ -190,14 +190,14 @@ class ClassDeclaration : public Declaration {
                    Nonnull<SelfDeclaration*> self_decl,
                    ClassExtensibility extensibility,
                    std::optional<Nonnull<TuplePattern*>> type_params,
-                   std::optional<Nonnull<Expression*>> extends,
+                   std::optional<Nonnull<IdentifierExpression*>> base,
                    std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::ClassDeclaration, source_loc),
         name_(std::move(name)),
         extensibility_(extensibility),
         self_decl_(self_decl),
         type_params_(type_params),
-        extends_(extends),
+        base_(base),
         members_(std::move(members)) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -212,8 +212,8 @@ class ClassDeclaration : public Declaration {
   auto type_params() -> std::optional<Nonnull<TuplePattern*>> {
     return type_params_;
   }
-  auto extends() const -> std::optional<Nonnull<Expression*>> {
-    return extends_;
+  auto base() const -> std::optional<Nonnull<IdentifierExpression*>> {
+    return base_;
   }
   auto self() const -> Nonnull<const SelfDeclaration*> { return self_decl_; }
   auto self() -> Nonnull<SelfDeclaration*> { return self_decl_; }
@@ -229,7 +229,7 @@ class ClassDeclaration : public Declaration {
   ClassExtensibility extensibility_;
   Nonnull<SelfDeclaration*> self_decl_;
   std::optional<Nonnull<TuplePattern*>> type_params_;
-  std::optional<Nonnull<Expression*>> extends_;
+  std::optional<Nonnull<IdentifierExpression*>> base_;
   std::vector<Nonnull<Declaration*>> members_;
 };
 

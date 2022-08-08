@@ -105,7 +105,7 @@
 %type <std::string> optional_library_path
 %type <bool> api_or_impl
 %type <ClassExtensibility> class_declaration_extensibility
-%type <std::optional<Nonnull<Expression*>>> class_declaration_extends
+%type <std::optional<Nonnull<IdentifierExpression*>>> class_declaration_extends
 %type <Nonnull<Declaration*>> declaration
 %type <Nonnull<FunctionDeclaration*>> function_declaration
 %type <Nonnull<AliasDeclaration*>> alias_declaration
@@ -1099,8 +1099,8 @@ class_declaration_extensibility:
 class_declaration_extends:
   // Empty
     { $$ = std::nullopt; }
-| EXTENDS expression
-    { $$ = $2; }
+| EXTENDS identifier
+    { $$ = arena->New<IdentifierExpression>(context.source_loc(), $2); }
 ;
 declaration:
   function_declaration

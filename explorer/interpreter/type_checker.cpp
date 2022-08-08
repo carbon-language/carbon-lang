@@ -3297,14 +3297,8 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     return CompilationError(class_decl->source_loc())
            << "Class prefixes `base` and `abstract` are not supported yet";
   }
-  if (class_decl->extends()) {
-    const auto* expr = class_decl->extends().value();
-    const auto* expr_parent = dyn_cast<IdentifierExpression>(expr);
-    if (!expr_parent) {
-      return CompilationError(class_decl->source_loc())
-             << "Attempting to extend non-identifier expression `"
-             << ExpressionKindName(expr->kind()) << "`";
-    }
+  if (class_decl->base()) {
+    const auto* expr_parent = class_decl->base().value();
     CARBON_RETURN_IF_ERROR(
         TypeCheckExp(Nonnull<Expression*>(expr_parent), class_scope));
   }

@@ -10,10 +10,10 @@
 
 package ExplorerTest api;
 
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_extends_non_class.carbon:[[@LINE+1]]: syntax error, unexpected sized_type_literal, expecting identifier
 class C extends i32 {
   var x: i32;
   var y: i32;
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_extends_non_class.carbon:[[@LINE+1]]: Attempting to extend non-identifier expression `int type literal`
 }
 
 fn Main() -> i32 {

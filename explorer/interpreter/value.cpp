@@ -970,11 +970,9 @@ auto LookupFunction(std::string_view name, const ClassDeclaration& class_decl)
   if (auto fun = FindFunction(name, class_decl.members()); fun.has_value()) {
     return fun;
   }
-  if (class_decl.extends()) {
-    const auto* identifier =
-        dyn_cast<IdentifierExpression>(class_decl.extends().value());
+  if (class_decl.base()) {
     const auto* t_parent_class =
-        dyn_cast<TypeOfClassType>(&identifier->static_type());
+        dyn_cast<TypeOfClassType>(&class_decl.base().value()->static_type());
     if (t_parent_class) {
       return LookupFunction(name, t_parent_class->class_type().declaration());
     }
@@ -1002,11 +1000,9 @@ auto LookupMember(std::string_view name, const ClassDeclaration& class_decl)
       member.has_value()) {
     return member;
   }
-  if (class_decl.extends()) {
-    const auto* identifier =
-        dyn_cast<IdentifierExpression>(class_decl.extends().value());
+  if (class_decl.base()) {
     const auto* t_parent_class =
-        dyn_cast<TypeOfClassType>(&identifier->static_type());
+        dyn_cast<TypeOfClassType>(&class_decl.base().value()->static_type());
     if (t_parent_class) {
       return LookupMember(name, t_parent_class->class_type().declaration());
     }
