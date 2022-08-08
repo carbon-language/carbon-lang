@@ -3476,22 +3476,7 @@ auto TypeChecker::TypeCheckMixDeclaration(
     return CompilationError(mix_decl->source_loc())
            << "mix declaration must not be present in global scope";
   }
-  switch (enclosing_decl.value()->kind()) {
-    // TODO(darshal): figure out if more enclosing declarations should be
-    // allowed
-    // case DeclarationKind::MixinDeclaration:
-    case DeclarationKind::ClassDeclaration: {
-      // auto& class_decl = cast<ClassDeclaration>(*enclosing_decl.value());
-      // for (Nonnull<Declaration*> m : class_decl.members()) {
-      //   // do check here
-      // }
-      break;
-    }
-    default:
-      return CompilationError(mix_decl->source_loc())
-             << "mix declaration must not be present within "
-             << *enclosing_decl.value();
-  }
+
   return Success();
 }
 
