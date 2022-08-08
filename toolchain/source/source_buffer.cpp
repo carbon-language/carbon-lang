@@ -79,10 +79,10 @@ auto SourceBuffer::CreateFromFile(llvm::StringRef filename)
 
   errno = 0;
   void* mapped_text = mmap(nullptr, size, PROT_READ,
-#ifdef __APPLE__
-                           MAP_PRIVATE,
-#else
+#if defined(__linux__)
                            MAP_PRIVATE | MAP_POPULATE,
+#else
+                           MAP_PRIVATE,
 #endif
                            file_descriptor, /*offset=*/0);
   // The `MAP_FAILED` macro may expand to a cast to pointer that `clang-tidy`
