@@ -64,6 +64,14 @@ class TypeChecker {
                  SourceLocation source_loc) const
       -> std::optional<Nonnull<Expression*>>;
 
+  // Similar to FindMember, but returns the type of mixin methods after
+  // substituting the Self type variable during mix declarations.
+  auto FindClassMemberAndType(const std::string_view& name,
+                              llvm::ArrayRef<Nonnull<Declaration*>> members,
+                              const Nonnull<const Value*> enclosing_type)
+      -> std::optional<
+          std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>;
+
   // Given the witnesses for the components of a constraint, form a witness for
   // the constraint.
   auto MakeConstraintWitness(
@@ -179,6 +187,9 @@ class TypeChecker {
   auto DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                                const ScopeInfo& scope_info) -> ErrorOr<Success>;
 
+  auto DeclareMixinDeclaration(Nonnull<MixinDeclaration*> mixin_decl,
+                               const ScopeInfo& scope_info) -> ErrorOr<Success>;
+
   auto DeclareInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl,
                                    const ScopeInfo& scope_info)
       -> ErrorOr<Success>;
@@ -247,7 +258,9 @@ class TypeChecker {
   // Dispatches to one of the following functions.
   // Assumes that DeclareDeclaration has already been invoked on `d`.
   auto TypeCheckDeclaration(Nonnull<Declaration*> d,
-                            const ImplScope& impl_scope) -> ErrorOr<Success>;
+                            const ImplScope& impl_scope,
+                            std::optional<Nonnull<Declaration*>> enclosing_decl)
+      -> ErrorOr<Success>;
 
   // Type check the body of the function.
   auto TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
@@ -258,6 +271,15 @@ class TypeChecker {
   auto TypeCheckClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                                  const ImplScope& impl_scope)
       -> ErrorOr<Success>;
+
+  // Type check all the members of the mixin.
+  auto TypeCheckMixinDeclaration(Nonnull<MixinDeclaration*> mixin_decl,
+                                 const ImplScope& impl_scope)
+      -> ErrorOr<Success>;
+
+  auto TypeCheckMixDeclaration(
+      Nonnull<MixDeclaration*> mix_decl, const ImplScope& impl_scope,
+      std::optional<Nonnull<Declaration*>> enclosing_decl) -> ErrorOr<Success>;
 
   // Type check all the members of the interface.
   auto TypeCheckInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl,

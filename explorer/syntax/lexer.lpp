@@ -64,6 +64,7 @@ EXTERNAL             "external"
 FALSE                "false"
 FN                   "fn"
 FN_TYPE              "__Fn"
+FOR                  "for"
 FORALL               "forall"
 GREATER              ">"
 GREATER_EQUAL        ">="
@@ -83,6 +84,8 @@ LET                  "let"
 LIBRARY              "library"
 MATCH                "match"
 MINUS                "-"
+MIX                  "mix"
+MIXIN                "mixin"
 NOT                  "not"
 OR                   "or"
 PACKAGE              "package"
@@ -165,6 +168,7 @@ operand_start         [(A-Za-z0-9_\"]
 {FN_TYPE}             { return CARBON_SIMPLE_TOKEN(FN_TYPE);             }
 {FN}                  { return CARBON_SIMPLE_TOKEN(FN);                  }
 {FORALL}              { return CARBON_SIMPLE_TOKEN(FORALL);              }
+{FOR}                 { return CARBON_SIMPLE_TOKEN(FOR);                 }
 {GREATER_EQUAL}       { return CARBON_SIMPLE_TOKEN(GREATER_EQUAL);       }
 {GREATER_GREATER}     { return CARBON_SIMPLE_TOKEN(GREATER_GREATER);     }
 {GREATER}             { return CARBON_SIMPLE_TOKEN(GREATER);             }
@@ -183,6 +187,8 @@ operand_start         [(A-Za-z0-9_\"]
 {LIBRARY}             { return CARBON_SIMPLE_TOKEN(LIBRARY);             }
 {MATCH}               { return CARBON_SIMPLE_TOKEN(MATCH);               }
 {MINUS}               { return CARBON_SIMPLE_TOKEN(MINUS);               }
+{MIXIN}               { return CARBON_SIMPLE_TOKEN(MIXIN);               }
+{MIX}                 { return CARBON_SIMPLE_TOKEN(MIX);                 }
 {NOT}                 { return CARBON_SIMPLE_TOKEN(NOT);                 }
 {OR}                  { return CARBON_SIMPLE_TOKEN(OR);                  }
 {PACKAGE}             { return CARBON_SIMPLE_TOKEN(PACKAGE);             }
