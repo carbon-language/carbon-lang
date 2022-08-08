@@ -17,12 +17,16 @@ class FlowFacts {
  public:
   enum class ActionType {
     // Used at `VariableDefinition` with initialization.
+    // Adds a must-be-formed flow fact.
     AddInit,
     // Used at `VariableDefinition` without initialization.
+    // Adds an unformed flow fact.
     AddUninit,
     // Used at AST nodes that potentially initializes a variable.
+    // Marks an unformed flow fact as may-be-formed.
     Form,
     // Used at AST nodes that uses a variable.
+    // Returns compilation error if the AST node is impossible to be formed.
     Check,
     // Used in traversing children nodes without an acion to take.
     None,
@@ -43,47 +47,9 @@ class FlowFacts {
     FormedState formed_state;
   };
 
-  auto get_fact(Nonnull<const AstNode*> node) const
-      -> std::optional<Nonnull<const Fact*>> {
-    auto entry = facts_.find(node);
-    if (entry != facts_.end()) {
-      return &entry->second;
-    }
-    return std::nullopt;
-  }
-
-  void add_fact(Nonnull<const AstNode*> node, const FormedState state) {
-    CARBON_CHECK(!get_fact(node).has_value());
+  void AddFact(Nonnull<const AstNode*> node, const FormedState state) {
+    CARBON_CHECK(!facts_.count(node));
     facts_.insert({node, {state}});
-  }
-
-  // Adds a must-be-formed flow fact .
-  void AddInitFact(Nonnull<const AstNode*> node) {
-    add_fact(node, FormedState::MustBeFormed);
-  }
-  // Adds an unformed flow fact.
-  void AddUninitFact(Nonnull<const AstNode*> node) {
-    add_fact(node, FormedState::Unformed);
-  }
-  // Marks an unformed flow fact as may-be-formed.
-  void FormFact(Nonnull<const AstNode*> node) {
-    // TODO: Use CARBON_CHECK when we are able to handle global variables.
-    if (get_fact(node).has_value() &&
-        facts_[node].formed_state == FormedState::Unformed) {
-      facts_[node].formed_state = FormedState::MayBeFormed;
-    }
-  }
-  // Returns compilation error if the AST node is impossible to be formed.
-  auto CheckFact(Nonnull<const AstNode*> node, SourceLocation source_loc,
-                 const std::string& name) const -> ErrorOr<Success> {
-    // TODO: @slaterlatiao add all available value nodes to flow facts and use
-    // CARBON_CHECK on the following line.
-    std::optional<Nonnull<const Fact*>> fact = get_fact(node);
-    if (fact.has_value() && (*fact)->formed_state == FormedState::Unformed) {
-      return CompilationError(source_loc)
-             << "use of uninitialized variable " << name;
-    }
-    return Success();
   }
 
   std::unordered_map<Nonnull<const AstNode*>, Fact> facts_;

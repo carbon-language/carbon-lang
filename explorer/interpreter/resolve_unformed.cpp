@@ -20,17 +20,33 @@ auto FlowFacts::TakeAction(Nonnull<const AstNode*> node, ActionType action,
                            SourceLocation source_loc, const std::string& name)
     -> ErrorOr<Success> {
   switch (action) {
-    case ActionType::AddInit:
-      AddInitFact(node);
+    case ActionType::AddInit: {
+      AddFact(node, FormedState::MustBeFormed);
       break;
-    case ActionType::AddUninit:
-      AddUninitFact(node);
+    }
+    case ActionType::AddUninit: {
+      AddFact(node, FormedState::Unformed);
       break;
-    case ActionType::Form:
-      FormFact(node);
+    }
+    case ActionType::Form: {
+      // TODO: Use CARBON_CHECK when we are able to handle global variables.
+      if (facts_.count(node) &&
+          facts_[node].formed_state == FormedState::Unformed) {
+        facts_[node].formed_state = FormedState::MayBeFormed;
+      }
       break;
-    case ActionType::Check:
-      return CheckFact(node, source_loc, name);
+    }
+    case ActionType::Check: {
+      // TODO: @slaterlatiao add all available value nodes to flow facts and use
+      // CARBON_CHECK on the following line.
+      auto entry = facts_.find(node);
+      if (entry != facts_.end() &&
+          entry->second.formed_state == FormedState::Unformed) {
+        return CompilationError(source_loc)
+               << "use of uninitialized variable " << name;
+      }
+      break;
+    }
     case ActionType::None:
       break;
   }
