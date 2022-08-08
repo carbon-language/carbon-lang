@@ -262,9 +262,11 @@ class ChoiceDeclaration : public Declaration {
   using ImplementsCarbonValueNode = void;
 
   ChoiceDeclaration(SourceLocation source_loc, std::string name,
+                    std::optional<Nonnull<TuplePattern*>> type_params,
                     std::vector<Nonnull<AlternativeSignature*>> alternatives)
       : Declaration(AstNodeKind::ChoiceDeclaration, source_loc),
         name_(std::move(name)),
+        type_params_(type_params),
         alternatives_(std::move(alternatives)) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -272,6 +274,14 @@ class ChoiceDeclaration : public Declaration {
   }
 
   auto name() const -> const std::string& { return name_; }
+
+  auto type_params() const -> std::optional<Nonnull<const TuplePattern*>> {
+    return type_params_;
+  }
+  auto type_params() -> std::optional<Nonnull<TuplePattern*>> {
+    return type_params_;
+  }
+
   auto alternatives() const
       -> llvm::ArrayRef<Nonnull<const AlternativeSignature*>> {
     return alternatives_;
@@ -284,6 +294,7 @@ class ChoiceDeclaration : public Declaration {
 
  private:
   std::string name_;
+  std::optional<Nonnull<TuplePattern*>> type_params_;
   std::vector<Nonnull<AlternativeSignature*>> alternatives_;
 };
 

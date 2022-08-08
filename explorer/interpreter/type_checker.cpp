@@ -312,6 +312,8 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
 auto TypeChecker::ExpectIsConcreteType(SourceLocation source_loc,
                                        Nonnull<const Value*> value)
     -> ErrorOr<Success> {
+
+  llvm::outs()<<__LINE__ << " :IsConcreteType: " << *value << "\n";
   if (!IsConcreteType(value)) {
     return CompilationError(source_loc)
            << "Expected a type, but got " << *value;
@@ -1455,6 +1457,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     }
     return Success();
   }
+  llvm::outs() << "type-checking " << ExpressionKindName(e->kind()) << " "<< *e << "\n";
   switch (e->kind()) {
     case ExpressionKind::InstantiateImpl:
     case ExpressionKind::ValueLiteral:
@@ -1503,8 +1506,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       std::vector<Nonnull<const Value*>> arg_types;
       for (auto* arg : cast<TupleLiteral>(*e).fields()) {
         CARBON_RETURN_IF_ERROR(TypeCheckExp(arg, impl_scope));
+        llvm::outs()<<__LINE__<< " :type-checking " << *arg << "\n";
         CARBON_RETURN_IF_ERROR(
             ExpectIsConcreteType(arg->source_loc(), &arg->static_type()));
+        llvm::outs()<<__LINE__<<" Except OK\n";
         arg_types.push_back(&arg->static_type());
       }
       e->set_static_type(arena_->New<TupleValue>(std::move(arg_types)));
@@ -1905,6 +1910,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       auto& ident = cast<IdentifierExpression>(*e);
       if (ident.value_node().base().kind() ==
           AstNodeKind::FunctionDeclaration) {
+          llvm::outs()<<__LINE__<<"FUNC DECL\n";
         const auto& function =
             cast<FunctionDeclaration>(ident.value_node().base());
         if (!function.has_static_type()) {
@@ -1913,8 +1919,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                  << "Function calls itself, but has a deduced return type";
         }
       }
+        llvm::outs()<<__LINE__<<"NON DECL 1\n";
       ident.set_static_type(&ident.value_node().static_type());
+        llvm::outs()<<__LINE__<<"NON DECL 2\n";
       ident.set_value_category(ident.value_node().value_category());
+        llvm::outs()<<__LINE__<<"NON DECL 3\n";
       return Success();
     }
     case ExpressionKind::DotSelfExpression: {
@@ -2189,10 +2198,15 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     }
     case ExpressionKind::CallExpression: {
       auto& call = cast<CallExpression>(*e);
+      llvm::outs()<<__LINE__<<" \t:TypeCheckExp(&call.function(), impl_scope) BEGIN\n";
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&call.function(), impl_scope));
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&call.argument(), impl_scope));
+      llvm::outs()<<__LINE__<<" \t:TypeCheckExp(&call.function(), impl_scope) End\n";
+
+        CARBON_RETURN_IF_ERROR(TypeCheckExp(&call.argument(), impl_scope));
+
       switch (call.function().static_type().kind()) {
         case Value::Kind::FunctionType: {
+            llvm::outs()<<__LINE__<<" Func Type\n";
           const auto& fun_t = cast<FunctionType>(call.function().static_type());
           if (trace_stream_) {
             **trace_stream_
@@ -2214,7 +2228,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           return Success();
         }
         case Value::Kind::TypeOfParameterizedEntityName: {
-          // This case handles the application of a parameterized class or
+            llvm::outs()<<__LINE__<<" Type Of ParameterizedEntityName\n";
+
+            // This case handles the application of a parameterized class or
           // interface to a set of arguments, such as Point(i32) or
           // AddWith(i32).
           const ParameterizedEntityName& param_name =
@@ -2267,6 +2283,13 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                   << "unknown type of ParameterizedEntityName for " << decl;
           }
           return Success();
+        }
+        case Value::Kind::TypeOfChoiceType:{
+            llvm::outs()<<__LINE__<<" ChoiceType\n";
+            return CompilationError(e->source_loc())
+                    << "in call `" << *e
+                    << "`, expected callee to be a function, found `"
+                    << call.function().static_type() << "`";
         }
         default: {
           return CompilationError(e->source_loc())
@@ -2696,6 +2719,10 @@ auto TypeChecker::TypeCheckPattern(
     Nonnull<Pattern*> p, std::optional<Nonnull<const Value*>> expected,
     ImplScope& impl_scope, ValueCategory enclosing_value_category)
     -> ErrorOr<Success> {
+    if(expected)
+        llvm::outs()<<__LINE__<<" ::: TypeCheckPattern pattern:"<< *p << " Expected: "<< **expected<<"\n";
+    else
+        llvm::outs()<<__LINE__<<" ::: TypeCheckPattern pattern:"<< *p <<"\n";
   if (trace_stream_) {
     **trace_stream_ << "checking " << PatternKindName(p->kind()) << " " << *p;
     if (expected) {
@@ -2711,6 +2738,7 @@ auto TypeChecker::TypeCheckPattern(
       return Success();
     }
     case PatternKind::BindingPattern: {
+        llvm::outs()<<__LINE__<< " : BindingPattern\n";
       auto& binding = cast<BindingPattern>(*p);
       if (!VisitNestedPatterns(binding.type(), [](const Pattern& pattern) {
             return !isa<BindingPattern>(pattern);
@@ -2752,6 +2780,7 @@ auto TypeChecker::TypeCheckPattern(
       return Success();
     }
     case PatternKind::GenericBinding: {
+        llvm::outs()<<__LINE__<< " : GenericBinding\n";
       auto& binding = cast<GenericBinding>(*p);
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
                               TypeCheckTypeExp(&binding.type(), impl_scope));
@@ -2813,6 +2842,7 @@ auto TypeChecker::TypeCheckPattern(
       return Success();
     }
     case PatternKind::AlternativePattern: {
+        llvm::outs()<<__LINE__<< " : AlternativePattern\n";
       auto& alternative = cast<AlternativePattern>(*p);
       CARBON_RETURN_IF_ERROR(
           TypeCheckExp(&alternative.choice_type(), impl_scope));
@@ -2847,15 +2877,20 @@ auto TypeChecker::TypeCheckPattern(
       return Success();
     }
     case PatternKind::ExpressionPattern: {
+        llvm::outs()<<__LINE__<< " : ExpressionPattern\n";
       auto& expression = cast<ExpressionPattern>(*p).expression();
+      llvm::outs()<<__LINE__<< " : CAST ExpressionPattern\n";
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&expression, impl_scope));
       p->set_static_type(&expression.static_type());
+      llvm::outs()<<__LINE__<< " : InterpPattern\n";
+
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> expr_value,
                               InterpPattern(p, arena_, trace_stream_));
       SetValue(p, expr_value);
       return Success();
     }
     case PatternKind::VarPattern: {
+        llvm::outs()<<__LINE__<< " : VarPattern\n";
       auto& var_pattern = cast<VarPattern>(*p);
 
       CARBON_RETURN_IF_ERROR(TypeCheckPattern(&var_pattern.pattern(), expected,
@@ -3345,6 +3380,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   ScopeInfo class_scope_info =
       ScopeInfo::ForClassScope(scope_info, &class_scope, std::move(bindings));
   for (Nonnull<Declaration*> m : class_decl->members()) {
+      llvm::outs()<<__LINE__<<" ´:member: "<<*m<<"\n";
     CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, class_scope_info));
   }
 
@@ -3762,6 +3798,39 @@ auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
 auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
                                            const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
+    ImplScope choice_scope;
+    choice_scope.AddParent(scope_info.innermost_scope);
+    std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
+    if (choice->type_params().has_value()) {
+        Nonnull<TuplePattern*> type_params = *choice->type_params();
+        CARBON_RETURN_IF_ERROR(TypeCheckPattern(type_params, std::nullopt,
+                                                choice_scope, ValueCategory::Let));
+        CollectGenericBindingsInPattern(type_params, bindings);
+        if (trace_stream_) {
+            **trace_stream_ << choice_scope;
+        }
+    }
+
+    // For class declaration `class MyType(T:! Type, U:! AnInterface)`, `Self`
+    // should have the value `MyType(T, U)`.
+    BindingMap generic_args;
+    for (auto* binding : bindings) {
+        // binding.symbolic_identity() set by call to `TypeCheckPattern(...)`
+        // above and/or by any enclosing generic classes.
+        llvm::outs()<<__LINE__<<":" <<**binding->symbolic_identity()<<"\n";
+        generic_args[binding] = *binding->symbolic_identity();
+    }
+
+    if (choice->type_params().has_value()) {
+        // TODO: The `enclosing_bindings` should be tracked in the parameterized
+        // entity name so that they can be included in the eventual type.
+        Nonnull<ParameterizedEntityName*> param_name =
+                arena_->New<ParameterizedEntityName>(choice,
+                                                     *choice->type_params());
+        SetConstantValue(choice, param_name);
+        choice->set_static_type(
+                arena_->New<TypeOfParameterizedEntityName>(param_name));
+    }
   std::vector<NamedValue> alternatives;
   for (Nonnull<AlternativeSignature*> alternative : choice->alternatives()) {
     CARBON_ASSIGN_OR_RETURN(auto signature,
@@ -3778,7 +3847,9 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
 auto TypeChecker::TypeCheckChoiceDeclaration(
     Nonnull<ChoiceDeclaration*> /*choice*/, const ImplScope& /*impl_scope*/)
     -> ErrorOr<Success> {
-  // Nothing to do here, but perhaps that will change in the future?
+    llvm::outs()<<__LINE__<< " declaring choice "  << "\n";
+
+    // Nothing to do here, but perhaps that will change in the future?
   return Success();
 }
 
@@ -3969,6 +4040,7 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
 
     case DeclarationKind::VariableDeclaration: {
       auto& var = cast<VariableDeclaration>(*d);
+      llvm::outs()<<__LINE__<<"var dec:"<<var<<"\n";
       // Associate the variable name with it's declared type in the
       // compile-time symbol table.
       if (!llvm::isa<ExpressionPattern>(var.binding().type())) {
