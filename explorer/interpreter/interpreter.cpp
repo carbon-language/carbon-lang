@@ -1513,7 +1513,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       }
       if (act.pos() == 1) {
         Nonnull<const TupleValue*> source_array =
-            cast<const TupleValue>(act.results().back());
+            cast<const TupleValue>(act.results()[TARGET_VAR_POS]);
 
         auto end_index = static_cast<int>(source_array->elements().size());
         auto start_index = 0;
