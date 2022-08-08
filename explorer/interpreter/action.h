@@ -90,6 +90,7 @@ class Action {
     DeclarationAction,
     ScopeAction,
     RecursiveAction,
+    DESTRUCTOR_ACTION
   };
 
   Action(const Value&) = delete;
@@ -167,6 +168,24 @@ class LValAction : public Action {
  private:
   Nonnull<const Expression*> expression_;
 };
+
+
+class DestructorAction : public Action {
+public:
+    explicit DestructorAction(Nonnull<const Expression*> expression)
+            : Action(Kind::ExpressionAction), expression_(expression) {}
+
+    static auto classof(const Action* action) -> bool {
+        return action->kind() == Kind::DestructorAction;
+    }
+
+    // The Expression this Action evaluates.
+    auto expression() const -> const Expression& { return *expression_; }
+
+private:
+    Nonnull<const Expression*> expression_;
+};
+
 
 // An Action which implements evaluation of an Expression to produce an
 // rvalue. The result is expressed as a Value.
