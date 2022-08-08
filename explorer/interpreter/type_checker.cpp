@@ -3371,6 +3371,11 @@ auto TypeChecker::TypeCheckClassDeclaration(
   }
   for (Nonnull<Declaration*> m : class_decl->members()) {
     CARBON_RETURN_IF_ERROR(TypeCheckDeclaration(m, class_scope));
+    if(auto fn = dyn_cast<FunctionDeclaration>(m)){
+      if (fn->name() == "destructor"){
+        class_decl->set_destructor(fn);
+      }
+    }
   }
   if (trace_stream_) {
     **trace_stream_ << "** finished checking class " << class_decl->name()

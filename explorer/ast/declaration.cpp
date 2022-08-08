@@ -199,6 +199,43 @@ void ReturnTerm::Print(llvm::raw_ostream& out) const {
   }
 }
 
+auto FunctionDeclaration::CreateDestructor(Nonnull<Arena*> arena,
+                                 SourceLocation source_loc,
+                                 std::vector<Nonnull<AstNode*>> deduced_params,
+                                 Nonnull<TuplePattern*> param_pattern,
+                                 ReturnTerm return_term,
+                                 std::optional<Nonnull<Block*>> body)
+    -> ErrorOr<Nonnull<FunctionDeclaration*>> {
+  std::vector<Nonnull<GenericBinding*>> resolved_params;
+  std::optional<Nonnull<Pattern*>> me_pattern;
+
+  // Look for the `me` parameter in the `deduced_parameters`
+  // and put it in the `me_pattern`.
+  for (Nonnull<AstNode*> param : deduced_params) {
+    switch (param->kind()) {
+      case AstNodeKind::GenericBinding:
+        resolved_params.push_back(&cast<GenericBinding>(*param));
+        break;
+      case AstNodeKind::BindingPattern: {
+        Nonnull<BindingPattern*> bp = &cast<BindingPattern>(*param);
+        if (me_pattern.has_value() || bp->name() != "me") {
+          return CompilationError(source_loc)
+                 << "illegal binding pattern in implicit parameter list";
+        }
+        me_pattern = bp;
+        break;
+      }
+      default:
+        return CompilationError(source_loc)
+               << "illegal AST node in implicit parameter list";
+    }
+  }
+  return arena->New<FunctionDeclaration>(source_loc, "destructor",
+                                         std::move(resolved_params), me_pattern,
+                                         param_pattern, return_term,
+                                         body);
+}
+
 auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
                                  SourceLocation source_loc, std::string name,
                                  std::vector<Nonnull<AstNode*>> deduced_params,

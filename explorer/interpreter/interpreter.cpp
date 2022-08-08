@@ -142,6 +142,9 @@ class Interpreter {
                     Nonnull<const Value*> arg, ImplWitnessMap&& witnesses)
       -> ErrorOr<Success>;
 
+  auto CallDestructor(Nonnull<const FunctionDeclaration*> fun, Nonnull<const Value*> receiver)
+      ->ErrorOr<Success>;
+
   void PrintState(llvm::raw_ostream& out);
 
   Phase phase() const { return phase_; }
@@ -733,6 +736,27 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
   }
 }
 
+auto Interpreter::CallDestructor(Nonnull<const FunctionDeclaration*> fun,
+                                 Nonnull<const Value*> receiver) -> ErrorOr<Success> {
+  const FunctionDeclaration& method = *fun;
+  CARBON_CHECK(method.is_method());
+  RuntimeScope method_scope(&heap_);
+  BindingMap generic_args;
+  // Bind the receiver to the `me` parameter.
+  CARBON_CHECK(PatternMatch(&method.me_pattern().value(), receiver,
+                            fun->source_loc(), &method_scope, generic_args,
+                            trace_stream_, this->arena_));
+
+
+  CARBON_CHECK(method.body().has_value())
+      << "Calling a method that's missing a body";
+
+  todo_.Push(std::make_unique<StatementAction>(*method.body()),std::move(method_scope));
+   //return todo_.Spawn(std::make_unique<StatementAction>(*method.body()),
+     //                std::move(method_scope));
+  return Success();
+}
+
 auto Interpreter::CallFunction(const CallExpression& call,
                                Nonnull<const Value*> fun,
                                Nonnull<const Value*> arg,
@@ -850,6 +874,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
 
 auto Interpreter::StepExp() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
+
   const Expression& exp = cast<ExpressionAction>(act).expression();
   if (trace_stream_) {
     **trace_stream_ << "--- step exp " << exp << " ." << act.pos() << "."
@@ -949,7 +974,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       bool forming_member_name = isa<TypeOfMemberName>(&access.static_type());
       if (act.pos() == 0) {
         // First, evaluate the first operand.
-        if (access.is_field_addr_me_method()) {
+        if (access.is_field_addr_me_method()){
           return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
         } else {
           return todo_.Spawn(
@@ -959,6 +984,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                  !forming_member_name) {
         // Next, if we're accessing an interface member, evaluate the `impl`
         // expression to find the corresponding witness.
+
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(access.impl().value()));
       } else {
@@ -1543,7 +1569,26 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       if (act.pos() >= static_cast<int>(block.statements().size())) {
         // If the position is past the end of the block, end processing. Note
         // that empty blocks immediately end.
-        return todo_.FinishAction();
+        if(block.destruction_active()){
+          return todo_.FinishAction();
+        }
+        block.activate_destruction();
+        auto & block_scope = *act.scope();
+        auto locals = block_scope.GetLocals();
+
+
+        for( auto [key,lvalue] : locals){
+          auto value = heap_.Read(lvalue->address(),stmt.source_loc());
+          if(const auto * class_obj = dyn_cast<NominalClassValue>(*value)){
+            auto &class_type = cast<NominalClassType>(class_obj->type());
+            auto &class_dec = class_type.declaration();
+            if(class_dec.destructor().has_value()) {
+              auto x = CallDestructor(*class_dec.destructor(), class_obj);
+              (void)x;
+            }
+          }
+        }
+        return Success();//todo_.FinishAction();
       }
       // Initialize a scope when starting a block.
       if (act.pos() == 0) {
@@ -1682,6 +1727,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
             Nonnull<const Value*> return_value,
             Convert(act.results()[0], &function.return_term().static_type(),
                     stmt.source_loc()));
+
         return todo_.UnwindPast(*function.body(), return_value);
       }
     case StatementKind::Continuation: {

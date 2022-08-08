@@ -114,6 +114,13 @@ class FunctionDeclaration : public Declaration {
                      std::optional<Nonnull<Block*>> body)
       -> ErrorOr<Nonnull<FunctionDeclaration*>>;
 
+  static auto CreateDestructor(Nonnull<Arena*> arena, SourceLocation source_loc,
+                     std::vector<Nonnull<AstNode*>> deduced_params,
+                     Nonnull<TuplePattern*> param_pattern,
+                     ReturnTerm return_term,
+                     std::optional<Nonnull<Block*>> body)
+      -> ErrorOr<Nonnull<FunctionDeclaration*>>;
+
   // Use `Create()` instead. This is public only so Arena::New() can call it.
   FunctionDeclaration(SourceLocation source_loc, std::string name,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,
@@ -221,7 +228,12 @@ class ClassDeclaration : public Declaration {
   auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
     return members_;
   }
-
+  auto destructor() const -> std::optional<Nonnull<FunctionDeclaration*>> {
+    return destructor_;
+  }
+  void set_destructor(Nonnull<FunctionDeclaration*> dtor){
+    destructor_ = dtor;
+  }
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
  private:
@@ -231,6 +243,7 @@ class ClassDeclaration : public Declaration {
   std::optional<Nonnull<TuplePattern*>> type_params_;
   std::optional<Nonnull<Expression*>> extends_;
   std::vector<Nonnull<Declaration*>> members_;
+  std::optional<Nonnull<FunctionDeclaration*>> destructor_;
 };
 
 class AlternativeSignature : public AstNode {
