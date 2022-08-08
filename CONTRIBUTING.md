@@ -177,7 +177,7 @@ access. All requests require a
     -   Grants edit access to Carbon Language documents, as well as the ability
         to edit Calendar events.
 -   GitHub Label/project contributor access:
-    [ask on #proposal-prs-and-process](https://discord.com/channels/655572317891461132/710222916662591528)
+    [ask on #access-requests](https://discord.com/channels/655572317891461132/1006221387574292540)
     -   Don't forget to mention your GitHub username.
     -   Used by the proposal process.
 
