@@ -402,22 +402,8 @@ void Value::Print(llvm::raw_ostream& out) const {
     }
     case Value::Kind::MixinPseudoType: {
       const auto& mixin_type = cast<MixinPseudoType>(*this);
-      out << "mixin " << mixin_type.declaration().name();
-      if (!mixin_type.type_args().empty()) {
-        out << "(";
-        llvm::ListSeparator sep;
-        for (const auto& [bind, val] : mixin_type.type_args()) {
-          out << sep << bind->name() << " = " << *val;
-        }
-        out << ")";
-      }
-      if (!mixin_type.impls().empty()) {
-        out << " impls ";
-        llvm::ListSeparator sep;
-        for (const auto& [impl_bind, impl] : mixin_type.impls()) {
-          out << sep << *impl;
-        }
-      }
+      out << "mixin ";
+      PrintNameWithBindings(out, &mixin_type.declaration(), mixin_type.args());
       if (!mixin_type.witnesses().empty()) {
         out << " witnesses ";
         llvm::ListSeparator sep;

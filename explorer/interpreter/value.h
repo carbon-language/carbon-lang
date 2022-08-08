@@ -634,77 +634,37 @@ class NominalClassType : public Value {
 
 class MixinPseudoType : public Value {
  public:
-  // Construct a non-generic mixin type.
   explicit MixinPseudoType(Nonnull<const MixinDeclaration*> declaration)
       : Value(Kind::MixinPseudoType), declaration_(declaration) {
     CARBON_CHECK(!declaration->params().has_value())
-        << "missing arguments for parameterized class type";
+        << "missing arguments for parameterized mixin type";
   }
-
-  // Construct a class type that represents the result of applying the
-  // given generic class to the `type_args`.
   explicit MixinPseudoType(Nonnull<const MixinDeclaration*> declaration,
-                           const BindingMap& type_args)
+                           Nonnull<const Bindings*> bindings)
       : Value(Kind::MixinPseudoType),
         declaration_(declaration),
-        type_args_(type_args) {}
-
-  // Construct a class type that represents the result of applying the
-  // given generic class to the `type_args` and that records the result of the
-  // compile-time search for any required impls.
-  explicit MixinPseudoType(Nonnull<const MixinDeclaration*> declaration,
-                           const BindingMap& type_args, const ImplExpMap& impls)
-      : Value(Kind::MixinPseudoType),
-        declaration_(declaration),
-        type_args_(type_args),
-        impls_(impls) {}
-
-  // Construct a fully instantiated generic class type to represent the
-  // run-time type of an object.
-  explicit MixinPseudoType(Nonnull<const MixinDeclaration*> declaration,
-                           const BindingMap& type_args,
-                           const ImplWitnessMap& wits)
-      : Value(Kind::MixinPseudoType),
-        declaration_(declaration),
-        type_args_(type_args),
-        witnesses_(wits) {}
+        bindings_(bindings) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::MixinPseudoType;
   }
 
   auto declaration() const -> const MixinDeclaration& { return *declaration_; }
-  auto type_args() const -> const BindingMap& { return type_args_; }
 
-  // Maps each of an instantiated generic class's impl bindings to an
-  // expression that constructs the witness table for the corresponding
-  // argument. Should not be called on 1) a non-generic class, 2) a
-  // generic-class that is not instantiated, or 3) a fully
-  // instantiated runtime type of a generic class.
-  auto impls() const -> const ImplExpMap& { return impls_; }
+  auto bindings() const -> const Bindings& { return *bindings_; }
 
-  // Maps each of the class's impl bindings to the witness table
-  // for the corresponding argument. Should only be called on a fully
-  // instantiated runtime type of a generic class.
-  auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
+  auto args() const -> const BindingMap& { return bindings_->args(); }
 
-  // Returns whether this a parameterized class. That is, a class with
-  // parameters and no corresponding arguments.
-  auto IsParameterized() const -> bool {
-    return declaration_->params().has_value() && type_args_.empty();
+  auto witnesses() const -> const ImplWitnessMap& {
+    return bindings_->witnesses();
   }
 
-  // Returns the value of the function named `name` in this class, or
-  // nullopt if there is no such function.
   auto FindFunction(const std::string_view& name) const
       -> std::optional<Nonnull<const FunctionValue*>>;
 
  private:
   Nonnull<const MixinDeclaration*> declaration_;
-  std::optional<Nonnull<const InterfaceDeclaration*>> import_decl_;
-  BindingMap type_args_;
-  ImplExpMap impls_;
-  ImplWitnessMap witnesses_;
+  Nonnull<const Bindings*> bindings_ = Bindings::None();
 };
 
 // Return the declaration of the member with the given name.
