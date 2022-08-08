@@ -106,6 +106,6 @@ This criterion includes:
 This criterion does not include:
 
 -   Cleaning up coding style to idiomatic Carbon.
-    -   For example, heavy use of C++ pre-processor macros may result in
+    -   For example, heavy use of C++ preprocessor macros may result in
         expanded code where there is no equivalent Carbon metaprogramming
         construct.
