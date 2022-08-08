@@ -61,7 +61,7 @@ typical tool setup flow is:
         create a GitHub fork and clone the repository locally
     -   `cd carbon-lang` to go into the cloned fork's directory.
     -   `pre-commit install` to set up [pre-commit](#pre-commit) in the clone.
-4.  Validate your installation by invoking `bazel test //...:all' from the
+4.  Validate your installation by invoking `bazel test //...:all` from the
     project root. All tests should pass.
 
 <!-- google-doc-style-resume -->
