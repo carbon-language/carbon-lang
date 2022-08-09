@@ -662,13 +662,12 @@ auto TypeChecker::ArgumentDeduction(
       const auto& var_type = cast<VariableType>(*param);
       const auto& binding = cast<VariableType>(*param).binding();
       if (binding.has_static_type()) {
-        if (!IsTypeOfType(&binding.static_type())) {
-          if (!IsImplicitlyConvertible(arg, &binding.static_type(), impl_scope,
-                                       false)) {
+        const Value* binding_type = Substitute(deduced, &binding.static_type());
+        if (!IsTypeOfType(binding_type)) {
+          if (!IsImplicitlyConvertible(arg, binding_type, impl_scope, false)) {
             return CompilationError(source_loc)
                    << "cannot convert deduced value " << *arg << " for "
-                   << binding.name() << " to parameter type "
-                   << binding.static_type();
+                   << binding.name() << " to parameter type " << *binding_type;
           }
         }
       }
