@@ -45,7 +45,7 @@ considered for promotion to senior moderators when:
 ## Moderation powers
 
 There is a moderation playbook for moderators with instructions on how to use
-these powers.
+these powers. This enumerates specific actions a moderator may take.
 
 -   **Discord**
 
@@ -95,6 +95,9 @@ these powers.
         Hiding or editing messages is preferred.
 
     -   **Block user** (senior): Blocks a user from all repositories.
+
+    -   Note: We use custom roles which have
+        [limited access granularity](https://docs.github.com/en/enterprise-cloud@latest/organizations/managing-peoples-access-to-your-organization-with-roles/managing-custom-repository-roles-for-an-organization).
 
 -   **Google Docs**
 
