@@ -671,8 +671,9 @@ auto TypeChecker::ArgumentDeduction(
             if (!IsImplicitlyConvertible(substituted_param_type,
                                          arg, impl_scope, false)) {
               return CompilationError(source_loc)
-                     << "Could not convert argument " << *substituted_param_type
-                     << " to parameter type " << binding.static_type();
+                     << "cannot convert deduced value " << *arg
+                     << " for " << binding.name()
+                     << " to parameter type " << *substituted_param_type;
             }
           }
         }
