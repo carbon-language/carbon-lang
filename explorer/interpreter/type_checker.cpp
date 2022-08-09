@@ -359,21 +359,38 @@ auto TypeChecker::FieldTypesImplicitlyConvertible(
   return true;
 }
 
+// Returns all class members from class and its parent classes.
+static auto GetAllClassMembers(const NominalClassType& class_type)
+    -> std::vector<llvm::ArrayRef<Nonnull<Declaration*>>> {
+  const auto* class_decl = &class_type.declaration();
+  std::vector<llvm::ArrayRef<Nonnull<Declaration*>>> all_members{
+      class_decl->members()};
+  while (class_decl->base().has_value()) {
+    const auto type_of_class = llvm::dyn_cast<TypeOfClassType>(
+        &class_decl->base().value()->static_type());
+    class_decl = &type_of_class->class_type().declaration();
+    all_members.push_back(class_decl->members());
+  }
+  return all_members;
+}
+
 auto TypeChecker::FieldTypes(const NominalClassType& class_type) const
     -> std::vector<NamedValue> {
   std::vector<NamedValue> field_types;
-  for (Nonnull<Declaration*> m : class_type.declaration().members()) {
-    switch (m->kind()) {
-      case DeclarationKind::VariableDeclaration: {
-        const auto& var = cast<VariableDeclaration>(*m);
-        Nonnull<const Value*> field_type =
-            Substitute(class_type.type_args(), &var.binding().static_type());
-        field_types.push_back(
-            {.name = var.binding().name(), .value = field_type});
-        break;
+  for (const auto& members : GetAllClassMembers(class_type)) {
+    for (Nonnull<Declaration*> m : members) {
+      switch (m->kind()) {
+        case DeclarationKind::VariableDeclaration: {
+          const auto& var = cast<VariableDeclaration>(*m);
+          Nonnull<const Value*> field_type =
+              Substitute(class_type.type_args(), &var.binding().static_type());
+          field_types.push_back(
+              {.name = var.binding().name(), .value = field_type});
+          break;
+        }
+        default:
+          break;
       }
-      default:
-        break;
     }
   }
   return field_types;
