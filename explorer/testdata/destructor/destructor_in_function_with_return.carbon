@@ -15,8 +15,9 @@ package ExplorerTest api;
 
 class A{
     fn destructor[me: Self]{
-        Print("DESTRUCTOR A");
+        Print("DESTRUCTOR A {0}",me.n);
     }
+    var n: i32;
 }
 
 class B{
@@ -32,14 +33,13 @@ class A0{
 }
 
 fn Main() -> i32 {
-  var i: i32 = 0;
-  while( i < 1){
-    var b: B = {};
-    var a0: A0 ={};
-    var a: A = {};
-
-
-    i = i + 1;
-  }
+    var i : i32 = 0;
+    var a0: A = {.n = 2};
+  //  while(i < 1){
+  //    var a0 : A = {.n = 0};
+  //    var a1 : A = {.n = 1};
+  //    var a2 : A = {.n = 2};
+  //   i = i + 1;
+  // }
   return 1;
 }

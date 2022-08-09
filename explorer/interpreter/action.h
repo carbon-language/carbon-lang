@@ -91,8 +91,7 @@ class Action {
     StatementAction,
     DeclarationAction,
     ScopeAction,
-    RecursiveAction,
-    DestructorAction
+    RecursiveAction
   };
 
   Action(const Value&) = delete;
@@ -171,40 +170,6 @@ class LValAction : public Action {
   Nonnull<const Expression*> expression_;
 };
 
-
-class DestructorAction : public Action {
-public:
-    explicit DestructorAction(std::list<std::pair<Nonnull<const Block*>,RuntimeScope>> &destructors,
-                              const std::function<ErrorOr<Success>()> & last_stack_manipulation)
-            : Action(Kind::DestructorAction),
-              destructors_(std::move(destructors)),
-              last_stack_manipulation_(last_stack_manipulation),
-              destructors_activated_(false){}
-
-    static auto classof(const Action* action) -> bool {
-        return action->kind() == Kind::DestructorAction;
-    }
-    auto destructors() const -> const std::list<std::pair<Nonnull<const Block*>,RuntimeScope>>& {
-        return destructors_;
-    }
-    auto last_stack_manipulation() const -> const std::function<ErrorOr<Success>()>& {
-        return last_stack_manipulation_;
-    }
-    void activate_destructors() {
-        destructors_activated_ = true;
-    }
-    auto destructors_active() const -> bool {
-        return destructors_activated_;
-    }
-
-private:
-    std::list<std::pair<Nonnull<const Block*>,RuntimeScope>> destructors_;
-    std::function<ErrorOr<Success>()> last_stack_manipulation_;
-    bool destructors_activated_;
-
-};
-
-
 // An Action which implements evaluation of an Expression to produce an
 // rvalue. The result is expressed as a Value.
 class ExpressionAction : public Action {
@@ -246,7 +211,8 @@ class PatternAction : public Action {
 class StatementAction : public Action {
  public:
   explicit StatementAction(Nonnull<const Statement*> statement)
-      : Action(Kind::StatementAction), statement_(statement) {}
+      : Action(Kind::StatementAction),
+        statement_(statement), destruction_active_(false) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::StatementAction;
@@ -254,9 +220,29 @@ class StatementAction : public Action {
 
   // The Statement this Action executes.
   auto statement() const -> const Statement& { return *statement_; }
+  void add_destructor_calls(const  std::list<std::pair<Nonnull<const FunctionDeclaration*>, Nonnull<const Value*>>> & l){
+      destruction_active_ = true;
+      destructor_calls_ = l;
+  }
+
+  auto PopDestructorCall() -> std::pair<Nonnull<const FunctionDeclaration*>, Nonnull<const Value*>> {
+      auto ret = destructor_calls_.back();
+      destructor_calls_.pop_back();
+      return ret;
+  }
+
+  auto DestructionActive() const -> bool {
+      return destruction_active_;
+  }
+
+  auto HasDestructorCalls() const -> bool {
+      return !destructor_calls_.empty();
+  }
 
  private:
   Nonnull<const Statement*> statement_;
+  bool destruction_active_;
+  std::list<std::pair<Nonnull<const FunctionDeclaration*>, Nonnull<const Value*>>> destructor_calls_;
 };
 
 // Action which implements the run-time effects of executing a Declaration.
