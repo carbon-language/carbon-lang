@@ -10,12 +10,9 @@
 
 package ExplorerTest api;
 
-fn AddInt(a: i32, b: i32) -> auto {
-  return a + b;
-}
-
 fn Main() -> i32 {
   var x: i32;
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/uninitialized/static/fail_local_unformed_param.carbon:[[@LINE+1]]: use of uninitialized variable x
-  return AddInt(x, 2);
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/unformed/static/fail_field_value.carbon:[[@LINE+1]]: use of uninitialized variable x
+  var p: auto = {.x = x,};
+  return 0;
 }

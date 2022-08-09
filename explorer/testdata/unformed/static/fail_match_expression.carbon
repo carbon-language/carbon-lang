@@ -10,17 +10,12 @@
 
 package ExplorerTest api;
 
-fn Foo() -> i32;
-
 fn Main() -> i32 {
   var x : i32;
-  match (Foo()) {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/unformed/static/fail_match_expression.carbon:[[@LINE+1]]: use of uninitialized variable x
+  match (x) {
     case 0 => {
-      return 2;
-    }
-    case 1 => {
-      // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/uninitialized/static/control_flow/fail_local_unformed_match_clause.carbon:[[@LINE+1]]: use of uninitialized variable x
-      return x;
+      return 1;
     }
     default => {
       return 0;

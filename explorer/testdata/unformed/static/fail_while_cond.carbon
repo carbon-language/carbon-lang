@@ -11,7 +11,10 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  returned var x: i32;
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/uninitialized/static/fail_unformed_returned_var.carbon:[[@LINE+1]]: use of uninitialized variable x
-  return var;
+  var (x: i32, y: i32);
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/unformed/static/fail_while_cond.carbon:[[@LINE+1]]: use of uninitialized variable x
+  while (x == 0) {
+    y = 1;
+  }
+  return 1;
 }
