@@ -1532,8 +1532,7 @@ auto TypeChecker::DeduceCallBindings(
   // Convert the arguments to the parameter type.
   Nonnull<const Value*> param_type = Substitute(generic_bindings, params_type);
 
-  // Test is substituted param is convertible to the original type.
-
+  // Convert the arguments to the deduced and substituted parameter type.
   CARBON_ASSIGN_OR_RETURN(
       Nonnull<Expression*> converted_argument,
       ImplicitlyConvert("call", impl_scope, &call.argument(), param_type));
