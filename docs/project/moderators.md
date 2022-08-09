@@ -24,8 +24,8 @@ conduct. Senior moderators will have the "senior-moderator" role on Discord.
 TODO: Need to figure out right process for asking. (that is, how?)
 
 The Conduct team reviews new moderators. Community members will be considered
-mainly based on their history on the Carbon Language Discord, although
-applicants may also note history on other servers.
+mainly based on their history in Carbon Language community spaces (Discord, GitHub, etc.), although
+applicants may also note history in other communities.
 
 Prior to being granted moderation privileges, new moderators will need to attend
 a workshop in order to help orient them with the Carbon Language community's
