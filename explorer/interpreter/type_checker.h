@@ -320,8 +320,6 @@ class TypeChecker {
                                bool allow_user_defined_conversions) const
       -> bool;
 
-  auto ResolveType(Nonnull<const Value*> source) const -> Nonnull<const Value*>;
-
   // Attempt to implicitly convert type-checked expression `source` to the type
   // `destination`.
   auto ImplicitlyConvert(const std::string& context,
