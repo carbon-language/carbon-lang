@@ -98,7 +98,7 @@ these powers. This enumerates specific actions a moderator may take.
 
     -   Note: We use custom roles which have
         [limited access options](https://docs.github.com/en/enterprise-cloud@latest/organizations/managing-peoples-access-to-your-organization-with-roles/managing-custom-repository-roles-for-an-organization)
-        versus
+        versus what
         [base permissions](https://docs.github.com/en/organizations/managing-access-to-your-organizations-repositories/repository-roles-for-an-organization)
         allow.
 
