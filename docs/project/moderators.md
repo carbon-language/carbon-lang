@@ -97,7 +97,10 @@ these powers. This enumerates specific actions a moderator may take.
     -   **Block user** (senior): Blocks a user from all repositories.
 
     -   Note: We use custom roles which have
-        [limited access granularity](https://docs.github.com/en/enterprise-cloud@latest/organizations/managing-peoples-access-to-your-organization-with-roles/managing-custom-repository-roles-for-an-organization).
+        [limited access options](https://docs.github.com/en/enterprise-cloud@latest/organizations/managing-peoples-access-to-your-organization-with-roles/managing-custom-repository-roles-for-an-organization)
+        versus
+        [base permissions](https://docs.github.com/en/organizations/managing-access-to-your-organizations-repositories/repository-roles-for-an-organization)
+        allow.
 
 -   **Google Docs**
 
