@@ -279,7 +279,7 @@ a pull request instead go through the full evolution process.
 ### Proposal PRs
 
 A proposal PR should use the `proposal` label, have a descriptive title, and
-easily understand initial summary comment. Authors and leads are encouraged to
+easily understood initial summary comment. Authors and leads are encouraged to
 edit both as necessary to ensure they give the best high-level understanding of
 the proposal possible.
 
