@@ -49,10 +49,10 @@ these powers.
 
 -   **Discord**
 
-    -   **Delete message** (senior): Delete a message owned by another user.
-
     -   **Timeout user** (all): Prevent a user from sending messages on the
         Discord server for up to a week.
+
+    -   **Delete message** (senior): Delete a message owned by another user.
 
     -   **Kick user** (senior): Temporarily remove a user from the Discord
         server. Note that users can rejoin the server, and so banning is
@@ -69,7 +69,8 @@ these powers.
 
 -   **GitHub**
 
-    -   **Lock conversation** (all): Prevent more discussion on a topic.
+    -   **Convert issue to discussion** (all): Moves an issue to a discussion.
+        This is mainly organizational.
 
     -   **Hide message** (all): Collapses a message so that its text is not
         immediately visible, reducing distractions. Recommended for moderators
@@ -78,17 +79,19 @@ these powers.
 
         -   This cannot be done with the first message in a conversation.
 
-    -   **Edit message** (all): Edits content of a message. Users can still view
-        the original content.
+    -   **Lock conversation** (senior): Prevent more discussion on a topic.
 
-    -   **Edit title** (all): Edits the title of a thread.
+    -   **Edit message** (senior): Edits content of a message. Users can still
+        view the original content.
 
-    -   **Delete message** (all): Removes a single message from a conversation.
-        Hiding or editing messages is preferred.
+    -   **Edit title** (senior): Edits the title of a thread.
+
+    -   **Delete message** (senior): Removes a single message from a
+        conversation. Hiding or editing messages is preferred.
 
         -   This cannot be done to the first message in a conversation.
 
-    -   **Delete conversation** (all): Deletes a full GitHub conversation.
+    -   **Delete conversation** (senior): Deletes a full GitHub conversation.
         Hiding or editing messages is preferred.
 
     -   **Block user** (senior): Blocks a user from all repositories.
