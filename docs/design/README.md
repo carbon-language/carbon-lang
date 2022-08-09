@@ -212,7 +212,8 @@ much like in C++. However, an important difference from C++ is that types are
 themselves modeled as values; specifically, compile-time constant values. This
 means that the grammar for writing a type is the [expression](#expressions)
 grammar. Expressions written where a type is expected must be able to be
-evaluated at compile-time and must evaluate to a type value.
+evaluated at compile-time and must evaluate to a type value. Parameters to a
+type are expressed using the function-call syntax.
 
 ## Primitive types
 
