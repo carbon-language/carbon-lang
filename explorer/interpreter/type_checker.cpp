@@ -663,7 +663,7 @@ auto TypeChecker::ArgumentDeduction(
       const auto& binding = cast<VariableType>(*param).binding();
       if (binding.has_static_type()) {
         if (!IsTypeOfType(&binding.static_type())) {
-          if (!IsImplicitlyConvertible(&binding.static_type(), arg, impl_scope,
+          if (!IsImplicitlyConvertible(arg, &binding.static_type(), impl_scope,
                                        false)) {
             return CompilationError(source_loc)
                    << "cannot convert deduced value " << *arg << " for "
