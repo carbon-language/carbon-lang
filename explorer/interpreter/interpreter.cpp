@@ -1504,53 +1504,53 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       }
     }
     case StatementKind::For: {
-      static int CURRENT_INDEX_POS = 1;
-      static int TARGET_VAR_POS = 0;
-      static int END_INDEX_POS = 2;
+      constexpr int TargetVarPosInResult = 0;
+      constexpr int CurrentIndexPosInResult = 1;
+      constexpr int EndIndexPosInResult = 2;
+      constexpr int LoopVarPosInResult = 3;
       if (act.pos() == 0) {
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(&cast<For>(stmt).loop_target()));
       }
       if (act.pos() == 1) {
         Nonnull<const TupleValue*> source_array =
-            cast<const TupleValue>(act.results()[TARGET_VAR_POS]);
+            cast<const TupleValue>(act.results()[TargetVarPosInResult]);
 
         auto end_index = static_cast<int>(source_array->elements().size());
-        auto start_index = 0;
-
-        if (end_index > 0) {
-          return todo_.FinishAction();
+        if(end_index == 0){
+            return todo_.FinishAction();
         }
-        act.AddResult(arena_->New<IntValue>(start_index));
+        act.AddResult(arena_->New<IntValue>(0));
         act.AddResult(arena_->New<IntValue>(end_index));
         return todo_.Spawn(std::make_unique<PatternAction>(
-            &cast<For>(stmt).variable_declaration()));
+                &cast<For>(stmt).variable_declaration()));
+
       }
       if (act.pos() == 2) {
         Nonnull<const BindingPlaceholderValue*> loop_var =
-            cast<const BindingPlaceholderValue>(act.results().back());
+            cast<const BindingPlaceholderValue>(act.results()[LoopVarPosInResult]);
         Nonnull<const TupleValue*> source_array =
-            cast<const TupleValue>(act.results()[TARGET_VAR_POS]);
+            cast<const TupleValue>(act.results()[TargetVarPosInResult]);
 
         auto start_index =
-            cast<IntValue>(act.results()[CURRENT_INDEX_POS])->value();
+            cast<IntValue>(act.results()[CurrentIndexPosInResult])->value();
         todo_.Initialize(*(loop_var->value_node()),
                          source_array->elements()[start_index]);
-        act.ReplaceResult(CURRENT_INDEX_POS,
+        act.ReplaceResult(CurrentIndexPosInResult,
                           arena_->New<IntValue>(start_index + 1));
         return todo_.Spawn(
             std::make_unique<StatementAction>(&cast<For>(stmt).body()));
       }
       if (act.pos() >= 3) {
         auto current_index =
-            cast<IntValue>(act.results()[CURRENT_INDEX_POS])->value();
-        auto end_index = cast<IntValue>(act.results()[END_INDEX_POS])->value();
+            cast<IntValue>(act.results()[CurrentIndexPosInResult])->value();
+        auto end_index = cast<IntValue>(act.results()[EndIndexPosInResult])->value();
 
         if (current_index < end_index) {
           Nonnull<const TupleValue*> source_array =
-              cast<const TupleValue>(act.results()[TARGET_VAR_POS]);
+              cast<const TupleValue>(act.results()[TargetVarPosInResult]);
           Nonnull<const BindingPlaceholderValue*> loop_var =
-              cast<const BindingPlaceholderValue>(act.results().back());
+              cast<const BindingPlaceholderValue>(act.results()[LoopVarPosInResult]);
 
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> assigned_array_element,
@@ -1561,7 +1561,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
               lvalue->address(), source_array->elements()[current_index],
               stmt.source_loc()));
 
-          act.ReplaceResult(CURRENT_INDEX_POS,
+          act.ReplaceResult(CurrentIndexPosInResult,
                             arena_->New<IntValue>(current_index + 1));
           return todo_.Spawn(
               std::make_unique<StatementAction>(&cast<For>(stmt).body()));
@@ -1570,6 +1570,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       return todo_.FinishAction();
     }
     case StatementKind::While:
+      //TODO: Rewrite While to use ReplaceResult to store condition result.
+      //      This will remove the inconsistency between the while and for loops.
       if (act.pos() % 2 == 0) {
         //    { { (while (e) s) :: C, E, F} :: S, H}
         // -> { { e :: (while ([]) s) :: C, E, F} :: S, H}
