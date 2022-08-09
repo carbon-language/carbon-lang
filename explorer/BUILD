@@ -35,6 +35,7 @@ cc_binary(
         ":main",
         "@llvm-project//llvm:Support",
     ],
+    visibility = ["//visibility:public"] # for doctests
 )
 
 py_binary(

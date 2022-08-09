@@ -28,6 +28,11 @@ pip_install(
     requirements = "//github_tools:requirements.txt",
 )
 
+pip_install(
+    name = "py_deps_doctests",
+    requirements = "//docs:tests/requirements.txt",
+)
+
 ###############################################################################
 # C++ rules
 ###############################################################################

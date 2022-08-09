@@ -19,3 +19,5 @@ filegroup(
     srcs = glob(["**/*.carbon"]),
     visibility = ["//visibility:public"],
 )
+
+exports_files(["lit.cfg.py"]) # for doctests
