@@ -143,7 +143,7 @@ class Interpreter {
       -> ErrorOr<Success>;
 
   auto CallDestructor(Nonnull<const FunctionDeclaration*> fun, Nonnull<const Value*> receiver)
-      ->ErrorOr<Success>;
+      ->ErrorOr<std::pair<Nonnull<const Block*>,RuntimeScope>>;
 
   void PrintState(llvm::raw_ostream& out);
 
@@ -737,7 +737,8 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
 }
 
 auto Interpreter::CallDestructor(Nonnull<const FunctionDeclaration*> fun,
-                                 Nonnull<const Value*> receiver) -> ErrorOr<Success> {
+                                 Nonnull<const Value*> receiver)
+                                 -> ErrorOr<std::pair<Nonnull<const Block*>,RuntimeScope>>  {
   const FunctionDeclaration& method = *fun;
   CARBON_CHECK(method.is_method());
   RuntimeScope method_scope(&heap_);
@@ -751,10 +752,10 @@ auto Interpreter::CallDestructor(Nonnull<const FunctionDeclaration*> fun,
   CARBON_CHECK(method.body().has_value())
       << "Calling a method that's missing a body";
 
-  todo_.Push(std::make_unique<StatementAction>(*method.body()),std::move(method_scope));
+  return { {*method.body(),std::move(method_scope)} };
    //return todo_.Spawn(std::make_unique<StatementAction>(*method.body()),
      //                std::move(method_scope));
-  return Success();
+  //return Success();
 }
 
 auto Interpreter::CallFunction(const CallExpression& call,
@@ -1569,26 +1570,33 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       if (act.pos() >= static_cast<int>(block.statements().size())) {
         // If the position is past the end of the block, end processing. Note
         // that empty blocks immediately end.
+          llvm::outs() <<__LINE__<< "Destruction active\n";
         if(block.destruction_active()){
+          llvm::outs() <<__LINE__<< "Destruction active\n";
           return todo_.FinishAction();
         }
         block.activate_destruction();
         auto & block_scope = *act.scope();
         auto locals = block_scope.GetLocals();
 
-
+        std::list<std::pair<Nonnull<const Block*>,RuntimeScope>> destructor_calls;
         for( auto [key,lvalue] : locals){
           auto value = heap_.Read(lvalue->address(),stmt.source_loc());
           if(const auto * class_obj = dyn_cast<NominalClassValue>(*value)){
             auto &class_type = cast<NominalClassType>(class_obj->type());
             auto &class_dec = class_type.declaration();
             if(class_dec.destructor().has_value()) {
-              auto x = CallDestructor(*class_dec.destructor(), class_obj);
-              (void)x;
+                destructor_calls.push_back( std::move(*CallDestructor(*class_dec.destructor(), class_obj)) );
             }
           }
         }
-        return Success();//todo_.FinishAction();
+        if(destructor_calls.empty()){
+          return todo_.FinishAction();
+        }
+
+        return todo_.Spawn(std::make_unique<DestructorAction>(destructor_calls,
+                          [&]()->ErrorOr<Success>{ return todo_.FinishAction(); }));
+        //return Success();//todo_.FinishAction();
       }
       // Initialize a scope when starting a block.
       if (act.pos() == 0) {
@@ -1828,6 +1836,25 @@ auto Interpreter::Step() -> ErrorOr<Success> {
       CARBON_FATAL() << "ScopeAction escaped ActionStack";
     case Action::Kind::RecursiveAction:
       CARBON_FATAL() << "Tried to step a RecursiveAction";
+    case Action::Kind::DestructorAction: {
+        DestructorAction &destructor_action = cast<DestructorAction>(act);
+        if(destructor_action.destructors_active()){
+            return todo_.FinishAction();
+        }
+        destructor_action.activate_destructors();
+        for (auto & action: destructor_action.destructors()) {
+            auto x = std::move(action.first);
+            RuntimeScope method_scope(&heap_);
+
+            CARBON_RETURN_IF_ERROR(todo_.Spawn(std::make_unique<StatementAction>(x), std::move(method_scope)));
+            llvm::outs()<<"CALL DESTRUCTOR\n";
+            CARBON_RETURN_IF_ERROR(StepStmt());
+        }
+        llvm::outs()<<"CALL DESTRUCTOR 1\n";
+
+        CARBON_RETURN_IF_ERROR(todo_.FinishAction());
+        return destructor_action.last_stack_manipulation()();
+    }
   }  // switch
   return Success();
 }
@@ -1838,11 +1865,27 @@ auto Interpreter::RunAllSteps(std::unique_ptr<Action> action)
     PrintState(**trace_stream_);
   }
   todo_.Start(std::move(action));
+  Action& act = todo_.CurrentAction();
   while (!todo_.IsEmpty()) {
-    CARBON_RETURN_IF_ERROR(Step());
-    if (trace_stream_) {
-      PrintState(**trace_stream_);
-    }
+      switch(act.kind()) {
+          case Action::Kind::DestructorAction: {
+              llvm::outs()<<"G<<" <<"\n";
+              DestructorAction &destructor_action = cast<DestructorAction>(act);
+              for (auto & action: destructor_action.destructors()) {
+                  auto x = std::move(action.first);
+                  RuntimeScope method_scope(&heap_);
+
+                  CARBON_RETURN_IF_ERROR(todo_.Spawn(std::make_unique<StatementAction>(x), std::move(method_scope)));
+                  CARBON_RETURN_IF_ERROR(Step());
+              }
+              return destructor_action.last_stack_manipulation()();
+          }
+          default:
+              CARBON_RETURN_IF_ERROR(Step());
+              if (trace_stream_) {
+                  PrintState(**trace_stream_);
+              }
+      }
   }
   return Success();
 }

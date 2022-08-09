@@ -138,6 +138,9 @@ auto ActionStack::FinishAction() -> ErrorOr<Success> {
     case Action::Kind::DeclarationAction:
     case Action::Kind::RecursiveAction:
       PopScopes();
+      break;
+    case Action::Kind::DestructorAction:
+        return Success();
   }
   return Success();
 }
@@ -157,6 +160,10 @@ auto ActionStack::FinishAction(Nonnull<const Value*> result)
     case Action::Kind::PatternAction:
       PopScopes();
       SetResult(result);
+      break;
+    case Action::Kind::DestructorAction:
+      return Success();
+
   }
   return Success();
 }

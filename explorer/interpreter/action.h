@@ -5,7 +5,9 @@
 #ifndef CARBON_EXPLORER_INTERPRETER_ACTION_H_
 #define CARBON_EXPLORER_INTERPRETER_ACTION_H_
 
+#include <list>
 #include <map>
+#include <tuple>
 #include <vector>
 
 #include "common/ostream.h"
@@ -90,7 +92,7 @@ class Action {
     DeclarationAction,
     ScopeAction,
     RecursiveAction,
-    DESTRUCTOR_ACTION
+    DestructorAction
   };
 
   Action(const Value&) = delete;
@@ -172,18 +174,34 @@ class LValAction : public Action {
 
 class DestructorAction : public Action {
 public:
-    explicit DestructorAction(Nonnull<const Expression*> expression)
-            : Action(Kind::ExpressionAction), expression_(expression) {}
+    explicit DestructorAction(std::list<std::pair<Nonnull<const Block*>,RuntimeScope>> &destructors,
+                              const std::function<ErrorOr<Success>()> & last_stack_manipulation)
+            : Action(Kind::DestructorAction),
+              destructors_(std::move(destructors)),
+              last_stack_manipulation_(last_stack_manipulation),
+              destructors_activated_(false){}
 
     static auto classof(const Action* action) -> bool {
         return action->kind() == Kind::DestructorAction;
     }
-
-    // The Expression this Action evaluates.
-    auto expression() const -> const Expression& { return *expression_; }
+    auto destructors() const -> const std::list<std::pair<Nonnull<const Block*>,RuntimeScope>>& {
+        return destructors_;
+    }
+    auto last_stack_manipulation() const -> const std::function<ErrorOr<Success>()>& {
+        return last_stack_manipulation_;
+    }
+    void activate_destructors() {
+        destructors_activated_ = true;
+    }
+    auto destructors_active() const -> bool {
+        return destructors_activated_;
+    }
 
 private:
-    Nonnull<const Expression*> expression_;
+    std::list<std::pair<Nonnull<const Block*>,RuntimeScope>> destructors_;
+    std::function<ErrorOr<Success>()> last_stack_manipulation_;
+    bool destructors_activated_;
+
 };
 
 
