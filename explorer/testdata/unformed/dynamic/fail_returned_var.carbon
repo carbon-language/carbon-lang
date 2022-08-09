@@ -11,12 +11,11 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  var (x: i32, y: i32);
-  x = 1;
+  // CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/unformed/dynamic/fail_returned_var.carbon:[[@LINE+1]]: undefined behavior: access to uninitialized value Uninit<Placeholder<x>>
+  returned var x: i32;
   if (0 == 1) {
-    y = 0;
+    x = 0;
   }
-  // Static analysis thinks `y` may be formed, defer the check to run-time.
-  // CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/unformed/dynaimic/fail_pattern_declare.carbon:[[@LINE+1]]: undefined behavior: access to uninitialized value Uninit<Placeholder<y>>
-  return y;
+  // Static analysis thinks `x` may be formed, defer the check to run-time.
+  return var;
 }
