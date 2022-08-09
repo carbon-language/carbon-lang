@@ -19,9 +19,9 @@ load(
 load("@bazel_tools//tools/build_defs/cc:action_names.bzl", "ACTION_NAMES")
 load(
     ":clang_detected_variables.bzl",
+    "clang_bindir",
     "clang_include_dirs_list",
     "clang_resource_dir",
-    "clang_bindir",
     "llvm_bindir",
     "sysroot_dir",
 )

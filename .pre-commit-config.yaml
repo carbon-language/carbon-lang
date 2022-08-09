@@ -57,9 +57,10 @@ repos:
       - id: buildifier
         name: Bazel buildifier
         entry: scripts/run_buildifier.py
+        args: ['-r', '.']
         language: python
         files: |
-          (?x)^(
+          '(?x)^(
             .*BUILD.*|
             .*WORKSPACE.*|
             .*\.bzl

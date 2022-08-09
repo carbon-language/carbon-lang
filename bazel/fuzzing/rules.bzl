@@ -40,7 +40,7 @@ def cc_fuzz_test(
     if "fuzzer" not in features:
         features = features + ["fuzzer"]
     if "@llvm-project//compiler-rt:FuzzerMain" not in deps:
-      deps = deps + ["@llvm-project//compiler-rt:FuzzerMain"]
+        deps = deps + ["@llvm-project//compiler-rt:FuzzerMain"]
 
     # Append the corpus files to the test arguments. When run on a list of
     # files rather than a directory, libFuzzer-based fuzzers will perform a
