@@ -23,7 +23,7 @@ def generate_md_tests(srcs, tool):
             cmd = "tarpath=$(location " + tarpath + ") \
                 && $(location " + tool + ") --input=$(location " + src + ") --output=$${tarpath%.*} \
                 && cp $(location " + testcfg + ") . \
-                && tar cf \"$@\" $${tarpath%.*} lit.cfg.py --remove-files",
+                && tar cf \"$@\" $${tarpath%.*} lit.cfg.py",
         )
         test_data = [
             "//explorer",
