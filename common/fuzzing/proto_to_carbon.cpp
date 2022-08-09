@@ -586,6 +586,16 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
       BlockStatementToCarbon(while_statement.body(), out);
       break;
     }
+    case Fuzzing::Statement::kForStatement: {
+      const auto& for_statement = statement.for_statement();
+      out << "for (";
+      BindingPatternToCarbon(for_statement.var_decl(), out);
+      out << " in ";
+      ExpressionToCarbon(for_statement.target(), out);
+      out << ") ";
+      BlockStatementToCarbon(for_statement.body(), out);
+      break;
+    }
 
     case Fuzzing::Statement::kMatch: {
       const auto& match = statement.match();

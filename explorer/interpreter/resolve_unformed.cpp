@@ -196,6 +196,7 @@ static auto ResolveUnformed(
     case StatementKind::Continuation:
     case StatementKind::Run:
     case StatementKind::Await:
+    case StatementKind::For:
       // do nothing
       break;
   }

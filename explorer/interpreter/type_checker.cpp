@@ -2965,6 +2965,29 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       CARBON_RETURN_IF_ERROR(TypeCheckStmt(&while_stmt.body(), impl_scope));
       return Success();
     }
+    case StatementKind::For: {
+      auto& for_stmt = cast<For>(*s);
+      ImplScope inner_impl_scope;
+      inner_impl_scope.AddParent(&impl_scope);
+
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckExp(&for_stmt.loop_target(), inner_impl_scope));
+
+      const Value& rhs = for_stmt.loop_target().static_type();
+      if (rhs.kind() == Value::Kind::StaticArrayType) {
+        CARBON_RETURN_IF_ERROR(
+            TypeCheckPattern(&for_stmt.variable_declaration(),
+                             &cast<StaticArrayType>(rhs).element_type(),
+                             inner_impl_scope, ValueCategory::Var));
+
+      } else {
+        return CompilationError(for_stmt.source_loc())
+               << "expected array type after in, found value of type " << rhs;
+      }
+
+      CARBON_RETURN_IF_ERROR(TypeCheckStmt(&for_stmt.body(), inner_impl_scope));
+      return Success();
+    }
     case StatementKind::Break:
     case StatementKind::Continue:
       return Success();
@@ -3163,6 +3186,7 @@ auto TypeChecker::ExpectReturnOnAllPaths(
     case StatementKind::Assign:
     case StatementKind::ExpressionStatement:
     case StatementKind::While:
+    case StatementKind::For:
     case StatementKind::Break:
     case StatementKind::Continue:
     case StatementKind::VariableDefinition:
