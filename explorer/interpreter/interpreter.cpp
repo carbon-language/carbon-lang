@@ -1517,18 +1517,18 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
             cast<const TupleValue>(act.results()[TargetVarPosInResult]);
 
         auto end_index = static_cast<int>(source_array->elements().size());
-        if(end_index == 0){
-            return todo_.FinishAction();
+        if (end_index == 0) {
+          return todo_.FinishAction();
         }
         act.AddResult(arena_->New<IntValue>(0));
         act.AddResult(arena_->New<IntValue>(end_index));
         return todo_.Spawn(std::make_unique<PatternAction>(
-                &cast<For>(stmt).variable_declaration()));
-
+            &cast<For>(stmt).variable_declaration()));
       }
       if (act.pos() == 2) {
         Nonnull<const BindingPlaceholderValue*> loop_var =
-            cast<const BindingPlaceholderValue>(act.results()[LoopVarPosInResult]);
+            cast<const BindingPlaceholderValue>(
+                act.results()[LoopVarPosInResult]);
         Nonnull<const TupleValue*> source_array =
             cast<const TupleValue>(act.results()[TargetVarPosInResult]);
 
@@ -1544,13 +1544,15 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       if (act.pos() >= 3) {
         auto current_index =
             cast<IntValue>(act.results()[CurrentIndexPosInResult])->value();
-        auto end_index = cast<IntValue>(act.results()[EndIndexPosInResult])->value();
+        auto end_index =
+            cast<IntValue>(act.results()[EndIndexPosInResult])->value();
 
         if (current_index < end_index) {
           Nonnull<const TupleValue*> source_array =
               cast<const TupleValue>(act.results()[TargetVarPosInResult]);
           Nonnull<const BindingPlaceholderValue*> loop_var =
-              cast<const BindingPlaceholderValue>(act.results()[LoopVarPosInResult]);
+              cast<const BindingPlaceholderValue>(
+                  act.results()[LoopVarPosInResult]);
 
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> assigned_array_element,
@@ -1570,8 +1572,9 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       return todo_.FinishAction();
     }
     case StatementKind::While:
-      //TODO: Rewrite While to use ReplaceResult to store condition result.
-      //      This will remove the inconsistency between the while and for loops.
+      // TODO: Rewrite While to use ReplaceResult to store condition result.
+      //       This will remove the inconsistency between the while and for
+      //       loops.
       if (act.pos() % 2 == 0) {
         //    { { (while (e) s) :: C, E, F} :: S, H}
         // -> { { e :: (while ([]) s) :: C, E, F} :: S, H}
