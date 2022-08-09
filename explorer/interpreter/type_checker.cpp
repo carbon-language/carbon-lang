@@ -669,8 +669,7 @@ auto TypeChecker::ArgumentDeduction(
         if (binding.has_static_type()) {
           if (!IsTypeOfType(&binding.static_type())) {
             if (!IsImplicitlyConvertible(substituted_param_type,
-                                         &binding.static_type(), impl_scope,
-                                         false)) {
+                                         arg, impl_scope, false)) {
               return CompilationError(source_loc)
                      << "Could not convert argument " << *substituted_param_type
                      << " to parameter type " << binding.static_type();
