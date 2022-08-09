@@ -434,7 +434,7 @@ auto TypeChecker::IsImplicitlyConvertible(
         case Value::Kind::StaticArrayType: {
           const auto& unchecked_destination_array =
               cast<StaticArrayType>(*destination);
-          StaticArrayType const& destination_array =
+          const auto& destination_array =
               !unchecked_destination_array.size()
                   ? cast<StaticArrayType>(
                         *(destination = arena_->New<StaticArrayType>(

@@ -923,7 +923,7 @@ class ArrayTypeLiteral : public Expression {
     return *element_type_expression_;
   }
 
-  auto size_expression() const -> std::optional<Nonnull<Expression*>> {
+  auto size_expression() const -> std::optional<Nonnull<const Expression*>> {
     return size_expression_;
   }
   auto size_expression() -> std::optional<Nonnull<Expression*>> {
