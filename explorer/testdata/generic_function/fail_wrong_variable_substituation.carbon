@@ -17,7 +17,7 @@ fn Get[T:! ()](n: T) -> i32 {  return 2; }
 
 fn Main() -> i32 {
   var x : X = {};
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_wrong_variable_substituation.carbon:[[@LINE+1]]: Could not convert argument class X to parameter type ()
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_wrong_variable_substituation.carbon:[[@LINE+1]]: cannot convert deduced value class X for T to parameter type T:! ()
   Get(x);
   return 0;
 }

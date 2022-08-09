@@ -660,24 +660,23 @@ auto TypeChecker::ArgumentDeduction(
   switch (param->kind()) {
     case Value::Kind::VariableType: {
       const auto& var_type = cast<VariableType>(*param);
+      const Value* substituted_param_type = Substitute(deduced, param);
+      const auto& binding = cast<VariableType>(*param).binding();
+      if (binding.has_static_type()) {
+        if (!IsTypeOfType(&binding.static_type())) {
+          if (!IsImplicitlyConvertible(substituted_param_type, arg, impl_scope,
+                                       false)) {
+            return CompilationError(source_loc)
+                   << "cannot convert deduced value " << *arg << " for "
+                   << binding.name() << " to parameter type "
+                   << *substituted_param_type;
+          }
+        }
+      }
+
       if (std::find(bindings_to_deduce.begin(), bindings_to_deduce.end(),
                     &var_type.binding()) != bindings_to_deduce.end()) {
         auto [it, success] = deduced.insert({&var_type.binding(), arg});
-
-        const Value* substituted_param_type = Substitute(deduced, param);
-        const auto& binding = cast<VariableType>(*param).binding();
-        if (binding.has_static_type()) {
-          if (!IsTypeOfType(&binding.static_type())) {
-            if (!IsImplicitlyConvertible(substituted_param_type,
-                                         arg, impl_scope, false)) {
-              return CompilationError(source_loc)
-                     << "cannot convert deduced value " << *arg
-                     << " for " << binding.name()
-                     << " to parameter type " << *substituted_param_type;
-            }
-          }
-        }
-
         if (!success) {
           // All deductions are required to produce the same value. Note that
           // we intentionally don't consider type equality here; we need the
@@ -690,10 +689,11 @@ auto TypeChecker::ArgumentDeduction(
                    << var_type.binding() << ":\n  " << *it->second << "\n  "
                    << *arg;
           }
-          return Success();
         }
+      } else {
+        return handle_non_deduced_type();
       }
-      return handle_non_deduced_type();
+      return Success();
     }
     case Value::Kind::TupleValue: {
       if (arg->kind() != Value::Kind::TupleValue) {
