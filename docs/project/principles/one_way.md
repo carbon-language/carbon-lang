@@ -111,7 +111,7 @@ occurs are:
     [understandability of code](/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write),
     there may be times that a particular use-case is common enough that
     simplifying its syntax provides substantial benefit.
-    -   For example, `for (var x: auto in list)` could typically be written with
+    -   For example, `for (var x: auto in list)` could typically be written
         as a `while` loop, but range-based for loops are considered to improve
         understandability. However, C++'s `for (;;)` syntax is sufficiently
         close to `while` that we expect to use `while` to address the
@@ -123,7 +123,7 @@ occurs are:
     migration.
     -   For example, consider generics and templates: generics are considered to
         be the preferred form for new code, but templates are considered a
-        necessity for migration of C++ code. This is not an evolution situation
+        necessity for migration of C++ code. This is not an evolutionary situation
         because we do not anticipate ever removing templates.
 
 ### Non-obvious alternatives
