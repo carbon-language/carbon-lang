@@ -441,5 +441,3 @@ class Heap {
 }
 
 var heap: Heap = {};
-
-g;
