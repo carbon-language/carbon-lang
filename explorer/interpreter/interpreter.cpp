@@ -1513,18 +1513,18 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       }
       if (act.pos() == 1) {
         Nonnull<const TupleValue*> source_array =
-            cast<const TupleValue>(act.results().back());
+            cast<const TupleValue>(act.results()[TARGET_VAR_POS]);
 
         auto end_index = static_cast<int>(source_array->elements().size());
         auto start_index = 0;
 
-        if (start_index < end_index) {
-          act.AddResult(arena_->New<IntValue>(start_index));
-          act.AddResult(arena_->New<IntValue>(end_index));
-          return todo_.Spawn(std::make_unique<PatternAction>(
-              &cast<For>(stmt).variable_declaration()));
+        if (end_index > 0) {
+          return todo_.FinishAction();
         }
-        return todo_.FinishAction();
+        act.AddResult(arena_->New<IntValue>(start_index));
+        act.AddResult(arena_->New<IntValue>(end_index));
+        return todo_.Spawn(std::make_unique<PatternAction>(
+            &cast<For>(stmt).variable_declaration()));      
       }
       if (act.pos() == 2) {
         Nonnull<const BindingPlaceholderValue*> loop_var =
