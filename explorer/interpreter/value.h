@@ -590,11 +590,14 @@ class NominalClassType : public Value {
 
   // Construct a fully instantiated generic class type to represent the
   // run-time type of an object.
-  explicit NominalClassType(Nonnull<const ClassDeclaration*> declaration,
-                            Nonnull<const Bindings*> bindings)
+  explicit NominalClassType(
+      Nonnull<const ClassDeclaration*> declaration,
+      Nonnull<const Bindings*> bindings,
+      std::optional<Nonnull<const NominalClassType*>> base = std::nullopt)
       : Value(Kind::NominalClassType),
         declaration_(declaration),
-        bindings_(bindings) {}
+        bindings_(bindings),
+        base_(base) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassType;
@@ -603,6 +606,10 @@ class NominalClassType : public Value {
   auto declaration() const -> const ClassDeclaration& { return *declaration_; }
 
   auto bindings() const -> const Bindings& { return *bindings_; }
+
+  auto base() const -> std::optional<Nonnull<const NominalClassType*>> {
+    return base_;
+  }
 
   auto type_args() const -> const BindingMap& { return bindings_->args(); }
 
@@ -623,6 +630,7 @@ class NominalClassType : public Value {
  private:
   Nonnull<const ClassDeclaration*> declaration_;
   Nonnull<const Bindings*> bindings_ = Bindings::None();
+  std::optional<Nonnull<const NominalClassType*>> base_;
 };
 
 // Returns the value of the function named `name` in this class, or

@@ -7,7 +7,11 @@
 #include <algorithm>
 #include <iterator>
 #include <map>
+#include <optional>
 #include <set>
+#include <string>
+#include <string_view>
+#include <unordered_set>
 #include <vector>
 
 #include "common/error.h"
@@ -360,30 +364,59 @@ auto TypeChecker::FieldTypesImplicitlyConvertible(
 }
 
 // Returns all class members from class and its parent classes.
-static auto GetAllClassMembers(const NominalClassType& class_type)
-    -> std::vector<llvm::ArrayRef<Nonnull<Declaration*>>> {
-  const auto* class_decl = &class_type.declaration();
-  std::vector<llvm::ArrayRef<Nonnull<Declaration*>>> all_members{
-      class_decl->members()};
-  while (class_decl->base().has_value()) {
+static auto GetClassHierarchy(const NominalClassType& class_type)
+    -> std::vector<Nonnull<const NominalClassType*>> {
+  Nonnull<const NominalClassType*> curr_class_type = &class_type;
+  std::vector<Nonnull<const NominalClassType*>> all_classes{curr_class_type};
+  while (curr_class_type->declaration().base().has_value()) {
     const auto type_of_class = llvm::dyn_cast<TypeOfClassType>(
-        &class_decl->base().value()->static_type());
-    class_decl = &type_of_class->class_type().declaration();
-    all_members.push_back(class_decl->members());
+        &curr_class_type->declaration().base().value()->static_type());
+    curr_class_type = &type_of_class->class_type();
+    all_classes.push_back(curr_class_type);
+  }
+  return all_classes;
+}
+
+// Returns all class members from class and its parent classes.
+static auto GetAllClassMembers(const ClassDeclaration& class_decl)
+    -> std::vector<llvm::ArrayRef<Nonnull<Declaration*>>> {
+  const auto* curr_class_decl = &class_decl;
+  std::vector<llvm::ArrayRef<Nonnull<Declaration*>>> all_members{
+      curr_class_decl->members()};
+  while (curr_class_decl->base().has_value()) {
+    const auto type_of_class = llvm::dyn_cast<TypeOfClassType>(
+        &curr_class_decl->base().value()->static_type());
+    curr_class_decl = &type_of_class->class_type().declaration();
+    all_members.push_back(curr_class_decl->members());
   }
   return all_members;
+}
+
+// Executes the given visitor on all members of the given class, and its
+// parent classes. Stops when the visitor returns an error and return it,
+// otherwise returns Success.
+static auto VisitAllClassMembers(
+    const ClassDeclaration& class_decl,
+    llvm::function_ref<ErrorOr<Success>(Nonnull<Declaration*>)> visitor)
+    -> ErrorOr<Success> {
+  for (const auto& members : GetAllClassMembers(class_decl)) {
+    for (const auto& m : members) {
+      CARBON_RETURN_IF_ERROR(visitor(m));
+    }
+  }
+  return Success();
 }
 
 auto TypeChecker::FieldTypes(const NominalClassType& class_type) const
     -> std::vector<NamedValue> {
   std::vector<NamedValue> field_types;
-  for (const auto& members : GetAllClassMembers(class_type)) {
-    for (Nonnull<Declaration*> m : members) {
+  for (const auto class_type : GetClassHierarchy(class_type)) {
+    for (Nonnull<Declaration*> m : class_type->declaration().members()) {
       switch (m->kind()) {
         case DeclarationKind::VariableDeclaration: {
           const auto& var = cast<VariableDeclaration>(*m);
           Nonnull<const Value*> field_type =
-              Substitute(class_type.type_args(), &var.binding().static_type());
+              Substitute(class_type->type_args(), &var.binding().static_type());
           field_types.push_back(
               {.name = var.binding().name(), .value = field_type});
           break;
@@ -3314,10 +3347,15 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     return CompilationError(class_decl->source_loc())
            << "Class prefixes `base` and `abstract` are not supported yet";
   }
+
+  std::optional<Nonnull<const NominalClassType*>> base_class;
   if (class_decl->base()) {
-    const auto* expr_parent = class_decl->base().value();
-    CARBON_RETURN_IF_ERROR(
-        TypeCheckExp(Nonnull<Expression*>(expr_parent), class_scope));
+    const auto base_class_expr = class_decl->base();
+    CARBON_RETURN_IF_ERROR(TypeCheckExp(
+        Nonnull<Expression*>(base_class_expr.value()), class_scope));
+    const auto& type_of_class =
+        cast<TypeOfClassType>(base_class_expr.value()->static_type());
+    base_class = &type_of_class.class_type();
   }
 
   std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
@@ -3339,9 +3377,11 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     // above and/or by any enclosing generic classes.
     generic_args[binding] = *binding->symbolic_identity();
   }
+
   Nonnull<NominalClassType*> self_type = arena_->New<NominalClassType>(
       class_decl,
-      arena_->New<Bindings>(std::move(generic_args), Bindings::NoWitnesses));
+      arena_->New<Bindings>(std::move(generic_args), Bindings::NoWitnesses),
+      base_class);
   SetConstantValue(self, self_type);
   self->set_static_type(arena_->New<TypeOfClassType>(self_type));
 
@@ -3392,6 +3432,21 @@ auto TypeChecker::TypeCheckClassDeclaration(
   for (Nonnull<Declaration*> m : class_decl->members()) {
     CARBON_RETURN_IF_ERROR(TypeCheckDeclaration(m, class_scope));
   }
+  std::unordered_set<std::string_view> member_names;
+  const auto check_duplicate_members =
+      [&member_names](Nonnull<Declaration*> m) -> ErrorOr<Success> {
+    if (const auto name = GetName(*m); name.has_value()) {
+      if (auto [_, inserted] = member_names.insert(name.value()); !inserted) {
+        return CompilationError(m->source_loc())
+               << "A member named `" << name.value()
+               << "` already exists in this class or its parents";
+      };
+    }
+    return Success();
+  };
+  CARBON_RETURN_IF_ERROR(
+      VisitAllClassMembers(*class_decl, check_duplicate_members));
+
   if (trace_stream_) {
     **trace_stream_ << "** finished checking class " << class_decl->name()
                     << "\n";
