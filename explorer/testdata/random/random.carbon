@@ -6,7 +6,8 @@
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// NOAUTOUPDATE
+// AUTOUPDATE: %{explorer} %s
+// CHECK: Nice!
 // CHECK: result: 0
 
 package ExplorerTest api;
