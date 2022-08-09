@@ -660,16 +660,15 @@ auto TypeChecker::ArgumentDeduction(
   switch (param->kind()) {
     case Value::Kind::VariableType: {
       const auto& var_type = cast<VariableType>(*param);
-      const Value* substituted_param_type = Substitute(deduced, param);
       const auto& binding = cast<VariableType>(*param).binding();
       if (binding.has_static_type()) {
         if (!IsTypeOfType(&binding.static_type())) {
-          if (!IsImplicitlyConvertible(substituted_param_type, arg, impl_scope,
+          if (!IsImplicitlyConvertible(&binding.static_type(), arg, impl_scope,
                                        false)) {
             return CompilationError(source_loc)
                    << "cannot convert deduced value " << *arg << " for "
                    << binding.name() << " to parameter type "
-                   << *substituted_param_type;
+                   << binding.static_type();
           }
         }
       }
