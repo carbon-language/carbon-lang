@@ -316,7 +316,7 @@ incremental changes and preserves a simple linear history.
 ## Acknowledgements
 
 Carbon's Contributing guidelines are based on
-[Tensorflow](https://github.com/tensorflow/tensorflow/blob/master/CONTRIBUTING.md)
+[TensorFlow](https://github.com/tensorflow/tensorflow/blob/master/CONTRIBUTING.md)
 and [Flutter](https://github.com/flutter/flutter/blob/master/CONTRIBUTING.md)
 guidelines. Many thanks to these communities for their help in providing a
 basis.

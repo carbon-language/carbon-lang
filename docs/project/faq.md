@@ -537,7 +537,7 @@ ask (see
 
 ### How can I best say "I like X" or "I don't like X"?
 
-Both Discord and Github Discussions allow you to give an emoji "reaction" to
+Both Discord and GitHub Discussions allow you to give an emoji "reaction" to
 individual posts. If you'd like to amplify what has already been said, please
 use these instead of posting messages that re-state substantially the same
 thing. These make conversations easier to follow and understand general
