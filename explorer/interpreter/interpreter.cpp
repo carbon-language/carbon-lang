@@ -1524,7 +1524,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         act.AddResult(arena_->New<IntValue>(start_index));
         act.AddResult(arena_->New<IntValue>(end_index));
         return todo_.Spawn(std::make_unique<PatternAction>(
-            &cast<For>(stmt).variable_declaration()));      
+            &cast<For>(stmt).variable_declaration()));
       }
       if (act.pos() == 2) {
         Nonnull<const BindingPlaceholderValue*> loop_var =
