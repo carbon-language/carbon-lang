@@ -3838,6 +3838,7 @@ auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
 auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
                                            const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
+    llvm::outs()<<__LINE__<<"\t---BEGIN:" << *choice <<"\n";
     ImplScope choice_scope;
     choice_scope.AddParent(scope_info.innermost_scope);
     std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
@@ -3850,6 +3851,8 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
             **trace_stream_ << choice_scope;
         }
     }
+    llvm::outs()<<__LINE__<<"\t\t---Block:" << 1 <<"\n";
+
 
     // For class declaration `class MyType(T:! Type, U:! AnInterface)`, `Self`
     // should have the value `MyType(T, U)`.
@@ -3861,6 +3864,8 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
         generic_args[binding] = *binding->symbolic_identity();
     }
 
+    llvm::outs()<<__LINE__<<"\t\t---Block:" << 2 <<"\n";
+
     if (choice->type_params().has_value()) {
         // TODO: The `enclosing_bindings` should be tracked in the parameterized
         // entity name so that they can be included in the eventual type.
@@ -3871,16 +3876,25 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
         choice->set_static_type(
                 arena_->New<TypeOfParameterizedEntityName>(param_name));
     }
-  std::vector<NamedValue> alternatives;
+    llvm::outs()<<__LINE__<<"\t\t---Block:" << 3 <<"\n";
+
+    std::vector<NamedValue> alternatives;
   for (Nonnull<AlternativeSignature*> alternative : choice->alternatives()) {
     CARBON_ASSIGN_OR_RETURN(auto signature,
                             TypeCheckTypeExp(&alternative->signature(),
                                              *scope_info.innermost_scope));
     alternatives.push_back({.name = alternative->name(), .value = signature});
   }
-  auto ct = arena_->New<ChoiceType>(choice->name(), std::move(alternatives));
-  SetConstantValue(choice, ct);
-  choice->set_static_type(arena_->New<TypeOfChoiceType>(ct));
+    llvm::outs()<<__LINE__<<"\t\t---Block:" << 4 <<"\n";
+
+    auto ct = arena_->New<ChoiceType>(choice->name(), std::move(alternatives));
+    llvm::outs()<<__LINE__<<"\t\t---Block:" << "4a" <<"\n";
+
+
+    SetConstantValue(choice, ct);
+    llvm::outs()<<__LINE__<<"\t\t---Block:" << "4b" <<"\n";
+    choice->set_static_type(arena_->New<TypeOfChoiceType>(ct));
+  llvm::outs()<<__LINE__<<"\t---ENDE\n";
   return Success();
 }
 
