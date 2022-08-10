@@ -2071,10 +2071,23 @@ Note that the right-hand side of the equal sign (`=`) is a name not a value, so
 `alias four = 4;` is not allowed. This allows `alias` to work with entities like
 namespaces, which aren't values in Carbon.
 
-This can be used during an incremental migration when changing a name, or to
-include a name in a public API. For example, `alias` may be used to include a
-name from an interface implementation as a member of a class or
-[named constraint](generics/details.md#named-constraints), possibly renamed:
+This can be used during an incremental migration when changing a name. For
+example, `alias` would allow you to have two names for a data field in a class
+while clients were migrated between the old name and the new name.
+
+```carbon
+class MyClass {
+  var new_name: String;
+  alias old_name = new_name;
+}
+
+var x: MyClass = {.new_name = "hello"};
+Carbon.Assert(x.old_name == "hello");
+```
+
+Another use is to include a name in a public API. For example, `alias` may be
+used to include a name from an interface implementation as a member of a class
+or [named constraint](generics/details.md#named-constraints), possibly renamed:
 
 ```carbon
 class ContactInfo {
