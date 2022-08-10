@@ -396,9 +396,6 @@ are available for representing strings with `\`s and `"`s.
 
 ## Value categories and value phases
 
-**FIXME:** Should this be moved together with
-[Types are values](#types-are-values)?
-
 Every value has a
 [value category](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>),
 similar to [C++](https://en.cppreference.com/w/cpp/language/value_category),
@@ -481,6 +478,10 @@ fn DoubleTuple(x: (i32, i32)) -> (i32, i32) {
 Tuple types are
 [structural](https://en.wikipedia.org/wiki/Structural_type_system).
 
+> **Note:** This is provisional, no design for tuples has been through the
+> proposal process yet. Many of these questions were discussed in dropped
+> proposal [#111](https://github.com/carbon-language/carbon-lang/pull/111).
+
 > References: [Tuples](tuples.md)
 
 ### Struct types
@@ -531,6 +532,10 @@ type `Optional(T*)`.
 [stricter pointer provenance](https://www.ralfj.de/blog/2022/04/11/provenance-exposed.html)
 or restrictions on casts between pointers and integers.
 
+> **Note:** While the syntax for points has been decided, the semantics of
+> pointers is provisional, as is the syntax for optionals. See pending proposal
+> [#821: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/821).
+
 > References:
 >
 > -   Question-for-leads issue
@@ -561,6 +566,10 @@ Console.Print(a[0]);
 ```
 
 > **TODO:** Slices
+
+> **Note:** This is provisional, no design for arrays has been through the
+> proposal process yet. See pending proposal
+> [#1928: Arrays](https://github.com/carbon-language/carbon-lang/pull/1928).
 
 ## Expressions
 
@@ -663,6 +672,9 @@ function or class itself is visible until the end of the enclosing scope.
 >     [#472: Open question: Calling functions defined later in the same file](https://github.com/carbon-language/carbon-lang/issues/472)
 
 ## Patterns
+
+> **Note:** This is provisional, no design for patterns has been through the
+> proposal process yet.
 
 A _pattern_ says how to receive some data that is being matched against. There
 are two kinds of patterns:
@@ -792,6 +804,9 @@ Here `x: i64` is the pattern, which is followed by an equal sign (`=`) and the
 value to match, `42`. The names from [binding patterns](#binding-patterns) are
 introduced into the enclosing [scope](#declarations-definitions-and-scopes).
 
+> **Note:** `let` declarations are provisional. See pending proposal
+> [#821: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/821).
+
 ### Variable `var` declarations
 
 A `var` declaration is similar, except with `var` bindings, so `x` here is an
@@ -907,6 +922,10 @@ the caller, and dereferencing using `*` in the callee.
 Outputs of a function should prefer to be returned. Multiple values may be
 returned using a [tuple](#tuples) or [struct](#struct-types) type.
 
+> **Note:** The semantics of parameter passing are provisional. See pending
+> proposal
+> [#821: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/821).
+
 ### `auto` return type
 
 If `auto` is used in place of the return type, the return type of the function
@@ -976,6 +995,9 @@ the assignment.
 
 Unlike C++, these assignments are statements, not expressions, and don't return
 a value.
+
+> **Note:** The semantics of assignment are provisional. See pending proposal
+> [#821: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/821).
 
 ### Control flow
 
@@ -1103,7 +1125,13 @@ for (var step: Step in steps) {
 }
 ```
 
-> References: [`break`](control_flow/loops.md#break)
+> References:
+>
+> -   [`break`](control_flow/loops.md#break)
+> -   Proposal
+>     [#340: Add C++-like `while` loops](https://github.com/carbon-language/carbon-lang/pull/340)
+> -   Proposal
+>     [#353: Add C++-like `for` loops](https://github.com/carbon-language/carbon-lang/pull/353)
 
 ##### `continue`
 
@@ -1123,7 +1151,13 @@ while (!f.EOF()) {
 }
 ```
 
-> References: [`continue`](control_flow/loops.md#continue)
+> References:
+>
+> -   [`continue`](control_flow/loops.md#continue)
+> -   Proposal
+>     [#340: Add C++-like `while` loops](https://github.com/carbon-language/carbon-lang/pull/340)
+> -   Proposal
+>     [#353: Add C++-like `for` loops](https://github.com/carbon-language/carbon-lang/pull/353)
 
 #### `return`
 
@@ -1233,6 +1267,9 @@ fn Foo() -> f32 {
 }
 ```
 
+> **Note:** This is provisional, no design for `match` statements has been
+> through the proposal process yet.
+
 > References:
 >
 > -   [Pattern matching](pattern_matching.md)
@@ -1240,8 +1277,6 @@ fn Foo() -> f32 {
 >     [#1283: how should pattern matching and implicit conversion interact?](https://github.com/carbon-language/carbon-lang/issues/1283)
 
 ## User-defined types
-
-> **TODO:** Maybe rename to "nominal types"?
 
 ### Classes
 
@@ -1326,7 +1361,9 @@ sprocket = {.x = 2, .y = 1, .payload = "Bounce"};
 
 > References:
 >
-> -   [Classes: Construction](classes.md#construction)
+> -   [Classes: Assignment](classes.md#assignment)
+> -   Proposal
+>     [#722: Nominal classes and methods](https://github.com/carbon-language/carbon-lang/pull/722)
 > -   Proposal
 >     [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
 
@@ -1373,6 +1410,12 @@ class Registered {
 ```
 
 This approach can also be used for types that can't be copied or moved.
+
+> References:
+>
+> -   [Classes: Construction](classes.md#construction)
+> -   Proposal
+>     [#722: Nominal classes and methods](https://github.com/carbon-language/carbon-lang/pull/722)
 
 #### Methods
 
@@ -1532,7 +1575,7 @@ class DerivedFromAbstract extends AbstractClass {
 
 > References:
 >
-> -   [Inheritance](classes.md#inheritance)
+> -   [Classes: Inheritance](classes.md#inheritance)
 > -   Proposal
 >     [#777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777)
 > -   Proposal
@@ -1556,6 +1599,8 @@ names resolvable by the compiler, and don't act like forward declarations.
 > -   [Access control for class members](classes.md#access-control)
 > -   Question-for-leads issue
 >     [#665: `private` vs `public` _syntax_ strategy, as well as other visibility tools like `external`/`api`/etc.](https://github.com/carbon-language/carbon-lang/issues/665)
+> -   Proposal
+>     [#777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777)
 > -   Question-for-leads issue
 >     [#971: Private interfaces in public API files](https://github.com/carbon-language/carbon-lang/issues/971)
 
@@ -1595,7 +1640,7 @@ type, use `UnsafeDelete`.
 
 > References:
 >
-> -   [Destructors](classes.md#destructors)
+> -   [Classes: Destructors](classes.md#destructors)
 > -   Proposal
 >     [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
 
@@ -1682,6 +1727,12 @@ when returning a value from a function or by using the _move operator_ `~x`.
 This leaves `x` in an [unformed state](#unformed-state) and returns its old
 value.
 
+> **Note:** This is provisional. The move operator was discussed but not
+> proposed in accepted proposal
+> [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257).
+> See pending proposal
+> [#821: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/821).
+
 #### Mixins
 
 Mixins allow reuse with different trade-offs compared to
@@ -1691,7 +1742,9 @@ be done using
 [multiple inheritance](https://en.wikipedia.org/wiki/Multiple_inheritance) in
 C++.
 
-**TODO:** The design for mixins is still under development.
+> **TODO:** The design for mixins is still under development. The details here
+> are provisional. The mixin use case was included in accepted proposal
+> [#561: Basic classes: use cases, struct literals, struct types, and future work](https://github.com/carbon-language/carbon-lang/pull/561).
 
 ### Choice types
 
@@ -1931,7 +1984,7 @@ given name public.
 
 ### Package scope
 
-The top-level scope in a package is the scope of the package. This means:
+The top-level scope in a file is the scope of the package. This means:
 
 -   Within this scope (and its sub-namespaces), all visible names from the same
     package appear. This includes names from the same file, names from the `api`
@@ -2046,6 +2099,12 @@ P.M.Q();
 >
 > -   ["Namespaces" in "Code and name organization"](code_and_name_organization/README.md#namespaces)
 > -   ["Package and namespace members" in "Qualified names and member access"](expressions/member_access.md#package-and-namespace-members)
+> -   Proposal
+>     [#107: Code and name organization](https://github.com/carbon-language/carbon-lang/pull/107)
+> -   Proposal
+>     [#989: Member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
+> -   Question-for-leads issue
+>     [#1136: what is the top-level scope in a source file, and what names are found there?](https://github.com/carbon-language/carbon-lang/issues/1136)
 
 ### Naming conventions
 
@@ -2103,9 +2162,13 @@ class ContactInfo {
 > -   [`alias` a name from an external impl](generics/details.md#external-impl)
 > -   [`alias` a name in a named constraint](generics/details.md#named-constraints)
 > -   Proposal
+>     [#107: Code and name organization](https://github.com/carbon-language/carbon-lang/pull/107)
+> -   Proposal
 >     [#553: Generics details part 1](https://github.com/carbon-language/carbon-lang/pull/553)
 > -   Question-for-leads issue
 >     [#749: Alias syntax](https://github.com/carbon-language/carbon-lang/issues/749)
+> -   Proposal
+>     [#989: Member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
 
 ### Name lookup
 
