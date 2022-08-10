@@ -8,11 +8,16 @@
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
 
-package ExplorerTest api;
+package Foo api;
+
+class X{
+}
+
+fn Get[T:! ()](n: T) -> i32 {  return 2; }
 
 fn Main() -> i32 {
-  // Error: Can't use keyword `Self` as the name of a local.
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_local_named_self.carbon:[[@LINE+1]]: syntax error, unexpected COLON, expecting EQUAL
-  let Self: auto = 10;
+  var x : X = {};
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_wrong_variable_substituation.carbon:[[@LINE+1]]: cannot convert deduced value class X for T to parameter type ()
+  Get(x);
   return 0;
 }

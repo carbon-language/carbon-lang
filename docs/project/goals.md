@@ -507,9 +507,9 @@ interfaces with business logic in Carbon, although this direction can tolerate
 slightly more constraints both in supported features and performance overhead.
 In all cases, the particular performance overhead imposed by moving between C++
 and Carbon will need to be easily exposed and understood by developers. While a
-given piece code only needs to be migrated once, we expect interoperability to
-be invoked continuously to support migrated code and will thus remain important
-for most developers.
+given piece of code only needs to be migrated once, we expect interoperability
+to be invoked continuously to support migrated code and will thus remain
+important for most developers.
 
 ## Non-goals
 

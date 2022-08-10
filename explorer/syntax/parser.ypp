@@ -228,6 +228,7 @@
   FALSE
   FN
   FN_TYPE
+  FOR
   FORALL
   GREATER
   GREATER_EQUAL
@@ -235,6 +236,7 @@
   IF
   IMPL
   IMPORT
+  IN
   INTERFACE
   IS
   LEFT_CURLY_BRACE
@@ -934,6 +936,8 @@ statement:
     { $$ = arena->New<Run>(context.source_loc(), $2); }
 | AWAIT SEMICOLON
     { $$ = arena->New<Await>(context.source_loc()); }
+| FOR LEFT_PARENTHESIS variable_declaration IN type_expression RIGHT_PARENTHESIS block
+    { $$ = arena->New<For>(context.source_loc(), $3, $5, $7); }
 ;
 if_statement:
   IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS block optional_else

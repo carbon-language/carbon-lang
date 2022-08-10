@@ -7,20 +7,31 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: Nice!
-// CHECK: result: 0
+// CHECK: HALLO WELT
+// CHECK: HALLO WELT
+// CHECK: HALLO WELT
+// CHECK: HALLO WELT
+// CHECK: HALLO WELT
+// CHECK: HALLO WELT
+// CHECK: HALLO WELT
+// CHECK: HALLO WELT
+// CHECK: result: 8
 
 package ExplorerTest api;
-fn test(para: i32)->bool{
-  return true;
-}
+
+
+
+
 fn Main() -> i32 {
-  var i : i32 = Rand(0,100);
-  var j : i32 = Rand(0,100);
-  if(i == j){
-    Print("HALLO WELT");
-  }else{
-    Print("Nice!");
+  var ar: [i32; 4] = (0, 1,2,3);
+  var count : i32 = 0;
+  for( x: i32 in ar){
+      Print("HALLO WELT ", x);
+      count = count +1;
   }
-  return 0;
+  for( x: i32 in ar){
+      Print("HALLO WELT ", x);
+      count = count +1;
+  }
+  return count;
 }

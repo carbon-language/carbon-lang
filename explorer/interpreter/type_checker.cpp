@@ -518,6 +518,7 @@ auto TypeChecker::ImplicitlyConvert(const std::string& context,
                                     Nonnull<const Value*> destination)
     -> ErrorOr<Nonnull<Expression*>> {
   Nonnull<const Value*> source_type = &source->static_type();
+
   // TODO: If a builtin conversion works, for now we don't create any
   // expression to do the conversion and rely on the interpreter to know how to
   // do it.
@@ -661,6 +662,18 @@ auto TypeChecker::ArgumentDeduction(
   switch (param->kind()) {
     case Value::Kind::VariableType: {
       const auto& var_type = cast<VariableType>(*param);
+      const auto& binding = cast<VariableType>(*param).binding();
+      if (binding.has_static_type()) {
+        const Value* binding_type = Substitute(deduced, &binding.static_type());
+        if (!IsTypeOfType(binding_type)) {
+          if (!IsImplicitlyConvertible(arg, binding_type, impl_scope, false)) {
+            return CompilationError(source_loc)
+                   << "cannot convert deduced value " << *arg << " for "
+                   << binding.name() << " to parameter type " << *binding_type;
+          }
+        }
+      }
+
       if (std::find(bindings_to_deduce.begin(), bindings_to_deduce.end(),
                     &var_type.binding()) != bindings_to_deduce.end()) {
         auto [it, success] = deduced.insert({&var_type.binding(), arg});
@@ -842,8 +855,9 @@ auto TypeChecker::ArgumentDeduction(
     case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
-    case Value::Kind::TypeOfMemberName:
+    case Value::Kind::TypeOfMemberName: {
       return handle_non_deduced_type();
+    }
     case Value::Kind::ImplWitness:
     case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
@@ -1316,7 +1330,6 @@ auto TypeChecker::DeduceCallBindings(
            << "wrong number of arguments in function call, expected "
            << params.size() << " but got " << args.size();
   }
-
   // Bindings for deduced parameters and generic parameters.
   BindingMap generic_bindings;
 
@@ -1372,9 +1385,12 @@ auto TypeChecker::DeduceCallBindings(
 
   // Convert the arguments to the parameter type.
   Nonnull<const Value*> param_type = Substitute(generic_bindings, params_type);
+
+  // Convert the arguments to the deduced and substituted parameter type.
   CARBON_ASSIGN_OR_RETURN(
       Nonnull<Expression*> converted_argument,
       ImplicitlyConvert("call", impl_scope, &call.argument(), param_type));
+
   call.set_argument(converted_argument);
 
   return Success();
@@ -2984,6 +3000,29 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       CARBON_RETURN_IF_ERROR(TypeCheckStmt(&while_stmt.body(), impl_scope));
       return Success();
     }
+    case StatementKind::For: {
+      auto& for_stmt = cast<For>(*s);
+      ImplScope inner_impl_scope;
+      inner_impl_scope.AddParent(&impl_scope);
+
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckExp(&for_stmt.loop_target(), inner_impl_scope));
+
+      const Value& rhs = for_stmt.loop_target().static_type();
+      if (rhs.kind() == Value::Kind::StaticArrayType) {
+        CARBON_RETURN_IF_ERROR(
+            TypeCheckPattern(&for_stmt.variable_declaration(),
+                             &cast<StaticArrayType>(rhs).element_type(),
+                             inner_impl_scope, ValueCategory::Var));
+
+      } else {
+        return CompilationError(for_stmt.source_loc())
+               << "expected array type after in, found value of type " << rhs;
+      }
+
+      CARBON_RETURN_IF_ERROR(TypeCheckStmt(&for_stmt.body(), inner_impl_scope));
+      return Success();
+    }
     case StatementKind::Break:
     case StatementKind::Continue:
       return Success();
@@ -3182,6 +3221,7 @@ auto TypeChecker::ExpectReturnOnAllPaths(
     case StatementKind::Assign:
     case StatementKind::ExpressionStatement:
     case StatementKind::While:
+    case StatementKind::For:
     case StatementKind::Break:
     case StatementKind::Continue:
     case StatementKind::VariableDefinition:
