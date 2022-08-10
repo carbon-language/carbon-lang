@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 from markdown import Markdown, Extension, markdownFromFile
 from markdown.extensions.fenced_code import FencedCodeExtension
+from markdown.preprocessors import Preprocessor
 from markdown.postprocessors import Postprocessor
 import re
 from typing import Any, Dict, List, Tuple
@@ -34,6 +35,7 @@ NAMED_SNIPPETS = {
     "c": ["}"],
 }
 RE_TEST = re.compile(r"\s*test\s+")
+RE_TEST_COMMENT = re.compile(r"\s*<!--\s*test\s+")
 RE_TEST_COMMAND = re.compile(r"""\s*(?P<command>
  (?P<out_buf>[_])
 |`(?P<out_code>[^`]+)`
@@ -55,8 +57,21 @@ def parse_test(text : str) -> List[Dict]:
     matches.append(match.groupdict())
   return matches
 
+class TestLinenoProcessor(Preprocessor):
+    def __init__(self, linenos: List[int]) -> None:
+        super().__init__()
+        self.linenos = linenos
+
+    def run(self, lines) -> List[str]:
+        lineno = 0
+        for line in lines:
+            lineno += 1
+            if RE_TEST_COMMENT.match(line):
+                self.linenos.append(lineno)
+        return lines
+
 class DocsSnippetParser(HTMLParser):
-    def __init__(self, outdir: Path) -> None:
+    def __init__(self, test_linenos: List[int], outdir: Path) -> None:
         super().__init__()
         self.outdir = outdir
         self.comm_lineno = 0
@@ -67,11 +82,15 @@ class DocsSnippetParser(HTMLParser):
         self.test_text = None
         self.test_cmds = None
         self.test_lines = None
+        self.test_linenos = test_linenos
         self.test_index = 0
+        self.test_lineno = 0
     def handle_comment(self, data: str) -> None:
-        self.test_text = data
-        self.comm_lineno = self.getpos()[0]
-        #TODO: keep track of line numbers in original document for error reporting
+        if RE_TEST.match(data):
+          self.test_text = data
+          self.comm_lineno = self.getpos()[0]
+          self.test_lineno = self.test_linenos[self.test_index]
+          self.test_index += 1
     def handle_starttag(self, tag: str, attrs: List[Tuple[str, str]]) -> None:
         langs = [v for k, v in attrs if k == "class" and v.startswith("lang-")]
         if tag == "code" and (not langs or "lang-carbon" in langs):
@@ -124,7 +143,7 @@ class DocsSnippetParser(HTMLParser):
 
     def handle_endtag(self, tag: str) -> None:
         if self.test_lines:
-            testpath = os.path.join(self.outdir, f"test_{self.test_index}.carbon")
+            testpath = os.path.join(self.outdir, f"line_{self.test_lineno}.carbon")
             with open(testpath, "w", encoding="utf-8") as testfile:
                 testfile.write(TEST_HEADER)
                 testfile.write(f"// CHECK: result: 0") #TODO: make configurable
@@ -133,20 +152,21 @@ class DocsSnippetParser(HTMLParser):
                 testfile.write("\n")
                 testfile.writelines(map(lambda l: l + "\n", self.test_lines))
                 testfile.write("\n")
-            self.test_index += 1
         self.code_lineno = 0
         self.code_text = None
         self.code_lines = None
         self.test_text = None
         self.test_data = None
         self.test_lines = None
+        self.test_lineno = 0
 
 class DocsSnippetProcessor(Postprocessor):
-    def __init__(self, md, outdir) -> None:
+    def __init__(self, md: Markdown, test_linenos: List[int], outdir) -> None:
         self.md = md
+        self.test_linenos = test_linenos
         self.outdir = outdir
     def run(self, text: str) -> str:
-        parser = DocsSnippetParser(self.outdir)
+        parser = DocsSnippetParser(self.test_linenos, self.outdir)
         parser.feed(text)
         return text
 
@@ -155,7 +175,9 @@ class DocsSnippetToTest(Extension):
         super().__init__(**kwargs)
         self.path = path
     def extendMarkdown(self, md: Markdown) -> None:
-        md.postprocessors.register(DocsSnippetProcessor(md, self.path), "md_to_lit", 0)
+        test_linenos = []
+        md.preprocessors.register(TestLinenoProcessor(test_linenos), "test_to_lineno", 999)
+        md.postprocessors.register(DocsSnippetProcessor(md, test_linenos, self.path), "md_to_lit", 0)
         md.registerExtension(self)
 
 def main() -> None:
