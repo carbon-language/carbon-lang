@@ -383,9 +383,6 @@ selected.
 
 ### String types
 
-> **Note:** This is provisional, no design for string types has been through the
-> proposal process yet.
-
 There are two string types:
 
 -   `String` - a byte sequence treated as containing UTF-8 encoded text.
