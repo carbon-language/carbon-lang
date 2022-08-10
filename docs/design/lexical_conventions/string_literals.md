@@ -29,6 +29,7 @@ quotation marks (`'''`). A block string literal may have a file type indicator
 after the first `'''`; this does not affect the string itself, but may assist
 other tooling. For example:
 
+<!-- test mo _ rc -->
 ```carbon
 // Simple string literal:
 var simple: String = "example";
@@ -49,7 +50,7 @@ var code_block: String = '''cpp
         std::cout << "Hello world!";
         return 0;
     }
-    '''
+    ''';
 ```
 
 The indentation of a block string literal's terminating line is removed from all
@@ -64,6 +65,7 @@ an equal number of hash symbols (`#`) after the `\` to indicate an escape
 sequence. Raw string literals are used to more easily write literal `\`s in
 strings. Both simple and block string literals have raw forms. For example:
 
+<!-- test mo _ rc -->
 ```carbon
 // Raw simple string literal with newline escape sequence:
 var newline: String = "line one\nline two";
@@ -131,15 +133,16 @@ as follows:
 
 A content line is considered empty if it contains only whitespace characters.
 
+<!-- test -8+4 mo _ rc -->
 ```carbon
-var String: w = '''
+var w: String = '''
   This is a string literal. Its first character is 'T' and its last character is
   a newline character. It contains another newline between 'is' and 'a'.
   ''';
 
 // This string literal is invalid because the ''' after 'closing' terminates
 // the literal, but is not at the start of the line.
-var String: invalid = '''
+var invalid: String = '''
   error: closing ''' is not on its own line.
   ''';
 ```
@@ -150,10 +153,11 @@ compiler, but some file type indicators are understood by the language tooling
 (for example, syntax highlighter, code formatter) as indicating the structure of
 the string literal's content.
 
+<!-- test mo _ rc -->
 ```carbon
 // This is a block string literal. Its first two characters are spaces, and its
 // last character is a line feed. It has a file type of 'c++'.
-var String: starts_with_whitespace = '''c++
+var starts_with_whitespace: String = '''c++
     int x = 1; // This line starts with two spaces.
     int y = 2; // This line starts with two spaces.
   ''';
@@ -249,21 +253,22 @@ can only be produced by `\x` escape sequences.
 The decision to disallow raw tab characters in string literals is
 _experimental_.
 
+<!-- test -->
 ```carbon
-var String: fret = "I would 'twere something that would fret the string,\n" +
+var fret: String = "I would 'twere something that would fret the string,\n" +
                    "The master-cord on's \u{2764}\u{FE0F}!";
 
 // This string contains two characters (prior to encoding in UTF-8):
 // U+1F3F9 (BOW AND ARROW) followed by U+0032 (DIGIT TWO)
-var String: password = "\u{1F3F9}2";
+var password: String = "\u{1F3F9}2";
 
 // This string contains no newline characters.
-var String: type_mismatch = '''
+var type_mismatch: String = '''
   Shall I compare thee to a summer's day? Thou art \
   more lovely and more temperate.\
   ''';
 
-var String: trailing_whitespace = '''
+var trailing_whitespace: String = '''
   This line ends in a space followed by a newline. \n\
       This line starts with four spaces.
   ''';
@@ -289,17 +294,18 @@ special meaning.
 
 For example:
 
+<!-- test mo _ rc -->
 ```carbon
-var String: x = #'''
+var x: String = #'''
   This is the content of the string. The 'T' is the first character
   of the string.
   ''' <-- This is not the end of the string.
   '''#;
   // But the preceding line does end the string.
 // OK, final character is \
-var String: y = #"Hello\"#;
-var String: z = ##"Raw strings #"nesting"#"##;
-var String: w = #"Tab is expressed as \t. Example: '\#t'"#;
+var y: String = #"Hello\"#;
+var z: String = ##"Raw strings #"nesting"#"##;
+var w: String = #"Tab is expressed as \t. Example: '\#t'"#;
 ```
 
 ### Encoding
