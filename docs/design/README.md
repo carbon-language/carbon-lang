@@ -137,6 +137,7 @@ This document includes much that is provisional or placeholder. This means that
 the syntax used, language rules, standard library, and other aspects of the
 design have things that have not been decided through the Carbon process. This
 preliminary material fills in gaps until aspects of the design can be filled in.
+Features that are provisional have been marked as such on a best-effort basis.
 
 ## Hello, Carbon
 
@@ -2653,6 +2654,10 @@ indicate that they may not be specialized, subject to
 >     [#920: Generic parameterized impls (details 5)](https://github.com/carbon-language/carbon-lang/pull/920)
 > -   Proposal
 >     [#983: Generics details 7: final impls](https://github.com/carbon-language/carbon-lang/pull/983)
+> -   Question-for-leads issue
+>     [1192: Parameterized impl syntax](https://github.com/carbon-language/carbon-lang/issues/1192)
+> -   Proposal
+>     [#1327: Generics: `impl forall`](https://github.com/carbon-language/carbon-lang/pull/1327)
 
 ### Other features
 
@@ -2680,9 +2685,9 @@ Carbon generics have a number of other features, including:
     value with a type implementing an interface, and allows the functions in
     that interface to be called using
     [dynamic dispatch](https://en.wikipedia.org/wiki/Dynamic_dispatch), for some
-    interfaces marked "`dyn`-safe".
+    interfaces marked "`dyn`-safe". **Note:** Provisional.
 -   [Variadics](generics/details.md#variadic-arguments) supports variable-length
-    parameter lists.
+    parameter lists. **Note:** Provisional.
 
 > References:
 >
@@ -2943,6 +2948,9 @@ include:
 
 ### Importing and `#include`
 
+> **Note:** This is provisional, no design for importing C++ has been through
+> the proposal process yet.
+
 A C++ library header file may be [imported](#imports) into Carbon using an
 `import` declaration of the special `Cpp` package.
 
@@ -2979,6 +2987,9 @@ marker.
 
 ### ABI and dynamic linking
 
+> **Note:** This is provisional, no design for this has been through the
+> proposal process yet.
+
 Carbon itself will not have a stable ABI for the language as a whole, and most
 language features will be designed around not having any ABI stability. Instead,
 we expect to add dedicated language features that are specifically designed to
@@ -3004,6 +3015,9 @@ expressible in the C ABI, and types may need explicit markers to have guaranteed
 ABI compatibility.
 
 ### Operator overloading
+
+> **Note:** This is provisional, no design for this has been through the
+> proposal process yet.
 
 [Operator overloading](#operator-overloading) is supported in Carbon, but is
 done by [implementing an interface](#interfaces-and-implementations) instead of
@@ -3044,6 +3058,9 @@ requiring changes to importers?
 
 ### Templates
 
+> **Note:** This is provisional, no design for this has been through the
+> proposal process yet.
+
 Carbon supports both
 [checked and template generics](#checked-and-template-parameters). This provides
 a migration path for C++ template code:
@@ -3071,6 +3088,9 @@ we will include the ability where possible to use a Carbon generic from C++ as
 if it were a C++ template.
 
 ### Standard types
+
+> **Note:** This is provisional, no design for this has been through the
+> proposal process yet.
 
 The Carbon integer types, like `i32` and `u64`, are considered equal to the
 corresponding fixed-width integer types in C++, like `int32_t` and `uint64_t`,
@@ -3136,11 +3156,20 @@ The reverse operation is also possible using a proxy object implementing a C++
 abstract base class and holding a pointer to a type implementing the
 corresponding interface.
 
+> References:
+>
+> -   Proposal
+>     [#561: Basic classes: use cases, struct literals, struct types, and future work](https://github.com/carbon-language/carbon-lang/pull/561)
+> -   Proposal
+>     [#777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777)
+
 ### Enums
 
 > **TODO**
 
 ## Unfinished tales
+
+> **Note:** Everything in this section is provisional and forward looking.
 
 ### Safety
 
