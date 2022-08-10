@@ -115,14 +115,14 @@ if (m > 1 == n > 1) {
 Built-in comparisons are permitted in three cases:
 
 1.  When both operands are of standard Carbon integer types (`Int(n)` or
-    `Unsigned(n)`).
+    `UInt(n)`).
 2.  When both operands are of standard Carbon floating-point types (`Float(n)`).
 3.  When one operand is of floating-point type and the other is of integer type,
     if all values of the integer type can be exactly represented in the
     floating-point type.
 
 In each case, the result is the mathematically-correct answer. This applies even
-when comparing `Int(n)` with `Unsigned(m)`.
+when comparing `Int(n)` with `UInt(m)`.
 
 For example:
 
@@ -148,7 +148,7 @@ these rules and are [discussed separately](#comparisons-with-constants).
 We support the following [implicit conversions](implicit_conversions.md):
 
 -   From `Int(n)` to `Int(m)` if `m > n`.
--   From `Unsigned(n)` to `Int(m)` or `Unsigned(m)` if `m > n`.
+-   From `UInt(n)` to `Int(m)` or `UInt(m)` if `m > n`.
 -   From `Float(n)` to `Float(m)` if `m > n`.
 -   From `Int(n)` to `Float(m)` if `Float(m)` can represent all values of
     `Int(n)`.
@@ -166,9 +166,9 @@ similar types, and then performing a comparison on those types. The target types
 for these implicit conversions are, for each suitable value `n`:
 
 -   `Int(n)` versus `Int(n)`
--   `Unsigned(n)` versus `Unsigned(n)`
--   `Int(n)` versus `Unsigned(n)`
--   `Unsigned(n)` versus `Int(n)`
+-   `UInt(n)` versus `UInt(n)`
+-   `Int(n)` versus `UInt(n)`
+-   `UInt(n)` versus `Int(n)`
 -   `Float(n)` versus `Float(n)`
 
 There will in general be multiple combinations of implicit conversions that will

@@ -6,6 +6,9 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
+> **STATUS:** Up-to-date on 09-Aug-2022, including proposals up through
+> [#1327](https://github.com/carbon-language/carbon-lang/pull/1327).
+
 <!-- toc -->
 
 ## Table of contents
@@ -225,15 +228,21 @@ Primitive types fall into the following categories:
 
 These are made available through the [prelude](#name-lookup-for-common-types).
 
-> References: [Primitive types](primitive_types.md)
-
 ### `bool`
 
 The type `bool` is a boolean type with two possible values: `true` and `false`.
+The names `bool`, `true`, and `false` are keywords.
 [Comparison expressions](#expressions) produce `bool` values. The condition
 arguments in [control-flow statements](#control-flow), like [`if`](#if-and-else)
 and [`while`](#while), and
 [`if`-`then`-`else` conditional expressions](#expressions) take `bool` values.
+
+> References:
+>
+> -   Question-for-leads issue
+>     [#750: Naming conventions for Carbon-provided features](https://github.com/carbon-language/carbon-lang/issues/750)
+> -   Proposal
+>     [#861: Naming conventions](https://github.com/carbon-language/carbon-lang/pull/861)
 
 ### Integer types
 
@@ -254,7 +263,7 @@ programming error:
     zero.
 
 The unsigned-integer types are: `u8`, `u16`, `u32`, `u64`, `u128`, and
-`Carbon.UInt(N)`. Unsigned integer types wrap around on overflow, we strongly
+`Carbon.UInt(N)`. Unsigned integer types wrap around on overflow; we strongly
 advise that they are not used except when those semantics are desired. These
 types are intended for bit manipulation or modular arithmetic as often found in
 [hashing](https://en.wikipedia.org/wiki/Hash_function),
@@ -264,12 +273,25 @@ Values which can never be negative, like sizes, but for which wrapping does not
 make sense
 [should use signed integer types](/proposals/p1083.md#dont-let-unsigned-arithmetic-wrap).
 
+Identifiers of the form `i[0-9]+` and `u[0-9]+` are _type literals_, resulting
+in the corresponding type.
+
+There is an upper bound on the size of an integer, most likely initially set to
+128 bits due to LLVM limitations.
+
+> **Open question:** Bit-field ([1](https://en.wikipedia.org/wiki/Bit_field),
+> [2](https://en.cppreference.com/w/cpp/language/bit_field)) support may need a
+> more convenient way to spell non-power-of-two-bits integers than
+> `Carbon.Int(N)` and `Carbon.UInt(N)`.
+
 > References:
 >
 > -   Question-for-leads issue
 >     [#543: pick names for fixed-size integer types](https://github.com/carbon-language/carbon-lang/issues/543)
+> -   Question-for-leads issue
+>     [#750: Naming conventions for Carbon-provided features](https://github.com/carbon-language/carbon-lang/issues/750)
 > -   Proposal
->     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
+>     [#861: Naming conventions](https://github.com/carbon-language/carbon-lang/pull/861)
 > -   Proposal
 >     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
 
@@ -303,17 +325,34 @@ represent that value.
 
 ### Floating-point types
 
-Floating-point types in Carbon have IEEE 754 semantics, use the round-to-nearest
+Floating-point types in Carbon have IEEE-754 semantics, use the round-to-nearest
 rounding mode, and do not set any floating-point exception state. They are named
-with an `f` and the number of bits: `f16`, `f32`, `f64`, and `f128`.
-[`BFloat16`](primitive_types.md#bfloat16) is also provided.
+with an `f` and the number of bits:
+[`f16`](https://en.wikipedia.org/wiki/Half-precision_floating-point_format),
+[`f32`](https://en.wikipedia.org/wiki/Single-precision_floating-point_format),
+and
+[`f64`](https://en.wikipedia.org/wiki/Double-precision_floating-point_format).
+Other sizes may be available, depending on the platform, such as
+[`f80`](https://en.wikipedia.org/wiki/Extended_precision),
+[`f128`](https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format),
+or
+[`f256`](https://en.wikipedia.org/wiki/Octuple-precision_floating-point_format).
+Identifiers of the form `f[0-9]+` are _type literals_, resulting in the
+corresponding type.
+
+Carbon also supports the
+[`BFloat16`](https://en.wikipedia.org/wiki/Bfloat16_floating-point_format)
+format, a 16-bit truncation of a "binary32" IEEE-754 format floating point
+number.
 
 > References:
 >
 > -   Question-for-leads issue
 >     [#543: pick names for fixed-size integer types](https://github.com/carbon-language/carbon-lang/issues/543)
+> -   Question-for-leads issue
+>     [#750: Naming conventions for Carbon-provided features](https://github.com/carbon-language/carbon-lang/issues/750)
 > -   Proposal
->     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
+>     [#861: Naming conventions](https://github.com/carbon-language/carbon-lang/pull/861)
 > -   Proposal
 >     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
 
@@ -347,11 +386,26 @@ selected.
 
 ### String types
 
+> **Note:** This is provisional, no design for string types has been through the
+> proposal process yet.
+
 There are two string types:
 
 -   `String` - a byte sequence treated as containing UTF-8 encoded text.
 -   `StringView` - a read-only reference to a byte sequence treated as
     containing UTF-8 encoded text.
+
+There is an [implicit conversion](expressions/implicit_conversions.md) from
+`String` to `StringView`.
+
+> References:
+>
+> -   Question-for-leads issue
+>     [#750: Naming conventions for Carbon-provided features](https://github.com/carbon-language/carbon-lang/issues/750)
+> -   Proposal
+>     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
+> -   Proposal
+>     [#861: Naming conventions](https://github.com/carbon-language/carbon-lang/pull/861)
 
 #### String literals
 
@@ -434,6 +488,10 @@ Constants convert to symbolic values and to runtime values. Symbolic values will
 generally convert into runtime values if an operation that inspects the value is
 performed on them. Runtime values will convert into constants or to symbolic
 values if constant evaluation of the runtime expression succeeds.
+
+> **Note:** Conversion of runtime values to other phases is provisional, as are
+> the semantics of r-values. See pending proposal
+> [#821: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/821).
 
 ## Composite types
 
@@ -1591,8 +1649,8 @@ type, use `UnsafeDelete`.
 
 #### `const`
 
-**Note:** This is provisional, no design for `const` has been through the
-proposal process yet.
+> **Note:** This is provisional, no design for `const` has been through the
+> proposal process yet.
 
 For every type `MyClass`, there is the type `const MyClass` such that:
 
