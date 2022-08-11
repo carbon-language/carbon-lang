@@ -239,8 +239,7 @@ and [`while`](#while), and
 
 The signed-integer type with bit width `N` may be written `Carbon.Int(N)`. For
 convenience and brevity, the common power-of-two sizes may be written with an
-`i` followed by the size: `i8`, `i16`, `i32`, `i64`, `i128`, or `i256`.
-Signed-integer
+`i` followed by the size: `i8`, `i16`, `i32`, `i64`, or `i128`. Signed-integer
 [overflow](expressions/arithmetic.md#overflow-and-other-error-conditions) is a
 programming error:
 
@@ -254,7 +253,7 @@ programming error:
     to a mathematically incorrect result, such as a two's complement result or
     zero.
 
-The unsigned-integer types are: `u8`, `u16`, `u32`, `u64`, `u128`, `u256`, and
+The unsigned-integer types are: `u8`, `u16`, `u32`, `u64`, `u128`, and
 `Carbon.UInt(N)`. Unsigned integer types wrap around on overflow, we strongly
 advise that they are not used except when those semantics are desired. These
 types are intended for bit manipulation or modular arithmetic as often found in
@@ -698,10 +697,11 @@ A `let`-binding may trigger a copy of the original value, or a move if the
 original value is a temporary, or the binding may be a pointer to the original
 value, like a
 [`const` reference in C++](<https://en.wikipedia.org/wiki/Reference_(C%2B%2B)>).
-Which option must not be observable to the programmer. For example, Carbon will
-not allow modifications to the original value when it is through a pointer. This
-choice may also be influenced by the type. For example, types that don't support
-being copied will be passed by pointer instead.
+Which of these options (copy, move, or pointer) is selected must not be
+observable to the programmer. For example, Carbon will not allow modifications
+to the original value when it is through a pointer. This choice may also be
+influenced by the type. For example, types that don't support being copied will
+be passed by pointer instead.
 
 A [generic binding](#checked-and-template-parameters) uses `:!` instead of a
 colon (`:`) and can only match
@@ -2071,10 +2071,23 @@ Note that the right-hand side of the equal sign (`=`) is a name not a value, so
 `alias four = 4;` is not allowed. This allows `alias` to work with entities like
 namespaces, which aren't values in Carbon.
 
-This can be used during an incremental migration when changing a name, or to
-include a name in a public API. For example, `alias` may be used to include a
-name from an interface implementation as a member of a class or
-[named constraint](generics/details.md#named-constraints), possibly renamed:
+This can be used during an incremental migration when changing a name. For
+example, `alias` would allow you to have two names for a data field in a class
+while clients were migrated between the old name and the new name.
+
+```carbon
+class MyClass {
+  var new_name: String;
+  alias old_name = new_name;
+}
+
+var x: MyClass = {.new_name = "hello"};
+Carbon.Assert(x.old_name == "hello");
+```
+
+Another use is to include a name in a public API. For example, `alias` may be
+used to include a name from an interface implementation as a member of a class
+or [named constraint](generics/details.md#named-constraints), possibly renamed:
 
 ```carbon
 class ContactInfo {

@@ -1755,8 +1755,8 @@ declaration with all of the optional parameters in an option struct:
 ```
 fn SortIntVector(
     v: Vector(i32)*,
-    options: {.stable: Bool = false,
-              .descending: Bool = false} = {}) {
+    options: {.stable: bool = false,
+              .descending: bool = false} = {}) {
   // Code using `options.stable` and `options.descending`.
 }
 
@@ -1780,7 +1780,7 @@ We might instead support destructuring struct patterns with defaults:
 ```
 fn SortIntVector(
     v: Vector(i32)*,
-    {stable: Bool = false, descending: Bool = false}) {
+    {stable: bool = false, descending: bool = false}) {
   // Code using `stable` and `descending`.
 }
 ```
@@ -1863,7 +1863,7 @@ There are some opportunities to improve on and simplify the C++ story:
     aren't friends of the base class.
 
 **References:** This was discussed in
-[the open discussion on 2021-07-12](https://docs.google.com/document/d/1QCdKQ33rki-kCDrxi8UHy3a36dtW0WdMqpUzluGSrz4/edit?resourcekey=0-bZmNUiueOiH_sysJNqnT9A#heading=h.40jlsrcgp8mr).
+[the open discussion on 2021-07-12](https://docs.google.com/document/d/14vAcURDKeH6LZ_TQCMRGpNJrXSZCACQqDy29YH19XGo/edit#heading=h.40jlsrcgp8mr).
 
 #### Interop with C++ inheritance
 

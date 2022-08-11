@@ -31,6 +31,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 %s AFTER_OPERAND
 
 /* table-begin */
+ABSTRACT             "abstract"
 ADDR                 "addr"
 ALIAS                "alias"
 AMPERSAND            "&"
@@ -40,8 +41,10 @@ ARROW                "->"
 AS                   "as"
 AUTO                 "auto"
 AWAIT                "__await"
-BOOL                 "Bool"
+BASE                 "base"
+BOOL                 "bool"
 BREAK                "break"
+CARET                "^"
 CASE                 "case"
 CHOICE               "choice"
 CLASS                "class"
@@ -56,28 +59,38 @@ DOUBLE_ARROW         "=>"
 ELSE                 "else"
 EQUAL                "="
 EQUAL_EQUAL          "=="
+EXTENDS              "extends"
 EXTERNAL             "external"
 FALSE                "false"
 FN                   "fn"
 FN_TYPE              "__Fn"
+FOR                  "for"
 FORALL               "forall"
+GREATER              ">"
+GREATER_EQUAL        ">="
+GREATER_GREATER      ">>"
 IF                   "if"
 IMPL                 "impl"
 IMPORT               "import"
+IN                   "in"
 INTERFACE            "interface"
 IS                   "is"
 LEFT_CURLY_BRACE     "{"
 LEFT_PARENTHESIS     "("
 LEFT_SQUARE_BRACKET  "["
+LESS                 "<"
+LESS_EQUAL           "<="
+LESS_LESS            "<<"
 LET                  "let"
 LIBRARY              "library"
 MATCH                "match"
 MINUS                "-"
-MODULO               "%"
 NOT                  "not"
 OR                   "or"
 PACKAGE              "package"
+PERCENT              "%"
 PERIOD               "."
+PIPE                 "|"
 PLUS                 "+"
 RETURN               "return"
 RETURNED             "returned"
@@ -120,6 +133,7 @@ operand_start         [(A-Za-z0-9_\"]
 %}
 
  /* table-begin */
+{ABSTRACT}            { return CARBON_SIMPLE_TOKEN(ABSTRACT);            }
 {ADDR}                { return CARBON_SIMPLE_TOKEN(ADDR);                }
 {ALIAS}               { return CARBON_SIMPLE_TOKEN(ALIAS);               }
 {AMPERSAND}           { return CARBON_SIMPLE_TOKEN(AMPERSAND);           }
@@ -129,8 +143,10 @@ operand_start         [(A-Za-z0-9_\"]
 {AS}                  { return CARBON_SIMPLE_TOKEN(AS);                  }
 {AUTO}                { return CARBON_SIMPLE_TOKEN(AUTO);                }
 {AWAIT}               { return CARBON_SIMPLE_TOKEN(AWAIT);               }
+{BASE}                { return CARBON_SIMPLE_TOKEN(BASE);                }
 {BOOL}                { return CARBON_SIMPLE_TOKEN(BOOL);                }
 {BREAK}               { return CARBON_SIMPLE_TOKEN(BREAK);               }
+{CARET}               { return CARBON_SIMPLE_TOKEN(CARET);               }
 {CASE}                { return CARBON_SIMPLE_TOKEN(CASE);                }
 {CHOICE}              { return CARBON_SIMPLE_TOKEN(CHOICE);              }
 {CLASS}               { return CARBON_SIMPLE_TOKEN(CLASS);               }
@@ -145,28 +161,38 @@ operand_start         [(A-Za-z0-9_\"]
 {ELSE}                { return CARBON_SIMPLE_TOKEN(ELSE);                }
 {EQUAL_EQUAL}         { return CARBON_SIMPLE_TOKEN(EQUAL_EQUAL);         }
 {EQUAL}               { return CARBON_SIMPLE_TOKEN(EQUAL);               }
+{EXTENDS}             { return CARBON_SIMPLE_TOKEN(EXTENDS);             }
 {EXTERNAL}            { return CARBON_SIMPLE_TOKEN(EXTERNAL);            }
 {FALSE}               { return CARBON_SIMPLE_TOKEN(FALSE);               }
 {FN_TYPE}             { return CARBON_SIMPLE_TOKEN(FN_TYPE);             }
 {FN}                  { return CARBON_SIMPLE_TOKEN(FN);                  }
 {FORALL}              { return CARBON_SIMPLE_TOKEN(FORALL);              }
+{FOR}                 { return CARBON_SIMPLE_TOKEN(FOR);                 }
+{GREATER_EQUAL}       { return CARBON_SIMPLE_TOKEN(GREATER_EQUAL);       }
+{GREATER_GREATER}     { return CARBON_SIMPLE_TOKEN(GREATER_GREATER);     }
+{GREATER}             { return CARBON_SIMPLE_TOKEN(GREATER);             }
 {IF}                  { return CARBON_SIMPLE_TOKEN(IF);                  }
 {IMPL}                { return CARBON_SIMPLE_TOKEN(IMPL);                }
 {IMPORT}              { return CARBON_SIMPLE_TOKEN(IMPORT);              }
 {INTERFACE}           { return CARBON_SIMPLE_TOKEN(INTERFACE);           }
+{IN}                  { return CARBON_SIMPLE_TOKEN(IN);                  }
 {IS}                  { return CARBON_SIMPLE_TOKEN(IS);                  }
 {LEFT_CURLY_BRACE}    { return CARBON_SIMPLE_TOKEN(LEFT_CURLY_BRACE);    }
 {LEFT_PARENTHESIS}    { return CARBON_SIMPLE_TOKEN(LEFT_PARENTHESIS);    }
 {LEFT_SQUARE_BRACKET} { return CARBON_SIMPLE_TOKEN(LEFT_SQUARE_BRACKET); }
+{LESS_EQUAL}          { return CARBON_SIMPLE_TOKEN(LESS_EQUAL);          }
+{LESS_LESS}           { return CARBON_SIMPLE_TOKEN(LESS_LESS);           }
+{LESS}                { return CARBON_SIMPLE_TOKEN(LESS);                }
 {LET}                 { return CARBON_SIMPLE_TOKEN(LET);                 }
 {LIBRARY}             { return CARBON_SIMPLE_TOKEN(LIBRARY);             }
 {MATCH}               { return CARBON_SIMPLE_TOKEN(MATCH);               }
 {MINUS}               { return CARBON_SIMPLE_TOKEN(MINUS);               }
-{MODULO}              { return CARBON_SIMPLE_TOKEN(MODULO);              }
 {NOT}                 { return CARBON_SIMPLE_TOKEN(NOT);                 }
 {OR}                  { return CARBON_SIMPLE_TOKEN(OR);                  }
 {PACKAGE}             { return CARBON_SIMPLE_TOKEN(PACKAGE);             }
+{PERCENT}             { return CARBON_SIMPLE_TOKEN(PERCENT);             }
 {PERIOD}              { return CARBON_SIMPLE_TOKEN(PERIOD);              }
+{PIPE}                { return CARBON_SIMPLE_TOKEN(PIPE);                }
 {PLUS}                { return CARBON_SIMPLE_TOKEN(PLUS);                }
 {RETURNED}            { return CARBON_SIMPLE_TOKEN(RETURNED);            }
 {RETURN}              { return CARBON_SIMPLE_TOKEN(RETURN);              }

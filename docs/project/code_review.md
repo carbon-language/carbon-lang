@@ -502,7 +502,7 @@ an escalation path.
 
 Before escalating an impasse or conflict in code review, try asking another
 reviewer to help resolve the issue or bridge any communication gaps. Consider
-scheduling a quick video chat to discuss and better understand each others'
+scheduling a quick video chat to discuss and better understand each other’s
 concerns and position.
 
 Note that the formal evolution process is heavyweight and relatively slow. The

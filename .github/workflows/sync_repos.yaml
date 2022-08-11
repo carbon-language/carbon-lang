@@ -1,0 +1,31 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: sync-repos
+
+on:
+  push:
+    branches: [trunk]
+    paths:
+      # Minimize where we run this to changes to the top-level files and
+      # specific trees that we sync to other repositories.
+      - '*'
+      - 'utils/**'
+      # Also run if the action itself is updated.
+      - '.github/workflows/sync_repos.yaml'
+      - 'scripts/sync_repos.sh'
+
+jobs:
+  sync-repos:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout our main repository.
+      - name: Checkout the main repository
+        uses: actions/checkout@v2
+
+      # Run the sync script.
+      - name: Sync to other repositories
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.SYNC_REPOS_API_TOKEN_GITHUB }}
+        run: ./scripts/sync_repos.sh

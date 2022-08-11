@@ -302,7 +302,7 @@ class RE2 {
   impl as Destroyable;
 
   // Returns whether RE2 was created properly.
-  fn ok[me: Self]() -> Bool { return me.error_code() == ErrorCode.NoError; }
+  fn ok[me: Self]() -> bool { return me.error_code() == ErrorCode.NoError; }
 
   // The string specification for this RE2.  E.g.
   //   RE2 re("ab*c?d+");

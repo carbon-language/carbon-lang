@@ -13,7 +13,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Principle](#principle)
     -   [Mitigations of context-sensitive costs](#mitigations-of-context-sensitive-costs)
         -   [Visual aids](#visual-aids)
-        -   [Contextual _validity_ rather than _meaning_](#contextual-_validity_-rather-than-_meaning_)
+        -   [Contextual _validity_ rather than _meaning_](#contextual-validity-rather-than-meaning)
         -   [Reduced cost of mistakes](#reduced-cost-of-mistakes)
             -   [Compiler-checked context](#compiler-checked-context)
 -   [Applications of the principle](#applications-of-the-principle)
@@ -217,7 +217,7 @@ usability, consistency, or expressivity gains.
 
 Carbon [packages](/docs/design/code_and_name_organization/#packages) are
 designed to ensure all declared names belong to exactly one package and the
-compiler can enforcement Carbon's equivalent
+compiler can enforce Carbon's equivalent
 [one-definition rule (ODR)](https://en.wikipedia.org/wiki/One_Definition_Rule).
 This avoids an issue in C++ where the ODR is not reliably checked by the
 compiler, which can leave the correctness of programs dependent on both distant
