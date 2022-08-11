@@ -533,7 +533,7 @@ type `Optional(T*)`.
 [stricter pointer provenance](https://www.ralfj.de/blog/2022/04/11/provenance-exposed.html)
 or restrictions on casts between pointers and integers.
 
-> **Note:** While the syntax for points has been decided, the semantics of
+> **Note:** While the syntax for pointers has been decided, the semantics of
 > pointers is provisional, as is the syntax for optionals. See pending proposal
 > [#821: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/821).
 
