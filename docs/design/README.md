@@ -534,7 +534,7 @@ type `Optional(T*)`.
 or restrictions on casts between pointers and integers.
 
 > **Note:** While the syntax for pointers has been decided, the semantics of
-> pointers is provisional, as is the syntax for optionals. See pending proposal
+> pointers are provisional, as is the syntax for optionals. See pending proposal
 > [#821: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/821).
 
 > References:
