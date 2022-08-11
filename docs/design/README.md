@@ -2987,8 +2987,8 @@ marker.
 
 ### ABI and dynamic linking
 
-> **Note:** This is provisional, no design for this has been through the
-> proposal process yet.
+> **Note:** This reflects goals and plans. No specific design for the
+> implementation has been through the proposal process yet.
 
 Carbon itself will not have a stable ABI for the language as a whole, and most
 language features will be designed around not having any ABI stability. Instead,
@@ -3013,6 +3013,11 @@ marker in order to provide full bi-directional support here. The functionality
 available across this interop boundary will of course be restricted to what is
 expressible in the C ABI, and types may need explicit markers to have guaranteed
 ABI compatibility.
+
+> References:
+>
+> -   [Goals: Stable language and library ABI](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/project/goals.md#stable-language-and-library-abi)
+> -   [#175: C++ interoperability goals: Support mixing Carbon and C++ toolchains](/proposals/p0175.md#support-mixing-carbon-and-c-toolchains)
 
 ### Operator overloading
 
