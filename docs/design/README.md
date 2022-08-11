@@ -3016,7 +3016,7 @@ ABI compatibility.
 
 > References:
 >
-> -   [Goals: Stable language and library ABI](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/project/goals.md#stable-language-and-library-abi)
+> -   [Goals: Stable language and library ABI non-goal](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/project/goals.md#stable-language-and-library-abi)
 > -   [#175: C++ interoperability goals: Support mixing Carbon and C++ toolchains](/proposals/p0175.md#support-mixing-carbon-and-c-toolchains)
 
 ### Operator overloading
