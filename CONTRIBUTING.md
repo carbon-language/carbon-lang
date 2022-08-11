@@ -61,8 +61,8 @@ information here in our contributing guide, especially the
 ### Help comment on proposals
 
 If you're looking for a quick way to contribute, commenting on proposals is a
-way to provide proposal authors with a breadth of feedback.
-[Issues for leads](https://github.com/carbon-language/carbon-lang/issues?q=is%3Aissue+is%3Aopen+label%3A%22leads+question%22)
+way to provide proposal authors with a breadth of feedback. The
+["leads questions" label](https://github.com/carbon-language/carbon-lang/issues?q=is%3Aissue+is%3Aopen+label%3A%22leads+question%22)
 has questions the community is looking for a decision on. The
 [list of open proposals](https://github.com/carbon-language/carbon-lang/issues?q=is%3Aopen+label%3Aproposal+draft%3Afalse)
 will have more mature proposals that are nearing a decision. For more about the
