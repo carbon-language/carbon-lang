@@ -815,9 +815,11 @@ are two kinds of patterns:
 -   _Irrefutable_ patterns are guaranteed to match, so long as the code
     type-checks.
 
-Irrefutable patterns are used in [function parameters](#functions),
+In the [first example](#example), [function parameters](#functions),
 [variable `var` declarations](#variable-var-declarations), and
-[constant `let` declarations](#constant-let-declarations).
+[constant `let` declarations](#constant-let-declarations) use a "name `:` type"
+construction. That construction is an example of an irrefutable pattern, and in
+fact any irrefutable pattern may be used in those positions.
 [`match` statements](#match) can include both refutable patterns and irrefutable
 patterns.
 
