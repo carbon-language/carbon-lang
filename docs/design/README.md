@@ -13,9 +13,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [Overview](#overview)
+-   [Introduction](#introduction)
     -   [This document is provisional](#this-document-is-provisional)
--   [Hello, Carbon](#hello-carbon)
+    -   [Example](#example)
+    -   [Tour of the basics](#tour-of-the-basics)
 -   [Code and comments](#code-and-comments)
 -   [Build modes](#build-modes)
 -   [Types are values](#types-are-values)
@@ -120,7 +121,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- tocstop -->
 
-## Overview
+## Introduction
 
 This documentation describes the design of the Carbon language, and the
 rationale for that design. This documentation is an overview of the Carbon
@@ -139,7 +140,7 @@ design have things that have not been decided through the Carbon process. This
 preliminary material fills in gaps until aspects of the design can be filled in.
 Features that are provisional have been marked as such on a best-effort basis.
 
-## Hello, Carbon
+### Example
 
 Here is a simple function showing some Carbon code:
 
@@ -147,29 +148,157 @@ Here is a simple function showing some Carbon code:
 import Console;
 
 // Prints the Fibonacci numbers less than `limit`.
-fn Fibonacci(limit: i64) {
-  var (a: i64, b: i64) = (0, 1);
+fn Fibonacci(limit: i64) -> (i64, i32) {
+  var a: i64 = 0;
+  var b: i64 = 1;
+  var n: i32 = 0;
   while (a < limit) {
-    Console.Print(a, " ");
+    Console.Print("{0}: {1}\n", n, a);
+    // Stop before overflow.
+    if (b > 1 << 62) {
+      break;
+    }
     let next: i64 = a + b;
     a = b;
     b = next;
+    ++n;
   }
-  Console.Print("\n");
+  // Returns value and index.
+  return (a, n);
 }
 ```
 
 Carbon is a language that should feel familiar to C++ and C developers. This
 example has familiar constructs like [imports](#imports),
-[function definitions](#functions), [typed arguments](#binding-patterns), and
-[curly braces](#blocks-and-statements).
+[comments](#code-and-comments), [function definitions](#functions),
+[typed arguments](#binding-patterns), and [expressions](#expressions).
+Statements and declarations are terminated with a `;` or something in curly
+braces `{`...`}`.
 
 A few other features that are unlike C or C++ may stand out. First,
 [declarations](#declarations-definitions-and-scopes) start with introducer
 keywords. `fn` introduces a function declaration, and `var` introduces a
-[variable declaration](#variable-var-declarations). You can also see a
-[_tuple_](#tuples), a composite type written as a comma-separated list inside
-parentheses. Unlike, say, Python, these types are strongly-typed as well.
+[variable declaration](#variable-var-declarations).
+
+### Tour of the basics
+
+The example starts with an [`import` declaration](#imports). Carbon imports are
+more like [C++ modules](https://en.cppreference.com/w/cpp/language/modules) than
+[textual inclusion during preprocessing using `#include`](https://en.cppreference.com/w/cpp/preprocessor/include).
+The `import` declaration imports a
+[library from a package](#files-libraries-packages). It must appear at the top
+of a Carbon source file, the first thing after the
+[optional `package` declaration](#package-declaration). Libraries can be split
+into [api and implementation files](#files-libraries-packages), like C++'s
+header and source files. This declaration from the example:
+
+```carbon
+import Console;
+```
+
+imports the default library from package `Carbon`. The names from this library
+are accessible as members of `Console`, like `Console.Print`. Unlike C++, the
+namespaces of different packages are kept separate, so there are no name
+conflicts.
+
+Carbon [comments](#code-and-comments) must be on a line by themselves starting
+with `//`.
+
+```carbon
+// Prints the Fibonacci numbers less than `limit`.
+...
+    // Stop before overflow.
+...
+  // Returns value and index.
+```
+
+Carbon [function definitions](#functions) start with the `fn` keyword, followed
+by the function name, parameter list, optional return type, and the body with
+the code inside curly braces `{`...`}`. Function execution ends with a `return`
+statement that specifies the value to return.
+
+```carbon
+fn Fibonacci(limit: i64) -> (i64, i32) {
+  ...
+  return (a, n);
+}
+```
+
+Here `i64` and `i32` refer to signed [integer types](#integer-types), with 64
+and 32 bits respectively. Carbon has [`bool` boolean type](#bool),
+[floating-point types](#floating-point-types) like `f32` and `f64`, and
+[string types](#string-types).
+
+[Variables are declared](#variable-var-declarations) with the `var` keyword
+introducer. This is followed by the name, `:`, and the type, like parameters
+declared in the function signature. This is followed by an optional initializer.
+
+```carbon
+  var a: i64 = 0;
+```
+
+The value of a variable is modified using an
+[assignment statement](#assignment-statements):
+
+```carbon
+    a = b;
+    b = next;
+    ++n;
+```
+
+[Constants are declared](#constant-let-declarations) with the `let` keyword
+introducer. The syntax parallels variable declarations except the initializer is
+required:
+
+```carbon
+    let next: i64 = a + b;
+```
+
+Here, `a + b` is an [expression](#expressions) using the `+` operator.
+Expressions can be statements on their own, as in:
+
+```carbon
+    Console.Print("{0}: {1}\n", n, a);
+```
+
+This expression is a function call, which consists of the name of the function
+followed by the argument list in round parentheses `(`...`)`.
+
+Control flow statements including `if`, `while`, and `break` work like C++:
+
+```carbon
+  while (a < limit) {
+    ...
+    if (b > 1 << 62) {
+      break;
+    }
+    ...
+  }
+```
+
+Every code block in curly braces `{`...`}` defines a scope. Names are visible
+from their declaration until the end of innermost scope containing it. So `next`
+in the example is visible until the next closing curly brace `}`.
+
+The example function uses a [_tuple_](#tuples), a
+[composite type](#composite-types), to return multiple values. Both tuple values
+and types are written using a comma-separated list inside parentheses. So
+`(a, n)` is a tuple value, and `(i64, i32)` is its type.
+
+[Struct types](#struct-types) are similar, except their members are referenced
+by name instead of position. The example could be changed to use structs instead
+as follows:
+
+```carbon
+// Return type of `{.value: i64, .index: i32}` is a struct
+// with an `i64` field named `.value`, and an `i32` field
+// named `.index`.
+fn Fibonacci(limit: i64) -> {.value: i64, .index: i32} {
+  ...
+  // Return a struct value.
+  return {.value = a, .index = n};
+}
+```
 
 ## Code and comments
 
@@ -2018,7 +2147,7 @@ class C {
     // ✅ Allowed: unambiguous
     C.F();
     // ❌ Error: ambiguous whether `P` means
-    // `package.P` or `package.P.F`.
+    // `package.P` or `package.C.P`.
     P.H();
     // ✅ Allowed
     package.P.H();
