@@ -10,6 +10,9 @@ on:
     types:
       - ready_for_review
 
+permissions:
+  pull-requests: write
+
 jobs:
   proposal_ready:
     if: contains(github.event.pull_request.labels.*.name, 'proposal')
