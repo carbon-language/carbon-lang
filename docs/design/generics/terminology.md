@@ -642,8 +642,15 @@ types in the signatures of function in an interface to vary. For example,
 different [stacks](<https://en.wikipedia.org/wiki/Stack_(abstract_data_type)>)
 will have different element types. That element type would be used as the
 parameter type of the `Push` function and the return type of the `Pop` function.
-An interface type parameter is a parameter or input to the interface type and
-associated types are outputs.
+As
+[in Rust](https://rust-lang.github.io/rfcs/0195-associated-items.html#clearer-trait-matching):
+
+-   An interface type parameter is a parameter or input to the interface type.
+    That means they must be specified before an implementation of the interface
+    may be determined.
+-   In contrast, associated types are outputs. This means that they are
+    determined by the implementation, and need not be specified in a type
+    constraint.
 
 Functions using an interface as a constraint need not specify the value of its
 associated types. An associated type is a kind of
