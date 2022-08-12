@@ -126,6 +126,24 @@ class TypeChecker {
   auto TypeCheckWhereClause(Nonnull<WhereClause*> clause,
                             const ImplScope& impl_scope) -> ErrorOr<Success>;
 
+  // Provides additional context for pattern type checking logic.
+  struct PatternContext {
+    PatternContext() : refutable_ok(true), is_binding_pattern_type(false) {}
+
+    auto set_refutable_ok(bool b) -> PatternContext {
+      refutable_ok = b;
+      return *this;
+    }
+
+    auto set_is_binding_pattern_type(bool b) -> PatternContext {
+      is_binding_pattern_type = b;
+      return *this;
+    }
+
+    bool refutable_ok;
+    bool is_binding_pattern_type;
+  };
+
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `p`.
   //
   // `expected` is the type that this pattern is expected to have, if the
@@ -136,7 +154,8 @@ class TypeChecker {
   auto TypeCheckPattern(Nonnull<Pattern*> p,
                         std::optional<Nonnull<const Value*>> expected,
                         ImplScope& impl_scope,
-                        ValueCategory enclosing_value_category)
+                        ValueCategory enclosing_value_category,
+                        PatternContext context = PatternContext())
       -> ErrorOr<Success>;
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `s`.

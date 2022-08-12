@@ -11,7 +11,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_var_pattern.carbon:[[@LINE+1]]: auto pattern is not allowed on the left hand side of a variable definition
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_var_pattern.carbon:[[@LINE+1]]: auto can only appear in the type part of a binding pattern.
   var auto = i32;
   return 0;
 }

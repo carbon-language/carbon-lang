@@ -292,54 +292,6 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
   }
 }
 
-// Checks variable definition pattern structure.
-static auto CheckVariableDefinitionPattern(const Pattern& p, const bool lhs)
-    -> ErrorOr<Success> {
-  auto expect = [&](const bool expected) -> ErrorOr<Success> {
-    if (expected) {
-      return Success();
-    } else {
-      return CompilationError(p.source_loc())
-             << PatternKindName(p.kind()) << " is not allowed on the "
-             << (lhs ? "left" : "right")
-             << " hand side of a variable definition";
-    }
-  };
-  switch (p.kind()) {
-    case PatternKind::AutoPattern:
-      return expect(!lhs);
-
-    case PatternKind::BindingPattern: {
-      CARBON_RETURN_IF_ERROR(expect(lhs));
-      auto& binding = cast<BindingPattern>(p);
-      return CheckVariableDefinitionPattern(binding.type(), /*lhs=*/false);
-    }
-    case PatternKind::TuplePattern: {
-      auto& tuple = cast<TuplePattern>(p);
-      for (const auto& field : tuple.fields()) {
-        CARBON_RETURN_IF_ERROR(CheckVariableDefinitionPattern(*field, lhs));
-      }
-      return Success();
-    }
-
-    case PatternKind::ExpressionPattern:
-      return expect(!lhs);
-
-    case PatternKind::VarPattern: {
-      CARBON_RETURN_IF_ERROR(expect(lhs));
-      auto& var_pattern = cast<VarPattern>(p);
-      return CheckVariableDefinitionPattern(var_pattern.pattern(), lhs);
-    }
-
-    case PatternKind::GenericBinding:
-    case PatternKind::AlternativePattern:
-    case PatternKind::AddrPattern:
-      return CompilationError(p.source_loc())
-             << PatternKindName(p.kind())
-             << " is not allowed in a variable definition";
-  }
-}
-
 auto TypeChecker::ExpectIsType(SourceLocation source_loc,
                                Nonnull<const Value*> value)
     -> ErrorOr<Success> {
@@ -2758,8 +2710,8 @@ auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
 
 auto TypeChecker::TypeCheckPattern(
     Nonnull<Pattern*> p, std::optional<Nonnull<const Value*>> expected,
-    ImplScope& impl_scope, ValueCategory enclosing_value_category)
-    -> ErrorOr<Success> {
+    ImplScope& impl_scope, ValueCategory enclosing_value_category,
+    PatternContext context) -> ErrorOr<Success> {
   if (trace_stream_) {
     **trace_stream_ << "checking " << PatternKindName(p->kind()) << " " << *p;
     if (expected) {
@@ -2771,8 +2723,13 @@ auto TypeChecker::TypeCheckPattern(
   }
   switch (p->kind()) {
     case PatternKind::AutoPattern: {
-      p->set_static_type(arena_->New<TypeType>());
-      return Success();
+      if (context.is_binding_pattern_type) {
+        p->set_static_type(arena_->New<TypeType>());
+        return Success();
+      } else {
+        return CompilationError(p->source_loc())
+               << "auto can only appear in the type part of a binding pattern.";
+      }
     }
     case PatternKind::BindingPattern: {
       auto& binding = cast<BindingPattern>(*p);
@@ -2783,7 +2740,8 @@ auto TypeChecker::TypeCheckPattern(
                << "The type of a binding pattern cannot contain bindings.";
       }
       CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-          &binding.type(), std::nullopt, impl_scope, enclosing_value_category));
+          &binding.type(), std::nullopt, impl_scope, enclosing_value_category,
+          context.set_is_binding_pattern_type(true)));
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> type,
           InterpPattern(&binding.type(), arena_, trace_stream_));
@@ -2863,8 +2821,9 @@ auto TypeChecker::TypeCheckPattern(
         if (expected) {
           expected_field_type = cast<TupleValue>(**expected).elements()[i];
         }
-        CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-            field, expected_field_type, impl_scope, enclosing_value_category));
+        CARBON_RETURN_IF_ERROR(
+            TypeCheckPattern(field, expected_field_type, impl_scope,
+                             enclosing_value_category, context));
         if (trace_stream_)
           **trace_stream_ << "finished checking tuple pattern field " << *field
                           << "\n";
@@ -2877,6 +2836,10 @@ auto TypeChecker::TypeCheckPattern(
       return Success();
     }
     case PatternKind::AlternativePattern: {
+      if (!context.refutable_ok) {
+        return CompilationError(p->source_loc())
+               << "Expected an irrefutable pattern, got alternative";
+      }
       auto& alternative = cast<AlternativePattern>(*p);
       CARBON_RETURN_IF_ERROR(
           TypeCheckExp(&alternative.choice_type(), impl_scope));
@@ -2900,9 +2863,9 @@ auto TypeChecker::TypeCheckPattern(
                << "'" << alternative.alternative_name()
                << "' is not an alternative of " << choice_type;
       }
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&alternative.arguments(),
-                                              *parameter_types, impl_scope,
-                                              enclosing_value_category));
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckPattern(&alternative.arguments(), *parameter_types,
+                           impl_scope, enclosing_value_category, context));
       alternative.set_static_type(&choice_type);
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> alternative_value,
@@ -2917,14 +2880,22 @@ auto TypeChecker::TypeCheckPattern(
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> expr_value,
                               InterpPattern(p, arena_, trace_stream_));
       SetValue(p, expr_value);
+      // TODO
+      // if (!context.refutable_ok) {
+      //   return CompilationError(p->source_loc())
+      //          << "Expected an irrefutable pattern, got "
+      //          << ExpressionKindName(expression.kind()) << ": " << expression
+      //          << ", expr type: " << expression.static_type()
+      //          << ", expr value: " << *expr_value;
+      // }
       return Success();
     }
     case PatternKind::VarPattern: {
       auto& var_pattern = cast<VarPattern>(*p);
 
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&var_pattern.pattern(), expected,
-                                              impl_scope,
-                                              var_pattern.value_category()));
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckPattern(&var_pattern.pattern(), expected, impl_scope,
+                           var_pattern.value_category(), context));
       var_pattern.set_static_type(&var_pattern.pattern().static_type());
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> pattern_value,
@@ -2938,9 +2909,9 @@ auto TypeChecker::TypeCheckPattern(
       if (expected) {
         expected_ptr = arena_->New<PointerType>(expected.value());
       }
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&addr_pattern.binding(),
-                                              expected_ptr, impl_scope,
-                                              enclosing_value_category));
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckPattern(&addr_pattern.binding(), expected_ptr, impl_scope,
+                           enclosing_value_category, context));
 
       if (auto* inner_binding_type =
               dyn_cast<PointerType>(&addr_pattern.binding().static_type())) {
@@ -3048,8 +3019,6 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
     }
     case StatementKind::VariableDefinition: {
       auto& var = cast<VariableDefinition>(*s);
-      CARBON_RETURN_IF_ERROR(
-          CheckVariableDefinitionPattern(var.pattern(), /*lhs=*/true));
       ImplScope var_scope;
       var_scope.AddParent(&impl_scope);
       if (var.has_init()) {
@@ -3063,7 +3032,8 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
         // a.(Widget.F)();
         // ```
         CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-            &var.pattern(), &rhs_ty, var_scope, var.value_category()));
+            &var.pattern(), &rhs_ty, var_scope, var.value_category(),
+            PatternContext().set_refutable_ok(false)));
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<Expression*> converted_init,
             ImplicitlyConvert("initializer of variable", impl_scope,
@@ -3071,7 +3041,8 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
         var.set_init(converted_init);
       } else {
         CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-            &var.pattern(), std::nullopt, var_scope, var.value_category()));
+            &var.pattern(), std::nullopt, var_scope, var.value_category(),
+            PatternContext().set_refutable_ok(false)));
       }
       return Success();
     }
