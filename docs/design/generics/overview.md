@@ -223,7 +223,7 @@ external impl Song as Comparable {
 ```
 
 Implementations may be defined within the class definition itself or
-out-of-line. Implementations may optionally be start with the `external` keyword
+out-of-line. Implementations may optionally be started with the `external` keyword
 to say the members of the interface are not members of the class. Out-of-line
 implementations must be external. External implementations may be defined in the
 library defining either the class or the interface.
