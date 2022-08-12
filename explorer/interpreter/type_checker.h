@@ -328,6 +328,13 @@ class TypeChecker {
                          Nonnull<const Value*> destination)
       -> ErrorOr<Nonnull<Expression*>>;
 
+  // Determine whether `type1` and `type2` are considered to be the same type
+  // in the given scope. This is true if they're structurally identical or if
+  // there is an equality relation in scope that specifies that they are the
+  // same.
+  auto IsSameType(Nonnull<const Value*> type1, Nonnull<const Value*> type2,
+                  const ImplScope& impl_scope) const -> bool;
+
   // Check whether `actual` is implicitly convertible to `expected`
   // and halt with a fatal compilation error if it is not.
   //

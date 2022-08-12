@@ -159,7 +159,7 @@ Example:
 ```
 interface Comparable {
   // `Less` is an associated method.
-  fn Less[me: Self](rhs: Self) -> Bool;
+  fn Less[me: Self](rhs: Self) -> bool;
 }
 ```
 
@@ -218,7 +218,7 @@ class Song {
 // the library defining `Song` or `Comparable`.
 external impl Song as Comparable {
   // Could use either `Self` or `Song` here.
-  fn Less[me: Self](rhs: Self) -> Bool { ... }
+  fn Less[me: Self](rhs: Self) -> bool { ... }
 }
 ```
 
@@ -350,7 +350,7 @@ Interfaces can require other interfaces be implemented:
 
 ```
 interface Equatable {
-  fn IsEqual[me: Self](rhs: Self) -> Bool;
+  fn IsEqual[me: Self](rhs: Self) -> bool;
 }
 
 // `Iterable` requires that `Equatable` is implemented.
@@ -386,7 +386,7 @@ methods in the implementation of the derived interface.
 class Key {
   // ...
   impl as Hashable {
-    fn IsEqual[me: Key](rhs: Key) -> Bool { ... }
+    fn IsEqual[me: Key](rhs: Key) -> bool { ... }
     fn Hash[me: Key]() -> u64 { ... }
   }
   // No need to separately implement `Equatable`.
@@ -535,7 +535,7 @@ interface Stack {
   let ElementType:! Movable;
   fn Push[addr me: Self*](value: ElementType);
   fn Pop[addr me: Self*]() -> ElementType;
-  fn IsEmpty[addr me: Self*]() -> Bool;
+  fn IsEmpty[addr me: Self*]() -> bool;
 }
 ```
 
@@ -561,7 +561,7 @@ those types to be different. An element in a hash map might have type
 
 ```
 interface Equatable(T:! Type) {
-  fn IsEqual[me: Self](compare_to: T) -> Bool;
+  fn IsEqual[me: Self](compare_to: T) -> bool;
 }
 ```
 
@@ -642,7 +642,7 @@ implement the `Negatable` interface for that type. The interfaces and rewrites
 used for a given operator may be found in the
 [expressions design](/docs/design/expressions/README.md).
 
-As a convenience, there is a shorcut for defining an implementation that
+As a convenience, there is a shortcut for defining an implementation that
 supports any type implicitly convertible to a specified type, using `like`:
 
 ```

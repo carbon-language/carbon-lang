@@ -22,6 +22,9 @@ contributions.
     -   [Bazel and Bazelisk](#bazel-and-bazelisk)
     -   [Clang and LLVM](#clang-and-llvm)
         -   [Manual installations (not recommended)](#manual-installations-not-recommended)
+        -   [Troubleshooting build issues](#troubleshooting-build-issues)
+        -   [Troubleshooting debug issues](#troubleshooting-debug-issues)
+    -   [zlib (Linux-only)](#zlib-linux-only)
     -   [pre-commit](#pre-commit)
 -   [Optional tools](#optional-tools)
     -   [Carbon-maintained](#carbon-maintained)
@@ -34,6 +37,7 @@ contributions.
     -   [Vim](#vim)
         -   [vim-prettier](#vim-prettier)
     -   [Visual Studio Code](#visual-studio-code)
+        -   [DevContainer](#devcontainer)
     -   [pre-commit enabled tools](#pre-commit-enabled-tools)
         -   [black](#black)
         -   [codespell](#codespell)
@@ -53,12 +57,11 @@ typical tool setup flow is:
 2.  Install [main tools](#main-tools) and any desired
     [optional tools](#optional-tools).
 3.  Set up the [git](https://git-scm.com/) repository:
-    -   In GitHub, create a fork for development at
-        https://github.com/carbon-language/carbon-lang.
-    -   `gh repo clone USER/carbon-lang`, or otherwise clone the fork.
+    -   `gh repo fork --clone carbon-language/carbon-lang`: this will both
+        create a GitHub fork and clone the repository locally
     -   `cd carbon-lang` to go into the cloned fork's directory.
     -   `pre-commit install` to set up [pre-commit](#pre-commit) in the clone.
-4.  Validate your installation by invoking `bazel test //...:all' from the
+4.  Validate your installation by invoking `bazel test //...:all` from the
     project root. All tests should pass.
 
 <!-- google-doc-style-resume -->
@@ -73,7 +76,7 @@ instructions will try to rely on a minimum of managers.
 #### Homebrew
 
 [Homebrew](https://brew.sh/) is a package manager, and can help install several
-tools that we recommend. See the
+tools that we recommend.
 
 Our recommended way of installing is to run
 [the canonical install command](https://brew.sh/).
@@ -150,7 +153,7 @@ export PATH="$(brew --prefix llvm)/bin:${PATH}"
 Carbon expects the `PATH` to include the installed tooling. If set, `CC` should
 also point at `clang`. Our build environment will detect the `clang` binary
 using `CC` then `PATH`, and will expect the rest of the LLVM toolchain to be
-available in the same directory as `clang`. However, various scripts and tools
+available in the same directory as `llvm-ar`. However, various scripts and tools
 assume that the LLVM toolchain will be in `PATH`, particularly for tools like
 `clang-format` and `clang-tidy`.
 
@@ -172,6 +175,65 @@ CMake options to pass in order for this to work reliably include:
 
 However, we primarily test against the Homebrew installation, so if building
 LLVM and Clang yourself you may hit some issues.
+
+#### Troubleshooting build issues
+
+Many build issues result from the particular options `clang` and `llvm` have
+been built with, particularly when it comes to system-installed versions. This
+is why we recommend using [Homebrew's LLVM](#clang-and-llvm).
+
+After installing from Homebrew, you may need to open a new shell to get `$PATH`
+changes. It may also be necessary to run `bazel clean` in order to clean up
+cached state.
+
+If issues continue, please ask on
+[#build-help](https://discord.com/channels/655572317891461132/824137170032787467),
+providing the output of the following diagnostic commands:
+
+```shell
+brew --prefix llvm
+echo $CC
+which clang
+grep llvm_bindir $(bazel info workspace)/bazel-execroot/external/bazel_cc_toolchain/clang_detected_variables.bzl
+```
+
+These commands will help diagnose potential build issues because they'll expose
+what's occurring with
+[clang detection](/bazel/cc_toolchains/clang_configuration.bzl).
+
+#### Troubleshooting debug issues
+
+Use the `--compilation_mode=dbg` argument to `bazel build` in order to compile
+with debugging enabled. For example:
+
+```shell
+bazel build --compilation_mode=dbg //explorer
+```
+
+Then debugging works with GDB:
+
+```shell
+gdb bazel-bin/explorer/explorer
+```
+
+Note that LLVM uses DWARF v5 debug symbols, which means that GDB version 10.1 or
+newer is required. If you see an error like this:
+
+```shell
+Dwarf Error: DW_FORM_strx1 found in non-DWO CU
+```
+
+It means that the version of GDB used is too old, and does not support the DWARF
+v5 format.
+
+### zlib (Linux-only)
+
+On **Linux**, you need to have the zlib headers installed. For Debian- and
+Ubuntu-based distributions, you can install the development package:
+
+```bash
+sudo apt install zlib1g-dev
+```
 
 ### pre-commit
 
@@ -260,7 +322,7 @@ used by some scripts.
 Our recommended way of installing is:
 
 ```bash
-brew install github/gh/gh
+brew install gh
 ```
 
 #### GitHub Desktop
@@ -322,9 +384,9 @@ Our recommended way of installing is to use
 
 ### Visual Studio Code
 
-[Visual Studio Code](https://code.visualstudio.com/) is an IDE used by several
-of us. We provide [recommended extensions](/.vscode/extensions.json) to assist
-Carbon development. Some settings changes must be made separately:
+[Visual Studio Code](https://code.visualstudio.com/) is a code editor used by
+several of us. We provide [recommended extensions](/.vscode/extensions.json) to
+assist Carbon development. Some settings changes must be made separately:
 
 -   Python › Formatting: Provider: `black`
 
@@ -338,6 +400,22 @@ Our recommended way of installing is to use
 > Studio Code to run `bazel`, not both in combination. Visual Studio Code can
 > still be used for other purposes, such as editing files, without interfering
 > with `bazel`.
+
+#### DevContainer
+
+To support developers join the project without deploying the build env, we
+provide VSCode `DevContainer`.
+
+-   Install VSCode and Docker;
+-   Install the plugin `ms-vscode-remote.remote-containers` under VSCode;
+-   Open `Carbon` project folder in
+    [VSCode](https://docs.microsoft.com/en-us/azure-sphere/app-development/container-build-vscode#build-and-debug-the-project);
+    <br> Visual Studio Code detects the new files and opens a message box
+    saying:
+    `Folder contains a Dev Container configuration file. Reopen to folder to develop in a container.`
+-   Select the `Reopen in Container` button to reopen the folder in the
+    container created by the `.devcontainer/Dockerfile` file;
+-   And then, you are ready to start writing code.
 
 ### pre-commit enabled tools
 

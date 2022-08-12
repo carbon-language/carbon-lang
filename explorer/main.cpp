@@ -77,16 +77,19 @@ static auto Main(llvm::StringRef default_prelude_file, int argc, char* argv[])
   // Typecheck and run the parsed program.
   CARBON_ASSIGN_OR_RETURN(int return_code,
                           ExecProgram(&arena, ast, trace_stream));
-  // Print the return code to stdout even when we aren't tracing.
-  (trace_stream ? **trace_stream : llvm::outs())
-      << "result: " << return_code << "\n";
+  // Always print the return code to stdout.
+  llvm::outs() << "result: " << return_code << "\n";
+  // When there's a dedicated trace file, print the return code to it too.
+  if (scoped_trace_stream) {
+    **trace_stream << "result: " << return_code << "\n";
+  }
   return Success();
 }
 
 auto ExplorerMain(llvm::StringRef default_prelude_file, int argc, char** argv)
     -> int {
   if (auto result = Main(default_prelude_file, argc, argv); !result.ok()) {
-    llvm::errs() << result.error().message() << "\n";
+    llvm::errs() << result.error() << "\n";
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;

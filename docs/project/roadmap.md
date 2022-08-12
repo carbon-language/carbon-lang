@@ -21,7 +21,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Carbon explorer implementation of core features with test cases](#carbon-explorer-implementation-of-core-features-with-test-cases)
 -   [Beyond 2022](#beyond-2022)
     -   [Potential 2023 goals: finish 0.2 language, stop experimenting](#potential-2023-goals-finish-02-language-stop-experimenting)
-    -   [Potential 2024-2025 goals: _ship_ 1.0 language & organization](#potential-2024-2025-goals-_ship_-10-language--organization)
+    -   [Potential 2024-2025 goals: _ship_ 1.0 language & organization](#potential-2024-2025-goals-ship-10-language--organization)
 
 <!-- tocstop -->
 
@@ -77,7 +77,7 @@ set of perspectives in the evolution of Carbon as possible.
 
 As a proxy for the amount of participation, we will count the number of active
 participants from each organization in 2022, with the aim that each organization
-is represented by less than 50% of all active participatnts.
+is represented by less than 50% of all active participants.
 
 There are many ways in which someone could be an active participant, and when
 the leads come to reflect on this at the end of the year, we expect this to be a

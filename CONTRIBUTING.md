@@ -16,10 +16,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Help contribute ideas to Carbon](#help-contribute-ideas-to-carbon)
     -   [Help implement Carbon's design](#help-implement-carbons-design)
     -   [Help address bugs](#help-address-bugs)
+    -   [Good first issues](#good-first-issues)
 -   [How to become a contributor to Carbon](#how-to-become-a-contributor-to-carbon)
     -   [Contributor License Agreements (CLAs)](#contributor-license-agreements-clas)
         -   [Future CLA plans](#future-cla-plans)
     -   [Collaboration systems](#collaboration-systems)
+        -   [Getting access](#getting-access)
     -   [Contribution tools](#contribution-tools)
     -   [Contribution guidelines and standards](#contribution-guidelines-and-standards)
         -   [Guidelines and philosophy for contributions](#guidelines-and-philosophy-for-contributions)
@@ -42,7 +44,7 @@ contribute, and we appreciate all of them. If you have questions, please feel
 free to ask on Discord or
 [GitHub](https://github.com/carbon-language/carbon-lang/discussions).
 
-Everyone contributing to Carbon is expected to:
+Everyone who contributes to Carbon is expected to:
 
 -   Read and follow the [Code of Conduct](CODE_OF_CONDUCT.md). We expect
     everyone in our community to be welcoming, helpful, and respectful.
@@ -59,11 +61,12 @@ information here in our contributing guide, especially the
 ### Help comment on proposals
 
 If you're looking for a quick way to contribute, commenting on proposals is a
-way to provide proposal authors with a breadth of feedback. The "Evolution >
-Ideas" forum is where authors will go for early, high-level feedback. The
-"Evolution > Proposal reviews" forum will have more mature proposals that are
-nearing the decision process. For more about the difference, see the
-[evolution process](docs/project/evolution.md).
+way to provide proposal authors with a breadth of feedback.
+[Issues for leads](https://github.com/carbon-language/carbon-lang/projects/2)
+has questions the community is looking for a decision on. The
+[list of open proposals](https://github.com/carbon-language/carbon-lang/issues?q=is%3Aopen+label%3Aproposal+draft%3Afalse)
+will have more mature proposals that are nearing a decision. For more about the
+difference, see the [evolution process](docs/project/evolution.md).
 
 When giving feedback, please keep comments positive and constructive. Our goal
 is to use community discussion to improve proposals and assist authors.
@@ -90,9 +93,14 @@ and are very interested in folks joining in to help us with it.
 
 As Carbon's design and eventually implementation begin to take shape, we'll
 inevitably end up with plenty of bugs. Helping us triage, analyze, and address
-them is always a great way to get involved. When we have the bug tracker(s) set
-up for this, we'll update this section with ideas of how to find these and get
-started.
+them is always a great way to get involved. See
+[open issues on GitHub](https://github.com/carbon-language/carbon-lang/issues).
+
+### Good first issues
+
+Some issues have been marked as
+["good first issues"](https://github.com/carbon-language/carbon-lang/labels/good%20first%20issue).
+These are intended to be a good place to start contributing.
 
 ## How to become a contributor to Carbon
 
@@ -121,57 +129,61 @@ code and discussion), Google Docs, and Discord.
 
 #### Future CLA plans
 
-At present, we are using Google's CLA. In the future, we expect the Carbon
-ownership and IP to formally transfer from Google to a Carbon-specific
-foundation or other neutral third-party. When that happens, the foundation will
-take ownership of providing a CLA.
+Initially, Carbon is bootstrapping using Google's CLA. We are planning to create
+an open source foundation and transfer all Carbon-related rights to it; our goal
+is for the foundation setup to be similar to other open source projects, such as
+LLVM or Kubernetes.
 
 ### Collaboration systems
 
 We use a few systems for collaboration which contributors should be aware of.
-Membership is currently invite-only.
 
 Before using these systems, everyone must sign the CLA. They are all governed by
 the Code of Conduct.
 
--   [The GitHub carbon-language organization](https://github.com/orgs/carbon-language)
-    is used for our repositories. **To join:**
-
-    1.  Ask [an admin](docs/project/groups.md#admins) to send an invite,
-        providing your GitHub account.
-    2.  Check your email to accept the invite, or try the standard
-        [accept link](https://github.com/orgs/carbon-language/invitation?via_email=1)
-        if you don't see the email.
-
--   [Discord](https://discord.com/app) is used for chat. **To join:**
-
-    1.  Ask [an admin](docs/project/groups.md#admins) for an invite link.
-        -   Please do not re-share the invite links: they're our only way to
-            restrict access.
-    2.  You will be prompted with the Code of Conduct. After reading it, click
-        the check mark reaction icon at the bottom.
-
--   [A shared Google Drive](https://drive.google.com/corp/drive/folders/0ALTu5Y6kc39XUk9PVA)
-    is used for all of our Google Docs, particularly proposal drafts. **To
-    join:**
-
-    1.  Ask [an admin](docs/project/groups.md#admins) to invite you, providing
-        your Google account email.
-    2.  The admin will add you to the
-        [Google Group](https://groups.google.com/g/carbon-lang-contributors)
-        used for access.
-
+-   [The GitHub carbon-language organization](https://github.com/carbon-language)
+    is used for our repositories.
+-   [Discord](https://discord.gg/ZjVdShJDAs) is used for chat.
+-   [A shared Google Drive](https://drive.google.com/drive/folders/1aC5JJ5EcI8B7cgVDrLvO7WNw97F0LpS2)
+    is used for all of our Google Docs, particularly proposal drafts.
 -   [Google Calendar](https://calendar.google.com/calendar/embed?src=c_07td7k4qjq0ssb4gdl6bmbnkik%40group.calendar.google.com)
     is used for meeting invites and project reminders. Contributors may add
     calendar entries for meetings added to discuss details. Standard entries
     are:
 
     -   The
-        [weekly sync](https://docs.google.com/document/d/1K_5uig1HHMsfEl-6eSMjM1qjwX-7PsbkBuRp36knxlQ/edit),
-        where everyone is welcome.
-    -   [Open discussions](https://docs.google.com/document/d/1QCdKQ33rki-kCDrxi8UHy3a36dtW0WdMqpUzluGSrz4/edit?resourcekey=0-bZmNUiueOiH_sysJNqnT9A)
+        [weekly sync](https://docs.google.com/document/d/1dwS2sJ8tsN3LwxqmZSv9OvqutYhP71dK9Dmr1IXQFTs/edit?resourcekey=0-NxBWgL9h05yD2GOR3wUisg),
+        where contributors are welcome.
+    -   [Open discussions](https://docs.google.com/document/d/1tEt4iM6vfcY0O0DG0uOEMIbaXcZXlNREc2ChNiEtn_w/edit),
         which are unstructured meeting slots used for discussing proposals,
         tooling, and other Carbon topics based on who attends.
+
+#### Getting access
+
+Our collaboration systems are all viewable publicly, and most can be joined
+without particular requests. However, some require extra permissions, such as
+editing Google Docs, joining meetings, or some details of the proposal process.
+
+When requesting any of the following access, please provide a reason for the
+access. All requests require a
+[signed CLA](#contributor-license-agreements-clas).
+
+-   Google Docs/Calendar commenter access:
+    [join group](https://groups.google.com/a/carbon-lang.dev/g/commenters/about)
+    -   Grants commenter access to Carbon Language documents, as well as the
+        ability to view Calendar events.
+-   Google Docs/Calendar contributor access:
+    [join group](https://groups.google.com/a/carbon-lang.dev/g/contributors/about)
+    -   Grants edit access to Carbon Language documents, as well as the ability
+        to edit Calendar events.
+-   GitHub Label/project contributor access:
+    [ask on #access-requests](https://discord.com/channels/655572317891461132/1006221387574292540)
+    -   Don't forget to mention your GitHub username.
+    -   Used by the proposal process.
+
+If you simply want to chime in on GitHub or Discord, none of this is needed. If
+you're interested in joining meetings, ask for commenter access. If you're
+trying to write proposals, both types of contributor access will help.
 
 ### Contribution tools
 
@@ -192,8 +204,7 @@ follow the Carbon documentation and coding styles.
 
     -   When the Carbon team accepts new documentation or features, to Carbon,
         by default they take on the maintenance burden. This means they'll weigh
-        the benefit of each contribution must be weighed against the cost of
-        maintaining it.
+        the benefit of each contribution against the cost of maintaining it.
     -   The appropriate [style](#style) is applied.
     -   The [license](#license) is present in all contributions.
     -   [Code review](/docs/project/code_review.md) is used to improve the
@@ -218,7 +229,7 @@ follow the Carbon documentation and coding styles.
 
     -   New features should have a documented design that has been approved
         through the [evolution process](docs/project/evolution.md). This
-        includes modifications to pre-existing designs.
+        includes modifications to preexisting designs.
     -   Bug fixes and mechanical improvements don't need this.
     -   All new features include unit tests, as they help to (a) document and
         validate concrete usage of the feature and its edge cases, and (b) guard
@@ -268,7 +279,7 @@ A license is required at the top of all documents and files.
 ### Google Docs
 
 Google Docs all use
-[this template](https://docs.google.com/document/d/1sqEnIWWZKTrtMz2XgD7_RqvogwbI0tBQjAZIvOabQsw/template/preview).
+[this template](https://docs.google.com/document/d/1tAwE0230PDxweVruHUVY6DSfSnrJF2LnLOWXQYqNJuI/template/preview?usp=sharing&resourcekey=0-zsrwCWP7ictbxhCuePk-fw).
 It puts the license at the top of every page if printed.
 
 ### Markdown
@@ -305,7 +316,7 @@ incremental changes and preserves a simple linear history.
 ## Acknowledgements
 
 Carbon's Contributing guidelines are based on
-[Tensorflow](https://github.com/tensorflow/tensorflow/blob/master/CONTRIBUTING.md)
+[TensorFlow](https://github.com/tensorflow/tensorflow/blob/master/CONTRIBUTING.md)
 and [Flutter](https://github.com/flutter/flutter/blob/master/CONTRIBUTING.md)
 guidelines. Many thanks to these communities for their help in providing a
 basis.

@@ -117,8 +117,8 @@ class VariableDefinition : public Statement {
   };
 
   VariableDefinition(SourceLocation source_loc, Nonnull<Pattern*> pattern,
-                     Nonnull<Expression*> init, ValueCategory value_category,
-                     DefinitionType def_type)
+                     std::optional<Nonnull<Expression*>> init,
+                     ValueCategory value_category, DefinitionType def_type)
       : Statement(AstNodeKind::VariableDefinition, source_loc),
         pattern_(pattern),
         init_(init),
@@ -131,17 +131,31 @@ class VariableDefinition : public Statement {
 
   auto pattern() const -> const Pattern& { return *pattern_; }
   auto pattern() -> Pattern& { return *pattern_; }
-  auto init() const -> const Expression& { return *init_; }
-  auto init() -> Expression& { return *init_; }
-  auto value_category() const -> ValueCategory { return value_category_; }
-  auto is_returned() const -> bool { return def_type_ == Returned; };
+
+  auto init() const -> const Expression& {
+    CARBON_CHECK(has_init());
+    return **init_;
+  }
+  auto init() -> Expression& {
+    CARBON_CHECK(has_init());
+    return **init_;
+  }
+
+  auto has_init() const -> bool { return init_.has_value(); }
 
   // Can only be called by type-checking, if a conversion was required.
-  void set_init(Nonnull<Expression*> init) { init_ = init; }
+  void set_init(Nonnull<Expression*> init) {
+    CARBON_CHECK(has_init()) << "should not add a new initializer";
+    init_ = init;
+  }
+
+  auto value_category() const -> ValueCategory { return value_category_; }
+
+  auto is_returned() const -> bool { return def_type_ == Returned; };
 
  private:
   Nonnull<Pattern*> pattern_;
-  Nonnull<Expression*> init_;
+  std::optional<Nonnull<Expression*>> init_;
   ValueCategory value_category_;
   const DefinitionType def_type_;
 };
@@ -281,6 +295,38 @@ class While : public Statement {
 
  private:
   Nonnull<Expression*> condition_;
+  Nonnull<Block*> body_;
+};
+
+class For : public Statement {
+ public:
+  For(SourceLocation source_loc, Nonnull<BindingPattern*> variable_declaration,
+      Nonnull<Expression*> loop_target, Nonnull<Block*> body)
+      : Statement(AstNodeKind::For, source_loc),
+        variable_declaration_(variable_declaration),
+        loop_target_(loop_target),
+        body_(body) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromFor(node->kind());
+  }
+
+  auto variable_declaration() const -> const BindingPattern& {
+    return *variable_declaration_;
+  }
+  auto variable_declaration() -> BindingPattern& {
+    return *variable_declaration_;
+  }
+
+  auto loop_target() const -> const Expression& { return *loop_target_; }
+  auto loop_target() -> Expression& { return *loop_target_; }
+
+  auto body() const -> const Block& { return *body_; }
+  auto body() -> Block& { return *body_; }
+
+ private:
+  Nonnull<BindingPattern*> variable_declaration_;
+  Nonnull<Expression*> loop_target_;
   Nonnull<Block*> body_;
 };
 

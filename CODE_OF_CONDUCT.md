@@ -33,8 +33,8 @@ that we ask all community members to adhere to:
 -   be friendly and patient,
 -   be considerate,
 -   be kind,
--   be careful in the words that you choose,
--   when we disagree, try to understand why, and
+-   be careful in the words that we choose,
+-   when we disagree, we try to understand why, and
 -   recognize when progress has stopped, and take a step back.
 
 This list isn't exhaustive. Rather, take it in the spirit in which it’s intended
@@ -45,9 +45,7 @@ includes chat systems, forums, emails (on lists or between members), issue
 trackers, events, and any other spaces that the community uses for
 communication. It applies to all of your communication and conduct in these
 spaces, including emails, chats, things you say, slides, videos, posters, signs,
-or even t-shirts you display in these spaces. In rare cases, violations of this
-code _outside_ of these spaces may affect a person’s ability to participate
-_within_ these spaces.
+or even t-shirts you display in these spaces.
 
 All community members should help support our standards of acceptable behavior.
 Everyone is encouraged to speak up in response to any behavior that they deem
@@ -88,9 +86,9 @@ spaces:
     kind when dealing with other members as well as with people outside the
     Carbon community.
 
--   **Be careful in the words that you choose and be kind to others.** Do not
-    insult or put down other participants. Harassment and other exclusionary
-    behaviors aren’t acceptable. This includes, but is not limited to:
+-   **Be careful in the words that we choose and be kind to others.** Do not use
+    insults or put downs. Harassment and other exclusionary behaviors aren’t
+    acceptable. This includes, but is not limited to:
 
     -   Violent threats or language directed against another person.
     -   Discriminatory jokes and language.
@@ -103,15 +101,15 @@ spaces:
     -   In general, if someone asks you to stop, then stop. Persisting after
         being asked to stop is considered harassment.
 
--   **When we disagree, try to understand why.** Disagreements, both social and
-    technical, happen all the time, and Carbon is no exception. It is important
-    that we resolve disagreements and differing views constructively. Remember
-    that we’re different. The strength of the project comes from its varied
-    community: people from a wide range of backgrounds. Different people have
-    different perspectives on issues. Being unable to understand why someone
-    holds a viewpoint doesn’t mean that they’re wrong. Don’t forget that it is
-    human to err and blaming each other doesn’t get us anywhere. Instead, focus
-    on helping to resolve issues and learning from mistakes.
+-   **When we disagree, we try to understand why.** Disagreements, both social
+    and technical, happen all the time, and Carbon is no exception. It is
+    important that we resolve disagreements and differing views constructively.
+    Remember that we’re different. The strength of the project comes from its
+    varied community: people from a wide range of backgrounds. Different people
+    have different perspectives on issues. Being unable to understand why
+    someone holds a viewpoint doesn’t mean that they’re wrong. Don’t forget that
+    it is human to err and blaming each other doesn’t get us anywhere. Instead,
+    focus on helping to resolve issues and learning from mistakes.
 
 -   **Recognize when progress has stopped, and take a step back.** Regardless of
     whether you're trying to resolve a disagreement or anything else, think
@@ -121,6 +119,25 @@ spaces:
     before responding again. Consider pulling in another community member to
     give a fresh perspective. Maybe meet over VC instead. Switching approaches
     can help resume progress.
+
+No weapons are allowed at Carbon events. Weapons include, but are not limited
+to, explosives (including fireworks), guns, and large knives such as those used
+for hunting or display, as well as any other item used for the purpose of
+causing injury or harm to others.
+
+In rare cases, violations of this code _outside_ of these spaces may affect, and
+be detrimental to, a person’s ability to participate _within_ these spaces.
+Important examples include, but are not limited to,
+[sexual and gender-based violence and/or harassment](https://hr.un.org/sites/hr.un.org/files/SEA%20Glossary%20%20%5BSecond%20Edition%20-%202017%5D%20-%20English_0.pdf),
+[hate crimes](https://hatecrime.osce.org/), and
+[hate speech](https://www.un.org/en/genocideprevention/documents/UN%20Strategy%20and%20Plan%20of%20Action%20on%20Hate%20Speech%2018%20June%20SYNOPSIS.pdf).
+Although we do not conduct proactive research, we have an obligation to respond
+to reported and, to the extent possible, corroborated concerns. Our motivations
+are not rooted in responding punitively, or holding people accountable. Instead,
+our response will be focused on how the continued participation of the person at
+issue could impact the community's safety, well-being, and inclusivity. It is
+our priority to remain a welcoming community to victims as well as groups
+subjected to systemic marginalization or underrepresentation.
 
 If you have questions, please feel free to ask on Discord,
 [GitHub](https://github.com/carbon-language/carbon-lang/discussions), or contact
@@ -132,11 +149,35 @@ At present, the [Carbon leads](docs/project/evolution.md#carbon-leads-1) will
 serve as the conduct team. We expect to establish a dedicated conduct team if
 and when the project grows, along with more communication systems for reports.
 
+The conduct team can be emailed at carbon-lang-conduct@googlegroups.com, and
+currently has the following members:
+
+-   Chandler Carruth (@chandlerc on Discord and
+    [GitHub](https://github.com/chandlerc))
+-   Kate Gregory (@KateGregory on Discord and
+    [GitHub](https://github.com/KateGregory))
+-   Richard Smith (@zygoloid on Discord and
+    [GitHub](https://github.com/zygoloid))
+
+If the composition of the code of conduct team changes, reports will not be
+shared with new members without the permission of the reporter.
+
 ### Reporting conduct
 
-If you believe someone is violating the code of conduct, you can always report
-it to the conduct team by emailing all members of the conduct team. **All
-reports will be kept confidential.**
+If you believe someone is violating the code of conduct, you can report it
+several ways, including:
+
+-   Asking for help on
+    [#community-help](https://discord.com/channels/655572317891461132/996113200464543804).
+    An available moderator will respond privately.
+    -   If you want to privately ask for moderator assistance, direct message a
+        moderator on Discord. Look under the Moderator list for logged in
+        moderators, and click on a moderator's name to send a message.
+-   Emailing the [conduct team](#conduct-team) directly at
+    carbon-lang-conduct@googlegroups.com. Bear in mind that
+    [responses may take time](#what-happens-after-contacting-the-conduct-team).
+
+**All reports will be kept confidential.**
 
 Please send reports concerning a member of the conduct team directly to other
 members of the conduct team. This allows discussion of the complaint to more
@@ -252,7 +293,7 @@ violation of this Code of Conduct using these guidelines based on the behavior
 involved:
 
 1.  **Correction**
-    -   **Behavior:** Use of inappropriate language or other minor violations
+    -   **Behavior:** Use of inappropriate language or other minor violations of
         the code of conduct.
     -   **Action:** A private, written message providing clarity around the
         nature of the violation and an explanation of why the behavior was

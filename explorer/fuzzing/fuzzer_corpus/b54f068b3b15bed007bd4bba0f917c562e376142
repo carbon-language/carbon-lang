@@ -1,0 +1,115 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "x"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              int_literal {
+                value: 2
+              }
+            }
+          }
+        }
+        statements {
+          while_statement {
+            condition {
+              bool_literal {
+                value: true
+              }
+            }
+            body {
+              statements {
+                if_statement {
+                  condition {
+                    operator {
+                      op: Eq
+                      arguments {
+                        identifier {
+                          name: "x"
+                        }
+                      }
+                      arguments {
+                        int_literal {
+                          value: 0
+                        }
+                      }
+                    }
+                  }
+                  then_block {
+                    statements {
+                      break_statement {
+                      }
+                    }
+                  }
+                  else_block {
+                    statements {
+                      assign {
+                        lhs {
+                          identifier {
+                            name: "x"
+                          }
+                        }
+                        rhs {
+                          operator {
+                            op: Sub
+                            arguments {
+                              identifier {
+                                name: "x"
+                              }
+                            }
+                            arguments {
+                              int_literal {
+                                value: 1
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          return_statement {
+            expression {
+              identifier {
+                name: "x"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

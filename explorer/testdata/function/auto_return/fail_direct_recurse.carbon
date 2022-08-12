@@ -12,7 +12,7 @@ package ExplorerTest api;
 
 // This is required to fail even though the Recurse() call's return value isn't
 // used.
-fn Recurse(x: i32, do_recurse: Bool) -> auto {
+fn Recurse(x: i32, do_recurse: bool) -> auto {
   if (do_recurse) {
     // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/auto_return/fail_direct_recurse.carbon:[[@LINE+1]]: Function calls itself, but has a deduced return type
     Recurse(x, false);

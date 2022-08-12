@@ -1,0 +1,21 @@
+{
+  "name": "carbon-lang",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      "TAG": "3.5.6"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "bazelbuild.vscode-bazel",
+        "bierner.github-markdown-preview",
+        "daohong-emilio.yash",
+        "esbenp.prettier-vscode",
+        "llvm-vs-code-extensions.vscode-clangd",
+        "ms-python.python"
+      ]
+    }
+  }
+}

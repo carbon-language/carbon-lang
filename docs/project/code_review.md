@@ -72,22 +72,31 @@ partial review can be a good way to start contributing to Carbon. Contributors
 with specific domain expertise or familiarity should also try to provide review
 on changes touching relevant parts of the project.
 
-Additionally, at least one _code owner_ of any file changed needs to review that
-change. The code owners and what files they are responsible for are defined
-using the
-[`CODEOWNERS`](https://help.github.com/en/github/creating-cloning-and-archiving-repositories/about-code-owners#codeowners-syntax)
-file in the root of the repository. Pull requests will automatically request
-reviewers based on this file and enforce that these reviews take place.
+Additionally, at least one developer with commit access must review each change.
+In Carbon, developers will focus on particular areas, loosely broken down as:
 
-While we do encourage people interested in contributing to Carbon by reviewing
-changes to do so, we also suggest not overloading a single review. It can be
-daunting for the author of a change to get feedback from a large number of
-reviewers, and so we suggest keeping the number of reviewers reasonably small.
+-   [Carbon leads](groups.md#carbon-leads): [proposals](/proposals/) and other
+    important project documents, including the [Main README](/README.md),
+    [Code of Conduct](/CODE_OF_CONDUCT.md), [license](/LICENSE), and
+    [goals](goals.md).
+
+-   [Implementation team](groups.md#implementation-team): general changes.
+
+    -   We split out auto-assignment by
+        [explorer](/.github/assign_prs/explorer.yaml),
+        [toolchain](/.github/assign_prs/toolchain.yaml), and
+        [other files, including documentation](/.github/assign_prs/fallback.yaml).
+
+[Auto-assignment](/.github/workflows/assign_prs.yaml) will help find owners, but
+won't always be perfect -- developers may take a PR they weren't auto-assigned
+in order to help review go quickly. Contributors can also request multiple
+reviewers, but it can be daunting to get feedback from a large number of
+reviewers, so we suggest keeping the number of reviewers reasonably small.
 
 Any reviews that explicitly request changes should be addressed, either with the
 changes or an explanation of why not, before a pull request is merged. Further,
-any code owners who have requested changes should explicitly confirm they're
-happy with the resolution before the change is merged.
+any owners who have requested changes should explicitly confirm they're happy
+with the resolution before the change is merged.
 
 When a team gives an affirm decision on an [evolution proposal](evolution.md),
 each team member should explicitly note any of their comments on the pull
@@ -116,13 +125,13 @@ mechanical best practices to most effectively navigate them.
     -   Make any in-file comments needed, but add them to a pending review
         rather than sending them directly.
     -   Finish the review and add any top-level review comments there.
--   If you are a code owner who will be providing approval for the change, then
-    make sure to mark a review as requesting changes when you want the author to
+-   If you are an owner who will be providing approval for the change, then make
+    sure to mark a review as requesting changes when you want the author to
     begin addressing your comment. Only use the "comment" review state if you
     are still in the process of reviewing and don't expect the author to begin
     working on further changes.
-    -   If you are not a code owner asked to approve, use the difference between
-        a comment and requesting a change to help the author know whether to
+    -   If you are not an owner asked to approve, use the difference between a
+        comment and requesting a change to help the author know whether to
         circle back with you before landing the pull request if the relevant
         owner(s) approve it.
 -   Don't reply to in-file comment threads in the conversation view, or with
@@ -209,10 +218,10 @@ far. It is still possible to shrink a change so much that it becomes nonsensical
 in isolation. For example, a change without appropriate tests is not
 self-contained.
 
-You may want to use a set of stacked pull requests rather than a single, larger
-pull request in order to keep changes easy to review.
-
-> TODO: link to the stacked pull request documentation when available.
+You may want to use a set of
+[stacked pull requests](pull_request_workflow.md#stacking-dependent-pull-requests)
+rather than a single, larger pull request in order to keep changes easy to
+review.
 
 ### Responding to review comments
 
@@ -400,9 +409,9 @@ in GitHub, but also state this explicitly in the message since this is the
 default and doesn't indicate that your feedback _is_ addressed. For example, say
 that "my comments are addressed, but leaving the final review to others" to
 clearly indicate that you're happy but are deferring the decision to others. If
-you are a code owner and deferring to someone else, it is essential to suggest
-specific other reviewers. Otherwise, we risk all the code owners assuming
-another is going to approve the change.
+you are an owner and deferring to someone else, it is essential to suggest
+specific other reviewers. Otherwise, we risk all the owners assuming another is
+going to approve the change.
 
 An important technique to make progress, especially with different working hours
 and timezones, is to approve changes even with outstanding comments. For
@@ -454,7 +463,7 @@ There are two techniques to use to resolve these situations that should be tried
 early on:
 
 1. Bring another person into the review to help address the specific issue.
-   Typically they should at least be a code owner, and may usefully be a
+   Typically they should at least be an owner, and may usefully be a
    [Carbon lead](groups.md#carbon-leads).
 
 2. Ask the specific question in a broader forum, such as Discord, in order to
@@ -464,8 +473,8 @@ The goal of these steps isn't to override the author or the reviewer, but to get
 more perspectives and voices involved. Often this will clarify the issue and its
 trade-offs, and provide a simple resolution that all parties are happy with.
 However, in some cases, the underlying conflict isn't actually addressed. While
-there is a desire to generally bias towards the direction of the code owners
-during reviews, reviews should _not_ turn into a voting process. The reason for
+there is a desire to generally bias towards the direction of the owners during
+reviews, reviews should _not_ turn into a voting process. The reason for
 proceeding in a specific direction should always be explained sufficiently that
 all parties on the review are satisfied by the explanation and don't feel the
 need to escalate.
@@ -493,7 +502,7 @@ an escalation path.
 
 Before escalating an impasse or conflict in code review, try asking another
 reviewer to help resolve the issue or bridge any communication gaps. Consider
-scheduling a quick video chat to discuss and better understand each others'
+scheduling a quick video chat to discuss and better understand each other’s
 concerns and position.
 
 Note that the formal evolution process is heavyweight and relatively slow. The

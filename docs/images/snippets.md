@@ -9,7 +9,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Images
 
 Images are managed in
-[Google Drive](https://drive.google.com/corp/drive/folders/1CsbHo3vamrxmBwHkoyz1kU0sGFqAh688).
+[Google Drive](https://drive.google.com/drive/folders/1QrBXiy_X74YsOueeC0IYlgyolWIhvusB).
 
 ## Quicksort
 
@@ -36,8 +36,8 @@ fn QuickSort[T:! Comparable & Movable](s: Slice(T)) {
     return;
   }
   let p: i64 = Partition(s);
-  QuickSort(s[:p - 1]));
-  QuickSort(s[p + 1:]));
+  QuickSort(s[:p - 1]);
+  QuickSort(s[p + 1:]);
 }
 ```
 
@@ -56,7 +56,7 @@ struct Circle {
   float r;
 };
 
-void WriteTotalArea(std::span<Circle> circles) {
+void PrintTotalArea(std::span<Circle> circles) {
   float area = 0;
   for (const Circle& c : circles) {
     area += M_PI * c.r * c.r;
@@ -67,7 +67,7 @@ void WriteTotalArea(std::span<Circle> circles) {
 auto main(int argc, char** argv) -> int {
   std::vector<Circle> circles = {{1.0}, {2.0}};
   // Implicitly constructors `span` from `vector`.
-  WriteTotalArea(circles);
+  PrintTotalArea(circles);
   return 0;
 }
 ```
@@ -83,19 +83,19 @@ class Circle {
   var r: f32;
 }
 
-fn WriteTotalArea(circles: Slice(Circle)) {
+fn PrintTotalArea(circles: Slice(Circle)) {
   var area: f32 = 0;
   for (c: Circle in circles) {
     area += Math.Pi * c.r * c.r;
   }
-  Console.WriteLine("Total area: {0}", area);
+  Print("Total area: {0}", area);
 }
 
 fn Main() -> i32 {
   // A dynamically sized array, like `std::vector`.
   var circles: Array(Circle) = ({.r = 1.0}, {.r = 2.0});
   // Implicitly constructs `Slice` from `Array`.
-  WriteTotalArea(circles);
+  PrintTotalArea(circles);
   return 0;
 }
 ```
@@ -113,12 +113,12 @@ package Geometry api;
 import Cpp library "circle.h";
 import Math;
 
-fn WriteTotalArea(circles: Slice(Cpp.Circle)) {
+fn PrintTotalArea(circles: Slice(Cpp.Circle)) {
   var area: f32 = 0;
   for (c: Cpp.Circle in circles) {
     area += Math.Pi * c.r * c.r;
   }
-  Console.WriteLine("Total area: {0}", area);
+  Print("Total area: {0}", area);
 }
 
 // C++ calling Carbon:
@@ -130,7 +130,7 @@ auto main(int argc, char** argv) -> int {
   std::vector<Circle> circles = {{1.0}, {2.0}};
   // Carbon's `Slice` supports implicit construction from `std::vector`,
   // similar to `std::span`.
-  Geometry::WriteTotalArea(circles);
+  Geometry::PrintTotalArea(circles);
   return 0;
 }
 ```

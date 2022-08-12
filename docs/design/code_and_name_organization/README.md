@@ -24,7 +24,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Libraries](#libraries)
         -   [Exporting entities from an API file](#exporting-entities-from-an-api-file)
         -   [Granularity of libraries](#granularity-of-libraries)
-        -   [Exporting namespces](#exporting-namespces)
+        -   [Exporting namespaces](#exporting-namespaces)
     -   [Imports](#imports-1)
         -   [Imports from the current package](#imports-from-the-current-package)
     -   [Namespaces](#namespaces)
@@ -392,7 +392,7 @@ possibly containing only a single class. The choice of only allowing a single
 `api` file per library should help encourage developers to write small
 libraries.
 
-#### Exporting namespces
+#### Exporting namespaces
 
 Any entity may be marked with `api` except for namespace and package entities.
 That is, `api namespace Sha256;` is invalid code. Instead, namespaces are
@@ -575,7 +575,7 @@ server for open source packages. Conflicts can also be addressed by renaming one
 of the packages, either at the source, or as a local modification.
 
 We do need to address the case of package names conflicting with other entity
-names. It's possible that a pre-existing entity will conflict with a new import,
+names. It's possible that a preexisting entity will conflict with a new import,
 and that renaming the entity is infeasible to rename due to existing callers.
 Alternately, the entity may be using an idiomatic name that it would contradict
 naming conventions to rename. In either case, this conflict may exist in a
@@ -769,13 +769,14 @@ Currently, we do not support cross-language imports. In the future, we will
 likely want to support imports from other languages, particularly for C++
 interoperability.
 
-Although we're not designing this right now, it could fit into the proposed
-syntax. For example:
+To fit into the proposed `import` syntax, we are provisionally using a special
+`Cpp` package to import headers from C++ code, as in:
 
 ```carbon
-import Cpp file("myproject/myclass.h");
+import Cpp library "<map>";
+import Cpp library "myproject/myclass.h";
 
-fn MyCarbonCall(x: Cpp.MyProject.MyClass);
+fn MyCarbonCall(x: Cpp.std.map(Cpp.MyProject.MyClass));
 ```
 
 ### Imports from URLs

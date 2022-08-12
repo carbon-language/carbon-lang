@@ -10,9 +10,10 @@
 
 package ExplorerTest api;
 
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_invalid_fnty.carbon:[[@LINE+3]]: type error in negation
-// CHECK: expected: i32
-// CHECK: actual: Bool
+// TODO: We should type-check the prelude before the main input so that we can
+// use it within the types of top-level declarations.
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_invalid_fnty.carbon:[[@LINE+2]]: type error in `-`:
+// CHECK: missing declaration for builtin `Negate`
 fn f(g: __Fn(-true) -> true) {
 }
 

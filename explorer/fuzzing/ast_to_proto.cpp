@@ -33,32 +33,54 @@ static auto LibraryNameToProto(const LibraryName& library_name)
 }
 
 static auto OperatorToProtoEnum(const Operator op)
-    -> Fuzzing::PrimitiveOperatorExpression::Operator {
+    -> Fuzzing::OperatorExpression::Operator {
   switch (op) {
     case Operator::AddressOf:
-      return Fuzzing::PrimitiveOperatorExpression::AddressOf;
+      return Fuzzing::OperatorExpression::AddressOf;
+    case Operator::As:
+      return Fuzzing::OperatorExpression::As;
     case Operator::Deref:
-      return Fuzzing::PrimitiveOperatorExpression::Deref;
+      return Fuzzing::OperatorExpression::Deref;
     case Operator::Neg:
-      return Fuzzing::PrimitiveOperatorExpression::Neg;
+      return Fuzzing::OperatorExpression::Neg;
     case Operator::Not:
-      return Fuzzing::PrimitiveOperatorExpression::Not;
+      return Fuzzing::OperatorExpression::Not;
     case Operator::Ptr:
-      return Fuzzing::PrimitiveOperatorExpression::Ptr;
+      return Fuzzing::OperatorExpression::Ptr;
     case Operator::Add:
-      return Fuzzing::PrimitiveOperatorExpression::Add;
+      return Fuzzing::OperatorExpression::Add;
     case Operator::And:
-      return Fuzzing::PrimitiveOperatorExpression::And;
+      return Fuzzing::OperatorExpression::And;
     case Operator::Eq:
-      return Fuzzing::PrimitiveOperatorExpression::Eq;
+      return Fuzzing::OperatorExpression::Eq;
+    case Operator::Less:
+      return Fuzzing::OperatorExpression::Less;
+    case Operator::LessEq:
+      return Fuzzing::OperatorExpression::LessEq;
+    case Operator::Greater:
+      return Fuzzing::OperatorExpression::Greater;
+    case Operator::GreaterEq:
+      return Fuzzing::OperatorExpression::GreaterEq;
     case Operator::Mul:
-      return Fuzzing::PrimitiveOperatorExpression::Mul;
+      return Fuzzing::OperatorExpression::Mul;
+    case Operator::Mod:
+      return Fuzzing::OperatorExpression::Mod;
     case Operator::Or:
-      return Fuzzing::PrimitiveOperatorExpression::Or;
+      return Fuzzing::OperatorExpression::Or;
     case Operator::Sub:
-      return Fuzzing::PrimitiveOperatorExpression::Sub;
-    case Operator::Combine:
-      return Fuzzing::PrimitiveOperatorExpression::Combine;
+      return Fuzzing::OperatorExpression::Sub;
+    case Operator::BitwiseAnd:
+      return Fuzzing::OperatorExpression::BitwiseAnd;
+    case Operator::BitwiseOr:
+      return Fuzzing::OperatorExpression::BitwiseOr;
+    case Operator::BitwiseXor:
+      return Fuzzing::OperatorExpression::BitwiseXor;
+    case Operator::BitShiftLeft:
+      return Fuzzing::OperatorExpression::BitShiftLeft;
+    case Operator::BitShiftRight:
+      return Fuzzing::OperatorExpression::BitShiftRight;
+    case Operator::Complement:
+      return Fuzzing::OperatorExpression::Complement;
   }
 }
 
@@ -144,12 +166,11 @@ static auto ExpressionToProto(const Expression& expression)
       break;
     }
 
-    case ExpressionKind::PrimitiveOperatorExpression: {
-      const auto& primitive_operator =
-          cast<PrimitiveOperatorExpression>(expression);
-      auto* operator_proto = expression_proto.mutable_primitive_operator();
-      operator_proto->set_op(OperatorToProtoEnum(primitive_operator.op()));
-      for (Nonnull<const Expression*> arg : primitive_operator.arguments()) {
+    case ExpressionKind::OperatorExpression: {
+      const auto& operator_expr = cast<OperatorExpression>(expression);
+      auto* operator_proto = expression_proto.mutable_operator_();
+      operator_proto->set_op(OperatorToProtoEnum(operator_expr.op()));
+      for (Nonnull<const Expression*> arg : operator_expr.arguments()) {
         *operator_proto->add_arguments() = ExpressionToProto(*arg);
       }
       break;
@@ -225,20 +246,10 @@ static auto ExpressionToProto(const Expression& expression)
 
     case ExpressionKind::IntrinsicExpression: {
       const auto& intrinsic = cast<IntrinsicExpression>(expression);
-      auto* intrinsic_proto = expression_proto.mutable_intrinsic();
-      switch (intrinsic.intrinsic()) {
-        case IntrinsicExpression::Intrinsic::Print:
-          intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::Print);
-          break;
-        case IntrinsicExpression::Intrinsic::Alloc:
-          intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::Alloc);
-          break;
-        case IntrinsicExpression::Intrinsic::Dealloc:
-          intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::Dealloc);
-          break;
-      }
-      *intrinsic_proto->mutable_argument() =
-          TupleLiteralExpressionToProto(intrinsic.args());
+      auto* call_proto = expression_proto.mutable_call();
+      call_proto->mutable_function()->mutable_identifier()->set_name(
+          std::string(intrinsic.name()));
+      *call_proto->mutable_argument() = ExpressionToProto(intrinsic.args());
       break;
     }
 
@@ -411,7 +422,9 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
       const auto& def = cast<VariableDefinition>(statement);
       auto* def_proto = statement_proto.mutable_variable_definition();
       *def_proto->mutable_pattern() = PatternToProto(def.pattern());
-      *def_proto->mutable_init() = ExpressionToProto(def.init());
+      if (def.has_init()) {
+        *def_proto->mutable_init() = ExpressionToProto(def.init());
+      }
       def_proto->set_is_returned(def.is_returned());
       break;
     }
@@ -508,6 +521,16 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
       // Initializes with the default value; there's nothing to set.
       statement_proto.mutable_continue_statement();
       break;
+
+    case StatementKind::For: {
+      const auto& for_stmt = cast<For>(statement);
+      auto* for_proto = statement_proto.mutable_for_statement();
+      *for_proto->mutable_var_decl() =
+          BindingPatternToProto(for_stmt.variable_declaration());
+      *for_proto->mutable_target() = ExpressionToProto(for_stmt.loop_target());
+      *for_proto->mutable_body() = BlockStatementToProto(for_stmt.body());
+      break;
+    }
   }
   return statement_proto;
 }

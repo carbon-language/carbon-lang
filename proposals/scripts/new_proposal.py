@@ -196,8 +196,9 @@ def main() -> None:
             "--draft",
             "--label",
             "proposal",
-            "--project",
-            "Proposals",
+            # TODO: https://github.com/carbon-language/carbon-lang/issues/1898
+            # "--project",
+            # "Proposals",
             "--reviewer",
             "carbon-language/carbon-leads",
             "--repo",

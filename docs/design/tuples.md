@@ -12,6 +12,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [TODO](#todo)
 -   [Overview](#overview)
+    -   [Empty tuples](#empty-tuples)
     -   [Indices as compile-time constants](#indices-as-compile-time-constants)
     -   [Operations performed field-wise](#operations-performed-field-wise)
 -   [Open questions](#open-questions)
@@ -69,6 +70,11 @@ fn Baz(x: i32, y: i32, z: i32) -> (i32, i32) {
 
 This code first reverses the tuple, and then extracts a slice using a half-open
 range of indices.
+
+### Empty tuples
+
+`()` is the empty tuple. This is used in other parts of the design, such as
+[functions](functions.md).
 
 ### Indices as compile-time constants
 

@@ -47,7 +47,7 @@ SCRIPT=$(cat <<EOF
   done
 
   # Add symlinks in bin.
-  ln -fs "${INSTALL_PATH}/lib/carbon/carbon" \
+  ln -fs "../lib/carbon/carbon" \
     "${INSTALL_PATH}/bin/carbon-explorer"
 EOF
 )
@@ -60,9 +60,9 @@ done
 
 if [[ -O "${ACCESS_PATH}" ]]; then
   echo "Installing files..."
-  echo "${SCRIPT}" | /usr/bin/bash -eux -
+  echo "${SCRIPT}" | /bin/bash -eux -
 else
   echo "Installing files using sudo..."
-  echo "${SCRIPT}" | sudo -- /usr/bin/bash -eux -
+  echo "${SCRIPT}" | sudo -- /bin/bash -eux -
 fi
 echo "All done."

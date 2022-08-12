@@ -7,7 +7,11 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: result: 2121
+// CHECK: ab.a: 2
+// CHECK: ab.b: 1
+// CHECK: ba.a: 2
+// CHECK: ba.b: 1
+// CHECK: result: 0
 
 package ExplorerTest api;
 
@@ -17,6 +21,9 @@ alias BA = {.b: i32, .a: i32};
 fn Main() -> i32 {
   var ab: AB = {.b = 1, .a = 2};
   var ba: BA = ab;
-  // TODO: Switch to using Print here once it supports printing integers.
-  return 1000 * ab.a + 100 * ab.b + 10 * ba.a + ba.b;
+  Print("ab.a: {0}", ab.a);
+  Print("ab.b: {0}", ab.b);
+  Print("ba.a: {0}", ba.a);
+  Print("ba.b: {0}", ba.b);
+  return 0;
 }

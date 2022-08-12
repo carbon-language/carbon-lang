@@ -7,7 +7,10 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: result: 123
+// CHECK: b.n: 1
+// CHECK: d.Get(0): 2
+// CHECK: e.Get(1): 3
+// CHECK: result: 0
 
 package ExplorerTest api;
 
@@ -35,6 +38,9 @@ fn Main() -> i32 {
   var c: GenericClass(i32) = {.m = 2};
   var d: GenericClassAlias(i32) = c;
   var e: ClassSpecializationAlias = c;
-  // TODO: Switch to using Print here once it supports printing integers.
-  return 100 * b.n + 10 * d.Get(0) + e.Get(1);
+
+  Print("b.n: {0}", b.n);
+  Print("d.Get(0): {0}", d.Get(0));
+  Print("e.Get(1): {0}", e.Get(1));
+  return 0;
 }
