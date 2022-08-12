@@ -333,10 +333,9 @@ to the leads to resolve. You can even do this before sending the proposal for
 review. Even after it's resolved, an open question issue can be reopened if new
 information comes up during the RFC.
 
-When opening issues, add them to the
-["Issues for leads" project](https://github.com/carbon-language/carbon-lang/projects/2)
-under "Questions". Carbon leads use this to locate and prioritize the issue for
-resolution.
+When opening issues, label them as
+[leads questions](https://github.com/carbon-language/carbon-lang/issues?q=is%3Aissue+is%3Aopen+label%3A%22leads+question%22).
+Carbon leads use this to locate and prioritize the issue for resolution.
 
 ### Review and RFC on proposal PRs
 
@@ -409,10 +408,8 @@ forms both the primary discussion thread and where the leads signal how it is
 resolved. We use issues both to track that there is a specific resolution
 expected and that there may be dependencies.
 
-We add blocking issues to the
-["Issues for leads" project](https://github.com/carbon-language/carbon-lang/projects/2)
-under "Blocking issues". Carbon leads use this to locate and prioritize the
-issue for resolution.
+We label blocking issues as
+[leads questions](https://github.com/carbon-language/carbon-lang/issues?q=is%3Aissue+is%3Aopen+label%3A%22leads+question%22).
 
 These issues can be created at any time and by any one. Issues can be created
 while the proposal is being drafted in order to help inform specific content
