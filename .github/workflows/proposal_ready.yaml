@@ -10,9 +10,6 @@ on:
     types:
       - ready_for_review
 
-permissions:
-  pull-requests: write
-
 jobs:
   proposal_ready:
     if: contains(github.event.pull_request.labels.*.name, 'proposal')
@@ -27,5 +24,5 @@ jobs:
             --remove-label "proposal deferred" \
             --add-label "proposal rfc"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.LABEL_ACTION_GITHUB }}
           PR: ${{ github.event.pull_request.html_url }}
