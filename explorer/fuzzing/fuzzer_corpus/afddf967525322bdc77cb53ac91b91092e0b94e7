@@ -1,0 +1,64 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    function {
+      name: "F"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          call {
+            function {
+              identifier {
+                name: "F"
+              }
+            }
+            argument {
+              tuple_literal {
+              }
+            }
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              type_type_literal {
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              identifier {
+                name: "x"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
