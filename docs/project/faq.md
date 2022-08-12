@@ -30,6 +30,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [If you can use Rust, ignore Carbon](#if-you-can-use-rust-ignore-carbon)
         -   [Why is adopting Rust difficult for C++ codebases?](#why-is-adopting-rust-difficult-for-c-codebases)
     -   [Why not a garbage collected language, like Java, Kotlin, or Go?](#why-not-a-garbage-collected-language-like-java-kotlin-or-go)
+-   [Why is Carbon designed that way?](#why-is-carbon-designed-that-way)
+    -   [Why are there no angle brackets?](#why-are-there-no-angle-brackets)
+    -   [Why aren't variable declarations more concise?](#why-arent-variable-declarations-more-concise)
 -   [How will Carbon work?](#how-will-carbon-work)
     -   [What compiler infrastructure is Carbon using?](#what-compiler-infrastructure-is-carbon-using)
     -   [How will Carbon's bidirectional C++ interoperability work?](#how-will-carbons-bidirectional-c-interoperability-work)
@@ -309,6 +312,84 @@ over performance. This trade-off makes sense for many applications, and we
 actively encourage using these languages in those cases. However, we need a
 solution for C++ use-cases that require its full performance, low-level control,
 and access to hardware.
+
+## Why is Carbon designed that way?
+
+### Why are there no angle brackets?
+
+Angle brackets cause major parsing problems in a language that also uses `<` and
+`>` as comparison operators. In particular,
+[one of our sub-goals for Carbon](/docs/project/goals.md#fast-and-scalable-development)
+is that it should support parsing without contextual or semantic information,
+and experience with C++ has shown that angle brackets make that difficult if not
+impossible.
+
+For example, in C++, the expression `a<b>(c)` could parse as either a function
+call with a template argument `b` and an ordinary argument `c`, or as a chained
+comparison `(a < b) > (c)`. In order to resolve the ambiguity, the compiler has
+to perform name lookup on `a` to determine whether there's a function named `a`
+in scope.
+
+It's also worth noting that Carbon doesn't use _any_ kind of brackets to mark
+template parameters (or generic parameters), so if Carbon had angle brackets,
+they would mean something different than they do in C++, which could cause
+confusion. We do use square brackets to mark _deduced_ parameters, as in:
+
+```
+fn Sort[T:! Comparable](a: Vector(T)*)
+```
+
+But those aren't the same thing. In particular, deduced parameters are never
+mentioned at the callsite, so those square brackets are never part of the
+expression syntax.
+
+See [this issue](https://github.com/carbon-language/carbon-lang/issues/565) for
+more background on how and why we chose our current generics syntax.
+
+### Why aren't variable declarations more concise?
+
+In Carbon, a declaration of a single variable looks like this:
+
+```
+var the_answer: i32 = 42;
+```
+
+But this is actually a special case. The syntax between `var` and `=` can be any
+[irrefutable pattern](/docs/design/README.md#patterns), not just a single
+variable binding. For example:
+
+```
+var ((x: i32, _: i32), y: auto) = ((1, 2), (3, 4));
+```
+
+This code is valid, and initializes `x` to `1` and `z` to `(3, 4)`. In the
+future, we will probably also support destructuring structs in a similar way,
+and many other kinds of patterns are possible.
+
+As a result we need `var` to act as an introducer token, so that the parser can
+tell it's parsing a variable declaration without unbounded lookahead, which we
+think is
+[important to avoid](/docs/project/goals.md#fast-and-scalable-development).
+
+`the_answer: i32` is an example of a _binding pattern_, which matches any value
+of the appropriate type, and binds the given name to it. The `: i32` can't be
+omitted, because `the_answer` on its own is an expression, and any Carbon
+expression is also a valid pattern, which matches if the value being matched is
+equal to the value of the expression. So `var the_answer = 42;` would try to
+match `42` with the value of the expression `the_answer`, which requires a
+variable named `the_answer` to already exist.
+
+There are other ways of approaching pattern matching, but they all seem to have
+significant tradeoffs. For example, in Rust, identifiers inside patterns are
+always treated as new name bindings, not expressions that mention existing
+names, but that means the same syntax can have very different meanings depending
+on the context it appears in, which can create confusion. Leaving variable types
+unmarked by default may also have readability drawbacks.
+
+As of August 2022, the design for pattern matching is provisional, and hasn't
+been through our [evolution process](evolution.md). A future proposal for
+pattern matching will need to weigh these tradeoffs in more detail, and may come
+to a different decision.
 
 ## How will Carbon work?
 
