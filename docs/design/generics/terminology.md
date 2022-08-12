@@ -660,7 +660,7 @@ interface Stack {
 // Works on any type implementing `Stack`. Return type
 // is determined by the type's implementation of `Stack`.
 fn PeekAtTopOfStack[T: Stack](s: T*) -> T.ElementType {
-  let ret: T.Elementtype = s->Pop();
+  let ret: T.ElementType = s->Pop();
   s->Push(ret);
   return ret;
 }
