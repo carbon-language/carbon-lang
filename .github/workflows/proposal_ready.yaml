@@ -6,7 +6,7 @@
 
 name: Proposal ready for review
 on:
-  pull_request:
+  pull_request_target:
     types:
       - ready_for_review
 
@@ -24,5 +24,5 @@ jobs:
             --remove-label "proposal deferred" \
             --add-label "proposal rfc"
         env:
-          GITHUB_TOKEN: ${{ secrets.LABEL_ACTION_GITHUB }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}

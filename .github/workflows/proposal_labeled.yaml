@@ -15,7 +15,7 @@
 
 name: Proposal labeled
 on:
-  pull_request:
+  pull_request_target:
     types:
       - labeled
 
@@ -34,7 +34,7 @@ jobs:
             --remove-label "proposal deferred" \
             --add-label "proposal"
         env:
-          GITHUB_TOKEN: ${{ secrets.LABEL_ACTION_GITHUB }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
 
       - name: rfc
@@ -48,7 +48,7 @@ jobs:
             --remove-label "proposal deferred" \
             --add-label "proposal"
         env:
-          GITHUB_TOKEN: ${{ secrets.LABEL_ACTION_GITHUB }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
 
       - name: accepted
@@ -62,7 +62,7 @@ jobs:
             --remove-label "proposal deferred" \
             --add-label "proposal"
         env:
-          GITHUB_TOKEN: ${{ secrets.LABEL_ACTION_GITHUB }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
 
       - name: declined
@@ -76,7 +76,7 @@ jobs:
             --remove-label "proposal deferred" \
             --add-label "proposal"
         env:
-          GITHUB_TOKEN: ${{ secrets.LABEL_ACTION_GITHUB }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
 
       - name: deferred
@@ -90,5 +90,5 @@ jobs:
             --remove-label "proposal declined" \
             --add-label "proposal"
         env:
-          GITHUB_TOKEN: ${{ secrets.LABEL_ACTION_GITHUB }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
