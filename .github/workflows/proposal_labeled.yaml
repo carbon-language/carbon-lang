@@ -19,6 +19,9 @@ on:
     types:
       - labeled
 
+permissions:
+  pull-requests: write
+
 jobs:
   proposal_labeled:
     runs-on: ubuntu-latest
