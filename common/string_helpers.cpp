@@ -10,6 +10,7 @@
 #include "common/check.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/ConvertUTF.h"
 
 namespace Carbon {
 
@@ -81,8 +82,42 @@ auto UnescapeStringLiteral(llvm::StringRef source, const int hashtag_num,
           ret.push_back(16 * *c1 + *c2);
           break;
         }
-        case 'u':
-          CARBON_FATAL() << "\\u is not yet supported in string literals";
+        case 'u': {
+          i++;
+          if (i >= source.size() || source[i] != '{') {
+            return std::nullopt;
+          }
+          unsigned int unicode_int = 0;
+          i++;
+          while (i < source.size() && source[i] != '}') {
+            char hex_val;
+            if (source[i] >= '0' && source[i] <= '9') {
+              hex_val = source[i] - '0';
+            } else if (source[i] >= 'A' && source[i] <= 'F') {
+              hex_val = source[i] - 'A' + 10;
+            } else {
+              return std::nullopt;
+            }
+            unicode_int = unicode_int << 4;
+            unicode_int += hex_val;
+            i++;
+          }
+          if (i >= source.size()) {
+            return std::nullopt;
+          }
+          char temp[4];
+          char *result_two = &temp[0];
+          char *result = &temp[0];
+          bool conversion_ok = llvm::ConvertCodePointToUTF8(unicode_int, result_two);
+          if (!conversion_ok) {
+            return std::nullopt;
+          }
+          while(result < result_two) {
+            ret.push_back(*result);
+            result++;
+          }
+          break;
+        }
         case '\n':
           if (!is_block_string) {
             return std::nullopt;
