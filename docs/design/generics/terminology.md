@@ -638,7 +638,7 @@ conditions on the type argument. For example: `Array(T)` might implement
 ## Interface type parameters and associated types
 
 _Interface type parameters_ and _associated types_ are both ways of allowing the
-types in the signatures of function in an interface to vary. For example,
+types in function signatures in an interface to vary. For example,
 different [stacks](<https://en.wikipedia.org/wiki/Stack_(abstract_data_type)>)
 will have different element types. That element type would be used as the
 parameter type of the `Push` function and the return type of the `Pop` function.
