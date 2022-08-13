@@ -30,7 +30,7 @@ TEST(UnescapeStringLiteral, Valid) {
   EXPECT_THAT(UnescapeStringLiteral("\\x12"), Optional(Eq("\x12")));
   EXPECT_THAT(UnescapeStringLiteral("test", 1), Optional(Eq("test")));
   EXPECT_THAT(UnescapeStringLiteral("test\\#n", 1), Optional(Eq("test\n")));
-  EXPECT_THAT(UnescapeStringLiteral("r\\u{E9}al\\u{2764}\\u{FE0F}\\u{1F50A}!"), Optional(Eq("réal❤️🔊!")));
+  EXPECT_THAT(UnescapeStringLiteral("r\\u{E9}al\\u{2764}\\u{FE0F}\\u{1F50A}!"), Optional(Eq("réal❤️🔊!\u{1F061}")));
 }
 
 TEST(UnescapeStringLiteral, Invalid) {
