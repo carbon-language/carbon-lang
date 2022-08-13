@@ -1,6 +1,0 @@
-make --dry-run --always-make --keep-going --print-directory
-make: Entering directory '/home/lenovo/carbon-lang-test/carbon-lang'
-make: Leaving directory '/home/lenovo/carbon-lang-test/carbon-lang'
- 
-make: *** No targets specified and no makefile found.  Stop.
-
