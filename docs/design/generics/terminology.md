@@ -643,7 +643,9 @@ different [stacks](<https://en.wikipedia.org/wiki/Stack_(abstract_data_type)>)
 will have different element types. That element type would be used as the
 parameter type of the `Push` function and the return type of the `Pop` function.
 As
-[in Rust](https://rust-lang.github.io/rfcs/0195-associated-items.html#clearer-trait-matching):
+[in Rust](https://rust-lang.github.io/rfcs/0195-associated-items.html#clearer-trait-matching),
+we can distinguish these by whether they are input parameters or output
+parameters:
 
 -   An interface type parameter is a parameter or input to the interface type.
     That means they must be specified before an implementation of the interface
