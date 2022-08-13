@@ -12,12 +12,12 @@
 package ExplorerTest api;
 
 fn CompareStr(s: String) -> i32 {
-  if (s == "str;\u0021") {
+  if (s == "str;\u{0021}") {
     return 0;
   }
   return 1;
 }
 
 fn Main() -> i32 {
-  return CompareStr("\u0048\u0045\u004C\u004C\u004F \u0057\u004F\u0052\u004C\u0044\u0021");
+  return CompareStr("\u{0048}\{u0045}\u{004C}\u{004C}\u{004F} \u{0057}\u{004F}\u{0052}\u{004C}\u{0044}\u{0021}");
 }
