@@ -1827,6 +1827,13 @@ and starts with a letter. We intend to follow
 identifier characters, but a concrete set of valid characters has not been
 selected yet.
 
+The following names are reserved for internal Carbon implementation specifics,
+and to allow seamless interoperability with C++ codebases:
+
+-   Names with a double underscore anywhere are reserved;
+-   Names that begin with an underscore followed by an uppercase letter are
+    reserved.
+
 > References:
 >
 > -   [Lexical conventions](lexical_conventions)
@@ -1836,7 +1843,8 @@ selected yet.
 > -   Question-for-leads issue
 >     [#472: Open question: Calling functions defined later in the same file](https://github.com/carbon-language/carbon-lang/issues/472)
 > -   Proposal
->     [#875: Principle: information accumulation](https://github.com/carbon-language/carbon-lang/pull/875)
+>     [#875: Principle: information accumulation](https://github.com/carbon-language/carbon-lang/pull/875) >
+>     [#2029: C++ Interop: Reserved identifiers](https://github.com/carbon-language/carbon-lang/pull/2029)
 
 ### Files, libraries, packages
 

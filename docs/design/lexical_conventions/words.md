@@ -12,6 +12,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Overview](#overview)
 -   [Keywords](#keywords)
+-   [Identifiers](#identifiers)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
@@ -81,6 +82,15 @@ The following words are interpreted as keywords:
 -   `virtual`
 -   `where`
 -   `while`
+
+## Identifiers
+
+The following identifiers are reserved for internal Carbon implementation
+specifics, and to allow seamless interoperability with C++ codebases:
+
+-   Identifiers with a double underscore anywhere are reserved;
+-   Identifiers that begin with an underscore followed by an uppercase letter
+    are reserved.
 
 ## Alternatives considered
 
