@@ -84,9 +84,8 @@ auto UnescapeStringLiteral(llvm::StringRef source, const int hashtag_num,
         }
         case 'u': {
           i++;
-          if (i >= source.size() || source[i] != '{') {
+          if (i >= source.size() || source[i] != '{')
             return std::nullopt;
-          }
           unsigned int unicode_int = 0;
           i++;
           while (i < source.size() && source[i] != '}') {
@@ -102,9 +101,8 @@ auto UnescapeStringLiteral(llvm::StringRef source, const int hashtag_num,
             unicode_int += hex_val;
             i++;
           }
-          if (i >= source.size()) {
+          if (i >= source.size())
             return std::nullopt;
-          }
           char temp[4];
           char *result_two = &temp[0];
           char *result = &temp[0];
