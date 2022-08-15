@@ -14,17 +14,17 @@ namespace Carbon {
 class FlowFacts {
  public:
   enum class ActionType {
-    // Used at `VariableDefinition` with initialization.
     // Adds a must-be-formed flow fact.
+    // Used at `VariableDefinition` with initialization.
     AddInit,
-    // Used at `VariableDefinition` without initialization.
     // Adds an unformed flow fact.
+    // Used at `VariableDefinition` without initialization.
     AddUninit,
-    // Used at AST nodes that potentially initializes a variable.
     // Marks an unformed flow fact as may-be-formed.
+    // Used at AST nodes that potentially initializes a variable.
     Form,
-    // Used at AST nodes that uses a variable.
     // Returns compilation error if the AST node is impossible to be formed.
+    // Used at AST nodes that uses a variable.
     Check,
     // Used in traversing children nodes without an acion to take.
     None,
