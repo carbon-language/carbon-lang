@@ -30,9 +30,10 @@ auto FlowFacts::TakeAction(Nonnull<const AstNode*> node, ActionType action,
     }
     case ActionType::Form: {
       // TODO: Use CARBON_CHECK when we are able to handle global variables.
-      if (facts_.count(node) &&
-          facts_[node].formed_state == FormedState::Unformed) {
-        facts_[node].formed_state = FormedState::MayBeFormed;
+      auto entry = facts_.find(node);
+      if (entry != facts_.end() &&
+          entry->second.formed_state == FormedState::Unformed) {
+        entry->second.formed_state = FormedState::MayBeFormed;
       }
       break;
     }
