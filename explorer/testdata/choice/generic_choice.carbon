@@ -13,7 +13,7 @@ package ExplorerTest api;
 
 
 choice OptionalElement(T:! Type) {
-  None(),
+  None(T),
   Element(T)
 }
 
@@ -28,7 +28,7 @@ class Optional(T:! Type){
     fn has_value[me: Self] () -> bool{
         var x: OptionalElement = me.element;
         match(x){
-            case OptionalElement.None() => { return false; }
+            case OptionalElement.None(var x: T) => { return false; }
         }
         return false;
     }

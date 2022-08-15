@@ -14,14 +14,14 @@ package ExplorerTest api;
 
 class OptionalElement(T:! Type) {
 
+    fn Create(x:T)->OptionalElement(T){
+        return {};
+    }
 }
 
-class Optional(T:! Type){
-
-   var element: OptionalElement(T);
-}
 
 
 fn Main() -> i32 {
+  var x: OptionalElement(i32) = OptionalElement(i32).Create(1);
   return 0;
 }

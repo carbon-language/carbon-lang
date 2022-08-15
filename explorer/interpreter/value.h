@@ -840,6 +840,21 @@ class ChoiceType : public Value {
         name_(std::move(name)),
         alternatives_(std::move(alternatives)) {}
 
+
+  ChoiceType(std::string name, std::vector<NamedValue> alternatives,
+                         Nonnull<const Bindings*> bindings)  
+      : Value(Kind::ChoiceType),
+        name_(std::move(name)),
+        alternatives_(std::move(alternatives)),
+        bindings_(bindings) {}
+
+  ChoiceType(Nonnull<const ChoiceDeclaration*> declaration,const std::vector<NamedValue> & alternatives, Nonnull<const Bindings*> bindings)
+    :Value(Kind::ChoiceType),
+    name_(declaration->name()),
+    alternatives_(alternatives),
+    bindings_(bindings),
+    declaration_(declaration){}
+
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ChoiceType;
   }
@@ -850,10 +865,19 @@ class ChoiceType : public Value {
   // or nullopt if no such alternative is present.
   auto FindAlternative(std::string_view name) const
       -> std::optional<Nonnull<const Value*>>;
+ 
+ auto bindings() const -> const Bindings& { return *bindings_; }
+ 
+ auto declaration() const -> const ChoiceDeclaration & { return *declaration_; }
+
+ 
 
  private:
   std::string name_;
+  std::vector<Nonnull<const AlternativeSignature*>> alternatives_signature_;
   std::vector<NamedValue> alternatives_;
+  Nonnull<const Bindings*> bindings_;
+  Nonnull<const ChoiceDeclaration*> declaration_;
 };
 
 // A continuation type.
@@ -893,16 +917,25 @@ class ParameterizedEntityName : public Value {
         declaration_(declaration),
         params_(params) {}
 
+  explicit ParameterizedEntityName(Nonnull<const Declaration*> declaration,
+                                   Nonnull<const TuplePattern*> params,
+                                   const std::vector<NamedValue> &alternatives)
+      : Value(Kind::ParameterizedEntityName),
+        declaration_(declaration),
+        params_(params),
+        alternatives_(alternatives){}
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ParameterizedEntityName;
   }
 
   auto declaration() const -> const Declaration& { return *declaration_; }
   auto params() const -> const TuplePattern& { return *params_; }
+  auto alternatives() const -> std::vector<NamedValue> { return alternatives_; }
 
  private:
   Nonnull<const Declaration*> declaration_;
   Nonnull<const TuplePattern*> params_;
+  std::vector<NamedValue> alternatives_;
 };
 
 // The name of a member of a class or interface.
@@ -1145,15 +1178,20 @@ class TypeOfParameterizedEntityName : public Value {
   explicit TypeOfParameterizedEntityName(
       Nonnull<const ParameterizedEntityName*> name)
       : Value(Kind::TypeOfParameterizedEntityName), name_(name) {}
+  explicit TypeOfParameterizedEntityName(
+      Nonnull<const ParameterizedEntityName*> name, const std::vector<NamedValue> & alternatives)
+      : Value(Kind::TypeOfParameterizedEntityName), 
+        name_(name),alternatives_(alternatives) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::TypeOfParameterizedEntityName;
   }
 
   auto name() const -> const ParameterizedEntityName& { return *name_; }
-
+  auto alternatives() const -> std::vector<NamedValue> { return alternatives_; }
  private:
   Nonnull<const ParameterizedEntityName*> name_;
+  std::vector<NamedValue> alternatives_;
 };
 
 // The type of a member name expression.

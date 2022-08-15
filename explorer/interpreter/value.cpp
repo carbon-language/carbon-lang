@@ -937,8 +937,10 @@ auto ConstraintType::VisitEqualValues(
 
 auto ChoiceType::FindAlternative(std::string_view name) const
     -> std::optional<Nonnull<const Value*>> {
+      llvm::outs()<<__LINE__<<" "<<"Find Alternatives"<<"\n";
   for (const NamedValue& alternative : alternatives_) {
     if (alternative.name == name) {
+      llvm::outs()<<__LINE__<<" "<<alternative.name<<"\n";
       return alternative.value;
     }
   }

@@ -249,6 +249,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
   if (trace_stream) {
     **trace_stream << "match pattern " << *p << "\nwith value " << *v << "\n";
   }
+  llvm::outs() << "match pattern " << *p << "\nwith value " << *v << "\n";
   switch (p->kind()) {
     case Value::Kind::BindingPlaceholderValue: {
       CARBON_CHECK(bindings.has_value());
@@ -316,6 +317,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       return true;
     }
     case Value::Kind::AlternativeValue:
+      llvm::outs()<<__LINE__<<" " << " ALTERNATIVE VALUE"<<"\n";
       switch (v->kind()) {
         case Value::Kind::AlternativeValue: {
           const auto& p_alt = cast<AlternativeValue>(*p);
@@ -838,6 +840,15 @@ auto Interpreter::CallFunction(const CallExpression& call,
         case DeclarationKind::InterfaceDeclaration:
           return todo_.FinishAction(arena_->New<InterfaceType>(
               &cast<InterfaceDeclaration>(decl), bindings));
+        case DeclarationKind::ChoiceDeclaration:
+            llvm::outs()<<"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
+            llvm::outs()<<"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
+            llvm::outs()<<"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
+            llvm::outs()<<"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
+            llvm::outs()<<"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
+            llvm::outs()<<"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
+            llvm::outs()<<"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
+            return todo_.FinishAction(arena_->New<ChoiceType>(&cast<ChoiceDeclaration>(decl),name.alternatives(),bindings));
         default:
           CARBON_FATAL() << "unknown kind of ParameterizedEntityName " << decl;
       }
@@ -1156,6 +1167,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             ++i;
           }
         }
+        llvm::outs()<<__LINE__<<"--------"<<call<<"\n";
         return CallFunction(call, act.results()[0], act.results()[1],
                             std::move(witnesses));
       } else if (act.pos() == 3 + int(num_impls)) {
