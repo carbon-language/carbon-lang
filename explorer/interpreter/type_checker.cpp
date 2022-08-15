@@ -1575,7 +1575,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         case Value::Kind::NominalClassType: {
           const auto& t_class = cast<NominalClassType>(object_type);
-          if (auto type_member = FindClassMemberAndType(
+          if (auto type_member = FindMixedMemberAndType(
                   access.member_name(), t_class.declaration().members(),
                   &t_class);
               type_member.has_value()) {
@@ -1758,7 +1758,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             case Value::Kind::NominalClassType: {
               const NominalClassType& class_type =
                   cast<NominalClassType>(*type);
-              if (auto type_member = FindClassMemberAndType(
+              if (auto type_member = FindMixedMemberAndType(
                       access.member_name(), class_type.declaration().members(),
                       &class_type);
                   type_member.has_value()) {
@@ -3465,16 +3465,65 @@ auto TypeChecker::TypeCheckMixinDeclaration(
 
 auto TypeChecker::TypeCheckMixDeclaration(
     Nonnull<MixDeclaration*> mix_decl, const ImplScope& impl_scope,
-    std::optional<Nonnull<Declaration*>> enclosing_decl) -> ErrorOr<Success> {
+    std::optional<Nonnull<const Declaration*>> enclosing_decl)
+    -> ErrorOr<Success> {
   // TODO(darshal): Check if the imports of the mixin being mixed are being
   // impl'd in the enclosed class/mixin declaration This brings the question of
   // whether it makes sense to have impl declarations in mixin declarations
 
+  Nonnull<const Declaration*> encl_decl = enclosing_decl.value();
+  const auto& mixin_decl = mix_decl->mixin_value().declaration();
   // TODO(darshal): Check if the name of members of corresponding mixin
   // declaration and enclosed declaration clash
-  if (!enclosing_decl.has_value()) {
-    return CompilationError(mix_decl->source_loc())
-           << "mix declaration must not be present in global scope";
+  switch (encl_decl->kind()) {
+    case DeclarationKind::MixinDeclaration:
+    case DeclarationKind::ClassDeclaration: {
+      llvm::ArrayRef<Nonnull<const Declaration*>> members;
+      if (isa<ClassDeclaration>(encl_decl)) {
+        members = cast<ClassDeclaration>(encl_decl)->members();
+      } else if (isa<MixinDeclaration>(encl_decl)) {
+        members = cast<MixinDeclaration>(encl_decl)->members();
+      } else {
+        // This block should be unreachable
+        break;
+      }
+
+      // Check if the member names of the mixin being mixed in the enclosing
+      // declaration clashes with the member names of the enclosing declaration.
+      // Execution time of this block will blow up as the number
+      for (Nonnull<const Declaration*> member : members) {
+        switch (member->kind()) {
+          case DeclarationKind::VariableDeclaration:
+          case DeclarationKind::FunctionDeclaration: {
+            std::optional<std::string_view> member_name = GetName(*member);
+            if (!member_name.has_value()) {
+              break;
+            }
+            const auto mixin_member = FindMixedMemberAndType(
+                member_name.value(), mixin_decl.members(),
+                &enclosing_decl.value()->static_type());
+            if (mixin_member.has_value()) {
+              return CompilationError(mix_decl->source_loc())
+                     << "Ambiguous member name '" << member_name.value()
+                     << "' (" << member->source_loc() << ") "
+                     << "while mixing with the mixin " << mixin_decl.name()
+                     << ". "
+                     << "(Clashes with mixin member declared at "
+                     << mixin_member.value().second->source_loc() << ")";
+            }
+            break;
+          }
+          default:
+            break;
+            // throw std::runtime_error("Not implemented");
+        }
+      }
+      break;
+    }
+    default:
+      CARBON_FATAL() << "Parser shouldn't allow the declaration enclosing a "
+                        "mix declaration to be "
+                     << *enclosing_decl.value();
   }
 
   return Success();
@@ -3978,7 +4027,8 @@ auto TypeChecker::TypeCheck(AST& ast) -> ErrorOr<Success> {
 
 auto TypeChecker::TypeCheckDeclaration(
     Nonnull<Declaration*> d, const ImplScope& impl_scope,
-    std::optional<Nonnull<Declaration*>> enclosing_decl) -> ErrorOr<Success> {
+    std::optional<Nonnull<const Declaration*>> enclosing_decl)
+    -> ErrorOr<Success> {
   if (trace_stream_) {
     **trace_stream_ << "checking " << DeclarationKindName(d->kind()) << "\n";
   }
@@ -4152,7 +4202,7 @@ void TypeChecker::PrintConstants(llvm::raw_ostream& out) {
   }
 }
 
-auto TypeChecker::FindClassMemberAndType(
+auto TypeChecker::FindMixedMemberAndType(
     const std::string_view& name, llvm::ArrayRef<Nonnull<Declaration*>> members,
     const Nonnull<const Value*> enclosing_type)
     -> std::optional<
@@ -4162,7 +4212,7 @@ auto TypeChecker::FindClassMemberAndType(
       const auto& mix_decl = cast<MixDeclaration>(*member);
       Nonnull<const MixinPseudoType*> mixin = &mix_decl.mixin_value();
       const auto res =
-          FindClassMemberAndType(name, mixin->declaration().members(), mixin);
+          FindMixedMemberAndType(name, mixin->declaration().members(), mixin);
       if (res.has_value()) {
         if (isa<NominalClassType>(enclosing_type)) {
           BindingMap temp_map;

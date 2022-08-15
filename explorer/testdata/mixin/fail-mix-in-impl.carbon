@@ -16,34 +16,14 @@ mixin Operations {
   }
 }
 
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-mix-in-global.carbon:[[@LINE+1]]: syntax error, unexpected MIX, expecting END_OF_FILE
-mix Operations;
+interface A {
+  fn F();
+}
 
-class Point {
-  fn Origin() -> Point {
-    return {.x = 0, .y = 0};
-  }
-
-  var x: i32;
-  var y: i32;
+external impl i32 as A {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-mix-in-impl.carbon:[[@LINE+1]]: syntax error, unexpected MIX, expecting ALIAS or FN or RIGHT_CURLY_BRACE
   mix Operations;
+  fn F() {}
 }
 
-class Complex {
-  fn Zero() -> Complex {
-    return {.r = 0, .i = 0};
-  }
-
-  var r: i32;
-  var i: i32;
-  mix Operations;
-}
-
-
-fn Main() -> i32 {
-  var p: Point = Point.Origin();
-  var c: Complex = Complex.Zero();
-  p.x = 3;
-  c.r = 3;
-  return p.Square(p.y) - c.Square(c.i);
-}
+fn Main() -> i32 { return 0; }

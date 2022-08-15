@@ -66,7 +66,7 @@ class TypeChecker {
 
   // Similar to FindMember, but returns the type of mixin methods after
   // substituting the Self type variable during mix declarations.
-  auto FindClassMemberAndType(const std::string_view& name,
+  auto FindMixedMemberAndType(const std::string_view& name,
                               llvm::ArrayRef<Nonnull<Declaration*>> members,
                               const Nonnull<const Value*> enclosing_type)
       -> std::optional<
@@ -257,9 +257,9 @@ class TypeChecker {
   // declaration, such as the body of a function.
   // Dispatches to one of the following functions.
   // Assumes that DeclareDeclaration has already been invoked on `d`.
-  auto TypeCheckDeclaration(Nonnull<Declaration*> d,
-                            const ImplScope& impl_scope,
-                            std::optional<Nonnull<Declaration*>> enclosing_decl)
+  auto TypeCheckDeclaration(
+      Nonnull<Declaration*> d, const ImplScope& impl_scope,
+      std::optional<Nonnull<const Declaration*>> enclosing_decl)
       -> ErrorOr<Success>;
 
   // Type check the body of the function.
@@ -279,7 +279,8 @@ class TypeChecker {
 
   auto TypeCheckMixDeclaration(
       Nonnull<MixDeclaration*> mix_decl, const ImplScope& impl_scope,
-      std::optional<Nonnull<Declaration*>> enclosing_decl) -> ErrorOr<Success>;
+      std::optional<Nonnull<const Declaration*>> enclosing_decl)
+      -> ErrorOr<Success>;
 
   // Type check all the members of the interface.
   auto TypeCheckInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl,
