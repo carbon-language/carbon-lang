@@ -1,0 +1,101 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    function {
+      name: "Id"
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "t"
+            type {
+              expression_pattern {
+                expression {
+                  type_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Auto
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              identifier {
+                name: "t"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "x"
+                type {
+                  expression_pattern {
+                    expression {
+                      call {
+                        function {
+                          identifier {
+                            name: "Id"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              int_type_literal {
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              int_literal {
+                value: 0
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              identifier {
+                name: "x"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
