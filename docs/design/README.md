@@ -1825,14 +1825,8 @@ A name in Carbon is formed from a sequence of letters, numbers, and underscores,
 and starts with a letter. We intend to follow
 [Unicode's Annex 31](https://unicode.org/reports/tr31/) in selecting valid
 identifier characters, but a concrete set of valid characters has not been
-selected yet.
-
-The following names are reserved for internal Carbon implementation specifics,
-and to allow seamless interoperability with C++ codebases:
-
--   Names with a double underscore anywhere are reserved;
--   Names that begin with an underscore followed by an uppercase letter are
-    reserved.
+selected yet. Carbon reserves certain sets of names for C++ interoperability and
+internal implementation purposes.
 
 > References:
 >
