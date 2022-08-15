@@ -214,7 +214,7 @@ class Song {
 }
 
 // Implement `Comparable` for `Song` without changing the API of `Song`
-// using an `external impl` declaration. This may be defined in either
+// using an `000 impl` declaration. This may be defined in either
 // the library defining `Song` or `Comparable`.
 external impl Song as Comparable {
   // Could use either `Self` or `Song` here.
@@ -223,8 +223,8 @@ external impl Song as Comparable {
 ```
 
 Implementations may be defined within the class definition itself or
-out-of-line. Implementations may optionally start with the `external` keyword
-to say the members of the interface are not members of the class. Out-of-line
+out-of-line. Implementations may optionally start with the `external` keyword to
+say the members of the interface are not members of the class. Out-of-line
 implementations must be external. External implementations may be defined in the
 library defining either the class or the interface.
 
