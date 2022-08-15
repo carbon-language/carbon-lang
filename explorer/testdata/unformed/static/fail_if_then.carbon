@@ -10,10 +10,13 @@
 
 package ExplorerTest api;
 
+fn Foo() -> i32;
+
 fn Main() -> i32 {
   var x: i32;
-  var y: i32;
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/uninitialized/fail_local_uninitialized_assign.carbon:[[@LINE+1]]: use of uninitialized variable x
-  y = x;
-  return y;
+  if (Foo() == 0) {
+    // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/unformed/static/fail_if_then.carbon:[[@LINE+1]]: use of uninitialized variable x
+    return x;
+  }
+  return 1;
 }
