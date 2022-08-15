@@ -1,0 +1,90 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "t"
+                type {
+                  auto_pattern {
+                  }
+                }
+              }
+            }
+            init {
+              int_literal {
+                value: 5
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          match {
+            expression {
+              identifier {
+                name: "t"
+              }
+            }
+            clauses {
+              pattern {
+                generic_binding {
+                  name: "T"
+                  type {
+                    int_type_literal {
+                    }
+                  }
+                }
+              }
+              statement {
+                block {
+                  statements {
+                    return_expression_statement {
+                      expression {
+                        int_literal {
+                          value: 0
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            clauses {
+              statement {
+                block {
+                  statements {
+                    return_expression_statement {
+                      expression {
+                        int_literal {
+                          value: 1
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              is_default: true
+            }
+          }
+        }
+      }
+    }
+  }
+}

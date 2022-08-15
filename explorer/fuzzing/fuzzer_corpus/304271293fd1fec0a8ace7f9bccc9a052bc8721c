@@ -1,0 +1,128 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "x"
+                type {
+                  auto_pattern {
+                  }
+                }
+              }
+            }
+            init {
+              int_literal {
+                value: 2
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          while_statement {
+            condition {
+              operator {
+                op: Not
+                arguments {
+                  operator {
+                    op: Eq
+                    arguments {
+                      identifier {
+                        name: "x"
+                      }
+                    }
+                    arguments {
+                      int_literal {
+                        value: 0
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            body {
+              statements {
+                assign {
+                  lhs {
+                    identifier {
+                      name: "x"
+                    }
+                  }
+                  rhs {
+                    operator {
+                      op: Sub
+                      arguments {
+                        identifier {
+                          name: "x"
+                        }
+                      }
+                      arguments {
+                        int_literal {
+                          value: 1
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              statements {
+                continue_statement {
+                }
+              }
+              statements {
+                assign {
+                  lhs {
+                    identifier {
+                      name: "x"
+                    }
+                  }
+                  rhs {
+                    operator {
+                      op: Add
+                      arguments {
+                        identifier {
+                          name: "x"
+                        }
+                      }
+                      arguments {
+                        int_literal {
+                          value: 1
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              identifier {
+                name: "x"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

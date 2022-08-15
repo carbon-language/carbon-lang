@@ -1,0 +1,197 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    function {
+      name: "Foo"
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "a"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+        fields {
+          binding_pattern {
+            name: "b"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Auto
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "ret"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              operator {
+                op: Add
+                arguments {
+                  identifier {
+                    name: "a"
+                  }
+                }
+                arguments {
+                  identifier {
+                    name: "b"
+                  }
+                }
+              }
+            }
+            is_returned: true
+          }
+        }
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: Eq
+                arguments {
+                  identifier {
+                    name: "b"
+                  }
+                }
+                arguments {
+                  identifier {
+                    name: "a"
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                assign {
+                  lhs {
+                    identifier {
+                      name: "ret"
+                    }
+                  }
+                  rhs {
+                    operator {
+                      op: Sub
+                      arguments {
+                        identifier {
+                          name: "b"
+                        }
+                      }
+                      arguments {
+                        identifier {
+                          name: "a"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              statements {
+                return_var_statement {
+                }
+              }
+            }
+          }
+        }
+        statements {
+          assign {
+            lhs {
+              identifier {
+                name: "ret"
+              }
+            }
+            rhs {
+              operator {
+                op: Sub
+                arguments {
+                  identifier {
+                    name: "a"
+                  }
+                }
+                arguments {
+                  identifier {
+                    name: "b"
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          return_var_statement {
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "Foo"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      int_literal {
+                        value: 1
+                      }
+                    }
+                    fields {
+                      int_literal {
+                        value: 2
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
