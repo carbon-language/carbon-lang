@@ -214,7 +214,7 @@ class Song {
 }
 
 // Implement `Comparable` for `Song` without changing the API of `Song`
-// using an `000 impl` declaration. This may be defined in either
+// using an `external impl` declaration. This may be defined in either
 // the library defining `Song` or `Comparable`.
 external impl Song as Comparable {
   // Could use either `Self` or `Song` here.
