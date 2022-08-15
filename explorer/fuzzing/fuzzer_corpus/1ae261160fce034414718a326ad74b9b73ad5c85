@@ -1,0 +1,197 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "ar"
+                type {
+                  expression_pattern {
+                    expression {
+                      array_type_literal {
+                        element_type {
+                          int_type_literal {
+                          }
+                        }
+                        size {
+                          int_literal {
+                            value: 4
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              tuple_literal {
+                fields {
+                  int_literal {
+                    value: 0
+                  }
+                }
+                fields {
+                  int_literal {
+                    value: 1
+                  }
+                }
+                fields {
+                  int_literal {
+                    value: 2
+                  }
+                }
+                fields {
+                  int_literal {
+                    value: 3
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "count"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              int_literal {
+                value: 0
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          for_statement {
+            var_decl {
+              name: "x"
+              type {
+                expression_pattern {
+                  expression {
+                    int_type_literal {
+                    }
+                  }
+                }
+              }
+            }
+            target {
+              identifier {
+                name: "ar"
+              }
+            }
+            body {
+              statements {
+                assign {
+                  lhs {
+                    identifier {
+                      name: "count"
+                    }
+                  }
+                  rhs {
+                    operator {
+                      op: Add
+                      arguments {
+                        identifier {
+                          name: "count"
+                        }
+                      }
+                      arguments {
+                        int_literal {
+                          value: 1
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              statements {
+                for_statement {
+                  var_decl {
+                    name: "x"
+                    type {
+                      expression_pattern {
+                        expression {
+                          int_type_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                  target {
+                    identifier {
+                      name: "ar"
+                    }
+                  }
+                  body {
+                    statements {
+                      assign {
+                        lhs {
+                          identifier {
+                            name: "count"
+                          }
+                        }
+                        rhs {
+                          operator {
+                            op: Add
+                            arguments {
+                              identifier {
+                                name: "count"
+                              }
+                            }
+                            arguments {
+                              int_literal {
+                                value: 1
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              identifier {
+                name: "count"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
