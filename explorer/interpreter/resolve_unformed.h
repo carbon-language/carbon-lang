@@ -46,7 +46,7 @@ class FlowFacts {
   };
 
   void AddFact(Nonnull<const AstNode*> node, const FormedState state) {
-    CARBON_CHECK(!facts_.count(node));
+    CARBON_CHECK(facts_.find(node) == facts_.end());
     facts_.insert({node, {state}});
   }
 
