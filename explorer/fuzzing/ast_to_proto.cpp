@@ -598,10 +598,26 @@ static auto DeclarationToProto(const Declaration& declaration)
     }
 
     case DeclarationKind::MixinDeclaration: {
-      throw std::runtime_error("Not implemented (ast_to_proto)");
+      const auto& mixin = cast<MixinDeclaration>(declaration);
+      auto* mixin_proto = declaration_proto.mutable_mixin();
+      mixin_proto->set_name(mixin.name());
+      for (const auto& member : mixin.members()) {
+        *mixin_proto->add_members() = DeclarationToProto(*member);
+      }
+      // Type params not implemented yet
+      // if (mixin.params().has_value()) {
+      //  *mixin_proto->mutable_params() =
+      //      TuplePatternToProto(**mixin.params());
+      //}
+      *mixin_proto->mutable_self() = GenericBindingToProto(*mixin.self());
+      break;
     }
+
     case DeclarationKind::MixDeclaration: {
-      throw std::runtime_error("Not implemented (ast_to_proto)");
+      const auto& mix = cast<MixDeclaration>(declaration);
+      auto* mix_proto = declaration_proto.mutable_mix();
+      *mix_proto->mutable_mixin() = ExpressionToProto(mix.mixin());
+      break;
     }
 
     case DeclarationKind::ChoiceDeclaration: {
