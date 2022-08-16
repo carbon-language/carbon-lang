@@ -312,7 +312,6 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
 auto TypeChecker::ExpectIsConcreteType(SourceLocation source_loc,
                                        Nonnull<const Value*> value)
     -> ErrorOr<Success> {
-  llvm::outs() << __LINE__ << " :IsConcreteType: " << *value << "\n";
   if (!IsConcreteType(value)) {
     return CompilationError(source_loc)
            << "Expected a type, but got " << *value;
@@ -613,7 +612,6 @@ auto TypeChecker::ExpectType(SourceLocation source_loc,
     -> ErrorOr<Success> {
   if (!IsImplicitlyConvertible(actual, expected, impl_scope,
                                /*allow_user_defined_conversions=*/true)) {
-    CARBON_FATAL();
     return CompilationError(source_loc)
            << "type error in " << context << ": "
            << "'" << *actual << "' is not implicitly convertible to '"
@@ -638,6 +636,7 @@ auto TypeChecker::ArgumentDeduction(
     }
     **trace_stream_ << "\n";
   }
+
   // Handle the case where we can't perform deduction, either because the
   // parameter is a primitive type or because the parameter and argument have
   // different forms. In this case, we require an implicit conversion to exist,
@@ -1473,8 +1472,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     }
     return Success();
   }
-  llvm::outs() << "type-checking " << ExpressionKindName(e->kind()) << " " << *e
-               << "\n";
   switch (e->kind()) {
     case ExpressionKind::InstantiateImpl:
     case ExpressionKind::ValueLiteral:
@@ -1523,10 +1520,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       std::vector<Nonnull<const Value*>> arg_types;
       for (auto* arg : cast<TupleLiteral>(*e).fields()) {
         CARBON_RETURN_IF_ERROR(TypeCheckExp(arg, impl_scope));
-        llvm::outs() << __LINE__ << " :type-checking " << *arg << "\n";
         CARBON_RETURN_IF_ERROR(
             ExpectIsConcreteType(arg->source_loc(), &arg->static_type()));
-        llvm::outs() << __LINE__ << " Except OK\n";
         arg_types.push_back(&arg->static_type());
       }
       e->set_static_type(arena_->New<TupleValue>(std::move(arg_types)));
@@ -1741,11 +1736,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                      << " does not have a field named " << access.member_name();
             }
             case Value::Kind::ChoiceType: {
-              llvm::outs()<<__LINE__<<" "<<cast<ChoiceType>(*type).name()<<"\n";
 
              const ChoiceType& choice = cast<ChoiceType>(*type);
-
-              std::optional<Nonnull<const Value*>> parameter_types =
+                std::optional<Nonnull<const Value*>> parameter_types =
                   choice.FindAlternative(access.member_name());
               if (!parameter_types.has_value()) {
                 return CompilationError(e->source_loc())
@@ -1753,10 +1746,24 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                        << " does not have an alternative named "
                        << access.member_name();
               }
+                if(choice.is_generic()) {
+                    Nonnull<const Value *> field_type = Substitute(
+                            choice.type_args(), *parameter_types);
+                    Nonnull<const Value*> type =
+                            arena_->New<FunctionType>(field_type, llvm::None,
+                                                      &choice, llvm::None, llvm::None);
+
+                    // TODO: Should there be a Declaration corresponding to each
+                    // choice type alternative?
+                    access.set_member(Member(arena_->New<NamedValue>(
+                            NamedValue{access.member_name(), type})));
+                    access.set_static_type(type);
+                    access.set_value_category(ValueCategory::Let);
+                    return Success();
+                }
               Nonnull<const Value*> type =
                   arena_->New<FunctionType>(*parameter_types, llvm::None,
                                             &choice, llvm::None, llvm::None);
-                llvm::outs()<<__LINE__<<" "<<*type<< " : "<<**parameter_types<<"\n";
 
               // TODO: Should there be a Declaration corresponding to each
               // choice type alternative?
@@ -1782,7 +1789,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                     }
                     Nonnull<const Value*> field_type = Substitute(
                         class_type.type_args(), &(*member)->static_type());
-                    access.set_static_type(field_type);
+
+                      access.set_static_type(field_type);
                     access.set_value_category(ValueCategory::Let);
                     return Success();
                   }
@@ -1932,7 +1940,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       auto& ident = cast<IdentifierExpression>(*e);
       if (ident.value_node().base().kind() ==
           AstNodeKind::FunctionDeclaration) {
-        llvm::outs() << __LINE__ << "FUNC DECL\n";
         const auto& function =
             cast<FunctionDeclaration>(ident.value_node().base());
         if (!function.has_static_type()) {
@@ -1941,12 +1948,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                  << "Function calls itself, but has a deduced return type";
         }
       }
-      llvm::outs() << __LINE__ << "NON DECL 1\n";
-      llvm::outs() << __LINE__ << " " << ident.value_node() << "\n";
       ident.set_static_type(&ident.value_node().static_type());
-      llvm::outs() << __LINE__ << "NON DECL 2\n";
       ident.set_value_category(ident.value_node().value_category());
-      llvm::outs() << __LINE__ << "NON DECL 3\n";
       return Success();
     }
     case ExpressionKind::DotSelfExpression: {
@@ -2221,17 +2224,14 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     }
     case ExpressionKind::CallExpression: {
       auto& call = cast<CallExpression>(*e);
-      llvm::outs() << __LINE__
-                   << " \t:TypeCheckExp(&call.function(), impl_scope) BEGIN\n";
+
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&call.function(), impl_scope));
-      llvm::outs() << __LINE__
-                   << " \t:TypeCheckExp(&call.function(), impl_scope) End\n";
+
 
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&call.argument(), impl_scope));
 
       switch (call.function().static_type().kind()) {
         case Value::Kind::FunctionType: {
-          llvm::outs() << __LINE__ << " Func Type\n";
           const auto& fun_t = cast<FunctionType>(call.function().static_type());
           if (trace_stream_) {
             **trace_stream_
@@ -2239,10 +2239,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 << "\nwith arguments of type: " << call.argument().static_type()
                 << "\n";
           }
-          llvm::outs()
-                << "checking call to function of type " << fun_t
-                << "\nwith arguments of type: " << call.argument().static_type()
-                << "\n";
+
 
           CARBON_RETURN_IF_ERROR(DeduceCallBindings(
               call, &fun_t.parameters(), fun_t.generic_parameters(),
@@ -2258,7 +2255,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           return Success();
         }
         case Value::Kind::TypeOfParameterizedEntityName: {
-          llvm::outs() << __LINE__ << " Type Of ParameterizedEntityName\n";
 
           // This case handles the application of a parameterized class or
           // interface to a set of arguments, such as Point(i32) or
@@ -2314,7 +2310,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               Nonnull<ChoiceType*> ct = arena_->New<ChoiceType>(
                   cast<ChoiceDeclaration>(&decl)->name(),
                   entity.alternatives(),bindings);
-              llvm::outs()<<__LINE__<<ct->name()<<"\n";
               Nonnull<TypeOfChoiceType*> inst_choice_type =
                   arena_->New<TypeOfChoiceType>(ct);
               call.set_static_type(inst_choice_type);
@@ -2329,7 +2324,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           return Success();
         }
         case Value::Kind::TypeOfChoiceType: {
-          llvm::outs() << __LINE__ << " ChoiceType\n";
           return CompilationError(e->source_loc())
                  << "in call `" << *e
                  << "`, expected callee to be a function, found `"
@@ -2763,11 +2757,6 @@ auto TypeChecker::TypeCheckPattern(
     Nonnull<Pattern*> p, std::optional<Nonnull<const Value*>> expected,
     ImplScope& impl_scope, ValueCategory enclosing_value_category)
     -> ErrorOr<Success> {
-  if (expected)
-    llvm::outs() << __LINE__ << " ::: TypeCheckPattern pattern:" << *p
-                 << " Expected: " << **expected << "\n";
-  else
-    llvm::outs() << __LINE__ << " ::: TypeCheckPattern pattern:" << *p << "\n";
   if (trace_stream_) {
     **trace_stream_ << "checking " << PatternKindName(p->kind()) << " " << *p;
     if (expected) {
@@ -2783,7 +2772,6 @@ auto TypeChecker::TypeCheckPattern(
       return Success();
     }
     case PatternKind::BindingPattern: {
-      llvm::outs() << __LINE__ << " : BindingPattern\n";
       auto& binding = cast<BindingPattern>(*p);
       if (!VisitNestedPatterns(binding.type(), [](const Pattern& pattern) {
             return !isa<BindingPattern>(pattern);
@@ -2825,7 +2813,6 @@ auto TypeChecker::TypeCheckPattern(
       return Success();
     }
     case PatternKind::GenericBinding: {
-      llvm::outs() << __LINE__ << " : GenericBinding\n";
       auto& binding = cast<GenericBinding>(*p);
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
                               TypeCheckTypeExp(&binding.type(), impl_scope));
@@ -2887,7 +2874,6 @@ auto TypeChecker::TypeCheckPattern(
       return Success();
     }
     case PatternKind::AlternativePattern: {
-      llvm::outs() << __LINE__ << " : AlternativePattern\n";
       auto& alternative = cast<AlternativePattern>(*p);
       CARBON_RETURN_IF_ERROR(
           TypeCheckExp(&alternative.choice_type(), impl_scope));
@@ -2911,6 +2897,21 @@ auto TypeChecker::TypeCheckPattern(
                << "'" << alternative.alternative_name()
                << "' is not an alternative of " << choice_type;
       }
+      if(choice_type.is_generic()){
+          Nonnull<const Value *> ty = Substitute(
+                  choice_type.type_args(), *parameter_types);
+
+          CARBON_RETURN_IF_ERROR(TypeCheckPattern(&alternative.arguments(),
+                                                  ty, impl_scope,
+                                                  enclosing_value_category));
+          alternative.set_static_type(&choice_type);
+          CARBON_ASSIGN_OR_RETURN(
+                  Nonnull<const Value*> alternative_value,
+                  InterpPattern(&alternative, arena_, trace_stream_));
+          SetValue(&alternative, alternative_value);
+          return Success();
+
+      }
       CARBON_RETURN_IF_ERROR(TypeCheckPattern(&alternative.arguments(),
                                               *parameter_types, impl_scope,
                                               enclosing_value_category));
@@ -2922,12 +2923,9 @@ auto TypeChecker::TypeCheckPattern(
       return Success();
     }
     case PatternKind::ExpressionPattern: {
-      llvm::outs() << __LINE__ << " : ExpressionPattern\n";
       auto& expression = cast<ExpressionPattern>(*p).expression();
-      llvm::outs() << __LINE__ << " : CAST ExpressionPattern\n";
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&expression, impl_scope));
       p->set_static_type(&expression.static_type());
-      llvm::outs() << __LINE__ << " : InterpPattern\n";
 
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> expr_value,
                               InterpPattern(p, arena_, trace_stream_));
@@ -2935,7 +2933,6 @@ auto TypeChecker::TypeCheckPattern(
       return Success();
     }
     case PatternKind::VarPattern: {
-      llvm::outs() << __LINE__ << " : VarPattern\n";
       auto& var_pattern = cast<VarPattern>(*p);
 
       CARBON_RETURN_IF_ERROR(TypeCheckPattern(&var_pattern.pattern(), expected,
@@ -3449,7 +3446,6 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   ScopeInfo class_scope_info =
       ScopeInfo::ForClassScope(scope_info, &class_scope, std::move(bindings));
   for (Nonnull<Declaration*> m : class_decl->members()) {
-    llvm::outs() << __LINE__ << " ´:member: " << *m << "\n";
     CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, class_scope_info));
   }
 
@@ -3867,13 +3863,10 @@ auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
 auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
                                            const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
-  llvm::outs() << __LINE__ << "\t---BEGIN:" << *choice << "\n";
   ImplScope choice_scope;
   choice_scope.AddParent(scope_info.innermost_scope);
   std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
   if (choice->type_params().has_value()) {
-    llvm::outs() << __LINE__ << " begin 0"
-                 << "\n";
     Nonnull<TuplePattern*> type_params = *choice->type_params();
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(type_params, std::nullopt,
                                             choice_scope, ValueCategory::Let));
@@ -3882,21 +3875,16 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
       **trace_stream_ << choice_scope;
     }
   }
-  llvm::outs() << __LINE__ << "\t\t---Block:" << 1 << "\n";
 
   // For class declaration `class MyType(T:! Type, U:! AnInterface)`, `Self`
   // should have the value `MyType(T, U)`.
   BindingMap generic_args;
   for (auto* binding : bindings) {
-    llvm::outs() << __LINE__ << " begin 1"
-                 << "\n";
     // binding.symbolic_identity() set by call to `TypeCheckPattern(...)`
     // above and/or by any enclosing generic classes.
-    llvm::outs() << __LINE__ << ":" << **binding->symbolic_identity() << "\n";
     generic_args[binding] = *binding->symbolic_identity();
   }
 
-  llvm::outs() << __LINE__ << "\t\t---Block:" << 2 << "\n";
 
   if (choice->type_params().has_value()) {
     // TODO: The `enclosing_bindings` should be tracked in the parameterized
@@ -3911,18 +3899,9 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
     Nonnull<ParameterizedEntityName*> param_name =
         arena_->New<ParameterizedEntityName>(choice, *choice->type_params(),alternatives);
     SetConstantValue(choice, param_name);
-    llvm::outs() << __LINE__
-                 << "====================================================="
-                 << "\n";
-    choice->set_static_type(
+   choice->set_static_type(
         arena_->New<TypeOfParameterizedEntityName>(param_name, alternatives));
-    llvm::outs() << __LINE__ << " choice static-type: " << choice->static_type()
-                 << "\n";
-    llvm::outs() << __LINE__
-                 << "====================================================="
-                 << "\n";
-  }
-  llvm::outs() << __LINE__ << "\t\t---Block:" << 3 << "\n";
+    }
 
   std::vector<NamedValue> alternatives;
   for (Nonnull<AlternativeSignature*> alternative : choice->alternatives()) {
@@ -3932,31 +3911,18 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
     alternatives.push_back({.name = alternative->name(), .value = signature});
   }
   if (choice->type_params().has_value()) {
-    llvm::outs() << __LINE__ << " begin 3"
-                 << "\n";
     return Success();
   }
-  llvm::outs() << __LINE__ << "\t\t---Block:" << 4 << "\n";
-
-  auto ct = arena_->New<ChoiceType>(choice->name(), std::move(alternatives));
-  llvm::outs() << __LINE__ << "\t\t---Block:"
-               << "4a"
-               << "\n";
+   auto ct = arena_->New<ChoiceType>(choice->name(), std::move(alternatives));
 
   SetConstantValue(choice, ct);
-  llvm::outs() << __LINE__ << "\t\t---Block:"
-               << "4b"
-               << "\n";
   choice->set_static_type(arena_->New<TypeOfChoiceType>(ct));
-  llvm::outs() << __LINE__ << "\t---ENDE\n";
   return Success();
 }
 
 auto TypeChecker::TypeCheckChoiceDeclaration(
     Nonnull<ChoiceDeclaration*> choice, const ImplScope& impl_scope)
     -> ErrorOr<Success> {
-  llvm::outs() << __LINE__ << " declaring choice "
-               << "\n";
 
   ImplScope choice_scope;
   choice_scope.AddParent(&impl_scope);
@@ -4158,7 +4124,7 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
 
     case DeclarationKind::VariableDeclaration: {
       auto& var = cast<VariableDeclaration>(*d);
-      llvm::outs() << __LINE__ << "var dec:" << var << "\n";
+
       // Associate the variable name with it's declared type in the
       // compile-time symbol table.
       if (!llvm::isa<ExpressionPattern>(var.binding().type())) {

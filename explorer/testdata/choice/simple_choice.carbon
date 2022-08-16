@@ -12,17 +12,19 @@
 package ExplorerTest api;
 
 
-
-class OptionalElement(T:! Type) {
-
-    fn Create(x:T)->OptionalElement(T){
-        return {};
-    }
+choice OptionalElement {
+  None(i32),
+  Element(i32)
 }
 
 
-
 fn Main() -> i32 {
-  var x: OptionalElement(i32) = OptionalElement(i32).Create(1);
+  var f: OptionalElement; //= OptionalElement(i32).Create(22);
+  f = OptionalElement.None(22);
+  match(f){
+    case OptionalElement.None( var x: i32) => {
+      return 1;
+    }
+  }
   return 0;
 }

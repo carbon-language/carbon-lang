@@ -838,7 +838,7 @@ class ChoiceType : public Value {
   ChoiceType(std::string name, std::vector<NamedValue> alternatives)
       : Value(Kind::ChoiceType),
         name_(std::move(name)),
-        alternatives_(std::move(alternatives)) {}
+        alternatives_(std::move(alternatives)),is_generic_(false) {}
 
 
   ChoiceType(std::string name, std::vector<NamedValue> alternatives,
@@ -846,14 +846,14 @@ class ChoiceType : public Value {
       : Value(Kind::ChoiceType),
         name_(std::move(name)),
         alternatives_(std::move(alternatives)),
-        bindings_(bindings) {}
+        bindings_(bindings),is_generic_(true) {}
 
   ChoiceType(Nonnull<const ChoiceDeclaration*> declaration,const std::vector<NamedValue> & alternatives, Nonnull<const Bindings*> bindings)
     :Value(Kind::ChoiceType),
     name_(declaration->name()),
     alternatives_(alternatives),
     bindings_(bindings),
-    declaration_(declaration){}
+    declaration_(declaration),is_generic_(true){}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ChoiceType;
@@ -867,10 +867,10 @@ class ChoiceType : public Value {
       -> std::optional<Nonnull<const Value*>>;
  
  auto bindings() const -> const Bindings& { return *bindings_; }
- 
+ auto type_args() const -> const BindingMap& { return bindings_->args(); }
  auto declaration() const -> const ChoiceDeclaration & { return *declaration_; }
 
- 
+ auto is_generic() const -> bool { return is_generic_; }
 
  private:
   std::string name_;
@@ -878,6 +878,7 @@ class ChoiceType : public Value {
   std::vector<NamedValue> alternatives_;
   Nonnull<const Bindings*> bindings_;
   Nonnull<const ChoiceDeclaration*> declaration_;
+  bool is_generic_;
 };
 
 // A continuation type.

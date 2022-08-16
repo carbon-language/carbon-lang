@@ -13,34 +13,35 @@ package ExplorerTest api;
 
 
 choice OptionalElement(T:! Type) {
-  None(T),
+  None(),
   Element(T)
 }
 
 class Optional(T:! Type){
    fn CreateEmpty() -> Optional(T){
-       return { .element = OptionalElement.None() };
+       return { .element = OptionalElement(T).None() };
    }
    fn Create ( value: T ) -> Optional(T){
-       return { .element = OptionalElement.Element(value) };
+       return { .element = OptionalElement(T).Element(value) };
    }
 
     fn has_value[me: Self] () -> bool{
-        var x: OptionalElement = me.element;
+        var x: OptionalElement(T) = me.element;
         match(x){
-            case OptionalElement.None(var x: T) => { return false; }
+            case OptionalElement(T).None() => { return false; }
         }
         return false;
     }
 
     fn get[me: Self] () -> T {
-        var x: OptionalElement = me.element;
+        var y: T;
+        var x: OptionalElement(T) = me.element;
         match(x){
-            case OptionalElement.Element( var x: T ) =>{
+            case OptionalElement(T).Element( var x: T ) =>{
                 return x;
             }
         }
-        return 2;
+        return y;
     }
 
    var element: OptionalElement(T);
