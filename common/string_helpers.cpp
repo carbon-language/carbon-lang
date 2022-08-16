@@ -111,10 +111,7 @@ auto UnescapeStringLiteral(llvm::StringRef source, const int hashtag_num,
           if (!llvm::ConvertCodePointToUTF8(unicode_int, result_two)) {
             return std::nullopt;
           }
-          while(result < result_two) {
-            ret.push_back(*result);
-            result++;
-          }
+          ret.append(temp, result_two - temp);
           break;
         }
         case '\n':
