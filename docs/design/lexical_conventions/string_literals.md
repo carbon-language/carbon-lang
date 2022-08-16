@@ -204,8 +204,8 @@ While octal escape sequences are expected to remain not permitted (even though
 In the above table, `H` represents an arbitrary hexadecimal character, `0`-`9`
 or `A`-`F` (case-sensitive). Unlike in C++, but like in Python, `\x` expects
 exactly two hexadecimal digits. As in JavaScript, Rust, and Swift, Unicode code
-points can be expressed by number using `\u{10FFFF}` notation, which accepts any
-number of hexadecimal characters. Any numeric code point in the ranges
+points can be expressed by number using `\u{10FFFF}` notation. This accepts
+between 1 and 8 hexadecimal characters. Any numeric code point in the ranges
 0<sub>16</sub>-D7FF<sub>16</sub> or E000<sub>16</sub>-10FFFF<sub>16</sub> can be
 expressed this way.
 
@@ -347,3 +347,5 @@ string in the type system. In such string literals, we should consider rejecting
 
 -   Proposal
     [#199: String literals](https://github.com/carbon-language/carbon-lang/pull/199)
+-   Proposal
+    [#2040: Unicode escape code length](https://github.com/carbon-language/carbon-lang/pull/2040)
