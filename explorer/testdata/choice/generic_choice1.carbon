@@ -7,7 +7,7 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: result: 0
+// CHECK: result: 22
 
 package ExplorerTest api;
 
@@ -19,7 +19,7 @@ choice OptionalElement(ZZ:! Type) {
 
 
 fn Main() -> i32 {
-  var f: OptionalElement(i32); //= OptionalElement(i32).Create(22);
+  var f: OptionalElement(i32);
   f = OptionalElement(i32).None(22);
   match(f) {
     case OptionalElement(i32).None(var x: i32) => {
