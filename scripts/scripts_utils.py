@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """Utilities for scripts."""
 
 __copyright__ = """
