@@ -102,8 +102,9 @@ auto UnescapeStringLiteral(llvm::StringRef source, const int hashtag_num,
             unicode_int += hex_val;
             i++;
           }
-          if (i >= source.size())
+          if (i >= source.size()) {
             return std::nullopt;
+          }
           char temp[4];
           char *result_two = &temp[0];
           char *result = &temp[0];
