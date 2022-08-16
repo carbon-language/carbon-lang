@@ -1,0 +1,263 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    interface {
+      name: "Frob"
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "Result"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name: "F"
+          me_pattern {
+            binding_pattern {
+              name: "me"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "Result"
+              }
+            }
+          }
+        }
+      }
+      self {
+        name: "Self"
+        type {
+          type_type_literal {
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Use"
+      deduced_parameters {
+        name: "T"
+        type {
+          identifier {
+            name: "Frob"
+          }
+        }
+      }
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "x"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "T"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          simple_member_access {
+            field: "Result"
+            object {
+              identifier {
+                name: "T"
+              }
+            }
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "v"
+                type {
+                  expression_pattern {
+                    expression {
+                      simple_member_access {
+                        field: "Result"
+                        object {
+                          identifier {
+                            name: "T"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              call {
+                function {
+                  simple_member_access {
+                    field: "F"
+                    object {
+                      identifier {
+                        name: "x"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              identifier {
+                name: "v"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        int_type_literal {
+        }
+      }
+      interface {
+        where {
+          base {
+            identifier {
+              name: "Frob"
+            }
+          }
+          clauses {
+            equals {
+              lhs {
+                designator {
+                  name: "Result"
+                }
+              }
+              rhs {
+                int_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name: "F"
+          me_pattern {
+            binding_pattern {
+              name: "me"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              int_type_literal {
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  int_literal {
+                    value: 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "Use"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      int_literal {
+                        value: 0
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
