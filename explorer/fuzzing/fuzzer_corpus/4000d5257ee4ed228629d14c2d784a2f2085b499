@@ -1,0 +1,611 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: Not
+                arguments {
+                  operator {
+                    op: Eq
+                    arguments {
+                      operator {
+                        op: Complement
+                        arguments {
+                          int_literal {
+                            value: 0
+                          }
+                        }
+                      }
+                    }
+                    arguments {
+                      operator {
+                        op: Neg
+                        arguments {
+                          int_literal {
+                            value: 1
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                return_expression_statement {
+                  expression {
+                    int_literal {
+                      value: 11
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: Not
+                arguments {
+                  operator {
+                    op: Eq
+                    arguments {
+                      operator {
+                        op: Complement
+                        arguments {
+                          int_literal {
+                            value: 1
+                          }
+                        }
+                      }
+                    }
+                    arguments {
+                      operator {
+                        op: Neg
+                        arguments {
+                          int_literal {
+                            value: 2
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                return_expression_statement {
+                  expression {
+                    int_literal {
+                      value: 12
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: Not
+                arguments {
+                  operator {
+                    op: Eq
+                    arguments {
+                      operator {
+                        op: Complement
+                        arguments {
+                          operator {
+                            op: Neg
+                            arguments {
+                              int_literal {
+                                value: 3
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    arguments {
+                      int_literal {
+                        value: 2
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                return_expression_statement {
+                  expression {
+                    int_literal {
+                      value: 13
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: Not
+                arguments {
+                  operator {
+                    op: Eq
+                    arguments {
+                      operator {
+                        op: BitwiseAnd
+                        arguments {
+                          int_literal {
+                            value: 3
+                          }
+                        }
+                        arguments {
+                          int_literal {
+                            value: 6
+                          }
+                        }
+                      }
+                    }
+                    arguments {
+                      int_literal {
+                        value: 2
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                return_expression_statement {
+                  expression {
+                    int_literal {
+                      value: 21
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: Not
+                arguments {
+                  operator {
+                    op: Eq
+                    arguments {
+                      operator {
+                        op: BitwiseAnd
+                        arguments {
+                          operator {
+                            op: Neg
+                            arguments {
+                              int_literal {
+                                value: 1
+                              }
+                            }
+                          }
+                        }
+                        arguments {
+                          int_literal {
+                            value: 4
+                          }
+                        }
+                      }
+                    }
+                    arguments {
+                      int_literal {
+                        value: 4
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                return_expression_statement {
+                  expression {
+                    int_literal {
+                      value: 22
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: Not
+                arguments {
+                  operator {
+                    op: Eq
+                    arguments {
+                      operator {
+                        op: BitwiseAnd
+                        arguments {
+                          operator {
+                            op: Neg
+                            arguments {
+                              int_literal {
+                                value: 1
+                              }
+                            }
+                          }
+                        }
+                        arguments {
+                          operator {
+                            op: Neg
+                            arguments {
+                              int_literal {
+                                value: 2
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    arguments {
+                      operator {
+                        op: Neg
+                        arguments {
+                          int_literal {
+                            value: 2
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                return_expression_statement {
+                  expression {
+                    int_literal {
+                      value: 23
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: Not
+                arguments {
+                  operator {
+                    op: Eq
+                    arguments {
+                      operator {
+                        op: BitwiseOr
+                        arguments {
+                          int_literal {
+                            value: 1
+                          }
+                        }
+                        arguments {
+                          int_literal {
+                            value: 4
+                          }
+                        }
+                      }
+                    }
+                    arguments {
+                      int_literal {
+                        value: 5
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                return_expression_statement {
+                  expression {
+                    int_literal {
+                      value: 31
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: Not
+                arguments {
+                  operator {
+                    op: Eq
+                    arguments {
+                      operator {
+                        op: BitwiseOr
+                        arguments {
+                          int_literal {
+                            value: 5
+                          }
+                        }
+                        arguments {
+                          int_literal {
+                            value: 3
+                          }
+                        }
+                      }
+                    }
+                    arguments {
+                      int_literal {
+                        value: 7
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                return_expression_statement {
+                  expression {
+                    int_literal {
+                      value: 32
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: Not
+                arguments {
+                  operator {
+                    op: Eq
+                    arguments {
+                      operator {
+                        op: BitwiseOr
+                        arguments {
+                          operator {
+                            op: Neg
+                            arguments {
+                              int_literal {
+                                value: 2
+                              }
+                            }
+                          }
+                        }
+                        arguments {
+                          int_literal {
+                            value: 1
+                          }
+                        }
+                      }
+                    }
+                    arguments {
+                      operator {
+                        op: Neg
+                        arguments {
+                          int_literal {
+                            value: 1
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                return_expression_statement {
+                  expression {
+                    int_literal {
+                      value: 33
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: Not
+                arguments {
+                  operator {
+                    op: Eq
+                    arguments {
+                      operator {
+                        op: BitwiseXor
+                        arguments {
+                          int_literal {
+                            value: 1
+                          }
+                        }
+                        arguments {
+                          int_literal {
+                            value: 4
+                          }
+                        }
+                      }
+                    }
+                    arguments {
+                      int_literal {
+                        value: 5
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                return_expression_statement {
+                  expression {
+                    int_literal {
+                      value: 41
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: Not
+                arguments {
+                  operator {
+                    op: Eq
+                    arguments {
+                      operator {
+                        op: BitwiseXor
+                        arguments {
+                          int_literal {
+                            value: 5
+                          }
+                        }
+                        arguments {
+                          int_literal {
+                            value: 3
+                          }
+                        }
+                      }
+                    }
+                    arguments {
+                      int_literal {
+                        value: 6
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                return_expression_statement {
+                  expression {
+                    int_literal {
+                      value: 42
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: Not
+                arguments {
+                  operator {
+                    op: Eq
+                    arguments {
+                      operator {
+                        op: BitwiseXor
+                        arguments {
+                          operator {
+                            op: Neg
+                            arguments {
+                              int_literal {
+                                value: 2
+                              }
+                            }
+                          }
+                        }
+                        arguments {
+                          operator {
+                            op: Neg
+                            arguments {
+                              int_literal {
+                                value: 3
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    arguments {
+                      int_literal {
+                        value: 3
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                return_expression_statement {
+                  expression {
+                    int_literal {
+                      value: 43
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              int_literal {
+                value: 0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

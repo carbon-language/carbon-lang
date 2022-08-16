@@ -1,0 +1,130 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    function {
+      name: "add1"
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "x"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              operator {
+                op: Add
+                arguments {
+                  identifier {
+                    name: "x"
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "f"
+                type {
+                  expression_pattern {
+                    expression {
+                      function_type {
+                        return_type {
+                          int_type_literal {
+                          }
+                        }
+                        parameter {
+                          fields {
+                            int_type_literal {
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              identifier {
+                name: "add1"
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "f"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      operator {
+                        op: Neg
+                        arguments {
+                          int_literal {
+                            value: 1
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

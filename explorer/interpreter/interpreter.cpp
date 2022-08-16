@@ -1720,7 +1720,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         return todo_.FinishAction();
       }
     case StatementKind::ReturnVar: {
-      const ValueNodeView& value_node = cast<ReturnVar>(stmt).value_node();
+      const auto& ret_var = cast<ReturnVar>(stmt);
+      const ValueNodeView& value_node = ret_var.value_node();
       if (trace_stream_) {
         **trace_stream_ << "--- step returned var "
                         << cast<BindingPattern>(value_node.base()).name()
@@ -1731,8 +1732,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
                               todo_.ValueOfNode(value_node, stmt.source_loc()));
       if (const auto* lvalue = dyn_cast<LValue>(value)) {
         CARBON_ASSIGN_OR_RETURN(
-            value,
-            heap_.Read(lvalue->address(), value_node.base().source_loc()));
+            value, heap_.Read(lvalue->address(), ret_var.source_loc()));
       }
       const FunctionDeclaration& function = cast<Return>(stmt).function();
       CARBON_ASSIGN_OR_RETURN(

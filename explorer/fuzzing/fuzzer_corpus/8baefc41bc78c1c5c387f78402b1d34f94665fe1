@@ -1,0 +1,177 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    interface {
+      name: "Vector"
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "Dim"
+              type {
+                int_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      self {
+        name: "Self"
+        type {
+          type_type_literal {
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name: "Point"
+      members {
+        variable {
+          binding {
+            name: "x"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        variable {
+          binding {
+            name: "y"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        impl {
+          kind: InternalImpl
+          impl_type {
+            identifier {
+              name: "Self"
+            }
+          }
+          interface {
+            where {
+              base {
+                identifier {
+                  name: "Vector"
+                }
+              }
+              clauses {
+                equals {
+                  lhs {
+                    designator {
+                      name: "Dim"
+                    }
+                  }
+                  rhs {
+                    int_literal {
+                      value: 2
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "a"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "Point"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              struct_literal {
+                fields {
+                  name: "x"
+                  expression {
+                    int_literal {
+                      value: 2
+                    }
+                  }
+                }
+                fields {
+                  name: "y"
+                  expression {
+                    int_literal {
+                      value: 1
+                    }
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              compound_member_access {
+                object {
+                  identifier {
+                    name: "a"
+                  }
+                }
+                path {
+                  simple_member_access {
+                    field: "Dim"
+                    object {
+                      identifier {
+                        name: "Vector"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
