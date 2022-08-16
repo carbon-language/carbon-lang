@@ -88,7 +88,8 @@ auto UnescapeStringLiteral(llvm::StringRef source, const int hashtag_num,
             return std::nullopt;
           }
           unsigned int unicode_int = 0;
-          i++;
+          ++i;
+          int original_i = i;
           while (i < source.size() && source[i] != '}') {
             char hex_val;
             if (source[i] >= '0' && source[i] <= '9') {
@@ -100,22 +101,23 @@ auto UnescapeStringLiteral(llvm::StringRef source, const int hashtag_num,
             }
             unicode_int = unicode_int << 4;
             unicode_int += hex_val;
-            i++;
+            ++i;
+            if (i - original_i > 6) {
+              return std::nullopt;
+            }
           }
           if (i >= source.size()) {
             return std::nullopt;
           }
+          if (i - original_i == 0) {
+            return std::nullopt;
+          }
           char temp[4];
           char *result_two = &temp[0];
-          char *result = &temp[0];
           if (!llvm::ConvertCodePointToUTF8(unicode_int, result_two)) {
             return std::nullopt;
           }
-          while (result < result_two) {
-            ret.push_back(*result);
-            result++;
-          }
-          // ret.append(temp, result_two - temp);
+          ret.append(temp, result_two - temp);
           break;
         }
         case '\n':

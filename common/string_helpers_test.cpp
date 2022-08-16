@@ -49,6 +49,29 @@ TEST(UnescapeStringLiteral, Invalid) {
   EXPECT_THAT(UnescapeStringLiteral("\\#00", 1), Eq(std::nullopt));
 }
 
+TEST(UnescapeStringLiteral, InvalidUnicodes) {
+  // Various incomplete Unicode specifiers
+  EXPECT_THAT(UnescapeStringLiteral("\\u"), Eq(std::nullopt));
+  EXPECT_THAT(UnescapeStringLiteral("\\u1"), Eq(std::nullopt));
+  EXPECT_THAT(UnescapeStringLiteral("\\u{"), Eq(std::nullopt));
+  EXPECT_THAT(UnescapeStringLiteral("\\u{E9"), Eq(std::nullopt));
+  EXPECT_THAT(UnescapeStringLiteral("\\u{}"), Eq(std::nullopt));
+
+  // invalid characters in unicode
+  EXPECT_THAT(UnescapeStringLiteral("\\u{z}"), Eq(std::nullopt));
+
+  // lowercase hexadecimal
+  EXPECT_THAT(UnescapeStringLiteral("\\u{e9}"), Eq(std::nullopt));
+
+  // Codepoint number too high
+  EXPECT_THAT(UnescapeStringLiteral("\\u{110000}"), Eq(std::nullopt));
+
+  // codepoint overflows 32-bit
+  EXPECT_THAT(UnescapeStringLiteral("\\u{FF000000E9}"), Eq(std::nullopt));
+  
+
+}
+
 TEST(UnescapeStringLiteral, Nul) {
   std::optional<std::string> str = UnescapeStringLiteral("a\\0b");
   ASSERT_NE(str, std::nullopt);
