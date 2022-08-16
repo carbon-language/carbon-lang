@@ -2486,6 +2486,17 @@ auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
   }
 }
 
+static auto HasSize(SourceLocation source_loc,
+                    const StaticArrayType& static_array_type)
+    -> ErrorOr<Success> {
+  if (static_array_type.size()) {
+    return Success();
+  } else {
+    return CompilationError(source_loc)
+           << "Unable to infer array size without assigning value from rhs";
+  }
+}
+
 auto TypeChecker::TypeCheckPattern(
     Nonnull<Pattern*> p, std::optional<Nonnull<const Value*>> expected,
     ImplScope& impl_scope, ValueCategory enclosing_value_category)
@@ -2522,6 +2533,16 @@ auto TypeChecker::TypeCheckPattern(
         if (IsConcreteType(type)) {
           CARBON_RETURN_IF_ERROR(ExpectType(p->source_loc(), "name binding",
                                             type, *expected, impl_scope));
+
+          if (type->kind() == Value::Kind::StaticArrayType &&
+              (*expected)->kind() == Value::Kind::TupleValue) {
+            const auto& static_array_type = cast<StaticArrayType>(type);
+            const auto& tuple_type = cast<TupleValue>(*expected);
+
+            type =
+                arena_->New<StaticArrayType>(&static_array_type->element_type(),
+                                             tuple_type->elements().size());
+          }
         } else {
           BindingMap generic_args;
           if (!PatternMatch(type, *expected, binding.type().source_loc(),
@@ -2533,6 +2554,12 @@ auto TypeChecker::TypeCheckPattern(
           }
           type = *expected;
         }
+      }
+      if (type->kind() == Value::Kind::StaticArrayType) {
+        const auto& static_array_type = cast<StaticArrayType>(type);
+
+        CARBON_RETURN_IF_ERROR(
+            HasSize(binding.type().source_loc(), *static_array_type));
       }
       CARBON_RETURN_IF_ERROR(ExpectIsConcreteType(binding.source_loc(), type));
       binding.set_static_type(type);
@@ -2687,17 +2714,6 @@ auto TypeChecker::TypeCheckPattern(
   }
 }
 
-static auto HasSize(SourceLocation source_loc,
-                    const StaticArrayType& static_array_type)
-    -> ErrorOr<Success> {
-  if (static_array_type.size()) {
-    return Success();
-  } else {
-    return CompilationError(source_loc)
-           << "Unable to infer array size without assigning value from rhs";
-  }
-}
-
 auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
                                 const ImplScope& impl_scope)
     -> ErrorOr<Success> {
@@ -2788,14 +2804,6 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       } else {
         CARBON_RETURN_IF_ERROR(TypeCheckPattern(
             &var.pattern(), std::nullopt, var_scope, var.value_category()));
-
-        const auto& value = var.pattern().static_type();
-
-        if (value.kind() == Value::Kind::StaticArrayType) {
-          const auto& static_array_type = cast<StaticArrayType>(value);
-
-          CARBON_RETURN_IF_ERROR(HasSize(var.source_loc(), static_array_type));
-        }
       }
       return Success();
     }
