@@ -12,12 +12,14 @@
 package ExplorerTest api;
 
 fn CompareStr(s: String) -> i32 {
-  if (s == "HELLO WORLD!") {
+  if (s == "HELLO WORLD!!") {
     return 0;
   }
   return 1;
 }
 
 fn Main() -> i32 {
-  return CompareStr("\u{0048}\u{0045}\u{004C}\u{004C}\u{004F} \u{0057}\u{004F}\u{0052}\u{004C}\u{0044}\u{0021}");
+  Print("\u{0048}\u{0045}\u{004C}\u{004C}\u{004F} \u{0057}\u{004F}\u{0052}\u{004C}\u{0044}\u{0021}\u{21}\u{1F601}");
+  Print("\u{10FFFF}\u{0000}\u{00000000E9}\u{}");
+  return CompareStr("\u{0048}\u{0045}\u{004C}\u{004C}\u{004F} \u{0057}\u{004F}\u{0052}\u{004C}\u{0044}\u{0021}\u{21}");
 }

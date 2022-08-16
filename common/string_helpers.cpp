@@ -83,7 +83,7 @@ auto UnescapeStringLiteral(llvm::StringRef source, const int hashtag_num,
           break;
         }
         case 'u': {
-          i++;
+          ++i;
           if (i >= source.size() || source[i] != '{') {
             return std::nullopt;
           }
@@ -111,7 +111,11 @@ auto UnescapeStringLiteral(llvm::StringRef source, const int hashtag_num,
           if (!llvm::ConvertCodePointToUTF8(unicode_int, result_two)) {
             return std::nullopt;
           }
-          ret.append(temp, result_two - temp);
+          while (result < result_two) {
+            ret.push_back(*result);
+            result++;
+          }
+          // ret.append(temp, result_two - temp);
           break;
         }
         case '\n':
