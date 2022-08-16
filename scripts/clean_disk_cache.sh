@@ -1,4 +1,4 @@
-#!/bin/bash -eu
+#!/usr/bin/env bash
 #
 # Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 # Exceptions. See /LICENSE for license information.
@@ -6,6 +6,8 @@
 #
 # Clean out any files in the Bazel disk cache which haven't been used for over
 # thirty days.
+
+set -eu
 
 # Default to the same directory in the project `.blazerc`, but you can set this
 # environment variable to override that.
