@@ -84,8 +84,9 @@ auto UnescapeStringLiteral(llvm::StringRef source, const int hashtag_num,
         }
         case 'u': {
           i++;
-          if (i >= source.size() || source[i] != '{')
+          if (i >= source.size() || source[i] != '{') {
             return std::nullopt;
+          }
           unsigned int unicode_int = 0;
           i++;
           while (i < source.size() && source[i] != '}') {
