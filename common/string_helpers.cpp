@@ -91,16 +91,12 @@ auto UnescapeStringLiteral(llvm::StringRef source, const int hashtag_num,
           ++i;
           int original_i = i;
           while (i < source.size() && source[i] != '}') {
-            char hex_val;
-            if (source[i] >= '0' && source[i] <= '9') {
-              hex_val = source[i] - '0';
-            } else if (source[i] >= 'A' && source[i] <= 'F') {
-              hex_val = source[i] - 'A' + 10;
-            } else {
+            std::optional<char> hex_val = FromHex(source[i]);
+            if (hex_val == std::nullopt) {
               return std::nullopt;
             }
             unicode_int = unicode_int << 4;
-            unicode_int += hex_val;
+            unicode_int += hex_val.value();
             ++i;
             if (i - original_i > 6) {
               return std::nullopt;
@@ -112,12 +108,12 @@ auto UnescapeStringLiteral(llvm::StringRef source, const int hashtag_num,
           if (i - original_i == 0) {
             return std::nullopt;
           }
-          char temp[4];
-          char *result_two = &temp[0];
-          if (!llvm::ConvertCodePointToUTF8(unicode_int, result_two)) {
+          char utf8_buf[4];
+          char *utf8_end = &utf8_buf[0];
+          if (!llvm::ConvertCodePointToUTF8(unicode_int, utf8_end)) {
             return std::nullopt;
           }
-          ret.append(temp, result_two - temp);
+          ret.append(utf8_buf, utf8_end - utf8_buf);
           break;
         }
         case '\n':
