@@ -108,8 +108,7 @@ auto UnescapeStringLiteral(llvm::StringRef source, const int hashtag_num,
           char temp[4];
           char *result_two = &temp[0];
           char *result = &temp[0];
-          bool conversion_ok = llvm::ConvertCodePointToUTF8(unicode_int, result_two);
-          if (!conversion_ok) {
+          if (!llvm::ConvertCodePointToUTF8(unicode_int, result_two)) {
             return std::nullopt;
           }
           while(result < result_two) {
