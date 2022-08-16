@@ -689,7 +689,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
           break;
         case Value::Kind::StaticArrayType: {
           const auto& array_type = cast<StaticArrayType>(*destination_type);
-          destination_element_types.resize(tuple->elements().size(),
+          destination_element_types.resize(*array_type.size(),
                                            &array_type.element_type());
           break;
         }
