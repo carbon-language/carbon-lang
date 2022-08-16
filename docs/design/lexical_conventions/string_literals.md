@@ -338,6 +338,10 @@ string in the type system. In such string literals, we should consider rejecting
     -   [Leading whitespace removal](/proposals/p0199.md#leading-whitespace-removal)
     -   [Terminating newline](/proposals/p0199.md#terminating-newline)
 -   [Escape sequences](/proposals/p0199.md#escape-sequences-1)
+    -   Unicode escape sequences:
+        -   [Allow zero digits](/proposals/p2040.md#allow-zero-digits)
+        -   [Allow any number of hexadecimal characters](/proposals/p2040.md#allow-any-number-of-hexadecimal-characters)
+        -   [Limiting to 6 digits versus 8](/proposals/p2040.md#limiting-to-6-digits-versus-8)
 -   [Raw string literals](/proposals/p0199.md#raw-string-literals-1)
     -   [Trailing whitespace](/proposals/p0199.md#trailing-whitespace)
     -   [Line separators](/proposals/p0199.md#line-separators)
