@@ -98,7 +98,7 @@ auto UnescapeStringLiteral(llvm::StringRef source, const int hashtag_num,
             unicode_int = unicode_int << 4;
             unicode_int += hex_val.value();
             ++i;
-            if (i - original_i > 6) {
+            if (i - original_i > 8) {
               return std::nullopt;
             }
           }
