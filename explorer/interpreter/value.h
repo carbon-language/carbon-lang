@@ -835,20 +835,6 @@ class SymbolicWitness : public Witness {
 // A choice type.
 class ChoiceType : public Value {
  public:
-  ChoiceType(std::string name, std::vector<NamedValue> alternatives)
-      : Value(Kind::ChoiceType),
-        name_(std::move(name)),
-        alternatives_(std::move(alternatives)),
-        is_generic_(false) {}
-
-  ChoiceType(std::string name, std::vector<NamedValue> alternatives,
-             Nonnull<const Bindings*> bindings)
-      : Value(Kind::ChoiceType),
-        name_(std::move(name)),
-        alternatives_(std::move(alternatives)),
-        bindings_(bindings),
-        is_generic_(true) {}
-
   ChoiceType(Nonnull<const ChoiceDeclaration*> declaration,
              const std::vector<NamedValue>& alternatives,
              Nonnull<const Bindings*> bindings)
@@ -856,8 +842,7 @@ class ChoiceType : public Value {
         name_(declaration->name()),
         alternatives_(alternatives),
         bindings_(bindings),
-        declaration_(declaration),
-        is_generic_(true) {}
+        declaration_(declaration){}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ChoiceType;
@@ -874,14 +859,16 @@ class ChoiceType : public Value {
   auto type_args() const -> const BindingMap& { return bindings_->args(); }
   auto declaration() const -> const ChoiceDeclaration& { return *declaration_; }
 
-  auto is_generic() const -> bool { return is_generic_; }
+  auto IsParameterized() const -> bool {
+    return declaration_->type_params().has_value();
+  }
 
  private:
   std::string name_;
   std::vector<NamedValue> alternatives_;
   Nonnull<const Bindings*> bindings_;
   Nonnull<const ChoiceDeclaration*> declaration_;
-  bool is_generic_;
+
 };
 
 // A continuation type.
@@ -920,22 +907,21 @@ class ParameterizedEntityName : public Value {
       : Value(Kind::ParameterizedEntityName),
         declaration_(declaration),
         params_(params) {}
+explicit ParameterizedEntityName(Nonnull<const Declaration*> declaration,
+                                 Nonnull<const TuplePattern*> params,
+                                 const std::vector<NamedValue> & alternatives)
+        : Value(Kind::ParameterizedEntityName),
+          declaration_(declaration),
+          params_(params),
+          alternatives_(alternatives){}
 
-  explicit ParameterizedEntityName(Nonnull<const Declaration*> declaration,
-                                   Nonnull<const TuplePattern*> params,
-                                   const std::vector<NamedValue>& alternatives)
-      : Value(Kind::ParameterizedEntityName),
-        declaration_(declaration),
-        params_(params),
-        alternatives_(alternatives) {}
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ParameterizedEntityName;
   }
 
   auto declaration() const -> const Declaration& { return *declaration_; }
   auto params() const -> const TuplePattern& { return *params_; }
-  auto alternatives() const -> std::vector<NamedValue> { return alternatives_; }
-
+  auto alternatives() const -> const std::vector<NamedValue>& { return alternatives_; }
  private:
   Nonnull<const Declaration*> declaration_;
   Nonnull<const TuplePattern*> params_;
