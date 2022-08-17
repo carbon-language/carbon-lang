@@ -1175,5 +1175,18 @@ TEST_F(LexerTest, PrintingAsYaml) {
                                                {"spelling", ""}}}}));
 }
 
+TEST_F(LexerTest, PrintToken) {
+  auto buffer = Lex("0x9");
+  ASSERT_FALSE(buffer.has_errors());
+  std::string print_output;
+  llvm::raw_string_ostream print_stream(print_output);
+  buffer.Print(print_stream);
+  llvm::StringRef print = print_stream.str();
+  EXPECT_THAT(GetAndDropLine(print),
+              StrEq("token: { index: 0, kind: 'IntegerLiteral', line: 1, "
+                    "column: 1, indent: 1, spelling: '0x9', value: `9`, "
+                    "has_trailing_space: true }"));
+}
+
 }  // namespace
 }  // namespace Carbon::Testing
