@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ARG TAG=3.5.6
-FROM homebrew/brew:${TAG}
+FROM docker.io/homebrew/brew:${TAG}
 
 # Install libxcrypt using Homebrew.
 RUN brew install libxcrypt --overwrite
