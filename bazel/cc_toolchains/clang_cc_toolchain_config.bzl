@@ -98,7 +98,7 @@ def _impl(ctx):
 
     std_compile_flags = ["-std=c++17"]
     # libc++ is only used on non-Windows platforms.
-    if target_cpu != "x64_windows":
+    if ctx.attr.target_cpu != "x64_windows":
         std_compile_flags.append("-stdlib=libc++")
 
     default_flags_feature = feature(
