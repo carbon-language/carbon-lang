@@ -842,7 +842,7 @@ class ChoiceType : public Value {
         name_(declaration->name()),
         alternatives_(alternatives),
         bindings_(bindings),
-        declaration_(declaration){}
+        declaration_(declaration) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ChoiceType;
@@ -868,7 +868,6 @@ class ChoiceType : public Value {
   std::vector<NamedValue> alternatives_;
   Nonnull<const Bindings*> bindings_;
   Nonnull<const ChoiceDeclaration*> declaration_;
-
 };
 
 // A continuation type.
@@ -907,13 +906,13 @@ class ParameterizedEntityName : public Value {
       : Value(Kind::ParameterizedEntityName),
         declaration_(declaration),
         params_(params) {}
-explicit ParameterizedEntityName(Nonnull<const Declaration*> declaration,
-                                 Nonnull<const TuplePattern*> params,
-                                 const std::vector<NamedValue> & alternatives)
-        : Value(Kind::ParameterizedEntityName),
-          declaration_(declaration),
-          params_(params),
-          alternatives_(alternatives){}
+  explicit ParameterizedEntityName(Nonnull<const Declaration*> declaration,
+                                   Nonnull<const TuplePattern*> params,
+                                   const std::vector<NamedValue>& alternatives)
+      : Value(Kind::ParameterizedEntityName),
+        declaration_(declaration),
+        params_(params),
+        alternatives_(alternatives) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ParameterizedEntityName;
@@ -921,7 +920,10 @@ explicit ParameterizedEntityName(Nonnull<const Declaration*> declaration,
 
   auto declaration() const -> const Declaration& { return *declaration_; }
   auto params() const -> const TuplePattern& { return *params_; }
-  auto alternatives() const -> const std::vector<NamedValue>& { return alternatives_; }
+  auto alternatives() const -> const std::vector<NamedValue>& {
+    return alternatives_;
+  }
+
  private:
   Nonnull<const Declaration*> declaration_;
   Nonnull<const TuplePattern*> params_;

@@ -1737,17 +1737,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                      << " does not have a field named " << access.member_name();
             }
             case Value::Kind::ChoiceType: {
-              const ChoiceType& tmp_choice = cast<ChoiceType>(*type);
-              ChoiceDeclaration & choice_dec = const_cast<ChoiceDeclaration&>(tmp_choice.declaration());
-              std::vector<NamedValue> alternatives;
-                for (Nonnull<AlternativeSignature*> alternative : choice_dec.alternatives()) {
-                    CARBON_ASSIGN_OR_RETURN(auto signature,
-                            TypeCheckTypeExp(&alternative->signature(),
-                                             impl_scope));
-                    alternatives.push_back({.name = alternative->name(), .value = signature});
-                }
-                ChoiceType & choice = cast<ChoiceType>(*arena_->New<ChoiceType>(&choice_dec, alternatives, &tmp_choice.bindings()));
-                std::optional<Nonnull<const Value*>> parameter_types =
+              const ChoiceType& choice = cast<ChoiceType>(*type);
+
+              std::optional<Nonnull<const Value*>> parameter_types =
                   choice.FindAlternative(access.member_name());
               if (!parameter_types.has_value()) {
                 return CompilationError(e->source_loc())
@@ -1757,7 +1749,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               }
               Nonnull<const Value*> substituted_parameter_type =
                   *parameter_types;
-                if (choice.IsParameterized()) {
+              if (choice.IsParameterized()) {
                 substituted_parameter_type =
                     Substitute(choice.type_args(), *parameter_types);
               }
@@ -1767,7 +1759,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               // TODO: Should there be a Declaration corresponding to each
               // choice type alternative?
               access.set_member(Member(arena_->New<NamedValue>(
-                  NamedValue{access.member_name(), &choice})));
+                  NamedValue{access.member_name(), type})));
               access.set_static_type(type);
               access.set_value_category(ValueCategory::Let);
               return Success();
@@ -2303,9 +2295,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               break;
             }
             case DeclarationKind::ChoiceDeclaration: {
-              Nonnull<ChoiceType*> ct = arena_->New<ChoiceType>(
-                  cast<ChoiceDeclaration>(&decl), entity.alternatives(),
-                  bindings);
+              Nonnull<ChoiceType*> ct =
+                  arena_->New<ChoiceType>(cast<ChoiceDeclaration>(&decl),
+                                          entity.alternatives(), bindings);
               Nonnull<TypeOfChoiceType*> inst_choice_type =
                   arena_->New<TypeOfChoiceType>(ct);
               call.set_static_type(inst_choice_type);
@@ -2886,17 +2878,8 @@ auto TypeChecker::TypeCheckPattern(
                                           "alternative pattern", &choice_type,
                                           *expected, impl_scope));
       }
-    ChoiceDeclaration & choice_dec = const_cast<ChoiceDeclaration&>(choice_type.declaration());
-    std::vector<NamedValue> alternatives;
-    for (Nonnull<AlternativeSignature*> alternative : choice_dec.alternatives()) {
-        CARBON_ASSIGN_OR_RETURN(auto signature,
-                TypeCheckTypeExp(&alternative->signature(),
-                                 impl_scope));
-        alternatives.push_back({.name = alternative->name(), .value = signature});
-    }
-        const ChoiceType & choice = cast<ChoiceType>(*arena_->New<ChoiceType>(&choice_dec, alternatives, &choice_type.bindings()));
-        std::optional<Nonnull<const Value*>> parameter_types =
-                choice.FindAlternative(alternative.alternative_name());
+      std::optional<Nonnull<const Value*>> parameter_types =
+          choice_type.FindAlternative(alternative.alternative_name());
       if (parameter_types == std::nullopt) {
         return CompilationError(alternative.source_loc())
                << "'" << alternative.alternative_name()
@@ -2904,14 +2887,14 @@ auto TypeChecker::TypeCheckPattern(
       }
 
       Nonnull<const Value*> substituted_parameter_type = *parameter_types;
-        if (choice_type.IsParameterized()) {
+      if (choice_type.IsParameterized()) {
         substituted_parameter_type =
-            Substitute(choice.type_args(), *parameter_types);
+            Substitute(choice_type.type_args(), *parameter_types);
       }
       CARBON_RETURN_IF_ERROR(
           TypeCheckPattern(&alternative.arguments(), substituted_parameter_type,
                            impl_scope, enclosing_value_category));
-      alternative.set_static_type(&choice);
+      alternative.set_static_type(&choice_type);
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> alternative_value,
           InterpPattern(&alternative, arena_, trace_stream_));
@@ -3874,7 +3857,7 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
   }
   BindingMap generic_args;
   for (auto* binding : bindings) {
-        generic_args[binding] = *binding->symbolic_identity();
+    generic_args[binding] = *binding->symbolic_identity();
   }
 
   std::vector<NamedValue> alternatives;
@@ -3887,14 +3870,17 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
 
   if (choice->type_params().has_value()) {
     Nonnull<ParameterizedEntityName*> param_name =
-        arena_->New<ParameterizedEntityName>(choice, *choice->type_params(),alternatives);
+        arena_->New<ParameterizedEntityName>(choice, *choice->type_params(),
+                                             alternatives);
     SetConstantValue(choice, param_name);
     choice->set_static_type(
         arena_->New<TypeOfParameterizedEntityName>(param_name, alternatives));
     return Success();
   }
 
-  auto ct = arena_->New<ChoiceType>(choice, std::move(alternatives),arena_->New<Bindings>(std::move(generic_args), Bindings::NoWitnesses));
+  auto ct = arena_->New<ChoiceType>(
+      choice, std::move(alternatives),
+      arena_->New<Bindings>(std::move(generic_args), Bindings::NoWitnesses));
 
   SetConstantValue(choice, ct);
   choice->set_static_type(arena_->New<TypeOfChoiceType>(ct));
