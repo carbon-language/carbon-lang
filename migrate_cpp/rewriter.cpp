@@ -63,21 +63,21 @@ auto OutputWriter::Write(clang::SourceLocation loc,
 
 auto MigrationConsumer::HandleTranslationUnit(clang::ASTContext& context)
     -> void {
-  RewriteBuilder rewriter(context, segment_map);
+  RewriteBuilder rewriter(context, segment_map_);
   rewriter.TraverseAST(context);
 
   auto translation_unit_node =
       clang::DynTypedNode::create(*context.getTranslationUnitDecl());
-  auto iter = segment_map.find(translation_unit_node);
+  auto iter = segment_map_.find(translation_unit_node);
 
-  if (iter == segment_map.end()) {
-    result.append(CppPlaceholder);
+  if (iter == segment_map_.end()) {
+    result_.append(CppPlaceholder);
   } else {
     OutputWriter w{
-        .map = segment_map,
-        .bounds = output_range,
+        .map = segment_map_,
+        .bounds = output_range_,
         .source_manager = context.getSourceManager(),
-        .output = result,
+        .output = result_,
     };
 
     for (const auto& output_segment : iter->second) {
@@ -91,17 +91,17 @@ auto RewriteBuilder::TextFor(clang::SourceLocation begin,
                              clang::SourceLocation end) const
     -> llvm::StringRef {
   auto range = clang::CharSourceRange::getCharRange(begin, end);
-  return clang::Lexer::getSourceText(range, context.getSourceManager(),
-                                     context.getLangOpts());
+  return clang::Lexer::getSourceText(range, context_.getSourceManager(),
+                                     context_.getLangOpts());
 }
 
 auto RewriteBuilder::TextForTokenAt(clang::SourceLocation loc) const
     -> llvm::StringRef {
-  auto& source_manager = context.getSourceManager();
+  auto& source_manager = context_.getSourceManager();
   auto [file_id, offset] = source_manager.getDecomposedLoc(loc);
   llvm::StringRef file = source_manager.getBufferData(file_id);
   clang::Lexer lexer(source_manager.getLocForStartOfFile(file_id),
-                     context.getLangOpts(), file.begin(), file.data() + offset,
+                     context_.getLangOpts(), file.begin(), file.data() + offset,
                      file.end());
   clang::Token token;
   lexer.LexFromRawLexer(token);

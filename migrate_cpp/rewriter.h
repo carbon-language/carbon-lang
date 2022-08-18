@@ -90,7 +90,7 @@ class RewriteBuilder : public clang::RecursiveASTVisitor<RewriteBuilder> {
   // Constructs a `RewriteBuilder` which can read the AST from `context` and
   // will write results into `segments`.
   explicit RewriteBuilder(clang::ASTContext& context, SegmentMapType& segments)
-      : context(context), segments_map(segments) {}
+      : context_(context), segments_(segments) {}
 
   // By default, traverse children nodes before their parent. Called by the CRTP
   // base class to determine traversal order.
@@ -107,8 +107,8 @@ class RewriteBuilder : public clang::RecursiveASTVisitor<RewriteBuilder> {
   auto VisitUnaryOperator(clang::UnaryOperator* expr) -> bool;
   auto VisitVarDecl(clang::VarDecl* decl) -> bool;
 
-  auto segments() const -> const SegmentMapType& { return segments_map; }
-  auto segments() -> SegmentMapType& { return segments_map; }
+  auto segments() const -> const SegmentMapType& { return segments_; }
+  auto segments() -> SegmentMapType& { return segments_; }
 
  private:
   // Associates `output_segments` in the output map `this->segments()` with the
@@ -117,19 +117,19 @@ class RewriteBuilder : public clang::RecursiveASTVisitor<RewriteBuilder> {
   // `output_segments`.
   auto SetReplacement(clang::DynTypedNode node,
                       std::vector<OutputSegment> output_segments) -> void {
-    segments_map.try_emplace(node, std::move(output_segments));
+    segments_.try_emplace(node, std::move(output_segments));
   }
 
   auto SetReplacement(clang::TypeLoc node,
                       std::vector<OutputSegment> output_segments) -> void {
-    segments_map.try_emplace(node, std::move(output_segments));
+    segments_.try_emplace(node, std::move(output_segments));
   }
 
   template <typename T>
   auto SetReplacement(const T* node, std::vector<OutputSegment> output_segments)
       -> void {
-    segments_map.try_emplace(clang::DynTypedNode::create(*node),
-                             std::move(output_segments));
+    segments_.try_emplace(clang::DynTypedNode::create(*node),
+                          std::move(output_segments));
   }
 
   // Invokes the overload of `SetReplacement` defined above. Equivalent to
@@ -157,8 +157,8 @@ class RewriteBuilder : public clang::RecursiveASTVisitor<RewriteBuilder> {
   // located at `loc`.
   auto TextForTokenAt(clang::SourceLocation loc) const -> llvm::StringRef;
 
-  clang::ASTContext& context;
-  SegmentMapType& segments_map;
+  clang::ASTContext& context_;
+  SegmentMapType& segments_;
 };
 
 // An `ASTConsumer` which, when executed, populates a `std::string` with the
@@ -169,14 +169,14 @@ class MigrationConsumer : public clang::ASTConsumer {
  public:
   explicit MigrationConsumer(std::string& result,
                              std::pair<size_t, size_t> output_range)
-      : result(result), output_range(output_range) {}
+      : result_(result), output_range_(output_range) {}
 
   auto HandleTranslationUnit(clang::ASTContext& context) -> void override;
 
  private:
-  RewriteBuilder::SegmentMapType segment_map;
-  std::string& result;
-  std::pair<size_t, size_t> output_range;
+  RewriteBuilder::SegmentMapType segment_map_;
+  std::string& result_;
+  std::pair<size_t, size_t> output_range_;
 };
 
 // An `ASTFrontendAction` which constructs a `MigrationConsumer` and invokes it
@@ -191,18 +191,18 @@ class MigrationAction : public clang::ASTFrontendAction {
   // `output_range.second` will be written.
   explicit MigrationAction(std::string& result,
                            std::pair<size_t, size_t> output_range)
-      : result(result), output_range(output_range) {}
+      : result_(result), output_range_(output_range) {}
 
   // Returns a `std::unique_ptr` to a `clang::MigrationConsumer` which populates
   // the output `result`.
   auto CreateASTConsumer(clang::CompilerInstance&, llvm::StringRef)
       -> std::unique_ptr<clang::ASTConsumer> override {
-    return std::make_unique<MigrationConsumer>(result, output_range);
+    return std::make_unique<MigrationConsumer>(result_, output_range_);
   }
 
  private:
-  std::string& result;
-  std::pair<size_t, size_t> output_range;
+  std::string& result_;
+  std::pair<size_t, size_t> output_range_;
 };
 
 }  // namespace Carbon
