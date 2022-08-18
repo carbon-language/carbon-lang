@@ -7,19 +7,30 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-field-member-name-clash.carbon:23: Member named F (declared at {{.*}}/explorer/testdata/mixin/fail-field-member-name-clash.carbon:17) cannot be mixed into C because it clashes with an existing member with the same name (declared at {{.*}}/explorer/testdata/mixin/fail-field-member-name-clash.carbon:21)
-
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-mix-diamond-clash.carbon:34: Member named F1 (declared at {{.*}}/explorer/testdata/mixin/fail-mix-diamond-clash.carbon:16) is being mixed multiple times into C
 package ExplorerTest api;
 
-mixin M {
-  fn F[me: Self](x: Self) -> Self{
+mixin M1 {
+  fn F1[me: Self](x: Self) -> Self{
      return x;
   }
 }
 
+mixin M2 {
+  fn F2() {
+  }
+  mix M1;
+}
+
+mixin M3 {
+  mix M1;
+  fn F3() {
+  }
+}
+
 class C {
-  let F: i32 = 0;
-  mix M;
+  mix M2;
+  mix M3;
 }
 
 fn Main() -> i32 {

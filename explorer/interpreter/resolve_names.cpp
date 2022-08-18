@@ -49,7 +49,8 @@ static auto AddExposedNames(const Declaration& declaration,
     case DeclarationKind::MixinDeclaration: {
       auto& mixin_decl = cast<MixinDeclaration>(declaration);
       CARBON_RETURN_IF_ERROR(
-          enclosing_scope.Add(mixin_decl.name(), &mixin_decl));
+          enclosing_scope.Add(mixin_decl.name(), &mixin_decl,
+                              StaticScope::NameStatus::KnownButNotDeclared));
       break;
     }
     case DeclarationKind::MixDeclaration: {

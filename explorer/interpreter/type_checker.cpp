@@ -3386,8 +3386,13 @@ auto TypeChecker::TypeCheckClassDeclaration(
   if (trace_stream_) {
     **trace_stream_ << class_scope;
   }
+  auto [it, inserted] =
+      collected_members_.insert({class_decl, CollectedMembersMap()});
+  CARBON_CHECK(inserted) << "Adding class " << class_decl->name()
+                         << " to collected_members_ must not fail";
   for (Nonnull<Declaration*> m : class_decl->members()) {
     CARBON_RETURN_IF_ERROR(TypeCheckDeclaration(m, class_scope, class_decl));
+    CARBON_RETURN_IF_ERROR(CollectMember(class_decl, m));
   }
   if (trace_stream_) {
     **trace_stream_ << "** finished checking class " << class_decl->name()
@@ -3440,8 +3445,18 @@ auto TypeChecker::DeclareMixinDeclaration(Nonnull<MixinDeclaration*> mixin_decl,
 }
 
 auto TypeChecker::TypeCheckMixinDeclaration(
-    Nonnull<MixinDeclaration*> mixin_decl, const ImplScope& impl_scope)
+    Nonnull<const MixinDeclaration*> mixin_decl, const ImplScope& impl_scope)
     -> ErrorOr<Success> {
+  auto [it, inserted] =
+      collected_members_.insert({mixin_decl, CollectedMembersMap()});
+  if (!inserted) {
+    // This declaration has already been type checked before
+    if (trace_stream_) {
+      **trace_stream_ << "** skipped checking mixin " << mixin_decl->name()
+                      << "\n";
+    }
+    return Success();
+  }
   if (trace_stream_) {
     **trace_stream_ << "** checking mixin " << mixin_decl->name() << "\n";
   }
@@ -3455,6 +3470,7 @@ auto TypeChecker::TypeCheckMixinDeclaration(
   }
   for (Nonnull<Declaration*> m : mixin_decl->members()) {
     CARBON_RETURN_IF_ERROR(TypeCheckDeclaration(m, mixin_scope, mixin_decl));
+    CARBON_RETURN_IF_ERROR(CollectMember(mixin_decl, m));
   }
   if (trace_stream_) {
     **trace_stream_ << "** finished checking mixin " << mixin_decl->name()
@@ -3467,63 +3483,27 @@ auto TypeChecker::TypeCheckMixDeclaration(
     Nonnull<MixDeclaration*> mix_decl, const ImplScope& impl_scope,
     std::optional<Nonnull<const Declaration*>> enclosing_decl)
     -> ErrorOr<Success> {
+  if (trace_stream_) {
+    **trace_stream_ << "** checking " << *mix_decl << "\n";
+  }
   // TODO(darshal): Check if the imports of the mixin being mixed are being
-  // impl'd in the enclosed class/mixin declaration This brings the question of
+  // impl'd in the enclosed class/mixin declaration This raises the question of
   // whether it makes sense to have impl declarations in mixin declarations
 
+  CARBON_CHECK(enclosing_decl.has_value());
   Nonnull<const Declaration*> encl_decl = enclosing_decl.value();
-  const auto& mixin_decl = mix_decl->mixin_value().declaration();
-  // TODO(darshal): Check if the name of members of corresponding mixin
-  // declaration and enclosed declaration clash
-  switch (encl_decl->kind()) {
-    case DeclarationKind::MixinDeclaration:
-    case DeclarationKind::ClassDeclaration: {
-      llvm::ArrayRef<Nonnull<const Declaration*>> members;
-      if (isa<ClassDeclaration>(encl_decl)) {
-        members = cast<ClassDeclaration>(encl_decl)->members();
-      } else if (isa<MixinDeclaration>(encl_decl)) {
-        members = cast<MixinDeclaration>(encl_decl)->members();
-      } else {
-        // This block should be unreachable
-        break;
-      }
+  auto& mixin_decl = mix_decl->mixin_value().declaration();
+  CARBON_RETURN_IF_ERROR(TypeCheckMixinDeclaration(&mixin_decl, impl_scope));
+  CollectedMembersMap& mix_members = FindCollectedMembers(&mixin_decl);
 
-      // Check if the member names of the mixin being mixed in the enclosing
-      // declaration clashes with the member names of the enclosing declaration.
-      // Execution time of this block will blow up as the number
-      for (Nonnull<const Declaration*> member : members) {
-        switch (member->kind()) {
-          case DeclarationKind::VariableDeclaration:
-          case DeclarationKind::FunctionDeclaration: {
-            std::optional<std::string_view> member_name = GetName(*member);
-            if (!member_name.has_value()) {
-              break;
-            }
-            const auto mixin_member = FindMixedMemberAndType(
-                member_name.value(), mixin_decl.members(),
-                &enclosing_decl.value()->static_type());
-            if (mixin_member.has_value()) {
-              return CompilationError(mix_decl->source_loc())
-                     << "Ambiguous member name '" << member_name.value()
-                     << "' (" << member->source_loc() << ") "
-                     << "while mixing with the mixin " << mixin_decl.name()
-                     << ". "
-                     << "(Clashes with mixin member declared at "
-                     << mixin_member.value().second->source_loc() << ")";
-            }
-            break;
-          }
-          default:
-            break;
-            // throw std::runtime_error("Not implemented");
-        }
-      }
-      break;
-    }
-    default:
-      CARBON_FATAL() << "Parser shouldn't allow the declaration enclosing a "
-                        "mix declaration to be "
-                     << *enclosing_decl.value();
+  // Merge members collected in the enclosing declaration with the members
+  // collected for the mixin declaration associated with the mix declaration
+  for (auto [mix_member_name, mix_member] : mix_members) {
+    CARBON_RETURN_IF_ERROR(CollectMember(encl_decl, mix_member));
+  }
+
+  if (trace_stream_) {
+    **trace_stream_ << "** finished checking " << *mix_decl << "\n";
   }
 
   return Success();
@@ -4233,6 +4213,56 @@ auto TypeChecker::FindMixedMemberAndType(
   }
 
   return std::nullopt;
+}
+
+auto TypeChecker::CollectMember(Nonnull<const Declaration*> enclosing_decl,
+                                Nonnull<const Declaration*> member_decl)
+    -> ErrorOr<Success> {
+  CARBON_CHECK(isa<MixinDeclaration>(enclosing_decl) ||
+               isa<ClassDeclaration>(enclosing_decl))
+      << "Can't collect members for " << *enclosing_decl;
+  auto member_name = GetName(*member_decl);
+  if (!member_name.has_value()) {
+    // No need to collect members without a name
+    return Success();
+  }
+  auto encl_decl_name = GetName(*enclosing_decl);
+  CARBON_CHECK(encl_decl_name.has_value());
+  auto enclosing_decl_name = encl_decl_name.value();
+  auto enclosing_decl_loc = enclosing_decl->source_loc();
+  CollectedMembersMap& encl_members = FindCollectedMembers(enclosing_decl);
+  auto [it, inserted] = encl_members.insert({member_name.value(), member_decl});
+  if (!inserted) {
+    if (member_decl == it->second) {
+      return CompilationError(enclosing_decl_loc)
+             << "Member named " << member_name.value() << " (declared at "
+             << member_decl->source_loc() << ")"
+             << " is being mixed multiple times into " << enclosing_decl_name;
+    } else {
+      return CompilationError(enclosing_decl_loc)
+             << "Member named " << member_name.value() << " (declared at "
+             << member_decl->source_loc() << ") cannot be mixed into "
+             << enclosing_decl_name
+             << " because it clashes with an existing member"
+             << " with the same name (declared at " << it->second->source_loc()
+             << ") ";
+    }
+  }
+  return Success();
+}
+
+auto TypeChecker::FindCollectedMembers(Nonnull<const Declaration*> decl)
+    -> CollectedMembersMap& {
+  switch (decl->kind()) {
+    case DeclarationKind::MixinDeclaration:
+    case DeclarationKind::ClassDeclaration: {
+      auto it = collected_members_.find(decl);
+      CARBON_CHECK(it != collected_members_.end());
+      return it->second;
+    }
+    default:
+      CARBON_FATAL() << "Can't collect members for " << *decl;
+  }
 }
 
 }  // namespace Carbon

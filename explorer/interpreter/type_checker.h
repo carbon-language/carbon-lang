@@ -19,6 +19,13 @@
 
 namespace Carbon {
 
+using CollectedMembersMap =
+    std::unordered_map<std::string_view, Nonnull<const Declaration*>>;
+
+// Maps a mixin/class declaration to all of its direct and indirect members.
+using GlobalMembersMap =
+    std::unordered_map<Nonnull<const Declaration*>, CollectedMembersMap>;
+
 class TypeChecker {
  public:
   explicit TypeChecker(Nonnull<Arena*> arena,
@@ -273,7 +280,7 @@ class TypeChecker {
       -> ErrorOr<Success>;
 
   // Type check all the members of the mixin.
-  auto TypeCheckMixinDeclaration(Nonnull<MixinDeclaration*> mixin_decl,
+  auto TypeCheckMixinDeclaration(Nonnull<const MixinDeclaration*> mixin_decl,
                                  const ImplScope& impl_scope)
       -> ErrorOr<Success>;
 
@@ -427,9 +434,18 @@ class TypeChecker {
 
   void PrintConstants(llvm::raw_ostream& out);
 
+  auto CollectMember(Nonnull<const Declaration*> enclosing_decl,
+                     Nonnull<const Declaration*> member_decl)
+      -> ErrorOr<Success>;
+
+  auto FindCollectedMembers(Nonnull<const Declaration*> decl)
+      -> CollectedMembersMap&;
+
   Nonnull<Arena*> arena_;
   std::set<ValueNodeView> constants_;
   Builtins builtins_;
+
+  GlobalMembersMap collected_members_;
 
   std::optional<Nonnull<llvm::raw_ostream*>> trace_stream_;
 };

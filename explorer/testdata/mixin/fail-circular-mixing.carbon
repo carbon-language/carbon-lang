@@ -7,19 +7,30 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-field-member-name-clash.carbon:23: Member named F (declared at {{.*}}/explorer/testdata/mixin/fail-field-member-name-clash.carbon:17) cannot be mixed into C because it clashes with an existing member with the same name (declared at {{.*}}/explorer/testdata/mixin/fail-field-member-name-clash.carbon:21)
-
 package ExplorerTest api;
 
-mixin M {
-  fn F[me: Self](x: Self) -> Self{
+mixin M1 {
+  fn F1[me: Self](x: Self) -> Self{
      return x;
+  }
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-circular-mixing.carbon:[[@LINE+1]]: 'M3' has not been declared yet
+  mix M3;
+}
+
+mixin M2 {
+  fn F2() {
+  }
+  mix M1;
+}
+
+mixin M3 {
+  mix M2;
+  fn F3() {
   }
 }
 
 class C {
-  let F: i32 = 0;
-  mix M;
+  mix M2;
 }
 
 fn Main() -> i32 {

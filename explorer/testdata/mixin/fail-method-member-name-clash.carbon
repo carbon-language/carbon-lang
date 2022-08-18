@@ -7,6 +7,7 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-method-member-name-clash.carbon:25: Member named F (declared at {{.*}}/explorer/testdata/mixin/fail-method-member-name-clash.carbon:17) cannot be mixed into C because it clashes with an existing member with the same name (declared at {{.*}}/explorer/testdata/mixin/fail-method-member-name-clash.carbon:23)
 
 package ExplorerTest api;
 
@@ -20,7 +21,6 @@ class C {
   fn F[me: Self](x: Self) -> Self {
      return x;
   }
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-method-member-name-clash.carbon:[[@LINE+1]]: Ambiguous member name 'F' ({{.*}}/explorer/testdata/mixin/fail-method-member-name-clash.carbon:22) while mixing with the mixin M. (Clashes with mixin member declared at {{.*}}/explorer/testdata/mixin/fail-method-member-name-clash.carbon:16)
   mix M;
 }
 
