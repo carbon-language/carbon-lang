@@ -150,12 +150,11 @@ import Console;
 fn Fibonacci(limit: i64) {
   var (a: i64, b: i64) = (0, 1);
   while (a < limit) {
-    Console.Print(a, " ");
+    Print("{0}", a);
     let next: i64 = a + b;
     a = b;
     b = next;
   }
-  Console.Print("\n");
 }
 ```
 
@@ -563,7 +562,7 @@ Elements of an array may be accessed using square brackets (`[`...`]`), as in
 
 ```carbon
 a[i] = 2;
-Console.Print(a[0]);
+Print("{0}", a[0]);
 ```
 
 > **TODO:** Slices
@@ -1047,11 +1046,11 @@ For example:
 
 ```carbon
 if (fruit.IsYellow()) {
-  Console.Print("Banana!");
+  Print("Banana!");
 } else if (fruit.IsOrange()) {
-  Console.Print("Orange!");
+  Print("Orange!");
 } else {
-  Console.Print("Vegetable!");
+  Print("Vegetable!");
 }
 ```
 
@@ -1080,10 +1079,10 @@ example, this prints `0`, `1`, `2`, then `Done!`:
 ```carbon
 var x: i32 = 0;
 while (x < 3) {
-  Console.Print(x);
+  Print("{0}", x);
   ++x;
 }
-Console.Print("Done!");
+Print("Done!");
 ```
 
 > References:
@@ -1099,7 +1098,7 @@ example, this prints each `String` value in `names`:
 
 ```carbon
 for (var name: String in names) {
-  Console.Print(name);
+  Print(name);
 }
 ```
 
@@ -1119,7 +1118,7 @@ processed):
 ```carbon
 for (var step: Step in steps) {
   if (step.IsManual()) {
-    Console.Print("Reached manual step!");
+    Print("Reached manual step!");
     break;
   }
   step.Process();
@@ -1148,7 +1147,7 @@ while (!f.EOF()) {
   if (line.IsEmpty()) {
     continue;
   }
-  Console.Print(line);
+  Print(line);
 }
 ```
 
@@ -1177,7 +1176,7 @@ fn PrintFirstN(n: i32) {
       // executed after a `return`.
       return;
     }
-    Console.Print(i);
+    Print("{0}", i);
   }
 }
 ```
