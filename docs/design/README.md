@@ -237,7 +237,7 @@ declared in the function signature. This is followed by an optional initializer.
   var a: i64 = 0;
 ```
 
-The value of a variable is modified using an
+You can modify the value of a variable with an
 [assignment statement](#assignment-statements):
 
 ```carbon
@@ -264,7 +264,7 @@ Expressions can be statements on their own, as in:
 This expression is a function call, which consists of the name of the function
 followed by the argument list in round parentheses `(`...`)`.
 
-Control flow statements including `if`, `while`, and `break` work like C++:
+Control flow statements including `if`, `while`, and `break` work as they do in C++:
 
 ```carbon
   while (a < limit) {
