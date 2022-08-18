@@ -21,6 +21,8 @@ auto OutputWriter::Write(clang::SourceLocation loc,
 
         if constexpr (std::is_same_v<type, std::string>) {
           auto begin_offset = source_manager.getDecomposedLoc(loc).second;
+          // Append the string replacement if the node being replaced falls
+          // within `bounds`.
           if (begin <= begin_offset && begin_offset < end) {
             output.append(content);
           }
@@ -29,6 +31,15 @@ auto OutputWriter::Write(clang::SourceLocation loc,
           auto content_loc = content.getSourceRange().getBegin();
           auto begin_offset =
               source_manager.getDecomposedLoc(content_loc).second;
+          // If the node we're considering a replacement for is already beyond
+          // the region for which we want to make a replacement, exit early
+          // declaring that we have completed replacements (by returning false).
+          // Otherwise proceed. Note that we do not exit early or skip anything
+          // if the node comes before the relevant region. This is because many
+          // nodes in Clang's AST have a starting source location but a
+          // meaningless end location, and while the start of the segment may
+          // not be in the range, as we recurse, sub-segments may indeed end up
+          // being printed.
           if (begin_offset >= end) {
             return false;
           }
