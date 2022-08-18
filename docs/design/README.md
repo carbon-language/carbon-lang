@@ -15,7 +15,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Introduction](#introduction)
     -   [This document is provisional](#this-document-is-provisional)
-    -   [Example](#example)
     -   [Tour of the basics](#tour-of-the-basics)
 -   [Code and comments](#code-and-comments)
 -   [Build modes](#build-modes)
@@ -140,7 +139,7 @@ design have things that have not been decided through the Carbon process. This
 preliminary material fills in gaps until aspects of the design can be filled in.
 Features that are provisional have been marked as such on a best-effort basis.
 
-### Example
+### Tour of the basics
 
 Here is a simple function showing some Carbon code:
 
@@ -179,8 +178,6 @@ A few other features that are unlike C or C++ may stand out. First,
 [declarations](#declarations-definitions-and-scopes) start with introducer
 keywords. `fn` introduces a function declaration, and `var` introduces a
 [variable declaration](#variable-var-declarations).
-
-### Tour of the basics
 
 The example starts with an [`import` declaration](#imports). Carbon imports are
 more like [C++ modules](https://en.cppreference.com/w/cpp/language/modules) than
@@ -816,7 +813,7 @@ are two kinds of patterns:
 -   _Irrefutable_ patterns are guaranteed to match, so long as the code
     type-checks.
 
-In the [first example](#example), [function parameters](#functions),
+In the [introduction](#tour-of-the-basics), [function parameters](#functions),
 [variable `var` declarations](#variable-var-declarations), and
 [constant `let` declarations](#constant-let-declarations) use a "name `:` type"
 construction. That construction is an example of an irrefutable pattern, and in
