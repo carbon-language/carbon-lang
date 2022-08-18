@@ -144,17 +144,19 @@ Features that are provisional have been marked as such on a best-effort basis.
 Here is a simple function showing some Carbon code:
 
 ```carbon
-import Console;
+import Math;
 
-// Prints the Fibonacci numbers less than `limit`.
-fn Fibonacci(limit: i64) {
-  var (a: i64, b: i64) = (0, 1);
-  while (a < limit) {
-    Print("{0}", a);
-    let next: i64 = a + b;
-    a = b;
-    b = next;
+// Returns the roots according to the quadratic formula, or None if invalid.
+fn GetQuadraticRoots(a: f64, b: 64, c: f64) -> Optional((f64, f64)) {
+  if (a == 0) {
+    return Optional.None;
   }
+  var root: f64 = b * b - 4 * a * c;
+  if (root < 0) {
+    return Optional.None;
+  }
+  root = Math.Sqrt(root);
+  return ((-b + root) / (2 * a), (-b - root) / (2 * a));
 }
 ```
 
