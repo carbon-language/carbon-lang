@@ -2417,7 +2417,7 @@ class Circle {
 
   impl as Printable {
     fn Print[me: Self]() {
-      Console.WriteLine("Circle with radius: {0}", me.radius);
+      Print("Circle with radius: {0}", me.radius);
     }
   }
 }
