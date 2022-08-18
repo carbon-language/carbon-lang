@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_MIGRATE_CPP_CPP_REFACTORING_REWRITER_H_
-#define CARBON_MIGRATE_CPP_CPP_REFACTORING_REWRITER_H_
+#ifndef CARBON_MIGRATE_CPP_REWRITER_H_
+#define CARBON_MIGRATE_CPP_REWRITER_H_
 
 #include <optional>
 #include <string>
@@ -17,7 +17,7 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendAction.h"
 #include "llvm/ADT/DenseMap.h"
-#include "migrate_cpp/cpp_refactoring/output_segment.h"
+#include "migrate_cpp/output_segment.h"
 
 namespace Carbon {
 
@@ -202,4 +202,4 @@ class MigrationAction : public clang::ASTFrontendAction {
 
 }  // namespace Carbon
 
-#endif  // CARBON_MIGRATE_CPP_CPP_REFACTORING_REWRITER_H_
+#endif  // CARBON_MIGRATE_CPP_REWRITER_H_

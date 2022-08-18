@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_MIGRATE_CPP_CPP_REFACTORING_OUTPUT_SEGMENT_H_
-#define CARBON_MIGRATE_CPP_CPP_REFACTORING_OUTPUT_SEGMENT_H_
+#ifndef CARBON_MIGRATE_CPP_OUTPUT_SEGMENT_H_
+#define CARBON_MIGRATE_CPP_OUTPUT_SEGMENT_H_
 
 #include <string>
 #include <utility>
@@ -72,4 +72,4 @@ class OutputSegment {
 
 }  // namespace Carbon
 
-#endif  // CARBON_MIGRATE_CPP_CPP_REFACTORING_OUTPUT_SEGMENT_H_
+#endif  // CARBON_MIGRATE_CPP_OUTPUT_SEGMENT_H_
