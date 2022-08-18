@@ -171,8 +171,9 @@ Carbon is a language that should feel familiar to C++ and C developers. This
 example has familiar constructs like [imports](#imports),
 [comments](#code-and-comments), [function definitions](#functions),
 [typed arguments](#binding-patterns), and [expressions](#expressions).
-Statements and declarations are terminated with a `;` or something in curly
-braces `{`...`}`.
+[Statements](#blocks-and-statements) and
+[declarations](#declarations-definitions-and-scopes) are terminated with a `;`
+or something in curly braces `{`...`}`.
 
 A few other features that are unlike C or C++ may stand out. First,
 [declarations](#declarations-definitions-and-scopes) start with introducer
@@ -209,10 +210,13 @@ with `//`.
   // Returns value and index.
 ```
 
-Carbon [function definitions](#functions) start with the `fn` keyword, followed
-by the function name, parameter list, optional return type, and the body with
-the code inside curly braces `{`...`}`. Function execution ends with a `return`
-statement that specifies the value to return.
+A [function definition](#functions) consists of:
+
+-   the `fn` keyword introducer,
+-   the function's name,
+-   a parameter list in round parens `(`...`)`,
+-   an optional `->` and return type, and
+-   a body inside curly braces `{`...`}`.
 
 ```carbon
 fn Fibonacci(limit: i64) -> (i64, i32) {
@@ -221,14 +225,23 @@ fn Fibonacci(limit: i64) -> (i64, i32) {
 }
 ```
 
+The body of the function is an ordered sequence of
+[statements](#blocks-and-statements) and
+[declarations](#declarations-definitions-and-scopes). Function execution ends
+with an optional `return` statement that specifies an expression whose value is
+returned.
+
 Here `i64` and `i32` refer to signed [integer types](#integer-types), with 64
 and 32 bits respectively. Carbon has [`bool` boolean type](#bool),
 [floating-point types](#floating-point-types) like `f32` and `f64`, and
 [string types](#string-types).
 
-[Variables are declared](#variable-var-declarations) with the `var` keyword
-introducer. This is followed by the name, `:`, and the type, like parameters
-declared in the function signature. This is followed by an optional initializer.
+A [variable declaration](#variable-var-declarations) has three parts:
+
+-   the `var` keyword introducer,
+-   the name followed by a `:` and a type, declared the same way as a parameter
+    in a function signature, and
+-   an optional initializer.
 
 ```carbon
   var a: i64 = 0;
@@ -251,18 +264,19 @@ required:
     let next: i64 = a + b;
 ```
 
-Here, `a + b` is an [expression](#expressions) using the `+` operator.
-Expressions can be statements on their own, as in:
+Here, `a + b` is an [expression](#expressions) that return the value returned by
+the `+` operator. Expression return values are ignored when expressions are used
+as statements, as in this call to the `Console.Print` function:
 
 ```carbon
     Console.Print("{0}: {1}\n", n, a);
 ```
 
-This expression is a function call, which consists of the name of the function
-followed by the argument list in round parentheses `(`...`)`.
+Function calls consist of the name of the function followed by the argument list
+in round parentheses `(`...`)`.
 
-Control flow statements including `if`, `while`, and `break` work as they do in
-C++:
+Control flow statements, including `if`, `while`, and `break`, change the order
+that statements are executed, as they do in C++:
 
 ```carbon
   while (a < limit) {
@@ -317,7 +331,7 @@ required to be the only non-whitespace on the line.
 > References:
 >
 > -   [Source files](code_and_name_organization/source_files.md)
-> -   [lexical conventions](lexical_conventions)
+> -   [Lexical conventions](lexical_conventions)
 > -   Proposal
 >     [#142: Unicode source files](https://github.com/carbon-language/carbon-lang/pull/142)
 > -   Proposal
