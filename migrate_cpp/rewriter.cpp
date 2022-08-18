@@ -6,8 +6,11 @@
 
 #include "clang/Tooling/Tooling.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Support/FormatVariadic.h"
 
 namespace Carbon {
+
+static constexpr const char CppPlaceholder[] = "__cpp__{ ... }";
 
 auto OutputWriter::Write(clang::SourceLocation loc,
                          const OutputSegment& segment) const -> bool {
@@ -30,7 +33,7 @@ auto OutputWriter::Write(clang::SourceLocation loc,
           }
 
           if (auto iter = map.find(content); iter == map.end()) {
-            output.append("__cpp__{ ... }");
+            output.append(CppPlaceholder);
           } else {
             for (const auto& output_segment : iter->second) {
               if (!Write(content.getSourceRange().getBegin(), output_segment)) {
@@ -47,7 +50,7 @@ auto OutputWriter::Write(clang::SourceLocation loc,
           }
 
           if (auto iter = map.find(content); iter == map.end()) {
-            output.append("__cpp__");
+            output.append(CppPlaceholder);
           } else {
             for (const auto& output_segment : iter->second) {
               if (!Write(content.getSourceRange().getBegin(), output_segment)) {
@@ -60,7 +63,7 @@ auto OutputWriter::Write(clang::SourceLocation loc,
         }
         return true;
       },
-      segment.content);
+      segment.content_);
 }
 
 auto MigrationConsumer::HandleTranslationUnit(clang::ASTContext& context)
@@ -73,7 +76,7 @@ auto MigrationConsumer::HandleTranslationUnit(clang::ASTContext& context)
   auto iter = segment_map.find(translation_unit_node);
 
   if (iter == segment_map.end()) {
-    result.append("__cpp__{}");
+    result.append(CppPlaceholder);
   } else {
     OutputWriter w{
         .map = segment_map,
@@ -91,15 +94,14 @@ auto MigrationConsumer::HandleTranslationUnit(clang::ASTContext& context)
 
 auto RewriteBuilder::TextFor(clang::SourceLocation begin,
                              clang::SourceLocation end) const
-    -> std::string_view {
+    -> llvm::StringRef {
   auto range = clang::CharSourceRange::getCharRange(begin, end);
-  llvm::StringRef s = clang::Lexer::getSourceText(
-      range, context.getSourceManager(), context.getLangOpts());
-  return std::string_view(s.data(), s.size());
+  return clang::Lexer::getSourceText(range, context.getSourceManager(),
+                                     context.getLangOpts());
 }
 
 auto RewriteBuilder::TextForTokenAt(clang::SourceLocation loc) const
-    -> std::string_view {
+    -> llvm::StringRef {
   auto& source_manager = context.getSourceManager();
   auto [file_id, offset] = source_manager.getDecomposedLoc(loc);
   llvm::StringRef file = source_manager.getBufferData(file_id);
@@ -122,7 +124,7 @@ auto RewriteBuilder::TextForTokenAt(clang::SourceLocation loc) const
 // issues.
 auto RewriteBuilder::VisitBuiltinTypeLoc(clang::BuiltinTypeLoc type_loc)
     -> bool {
-  std::string_view content;
+  llvm::StringRef content;
   switch (type_loc.getTypePtr()->getKind()) {
     case clang::BuiltinType::Bool:
       content = "bool";
@@ -180,26 +182,26 @@ auto RewriteBuilder::VisitBuiltinTypeLoc(clang::BuiltinTypeLoc type_loc)
       // write any.
       return true;
   }
-  Write(type_loc, OutputSegment::Text(content));
+  Write(type_loc, OutputSegment(content));
   return true;
 }
 
 auto RewriteBuilder::VisitCXXBoolLiteralExpr(clang::CXXBoolLiteralExpr* expr)
     -> bool {
-  Write(expr, OutputSegment::Text(expr->getValue() ? "true" : "false"));
+  Write(expr, OutputSegment(expr->getValue() ? "true" : "false"));
   return true;
 }
 
 auto RewriteBuilder::VisitDeclRefExpr(clang::DeclRefExpr* expr) -> bool {
-  Write(expr, OutputSegment::Text(TextForTokenAt(expr->getBeginLoc())));
+  Write(expr, OutputSegment(TextForTokenAt(expr->getBeginLoc())));
   return true;
 }
 
 auto RewriteBuilder::VisitDeclStmt(clang::DeclStmt* stmt) -> bool {
   std::vector<OutputSegment> segments;
   for (clang::Decl* decl : stmt->decls()) {
-    segments.push_back(OutputSegment::Node(decl));
-    segments.push_back(OutputSegment::Text(";\n"));
+    segments.push_back(OutputSegment(decl));
+    segments.push_back(OutputSegment(";\n"));
   }
   Write(stmt, std::move(segments));
   return true;
@@ -213,14 +215,14 @@ auto RewriteBuilder::VisitIntegerLiteral(clang::IntegerLiteral* expr) -> bool {
       c = '_';
     }
   }
-  Write(expr, {OutputSegment::Text(std::move(text))});
+  Write(expr, {OutputSegment(std::move(text))});
   return true;
 }
 
 auto RewriteBuilder::VisitPointerTypeLoc(clang::PointerTypeLoc type_loc)
     -> bool {
-  Write(type_loc, {OutputSegment::TypeLoc(type_loc.getPointeeLoc()),
-                   OutputSegment::Text("*")});
+  Write(type_loc,
+        {OutputSegment(type_loc.getPointeeLoc()), OutputSegment("*")});
   return true;
 }
 
@@ -240,8 +242,8 @@ auto RewriteBuilder::VisitTranslationUnitDecl(clang::TranslationUnitDecl* decl)
 
   for (; iter != decl->decls_end(); ++iter) {
     clang::Decl* d = *iter;
-    segments.push_back(OutputSegment::Node(d));
-    segments.push_back(OutputSegment::Text(";\n"));
+    segments.push_back(OutputSegment(d));
+    segments.push_back(OutputSegment(";\n"));
   }
 
   Write(decl, std::move(segments));
@@ -251,8 +253,7 @@ auto RewriteBuilder::VisitTranslationUnitDecl(clang::TranslationUnitDecl* decl)
 auto RewriteBuilder::VisitUnaryOperator(clang::UnaryOperator* expr) -> bool {
   switch (expr->getOpcode()) {
     case clang::UO_AddrOf:
-      Write(expr, {OutputSegment::Text("&"),
-                   OutputSegment::Node(expr->getSubExpr())});
+      Write(expr, {OutputSegment("&"), OutputSegment(expr->getSubExpr())});
       break;
 
     default:
@@ -268,15 +269,14 @@ auto RewriteBuilder::VisitVarDecl(clang::VarDecl* decl) -> bool {
 
   bool is_const = decl->getType().isConstQualified();
   std::vector<OutputSegment> segments = {
-      OutputSegment::Text((llvm::Twine(is_const ? "let " : "var ") +
-                           decl->getNameAsString() + ": ")
-                              .str()),
-      OutputSegment::TypeLoc(decl->getTypeSourceInfo()->getTypeLoc()),
+      OutputSegment(llvm::formatv("{0} {1}: ", is_const ? "let" : "var",
+                                  decl->getNameAsString())),
+      OutputSegment(decl->getTypeSourceInfo()->getTypeLoc()),
   };
 
   if (clang::Expr* init = decl->getInit()) {
-    segments.push_back(OutputSegment::Text(" = "));
-    segments.push_back(OutputSegment::Node(init));
+    segments.push_back(OutputSegment(" = "));
+    segments.push_back(OutputSegment(init));
   }
 
   Write(decl, std::move(segments));

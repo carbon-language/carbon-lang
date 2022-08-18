@@ -5,7 +5,6 @@
 #ifndef CARBON_MIGRATE_CPP_REWRITER_H_
 #define CARBON_MIGRATE_CPP_REWRITER_H_
 
-#include <optional>
 #include <string>
 #include <utility>
 #include <variant>
@@ -30,9 +29,14 @@ class OutputWriter {
   struct Tombstone {
     friend bool operator==(Tombstone, Tombstone) { return true; }
   };
+
+  // Type alias for the variant representing any of the values that can be
+  // written with OutputWriter.
   using KeyType =
       std::variant<clang::DynTypedNode, clang::TypeLoc, Empty, Tombstone>;
 
+  // `KeyInfo` is used as a template argument to `llvm::DenseMap` to specify how
+  // to equality-compare and hash `KeyType`.
   struct KeyInfo {
     static bool isEqual(const KeyType& lhs, const KeyType& rhs) {
       return lhs == rhs;
@@ -142,15 +146,15 @@ class RewriteBuilder : public clang::RecursiveASTVisitor<RewriteBuilder> {
     Write(type_loc, std::move(node_segments));
   }
 
-  // Returns a `std::string_view` into the source text corresponding to the
+  // Returns a `llvm::StringRef` into the source text corresponding to the
   // half-open interval starting at `begin` (inclusive) and ending at `end`
   // (exclusive).
   auto TextFor(clang::SourceLocation begin, clang::SourceLocation end) const
-      -> std::string_view;
+      -> llvm::StringRef;
 
-  // Returns a `std::string_view` into the source text for the single token
+  // Returns a `llvm::StringRef` into the source text for the single token
   // located at `loc`.
-  auto TextForTokenAt(clang::SourceLocation loc) const -> std::string_view;
+  auto TextForTokenAt(clang::SourceLocation loc) const -> llvm::StringRef;
 
   clang::ASTContext& context;
   SegmentMapType& segments_map;

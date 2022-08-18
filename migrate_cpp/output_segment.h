@@ -6,10 +6,12 @@
 #define CARBON_MIGRATE_CPP_OUTPUT_SEGMENT_H_
 
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <variant>
 
 #include "clang/AST/ASTTypeTraits.h"
+#include "common/check.h"
 
 namespace Carbon {
 
@@ -27,47 +29,56 @@ namespace Carbon {
 //
 // The left-hand side and right-hand side can then be queried recursively to
 // determine what their output should be.
-//
 class OutputSegment {
+ private:
+  // Returns whether or not the type T is an acceptable node type from which an
+  // OutputSegment can be constructed. We intentionally do not want to support
+  // `clang::Type` because we support traversing through `clang::TypeLoc`
+  // instead. However, most other types we intend to support as they become
+  // necessary.
+  template <typename T>
+  static constexpr bool IsSupportedClangASTNodeType() {
+    return std::is_convertible_v<T*, clang::Stmt*> ||
+           std::is_convertible_v<T*, clang::Decl*>;
+  }
+
  public:
-  // Each of these there overloads creates a text-based `OutputSegment`.
-  static auto Text(std::string content) -> OutputSegment {
-    return OutputSegment(std::move(content));
-  }
-  static auto Text(std::string_view content) -> OutputSegment {
-    return Text(std::string(content));
-  }
-  static auto Text(const char* content) -> OutputSegment {
-    return Text(std::string(content));
-  }
+  // Creates a text-based `OutputSegment`.
+  explicit OutputSegment(std::string content) : content_(std::move(content)) {}
+  explicit OutputSegment(llvm::StringRef content) : content_(content.str()) {}
+  explicit OutputSegment(const char* content) : content_(content) {}
 
   // Creates a node-based `OutputSegment` from `node`.
-  static auto Node(const clang::DynTypedNode& node) -> OutputSegment {
-    return OutputSegment(node);
-  }
-  template <typename T>
-  static auto Node(const T* node) -> OutputSegment {
-    assert(node != nullptr);
-    return OutputSegment(clang::DynTypedNode::create(*node));
-  }
+  explicit OutputSegment(const clang::DynTypedNode& node) : content_(node) {}
+  template <typename T,
+            std::enable_if_t<IsSupportedClangASTNodeType<T>(), int> = 0>
+  explicit OutputSegment(const T* node)
+      : content_(clang::DynTypedNode::create(AssertNotNull(node))) {}
 
   // Creates a TypeLoc-based `OutputSegment` from `type_loc`.
-  static auto TypeLoc(clang::TypeLoc type_loc) -> OutputSegment {
-    // Traversals for TypeLocs have some sharp corners. In particular,
-    // QualifiedTypeLocs are silently passed through to their unqualified
-    // part. This means that when constructing output segments we also need to
-    // match this behavior.
-    auto qtl = type_loc.getAs<clang::QualifiedTypeLoc>();
-    return OutputSegment(qtl.isNull() ? type_loc : qtl.getUnqualifiedLoc());
-  }
+  explicit OutputSegment(clang::TypeLoc type_loc)
+      : content_(PassThroughQualifiedTypeLoc(type_loc)) {}
 
  private:
   friend class OutputWriter;
-  explicit OutputSegment(std::string content) : content(std::move(content)) {}
-  explicit OutputSegment(const clang::DynTypedNode& node) : content(node) {}
-  explicit OutputSegment(clang::TypeLoc type_loc) : content(type_loc) {}
 
-  std::variant<std::string, clang::DynTypedNode, clang::TypeLoc> content;
+  template <typename T>
+  T& AssertNotNull(T* ptr) {
+    CARBON_CHECK(ptr != nullptr);
+    return *ptr;
+  }
+
+  // Traversals for TypeLocs have some sharp corners. In particular,
+  // QualifiedTypeLocs are silently passed through to their unqualified part.
+  // This means that when constructing output segments we also need to match
+  // this behavior.
+  static auto PassThroughQualifiedTypeLoc(clang::TypeLoc type_loc)
+      -> clang::TypeLoc {
+    auto qtl = type_loc.getAs<clang::QualifiedTypeLoc>();
+    return qtl.isNull() ? type_loc : qtl.getUnqualifiedLoc();
+  }
+
+  std::variant<std::string, clang::DynTypedNode, clang::TypeLoc> content_;
 };
 
 }  // namespace Carbon

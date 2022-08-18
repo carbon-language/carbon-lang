@@ -19,9 +19,9 @@ namespace {
 // an annotated range.
 class Annotations {
  public:
-  Annotations(std::string_view annotated_source) {
+  Annotations(llvm::StringRef annotated_source) {
     size_t index = annotated_source.find("$[[");
-    if (index == std::string_view::npos) {
+    if (index == llvm::StringRef::npos) {
       source_code = std::string(annotated_source);
       return;
     }
@@ -37,7 +37,7 @@ class Annotations {
   }
 
   // Returns a view into the unannotated source.
-  std::string_view source() const { return source_code; }
+  llvm::StringRef source() const { return source_code; }
 
   // Returns the offsets in the file representing the annotated range if they
   // exist and `{0, std::numeric_limits<size_t>::max()}` otherwise.
@@ -58,7 +58,7 @@ class Annotations {
 // This annotation mechanism is useful in that it allows us to specifically test
 // the migration associated with specific nodes even when they require some
 // additional context that we do not wish to be covered by the test.
-auto RewriteText(std::string_view cpp_code) -> std::string {
+auto RewriteText(llvm::StringRef cpp_code) -> std::string {
   std::string result;
 
   Annotations annotated_cpp_code(cpp_code);

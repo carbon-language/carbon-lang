@@ -16,6 +16,7 @@ cc_library(
     name = "output_segment",
     hdrs = ["output_segment.h"],
     deps = [
+        "//common:check",
         "@llvm-project//clang:ast",
     ],
 )
@@ -26,6 +27,7 @@ cc_library(
     hdrs = ["rewriter.h"],
     deps = [
         ":output_segment",
+        "//common:check",
         "@llvm-project//clang:ast",
         "@llvm-project//clang:basic",
         "@llvm-project//clang:frontend",
