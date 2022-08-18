@@ -264,7 +264,8 @@ Expressions can be statements on their own, as in:
 This expression is a function call, which consists of the name of the function
 followed by the argument list in round parentheses `(`...`)`.
 
-Control flow statements including `if`, `while`, and `break` work as they do in C++:
+Control flow statements including `if`, `while`, and `break` work as they do in
+C++:
 
 ```carbon
   while (a < limit) {
