@@ -24,24 +24,8 @@ auto OutputWriter::Write(clang::SourceLocation loc,
           if (begin <= begin_offset && begin_offset < end) {
             output.append(content);
           }
-        } else if constexpr (std::is_same_v<type, clang::DynTypedNode>) {
-          auto content_loc = content.getSourceRange().getBegin();
-          auto begin_offset =
-              source_manager.getDecomposedLoc(content_loc).second;
-          if (begin_offset >= end) {
-            return false;
-          }
-
-          if (auto iter = map.find(content); iter == map.end()) {
-            output.append(CppPlaceholder);
-          } else {
-            for (const auto& output_segment : iter->second) {
-              if (!Write(content.getSourceRange().getBegin(), output_segment)) {
-                return false;
-              }
-            }
-          }
-        } else if constexpr (std::is_same_v<type, clang::TypeLoc>) {
+        } else if constexpr (std::is_same_v<type, clang::DynTypedNode> ||
+                             std::is_same_v<type, clang::TypeLoc>) {
           auto content_loc = content.getSourceRange().getBegin();
           auto begin_offset =
               source_manager.getDecomposedLoc(content_loc).second;
@@ -182,18 +166,18 @@ auto RewriteBuilder::VisitBuiltinTypeLoc(clang::BuiltinTypeLoc type_loc)
       // write any.
       return true;
   }
-  Write(type_loc, OutputSegment(content));
+  SetReplacement(type_loc, OutputSegment(content));
   return true;
 }
 
 auto RewriteBuilder::VisitCXXBoolLiteralExpr(clang::CXXBoolLiteralExpr* expr)
     -> bool {
-  Write(expr, OutputSegment(expr->getValue() ? "true" : "false"));
+  SetReplacement(expr, OutputSegment(expr->getValue() ? "true" : "false"));
   return true;
 }
 
 auto RewriteBuilder::VisitDeclRefExpr(clang::DeclRefExpr* expr) -> bool {
-  Write(expr, OutputSegment(TextForTokenAt(expr->getBeginLoc())));
+  SetReplacement(expr, OutputSegment(TextForTokenAt(expr->getBeginLoc())));
   return true;
 }
 
@@ -203,7 +187,7 @@ auto RewriteBuilder::VisitDeclStmt(clang::DeclStmt* stmt) -> bool {
     segments.push_back(OutputSegment(decl));
     segments.push_back(OutputSegment(";\n"));
   }
-  Write(stmt, std::move(segments));
+  SetReplacement(stmt, std::move(segments));
   return true;
 }
 
@@ -211,18 +195,20 @@ auto RewriteBuilder::VisitIntegerLiteral(clang::IntegerLiteral* expr) -> bool {
   // TODO: Replace suffixes.
   std::string text(TextForTokenAt(expr->getBeginLoc()));
   for (char& c : text) {
+    // Carbon uses underscores for digit separators whereas C++ uses single
+    // quotation marks. Convert all `'` to `_`.
     if (c == '\'') {
       c = '_';
     }
   }
-  Write(expr, {OutputSegment(std::move(text))});
+  SetReplacement(expr, {OutputSegment(std::move(text))});
   return true;
 }
 
 auto RewriteBuilder::VisitPointerTypeLoc(clang::PointerTypeLoc type_loc)
     -> bool {
-  Write(type_loc,
-        {OutputSegment(type_loc.getPointeeLoc()), OutputSegment("*")});
+  SetReplacement(type_loc,
+                 {OutputSegment(type_loc.getPointeeLoc()), OutputSegment("*")});
   return true;
 }
 
@@ -246,14 +232,15 @@ auto RewriteBuilder::VisitTranslationUnitDecl(clang::TranslationUnitDecl* decl)
     segments.push_back(OutputSegment(";\n"));
   }
 
-  Write(decl, std::move(segments));
+  SetReplacement(decl, std::move(segments));
   return true;
 }
 
 auto RewriteBuilder::VisitUnaryOperator(clang::UnaryOperator* expr) -> bool {
   switch (expr->getOpcode()) {
     case clang::UO_AddrOf:
-      Write(expr, {OutputSegment("&"), OutputSegment(expr->getSubExpr())});
+      SetReplacement(expr,
+                     {OutputSegment("&"), OutputSegment(expr->getSubExpr())});
       break;
 
     default:
@@ -279,7 +266,7 @@ auto RewriteBuilder::VisitVarDecl(clang::VarDecl* decl) -> bool {
     segments.push_back(OutputSegment(init));
   }
 
-  Write(decl, std::move(segments));
+  SetReplacement(decl, std::move(segments));
   return true;
 }
 

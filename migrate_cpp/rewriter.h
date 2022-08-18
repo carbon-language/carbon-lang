@@ -92,7 +92,8 @@ class RewriteBuilder : public clang::RecursiveASTVisitor<RewriteBuilder> {
   explicit RewriteBuilder(clang::ASTContext& context, SegmentMapType& segments)
       : context(context), segments_map(segments) {}
 
-  // By default, traverse children nodes before their parent.
+  // By default, traverse children nodes before their parent. Called by the CRTP
+  // base class to determine traversal order.
   auto shouldTraversePostOrder() const -> bool { return true; }
 
   // Visitor member functions, defining how each node should be processed.
@@ -114,36 +115,36 @@ class RewriteBuilder : public clang::RecursiveASTVisitor<RewriteBuilder> {
   // key `node`, so as to declare that, when output is being written, `node`
   // should be replaced with the sequence of outputs described by
   // `output_segments`.
-  auto Write(clang::DynTypedNode node,
-             std::vector<OutputSegment> output_segments) -> void {
+  auto SetReplacement(clang::DynTypedNode node,
+                      std::vector<OutputSegment> output_segments) -> void {
     segments_map.try_emplace(node, std::move(output_segments));
   }
 
-  auto Write(clang::TypeLoc node, std::vector<OutputSegment> output_segments)
-      -> void {
+  auto SetReplacement(clang::TypeLoc node,
+                      std::vector<OutputSegment> output_segments) -> void {
     segments_map.try_emplace(node, std::move(output_segments));
   }
 
   template <typename T>
-  auto Write(const T* node, std::vector<OutputSegment> output_segments)
+  auto SetReplacement(const T* node, std::vector<OutputSegment> output_segments)
       -> void {
     segments_map.try_emplace(clang::DynTypedNode::create(*node),
                              std::move(output_segments));
   }
 
-  // Invokes the overload of `Write` defined above. Equivalent to
-  // `this->Write(node, std::vector<OutputSegment>(1, segment))`.
+  // Invokes the overload of `SetReplacement` defined above. Equivalent to
+  // `this->SetReplacement(node, std::vector<OutputSegment>(1, segment))`.
   template <typename T>
-  auto Write(const T* node, OutputSegment segment) -> void {
+  auto SetReplacement(const T* node, OutputSegment segment) -> void {
     std::vector<OutputSegment> node_segments;
     node_segments.push_back(std::move(segment));
-    Write(node, std::move(node_segments));
+    SetReplacement(node, std::move(node_segments));
   }
 
-  auto Write(clang::TypeLoc type_loc, OutputSegment segment) -> void {
+  auto SetReplacement(clang::TypeLoc type_loc, OutputSegment segment) -> void {
     std::vector<OutputSegment> node_segments;
     node_segments.push_back(std::move(segment));
-    Write(type_loc, std::move(node_segments));
+    SetReplacement(type_loc, std::move(node_segments));
   }
 
   // Returns a `llvm::StringRef` into the source text corresponding to the
