@@ -9,7 +9,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Images
 
 Images are managed in
-[Google Drive](https://drive.google.com/drive/folders/1-rsUjiya7dSZ87L8kpZmu3MZghRVxzLA).
+[Google Drive](https://drive.google.com/drive/folders/1QrBXiy_X74YsOueeC0IYlgyolWIhvusB).
 
 ## Quicksort
 

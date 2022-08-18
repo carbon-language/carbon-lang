@@ -1,0 +1,705 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    interface {
+      name: "Vector"
+      members {
+        function {
+          name: "Add"
+          me_pattern {
+            binding_pattern {
+              name: "me"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "b"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "Self"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "Self"
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name: "Scale"
+          me_pattern {
+            binding_pattern {
+              name: "me"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "v"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "Self"
+              }
+            }
+          }
+        }
+      }
+      self {
+        name: "Self"
+        type {
+          type_type_literal {
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name: "Point"
+      members {
+        variable {
+          binding {
+            name: "x"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        variable {
+          binding {
+            name: "y"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        impl {
+          kind: InternalImpl
+          impl_type {
+            identifier {
+              name: "Point"
+            }
+          }
+          interface {
+            identifier {
+              name: "Vector"
+            }
+          }
+          members {
+            function {
+              name: "Add"
+              me_pattern {
+                binding_pattern {
+                  name: "me"
+                  type {
+                    expression_pattern {
+                      expression {
+                        identifier {
+                          name: "Point"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              param_pattern {
+                fields {
+                  binding_pattern {
+                    name: "b"
+                    type {
+                      expression_pattern {
+                        expression {
+                          identifier {
+                            name: "Point"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              return_term {
+                kind: Expression
+                type {
+                  identifier {
+                    name: "Point"
+                  }
+                }
+              }
+              body {
+                statements {
+                  return_expression_statement {
+                    expression {
+                      struct_literal {
+                        fields {
+                          name: "x"
+                          expression {
+                            operator {
+                              op: Add
+                              arguments {
+                                simple_member_access {
+                                  field: "x"
+                                  object {
+                                    identifier {
+                                      name: "me"
+                                    }
+                                  }
+                                }
+                              }
+                              arguments {
+                                simple_member_access {
+                                  field: "x"
+                                  object {
+                                    identifier {
+                                      name: "b"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                        fields {
+                          name: "y"
+                          expression {
+                            operator {
+                              op: Add
+                              arguments {
+                                simple_member_access {
+                                  field: "y"
+                                  object {
+                                    identifier {
+                                      name: "me"
+                                    }
+                                  }
+                                }
+                              }
+                              arguments {
+                                simple_member_access {
+                                  field: "y"
+                                  object {
+                                    identifier {
+                                      name: "b"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          members {
+            function {
+              name: "Scale"
+              me_pattern {
+                binding_pattern {
+                  name: "me"
+                  type {
+                    expression_pattern {
+                      expression {
+                        identifier {
+                          name: "Point"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              param_pattern {
+                fields {
+                  binding_pattern {
+                    name: "v"
+                    type {
+                      expression_pattern {
+                        expression {
+                          int_type_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              return_term {
+                kind: Expression
+                type {
+                  identifier {
+                    name: "Point"
+                  }
+                }
+              }
+              body {
+                statements {
+                  return_expression_statement {
+                    expression {
+                      struct_literal {
+                        fields {
+                          name: "x"
+                          expression {
+                            operator {
+                              op: Mul
+                              arguments {
+                                simple_member_access {
+                                  field: "x"
+                                  object {
+                                    identifier {
+                                      name: "me"
+                                    }
+                                  }
+                                }
+                              }
+                              arguments {
+                                identifier {
+                                  name: "v"
+                                }
+                              }
+                            }
+                          }
+                        }
+                        fields {
+                          name: "y"
+                          expression {
+                            operator {
+                              op: Mul
+                              arguments {
+                                simple_member_access {
+                                  field: "y"
+                                  object {
+                                    identifier {
+                                      name: "me"
+                                    }
+                                  }
+                                }
+                              }
+                              arguments {
+                                identifier {
+                                  name: "v"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "AddAndScaleGeneric"
+      deduced_parameters {
+        name: "T"
+        type {
+          identifier {
+            name: "Vector"
+          }
+        }
+      }
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "a"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "T"
+                  }
+                }
+              }
+            }
+          }
+        }
+        fields {
+          binding_pattern {
+            name: "b"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "T"
+                  }
+                }
+              }
+            }
+          }
+        }
+        fields {
+          binding_pattern {
+            name: "s"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          identifier {
+            name: "T"
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "m"
+                type {
+                  expression_pattern {
+                    expression {
+                      function_type {
+                        return_type {
+                          identifier {
+                            name: "T"
+                          }
+                        }
+                        parameter {
+                          fields {
+                            identifier {
+                              name: "T"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              simple_member_access {
+                field: "Add"
+                object {
+                  identifier {
+                    name: "a"
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "n"
+                type {
+                  expression_pattern {
+                    expression {
+                      function_type {
+                        return_type {
+                          identifier {
+                            name: "T"
+                          }
+                        }
+                        parameter {
+                          fields {
+                            int_type_literal {
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              simple_member_access {
+                field: "Scale"
+                object {
+                  call {
+                    function {
+                      identifier {
+                        name: "m"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          identifier {
+                            name: "b"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "n"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "s"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "a"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "Point"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              struct_literal {
+                fields {
+                  name: "x"
+                  expression {
+                    int_literal {
+                      value: 1
+                    }
+                  }
+                }
+                fields {
+                  name: "y"
+                  expression {
+                    int_literal {
+                      value: 1
+                    }
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "b"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "Point"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              struct_literal {
+                fields {
+                  name: "x"
+                  expression {
+                    int_literal {
+                      value: 2
+                    }
+                  }
+                }
+                fields {
+                  name: "y"
+                  expression {
+                    int_literal {
+                      value: 3
+                    }
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "p"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "Point"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              call {
+                function {
+                  identifier {
+                    name: "AddAndScaleGeneric"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "a"
+                      }
+                    }
+                    fields {
+                      identifier {
+                        name: "b"
+                      }
+                    }
+                    fields {
+                      int_literal {
+                        value: 5
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              operator {
+                op: Sub
+                arguments {
+                  simple_member_access {
+                    field: "x"
+                    object {
+                      identifier {
+                        name: "p"
+                      }
+                    }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 15
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

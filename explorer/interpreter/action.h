@@ -116,7 +116,10 @@ class Action {
   auto results() const -> const std::vector<Nonnull<const Value*>>& {
     return results_;
   }
-
+  void ReplaceResult(std::size_t index, Nonnull<const Value*> value) {
+    CARBON_CHECK(index < results_.size());
+    results_[index] = value;
+  }
   // Appends `result` to `results`.
   void AddResult(Nonnull<const Value*> result) { results_.push_back(result); }
 
