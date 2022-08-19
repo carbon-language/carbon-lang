@@ -705,9 +705,9 @@ interface AddWith(T:! Type) {
 An `i32` value might support addition with `i32`, `u16`, and `f64` values.
 
 ```
-impl i32 as AddWith(i32) where .ResultType = i32 { ... }
-impl i32 as AddWith(u16) where .ResultType = i32 { ... }
-impl i32 as AddWith(f64) where .ResultType = f64 { ... }
+impl i32 as AddWith(i32) where .ResultType == i32 { ... }
+impl i32 as AddWith(u16) where .ResultType == i32 { ... }
+impl i32 as AddWith(f64) where .ResultType == f64 { ... }
 ```
 
 To write a generic function requiring a parameter to be `AddWith`, there needs

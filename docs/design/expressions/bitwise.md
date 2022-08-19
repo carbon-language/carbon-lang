@@ -209,7 +209,7 @@ interface BitAndWith(U:! Type) {
   fn Op[me: Self](other: U) -> Result;
 }
 constraint BitAnd {
-  extends BitAndWith(Self) where .Result = Self;
+  extends BitAndWith(Self) where .Result == Self;
 }
 ```
 
@@ -220,7 +220,7 @@ interface BitOrWith(U:! Type) {
   fn Op[me: Self](other: U) -> Result;
 }
 constraint BitOr {
-  extends BitOrWith(Self) where .Result = Self;
+  extends BitOrWith(Self) where .Result == Self;
 }
 ```
 
@@ -231,7 +231,7 @@ interface BitXorWith(U:! Type) {
   fn Op[me: Self](other: U) -> Result;
 }
 constraint BitXor {
-  extends BitXorWith(Self) where .Result = Self;
+  extends BitXorWith(Self) where .Result == Self;
 }
 ```
 
@@ -242,7 +242,7 @@ interface LeftShiftWith(U:! Type) {
   fn Op[me: Self](other: U) -> Result;
 }
 constraint LeftShift {
-  extends LeftShiftWith(Self) where .Result = Self;
+  extends LeftShiftWith(Self) where .Result == Self;
 }
 ```
 
@@ -253,7 +253,7 @@ interface RightShiftWith(U:! Type) {
   fn Op[me: Self](other: U) -> Result;
 }
 constraint RightShift {
-  extends RightShiftWith(Self) where .Result = Self;
+  extends RightShiftWith(Self) where .Result == Self;
 }
 ```
 

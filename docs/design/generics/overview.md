@@ -610,7 +610,7 @@ of associated types (and other associated constants).
 
 ```
 class Vector(T:! Movable) {
-  impl as Stack where .ElementType = T { ... }
+  impl as Stack where .ElementType == T { ... }
 }
 ```
 

@@ -305,7 +305,7 @@ interface Addable {
   // #1
   fn Add[me: Self](other: Self) -> Self;
   // #2
-  default fn Sum[Seq:! Iterable where .ValueType = Self](seq: Seq) -> Self {
+  default fn Sum[Seq:! Iterable where .ValueType == Self](seq: Seq) -> Self {
     // ...
   }
 }
@@ -372,7 +372,7 @@ interface I {
   let N:! i32;
 }
 class C {
-  impl as I where .N = 5 {
+  impl as I where .N == 5 {
     // #2
     fn F[me: C]() {}
   }

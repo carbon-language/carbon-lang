@@ -1922,7 +1922,7 @@ a [`where` clause](#where-constraints). For example, implementations of
 
 ```
 class Point2D {
-  impl as NSpacePoint where .N = 2 {
+  impl as NSpacePoint where .N == 2 {
     fn Get[addr me: Self*](i: i32) -> f64 { ... }
     fn Set[addr me: Self*](i: i32, value: f64) { ... }
     fn SetAll[addr me: Self*](value: Array(f64, 2)) { ... }
@@ -1930,7 +1930,7 @@ class Point2D {
 }
 
 class Point3D {
-  impl as NSpacePoint where .N = 3 {
+  impl as NSpacePoint where .N == 3 {
     fn Get[addr me: Self*](i: i32) -> f64 { ... }
     fn Set[addr me: Self*](i: i32, value: f64) { ... }
     fn SetAll[addr me: Self*](value: Array(f64, 3)) { ... }
@@ -2046,7 +2046,7 @@ class DynamicArray(T:! Type) {
   fn Remove[addr me: Self*](pos: IteratorType);
 
   // Set the associated type `ElementType` to `T`.
-  impl as StackAssociatedType where .ElementType = T {
+  impl as StackAssociatedType where .ElementType == T {
     fn Push[addr me: Self*](value: ElementType) {
       me->Insert(me->End(), value);
     }
@@ -2440,10 +2440,10 @@ naming some classes of constraints.
 
 We might need to write a function that only works with a specific value of an
 [associated constant](#associated-constants) `N`. In this case, the name of the
-associated constant is written first, followed by an `=`, and then the value:
+associated constant is written first, followed by an `==`, and then the value:
 
 ```
-fn PrintPoint2D[PointT:! NSpacePoint where .N = 2](p: PointT) {
+fn PrintPoint2D[PointT:! NSpacePoint where .N == 2](p: PointT) {
   Print(p.Get(0), ", ", p.Get(1));
 }
 ```
@@ -2452,16 +2452,16 @@ Similarly in an interface definition:
 
 ```
 interface Has2DPoint {
-  let PointT:! NSpacePoint where .N = 2;
+  let PointT:! NSpacePoint where .N == 2;
 }
 ```
 
 To name such a constraint, you may use a `let` or a `constraint` declaration:
 
 ```
-let Point2DInterface:! auto = NSpacePoint where .N = 2;
+let Point2DInterface:! auto = NSpacePoint where .N == 2;
 constraint Point2DInterface {
-  extends NSpacePoint where .N = 2;
+  extends NSpacePoint where .N == 2;
 }
 ```
 
@@ -2469,13 +2469,8 @@ This syntax is also used to specify the values of
 [associated constants](#associated-constants) when implementing an interface for
 a type.
 
-**Concern:** Using `=` for this use case is not consistent with other `where`
-clauses that write a boolean expression that evaluates to `true` when the
-constraint is satisfied.
-
-A constraint to say that two associated constants should have the same value
-without specifying what specific value they should have must use `==` instead of
-`=`:
+Similarly a constraint to say that two associated constants should have the same
+value also uses `==`:
 
 ```
 interface PointCloud {
@@ -2493,7 +2488,7 @@ associated types to be a specific, concrete type. For example, we might want to
 have a function only accept stacks containing integers:
 
 ```
-fn SumIntStack[T:! Stack where .ElementType = i32](s: T*) -> i32 {
+fn SumIntStack[T:! Stack where .ElementType == i32](s: T*) -> i32 {
   var sum: i32 = 0;
   while (!s->IsEmpty()) {
     // s->Pop() has type `T.ElementType` == i32:
@@ -2507,9 +2502,9 @@ To name these sorts of constraints, we could use `let` declarations or
 `constraint` definitions:
 
 ```
-let IntStack:! auto = Stack where .ElementType = i32;
+let IntStack:! auto = Stack where .ElementType == i32;
 constraint IntStack {
-  extends Stack where .ElementType = i32;
+  extends Stack where .ElementType == i32;
 }
 ```
 
@@ -2518,10 +2513,10 @@ This syntax is also used to specify the values of
 
 ##### Equal generic types
 
-Alternatively, two generic types could be constrained to be equal to each other,
-without specifying what that type is. This uses `==` instead of `=`. For
-example, we could make the `ElementType` of an `Iterator` interface equal to the
-`ElementType` of a `Container` interface as follows:
+Two generic types could be constrained to be equal to each other using `==`,
+without specifying what that type is. For example, we could make the
+`ElementType` of an `Iterator` interface equal to the `ElementType` of a
+`Container` interface as follows:
 
 ```
 interface Iterator {
@@ -2593,15 +2588,12 @@ fn Contains
 ```
 
 the `where` constraint means `CT.ElementType` must satisfy `Comparable` as well.
-However, inside the body of `Contains`, `CT.ElementType` will only act like the
-implementation of `Comparable` is [external](#external-impl). That is, items
-from the `needles` container won't directly have a `Compare` method member, but
-can still be implicitly converted to `Comparable` and can still call `Compare`
-using the compound member access syntax, `needle.(Comparable.Compare)(elt)`. The
-rule is that an `==` `where` constraint between two type variables does not
-modify the set of member names of either type. (If you write
-`where .ElementType = String` with a `=` and a concrete type, then
-`.ElementType` is actually set to `String` including the complete `String` API.)
+As a result, inside the body of `Contains`, `CT.ElementType` and
+`SC.ElementType` will have all the methods from both type-of-types, such as
+`Compare`. If there is a name conflict, references to those names will have to
+be qualified using the compound member access syntax, just like if the
+type-of-types were
+[combined using the `&` operator](#combining-interfaces-by-anding-type-of-types).
 
 Note that `==` constraints are symmetric, so the previous declaration of
 `Contains` is equivalent to an alternative declaration where `CT` is declared
@@ -2613,6 +2605,9 @@ fn Contains
      SC:! SortedContainer where .ElementType == CT.ElementType]
     (haystack: SC, needles: CT) -> bool;
 ```
+
+A constraint setting an associated type to a concrete type, like
+`where .ElementType == String`, gives `.ElementType` the complete `String` API.
 
 #### Type bound for associated type
 
@@ -3578,7 +3573,7 @@ lexically in the class' scope:
 
 ```
 class Vector(T:! Type) {
-  impl as Iterable where .ElementType = T {
+  impl as Iterable where .ElementType == T {
     ...
   }
 }
@@ -3588,7 +3583,7 @@ This is equivalent to naming the type between `impl` and `as`:
 
 ```
 class Vector(T:! Type) {
-  impl Vector(T) as Iterable where .ElementType = T {
+  impl Vector(T) as Iterable where .ElementType == T {
     ...
   }
 }
@@ -3600,7 +3595,7 @@ parameters must be declared in a `forall` clause:
 
 ```
 external impl forall [T:! Type] Vector(T) as Iterable
-    where .ElementType = T {
+    where .ElementType == T {
   ...
 }
 ```
@@ -3781,7 +3776,7 @@ where blanket impls arise:
 
     ```
     external impl forall [T:! Type] T as CommonType(T)
-        where .Result = T { }
+        where .Result == T { }
     ```
 
     This means that every type is the common type with itself.
@@ -4017,9 +4012,9 @@ impl Y as True {}
 interface Z(T:! Type) { let Cond:! Type; }
 match_first {
   impl forall [T:! Type, U:! Z(T) where .Cond is True] T as Z(U)
-      where .Cond = N { }
+      where .Cond == N { }
   impl forall [T:! Type, U:! Type] T as Z(U)
-      where .Cond = Y { }
+      where .Cond == Y { }
 }
 ```
 
@@ -4045,12 +4040,12 @@ class B {}
 class C {}
 interface D(T:! Type) { let Cond:! Type; }
 match_first {
-  impl forall [T:! Type, U:! D(T) where .Cond = B] T as D(U)
-      where .Cond = C { }
-  impl forall [T:! Type, U:! D(T) where .Cond = A] T as D(U)
-      where .Cond = B { }
+  impl forall [T:! Type, U:! D(T) where .Cond == B] T as D(U)
+      where .Cond == C { }
+  impl forall [T:! Type, U:! D(T) where .Cond == A] T as D(U)
+      where .Cond == B { }
   impl forall [T:! Type, U:! Type] T as D(U)
-      where .Cond = A { }
+      where .Cond == A { }
 }
 ```
 
@@ -4137,13 +4132,13 @@ interface Deref {
 // Types implementing `Deref`
 class Ptr(T:! Type) {
   ...
-  external impl as Deref where .Result = T {
+  external impl as Deref where .Result == T {
     fn DoDeref[me: Self]() -> Result { ... }
   }
 }
 class Optional(T:! Type) {
   ...
-  external impl as Deref where .Result = T {
+  external impl as Deref where .Result == T {
     fn DoDeref[me: Self]() -> Result { ... }
   }
 }
@@ -4173,14 +4168,14 @@ To mark an impl as not able to be specialized, prefix it with the keyword
 class Ptr(T:! Type) {
   ...
   // Note: added `final`
-  final external impl as Deref where .Result = T {
+  final external impl as Deref where .Result == T {
     fn DoDeref[me: Self]() -> Result { ... }
   }
 }
 class Optional(T:! Type) {
   ...
   // Note: added `final`
-  final external impl as Deref where .Result = T {
+  final external impl as Deref where .Result == T {
     fn DoDeref[me: Self]() -> Result { ... }
   }
 }
@@ -4462,12 +4457,12 @@ interface Interface4 {
 }
 
 // Forward declaration of external implementations
-external impl MyClass as Interface1 where .T1 = i32;
-external impl MyClass as Interface2 where .T2 = bool;
+external impl MyClass as Interface1 where .T1 == i32;
+external impl MyClass as Interface2 where .T2 == bool;
 
 // Forward declaration of an internal implementation
-impl MyClass as Interface3 where .T3 = f32;
-impl MyClass as Interface4 where .T4 = String;
+impl MyClass as Interface3 where .T3 == f32;
+impl MyClass as Interface4 where .T4 == String;
 
 interface Interface5 {
   let T5:! Type;
@@ -4487,7 +4482,7 @@ class MyClass {
   // Note: allowed even though `MyClass` is incomplete.
   // Note: allowed but not required to repeat `where`
   // clause.
-  impl as Interface3 where .T3 = f32 { }
+  impl as Interface3 where .T3 == f32 { }
 
   // Redeclaration of previously declared internal impl.
   // Every internal implementation must be declared in
@@ -4495,10 +4490,10 @@ class MyClass {
   impl as Interface4 where _;
 
   // Forward declaration of external implementation.
-  external impl MyClass as Interface5 where .T5 = u64;
+  external impl MyClass as Interface5 where .T5 == u64;
 
   // Forward declaration of internal implementation.
-  impl MyClass as Interface6 where .T6 = u8;
+  impl MyClass as Interface6 where .T6 == u8;
 }
 
 // It would be legal to move the following definitions
@@ -5163,7 +5158,7 @@ class Meters {
 }
 // "Implementation One"
 external impl Meters as MultipliableWith(f64)
-    where .Result = Meters {
+    where .Result == Meters {
   fn Multiply[me: Self](other: f64) -> Result {
     return me.Scale(other);
   }
@@ -5192,7 +5187,7 @@ conversion. The implementation is for types that implement the
 ```
 // "Implementation Two"
 external impl forall [T:! ImplicitAs(f64)]
-    Meters as MultipliableWith(T) where .Result = Meters {
+    Meters as MultipliableWith(T) where .Result == Meters {
   fn Multiply[me: Self](other: T) -> Result {
     // Carbon will implicitly convert `other` from type
     // `T` to `f64` to perform this call.
@@ -5216,7 +5211,7 @@ of a forward declaration or definition, in a place of a type.
 // Notice `f64` has been replaced by `like f64`
 // compared to "implementation one" above.
 external impl Meters as MultipliableWith(like f64)
-    where .Result = Meters {
+    where .Result == Meters {
   fn Multiply[me: Self](other: f64) -> Result {
     return me.Scale(other);
   }
@@ -5239,7 +5234,7 @@ In this example, there are two uses of `like`, producing three implementations
 
 ```
 external impl like Meters as MultipliableWith(like f64)
-    where .Result = Meters {
+    where .Result == Meters {
   fn Multiply[me: Self](other: f64) -> Result {
     return me.Scale(other);
   }
@@ -5250,7 +5245,7 @@ is equivalent to "implementation one", "implementation two", and:
 
 ```
 external impl forall [T:! ImplicitAs(Meters)]
-    T as MultipliableWith(f64) where .Result = Meters {
+    T as MultipliableWith(f64) where .Result == Meters {
   fn Multiply[me: Self](other: f64) -> Result {
     // Will implicitly convert `me` to `Meters` in order to
     // match the signature of this `Multiply` method.
@@ -5264,7 +5259,7 @@ definitions.
 
 ```
 external impl like Meters as MultipliableWith(like f64)
-    where .Result = Meters;
+    where .Result == Meters;
 }
 ```
 
@@ -5274,17 +5269,17 @@ is equivalent to:
 // All `like`s removed. Same as the declaration part of
 // "implementation one", without the body of the definition.
 external impl Meters as MultipliableWith(f64)
-    where .Result = Meters;
+    where .Result == Meters;
 
 // First `like` replaced with a wildcard.
 external impl forall [T:! ImplicitAs(Meters)]
-    T as MultipliableWith(f64) where .Result = Meters;
+    T as MultipliableWith(f64) where .Result == Meters;
 
 // Second `like` replaced with a wildcard. Same as the
 // declaration part of "implementation two", without the
 // body of the definition.
 external impl forall [T:! ImplicitAs(f64)]
-    Meters as MultipliableWith(T) where .Result = Meters;
+    Meters as MultipliableWith(T) where .Result == Meters;
 ```
 
 In addition, the generated impl definition for a `like` is implicitly injected
@@ -5343,24 +5338,24 @@ external impl forall [T:! IntLike] like T as Printable;
 // ❌ Illegal: `T` being used in a `where` clause
 //             is insufficient.
 external impl forall [T:! IntLike] like T
-    as MultipliableWith(i64) where .Result = T;
+    as MultipliableWith(i64) where .Result == T;
 
 // ❌ Illegal: `like` can't be used in a `where`
 //             clause.
 external impl Meters as MultipliableWith(f64)
-    where .Result = like Meters;
+    where .Result == like Meters;
 
 // ✅ Allowed: `T` can be determined by another
 //             part of the query.
 external impl forall [T:! IntLike] like T
-    as MultipliableWith(T) where .Result = T;
+    as MultipliableWith(T) where .Result == T;
 external impl forall [T:! IntLike] T
-    as MultipliableWith(like T) where .Result = T;
+    as MultipliableWith(like T) where .Result == T;
 
 // ✅ Allowed: Only one `like` used at a time, so this
 //             is equivalent to the above two examples.
 external impl forall [T:! IntLike] like T
-    as MultipliableWith(like T) where .Result = T;
+    as MultipliableWith(like T) where .Result == T;
 ```
 
 ## Parameterized types
@@ -5383,7 +5378,7 @@ class HashMap(
   private var buckets: Vector((KeyType, ValueType));
 
   // Parameters may be used in interfaces implemented.
-  impl as Container where .ElementType = (KeyType, ValueType);
+  impl as Container where .ElementType == (KeyType, ValueType);
   impl as ComparableWith(HashMap(KeyType, ValueType));
 }
 ```
@@ -5452,7 +5447,7 @@ The default implementation of this interface is provided by a
 ```
 // Default blanket implementation
 impl forall [T:! Movable] T as OptionalStorage
-    where .Storage = (bool, T) {
+    where .Storage == (bool, T) {
   ...
 }
 ```
@@ -5464,12 +5459,12 @@ patterns:
 ```
 // Specialization for pointers, using nullptr == None
 final external impl forall [T:! Type] T* as OptionalStorage
-    where .Storage = Array(Byte, sizeof(T*)) {
+    where .Storage == Array(Byte, sizeof(T*)) {
   ...
 }
 // Specialization for type `bool`.
 final external impl bool as OptionalStorage
-    where .Storage = Byte {
+    where .Storage == Byte {
   ...
 }
 ```
