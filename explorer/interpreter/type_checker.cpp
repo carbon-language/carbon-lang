@@ -2296,8 +2296,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             }
             case DeclarationKind::ChoiceDeclaration: {
               Nonnull<ChoiceType*> ct = arena_->New<ChoiceType>(
-                  cast<ChoiceDeclaration>(&decl),
-                  cast<ChoiceDeclaration>(&decl)->members(), bindings);
+                  cast<ChoiceDeclaration>(&decl),bindings);
               Nonnull<TypeOfChoiceType*> inst_choice_type =
                   arena_->New<TypeOfChoiceType>(ct);
               call.set_static_type(inst_choice_type);
@@ -3878,8 +3877,7 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
   }
 
   auto ct = arena_->New<ChoiceType>(
-      choice, std::move(alternatives),
-      arena_->New<Bindings>(std::move(generic_args), Bindings::NoWitnesses));
+      choice, arena_->New<Bindings>(std::move(generic_args), Bindings::NoWitnesses));
 
   SetConstantValue(choice, ct);
   choice->set_static_type(arena_->New<TypeOfChoiceType>(ct));

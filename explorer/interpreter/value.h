@@ -836,11 +836,10 @@ class SymbolicWitness : public Witness {
 class ChoiceType : public Value {
  public:
   ChoiceType(Nonnull<const ChoiceDeclaration*> declaration,
-             const std::vector<NamedValue>& alternatives,
              Nonnull<const Bindings*> bindings)
       : Value(Kind::ChoiceType),
         name_(declaration->name()),
-        alternatives_(alternatives),
+        alternatives_(declaration->members()),
         bindings_(bindings),
         declaration_(declaration) {}
 

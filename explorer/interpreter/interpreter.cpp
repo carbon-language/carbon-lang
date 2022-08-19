@@ -840,8 +840,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
               &cast<InterfaceDeclaration>(decl), bindings));
         case DeclarationKind::ChoiceDeclaration:
           return todo_.FinishAction(arena_->New<ChoiceType>(
-              &cast<ChoiceDeclaration>(decl),
-              cast<ChoiceDeclaration>(decl).members(), bindings));
+              &cast<ChoiceDeclaration>(decl), bindings));
         default:
           CARBON_FATAL() << "unknown kind of ParameterizedEntityName " << decl;
       }
