@@ -21,24 +21,28 @@ If you would like to contribute, please follow the normal
 [Carbon contributing guide](https://github.com/carbon-language/carbon-lang/blob/trunk/CONTRIBUTING.md)
 and submit pull requests to the main repository.
 
-## Manual Installation
+## Installation
 
-### Vim Users
+In case you don't have a preferred plugin manager, and you're using `Vim 8.0` version or 
+higher, consider use its built-in package management:
 
-From the current directory `utils/vim`, please run the following commands to
-install the syntax file.
-
-```
-mkdir -p ~/.vim/syntax && cp syntax/carbon.vim ~/.vim/syntax/
-mkdir -p ~/.vim/ftdetect && cp ftdetect/carbon.vim ~/.vim/ftdetect/
+```bash
+# See ':help packages' to more information
+$ git clone https://github.com/carbon-language/vim-carbon-lang ~/.vim/pack/vendor/start/vim-carbon-lang
 ```
 
-### Neovim Users
+Otherwise, basic usage examples for some popular ones are listing below:
 
-Instead of copying to the `~/.vim` directory, please use the `~/.config/nvim`
-directory, or your custom Neovim root directory.
-
+- [**Vim Plug**](https://github.com/junegunn/vim-plug)
+```vim
+call plug#begin()
+    Plug 'carbon-language/vim-carbon-lang'
+call plug#end()
 ```
-mkdir -p ~/.config/nvim/syntax && cp syntax/carbon.vim ~/.config/nvim/syntax/
-mkdir -p ~/.config/nvim/ftdetect && cp ftdetect/carbon.vim ~/.config/nvim/ftdetect/
+
+- [**Packer**](https://github.com/wbthomason/packer.nvim) (Only Neovim)
+```lua
+return require('packer').startup(function(use)
+    use 'carbon-language/vim-carbon-lang'
+end)
 ```
