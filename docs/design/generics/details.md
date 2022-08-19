@@ -5638,3 +5638,4 @@ parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 -   [#1144: Generic details 11: operator overloading](https://github.com/carbon-language/carbon-lang/pull/1144)
 -   [#1146: Generic details 12: parameterized types](https://github.com/carbon-language/carbon-lang/pull/1146)
 -   [#1327: Generics: `impl forall`](https://github.com/carbon-language/carbon-lang/pull/1327)
+-   [#2070: Always `==` not `=` in `where` clauses](https://github.com/carbon-language/carbon-lang/pull/2070)
