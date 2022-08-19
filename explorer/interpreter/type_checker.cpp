@@ -2295,9 +2295,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               break;
             }
             case DeclarationKind::ChoiceDeclaration: {
-              Nonnull<ChoiceType*> ct =
-                  arena_->New<ChoiceType>(cast<ChoiceDeclaration>(&decl),
-                                          cast<ChoiceDeclaration>(&decl)->members(), bindings);
+              Nonnull<ChoiceType*> ct = arena_->New<ChoiceType>(
+                  cast<ChoiceDeclaration>(&decl),
+                  cast<ChoiceDeclaration>(&decl)->members(), bindings);
               Nonnull<TypeOfChoiceType*> inst_choice_type =
                   arena_->New<TypeOfChoiceType>(ct);
               call.set_static_type(inst_choice_type);

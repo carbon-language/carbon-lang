@@ -290,13 +290,10 @@ class ChoiceDeclaration : public Declaration {
     return alternatives_;
   }
 
-  void set_members(const std::vector<NamedValue> & members) {
-      members_ = members;
+  void set_members(const std::vector<NamedValue>& members) {
+    members_ = members;
   }
-  auto members() const -> std::vector<NamedValue> {
-      return members_;
-  }
-
+  auto members() const -> std::vector<NamedValue> { return members_; }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 

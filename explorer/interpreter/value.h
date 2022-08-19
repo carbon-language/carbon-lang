@@ -1160,7 +1160,6 @@ class TypeOfParameterizedEntityName : public Value {
       Nonnull<const ParameterizedEntityName*> name)
       : Value(Kind::TypeOfParameterizedEntityName), name_(name) {}
 
-
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::TypeOfParameterizedEntityName;
   }
