@@ -30,7 +30,9 @@ TEST(UnescapeStringLiteral, Valid) {
   EXPECT_THAT(UnescapeStringLiteral("\\x12"), Optional(Eq("\x12")));
   EXPECT_THAT(UnescapeStringLiteral("test", 1), Optional(Eq("test")));
   EXPECT_THAT(UnescapeStringLiteral("test\\#n", 1), Optional(Eq("test\n")));
-  EXPECT_THAT(UnescapeStringLiteral("r\\u{000000E9}al \\u{2764}\\u{FE0F}\\u{1F50A}!\\u{10FFFF}"), Optional(Eq("réal ❤️🔊!􏿿")));
+  EXPECT_THAT(UnescapeStringLiteral(
+                  "r\\u{000000E9}al \\u{2764}\\u{FE0F}\\u{1F50A}!\\u{10FFFF}"),
+              Optional(Eq("réal ❤️🔊!􏿿")));
 }
 
 TEST(UnescapeStringLiteral, Invalid) {
@@ -71,8 +73,6 @@ TEST(UnescapeStringLiteral, InvalidUnicodes) {
 
   // codepoint more than 8 hex digits
   EXPECT_THAT(UnescapeStringLiteral("\\u{FF000000E9}"), Eq(std::nullopt));
-  
-
 }
 
 TEST(UnescapeStringLiteral, Nul) {

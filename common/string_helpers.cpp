@@ -109,7 +109,7 @@ auto UnescapeStringLiteral(llvm::StringRef source, const int hashtag_num,
             return std::nullopt;
           }
           char utf8_buf[4];
-          char *utf8_end = &utf8_buf[0];
+          char* utf8_end = &utf8_buf[0];
           if (!llvm::ConvertCodePointToUTF8(unicode_int, utf8_end)) {
             return std::nullopt;
           }
