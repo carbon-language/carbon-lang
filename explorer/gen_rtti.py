@@ -2,6 +2,8 @@
 
 """Generates C++ header to support LLVM-style RTTI for a class hierarchy.
 
+This script should be run through the //explorer:gen_rtti build target.
+
 # Background
 
 A C++ class hierarchy supported by this script consists of *abstract* classes,

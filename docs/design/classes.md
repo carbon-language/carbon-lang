@@ -1755,8 +1755,8 @@ declaration with all of the optional parameters in an option struct:
 ```
 fn SortIntVector(
     v: Vector(i32)*,
-    options: {.stable: Bool = false,
-              .descending: Bool = false} = {}) {
+    options: {.stable: bool = false,
+              .descending: bool = false} = {}) {
   // Code using `options.stable` and `options.descending`.
 }
 
@@ -1780,7 +1780,7 @@ We might instead support destructuring struct patterns with defaults:
 ```
 fn SortIntVector(
     v: Vector(i32)*,
-    {stable: Bool = false, descending: Bool = false}) {
+    {stable: bool = false, descending: bool = false}) {
   // Code using `stable` and `descending`.
 }
 ```
@@ -1814,9 +1814,9 @@ Some discussion on this topic has occurred in:
 
 -   [question-for-leads issue #505 on named parameters](https://github.com/carbon-language/carbon-lang/issues/505)
 -   labeled params brainstorming docs
-    [1](https://docs.google.com/document/d/1a1wI8SHGh3HYV8SUWPIKhg48ZW2glUlAMIIS3aec5dY/edit),
-    [2](https://docs.google.com/document/d/1u6GORSkcgThMAiYKOqsgALcEviEtcghGb5TTVT-U-N0/edit)
--   ["match" in syntax choices doc](https://docs.google.com/document/d/1iuytei37LPg_tEd6xe-O6P_bpN7TIbEjNtFMLYW2Nno/edit#heading=h.y566d16ivoy2)
+    [1](https://docs.google.com/document/d/1Ui2OEHLwa9LZ6ktc1joJqE7_N-ZHX2gBvBpaFw6DUy8/edit?usp=sharing&resourcekey=0-6bEnyc03QePVcttPRSFoew),
+    [2](https://docs.google.com/document/d/1kK_tti4DwPqa3Oh5CgA5pWSx0g3bKlZG1yREMpq9uiU/edit?usp=sharing&resourcekey=0-oFV6tXtCVu1bcHz4oCMyMQ)
+-   ["match" in syntax choices doc](https://docs.google.com/document/d/1EhZA3AlY9TaCMho9jz2ynFxK-6eS6BwMAkE5jNYQzEA/edit?usp=sharing&resourcekey=0-QXEoh-b4_sQG2u636gIa1A#heading=h.y566d16ivoy2)
 
 ### Inheritance
 
@@ -1863,7 +1863,7 @@ There are some opportunities to improve on and simplify the C++ story:
     aren't friends of the base class.
 
 **References:** This was discussed in
-[the open discussion on 2021-07-12](https://docs.google.com/document/d/1QCdKQ33rki-kCDrxi8UHy3a36dtW0WdMqpUzluGSrz4/edit?resourcekey=0-bZmNUiueOiH_sysJNqnT9A#heading=h.40jlsrcgp8mr).
+[the open discussion on 2021-07-12](https://docs.google.com/document/d/14vAcURDKeH6LZ_TQCMRGpNJrXSZCACQqDy29YH19XGo/edit#heading=h.40jlsrcgp8mr).
 
 #### Interop with C++ inheritance
 

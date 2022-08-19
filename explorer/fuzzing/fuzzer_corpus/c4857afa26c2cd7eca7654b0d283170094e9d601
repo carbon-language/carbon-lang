@@ -1,0 +1,266 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    class_declaration {
+      name: "LazyEq"
+      members {
+        variable {
+          binding {
+            name: "v1"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        variable {
+          binding {
+            name: "v2"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        impl {
+          kind: InternalImpl
+          impl_type {
+            identifier {
+              name: "Self"
+            }
+          }
+          interface {
+            call {
+              function {
+                identifier {
+                  name: "ImplicitAs"
+                }
+              }
+              argument {
+                tuple_literal {
+                  fields {
+                    bool_type_literal {
+                    }
+                  }
+                }
+              }
+            }
+          }
+          members {
+            function {
+              name: "Convert"
+              me_pattern {
+                binding_pattern {
+                  name: "me"
+                  type {
+                    expression_pattern {
+                      expression {
+                        identifier {
+                          name: "Self"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              param_pattern {
+              }
+              return_term {
+                kind: Expression
+                type {
+                  bool_type_literal {
+                  }
+                }
+              }
+              body {
+                statements {
+                  return_expression_statement {
+                    expression {
+                      operator {
+                        op: Eq
+                        arguments {
+                          simple_member_access {
+                            field: "v1"
+                            object {
+                              identifier {
+                                name: "me"
+                              }
+                            }
+                          }
+                        }
+                        arguments {
+                          simple_member_access {
+                            field: "v2"
+                            object {
+                              identifier {
+                                name: "me"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name: "Make"
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "v1"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            fields {
+              binding_pattern {
+                name: "v2"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "Self"
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  struct_literal {
+                    fields {
+                      name: "v1"
+                      expression {
+                        identifier {
+                          name: "v1"
+                        }
+                      }
+                    }
+                    fields {
+                      name: "v2"
+                      expression {
+                        identifier {
+                          name: "v2"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              if_expression {
+                condition {
+                  call {
+                    function {
+                      simple_member_access {
+                        field: "Make"
+                        object {
+                          identifier {
+                            name: "LazyEq"
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          int_literal {
+                            value: 2
+                          }
+                        }
+                        fields {
+                          operator {
+                            op: Add
+                            arguments {
+                              int_literal {
+                                value: 1
+                              }
+                            }
+                            arguments {
+                              int_literal {
+                                value: 1
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                then_expression {
+                  int_literal {
+                    value: 1
+                  }
+                }
+                else_expression {
+                  int_literal {
+                    value: 2
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

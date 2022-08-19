@@ -1,0 +1,152 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    function {
+      name: "DoMul"
+      deduced_parameters {
+        name: "T"
+        type {
+          where {
+            base {
+              call {
+                function {
+                  identifier {
+                    name: "MulWith"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      designator {
+                        name: "Self"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            clauses {
+              equals {
+                lhs {
+                  designator {
+                    name: "Result"
+                  }
+                }
+                rhs {
+                  designator {
+                    name: "Self"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "x"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "T"
+                  }
+                }
+              }
+            }
+          }
+        }
+        fields {
+          binding_pattern {
+            name: "y"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "T"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          identifier {
+            name: "T"
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              operator {
+                op: Mul
+                arguments {
+                  identifier {
+                    name: "x"
+                  }
+                }
+                arguments {
+                  identifier {
+                    name: "y"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "DoMul"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      int_literal {
+                        value: 2
+                      }
+                    }
+                    fields {
+                      int_literal {
+                        value: 3
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

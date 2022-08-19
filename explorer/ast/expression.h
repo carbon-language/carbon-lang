@@ -116,10 +116,20 @@ enum class Operator {
   AddressOf,
   And,
   As,
-  Combine,
+  BitwiseAnd,
+  BitwiseOr,
+  BitwiseXor,
+  BitShiftLeft,
+  BitShiftRight,
+  Complement,
   Deref,
   Eq,
+  Less,
+  LessEq,
+  Greater,
+  GreaterEq,
   Mul,
+  Mod,
   Neg,
   Not,
   Or,
@@ -663,7 +673,22 @@ class ValueLiteral : public Expression {
 
 class IntrinsicExpression : public Expression {
  public:
-  enum class Intrinsic { Print, Alloc, Dealloc };
+  enum class Intrinsic {
+    Print,
+    Alloc,
+    Dealloc,
+    Rand,
+    IntEq,
+    StrEq,
+    StrCompare,
+    IntCompare,
+    IntBitAnd,
+    IntBitOr,
+    IntBitXor,
+    IntBitComplement,
+    IntLeftShift,
+    IntRightShift,
+  };
 
   // Returns the enumerator corresponding to the intrinsic named `name`,
   // or raises a fatal compile error if there is no such enumerator.
@@ -681,6 +706,7 @@ class IntrinsicExpression : public Expression {
   }
 
   auto intrinsic() const -> Intrinsic { return intrinsic_; }
+  auto name() const -> std::string_view;
   auto args() const -> const TupleLiteral& { return *args_; }
   auto args() -> TupleLiteral& { return *args_; }
 

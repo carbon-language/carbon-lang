@@ -92,8 +92,10 @@ http_archive(
     name = "llvm-raw",
     build_file_content = "# empty",
     patch_args = ["-p1"],
-    patches = ["@//:bazel/llvm-patches/0001-Patch-for-mallinfo2-when-using-Bazel-build-system.patch",
-               "@//:bazel/llvm-patches/0002-Added-Bazel-build-for-compiler-rt-fuzzer.patch"],
+    patches = [
+        "@//:bazel/llvm-patches/0001-Patch-for-mallinfo2-when-using-Bazel-build-system.patch",
+        "@//:bazel/llvm-patches/0002-Added-Bazel-build-for-compiler-rt-fuzzer.patch",
+    ],
     sha256 = "0a3929c5f2fe756820277be7b10e95f7480e7cb7f297ec574d3e9ddeac9068d7",
     strip_prefix = "llvm-project-%s" % llvm_version,
     urls = ["https://github.com/llvm/llvm-project/archive/%s.tar.gz" % llvm_version],

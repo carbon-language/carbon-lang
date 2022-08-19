@@ -1,0 +1,168 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    variable {
+      binding {
+        name: "call_count"
+        type {
+          expression_pattern {
+            expression {
+              int_type_literal {
+              }
+            }
+          }
+        }
+      }
+      initializer {
+        int_literal {
+          value: 0
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "ReturnTrue"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          bool_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          assign {
+            lhs {
+              identifier {
+                name: "call_count"
+              }
+            }
+            rhs {
+              operator {
+                op: Add
+                arguments {
+                  identifier {
+                    name: "call_count"
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 1
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              bool_literal {
+                value: true
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "result"
+                type {
+                  expression_pattern {
+                    expression {
+                      bool_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              operator {
+                op: Or
+                arguments {
+                  call {
+                    function {
+                      identifier {
+                        name: "ReturnTrue"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                      }
+                    }
+                  }
+                }
+                arguments {
+                  call {
+                    function {
+                      identifier {
+                        name: "ReturnTrue"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              if_expression {
+                condition {
+                  identifier {
+                    name: "result"
+                  }
+                }
+                then_expression {
+                  identifier {
+                    name: "call_count"
+                  }
+                }
+                else_expression {
+                  operator {
+                    op: Neg
+                    arguments {
+                      int_literal {
+                        value: 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -13,7 +13,8 @@
 // CHECK: interface ImplicitAs {
 // CHECK: ********** type checking **********
 // CHECK: ** declaring interface ImplicitAs
-// CHECK: ********** type checking complete **********
+// CHECK: ********** resolving unformed variables **********
+// CHECK: ********** printing declarations **********
 // CHECK: interface ImplicitAs {
 // CHECK: ********** starting execution **********
 // CHECK: ********** initializing globals **********

@@ -19,6 +19,7 @@ load(
 load("@bazel_tools//tools/build_defs/cc:action_names.bzl", "ACTION_NAMES")
 load(
     ":clang_detected_variables.bzl",
+    "clang_bindir",
     "clang_include_dirs_list",
     "clang_resource_dir",
     "llvm_bindir",
@@ -68,9 +69,9 @@ all_link_actions = [
 def _impl(ctx):
     tool_paths = [
         tool_path(name = "ar", path = llvm_bindir + "/llvm-ar"),
-        tool_path(name = "ld", path = llvm_bindir + "/ld.lld"),
-        tool_path(name = "cpp", path = llvm_bindir + "/clang-cpp"),
-        tool_path(name = "gcc", path = llvm_bindir + "/clang++"),
+        tool_path(name = "ld", path = clang_bindir + "/ld.lld"),
+        tool_path(name = "cpp", path = clang_bindir + "/clang-cpp"),
+        tool_path(name = "gcc", path = clang_bindir + "/clang++"),
         tool_path(name = "dwp", path = llvm_bindir + "/llvm-dwp"),
         tool_path(name = "gcov", path = llvm_bindir + "/llvm-cov"),
         tool_path(name = "nm", path = llvm_bindir + "/llvm-nm"),
@@ -80,13 +81,13 @@ def _impl(ctx):
     ]
 
     action_configs = [
-        action_config(action_name = name, enabled = True, tools = [tool(path = llvm_bindir + "/clang")])
+        action_config(action_name = name, enabled = True, tools = [tool(path = clang_bindir + "/clang")])
         for name in all_c_compile_actions
     ] + [
-        action_config(action_name = name, enabled = True, tools = [tool(path = llvm_bindir + "/clang++")])
+        action_config(action_name = name, enabled = True, tools = [tool(path = clang_bindir + "/clang++")])
         for name in all_cpp_compile_actions
     ] + [
-        action_config(action_name = name, enabled = True, tools = [tool(path = llvm_bindir + "/clang++")])
+        action_config(action_name = name, enabled = True, tools = [tool(path = clang_bindir + "/clang++")])
         for name in all_link_actions
     ] + [
         action_config(action_name = name, enabled = True, tools = [tool(path = llvm_bindir + "/llvm-ar")])

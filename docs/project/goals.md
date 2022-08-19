@@ -80,7 +80,7 @@ set expectations for people joining, and to help remind and anchor us on
 consistent standards. It is also important that we hold ourselves accountable to
 these expectations and have real and meaningful mechanisms to moderate the
 community. When behavior steps outside of our expectations, we need tools,
-process, and policy for how we will recognize and correct it.
+processes, and policies for how we will recognize and correct it.
 
 **An open, inclusive process for Carbon changes.** The community needs to be
 able to effectively engage in the direction and evolution of the project and
@@ -140,12 +140,13 @@ we expect to provide tooling to help automate and scale migrating existing
 Carbon code to the new version. The goal is to enable more rapid evolution of
 the language without the churn tax and version skew becoming unsustainable.
 
-**Developer tooling.** We need developers to be productive reading and writing
-Carbon code. We expect to provide a broad suite of development oriented tools
-ranging from refactoring tools to [LSP](https://langserver.org/) implementations
-and editor integrations. We also plan to provide machine readable forms of many
-parts of the language, such as a grammar, to ensure consistency between tools
-and enable the development of tools by others.
+**Developer tooling.** We need developers to be productive while reading and
+writing Carbon code. We expect to provide a broad suite of development oriented
+tools ranging from formatting and refactoring tools to
+[LSP](https://langserver.org/) implementations and editor integrations. We also
+plan to provide machine readable forms of many parts of the language, such as a
+grammar, to ensure consistency between tools and enable the development of tools
+by others.
 
 **Infrastructure to enable package management and other library ecosystem
 support.** The goal is to support what the ecosystem needs, regardless of the
@@ -205,9 +206,9 @@ that performance, whether good or bad, is unsurprising to developers. Even
 pleasant surprises, when too frequent, can become a problem due to establishing
 brittle baseline performance that cannot be reliably sustained.
 
-**Leave no room for a lower level language.** Developers should not need to
-leave the rules and structure of Carbon, whether to gain control over
-performance problems or to gain access to hardware facilities.
+**No need for a lower level language.** Developers should not need to leave the
+rules and structure of Carbon, whether to gain control over performance problems
+or to gain access to hardware facilities.
 
 ### Software and language evolution
 
@@ -506,9 +507,9 @@ interfaces with business logic in Carbon, although this direction can tolerate
 slightly more constraints both in supported features and performance overhead.
 In all cases, the particular performance overhead imposed by moving between C++
 and Carbon will need to be easily exposed and understood by developers. While a
-given piece code only needs to be migrated once, we expect interoperability to
-be invoked continuously to support migrated code and will thus remain important
-for most developers.
+given piece of code only needs to be migrated once, we expect interoperability
+to be invoked continuously to support migrated code and will thus remain
+important for most developers.
 
 ## Non-goals
 
@@ -596,15 +597,15 @@ cost-benefit analysis.
 **Cost-benefit will drive many choices.** We expect to measure both cost,
 including complexity, and benefit using the impact on the project and language
 as a whole. Benefit accumulates over time, which means providing incremental
-solutions earlier will typically increase total benefit. It is also reasonable
-for the rationale of a decision to factor in both effort already invested, and
-effort ready to commit to the feature. This should not overwhelm any fundamental
-cost-benefit analysis. However, given two equally impactful features, we should
-focus on the solution that is moving the fastest.
+solutions earlier will typically increase the total benefit. It is also
+reasonable for the rationale of a decision to factor in both effort already
+invested, and effort ready to commit to the feature. This should not overwhelm
+any fundamental cost-benefit analysis. However, given two equally impactful
+features, we should focus on the solution that is moving the fastest.
 
 **Domain-motivated libraries and features are an example.** For these, the cost
 function will typically be the effort required to specify and implement the
-feature. Benefit will stem from the number of users and how much utility the
+feature. The benefit will stem from the number of users and how much utility the
 feature provides. We don't expect to have concrete numbers for these, but we
 expect prioritization decisions between features to be expressed using this
 framework.

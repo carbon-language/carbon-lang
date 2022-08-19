@@ -1,0 +1,205 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "x"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              int_literal {
+                value: 5
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          assign {
+            lhs {
+              identifier {
+                name: "x"
+              }
+            }
+            rhs {
+              int_literal {
+                value: 10
+              }
+            }
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "p"
+                type {
+                  expression_pattern {
+                    expression {
+                      operator {
+                        op: Ptr
+                        arguments {
+                          int_type_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              operator {
+                op: AddressOf
+                arguments {
+                  identifier {
+                    name: "x"
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          assign {
+            lhs {
+              operator {
+                op: Deref
+                arguments {
+                  identifier {
+                    name: "p"
+                  }
+                }
+              }
+            }
+            rhs {
+              int_literal {
+                value: 7
+              }
+            }
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "q"
+                type {
+                  expression_pattern {
+                    expression {
+                      operator {
+                        op: Ptr
+                        arguments {
+                          int_type_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              operator {
+                op: AddressOf
+                arguments {
+                  operator {
+                    op: Deref
+                    arguments {
+                      identifier {
+                        name: "p"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          assign {
+            lhs {
+              operator {
+                op: Deref
+                arguments {
+                  identifier {
+                    name: "q"
+                  }
+                }
+              }
+            }
+            rhs {
+              int_literal {
+                value: 0
+              }
+            }
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "y"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              operator {
+                op: Deref
+                arguments {
+                  identifier {
+                    name: "p"
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              identifier {
+                name: "y"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
