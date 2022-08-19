@@ -54,7 +54,8 @@ auto OutputWriter::Write(clang::SourceLocation loc,
             }
           }
         } else {
-          static_assert(std::is_void_v<type>);
+          static_assert(std::is_void_v<type>,
+                        "Failed to handle a case in the `std::variant`.");
         }
         return true;
       },

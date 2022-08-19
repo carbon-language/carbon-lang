@@ -30,7 +30,7 @@ namespace Carbon {
 // The left-hand side and right-hand side can then be queried recursively to
 // determine what their output should be.
 class OutputSegment {
- private:
+ public:
   // Returns whether or not the type T is an acceptable node type from which an
   // OutputSegment can be constructed. We intentionally do not want to support
   // `clang::Type` because we support traversing through `clang::TypeLoc`
@@ -42,7 +42,6 @@ class OutputSegment {
            std::is_convertible_v<T*, clang::Decl*>;
   }
 
- public:
   // Creates a text-based `OutputSegment`.
   explicit OutputSegment(std::string content) : content_(std::move(content)) {}
   explicit OutputSegment(llvm::StringRef content) : content_(content.str()) {}
@@ -51,16 +50,16 @@ class OutputSegment {
   // Creates a node-based `OutputSegment` from `node`.
   explicit OutputSegment(const clang::DynTypedNode& node) : content_(node) {}
   template <typename T,
-            std::enable_if_t<IsSupportedClangASTNodeType<T>(), int> = 0>
-  explicit OutputSegment(const T* node)
-      : content_(clang::DynTypedNode::create(AssertNotNull(node))) {}
+            std::enable_if_t<OutputSegment::IsSupportedClangASTNodeType<T>(),
+                             int> = 0>
+  explicit OutputSegment(const T* node);
 
   // Creates a TypeLoc-based `OutputSegment` from `type_loc`.
   explicit OutputSegment(clang::TypeLoc type_loc)
       : content_(PassThroughQualifiedTypeLoc(type_loc)) {}
 
  private:
-  friend class OutputWriter;
+  friend struct OutputWriter;
 
   template <typename T>
   T& AssertNotNull(T* ptr) {
@@ -80,6 +79,11 @@ class OutputSegment {
 
   std::variant<std::string, clang::DynTypedNode, clang::TypeLoc> content_;
 };
+
+template <typename T, std::enable_if_t<
+                          OutputSegment::IsSupportedClangASTNodeType<T>(), int>>
+OutputSegment::OutputSegment(const T* node)
+    : content_(clang::DynTypedNode::create(AssertNotNull(node))) {}
 
 }  // namespace Carbon
 

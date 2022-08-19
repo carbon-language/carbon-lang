@@ -19,51 +19,54 @@
 #include "migrate_cpp/output_segment.h"
 
 namespace Carbon {
+namespace Internal {
 
-// `OutputWriter` is ressponsible for traversing the tree of `OutputSegment`s
+struct Empty {
+  friend bool operator==(Empty, Empty) { return true; }
+};
+struct Tombstone {
+  friend bool operator==(Tombstone, Tombstone) { return true; }
+};
+
+// Type alias for the variant representing any of the values that can be
+// written with OutputWriter.
+using KeyType =
+    std::variant<clang::DynTypedNode, clang::TypeLoc, Empty, Tombstone>;
+
+// `KeyInfo` is used as a template argument to `llvm::DenseMap` to specify how
+// to equality-compare and hash `KeyType`.
+struct KeyInfo {
+  static bool isEqual(const KeyType& lhs, const KeyType& rhs) {
+    return lhs == rhs;
+  }
+  static unsigned getHashValue(const KeyType& x) {
+    return std::visit(
+        [](auto x) -> unsigned {
+          using type = std::decay_t<decltype(x)>;
+          if constexpr (std::is_same_v<type, clang::DynTypedNode>) {
+            return clang::DynTypedNode::DenseMapInfo::getHashValue(x);
+          } else if constexpr (std::is_same_v<type, clang::TypeLoc>) {
+            // TODO: Improve this.
+            return reinterpret_cast<uintptr_t>(x.getTypePtr());
+          } else {
+            return 0;
+          }
+        },
+        x);
+  }
+
+  static KeyType getEmptyKey() { return Empty{}; }
+  static KeyType getTombstoneKey() { return Tombstone{}; }
+};
+
+}  // namespace Internal
+
+// `OutputWriter` is responsible for traversing the tree of `OutputSegment`s
 // and writing the correct data to its member `output`.
-class OutputWriter {
-  struct Empty {
-    friend bool operator==(Empty, Empty) { return true; }
-  };
-  struct Tombstone {
-    friend bool operator==(Tombstone, Tombstone) { return true; }
-  };
-
-  // Type alias for the variant representing any of the values that can be
-  // written with OutputWriter.
-  using KeyType =
-      std::variant<clang::DynTypedNode, clang::TypeLoc, Empty, Tombstone>;
-
-  // `KeyInfo` is used as a template argument to `llvm::DenseMap` to specify how
-  // to equality-compare and hash `KeyType`.
-  struct KeyInfo {
-    static bool isEqual(const KeyType& lhs, const KeyType& rhs) {
-      return lhs == rhs;
-    }
-    static unsigned getHashValue(const KeyType& x) {
-      return std::visit(
-          [](auto x) -> unsigned {
-            using type = std::decay_t<decltype(x)>;
-            if constexpr (std::is_same_v<type, clang::DynTypedNode>) {
-              return clang::DynTypedNode::DenseMapInfo::getHashValue(x);
-            } else if constexpr (std::is_same_v<type, clang::TypeLoc>) {
-              // TODO: Improve this.
-              return reinterpret_cast<uintptr_t>(x.getTypePtr());
-            } else {
-              return 0;
-            }
-          },
-          x);
-    }
-
-    static KeyType getEmptyKey() { return Empty{}; }
-    static KeyType getTombstoneKey() { return Tombstone{}; }
-  };
-
- public:
+struct OutputWriter {
   using SegmentMapType =
-      llvm::DenseMap<KeyType, std::vector<OutputSegment>, KeyInfo>;
+      llvm::DenseMap<Internal::KeyType, std::vector<OutputSegment>,
+                     Internal::KeyInfo>;
 
   auto Write(clang::SourceLocation loc, const OutputSegment& segment) const
       -> bool;

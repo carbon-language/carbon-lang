@@ -22,33 +22,33 @@ class Annotations {
   Annotations(llvm::StringRef annotated_source) {
     size_t index = annotated_source.find("$[[");
     if (index == llvm::StringRef::npos) {
-      source_code = std::string(annotated_source);
+      source_code_ = std::string(annotated_source);
       return;
     }
-    start = index;
-    end = annotated_source.find("]]$", index);
-    CARBON_CHECK(end != llvm::StringRef::npos)
+    start_ = index;
+    end_ = annotated_source.find("]]$", index);
+    CARBON_CHECK(end_ != llvm::StringRef::npos)
         << "Found `$[[` but no matching `]]$`";
-    source_code = (llvm::Twine(annotated_source.substr(0, start)) +
-                   annotated_source.substr(start + 3, end - start - 3) +
-                   annotated_source.substr(end + 3))
-                      .str();
-    // Update `end` so that it is relative to the unannotated source (which
+    source_code_ = (llvm::Twine(annotated_source.substr(0, start_)) +
+                    annotated_source.substr(start_ + 3, end_ - start_ - 3) +
+                    annotated_source.substr(end_ + 3))
+                       .str();
+    // Update `end_` so that it is relative to the unannotated source (which
     // means three characters earlier due to the `$[[` being removed.
-    end -= 3;
+    end_ -= 3;
   }
 
   // Returns a view into the unannotated source.
-  llvm::StringRef source() const { return source_code; }
+  llvm::StringRef source() const { return source_code_; }
 
   // Returns the offsets in the file representing the annotated range if they
   // exist and `{0, std::numeric_limits<size_t>::max()}` otherwise.
-  std::pair<size_t, size_t> range() const { return std::pair(start, end); }
+  std::pair<size_t, size_t> range() const { return std::pair(start_, end_); }
 
  private:
-  std::string source_code;
-  size_t start = 0;
-  size_t end = std::numeric_limits<size_t>::max();
+  std::string source_code_;
+  size_t start_ = 0;
+  size_t end_ = std::numeric_limits<size_t>::max();
 };
 
 // Rewrites the `cpp_code`, return the Carbon equivalent. If the text has no
