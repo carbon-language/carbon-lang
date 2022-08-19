@@ -290,12 +290,21 @@ class ChoiceDeclaration : public Declaration {
     return alternatives_;
   }
 
+  void set_members(const std::vector<NamedValue> & members) {
+      members_ = members;
+  }
+  auto members() const -> std::vector<NamedValue> {
+      return members_;
+  }
+
+
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
  private:
   std::string name_;
   std::optional<Nonnull<TuplePattern*>> type_params_;
   std::vector<Nonnull<AlternativeSignature*>> alternatives_;
+  std::vector<NamedValue> members_;
 };
 
 // Global variable definition implements the Declaration concept.

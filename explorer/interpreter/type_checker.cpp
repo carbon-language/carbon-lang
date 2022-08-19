@@ -2297,7 +2297,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             case DeclarationKind::ChoiceDeclaration: {
               Nonnull<ChoiceType*> ct =
                   arena_->New<ChoiceType>(cast<ChoiceDeclaration>(&decl),
-                                          entity.alternatives(), bindings);
+                                          cast<ChoiceDeclaration>(&decl)->members(), bindings);
               Nonnull<TypeOfChoiceType*> inst_choice_type =
                   arena_->New<TypeOfChoiceType>(ct);
               call.set_static_type(inst_choice_type);
@@ -3867,14 +3867,13 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
                                              *scope_info.innermost_scope));
     alternatives.push_back({.name = alternative->name(), .value = signature});
   }
-
+  choice->set_members(alternatives);
   if (choice->type_params().has_value()) {
     Nonnull<ParameterizedEntityName*> param_name =
-        arena_->New<ParameterizedEntityName>(choice, *choice->type_params(),
-                                             alternatives);
+        arena_->New<ParameterizedEntityName>(choice, *choice->type_params());
     SetConstantValue(choice, param_name);
     choice->set_static_type(
-        arena_->New<TypeOfParameterizedEntityName>(param_name, alternatives));
+        arena_->New<TypeOfParameterizedEntityName>(param_name));
     return Success();
   }
 
