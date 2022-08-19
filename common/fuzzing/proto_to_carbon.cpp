@@ -117,6 +117,10 @@ static auto OperatorToCarbon(const Fuzzing::OperatorExpression& operator_expr,
       BinaryOperatorToCarbon(arg0, " * ", arg1, out);
       break;
 
+    case Fuzzing::OperatorExpression::Mod:
+      BinaryOperatorToCarbon(arg0, " % ", arg1, out);
+      break;
+
     case Fuzzing::OperatorExpression::Ptr:
       PostfixUnaryOperatorToCarbon(arg0, "*", out);
       break;
@@ -145,13 +149,45 @@ static auto OperatorToCarbon(const Fuzzing::OperatorExpression& operator_expr,
     case Fuzzing::OperatorExpression::Eq:
       BinaryOperatorToCarbon(arg0, " == ", arg1, out);
       break;
+    case Fuzzing::OperatorExpression::Less:
+      BinaryOperatorToCarbon(arg0, " < ", arg1, out);
+      break;
+    case Fuzzing::OperatorExpression::LessEq:
+      BinaryOperatorToCarbon(arg0, " <= ", arg1, out);
+      break;
+    case Fuzzing::OperatorExpression::GreaterEq:
+      BinaryOperatorToCarbon(arg0, " >= ", arg1, out);
+      break;
+    case Fuzzing::OperatorExpression::Greater:
+      BinaryOperatorToCarbon(arg0, " > ", arg1, out);
+      break;
 
     case Fuzzing::OperatorExpression::Or:
       BinaryOperatorToCarbon(arg0, " or ", arg1, out);
       break;
 
-    case Fuzzing::OperatorExpression::Combine:
+    case Fuzzing::OperatorExpression::Complement:
+      PrefixUnaryOperatorToCarbon("^", arg0, out);
+      break;
+
+    case Fuzzing::OperatorExpression::BitwiseAnd:
       BinaryOperatorToCarbon(arg0, " & ", arg1, out);
+      break;
+
+    case Fuzzing::OperatorExpression::BitwiseOr:
+      BinaryOperatorToCarbon(arg0, " | ", arg1, out);
+      break;
+
+    case Fuzzing::OperatorExpression::BitwiseXor:
+      BinaryOperatorToCarbon(arg0, " ^ ", arg1, out);
+      break;
+
+    case Fuzzing::OperatorExpression::BitShiftLeft:
+      BinaryOperatorToCarbon(arg0, " << ", arg1, out);
+      break;
+
+    case Fuzzing::OperatorExpression::BitShiftRight:
+      BinaryOperatorToCarbon(arg0, " >> ", arg1, out);
       break;
   }
   out << ")";
@@ -285,27 +321,6 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
       break;
     }
 
-    case Fuzzing::Expression::kIntrinsic: {
-      const auto& intrinsic = expression.intrinsic();
-      switch (intrinsic.intrinsic()) {
-        case Fuzzing::IntrinsicExpression::UnknownIntrinsic:
-          // Arbitrary default to avoid getting invalid syntax.
-          out << "__intrinsic_print";
-          break;
-
-        case Fuzzing::IntrinsicExpression::Print:
-          out << "__intrinsic_print";
-          break;
-        case Fuzzing::IntrinsicExpression::Alloc:
-          out << "__intrinsic_new";
-          break;
-        case Fuzzing::IntrinsicExpression::Dealloc:
-          out << "__intrinsic_delete";
-          break;
-      }
-      TupleLiteralExpressionToCarbon(intrinsic.argument(), out);
-    } break;
-
     case Fuzzing::Expression::kIfExpression: {
       const auto& if_expression = expression.if_expression();
       out << "if ";
@@ -318,7 +333,7 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
     }
 
     case Fuzzing::Expression::kBoolTypeLiteral:
-      out << "Bool";
+      out << "bool";
       break;
 
     case Fuzzing::Expression::kBoolLiteral: {
@@ -569,6 +584,16 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
       ExpressionToCarbon(while_statement.condition(), out);
       out << ") ";
       BlockStatementToCarbon(while_statement.body(), out);
+      break;
+    }
+    case Fuzzing::Statement::kForStatement: {
+      const auto& for_statement = statement.for_statement();
+      out << "for (";
+      BindingPatternToCarbon(for_statement.var_decl(), out);
+      out << " in ";
+      ExpressionToCarbon(for_statement.target(), out);
+      out << ") ";
+      BlockStatementToCarbon(for_statement.body(), out);
       break;
     }
 

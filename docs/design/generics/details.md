@@ -1123,7 +1123,7 @@ for adding requirements for interfaces used for
 interface is enough to be able to use the operator to access the functionality.
 
 **Alternatives considered:** See
-[Carbon: Access to interface methods](https://docs.google.com/document/d/1u_i_s31OMI_apPur7WmVxcYq6MUXsG3oCiKwH893GRI/edit?usp=sharing&resourcekey=0-0lzSNebBMtUBi4lStL825g).
+[Carbon: Access to interface methods](https://docs.google.com/document/d/17IXDdu384x1t9RimQ01bhx4-nWzs4ZEeke4eO6ImQNc/edit?resourcekey=0-Fe44R-0DhQBlw0gs2ujNJA).
 
 **Comparison with other languages:** This `&` operation on interfaces works very
 similarly to Rust's `+` operation, with the main difference being how you
@@ -1243,7 +1243,7 @@ Examples:
     [Boost.Graph library](https://www.boost.org/doc/libs/1_74_0/libs/graph/doc/)
     [graph concepts](https://www.boost.org/doc/libs/1_74_0/libs/graph/doc/graph_concepts.html#fig:graph-concepts)
     has many refining relationships between concepts.
-    [Carbon generics use case: graph library](https://docs.google.com/document/d/1xk0GLtpBl2OOnf3F_6Z-A3DtTt-r7wdOZ5wPipYUSO0/edit?usp=sharing&resourcekey=0-mBSmwn6b6jwbLaQw2WG6OA)
+    [Carbon generics use case: graph library](https://docs.google.com/document/d/15Brjv8NO_96jseSesqer5HbghqSTJICJ_fTaZOH0Mg4/edit?usp=sharing&resourcekey=0-CYSbd6-xF8vYHv9m1rolEQ)
     shows how those concepts might be translated into Carbon interfaces.
 -   The [C++ concepts](https://en.cppreference.com/w/cpp/named_req) for
     containers, iterators, and concurrency include many requirement
@@ -1372,7 +1372,7 @@ interface MovieCodec {
 #### Diamond dependency issue
 
 Consider this set of interfaces, simplified from
-[this example generic graph library doc](https://docs.google.com/document/d/1xk0GLtpBl2OOnf3F_6Z-A3DtTt-r7wdOZ5wPipYUSO0/edit?resourcekey=0-mBSmwn6b6jwbLaQw2WG6OA#):
+[this example generic graph library doc](https://docs.google.com/document/d/15Brjv8NO_96jseSesqer5HbghqSTJICJ_fTaZOH0Mg4/edit?usp=sharing&resourcekey=0-CYSbd6-xF8vYHv9m1rolEQ):
 
 ```
 interface Graph {

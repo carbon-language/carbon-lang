@@ -18,7 +18,7 @@ def cc_fuzz_test(
     """Macro for C++ fuzzing test.
 
     In order to run tests on a single file, run the fuzzer binary under
-    bazel-bin directly. That will avoid the args being passed by bazel.
+    bazel-bin directly. That will avoid the args being passed by Bazel.
 
     Args:
         name: The main fuzz test rule name.
@@ -40,7 +40,7 @@ def cc_fuzz_test(
     if "fuzzer" not in features:
         features = features + ["fuzzer"]
     if "@llvm-project//compiler-rt:FuzzerMain" not in deps:
-      deps = deps + ["@llvm-project//compiler-rt:FuzzerMain"]
+        deps = deps + ["@llvm-project//compiler-rt:FuzzerMain"]
 
     # Append the corpus files to the test arguments. When run on a list of
     # files rather than a directory, libFuzzer-based fuzzers will perform a

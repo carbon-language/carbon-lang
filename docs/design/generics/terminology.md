@@ -69,7 +69,7 @@ a single one.
 
 ## Generic versus template parameters
 
-When we are distinguishing between generics and templates in Carbon, it is on an
+When we are distinguishing between generics and templates in Carbon, it is on a
 parameter by parameter basis. A single function can take a mix of regular,
 generic, and template parameters.
 
@@ -192,10 +192,10 @@ overloads:
 
 ```
 fn F[template T:! Type](x: T*) -> T;
-fn F(x: Int) -> Bool;
+fn F(x: Int) -> bool;
 ```
 
-A generic function `G` can call `F` with a type like `T*` that can not possibly
+A generic function `G` can call `F` with a type like `T*` that cannot possibly
 call the `F(Int)` overload for `F`, and so it can consistently determine the
 return type of `F`. But `G` can't call `F` with an argument that could match
 either overload.
@@ -267,7 +267,7 @@ complete definition checking. This occurs for
 
 ## Deduced parameter
 
-An deduced parameter is listed in the optional `[` `]` section right after the
+A deduced parameter is listed in the optional `[` `]` section right after the
 function name in a function signature:
 
 `fn` &lt;name> `[` &lt;deduced parameters> `](` &lt;explicit parameters `) ->`
@@ -637,59 +637,54 @@ conditions on the type argument. For example: `Array(T)` might implement
 
 ## Interface type parameters and associated types
 
-Imagine an interface defining a container. Different containers will contain
-different types of values, and the container API will have to refer to that
-"element type" when defining the signature of methods like "insert" or "find".
-If that element type is a parameter (input) to the interface type, we say it is
-an _interface type parameter_; if it is an output, we say it is an _associated
-type_. An associated type is a kind of [associated entity](#associated-entity).
+_Interface type parameters_ and _associated types_ are both ways of allowing the
+types in function signatures in an interface to vary. For example, different
+[stacks](<https://en.wikipedia.org/wiki/Stack_(abstract_data_type)>) will have
+different element types. That element type would be used as the parameter type
+of the `Push` function and the return type of the `Pop` function. As
+[in Rust](https://rust-lang.github.io/rfcs/0195-associated-items.html#clearer-trait-matching),
+we can distinguish these by whether they are input parameters or output
+parameters:
 
-Interface type parameter example:
+-   An interface type parameter is a parameter or input to the interface type.
+    That means they must be specified before an implementation of the interface
+    may be determined.
+-   In contrast, associated types are outputs. This means that they are
+    determined by the implementation, and need not be specified in a type
+    constraint.
+
+Functions using an interface as a constraint need not specify the value of its
+associated types. An associated type is a kind of
+[associated entity](#associated-entity).
 
 ```
-interface StackTP(ElementType:! Type)
-  fn Push[addr me: Self*](value: ElementType);
-  fn Pop[addr me: Self*]() -> ElementType;
-}
-```
-
-Associated type example:
-
-```
-interface StackAT {
+// Stack using associated types
+interface Stack {
   let ElementType:! Type;
   fn Push[addr me: Self*](value: ElementType);
   fn Pop[addr me: Self*]() -> ElementType;
 }
+
+// Works on any type implementing `Stack`. Return type
+// is determined by the type's implementation of `Stack`.
+fn PeekAtTopOfStack[T: Stack](s: T*) -> T.ElementType {
+  let ret: T.ElementType = s->Pop();
+  s->Push(ret);
+  return ret;
+}
+
+class Fruit;
+class FruitStack {
+  // Implement `Stack` for `FruitStack`
+  // with `ElementType` set to `Fruit`.
+  impl as Stack where .ElementType == Fruit { ... }
+}
 ```
 
-Associated types are particularly called for when the implementation controls
-the type, not the caller. For example, the iterator type for a container is
-specific to the container and not something you would expect a user of the
-interface to specify.
-
-```
-interface Iterator { ... }
-interface Container {
-  // This does not make sense as an parameter to the container interface,
-  // since this type is determined from the container type.
-  let IteratorType:! Iterator;
-  ...
-  fn Insert[addr me: Self*](position: IteratorType, value: ElementType);
-}
-class ListIterator(ElementType:! Type) {
-  ...
-  impl as Iterator;
-}
-class List(ElementType:! Type) {
-  // Iterator type is determined by the container type.
-  impl as Container where .IteratorType = ListIterator(ElementType) {
-    fn Insert[addr me: Self*](position: IteratorType, value: ElementType) {
-      ...
-    }
-  }
-}
-```
+Associated types are particularly called for when the implementation of the
+interface determines the type, not the caller. For example, the iterator type
+for a container is specific to the container and not something you would expect
+a user of the interface to specify.
 
 If you have an interface with type parameters, a type can have multiple impls
 for different combinations of type parameters. As a result, type parameters may
@@ -701,7 +696,7 @@ For example, we might have an interface that says how to perform addition with
 another type:
 
 ```
-interface Addable(T:! Type) {
+interface AddWith(T:! Type) {
   let ResultType:! Type;
   fn Add[me: Self](rhs: T) -> ResultType;
 }
@@ -710,23 +705,23 @@ interface Addable(T:! Type) {
 An `i32` value might support addition with `i32`, `u16`, and `f64` values.
 
 ```
-impl i32 as Addable(i32) where .ResultType = i32 { ... }
-impl i32 as Addable(u16) where .ResultType = i32 { ... }
-impl i32 as Addable(f64) where .ResultType = f64 { ... }
+impl i32 as AddWith(i32) where .ResultType = i32 { ... }
+impl i32 as AddWith(u16) where .ResultType = i32 { ... }
+impl i32 as AddWith(f64) where .ResultType = f64 { ... }
 ```
 
-To write a generic function requiring a parameter to be `Addable`, there needs
+To write a generic function requiring a parameter to be `AddWith`, there needs
 to be some way to determine the type to add to:
 
 ```
 // ✅ This is allowed, since the value of `T` is determined by the
 // `y` parameter.
-fn DoAdd[T:! Type, U:! Addable(T)](x: U, y: T) -> U.ResultType {
+fn DoAdd[T:! Type, U:! AddWith(T)](x: U, y: T) -> U.ResultType {
   return x.Add(y);
 }
 
 // ❌ This is forbidden, can't uniquely determine `T`.
-fn CompileError[T:! Type, U:! Addable(T)](x: U) -> T;
+fn CompileError[T:! Type, U:! AddWith(T)](x: U) -> T;
 ```
 
 Once the interface parameter can be determined, that determines the values for
@@ -734,7 +729,7 @@ associated types, such as `ResultType` in the example. As always, calls with
 types for which no implementation exists will be rejected at the call site:
 
 ```
-// ❌ This is forbidden, no implementation of `Addable(Orange)`
+// ❌ This is forbidden, no implementation of `AddWith(Orange)`
 // for `Apple`.
 DoAdd(apple, orange);
 ```

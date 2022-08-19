@@ -1,0 +1,231 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    class_declaration {
+      name: "A"
+      members {
+        variable {
+          binding {
+            name: "n"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: ExternalImpl
+      impl_type {
+        identifier {
+          name: "A"
+        }
+      }
+      interface {
+        where {
+          base {
+            call {
+              function {
+                identifier {
+                  name: "RightShiftWith"
+                }
+              }
+              argument {
+                tuple_literal {
+                  fields {
+                    int_type_literal {
+                    }
+                  }
+                }
+              }
+            }
+          }
+          clauses {
+            equals {
+              lhs {
+                designator {
+                  name: "Result"
+                }
+              }
+              rhs {
+                identifier {
+                  name: "A"
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name: "Op"
+          me_pattern {
+            binding_pattern {
+              name: "me"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "rhs"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "A"
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  struct_literal {
+                    fields {
+                      name: "n"
+                      expression {
+                        operator {
+                          op: BitShiftRight
+                          arguments {
+                            simple_member_access {
+                              field: "n"
+                              object {
+                                identifier {
+                                  name: "me"
+                                }
+                              }
+                            }
+                          }
+                          arguments {
+                            identifier {
+                              name: "rhs"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "a"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "A"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              struct_literal {
+                fields {
+                  name: "n"
+                  expression {
+                    int_literal {
+                      value: 5
+                    }
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          assign {
+            lhs {
+              identifier {
+                name: "a"
+              }
+            }
+            rhs {
+              operator {
+                op: BitShiftRight
+                arguments {
+                  identifier {
+                    name: "a"
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 1
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              simple_member_access {
+                field: "n"
+                object {
+                  identifier {
+                    name: "a"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

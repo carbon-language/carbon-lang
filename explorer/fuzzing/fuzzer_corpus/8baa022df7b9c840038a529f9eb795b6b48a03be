@@ -1,0 +1,219 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    class_declaration {
+      name: "Point"
+      members {
+        function {
+          name: "Get"
+          me_pattern {
+            binding_pattern {
+              name: "me"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "T"
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  identifier {
+                    name: "V"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      type_params {
+        fields {
+          generic_binding {
+            name: "T"
+            type {
+              type_type_literal {
+              }
+            }
+          }
+        }
+        fields {
+          generic_binding {
+            name: "V"
+            type {
+              identifier {
+                name: "T"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "F"
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "p"
+            type {
+              expression_pattern {
+                expression {
+                  call {
+                    function {
+                      identifier {
+                        name: "Point"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          int_type_literal {
+                          }
+                        }
+                        fields {
+                          int_literal {
+                            value: 1
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              call {
+                function {
+                  simple_member_access {
+                    field: "Get"
+                    object {
+                      identifier {
+                        name: "p"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "v"
+                type {
+                  expression_pattern {
+                    expression {
+                      call {
+                        function {
+                          identifier {
+                            name: "Point"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              int_type_literal {
+                              }
+                            }
+                            fields {
+                              int_literal {
+                                value: 1
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              struct_type_literal {
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "F"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "v"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

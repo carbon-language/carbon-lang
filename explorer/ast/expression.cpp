@@ -29,13 +29,58 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
   static const auto& intrinsic_map = *new std::map<std::string_view, Intrinsic>(
       {{"print", Intrinsic::Print},
        {"new", Intrinsic::Alloc},
-       {"delete", Intrinsic::Dealloc}});
+       {"delete", Intrinsic::Dealloc},
+       {"rand", Intrinsic::Rand},
+       {"int_eq", Intrinsic::IntEq},
+       {"int_compare", Intrinsic::IntCompare},
+       {"int_bit_complement", Intrinsic::IntBitComplement},
+       {"int_bit_and", Intrinsic::IntBitAnd},
+       {"int_bit_or", Intrinsic::IntBitOr},
+       {"int_bit_xor", Intrinsic::IntBitXor},
+       {"int_left_shift", Intrinsic::IntLeftShift},
+       {"int_right_shift", Intrinsic::IntRightShift},
+       {"str_eq", Intrinsic::StrEq},
+       {"str_compare", Intrinsic::StrCompare}});
   name.remove_prefix(std::strlen("__intrinsic_"));
   auto it = intrinsic_map.find(name);
   if (it == intrinsic_map.end()) {
     return CompilationError(source_loc) << "Unknown intrinsic '" << name << "'";
   }
   return it->second;
+}
+
+auto IntrinsicExpression::name() const -> std::string_view {
+  switch (intrinsic()) {
+    case IntrinsicExpression::Intrinsic::Print:
+      // TODO: Remove Print special casing once we have variadics or overloads.
+      return "Print";
+    case IntrinsicExpression::Intrinsic::Alloc:
+      return "__intrinsic_new";
+    case IntrinsicExpression::Intrinsic::Dealloc:
+      return "__intrinsic_delete";
+    case IntrinsicExpression::Intrinsic::Rand:
+      return "__intrinsic_rand";
+    case IntrinsicExpression::Intrinsic::IntEq:
+      return "__intrinsic_int_eq";
+    case IntrinsicExpression::Intrinsic::IntCompare:
+      return "__intrinsic_int_compare";
+    case IntrinsicExpression::Intrinsic::IntBitComplement:
+      return "__intrinsic_int_bit_complement";
+    case IntrinsicExpression::Intrinsic::IntBitAnd:
+      return "__intrinsic_int_bit_and";
+    case IntrinsicExpression::Intrinsic::IntBitOr:
+      return "__intrinsic_int_bit_or";
+    case IntrinsicExpression::Intrinsic::IntBitXor:
+      return "__intrinsic_int_bit_xor";
+    case IntrinsicExpression::Intrinsic::IntLeftShift:
+      return "__intrinsic_int_left_shift";
+    case IntrinsicExpression::Intrinsic::IntRightShift:
+      return "__intrinsic_int_right_shift";
+    case IntrinsicExpression::Intrinsic::StrEq:
+      return "__intrinsic_str_eq";
+    case IntrinsicExpression::Intrinsic::StrCompare:
+      return "__intrinsic_str_compare";
+  }
 }
 
 auto ExpressionFromParenContents(
@@ -64,8 +109,17 @@ auto ToString(Operator op) -> std::string_view {
     case Operator::As:
       return "as";
     case Operator::AddressOf:
-    case Operator::Combine:
+    case Operator::BitwiseAnd:
       return "&";
+    case Operator::BitwiseOr:
+      return "|";
+    case Operator::BitwiseXor:
+    case Operator::Complement:
+      return "^";
+    case Operator::BitShiftLeft:
+      return "<<";
+    case Operator::BitShiftRight:
+      return ">>";
     case Operator::Neg:
     case Operator::Sub:
       return "-";
@@ -81,6 +135,16 @@ auto ToString(Operator op) -> std::string_view {
       return "or";
     case Operator::Eq:
       return "==";
+    case Operator::Mod:
+      return "%";
+    case Operator::Less:
+      return "<";
+    case Operator::LessEq:
+      return "<=";
+    case Operator::Greater:
+      return ">";
+    case Operator::GreaterEq:
+      return ">=";
   }
 }
 
@@ -168,24 +232,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
     }
     case ExpressionKind::IntrinsicExpression: {
       const auto& iexp = cast<IntrinsicExpression>(*this);
-      // TODO: Remove Print special casing once we have variadics or overloads.
-      if (iexp.intrinsic() == IntrinsicExpression::Intrinsic::Print) {
-        out << "Print" << iexp.args();
-        break;
-      }
-      out << "intrinsic_";
-      switch (iexp.intrinsic()) {
-        case IntrinsicExpression::Intrinsic::Print:
-          out << "print";
-          break;
-        case IntrinsicExpression::Intrinsic::Alloc:
-          out << "new";
-          break;
-        case IntrinsicExpression::Intrinsic::Dealloc:
-          out << "delete";
-          break;
-      }
-      out << iexp.args();
+      out << iexp.name() << iexp.args();
       break;
     }
     case ExpressionKind::IfExpression: {
@@ -255,7 +302,7 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
       out << (cast<BoolLiteral>(*this).value() ? "true" : "false");
       break;
     case ExpressionKind::BoolTypeLiteral:
-      out << "Bool";
+      out << "bool";
       break;
     case ExpressionKind::IntTypeLiteral:
       out << "i32";

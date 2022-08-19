@@ -1,0 +1,728 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    class_declaration {
+      name: "Cell"
+      members {
+        function {
+          name: "Create"
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "x"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "T"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              call {
+                function {
+                  identifier {
+                    name: "Cell"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "T"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  struct_literal {
+                    fields {
+                      name: "data"
+                      expression {
+                        identifier {
+                          name: "x"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name: "Get"
+          me_pattern {
+            binding_pattern {
+              name: "me"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "T"
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  simple_member_access {
+                    field: "data"
+                    object {
+                      identifier {
+                        name: "me"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name: "Put"
+          me_pattern {
+            addr_pattern {
+              binding_pattern {
+                name: "me"
+                type {
+                  expression_pattern {
+                    expression {
+                      operator {
+                        op: Ptr
+                        arguments {
+                          identifier {
+                            name: "Self"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "x"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "T"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Omitted
+          }
+          body {
+            statements {
+              assign {
+                lhs {
+                  simple_member_access {
+                    field: "data"
+                    object {
+                      operator {
+                        op: Deref
+                        arguments {
+                          identifier {
+                            name: "me"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                rhs {
+                  identifier {
+                    name: "x"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name: "Update"
+          deduced_parameters {
+            name: "U"
+            type {
+              call {
+                function {
+                  identifier {
+                    name: "ImplicitAs"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "T"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          me_pattern {
+            addr_pattern {
+              binding_pattern {
+                name: "me"
+                type {
+                  expression_pattern {
+                    expression {
+                      operator {
+                        op: Ptr
+                        arguments {
+                          identifier {
+                            name: "Self"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "x"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "U"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Omitted
+          }
+          body {
+            statements {
+              assign {
+                lhs {
+                  simple_member_access {
+                    field: "data"
+                    object {
+                      operator {
+                        op: Deref
+                        arguments {
+                          identifier {
+                            name: "me"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                rhs {
+                  identifier {
+                    name: "x"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name: "CreateOther"
+          deduced_parameters {
+            name: "U"
+            type {
+              type_type_literal {
+              }
+            }
+          }
+          me_pattern {
+            binding_pattern {
+              name: "me"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "x"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "U"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              call {
+                function {
+                  identifier {
+                    name: "Cell"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "U"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  struct_literal {
+                    fields {
+                      name: "data"
+                      expression {
+                        identifier {
+                          name: "x"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        variable {
+          binding {
+            name: "data"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "T"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      type_params {
+        fields {
+          generic_binding {
+            name: "T"
+            type {
+              type_type_literal {
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name: "Integer"
+      members {
+        variable {
+          binding {
+            name: "int"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "i"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "Integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              struct_literal {
+                fields {
+                  name: "int"
+                  expression {
+                    int_literal {
+                      value: 1
+                    }
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "c"
+                type {
+                  expression_pattern {
+                    expression {
+                      call {
+                        function {
+                          identifier {
+                            name: "Cell"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              identifier {
+                                name: "Integer"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              call {
+                function {
+                  simple_member_access {
+                    field: "Create"
+                    object {
+                      call {
+                        function {
+                          identifier {
+                            name: "Cell"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              identifier {
+                                name: "Integer"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "i"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          assign {
+            lhs {
+              identifier {
+                name: "i"
+              }
+            }
+            rhs {
+              struct_literal {
+                fields {
+                  name: "int"
+                  expression {
+                    int_literal {
+                      value: 2
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "j"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "Integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              call {
+                function {
+                  simple_member_access {
+                    field: "Get"
+                    object {
+                      identifier {
+                        name: "c"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  simple_member_access {
+                    field: "Put"
+                    object {
+                      identifier {
+                        name: "c"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "i"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  simple_member_access {
+                    field: "Update"
+                    object {
+                      identifier {
+                        name: "c"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "j"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "d"
+                type {
+                  expression_pattern {
+                    expression {
+                      call {
+                        function {
+                          identifier {
+                            name: "Cell"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              identifier {
+                                name: "Integer"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              call {
+                function {
+                  simple_member_access {
+                    field: "CreateOther"
+                    object {
+                      identifier {
+                        name: "c"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "i"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              operator {
+                op: Add
+                arguments {
+                  simple_member_access {
+                    field: "int"
+                    object {
+                      simple_member_access {
+                        field: "data"
+                        object {
+                          identifier {
+                            name: "c"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                arguments {
+                  simple_member_access {
+                    field: "int"
+                    object {
+                      simple_member_access {
+                        field: "data"
+                        object {
+                          identifier {
+                            name: "d"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

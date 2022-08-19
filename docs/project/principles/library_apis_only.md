@@ -61,7 +61,7 @@ lookup as well.
 
 According to the resolutions of
 [#543](https://github.com/carbon-language/carbon-lang/issues/543) and
-[#750](https://github.com/carbon-language/carbon-lang/issues/543), Carbon will
+[#750](https://github.com/carbon-language/carbon-lang/issues/750), Carbon will
 have a substantial number of type keywords, such as `i32`, `f64`, and `bool`.
 However, these keywords will all be aliases for ordinary type names, such as
 `Carbon.Int(32)`, `Carbon.Float(64)`, and `Carbon.Bool`. Furthermore, all

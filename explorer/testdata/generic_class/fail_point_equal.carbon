@@ -17,7 +17,7 @@ class Point(T:! Type) {
 
 fn Main() -> i32 {
   var p: Point(i32) = {.x = 0, .y = 0};
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_point_equal.carbon:[[@LINE+1]]: type error in name binding: 'class Point(T = i32)' is not implicitly convertible to 'class Point(T = Bool)'
-  var q: Point(Bool) = p;
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_point_equal.carbon:[[@LINE+1]]: type error in name binding: 'class Point(T = i32)' is not implicitly convertible to 'class Point(T = bool)'
+  var q: Point(bool) = p;
   return 0;
 }
