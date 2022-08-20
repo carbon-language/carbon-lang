@@ -8,6 +8,7 @@
 #include <map>
 #include <vector>
 
+#include "common/action.h"
 #include "common/ostream.h"
 #include "explorer/ast/expression.h"
 #include "explorer/ast/pattern.h"
