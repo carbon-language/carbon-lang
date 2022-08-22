@@ -192,6 +192,9 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
     case Operator::Mul:
       return arena_->New<IntValue>(cast<IntValue>(*args[0]).value() *
                                    cast<IntValue>(*args[1]).value());
+    case Operator::Div:
+      return arena_->New<IntValue>(cast<IntValue>(*args[0]).value() /
+                                   cast<IntValue>(*args[1]).value());
     case Operator::Mod:
       return arena_->New<IntValue>(cast<IntValue>(*args[0]).value() %
                                    cast<IntValue>(*args[1]).value());
