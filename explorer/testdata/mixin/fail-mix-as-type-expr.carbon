@@ -10,7 +10,7 @@
 
 package ExplorerTest api;
 
-mixin Operations {}
+__mixin Operations {}
 
 fn Main() -> i32 {
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-mix-as-type-expr.carbon:[[@LINE+1]]: Expected a type, but got mixin Operations

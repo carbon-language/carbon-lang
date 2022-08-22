@@ -10,7 +10,7 @@
 
 package ExplorerTest api;
 
-mixin Operations {
+__mixin Operations {
   fn F[me: Self](x: Self) -> Self{
      return x;
   }
@@ -23,7 +23,7 @@ class Point {
 
   var x: i32;
   var y: i32;
-  mix Operations;
+  __mix Operations;
 }
 
 class Complex {

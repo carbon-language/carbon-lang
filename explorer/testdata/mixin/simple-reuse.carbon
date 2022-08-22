@@ -11,7 +11,7 @@
 
 package ExplorerTest api;
 
-mixin Operations {
+__mixin Operations {
   fn Square[me: Self](x:i32) -> i32{
     return x * x;
   }
@@ -24,7 +24,7 @@ class Point {
 
   var x: i32;
   var y: i32;
-  mix Operations;
+  __mix Operations;
 }
 
 class Complex {
@@ -34,7 +34,7 @@ class Complex {
 
   var r: i32;
   var i: i32;
-  mix Operations;
+  __mix Operations;
 }
 
 

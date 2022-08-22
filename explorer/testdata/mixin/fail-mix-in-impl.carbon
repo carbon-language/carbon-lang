@@ -10,7 +10,7 @@
 
 package ExplorerTest api;
 
-mixin Operations {
+__mixin Operations {
   fn Square[me: Self](x:i32) -> i32{
     return x * x;
   }
@@ -22,7 +22,7 @@ interface A {
 
 external impl i32 as A {
   // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-mix-in-impl.carbon:[[@LINE+1]]: syntax error, unexpected MIX, expecting ALIAS or FN or RIGHT_CURLY_BRACE
-  mix Operations;
+  __mix Operations;
   fn F() {}
 }
 

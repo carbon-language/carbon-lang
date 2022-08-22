@@ -2,11 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
+// RUN: %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
+// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
+// CHECK: result: 0
 
 package ExplorerTest api;
 
@@ -16,34 +17,28 @@ __mixin Operations {
   }
 }
 
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-mix-in-global.carbon:[[@LINE+1]]: syntax error, unexpected MIX, expecting END_OF_FILE
-__mix Operations;
-
 class Point {
-  fn Origin() -> Point {
-    return {.x = 0, .y = 0};
-  }
-
   var x: i32;
   var y: i32;
+  fn DistanceSquare[me:Self](other:Self) -> i32 {
+    return me.Square(me.x - other.x) + me.Square(me.y - other.y);
+  }
   __mix Operations;
 }
 
 class Complex {
-  fn Zero() -> Complex {
-    return {.r = 0, .i = 0};
-  }
-
   var r: i32;
   var i: i32;
   __mix Operations;
+  fn AbsSquare[me:Self]() -> i32 {
+    return me.Square(me.r) + me.Square(me.i);
+  }
 }
 
 
 fn Main() -> i32 {
-  var p: Point = Point.Origin();
-  var c: Complex = Complex.Zero();
-  p.x = 3;
-  c.r = 3;
-  return p.Square(p.y) - c.Square(c.i);
+  var p1: Point = {.x = 0, .y = 0 };
+  var p2: Point = {.x = 1, .y = 2 };
+  var c: Complex = {.r = 1, .i = 2 };
+  return c.AbsSquare() - p1.DistanceSquare(p2);
 }

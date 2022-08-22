@@ -11,7 +11,7 @@
 
 package ExplorerTest api;
 
-mixin M {
+__mixin M {
   fn F[me: Self](x: Self) -> Self{
      return x;
   }
@@ -19,7 +19,7 @@ mixin M {
 
 class C {
   let F: i32 = 0;
-  mix M;
+  __mix M;
 }
 
 fn Main() -> i32 {

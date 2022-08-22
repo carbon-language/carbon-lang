@@ -721,9 +721,10 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
       break;
     }
 
+    // EXPERIMENTAL MIXIN FEATURE
     case Fuzzing::Declaration::kMixin: {
       const auto& mixin_declaration = declaration.mixin();
-      out << "mixin ";
+      out << "__mixin ";
       IdentifierToCarbon(mixin_declaration.name(), out);
 
       // type params are not implemented yet
@@ -741,9 +742,10 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
       break;
     }
 
+    // EXPERIMENTAL MIXIN FEATURE
     case Fuzzing::Declaration::kMix: {
       const auto& mix_declaration = declaration.mix();
-      out << "mix ";
+      out << "__mix ";
       ExpressionToCarbon(mix_declaration.mixin(), out);
       out << ";";
       break;

@@ -2,33 +2,25 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
+// RUN: %{not} %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
+// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: result: 0
-
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-recursive-mixing.carbon:18: Member named F1 (declared at {{.*}}/explorer/testdata/mixin/fail-recursive-mixing.carbon:16) is being mixed multiple times into M1
 package ExplorerTest api;
 
 __mixin M1 {
-  fn Scale10[me:Self](x:i32) -> i32{
-     return x * 10;
+  fn F1[me: Self](x: Self) -> Self{
+     return x;
   }
-}
-
-__mixin M2 {
   __mix M1;
-  fn Square[me: Self](x:i32) -> i32{
-    return x * x;
-  }
 }
 
 class C {
-  __mix M2;
+  __mix M1;
 }
 
 fn Main() -> i32 {
-  var c: C = {};
-  return c.Square(10) - c.Scale10(10);
+  return 0;
 }

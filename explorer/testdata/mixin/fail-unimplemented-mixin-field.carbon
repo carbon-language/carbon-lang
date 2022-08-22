@@ -2,33 +2,26 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
+// RUN: %{not} %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
+// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: result: 0
-
 package ExplorerTest api;
 
 __mixin M1 {
-  fn Scale10[me:Self](x:i32) -> i32{
-     return x * 10;
+  fn F1[me: Self](x: Self) -> Self{
+     return x;
   }
-}
-
-__mixin M2 {
-  __mix M1;
-  fn Square[me: Self](x:i32) -> i32{
-    return x * x;
-  }
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-unimplemented-mixin-field.carbon:[[@LINE+1]]: syntax error, unexpected VAR, expecting FN or MIX or RIGHT_CURLY_BRACE
+  var v: i32 = 42;
 }
 
 class C {
-  __mix M2;
+ __mix M1;
 }
 
 fn Main() -> i32 {
-  var c: C = {};
-  return c.Square(10) - c.Scale10(10);
+  var c: C = {.v = 0};
+  return c.v;
 }
