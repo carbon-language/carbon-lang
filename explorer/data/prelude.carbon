@@ -416,46 +416,6 @@ external impl i32 as RightShiftWith(i32) where .Result == i32 {
   }
 }
 
-//-------------------------
-// Optional
-//-------------------------
-choice OptionalElement(T:! Type) {
-  None(),
-  Element(T)
-}
-
-class Optional(T:! Type){
-  fn CreateEmpty() -> Optional(T){
-    return { .element = OptionalElement(T).None() };
-  }
-  fn Create ( value: T ) -> Optional(T){
-    return { .element = MyOptionalElement(T).Element(value) };
-  }
-
-  fn has_value[me: Self] () -> bool{
-    var x: OptionalElement(T) = me.element;
-    match(x){
-      case MyOptionalElement(T).None() => { return false; }
-    }
-    return false;
-  }
-
-  fn get[me: Self] () -> T {
-    var y: T;
-    var x: OptionalElement(T) = me.element;
-    match(x){
-      case OptionalElement(T).Element( var x: T ) =>{
-        return x;
-      }
-    }
-    return y;
-  }
-
-  var element: OptionalElement(T);
-}
-
-
-
 // ------------------------
 // Miscellaneous utilities.
 // ------------------------
@@ -481,5 +441,3 @@ class Heap {
 }
 
 var heap: Heap = {};
-
-

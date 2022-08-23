@@ -45,15 +45,8 @@ class MyOptional(T:! Type){
         return y;
     }
 
-    impl ImplicitAs(bool){
-        fn Convert[me: Self]() -> bool{
-            return true;
-        }
-    }
-
    var element: MyOptionalElement(T);
 }
-
 
 
 fn Main() -> i32 {
