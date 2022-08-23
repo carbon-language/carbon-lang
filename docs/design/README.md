@@ -143,27 +143,28 @@ Features that are provisional have been marked as such on a best-effort basis.
 
 Here is a simple function showing some Carbon code:
 
-```carbon
-import Console;
+FIXME: assignment statement
 
-// Prints the Fibonacci numbers less than `limit`.
-fn Fibonacci(limit: i64) -> (i64, i32) {
-  var a: i64 = 0;
-  var b: i64 = 1;
-  var n: i32 = 0;
-  while (a < limit) {
-    Console.Print("{0}: {1}\n", n, a);
-    // Stop before overflow.
-    if (b > 1 << 62) {
-      break;
+```carbon
+import Math;
+
+// Return smallest factor > 1, and whether it is prime.
+fn SmallestFactor(n: i32) -> (i32, bool) {
+  let limit: i32 = Math.Sqrt(n) as i32;
+  var i: i32 = 2;
+  while (i <= limit) {
+    let remainder: i32 = n % i;
+    if (remainder == 0) {
+      Carbon.Print("{0} is a factor of {1}", i, n);
+      return (i, false);
     }
-    let next: i64 = a + b;
-    a = b;
-    b = next;
-    ++n;
+    if (i == 2) {
+      i = 3;
+    } else {
+      i += 2;
+    }
   }
-  // Returns value and index.
-  return (a, n);
+  return (n, true);
 }
 ```
 
@@ -191,23 +192,20 @@ into [api and implementation files](#files-libraries-packages), like C++'s
 header and source files. This declaration from the example:
 
 ```carbon
-import Console;
+import Math;
 ```
 
-imports the default library from package `Carbon`. The names from this library
-are accessible as members of `Console`, like `Console.Print`. Unlike C++, the
-namespaces of different packages are kept separate, so there are no name
-conflicts.
+imports the default library from package `Math`. The names from this library are
+accessible as members of `Math`, like `Math.Sqrt`. The `Carbon.Print` function
+comes from the `Carbon` package which is
+[imported by default](#name-lookup-for-common-types). Unlike C++, the namespaces
+of different packages are kept separate, so there are no name conflicts.
 
 Carbon [comments](#code-and-comments) must be on a line by themselves starting
 with `//`.
 
 ```carbon
-// Prints the Fibonacci numbers less than `limit`.
-...
-    // Stop before overflow.
-...
-  // Returns value and index.
+// Return smallest factor > 1, and whether it is prime.
 ```
 
 A [function definition](#functions) consists of:
@@ -219,9 +217,11 @@ A [function definition](#functions) consists of:
 -   a body inside curly braces `{`...`}`.
 
 ```carbon
-fn Fibonacci(limit: i64) -> (i64, i32) {
+fn SmallestFactor(n: i32) -> (i32, bool) {
   ...
-  return (a, n);
+      return (i, false);
+  ...
+  return (n, true);
 }
 ```
 
@@ -231,8 +231,8 @@ The body of the function is an ordered sequence of
 with an optional `return` statement that specifies an expression whose value is
 returned.
 
-Here `i64` and `i32` refer to signed [integer types](#integer-types), with 64
-and 32 bits respectively. Carbon has [`bool` boolean type](#bool),
+Here `i32` refers to a signed [integer type](#integer-types), with 32 bits, and
+`bool` is the [boolean type](#bool). Carbon also has
 [floating-point types](#floating-point-types) like `f32` and `f64`, and
 [string types](#string-types).
 
@@ -244,16 +244,16 @@ A [variable declaration](#variable-var-declarations) has three parts:
 -   an optional initializer.
 
 ```carbon
-  var a: i64 = 0;
+  var i: i32 = 2;
 ```
 
 You can modify the value of a variable with an
 [assignment statement](#assignment-statements):
 
 ```carbon
-    a = b;
-    b = next;
-    ++n;
+      i = 3;
+      ...
+      i += 2;
 ```
 
 [Constants are declared](#constant-let-declarations) with the `let` keyword
@@ -261,54 +261,73 @@ introducer. The syntax parallels variable declarations except the initializer is
 required:
 
 ```carbon
-    let next: i64 = a + b;
+  let limit: i32 = Math.Sqrt(n) as i32;
+  ...
+    let remainder: i32 = n % i;
 ```
 
-Here, `a + b` is an [expression](#expressions) that return the value returned by
-the `+` operator. Expression return values are ignored when expressions are used
-as statements, as in this call to the `Console.Print` function:
+The initializer `Math.Sqrt(n) as i32` is an [expression](#expressions). It first
+calls the `Math.Sqrt` function with `n` as the argument. Then, the `as` operator
+casts the floating-point return value to `i32`. Lossy conversions like that must
+be done explicitly.
+
+Other expressions include `n % i`, which applies the binary `%` modulo operator
+with `n` and `i` as arguments, and `remainder == 0`, which applies the `==`
+comparison operator producing a `bool` result. Expression return values are
+ignored when expressions are used as statements, as in this call to the
+`Carbon.Print` function:
 
 ```carbon
-    Console.Print("{0}: {1}\n", n, a);
+      Carbon.Print("{0} is a factor of {1}", i, n);
 ```
 
-Function calls consist of the name of the function followed by the argument list
-in round parentheses `(`...`)`.
+Function calls consist of the name of the function followed by the
+comma-separated argument list in round parentheses `(`...`)`.
 
-Control flow statements, including `if`, `while`, and `break`, change the order
-that statements are executed, as they do in C++:
+Control flow statements, including `if`, `while`, `for`, `break`, and
+`continue`, change the order that statements are executed, as they do in C++:
 
 ```carbon
-  while (a < limit) {
+  while (i <= limit) {
     ...
-    if (b > 1 << 62) {
-      break;
+    if (remainder == 0) {
+      ...
     }
-    ...
+    if (i == 2) {
+      ...
+    } else {
+      ...
+    }
   }
 ```
 
 Every code block in curly braces `{`...`}` defines a scope. Names are visible
-from their declaration until the end of innermost scope containing it. So `next`
-in the example is visible until the next closing curly brace `}`.
+from their declaration until the end of innermost scope containing it. So
+`remainder` in the example is visible until the curly brace `}` that closes the
+`while`.
 
 The example function uses a [_tuple_](#tuples), a
 [composite type](#composite-types), to return multiple values. Both tuple values
 and types are written using a comma-separated list inside parentheses. So
-`(a, n)` is a tuple value, and `(i64, i32)` is its type.
+`(i, false)` and `(n, true)` are tuple values, and `(i32, bool)` is their type.
 
 [Struct types](#struct-types) are similar, except their members are referenced
 by name instead of position. The example could be changed to use structs instead
 as follows:
 
 ```carbon
-// Return type of `{.value: i64, .index: i32}` is a struct
-// with an `i64` field named `.value`, and an `i32` field
-// named `.index`.
-fn Fibonacci(limit: i64) -> {.value: i64, .index: i32} {
+// Return type of `{.factor: i32, .prime: bool}` is a struct
+// with an `i32` field named `.factor`, and a `bool` field
+// named `.prime`.
+fn SmallestFactor(n: i32) -> {.factor: i32, .prime: bool} {
+  ...
+    if (remainder == 0) {
+      // Return a struct value.
+      return {.factor = i, .prime = false};
+    }
   ...
   // Return a struct value.
-  return {.value = a, .index = n};
+  return {.factor = n, .prime = true};
 }
 ```
 
@@ -354,11 +373,26 @@ The behavior of the Carbon compiler depends on the _build mode_:
 
 Expressions compute values in Carbon, and these values are always strongly typed
 much like in C++. However, an important difference from C++ is that types are
-themselves modeled as values; specifically, compile-time constant values. This
-means that the grammar for writing a type is the [expression](#expressions)
-grammar. Expressions written where a type is expected must be able to be
-evaluated at compile-time and must evaluate to a type value. Parameters to a
-type are expressed using the function-call syntax.
+themselves modeled as values; specifically, compile-time-constant values. This
+has a number of consequences:
+
+-   Names for types are in the same namespace shared with functions, variables,
+    namespaces, and so on.
+-   The grammar for writing a type is the [expression](#expressions) grammar,
+    not a separate grammar for types. So Carbon doesn't use angle brackets
+    `<`...`>` in types, since `<` and `>` are used for comparison in
+    expressions.
+-   Function call syntax is used to specify parameters to a type, like
+    `HashMap(String, i64)`.
+
+Some values, such as `()` and `{}`, may even be used as types, but only act like
+types when they are in a type position, like after a `:` in a variable
+declaration or the return type after a `->` in a function declaration. Any
+expression in a type position must be
+[a constants or symbolic value](#value-categories-and-value-phases) so the
+compiler can resolve whether the value can be used as a type. This also puts
+limits on how much operators can do different things for types. This is good for
+consistency, but is a significant restriction on Carbon's design.
 
 ## Primitive types
 
@@ -705,7 +739,7 @@ Elements of an array may be accessed using square brackets (`[`...`]`), as in
 
 ```carbon
 a[i] = 2;
-Console.Print(a[0]);
+Carbon.Print(a[0]);
 ```
 
 > **TODO:** Slices
@@ -1191,11 +1225,11 @@ For example:
 
 ```carbon
 if (fruit.IsYellow()) {
-  Console.Print("Banana!");
+  Carbon.Print("Banana!");
 } else if (fruit.IsOrange()) {
-  Console.Print("Orange!");
+  Carbon.Print("Orange!");
 } else {
-  Console.Print("Vegetable!");
+  Carbon.Print("Vegetable!");
 }
 ```
 
@@ -1224,10 +1258,10 @@ example, this prints `0`, `1`, `2`, then `Done!`:
 ```carbon
 var x: i32 = 0;
 while (x < 3) {
-  Console.Print(x);
+  Carbon.Print(x);
   ++x;
 }
-Console.Print("Done!");
+Carbon.Print("Done!");
 ```
 
 > References:
@@ -1243,7 +1277,7 @@ example, this prints each `String` value in `names`:
 
 ```carbon
 for (var name: String in names) {
-  Console.Print(name);
+  Carbon.Print(name);
 }
 ```
 
@@ -1263,7 +1297,7 @@ processed):
 ```carbon
 for (var step: Step in steps) {
   if (step.IsManual()) {
-    Console.Print("Reached manual step!");
+    Carbon.Print("Reached manual step!");
     break;
   }
   step.Process();
@@ -1292,7 +1326,7 @@ while (!f.EOF()) {
   if (line.IsEmpty()) {
     continue;
   }
-  Console.Print(line);
+  Carbon.Print(line);
 }
 ```
 
@@ -1321,7 +1355,7 @@ fn PrintFirstN(n: i32) {
       // executed after a `return`.
       return;
     }
-    Console.Print(i);
+    Carbon.Print(i);
   }
 }
 ```
@@ -2406,6 +2440,9 @@ imported automatically into every `api` file. Dedicated type literal syntaxes
 like `i32` and `bool` refer to types defined within this package, based on the
 ["all APIs are library APIs" principle](/docs/project/principles/library_apis_only.md).
 
+> **TODO:** Prelude provisionally imports the `Carbon` package which includes
+> common facilities, like `Print` and the interfaces for operator overloading.
+
 > References:
 >
 > -   [Name lookup](name_lookup.md)
@@ -2560,7 +2597,7 @@ class Circle {
 
   impl as Printable {
     fn Print[me: Self]() {
-      Console.WriteLine("Circle with radius: {0}", me.radius);
+      Carbon.Print("Circle with radius: {0}", me.radius);
     }
   }
 }
