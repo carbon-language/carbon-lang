@@ -12,17 +12,17 @@
 package ExplorerTest api;
 
 
-choice OptionalElement(ZZ:! Type, YY:! Type) {
+choice MyOptionalElement(ZZ:! Type, YY:! Type) {
   None(YY),
   Element(ZZ)
 }
 
 
 fn Main() -> i32 {
-  var f: OptionalElement(String,i32);
-  f = OptionalElement(String,i32).None(22);
+  var f: MyOptionalElement(String,i32);
+  f = MyOptionalElement(String,i32).None(22);
   match(f) {
-    case OptionalElement(String,i32).None(var x: i32) => {
+    case MyOptionalElement(String,i32).None(var x: i32) => {
       return x;
     }
   }

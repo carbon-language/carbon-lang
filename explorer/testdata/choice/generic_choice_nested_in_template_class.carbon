@@ -13,44 +13,44 @@
 package ExplorerTest api;
 
 
-choice OptionalElement(T:! Type) {
+choice MyOptionalElement(T:! Type) {
   None(),
   Element(T)
 }
 
-class Optional(T:! Type){
-   fn CreateEmpty() -> Optional(T){
-       return { .element = OptionalElement(T).None() };
+class MyOptional(T:! Type){
+   fn CreateEmpty() -> MyOptional(T){
+       return { .element = MyOptionalElement(T).None() };
    }
-   fn Create ( value: T ) -> Optional(T){
-       return { .element = OptionalElement(T).Element(value) };
+   fn Create ( value: T ) -> MyOptional(T){
+       return { .element = MyOptionalElement(T).Element(value) };
    }
 
     fn has_value[me: Self] () -> bool{
-        var x: OptionalElement(T) = me.element;
+        var x: MyOptionalElement(T) = me.element;
         match(x){
-            case OptionalElement(T).None() => { return false; }
+            case MyOptionalElement(T).None() => { return false; }
         }
         return false;
     }
 
     fn get[me: Self] () -> T {
         var y: T;
-        var x: OptionalElement(T) = me.element;
+        var x: MyOptionalElement(T) = me.element;
         match(x){
-            case OptionalElement(T).Element( var x: T ) =>{
+            case MyOptionalElement(T).Element( var x: T ) =>{
                 return x;
             }
         }
         return y;
     }
 
-   var element: OptionalElement(T);
+   var element: MyOptionalElement(T);
 }
 
 
 fn Main() -> i32 {
-  var f: Optional(i32) = Optional(i32).Create(22);
+  var f: MyOptional(i32) = MyOptional(i32).Create(22);
   var x: i32 = f.get();
   Print("H {0}",x);
 
