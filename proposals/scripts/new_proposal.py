@@ -198,8 +198,6 @@ def main() -> None:
             "proposal",
             "--label",
             "proposal draft",
-            "--reviewer",
-            "carbon-language/carbon-leads",
             "--repo",
             "carbon-language/carbon-lang",
             "--title",
