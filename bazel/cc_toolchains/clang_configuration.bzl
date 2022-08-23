@@ -64,6 +64,19 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
     Returns the resulting paths as a list of strings.
     """
 
+    # Create an empty temp file for Clang to use
+    if repository_ctx.os.name.lower().startswith("windows"):
+        repository_ctx.file('_temp', '')
+
+    # Read in an empty input file. If we are building from
+    # Windows, then we create an empty temp file. Clang
+    # on Windows does not like it when you pass a non-existent file.
+    if repository_ctx.os.name.lower().startswith("windows"):
+        repository_ctx.file('_temp', '')
+        input_file = repository_ctx.path('_temp')
+    else:
+        input_file = "/dev/null"
+
     # The only way to get this out of Clang currently is to parse the verbose
     # output of the compiler when it is compiling C++ code.
     cmd = [
@@ -78,7 +91,7 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
         "-x",
         "c++",
         # Read in an empty input file.
-        "/dev/null",
+        input_file,
         # Always use libc++.
         "-stdlib=libc++",
     ]
@@ -98,6 +111,7 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
     # space from each path.
     include_begin = output.index("#include <...> search starts here:") + 1
     include_end = output.index("End of search list.", include_begin)
+
     return [
         repository_ctx.path(s.lstrip(" "))
         for s in output[include_begin:include_end]
@@ -138,6 +152,13 @@ def _configure_clang_toolchain_impl(repository_ctx):
         arpath = repository_ctx.which("llvm-ar")
         if not arpath:
             fail("`llvm-ar` not found in PATH or adjacent to clang")
+
+    # By default Windows uses '\' in its paths. These will be
+    # interpreted as escape characters and fail the build, thus
+    # we must manually replace the backslashes with '/'
+    if repository_ctx.os.name.lower().startswith("windows"):
+        resource_dir = resource_dir.replace("\\", "/")
+        include_dirs = [str(s).replace("\\", "/") for s in include_dirs]
 
     repository_ctx.template(
         "clang_detected_variables.bzl",
