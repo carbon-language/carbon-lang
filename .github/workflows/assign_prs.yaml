@@ -4,7 +4,7 @@
 
 name: 'Auto Assign'
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, ready_for_review]
 
 jobs:
@@ -30,60 +30,31 @@ jobs:
 
       - id: assign-leads
         if: steps.changes.outputs.leads == 'true'
-        uses: kentaro-m/auto-assign-action@v1.2.1
+        uses: hkusu/review-assign-action@v1.3.0
         with:
-          configuration-path: '.github/assign_prs/leads.yaml'
+          reviewers: KateGregory, chandlerc, zygoloid
+          max-num-of-reviewers: 1
 
       - id: assign-explorer
         if: steps.changes.outputs.explorer == 'true'
-        uses: kentaro-m/auto-assign-action@v1.2.1
+        uses: hkusu/review-assign-action@v1.3.0
         with:
-          configuration-path: '.github/assign_prs/explorer.yaml'
+          reviewers: geoffromer, jonmeow, jsiek, zygoloid
+          max-num-of-reviewers: 1
 
       - id: assign-toolchain
         if: steps.changes.outputs.toolchain == 'true'
-        uses: kentaro-m/auto-assign-action@v1.2.1
+        uses: hkusu/review-assign-action@v1.3.0
         with:
-          configuration-path: '.github/assign_prs/toolchain.yaml'
+          reviewers: chandlerc, jonmeow, zygoloid
+          max-num-of-reviewers: 1
 
       - id: assign-fallback
         if:
           steps.changes.outputs.leads != 'true' &&
           steps.changes.outputs.explorer != 'true' &&
           steps.changes.outputs.toolchain != 'true'
-        uses: kentaro-m/auto-assign-action@v1.2.1
+        uses: hkusu/review-assign-action@v1.3.0
         with:
-          configuration-path: '.github/assign_prs/fallback.yaml'
-# TODO: Consider the below. While private it currently fails more sharply, but
-# may be a better post-public choice.
-#
-#      - id: assign-leads
-#        if: steps.changes.outputs.leads == 'true'
-#        uses: hkusu/review-assign-action@v1.3.0
-#        with:
-#          reviewers: KateGregory, chandlerc, zygoloid
-#          max-num-of-reviewers: 1
-#
-#      - id: assign-explorer
-#        if: steps.changes.outputs.explorer == 'true'
-#        uses: hkusu/review-assign-action@v1.3.0
-#        with:
-#          reviewers: geoffromer, jonmeow, jsiek, zygoloid
-#          max-num-of-reviewers: 1
-#
-#      - id: assign-toolchain
-#        if: steps.changes.outputs.toolchain == 'true'
-#        uses: hkusu/review-assign-action@v1.3.0
-#        with:
-#          reviewers: chandlerc, jonmeow, zygoloid
-#          max-num-of-reviewers: 1
-#
-#      - id: assign-fallback
-#        if:
-#          steps.changes.outputs.leads != 'true' &&
-#          steps.changes.outputs.explorer != 'true' &&
-#          steps.changes.outputs.toolchain != 'true'
-#        uses: hkusu/review-assign-action@v1.3.0
-#        with:
-#          reviewers: chandlerc, jonmeow, josh11b, zygoloid
-#          max-num-of-reviewers: 1
+          reviewers: chandlerc, jonmeow, josh11b, zygoloid
+          max-num-of-reviewers: 1
