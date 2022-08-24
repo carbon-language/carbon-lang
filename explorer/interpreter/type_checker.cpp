@@ -1744,9 +1744,15 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                        << " does not have an alternative named "
                        << access.member_name();
               }
-              Nonnull<const Value*> type =
-                  arena_->New<FunctionType>(*parameter_types, llvm::None,
-                                            &choice, llvm::None, llvm::None);
+              Nonnull<const Value*> substituted_parameter_type =
+                  *parameter_types;
+              if (choice.IsParameterized()) {
+                substituted_parameter_type =
+                    Substitute(choice.type_args(), *parameter_types);
+              }
+              Nonnull<const Value*> type = arena_->New<FunctionType>(
+                  substituted_parameter_type, llvm::None, &choice, llvm::None,
+                  llvm::None);
               // TODO: Should there be a Declaration corresponding to each
               // choice type alternative?
               access.set_member(Member(arena_->New<NamedValue>(
@@ -2278,12 +2284,22 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               call.set_value_category(ValueCategory::Let);
               break;
             }
+            case DeclarationKind::ChoiceDeclaration: {
+              Nonnull<ChoiceType*> ct = arena_->New<ChoiceType>(
+                  cast<ChoiceDeclaration>(&decl), bindings);
+              Nonnull<TypeOfChoiceType*> inst_choice_type =
+                  arena_->New<TypeOfChoiceType>(ct);
+              call.set_static_type(inst_choice_type);
+              call.set_value_category(ValueCategory::Let);
+              break;
+            }
             default:
               CARBON_FATAL()
                   << "unknown type of ParameterizedEntityName for " << decl;
           }
           return Success();
         }
+        case Value::Kind::TypeOfChoiceType:
         default: {
           return CompilationError(e->source_loc())
                  << "in call `" << *e
@@ -2852,9 +2868,15 @@ auto TypeChecker::TypeCheckPattern(
                << "'" << alternative.alternative_name()
                << "' is not an alternative of " << choice_type;
       }
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&alternative.arguments(),
-                                              *parameter_types, impl_scope,
-                                              enclosing_value_category));
+
+      Nonnull<const Value*> substituted_parameter_type = *parameter_types;
+      if (choice_type.IsParameterized()) {
+        substituted_parameter_type =
+            Substitute(choice_type.type_args(), *parameter_types);
+      }
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckPattern(&alternative.arguments(), substituted_parameter_type,
+                           impl_scope, enclosing_value_category));
       alternative.set_static_type(&choice_type);
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> alternative_value,
@@ -3802,6 +3824,23 @@ auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
 auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
                                            const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
+  ImplScope choice_scope;
+  choice_scope.AddParent(scope_info.innermost_scope);
+  std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
+  if (choice->type_params().has_value()) {
+    Nonnull<TuplePattern*> type_params = *choice->type_params();
+    CARBON_RETURN_IF_ERROR(TypeCheckPattern(type_params, std::nullopt,
+                                            choice_scope, ValueCategory::Let));
+    CollectGenericBindingsInPattern(type_params, bindings);
+    if (trace_stream_) {
+      **trace_stream_ << choice_scope;
+    }
+  }
+  BindingMap generic_args;
+  for (auto* binding : bindings) {
+    generic_args[binding] = *binding->symbolic_identity();
+  }
+
   std::vector<NamedValue> alternatives;
   for (Nonnull<AlternativeSignature*> alternative : choice->alternatives()) {
     CARBON_ASSIGN_OR_RETURN(auto signature,
@@ -3809,7 +3848,20 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
                                              *scope_info.innermost_scope));
     alternatives.push_back({.name = alternative->name(), .value = signature});
   }
-  auto ct = arena_->New<ChoiceType>(choice->name(), std::move(alternatives));
+  choice->set_members(alternatives);
+  if (choice->type_params().has_value()) {
+    Nonnull<ParameterizedEntityName*> param_name =
+        arena_->New<ParameterizedEntityName>(choice, *choice->type_params());
+    SetConstantValue(choice, param_name);
+    choice->set_static_type(
+        arena_->New<TypeOfParameterizedEntityName>(param_name));
+    return Success();
+  }
+
+  auto ct = arena_->New<ChoiceType>(
+      choice,
+      arena_->New<Bindings>(std::move(generic_args), Bindings::NoWitnesses));
+
   SetConstantValue(choice, ct);
   choice->set_static_type(arena_->New<TypeOfChoiceType>(ct));
   return Success();

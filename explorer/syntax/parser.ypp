@@ -1115,8 +1115,8 @@ declaration:
           context.source_loc(), $3,
           arena->New<SelfDeclaration>(context.source_loc()), $1, $4, $5, $7);
     }
-| CHOICE identifier LEFT_CURLY_BRACE alternative_list RIGHT_CURLY_BRACE
-    { $$ = arena->New<ChoiceDeclaration>(context.source_loc(), $2, $4); }
+| CHOICE identifier type_params LEFT_CURLY_BRACE alternative_list RIGHT_CURLY_BRACE
+    { $$ = arena->New<ChoiceDeclaration>(context.source_loc(), $2, $3, $5); }
 | VAR variable_declaration SEMICOLON
     {
       $$ = arena->New<VariableDeclaration>(context.source_loc(), $2,
