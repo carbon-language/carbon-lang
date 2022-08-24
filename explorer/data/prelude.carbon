@@ -432,7 +432,7 @@ class Optional(T:! Type){
     return { .element = OptionalElement(T).Element(value) };
   }
 
-  fn has_value[me: Self] () -> bool{
+  fn HasValue[me: Self] () -> bool {
     var x: OptionalElement(T) = me.element;
     match(x){
       case OptionalElement(T).None() => { return false; }
