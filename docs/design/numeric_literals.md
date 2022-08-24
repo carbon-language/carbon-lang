@@ -12,30 +12,23 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [TODO](#todo)
 -   [Overview](#overview)
     -   [Defined Types](#defined-types)
+        -   [TODO](#todo)
     -   [Numeric literal syntax](#numeric-literal-syntax)
     -   [Implicit conversions](#implicit-conversions)
-    -   [Examples](#examples)
+-   [Examples](#examples)
 -   [Alternatives Considered](#alternatives-considered)
 -   [References](#references)
 
 <!-- tocstop -->
-
-## TODO
-
-This document needs to be updated once we have resolved how to reference types
-brought in by the prelude. BigInt, Rational, IntLiteral, FloatLiteral will
-likely be accessed through a package prefix like Carbon.BigInt or Core.BigInt,
-and the Defined Types section will need to be updated to reflect those.
 
 ## Overview
 
 Numeric Literals are defined on Wikipedia
 [here](<https://en.wikipedia.org/wiki/Literal_(computer_programming)>).
 
-in Carbon, Numeric literals have a type derived from their value. Two integer
+in Carbon, numeric literals have a type derived from their value. Two integer
 literals have the same type if and only if they represent the same integer. Two
 real number literals have the same type if and only if they represent the same
 real number.
@@ -104,11 +97,19 @@ operations are typically heterogeneous: for example, an addition between
 `IntLiteral(n)` and `IntLiteral(m)` produces a value of type
 `IntLiteral(n + m)`.
 
+#### TODO
+
+This document needs to be updated once we have resolved how to reference things
+brought in by the prelude. `BigInt`, `Rational`, `IntLiteral`, and
+`FloatLiteral` will likely be accessed through a package prefix like
+`Carbon.BigInt` or `Core.BigInt`, and the [Defined Types](#defined-types)
+section will need to be updated to reflect those.
+
 ### Numeric literal syntax
 
-Numeric Literal semantics are covered in the
+Numeric Literal syntax is covered in the
 [numeric_literals](lexical_conventions/numeric_literals.md) lexical conventions
-doc. Decimal and Real-Number semantics are defined, with decimal, hexadecimal
+doc. Both Integer and Real-Number syntax is defined, with decimal, hexadecimal
 and binary integer literals, and decimal and hexadecimal real number literals.
 
 ### Implicit conversions
@@ -133,16 +134,18 @@ yet decided.
 
 Similarly, `IntLiteral(x)` and `FloatLiteral(x)` convert to any sufficiently
 large floating-point type, and produce the nearest representable floating-point
-value. Conversions in which `x` lies exactly half-way between two values are
-rounded to the value in which the mantissa is even, as defined in the IEEE 754
-standard and as was decided in
+value.
+
+Conversions in which `x` lies exactly half-way between two values are rounded to
+the value in which the mantissa is even, as defined in the IEEE 754 standard and
+as was decided in
 [proposal #866](https://github.com/carbon-language/carbon-lang/pull/866).
 
 Conversions in which `x` is outside the range of finite values of the
 floating-point type are rejected rather than saturating to the finite range or
 producing an infinity.
 
-### Examples
+## Examples
 
 ```carbon
 // This is OK: the initializer is of the integer literal type with value
