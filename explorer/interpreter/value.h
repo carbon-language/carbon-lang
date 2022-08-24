@@ -838,16 +838,14 @@ class ChoiceType : public Value {
   ChoiceType(Nonnull<const ChoiceDeclaration*> declaration,
              Nonnull<const Bindings*> bindings)
       : Value(Kind::ChoiceType),
-        name_(declaration->name()),
-        alternatives_(declaration->members()),
-        bindings_(bindings),
-        declaration_(declaration) {}
+        declaration_(declaration),
+        bindings_(bindings) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ChoiceType;
   }
 
-  auto name() const -> const std::string& { return name_; }
+  auto name() const -> const std::string& { return declaration_->name(); }
 
   // Returns the parameter types of the alternative with the given name,
   // or nullopt if no such alternative is present.
@@ -855,7 +853,9 @@ class ChoiceType : public Value {
       -> std::optional<Nonnull<const Value*>>;
 
   auto bindings() const -> const Bindings& { return *bindings_; }
+
   auto type_args() const -> const BindingMap& { return bindings_->args(); }
+
   auto declaration() const -> const ChoiceDeclaration& { return *declaration_; }
 
   auto IsParameterized() const -> bool {
@@ -863,10 +863,8 @@ class ChoiceType : public Value {
   }
 
  private:
-  std::string name_;
-  std::vector<NamedValue> alternatives_;
-  Nonnull<const Bindings*> bindings_;
   Nonnull<const ChoiceDeclaration*> declaration_;
+  Nonnull<const Bindings*> bindings_;
 };
 
 // A continuation type.

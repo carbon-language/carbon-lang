@@ -636,7 +636,6 @@ auto TypeChecker::ArgumentDeduction(
     }
     **trace_stream_ << "\n";
   }
-
   // Handle the case where we can't perform deduction, either because the
   // parameter is a primitive type or because the parameter and argument have
   // different forms. In this case, we require an implicit conversion to exist,
@@ -1720,7 +1719,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> type,
               InterpExp(&access.object(), arena_, trace_stream_));
-
           switch (type->kind()) {
             case Value::Kind::StructType: {
               for (const auto& field : cast<StructType>(type)->fields()) {
@@ -1738,7 +1736,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             }
             case Value::Kind::ChoiceType: {
               const ChoiceType& choice = cast<ChoiceType>(*type);
-
               std::optional<Nonnull<const Value*>> parameter_types =
                   choice.FindAlternative(access.member_name());
               if (!parameter_types.has_value()) {
@@ -1780,7 +1777,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                     }
                     Nonnull<const Value*> field_type = Substitute(
                         class_type.type_args(), &(*member)->static_type());
-
                     access.set_static_type(field_type);
                     access.set_value_category(ValueCategory::Let);
                     return Success();
@@ -2215,11 +2211,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     }
     case ExpressionKind::CallExpression: {
       auto& call = cast<CallExpression>(*e);
-
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&call.function(), impl_scope));
-
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&call.argument(), impl_scope));
-
       switch (call.function().static_type().kind()) {
         case Value::Kind::FunctionType: {
           const auto& fun_t = cast<FunctionType>(call.function().static_type());
@@ -2229,7 +2222,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 << "\nwith arguments of type: " << call.argument().static_type()
                 << "\n";
           }
-
           CARBON_RETURN_IF_ERROR(DeduceCallBindings(
               call, &fun_t.parameters(), fun_t.generic_parameters(),
               fun_t.deduced_bindings(), fun_t.impl_bindings(), impl_scope));
@@ -2247,11 +2239,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           // This case handles the application of a parameterized class or
           // interface to a set of arguments, such as Point(i32) or
           // AddWith(i32).
-          const TypeOfParameterizedEntityName& entity =
-              cast<TypeOfParameterizedEntityName>(
-                  call.function().static_type());
-
-          const ParameterizedEntityName& param_name = entity.name();
+          const ParameterizedEntityName& param_name =
+              cast<TypeOfParameterizedEntityName>(call.function().static_type())
+                  .name();
 
           // Collect the top-level generic parameters and their constraints.
           std::vector<FunctionType::GenericParameter> generic_parameters;
@@ -2301,7 +2291,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                   arena_->New<TypeOfChoiceType>(ct);
               call.set_static_type(inst_choice_type);
               call.set_value_category(ValueCategory::Let);
-
               break;
             }
             default:
@@ -2310,12 +2299,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           }
           return Success();
         }
-        case Value::Kind::TypeOfChoiceType: {
-          return CompilationError(e->source_loc())
-                 << "in call `" << *e
-                 << "`, expected callee to be a function, found `"
-                 << call.function().static_type() << "`";
-        }
+        case Value::Kind::TypeOfChoiceType:
         default: {
           return CompilationError(e->source_loc())
                  << "in call `" << *e
@@ -2897,7 +2881,6 @@ auto TypeChecker::TypeCheckPattern(
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> alternative_value,
           InterpPattern(&alternative, arena_, trace_stream_));
-
       SetValue(&alternative, alternative_value);
       return Success();
     }
@@ -2905,7 +2888,6 @@ auto TypeChecker::TypeCheckPattern(
       auto& expression = cast<ExpressionPattern>(*p).expression();
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&expression, impl_scope));
       p->set_static_type(&expression.static_type());
-
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> expr_value,
                               InterpPattern(p, arena_, trace_stream_));
       SetValue(p, expr_value);
@@ -3885,8 +3867,8 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
   return Success();
 }
 
-auto TypeChecker::TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
-                                             const ImplScope& impl_scope)
+auto TypeChecker::TypeCheckChoiceDeclaration(
+    Nonnull<ChoiceDeclaration*> /*choice*/, const ImplScope& /*impl_scope*/)
     -> ErrorOr<Success> {
   // Nothing to do here, but perhaps that will change in the future?
   return Success();
@@ -4079,7 +4061,6 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
 
     case DeclarationKind::VariableDeclaration: {
       auto& var = cast<VariableDeclaration>(*d);
-
       // Associate the variable name with it's declared type in the
       // compile-time symbol table.
       if (!llvm::isa<ExpressionPattern>(var.binding().type())) {

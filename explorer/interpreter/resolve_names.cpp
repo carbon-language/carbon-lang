@@ -565,14 +565,13 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
       StaticScope choice_scope;
       choice_scope.AddParent(&enclosing_scope);
       enclosing_scope.MarkDeclared(choice.name());
-      // Alternative names are never used unqualified, so we don't need to
-      // add the alternatives to a scope, or introduce a new scope; we only
-      // need to check for duplicates.
       if (choice.type_params().has_value()) {
         CARBON_RETURN_IF_ERROR(
             ResolveNames(**choice.type_params(), choice_scope));
       }
-
+      // Alternative names are never used unqualified, so we don't need to
+      // add the alternatives to a scope, or introduce a new scope; we only
+      // need to check for duplicates.
       std::set<std::string_view> alternative_names;
       for (Nonnull<AlternativeSignature*> alternative : choice.alternatives()) {
         CARBON_RETURN_IF_ERROR(
