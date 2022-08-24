@@ -2607,7 +2607,8 @@ fn Contains
 ```
 
 A constraint setting an associated type to a concrete type, like
-`where .ElementType == String`, gives `.ElementType` the complete `String` API.
+`where .ElementType == String`, gives `.ElementType` the complete `String` API,
+in addition to any API from the type of `ElementType`.
 
 #### Type bound for associated type
 
