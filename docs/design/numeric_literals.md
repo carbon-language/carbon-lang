@@ -1,4 +1,4 @@
-# Numeric Literals
+# Numeric Literal Semantics
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -6,32 +6,39 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
+> **STATUS:** Up-to-date on 23-Aug-2022.
+
 <!-- toc -->
 
 ## Table of contents
 
+-   [TODO](#todo)
 -   [Overview](#overview)
     -   [Defined Types](#defined-types)
-    -   [Integers](#integers)
-    -   [Floats](#floats)
+    -   [Numeric literal syntax](#numeric-literal-syntax)
     -   [Implicit conversions](#implicit-conversions)
     -   [Examples](#examples)
--   [Numeric literal semantics](#numeric-literal-semantics)
--   [Open questions](#open-questions)
-    -   [Primitive types as code vs built-in](#primitive-types-as-code-vs-built-in)
-    -   [Syntax for wrapping operations](#syntax-for-wrapping-operations)
-    -   [Non-power-of-two sizes](#non-power-of-two-sizes)
+-   [Alternatives Considered](#alternatives-considered)
 -   [References](#references)
 
 <!-- tocstop -->
 
+## TODO
+
+This document needs to be updated once we have resolved how to reference types
+brought in by the prelude. BigInt, Rational, IntLiteral, FloatLiteral will
+likely be accessed through a package prefix like Carbon.BigInt or Core.BigInt,
+and the Defined Types section will need to be updated to reflect those.
+
 ## Overview
 
-Numeric literals are used to define a numeric value in a program. This value can
-be of any type, such as an integral type or a real number type. Numeric literals
-have a type derived from their value. Two integer literals have the same type if
-and only if they represent the same integer. Two real number literals have the
-same type if and only if they represent the same real number.
+Numeric Literals are defined on Wikipedia
+[here](<https://en.wikipedia.org/wiki/Literal_(computer_programming)>).
+
+in Carbon, Numeric literals have a type derived from their value. Two integer
+literals have the same type if and only if they represent the same integer. Two
+real number literals have the same type if and only if they represent the same
+real number.
 
 That is:
 
@@ -83,13 +90,13 @@ The following types are defined in the Carbon prelude:
 
 -   A type representing floating-point literals.
 
-        ```
-        class FloatLiteral(X:! Rational(BigInt));
-        ```
+    ```
+    class FloatLiteral(X:! Rational(BigInt));
+    ```
 
-    All of these types are usable during compilation. `BigInt` supports the same
-    operations as `Int(n)`. `Rational(T)` supports the same operations as
-    `Float(n)`.
+All of these types are usable during compilation. `BigInt` supports the same
+operations as `Int(n)`. `Rational(T)` supports the same operations as
+`Float(n)`.
 
 The types `IntLiteral(n)` and `FloatLiteral(x)` also support primitive integer
 and floating-point operations such as arithmetic and comparison, but these
@@ -97,21 +104,12 @@ operations are typically heterogeneous: for example, an addition between
 `IntLiteral(n)` and `IntLiteral(m)` produces a value of type
 `IntLiteral(n + m)`.
 
-### Integers
+### Numeric literal syntax
 
-Integer types can be either signed or unsigned, much like in C++. Signed
-integers are represented using 2's complement and notionally modeled as
-unbounded natural numbers. Signed overflow in either direction is an error.
-Specific sizes are available, for example: `i8`, `u16`, `i32`, and `u128`.
-
-There is an upper bound on the size of an integer, most likely initially set to
-128 bits due to LLVM limitations.
-
-### Floats
-
-Floating point types are based on the binary floating point formats provided by
-IEEE-754. `f16`, `f32`, `f64` and, if available, `f128` correspond exactly to
-those sized IEEE-754 formats, and have the semantics defined by IEEE-754.
+Numeric Literal semantics are covered in the
+[numeric_literals](lexical_conventions/numeric_literals.md) lexical conventions
+doc. Decimal and Real-Number semantics are defined, with decimal, hexadecimal
+and binary integer literals, and decimal and hexadecimal real number literals.
 
 ### Implicit conversions
 
@@ -119,13 +117,13 @@ those sized IEEE-754 formats, and have the semantics defined by IEEE-754.
 
 ```
 impl [template N:! BigInt, template M:! BigInt]
-    IntLiteral(N) as ImplicitAs(Int(M))
-    if N >= Int(M).MinValue as BigInt and N <= Int(M).MaxValue as BigInt {
+    IntLiteral(N) as ImplicitAs(Carbon.Int(M))
+    if N >= Carbon.Int(M).MinValue as BigInt and N <= Carbon.Int(M).MaxValue as BigInt {
   ...
 }
 impl [template N:! BigInt, template M:! BigInt]
-    IntLiteral(N) as ImplicitAs(Unsigned(M))
-    if N >= Int(M).MinValue as BigInt and N <= Int(M).MaxValue as BigInt {
+    IntLiteral(N) as ImplicitAs(Carbon.UInt(M))
+    if N >= Carbon.UInt(M).MinValue as BigInt and N <= Carbon.UInt(M).MaxValue as BigInt {
   ...
 }
 ```
@@ -136,11 +134,13 @@ yet decided.
 Similarly, `IntLiteral(x)` and `FloatLiteral(x)` convert to any sufficiently
 large floating-point type, and produce the nearest representable floating-point
 value. Conversions in which `x` lies exactly half-way between two values are
-rejected, as
-[previously decided](/docs/design/lexical_conventions/numeric_literals.md).
+rounded to the value in which the mantissa is even, as defined in the IEEE 754
+standard and as was decided in
+[proposal #866](https://github.com/carbon-language/carbon-lang/pull/866).
+
 Conversions in which `x` is outside the range of finite values of the
-floating-point type are also represented, rather than saturating to the finite
-range or producing an infinity.
+floating-point type are rejected rather than saturating to the finite range or
+producing an infinity.
 
 ### Examples
 
@@ -159,15 +159,15 @@ var z: f64 = 1.0 / 3.0;
 // This is an error: 300 cannot be represented in type `i8`.
 var c: i8 = 300;
 
-fn f[template T:! Type](v: T) {
+fn F[template T:! Type](v: T) {
   var x: i32 = v * 2;
 }
 
 // OK: x = 2_000_000_000.
-f(1_000_000_000);
+F(1_000_000_000);
 
 // Error: 4_000_000_000 can't be represented in type `i32`.
-f(2_000_000_000);
+F(2_000_000_000);
 
 // No storage required for the bound when it's of integer literal type.
 struct Span(template T:! Type, template BoundT:! Type) {
@@ -201,41 +201,19 @@ fn OneHigher(L: IntLiteral(template _:! BigInt)) -> auto {
 var v: i8 = OneHigher(255);
 ```
 
-## Numeric literal semantics
+## Alternatives Considered
 
-Numeric Literal semantics are covered in the
-[numeric_literals](lexical_conventions/numeric_literals.md) lexical conventions
-doc. Decimal and Real-Number semantics are defined, with decimal, hexadecimal
-and binary integer literals, and decimal and hexadecimal real number literals.
-
-## Open questions
-
-### Primitive types as code vs built-in
-
-There are open questions about the extent to which these types should be defined
-in Carbon code rather than special. Clearly they can't be directly implemented
-w/o help, but it might still be useful to force the programmer-observed
-interface to reside in code. However, this can cause difficulty with avoiding
-the need to import things gratuitously.
-
-### Syntax for wrapping operations
-
-Open question around allowing special syntax for wrapping operations (even on
-signed types) and/or requiring such syntax for wrapping operations on unsigned
-types.
-
-### Non-power-of-two sizes
-
-Supporting non-power-of-two sizes is likely needed to have a clean model for
-bitfields, but requires more details to be worked out around memory access.
+-   [Use an ordinary integer or floating-point type for literals](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p0144.md#use-an-ordinary-integer-or-floating-point-type-for-literals)
+-   [Use same type for all literals](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p0144.md#use-same-type-for-all-literals)
+-   [Allow leading `-` in literal tokens](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p0144.md#allow-leading---in-literal-tokens)
 
 ## References
 
 > -   Proposal
->     [#144: Numeric literal semantics](https://github.com/carbon-language/carbon-lang/pull/144)
-> -   Proposal
 >     [#143: Numeric literals](https://github.com/carbon-language/carbon-lang/pull/143)
 > -   Proposal
->     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
+>     [#144: Numeric literal semantics](https://github.com/carbon-language/carbon-lang/pull/144)
 > -   Proposal
->     [#2015: Numeric type literal syntax](https://github.com/carbon-language/carbon-lang/pull/2015)
+>     [#866: Allow ties in floating literals](https://github.com/carbon-language/carbon-lang/pull/866)
+> -   Issue
+>     [#1998: Make proposal for numeric type literal syntax](https://github.com/carbon-language/carbon-lang/issues/1998#issuecomment-1212644291)

@@ -297,8 +297,7 @@ represent that value.
 
 > References:
 >
-> -   [Integer literal semantics](lexical_conventions/numeric_literals.md#integer-literals)
-> -   [Integer Literals](numeric_literals.md#integers)
+> -   [Integer literal syntax](lexical_conventions/numeric_literals.md#integer-literals)
 > -   Proposal
 >     [#143: Numeric literals](https://github.com/carbon-language/carbon-lang/pull/143)
 > -   Proposal
@@ -340,8 +339,7 @@ selected.
 
 > References:
 >
-> -   [Real-number literal semantics](lexical_conventions/numeric_literals.md#real-number-literals)
-> -   [Real-number literals](numeric_literals.md#floats)
+> -   [Real-number literal syntax](lexical_conventions/numeric_literals.md#real-number-literals)
 > -   Proposal
 >     [#143: Numeric literals](https://github.com/carbon-language/carbon-lang/pull/143)
 > -   Proposal
