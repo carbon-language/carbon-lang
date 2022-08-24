@@ -440,7 +440,7 @@ class Optional(T:! Type){
     return true;
   }
 
-  fn get[me: Self] () -> T {
+  fn Get[me: Self]() -> T {
     var y: T;
     var x: OptionalElement(T) = me.element;
     match(x){
