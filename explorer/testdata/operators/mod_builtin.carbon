@@ -11,9 +11,6 @@
 
 package ExplorerTest api;
 
-// TODO: T:! Mod
-fn DoMod[T:! ModWith(.Self) where .Result == .Self](x: T, y: T) -> T { return x % y; }
-
 fn Main() -> i32 {
-  return DoMod(4, 2);
+  return 4 % 2;
 }

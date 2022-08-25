@@ -11,9 +11,6 @@
 
 package ExplorerTest api;
 
-// TODO: T:! Mul
-fn DoMul[T:! MulWith(.Self) where .Result == .Self](x: T, y: T) -> T { return x * y; }
-
 fn Main() -> i32 {
-  return DoMul(2, 3);
+  return 2 * 3;
 }

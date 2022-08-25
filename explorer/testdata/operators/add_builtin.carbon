@@ -11,9 +11,6 @@
 
 package ExplorerTest api;
 
-// TODO: T:! Add
-fn DoAdd[T:! AddWith(.Self) where .Result == .Self](x: T, y: T) -> T { return x + y; }
-
 fn Main() -> i32 {
-  return DoAdd(1, 2);
+  return 1 + 2;
 }
