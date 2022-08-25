@@ -193,6 +193,30 @@ cc_library(
         ":action_and_value",
         ":dictionary",
         ":interpreter",
+        ":type_checker_util",
+        "//common:error",
+        "//common:ostream",
+        "//explorer/ast",
+        "//explorer/common:arena",
+        "//explorer/common:error_builders",
+        "//explorer/common:nonnull",
+        "//explorer/common:source_location",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "type_checker_util",
+    srcs = [
+        "type_checker_util.cpp",
+    ],
+    hdrs = [
+        "type_checker_util.h",
+    ],
+    deps = [
+        ":action_and_value",
+        ":dictionary",
+        ":interpreter",
         "//common:error",
         "//common:ostream",
         "//explorer/ast",
