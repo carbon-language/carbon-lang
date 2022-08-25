@@ -80,7 +80,7 @@ auto ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit)
   const ErrorOr<std::string> prelude_path =
       Internal::GetRunfilesFile("carbon/explorer/data/prelude.carbon");
   // Can't do anything without a prelude, so it's a fatal error.
-  CARBON_CHECK(prelude_path.ok()) << prelude_path.error().message();
+  CARBON_CHECK(prelude_path.ok()) << prelude_path.error();
 
   AddPrelude(*prelude_path, &arena, &ast.declarations);
   return ExecProgram(&arena, ast, /*trace_stream=*/std::nullopt);
