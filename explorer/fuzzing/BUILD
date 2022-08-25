@@ -90,6 +90,7 @@ cc_test(
     ],
     deps = [
         ":fuzzer_util",
+        "//common:gtest_main",
         "@com_google_googletest//:gtest",
         "@com_google_protobuf//:protobuf_headers",
         "@llvm-project//llvm:Support",
@@ -125,6 +126,7 @@ cc_fuzz_test(
     corpus = glob(["fuzzer_corpus/*"]),
     deps = [
         ":fuzzer_util",
+        "//common:error",
         "@com_google_libprotobuf_mutator//:libprotobuf_mutator",
         "@llvm-project//llvm:Support",
     ],
