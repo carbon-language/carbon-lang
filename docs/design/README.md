@@ -143,8 +143,6 @@ Features that are provisional have been marked as such on a best-effort basis.
 
 Here is a simple function showing some Carbon code:
 
-FIXME: assignment statement
-
 ```carbon
 import Math;
 
