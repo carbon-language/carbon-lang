@@ -25,7 +25,6 @@
 
 using llvm::cast;
 using llvm::dyn_cast;
-using llvm::dyn_cast_or_null;
 using llvm::isa;
 
 namespace Carbon {
@@ -297,7 +296,8 @@ auto TypeChecker::ExpectIsType(SourceLocation source_loc,
     -> ErrorOr<Success> {
   if (!IsType(value)) {
     return CompilationError(source_loc)
-           << "Expected a type, but got " << *value;
+           << "Expected a type, but got " << ValueKindName(value->kind())
+           << ": " << *value;
   } else {
     return Success();
   }
