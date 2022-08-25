@@ -234,6 +234,7 @@ class ClassDeclaration : public Declaration {
   std::vector<Nonnull<Declaration*>> members_;
 };
 
+// EXPERIMENTAL MIXIN FEATURE
 class MixinDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
@@ -272,6 +273,7 @@ class MixinDeclaration : public Declaration {
   std::vector<Nonnull<Declaration*>> members_;
 };
 
+// EXPERIMENTAL MIXIN FEATURE
 class MixDeclaration : public Declaration {
  public:
   MixDeclaration(SourceLocation source_loc,

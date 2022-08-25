@@ -7,9 +7,7 @@
 #include <algorithm>
 #include <iterator>
 #include <map>
-#include <optional>
 #include <set>
-#include <string_view>
 #include <vector>
 
 #include "common/error.h"
@@ -3462,6 +3460,8 @@ auto TypeChecker::TypeCheckClassDeclaration(
   }
   return Success();
 }
+
+// EXPERIMENTAL MIXIN FEATURE
 auto TypeChecker::DeclareMixinDeclaration(Nonnull<MixinDeclaration*> mixin_decl,
                                           const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
@@ -3506,6 +3506,14 @@ auto TypeChecker::DeclareMixinDeclaration(Nonnull<MixinDeclaration*> mixin_decl,
   return Success();
 }
 
+// EXPERIMENTAL MIXIN FEATURE
+/*
+** Checks to see if mixin_decl is already within collected_members_. If it is,
+** then the mixin has already been type checked before either while type
+** checking a previous mix declaration or while type checking the original mixin
+** declaration. If not, then every member declaration is type checked and then
+** added to collected_members_ under the mixin_decl key.
+*/
 auto TypeChecker::TypeCheckMixinDeclaration(
     Nonnull<const MixinDeclaration*> mixin_decl, const ImplScope& impl_scope)
     -> ErrorOr<Success> {
@@ -3541,6 +3549,13 @@ auto TypeChecker::TypeCheckMixinDeclaration(
   return Success();
 }
 
+// EXPERIMENTAL MIXIN FEATURE
+/*
+** Type checks the mixin mentioned in the mix declaration.
+** TypeCheckMixinDeclaration ensures that the members of that mixin are
+** available in collected_members_. The mixin members are then collected as
+** members of the enclosing class or mixin declaration.
+*/
 auto TypeChecker::TypeCheckMixDeclaration(
     Nonnull<MixDeclaration*> mix_decl, const ImplScope& impl_scope,
     std::optional<Nonnull<const Declaration*>> enclosing_decl)
@@ -3548,9 +3563,10 @@ auto TypeChecker::TypeCheckMixDeclaration(
   if (trace_stream_) {
     **trace_stream_ << "** checking " << *mix_decl << "\n";
   }
-  // TODO(darshal): Check if the imports of the mixin being mixed are being
-  // impl'd in the enclosed class/mixin declaration This raises the question of
-  // whether it makes sense to have impl declarations in mixin declarations
+  // TODO(darshal): Check if the imports (interface mentioned in the 'for'
+  // clause) of the mixin being mixed are being impl'd in the enclosed
+  // class/mixin declaration This raises the question of how to handle impl
+  // declarations in mixin declarations
 
   CARBON_CHECK(enclosing_decl.has_value());
   Nonnull<const Declaration*> encl_decl = enclosing_decl.value();

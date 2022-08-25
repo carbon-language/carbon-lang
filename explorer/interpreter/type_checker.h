@@ -22,7 +22,6 @@ namespace Carbon {
 using CollectedMembersMap =
     std::unordered_map<std::string_view, Nonnull<const Declaration*>>;
 
-// Maps a mixin/class declaration to all of its direct and indirect members.
 using GlobalMembersMap =
     std::unordered_map<Nonnull<const Declaration*>, CollectedMembersMap>;
 
@@ -71,8 +70,14 @@ class TypeChecker {
                  SourceLocation source_loc) const
       -> std::optional<Nonnull<Expression*>>;
 
-  // Similar to FindMember, but returns the type of mixin methods after
-  // substituting the Self type variable during mix declarations.
+  /*
+  ** Finds the direct or indirect member of a class or mixin by its name and
+  ** returns the member's declaration and type. Indirect members are members of
+  ** mixins that are mixed by member mix declarations. If the member is an
+  ** indirect member from a mix declaration, then the Self type variable within
+  ** the member's type is substituted with the type of the enclosing declaration
+  ** containing the mix declaration.
+  */
   auto FindMixedMemberAndType(const std::string_view& name,
                               llvm::ArrayRef<Nonnull<Declaration*>> members,
                               const Nonnull<const Value*> enclosing_type)
@@ -434,10 +439,17 @@ class TypeChecker {
 
   void PrintConstants(llvm::raw_ostream& out);
 
+  /*
+  ** Adds a member of a declaration to collected_members_
+  */
   auto CollectMember(Nonnull<const Declaration*> enclosing_decl,
                      Nonnull<const Declaration*> member_decl)
       -> ErrorOr<Success>;
 
+  /*
+  ** Fetches all direct and indirect members of a class or mixin declaration
+  ** stored within collected_members_
+  */
   auto FindCollectedMembers(Nonnull<const Declaration*> decl)
       -> CollectedMembersMap&;
 
@@ -445,6 +457,7 @@ class TypeChecker {
   std::set<ValueNodeView> constants_;
   Builtins builtins_;
 
+  // Maps a mixin/class declaration to all of its direct and indirect members.
   GlobalMembersMap collected_members_;
 
   std::optional<Nonnull<llvm::raw_ostream*>> trace_stream_;

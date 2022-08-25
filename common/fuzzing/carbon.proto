@@ -389,6 +389,7 @@ message AliasDeclaration {
   optional Expression target = 2;
 }
 
+// EXPERIMENTAL MIXIN FEATURE
 message MixinDeclaration {
   optional string name = 1;
   repeated Declaration members = 2;
@@ -397,6 +398,7 @@ message MixinDeclaration {
   optional GenericBinding self = 4;
 }
 
+// EXPERIMENTAL MIXIN FEATURE
 message MixDeclaration {
   optional Expression mixin = 1;
 }

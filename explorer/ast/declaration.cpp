@@ -139,14 +139,14 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
     }
     case DeclarationKind::MixinDeclaration: {
       const auto& mixin_decl = cast<MixinDeclaration>(*this);
-      out << "mixin " << mixin_decl.name();
+      out << "__mixin " << mixin_decl.name();
       if (mixin_decl.self()->type().kind() != ExpressionKind::TypeTypeLiteral) {
         out << " for " << mixin_decl.self()->type();
       }
       break;
     }
     case DeclarationKind::MixDeclaration: {
-      out << "mix ";
+      out << "__mix ";
       break;
     }
     case DeclarationKind::ChoiceDeclaration: {
