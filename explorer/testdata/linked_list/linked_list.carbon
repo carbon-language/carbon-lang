@@ -40,17 +40,17 @@ class List{
     return {.next = Optional(ListElement*).CreateEmpty() };
   }
   fn insert[addr me: Self*] (value: i32){
-    if( not (*me).next.has_value() ){
+    if( not (*me).next.HasValue() ){
       (*me).next = Optional(ListElement*).Create( heap.New(ListElement.Create(value)) );
       return;
     }
     var iter: Optional(ListElement*) = (*me).next;
-    var node: auto = (iter.get());
+    var node: auto = (iter.Get());
     while((*node).next){
       iter = (*node).next;
-      node = (iter.get());
+      node = (iter.Get());
     }
-    var v : ListElement* = iter.get();
+    var v : ListElement* = iter.Get();
     var x: Optional(ListElement*) = Optional(ListElement*).Create( heap.New(ListElement.Create(value) ));
     (*v).set(x);
   }
@@ -58,9 +58,9 @@ class List{
   fn print[me: Self] (){
     var iter: Optional(ListElement*) = me.next;
     while(iter){
-      var node: auto = *(iter.get());
-      Print("{0}",node.element.get());
-      var node_ptr: auto = iter.get();
+      var node: auto = *(iter.Get());
+      Print("{0}",node.element.Get());
+      var node_ptr: auto = iter.Get();
       iter = node.next;
     }
   }
@@ -69,8 +69,8 @@ class List{
     var head: auto = (*me).next;
     while(head){
       var tmp: auto = head;
-      head = (*head.get()).next;
-      heap.Delete(tmp.get());
+      head = (*head.Get()).next;
+      heap.Delete(tmp.Get());
     }
     (*me).next= Optional(ListElement*).CreateEmpty();
   }

@@ -433,8 +433,8 @@ class Optional(T:! Type){
   }
 
   fn HasValue[me: Self] () -> bool {
-    var x: OptionalElement(T) = me.element;
-    match(x){
+    //var x: OptionalElement(T) = me.element;
+    match(me.element){
       case OptionalElement(T).None() => { return false; }
     }
     return true;
@@ -443,7 +443,7 @@ class Optional(T:! Type){
   fn Get[me: Self]() -> T {
     var y: T;
     var x: OptionalElement(T) = me.element;
-    match(x){
+    match(me.element){
       case OptionalElement(T).Element( var x: T ) =>{
         return x;
       }
@@ -451,15 +451,9 @@ class Optional(T:! Type){
     return y;
   }
 
-  impl Optional(T) as EqWith(bool){
-    fn Equal[me: Self](other: bool) -> bool{
-      return me.has_value();
-    }
-  }
-
   impl Optional(T) as ImplicitAs(bool){
     fn Convert[me: Self]() -> bool{
-      return me.has_value();
+      return me.HasValue();
     }
   }
 
