@@ -111,7 +111,7 @@ string literals. It is important to reject and diagnose them.
 A _block string_ literal starts with `'''`. Characters on the same line
 following the `'''` are an optional file type indicator. The literal ends at the
 next instance of three single quotation marks whose first `'` is not part of a
-`\"` escape sequence. The closing `'''` shall be the first non-whitespace
+`\'` escape sequence. The closing `'''` shall be the first non-whitespace
 characters on that line. The lines between the opening line and the closing line
 (exclusive) are _content lines_. The content lines shall not contain `\`
 characters that do not form part of an escape sequence.
