@@ -428,12 +428,11 @@ class Optional(T:! Type){
   fn CreateEmpty() -> Optional(T){
     return { .element = OptionalElement(T).None() };
   }
-  fn Create ( value: T ) -> Optional(T){
+  fn Create(value: T ) -> Optional(T){
     return { .element = OptionalElement(T).Element(value) };
   }
 
-  fn HasValue[me: Self] () -> bool {
-    //var x: OptionalElement(T) = me.element;
+  fn HasValue[me: Self]() -> bool {
     match(me.element){
       case OptionalElement(T).None() => { return false; }
     }
@@ -442,9 +441,8 @@ class Optional(T:! Type){
 
   fn Get[me: Self]() -> T {
     var y: T;
-    var x: OptionalElement(T) = me.element;
     match(me.element){
-      case OptionalElement(T).Element( var x: T ) =>{
+      case OptionalElement(T).Element(x: T ) =>{
         return x;
       }
     }
