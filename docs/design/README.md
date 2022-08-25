@@ -9,6 +9,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 > **STATUS:** Up-to-date on 09-Aug-2022, including proposals up through
 > [#1327](https://github.com/carbon-language/carbon-lang/pull/1327).
 
+> FIXME: add #2015
+
 <!-- toc -->
 
 ## Table of contents
@@ -247,9 +249,9 @@ and [`while`](#while), and
 
 ### Integer types
 
-The signed-integer type with bit width `N` may be written `Carbon.Int(N)`. For
-convenience and brevity, the common power-of-two sizes may be written with an
-`i` followed by the size: `i8`, `i16`, `i32`, `i64`, or `i128`. Signed-integer
+The signed-integer type with bit width `N` may be written `iN` or
+`Carbon.Int(N)`, as long as `N` is a positive multiple of 8. For example, `i32`
+is equivalent to `Carbon.Int(32)`. Signed-integer
 [overflow](expressions/arithmetic.md#overflow-and-other-error-conditions) is a
 programming error:
 
@@ -263,27 +265,27 @@ programming error:
     to a mathematically incorrect result, such as a two's complement result or
     zero.
 
-The unsigned-integer types are: `u8`, `u16`, `u32`, `u64`, `u128`, and
-`Carbon.UInt(N)`. Unsigned integer types wrap around on overflow; we strongly
-advise that they are not used except when those semantics are desired. These
-types are intended for bit manipulation or modular arithmetic as often found in
-[hashing](https://en.wikipedia.org/wiki/Hash_function),
+The unsigned-integer types are written `uN` or `Carbon.UInt(N)`, with `N` a
+positive multiple of 8. Unsigned integer types wrap around on overflow; we
+strongly advise that they are not used except when those semantics are desired.
+These types are intended for bit manipulation or modular arithmetic as often
+found in [hashing](https://en.wikipedia.org/wiki/Hash_function),
 [cryptography](https://en.wikipedia.org/wiki/Cryptography), and
 [PRNG](https://en.wikipedia.org/wiki/Pseudorandom_number_generator) use cases.
 Values which can never be negative, like sizes, but for which wrapping does not
 make sense
 [should use signed integer types](/proposals/p1083.md#dont-let-unsigned-arithmetic-wrap).
 
-Identifiers of the form `i[0-9]+` and `u[0-9]+` are _type literals_, resulting
-in the corresponding type.
+Identifiers of the form `iN` and `uN` are _type literals_, resulting in the
+corresponding type.
 
-There is an upper bound on the size of an integer, most likely initially set to
-128 bits due to LLVM limitations.
+Not all operations will be supported for all bit sizes. For example, division
+may be limited to integers of at most 128 bits due to LLVM limitations.
 
 > **Open question:** Bit-field ([1](https://en.wikipedia.org/wiki/Bit_field),
-> [2](https://en.cppreference.com/w/cpp/language/bit_field)) support may need a
-> more convenient way to spell non-power-of-two-bits integers than
-> `Carbon.Int(N)` and `Carbon.UInt(N)`.
+> [2](https://en.cppreference.com/w/cpp/language/bit_field)) support will need
+> some way to talk about non-multiple-of-eight-bit integers, even though Carbon
+> will likely not support pointers to those types.
 
 > References:
 >
@@ -295,6 +297,8 @@ There is an upper bound on the size of an integer, most likely initially set to
 >     [#861: Naming conventions](https://github.com/carbon-language/carbon-lang/pull/861)
 > -   Proposal
 >     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
+> -   Proposal
+>     [#2015: Numeric type literal syntax](https://github.com/carbon-language/carbon-lang/pull/2015)
 
 #### Integer literals
 
@@ -338,8 +342,8 @@ Other sizes may be available, depending on the platform, such as
 [`f128`](https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format),
 or
 [`f256`](https://en.wikipedia.org/wiki/Octuple-precision_floating-point_format).
-Identifiers of the form `f[0-9]+` are _type literals_, resulting in the
-corresponding type.
+Identifiers of the form `fN`, where `N` is a positive multiple of `8` are _type
+literals_, resulting in the type `Carbon.Float(N)`.
 
 Carbon also supports the
 [`BFloat16`](https://en.wikipedia.org/wiki/Bfloat16_floating-point_format)
@@ -356,6 +360,8 @@ number.
 >     [#861: Naming conventions](https://github.com/carbon-language/carbon-lang/pull/861)
 > -   Proposal
 >     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
+> -   Proposal
+>     [#2015: Numeric type literal syntax](https://github.com/carbon-language/carbon-lang/pull/2015)
 
 #### Floating-point literals
 
