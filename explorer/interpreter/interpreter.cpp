@@ -1727,6 +1727,9 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       if (act.pos() == 0) {
         //    { {return e :: C, E, F} :: S, H}
         // -> { {e :: return [] :: C, E, F} :: S, H}
+          if(act.scope().has_value()){
+              llvm::outs()<<"HALLO WELT"<<"\n";
+          }
         return todo_.Spawn(std::make_unique<ExpressionAction>(
             &cast<ReturnExpression>(stmt).expression()));
       } else {
@@ -1738,17 +1741,20 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
             Convert(act.results()[0], &function.return_term().static_type(),
                     stmt.source_loc()));
 
-          RuntimeScope block_scope(&heap_);
-          auto locals = block_scope.GetLocals();
-          std::list<std::pair<Nonnull<const FunctionDeclaration*>, Nonnull<const Value*>>> destructor_calls;
-          for( auto [key,lvalue] : locals){
-              auto value = heap_.Read(lvalue->address(),stmt.source_loc());
-              if(const auto * class_obj = dyn_cast<NominalClassValue>(*value)){
-                  auto &class_type = cast<NominalClassType>(class_obj->type());
-                  auto &class_dec = class_type.declaration();
-                  if(class_dec.destructor().has_value()) {
-                      llvm::outs()<<__LINE__<<":"<<*class_obj<<"\n";
-                      destructor_calls.push_back({*class_dec.destructor(),class_obj});
+          if(todo_.GetCurrentScope().has_value()) {
+              RuntimeScope& block_scope = *todo_.GetCurrentScope();
+              auto locals = block_scope.GetLocals();
+              std::list <std::pair<Nonnull<const FunctionDeclaration *>, Nonnull<const Value *>>> destructor_calls;
+              for (auto [key, lvalue]: locals) {
+                  llvm::outs() << "Exist" << "\n";
+                  auto value = heap_.Read(lvalue->address(), stmt.source_loc());
+                  if (const auto *class_obj = dyn_cast<NominalClassValue>(*value)) {
+                      auto &class_type = cast<NominalClassType>(class_obj->type());
+                      auto &class_dec = class_type.declaration();
+                      if (class_dec.destructor().has_value()) {
+                          llvm::outs() << __LINE__ << ":" << *class_obj << "\n";
+                          destructor_calls.push_back({*class_dec.destructor(), class_obj});
+                      }
                   }
               }
           }

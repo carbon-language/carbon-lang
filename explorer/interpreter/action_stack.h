@@ -57,6 +57,15 @@ class ActionStack {
   // Merges `scope` into the innermost scope currently on the stack.
   void MergeScope(RuntimeScope scope);
 
+  auto GetCurrentScope() -> std::optional<RuntimeScope>& {
+      for (const std::unique_ptr <Action> &action: todo_) {
+          if (action->scope().has_value()) {
+              return action->scope();
+          }
+      }
+      return empty_locals_;
+
+  }
   // Initializes `fragment` so that, when resumed, it begins execution of
   // `body`.
   void InitializeFragment(ContinuationValue::StackFragment& fragment,
@@ -133,6 +142,7 @@ class ActionStack {
   std::optional<Nonnull<const Value*>> result_;
   std::optional<RuntimeScope> globals_;
   Phase phase_;
+  std::optional<RuntimeScope> empty_locals_;
 };
 
 }  // namespace Carbon

@@ -34,12 +34,10 @@ class A0{
 
 fn Main() -> i32 {
     var i : i32 = 0;
+    if(i < 1){
+        var a0: A = {.n = 3};
+    }
+
     var a0: A = {.n = 2};
-  //  while(i < 1){
-  //    var a0 : A = {.n = 0};
-  //    var a1 : A = {.n = 1};
-  //    var a2 : A = {.n = 2};
-  //   i = i + 1;
-  // }
   return 1;
 }
