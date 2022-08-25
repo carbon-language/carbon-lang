@@ -5,6 +5,7 @@
 #include "explorer/interpreter/value.h"
 
 #include <algorithm>
+#include <regex>
 
 #include "common/check.h"
 #include "explorer/common/arena.h"
@@ -524,93 +525,20 @@ void Value::Print(llvm::raw_ostream& out) const {
   }
 }
 
+// Generates a 'human readable' description for an enum name.
+// For example, IntType -> 'int type'.
+static auto MakeKindName(const char* name) -> std::string {
+  return llvm::StringRef(
+             std::regex_replace(name, std::regex("(?!^)([A-Z])"), " $1"))
+      .lower();
+}
+
 auto ValueKindName(Value::Kind kind) -> std::string_view {
-  switch (kind) {
-    case Value::Kind::IntValue:
-      return "int value";
-    case Value::Kind::FunctionValue:
-      return "function value";
-    case Value::Kind::BoundMethodValue:
-      return "bound method value";
-    case Value::Kind::PointerValue:
-      return "pointer value";
-    case Value::Kind::LValue:
-      return "lvalue";
-    case Value::Kind::BoolValue:
-      return "bool value";
-    case Value::Kind::StructValue:
-      return "struct value";
-    case Value::Kind::NominalClassValue:
-      return "nominal class value";
-    case Value::Kind::AlternativeValue:
-      return "alternative value";
-    case Value::Kind::TupleValue:
-      return "tuple value";
-    case Value::Kind::UninitializedValue:
-      return "uninitialized value";
-    case Value::Kind::ImplWitness:
-      return "impl witness";
-    case Value::Kind::SymbolicWitness:
-      return "symbolic witness";
-    case Value::Kind::IntType:
-      return "int type";
-    case Value::Kind::BoolType:
-      return "bool type";
-    case Value::Kind::TypeType:
-      return "type type";
-    case Value::Kind::FunctionType:
-      return "function type";
-    case Value::Kind::PointerType:
-      return "pointer type";
-    case Value::Kind::AutoType:
-      return "auto type";
-    case Value::Kind::StructType:
-      return "struct type";
-    case Value::Kind::NominalClassType:
-      return "nominal class type";
-    case Value::Kind::InterfaceType:
-      return "interface type";
-    case Value::Kind::ConstraintType:
-      return "constraint type";
-    case Value::Kind::ChoiceType:
-      return "choice type";
-    case Value::Kind::ContinuationType:
-      return "continuation type";
-    case Value::Kind::VariableType:
-      return "variable type";
-    case Value::Kind::AssociatedConstant:
-      return "associated constant";
-    case Value::Kind::ParameterizedEntityName:
-      return "parameterized entity name";
-    case Value::Kind::MemberName:
-      return "member name";
-    case Value::Kind::BindingPlaceholderValue:
-      return "binding placeholder value";
-    case Value::Kind::AddrValue:
-      return "addr value";
-    case Value::Kind::AlternativeConstructorValue:
-      return "alternative constructor value";
-    case Value::Kind::ContinuationValue:
-      return "continuation value";
-    case Value::Kind::StringType:
-      return "string type";
-    case Value::Kind::StringValue:
-      return "string value";
-    case Value::Kind::TypeOfClassType:
-      return "type of class type";
-    case Value::Kind::TypeOfInterfaceType:
-      return "type of interface type";
-    case Value::Kind::TypeOfConstraintType:
-      return "type of constraint type";
-    case Value::Kind::TypeOfChoiceType:
-      return "type of choice type";
-    case Value::Kind::TypeOfParameterizedEntityName:
-      return "type of parameterized entity name";
-    case Value::Kind::TypeOfMemberName:
-      return "type of member name";
-    case Value::Kind::StaticArrayType:
-      return "static array type";
-  }
+  static const auto* Names = new std::vector<std::string>({
+#define CARBON_VALUE_KIND(Name) MakeKindName(#Name),
+#include "explorer/interpreter/value_kind.def"
+  });
+  return (*Names)[static_cast<int>(kind)];
 }
 
 ContinuationValue::StackFragment::~StackFragment() {

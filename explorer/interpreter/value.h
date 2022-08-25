@@ -37,48 +37,8 @@ class ImplScope;
 class Value {
  public:
   enum class Kind {
-    IntValue,
-    FunctionValue,
-    BoundMethodValue,
-    PointerValue,
-    LValue,
-    BoolValue,
-    StructValue,
-    NominalClassValue,
-    AlternativeValue,
-    TupleValue,
-    UninitializedValue,
-    ImplWitness,
-    SymbolicWitness,
-    IntType,
-    BoolType,
-    TypeType,
-    FunctionType,
-    PointerType,
-    AutoType,
-    StructType,
-    NominalClassType,
-    InterfaceType,
-    ConstraintType,
-    ChoiceType,
-    ContinuationType,  // The type of a continuation.
-    VariableType,      // e.g., generic type parameters.
-    AssociatedConstant,
-    ParameterizedEntityName,
-    MemberName,
-    BindingPlaceholderValue,
-    AddrValue,
-    AlternativeConstructorValue,
-    ContinuationValue,  // A first-class continuation value.
-    StringType,
-    StringValue,
-    TypeOfClassType,
-    TypeOfInterfaceType,
-    TypeOfConstraintType,
-    TypeOfChoiceType,
-    TypeOfParameterizedEntityName,
-    TypeOfMemberName,
-    StaticArrayType,
+#define CARBON_VALUE_KIND(Name) Name,
+#include "explorer/interpreter/value_kind.def"
   };
 
   Value(const Value&) = delete;

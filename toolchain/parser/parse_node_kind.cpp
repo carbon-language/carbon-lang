@@ -10,7 +10,7 @@ namespace Carbon {
 
 auto ParseNodeKind::name() const -> llvm::StringRef {
   static constexpr llvm::StringLiteral Names[] = {
-#define CARBON_PARSE_NODE_KIND(Name) #Name,
+#define CARBON_PARSE_NODE_KIND(Name) std::string(#Name),
 #include "toolchain/parser/parse_node_kind.def"
   };
   return Names[static_cast<int>(kind_)];

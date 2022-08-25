@@ -16,6 +16,7 @@ cc_library(
         "action.h",
         "value.h",
     ],
+    textual_hdrs = ["value_kind.def"],
     deps = [
         ":address",
         ":dictionary",
