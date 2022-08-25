@@ -59,9 +59,9 @@
   #include <cstdlib>
   #include <vector>
 
-  #include "common/check.h"
   #include "explorer/syntax/parse_and_lex_context.h"
   #include "llvm/ADT/StringExtras.h"
+  #include "llvm/Support/FormatVariadic.h"
   #include "llvm/Support/raw_ostream.h"
 }  // %code top
 
@@ -349,11 +349,18 @@ primary_expression:
     { $$ = arena->New<BoolLiteral>(context.source_loc(), false); }
 | sized_type_literal
     {
-      int val;
-      CARBON_CHECK(llvm::to_integer(llvm::StringRef($1).substr(1), val));
-      CARBON_CHECK($1[0] == 'i' && val == 32)
-          << "Only i32 is supported for now: " << $1;
-      $$ = arena->New<IntTypeLiteral>(context.source_loc());
+      int val = 0;
+      if (!llvm::to_integer(llvm::StringRef($1).substr(1), val)) {
+        context.RecordSyntaxError(
+            llvm::formatv("Invalid type literal: {0}", $1));
+        YYERROR;
+      } else if ($1[0] != 'i' || val != 32) {
+        context.RecordSyntaxError(
+            llvm::formatv("Only i32 is supported for now: {0}", $1));
+        YYERROR;
+      } else {
+        $$ = arena->New<IntTypeLiteral>(context.source_loc());
+      }
     }
 | SELF
     // TODO: Should we create a new TypeLiteral for `Self`?
