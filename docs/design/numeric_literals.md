@@ -13,8 +13,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
+    -   [TODO](#todo)
     -   [Defined Types](#defined-types)
-        -   [TODO](#todo)
     -   [Numeric literal syntax](#numeric-literal-syntax)
     -   [Implicit conversions](#implicit-conversions)
 -   [Examples](#examples)
@@ -28,7 +28,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 Numeric Literals are defined on Wikipedia
 [here](<https://en.wikipedia.org/wiki/Literal_(computer_programming)>).
 
-in Carbon, numeric literals have a type derived from their value. Two integer
+In Carbon, numeric literals have a type derived from their value. Two integer
 literals have the same type if and only if they represent the same integer. Two
 real number literals have the same type if and only if they represent the same
 real number.
@@ -55,6 +55,14 @@ literal types whose values are representable in the integer type. The
 floating-point types defined in the Carbon library permit conversion from
 integer and rational literal types whose values are between the minimum and
 maximum finite value representable in the floating-point type.
+
+### TODO
+
+This document needs to be updated once we have resolved how to reference things
+brought in by the prelude. `BigInt`, `Rational`, `IntLiteral`, and
+`FloatLiteral` will likely be accessed through a package prefix like
+`Carbon.BigInt` or `Core.BigInt`, and the [Defined Types](#defined-types)
+section will need to be updated to reflect those.
 
 ### Defined Types
 
@@ -97,18 +105,10 @@ operations are typically heterogeneous: for example, an addition between
 `IntLiteral(n)` and `IntLiteral(m)` produces a value of type
 `IntLiteral(n + m)`.
 
-#### TODO
-
-This document needs to be updated once we have resolved how to reference things
-brought in by the prelude. `BigInt`, `Rational`, `IntLiteral`, and
-`FloatLiteral` will likely be accessed through a package prefix like
-`Carbon.BigInt` or `Core.BigInt`, and the [Defined Types](#defined-types)
-section will need to be updated to reflect those.
-
 ### Numeric literal syntax
 
 Numeric Literal syntax is covered in the
-[numeric_literals](lexical_conventions/numeric_literals.md) lexical conventions
+[numeric literal lexical conventions](lexical_conventions/numeric_literals.md)
 doc. Both Integer and Real-Number syntax is defined, with decimal, hexadecimal
 and binary integer literals, and decimal and hexadecimal real number literals.
 
@@ -206,9 +206,10 @@ var v: i8 = OneHigher(255);
 
 ## Alternatives Considered
 
--   [Use an ordinary integer or floating-point type for literals](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p0144.md#use-an-ordinary-integer-or-floating-point-type-for-literals)
--   [Use same type for all literals](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p0144.md#use-same-type-for-all-literals)
--   [Allow leading `-` in literal tokens](https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p0144.md#allow-leading---in-literal-tokens)
+-   [Use an ordinary integer or floating-point type for literals](/proposals/p0144.md#use-an-ordinary-integer-or-floating-point-type-for-literals)
+-   [Use same type for all literals](/proposals/p0144.md#use-same-type-for-all-literals)
+-   [Allow leading `-` in literal tokens](/proposals/p0144.md#allow-leading---in-literal-tokens)
+-   [Forbidding floating-point ties](/proposals/p0866.md/#alternatives-considered)
 
 ## References
 
