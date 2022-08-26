@@ -689,10 +689,8 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
         }
         out << "]";
       }
-      if (!function.is_destructor()) {
-        TuplePatternToCarbon(function.param_pattern(), out);
-        ReturnTermToCarbon(function.return_term(), out);
-      }
+      TuplePatternToCarbon(function.param_pattern(), out);
+      ReturnTermToCarbon(function.return_term(), out);
       // Body is optional.
       if (function.has_body()) {
         out << "\n";
