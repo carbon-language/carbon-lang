@@ -48,6 +48,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Where constraints](#where-constraints)
     -   [Constraint use cases](#constraint-use-cases)
         -   [Set an associated constant to a specific value](#set-an-associated-constant-to-a-specific-value)
+        -   [Equal associated constants](#equal-associated-constants)
         -   [Same type constraints](#same-type-constraints)
             -   [Set an associated type to a specific value](#set-an-associated-type-to-a-specific-value)
             -   [Equal generic types](#equal-generic-types)
@@ -2469,6 +2470,8 @@ This syntax is also used to specify the values of
 [associated constants](#associated-constants) when implementing an interface for
 a type.
 
+#### Equal associated constants
+
 Similarly a constraint to say that two associated constants should have the same
 value also uses `==`:
 
@@ -2478,6 +2481,21 @@ interface PointCloud {
   let PointT:! NSpacePoint where .N == Dim;
 }
 ```
+
+In this case, the types of the two associated constants must be compatible.
+
+```
+interface C { let A:! Type; }
+interface D { let B:! i32; }
+// ❌ Error: type of T.A == Type incompatible
+//           with type of U.B == i32.
+fn F[U:! D, T:! C where .A == U.B]();
+```
+
+FIXME: What is the definition of compatible? Could be having an implicit
+conversion from one to the other, use the same unification rules as
+`if`...`then`...`else` uses, or having a defined `==` operator overload between
+the two types.
 
 #### Same type constraints
 
@@ -2508,15 +2526,19 @@ constraint IntStack {
 }
 ```
 
+A constraint setting an associated type to a concrete type, like
+`where .ElementType == i32`, gives `.ElementType` the complete `i32` API, in
+addition to any API from the type of `ElementType`.
+
 This syntax is also used to specify the values of
 [associated types](#associated-types) when implementing an interface for a type.
 
 ##### Equal generic types
 
-Two generic types could be constrained to be equal to each other using `==`,
-without specifying what that type is. For example, we could make the
-`ElementType` of an `Iterator` interface equal to the `ElementType` of a
-`Container` interface as follows:
+Two generic types could be constrained to be equal to each other using `==`, as
+long the constraints on those types are compatible with each other. For example,
+we could make the `ElementType` of an `Iterator` interface equal to the
+`ElementType` of a `Container` interface as follows:
 
 ```
 interface Iterator {
@@ -2595,6 +2617,19 @@ be qualified using the compound member access syntax, just like if the
 type-of-types were
 [combined using the `&` operator](#combining-interfaces-by-anding-type-of-types).
 
+In some cases, the constraints on the two type variables will be incompatible,
+as in:
+
+```
+interface D { let A:! Type; }
+interface E { let B:! D where .A == i32; }
+interface F { let C:! D where .A == bool; }
+// ❌ Error: U.C.A == bool can't be equal to T.B.A == i32.
+fn F[T:! E, U:! F where .C == T.B](x: T, y: U);
+```
+
+FIXME: is the compiler required to diagnose?
+
 Note that `==` constraints are symmetric, so the previous declaration of
 `Contains` is equivalent to an alternative declaration where `CT` is declared
 first and the `where` clause is attached to `SortedContainer`:
@@ -2605,10 +2640,6 @@ fn Contains
      SC:! SortedContainer where .ElementType == CT.ElementType]
     (haystack: SC, needles: CT) -> bool;
 ```
-
-A constraint setting an associated type to a concrete type, like
-`where .ElementType == String`, gives `.ElementType` the complete `String` API,
-in addition to any API from the type of `ElementType`.
 
 #### Type bound for associated type
 
