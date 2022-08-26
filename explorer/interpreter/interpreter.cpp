@@ -773,7 +773,7 @@ auto Interpreter::CollectVariablesToDestruct(const Statement& stmt,
 
   if (capture == CaptureVariables::DestructorBlock) {
     const auto locals = todo_.DestructorScope();
-    for ( auto [key, lvalue] : locals) {
+    for (auto [key, lvalue] : locals) {
       auto value = heap_.Read(lvalue->address(), stmt.source_loc());
       // possible access to uninitialized variable
       if (value.ok()) {

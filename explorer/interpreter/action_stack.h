@@ -61,7 +61,8 @@ class ActionStack {
 
   auto FunctionScope() const -> std::map<ValueNodeView, Nonnull<const LValue*>>;
 
-  auto DestructorScope() const -> std::map<ValueNodeView, Nonnull<const LValue*>>;
+  auto DestructorScope() const
+      -> std::map<ValueNodeView, Nonnull<const LValue*>>;
 
   // Initializes `fragment` so that, when resumed, it begins execution of
   // `body`.
