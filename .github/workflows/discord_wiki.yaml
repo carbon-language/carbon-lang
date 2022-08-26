@@ -1,0 +1,15 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: Wiki Changed Discord Notification
+
+on: gollum
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: 'oznu/gh-wiki-edit-discord-notification@v1.0.0'
+        with:
+          discord-webhook-url: ${{ secrets.DISCORD_WEBHOOK_WIKI_EDIT }}

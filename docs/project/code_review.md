@@ -82,10 +82,8 @@ In Carbon, developers will focus on particular areas, loosely broken down as:
 
 -   [Implementation team](groups.md#implementation-team): general changes.
 
-    -   We split out auto-assignment by
-        [explorer](/.github/assign_prs/explorer.yaml),
-        [toolchain](/.github/assign_prs/toolchain.yaml), and
-        [other files, including documentation](/.github/assign_prs/fallback.yaml).
+    -   We split out auto-assignment by explorer, toolchain, and other files
+        (including documentation).
 
 [Auto-assignment](/.github/workflows/assign_prs.yaml) will help find owners, but
 won't always be perfect -- developers may take a PR they weren't auto-assigned
