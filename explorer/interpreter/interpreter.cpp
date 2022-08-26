@@ -772,7 +772,7 @@ auto Interpreter::CollectVariablesToDestruct(const Statement& stmt,
       destructor_calls;
 
   if (capture == CaptureVariables::DestructorBlock) {
-    auto locals = todo_.GetSelfScope();
+    auto locals = todo_.DestructorScope();
     for (auto [key, lvalue] : locals) {
       auto value = heap_.Read(lvalue->address(), stmt.source_loc());
       // possible access to uninitialized variable
@@ -805,8 +805,7 @@ auto Interpreter::CollectVariablesToDestruct(const Statement& stmt,
       }
     }
   } else if (capture == CaptureVariables::FunctionBlock) {
-    auto locals = todo_.GetCompleteScope();
-    // auto locals = block_scope->GetLocals();
+    auto locals = todo_.FunctionScope();
     for (auto [key, lvalue] : locals) {
       auto value = heap_.Read(lvalue->address(), stmt.source_loc());
       // possible access to uninitialized variable
@@ -820,9 +819,8 @@ auto Interpreter::CollectVariablesToDestruct(const Statement& stmt,
         }
       }
     }
-  } else if (todo_.GetCurrentScope().has_value()) {
-    RuntimeScope& block_scope = *todo_.GetCurrentScope();
-    auto locals = block_scope.GetLocals();
+  } else {
+    auto locals = todo_.BlockScope();
     for (auto [key, lvalue] : locals) {
       auto value = heap_.Read(lvalue->address(), stmt.source_loc());
       // possible access to uninitialized variable
@@ -1744,16 +1742,12 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
     }
     case StatementKind::Block: {
       StatementAction& statement_action = cast<StatementAction>(act);
-      // llvm::outs()<<act<<"\n";
       const auto& block = cast<Block>(stmt);
       if (act.pos() > 0 &&
           act.pos() >= static_cast<int>(block.statements().size()) &&
           !statement_action.DestructionActive()) {
         // If the position is past the end of the block, end processing. Note
         // that empty blocks immediately end.
-        auto& block_scope = *act.scope();
-        //   llvm::outs()<<block_scope<<"\n";
-        auto locals = block_scope.GetLocals();
         CaptureVariables capture = statement_action.IsDestructorCall()
                                        ? CaptureVariables::DestructorBlock
                                        : CaptureVariables::Block;

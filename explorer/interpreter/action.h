@@ -60,7 +60,7 @@ class RuntimeScope {
   auto Get(ValueNodeView value_node) const
       -> std::optional<Nonnull<const LValue*>>;
 
-  auto GetLocals() const -> std::map<ValueNodeView, Nonnull<const LValue*>> {
+  auto Locals() const -> std::map<ValueNodeView, Nonnull<const LValue*>> {
     return locals_;
   }
 
