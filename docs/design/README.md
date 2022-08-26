@@ -146,7 +146,8 @@ Here is a simple function showing some Carbon code:
 ```carbon
 import Math;
 
-// Returns the smallest factor of `n` > 1, and whether `n` itself is prime.
+// Returns the smallest factor of `n` > 1, and
+// whether `n` itself is prime.
 fn SmallestFactor(n: i32) -> (i32, bool) {
   let limit: i32 = Math.Sqrt(n) as i32;
   var i: i32 = 2;
@@ -186,9 +187,8 @@ more like [C++ modules](https://en.cppreference.com/w/cpp/language/modules) than
 The `import` declaration imports a
 [library from a package](#files-libraries-packages). It must appear at the top
 of a Carbon source file, the first thing after the
-[optional `package` declaration](#package-declaration). Libraries can be split
-into [api and implementation files](#files-libraries-packages), like C++'s
-header and source files. This declaration from the example:
+[optional `package` declaration](#package-declaration). This declaration from
+the example:
 
 ```carbon
 import Math;
@@ -204,7 +204,10 @@ Carbon [comments](#code-and-comments) must be on a line by themselves starting
 with `//`:
 
 ```carbon
-// Return smallest factor > 1, and whether it is prime.
+// Returns the smallest factor of `n` > 1, and
+// whether `n` itself is prime.
+...
+      // Skip even numbers once we get past `2`.
 ```
 
 A [function definition](#functions) consists of:
@@ -378,8 +381,8 @@ has a number of consequences:
 -   Names for types are in the same namespace shared with functions, variables,
     namespaces, and so on.
 -   The grammar for writing a type is the [expression](#expressions) grammar,
-    not a separate grammar for types. Carbon also doesn't use angle brackets
-    `<`...`>` in types, since `<` and `>` are used for comparison in
+    not a separate grammar for types. As a result, Carbon doesn't use angle
+    brackets `<`...`>` in types, since `<` and `>` are used for comparison in
     expressions.
 -   Function call syntax is used to specify parameters to a type, like
     `HashMap(String, i64)`.
