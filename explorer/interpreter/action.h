@@ -60,10 +60,10 @@ class RuntimeScope {
   auto Get(ValueNodeView value_node) const
       -> std::optional<Nonnull<const LValue*>>;
 
-  auto GetLocals() const
-      -> std::map<ValueNodeView,Nonnull<const LValue*>>{
+  auto GetLocals() const -> std::map<ValueNodeView, Nonnull<const LValue*>> {
     return locals_;
   }
+
  private:
   std::map<ValueNodeView, Nonnull<const LValue*>> locals_;
   std::vector<AllocationId> allocations_;
@@ -212,7 +212,10 @@ class StatementAction : public Action {
  public:
   explicit StatementAction(Nonnull<const Statement*> statement)
       : Action(Kind::StatementAction),
-        statement_(statement), destruction_active_(false),ignore_destructor_calls_(false) {}
+        statement_(statement),
+        destruction_active_(false),
+        ignore_destructor_calls_(false),
+        is_destructor_call_(false) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::StatementAction;
@@ -220,34 +223,40 @@ class StatementAction : public Action {
 
   // The Statement this Action executes.
   auto statement() const -> const Statement& { return *statement_; }
-  void add_destructor_calls(const  std::list<std::pair<Nonnull<const FunctionDeclaration*>, Nonnull<const Value*>>> & l){
-      destruction_active_ = true;
-      destructor_calls_ = l;
+  void add_destructor_calls(
+      const std::list<std::pair<Nonnull<const FunctionDeclaration*>,
+                                Nonnull<const Value*>>>& l) {
+    destruction_active_ = true;
+    destructor_calls_ = l;
   }
 
-  auto PopDestructorCall() -> std::pair<Nonnull<const FunctionDeclaration*>, Nonnull<const Value*>> {
-      auto ret = destructor_calls_.back();
-      destructor_calls_.pop_back();
-      return ret;
+  auto PopDestructorCall()
+      -> std::pair<Nonnull<const FunctionDeclaration*>, Nonnull<const Value*>> {
+    auto ret = destructor_calls_.back();
+    destructor_calls_.pop_back();
+    return ret;
   }
 
-  auto DestructionActive() const -> bool {
-      return destruction_active_;
-  }
+  auto DestructionActive() const -> bool { return destruction_active_; }
 
   auto HasDestructorCalls() const -> bool {
-      return !destructor_calls_.empty() && !ignore_destructor_calls_;
+    return !destructor_calls_.empty() && !ignore_destructor_calls_;
   }
 
-  void IgnoreDestructorCalls(){
-      ignore_destructor_calls_ = true;
-  }
+  auto IsDestructorCall() const -> bool { return is_destructor_call_; }
+
+  void IgnoreDestructorCalls() { ignore_destructor_calls_ = true; }
+
+  void SetDestructorCall() { is_destructor_call_ = true; }
 
  private:
   Nonnull<const Statement*> statement_;
   bool destruction_active_;
-  std::list<std::pair<Nonnull<const FunctionDeclaration*>, Nonnull<const Value*>>> destructor_calls_;
+  std::list<
+      std::pair<Nonnull<const FunctionDeclaration*>, Nonnull<const Value*>>>
+      destructor_calls_;
   bool ignore_destructor_calls_;
+  bool is_destructor_call_;
 };
 
 // Action which implements the run-time effects of executing a Declaration.

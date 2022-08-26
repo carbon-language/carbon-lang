@@ -58,21 +58,22 @@ class ActionStack {
   void MergeScope(RuntimeScope scope);
 
   auto GetCurrentScope() -> std::optional<RuntimeScope>& {
-      for (const std::unique_ptr <Action> &action: todo_) {
-          if (action->scope().has_value()) {
-              return action->scope();
-          }
+    for (const std::unique_ptr<Action>& action : todo_) {
+      if (action->scope().has_value()) {
+        return action->scope();
       }
-      return empty_locals_;
+    }
+    return empty_locals_;
   }
 
-  auto GetCompleteScope() -> std::map<ValueNodeView,Nonnull<const LValue*>>{
-      std::map<Nonnull<const LValue*>,bool> unique_map;
-      std::map<ValueNodeView,Nonnull<const LValue*>> locals;
-      //bool found_beginning_block = false;
-      for (const std::unique_ptr <Action> &action: todo_) {
-            if (action->scope().has_value()) {
-           //    ExpressionAction* exp = llvm::dyn_cast<ExpressionAction>(action.get());
+  auto GetCompleteScope() -> std::map<ValueNodeView, Nonnull<const LValue*>> {
+    std::map<Nonnull<const LValue*>, bool> unique_map;
+    std::map<ValueNodeView, Nonnull<const LValue*>> locals;
+    // bool found_beginning_block = false;
+    for (const std::unique_ptr<Action>& action : todo_) {
+      if (action->scope().has_value()) {
+        //    ExpressionAction* exp =
+        //    llvm::dyn_cast<ExpressionAction>(action.get());
 #if 0
                llvm::outs()<<*action.get();
                switch(action->kind()){
@@ -85,24 +86,40 @@ class ActionStack {
                    case Action::Kind::RecursiveAction: llvm::outs()<<" "<<__LINE__<<"\n"; break;
                }
 #endif
-               ScopeAction * scopeAct = llvm::dyn_cast<ScopeAction>(action.get());
-               if(scopeAct != nullptr){
-                    return locals;
-               }
+        ScopeAction* scopeAct = llvm::dyn_cast<ScopeAction>(action.get());
+        if (scopeAct != nullptr) {
+          return locals;
+        }
 
-               auto & scope = *(action->scope());
-               auto scope_locals = scope.GetLocals();
-               for(auto [view, lvalue]: scope_locals ){
-                   if(unique_map.count(lvalue) == 0){
-                       unique_map[lvalue] = true;
-                       locals[view] = lvalue;
-                   }
-               }
-            }
+        auto& scope = *(action->scope());
+        auto scope_locals = scope.GetLocals();
+        for (auto [view, lvalue] : scope_locals) {
+          if (unique_map.count(lvalue) == 0) {
+            unique_map[lvalue] = true;
+            locals[view] = lvalue;
+          }
+        }
       }
-
-      return {};
+    }
+    return {};
   }
+
+  auto GetSelfScope() -> std::map<ValueNodeView, Nonnull<const LValue*>> {
+    std::map<ValueNodeView, Nonnull<const LValue*>> locals;
+    for (const std::unique_ptr<Action>& action : todo_) {
+      ScopeAction* scopeAct = llvm::dyn_cast<ScopeAction>(action.get());
+      if (scopeAct != nullptr) {
+        auto& scope = *(action->scope());
+        auto scope_locals = scope.GetLocals();
+        for (auto [view, lvalue] : scope_locals) {
+          locals[view] = lvalue;
+        }
+        return locals;
+      }
+    }
+    return locals;
+  }
+
   // Initializes `fragment` so that, when resumed, it begins execution of
   // `body`.
   void InitializeFragment(ContinuationValue::StackFragment& fragment,

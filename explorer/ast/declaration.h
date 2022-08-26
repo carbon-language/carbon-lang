@@ -115,10 +115,10 @@ class FunctionDeclaration : public Declaration {
       -> ErrorOr<Nonnull<FunctionDeclaration*>>;
 
   static auto CreateDestructor(Nonnull<Arena*> arena, SourceLocation source_loc,
-                     std::vector<Nonnull<AstNode*>> deduced_params,
-                     Nonnull<TuplePattern*> param_pattern,
-                     ReturnTerm return_term,
-                     std::optional<Nonnull<Block*>> body)
+                               std::vector<Nonnull<AstNode*>> deduced_params,
+                               Nonnull<TuplePattern*> param_pattern,
+                               ReturnTerm return_term,
+                               std::optional<Nonnull<Block*>> body)
       -> ErrorOr<Nonnull<FunctionDeclaration*>>;
 
   // Use `Create()` instead. This is public only so Arena::New() can call it.
@@ -231,7 +231,7 @@ class ClassDeclaration : public Declaration {
   auto destructor() const -> std::optional<Nonnull<FunctionDeclaration*>> {
     return destructor_;
   }
-  void set_destructor(Nonnull<FunctionDeclaration*> dtor){
+  void set_destructor(Nonnull<FunctionDeclaration*> dtor) {
     destructor_ = dtor;
   }
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }

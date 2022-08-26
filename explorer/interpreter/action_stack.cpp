@@ -179,7 +179,7 @@ auto ActionStack::Spawn(std::unique_ptr<Action> child, RuntimeScope scope)
   return Success();
 }
 
-void ActionStack::Push(std::unique_ptr<Action> child, RuntimeScope scope){
+void ActionStack::Push(std::unique_ptr<Action> child, RuntimeScope scope) {
   todo_.Push(std::make_unique<ScopeAction>(std::move(scope)));
   todo_.Push(std::move(child));
 }

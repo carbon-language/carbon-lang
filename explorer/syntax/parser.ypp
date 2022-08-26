@@ -1173,8 +1173,9 @@ destructor_declaration:
   {
     ErrorOr<FunctionDeclaration*> fn = FunctionDeclaration::CreateDestructor(
         arena, context.source_loc(), $3,
-        arena->New<TuplePattern>(context.source_loc(),std::vector<Nonnull<Pattern*>>()),
-        ReturnTerm::Omitted(context.source_loc()),$4);
+        arena->New<TuplePattern>(context.source_loc(),
+                                 std::vector<Nonnull<Pattern*>>()),
+        ReturnTerm::Omitted(context.source_loc()), $4);
     if (fn.ok()) {
       $$ = *fn;
     } else {

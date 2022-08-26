@@ -199,12 +199,11 @@ void ReturnTerm::Print(llvm::raw_ostream& out) const {
   }
 }
 
-auto FunctionDeclaration::CreateDestructor(Nonnull<Arena*> arena,
-                                 SourceLocation source_loc,
-                                 std::vector<Nonnull<AstNode*>> deduced_params,
-                                 Nonnull<TuplePattern*> param_pattern,
-                                 ReturnTerm return_term,
-                                 std::optional<Nonnull<Block*>> body)
+auto FunctionDeclaration::CreateDestructor(
+    Nonnull<Arena*> arena, SourceLocation source_loc,
+    std::vector<Nonnull<AstNode*>> deduced_params,
+    Nonnull<TuplePattern*> param_pattern, ReturnTerm return_term,
+    std::optional<Nonnull<Block*>> body)
     -> ErrorOr<Nonnull<FunctionDeclaration*>> {
   std::vector<Nonnull<GenericBinding*>> resolved_params;
   std::optional<Nonnull<Pattern*>> me_pattern;
@@ -232,8 +231,7 @@ auto FunctionDeclaration::CreateDestructor(Nonnull<Arena*> arena,
   }
   return arena->New<FunctionDeclaration>(source_loc, "destructor",
                                          std::move(resolved_params), me_pattern,
-                                         param_pattern, return_term,
-                                         body);
+                                         param_pattern, return_term, body);
 }
 
 auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
