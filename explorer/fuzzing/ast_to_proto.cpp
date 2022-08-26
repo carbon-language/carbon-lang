@@ -582,11 +582,11 @@ static auto DeclarationToProto(const Declaration& declaration)
             break;
         }
       }
-      if(function.is_destructor()) {
-          *function_proto->mutable_param_pattern() =
-                  TuplePatternToProto(function.param_pattern());
-          *function_proto->mutable_return_term() =
-                  ReturnTermToProto(function.return_term());
+      if (function.is_destructor()) {
+        *function_proto->mutable_param_pattern() =
+            TuplePatternToProto(function.param_pattern());
+        *function_proto->mutable_return_term() =
+            ReturnTermToProto(function.return_term());
       }
       if (function.body().has_value()) {
         *function_proto->mutable_body() =

@@ -108,48 +108,51 @@ void ActionStack::MergeScope(RuntimeScope scope) {
   CARBON_FATAL() << "No current scope";
 }
 
-auto ActionStack::BlockScope() ->std::map<ValueNodeView, Nonnull<const LValue*>> {
-    std::map<ValueNodeView, Nonnull<const LValue*>> locals;
-    for (const std::unique_ptr<Action>& action : todo_) {
-        if (action->scope().has_value()) {
-            return action->scope()->Locals();
-        }
+auto ActionStack::BlockScope()
+    -> std::map<ValueNodeView, Nonnull<const LValue*>> {
+  std::map<ValueNodeView, Nonnull<const LValue*>> locals;
+  for (const std::unique_ptr<Action>& action : todo_) {
+    if (action->scope().has_value()) {
+      return action->scope()->Locals();
     }
-    return locals;
+  }
+  return locals;
 }
 
-auto ActionStack::FunctionScope() -> std::map<ValueNodeView, Nonnull<const LValue*>> {
-    std::map<ValueNodeView, Nonnull<const LValue*>> locals;
-    for (const std::unique_ptr<Action>& action : todo_) {
-        if (action->scope().has_value()) {
-            ScopeAction* scopeAct = llvm::dyn_cast<ScopeAction>(action.get());
-            if (scopeAct != nullptr) {
-                return locals;
-            }
-            auto& scope = *(action->scope());
-            auto scope_locals = scope.Locals();
-            for (auto [view, lvalue] : scope_locals) {
-                locals[view] = lvalue;
-            }
-        }
+auto ActionStack::FunctionScope()
+    -> std::map<ValueNodeView, Nonnull<const LValue*>> {
+  std::map<ValueNodeView, Nonnull<const LValue*>> locals;
+  for (const std::unique_ptr<Action>& action : todo_) {
+    if (action->scope().has_value()) {
+      ScopeAction* scopeAct = llvm::dyn_cast<ScopeAction>(action.get());
+      if (scopeAct != nullptr) {
+        return locals;
+      }
+      auto& scope = *(action->scope());
+      auto scope_locals = scope.Locals();
+      for (auto [view, lvalue] : scope_locals) {
+        locals[view] = lvalue;
+      }
     }
-    return {};
+  }
+  return {};
 }
 
-auto ActionStack::DestructorScope() -> std::map<ValueNodeView, Nonnull<const LValue*>> {
-    std::map<ValueNodeView, Nonnull<const LValue*>> locals;
-    for (const std::unique_ptr<Action>& action : todo_) {
-        ScopeAction* scopeAct = llvm::dyn_cast<ScopeAction>(action.get());
-        if (scopeAct != nullptr) {
-            auto& scope = *(action->scope());
-            auto scope_locals = scope.Locals();
-            for (auto [view, lvalue] : scope_locals) {
-                locals[view] = lvalue;
-            }
-            return locals;
-        }
+auto ActionStack::DestructorScope()
+    -> std::map<ValueNodeView, Nonnull<const LValue*>> {
+  std::map<ValueNodeView, Nonnull<const LValue*>> locals;
+  for (const std::unique_ptr<Action>& action : todo_) {
+    ScopeAction* scopeAct = llvm::dyn_cast<ScopeAction>(action.get());
+    if (scopeAct != nullptr) {
+      auto& scope = *(action->scope());
+      auto scope_locals = scope.Locals();
+      for (auto [view, lvalue] : scope_locals) {
+        locals[view] = lvalue;
+      }
+      return locals;
     }
-    return locals;
+  }
+  return locals;
 }
 
 void ActionStack::InitializeFragment(ContinuationValue::StackFragment& fragment,

@@ -134,19 +134,16 @@ class FunctionDeclaration : public Declaration {
         me_pattern_(me_pattern),
         param_pattern_(param_pattern),
         return_term_(return_term),
-        body_(body),is_destructor_(false) {}
+        body_(body),
+        is_destructor_(false) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromFunctionDeclaration(node->kind());
   }
 
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
-  void set_is_destructor(){
-      is_destructor_ = true;
-  }
-  auto is_destructor() const -> bool{
-      return is_destructor_;
-  }
+  void set_is_destructor() { is_destructor_ = true; }
+  auto is_destructor() const -> bool { return is_destructor_; }
   auto name() const -> const std::string& { return name_; }
   auto deduced_parameters() const
       -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
