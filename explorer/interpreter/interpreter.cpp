@@ -145,6 +145,9 @@ class Interpreter {
   auto CallDestructor(Nonnull<const FunctionDeclaration*> fun, Nonnull<const Value*> receiver)
       ->ErrorOr<Success>;
 
+  auto CollectVariablesToDestruct(const Statement& stmt,bool capture_env_scope = false)
+      -> std::list <std::pair<Nonnull<const FunctionDeclaration *>, Nonnull<const Value *>>>;
+
   void PrintState(llvm::raw_ostream& out);
 
   Phase phase() const { return phase_; }
@@ -754,6 +757,48 @@ auto Interpreter::CallDestructor(Nonnull<const FunctionDeclaration*> fun,
 
    return todo_.Spawn(std::make_unique<StatementAction>(*method.body()),
                    std::move(method_scope));
+}
+
+auto Interpreter::CollectVariablesToDestruct(const Statement& stmt,bool capture_env_scope)
+    ->  std::list <std::pair<Nonnull<const FunctionDeclaration *>, Nonnull<const Value *>>> {
+    std::list <std::pair<Nonnull<const FunctionDeclaration *>, Nonnull<const Value *>>> destructor_calls;
+
+        if (capture_env_scope) {
+            auto locals = todo_.GetCompleteScope();
+            //auto locals = block_scope->GetLocals();
+            for (auto [key, lvalue]: locals) {
+                auto value = heap_.Read(lvalue->address(), stmt.source_loc());
+                //possible acces to unintialized variable
+                if (value.ok()) {
+                    if (const auto *class_obj = dyn_cast<NominalClassValue>(*value)) {
+                        auto &class_type = cast<NominalClassType>(class_obj->type());
+                        auto &class_dec = class_type.declaration();
+                        if (class_dec.destructor().has_value()) {
+                            destructor_calls.push_back({*class_dec.destructor(), class_obj});
+                        }
+                    }
+                }
+            }
+
+        } else if(todo_.GetCurrentScope().has_value()) {
+            RuntimeScope &block_scope = *todo_.GetCurrentScope();;
+            auto locals = block_scope.GetLocals();
+            for (auto [key, lvalue]: locals) {
+                auto value = heap_.Read(lvalue->address(), stmt.source_loc());
+                //possible acces to unintialized variable
+                if (value.ok()) {
+                    if (const auto *class_obj = dyn_cast<NominalClassValue>(*value)) {
+                        auto &class_type = cast<NominalClassType>(class_obj->type());
+                        auto &class_dec = class_type.declaration();
+                        if (class_dec.destructor().has_value()) {
+                            destructor_calls.push_back({*class_dec.destructor(), class_obj});
+                        }
+                    }
+                }
+            }
+        }
+
+    return destructor_calls;
 }
 
 auto Interpreter::CallFunction(const CallExpression& call,
@@ -1552,13 +1597,30 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         }
       }
     case StatementKind::Break: {
-      CARBON_CHECK(act.pos() == 0);
+      StatementAction& statement_action = cast<StatementAction>(act);
+      if(act.pos() == 0){
+          auto destructor_calls = CollectVariablesToDestruct(stmt,true);
+          statement_action.add_destructor_calls(destructor_calls);
+      }
+      if(statement_action.HasDestructorCalls()){
+        auto call_item = statement_action.PopDestructorCall();
+        return CallDestructor(call_item.first, call_item.second) ;
+      }
       //    { { break; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { C, E', F} :: S, H}
       return todo_.UnwindPast(&cast<Break>(stmt).loop());
+
     }
     case StatementKind::Continue: {
-      CARBON_CHECK(act.pos() == 0);
+    StatementAction& statement_action = cast<StatementAction>(act);
+    if(act.pos() == 0){
+        auto destructor_calls = CollectVariablesToDestruct(stmt,true);
+        statement_action.add_destructor_calls(destructor_calls);
+    }
+        if(statement_action.HasDestructorCalls()){
+            auto call_item = statement_action.PopDestructorCall();
+            return CallDestructor(call_item.first, call_item.second) ;
+        }
       //    { { continue; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { (while (e) s) :: C, E', F} :: S, H}
       return todo_.UnwindTo(&cast<Continue>(stmt).loop());
@@ -1566,24 +1628,15 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
     case StatementKind::Block: {
         StatementAction& statement_action = cast<StatementAction>(act);
         const auto& block = cast<Block>(stmt);
-      if (act.pos() >= static_cast<int>(block.statements().size()) && !statement_action.DestructionActive()) {
+      if (act.pos() > 0 && act.pos() >= static_cast<int>(block.statements().size()) && !statement_action.DestructionActive()) {
         // If the position is past the end of the block, end processing. Note
         // that empty blocks immediately end.
 
         auto & block_scope = *act.scope();
         auto locals = block_scope.GetLocals();
 
-        std::list<std::pair<Nonnull<const FunctionDeclaration*>, Nonnull<const Value*>>> destructor_calls;
-        for( auto [key,lvalue] : locals){
-          auto value = heap_.Read(lvalue->address(),stmt.source_loc());
-          if(const auto * class_obj = dyn_cast<NominalClassValue>(*value)){
-            auto &class_type = cast<NominalClassType>(class_obj->type());
-            auto &class_dec = class_type.declaration();
-            if(class_dec.destructor().has_value()) {
-                destructor_calls.push_back({*class_dec.destructor(),class_obj});
-            }
-          }
-        }
+        auto destructor_calls = CollectVariablesToDestruct(stmt);
+
 
         statement_action.add_destructor_calls(destructor_calls);
         if(destructor_calls.empty()){
@@ -1723,45 +1776,37 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
                   stmt.source_loc()));
       return todo_.UnwindPast(*function.body(), return_value);
     }
-    case StatementKind::ReturnExpression:
-      if (act.pos() == 0) {
-        //    { {return e :: C, E, F} :: S, H}
-        // -> { {e :: return [] :: C, E, F} :: S, H}
-          if(act.scope().has_value()){
-              llvm::outs()<<"HALLO WELT"<<"\n";
-          }
-        return todo_.Spawn(std::make_unique<ExpressionAction>(
-            &cast<ReturnExpression>(stmt).expression()));
-      } else {
-        //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
-        // -> { {v :: C', E', F'} :: S, H}
-        const FunctionDeclaration& function = cast<Return>(stmt).function();
-        CARBON_ASSIGN_OR_RETURN(
-            Nonnull<const Value*> return_value,
-            Convert(act.results()[0], &function.return_term().static_type(),
-                    stmt.source_loc()));
-
-          if(todo_.GetCurrentScope().has_value()) {
-              RuntimeScope& block_scope = *todo_.GetCurrentScope();
-              auto locals = block_scope.GetLocals();
-              std::list <std::pair<Nonnull<const FunctionDeclaration *>, Nonnull<const Value *>>> destructor_calls;
-              for (auto [key, lvalue]: locals) {
-                  llvm::outs() << "Exist" << "\n";
-                  auto value = heap_.Read(lvalue->address(), stmt.source_loc());
-                  if (const auto *class_obj = dyn_cast<NominalClassValue>(*value)) {
-                      auto &class_type = cast<NominalClassType>(class_obj->type());
-                      auto &class_dec = class_type.declaration();
-                      if (class_dec.destructor().has_value()) {
-                          llvm::outs() << __LINE__ << ":" << *class_obj << "\n";
-                          destructor_calls.push_back({*class_dec.destructor(), class_obj});
-                      }
-                  }
-              }
-          }
-
-
-        return todo_.UnwindPast(*function.body(), return_value);
-      }
+    case StatementKind::ReturnExpression: {
+        StatementAction &statement_action = cast<StatementAction>(act);
+        if (act.pos() == 0 && !statement_action.DestructionActive()) {
+            //    { {return e :: C, E, F} :: S, H}
+            // -> { {e :: return [] :: C, E, F} :: S, H}
+            if(cast<ReturnExpression>(stmt).expression().kind() == ExpressionKind::IntrinsicExpression){
+                statement_action.IgnoreDestructorCalls();
+            }
+            return todo_.Spawn(std::make_unique<ExpressionAction>(
+                    &cast<ReturnExpression>(stmt).expression()));
+        } else {
+            if (act.pos() == 1 && !statement_action.DestructionActive()) {
+                auto destructor_calls = CollectVariablesToDestruct(stmt,true);
+                statement_action.add_destructor_calls(destructor_calls);
+            }
+            if (statement_action.HasDestructorCalls()) {
+                auto call_item = statement_action.PopDestructorCall();
+                return CallDestructor(call_item.first, call_item.second);
+            } else {
+                //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
+                // -> { {v :: C', E', F'} :: S, H}
+                const FunctionDeclaration &function = cast<Return>(stmt).function();
+                CARBON_ASSIGN_OR_RETURN(
+                        Nonnull<const Value *>
+                return_value,
+                        Convert(act.results()[0], &function.return_term().static_type(),
+                                stmt.source_loc()));
+                return todo_.UnwindPast(*function.body(), return_value);
+            }
+        }
+    }
     case StatementKind::Continuation: {
       CARBON_CHECK(act.pos() == 0);
       const auto& continuation = cast<Continuation>(stmt);

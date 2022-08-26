@@ -33,9 +33,12 @@ class C{
 }
 
 fn Main() -> i32 {
-  var i : i32 = 0;
-  var a: A = {.n = 3};
-  var b: B = {.n = 2};
-  var c: C = {.n = 1};
+  var i: i32 = 0;
+  while( i < 2){
+    var a: A = {.n = 3};
+    var b: B = {.n = 2};
+    var c: C = {.n = 1};
+    i = i + 1;
+  }
   return 1;
 }

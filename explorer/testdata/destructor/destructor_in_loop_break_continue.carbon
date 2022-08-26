@@ -7,7 +7,7 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: result: 1
+// CHECK: result: 2
 
 package ExplorerTest api;
 
@@ -32,10 +32,37 @@ class C{
     var n: i32;
 }
 
+fn ident(x: bool)-> bool{
+    return x;
+}
+
+fn ident_i32(x: i32)-> i32{
+    return x;
+}
+
 fn Main() -> i32 {
-  var i : i32 = 0;
-  var a: A = {.n = 3};
-  var b: B = {.n = 2};
-  var c: C = {.n = 1};
+  var i: i32 = 0;
+  while(i < 2 ){
+      var a: A = {.n = 4};
+      var b: B = {.n = 3};
+      var c: C = {.n = 2};
+      if(i == 0){
+        var a: A = {.n = 1};
+        break;
+      }
+  }
+
+  while(i < 2 ){
+    var a: A = {.n = 4};
+    var b: B = {.n = 3};
+    var c: C = {.n = 2};
+    if(i == 0){
+      var a: A = {.n = 1};
+      i = i+1;
+      continue;
+    }
+    i = i+1;
+  }
+
   return 1;
 }

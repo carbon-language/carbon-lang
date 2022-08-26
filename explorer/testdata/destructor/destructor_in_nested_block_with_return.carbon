@@ -7,39 +7,52 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: result: 7
+// CHECK: result: 2
 
 package ExplorerTest api;
 
-
-
 class A{
     fn destructor[me: Self]{
-        Print("DESTRUCTOR A");
+        Print("DESTRUCTOR A {0}",me.n);
     }
+    var n: i32;
 }
 
 class B{
     fn destructor[me: Self]{
-        Print("DESTRUCTOR B");
+        Print("DESTRUCTOR B {0}",me.n);
     }
+    var n: i32;
 }
 
-class A0{
+class C{
     fn destructor[me: Self]{
-        Print("DESTRUCTOR A0");
+        Print("DESTRUCTOR C {0}",me.n);
     }
+    var n: i32;
+}
+
+fn ident(x: bool)-> bool{
+    return x;
+}
+
+fn ident_i32(x: i32)-> i32{
+    return x;
 }
 
 fn Main() -> i32 {
   var i: i32 = 0;
-  while( i < 1){
-    var b: B = {};
-    var a0: A0 ={};
-    var a: A = {};
-
-
-    i = i + 1;
+  var d: A = {.n = 4};
+  if(ident(true)){
+    var a: A = {.n = 3};
+    if(i == 0){
+       var b: B = {.n = 2};
+       ident_i32(2);
+       if(ident_i32(0) == 0){
+         var c: C = {.n = 1};
+         return 2;
+       }
+    }
   }
   return 1;
 }

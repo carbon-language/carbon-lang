@@ -212,7 +212,7 @@ class StatementAction : public Action {
  public:
   explicit StatementAction(Nonnull<const Statement*> statement)
       : Action(Kind::StatementAction),
-        statement_(statement), destruction_active_(false) {}
+        statement_(statement), destruction_active_(false),ignore_destructor_calls_(false) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::StatementAction;
@@ -236,13 +236,18 @@ class StatementAction : public Action {
   }
 
   auto HasDestructorCalls() const -> bool {
-      return !destructor_calls_.empty();
+      return !destructor_calls_.empty() && !ignore_destructor_calls_;
+  }
+
+  void IgnoreDestructorCalls(){
+      ignore_destructor_calls_ = true;
   }
 
  private:
   Nonnull<const Statement*> statement_;
   bool destruction_active_;
   std::list<std::pair<Nonnull<const FunctionDeclaration*>, Nonnull<const Value*>>> destructor_calls_;
+  bool ignore_destructor_calls_;
 };
 
 // Action which implements the run-time effects of executing a Declaration.
