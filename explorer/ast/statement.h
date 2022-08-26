@@ -51,8 +51,7 @@ class Block : public Statement {
  public:
   Block(SourceLocation source_loc, std::vector<Nonnull<Statement*>> statements)
       : Statement(AstNodeKind::Block, source_loc),
-        statements_(std::move(statements)),
-        destruction_active_(false) {}
+        statements_(std::move(statements)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromBlock(node->kind());
@@ -64,13 +63,9 @@ class Block : public Statement {
   auto statements() -> llvm::MutableArrayRef<Nonnull<Statement*>> {
     return statements_;
   }
-  void activate_destruction() const { destruction_active_ = true; }
-
-  auto destruction_active() const -> bool { return destruction_active_; }
 
  private:
   std::vector<Nonnull<Statement*>> statements_;
-  mutable bool destruction_active_;
 };
 
 class ExpressionStatement : public Statement {
