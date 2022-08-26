@@ -828,7 +828,9 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
       output_stream << ", identifier: " << GetIdentifier(token).index_;
       break;
     case TokenKind::IntegerLiteral():
-      output_stream << ", value: `" << GetIntegerLiteral(token) << "`";
+      output_stream << ", value: `";
+      GetIntegerLiteral(token).print(output_stream, /*isSigned=*/false);
+      output_stream << "`";
       break;
     case TokenKind::RealLiteral():
       output_stream << ", value: `" << GetRealLiteral(token) << "`";

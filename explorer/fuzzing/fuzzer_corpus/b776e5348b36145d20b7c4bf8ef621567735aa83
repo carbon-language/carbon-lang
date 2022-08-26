@@ -1,0 +1,190 @@
+compilation_unit {
+  package_statement {
+    package_name: "Testcase"
+  }
+  is_api: true
+  declarations {
+    interface {
+      name: "HasName"
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "Name"
+              type {
+                string_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      self {
+        name: "Self"
+        type {
+          type_type_literal {
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: ExternalImpl
+      impl_type {
+        int_type_literal {
+        }
+      }
+      interface {
+        where {
+          base {
+            identifier {
+              name: "HasName"
+            }
+          }
+          clauses {
+            equals {
+              lhs {
+                designator {
+                  name: "Name"
+                }
+              }
+              rhs {
+                string_literal {
+                  value: "i32"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: ExternalImpl
+      impl_type {
+        string_type_literal {
+        }
+      }
+      interface {
+        where {
+          base {
+            identifier {
+              name: "HasName"
+            }
+          }
+          clauses {
+            equals {
+              lhs {
+                designator {
+                  name: "Name"
+                }
+              }
+              rhs {
+                string_literal {
+                  value: "String"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "Print"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      compound_member_access {
+                        object {
+                          int_type_literal {
+                          }
+                        }
+                        path {
+                          simple_member_access {
+                            field: "Name"
+                            object {
+                              identifier {
+                                name: "HasName"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "Print"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      compound_member_access {
+                        object {
+                          string_type_literal {
+                          }
+                        }
+                        path {
+                          simple_member_access {
+                            field: "Name"
+                            object {
+                              identifier {
+                                name: "HasName"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              int_literal {
+                value: 0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

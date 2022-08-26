@@ -65,6 +65,7 @@ EXTERNAL             "external"
 FALSE                "false"
 FN                   "fn"
 FN_TYPE              "__Fn"
+FOR                  "for"
 FORALL               "forall"
 GREATER              ">"
 GREATER_EQUAL        ">="
@@ -72,6 +73,7 @@ GREATER_GREATER      ">>"
 IF                   "if"
 IMPL                 "impl"
 IMPORT               "import"
+IN                   "in"
 INTERFACE            "interface"
 IS                   "is"
 LEFT_CURLY_BRACE     "{"
@@ -167,6 +169,7 @@ operand_start         [(A-Za-z0-9_\"]
 {FN_TYPE}             { return CARBON_SIMPLE_TOKEN(FN_TYPE);             }
 {FN}                  { return CARBON_SIMPLE_TOKEN(FN);                  }
 {FORALL}              { return CARBON_SIMPLE_TOKEN(FORALL);              }
+{FOR}                 { return CARBON_SIMPLE_TOKEN(FOR);                 }
 {GREATER_EQUAL}       { return CARBON_SIMPLE_TOKEN(GREATER_EQUAL);       }
 {GREATER_GREATER}     { return CARBON_SIMPLE_TOKEN(GREATER_GREATER);     }
 {GREATER}             { return CARBON_SIMPLE_TOKEN(GREATER);             }
@@ -174,6 +177,7 @@ operand_start         [(A-Za-z0-9_\"]
 {IMPL}                { return CARBON_SIMPLE_TOKEN(IMPL);                }
 {IMPORT}              { return CARBON_SIMPLE_TOKEN(IMPORT);              }
 {INTERFACE}           { return CARBON_SIMPLE_TOKEN(INTERFACE);           }
+{IN}                  { return CARBON_SIMPLE_TOKEN(IN);                  }
 {IS}                  { return CARBON_SIMPLE_TOKEN(IS);                  }
 {LEFT_CURLY_BRACE}    { return CARBON_SIMPLE_TOKEN(LEFT_CURLY_BRACE);    }
 {LEFT_PARENTHESIS}    { return CARBON_SIMPLE_TOKEN(LEFT_PARENTHESIS);    }

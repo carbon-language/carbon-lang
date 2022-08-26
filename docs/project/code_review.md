@@ -82,10 +82,8 @@ In Carbon, developers will focus on particular areas, loosely broken down as:
 
 -   [Implementation team](groups.md#implementation-team): general changes.
 
-    -   We split out auto-assignment by
-        [explorer](/.github/assign_prs/explorer.yaml),
-        [toolchain](/.github/assign_prs/toolchain.yaml), and
-        [other files, including documentation](/.github/assign_prs/fallback.yaml).
+    -   We split out auto-assignment by explorer, toolchain, and other files
+        (including documentation).
 
 [Auto-assignment](/.github/workflows/assign_prs.yaml) will help find owners, but
 won't always be perfect -- developers may take a PR they weren't auto-assigned
@@ -502,7 +500,7 @@ an escalation path.
 
 Before escalating an impasse or conflict in code review, try asking another
 reviewer to help resolve the issue or bridge any communication gaps. Consider
-scheduling a quick video chat to discuss and better understand each others'
+scheduling a quick video chat to discuss and better understand each other’s
 concerns and position.
 
 Note that the formal evolution process is heavyweight and relatively slow. The

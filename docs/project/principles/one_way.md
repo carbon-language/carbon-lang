@@ -33,7 +33,7 @@ syntax. We are concerned with both forms.
 We also are cautious about creating alternatives that may give rise to a
 [paradox of choice](https://en.wikipedia.org/wiki/The_Paradox_of_Choice),
 wherein options are similar enough that developers actively spend time analyzing
-tarde-offs, and the time spent that way outweighs the potential benefits of a
+trade-offs, and the time spent that way outweighs the potential benefits of a
 correct choice.
 
 Where multiple, similar implementation options exist, it can sometimes give rise

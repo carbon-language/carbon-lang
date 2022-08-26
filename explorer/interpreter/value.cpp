@@ -937,7 +937,8 @@ auto ConstraintType::VisitEqualValues(
 
 auto ChoiceType::FindAlternative(std::string_view name) const
     -> std::optional<Nonnull<const Value*>> {
-  for (const NamedValue& alternative : alternatives_) {
+  std::vector<NamedValue> alternatives = declaration_->members();
+  for (const NamedValue& alternative : alternatives) {
     if (alternative.name == name) {
       return alternative.value;
     }

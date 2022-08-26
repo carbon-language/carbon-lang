@@ -521,6 +521,16 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
       // Initializes with the default value; there's nothing to set.
       statement_proto.mutable_continue_statement();
       break;
+
+    case StatementKind::For: {
+      const auto& for_stmt = cast<For>(statement);
+      auto* for_proto = statement_proto.mutable_for_statement();
+      *for_proto->mutable_var_decl() =
+          BindingPatternToProto(for_stmt.variable_declaration());
+      *for_proto->mutable_target() = ExpressionToProto(for_stmt.loop_target());
+      *for_proto->mutable_body() = BlockStatementToProto(for_stmt.body());
+      break;
+    }
   }
   return statement_proto;
 }
