@@ -146,7 +146,7 @@ Here is a simple function showing some Carbon code:
 ```carbon
 import Math;
 
-// Return smallest factor > 1, and whether it is prime.
+// Returns the smallest factor of `n` > 1, and whether `n` itself is prime.
 fn SmallestFactor(n: i32) -> (i32, bool) {
   let limit: i32 = Math.Sqrt(n) as i32;
   var i: i32 = 2;
@@ -159,6 +159,7 @@ fn SmallestFactor(n: i32) -> (i32, bool) {
     if (i == 2) {
       i = 3;
     } else {
+      // Skip even numbers once we get past `2`.
       i += 2;
     }
   }
@@ -195,12 +196,12 @@ import Math;
 
 imports the default library from package `Math`. The names from this library are
 accessible as members of `Math`, like `Math.Sqrt`. The `Carbon.Print` function
-comes from the `Carbon` package which is
+comes from the `Carbon` package's prelude library which is
 [imported by default](#name-lookup-for-common-types). Unlike C++, the namespaces
 of different packages are kept separate, so there are no name conflicts.
 
 Carbon [comments](#code-and-comments) must be on a line by themselves starting
-with `//`.
+with `//`:
 
 ```carbon
 // Return smallest factor > 1, and whether it is prime.
@@ -226,7 +227,7 @@ fn SmallestFactor(n: i32) -> (i32, bool) {
 The body of the function is an ordered sequence of
 [statements](#blocks-and-statements) and
 [declarations](#declarations-definitions-and-scopes). Function execution ends
-with an optional `return` statement that specifies an expression whose value is
+when it reaches a `return` statement or the end of the function body. `return` statements can also specify an expression whose value is
 returned.
 
 Here `i32` refers to a signed [integer type](#integer-types), with 32 bits, and
@@ -377,7 +378,7 @@ has a number of consequences:
 -   Names for types are in the same namespace shared with functions, variables,
     namespaces, and so on.
 -   The grammar for writing a type is the [expression](#expressions) grammar,
-    not a separate grammar for types. So Carbon doesn't use angle brackets
+    not a separate grammar for types. Carbon also doesn't use angle brackets
     `<`...`>` in types, since `<` and `>` are used for comparison in
     expressions.
 -   Function call syntax is used to specify parameters to a type, like
