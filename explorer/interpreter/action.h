@@ -91,7 +91,7 @@ class Action {
     StatementAction,
     DeclarationAction,
     ScopeAction,
-    RecursiveAction
+    RecursiveAction,
   };
 
   Action(const Value&) = delete;
