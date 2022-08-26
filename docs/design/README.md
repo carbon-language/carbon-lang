@@ -227,8 +227,8 @@ fn SmallestFactor(n: i32) -> (i32, bool) {
 The body of the function is an ordered sequence of
 [statements](#blocks-and-statements) and
 [declarations](#declarations-definitions-and-scopes). Function execution ends
-when it reaches a `return` statement or the end of the function body. `return` statements can also specify an expression whose value is
-returned.
+when it reaches a `return` statement or the end of the function body. `return`
+statements can also specify an expression whose value is returned.
 
 Here `i32` refers to a signed [integer type](#integer-types), with 32 bits, and
 `bool` is the [boolean type](#bool). Carbon also has
