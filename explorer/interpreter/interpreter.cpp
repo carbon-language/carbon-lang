@@ -148,7 +148,7 @@ class Interpreter {
                       Nonnull<const Value*> receiver) -> ErrorOr<Success>;
 
   auto CollectVariablesToDestruct(const Statement& stmt,
-                                  CaptureVariables capture)
+                                  CaptureVariables capture) const
       -> std::list<std::pair<Nonnull<const FunctionDeclaration*>,
                              Nonnull<const Value*>>>;
 
@@ -764,7 +764,7 @@ auto Interpreter::CallDestructor(Nonnull<const FunctionDeclaration*> fun,
 }
 
 auto Interpreter::CollectVariablesToDestruct(const Statement& stmt,
-                                             CaptureVariables capture)
+                                             CaptureVariables capture) const
     -> std::list<
         std::pair<Nonnull<const FunctionDeclaration*>, Nonnull<const Value*>>> {
   std::list<
@@ -772,24 +772,23 @@ auto Interpreter::CollectVariablesToDestruct(const Statement& stmt,
       destructor_calls;
 
   if (capture == CaptureVariables::DestructorBlock) {
-    auto locals = todo_.DestructorScope();
-    for (auto [key, lvalue] : locals) {
+    const auto locals = todo_.DestructorScope();
+    for ( auto [key, lvalue] : locals) {
       auto value = heap_.Read(lvalue->address(), stmt.source_loc());
       // possible access to uninitialized variable
       if (value.ok()) {
         if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
-          auto& class_type = cast<NominalClassType>(class_obj->type());
-          auto& class_dec = class_type.declaration();
+          const auto& class_type = cast<NominalClassType>(class_obj->type());
+          const auto& class_dec = class_type.declaration();
           const auto& class_members = class_dec.members();
-          for (auto& member : class_members) {
-            if (const VariableDeclaration* var = dyn_cast<VariableDeclaration>(member)) {
-              auto& type = var->static_type();
-              if (const NominalClassType* c_type = dyn_cast<NominalClassType>(&type)) {
+          for (const auto& member : class_members) {
+            if (const auto* var = dyn_cast<VariableDeclaration>(member)) {
+              const auto& type = var->static_type();
+              if (const auto* c_type = dyn_cast<NominalClassType>(&type)) {
                 auto& c_dec = c_type->declaration();
                 if (c_dec.destructor().has_value()) {
                   Address object = lvalue->address();
-                  Nonnull<const Declaration*> d(var);
-                  Address mem = object.SubobjectAddress(Member(d));
+                  Address mem = object.SubobjectAddress(Member(var));
                   auto v = heap_.Read(mem, stmt.source_loc());
                   destructor_calls.push_back({*c_dec.destructor(), *v});
                 }
@@ -799,28 +798,27 @@ auto Interpreter::CollectVariablesToDestruct(const Statement& stmt,
         }
       }
     }
-  }else{
-      std::map<ValueNodeView, Nonnull<const LValue*>> locals;
-      if (capture == CaptureVariables::FunctionBlock){
-          locals = todo_.FunctionScope();
-      }else{
-          locals = todo_.BlockScope();
-      }
-      for (auto [key, lvalue] : locals) {
-          auto value = heap_.Read(lvalue->address(), stmt.source_loc());
-          // possible access to uninitialized variable
-          if (value.ok()) {
-              if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
-                  auto& class_type = cast<NominalClassType>(class_obj->type());
-                  auto& class_dec = class_type.declaration();
-                  if (class_dec.destructor().has_value()) {
-                      destructor_calls.push_back({*class_dec.destructor(), class_obj});
-                  }
-              }
+  } else {
+    std::map<ValueNodeView, Nonnull<const LValue*>> locals;
+    if (capture == CaptureVariables::FunctionBlock) {
+      locals = todo_.FunctionScope();
+    } else {
+      locals = todo_.BlockScope();
+    }
+    for (auto [key, lvalue] : locals) {
+      auto value = heap_.Read(lvalue->address(), stmt.source_loc());
+      // possible access to uninitialized variable
+      if (value.ok()) {
+        if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
+          const auto& class_type = cast<NominalClassType>(class_obj->type());
+          const auto& class_dec = class_type.declaration();
+          if (class_dec.destructor().has_value()) {
+            destructor_calls.push_back({*class_dec.destructor(), class_obj});
           }
+        }
       }
+    }
   }
-
   return destructor_calls;
 }
 

@@ -108,7 +108,7 @@ void ActionStack::MergeScope(RuntimeScope scope) {
   CARBON_FATAL() << "No current scope";
 }
 
-auto ActionStack::BlockScope()
+auto ActionStack::BlockScope() const
     -> std::map<ValueNodeView, Nonnull<const LValue*>> {
   std::map<ValueNodeView, Nonnull<const LValue*>> locals;
   for (const std::unique_ptr<Action>& action : todo_) {
@@ -119,7 +119,7 @@ auto ActionStack::BlockScope()
   return locals;
 }
 
-auto ActionStack::FunctionScope()
+auto ActionStack::FunctionScope() const
     -> std::map<ValueNodeView, Nonnull<const LValue*>> {
   std::map<ValueNodeView, Nonnull<const LValue*>> locals;
   for (const std::unique_ptr<Action>& action : todo_) {
@@ -138,7 +138,7 @@ auto ActionStack::FunctionScope()
   return {};
 }
 
-auto ActionStack::DestructorScope()
+auto ActionStack::DestructorScope() const
     -> std::map<ValueNodeView, Nonnull<const LValue*>> {
   std::map<ValueNodeView, Nonnull<const LValue*>> locals;
   for (const std::unique_ptr<Action>& action : todo_) {

@@ -57,11 +57,11 @@ class ActionStack {
   // Merges `scope` into the innermost scope currently on the stack.
   void MergeScope(RuntimeScope scope);
 
-  auto BlockScope() -> std::map<ValueNodeView, Nonnull<const LValue*>>;
+  auto BlockScope() const -> std::map<ValueNodeView, Nonnull<const LValue*>>;
 
-  auto FunctionScope() -> std::map<ValueNodeView, Nonnull<const LValue*>>;
+  auto FunctionScope() const -> std::map<ValueNodeView, Nonnull<const LValue*>>;
 
-  auto DestructorScope() -> std::map<ValueNodeView, Nonnull<const LValue*>>;
+  auto DestructorScope() const -> std::map<ValueNodeView, Nonnull<const LValue*>>;
 
   // Initializes `fragment` so that, when resumed, it begins execution of
   // `body`.
