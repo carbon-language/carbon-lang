@@ -127,7 +127,7 @@ class FunctionDeclaration : public Declaration {
                       std::optional<Nonnull<Pattern*>> me_pattern,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
-                      std::optional<Nonnull<Block*>> body)
+                      std::optional<Nonnull<Block*>> body, bool is_destructor)
       : Declaration(AstNodeKind::FunctionDeclaration, source_loc),
         name_(std::move(name)),
         deduced_parameters_(std::move(deduced_params)),
@@ -135,14 +135,13 @@ class FunctionDeclaration : public Declaration {
         param_pattern_(param_pattern),
         return_term_(return_term),
         body_(body),
-        is_destructor_(false) {}
+        is_destructor_(is_destructor) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromFunctionDeclaration(node->kind());
   }
 
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
-  void set_is_destructor() { is_destructor_ = true; }
   auto is_destructor() const -> bool { return is_destructor_; }
   auto name() const -> const std::string& { return name_; }
   auto deduced_parameters() const

@@ -229,11 +229,9 @@ auto FunctionDeclaration::CreateDestructor(
                << "illegal AST node in implicit parameter list";
     }
   }
-  auto destructor = arena->New<FunctionDeclaration>(
+  return arena->New<FunctionDeclaration>(
       source_loc, "destructor", std::move(resolved_params), me_pattern,
-      param_pattern, return_term, body);
-  destructor->set_is_destructor();
-  return destructor;
+      param_pattern, return_term, body, true);
 }
 
 auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
@@ -276,9 +274,9 @@ auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
                << "illegal AST node in implicit parameter list";
     }
   }
-  return arena->New<FunctionDeclaration>(source_loc, name,
-                                         std::move(resolved_params), me_pattern,
-                                         param_pattern, return_term, body);
+  return arena->New<FunctionDeclaration>(
+      source_loc, name, std::move(resolved_params), me_pattern, param_pattern,
+      return_term, body, false);
 }
 
 void FunctionDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
