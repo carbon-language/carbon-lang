@@ -138,7 +138,6 @@ auto ActionStack::FinishAction() -> ErrorOr<Success> {
     case Action::Kind::DeclarationAction:
     case Action::Kind::RecursiveAction:
       PopScopes();
-      break;
   }
   return Success();
 }
@@ -158,7 +157,6 @@ auto ActionStack::FinishAction(Nonnull<const Value*> result)
     case Action::Kind::PatternAction:
       PopScopes();
       SetResult(result);
-      break;
   }
   return Success();
 }
@@ -177,11 +175,6 @@ auto ActionStack::Spawn(std::unique_ptr<Action> child, RuntimeScope scope)
   todo_.Push(std::make_unique<ScopeAction>(std::move(scope)));
   todo_.Push(std::move(child));
   return Success();
-}
-
-void ActionStack::Push(std::unique_ptr<Action> child, RuntimeScope scope) {
-  todo_.Push(std::make_unique<ScopeAction>(std::move(scope)));
-  todo_.Push(std::move(child));
 }
 
 auto ActionStack::ReplaceWith(std::unique_ptr<Action> replacement)

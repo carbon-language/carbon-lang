@@ -150,7 +150,6 @@ class ActionStack {
   auto Spawn(std::unique_ptr<Action> child) -> ErrorOr<Success>;
   auto Spawn(std::unique_ptr<Action> child, RuntimeScope scope)
       -> ErrorOr<Success>;
-  void Push(std::unique_ptr<Action> child, RuntimeScope scope);
   // Replace the current action with another action of the same kind and run it
   // next.
   auto ReplaceWith(std::unique_ptr<Action> child) -> ErrorOr<Success>;
@@ -182,9 +181,9 @@ class ActionStack {
   // Suspends execution of the currently-executing continuation.
   auto Suspend() -> ErrorOr<Success>;
 
+ private:
   // Pop any ScopeActions from the top of the stack, propagating results as
   // needed, to restore the invariant that todo_.Top() is not a ScopeAction.
- private:
   void PopScopes();
 
   // Set `result` as the result of the Action most recently removed from the
