@@ -187,11 +187,11 @@ trying to write proposals, both types of contributor access will help.
 
 ### Contribution tools
 
-Please see our [contribution tool](/docs/project/contribution_tools.md)
+Please see our [contribution tool](docs/project/contribution_tools.md)
 documentation for information on setting up a git client for Carbon development,
 as well as helpful tooling that will ease the contribution process. For example,
-[pre-commit](/docs/project/contribution_tools.md#pre-commit) is used to simplify
-[code review](/docs/project/code_review.md).
+[pre-commit](docs/project/contribution_tools.md#pre-commit) is used to simplify
+[code review](docs/project/code_review.md).
 
 ### Contribution guidelines and standards
 
@@ -207,7 +207,7 @@ follow the Carbon documentation and coding styles.
         the benefit of each contribution against the cost of maintaining it.
     -   The appropriate [style](#style) is applied.
     -   The [license](#license) is present in all contributions.
-    -   [Code review](/docs/project/code_review.md) is used to improve the
+    -   [Code review](docs/project/code_review.md) is used to improve the
         correctness, clarity, and consistency of all contributions.
         -   Please avoid rebasing PRs after receiving comments; it can break
             viewing of the comments in files.
@@ -252,7 +252,7 @@ Changes to Carbon documentation follow the
 [Google developer documentation style guide](https://developers.google.com/style).
 
 Markdown files should additionally use
-[Prettier](/docs/project/contribution_tools.md#prettier) for formatting.
+[Prettier](docs/project/contribution_tools.md#prettier) for formatting.
 
 Other style points to be aware of are:
 
