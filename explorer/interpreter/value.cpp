@@ -534,11 +534,11 @@ static auto MakeKindName(const char* name) -> std::string {
 }
 
 auto ValueKindName(Value::Kind kind) -> std::string_view {
-  static const auto* Names = new std::vector<std::string>({
+  static const auto& Names = *new std::vector<std::string>({
 #define CARBON_VALUE_KIND(Name) MakeKindName(#Name),
 #include "explorer/interpreter/value_kind.def"
   });
-  return (*Names)[static_cast<int>(kind)];
+  return Names[static_cast<int>(kind)];
 }
 
 ContinuationValue::StackFragment::~StackFragment() {

@@ -222,3 +222,13 @@ cc_library(
         "@llvm-project//llvm:Support",
     ],
 )
+
+cc_test(
+    name = "value_test",
+    srcs = ["value_test.cpp"],
+    deps = [
+        ":action_and_value",
+        "//common:gtest_main",
+        "@com_google_googletest//:gtest",
+    ],
+)
