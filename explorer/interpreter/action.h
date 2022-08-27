@@ -65,7 +65,8 @@ class RuntimeScope {
   }
 
  private:
-  std::map<ValueNodeView, Nonnull<const LValue*>> locals_;
+  std::vector<Nonnull<const LValue*>> local_values_;
+  std::map<ValueNodeView, unsigned int> locals_;
   std::vector<AllocationId> allocations_;
   Nonnull<HeapAllocationInterface*> heap_;
 };
