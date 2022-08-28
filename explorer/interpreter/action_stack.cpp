@@ -128,7 +128,7 @@ auto ActionStack::FunctionScope() const -> std::vector<Nonnull<const LValue*>> {
       }
       auto& scope = *(action->scope());
       auto scope_locals = scope.Locals();
-      locals.insert(locals.end(), scope_locals.begin(), scope_locals.end());
+      locals.insert(locals.begin(), scope_locals.begin(), scope_locals.end());
     }
   }
   return {};
