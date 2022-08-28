@@ -108,9 +108,8 @@ void ActionStack::MergeScope(RuntimeScope scope) {
   CARBON_FATAL() << "No current scope";
 }
 
-auto ActionStack::BlockScope() const
-    -> std::map<ValueNodeView, Nonnull<const LValue*>> {
-  std::map<ValueNodeView, Nonnull<const LValue*>> locals;
+auto ActionStack::BlockScope() const -> std::vector<Nonnull<const LValue*>> {
+  std::vector<Nonnull<const LValue*>> locals;
   for (const std::unique_ptr<Action>& action : todo_) {
     if (action->scope().has_value()) {
       return action->scope()->Locals();
@@ -119,9 +118,8 @@ auto ActionStack::BlockScope() const
   return locals;
 }
 
-auto ActionStack::FunctionScope() const
-    -> std::map<ValueNodeView, Nonnull<const LValue*>> {
-  std::map<ValueNodeView, Nonnull<const LValue*>> locals;
+auto ActionStack::FunctionScope() const -> std::vector<Nonnull<const LValue*>> {
+  std::vector<Nonnull<const LValue*>> locals;
   for (const std::unique_ptr<Action>& action : todo_) {
     if (action->scope().has_value()) {
       ScopeAction* scopeAct = llvm::dyn_cast<ScopeAction>(action.get());
@@ -130,29 +128,22 @@ auto ActionStack::FunctionScope() const
       }
       auto& scope = *(action->scope());
       auto scope_locals = scope.Locals();
-      for (auto [view, lvalue] : scope_locals) {
-        locals[view] = lvalue;
-      }
+      locals.insert(locals.end(), scope_locals.begin(), scope_locals.end());
     }
   }
   return {};
 }
 
 auto ActionStack::DestructorScope() const
-    -> std::map<ValueNodeView, Nonnull<const LValue*>> {
-  std::map<ValueNodeView, Nonnull<const LValue*>> locals;
+    -> std::vector<Nonnull<const LValue*>> {
   for (const std::unique_ptr<Action>& action : todo_) {
     ScopeAction* scopeAct = llvm::dyn_cast<ScopeAction>(action.get());
     if (scopeAct != nullptr) {
       auto& scope = *(action->scope());
-      auto scope_locals = scope.Locals();
-      for (auto [view, lvalue] : scope_locals) {
-        locals[view] = lvalue;
-      }
-      return locals;
+      return scope.Locals();
     }
   }
-  return locals;
+  return {};
 }
 
 void ActionStack::InitializeFragment(ContinuationValue::StackFragment& fragment,

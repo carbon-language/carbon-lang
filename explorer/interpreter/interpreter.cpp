@@ -773,7 +773,7 @@ auto Interpreter::CollectVariablesToDestruct(const Statement& stmt,
 
   if (capture == CaptureVariables::DestructorBlock) {
     const auto locals = todo_.DestructorScope();
-    for (auto [key, lvalue] : locals) {
+    for (auto lvalue : locals) {
       auto value = heap_.Read(lvalue->address(), stmt.source_loc());
       // possible access to uninitialized variable
       if (value.ok()) {
@@ -799,13 +799,13 @@ auto Interpreter::CollectVariablesToDestruct(const Statement& stmt,
       }
     }
   } else {
-    std::map<ValueNodeView, Nonnull<const LValue*>> locals;
+    std::vector<Nonnull<const LValue*>> locals;
     if (capture == CaptureVariables::FunctionBlock) {
       locals = todo_.FunctionScope();
     } else {
       locals = todo_.BlockScope();
     }
-    for (auto [key, lvalue] : locals) {
+    for (auto lvalue : locals) {
       auto value = heap_.Read(lvalue->address(), stmt.source_loc());
       // possible access to uninitialized variable
       if (value.ok()) {
