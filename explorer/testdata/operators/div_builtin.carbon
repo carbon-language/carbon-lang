@@ -11,9 +11,6 @@
 
 package ExplorerTest api;
 
-// TODO: T:! Div
-fn DoDiv[T:! DivWith(.Self) where .Result == .Self](x: T, y: T) -> T { return x / y; }
-
 fn Main() -> i32 {
-  return DoDiv(8, 3);
+  return 8 / 3;
 }
