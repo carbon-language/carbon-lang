@@ -285,8 +285,7 @@ Integers may be written in decimal, hexadecimal, or binary:
 -   `0x1FE` (hexadecimal)
 -   `0b1010` (binary)
 
-Underscores `_` may be used as digit separators, but for decimal and hexadecimal
-literals, they can only appear in conventional locations. Numeric literals are
+Underscores (`_`) may be used as digit separators. Numeric literals are
 case-sensitive: `0x`, `0b` must be lowercase, whereas hexadecimal digits must be
 uppercase. Integer literals never contain a `.`.
 
@@ -304,6 +303,8 @@ represent that value.
 >     [#144: Numeric literal semantics](https://github.com/carbon-language/carbon-lang/pull/144)
 > -   Proposal
 >     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
+> -   Proposal
+>     [#1983: Weaken digit separator placement rules](https://github.com/carbon-language/carbon-lang/pull/1983)
 
 ### Floating-point types
 
@@ -331,6 +332,7 @@ literals are supported:
 -   `123.456e789` (optional `+` or `-` after the `e`)
 -   `0x1.Ap123` (optional `+` or `-` after the `p`)
 
+As with integer literals, underscores (`_`) may be used as digit separators.
 Real-number literals always have a period (`.`) and a digit on each side of the
 period. When a real-number literal is interpreted as a value of a floating-point
 type, its value is the representable real number closest to the value of the
@@ -348,6 +350,8 @@ selected.
 >     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
 > -   Proposal
 >     [#866: Allow ties in floating literals](https://github.com/carbon-language/carbon-lang/pull/866)
+> -   Proposal
+>     [#1983: Weaken digit separator placement rules](https://github.com/carbon-language/carbon-lang/pull/1983)
 
 ### String types
 
