@@ -1,8 +1,7 @@
-# Carbon Language: <br/> An experimental successor to C++
+# Carbon Programlama Dili: <br/> C++ Programlama dilinin deneysel halefisi
 
 <!--
-Part of the Carbon Language project, under the Apache License v2.0 with LLVM
-Exceptions. See /LICENSE for license information.
+LLVM Exception ile Apache Lisansı v2.0 kapsamında Carbon Programlama dilinin projesinin bir parçası. Lisans bilgileri için /LICENSE bölümüne bakın.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
@@ -14,13 +13,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   <a href="#join-us">Join us</a>
 </p>
 
-**See our [announcement video](https://youtu.be/omrY53kbVoA) from
-[CppNorth](https://cppnorth.ca/).** Note that Carbon is
-[not ready for use](#project-status).
+**Bizim [Duyuru Videosunu](https://youtu.be/omrY53kbVoA) adresinden izleyin
+[CppNorth](https://cppnorth.ca/).** Karbon olduğunu unutmayın
+[Kullanıma hazır değil](#project-status).
 
 <a href="docs/images/snippets.md#quicksort">
 <!--
-Edit snippet in docs/images/snippets.md and:
+Snippet'idocs/images/snippets.md dosyasında düzenleyin ve:
 https://drive.google.com/drive/folders/1-rsUjiya7dSZ87L8kpZmu3MZghRVxzLA
 -->
 <img src="docs/images/quicksort_snippet.svg" align="right" width="575"
@@ -28,45 +27,37 @@ https://drive.google.com/drive/folders/1-rsUjiya7dSZ87L8kpZmu3MZghRVxzLA
 </a>
 
 <!--
-Don't let the text wrap too narrowly to the left of the above image.
-The `div` reduces the vertical height.
-GitHub will autolink `img`, but won't produce a link when `href="#"`.
+Metnin yukarıdaki resmin soluna çok dar olmasına izin vermeyin.
+'div' dikey yüksekliği azaltır.
+GitHub, "img"yi otomatik olarak bağlar, ancak "href="#"` olduğunda bir bağlantı oluşturmaz.
 -->
 <div><a href="#"><img src="docs/images/bumper.png"></a></div>
 
-**Fast and works with C++**
+**Hızlı ve C++ ile çalışır**
 
--   Performance matching C++ using LLVM, with low-level access to bits and
-    addresses
--   Interoperate with your existing C++ code, from inheritance to templates
--   Fast and scalable builds that work with your existing C++ build systems
+- Bitlere ve adreslere düşük seviyeli erişim ile LLVM kullanarak C++ performans eşleştirme
+- Kalıtımdan şablonlara kadar mevcut C++ kodunuzla birlikte çalışın
+- Mevcut C++ yapı sistemlerinizle çalışan hızlı ve ölçeklenebilir yapılar
 
-**Modern and evolving**
+**Modern ve gelişen**
 
--   Solid language foundations that are easy to learn, especially if you have
-    used C++
--   Easy, tool-based upgrades between Carbon versions
--   Safer fundamentals, and an incremental path towards a memory-safe subset
+- Özellikle C++ kullandıysanız öğrenmesi kolay sağlam dil temelleri
+- Karbon sürümleri arasında kolay, araç tabanlı yükseltmeler
+- Daha güvenli temeller ve bellek açısından güvenli bir alt kümeye doğru artan bir yol
 
-**Welcoming open-source community**
+**Açık kaynak topluluğuna hoş geldiniz**
 
--   Clear goals and priorities with robust governance
--   Community that works to be welcoming, inclusive, and friendly
--   Batteries-included approach: compiler, libraries, docs, tools, package
-    manager, and more
+- Güçlü yönetişim ile net hedefler ve öncelikler
+- Konuksever, kapsayıcı ve arkadaş canlısı olmaya çalışan topluluk
+- Pilleri içeren yaklaşım: derleyici, kitaplıklar, belgeler, araçlar, paket yöneticisi ve daha fazlası
 
 ## Why build Carbon?
 
-C++ remains the dominant programming language for performance-critical software,
-with massive and growing codebases and investments. However, it is struggling to
-improve and meet developers' needs, as outlined above, in no small part due to
-accumulating decades of technical debt. Incrementally improving C++ is
-[extremely difficult](/docs/project/difficulties_improving_cpp.md), both due to
-the technical debt itself and challenges with its evolution process. The best
-way to address these problems is to avoid inheriting the legacy of C or C++
-directly, and instead start with solid language foundations like
-[modern generics system](#generics), modular code organization, and consistent,
-simple syntax.
+C++, performans açısından kritik yazılımlar için baskın programlama dili olmaya devam ediyor, devasa yatırımlarla ve büyüyen kod tabanlarıyla.Ancak  on yıllardır biriken teknik borç nedeniyle, yukarıda belirtildiği gibi geliştiricilerin ihtiyaçlarını iyileştirmek ve karşılamak için uğraşıyor. Kademeli olarak gelişen C++
+[son derece zor](/docs/project/difficulties cpp.md'yi geliştirmek), her ikisi de
+teknik borcun kendisi ve evrim süreciyle ilgili zorluklar.Bu sorunları çözmenin en iyi yolu, C veya C++ mirasını doğrudan devralmaktan kaçınmaktır ve ve bunun yerine aşağıdaki gibi sağlam dil temelleriyle başlayın.
+[modern jenerik sistem](#generics), modüler kod organizasyonu ve tutarlı,
+basit sözdizimi.
 
 Existing modern languages already provide an excellent developer experience: Go,
 Swift, Kotlin, Rust, and many more. **Developers that _can_ use one of these
