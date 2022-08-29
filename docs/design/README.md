@@ -187,8 +187,10 @@ more like [C++ modules](https://en.cppreference.com/w/cpp/language/modules) than
 The `import` declaration imports a
 [library from a package](#files-libraries-packages). It must appear at the top
 of a Carbon source file, the first thing after the
-[optional `package` declaration](#package-declaration). This declaration from
-the example:
+[optional `package` declaration](#package-declaration). Libraries can optionally
+be split into [api and implementation files](#files-libraries-packages), like
+C++'s header and source files but without requiring a source file in any cases.
+This declaration from the example:
 
 ```carbon
 import Math;
