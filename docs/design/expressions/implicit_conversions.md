@@ -101,30 +101,27 @@ salient part of a `StringView`'s value.
 
 The following implicit numeric conversions are available:
 
--   `Carbon.Int(N)` or `Carbon.UInt(N)` -> `Carbon.Int(M)` if `M` > `N`
--   `Carbon.UInt(N)` -> `Carbon.UInt(M)` if `M` > `N`
+-   `iN` or `uN` -> `iM` if `M` > `N`
+-   `uN` -> `uM` if `M` > `N`
 -   `fN` -> `fM` if `M` > `N`
--   `Carbon.Int(N)` or `Carbon.UInt(N)` -> `fM` if every value of type
-    `Carbon.Int(N)` or `Carbon.UInt(N)` can be represented in `fM`:
-    -   `Carbon.Int(12)` or `Carbon.UInt(11)` (or smaller) -> `f16`
-    -   `Carbon.Int(25)` or `Carbon.UInt(24)` (or smaller) -> `f32`
-    -   `Carbon.Int(54)` or `Carbon.UInt(53)` (or smaller) -> `f64`
-    -   `Carbon.Int(65)` or `Carbon.UInt(64)` (or smaller) -> `f80` (x86 only)
-    -   `Carbon.Int(114)` or `Carbon.UInt(113)` (or smaller) -> `f128` (if
-        available)
-    -   `Carbon.Int(238)` or `Carbon.UInt(237)` (or smaller) -> `f256` (if
-        available)
+-   `iN` or `uN` -> `fM` if every value of type `iN` or `uN` can be represented
+    in `fM`:
+    -   `i8` or `u8` -> `f16`
+    -   `i24` or `u24` (or smaller) -> `f32`
+    -   `i48` or `u48` (or smaller) -> `f64`
+    -   `i64` or `u64` (or smaller) -> `f80` (x86 only)
+    -   `i112` or `u112` (or smaller) -> `f128` (if available)
+    -   `i232` or `u232` (or smaller) -> `f256` (if available)
 
 In each case, the numerical value is the same before and after the conversion.
 An integer zero is translated into a floating-point positive zero.
 
-An integer constant can be implicitly converted to any type `Carbon.Int(M)`,
-`Carbon.UInt(M)`, or `fM` in which that value can be exactly represented. A
-floating-point constant can be implicitly converted to any type `fM` in which
-that value is between the least representable finite value and the greatest
-representable finite value (inclusive), and converts to the nearest
-representable finite value, with ties broken by picking the value for which the
-mantissa is even.
+An integer constant can be implicitly converted to any type `iM`, `uM`, or `fM`
+in which that value can be exactly represented. A floating-point constant can be
+implicitly converted to any type `fM` in which that value is between the least
+representable finite value and the greatest representable finite value
+(inclusive), and converts to the nearest representable finite value, with ties
+broken by picking the value for which the mantissa is even.
 
 The above conversions are also precisely those that C++ considers non-narrowing,
 except:
@@ -144,12 +141,12 @@ except:
     [#508](https://github.com/carbon-language/carbon-lang/issues/508).
 
 In addition to the above rules, a negative integer constant `k` can be
-implicitly converted to the type `Carbon.UInt(N)` if the value `k` +
-2<sup>N</sup> can be exactly represented, and converts to that value. Note that
-this conversion violates the "semantics-preserving" test. For example,
-`(-1 as u8) as i32` produces the value `255` whereas `-1 as i32` produces the
-value `-1`. However, this conversion is important in order to allow bitwise
-operations with masks, so we allow it:
+implicitly converted to the type `uN` if the value `k` + 2<sup>N</sup> can be
+exactly represented, and converts to that value. Note that this conversion
+violates the "semantics-preserving" test. For example, `(-1 as u8) as i32`
+produces the value `255` whereas `-1 as i32` produces the value `-1`. However,
+this conversion is important in order to allow bitwise operations with masks, so
+we allow it:
 
 ```
 // We allow ^0 == -1 to convert to `u32` to represent an all-ones value.

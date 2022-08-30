@@ -332,7 +332,9 @@ represent that value.
 
 Floating-point types in Carbon have IEEE-754 semantics, use the round-to-nearest
 rounding mode, and do not set any floating-point exception state. They are named
-with an `f` and the number of bits:
+with a _type literals_, consisting of `f` and the number of bits, which must be
+a multiple of 8. The type literal `fN` results in the type `Carbon.Float(N)`.
+These types will always be available:
 [`f16`](https://en.wikipedia.org/wiki/Half-precision_floating-point_format),
 [`f32`](https://en.wikipedia.org/wiki/Single-precision_floating-point_format),
 and
@@ -342,8 +344,6 @@ Other sizes may be available, depending on the platform, such as
 [`f128`](https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format),
 or
 [`f256`](https://en.wikipedia.org/wiki/Octuple-precision_floating-point_format).
-Identifiers of the form `fN`, where `N` is a positive multiple of `8` are _type
-literals_, resulting in the type `Carbon.Float(N)`.
 
 Carbon also supports the
 [`BFloat16`](https://en.wikipedia.org/wiki/Bfloat16_floating-point_format)
