@@ -2108,3 +2108,4 @@ the type of `U.x`."
 -   [#777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777)
 -   [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
 -   [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
+-   [#2107: Clarify rules around `Self` and `.Self`](https://github.com/carbon-language/carbon-lang/pull/2107)
