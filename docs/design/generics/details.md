@@ -459,7 +459,7 @@ class Point4b {
       return {.x = a.x * v, .y = a.y * v};
     }
   }
-  alias Add = Vector.Add;  // Syntax TBD
+  alias Add = Vector.Add;
 }
 
 // OR:
@@ -1079,8 +1079,8 @@ other type-of-types, independent of order.
 Note that we do _not_ consider two type-of-types using the same name to mean the
 same thing to be a conflict. For example, combining a type-of-type with itself
 gives itself, `MyTypeOfType & MyTypeOfType == MyTypeOfType`. Also, given two
-[interface extensions](#interface-extension) of a common base interface, the sum
-should not conflict on any names in the common base.
+[interface extensions](#interface-extension) of a common base interface, the
+combination should not conflict on any names in the common base.
 
 **Rejected alternative:** Instead of using `&` as the combining operator, we
 considered using `+`,

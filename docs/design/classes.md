@@ -831,7 +831,7 @@ members of the type, while methods can only be called on instances.
 #### Class functions
 
 A class function is like a
-[C++ static member function or method](<https://en.wikipedia.org/wiki/Static_(keyword)#Static_method>),
+[C++ static member function](https://en.cppreference.com/w/cpp/language/static#Static_member_functions),
 and is declared like a function at file scope. The declaration can include a
 definition of the function body, or that definition can be provided out of line
 after the class definition is finished. A common use is for constructor
