@@ -2827,7 +2827,14 @@ The `.Self` construct follows these rules:
 
 So in `X:! A where ...`, `.Self` is introduced twice, after the `:!` and the
 `where`. This is allowed since both times it means `X`. After the `:!`, `.Self`
-has the type `Type`, which gets refined to `A` after the `where`.
+has the type `Type`, which gets refined to `A` after the `where`. In contrast,
+it is an error if `.Self` could mean two different things, as in:
+
+```
+// ❌ Illegal: `.Self` could mean `T` or `T.A`.
+fn F[T:! InterfaceA where .A is
+           (InterfaceB where .B == .Self)](x: T);
+```
 
 #### Parameterized type implements interface
 
