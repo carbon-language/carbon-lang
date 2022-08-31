@@ -81,11 +81,7 @@ filegroup(
 cc_test(
     name = "fuzzer_util_test",
     srcs = ["fuzzer_util_test.cpp"],
-    args = [
-        "$(locations fuzzer_corpus_files)",
-    ],
     data = [
-        ":fuzzer_corpus_files",
         "//explorer:standard_libraries",
     ],
     deps = [
