@@ -17,23 +17,39 @@ namespace Carbon {
 
 using LexerDiagnosticEmitter = DiagnosticEmitter<const char*>;
 
-static constexpr char MultiLineIndicator[] = R"(""")";
+static constexpr char MultiLineIndicator[] = R"(''')";
+static constexpr char DoubleQuotedMultiLineIndicator[] = R"(""")";
 
 // Return the number of opening characters of a multi-line string literal,
 // after any '#'s, including the file type indicator and following newline.
-static auto GetMultiLineStringLiteralPrefixSize(llvm::StringRef source_text)
-    -> int {
-  if (!source_text.startswith(MultiLineIndicator)) {
+// `indicator` is set to the indicator / terminator for the literal, without
+// any leading or trailing '#'s.
+//
+// If this is not the start of a multi-line string literal, returns 0 and does
+// not change `indicator`.
+//
+// We lex multi-line literals when spelled with either ''' or """ for error
+// recovery purposes, and reject """ literals after lexing.
+static auto GetMultiLineStringLiteralPrefixSize(
+    llvm::StringRef source_text, llvm::SmallString<16>& indicator) -> int {
+  llvm::StringRef tentative_indicator;
+  if (source_text.startswith(MultiLineIndicator)) {
+    tentative_indicator = llvm::StringRef(MultiLineIndicator);
+  } else if (source_text.startswith(DoubleQuotedMultiLineIndicator)) {
+    tentative_indicator = llvm::StringRef(DoubleQuotedMultiLineIndicator);
+  } else {
     return 0;
   }
 
   // The rest of the line must be a valid file type indicator: a sequence of
   // characters containing neither '#' nor '"' followed by a newline.
   auto prefix_end =
-      source_text.find_first_of("#\n\"", strlen(MultiLineIndicator));
+      source_text.find_first_of("#\n\"", tentative_indicator.size());
   if (prefix_end == llvm::StringRef::npos || source_text[prefix_end] != '\n') {
     return 0;
   }
+
+  indicator = tentative_indicator;
 
   // Include the newline on return.
   return prefix_end + 1;
@@ -53,12 +69,14 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
   llvm::SmallString<16> terminator("\"");
   llvm::SmallString<16> escape("\\");
 
-  const int multi_line_prefix_size =
-      GetMultiLineStringLiteralPrefixSize(source_text.substr(hash_level));
-  const bool multi_line = multi_line_prefix_size > 0;
+  const int multi_line_prefix_size = GetMultiLineStringLiteralPrefixSize(
+      source_text.substr(hash_level), terminator);
+  const MultiLineKind multi_line = multi_line_prefix_size == 0 ? NotMultiLine
+                                   : terminator[0] == '"'
+                                       ? MultiLineWithDoubleQuotes
+                                       : MultiLine;
   if (multi_line) {
     cursor += multi_line_prefix_size;
-    terminator = MultiLineIndicator;
   } else if (cursor < source_text_size && source_text[cursor] == '"') {
     ++cursor;
   } else {
@@ -103,9 +121,11 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
                                     /*is_terminated=*/false);
         }
         break;
-      case '\"': {
-        if (terminator.size() == 1 ||
-            source_text.substr(cursor).startswith(terminator)) {
+      case '"':
+      case '\'': {
+        if (terminator.size() == 1
+                ? source_text[cursor] == '"'
+                : source_text.substr(cursor).startswith(terminator)) {
           llvm::StringRef text =
               source_text.substr(0, cursor + terminator.size());
           llvm::StringRef content =
@@ -153,7 +173,7 @@ static auto CheckIndent(LexerDiagnosticEmitter& emitter, llvm::StringRef text,
   if (indent.end() != content.end()) {
     CARBON_DIAGNOSTIC(
         ContentBeforeStringTerminator, Error,
-        "Only whitespace is permitted before the closing `\"\"\"` of a "
+        "Only whitespace is permitted before the closing `'''` of a "
         "multi-line string.");
     emitter.Emit(indent.end(), ContentBeforeStringTerminator);
   }
@@ -309,7 +329,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       if (!contents.startswith("\n")) {
         CARBON_DIAGNOSTIC(
             MismatchedIndentInString, Error,
-            "Indentation does not match that of the closing \"\"\" in "
+            "Indentation does not match that of the closing `'''` in "
             "multi-line string literal.");
         emitter.Emit(line_start, MismatchedIndentInString);
       }
@@ -385,6 +405,12 @@ auto LexedStringLiteral::ComputeValue(LexerDiagnosticEmitter& emitter) const
     -> std::string {
   if (!is_terminated_) {
     return "";
+  }
+  if (multi_line_ == MultiLineWithDoubleQuotes) {
+    CARBON_DIAGNOSTIC(
+        MultiLineStringWithDoubleQuotes, Error,
+        "Use `'''` delimiters for a multi-line string literal, not `\"\"\"`.");
+    emitter.Emit(text_.begin(), MultiLineStringWithDoubleQuotes);
   }
   llvm::StringRef indent =
       multi_line_ ? CheckIndent(emitter, text_, content_) : llvm::StringRef();
