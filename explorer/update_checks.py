@@ -289,7 +289,11 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("tests", nargs="*")
     args = parser.parse_args()
-    tests = set(args.tests) if args.tests else _get_tests()
+    if args.tests:
+        tests = set(args.tests)
+    else:
+        print("HINT: run `update_checks.py f1 f2 ...` to update specific tests")
+        tests = _get_tests()
     _update_checks(tests)
 
 
