@@ -40,7 +40,10 @@ That is:
 -   For every rational number, there is a type representing literals with that
     real value.
 -   The types for real numbers are distinct from the types for integers, even
-    for real numbers that represent integers. `var x: i32 = 1.0;` is invalid.
+    for real numbers that represent integers. For example, `1 / 2` results in
+    `0`, due to integer arithmetic, whereas `1.0 / 2` results in `0.5`. This is
+    due to `1` having an integral type, while `1.0` has a real number type, even
+    though it represents the same numeric value.
 
 Primitive operators are available between numeric literals, and produce values
 with numeric literal types. For example, the type of `1 + 2` is the same as the
@@ -52,7 +55,7 @@ decision can be made as to whether the conversion is valid.
 
 The integer types defined in the standard library permit conversion from integer
 literal types whose values are representable in the integer type. The
-floating-point types defined in the Carbon library permit conversion from
+floating-point types defined in the standard library permit conversion from
 integer and rational literal types whose values are between the minimum and
 maximum finite value representable in the floating-point type.
 
@@ -117,12 +120,12 @@ and binary integer literals, and decimal and hexadecimal real number literals.
 `IntLiteral(n)` converts to any sufficiently large integer type, as if by:
 
 ```
-impl [template N:! BigInt, template M:! BigInt]
+impl forall [template N:! BigInt, template M:! BigInt]
     IntLiteral(N) as ImplicitAs(Carbon.Int(M))
     if N >= Carbon.Int(M).MinValue as BigInt and N <= Carbon.Int(M).MaxValue as BigInt {
   ...
 }
-impl [template N:! BigInt, template M:! BigInt]
+impl forall [template N:! BigInt, template M:! BigInt]
     IntLiteral(N) as ImplicitAs(Carbon.UInt(M))
     if N >= Carbon.UInt(M).MinValue as BigInt and N <= Carbon.UInt(M).MaxValue as BigInt {
   ...
