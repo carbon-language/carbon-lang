@@ -24,6 +24,10 @@ static void BM_ValidString_Simple(benchmark::State& state) {
 }
 
 static void BM_ValidString_Multiline(benchmark::State& state) {
+  BM_ValidString(state, "'''\n", "\n'''");
+}
+
+static void BM_ValidString_MultilineDoubleQuote(benchmark::State& state) {
   BM_ValidString(state, "\"\"\"\n", "\n\"\"\"");
 }
 
@@ -33,6 +37,7 @@ static void BM_ValidString_Raw(benchmark::State& state) {
 
 BENCHMARK(BM_ValidString_Simple);
 BENCHMARK(BM_ValidString_Multiline);
+BENCHMARK(BM_ValidString_MultilineDoubleQuote);
 BENCHMARK(BM_ValidString_Raw);
 
 static void BM_IncompleteWithRepeatedEscapes(benchmark::State& state,
@@ -59,6 +64,11 @@ static void BM_IncompleteWithEscapes_Simple(benchmark::State& state) {
 }
 
 static void BM_IncompleteWithEscapes_Multiline(benchmark::State& state) {
+  BM_IncompleteWithRepeatedEscapes(state, "'''\n", "\\");
+}
+
+static void BM_IncompleteWithEscapes_MultilineDoubleQuote(
+    benchmark::State& state) {
   BM_IncompleteWithRepeatedEscapes(state, "\"\"\"\n", "\\");
 }
 
@@ -68,6 +78,7 @@ static void BM_IncompleteWithEscapes_Raw(benchmark::State& state) {
 
 BENCHMARK(BM_IncompleteWithEscapes_Simple);
 BENCHMARK(BM_IncompleteWithEscapes_Multiline);
+BENCHMARK(BM_IncompleteWithEscapes_MultilineDoubleQuote);
 BENCHMARK(BM_IncompleteWithEscapes_Raw);
 
 }  // namespace
