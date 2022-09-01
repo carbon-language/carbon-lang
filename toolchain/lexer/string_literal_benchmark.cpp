@@ -5,6 +5,7 @@
 #include <benchmark/benchmark.h>
 
 #include "toolchain/lexer/string_literal.h"
+#include "toolchain/diagnostics/null_diagnostics.h"
 
 namespace Carbon::Testing {
 namespace {
@@ -80,6 +81,39 @@ BENCHMARK(BM_IncompleteWithEscapes_Simple);
 BENCHMARK(BM_IncompleteWithEscapes_Multiline);
 BENCHMARK(BM_IncompleteWithEscapes_MultilineDoubleQuote);
 BENCHMARK(BM_IncompleteWithEscapes_Raw);
+
+static void BM_SimpleStringValue(benchmark::State& state,
+                                 std::string_view introducer,
+                                 std::string_view terminator) {
+  std::string x(introducer);
+  x.append(100000, 'a');
+  x.append(terminator);
+  for (auto _ : state) {
+    LexedStringLiteral::Lex(x)->ComputeValue(
+        NullDiagnosticEmitter<const char*>());
+  }
+}
+
+static void BM_SimpleStringValue_Simple(benchmark::State& state) {
+  BM_SimpleStringValue(state, "\"", "\"");
+}
+
+static void BM_SimpleStringValue_Multiline(benchmark::State& state) {
+  BM_SimpleStringValue(state, "'''\n", "\n'''");
+}
+
+static void BM_SimpleStringValue_MultilineDoubleQuote(benchmark::State& state) {
+  BM_SimpleStringValue(state, "\"\"\"\n", "\n\"\"\"");
+}
+
+static void BM_SimpleStringValue_Raw(benchmark::State& state) {
+  BM_SimpleStringValue(state, "#\"", "\"#");
+}
+
+BENCHMARK(BM_SimpleStringValue_Simple);
+BENCHMARK(BM_SimpleStringValue_Multiline);
+BENCHMARK(BM_SimpleStringValue_MultilineDoubleQuote);
+BENCHMARK(BM_SimpleStringValue_Raw);
 
 }  // namespace
 }  // namespace Carbon::Testing
