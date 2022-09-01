@@ -102,16 +102,14 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
   llvm::StringLiteral invalid[] = {
       // clang-format off
       R"(")",
-      R"('''
-      '')",
       R"("\)",
       R"("\")",
       R"("\\)",
       R"("\\\")",
-      R"('''
-      )",
-      R"(#'''
-      ''')",
+      "'''\n",
+      "'''\n'",
+      "'''\n''",
+      "#'''\n'''",
       R"(" \
       ")",
       // clang-format on
