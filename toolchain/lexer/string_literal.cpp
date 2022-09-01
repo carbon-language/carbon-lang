@@ -130,19 +130,24 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
         }
         break;
       case '"':
-      case '\'': {
-        if (terminator.size() == 1
-                ? source_text[cursor] == '"'
-                : source_text.substr(cursor).startswith(terminator)) {
-          llvm::StringRef text =
-              source_text.substr(0, cursor + terminator.size());
-          llvm::StringRef content =
-              source_text.substr(prefix_len, cursor - prefix_len);
-          return LexedStringLiteral(text, content, hash_level, introducer->kind,
-                                    /*is_terminated=*/true);
+        // As a performance optimization, don't call `startswith` in the common
+        // case of encountering an unescaped `"` in a single-line string
+        // literal.
+        if (terminator.size() == 1) {
+          goto found_terminator;
         }
-        break;
-      }
+        LLVM_FALLTHROUGH;
+      case '\'':
+        if (!source_text.substr(cursor).startswith(terminator)) {
+          break;
+        }
+      found_terminator:
+        llvm::StringRef text =
+            source_text.substr(0, cursor + terminator.size());
+        llvm::StringRef content =
+            source_text.substr(prefix_len, cursor - prefix_len);
+        return LexedStringLiteral(text, content, hash_level, introducer->kind,
+                                  /*is_terminated=*/true);
     }
   }
   // No terminator was found.
