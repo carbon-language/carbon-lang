@@ -70,6 +70,23 @@ auto LexedStringLiteral::Introducer::Lex(llvm::StringRef source_text)
   return llvm::None;
 }
 
+namespace {
+// A set of 'char' values.
+struct alignas(8) CharSet {
+  bool Elements[UCHAR_MAX + 1];
+
+  constexpr CharSet(std::initializer_list<char> chars) : Elements() {
+    for (char c : chars) {
+      Elements[static_cast<unsigned char>(c)] = true;
+    }
+  }
+
+  constexpr auto operator[](char c) const -> bool {
+    return Elements[static_cast<unsigned char>(c)];
+  }
+};
+}  // namespace
+
 auto LexedStringLiteral::Lex(llvm::StringRef source_text)
     -> llvm::Optional<LexedStringLiteral> {
   int64_t cursor = 0;
@@ -101,13 +118,19 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
   // TODO: Detect indent / dedent for multi-line string literals in order to
   // stop parsing on dedent before a terminator is found.
   for (; cursor < source_text_size; ++cursor) {
+    // Use a lookup table to allow us to quickly skip uninteresting characters.
+    static constexpr CharSet InterestingChars = {'\\', '\n', '"', '\''};
+    if (!InterestingChars[source_text[cursor]]) {
+      continue;
+    }
+
     // This switch and loop structure relies on multi-character terminators and
     // escape sequences starting with a predictable character and not containing
     // embedded and unescaped terminators or newlines.
     switch (source_text[cursor]) {
       case '\\':
         if (escape.size() == 1 ||
-            source_text.substr(cursor).startswith(escape)) {
+            source_text.substr(cursor + 1).startswith(escape.substr(1))) {
           cursor += escape.size();
           // If there's either not a character following the escape, or it's a
           // single-line string and the escaped character is a newline, we
@@ -130,24 +153,16 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
         }
         break;
       case '"':
-        // As a performance optimization, don't call `startswith` in the common
-        // case of encountering an unescaped `"` in a single-line string
-        // literal.
-        if (terminator.size() == 1) {
-          goto found_terminator;
-        }
-        LLVM_FALLTHROUGH;
       case '\'':
-        if (!source_text.substr(cursor).startswith(terminator)) {
-          break;
+        if (source_text.substr(cursor).startswith(terminator)) {
+          llvm::StringRef text =
+              source_text.substr(0, cursor + terminator.size());
+          llvm::StringRef content =
+              source_text.substr(prefix_len, cursor - prefix_len);
+          return LexedStringLiteral(text, content, hash_level, introducer->kind,
+                                    /*is_terminated=*/true);
         }
-      found_terminator:
-        llvm::StringRef text =
-            source_text.substr(0, cursor + terminator.size());
-        llvm::StringRef content =
-            source_text.substr(prefix_len, cursor - prefix_len);
-        return LexedStringLiteral(text, content, hash_level, introducer->kind,
-                                  /*is_terminated=*/true);
+        break;
     }
   }
   // No terminator was found.

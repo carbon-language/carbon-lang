@@ -4,8 +4,8 @@
 
 #include <benchmark/benchmark.h>
 
-#include "toolchain/lexer/string_literal.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
+#include "toolchain/lexer/string_literal.h"
 
 namespace Carbon::Testing {
 namespace {
