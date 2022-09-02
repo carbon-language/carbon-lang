@@ -14,6 +14,8 @@ using llvm::dyn_cast;
 
 namespace Carbon {
 
+ImplScope::ImplScope(Nonnull<Arena*> arena) : arena_(arena) {}
+
 void ImplScope::Add(Nonnull<const Value*> iface, Nonnull<const Value*> type,
                     Nonnull<Expression*> impl,
                     const TypeChecker& type_checker) {
@@ -34,7 +36,7 @@ void ImplScope::Add(Nonnull<const Value*> iface,
     for (size_t i = 0; i != constraint->impl_constraints().size(); ++i) {
       ConstraintType::ImplConstraint impl = constraint->impl_constraints()[i];
       Add(impl.interface, deduced, impl.type, impl_bindings,
-          type_checker.MakeConstraintWitnessAccess(impl_expr, i), type_checker);
+          MakeConstraintWitnessAccess(impl_expr, i), type_checker);
     }
     // A parameterized impl declaration doesn't contribute any equality
     // constraints to the scope. Instead, we'll resolve the equality
@@ -80,8 +82,7 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
       witnesses.push_back(result);
     }
     // TODO: Check satisfaction of same-type constraints.
-    return type_checker.MakeConstraintWitness(*constraint, std::move(witnesses),
-                                              source_loc);
+    return MakeConstraintWitness(*constraint, std::move(witnesses), source_loc);
   }
   CARBON_FATAL() << "expected a constraint, not " << *constraint_type;
 }
@@ -183,6 +184,22 @@ void ImplScope::Print(llvm::raw_ostream& out) const {
   for (const Nonnull<const ImplScope*>& parent : parent_scopes_) {
     out << *parent;
   }
+}
+
+auto ImplScope::MakeConstraintWitness(
+    const ConstraintType& constraint,
+    std::vector<Nonnull<Expression*>> impl_constraint_witnesses,
+    SourceLocation source_loc) const -> Nonnull<Expression*> {
+  return arena_->New<TupleLiteral>(source_loc,
+                                   std::move(impl_constraint_witnesses));
+}
+
+auto ImplScope::MakeConstraintWitnessAccess(Nonnull<Expression*> witness,
+                                            size_t impl_offset) const
+    -> Nonnull<Expression*> {
+  return arena_->New<IndexExpression>(
+      witness->source_loc(), witness,
+      arena_->New<IntLiteral>(witness->source_loc(), impl_offset));
 }
 
 }  // namespace Carbon

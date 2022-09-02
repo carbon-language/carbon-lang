@@ -181,13 +181,23 @@ cc_library(
     name = "type_checker",
     srcs = [
         "builtins.cpp",
+        "constraint_type_builder.cpp",
+        "expression_checker.cpp",
         "impl_scope.cpp",
+        "single_step_equality_context.cpp",
         "type_checker.cpp",
+        "type_utils.cpp",
+        "generic_checker.cpp",
     ],
     hdrs = [
         "builtins.h",
+        "constraint_type_builder.h",
+        "expression_checker.h",
         "impl_scope.h",
+        "single_step_equality_context.h",
         "type_checker.h",
+        "type_utils.h",
+        "generic_checker.h",
     ],
     deps = [
         ":action_and_value",

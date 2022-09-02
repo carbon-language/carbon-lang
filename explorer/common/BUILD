@@ -13,6 +13,15 @@ cc_library(
 )
 
 cc_library(
+    name = "globals",
+    hdrs = ["globals.h"],
+    deps = [
+        ":arena",
+        ":nonnull",
+    ],
+)
+
+cc_library(
     name = "error_builders",
     hdrs = ["error_builders.h"],
     deps = [

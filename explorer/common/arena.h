@@ -18,6 +18,7 @@ class Arena {
   // Allocates an object in the arena, returning a pointer to it.
   template <
       typename T, typename... Args,
+      // typename std::enable_if_t<T(std::declval<Args>()...)>* = nullptr>
       typename std::enable_if_t<std::is_constructible_v<T, Args...>>* = nullptr>
   auto New(Args&&... args) -> Nonnull<T*> {
     auto smart_ptr =

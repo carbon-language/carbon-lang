@@ -42,6 +42,8 @@ class TypeChecker;
 // scope.
 class ImplScope {
  public:
+  explicit ImplScope(Nonnull<Arena*> arena);
+
   // Associates `iface` and `type` with the `impl` in this scope.
   void Add(Nonnull<const Value*> iface, Nonnull<const Value*> type,
            Nonnull<Expression*> impl, const TypeChecker& type_checker);
@@ -130,6 +132,20 @@ class ImplScope {
                    const TypeChecker& type_checker) const
       -> ErrorOr<std::optional<Nonnull<Expression*>>>;
 
+  // Given the witnesses for the components of a constraint, form a witness for
+  // the constraint.
+  auto MakeConstraintWitness(
+      const ConstraintType& constraint,
+      std::vector<Nonnull<Expression*>> impl_constraint_witnesses,
+      SourceLocation source_loc) const -> Nonnull<Expression*>;
+
+  // Given the witnesses for the components of a constraint, form a witness for
+  // the constraint.
+  auto MakeConstraintWitnessAccess(Nonnull<Expression*> witness,
+                                   size_t impl_offset) const
+      -> Nonnull<Expression*>;
+
+  Nonnull<Arena*> arena_;
   std::vector<Impl> impls_;
   std::vector<Nonnull<const EqualityConstraint*>> equalities_;
   std::vector<Nonnull<const ImplScope*>> parent_scopes_;

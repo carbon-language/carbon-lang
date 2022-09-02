@@ -31,52 +31,6 @@ class TypeChecker {
   // processed.
   auto TypeCheck(AST& ast) -> ErrorOr<Success>;
 
-  // Perform type argument deduction, matching the parameter value `param`
-  // against the argument value `arg`. Whenever there is an VariableType in the
-  // parameter, it is deduced to be the corresponding type inside the argument
-  // type. The argument and parameter will typically be types, but can be
-  // non-type values when deduction recurses into the arguments of a
-  // parameterized type.
-  // The `deduced` parameter is an accumulator, that is, it holds the
-  // results so-far.
-  // `allow_implicit_conversion` specifies whether implicit conversions are
-  // permitted from the argument to the parameter type. If so, an `impl_scope`
-  // must be provided.
-  auto ArgumentDeduction(
-      SourceLocation source_loc, const std::string& context,
-      llvm::ArrayRef<Nonnull<const GenericBinding*>> bindings_to_deduce,
-      BindingMap& deduced, Nonnull<const Value*> param,
-      Nonnull<const Value*> arg, bool allow_implicit_conversion,
-      const ImplScope& impl_scope) const -> ErrorOr<Success>;
-
-  // Construct a type that is the same as `type` except that occurrences
-  // of type variables (aka. `GenericBinding`) are replaced by their
-  // corresponding type in `dict`.
-  auto Substitute(const std::map<Nonnull<const GenericBinding*>,
-                                 Nonnull<const Value*>>& dict,
-                  Nonnull<const Value*> type) const -> Nonnull<const Value*>;
-
-  // If `impl` can be an implementation of interface `iface` for the
-  // given `type`, then return an expression that will produce the witness
-  // for this `impl` (at runtime). Otherwise return std::nullopt.
-  auto MatchImpl(const InterfaceType& iface, Nonnull<const Value*> type,
-                 const ImplScope::Impl& impl, const ImplScope& impl_scope,
-                 SourceLocation source_loc) const
-      -> std::optional<Nonnull<Expression*>>;
-
-  // Given the witnesses for the components of a constraint, form a witness for
-  // the constraint.
-  auto MakeConstraintWitness(
-      const ConstraintType& constraint,
-      std::vector<Nonnull<Expression*>> impl_constraint_witnesses,
-      SourceLocation source_loc) const -> Nonnull<Expression*>;
-
-  // Given the witnesses for the components of a constraint, form a witness for
-  // the constraint.
-  auto MakeConstraintWitnessAccess(Nonnull<Expression*> witness,
-                                   size_t impl_offset) const
-      -> Nonnull<Expression*>;
-
  private:
   struct SingleStepEqualityContext;
 
@@ -106,14 +60,6 @@ class TypeChecker {
     // The enclosing generic bindings, if any.
     std::vector<Nonnull<const GenericBinding*>> bindings;
   };
-
-  // Traverses the AST rooted at `e`, populating the static_type() of all nodes
-  // and ensuring they follow Carbon's typing rules.
-  //
-  // `values` maps variable names to their compile-time values. It is not
-  //    directly used in this function but is passed to InterpExp.
-  auto TypeCheckExp(Nonnull<Expression*> e, const ImplScope& impl_scope)
-      -> ErrorOr<Success>;
 
   // Type checks and interprets `type_expression`, and validates it represents a
   // [concrete] type.
@@ -327,29 +273,6 @@ class TypeChecker {
                          Nonnull<Expression*> source,
                          Nonnull<const Value*> destination)
       -> ErrorOr<Nonnull<Expression*>>;
-
-  // Determine whether `type1` and `type2` are considered to be the same type
-  // in the given scope. This is true if they're structurally identical or if
-  // there is an equality relation in scope that specifies that they are the
-  // same.
-  auto IsSameType(Nonnull<const Value*> type1, Nonnull<const Value*> type2,
-                  const ImplScope& impl_scope) const -> bool;
-
-  // Check whether `actual` is implicitly convertible to `expected`
-  // and halt with a fatal compilation error if it is not.
-  //
-  // TODO: Does not actually perform the conversion if a user-defined
-  // conversion is needed. Should be used very rarely for that reason.
-  auto ExpectType(SourceLocation source_loc, const std::string& context,
-                  Nonnull<const Value*> expected, Nonnull<const Value*> actual,
-                  const ImplScope& impl_scope) const -> ErrorOr<Success>;
-
-  // Check whether `actual` is the same type as `expected` and halt with a
-  // fatal compilation error if it is not.
-  auto ExpectExactType(SourceLocation source_loc, const std::string& context,
-                       Nonnull<const Value*> expected,
-                       Nonnull<const Value*> actual,
-                       const ImplScope& impl_scope) const -> ErrorOr<Success>;
 
   // The name of a builtin interface, with any arguments.
   struct BuiltinInterfaceName {
