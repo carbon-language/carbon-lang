@@ -14,8 +14,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Overview](#overview)
     -   [TODO](#todo)
-    -   [Defined Types](#defined-types)
     -   [Numeric literal syntax](#numeric-literal-syntax)
+    -   [Defined Types](#defined-types)
     -   [Implicit conversions](#implicit-conversions)
 -   [Examples](#examples)
 -   [Alternatives Considered](#alternatives-considered)
@@ -67,6 +67,13 @@ brought in by the prelude. `BigInt`, `Rational`, `IntLiteral`, and
 `Carbon.BigInt` or `Core.BigInt`, and the [Defined Types](#defined-types)
 section will need to be updated to reflect those.
 
+### Numeric literal syntax
+
+Numeric Literal syntax is covered in the
+[numeric literal lexical conventions](lexical_conventions/numeric_literals.md)
+doc. Both Integer and Real-Number syntax is defined, with decimal, hexadecimal
+and binary integer literals, and decimal and hexadecimal real number literals.
+
 ### Defined Types
 
 The following types are defined in the Carbon prelude:
@@ -107,13 +114,6 @@ and floating-point operations such as arithmetic and comparison, but these
 operations are typically heterogeneous: for example, an addition between
 `IntLiteral(n)` and `IntLiteral(m)` produces a value of type
 `IntLiteral(n + m)`.
-
-### Numeric literal syntax
-
-Numeric Literal syntax is covered in the
-[numeric literal lexical conventions](lexical_conventions/numeric_literals.md)
-doc. Both Integer and Real-Number syntax is defined, with decimal, hexadecimal
-and binary integer literals, and decimal and hexadecimal real number literals.
 
 ### Implicit conversions
 
