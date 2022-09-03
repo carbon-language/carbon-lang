@@ -2440,8 +2440,8 @@ naming some classes of constraints.
 #### Set an associated constant to a specific value
 
 We might need to write a function that only works with a specific value of an
-[associated constant](#associated-constants) `N`. In this case, the name of the
-associated constant is written first, followed by an `==`, and then the value:
+[associated constant](#associated-constants) `N`. Write the name of the
+associated constant and the value with an `==` between them:
 
 ```
 fn PrintPoint2D[PointT:! NSpacePoint where .N == 2](p: PointT) {
@@ -2456,6 +2456,9 @@ interface Has2DPoint {
   let PointT:! NSpacePoint where .N == 2;
 }
 ```
+
+There must exist an implicit conversion from the constant value to the type of
+the associated constant.
 
 To name such a constraint, you may use a `let` or a `constraint` declaration:
 
@@ -2483,6 +2486,7 @@ interface PointCloud {
 ```
 
 In this case, the types of the two associated constants must be compatible.
+Either they most both be associated types or have the same type.
 
 ```
 interface C { let A:! Type; }
@@ -2491,11 +2495,6 @@ interface D { let B:! i32; }
 //           with type of U.B == i32.
 fn F[U:! D, T:! C where .A == U.B]();
 ```
-
-FIXME: What is the definition of compatible? Could be having an implicit
-conversion from one to the other, use the same unification rules as
-`if`...`then`...`else` uses, or having a defined `==` operator overload between
-the two types.
 
 #### Same type constraints
 
