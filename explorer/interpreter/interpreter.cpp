@@ -1183,21 +1183,37 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       switch (cast<IntrinsicExpression>(exp).intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print: {
           CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Value*> format_string_value,
-              Convert(args[0], arena_->New<StringType>(), exp.source_loc()));
-          const char* format_string =
-              cast<StringValue>(*format_string_value).value().c_str();
-          switch (args.size()) {
-            case 1:
-              llvm::outs() << llvm::formatv(format_string);
-              break;
-            case 2:
-              llvm::outs() << llvm::formatv(format_string,
-                                            cast<IntValue>(*args[1]).value());
-              break;
-            default:
-              CARBON_FATAL() << "Unexpected arg count: " << args.size();
-          }
+            Nonnull<const Value*> format_string_value,
+            Convert(args[0], arena_->New<StringType>(), exp.source_loc()));
+            std::string str_out = cast<StringValue>(*format_string_value).value();
+            if(args.size() > 1) {
+              for (size_t i = 1; i < args.size(); ++i) {
+                std::string search = "{" + std::to_string(i-1) + "}";          
+                while (str_out.find(search) != std::string::npos) {
+                  const size_t start_pos = str_out.find(search);
+                  const auto& arg = args[i];
+                  switch (arg->kind()) {
+                    case Value::Kind::IntValue:
+                      str_out.replace(
+                          start_pos, search.length(),
+                          std::to_string(cast<IntValue>(*arg).value()));
+                      break;
+                    case Value::Kind::StringValue:
+                      str_out.replace(
+                          start_pos, search.length(),
+                                      cast<StringValue>(*arg).value());
+                      break;
+                    default:
+                     return CompilationError(exp.source_loc())
+                             << "Print argument " << std::to_string(i) << " wrong type" << "\n"
+                             << "expected: " << *arena_->New<StringType>() << " or " << *arena_->New<IntType>() << "\n"
+                             << "actual: " << *arg;
+                  }                 
+                }
+              }
+            }
+            llvm::outs() << llvm::formatv(str_out.c_str());
+          
           // Implicit newline; currently no way to disable it.
           llvm::outs() << "\n";
           return todo_.FinishAction(TupleValue::Empty());

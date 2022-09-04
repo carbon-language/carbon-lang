@@ -2330,17 +2330,26 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           // TODO: Remove Print special casing once we have variadics or
           // overloads. Here, that's the name Print instead of __intrinsic_print
           // in errors.
-          if (args.size() < 1 || args.size() > 2) {
+          if (args.size() < 1) {
             return CompilationError(e->source_loc())
-                   << "Print takes 1 or 2 arguments, received " << args.size();
+                   << "Print takes 1 or more arguments, received " << args.size();
           }
           CARBON_RETURN_IF_ERROR(ExpectExactType(
               e->source_loc(), "Print argument 0", arena_->New<StringType>(),
               &args[0]->static_type(), impl_scope));
           if (args.size() >= 2) {
-            CARBON_RETURN_IF_ERROR(ExpectExactType(
-                e->source_loc(), "Print argument 1", arena_->New<IntType>(),
-                &args[1]->static_type(), impl_scope));
+             for (size_t i = 1; i < args.size(); ++i) {  
+                switch (args[i]->static_type().kind()) {
+                    case Value::Kind::IntType:
+                    case Value::Kind::StringType:
+                            break;
+                    default:
+                      return CompilationError(e->source_loc()) 
+                          << "Print argument " << std::to_string(i) << " wrong type" << "\n"
+                          << "expected: " << *arena_->New<StringType>() << " or " << *arena_->New<IntType>() << "\n"
+                          << "actual: " << args[i]->static_type();
+                }
+             }
           }
           e->set_static_type(TupleValue::Empty());
           e->set_value_category(ValueCategory::Let);
