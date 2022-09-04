@@ -7,12 +7,12 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: too 6 args to print
+// CHECK: too 4 args to print
 // CHECK: result: 0
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  Print("too {0} {1} {2} {3}", 6, "args", "to", "print");
+  Print("too {0} {1} {2} {3}", 4, "args", "to", "print");
   return 0;
 }
