@@ -250,6 +250,7 @@
   MATCH
   MINUS
   NOT
+  NOT_EQUAL
   OR
   PACKAGE
   PERCENT
@@ -591,7 +592,6 @@ comparison_operand:
   ref_deref_expression
 | value_expression
 ;
-/* TODO: Add NOT_EQUAL */
 comparison_operator:
   EQUAL_EQUAL
     { $$ = Operator::Eq; }
@@ -603,6 +603,8 @@ comparison_operator:
     { $$ = Operator::Greater; }
 | GREATER_EQUAL
     { $$ = Operator::GreaterEq; }
+| NOT_EQUAL
+    { $$ = Operator::NotEq; }
 ;
 comparison_expression:
   value_expression
