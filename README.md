@@ -93,7 +93,9 @@ along existing investments, codebases, and developer populations. There are a
 few languages that have followed this model for other ecosystems, and Carbon
 aims to fill an analogous role for C++:
 
+-   C → C++
 -   JavaScript → TypeScript
+-   Objective-C → Swift
 -   Java → Kotlin
 -   C++ → **_Carbon_**
 
