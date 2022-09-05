@@ -132,6 +132,7 @@ cc_binary(
     srcs = ["string_literal_benchmark.cpp"],
     deps = [
         ":string_literal",
+        "//toolchain/diagnostics:null_diagnostics",
         "@com_github_google_benchmark//:benchmark_main",
     ],
 )

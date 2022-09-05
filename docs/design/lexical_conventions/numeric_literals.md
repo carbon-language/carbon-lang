@@ -25,16 +25,15 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 The following syntaxes are supported:
 
--   Integer literals
+-   [Integer literals](#integer-literals)
     -   `12345` (decimal)
     -   `0x1FE` (hexadecimal)
     -   `0b1010` (binary)
--   Real-number literals
+-   [Real-number literals](#real-number-literals)
     -   `123.456` (digits on both sides of the `.`)
     -   `123.456e789` (optional `+` or `-` after the `e`)
     -   `0x1.2p123` (optional `+` or `-` after the `p`)
--   Digit separators (`_`) may be used, with
-    [some restrictions](#digit-separators)
+-   [Digit separators](#digit-separators) (`_`)
 
 Note that real-number literals always contain a `.` with digits on both sides,
 and integer literals never contain a `.`.
@@ -102,19 +101,13 @@ or fixed point real-number types to be expressed directly.
 
 ### Digit separators
 
-If digit separators (`_`) are included in literals, they must meet the
-respective condition:
+A digit separator (`_`) may occur between any two digits within a literal. For
+example:
 
--   For decimal integers, the digit separators shall occur every three digits
-    starting from the right. For example, `2_147_483_648`.
--   For hexadecimal integers, the digit separators shall occur every four digits
-    starting from the right. For example, `0x7FFF_FFFF`.
--   For real-number literals, digit separators can appear in the decimal and
-    hexadecimal integer portions (prior to the period and after the optional `e`
-    or mandatory `p`) as described in the previous bullets. For example,
-    `2_147.483648e12_345` or `0x1_00CA.FEF00Dp+24`
--   For binary literals, digit separators can appear between any two digits. For
-    example, `0b1_000_101_11`.
+-   Decimal integers: `1_23_456_7890`
+-   Hexadecimal integers: `0x7_F_FF_FFFF`
+-   Real-number literals: `2_147.48_3648e12_345` or `0x1_00CA.FE_F00Dp+2_4`
+-   Binary literals: `0b1_000_101_11`
 
 ## Divergence from other languages
 
@@ -144,6 +137,9 @@ cases for the goal of not leaving room for a lower level language:
 -   [Real number syntax](/proposals/p0143.md#real-number-syntax)
     -   [Disallow ties](/proposals/p0866.md)
 -   [Digit separator syntax](/proposals/p0143.md#digit-separator-syntax)
+    -   [3-digit decimal groupings](/proposals/p1983.md#3-digit-decimal-groupings)
+    -   [2-digit or 4-digit hexadecimal digit groupings](/proposals/p1983.md#2-digit-or-4-digit-hexadecimal-digit-groupings)
+    -   [Disallow digit separators in fractions](/proposals/p1983.md#disallow-digit-separators-in-fractions)
 
 ## References
 
@@ -151,3 +147,5 @@ cases for the goal of not leaving room for a lower level language:
     [#143: Numeric literals](https://github.com/carbon-language/carbon-lang/pull/143)
 -   Proposal
     [#866: Allow ties in floating literals](https://github.com/carbon-language/carbon-lang/pull/866)
+-   Proposal
+    [#1983: Weaken digit separator placement rules](https://github.com/carbon-language/carbon-lang/pull/1983)

@@ -8,6 +8,7 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
+import argparse
 from concurrent import futures
 import os
 import re
@@ -265,17 +266,14 @@ def _update_check(test: str) -> None:
     print(".", end="", flush=True)
 
 
-def _update_checks() -> None:
+def _update_checks(tests: Set[str]) -> None:
     """Runs bazel to update CHECK: lines in lit tests."""
-    # TODO: It may be helpful if a list of tests can be passed in args; would
-    # want to use argparse for this.
-    tests = _get_tests()
 
     # Build all tests at once in order to allow parallel updates.
     print("Building explorer...")
     subprocess.check_call(["bazel", "build", "//explorer"])
 
-    print("Updating %d lit tests..." % len(tests))
+    print("Updating %d lit test(s)..." % len(tests))
     with futures.ThreadPoolExecutor() as exec:
         # list() iterates to propagate exceptions.
         list(exec.map(_update_check, tests))
@@ -288,7 +286,15 @@ def main() -> None:
     # Go to the repository root so that paths will match bazel's view.
     os.chdir(os.path.join(os.path.dirname(__file__), ".."))
 
-    _update_checks()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("tests", nargs="*")
+    args = parser.parse_args()
+    if args.tests:
+        tests = set(args.tests)
+    else:
+        print("HINT: run `update_checks.py f1 f2 ...` to update specific tests")
+        tests = _get_tests()
+    _update_checks(tests)
 
 
 if __name__ == "__main__":
