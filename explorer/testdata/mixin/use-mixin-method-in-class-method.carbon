@@ -37,8 +37,8 @@ class Complex {
 
 
 fn Main() -> i32 {
-  var p1: Point = {.x = 0, .y = 0 };
-  var p2: Point = {.x = 1, .y = 2 };
-  var c: Complex = {.r = 1, .i = 2 };
-  return c.AbsSquare() - p1.DistanceSquare(p2);
+  var p1: Point = {.x = 1, .y = 2 };
+  var p2: Point = {.x = 4, .y = 3 };
+  var c: Complex = {.r = 5, .i = 6 };
+  return c.AbsSquare() - p1.DistanceSquare(p2) - 51;
 }
