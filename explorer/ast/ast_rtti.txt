@@ -16,6 +16,8 @@ abstract class Declaration : AstNode;
   class FunctionDeclaration : Declaration;
   class SelfDeclaration : Declaration;
   class ClassDeclaration : Declaration;
+  class MixinDeclaration : Declaration;
+  class MixDeclaration : Declaration;
   class ChoiceDeclaration : Declaration;
   class VariableDeclaration : Declaration;
   class InterfaceDeclaration : Declaration;
