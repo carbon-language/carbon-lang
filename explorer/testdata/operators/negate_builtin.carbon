@@ -11,6 +11,8 @@
 
 package ExplorerTest api;
 
+fn DoNegate[T:! Negate where .Result == .Self](x: T) -> T { return -x; }
+
 fn Main() -> i32 {
-  return -3;
+  return DoNegate(3);
 }

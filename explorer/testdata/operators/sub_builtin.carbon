@@ -11,6 +11,9 @@
 
 package ExplorerTest api;
 
+// TODO: T:! Sub
+fn DoSub[T:! SubWith(.Self) where .Result == .Self](x: T, y: T) -> T { return x - y; }
+
 fn Main() -> i32 {
-  return 3 - 2;
+  return DoSub(3, 2);
 }
