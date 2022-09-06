@@ -42,6 +42,6 @@ fn Main() -> i32 {
   var p: Point = Point.Origin();
   var c: Complex = Complex.Zero();
   p.x = 3;
-  c.r = 3;
-  return p.Square(p.y) - c.Square(c.i);
+  c.r = 4;
+  return p.Square(p.x) - c.Square(c.r) + 7;
 }
