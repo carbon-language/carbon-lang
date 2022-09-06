@@ -2108,6 +2108,20 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           op.set_rewritten_form(*converted);
           return Success();
         }
+        case Operator::NotEq: {
+          ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
+              impl_scope, op.arguments()[0],
+              BuiltinInterfaceName{Builtins::NotEqWith, ts[1]},
+              BuiltinMethodCall{"NotEq", op.arguments()[1]});
+          if (!converted.ok()) {
+            // We couldn't find a matching `impl`.
+            return CompilationError(e->source_loc())
+                   << *ts[0] << " is not not equal comparable with " << *ts[1]
+                   << " (" << converted.error().message() << ")";
+          }
+          op.set_rewritten_form(*converted);
+          return Success();
+        }
         case Operator::Less: {
           ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
               impl_scope, op.arguments()[0],

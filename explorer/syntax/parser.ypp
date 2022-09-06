@@ -250,6 +250,7 @@
   MATCH
   MINUS
   NOT
+  NOT_EQUAL
   OR
   PACKAGE
   PERCENT
@@ -602,6 +603,8 @@ comparison_operand:
 comparison_operator:
   EQUAL_EQUAL
     { $$ = Operator::Eq; }
+|  NOT_EQUAL
+    { $$ = Operator::NotEq; }
 | LESS
     { $$ = Operator::Less; }
 | LESS_EQUAL

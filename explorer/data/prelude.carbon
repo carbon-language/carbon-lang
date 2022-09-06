@@ -156,6 +156,10 @@ interface GreaterEqWith(U:! Type) {
   fn GreaterEq[me: Self](other: U) -> bool;
 }
 
+interface NotEqWith(U:! Type) {
+  fn NotEq[me: Self](other: U) -> bool;
+}
+
 impl i32 as LessWith(Self) {
   fn Less[me: Self](other: Self) -> bool {
     var comp: Ordering = me.(CompareWith(i32).Compare)(other);
@@ -261,6 +265,30 @@ impl String as GreaterEqWith(Self) {
       }
     }
     return false;
+  }
+}
+
+impl i32 as NotEqWith(Self) {
+  fn NotEq[me: Self](other: Self) -> bool {
+    var comp: Ordering = me.(CompareWith(i32).Compare)(other);
+    match(comp) {
+      case Ordering.Equivalent() => {
+        return false;
+      }
+    }
+    return true;
+  }
+}
+
+impl String as NotEqWith(Self) {
+  fn NotEq[me: Self](other: Self) -> bool {
+    var comp: Ordering = me.(CompareWith(String).Compare)(other);
+    match(comp) {
+      case Ordering.Equivalent() => {
+        return false;
+      }
+    }
+    return true;
   }
 }
 

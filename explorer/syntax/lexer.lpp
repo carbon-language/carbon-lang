@@ -86,6 +86,7 @@ LIBRARY              "library"
 MATCH                "match"
 MINUS                "-"
 NOT                  "not"
+NOT_EQUAL            "!="
 OR                   "or"
 PACKAGE              "package"
 PERCENT              "%"
@@ -188,6 +189,7 @@ operand_start         [(A-Za-z0-9_\"]
 {MATCH}               { return CARBON_SIMPLE_TOKEN(MATCH);               }
 {MINUS}               { return CARBON_SIMPLE_TOKEN(MINUS);               }
 {NOT}                 { return CARBON_SIMPLE_TOKEN(NOT);                 }
+{NOT_EQUAL}           { return CARBON_SIMPLE_TOKEN(NOT_EQUAL);           }
 {OR}                  { return CARBON_SIMPLE_TOKEN(OR);                  }
 {PACKAGE}             { return CARBON_SIMPLE_TOKEN(PACKAGE);             }
 {PERCENT}             { return CARBON_SIMPLE_TOKEN(PERCENT);             }

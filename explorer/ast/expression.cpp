@@ -145,6 +145,8 @@ auto ToString(Operator op) -> std::string_view {
       return ">";
     case Operator::GreaterEq:
       return ">=";
+    case Operator::NotEq:
+      return "!=";
   }
 }
 

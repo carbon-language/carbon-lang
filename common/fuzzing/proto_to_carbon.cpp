@@ -161,6 +161,8 @@ static auto OperatorToCarbon(const Fuzzing::OperatorExpression& operator_expr,
     case Fuzzing::OperatorExpression::Greater:
       BinaryOperatorToCarbon(arg0, " > ", arg1, out);
       break;
+    case Fuzzing::OperatorExpression::NotEq:
+      BinaryOperatorToCarbon(arg0, " != ", arg1, out);
 
     case Fuzzing::OperatorExpression::Or:
       BinaryOperatorToCarbon(arg0, " or ", arg1, out);
