@@ -461,7 +461,7 @@ auto ParseTree::Parser::ParsePackageDirective() -> Node {
 
   auto exit_on_parse_error = [&]() {
     SkipPastLikelyEnd(package_intro_token, [&](TokenizedBuffer::Token semi) {
-      return AddLeafNode(ParseNodeKind::PackageSemi(), semi);
+      return AddLeafNode(ParseNodeKind::PackageEnd(), semi);
     });
 
     return create_error_node();
@@ -475,6 +475,7 @@ auto ParseTree::Parser::ParsePackageDirective() -> Node {
   }
 
   AddLeafNode(ParseNodeKind::DeclaredName(), Consume(TokenKind::Identifier()));
+  bool library_parsed = false;
 
   if (tokens_.GetKind(*(position_)) == TokenKind::Library()) {
     auto library_start = GetSubtreeStartPosition();
@@ -491,6 +492,7 @@ auto ParseTree::Parser::ParsePackageDirective() -> Node {
     AddLeafNode(ParseNodeKind::Literal(), Consume(TokenKind::StringLiteral()));
     AddNode(ParseNodeKind::PackageLibrary(), library_decl_token, library_start,
             /*has_error=*/false);
+    library_parsed = true;
   }
 
   auto api_or_impl_token = tokens_.GetKind(*(position_));
@@ -499,7 +501,11 @@ auto ParseTree::Parser::ParsePackageDirective() -> Node {
     AddLeafNode(ParseNodeKind::PackageApi(), Consume(TokenKind::Api()));
   } else if (api_or_impl_token == TokenKind::Impl()) {
     AddLeafNode(ParseNodeKind::PackageImpl(), Consume(TokenKind::Impl()));
-  } else if (api_or_impl_token == TokenKind::StringLiteral()) {
+  } else if (!library_parsed &&
+             api_or_impl_token == TokenKind::StringLiteral()) {
+    // If we come acroess a string literal and we didn't parse `library "..."`
+    // yet, then most probably the user forgot to add `library` before the
+    // library name.
     CARBON_DIAGNOSTIC(MissingLibraryKeyword, Error,
                       "Missing `library` keyword.");
     emitter_.Emit(*position_, MissingLibraryKeyword);
@@ -517,7 +523,7 @@ auto ParseTree::Parser::ParsePackageDirective() -> Node {
     return exit_on_parse_error();
   }
 
-  AddLeafNode(ParseNodeKind::PackageSemi(), Consume(TokenKind::Semi()));
+  AddLeafNode(ParseNodeKind::PackageEnd(), Consume(TokenKind::Semi()));
 
   return AddNode(ParseNodeKind::PackageDirective(), package_intro_token,
                  package_start, /*has_error=*/false);

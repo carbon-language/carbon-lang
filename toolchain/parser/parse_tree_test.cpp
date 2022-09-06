@@ -1303,25 +1303,25 @@ TEST_F(ParseTreeTest, Package) {
 
   ParseTree tree = ParseTree::Parse(tokens, consumer);
 
-  EXPECT_THAT(
-      tree, MatchParseTreeNodes(
-                {MatchPackageDirective(MatchDeclaredName("Geometry"),
-                                       MatchPackageApi(), MatchPackageSemi()),
+  EXPECT_THAT(tree,
+              MatchParseTreeNodes(
+                  {MatchPackageDirective(MatchDeclaredName("Geometry"),
+                                         MatchPackageApi(), MatchPackageEnd()),
 
-                 MatchPackageDirective(MatchDeclaredName("Geometry"),
-                                       MatchPackageImpl(), MatchPackageSemi()),
+                   MatchPackageDirective(MatchDeclaredName("Geometry"),
+                                         MatchPackageImpl(), MatchPackageEnd()),
 
-                 MatchPackageDirective(
-                     MatchDeclaredName("Geometry"),
-                     MatchPackageLibrary(MatchLiteral("\"Shapes\"")),
-                     MatchPackageApi(), MatchPackageSemi()),
+                   MatchPackageDirective(
+                       MatchDeclaredName("Geometry"),
+                       MatchPackageLibrary(MatchLiteral("\"Shapes\"")),
+                       MatchPackageApi(), MatchPackageEnd()),
 
-                 MatchPackageDirective(
-                     MatchDeclaredName("Geometry"),
-                     MatchPackageLibrary(MatchLiteral("\"Shapes\"")),
-                     MatchPackageImpl(), MatchPackageSemi()),
+                   MatchPackageDirective(
+                       MatchDeclaredName("Geometry"),
+                       MatchPackageLibrary(MatchLiteral("\"Shapes\"")),
+                       MatchPackageImpl(), MatchPackageEnd()),
 
-                 MatchFileEnd()}));
+                   MatchFileEnd()}));
 }
 
 TEST_F(ParseTreeTest, PackageErrors) {
@@ -1343,7 +1343,8 @@ TEST_F(ParseTreeTest, PackageErrors) {
        IsDiagnosticMessage("Missing `library` keyword.")},
       {"package Geometry api",
        IsDiagnosticMessage("Expected `;` to end package directive.")},
-      {"package Geometry;",
+      {"package Geometry;", IsDiagnosticMessage("Expected a `api` or `impl`.")},
+      {R"(package Foo library "bar" "baz";)",
        IsDiagnosticMessage("Expected a `api` or `impl`.")}};
 
   for (const TestCase& testcase : testcases) {
