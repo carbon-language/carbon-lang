@@ -30,5 +30,5 @@ class C {
 
 fn Main() -> i32 {
   var c: C = {};
-  return c.Square(10) - c.Scale10(10);
+  return c.Square(11) - c.Scale10(10) - 21;
 }
