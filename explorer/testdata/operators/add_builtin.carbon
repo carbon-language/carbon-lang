@@ -12,5 +12,8 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  return 1 + 2;
+  var a: i32 = 1;
+  var b: i32 = 2;
+  var c: i32 = a + b;
+  return c;
 }

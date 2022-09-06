@@ -7,10 +7,13 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: result: 0
+// CHECK: result: 1
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  return 4 % 2;
+  var a: i32 = 1;
+  var b: i32 = 2;
+  var c: i32 = a % b;
+  return c;
 }
