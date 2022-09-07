@@ -347,8 +347,8 @@ But deduced parameters aren't the same thing as template parameters. In
 particular, deduced parameters are never mentioned at the callsite, so those
 square brackets are never part of the expression syntax.
 
-See [Proposal #676: `:!` generic syntax](/proposals/p0676.md) for more background on how and why we chose our
-current generics syntax.
+See [Proposal #676: `:!` generic syntax](/proposals/p0676.md) for more
+background on how and why we chose our current generics syntax.
 
 ### Why do variable declarations have to start with `var` or `let`?
 
@@ -400,7 +400,11 @@ equal to the value of the expression. So `var the_answer = 42;` would try to
 match `42` with the value of the expression `the_answer`, which requires a
 variable named `the_answer` to already exist.
 
-There are other ways of approaching pattern matching, but there are tradeoffs. Pattern matching is still on a provisional design, and as of August 2022 it hasn't been fully reviewed with alternatives considered. A future proposal for pattern matching will need to weigh the tradeoffs in more detail, and may come to a different decision.
+There are other ways of approaching pattern matching, but there are tradeoffs.
+Pattern matching is still on a provisional design, and as of August 2022 it
+hasn't been fully reviewed with alternatives considered. A future proposal for
+pattern matching will need to weigh the tradeoffs in more detail, and may come
+to a different decision.
 
 ## How will Carbon work?
 
