@@ -389,6 +389,20 @@ message AliasDeclaration {
   optional Expression target = 2;
 }
 
+// EXPERIMENTAL MIXIN FEATURE
+message MixinDeclaration {
+  optional string name = 1;
+  repeated Declaration members = 2;
+  // Type params not implemented yet
+  // optional TuplePattern params = 3;
+  optional GenericBinding self = 4;
+}
+
+// EXPERIMENTAL MIXIN FEATURE
+message MixDeclaration {
+  optional Expression mixin = 1;
+}
+
 message Declaration {
   oneof kind {
     FunctionDeclaration function = 1;
@@ -399,6 +413,8 @@ message Declaration {
     ImplDeclaration impl = 6;
     AliasDeclaration alias = 7;
     LetDeclaration let = 8;
+    MixinDeclaration mixin = 9;
+    MixDeclaration mix = 10;
   }
 }
 

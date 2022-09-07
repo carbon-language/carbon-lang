@@ -52,7 +52,22 @@ void Declaration::Print(llvm::raw_ostream& out) const {
       out << "}\n";
       break;
     }
-
+    case DeclarationKind::MixinDeclaration: {
+      const auto& mixin_decl = cast<MixinDeclaration>(*this);
+      PrintID(out);
+      out << "{\n";
+      for (Nonnull<Declaration*> m : mixin_decl.members()) {
+        out << *m;
+      }
+      out << "}\n";
+      break;
+    }
+    case DeclarationKind::MixDeclaration: {
+      const auto& mix_decl = cast<MixDeclaration>(*this);
+      PrintID(out);
+      out << mix_decl.mixin() << ";";
+      break;
+    }
     case DeclarationKind::ChoiceDeclaration: {
       const auto& choice = cast<ChoiceDeclaration>(*this);
       PrintID(out);
@@ -122,7 +137,18 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
       out << "class " << class_decl.name();
       break;
     }
-
+    case DeclarationKind::MixinDeclaration: {
+      const auto& mixin_decl = cast<MixinDeclaration>(*this);
+      out << "__mixin " << mixin_decl.name();
+      if (mixin_decl.self()->type().kind() != ExpressionKind::TypeTypeLiteral) {
+        out << " for " << mixin_decl.self()->type();
+      }
+      break;
+    }
+    case DeclarationKind::MixDeclaration: {
+      out << "__mix ";
+      break;
+    }
     case DeclarationKind::ChoiceDeclaration: {
       const auto& choice = cast<ChoiceDeclaration>(*this);
       out << "choice " << choice.name();
@@ -161,6 +187,12 @@ auto GetName(const Declaration& declaration)
       return cast<FunctionDeclaration>(declaration).name();
     case DeclarationKind::ClassDeclaration:
       return cast<ClassDeclaration>(declaration).name();
+    case DeclarationKind::MixinDeclaration: {
+      return cast<MixinDeclaration>(declaration).name();
+    }
+    case DeclarationKind::MixDeclaration: {
+      return std::nullopt;
+    }
     case DeclarationKind::ChoiceDeclaration:
       return cast<ChoiceDeclaration>(declaration).name();
     case DeclarationKind::InterfaceDeclaration:

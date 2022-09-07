@@ -476,7 +476,8 @@ represent that value.
 
 > References:
 >
-> -   [Integer literals](lexical_conventions/numeric_literals.md#integer-literals)
+> -   [Integer literal syntax](lexical_conventions/numeric_literals.md#integer-literals)
+> -   [Numeric Literal Semantics](numeric_literals.md)
 > -   Proposal
 >     [#143: Numeric literals](https://github.com/carbon-language/carbon-lang/pull/143)
 > -   Proposal
@@ -521,7 +522,8 @@ selected.
 
 > References:
 >
-> -   [Real-number literals](lexical_conventions/numeric_literals.md#real-number-literals)
+> -   [Real-number literal syntax](lexical_conventions/numeric_literals.md#real-number-literals)
+> -   [Numeric Literal Semantics](numeric_literals.md)
 > -   Proposal
 >     [#143: Numeric literals](https://github.com/carbon-language/carbon-lang/pull/143)
 > -   Proposal

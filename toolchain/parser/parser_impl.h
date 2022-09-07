@@ -66,12 +66,12 @@ class ParseTree::Parser {
   // tree's preorder sequence.
   auto AddLeafNode(ParseNodeKind kind, TokenizedBuffer::Token token) -> Node;
 
-  // Composes `consumeIf` and `addLeafNode`, propagating the failure case
+  // Composes `ConsumeIf` and `AddLeafNode`, propagating the failure case
   // through the optional.
   auto ConsumeAndAddLeafNodeIf(TokenKind t_kind, ParseNodeKind n_kind)
       -> llvm::Optional<Node>;
 
-  // Marks the node `N` as having some parse errors and that the tree contains
+  // Marks the node `n` as having some parse errors and that the tree contains
   // a node with a parse error.
   auto MarkNodeError(Node n) -> void;
 
@@ -177,6 +177,9 @@ class ParseTree::Parser {
 
   // Parses and returns an empty declaration node from a single semicolon token.
   auto ParseEmptyDeclaration() -> Node;
+
+  // Parses a package directive.
+  auto ParsePackageDirective() -> Node;
 
   // Tries to parse a declaration. If a declaration, even an empty one after
   // skipping errors, can be parsed, it is returned. There may be parse errors
