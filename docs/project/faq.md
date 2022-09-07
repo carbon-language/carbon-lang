@@ -30,7 +30,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [If you can use Rust, ignore Carbon](#if-you-can-use-rust-ignore-carbon)
         -   [Why is adopting Rust difficult for C++ codebases?](#why-is-adopting-rust-difficult-for-c-codebases)
     -   [Why not a garbage collected language, like Java, Kotlin, or Go?](#why-not-a-garbage-collected-language-like-java-kotlin-or-go)
--   [Why is Carbon designed that way?](#why-is-carbon-designed-that-way)
+-   [How were specific feature designs chosen?](#how-were-specific-feature-designs-chosen)
     -   [Why aren't `<` and `>` used as delimiters?](#why-arent--and--used-as-delimiters)
     -   [Why do variable declarations have to start with `var` or `let`?](#why-do-variable-declarations-have-to-start-with-var-or-let)
     -   [Why do variable declarations have to have types?](#why-do-variable-declarations-have-to-have-types)
@@ -314,7 +314,11 @@ actively encourage using these languages in those cases. However, we need a
 solution for C++ use-cases that require its full performance, low-level control,
 and access to hardware.
 
-## Why is Carbon designed that way?
+## How were specific feature designs chosen?
+
+Throughout the design, we include 'Alternatives considered' and 'References'
+sections which can be used to research the decision process for a particular
+design.
 
 ### Why aren't `<` and `>` used as delimiters?
 
@@ -329,10 +333,11 @@ comparison `(a < b) > (c)`. In order to resolve the ambiguity, the compiler has
 to perform name lookup on `a` to determine whether there's a function named `a`
 in scope.
 
-It's also worth noting that Carbon doesn't use _any_ kind of brackets to mark
-template parameters (or generic parameters), so if Carbon had angle brackets,
-they would mean something different than they do in C++, which could cause
-confusion. We do use square brackets to mark _deduced_ parameters, as in:
+It's also worth noting that Carbon
+[doesn't use _any_ kind of brackets](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/README.md#checked-and-template-parameters)
+to mark template or generic parameters, so if Carbon had angle brackets, they
+would mean something different than they do in C++, which could cause confusion.
+We do use square brackets to mark _deduced_ parameters, as in:
 
 ```
 fn Sort[T:! Comparable](a: Vector(T)*)
