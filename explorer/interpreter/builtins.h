@@ -29,7 +29,6 @@ class Builtins {
 
     // Comparison.
     EqWith,
-    NotEqWith,
     LessWith,
     LessEqWith,
     GreaterWith,
@@ -57,7 +56,6 @@ class Builtins {
   static constexpr Builtin As = Builtin::As;
   static constexpr Builtin ImplicitAs = Builtin::ImplicitAs;
   static constexpr Builtin EqWith = Builtin::EqWith;
-  static constexpr Builtin NotEqWith = Builtin::NotEqWith;
   static constexpr Builtin LessWith = Builtin::LessWith;
   static constexpr Builtin LessEqWith = Builtin::LessEqWith;
   static constexpr Builtin GreaterWith = Builtin::GreaterWith;
@@ -90,11 +88,11 @@ class Builtins {
  private:
   static constexpr int NumBuiltins = static_cast<int>(Builtin::Last) + 1;
   static constexpr const char* BuiltinNames[NumBuiltins] = {
-      "As",          "ImplicitAs", "EqWith",        "NotEqWith",
-      "LessWith",    "LessEqWith", "GreaterWith",   "GreaterEqWith",
-      "CompareWith", "Negate",     "AddWith",       "SubWith",
-      "MulWith",     "ModWith",    "BitComplement", "BitAndWith",
-      "BitOrWith",   "BitXorWith", "LeftShiftWith", "RightShiftWith"};
+      "As",         "ImplicitAs",    "EqWith",        "LessWith",
+      "LessEqWith", "GreaterWith",   "GreaterEqWith", "CompareWith",
+      "Negate",     "AddWith",       "SubWith",       "MulWith",
+      "ModWith",    "BitComplement", "BitAndWith",    "BitOrWith",
+      "BitXorWith", "LeftShiftWith", "RightShiftWith"};
 
   std::optional<Nonnull<const Declaration*>> builtins_[NumBuiltins] = {};
 };

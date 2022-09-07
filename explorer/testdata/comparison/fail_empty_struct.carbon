@@ -13,6 +13,9 @@ external impl {} as EqWith({}) {
   fn Equal[me: Self](other: Self) -> bool {
     return true;
   }
+  fn NotEqual[me: Self](other: Self) -> bool {
+    return false;
+  }
 }
 
 fn Main() -> i32 {

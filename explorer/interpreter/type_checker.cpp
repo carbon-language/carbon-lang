@@ -2126,8 +2126,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         case Operator::NotEq: {
           ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
               impl_scope, op.arguments()[0],
-              BuiltinInterfaceName{Builtins::NotEqWith, ts[1]},
-              BuiltinMethodCall{"NotEq", op.arguments()[1]});
+              BuiltinInterfaceName{Builtins::EqWith, ts[1]},
+              BuiltinMethodCall{"NotEqual", op.arguments()[1]});
           if (!converted.ok()) {
             // We couldn't find a matching `impl`.
             return CompilationError(e->source_loc())
