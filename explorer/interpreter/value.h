@@ -76,8 +76,8 @@ class Value {
   const Kind kind_;
 };
 
-// Returns the string 'name' for the supplied value `kind`.
-auto ValueKindName(Value::Kind kind) -> std::string_view;
+// Returns a description for the supplied value `kind`.
+auto ValueKindDesc(Value::Kind kind) -> std::string_view;
 
 // Base class for types holding contextual information by which we can
 // determine whether values are equal.

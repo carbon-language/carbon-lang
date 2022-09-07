@@ -252,7 +252,7 @@ def main() -> None:
                 print(f"  {node.Root().leaves[id].name} = {id},")
             print("};\n")
 
-            print(f"std::string_view {node.name}KindName({node.name}Kind k);\n")
+            print(f"std::string_view {node.name}KindDesc({node.name}Kind k);\n")
 
         if node.kind in [Class.Kind.ABSTRACT, Class.Kind.CONCRETE]:
             print(
@@ -297,7 +297,7 @@ def main() -> None:
         if node.kind != Class.Kind.CONCRETE:
             assert node.id_range is not None
             ids = range(node.id_range[0], node.id_range[1])
-            print(f"std::string_view {node.name}KindName({node.name}Kind k) {{")
+            print(f"std::string_view {node.name}KindDesc({node.name}Kind k) {{")
             print("  switch(k) {")
             for id in ids:
                 name = node.Root().leaves[id].name

@@ -549,18 +549,18 @@ void Value::Print(llvm::raw_ostream& out) const {
 
 // Generates a 'human readable' description for an enum name.
 // For example, IntType -> 'int type'.
-static auto MakeKindName(const char* name) -> std::string {
+static auto MakeKindDesc(const char* name) -> std::string {
   return llvm::StringRef(
              std::regex_replace(name, std::regex("(?!^)([A-Z])"), " $1"))
       .lower();
 }
 
-auto ValueKindName(Value::Kind kind) -> std::string_view {
-  static const auto& Names = *new std::vector<std::string>({
-#define CARBON_VALUE_KIND(Name) MakeKindName(#Name),
+auto ValueKindDesc(Value::Kind kind) -> std::string_view {
+  static const auto& Descriptions = *new std::vector<std::string>({
+#define CARBON_VALUE_KIND(Name) MakeKindDesc(#Name),
 #include "explorer/interpreter/value_kind.def"
   });
-  return Names[static_cast<int>(kind)];
+  return Descriptions[static_cast<int>(kind)];
 }
 
 ContinuationValue::StackFragment::~StackFragment() {
