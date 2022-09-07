@@ -58,6 +58,7 @@ class Value {
     AutoType,
     StructType,
     NominalClassType,
+    MixinPseudoType,
     InterfaceType,
     ConstraintType,
     ChoiceType,
@@ -73,6 +74,7 @@ class Value {
     StringType,
     StringValue,
     TypeOfClassType,
+    TypeOfMixinPseudoType,
     TypeOfInterfaceType,
     TypeOfConstraintType,
     TypeOfChoiceType,
@@ -630,6 +632,41 @@ class NominalClassType : public Value {
   Nonnull<const Bindings*> bindings_ = Bindings::None();
 };
 
+class MixinPseudoType : public Value {
+ public:
+  explicit MixinPseudoType(Nonnull<const MixinDeclaration*> declaration)
+      : Value(Kind::MixinPseudoType), declaration_(declaration) {
+    CARBON_CHECK(!declaration->params().has_value())
+        << "missing arguments for parameterized mixin type";
+  }
+  explicit MixinPseudoType(Nonnull<const MixinDeclaration*> declaration,
+                           Nonnull<const Bindings*> bindings)
+      : Value(Kind::MixinPseudoType),
+        declaration_(declaration),
+        bindings_(bindings) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::MixinPseudoType;
+  }
+
+  auto declaration() const -> const MixinDeclaration& { return *declaration_; }
+
+  auto bindings() const -> const Bindings& { return *bindings_; }
+
+  auto args() const -> const BindingMap& { return bindings_->args(); }
+
+  auto witnesses() const -> const ImplWitnessMap& {
+    return bindings_->witnesses();
+  }
+
+  auto FindFunction(const std::string_view& name) const
+      -> std::optional<Nonnull<const FunctionValue*>>;
+
+ private:
+  Nonnull<const MixinDeclaration*> declaration_;
+  Nonnull<const Bindings*> bindings_ = Bindings::None();
+};
+
 // Return the declaration of the member with the given name.
 auto FindMember(std::string_view name,
                 llvm::ArrayRef<Nonnull<Declaration*>> members)
@@ -1095,6 +1132,21 @@ class TypeOfClassType : public Value {
 
  private:
   Nonnull<const NominalClassType*> class_type_;
+};
+
+class TypeOfMixinPseudoType : public Value {
+ public:
+  explicit TypeOfMixinPseudoType(Nonnull<const MixinPseudoType*> class_type)
+      : Value(Kind::TypeOfMixinPseudoType), mixin_type_(class_type) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::TypeOfMixinPseudoType;
+  }
+
+  auto mixin_type() const -> const MixinPseudoType& { return *mixin_type_; }
+
+ private:
+  Nonnull<const MixinPseudoType*> mixin_type_;
 };
 
 class TypeOfInterfaceType : public Value {

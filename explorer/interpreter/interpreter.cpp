@@ -626,6 +626,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::PointerType:
     case Value::Kind::AutoType:
     case Value::Kind::NominalClassType:
+    case Value::Kind::MixinPseudoType:
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
     case Value::Kind::ImplWitness:
@@ -641,6 +642,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::StringType:
     case Value::Kind::StringValue:
     case Value::Kind::TypeOfClassType:
+    case Value::Kind::TypeOfMixinPseudoType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
@@ -1825,6 +1827,8 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
     }
     case DeclarationKind::FunctionDeclaration:
     case DeclarationKind::ClassDeclaration:
+    case DeclarationKind::MixinDeclaration:
+    case DeclarationKind::MixDeclaration:
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::AssociatedConstantDeclaration:
