@@ -76,17 +76,19 @@ jobs:
         run: |
           brew update
 
-      - name: brew install LLVM dependencies (attempt 1)
+      - name: brew install llvm (attempt 1)
         env:
           HOMEBREW_NO_INSTALL_CLEANUP: 1
         run: |
           brew install --force-bottle --force llvm
+          sudo chown -R $(whoami) /home/linuxbrew/.linuxbrew/Cellar
 
-      - name: brew install LLVM dependencies (attempt 2)
+      - name: brew install llvm (attempt 2)
         env:
           HOMEBREW_NO_INSTALL_CLEANUP: 1
         run: |
           brew install --force-bottle --force llvm
+          sudo chown -R $(whoami) /home/linuxbrew/.linuxbrew/Cellar
 
       - name: brew info llvm (for debugging)
         run: |
