@@ -72,42 +72,11 @@ jobs:
       # toolchain. We also take some care to be as resilient as possible to
       # issues fetching and installing the toolchain.
 
-      - name: brew update
+      - name: apt install llvm
         run: |
-          brew update
-
-      - name: brew install llvm (attempt 1)
-        env:
-          HOMEBREW_NO_INSTALL_CLEANUP: 1
-        run: |
-          brew install --force-bottle --force llvm
-          sudo chown -R $(whoami) /home/linuxbrew/.linuxbrew/Cellar
-
-      - name: brew install llvm (attempt 2)
-        env:
-          HOMEBREW_NO_INSTALL_CLEANUP: 1
-        run: |
-          brew install --force-bottle --force llvm
-          sudo chown -R $(whoami) /home/linuxbrew/.linuxbrew/Cellar
-
-      - name: brew install llvm (attempt 3)
-        env:
-          HOMEBREW_NO_INSTALL_CLEANUP: 1
-        run: |
-          brew install --force-bottle --force llvm
-          sudo chown -R $(whoami) /home/linuxbrew/.linuxbrew/Cellar
-
-      - name: brew info llvm (for debugging)
-        run: |
-          brew info llvm
-
-      - name: brew config (for debugging)
-        run: |
-          brew config
-
-      - name: Add LLVM to PATH
-        run: |
-          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 15.0.0
 
       # Print the various tool paths and versions to help in debugging.
       - name: Print tool debugging info
