@@ -30,11 +30,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        build_mode: [opt]
-        # The apt libc++ isn't correctly configured for debug mode.
-        include:
-          - os: macos-latest
-            build_mode: fastbuild
+        build_mode: [fastbuild, opt]
     runs-on: ${{ matrix.os }}
     steps:
       # Checkout the pull request head or the branch.
@@ -65,9 +61,9 @@ jobs:
 
       # On macOS, use brew to install Clang/LLVM.
       - name: Install Clang/LLVM using brew
-        if: matrix.os == 'macos-latest'
         env:
           HOMEBREW_NO_INSTALL_CLEANUP: 1
+          HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
         run: |
           echo '*** Updating brew'
           brew update
@@ -81,22 +77,6 @@ jobs:
           brew config
           echo '*** Updating PATH'
           echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
-
-      # On Linux, use apt to install Clang/LLVM.
-      - name: Install Clang/LLVM using apt
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          echo '*** Fetching llvm install script'
-          wget https://apt.llvm.org/llvm.sh
-          chmod +x ./llvm.sh
-          echo '*** Installing llvm-15'
-          sudo ./llvm.sh 15 all
-          echo '*** Files in llvm-15'
-          dpkg -L llvm-15
-          echo '*** Files in clang-15'
-          dpkg -L clang-15
-          echo '*** Updating PATH'
-          echo '/usr/lib/llvm-15/bin' >> $GITHUB_PATH
 
       # Print the various tool paths and versions to help in debugging.
       - name: Print tool debugging info
