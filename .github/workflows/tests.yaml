@@ -30,7 +30,10 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        build_mode: [fastbuild, opt]
+        build_mode: [opt]
+        include:
+        - os: macos-latest
+          build_mode: debug
     runs-on: ${{ matrix.os }}
     steps:
       # Checkout the pull request head or the branch.
