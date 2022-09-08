@@ -688,6 +688,7 @@ class IntrinsicExpression : public Expression {
     IntBitComplement,
     IntLeftShift,
     IntRightShift,
+    Assert,
   };
 
   // Returns the enumerator corresponding to the intrinsic named `name`,

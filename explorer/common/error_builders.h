@@ -33,6 +33,10 @@ inline auto RuntimeError(SourceLocation loc) -> ErrorBuilder {
   return ErrorBuilder("RUNTIME ERROR", loc.ToString());
 }
 
+inline auto AssertionError(SourceLocation loc) -> ErrorBuilder {
+  return ErrorBuilder("ASSERTION ERROR", loc.ToString());
+}
+
 }  // namespace Carbon
 
 #endif  // CARBON_EXPLORER_COMMON_ERROR_BUILDERS_H_
