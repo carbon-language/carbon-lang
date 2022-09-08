@@ -30,6 +30,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [If you can use Rust, ignore Carbon](#if-you-can-use-rust-ignore-carbon)
         -   [Why is adopting Rust difficult for C++ codebases?](#why-is-adopting-rust-difficult-for-c-codebases)
     -   [Why not a garbage collected language, like Java, Kotlin, or Go?](#why-not-a-garbage-collected-language-like-java-kotlin-or-go)
+-   [How were specific feature designs chosen?](#how-were-specific-feature-designs-chosen)
+    -   [Why aren't `<` and `>` used as delimiters?](#why-arent--and--used-as-delimiters)
+    -   [Why do variable declarations have to start with `var` or `let`?](#why-do-variable-declarations-have-to-start-with-var-or-let)
+    -   [Why do variable declarations have to have types?](#why-do-variable-declarations-have-to-have-types)
 -   [How will Carbon work?](#how-will-carbon-work)
     -   [What compiler infrastructure is Carbon using?](#what-compiler-infrastructure-is-carbon-using)
     -   [How will Carbon's bidirectional C++ interoperability work?](#how-will-carbons-bidirectional-c-interoperability-work)
@@ -309,6 +313,98 @@ over performance. This trade-off makes sense for many applications, and we
 actively encourage using these languages in those cases. However, we need a
 solution for C++ use-cases that require its full performance, low-level control,
 and access to hardware.
+
+## How were specific feature designs chosen?
+
+Throughout the design, we include 'Alternatives considered' and 'References'
+sections which can be used to research the decision process for a particular
+design.
+
+### Why aren't `<` and `>` used as delimiters?
+
+[One of our goals for Carbon](/docs/project/goals.md#fast-and-scalable-development)
+is that it should support parsing without contextual or semantic information,
+and experience with C++ has shown that using `<` as both a binary operator and
+an opening delimiter makes that goal difficult to achieve.
+
+For example, in C++, the expression `a<b>(c)` could parse as either a function
+call with a template argument `b` and an ordinary argument `c`, or as a chained
+comparison `(a < b) > (c)`. In order to resolve the ambiguity, the compiler has
+to perform name lookup on `a` to determine whether there's a function named `a`
+in scope.
+
+It's also worth noting that Carbon
+[doesn't use _any_ kind of brackets](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/README.md#checked-and-template-parameters)
+to mark template or generic parameters, so if Carbon had angle brackets, they
+would mean something different than they do in C++, which could cause confusion.
+We do use square brackets to mark _deduced_ parameters, as in:
+
+```
+fn Sort[T:! Comparable](a: Vector(T)*)
+```
+
+But deduced parameters aren't the same thing as template parameters. In
+particular, deduced parameters are never mentioned at the callsite, so those
+square brackets are never part of the expression syntax.
+
+See [Proposal #676: `:!` generic syntax](/proposals/p0676.md) for more
+background on how and why we chose our current generics syntax.
+
+### Why do variable declarations have to start with `var` or `let`?
+
+In Carbon, a declaration of a single variable looks like this:
+
+```
+var the_answer: i32 = 42;
+```
+
+But this is just the most common case. The syntax between `var` and `=` can be
+any [irrefutable pattern](/docs/design/README.md#patterns), not just a single
+variable binding. For example:
+
+```
+var ((x: i32, _: i32), y: auto) = ((1, 2), (3, 4));
+```
+
+This code is valid, and initializes `x` to `1` and `z` to `(3, 4)`. In the
+future, we will probably also support destructuring structs in a similar way,
+and many other kinds of patterns are possible.
+
+Now consider how that example would look if the `var` token were not required:
+
+```
+((_: i32, x: i32), y: auto) = ((1, 2), (3, 4));
+```
+
+With this example, the parser would need to look four tokens ahead to determine
+that it's parsing a variable declaration rather than an expression. With more
+deeply-nested patterns, it would have to look ahead farther. Avoiding this sort
+of unbounded lookahead is an important part of our
+[fast and scalable development](/docs/project/goals.md#fast-and-scalable-development)
+goal.
+
+### Why do variable declarations have to have types?
+
+As discussed above, Carbon variable declarations are actually doing a form of
+pattern matching. In a declaration like this:
+
+```
+var the_answer: i32 = 42;
+```
+
+`the_answer: i32` is an example of a _binding pattern_, which matches any value
+of the appropriate type, and binds the given name to it. The `: i32` can't be
+omitted, because `the_answer` on its own is an expression, and any Carbon
+expression is also a valid pattern, which matches if the value being matched is
+equal to the value of the expression. So `var the_answer = 42;` would try to
+match `42` with the value of the expression `the_answer`, which requires a
+variable named `the_answer` to already exist.
+
+There are other ways of approaching pattern matching, but there are tradeoffs.
+Pattern matching is still on a provisional design, and as of August 2022 it
+hasn't been fully reviewed with alternatives considered. A future proposal for
+pattern matching will need to weigh the tradeoffs in more detail, and may come
+to a different decision.
 
 ## How will Carbon work?
 
