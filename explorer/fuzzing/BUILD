@@ -120,6 +120,10 @@ cc_fuzz_test(
     testonly = 1,
     srcs = ["explorer_fuzzer.cpp"],
     corpus = glob(["fuzzer_corpus/*"]),
+    copts = [
+        # argument_type use in libfuzzer macro.
+        "-Wno-deprecated-declarations",
+    ],
     deps = [
         ":fuzzer_util",
         "//common:error",
