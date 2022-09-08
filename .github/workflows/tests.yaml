@@ -33,8 +33,8 @@ jobs:
         build_mode: [opt]
         # The apt libc++ isn't correctly configured for debug mode.
         include:
-        - os: macos-latest
-          build_mode: fastbuild
+          - os: macos-latest
+            build_mode: fastbuild
     runs-on: ${{ matrix.os }}
     steps:
       # Checkout the pull request head or the branch.
