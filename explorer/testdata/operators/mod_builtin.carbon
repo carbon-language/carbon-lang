@@ -14,10 +14,11 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  var val: i32 = 3;
+  var lhs: i32 = 3;
+  var rhs: i32 = 2;
   // Make sure that both the interface and operator work with i32. These rely on
   // builtin arithmetic more directly.
-  Print("Interface: {0}", val.(ModWith(i32).Op)(2));
-  Print("Op: {0}", val % 2);
+  Print("Interface: {0}", lhs.(ModWith(i32).Op)(rhs));
+  Print("Op: {0}", val % rhs);
   return 0;
 }
