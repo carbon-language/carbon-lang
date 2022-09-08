@@ -19,6 +19,6 @@ fn Main() -> i32 {
   // Make sure that both the interface and operator work with i32. These rely on
   // builtin arithmetic more directly.
   Print("Interface: {0}", lhs.(ModWith(i32).Op)(rhs));
-  Print("Op: {0}", val % rhs);
+  Print("Op: {0}", lhs % rhs);
   return 0;
 }
