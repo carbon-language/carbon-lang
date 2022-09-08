@@ -75,7 +75,7 @@ jobs:
       - name: apt install llvm
         run: |
           wget https://apt.llvm.org/llvm.sh
-          chmod +x llvm.sh
+          chmod +x ./llvm.sh
           sudo ./llvm.sh 15
 
       # Print the various tool paths and versions to help in debugging.
@@ -90,6 +90,8 @@ jobs:
           clang --version
           which clang++
           clang++ --version
+          dpkg -L llvm-15
+          dpkg -L clang-15
 
       # Extract our access key for our build cache.
       - name: Extract access key
