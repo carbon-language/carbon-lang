@@ -76,7 +76,7 @@ jobs:
         run: |
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
-          sudo ./llvm.sh 15.0.0
+          sudo ./llvm.sh 15
 
       # Print the various tool paths and versions to help in debugging.
       - name: Print tool debugging info
