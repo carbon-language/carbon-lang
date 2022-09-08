@@ -6,7 +6,7 @@ name: test
 
 on:
   push:
-    branches: [trunk]
+    branches: [brew-fix]
     paths:
       # Conservatively run the tests. However, skip them if the only paths in
       # the pull request match files that we know don't impact the build.
@@ -29,8 +29,10 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        build_mode: [fastbuild, opt]
+        os: [ubuntu-latest]
+        build_mode: [opt]
+        #os: [ubuntu-latest, macos-latest]
+        #build_mode: [fastbuild, opt]
     runs-on: ${{ matrix.os }}
     steps:
       # Checkout the pull request head or the branch.
@@ -69,15 +71,27 @@ jobs:
       # For now, we rely on Homebrew to manage installing a correctly built
       # toolchain. We also take some care to be as resilient as possible to
       # issues fetching and installing the toolchain.
-      - name: Setup LLVM and Clang
+
+      - name: brew update
+        run: |
+          brew update
+
+      - name: brew install LLVM dependencies
         env:
           HOMEBREW_NO_INSTALL_CLEANUP: 1
         run: |
-          brew update
-          brew install --force-bottle --only-dependencies llvm
-          brew install --force-bottle --force --verbose llvm
+          brew install --force-bottle llvm
+
+      - name: brew info llvm (for debugging)
+        run: |
           brew info llvm
+
+      - name: brew config (for debugging)
+        run: |
           brew config
+
+      - name: Add LLVM to PATH
+        run: |
           echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
 
       # Print the various tool paths and versions to help in debugging.
