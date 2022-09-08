@@ -15,7 +15,7 @@ namespace Carbon::Testing {
 
 MATCHER_P2(Function, id_matcher, body_matcher,
            llvm::formatv(
-               "Function(%{0}, {1})",
+               "Function(`{0}`, `{1}`)",
                ::testing::DescribeMatcher<Semantics::NodeId>(id_matcher),
                ::testing::DescribeMatcher<llvm::ArrayRef<Semantics::NodeRef>>(
                    body_matcher))) {

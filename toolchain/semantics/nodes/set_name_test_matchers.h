@@ -16,7 +16,7 @@ namespace Carbon::Testing {
 MATCHER_P2(
     SetName, name_matcher, target_id_matcher,
     llvm::formatv(
-        "SetName(`{0}`, %`{1}`)",
+        "SetName(`{0}`, `{1}`)",
         ::testing::DescribeMatcher<llvm::StringRef>(name_matcher),
         ::testing::DescribeMatcher<Semantics::NodeId>(target_id_matcher))) {
   const Semantics::NodeRef& node_ref = arg;

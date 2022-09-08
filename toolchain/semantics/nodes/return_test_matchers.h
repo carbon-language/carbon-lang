@@ -15,7 +15,7 @@ namespace Carbon::Testing {
 
 MATCHER_P(
     Return, target_id_matcher,
-    llvm::formatv("Return({0})",
+    llvm::formatv("Return(`{0}`)",
                   ::testing::DescribeMatcher<llvm::Optional<Semantics::NodeId>>(
                       target_id_matcher))) {
   const Semantics::NodeRef& node_ref = arg;

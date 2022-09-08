@@ -21,7 +21,7 @@ class IntegerLiteral {
       : node_(node), id_(id), value_(&value) {}
 
   void Print(llvm::raw_ostream& out) const {
-    out << "IntegerLiteral(%" << id_ << ", " << *value_ << ")";
+    out << "IntegerLiteral(" << id_ << ", " << *value_ << ")";
   }
 
   auto node() const -> ParseTree::Node { return node_; }

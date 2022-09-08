@@ -16,7 +16,7 @@ namespace Carbon::Testing {
 MATCHER_P4(
     BinaryOperator, id_matcher, op_matcher, lhs_id_matcher, rhs_id_matcher,
     llvm::formatv(
-        "BinaryOperator(%{0}, {1}, %{2}, %{3})",
+        "BinaryOperator(`{0}`, `{1}`, `{2}`, `{3}`)",
         ::testing::DescribeMatcher<Semantics::NodeId>(id_matcher),
         ::testing::DescribeMatcher<Semantics::BinaryOperator::Op>(op_matcher),
         ::testing::DescribeMatcher<Semantics::NodeId>(lhs_id_matcher),

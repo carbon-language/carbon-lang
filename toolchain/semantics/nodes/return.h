@@ -25,7 +25,7 @@ class Return {
   void Print(llvm::raw_ostream& out) const {
     out << "Return(";
     if (target_id_) {
-      out << "%" << *target_id_;
+      out << *target_id_;
     } else {
       out << "None";
     }

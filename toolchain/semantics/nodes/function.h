@@ -31,7 +31,7 @@ class Function {
 
   void Print(llvm::raw_ostream& out,
              std::function<void(NodeRef)> print_node_ref) const {
-    out << "Function(%" << id_ << ", {";
+    out << "Function(" << id_ << ", {";
     llvm::ListSeparator sep(", ");
     for (auto& node_ref : body_) {
       out << sep;

@@ -25,13 +25,13 @@ class BinaryOperator {
       : node_(node), id_(id), op_(op), lhs_id_(lhs_id), rhs_id_(rhs_id) {}
 
   void Print(llvm::raw_ostream& out) const {
-    out << "BinaryOperator(%" << id_ << ", ";
+    out << "BinaryOperator(" << id_ << ", ";
     switch (op_) {
       case Op::Add:
         out << "+";
         break;
     }
-    out << ", %" << lhs_id_ << ", %" << rhs_id_ << ")";
+    out << ", " << lhs_id_ << ", %" << rhs_id_ << ")";
   }
 
   auto node() const -> ParseTree::Node { return node_; }
