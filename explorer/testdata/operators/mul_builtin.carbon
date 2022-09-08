@@ -7,13 +7,17 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: result: 2
+// CHECK: Interface: 6
+// CHECK: Op: 6
+// CHECK: result: 0
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  var a: i32 = 1;
-  var b: i32 = 2;
-  var c: i32 = a * b;
-  return c;
+  var val: i32 = 3;
+  // Make sure that both the interface and operator work with i32. These rely on
+  // builtin arithmetic more directly.
+  Print("Interface: {0}", val.(MulWith(i32).Op)(2));
+  Print("Op: {0}", val * 2);
+  return 0;
 }
