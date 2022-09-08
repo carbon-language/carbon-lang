@@ -29,10 +29,8 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        build_mode: [opt]
-        #os: [ubuntu-latest, macos-latest]
-        #build_mode: [fastbuild, opt]
+        os: [ubuntu-latest, macos-latest]
+        build_mode: [fastbuild, opt]
     runs-on: ${{ matrix.os }}
     steps:
       # Checkout the pull request head or the branch.
@@ -61,29 +59,40 @@ jobs:
           go get github.com/bazelbuild/bazelisk
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
-      # Setup to the latest LLVM and Clang release.
-      #
-      # Ideally we would use the pre-installed versions in the image, but the
-      # debian packages for LLVM-12 are broken due to several bugs:
-      # https://bugs.llvm.org/show_bug.cgi?id=43604
-      # https://bugs.llvm.org/show_bug.cgi?id=46321
-      #
-      # For now, we rely on Homebrew to manage installing a correctly built
-      # toolchain. We also take some care to be as resilient as possible to
-      # issues fetching and installing the toolchain.
+      # On macOS, use brew to install Clang/LLVM.
+      - name: Install Clang/LLVM using brew
+        if: matrix.os == 'macos-latest'
+        env:
+          HOMEBREW_NO_INSTALL_CLEANUP: 1
+        run: |
+          echo '*** Updating brew'
+          brew update
+          echo '*** Installing LLVM deps'
+          brew install --force-bottle --only-dependencies llvm
+          echo '*** Installing LLVM itself'
+          brew install --force-bottle --force --verbose llvm
+          echo '*** brew info llvm'
+          brew info llvm
+          echo '*** brew config'
+          brew config
+          echo '*** Updating PATH'
+          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
 
-      - name: apt install llvm
+      # On Linux, use apt to install Clang/LLVM.
+      - name: Install Clang/LLVM using apt
+        if: matrix.os == 'ubuntu-latest'
         run: |
           echo '*** Fetching llvm install script'
           wget https://apt.llvm.org/llvm.sh
           chmod +x ./llvm.sh
           echo '*** Installing llvm-15'
           sudo ./llvm.sh 15 all
-          echo '/usr/lib/llvm-15/bin' >> $GITHUB_PATH
           echo '*** Files in llvm-15'
           dpkg -L llvm-15
           echo '*** Files in clang-15'
           dpkg -L clang-15
+          echo '*** Updating PATH'
+          echo '/usr/lib/llvm-15/bin' >> $GITHUB_PATH
 
       # Print the various tool paths and versions to help in debugging.
       - name: Print tool debugging info
