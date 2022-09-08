@@ -7,7 +7,6 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-recursive-mixing.carbon:18: Member named F1 (declared at {{.*}}/explorer/testdata/mixin/fail-recursive-mixing.carbon:16) is being mixed multiple times into M1
 package ExplorerTest api;
 
 __mixin M1 {
@@ -15,6 +14,7 @@ __mixin M1 {
      return x;
   }
   __mix M1;
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-recursive-mixing.carbon:[[@LINE+1]]: Member named F1 (declared at {{.*}}/explorer/testdata/mixin/fail-recursive-mixing.carbon:15) is being mixed multiple times into M1
 }
 
 class C {
