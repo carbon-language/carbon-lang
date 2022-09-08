@@ -16,7 +16,7 @@ class IntegerLiteral {
  public:
   static constexpr NodeKind Kind = NodeKind::IntegerLiteral;
 
-  explicit IntegerLiteral(ParseTree::Node node, int32_t id,
+  explicit IntegerLiteral(ParseTree::Node node, NodeId id,
                           const llvm::APInt& value)
       : node_(node), id_(id), value_(&value) {}
 
@@ -25,12 +25,12 @@ class IntegerLiteral {
   }
 
   auto node() const -> ParseTree::Node { return node_; }
-  auto id() const -> int32_t { return id_; }
+  auto id() const -> NodeId { return id_; }
   auto value() const -> const llvm::APInt& { return *value_; }
 
  private:
   ParseTree::Node node_;
-  int32_t id_;
+  NodeId id_;
   const llvm::APInt* value_;
 };
 

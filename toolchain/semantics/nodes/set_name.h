@@ -17,7 +17,7 @@ class SetName {
  public:
   static constexpr NodeKind Kind = NodeKind::SetName;
 
-  SetName(ParseTree::Node node, llvm::StringRef name, int32_t target_id)
+  SetName(ParseTree::Node node, llvm::StringRef name, NodeId target_id)
       : node_(node), name_(name), target_id_(target_id) {}
 
   void Print(llvm::raw_ostream& out) const {
@@ -26,7 +26,7 @@ class SetName {
 
   auto node() const -> ParseTree::Node { return node_; }
   auto name() const -> llvm::StringRef { return name_; }
-  auto target_id() const -> int32_t { return target_id_; }
+  auto target_id() const -> NodeId { return target_id_; }
 
  private:
   // The name node.
@@ -36,7 +36,7 @@ class SetName {
   llvm::StringRef name_;
 
   // The ID being named.
-  int32_t target_id_;
+  NodeId target_id_;
 };
 
 }  // namespace Carbon::Semantics
