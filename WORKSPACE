@@ -44,20 +44,14 @@ configure_clang_toolchain(name = "bazel_cc_toolchain")
 # Abseil libraries
 ###############################################################################
 
-# Head version as of 2022-09-08.
-abseil_version = "5b01512e94e82bf111df3968784c9508e576a4da"
+abseil_version = "20211102.0"
 
 http_archive(
     name = "com_google_absl",
-    sha256 = "7d5d6c63e9cc667fc60846fb931b369efa59172ca229d59cf015a3902218f40d",
+    sha256 = "dcf71b9cba8dc0ca9940c4b316a0c796be8fab42b070bb6b7cab62b48f0e66c4",
     strip_prefix = "abseil-cpp-%s" % abseil_version,
-    urls = ["https://github.com/abseil/abseil-cpp/archive/%s.tar.gz" % abseil_version],
+    urls = ["https://github.com/abseil/abseil-cpp/archive/refs/tags/%s.tar.gz" % abseil_version],
 )
-
-#local_repository(
-#    name = "com_google_absl",
-#    path = "../abseil-cpp",
-#)
 
 ###############################################################################
 # GoogleTest libraries

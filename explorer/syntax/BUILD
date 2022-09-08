@@ -71,7 +71,6 @@ cc_library(
     copts = [
         "-Wno-implicit-fallthrough",  # Needed to make yyinput() code compile.
         "-Wno-unneeded-internal-declaration",
-        "-Wno-unused-but-set-variable",
         "-Wno-unused-function",
         "-Wno-writable-strings",
     ],
