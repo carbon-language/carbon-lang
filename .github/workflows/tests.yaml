@@ -70,6 +70,8 @@ jobs:
       # toolchain. We also take some care to be as resilient as possible to
       # issues fetching and installing the toolchain.
       - name: Setup LLVM and Clang
+        env:
+          HOMEBREW_NO_INSTALL_CLEANUP: 1
         run: |
           brew update
           brew install --force-bottle --only-dependencies llvm
