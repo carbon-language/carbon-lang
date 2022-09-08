@@ -37,7 +37,7 @@ class Driver {
   // Returns true if the operation succeeds. If the operation fails, returns
   // false and any information about the failure is printed to the registered
   // error stream (stderr by default).
-  auto RunFullCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool;
+  auto RunFullCommand(int argc, char **argv) -> bool;
 
   // Subcommand that prints available help text to the error stream.
   //

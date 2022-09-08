@@ -14,8 +14,7 @@ auto main(int argc, char** argv) -> int {
     return EXIT_FAILURE;
   }
 
-  llvm::SmallVector<llvm::StringRef, 16> args(argv + 1, argv + argc);
   Carbon::Driver driver;
-  bool success = driver.RunFullCommand(args);
+  bool success = driver.RunFullCommand(argc, argv);
   return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }

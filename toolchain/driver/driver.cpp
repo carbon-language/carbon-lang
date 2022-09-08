@@ -7,7 +7,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/StringSwitch.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
@@ -26,44 +26,76 @@ enum class Subcommand {
   Unknown,
 };
 
-auto GetSubcommand(llvm::StringRef name) -> Subcommand {
-  return llvm::StringSwitch<Subcommand>(name)
-#define CARBON_SUBCOMMAND(Name, Spelling, ...) .Case(Spelling, Subcommand::Name)
-#include "toolchain/driver/flags.def"
-      .Default(Subcommand::Unknown);
+// TODO: There should be better ways to version other than this.
+#define CARBON_TOOLCHAIN_VERSION "Carbon version 0.0.0"
+// TODO: rename/def/enum/header it something like Driver:RunVersionSubcommand.
+auto PrintVersionMessage(llvm::raw_ostream& stream) -> bool {
+  // TODO: Report Target, Thread model, InstalledDir.
+  stream << CARBON_TOOLCHAIN_VERSION << '\n';
+  return true;
+
 }
+
+std::string Desc = "Carbon Toolchain";
+std::string ExtraDesc = "\n\n  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n";
 
 }  // namespace
 
-auto Driver::RunFullCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
-  if (args.empty()) {
-    error_stream_ << "ERROR: No subcommand specified.\n";
-    return false;
-  }
+auto Driver::RunFullCommand(int argc, char **argv) -> bool {
+  // Discard general option and reset `GenericCategory` with generic options.
+  llvm::cl::OptionCategory dummycat("","");
+  llvm::cl::HideUnrelatedOptions(dummycat);
+  llvm::cl::ResetCommandLineParser();
 
-  llvm::StringRef subcommand_text = args[0];
-  llvm::SmallVector<llvm::StringRef, 16> subcommand_args(
-      std::next(args.begin()), args.end());
+  // TODO: cases for piping(stdin, probably by default?), multiple files.
+  llvm::cl::list<std::string> InputFilenames(
+                                    llvm::cl::Positional, llvm::cl::ZeroOrMore,
+                                    llvm::cl::desc("<input file(s)>"));
+  // TODO: case for output to stdout(probably by default?).
+  llvm::cl::opt<std::string> OutputFilename("o",
+                                    llvm::cl::desc("Specify output filename"),
+                                    llvm::cl::value_desc("output filename"));
+  llvm::cl::opt<bool> Version("version",
+                        llvm::cl::desc("Display the version of this program"));
 
+// Positionals who correspond to subcommands.
+#define CARBON_SUBCOMMAND(Name, Spelling, Description) \
+        llvm::cl::opt<bool> Name(Spelling, llvm::cl::desc( Description ));
+#include "toolchain/driver/flags.def"
+
+  llvm::cl::ParseCommandLineOptions(argc, argv, Desc.append(ExtraDesc));
+
+  // TODO: Refactor the same pattern in subcommands: CreateFromFile ...
+  //       Organize with `args` that won't be entirely used
+  // Somewhat stubbing arguments for RunSubcommands.
+  llvm::SmallVector<llvm::StringRef, 16> subcommand_args(argv + 1, argv + argc);
   DiagnosticConsumer* consumer = &ConsoleDiagnosticConsumer();
   std::unique_ptr<SortingDiagnosticConsumer> sorting_consumer;
-  // TODO: Figure out command-line support (llvm::cl?), this is temporary.
-  if (!subcommand_args.empty() &&
-      subcommand_args[0] == "--print-errors=streamed") {
-    subcommand_args.erase(subcommand_args.begin());
-  } else {
-    sorting_consumer = std::make_unique<SortingDiagnosticConsumer>(*consumer);
-    consumer = sorting_consumer.get();
-  }
-  switch (GetSubcommand(subcommand_text)) {
-    case Subcommand::Unknown:
-      error_stream_ << "ERROR: Unknown subcommand '" << subcommand_text
-                    << "'.\n";
-      return false;
+  // TODO: case of "--print-errors=streamed"
+  sorting_consumer = std::make_unique<SortingDiagnosticConsumer>(*consumer);
+  consumer = sorting_consumer.get();
 
+  Carbon::Subcommand subcommand =
 #define CARBON_SUBCOMMAND(Name, ...) \
-  case Subcommand::Name:             \
-    return Run##Name##Subcommand(*consumer, subcommand_args);
+ (Name ? Subcommand::Name :
+#include "toolchain/driver/flags.def"
+  Subcommand::Unknown
+#define CARBON_SUBCOMMAND(Name, ...) \
+  )
+#include "toolchain/driver/flags.def"
+  ;
+
+  if (Version)
+    return PrintVersionMessage(error_stream_);
+
+  switch (subcommand) {
+    // Note `llvm::cl` also handles cases of unknown subcommands
+    case Subcommand::Unknown:
+      error_stream_ << "ERROR: Unknown subcommand\n";
+      return false;
+#define CARBON_SUBCOMMAND(Name, ...)    \
+  case Subcommand::Name:                \
+  return Run##Name##Subcommand(*consumer, subcommand_args);
 #include "toolchain/driver/flags.def"
   }
   llvm_unreachable("All subcommands handled!");
@@ -71,37 +103,11 @@ auto Driver::RunFullCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
 
 auto Driver::RunHelpSubcommand(DiagnosticConsumer& /*consumer*/,
                                llvm::ArrayRef<llvm::StringRef> args) -> bool {
-  // TODO: We should support getting detailed help on a subcommand by looking
-  // for it as a positional parameter here.
-  if (!args.empty()) {
-    ReportExtraArgs("help", args);
-    return false;
-  }
-
-  output_stream_ << "List of subcommands:\n\n";
-
-  constexpr llvm::StringLiteral SubcommandsAndHelp[][2] = {
-#define CARBON_SUBCOMMAND(Name, Spelling, HelpText) {Spelling, HelpText},
-#include "toolchain/driver/flags.def"
-  };
-
-  int max_subcommand_width = 0;
-  for (auto subcommand_and_help : SubcommandsAndHelp) {
-    max_subcommand_width = std::max(
-        max_subcommand_width, static_cast<int>(subcommand_and_help[0].size()));
-  }
-
-  for (auto subcommand_and_help : SubcommandsAndHelp) {
-    llvm::StringRef subcommand_text = subcommand_and_help[0];
-    // TODO: We should wrap this to the number of columns left after the
-    // subcommand on the terminal, and using a hanging indent.
-    llvm::StringRef help_text = subcommand_and_help[1];
-    output_stream_ << "  "
-                   << llvm::left_justify(subcommand_text, max_subcommand_width)
-                   << " - " << help_text << "\n";
-  }
-
-  output_stream_ << "\n";
+  //if (!args.empty()) {
+  //  ReportExtraArgs("help", args);
+  //  return false;
+  //}
+  llvm::cl::PrintHelpMessage();
   return true;
 }
 
