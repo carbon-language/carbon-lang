@@ -74,31 +74,32 @@ jobs:
 
       - name: apt install llvm
         run: |
+          echo '*** Fetching llvm install script'
           wget https://apt.llvm.org/llvm.sh
           chmod +x ./llvm.sh
-          echo '==> Installing llvm-15'
+          echo '*** Installing llvm-15'
           sudo ./llvm.sh 15 all
           echo '/usr/lib/llvm-15/bin' >> $GITHUB_PATH
-          echo '==> Files in llvm-15'
+          echo '*** Files in llvm-15'
           dpkg -L llvm-15
-          echo '==> Files in clang-15'
+          echo '*** Files in clang-15'
           dpkg -L clang-15
 
       # Print the various tool paths and versions to help in debugging.
       - name: Print tool debugging info
         run: |
-          echo '==> PATH'
+          echo '*** PATH'
           echo $PATH
-          echo '==> bazelisk'
+          echo '*** bazelisk'
           which bazelisk
           bazelisk --version
-          echo '==> python'
+          echo '*** python'
           which python
           python --version
-          echo '==> clang'
+          echo '*** clang'
           which clang
           clang --version
-          echo '==> clang++'
+          echo '*** clang++'
           which clang++
           clang++ --version
 
