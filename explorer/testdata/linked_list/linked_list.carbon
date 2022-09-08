@@ -46,7 +46,7 @@ class List{
     }
     var iter: Optional(ListElement*) = (*me).next;
     var node: auto = (iter.Get());
-    while((*node).next){
+    while((*node).next.HasValue()){
       iter = (*node).next;
       node = (iter.Get());
     }
@@ -57,7 +57,7 @@ class List{
 
   fn print[me: Self] (){
     var iter: Optional(ListElement*) = me.next;
-    while(iter){
+    while(iter.HasValue()){
       var node: auto = *(iter.Get());
       Print("{0}",node.element.Get());
       var node_ptr: auto = iter.Get();
@@ -67,7 +67,7 @@ class List{
 
   fn clean[addr me: Self*] (){
     var head: auto = (*me).next;
-    while(head){
+    while(head.HasValue()){
       var tmp: auto = head;
       head = (*head.Get()).next;
       heap.Delete(tmp.Get());

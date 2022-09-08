@@ -446,13 +446,8 @@ class Optional(T:! Type){
         return x;
       }
     }
+    //TODO: Use assert as soon as available
     return y;
-  }
-
-  impl Optional(T) as ImplicitAs(bool){
-    fn Convert[me: Self]() -> bool{
-      return me.HasValue();
-    }
   }
 
   var element: OptionalElement(T);
