@@ -59,7 +59,14 @@ jobs:
           go get github.com/bazelbuild/bazelisk
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
-      # On macOS, use brew to install Clang/LLVM.
+      # Setup to the latest LLVM and Clang release.
+      #
+      # Ideally we would use the pre-installed versions in the image, but the
+      # debian packages for LLVM-15 currently don't work for fastbuild.
+      #
+      # For now, we rely on Homebrew to manage installing a correctly built
+      # toolchain. We also take some care to be as resilient as possible to
+      # issues fetching and installing the toolchain.
       - name: Install Clang/LLVM using brew
         env:
           HOMEBREW_NO_INSTALL_CLEANUP: 1
