@@ -129,6 +129,8 @@ auto ToString(Operator op) -> std::string_view {
       return "*";
     case Operator::Not:
       return "not";
+    case Operator::NotEq:
+      return "!=";
     case Operator::And:
       return "and";
     case Operator::Or:

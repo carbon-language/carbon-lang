@@ -132,6 +132,7 @@ enum class Operator {
   Mod,
   Neg,
   Not,
+  NotEq,
   Or,
   Sub,
   Ptr,

@@ -53,6 +53,8 @@ static auto OperatorToProtoEnum(const Operator op)
       return Fuzzing::OperatorExpression::And;
     case Operator::Eq:
       return Fuzzing::OperatorExpression::Eq;
+    case Operator::NotEq:
+      return Fuzzing::OperatorExpression::NotEq;
     case Operator::Less:
       return Fuzzing::OperatorExpression::Less;
     case Operator::LessEq:

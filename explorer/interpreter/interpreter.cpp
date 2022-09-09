@@ -214,6 +214,7 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
       return &cast<TypeOfConstraintType>(static_type)->constraint_type();
     case Operator::As:
     case Operator::Eq:
+    case Operator::NotEq:
     case Operator::Less:
     case Operator::LessEq:
     case Operator::Greater:

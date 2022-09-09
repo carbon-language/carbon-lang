@@ -63,7 +63,7 @@ impl forall [U1:! Type, U2:! Type, U3:! Type,
 
 interface EqWith(U:! Type) {
   fn Equal[me: Self](other: U) -> bool;
-  // TODO: NotEqual with default impl
+  fn NotEqual[me: Self](other: U) -> bool;
 }
 // TODO: constraint Eq { ... }
 
@@ -76,17 +76,30 @@ impl forall [T2:! Type, U2:! Type, T1:! EqWith(T2), U1:! EqWith(U2)]
     let (r1: T2, r2: U2) = other;
     return l1 == r1 and l2 == r2;
   }
+  fn NotEqual[me: Self](other: (T2, U2)) -> bool {
+      let (l1: T1, l2: U1) = me;
+      let (r1: T2, r2: U2) = other;
+      return l1 != r1 or l2 != r2;
+    }
 }
 
 impl i32 as EqWith(Self) {
   fn Equal[me: Self](other: Self) -> bool {
     return __intrinsic_int_eq(me, other);
   }
+
+  fn NotEqual[me: Self](other: Self) -> bool {
+    return not __intrinsic_int_eq(me, other);
+  }
 }
 
 impl String as EqWith(Self) {
   fn Equal[me: Self](other: Self) -> bool {
     return __intrinsic_str_eq(me, other);
+  }
+
+  fn NotEqual[me: Self](other: Self) -> bool {
+    return not __intrinsic_str_eq(me, other);
   }
 }
 
