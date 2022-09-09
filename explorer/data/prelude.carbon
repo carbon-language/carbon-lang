@@ -446,7 +446,7 @@ class Optional(T:! Type){
         return x;
       }
     }
-    //TODO: Use assert as soon as available
+    // TODO: Use assert as soon as available
     return y;
   }
 
