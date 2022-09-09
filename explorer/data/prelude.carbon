@@ -416,6 +416,43 @@ external impl i32 as RightShiftWith(i32) where .Result == i32 {
   }
 }
 
+//-------------------------
+// Optional
+//-------------------------
+choice OptionalElement(T:! Type) {
+  None(),
+  Element(T)
+}
+
+class Optional(T:! Type){
+  fn CreateEmpty() -> Optional(T){
+    return { .element = OptionalElement(T).None() };
+  }
+  fn Create(value: T ) -> Optional(T){
+    return { .element = OptionalElement(T).Element(value) };
+  }
+
+  fn HasValue[me: Self]() -> bool {
+    match(me.element){
+      case OptionalElement(T).None() => { return false; }
+    }
+    return true;
+  }
+
+  fn Get[me: Self]() -> T {
+    var y: T;
+    match(me.element){
+      case OptionalElement(T).Element(x: T ) =>{
+        return x;
+      }
+    }
+    // TODO: Use assert as soon as available
+    return y;
+  }
+
+  var element: OptionalElement(T);
+}
+
 // ------------------------
 // Miscellaneous utilities.
 // ------------------------
