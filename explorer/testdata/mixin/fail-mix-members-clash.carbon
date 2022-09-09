@@ -7,7 +7,6 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-mix-members-clash.carbon:27: Member named F1 (declared at {{.*}}/explorer/testdata/mixin/fail-mix-members-clash.carbon:21) cannot be mixed into C because it clashes with an existing member with the same name (declared at {{.*}}/explorer/testdata/mixin/fail-mix-members-clash.carbon:16)
 package ExplorerTest api;
 
 __mixin M1 {
@@ -24,6 +23,7 @@ __mixin M2 {
 class C {
   __mix M1;
   __mix M2;
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-mix-members-clash.carbon:[[@LINE+1]]: Member named F1 (declared at {{.*}}/explorer/testdata/mixin/fail-mix-members-clash.carbon:20) cannot be mixed into C because it clashes with an existing member with the same name (declared at {{.*}}/explorer/testdata/mixin/fail-mix-members-clash.carbon:15)
 }
 
 fn Main() -> i32 {
