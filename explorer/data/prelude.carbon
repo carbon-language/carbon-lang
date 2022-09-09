@@ -427,6 +427,10 @@ external impl i32 as RightShiftWith(i32) where .Result == i32 {
 //   __intrinsic_print(format_str);
 // }
 
+fn Assert(condition: bool, message: String){
+    __intrinsic_assert(condition, message);
+}
+
 fn Rand(low: i32, high: i32) -> i32{
     return __intrinsic_rand(low,high);
 }

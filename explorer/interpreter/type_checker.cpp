@@ -2365,10 +2365,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             return CompilationError(e->source_loc())
                    << "__intrinsic_assert takes 2 arguments";
           }
-          CARBON_RETURN_IF_ERROR(ExpectExactType(
+          CARBON_RETURN_IF_ERROR(ExpectType(
               e->source_loc(), "__intrinsic_assert argument 0",
               arena_->New<BoolType>(), &args[0]->static_type(), impl_scope));
-          CARBON_RETURN_IF_ERROR(ExpectExactType(
+          CARBON_RETURN_IF_ERROR(ExpectType(
               e->source_loc(), "__intrinsic_assert argument 1",
               arena_->New<StringType>(), &args[1]->static_type(), impl_scope));
           e->set_static_type(TupleValue::Empty());

@@ -42,13 +42,5 @@ TEST(ErrorBuildersTest, RuntimeError) {
   EXPECT_EQ(ToString(err), "RUNTIME ERROR: x:1: test");
 }
 
-TEST(ErrorBuildersTest, AssertionError) {
-  Error err = AssertionError(SourceLocation("x", 1)) << "test";
-  EXPECT_EQ(err.prefix(), "ASSERTION ERROR");
-  EXPECT_EQ(err.location(), "x:1");
-  EXPECT_EQ(err.message(), "test");
-  EXPECT_EQ(ToString(err), "ASSERTION ERROR: x:1: test");
-}
-
 }  // namespace
 }  // namespace Carbon::Testing
