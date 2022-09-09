@@ -1205,6 +1205,19 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           llvm::outs() << "\n";
           return todo_.FinishAction(TupleValue::Empty());
         }
+        case IntrinsicExpression::Intrinsic::Assert: {
+          CARBON_CHECK(args.size() == 2);
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> condition,
+              Convert(args[0], arena_->New<BoolType>(), exp.source_loc()));
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> string_value,
+              Convert(args[1], arena_->New<StringType>(), exp.source_loc()));
+          if (cast<BoolValue>(condition)->value() == false) {
+            return RuntimeError(exp.source_loc()) << *string_value;
+          }
+          return todo_.FinishAction(TupleValue::Empty());
+        }
         case IntrinsicExpression::Intrinsic::Alloc: {
           CARBON_CHECK(args.size() == 1);
           Address addr(heap_.AllocateValue(args[0]));
