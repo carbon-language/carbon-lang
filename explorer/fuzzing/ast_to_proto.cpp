@@ -607,6 +607,29 @@ static auto DeclarationToProto(const Declaration& declaration)
       break;
     }
 
+    case DeclarationKind::MixinDeclaration: {
+      const auto& mixin = cast<MixinDeclaration>(declaration);
+      auto* mixin_proto = declaration_proto.mutable_mixin();
+      mixin_proto->set_name(mixin.name());
+      for (const auto& member : mixin.members()) {
+        *mixin_proto->add_members() = DeclarationToProto(*member);
+      }
+      // Type params not implemented yet
+      // if (mixin.params().has_value()) {
+      //  *mixin_proto->mutable_params() =
+      //      TuplePatternToProto(**mixin.params());
+      //}
+      *mixin_proto->mutable_self() = GenericBindingToProto(*mixin.self());
+      break;
+    }
+
+    case DeclarationKind::MixDeclaration: {
+      const auto& mix = cast<MixDeclaration>(declaration);
+      auto* mix_proto = declaration_proto.mutable_mix();
+      *mix_proto->mutable_mixin() = ExpressionToProto(mix.mixin());
+      break;
+    }
+
     case DeclarationKind::ChoiceDeclaration: {
       const auto& choice = cast<ChoiceDeclaration>(declaration);
       auto* choice_proto = declaration_proto.mutable_choice();

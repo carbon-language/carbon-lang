@@ -294,6 +294,8 @@ static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
       break;
     }
     case DeclarationKind::ClassDeclaration:
+    case DeclarationKind::MixDeclaration:
+    case DeclarationKind::MixinDeclaration:
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ImplDeclaration:
     case DeclarationKind::ChoiceDeclaration:

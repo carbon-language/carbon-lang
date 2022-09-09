@@ -31,7 +31,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Operations performed field-wise](#operations-performed-field-wise)
 -   [Nominal class types](#nominal-class-types)
     -   [Forward declaration](#forward-declaration)
-    -   [Self](#self)
+    -   [`Self`](#self)
     -   [Construction](#construction)
         -   [Assignment](#assignment)
     -   [Member functions](#member-functions)
@@ -46,6 +46,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Virtual methods](#virtual-methods)
             -   [Virtual override keywords](#virtual-override-keywords)
         -   [Subtyping](#subtyping)
+        -   [`Self` refers to the current type](#self-refers-to-the-current-type)
         -   [Constructors](#constructors)
             -   [Partial facet](#partial-facet)
             -   [Usage](#usage)
@@ -730,7 +731,7 @@ class GraphNode {
 **Open question:** What is specifically allowed and forbidden with an incomplete
 type has not yet been decided.
 
-### Self
+### `Self`
 
 A `class` definition may provisionally include references to its own name in
 limited ways. These limitations arise from the type not being complete until the
@@ -743,8 +744,8 @@ class IntListNode {
 }
 ```
 
-An equivalent definition of `IntListNode`, since `Self` is an alias for the
-current type, is:
+An equivalent definition of `IntListNode`, since the `Self` keyword is an alias
+for the current type, is:
 
 ```
 class IntListNode {
@@ -759,6 +760,7 @@ class IntListNode {
 class IntList {
   class IntListNode {
     var data: i32;
+    // `Self` is `IntListNode`, not `IntList`.
     var next: Self*;
   }
   var first: IntListNode*;
@@ -831,7 +833,7 @@ members of the type, while methods can only be called on instances.
 #### Class functions
 
 A class function is like a
-[C++ static member function or method](<https://en.wikipedia.org/wiki/Static_(keyword)#Static_method>),
+[C++ static member function](https://en.cppreference.com/w/cpp/language/static#Static_member_functions),
 and is declared like a function at file scope. The declaration can include a
 definition of the function body, or that definition can be provided out of line
 after the class definition is finished. A common use is for constructor
@@ -1197,6 +1199,55 @@ base class Extensible { ... }
 
 abstract class ExtensibleBase { ... }
 class ExactlyExtensible extends ExtensibleBase { ... }
+```
+
+#### `Self` refers to the current type
+
+Note that `Self` in a class definition means "the current type being defined"
+not "the type implementing this method." To implement a method in a derived
+class that uses `Self` in the declaration in the base class, only the type of
+`me` should change:
+
+```
+base class B1 {
+  virtual fn F[me: Self](x: Self) -> Self;
+  // Means exactly the same thing as:
+  //   virtual fn F[me: B1](x: B1) -> B1;
+}
+
+class D1 extends B1 {
+  // ❌ Illegal:
+  //   impl fn F[me: Self](x: Self) -> Self;
+  // since that would mean the same thing as:
+  //   impl fn F[me: Self](x: D1) -> D1;
+  // and `D1` is a different type than `B1`.
+
+  // ✅ Allowed: Parameter and return types
+  //  of `F` match declaration in `B1`.
+  impl fn F[me: Self](x: B1) -> B1;
+  // Or: impl fn F[me: D1](x: B1) -> B1;
+}
+```
+
+The exception is when there is a [subtyping relationship](#subtyping) such that
+it would be legal for a caller using the base classes signature to actually be
+calling the derived implementation, as in:
+
+```
+base class B2 {
+  virtual fn Clone[me: Self]() -> Self*;
+  // Means exactly the same thing as:
+  //   virtual fn Clone[me: B2]() -> B2*;
+}
+
+class D2 extends B2 {
+  // ✅ Allowed
+  impl fn Clone[me: Self]() -> Self*;
+  // Means the same thing as:
+  //   impl fn Clone[me: D2]() -> D2*;
+  // which is allowed since `D2*` is a
+  // subtype of `B2*`.
+}
 ```
 
 #### Constructors
@@ -2057,3 +2108,4 @@ the type of `U.x`."
 -   [#777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777)
 -   [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
 -   [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
+-   [#2107: Clarify rules around `Self` and `.Self`](https://github.com/carbon-language/carbon-lang/pull/2107)

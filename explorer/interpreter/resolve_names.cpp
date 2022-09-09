@@ -46,6 +46,17 @@ static auto AddExposedNames(const Declaration& declaration,
                               StaticScope::NameStatus::KnownButNotDeclared));
       break;
     }
+    case DeclarationKind::MixinDeclaration: {
+      auto& mixin_decl = cast<MixinDeclaration>(declaration);
+      CARBON_RETURN_IF_ERROR(
+          enclosing_scope.Add(mixin_decl.name(), &mixin_decl,
+                              StaticScope::NameStatus::KnownButNotDeclared));
+      break;
+    }
+    case DeclarationKind::MixDeclaration: {
+      // Nothing to do here
+      break;
+    }
     case DeclarationKind::ChoiceDeclaration: {
       auto& choice = cast<ChoiceDeclaration>(declaration);
       CARBON_RETURN_IF_ERROR(
@@ -558,6 +569,26 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
       CARBON_RETURN_IF_ERROR(AddExposedNames(*class_decl.self(), class_scope));
       CARBON_RETURN_IF_ERROR(
           ResolveMemberNames(class_decl.members(), class_scope, bodies));
+      break;
+    }
+    case DeclarationKind::MixinDeclaration: {
+      auto& mixin_decl = cast<MixinDeclaration>(declaration);
+      StaticScope mixin_scope;
+      mixin_scope.AddParent(&enclosing_scope);
+      enclosing_scope.MarkDeclared(mixin_decl.name());
+      if (mixin_decl.params().has_value()) {
+        CARBON_RETURN_IF_ERROR(
+            ResolveNames(**mixin_decl.params(), mixin_scope));
+      }
+      enclosing_scope.MarkUsable(mixin_decl.name());
+      CARBON_RETURN_IF_ERROR(mixin_scope.Add("Self", mixin_decl.self()));
+      CARBON_RETURN_IF_ERROR(
+          ResolveMemberNames(mixin_decl.members(), mixin_scope, bodies));
+      break;
+    }
+    case DeclarationKind::MixDeclaration: {
+      auto& mix_decl = cast<MixDeclaration>(declaration);
+      CARBON_RETURN_IF_ERROR(ResolveNames(mix_decl.mixin(), enclosing_scope));
       break;
     }
     case DeclarationKind::ChoiceDeclaration: {

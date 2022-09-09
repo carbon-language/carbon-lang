@@ -26,6 +26,7 @@
 
 namespace Carbon {
 
+class MixinPseudoType;
 class ConstraintType;
 
 // Abstract base class of all AST nodes representing patterns.
@@ -231,6 +232,70 @@ class ClassDeclaration : public Declaration {
   std::optional<Nonnull<TuplePattern*>> type_params_;
   std::optional<Nonnull<Expression*>> extends_;
   std::vector<Nonnull<Declaration*>> members_;
+};
+
+// EXPERIMENTAL MIXIN FEATURE
+class MixinDeclaration : public Declaration {
+ public:
+  using ImplementsCarbonValueNode = void;
+
+  MixinDeclaration(SourceLocation source_loc, std::string name,
+                   std::optional<Nonnull<TuplePattern*>> params,
+                   Nonnull<GenericBinding*> self,
+                   std::vector<Nonnull<Declaration*>> members)
+      : Declaration(AstNodeKind::MixinDeclaration, source_loc),
+        name_(std::move(name)),
+        params_(std::move(params)),
+        self_(self),
+        members_(std::move(members)) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromMixinDeclaration(node->kind());
+  }
+
+  auto name() const -> const std::string& { return name_; }
+  auto params() const -> std::optional<Nonnull<const TuplePattern*>> {
+    return params_;
+  }
+  auto params() -> std::optional<Nonnull<TuplePattern*>> { return params_; }
+  auto self() const -> Nonnull<const GenericBinding*> { return self_; }
+  auto self() -> Nonnull<GenericBinding*> { return self_; }
+  auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
+    return members_;
+  }
+
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+
+ private:
+  std::string name_;
+  std::optional<Nonnull<TuplePattern*>> params_;
+  Nonnull<GenericBinding*> self_;
+  std::vector<Nonnull<Declaration*>> members_;
+};
+
+// EXPERIMENTAL MIXIN FEATURE
+class MixDeclaration : public Declaration {
+ public:
+  MixDeclaration(SourceLocation source_loc,
+                 std::optional<Nonnull<Expression*>> mixin_type)
+      : Declaration(AstNodeKind::MixDeclaration, source_loc),
+        mixin_(mixin_type) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromMixDeclaration(node->kind());
+  }
+
+  auto mixin() const -> const Expression& { return **mixin_; }
+  auto mixin() -> Expression& { return **mixin_; }
+
+  auto mixin_value() const -> const MixinPseudoType& { return *mixin_value_; }
+  void set_mixin_value(Nonnull<const MixinPseudoType*> mixin_value) {
+    mixin_value_ = mixin_value;
+  }
+
+ private:
+  std::optional<Nonnull<Expression*>> mixin_;
+  Nonnull<const MixinPseudoType*> mixin_value_;
 };
 
 class AlternativeSignature : public AstNode {

@@ -85,6 +85,8 @@ LET                  "let"
 LIBRARY              "library"
 MATCH                "match"
 MINUS                "-"
+MIX                  "__mix"
+MIXIN                "__mixin"
 NOT                  "not"
 OR                   "or"
 PACKAGE              "package"
@@ -187,6 +189,8 @@ operand_start         [(A-Za-z0-9_\"]
 {LIBRARY}             { return CARBON_SIMPLE_TOKEN(LIBRARY);             }
 {MATCH}               { return CARBON_SIMPLE_TOKEN(MATCH);               }
 {MINUS}               { return CARBON_SIMPLE_TOKEN(MINUS);               }
+{MIXIN}               { return CARBON_SIMPLE_TOKEN(MIXIN);               }
+{MIX}                 { return CARBON_SIMPLE_TOKEN(MIX);                 }
 {NOT}                 { return CARBON_SIMPLE_TOKEN(NOT);                 }
 {OR}                  { return CARBON_SIMPLE_TOKEN(OR);                  }
 {PACKAGE}             { return CARBON_SIMPLE_TOKEN(PACKAGE);             }

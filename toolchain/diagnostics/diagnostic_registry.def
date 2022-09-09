@@ -27,6 +27,7 @@ CARBON_DIAGNOSTIC_KIND(InvalidHorizontalWhitespaceInString)
 CARBON_DIAGNOSTIC_KIND(IrregularDigitSeparators)
 CARBON_DIAGNOSTIC_KIND(MismatchedClosing)
 CARBON_DIAGNOSTIC_KIND(MismatchedIndentInString)
+CARBON_DIAGNOSTIC_KIND(MultiLineStringWithDoubleQuotes)
 CARBON_DIAGNOSTIC_KIND(NoWhitespaceAfterCommentIntroducer)
 CARBON_DIAGNOSTIC_KIND(TooManyDigits)
 CARBON_DIAGNOSTIC_KIND(TrailingComment)
@@ -65,6 +66,13 @@ CARBON_DIAGNOSTIC_KIND(UnaryOperatorRequiresWhitespace)
 CARBON_DIAGNOSTIC_KIND(UnexpectedTokenAfterListElement)
 CARBON_DIAGNOSTIC_KIND(UnexpectedTokenInCodeBlock)
 CARBON_DIAGNOSTIC_KIND(UnrecognizedDeclaration)
+
+// Packaged-related diagnostics
+CARBON_DIAGNOSTIC_KIND(ExpectedIdentifierAfterPackage)
+CARBON_DIAGNOSTIC_KIND(ExpectedLibraryName)
+CARBON_DIAGNOSTIC_KIND(MissingLibraryKeyword)
+CARBON_DIAGNOSTIC_KIND(ExpectedApiOrImpl)
+CARBON_DIAGNOSTIC_KIND(ExpectedSemiToEndPackageDirective)
 
 // ============================================================================
 // Other diagnostics
