@@ -2026,6 +2026,22 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         return handle_binary_operator(builtin);
       };
 
+      auto handle_compare =
+          [&](Builtins::Builtin builtin, const std::string& method_name,
+              const std::string_view& operator_desc) -> ErrorOr<Success> {
+        ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
+            impl_scope, op.arguments()[0], BuiltinInterfaceName{builtin, ts[1]},
+            BuiltinMethodCall{method_name, op.arguments()[1]});
+        if (!converted.ok()) {
+          // We couldn't find a matching `impl`.
+          return CompilationError(e->source_loc())
+                 << *ts[0] << " is not " << operator_desc << " comparable with "
+                 << *ts[1] << " (" << converted.error().message() << ")";
+        }
+        op.set_rewritten_form(*converted);
+        return Success();
+      };
+
       switch (op.op()) {
         case Operator::Neg: {
           // Handle a built-in negation first.
@@ -2109,90 +2125,19 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           op.set_static_type(arena_->New<BoolType>());
           op.set_value_category(ValueCategory::Let);
           return Success();
-        case Operator::Eq: {
-          ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
-              impl_scope, op.arguments()[0],
-              BuiltinInterfaceName{Builtins::EqWith, ts[1]},
-              BuiltinMethodCall{"Equal", op.arguments()[1]});
-          if (!converted.ok()) {
-            // We couldn't find a matching `impl`.
-            return CompilationError(e->source_loc())
-                   << *ts[0] << " is not equality comparable with " << *ts[1]
-                   << " (" << converted.error().message() << ")";
-          }
-          op.set_rewritten_form(*converted);
-          return Success();
-        }
-        case Operator::NotEq: {
-          ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
-              impl_scope, op.arguments()[0],
-              BuiltinInterfaceName{Builtins::EqWith, ts[1]},
-              BuiltinMethodCall{"NotEqual", op.arguments()[1]});
-          if (!converted.ok()) {
-            // We couldn't find a matching `impl`.
-            return CompilationError(e->source_loc())
-                   << *ts[0] << " is not equal comparable with " << *ts[1]
-                   << " (" << converted.error().message() << ")";
-          }
-          op.set_rewritten_form(*converted);
-          return Success();
-        }
-        case Operator::Less: {
-          ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
-              impl_scope, op.arguments()[0],
-              BuiltinInterfaceName{Builtins::LessWith, ts[1]},
-              BuiltinMethodCall{"Less", op.arguments()[1]});
-          if (!converted.ok()) {
-            // We couldn't find a matching `impl`.
-            return CompilationError(e->source_loc())
-                   << *ts[0] << " is not less comparable with " << *ts[1]
-                   << " (" << converted.error().message() << ")";
-          }
-          op.set_rewritten_form(*converted);
-          return Success();
-        }
-        case Operator::LessEq: {
-          ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
-              impl_scope, op.arguments()[0],
-              BuiltinInterfaceName{Builtins::LessEqWith, ts[1]},
-              BuiltinMethodCall{"LessEq", op.arguments()[1]});
-          if (!converted.ok()) {
-            // We couldn't find a matching `impl`.
-            return CompilationError(e->source_loc())
-                   << *ts[0] << " is not less equal comparable with " << *ts[1]
-                   << " (" << converted.error().message() << ")";
-          }
-          op.set_rewritten_form(*converted);
-          return Success();
-        }
-        case Operator::GreaterEq: {
-          ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
-              impl_scope, op.arguments()[0],
-              BuiltinInterfaceName{Builtins::GreaterEqWith, ts[1]},
-              BuiltinMethodCall{"GreaterEq", op.arguments()[1]});
-          if (!converted.ok()) {
-            // We couldn't find a matching `impl`.
-            return CompilationError(e->source_loc())
-                   << *ts[0] << " is not greater equal comparable with "
-                   << *ts[1] << " (" << converted.error().message() << ")";
-          }
-          op.set_rewritten_form(*converted);
-          return Success();
-        }
-        case Operator::Greater: {
-          ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
-              impl_scope, op.arguments()[0],
-              BuiltinInterfaceName{Builtins::GreaterWith, ts[1]},
-              BuiltinMethodCall{"Greater", op.arguments()[1]});
-          if (!converted.ok()) {
-            // We couldn't find a matching `impl`.
-            return CompilationError(e->source_loc())
-                   << *ts[0] << " is not greater comparable with " << *ts[1]
-                   << " (" << converted.error().message() << ")";
-          }
-          op.set_rewritten_form(*converted);
-          return Success();
-        }
+        case Operator::Eq:
+          return handle_compare(Builtins::EqWith, "Equal", "equality");
+        case Operator::NotEq:
+          return handle_compare(Builtins::EqWith, "NotEqual", "equality");
+        case Operator::Less:
+          return handle_compare(Builtins::LessWith, "Less", "less");
+        case Operator::LessEq:
+          return handle_compare(Builtins::LessEqWith, "LessEq", "less equal");
+        case Operator::GreaterEq:
+          return handle_compare(Builtins::GreaterEqWith, "GreaterEq",
+                                "greater equal");
+        case Operator::Greater:
+          return handle_compare(Builtins::GreaterWith, "Greater", "greater");
         case Operator::Deref:
           CARBON_RETURN_IF_ERROR(
               ExpectPointerType(e->source_loc(), "*", ts[0]));
