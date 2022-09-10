@@ -2920,6 +2920,354 @@ auto TypeChecker::TypeCheckPattern(
   }
 }
 
+// A simplified view of a pattern, or a constant value (which we view as a
+// particular kind of pattern).
+class SimplePattern {
+ public:
+  enum Kind {
+    // A pattern that matches anything.
+    Wildcard,
+    // A pattern that matches a compound value with sub-patterns to match
+    // elements. A compound value is modeled as a discriminator name applied to
+    // a sequence of nested values: the alternative `Optional.Element(E)` has
+    // discriminator `Element` and nested value `E`, and the tuple `(A,B,C)`
+    // has an empty discriminator and nested values `A`, `B`, and `C`.
+    Compound,
+    // A pattern that matches a particular primitive value.
+    Primitive
+  };
+
+  SimplePattern(Nonnull<const Pattern*> pattern) { Set(pattern); }
+
+  SimplePattern(Nonnull<const Value*> value, Nonnull<const Value*> type)
+      : value_(value), type_(type) {}
+
+  // Make a match-anything wildcard pattern.
+  static auto MakeWildcard() -> SimplePattern {
+    return SimplePattern(WildcardTag());
+  }
+
+  auto kind() const -> Kind {
+    if (auto* pattern = value_.dyn_cast<const Pattern*>()) {
+      return Compound;
+    }
+    if (auto* value = value_.dyn_cast<const Value*>()) {
+      if (isa<TupleValue, AlternativeValue>(value)) {
+        return Compound;
+      }
+      return Primitive;
+    }
+    assert(value_.is<const WildcardTag*>());
+    return Wildcard;
+  }
+
+  auto discriminator() const -> std::string_view {
+    assert(kind() == Compound);
+    if (auto* pattern = value_.dyn_cast<const Pattern*>()) {
+      if (auto* alt_pattern = dyn_cast<AlternativePattern>(pattern)) {
+        return alt_pattern->alternative_name();
+      }
+    } else if (auto* value = value_.dyn_cast<const Value*>()) {
+      if (auto* alt = dyn_cast<AlternativeValue>(value)) {
+        return alt->alt_name();
+      }
+    }
+    return {};
+  }
+
+  auto NumElements() const -> int {
+    if (auto* pattern = value_.dyn_cast<const Pattern*>()) {
+      if (auto* tuple_pattern = dyn_cast<TuplePattern>(pattern)) {
+        return tuple_pattern->fields().size();
+      } else if (isa<AlternativePattern>(pattern)) {
+        return 1;
+      }
+    } else if (auto* value = value_.dyn_cast<const Value*>()) {
+      if (auto* tuple = dyn_cast<TupleValue>(value)) {
+        return tuple->elements().size();
+      } else if (auto* alt = dyn_cast<AlternativeValue>(value)) {
+        return 1;
+      }
+    }
+    return 0;
+  }
+
+  void AppendElementsTo(std::vector<SimplePattern>& out) const {
+    if (auto* pattern = value_.dyn_cast<const Pattern*>()) {
+      if (auto* tuple_pattern = dyn_cast<TuplePattern>(pattern)) {
+        auto fields = tuple_pattern->fields();
+        out.insert(out.end(), fields.begin(), fields.end());
+      } else if (auto* alt_pattern = dyn_cast<AlternativePattern>(pattern)) {
+        out.push_back(&alt_pattern->arguments());
+      }
+    } else if (auto* value = value_.dyn_cast<const Value*>()) {
+      if (auto* tuple = dyn_cast<TupleValue>(value)) {
+        auto* tuple_type = cast<TupleValue>(type_);
+        assert(tuple->elements().size() == tuple_type->elements().size());
+        for (size_t i = 0; i != tuple->elements().size(); ++i) {
+          out.push_back(
+              SimplePattern(tuple->elements()[i], tuple_type->elements()[i]));
+        }
+      } else if (auto* alt = dyn_cast<AlternativeValue>(value)) {
+        out.push_back(SimplePattern(
+            &alt->argument(),
+            *cast<ChoiceType>(type_)->FindAlternative(alt->alt_name())));
+      }
+    }
+  }
+
+  auto value() const -> const Value& { return *value_.get<const Value*>(); }
+
+  auto type() const -> const Value& {
+    assert(kind() == Compound);
+    return *type_;
+  }
+
+ private:
+  struct alignas(8) WildcardTag {};
+  SimplePattern(WildcardTag)
+      : value_(static_cast<const WildcardTag*>(nullptr)), type_(nullptr) {}
+
+  void Set(Nonnull<const Pattern*> pattern) {
+    type_ = &pattern->static_type();
+    switch (pattern->kind()) {
+      case PatternKind::AddrPattern:
+      case PatternKind::AutoPattern:
+      case PatternKind::BindingPattern:
+      case PatternKind::GenericBinding:
+        value_ = static_cast<const WildcardTag*>(nullptr);
+        break;
+
+      case PatternKind::TuplePattern:
+      case PatternKind::AlternativePattern:
+        value_ = pattern;
+        break;
+
+      case PatternKind::ExpressionPattern:
+        value_ = &pattern->value();
+        break;
+
+      case PatternKind::VarPattern:
+        Set(&cast<VarPattern>(pattern)->pattern());
+        break;
+    }
+  }
+
+ private:
+  // The underlying pattern: either a syntactic pattern, or a constant value,
+  // or a placeholder indicating that this is a wildcard pattern.
+  llvm::PointerUnion<Nonnull<const Pattern*>, Nonnull<const Value*>,
+                     const WildcardTag*>
+      value_;
+  // Values don't always know their types, so store the type here. We only
+  // really need it for the `const Value*` case but also store it for the
+  // `const Pattern*` case for convenience.
+  const Value* type_;
+};
+
+// A matrix of patterns, used for determining exhaustiveness and redundancy of
+// patterns in a match statement.
+//
+// See http://moscova.inria.fr/~maranget/papers/warn/index.html for details on
+// the algorithm used here.
+class PatternMatrix {
+ public:
+  // Add a pattern vector row to this collection of pattern vectors.
+  void Add(std::vector<SimplePattern> pattern_vector) {
+    assert(matrix_.empty() || matrix_[0].size() == pattern_vector.size());
+    matrix_.push_back(std::move(pattern_vector));
+  }
+
+  // Determine whether the given pattern vector is useful: that is, whether
+  // adding it to the matrix would allow any more values to be matched.
+  auto IsUseful(llvm::ArrayRef<SimplePattern> pattern) const -> bool {
+    if (matrix_.empty()) {
+      return true;
+    }
+
+    assert(pattern.size() == matrix_[0].size());
+    if (matrix_[0].empty()) {
+      return false;
+    }
+
+    switch (pattern[0].kind()) {
+      case SimplePattern::Wildcard: {
+        auto discrim = FirstColumnDiscriminators();
+        if (!discrim.any_missing) {
+          for (auto found : discrim.found) {
+            if (Specialize(found).IsUseful(*SpecializeRow(pattern, found))) {
+              return true;
+            }
+          }
+          return false;
+        }
+        return Default().IsUseful(pattern.slice(1));
+      }
+
+      case SimplePattern::Compound: {
+        DiscriminatorInfo discrim = {
+            .discriminator = pattern[0].discriminator(),
+            .size = pattern[0].NumElements()};
+        return Specialize(discrim).IsUseful(*SpecializeRow(pattern, discrim));
+      }
+
+      case SimplePattern::Primitive: {
+        return Specialize(pattern[0].value()).IsUseful(pattern.slice(1));
+      }
+    }
+  }
+
+ private:
+  // Information about a constructor for a compound type.
+  struct DiscriminatorInfo {
+    // For an alternative, the name. Otherwise, empty.
+    std::string_view discriminator;
+    // The number of elements. For a tuple, the size. Always 1 for an
+    // alternative.
+    int size;
+  };
+
+  struct DiscriminatorSet {
+    std::vector<DiscriminatorInfo> found;
+    bool any_missing;
+  };
+
+  // Find the discriminators used by the first column and check whether we
+  // found all of them.
+  auto FirstColumnDiscriminators() const -> DiscriminatorSet {
+    std::set<std::string_view> discrims;
+    std::optional<const ChoiceType*> choice;
+
+    for (auto& row : matrix_) {
+      assert(!row.empty());
+      switch (row[0].kind()) {
+        case SimplePattern::Wildcard:
+          continue;
+        case SimplePattern::Compound: {
+          if (auto* tuple = dyn_cast<TupleValue>(&row[0].type())) {
+            // If we find a tuple match, we've found all constructors (there's
+            // only one!) and none were missing.
+            return {
+                .found = {{.discriminator = {},
+                           .size = static_cast<int>(tuple->elements().size())}},
+                .any_missing = false};
+          }
+          discrims.insert(row[0].discriminator());
+          choice = &cast<ChoiceType>(row[0].type());
+          break;
+        }
+        case SimplePattern::Primitive: {
+          // TODO: We assume that primitive value matches are always incomplete
+          // for now. This might be reasonable for integer types, even i8, but
+          // is probably worth revisiting for `bool`.
+          return {.found = {}, .any_missing = true};
+        }
+      }
+    }
+
+    if (!choice || choice.value()->declaration().alternatives().size() !=
+                       discrims.size()) {
+      return {.found = {}, .any_missing = true};
+    }
+
+    DiscriminatorSet result = {.found = {}, .any_missing = false};
+    result.found.reserve(discrims.size());
+    for (auto s : discrims) {
+      result.found.push_back({.discriminator = s, .size = 1});
+    }
+    return result;
+  }
+
+  // Specialize the pattern vector `row` for the case that the first value
+  // matched uses `discriminator`.
+  static auto SpecializeRow(llvm::ArrayRef<SimplePattern> row,
+                            DiscriminatorInfo discriminator)
+      -> std::optional<std::vector<SimplePattern>> {
+    assert(!row.empty());
+    std::vector<SimplePattern> new_row;
+    switch (row[0].kind()) {
+      case SimplePattern::Wildcard:
+        new_row.reserve(discriminator.size + row.size() - 1);
+        new_row.insert(new_row.end(), discriminator.size,
+                       SimplePattern::MakeWildcard());
+        break;
+      case SimplePattern::Compound: {
+        if (row[0].discriminator() != discriminator.discriminator) {
+          return std::nullopt;
+        }
+        assert(static_cast<int>(row[0].NumElements()) == discriminator.size);
+        new_row.reserve(discriminator.size + row.size() - 1);
+        row[0].AppendElementsTo(new_row);
+        break;
+      }
+      case SimplePattern::Primitive:
+        // These cases should be rejected by the type checker.
+        llvm_unreachable("matched primitive against compound");
+    }
+    new_row.insert(new_row.end(), row.begin() + 1, row.end());
+    return std::move(new_row);
+  }
+
+  // Specialize the pattern matrix for the case that the first value matched
+  // uses `discriminator`, and its elements are matched.
+  auto Specialize(DiscriminatorInfo discriminator) const -> PatternMatrix {
+    PatternMatrix specialized;
+    for (auto& row : matrix_) {
+      // TODO: If we add support for "or" patterns, specialization might
+      // produce multiple rows here.
+      if (auto new_row = SpecializeRow(row, discriminator)) {
+        specialized.Add(std::move(new_row.value()));
+      }
+    }
+    return specialized;
+  }
+
+  // Specialize the pattern matrix for the case where the first value is known
+  // to be `value`, and is not matched.
+  auto Specialize(const Value& value) const -> PatternMatrix {
+    PatternMatrix specialized;
+    for (auto& row : matrix_) {
+      assert(!row.empty());
+      switch (row[0].kind()) {
+        case SimplePattern::Wildcard:
+          break;
+        case SimplePattern::Compound:
+          llvm_unreachable("matched compound against primitive");
+        case SimplePattern::Primitive:
+          // TODO: Use an equality context here?
+          if (!ValueEqual(&row[0].value(), &value, std::nullopt)) {
+            continue;
+          }
+          break;
+      }
+      specialized.Add(std::vector<SimplePattern>(row.begin() + 1, row.end()));
+    }
+    return specialized;
+  }
+
+  // Specialize the pattern matrix for the case where the first value uses a
+  // discriminator matching none of the non-wildcard patterns.
+  auto Default() const -> PatternMatrix {
+    PatternMatrix default_matrix;
+    for (auto& row : matrix_) {
+      assert(!row.empty());
+      switch (row[0].kind()) {
+        case SimplePattern::Wildcard:
+          default_matrix.Add(
+              std::vector<SimplePattern>(row.begin() + 1, row.end()));
+          break;
+        case SimplePattern::Compound:
+        case SimplePattern::Primitive:
+          break;
+      }
+    }
+    return default_matrix;
+  }
+
+ private:
+  std::vector<std::vector<SimplePattern>> matrix_;
+};
+
 auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
                                 const ImplScope& impl_scope)
     -> ErrorOr<Success> {
@@ -2933,6 +3281,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&match.expression(), impl_scope));
       std::vector<Match::Clause> new_clauses;
       std::optional<Nonnull<const Value*>> expected_type;
+      PatternMatrix patterns;
       for (auto& clause : match.clauses()) {
         ImplScope clause_scope;
         clause_scope.AddParent(&impl_scope);
@@ -2953,6 +3302,12 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
         } else {
           expected_type = &clause.pattern().static_type();
         }
+        if (!patterns.IsUseful({&clause.pattern()})) {
+          return CompilationError(clause.pattern().source_loc())
+                 << "unreachable case: all values matched by this case "
+                 << "are matched by earlier cases";
+        }
+        patterns.Add({&clause.pattern()});
         CARBON_RETURN_IF_ERROR(
             TypeCheckStmt(&clause.statement(), clause_scope));
       }
@@ -3127,322 +3482,6 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
     }
   }
 }
-
-// A simplified view of a pattern.
-class SimplePattern {
- public:
-  enum Kind {
-    // A pattern that matches anything.
-    Wildcard,
-    // A pattern that matches a particular kind of values, potentially with
-    // sub-patterns to match elements.
-    Compound,
-    // A pattern that matches a particular value.
-    Value
-  };
-
-  SimplePattern(Nonnull<const Pattern*> pattern) : pattern_(pattern) {
-    while (auto *var_pattern = dyn_cast<VarPattern>(pattern_)) {
-      pattern_ = &var_pattern->pattern();
-    }
-  }
-
-  static auto MakeWildcard() -> SimplePattern {
-    return SimplePattern(WildcardTag());
-  }
-
-  auto kind() const -> Kind {
-    if (!pattern_) {
-      return Wildcard;
-    }
-    switch (pattern_->kind()) {
-      case PatternKind::AddrPattern:
-      case PatternKind::AutoPattern:
-      case PatternKind::BindingPattern:
-      case PatternKind::GenericBinding:
-        return Wildcard;
-
-      case PatternKind::TuplePattern:
-      case PatternKind::AlternativePattern:
-        return Compound;
-
-      case PatternKind::ExpressionPattern:
-        // FIXME: If the value is a compound value, it should decompose like a
-        // compound pattern. Eg, (1, 2, 3) should behave like (1, n: i32, 3).
-        return Value;
-
-      case PatternKind::VarPattern:
-        llvm_unreachable("stripped in constructor");
-    }
-  }
-
-  auto num_elements() const -> int {
-    if (!pattern_) {
-      return 0;
-    }
-    switch (pattern_->kind()) {
-      case PatternKind::AddrPattern:
-      case PatternKind::AutoPattern:
-      case PatternKind::BindingPattern:
-      case PatternKind::GenericBinding:
-      case PatternKind::ExpressionPattern:
-        return 0;
-
-      case PatternKind::TuplePattern:
-        return cast<TuplePattern>(pattern_)->fields().size();
-
-      case PatternKind::AlternativePattern:
-        return 1;
-
-      case PatternKind::VarPattern:
-        llvm_unreachable("stripped in constructor");
-    }
-  }
-
-  void AppendElements(std::vector<SimplePattern> &out) const {
-    if (!pattern_) {
-      return;
-    }
-    switch (pattern_->kind()) {
-      case PatternKind::AddrPattern:
-      case PatternKind::AutoPattern:
-      case PatternKind::BindingPattern:
-      case PatternKind::GenericBinding:
-      case PatternKind::ExpressionPattern:
-        return;
-
-      case PatternKind::TuplePattern: {
-        auto fields = cast<TuplePattern>(pattern_)->fields();
-        out.insert(out.end(), fields.begin(), fields.end());
-        return;
-      }
-
-      case PatternKind::AlternativePattern:
-        out.push_back(&cast<AlternativePattern>(pattern_)->arguments());
-        return;
-
-      case PatternKind::VarPattern:
-        llvm_unreachable("stripped in constructor");
-    }
-  }
-
-  auto discriminator() const -> std::string_view {
-    assert(kind() == Compound);
-    if (auto* alt_pattern = dyn_cast<AlternativePattern>(pattern_)) {
-      return alt_pattern->alternative_name();
-    }
-    return {};
-  }
-
-  auto value() const -> const Carbon::Value& {
-    assert(kind() == Value);
-    return cast<ExpressionPattern>(pattern_)->value();
-  }
-
-  auto type() const -> const Carbon::Value& {
-    assert(kind() != Wildcard);
-    return pattern_->static_type();
-  }
-
- private:
-  struct WildcardTag {};
-  SimplePattern(WildcardTag) : pattern_(nullptr) {}
-
- private:
-  const Pattern* pattern_;
-};
-
-// A matrix of patterns, used for determining exhaustiveness and redundancy of
-// patterns in a match statement.
-//
-// See http://moscova.inria.fr/~maranget/papers/warn/index.html for details on
-// the algorithm used here.
-class PatternMatrix {
- public:
-  void Add(std::vector<SimplePattern> pattern_vector) {
-    assert(matrix_.empty() || matrix_[0].size() == pattern_vector.size());
-    matrix_.push_back(std::move(pattern_vector));
-  }
-
-  auto IsUseful(llvm::ArrayRef<SimplePattern> pattern) const -> bool {
-    if (matrix_.empty()) {
-      return true;
-    }
-
-    assert(pattern.size() == matrix_[0].size());
-    if (matrix_[0].empty()) {
-      return false;
-    }
-
-    switch (pattern[0].kind()) {
-      case SimplePattern::Wildcard: {
-        auto discrim = FirstColumnDiscriminators();
-        if (!discrim.any_missing) {
-          for (auto found : discrim.found) {
-            if (Specialize(found.discriminator, found.size)
-                    .IsUseful(*SpecializeRow(pattern, found.size,
-                                             found.discriminator))) {
-              return true;
-            }
-          }
-          return false;
-        }
-        return Default().IsUseful(pattern.slice(1));
-      }
-
-      case SimplePattern::Compound: {
-        int size = pattern[0].num_elements();
-        return Specialize(pattern[0].discriminator(), size)
-            .IsUseful(
-                *SpecializeRow(pattern, size, pattern[0].discriminator()));
-      }
-
-      case SimplePattern::Value: {
-        return Specialize(pattern[0].value()).IsUseful(pattern.slice(1));
-      }
-    }
-  }
-
- private:
-  struct DiscriminatorSet {
-    struct Kind {
-      // For an alternative, the name.
-      std::string_view discriminator;
-      // For a tuple, the size.
-      int size;
-    };
-
-    std::vector<Kind> found;
-    bool any_missing;
-  };
-
-  auto FirstColumnDiscriminators() const -> DiscriminatorSet {
-    std::set<std::string_view> discrims;
-    std::optional<const ChoiceType*> choice;
-
-    for (auto& row : matrix_) {
-      assert(!row.empty());
-      switch (row[0].kind()) {
-        case SimplePattern::Wildcard:
-          continue;
-        case SimplePattern::Compound: {
-          if (auto *tuple = dyn_cast<TupleValue>(&row[0].type())) {
-            // If we find a tuple match, we've found all constructors (there's
-            // only one!) and none were missing.
-            return {
-              .found = {{.discriminator = {},
-                         .size = static_cast<int>(tuple->elements().size())}},
-              .any_missing = false
-            };
-          }
-          discrims.insert(row[0].discriminator());
-          choice = &cast<ChoiceType>(row[0].type());
-          break;
-        }
-        case SimplePattern::Value: {
-          // TODO: We assume that value matches are always incomplete for now.
-          return {.found = {}, .any_missing = true};
-        }
-      }
-    }
-
-    if (!choice || choice.value()->declaration().alternatives().size() !=
-                       discrims.size()) {
-      return {.found = {}, .any_missing = true};
-    }
-
-    DiscriminatorSet result = {.found = {}, .any_missing = false};
-    result.found.reserve(discrims.size());
-    for (auto s : discrims) {
-      result.found.push_back({.discriminator = s, .size = 1});
-    }
-    return result;
-  }
-
-  static auto SpecializeRow(llvm::ArrayRef<SimplePattern> row, int elements,
-                            std::string_view discriminator)
-      -> std::optional<std::vector<SimplePattern>> {
-    assert(!row.empty());
-    std::vector<SimplePattern> new_row;
-    switch (row[0].kind()) {
-      case SimplePattern::Wildcard:
-        new_row.reserve(elements + row.size() - 1);
-        new_row.insert(new_row.end(), elements, SimplePattern::MakeWildcard());
-        break;
-      case SimplePattern::Compound: {
-        if (row[0].discriminator() != discriminator) {
-          return std::nullopt;
-        }
-        assert(static_cast<int>(row[0].num_elements()) == elements);
-        new_row.reserve(elements + row.size() - 1);
-        row[0].AppendElements(new_row);
-        break;
-      }
-      case SimplePattern::Value:
-        // TODO: Should be impossible due to type mismatch once we decompose
-        // values.
-        return std::nullopt;
-    }
-    new_row.insert(new_row.end(), row.begin() + 1, row.end());
-    return std::move(new_row);
-  }
-
-  auto Specialize(std::string_view discriminator, int elements) const
-      -> PatternMatrix {
-    PatternMatrix specialized;
-    for (auto& row : matrix_) {
-      // TODO: If we add support for "or" patterns, specialization might
-      // produce multiple rows here.
-      if (auto new_row = SpecializeRow(row, elements, discriminator)) {
-        specialized.Add(std::move(new_row.value()));
-      }
-    }
-    return specialized;
-  }
-
-  auto Specialize(const Value& value) const -> PatternMatrix {
-    PatternMatrix specialized;
-    for (auto& row : matrix_) {
-      assert(!row.empty());
-      switch (row[0].kind()) {
-        case SimplePattern::Wildcard:
-          break;
-        case SimplePattern::Compound:
-          // TODO: Should be impossible due to type mismatch once we decompose
-          // values.
-          continue;
-        case SimplePattern::Value:
-          // TODO: Use an equality context here?
-          if (!ValueEqual(&row[0].value(), &value, std::nullopt)) {
-            continue;
-          }
-          break;
-      }
-      specialized.Add(std::vector<SimplePattern>(row.begin() + 1, row.end()));
-    }
-    return specialized;
-  }
-
-  auto Default() const -> PatternMatrix {
-    PatternMatrix default_matrix;
-    for (auto& row : matrix_) {
-      assert(!row.empty());
-      switch (row[0].kind()) {
-        case SimplePattern::Wildcard:
-          default_matrix.Add(
-              std::vector<SimplePattern>(row.begin() + 1, row.end()));
-          break;
-        case SimplePattern::Compound:
-        case SimplePattern::Value:
-          break;
-      }
-    }
-    return default_matrix;
-  }
-
- private:
-  std::vector<std::vector<SimplePattern>> matrix_;
-};
 
 // Returns true if we can statically verify that `match` is exhaustive, meaning
 // that one of its clauses will be executed for any possible operand value.
