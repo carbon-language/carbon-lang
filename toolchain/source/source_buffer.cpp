@@ -48,7 +48,7 @@ static auto ErrnoToError(int errno_value) -> llvm::Error {
 
 auto SourceBuffer::CreateFromFile(llvm::StringRef filename)
     -> llvm::Expected<SourceBuffer> {
-  // Add storage to ensure there's a nul-terminator for open().
+  // Add storage to ensure there's a null-terminator for open().
   std::string filename_str = filename.str();
 
   errno = 0;
