@@ -227,7 +227,7 @@ class TokenizedBuffer {
     // If true, the value is mantissa * 10^exponent.
     [[nodiscard]] auto IsDecimal() const -> bool { return is_decimal_; }
 
-    void Print(llvm::raw_ostream& output_stream) const {
+    auto Print(llvm::raw_ostream& output_stream) const -> void {
       output_stream << Mantissa() << "*" << (is_decimal_ ? "10" : "2") << "^"
                     << Exponent();
     }
@@ -351,7 +351,7 @@ class TokenizedBuffer {
   // line-oriented shell tools from `grep` to `awk`.
   auto Print(llvm::raw_ostream& output_stream) const -> void;
 
-  // Prints a description of a single token.  See `print` for details on the
+  // Prints a description of a single token.  See `Print` for details on the
   // format.
   auto PrintToken(llvm::raw_ostream& output_stream, Token token) const -> void;
 
