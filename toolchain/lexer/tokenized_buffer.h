@@ -400,8 +400,8 @@ class TokenizedBuffer {
 
     int index;
     int kind;
-    int column;
     int line;
+    int column;
     int indent;
   };
 
