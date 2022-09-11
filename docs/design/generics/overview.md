@@ -223,8 +223,8 @@ external impl Song as Comparable {
 ```
 
 Implementations may be defined within the class definition itself or
-out-of-line. Implementations may optionally be start with the `external` keyword
-to say the members of the interface are not members of the class. Out-of-line
+out-of-line. Implementations may optionally start with the `external` keyword to
+say the members of the interface are not members of the class. Out-of-line
 implementations must be external. External implementations may be defined in the
 library defining either the class or the interface.
 
@@ -493,7 +493,7 @@ cast from `T` to `CDCover`.
 
 ### Adapting types
 
-Carbon has a mechanism called [adapting types](terminology.md#adapting-a-type))
+Carbon has a mechanism called [adapting types](terminology.md#adapting-a-type)
 to create new types that are [compatible](terminology.md#compatible-types) with
 existing types but with different interface implementations. This could be used
 to add or replace implementations, or define implementations for reuse.

@@ -189,6 +189,9 @@ static auto OperatorToCarbon(const Fuzzing::OperatorExpression& operator_expr,
     case Fuzzing::OperatorExpression::BitShiftRight:
       BinaryOperatorToCarbon(arg0, " >> ", arg1, out);
       break;
+    case Fuzzing::OperatorExpression::NotEq:
+      BinaryOperatorToCarbon(arg0, " != ", arg1, out);
+      break;
   }
   out << ")";
 }
@@ -718,6 +721,36 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
         out << "\n";
       }
       out << "}";
+      break;
+    }
+
+    // EXPERIMENTAL MIXIN FEATURE
+    case Fuzzing::Declaration::kMixin: {
+      const auto& mixin_declaration = declaration.mixin();
+      out << "__mixin ";
+      IdentifierToCarbon(mixin_declaration.name(), out);
+
+      // type params are not implemented yet
+      // if (mixin_declaration.has_params()) {
+      //  TuplePatternToCarbon(mixin_declaration.params(), out);
+      //}
+
+      out << "{\n";
+      for (const auto& member : mixin_declaration.members()) {
+        DeclarationToCarbon(member, out);
+        out << "\n";
+      }
+      out << "}";
+      // TODO: need to handle interface.self()?
+      break;
+    }
+
+    // EXPERIMENTAL MIXIN FEATURE
+    case Fuzzing::Declaration::kMix: {
+      const auto& mix_declaration = declaration.mix();
+      out << "__mix ";
+      ExpressionToCarbon(mix_declaration.mixin(), out);
+      out << ";";
       break;
     }
 

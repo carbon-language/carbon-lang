@@ -1,0 +1,338 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    interface {
+      name: "A"
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "T"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      self {
+        name: "Self"
+        type {
+          type_type_literal {
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "F1"
+      deduced_parameters {
+        name: "T"
+        type {
+          where {
+            base {
+              identifier {
+                name: "A"
+              }
+            }
+            clauses {
+              equals {
+                lhs {
+                  designator {
+                    name: "T"
+                  }
+                }
+                rhs {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "x"
+            type {
+              expression_pattern {
+                expression {
+                  simple_member_access {
+                    field: "T"
+                    object {
+                      identifier {
+                        name: "T"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              identifier {
+                name: "x"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "F2"
+      deduced_parameters {
+        name: "U"
+        type {
+          where {
+            base {
+              identifier {
+                name: "A"
+              }
+            }
+            clauses {
+              equals {
+                lhs {
+                  designator {
+                    name: "T"
+                  }
+                }
+                rhs {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "x"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          simple_member_access {
+            field: "T"
+            object {
+              identifier {
+                name: "U"
+              }
+            }
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              identifier {
+                name: "x"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "F3"
+      deduced_parameters {
+        name: "T"
+        type {
+          where {
+            base {
+              identifier {
+                name: "A"
+              }
+            }
+            clauses {
+              equals {
+                lhs {
+                  designator {
+                    name: "T"
+                  }
+                }
+                rhs {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      deduced_parameters {
+        name: "U"
+        type {
+          where {
+            base {
+              identifier {
+                name: "A"
+              }
+            }
+            clauses {
+              equals {
+                lhs {
+                  designator {
+                    name: "T"
+                  }
+                }
+                rhs {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "x"
+            type {
+              expression_pattern {
+                expression {
+                  simple_member_access {
+                    field: "T"
+                    object {
+                      identifier {
+                        name: "T"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          simple_member_access {
+            field: "T"
+            object {
+              identifier {
+                name: "U"
+              }
+            }
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              identifier {
+                name: "x"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: ExternalImpl
+      impl_type {
+        int_type_literal {
+        }
+      }
+      interface {
+        where {
+          base {
+            identifier {
+              name: "A"
+            }
+          }
+          clauses {
+            equals {
+              lhs {
+                designator {
+                  name: "T"
+                }
+              }
+              rhs {
+                int_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "F3"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      int_literal {
+                        value: 0
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

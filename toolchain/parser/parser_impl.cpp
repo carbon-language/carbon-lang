@@ -448,6 +448,87 @@ auto ParseTree::Parser::ParseCodeBlock() -> llvm::Optional<Node> {
   return AddNode(ParseNodeKind::CodeBlock(), open_curly, start, has_errors);
 }
 
+auto ParseTree::Parser::ParsePackageDirective() -> Node {
+  TokenizedBuffer::Token package_intro_token = Consume(TokenKind::Package());
+  auto package_start = GetSubtreeStartPosition();
+  auto create_error_node = [&]() {
+    return AddNode(ParseNodeKind::PackageDirective(), package_intro_token,
+                   package_start,
+                   /*has_error=*/true);
+  };
+
+  CARBON_RETURN_IF_STACK_LIMITED(create_error_node());
+
+  auto exit_on_parse_error = [&]() {
+    SkipPastLikelyEnd(package_intro_token, [&](TokenizedBuffer::Token semi) {
+      return AddLeafNode(ParseNodeKind::PackageEnd(), semi);
+    });
+
+    return create_error_node();
+  };
+
+  if (!NextTokenIs(TokenKind::Identifier())) {
+    CARBON_DIAGNOSTIC(ExpectedIdentifierAfterPackage, Error,
+                      "Expected identifier after `package`.");
+    emitter_.Emit(*position_, ExpectedIdentifierAfterPackage);
+    return exit_on_parse_error();
+  }
+
+  AddLeafNode(ParseNodeKind::DeclaredName(), Consume(TokenKind::Identifier()));
+  bool library_parsed = false;
+
+  if (tokens_.GetKind(*(position_)) == TokenKind::Library()) {
+    auto library_start = GetSubtreeStartPosition();
+    auto library_decl_token = Consume(TokenKind::Library());
+
+    if (tokens_.GetKind(*(position_)) != TokenKind::StringLiteral()) {
+      CARBON_DIAGNOSTIC(
+          ExpectedLibraryName, Error,
+          "Expected a string literal to specify the library name.");
+      emitter_.Emit(*position_, ExpectedLibraryName);
+      return exit_on_parse_error();
+    }
+
+    AddLeafNode(ParseNodeKind::Literal(), Consume(TokenKind::StringLiteral()));
+    AddNode(ParseNodeKind::PackageLibrary(), library_decl_token, library_start,
+            /*has_error=*/false);
+    library_parsed = true;
+  }
+
+  auto api_or_impl_token = tokens_.GetKind(*(position_));
+
+  if (api_or_impl_token == TokenKind::Api()) {
+    AddLeafNode(ParseNodeKind::PackageApi(), Consume(TokenKind::Api()));
+  } else if (api_or_impl_token == TokenKind::Impl()) {
+    AddLeafNode(ParseNodeKind::PackageImpl(), Consume(TokenKind::Impl()));
+  } else if (!library_parsed &&
+             api_or_impl_token == TokenKind::StringLiteral()) {
+    // If we come acroess a string literal and we didn't parse `library "..."`
+    // yet, then most probably the user forgot to add `library` before the
+    // library name.
+    CARBON_DIAGNOSTIC(MissingLibraryKeyword, Error,
+                      "Missing `library` keyword.");
+    emitter_.Emit(*position_, MissingLibraryKeyword);
+    return exit_on_parse_error();
+  } else {
+    CARBON_DIAGNOSTIC(ExpectedApiOrImpl, Error, "Expected a `api` or `impl`.");
+    emitter_.Emit(*position_, ExpectedApiOrImpl);
+    return exit_on_parse_error();
+  }
+
+  if (tokens_.GetKind(*(position_)) != TokenKind::Semi()) {
+    CARBON_DIAGNOSTIC(ExpectedSemiToEndPackageDirective, Error,
+                      "Expected `;` to end package directive.");
+    emitter_.Emit(*position_, ExpectedSemiToEndPackageDirective);
+    return exit_on_parse_error();
+  }
+
+  AddLeafNode(ParseNodeKind::PackageEnd(), Consume(TokenKind::Semi()));
+
+  return AddNode(ParseNodeKind::PackageDirective(), package_intro_token,
+                 package_start, /*has_error=*/false);
+}
+
 auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
   TokenizedBuffer::Token function_intro_token = Consume(TokenKind::Fn());
   auto start = GetSubtreeStartPosition();
@@ -561,6 +642,8 @@ auto ParseTree::Parser::ParseEmptyDeclaration() -> Node {
 auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
   CARBON_RETURN_IF_STACK_LIMITED(llvm::None);
   switch (NextTokenKind()) {
+    case TokenKind::Package():
+      return ParsePackageDirective();
     case TokenKind::Fn():
       return ParseFunctionDeclaration();
     case TokenKind::Var():
@@ -574,6 +657,7 @@ auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
       break;
   }
 
+  // Should happen for packages now.
   // We didn't recognize an introducer for a valid declaration.
   CARBON_DIAGNOSTIC(UnrecognizedDeclaration, Error,
                     "Unrecognized declaration introducer.");

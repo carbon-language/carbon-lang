@@ -170,29 +170,36 @@ def get_missing_deps(
         if source_file in generated_files:
             continue
         with open(source_file, "r") as f:
-            for header in re.findall(
-                r'^#include "([^"]+)"', f.read(), re.MULTILINE
+            for header_groups in re.findall(
+                r'^(#include (?:"([^"]+)"|<((?:gmock|gtest)/[^>]+)>))',
+                f.read(),
+                re.MULTILINE,
             ):
+                # Ignore whether the source was a quote or system include.
+                header = header_groups[1]
+                if not header:
+                    header = header_groups[2]
+
                 if header in rule_files:
                     continue
                 if header not in header_to_rule_map:
                     if IGNORE_HEADER_REGEX.match(header):
                         print(
-                            f"Ignored missing #include '{header}' in "
-                            f"'{source_file}'"
+                            f"Ignored missing "
+                            f"'{header_groups[0]}' in '{source_file}'"
                         )
                         continue
                     else:
                         exit(
-                            f"Missing rule for #include '{header}' in "
-                            f"'{source_file}'"
+                            f"Missing rule for "
+                            f"'{header_groups[0]}' in '{source_file}'"
                         )
                 dep_choices = header_to_rule_map[header]
                 if not dep_choices.intersection(rule.deps):
                     if len(dep_choices) > 1:
                         print(
-                            f"Ambiguous dependency choice for #include "
-                            f"'{header}' in '{source_file}': "
+                            f"Ambiguous dependency choice for "
+                            f"'{header_groups[0]}' in '{source_file}': "
                             f"{', '.join(dep_choices)}"
                         )
                         ambiguous = True
@@ -213,6 +220,8 @@ def main() -> None:
 
     print("Building header map...")
     header_to_rule_map: Dict[str, Set[str]] = {}
+    header_to_rule_map["gmock/gmock.h"] = {"@com_google_googletest//:gtest"}
+    header_to_rule_map["gtest/gtest.h"] = {"@com_google_googletest//:gtest"}
     map_headers(header_to_rule_map, carbon_rules)
     map_headers(header_to_rule_map, external_rules)
 

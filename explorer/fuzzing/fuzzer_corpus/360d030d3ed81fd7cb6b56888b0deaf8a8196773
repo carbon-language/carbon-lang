@@ -1,0 +1,180 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    variable {
+      binding {
+        name: "x"
+        type {
+          expression_pattern {
+            expression {
+              int_type_literal {
+              }
+            }
+          }
+        }
+      }
+      initializer {
+        int_literal {
+          value: 0
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Foo"
+      param_pattern {
+      }
+      return_term {
+        kind: Omitted
+      }
+      body {
+        statements {
+          assign {
+            lhs {
+              identifier {
+                name: "x"
+              }
+            }
+            rhs {
+              operator {
+                op: Add
+                arguments {
+                  identifier {
+                    name: "x"
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 1
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          await_statement {
+          }
+        }
+        statements {
+          assign {
+            lhs {
+              identifier {
+                name: "x"
+              }
+            }
+            rhs {
+              operator {
+                op: Add
+                arguments {
+                  identifier {
+                    name: "x"
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 2
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          continuation {
+            name: "k1"
+            body {
+              statements {
+                expression_statement {
+                  expression {
+                    call {
+                      function {
+                        identifier {
+                          name: "Foo"
+                        }
+                      }
+                      argument {
+                        tuple_literal {
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "k2"
+                type {
+                  expression_pattern {
+                    expression {
+                      continuation_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              identifier {
+                name: "k1"
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          run {
+            argument {
+              identifier {
+                name: "k1"
+              }
+            }
+          }
+        }
+        statements {
+          run {
+            argument {
+              identifier {
+                name: "k2"
+              }
+            }
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              identifier {
+                name: "x"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

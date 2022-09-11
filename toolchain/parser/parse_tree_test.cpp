@@ -1293,5 +1293,68 @@ TEST_F(ParseTreeTest, ParsePostfixExpressionRegression) {
   }
 }
 
+TEST_F(ParseTreeTest, Package) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(R"(
+    package Geometry api;
+    package Geometry impl;
+    package Geometry library "Shapes" api;
+    package Geometry library "Shapes" impl;
+  )");
+
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+
+  EXPECT_THAT(tree,
+              MatchParseTreeNodes(
+                  {MatchPackageDirective(MatchDeclaredName("Geometry"),
+                                         MatchPackageApi(), MatchPackageEnd()),
+
+                   MatchPackageDirective(MatchDeclaredName("Geometry"),
+                                         MatchPackageImpl(), MatchPackageEnd()),
+
+                   MatchPackageDirective(
+                       MatchDeclaredName("Geometry"),
+                       MatchPackageLibrary(MatchLiteral("\"Shapes\"")),
+                       MatchPackageApi(), MatchPackageEnd()),
+
+                   MatchPackageDirective(
+                       MatchDeclaredName("Geometry"),
+                       MatchPackageLibrary(MatchLiteral("\"Shapes\"")),
+                       MatchPackageImpl(), MatchPackageEnd()),
+
+                   MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, PackageErrors) {
+  struct TestCase {
+    llvm::StringLiteral input;
+    ::testing::Matcher<const Diagnostic&> diag_matcher;
+  };
+
+  TestCase testcases[] = {
+      {"package;", IsDiagnosticMessage("Expected identifier after `package`.")},
+      {"package fn;",
+       IsDiagnosticMessage("Expected identifier after `package`.")},
+      {"package library \"Shapes\" api;",
+       IsDiagnosticMessage("Expected identifier after `package`.")},
+      {"package Geometry library Shapes api;",
+       IsDiagnosticMessage(
+           "Expected a string literal to specify the library name.")},
+      {"package Geometry \"Shapes\" api;",
+       IsDiagnosticMessage("Missing `library` keyword.")},
+      {"package Geometry api",
+       IsDiagnosticMessage("Expected `;` to end package directive.")},
+      {"package Geometry;", IsDiagnosticMessage("Expected a `api` or `impl`.")},
+      {R"(package Foo library "bar" "baz";)",
+       IsDiagnosticMessage("Expected a `api` or `impl`.")}};
+
+  for (const TestCase& testcase : testcases) {
+    TokenizedBuffer tokens = GetTokenizedBuffer(testcase.input);
+    Testing::MockDiagnosticConsumer consumer;
+    EXPECT_CALL(consumer, HandleDiagnostic(testcase.diag_matcher));
+    ParseTree tree = ParseTree::Parse(tokens, consumer);
+    EXPECT_TRUE(tree.has_errors());
+  }
+}
+
 }  // namespace
 }  // namespace Carbon::Testing
