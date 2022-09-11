@@ -23,14 +23,23 @@
 
 namespace Carbon {
 
+namespace {
+
 // Verifies that the content size is within limits.
-static auto CheckContentSize(int64_t size) -> llvm::Error {
+auto CheckContentSize(int64_t size) -> llvm::Error {
   if (size < std::numeric_limits<int32_t>::max()) {
     return llvm::Error::success();
   }
   return llvm::createStringError(llvm::inconvertibleErrorCode(),
                                  "Input too large!");
 }
+
+auto ErrnoToError(int errno_value) -> llvm::Error {
+  return llvm::errorCodeToError(
+      std::error_code(errno_value, std::generic_category()));
+}
+
+}  // namespace
 
 auto SourceBuffer::CreateFromText(llvm::Twine text, llvm::StringRef filename)
     -> llvm::Expected<SourceBuffer> {
@@ -40,11 +49,6 @@ auto SourceBuffer::CreateFromText(llvm::Twine text, llvm::StringRef filename)
     return std::move(size_check);
   }
   return SourceBuffer(filename.str(), std::move(buffer));
-}
-
-static auto ErrnoToError(int errno_value) -> llvm::Error {
-  return llvm::errorCodeToError(
-      std::error_code(errno_value, std::generic_category()));
 }
 
 auto SourceBuffer::CreateFromFile(llvm::StringRef filename)
