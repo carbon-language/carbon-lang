@@ -266,8 +266,11 @@ semantics onto C++ such as Rust-inspired
 
 ## Getting started
 
-You can get started playing with Carbon by checking out the codebase and using
-the Carbon explorer:
+As there is no compiler yet, to try out Carbon, you can use the Carbon explorer
+to interpret Carbon code and print its output. You can try it out immediately at
+[compiler-explorer.com](http://carbon.compiler-explorer.com/).
+
+To build the Carbon explorer yourself, follow these instructions:
 
 ```shell
 # Install bazelisk using Homebrew.

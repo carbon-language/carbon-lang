@@ -173,6 +173,9 @@ auto RewriteBuilder::VisitBuiltinTypeLoc(clang::BuiltinTypeLoc type_loc)
     case clang::BuiltinType::Double:
       content = "f64";
       break;
+    case clang::BuiltinType::Void:
+      content = "()";
+      break;
     default:
       // In this case we do not know what the output should be so we do not
       // write any.
@@ -203,6 +206,12 @@ auto RewriteBuilder::VisitDeclStmt(clang::DeclStmt* stmt) -> bool {
   return true;
 }
 
+auto RewriteBuilder::VisitImplicitCastExpr(clang::ImplicitCastExpr* expr)
+    -> bool {
+  SetReplacement(expr, OutputSegment(expr->getSubExpr()));
+  return true;
+}
+
 auto RewriteBuilder::VisitIntegerLiteral(clang::IntegerLiteral* expr) -> bool {
   // TODO: Replace suffixes.
   std::string text(TextForTokenAt(expr->getBeginLoc()));
@@ -217,10 +226,32 @@ auto RewriteBuilder::VisitIntegerLiteral(clang::IntegerLiteral* expr) -> bool {
   return true;
 }
 
+auto RewriteBuilder::VisitParmVarDecl(clang::ParmVarDecl* decl) -> bool {
+  llvm::StringRef name = decl->getName();
+  std::vector<OutputSegment> segments = {
+      OutputSegment(llvm::formatv("{0}: ", name.empty() ? "_" : name.str())),
+      OutputSegment(decl->getTypeSourceInfo()->getTypeLoc()),
+  };
+
+  if (clang::Expr* init = decl->getInit()) {
+    segments.push_back(OutputSegment(" = "));
+    segments.push_back(OutputSegment(init));
+  }
+
+  SetReplacement(decl, std::move(segments));
+  return true;
+}
+
 auto RewriteBuilder::VisitPointerTypeLoc(clang::PointerTypeLoc type_loc)
     -> bool {
   SetReplacement(type_loc,
                  {OutputSegment(type_loc.getPointeeLoc()), OutputSegment("*")});
+  return true;
+}
+
+auto RewriteBuilder::VisitReturnStmt(clang::ReturnStmt* stmt) -> bool {
+  SetReplacement(
+      stmt, {OutputSegment("return "), OutputSegment(stmt->getRetValue())});
   return true;
 }
 
@@ -241,7 +272,11 @@ auto RewriteBuilder::VisitTranslationUnitDecl(clang::TranslationUnitDecl* decl)
   for (; iter != decl->decls_end(); ++iter) {
     clang::Decl* d = *iter;
     segments.push_back(OutputSegment(d));
-    segments.push_back(OutputSegment(";\n"));
+
+    // Function definitions do not need semicolons.
+    bool needs_semicolon = !(llvm::isa<clang::FunctionDecl>(d) &&
+                             llvm::cast<clang::FunctionDecl>(d)->hasBody());
+    segments.push_back(OutputSegment(needs_semicolon ? ";\n" : "\n"));
   }
 
   SetReplacement(decl, std::move(segments));
@@ -262,10 +297,62 @@ auto RewriteBuilder::VisitUnaryOperator(clang::UnaryOperator* expr) -> bool {
   return true;
 }
 
-auto RewriteBuilder::VisitVarDecl(clang::VarDecl* decl) -> bool {
+auto RewriteBuilder::TraverseFunctionDecl(clang::FunctionDecl* decl) -> bool {
+  clang::TypeLoc return_type_loc = decl->getFunctionTypeLoc().getReturnLoc();
+  if (!TraverseTypeLoc(return_type_loc)) {
+    return false;
+  }
+
+  std::vector<OutputSegment> segments;
+  segments.push_back(
+      OutputSegment(llvm::formatv("fn {0}(", decl->getNameAsString())));
+
+  size_t i = 0;
+  for (; i + 1 < decl->getNumParams(); ++i) {
+    clang::ParmVarDecl* param = decl->getParamDecl(i);
+    if (!TraverseDecl(param)) {
+      return false;
+    }
+    segments.push_back(OutputSegment(param));
+    segments.push_back(OutputSegment(", "));
+  }
+
+  if (i + 1 == decl->getNumParams()) {
+    clang::ParmVarDecl* param = decl->getParamDecl(i);
+    if (!TraverseDecl(param)) {
+      return false;
+    }
+    segments.push_back(OutputSegment(param));
+  }
+
+  segments.push_back(OutputSegment(") -> "));
+  segments.push_back(OutputSegment(return_type_loc));
+
+  if (decl->hasBody()) {
+    segments.push_back(OutputSegment(" {\n"));
+    auto* stmts = llvm::dyn_cast<clang::CompoundStmt>(decl->getBody());
+    for (clang::Stmt* stmt : stmts->body()) {
+      if (!TraverseStmt(stmt)) {
+        return false;
+      }
+      segments.push_back(OutputSegment(stmt));
+      segments.push_back(OutputSegment(";\n"));
+    }
+    segments.push_back(OutputSegment("}"));
+  }
+
+  SetReplacement(decl, std::move(segments));
+  return true;
+}
+
+auto RewriteBuilder::TraverseVarDecl(clang::VarDecl* decl) -> bool {
+  clang::TypeLoc loc = decl->getTypeSourceInfo()->getTypeLoc();
+  if (!TraverseTypeLoc(loc)) {
+    return false;
+  }
+
   // TODO: Check storage class. Determine what happens for static local
   // variables.
-
   bool is_const = decl->getType().isConstQualified();
   std::vector<OutputSegment> segments = {
       OutputSegment(llvm::formatv("{0} {1}: ", is_const ? "let" : "var",
@@ -274,6 +361,10 @@ auto RewriteBuilder::VisitVarDecl(clang::VarDecl* decl) -> bool {
   };
 
   if (clang::Expr* init = decl->getInit()) {
+    if (!TraverseStmt(init)) {
+      return false;
+    }
+
     segments.push_back(OutputSegment(" = "));
     segments.push_back(OutputSegment(init));
   }

@@ -9,6 +9,8 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: strings equal: 0
 // CHECK: ints equal: 1
+// CHECK: strings not eq: 1
+// CHECK: ints not eq: 0
 // CHECK: result: 0
 
 package ExplorerTest api;
@@ -16,5 +18,7 @@ package ExplorerTest api;
 fn Main() -> i32 {
   Print("strings equal: {0}", if "hello" == "world" then 1 else 0);
   Print("ints equal: {0}", if 1 == 1 then 1 else 0);
+  Print("strings not eq: {0}", if "hello" != "world" then 1 else 0);
+  Print("ints not eq: {0}", if 1 != 1 then 1 else 0);
   return 0;
 }

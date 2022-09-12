@@ -400,6 +400,20 @@ void Value::Print(llvm::raw_ostream& out) const {
       }
       break;
     }
+    case Value::Kind::MixinPseudoType: {
+      const auto& mixin_type = cast<MixinPseudoType>(*this);
+      out << "mixin ";
+      PrintNameWithBindings(out, &mixin_type.declaration(), mixin_type.args());
+      if (!mixin_type.witnesses().empty()) {
+        out << " witnesses ";
+        llvm::ListSeparator sep;
+        for (const auto& [impl_bind, witness] : mixin_type.witnesses()) {
+          out << sep << *witness;
+        }
+      }
+      // TODO: print the import interface
+      break;
+    }
     case Value::Kind::InterfaceType: {
       const auto& iface_type = cast<InterfaceType>(*this);
       out << "interface ";
@@ -490,6 +504,14 @@ void Value::Print(llvm::raw_ostream& out) const {
       break;
     case Value::Kind::TypeOfClassType:
       out << "typeof(" << cast<TypeOfClassType>(*this).class_type() << ")";
+      break;
+    case Value::Kind::TypeOfMixinPseudoType:
+      out << "typeof("
+          << cast<TypeOfMixinPseudoType>(*this)
+                 .mixin_type()
+                 .declaration()
+                 .name()
+          << ")";
       break;
     case Value::Kind::TypeOfInterfaceType:
       out << "typeof("
@@ -731,6 +753,8 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     case Value::Kind::MemberName:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
+    case Value::Kind::MixinPseudoType:
+    case Value::Kind::TypeOfMixinPseudoType:
       CARBON_FATAL() << "TypeEqual used to compare non-type values\n"
                      << *t1 << "\n"
                      << *t2;
@@ -830,6 +854,7 @@ auto ValueStructurallyEqual(
     case Value::Kind::AutoType:
     case Value::Kind::StructType:
     case Value::Kind::NominalClassType:
+    case Value::Kind::MixinPseudoType:
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
     case Value::Kind::ImplWitness:
@@ -839,6 +864,7 @@ auto ValueStructurallyEqual(
     case Value::Kind::VariableType:
     case Value::Kind::StringType:
     case Value::Kind::TypeOfClassType:
+    case Value::Kind::TypeOfMixinPseudoType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
@@ -950,6 +976,43 @@ auto NominalClassType::FindFunction(std::string_view name) const
     -> std::optional<Nonnull<const FunctionValue*>> {
   for (const auto& member : declaration().members()) {
     switch (member->kind()) {
+      case DeclarationKind::MixDeclaration: {
+        const auto& mix_decl = cast<MixDeclaration>(*member);
+        Nonnull<const MixinPseudoType*> mixin = &mix_decl.mixin_value();
+        const auto res = mixin->FindFunction(name);
+        if (res.has_value()) {
+          return res;
+        }
+        break;
+      }
+      case DeclarationKind::FunctionDeclaration: {
+        const auto& fun = cast<FunctionDeclaration>(*member);
+        if (fun.name() == name) {
+          return &cast<FunctionValue>(**fun.constant_value());
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }
+  return std::nullopt;
+}
+
+// TODO: Find out a way to remove code duplication
+auto MixinPseudoType::FindFunction(const std::string_view& name) const
+    -> std::optional<Nonnull<const FunctionValue*>> {
+  for (const auto& member : declaration().members()) {
+    switch (member->kind()) {
+      case DeclarationKind::MixDeclaration: {
+        const auto& mix_decl = cast<MixDeclaration>(*member);
+        Nonnull<const MixinPseudoType*> mixin = &mix_decl.mixin_value();
+        const auto res = mixin->FindFunction(name);
+        if (res.has_value()) {
+          return res;
+        }
+        break;
+      }
       case DeclarationKind::FunctionDeclaration: {
         const auto& fun = cast<FunctionDeclaration>(*member);
         if (fun.name() == name) {

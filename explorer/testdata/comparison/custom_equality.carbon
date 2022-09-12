@@ -8,6 +8,7 @@
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
 // CHECK: structs equal: 0
+// CHECK: structs not equal: 1
 // CHECK: result: 0
 
 package ExplorerTest api;
@@ -19,6 +20,9 @@ class MyType {
     fn Equal[me: Self](other: Self) -> bool {
       return me.value == other.value;
     }
+    fn NotEqual[me: Self](other: Self) -> bool{
+      return me.value != other.value;
+    }
   }
 }
 
@@ -26,5 +30,6 @@ fn Main() -> i32 {
   let x: MyType = {.value = 1};
   let y: MyType = {.value = 2};
   Print("structs equal: {0}", if x == y then 1 else 0);
+  Print("structs not equal: {0}", if x != y then 1 else 0);
   return 0;
 }
