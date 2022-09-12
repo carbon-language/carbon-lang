@@ -440,7 +440,7 @@ class TokenizedBuffer {
     int64_t start;
 
     // The byte length of the line. Does not include the newline character (or a
-    // null terminator or EOF).
+    // nul-terminator or EOF).
     int32_t length;
 
     // The byte offset from the start of the line of the first non-whitespace
