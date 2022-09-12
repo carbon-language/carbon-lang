@@ -3078,9 +3078,16 @@ class PatternMatrix {
     matrix_.push_back(std::move(pattern_vector));
   }
 
+  // The maximum number of times we will consider all alternatives when
+  // recursively expanding the pattern. Allowing this to happen an arbitrary
+  // number of times leads to exponential growth in the runtime of the
+  // algorithm.
+  static constexpr int MaxExponentialDepth = 8;
+
   // Determine whether the given pattern vector is useful: that is, whether
   // adding it to the matrix would allow any more values to be matched.
-  auto IsUseful(llvm::ArrayRef<AbstractPattern> pattern) const -> bool {
+  auto IsUseful(llvm::ArrayRef<AbstractPattern> pattern,
+                int max_exponential_depth = MaxExponentialDepth) const -> bool {
     if (matrix_.empty()) {
       return true;
     }
@@ -3093,26 +3100,37 @@ class PatternMatrix {
     switch (pattern[0].kind()) {
       case AbstractPattern::Wildcard: {
         auto discrim = FirstColumnDiscriminators();
-        if (!discrim.any_missing) {
+        // Check if we hit the depth limit. If so, we act as if the
+        // constructors present in this position are not exhaustive, that is,
+        // as if the type we're matching has some other constructor not
+        // corresponding to anything written in the pattern in this position.
+        // This can lead us to conclude that a pattern is useful if it is not,
+        // and that a set of patterns is not exhaustive when it is.
+        int new_depth =
+            max_exponential_depth - (discrim.found.size() > 1 ? 1 : 0);
+        if (!discrim.any_missing && new_depth >= 0) {
           for (auto found : discrim.found) {
-            if (Specialize(found).IsUseful(*SpecializeRow(pattern, found))) {
+            if (Specialize(found).IsUseful(*SpecializeRow(pattern, found),
+                                           new_depth)) {
               return true;
             }
           }
           return false;
         }
-        return Default().IsUseful(pattern.slice(1));
+        return Default().IsUseful(pattern.slice(1), max_exponential_depth);
       }
 
       case AbstractPattern::Compound: {
         DiscriminatorInfo discrim = {
             .discriminator = pattern[0].discriminator(),
             .size = pattern[0].NumElements()};
-        return Specialize(discrim).IsUseful(*SpecializeRow(pattern, discrim));
+        return Specialize(discrim).IsUseful(*SpecializeRow(pattern, discrim),
+                                            max_exponential_depth);
       }
 
       case AbstractPattern::Primitive: {
-        return Specialize(pattern[0].value()).IsUseful(pattern.slice(1));
+        return Specialize(pattern[0].value())
+            .IsUseful(pattern.slice(1), max_exponential_depth);
       }
     }
   }
