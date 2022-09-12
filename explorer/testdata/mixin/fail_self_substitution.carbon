@@ -38,7 +38,7 @@ class Complex {
 fn Main() -> i32 {
   var p: Point = Point.Origin();
   var c: Complex = {.r = 42, .i = 1};
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-self-substitution.carbon:[[@LINE+1]]: type error in call: 'class Complex' is not implicitly convertible to 'class Point'
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_self_substitution.carbon:[[@LINE+1]]: type error in call: 'class Complex' is not implicitly convertible to 'class Point'
   var p1: Point = p.F(c);
 
   return p1.x - 42;

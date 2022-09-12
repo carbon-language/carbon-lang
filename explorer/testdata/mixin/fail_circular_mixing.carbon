@@ -13,7 +13,7 @@ __mixin M1 {
   fn F1[me: Self](x: Self) -> Self{
      return x;
   }
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-circular-mixing.carbon:[[@LINE+1]]: 'M3' has not been declared yet
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_circular_mixing.carbon:[[@LINE+1]]: 'M3' has not been declared yet
   __mix M3;
 }
 

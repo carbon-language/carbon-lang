@@ -14,7 +14,7 @@ __mixin M1 {
      return x;
   }
   __mix M1;
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-recursive-mixing.carbon:[[@LINE+1]]: Member named F1 (declared at {{.*}}/explorer/testdata/mixin/fail-recursive-mixing.carbon:15) is being mixed multiple times into M1
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_recursive_mixing.carbon:[[@LINE+1]]: Member named F1 (declared at {{.*}}/explorer/testdata/mixin/fail_recursive_mixing.carbon:15) is being mixed multiple times into M1
 }
 
 class C {

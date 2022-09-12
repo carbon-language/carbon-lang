@@ -19,7 +19,7 @@ __mixin M {
 class C {
   let F: i32 = 0;
   __mix M;
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-field-member-name-clash.carbon:[[@LINE+1]]: Member named F (declared at {{.*}}/explorer/testdata/mixin/fail-field-member-name-clash.carbon:16) cannot be mixed into C because it clashes with an existing member with the same name (declared at {{.*}}/explorer/testdata/mixin/fail-field-member-name-clash.carbon:20)
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_field_member_name_clash.carbon:[[@LINE+1]]: Member named F (declared at {{.*}}/explorer/testdata/mixin/fail_field_member_name_clash.carbon:16) cannot be mixed into C because it clashes with an existing member with the same name (declared at {{.*}}/explorer/testdata/mixin/fail_field_member_name_clash.carbon:20)
 }
 
 fn Main() -> i32 {
