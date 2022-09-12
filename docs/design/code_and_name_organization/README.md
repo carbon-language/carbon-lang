@@ -56,6 +56,11 @@ Important Carbon goals for code and name organization are:
 
     -   Tooling support is important for Carbon, including the possibility of a
         package manager.
+        -   Branch package-management is an attempt to easily allow for
+            packages to be managed using an external scripting language.
+            The carbon-lang repository is in c++. An external scripting language
+            could be created as a simplified version of carbon,
+            with limited features that focus on package management.
 
     -   Developer tooling, including both IDEs and refactoring tools, are
         expected to exist and be well-supported.
