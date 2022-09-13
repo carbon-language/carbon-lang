@@ -54,7 +54,7 @@ class AbstractPattern {
   auto discriminator() const -> std::string_view;
 
   // Get the number of nested patterns for a compound pattern.
-  auto NumElements() const -> int;
+  auto elements_size() const -> int;
 
   // Append the nested patterns in this compound pattern to `out`.
   void AppendElementsTo(std::vector<AbstractPattern>& out) const;

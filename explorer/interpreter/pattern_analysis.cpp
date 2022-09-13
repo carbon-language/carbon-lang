@@ -42,7 +42,7 @@ auto AbstractPattern::discriminator() const -> std::string_view {
   return {};
 }
 
-auto AbstractPattern::NumElements() const -> int {
+auto AbstractPattern::elements_size() const -> int {
   if (auto* pattern = value_.dyn_cast<const Pattern*>()) {
     if (auto* tuple_pattern = dyn_cast<TuplePattern>(pattern)) {
       return tuple_pattern->fields().size();
@@ -155,7 +155,7 @@ auto PatternMatrix::IsUseful(llvm::ArrayRef<AbstractPattern> pattern,
 
     case AbstractPattern::Compound: {
       DiscriminatorInfo discrim = {.discriminator = pattern[0].discriminator(),
-                                   .size = pattern[0].NumElements()};
+                                   .size = pattern[0].elements_size()};
       return Specialize(discrim).IsUseful(*SpecializeRow(pattern, discrim),
                                           max_exponential_depth);
     }
@@ -235,7 +235,7 @@ auto PatternMatrix::SpecializeRow(llvm::ArrayRef<AbstractPattern> row,
       if (row[0].discriminator() != discriminator.discriminator) {
         return std::nullopt;
       }
-      CARBON_CHECK(static_cast<int>(row[0].NumElements()) ==
+      CARBON_CHECK(static_cast<int>(row[0].elements_size()) ==
                    discriminator.size);
       new_row.reserve(discriminator.size + row.size() - 1);
       row[0].AppendElementsTo(new_row);
