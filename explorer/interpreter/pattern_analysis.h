@@ -94,8 +94,10 @@ class PatternMatrix {
     matrix_.push_back(std::move(pattern_vector));
   }
 
-  // Is the given pattern vector redundant if it appears after the patterns in
-  // this matrix? That is, will it never match following the other patterns?
+  // Returns true if the given pattern vector is redundant if it appears after
+  // the patterns in this matrix. That is, if it will never match following the
+  // other patterns because everything it matches is matched by some other
+  // pattern.
   auto IsRedundant(llvm::ArrayRef<AbstractPattern> pattern) const -> bool {
     return !IsUseful(pattern, MaxExponentialDepth);
   }
