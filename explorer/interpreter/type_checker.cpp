@@ -2937,6 +2937,9 @@ class AbstractPattern {
     Primitive
   };
 
+  // This is intentionally implicit to allow easy conversion from a container
+  // of `const Pattern*` to a container of `AbstractPattern`s.
+  // NOLINTNEXTLINE(google-explicit-constructor)
   AbstractPattern(Nonnull<const Pattern*> pattern) { Set(pattern); }
 
   AbstractPattern(Nonnull<const Value*> value, Nonnull<const Value*> type)
@@ -2957,12 +2960,12 @@ class AbstractPattern {
       }
       return Primitive;
     }
-    assert(value_.is<const WildcardTag*>());
+    CARBON_CHECK(value_.is<const WildcardTag*>());
     return Wildcard;
   }
 
   auto discriminator() const -> std::string_view {
-    assert(kind() == Compound);
+    CARBON_CHECK(kind() == Compound);
     if (auto* pattern = value_.dyn_cast<const Pattern*>()) {
       if (auto* alt_pattern = dyn_cast<AlternativePattern>(pattern)) {
         return alt_pattern->alternative_name();
@@ -3003,7 +3006,7 @@ class AbstractPattern {
     } else if (auto* value = value_.dyn_cast<const Value*>()) {
       if (auto* tuple = dyn_cast<TupleValue>(value)) {
         auto* tuple_type = cast<TupleValue>(type_);
-        assert(tuple->elements().size() == tuple_type->elements().size());
+        CARBON_CHECK(tuple->elements().size() == tuple_type->elements().size());
         for (size_t i = 0; i != tuple->elements().size(); ++i) {
           out.push_back(
               AbstractPattern(tuple->elements()[i], tuple_type->elements()[i]));
@@ -3019,7 +3022,7 @@ class AbstractPattern {
   auto value() const -> const Value& { return *value_.get<const Value*>(); }
 
   auto type() const -> const Value& {
-    assert(kind() == Compound);
+    CARBON_CHECK(kind() == Compound);
     return *type_;
   }
 
@@ -3072,17 +3075,17 @@ class AbstractPattern {
 // the algorithm used here.
 class PatternMatrix {
  public:
-  // Add a pattern vector row to this collection of pattern vectors.
-  void Add(std::vector<AbstractPattern> pattern_vector) {
-    assert(matrix_.empty() || matrix_[0].size() == pattern_vector.size());
-    matrix_.push_back(std::move(pattern_vector));
-  }
-
   // The maximum number of times we will consider all alternatives when
   // recursively expanding the pattern. Allowing this to happen an arbitrary
   // number of times leads to exponential growth in the runtime of the
   // algorithm.
   static constexpr int MaxExponentialDepth = 8;
+
+  // Add a pattern vector row to this collection of pattern vectors.
+  void Add(std::vector<AbstractPattern> pattern_vector) {
+    CARBON_CHECK(matrix_.empty() || matrix_[0].size() == pattern_vector.size());
+    matrix_.push_back(std::move(pattern_vector));
+  }
 
   // Determine whether the given pattern vector is useful: that is, whether
   // adding it to the matrix would allow any more values to be matched.
@@ -3092,7 +3095,7 @@ class PatternMatrix {
       return true;
     }
 
-    assert(pattern.size() == matrix_[0].size());
+    CARBON_CHECK(pattern.size() == matrix_[0].size());
     if (matrix_[0].empty()) {
       return false;
     }
@@ -3157,7 +3160,7 @@ class PatternMatrix {
     std::optional<const ChoiceType*> choice;
 
     for (auto& row : matrix_) {
-      assert(!row.empty());
+      CARBON_CHECK(!row.empty());
       switch (row[0].kind()) {
         case AbstractPattern::Wildcard:
           continue;
@@ -3201,7 +3204,7 @@ class PatternMatrix {
   static auto SpecializeRow(llvm::ArrayRef<AbstractPattern> row,
                             DiscriminatorInfo discriminator)
       -> std::optional<std::vector<AbstractPattern>> {
-    assert(!row.empty());
+    CARBON_CHECK(!row.empty());
     std::vector<AbstractPattern> new_row;
     switch (row[0].kind()) {
       case AbstractPattern::Wildcard:
@@ -3213,7 +3216,8 @@ class PatternMatrix {
         if (row[0].discriminator() != discriminator.discriminator) {
           return std::nullopt;
         }
-        assert(static_cast<int>(row[0].NumElements()) == discriminator.size);
+        CARBON_CHECK(static_cast<int>(row[0].NumElements()) ==
+                     discriminator.size);
         new_row.reserve(discriminator.size + row.size() - 1);
         row[0].AppendElementsTo(new_row);
         break;
@@ -3245,7 +3249,7 @@ class PatternMatrix {
   auto Specialize(const Value& value) const -> PatternMatrix {
     PatternMatrix specialized;
     for (auto& row : matrix_) {
-      assert(!row.empty());
+      CARBON_CHECK(!row.empty());
       switch (row[0].kind()) {
         case AbstractPattern::Wildcard:
           break;
@@ -3268,7 +3272,7 @@ class PatternMatrix {
   auto Default() const -> PatternMatrix {
     PatternMatrix default_matrix;
     for (auto& row : matrix_) {
-      assert(!row.empty());
+      CARBON_CHECK(!row.empty());
       switch (row[0].kind()) {
         case AbstractPattern::Wildcard:
           default_matrix.Add(
