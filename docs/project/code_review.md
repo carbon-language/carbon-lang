@@ -259,7 +259,9 @@ It is good to reply to every comment so that the reviewer knows you saw them.
 Best practice is to send the reply to all of the comments at once, after the
 files in the pull request have been updated. If there are a lot of replies, it
 can be helpful to include a message saying whether the pull request is now ready
-for re-review.
+for re-review, or press the "request review" button to the right of the
+reviewer's name:
+![The request review button on GitHub](https://user-images.githubusercontent.com/711534/189789784-fcf18d1b-137b-48ba-959a-0d05cee36c2d.png)
 
 #### Responding to questions or confusion
 
