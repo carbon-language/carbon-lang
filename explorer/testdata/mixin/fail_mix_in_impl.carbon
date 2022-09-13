@@ -7,32 +7,23 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
+
 package ExplorerTest api;
 
-__mixin M1 {
-  fn F1[me: Self](x: Self) -> Self{
-     return x;
+__mixin Operations {
+  fn Square[me: Self](x:i32) -> i32{
+    return x * x;
   }
 }
 
-__mixin M2 {
-  fn F2() {
-  }
-  __mix M1;
+interface A {
+  fn F();
 }
 
-__mixin M3 {
-  __mix M1;
-  fn F3() {
-  }
+external impl i32 as A {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_mix_in_impl.carbon:[[@LINE+1]]: syntax error, unexpected MIX, expecting ALIAS or FN or RIGHT_CURLY_BRACE
+  __mix Operations;
+  fn F() {}
 }
 
-class C {
-  __mix M2;
-  __mix M3;
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-mix-diamond-clash.carbon:[[@LINE+1]]: Member named F1 (declared at {{.*}}/explorer/testdata/mixin/fail-mix-diamond-clash.carbon:15) is being mixed multiple times into C
-}
-
-fn Main() -> i32 {
-  return 0;
-}
+fn Main() -> i32 { return 0; }

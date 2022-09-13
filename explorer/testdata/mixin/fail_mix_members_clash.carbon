@@ -7,31 +7,25 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-
 package ExplorerTest api;
 
-class Point {
-
-  fn Origin() -> Point {
-    return {.x = 0, .y = 0};
+__mixin M1 {
+  fn F1[me: Self](x: Self) -> Self{
+     return x;
   }
+}
 
-  fn GetSetX[addr me: Point*](x: i32) -> i32 {
-    var old: auto = (*me).x;
-    (*me).x = x;
-    return old;
+__mixin M2 {
+  fn F1() {
   }
+}
 
-  var x: i32;
-  var y: i32;
+class C {
+  __mix M1;
+  __mix M2;
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_mix_members_clash.carbon:[[@LINE+1]]: Member named F1 (declared at {{.*}}/explorer/testdata/mixin/fail_mix_members_clash.carbon:20) cannot be mixed into C because it clashes with an existing member with the same name (declared at {{.*}}/explorer/testdata/mixin/fail_mix_members_clash.carbon:15)
 }
 
 fn Main() -> i32 {
-  let p: Point = Point.Origin();
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/addr/fail-method-let.carbon:[[@LINE+1]]: method GetSetX requires its receiver to be an lvalue
-  var x: auto = p.GetSetX(42);
-  if (p.x == 42) {
-    return x;
-  }
-  return 1;
+  return 0;
 }

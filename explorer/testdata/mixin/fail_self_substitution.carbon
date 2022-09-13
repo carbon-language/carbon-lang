@@ -10,20 +10,36 @@
 
 package ExplorerTest api;
 
-__mixin M {
+__mixin Operations {
   fn F[me: Self](x: Self) -> Self{
      return x;
   }
 }
 
-class C {
-  fn F[me: Self](x: Self) -> Self {
-     return x;
+class Point {
+  fn Origin() -> Point {
+    return {.x = 0, .y = 0};
   }
-  __mix M;
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-method-member-name-clash.carbon:[[@LINE+1]]: Member named F (declared at {{.*}}/explorer/testdata/mixin/fail-method-member-name-clash.carbon:16) cannot be mixed into C because it clashes with an existing member with the same name (declared at {{.*}}/explorer/testdata/mixin/fail-method-member-name-clash.carbon:22)
+
+  var x: i32;
+  var y: i32;
+  __mix Operations;
+}
+
+class Complex {
+  fn Zero() -> Complex {
+    return {.r = 0, .i = 0};
+  }
+
+  var r: i32;
+  var i: i32;
 }
 
 fn Main() -> i32 {
-  return 0;
+  var p: Point = Point.Origin();
+  var c: Complex = {.r = 42, .i = 1};
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_self_substitution.carbon:[[@LINE+1]]: type error in call: 'class Complex' is not implicitly convertible to 'class Point'
+  var p1: Point = p.F(c);
+
+  return p1.x - 42;
 }

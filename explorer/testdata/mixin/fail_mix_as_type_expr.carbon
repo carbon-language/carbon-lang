@@ -10,20 +10,10 @@
 
 package ExplorerTest api;
 
-__mixin Operations {
-  fn Square[me: Self](x:i32) -> i32{
-    return x * x;
-  }
-}
+__mixin Operations {}
 
-interface A {
-  fn F();
+fn Main() -> i32 {
+   // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_mix_as_type_expr.carbon:[[@LINE+1]]: Expected a type, but got mixin Operations
+   var a: Operations;
+   return 0;
 }
-
-external impl i32 as A {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-mix-in-impl.carbon:[[@LINE+1]]: syntax error, unexpected MIX, expecting ALIAS or FN or RIGHT_CURLY_BRACE
-  __mix Operations;
-  fn F() {}
-}
-
-fn Main() -> i32 { return 0; }

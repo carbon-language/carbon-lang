@@ -10,40 +10,28 @@
 
 package ExplorerTest api;
 
-__mixin Operations {
-  fn Square[me: Self](x:i32) -> i32{
-    return x * x;
-  }
-}
-
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-mix-in-global.carbon:[[@LINE+1]]: syntax error, unexpected MIX, expecting END_OF_FILE
-__mix Operations;
-
 class Point {
+
   fn Origin() -> Point {
     return {.x = 0, .y = 0};
   }
 
-  var x: i32;
-  var y: i32;
-  __mix Operations;
-}
-
-class Complex {
-  fn Zero() -> Complex {
-    return {.r = 0, .i = 0};
+  fn GetSetX[addr me: Point*](x: i32) -> i32 {
+    var old: auto = (*me).x;
+    (*me).x = x;
+    return old;
   }
 
-  var r: i32;
-  var i: i32;
-  __mix Operations;
+  var x: i32;
+  var y: i32;
 }
 
-
 fn Main() -> i32 {
-  var p: Point = Point.Origin();
-  var c: Complex = Complex.Zero();
-  p.x = 3;
-  c.r = 3;
-  return p.Square(p.y) - c.Square(c.i);
+  let p: Point = Point.Origin();
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/addr/fail_method_let.carbon:[[@LINE+1]]: method GetSetX requires its receiver to be an lvalue
+  var x: auto = p.GetSetX(42);
+  if (p.x == 42) {
+    return x;
+  }
+  return 1;
 }
