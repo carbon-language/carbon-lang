@@ -2920,7 +2920,7 @@ auto TypeChecker::TypeCheckPattern(
   }
 }
 
-// A abstracted view of a pattern or constant value (which we view as a
+// An abstracted view of a pattern or constant value (which we view as a
 // particular kind of pattern).
 class AbstractPattern {
  public:
@@ -3024,6 +3024,7 @@ class AbstractPattern {
   }
 
  private:
+  // This is aligned so that we can use it in the `PointerUnion` below.
   struct alignas(8) WildcardTag {};
   AbstractPattern(WildcardTag)
       : value_(static_cast<const WildcardTag*>(nullptr)), type_(nullptr) {}
@@ -3053,7 +3054,6 @@ class AbstractPattern {
     }
   }
 
- private:
   // The underlying pattern: either a syntactic pattern, or a constant value,
   // or a placeholder indicating that this is a wildcard pattern.
   llvm::PointerUnion<Nonnull<const Pattern*>, Nonnull<const Value*>,
