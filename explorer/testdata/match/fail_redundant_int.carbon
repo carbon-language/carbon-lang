@@ -10,10 +10,15 @@
 
 package ExplorerTest api;
 
-fn Main() -> i32 {
-  var n: i32 = 0;
+fn A(n: i32) -> i32 {
   match (n) {
-    case 1 => { return 0; }
+    case 1 => { return 1; }
+    // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/match/fail_redundant_int.carbon:[[@LINE+1]]: unreachable case: all values matched by this case are matched by earlier cases
+    case 1 => { return 2; }
+    case (_: i32) => { return 3; }
   }
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_non_exhaustive_match.carbon:[[@LINE+1]]: non-exhaustive match may allow control-flow to reach the end of a function that provides a `->` return type
+}
+
+fn Main() -> i32 {
+  return A(1);
 }
