@@ -3075,17 +3075,38 @@ class AbstractPattern {
 // the algorithm used here.
 class PatternMatrix {
  public:
+  // Add a pattern vector row to this collection of pattern vectors.
+  void Add(std::vector<AbstractPattern> pattern_vector) {
+    CARBON_CHECK(matrix_.empty() || matrix_[0].size() == pattern_vector.size());
+    matrix_.push_back(std::move(pattern_vector));
+  }
+
+  // Is the given pattern vector redundant if it appears after the patterns in
+  // this matrix? That is, will it never match following the other patterns?
+  auto IsRedundant(llvm::ArrayRef<AbstractPattern> pattern) const -> bool {
+    return !IsUseful(pattern);
+  }
+
+ private:
   // The maximum number of times we will consider all alternatives when
   // recursively expanding the pattern. Allowing this to happen an arbitrary
   // number of times leads to exponential growth in the runtime of the
   // algorithm.
   static constexpr int MaxExponentialDepth = 8;
 
-  // Add a pattern vector row to this collection of pattern vectors.
-  void Add(std::vector<AbstractPattern> pattern_vector) {
-    CARBON_CHECK(matrix_.empty() || matrix_[0].size() == pattern_vector.size());
-    matrix_.push_back(std::move(pattern_vector));
-  }
+  // Information about a constructor for a compound type.
+  struct DiscriminatorInfo {
+    // For an alternative, the name. Otherwise, empty.
+    std::string_view discriminator;
+    // The number of elements. For a tuple, the size. Always 1 for an
+    // alternative.
+    int size;
+  };
+
+  struct DiscriminatorSet {
+    std::vector<DiscriminatorInfo> found;
+    bool any_missing;
+  };
 
   // Determine whether the given pattern vector is useful: that is, whether
   // adding it to the matrix would allow any more values to be matched.
@@ -3137,21 +3158,6 @@ class PatternMatrix {
       }
     }
   }
-
- private:
-  // Information about a constructor for a compound type.
-  struct DiscriminatorInfo {
-    // For an alternative, the name. Otherwise, empty.
-    std::string_view discriminator;
-    // The number of elements. For a tuple, the size. Always 1 for an
-    // alternative.
-    int size;
-  };
-
-  struct DiscriminatorSet {
-    std::vector<DiscriminatorInfo> found;
-    bool any_missing;
-  };
 
   // Find the discriminators used by the first column and check whether we
   // found all of them.
@@ -3324,7 +3330,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
         } else {
           expected_type = &clause.pattern().static_type();
         }
-        if (!patterns.IsUseful({&clause.pattern()})) {
+        if (patterns.IsRedundant({&clause.pattern()})) {
           return CompilationError(clause.pattern().source_loc())
                  << "unreachable case: all values matched by this case "
                  << "are matched by earlier cases";
@@ -3512,7 +3518,7 @@ static auto IsExhaustive(const Match& match) -> bool {
   for (const Match::Clause& clause : match.clauses()) {
     matrix.Add({&clause.pattern()});
   }
-  return !matrix.IsUseful({AbstractPattern::MakeWildcard()});
+  return matrix.IsRedundant({AbstractPattern::MakeWildcard()});
 }
 
 auto TypeChecker::ExpectReturnOnAllPaths(
