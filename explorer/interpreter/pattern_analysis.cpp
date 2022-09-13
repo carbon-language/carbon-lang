@@ -17,7 +17,7 @@ auto AbstractPattern::kind() const -> Kind {
     return Compound;
   }
   if (auto* value = value_.dyn_cast<const Value*>()) {
-    if (isa<TupleValue, AlternativeValue>(value)) {
+    if (isa<TupleValue, AlternativeValue, BoolValue>(value)) {
       return Compound;
     }
     return Primitive;
@@ -35,6 +35,8 @@ auto AbstractPattern::discriminator() const -> std::string_view {
   } else if (auto* value = value_.dyn_cast<const Value*>()) {
     if (auto* alt = dyn_cast<AlternativeValue>(value)) {
       return alt->alt_name();
+    } else if (auto* bool_val = dyn_cast<BoolValue>(value)) {
+      return bool_val->value() ? "true" : "false";
     }
   }
   return {};
@@ -167,7 +169,8 @@ auto PatternMatrix::IsUseful(llvm::ArrayRef<AbstractPattern> pattern,
 
 auto PatternMatrix::FirstColumnDiscriminators() const -> DiscriminatorSet {
   std::set<std::string_view> discrims;
-  std::optional<const ChoiceType*> choice;
+  std::optional<int> num_discrims;
+  std::optional<int> elem_size;
 
   for (auto& row : matrix_) {
     CARBON_CHECK(!row.empty());
@@ -175,36 +178,44 @@ auto PatternMatrix::FirstColumnDiscriminators() const -> DiscriminatorSet {
       case AbstractPattern::Wildcard:
         continue;
       case AbstractPattern::Compound: {
-        if (auto* tuple = dyn_cast<TupleValue>(&row[0].type())) {
+        const Value& type = row[0].type();
+        if (auto* tuple = dyn_cast<TupleValue>(&type)) {
           // If we find a tuple match, we've found all constructors (there's
           // only one!) and none were missing.
           return {
               .found = {{.discriminator = {},
                          .size = static_cast<int>(tuple->elements().size())}},
               .any_missing = false};
+        } else if (auto* choice = dyn_cast<ChoiceType>(&type)) {
+          num_discrims = choice->declaration().alternatives().size();
+          elem_size = 1;
+        } else if (isa<BoolType>(type)) {
+          // `bool` behaves like a choice type with two alternativs,
+          // and with no nested patterns for either of them.
+          num_discrims = 2;
+          elem_size = 0;
+        } else {
+          llvm_unreachable("unexpected compound type");
         }
         discrims.insert(row[0].discriminator());
-        choice = &cast<ChoiceType>(row[0].type());
         break;
       }
       case AbstractPattern::Primitive: {
-        // TODO: We assume that primitive value matches are always incomplete
-        // for now. This might be reasonable for integer types, even i8, but
-        // is probably worth revisiting for `bool`.
+        // We assume that primitive value matches are always incomplete, even
+        // for types like `i8` where a covering match might be possible.
         return {.found = {}, .any_missing = true};
       }
     }
   }
 
-  if (!choice ||
-      choice.value()->declaration().alternatives().size() != discrims.size()) {
+  if (!num_discrims || *num_discrims != static_cast<int>(discrims.size())) {
     return {.found = {}, .any_missing = true};
   }
 
   DiscriminatorSet result = {.found = {}, .any_missing = false};
   result.found.reserve(discrims.size());
   for (auto s : discrims) {
-    result.found.push_back({.discriminator = s, .size = 1});
+    result.found.push_back({.discriminator = s, .size = *elem_size});
   }
   return result;
 }
