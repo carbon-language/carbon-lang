@@ -7,25 +7,24 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
+
 package ExplorerTest api;
 
-__mixin M1 {
-  fn F1[me: Self](x: Self) -> Self{
-     return x;
-  }
+choice Opt {
+  None(),
+  Some(i32)
 }
 
-__mixin M2 {
-  fn F1() {
+fn A(a: Opt, b: Opt) -> i32 {
+  match ((a, b)) {
+    case (Opt.Some(n: i32), _: auto) => { return n; }
+    case (_: auto, Opt.Some(n: i32)) => { return n; }
+    // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/match/fail_not_reachable.carbon:[[@LINE+1]]: unreachable case: all values matched by this case are matched by earlier cases
+    case (Opt.Some(m: i32), Opt.Some(n: i32)) => { return m + n; }
   }
-}
-
-class C {
-  __mix M1;
-  __mix M2;
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-mix-members-clash.carbon:[[@LINE+1]]: Member named F1 (declared at {{.*}}/explorer/testdata/mixin/fail-mix-members-clash.carbon:20) cannot be mixed into C because it clashes with an existing member with the same name (declared at {{.*}}/explorer/testdata/mixin/fail-mix-members-clash.carbon:15)
+  return 0;
 }
 
 fn Main() -> i32 {
-  return 0;
+  return A(Opt.None(), Opt.Some(1));
 }

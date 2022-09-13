@@ -10,10 +10,10 @@
 
 package ExplorerTest api;
 
+__mixin Operations {}
+
 fn Main() -> i32 {
-  var n: i32 = 0;
-  match (n) {
-    case 1 => { return 0; }
-  }
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_non_exhaustive_match.carbon:[[@LINE+1]]: non-exhaustive match may allow control-flow to reach the end of a function that provides a `->` return type
+   // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_mix_as_type_expr.carbon:[[@LINE+1]]: Expected a type, but got mixin Operations
+   var a: Operations;
+   return 0;
 }

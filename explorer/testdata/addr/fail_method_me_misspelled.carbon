@@ -10,20 +10,9 @@
 
 package ExplorerTest api;
 
-__mixin Operations {
-  fn Square[me: Self](x:i32) -> i32{
-    return x * x;
-  }
-}
-
-interface A {
-  fn F();
-}
-
-external impl i32 as A {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-mix-in-impl.carbon:[[@LINE+1]]: syntax error, unexpected MIX, expecting ALIAS or FN or RIGHT_CURLY_BRACE
-  __mix Operations;
-  fn F() {}
+class C {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/addr/fail_method_me_misspelled.carbon:[[@LINE+1]]: illegal binding pattern in implicit parameter list
+  fn F[addr mew: Self*]() {}
 }
 
 fn Main() -> i32 { return 0; }

@@ -10,20 +10,22 @@
 
 package ExplorerTest api;
 
-__mixin M {
-  fn F[me: Self](x: Self) -> Self{
-     return x;
-  }
+choice Opt {
+  None(),
+  Some(i32)
 }
 
-class C {
-  fn F[me: Self](x: Self) -> Self {
-     return x;
+fn A(a: Opt, b: Opt) -> i32 {
+  match ((a, b)) {
+    case (Opt.None(), Opt.None()) => { return 0; }
+    case (Opt.Some(n: i32), _: auto) => { return n; }
+    case (_: auto, Opt.Some(n: i32)) => { return n; }
+    // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/match/fail_not_reachable_default.carbon:[[@LINE+1]]: unreachable case: all values matched by this case are matched by earlier cases
+    default => { return -1; }
   }
-  __mix M;
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-method-member-name-clash.carbon:[[@LINE+1]]: Member named F (declared at {{.*}}/explorer/testdata/mixin/fail-method-member-name-clash.carbon:16) cannot be mixed into C because it clashes with an existing member with the same name (declared at {{.*}}/explorer/testdata/mixin/fail-method-member-name-clash.carbon:22)
+  return 0;
 }
 
 fn Main() -> i32 {
-  return 0;
+  return A(Opt.None(), Opt.Some(1));
 }
