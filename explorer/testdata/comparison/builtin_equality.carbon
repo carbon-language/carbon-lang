@@ -8,43 +8,48 @@
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
 // CHECK: bool: 1
-// CHECK: bool: 0
-// CHECK: bool: 0
-// CHECK: bool: 1
-// CHECK: bool: 0
 // CHECK: bool: 1
 // CHECK: bool: 1
-// CHECK: bool: 0
+// CHECK: bool: 1
+// CHECK: bool: 1
+// CHECK: bool: 1
+// CHECK: bool: 1
+// CHECK: bool: 1
 // CHECK: string: 1
-// CHECK: string: 0
-// CHECK: string: 0
-// CHECK: string: 1
-// CHECK: string: 0
 // CHECK: string: 1
 // CHECK: string: 1
-// CHECK: string: 0
+// CHECK: string: 1
+// CHECK: string: 1
+// CHECK: string: 1
+// CHECK: string: 1
+// CHECK: string: 1
 // CHECK: int: 1
-// CHECK: int: 0
-// CHECK: int: 0
-// CHECK: int: 1
-// CHECK: int: 0
 // CHECK: int: 1
 // CHECK: int: 1
-// CHECK: int: 0
+// CHECK: int: 1
+// CHECK: int: 1
+// CHECK: int: 1
+// CHECK: int: 1
+// CHECK: int: 1
 // CHECK: result: 0
 
 package ExplorerTest api;
 
-fn Compare[T:! EqWith(.Self)](format: String, a: T, b: T) {
+fn CompareEqualValues[T:! EqWith(.Self)](format: String, a: T, b: T) {
   Print(format, if a == b then 1 else 0);
+  Print(format, if a != b then 0 else 1);
+}
+
+fn CompareDifferentValues[T:! EqWith(.Self)](format: String, a: T, b: T) {
+  Print(format, if a == b then 0 else 1);
   Print(format, if a != b then 1 else 0);
 }
 
 fn CompareAll[T:! EqWith(.Self)](format: String, a: T, b: T) {
-  Compare(format, a, a);
-  Compare(format, a, b);
-  Compare(format, b, a);
-  Compare(format, b, b);
+  CompareEqualValues(format, a, a);
+  CompareEqualValues(format, b, b);
+  CompareDifferentValues(format, a, b);
+  CompareDifferentValues(format, b, a);
 }
 
 fn Main() -> i32 {
