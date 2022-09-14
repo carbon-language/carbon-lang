@@ -547,6 +547,14 @@ void Value::Print(llvm::raw_ostream& out) const {
   }
 }
 
+auto ValueKindName(Value::Kind kind) -> std::string_view {
+  static constexpr std::string_view Names[] = {
+#define CARBON_VALUE_KIND(Name) #Name,
+#include "explorer/interpreter/value_kind.def"
+  };
+  return Names[static_cast<int>(kind)];
+}
+
 // Generates a 'human readable' description for an enum name.
 // For example, IntType -> 'int type'.
 static auto MakeKindDesc(const char* name) -> std::string {

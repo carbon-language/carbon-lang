@@ -10,6 +10,13 @@
 namespace Carbon::Testing {
 namespace {
 
+TEST(ValueTest, ValueKindName) {
+  EXPECT_EQ("AlternativeConstructorValue",
+            ValueKindName(Value::Kind::AlternativeConstructorValue));
+
+  EXPECT_EQ("IntType", ValueKindName(Value::Kind::IntType));
+}
+
 TEST(ValueTest, ValueKindDesc) {
   EXPECT_EQ("alternative constructor value",
             ValueKindDesc(Value::Kind::AlternativeConstructorValue));

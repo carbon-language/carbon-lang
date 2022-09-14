@@ -76,7 +76,10 @@ class Value {
   const Kind kind_;
 };
 
-// Returns a description for the supplied value `kind`.
+// Returns the name for the supplied value `kind`: IntType -> 'IntType'.
+auto ValueKindName(Value::Kind kind) -> std::string_view;
+
+// Returns a description for the supplied value `kind`: IntType -> 'int type'.
 auto ValueKindDesc(Value::Kind kind) -> std::string_view;
 
 // Base class for types holding contextual information by which we can
