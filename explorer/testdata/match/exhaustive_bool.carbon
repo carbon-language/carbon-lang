@@ -7,18 +7,17 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: strings equal: 0
-// CHECK: ints equal: 1
-// CHECK: strings not eq: 1
-// CHECK: ints not eq: 0
-// CHECK: result: 0
+// CHECK: result: 2
 
 package ExplorerTest api;
 
+fn A(b: bool) -> i32 {
+  match (b) {
+    case false => { return 1; }
+    case true => { return 2; }
+  }
+}
+
 fn Main() -> i32 {
-  Print("strings equal: {0}", if "hello" == "world" then 1 else 0);
-  Print("ints equal: {0}", if 1 == 1 then 1 else 0);
-  Print("strings not eq: {0}", if "hello" != "world" then 1 else 0);
-  Print("ints not eq: {0}", if 1 != 1 then 1 else 0);
-  return 0;
+  return A(true);
 }

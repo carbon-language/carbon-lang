@@ -10,10 +10,9 @@
 
 package ExplorerTest api;
 
-fn Main() -> i32 {
-  var n: i32 = 0;
-  match (n) {
-    case 1 => { return 0; }
-  }
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_non_exhaustive_match.carbon:[[@LINE+1]]: non-exhaustive match may allow control-flow to reach the end of a function that provides a `->` return type
+class C {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/addr/fail_method_me_misspelled.carbon:[[@LINE+1]]: illegal binding pattern in implicit parameter list
+  fn F[addr mew: Self*]() {}
 }
+
+fn Main() -> i32 { return 0; }

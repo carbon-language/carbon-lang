@@ -2,18 +2,23 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
+// RUN: %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
+// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
+// CHECK: result: 0
 
 package ExplorerTest api;
 
-__mixin Operations {}
+fn F(n: i32) {
+  match (n) {
+    case 1 => { return; }
+  }
+  // No diagnostic: this is reachable but that's OK.
+}
 
 fn Main() -> i32 {
-   // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-mix-as-type-expr.carbon:[[@LINE+1]]: Expected a type, but got mixin pseudo type: mixin Operations
-   var a: Operations;
-   return 0;
+  F(0);
+  return 0;
 }

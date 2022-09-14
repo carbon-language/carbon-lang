@@ -104,11 +104,16 @@ class RewriteBuilder : public clang::RecursiveASTVisitor<RewriteBuilder> {
   auto VisitCXXBoolLiteralExpr(clang::CXXBoolLiteralExpr* expr) -> bool;
   auto VisitDeclRefExpr(clang::DeclRefExpr* expr) -> bool;
   auto VisitDeclStmt(clang::DeclStmt* stmt) -> bool;
+  auto VisitImplicitCastExpr(clang::ImplicitCastExpr* expr) -> bool;
   auto VisitIntegerLiteral(clang::IntegerLiteral* expr) -> bool;
+  auto VisitParmVarDecl(clang::ParmVarDecl* decl) -> bool;
   auto VisitPointerTypeLoc(clang::PointerTypeLoc type_loc) -> bool;
+  auto VisitReturnStmt(clang::ReturnStmt* stmt) -> bool;
   auto VisitTranslationUnitDecl(clang::TranslationUnitDecl* decl) -> bool;
   auto VisitUnaryOperator(clang::UnaryOperator* expr) -> bool;
-  auto VisitVarDecl(clang::VarDecl* decl) -> bool;
+
+  auto TraverseFunctionDecl(clang::FunctionDecl* decl) -> bool;
+  auto TraverseVarDecl(clang::VarDecl* decl) -> bool;
 
   auto segments() const -> const SegmentMapType& { return segments_; }
   auto segments() -> SegmentMapType& { return segments_; }

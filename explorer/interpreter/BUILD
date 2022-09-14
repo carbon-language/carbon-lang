@@ -179,6 +179,22 @@ cc_library(
 )
 
 cc_library(
+    name = "pattern_analysis",
+    srcs = [
+        "pattern_analysis.cpp",
+    ],
+    hdrs = [
+        "pattern_analysis.h",
+    ],
+    deps = [
+        ":action_and_value",
+        "//common:error",
+        "//explorer/ast",
+        "//explorer/common:nonnull",
+        "@llvm-project//llvm:Support",
+    ],
+)
+cc_library(
     name = "type_checker",
     srcs = [
         "builtins.cpp",
@@ -194,6 +210,7 @@ cc_library(
         ":action_and_value",
         ":dictionary",
         ":interpreter",
+        ":pattern_analysis",
         "//common:error",
         "//common:ostream",
         "//explorer/ast",

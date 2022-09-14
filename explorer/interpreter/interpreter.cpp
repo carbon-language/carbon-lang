@@ -214,6 +214,7 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
       return &cast<TypeOfConstraintType>(static_type)->constraint_type();
     case Operator::As:
     case Operator::Eq:
+    case Operator::NotEq:
     case Operator::Less:
     case Operator::LessEq:
     case Operator::Greater:
@@ -1202,6 +1203,19 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           }
           // Implicit newline; currently no way to disable it.
           llvm::outs() << "\n";
+          return todo_.FinishAction(TupleValue::Empty());
+        }
+        case IntrinsicExpression::Intrinsic::Assert: {
+          CARBON_CHECK(args.size() == 2);
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> condition,
+              Convert(args[0], arena_->New<BoolType>(), exp.source_loc()));
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> string_value,
+              Convert(args[1], arena_->New<StringType>(), exp.source_loc()));
+          if (cast<BoolValue>(condition)->value() == false) {
+            return RuntimeError(exp.source_loc()) << *string_value;
+          }
           return todo_.FinishAction(TupleValue::Empty());
         }
         case IntrinsicExpression::Intrinsic::Alloc: {

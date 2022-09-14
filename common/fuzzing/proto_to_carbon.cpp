@@ -189,6 +189,9 @@ static auto OperatorToCarbon(const Fuzzing::OperatorExpression& operator_expr,
     case Fuzzing::OperatorExpression::BitShiftRight:
       BinaryOperatorToCarbon(arg0, " >> ", arg1, out);
       break;
+    case Fuzzing::OperatorExpression::NotEq:
+      BinaryOperatorToCarbon(arg0, " != ", arg1, out);
+      break;
   }
   out << ")";
 }

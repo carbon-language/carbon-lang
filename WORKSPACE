@@ -44,13 +44,14 @@ configure_clang_toolchain(name = "bazel_cc_toolchain")
 # Abseil libraries
 ###############################################################################
 
-abseil_version = "20211102.0"
+# Head as of 2022-09-13.
+abseil_version = "530cd52f585c9d31b2b28cea7e53915af7a878e3"
 
 http_archive(
     name = "com_google_absl",
-    sha256 = "dcf71b9cba8dc0ca9940c4b316a0c796be8fab42b070bb6b7cab62b48f0e66c4",
+    sha256 = "f8a6789514a3b109111252af92da41d6e64f90efca9fb70515d86debee57dc24",
     strip_prefix = "abseil-cpp-%s" % abseil_version,
-    urls = ["https://github.com/abseil/abseil-cpp/archive/refs/tags/%s.tar.gz" % abseil_version],
+    urls = ["https://github.com/abseil/abseil-cpp/archive/%s.tar.gz" % abseil_version],
 )
 
 ###############################################################################
@@ -93,8 +94,8 @@ http_archive(
     build_file_content = "# empty",
     patch_args = ["-p1"],
     patches = [
-        "@//:bazel/llvm-patches/0001-Patch-for-mallinfo2-when-using-Bazel-build-system.patch",
-        "@//:bazel/llvm-patches/0002-Added-Bazel-build-for-compiler-rt-fuzzer.patch",
+        "@carbon//bazel/llvm-patches:0001-Patch-for-mallinfo2-when-using-Bazel-build-system.patch",
+        "@carbon//bazel/llvm-patches:0002-Added-Bazel-build-for-compiler-rt-fuzzer.patch",
     ],
     sha256 = "0a3929c5f2fe756820277be7b10e95f7480e7cb7f297ec574d3e9ddeac9068d7",
     strip_prefix = "llvm-project-%s" % llvm_version,
@@ -212,14 +213,15 @@ rules_proto_toolchains()
 # libprotobuf_mutator - for structured fuzzer testing.
 ###############################################################################
 
-libprotobuf_mutator_version = "1.0"
+# Head as of 2022-09-13.
+libprotobuf_mutator_version = "a304ec48dcf15d942607032151f7e9ee504b5dcf"
 
 http_archive(
     name = "com_google_libprotobuf_mutator",
     build_file = "@//:third_party/libprotobuf_mutator/BUILD.txt",
-    sha256 = "792f250fb546bde8590e72d64311ea00a70c175fd77df6bb5e02328fa15fe28e",
+    sha256 = "0ce80217393fe6b01dac9818127e664801d865fefd708b98183181c0ed457878",
     strip_prefix = "libprotobuf-mutator-%s" % libprotobuf_mutator_version,
-    urls = ["https://github.com/google/libprotobuf-mutator/archive/v%s.tar.gz" % libprotobuf_mutator_version],
+    urls = ["https://github.com/google/libprotobuf-mutator/archive/%s.tar.gz" % libprotobuf_mutator_version],
 )
 
 ###############################################################################
