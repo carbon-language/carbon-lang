@@ -1180,6 +1180,87 @@ auto ParseTree::Parser::ParseWhileStatement() -> llvm::Optional<Node> {
                  /*has_error=*/!cond || !body);
 }
 
+auto ParseTree::Parser::ParseForStatement() -> llvm::Optional<Node> {
+  // TODO Add proper diagnostics.
+  CARBON_RETURN_IF_STACK_LIMITED(llvm::None);
+  auto start = GetSubtreeStartPosition();
+  auto token = Consume(TokenKind::For());
+
+  auto header = [this]() -> llvm::Optional<Node> {
+    auto open_paren = ConsumeIf(TokenKind::OpenParen());
+    auto header_start = GetSubtreeStartPosition();
+
+    if (!open_paren) {
+      CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "Expected `(` after `{0}`.",
+                        TokenKind);
+      emitter_.Emit(*position_, ExpectedParenAfter, TokenKind::For());
+    } else {
+      // Question: should we:
+      // 1. Try to continue parsing the loop header?
+      // 2. Skip all tokens until we reach either:
+      //    * A `)` without an opening one?
+      //      That might be easy because:
+      //      - The lexer will likely add a recovery token and mark the `)` as
+      //        an error token. So we skip until we come across this error
+      //        token.
+      //    * A `{` which marks the start of the block:
+      //      We might want to implement a heuristic here that the `{` has to be
+      //      the last token on the line.
+      //    * The end of line.
+      //
+      // The first option boils down to trying to report as many errors as
+      // possible in the header. The second one tries to skip over as much as
+      // possible until we reach a new construct, i.e. the for body block.
+    }
+
+    bool var_decl_parsed = false;
+
+    if (NextTokenIs(TokenKind::Var())) {
+      auto var_token = Consume(TokenKind::Var());
+      auto var_start = GetSubtreeStartPosition();
+      auto pattern = ParsePattern(PatternKind::Variable);
+      AddNode(ParseNodeKind::VariableDeclaration(), var_token, var_start,
+              !pattern);
+      var_decl_parsed = true;
+    } else {
+      CARBON_DIAGNOSTIC(ExpectedVariableDeclaration, Error,
+                        "Expected `var` declaration.");
+      emitter_.Emit(*position_, ExpectedVariableDeclaration);
+
+      // Same questin for missing `(` applies here.
+    }
+
+    bool in_parsed = false;
+
+    if (NextTokenIs(TokenKind::In())) {
+      in_parsed = true;
+      AddLeafNode(ParseNodeKind::ForIn(), Consume(TokenKind::In()));
+    } else if (NextTokenIs(TokenKind::Colon())) {
+      in_parsed = true;
+      Consume(TokenKind::Colon());
+      CARBON_DIAGNOSTIC(ExpectedVariableDeclaration, Error,
+                        "Expected `var` declaration.");
+      emitter_.Emit(*position_, ExpectedVariableDeclaration);
+    } else {
+      // Same questin for missing `(` applies here.
+    }
+
+    auto expr = ParseExpression();
+
+    // This will be more complicated based on how we handle the missing `(`
+    // case.
+    auto close_paren =
+        ParseCloseParen(*open_paren, ParseNodeKind::ForHeaderEnd());
+
+    return AddNode(ParseNodeKind::ForHeader(), *open_paren, header_start,
+                   !var_decl_parsed || !in_parsed || !expr || !close_paren);
+  }();
+
+  auto body = ParseCodeBlock();
+
+  return AddNode(ParseNodeKind::ForStatement(), token, start, !header || !body);
+}
+
 auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind,
                                               KeywordStatementArgument argument)
     -> llvm::Optional<Node> {
@@ -1219,6 +1300,9 @@ auto ParseTree::Parser::ParseStatement() -> llvm::Optional<Node> {
 
     case TokenKind::While():
       return ParseWhileStatement();
+
+    case TokenKind::For():
+      return ParseForStatement();
 
     case TokenKind::Continue():
       return ParseKeywordStatement(ParseNodeKind::ContinueStatement(),
