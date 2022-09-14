@@ -7,18 +7,49 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: strings equal: 0
-// CHECK: ints equal: 1
-// CHECK: strings not eq: 1
-// CHECK: ints not eq: 0
+// CHECK: bool: 1
+// CHECK: bool: 0
+// CHECK: bool: 0
+// CHECK: bool: 1
+// CHECK: bool: 0
+// CHECK: bool: 1
+// CHECK: bool: 1
+// CHECK: bool: 0
+// CHECK: string: 1
+// CHECK: string: 0
+// CHECK: string: 0
+// CHECK: string: 1
+// CHECK: string: 0
+// CHECK: string: 1
+// CHECK: string: 1
+// CHECK: string: 0
+// CHECK: int: 1
+// CHECK: int: 0
+// CHECK: int: 0
+// CHECK: int: 1
+// CHECK: int: 0
+// CHECK: int: 1
+// CHECK: int: 1
+// CHECK: int: 0
 // CHECK: result: 0
 
 package ExplorerTest api;
 
+fn Compare[T:! EqWith(.Self)](format: String, a: T, b: T) {
+  Print(format, if a == b then 1 else 0);
+  Print(format, if a != b then 1 else 0);
+}
+
+fn CompareAll[T:! EqWith(.Self)](format: String, a: T, b: T) {
+  Compare(format, a, a);
+  Compare(format, a, b);
+  Compare(format, b, a);
+  Compare(format, b, b);
+}
+
 fn Main() -> i32 {
-  Print("strings equal: {0}", if "hello" == "world" then 1 else 0);
-  Print("ints equal: {0}", if 1 == 1 then 1 else 0);
-  Print("strings not eq: {0}", if "hello" != "world" then 1 else 0);
-  Print("ints not eq: {0}", if 1 != 1 then 1 else 0);
+  CompareAll("bool: {0}", false, true);
+  CompareAll("string: {0}", "hello", "world");
+  CompareAll("int: {0}", 1, 2);
   return 0;
 }
