@@ -58,6 +58,14 @@ def _compute_mac_os_sysroot(repository_ctx):
     output = _run(repository_ctx, [xcrun, "--show-sdk-path"]).stdout
     return output.splitlines()[0]
 
+def _transform_include_path(repository_ctx, path):
+    """Transforms an include path from Clang into one for Bazel."""
+    path = path.lstrip(" ")
+    framework_suffix = " (framework directory)"
+    if path.endswith(framework_suffix):
+      path = path[:len(path) - len(framework_suffix)]
+    return repository_ctx.path(path)
+
 def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
     """Runs the `clang` binary and extracts the include search paths.
 
@@ -113,7 +121,7 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
     include_end = output.index("End of search list.", include_begin)
 
     return [
-        repository_ctx.path(s.lstrip(" "))
+        _transform_include_path(repository_ctx, s)
         for s in output[include_begin:include_end]
     ]
 
