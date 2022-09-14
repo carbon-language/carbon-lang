@@ -223,17 +223,6 @@ def _impl(ctx):
                 flag_groups = [flag_group(flags = ["-shared"])],
             ),
             flag_set(
-                actions = [
-                    ACTION_NAMES.cpp_link_executable,
-                ],
-                flag_groups = [
-                    flag_group(
-                        flags = ["-pie"],
-                        expand_if_available = "force_pic",
-                    ),
-                ],
-            ),
-            flag_set(
                 actions = all_link_actions,
                 flag_groups = [
                     flag_group(
@@ -556,6 +545,35 @@ def _impl(ctx):
                     with_feature_set(not_features = ["opt"]),
                 ],
             ),
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cpp_link_executable,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["-pie"],
+                        expand_if_available = "force_pic",
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    macos_flags_feature = feature(
+        name = "macos_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cpp_link_executable,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["-fpie"],
+                        expand_if_available = "force_pic",
+                    ),
+                ],
+            ),
         ],
     )
 
@@ -794,6 +812,7 @@ def _impl(ctx):
         # so that might be an example where a feature must be added.
         sysroot = None
     elif ctx.attr.target_cpu in ["darwin", "darwin_arm64"]:
+        features += [macos_flags_feature]
         sysroot = sysroot_dir
     else:
         fail("Unsupported target platform!")
