@@ -14,8 +14,8 @@ TEST(CheckTest, CheckTrue) { CARBON_CHECK(true); }
 TEST(CheckTest, CheckFalse) {
   ASSERT_DEATH({ CARBON_CHECK(false); },
                "Stack trace:\n"
-               "[[:digit:]]+\n"
-               "CHECK failure at common/check_test.cpp:.+: false\n");
+               ".+\n"
+               "CHECK failure at common/check_test.cpp:[[:digit:]]+: false\n");
 }
 
 TEST(CheckTest, CheckTrueCallbackNotUsed) {
