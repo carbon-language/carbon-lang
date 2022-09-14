@@ -559,6 +559,24 @@ def _impl(ctx):
         ],
     )
 
+    macos_flags_feature = feature(
+        name = "macos_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cpp_link_executable,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["-fpie"],
+                        expand_if_available = "force_pic",
+                    ),
+                ],
+            ),
+        ],
+    )
+
     default_link_libraries_feature = feature(
         name = "default_link_libraries",
         enabled = True,
@@ -794,6 +812,7 @@ def _impl(ctx):
         # so that might be an example where a feature must be added.
         sysroot = None
     elif ctx.attr.target_cpu in ["darwin", "darwin_arm64"]:
+        features += [macos_flags_feature]
         sysroot = sysroot_dir
     else:
         fail("Unsupported target platform!")
