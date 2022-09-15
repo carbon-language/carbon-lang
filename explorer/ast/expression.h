@@ -132,6 +132,7 @@ enum class Operator {
   Mod,
   Neg,
   Not,
+  NotEq,
   Or,
   Sub,
   Ptr,
@@ -688,6 +689,7 @@ class IntrinsicExpression : public Expression {
     IntBitComplement,
     IntLeftShift,
     IntRightShift,
+    Assert,
   };
 
   // Returns the enumerator corresponding to the intrinsic named `name`,

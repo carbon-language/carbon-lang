@@ -7,14 +7,54 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: strings equal: 0
-// CHECK: ints equal: 1
+// CHECK: bool: 1
+// CHECK: bool: 1
+// CHECK: bool: 1
+// CHECK: bool: 1
+// CHECK: bool: 1
+// CHECK: bool: 1
+// CHECK: bool: 1
+// CHECK: bool: 1
+// CHECK: string: 1
+// CHECK: string: 1
+// CHECK: string: 1
+// CHECK: string: 1
+// CHECK: string: 1
+// CHECK: string: 1
+// CHECK: string: 1
+// CHECK: string: 1
+// CHECK: int: 1
+// CHECK: int: 1
+// CHECK: int: 1
+// CHECK: int: 1
+// CHECK: int: 1
+// CHECK: int: 1
+// CHECK: int: 1
+// CHECK: int: 1
 // CHECK: result: 0
 
 package ExplorerTest api;
 
+fn CompareEqualValues[T:! EqWith(.Self)](format: String, a: T, b: T) {
+  Print(format, if a == b then 1 else 0);
+  Print(format, if a != b then 0 else 1);
+}
+
+fn CompareDifferentValues[T:! EqWith(.Self)](format: String, a: T, b: T) {
+  Print(format, if a == b then 0 else 1);
+  Print(format, if a != b then 1 else 0);
+}
+
+fn CompareAll[T:! EqWith(.Self)](format: String, a: T, b: T) {
+  CompareEqualValues(format, a, a);
+  CompareEqualValues(format, b, b);
+  CompareDifferentValues(format, a, b);
+  CompareDifferentValues(format, b, a);
+}
+
 fn Main() -> i32 {
-  Print("strings equal: {0}", if "hello" == "world" then 1 else 0);
-  Print("ints equal: {0}", if 1 == 1 then 1 else 0);
+  CompareAll("bool: {0}", false, true);
+  CompareAll("string: {0}", "hello", "world");
+  CompareAll("int: {0}", 1, 2);
   return 0;
 }

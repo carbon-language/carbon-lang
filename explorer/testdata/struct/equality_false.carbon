@@ -16,6 +16,9 @@ external impl {.x: i32, .y: i32} as EqWith(Self) {
   fn Equal[me: Self](other: Self) -> bool {
     return me.x == other.x and me.y == other.y;
   }
+  fn NotEqual[me: Self](other: Self) -> bool {
+    return me.x != other.x or me.y != other.y;
+  }
 }
 
 fn Main() -> i32 {

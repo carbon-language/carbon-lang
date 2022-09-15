@@ -10,17 +10,13 @@
 
 package ExplorerTest api;
 
-class Shape {
-  var x: i32;
-}
-
 class Point {
 
   fn Origin() -> Point {
     return {.x = 0, .y = 0};
   }
 
-  fn GetSetX[addr me: Shape*](x: i32) -> i32 {
+  fn GetSetX[addr me: Point*](x: i32) -> i32 {
     var old: auto = (*me).x;
     (*me).x = x;
     return old;
@@ -31,8 +27,8 @@ class Point {
 }
 
 fn Main() -> i32 {
-  var p: Point = Point.Origin();
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/addr/fail-method-me-type.carbon:[[@LINE+1]]: type error in method access, receiver type: 'class Point' is not implicitly convertible to 'class Shape'
+  let p: Point = Point.Origin();
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/addr/fail_method_let.carbon:[[@LINE+1]]: method GetSetX requires its receiver to be an lvalue
   var x: auto = p.GetSetX(42);
   if (p.x == 42) {
     return x;

@@ -145,7 +145,7 @@ var String: invalid = '''
 ```
 
 A _file type indicator_ is any sequence of non-whitespace characters other than
-`"` or `#`. The file type indicator has no semantic meaning to the Carbon
+`'` or `#`. The file type indicator has no semantic meaning to the Carbon
 compiler, but some file type indicators are understood by the language tooling
 (for example, syntax highlighter, code formatter) as indicating the structure of
 the string literal's content.
@@ -331,6 +331,7 @@ string in the type system. In such string literals, we should consider rejecting
     -   [Trailing whitespace](/proposals/p0199.md#trailing-whitespace)
     -   [Line separators](/proposals/p0199.md#line-separators)
 -   [Internal whitespace](/proposals/p0199.md#internal-whitespace)
+-   [Different restrictions for file type indicators](https://github.com/carbon-language/carbon-lang/issues/2140)
 
 ## References
 
