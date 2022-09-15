@@ -303,4 +303,4 @@ Karbon, herkesin katkıda bulunabileceği sıcak ve kapsayıcı bir ortama kendi
     [GitHub forumu](https://github.com/carbon-language/carbon-lang/discussions)'a katıl .
 -   [Davranış kodu](CODE_OF_CONDUCT.md)'na Göz at ve 
     Karbon geliştirme topluluğu hakkında bilgi için [katkıda bulunan yönergeler](CONTRIBUTING.md).
--   Karbonu burada tartışıyoruz [Discord](https://discord.gg/ZjVdShJDAs).
+-   Karbonu [Discord](https://discord.gg/ZjVdShJDAs)'da tartışıyoruz.
