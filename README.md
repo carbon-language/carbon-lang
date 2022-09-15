@@ -285,24 +285,22 @@ These instructions assume [Homebrew](https://brew.sh/) is installed; see our
 [contribution tools documentation](/docs/project/contribution_tools.md) for more
 extensive tooling instructions.
 
-Learn more about the Carbon project:
+Karbon projesi hakkında daha fazla şey öğren:
 
--   [Project goals](/docs/project/goals.md)
--   [Language design overview](/docs/design)
--   [Carbon Explorer](/explorer)
--   [FAQ](/docs/project/faq.md)
+-   [Proje Hedefleri](/docs/project/goals.md)
+-   [Dil tasarımına genel bakış](/docs/design)
+-   [Karbon gezgini](/explorer)
+-   [SSS](/docs/project/faq.md)
 
-## Join us
+## Bize katıl
 
-Carbon is committed to a welcoming and inclusive environment where everyone can
-contribute.
+Karbon, herkesin katkıda bulunabileceği sıcak ve kapsayıcı bir ortama kendini adamıştır.
 
--   To watch for major release announcements, subscribe to our
-    [Carbon release post on GitHub](https://github.com/carbon-language/carbon-lang/discussions/1020)
-    and [star carbon-lang](https://github.com/carbon-language/carbon-lang).
--   To join the design discussion, join our
-    [GitHub forum](https://github.com/carbon-language/carbon-lang/discussions).
--   See our [code of conduct](CODE_OF_CONDUCT.md) and
-    [contributing guidelines](CONTRIBUTING.md) for information about the Carbon
-    development community.
--   We discuss Carbon on [Discord](https://discord.gg/ZjVdShJDAs).
+-   Büyük sürüm duyurularını izlemek için,
+    [GitHub'daki karbon yayın gönderisi](https://github.com/carbon-language/carbon-lang/discussions/1020) abone ol ve
+    [yıldız karbon-dili](https://github.com/carbon-language/carbon-lang).
+-   Tasarım tartışmasına katılmak için,
+    [GitHub forumu](https://github.com/carbon-language/carbon-lang/discussions)'a katıl .
+-   [Davranış kodu](CODE_OF_CONDUCT.md)'na Göz at ve 
+    Karbon geliştirme topluluğu hakkında bilgi için [katkıda bulunan yönergeler](CONTRIBUTING.md).
+-   Karbonu burada tartışıyoruz [Discord](https://discord.gg/ZjVdShJDAs).
