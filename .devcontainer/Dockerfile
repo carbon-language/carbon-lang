@@ -31,8 +31,8 @@ RUN wget https://apt.llvm.org/llvm.sh
 RUN chmod +x llvm.sh
 RUN ./llvm.sh 15 all
 RUN rm llvm.sh
-# Add the lib dir to the PATH. This helps Bazel find clang, and VS Code find
-# clangd.
+# Add the lib dir to the PATH. This helps Bazel find clang and VS Code find
+# clangd, without version suffixes.
 ENV PATH="/usr/lib/llvm-15/bin:${PATH}"
 
 # Update pip and install black and pre-commit.
