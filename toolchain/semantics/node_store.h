@@ -29,7 +29,7 @@ class NodeStoreBase {
   template <typename NodeT>
   auto Store(NodeT node) -> NodeRef {
     auto& node_store = std::get<static_cast<size_t>(NodeT::Kind)>(node_stores_);
-    NodeStoreIndex index = {.index = static_cast<int32_t>(node_store.size())};
+    NodeStoreIndex index(node_store.size());
     node_store.push_back(node);
     return NodeRef(NodeT::Kind, index);
   }

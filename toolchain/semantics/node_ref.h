@@ -14,6 +14,8 @@ namespace Carbon::Semantics {
 
 // Type-safe storage of NodeStore indices.
 struct NodeStoreIndex {
+  explicit NodeStoreIndex(int32_t index) : index(index) {}
+
   operator int32_t() const { return index; }
 
   int32_t index;
@@ -26,7 +28,7 @@ struct NodeStoreIndex {
 // quantities are being created.
 class NodeRef {
  public:
-  NodeRef() : NodeRef(NodeKind::Invalid, {.index = -1}) {}
+  NodeRef() : NodeRef(NodeKind::Invalid, NodeStoreIndex(-1)) {}
 
   auto kind() -> NodeKind { return kind_; }
 

@@ -59,7 +59,9 @@ class SemanticsIRFactory {
                                 ParseTree::Node node);
 
   // Returns a unique ID for the SemanticsIR.
-  auto next_id() -> Semantics::NodeId { return {.id = id_counter_++}; }
+  auto next_id() -> Semantics::NodeId {
+    return Semantics::NodeId(id_counter_++);
+  }
 
   // Convenience accessor.
   auto parse_tree() -> const ParseTree& { return *semantics_.parse_tree_; }

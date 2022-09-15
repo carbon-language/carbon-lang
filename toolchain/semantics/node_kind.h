@@ -13,6 +13,8 @@ namespace Carbon::Semantics {
 
 // Type-safe storage of Node IDs.
 struct NodeId {
+  explicit NodeId(int32_t id) : id(id) {}
+
   void Print(llvm::raw_ostream& out) const { out << "%" << id; }
 
   // Comparison to help tests.
