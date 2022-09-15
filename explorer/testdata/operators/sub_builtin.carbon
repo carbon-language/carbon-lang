@@ -14,8 +14,8 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  var lhs: i32 = 3;
-  var rhs: i32 = 2;
+  var lhs: i32 = 8;
+  var rhs: i32 = 3;
   // Make sure that both the interface and operator work with i32. These rely on
   // builtin arithmetic more directly.
   Print("Interface: {0}", lhs.(SubWith(i32).Op)(rhs));
