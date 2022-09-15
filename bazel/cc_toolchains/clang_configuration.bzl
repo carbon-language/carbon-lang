@@ -19,19 +19,22 @@ def _run(repository_ctx, cmd):
 
 def _clang_version(version_output):
     """Returns clang's major version number, or None if not found."""
-    version_prefix = 'clang version '
+    version_prefix = "clang version "
     version_start = version_output.find(version_prefix)
     if version_start == -1:
         # No version
         return None
     version_start += len(version_prefix)
+
     # Find a dot to indicate something like 'clang version 14.0.6'.
-    version_dot = version_output.find('.', version_start)
+    version_dot = version_output.find(".", version_start)
     if version_dot == -1:
         return None
+
     # Make sure the dot was on the same line as the version.
-    if version_output.find('\n', version_start) < version_dot:
+    if version_output.find("\n", version_start) < version_dot:
         return None
+
     # Return the version as int.
     return int(version_output[version_start:version_dot])
 
@@ -84,14 +87,14 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
 
     # Create an empty temp file for Clang to use
     if repository_ctx.os.name.lower().startswith("windows"):
-        repository_ctx.file('_temp', '')
+        repository_ctx.file("_temp", "")
 
     # Read in an empty input file. If we are building from
     # Windows, then we create an empty temp file. Clang
     # on Windows does not like it when you pass a non-existent file.
     if repository_ctx.os.name.lower().startswith("windows"):
-        repository_ctx.file('_temp', '')
-        input_file = repository_ctx.path('_temp')
+        repository_ctx.file("_temp", "")
+        input_file = repository_ctx.path("_temp")
     else:
         input_file = "/dev/null"
 
