@@ -59,8 +59,7 @@ teknik borcun kendisi ve evrim süreciyle ilgili zorluklar. Bu sorunları çözm
 basit sözdizimi.
 
 Mevcut modern diller zaten mükemmel bir geliştirici deneyimi sağlıyor: Go,
-Swift, Kotlin, Rust, ve daha fazlası. **_Geliştiriciler var olan bu 
-dillerden birini kullanabilir._**Ne yazık ki, bu dillerin tasarımları
+Swift, Kotlin, Rust, ve daha fazlası. **_Geliştiriciler var olan bu dillerden birini kullanabilir._**Ne yazık ki, bu dillerin tasarımları
 C++'ın benimsenmesi ve taşınması için önemli engeller sunar.
 Bu engeller Yazılımın deyimsel tasarımındaki değişikliklerden performans 
 yüküne kadar değişir.
