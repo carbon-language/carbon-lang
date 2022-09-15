@@ -20,6 +20,7 @@ load("@bazel_tools//tools/build_defs/cc:action_names.bzl", "ACTION_NAMES")
 load(
     ":clang_detected_variables.bzl",
     "clang_bindir",
+    "clang_version",
     "clang_include_dirs_list",
     "clang_resource_dir",
     "llvm_bindir",
@@ -496,6 +497,13 @@ def _impl(ctx):
         implies = ["fuzzer"],
     )
 
+    # With clang 14 and lower, we expect it to be built with libc++ debug
+    # support. In later LLVM versions, we expect the assertions define to work.
+    if clang_version and clang_version <= 14:
+        libcpp_debug_flags = ["-D_LIBCPP_DEBUG=1"]
+    else:
+        libcpp_debug_flags = ["-D_LIBCPP_ENABLE_ASSERTIONS=1"]
+
     linux_flags_feature = feature(
         name = "linux_flags",
         enabled = True,
@@ -537,10 +545,7 @@ def _impl(ctx):
             ),
             flag_set(
                 actions = all_compile_actions,
-                flag_groups = [flag_group(flags = [
-                    # Enable libc++'s debug features.
-                    "-D_LIBCPP_DEBUG=1",
-                ])],
+                flag_groups = [flag_group(flags = libcpp_debug_flags)],
                 with_features = [
                     with_feature_set(not_features = ["opt"]),
                 ],
