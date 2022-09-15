@@ -51,19 +51,20 @@ GitHub, "img"yi otomatik olarak bağlar, ancak "href="#"` olduğunda bir bağlan
 - Konuksever, kapsayıcı ve arkadaş canlısı olmaya çalışan topluluk
 - Pilleri içeren yaklaşım: derleyici, kitaplıklar, belgeler, araçlar, paket yöneticisi ve daha fazlası
 
-## Why build Carbon?
+## Karbon dili niçin geliştiriliyor?
 
-C++, performans açısından kritik yazılımlar için baskın programlama dili olmaya devam ediyor, devasa yatırımlarla ve büyüyen kod tabanlarıyla.Ancak  on yıllardır biriken teknik borç nedeniyle, yukarıda belirtildiği gibi geliştiricilerin ihtiyaçlarını iyileştirmek ve karşılamak için uğraşıyor. Kademeli olarak gelişen C++
+C++, performans açısından kritik yazılımlar için devasa yatırımlarla ve büyüyen kod tabanlarıyla baskın programlama dili olmaya devam ediyor. Ancak on yıllardır biriken teknik borç nedeniyle, yukarıda belirtildiği gibi geliştiricilerin ihtiyaçlarını iyileştirmek ve karşılamak için uğraşılıyor. Kademeli olarak gelişen C++
 [son derece zor](/docs/project/difficulties cpp.md'yi geliştirmek), her ikisi de
-teknik borcun kendisi ve evrim süreciyle ilgili zorluklar.Bu sorunları çözmenin en iyi yolu, C veya C++ mirasını doğrudan devralmaktan kaçınmaktır ve ve bunun yerine aşağıdaki gibi sağlam dil temelleriyle başlayın.
-[modern jenerik sistem](#generics), modüler kod organizasyonu ve tutarlı,
+teknik borcun kendisi ve evrim süreciyle ilgili zorluklar. Bu sorunları çözmenin en iyi yolu, C veya C++ mirasını doğrudan devralmaktan kaçınmaktır ve bunun yerine aşağıdaki gibi sağlam dil temelleriyle başlamaktır.
+[modern jenerik sistem](#generics), modüler kod organizasyonu, tutarlı ve
 basit sözdizimi.
 
-Existing modern languages already provide an excellent developer experience: Go,
-Swift, Kotlin, Rust, and many more. **Developers that _can_ use one of these
-existing languages _should_.** Unfortunately, the designs of these languages
-present significant barriers to adoption and migration from C++. These barriers
-range from changes in the idiomatic design of software to performance overhead.
+Mevcut modern diller zaten mükemmel bir geliştirici deneyimi sağlıyor: Go,
+Swift, Kotlin, Rust, ve daha fazlası. **Developers that _can_ use one of these
+existing languages _should_.** Ne yazık ki, bu dillerin tasarımları
+C++'ın benimsenmesi ve taşınması için önemli engeller sunar.
+Bu engeller Yazılımın deyimsel tasarımındaki değişikliklerden performans 
+yüküne kadar değişir.
 
 Carbon is fundamentally **a successor language approach**, rather than an
 attempt to incrementally evolve C++. It is designed around interoperability with
