@@ -55,15 +55,29 @@ http_archive(
 )
 
 ###############################################################################
+# RE2 libraries
+###############################################################################
+
+# Head as of 2022-09-14.
+re2_version = "cc1c9db8bf5155d89d10d65998cdb226f676492c"
+
+http_archive(
+    name = "com_googlesource_code_re2",
+    sha256 = "8ef976c79a300f8c5e880535665bd4ba146fb09fb6d2342f8f1a02d9af29f365",
+    strip_prefix = "re2-%s" % re2_version,
+    urls = ["https://github.com/google/re2/archive/%s.tar.gz" % re2_version],
+)
+
+###############################################################################
 # GoogleTest libraries
 ###############################################################################
 
-# Version as of 2021-12-07. Not a major release, but gets a clang-tidy fix.
-googletest_version = "4c5650f68866e3c2e60361d5c4c95c6f335fb64b"
+# Head as of 2022-09-14.
+googletest_version = "1336c4b6d1a6f4bc6beebccb920e5ff858889292"
 
 http_archive(
     name = "com_google_googletest",
-    sha256 = "770e61fa13d51320736c2881ff6279212e4eab8a9100709fff8c44759f61d126",
+    sha256 = "d701aaeb9a258afba27210d746d971042be96c371ddc5a49f1e8914d9ea17e3c",
     strip_prefix = "googletest-%s" % googletest_version,
     urls = ["https://github.com/google/googletest/archive/%s.tar.gz" % googletest_version],
 )

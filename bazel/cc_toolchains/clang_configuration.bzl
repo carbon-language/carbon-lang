@@ -112,8 +112,10 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
     include_begin = output.index("#include <...> search starts here:") + 1
     include_end = output.index("End of search list.", include_begin)
 
+    # Suffix present on framework paths.
+    framework_suffix = " (framework directory)"
     return [
-        repository_ctx.path(s.lstrip(" "))
+        repository_ctx.path(s.lstrip(" ").removesuffix(framework_suffix))
         for s in output[include_begin:include_end]
     ]
 
