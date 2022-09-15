@@ -16,11 +16,11 @@ namespace Carbon::Testing {
 MATCHER_P4(
     BinaryOperator, id_matcher, op_matcher, lhs_id_matcher, rhs_id_matcher,
     llvm::formatv(
-        "BinaryOperator(%{0}, {1}, %{2}, %{3})",
-        ::testing::DescribeMatcher<int32_t>(id_matcher),
+        "BinaryOperator(`{0}`, `{1}`, `{2}`, `{3}`)",
+        ::testing::DescribeMatcher<Semantics::NodeId>(id_matcher),
         ::testing::DescribeMatcher<Semantics::BinaryOperator::Op>(op_matcher),
-        ::testing::DescribeMatcher<int32_t>(lhs_id_matcher),
-        ::testing::DescribeMatcher<int32_t>(rhs_id_matcher))) {
+        ::testing::DescribeMatcher<Semantics::NodeId>(lhs_id_matcher),
+        ::testing::DescribeMatcher<Semantics::NodeId>(rhs_id_matcher))) {
   const Semantics::NodeRef& node_ref = arg;
   if (auto op =
           SemanticsIRForTest::GetNode<Semantics::BinaryOperator>(node_ref)) {

@@ -7,7 +7,21 @@
 
 #include <cstdint>
 
+#include "common/ostream.h"
+
 namespace Carbon::Semantics {
+
+// Type-safe storage of Node IDs.
+struct NodeId {
+  explicit NodeId(int32_t id) : id(id) {}
+
+  void Print(llvm::raw_ostream& out) const { out << "%" << id; }
+
+  // Comparison to help tests.
+  auto operator==(int32_t other) const -> bool { return id == other; }
+
+  int32_t id;
+};
 
 // Meta node information for declarations.
 enum class NodeKind {
