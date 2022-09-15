@@ -102,34 +102,15 @@ class Declaration : public AstNode {
   std::optional<Nonnull<const Value*>> constant_value_;
 };
 
-class FunctionDeclaration : public Declaration {
+class CallableDeclaration : public Declaration {
  public:
-  using ImplementsCarbonValueNode = void;
-
-  static auto Create(Nonnull<Arena*> arena, SourceLocation source_loc,
-                     std::string name,
-                     std::vector<Nonnull<AstNode*>> deduced_params,
-                     std::optional<Nonnull<Pattern*>> me_pattern,
-                     Nonnull<TuplePattern*> param_pattern,
-                     ReturnTerm return_term,
-                     std::optional<Nonnull<Block*>> body)
-      -> ErrorOr<Nonnull<FunctionDeclaration*>>;
-
-  static auto CreateDestructor(Nonnull<Arena*> arena, SourceLocation source_loc,
-                               std::vector<Nonnull<AstNode*>> deduced_params,
-                               Nonnull<TuplePattern*> param_pattern,
-                               ReturnTerm return_term,
-                               std::optional<Nonnull<Block*>> body)
-      -> ErrorOr<Nonnull<FunctionDeclaration*>>;
-
-  // Use `Create()` instead. This is public only so Arena::New() can call it.
-  FunctionDeclaration(SourceLocation source_loc, std::string name,
+  CallableDeclaration(AstNodeKind kind, SourceLocation loc, std::string name,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,
                       std::optional<Nonnull<Pattern*>> me_pattern,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
                       std::optional<Nonnull<Block*>> body, bool is_destructor)
-      : Declaration(AstNodeKind::FunctionDeclaration, source_loc),
+      : Declaration(kind, loc),
         name_(std::move(name)),
         deduced_parameters_(std::move(deduced_params)),
         me_pattern_(me_pattern),
@@ -137,10 +118,6 @@ class FunctionDeclaration : public Declaration {
         return_term_(return_term),
         body_(body),
         is_destructor_(is_destructor) {}
-
-  static auto classof(const AstNode* node) -> bool {
-    return InheritsFromFunctionDeclaration(node->kind());
-  }
 
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
   auto is_destructor() const -> bool { return is_destructor_; }
@@ -173,6 +150,65 @@ class FunctionDeclaration : public Declaration {
   ReturnTerm return_term_;
   std::optional<Nonnull<Block*>> body_;
   bool is_destructor_;
+};
+
+class FunctionDeclaration : public CallableDeclaration {
+ public:
+  using ImplementsCarbonValueNode = void;
+
+  static auto Create(Nonnull<Arena*> arena, SourceLocation source_loc,
+                     std::string name,
+                     std::vector<Nonnull<AstNode*>> deduced_params,
+                     std::optional<Nonnull<Pattern*>> me_pattern,
+                     Nonnull<TuplePattern*> param_pattern,
+                     ReturnTerm return_term,
+                     std::optional<Nonnull<Block*>> body)
+      -> ErrorOr<Nonnull<FunctionDeclaration*>>;
+
+  // Use `Create()` instead. This is public only so Arena::New() can call it.
+  FunctionDeclaration(SourceLocation source_loc, std::string name,
+                      std::vector<Nonnull<GenericBinding*>> deduced_params,
+                      std::optional<Nonnull<Pattern*>> me_pattern,
+                      Nonnull<TuplePattern*> param_pattern,
+                      ReturnTerm return_term,
+                      std::optional<Nonnull<Block*>> body, bool is_destructor)
+      : CallableDeclaration(AstNodeKind::FunctionDeclaration, source_loc,
+                            std::move(name), std::move(deduced_params),
+                            me_pattern, param_pattern, return_term, body,
+                            is_destructor) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromFunctionDeclaration(node->kind());
+  }
+};
+
+class DestructorDeclaration : public CallableDeclaration {
+ public:
+  using ImplementsCarbonValueNode = void;
+
+  static auto CreateDestructor(Nonnull<Arena*> arena, SourceLocation source_loc,
+                               std::vector<Nonnull<AstNode*>> deduced_params,
+                               Nonnull<TuplePattern*> param_pattern,
+                               ReturnTerm return_term,
+                               std::optional<Nonnull<Block*>> body)
+      -> ErrorOr<Nonnull<DestructorDeclaration*>>;
+
+  // Use `Create()` instead. This is public only so Arena::New() can call it.
+  DestructorDeclaration(SourceLocation source_loc,
+                        std::vector<Nonnull<GenericBinding*>> deduced_params,
+                        std::optional<Nonnull<Pattern*>> me_pattern,
+                        Nonnull<TuplePattern*> param_pattern,
+                        ReturnTerm return_term,
+                        std::optional<Nonnull<Block*>> body)
+      : CallableDeclaration(AstNodeKind::DestructorDeclaration, source_loc,
+                            "destructor", std::move(deduced_params), me_pattern,
+                            param_pattern, return_term, body, true) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromDestructorDeclaration(node->kind());
+  }
+
+ private:
 };
 
 class SelfDeclaration : public Declaration {
@@ -231,8 +267,13 @@ class ClassDeclaration : public Declaration {
   auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
     return members_;
   }
-  auto destructor() const -> std::optional<Nonnull<FunctionDeclaration*>> {
-    return destructor_;
+  auto destructor() const -> std::optional<Nonnull<DestructorDeclaration*>> {
+    for (auto& x : members_) {
+      if (x->kind() == DeclarationKind::DestructorDeclaration) {
+        return llvm::cast<DestructorDeclaration>(x);
+      }
+    }
+    return std::nullopt;
   }
   void set_destructor(Nonnull<FunctionDeclaration*> dtor) {
     destructor_ = dtor;

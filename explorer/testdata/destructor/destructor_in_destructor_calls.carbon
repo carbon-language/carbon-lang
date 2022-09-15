@@ -19,7 +19,7 @@
 package ExplorerTest api;
 
 class A{
-    fn destructor[me: Self]{
+    destructor[me: Self]{
         Print("DESTRUCTOR A {0}",me.n);
     }
     fn Create(x: i32) -> A{
@@ -29,7 +29,7 @@ class A{
 }
 
 class B{
-    fn destructor[me: Self]{
+    destructor[me: Self]{
         Print("DESTRUCTOR B");
     }
     fn Create(x: A) -> B{
@@ -39,7 +39,7 @@ class B{
 }
 
 class C{
-    fn destructor[me: Self]{
+    destructor[me: Self]{
         Print("DESTRUCTOR C");
     }
     fn Create(x: A, y : B) -> C{

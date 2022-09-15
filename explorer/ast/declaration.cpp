@@ -38,7 +38,9 @@ void Declaration::Print(llvm::raw_ostream& out) const {
     case DeclarationKind::FunctionDeclaration:
       cast<FunctionDeclaration>(*this).PrintDepth(-1, out);
       break;
-
+    case DeclarationKind::DestructorDeclaration:
+      cast<DestructorDeclaration>(*this).PrintDepth(-1, out);
+      break;
     case DeclarationKind::ClassDeclaration: {
       const auto& class_decl = cast<ClassDeclaration>(*this);
       PrintID(out);
@@ -131,7 +133,9 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
     case DeclarationKind::FunctionDeclaration:
       out << "fn " << cast<FunctionDeclaration>(*this).name();
       break;
-
+    case DeclarationKind::DestructorDeclaration:
+      out << cast<DestructorDeclaration>(*this).name();
+      break;
     case DeclarationKind::ClassDeclaration: {
       const auto& class_decl = cast<ClassDeclaration>(*this);
       out << "class " << class_decl.name();
@@ -185,6 +189,8 @@ auto GetName(const Declaration& declaration)
   switch (declaration.kind()) {
     case DeclarationKind::FunctionDeclaration:
       return cast<FunctionDeclaration>(declaration).name();
+    case DeclarationKind::DestructorDeclaration:
+      return cast<DestructorDeclaration>(declaration).name();
     case DeclarationKind::ClassDeclaration:
       return cast<ClassDeclaration>(declaration).name();
     case DeclarationKind::MixinDeclaration: {
@@ -231,12 +237,12 @@ void ReturnTerm::Print(llvm::raw_ostream& out) const {
   }
 }
 
-auto FunctionDeclaration::CreateDestructor(
+auto DestructorDeclaration::CreateDestructor(
     Nonnull<Arena*> arena, SourceLocation source_loc,
     std::vector<Nonnull<AstNode*>> deduced_params,
     Nonnull<TuplePattern*> param_pattern, ReturnTerm return_term,
     std::optional<Nonnull<Block*>> body)
-    -> ErrorOr<Nonnull<FunctionDeclaration*>> {
+    -> ErrorOr<Nonnull<DestructorDeclaration*>> {
   std::vector<Nonnull<GenericBinding*>> resolved_params;
   std::optional<Nonnull<Pattern*>> me_pattern;
 
@@ -261,9 +267,9 @@ auto FunctionDeclaration::CreateDestructor(
                << "illegal AST node in implicit parameter list";
     }
   }
-  return arena->New<FunctionDeclaration>(
-      source_loc, "destructor", std::move(resolved_params), me_pattern,
-      param_pattern, return_term, body, true);
+  return arena->New<DestructorDeclaration>(
+      source_loc, std::move(resolved_params), me_pattern, param_pattern,
+      return_term, body);
 }
 
 auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
@@ -311,7 +317,7 @@ auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
       return_term, body, false);
 }
 
-void FunctionDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
+void CallableDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
   out << "fn " << name_ << " ";
   if (!deduced_parameters_.empty()) {
     out << "[";

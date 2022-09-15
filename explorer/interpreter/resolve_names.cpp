@@ -33,12 +33,19 @@ static auto AddExposedNames(const Declaration& declaration,
       // Nothing to do here
       break;
     }
+    case DeclarationKind::DestructorDeclaration: {
+      auto& func = cast<DestructorDeclaration>(declaration);
+      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(
+          func.name(), &func, StaticScope::NameStatus::KnownButNotDeclared));
+      break;
+    }
     case DeclarationKind::FunctionDeclaration: {
       auto& func = cast<FunctionDeclaration>(declaration);
       CARBON_RETURN_IF_ERROR(enclosing_scope.Add(
           func.name(), &func, StaticScope::NameStatus::KnownButNotDeclared));
       break;
     }
+
     case DeclarationKind::ClassDeclaration: {
       auto& class_decl = cast<ClassDeclaration>(declaration);
       CARBON_RETURN_IF_ERROR(
@@ -531,8 +538,9 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
           ResolveMemberNames(impl.members(), impl_scope, bodies));
       break;
     }
+    case DeclarationKind::DestructorDeclaration:
     case DeclarationKind::FunctionDeclaration: {
-      auto& function = cast<FunctionDeclaration>(declaration);
+      auto& function = cast<CallableDeclaration>(declaration);
       StaticScope function_scope;
       function_scope.AddParent(&enclosing_scope);
       enclosing_scope.MarkDeclared(function.name());

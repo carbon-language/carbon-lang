@@ -156,10 +156,10 @@ class IntValue : public Value {
 // A function value.
 class FunctionValue : public Value {
  public:
-  explicit FunctionValue(Nonnull<const FunctionDeclaration*> declaration)
+  explicit FunctionValue(Nonnull<const CallableDeclaration*> declaration)
       : Value(Kind::FunctionValue), declaration_(declaration) {}
 
-  explicit FunctionValue(Nonnull<const FunctionDeclaration*> declaration,
+  explicit FunctionValue(Nonnull<const CallableDeclaration*> declaration,
                          Nonnull<const Bindings*> bindings)
       : Value(Kind::FunctionValue),
         declaration_(declaration),
@@ -169,7 +169,7 @@ class FunctionValue : public Value {
     return value->kind() == Kind::FunctionValue;
   }
 
-  auto declaration() const -> const FunctionDeclaration& {
+  auto declaration() const -> const CallableDeclaration& {
     return *declaration_;
   }
 
@@ -182,20 +182,20 @@ class FunctionValue : public Value {
   }
 
  private:
-  Nonnull<const FunctionDeclaration*> declaration_;
+  Nonnull<const CallableDeclaration*> declaration_;
   Nonnull<const Bindings*> bindings_ = Bindings::None();
 };
 
 // A bound method value. It includes the receiver object.
 class BoundMethodValue : public Value {
  public:
-  explicit BoundMethodValue(Nonnull<const FunctionDeclaration*> declaration,
+  explicit BoundMethodValue(Nonnull<const CallableDeclaration*> declaration,
                             Nonnull<const Value*> receiver)
       : Value(Kind::BoundMethodValue),
         declaration_(declaration),
         receiver_(receiver) {}
 
-  explicit BoundMethodValue(Nonnull<const FunctionDeclaration*> declaration,
+  explicit BoundMethodValue(Nonnull<const CallableDeclaration*> declaration,
                             Nonnull<const Value*> receiver,
                             Nonnull<const Bindings*> bindings)
       : Value(Kind::BoundMethodValue),
@@ -207,7 +207,7 @@ class BoundMethodValue : public Value {
     return value->kind() == Kind::BoundMethodValue;
   }
 
-  auto declaration() const -> const FunctionDeclaration& {
+  auto declaration() const -> const CallableDeclaration& {
     return *declaration_;
   }
 
@@ -222,7 +222,7 @@ class BoundMethodValue : public Value {
   }
 
  private:
-  Nonnull<const FunctionDeclaration*> declaration_;
+  Nonnull<const CallableDeclaration*> declaration_;
   Nonnull<const Value*> receiver_;
   Nonnull<const Bindings*> bindings_ = Bindings::None();
 };

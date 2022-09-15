@@ -228,14 +228,14 @@ class StatementAction : public Action {
   // The Statement this Action executes.
   auto statement() const -> const Statement& { return *statement_; }
   void add_destructor_calls(
-      const std::list<std::pair<Nonnull<const FunctionDeclaration*>,
+      const std::list<std::pair<Nonnull<const DestructorDeclaration*>,
                                 Nonnull<const Value*>>>& l) {
     destruction_active_ = true;
     destructor_calls_ = l;
   }
 
-  auto PopDestructorCall()
-      -> std::pair<Nonnull<const FunctionDeclaration*>, Nonnull<const Value*>> {
+  auto PopDestructorCall() -> std::pair<Nonnull<const DestructorDeclaration*>,
+                                        Nonnull<const Value*>> {
     auto ret = destructor_calls_.back();
     destructor_calls_.pop_back();
     return ret;
@@ -257,7 +257,7 @@ class StatementAction : public Action {
   Nonnull<const Statement*> statement_;
   bool destruction_active_;
   std::list<
-      std::pair<Nonnull<const FunctionDeclaration*>, Nonnull<const Value*>>>
+      std::pair<Nonnull<const DestructorDeclaration*>, Nonnull<const Value*>>>
       destructor_calls_;
   bool ignore_destructor_calls_;
   bool is_destructor_call_;

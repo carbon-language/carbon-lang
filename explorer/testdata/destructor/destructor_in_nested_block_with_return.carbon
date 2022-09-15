@@ -16,21 +16,21 @@
 package ExplorerTest api;
 
 class A{
-    fn destructor[me: Self]{
+    destructor[me: Self]{
         Print("DESTRUCTOR A {0}",me.n);
     }
     var n: i32;
 }
 
 class B{
-    fn destructor[me: Self]{
+    destructor[me: Self]{
         Print("DESTRUCTOR B {0}",me.n);
     }
     var n: i32;
 }
 
 class C{
-    fn destructor[me: Self]{
+    destructor[me: Self]{
         Print("DESTRUCTOR C {0}",me.n);
     }
     var n: i32;

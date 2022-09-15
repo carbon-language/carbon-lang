@@ -56,7 +56,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         if (std::optional<Nonnull<const Declaration*>> mem_decl =
                 FindMember(f, impl_witness->declaration().members());
             mem_decl.has_value()) {
-          const auto& fun_decl = cast<FunctionDeclaration>(**mem_decl);
+          const auto& fun_decl = cast<CallableDeclaration>(**mem_decl);
           if (fun_decl.is_method()) {
             return arena->New<BoundMethodValue>(&fun_decl, v,
                                                 &impl_witness->bindings());
@@ -986,7 +986,7 @@ auto NominalClassType::FindFunction(std::string_view name) const
         break;
       }
       case DeclarationKind::FunctionDeclaration: {
-        const auto& fun = cast<FunctionDeclaration>(*member);
+        const auto& fun = cast<CallableDeclaration>(*member);
         if (fun.name() == name) {
           return &cast<FunctionValue>(**fun.constant_value());
         }
@@ -1014,7 +1014,7 @@ auto MixinPseudoType::FindFunction(const std::string_view& name) const
         break;
       }
       case DeclarationKind::FunctionDeclaration: {
-        const auto& fun = cast<FunctionDeclaration>(*member);
+        const auto& fun = cast<CallableDeclaration>(*member);
         if (fun.name() == name) {
           return &cast<FunctionValue>(**fun.constant_value());
         }

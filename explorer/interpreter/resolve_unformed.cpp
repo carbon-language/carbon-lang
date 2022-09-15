@@ -293,6 +293,15 @@ static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
       }
       break;
     }
+    case DeclarationKind::DestructorDeclaration: {
+      auto& destructor = cast<DestructorDeclaration>(*declaration);
+      if (destructor.body().has_value()) {
+        FlowFacts flow_facts;
+        CARBON_RETURN_IF_ERROR(ResolveUnformed(*destructor.body(), flow_facts,
+                                               FlowFacts::ActionType::None));
+      }
+      break;
+    }
     case DeclarationKind::ClassDeclaration:
     case DeclarationKind::MixDeclaration:
     case DeclarationKind::MixinDeclaration:

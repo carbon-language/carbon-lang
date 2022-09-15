@@ -108,7 +108,7 @@
 %type <std::optional<Nonnull<Expression*>>> class_declaration_extends
 %type <Nonnull<Declaration*>> declaration
 %type <Nonnull<FunctionDeclaration*>> function_declaration
-%type <Nonnull<FunctionDeclaration*>> destructor_declaration;
+%type <Nonnull<DestructorDeclaration*>> destructor_declaration;
 %type <Nonnull<MixDeclaration*>> mix_declaration
 %type <Nonnull<AliasDeclaration*>> alias_declaration
 %type <std::vector<Nonnull<Declaration*>>> declaration_list
@@ -1210,13 +1210,14 @@ impl_type:
 | type_expression
 ;
 destructor_declaration:
-  FN DESTRUCTOR deduced_params block
+  DESTRUCTOR deduced_params block
   {
-    ErrorOr<FunctionDeclaration*> fn = FunctionDeclaration::CreateDestructor(
-        arena, context.source_loc(), $3,
-        arena->New<TuplePattern>(context.source_loc(),
-                                 std::vector<Nonnull<Pattern*>>()),
-        ReturnTerm::Omitted(context.source_loc()), $4);
+    ErrorOr<DestructorDeclaration*> fn =
+        DestructorDeclaration::CreateDestructor(
+            arena, context.source_loc(), $2,
+            arena->New<TuplePattern>(context.source_loc(),
+                                     std::vector<Nonnull<Pattern*>>()),
+            ReturnTerm::Omitted(context.source_loc()), $3);
     if (fn.ok()) {
       $$ = *fn;
     } else {
