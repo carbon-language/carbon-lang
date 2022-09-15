@@ -6,19 +6,19 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
 <p align="center">
-  <a href="#why-build-carbon">Why?</a> |
-  <a href="#language-goals">Goals</a> |
-  <a href="#project-status">Status</a> |
-  <a href="#getting-started">Getting started</a> |
-  <a href="#join-us">Join us</a>
+  <a href="#why-build-carbon">Niçin?</a> |
+  <a href="#language-goals">Hedefler</a> |
+  <a href="#project-status">Durum</a> |
+  <a href="#getting-started">Başlarken</a> |
+  <a href="#join-us">Bize katıl</a>
 </p>
 
 **[Duyuru Videomuzu](https://youtu.be/omrY53kbVoA) izleyin
-[CppNorth](https://cppnorth.ca/).** Karbon [Kullanıma hazır Olmadığını](#project-status) unutmayın.
+[CppNorth](https://cppnorth.ca/).** Karbon dilinin [Kullanıma hazır Olmadığını](#project-status) unutmayın.
 
 <a href="docs/images/snippets.md#quicksort">
 <!--
-Snippet'idocs/images/snippets.md dosyasında düzenleyin ve:
+Snippet'i docs/images/snippets.md dosyasında düzenleyin ve:
 https://drive.google.com/drive/folders/1-rsUjiya7dSZ87L8kpZmu3MZghRVxzLA
 -->
 <img src="docs/images/quicksort_snippet.svg" align="right" width="575"
@@ -64,8 +64,8 @@ C++'ın benimsenmesi ve taşınması için önemli engeller sunar.
 Bu engeller Yazılımın deyimsel tasarımındaki değişikliklerden performans 
 yüküne kadar değişir.
 
-Carbon is fundamentally **a successor language approach**, rather than an
-attempt to incrementally evolve C++. It is designed around interoperability with
+Karbon temelde c++ geliştirmek yerine onun yerini alabilecek bir **varis yaklaşımıdır**.
+ It is designed around interoperability with
 C++ as well as large-scale adoption and migration for existing C++ codebases and
 developers. A successor language for C++ requires:
 
@@ -87,7 +87,7 @@ aims to fill an analogous role for C++:
 -   Java → Kotlin
 -   C++ → **_Carbon_**
 
-## Language Goals
+## Dil hedefleri
 
 We are designing Carbon to support:
 
@@ -112,7 +112,7 @@ We also have explicit _non-goals_ for Carbon, notably including:
 Our detailed [goals](/docs/project/goals.md) document fleshes out these ideas
 and provides a deeper view into our goals for the Carbon project and language.
 
-## Project status
+## Proje durumu
 
 Carbon Language is currently an experimental project. There is no working
 compiler or toolchain. You can see the demo interpreter for Carbon on
@@ -151,7 +151,7 @@ Carbon in more detail.
 
 You can see our [full roadmap](/docs/project/roadmap.md) for more details.
 
-## Carbon and C++
+## Karbon ve C++
 
 If you're already a C++ developer, Carbon should have a gentle learning curve.
 It is built out of a consistent set of language constructs that should feel
@@ -199,7 +199,7 @@ Beyond interoperability between Carbon and C++, we're also planning to support
 migration tools that will mechanically translate idiomatic C++ code into Carbon
 code to help you switch an existing C++ codebase to Carbon.
 
-## Generics
+## Jenerik
 
 Carbon provides a
 **[modern generics system](/docs/design/generics/overview.md#what-are-generics)**
@@ -228,7 +228,7 @@ In addition to easy and powerful interop with C++, Carbon templates can be
 constrained and incrementally migrated to checked generics at a fine granularity
 and with a smooth evolutionary path.
 
-## Memory safety
+## Bellek güvenliği
 
 Safety, and especially
 [memory safety](https://en.wikipedia.org/wiki/Memory_safety), remains a key
@@ -254,7 +254,7 @@ Meanwhile, we are closely watching and learning from efforts to add memory safe
 semantics onto C++ such as Rust-inspired
 [lifetime annotations](https://discourse.llvm.org/t/rfc-lifetime-annotations-for-c/61377).
 
-## Getting started
+## Başlarken
 
 As there is no compiler yet, to try out Carbon, you can use the Carbon explorer
 to interpret Carbon code and print its output. You can try it out immediately at
