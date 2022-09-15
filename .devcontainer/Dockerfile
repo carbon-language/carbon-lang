@@ -5,7 +5,7 @@
 FROM ubuntu:22.04
 
 # Install apt tools:
-#   git: Addresses VS Code error, but can't really be used.
+#   git: Used by VS Code.
 #   golang: Used for Bazelisk and Buildifier.
 #   python3: For Carbon tools.
 #   gnupg, software-properties-common, wget: For llvm.sh.
@@ -33,6 +33,6 @@ RUN ./llvm.sh 15 all
 RUN rm llvm.sh
 ENV CC="/usr/bin/clang-15"
 
-# Update pip and install pre-commit.
+# Update pip and install black and pre-commit.
 RUN pip3 install -U pip
-RUN pip3 install pre-commit
+RUN pip3 install black pre-commit
