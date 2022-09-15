@@ -48,7 +48,7 @@ GitHub, "img"yi otomatik olarak bağlar, ancak "href="#"` olduğunda bir bağlan
 
 - Güçlü yönetişim ile net hedefler ve öncelikler
 - Konuksever, kapsayıcı ve arkadaş canlısı olmaya çalışan topluluk
-- Pilleri içeren yaklaşım: derleyici, kitaplıklar, belgeler, araçlar, paket yöneticisi ve daha fazlası
+- Herşeyi içeren yaklaşım: derleyici, kitaplıklar, belgeler, araçlar, paket yöneticisi ve daha fazlası
 
 ## Karbon dili niçin geliştiriliyor?
 
@@ -59,8 +59,8 @@ teknik borcun kendisi ve evrim süreciyle ilgili zorluklar. Bu sorunları çözm
 basit sözdizimi.
 
 Mevcut modern diller zaten mükemmel bir geliştirici deneyimi sağlıyor: Go,
-Swift, Kotlin, Rust, ve daha fazlası. **Developers that _can_ use one of these
-existing languages _should_.** Ne yazık ki, bu dillerin tasarımları
+Swift, Kotlin, Rust, ve daha fazlası. **Geliştiriciler var olan bu 
+dillerden birini kullanabilir.**Ne yazık ki, bu dillerin tasarımları
 C++'ın benimsenmesi ve taşınması için önemli engeller sunar.
 Bu engeller Yazılımın deyimsel tasarımındaki değişikliklerden performans 
 yüküne kadar değişir.
