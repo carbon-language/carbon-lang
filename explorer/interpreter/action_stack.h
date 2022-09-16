@@ -124,10 +124,14 @@ class ActionStack {
   // Suspends execution of the currently-executing continuation.
   auto Suspend() -> ErrorOr<Success>;
 
+  void Pop() {
+    todo_.Pop();
+  }
+
  private:
   // Pop any ScopeActions from the top of the stack, propagating results as
   // needed, to restore the invariant that todo_.Top() is not a ScopeAction.
-  void PopScopes();
+  auto PopScopes() -> std::list<std::unique_ptr<Action>>;
 
   // Set `result` as the result of the Action most recently removed from the
   // stack.
@@ -139,6 +143,7 @@ class ActionStack {
   std::optional<RuntimeScope> globals_;
   Phase phase_;
   std::optional<RuntimeScope> empty_locals_;
+  std::list<std::unique_ptr<Action>> destroy_actions_;
 };
 
 }  // namespace Carbon

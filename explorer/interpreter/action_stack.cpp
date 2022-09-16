@@ -4,6 +4,7 @@
 
 #include "explorer/interpreter/action_stack.h"
 
+#include "common/error.h"
 #include "explorer/interpreter/action.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
@@ -176,7 +177,22 @@ auto ActionStack::FinishAction() -> ErrorOr<Success> {
     case Action::Kind::DeclarationAction:
     case Action::Kind::RecursiveAction:
       PopScopes();
+      break;
+    case Action::Kind::CleanUpAction:
+      llvm::outs()<<"C-A-2\n";
+      break;
   }
+#if 0
+  std::unique_ptr<Action> cleanup_action(nullptr);
+  auto & scope = act->scope();
+  if(scope){
+     std::unique_ptr<Action> cleanup_action = std::make_unique<CleanupAction>(std::move(*scope));
+  }
+  if(act->kind() != Action::Kind::CleanUpAction && cleanup_action ){
+    llvm::outs()<<"Spawn clean_up_action"<<"\n";
+    CARBON_RETURN_IF_ERROR(Spawn(std::move(cleanup_action)));
+  }
+#endif
   return Success();
 }
 
@@ -195,7 +211,22 @@ auto ActionStack::FinishAction(Nonnull<const Value*> result)
     case Action::Kind::PatternAction:
       PopScopes();
       SetResult(result);
+      break;
+    case Action::Kind::CleanUpAction:
+      llvm::outs()<<"C-A-1\n";
+      break;
   }
+#if 0
+  std::unique_ptr<Action> cleanup_action(nullptr);
+  auto & scope = act->scope();
+  if(scope){
+     std::unique_ptr<Action> cleanup_action = std::make_unique<CleanupAction>(std::move(*scope));
+  }
+  if(act->kind() != Action::Kind::CleanUpAction && cleanup_action ){
+    llvm::outs()<<"Spawn clean_up_action"<<"\n";
+    CARBON_RETURN_IF_ERROR(Spawn(std::move(cleanup_action)));
+  }
+#endif
   return Success();
 }
 
@@ -239,7 +270,13 @@ auto ActionStack::UnwindTo(Nonnull<const Statement*> ast_node)
         &statement_action->statement() == ast_node) {
       break;
     }
-    todo_.Pop();
+    auto item = todo_.Pop();
+   /* auto & scope = item->scope();
+    if(scope && item->kind() != Action::Kind::CleanUpAction){
+       llvm::outs()<<"Spawn clean_up_action"<<"\n";
+       std::unique_ptr<Action> cleanup_action = std::make_unique<CleanupAction>(std::move(*scope));
+       CARBON_RETURN_IF_ERROR(Spawn(std::move(cleanup_action)));
+    }*/
   }
   return Success();
 }
@@ -247,15 +284,27 @@ auto ActionStack::UnwindTo(Nonnull<const Statement*> ast_node)
 auto ActionStack::UnwindPast(Nonnull<const Statement*> ast_node)
     -> ErrorOr<Success> {
   CARBON_RETURN_IF_ERROR(UnwindTo(ast_node));
-  todo_.Pop();
-  PopScopes();
+  auto item = todo_.Pop();
+  destroy_actions_ = PopScopes();
   return Success();
 }
 
 auto ActionStack::UnwindPast(Nonnull<const Statement*> ast_node,
                              Nonnull<const Value*> result) -> ErrorOr<Success> {
+  //llvm::outs()<<"FIRST: "<<*ast_node<<"\n";
   CARBON_RETURN_IF_ERROR(UnwindPast(ast_node));
   SetResult(result);
+  if(!destroy_actions_.empty()){
+    for(auto & x : destroy_actions_){
+      auto & scope = x->scope();
+      if(scope && x->kind() != Action::Kind::CleanUpAction){
+       //llvm::outs()<<"Spawn clean_up_action"<<"\n";
+       std::unique_ptr<Action> cleanup_action = std::make_unique<CleanupAction>(std::move(*scope));
+       todo_.Push(std::move(cleanup_action));
+      }
+    }
+    destroy_actions_.clear();
+  }
   return Success();
 }
 
@@ -286,10 +335,23 @@ auto ActionStack::Suspend() -> ErrorOr<Success> {
   return Success();
 }
 
-void ActionStack::PopScopes() {
+auto ActionStack::PopScopes() -> std::list<std::unique_ptr<Action>> {
+  std::list<std::unique_ptr<Action>> l;
   while (!todo_.IsEmpty() && llvm::isa<ScopeAction>(*todo_.Top())) {
-    todo_.Pop();
+    auto act = todo_.Pop();
+    l.push_back(std::move(act));
+#if 0
+    std::unique_ptr<Action> cleanup_action;
+    auto & scope = act->scope();
+    if(scope && act->kind() != Action::Kind::CleanUpAction){
+      llvm::outs()<<"Spawn clean_up_action"<<"\n";
+      std::unique_ptr<Action> cleanup_action = std::make_unique<CleanupAction>(std::move(*scope));
+      auto unused = Spawn(std::move(cleanup_action));
+      (void)(unused);
+    }
+#endif
   }
+  return l;
 }
 
 void ActionStack::SetResult(Nonnull<const Value*> result) {

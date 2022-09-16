@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "explorer/interpreter/interpreter.h"
+#include <llvm/Support/raw_ostream.h>
 
 #include <iterator>
 #include <map>
@@ -85,6 +86,8 @@ class Interpreter {
   auto StepStmt() -> ErrorOr<Success>;
   // State transition for declarations.
   auto StepDeclaration() -> ErrorOr<Success>;
+  // State transition for object destruction.
+  auto StepCleanUp() -> ErrorOr<Success>;
 
   auto CreateStruct(const std::vector<FieldInitializer>& fields,
                     const std::vector<Nonnull<const Value*>>& values)
@@ -2002,6 +2005,33 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
   }
 }
 
+auto Interpreter::StepCleanUp() -> ErrorOr<Success>{
+  Action& act = todo_.CurrentAction();
+  CleanupAction & cleanup = cast<CleanupAction>(act);
+  //llvm::outs()<<"Size:"<<cleanup.LocalsCount()<<"ACT:" << act.pos()<<"\n";
+  if(act.pos() < cleanup.LocalsCount()){
+    //llvm::outs()<<"CLEANUP CALL"<<"\n";
+    auto lvalue =  act.scope()->Locals()[act.pos()];
+    SourceLocation source_loc("destructor",1);
+    auto value = heap_.Read(lvalue->address(), source_loc);
+      // possible access to uninitialized variable
+    if (value.ok()) {
+     if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
+        const auto& class_type = cast<NominalClassType>(class_obj->type());
+        const auto& class_dec = class_type.declaration();
+        if (class_dec.destructor().has_value()) {
+          return CallDestructor(*class_dec.destructor(),class_obj);
+          //destructor_calls.push_back({*class_dec.destructor(), class_obj});
+        }
+      }
+    }
+    
+    //llvm::outs()<<"Hallo Welt";
+  }
+  todo_.Pop(); 
+  return Success();
+}
+
 // State transition.
 auto Interpreter::Step() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
@@ -2021,6 +2051,16 @@ auto Interpreter::Step() -> ErrorOr<Success> {
     case Action::Kind::DeclarationAction:
       CARBON_RETURN_IF_ERROR(StepDeclaration());
       break;
+    case Action::Kind::CleanUpAction:
+      CARBON_RETURN_IF_ERROR(StepCleanUp());
+      break;
+      /*llvm::outs()<<"CALL CLEAN_UP ACTION"<<"\n";
+      auto locals = act.scope()->Locals();
+      for(auto & x: locals){
+        llvm::outs()<<"Locals: "<<*x<<"\n";
+      }
+      todo_.Pop();
+      }*/
     case Action::Kind::ScopeAction:
       CARBON_FATAL() << "ScopeAction escaped ActionStack";
     case Action::Kind::RecursiveAction:

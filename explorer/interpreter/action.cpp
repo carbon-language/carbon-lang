@@ -130,6 +130,9 @@ void Action::Print(llvm::raw_ostream& out) const {
     case Action::Kind::RecursiveAction:
       out << "recursive";
       break;
+    case Action::Kind::CleanUpAction:
+      out << "clean up";
+      break;
   }
   out << "." << pos_ << ".";
   if (!results_.empty()) {

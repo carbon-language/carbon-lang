@@ -93,6 +93,7 @@ class Action {
     DeclarationAction,
     ScopeAction,
     RecursiveAction,
+    CleanUpAction,
   };
 
   Action(const Value&) = delete;
@@ -279,6 +280,25 @@ class DeclarationAction : public Action {
 
  private:
   Nonnull<const Declaration*> declaration_;
+};
+
+class CleanupAction : public Action{
+  public:
+   explicit CleanupAction(RuntimeScope scope) 
+     : Action(Kind::CleanUpAction){
+    locals_count_ = scope.Locals().size();
+    StartScope(std::move(scope));
+   }
+ 
+   auto LocalsCount()const -> int{
+    return locals_count_;
+   }
+
+   static auto classof(const Action* action) -> bool {
+    return action->kind() == Kind::CleanUpAction;
+   }
+  private:
+   int locals_count_;
 };
 
 // Action which does nothing except introduce a new scope into the action
