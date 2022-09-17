@@ -13,12 +13,17 @@ __mixin M1 {
   fn F1[me: Self](x: Self) -> Self{
      return x;
   }
-  __mix M1;
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-recursive-mixing.carbon:[[@LINE+1]]: Member named F1 (declared at {{.*}}/explorer/testdata/mixin/fail-recursive-mixing.carbon:15) is being mixed multiple times into M1
+}
+
+__mixin M2 {
+  fn F1() {
+  }
 }
 
 class C {
   __mix M1;
+  __mix M2;
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_mix_members_clash.carbon:[[@LINE+1]]: Member named F1 (declared at {{.*}}/explorer/testdata/mixin/fail_mix_members_clash.carbon:20) cannot be mixed into C because it clashes with an existing member with the same name (declared at {{.*}}/explorer/testdata/mixin/fail_mix_members_clash.carbon:15)
 }
 
 fn Main() -> i32 {

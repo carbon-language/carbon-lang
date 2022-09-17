@@ -5631,6 +5631,9 @@ a type to an implementation of an interface parameterized by that type.
 Generic associated types are about when this is a requirement of an interface.
 These are also called "associated type constructors."
 
+Rust has
+[stabilized this feature](https://github.com/rust-lang/rust/pull/96709).
+
 #### Higher-ranked types
 
 Higher-ranked types are used to represent this requirement in a function

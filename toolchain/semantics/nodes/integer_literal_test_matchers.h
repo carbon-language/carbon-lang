@@ -15,8 +15,8 @@ namespace Carbon::Testing {
 
 MATCHER_P2(
     IntegerLiteral, id_matcher, value_matcher,
-    llvm::formatv("IntegerLiteral(%{0}, {1})",
-                  ::testing::DescribeMatcher<int32_t>(id_matcher),
+    llvm::formatv("IntegerLiteral(`{0}`, `{1}`)",
+                  ::testing::DescribeMatcher<Semantics::NodeId>(id_matcher),
                   ::testing::DescribeMatcher<llvm::APInt>(value_matcher))) {
   const Semantics::NodeRef& node_ref = arg;
   if (auto lit =

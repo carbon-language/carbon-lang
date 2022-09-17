@@ -2,5 +2,8 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-# Python dependencies, consumed by /WORKSPACE.
-gql >= 2.0.0, < 3.0.0
+package(default_visibility = ["//visibility:public"])
+
+exports_files(glob([
+    "*.patch",
+]))

@@ -13,6 +13,7 @@
 namespace Carbon {
 
 using ::llvm::cast;
+using ::llvm::dyn_cast;
 using ::llvm::isa;
 
 static auto ExpressionToProto(const Expression& expression)
@@ -481,9 +482,16 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
           ExpressionToProto(match.expression());
       for (const Match::Clause& clause : match.clauses()) {
         auto* clause_proto = match_proto->add_clauses();
-        const bool is_default_clause =
-            clause.pattern().kind() == PatternKind::BindingPattern &&
-            cast<BindingPattern>(clause.pattern()).name() == AnonymousName;
+        // TODO: Working out whether we have a default clause after the fact
+        // like this is fragile.
+        bool is_default_clause = false;
+        if (auto* binding = dyn_cast<BindingPattern>(&clause.pattern())) {
+          if (binding->name() == AnonymousName &&
+              isa<AutoPattern>(binding->type()) &&
+              binding->source_loc() == binding->type().source_loc()) {
+            is_default_clause = true;
+          }
+        }
         if (is_default_clause) {
           clause_proto->set_is_default(true);
         } else {

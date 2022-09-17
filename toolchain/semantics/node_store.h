@@ -29,7 +29,7 @@ class NodeStoreBase {
   template <typename NodeT>
   auto Store(NodeT node) -> NodeRef {
     auto& node_store = std::get<static_cast<size_t>(NodeT::Kind)>(node_stores_);
-    int32_t index = node_store.size();
+    NodeStoreIndex index(node_store.size());
     node_store.push_back(node);
     return NodeRef(NodeT::Kind, index);
   }
@@ -38,13 +38,14 @@ class NodeStoreBase {
   // store.
   template <typename NodeT>
   auto Get(NodeRef node_ref) const -> const NodeT& {
-    CARBON_CHECK(node_ref.index_ >= 0);
+    CARBON_CHECK(node_ref.index_.index >= 0);
     CARBON_CHECK(node_ref.kind_ == NodeT::Kind)
         << "Kind mismatch: " << static_cast<int>(node_ref.kind_) << " vs "
         << static_cast<int>(NodeT::Kind);
     auto& node_store = std::get<static_cast<size_t>(NodeT::Kind)>(node_stores_);
-    CARBON_CHECK(static_cast<size_t>(node_ref.index_) < node_store.size());
-    return node_store[node_ref.index_];
+    CARBON_CHECK(static_cast<size_t>(node_ref.index_.index) <
+                 node_store.size());
+    return node_store[node_ref.index_.index];
   }
 
  private:
