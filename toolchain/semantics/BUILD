@@ -30,6 +30,7 @@ cc_library(
     deps = [
         "//common:check",
         "//toolchain/parser:parse_tree",
+        "@llvm-project//llvm:Support",
     ],
 )
 
