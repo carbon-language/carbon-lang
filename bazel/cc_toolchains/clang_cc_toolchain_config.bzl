@@ -480,7 +480,7 @@ def _impl(ctx):
 
     fuzzer = feature(
         name = "fuzzer",
-        requires = [feature_set(["nonhost"])],
+        requires = [feature_set(["nonhost", "fastbuild"])],
         implies = ["asan"],
         flag_sets = [flag_set(
             actions = all_compile_actions + all_link_actions,
