@@ -217,6 +217,7 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
       return &cast<TypeOfConstraintType>(static_type)->constraint_type();
     case Operator::As:
     case Operator::Eq:
+    case Operator::NotEq:
     case Operator::Less:
     case Operator::LessEq:
     case Operator::Greater:
@@ -628,6 +629,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::PointerType:
     case Value::Kind::AutoType:
     case Value::Kind::NominalClassType:
+    case Value::Kind::MixinPseudoType:
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
     case Value::Kind::ImplWitness:
@@ -643,6 +645,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::StringType:
     case Value::Kind::StringValue:
     case Value::Kind::TypeOfClassType:
+    case Value::Kind::TypeOfMixinPseudoType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
@@ -841,6 +844,9 @@ auto Interpreter::CallFunction(const CallExpression& call,
         case DeclarationKind::InterfaceDeclaration:
           return todo_.FinishAction(arena_->New<InterfaceType>(
               &cast<InterfaceDeclaration>(decl), bindings));
+        case DeclarationKind::ChoiceDeclaration:
+          return todo_.FinishAction(arena_->New<ChoiceType>(
+              &cast<ChoiceDeclaration>(decl), bindings));
         default:
           CARBON_FATAL() << "unknown kind of ParameterizedEntityName " << decl;
       }
@@ -1200,6 +1206,19 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           }
           // Implicit newline; currently no way to disable it.
           llvm::outs() << "\n";
+          return todo_.FinishAction(TupleValue::Empty());
+        }
+        case IntrinsicExpression::Intrinsic::Assert: {
+          CARBON_CHECK(args.size() == 2);
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> condition,
+              Convert(args[0], arena_->New<BoolType>(), exp.source_loc()));
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> string_value,
+              Convert(args[1], arena_->New<StringType>(), exp.source_loc()));
+          if (cast<BoolValue>(condition)->value() == false) {
+            return RuntimeError(exp.source_loc()) << *string_value;
+          }
           return todo_.FinishAction(TupleValue::Empty());
         }
         case IntrinsicExpression::Intrinsic::Alloc: {
@@ -1824,6 +1843,8 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
     }
     case DeclarationKind::FunctionDeclaration:
     case DeclarationKind::ClassDeclaration:
+    case DeclarationKind::MixinDeclaration:
+    case DeclarationKind::MixDeclaration:
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::AssociatedConstantDeclaration:

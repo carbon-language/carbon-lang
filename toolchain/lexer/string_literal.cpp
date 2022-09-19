@@ -17,27 +17,75 @@ namespace Carbon {
 
 using LexerDiagnosticEmitter = DiagnosticEmitter<const char*>;
 
-static constexpr char MultiLineIndicator[] = R"(""")";
+static constexpr char MultiLineIndicator[] = R"(''')";
+static constexpr char DoubleQuotedMultiLineIndicator[] = R"(""")";
 
-// Return the number of opening characters of a multi-line string literal,
-// after any '#'s, including the file type indicator and following newline.
-static auto GetMultiLineStringLiteralPrefixSize(llvm::StringRef source_text)
-    -> int {
-  if (!source_text.startswith(MultiLineIndicator)) {
-    return 0;
+struct LexedStringLiteral::Introducer {
+  // The kind of string being introduced.
+  MultiLineKind kind;
+  // The terminator for the string, without any '#' suffixes.
+  llvm::StringRef terminator;
+  // The length of the introducer, including the file type indicator and
+  // newline for a multi-line string literal.
+  int prefix_size;
+
+  // Lex the introducer for a string literal, after any '#'s.
+  static auto Lex(llvm::StringRef source_text) -> llvm::Optional<Introducer>;
+};
+
+// Lex the introducer for a string literal, after any '#'s.
+//
+// We lex multi-line literals when spelled with either ''' or """ for error
+// recovery purposes, and reject """ literals after lexing.
+auto LexedStringLiteral::Introducer::Lex(llvm::StringRef source_text)
+    -> llvm::Optional<Introducer> {
+  MultiLineKind kind = NotMultiLine;
+  llvm::StringRef indicator;
+  if (source_text.startswith(MultiLineIndicator)) {
+    kind = MultiLine;
+    indicator = llvm::StringRef(MultiLineIndicator);
+  } else if (source_text.startswith(DoubleQuotedMultiLineIndicator)) {
+    kind = MultiLineWithDoubleQuotes;
+    indicator = llvm::StringRef(DoubleQuotedMultiLineIndicator);
   }
 
-  // The rest of the line must be a valid file type indicator: a sequence of
-  // characters containing neither '#' nor '"' followed by a newline.
-  auto prefix_end =
-      source_text.find_first_of("#\n\"", strlen(MultiLineIndicator));
-  if (prefix_end == llvm::StringRef::npos || source_text[prefix_end] != '\n') {
-    return 0;
+  if (kind != NotMultiLine) {
+    // The rest of the line must be a valid file type indicator: a sequence of
+    // characters containing neither '#' nor '"' followed by a newline.
+    auto prefix_end = source_text.find_first_of("#\n\"", indicator.size());
+    if (prefix_end != llvm::StringRef::npos &&
+        source_text[prefix_end] == '\n') {
+      // Include the newline in the prefix size.
+      return Introducer{.kind = kind,
+                        .terminator = indicator,
+                        .prefix_size = static_cast<int>(prefix_end + 1)};
+    }
   }
 
-  // Include the newline on return.
-  return prefix_end + 1;
+  if (!source_text.empty() && source_text[0] == '"') {
+    return Introducer{
+        .kind = NotMultiLine, .terminator = "\"", .prefix_size = 1};
+  }
+
+  return llvm::None;
 }
+
+namespace {
+// A set of 'char' values.
+struct alignas(8) CharSet {
+  bool Elements[UCHAR_MAX + 1];
+
+  constexpr CharSet(std::initializer_list<char> chars) : Elements() {
+    for (char c : chars) {
+      Elements[static_cast<unsigned char>(c)] = true;
+    }
+  }
+
+  constexpr auto operator[](char c) const -> bool {
+    return Elements[static_cast<unsigned char>(c)];
+  }
+};
+}  // namespace
 
 auto LexedStringLiteral::Lex(llvm::StringRef source_text)
     -> llvm::Optional<LexedStringLiteral> {
@@ -50,22 +98,17 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
   }
   const int hash_level = cursor;
 
-  llvm::SmallString<16> terminator("\"");
-  llvm::SmallString<16> escape("\\");
-
-  const int multi_line_prefix_size =
-      GetMultiLineStringLiteralPrefixSize(source_text.substr(hash_level));
-  const bool multi_line = multi_line_prefix_size > 0;
-  if (multi_line) {
-    cursor += multi_line_prefix_size;
-    terminator = MultiLineIndicator;
-  } else if (cursor < source_text_size && source_text[cursor] == '"') {
-    ++cursor;
-  } else {
+  const llvm::Optional<Introducer> introducer =
+      Introducer::Lex(source_text.substr(hash_level));
+  if (!introducer) {
     return llvm::None;
   }
 
+  cursor += introducer->prefix_size;
   const int prefix_len = cursor;
+
+  llvm::SmallString<16> terminator(introducer->terminator);
+  llvm::SmallString<16> escape("\\");
 
   // The terminator and escape sequence marker require a number of '#'s
   // matching the leading sequence of '#'s.
@@ -75,51 +118,56 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
   // TODO: Detect indent / dedent for multi-line string literals in order to
   // stop parsing on dedent before a terminator is found.
   for (; cursor < source_text_size; ++cursor) {
+    // Use a lookup table to allow us to quickly skip uninteresting characters.
+    static constexpr CharSet InterestingChars = {'\\', '\n', '"', '\''};
+    if (!InterestingChars[source_text[cursor]]) {
+      continue;
+    }
+
     // This switch and loop structure relies on multi-character terminators and
     // escape sequences starting with a predictable character and not containing
     // embedded and unescaped terminators or newlines.
     switch (source_text[cursor]) {
       case '\\':
         if (escape.size() == 1 ||
-            source_text.substr(cursor).startswith(escape)) {
+            source_text.substr(cursor + 1).startswith(escape.substr(1))) {
           cursor += escape.size();
           // If there's either not a character following the escape, or it's a
           // single-line string and the escaped character is a newline, we
           // should stop here.
-          if (cursor >= source_text_size ||
-              (!multi_line && source_text[cursor] == '\n')) {
+          if (cursor >= source_text_size || (introducer->kind == NotMultiLine &&
+                                             source_text[cursor] == '\n')) {
             llvm::StringRef text = source_text.take_front(cursor);
             return LexedStringLiteral(text, text.drop_front(prefix_len),
-                                      hash_level, multi_line,
+                                      hash_level, introducer->kind,
                                       /*is_terminated=*/false);
           }
         }
         break;
       case '\n':
-        if (!multi_line) {
+        if (introducer->kind == NotMultiLine) {
           llvm::StringRef text = source_text.take_front(cursor);
           return LexedStringLiteral(text, text.drop_front(prefix_len),
-                                    hash_level, multi_line,
+                                    hash_level, introducer->kind,
                                     /*is_terminated=*/false);
         }
         break;
-      case '\"': {
-        if (terminator.size() == 1 ||
-            source_text.substr(cursor).startswith(terminator)) {
+      case '"':
+      case '\'':
+        if (source_text.substr(cursor).startswith(terminator)) {
           llvm::StringRef text =
               source_text.substr(0, cursor + terminator.size());
           llvm::StringRef content =
               source_text.substr(prefix_len, cursor - prefix_len);
-          return LexedStringLiteral(text, content, hash_level, multi_line,
+          return LexedStringLiteral(text, content, hash_level, introducer->kind,
                                     /*is_terminated=*/true);
         }
         break;
-      }
     }
   }
   // No terminator was found.
   return LexedStringLiteral(source_text, source_text.drop_front(prefix_len),
-                            hash_level, multi_line,
+                            hash_level, introducer->kind,
                             /*is_terminated=*/false);
 }
 
@@ -153,7 +201,7 @@ static auto CheckIndent(LexerDiagnosticEmitter& emitter, llvm::StringRef text,
   if (indent.end() != content.end()) {
     CARBON_DIAGNOSTIC(
         ContentBeforeStringTerminator, Error,
-        "Only whitespace is permitted before the closing `\"\"\"` of a "
+        "Only whitespace is permitted before the closing `'''` of a "
         "multi-line string.");
     emitter.Emit(indent.end(), ContentBeforeStringTerminator);
   }
@@ -309,7 +357,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       if (!contents.startswith("\n")) {
         CARBON_DIAGNOSTIC(
             MismatchedIndentInString, Error,
-            "Indentation does not match that of the closing \"\"\" in "
+            "Indentation does not match that of the closing `'''` in "
             "multi-line string literal.");
         emitter.Emit(line_start, MismatchedIndentInString);
       }
@@ -385,6 +433,12 @@ auto LexedStringLiteral::ComputeValue(LexerDiagnosticEmitter& emitter) const
     -> std::string {
   if (!is_terminated_) {
     return "";
+  }
+  if (multi_line_ == MultiLineWithDoubleQuotes) {
+    CARBON_DIAGNOSTIC(
+        MultiLineStringWithDoubleQuotes, Error,
+        "Use `'''` delimiters for a multi-line string literal, not `\"\"\"`.");
+    emitter.Emit(text_.begin(), MultiLineStringWithDoubleQuotes);
   }
   llvm::StringRef indent =
       multi_line_ ? CheckIndent(emitter, text_, content_) : llvm::StringRef();

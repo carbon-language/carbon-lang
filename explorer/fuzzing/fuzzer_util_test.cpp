@@ -15,26 +15,33 @@
 namespace Carbon::Testing {
 namespace {
 
-static std::vector<llvm::StringRef>* carbon_files = nullptr;
-
-// A workaround for https://github.com/carbon-language/carbon-lang/issues/1208.
-TEST(FuzzerUtilTest, RunFuzzerOnCorpus) {
-  int parsed_file_count = 0;
-  for (const llvm::StringRef f : *carbon_files) {
-    llvm::outs() << "Processing " << f << "\n";
-    std::ifstream file(f.str(), std::ios::in);
-    ASSERT_TRUE(file.is_open());
-    std::stringstream contents;
-    contents << file.rdbuf();
-    // Parsing errors are ignored to make the fuzzer inputs less brittle as the
-    // explorer code changes. This also matches standard fuzzer behavior.
-    if (auto carbon_proto = ParseCarbonTextProto(contents.str());
-        carbon_proto.ok()) {
-      ParseAndExecute(carbon_proto->compilation_unit());
-      ++parsed_file_count;
-    }
-  }
-  EXPECT_GT(parsed_file_count, 0);
+TEST(FuzzerUtilTest, ParseAndExecute) {
+  const ErrorOr<Fuzzing::Carbon> carbon_proto = ParseCarbonTextProto(R"(
+    compilation_unit {
+      package_statement { package_name: "P" }
+      is_api: true
+      declarations {
+        function {
+          name: "Main"
+          param_pattern {}
+          return_term {
+            kind: Expression
+            type { int_type_literal {} }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression { int_literal { value: 0 } }
+              }
+            }
+          }
+        }
+      }
+    })");
+  ASSERT_TRUE(carbon_proto.ok());
+  const ErrorOr<int> result = ParseAndExecute(carbon_proto->compilation_unit());
+  ASSERT_TRUE(result.ok()) << "Execution failed: " << result.error();
+  EXPECT_EQ(*result, 0);
 }
 
 TEST(FuzzerUtilTest, GetRunfilesFile) {
@@ -64,10 +71,3 @@ TEST(FuzzerUtilTest, ParseCarbonTextProtoWithUnknownField) {
 
 }  // namespace
 }  // namespace Carbon::Testing
-
-auto main(int argc, char** argv) -> int {
-  ::testing::InitGoogleTest(&argc, argv);
-  Carbon::Testing::carbon_files =
-      new std::vector<llvm::StringRef>(&argv[1], &argv[argc]);
-  return RUN_ALL_TESTS();
-}

@@ -98,7 +98,7 @@ def _fill_template(template_path: str, title: str, pr_num: int) -> str:
         r"\g<1>%d" % pr_num,
         content,
     )
-    content = re.sub(r"## TODO(?:.|\n)*(## Problem)", r"\1", content)
+    content = re.sub(r"\n## TODO(?:|\n)*?(\n## )", r"\1", content)
     return content
 
 
@@ -198,8 +198,6 @@ def main() -> None:
             "proposal",
             "--label",
             "proposal draft",
-            "--reviewer",
-            "carbon-language/carbon-leads",
             "--repo",
             "carbon-language/carbon-lang",
             "--title",

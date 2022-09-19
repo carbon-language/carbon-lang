@@ -17,6 +17,27 @@ def _run(repository_ctx, cmd):
 
     return exec_result
 
+def _clang_version(version_output):
+    """Returns clang's major version number, or None if not found."""
+    version_prefix = "clang version "
+    version_start = version_output.find(version_prefix)
+    if version_start == -1:
+        # No version
+        return None
+    version_start += len(version_prefix)
+
+    # Find a dot to indicate something like 'clang version 14.0.6'.
+    version_dot = version_output.find(".", version_start)
+    if version_dot == -1:
+        return None
+
+    # Make sure the dot was on the same line as the version.
+    if version_output.find("\n", version_start) < version_dot:
+        return None
+
+    # Return the version as int.
+    return int(version_output[version_start:version_dot])
+
 def _detect_system_clang(repository_ctx):
     """Detects whether the system-provided clang can be used.
 
@@ -38,7 +59,7 @@ def _detect_system_clang(repository_ctx):
     version_output = _run(repository_ctx, [cc_path, "--version"]).stdout
     if "clang" not in version_output:
         fail("Searching for clang or CC (%s), and found (%s), which is not a Clang compiler" % (cc, cc_path))
-    return cc_path
+    return (cc_path, _clang_version(version_output))
 
 def _compute_clang_resource_dir(repository_ctx, clang):
     """Runs the `clang` binary to get its resource dir."""
@@ -64,6 +85,19 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
     Returns the resulting paths as a list of strings.
     """
 
+    # Create an empty temp file for Clang to use
+    if repository_ctx.os.name.lower().startswith("windows"):
+        repository_ctx.file("_temp", "")
+
+    # Read in an empty input file. If we are building from
+    # Windows, then we create an empty temp file. Clang
+    # on Windows does not like it when you pass a non-existent file.
+    if repository_ctx.os.name.lower().startswith("windows"):
+        repository_ctx.file("_temp", "")
+        input_file = repository_ctx.path("_temp")
+    else:
+        input_file = "/dev/null"
+
     # The only way to get this out of Clang currently is to parse the verbose
     # output of the compiler when it is compiling C++ code.
     cmd = [
@@ -78,7 +112,7 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
         "-x",
         "c++",
         # Read in an empty input file.
-        "/dev/null",
+        input_file,
         # Always use libc++.
         "-stdlib=libc++",
     ]
@@ -98,8 +132,11 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
     # space from each path.
     include_begin = output.index("#include <...> search starts here:") + 1
     include_end = output.index("End of search list.", include_begin)
+
+    # Suffix present on framework paths.
+    framework_suffix = " (framework directory)"
     return [
-        repository_ctx.path(s.lstrip(" "))
+        repository_ctx.path(s.lstrip(" ").removesuffix(framework_suffix))
         for s in output[include_begin:include_end]
     ]
 
@@ -115,7 +152,7 @@ def _configure_clang_toolchain_impl(repository_ctx):
     # here as the other LLVM tools may not be symlinked into the PATH even if
     # `clang` is. We also insist on finding the basename of `clang++` as that is
     # important for C vs. C++ compiles.
-    clang = _detect_system_clang(repository_ctx)
+    (clang, clang_version) = _detect_system_clang(repository_ctx)
     clang = clang.realpath.dirname.get_child("clang++")
 
     # Compute the various directories used by Clang.
@@ -139,12 +176,20 @@ def _configure_clang_toolchain_impl(repository_ctx):
         if not arpath:
             fail("`llvm-ar` not found in PATH or adjacent to clang")
 
+    # By default Windows uses '\' in its paths. These will be
+    # interpreted as escape characters and fail the build, thus
+    # we must manually replace the backslashes with '/'
+    if repository_ctx.os.name.lower().startswith("windows"):
+        resource_dir = resource_dir.replace("\\", "/")
+        include_dirs = [str(s).replace("\\", "/") for s in include_dirs]
+
     repository_ctx.template(
         "clang_detected_variables.bzl",
         repository_ctx.attr._clang_detected_variables_template,
         substitutions = {
             "{LLVM_BINDIR}": str(arpath.dirname),
             "{CLANG_BINDIR}": str(clang.dirname),
+            "{CLANG_VERSION}": str(clang_version),
             "{CLANG_RESOURCE_DIR}": resource_dir,
             "{CLANG_INCLUDE_DIRS_LIST}": str(
                 [str(path) for path in include_dirs],

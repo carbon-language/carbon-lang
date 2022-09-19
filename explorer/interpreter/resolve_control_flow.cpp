@@ -154,6 +154,13 @@ auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
       }
       break;
     }
+    case DeclarationKind::MixinDeclaration: {
+      auto& mixin_decl = cast<MixinDeclaration>(*declaration);
+      for (Nonnull<Declaration*> member : mixin_decl.members()) {
+        CARBON_RETURN_IF_ERROR(ResolveControlFlow(member));
+      }
+      break;
+    }
     case DeclarationKind::InterfaceDeclaration: {
       auto& iface_decl = cast<InterfaceDeclaration>(*declaration);
       for (Nonnull<Declaration*> member : iface_decl.members()) {
@@ -173,6 +180,7 @@ auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
     case DeclarationKind::AssociatedConstantDeclaration:
     case DeclarationKind::SelfDeclaration:
     case DeclarationKind::AliasDeclaration:
+    case DeclarationKind::MixDeclaration:
       // do nothing
       break;
   }
