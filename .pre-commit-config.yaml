@@ -12,7 +12,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: 3298ddab3c13dd77d6ce1fc0baf97691430d84b0 # frozen: v4.3.0
+    rev: v4.3.0
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
@@ -30,7 +30,7 @@ repos:
       - id: trailing-whitespace
         exclude: '^(.*/fuzzer_corpus/.*|.*/testdata/.*\.golden|.*\.svg)$'
   - repo: https://github.com/google/pre-commit-tool-hooks
-    rev: e006c8ab09f96ec32ba728b488ea5d17e1f8f6c0 # frozen: v1.2.4
+    rev: v1.2.4
     hooks:
       - id: check-google-doc-style
       - id: markdown-toc
@@ -45,11 +45,11 @@ repos:
 
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
-    rev: f6c139c5215ce04fd3e73a900f1372942d58eca0 # frozen: 22.6.0
+    rev: 22.8.0
     hooks:
       - id: black
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: d0a4882e1c96eca274f90b273f0f809ab3d98aff # frozen: v3.0.0-alpha.0
+    rev: v3.0.0-alpha.0
     hooks:
       - id: prettier
   - repo: local
@@ -106,11 +106,11 @@ repos:
         files: ^.*/BUILD$
         pass_filenames: false
   - repo: https://github.com/PyCQA/flake8
-    rev: f8e1b317742036ff11ff86356fd2b68147e169f7 # frozen: 5.0.4
+    rev: 5.0.4
     hooks:
       - id: flake8
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'fde4bb992b03943ecb94207a52739ba07957bd06' # frozen: v0.971
+    rev: 'v0.971'
     hooks:
       - id: mypy
         # Use setup.cfg to match the command line.
@@ -132,7 +132,7 @@ repos:
               .*_test\.py
           )$
   - repo: https://github.com/codespell-project/codespell
-    rev: c6ecb9fc51571a77bc92e6c265c358aef7cb6c38 # frozen: v2.2.1
+    rev: v2.2.1
     hooks:
       - id: codespell
         args: ['-I', '.codespell_ignore', '--uri-ignore-words-list', '*']
@@ -145,7 +145,7 @@ repos:
               .*/fuzzer_corpus/.*
           )$
   - repo: https://github.com/google/pre-commit-tool-hooks
-    rev: e006c8ab09f96ec32ba728b488ea5d17e1f8f6c0 # frozen: v1.2.4
+    rev: v1.2.4
     hooks:
       - id: check-copyright
         args:
