@@ -40,6 +40,7 @@ cc_library(
     deps = [
         ":action_and_value",
         ":stack",
+        "//common:error",
         "//common:ostream",
         "//explorer/ast",
         "@llvm-project//llvm:Support",
