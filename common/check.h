@@ -5,6 +5,8 @@
 #ifndef CARBON_COMMON_CHECK_H_
 #define CARBON_COMMON_CHECK_H_
 
+// Test
+
 #include "common/check_internal.h"
 
 namespace Carbon {
