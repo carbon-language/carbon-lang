@@ -71,13 +71,14 @@ jobs:
         env:
           HOMEBREW_NO_INSTALL_CLEANUP: 1
           HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
+        # Use llvm@14 because llvm (15) has sanitizer issues.
         run: |
           echo '*** Updating brew'
           brew update
           echo '*** Installing LLVM deps'
-          brew install --force-bottle --only-dependencies llvm
+          brew install --force-bottle --only-dependencies llvm@14
           echo '*** Installing LLVM itself'
-          brew install --force-bottle --force --verbose llvm
+          brew install --force-bottle --force --verbose llvm@14
           echo '*** brew info llvm'
           brew info llvm
           echo '*** brew config'
