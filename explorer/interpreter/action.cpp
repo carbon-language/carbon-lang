@@ -26,7 +26,7 @@ RuntimeScope::RuntimeScope(RuntimeScope&& other) noexcept
       locals_(std::move(other.locals_)),
       // To transfer ownership of other.allocations_, we have to empty it out.
       allocations_(std::exchange(other.allocations_, {})),
-      heap_(other.heap_) {}
+      heap_(other.heap_),destructor_scope_(other.destructor_scope_) {}
 
 auto RuntimeScope::operator=(RuntimeScope&& rhs) noexcept -> RuntimeScope& {
   local_values_ = std::move(rhs.local_values_);
@@ -34,6 +34,7 @@ auto RuntimeScope::operator=(RuntimeScope&& rhs) noexcept -> RuntimeScope& {
   // To transfer ownership of rhs.allocations_, we have to empty it out.
   allocations_ = std::exchange(rhs.allocations_, {});
   heap_ = rhs.heap_;
+  destructor_scope_ = rhs.destructor_scope_;
   return *this;
 }
 
@@ -79,6 +80,7 @@ void RuntimeScope::Merge(RuntimeScope other) {
   allocations_.insert(allocations_.end(), other.allocations_.begin(),
                       other.allocations_.end());
   other.allocations_.clear();
+  destructor_scope_ = other.destructor_scope_;
 }
 
 auto RuntimeScope::Get(ValueNodeView value_node) const

@@ -57,12 +57,13 @@ fn Main() -> i32 {
       }
   }
 
+  i = 0;
   while(i < 2 ){
-    var a: A = {.n = 4};
-    var b: B = {.n = 3};
-    var c: C = {.n = 2};
+    var a: A = {.n = 8};
+    var b: B = {.n = 7};
+    var c: C = {.n = 6};
     if(i == 0){
-      var a: A = {.n = 1};
+      var a: A = {.n = 5};
       i = i+1;
       continue;
     }

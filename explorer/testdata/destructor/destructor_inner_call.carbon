@@ -7,13 +7,6 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: DESTRUCTOR C
-// CHECK: DESTRUCTOR B
-// CHECK: DESTRUCTOR A 2
-// CHECK: DESTRUCTOR A 2
-// CHECK: DESTRUCTOR B
-// CHECK: DESTRUCTOR A 2
-// CHECK: DESTRUCTOR A 2
 // CHECK: result: 1
 
 package ExplorerTest api;
@@ -30,29 +23,19 @@ class A{
 
 class B{
     destructor[me: Self]{
-        Print("DESTRUCTOR B");
+        Print("DESTRUCTOR B {0}",me.n);
     }
-    fn Create(x: A) -> B{
-       return {.a = x};
+    fn Create(x: i32) -> B{
+       return {.n = x, .a = A.Create(3) };
     }
+    var n: i32;
     var a: A;
-}
-
-class C{
-    destructor[me: Self]{
-        Print("DESTRUCTOR C");
-    }
-    fn Create(x: A, y : B) -> C{
-       return {.a = x, .b = y};
-    }
-    var a: A;
-    var b: B;
 }
 
 
 fn Main() -> i32 {
-  var a: A = A.Create(2);
-  var b: B = B.Create(a);
-  var c: C = C.Create(a,b);
+  var a: A = A.Create(4);
+  var b: B = B.Create(2);
+  var c: A = A.Create(1);
   return 1;
 }

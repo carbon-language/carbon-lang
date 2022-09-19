@@ -175,24 +175,28 @@ auto ActionStack::FinishAction() -> ErrorOr<Success> {
       CARBON_FATAL() << "ScopeAction at top of stack";
     case Action::Kind::StatementAction:
     case Action::Kind::DeclarationAction:
-    case Action::Kind::RecursiveAction:
-      PopScopes();
+    case Action::Kind::RecursiveAction: {
+      destroy_actions_ = PopScopes();
+    }
       break;
     case Action::Kind::CleanUpAction:
-      llvm::outs()<<"C-A-2\n";
       break;
   }
-#if 0
-  std::unique_ptr<Action> cleanup_action(nullptr);
+  if(!destroy_actions_.empty()){
+    for(auto & x : destroy_actions_){
+      auto & scope = x->scope();
+      if(scope && x->kind() != Action::Kind::CleanUpAction){
+        std::unique_ptr<Action> cleanup_action = std::make_unique<CleanupAction>(std::move(*scope));
+        todo_.Push(std::move(cleanup_action));
+      }
+    }
+    destroy_actions_.clear();
+  }
   auto & scope = act->scope();
-  if(scope){
-     std::unique_ptr<Action> cleanup_action = std::make_unique<CleanupAction>(std::move(*scope));
+  if(scope && act->kind() != Action::Kind::CleanUpAction ){
+    std::unique_ptr<Action> cleanup_action = std::make_unique<CleanupAction>(std::move(*scope));
+    todo_.Push(std::move(cleanup_action));
   }
-  if(act->kind() != Action::Kind::CleanUpAction && cleanup_action ){
-    llvm::outs()<<"Spawn clean_up_action"<<"\n";
-    CARBON_RETURN_IF_ERROR(Spawn(std::move(cleanup_action)));
-  }
-#endif
   return Success();
 }
 
@@ -208,25 +212,29 @@ auto ActionStack::FinishAction(Nonnull<const Value*> result)
       CARBON_FATAL() << "ScopeAction at top of stack";
     case Action::Kind::ExpressionAction:
     case Action::Kind::LValAction:
-    case Action::Kind::PatternAction:
-      PopScopes();
+    case Action::Kind::PatternAction: 
+      destroy_actions_ = PopScopes();
       SetResult(result);
       break;
     case Action::Kind::CleanUpAction:
-      llvm::outs()<<"C-A-1\n";
       break;
   }
-#if 0
-  std::unique_ptr<Action> cleanup_action(nullptr);
+  if(!destroy_actions_.empty()){
+    for(auto & x : destroy_actions_){
+      auto & scope = x->scope();
+      if(scope && x->kind() != Action::Kind::CleanUpAction){
+        std::unique_ptr<Action> cleanup_action = std::make_unique<CleanupAction>(std::move(*scope));
+        todo_.Push(std::move(cleanup_action));
+      }
+    }
+    destroy_actions_.clear();
+  }
   auto & scope = act->scope();
-  if(scope){
-     std::unique_ptr<Action> cleanup_action = std::make_unique<CleanupAction>(std::move(*scope));
+  if(scope && act->kind() != Action::Kind::CleanUpAction ){
+    std::unique_ptr<Action> cleanup_action = std::make_unique<CleanupAction>(std::move(*scope));
+    todo_.Push(std::move(cleanup_action));
   }
-  if(act->kind() != Action::Kind::CleanUpAction && cleanup_action ){
-    llvm::outs()<<"Spawn clean_up_action"<<"\n";
-    CARBON_RETURN_IF_ERROR(Spawn(std::move(cleanup_action)));
-  }
-#endif
+
   return Success();
 }
 
@@ -234,6 +242,16 @@ auto ActionStack::Spawn(std::unique_ptr<Action> child) -> ErrorOr<Success> {
   Action& action = *todo_.Top();
   action.set_pos(action.pos() + 1);
   todo_.Push(std::move(child));
+  if(!destroy_actions_.empty()){
+    for(auto & x : destroy_actions_){
+      auto & scope = x->scope();
+      if(scope && x->kind() != Action::Kind::CleanUpAction){
+       std::unique_ptr<Action> cleanup_action = std::make_unique<CleanupAction>(std::move(*scope));
+       todo_.Push(std::move(cleanup_action));
+      }
+    }
+    destroy_actions_.clear();
+  }
   return Success();
 }
 
@@ -243,6 +261,16 @@ auto ActionStack::Spawn(std::unique_ptr<Action> child, RuntimeScope scope)
   action.set_pos(action.pos() + 1);
   todo_.Push(std::make_unique<ScopeAction>(std::move(scope)));
   todo_.Push(std::move(child));
+  if(!destroy_actions_.empty()){
+    for(auto & x : destroy_actions_){
+      auto & scope = x->scope();
+      if(scope && x->kind() != Action::Kind::CleanUpAction){
+       std::unique_ptr<Action> cleanup_action = std::make_unique<CleanupAction>(std::move(*scope));
+       todo_.Push(std::move(cleanup_action));
+      }
+    }
+    destroy_actions_.clear();
+  }
   return Success();
 }
 
@@ -261,44 +289,65 @@ auto ActionStack::RunAgain() -> ErrorOr<Success> {
   return Success();
 }
 
-auto ActionStack::UnwindTo(Nonnull<const Statement*> ast_node)
+auto ActionStack::UnwindTo(Nonnull<const Statement*> ast_node,bool destroy_scopes)
     -> ErrorOr<Success> {
   while (true) {
     if (const auto* statement_action =
             llvm::dyn_cast<StatementAction>(todo_.Top().get());
         statement_action != nullptr &&
         &statement_action->statement() == ast_node) {
+      //llvm::outs()<<"XXX"<<"\n";
       break;
     }
     auto item = todo_.Pop();
-   /* auto & scope = item->scope();
+    auto & scope = item->scope();
     if(scope && item->kind() != Action::Kind::CleanUpAction){
-       llvm::outs()<<"Spawn clean_up_action"<<"\n";
-       std::unique_ptr<Action> cleanup_action = std::make_unique<CleanupAction>(std::move(*scope));
-       CARBON_RETURN_IF_ERROR(Spawn(std::move(cleanup_action)));
-    }*/
+      std::unique_ptr<Action> cleanup_action = std::make_unique<CleanupAction>(std::move(*scope));
+        destroy_actions_.push_front(std::move(cleanup_action));
+    }
+  }
+  if(destroy_scopes){
+    for(auto & x: destroy_actions_){
+      todo_.Push(std::move(x));
+    }
+    destroy_actions_.clear();
   }
   return Success();
 }
 
-auto ActionStack::UnwindPast(Nonnull<const Statement*> ast_node)
+auto ActionStack::UnwindPast(Nonnull<const Statement*> ast_node,bool destroy_scopes)
     -> ErrorOr<Success> {
   CARBON_RETURN_IF_ERROR(UnwindTo(ast_node));
   auto item = todo_.Pop();
-  destroy_actions_ = PopScopes();
+  auto popped_scopes = PopScopes();
+  for(auto &popped_scope : popped_scopes){
+    destroy_actions_.push_front(std::move(popped_scope));
+  }
+  destroy_actions_.push_front(std::move(item));
+  if (destroy_scopes){
+    for(auto & x : destroy_actions_){
+      auto & scope = x->scope();
+      //if(scope && x->kind() != Action::Kind::CleanUpAction){
+      if(scope){
+       // std::unique_ptr<Action> cleanup_action = std::make_unique<CleanupAction>(std::move(*scope));
+       // todo_.Push(std::move(cleanup_action));
+        todo_.Push(std::move(x));
+      }
+    }
+    destroy_actions_.clear();
+  }
+  //llvm::outs()<<"XXX ENDE"<<"\n";
   return Success();
 }
 
 auto ActionStack::UnwindPast(Nonnull<const Statement*> ast_node,
                              Nonnull<const Value*> result) -> ErrorOr<Success> {
-  //llvm::outs()<<"FIRST: "<<*ast_node<<"\n";
   CARBON_RETURN_IF_ERROR(UnwindPast(ast_node));
   SetResult(result);
   if(!destroy_actions_.empty()){
     for(auto & x : destroy_actions_){
       auto & scope = x->scope();
-      if(scope && x->kind() != Action::Kind::CleanUpAction){
-       //llvm::outs()<<"Spawn clean_up_action"<<"\n";
+      if(scope){
        std::unique_ptr<Action> cleanup_action = std::make_unique<CleanupAction>(std::move(*scope));
        todo_.Push(std::move(cleanup_action));
       }
@@ -339,17 +388,12 @@ auto ActionStack::PopScopes() -> std::list<std::unique_ptr<Action>> {
   std::list<std::unique_ptr<Action>> l;
   while (!todo_.IsEmpty() && llvm::isa<ScopeAction>(*todo_.Top())) {
     auto act = todo_.Pop();
-    l.push_back(std::move(act));
-#if 0
-    std::unique_ptr<Action> cleanup_action;
-    auto & scope = act->scope();
-    if(scope && act->kind() != Action::Kind::CleanUpAction){
-      llvm::outs()<<"Spawn clean_up_action"<<"\n";
-      std::unique_ptr<Action> cleanup_action = std::make_unique<CleanupAction>(std::move(*scope));
-      auto unused = Spawn(std::move(cleanup_action));
-      (void)(unused);
+    if(act->scope()){
+      if((*act->scope()).DestructorScope() < 2 ){
+        (*act->scope()).ChangeToDestructorScope();
+        l.push_back(std::move(act));
+      }
     }
-#endif
   }
   return l;
 }

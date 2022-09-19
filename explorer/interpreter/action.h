@@ -35,7 +35,7 @@ class RuntimeScope {
       -> RuntimeScope;
 
   // Constructs a RuntimeScope that allocates storage in `heap`.
-  explicit RuntimeScope(Nonnull<HeapAllocationInterface*> heap) : heap_(heap) {}
+  explicit RuntimeScope(Nonnull<HeapAllocationInterface*> heap) : heap_(heap),destructor_scope_(0) {}
 
   // Moving a RuntimeScope transfers ownership of its allocations.
   RuntimeScope(RuntimeScope&&) noexcept;
@@ -63,12 +63,15 @@ class RuntimeScope {
   auto Locals() const -> std::vector<Nonnull<const LValue*>> {
     return local_values_;
   }
+  auto DestructorScope()const -> int { return destructor_scope_; }
+  void ChangeToDestructorScope() { destructor_scope_++; }
 
  private:
   std::vector<Nonnull<const LValue*>> local_values_;
   std::map<ValueNodeView, unsigned int> locals_;
   std::vector<AllocationId> allocations_;
   Nonnull<HeapAllocationInterface*> heap_;
+  int destructor_scope_;
 };
 
 // An Action represents the current state of a self-contained computation,

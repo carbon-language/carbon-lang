@@ -107,13 +107,13 @@ class ActionStack {
 
   // Unwinds Actions from the stack until the StatementAction associated with
   // `ast_node` is at the top of the stack.
-  auto UnwindTo(Nonnull<const Statement*> ast_node) -> ErrorOr<Success>;
+  auto UnwindTo(Nonnull<const Statement*> ast_node,bool destroy_scopes = false) -> ErrorOr<Success>;
 
   // Unwinds Actions from the stack until the StatementAction associated with
   // `ast_node` has been removed from the stack. If `result` is specified,
   // it represents the result of that Action (StatementActions normally cannot
   // produce results, but the body of a function can).
-  auto UnwindPast(Nonnull<const Statement*> ast_node) -> ErrorOr<Success>;
+  auto UnwindPast(Nonnull<const Statement*> ast_node, bool destroy_scopes = false) -> ErrorOr<Success>;
   auto UnwindPast(Nonnull<const Statement*> ast_node,
                   Nonnull<const Value*> result) -> ErrorOr<Success>;
 
