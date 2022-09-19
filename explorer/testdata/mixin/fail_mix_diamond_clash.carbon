@@ -7,13 +7,32 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-
 package ExplorerTest api;
 
-fn Main() -> i32 {
-  var n: i32 = 0;
-  match (n) {
-    case 1 => { return 0; }
+__mixin M1 {
+  fn F1[me: Self](x: Self) -> Self{
+     return x;
   }
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_non_exhaustive_match.carbon:[[@LINE+1]]: non-exhaustive match may allow control-flow to reach the end of a function that provides a `->` return type
+}
+
+__mixin M2 {
+  fn F2() {
+  }
+  __mix M1;
+}
+
+__mixin M3 {
+  __mix M1;
+  fn F3() {
+  }
+}
+
+class C {
+  __mix M2;
+  __mix M3;
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_mix_diamond_clash.carbon:[[@LINE+1]]: Member named F1 (declared at {{.*}}/explorer/testdata/mixin/fail_mix_diamond_clash.carbon:15) is being mixed multiple times into C
+}
+
+fn Main() -> i32 {
+  return 0;
 }

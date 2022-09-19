@@ -7,13 +7,18 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: result: 3
+// CHECK: Interface: 5
+// CHECK: Op: 5
+// CHECK: result: 0
 
 package ExplorerTest api;
 
-// TODO: T:! Add
-fn DoAdd[T:! AddWith(.Self) where .Result == .Self](x: T, y: T) -> T { return x + y; }
-
 fn Main() -> i32 {
-  return DoAdd(1, 2);
+  var lhs: i32 = 3;
+  var rhs: i32 = 2;
+  // Make sure that both the interface and operator work with i32. These rely on
+  // builtin arithmetic more directly.
+  Print("Interface: {0}", lhs.(AddWith(i32).Op)(rhs));
+  Print("Op: {0}", lhs + rhs);
+  return 0;
 }

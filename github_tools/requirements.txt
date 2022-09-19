@@ -4,4 +4,3 @@
 
 # Python dependencies, consumed by /WORKSPACE.
 gql >= 2.0.0, < 3.0.0
-PyGitHub

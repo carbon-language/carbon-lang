@@ -13,10 +13,11 @@
 
 namespace Carbon::Testing {
 
-MATCHER_P(Return, target_id_matcher,
-          llvm::formatv("Return({0})",
-                        ::testing::DescribeMatcher<llvm::Optional<int32_t>>(
-                            target_id_matcher))) {
+MATCHER_P(
+    Return, target_id_matcher,
+    llvm::formatv("Return(`{0}`)",
+                  ::testing::DescribeMatcher<llvm::Optional<Semantics::NodeId>>(
+                      target_id_matcher))) {
   const Semantics::NodeRef& node_ref = arg;
   if (auto ret = SemanticsIRForTest::GetNode<Semantics::Return>(node_ref)) {
     return ExplainMatchResult(target_id_matcher, ret->target_id(),

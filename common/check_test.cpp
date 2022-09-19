@@ -12,11 +12,10 @@ namespace {
 TEST(CheckTest, CheckTrue) { CARBON_CHECK(true); }
 
 TEST(CheckTest, CheckFalse) {
-  // TODO: figure out why we can't use \\d+ instead of .+ in these patterns.
   ASSERT_DEATH({ CARBON_CHECK(false); },
                "Stack trace:\n"
-               ".+\n"
-               "CHECK failure at common/check_test.cpp:.+: false\n");
+               "(.|\n)+\n"
+               "CHECK failure at common/check_test.cpp:\\d+: false\n");
 }
 
 TEST(CheckTest, CheckTrueCallbackNotUsed) {

@@ -17,6 +17,7 @@
 #include "explorer/common/error_builders.h"
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
+#include "explorer/interpreter/pattern_analysis.h"
 #include "explorer/interpreter/value.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringExtras.h"
@@ -2933,6 +2934,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&match.expression(), impl_scope));
       std::vector<Match::Clause> new_clauses;
       std::optional<Nonnull<const Value*>> expected_type;
+      PatternMatrix patterns;
       for (auto& clause : match.clauses()) {
         ImplScope clause_scope;
         clause_scope.AddParent(&impl_scope);
@@ -2953,6 +2955,12 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
         } else {
           expected_type = &clause.pattern().static_type();
         }
+        if (patterns.IsRedundant({&clause.pattern()})) {
+          return CompilationError(clause.pattern().source_loc())
+                 << "unreachable case: all values matched by this case "
+                 << "are matched by earlier cases";
+        }
+        patterns.Add({&clause.pattern()});
         CARBON_RETURN_IF_ERROR(
             TypeCheckStmt(&clause.statement(), clause_scope));
       }
@@ -3130,17 +3138,12 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
 
 // Returns true if we can statically verify that `match` is exhaustive, meaning
 // that one of its clauses will be executed for any possible operand value.
-//
-// TODO: the current rule is an extremely simplistic placeholder, with
-// many false negatives.
 static auto IsExhaustive(const Match& match) -> bool {
+  PatternMatrix matrix;
   for (const Match::Clause& clause : match.clauses()) {
-    // A pattern consisting of a single variable binding is guaranteed to match.
-    if (clause.pattern().kind() == PatternKind::BindingPattern) {
-      return true;
-    }
+    matrix.Add({&clause.pattern()});
   }
-  return false;
+  return matrix.IsRedundant({AbstractPattern::MakeWildcard()});
 }
 
 auto TypeChecker::ExpectReturnOnAllPaths(
