@@ -22,14 +22,19 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 In Carbon, a _sum type_ is a type whose values are grouped into several distinct
 named cases, called _alternatives_. A value of a sum type logically consists of
-a value of one of the alternatives, together with a _discriminator_ tag, which
-identifies which alternative is present. Sum types are typically handled with
-pattern matching.
+a _discriminator_ tag that identifies which alternative is present, together
+with that alternative's value if it has one. Sum types are typically handled
+with pattern matching.
 
 ## `choice` declarations
 
 The `choice` keyword is used to declare a sum type by specifying its interface,
-leaving the implementation to the compiler. For example:
+leaving the implementation to the compiler. A `choice` declaration consists of
+the `choice` keyword followed by the name of the type, and then a list of
+alternatives inside curly braces. An alternative declaration consists of the
+alternative name, optionally followed by a parameter list in parentheses. If
+present, the parameter list has the same syntax as in a
+[function declaration](README.md#functions). For example:
 
 ```carbon
 choice OptionalI32 {
@@ -40,7 +45,8 @@ choice OptionalI32 {
 
 This declares a sum type named `OptionalI32` with two alternatives: `Some`,
 which holds a single `i32` value, and `None`, which is empty. Choice types can
-also be parameterized, like class types:
+also be parameterized,
+[like class types](generics/details.md#parameterized-types):
 
 ```carbon
 choice Optional(T:! Type) {
@@ -49,11 +55,9 @@ choice Optional(T:! Type) {
 }
 ```
 
-An alternative declaration consists of the alternative name, followed by an
-optional parameter list in parentheses, much like the syntax of a function
-declaration. A value of a function-like alternative is specified by "calling" it
-like a function, and a value of a "bare" alternative like `None` is specified by
-naming it:
+A value of a function-like alternative is specified by "calling" it like a
+function, and a value of an empty alternative like `None` is specified by naming
+it:
 
 ```carbon
 var my_opt: Optional(i32) = Optional(i32).None;
@@ -86,12 +90,11 @@ declaration, but gives the author full control over the representation and class
 members.
 
 The ability to create instances of the sum type can be straightforwardly
-emulated with factory functions and static constants (although the latter
-[are not yet designed](classes.md#no-static-variables)), and the internal
-storage layout will presumably involve untagged unions or some other low-level
-storage primitive which hasn't been designed yet, but the key to defining a sum
-type's interface is enabling it to support pattern matching. To do that, the sum
-type has to specify two things:
+emulated with factory functions and static constants, and the internal storage
+layout will presumably involve untagged unions or some other low-level storage
+primitive which hasn't been designed yet, but the key to defining a sum type's
+interface is enabling it to support pattern matching. To do that, the sum type
+has to specify two things:
 
 -   The set of all possible alternatives, including their names and parameter
     types, so that the compiler can typecheck the `match` body, identify any
@@ -105,20 +108,20 @@ Here's how that would look if `Optional` were defined as a class:
 class Optional(T:! Type) {
   // Factory functions
   fn Some(value: T) -> Self;
-  fn None() -> Self;
+  let None:! Self;
 
   private var has_value: bool;
   private var value: T;
 
   interface MatchContinuation {
     let template ReturnType:! Type;
-    fn Some(value: T) -> ReturnType;
-    fn None() -> ReturnType;
+    fn Some[addr me: Self*](value: T) -> ReturnType;
+    fn None[addr me: Self*]() -> ReturnType;
   }
 
   external impl as Match(MatchContinuation) {
     fn Op[me: Self, Continuation:! MatchContinuation](
-        continuation: Continuation*) {
+        continuation: Continuation*) -> Continuation.ReturnType {
       if (me.has_value) {
         return continuation->Some(me.value);
       } else {
@@ -170,14 +173,14 @@ required to invoke exactly one method of `MatchContinuation`, and to do so
 exactly once.
 
 Notice that the names `Some` and `None` are defined twice, once as factory
-functions of `Optional` and once as methods of `MatchContinuation`, with the
-same parameter types in each case. The two effectively act as inverses of each
-other: the factory functions compute an `Optional` from their parameters, and
-the methods are used to report the parameter values that would compute a given
-`Optional`. This mirroring between expression and pattern syntax is ultimately a
-design choice by the type author; there is no language-level requirement that
-the alternatives correspond to the factory functions, but it is **strongly**
-recommended.
+functions/constant members of `Optional` and once as methods of
+`MatchContinuation`, with the same parameter types in each case. The two
+effectively act as inverses of each other: the `Optional` members are used to
+create `Optional` values, and the `MatchContinuation` methods are used to report
+the parameter values that would create a given `Optional`. This mirroring
+between expression and pattern syntax is ultimately a design choice by the type
+author; there is no language-level requirement that the alternatives correspond
+to the factory functions, but it is **strongly** recommended.
 
 ## Alternatives considered
 
