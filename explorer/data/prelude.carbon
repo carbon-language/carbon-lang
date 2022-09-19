@@ -317,6 +317,13 @@ interface MulWith(U:! Type) {
 }
 // TODO: constraint Mul { ... }
 
+interface DivWith(U:! Type) {
+  // TODO: = Self
+  let Result:! Type;
+  fn Op[me: Self](other: U) -> Result;
+}
+// TODO: constraint Div { ... }
+
 interface ModWith(U:! Type) {
   // TODO: = Self
   let Result:! Type;
@@ -336,6 +343,9 @@ external impl i32 as SubWith(i32) where .Result == i32 {
 }
 external impl i32 as MulWith(i32) where .Result == i32 {
   fn Op[me: i32](other: i32) -> i32 { return me * other; }
+}
+external impl i32 as DivWith(i32) where .Result == i32 {
+  fn Op[me: i32](other: i32) -> i32 { return me / other; }
 }
 external impl i32 as ModWith(i32) where .Result == i32 {
   fn Op[me: i32](other: i32) -> i32 { return me % other; }
