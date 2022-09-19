@@ -35,7 +35,8 @@ class RuntimeScope {
       -> RuntimeScope;
 
   // Constructs a RuntimeScope that allocates storage in `heap`.
-  explicit RuntimeScope(Nonnull<HeapAllocationInterface*> heap) : heap_(heap),destructor_scope_(0) {}
+  explicit RuntimeScope(Nonnull<HeapAllocationInterface*> heap)
+      : heap_(heap), destructor_scope_(0) {}
 
   // Moving a RuntimeScope transfers ownership of its allocations.
   RuntimeScope(RuntimeScope&&) noexcept;
@@ -60,15 +61,15 @@ class RuntimeScope {
   auto Get(ValueNodeView value_node) const
       -> std::optional<Nonnull<const LValue*>>;
 
-  auto Locals() const -> std::vector<Nonnull<const LValue*>> {
+  auto locals() const -> llvm::ArrayRef<Nonnull<const LValue*>> {
     return local_values_;
   }
-  auto DestructorScope()const -> int { return destructor_scope_; }
+  auto DestructorScope() const -> int { return destructor_scope_; }
   void ChangeToDestructorScope() { destructor_scope_++; }
 
  private:
   std::vector<Nonnull<const LValue*>> local_values_;
-  std::map<ValueNodeView, unsigned int> locals_;
+  std::map<ValueNodeView, unsigned int> locals_map_;
   std::vector<AllocationId> allocations_;
   Nonnull<HeapAllocationInterface*> heap_;
   int destructor_scope_;
@@ -285,23 +286,21 @@ class DeclarationAction : public Action {
   Nonnull<const Declaration*> declaration_;
 };
 
-class CleanupAction : public Action{
-  public:
-   explicit CleanupAction(RuntimeScope scope) 
-     : Action(Kind::CleanUpAction){
-    locals_count_ = scope.Locals().size();
+class CleanupAction : public Action {
+ public:
+  explicit CleanupAction(RuntimeScope scope) : Action(Kind::CleanUpAction) {
+    locals_count_ = scope.locals().size();
     StartScope(std::move(scope));
-   }
- 
-   auto LocalsCount()const -> int{
-    return locals_count_;
-   }
+  }
 
-   static auto classof(const Action* action) -> bool {
+  auto locals_count() const -> int { return locals_count_; }
+
+  static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::CleanUpAction;
-   }
-  private:
-   int locals_count_;
+  }
+
+ private:
+  int locals_count_;
 };
 
 // Action which does nothing except introduce a new scope into the action

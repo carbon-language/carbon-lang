@@ -109,18 +109,17 @@ class CallableDeclaration : public Declaration {
                       std::optional<Nonnull<Pattern*>> me_pattern,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
-                      std::optional<Nonnull<Block*>> body, bool is_destructor)
+                      std::optional<Nonnull<Block*>> body)
       : Declaration(kind, loc),
         name_(std::move(name)),
         deduced_parameters_(std::move(deduced_params)),
         me_pattern_(me_pattern),
         param_pattern_(param_pattern),
         return_term_(return_term),
-        body_(body),
-        is_destructor_(is_destructor) {}
+        body_(body) {}
 
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
-  auto is_destructor() const -> bool { return is_destructor_; }
+
   auto name() const -> const std::string& { return name_; }
   auto deduced_parameters() const
       -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
@@ -149,7 +148,6 @@ class CallableDeclaration : public Declaration {
   Nonnull<TuplePattern*> param_pattern_;
   ReturnTerm return_term_;
   std::optional<Nonnull<Block*>> body_;
-  bool is_destructor_;
 };
 
 class FunctionDeclaration : public CallableDeclaration {
@@ -171,11 +169,10 @@ class FunctionDeclaration : public CallableDeclaration {
                       std::optional<Nonnull<Pattern*>> me_pattern,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
-                      std::optional<Nonnull<Block*>> body, bool is_destructor)
+                      std::optional<Nonnull<Block*>> body)
       : CallableDeclaration(AstNodeKind::FunctionDeclaration, source_loc,
                             std::move(name), std::move(deduced_params),
-                            me_pattern, param_pattern, return_term, body,
-                            is_destructor) {}
+                            me_pattern, param_pattern, return_term, body) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromFunctionDeclaration(node->kind());
@@ -202,7 +199,7 @@ class DestructorDeclaration : public CallableDeclaration {
                         std::optional<Nonnull<Block*>> body)
       : CallableDeclaration(AstNodeKind::DestructorDeclaration, source_loc,
                             "destructor", std::move(deduced_params), me_pattern,
-                            param_pattern, return_term, body, true) {}
+                            param_pattern, return_term, body) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromDestructorDeclaration(node->kind());

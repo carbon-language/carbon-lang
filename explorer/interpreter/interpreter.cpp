@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "explorer/interpreter/interpreter.h"
+
 #include <llvm/Support/raw_ostream.h>
 
 #include <iterator>
@@ -43,8 +44,6 @@ static auto MakeTodo(Phase phase, Nonnull<Heap*> heap) -> ActionStack {
       return ActionStack(heap);
   }
 }
-
-enum class CaptureVariables { Block, FunctionBlock, DestructorBlock };
 
 // An Interpreter represents an instance of the Carbon abstract machine. It
 // manages the state of the abstract machine, and executes the steps of Actions
@@ -149,11 +148,6 @@ class Interpreter {
 
   auto CallDestructor(Nonnull<const DestructorDeclaration*> fun,
                       Nonnull<const Value*> receiver) -> ErrorOr<Success>;
-
-  auto CollectVariablesToDestruct(const Statement& stmt,
-                                  CaptureVariables capture) const
-      -> std::list<std::pair<Nonnull<const DestructorDeclaration*>,
-                             Nonnull<const Value*>>>;
 
   void PrintState(llvm::raw_ostream& out);
 
@@ -768,65 +762,6 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
   method_scope.ChangeToDestructorScope();
   return todo_.Spawn(std::unique_ptr<Action>(std::move(act)),
                      std::move(method_scope));
-}
-
-auto Interpreter::CollectVariablesToDestruct(const Statement& stmt,
-                                             CaptureVariables capture) const
-    -> std::list<std::pair<Nonnull<const DestructorDeclaration*>,
-                           Nonnull<const Value*>>> {
-  std::list<
-      std::pair<Nonnull<const DestructorDeclaration*>, Nonnull<const Value*>>>
-      destructor_calls;
-
-  if (capture == CaptureVariables::DestructorBlock) {
-    const auto locals = todo_.DestructorScope();
-    for (auto lvalue : locals) {
-      auto value = heap_.Read(lvalue->address(), stmt.source_loc());
-      // possible access to uninitialized variable
-      if (value.ok()) {
-        if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
-          const auto& class_type = cast<NominalClassType>(class_obj->type());
-          const auto& class_dec = class_type.declaration();
-          const auto& class_members = class_dec.members();
-          for (const auto& member : class_members) {
-            if (const auto* var = dyn_cast<VariableDeclaration>(member)) {
-              const auto& type = var->static_type();
-              if (const auto* c_type = dyn_cast<NominalClassType>(&type)) {
-                auto& c_dec = c_type->declaration();
-                if (c_dec.destructor().has_value()) {
-                  Address object = lvalue->address();
-                  Address mem = object.SubobjectAddress(Member(var));
-                  auto v = heap_.Read(mem, stmt.source_loc());
-                  destructor_calls.push_back({*c_dec.destructor(), *v});
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  } else {
-    std::vector<Nonnull<const LValue*>> locals;
-    if (capture == CaptureVariables::FunctionBlock) {
-      locals = todo_.FunctionScope();
-    } else {
-      locals = todo_.BlockScope();
-    }
-    for (auto lvalue : locals) {
-      auto value = heap_.Read(lvalue->address(), stmt.source_loc());
-      // possible access to uninitialized variable
-      if (value.ok()) {
-        if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
-          const auto& class_type = cast<NominalClassType>(class_obj->type());
-          const auto& class_dec = class_type.declaration();
-          if (class_dec.destructor().has_value()) {
-            destructor_calls.push_back({*class_dec.destructor(), class_obj});
-          }
-        }
-      }
-    }
-  }
-  return destructor_calls;
 }
 
 auto Interpreter::CallFunction(const CallExpression& call,
@@ -1718,14 +1653,13 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       CARBON_CHECK(act.pos() == 0);
       //    { { break; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { C, E', F} :: S, H}
-      llvm::outs()<<"Unwind Past"<< " BREAK"<<"\n";
-      return todo_.UnwindPast(&cast<Break>(stmt).loop(),true);
+      return todo_.UnwindPast(&cast<Break>(stmt).loop(), true);
     }
     case StatementKind::Continue: {
       CARBON_CHECK(act.pos() == 0);
       //    { { continue; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { (while (e) s) :: C, E', F} :: S, H}
-      return todo_.UnwindTo(&cast<Continue>(stmt).loop(),true);
+      return todo_.UnwindTo(&cast<Continue>(stmt).loop(), true);
     }
     case StatementKind::Block: {
       const auto& block = cast<Block>(stmt);
@@ -1951,24 +1885,23 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
   }
 }
 
-auto Interpreter::StepCleanUp() -> ErrorOr<Success>{
+auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
-  CleanupAction & cleanup = cast<CleanupAction>(act);
-  if(act.pos() < cleanup.LocalsCount() ){
-    auto lvalue =  act.scope()->Locals()[cleanup.LocalsCount()-act.pos()-1];
-    //llvm::outs()<<"LVALUE:"<<*lvalue<<"\n";
-    SourceLocation source_loc("destructor",1);
+  CleanupAction& cleanup = cast<CleanupAction>(act);
+  if (act.pos() < cleanup.locals_count()) {
+    auto lvalue = act.scope()->locals()[cleanup.locals_count() - act.pos() - 1];
+    SourceLocation source_loc("destructor", 1);
     auto value = heap_.Read(lvalue->address(), source_loc);
     if (value.ok()) {
-      if(act.scope()->DestructorScope() < 2){
+      if (act.scope()->DestructorScope() < 2) {
         if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
           const auto& class_type = cast<NominalClassType>(class_obj->type());
           const auto& class_dec = class_type.declaration();
           if (class_dec.destructor().has_value()) {
-            return CallDestructor(*class_dec.destructor(),class_obj);
+            return CallDestructor(*class_dec.destructor(), class_obj);
           }
         }
-      }else{
+      } else {
         if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
           const auto& class_type = cast<NominalClassType>(class_obj->type());
           const auto& class_dec = class_type.declaration();
@@ -1993,7 +1926,7 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success>{
       }
     }
   }
-  todo_.Pop(); 
+  todo_.Pop();
   return Success();
 }
 

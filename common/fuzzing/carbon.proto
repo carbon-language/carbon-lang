@@ -337,7 +337,14 @@ message FunctionDeclaration {
   optional TuplePattern param_pattern = 4;
   optional ReturnTerm return_term = 5;
   optional BlockStatement body = 6;
-  optional bool is_destructor = 7;
+}
+
+message DestructorDeclaration {
+  // repeated GenericBinding deduced_parameters = 1;
+  optional Pattern me_pattern = 1;
+  // optional TuplePattern param_pattern = 2;
+  // optional ReturnTerm return_term = 4;
+  optional BlockStatement body = 3;
 }
 
 message ClassDeclaration {
@@ -417,6 +424,7 @@ message Declaration {
     LetDeclaration let = 8;
     MixinDeclaration mixin = 9;
     MixDeclaration mix = 10;
+    DestructorDeclaration destructor = 11;
   }
 }
 

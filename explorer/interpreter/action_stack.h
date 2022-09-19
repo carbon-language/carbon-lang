@@ -57,12 +57,6 @@ class ActionStack {
   // Merges `scope` into the innermost scope currently on the stack.
   void MergeScope(RuntimeScope scope);
 
-  auto BlockScope() const -> std::vector<Nonnull<const LValue*>>;
-
-  auto FunctionScope() const -> std::vector<Nonnull<const LValue*>>;
-
-  auto DestructorScope() const -> std::vector<Nonnull<const LValue*>>;
-
   // Initializes `fragment` so that, when resumed, it begins execution of
   // `body`.
   void InitializeFragment(ContinuationValue::StackFragment& fragment,
@@ -107,13 +101,15 @@ class ActionStack {
 
   // Unwinds Actions from the stack until the StatementAction associated with
   // `ast_node` is at the top of the stack.
-  auto UnwindTo(Nonnull<const Statement*> ast_node,bool destroy_scopes = false) -> ErrorOr<Success>;
+  auto UnwindTo(Nonnull<const Statement*> ast_node, bool destroy_scopes = false)
+      -> ErrorOr<Success>;
 
   // Unwinds Actions from the stack until the StatementAction associated with
   // `ast_node` has been removed from the stack. If `result` is specified,
   // it represents the result of that Action (StatementActions normally cannot
   // produce results, but the body of a function can).
-  auto UnwindPast(Nonnull<const Statement*> ast_node, bool destroy_scopes = false) -> ErrorOr<Success>;
+  auto UnwindPast(Nonnull<const Statement*> ast_node,
+                  bool destroy_scopes = false) -> ErrorOr<Success>;
   auto UnwindPast(Nonnull<const Statement*> ast_node,
                   Nonnull<const Value*> result) -> ErrorOr<Success>;
 
@@ -124,9 +120,7 @@ class ActionStack {
   // Suspends execution of the currently-executing continuation.
   auto Suspend() -> ErrorOr<Success>;
 
-  void Pop() {
-    todo_.Pop();
-  }
+  void Pop() { todo_.Pop(); }
 
  private:
   // Pop any ScopeActions from the top of the stack, propagating results as

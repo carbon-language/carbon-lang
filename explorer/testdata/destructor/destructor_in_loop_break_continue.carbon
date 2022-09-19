@@ -8,10 +8,16 @@
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
 // CHECK: DESTRUCTOR A 1
-// CHECK: DESTRUCTOR A 1
 // CHECK: DESTRUCTOR C 2
 // CHECK: DESTRUCTOR B 3
 // CHECK: DESTRUCTOR A 4
+// CHECK: DESTRUCTOR A 5
+// CHECK: DESTRUCTOR C 6
+// CHECK: DESTRUCTOR B 7
+// CHECK: DESTRUCTOR A 8
+// CHECK: DESTRUCTOR C 6
+// CHECK: DESTRUCTOR B 7
+// CHECK: DESTRUCTOR A 8
 // CHECK: result: 1
 
 package ExplorerTest api;
