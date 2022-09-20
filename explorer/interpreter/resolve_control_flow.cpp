@@ -138,8 +138,9 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
 
 auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
   switch (declaration->kind()) {
-    case DeclarationKind::DestructorDeclaration: {
-      auto& destructor = cast<DestructorDeclaration>(*declaration);
+    case DeclarationKind::DestructorDeclaration:
+    case DeclarationKind::FunctionDeclaration: {
+      auto& destructor = cast<CallableDeclaration>(*declaration);
       if (destructor.body().has_value()) {
         CARBON_RETURN_IF_ERROR(
             ResolveControlFlow(*destructor.body(), std::nullopt, std::nullopt));
