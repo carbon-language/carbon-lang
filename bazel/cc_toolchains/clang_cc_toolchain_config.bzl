@@ -21,6 +21,7 @@ load(
     ":clang_detected_variables.bzl",
     "clang_bindir",
     "clang_version",
+    "clang_version_for_cache",
     "clang_include_dirs_list",
     "clang_resource_dir",
     "llvm_bindir",
@@ -191,6 +192,9 @@ def _impl(ctx):
                             "-D__DATE__=\"redacted\"",
                             "-D__TIMESTAMP__=\"redacted\"",
                             "-D__TIME__=\"redacted\"",
+                            # Pass the clang version as a define so that bazel
+                            # caching is more likely to notice version changes.
+                            "-DCLANG_VERSION_FOR_CACHE=\"%s\"" % clang_version_for_cache,
                         ],
                     ),
                     flag_group(
