@@ -128,8 +128,10 @@ jobs:
       - name: Configure Bazel and print info
         run: |
           cat >user.bazelrc <<EOF
+          # Add a cache version for changes that bazel won't otherwise detect.
+          CACHE_VERSION=1
           # Enable remote cache for our CI.
-          build --remote_cache=https://storage.googleapis.com/carbon-builds-github-${{ matrix.os }}
+          build --remote_cache=https://storage.googleapis.com/carbon-builds-github-v${CACHE_VERSION}-${{ matrix.os }}
           build --google_credentials=$HOME/gcp-builds-service-account.json
 
           # General build options.
