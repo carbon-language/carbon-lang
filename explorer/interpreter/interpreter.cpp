@@ -816,23 +816,22 @@ auto Interpreter::CallFunction(const CallExpression& call,
     }
     case Value::Kind::BoundMethodValue: {
       const auto& m = cast<BoundMethodValue>(*fun);
-      const FunctionDeclaration* method =
-          dyn_cast<FunctionDeclaration>(&m.declaration());
-      CARBON_CHECK(method->is_method());
+      const FunctionDeclaration& method = m.declaration();
+      CARBON_CHECK(method.is_method());
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> converted_args,
-          Convert(arg, &method->param_pattern().static_type(),
+          Convert(arg, &method.param_pattern().static_type(),
                   call.source_loc()));
       RuntimeScope method_scope(&heap_);
       BindingMap generic_args;
       // Bind the receiver to the `me` parameter.
-      CARBON_CHECK(PatternMatch(&method->me_pattern().value(), m.receiver(),
+      CARBON_CHECK(PatternMatch(&method.me_pattern().value(), m.receiver(),
                                 call.source_loc(), &method_scope, generic_args,
                                 trace_stream_, this->arena_));
       // Bind the arguments to the parameters.
-      CARBON_CHECK(PatternMatch(
-          &method->param_pattern().value(), converted_args, call.source_loc(),
-          &method_scope, generic_args, trace_stream_, this->arena_));
+      CARBON_CHECK(PatternMatch(&method.param_pattern().value(), converted_args,
+                                call.source_loc(), &method_scope, generic_args,
+                                trace_stream_, this->arena_));
       // Bring the class type arguments into scope.
       for (const auto& [bind, val] : m.type_args()) {
         method_scope.Initialize(bind->original(), val);
@@ -848,9 +847,9 @@ auto Interpreter::CallFunction(const CallExpression& call,
       for (const auto& [impl_bind, witness] : m.witnesses()) {
         method_scope.Initialize(impl_bind->original(), witness);
       }
-      CARBON_CHECK(method->body().has_value())
+      CARBON_CHECK(method.body().has_value())
           << "Calling a method that's missing a body";
-      return todo_.Spawn(std::make_unique<StatementAction>(*method->body()),
+      return todo_.Spawn(std::make_unique<StatementAction>(*method.body()),
                          std::move(method_scope));
     }
     case Value::Kind::ParameterizedEntityName: {

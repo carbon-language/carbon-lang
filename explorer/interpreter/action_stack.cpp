@@ -129,6 +129,7 @@ void ActionStack::InitializeFragment(ContinuationValue::StackFragment& fragment,
 auto ActionStack::FinishAction() -> ErrorOr<Success> {
   std::unique_ptr<Action> act = todo_.Pop();
   switch (act->kind()) {
+    case Action::Kind::CleanUpAction:
     case Action::Kind::ExpressionAction:
     case Action::Kind::LValAction:
     case Action::Kind::PatternAction:
@@ -140,8 +141,6 @@ auto ActionStack::FinishAction() -> ErrorOr<Success> {
     case Action::Kind::RecursiveAction: {
       destroy_actions_ = PopScopes();
     } break;
-    case Action::Kind::CleanUpAction:
-      break;
   }
   PushCleanUpAction(std::move(act));
   return Success();
@@ -151,6 +150,7 @@ auto ActionStack::FinishAction(Nonnull<const Value*> result)
     -> ErrorOr<Success> {
   std::unique_ptr<Action> act = todo_.Pop();
   switch (act->kind()) {
+    case Action::Kind::CleanUpAction:
     case Action::Kind::StatementAction:
     case Action::Kind::DeclarationAction:
     case Action::Kind::RecursiveAction:
@@ -162,8 +162,6 @@ auto ActionStack::FinishAction(Nonnull<const Value*> result)
     case Action::Kind::PatternAction:
       destroy_actions_ = PopScopes();
       SetResult(result);
-      break;
-    case Action::Kind::CleanUpAction:
       break;
   }
   PushCleanUpAction(std::move(act));

@@ -142,7 +142,6 @@ class ActionStack {
   std::optional<Nonnull<const Value*>> result_;
   std::optional<RuntimeScope> globals_;
   Phase phase_;
-  std::optional<RuntimeScope> empty_locals_;
   std::list<std::unique_ptr<Action>> destroy_actions_;
 };
 
