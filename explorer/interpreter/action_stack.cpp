@@ -140,7 +140,8 @@ auto ActionStack::FinishAction() -> ErrorOr<Success> {
     case Action::Kind::DeclarationAction:
     case Action::Kind::RecursiveAction: {
       destroy_actions_ = PopScopes();
-    } break;
+      break;
+    }
   }
   PushCleanUpAction(std::move(act));
   return Success();
