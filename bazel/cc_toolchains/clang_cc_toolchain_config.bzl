@@ -191,6 +191,7 @@ def _impl(ctx):
                             "-D__DATE__=\"redacted\"",
                             "-D__TIMESTAMP__=\"redacted\"",
                             "-D__TIME__=\"redacted\"",
+                            "-DCLANG_VERSION_FOR_CACHE=\"%s\"" % clang_version_for_cache,
                         ],
                     ),
                     flag_group(
