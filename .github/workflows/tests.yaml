@@ -85,9 +85,9 @@ jobs:
         run: |
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
-          sudo ./llvm.sh 15 all
+          sudo ./llvm.sh 14 all
           rm llvm.sh
-          echo "/usr/lib/llvm-15/bin" >> $GITHUB_PATH
+          echo "/usr/lib/llvm-14/bin" >> $GITHUB_PATH
 
       # Print the various tool paths and versions to help in debugging.
       - name: Print tool debugging info
