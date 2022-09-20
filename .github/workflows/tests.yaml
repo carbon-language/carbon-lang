@@ -79,7 +79,7 @@ jobs:
           echo '*** Updating PATH'
           echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
 
-      # On Ubuntu, use apt.llvm.org to install a recent LLVM and Clang.
+      # On Ubuntu, use apt.llvm.org to install a recent LLVM and Clang. x
       - name: Setup LLVM and Clang (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: |
