@@ -293,8 +293,9 @@ static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
       }
       break;
     }
+    case DeclarationKind::FunctionDeclaration:
     case DeclarationKind::DestructorDeclaration: {
-      auto& destructor = cast<DestructorDeclaration>(*declaration);
+      auto& destructor = cast<CallableDeclaration>(*declaration);
       if (destructor.body().has_value()) {
         FlowFacts flow_facts;
         CARBON_RETURN_IF_ERROR(ResolveUnformed(*destructor.body(), flow_facts,
