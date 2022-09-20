@@ -6,7 +6,7 @@ name: test
 
 on:
   push:
-    branches: [trunk]
+    branches: [llvm-apt]
     paths:
       # Conservatively run the tests. However, skip them if the only paths in
       # the pull request match files that we know don't impact the build.
@@ -79,7 +79,7 @@ jobs:
           echo '*** Updating PATH'
           echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
 
-      # On Ubuntu, use apt.llvm.org to install a recent LLVM and Clang. x
+      # On Ubuntu, use apt.llvm.org to install a recent LLVM and Clang.
       - name: Setup LLVM and Clang (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: |
