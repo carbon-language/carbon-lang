@@ -6,7 +6,7 @@ name: test
 
 on:
   push:
-    branches: [trunk]
+    branches: [llvm-apt]
     paths:
       # Conservatively run the tests. However, skip them if the only paths in
       # the pull request match files that we know don't impact the build.
@@ -118,10 +118,10 @@ jobs:
       # Add our bazel configuration and print basic info to ease debugging.
       - name: Configure Bazel and print info
         run: |
-          cat >user.bazelrc <<EOF
           # Add a cache version for changes that bazel won't otherwise detect,
           # like llvm version changes.
           CACHE_VERSION=1
+          cat >user.bazelrc <<EOF
           # Enable remote cache for our CI.
           build --remote_cache=https://storage.googleapis.com/carbon-builds-github-v${CACHE_VERSION}-${{ matrix.os }}
           build --google_credentials=$HOME/gcp-builds-service-account.json
