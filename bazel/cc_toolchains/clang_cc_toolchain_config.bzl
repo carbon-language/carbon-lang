@@ -98,7 +98,7 @@ def _impl(ctx):
         for name in [ACTION_NAMES.strip]
     ]
 
-    std_compile_flags = ["-std=c++17"]
+    std_compile_flags = ["-std=c++17", "-v"]
     # libc++ is only used on non-Windows platforms.
     if ctx.attr.target_cpu != "x64_windows":
         std_compile_flags.append("-stdlib=libc++")
@@ -424,7 +424,6 @@ def _impl(ctx):
                     flag_group(flags = [
                         "-fmodules-strict-decluse",
                         "-Wprivate-header",
-                        "-v",
                     ]),
                     flag_group(
                         iterate_over = "dependent_module_map_files",
