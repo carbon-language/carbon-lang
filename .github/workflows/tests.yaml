@@ -119,7 +119,8 @@ jobs:
       - name: Configure Bazel and print info
         run: |
           cat >user.bazelrc <<EOF
-          # Add a cache version for changes that bazel won't otherwise detect.
+          # Add a cache version for changes that bazel won't otherwise detect,
+          # like llvm version changes.
           CACHE_VERSION=1
           # Enable remote cache for our CI.
           build --remote_cache=https://storage.googleapis.com/carbon-builds-github-v${CACHE_VERSION}-${{ matrix.os }}
