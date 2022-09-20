@@ -87,6 +87,7 @@ jobs:
           chmod +x llvm.sh
           sudo ./llvm.sh 15 all
           rm llvm.sh
+          ls /usr/lib/llvm-15/lib/clang/
           echo "/usr/lib/llvm-15/bin" >> $GITHUB_PATH
 
       # Print the various tool paths and versions to help in debugging.
