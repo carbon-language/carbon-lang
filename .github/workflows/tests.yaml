@@ -64,12 +64,19 @@ jobs:
         if: matrix.os == 'macos-latest'
         env:
           HOMEBREW_NO_INSTALL_CLEANUP: 1
+          HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
         run: |
+          echo '*** Updating brew'
           brew update
+          echo '*** Installing LLVM deps'
           brew install --force-bottle --only-dependencies llvm
+          echo '*** Installing LLVM itself'
           brew install --force-bottle --force --verbose llvm
+          echo '*** brew info llvm'
           brew info llvm
+          echo '*** brew config'
           brew config
+          echo '*** Updating PATH'
           echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
 
       # On Ubuntu, use apt.llvm.org to install a recent LLVM and Clang.
@@ -85,13 +92,18 @@ jobs:
       # Print the various tool paths and versions to help in debugging.
       - name: Print tool debugging info
         run: |
+          echo '*** PATH'
           echo $PATH
+          echo '*** bazelisk'
           which bazelisk
           bazelisk --version
+          echo '*** python'
           which python
           python --version
+          echo '*** clang'
           which clang
           clang --version
+          echo '*** clang++'
           which clang++
           clang++ --version
 

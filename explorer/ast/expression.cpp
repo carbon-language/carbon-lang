@@ -40,7 +40,8 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
        {"int_left_shift", Intrinsic::IntLeftShift},
        {"int_right_shift", Intrinsic::IntRightShift},
        {"str_eq", Intrinsic::StrEq},
-       {"str_compare", Intrinsic::StrCompare}});
+       {"str_compare", Intrinsic::StrCompare},
+       {"assert", Intrinsic::Assert}});
   name.remove_prefix(std::strlen("__intrinsic_"));
   auto it = intrinsic_map.find(name);
   if (it == intrinsic_map.end()) {
@@ -80,6 +81,8 @@ auto IntrinsicExpression::name() const -> std::string_view {
       return "__intrinsic_str_eq";
     case IntrinsicExpression::Intrinsic::StrCompare:
       return "__intrinsic_str_compare";
+    case IntrinsicExpression::Intrinsic::Assert:
+      return "__intrinsic_assert";
   }
 }
 
@@ -120,6 +123,8 @@ auto ToString(Operator op) -> std::string_view {
       return "<<";
     case Operator::BitShiftRight:
       return ">>";
+    case Operator::Div:
+      return "/";
     case Operator::Neg:
     case Operator::Sub:
       return "-";
@@ -129,6 +134,8 @@ auto ToString(Operator op) -> std::string_view {
       return "*";
     case Operator::Not:
       return "not";
+    case Operator::NotEq:
+      return "!=";
     case Operator::And:
       return "and";
     case Operator::Or:

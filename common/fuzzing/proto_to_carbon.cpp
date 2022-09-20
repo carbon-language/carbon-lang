@@ -117,6 +117,10 @@ static auto OperatorToCarbon(const Fuzzing::OperatorExpression& operator_expr,
       BinaryOperatorToCarbon(arg0, " * ", arg1, out);
       break;
 
+    case Fuzzing::OperatorExpression::Div:
+      BinaryOperatorToCarbon(arg0, " / ", arg1, out);
+      break;
+
     case Fuzzing::OperatorExpression::Mod:
       BinaryOperatorToCarbon(arg0, " % ", arg1, out);
       break;
@@ -188,6 +192,9 @@ static auto OperatorToCarbon(const Fuzzing::OperatorExpression& operator_expr,
 
     case Fuzzing::OperatorExpression::BitShiftRight:
       BinaryOperatorToCarbon(arg0, " >> ", arg1, out);
+      break;
+    case Fuzzing::OperatorExpression::NotEq:
+      BinaryOperatorToCarbon(arg0, " != ", arg1, out);
       break;
   }
   out << ")";

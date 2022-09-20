@@ -7,20 +7,12 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-recursive-mixing.carbon:18: Member named F1 (declared at {{.*}}/explorer/testdata/mixin/fail-recursive-mixing.carbon:16) is being mixed multiple times into M1
+
 package ExplorerTest api;
 
-__mixin M1 {
-  fn F1[me: Self](x: Self) -> Self{
-     return x;
-  }
-  __mix M1;
-}
-
 class C {
-  __mix M1;
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/addr/fail_method_me_misspelled.carbon:[[@LINE+1]]: illegal binding pattern in implicit parameter list
+  fn F[addr mew: Self*]() {}
 }
 
-fn Main() -> i32 {
-  return 0;
-}
+fn Main() -> i32 { return 0; }

@@ -5,7 +5,7 @@
 #ifndef CARBON_COMMON_CHECK_INTERNAL_H_
 #define CARBON_COMMON_CHECK_INTERNAL_H_
 
-#include <unistd.h>
+#include <cstdlib>
 
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Signals.h"

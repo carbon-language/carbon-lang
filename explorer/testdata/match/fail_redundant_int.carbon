@@ -7,32 +7,18 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-mix-diamond-clash.carbon:34: Member named F1 (declared at {{.*}}/explorer/testdata/mixin/fail-mix-diamond-clash.carbon:16) is being mixed multiple times into C
+
 package ExplorerTest api;
 
-__mixin M1 {
-  fn F1[me: Self](x: Self) -> Self{
-     return x;
+fn A(n: i32) -> i32 {
+  match (n) {
+    case 1 => { return 1; }
+    // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/match/fail_redundant_int.carbon:[[@LINE+1]]: unreachable case: all values matched by this case are matched by earlier cases
+    case 1 => { return 2; }
+    case (_: i32) => { return 3; }
   }
-}
-
-__mixin M2 {
-  fn F2() {
-  }
-  __mix M1;
-}
-
-__mixin M3 {
-  __mix M1;
-  fn F3() {
-  }
-}
-
-class C {
-  __mix M2;
-  __mix M3;
 }
 
 fn Main() -> i32 {
-  return 0;
+  return A(1);
 }

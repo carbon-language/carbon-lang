@@ -17,6 +17,7 @@
 #include "explorer/common/error_builders.h"
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
+#include "explorer/interpreter/pattern_analysis.h"
 #include "explorer/interpreter/value.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringExtras.h"
@@ -2026,6 +2027,22 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         return handle_binary_operator(builtin);
       };
 
+      auto handle_compare =
+          [&](Builtins::Builtin builtin, const std::string& method_name,
+              const std::string_view& operator_desc) -> ErrorOr<Success> {
+        ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
+            impl_scope, op.arguments()[0], BuiltinInterfaceName{builtin, ts[1]},
+            BuiltinMethodCall{method_name, op.arguments()[1]});
+        if (!converted.ok()) {
+          // We couldn't find a matching `impl`.
+          return CompilationError(e->source_loc())
+                 << *ts[0] << " is not " << operator_desc << " comparable with "
+                 << *ts[1] << " (" << converted.error().message() << ")";
+        }
+        op.set_rewritten_form(*converted);
+        return Success();
+      };
+
       switch (op.op()) {
         case Operator::Neg: {
           // Handle a built-in negation first.
@@ -2044,6 +2061,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           return handle_binary_arithmetic(Builtins::SubWith);
         case Operator::Mul:
           return handle_binary_arithmetic(Builtins::MulWith);
+        case Operator::Div:
+          return handle_binary_arithmetic(Builtins::DivWith);
         case Operator::Mod:
           return handle_binary_arithmetic(Builtins::ModWith);
         case Operator::BitwiseAnd:
@@ -2109,76 +2128,19 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           op.set_static_type(arena_->New<BoolType>());
           op.set_value_category(ValueCategory::Let);
           return Success();
-        case Operator::Eq: {
-          ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
-              impl_scope, op.arguments()[0],
-              BuiltinInterfaceName{Builtins::EqWith, ts[1]},
-              BuiltinMethodCall{"Equal", op.arguments()[1]});
-          if (!converted.ok()) {
-            // We couldn't find a matching `impl`.
-            return CompilationError(e->source_loc())
-                   << *ts[0] << " is not equality comparable with " << *ts[1]
-                   << " (" << converted.error().message() << ")";
-          }
-          op.set_rewritten_form(*converted);
-          return Success();
-        }
-        case Operator::Less: {
-          ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
-              impl_scope, op.arguments()[0],
-              BuiltinInterfaceName{Builtins::LessWith, ts[1]},
-              BuiltinMethodCall{"Less", op.arguments()[1]});
-          if (!converted.ok()) {
-            // We couldn't find a matching `impl`.
-            return CompilationError(e->source_loc())
-                   << *ts[0] << " is not less comparable with " << *ts[1]
-                   << " (" << converted.error().message() << ")";
-          }
-          op.set_rewritten_form(*converted);
-          return Success();
-        }
-        case Operator::LessEq: {
-          ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
-              impl_scope, op.arguments()[0],
-              BuiltinInterfaceName{Builtins::LessEqWith, ts[1]},
-              BuiltinMethodCall{"LessEq", op.arguments()[1]});
-          if (!converted.ok()) {
-            // We couldn't find a matching `impl`.
-            return CompilationError(e->source_loc())
-                   << *ts[0] << " is not less equal comparable with " << *ts[1]
-                   << " (" << converted.error().message() << ")";
-          }
-          op.set_rewritten_form(*converted);
-          return Success();
-        }
-        case Operator::GreaterEq: {
-          ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
-              impl_scope, op.arguments()[0],
-              BuiltinInterfaceName{Builtins::GreaterEqWith, ts[1]},
-              BuiltinMethodCall{"GreaterEq", op.arguments()[1]});
-          if (!converted.ok()) {
-            // We couldn't find a matching `impl`.
-            return CompilationError(e->source_loc())
-                   << *ts[0] << " is not greater equal comparable with "
-                   << *ts[1] << " (" << converted.error().message() << ")";
-          }
-          op.set_rewritten_form(*converted);
-          return Success();
-        }
-        case Operator::Greater: {
-          ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
-              impl_scope, op.arguments()[0],
-              BuiltinInterfaceName{Builtins::GreaterWith, ts[1]},
-              BuiltinMethodCall{"Greater", op.arguments()[1]});
-          if (!converted.ok()) {
-            // We couldn't find a matching `impl`.
-            return CompilationError(e->source_loc())
-                   << *ts[0] << " is not greater comparable with " << *ts[1]
-                   << " (" << converted.error().message() << ")";
-          }
-          op.set_rewritten_form(*converted);
-          return Success();
-        }
+        case Operator::Eq:
+          return handle_compare(Builtins::EqWith, "Equal", "equality");
+        case Operator::NotEq:
+          return handle_compare(Builtins::EqWith, "NotEqual", "equality");
+        case Operator::Less:
+          return handle_compare(Builtins::LessWith, "Less", "less");
+        case Operator::LessEq:
+          return handle_compare(Builtins::LessEqWith, "LessEq", "less equal");
+        case Operator::GreaterEq:
+          return handle_compare(Builtins::GreaterEqWith, "GreaterEq",
+                                "greater equal");
+        case Operator::Greater:
+          return handle_compare(Builtins::GreaterWith, "Greater", "greater");
         case Operator::Deref:
           CARBON_RETURN_IF_ERROR(
               ExpectPointerType(e->source_loc(), "*", ts[0]));
@@ -2360,6 +2322,21 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           e->set_static_type(TupleValue::Empty());
           e->set_value_category(ValueCategory::Let);
           return Success();
+        case IntrinsicExpression::Intrinsic::Assert: {
+          if (args.size() != 2) {
+            return CompilationError(e->source_loc())
+                   << "__intrinsic_assert takes 2 arguments";
+          }
+          CARBON_RETURN_IF_ERROR(ExpectType(
+              e->source_loc(), "__intrinsic_assert argument 0",
+              arena_->New<BoolType>(), &args[0]->static_type(), impl_scope));
+          CARBON_RETURN_IF_ERROR(ExpectType(
+              e->source_loc(), "__intrinsic_assert argument 1",
+              arena_->New<StringType>(), &args[1]->static_type(), impl_scope));
+          e->set_static_type(TupleValue::Empty());
+          e->set_value_category(ValueCategory::Let);
+          return Success();
+        }
         case IntrinsicExpression::Intrinsic::Alloc: {
           if (args.size() != 1) {
             return CompilationError(e->source_loc())
@@ -2959,6 +2936,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&match.expression(), impl_scope));
       std::vector<Match::Clause> new_clauses;
       std::optional<Nonnull<const Value*>> expected_type;
+      PatternMatrix patterns;
       for (auto& clause : match.clauses()) {
         ImplScope clause_scope;
         clause_scope.AddParent(&impl_scope);
@@ -2979,6 +2957,12 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
         } else {
           expected_type = &clause.pattern().static_type();
         }
+        if (patterns.IsRedundant({&clause.pattern()})) {
+          return CompilationError(clause.pattern().source_loc())
+                 << "unreachable case: all values matched by this case "
+                 << "are matched by earlier cases";
+        }
+        patterns.Add({&clause.pattern()});
         CARBON_RETURN_IF_ERROR(
             TypeCheckStmt(&clause.statement(), clause_scope));
       }
@@ -3156,17 +3140,12 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
 
 // Returns true if we can statically verify that `match` is exhaustive, meaning
 // that one of its clauses will be executed for any possible operand value.
-//
-// TODO: the current rule is an extremely simplistic placeholder, with
-// many false negatives.
 static auto IsExhaustive(const Match& match) -> bool {
+  PatternMatrix matrix;
   for (const Match::Clause& clause : match.clauses()) {
-    // A pattern consisting of a single variable binding is guaranteed to match.
-    if (clause.pattern().kind() == PatternKind::BindingPattern) {
-      return true;
-    }
+    matrix.Add({&clause.pattern()});
   }
-  return false;
+  return matrix.IsRedundant({AbstractPattern::MakeWildcard()});
 }
 
 auto TypeChecker::ExpectReturnOnAllPaths(

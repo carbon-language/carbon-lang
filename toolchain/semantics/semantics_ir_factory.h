@@ -40,15 +40,16 @@ class SemanticsIRFactory {
   auto TransformCodeBlock(ParseTree::Node node)
       -> llvm::SmallVector<Semantics::NodeRef, 0>;
   void TransformDeclaredName(llvm::SmallVector<Semantics::NodeRef, 0>& nodes,
-                             ParseTree::Node node, int32_t target_id);
+                             ParseTree::Node node, Semantics::NodeId target_id);
   void TransformExpression(llvm::SmallVector<Semantics::NodeRef, 0>& nodes,
-                           ParseTree::Node node, int32_t target_id);
+                           ParseTree::Node node, Semantics::NodeId target_id);
   // auto TransformExpressionStatement(ParseTree::Node node)
   //   -> Semantics::Statement;
   void TransformFunctionDeclaration(
       llvm::SmallVector<Semantics::NodeRef, 0>& nodes, ParseTree::Node node);
   void TransformInfixOperator(llvm::SmallVector<Semantics::NodeRef, 0>& nodes,
-                              ParseTree::Node node, int32_t target_id);
+                              ParseTree::Node node,
+                              Semantics::NodeId target_id);
   // auto TransformParameterList(ParseTree::Node node)
   //   -> llvm::SmallVector<Semantics::PatternBinding, 0>
   // auto TransformPatternBinding(ParseTree::Node node)
@@ -58,7 +59,9 @@ class SemanticsIRFactory {
                                 ParseTree::Node node);
 
   // Returns a unique ID for the SemanticsIR.
-  auto next_id() -> int32_t { return id_counter_++; }
+  auto next_id() -> Semantics::NodeId {
+    return Semantics::NodeId(id_counter_++);
+  }
 
   // Convenience accessor.
   auto parse_tree() -> const ParseTree& { return *semantics_.parse_tree_; }
