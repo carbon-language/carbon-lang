@@ -202,7 +202,7 @@ def _configure_clang_toolchain_impl(repository_ctx):
             "{LLVM_BINDIR}": str(arpath.dirname),
             "{CLANG_BINDIR}": str(clang.dirname),
             "{CLANG_VERSION}": str(clang_version),
-            "{CLANG_VERSION_FOR_CACHE}": clang_version_for_cache,
+            "{CLANG_VERSION_FOR_CACHE}": clang_version_for_cache.replace('"', '_').replace('\\', '_'),
             "{CLANG_RESOURCE_DIR}": resource_dir,
             "{CLANG_INCLUDE_DIRS_LIST}": str(
                 [str(path) for path in include_dirs],
