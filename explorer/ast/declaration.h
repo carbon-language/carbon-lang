@@ -204,8 +204,6 @@ class DestructorDeclaration : public CallableDeclaration {
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromDestructorDeclaration(node->kind());
   }
-
- private:
 };
 
 class SelfDeclaration : public Declaration {

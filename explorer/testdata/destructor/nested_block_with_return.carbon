@@ -7,18 +7,11 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: DESTRUCTOR A 1
-// CHECK: DESTRUCTOR C 2
-// CHECK: DESTRUCTOR B 3
+// CHECK: DESTRUCTOR C 1
+// CHECK: DESTRUCTOR B 2
+// CHECK: DESTRUCTOR A 3
 // CHECK: DESTRUCTOR A 4
-// CHECK: DESTRUCTOR A 5
-// CHECK: DESTRUCTOR C 6
-// CHECK: DESTRUCTOR B 7
-// CHECK: DESTRUCTOR A 8
-// CHECK: DESTRUCTOR C 6
-// CHECK: DESTRUCTOR B 7
-// CHECK: DESTRUCTOR A 8
-// CHECK: result: 1
+// CHECK: result: 2
 
 package ExplorerTest api;
 
@@ -50,31 +43,21 @@ fn ident(x: bool)-> bool{
 fn ident_i32(x: i32)-> i32{
     return x;
 }
-
+// It should be enforced that different runtime scopes are on the stack.
+//So that it can be tested that the wrong scopes are not removed from the stack.
 fn Main() -> i32 {
   var i: i32 = 0;
-  while(i < 2 ){
-      var a: A = {.n = 4};
-      var b: B = {.n = 3};
-      var c: C = {.n = 2};
-      if(i == 0){
-        var a: A = {.n = 1};
-        break;
-      }
-  }
-
-  i = 0;
-  while(i < 2 ){
-    var a: A = {.n = 8};
-    var b: B = {.n = 7};
-    var c: C = {.n = 6};
-    if(i == 0){
-      var a: A = {.n = 5};
-      i = i+1;
-      continue;
+  var d: A = {.n = 4};
+  if(ident(true)){
+    var a: A = {.n = 3};
+    if(true){
+       var b: B = {.n = 2};
+       ident_i32(2);
+       if(ident_i32(0) == 0){
+         var c: C = {.n = 1};
+         return 2;
+       }
     }
-    i = i+1;
   }
-
   return 1;
 }

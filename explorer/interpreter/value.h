@@ -39,6 +39,7 @@ class Value {
   enum class Kind {
     IntValue,
     FunctionValue,
+    DestructorValue,
     BoundMethodValue,
     PointerValue,
     LValue,
@@ -156,10 +157,10 @@ class IntValue : public Value {
 // A function value.
 class FunctionValue : public Value {
  public:
-  explicit FunctionValue(Nonnull<const CallableDeclaration*> declaration)
+  explicit FunctionValue(Nonnull<const FunctionDeclaration*> declaration)
       : Value(Kind::FunctionValue), declaration_(declaration) {}
 
-  explicit FunctionValue(Nonnull<const CallableDeclaration*> declaration,
+  explicit FunctionValue(Nonnull<const FunctionDeclaration*> declaration,
                          Nonnull<const Bindings*> bindings)
       : Value(Kind::FunctionValue),
         declaration_(declaration),
@@ -169,7 +170,7 @@ class FunctionValue : public Value {
     return value->kind() == Kind::FunctionValue;
   }
 
-  auto declaration() const -> const CallableDeclaration& {
+  auto declaration() const -> const FunctionDeclaration& {
     return *declaration_;
   }
 
@@ -182,20 +183,38 @@ class FunctionValue : public Value {
   }
 
  private:
-  Nonnull<const CallableDeclaration*> declaration_;
+  Nonnull<const FunctionDeclaration*> declaration_;
   Nonnull<const Bindings*> bindings_ = Bindings::None();
+};
+
+// A destructor value.
+class DestructorValue : public Value {
+ public:
+  explicit DestructorValue(Nonnull<const DestructorDeclaration*> declaration)
+      : Value(Kind::DestructorValue), declaration_(declaration) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::DestructorValue;
+  }
+
+  auto declaration() const -> const DestructorDeclaration& {
+    return *declaration_;
+  }
+
+ private:
+  Nonnull<const DestructorDeclaration*> declaration_;
 };
 
 // A bound method value. It includes the receiver object.
 class BoundMethodValue : public Value {
  public:
-  explicit BoundMethodValue(Nonnull<const CallableDeclaration*> declaration,
+  explicit BoundMethodValue(Nonnull<const FunctionDeclaration*> declaration,
                             Nonnull<const Value*> receiver)
       : Value(Kind::BoundMethodValue),
         declaration_(declaration),
         receiver_(receiver) {}
 
-  explicit BoundMethodValue(Nonnull<const CallableDeclaration*> declaration,
+  explicit BoundMethodValue(Nonnull<const FunctionDeclaration*> declaration,
                             Nonnull<const Value*> receiver,
                             Nonnull<const Bindings*> bindings)
       : Value(Kind::BoundMethodValue),
@@ -207,7 +226,7 @@ class BoundMethodValue : public Value {
     return value->kind() == Kind::BoundMethodValue;
   }
 
-  auto declaration() const -> const CallableDeclaration& {
+  auto declaration() const -> const FunctionDeclaration& {
     return *declaration_;
   }
 
@@ -222,7 +241,7 @@ class BoundMethodValue : public Value {
   }
 
  private:
-  Nonnull<const CallableDeclaration*> declaration_;
+  Nonnull<const FunctionDeclaration*> declaration_;
   Nonnull<const Value*> receiver_;
   Nonnull<const Bindings*> bindings_ = Bindings::None();
 };

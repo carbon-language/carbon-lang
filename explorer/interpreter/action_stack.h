@@ -131,6 +131,12 @@ class ActionStack {
   // stack.
   void SetResult(Nonnull<const Value*> result);
 
+  void DestructAllScopes();
+
+  void DestructScopes();
+
+  void PushCleanUpAction(std::unique_ptr<Action> act);
+
   // TODO: consider defining a non-nullable unique_ptr-like type to use here.
   Stack<std::unique_ptr<Action>> todo_;
   std::optional<Nonnull<const Value*>> result_;

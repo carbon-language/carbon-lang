@@ -619,6 +619,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
   switch (value->kind()) {
     case Value::Kind::IntValue:
     case Value::Kind::FunctionValue:
+    case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LValue:
@@ -758,7 +759,6 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
       << "Calling a method that's missing a body";
 
   auto act = std::make_unique<StatementAction>(*method.body());
-  act->SetDestructorCall();
   method_scope.ChangeToDestructorScope();
   return todo_.Spawn(std::unique_ptr<Action>(std::move(act)),
                      std::move(method_scope));
@@ -779,9 +779,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
     }
     case Value::Kind::FunctionValue: {
       const FunctionValue& fun_val = cast<FunctionValue>(*fun);
-      const CallableDeclaration& callableDeclaration = fun_val.declaration();
-      const FunctionDeclaration* function =
-          dyn_cast<FunctionDeclaration>(&callableDeclaration);
+      const FunctionDeclaration& function = fun_val.declaration();
       RuntimeScope binding_scope(&heap_);
       // Bring the class type arguments into scope.
       for (const auto& [bind, val] : fun_val.type_args()) {
@@ -803,17 +801,17 @@ auto Interpreter::CallFunction(const CallExpression& call,
       todo_.CurrentAction().StartScope(std::move(binding_scope));
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> converted_args,
-          Convert(arg, &function->param_pattern().static_type(),
+          Convert(arg, &function.param_pattern().static_type(),
                   call.source_loc()));
 
       RuntimeScope function_scope(&heap_);
       BindingMap generic_args;
       CARBON_CHECK(PatternMatch(
-          &function->param_pattern().value(), converted_args, call.source_loc(),
+          &function.param_pattern().value(), converted_args, call.source_loc(),
           &function_scope, generic_args, trace_stream_, this->arena_));
-      CARBON_CHECK(function->body().has_value())
+      CARBON_CHECK(function.body().has_value())
           << "Calling a function that's missing a body";
-      return todo_.Spawn(std::make_unique<StatementAction>(*function->body()),
+      return todo_.Spawn(std::make_unique<StatementAction>(*function.body()),
                          std::move(function_scope));
     }
     case Value::Kind::BoundMethodValue: {

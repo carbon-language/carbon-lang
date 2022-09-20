@@ -143,12 +143,7 @@ auto ActionStack::FinishAction() -> ErrorOr<Success> {
     case Action::Kind::CleanUpAction:
       break;
   }
-  auto& scope = act->scope();
-  if (scope && act->kind() != Action::Kind::CleanUpAction) {
-    std::unique_ptr<Action> cleanup_action =
-        std::make_unique<CleanupAction>(std::move(*scope));
-    todo_.Push(std::move(cleanup_action));
-  }
+  PushCleanUpAction(std::move(act));
   return Success();
 }
 
@@ -171,12 +166,7 @@ auto ActionStack::FinishAction(Nonnull<const Value*> result)
     case Action::Kind::CleanUpAction:
       break;
   }
-  auto& scope = act->scope();
-  if (scope && act->kind() != Action::Kind::CleanUpAction) {
-    std::unique_ptr<Action> cleanup_action =
-        std::make_unique<CleanupAction>(std::move(*scope));
-    todo_.Push(std::move(cleanup_action));
-  }
+  PushCleanUpAction(std::move(act));
 
   return Success();
 }
@@ -185,17 +175,7 @@ auto ActionStack::Spawn(std::unique_ptr<Action> child) -> ErrorOr<Success> {
   Action& action = *todo_.Top();
   action.set_pos(action.pos() + 1);
   todo_.Push(std::move(child));
-  if (!destroy_actions_.empty()) {
-    for (auto& x : destroy_actions_) {
-      auto& scope = x->scope();
-      if (scope && x->kind() != Action::Kind::CleanUpAction) {
-        std::unique_ptr<Action> cleanup_action =
-            std::make_unique<CleanupAction>(std::move(*scope));
-        todo_.Push(std::move(cleanup_action));
-      }
-    }
-    destroy_actions_.clear();
-  }
+  DestructScopes();
   return Success();
 }
 
@@ -205,17 +185,7 @@ auto ActionStack::Spawn(std::unique_ptr<Action> child, RuntimeScope scope)
   action.set_pos(action.pos() + 1);
   todo_.Push(std::make_unique<ScopeAction>(std::move(scope)));
   todo_.Push(std::move(child));
-  if (!destroy_actions_.empty()) {
-    for (auto& x : destroy_actions_) {
-      auto& scope = x->scope();
-      if (scope && x->kind() != Action::Kind::CleanUpAction) {
-        std::unique_ptr<Action> cleanup_action =
-            std::make_unique<CleanupAction>(std::move(*scope));
-        todo_.Push(std::move(cleanup_action));
-      }
-    }
-    destroy_actions_.clear();
-  }
+  DestructScopes();
   return Success();
 }
 
@@ -252,10 +222,7 @@ auto ActionStack::UnwindTo(Nonnull<const Statement*> ast_node,
     }
   }
   if (destroy_scopes) {
-    for (auto& x : destroy_actions_) {
-      todo_.Push(std::move(x));
-    }
-    destroy_actions_.clear();
+    DestructAllScopes();
   }
   return Success();
 }
@@ -270,17 +237,7 @@ auto ActionStack::UnwindPast(Nonnull<const Statement*> ast_node,
   }
   destroy_actions_.push_front(std::move(item));
   if (destroy_scopes) {
-    for (auto& x : destroy_actions_) {
-      auto& scope = x->scope();
-      // if(scope && x->kind() != Action::Kind::CleanUpAction){
-      if (scope) {
-        // std::unique_ptr<Action> cleanup_action =
-        // std::make_unique<CleanupAction>(std::move(*scope));
-        // todo_.Push(std::move(cleanup_action));
-        todo_.Push(std::move(x));
-      }
-    }
-    destroy_actions_.clear();
+    DestructAllScopes();
   }
   return Success();
 }
@@ -289,17 +246,7 @@ auto ActionStack::UnwindPast(Nonnull<const Statement*> ast_node,
                              Nonnull<const Value*> result) -> ErrorOr<Success> {
   CARBON_RETURN_IF_ERROR(UnwindPast(ast_node));
   SetResult(result);
-  if (!destroy_actions_.empty()) {
-    for (auto& x : destroy_actions_) {
-      auto& scope = x->scope();
-      if (scope) {
-        std::unique_ptr<Action> cleanup_action =
-            std::make_unique<CleanupAction>(std::move(*scope));
-        todo_.Push(std::move(cleanup_action));
-      }
-    }
-    destroy_actions_.clear();
-  }
+  DestructAllScopes();
   return Success();
 }
 
@@ -349,6 +296,38 @@ void ActionStack::SetResult(Nonnull<const Value*> result) {
     result_ = result;
   } else {
     todo_.Top()->AddResult(result);
+  }
+}
+
+void ActionStack::DestructAllScopes() {
+  if (!destroy_actions_.empty()) {
+    for (auto& x : destroy_actions_) {
+      auto& scope = x->scope();
+      if (scope) {
+        std::unique_ptr<Action> cleanup_action =
+            std::make_unique<CleanupAction>(std::move(*scope));
+        todo_.Push(std::move(cleanup_action));
+      }
+    }
+    destroy_actions_.clear();
+  }
+}
+
+void ActionStack::DestructScopes() {
+  if (!destroy_actions_.empty()) {
+    for (auto& x : destroy_actions_) {
+      PushCleanUpAction(std::move(x));
+    }
+    destroy_actions_.clear();
+  }
+}
+
+void ActionStack::PushCleanUpAction(std::unique_ptr<Action> act) {
+  auto& scope = act->scope();
+  if (scope && act->kind() != Action::Kind::CleanUpAction) {
+    std::unique_ptr<Action> cleanup_action =
+        std::make_unique<CleanupAction>(std::move(*scope));
+    todo_.Push(std::move(cleanup_action));
   }
 }
 

@@ -56,7 +56,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         if (std::optional<Nonnull<const Declaration*>> mem_decl =
                 FindMember(f, impl_witness->declaration().members());
             mem_decl.has_value()) {
-          const auto& fun_decl = cast<CallableDeclaration>(**mem_decl);
+          const auto& fun_decl = cast<FunctionDeclaration>(**mem_decl);
           if (fun_decl.is_method()) {
             return arena->New<BoundMethodValue>(&fun_decl, v,
                                                 &impl_witness->bindings());
@@ -290,6 +290,9 @@ void Value::Print(llvm::raw_ostream& out) const {
       break;
     case Value::Kind::BoolValue:
       out << (cast<BoolValue>(*this).value() ? "true" : "false");
+      break;
+    case Value::Kind::DestructorValue:
+      out << "destructor [ me: Self ] ";
       break;
     case Value::Kind::FunctionValue: {
       const FunctionValue& fun = cast<FunctionValue>(*this);
@@ -736,6 +739,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     }
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
+    case Value::Kind::DestructorValue:
     case Value::Kind::FunctionValue:
     case Value::Kind::BoundMethodValue:
     case Value::Kind::StructValue:
@@ -789,6 +793,8 @@ auto ValueStructurallyEqual(
       return body1.has_value() == body2.has_value() &&
              (!body1.has_value() || *body1 == *body2);
     }
+    case Value::Kind::DestructorValue:
+      return false;
     case Value::Kind::BoundMethodValue: {
       const auto& m1 = cast<BoundMethodValue>(*v1);
       const auto& m2 = cast<BoundMethodValue>(*v2);

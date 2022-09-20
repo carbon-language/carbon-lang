@@ -167,6 +167,7 @@ static auto ExpectPointerType(SourceLocation source_loc,
 static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
   switch (value->kind()) {
     case Value::Kind::IntValue:
+    case Value::Kind::DestructorValue:
     case Value::Kind::FunctionValue:
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
@@ -228,6 +229,7 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
   switch (value->kind()) {
     case Value::Kind::IntValue:
     case Value::Kind::FunctionValue:
+    case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LValue:
@@ -871,6 +873,7 @@ auto TypeChecker::ArgumentDeduction(
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
+    case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LValue:
@@ -1179,6 +1182,7 @@ auto TypeChecker::Substitute(
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
+    case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LValue:
@@ -3287,12 +3291,14 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
       &f->return_term().static_type(), deduced_bindings, impl_bindings));
   switch (f->kind()) {
     case DeclarationKind::FunctionDeclaration:
-      SetConstantValue(cast<FunctionDeclaration>(f),
-                       arena_->New<FunctionValue>(f));
+      SetConstantValue(
+          cast<FunctionDeclaration>(f),
+          arena_->New<FunctionValue>(cast<FunctionDeclaration>(f)));
       break;
     case DeclarationKind::DestructorDeclaration:
-      SetConstantValue(cast<DestructorDeclaration>(f),
-                       arena_->New<FunctionValue>(f));
+      SetConstantValue(
+          cast<DestructorDeclaration>(f),
+          arena_->New<DestructorValue>(cast<DestructorDeclaration>(f)));
       break;
     default:
       CARBON_FATAL() << "f is not a callable declaration";
@@ -4019,6 +4025,7 @@ static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
   switch (type->kind()) {
     case Value::Kind::IntValue:
     case Value::Kind::FunctionValue:
+    case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LValue:
