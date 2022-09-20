@@ -110,7 +110,7 @@ jobs:
           echo '*** clang includes'
           clang -no-canonical-prefixes -v -fsyntax-only -x c++ /dev/null -stdlib=libc++
           echo '*** clang includes'
-          clang -no-canonical-prefixes -v -fsyntax-only /dev/null
+          clang -no-canonical-prefixes -v -fsyntax-only -x c /dev/null
 
       # Extract our access key for our build cache.
       - name: Extract access key
