@@ -21,6 +21,7 @@ load(
     ":clang_detected_variables.bzl",
     "clang_bindir",
     "clang_version",
+    "clang_version_for_cache",
     "clang_include_dirs_list",
     "clang_resource_dir",
     "llvm_bindir",
