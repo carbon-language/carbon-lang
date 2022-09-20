@@ -424,6 +424,7 @@ def _impl(ctx):
                     flag_group(flags = [
                         "-fmodules-strict-decluse",
                         "-Wprivate-header",
+                        "-v",
                     ]),
                     flag_group(
                         iterate_over = "dependent_module_map_files",
