@@ -45,7 +45,6 @@ static auto AddExposedNames(const Declaration& declaration,
           func.name(), &func, StaticScope::NameStatus::KnownButNotDeclared));
       break;
     }
-
     case DeclarationKind::ClassDeclaration: {
       auto& class_decl = cast<ClassDeclaration>(declaration);
       CARBON_RETURN_IF_ERROR(
