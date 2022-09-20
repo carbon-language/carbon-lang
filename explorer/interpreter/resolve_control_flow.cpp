@@ -18,7 +18,7 @@ namespace Carbon {
 // Aggregate information about a function being analyzed.
 struct FunctionData {
   // The function declaration.
-  Nonnull<FunctionDeclaration*> declaration;
+  Nonnull<CallableDeclaration*> declaration;
 
   // True if the function has a deduced return type, and we've already seen
   // a `return` statement in its body.
@@ -53,8 +53,11 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
         }
         (*function)->saw_return_in_auto = true;
       }
-      auto& ret = cast<Return>(*statement);
-      ret.set_function((*function)->declaration);
+      if ((*function)->declaration->kind() ==
+          DeclarationKind::FunctionDeclaration) {
+        auto& ret = cast<Return>(*statement);
+        ret.set_function(cast<FunctionDeclaration>((*function)->declaration));
+      }
       if (statement->kind() == StatementKind::ReturnVar &&
           function_return.is_omitted()) {
         return CompilationError(statement->source_loc())
@@ -72,6 +75,7 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
                     "signature.";
         }
       }
+
       return Success();
     }
     case StatementKind::Break:
@@ -140,19 +144,11 @@ auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
   switch (declaration->kind()) {
     case DeclarationKind::DestructorDeclaration:
     case DeclarationKind::FunctionDeclaration: {
-      auto& destructor = cast<CallableDeclaration>(*declaration);
-      if (destructor.body().has_value()) {
+      auto& callable = cast<CallableDeclaration>(*declaration);
+      if (callable.body().has_value()) {
+        FunctionData data = {.declaration = &callable};
         CARBON_RETURN_IF_ERROR(
-            ResolveControlFlow(*destructor.body(), std::nullopt, std::nullopt));
-      }
-      break;
-    }
-    case DeclarationKind::FunctionDeclaration: {
-      auto& function = cast<FunctionDeclaration>(*declaration);
-      if (function.body().has_value()) {
-        FunctionData data = {.declaration = &function};
-        CARBON_RETURN_IF_ERROR(
-            ResolveControlFlow(*function.body(), std::nullopt, &data));
+            ResolveControlFlow(*callable.body(), std::nullopt, &data));
       }
       break;
     }

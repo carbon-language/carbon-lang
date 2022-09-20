@@ -36,7 +36,7 @@ static auto AddExposedNames(const Declaration& declaration,
     case DeclarationKind::DestructorDeclaration: {
       auto& func = cast<DestructorDeclaration>(declaration);
       CARBON_RETURN_IF_ERROR(enclosing_scope.Add(
-          func.name(), &func, StaticScope::NameStatus::KnownButNotDeclared));
+          "destructor", &func, StaticScope::NameStatus::KnownButNotDeclared));
       break;
     }
     case DeclarationKind::FunctionDeclaration: {
