@@ -138,7 +138,7 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
     return [
         repository_ctx.path(s.lstrip(" ").removesuffix(framework_suffix))
         for s in output[include_begin:include_end]
-    ] + ["/usr/lib/llvm-15/lib/clang/"]
+    ]
 
 def _configure_clang_toolchain_impl(repository_ctx):
     # First just symlink in the untemplated parts of the toolchain repo.
