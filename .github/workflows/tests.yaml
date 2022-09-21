@@ -76,8 +76,7 @@ jobs:
           brew info llvm
           echo '*** brew config'
           brew config
-          echo '*** Updating PATH'
-          # Always assign the newest LLVM we have 
+          echo '*** Updating PATH by the newest LLVM on the system'
           echo "$(find "${$(brew --prefix llvm)%/llvm}" -name 'llvm*' | tail -1)/bin" >> $GITHUB_PATH
 
       # On Ubuntu, use apt.llvm.org to install a recent LLVM and Clang.
