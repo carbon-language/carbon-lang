@@ -83,6 +83,15 @@ impl forall [T2:! Type, U2:! Type, T1:! EqWith(T2), U1:! EqWith(U2)]
     }
 }
 
+impl bool as EqWith(Self) {
+  fn Equal[me: Self](other: Self) -> bool {
+    return if me then other else not other;
+  }
+  fn NotEqual[me: Self](other: Self) -> bool {
+    return if me then not other else other;
+  }
+}
+
 impl i32 as EqWith(Self) {
   fn Equal[me: Self](other: Self) -> bool {
     return __intrinsic_int_eq(me, other);
@@ -308,6 +317,13 @@ interface MulWith(U:! Type) {
 }
 // TODO: constraint Mul { ... }
 
+interface DivWith(U:! Type) {
+  // TODO: = Self
+  let Result:! Type;
+  fn Op[me: Self](other: U) -> Result;
+}
+// TODO: constraint Div { ... }
+
 interface ModWith(U:! Type) {
   // TODO: = Self
   let Result:! Type;
@@ -327,6 +343,9 @@ external impl i32 as SubWith(i32) where .Result == i32 {
 }
 external impl i32 as MulWith(i32) where .Result == i32 {
   fn Op[me: i32](other: i32) -> i32 { return me * other; }
+}
+external impl i32 as DivWith(i32) where .Result == i32 {
+  fn Op[me: i32](other: i32) -> i32 { return me / other; }
 }
 external impl i32 as ModWith(i32) where .Result == i32 {
   fn Op[me: i32](other: i32) -> i32 { return me % other; }
@@ -437,16 +456,16 @@ choice OptionalElement(T:! Type) {
   Element(T)
 }
 
-class Optional(T:! Type){
-  fn CreateEmpty() -> Optional(T){
-    return { .element = OptionalElement(T).None() };
+class Optional(T:! Type) {
+  fn CreateEmpty() -> Optional(T) {
+    return {.element = OptionalElement(T).None()};
   }
-  fn Create(value: T ) -> Optional(T){
-    return { .element = OptionalElement(T).Element(value) };
+  fn Create(value: T) -> Optional(T) {
+    return {.element = OptionalElement(T).Element(value)};
   }
 
   fn HasValue[me: Self]() -> bool {
-    match(me.element){
+    match(me.element) {
       case OptionalElement(T).None() => { return false; }
     }
     return true;
@@ -454,8 +473,8 @@ class Optional(T:! Type){
 
   fn Get[me: Self]() -> T {
     var y: T;
-    match(me.element){
-      case OptionalElement(T).Element(x: T ) =>{
+    match(me.element) {
+      case OptionalElement(T).Element(x: T) => {
         return x;
       }
     }

@@ -5,6 +5,10 @@
 #ifndef CARBON_TOOLCHAIN_SEMANTICS_PARSE_SUBTREE_CONSUMER_H_
 #define CARBON_TOOLCHAIN_SEMANTICS_PARSE_SUBTREE_CONSUMER_H_
 
+#include <iterator>
+
+#include "llvm/ADT/Optional.h"
+#include "toolchain/parser/parse_node_kind.h"
 #include "toolchain/parser/parse_tree.h"
 
 namespace Carbon {

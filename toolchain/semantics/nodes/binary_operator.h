@@ -20,32 +20,32 @@ class BinaryOperator {
 
   static constexpr NodeKind Kind = NodeKind::BinaryOperator;
 
-  explicit BinaryOperator(ParseTree::Node node, int32_t id, Op op,
-                          int32_t lhs_id, int32_t rhs_id)
+  explicit BinaryOperator(ParseTree::Node node, NodeId id, Op op, NodeId lhs_id,
+                          NodeId rhs_id)
       : node_(node), id_(id), op_(op), lhs_id_(lhs_id), rhs_id_(rhs_id) {}
 
   void Print(llvm::raw_ostream& out) const {
-    out << "BinaryOperator(%" << id_ << ", ";
+    out << "BinaryOperator(" << id_ << ", ";
     switch (op_) {
       case Op::Add:
         out << "+";
         break;
     }
-    out << ", %" << lhs_id_ << ", %" << rhs_id_ << ")";
+    out << ", " << lhs_id_ << ", %" << rhs_id_ << ")";
   }
 
   auto node() const -> ParseTree::Node { return node_; }
-  auto id() const -> int32_t { return id_; }
+  auto id() const -> NodeId { return id_; }
   auto op() const -> Op { return op_; }
-  auto lhs_id() const -> int32_t { return lhs_id_; }
-  auto rhs_id() const -> int32_t { return rhs_id_; }
+  auto lhs_id() const -> NodeId { return lhs_id_; }
+  auto rhs_id() const -> NodeId { return rhs_id_; }
 
  private:
   ParseTree::Node node_;
-  int32_t id_;
+  NodeId id_;
   Op op_;
-  int32_t lhs_id_;
-  int32_t rhs_id_;
+  NodeId lhs_id_;
+  NodeId rhs_id_;
 };
 
 }  // namespace Carbon::Semantics

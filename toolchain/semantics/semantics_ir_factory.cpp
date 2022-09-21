@@ -87,7 +87,7 @@ auto SemanticsIRFactory::TransformCodeBlock(ParseTree::Node node)
 
 void SemanticsIRFactory::TransformDeclaredName(
     llvm::SmallVector<Semantics::NodeRef, 0>& nodes, ParseTree::Node node,
-    int32_t target_id) {
+    Semantics::NodeId target_id) {
   CARBON_CHECK(parse_tree().node_kind(node) == ParseNodeKind::DeclaredName());
   RequireNodeEmpty(node);
 
@@ -97,7 +97,7 @@ void SemanticsIRFactory::TransformDeclaredName(
 
 void SemanticsIRFactory::TransformExpression(
     llvm::SmallVector<Semantics::NodeRef, 0>& nodes, ParseTree::Node node,
-    int32_t target_id) {
+    Semantics::NodeId target_id) {
   switch (auto node_kind = parse_tree().node_kind(node)) {
     case ParseNodeKind::Literal(): {
       RequireNodeEmpty(node);
@@ -167,7 +167,7 @@ static auto GetBinaryOp(TokenKind kind) -> Semantics::BinaryOperator::Op {
 
 void SemanticsIRFactory::TransformInfixOperator(
     llvm::SmallVector<Semantics::NodeRef, 0>& nodes, ParseTree::Node node,
-    int32_t target_id) {
+    Semantics::NodeId target_id) {
   CARBON_CHECK(parse_tree().node_kind(node) == ParseNodeKind::InfixOperator());
 
   auto token = parse_tree().node_token(node);

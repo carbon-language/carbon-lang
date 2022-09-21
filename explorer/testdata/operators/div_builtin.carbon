@@ -2,17 +2,23 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
+// RUN: %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
+// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
+// CHECK: Interface: 2
+// CHECK: Op: 2
+// CHECK: result: 0
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // error
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_missing_var.carbon:[[@LINE+1]]: syntax error, unexpected COLON, expecting SLASH or binary *
-  x : i32;
-  return 1;
+  var lhs: i32 = 8;
+  var rhs: i32 = 3;
+  // Make sure that both the interface and operator work with i32. These rely on
+  // builtin arithmetic more directly.
+  Print("Interface: {0}", lhs.(DivWith(i32).Op)(rhs));
+  Print("Op: {0}", lhs / rhs);
+  return 0;
 }

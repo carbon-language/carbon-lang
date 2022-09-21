@@ -2061,6 +2061,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           return handle_binary_arithmetic(Builtins::SubWith);
         case Operator::Mul:
           return handle_binary_arithmetic(Builtins::MulWith);
+        case Operator::Div:
+          return handle_binary_arithmetic(Builtins::DivWith);
         case Operator::Mod:
           return handle_binary_arithmetic(Builtins::ModWith);
         case Operator::BitwiseAnd:

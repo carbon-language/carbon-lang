@@ -29,7 +29,9 @@ cc_library(
     hdrs = ["parse_subtree_consumer.h"],
     deps = [
         "//common:check",
+        "//toolchain/parser:parse_node_kind",
         "//toolchain/parser:parse_tree",
+        "@llvm-project//llvm:Support",
     ],
 )
 
