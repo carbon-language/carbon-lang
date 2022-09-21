@@ -78,7 +78,7 @@ jobs:
           brew config
           echo '*** make sure the newest LLVM on the system is linked as the default'
           BREW_PREFIX_LLVM=$(brew --prefix llvm)
-          rm $BREW_PREFIX_LLVM
+          rm $BREW_PREFIX_LLVM 2>/dev/null
           ln -s $(readlink -f $(find $(echo "${BREW_PREFIX_LLVM%/llvm}") -name 'llvm*' | sort | tail -n1)) $BREW_PREFIX_LLVM
           echo '*** Updating PATH'
           echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
