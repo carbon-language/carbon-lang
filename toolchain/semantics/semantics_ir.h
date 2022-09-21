@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_IR_H_
 #define CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_IR_H_
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/node_store.h"
@@ -24,7 +25,7 @@ class SemanticsIR {
   }
 
   // Prints the node information.
-  void Print(llvm::raw_ostream& out, Semantics::NodeRef node_ref) const;
+  auto Print(llvm::raw_ostream& out, Semantics::NodeRef node_ref) const -> void;
 
  private:
   friend class SemanticsIRFactory;
