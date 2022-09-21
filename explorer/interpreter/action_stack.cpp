@@ -227,28 +227,16 @@ auto ActionStack::UnwindToWithCaptureScopesToDestroy(
 
 auto ActionStack::UnwindTo(Nonnull<const Statement*> ast_node)
     -> ErrorOr<Success> {
-  while (true) {
-    if (const auto* statement_action =
-            llvm::dyn_cast<StatementAction>(todo_.Top().get());
-        statement_action != nullptr &&
-        &statement_action->statement() == ast_node) {
-      break;
-    }
-    auto item = todo_.Pop();
-  }
+  std::list<std::unique_ptr<Action>> scopes_to_destroy =
+      UnwindToWithCaptureScopesToDestroy(ast_node);
+  DestroyAllScopes(std::move(scopes_to_destroy));
   return Success();
 }
 
 auto ActionStack::UnwindPast(Nonnull<const Statement*> ast_node)
     -> ErrorOr<Success> {
   std::list<std::unique_ptr<Action>> scopes_to_destroy =
-      UnwindToWithCaptureScopesToDestroy(ast_node);
-  auto item = todo_.Pop();
-  auto popped_scopes = PopScopes();
-  for (auto& popped_scope : popped_scopes) {
-    scopes_to_destroy.push_front(std::move(popped_scope));
-  }
-  scopes_to_destroy.push_front(std::move(item));
+      UnwindPastWithCaptureScopesToDestroy(ast_node);
   DestroyAllScopes(std::move(scopes_to_destroy));
 
   return Success();
