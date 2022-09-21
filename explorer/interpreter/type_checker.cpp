@@ -3446,13 +3446,6 @@ auto TypeChecker::TypeCheckClassDeclaration(
                          << " to collected_members_ must not fail";
   for (Nonnull<Declaration*> m : class_decl->members()) {
     CARBON_RETURN_IF_ERROR(TypeCheckDeclaration(m, class_scope, class_decl));
-#if 0
-    if (auto fn = dyn_cast<FunctionDeclaration>(m)) {
-      if (fn->name() == "destructor") {
-        class_decl->set_destructor(fn);
-      }
-    }
-#endif
     CARBON_RETURN_IF_ERROR(CollectMember(class_decl, m));
   }
   if (trace_stream_) {

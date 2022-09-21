@@ -101,15 +101,14 @@ class ActionStack {
 
   // Unwinds Actions from the stack until the StatementAction associated with
   // `ast_node` is at the top of the stack.
-  auto UnwindTo(Nonnull<const Statement*> ast_node, bool destroy_scopes = false)
+  auto UnwindTo(Nonnull<const Statement*> ast_node)
       -> ErrorOr<Success>;
 
   // Unwinds Actions from the stack until the StatementAction associated with
   // `ast_node` has been removed from the stack. If `result` is specified,
   // it represents the result of that Action (StatementActions normally cannot
   // produce results, but the body of a function can).
-  auto UnwindPast(Nonnull<const Statement*> ast_node,
-                  bool destroy_scopes = false) -> ErrorOr<Success>;
+  auto UnwindPast(Nonnull<const Statement*> ast_node) -> ErrorOr<Success>;
   auto UnwindPast(Nonnull<const Statement*> ast_node,
                   Nonnull<const Value*> result) -> ErrorOr<Success>;
 
@@ -131,9 +130,13 @@ class ActionStack {
   // stack.
   void SetResult(Nonnull<const Value*> result);
 
-  void DestructAllScopes();
+  auto UnwindToWithCaptureScopesToDestroy(Nonnull<const Statement*> ast_node) ->std::list<std::unique_ptr<Action>>;
 
-  void DestructScopes();
+  auto UnwindPastWithCaptureScopesToDestroy(Nonnull<const Statement*> ast_node) -> std::list<std::unique_ptr<Action>>;
+
+  void DestroyAllScopes(std::list<std::unique_ptr<Action>> && actions);
+
+  void DestroyScopes(std::list<std::unique_ptr<Action>> && actions);
 
   void PushCleanUpAction(std::unique_ptr<Action> act);
 
@@ -142,7 +145,6 @@ class ActionStack {
   std::optional<Nonnull<const Value*>> result_;
   std::optional<RuntimeScope> globals_;
   Phase phase_;
-  std::list<std::unique_ptr<Action>> destroy_actions_;
 };
 
 }  // namespace Carbon

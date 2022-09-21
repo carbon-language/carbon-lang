@@ -270,9 +270,7 @@ class ClassDeclaration : public Declaration {
     }
     return std::nullopt;
   }
-  void set_destructor(Nonnull<FunctionDeclaration*> dtor) {
-    destructor_ = dtor;
-  }
+
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
  private:

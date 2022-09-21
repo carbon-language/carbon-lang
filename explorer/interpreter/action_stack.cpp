@@ -127,6 +127,7 @@ void ActionStack::InitializeFragment(ContinuationValue::StackFragment& fragment,
 }
 
 auto ActionStack::FinishAction() -> ErrorOr<Success> {
+  std::list<std::unique_ptr<Action>> scopes_to_destroy;
   std::unique_ptr<Action> act = todo_.Pop();
   switch (act->kind()) {
     case Action::Kind::CleanUpAction:
@@ -139,16 +140,18 @@ auto ActionStack::FinishAction() -> ErrorOr<Success> {
     case Action::Kind::StatementAction:
     case Action::Kind::DeclarationAction:
     case Action::Kind::RecursiveAction: {
-      destroy_actions_ = PopScopes();
+      scopes_to_destroy = PopScopes();
       break;
     }
   }
   PushCleanUpAction(std::move(act));
+  DestroyScopes(std::move(scopes_to_destroy));
   return Success();
 }
 
 auto ActionStack::FinishAction(Nonnull<const Value*> result)
     -> ErrorOr<Success> {
+  std::list<std::unique_ptr<Action>> scopes_to_destroy;
   std::unique_ptr<Action> act = todo_.Pop();
   switch (act->kind()) {
     case Action::Kind::CleanUpAction:
@@ -161,12 +164,12 @@ auto ActionStack::FinishAction(Nonnull<const Value*> result)
     case Action::Kind::ExpressionAction:
     case Action::Kind::LValAction:
     case Action::Kind::PatternAction:
-      destroy_actions_ = PopScopes();
+      scopes_to_destroy = PopScopes();
       SetResult(result);
       break;
   }
   PushCleanUpAction(std::move(act));
-
+  DestroyScopes(std::move(scopes_to_destroy));
   return Success();
 }
 
@@ -174,7 +177,6 @@ auto ActionStack::Spawn(std::unique_ptr<Action> child) -> ErrorOr<Success> {
   Action& action = *todo_.Top();
   action.set_pos(action.pos() + 1);
   todo_.Push(std::move(child));
-  DestructScopes();
   return Success();
 }
 
@@ -184,7 +186,6 @@ auto ActionStack::Spawn(std::unique_ptr<Action> child, RuntimeScope scope)
   action.set_pos(action.pos() + 1);
   todo_.Push(std::make_unique<ScopeAction>(std::move(scope)));
   todo_.Push(std::move(child));
-  DestructScopes();
   return Success();
 }
 
@@ -203,8 +204,9 @@ auto ActionStack::RunAgain() -> ErrorOr<Success> {
   return Success();
 }
 
-auto ActionStack::UnwindTo(Nonnull<const Statement*> ast_node,
-                           bool destroy_scopes) -> ErrorOr<Success> {
+auto ActionStack::UnwindToWithCaptureScopesToDestroy(Nonnull<const Statement*> ast_node)
+      ->std::list<std::unique_ptr<Action>>{
+  std::list<std::unique_ptr<Action>> scopes_to_destroy;
   while (true) {
     if (const auto* statement_action =
             llvm::dyn_cast<StatementAction>(todo_.Top().get());
@@ -217,35 +219,55 @@ auto ActionStack::UnwindTo(Nonnull<const Statement*> ast_node,
     if (scope && item->kind() != Action::Kind::CleanUpAction) {
       std::unique_ptr<Action> cleanup_action =
           std::make_unique<CleanupAction>(std::move(*scope));
-      destroy_actions_.push_front(std::move(cleanup_action));
+      scopes_to_destroy.push_front(std::move(cleanup_action));
     }
   }
-  if (destroy_scopes) {
-    DestructAllScopes();
+  return scopes_to_destroy;
+}
+
+auto ActionStack::UnwindTo(Nonnull<const Statement*> ast_node) -> ErrorOr<Success> {
+  while (true) {
+    if (const auto* statement_action =
+            llvm::dyn_cast<StatementAction>(todo_.Top().get());
+        statement_action != nullptr &&
+        &statement_action->statement() == ast_node) {
+      break;
+    }
+    auto item = todo_.Pop();
   }
   return Success();
 }
 
-auto ActionStack::UnwindPast(Nonnull<const Statement*> ast_node,
-                             bool destroy_scopes) -> ErrorOr<Success> {
-  CARBON_RETURN_IF_ERROR(UnwindTo(ast_node));
+auto ActionStack::UnwindPast(Nonnull<const Statement*> ast_node) -> ErrorOr<Success> {
+  std::list<std::unique_ptr<Action>> scopes_to_destroy = UnwindToWithCaptureScopesToDestroy(ast_node);
   auto item = todo_.Pop();
   auto popped_scopes = PopScopes();
   for (auto& popped_scope : popped_scopes) {
-    destroy_actions_.push_front(std::move(popped_scope));
+    scopes_to_destroy.push_front(std::move(popped_scope));
   }
-  destroy_actions_.push_front(std::move(item));
-  if (destroy_scopes) {
-    DestructAllScopes();
-  }
+  scopes_to_destroy.push_front(std::move(item));
+  DestroyAllScopes(std::move(scopes_to_destroy));
+
   return Success();
+}
+
+auto ActionStack::UnwindPastWithCaptureScopesToDestroy(Nonnull<const Statement*> ast_node) -> std::list<std::unique_ptr<Action>>  {
+  std::list<std::unique_ptr<Action>> scopes_to_destroy = UnwindToWithCaptureScopesToDestroy(ast_node);
+  auto item = todo_.Pop();
+  auto popped_scopes = PopScopes();
+  for (auto& popped_scope : popped_scopes) {
+    scopes_to_destroy.push_front(std::move(popped_scope));
+  }
+  scopes_to_destroy.push_front(std::move(item));
+
+  return scopes_to_destroy;
 }
 
 auto ActionStack::UnwindPast(Nonnull<const Statement*> ast_node,
                              Nonnull<const Value*> result) -> ErrorOr<Success> {
-  CARBON_RETURN_IF_ERROR(UnwindPast(ast_node));
+  std::list<std::unique_ptr<Action>> scopes_to_destroy = UnwindPastWithCaptureScopesToDestroy(ast_node);
   SetResult(result);
-  DestructAllScopes();
+  DestroyAllScopes(std::move(scopes_to_destroy));
   return Success();
 }
 
@@ -298,9 +320,9 @@ void ActionStack::SetResult(Nonnull<const Value*> result) {
   }
 }
 
-void ActionStack::DestructAllScopes() {
-  if (!destroy_actions_.empty()) {
-    for (auto& x : destroy_actions_) {
+void ActionStack::DestroyAllScopes(std::list<std::unique_ptr<Action>> && actions){
+  if (!actions.empty()) {
+    for (auto& x : actions) {
       auto& scope = x->scope();
       if (scope) {
         std::unique_ptr<Action> cleanup_action =
@@ -308,16 +330,14 @@ void ActionStack::DestructAllScopes() {
         todo_.Push(std::move(cleanup_action));
       }
     }
-    destroy_actions_.clear();
-  }
+   }
 }
 
-void ActionStack::DestructScopes() {
-  if (!destroy_actions_.empty()) {
-    for (auto& x : destroy_actions_) {
+void ActionStack::DestroyScopes(std::list<std::unique_ptr<Action>> && actions) {
+  if (!actions.empty()) {
+    for (auto& x : actions) {
       PushCleanUpAction(std::move(x));
     }
-    destroy_actions_.clear();
   }
 }
 

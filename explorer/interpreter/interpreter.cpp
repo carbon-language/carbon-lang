@@ -1650,13 +1650,13 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       CARBON_CHECK(act.pos() == 0);
       //    { { break; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { C, E', F} :: S, H}
-      return todo_.UnwindPast(&cast<Break>(stmt).loop(), true);
+      return todo_.UnwindPast(&cast<Break>(stmt).loop());
     }
     case StatementKind::Continue: {
       CARBON_CHECK(act.pos() == 0);
       //    { { continue; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { (while (e) s) :: C, E', F} :: S, H}
-      return todo_.UnwindTo(&cast<Continue>(stmt).loop(), true);
+      return todo_.UnwindTo(&cast<Continue>(stmt).loop());
     }
     case StatementKind::Block: {
       const auto& block = cast<Block>(stmt);
