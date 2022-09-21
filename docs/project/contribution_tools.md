@@ -43,6 +43,7 @@ sudo apt-get update
 sudo apt-get install \
   bazel \
   clang \
+  gh \
   libc++-dev \
   lld \
   python3 \
