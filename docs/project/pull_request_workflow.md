@@ -134,8 +134,7 @@ required):
     git push origin
     ```
 
-    And create a pull request for it using the
-    [`gh`](/docs/project/contribution_tools.md#gh-cli) tool:
+    And create a pull request for it using the `gh` tool:
 
     ```shell
     gh pr create
