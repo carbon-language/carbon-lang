@@ -82,7 +82,7 @@ match (my_opt) {
 `choice` declarations are a convenience shorthand for common use cases, but they
 have limited flexibility. There is no way to control the representation of a
 `choice` type, or define methods or other members for it (although you can
-extend it to implement interfaces, using
+extend it to implement interfaces, using an
 [`external impl`](generics/overview.md#implementing-interfaces) or
 [`adapter`](generics/overview.md#adapting-types)). However, a `class` type can
 be extended to behave like a sum type. This is much more verbose than a `choice`
