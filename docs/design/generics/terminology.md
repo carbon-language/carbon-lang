@@ -270,8 +270,8 @@ complete definition checking. This occurs for
 A deduced parameter is listed in the optional `[` `]` section right after the
 function name in a function signature:
 
-`fn` &lt;name> `[` &lt;deduced parameters> `](` &lt;explicit parameters `) ->`
-&lt;return type>
+`fn` \<name\> `[` \<deduced parameters\> `](` \<explicit parameters\> `) ->`
+\<return type\>
 
 Deduced arguments are determined as a result of pattern matching the explicit
 argument values (usually the types of those values) to the explicit parameters.
