@@ -216,11 +216,6 @@ far. It is still possible to shrink a change so much that it becomes nonsensical
 in isolation. For example, a change without appropriate tests is not
 self-contained.
 
-You may want to use a set of
-[stacked pull requests](pull_request_workflow.md#stacking-dependent-pull-requests)
-rather than a single, larger pull request in order to keep changes easy to
-review.
-
 ### Responding to review comments
 
 Many comments have easy and simple responses. The easiest is **"Done"**. When
