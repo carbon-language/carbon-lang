@@ -308,8 +308,6 @@ contribute.
 -   To watch for major release announcements, subscribe to our
     [Carbon release post on GitHub](https://github.com/carbon-language/carbon-lang/discussions/1020)
     and [star carbon-lang](https://github.com/carbon-language/carbon-lang).
--   To join the design discussion, join our
-    [GitHub forum](https://github.com/carbon-language/carbon-lang/discussions).
 -   See our [code of conduct](CODE_OF_CONDUCT.md) and
     [contributing guidelines](CONTRIBUTING.md) for information about the Carbon
     development community.
