@@ -77,7 +77,7 @@ jobs:
           echo '*** brew config'
           brew config
           echo '*** Updating PATH by the newest LLVM on the system'
-          echo "$(find "${$(brew --prefix llvm)%/llvm}" -name 'llvm*' | tail -1)/bin" >> $GITHUB_PATH
+          echo "$(find $(echo "${$(brew --prefix llvm)%/llvm}") -name 'llvm*' | sort | tail -n1)/bin" >> $GITHUB_PATH
 
       # On Ubuntu, use apt.llvm.org to install a recent LLVM and Clang.
       - name: Setup LLVM and Clang (Ubuntu)
