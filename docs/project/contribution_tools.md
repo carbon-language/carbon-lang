@@ -15,7 +15,7 @@ contributions.
 
 -   [Setup commands](#setup-commands)
     -   [Debian or Ubuntu](#debian-or-ubuntu)
-    -   [MacOS](#macos)
+    -   [macOS](#macos)
 -   [Tools](#tools)
     -   [Main tools](#main-tools)
         -   [Running pre-commit](#running-pre-commit)
@@ -64,7 +64,7 @@ bazel test //...:all
 > NOTE: Most LLVM 14+ installs should build Carbon. If you're having issues, see
 > [troubleshooting build issues](#troubleshooting-build-issues).
 
-### MacOS
+### macOS
 
 ```
 # Install Hombrew.
