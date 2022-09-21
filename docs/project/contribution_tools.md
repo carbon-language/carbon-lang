@@ -71,7 +71,10 @@ bazel test //...:all
 # IMPORTANT: Make sure `brew` is added to the PATH!
 
 # Install Homebrew tools.
-brew install python@3.10 llvm
+brew install \
+  gh \
+  llvm \
+  python@3.10
 
 # IMPORTANT: Make sure `llvm` is added to the PATH! It's separate from `brew`.
 
@@ -90,7 +93,7 @@ bazel test //...:all
 > NOTE: On macOS, you should end up adding rc file lines similar to:
 >
 > ```
-> # For `brew`, `python3`, and other tools:
+> # For `brew`, `gh`, and other tools:
 > export PATH="${HOME}/.brew/bin:${PATH}"
 > # For `llvm`:
 > export PATH="$(brew --prefix llvm)/bin:${PATH}"
