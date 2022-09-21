@@ -14,7 +14,7 @@ contributions.
 ## Table of contents
 
 -   [Setup commands](#setup-commands)
-    -   [Linux](#linux)
+    -   [Debian or Ubuntu](#debian-or-ubuntu)
     -   [MacOS](#macos)
 -   [Tools](#tools)
     -   [Main tools](#main-tools)
@@ -33,7 +33,7 @@ contributions.
 
 These commands should help set up a development environment on your machine.
 
-### Linux
+### Debian or Ubuntu
 
 ```
 # Update apt.
@@ -109,7 +109,7 @@ bazel test //...:all
 These tools are essential for work on Carbon.
 
 -   Package managers
-    -   `apt` (for Linux)
+    -   `apt` (for Debian or Ubuntu)
         -   To upgrade versions of `apt` packages, it will be necessary to
             periodically run `sudo apt-get update && sudo apt-get upgrade`.
     -   [Homebrew](https://brew.sh/) (for macOS)
