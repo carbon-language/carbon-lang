@@ -101,8 +101,7 @@ class ActionStack {
 
   // Unwinds Actions from the stack until the StatementAction associated with
   // `ast_node` is at the top of the stack.
-  auto UnwindTo(Nonnull<const Statement*> ast_node)
-      -> ErrorOr<Success>;
+  auto UnwindTo(Nonnull<const Statement*> ast_node) -> ErrorOr<Success>;
 
   // Unwinds Actions from the stack until the StatementAction associated with
   // `ast_node` has been removed from the stack. If `result` is specified,
@@ -130,13 +129,15 @@ class ActionStack {
   // stack.
   void SetResult(Nonnull<const Value*> result);
 
-  auto UnwindToWithCaptureScopesToDestroy(Nonnull<const Statement*> ast_node) ->std::list<std::unique_ptr<Action>>;
+  auto UnwindToWithCaptureScopesToDestroy(Nonnull<const Statement*> ast_node)
+      -> std::list<std::unique_ptr<Action>>;
 
-  auto UnwindPastWithCaptureScopesToDestroy(Nonnull<const Statement*> ast_node) -> std::list<std::unique_ptr<Action>>;
+  auto UnwindPastWithCaptureScopesToDestroy(Nonnull<const Statement*> ast_node)
+      -> std::list<std::unique_ptr<Action>>;
 
-  void DestroyAllScopes(std::list<std::unique_ptr<Action>> && actions);
+  void DestroyAllScopes(std::list<std::unique_ptr<Action>>&& actions);
 
-  void DestroyScopes(std::list<std::unique_ptr<Action>> && actions);
+  void DestroyScopes(std::list<std::unique_ptr<Action>>&& actions);
 
   void PushCleanUpAction(std::unique_ptr<Action> act);
 
