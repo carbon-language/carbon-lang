@@ -69,14 +69,15 @@ jobs:
           echo '*** Updating brew'
           brew update
           echo '*** Installing LLVM deps'
-          brew install --force-bottle --only-dependencies llvm@15
+          brew install --force-bottle --only-dependencies llvm
           echo '*** Installing LLVM itself'
-          brew install --force-bottle --force --verbose llvm@15
-          echo '*** brew info llvm@15'
+          brew install --force-bottle --force --verbose llvm
+          echo '*** brew info llvm'
           brew info llvm
           echo '*** brew config'
           brew config
           echo '*** Updating PATH'
+          brew --prefix llvm
           echo "$(brew --prefix llvm@15)/bin" >> $GITHUB_PATH
 
       # On Ubuntu, use apt.llvm.org to install a recent LLVM and Clang.
