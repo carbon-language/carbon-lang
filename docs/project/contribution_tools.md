@@ -31,6 +31,8 @@ contributions.
 
 ## Setup commands
 
+These commands should help set up a development environment on your machine.
+
 ### Linux
 
 ```
@@ -103,6 +105,8 @@ bazel test //...:all
 
 ### Main tools
 
+These tools are essential for work on Carbon.
+
 -   Package managers
     -   `apt` (for Linux)
         -   To upgrade versions of `apt` packages, it will be necessary to
@@ -152,6 +156,9 @@ You can also use `pre-commit run` to check pending changes without `git commit`,
 or `pre-commit run -a` to run on all files in the repository.
 
 ### Optional tools
+
+These tools aren't necessary to contribute to Carbon, but can be worth
+considering if they fit your workflow.
 
 -   [GitHub Desktop](https://desktop.github.com/): A UI for managing GitHub
     repositories.
