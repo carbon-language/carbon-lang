@@ -50,7 +50,9 @@ class TestNewProposal(unittest.TestCase):
             "pull/123)" in content,
             content,
         )
-        self.assertTrue("\n## Abstract\n\n" in content, content)
+        self.assertTrue(
+            "<!-- tocstop -->\n\n## Abstract\n\n" in content, content
+        )
 
     def test_run_success(self):
         new_proposal._run(["true"])
