@@ -74,11 +74,11 @@ parameter by parameter basis. A single function can take a mix of regular,
 generic, and template parameters.
 
 -   **Regular parameters**, or "dynamic parameters", are designated using the
-    "\<name\>`:` \<type\>" syntax (or "\<value\>").
+    "\<name>`:` \<type>" syntax (or "\<value>").
 -   **Generic parameters** are designated using `:!` between the name and the
-    type (so it is "\<name\>`:!` \<type\>").
--   **Template parameters** are designated using "`template` \<name\>`:!`
-    \<type\>".
+    type (so it is "\<name>`:!` \<type>").
+-   **Template parameters** are designated using "`template` \<name>`:!`
+    \<type>".
 
 The syntax for generic and template parameters was decided in
 [questions-for-leads issue #565](https://github.com/carbon-language/carbon-lang/issues/565).
@@ -270,8 +270,8 @@ complete definition checking. This occurs for
 A deduced parameter is listed in the optional `[` `]` section right after the
 function name in a function signature:
 
-`fn` \<name\> `[` \<deduced parameters\> `](` \<explicit parameters\> `) ->`
-\<return type\>
+`fn` \<name> `[` \<deduced parameters> `](` \<explicit parameters> `) ->`
+\<return type>
 
 Deduced arguments are determined as a result of pattern matching the explicit
 argument values (usually the types of those values) to the explicit parameters.
