@@ -75,6 +75,9 @@ CARBON_DIAGNOSTIC_KIND(MissingLibraryKeyword)
 CARBON_DIAGNOSTIC_KIND(ExpectedApiOrImpl)
 CARBON_DIAGNOSTIC_KIND(ExpectedSemiToEndPackageDirective)
 
+// For-specific diagnostics
+CARBON_DIAGNOSTIC_KIND(ExpectedIn)
+
 // ============================================================================
 // Other diagnostics
 // ============================================================================

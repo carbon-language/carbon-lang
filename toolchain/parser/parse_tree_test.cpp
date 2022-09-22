@@ -1356,5 +1356,189 @@ TEST_F(ParseTreeTest, PackageErrors) {
   }
 }
 
+TEST_F(ParseTreeTest, ForSimple) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(R"(
+    fn foo() {
+      for (var x : i32 in y) {
+        Print(x);
+      }
+    }
+  )");
+
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {MatchFunctionDeclaration(
+               MatchDeclaredName("foo"), MatchParameters(),
+               MatchCodeBlock(
+                   MatchForStatement(
+                       MatchForHeader(
+                           MatchVariableDeclaration(MatchPatternBinding(
+                               MatchDeclaredName("x"), MatchLiteral("i32"))),
+                           MatchForIn(), MatchNameReference("y"),
+                           MatchForHeaderEnd()),
+                       MatchCodeBlock(
+                           MatchExpressionStatement(
+                               MatchCallExpression(MatchNameReference("Print"),
+                                                   MatchNameReference("x"),
+                                                   MatchCallExpressionEnd())),
+                           MatchCodeBlockEnd())),
+                   MatchCodeBlockEnd())),
+           MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, ForNested) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(R"(
+    fn foo() {
+      for (var y : i32 in x) {
+          for (var z : i32 in y) {
+              Print(z);
+          }
+      }
+    }
+  )");
+
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {MatchFunctionDeclaration(
+               MatchDeclaredName("foo"), MatchParameters(),
+               MatchCodeBlock(
+                   MatchForStatement(
+                       MatchForHeader(
+                           MatchVariableDeclaration(MatchPatternBinding(
+                               MatchDeclaredName("y"), MatchLiteral("i32"))),
+                           MatchForIn(), MatchNameReference("x"),
+                           MatchForHeaderEnd()),
+                       MatchCodeBlock(
+                           MatchForStatement(
+                               MatchForHeader(
+                                   MatchVariableDeclaration(MatchPatternBinding(
+                                       MatchDeclaredName("z"),
+                                       MatchLiteral("i32"))),
+                                   MatchForIn(), MatchNameReference("y"),
+                                   MatchForHeaderEnd()),
+                               MatchCodeBlock(
+                                   MatchExpressionStatement(MatchCallExpression(
+                                       MatchNameReference("Print"),
+                                       MatchNameReference("z"),
+                                       MatchCallExpressionEnd())),
+                                   MatchCodeBlockEnd())),
+                           MatchCodeBlockEnd())),
+                   MatchCodeBlockEnd())),
+           MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, ForIterVarError) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(R"(
+    fn foo() {
+      for (x : i32 in y) {
+        Print(x);
+      }
+    }
+  )");
+
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(IsDiagnosticMessage("Expected `var` declaration.")));
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+
+  EXPECT_THAT(tree,
+              MatchParseTreeNodes(
+                  {MatchFunctionDeclaration(
+                       MatchDeclaredName("foo"), MatchParameters(),
+                       MatchCodeBlock(
+                           MatchForStatement(
+                               MatchForHeader(HasError, MatchForIn(),
+                                              MatchNameReference("y"),
+                                              MatchForHeaderEnd()),
+                               MatchCodeBlock(
+                                   MatchExpressionStatement(MatchCallExpression(
+                                       MatchNameReference("Print"),
+                                       MatchNameReference("x"),
+                                       MatchCallExpressionEnd())),
+                                   MatchCodeBlockEnd())),
+                           MatchCodeBlockEnd())),
+                   MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, ForColonInsteafOfIn) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(R"(
+    fn foo() {
+      for (var x : i32 : y) {
+        Print(x);
+      }
+    }
+  )");
+
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(IsDiagnosticMessage("`:` should be replaced by `in`.")));
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {MatchFunctionDeclaration(
+               MatchDeclaredName("foo"), MatchParameters(),
+               MatchCodeBlock(
+                   MatchForStatement(
+                       MatchForHeader(
+                           HasError,
+                           MatchVariableDeclaration(MatchPatternBinding(
+                               MatchDeclaredName("x"), MatchLiteral("i32"))),
+                           MatchNameReference("y"), MatchForHeaderEnd()),
+                       MatchCodeBlock(
+                           MatchExpressionStatement(
+                               MatchCallExpression(MatchNameReference("Print"),
+                                                   MatchNameReference("x"),
+                                                   MatchCallExpressionEnd())),
+                           MatchCodeBlockEnd())),
+                   MatchCodeBlockEnd())),
+           MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, ForMissingIn) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(R"(
+    fn foo() {
+      for (var x : i32 y) {
+        Print(x);
+      }
+    }
+  )");
+
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(consumer, HandleDiagnostic(IsDiagnosticMessage(
+                            "Expected `in` after loop `var` declaration.")));
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {MatchFunctionDeclaration(
+               MatchDeclaredName("foo"), MatchParameters(),
+               MatchCodeBlock(
+                   MatchForStatement(
+                       MatchForHeader(
+                           HasError,
+                           MatchVariableDeclaration(MatchPatternBinding(
+                               MatchDeclaredName("x"), MatchLiteral("i32"))),
+                           MatchForHeaderEnd()),
+                       MatchCodeBlock(
+                           MatchExpressionStatement(
+                               MatchCallExpression(MatchNameReference("Print"),
+                                                   MatchNameReference("x"),
+                                                   MatchCallExpressionEnd())),
+                           MatchCodeBlockEnd())),
+                   MatchCodeBlockEnd())),
+           MatchFileEnd()}));
+}
+
 }  // namespace
 }  // namespace Carbon::Testing
