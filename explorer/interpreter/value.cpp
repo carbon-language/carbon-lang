@@ -291,9 +291,13 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::BoolValue:
       out << (cast<BoolValue>(*this).value() ? "true" : "false");
       break;
-    case Value::Kind::DestructorValue:
-      out << "destructor [ me: Self ] ";
+    case Value::Kind::DestructorValue: {
+      const DestructorValue& destructor = cast<DestructorValue>(*this);
+      out << "destructor [ ";
+      out << destructor.declaration().me_pattern();
+      out << " ]";
       break;
+    }
     case Value::Kind::FunctionValue: {
       const FunctionValue& fun = cast<FunctionValue>(*this);
       out << "fun<" << fun.declaration().name() << ">";

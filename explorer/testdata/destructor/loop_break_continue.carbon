@@ -8,15 +8,15 @@
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
 // CHECK: DESTRUCTOR A 1
-// CHECK: DESTRUCTOR C 2
-// CHECK: DESTRUCTOR B 3
+// CHECK: DESTRUCTOR A 2
+// CHECK: DESTRUCTOR A 3
 // CHECK: DESTRUCTOR A 4
 // CHECK: DESTRUCTOR A 5
-// CHECK: DESTRUCTOR C 6
-// CHECK: DESTRUCTOR B 7
+// CHECK: DESTRUCTOR A 6
+// CHECK: DESTRUCTOR A 7
 // CHECK: DESTRUCTOR A 8
-// CHECK: DESTRUCTOR C 6
-// CHECK: DESTRUCTOR B 7
+// CHECK: DESTRUCTOR A 6
+// CHECK: DESTRUCTOR A 7
 // CHECK: DESTRUCTOR A 8
 // CHECK: result: 1
 
@@ -29,34 +29,12 @@ class A{
     var n: i32;
 }
 
-class B{
-    destructor[me: Self]{
-        Print("DESTRUCTOR B {0}",me.n);
-    }
-    var n: i32;
-}
-
-class C{
-    destructor[me: Self]{
-        Print("DESTRUCTOR C {0}",me.n);
-    }
-    var n: i32;
-}
-
-fn ident(x: bool)-> bool{
-    return x;
-}
-
-fn ident_i32(x: i32)-> i32{
-    return x;
-}
-
 fn Main() -> i32 {
   var i: i32 = 0;
   while(true){
       var a: A = {.n = 4};
-      var b: B = {.n = 3};
-      var c: C = {.n = 2};
+      var b: A = {.n = 3};
+      var c: A = {.n = 2};
       if(true){
         var a: A = {.n = 1};
         break;
@@ -66,8 +44,8 @@ fn Main() -> i32 {
   i = 0;
   while(i < 2 ){
     var a: A = {.n = 8};
-    var b: B = {.n = 7};
-    var c: C = {.n = 6};
+    var b: A = {.n = 7};
+    var c: A = {.n = 6};
     if(i == 0){
       var a: A = {.n = 5};
       i = i+1;
