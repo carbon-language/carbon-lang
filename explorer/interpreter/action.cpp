@@ -22,7 +22,8 @@ namespace Carbon {
 using llvm::cast;
 
 RuntimeScope::RuntimeScope(RuntimeScope&& other) noexcept
-    : local_values_(std::move(other.local_values_)),
+    : map_vec_(std::move(other.map_vec_)),
+      local_values_(std::move(other.local_values_)),
       locals_map_(std::move(other.locals_map_)),
       // To transfer ownership of other.allocations_, we have to empty it out.
       allocations_(std::exchange(other.allocations_, {})),
@@ -30,6 +31,7 @@ RuntimeScope::RuntimeScope(RuntimeScope&& other) noexcept
       destructor_scope_(other.destructor_scope_) {}
 
 auto RuntimeScope::operator=(RuntimeScope&& rhs) noexcept -> RuntimeScope& {
+  map_vec_ = std::move(rhs.map_vec_);
   local_values_ = std::move(rhs.local_values_);
   locals_map_ = std::move(rhs.locals_map_);
   // To transfer ownership of rhs.allocations_, we have to empty it out.
@@ -48,8 +50,8 @@ RuntimeScope::~RuntimeScope() {
 void RuntimeScope::Print(llvm::raw_ostream& out) const {
   out << "{";
   llvm::ListSeparator sep;
-  for (const auto& [value_node, value] : locals_map_) {
-    out << sep << value_node.base() << ": " << *local_values_[value];
+  for (const auto& [value_node, value] : map_vec_) {
+    out << sep << value_node.base() << ": " << *value;
   }
   out << "}";
 }
@@ -59,37 +61,28 @@ void RuntimeScope::Initialize(ValueNodeView value_node,
   CARBON_CHECK(!value_node.constant_value().has_value());
   CARBON_CHECK(value->kind() != Value::Kind::LValue);
   allocations_.push_back(heap_->AllocateValue(value));
-  auto lvalue = heap_->arena().New<LValue>(Address(allocations_.back()));
-  local_values_.push_back(lvalue);
-  auto [it, success] =
-      locals_map_.insert({value_node, local_values_.size() - 1});
+  auto [it, success] = map_vec_.insert(
+      {value_node, heap_->arena().New<LValue>(Address(allocations_.back()))});
   CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
 }
 
 void RuntimeScope::Merge(RuntimeScope other) {
   CARBON_CHECK(heap_ == other.heap_);
-  for (auto& element : other.locals_map_) {
-    if (local_values_.size() > 0)
-      other.locals_map_[element.first] += local_values_.size();
+  for(auto & element: other.map_vec_){
+    CARBON_CHECK(map_vec_.count(element.first) == 0)
+      << "Duplicate definition of" << element.first;
+    map_vec_.insert(element);
   }
-  local_values_.insert(local_values_.end(), other.local_values_.begin(),
-                       other.local_values_.end());
-  other.local_values_.clear();
-  locals_map_.merge(other.locals_map_);
-  CARBON_CHECK(other.locals_map_.empty())
-      << "Duplicate definition of " << other.locals_map_.size()
-      << " names, including " << other.locals_map_.begin()->first.base();
   allocations_.insert(allocations_.end(), other.allocations_.begin(),
                       other.allocations_.end());
   other.allocations_.clear();
-  destructor_scope_ = other.destructor_scope_;
 }
 
 auto RuntimeScope::Get(ValueNodeView value_node) const
     -> std::optional<Nonnull<const LValue*>> {
-  auto it = locals_map_.find(value_node);
-  if (it != locals_map_.end()) {
-    return local_values_[it->second];
+  auto it = map_vec_.find(value_node);
+  if (it != map_vec_.end()) {
+    return it->second;
   } else {
     return std::nullopt;
   }
@@ -101,9 +94,9 @@ auto RuntimeScope::Capture(
   RuntimeScope result(scopes.front()->heap_);
   for (Nonnull<const RuntimeScope*> scope : scopes) {
     CARBON_CHECK(scope->heap_ == result.heap_);
-    for (const auto& entry : scope->locals_map_) {
-      result.local_values_.push_back(scope->local_values_[entry.second]);
-      result.locals_map_[entry.first] = result.local_values_.size() - 1;
+    for (const auto& entry : scope->map_vec_) {
+      // Intentionally disregards duplicates later in the vector.
+      result.map_vec_.insert(entry);
     }
   }
   return result;

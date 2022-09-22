@@ -18,7 +18,10 @@
 #include "explorer/interpreter/heap_allocation_interface.h"
 #include "explorer/interpreter/stack.h"
 #include "explorer/interpreter/value.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/Support/Compiler.h"
+
+
 
 namespace Carbon {
 
@@ -61,13 +64,18 @@ class RuntimeScope {
   auto Get(ValueNodeView value_node) const
       -> std::optional<Nonnull<const LValue*>>;
 
-  auto locals() const -> llvm::ArrayRef<Nonnull<const LValue*>> {
-    return local_values_;
+  auto locals() const -> std::vector<Nonnull<const LValue*>> {
+    std::vector<Nonnull<const LValue*>> res;
+    for(auto & entry : map_vec_){
+      res.push_back(entry.second);
+    }
+    return res;
   }
   auto DestructorScope() const -> int { return destructor_scope_; }
   void ChangeToDestructorScope() { destructor_scope_++; }
 
  private:
+  llvm::MapVector<ValueNodeView,Nonnull<const LValue*>,std::map<ValueNodeView,unsigned >> map_vec_;
   std::vector<Nonnull<const LValue*>> local_values_;
   std::map<ValueNodeView, unsigned int> locals_map_;
   std::vector<AllocationId> allocations_;
