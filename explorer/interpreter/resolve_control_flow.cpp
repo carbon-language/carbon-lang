@@ -53,11 +53,8 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
         }
         (*function)->saw_return_in_auto = true;
       }
-      if ((*function)->declaration->kind() ==
-          DeclarationKind::FunctionDeclaration) {
-        auto& ret = cast<Return>(*statement);
-        ret.set_function(cast<FunctionDeclaration>((*function)->declaration));
-      }
+      auto& ret = cast<Return>(*statement);
+      ret.set_function((*function)->declaration);
       if (statement->kind() == StatementKind::ReturnVar &&
           function_return.is_omitted()) {
         return CompilationError(statement->source_loc())
