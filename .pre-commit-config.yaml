@@ -45,7 +45,7 @@ repos:
 
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
-    rev: f6c139c5215ce04fd3e73a900f1372942d58eca0 # frozen: 22.6.0
+    rev: 2018e667a6a36ee3fbfa8041cd36512f92f60d49 # frozen: 22.8.0
     hooks:
       - id: black
   - repo: https://github.com/pre-commit/mirrors-prettier
