@@ -62,6 +62,7 @@ class RuntimeScope {
   auto Get(ValueNodeView value_node) const
       -> std::optional<Nonnull<const LValue*>>;
 
+  // Returns the local values in created order
   auto locals() const -> std::vector<Nonnull<const LValue*>> {
     std::vector<Nonnull<const LValue*>> res;
     for (auto& entry : locals_) {
@@ -69,7 +70,16 @@ class RuntimeScope {
     }
     return res;
   }
+  // Returns how often the scope has been cleaned up
+  // 0 = no destructor,
+  // 1 = is marked as destructor,
+  // 2 = the scope of the destructor can be cleaned up.
+  // If it is greater than 2, then it is an error,
+  // because the destructor call is attempted on itself.
   auto DestructorScope() const -> int { return destructor_scope_; }
+
+  // Mark Scope as bound to a destructor.
+  // Prevent this scope from recursively trying to clean itself up
   void ChangeToDestructorScope() { destructor_scope_++; }
 
  private:

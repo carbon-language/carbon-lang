@@ -120,6 +120,7 @@ class CallableDeclaration : public Declaration {
 
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
 
+  // TODO: Move name() and name_ to FunctionDeclaration
   auto name() const -> const std::string& { return name_; }
   auto deduced_parameters() const
       -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
