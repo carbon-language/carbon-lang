@@ -64,7 +64,7 @@ class RuntimeScope {
 
   auto locals() const -> std::vector<Nonnull<const LValue*>> {
     std::vector<Nonnull<const LValue*>> res;
-    for (auto& entry : map_vec_) {
+    for (auto& entry : locals_) {
       res.push_back(entry.second);
     }
     return res;
@@ -75,9 +75,7 @@ class RuntimeScope {
  private:
   llvm::MapVector<ValueNodeView, Nonnull<const LValue*>,
                   std::map<ValueNodeView, unsigned>>
-      map_vec_;
-  std::vector<Nonnull<const LValue*>> local_values_;
-  std::map<ValueNodeView, unsigned int> locals_map_;
+      locals_;
   std::vector<AllocationId> allocations_;
   Nonnull<HeapAllocationInterface*> heap_;
   int destructor_scope_;

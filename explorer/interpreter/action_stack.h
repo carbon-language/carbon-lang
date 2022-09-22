@@ -135,10 +135,13 @@ class ActionStack {
   auto UnwindPastWithCaptureScopesToDestroy(Nonnull<const Statement*> ast_node)
       -> std::list<std::unique_ptr<Action>>;
 
+  // Create CleanUpActions for all actions
   void DestroyAllScopes(std::list<std::unique_ptr<Action>> actions);
 
+  // Create CleanUpActions for all non CleanUpActions
   void DestroyScopes(std::list<std::unique_ptr<Action>> actions);
 
+  // Create and push a CleanUpAction on the stack
   void PushCleanUpAction(std::unique_ptr<Action> act);
 
   // TODO: consider defining a non-nullable unique_ptr-like type to use here.

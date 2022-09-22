@@ -22,18 +22,14 @@ namespace Carbon {
 using llvm::cast;
 
 RuntimeScope::RuntimeScope(RuntimeScope&& other) noexcept
-    : map_vec_(std::move(other.map_vec_)),
-      local_values_(std::move(other.local_values_)),
-      locals_map_(std::move(other.locals_map_)),
+    : locals_(std::move(other.locals_)),
       // To transfer ownership of other.allocations_, we have to empty it out.
       allocations_(std::exchange(other.allocations_, {})),
       heap_(other.heap_),
       destructor_scope_(other.destructor_scope_) {}
 
 auto RuntimeScope::operator=(RuntimeScope&& rhs) noexcept -> RuntimeScope& {
-  map_vec_ = std::move(rhs.map_vec_);
-  local_values_ = std::move(rhs.local_values_);
-  locals_map_ = std::move(rhs.locals_map_);
+  locals_ = std::move(rhs.locals_);
   // To transfer ownership of rhs.allocations_, we have to empty it out.
   allocations_ = std::exchange(rhs.allocations_, {});
   heap_ = rhs.heap_;
@@ -50,7 +46,7 @@ RuntimeScope::~RuntimeScope() {
 void RuntimeScope::Print(llvm::raw_ostream& out) const {
   out << "{";
   llvm::ListSeparator sep;
-  for (const auto& [value_node, value] : map_vec_) {
+  for (const auto& [value_node, value] : locals_) {
     out << sep << value_node.base() << ": " << *value;
   }
   out << "}";
@@ -61,17 +57,17 @@ void RuntimeScope::Initialize(ValueNodeView value_node,
   CARBON_CHECK(!value_node.constant_value().has_value());
   CARBON_CHECK(value->kind() != Value::Kind::LValue);
   allocations_.push_back(heap_->AllocateValue(value));
-  auto [it, success] = map_vec_.insert(
+  auto [it, success] = locals_.insert(
       {value_node, heap_->arena().New<LValue>(Address(allocations_.back()))});
   CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
 }
 
 void RuntimeScope::Merge(RuntimeScope other) {
   CARBON_CHECK(heap_ == other.heap_);
-  for (auto& element : other.map_vec_) {
-    CARBON_CHECK(map_vec_.count(element.first) == 0)
+  for (auto& element : other.locals_) {
+    CARBON_CHECK(locals_.count(element.first) == 0)
         << "Duplicate definition of" << element.first;
-    map_vec_.insert(element);
+    locals_.insert(element);
   }
   allocations_.insert(allocations_.end(), other.allocations_.begin(),
                       other.allocations_.end());
@@ -80,8 +76,8 @@ void RuntimeScope::Merge(RuntimeScope other) {
 
 auto RuntimeScope::Get(ValueNodeView value_node) const
     -> std::optional<Nonnull<const LValue*>> {
-  auto it = map_vec_.find(value_node);
-  if (it != map_vec_.end()) {
+  auto it = locals_.find(value_node);
+  if (it != locals_.end()) {
     return it->second;
   } else {
     return std::nullopt;
@@ -94,9 +90,9 @@ auto RuntimeScope::Capture(
   RuntimeScope result(scopes.front()->heap_);
   for (Nonnull<const RuntimeScope*> scope : scopes) {
     CARBON_CHECK(scope->heap_ == result.heap_);
-    for (const auto& entry : scope->map_vec_) {
+    for (const auto& entry : scope->locals_) {
       // Intentionally disregards duplicates later in the vector.
-      result.map_vec_.insert(entry);
+      result.locals_.insert(entry);
     }
   }
   return result;
