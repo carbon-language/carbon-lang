@@ -7,8 +7,6 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: DESTRUCTOR C 1
-// CHECK: DESTRUCTOR B 2
 // CHECK: DESTRUCTOR A 3
 // CHECK: result: 1
 
