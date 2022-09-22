@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <optional>
+#include <stack>
 
 #include "common/ostream.h"
 #include "explorer/ast/statement.h"
@@ -123,23 +124,24 @@ class ActionStack {
  private:
   // Pop any ScopeActions from the top of the stack, propagating results as
   // needed, to restore the invariant that todo_.Top() is not a ScopeAction.
-  auto PopScopes() -> std::list<std::unique_ptr<Action>>;
+  // Store the popped scope action into cleanup_stack, so that the destructor can be called for the variables
+  void PopScopes(std::stack<std::unique_ptr<Action>> & cleanup_stack) ;
 
   // Set `result` as the result of the Action most recently removed from the
   // stack.
   void SetResult(Nonnull<const Value*> result);
 
   auto UnwindToWithCaptureScopesToDestroy(Nonnull<const Statement*> ast_node)
-      -> std::list<std::unique_ptr<Action>>;
+      -> std::stack<std::unique_ptr<Action>>;
 
   auto UnwindPastWithCaptureScopesToDestroy(Nonnull<const Statement*> ast_node)
-      -> std::list<std::unique_ptr<Action>>;
+      -> std::stack<std::unique_ptr<Action>>;
 
   // Create CleanUpActions for all actions
-  void DestroyAllScopes(std::list<std::unique_ptr<Action>> actions);
+  void DestroyAllScopes(std::stack<std::unique_ptr<Action>> actions);
 
   // Create CleanUpActions for all non CleanUpActions
-  void DestroyScopes(std::list<std::unique_ptr<Action>> actions);
+  void DestroyScopes(std::stack<std::unique_ptr<Action>> actions);
 
   // Create and push a CleanUpAction on the stack
   void PushCleanUpAction(std::unique_ptr<Action> act);
