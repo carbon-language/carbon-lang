@@ -179,7 +179,7 @@ repos:
               .bazelversion|
               compile_flags.txt|
               third_party/.*|
-              bazel/llvm-patches/.*\.patch|
+              bazel/llvm_patches/.*\.patch|
               .*\.def|
               .*\.svg|
               .*/fuzzer_corpus/.*|
