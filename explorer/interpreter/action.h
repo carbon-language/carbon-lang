@@ -71,11 +71,9 @@ class RuntimeScope {
     return res;
   }
   // Returns how often the scope has been cleaned up
-  // 0 = no destructor,
-  // 1 = is marked as destructor,
-  // 2 = the scope of the destructor can be cleaned up.
-  // If it is greater than 2, then it is an error,
-  // because the destructor call is attempted on itself.
+  // 0 = Scope is not bind to a destructor call
+  // 1 = is bind to a destructor call and was not cleaned up,
+  // 2 = the scope of the destructor was cleaned up
   auto DestructorScope() const -> int { return destructor_scope_; }
 
   // Mark Scope as bound to a destructor.
