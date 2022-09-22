@@ -247,12 +247,11 @@ auto ActionStack::UnwindPastWithCaptureScopesToDestroy(
   std::list<std::unique_ptr<Action>> scopes_to_destroy =
       UnwindToWithCaptureScopesToDestroy(ast_node);
   auto item = todo_.Pop();
+  scopes_to_destroy.push_front(std::move(item));
   auto popped_scopes = PopScopes();
   for (auto& popped_scope : popped_scopes) {
     scopes_to_destroy.push_front(std::move(popped_scope));
   }
-  scopes_to_destroy.push_front(std::move(item));
-
   return scopes_to_destroy;
 }
 

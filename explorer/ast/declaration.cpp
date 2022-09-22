@@ -237,7 +237,9 @@ void ReturnTerm::Print(llvm::raw_ostream& out) const {
   }
 }
 
-auto MoveMeParameterToPattern(
+// Look for the `me` parameter in the `deduced_parameters`
+// and put it in the `me_pattern`.
+static auto MoveMeParameterToPattern(
     SourceLocation source_loc, std::optional<Nonnull<Pattern*>>& me_pattern,
     const std::vector<Nonnull<AstNode*>>& deduced_params)
     -> ErrorOr<std::vector<Nonnull<GenericBinding*>>> {
