@@ -21,8 +21,6 @@
 #include "llvm/ADT/MapVector.h"
 #include "llvm/Support/Compiler.h"
 
-
-
 namespace Carbon {
 
 // A RuntimeScope manages and provides access to the storage for names that are
@@ -66,7 +64,7 @@ class RuntimeScope {
 
   auto locals() const -> std::vector<Nonnull<const LValue*>> {
     std::vector<Nonnull<const LValue*>> res;
-    for(auto & entry : map_vec_){
+    for (auto& entry : map_vec_) {
       res.push_back(entry.second);
     }
     return res;
@@ -75,7 +73,9 @@ class RuntimeScope {
   void ChangeToDestructorScope() { destructor_scope_++; }
 
  private:
-  llvm::MapVector<ValueNodeView,Nonnull<const LValue*>,std::map<ValueNodeView,unsigned >> map_vec_;
+  llvm::MapVector<ValueNodeView, Nonnull<const LValue*>,
+                  std::map<ValueNodeView, unsigned>>
+      map_vec_;
   std::vector<Nonnull<const LValue*>> local_values_;
   std::map<ValueNodeView, unsigned int> locals_map_;
   std::vector<AllocationId> allocations_;

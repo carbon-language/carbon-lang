@@ -313,8 +313,7 @@ void ActionStack::SetResult(Nonnull<const Value*> result) {
   }
 }
 
-void ActionStack::DestroyAllScopes(
-    std::list<std::unique_ptr<Action>>&& actions) {
+void ActionStack::DestroyAllScopes(std::list<std::unique_ptr<Action>> actions) {
   if (!actions.empty()) {
     for (auto& x : actions) {
       auto& scope = x->scope();
@@ -327,7 +326,7 @@ void ActionStack::DestroyAllScopes(
   }
 }
 
-void ActionStack::DestroyScopes(std::list<std::unique_ptr<Action>>&& actions) {
+void ActionStack::DestroyScopes(std::list<std::unique_ptr<Action>> actions) {
   if (!actions.empty()) {
     for (auto& x : actions) {
       PushCleanUpAction(std::move(x));

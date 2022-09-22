@@ -68,9 +68,9 @@ void RuntimeScope::Initialize(ValueNodeView value_node,
 
 void RuntimeScope::Merge(RuntimeScope other) {
   CARBON_CHECK(heap_ == other.heap_);
-  for(auto & element: other.map_vec_){
+  for (auto& element : other.map_vec_) {
     CARBON_CHECK(map_vec_.count(element.first) == 0)
-      << "Duplicate definition of" << element.first;
+        << "Duplicate definition of" << element.first;
     map_vec_.insert(element);
   }
   allocations_.insert(allocations_.end(), other.allocations_.begin(),
