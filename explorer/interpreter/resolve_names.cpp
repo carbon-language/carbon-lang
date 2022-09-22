@@ -34,7 +34,8 @@ static auto AddExposedNames(const Declaration& declaration,
       break;
     }
     case DeclarationKind::DestructorDeclaration: {
-      // TODO: Remove this code. With this code, it is possible to create not useful carbon code.
+      // TODO: Remove this code. With this code, it is possible to create not
+      // useful carbon code.
       //       Without this code, a Segfault is generated
       auto& func = cast<DestructorDeclaration>(declaration);
       CARBON_RETURN_IF_ERROR(enclosing_scope.Add(
