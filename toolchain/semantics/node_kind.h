@@ -15,7 +15,7 @@ namespace Carbon::Semantics {
 struct NodeId {
   explicit NodeId(int32_t id) : id(id) {}
 
-  void Print(llvm::raw_ostream& out) const { out << "%" << id; }
+  auto Print(llvm::raw_ostream& out) const -> void { out << "%" << id; }
 
   // Comparison to help tests.
   auto operator==(int32_t other) const -> bool { return id == other; }

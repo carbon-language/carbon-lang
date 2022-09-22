@@ -29,8 +29,8 @@ class Function {
         // return_expr_(return_expr),
         body_(std::move(body)) {}
 
-  void Print(llvm::raw_ostream& out,
-             std::function<void(NodeRef)> print_node_ref) const {
+  auto Print(llvm::raw_ostream& out,
+             std::function<void(NodeRef)> print_node_ref) const -> void {
     out << "Function(" << id_ << ", {";
     llvm::ListSeparator sep(", ");
     for (auto& node_ref : body_) {

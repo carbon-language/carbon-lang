@@ -20,7 +20,7 @@ class IntegerLiteral {
                           const llvm::APInt& value)
       : node_(node), id_(id), value_(&value) {}
 
-  void Print(llvm::raw_ostream& out) const {
+  auto Print(llvm::raw_ostream& out) const -> void {
     out << "IntegerLiteral(" << id_ << ", " << *value_ << ")";
   }
 

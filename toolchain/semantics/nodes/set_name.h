@@ -20,7 +20,7 @@ class SetName {
   SetName(ParseTree::Node node, llvm::StringRef name, NodeId target_id)
       : node_(node), name_(name), target_id_(target_id) {}
 
-  void Print(llvm::raw_ostream& out) const {
+  auto Print(llvm::raw_ostream& out) const -> void {
     out << "SetName(`" << name_ << "`, " << target_id_ << ")";
   }
 

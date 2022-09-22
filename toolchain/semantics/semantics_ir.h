@@ -8,6 +8,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/parser/parse_tree.h"
+#include "toolchain/semantics/node_ref.h"
 #include "toolchain/semantics/node_store.h"
 
 namespace Carbon::Testing {

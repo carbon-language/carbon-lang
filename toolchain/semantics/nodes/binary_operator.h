@@ -24,7 +24,7 @@ class BinaryOperator {
                           NodeId rhs_id)
       : node_(node), id_(id), op_(op), lhs_id_(lhs_id), rhs_id_(rhs_id) {}
 
-  void Print(llvm::raw_ostream& out) const {
+  auto Print(llvm::raw_ostream& out) const -> void {
     out << "BinaryOperator(" << id_ << ", ";
     switch (op_) {
       case Op::Add:

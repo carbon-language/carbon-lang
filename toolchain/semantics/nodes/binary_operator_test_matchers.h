@@ -8,6 +8,7 @@
 #include <gmock/gmock.h>
 
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/FormatVariadic.h"
 #include "toolchain/semantics/nodes/binary_operator.h"
 #include "toolchain/semantics/semantics_ir_for_test.h"
 

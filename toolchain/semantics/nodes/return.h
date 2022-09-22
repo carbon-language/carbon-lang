@@ -22,7 +22,7 @@ class Return {
   Return(ParseTree::Node node, llvm::Optional<NodeId> target_id)
       : node_(node), target_id_(target_id) {}
 
-  void Print(llvm::raw_ostream& out) const {
+  auto Print(llvm::raw_ostream& out) const -> void {
     out << "Return(";
     if (target_id_) {
       out << *target_id_;
