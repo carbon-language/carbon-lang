@@ -65,6 +65,7 @@ message OperatorExpression {
     Greater = 22;
     GreaterEq = 23;
     NotEq = 24;
+    Div = 25;
   }
   optional Operator op = 1;
   repeated Expression arguments = 2;

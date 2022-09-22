@@ -123,6 +123,7 @@ enum class Operator {
   BitShiftRight,
   Complement,
   Deref,
+  Div,
   Eq,
   Less,
   LessEq,

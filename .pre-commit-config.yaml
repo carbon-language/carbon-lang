@@ -19,7 +19,7 @@ repos:
       - id: check-executables-have-shebangs
       - id: check-merge-conflict
       - id: check-symlinks
-        exclude: ^bazel-(clang-toolchain|execroot)$
+        exclude: ^bazel-execroot$
       - id: check-yaml
       - id: detect-private-key
       - id: end-of-file-fixer

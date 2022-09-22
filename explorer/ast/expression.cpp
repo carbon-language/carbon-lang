@@ -123,6 +123,8 @@ auto ToString(Operator op) -> std::string_view {
       return "<<";
     case Operator::BitShiftRight:
       return ">>";
+    case Operator::Div:
+      return "/";
     case Operator::Neg:
     case Operator::Sub:
       return "-";
