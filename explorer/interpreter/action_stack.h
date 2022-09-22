@@ -124,8 +124,9 @@ class ActionStack {
  private:
   // Pop any ScopeActions from the top of the stack, propagating results as
   // needed, to restore the invariant that todo_.Top() is not a ScopeAction.
-  // Store the popped scope action into cleanup_stack, so that the destructor can be called for the variables
-  void PopScopes(std::stack<std::unique_ptr<Action>> & cleanup_stack) ;
+  // Store the popped scope action into cleanup_stack, so that the destructor
+  // can be called for the variables
+  void PopScopes(std::stack<std::unique_ptr<Action>>& cleanup_stack);
 
   // Set `result` as the result of the Action most recently removed from the
   // stack.

@@ -288,7 +288,8 @@ auto ActionStack::Suspend() -> ErrorOr<Success> {
   return Success();
 }
 
-void ActionStack::PopScopes(std::stack<std::unique_ptr<Action>> &cleanup_stack) {
+void ActionStack::PopScopes(
+    std::stack<std::unique_ptr<Action>>& cleanup_stack) {
   while (!todo_.IsEmpty() && llvm::isa<ScopeAction>(*todo_.Top())) {
     auto act = todo_.Pop();
     if (act->scope()) {
@@ -308,24 +309,25 @@ void ActionStack::SetResult(Nonnull<const Value*> result) {
   }
 }
 
-void ActionStack::DestroyAllScopes(std::stack<std::unique_ptr<Action>> actions) {
-    while(!actions.empty()) {
-      auto & act = actions.top();
-      if (act->scope()) {
-        std::unique_ptr<Action> cleanup_action =
-            std::make_unique<CleanupAction>(std::move(*act->scope()));
-        todo_.Push(std::move(cleanup_action));
-      }
-      actions.pop();
+void ActionStack::DestroyAllScopes(
+    std::stack<std::unique_ptr<Action>> actions) {
+  while (!actions.empty()) {
+    auto& act = actions.top();
+    if (act->scope()) {
+      std::unique_ptr<Action> cleanup_action =
+          std::make_unique<CleanupAction>(std::move(*act->scope()));
+      todo_.Push(std::move(cleanup_action));
     }
+    actions.pop();
+  }
 }
 
 void ActionStack::DestroyScopes(std::stack<std::unique_ptr<Action>> actions) {
-    while(!actions.empty()) {
-      auto & act = actions.top();
-      PushCleanUpAction(std::move(act));
-      actions.pop();
-    }
+  while (!actions.empty()) {
+    auto& act = actions.top();
+    PushCleanUpAction(std::move(act));
+    actions.pop();
+  }
 }
 
 void ActionStack::PushCleanUpAction(std::unique_ptr<Action> act) {
