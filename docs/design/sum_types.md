@@ -44,9 +44,9 @@ choice OptionalI32 {
 ```
 
 This declares a sum type named `OptionalI32` with two alternatives: `Some`,
-which holds a single `i32` value, and `None`, which is empty. Choice types can
-also be parameterized,
-[like class types](generics/details.md#parameterized-types):
+which holds a single `i32` value (the parameter name `value` has no effect other
+than documentation), and `None`, which is empty. Choice types can also be
+parameterized, [like class types](generics/details.md#parameterized-types):
 
 ```carbon
 choice Optional(T:! Type) {
@@ -102,7 +102,29 @@ has to specify two things:
 -   The algorithm that, given a value of the sum type, determines which
     alternative is present, and specifies the values of its parameters.
 
-Here's how that would look if `Optional` were defined as a class:
+It does so by implementing the `Match` interface, which is defined as follows:
+
+```carbon
+interface Match {
+  let template Continuation:! Type;
+  fn Op[me: Self, C:! Continuation](continuation: Continuation*)
+    -> Continuation.ReturnType;
+}
+```
+
+`Continuation` must itself be an interface, and its definition specifies the set
+of possible alternatives: each alternative is represented as a method of that
+interface. When compiling a proper pattern (or set of patterns that includes a
+proper pattern, as with the cases of a `match`) whose type is a sum type, the
+compiler generates an implementation of `Continuation` and passes it to
+`Match.Op`. The sum type's implementation of `Match.Op` is responsible for
+determining which alternative is present and what its parameters are, and
+calling the corresponding method of `continuation` with those parameters. It is
+required to call exactly one such method exactly once before returning. The
+compiler populates the `Continuation` method bodies with whatever code should be
+executed when the corresponding alternatives match.
+
+For example, here's how `Optional` can be defined as a class:
 
 ```carbon
 class Optional(T:! Type) {
@@ -113,15 +135,14 @@ class Optional(T:! Type) {
   private var has_value: bool;
   private var value: T;
 
-  interface MatchContinuation {
-    let template ReturnType:! Type;
-    fn Some[addr me: Self*](value: T) -> ReturnType;
-    fn None[addr me: Self*]() -> ReturnType;
-  }
+  external impl as Match {
+    interface Continuation {
+      let ReturnType:! Type;
+      fn Some[addr me: Self*](value: T) -> ReturnType;
+      fn None[addr me: Self*]() -> ReturnType;
+    }
 
-  external impl as Match(MatchContinuation) {
-    fn Op[me: Self, Continuation:! MatchContinuation](
-        continuation: Continuation*) -> Continuation.ReturnType {
+    fn Op[me: Self, C:! Continuation](continuation: C*) -> C.ReturnType {
       if (me.has_value) {
         return continuation->Some(me.value);
       } else {
@@ -135,23 +156,11 @@ class Optional(T:! Type) {
 }
 ```
 
-In this code, `Optional` makes itself available for use in pattern matching by
-declaring that it implements the `Match` interface. `Match` takes an interface
-argument, called the _continuation interface_, which specifies the set of
-possible alternatives by declaring a method for each one. In this case, we pass
-`Optional.MatchContinuation` as the continuation interface.
-
-When compiling a `match` statement, the compiler checks that the type being
-matched implements `Match(C)` for some continuation interface `C`. Then, it
-notionally transforms the `match` body into a class that implements `C`, with
-one method for each `case`, and then passes that to `Match.Op` on the object
-being matched. For example, the `match` statement shown earlier might be
-transformed into:
+And here's how the compiler might generate an implementation of
+`Optional.(Match.Continuation)` for the `match` statement shown earlier:
 
 ```carbon
 class __MatchStatementImpl {
-  fn Make() -> Self { return {}; }
-
   impl as Match(Optional.MatchContinuation) where .ReturnType = () {
     fn Some(the_value: i32) {
       Print(the_value);
@@ -162,25 +171,43 @@ class __MatchStatementImpl {
   }
 }
 
-my_opt.(Match.Op)(__MatchStatementImpl.Make());
+my_opt.(Match.Op)({} as __MatchStatementImpl);
 ```
 
-Thus, a `match` statement works by invoking the sum type's `Match.Op` method,
-which is responsible for determining which alternative the sum object
-represents, and then invoking the compiler-supplied continuation that
-corresponds to that alternative. In order for this scheme to work, `Match.Op` is
-required to invoke exactly one method of `MatchContinuation`, and to do so
-exactly once.
+The mechanism described above for proper patterns may also be used for
+expression patterns if they have the form of an alternative pattern. An
+expression pattern of type `T` has the form of an alternative pattern if `T`
+implements `Match`, and the expression consists of an optional expression that
+names `T`, followed by a designator that names a method of
+`T.(Match.Continuation)`, optionally followed by a tuple expression. If an
+expression pattern has that form, it may be matched using the mechanism above,
+as if it were a proper pattern, rather than by evaluating the expression and
+comparing it to the scrutinee using `==`. Both possible implementations must be
+well-formed (and this is enforced by the compiler), but it is unspecified which
+implementation is used to generate code.
 
-Notice that the names `Some` and `None` are defined twice, once as factory
-functions/constant members of `Optional` and once as methods of
-`MatchContinuation`, with the same parameter types in each case. The two
-effectively act as inverses of each other: the `Optional` members are used to
-create `Optional` values, and the `MatchContinuation` methods are used to report
-the parameter values that would create a given `Optional`. This mirroring
-between expression and pattern syntax is ultimately a design choice by the type
-author; there is no language-level requirement that the alternatives correspond
-to the factory functions, but it is **strongly** recommended.
+As a result, it is **strongly** recommended that user-defined sum types ensure
+that for every alternative there is a factory function or constant member with
+the same name and parameter list, such that pattern-matching on the result will
+correctly reproduce the arguments to the factory function. For example, the
+definition of `Optional` above satisfies this requirement, because for any
+regular type `T`, the expression `Optional(T).None` evaluates to a value that
+matches the pattern `Optional(T).None` (under both possible matching
+mechanisms), and for any `x` of type `T`, the expression `Optional(T).Some(x)`
+evaluates to a value that matches the pattern `Optional(T).Some(y: T)` and binds
+`y` to a value that's equal to `x`. Expression patterns involving a sum type
+that doesn't meet this requirement will fail to compile, or have behavior that
+observably changes depending on the compiler's implementation choices.
+
+Another corollary of this rule is that if an alternative takes no arguments, its
+pattern syntax is the same as its expression syntax. For example,
+`case Optional(i32).None() => ...` is not well-formed, because
+`Optional(i32).None()` has the form of an alternative pattern, but the
+implementation in terms of `==` is not well-formed because
+`Optional(i32).None()` is not a well-formed expression. If we had defined
+`Optional.None` as a factory function instead of a constant,
+`case Optional(i32).None() => ...` would be well-formed but
+`case Optional(i32).None => ...` would not be.
 
 ## Alternatives considered
 
