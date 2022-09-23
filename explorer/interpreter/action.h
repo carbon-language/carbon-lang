@@ -27,6 +27,12 @@ namespace Carbon {
 // not compile-time constants.
 class RuntimeScope {
  public:
+  enum class State {
+    Normal = 0,
+    Destructor = 1,
+    CleanUpped = 2,
+  };
+
   // Returns a RuntimeScope whose Get() operation for a given name returns the
   // storage owned by the first entry in `scopes` that defines that name. This
   // behavior is closely analogous to a `[&]` capture in C++, hence the name.
@@ -37,7 +43,7 @@ class RuntimeScope {
 
   // Constructs a RuntimeScope that allocates storage in `heap`.
   explicit RuntimeScope(Nonnull<HeapAllocationInterface*> heap)
-      : heap_(heap), destructor_scope_(0) {}
+      : heap_(heap), destructor_scope_(State::Normal) {}
 
   // Moving a RuntimeScope transfers ownership of its allocations.
   RuntimeScope(RuntimeScope&&) noexcept;
@@ -70,15 +76,16 @@ class RuntimeScope {
     }
     return res;
   }
-  // Returns how often the scope has been cleaned up
-  // 0 = Scope is not bind to a destructor call
-  // 1 = is bind to a destructor call and was not cleaned up,
-  // 2 = the scope of the destructor was cleaned up
-  auto DestructorScope() const -> int { return destructor_scope_; }
 
-  // Mark Scope as bound to a destructor.
-  // Prevent this scope from recursively trying to clean itself up
-  void ChangeToDestructorScope() { destructor_scope_++; }
+  // Return scope state
+  // Normal     = Scope is not bind at the top of a destructor call
+  // Destructor = Scope is bind to a destructor call and was not cleaned up,
+  // CleanedUp  = Scope is bind to a destructor call and is cleaned up
+  auto DestructionState() const -> State { return destructor_scope_; }
+
+  // Transit the state from Normal to Destructor
+  // Transit the state from Destructor to CleanUpped
+  void TransitState();
 
  private:
   llvm::MapVector<ValueNodeView, Nonnull<const LValue*>,
@@ -86,7 +93,7 @@ class RuntimeScope {
       locals_;
   std::vector<AllocationId> allocations_;
   Nonnull<HeapAllocationInterface*> heap_;
-  int destructor_scope_;
+  State destructor_scope_;
 };
 
 // An Action represents the current state of a self-contained computation,

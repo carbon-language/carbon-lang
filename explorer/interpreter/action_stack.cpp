@@ -293,8 +293,9 @@ void ActionStack::PopScopes(
   while (!todo_.IsEmpty() && llvm::isa<ScopeAction>(*todo_.Top())) {
     auto act = todo_.Pop();
     if (act->scope()) {
-      if ((*act->scope()).DestructorScope() < 2) {
-        (*act->scope()).ChangeToDestructorScope();
+      if ((*act->scope()).DestructionState() <
+          RuntimeScope::State::CleanUpped) {
+        (*act->scope()).TransitState();
         cleanup_stack.push(std::move(act));
       }
     }

@@ -762,7 +762,7 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
       << "Calling a method that's missing a body";
 
   auto act = std::make_unique<StatementAction>(*method.body());
-  method_scope.ChangeToDestructorScope();
+  method_scope.TransitState();
   return todo_.Spawn(std::unique_ptr<Action>(std::move(act)),
                      std::move(method_scope));
 }
@@ -1893,7 +1893,7 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
     SourceLocation source_loc("destructor", 1);
     auto value = heap_.Read(lvalue->address(), source_loc);
     if (value.ok()) {
-      if (act.scope()->DestructorScope() < 2) {
+      if (act.scope()->DestructionState() < RuntimeScope::State::CleanUpped) {
         if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
           const auto& class_type = cast<NominalClassType>(class_obj->type());
           const auto& class_dec = class_type.declaration();
@@ -1915,14 +1915,14 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
                   Address object = lvalue->address();
                   Address mem = object.SubobjectAddress(Member(var));
                   auto v = heap_.Read(mem, source_loc);
-                  act.scope()->ChangeToDestructorScope();
+                  act.scope()->TransitState();
                   return CallDestructor(*c_dec.destructor(), *v);
                 }
               }
             }
           }
         }
-        act.scope()->ChangeToDestructorScope();
+        act.scope()->TransitState();
       }
     }
   }

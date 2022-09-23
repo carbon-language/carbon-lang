@@ -98,6 +98,16 @@ auto RuntimeScope::Capture(
   return result;
 }
 
+void RuntimeScope::TransitState() {
+  if (destructor_scope_ == State::Normal) {
+    destructor_scope_ = State::Destructor;
+  } else if (destructor_scope_ == State::Destructor) {
+    destructor_scope_ = State::CleanUpped;
+  } else {
+    destructor_scope_ = State::CleanUpped;
+  }
+}
+
 void Action::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
     case Action::Kind::LValAction:
