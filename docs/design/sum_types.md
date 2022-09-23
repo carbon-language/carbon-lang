@@ -21,7 +21,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Overview
 
 In Carbon, a _sum type_ is a type whose values are grouped into several distinct
-named cases, called _alternatives_. A value of a sum type logically consists of
+named cases, called _alternatives_. A value of a sum type notionally consists of
 a _discriminator_ tag that identifies which alternative is present, together
 with that alternative's value if it has one. Sum types are typically handled
 with pattern matching.
