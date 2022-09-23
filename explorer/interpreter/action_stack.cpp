@@ -145,7 +145,7 @@ auto ActionStack::FinishAction() -> ErrorOr<Success> {
     }
   }
   PushCleanUpAction(std::move(act));
-  DestroyScopes(std::move(scopes_to_destroy));
+  PushCleanUpActions(std::move(scopes_to_destroy));
   return Success();
 }
 
@@ -169,7 +169,7 @@ auto ActionStack::FinishAction(Nonnull<const Value*> result)
       break;
   }
   PushCleanUpAction(std::move(act));
-  DestroyScopes(std::move(scopes_to_destroy));
+  PushCleanUpActions(std::move(scopes_to_destroy));
   return Success();
 }
 
@@ -229,7 +229,7 @@ auto ActionStack::UnwindTo(Nonnull<const Statement*> ast_node)
     -> ErrorOr<Success> {
   std::stack<std::unique_ptr<Action>> scopes_to_destroy =
       UnwindToWithCaptureScopesToDestroy(ast_node);
-  DestroyAllScopes(std::move(scopes_to_destroy));
+  PushCleanUpActions(std::move(scopes_to_destroy));
   return Success();
 }
 
@@ -237,7 +237,7 @@ auto ActionStack::UnwindPast(Nonnull<const Statement*> ast_node)
     -> ErrorOr<Success> {
   std::stack<std::unique_ptr<Action>> scopes_to_destroy =
       UnwindPastWithCaptureScopesToDestroy(ast_node);
-  DestroyAllScopes(std::move(scopes_to_destroy));
+  PushCleanUpActions(std::move(scopes_to_destroy));
 
   return Success();
 }
@@ -257,7 +257,7 @@ auto ActionStack::UnwindPast(Nonnull<const Statement*> ast_node,
   std::stack<std::unique_ptr<Action>> scopes_to_destroy =
       UnwindPastWithCaptureScopesToDestroy(ast_node);
   SetResult(result);
-  DestroyAllScopes(std::move(scopes_to_destroy));
+  PushCleanUpActions(std::move(scopes_to_destroy));
   return Success();
 }
 
@@ -310,7 +310,7 @@ void ActionStack::SetResult(Nonnull<const Value*> result) {
   }
 }
 
-void ActionStack::DestroyAllScopes(
+void ActionStack::PushCleanUpActions(
     std::stack<std::unique_ptr<Action>> actions) {
   while (!actions.empty()) {
     auto& act = actions.top();
@@ -319,14 +319,6 @@ void ActionStack::DestroyAllScopes(
           std::make_unique<CleanupAction>(std::move(*act->scope()));
       todo_.Push(std::move(cleanup_action));
     }
-    actions.pop();
-  }
-}
-
-void ActionStack::DestroyScopes(std::stack<std::unique_ptr<Action>> actions) {
-  while (!actions.empty()) {
-    auto& act = actions.top();
-    PushCleanUpAction(std::move(act));
     actions.pop();
   }
 }

@@ -138,12 +138,8 @@ class ActionStack {
   auto UnwindPastWithCaptureScopesToDestroy(Nonnull<const Statement*> ast_node)
       -> std::stack<std::unique_ptr<Action>>;
 
-  // TODO: see if it's possible to combine DestroyAllScopes and DestroyScopes
   // Create CleanUpActions for all actions
-  void DestroyAllScopes(std::stack<std::unique_ptr<Action>> actions);
-
-  // Create CleanUpActions for all non CleanUpActions
-  void DestroyScopes(std::stack<std::unique_ptr<Action>> actions);
+  void PushCleanUpActions(std::stack<std::unique_ptr<Action>> actions);
 
   // Create and push a CleanUpAction on the stack
   void PushCleanUpAction(std::unique_ptr<Action> act);
