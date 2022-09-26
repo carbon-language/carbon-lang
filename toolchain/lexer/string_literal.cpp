@@ -380,7 +380,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
         // Trailing whitespace before a newline doesn't contribute to the string
         // literal value.
         while (!result.empty() && result.back() != '\n' &&
-               IsSpace(result.back())) {
+               result.back() == ' ') {
           result.pop_back();
         }
         result += '\n';
