@@ -73,11 +73,6 @@ cc_library(
     testonly = 1,
     srcs = ["semantics_ir_for_test.cpp"],
     hdrs = [
-        "nodes/binary_operator_test_matchers.h",
-        "nodes/function_test_matchers.h",
-        "nodes/integer_literal_test_matchers.h",
-        "nodes/return_test_matchers.h",
-        "nodes/set_name_test_matchers.h",
         "semantics_ir_for_test.h",
         "semantics_ir_test_helpers.h",
     ],
