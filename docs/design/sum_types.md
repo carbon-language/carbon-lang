@@ -156,8 +156,9 @@ class Optional(T:! Type) {
 }
 ```
 
-And here's how the compiler might generate an implementation of
-`Optional.(Match.Continuation)` for the `match` statement shown earlier:
+And here's how the compiler-generated implementation of
+`Optional.(Match.Continuation)` for the `match` statement shown earlier might
+look, if it were written in Carbon:
 
 ```carbon
 class __MatchStatementImpl {
@@ -173,6 +174,9 @@ class __MatchStatementImpl {
 
 my_opt.(Match.Op)({} as __MatchStatementImpl);
 ```
+
+(The name `__MatchStatementImpl` is a placeholder for illustration purposes; the
+actual generated class will be anonymous.)
 
 The mechanism described above for proper patterns may also be used for
 expression patterns if they have the form of an alternative pattern. An
