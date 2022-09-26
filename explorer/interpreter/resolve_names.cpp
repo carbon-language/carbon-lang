@@ -33,6 +33,15 @@ static auto AddExposedNames(const Declaration& declaration,
       // Nothing to do here
       break;
     }
+    case DeclarationKind::DestructorDeclaration: {
+      // TODO: Remove this code. With this code, it is possible to create not
+      // useful carbon code.
+      //       Without this code, a Segfault is generated
+      auto& func = cast<DestructorDeclaration>(declaration);
+      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(
+          "destructor", &func, StaticScope::NameStatus::KnownButNotDeclared));
+      break;
+    }
     case DeclarationKind::FunctionDeclaration: {
       auto& func = cast<FunctionDeclaration>(declaration);
       CARBON_RETURN_IF_ERROR(enclosing_scope.Add(
@@ -531,8 +540,9 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
           ResolveMemberNames(impl.members(), impl_scope, bodies));
       break;
     }
+    case DeclarationKind::DestructorDeclaration:
     case DeclarationKind::FunctionDeclaration: {
-      auto& function = cast<FunctionDeclaration>(declaration);
+      auto& function = cast<CallableDeclaration>(declaration);
       StaticScope function_scope;
       function_scope.AddParent(&enclosing_scope);
       enclosing_scope.MarkDeclared(function.name());

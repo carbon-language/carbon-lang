@@ -5,7 +5,9 @@
 #ifndef CARBON_EXPLORER_INTERPRETER_ACTION_H_
 #define CARBON_EXPLORER_INTERPRETER_ACTION_H_
 
+#include <list>
 #include <map>
+#include <tuple>
 #include <vector>
 
 #include "common/ostream.h"
@@ -16,6 +18,7 @@
 #include "explorer/interpreter/heap_allocation_interface.h"
 #include "explorer/interpreter/stack.h"
 #include "explorer/interpreter/value.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
@@ -24,6 +27,12 @@ namespace Carbon {
 // not compile-time constants.
 class RuntimeScope {
  public:
+  enum class State {
+    Normal = 0,
+    Destructor = 1,
+    CleanUpped = 2,
+  };
+
   // Returns a RuntimeScope whose Get() operation for a given name returns the
   // storage owned by the first entry in `scopes` that defines that name. This
   // behavior is closely analogous to a `[&]` capture in C++, hence the name.
@@ -33,7 +42,8 @@ class RuntimeScope {
       -> RuntimeScope;
 
   // Constructs a RuntimeScope that allocates storage in `heap`.
-  explicit RuntimeScope(Nonnull<HeapAllocationInterface*> heap) : heap_(heap) {}
+  explicit RuntimeScope(Nonnull<HeapAllocationInterface*> heap)
+      : heap_(heap), destructor_scope_(State::Normal) {}
 
   // Moving a RuntimeScope transfers ownership of its allocations.
   RuntimeScope(RuntimeScope&&) noexcept;
@@ -58,10 +68,32 @@ class RuntimeScope {
   auto Get(ValueNodeView value_node) const
       -> std::optional<Nonnull<const LValue*>>;
 
+  // Returns the local values in created order
+  auto locals() const -> std::vector<Nonnull<const LValue*>> {
+    std::vector<Nonnull<const LValue*>> res;
+    for (auto& entry : locals_) {
+      res.push_back(entry.second);
+    }
+    return res;
+  }
+
+  // Return scope state
+  // Normal     = Scope is not bind at the top of a destructor call
+  // Destructor = Scope is bind to a destructor call and was not cleaned up,
+  // CleanedUp  = Scope is bind to a destructor call and is cleaned up
+  auto DestructionState() const -> State { return destructor_scope_; }
+
+  // Transit the state from Normal to Destructor
+  // Transit the state from Destructor to CleanUpped
+  void TransitState();
+
  private:
-  std::map<ValueNodeView, Nonnull<const LValue*>> locals_;
+  llvm::MapVector<ValueNodeView, Nonnull<const LValue*>,
+                  std::map<ValueNodeView, unsigned>>
+      locals_;
   std::vector<AllocationId> allocations_;
   Nonnull<HeapAllocationInterface*> heap_;
+  State destructor_scope_;
 };
 
 // An Action represents the current state of a self-contained computation,
@@ -86,6 +118,7 @@ class Action {
     DeclarationAction,
     ScopeAction,
     RecursiveAction,
+    CleanUpAction,
   };
 
   Action(const Value&) = delete;
@@ -237,6 +270,23 @@ class DeclarationAction : public Action {
 
  private:
   Nonnull<const Declaration*> declaration_;
+};
+
+class CleanupAction : public Action {
+ public:
+  explicit CleanupAction(RuntimeScope scope) : Action(Kind::CleanUpAction) {
+    locals_count_ = scope.locals().size();
+    StartScope(std::move(scope));
+  }
+
+  auto locals_count() const -> int { return locals_count_; }
+
+  static auto classof(const Action* action) -> bool {
+    return action->kind() == Kind::CleanUpAction;
+  }
+
+ private:
+  int locals_count_;
 };
 
 // Action which does nothing except introduce a new scope into the action

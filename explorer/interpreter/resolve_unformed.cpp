@@ -284,11 +284,12 @@ static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
     // Checks formed/unformed state intraprocedurally.
     // Can be extended to an interprocedural analysis when a call graph is
     // available.
-    case DeclarationKind::FunctionDeclaration: {
-      auto& function = cast<FunctionDeclaration>(*declaration);
-      if (function.body().has_value()) {
+    case DeclarationKind::FunctionDeclaration:
+    case DeclarationKind::DestructorDeclaration: {
+      auto& callable = cast<CallableDeclaration>(*declaration);
+      if (callable.body().has_value()) {
         FlowFacts flow_facts;
-        CARBON_RETURN_IF_ERROR(ResolveUnformed(*function.body(), flow_facts,
+        CARBON_RETURN_IF_ERROR(ResolveUnformed(*callable.body(), flow_facts,
                                                FlowFacts::ActionType::None));
       }
       break;

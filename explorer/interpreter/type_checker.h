@@ -192,7 +192,7 @@ class TypeChecker {
   auto DeclareDeclaration(Nonnull<Declaration*> d, const ScopeInfo& scope_info)
       -> ErrorOr<Success>;
 
-  auto DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
+  auto DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
                                   const ScopeInfo& scope_info)
       -> ErrorOr<Success>;
 
@@ -275,7 +275,7 @@ class TypeChecker {
       -> ErrorOr<Success>;
 
   // Type check the body of the function.
-  auto TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
+  auto TypeCheckCallableDeclaration(Nonnull<CallableDeclaration*> f,
                                     const ImplScope& impl_scope)
       -> ErrorOr<Success>;
 

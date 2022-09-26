@@ -167,6 +167,7 @@ static auto ExpectPointerType(SourceLocation source_loc,
 static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
   switch (value->kind()) {
     case Value::Kind::IntValue:
+    case Value::Kind::DestructorValue:
     case Value::Kind::FunctionValue:
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
@@ -228,6 +229,7 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
   switch (value->kind()) {
     case Value::Kind::IntValue:
     case Value::Kind::FunctionValue:
+    case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LValue:
@@ -871,6 +873,7 @@ auto TypeChecker::ArgumentDeduction(
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
+    case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LValue:
@@ -1179,6 +1182,7 @@ auto TypeChecker::Substitute(
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
+    case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LValue:
@@ -3214,7 +3218,7 @@ auto TypeChecker::ExpectReturnOnAllPaths(
 
 // TODO: Add checking to function definitions to ensure that
 //   all deduced type parameters will be deduced.
-auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
+auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
                                              const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
   if (trace_stream_) {
@@ -3287,7 +3291,20 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   f->set_static_type(arena_->New<FunctionType>(
       &f->param_pattern().static_type(), generic_parameters,
       &f->return_term().static_type(), deduced_bindings, impl_bindings));
-  SetConstantValue(f, arena_->New<FunctionValue>(f));
+  switch (f->kind()) {
+    case DeclarationKind::FunctionDeclaration:
+      SetConstantValue(
+          cast<FunctionDeclaration>(f),
+          arena_->New<FunctionValue>(cast<FunctionDeclaration>(f)));
+      break;
+    case DeclarationKind::DestructorDeclaration:
+      SetConstantValue(
+          cast<DestructorDeclaration>(f),
+          arena_->New<DestructorValue>(cast<DestructorDeclaration>(f)));
+      break;
+    default:
+      CARBON_FATAL() << "f is not a callable declaration";
+  }
 
   if (f->name() == "Main") {
     if (!f->return_term().type_expression().has_value()) {
@@ -3308,7 +3325,7 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   return Success();
 }
 
-auto TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
+auto TypeChecker::TypeCheckCallableDeclaration(Nonnull<CallableDeclaration*> f,
                                                const ImplScope& impl_scope)
     -> ErrorOr<Success> {
   if (trace_stream_) {
@@ -4003,6 +4020,7 @@ static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
   switch (type->kind()) {
     case Value::Kind::IntValue:
     case Value::Kind::FunctionValue:
+    case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LValue:
@@ -4110,9 +4128,10 @@ auto TypeChecker::TypeCheckDeclaration(
           TypeCheckImplDeclaration(&cast<ImplDeclaration>(*d), impl_scope));
       break;
     }
+    case DeclarationKind::DestructorDeclaration:
     case DeclarationKind::FunctionDeclaration:
-      CARBON_RETURN_IF_ERROR(TypeCheckFunctionDeclaration(
-          &cast<FunctionDeclaration>(*d), impl_scope));
+      CARBON_RETURN_IF_ERROR(TypeCheckCallableDeclaration(
+          &cast<CallableDeclaration>(*d), impl_scope));
       return Success();
     case DeclarationKind::ClassDeclaration:
       CARBON_RETURN_IF_ERROR(
@@ -4181,11 +4200,16 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       break;
     }
     case DeclarationKind::FunctionDeclaration: {
-      auto& func_def = cast<FunctionDeclaration>(*d);
-      CARBON_RETURN_IF_ERROR(DeclareFunctionDeclaration(&func_def, scope_info));
+      auto& func_def = cast<CallableDeclaration>(*d);
+      CARBON_RETURN_IF_ERROR(DeclareCallableDeclaration(&func_def, scope_info));
       break;
     }
-
+    case DeclarationKind::DestructorDeclaration: {
+      auto& destructor_def = cast<CallableDeclaration>(*d);
+      CARBON_RETURN_IF_ERROR(
+          DeclareCallableDeclaration(&destructor_def, scope_info));
+      break;
+    }
     case DeclarationKind::ClassDeclaration: {
       auto& class_decl = cast<ClassDeclaration>(*d);
       CARBON_RETURN_IF_ERROR(DeclareClassDeclaration(&class_decl, scope_info));
