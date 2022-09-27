@@ -53,7 +53,10 @@ sudo apt install \
 pip3 install pre-commit
 
 # Set up git.
-gh repository fork --clone carbon-language/carbon-lang
+# If you don't already have a fork:
+gh repo fork --clone carbon-language/carbon-lang
+# Otherwise:
+gh repo clone carbon-lang
 cd carbon-lang
 pre-commit install
 
