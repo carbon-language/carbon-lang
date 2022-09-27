@@ -174,7 +174,7 @@ considering if they fit your workflow.
         `pre-commit` deleting files. If you see files being deleted, disable
         `rs-git-fsmonitor` with `git config --unset core.fsmonitor`.
 -   [vim-prettier](https://github.com/prettier/vim-prettier): A vim integration
-    for Prettier, which we use for formatting.
+    for [Prettier](https://prettier.io/), which we use for formatting.
 -   [Visual Studio Code](https://code.visualstudio.com/): A code editor.
     -   We provide [recommended extensions](/.vscode/extensions.json) to assist
         Carbon development. Some settings changes must be made separately:
