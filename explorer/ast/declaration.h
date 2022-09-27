@@ -158,7 +158,6 @@ class FunctionDeclaration : public CallableDeclaration {
   static auto Create(Nonnull<Arena*> arena, SourceLocation source_loc,
                      std::string name,
                      std::vector<Nonnull<AstNode*>> deduced_params,
-                     std::optional<Nonnull<Pattern*>> me_pattern,
                      Nonnull<TuplePattern*> param_pattern,
                      ReturnTerm return_term,
                      std::optional<Nonnull<Block*>> body)
