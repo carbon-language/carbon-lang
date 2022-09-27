@@ -111,7 +111,7 @@ These tools are essential for work on Carbon.
 -   Package managers
     -   `apt` (for Debian or Ubuntu)
         -   To upgrade versions of `apt` packages, it will be necessary to
-            periodically run `sudo apt-get update && sudo apt-get upgrade`.
+            periodically run `sudo apt update && sudo apt upgrade`.
     -   [Homebrew](https://brew.sh/) (for macOS)
         -   To upgrade versions of `brew` packages, it will be necessary to
             periodically run `brew upgrade`.
