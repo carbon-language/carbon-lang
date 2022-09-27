@@ -22,7 +22,6 @@ contributions.
     -   [Optional tools](#optional-tools)
     -   [Manually building Clang and LLVM (not recommended)](#manually-building-clang-and-llvm-not-recommended)
 -   [Troubleshooting build issues](#troubleshooting-build-issues)
-    -   [How LLVM is found](#how-llvm-is-found)
     -   [Old LLVM versions](#old-llvm-versions)
     -   [Asking for help](#asking-for-help)
 -   [Troubleshooting debug issues](#troubleshooting-debug-issues)
@@ -32,6 +31,9 @@ contributions.
 ## Setup commands
 
 These commands should help set up a development environment on your machine.
+
+<!-- google-doc-style-ignore -->
+<!-- Need to retain "repo" in "gh repo clone". -->
 
 ### Debian or Ubuntu
 
@@ -55,8 +57,6 @@ pip3 install pre-commit
 # Set up git.
 # If you don't already have a fork:
 gh repo fork --clone carbon-language/carbon-lang
-# Otherwise:
-gh repo clone carbon-lang
 cd carbon-lang
 pre-commit install
 
@@ -78,6 +78,7 @@ bazel test //...:all
 
 # Install Homebrew tools.
 brew install \
+  bazelisk \
   gh \
   llvm \
   python@3.10
@@ -88,7 +89,7 @@ brew install \
 pip3 install pre-commit
 
 # Set up git.
-gh repository fork --clone carbon-language/carbon-lang
+gh repo fork --clone carbon-language/carbon-lang
 cd carbon-lang
 pre-commit install
 
@@ -104,6 +105,8 @@ bazel test //...:all
 > # For `llvm`:
 > export PATH="$(brew --prefix llvm)/bin:${PATH}"
 > ```
+
+<!-- google-doc-style-resume -->
 
 ## Tools
 
@@ -139,12 +142,6 @@ These tools are essential for work on Carbon.
 -   Libraries
     -   zlib1g-dev: Used as a library, but not installed on all Linux systems.
 
-Our recommended way of installing is:
-
-```bash
-brew install bazelisk
-```
-
 #### Running pre-commit
 
 [pre-commit](https://pre-commit.com) is typically set up using
@@ -158,6 +155,11 @@ brew install bazelisk
 
 You can also use `pre-commit run` to check pending changes without `git commit`,
 or `pre-commit run -a` to run on all files in the repository.
+
+> NOTE: Some developers prefer to run `pre-commit` on `git push` instead of
+> `git commit` because they want to commit files as originally authored instead
+> of with pre-commit modifications. To switch, run
+> `pre-commit uninstall && pre-commit install -t pre-push`.
 
 ### Optional tools
 
@@ -205,12 +207,6 @@ The essential CMake options to pass in order for this to work reliably include:
 ```
 
 ## Troubleshooting build issues
-
-### How LLVM is found
-
-The [clang detection](/bazel/cc_toolchains/clang_configuration.bzl) decides
-where to use LLVM from by first checking `$CC` then `which clang`. It will use
-other LLVM tools in the same directory of the `clang` that it finds.
 
 ### Old LLVM versions
 
