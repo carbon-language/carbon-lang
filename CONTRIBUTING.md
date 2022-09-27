@@ -84,8 +84,8 @@ eventually implemented. A good starting point is to read through the
 [evolution process](docs/project/evolution.md). We encourage discussing the idea
 early, before even writing a proposal, and the process explains how to do that.
 
-In contrast, [an unhealthy proposal](proposals/examples/bad_p0000.md) cannot
-be approved.
+In contrast, [an unhealthy proposal](proposals/examples/bad_p0000.md) cannot be
+approved.
 
 ### Help implement Carbon's design
 
