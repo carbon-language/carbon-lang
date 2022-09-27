@@ -1,4 +1,4 @@
-# Carbon Programlama Dili: <br/> C++ Programlama dilinin deneysel halefisi
+# Karbon Programlama Dili: <br/> C++ Programlama dilinin deneysel halefisi
 
 <!--
 LLVM Exception ile Apache Lisansı v2.0 kapsamında Carbon Programlama dilinin projesinin bir parçası. Lisans bilgileri için /LICENSE bölümüne bakın.
@@ -71,19 +71,14 @@ Karbon temelde c++ geliştirmek yerine onun yerini alabilecek bir **varis yakla�
 -   **C++ ile sorunsuz, çift yönlü birlikte çalışabilirlik**, öyle ki mevcut bir C++ kötüphanesinin 
     herhangi bir yerindeki bir kitaplık, geri kalanını taşımadan Karbon'u benimseyebilir.
 -   C++ geliştiricileri için makul düzeyde aşinalık sağlayan **yumuşak bir öğrenme eğrisi**.
--   **Comparable expressivity** and support for existing software's design and
-    architecture.
--   **Scalable migration**, with some level of source-to-source translation for
-    idiomatic C++ code.
+-   Mevcut yazılımın tasarımı ve mimarisi için **karşılaştırılabilir ifade ve destek**.
+-   Deyimsel C++ kodu için bir düzeyde kaynaktan kaynağa çeviri ile **ölçeklenebilir geçiş**.
 
-With this approach, we can build on top of C++'s existing ecosystem, and bring
-along existing investments, codebases, and developer populations. There are a
-few languages that have followed this model for other ecosystems, and Carbon
-aims to fill an analogous role for C++:
+Bu yaklaşımla, C++'ın mevcut ekosisteminin üzerine inşa edebilir ve mevcut yatırımları, kod tabanlarını ve geliştirici popülasyonlarını bir araya getirebiliriz. Diğer ekosistemler için bu modeli takip eden birkaç dil vardır ve Carbon, C++ için benzer bir rolü doldurmayı amaçlamaktadır:
 
 -   JavaScript → TypeScript
 -   Java → Kotlin
--   C++ → **_Carbon_**
+-   C++ → **_Karbon_**
 
 ## Dil hedefleri
 
