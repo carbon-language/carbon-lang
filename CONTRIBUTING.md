@@ -190,7 +190,7 @@ trying to write proposals, both types of contributor access will help.
 Please see our [contribution tool](/docs/project/contribution_tools.md)
 documentation for information on setting up a git client for Carbon development,
 as well as helpful tooling that will ease the contribution process. For example,
-pre-commit is used to simplify [code review](/docs/project/code_review.md).
+[pre-commit](https://pre-commit.com) is used to simplify [code review](/docs/project/code_review.md).
 
 ### Contribution guidelines and standards
 
