@@ -196,9 +196,10 @@ considering if they fit your workflow.
 
 ### Manually building Clang and LLVM (not recommended)
 
-We primarily test against <apt.llvm.org> and Homebrew installations. However,
-you can build and install LLVM yourself if you feel more comfortable with it.
-The essential CMake options to pass in order for this to work reliably include:
+We primarily test against [apt.llvm.org](https://apt.llvm.org) and Homebrew
+installations. However, you can build and install LLVM yourself if you feel more
+comfortable with it. The essential CMake options to pass in order for this to
+work reliably include:
 
 ```
 -DLLVM_ENABLE_PROJECTS=clang;clang-tools-extra;lld
