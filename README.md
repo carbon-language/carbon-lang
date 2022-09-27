@@ -82,7 +82,7 @@ Bu yaklaşımla, C++'ın mevcut ekosisteminin üzerine inşa edebilir ve mevcut 
 
 ## Dil hedefleri
 
-We are designing Carbon to support:
+Karbonu bunları destekleyecek şekilde tasarlıyoruz:
 
 -   Performance-critical software
 -   Software and language evolution
