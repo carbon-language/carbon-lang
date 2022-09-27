@@ -37,10 +37,10 @@ These commands should help set up a development environment on your machine.
 
 ```
 # Update apt.
-sudo apt-get update
+sudo apt update
 
-# Install apt tools.
-sudo apt-get install \
+# Install tools.
+sudo apt install \
   bazel \
   clang \
   gh \
