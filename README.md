@@ -65,14 +65,12 @@ Bu engeller Yazılımın deyimsel tasarımındaki değişikliklerden performans
 yüküne kadar değişir.
 
 Karbon temelde c++ geliştirmek yerine onun yerini alabilecek bir **varis yaklaşımıdır**.
- It is designed around interoperability with
-C++ as well as large-scale adoption and migration for existing C++ codebases and
-developers. A successor language for C++ requires:
+ Büyük ölçekli benimsemenin sayesinde büyük ölçekli C++ kod tabanlarının ve geliştiricilerin C++ den geçişi sırasında daha kolay şekilde adapte olmalarını sağlar. C++ dilinin varisi olmak için gereklilikler şunlardır:
 
--   **Performance matching C++**, an essential property for our developers.
--   **Seamless, bidirectional interoperability with C++**, such that a library
-    anywhere in an existing C++ stack can adopt Carbon without porting the rest.
--   **A gentle learning curve** with reasonable familiarity for C++ developers.
+-   Geliştiricilerimiz için önemli bir özellik olan **C++ ile performans eşleştirme**.
+-   **C++ ile sorunsuz, çift yönlü birlikte çalışabilirlik**, öyle ki mevcut bir C++ kötüphanesinin 
+    herhangi bir yerindeki bir kitaplık, geri kalanını taşımadan Karbon'u benimseyebilir.
+-   C++ geliştiricileri için makul düzeyde aşinalık sağlayan **yumuşak bir öğrenme eğrisi**.
 -   **Comparable expressivity** and support for existing software's design and
     architecture.
 -   **Scalable migration**, with some level of source-to-source translation for
