@@ -250,7 +250,7 @@ follow the Carbon documentation and coding styles.
 Changes to Carbon documentation follow the
 [Google developer documentation style guide](https://developers.google.com/style).
 
-Markdown files should additionally use Prettier for formatting, which we
+Markdown files should additionally use [Prettier](https://prettier.io) for formatting, which we
 automate with [pre-commit](/docs/project/contribution_tools.md#main-tools).
 
 Other style points to be aware of are:
