@@ -24,6 +24,9 @@ class SemanticsIR {
     return root_block_;
   }
 
+  // Prints the full IR.
+  auto Print(llvm::raw_ostream& out) const -> void;
+
   // Prints the node information.
   auto Print(llvm::raw_ostream& out, Semantics::NodeRef node_ref) const -> void;
 
