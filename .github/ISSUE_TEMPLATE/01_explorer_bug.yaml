@@ -6,7 +6,7 @@ name: Explorer bug
 description: >
   Report a bug with the explorer interpreter. This is what's provided at
   carbon.compiler-explorer.com.
-labels: explorer
+labels: [explorer]
 body:
   - type: markdown
     attributes:

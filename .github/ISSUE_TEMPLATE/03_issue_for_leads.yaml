@@ -6,7 +6,7 @@ name: Issue for leads
 description: >
   Ask the leads for feedback on an important issue, such as a language design
   choice.
-labels: issue for leads
+labels: [issue for leads]
 body:
   - type: markdown
     attributes:
