@@ -11,6 +11,4 @@
 
 package ExplorerTest api;
 
-fn Main() -> i32 {
-  return (1 + 2) + 4;
-}
+fn Main() -> i32 { return (1 + 2) + 4; }

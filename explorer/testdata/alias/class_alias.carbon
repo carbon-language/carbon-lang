@@ -21,7 +21,9 @@ impl i32 as Addable {
   fn Add[me: Self](k: i32) -> Self { return me + k; }
 }
 
-class Class { var n: i32; }
+class Class {
+  var n: i32;
+}
 class GenericClass(T:! Addable) {
   var m: T;
   fn Get[me: Self](n: i32) -> T { return me.m.Add(n); }

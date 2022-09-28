@@ -13,6 +13,4 @@ package ExplorerTest api;
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/alias/fail_self_alias.carbon:[[@LINE+1]]: 'a' is not usable until after it has been completely declared
 alias a = a;
 
-fn Main() -> i32 {
-  return 0;
-}
+fn Main() -> i32 { return 0; }

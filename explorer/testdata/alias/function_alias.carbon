@@ -19,6 +19,4 @@ fn GenericFunction[T:! Type](x: T) -> T { return x; }
 alias FunctionAlias = Function;
 alias GenericFunctionAlias = GenericFunction;
 
-fn Main() -> i32 {
-  return FunctionAlias(1, 2) + GenericFunctionAlias(4);
-}
+fn Main() -> i32 { return FunctionAlias(1, 2) + GenericFunctionAlias(4); }

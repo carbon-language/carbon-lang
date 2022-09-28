@@ -11,10 +11,7 @@
 package ExplorerTest api;
 
 class Point {
-
-  fn Origin() -> Point {
-    return {.x = 0, .y = 0};
-  }
+  fn Origin() -> Point { return {.x = 0, .y = 0}; }
 
   fn GetSetX[addr me: Point*](x: i32) -> i32 {
     var old: auto = (*me).x;

@@ -14,12 +14,10 @@ package ExplorerTest api;
 // Never actually called, so this only tests typechecking and semantic analysis.
 fn F(n: i32, p: i32*, q: i32***) -> i32* {
   var a: i32 = n * *p;
-  var b: i32 = a*n;
-  *p = b*(*p);
+  var b: i32 = a * n;
+  *p = b * (*p);
   **q = p;
   return **q;
 }
 
-fn Main() -> i32 {
-  return 0;
-}
+fn Main() -> i32 { return 0; }

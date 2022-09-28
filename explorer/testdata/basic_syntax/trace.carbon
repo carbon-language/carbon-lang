@@ -24,6 +24,4 @@
 
 package ExplorerTest api;
 
-fn Main() -> i32 {
-  return 0;
-}
+fn Main() -> i32 { return 0; }

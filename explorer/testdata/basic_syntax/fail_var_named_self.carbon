@@ -15,6 +15,6 @@ fn Main() -> i32 {
   // TODO: Current error message is unclear, better would be to say
   // something like: unexpected `Self`, expecting identifier
   // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_var_named_self.carbon:[[@LINE+1]]: syntax error, unexpected COLON, expecting SLASH or binary *
-  var Self : i32 = 0;
+  var Self: i32 = 0;
   return Self;
 }
