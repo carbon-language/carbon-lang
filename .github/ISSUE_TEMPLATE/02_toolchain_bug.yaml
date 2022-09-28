@@ -27,12 +27,12 @@ body:
         Please provide example code and errors; a shortlink to the execution on
         carbon.compiler-explorer.com can also help.
   - type: textarea
-    id: desc
+    id: expected
     attributes:
       label: >
         What did you expect to happen?
   - type: textarea
-    id: desc
+    id: actual
     attributes:
       label: >
         What actually happened?
