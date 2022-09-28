@@ -84,9 +84,9 @@ Bu yaklaşımla, C++'ın mevcut ekosisteminin üzerine inşa edebilir ve mevcut 
 
 Karbonu bunları destekleyecek şekilde tasarlıyoruz:
 
--   Performance-critical software
--   Software and language evolution
--   Code that is easy to read, understand, and write
+-   Performans açısından kritik yazılımlar
+-   Yazılım ve dil gelişimi
+-   Okunması, anlaşılması ve yazılması kolay kod
 -   Practical safety and testing mechanisms
 -   Fast and scalable development
 -   Modern OS platforms, hardware architectures, and environments
