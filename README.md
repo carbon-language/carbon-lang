@@ -87,24 +87,21 @@ Karbonu bunları destekleyecek şekilde tasarlıyoruz:
 -   Performans açısından kritik yazılımlar
 -   Yazılım ve dil gelişimi
 -   Okunması, anlaşılması ve yazılması kolay kod
--   Practical safety and testing mechanisms
--   Fast and scalable development
--   Modern OS platforms, hardware architectures, and environments
--   Interoperability with and migration from existing C++ code
+-   Pratik güvenlik ve test mekanizmaları
+-   Hızlı ve ölçeklenebilir geliştirme
+-   Modern işletim sistemi platformları, donanım mimarileri ve ortamları
+-   Mevcut C++ koduyla birlikte çalışabilirlik ve kolay şekilde geçiş
 
-While many languages share subsets of these goals, what distinguishes Carbon is
-their combination.
+Birçok dil bu hedeflerin alt kümelerini paylaşırken, Karbon'u farklı kılan şey,
+onların kombinasyonu.
 
-We also have explicit _non-goals_ for Carbon, notably including:
+Ayrıca, özellikle aşağıdakiler dahil olmak üzere Carbon için _açık olmayan hedeflerimiz_ var:
 
--   A stable
-    [application binary interface](https://en.wikipedia.org/wiki/Application_binary_interface)
-    (ABI) for the entire language and library
--   Perfect backwards or forwards compatibility
-
-Our detailed [goals](/docs/project/goals.md) document fleshes out these ideas
-and provides a deeper view into our goals for the Carbon project and language.
-
+-   Tüm dil ve kötüphane için karalı bir şekilde çalışan
+    [ikili uygulama arayüzü](https://en.wikipedia.org/wiki/Application_binary_interface)
+    (ABI)
+-   Geriye ve ileriye dönük mükemmel uyumluluk
+Bizim detaylı [hedeflerimiz](/docs/project/goals.md) belgesi bu fikirleri somutlaştırır ve karbon projesi ve dili için hedeflerimize daha derin bir bakış sağlar.
 ## Proje durumu
 
 Carbon Language is currently an experimental project. There is no working
