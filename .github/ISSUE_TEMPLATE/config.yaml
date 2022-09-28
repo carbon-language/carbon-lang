@@ -1,0 +1,12 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+blank_issues_enabled: true
+contact_links:
+  - name: I have a question about Carbon
+    url: https://github.com/carbon-language/carbon-lang/discussions/categories/getting-started
+    about: Ask questions about Carbon in GitHub Discussions.
+  - name: I want to join the Discord
+    url: https://discord.gg/ZjVdShJDAs
+    about: Discord is where a lot of design discussion occurs.
