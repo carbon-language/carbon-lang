@@ -2,9 +2,9 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-name: Explorer bug
+name: Carbon Explorer bug
 description: >
-  Report a bug with the explorer interpreter. This is what's provided at
+  Report a bug with the Carbon Explorer interpreter. This is what's provided at
   [Compiler Explorer](https://carbon.compiler-explorer.com).
 labels: [explorer]
 body:
