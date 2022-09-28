@@ -5,7 +5,7 @@
 name: Explorer bug
 description: >
   Report a bug with the explorer interpreter. This is what's provided at
-  carbon.compiler-explorer.com.
+  [Compiler Explorer](https://carbon.compiler-explorer.com).
 labels: [explorer]
 body:
   - type: markdown
@@ -26,7 +26,7 @@ body:
         What did you do, or what's a simple way to reproduce the bug?
       description: >
         Please provide example code and errors; a shortlink to the execution on
-        carbon.compiler-explorer.com can also help.
+        [Compiler Explorer](https://carbon.compiler-explorer.com) can also help.
   - type: textarea
     id: expected
     attributes:
