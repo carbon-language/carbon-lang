@@ -166,7 +166,7 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   if (dump_mode == DumpMode::SemanticsIR) {
     consumer.Flush();
     semantics_ir.Print(output_stream_);
-    // TODO:
+    // TODO: Return false when SemanticsIR has errors (not supported right now).
     return !tokenized_source.has_errors() && !parse_tree.has_errors();
   }
 
