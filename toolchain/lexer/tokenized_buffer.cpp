@@ -307,6 +307,15 @@ class TokenizedBuffer::Lexer {
     CloseInvalidOpenGroups(kind);
 
     const char* location = source_text.begin();
+
+    if (kind.IsOpeningSymbol()) {
+      // Close all open tokens that have nesting same as or deeper than the
+      // current token. This ensures that nested scopes that are left open are
+      // closed before we open new scopes on the same or shallower nesting
+      // level.
+      CloseInvalidOpenGroups(TokenKind::Error());
+    }
+
     Token token = buffer_.AddToken(
         {.kind = kind, .token_line = current_line_, .column = current_column_});
     current_column_ += kind.GetFixedSpelling().size();
@@ -327,7 +336,9 @@ class TokenizedBuffer::Lexer {
 
     // Check that there is a matching opening symbol before we consume this as
     // a closing symbol.
-    if (open_groups_.empty()) {
+    if (open_groups_.empty() ||
+        buffer_.GetTokenInfo(open_groups_.back()).kind.GetClosingSymbol() !=
+            kind) {
       closing_token_info.kind = TokenKind::Error();
       closing_token_info.error_length = kind.GetFixedSpelling().size();
 
@@ -396,10 +407,17 @@ class TokenizedBuffer::Lexer {
     return token;
   }
 
-  // Closes all open groups that cannot remain open across the symbol `K`.
-  // Users may pass `Error` to close all open groups.
+  // Closes all open groups that cannot remain open across the current token
+  // (whose TokenKind is \p kind).
+  //
+  // Users may pass `Error` to close all open groups whose nesting is deeper
+  // than the current line.
+  //
+  // Users may pass `EndOfFile` to close all open groups regardless of the
+  // nesting level.
   auto CloseInvalidOpenGroups(TokenKind kind) -> void {
-    if (!kind.IsClosingSymbol() && kind != TokenKind::Error()) {
+    if (!kind.IsClosingSymbol() && kind != TokenKind::Error() &&
+        kind != TokenKind::EndOfFile()) {
       return;
     }
 
@@ -410,28 +428,79 @@ class TokenizedBuffer::Lexer {
         return;
       }
 
-      open_groups_.pop_back();
-      CARBON_DIAGNOSTIC(
-          MismatchedClosing, Error,
-          "Closing symbol does not match most recent opening symbol.");
-      token_emitter_.Emit(opening_token, MismatchedClosing);
-
-      CARBON_CHECK(!buffer_.tokens().empty())
-          << "Must have a prior opening token!";
-      Token prev_token = buffer_.tokens().end()[-1];
-
-      // TODO: do a smarter backwards scan for where to put the closing
-      // token.
-      Token closing_token = buffer_.AddToken(
-          {.kind = opening_kind.GetClosingSymbol(),
-           .has_trailing_space = buffer_.HasTrailingWhitespace(prev_token),
-           .is_recovery = true,
-           .token_line = current_line_,
-           .column = current_column_});
       TokenInfo& opening_token_info = buffer_.GetTokenInfo(opening_token);
-      TokenInfo& closing_token_info = buffer_.GetTokenInfo(closing_token);
-      opening_token_info.closing_token = closing_token;
-      closing_token_info.opening_token = opening_token;
+      LineInfo& opening_token_line_info =
+          buffer_.GetLineInfo(opening_token_info.token_line);
+
+      auto is_current_line_shallower_than_opening_token = [&]() {
+        return opening_token_line_info.start != current_line_info_->start &&
+               opening_token_line_info.indent >= current_line_info_->indent;
+      };
+
+      auto is_closing_token_on_same_line_as_opening_token = [&]() {
+        return kind.IsClosingSymbol() &&
+               opening_token_line_info.start == current_line_info_->start;
+      };
+
+      if (kind == TokenKind::EndOfFile() ||
+          is_current_line_shallower_than_opening_token() ||
+          is_closing_token_on_same_line_as_opening_token()) {
+        // The top opening token either:
+        //
+        // 1. Has deeper nesting level than the current line. This probably
+        // means the the deeper nesting level which the token opens wasn't
+        // properly closed. Hence, we should add a recovery closing token.
+        //
+        // 2. Or on the same line as the current closing token.
+        //
+        // Examples:
+        // ```
+        //   {
+        // )
+        // ```
+        //
+        // ```
+        // {
+        // )
+        // ```
+        //
+        // ```
+        // {)
+        // ```
+        open_groups_.pop_back();
+        CARBON_DIAGNOSTIC(
+            MismatchedClosing, Error,
+            "Closing symbol does not match most recent opening symbol.");
+        token_emitter_.Emit(opening_token, MismatchedClosing);
+
+        CARBON_CHECK(!buffer_.tokens().empty())
+            << "Must have a prior opening token!";
+        Token prev_token = buffer_.tokens().end()[-1];
+
+        Token closing_token = buffer_.AddToken(
+            {.kind = opening_kind.GetClosingSymbol(),
+             .has_trailing_space = buffer_.HasTrailingWhitespace(prev_token),
+             .is_recovery = true,
+             .token_line = current_line_,
+             .column = current_column_});
+        TokenInfo& closing_token_info = buffer_.GetTokenInfo(closing_token);
+        opening_token_info.closing_token = closing_token;
+        closing_token_info.opening_token = opening_token;
+      } else {
+        // Example:
+        // ```
+        // {
+        //   )
+        // ```
+        //
+        // If the mismatched closing token has deeper nesting than the top
+        // opening token, then this maybe due to the opening token of the
+        // mismatched closing token being missing. In this case, we don't pop
+        // the top opening token since its closing token might still be ahead in
+        // the token buffer; if we pop the top opening token, then its future
+        // closing token will wrongly be marked as an Error token.
+        break;
+      }
     }
   }
 
@@ -576,7 +645,7 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
   // The end-of-file token is always considered to be whitespace.
   lexer.NoteWhitespace();
 
-  lexer.CloseInvalidOpenGroups(TokenKind::Error());
+  lexer.CloseInvalidOpenGroups(TokenKind::EndOfFile());
   lexer.AddEndOfFileToken();
 
   if (error_tracking_consumer.seen_error()) {

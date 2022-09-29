@@ -1189,5 +1189,364 @@ TEST_F(LexerTest, PrintToken) {
                     "has_trailing_space: true }"));
 }
 
+TEST_F(LexerTest, ClosingTokenRecovery_1) {
+  // ```
+  // [
+  // {
+  // }
+  // ```
+  auto buffer = Lex("[\n{\n}");
+  ASSERT_TRUE(buffer.has_errors());
+
+  std::string print_output;
+  llvm::raw_string_ostream print_stream(print_output);
+  buffer.Print(print_stream);
+  print_stream.flush();
+
+  EXPECT_THAT(Yaml::Value::FromText(print_output),
+              ElementsAre(Yaml::MappingValue{
+                  {"token", Yaml::MappingValue{{"index", "0"},
+                                               {"kind", "OpenSquareBracket"},
+                                               {"line", "1"},
+                                               {"column", "1"},
+                                               {"indent", "1"},
+                                               {"spelling", "["},
+                                               {"closing_token", "1"},
+                                               {"has_trailing_space", "true"}}},
+                  // A `]` recovery token is added since the following`{` opens
+                  // a new scope on the same nesting level as the opening `[`.
+                  {"token", Yaml::MappingValue{{"index", "1"},
+                                               {"kind", "CloseSquareBracket"},
+                                               {"line", "2"},
+                                               {"column", "1"},
+                                               {"indent", "1"},
+                                               {"spelling", "]"},
+                                               {"opening_token", "0"},
+                                               {"has_trailing_space", "true"},
+                                               {"recovery", "true"}}},
+                  {"token", Yaml::MappingValue{{"index", "2"},
+                                               {"kind", "OpenCurlyBrace"},
+                                               {"line", "2"},
+                                               {"column", "1"},
+                                               {"indent", "1"},
+                                               {"spelling", "{"},
+                                               {"closing_token", "3"},
+                                               {"has_trailing_space", "true"}}},
+                  {"token", Yaml::MappingValue{{"index", "3"},
+                                               {"kind", "CloseCurlyBrace"},
+                                               {"line", "3"},
+                                               {"column", "1"},
+                                               {"indent", "1"},
+                                               {"spelling", "}"},
+                                               {"opening_token", "2"},
+                                               {"has_trailing_space", "true"}}},
+                  {"token", Yaml::MappingValue{{"index", "4"},
+                                               {"kind", "EndOfFile"},
+                                               {"line", "3"},
+                                               {"column", "2"},
+                                               {"indent", "1"},
+                                               {"spelling", ""}}}}));
+}
+
+TEST_F(LexerTest, ClosingTokenRecovery_2) {
+  // ```
+  //   [
+  // {
+  // }
+  // ```
+  auto buffer = Lex("  [\n{\n}");
+  ASSERT_TRUE(buffer.has_errors());
+
+  std::string print_output;
+  llvm::raw_string_ostream print_stream(print_output);
+  buffer.Print(print_stream);
+  print_stream.flush();
+
+  EXPECT_THAT(
+      Yaml::Value::FromText(print_output),
+      ElementsAre(Yaml::MappingValue{
+          {"token", Yaml::MappingValue{{"index", "0"},
+                                       {"kind", "OpenSquareBracket"},
+                                       {"line", "1"},
+                                       {"column", "3"},
+                                       {"indent", "3"},
+                                       {"spelling", "["},
+                                       {"closing_token", "1"},
+                                       {"has_trailing_space", "true"}}},
+          // A `]` recovery token is added since the following`{` opens
+          // a new scope on a shallower nesting level as the opening `[`.
+          {"token", Yaml::MappingValue{{"index", "1"},
+                                       {"kind", "CloseSquareBracket"},
+                                       {"line", "2"},
+                                       {"column", "1"},
+                                       {"indent", "1"},
+                                       {"spelling", "]"},
+                                       {"opening_token", "0"},
+                                       {"has_trailing_space", "true"},
+                                       {"recovery", "true"}}},
+          {"token", Yaml::MappingValue{{"index", "2"},
+                                       {"kind", "OpenCurlyBrace"},
+                                       {"line", "2"},
+                                       {"column", "1"},
+                                       {"indent", "1"},
+                                       {"spelling", "{"},
+                                       {"closing_token", "3"},
+                                       {"has_trailing_space", "true"}}},
+          {"token", Yaml::MappingValue{{"index", "3"},
+                                       {"kind", "CloseCurlyBrace"},
+                                       {"line", "3"},
+                                       {"column", "1"},
+                                       {"indent", "1"},
+                                       {"spelling", "}"},
+                                       {"opening_token", "2"},
+                                       {"has_trailing_space", "true"}}},
+          {"token", Yaml::MappingValue{{"index", "4"},
+                                       {"kind", "EndOfFile"},
+                                       {"line", "3"},
+                                       {"column", "2"},
+                                       {"indent", "1"},
+                                       {"spelling", ""}}}}));
+}
+
+TEST_F(LexerTest, ClosingTokenRecovery_3) {
+  // ```
+  // [
+  //   {
+  //   }
+  // ```
+  auto buffer = Lex("[\n  {\n  }");
+  ASSERT_TRUE(buffer.has_errors());
+
+  std::string print_output;
+  llvm::raw_string_ostream print_stream(print_output);
+  buffer.Print(print_stream);
+  print_stream.flush();
+
+  EXPECT_THAT(
+      Yaml::Value::FromText(print_output),
+      ElementsAre(Yaml::MappingValue{Yaml::MappingValue{
+          {"token", Yaml::MappingValue{{"index", "0"},
+                                       {"kind", "OpenSquareBracket"},
+                                       {"line", "1"},
+                                       {"column", "1"},
+                                       {"indent", "1"},
+                                       {"spelling", "["},
+                                       {"closing_token", "3"},
+                                       {"has_trailing_space", "true"}}},
+          {"token", Yaml::MappingValue{{"index", "1"},
+                                       {"kind", "OpenCurlyBrace"},
+                                       {"line", "2"},
+                                       {"column", "3"},
+                                       {"indent", "3"},
+                                       {"spelling", "{"},
+                                       {"closing_token", "2"},
+                                       {"has_trailing_space", "true"}}},
+          {"token", Yaml::MappingValue{{"index", "2"},
+                                       {"kind", "CloseCurlyBrace"},
+                                       {"line", "3"},
+                                       {"column", "3"},
+                                       {"indent", "3"},
+                                       {"spelling", "}"},
+                                       {"opening_token", "1"},
+                                       {"has_trailing_space", "true"}}},
+          // A `]` recovery token is not added until here since the following`{`
+          // opens a new scope on a deeper nesting level as the opening `[`.
+          {"token", Yaml::MappingValue{{"index", "3"},
+                                       {"kind", "CloseSquareBracket"},
+                                       {"line", "3"},
+                                       {"column", "4"},
+                                       {"indent", "3"},
+                                       {"spelling", "]"},
+                                       {"opening_token", "0"},
+                                       {"has_trailing_space", "true"},
+                                       {"recovery", "true"}}},
+          {"token", Yaml::MappingValue{{"index", "4"},
+                                       {"kind", "EndOfFile"},
+                                       {"line", "3"},
+                                       {"column", "4"},
+                                       {"indent", "3"},
+                                       {"spelling", ""}}}}}));
+}
+
+TEST_F(LexerTest, ClosingTokenRecovery_4) {
+  // ```
+  // [
+  // ((()()))
+  // {
+  //   {
+  // {(}
+  // }
+  // ]
+  // ```
+  auto buffer = Lex("[\n((()()))\n{\n  {\n{(}\n}\n]");
+  ASSERT_TRUE(buffer.has_errors());
+
+  std::string print_output;
+  llvm::raw_string_ostream print_stream(print_output);
+  buffer.Print(print_stream);
+  print_stream.flush();
+
+  EXPECT_THAT(Yaml::Value::FromText(print_output),
+              ElementsAre(Yaml::MappingValue{Yaml::MappingValue{
+                  {"token", Yaml::MappingValue{{"index", "0"},
+                                               {"kind", "OpenSquareBracket"},
+                                               {"line", "1"},
+                                               {"column", "1"},
+                                               {"indent", "1"},
+                                               {"spelling", "["},
+                                               {"closing_token", "1"},
+                                               {"has_trailing_space", "true"}}},
+                  {"token", Yaml::MappingValue{{"index", "1"},
+                                               {"kind", "CloseSquareBracket"},
+                                               {"line", "2"},
+                                               {"column", "1"},
+                                               {"indent", "1"},
+                                               {"spelling", "]"},
+                                               {"opening_token", "0"},
+                                               {"has_trailing_space", "true"},
+                                               {"recovery", "true"}}},
+                  {"token", Yaml::MappingValue{{"index", "2"},
+                                               {"kind", "OpenParen"},
+                                               {"line", "2"},
+                                               {"column", "1"},
+                                               {"indent", "1"},
+                                               {"spelling", "("},
+                                               {"closing_token", "9"}}},
+                  {"token", Yaml::MappingValue{{"index", "3"},
+                                               {"kind", "OpenParen"},
+                                               {"line", "2"},
+                                               {"column", "2"},
+                                               {"indent", "1"},
+                                               {"spelling", "("},
+                                               {"closing_token", "8"}}},
+                  {"token", Yaml::MappingValue{{"index", "4"},
+                                               {"kind", "OpenParen"},
+                                               {"line", "2"},
+                                               {"column", "3"},
+                                               {"indent", "1"},
+                                               {"spelling", "("},
+                                               {"closing_token", "5"}}},
+                  {"token", Yaml::MappingValue{{"index", "5"},
+                                               {"kind", "CloseParen"},
+                                               {"line", "2"},
+                                               {"column", "4"},
+                                               {"indent", "1"},
+                                               {"spelling", ")"},
+                                               {"opening_token", "4"}}},
+                  {"token", Yaml::MappingValue{{"index", "6"},
+                                               {"kind", "OpenParen"},
+                                               {"line", "2"},
+                                               {"column", "5"},
+                                               {"indent", "1"},
+                                               {"spelling", "("},
+                                               {"closing_token", "7"}}},
+                  {"token", Yaml::MappingValue{{"index", "7"},
+                                               {"kind", "CloseParen"},
+                                               {"line", "2"},
+                                               {"column", "6"},
+                                               {"indent", "1"},
+                                               {"spelling", ")"},
+                                               {"opening_token", "6"}}},
+                  {"token", Yaml::MappingValue{{"index", "8"},
+                                               {"kind", "CloseParen"},
+                                               {"line", "2"},
+                                               {"column", "7"},
+                                               {"indent", "1"},
+                                               {"spelling", ")"},
+                                               {"opening_token", "3"}}},
+                  {"token", Yaml::MappingValue{{"index", "9"},
+                                               {"kind", "CloseParen"},
+                                               {"line", "2"},
+                                               {"column", "8"},
+                                               {"indent", "1"},
+                                               {"spelling", ")"},
+                                               {"opening_token", "2"},
+                                               {"has_trailing_space", "true"}}},
+                  {"token", Yaml::MappingValue{{"index", "10"},
+                                               {"kind", "OpenCurlyBrace"},
+                                               {"line", "3"},
+                                               {"column", "1"},
+                                               {"indent", "1"},
+                                               {"spelling", "{"},
+                                               {"closing_token", "13"},
+                                               {"has_trailing_space", "true"}}},
+                  {"token", Yaml::MappingValue{{"index", "11"},
+                                               {"kind", "OpenCurlyBrace"},
+                                               {"line", "4"},
+                                               {"column", "3"},
+                                               {"indent", "3"},
+                                               {"spelling", "{"},
+                                               {"closing_token", "12"},
+                                               {"has_trailing_space", "true"}}},
+                  {"token", Yaml::MappingValue{{"index", "12"},
+                                               {"kind", "CloseCurlyBrace"},
+                                               {"line", "5"},
+                                               {"column", "1"},
+                                               {"indent", "1"},
+                                               {"spelling", "}"},
+                                               {"opening_token", "11"},
+                                               {"has_trailing_space", "true"},
+                                               {"recovery", "true"}}},
+                  {"token", Yaml::MappingValue{{"index", "13"},
+                                               {"kind", "CloseCurlyBrace"},
+                                               {"line", "5"},
+                                               {"column", "1"},
+                                               {"indent", "1"},
+                                               {"spelling", "}"},
+                                               {"opening_token", "10"},
+                                               {"has_trailing_space", "true"},
+                                               {"recovery", "true"}}},
+                  {"token", Yaml::MappingValue{{"index", "14"},
+                                               {"kind", "OpenCurlyBrace"},
+                                               {"line", "5"},
+                                               {"column", "1"},
+                                               {"indent", "1"},
+                                               {"spelling", "{"},
+                                               {"closing_token", "17"}}},
+                  {"token", Yaml::MappingValue{{"index", "15"},
+                                               {"kind", "OpenParen"},
+                                               {"line", "5"},
+                                               {"column", "2"},
+                                               {"indent", "1"},
+                                               {"spelling", "("},
+                                               {"closing_token", "0"}}},
+                  {"token", Yaml::MappingValue{{"index", "16"},
+                                               {"kind", "CloseParen"},
+                                               {"line", "5"},
+                                               {"column", "3"},
+                                               {"indent", "1"},
+                                               {"spelling", ")"},
+                                               {"opening_token", "15"},
+                                               {"recovery", "true"}}},
+                  {"token", Yaml::MappingValue{{"index", "17"},
+                                               {"kind", "CloseCurlyBrace"},
+                                               {"line", "5"},
+                                               {"column", "3"},
+                                               {"indent", "1"},
+                                               {"spelling", "}"},
+                                               {"opening_token", "14"},
+                                               {"has_trailing_space", "true"}}},
+                  {"token", Yaml::MappingValue{{"index", "18"},
+                                               {"kind", "Error"},
+                                               {"line", "6"},
+                                               {"column", "1"},
+                                               {"indent", "1"},
+                                               {"spelling", "}"},
+                                               {"has_trailing_space", "true"}}},
+                  {"token", Yaml::MappingValue{{"index", "19"},
+                                               {"kind", "Error"},
+                                               {"line", "7"},
+                                               {"column", "1"},
+                                               {"indent", "1"},
+                                               {"spelling", "]"},
+                                               {"has_trailing_space", "true"}}},
+                  {"token", Yaml::MappingValue{{"index", "20"},
+                                               {"kind", "EndOfFile"},
+                                               {"line", "7"},
+                                               {"column", "2"},
+                                               {"indent", "1"},
+                                               {"spelling", ""}}}}}));
+}
+
 }  // namespace
 }  // namespace Carbon::Testing
