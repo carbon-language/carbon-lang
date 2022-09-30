@@ -637,18 +637,19 @@ are available for representing strings with `\`s and `"`s.
 
 ## Value categories and value phases
 
-Every value has a
+Every expression has a
 [value category](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>),
 similar to [C++](https://en.cppreference.com/w/cpp/language/value_category),
 that is either _l-value_ or _r-value_. Carbon will automatically convert an
 l-value to an r-value, but not in the other direction.
 
-L-values have storage and a stable address. They may be modified, assuming their
-type is not [`const`](#const).
+L-value expressions refer to values that have storage and a stable address. They
+may be modified, assuming their type is not [`const`](#const).
 
-R-values may not have dedicated storage. This means they cannot be modified and
-their address generally cannot be taken. R-values are broken down into three
-kinds, called _value phases_:
+R-value expressions evaluate to values that may not have dedicated storage. This
+means they cannot be modified and their address generally cannot be taken. The
+values of r-value expressions are broken down into three kinds, called _value
+phases_:
 
 -   A _constant_ has a value known at compile time, and that value is available
     during type checking, for example to use as the size of an array. These
