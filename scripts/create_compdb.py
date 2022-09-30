@@ -106,6 +106,8 @@ generated_file_labels = subprocess.run(
         (
             'filter(".*\\.(h|cpp|cc|c|cxx|def|inc)$",'
             'kind("generated file", deps(//...)))'
+            " union "
+            'kind("cc_proto_library", deps(//...))'
         ),
     ],
     check=True,
@@ -113,6 +115,8 @@ generated_file_labels = subprocess.run(
     stderr=subprocess.DEVNULL,
     universal_newlines=True,
 ).stdout.splitlines()
+for f in generated_file_labels:
+    print(f)
 print("Found %d generated files..." % (len(generated_file_labels),))
 
 # Directly build these labels so that indexing can find them. Allow this to
@@ -132,6 +136,7 @@ subprocess.run(
         "@llvm-project//llvm:LICENSE.TXT",
         "@com_google_absl//:LICENSE",
         "@com_google_googletest//:LICENSE",
+        "@com_googlesource_code_re2//:LICENSE",
         "@com_github_google_benchmark//:benchmark",
     ]
 )
