@@ -97,6 +97,7 @@ print(
 )
 
 # Now collect the generated file labels.
+# cc_proto_library generates files, but they aren't seen with "generated file".
 generated_file_labels = subprocess.run(
     [
         bazel,
