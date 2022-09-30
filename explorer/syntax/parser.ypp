@@ -180,7 +180,6 @@
 %type <std::vector<FieldInitializer>> struct_type_literal_contents
 %type <Nonnull<TupleLiteral*>> tuple
 %type <std::string> binding_lhs
-%type <std::optional<Nonnull<Pattern*>>> receiver
 %type <Nonnull<BindingPattern*>> variable_declaration
 %type <ParenContents<Expression>> paren_expression_base
 %type <ParenContents<Expression>> paren_expression_contents
@@ -1041,19 +1040,11 @@ impl_deduced_params:
 | FORALL LEFT_SQUARE_BRACKET deduced_param_list RIGHT_SQUARE_BRACKET
     { $$ = $3; }
 ;
-receiver:
-  // Empty
-    { $$ = std::nullopt; }
-| LEFT_CURLY_BRACE variable_declaration RIGHT_CURLY_BRACE
-    { $$ = $2; }
-| LEFT_CURLY_BRACE ADDR variable_declaration RIGHT_CURLY_BRACE
-    { $$ = arena->New<AddrPattern>(context.source_loc(), $3); }
-;
 function_declaration:
-  FN identifier deduced_params receiver maybe_empty_tuple_pattern return_term block
+  FN identifier deduced_params maybe_empty_tuple_pattern return_term block
     {
       ErrorOr<FunctionDeclaration*> fn = FunctionDeclaration::Create(
-          arena, context.source_loc(), $2, $3, $4, $5, $6, $7);
+          arena, context.source_loc(), $2, $3, $4, $5, $6);
       if (fn.ok()) {
         $$ = *fn;
       } else {
@@ -1061,10 +1052,10 @@ function_declaration:
         YYERROR;
       }
     }
-| FN identifier deduced_params receiver maybe_empty_tuple_pattern return_term SEMICOLON
+| FN identifier deduced_params maybe_empty_tuple_pattern return_term SEMICOLON
     {
       ErrorOr<FunctionDeclaration*> fn = FunctionDeclaration::Create(
-          arena, context.source_loc(), $2, $3, $4, $5, $6, std::nullopt);
+          arena, context.source_loc(), $2, $3, $4, $5, std::nullopt);
       if (fn.ok()) {
         $$ = *fn;
       } else {
