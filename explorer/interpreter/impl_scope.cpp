@@ -27,10 +27,20 @@ void ImplScope::Add(Nonnull<const Value*> iface,
                     Nonnull<Expression*> impl_expr,
                     const TypeChecker& type_checker) {
   if (auto* orig_constraint = dyn_cast<ConstraintType>(iface)) {
-    BindingMap map;
-    map[orig_constraint->self_binding()] = type;
-    const ConstraintType* constraint =
-        cast<ConstraintType>(type_checker.Substitute(map, orig_constraint));
+    // Constraints usually have an impl binding, but a constraint such as
+    // `Type where .Self == i32` does not.
+    // TODO: Should we have substituted .Self = type into iface before we got
+    // here, eg when initially setting the type of the binding? We do so for an
+    // impl.
+    std::optional<Nonnull<const Value*>> witness;
+    if (orig_constraint->self_binding()->impl_binding()) {
+      // TODO: convert impl_expr to a const Witness*.
+      //witness = impl_expr;
+    }
+    Bindings bindings;
+    bindings.Add(orig_constraint->self_binding(), type, witness);
+    const ConstraintType* constraint = cast<ConstraintType>(
+        type_checker.Substitute(bindings, orig_constraint));
     for (size_t i = 0; i != constraint->impl_constraints().size(); ++i) {
       ConstraintType::ImplConstraint impl = constraint->impl_constraints()[i];
       Add(impl.interface, deduced, impl.type, impl_bindings,
@@ -68,15 +78,29 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
   }
   if (const auto* constraint = dyn_cast<ConstraintType>(constraint_type)) {
     std::vector<Nonnull<Expression*>> witnesses;
-    BindingMap map;
-    map[constraint->self_binding()] = impl_type;
     for (auto impl : constraint->impl_constraints()) {
+      // Note that later impl constraints can refer to earlier impl constraints
+      // via impl bindings. For example, in
+      //   `C where .Self.AssocType is D`,
+      // ... the `.Self.AssocType is D` constraint refers to the `.Self is C`
+      // constraint when naming `AssocType`. So incrementally build up a
+      // partial constraint witness as we go.
+      std::optional<Nonnull<const Value*>> witness;
+      if (constraint->self_binding().impl_binding()) {
+        // Note, this is a partial impl binding covering only the impl
+        // constraints that we've already seen. Earlier impl constraints should
+        // not be able to refer to impl bindings for later impl constraints.
+        witness = type_checker.MakeConstraintWitness(*constraint, witnesses,
+                                                     source_loc);
+      }
+      Bindings bindings;
+      bindings.Add(constraint->self_binding(), impl_type, witness);
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<Expression*> result,
-          ResolveInterface(
-              cast<InterfaceType>(type_checker.Substitute(map, impl.interface)),
-              type_checker.Substitute(map, impl.type), source_loc,
-              type_checker));
+          ResolveInterface(cast<InterfaceType>(type_checker.Substitute(
+                               bindings, impl.interface)),
+                           type_checker.Substitute(bindings, impl.type),
+                           source_loc, type_checker));
       witnesses.push_back(result);
     }
     // TODO: Check satisfaction of same-type constraints.

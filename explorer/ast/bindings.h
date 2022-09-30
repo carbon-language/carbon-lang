@@ -38,6 +38,10 @@ class Bindings {
   // arguments but not the corresponding witnesses.
   Bindings(BindingMap args, NoWitnessesTag) : args_(args), witnesses_() {}
 
+  // Add a value, and perhaps a witness, for a generic binding.
+  void Add(Nonnull<const GenericBinding*> binding, Nonnull<const Value*> value,
+           std::optional<Nonnull<const Value*>> witness);
+
   // Argument values corresponding to generic bindings.
   auto args() const -> const BindingMap& { return args_; }
 

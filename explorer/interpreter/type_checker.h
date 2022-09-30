@@ -56,11 +56,10 @@ class TypeChecker {
       const ImplScope& impl_scope) const -> ErrorOr<Success>;
 
   // Construct a type that is the same as `type` except that occurrences
-  // of type variables (aka. `GenericBinding`) are replaced by their
-  // corresponding type in `dict`.
-  auto Substitute(const std::map<Nonnull<const GenericBinding*>,
-                                 Nonnull<const Value*>>& dict,
-                  Nonnull<const Value*> type) const -> Nonnull<const Value*>;
+  // of type variables (aka. `GenericBinding` and references to `ImplBinding`)
+  // are replaced by their corresponding type or witness in `dict`.
+  auto Substitute(const Bindings& dict, Nonnull<const Value*> type) const
+      -> Nonnull<const Value*>;
 
   // If `impl` can be an implementation of interface `iface` for the
   // given `type`, then return an expression that will produce the witness
