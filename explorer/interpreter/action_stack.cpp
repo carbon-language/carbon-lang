@@ -132,6 +132,7 @@ auto ActionStack::FinishAction() -> ErrorOr<Success> {
   switch (act->kind()) {
     case Action::Kind::CleanUpAction:
     case Action::Kind::ExpressionAction:
+    case Action::Kind::WitnessAction:
     case Action::Kind::LValAction:
     case Action::Kind::PatternAction:
       CARBON_FATAL() << "This kind of action must produce a result: " << *act;
@@ -162,6 +163,7 @@ auto ActionStack::FinishAction(Nonnull<const Value*> result)
     case Action::Kind::ScopeAction:
       CARBON_FATAL() << "ScopeAction at top of stack";
     case Action::Kind::ExpressionAction:
+    case Action::Kind::WitnessAction:
     case Action::Kind::LValAction:
     case Action::Kind::PatternAction:
       PopScopes(scopes_to_destroy);
@@ -192,8 +194,6 @@ auto ActionStack::Spawn(std::unique_ptr<Action> child, RuntimeScope scope)
 auto ActionStack::ReplaceWith(std::unique_ptr<Action> replacement)
     -> ErrorOr<Success> {
   std::unique_ptr<Action> old = todo_.Pop();
-  CARBON_CHECK(replacement->kind() == old->kind())
-      << "ReplaceWith can't change action kind";
   todo_.Push(std::move(replacement));
   return Success();
 }
