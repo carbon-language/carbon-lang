@@ -31,7 +31,7 @@ class BinaryOperator {
         out << "+";
         break;
     }
-    out << ", " << lhs_id_ << ", %" << rhs_id_ << ")";
+    out << ", " << lhs_id_ << ", " << rhs_id_ << ")";
   }
 
   auto node() const -> ParseTree::Node { return node_; }

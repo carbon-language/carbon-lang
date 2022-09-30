@@ -67,38 +67,3 @@ cc_library(
         "@llvm-project//llvm:Support",
     ],
 )
-
-cc_library(
-    name = "semantics_ir_test_helpers",
-    testonly = 1,
-    srcs = ["semantics_ir_for_test.cpp"],
-    hdrs = [
-        "semantics_ir_for_test.h",
-        "semantics_ir_test_helpers.h",
-    ],
-    deps = [
-        ":nodes",
-        ":semantics_ir",
-        "//common:check",
-        "//common:ostream",
-        "@com_google_googletest//:gtest",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_test(
-    name = "semantics_ir_factory_test",
-    size = "small",
-    srcs = ["semantics_ir_factory_test.cpp"],
-    deps = [
-        ":semantics_ir_factory",
-        ":semantics_ir_test_helpers",
-        "//common:gtest_main",
-        "//toolchain/diagnostics:mocks",
-        "//toolchain/lexer:tokenized_buffer",
-        "//toolchain/parser:parse_tree",
-        "//toolchain/source:source_buffer",
-        "@com_google_googletest//:gtest",
-        "@llvm-project//llvm:Support",
-    ],
-)

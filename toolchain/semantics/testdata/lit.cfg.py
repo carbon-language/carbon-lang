@@ -30,6 +30,14 @@ config.substitutions.append(("%{not}", fullpath("llvm-project/llvm/not")))
 config.substitutions.append(
     (
         "%{FileCheck}",
-        fullpath("llvm-project/llvm/FileCheck --dump-input-filter=all"),
+        " ".join(
+            [
+                fullpath("llvm-project/llvm/FileCheck"),
+                "--allow-unused-prefixes=false",
+                "--dump-input-filter=all",
+                "--match-full-lines",
+                "--strict-whitespace",
+            ]
+        ),
     )
 )
