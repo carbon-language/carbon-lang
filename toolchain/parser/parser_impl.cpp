@@ -1191,7 +1191,9 @@ auto ParseTree::Parser::ParseForStatement() -> llvm::Optional<Node> {
     auto header_start = GetSubtreeStartPosition();
 
     if (!open_paren) {
-      CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "Expected `(` after `{0}`.",
+      CARBON_DIAGNOSTIC(ExpectedParenAfter, Error,
+                        "Expected `(` after `{0}`. Recovering from missing `(` "
+                        "not implemented yet!",
                         TokenKind);
       emitter_.Emit(*position_, ExpectedParenAfter, TokenKind::For());
       // TODO A proper recovery strategy is needed here. For now, I assume that
@@ -1199,7 +1201,7 @@ auto ParseTree::Parser::ParseForStatement() -> llvm::Optional<Node> {
       // closing one).
       // This is temporary until we come to a conclusion regarding the recovery
       // tokens strategy.
-      CARBON_CHECK(false) << "Recovering from missing `(` not implemented yet!";
+      return llvm::None;
     }
 
     bool iter_var_parsed = false;
@@ -1223,7 +1225,7 @@ auto ParseTree::Parser::ParseForStatement() -> llvm::Optional<Node> {
 
     // A separator is either an `in` or a `:`. Even though `:` is incorrect,
     // accidentally typing it by a C++ programmer might be a common mistake that
-    // warrant special handling.
+    // warrants special handling.
     bool separator_parsed = false;
     bool in_parsed = false;
 
