@@ -17,6 +17,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Problem](#problem)
 -   [Background](#background)
 -   [Proposal](#proposal)
+    -   [Examples](#examples)
 -   [Details](#details)
     -   [Statically sized arrays](#statically-sized-arrays)
     -   [Pack expansions](#pack-expansions)
@@ -32,6 +33,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Alternatives considered](#alternatives-considered)
 
 <!-- tocstop -->
+
+**NOTE TO READER:** This is a very rough draft, because I'm still trying to pin
+down the ideas it's describing. As a result, it's not well-structured for
+reading, and it's probably not even internally consistent. I have inserted some
+notes like this one to try to provide some guidance.
 
 ## TODO: Initial proposal setup
 
@@ -90,7 +96,116 @@ P1858R2 has been especially influential for this proposal.
 
 ## Proposal
 
-FIXME
+**NOTE TO READER:** This section is the oldest part of this document. I've made
+some cursory attempts to bring it up to date, but if there's a conflict between
+this and the Details section, the version in Details is probably closer to my
+current thinking.
+
+`[T; N]` is the type of a statically-sized array of N objects of type `T`. Other
+syntaxes like `[N; T]` would also work; it just needs to be concise, and feel
+core-language enough that we can use it in patterns. `[T;]` is a shorthand for
+`[T; _ :! BigInt]`.
+
+The pack operators `...,`, `...and`, and `...or` are prefix unary operators with
+the same precedence as the corresponding non-pack operators. They are single
+tokens, and may not contain internal whitespace. A _pack expansion_ consists of
+a pack operator together with its operand, which is called the _pack template_.
+A pack template must contain at least one usage of the prefix unary operator
+`[:]`, whose operand, called a _pack argument_, must be a tuple or
+statically-sized array. All arguments of a given pack expansion must have the
+same arity. A pack expansion whose arguments have arity N is rewritten to N
+copies of the pack template, where in the Kth copy, each use of the `[:]`
+operator evaluates to the Kth element of its operand. Each copy is followed by a
+separator, and the entire sequence is followed by a terminator, as determined by
+the pack operator:
+
+| Pack operator | Separator | Terminator |
+| ------------- | --------- | ---------- |
+| `...,`        | `,`       | (none)     |
+| `...and`      | `and`     | `true`     |
+| `...or`       | `or`      | `false`    |
+
+As a consequence, a `...,` pack expansion can only occur where a tuple literal
+element is expected, or directly inside parentheses, and in the latter case, the
+parentheses form a tuple, even if the pack argument has only one element.
+
+A pack expansion block has the form `...{` _statements_ `}`, and is rewritten to
+N copies of the pack template `{` statements `}`, with pack arguments
+substituted as above. `...{` is a single token, and may not contain internal
+whitespace.
+
+Pack expansions currently cannot be nested.
+
+The spelling of `[:]` is taken from the C++ proposal
+[P1858R2](http://wg21.link/P1858R2), but I'm very open to alternatives.
+Precedence of `[:]` is TBD, so I've erred on the side of over-parenthesizing.
+
+### Examples
+
+```carbon
+// Computes the sum of its arguments, which are i64s
+fn SumInts(..., [:]params: [i64;]) -> i64 {
+  var sum: i64 = 0;
+  for (var i: i64 in params) {
+    sum += i;
+  }
+  return sum;
+}
+```
+
+```carbon
+// Concatenates its arguments, which are all convertible to String
+fn StrCat[T:! [ConvertibleToString;]](..., [:]params: T) -> String {
+  var len: i64 = 0;
+  ...{ len += ([:]params).Length(); }
+  var result: String = "";
+  result.Reserve(len);
+  ...{ result.Append(([:]params).ToString()); }
+  return result;
+}
+```
+
+```carbon
+// Returns the minimum of its arguments, which must all have the same type T
+fn Min[template N:! BigInt where N > 0, T:! Comparable & Value]
+    (..., [:]params: [T; N]) -> T {
+  // Safe since params non-empty
+  var result: T = params[0];
+  for (var x: T in params.Slice(1..)) {
+    if (x < result) {
+      result = x;
+    }
+  }
+  return result;
+}
+```
+
+```carbon
+// Invokes f, with the tuple `args` as its arguments.
+fn Apply[T:! [Type;], F:! CallableWith(..., [:]T)](f: F, args: (..., [:]T)) -> auto {
+  return f(..., [:]args);
+}
+```
+
+```carbon
+fn Zip[ElementTypes:! [Type;]]
+      (..., vectors: Vector([:]ElementTypes))
+      -> Vector((..., [:]ElementTypes)) {
+  var iters: auto = (..., vectors.Begin());
+  var result: Vector((..., [:]ElementTypes));
+  while (...and [:]iters != vectors.End()) {
+    result.push_back((..., *[:]iters));
+    ...{ ([:]iters)++; }
+  }
+  return result;
+}
+```
+
+```carbon
+// Toy example of mixing packs and values in a single parameter list.
+// Takes an i64, any number of f64s, and then another i64.
+fn MiddleVariadic(first: i64, ..., [:]middles: [f64;], last: i64);
+```
 
 ## Details
 
@@ -100,8 +215,9 @@ FIXME throughout the following, clarify what parts apply to patterns.
 
 `[T; N]` is the type of a statically-sized array of `N` objects of type `T`, and
 `[T;]` is a pattern that matches the type `[T; N]` for any `N`. In other words,
-it's a shorthand for `[T; _:! BigInt]`. FIXME Or maybe we should treat it as an
-interface/constraint? See
+it's a shorthand for `[T; _:! BigInt]`.
+
+FIXME Or maybe we should treat it as an interface/constraint? See
 https://discord.com/channels/655572317891461132/969001583088123905/973681495891910716
 Or maybe it's `[T; template _:! BigInt]` so that we can validly refactor it to
 `[template N:! BigInt]([T; N])`? `auto` seems like it might be ambivalent in a
@@ -121,6 +237,16 @@ expansion_. A pack expansion cannot occur within another pack expansion,
 although we may relax this restriction in the future.
 
 ### Packs
+
+**NOTE TO READER:** I was initially trying to specify variadics in the same kind
+of way we specify other features, in terms of recursive expression evaluation,
+statement execution, etc. I subsequently shifted to specifying the runtime
+semantics of variadic expression and statement semantics in terms of textual
+rewriting, while still trying to specify more traditional semantics for
+typechecking (because that happens before the rewriting would take place) and
+pattern matching (because rewriting just doesn't work there). This section
+mostly reflects that earlier approach, and I'm not sure how much of it is still
+relevant.
 
 FIXME reassess if we still need pack values, once we have description of pattern
 matching. Discussion of pack-type variables may be another reason we need it.
@@ -212,6 +338,10 @@ scrutinee value `s`, the expression `(..., [:]x)` should be equal to `s`.
 
 These are run-time semantics, so the scrutinee expression is fully evaluated
 (doesn't contain pack expansions).
+
+**NOTE TO READER:** This section is specifying run-time semantics, but I'm
+paying special attention to the conditions for pattern irrefutability because
+that's going to be an important property when typechecking variadic patterns.
 
 _Tuple pattern:_
 
@@ -444,7 +574,11 @@ rejected), so we will focus on the semantics of phase 3 when the pattern type is
 a variadic type. Variadic types are themselves patterns, so we will break this
 down into cases based on the possible forms of a pattern.
 
-NOTE TO SELF Test cases: A:
+**NOTE TO READER:** You should probably ignore these examples. I used them as
+test cases when working out the typechecking rules, but they're not integrated
+into the rest of the text.
+
+A:
 
 ```
 // OK
