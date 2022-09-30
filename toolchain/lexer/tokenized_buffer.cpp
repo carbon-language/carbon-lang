@@ -428,9 +428,8 @@ class TokenizedBuffer::Lexer {
         return;
       }
 
-      TokenInfo& opening_token_info = buffer_.GetTokenInfo(opening_token);
       LineInfo& opening_token_line_info =
-          buffer_.GetLineInfo(opening_token_info.token_line);
+          buffer_.GetLineInfo(buffer_.GetTokenInfo(opening_token).token_line);
 
       auto is_current_line_shallower_than_opening_token = [&]() {
         return opening_token_line_info.start != current_line_info_->start &&
@@ -483,6 +482,8 @@ class TokenizedBuffer::Lexer {
              .is_recovery = true,
              .token_line = current_line_,
              .column = current_column_});
+
+        TokenInfo& opening_token_info = buffer_.GetTokenInfo(opening_token);
         TokenInfo& closing_token_info = buffer_.GetTokenInfo(closing_token);
         opening_token_info.closing_token = closing_token;
         closing_token_info.opening_token = opening_token;
