@@ -21,6 +21,7 @@
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "explorer/common/nonnull.h"
+#include "explorer/common/source_location.h"
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
 #include "explorer/interpreter/pattern_analysis.h"
@@ -384,7 +385,7 @@ static auto GetClassHierarchy(const NominalClassType& class_type)
   return all_classes;
 }
 
-// Returns all class members from class and its parent classes.
+// Returns all class members per class, from ancestor to child
 static auto GetAllClassMembers(const ClassDeclaration& class_decl)
     -> std::vector<llvm::ArrayRef<Nonnull<Declaration*>>> {
   const auto* curr_class_decl = &class_decl;
@@ -396,11 +397,12 @@ static auto GetAllClassMembers(const ClassDeclaration& class_decl)
     curr_class_decl = &type_of_class->class_type().declaration();
     all_members.push_back(curr_class_decl->members());
   }
+  std::reverse(all_members.begin(), all_members.end());
   return all_members;
 }
 
-// Executes the given visitor on all members of the given class, and its
-// parent classes. Stops when the visitor returns an error and return it,
+// Executes the given visitor on all members of the given class, from ancestor
+// to child class. Stops when the visitor returns an error and return it,
 // otherwise returns Success.
 static auto VisitAllClassMembers(
     const ClassDeclaration& class_decl,
@@ -3522,11 +3524,13 @@ auto TypeChecker::TypeCheckClassDeclaration(
     CARBON_RETURN_IF_ERROR(TypeCheckDeclaration(m, class_scope, class_decl));
     CARBON_RETURN_IF_ERROR(CollectMember(class_decl, m));
   }
-  std::unordered_set<std::string_view> member_names;
+  std::unordered_map<std::string_view, SourceLocation> member_names;
   const auto check_duplicate_members =
       [&member_names](Nonnull<Declaration*> m) -> ErrorOr<Success> {
     if (const auto name = GetName(*m); name.has_value()) {
-      if (auto [_, inserted] = member_names.insert(name.value()); !inserted) {
+      if (auto [_, inserted] = member_names.insert(
+              std::make_pair(name.value(), m->source_loc()));
+          !inserted) {
         return CompilationError(m->source_loc())
                << "A member named `" << name.value()
                << "` already exists in this class or its parents";
