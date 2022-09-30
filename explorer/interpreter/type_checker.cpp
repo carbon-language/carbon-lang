@@ -2674,11 +2674,11 @@ auto TypeChecker::CreateImplBindingWitness(
 
 void TypeChecker::BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
                                      ImplScope& impl_scope) {
-  CARBON_CHECK(impl_binding->type_var()->symbolic_identity().has_value());
+  CARBON_CHECK(impl_binding->type_var()->symbolic_identity().has_value() &&
+               impl_binding->symbolic_identity().has_value());
   impl_scope.Add(impl_binding->interface(),
                  *impl_binding->type_var()->symbolic_identity(),
-                 /*TODO: impl_binding->symbolic_identity()*/
-                 CreateImplBindingWitness(impl_binding), *this);
+                 cast<Witness>(*impl_binding->symbolic_identity()), *this);
 }
 
 auto TypeChecker::TypeCheckTypeExp(Nonnull<Expression*> type_expression,
