@@ -14,23 +14,26 @@ namespace Carbon {
 // non-recoverable errors with user input.
 //
 // For example:
-//   return ProgramError(line_num) << "Line is bad!";
-//   return ProgramError() << "Application is bad!";
+//   return CompilationError(line_num) << "Line is bad!";
 //
-// Where possible, try to identify the error as a compilation or runtime error.
-// Use CHECK/FATAL for internal errors. The generic program error option is
-// provided as a fallback for cases that don't fit those classifications.
+// These should only be used to report errors in the user's Carbon code.
+// Use CHECK/FATAL for errors that indicate bugs in the Explorer.
 
+// Reports a compile-time error in the user's Carbon code.
 inline auto CompilationError(SourceLocation loc) -> ErrorBuilder {
   return ErrorBuilder("COMPILATION ERROR", loc.ToString());
 }
 
-inline auto ProgramError(SourceLocation loc) -> ErrorBuilder {
-  return ErrorBuilder("PROGRAM ERROR", loc.ToString());
-}
-
+// Reports a run-time error in the user's Carbon code.
 inline auto RuntimeError(SourceLocation loc) -> ErrorBuilder {
   return ErrorBuilder("RUNTIME ERROR", loc.ToString());
+}
+
+// Reports an error in the user's Carbon code that we aren't able to
+// classify as compile-time or run-time. Prefer to use CompilationError or
+// RuntimeError instead, if possible.
+inline auto ProgramError(SourceLocation loc) -> ErrorBuilder {
+  return ErrorBuilder("PROGRAM ERROR", loc.ToString());
 }
 
 }  // namespace Carbon
