@@ -115,8 +115,6 @@ generated_file_labels = subprocess.run(
     stderr=subprocess.DEVNULL,
     universal_newlines=True,
 ).stdout.splitlines()
-for f in generated_file_labels:
-    print(f)
 print("Found %d generated files..." % (len(generated_file_labels),))
 
 # Directly build these labels so that indexing can find them. Allow this to
