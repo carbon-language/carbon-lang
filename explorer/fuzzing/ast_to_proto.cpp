@@ -566,6 +566,35 @@ static auto DeclarationToProto(const Declaration& declaration)
     -> Fuzzing::Declaration {
   Fuzzing::Declaration declaration_proto;
   switch (declaration.kind()) {
+    case DeclarationKind::DestructorDeclaration: {
+      const auto& function = cast<DestructorDeclaration>(declaration);
+      auto* function_proto = declaration_proto.mutable_destructor();
+      if (function.is_method()) {
+        switch (function.me_pattern().kind()) {
+          case PatternKind::AddrPattern:
+            *function_proto->mutable_me_pattern() =
+                PatternToProto(cast<AddrPattern>(function.me_pattern()));
+            break;
+          case PatternKind::BindingPattern:
+            *function_proto->mutable_me_pattern() =
+                PatternToProto(cast<BindingPattern>(function.me_pattern()));
+            break;
+          default:
+            // Parser shouldn't allow me_pattern to be anything other than
+            // AddrPattern or BindingPattern
+            CARBON_FATAL() << "me_pattern in method declaration can be either "
+                              "AddrPattern or BindingPattern. Actual pattern: "
+                           << function.me_pattern();
+            break;
+        }
+      }
+      if (function.body().has_value()) {
+        *function_proto->mutable_body() =
+            BlockStatementToProto(**function.body());
+      }
+      break;
+    }
+
     case DeclarationKind::FunctionDeclaration: {
       const auto& function = cast<FunctionDeclaration>(declaration);
       auto* function_proto = declaration_proto.mutable_function();

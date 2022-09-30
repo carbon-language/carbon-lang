@@ -291,6 +291,13 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::BoolValue:
       out << (cast<BoolValue>(*this).value() ? "true" : "false");
       break;
+    case Value::Kind::DestructorValue: {
+      const DestructorValue& destructor = cast<DestructorValue>(*this);
+      out << "destructor [ ";
+      out << destructor.declaration().me_pattern();
+      out << " ]";
+      break;
+    }
     case Value::Kind::FunctionValue: {
       const FunctionValue& fun = cast<FunctionValue>(*this);
       out << "fun<" << fun.declaration().name() << ">";
@@ -736,6 +743,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     }
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
+    case Value::Kind::DestructorValue:
     case Value::Kind::FunctionValue:
     case Value::Kind::BoundMethodValue:
     case Value::Kind::StructValue:
@@ -789,6 +797,8 @@ auto ValueStructurallyEqual(
       return body1.has_value() == body2.has_value() &&
              (!body1.has_value() || *body1 == *body2);
     }
+    case Value::Kind::DestructorValue:
+      return false;
     case Value::Kind::BoundMethodValue: {
       const auto& m1 = cast<BoundMethodValue>(*v1);
       const auto& m2 = cast<BoundMethodValue>(*v2);
@@ -986,7 +996,7 @@ auto NominalClassType::FindFunction(std::string_view name) const
         break;
       }
       case DeclarationKind::FunctionDeclaration: {
-        const auto& fun = cast<FunctionDeclaration>(*member);
+        const auto& fun = cast<CallableDeclaration>(*member);
         if (fun.name() == name) {
           return &cast<FunctionValue>(**fun.constant_value());
         }
@@ -1014,7 +1024,7 @@ auto MixinPseudoType::FindFunction(const std::string_view& name) const
         break;
       }
       case DeclarationKind::FunctionDeclaration: {
-        const auto& fun = cast<FunctionDeclaration>(*member);
+        const auto& fun = cast<CallableDeclaration>(*member);
         if (fun.name() == name) {
           return &cast<FunctionValue>(**fun.constant_value());
         }

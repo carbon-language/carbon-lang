@@ -2,16 +2,28 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
+// RUN: %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
+// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
+// CHECK: DESTRUCTOR A 3
+// CHECK: result: 1
 
 package ExplorerTest api;
 
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/impl_as.carbon:[[@LINE+1]]: expected constraint after `as`, found value of type i32
-external impl i32 as i32 {}
+class A{
+    destructor[me: Self]{
+        Print("DESTRUCTOR A {0}",me.n);
+        if(me.n == 3){
+            return;
+        }
+        Print("DESTRUCTOR A: This message should not printed");
+    }
+    var n: i32;
+}
 
 fn Main() -> i32 {
+  var a: A = {.n = 3};
+  return 1;
 }

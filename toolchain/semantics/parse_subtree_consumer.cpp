@@ -5,6 +5,10 @@
 #include "toolchain/semantics/parse_subtree_consumer.h"
 
 #include "common/check.h"
+#include "llvm/ADT/None.h"
+#include "llvm/ADT/Optional.h"
+#include "toolchain/parser/parse_node_kind.h"
+#include "toolchain/parser/parse_tree.h"
 
 namespace Carbon {
 

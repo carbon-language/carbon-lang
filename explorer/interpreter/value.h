@@ -39,6 +39,7 @@ class Value {
   enum class Kind {
     IntValue,
     FunctionValue,
+    DestructorValue,
     BoundMethodValue,
     PointerValue,
     LValue,
@@ -184,6 +185,24 @@ class FunctionValue : public Value {
  private:
   Nonnull<const FunctionDeclaration*> declaration_;
   Nonnull<const Bindings*> bindings_ = Bindings::None();
+};
+
+// A destructor value.
+class DestructorValue : public Value {
+ public:
+  explicit DestructorValue(Nonnull<const DestructorDeclaration*> declaration)
+      : Value(Kind::DestructorValue), declaration_(declaration) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::DestructorValue;
+  }
+
+  auto declaration() const -> const DestructorDeclaration& {
+    return *declaration_;
+  }
+
+ private:
+  Nonnull<const DestructorDeclaration*> declaration_;
 };
 
 // A bound method value. It includes the receiver object.

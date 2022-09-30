@@ -4,6 +4,8 @@
 
 #include "explorer/interpreter/interpreter.h"
 
+#include <llvm/Support/raw_ostream.h>
+
 #include <iterator>
 #include <map>
 #include <optional>
@@ -83,6 +85,8 @@ class Interpreter {
   auto StepStmt() -> ErrorOr<Success>;
   // State transition for declarations.
   auto StepDeclaration() -> ErrorOr<Success>;
+  // State transition for object destruction.
+  auto StepCleanUp() -> ErrorOr<Success>;
 
   auto CreateStruct(const std::vector<FieldInitializer>& fields,
                     const std::vector<Nonnull<const Value*>>& values)
@@ -141,6 +145,9 @@ class Interpreter {
   auto CallFunction(const CallExpression& call, Nonnull<const Value*> fun,
                     Nonnull<const Value*> arg, ImplWitnessMap&& witnesses)
       -> ErrorOr<Success>;
+
+  auto CallDestructor(Nonnull<const DestructorDeclaration*> fun,
+                      Nonnull<const Value*> receiver) -> ErrorOr<Success>;
 
   void PrintState(llvm::raw_ostream& out);
 
@@ -615,6 +622,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
   switch (value->kind()) {
     case Value::Kind::IntValue:
     case Value::Kind::FunctionValue:
+    case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LValue:
@@ -737,6 +745,26 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
       return Convert(value, destination_type, source_loc);
     }
   }
+}
+
+auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
+                                 Nonnull<const Value*> receiver)
+    -> ErrorOr<Success> {
+  const DestructorDeclaration& method = *fun;
+  CARBON_CHECK(method.is_method());
+  RuntimeScope method_scope(&heap_);
+  BindingMap generic_args;
+  CARBON_CHECK(PatternMatch(&method.me_pattern().value(), receiver,
+                            fun->source_loc(), &method_scope, generic_args,
+                            trace_stream_, this->arena_));
+
+  CARBON_CHECK(method.body().has_value())
+      << "Calling a method that's missing a body";
+
+  auto act = std::make_unique<StatementAction>(*method.body());
+  method_scope.TransitState();
+  return todo_.Spawn(std::unique_ptr<Action>(std::move(act)),
+                     std::move(method_scope));
 }
 
 auto Interpreter::CallFunction(const CallExpression& call,
@@ -1756,7 +1784,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         CARBON_ASSIGN_OR_RETURN(
             value, heap_.Read(lvalue->address(), ret_var.source_loc()));
       }
-      const FunctionDeclaration& function = cast<Return>(stmt).function();
+      const CallableDeclaration& function = cast<Return>(stmt).function();
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> return_value,
           Convert(value, &function.return_term().static_type(),
@@ -1772,7 +1800,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
         // -> { {v :: C', E', F'} :: S, H}
-        const FunctionDeclaration& function = cast<Return>(stmt).function();
+        const CallableDeclaration& function = cast<Return>(stmt).function();
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> return_value,
             Convert(act.results()[0], &function.return_term().static_type(),
@@ -1841,6 +1869,7 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
         return todo_.FinishAction();
       }
     }
+    case DeclarationKind::DestructorDeclaration:
     case DeclarationKind::FunctionDeclaration:
     case DeclarationKind::ClassDeclaration:
     case DeclarationKind::MixinDeclaration:
@@ -1854,6 +1883,51 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
       // These declarations have no run-time effects.
       return todo_.FinishAction();
   }
+}
+
+auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
+  Action& act = todo_.CurrentAction();
+  CleanupAction& cleanup = cast<CleanupAction>(act);
+  if (act.pos() < cleanup.locals_count()) {
+    auto lvalue = act.scope()->locals()[cleanup.locals_count() - act.pos() - 1];
+    SourceLocation source_loc("destructor", 1);
+    auto value = heap_.Read(lvalue->address(), source_loc);
+    if (value.ok()) {
+      if (act.scope()->DestructionState() < RuntimeScope::State::CleanUpped) {
+        if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
+          const auto& class_type = cast<NominalClassType>(class_obj->type());
+          const auto& class_dec = class_type.declaration();
+          if (class_dec.destructor().has_value()) {
+            return CallDestructor(*class_dec.destructor(), class_obj);
+          }
+        }
+      } else {
+        if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
+          const auto& class_type = cast<NominalClassType>(class_obj->type());
+          const auto& class_dec = class_type.declaration();
+          const auto& class_members = class_dec.members();
+          for (const auto& member : class_members) {
+            if (const auto* var = dyn_cast<VariableDeclaration>(member)) {
+              const auto& type = var->static_type();
+              if (const auto* c_type = dyn_cast<NominalClassType>(&type)) {
+                auto& c_dec = c_type->declaration();
+                if (c_dec.destructor().has_value()) {
+                  Address object = lvalue->address();
+                  Address mem = object.SubobjectAddress(Member(var));
+                  auto v = heap_.Read(mem, source_loc);
+                  act.scope()->TransitState();
+                  return CallDestructor(*c_dec.destructor(), *v);
+                }
+              }
+            }
+          }
+        }
+        act.scope()->TransitState();
+      }
+    }
+  }
+  todo_.Pop();
+  return Success();
 }
 
 // State transition.
@@ -1874,6 +1948,9 @@ auto Interpreter::Step() -> ErrorOr<Success> {
       break;
     case Action::Kind::DeclarationAction:
       CARBON_RETURN_IF_ERROR(StepDeclaration());
+      break;
+    case Action::Kind::CleanUpAction:
+      CARBON_RETURN_IF_ERROR(StepCleanUp());
       break;
     case Action::Kind::ScopeAction:
       CARBON_FATAL() << "ScopeAction escaped ActionStack";
