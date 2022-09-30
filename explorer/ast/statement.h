@@ -22,7 +22,7 @@
 
 namespace Carbon {
 
-class FunctionDeclaration;
+class CallableDeclaration;
 
 class Statement : public AstNode {
  public:
@@ -203,11 +203,11 @@ class Return : public Statement {
   // Note that this function does not represent an edge in the tree
   // structure of the AST: the return value is not a child of this node,
   // but an ancestor.
-  auto function() const -> const FunctionDeclaration& { return **function_; }
-  auto function() -> FunctionDeclaration& { return **function_; }
+  auto function() const -> const CallableDeclaration& { return **function_; }
+  auto function() -> CallableDeclaration& { return **function_; }
 
   // Can only be called once, by ResolveControlFlow.
-  void set_function(Nonnull<FunctionDeclaration*> function) {
+  void set_function(Nonnull<CallableDeclaration*> function) {
     CARBON_CHECK(!function_.has_value());
     function_ = function;
   }
@@ -217,7 +217,7 @@ class Return : public Statement {
       : Statement(node_kind, source_loc) {}
 
  private:
-  std::optional<Nonnull<FunctionDeclaration*>> function_;
+  std::optional<Nonnull<CallableDeclaration*>> function_;
 };
 
 class ReturnVar : public Return {

@@ -55,6 +55,7 @@ CONTINUATION         "__continuation"
 CONTINUATION_TYPE    "__Continuation"
 CONTINUE             "continue"
 DEFAULT              "default"
+DESTRUCTOR           "destructor"
 DOUBLE_ARROW         "=>"
 ELSE                 "else"
 EQUAL                "="
@@ -160,6 +161,7 @@ operand_start         [(A-Za-z0-9_\"]
 {CONTINUATION}        { return CARBON_SIMPLE_TOKEN(CONTINUATION);        }
 {CONTINUE}            { return CARBON_SIMPLE_TOKEN(CONTINUE);            }
 {DEFAULT}             { return CARBON_SIMPLE_TOKEN(DEFAULT);             }
+{DESTRUCTOR}          { return CARBON_SIMPLE_TOKEN(DESTRUCTOR);          }
 {DOUBLE_ARROW}        { return CARBON_SIMPLE_TOKEN(DOUBLE_ARROW);        }
 {ELSE}                { return CARBON_SIMPLE_TOKEN(ELSE);                }
 {EQUAL_EQUAL}         { return CARBON_SIMPLE_TOKEN(EQUAL_EQUAL);         }

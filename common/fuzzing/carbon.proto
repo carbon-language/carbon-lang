@@ -340,6 +340,11 @@ message FunctionDeclaration {
   optional BlockStatement body = 6;
 }
 
+message DestructorDeclaration {
+  optional Pattern me_pattern = 1;
+  optional BlockStatement body = 2;
+}
+
 message ClassDeclaration {
   optional string name = 1;
   repeated Declaration members = 2;
@@ -417,6 +422,7 @@ message Declaration {
     LetDeclaration let = 8;
     MixinDeclaration mixin = 9;
     MixDeclaration mix = 10;
+    DestructorDeclaration destructor = 11;
   }
 }
 

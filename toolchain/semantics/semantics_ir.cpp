@@ -10,8 +10,15 @@
 
 namespace Carbon {
 
-void SemanticsIR::Print(llvm::raw_ostream& out,
-                        Semantics::NodeRef node_ref) const {
+auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
+  for (const auto& node_ref : root_block()) {
+    Print(out, node_ref);
+    out << "\n";
+  }
+}
+
+auto SemanticsIR::Print(llvm::raw_ostream& out,
+                        Semantics::NodeRef node_ref) const -> void {
   switch (node_ref.kind()) {
     case Semantics::NodeKind::BinaryOperator:
       nodes_.Get<Semantics::BinaryOperator>(node_ref).Print(out);

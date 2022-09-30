@@ -677,6 +677,27 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
       out << "var x: i32;";
       break;
 
+    case Fuzzing::Declaration::kDestructor: {
+      const auto& function = declaration.destructor();
+      out << "destructor";
+      llvm::ListSeparator sep;
+      out << "[";
+      if (function.has_me_pattern()) {
+        // This is a class method.
+        out << sep;
+        PatternToCarbon(function.me_pattern(), out);
+      }
+      out << "]";
+
+      // Body is optional.
+      if (function.has_body()) {
+        out << "\n";
+        BlockStatementToCarbon(function.body(), out);
+      } else {
+        out << ";";
+      }
+      break;
+    }
     case Fuzzing::Declaration::kFunction: {
       const auto& function = declaration.function();
       out << "fn ";

@@ -2558,16 +2558,20 @@ being passed as a separate explicit argument.
 
 ### Checked and template parameters
 
-The `:!` indicates that `T` is a _checked_ parameter passed at compile time.
+The `:!` indicates that the `T` parameter is generic, and therefore bound at
+compile time. Generic parameters may either be _checked_ or _template_, and
+default to checked.
+
 "Checked" here means that the body of `Min` is type checked when the function is
 defined, independent of the specific type values `T` is instantiated with, and
 name lookup is delegated to the constraint on `T` (`Ordered` in this case). This
 type checking is equivalent to saying the function would pass type checking
-given any type `T` that implements the `Ordered` interface. Then calls to `Min`
-only need to check that the deduced type value of `T` implements `Ordered`.
+given any type `T` that implements the `Ordered` interface. Subsequent calls to
+`Min` only need to check that the deduced type value of `T` implements
+`Ordered`.
 
-The parameter could alternatively be declared to be a _template_ parameter by
-prefixing with the `template` keyword, as in `template T:! Type`.
+The parameter could alternatively be declared to be a _template_ generic
+parameter by prefixing with the `template` keyword, as in `template T:! Type`.
 
 ```carbon
 fn Convert[template T:! Type](source: T, template U:! Type) -> U {
@@ -2579,6 +2583,15 @@ fn Foo(i: i32) -> f32 {
   // Instantiates with the `T` implicit argument set to `i32` and the `U`
   // explicit argument set to `f32`, then calls with the runtime value `i`.
   return Convert(i, f32);
+}
+```
+
+A template parameter can still use a constraint. The `Min` example could have
+been declared as:
+
+```carbon
+fn Min[template T:! Ordered](x: T, y: T) -> T {
+  return if x <= y then x else y;
 }
 ```
 

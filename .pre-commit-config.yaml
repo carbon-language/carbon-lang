@@ -177,9 +177,10 @@ repos:
         exclude: |
           (?x)^(
               .bazelversion|
+              .github/pull_request_template.md|
               compile_flags.txt|
               third_party/.*|
-              bazel/llvm-patches/.*\.patch|
+              bazel/llvm_patches/.*\.patch|
               .*\.def|
               .*\.svg|
               .*/fuzzer_corpus/.*|

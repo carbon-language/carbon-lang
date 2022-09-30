@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{carbon} dump-tokens --print-errors=streamed %s 2>&1 | \
+// RUN: %{not} %{carbon} --print-errors=streamed dump tokens %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
 
 fn run(String program) {

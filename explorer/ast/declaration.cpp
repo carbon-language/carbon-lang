@@ -38,7 +38,9 @@ void Declaration::Print(llvm::raw_ostream& out) const {
     case DeclarationKind::FunctionDeclaration:
       cast<FunctionDeclaration>(*this).PrintDepth(-1, out);
       break;
-
+    case DeclarationKind::DestructorDeclaration:
+      cast<DestructorDeclaration>(*this).PrintDepth(-1, out);
+      break;
     case DeclarationKind::ClassDeclaration: {
       const auto& class_decl = cast<ClassDeclaration>(*this);
       PrintID(out);
@@ -131,7 +133,9 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
     case DeclarationKind::FunctionDeclaration:
       out << "fn " << cast<FunctionDeclaration>(*this).name();
       break;
-
+    case DeclarationKind::DestructorDeclaration:
+      out << cast<DestructorDeclaration>(*this).name();
+      break;
     case DeclarationKind::ClassDeclaration: {
       const auto& class_decl = cast<ClassDeclaration>(*this);
       out << "class " << class_decl.name();
@@ -185,6 +189,8 @@ auto GetName(const Declaration& declaration)
   switch (declaration.kind()) {
     case DeclarationKind::FunctionDeclaration:
       return cast<FunctionDeclaration>(declaration).name();
+    case DeclarationKind::DestructorDeclaration:
+      return cast<DestructorDeclaration>(declaration).name();
     case DeclarationKind::ClassDeclaration:
       return cast<ClassDeclaration>(declaration).name();
     case DeclarationKind::MixinDeclaration: {
@@ -231,17 +237,13 @@ void ReturnTerm::Print(llvm::raw_ostream& out) const {
   }
 }
 
-auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
-                                 SourceLocation source_loc, std::string name,
-                                 std::vector<Nonnull<AstNode*>> deduced_params,
-                                 std::optional<Nonnull<Pattern*>> me_pattern,
-                                 Nonnull<TuplePattern*> param_pattern,
-                                 ReturnTerm return_term,
-                                 std::optional<Nonnull<Block*>> body)
-    -> ErrorOr<Nonnull<FunctionDeclaration*>> {
+// Look for the `me` parameter in the `deduced_parameters`
+// and put it in the `me_pattern`.
+static auto MoveMeParameterToPattern(
+    SourceLocation source_loc, std::optional<Nonnull<Pattern*>>& me_pattern,
+    const std::vector<Nonnull<AstNode*>>& deduced_params)
+    -> ErrorOr<std::vector<Nonnull<GenericBinding*>>> {
   std::vector<Nonnull<GenericBinding*>> resolved_params;
-  // Look for the `me` parameter in the `deduced_parameters`
-  // and put it in the `me_pattern`.
   for (Nonnull<AstNode*> param : deduced_params) {
     switch (param->kind()) {
       case AstNodeKind::GenericBinding:
@@ -271,12 +273,43 @@ auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
                << "illegal AST node in implicit parameter list";
     }
   }
+  return resolved_params;
+}
+
+auto DestructorDeclaration::CreateDestructor(
+    Nonnull<Arena*> arena, SourceLocation source_loc,
+    std::vector<Nonnull<AstNode*>> deduced_params,
+    Nonnull<TuplePattern*> param_pattern, ReturnTerm return_term,
+    std::optional<Nonnull<Block*>> body)
+    -> ErrorOr<Nonnull<DestructorDeclaration*>> {
+  std::vector<Nonnull<GenericBinding*>> resolved_params;
+  std::optional<Nonnull<Pattern*>> me_pattern;
+  CARBON_ASSIGN_OR_RETURN(
+      resolved_params,
+      MoveMeParameterToPattern(source_loc, me_pattern, deduced_params));
+  return arena->New<DestructorDeclaration>(
+      source_loc, std::move(resolved_params), me_pattern, param_pattern,
+      return_term, body);
+}
+
+auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
+                                 SourceLocation source_loc, std::string name,
+                                 std::vector<Nonnull<AstNode*>> deduced_params,
+                                 std::optional<Nonnull<Pattern*>> me_pattern,
+                                 Nonnull<TuplePattern*> param_pattern,
+                                 ReturnTerm return_term,
+                                 std::optional<Nonnull<Block*>> body)
+    -> ErrorOr<Nonnull<FunctionDeclaration*>> {
+  std::vector<Nonnull<GenericBinding*>> resolved_params;
+  CARBON_ASSIGN_OR_RETURN(
+      resolved_params,
+      MoveMeParameterToPattern(source_loc, me_pattern, deduced_params));
   return arena->New<FunctionDeclaration>(source_loc, name,
                                          std::move(resolved_params), me_pattern,
                                          param_pattern, return_term, body);
 }
 
-void FunctionDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
+void CallableDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
   out << "fn " << name_ << " ";
   if (!deduced_parameters_.empty()) {
     out << "[";
