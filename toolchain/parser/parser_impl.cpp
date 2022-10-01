@@ -1196,7 +1196,7 @@ auto ParseTree::Parser::ParseForStatement() -> llvm::Optional<Node> {
                         "not implemented yet!",
                         TokenKind);
       emitter_.Emit(*position_, ExpectedParenAfter, TokenKind::For());
-      // TODO A proper recovery strategy is needed here. For now, I assume that
+      // TODO: A proper recovery strategy is needed here. For now, I assume that
       // all brackets are properly balanced (i.e. each open bracket has a
       // closing one).
       // This is temporary until we come to a conclusion regarding the recovery
