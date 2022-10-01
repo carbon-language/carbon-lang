@@ -126,24 +126,45 @@ void ActionStack::InitializeFragment(ContinuationValue::StackFragment& fragment,
   fragment.StoreReversed(std::move(reversed_todo));
 }
 
-auto ActionStack::FinishAction() -> ErrorOr<Success> {
-  std::stack<std::unique_ptr<Action>> scopes_to_destroy;
-  std::unique_ptr<Action> act = todo_.Pop();
-  switch (act->kind()) {
-    case Action::Kind::CleanUpAction:
+namespace {
+enum class FinishActionKind {
+  // Action should finish without producing a value.
+  NoValue,
+  // Action should finish by producing a value.
+  Value,
+  // Action needs custom handling. Shouldn't call FinishAction at all.
+  NoFinish,
+};
+}
+
+static auto FinishActionKindFor(Action::Kind kind) -> FinishActionKind {
+  switch (kind) {
     case Action::Kind::ExpressionAction:
     case Action::Kind::WitnessAction:
     case Action::Kind::LValAction:
     case Action::Kind::PatternAction:
-      CARBON_FATAL() << "This kind of action must produce a result: " << *act;
-    case Action::Kind::ScopeAction:
-      CARBON_FATAL() << "ScopeAction at top of stack";
+      return FinishActionKind::Value;
     case Action::Kind::StatementAction:
     case Action::Kind::DeclarationAction:
-    case Action::Kind::RecursiveAction: {
+    case Action::Kind::RecursiveAction:
+      return FinishActionKind::NoValue;
+    case Action::Kind::ScopeAction:
+    case Action::Kind::CleanUpAction:
+      return FinishActionKind::NoFinish;
+  }
+}
+
+auto ActionStack::FinishAction() -> ErrorOr<Success> {
+  std::stack<std::unique_ptr<Action>> scopes_to_destroy;
+  std::unique_ptr<Action> act = todo_.Pop();
+  switch (FinishActionKindFor(act->kind())) {
+    case FinishActionKind::Value:
+      CARBON_FATAL() << "This kind of action must produce a result: " << *act;
+    case FinishActionKind::NoFinish:
+      CARBON_FATAL() << "Should not call FinishAction for: " << *act;
+    case FinishActionKind::NoValue:
       PopScopes(scopes_to_destroy);
       break;
-    }
   }
   PushCleanUpAction(std::move(act));
   PushCleanUpActions(std::move(scopes_to_destroy));
@@ -154,18 +175,12 @@ auto ActionStack::FinishAction(Nonnull<const Value*> result)
     -> ErrorOr<Success> {
   std::stack<std::unique_ptr<Action>> scopes_to_destroy;
   std::unique_ptr<Action> act = todo_.Pop();
-  switch (act->kind()) {
-    case Action::Kind::CleanUpAction:
-    case Action::Kind::StatementAction:
-    case Action::Kind::DeclarationAction:
-    case Action::Kind::RecursiveAction:
-      CARBON_FATAL() << "This kind of Action cannot produce results: " << *act;
-    case Action::Kind::ScopeAction:
-      CARBON_FATAL() << "ScopeAction at top of stack";
-    case Action::Kind::ExpressionAction:
-    case Action::Kind::WitnessAction:
-    case Action::Kind::LValAction:
-    case Action::Kind::PatternAction:
+  switch (FinishActionKindFor(act->kind())) {
+    case FinishActionKind::NoValue:
+      CARBON_FATAL() << "This kind of action cannot produce results: " << *act;
+    case FinishActionKind::NoFinish:
+      CARBON_FATAL() << "Should not call FinishAction for: " << *act;
+    case FinishActionKind::Value:
       PopScopes(scopes_to_destroy);
       SetResult(result);
       break;
@@ -194,6 +209,10 @@ auto ActionStack::Spawn(std::unique_ptr<Action> child, RuntimeScope scope)
 auto ActionStack::ReplaceWith(std::unique_ptr<Action> replacement)
     -> ErrorOr<Success> {
   std::unique_ptr<Action> old = todo_.Pop();
+  CARBON_CHECK(FinishActionKindFor(old->kind()) ==
+               FinishActionKindFor(replacement->kind()))
+      << "Can't replace action " << *old << " with action " << *replacement
+      << " that has a different kind of result";
   todo_.Push(std::move(replacement));
   return Success();
 }
