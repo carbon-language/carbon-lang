@@ -70,6 +70,10 @@ bazel-execroot/external/com_google_googletest
 -iquote
 bazel-bin/external/com_google_googletest
 -iquote
+bazel-execroot/external/com_googlesource_code_re2
+-iquote
+bazel-bin/external/com_googlesource_code_re2
+-iquote
 bazel-execroot/external/bazel_tools
 -iquote
 bazel-bin/external/bazel_tools
