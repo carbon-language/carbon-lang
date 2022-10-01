@@ -103,10 +103,10 @@ class Interpreter {
                Nonnull<const Value*> destination_type,
                SourceLocation source_loc) -> ErrorOr<Nonnull<const Value*>>;
 
-  // Evaluate an expression immediately, recursively.
+  // Evaluate an expression immediately, recursively, and return its result.
   //
   // TODO: Stop using this.
-  auto EvalExpRecursively(Nonnull<const Expression*> exp)
+  auto EvalRecursively(std::unique_ptr<Action> action)
       -> ErrorOr<Nonnull<const Value*>>;
 
   // Evaluate an associated constant by evaluating its witness and looking
@@ -133,6 +133,8 @@ class Interpreter {
   //     __Fn (Point(T)) -> Point(U)
   // becomes
   //     __Fn (Point(i32)) -> Point(bool)
+  //
+  // TODO: This should be an Action.
   auto InstantiateType(Nonnull<const Value*> type, SourceLocation source_loc)
       -> ErrorOr<Nonnull<const Value*>>;
 
@@ -141,6 +143,11 @@ class Interpreter {
   auto InstantiateBindings(Nonnull<const Bindings*> bindings,
                            SourceLocation source_loc)
       -> ErrorOr<Nonnull<const Bindings*>>;
+
+  // Instantiate a witness by replacing all type variables and impl binding
+  // references that occur within it by the current values of those variables.
+  auto InstantiateWitness(Nonnull<const Witness*> witness)
+      -> ErrorOr<Nonnull<const Witness*>>;
 
   // Call the function `fun` with the given `arg` and the `witnesses`
   // for the function's impl bindings.
@@ -492,14 +499,14 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
   }
 }
 
-auto Interpreter::EvalExpRecursively(Nonnull<const Expression*> exp)
+auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
     -> ErrorOr<Nonnull<const Value*>> {
   if (trace_stream_) {
-    **trace_stream_ << "--- recursive eval of " << *exp << "\n";
+    **trace_stream_ << "--- recursive eval\n";
     PrintState(**trace_stream_);
   }
   todo_.BeginRecursiveAction();
-  CARBON_RETURN_IF_ERROR(todo_.Spawn(std::make_unique<ExpressionAction>(exp)));
+  CARBON_RETURN_IF_ERROR(todo_.Spawn(std::move(action)));
   // Note that the only `RecursiveAction` we can encounter here is our own --
   // if a nested action begins a recursive action, it will run until that
   // action is finished and popped off the queue before returning to us.
@@ -522,11 +529,8 @@ auto Interpreter::EvalAssociatedConstant(
     Nonnull<const AssociatedConstant*> assoc, SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
   // Find the witness.
-  Nonnull<const Value*> witness = &assoc->witness();
-  if (auto* sym = dyn_cast<SymbolicWitness>(witness)) {
-    CARBON_ASSIGN_OR_RETURN(witness,
-                            EvalExpRecursively(&sym->impl_expression()));
-  }
+  CARBON_ASSIGN_OR_RETURN(Nonnull<const Witness*> witness,
+                          InstantiateWitness(&assoc->witness()));
   if (!isa<ImplWitness>(witness)) {
     CARBON_CHECK(phase() == Phase::CompileTime)
         << "symbolic witnesses should only be formed at compile time";
@@ -605,16 +609,22 @@ auto Interpreter::InstantiateBindings(Nonnull<const Bindings*> bindings,
 
   ImplWitnessMap witnesses = bindings->witnesses();
   for (auto& [bind, witness] : witnesses) {
-    if (auto* sym = dyn_cast<SymbolicWitness>(witness)) {
-      CARBON_ASSIGN_OR_RETURN(witness,
-                              EvalExpRecursively(&sym->impl_expression()));
-    }
+    CARBON_ASSIGN_OR_RETURN(witness,
+                            InstantiateWitness(cast<Witness>(witness)));
   }
 
   if (args == bindings->args() && witnesses == bindings->witnesses()) {
     return bindings;
   }
   return arena_->New<Bindings>(std::move(args), std::move(witnesses));
+}
+
+auto Interpreter::InstantiateWitness(Nonnull<const Witness*> witness)
+    -> ErrorOr<Nonnull<const Witness*>> {
+  CARBON_ASSIGN_OR_RETURN(
+      Nonnull<const Value*> value,
+      EvalRecursively(std::make_unique<WitnessAction>(witness)));
+  return cast<Witness>(value);
 }
 
 auto Interpreter::Convert(Nonnull<const Value*> value,
@@ -643,6 +653,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
     case Value::Kind::ImplWitness:
+    case Value::Kind::BindingWitness:
     case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::ChoiceType:
@@ -901,7 +912,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         return todo_.Spawn(
             std::make_unique<WitnessAction>(inst_impl.generic_impl()));
       }
-      if (act.pos() == 1 && isa<SymbolicWitness>(act.results()[0])) {
+      if (act.pos() == 1 && !isa<ImplWitness>(act.results()[0])) {
         return todo_.FinishAction(arena_->New<SymbolicWitness>(&exp));
       }
       if (act.pos() - 1 < int(inst_impl.impls().size())) {
@@ -931,7 +942,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         return todo_.Spawn(std::make_unique<ExpressionAction>(
             &cast<IndexExpression>(exp).object()));
       } else if (act.pos() == 1) {
-        if (isa<SymbolicWitness>(act.results()[0])) {
+        if (!isa<TupleValue>(act.results()[0])) {
           return todo_.FinishAction(arena_->New<SymbolicWitness>(&exp));
         }
         return todo_.Spawn(std::make_unique<ExpressionAction>(
@@ -1450,6 +1461,20 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
     case Value::Kind::SymbolicWitness:
       return todo_.ReplaceWith(std::make_unique<ExpressionAction>(
           &cast<SymbolicWitness>(witness)->impl_expression()));
+
+    case Value::Kind::BindingWitness: {
+      const ImplBinding* binding = cast<BindingWitness>(witness)->binding();
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> value,
+          todo_.ValueOfNode(binding, binding->type_var()->source_loc()));
+      if (const auto* lvalue = dyn_cast<LValue>(value)) {
+        // TODO: Why do we store values for impl bindings on the heap?
+        CARBON_ASSIGN_OR_RETURN(
+            value,
+            heap_.Read(lvalue->address(), binding->type_var()->source_loc()));
+      }
+      return todo_.FinishAction(value);
+    }
 
     case Value::Kind::ImplWitness:
       return todo_.FinishAction(witness);

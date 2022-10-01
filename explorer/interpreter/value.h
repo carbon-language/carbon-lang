@@ -50,6 +50,7 @@ class Value {
     TupleValue,
     UninitializedValue,
     ImplWitness,
+    BindingWitness,
     SymbolicWitness,
     IntType,
     BoolType,
@@ -831,6 +832,7 @@ class Witness : public Value {
  public:
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ImplWitness ||
+           value->kind() == Kind::BindingWitness ||
            value->kind() == Kind::SymbolicWitness;
   }
 };
@@ -867,6 +869,23 @@ class ImplWitness : public Witness {
  private:
   Nonnull<const ImplDeclaration*> declaration_;
   Nonnull<const Bindings*> bindings_ = Bindings::None();
+};
+
+// The witness table for an impl binding.
+class BindingWitness : public Witness {
+ public:
+  // Construct a witness for an impl binding.
+  explicit BindingWitness(Nonnull<const ImplBinding*> binding)
+      : Witness(Kind::BindingWitness), binding_(binding) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::BindingWitness;
+  }
+
+  auto binding() const -> Nonnull<const ImplBinding*> { return binding_; }
+
+ private:
+  Nonnull<const ImplBinding*> binding_;
 };
 
 // A witness table whose concrete value cannot be determined yet.

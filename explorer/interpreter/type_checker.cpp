@@ -180,6 +180,7 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::StringValue:
     case Value::Kind::UninitializedValue:
     case Value::Kind::ImplWitness:
+    case Value::Kind::BindingWitness:
     case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
@@ -241,6 +242,7 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
     case Value::Kind::StringValue:
     case Value::Kind::UninitializedValue:
     case Value::Kind::ImplWitness:
+    case Value::Kind::BindingWitness:
     case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
@@ -864,6 +866,7 @@ auto TypeChecker::ArgumentDeduction(
       return handle_non_deduced_type();
     }
     case Value::Kind::ImplWitness:
+    case Value::Kind::BindingWitness:
     case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
@@ -1174,6 +1177,7 @@ auto TypeChecker::Substitute(
       // type for it.
       return type;
     case Value::Kind::ImplWitness:
+    case Value::Kind::BindingWitness:
     case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
@@ -1290,11 +1294,20 @@ auto TypeChecker::MakeConstraintWitness(
 auto TypeChecker::MakeConstraintWitnessAccess(Nonnull<const Witness*> witness,
                                               size_t impl_offset) const
     -> Nonnull<const Witness*> {
+  // Convert the witness to an expression so we can index it.
+  Nonnull<const Expression*> witness_expr;
+  if (auto *binding = dyn_cast<BindingWitness>(witness)) {
+    auto impl_id = arena_->New<IdentifierExpression>(
+        binding->binding()->source_loc(), "impl");
+    impl_id->set_value_node(binding->binding());
+    witness_expr = impl_id;
+  } else {
+    witness_expr = &cast<SymbolicWitness>(witness)->impl_expression();
+  }
+
   SourceLocation no_source_loc("", 0);
   return arena_->New<SymbolicWitness>(arena_->New<IndexExpression>(
-      no_source_loc,
-      const_cast<Expression*>(
-          &cast<SymbolicWitness>(witness)->impl_expression()),
+      no_source_loc, const_cast<Expression*>(witness_expr),
       arena_->New<IntLiteral>(no_source_loc, impl_offset)));
 }
 
@@ -2664,14 +2677,6 @@ void TypeChecker::BringImplsIntoScope(
   }
 }
 
-auto TypeChecker::CreateImplBindingWitness(
-    Nonnull<const ImplBinding*> impl_binding) -> Nonnull<const Witness*> {
-  auto impl_id =
-      arena_->New<IdentifierExpression>(impl_binding->source_loc(), "impl");
-  impl_id->set_value_node(impl_binding);
-  return arena_->New<SymbolicWitness>(impl_id);
-}
-
 void TypeChecker::BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
                                      ImplScope& impl_scope) {
   CARBON_CHECK(impl_binding->type_var()->symbolic_identity().has_value() &&
@@ -2817,7 +2822,7 @@ auto TypeChecker::TypeCheckPattern(
         Nonnull<ImplBinding*> impl_binding =
             arena_->New<ImplBinding>(binding.source_loc(), &binding, type);
         impl_binding->set_symbolic_identity(
-            CreateImplBindingWitness(impl_binding));
+            arena_->New<BindingWitness>(impl_binding));
         binding.set_impl_binding(impl_binding);
         BringImplIntoScope(impl_binding, impl_scope);
       }
@@ -3646,7 +3651,8 @@ auto TypeChecker::DeclareInterfaceDeclaration(
     CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, iface_scope_info));
 
     if (auto* assoc = dyn_cast<AssociatedConstantDeclaration>(m)) {
-      // TODO: The witness should be optional in AssociatedConstant.
+      // TODO: Create an ImplBinding for Self and create a BindingWitness for
+      // it here.
       Nonnull<const Expression*> witness_expr =
           arena_->New<DotSelfExpression>(iface_decl->source_loc());
       assoc->binding().set_symbolic_identity(arena_->New<AssociatedConstant>(
@@ -4041,6 +4047,7 @@ static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
     case Value::Kind::AlternativeValue:
     case Value::Kind::TupleValue:
     case Value::Kind::ImplWitness:
+    case Value::Kind::BindingWitness:
     case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:

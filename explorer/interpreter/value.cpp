@@ -71,6 +71,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                  << "member " << f << " not in " << *witness;
         }
       }
+      case Value::Kind::BindingWitness:
       case Value::Kind::SymbolicWitness: {
         return RuntimeError(source_loc)
                << "member lookup for " << f << " in symbolic " << *witness
@@ -459,6 +460,11 @@ void Value::Print(llvm::raw_ostream& out) const {
           << witness.declaration().interface();
       break;
     }
+    case Value::Kind::BindingWitness: {
+      const auto& witness = cast<BindingWitness>(*this);
+      out << "witness " << *witness.binding()->type_var();
+      break;
+    }
     case Value::Kind::SymbolicWitness: {
       const auto& witness = cast<SymbolicWitness>(*this);
       out << "witness " << witness.impl_expression();
@@ -767,6 +773,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
                      << *t1 << "\n"
                      << *t2;
     case Value::Kind::ImplWitness:
+    case Value::Kind::BindingWitness:
     case Value::Kind::SymbolicWitness:
       CARBON_FATAL() << "TypeEqual: unexpected Witness";
       break;
@@ -868,6 +875,7 @@ auto ValueStructurallyEqual(
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
     case Value::Kind::ImplWitness:
+    case Value::Kind::BindingWitness:
     case Value::Kind::SymbolicWitness:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
