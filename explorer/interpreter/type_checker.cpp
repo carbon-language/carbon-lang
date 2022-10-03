@@ -660,7 +660,7 @@ auto TypeChecker::ArgumentDeduction(
     }
     // TODO: Compute or deduce witnesses.
     Bindings bindings(deduced, Bindings::NoWitnesses);
-    const Value* subst_param_type = Substitute(deduced, param);
+    const Value* subst_param_type = Substitute(bindings, param);
     return allow_implicit_conversion
                ? ExpectType(source_loc, context, subst_param_type, arg,
                             impl_scope)
@@ -928,15 +928,24 @@ class ConstraintTypeBuilder {
     return &self_binding_->value();
   }
 
+  // Get a witness that `.Self` implements the eventual constraint type built by
+  // this builder.
+  auto GetSelfWitness() const -> Nonnull<const Witness*> {
+    return cast<Witness>(
+        self_binding_->impl_binding().value()->symbolic_identity().value());
+  }
+
   // Add an `impl` constraint -- `T is C` if not already present.
-  void AddImplConstraint(ConstraintType::ImplConstraint impl) {
-    for (ConstraintType::ImplConstraint existing : impl_constraints_) {
+  // Returns the index of the impl constraint within the self witness.
+  auto AddImplConstraint(ConstraintType::ImplConstraint impl) -> int {
+    for (ConstraintType::ImplConstraint &existing : impl_constraints_) {
       if (TypeEqual(existing.type, impl.type, std::nullopt) &&
           TypeEqual(existing.interface, impl.interface, std::nullopt)) {
-        return;
+        return &existing - impl_constraints_.data();
       }
     }
     impl_constraints_.push_back(std::move(impl));
+    return impl_constraints_.size() - 1;
   }
 
   // Add an equality constraint -- `A == B`.
@@ -981,6 +990,9 @@ class ConstraintTypeBuilder {
   // Convert the builder into a ConstraintType. Note that this consumes the
   // builder.
   auto Build(Nonnull<Arena*> arena_) && -> Nonnull<const ConstraintType*> {
+    // TODO: Should we somehow replace `.Self` with one with the correct
+    // type-of-type? That would create a cycle: `.Self` would refer to the
+    // constraint type that owns it.
     return arena_->New<ConstraintType>(
         self_binding_, std::move(impl_constraints_),
         std::move(equality_constraints_), std::move(lookup_contexts_));
@@ -990,12 +1002,22 @@ class ConstraintTypeBuilder {
   // Make a generic binding to serve as the `.Self` of this constraint type.
   static auto MakeSelfBinding(Nonnull<Arena*> arena, SourceLocation source_loc)
       -> Nonnull<const GenericBinding*> {
+    // Note, the type-of-type here is a placeholder.
     Nonnull<GenericBinding*> self_binding = arena->New<GenericBinding>(
         source_loc, ".Self", arena->New<TypeTypeLiteral>(source_loc));
     Nonnull<const Value*> self = arena->New<VariableType>(self_binding);
     // TODO: Do we really need both of these?
     self_binding->set_symbolic_identity(self);
     self_binding->set_value(self);
+
+    // The `.Self` binding for a constraint should always have an
+    // `ImplBinding`.
+    // Note, the type-of-type here is a placeholder too.
+    Nonnull<ImplBinding*> impl_binding = arena->New<ImplBinding>(
+        source_loc, self_binding, arena->New<TypeType>());
+    impl_binding->set_symbolic_identity(
+        arena->New<BindingWitness>(impl_binding));
+    self_binding->set_impl_binding(impl_binding);
     return self_binding;
   }
 
@@ -1306,7 +1328,7 @@ auto TypeChecker::MakeConstraintWitness(
 }
 
 auto TypeChecker::MakeConstraintWitnessAccess(Nonnull<const Witness*> witness,
-                                              size_t impl_offset) const
+                                              int impl_offset) const
     -> Nonnull<const Witness*> {
   return ConstraintImplWitness::Make(arena_, witness, impl_offset);
 }
@@ -1351,9 +1373,13 @@ auto TypeChecker::CombineConstraints(
   auto* self = builder.GetSelfType(arena_);
   for (Nonnull<const ConstraintType*> constraint : constraints) {
     Bindings bindings;
-    // TODO: We should provide a witness expression that forms a witness for
-    // `constraint` from the witness for the result.
-    bindings.Add(constraint->self_binding(), self, std::nullopt);
+    std::optional<Nonnull<const Witness*>> witness;
+    if (auto impl_binding = constraint->self_binding()->impl_binding()) {
+      int index = builder.AddImplConstraint(
+          {.type = self, .interface = impl_binding->interface()});
+      witness = MakeConstraintWitnessAccess(builder.GetSelfWitness(), index);
+    }
+    bindings.Add(constraint->self_binding(), self, witness);
     builder.Add(cast<ConstraintType>(Substitute(bindings, constraint)));
   }
   return std::move(builder).Build(arena_);
@@ -1677,14 +1703,22 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               ConstraintLookupResult result,
               LookupInConstraint(e->source_loc(), "member access", &typeof_var,
                                  access.member_name()));
+          // Compute a witness that the variable type implements this
+          // interface. This will typically be either a reference to its
+          // `ImplBinding` or, for a constraint, to a witness for an impl
+          // constraint within it.
+          // TODO: We should only need to look at the impl binding for this
+          // variable, not everything in the impl scope, to find the witness.
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Witness*> witness,
+              impl_scope.Resolve(result.interface, &object_type,
+                                 e->source_loc(), *this));
+
+          Bindings bindings = result.interface->bindings();
+          bindings.Add(result.interface->declaration().self(), &object_type,
+                       witness);
 
           const Value& member_type = result.member->static_type();
-          Bindings bindings = result.interface->bindings();
-          // TODO: The type of `Self` should be the interface, and the witness
-          // used here should be taken from the impl binding of the variable.
-          // For now the type of `Self` is `Type`.
-          bindings.add(result.interface->declaration().self(), &object_type,
-                       std::nullopt);
           Nonnull<const Value*> inst_member_type =
               Substitute(bindings, &member_type);
           access.set_member(Member(result.member));
@@ -1751,10 +1785,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             // associated constant.
             const Value& member_type = result.member->static_type();
             Bindings bindings = result.interface->bindings();
-            // TODO: The type of `Self` should be the interface, and the witness
-            // used here should be `impl`. For now the type of `Self` is `Type`.
-            bindings.Add(result.interface->declaration().self(), type,
-                         std::nullopt);
+            bindings.Add(result.interface->declaration().self(), type, impl);
             Nonnull<const Value*> inst_member_type =
                 Substitute(bindings, &member_type);
             access.set_static_type(inst_member_type);

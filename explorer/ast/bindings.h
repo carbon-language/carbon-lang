@@ -27,6 +27,9 @@ using ImplWitnessMap =
 // will have the same set of bindings.
 class Bindings {
  public:
+  // Create an empty set of bindings.
+  Bindings() {}
+
   // Create an instantiated set of bindings for use during evaluation,
   // containing both arguments and witnesses.
   Bindings(BindingMap args, ImplWitnessMap witnesses)

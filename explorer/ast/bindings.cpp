@@ -10,7 +10,7 @@
 namespace Carbon {
 
 auto Bindings::None() -> Nonnull<const Bindings*> {
-  static Nonnull<const Bindings*> bindings = new Bindings({}, {});
+  static Nonnull<const Bindings*> bindings = new Bindings;
   return bindings;
 }
 

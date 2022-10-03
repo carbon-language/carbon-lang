@@ -88,7 +88,7 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
       // constraint when naming `AssocType`. So incrementally build up a
       // partial constraint witness as we go.
       std::optional<Nonnull<const Witness*>> witness;
-      if (constraint->self_binding().impl_binding()) {
+      if (constraint->self_binding()->impl_binding()) {
         // Note, this is a partial impl binding covering only the impl
         // constraints that we've already seen. Earlier impl constraints should
         // not be able to refer to impl bindings for later impl constraints.

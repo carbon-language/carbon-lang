@@ -93,7 +93,7 @@ class TypeChecker {
   // Given the witnesses for the components of a constraint, form a witness for
   // the constraint.
   auto MakeConstraintWitnessAccess(Nonnull<const Witness*> witness,
-                                   size_t impl_offset) const
+                                   int impl_offset) const
       -> Nonnull<const Witness*>;
 
  private:
