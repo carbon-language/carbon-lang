@@ -34,7 +34,7 @@ config.substitutions.append(
             [
                 fullpath("llvm-project/llvm/FileCheck"),
                 "--dump-input-filter=all",
-                "--implicit-check-not={{.+}}",
+                "--implicit-check-not={{.}}",
                 "--match-full-lines",
                 "--strict-whitespace",
             ]
