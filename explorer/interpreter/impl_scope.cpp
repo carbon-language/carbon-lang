@@ -15,16 +15,16 @@ using llvm::dyn_cast;
 namespace Carbon {
 
 void ImplScope::Add(Nonnull<const Value*> iface, Nonnull<const Value*> type,
-                    Nonnull<Expression*> impl,
+                    Nonnull<const Witness*> witness,
                     const TypeChecker& type_checker) {
-  Add(iface, {}, type, {}, impl, type_checker);
+  Add(iface, {}, type, {}, witness, type_checker);
 }
 
 void ImplScope::Add(Nonnull<const Value*> iface,
                     llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
                     Nonnull<const Value*> type,
                     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
-                    Nonnull<Expression*> impl_expr,
+                    Nonnull<const Witness*> witness,
                     const TypeChecker& type_checker) {
   if (auto* orig_constraint = dyn_cast<ConstraintType>(iface)) {
     BindingMap map;
@@ -34,7 +34,7 @@ void ImplScope::Add(Nonnull<const Value*> iface,
     for (size_t i = 0; i != constraint->impl_constraints().size(); ++i) {
       ConstraintType::ImplConstraint impl = constraint->impl_constraints()[i];
       Add(impl.interface, deduced, impl.type, impl_bindings,
-          type_checker.MakeConstraintWitnessAccess(impl_expr, i), type_checker);
+          type_checker.MakeConstraintWitnessAccess(witness, i), type_checker);
     }
     // A parameterized impl declaration doesn't contribute any equality
     // constraints to the scope. Instead, we'll resolve the equality
@@ -51,7 +51,7 @@ void ImplScope::Add(Nonnull<const Value*> iface,
                     .deduced = deduced,
                     .type = type,
                     .impl_bindings = impl_bindings,
-                    .impl = impl_expr});
+                    .witness = witness});
 }
 
 void ImplScope::AddParent(Nonnull<const ImplScope*> parent) {
@@ -62,17 +62,17 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
                         Nonnull<const Value*> impl_type,
                         SourceLocation source_loc,
                         const TypeChecker& type_checker) const
-    -> ErrorOr<Nonnull<Expression*>> {
+    -> ErrorOr<Nonnull<const Witness*>> {
   if (const auto* iface_type = dyn_cast<InterfaceType>(constraint_type)) {
     return ResolveInterface(iface_type, impl_type, source_loc, type_checker);
   }
   if (const auto* constraint = dyn_cast<ConstraintType>(constraint_type)) {
-    std::vector<Nonnull<Expression*>> witnesses;
+    std::vector<Nonnull<const Witness*>> witnesses;
     BindingMap map;
     map[constraint->self_binding()] = impl_type;
     for (auto impl : constraint->impl_constraints()) {
       CARBON_ASSIGN_OR_RETURN(
-          Nonnull<Expression*> result,
+          Nonnull<const Witness*> result,
           ResolveInterface(
               cast<InterfaceType>(type_checker.Substitute(map, impl.interface)),
               type_checker.Substitute(map, impl.type), source_loc,
@@ -106,9 +106,9 @@ auto ImplScope::ResolveInterface(Nonnull<const InterfaceType*> iface_type,
                                  Nonnull<const Value*> type,
                                  SourceLocation source_loc,
                                  const TypeChecker& type_checker) const
-    -> ErrorOr<Nonnull<Expression*>> {
+    -> ErrorOr<Nonnull<const Witness*>> {
   CARBON_ASSIGN_OR_RETURN(
-      std::optional<Nonnull<Expression*>> result,
+      std::optional<Nonnull<const Witness*>> result,
       TryResolve(iface_type, type, source_loc, *this, type_checker));
   if (!result.has_value()) {
     return CompilationError(source_loc) << "could not find implementation of "
@@ -122,14 +122,15 @@ auto ImplScope::TryResolve(Nonnull<const InterfaceType*> iface_type,
                            SourceLocation source_loc,
                            const ImplScope& original_scope,
                            const TypeChecker& type_checker) const
-    -> ErrorOr<std::optional<Nonnull<Expression*>>> {
+    -> ErrorOr<std::optional<Nonnull<const Witness*>>> {
   CARBON_ASSIGN_OR_RETURN(
-      std::optional<Nonnull<Expression*>> result,
+      std::optional<Nonnull<const Witness*>> result,
       ResolveHere(iface_type, type, source_loc, original_scope, type_checker));
   for (Nonnull<const ImplScope*> parent : parent_scopes_) {
-    CARBON_ASSIGN_OR_RETURN(std::optional<Nonnull<Expression*>> parent_result,
-                            parent->TryResolve(iface_type, type, source_loc,
-                                               original_scope, type_checker));
+    CARBON_ASSIGN_OR_RETURN(
+        std::optional<Nonnull<const Witness*>> parent_result,
+        parent->TryResolve(iface_type, type, source_loc, original_scope,
+                           type_checker));
     if (parent_result.has_value()) {
       if (result.has_value()) {
         return CompilationError(source_loc) << "ambiguous implementations of "
@@ -147,10 +148,10 @@ auto ImplScope::ResolveHere(Nonnull<const InterfaceType*> iface_type,
                             SourceLocation source_loc,
                             const ImplScope& original_scope,
                             const TypeChecker& type_checker) const
-    -> ErrorOr<std::optional<Nonnull<Expression*>>> {
-  std::optional<Nonnull<Expression*>> result = std::nullopt;
+    -> ErrorOr<std::optional<Nonnull<const Witness*>>> {
+  std::optional<Nonnull<const Witness*>> result = std::nullopt;
   for (const Impl& impl : impls_) {
-    std::optional<Nonnull<Expression*>> m = type_checker.MatchImpl(
+    std::optional<Nonnull<const Witness*>> m = type_checker.MatchImpl(
         *iface_type, impl_type, impl, original_scope, source_loc);
     if (m.has_value()) {
       if (result.has_value()) {

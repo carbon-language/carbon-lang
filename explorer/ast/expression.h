@@ -26,6 +26,7 @@
 namespace Carbon {
 
 class Value;
+class Witness;
 class MemberName;
 class VariableType;
 class InterfaceType;
@@ -243,15 +244,13 @@ class SimpleMemberAccessExpression : public Expression {
   // Can only be called once, during typechecking.
   void set_is_field_addr_me_method() { is_field_addr_me_method_ = true; }
 
-  // If `object` has a generic type, returns the `ImplBinding` that
-  // identifies its witness table. Otherwise, returns `std::nullopt`. Should not
+  // If `object` has a generic type, returns the witness value, which might be
+  // either concrete or symbolic. Otherwise, returns `std::nullopt`. Should not
   // be called before typechecking.
-  auto impl() const -> std::optional<Nonnull<const Expression*>> {
-    return impl_;
-  }
+  auto impl() const -> std::optional<Nonnull<const Witness*>> { return impl_; }
 
   // Can only be called once, during typechecking.
-  void set_impl(Nonnull<const Expression*> impl) {
+  void set_impl(Nonnull<const Witness*> impl) {
     CARBON_CHECK(!impl_.has_value());
     impl_ = impl;
   }
@@ -275,7 +274,7 @@ class SimpleMemberAccessExpression : public Expression {
   std::string member_name_;
   std::optional<Member> member_;
   bool is_field_addr_me_method_ = false;
-  std::optional<Nonnull<const Expression*>> impl_;
+  std::optional<Nonnull<const Witness*>> impl_;
   std::optional<Nonnull<const InterfaceType*>> found_in_interface_;
 };
 
@@ -323,14 +322,12 @@ class CompoundMemberAccessExpression : public Expression {
     member_ = member;
   }
 
-  // Returns the expression to use to compute the witness table, if this
-  // expression names an interface member.
-  auto impl() const -> std::optional<Nonnull<const Expression*>> {
-    return impl_;
-  }
+  // If this expression names an interface member, returns the witness value,
+  // which might be symbolic.
+  auto impl() const -> std::optional<Nonnull<const Witness*>> { return impl_; }
 
   // Can only be called once, during typechecking.
-  void set_impl(Nonnull<const Expression*> impl) {
+  void set_impl(Nonnull<const Witness*> impl) {
     CARBON_CHECK(!impl_.has_value());
     impl_ = impl;
   }
@@ -342,7 +339,7 @@ class CompoundMemberAccessExpression : public Expression {
   Nonnull<Expression*> object_;
   Nonnull<Expression*> path_;
   std::optional<Nonnull<const MemberName*>> member_;
-  std::optional<Nonnull<const Expression*>> impl_;
+  std::optional<Nonnull<const Witness*>> impl_;
 };
 
 class IndexExpression : public Expression {
@@ -539,8 +536,6 @@ class OperatorExpression : public Expression {
   std::optional<Nonnull<const Expression*>> rewritten_form_;
 };
 
-using ImplExpMap = std::map<Nonnull<const ImplBinding*>, Nonnull<Expression*>>;
-
 class CallExpression : public Expression {
  public:
   explicit CallExpression(SourceLocation source_loc,
@@ -548,7 +543,8 @@ class CallExpression : public Expression {
                           Nonnull<Expression*> argument)
       : Expression(AstNodeKind::CallExpression, source_loc),
         function_(function),
-        argument_(argument) {}
+        argument_(argument),
+        bindings_({}, {}) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromCallExpression(node->kind());
@@ -559,23 +555,20 @@ class CallExpression : public Expression {
   auto argument() const -> const Expression& { return *argument_; }
   auto argument() -> Expression& { return *argument_; }
 
-  // Maps each of `function`'s impl bindings to an expression
-  // that constructs a witness table.
-  // Should not be called before typechecking, or if `function` is not
-  // a generic function.
-  auto impls() const -> const ImplExpMap& { return impls_; }
+  auto bindings() -> const Bindings& { return bindings_; }
 
   // Can only be called once, during typechecking.
-  void set_impls(const ImplExpMap& impls) {
-    CARBON_CHECK(impls_.empty());
-    impls_ = impls;
+  void set_bindings(Bindings bindings) {
+    CARBON_CHECK(bindings_.args().empty() && bindings_.witnesses().empty());
+    bindings_ = std::move(bindings);
   }
 
-  auto deduced_args() const -> const BindingMap& { return deduced_args_; }
+  auto deduced_args() const -> const BindingMap& { return bindings_.args(); }
 
-  void set_deduced_args(const BindingMap& deduced_args) {
-    deduced_args_ = deduced_args;
-  }
+  // Maps each of `function`'s impl bindings to a witness.
+  // Should not be called before typechecking, or if `function` is not
+  // a generic function.
+  auto impls() const -> const ImplWitnessMap& { return bindings_.witnesses(); }
 
   // Can only be called by type-checking, if a conversion was required.
   void set_argument(Nonnull<Expression*> argument) { argument_ = argument; }
@@ -583,8 +576,7 @@ class CallExpression : public Expression {
  private:
   Nonnull<Expression*> function_;
   Nonnull<Expression*> argument_;
-  ImplExpMap impls_;
-  BindingMap deduced_args_;
+  Bindings bindings_;
 };
 
 class FunctionTypeLiteral : public Expression {
@@ -867,27 +859,25 @@ class InstantiateImpl : public Expression {
   using ImplementsCarbonValueNode = void;
 
   explicit InstantiateImpl(SourceLocation source_loc,
-                           Nonnull<Expression*> generic_impl,
-                           const BindingMap& type_args, const ImplExpMap& impls)
+                           Nonnull<const Witness*> generic_impl,
+                           Bindings bindings)
       : Expression(AstNodeKind::InstantiateImpl, source_loc),
         generic_impl_(generic_impl),
-        type_args_(type_args),
-        impls_(impls) {}
+        bindings_(std::move(bindings)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromInstantiateImpl(node->kind());
   }
-  auto generic_impl() const -> Nonnull<Expression*> { return generic_impl_; }
-  auto type_args() const -> const BindingMap& { return type_args_; }
+  auto generic_impl() const -> Nonnull<const Witness*> { return generic_impl_; }
+  auto type_args() const -> const BindingMap& { return bindings_.args(); }
 
   // Maps each of the impl bindings to an expression that constructs
   // the witness table for that impl.
-  auto impls() const -> const ImplExpMap& { return impls_; }
+  auto impls() const -> const ImplWitnessMap& { return bindings_.witnesses(); }
 
  private:
-  Nonnull<Expression*> generic_impl_;
-  BindingMap type_args_;
-  ImplExpMap impls_;
+  Nonnull<const Witness*> generic_impl_;
+  Bindings bindings_;
 };
 
 // An expression whose semantics have not been implemented. This can be used

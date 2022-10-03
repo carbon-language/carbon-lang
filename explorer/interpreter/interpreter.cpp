@@ -79,6 +79,8 @@ class Interpreter {
   auto StepExp() -> ErrorOr<Success>;
   // State transitions for lvalues.
   auto StepLvalue() -> ErrorOr<Success>;
+  // State transitions for witnesses.
+  auto StepWitness() -> ErrorOr<Success>;
   // State transitions for patterns.
   auto StepPattern() -> ErrorOr<Success>;
   // State transition for statements.
@@ -897,7 +899,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       const InstantiateImpl& inst_impl = cast<InstantiateImpl>(exp);
       if (act.pos() == 0) {
         return todo_.Spawn(
-            std::make_unique<ExpressionAction>(inst_impl.generic_impl()));
+            std::make_unique<WitnessAction>(inst_impl.generic_impl()));
       }
       if (act.pos() == 1 && isa<SymbolicWitness>(act.results()[0])) {
         return todo_.FinishAction(arena_->New<SymbolicWitness>(&exp));
@@ -905,7 +907,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       if (act.pos() - 1 < int(inst_impl.impls().size())) {
         auto iter = inst_impl.impls().begin();
         std::advance(iter, act.pos() - 1);
-        return todo_.Spawn(std::make_unique<ExpressionAction>(iter->second));
+        return todo_.Spawn(
+            std::make_unique<WitnessAction>(cast<Witness>(iter->second)));
       } else {
         Nonnull<const ImplWitness*> generic_witness =
             cast<ImplWitness>(act.results()[0]);
@@ -997,7 +1000,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         // Next, if we're accessing an interface member, evaluate the `impl`
         // expression to find the corresponding witness.
         return todo_.Spawn(
-            std::make_unique<ExpressionAction>(access.impl().value()));
+            std::make_unique<WitnessAction>(access.impl().value()));
       } else {
         // Finally, produce the result.
         std::optional<Nonnull<const InterfaceType*>> found_in_interface =
@@ -1058,7 +1061,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         // Next, if we're accessing an interface member, evaluate the `impl`
         // expression to find the corresponding witness.
         return todo_.Spawn(
-            std::make_unique<ExpressionAction>(access.impl().value()));
+            std::make_unique<WitnessAction>(access.impl().value()));
       } else {
         // Finally, produce the result.
         std::optional<Nonnull<const InterfaceType*>> found_in_interface =
@@ -1181,7 +1184,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       } else if (num_impls > 0 && act.pos() < 2 + int(num_impls)) {
         auto iter = call.impls().begin();
         std::advance(iter, act.pos() - 2);
-        return todo_.Spawn(std::make_unique<ExpressionAction>(iter->second));
+        return todo_.Spawn(
+            std::make_unique<WitnessAction>(cast<Witness>(iter->second)));
       } else if (act.pos() == 2 + int(num_impls)) {
         //    { { v2 :: v1([]) :: C, E, F} :: S, H}
         // -> { {C',E',F'} :: {C, E, F} :: S, H}
@@ -1433,6 +1437,26 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       }
     }
   }  // switch (exp->kind)
+}
+
+auto Interpreter::StepWitness() -> ErrorOr<Success> {
+  Action& act = todo_.CurrentAction();
+  const Witness* witness = cast<WitnessAction>(act).witness();
+  if (trace_stream_) {
+    **trace_stream_ << "--- step witness " << *witness << " ." << act.pos()
+                    << ". --->\n";
+  }
+  switch (witness->kind()) {
+    case Value::Kind::SymbolicWitness:
+      return todo_.ReplaceWith(std::make_unique<ExpressionAction>(
+          &cast<SymbolicWitness>(witness)->impl_expression()));
+
+    case Value::Kind::ImplWitness:
+      return todo_.FinishAction(witness);
+
+    default:
+      CARBON_FATAL() << "unexpected kind of witness " << *witness;
+  }
 }
 
 auto Interpreter::StepPattern() -> ErrorOr<Success> {
@@ -1939,6 +1963,9 @@ auto Interpreter::Step() -> ErrorOr<Success> {
       break;
     case Action::Kind::ExpressionAction:
       CARBON_RETURN_IF_ERROR(StepExp());
+      break;
+    case Action::Kind::WitnessAction:
+      CARBON_RETURN_IF_ERROR(StepWitness());
       break;
     case Action::Kind::PatternAction:
       CARBON_RETURN_IF_ERROR(StepPattern());

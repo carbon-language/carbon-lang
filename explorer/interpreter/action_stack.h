@@ -88,8 +88,8 @@ class ActionStack {
   auto Spawn(std::unique_ptr<Action> child) -> ErrorOr<Success>;
   auto Spawn(std::unique_ptr<Action> child, RuntimeScope scope)
       -> ErrorOr<Success>;
-  // Replace the current action with another action of the same kind and run it
-  // next.
+  // Replace the current action with another action that produces the same kind
+  // of result and run it next.
   auto ReplaceWith(std::unique_ptr<Action> child) -> ErrorOr<Success>;
 
   // Start a new recursive action.

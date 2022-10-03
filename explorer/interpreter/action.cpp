@@ -116,6 +116,9 @@ void Action::Print(llvm::raw_ostream& out) const {
     case Action::Kind::ExpressionAction:
       out << cast<ExpressionAction>(*this).expression() << " ";
       break;
+    case Action::Kind::WitnessAction:
+      out << *cast<WitnessAction>(*this).witness() << " ";
+      break;
     case Action::Kind::PatternAction:
       out << cast<PatternAction>(*this).pattern() << " ";
       break;
