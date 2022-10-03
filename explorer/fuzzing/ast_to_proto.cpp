@@ -110,11 +110,9 @@ static auto ExpressionToProto(const Expression& expression)
     -> Fuzzing::Expression {
   Fuzzing::Expression expression_proto;
   switch (expression.kind()) {
-    case ExpressionKind::InstantiateImpl:
-    case ExpressionKind::ValueLiteral: {
-      // These do not correspond to source syntax.
+    case ExpressionKind::ValueLiteral:
+      // This does not correspond to source syntax.
       break;
-    }
     case ExpressionKind::CallExpression: {
       const auto& call = cast<CallExpression>(expression);
       auto* call_proto = expression_proto.mutable_call();

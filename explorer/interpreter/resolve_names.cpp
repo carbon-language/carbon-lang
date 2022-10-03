@@ -267,7 +267,6 @@ static auto ResolveNames(Expression& expression,
     case ExpressionKind::TypeTypeLiteral:
     case ExpressionKind::ValueLiteral:
       break;
-    case ExpressionKind::InstantiateImpl:  // created after name resolution
     case ExpressionKind::UnimplementedExpression:
       return CompilationError(expression.source_loc()) << "Unimplemented";
   }

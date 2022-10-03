@@ -1275,11 +1275,17 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
     **trace_stream_ << "matched with " << *impl.type << " as "
                     << *impl.interface << "\n\n";
   }
-  return deduced_args.empty()
-             ? impl.witness
-             : arena_->New<SymbolicWitness>(arena_->New<InstantiateImpl>(
-                   source_loc, impl.witness,
-                   Bindings(std::move(deduced_args), std::move(impls))));
+  if (deduced_args.empty()) {
+    return impl.witness;
+  }
+
+  // Only ImplWitnesses can be parameterized.
+  const ImplWitness* impl_witness = cast<ImplWitness>(impl.witness);
+  CARBON_CHECK(impl_witness->bindings().empty())
+      << "should not deduce arguments for ImplWitness we have already resolved";
+  return arena_->New<ImplWitness>(
+      &impl_witness->declaration(),
+      arena_->New<Bindings>(std::move(deduced_args), std::move(impls)));
 }
 
 auto TypeChecker::MakeConstraintWitness(
@@ -1498,7 +1504,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     return Success();
   }
   switch (e->kind()) {
-    case ExpressionKind::InstantiateImpl:
     case ExpressionKind::ValueLiteral:
       CARBON_FATAL() << "attempting to type check node " << *e
                      << " generated during type checking";

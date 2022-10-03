@@ -492,7 +492,6 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
     case ExpressionKind::WhereExpression:
     case ExpressionKind::DotSelfExpression:
     case ExpressionKind::ArrayTypeLiteral:
-    case ExpressionKind::InstantiateImpl:
       CARBON_FATAL() << "Can't treat expression as lvalue: " << exp;
     case ExpressionKind::UnimplementedExpression:
       CARBON_FATAL() << "Unimplemented: " << exp;
@@ -908,35 +907,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                     << " (" << exp.source_loc() << ") --->\n";
   }
   switch (exp.kind()) {
-    case ExpressionKind::InstantiateImpl: {
-      const InstantiateImpl& inst_impl = cast<InstantiateImpl>(exp);
-      if (act.pos() == 0) {
-        return todo_.Spawn(
-            std::make_unique<WitnessAction>(inst_impl.generic_impl()));
-      }
-      if (act.pos() == 1 && !isa<ImplWitness>(act.results()[0])) {
-        return todo_.FinishAction(arena_->New<SymbolicWitness>(&exp));
-      }
-      if (act.pos() - 1 < int(inst_impl.impls().size())) {
-        auto iter = inst_impl.impls().begin();
-        std::advance(iter, act.pos() - 1);
-        return todo_.Spawn(
-            std::make_unique<WitnessAction>(cast<Witness>(iter->second)));
-      } else {
-        Nonnull<const ImplWitness*> generic_witness =
-            cast<ImplWitness>(act.results()[0]);
-        ImplWitnessMap witnesses;
-        int i = 0;
-        for (const auto& [impl_bind, impl_exp] : inst_impl.impls()) {
-          witnesses[impl_bind] = cast<Witness>(act.results()[i + 1]);
-          ++i;
-        }
-        return todo_.FinishAction(arena_->New<ImplWitness>(
-            &generic_witness->declaration(),
-            arena_->New<Bindings>(inst_impl.type_args(),
-                                  std::move(witnesses))));
-      }
-    }
     case ExpressionKind::IndexExpression: {
       if (act.pos() == 0) {
         //    { { e[i] :: C, E, F} :: S, H}
@@ -1504,8 +1474,18 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
           arena_, cast<Witness>(act.results()[0]), constraint_impl->index()));
     }
 
-    case Value::Kind::ImplWitness:
-      return todo_.FinishAction(witness);
+    case Value::Kind::ImplWitness: {
+      auto* impl_witness = cast<ImplWitness>(witness);
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Bindings*> new_bindings,
+          InstantiateBindings(&impl_witness->bindings(),
+                              impl_witness->declaration().source_loc()));
+      return todo_.FinishAction(
+          new_bindings == &impl_witness->bindings()
+              ? impl_witness
+              : arena_->New<ImplWitness>(&impl_witness->declaration(),
+                                         new_bindings));
+    }
 
     default:
       CARBON_FATAL() << "unexpected kind of witness " << *witness;
