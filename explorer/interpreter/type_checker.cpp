@@ -181,6 +181,8 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::UninitializedValue:
     case Value::Kind::ImplWitness:
     case Value::Kind::BindingWitness:
+    case Value::Kind::ConstraintWitness:
+    case Value::Kind::ConstraintImplWitness:
     case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
@@ -243,6 +245,8 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
     case Value::Kind::UninitializedValue:
     case Value::Kind::ImplWitness:
     case Value::Kind::BindingWitness:
+    case Value::Kind::ConstraintWitness:
+    case Value::Kind::ConstraintImplWitness:
     case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
@@ -867,6 +871,8 @@ auto TypeChecker::ArgumentDeduction(
     }
     case Value::Kind::ImplWitness:
     case Value::Kind::BindingWitness:
+    case Value::Kind::ConstraintWitness:
+    case Value::Kind::ConstraintImplWitness:
     case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
@@ -1178,6 +1184,8 @@ auto TypeChecker::Substitute(
       return type;
     case Value::Kind::ImplWitness:
     case Value::Kind::BindingWitness:
+    case Value::Kind::ConstraintWitness:
+    case Value::Kind::ConstraintImplWitness:
     case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
@@ -1278,37 +1286,13 @@ auto TypeChecker::MakeConstraintWitness(
     const ConstraintType& constraint,
     std::vector<Nonnull<const Witness*>> impl_constraint_witnesses,
     SourceLocation source_loc) const -> Nonnull<const Witness*> {
-  // TODO: Create a TupleValue when possible.
-  std::vector<Nonnull<Expression*>> witness_literals;
-  witness_literals.reserve(impl_constraint_witnesses.size());
-  // TODO: A witness expression has no type.
-  auto* witness_type = arena_->New<TypeType>();
-  for (const Witness* witness : impl_constraint_witnesses) {
-    witness_literals.push_back(arena_->New<ValueLiteral>(
-        source_loc, witness, witness_type, ValueCategory::Let));
-  }
-  return arena_->New<SymbolicWitness>(
-      arena_->New<TupleLiteral>(source_loc, std::move(witness_literals)));
+  return arena_->New<ConstraintWitness>(std::move(impl_constraint_witnesses));
 }
 
 auto TypeChecker::MakeConstraintWitnessAccess(Nonnull<const Witness*> witness,
                                               size_t impl_offset) const
     -> Nonnull<const Witness*> {
-  // Convert the witness to an expression so we can index it.
-  Nonnull<const Expression*> witness_expr;
-  if (auto *binding = dyn_cast<BindingWitness>(witness)) {
-    auto impl_id = arena_->New<IdentifierExpression>(
-        binding->binding()->source_loc(), "impl");
-    impl_id->set_value_node(binding->binding());
-    witness_expr = impl_id;
-  } else {
-    witness_expr = &cast<SymbolicWitness>(witness)->impl_expression();
-  }
-
-  SourceLocation no_source_loc("", 0);
-  return arena_->New<SymbolicWitness>(arena_->New<IndexExpression>(
-      no_source_loc, const_cast<Expression*>(witness_expr),
-      arena_->New<IntLiteral>(no_source_loc, impl_offset)));
+  return ConstraintImplWitness::Make(arena_, witness, impl_offset);
 }
 
 auto TypeChecker::SatisfyImpls(
@@ -4048,6 +4032,8 @@ static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
     case Value::Kind::TupleValue:
     case Value::Kind::ImplWitness:
     case Value::Kind::BindingWitness:
+    case Value::Kind::ConstraintWitness:
+    case Value::Kind::ConstraintImplWitness:
     case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:

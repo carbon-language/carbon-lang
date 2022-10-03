@@ -654,6 +654,8 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::ConstraintType:
     case Value::Kind::ImplWitness:
     case Value::Kind::BindingWitness:
+    case Value::Kind::ConstraintWitness:
+    case Value::Kind::ConstraintImplWitness:
     case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::ChoiceType:
@@ -1474,6 +1476,32 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
             heap_.Read(lvalue->address(), binding->type_var()->source_loc()));
       }
       return todo_.FinishAction(value);
+    }
+
+    case Value::Kind::ConstraintWitness: {
+      llvm::ArrayRef<Nonnull<const Witness*>> witnesses =
+          cast<ConstraintWitness>(witness)->witnesses();
+      if (act.pos() < static_cast<int>(witnesses.size())) {
+        return todo_.Spawn(
+            std::make_unique<WitnessAction>(witnesses[act.pos()]));
+      }
+      std::vector<Nonnull<const Witness*>> new_witnesses;
+      new_witnesses.reserve(witnesses.size());
+      for (auto* witness: act.results()) {
+        new_witnesses.push_back(cast<Witness>(witness));
+      }
+      return todo_.FinishAction(
+          arena_->New<ConstraintWitness>(std::move(new_witnesses)));
+    }
+
+    case Value::Kind::ConstraintImplWitness: {
+      auto* constraint_impl = cast<ConstraintImplWitness>(witness);
+      if (act.pos() == 0) {
+        return todo_.Spawn(std::make_unique<WitnessAction>(
+            constraint_impl->constraint_witness()));
+      }
+      return todo_.FinishAction(ConstraintImplWitness::Make(
+          arena_, cast<Witness>(act.results()[0]), constraint_impl->index()));
     }
 
     case Value::Kind::ImplWitness:
