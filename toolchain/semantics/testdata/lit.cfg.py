@@ -29,12 +29,12 @@ config.substitutions.append(
 config.substitutions.append(("%{not}", fullpath("llvm-project/llvm/not")))
 config.substitutions.append(
     (
-        "%{FileCheck}",
+        "%{FileCheckStrict}",
         " ".join(
             [
                 fullpath("llvm-project/llvm/FileCheck"),
-                "--allow-unused-prefixes=false",
                 "--dump-input-filter=all",
+                "--implicit-check-not={{.+}}",
                 "--match-full-lines",
                 "--strict-whitespace",
             ]
