@@ -23,20 +23,26 @@ config.test_format = lit.formats.ShTest()
 config.substitutions.append(
     ("%{prelude}", fullpath("carbon/explorer/data/prelude.carbon"))
 )
-config.substitutions.append(
-    (
-        "%{explorer}",
-        "%s --prelude=%s"
-        % (
-            fullpath("carbon/explorer/explorer"),
-            fullpath("carbon/explorer/data/prelude.carbon"),
-        ),
-    )
+
+_EXPLORER = "%s --prelude=%s" % (
+    fullpath("carbon/explorer/explorer"),
+    fullpath("carbon/explorer/data/prelude.carbon"),
 )
+config.substitutions.append(("%{explorer}", _EXPLORER))
+config.substitutions.append(
+    ("%{explorer-trace}", _EXPLORER + " --parser_debug --trace_file=-")
+)
+
 config.substitutions.append(("%{not}", fullpath("llvm-project/llvm/not")))
+
+_FILE_CHECK = "%s --dump-input-filter=all" % fullpath(
+    "llvm-project/llvm/FileCheck"
+)
+config.substitutions.append(("%{FileCheck}", _FILE_CHECK))
 config.substitutions.append(
     (
-        "%{FileCheck}",
-        fullpath("llvm-project/llvm/FileCheck --dump-input-filter=all"),
+        "%{FileCheck-strict}",
+        _FILE_CHECK
+        + " --implicit-check-not={{.}} --match-full-lines --strict-whitespace",
     )
 )

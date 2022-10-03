@@ -2,22 +2,20 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{carbon} dump tokens %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
+// RUN: %{carbon} dump tokens %s 2>&1 | %{FileCheck-strict} %s
 
+// CHECK:token: { index:  0, kind:              'Fn', line: {{ *}}[[@LINE+7]], column:   1, indent: 1, spelling: 'fn', has_trailing_space: true }
+// CHECK:token: { index:  1, kind:      'Identifier', line: {{ *}}[[@LINE+6]], column:   4, indent: 1, spelling: 'run', identifier: 0 }
+// CHECK:token: { index:  2, kind:       'OpenParen', line: {{ *}}[[@LINE+5]], column:   7, indent: 1, spelling: '(', closing_token: 5 }
+// CHECK:token: { index:  3, kind:      'Identifier', line: {{ *}}[[@LINE+4]], column:   8, indent: 1, spelling: 'String', identifier: 1, has_trailing_space: true }
+// CHECK:token: { index:  4, kind:      'Identifier', line: {{ *}}[[@LINE+3]], column:  15, indent: 1, spelling: 'program', identifier: 2 }
+// CHECK:token: { index:  5, kind:      'CloseParen', line: {{ *}}[[@LINE+2]], column:  22, indent: 1, spelling: ')', opening_token: 2, has_trailing_space: true }
+// CHECK:token: { index:  6, kind:  'OpenCurlyBrace', line: {{ *}}[[@LINE+1]], column:  24, indent: 1, spelling: '{', closing_token: 10, has_trailing_space: true }
 fn run(String program) {
+  // CHECK:token: { index:  7, kind:          'Return', line: {{ *}}[[@LINE+3]], column:   3, indent: 3, spelling: 'return', has_trailing_space: true }
+  // CHECK:token: { index:  8, kind:      'Identifier', line: {{ *}}[[@LINE+2]], column:  10, indent: 3, spelling: 'True', identifier: 3 }
+  // CHECK:token: { index:  9, kind:            'Semi', line: {{ *}}[[@LINE+1]], column:  14, indent: 3, spelling: ';', has_trailing_space: true }
   return True;
+// CHECK:token: { index: 10, kind: 'CloseCurlyBrace', line: {{ *}}[[@LINE+1]], column:   1, indent: 1, spelling: '}', opening_token: 6, has_trailing_space: true }
 }
-
-// CHECK: token: { index:  0, kind:              'Fn', line: 8, column:   1, indent: 1, spelling: 'fn', has_trailing_space: true }
-// CHECK: token: { index:  1, kind:      'Identifier', line: 8, column:   4, indent: 1, spelling: 'run', identifier: 0 }
-// CHECK: token: { index:  2, kind:       'OpenParen', line: 8, column:   7, indent: 1, spelling: '(', closing_token: 5 }
-// CHECK: token: { index:  3, kind:      'Identifier', line: 8, column:   8, indent: 1, spelling: 'String', identifier: 1, has_trailing_space: true }
-// CHECK: token: { index:  4, kind:      'Identifier', line: 8, column:  15, indent: 1, spelling: 'program', identifier: 2 }
-// CHECK: token: { index:  5, kind:      'CloseParen', line: 8, column:  22, indent: 1, spelling: ')', opening_token: 2, has_trailing_space: true }
-// CHECK: token: { index:  6, kind:  'OpenCurlyBrace', line: 8, column:  24, indent: 1, spelling: '{', closing_token: 10, has_trailing_space: true }
-// CHECK: token: { index:  7, kind:          'Return', line: 9, column:   3, indent: 3, spelling: 'return', has_trailing_space: true }
-// CHECK: token: { index:  8, kind:      'Identifier', line: 9, column:  10, indent: 3, spelling: 'True', identifier: 3 }
-// CHECK: token: { index:  9, kind:            'Semi', line: 9, column:  14, indent: 3, spelling: ';', has_trailing_space: true }
-// CHECK: token: { index: 10, kind: 'CloseCurlyBrace', line: 10, column:   1, indent: 1, spelling: '}', opening_token: 6, has_trailing_space: true }
-// CHECK: token: { index: 11, kind:       'EndOfFile', line: 23, column: 104, indent: 1, spelling: '' }
+// CHECK:token: { index: 11, kind:       'EndOfFile', line: {{ *}}[[@LINE]], column: {{[0-9]+}}, indent: 1, spelling: '' }
