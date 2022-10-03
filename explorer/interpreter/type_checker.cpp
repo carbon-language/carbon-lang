@@ -3631,22 +3631,24 @@ auto TypeChecker::DeclareInterfaceDeclaration(
     iface_decl->set_static_type(arena_->New<TypeOfInterfaceType>(iface_type));
   }
 
+  // Set the type of Self to be the instantiated interface.
+  Nonnull<SelfDeclaration*> self_type = iface_decl->self_type();
+  self_type->set_static_type(arena_->New<TypeType>());
+  SetConstantValue(self_type, iface_type);
+
   // Process the Self parameter.
   CARBON_RETURN_IF_ERROR(TypeCheckPattern(iface_decl->self(), std::nullopt,
                                           iface_scope, ValueCategory::Let));
+  auto* self_witness = cast<Witness>(
+      iface_decl->self()->impl_binding().value()->symbolic_identity().value());
 
   ScopeInfo iface_scope_info = ScopeInfo::ForNonClassScope(&iface_scope);
   for (Nonnull<Declaration*> m : iface_decl->members()) {
     CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, iface_scope_info));
 
     if (auto* assoc = dyn_cast<AssociatedConstantDeclaration>(m)) {
-      // TODO: Create an ImplBinding for Self and create a BindingWitness for
-      // it here.
-      Nonnull<const Expression*> witness_expr =
-          arena_->New<DotSelfExpression>(iface_decl->source_loc());
       assoc->binding().set_symbolic_identity(arena_->New<AssociatedConstant>(
-          &iface_decl->self()->value(), iface_type, assoc,
-          arena_->New<SymbolicWitness>(witness_expr)));
+          &iface_decl->self()->value(), iface_type, assoc, self_witness));
     }
   }
   if (trace_stream_) {

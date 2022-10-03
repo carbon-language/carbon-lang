@@ -512,6 +512,8 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
         CARBON_RETURN_IF_ERROR(ResolveNames(**iface.params(), iface_scope));
       }
       enclosing_scope.MarkUsable(iface.name());
+      // Don't resolve names in the type of the self binding. The
+      // InterfaceDeclaration constructor already did that.
       CARBON_RETURN_IF_ERROR(iface_scope.Add("Self", iface.self()));
       CARBON_RETURN_IF_ERROR(
           ResolveMemberNames(iface.members(), iface_scope, bodies));
