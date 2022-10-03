@@ -17,8 +17,6 @@ struct NodeId {
 
   void Print(llvm::raw_ostream& out) const { out << "%" << id; }
 
-  operator int32_t() const { return id; }
-
   // Comparison to help tests.
   auto operator==(int32_t other) const -> bool { return id == other; }
 
