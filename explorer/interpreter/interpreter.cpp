@@ -655,7 +655,6 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::BindingWitness:
     case Value::Kind::ConstraintWitness:
     case Value::Kind::ConstraintImplWitness:
-    case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
@@ -914,9 +913,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         return todo_.Spawn(std::make_unique<ExpressionAction>(
             &cast<IndexExpression>(exp).object()));
       } else if (act.pos() == 1) {
-        if (!isa<TupleValue>(act.results()[0])) {
-          return todo_.FinishAction(arena_->New<SymbolicWitness>(&exp));
-        }
         return todo_.Spawn(std::make_unique<ExpressionAction>(
             &cast<IndexExpression>(exp).offset()));
       } else {
@@ -1430,10 +1426,6 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
                     << ". --->\n";
   }
   switch (witness->kind()) {
-    case Value::Kind::SymbolicWitness:
-      return todo_.ReplaceWith(std::make_unique<ExpressionAction>(
-          &cast<SymbolicWitness>(witness)->impl_expression()));
-
     case Value::Kind::BindingWitness: {
       const ImplBinding* binding = cast<BindingWitness>(witness)->binding();
       CARBON_ASSIGN_OR_RETURN(

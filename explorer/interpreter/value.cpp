@@ -479,11 +479,6 @@ void Value::Print(llvm::raw_ostream& out) const {
           << *witness.constraint_witness();
       break;
     }
-    case Value::Kind::SymbolicWitness: {
-      const auto& witness = cast<SymbolicWitness>(*this);
-      out << "witness " << witness.impl_expression();
-      break;
-    }
     case Value::Kind::ParameterizedEntityName:
       out << *GetName(cast<ParameterizedEntityName>(*this).declaration());
       break;
@@ -790,7 +785,6 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     case Value::Kind::BindingWitness:
     case Value::Kind::ConstraintWitness:
     case Value::Kind::ConstraintImplWitness:
-    case Value::Kind::SymbolicWitness:
       CARBON_FATAL() << "TypeEqual: unexpected Witness";
       break;
     case Value::Kind::AutoType:
@@ -894,7 +888,6 @@ auto ValueStructurallyEqual(
     case Value::Kind::BindingWitness:
     case Value::Kind::ConstraintWitness:
     case Value::Kind::ConstraintImplWitness:
-    case Value::Kind::SymbolicWitness:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:

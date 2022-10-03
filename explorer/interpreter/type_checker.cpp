@@ -183,7 +183,6 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::BindingWitness:
     case Value::Kind::ConstraintWitness:
     case Value::Kind::ConstraintImplWitness:
-    case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::TypeOfParameterizedEntityName:
@@ -247,7 +246,6 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
     case Value::Kind::BindingWitness:
     case Value::Kind::ConstraintWitness:
     case Value::Kind::ConstraintImplWitness:
-    case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
       return false;
@@ -873,7 +871,6 @@ auto TypeChecker::ArgumentDeduction(
     case Value::Kind::BindingWitness:
     case Value::Kind::ConstraintWitness:
     case Value::Kind::ConstraintImplWitness:
-    case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::IntValue:
@@ -1186,7 +1183,6 @@ auto TypeChecker::Substitute(
     case Value::Kind::BindingWitness:
     case Value::Kind::ConstraintWitness:
     case Value::Kind::ConstraintImplWitness:
-    case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::IntValue:
@@ -4041,7 +4037,6 @@ static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
     case Value::Kind::BindingWitness:
     case Value::Kind::ConstraintWitness:
     case Value::Kind::ConstraintImplWitness:
-    case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::BindingPlaceholderValue:

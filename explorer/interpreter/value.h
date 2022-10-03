@@ -53,7 +53,6 @@ class Value {
     BindingWitness,
     ConstraintWitness,
     ConstraintImplWitness,
-    SymbolicWitness,
     IntType,
     BoolType,
     TypeType,
@@ -836,8 +835,7 @@ class Witness : public Value {
     return value->kind() == Kind::ImplWitness ||
            value->kind() == Kind::BindingWitness ||
            value->kind() == Kind::ConstraintWitness ||
-           value->kind() == Kind::ConstraintImplWitness ||
-           value->kind() == Kind::SymbolicWitness;
+           value->kind() == Kind::ConstraintImplWitness;
   }
 };
 
@@ -951,25 +949,6 @@ class ConstraintImplWitness : public Witness {
  private:
   Nonnull<const Witness*> constraint_witness_;
   int index_;
-};
-
-// A witness table whose concrete value cannot be determined yet.
-//
-// These are used to represent symbolic witness values which can be computed at
-// runtime but whose values are not known statically.
-class SymbolicWitness : public Witness {
- public:
-  explicit SymbolicWitness(Nonnull<const Expression*> impl_expr)
-      : Witness(Kind::SymbolicWitness), impl_expr_(impl_expr) {}
-
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::SymbolicWitness;
-  }
-
-  auto impl_expression() const -> const Expression& { return *impl_expr_; }
-
- private:
-  Nonnull<const Expression*> impl_expr_;
 };
 
 // A choice type.
