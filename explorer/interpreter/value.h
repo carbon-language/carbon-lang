@@ -925,9 +925,8 @@ class ConstraintImplWitness : public Witness {
   // Make a witness for the given impl_constraint of the given `ConstraintType`
   // witness. If we're indexing into a known tuple of witnesses, pull out the
   // element.
-  static auto Make(Nonnull<Arena*> arena,
-                   Nonnull<const Witness*> witness, int index)
-      -> Nonnull<const Witness*> {
+  static auto Make(Nonnull<Arena*> arena, Nonnull<const Witness*> witness,
+                   int index) -> Nonnull<const Witness*> {
     if (auto* constraint_witness = llvm::dyn_cast<ConstraintWitness>(witness)) {
       return constraint_witness->witnesses()[index];
     }

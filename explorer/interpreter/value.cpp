@@ -467,7 +467,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       const auto& witness = cast<ConstraintWitness>(*this);
       out << "(";
       llvm::ListSeparator sep;
-      for (auto *elem : witness.witnesses()) {
+      for (auto* elem : witness.witnesses()) {
         out << sep << *elem;
       }
       out << ")";

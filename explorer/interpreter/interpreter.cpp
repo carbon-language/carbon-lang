@@ -1449,7 +1449,7 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
       }
       std::vector<Nonnull<const Witness*>> new_witnesses;
       new_witnesses.reserve(witnesses.size());
-      for (auto* witness: act.results()) {
+      for (auto* witness : act.results()) {
         new_witnesses.push_back(cast<Witness>(witness));
       }
       return todo_.FinishAction(
