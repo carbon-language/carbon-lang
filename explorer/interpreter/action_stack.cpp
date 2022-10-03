@@ -127,15 +127,17 @@ void ActionStack::InitializeFragment(ContinuationValue::StackFragment& fragment,
 }
 
 namespace {
+// The way in which FinishAction should be called for a particular kind of
+// action.
 enum class FinishActionKind {
-  // Action should finish without producing a value.
+  // FinishAction should not be passed a value.
   NoValue,
-  // Action should finish by producing a value.
+  // FinishAction should be passed a value.
   Value,
-  // Action needs custom handling. Shouldn't call FinishAction at all.
-  NoFinish,
+  // FinishAction should not be called. The Action needs custom handling.
+  NeverCalled,
 };
-}
+}  // namespace
 
 static auto FinishActionKindFor(Action::Kind kind) -> FinishActionKind {
   switch (kind) {
@@ -150,7 +152,7 @@ static auto FinishActionKindFor(Action::Kind kind) -> FinishActionKind {
       return FinishActionKind::NoValue;
     case Action::Kind::ScopeAction:
     case Action::Kind::CleanUpAction:
-      return FinishActionKind::NoFinish;
+      return FinishActionKind::NeverCalled;
   }
 }
 
@@ -160,7 +162,7 @@ auto ActionStack::FinishAction() -> ErrorOr<Success> {
   switch (FinishActionKindFor(act->kind())) {
     case FinishActionKind::Value:
       CARBON_FATAL() << "This kind of action must produce a result: " << *act;
-    case FinishActionKind::NoFinish:
+    case FinishActionKind::NeverCalled:
       CARBON_FATAL() << "Should not call FinishAction for: " << *act;
     case FinishActionKind::NoValue:
       PopScopes(scopes_to_destroy);
@@ -178,7 +180,7 @@ auto ActionStack::FinishAction(Nonnull<const Value*> result)
   switch (FinishActionKindFor(act->kind())) {
     case FinishActionKind::NoValue:
       CARBON_FATAL() << "This kind of action cannot produce results: " << *act;
-    case FinishActionKind::NoFinish:
+    case FinishActionKind::NeverCalled:
       CARBON_FATAL() << "Should not call FinishAction for: " << *act;
     case FinishActionKind::Value:
       PopScopes(scopes_to_destroy);
@@ -211,8 +213,7 @@ auto ActionStack::ReplaceWith(std::unique_ptr<Action> replacement)
   std::unique_ptr<Action> old = todo_.Pop();
   CARBON_CHECK(FinishActionKindFor(old->kind()) ==
                FinishActionKindFor(replacement->kind()))
-      << "Can't replace action " << *old << " with action " << *replacement
-      << " that has a different kind of result";
+      << "Can't replace action " << *old << " with " << *replacement;
   todo_.Push(std::move(replacement));
   return Success();
 }
