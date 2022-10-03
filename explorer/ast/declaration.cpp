@@ -237,35 +237,56 @@ void ReturnTerm::Print(llvm::raw_ostream& out) const {
   }
 }
 
-// Look for the `me` parameter in the `deduced_parameters`
-// and put it in the `me_pattern`.
-static auto MoveMeParameterToPattern(
-    SourceLocation source_loc, std::optional<Nonnull<Pattern*>>& me_pattern,
-    const std::vector<Nonnull<AstNode*>>& deduced_params)
-    -> ErrorOr<std::vector<Nonnull<GenericBinding*>>> {
+namespace {
+
+// The deduced parameters of a function declaration.
+struct DeducedParameters {
+  // The `me` parameter, if any.
+  std::optional<Nonnull<Pattern*>> me_pattern;
+
+  // All other deduced parameters.
   std::vector<Nonnull<GenericBinding*>> resolved_params;
+};
+
+// Split the `me` pattern (if any) out of `deduced_params`.
+auto SplitDeducedParameters(
+    SourceLocation source_loc,
+    const std::vector<Nonnull<AstNode*>>& deduced_params)
+    -> ErrorOr<DeducedParameters> {
+  DeducedParameters result;
   for (Nonnull<AstNode*> param : deduced_params) {
     switch (param->kind()) {
       case AstNodeKind::GenericBinding:
-        resolved_params.push_back(&cast<GenericBinding>(*param));
+        result.resolved_params.push_back(&cast<GenericBinding>(*param));
         break;
       case AstNodeKind::BindingPattern: {
-        Nonnull<BindingPattern*> bp = &cast<BindingPattern>(*param);
-        if (me_pattern.has_value() || bp->name() != "me") {
+        Nonnull<BindingPattern*> binding = &cast<BindingPattern>(*param);
+        if (binding->name() != "me") {
           return CompilationError(source_loc)
                  << "illegal binding pattern in implicit parameter list";
         }
-        me_pattern = bp;
+        if (result.me_pattern.has_value()) {
+          return CompilationError(source_loc)
+                 << "parameter list cannot contain more than one `me` "
+                    "parameter";
+        }
+        result.me_pattern = binding;
         break;
       }
       case AstNodeKind::AddrPattern: {
-        Nonnull<AddrPattern*> abp = &cast<AddrPattern>(*param);
-        Nonnull<BindingPattern*> bp = &cast<BindingPattern>(abp->binding());
-        if (me_pattern.has_value() || bp->name() != "me") {
+        Nonnull<AddrPattern*> addr_pattern = &cast<AddrPattern>(*param);
+        Nonnull<BindingPattern*> binding =
+            &cast<BindingPattern>(addr_pattern->binding());
+        if (binding->name() != "me") {
           return CompilationError(source_loc)
                  << "illegal binding pattern in implicit parameter list";
         }
-        me_pattern = abp;
+        if (result.me_pattern.has_value()) {
+          return CompilationError(source_loc)
+                 << "parameter list cannot contain more than one `me` "
+                    "parameter";
+        }
+        result.me_pattern = addr_pattern;
         break;
       }
       default:
@@ -273,8 +294,9 @@ static auto MoveMeParameterToPattern(
                << "illegal AST node in implicit parameter list";
     }
   }
-  return resolved_params;
+  return result;
 }
+}  // namespace
 
 auto DestructorDeclaration::CreateDestructor(
     Nonnull<Arena*> arena, SourceLocation source_loc,
@@ -282,31 +304,27 @@ auto DestructorDeclaration::CreateDestructor(
     Nonnull<TuplePattern*> param_pattern, ReturnTerm return_term,
     std::optional<Nonnull<Block*>> body)
     -> ErrorOr<Nonnull<DestructorDeclaration*>> {
-  std::vector<Nonnull<GenericBinding*>> resolved_params;
-  std::optional<Nonnull<Pattern*>> me_pattern;
-  CARBON_ASSIGN_OR_RETURN(
-      resolved_params,
-      MoveMeParameterToPattern(source_loc, me_pattern, deduced_params));
+  DeducedParameters split_params;
+  CARBON_ASSIGN_OR_RETURN(split_params,
+                          SplitDeducedParameters(source_loc, deduced_params));
   return arena->New<DestructorDeclaration>(
-      source_loc, std::move(resolved_params), me_pattern, param_pattern,
-      return_term, body);
+      source_loc, std::move(split_params.resolved_params),
+      split_params.me_pattern, param_pattern, return_term, body);
 }
 
 auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
                                  SourceLocation source_loc, std::string name,
                                  std::vector<Nonnull<AstNode*>> deduced_params,
-                                 std::optional<Nonnull<Pattern*>> me_pattern,
                                  Nonnull<TuplePattern*> param_pattern,
                                  ReturnTerm return_term,
                                  std::optional<Nonnull<Block*>> body)
     -> ErrorOr<Nonnull<FunctionDeclaration*>> {
-  std::vector<Nonnull<GenericBinding*>> resolved_params;
-  CARBON_ASSIGN_OR_RETURN(
-      resolved_params,
-      MoveMeParameterToPattern(source_loc, me_pattern, deduced_params));
-  return arena->New<FunctionDeclaration>(source_loc, name,
-                                         std::move(resolved_params), me_pattern,
-                                         param_pattern, return_term, body);
+  DeducedParameters split_params;
+  CARBON_ASSIGN_OR_RETURN(split_params,
+                          SplitDeducedParameters(source_loc, deduced_params));
+  return arena->New<FunctionDeclaration>(
+      source_loc, name, std::move(split_params.resolved_params),
+      split_params.me_pattern, param_pattern, return_term, body);
 }
 
 void CallableDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {

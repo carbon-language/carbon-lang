@@ -140,7 +140,6 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
     case ExpressionKind::UnimplementedExpression:
     case ExpressionKind::FunctionTypeLiteral:
     case ExpressionKind::ArrayTypeLiteral:
-    case ExpressionKind::InstantiateImpl:
       break;
   }
   return Success();

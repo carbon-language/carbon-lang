@@ -1,0 +1,44 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: Carbon Explorer bug
+description: >
+  Report a bug with the Carbon Explorer interpreter. This is what's provided at
+  [Compiler Explorer](https://carbon.compiler-explorer.com).
+labels: [explorer]
+body:
+  - type: markdown
+    attributes:
+      value: >
+        **Attention:** If this is a _question_, please use either [GitHub
+        Discussions](https://github.com/carbon-language/carbon-lang/discussions)
+        or [Discord](https://discord.gg/ZjVdShJDAs).
+  - type: textarea
+    id: desc
+    attributes:
+      label: >
+        Description of the bug:
+  - type: textarea
+    id: repro
+    attributes:
+      label: >
+        What did you do, or what's a simple way to reproduce the bug?
+      description: >
+        Please provide example code and errors; a shortlink to the execution on
+        [Compiler Explorer](https://carbon.compiler-explorer.com) can also help.
+  - type: textarea
+    id: expected
+    attributes:
+      label: >
+        What did you expect to happen?
+  - type: textarea
+    id: actual
+    attributes:
+      label: >
+        What actually happened?
+  - type: textarea
+    id: extras
+    attributes:
+      label: >
+        Any other information, logs, or outputs that you want to share?

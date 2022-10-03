@@ -71,13 +71,12 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                  << "member " << f << " not in " << *witness;
         }
       }
-      case Value::Kind::SymbolicWitness: {
+      default:
+        CARBON_CHECK(isa<Witness>(witness))
+            << "expected Witness, not " << *witness;
         return RuntimeError(source_loc)
                << "member lookup for " << f << " in symbolic " << *witness
                << " not implemented yet";
-      }
-      default:
-        CARBON_FATAL() << "expected Witness, not " << *witness;
     }
   }
   switch (v->kind()) {
@@ -455,13 +454,29 @@ void Value::Print(llvm::raw_ostream& out) const {
     }
     case Value::Kind::ImplWitness: {
       const auto& witness = cast<ImplWitness>(*this);
-      out << "witness " << *witness.declaration().impl_type() << " as "
+      out << "witness for impl " << *witness.declaration().impl_type() << " as "
           << witness.declaration().interface();
       break;
     }
-    case Value::Kind::SymbolicWitness: {
-      const auto& witness = cast<SymbolicWitness>(*this);
-      out << "witness " << witness.impl_expression();
+    case Value::Kind::BindingWitness: {
+      const auto& witness = cast<BindingWitness>(*this);
+      out << "witness for " << *witness.binding()->type_var();
+      break;
+    }
+    case Value::Kind::ConstraintWitness: {
+      const auto& witness = cast<ConstraintWitness>(*this);
+      out << "(";
+      llvm::ListSeparator sep;
+      for (auto* elem : witness.witnesses()) {
+        out << sep << *elem;
+      }
+      out << ")";
+      break;
+    }
+    case Value::Kind::ConstraintImplWitness: {
+      const auto& witness = cast<ConstraintImplWitness>(*this);
+      out << "witness " << witness.index() << " of "
+          << *witness.constraint_witness();
       break;
     }
     case Value::Kind::ParameterizedEntityName:
@@ -767,7 +782,9 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
                      << *t1 << "\n"
                      << *t2;
     case Value::Kind::ImplWitness:
-    case Value::Kind::SymbolicWitness:
+    case Value::Kind::BindingWitness:
+    case Value::Kind::ConstraintWitness:
+    case Value::Kind::ConstraintImplWitness:
       CARBON_FATAL() << "TypeEqual: unexpected Witness";
       break;
     case Value::Kind::AutoType:
@@ -868,7 +885,9 @@ auto ValueStructurallyEqual(
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
     case Value::Kind::ImplWitness:
-    case Value::Kind::SymbolicWitness:
+    case Value::Kind::BindingWitness:
+    case Value::Kind::ConstraintWitness:
+    case Value::Kind::ConstraintImplWitness:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:

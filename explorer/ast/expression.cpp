@@ -257,11 +257,6 @@ void Expression::Print(llvm::raw_ostream& out) const {
       }
       break;
     }
-    case ExpressionKind::InstantiateImpl: {
-      const auto& inst_impl = cast<InstantiateImpl>(*this);
-      out << "instantiate " << *inst_impl.generic_impl();
-      break;
-    }
     case ExpressionKind::UnimplementedExpression: {
       const auto& unimplemented = cast<UnimplementedExpression>(*this);
       out << "UnimplementedExpression<" << unimplemented.label() << ">(";
@@ -346,7 +341,6 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
     case ExpressionKind::UnimplementedExpression:
     case ExpressionKind::FunctionTypeLiteral:
     case ExpressionKind::ArrayTypeLiteral:
-    case ExpressionKind::InstantiateImpl:
       out << "...";
       break;
   }

@@ -29,15 +29,16 @@ class Function {
         // return_expr_(return_expr),
         body_(std::move(body)) {}
 
-  void Print(llvm::raw_ostream& out,
-             std::function<void(NodeRef)> print_node_ref) const {
-    out << "Function(" << id_ << ", {";
-    llvm::ListSeparator sep(", ");
-    for (auto& node_ref : body_) {
-      out << sep;
-      print_node_ref(node_ref);
-    }
-    out << "})";
+  void Print(
+      llvm::raw_ostream& out, int indent,
+      std::function<void(int, llvm::ArrayRef<NodeRef>)> print_block) const {
+    out << "Function(\n";
+    int content_intent = indent + 4;
+    out.indent(content_intent);
+    out << id_ << ",\n";
+    out.indent(content_intent);
+    print_block(content_intent, body_);
+    out << ")";
   }
 
   auto node() const -> ParseTree::Node { return node_; }

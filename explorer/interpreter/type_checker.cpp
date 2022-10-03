@@ -48,13 +48,10 @@ struct TypeChecker::SingleStepEqualityContext : public EqualityContext {
     }
 
     CARBON_ASSIGN_OR_RETURN(
-        Nonnull<const Expression*> witness_expr,
+        Nonnull<const Witness*> witness,
         impl_scope_->Resolve(&assoc->interface(), &assoc->base(), source_loc,
                              *type_checker_));
-    CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> witness_value,
-                            InterpExp(witness_expr, type_checker_->arena_,
-                                      type_checker_->trace_stream_));
-    impl_witness = dyn_cast<ImplWitness>(witness_value);
+    impl_witness = dyn_cast<ImplWitness>(witness);
     if (impl_witness) {
       return impl_witness;
     }
@@ -181,7 +178,9 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::StringValue:
     case Value::Kind::UninitializedValue:
     case Value::Kind::ImplWitness:
-    case Value::Kind::SymbolicWitness:
+    case Value::Kind::BindingWitness:
+    case Value::Kind::ConstraintWitness:
+    case Value::Kind::ConstraintImplWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::TypeOfParameterizedEntityName:
@@ -242,7 +241,9 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
     case Value::Kind::StringValue:
     case Value::Kind::UninitializedValue:
     case Value::Kind::ImplWitness:
-    case Value::Kind::SymbolicWitness:
+    case Value::Kind::BindingWitness:
+    case Value::Kind::ConstraintWitness:
+    case Value::Kind::ConstraintImplWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
       return false;
@@ -870,7 +871,9 @@ auto TypeChecker::ArgumentDeduction(
       return handle_non_deduced_type();
     }
     case Value::Kind::ImplWitness:
-    case Value::Kind::SymbolicWitness:
+    case Value::Kind::BindingWitness:
+    case Value::Kind::ConstraintWitness:
+    case Value::Kind::ConstraintImplWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::IntValue:
@@ -1102,6 +1105,7 @@ auto TypeChecker::Substitute(const Bindings& bindings,
         Nonnull<ImplBinding*> new_ib =
             arena_->New<ImplBinding>(ib->source_loc(), bind_map[ib->type_var()],
                                      Substitute(new_bindings, ib->interface()));
+        // TODO: Should we set a symbolic identity on this impl binding?
         new_ib->set_original(ib->original());
         impl_bindings.push_back(new_ib);
       }
@@ -1190,7 +1194,9 @@ auto TypeChecker::Substitute(const Bindings& bindings,
       // type for it.
       return type;
     case Value::Kind::ImplWitness:
-    case Value::Kind::SymbolicWitness:
+    case Value::Kind::BindingWitness:
+    case Value::Kind::ConstraintWitness:
+    case Value::Kind::ConstraintImplWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::IntValue:
@@ -1221,7 +1227,7 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
                             const ImplScope::Impl& impl,
                             const ImplScope& impl_scope,
                             SourceLocation source_loc) const
-    -> std::optional<Nonnull<Expression*>> {
+    -> std::optional<Nonnull<const Witness*>> {
   if (trace_stream_) {
     **trace_stream_ << "MatchImpl: looking for " << *impl_type << " as "
                     << iface << "\n";
@@ -1265,7 +1271,7 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
 
   // Ensure the constraints on the `impl` are satisfied by the deduced
   // arguments.
-  ImplExpMap impls;
+  ImplWitnessMap impls;
   if (ErrorOr<Success> e = SatisfyImpls(impl.impl_bindings, impl_scope,
                                         source_loc, deduced_args, impls);
       !e.ok()) {
@@ -1279,31 +1285,36 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
     **trace_stream_ << "matched with " << *impl.type << " as "
                     << *impl.interface << "\n\n";
   }
-  return deduced_args.empty() ? impl.impl
-                              : arena_->New<InstantiateImpl>(
-                                    source_loc, impl.impl, deduced_args, impls);
+  if (deduced_args.empty()) {
+    return impl.witness;
+  }
+
+  // Only ImplWitnesses can be parameterized.
+  const ImplWitness* impl_witness = cast<ImplWitness>(impl.witness);
+  CARBON_CHECK(impl_witness->bindings().empty())
+      << "should not deduce arguments for ImplWitness we have already resolved";
+  return arena_->New<ImplWitness>(
+      &impl_witness->declaration(),
+      arena_->New<Bindings>(std::move(deduced_args), std::move(impls)));
 }
 
 auto TypeChecker::MakeConstraintWitness(
     const ConstraintType& constraint,
-    std::vector<Nonnull<Expression*>> impl_constraint_witnesses,
-    SourceLocation source_loc) const -> Nonnull<Expression*> {
-  return arena_->New<TupleLiteral>(source_loc,
-                                   std::move(impl_constraint_witnesses));
+    std::vector<Nonnull<const Witness*>> impl_constraint_witnesses,
+    SourceLocation source_loc) const -> Nonnull<const Witness*> {
+  return arena_->New<ConstraintWitness>(std::move(impl_constraint_witnesses));
 }
 
-auto TypeChecker::MakeConstraintWitnessAccess(Nonnull<Expression*> witness,
+auto TypeChecker::MakeConstraintWitnessAccess(Nonnull<const Witness*> witness,
                                               size_t impl_offset) const
-    -> Nonnull<Expression*> {
-  return arena_->New<IndexExpression>(
-      witness->source_loc(), witness,
-      arena_->New<IntLiteral>(witness->source_loc(), impl_offset));
+    -> Nonnull<const Witness*> {
+  return ConstraintImplWitness::Make(arena_, witness, impl_offset);
 }
 
 auto TypeChecker::SatisfyImpls(
     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
     const ImplScope& impl_scope, SourceLocation source_loc,
-    const BindingMap& deduced_type_args, ImplExpMap& impls) const
+    const BindingMap& deduced_type_args, ImplWitnessMap& impls) const
     -> ErrorOr<Success> {
   for (Nonnull<const ImplBinding*> impl_binding : impl_bindings) {
     // TODO: Presumably we will need to accumuate witnesses as we go.
@@ -1313,11 +1324,11 @@ auto TypeChecker::SatisfyImpls(
     CARBON_CHECK(deduced_type_args.find(impl_binding->type_var()) !=
                  deduced_type_args.end());
     CARBON_ASSIGN_OR_RETURN(
-        Nonnull<Expression*> impl,
+        Nonnull<const Value*> impl,
         impl_scope.Resolve(interface,
                            deduced_type_args.at(impl_binding->type_var()),
                            source_loc, *this));
-    impls.emplace(impl_binding, impl);
+    impls.insert({impl_binding, impl});
   }
   return Success();
 }
@@ -1395,7 +1406,6 @@ auto TypeChecker::DeduceCallBindings(
   CARBON_CHECK(generic_params.empty())
       << "did not find all generic parameters in parameter list";
 
-  call.set_deduced_args(generic_bindings);
   for (Nonnull<const GenericBinding*> deduced_param : deduced_bindings) {
     // TODO: change the following to a CHECK once the real checking
     // has been added to the type checking of function signatures.
@@ -1409,17 +1419,15 @@ auto TypeChecker::DeduceCallBindings(
   }
 
   // Find impls for all the required impl bindings.
-  ImplExpMap impls;
+  ImplWitnessMap impls;
   CARBON_RETURN_IF_ERROR(SatisfyImpls(
       impl_bindings, impl_scope, call.source_loc(), generic_bindings, impls));
-  call.set_impls(impls);
+  call.set_bindings(Bindings(std::move(generic_bindings), std::move(impls)));
 
   // TODO: Ensure any equality constraints are satisfied.
 
   // Convert the arguments to the parameter type.
-  // TODO: Unify ImplExpsMap and ImplWitnessesMap and use the latter here.
-  Bindings bindings(generic_bindings, std::nullopt/*TODO impls*/);
-  Nonnull<const Value*> param_type = Substitute(bindings, params_type);
+  Nonnull<const Value*> param_type = Substitute(call.bindings(), params_type);
 
   // Convert the arguments to the deduced and substituted parameter type.
   CARBON_ASSIGN_OR_RETURN(
@@ -1509,7 +1517,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     return Success();
   }
   switch (e->kind()) {
-    case ExpressionKind::InstantiateImpl:
     case ExpressionKind::ValueLiteral:
       CARBON_FATAL() << "attempting to type check node " << *e
                      << " generated during type checking";
@@ -1685,7 +1692,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           access.set_static_type(inst_member_type);
 
           CARBON_ASSIGN_OR_RETURN(
-              Nonnull<Expression*> impl,
+              Nonnull<const Witness*> impl,
               impl_scope.Resolve(result.interface, &object_type,
                                  e->source_loc(), *this));
           access.set_impl(impl);
@@ -1708,7 +1715,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               ConstraintLookupResult result,
               LookupInConstraint(e->source_loc(), "member access", &object_type,
                                  access.member_name()));
-          CARBON_ASSIGN_OR_RETURN(Nonnull<Expression*> impl,
+          CARBON_ASSIGN_OR_RETURN(Nonnull<const Witness*> impl,
                                   impl_scope.Resolve(result.interface, type,
                                                      e->source_loc(), *this));
           access.set_member(Member(result.member));
@@ -1911,7 +1918,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       if (std::optional<Nonnull<const Value*>> iface =
               member_name.interface()) {
         CARBON_ASSIGN_OR_RETURN(
-            Nonnull<Expression*> impl,
+            Nonnull<const Witness*> impl,
             impl_scope.Resolve(*iface, *base_type, e->source_loc(), *this));
         access.set_impl(impl);
       }
@@ -2691,20 +2698,13 @@ void TypeChecker::BringImplsIntoScope(
   }
 }
 
-auto TypeChecker::CreateImplReference(Nonnull<const ImplBinding*> impl_binding)
-    -> Nonnull<Expression*> {
-  auto impl_id =
-      arena_->New<IdentifierExpression>(impl_binding->source_loc(), "impl");
-  impl_id->set_value_node(impl_binding);
-  return impl_id;
-}
-
 void TypeChecker::BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
                                      ImplScope& impl_scope) {
-  CARBON_CHECK(impl_binding->type_var()->symbolic_identity().has_value());
+  CARBON_CHECK(impl_binding->type_var()->symbolic_identity().has_value() &&
+               impl_binding->symbolic_identity().has_value());
   impl_scope.Add(impl_binding->interface(),
                  *impl_binding->type_var()->symbolic_identity(),
-                 CreateImplReference(impl_binding), *this);
+                 cast<Witness>(*impl_binding->symbolic_identity()), *this);
 }
 
 auto TypeChecker::TypeCheckTypeExp(Nonnull<Expression*> type_expression,
@@ -2843,7 +2843,7 @@ auto TypeChecker::TypeCheckPattern(
         Nonnull<ImplBinding*> impl_binding =
             arena_->New<ImplBinding>(binding.source_loc(), &binding, type);
         impl_binding->set_symbolic_identity(
-            arena_->New<SymbolicWitness>(CreateImplReference(impl_binding)));
+            arena_->New<BindingWitness>(impl_binding));
         binding.set_impl_binding(impl_binding);
         BringImplIntoScope(impl_binding, impl_scope);
       }
@@ -3663,21 +3663,24 @@ auto TypeChecker::DeclareInterfaceDeclaration(
     iface_decl->set_static_type(arena_->New<TypeOfInterfaceType>(iface_type));
   }
 
+  // Set the type of Self to be the instantiated interface.
+  Nonnull<SelfDeclaration*> self_type = iface_decl->self_type();
+  self_type->set_static_type(arena_->New<TypeType>());
+  SetConstantValue(self_type, iface_type);
+
   // Process the Self parameter.
   CARBON_RETURN_IF_ERROR(TypeCheckPattern(iface_decl->self(), std::nullopt,
                                           iface_scope, ValueCategory::Let));
+  auto* self_witness = cast<Witness>(
+      iface_decl->self()->impl_binding().value()->symbolic_identity().value());
 
   ScopeInfo iface_scope_info = ScopeInfo::ForNonClassScope(&iface_scope);
   for (Nonnull<Declaration*> m : iface_decl->members()) {
     CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, iface_scope_info));
 
     if (auto* assoc = dyn_cast<AssociatedConstantDeclaration>(m)) {
-      // TODO: The witness should be optional in AssociatedConstant.
-      Nonnull<const Expression*> witness_expr =
-          arena_->New<DotSelfExpression>(iface_decl->source_loc());
       assoc->binding().set_symbolic_identity(arena_->New<AssociatedConstant>(
-          &iface_decl->self()->value(), iface_type, assoc,
-          arena_->New<SymbolicWitness>(witness_expr)));
+          &iface_decl->self()->value(), iface_type, assoc, self_witness));
     }
   }
   if (trace_stream_) {
@@ -3823,11 +3826,7 @@ auto TypeChecker::CheckAndAddImplBindings(
                           impl_decl->deduced_parameters().end());
 
   // An expression that evaluates to this impl's witness.
-  // TODO: Store witnesses as `Witness*` rather than `Expression*` everywhere
-  // so we don't need to create this.
-  auto* impl_expr = arena_->New<ValueLiteral>(
-      impl_decl->source_loc(), arena_->New<ImplWitness>(impl_decl),
-      arena_->New<TypeType>(), ValueCategory::Let);
+  auto* witness = arena_->New<ImplWitness>(impl_decl);
 
   // Form the resolved constraint type by substituting `Self` for `.Self`.
   Nonnull<const Value*> self = *impl_decl->self()->constant_value();
@@ -3861,7 +3860,7 @@ auto TypeChecker::CheckAndAddImplBindings(
 
       scope_info.innermost_non_class_scope->Add(
           iface_type, deduced_bindings, impl_type, impl_decl->impl_bindings(),
-          impl_expr, *this);
+          witness, *this);
     } else {
       // TODO: Add support for implementing `adapter`s.
       return CompilationError(impl_decl->source_loc())
@@ -4077,7 +4076,9 @@ static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
     case Value::Kind::AlternativeValue:
     case Value::Kind::TupleValue:
     case Value::Kind::ImplWitness:
-    case Value::Kind::SymbolicWitness:
+    case Value::Kind::BindingWitness:
+    case Value::Kind::ConstraintWitness:
+    case Value::Kind::ConstraintImplWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::BindingPlaceholderValue:

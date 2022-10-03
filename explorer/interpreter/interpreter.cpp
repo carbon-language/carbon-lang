@@ -79,6 +79,8 @@ class Interpreter {
   auto StepExp() -> ErrorOr<Success>;
   // State transitions for lvalues.
   auto StepLvalue() -> ErrorOr<Success>;
+  // State transitions for witnesses.
+  auto StepWitness() -> ErrorOr<Success>;
   // State transitions for patterns.
   auto StepPattern() -> ErrorOr<Success>;
   // State transition for statements.
@@ -101,10 +103,10 @@ class Interpreter {
                Nonnull<const Value*> destination_type,
                SourceLocation source_loc) -> ErrorOr<Nonnull<const Value*>>;
 
-  // Evaluate an expression immediately, recursively.
+  // Evaluate an expression immediately, recursively, and return its result.
   //
   // TODO: Stop using this.
-  auto EvalExpRecursively(Nonnull<const Expression*> exp)
+  auto EvalRecursively(std::unique_ptr<Action> action)
       -> ErrorOr<Nonnull<const Value*>>;
 
   // Evaluate an associated constant by evaluating its witness and looking
@@ -131,6 +133,8 @@ class Interpreter {
   //     __Fn (Point(T)) -> Point(U)
   // becomes
   //     __Fn (Point(i32)) -> Point(bool)
+  //
+  // TODO: This should be an Action.
   auto InstantiateType(Nonnull<const Value*> type, SourceLocation source_loc)
       -> ErrorOr<Nonnull<const Value*>>;
 
@@ -139,6 +143,11 @@ class Interpreter {
   auto InstantiateBindings(Nonnull<const Bindings*> bindings,
                            SourceLocation source_loc)
       -> ErrorOr<Nonnull<const Bindings*>>;
+
+  // Instantiate a witness by replacing all type variables and impl binding
+  // references that occur within it by the current values of those variables.
+  auto InstantiateWitness(Nonnull<const Witness*> witness)
+      -> ErrorOr<Nonnull<const Witness*>>;
 
   // Call the function `fun` with the given `arg` and the `witnesses`
   // for the function's impl bindings.
@@ -483,21 +492,20 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
     case ExpressionKind::WhereExpression:
     case ExpressionKind::DotSelfExpression:
     case ExpressionKind::ArrayTypeLiteral:
-    case ExpressionKind::InstantiateImpl:
       CARBON_FATAL() << "Can't treat expression as lvalue: " << exp;
     case ExpressionKind::UnimplementedExpression:
       CARBON_FATAL() << "Unimplemented: " << exp;
   }
 }
 
-auto Interpreter::EvalExpRecursively(Nonnull<const Expression*> exp)
+auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
     -> ErrorOr<Nonnull<const Value*>> {
   if (trace_stream_) {
-    **trace_stream_ << "--- recursive eval of " << *exp << "\n";
+    **trace_stream_ << "--- recursive eval\n";
     PrintState(**trace_stream_);
   }
   todo_.BeginRecursiveAction();
-  CARBON_RETURN_IF_ERROR(todo_.Spawn(std::make_unique<ExpressionAction>(exp)));
+  CARBON_RETURN_IF_ERROR(todo_.Spawn(std::move(action)));
   // Note that the only `RecursiveAction` we can encounter here is our own --
   // if a nested action begins a recursive action, it will run until that
   // action is finished and popped off the queue before returning to us.
@@ -520,11 +528,8 @@ auto Interpreter::EvalAssociatedConstant(
     Nonnull<const AssociatedConstant*> assoc, SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
   // Find the witness.
-  Nonnull<const Value*> witness = &assoc->witness();
-  if (auto* sym = dyn_cast<SymbolicWitness>(witness)) {
-    CARBON_ASSIGN_OR_RETURN(witness,
-                            EvalExpRecursively(&sym->impl_expression()));
-  }
+  CARBON_ASSIGN_OR_RETURN(Nonnull<const Witness*> witness,
+                          InstantiateWitness(&assoc->witness()));
   if (!isa<ImplWitness>(witness)) {
     CARBON_CHECK(phase() == Phase::CompileTime)
         << "symbolic witnesses should only be formed at compile time";
@@ -603,16 +608,22 @@ auto Interpreter::InstantiateBindings(Nonnull<const Bindings*> bindings,
 
   ImplWitnessMap witnesses = bindings->witnesses();
   for (auto& [bind, witness] : witnesses) {
-    if (auto* sym = dyn_cast<SymbolicWitness>(witness)) {
-      CARBON_ASSIGN_OR_RETURN(witness,
-                              EvalExpRecursively(&sym->impl_expression()));
-    }
+    CARBON_ASSIGN_OR_RETURN(witness,
+                            InstantiateWitness(cast<Witness>(witness)));
   }
 
   if (args == bindings->args() && witnesses == bindings->witnesses()) {
     return bindings;
   }
   return arena_->New<Bindings>(std::move(args), std::move(witnesses));
+}
+
+auto Interpreter::InstantiateWitness(Nonnull<const Witness*> witness)
+    -> ErrorOr<Nonnull<const Witness*>> {
+  CARBON_ASSIGN_OR_RETURN(
+      Nonnull<const Value*> value,
+      EvalRecursively(std::make_unique<WitnessAction>(witness)));
+  return cast<Witness>(value);
 }
 
 auto Interpreter::Convert(Nonnull<const Value*> value,
@@ -641,7 +652,9 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
     case Value::Kind::ImplWitness:
-    case Value::Kind::SymbolicWitness:
+    case Value::Kind::BindingWitness:
+    case Value::Kind::ConstraintWitness:
+    case Value::Kind::ConstraintImplWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
@@ -893,34 +906,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                     << " (" << exp.source_loc() << ") --->\n";
   }
   switch (exp.kind()) {
-    case ExpressionKind::InstantiateImpl: {
-      const InstantiateImpl& inst_impl = cast<InstantiateImpl>(exp);
-      if (act.pos() == 0) {
-        return todo_.Spawn(
-            std::make_unique<ExpressionAction>(inst_impl.generic_impl()));
-      }
-      if (act.pos() == 1 && isa<SymbolicWitness>(act.results()[0])) {
-        return todo_.FinishAction(arena_->New<SymbolicWitness>(&exp));
-      }
-      if (act.pos() - 1 < int(inst_impl.impls().size())) {
-        auto iter = inst_impl.impls().begin();
-        std::advance(iter, act.pos() - 1);
-        return todo_.Spawn(std::make_unique<ExpressionAction>(iter->second));
-      } else {
-        Nonnull<const ImplWitness*> generic_witness =
-            cast<ImplWitness>(act.results()[0]);
-        ImplWitnessMap witnesses;
-        int i = 0;
-        for (const auto& [impl_bind, impl_exp] : inst_impl.impls()) {
-          witnesses[impl_bind] = cast<Witness>(act.results()[i + 1]);
-          ++i;
-        }
-        return todo_.FinishAction(arena_->New<ImplWitness>(
-            &generic_witness->declaration(),
-            arena_->New<Bindings>(inst_impl.type_args(),
-                                  std::move(witnesses))));
-      }
-    }
     case ExpressionKind::IndexExpression: {
       if (act.pos() == 0) {
         //    { { e[i] :: C, E, F} :: S, H}
@@ -928,9 +913,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         return todo_.Spawn(std::make_unique<ExpressionAction>(
             &cast<IndexExpression>(exp).object()));
       } else if (act.pos() == 1) {
-        if (isa<SymbolicWitness>(act.results()[0])) {
-          return todo_.FinishAction(arena_->New<SymbolicWitness>(&exp));
-        }
         return todo_.Spawn(std::make_unique<ExpressionAction>(
             &cast<IndexExpression>(exp).offset()));
       } else {
@@ -997,7 +979,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         // Next, if we're accessing an interface member, evaluate the `impl`
         // expression to find the corresponding witness.
         return todo_.Spawn(
-            std::make_unique<ExpressionAction>(access.impl().value()));
+            std::make_unique<WitnessAction>(access.impl().value()));
       } else {
         // Finally, produce the result.
         std::optional<Nonnull<const InterfaceType*>> found_in_interface =
@@ -1058,7 +1040,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         // Next, if we're accessing an interface member, evaluate the `impl`
         // expression to find the corresponding witness.
         return todo_.Spawn(
-            std::make_unique<ExpressionAction>(access.impl().value()));
+            std::make_unique<WitnessAction>(access.impl().value()));
       } else {
         // Finally, produce the result.
         std::optional<Nonnull<const InterfaceType*>> found_in_interface =
@@ -1181,7 +1163,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       } else if (num_impls > 0 && act.pos() < 2 + int(num_impls)) {
         auto iter = call.impls().begin();
         std::advance(iter, act.pos() - 2);
-        return todo_.Spawn(std::make_unique<ExpressionAction>(iter->second));
+        return todo_.Spawn(
+            std::make_unique<WitnessAction>(cast<Witness>(iter->second)));
       } else if (act.pos() == 2 + int(num_impls)) {
         //    { { v2 :: v1([]) :: C, E, F} :: S, H}
         // -> { {C',E',F'} :: {C, E, F} :: S, H}
@@ -1433,6 +1416,72 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       }
     }
   }  // switch (exp->kind)
+}
+
+auto Interpreter::StepWitness() -> ErrorOr<Success> {
+  Action& act = todo_.CurrentAction();
+  const Witness* witness = cast<WitnessAction>(act).witness();
+  if (trace_stream_) {
+    **trace_stream_ << "--- step witness " << *witness << " ." << act.pos()
+                    << ". --->\n";
+  }
+  switch (witness->kind()) {
+    case Value::Kind::BindingWitness: {
+      const ImplBinding* binding = cast<BindingWitness>(witness)->binding();
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> value,
+          todo_.ValueOfNode(binding, binding->type_var()->source_loc()));
+      if (const auto* lvalue = dyn_cast<LValue>(value)) {
+        // TODO: Why do we store values for impl bindings on the heap?
+        CARBON_ASSIGN_OR_RETURN(
+            value,
+            heap_.Read(lvalue->address(), binding->type_var()->source_loc()));
+      }
+      return todo_.FinishAction(value);
+    }
+
+    case Value::Kind::ConstraintWitness: {
+      llvm::ArrayRef<Nonnull<const Witness*>> witnesses =
+          cast<ConstraintWitness>(witness)->witnesses();
+      if (act.pos() < static_cast<int>(witnesses.size())) {
+        return todo_.Spawn(
+            std::make_unique<WitnessAction>(witnesses[act.pos()]));
+      }
+      std::vector<Nonnull<const Witness*>> new_witnesses;
+      new_witnesses.reserve(witnesses.size());
+      for (auto* witness : act.results()) {
+        new_witnesses.push_back(cast<Witness>(witness));
+      }
+      return todo_.FinishAction(
+          arena_->New<ConstraintWitness>(std::move(new_witnesses)));
+    }
+
+    case Value::Kind::ConstraintImplWitness: {
+      auto* constraint_impl = cast<ConstraintImplWitness>(witness);
+      if (act.pos() == 0) {
+        return todo_.Spawn(std::make_unique<WitnessAction>(
+            constraint_impl->constraint_witness()));
+      }
+      return todo_.FinishAction(ConstraintImplWitness::Make(
+          arena_, cast<Witness>(act.results()[0]), constraint_impl->index()));
+    }
+
+    case Value::Kind::ImplWitness: {
+      auto* impl_witness = cast<ImplWitness>(witness);
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Bindings*> new_bindings,
+          InstantiateBindings(&impl_witness->bindings(),
+                              impl_witness->declaration().source_loc()));
+      return todo_.FinishAction(
+          new_bindings == &impl_witness->bindings()
+              ? impl_witness
+              : arena_->New<ImplWitness>(&impl_witness->declaration(),
+                                         new_bindings));
+    }
+
+    default:
+      CARBON_FATAL() << "unexpected kind of witness " << *witness;
+  }
 }
 
 auto Interpreter::StepPattern() -> ErrorOr<Success> {
@@ -1939,6 +1988,9 @@ auto Interpreter::Step() -> ErrorOr<Success> {
       break;
     case Action::Kind::ExpressionAction:
       CARBON_RETURN_IF_ERROR(StepExp());
+      break;
+    case Action::Kind::WitnessAction:
+      CARBON_RETURN_IF_ERROR(StepWitness());
       break;
     case Action::Kind::PatternAction:
       CARBON_RETURN_IF_ERROR(StepPattern());
