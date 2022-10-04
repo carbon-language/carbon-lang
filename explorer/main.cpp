@@ -19,13 +19,17 @@
 #include "explorer/interpreter/exec_program.h"
 #include "explorer/syntax/parse.h"
 #include "explorer/syntax/prelude.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/InitLLVM.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {
 
 namespace cl = llvm::cl;
+namespace path = llvm::sys::path;
 
 static auto Main(llvm::StringRef default_prelude_file, int argc, char* argv[])
     -> ErrorOr<Success> {
@@ -86,8 +90,16 @@ static auto Main(llvm::StringRef default_prelude_file, int argc, char* argv[])
   return Success();
 }
 
-auto ExplorerMain(llvm::StringRef default_prelude_file, int argc, char** argv)
-    -> int {
+auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
+                  llvm::StringRef relative_prelude_path) -> int {
+  std::string exe =
+      llvm::sys::fs::getMainExecutable(argv[0], static_for_main_addr);
+  llvm::StringRef install_path = path::parent_path(exe);
+  llvm::SmallString<256> default_prelude_file(install_path);
+  path::append(default_prelude_file,
+               path::begin(relative_prelude_path, path::Style::posix),
+               path::end(relative_prelude_path));
+
   if (auto result = Main(default_prelude_file, argc, argv); !result.ok()) {
     llvm::errs() << result.error() << "\n";
     return EXIT_FAILURE;
