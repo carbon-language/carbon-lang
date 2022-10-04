@@ -50,33 +50,27 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
     }
 
     // Associated functions.
-    switch (witness->kind()) {
-      case Value::Kind::ImplWitness: {
-        auto* impl_witness = cast<ImplWitness>(witness);
-        if (std::optional<Nonnull<const Declaration*>> mem_decl =
-                FindMember(f, impl_witness->declaration().members());
-            mem_decl.has_value()) {
-          const auto& fun_decl = cast<FunctionDeclaration>(**mem_decl);
-          if (fun_decl.is_method()) {
-            return arena->New<BoundMethodValue>(&fun_decl, v,
-                                                &impl_witness->bindings());
-          } else {
-            // Class function.
-            auto* fun = cast<FunctionValue>(*fun_decl.constant_value());
-            return arena->New<FunctionValue>(&fun->declaration(),
-                                             &impl_witness->bindings());
-          }
+    if (auto* impl_witness = dyn_cast<ImplWitness>(witness)) {
+      if (std::optional<Nonnull<const Declaration*>> mem_decl =
+              FindMember(f, impl_witness->declaration().members());
+          mem_decl.has_value()) {
+        const auto& fun_decl = cast<FunctionDeclaration>(**mem_decl);
+        if (fun_decl.is_method()) {
+          return arena->New<BoundMethodValue>(&fun_decl, v,
+                                              &impl_witness->bindings());
         } else {
-          return CompilationError(source_loc)
-                 << "member " << f << " not in " << *witness;
+          // Class function.
+          auto* fun = cast<FunctionValue>(*fun_decl.constant_value());
+          return arena->New<FunctionValue>(&fun->declaration(),
+                                           &impl_witness->bindings());
         }
+      } else {
+        return CompilationError(source_loc)
+               << "member " << f << " not in " << *witness;
       }
-      default:
-        CARBON_CHECK(isa<Witness>(witness))
-            << "expected Witness, not " << *witness;
-        return RuntimeError(source_loc)
-               << "member lookup for " << f << " in symbolic " << *witness
-               << " not implemented yet";
+    } else {
+      return RuntimeError(source_loc)
+             << "member lookup for " << f << " in symbolic " << *witness;
     }
   }
   switch (v->kind()) {
