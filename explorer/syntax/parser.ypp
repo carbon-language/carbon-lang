@@ -697,7 +697,7 @@ where_expression:
   type_expression WHERE where_clause_list
     {
       auto* self =
-          arena -> New<GenericBinding>(context.source_loc(), ".Self", $1);
+          arena->New<GenericBinding>(context.source_loc(), ".Self", $1);
       $$ = arena->New<WhereExpression>(context.source_loc(), self, $3);
     }
 ;
@@ -1149,8 +1149,7 @@ declaration:
 | MIXIN identifier type_params mixin_import LEFT_CURLY_BRACE mixin_body RIGHT_CURLY_BRACE
     {
       // EXPERIMENTAL MIXN FEATURE
-      auto self =
-          arena -> New<GenericBinding>(context.source_loc(), "Self", $4);
+      auto self = arena->New<GenericBinding>(context.source_loc(), "Self", $4);
       $$ = arena->New<MixinDeclaration>(context.source_loc(), $2, $3, self, $6);
     }
 | CHOICE identifier type_params LEFT_CURLY_BRACE alternative_list RIGHT_CURLY_BRACE
@@ -1174,10 +1173,10 @@ declaration:
     {
       // TODO: Type of `Self` should be the interface being declared, not
       // `Type`.
-      auto ty_ty = arena -> New<TypeTypeLiteral>(context.source_loc());
+      auto ty_ty = arena->New<TypeTypeLiteral>(context.source_loc());
       // TODO: Should this be switched to use a `SelfDeclaration` instead?
       auto self =
-          arena -> New<GenericBinding>(context.source_loc(), "Self", ty_ty);
+          arena->New<GenericBinding>(context.source_loc(), "Self", ty_ty);
       $$ = arena->New<InterfaceDeclaration>(context.source_loc(), $2, $3, self,
                                             $5);
     }
