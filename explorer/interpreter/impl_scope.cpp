@@ -28,7 +28,7 @@ void ImplScope::Add(Nonnull<const Value*> iface,
                     const TypeChecker& type_checker) {
   if (auto* orig_constraint = dyn_cast<ConstraintType>(iface)) {
     // Constraints usually have an impl binding, but a constraint such as
-    // `Type where .Self == i32` does not.
+    // `Type where .Self == i32` does not. FIXME: Should it?
     // TODO: Should we have substituted .Self = type into iface before we got
     // here, eg when initially setting the type of the binding? We do so for an
     // impl.

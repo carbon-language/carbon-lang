@@ -48,6 +48,9 @@ class ImplBinding : public AstNode {
   // The interface being implemented.
   auto interface() const -> Nonnull<const Value*> { return iface_; }
 
+  // Set the interface being implemented. Should only be called by typechecking.
+  void reset_interface(Nonnull<const Value*> iface) { iface_ = iface; }
+
   // Required for the ValueNode interface
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
     return std::nullopt;
@@ -61,6 +64,7 @@ class ImplBinding : public AstNode {
   }
 
   // The static type of the impl. Cannot be called before typechecking.
+  // TODO: An impl binding doesn't have a type. Can this be removed?
   auto static_type() const -> const Value& { return **static_type_; }
 
   // Sets the static type of the impl. Can only be called once, during

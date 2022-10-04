@@ -920,11 +920,18 @@ class ConstraintTypeBuilder {
  public:
   ConstraintTypeBuilder(Nonnull<Arena*> arena, SourceLocation source_loc)
       : self_binding_(MakeSelfBinding(arena, source_loc)) {}
-  ConstraintTypeBuilder(Nonnull<const GenericBinding*> self_binding)
-      : self_binding_(self_binding) {}
+  ConstraintTypeBuilder(Nonnull<GenericBinding*> self_binding)
+      : self_binding_(self_binding) {
+    // The self binding for a constraint type always has an impl binding,
+    // even in the case of something like `Type where .Self == i32`, which has
+    // no impl constraints so its impl binding's witness will always be `()`.
+    if (!self_binding->impl_binding()) {
+      AddImplBinding(self_binding);
+    }
+  }
 
   // Produce a type that refers to the `.Self` type of the constraint.
-  auto GetSelfType(Nonnull<Arena*> arena) const -> Nonnull<const Value*> {
+  auto GetSelfType() const -> Nonnull<const Value*> {
     return &self_binding_->value();
   }
 
@@ -990,29 +997,39 @@ class ConstraintTypeBuilder {
   // Convert the builder into a ConstraintType. Note that this consumes the
   // builder.
   auto Build(Nonnull<Arena*> arena_) && -> Nonnull<const ConstraintType*> {
-    // TODO: Should we somehow replace `.Self` with one with the correct
-    // type-of-type? That would create a cycle: `.Self` would refer to the
-    // constraint type that owns it.
-    return arena_->New<ConstraintType>(
+    // Create the new type.
+    auto* result = arena_->New<ConstraintType>(
         self_binding_, std::move(impl_constraints_),
         std::move(equality_constraints_), std::move(lookup_contexts_));
+    // Update the impl binding to denote the constraint type itself. It's
+    // possible for any of the impl bindings in a constraint type to be
+    // referenced from other parts of the constraint, for example:
+    //   (A where .Self is B) where .(B.X) = .(A.X)
+    self_binding->impl_binding().value()->reset_interface(result);
+    return result;
   }
 
  private:
   // Make a generic binding to serve as the `.Self` of this constraint type.
   static auto MakeSelfBinding(Nonnull<Arena*> arena, SourceLocation source_loc)
       -> Nonnull<const GenericBinding*> {
-    // Note, the type-of-type here is a placeholder.
+    // Note, the type-of-type here is a placeholder and isn't really
+    // meaningful.
     Nonnull<GenericBinding*> self_binding = arena->New<GenericBinding>(
         source_loc, ".Self", arena->New<TypeTypeLiteral>(source_loc));
     Nonnull<const Value*> self = arena->New<VariableType>(self_binding);
     // TODO: Do we really need both of these?
     self_binding->set_symbolic_identity(self);
     self_binding->set_value(self);
+    AddImplBinding(self_binding);
+    return self_binding;
+  }
 
+  // Add an impl binding to the given self binding.
+  static auto AddImplBinding(Nonnull<GenericBinding*> self_binding) {
     // The `.Self` binding for a constraint should always have an
-    // `ImplBinding`.
-    // Note, the type-of-type here is a placeholder too.
+    // `ImplBinding`. The interface type of `Type` will be replaced with the
+    // eventual constraint type by `Build`.
     Nonnull<ImplBinding*> impl_binding = arena->New<ImplBinding>(
         source_loc, self_binding, arena->New<TypeType>());
     impl_binding->set_symbolic_identity(
@@ -1022,7 +1039,7 @@ class ConstraintTypeBuilder {
   }
 
  private:
-  Nonnull<const GenericBinding*> self_binding_;
+  Nonnull<GenericBinding*> self_binding_;
   std::vector<ConstraintType::ImplConstraint> impl_constraints_;
   std::vector<ConstraintType::EqualityConstraint> equality_constraints_;
   std::vector<ConstraintType::LookupContext> lookup_contexts_;
@@ -1161,12 +1178,17 @@ auto TypeChecker::Substitute(const Bindings& bindings,
     }
     case Value::Kind::ConstraintType: {
       const auto& constraint = cast<ConstraintType>(*type);
-      ConstraintTypeBuilder builder(constraint.self_binding());
+      Bindings local_bindings = bindings;
+      ConstraintTypeBuilder builder(arena_, constraint.self_binding().source_loc());
+      local_bindings.Add(constraint.self_binding(), builder.GetSelfType(),
+                         builder.GetSelfWitness());
       for (const auto& impl_constraint : constraint.impl_constraints()) {
+        // TODO: If we lose any impl constraints due to deduplication, they
+        // need to be renumbered in our impl binding witness.
         builder.AddImplConstraint(
-            {.type = Substitute(bindings, impl_constraint.type),
+            {.type = Substitute(local_bindings, impl_constraint.type),
              .interface = cast<InterfaceType>(
-                 Substitute(bindings, impl_constraint.interface))});
+                 Substitute(local_bindings, impl_constraint.interface))});
       }
 
       for (const auto& equality_constraint :
@@ -1177,7 +1199,7 @@ auto TypeChecker::Substitute(const Bindings& bindings,
           if (std::find_if(values.begin(), values.end(), [&](const Value* v) {
                 return ValueEqual(v, value, std::nullopt);
               }) == values.end()) {
-            values.push_back(Substitute(bindings, value));
+            values.push_back(Substitute(local_bindings, value));
           }
         }
         builder.AddEqualityConstraint({.values = std::move(values)});
@@ -1185,7 +1207,7 @@ auto TypeChecker::Substitute(const Bindings& bindings,
 
       for (const auto& lookup_context : constraint.lookup_contexts()) {
         builder.AddLookupContext(
-            {.context = Substitute(bindings, lookup_context.context)});
+            {.context = Substitute(local_bindings, lookup_context.context)});
       }
       Nonnull<const ConstraintType*> new_constraint =
           std::move(builder).Build(arena_);
@@ -1360,7 +1382,7 @@ auto TypeChecker::MakeConstraintForInterface(
     -> Nonnull<const ConstraintType*> {
   ConstraintTypeBuilder builder(arena_, source_loc);
   builder.AddImplConstraint(
-      {.type = builder.GetSelfType(arena_), .interface = iface_type});
+      {.type = builder.GetSelfType(), .interface = iface_type});
   builder.AddLookupContext({.context = iface_type});
   return std::move(builder).Build(arena_);
 }
@@ -1370,7 +1392,7 @@ auto TypeChecker::CombineConstraints(
     llvm::ArrayRef<Nonnull<const ConstraintType*>> constraints)
     -> Nonnull<const ConstraintType*> {
   ConstraintTypeBuilder builder(arena_, source_loc);
-  auto* self = builder.GetSelfType(arena_);
+  auto* self = builder.GetSelfType();
   for (Nonnull<const ConstraintType*> constraint : constraints) {
     Bindings bindings;
     std::optional<Nonnull<const Witness*>> witness;
@@ -2604,7 +2626,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         // TODO: We need to provide a witness for the old self binding within
         // the new self binding's impl binding here, if the old one had an impl
         // binding.
-        bindings.Add((*base)->self_binding(), builder.GetSelfType(arena_),
+        bindings.Add((*base)->self_binding(), builder.GetSelfType(),
                      std::nullopt);
         builder.Add(cast<ConstraintType>(Substitute(bindings, *base)));
       }
