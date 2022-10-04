@@ -11,7 +11,7 @@
 package ExplorerTest api;
 
 // Error: global variable may not be named with keyword `Self`.
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/global_variable/fail_named_self.carbon:[[@LINE+1]]: syntax error, unexpected SELF, expecting identifier
+// CHECK: SYNTAX ERROR: {{.*}}/explorer/testdata/global_variable/fail_named_self.carbon:[[@LINE+1]]: syntax error, unexpected SELF, expecting identifier
 var Self: i32 = 0;
 
 fn Main() -> i32 {

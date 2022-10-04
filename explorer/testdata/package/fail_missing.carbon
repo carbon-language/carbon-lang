@@ -8,7 +8,7 @@
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
 
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/package/fail_missing.carbon:[[@LINE+1]]: syntax error, unexpected FN, expecting PACKAGE
+// CHECK: SYNTAX ERROR: {{.*}}/explorer/testdata/package/fail_missing.carbon:[[@LINE+1]]: syntax error, unexpected FN, expecting PACKAGE
 fn Main() -> i32 {
   return 0;
 }

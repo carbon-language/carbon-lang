@@ -50,6 +50,13 @@ class [[nodiscard]] Error {
     out << message();
   }
 
+  // Return another error with the prefix replaced by `prefix`.
+  auto WithPrefix(llvm::Twine prefix) && -> Error {
+    Error result = std::move(*this);
+    result.prefix_ = prefix.str();
+    return result;
+  }
+
   // Returns the prefix to prepend to the error, such as "ERROR".
   auto prefix() const -> const std::string& { return prefix_; }
 
@@ -99,6 +106,15 @@ class [[nodiscard]] ErrorOr {
   auto error() && -> Error {
     CARBON_CHECK(!ok());
     return std::get<Error>(std::move(val_));
+  }
+
+  // Return another value with the prefix of the error (if any) set to
+  // `prefix`.
+  auto WithPrefix(llvm::Twine prefix) && -> ErrorOr {
+    if (!ok()) {
+      return std::move(*this).error().WithPrefix(prefix);
+    }
+    return std::move(*this);
   }
 
   // Returns the contained value.

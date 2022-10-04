@@ -70,13 +70,17 @@ static auto Main(llvm::StringRef default_prelude_file, int argc, char* argv[])
   }
 
   Arena arena;
-  CARBON_ASSIGN_OR_RETURN(AST ast,
-                          Parse(&arena, input_file_name, parser_debug));
+  CARBON_ASSIGN_OR_RETURN(
+      AST ast,
+      Parse(&arena, input_file_name, parser_debug).WithPrefix("SYNTAX ERROR"));
   AddPrelude(prelude_file_name, &arena, &ast.declarations);
 
   // Typecheck and run the parsed program.
-  CARBON_ASSIGN_OR_RETURN(int return_code,
-                          ExecProgram(&arena, ast, trace_stream));
+  CARBON_ASSIGN_OR_RETURN(ast, AnalyzeProgram(&arena, ast, trace_stream)
+                                   .WithPrefix("COMPILATION ERROR"));
+  CARBON_ASSIGN_OR_RETURN(
+      int return_code,
+      ExecProgram(&arena, ast, trace_stream).WithPrefix("RUNTIME ERROR"));
   // Always print the return code to stdout.
   llvm::outs() << "result: " << return_code << "\n";
   // When there's a dedicated trace file, print the return code to it too.

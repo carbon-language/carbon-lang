@@ -16,7 +16,7 @@ __mixin Operations {
   }
 }
 
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_mix_in_global.carbon:[[@LINE+1]]: syntax error, unexpected MIX, expecting END_OF_FILE
+// CHECK: SYNTAX ERROR: {{.*}}/explorer/testdata/mixin/fail_mix_in_global.carbon:[[@LINE+1]]: syntax error, unexpected MIX, expecting END_OF_FILE
 __mix Operations;
 
 class Point {

@@ -18,8 +18,8 @@ auto ToString(const Error& err) -> std::string {
   return result;
 }
 
-TEST(ErrorBuildersTest, CompilationError) {
-  Error err = CompilationError(SourceLocation("x", 1)) << "test";
+TEST(ErrorBuildersTest, ProgramError) {
+  Error err = ProgramError(SourceLocation("x", 1)) << "test";
   EXPECT_EQ(err.prefix(), "COMPILATION ERROR");
   EXPECT_EQ(err.location(), "x:1");
   EXPECT_EQ(err.message(), "test");
@@ -34,8 +34,8 @@ TEST(ErrorBuildersTest, ProgramError) {
   EXPECT_EQ(ToString(err), "PROGRAM ERROR: x:1: test");
 }
 
-TEST(ErrorBuildersTest, RuntimeError) {
-  Error err = RuntimeError(SourceLocation("x", 1)) << "test";
+TEST(ErrorBuildersTest, ProgramError) {
+  Error err = ProgramError(SourceLocation("x", 1)) << "test";
   EXPECT_EQ(err.prefix(), "RUNTIME ERROR");
   EXPECT_EQ(err.location(), "x:1");
   EXPECT_EQ(err.message(), "test");

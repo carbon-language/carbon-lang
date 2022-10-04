@@ -17,7 +17,7 @@ auto StaticScope::Add(const std::string& name, ValueNodeView entity,
   auto [it, inserted] = declared_names_.insert({name, {entity, status}});
   if (!inserted) {
     if (it->second.entity != entity) {
-      return CompilationError(entity.base().source_loc())
+      return ProgramError(entity.base().source_loc())
              << "Duplicate name `" << name << "` also found at "
              << it->second.entity.base().source_loc();
     }
@@ -48,7 +48,7 @@ auto StaticScope::Resolve(const std::string& name,
   CARBON_ASSIGN_OR_RETURN(std::optional<ValueNodeView> result,
                           TryResolve(name, source_loc));
   if (!result) {
-    return CompilationError(source_loc) << "could not resolve '" << name << "'";
+    return ProgramError(source_loc) << "could not resolve '" << name << "'";
   }
   return *result;
 }
@@ -60,10 +60,10 @@ auto StaticScope::TryResolve(const std::string& name,
   if (it != declared_names_.end()) {
     switch (it->second.status) {
       case NameStatus::KnownButNotDeclared:
-        return CompilationError(source_loc)
+        return ProgramError(source_loc)
                << "'" << name << "' has not been declared yet";
       case NameStatus::DeclaredButNotUsable:
-        return CompilationError(source_loc)
+        return ProgramError(source_loc)
                << "'" << name
                << "' is not usable until after it has been completely declared";
       case NameStatus::Usable:
@@ -76,7 +76,7 @@ auto StaticScope::TryResolve(const std::string& name,
                             parent->TryResolve(name, source_loc));
     if (parent_result.has_value() && result.has_value() &&
         *parent_result != *result) {
-      return CompilationError(source_loc)
+      return ProgramError(source_loc)
              << "'" << name << "' is ambiguous between "
              << result->base().source_loc() << " and "
              << parent_result->base().source_loc();
@@ -90,7 +90,7 @@ auto StaticScope::AddReturnedVar(ValueNodeView returned_var_def_view)
     -> ErrorOr<Success> {
   std::optional<ValueNodeView> resolved_returned_var = ResolveReturned();
   if (resolved_returned_var.has_value()) {
-    return CompilationError(returned_var_def_view.base().source_loc())
+    return ProgramError(returned_var_def_view.base().source_loc())
            << "Duplicate definition of returned var also found at "
            << resolved_returned_var->base().source_loc();
   }
