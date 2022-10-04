@@ -11,7 +11,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_invalid_integer_type.carbon:[[@LINE+1]]: Invalid type literal: i11111111111111111111111111
+  // CHECK: SYNTAX ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_invalid_integer_type.carbon:[[@LINE+1]]: Invalid type literal: i11111111111111111111111111
   var x: i11111111111111111111111111 = 1;
   return 0;
 }

@@ -13,6 +13,6 @@ package ExplorerTest api;
 fn Main() -> i32 {
   var x: auto = (0, 1);
   var index: i32 = 0;
-  // CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/tuple/fail_index_var.carbon:[[@LINE+1]]: could not find `index: i32`
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/tuple/fail_index_var.carbon:[[@LINE+1]]: could not find `index: i32`
   return x[index];
 }

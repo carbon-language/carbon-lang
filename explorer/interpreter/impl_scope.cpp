@@ -111,8 +111,8 @@ auto ImplScope::ResolveInterface(Nonnull<const InterfaceType*> iface_type,
       std::optional<Nonnull<const Witness*>> result,
       TryResolve(iface_type, type, source_loc, *this, type_checker));
   if (!result.has_value()) {
-    return CompilationError(source_loc) << "could not find implementation of "
-                                        << *iface_type << " for " << *type;
+    return ProgramError(source_loc) << "could not find implementation of "
+                                    << *iface_type << " for " << *type;
   }
   return *result;
 }
@@ -133,8 +133,8 @@ auto ImplScope::TryResolve(Nonnull<const InterfaceType*> iface_type,
                            type_checker));
     if (parent_result.has_value()) {
       if (result.has_value()) {
-        return CompilationError(source_loc) << "ambiguous implementations of "
-                                            << *iface_type << " for " << *type;
+        return ProgramError(source_loc) << "ambiguous implementations of "
+                                        << *iface_type << " for " << *type;
       } else {
         result = *parent_result;
       }
@@ -155,9 +155,8 @@ auto ImplScope::ResolveHere(Nonnull<const InterfaceType*> iface_type,
         *iface_type, impl_type, impl, original_scope, source_loc);
     if (m.has_value()) {
       if (result.has_value()) {
-        return CompilationError(source_loc)
-               << "ambiguous implementations of " << *iface_type << " for "
-               << *impl_type;
+        return ProgramError(source_loc) << "ambiguous implementations of "
+                                        << *iface_type << " for " << *impl_type;
       } else {
         result = *m;
       }

@@ -91,7 +91,7 @@ auto ActionStack::ValueOfNode(ValueNodeView value_node,
     }
   }
   // TODO: Move these errors to compile time and explain them more clearly.
-  return RuntimeError(source_loc)
+  return ProgramError(source_loc)
          << "could not find `" << value_node.base() << "`";
 }
 

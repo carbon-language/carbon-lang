@@ -10,6 +10,7 @@
 namespace Carbon {
 
 // Behave as if the working directory is where `bazel run` was invoked.
+// This should only be used in development binaries, not release.
 inline auto SetWorkingDirForBazel() -> bool {
   char* build_working_dir = getenv("BUILD_WORKING_DIRECTORY");
   if (build_working_dir == nullptr) {

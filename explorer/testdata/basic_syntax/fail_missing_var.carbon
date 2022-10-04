@@ -12,7 +12,7 @@ package ExplorerTest api;
 
 fn Main() -> i32 {
   // error
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_missing_var.carbon:[[@LINE+1]]: syntax error, unexpected COLON, expecting SLASH or binary *
+  // CHECK: SYNTAX ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_missing_var.carbon:[[@LINE+1]]: syntax error, unexpected COLON, expecting SLASH or binary *
   x : i32;
   return 1;
 }
