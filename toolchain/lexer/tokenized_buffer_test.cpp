@@ -1213,7 +1213,7 @@ TEST_F(LexerTest, ClosingTokenRecovery_1) {
                                                {"spelling", "["},
                                                {"closing_token", "1"},
                                                {"has_trailing_space", "true"}}},
-                  // A `]` recovery token is added since the following`{` opens
+                  // A `]` recovery token is added since the following `{` opens
                   // a new scope on the same nesting level as the opening `[`.
                   {"token", Yaml::MappingValue{{"index", "1"},
                                                {"kind", "CloseSquareBracket"},
@@ -1273,7 +1273,7 @@ TEST_F(LexerTest, ClosingTokenRecovery_2) {
                                        {"spelling", "["},
                                        {"closing_token", "1"},
                                        {"has_trailing_space", "true"}}},
-          // A `]` recovery token is added since the following`{` opens
+          // A `]` recovery token is added since the following `{` opens
           // a new scope on a shallower nesting level as the opening `[`.
           {"token", Yaml::MappingValue{{"index", "1"},
                                        {"kind", "CloseSquareBracket"},
@@ -1349,8 +1349,8 @@ TEST_F(LexerTest, ClosingTokenRecovery_3) {
                                        {"spelling", "}"},
                                        {"opening_token", "1"},
                                        {"has_trailing_space", "true"}}},
-          // A `]` recovery token is not added until here since the following`{`
-          // opens a new scope on a deeper nesting level as the opening `[`.
+          // A `]` recovery token is not added until here since the following
+          // `{` opens a new scope on a deeper nesting level as the opening `[`.
           {"token", Yaml::MappingValue{{"index", "3"},
                                        {"kind", "CloseSquareBracket"},
                                        {"line", "3"},

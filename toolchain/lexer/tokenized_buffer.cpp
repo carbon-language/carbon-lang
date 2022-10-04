@@ -198,6 +198,7 @@ class TokenizedBuffer::Lexer {
     if (!set_indent_) {
       current_line_info_->indent = int_column;
       set_indent_ = true;
+      CloseInvalidOpenGroups(TokenKind::Error());
     }
 
     return VariantMatch(
@@ -249,6 +250,7 @@ class TokenizedBuffer::Lexer {
     if (!set_indent_) {
       current_line_info_->indent = string_column;
       set_indent_ = true;
+      CloseInvalidOpenGroups(TokenKind::Error());
     }
 
     // Update line and column information.
@@ -299,23 +301,23 @@ class TokenizedBuffer::Lexer {
       return LexResult::NoMatch();
     }
 
+    bool first_token_on_line = false;
     if (!set_indent_) {
       current_line_info_->indent = current_column_;
       set_indent_ = true;
+      first_token_on_line = true;
     }
 
-    CloseInvalidOpenGroups(kind);
-
-    const char* location = source_text.begin();
-
-    if (kind.IsOpeningSymbol()) {
-      // Close all open tokens that have nesting same as or deeper than the
-      // current token. This ensures that nested scopes that are left open are
-      // closed before we open new scopes on the same or shallower nesting
-      // level.
+    if (kind.IsClosingSymbol()) {
+      // If this is a closing token, try to nicely close the top group using the
+      // closing token.
+      CloseInvalidOpenGroups(kind);
+    } else if (first_token_on_line) {
+      // Otherwise, try to close invalid groups if we are starting a new line.
       CloseInvalidOpenGroups(TokenKind::Error());
     }
 
+    const char* location = source_text.begin();
     Token token = buffer_.AddToken(
         {.kind = kind, .token_line = current_line_, .column = current_column_});
     current_column_ += kind.GetFixedSpelling().size();
@@ -431,27 +433,22 @@ class TokenizedBuffer::Lexer {
       LineInfo& opening_token_line_info =
           buffer_.GetLineInfo(buffer_.GetTokenInfo(opening_token).token_line);
 
-      auto is_current_line_shallower_than_opening_token = [&]() {
-        return opening_token_line_info.start != current_line_info_->start &&
-               opening_token_line_info.indent >= current_line_info_->indent;
-      };
+      auto is_current_line_shallower_than_opening_token =
+          opening_token_line_info.start != current_line_info_->start &&
+          opening_token_line_info.indent >= current_line_info_->indent;
 
-      auto is_closing_token_on_same_line_as_opening_token = [&]() {
-        return kind.IsClosingSymbol() &&
-               opening_token_line_info.start == current_line_info_->start;
-      };
+      auto is_closing_token_on_same_line_as_opening_token =
+          kind.IsClosingSymbol() &&
+          opening_token_line_info.start == current_line_info_->start;
 
       if (kind == TokenKind::EndOfFile() ||
-          is_current_line_shallower_than_opening_token() ||
-          is_closing_token_on_same_line_as_opening_token()) {
+          is_current_line_shallower_than_opening_token ||
+          is_closing_token_on_same_line_as_opening_token) {
         // The top opening token either:
         //
         // 1. Has deeper nesting level than the current line. This probably
         // means the the deeper nesting level which the token opens wasn't
         // properly closed. Hence, we should add a recovery closing token.
-        //
-        // 2. Or on the same line as the current closing token.
-        //
         // Examples:
         // ```
         //   {
@@ -463,9 +460,15 @@ class TokenizedBuffer::Lexer {
         // )
         // ```
         //
+        // 2. On the same line as the current (mismatching) closing token.
         // ```
         // {)
         // ```
+        //
+        // 3. At the end of the file.
+        //
+        // In any of those cases, we add a recovery closing token to close the
+        // open group.
         open_groups_.pop_back();
         CARBON_DIAGNOSTIC(
             MismatchedClosing, Error,
@@ -522,6 +525,7 @@ class TokenizedBuffer::Lexer {
     if (!set_indent_) {
       current_line_info_->indent = current_column_;
       set_indent_ = true;
+      CloseInvalidOpenGroups(TokenKind::Error());
     }
 
     // Take the valid characters off the front of the source buffer.
