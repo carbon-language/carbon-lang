@@ -1172,13 +1172,7 @@ declaration:
     }
 | INTERFACE identifier type_params LEFT_CURLY_BRACE interface_body RIGHT_CURLY_BRACE
     {
-      // TODO: Type of `Self` should be the interface being declared, not
-      // `Type`.
-      auto ty_ty = arena -> New<TypeTypeLiteral>(context.source_loc());
-      // TODO: Should this be switched to use a `SelfDeclaration` instead?
-      auto self =
-          arena -> New<GenericBinding>(context.source_loc(), "Self", ty_ty);
-      $$ = arena->New<InterfaceDeclaration>(context.source_loc(), $2, $3, self,
+      $$ = arena->New<InterfaceDeclaration>(arena, context.source_loc(), $2, $3,
                                             $5);
     }
 | impl_kind IMPL impl_deduced_params impl_type AS type_or_where_expression LEFT_CURLY_BRACE impl_body RIGHT_CURLY_BRACE

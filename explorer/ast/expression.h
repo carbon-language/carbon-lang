@@ -853,33 +853,6 @@ class WhereExpression : public Expression {
   std::vector<Nonnull<WhereClause*>> clauses_;
 };
 
-// Instantiate a generic impl.
-class InstantiateImpl : public Expression {
- public:
-  using ImplementsCarbonValueNode = void;
-
-  explicit InstantiateImpl(SourceLocation source_loc,
-                           Nonnull<const Witness*> generic_impl,
-                           Bindings bindings)
-      : Expression(AstNodeKind::InstantiateImpl, source_loc),
-        generic_impl_(generic_impl),
-        bindings_(std::move(bindings)) {}
-
-  static auto classof(const AstNode* node) -> bool {
-    return InheritsFromInstantiateImpl(node->kind());
-  }
-  auto generic_impl() const -> Nonnull<const Witness*> { return generic_impl_; }
-  auto type_args() const -> const BindingMap& { return bindings_.args(); }
-
-  // Maps each of the impl bindings to an expression that constructs
-  // the witness table for that impl.
-  auto impls() const -> const ImplWitnessMap& { return bindings_.witnesses(); }
-
- private:
-  Nonnull<const Witness*> generic_impl_;
-  Bindings bindings_;
-};
-
 // An expression whose semantics have not been implemented. This can be used
 // as a placeholder during development, in order to implement and test parsing
 // of a new expression syntax without having to implement its semantics.
