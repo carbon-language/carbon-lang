@@ -913,15 +913,6 @@ class ConstraintWitness : public Witness {
 // a symbolic witness for the constraint type.
 class ConstraintImplWitness : public Witness {
  public:
-  explicit ConstraintImplWitness(Nonnull<const Witness*> constraint_witness,
-                                 int index)
-      : Witness(Kind::ConstraintImplWitness),
-        constraint_witness_(constraint_witness),
-        index_(index) {
-    CARBON_CHECK(!llvm::isa<ConstraintWitness>(constraint_witness))
-        << "should have resolved element from constraint witness";
-  }
-
   // Make a witness for the given impl_constraint of the given `ConstraintType`
   // witness. If we're indexing into a known tuple of witnesses, pull out the
   // element.
@@ -931,6 +922,15 @@ class ConstraintImplWitness : public Witness {
       return constraint_witness->witnesses()[index];
     }
     return arena->New<ConstraintImplWitness>(witness, index);
+  }
+
+  explicit ConstraintImplWitness(Nonnull<const Witness*> constraint_witness,
+                                 int index)
+      : Witness(Kind::ConstraintImplWitness),
+        constraint_witness_(constraint_witness),
+        index_(index) {
+    CARBON_CHECK(!llvm::isa<ConstraintWitness>(constraint_witness))
+        << "should have resolved element from constraint witness";
   }
 
   static auto classof(const Value* value) -> bool {
