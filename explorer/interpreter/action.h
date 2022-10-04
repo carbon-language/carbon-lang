@@ -27,12 +27,7 @@ namespace Carbon {
 // not compile-time constants.
 class RuntimeScope {
  public:
-  enum class State {
-    Normal = 0,
-    Destructor = 1,
-    CleanUpped = 2,
-    Method = 4
-  };
+  enum class State { Normal = 0, Destructor = 1, CleanUpped = 2, Method = 4 };
 
   // Returns a RuntimeScope whose Get() operation for a given name returns the
   // storage owned by the first entry in `scopes` that defines that name. This
@@ -279,11 +274,11 @@ class DeclarationAction : public Action {
 
 class CleanupAction : public Action {
  public:
-  explicit CleanupAction(RuntimeScope scope) :
-               Action(Kind::CleanUpAction),
-               locals_count_ ( scope.locals().size() ),
-               class_members_(std::nullopt),
-               array_index_(-1){
+  explicit CleanupAction(RuntimeScope scope)
+      : Action(Kind::CleanUpAction),
+        locals_count_(scope.locals().size()),
+        class_members_(std::nullopt),
+        array_index_(-1) {
     StartScope(std::move(scope));
   }
 
@@ -293,29 +288,24 @@ class CleanupAction : public Action {
     return action->kind() == Kind::CleanUpAction;
   }
 
-  void set_me_value(Nonnull<const LValue*> me_value){
-    me_value_ = me_value;
-  }
+  void set_me_value(Nonnull<const LValue*> me_value) { me_value_ = me_value; }
 
-  auto me_value() -> Nonnull<const LValue*>{
-    return me_value_;
-  }
+  auto me_value() -> Nonnull<const LValue*> { return me_value_; }
 
-  auto class_members() -> std::optional<llvm::ArrayRef<Nonnull<Declaration*>>> &{
+  auto class_members()
+      -> std::optional<llvm::ArrayRef<Nonnull<Declaration*>>>& {
     return class_members_;
   }
 
-  void set_class_members( const llvm::ArrayRef<Nonnull<Declaration*>> & class_members){
+  void set_class_members(
+      const llvm::ArrayRef<Nonnull<Declaration*>>& class_members) {
     class_members_ = class_members;
   }
 
-  void set_array_index(int index){
-    array_index_ = index;
-  }
+  void set_array_index(int index) { array_index_ = index; }
 
-  auto array_index() const -> int{
-    return array_index_;
-  }
+  auto array_index() const -> int { return array_index_; }
+
  private:
   int locals_count_;
   std::optional<llvm::ArrayRef<Nonnull<Declaration*>>> class_members_;

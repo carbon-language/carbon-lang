@@ -1897,31 +1897,34 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
     auto value = heap_.Read(lvalue->address(), source_loc);
     if (value.ok()) {
       if (act.scope()->DestructionState() < RuntimeScope::State::CleanUpped) {
-          if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
-            const auto& class_type = cast<NominalClassType>(class_obj->type());
-            const auto& class_dec = class_type.declaration();
-            if (class_dec.destructor().has_value()) {
-              return CallDestructor(*class_dec.destructor(), class_obj);
-            }
-          }else if(const auto * array = dyn_cast<TupleValue>(*value)){
-            if(cleanup.array_index() < 0 ) {
-              cleanup.set_array_index(0);
-            }
-            if(static_cast<std::size_t>(cleanup.array_index()) < array->elements().size()){
-              const auto & item = array->elements()[cleanup.array_index()];
-              if (const auto* class_obj = dyn_cast<NominalClassValue>(item)) {
-                const auto& class_type = cast<NominalClassType>(class_obj->type());
-                const auto& class_dec = class_type.declaration();
-                if (class_dec.destructor().has_value()) {
-                  if(static_cast<std::size_t>(cleanup.array_index())+1 < array->elements().size() ) {
-                    act.set_pos(act.pos() - 1);
-                  }
-                  cleanup.set_array_index(cleanup.array_index()+1);
-                  return CallDestructor(*class_dec.destructor(), class_obj);
+        if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
+          const auto& class_type = cast<NominalClassType>(class_obj->type());
+          const auto& class_dec = class_type.declaration();
+          if (class_dec.destructor().has_value()) {
+            return CallDestructor(*class_dec.destructor(), class_obj);
+          }
+        } else if (const auto* array = dyn_cast<TupleValue>(*value)) {
+          if (cleanup.array_index() < 0) {
+            cleanup.set_array_index(0);
+          }
+          if (static_cast<std::size_t>(cleanup.array_index()) <
+              array->elements().size()) {
+            const auto& item = array->elements()[cleanup.array_index()];
+            if (const auto* class_obj = dyn_cast<NominalClassValue>(item)) {
+              const auto& class_type =
+                  cast<NominalClassType>(class_obj->type());
+              const auto& class_dec = class_type.declaration();
+              if (class_dec.destructor().has_value()) {
+                if (static_cast<std::size_t>(cleanup.array_index()) + 1 <
+                    array->elements().size()) {
+                  act.set_pos(act.pos() - 1);
                 }
+                cleanup.set_array_index(cleanup.array_index() + 1);
+                return CallDestructor(*class_dec.destructor(), class_obj);
               }
             }
           }
+        }
       } else {
         if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
           const auto& class_type = cast<NominalClassType>(class_obj->type());
@@ -1932,8 +1935,8 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
       }
     }
   }
-  if(cleanup.class_members()){
-    while((*cleanup.class_members()).size() > 0){
+  if (cleanup.class_members()) {
+    while ((*cleanup.class_members()).size() > 0) {
       const auto& member = (*cleanup.class_members()).take_back()[0];
       cleanup.set_class_members((*cleanup.class_members()).drop_back());
       if (const auto* var = dyn_cast<VariableDeclaration>(member)) {
