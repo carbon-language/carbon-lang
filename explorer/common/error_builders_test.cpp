@@ -20,26 +20,9 @@ auto ToString(const Error& err) -> std::string {
 
 TEST(ErrorBuildersTest, ProgramError) {
   Error err = ProgramError(SourceLocation("x", 1)) << "test";
-  EXPECT_EQ(err.prefix(), "COMPILATION ERROR");
   EXPECT_EQ(err.location(), "x:1");
   EXPECT_EQ(err.message(), "test");
-  EXPECT_EQ(ToString(err), "COMPILATION ERROR: x:1: test");
-}
-
-TEST(ErrorBuildersTest, ProgramError) {
-  Error err = ProgramError(SourceLocation("x", 1)) << "test";
-  EXPECT_EQ(err.prefix(), "PROGRAM ERROR");
-  EXPECT_EQ(err.location(), "x:1");
-  EXPECT_EQ(err.message(), "test");
-  EXPECT_EQ(ToString(err), "PROGRAM ERROR: x:1: test");
-}
-
-TEST(ErrorBuildersTest, ProgramError) {
-  Error err = ProgramError(SourceLocation("x", 1)) << "test";
-  EXPECT_EQ(err.prefix(), "RUNTIME ERROR");
-  EXPECT_EQ(err.location(), "x:1");
-  EXPECT_EQ(err.message(), "test");
-  EXPECT_EQ(ToString(err), "RUNTIME ERROR: x:1: test");
+  EXPECT_EQ(ToString(err), "x:1: test");
 }
 
 }  // namespace

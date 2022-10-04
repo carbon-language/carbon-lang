@@ -22,7 +22,7 @@ namespace Carbon {
 // provided as a fallback for cases that don't fit those classifications.
 
 inline auto ProgramError(SourceLocation loc) -> ErrorBuilder {
-  return ErrorBuilder("ERROR", loc.ToString());
+  return ErrorBuilder(loc.ToString());
 }
 
 }  // namespace Carbon
