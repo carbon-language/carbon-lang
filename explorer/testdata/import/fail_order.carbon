@@ -14,5 +14,5 @@ fn Main() -> i32 {
   return 0;
 }
 
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/import/fail_order.carbon:[[@LINE+1]]: syntax error, unexpected IMPORT, expecting END_OF_FILE
+// CHECK: SYNTAX ERROR: {{.*}}/explorer/testdata/import/fail_order.carbon:[[@LINE+1]]: syntax error, unexpected IMPORT, expecting END_OF_FILE
 import ExplorerTest library "Nonexistent";

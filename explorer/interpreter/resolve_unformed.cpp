@@ -43,7 +43,7 @@ auto FlowFacts::TakeAction(Nonnull<const AstNode*> node, ActionType action,
       auto entry = facts_.find(node);
       if (entry != facts_.end() &&
           entry->second.formed_state == FormedState::Unformed) {
-        return CompilationError(source_loc)
+        return ProgramError(source_loc)
                << "use of uninitialized variable " << name;
       }
       break;
