@@ -103,10 +103,17 @@ void RuntimeScope::TransitState() {
     destructor_scope_ = State::Destructor;
   } else if (destructor_scope_ == State::Destructor) {
     destructor_scope_ = State::CleanUpped;
-  } else {
+  }else if (destructor_scope_ ==  State::Method){
+    destructor_scope_ = State::Method;
+  }else {
     destructor_scope_ = State::CleanUpped;
   }
 }
+
+void RuntimeScope::TransitState(RuntimeScope::State state){
+  destructor_scope_ = state;
+}
+
 
 void Action::Print(llvm::raw_ostream& out) const {
   switch (kind()) {

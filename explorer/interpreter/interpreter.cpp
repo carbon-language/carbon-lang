@@ -762,7 +762,7 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
       << "Calling a method that's missing a body";
 
   auto act = std::make_unique<StatementAction>(*method.body());
-  method_scope.TransitState();
+  method_scope.TransitState(RuntimeScope::State::Destructor);
   return todo_.Spawn(std::unique_ptr<Action>(std::move(act)),
                      std::move(method_scope));
 }
@@ -814,6 +814,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
           &function_scope, generic_args, trace_stream_, this->arena_));
       CARBON_CHECK(function.body().has_value())
           << "Calling a function that's missing a body";
+      function_scope.TransitState(RuntimeScope::State::Method);
       return todo_.Spawn(std::make_unique<StatementAction>(*function.body()),
                          std::move(function_scope));
     }
@@ -852,6 +853,8 @@ auto Interpreter::CallFunction(const CallExpression& call,
       }
       CARBON_CHECK(method.body().has_value())
           << "Calling a method that's missing a body";
+      method_scope.TransitState(RuntimeScope::State::Method);
+
       return todo_.Spawn(std::make_unique<StatementAction>(*method.body()),
                          std::move(method_scope));
     }
@@ -1888,41 +1891,63 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
 auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   CleanupAction& cleanup = cast<CleanupAction>(act);
+  SourceLocation source_loc("destructor", 1);
   if (act.pos() < cleanup.locals_count()) {
     auto lvalue = act.scope()->locals()[cleanup.locals_count() - act.pos() - 1];
-    SourceLocation source_loc("destructor", 1);
     auto value = heap_.Read(lvalue->address(), source_loc);
     if (value.ok()) {
       if (act.scope()->DestructionState() < RuntimeScope::State::CleanUpped) {
-        if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
-          const auto& class_type = cast<NominalClassType>(class_obj->type());
-          const auto& class_dec = class_type.declaration();
-          if (class_dec.destructor().has_value()) {
-            return CallDestructor(*class_dec.destructor(), class_obj);
-          }
-        }
-      } else {
-        if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
-          const auto& class_type = cast<NominalClassType>(class_obj->type());
-          const auto& class_dec = class_type.declaration();
-          const auto& class_members = class_dec.members();
-          for (const auto& member : class_members) {
-            if (const auto* var = dyn_cast<VariableDeclaration>(member)) {
-              const auto& type = var->static_type();
-              if (const auto* c_type = dyn_cast<NominalClassType>(&type)) {
-                auto& c_dec = c_type->declaration();
-                if (c_dec.destructor().has_value()) {
-                  Address object = lvalue->address();
-                  Address mem = object.SubobjectAddress(Member(var));
-                  auto v = heap_.Read(mem, source_loc);
-                  act.scope()->TransitState();
-                  return CallDestructor(*c_dec.destructor(), *v);
+          if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
+            const auto& class_type = cast<NominalClassType>(class_obj->type());
+            const auto& class_dec = class_type.declaration();
+            if (class_dec.destructor().has_value()) {
+              return CallDestructor(*class_dec.destructor(), class_obj);
+            }
+          }else if(const auto * array = dyn_cast<TupleValue>(*value)){
+            if(cleanup.array_index() < 0 ) {
+              cleanup.set_array_index(0);
+            }
+            if(static_cast<std::size_t>(cleanup.array_index()) < array->elements().size()){
+              const auto & item = array->elements()[cleanup.array_index()];
+              if (const auto* class_obj = dyn_cast<NominalClassValue>(item)) {
+                const auto& class_type = cast<NominalClassType>(class_obj->type());
+                const auto& class_dec = class_type.declaration();
+                if (class_dec.destructor().has_value()) {
+                  if(static_cast<std::size_t>(cleanup.array_index())+1 < array->elements().size() ) {
+                    act.set_pos(act.pos() - 1);
+                  }
+                  cleanup.set_array_index(cleanup.array_index()+1);
+                  return CallDestructor(*class_dec.destructor(), class_obj);
                 }
               }
             }
           }
+      } else {
+        if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
+          const auto& class_type = cast<NominalClassType>(class_obj->type());
+          const auto& class_dec = class_type.declaration();
+          cleanup.set_class_members(class_dec.members());
+          cleanup.set_me_value(lvalue);
         }
-        act.scope()->TransitState();
+      }
+    }
+  }
+  if(cleanup.class_members()){
+    while((*cleanup.class_members()).size() > 0){
+      const auto& member = (*cleanup.class_members()).take_back()[0];
+      cleanup.set_class_members((*cleanup.class_members()).drop_back());
+      if (const auto* var = dyn_cast<VariableDeclaration>(member)) {
+        const auto& type = var->static_type();
+        if (const auto* c_type = dyn_cast<NominalClassType>(&type)) {
+          auto& c_dec = c_type->declaration();
+          if (c_dec.destructor().has_value()) {
+            Address object = cleanup.me_value()->address();
+            Address mem = object.SubobjectAddress(Member(var));
+            auto v = heap_.Read(mem, source_loc);
+            act.scope()->TransitState();
+            return CallDestructor(*c_dec.destructor(), *v);
+          }
+        }
       }
     }
   }

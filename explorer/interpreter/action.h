@@ -31,6 +31,7 @@ class RuntimeScope {
     Normal = 0,
     Destructor = 1,
     CleanUpped = 2,
+    Method = 4
   };
 
   // Returns a RuntimeScope whose Get() operation for a given name returns the
@@ -80,12 +81,16 @@ class RuntimeScope {
   // Return scope state
   // Normal     = Scope is not bind at the top of a destructor call
   // Destructor = Scope is bind to a destructor call and was not cleaned up,
+  // Method     = Scope is bind at the top of a method
   // CleanedUp  = Scope is bind to a destructor call and is cleaned up
   auto DestructionState() const -> State { return destructor_scope_; }
 
   // Transit the state from Normal to Destructor
   // Transit the state from Destructor to CleanUpped
+  // Transit the state form Method to Method
   void TransitState();
+
+  void TransitState(State state);
 
  private:
   llvm::MapVector<ValueNodeView, Nonnull<const LValue*>,
@@ -274,8 +279,11 @@ class DeclarationAction : public Action {
 
 class CleanupAction : public Action {
  public:
-  explicit CleanupAction(RuntimeScope scope) : Action(Kind::CleanUpAction) {
-    locals_count_ = scope.locals().size();
+  explicit CleanupAction(RuntimeScope scope) :
+               Action(Kind::CleanUpAction),
+               locals_count_ ( scope.locals().size() ),
+               class_members_(std::nullopt),
+               array_index_(-1){
     StartScope(std::move(scope));
   }
 
@@ -285,8 +293,34 @@ class CleanupAction : public Action {
     return action->kind() == Kind::CleanUpAction;
   }
 
+  void set_me_value(Nonnull<const LValue*> me_value){
+    me_value_ = me_value;
+  }
+
+  auto me_value() -> Nonnull<const LValue*>{
+    return me_value_;
+  }
+
+  auto class_members() -> std::optional<llvm::ArrayRef<Nonnull<Declaration*>>> &{
+    return class_members_;
+  }
+
+  void set_class_members( const llvm::ArrayRef<Nonnull<Declaration*>> & class_members){
+    class_members_ = class_members;
+  }
+
+  void set_array_index(int index){
+    array_index_ = index;
+  }
+
+  auto array_index() const -> int{
+    return array_index_;
+  }
  private:
   int locals_count_;
+  std::optional<llvm::ArrayRef<Nonnull<Declaration*>>> class_members_;
+  Nonnull<const LValue*> me_value_;
+  int array_index_;
 };
 
 // Action which does nothing except introduce a new scope into the action
