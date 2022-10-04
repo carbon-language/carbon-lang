@@ -50,7 +50,9 @@ class Value {
     TupleValue,
     UninitializedValue,
     ImplWitness,
-    SymbolicWitness,
+    BindingWitness,
+    ConstraintWitness,
+    ConstraintImplWitness,
     IntType,
     BoolType,
     TypeType,
@@ -831,7 +833,9 @@ class Witness : public Value {
  public:
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ImplWitness ||
-           value->kind() == Kind::SymbolicWitness;
+           value->kind() == Kind::BindingWitness ||
+           value->kind() == Kind::ConstraintWitness ||
+           value->kind() == Kind::ConstraintImplWitness;
   }
 };
 
@@ -869,23 +873,81 @@ class ImplWitness : public Witness {
   Nonnull<const Bindings*> bindings_ = Bindings::None();
 };
 
-// A witness table whose concrete value cannot be determined yet.
-//
-// These are used to represent symbolic witness values which can be computed at
-// runtime but whose values are not known statically.
-class SymbolicWitness : public Witness {
+// The symbolic witness corresponding to an unresolved impl binding.
+class BindingWitness : public Witness {
  public:
-  explicit SymbolicWitness(Nonnull<const Expression*> impl_expr)
-      : Witness(Kind::SymbolicWitness), impl_expr_(impl_expr) {}
+  // Construct a witness for an impl binding.
+  explicit BindingWitness(Nonnull<const ImplBinding*> binding)
+      : Witness(Kind::BindingWitness), binding_(binding) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::SymbolicWitness;
+    return value->kind() == Kind::BindingWitness;
   }
 
-  auto impl_expression() const -> const Expression& { return *impl_expr_; }
+  auto binding() const -> Nonnull<const ImplBinding*> { return binding_; }
 
  private:
-  Nonnull<const Expression*> impl_expr_;
+  Nonnull<const ImplBinding*> binding_;
+};
+
+// A witness for a constraint type, expressed as a tuple of witnesses for the
+// individual impl constraints in the constraint type.
+class ConstraintWitness : public Witness {
+ public:
+  explicit ConstraintWitness(std::vector<Nonnull<const Witness*>> witnesses)
+      : Witness(Kind::ConstraintWitness), witnesses_(std::move(witnesses)) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::ConstraintWitness;
+  }
+
+  auto witnesses() const -> llvm::ArrayRef<Nonnull<const Witness*>> {
+    return witnesses_;
+  }
+
+ private:
+  std::vector<Nonnull<const Witness*>> witnesses_;
+};
+
+// A witness for an impl constraint in a constraint type, expressed in terms of
+// a symbolic witness for the constraint type.
+class ConstraintImplWitness : public Witness {
+ public:
+  // Make a witness for the given impl_constraint of the given `ConstraintType`
+  // witness. If we're indexing into a known tuple of witnesses, pull out the
+  // element.
+  static auto Make(Nonnull<Arena*> arena, Nonnull<const Witness*> witness,
+                   int index) -> Nonnull<const Witness*> {
+    if (auto* constraint_witness = llvm::dyn_cast<ConstraintWitness>(witness)) {
+      return constraint_witness->witnesses()[index];
+    }
+    return arena->New<ConstraintImplWitness>(witness, index);
+  }
+
+  explicit ConstraintImplWitness(Nonnull<const Witness*> constraint_witness,
+                                 int index)
+      : Witness(Kind::ConstraintImplWitness),
+        constraint_witness_(constraint_witness),
+        index_(index) {
+    CARBON_CHECK(!llvm::isa<ConstraintWitness>(constraint_witness))
+        << "should have resolved element from constraint witness";
+  }
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::ConstraintImplWitness;
+  }
+
+  // Get the witness for the complete `ConstraintType`.
+  auto constraint_witness() const -> Nonnull<const Witness*> {
+    return constraint_witness_;
+  }
+
+  // Get the index of the impl constraint within the constraint type.
+  auto index() const -> int { return index_; }
+
+ private:
+  Nonnull<const Witness*> constraint_witness_;
+  int index_;
 };
 
 // A choice type.

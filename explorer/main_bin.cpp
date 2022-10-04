@@ -8,13 +8,15 @@
 #include "llvm/Support/Path.h"
 
 auto main(int argc, char** argv) -> int {
-  // This assumes execution from bazel, in runfiles.
-  llvm::SmallString<256> prelude_path;
-  if (std::error_code err = llvm::sys::fs::current_path(prelude_path)) {
-    llvm::errs() << "Failed to get working directory: " << err.message();
-    return 1;
-  }
-  llvm::sys::path::append(prelude_path, "explorer/data/prelude.carbon");
+  // This assumes execution from `bazel-bin/explorer`, either directly or with
+  // `bazel run`.
+  static int static_for_main_addr;
+  std::string exe = llvm::sys::fs::getMainExecutable(
+      argv[0], static_cast<void*>(&static_for_main_addr));
+  llvm::SmallString<256> prelude_path = llvm::sys::path::parent_path(exe);
+  llvm::sys::path::append(prelude_path, "explorer.runfiles", "carbon",
+                          "explorer", "data");
+  llvm::sys::path::append(prelude_path, "prelude.carbon");
 
   // Behave as if the working directory is where `bazel run` was invoked.
   char* build_working_dir = getenv("BUILD_WORKING_DIRECTORY");

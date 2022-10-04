@@ -11,7 +11,7 @@
 package ExplorerTest api;
 
 interface Iface {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_anonymous.carbon:[[@LINE+1]]: syntax error, unexpected UNDERSCORE, expecting identifier
+  // CHECK: SYNTAX ERROR: {{.*}}/explorer/testdata/assoc_const/fail_anonymous.carbon:[[@LINE+1]]: syntax error, unexpected UNDERSCORE, expecting identifier
   let _:! Type;
 }
 

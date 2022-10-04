@@ -16,7 +16,7 @@ interface A {
 }
 
 external impl i32 as A {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_bad_member_kind.carbon:[[@LINE+1]]: syntax error, unexpected CLASS, expecting ALIAS or FN or RIGHT_CURLY_BRACE
+  // CHECK: SYNTAX ERROR: {{.*}}/explorer/testdata/impl/fail_bad_member_kind.carbon:[[@LINE+1]]: syntax error, unexpected CLASS, expecting ALIAS or FN or RIGHT_CURLY_BRACE
   class T {}
 }
 

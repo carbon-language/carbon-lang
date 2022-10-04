@@ -10,9 +10,15 @@
 
 package ExplorerTest api;
 
+interface X {
+  fn F() -> Type;
+}
+
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_use_symbolic_member.carbon:[[@LINE+1]]: member lookup for F in symbolic witness for T:! X
+fn G[T:! X]() -> T.F() {
+  return {};
+}
+
 fn Main() -> i32 {
-  {
-    // CHECK: SYNTAX ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_block.carbon:[[@LINE+1]]: syntax error, unexpected RETURN, expecting PERIOD or RIGHT_CURLY_BRACE
-    return 0;
-  }
+  return 0;
 }
