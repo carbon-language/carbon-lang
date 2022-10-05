@@ -6,6 +6,8 @@ load("//bazel/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
 
+exports_files(["lit.cfg.py"])
+
 cc_library(
     name = "driver",
     srcs = ["driver.cpp"],
@@ -16,6 +18,7 @@ cc_library(
         "//toolchain/diagnostics:sorting_diagnostic_consumer",
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_tree",
+        "//toolchain/semantics:semantics_ir_factory",
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Support",
     ],

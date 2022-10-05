@@ -43,7 +43,7 @@ auto FlowFacts::TakeAction(Nonnull<const AstNode*> node, ActionType action,
       auto entry = facts_.find(node);
       if (entry != facts_.end() &&
           entry->second.formed_state == FormedState::Unformed) {
-        return CompilationError(source_loc)
+        return ProgramError(source_loc)
                << "use of uninitialized variable " << name;
       }
       break;
@@ -140,7 +140,6 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
     case ExpressionKind::UnimplementedExpression:
     case ExpressionKind::FunctionTypeLiteral:
     case ExpressionKind::ArrayTypeLiteral:
-    case ExpressionKind::InstantiateImpl:
       break;
   }
   return Success();

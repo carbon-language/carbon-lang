@@ -48,19 +48,15 @@ struct TypeChecker::SingleStepEqualityContext : public EqualityContext {
     }
 
     CARBON_ASSIGN_OR_RETURN(
-        Nonnull<const Expression*> witness_expr,
+        Nonnull<const Witness*> witness,
         impl_scope_->Resolve(&assoc->interface(), &assoc->base(), source_loc,
                              *type_checker_));
-    CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> witness_value,
-                            InterpExp(witness_expr, type_checker_->arena_,
-                                      type_checker_->trace_stream_));
-    impl_witness = dyn_cast<ImplWitness>(witness_value);
+    impl_witness = dyn_cast<ImplWitness>(witness);
     if (impl_witness) {
       return impl_witness;
     }
-    return CompilationError(source_loc)
-           << "value of associated constant " << *assoc
-           << " depends on a generic parameter";
+    return ProgramError(source_loc) << "value of associated constant " << *assoc
+                                    << " depends on a generic parameter";
   }
 
   // Visits the values that are equal to the given value and a single step away
@@ -142,9 +138,9 @@ auto TypeChecker::ExpectExactType(SourceLocation source_loc,
                                   const ImplScope& impl_scope) const
     -> ErrorOr<Success> {
   if (!IsSameType(expected, actual, impl_scope)) {
-    return CompilationError(source_loc) << "type error in " << context << "\n"
-                                        << "expected: " << *expected << "\n"
-                                        << "actual: " << *actual;
+    return ProgramError(source_loc) << "type error in " << context << "\n"
+                                    << "expected: " << *expected << "\n"
+                                    << "actual: " << *actual;
   }
   return Success();
 }
@@ -155,9 +151,9 @@ static auto ExpectPointerType(SourceLocation source_loc,
     -> ErrorOr<Success> {
   // TODO: Try to resolve in equality context.
   if (actual->kind() != Value::Kind::PointerType) {
-    return CompilationError(source_loc) << "type error in " << context << "\n"
-                                        << "expected a pointer type\n"
-                                        << "actual: " << *actual;
+    return ProgramError(source_loc) << "type error in " << context << "\n"
+                                    << "expected a pointer type\n"
+                                    << "actual: " << *actual;
   }
   return Success();
 }
@@ -183,7 +179,9 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::StringValue:
     case Value::Kind::UninitializedValue:
     case Value::Kind::ImplWitness:
-    case Value::Kind::SymbolicWitness:
+    case Value::Kind::BindingWitness:
+    case Value::Kind::ConstraintWitness:
+    case Value::Kind::ConstraintImplWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::TypeOfParameterizedEntityName:
@@ -244,7 +242,9 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
     case Value::Kind::StringValue:
     case Value::Kind::UninitializedValue:
     case Value::Kind::ImplWitness:
-    case Value::Kind::SymbolicWitness:
+    case Value::Kind::BindingWitness:
+    case Value::Kind::ConstraintWitness:
+    case Value::Kind::ConstraintImplWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
       return false;
@@ -306,8 +306,7 @@ auto TypeChecker::ExpectIsType(SourceLocation source_loc,
                                Nonnull<const Value*> value)
     -> ErrorOr<Success> {
   if (!IsType(value)) {
-    return CompilationError(source_loc)
-           << "Expected a type, but got " << *value;
+    return ProgramError(source_loc) << "Expected a type, but got " << *value;
   } else {
     return Success();
   }
@@ -323,8 +322,7 @@ auto TypeChecker::ExpectIsConcreteType(SourceLocation source_loc,
                                        Nonnull<const Value*> value)
     -> ErrorOr<Success> {
   if (!IsConcreteType(value)) {
-    return CompilationError(source_loc)
-           << "Expected a type, but got " << *value;
+    return ProgramError(source_loc) << "Expected a type, but got " << *value;
   } else {
     return Success();
   }
@@ -542,7 +540,7 @@ auto TypeChecker::ImplicitlyConvert(const std::string& context,
       BuiltinMethodCall{"Convert"});
   if (!converted.ok()) {
     // We couldn't find a matching `impl`.
-    return CompilationError(source->source_loc())
+    return ProgramError(source->source_loc())
            << "type error in " << context << ": "
            << "'" << *source_type << "' is not implicitly convertible to '"
            << *destination << "'";
@@ -554,7 +552,7 @@ auto TypeChecker::GetBuiltinInterfaceType(SourceLocation source_loc,
                                           BuiltinInterfaceName interface) const
     -> ErrorOr<Nonnull<const InterfaceType*>> {
   auto bad_builtin = [&]() -> Error {
-    return CompilationError(source_loc)
+    return ProgramError(source_loc)
            << "unsupported declaration for builtin `"
            << Builtins::GetName(interface.builtin) << "`";
   };
@@ -622,7 +620,7 @@ auto TypeChecker::ExpectType(SourceLocation source_loc,
     -> ErrorOr<Success> {
   if (!IsImplicitlyConvertible(actual, expected, impl_scope,
                                /*allow_user_defined_conversions=*/true)) {
-    return CompilationError(source_loc)
+    return ProgramError(source_loc)
            << "type error in " << context << ": "
            << "'" << *actual << "' is not implicitly convertible to '"
            << *expected << "'";
@@ -655,9 +653,9 @@ auto TypeChecker::ArgumentDeduction(
       // Parameter type contains a nested `auto` and argument type isn't the
       // same kind of type.
       // TODO: This seems like something we should be able to accept.
-      return CompilationError(source_loc) << "type error in " << context << "\n"
-                                          << "expected: " << *param << "\n"
-                                          << "actual: " << *arg;
+      return ProgramError(source_loc) << "type error in " << context << "\n"
+                                      << "expected: " << *param << "\n"
+                                      << "actual: " << *arg;
     }
     const Value* subst_param_type = Substitute(deduced, param);
     return allow_implicit_conversion
@@ -675,7 +673,7 @@ auto TypeChecker::ArgumentDeduction(
         const Value* binding_type = Substitute(deduced, &binding.static_type());
         if (!IsTypeOfType(binding_type)) {
           if (!IsImplicitlyConvertible(arg, binding_type, impl_scope, false)) {
-            return CompilationError(source_loc)
+            return ProgramError(source_loc)
                    << "cannot convert deduced value " << *arg << " for "
                    << binding.name() << " to parameter type " << *binding_type;
           }
@@ -692,7 +690,7 @@ auto TypeChecker::ArgumentDeduction(
           // should be used, and we'd need to check all pairs of types for
           // equality because our notion of equality is non-transitive.
           if (!TypeEqual(it->second, arg, std::nullopt)) {
-            return CompilationError(source_loc)
+            return ProgramError(source_loc)
                    << "deduced multiple different values for "
                    << var_type.binding() << ":\n  " << *it->second << "\n  "
                    << *arg;
@@ -710,7 +708,7 @@ auto TypeChecker::ArgumentDeduction(
       const auto& param_tup = cast<TupleValue>(*param);
       const auto& arg_tup = cast<TupleValue>(*arg);
       if (param_tup.elements().size() != arg_tup.elements().size()) {
-        return CompilationError(source_loc)
+        return ProgramError(source_loc)
                << "mismatch in tuple sizes, expected "
                << param_tup.elements().size() << " but got "
                << arg_tup.elements().size();
@@ -734,7 +732,7 @@ auto TypeChecker::ArgumentDeduction(
                                         bool missing_from_source) -> Error {
         static constexpr const char* SourceOrDestination[2] = {"source",
                                                                "destination"};
-        return CompilationError(source_loc)
+        return ProgramError(source_loc)
                << "mismatch in field names, "
                << SourceOrDestination[missing_from_source ? 1 : 0] << " field `"
                << field.name << "` not in "
@@ -757,7 +755,7 @@ auto TypeChecker::ArgumentDeduction(
           }
           arg_field = arg_struct.fields()[i];
           if (param_field.name != arg_field.name) {
-            return CompilationError(source_loc)
+            return ProgramError(source_loc)
                    << "mismatch in field names, `" << param_field.name
                    << "` != `" << arg_field.name << "`";
           }
@@ -867,7 +865,9 @@ auto TypeChecker::ArgumentDeduction(
       return handle_non_deduced_type();
     }
     case Value::Kind::ImplWitness:
-    case Value::Kind::SymbolicWitness:
+    case Value::Kind::BindingWitness:
+    case Value::Kind::ConstraintWitness:
+    case Value::Kind::ConstraintImplWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::IntValue:
@@ -891,9 +891,8 @@ auto TypeChecker::ArgumentDeduction(
       // TODO: Deduce within the values where possible.
       // TODO: Consider in-scope value equalities here.
       if (!ValueEqual(param, arg, std::nullopt)) {
-        return CompilationError(source_loc)
-               << "mismatch in non-type values, `" << *arg << "` != `" << *param
-               << "`";
+        return ProgramError(source_loc) << "mismatch in non-type values, `"
+                                        << *arg << "` != `" << *param << "`";
       }
       return Success();
     }
@@ -1088,6 +1087,7 @@ auto TypeChecker::Substitute(
         Nonnull<ImplBinding*> new_ib =
             arena_->New<ImplBinding>(ib->source_loc(), bind_map[ib->type_var()],
                                      Substitute(new_dict, ib->interface()));
+        // TODO: Should we set a symbolic identity on this impl binding?
         new_ib->set_original(ib->original());
         impl_bindings.push_back(new_ib);
       }
@@ -1176,7 +1176,9 @@ auto TypeChecker::Substitute(
       // type for it.
       return type;
     case Value::Kind::ImplWitness:
-    case Value::Kind::SymbolicWitness:
+    case Value::Kind::BindingWitness:
+    case Value::Kind::ConstraintWitness:
+    case Value::Kind::ConstraintImplWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::IntValue:
@@ -1207,7 +1209,7 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
                             const ImplScope::Impl& impl,
                             const ImplScope& impl_scope,
                             SourceLocation source_loc) const
-    -> std::optional<Nonnull<Expression*>> {
+    -> std::optional<Nonnull<const Witness*>> {
   if (trace_stream_) {
     **trace_stream_ << "MatchImpl: looking for " << *impl_type << " as "
                     << iface << "\n";
@@ -1251,7 +1253,7 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
 
   // Ensure the constraints on the `impl` are satisfied by the deduced
   // arguments.
-  ImplExpMap impls;
+  ImplWitnessMap impls;
   if (ErrorOr<Success> e = SatisfyImpls(impl.impl_bindings, impl_scope,
                                         source_loc, deduced_args, impls);
       !e.ok()) {
@@ -1265,31 +1267,36 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
     **trace_stream_ << "matched with " << *impl.type << " as "
                     << *impl.interface << "\n\n";
   }
-  return deduced_args.empty() ? impl.impl
-                              : arena_->New<InstantiateImpl>(
-                                    source_loc, impl.impl, deduced_args, impls);
+  if (deduced_args.empty()) {
+    return impl.witness;
+  }
+
+  // Only ImplWitnesses can be parameterized.
+  const ImplWitness* impl_witness = cast<ImplWitness>(impl.witness);
+  CARBON_CHECK(impl_witness->bindings().empty())
+      << "should not deduce arguments for ImplWitness we have already resolved";
+  return arena_->New<ImplWitness>(
+      &impl_witness->declaration(),
+      arena_->New<Bindings>(std::move(deduced_args), std::move(impls)));
 }
 
 auto TypeChecker::MakeConstraintWitness(
     const ConstraintType& constraint,
-    std::vector<Nonnull<Expression*>> impl_constraint_witnesses,
-    SourceLocation source_loc) const -> Nonnull<Expression*> {
-  return arena_->New<TupleLiteral>(source_loc,
-                                   std::move(impl_constraint_witnesses));
+    std::vector<Nonnull<const Witness*>> impl_constraint_witnesses,
+    SourceLocation source_loc) const -> Nonnull<const Witness*> {
+  return arena_->New<ConstraintWitness>(std::move(impl_constraint_witnesses));
 }
 
-auto TypeChecker::MakeConstraintWitnessAccess(Nonnull<Expression*> witness,
+auto TypeChecker::MakeConstraintWitnessAccess(Nonnull<const Witness*> witness,
                                               size_t impl_offset) const
-    -> Nonnull<Expression*> {
-  return arena_->New<IndexExpression>(
-      witness->source_loc(), witness,
-      arena_->New<IntLiteral>(witness->source_loc(), impl_offset));
+    -> Nonnull<const Witness*> {
+  return ConstraintImplWitness::Make(arena_, witness, impl_offset);
 }
 
 auto TypeChecker::SatisfyImpls(
     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
     const ImplScope& impl_scope, SourceLocation source_loc,
-    const BindingMap& deduced_type_args, ImplExpMap& impls) const
+    const BindingMap& deduced_type_args, ImplWitnessMap& impls) const
     -> ErrorOr<Success> {
   for (Nonnull<const ImplBinding*> impl_binding : impl_bindings) {
     Nonnull<const Value*> interface =
@@ -1297,11 +1304,11 @@ auto TypeChecker::SatisfyImpls(
     CARBON_CHECK(deduced_type_args.find(impl_binding->type_var()) !=
                  deduced_type_args.end());
     CARBON_ASSIGN_OR_RETURN(
-        Nonnull<Expression*> impl,
+        Nonnull<const Value*> impl,
         impl_scope.Resolve(interface,
                            deduced_type_args.at(impl_binding->type_var()),
                            source_loc, *this));
-    impls.emplace(impl_binding, impl);
+    impls.insert({impl_binding, impl});
   }
   return Success();
 }
@@ -1341,7 +1348,7 @@ auto TypeChecker::DeduceCallBindings(
   llvm::ArrayRef<Nonnull<const Expression*>> args =
       cast<TupleLiteral>(call.argument()).fields();
   if (params.size() != args.size()) {
-    return CompilationError(call.source_loc())
+    return ProgramError(call.source_loc())
            << "wrong number of arguments in function call, expected "
            << params.size() << " but got " << args.size();
   }
@@ -1377,13 +1384,12 @@ auto TypeChecker::DeduceCallBindings(
   CARBON_CHECK(generic_params.empty())
       << "did not find all generic parameters in parameter list";
 
-  call.set_deduced_args(generic_bindings);
   for (Nonnull<const GenericBinding*> deduced_param : deduced_bindings) {
     // TODO: change the following to a CHECK once the real checking
     // has been added to the type checking of function signatures.
     if (auto it = generic_bindings.find(deduced_param);
         it == generic_bindings.end()) {
-      return CompilationError(call.source_loc())
+      return ProgramError(call.source_loc())
              << "could not deduce type argument for type parameter "
              << deduced_param->name() << "\n"
              << "in " << call;
@@ -1391,15 +1397,16 @@ auto TypeChecker::DeduceCallBindings(
   }
 
   // Find impls for all the required impl bindings.
-  ImplExpMap impls;
+  ImplWitnessMap impls;
   CARBON_RETURN_IF_ERROR(SatisfyImpls(
       impl_bindings, impl_scope, call.source_loc(), generic_bindings, impls));
-  call.set_impls(impls);
+  call.set_bindings(Bindings(std::move(generic_bindings), std::move(impls)));
 
   // TODO: Ensure any equality constraints are satisfied.
 
   // Convert the arguments to the parameter type.
-  Nonnull<const Value*> param_type = Substitute(generic_bindings, params_type);
+  Nonnull<const Value*> param_type =
+      Substitute(call.bindings().args(), params_type);
 
   // Convert the arguments to the deduced and substituted parameter type.
   CARBON_ASSIGN_OR_RETURN(
@@ -1455,7 +1462,7 @@ static auto LookupInConstraint(SourceLocation source_loc,
         }
         // TODO: If we resolve to the same member either way, this
         // is not ambiguous.
-        return CompilationError(source_loc)
+        return ProgramError(source_loc)
                << "ambiguous " << lookup_kind << ", " << member_name
                << " found in " << *found->interface << " and " << iface_type;
       }
@@ -1465,10 +1472,10 @@ static auto LookupInConstraint(SourceLocation source_loc,
 
   if (!found) {
     if (isa<TypeType>(type)) {
-      return CompilationError(source_loc)
+      return ProgramError(source_loc)
              << lookup_kind << " in unconstrained type";
     }
-    return CompilationError(source_loc)
+    return ProgramError(source_loc)
            << lookup_kind << ", " << member_name << " not in " << *type;
   }
   return found.value();
@@ -1489,7 +1496,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     return Success();
   }
   switch (e->kind()) {
-    case ExpressionKind::InstantiateImpl:
     case ExpressionKind::ValueLiteral:
       CARBON_FATAL() << "attempting to type check node " << *e
                      << " generated during type checking";
@@ -1510,7 +1516,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               InterpExp(&index.offset(), arena_, trace_stream_));
           int i = cast<IntValue>(*offset_value).value();
           if (i < 0 || i >= static_cast<int>(tuple_type.elements().size())) {
-            return CompilationError(e->source_loc())
+            return ProgramError(e->source_loc())
                    << "index " << i << " is out of range for type "
                    << tuple_type;
           }
@@ -1529,7 +1535,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           return Success();
         }
         default:
-          return CompilationError(e->source_loc()) << "expected a tuple";
+          return ProgramError(e->source_loc()) << "expected a tuple";
       }
     }
     case ExpressionKind::TupleLiteral: {
@@ -1588,7 +1594,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               return Success();
             }
           }
-          return CompilationError(access.source_loc())
+          return ProgramError(access.source_loc())
                  << "struct " << struct_type << " does not have a field named "
                  << access.member_name();
         }
@@ -1619,7 +1625,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                       e->source_loc(), "method access, receiver type", me_type,
                       &access.object().static_type(), impl_scope));
                   if (access.object().value_category() != ValueCategory::Var) {
-                    return CompilationError(e->source_loc())
+                    return ProgramError(e->source_loc())
                            << "method " << access.member_name()
                            << " requires its receiver to be an lvalue";
                   }
@@ -1634,7 +1640,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             }
             return Success();
           } else {
-            return CompilationError(e->source_loc())
+            return ProgramError(e->source_loc())
                    << "class " << t_class.declaration().name()
                    << " does not have a field named " << access.member_name();
           }
@@ -1661,7 +1667,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           access.set_static_type(inst_member_type);
 
           CARBON_ASSIGN_OR_RETURN(
-              Nonnull<Expression*> impl,
+              Nonnull<const Witness*> impl,
               impl_scope.Resolve(result.interface, &object_type,
                                  e->source_loc(), *this));
           access.set_impl(impl);
@@ -1684,7 +1690,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               ConstraintLookupResult result,
               LookupInConstraint(e->source_loc(), "member access", &object_type,
                                  access.member_name()));
-          CARBON_ASSIGN_OR_RETURN(Nonnull<Expression*> impl,
+          CARBON_ASSIGN_OR_RETURN(Nonnull<const Witness*> impl,
                                   impl_scope.Resolve(result.interface, type,
                                                      e->source_loc(), *this));
           access.set_member(Member(result.member));
@@ -1749,7 +1755,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                   return Success();
                 }
               }
-              return CompilationError(access.source_loc())
+              return ProgramError(access.source_loc())
                      << "struct " << *type << " does not have a field named "
                      << " does not have a field named " << access.member_name();
             }
@@ -1758,7 +1764,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               std::optional<Nonnull<const Value*>> parameter_types =
                   choice.FindAlternative(access.member_name());
               if (!parameter_types.has_value()) {
-                return CompilationError(e->source_loc())
+                return ProgramError(e->source_loc())
                        << "choice " << choice.name()
                        << " does not have an alternative named "
                        << access.member_name();
@@ -1809,7 +1815,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 access.set_value_category(ValueCategory::Let);
                 return Success();
               } else {
-                return CompilationError(access.source_loc())
+                return ProgramError(access.source_loc())
                        << class_type << " does not have a member named "
                        << access.member_name();
               }
@@ -1828,12 +1834,12 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               return Success();
             }
             default:
-              return CompilationError(access.source_loc())
+              return ProgramError(access.source_loc())
                      << "unsupported member access into type " << *type;
           }
         }
         default:
-          return CompilationError(e->source_loc())
+          return ProgramError(e->source_loc())
                  << "member access, unexpected " << object_type << " in " << *e;
       }
     }
@@ -1842,7 +1848,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.object(), impl_scope));
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.path(), impl_scope));
       if (!isa<TypeOfMemberName>(access.path().static_type())) {
-        return CompilationError(e->source_loc())
+        return ProgramError(e->source_loc())
                << "expected name of instance member or interface member in "
                   "compound member access, found "
                << access.path().static_type();
@@ -1884,7 +1890,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       if (std::optional<Nonnull<const Value*>> iface =
               member_name.interface()) {
         CARBON_ASSIGN_OR_RETURN(
-            Nonnull<Expression*> impl,
+            Nonnull<const Witness*> impl,
             impl_scope.Resolve(*iface, *base_type, e->source_loc(), *this));
         access.set_impl(impl);
       }
@@ -1951,7 +1957,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             cast<FunctionDeclaration>(ident.value_node().base());
         if (!function.has_static_type()) {
           CARBON_CHECK(function.return_term().is_auto());
-          return CompilationError(ident.source_loc())
+          return ProgramError(ident.source_loc())
                  << "Function calls itself, but has a deduced return type";
         }
       }
@@ -1993,7 +1999,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             BuiltinMethodCall{"Op"});
         if (!result.ok()) {
           // We couldn't find a matching `impl`.
-          return CompilationError(e->source_loc())
+          return ProgramError(e->source_loc())
                  << "type error in `" << ToString(op.op()) << "`:\n"
                  << result.error().message();
         }
@@ -2008,7 +2014,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             BuiltinMethodCall{"Op", {op.arguments()[1]}});
         if (!result.ok()) {
           // We couldn't find a matching `impl`.
-          return CompilationError(e->source_loc())
+          return ProgramError(e->source_loc())
                  << "type error in `" << ToString(op.op()) << "`:\n"
                  << result.error().message();
         }
@@ -2039,7 +2045,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             BuiltinMethodCall{method_name, op.arguments()[1]});
         if (!converted.ok()) {
           // We couldn't find a matching `impl`.
-          return CompilationError(e->source_loc())
+          return ProgramError(e->source_loc())
                  << *ts[0] << " is not " << operator_desc << " comparable with "
                  << *ts[1] << " (" << converted.error().message() << ")";
         }
@@ -2083,7 +2089,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                              dyn_cast<TypeOfConstraintType>(ts[i])) {
                 constraints[i] = &constraint_type_type->constraint_type();
               } else {
-                return CompilationError(op.arguments()[i]->source_loc())
+                return ProgramError(op.arguments()[i]->source_loc())
                        << "argument to " << ToString(op.op())
                        << " should be a constraint, found `" << *ts[i] << "`";
               }
@@ -2160,7 +2166,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           return Success();
         case Operator::AddressOf:
           if (op.arguments()[0]->value_category() != ValueCategory::Var) {
-            return CompilationError(op.arguments()[0]->source_loc())
+            return ProgramError(op.arguments()[0]->source_loc())
                    << "Argument to " << ToString(op.op())
                    << " should be an lvalue.";
           }
@@ -2179,7 +2185,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                      BuiltinMethodCall{"Convert"});
           if (!converted.ok()) {
             // We couldn't find a matching `impl`.
-            return CompilationError(e->source_loc())
+            return ProgramError(e->source_loc())
                    << "type error in `as`: `" << *ts[0]
                    << "` is not explicitly convertible to `" << *type << "`:\n"
                    << converted.error().message();
@@ -2282,7 +2288,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         case Value::Kind::TypeOfChoiceType:
         default: {
-          return CompilationError(e->source_loc())
+          return ProgramError(e->source_loc())
                  << "in call `" << *e
                  << "`, expected callee to be a function, found `"
                  << call.function().static_type() << "`";
@@ -2312,7 +2318,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           // overloads. Here, that's the name Print instead of __intrinsic_print
           // in errors.
           if (args.size() < 1 || args.size() > 2) {
-            return CompilationError(e->source_loc())
+            return ProgramError(e->source_loc())
                    << "Print takes 1 or 2 arguments, received " << args.size();
           }
           CARBON_RETURN_IF_ERROR(ExpectExactType(
@@ -2328,7 +2334,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           return Success();
         case IntrinsicExpression::Intrinsic::Assert: {
           if (args.size() != 2) {
-            return CompilationError(e->source_loc())
+            return ProgramError(e->source_loc())
                    << "__intrinsic_assert takes 2 arguments";
           }
           CARBON_RETURN_IF_ERROR(ExpectType(
@@ -2343,7 +2349,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         case IntrinsicExpression::Intrinsic::Alloc: {
           if (args.size() != 1) {
-            return CompilationError(e->source_loc())
+            return ProgramError(e->source_loc())
                    << "__intrinsic_new takes 1 argument";
           }
           auto arg_type = &args[0]->static_type();
@@ -2353,7 +2359,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         case IntrinsicExpression::Intrinsic::Dealloc: {
           if (args.size() != 1) {
-            return CompilationError(e->source_loc())
+            return ProgramError(e->source_loc())
                    << "__intrinsic_new takes 1 argument";
           }
           auto arg_type = &args[0]->static_type();
@@ -2365,7 +2371,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         case IntrinsicExpression::Intrinsic::Rand: {
           if (args.size() != 2) {
-            return CompilationError(e->source_loc())
+            return ProgramError(e->source_loc())
                    << "Rand takes 2 arguments, received " << args.size();
           }
           CARBON_RETURN_IF_ERROR(ExpectExactType(
@@ -2382,7 +2388,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         case IntrinsicExpression::Intrinsic::IntEq: {
           if (args.size() != 2) {
-            return CompilationError(e->source_loc())
+            return ProgramError(e->source_loc())
                    << "__intrinsic_int_eq takes 2 arguments";
           }
           CARBON_RETURN_IF_ERROR(ExpectExactType(
@@ -2397,7 +2403,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         case IntrinsicExpression::Intrinsic::IntCompare: {
           if (args.size() != 2) {
-            return CompilationError(e->source_loc())
+            return ProgramError(e->source_loc())
                    << "__intrinsic_int_compare takes 2 arguments";
           }
           CARBON_RETURN_IF_ERROR(ExpectExactType(
@@ -2412,7 +2418,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         case IntrinsicExpression::Intrinsic::StrEq: {
           if (args.size() != 2) {
-            return CompilationError(e->source_loc())
+            return ProgramError(e->source_loc())
                    << "__intrinsic_str_eq takes 2 arguments";
           }
           CARBON_RETURN_IF_ERROR(ExpectExactType(
@@ -2427,7 +2433,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         case IntrinsicExpression::Intrinsic::StrCompare: {
           if (args.size() != 2) {
-            return CompilationError(e->source_loc())
+            return ProgramError(e->source_loc())
                    << "__intrinsic_str_compare takes 2 arguments";
           }
           CARBON_RETURN_IF_ERROR(ExpectExactType(
@@ -2442,7 +2448,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         case IntrinsicExpression::Intrinsic::IntBitComplement:
           if (args.size() != 1) {
-            return CompilationError(e->source_loc())
+            return ProgramError(e->source_loc())
                    << intrinsic_exp.name() << " takes 1 argument";
           }
           CARBON_RETURN_IF_ERROR(ExpectExactType(
@@ -2457,7 +2463,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         case IntrinsicExpression::Intrinsic::IntLeftShift:
         case IntrinsicExpression::Intrinsic::IntRightShift:
           if (args.size() != 2) {
-            return CompilationError(e->source_loc())
+            return ProgramError(e->source_loc())
                    << intrinsic_exp.name() << " takes 2 arguments";
           }
           CARBON_RETURN_IF_ERROR(ExpectExactType(
@@ -2521,7 +2527,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       } else if (isa<TypeType>(base_type)) {
         // Start with an unconstrained type.
       } else {
-        return CompilationError(e->source_loc())
+        return ProgramError(e->source_loc())
                << "expected constraint as first operand of `where` expression, "
                << "found " << base_type;
       }
@@ -2557,7 +2563,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               map[constraint_type->self_binding()] = type;
               builder.Add(cast<ConstraintType>(Substitute(map, constraint)));
             } else {
-              return CompilationError(is_clause.constraint().source_loc())
+              return ProgramError(is_clause.constraint().source_loc())
                      << "expression after `is` does not resolve to a "
                         "constraint, found value "
                      << *constraint << " of type "
@@ -2603,7 +2609,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           Nonnull<const Value*> size_value,
           InterpExp(&array_literal.size_expression(), arena_, trace_stream_));
       if (cast<IntValue>(size_value)->value() < 0) {
-        return CompilationError(array_literal.size_expression().source_loc())
+        return ProgramError(array_literal.size_expression().source_loc())
                << "Array size cannot be negative";
       }
       array_literal.set_static_type(arena_->New<TypeType>());
@@ -2652,20 +2658,13 @@ void TypeChecker::BringImplsIntoScope(
   }
 }
 
-auto TypeChecker::CreateImplReference(Nonnull<const ImplBinding*> impl_binding)
-    -> Nonnull<Expression*> {
-  auto impl_id =
-      arena_->New<IdentifierExpression>(impl_binding->source_loc(), "impl");
-  impl_id->set_value_node(impl_binding);
-  return impl_id;
-}
-
 void TypeChecker::BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
                                      ImplScope& impl_scope) {
-  CARBON_CHECK(impl_binding->type_var()->symbolic_identity().has_value());
+  CARBON_CHECK(impl_binding->type_var()->symbolic_identity().has_value() &&
+               impl_binding->symbolic_identity().has_value());
   impl_scope.Add(impl_binding->interface(),
                  *impl_binding->type_var()->symbolic_identity(),
-                 CreateImplReference(impl_binding), *this);
+                 cast<Witness>(*impl_binding->symbolic_identity()), *this);
 }
 
 auto TypeChecker::TypeCheckTypeExp(Nonnull<Expression*> type_expression,
@@ -2690,7 +2689,7 @@ auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&is_clause.constraint(), impl_scope));
       if (!isa<TypeOfInterfaceType, TypeOfConstraintType, TypeType>(
               is_clause.constraint().static_type())) {
-        return CompilationError(is_clause.constraint().source_loc())
+        return ProgramError(is_clause.constraint().source_loc())
                << "expression after `is` does not resolve to a constraint, "
                << "found " << is_clause.constraint().static_type();
       }
@@ -2710,7 +2709,7 @@ auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
                                    /*allow_user_defined_conversions=*/false) &&
           !IsImplicitlyConvertible(rhs_type, lhs_type, impl_scope,
                                    /*allow_user_defined_conversions=*/false)) {
-        return CompilationError(clause->source_loc())
+        return ProgramError(clause->source_loc())
                << "type mismatch between values in `where LHS == RHS`\n"
                << "  LHS type: " << *lhs_type << "\n"
                << "  RHS type: " << *rhs_type;
@@ -2743,7 +2742,7 @@ auto TypeChecker::TypeCheckPattern(
       if (!VisitNestedPatterns(binding.type(), [](const Pattern& pattern) {
             return !isa<BindingPattern>(pattern);
           })) {
-        return CompilationError(binding.type().source_loc())
+        return ProgramError(binding.type().source_loc())
                << "The type of a binding pattern cannot contain bindings.";
       }
       CARBON_RETURN_IF_ERROR(TypeCheckPattern(
@@ -2761,7 +2760,7 @@ auto TypeChecker::TypeCheckPattern(
           if (!PatternMatch(type, *expected, binding.type().source_loc(),
                             std::nullopt, generic_args, trace_stream_,
                             this->arena_)) {
-            return CompilationError(binding.type().source_loc())
+            return ProgramError(binding.type().source_loc())
                    << "Type pattern '" << *type
                    << "' does not match actual type '" << **expected << "'";
           }
@@ -2784,14 +2783,14 @@ auto TypeChecker::TypeCheckPattern(
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
                               TypeCheckTypeExp(&binding.type(), impl_scope));
       if (expected) {
-        return CompilationError(binding.type().source_loc())
+        return ProgramError(binding.type().source_loc())
                << "Generic binding may not occur in pattern with expected "
                   "type: "
                << binding;
       }
       binding.set_static_type(type);
       if (binding.named_as_type_via_dot_self() && !IsTypeOfType(type)) {
-        return CompilationError(binding.type().source_loc())
+        return ProgramError(binding.type().source_loc())
                << "`.Self` used in type of non-type binding `" << binding.name()
                << "`";
       }
@@ -2804,7 +2803,7 @@ auto TypeChecker::TypeCheckPattern(
         Nonnull<ImplBinding*> impl_binding =
             arena_->New<ImplBinding>(binding.source_loc(), &binding, type);
         impl_binding->set_symbolic_identity(
-            arena_->New<SymbolicWitness>(CreateImplReference(impl_binding)));
+            arena_->New<BindingWitness>(impl_binding));
         binding.set_impl_binding(impl_binding);
         BringImplIntoScope(impl_binding, impl_scope);
       }
@@ -2814,12 +2813,11 @@ auto TypeChecker::TypeCheckPattern(
       auto& tuple = cast<TuplePattern>(*p);
       std::vector<Nonnull<const Value*>> field_types;
       if (expected && (*expected)->kind() != Value::Kind::TupleValue) {
-        return CompilationError(p->source_loc()) << "didn't expect a tuple";
+        return ProgramError(p->source_loc()) << "didn't expect a tuple";
       }
       if (expected && tuple.fields().size() !=
                           cast<TupleValue>(**expected).elements().size()) {
-        return CompilationError(tuple.source_loc())
-               << "tuples of different length";
+        return ProgramError(tuple.source_loc()) << "tuples of different length";
       }
       for (size_t i = 0; i < tuple.fields().size(); ++i) {
         Nonnull<Pattern*> field = tuple.fields()[i];
@@ -2848,7 +2846,7 @@ auto TypeChecker::TypeCheckPattern(
           Nonnull<const Value*> type,
           InterpExp(&alternative.choice_type(), arena_, trace_stream_));
       if (!isa<ChoiceType>(type)) {
-        return CompilationError(alternative.source_loc())
+        return ProgramError(alternative.source_loc())
                << "alternative pattern does not name a choice type.";
       }
       const ChoiceType& choice_type = cast<ChoiceType>(*type);
@@ -2860,7 +2858,7 @@ auto TypeChecker::TypeCheckPattern(
       std::optional<Nonnull<const Value*>> parameter_types =
           choice_type.FindAlternative(alternative.alternative_name());
       if (parameter_types == std::nullopt) {
-        return CompilationError(alternative.source_loc())
+        return ProgramError(alternative.source_loc())
                << "'" << alternative.alternative_name()
                << "' is not an alternative of " << choice_type;
       }
@@ -2916,7 +2914,7 @@ auto TypeChecker::TypeCheckPattern(
               dyn_cast<PointerType>(&addr_pattern.binding().static_type())) {
         addr_pattern.set_static_type(&inner_binding_type->type());
       } else {
-        return CompilationError(addr_pattern.source_loc())
+        return ProgramError(addr_pattern.source_loc())
                << "Type associated with addr must be a pointer type.";
       }
       CARBON_ASSIGN_OR_RETURN(
@@ -2962,7 +2960,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
           expected_type = &clause.pattern().static_type();
         }
         if (patterns.IsRedundant({&clause.pattern()})) {
-          return CompilationError(clause.pattern().source_loc())
+          return ProgramError(clause.pattern().source_loc())
                  << "unreachable case: all values matched by this case "
                  << "are matched by earlier cases";
         }
@@ -3006,7 +3004,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
                              inner_impl_scope, ValueCategory::Var));
 
       } else {
-        return CompilationError(for_stmt.source_loc())
+        return ProgramError(for_stmt.source_loc())
                << "expected array type after in, found value of type " << rhs;
       }
 
@@ -3055,7 +3053,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&assign.rhs(), impl_scope));
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&assign.lhs(), impl_scope));
       if (assign.lhs().value_category() != ValueCategory::Var) {
-        return CompilationError(assign.source_loc())
+        return ProgramError(assign.source_loc())
                << "Cannot assign to rvalue '" << assign.lhs() << "'";
       }
       CARBON_ASSIGN_OR_RETURN(
@@ -3096,7 +3094,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
         CARBON_CHECK(IsConcreteType(&ret.value_node().static_type()));
         if (!IsSameType(&return_term.static_type(),
                         &ret.value_node().static_type(), impl_scope)) {
-          return CompilationError(ret.value_node().base().source_loc())
+          return ProgramError(ret.value_node().base().source_loc())
                  << "type of returned var `" << ret.value_node().static_type()
                  << "` does not match return type `"
                  << return_term.static_type() << "`";
@@ -3156,7 +3154,7 @@ auto TypeChecker::ExpectReturnOnAllPaths(
     std::optional<Nonnull<Statement*>> opt_stmt, SourceLocation source_loc)
     -> ErrorOr<Success> {
   if (!opt_stmt) {
-    return CompilationError(source_loc)
+    return ProgramError(source_loc)
            << "control-flow reaches end of function that provides a `->` "
               "return type without reaching a return statement";
   }
@@ -3165,7 +3163,7 @@ auto TypeChecker::ExpectReturnOnAllPaths(
     case StatementKind::Match: {
       auto& match = cast<Match>(*stmt);
       if (!IsExhaustive(match)) {
-        return CompilationError(source_loc)
+        return ProgramError(source_loc)
                << "non-exhaustive match may allow control-flow to reach the "
                   "end "
                   "of a function that provides a `->` return type";
@@ -3180,7 +3178,7 @@ auto TypeChecker::ExpectReturnOnAllPaths(
     case StatementKind::Block: {
       auto& block = cast<Block>(*stmt);
       if (block.statements().empty()) {
-        return CompilationError(stmt->source_loc())
+        return ProgramError(stmt->source_loc())
                << "control-flow reaches end of function that provides a `->` "
                   "return type without reaching a return statement";
       }
@@ -3210,7 +3208,7 @@ auto TypeChecker::ExpectReturnOnAllPaths(
     case StatementKind::Break:
     case StatementKind::Continue:
     case StatementKind::VariableDefinition:
-      return CompilationError(stmt->source_loc())
+      return ProgramError(stmt->source_loc())
              << "control-flow reaches end of function that provides a `->` "
                 "return type without reaching a return statement";
   }
@@ -3276,7 +3274,7 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
   } else {
     // We have to type-check the body in order to determine the return type.
     if (!f->body().has_value()) {
-      return CompilationError(f->return_term().source_loc())
+      return ProgramError(f->return_term().source_loc())
              << "Function declaration has deduced return type but no body";
     }
     CARBON_RETURN_IF_ERROR(TypeCheckStmt(*f->body(), function_scope));
@@ -3308,7 +3306,7 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
 
   if (f->name() == "Main") {
     if (!f->return_term().type_expression().has_value()) {
-      return CompilationError(f->return_term().source_loc())
+      return ProgramError(f->return_term().source_loc())
              << "`Main` must have an explicit return type";
     }
     CARBON_RETURN_IF_ERROR(
@@ -3365,11 +3363,11 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   class_scope.AddParent(scope_info.innermost_scope);
 
   if (class_decl->extensibility() != ClassExtensibility::None) {
-    return CompilationError(class_decl->source_loc())
+    return ProgramError(class_decl->source_loc())
            << "Class prefixes `base` and `abstract` are not supported yet";
   }
   if (class_decl->extends()) {
-    return CompilationError(class_decl->source_loc())
+    return ProgramError(class_decl->source_loc())
            << "Class extension with `extends` is not supported yet";
   }
 
@@ -3624,21 +3622,24 @@ auto TypeChecker::DeclareInterfaceDeclaration(
     iface_decl->set_static_type(arena_->New<TypeOfInterfaceType>(iface_type));
   }
 
+  // Set the type of Self to be the instantiated interface.
+  Nonnull<SelfDeclaration*> self_type = iface_decl->self_type();
+  self_type->set_static_type(arena_->New<TypeType>());
+  SetConstantValue(self_type, iface_type);
+
   // Process the Self parameter.
   CARBON_RETURN_IF_ERROR(TypeCheckPattern(iface_decl->self(), std::nullopt,
                                           iface_scope, ValueCategory::Let));
+  auto* self_witness = cast<Witness>(
+      iface_decl->self()->impl_binding().value()->symbolic_identity().value());
 
   ScopeInfo iface_scope_info = ScopeInfo::ForNonClassScope(&iface_scope);
   for (Nonnull<Declaration*> m : iface_decl->members()) {
     CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, iface_scope_info));
 
     if (auto* assoc = dyn_cast<AssociatedConstantDeclaration>(m)) {
-      // TODO: The witness should be optional in AssociatedConstant.
-      Nonnull<const Expression*> witness_expr =
-          arena_->New<DotSelfExpression>(iface_decl->source_loc());
       assoc->binding().set_symbolic_identity(arena_->New<AssociatedConstant>(
-          &iface_decl->self()->value(), iface_type, assoc,
-          arena_->New<SymbolicWitness>(witness_expr)));
+          &iface_decl->self()->value(), iface_type, assoc, self_witness));
     }
   }
   if (trace_stream_) {
@@ -3687,7 +3688,7 @@ auto TypeChecker::CheckImplIsDeducible(
                                            impl_scope));
   for (auto* expected_deduced : deduced_bindings) {
     if (!deduced_args.count(expected_deduced)) {
-      return CompilationError(source_loc)
+      return ProgramError(source_loc)
              << "parameter `" << *expected_deduced
              << "` is not deducible from `impl " << *impl_type << " as "
              << *impl_iface << "`";
@@ -3729,7 +3730,7 @@ auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
       };
       impl_decl->constraint_type()->VisitEqualValues(expected, visitor);
       if (!found_any) {
-        return CompilationError(impl_decl->source_loc())
+        return ProgramError(impl_decl->source_loc())
                << "implementation missing " << *expected;
       } else if (!found_value) {
         // TODO: It's not clear what the right rule is here. Clearly
@@ -3737,11 +3738,11 @@ auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
         // ... is insufficient to establish a value for either X or Y.
         // But perhaps we can allow
         //   impl forall [T:! HasX] T as HasY where .Y == .X {}
-        return CompilationError(impl_decl->source_loc())
+        return ProgramError(impl_decl->source_loc())
                << "implementation doesn't provide a concrete value for "
                << *expected;
       } else if (second_value) {
-        return CompilationError(impl_decl->source_loc())
+        return ProgramError(impl_decl->source_loc())
                << "implementation provides multiple values for " << *expected
                << ": " << **found_value << " and " << **second_value;
       }
@@ -3753,7 +3754,7 @@ auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
       std::optional<Nonnull<const Declaration*>> mem =
           FindMember(*mem_name, impl_decl->members());
       if (!mem.has_value()) {
-        return CompilationError(impl_decl->source_loc())
+        return ProgramError(impl_decl->source_loc())
                << "implementation missing " << *mem_name;
       }
 
@@ -3783,11 +3784,7 @@ auto TypeChecker::CheckAndAddImplBindings(
                           impl_decl->deduced_parameters().end());
 
   // An expression that evaluates to this impl's witness.
-  // TODO: Store witnesses as `Witness*` rather than `Expression*` everywhere
-  // so we don't need to create this.
-  auto* impl_expr = arena_->New<ValueLiteral>(
-      impl_decl->source_loc(), arena_->New<ImplWitness>(impl_decl),
-      arena_->New<TypeType>(), ValueCategory::Let);
+  auto* witness = arena_->New<ImplWitness>(impl_decl);
 
   // Form the resolved constraint type by substituting `Self` for `.Self`.
   Nonnull<const Value*> self = *impl_decl->self()->constant_value();
@@ -3818,10 +3815,10 @@ auto TypeChecker::CheckAndAddImplBindings(
 
       scope_info.innermost_non_class_scope->Add(
           iface_type, deduced_bindings, impl_type, impl_decl->impl_bindings(),
-          impl_expr, *this);
+          witness, *this);
     } else {
       // TODO: Add support for implementing `adapter`s.
-      return CompilationError(impl_decl->source_loc())
+      return ProgramError(impl_decl->source_loc())
              << "cannot implement a constraint whose lookup context includes "
              << *lookup.context;
     }
@@ -3868,7 +3865,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
         impl_decl->interface().source_loc(), iface_type);
   }
   if (!isa<ConstraintType>(constraint_type)) {
-    return CompilationError(impl_decl->interface().source_loc())
+    return ProgramError(impl_decl->interface().source_loc())
            << "expected constraint after `as`, found value of type "
            << *constraint_type;
   }
@@ -4032,7 +4029,9 @@ static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
     case Value::Kind::AlternativeValue:
     case Value::Kind::TupleValue:
     case Value::Kind::ImplWitness:
-    case Value::Kind::SymbolicWitness:
+    case Value::Kind::BindingWitness:
+    case Value::Kind::ConstraintWitness:
+    case Value::Kind::ConstraintImplWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::BindingPlaceholderValue:
@@ -4080,7 +4079,7 @@ auto TypeChecker::DeclareAliasDeclaration(Nonnull<AliasDeclaration*> alias,
       TypeCheckExp(&alias->target(), *scope_info.innermost_scope));
 
   if (!IsValidTypeForAliasTarget(&alias->target().static_type())) {
-    return CompilationError(alias->source_loc())
+    return ProgramError(alias->source_loc())
            << "invalid target for alias declaration";
   }
 
@@ -4160,7 +4159,7 @@ auto TypeChecker::TypeCheckDeclaration(
           dyn_cast<ExpressionPattern>(&var.binding().type());
       if (binding_type == nullptr) {
         // TODO: consider adding support for `auto`
-        return CompilationError(var.source_loc())
+        return ProgramError(var.source_loc())
                << "Type of a top-level variable must be an expression.";
       }
       if (var.has_initializer()) {
@@ -4239,7 +4238,7 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       // Associate the variable name with it's declared type in the
       // compile-time symbol table.
       if (!llvm::isa<ExpressionPattern>(var.binding().type())) {
-        return CompilationError(var.binding().type().source_loc())
+        return ProgramError(var.binding().type().source_loc())
                << "Expected expression for variable type";
       }
       Expression& type =
@@ -4345,12 +4344,12 @@ auto TypeChecker::CollectMember(Nonnull<const Declaration*> enclosing_decl,
   auto [it, inserted] = encl_members.insert({member_name.value(), member_decl});
   if (!inserted) {
     if (member_decl == it->second) {
-      return CompilationError(enclosing_decl_loc)
+      return ProgramError(enclosing_decl_loc)
              << "Member named " << member_name.value() << " (declared at "
              << member_decl->source_loc() << ")"
              << " is being mixed multiple times into " << enclosing_decl_name;
     } else {
-      return CompilationError(enclosing_decl_loc)
+      return ProgramError(enclosing_decl_loc)
              << "Member named " << member_name.value() << " (declared at "
              << member_decl->source_loc() << ") cannot be mixed into "
              << enclosing_decl_name

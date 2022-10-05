@@ -21,16 +21,8 @@ namespace Carbon {
 // Use CHECK/FATAL for internal errors. The generic program error option is
 // provided as a fallback for cases that don't fit those classifications.
 
-inline auto CompilationError(SourceLocation loc) -> ErrorBuilder {
-  return ErrorBuilder("COMPILATION ERROR", loc.ToString());
-}
-
 inline auto ProgramError(SourceLocation loc) -> ErrorBuilder {
-  return ErrorBuilder("PROGRAM ERROR", loc.ToString());
-}
-
-inline auto RuntimeError(SourceLocation loc) -> ErrorBuilder {
-  return ErrorBuilder("RUNTIME ERROR", loc.ToString());
+  return ErrorBuilder(loc.ToString());
 }
 
 }  // namespace Carbon

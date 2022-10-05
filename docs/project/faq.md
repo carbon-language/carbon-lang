@@ -366,14 +366,14 @@ variable binding. For example:
 var ((x: i32, _: i32), y: auto) = ((1, 2), (3, 4));
 ```
 
-This code is valid, and initializes `x` to `1` and `z` to `(3, 4)`. In the
+This code is valid, and initializes `x` to `1` and `y` to `(3, 4)`. In the
 future, we will probably also support destructuring structs in a similar way,
 and many other kinds of patterns are possible.
 
 Now consider how that example would look if the `var` token were not required:
 
 ```
-((_: i32, x: i32), y: auto) = ((1, 2), (3, 4));
+((x: i32, _: i32), y: auto) = ((1, 2), (3, 4));
 ```
 
 With this example, the parser would need to look four tokens ahead to determine

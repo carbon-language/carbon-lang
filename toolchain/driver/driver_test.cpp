@@ -127,8 +127,8 @@ TEST(DriverTest, DumpTokens) {
   Driver driver = Driver(test_output_stream, test_error_stream);
 
   auto test_file_path = CreateTestFile("Hello World");
-  EXPECT_TRUE(driver.RunDumpTokensSubcommand(ConsoleDiagnosticConsumer(),
-                                             {test_file_path}));
+  EXPECT_TRUE(driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(),
+                                       {"tokens", test_file_path}));
   EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
   auto tokenized_text = test_output_stream.TakeStr();
 
@@ -158,27 +158,32 @@ TEST(DriverTest, DumpTokens) {
                                                {"spelling", ""}}}}));
 
   // Check that the subcommand dispatch works.
-  EXPECT_TRUE(driver.RunFullCommand({"dump-tokens", test_file_path}));
+  EXPECT_TRUE(driver.RunFullCommand({"dump", "tokens", test_file_path}));
   EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
   EXPECT_THAT(test_output_stream.TakeStr(), StrEq(tokenized_text));
 }
 
-TEST(DriverTest, DumpTokenErrors) {
+TEST(DriverTest, DumpErrors) {
   RawTestOstream test_output_stream;
   RawTestOstream test_error_stream;
   Driver driver = Driver(test_output_stream, test_error_stream);
 
-  EXPECT_FALSE(driver.RunDumpTokensSubcommand(ConsoleDiagnosticConsumer(), {}));
+  EXPECT_FALSE(driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(), {"foo"}));
   EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
   EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
 
   EXPECT_FALSE(
-      driver.RunDumpTokensSubcommand(ConsoleDiagnosticConsumer(), {"--xyz"}));
+      driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(), {"--xyz"}));
   EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
   EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
 
-  EXPECT_FALSE(driver.RunDumpTokensSubcommand(ConsoleDiagnosticConsumer(),
-                                              {"/not/a/real/file/name"}));
+  EXPECT_FALSE(
+      driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(), {"tokens"}));
+  EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
+  EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
+
+  EXPECT_FALSE(driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(),
+                                        {"tokens", "/not/a/real/file/name"}));
   EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
   EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
 }
@@ -189,8 +194,8 @@ TEST(DriverTest, DumpParseTree) {
   Driver driver = Driver(test_output_stream, test_error_stream);
 
   auto test_file_path = CreateTestFile("var v: Int = 42;");
-  EXPECT_TRUE(driver.RunDumpParseTreeSubcommand(ConsoleDiagnosticConsumer(),
-                                                {test_file_path}));
+  EXPECT_TRUE(driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(),
+                                       {"parse-tree", test_file_path}));
   EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
   auto tokenized_text = test_output_stream.TakeStr();
 
@@ -234,7 +239,7 @@ TEST(DriverTest, DumpParseTree) {
                              {"text", ""}}}));
 
   // Check that the subcommand dispatch works.
-  EXPECT_TRUE(driver.RunFullCommand({"dump-parse-tree", test_file_path}));
+  EXPECT_TRUE(driver.RunFullCommand({"dump", "parse-tree", test_file_path}));
   EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
   EXPECT_THAT(test_output_stream.TakeStr(), StrEq(tokenized_text));
 }

@@ -113,6 +113,7 @@ class Action {
   enum class Kind {
     LValAction,
     ExpressionAction,
+    WitnessAction,
     PatternAction,
     StatementAction,
     DeclarationAction,
@@ -216,6 +217,24 @@ class ExpressionAction : public Action {
 
  private:
   Nonnull<const Expression*> expression_;
+};
+
+// An Action which implements evaluation of a Witness to resolve it in the
+// local context.
+class WitnessAction : public Action {
+ public:
+  explicit WitnessAction(Nonnull<const Witness*> witness)
+      : Action(Kind::WitnessAction), witness_(witness) {}
+
+  static auto classof(const Action* action) -> bool {
+    return action->kind() == Kind::WitnessAction;
+  }
+
+  // The Witness this Action resolves.
+  auto witness() const -> Nonnull<const Witness*> { return witness_; }
+
+ private:
+  Nonnull<const Witness*> witness_;
 };
 
 // An Action which implements evaluation of a Pattern. The result is expressed
