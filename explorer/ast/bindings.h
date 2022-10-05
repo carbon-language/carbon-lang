@@ -8,9 +8,11 @@
 #include <map>
 
 #include "explorer/common/nonnull.h"
+#include "llvm/ADT/ArrayRef.h"
 
 namespace Carbon {
 
+class Arena;
 class ImplBinding;
 class GenericBinding;
 class Value;
@@ -53,6 +55,13 @@ class Bindings {
 
   // An empty set of bindings.
   static auto None() -> Nonnull<const Bindings*>;
+
+  // A set of symbolic identity bindings for the given collection of generic
+  // bindings and their impl bindings.
+  static auto SymbolicIdentity(
+      Nonnull<Arena*> arena,
+      llvm::ArrayRef<Nonnull<const GenericBinding*>> bindings)
+      -> Nonnull<const Bindings*>;
 
   // Determine whether this is an empty set of bindings.
   [[nodiscard]] auto empty() const -> bool {

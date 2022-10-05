@@ -26,28 +26,10 @@ void ImplScope::Add(Nonnull<const Value*> iface,
                     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
                     Nonnull<const Witness*> witness,
                     const TypeChecker& type_checker) {
-  if (auto* orig_constraint = dyn_cast<ConstraintType>(iface)) {
-    // Constraints usually have an impl binding, but a constraint such as
-    // `Type where .Self == i32` does not. FIXME: Should it?
-    // TODO: Should we have substituted .Self = type into iface before we got
-    // here, eg when initially setting the type of the binding? We do so for an
-    // impl.
-    std::optional<Nonnull<const Value*>> constraint_witness;
-    if (orig_constraint->self_binding()->impl_binding()) {
-      // The '.Self is X' witness for 'X where ...' is always the
-      // impl_constraint with index 0.
-      // TODO: Use a less brittle mechanism to extract this witness.
-      constraint_witness = type_checker.MakeConstraintWitnessAccess(witness, 0);
-    }
-    Bindings bindings;
-    bindings.Add(orig_constraint->self_binding(), type, constraint_witness);
-    const ConstraintType* constraint = cast<ConstraintType>(
-        type_checker.Substitute(bindings, orig_constraint));
-    for (size_t i = 0; i != constraint->impl_constraints().size(); ++i) {
-      ConstraintType::ImplConstraint impl = constraint->impl_constraints()[i];
-      Add(impl.interface, deduced, impl.type, impl_bindings,
-          type_checker.MakeConstraintWitnessAccess(witness, i), type_checker);
-    }
+  if (auto* constraint = dyn_cast<ConstraintType>(iface)) {
+    // The caller should have substituted `.Self` for `type` already.
+    Add(constraint->impl_constraints(), deduced, impl_bindings, witness,
+        type_checker);
     // A parameterized impl declaration doesn't contribute any equality
     // constraints to the scope. Instead, we'll resolve the equality
     // constraints by resolving a witness when needed.
@@ -64,6 +46,18 @@ void ImplScope::Add(Nonnull<const Value*> iface,
                     .type = type,
                     .impl_bindings = impl_bindings,
                     .witness = witness});
+}
+
+void ImplScope::Add(llvm::ArrayRef<ConstraintType::ImplConstraint> impls,
+                    llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
+                    llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
+                    Nonnull<const Witness*> witness,
+                    const TypeChecker& type_checker) {
+  for (size_t i = 0; i != impls.size(); ++i) {
+    ConstraintType::ImplConstraint impl = impls[i];
+    Add(impl.interface, deduced, impl.type, impl_bindings,
+        type_checker.MakeConstraintWitnessAccess(witness, i), type_checker);
+  }
 }
 
 void ImplScope::AddParent(Nonnull<const ImplScope*> parent) {

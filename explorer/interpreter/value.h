@@ -846,18 +846,16 @@ class Witness : public Value {
 // The witness table for an impl.
 class ImplWitness : public Witness {
  public:
-  // Construct a witness for
-  // 1) a non-generic impl, or
-  // 2) a generic impl that has not yet been applied to type arguments.
-  explicit ImplWitness(Nonnull<const ImplDeclaration*> declaration)
-      : Witness(Kind::ImplWitness), declaration_(declaration) {}
-
-  // Construct an instantiated generic impl.
+  // Construct a witness for an impl.
   explicit ImplWitness(Nonnull<const ImplDeclaration*> declaration,
                        Nonnull<const Bindings*> bindings)
       : Witness(Kind::ImplWitness),
         declaration_(declaration),
-        bindings_(bindings) {}
+        bindings_(bindings) {
+    CARBON_CHECK(bindings_->empty() ==
+                 declaration_->deduced_parameters().empty())
+        << "bindings should match deduced parameters";
+  }
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ImplWitness;

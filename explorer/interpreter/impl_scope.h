@@ -52,6 +52,13 @@ class ImplScope {
            Nonnull<const Value*> type,
            llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
            Nonnull<const Witness*> witness, const TypeChecker& type_checker);
+  // Add a list of impl constraints from a constraint type into scope. Any
+  // references to `.Self` are expected to have already been substituted for
+  // the type implementing the constraint.
+  void Add(llvm::ArrayRef<ConstraintType::ImplConstraint> impls,
+           llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
+           llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
+           Nonnull<const Witness*> witness, const TypeChecker& type_checker);
 
   // Add a type equality constraint.
   void AddEqualityConstraint(Nonnull<const EqualityConstraint*> equal) {

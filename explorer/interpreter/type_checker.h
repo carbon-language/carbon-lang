@@ -219,12 +219,14 @@ class TypeChecker {
   auto CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
                            Nonnull<const ImplDeclaration*> impl_decl,
                            Nonnull<const Value*> self_type,
+                           Nonnull<const Witness*> self_witness,
                            const ImplScope& impl_scope) -> ErrorOr<Success>;
 
   // Check that an `impl` declaration satisfies its constraints and add the
   // corresponding `ImplBinding`s to the impl scope.
   auto CheckAndAddImplBindings(Nonnull<const ImplDeclaration*> impl_decl,
                                Nonnull<const Value*> impl_type,
+                               Nonnull<const Witness*> self_witness,
                                const ScopeInfo& scope_info) -> ErrorOr<Success>;
 
   auto DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
