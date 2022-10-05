@@ -1065,11 +1065,11 @@ auto FindMember(std::string_view name,
 }
 
 void ImplBinding::Print(llvm::raw_ostream& out) const {
-  out << "impl binding " << *type_var_ << " as " << *iface_;
+  out << "impl binding " << *type_var_ << " as " << **iface_;
 }
 
 void ImplBinding::PrintID(llvm::raw_ostream& out) const {
-  out << *type_var_ << " as " << *iface_;
+  out << *type_var_ << " as " << **iface_;
 }
 
 }  // namespace Carbon

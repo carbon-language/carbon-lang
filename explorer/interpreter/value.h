@@ -510,16 +510,20 @@ class FunctionType : public Value {
   };
 
   FunctionType(Nonnull<const Value*> parameters,
-               llvm::ArrayRef<GenericParameter> generic_parameters,
+               Nonnull<const Value*> return_type)
+      : FunctionType(parameters, {}, return_type, {}, {}) {}
+
+  FunctionType(Nonnull<const Value*> parameters,
+               std::vector<GenericParameter> generic_parameters,
                Nonnull<const Value*> return_type,
-               llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings,
-               llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings)
+               std::vector<Nonnull<const GenericBinding*>> deduced_bindings,
+               std::vector<Nonnull<const ImplBinding*>> impl_bindings)
       : Value(Kind::FunctionType),
         parameters_(parameters),
-        generic_parameters_(generic_parameters),
+        generic_parameters_(std::move(generic_parameters)),
         return_type_(return_type),
-        deduced_bindings_(deduced_bindings),
-        impl_bindings_(impl_bindings) {}
+        deduced_bindings_(std::move(deduced_bindings)),
+        impl_bindings_(std::move(impl_bindings)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionType;

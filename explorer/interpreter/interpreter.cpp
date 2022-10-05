@@ -1360,8 +1360,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
         // -> { fn pt -> rt :: {C, E, F} :: S, H}
         return todo_.FinishAction(arena_->New<FunctionType>(
-            act.results()[0], llvm::None, act.results()[1], llvm::None,
-            llvm::None));
+            act.results()[0], act.results()[1]));
       }
     }
     case ExpressionKind::ContinuationTypeLiteral: {
