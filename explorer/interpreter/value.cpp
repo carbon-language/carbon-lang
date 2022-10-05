@@ -98,7 +98,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         const auto& class_type = cast<NominalClassType>(object.type());
         std::optional<Nonnull<const FunctionValue*>> func =
             class_type.FindFunction(f);
-        if (func == std::nullopt) {
+        if (!func) {
           return RuntimeError(source_loc) << "member " << f << " not in " << *v
                                           << " or its " << class_type;
         } else if ((*func)->declaration().is_method()) {
@@ -108,6 +108,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                                               &class_type.bindings());
         } else {
           // Found a class function
+          // TODO: This should not be reachable.
           return arena->New<FunctionValue>(&(*func)->declaration(),
                                            &class_type.bindings());
         }

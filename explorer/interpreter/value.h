@@ -851,11 +851,7 @@ class ImplWitness : public Witness {
                        Nonnull<const Bindings*> bindings)
       : Witness(Kind::ImplWitness),
         declaration_(declaration),
-        bindings_(bindings) {
-    CARBON_CHECK(bindings_->empty() ==
-                 declaration_->deduced_parameters().empty())
-        << "bindings should match deduced parameters";
-  }
+        bindings_(bindings) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ImplWitness;

@@ -540,16 +540,13 @@ auto Interpreter::EvalAssociatedConstant(
   auto& impl_witness = cast<ImplWitness>(*witness);
   Nonnull<const ConstraintType*> constraint =
       impl_witness.declaration().constraint_type();
-  Nonnull<const Value*> expected = arena_->New<AssociatedConstant>(
-      &constraint->self_binding()->value(), &assoc->interface(),
-      &assoc->constant(), &impl_witness);
   std::optional<Nonnull<const Value*>> result;
-  constraint->VisitEqualValues(expected,
+  constraint->VisitEqualValues(assoc,
                                [&](Nonnull<const Value*> equal_value) {
                                  // TODO: The value might depend on the
                                  // parameters of the impl. We need to
                                  // substitute impl_witness.type_args() into the
-                                 // value.
+                                 // value or constraint.
                                  if (isa<AssociatedConstant>(equal_value)) {
                                    return true;
                                  }
@@ -560,7 +557,8 @@ auto Interpreter::EvalAssociatedConstant(
                                  return false;
                                });
   if (!result) {
-    CARBON_FATAL() << impl_witness.declaration()
+    CARBON_FATAL() << impl_witness.declaration() << " with constraint "
+                   << *constraint
                    << " is missing value for associated constant " << *assoc;
   }
   return *result;
@@ -1013,7 +1011,11 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           FieldPath::Component member(access.member(), found_in_interface,
                                       witness);
           const Value* aggregate;
-          if (const auto* lvalue = dyn_cast<LValue>(act.results()[0])) {
+          if (access.is_type_access()) {
+            CARBON_ASSIGN_OR_RETURN(
+                aggregate, InstantiateType(&access.object().static_type(),
+                                           access.source_loc()));
+          } else if (const auto* lvalue = dyn_cast<LValue>(act.results()[0])) {
             CARBON_ASSIGN_OR_RETURN(
                 aggregate,
                 this->heap_.Read(lvalue->address(), exp.source_loc()));
@@ -1066,6 +1068,11 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         } else {
           // Access the object to find the named member.
           Nonnull<const Value*> object = act.results()[0];
+          if (access.is_type_access()) {
+            CARBON_ASSIGN_OR_RETURN(
+                object, InstantiateType(&access.object().static_type(),
+                                        access.source_loc()));
+          }
           std::optional<Nonnull<const Witness*>> witness;
           if (access.impl().has_value()) {
             witness = cast<Witness>(act.results()[1]);

@@ -244,6 +244,13 @@ class SimpleMemberAccessExpression : public Expression {
   // Can only be called once, during typechecking.
   void set_is_field_addr_me_method() { is_field_addr_me_method_ = true; }
 
+  // Returns true if this is an access of a member of the type of the object,
+  // rather than an access of a member of the object itself.
+  auto is_type_access() const -> bool { return is_type_access_; }
+
+  // Can only be called once, during typechecking.
+  void set_is_type_access(bool type_access) { is_type_access_ = type_access; }
+
   // If `object` has a generic type, returns the witness value, which might be
   // either concrete or symbolic. Otherwise, returns `std::nullopt`. Should not
   // be called before typechecking.
@@ -274,6 +281,7 @@ class SimpleMemberAccessExpression : public Expression {
   std::string member_name_;
   std::optional<Member> member_;
   bool is_field_addr_me_method_ = false;
+  bool is_type_access_ = false;
   std::optional<Nonnull<const Witness*>> impl_;
   std::optional<Nonnull<const InterfaceType*>> found_in_interface_;
 };
@@ -335,11 +343,19 @@ class CompoundMemberAccessExpression : public Expression {
   // Can only be called by type-checking, if a conversion was required.
   void set_object(Nonnull<Expression*> object) { object_ = object; }
 
+  // Returns true if this is an access of a member of the type of the object,
+  // rather than an access of a member of the object itself.
+  auto is_type_access() const -> bool { return is_type_access_; }
+
+  // Can only be called once, during typechecking.
+  void set_is_type_access(bool type_access) { is_type_access_ = type_access; }
+
  private:
   Nonnull<Expression*> object_;
   Nonnull<Expression*> path_;
   std::optional<Nonnull<const MemberName*>> member_;
   std::optional<Nonnull<const Witness*>> impl_;
+  bool is_type_access_ = false;
 };
 
 class IndexExpression : public Expression {

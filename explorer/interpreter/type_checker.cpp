@@ -48,7 +48,7 @@ struct TypeChecker::SingleStepEqualityContext : public EqualityContext {
     }
     if (type_checker_->trace_stream_) {
       **type_checker_->trace_stream_ << "found symbolic witness "
-                                     << *impl_witness
+                                     << assoc->witness()
                                      << "; performing impl scope lookup\n";
     }
 
@@ -1174,6 +1174,7 @@ auto TypeChecker::Substitute(const Bindings& bindings,
         }
         Nonnull<ImplBinding*> impl_binding = arena_->New<ImplBinding>(
             new_binding->source_loc(), new_binding, &new_binding->static_type());
+        impl_binding->set_original(old_binding->impl_binding().value());
         auto* witness = arena_->New<BindingWitness>(impl_binding);
         impl_binding->set_symbolic_identity(witness);
         new_binding->set_impl_binding(impl_binding);
@@ -1604,6 +1605,23 @@ static auto LookupInConstraint(SourceLocation source_loc,
   return found.value();
 }
 
+// Determine whether the given member declaration declares an instance member.
+static auto IsInstanceMember(Member member) {
+  if (!member.declaration()) {
+    // This is a struct field.
+    return true;
+  }
+  Nonnull<const Declaration*> declaration = *member.declaration();
+  switch (declaration->kind()) {
+    case DeclarationKind::FunctionDeclaration:
+      return cast<FunctionDeclaration>(declaration)->is_method();
+    case DeclarationKind::VariableDeclaration:
+      return true;
+    default:
+      return false;
+  }
+}
+
 auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                const ImplScope& impl_scope)
     -> ErrorOr<Success> {
@@ -1732,6 +1750,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 Substitute(t_class.bindings(), member_type);
             access.set_member(Member(member));
             access.set_static_type(field_type);
+            access.set_is_type_access(!IsInstanceMember(access.member()));
             switch (member->kind()) {
               case DeclarationKind::VariableDeclaration:
                 access.set_value_category(access.object().value_category());
@@ -1799,6 +1818,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               Substitute(bindings, &member_type);
           access.set_member(Member(result.member));
           access.set_found_in_interface(result.interface);
+          access.set_is_type_access(!IsInstanceMember(access.member()));
           access.set_static_type(inst_member_type);
 
           CARBON_ASSIGN_OR_RETURN(
@@ -1832,22 +1852,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           access.set_impl(impl);
           access.set_found_in_interface(result.interface);
 
-          bool is_instance_member;
-          switch (result.member->kind()) {
-            case DeclarationKind::FunctionDeclaration:
-              is_instance_member =
-                  cast<FunctionDeclaration>(*result.member).is_method();
-              break;
-            case DeclarationKind::AssociatedConstantDeclaration:
-              is_instance_member = false;
-              break;
-            default:
-              CARBON_FATAL()
-                  << "unexpected kind for interface member " << *result.member;
-              break;
-          }
-
-          if (is_instance_member) {
+          if (IsInstanceMember(access.member())) {
             // This is a member name denoting an instance member.
             // TODO: Consider setting the static type of all instance member
             // declarations to be member name types, rather than special-casing
@@ -1994,6 +1999,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                               InterpExp(&access.path(), arena_, trace_stream_));
       const auto& member_name = cast<MemberName>(*member_name_value);
       access.set_member(&member_name);
+      bool is_instance_member = IsInstanceMember(member_name.member());
 
       bool has_instance = true;
       std::optional<Nonnull<const Value*>> base_type = member_name.base_type();
@@ -2019,6 +2025,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                               &access.object(), *base_type));
         access.set_object(converted_object);
       }
+      access.set_is_type_access(has_instance && !is_instance_member);
 
       // Perform impl selection if necessary.
       if (std::optional<Nonnull<const Value*>> iface =
@@ -2056,11 +2063,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           }
           break;
         case DeclarationKind::FunctionDeclaration: {
-          bool is_method = cast<FunctionDeclaration>(*decl.value()).is_method();
-          if (has_instance || !is_method) {
+          if (has_instance || !is_instance_member) {
             // This should not be possible: the name of a static member
             // function should have function type not member name type.
-            CARBON_CHECK(!has_instance || is_method ||
+            CARBON_CHECK(!has_instance || is_instance_member ||
                          !member_name.base_type().has_value())
                 << "vacuous compound member access";
             access.set_static_type(SubstituteIntoMemberType());
@@ -2347,14 +2353,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           CARBON_RETURN_IF_ERROR(DeduceCallBindings(
               call, &fun_t.parameters(), fun_t.generic_parameters(),
               fun_t.deduced_bindings(), fun_t.impl_bindings(), impl_scope));
-          const BindingMap& generic_bindings = call.deduced_args();
 
           // Substitute into the return type to determine the type of the call
           // expression.
-          // TODO: pass in the witnesses produced by deduction.
-          Bindings bindings(generic_bindings, Bindings::NoWitnesses);
           Nonnull<const Value*> return_type =
-              Substitute(bindings, &fun_t.return_type());
+              Substitute(call.bindings(), &fun_t.return_type());
           call.set_static_type(return_type);
           call.set_value_category(ValueCategory::Let);
           return Success();
@@ -2385,8 +2388,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           CARBON_RETURN_IF_ERROR(DeduceCallBindings(
               call, &param_name.params().static_type(), generic_parameters,
               /*deduced_bindings=*/llvm::None, impl_bindings, impl_scope));
-          Nonnull<const Bindings*> bindings =
-              arena_->New<Bindings>(call.deduced_args(), Bindings::NoWitnesses);
+          Nonnull<const Bindings*> bindings = &call.bindings();
 
           const Declaration& decl = param_name.declaration();
           switch (decl.kind()) {
@@ -3878,7 +3880,7 @@ auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
       impl_decl->constraint_type()->VisitEqualValues(expected, visitor);
       if (!found_any) {
         return CompilationError(impl_decl->source_loc())
-               << "implementation missing " << *expected;
+               << "implementation missing " << *expected << "; have " << *impl_decl->constraint_type();
       } else if (!found_value) {
         // TODO: It's not clear what the right rule is here. Clearly
         //   impl T as HasX & HasY where .X == .Y {}
