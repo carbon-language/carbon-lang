@@ -55,6 +55,7 @@ cc_binary(
     srcs = ["driver_main.cpp"],
     deps = [
         ":driver",
+        "//common:bazel_working_dir",
         "@llvm-project//llvm:Support",
     ],
 )

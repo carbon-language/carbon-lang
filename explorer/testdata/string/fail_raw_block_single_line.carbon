@@ -11,7 +11,7 @@
 package ExplorerTest api;
 
 fn CompareStr(s: String) -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/string/fail_raw_block_single_line.carbon:[[@LINE+1]]: Invalid block string: Too few lines
+  // CHECK: SYNTAX ERROR: {{.*}}/explorer/testdata/string/fail_raw_block_single_line.carbon:[[@LINE+1]]: Invalid block string: Too few lines
   if (s == #"""raw string literal starting with """#) {
     return 0;
   }

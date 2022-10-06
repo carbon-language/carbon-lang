@@ -11,7 +11,7 @@
 package ExplorerTest api;
 
 class C {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/addr/fail_method_me_misspelled.carbon:[[@LINE+1]]: illegal binding pattern in implicit parameter list
+  // CHECK: SYNTAX ERROR: {{.*}}/explorer/testdata/addr/fail_method_me_misspelled.carbon:[[@LINE+1]]: illegal binding pattern in implicit parameter list
   fn F[addr mew: Self*]() {}
 }
 

@@ -461,15 +461,20 @@ class InterfaceDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
 
-  InterfaceDeclaration(SourceLocation source_loc, std::string name,
+  InterfaceDeclaration(Nonnull<Arena*> arena, SourceLocation source_loc,
+                       std::string name,
                        std::optional<Nonnull<TuplePattern*>> params,
-                       Nonnull<GenericBinding*> self,
                        std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::InterfaceDeclaration, source_loc),
         name_(std::move(name)),
         params_(std::move(params)),
-        self_(self),
-        members_(std::move(members)) {}
+        self_type_(arena->New<SelfDeclaration>(source_loc)),
+        members_(std::move(members)) {
+    // `interface X` has `Self:! X`.
+    auto self_type_ref = arena->New<IdentifierExpression>(source_loc, name);
+    self_type_ref->set_value_node(self_type_);
+    self_ = arena->New<GenericBinding>(source_loc, "Self", self_type_ref);
+  }
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromInterfaceDeclaration(node->kind());
@@ -480,6 +485,13 @@ class InterfaceDeclaration : public Declaration {
     return params_;
   }
   auto params() -> std::optional<Nonnull<TuplePattern*>> { return params_; }
+  // Get the type of `Self`, which is a reference to the interface itself, with
+  // parameters mapped to their values. For example, in `interface X(T:!
+  // Type)`, the self type is `X(T)`.
+  auto self_type() const -> Nonnull<const SelfDeclaration*> {
+    return self_type_;
+  }
+  auto self_type() -> Nonnull<SelfDeclaration*> { return self_type_; }
   auto self() const -> Nonnull<const GenericBinding*> { return self_; }
   auto self() -> Nonnull<GenericBinding*> { return self_; }
   auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
@@ -491,6 +503,7 @@ class InterfaceDeclaration : public Declaration {
  private:
   std::string name_;
   std::optional<Nonnull<TuplePattern*>> params_;
+  Nonnull<SelfDeclaration*> self_type_;
   Nonnull<GenericBinding*> self_;
   std::vector<Nonnull<Declaration*>> members_;
 };
