@@ -4,6 +4,7 @@
 
 #include <cstdlib>
 
+#include "common/bazel_working_dir.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FileSystem.h"
@@ -14,15 +15,7 @@ auto main(int argc, char** argv) -> int {
     return EXIT_FAILURE;
   }
 
-  // Behave as if the working directory is where `bazel run` was invoked.
-  char* build_working_dir = getenv("BUILD_WORKING_DIRECTORY");
-  if (build_working_dir != nullptr) {
-    if (std::error_code err =
-            llvm::sys::fs::set_current_path(build_working_dir)) {
-      llvm::errs() << "Failed to set working directory: " << err.message();
-      return EXIT_FAILURE;
-    }
-  }
+  Carbon::SetWorkingDirForBazel();
 
   llvm::SmallVector<llvm::StringRef, 16> args(argv + 1, argv + argc);
   Carbon::Driver driver;
