@@ -11,7 +11,7 @@
 package ExplorerTest api;
 
 // Error: Can't use keyword `Self` as the name of a class.
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_class_named_self.carbon:[[@LINE+1]]: syntax error, unexpected SELF, expecting identifier
+// CHECK: SYNTAX ERROR: {{.*}}/explorer/testdata/class/fail_class_named_self.carbon:[[@LINE+1]]: syntax error, unexpected SELF, expecting identifier
 class Self {
   var x: i32;
   var y: i32;

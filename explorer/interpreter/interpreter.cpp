@@ -533,7 +533,7 @@ auto Interpreter::EvalAssociatedConstant(
   if (!isa<ImplWitness>(witness)) {
     CARBON_CHECK(phase() == Phase::CompileTime)
         << "symbolic witnesses should only be formed at compile time";
-    return CompilationError(source_loc)
+    return ProgramError(source_loc)
            << "value of associated constant " << *assoc << " is not known";
   }
 
@@ -890,7 +890,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
       }
     }
     default:
-      return RuntimeError(call.source_loc())
+      return ProgramError(call.source_loc())
              << "in call, expected a function, not " << *fun;
   }
 }
@@ -918,7 +918,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         const auto& tuple = cast<TupleValue>(*act.results()[0]);
         int i = cast<IntValue>(*act.results()[1]).value();
         if (i < 0 || i >= static_cast<int>(tuple.elements().size())) {
-          return RuntimeError(exp.source_loc())
+          return ProgramError(exp.source_loc())
                  << "index " << i << " out of range in " << tuple;
         }
         return todo_.FinishAction(tuple.elements()[i]);
@@ -1234,7 +1234,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               Nonnull<const Value*> string_value,
               Convert(args[1], arena_->New<StringType>(), exp.source_loc()));
           if (cast<BoolValue>(condition)->value() == false) {
-            return RuntimeError(exp.source_loc()) << *string_value;
+            return ProgramError(exp.source_loc()) << *string_value;
           }
           return todo_.FinishAction(TupleValue::Empty());
         }

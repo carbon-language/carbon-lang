@@ -119,8 +119,8 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
                        .Case("semantics-ir", DumpMode::SemanticsIR)
                        .Default(DumpMode::Unknown);
   if (dump_mode == DumpMode::Unknown) {
-    error_stream_ << "ERROR: Dump mode should be one of tokens, parse_tree, or "
-                     "semantics_ir.\n";
+    error_stream_ << "ERROR: Dump mode should be one of tokens, parse-tree, or "
+                     "semantics-ir.\n";
     return false;
   }
   args = args.drop_front();

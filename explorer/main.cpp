@@ -28,7 +28,7 @@ namespace Carbon {
 namespace cl = llvm::cl;
 
 static auto Main(llvm::StringRef default_prelude_file, int argc, char* argv[])
-    -> ErrorOr<Success> {
+    -> bool {
   llvm::setBugReportMsg(
       "Please report issues to "
       "https://github.com/carbon-language/carbon-lang/issues and include the "
@@ -63,36 +63,55 @@ static auto Main(llvm::StringRef default_prelude_file, int argc, char* argv[])
       scoped_trace_stream =
           std::make_unique<llvm::raw_fd_ostream>(trace_file_name, err);
       if (err) {
-        return Error(err.message());
+        llvm::errs() << err.message() << "\n";
+        return false;
       }
       trace_stream = scoped_trace_stream.get();
     }
   }
 
   Arena arena;
-  CARBON_ASSIGN_OR_RETURN(AST ast,
-                          Parse(&arena, input_file_name, parser_debug));
+  AST ast;
+  if (ErrorOr<AST> parse_result = Parse(&arena, input_file_name, parser_debug);
+      parse_result.ok()) {
+    ast = *std::move(parse_result);
+  } else {
+    llvm::errs() << "SYNTAX ERROR: " << parse_result.error() << "\n";
+    return false;
+  }
+
   AddPrelude(prelude_file_name, &arena, &ast.declarations);
 
-  // Typecheck and run the parsed program.
-  CARBON_ASSIGN_OR_RETURN(int return_code,
-                          ExecProgram(&arena, ast, trace_stream));
-  // Always print the return code to stdout.
-  llvm::outs() << "result: " << return_code << "\n";
-  // When there's a dedicated trace file, print the return code to it too.
-  if (scoped_trace_stream) {
-    **trace_stream << "result: " << return_code << "\n";
+  // Semantically analyze the parsed program.
+  if (ErrorOr<AST> analyze_result = AnalyzeProgram(&arena, ast, trace_stream);
+      analyze_result.ok()) {
+    ast = *std::move(analyze_result);
+  } else {
+    llvm::errs() << "COMPILATION ERROR: " << analyze_result.error() << "\n";
+    return false;
   }
-  return Success();
+
+  // Run the program.
+  if (ErrorOr<int> exec_result = ExecProgram(&arena, ast, trace_stream);
+      exec_result.ok()) {
+    // Print the return code to stdout.
+    llvm::outs() << "result: " << *exec_result << "\n";
+
+    // When there's a dedicated trace file, print the return code to it too.
+    if (scoped_trace_stream) {
+      **trace_stream << "result: " << *exec_result << "\n";
+    }
+  } else {
+    llvm::errs() << "RUNTIME ERROR: " << exec_result.error() << "\n";
+    return false;
+  }
+
+  return true;
 }
 
 auto ExplorerMain(llvm::StringRef default_prelude_file, int argc, char** argv)
     -> int {
-  if (auto result = Main(default_prelude_file, argc, argv); !result.ok()) {
-    llvm::errs() << result.error() << "\n";
-    return EXIT_FAILURE;
-  }
-  return EXIT_SUCCESS;
+  return Main(default_prelude_file, argc, argv) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 }  // namespace Carbon
