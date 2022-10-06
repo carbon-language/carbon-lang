@@ -27,7 +27,7 @@ namespace Carbon {
 // not compile-time constants.
 class RuntimeScope {
  public:
-  enum class State { Normal = 0, Destructor = 1, CleanUpped = 2, Method = 4 };
+  enum class State { Normal, Destructor, CleanUpped, Method };
 
   // Returns a RuntimeScope whose Get() operation for a given name returns the
   // storage owned by the first entry in `scopes` that defines that name. This
@@ -120,6 +120,7 @@ class Action {
     ScopeAction,
     RecursiveAction,
     CleanUpAction,
+    CleanUpTupleAction
   };
 
   Action(const Value&) = delete;
@@ -330,6 +331,21 @@ class CleanupAction : public Action {
   std::optional<llvm::ArrayRef<Nonnull<Declaration*>>> class_members_;
   Nonnull<const LValue*> me_value_;
   int array_index_;
+};
+
+class CleanupTupleAction : public Action {
+ public:
+  explicit CleanupTupleAction(Nonnull<const TupleValue*> tuple)
+      : Action(Kind::CleanUpTupleAction), tuple_(tuple) {}
+
+  static auto classof(const Action* action) -> bool {
+    return action->kind() == Kind::CleanUpTupleAction;
+  }
+
+  auto tuple() const -> Nonnull<const TupleValue*> { return tuple_; }
+
+ private:
+  Nonnull<const TupleValue*> tuple_;
 };
 
 // Action which does nothing except introduce a new scope into the action

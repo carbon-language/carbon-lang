@@ -152,6 +152,7 @@ static auto FinishActionKindFor(Action::Kind kind) -> FinishActionKind {
       return FinishActionKind::NoValue;
     case Action::Kind::ScopeAction:
     case Action::Kind::CleanUpAction:
+    case Action::Kind::CleanUpTupleAction:
       return FinishActionKind::NeverCalled;
   }
 }

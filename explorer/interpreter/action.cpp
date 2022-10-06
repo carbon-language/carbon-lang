@@ -144,6 +144,9 @@ void Action::Print(llvm::raw_ostream& out) const {
     case Action::Kind::CleanUpAction:
       out << "clean up";
       break;
+    case Action::Kind::CleanUpTupleAction:
+      out << "clean up tuple";
+      break;
   }
   out << "." << pos_ << ".";
   if (!results_.empty()) {

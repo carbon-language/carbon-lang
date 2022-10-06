@@ -89,6 +89,8 @@ class Interpreter {
   auto StepDeclaration() -> ErrorOr<Success>;
   // State transition for object destruction.
   auto StepCleanUp() -> ErrorOr<Success>;
+  // State transition for tuple destruction.
+  auto StepCleanUpTuple() -> ErrorOr<Success>;
 
   auto CreateStruct(const std::vector<FieldInitializer>& fields,
                     const std::vector<Nonnull<const Value*>>& values)
@@ -1937,6 +1939,25 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
   }
 }
 
+auto Interpreter::StepCleanUpTuple() -> ErrorOr<Success> {
+  Action& act = todo_.CurrentAction();
+  CleanupTupleAction& cleanup = cast<CleanupTupleAction>(act);
+  auto tuple = cleanup.tuple();
+  if (static_cast<std::size_t>(act.pos()) < tuple->elements().size()) {
+    const auto& item =
+        tuple->elements()[tuple->elements().size() - act.pos() - 1];
+    if (const auto* class_obj = dyn_cast<NominalClassValue>(item)) {
+      const auto& class_type = cast<NominalClassType>(class_obj->type());
+      const auto& class_dec = class_type.declaration();
+      if (class_dec.destructor().has_value()) {
+        return CallDestructor(*class_dec.destructor(), class_obj);
+      }
+    }
+  }
+  todo_.Pop();
+  return Success();
+}
+
 auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   CleanupAction& cleanup = cast<CleanupAction>(act);
@@ -1953,26 +1974,7 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
             return CallDestructor(*class_dec.destructor(), class_obj);
           }
         } else if (const auto* array = dyn_cast<TupleValue>(*value)) {
-          if (cleanup.array_index() < 0) {
-            cleanup.set_array_index(0);
-          }
-          if (static_cast<std::size_t>(cleanup.array_index()) <
-              array->elements().size()) {
-            const auto& item = array->elements()[cleanup.array_index()];
-            if (const auto* class_obj = dyn_cast<NominalClassValue>(item)) {
-              const auto& class_type =
-                  cast<NominalClassType>(class_obj->type());
-              const auto& class_dec = class_type.declaration();
-              if (class_dec.destructor().has_value()) {
-                if (static_cast<std::size_t>(cleanup.array_index()) + 1 <
-                    array->elements().size()) {
-                  act.set_pos(act.pos() - 1);
-                }
-                cleanup.set_array_index(cleanup.array_index() + 1);
-                return CallDestructor(*class_dec.destructor(), class_obj);
-              }
-            }
-          }
+          return todo_.Spawn(std::make_unique<CleanupTupleAction>(array));
         }
       } else {
         if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
@@ -2031,6 +2033,9 @@ auto Interpreter::Step() -> ErrorOr<Success> {
       break;
     case Action::Kind::CleanUpAction:
       CARBON_RETURN_IF_ERROR(StepCleanUp());
+      break;
+    case Action::Kind::CleanUpTupleAction:
+      CARBON_RETURN_IF_ERROR(StepCleanUpTuple());
       break;
     case Action::Kind::ScopeAction:
       CARBON_FATAL() << "ScopeAction escaped ActionStack";
