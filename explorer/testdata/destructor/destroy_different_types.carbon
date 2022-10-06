@@ -24,6 +24,6 @@ class A{
 
 fn Main() -> i32 {
   var a1: A = {.n = 2};
-  var a: [A; 2] = ({.n = 0},{.n = 1});
+  var a: [A; 2] = ({.n = 1},{.n = 0});
   return 1;
 }
