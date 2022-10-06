@@ -7,12 +7,12 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: Struct OK
-// CHECK: Choice OK
-// CHECK: Class OK
-// CHECK: Interface OK
-// CHECK: Constraint OK
-// CHECK: result: 0
+// CHECK:Struct OK
+// CHECK:Choice OK
+// CHECK:Class OK
+// CHECK:Interface OK
+// CHECK:Constraint OK
+// CHECK:result: 0
 
 package Foo api;
 

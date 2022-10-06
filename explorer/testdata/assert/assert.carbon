@@ -5,12 +5,10 @@
 // This won't auto-update because it uses a regex for the prelude line number,
 // so that it doesn't need to be updated on every prelude change.
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
+// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
+// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
 // NOAUTOUPDATE
-// CHECK: RUNTIME ERROR: {{.*}}/explorer/data/prelude.carbon:{{.*}}: "HALLO WELT"
+// CHECK:RUNTIME ERROR: {{.*}}/explorer/data/prelude.carbon:{{.*}}: "HALLO WELT"
 
 package ExplorerTest api;
 

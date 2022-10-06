@@ -4334,7 +4334,7 @@ auto TypeChecker::CollectMember(Nonnull<const Declaration*> enclosing_decl,
              << enclosing_decl_name
              << " because it clashes with an existing member"
              << " with the same name (declared at " << it->second->source_loc()
-             << ") ";
+             << ")";
     }
   }
   return Success();

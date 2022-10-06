@@ -7,31 +7,31 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: bool: 1
-// CHECK: bool: 1
-// CHECK: bool: 1
-// CHECK: bool: 1
-// CHECK: bool: 1
-// CHECK: bool: 1
-// CHECK: bool: 1
-// CHECK: bool: 1
-// CHECK: string: 1
-// CHECK: string: 1
-// CHECK: string: 1
-// CHECK: string: 1
-// CHECK: string: 1
-// CHECK: string: 1
-// CHECK: string: 1
-// CHECK: string: 1
-// CHECK: int: 1
-// CHECK: int: 1
-// CHECK: int: 1
-// CHECK: int: 1
-// CHECK: int: 1
-// CHECK: int: 1
-// CHECK: int: 1
-// CHECK: int: 1
-// CHECK: result: 0
+// CHECK:bool: 1
+// CHECK:bool: 1
+// CHECK:bool: 1
+// CHECK:bool: 1
+// CHECK:bool: 1
+// CHECK:bool: 1
+// CHECK:bool: 1
+// CHECK:bool: 1
+// CHECK:string: 1
+// CHECK:string: 1
+// CHECK:string: 1
+// CHECK:string: 1
+// CHECK:string: 1
+// CHECK:string: 1
+// CHECK:string: 1
+// CHECK:string: 1
+// CHECK:int: 1
+// CHECK:int: 1
+// CHECK:int: 1
+// CHECK:int: 1
+// CHECK:int: 1
+// CHECK:int: 1
+// CHECK:int: 1
+// CHECK:int: 1
+// CHECK:result: 0
 
 package ExplorerTest api;
 

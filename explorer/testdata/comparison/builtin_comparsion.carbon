@@ -7,15 +7,15 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: strings less: 1
-// CHECK: ints less: 0
-// CHECK: strings less eq: 1
-// CHECK: ints less eq: 1
-// CHECK: strings greater: 0
-// CHECK: ints greater: 0
-// CHECK: strings greater eq: 0
-// CHECK: ints greater eq: 1
-// CHECK: result: 0
+// CHECK:strings less: 1
+// CHECK:ints less: 0
+// CHECK:strings less eq: 1
+// CHECK:ints less eq: 1
+// CHECK:strings greater: 0
+// CHECK:ints greater: 0
+// CHECK:strings greater eq: 0
+// CHECK:ints greater eq: 1
+// CHECK:result: 0
 
 package ExplorerTest api;
 

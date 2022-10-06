@@ -7,11 +7,11 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: HALLO WELT
-// CHECK: HALLO WELT
-// CHECK: HALLO WELT
-// CHECK: HALLO WELT
-// CHECK: result: 4
+// CHECK:HALLO WELT
+// CHECK:HALLO WELT
+// CHECK:HALLO WELT
+// CHECK:HALLO WELT
+// CHECK:result: 4
 
 package ExplorerTest api;
 

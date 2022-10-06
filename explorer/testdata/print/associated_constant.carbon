@@ -7,9 +7,9 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: i32
-// CHECK: String
-// CHECK: result: 0
+// CHECK:i32
+// CHECK:String
+// CHECK:result: 0
 
 package Testcase api;
 
