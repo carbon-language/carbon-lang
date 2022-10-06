@@ -2,10 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
+// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
+// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
 
 // TODO: Should this work?
@@ -24,7 +22,7 @@ fn F[Scalar:! Type, V:! Vector where .Dim == 3](p: Point(Scalar, V.Dim), v: V) {
 fn G[Scalar:! Type](p: Point(Scalar, 3)) {}
 fn H[V:! Vector where .Dim == 3](v: V) {
   var p: Point(i32, V.Dim) = {};
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_match_in_deduction.carbon:[[@LINE+1]]: mismatch in non-type values, `(V:! Vector where .Self.Dim == 3).Dim` != `3`
+  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_match_in_deduction.carbon:[[@LINE+1]]: mismatch in non-type values, `(V:! Vector where .Self.Dim == 3).Dim` != `3`
   G(p);
 }
 
