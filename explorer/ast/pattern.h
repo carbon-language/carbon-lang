@@ -17,7 +17,8 @@
 #include "explorer/ast/value_category.h"
 #include "explorer/common/source_location.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/STLFunctionalExtras.h"
+//the include bellow doesn't seem to be used and doesn't exists on clang13
+//#include "llvm/ADT/STLFunctionalExtras.h"
 
 namespace Carbon {
 
