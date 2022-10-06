@@ -50,34 +50,27 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
     }
 
     // Associated functions.
-    switch (witness->kind()) {
-      case Value::Kind::ImplWitness: {
-        auto* impl_witness = cast<ImplWitness>(witness);
-        if (std::optional<Nonnull<const Declaration*>> mem_decl =
-                FindMember(f, impl_witness->declaration().members());
-            mem_decl.has_value()) {
-          const auto& fun_decl = cast<FunctionDeclaration>(**mem_decl);
-          if (fun_decl.is_method()) {
-            return arena->New<BoundMethodValue>(&fun_decl, v,
-                                                &impl_witness->bindings());
-          } else {
-            // Class function.
-            auto* fun = cast<FunctionValue>(*fun_decl.constant_value());
-            return arena->New<FunctionValue>(&fun->declaration(),
-                                             &impl_witness->bindings());
-          }
+    if (auto* impl_witness = dyn_cast<ImplWitness>(witness)) {
+      if (std::optional<Nonnull<const Declaration*>> mem_decl =
+              FindMember(f, impl_witness->declaration().members());
+          mem_decl.has_value()) {
+        const auto& fun_decl = cast<FunctionDeclaration>(**mem_decl);
+        if (fun_decl.is_method()) {
+          return arena->New<BoundMethodValue>(&fun_decl, v,
+                                              &impl_witness->bindings());
         } else {
-          return CompilationError(source_loc)
-                 << "member " << f << " not in " << *witness;
+          // Class function.
+          auto* fun = cast<FunctionValue>(*fun_decl.constant_value());
+          return arena->New<FunctionValue>(&fun->declaration(),
+                                           &impl_witness->bindings());
         }
+      } else {
+        return ProgramError(source_loc)
+               << "member " << f << " not in " << *witness;
       }
-      case Value::Kind::SymbolicWitness: {
-        return RuntimeError(source_loc)
-               << "member lookup for " << f << " in symbolic " << *witness
-               << " not implemented yet";
-      }
-      default:
-        CARBON_FATAL() << "expected Witness, not " << *witness;
+    } else {
+      return ProgramError(source_loc)
+             << "member lookup for " << f << " in symbolic " << *witness;
     }
   }
   switch (v->kind()) {
@@ -85,7 +78,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       std::optional<Nonnull<const Value*>> field =
           cast<StructValue>(*v).FindField(f);
       if (field == std::nullopt) {
-        return RuntimeError(source_loc) << "member " << f << " not in " << *v;
+        return ProgramError(source_loc) << "member " << f << " not in " << *v;
       }
       return *field;
     }
@@ -106,7 +99,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         std::optional<Nonnull<const FunctionValue*>> func =
             class_type.FindFunction(f);
         if (func == std::nullopt) {
-          return RuntimeError(source_loc) << "member " << f << " not in " << *v
+          return ProgramError(source_loc) << "member " << f << " not in " << *v
                                           << " or its " << class_type;
         } else if ((*func)->declaration().is_method()) {
           // Found a method. Turn it into a bound method.
@@ -123,7 +116,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
     case Value::Kind::ChoiceType: {
       const auto& choice = cast<ChoiceType>(*v);
       if (!choice.FindAlternative(f)) {
-        return RuntimeError(source_loc)
+        return ProgramError(source_loc)
                << "alternative " << f << " not in " << *v;
       }
       return arena->New<AlternativeConstructorValue>(f, choice.name());
@@ -134,7 +127,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       std::optional<Nonnull<const FunctionValue*>> fun =
           class_type.FindFunction(f);
       if (fun == std::nullopt) {
-        return RuntimeError(source_loc)
+        return ProgramError(source_loc)
                << "class function " << f << " not in " << *v;
       }
       return arena->New<FunctionValue>(&(*fun)->declaration(),
@@ -174,7 +167,7 @@ static auto SetFieldImpl(
             return element.name == (*path_begin).name();
           });
       if (it == elements.end()) {
-        return RuntimeError(source_loc)
+        return ProgramError(source_loc)
                << "field " << (*path_begin).name() << " not in " << *value;
       }
       CARBON_ASSIGN_OR_RETURN(
@@ -195,7 +188,7 @@ static auto SetFieldImpl(
       // TODO(geoffromer): update FieldPath to hold integers as well as strings.
       int index = std::stoi(std::string((*path_begin).name()));
       if (index < 0 || static_cast<size_t>(index) >= elements.size()) {
-        return RuntimeError(source_loc) << "index " << (*path_begin).name()
+        return ProgramError(source_loc) << "index " << (*path_begin).name()
                                         << " out of range in " << *value;
       }
       CARBON_ASSIGN_OR_RETURN(
@@ -455,13 +448,29 @@ void Value::Print(llvm::raw_ostream& out) const {
     }
     case Value::Kind::ImplWitness: {
       const auto& witness = cast<ImplWitness>(*this);
-      out << "witness " << *witness.declaration().impl_type() << " as "
+      out << "witness for impl " << *witness.declaration().impl_type() << " as "
           << witness.declaration().interface();
       break;
     }
-    case Value::Kind::SymbolicWitness: {
-      const auto& witness = cast<SymbolicWitness>(*this);
-      out << "witness " << witness.impl_expression();
+    case Value::Kind::BindingWitness: {
+      const auto& witness = cast<BindingWitness>(*this);
+      out << "witness for " << *witness.binding()->type_var();
+      break;
+    }
+    case Value::Kind::ConstraintWitness: {
+      const auto& witness = cast<ConstraintWitness>(*this);
+      out << "(";
+      llvm::ListSeparator sep;
+      for (auto* elem : witness.witnesses()) {
+        out << sep << *elem;
+      }
+      out << ")";
+      break;
+    }
+    case Value::Kind::ConstraintImplWitness: {
+      const auto& witness = cast<ConstraintImplWitness>(*this);
+      out << "witness " << witness.index() << " of "
+          << *witness.constraint_witness();
       break;
     }
     case Value::Kind::ParameterizedEntityName:
@@ -767,7 +776,9 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
                      << *t1 << "\n"
                      << *t2;
     case Value::Kind::ImplWitness:
-    case Value::Kind::SymbolicWitness:
+    case Value::Kind::BindingWitness:
+    case Value::Kind::ConstraintWitness:
+    case Value::Kind::ConstraintImplWitness:
       CARBON_FATAL() << "TypeEqual: unexpected Witness";
       break;
     case Value::Kind::AutoType:
@@ -868,7 +879,9 @@ auto ValueStructurallyEqual(
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
     case Value::Kind::ImplWitness:
-    case Value::Kind::SymbolicWitness:
+    case Value::Kind::BindingWitness:
+    case Value::Kind::ConstraintWitness:
+    case Value::Kind::ConstraintImplWitness:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:

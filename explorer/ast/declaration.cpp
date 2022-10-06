@@ -262,11 +262,11 @@ auto SplitDeducedParameters(
       case AstNodeKind::BindingPattern: {
         Nonnull<BindingPattern*> binding = &cast<BindingPattern>(*param);
         if (binding->name() != "me") {
-          return CompilationError(source_loc)
+          return ProgramError(source_loc)
                  << "illegal binding pattern in implicit parameter list";
         }
         if (result.me_pattern.has_value()) {
-          return CompilationError(source_loc)
+          return ProgramError(source_loc)
                  << "parameter list cannot contain more than one `me` "
                     "parameter";
         }
@@ -278,11 +278,11 @@ auto SplitDeducedParameters(
         Nonnull<BindingPattern*> binding =
             &cast<BindingPattern>(addr_pattern->binding());
         if (binding->name() != "me") {
-          return CompilationError(source_loc)
+          return ProgramError(source_loc)
                  << "illegal binding pattern in implicit parameter list";
         }
         if (result.me_pattern.has_value()) {
-          return CompilationError(source_loc)
+          return ProgramError(source_loc)
                  << "parameter list cannot contain more than one `me` "
                     "parameter";
         }
@@ -290,7 +290,7 @@ auto SplitDeducedParameters(
         break;
       }
       default:
-        return CompilationError(source_loc)
+        return ProgramError(source_loc)
                << "illegal AST node in implicit parameter list";
     }
   }
@@ -360,7 +360,7 @@ auto ImplDeclaration::Create(Nonnull<Arena*> arena, SourceLocation source_loc,
         resolved_params.push_back(&cast<GenericBinding>(*param));
         break;
       default:
-        return CompilationError(source_loc)
+        return ProgramError(source_loc)
                << "illegal AST node in implicit parameter list of impl";
     }
   }

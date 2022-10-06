@@ -45,7 +45,7 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
   name.remove_prefix(std::strlen("__intrinsic_"));
   auto it = intrinsic_map.find(name);
   if (it == intrinsic_map.end()) {
-    return CompilationError(source_loc) << "Unknown intrinsic '" << name << "'";
+    return ProgramError(source_loc) << "Unknown intrinsic '" << name << "'";
   }
   return it->second;
 }
@@ -257,12 +257,6 @@ void Expression::Print(llvm::raw_ostream& out) const {
       }
       break;
     }
-    case ExpressionKind::InstantiateImpl: {
-      // TODO: For layering reasons, we can't print out the witness and
-      // argument values from here.
-      out << "instantiate impl";
-      break;
-    }
     case ExpressionKind::UnimplementedExpression: {
       const auto& unimplemented = cast<UnimplementedExpression>(*this);
       out << "UnimplementedExpression<" << unimplemented.label() << ">(";
@@ -347,7 +341,6 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
     case ExpressionKind::UnimplementedExpression:
     case ExpressionKind::FunctionTypeLiteral:
     case ExpressionKind::ArrayTypeLiteral:
-    case ExpressionKind::InstantiateImpl:
       out << "...";
       break;
   }
