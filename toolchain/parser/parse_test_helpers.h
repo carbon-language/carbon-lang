@@ -331,13 +331,18 @@ auto MatchParameters(Args... args) -> ExpectedNode {
   return MatchParameterList("(", std::move(args)..., MatchParameterListEnd());
 }
 
+template <typename... Args>
+auto MatchFullCodeBlock(Args... args) -> ExpectedNode {
+  return MatchCodeBlockEnd("}", MatchCodeBlock("{"), std::move(args)...);
+}
+
 // Helper for matching the statements in the body of a simple function
 // definition with no parameters.
 template <typename... Args>
 auto MatchFunctionWithBody(Args... args) -> ExpectedNode {
-  return MatchFunctionEnd(
-      MatchFunction("fn"), MatchDeclaredName(), MatchParameters(),
-      MatchCodeBlockEnd(MatchCodeBlock("{"), std::move(args)...));
+  return MatchFunctionEnd(MatchFunction("fn"), MatchDeclaredName(),
+                          MatchParameters(),
+                          MatchFullCodeBlock(std::move(args)...));
 }
 
 }  // namespace Testing

@@ -422,15 +422,15 @@ auto ParseTree::Parser::ParseCodeBlock() -> llvm::Optional<Node> {
     CARBON_DIAGNOSTIC(ExpectedCodeBlock, Error, "Expected braced code block.");
     emitter_.Emit(*position_, ExpectedCodeBlock);
     AddLeafNode(ParseNodeKind::CodeBlock(), *position_);
-    ParseStatement();
-    AddNode(ParseNodeKind::CodeBlockEnd(), *position_, start,
-            /*has_error=*/true);
+    bool has_error = ParseStatement() == llvm::None;
+    return AddNode(ParseNodeKind::CodeBlockEnd(), *position_, start,
+                   /*has_error=*/has_error);
   }
 
   TokenizedBuffer::Token open_curly = *maybe_open_curly;
   AddLeafNode(ParseNodeKind::CodeBlock(), open_curly);
 
-  bool has_errors = false;
+  bool has_error = false;
 
   // Loop over all the different possibly nested elements in the code block.
   while (!NextTokenIs(TokenKind::CloseCurlyBrace())) {
@@ -440,7 +440,7 @@ auto ParseTree::Parser::ParseCodeBlock() -> llvm::Optional<Node> {
       // TODO: It would be better to skip to the next semicolon, or the next
       // token at the start of a line with the same indent as this one.
       SkipTo(tokens_.GetMatchedClosingToken(open_curly));
-      has_errors = true;
+      has_error = true;
       break;
     }
   }
@@ -448,7 +448,7 @@ auto ParseTree::Parser::ParseCodeBlock() -> llvm::Optional<Node> {
   // We always reach here having set our position in the token stream to the
   // close curly brace.
   return AddNode(ParseNodeKind::CodeBlockEnd(),
-                 Consume(TokenKind::CloseCurlyBrace()), start, has_errors);
+                 Consume(TokenKind::CloseCurlyBrace()), start, has_error);
 }
 
 auto ParseTree::Parser::ParsePackageDirective() -> Node {
