@@ -29,6 +29,16 @@ using ImplWitnessMap =
 // will have the same set of bindings.
 class Bindings {
  public:
+  // Gets an empty set of bindings.
+  static auto None() -> Nonnull<const Bindings*>;
+
+  // Makes a set of symbolic identity bindings for the given collection of
+  // generic bindings and their impl bindings.
+  static auto SymbolicIdentity(
+      Nonnull<Arena*> arena,
+      llvm::ArrayRef<Nonnull<const GenericBinding*>> bindings)
+      -> Nonnull<const Bindings*>;
+
   // Create an empty set of bindings.
   Bindings() {}
 
@@ -52,16 +62,6 @@ class Bindings {
 
   // Witnesses corresponding to impl bindings.
   auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
-
-  // An empty set of bindings.
-  static auto None() -> Nonnull<const Bindings*>;
-
-  // A set of symbolic identity bindings for the given collection of generic
-  // bindings and their impl bindings.
-  static auto SymbolicIdentity(
-      Nonnull<Arena*> arena,
-      llvm::ArrayRef<Nonnull<const GenericBinding*>> bindings)
-      -> Nonnull<const Bindings*>;
 
   // Determine whether this is an empty set of bindings.
   [[nodiscard]] auto empty() const -> bool {

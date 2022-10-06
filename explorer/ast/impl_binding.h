@@ -46,7 +46,7 @@ class ImplBinding : public AstNode {
   // The binding for the type variable.
   auto type_var() const -> Nonnull<const GenericBinding*> { return type_var_; }
   // The constraint being implemented.
-  // TODO: Rename this.
+  // TODO: Rename this to `constraint`.
   auto interface() const -> Nonnull<const Value*> {
     CARBON_CHECK(iface_) << "interface has not been set yet";
     return *iface_;

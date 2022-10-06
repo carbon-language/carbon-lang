@@ -98,6 +98,7 @@ class TypeChecker {
 
  private:
   struct SingleStepEqualityContext;
+  class SubstitutedGenericBindings;
 
   // Information about the currently enclosing scopes.
   struct ScopeInfo {

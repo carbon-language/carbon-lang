@@ -542,16 +542,13 @@ auto Interpreter::EvalAssociatedConstant(
       impl_witness.declaration().constraint_type();
   std::optional<Nonnull<const Value*>> result;
   constraint->VisitEqualValues(assoc, [&](Nonnull<const Value*> equal_value) {
-    // TODO: The value might depend on the
-    // parameters of the impl. We need to
-    // substitute impl_witness.type_args() into the
-    // value or constraint.
+    // TODO: The value might depend on the parameters of the impl. We need to
+    // substitute impl_witness.type_args() into the value or constraint.
     if (isa<AssociatedConstant>(equal_value)) {
       return true;
     }
-    // TODO: This makes an arbitrary choice if
-    // there's more than one equal value. It's not
-    // clear how to handle that case.
+    // TODO: This makes an arbitrary choice if there's more than one equal
+    // value. It's not clear how to handle that case.
     result = equal_value;
     return false;
   });

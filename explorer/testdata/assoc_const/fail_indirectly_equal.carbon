@@ -25,7 +25,7 @@ fn F2[U:! A where .T == i32](x: i32) -> U.T {
 }
 
 fn F3[T:! A where .T == i32, U:! A where .T == i32](x: T.T) -> U.T {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_indirectly_equal.carbon:[[@LINE+1]]: type error in return value: '(T:! A where .Self.T == i32).T' is not implicitly convertible to '(U:! A where .Self.T == i32).T'
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_indirectly_equal.carbon:[[@LINE+1]]: type error in return value: '(T).T' is not implicitly convertible to '(U).T'
   return x;
 }
 
