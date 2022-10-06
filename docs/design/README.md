@@ -637,18 +637,19 @@ are available for representing strings with `\`s and `"`s.
 
 ## Value categories and value phases
 
-Every value has a
+Every expression has a
 [value category](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>),
 similar to [C++](https://en.cppreference.com/w/cpp/language/value_category),
 that is either _l-value_ or _r-value_. Carbon will automatically convert an
 l-value to an r-value, but not in the other direction.
 
-L-values have storage and a stable address. They may be modified, assuming their
-type is not [`const`](#const).
+L-value expressions refer to values that have storage and a stable address. They
+may be modified, assuming their type is not [`const`](#const).
 
-R-values may not have dedicated storage. This means they cannot be modified and
-their address generally cannot be taken. R-values are broken down into three
-kinds, called _value phases_:
+R-value expressions evaluate to values that may not have dedicated storage. This
+means they cannot be modified and their address generally cannot be taken. The
+values of r-value expressions are broken down into three kinds, called _value
+phases_:
 
 -   A _constant_ has a value known at compile time, and that value is available
     during type checking, for example to use as the size of an array. These
@@ -2558,16 +2559,20 @@ being passed as a separate explicit argument.
 
 ### Checked and template parameters
 
-The `:!` indicates that `T` is a _checked_ parameter passed at compile time.
+The `:!` indicates that the `T` parameter is generic, and therefore bound at
+compile time. Generic parameters may either be _checked_ or _template_, and
+default to checked.
+
 "Checked" here means that the body of `Min` is type checked when the function is
 defined, independent of the specific type values `T` is instantiated with, and
 name lookup is delegated to the constraint on `T` (`Ordered` in this case). This
 type checking is equivalent to saying the function would pass type checking
-given any type `T` that implements the `Ordered` interface. Then calls to `Min`
-only need to check that the deduced type value of `T` implements `Ordered`.
+given any type `T` that implements the `Ordered` interface. Subsequent calls to
+`Min` only need to check that the deduced type value of `T` implements
+`Ordered`.
 
-The parameter could alternatively be declared to be a _template_ parameter by
-prefixing with the `template` keyword, as in `template T:! Type`.
+The parameter could alternatively be declared to be a _template_ generic
+parameter by prefixing with the `template` keyword, as in `template T:! Type`.
 
 ```carbon
 fn Convert[template T:! Type](source: T, template U:! Type) -> U {
@@ -2579,6 +2584,15 @@ fn Foo(i: i32) -> f32 {
   // Instantiates with the `T` implicit argument set to `i32` and the `U`
   // explicit argument set to `f32`, then calls with the runtime value `i`.
   return Convert(i, f32);
+}
+```
+
+A template parameter can still use a constraint. The `Min` example could have
+been declared as:
+
+```carbon
+fn Min[template T:! Ordered](x: T, y: T) -> T {
+  return if x <= y then x else y;
 }
 ```
 

@@ -1,0 +1,34 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: Documentation bug
+description: >
+  Report a bug with the Carbon Language project documentation.
+body:
+  - type: markdown
+    attributes:
+      value: >
+        **Attention:** If this is a _question_, please use either [GitHub
+        Discussions](https://github.com/carbon-language/carbon-lang/discussions)
+        or [Discord](https://discord.gg/ZjVdShJDAs).
+  - type: textarea
+    id: desc
+    attributes:
+      label: >
+        Description of the bug:
+  - type: textarea
+    id: input
+    attributes:
+      label: >
+        Link to documentation:
+  - type: textarea
+    id: actual
+    attributes:
+      label: >
+        What should it say instead?
+  - type: textarea
+    id: extras
+    attributes:
+      label: >
+        Any other information, logs, or outputs that you want to share?

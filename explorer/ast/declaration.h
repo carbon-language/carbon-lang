@@ -102,27 +102,15 @@ class Declaration : public AstNode {
   std::optional<Nonnull<const Value*>> constant_value_;
 };
 
-class FunctionDeclaration : public Declaration {
+class CallableDeclaration : public Declaration {
  public:
-  using ImplementsCarbonValueNode = void;
-
-  static auto Create(Nonnull<Arena*> arena, SourceLocation source_loc,
-                     std::string name,
-                     std::vector<Nonnull<AstNode*>> deduced_params,
-                     std::optional<Nonnull<Pattern*>> me_pattern,
-                     Nonnull<TuplePattern*> param_pattern,
-                     ReturnTerm return_term,
-                     std::optional<Nonnull<Block*>> body)
-      -> ErrorOr<Nonnull<FunctionDeclaration*>>;
-
-  // Use `Create()` instead. This is public only so Arena::New() can call it.
-  FunctionDeclaration(SourceLocation source_loc, std::string name,
+  CallableDeclaration(AstNodeKind kind, SourceLocation loc, std::string name,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,
                       std::optional<Nonnull<Pattern*>> me_pattern,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
                       std::optional<Nonnull<Block*>> body)
-      : Declaration(AstNodeKind::FunctionDeclaration, source_loc),
+      : Declaration(kind, loc),
         name_(std::move(name)),
         deduced_parameters_(std::move(deduced_params)),
         me_pattern_(me_pattern),
@@ -130,12 +118,9 @@ class FunctionDeclaration : public Declaration {
         return_term_(return_term),
         body_(body) {}
 
-  static auto classof(const AstNode* node) -> bool {
-    return InheritsFromFunctionDeclaration(node->kind());
-  }
-
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
 
+  // TODO: Move name() and name_ to FunctionDeclaration
   auto name() const -> const std::string& { return name_; }
   auto deduced_parameters() const
       -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
@@ -164,6 +149,61 @@ class FunctionDeclaration : public Declaration {
   Nonnull<TuplePattern*> param_pattern_;
   ReturnTerm return_term_;
   std::optional<Nonnull<Block*>> body_;
+};
+
+class FunctionDeclaration : public CallableDeclaration {
+ public:
+  using ImplementsCarbonValueNode = void;
+
+  static auto Create(Nonnull<Arena*> arena, SourceLocation source_loc,
+                     std::string name,
+                     std::vector<Nonnull<AstNode*>> deduced_params,
+                     Nonnull<TuplePattern*> param_pattern,
+                     ReturnTerm return_term,
+                     std::optional<Nonnull<Block*>> body)
+      -> ErrorOr<Nonnull<FunctionDeclaration*>>;
+
+  // Use `Create()` instead. This is public only so Arena::New() can call it.
+  FunctionDeclaration(SourceLocation source_loc, std::string name,
+                      std::vector<Nonnull<GenericBinding*>> deduced_params,
+                      std::optional<Nonnull<Pattern*>> me_pattern,
+                      Nonnull<TuplePattern*> param_pattern,
+                      ReturnTerm return_term,
+                      std::optional<Nonnull<Block*>> body)
+      : CallableDeclaration(AstNodeKind::FunctionDeclaration, source_loc,
+                            std::move(name), std::move(deduced_params),
+                            me_pattern, param_pattern, return_term, body) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromFunctionDeclaration(node->kind());
+  }
+};
+
+class DestructorDeclaration : public CallableDeclaration {
+ public:
+  using ImplementsCarbonValueNode = void;
+
+  static auto CreateDestructor(Nonnull<Arena*> arena, SourceLocation source_loc,
+                               std::vector<Nonnull<AstNode*>> deduced_params,
+                               Nonnull<TuplePattern*> param_pattern,
+                               ReturnTerm return_term,
+                               std::optional<Nonnull<Block*>> body)
+      -> ErrorOr<Nonnull<DestructorDeclaration*>>;
+
+  // Use `Create()` instead. This is public only so Arena::New() can call it.
+  DestructorDeclaration(SourceLocation source_loc,
+                        std::vector<Nonnull<GenericBinding*>> deduced_params,
+                        std::optional<Nonnull<Pattern*>> me_pattern,
+                        Nonnull<TuplePattern*> param_pattern,
+                        ReturnTerm return_term,
+                        std::optional<Nonnull<Block*>> body)
+      : CallableDeclaration(AstNodeKind::DestructorDeclaration, source_loc,
+                            "destructor", std::move(deduced_params), me_pattern,
+                            param_pattern, return_term, body) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromDestructorDeclaration(node->kind());
+  }
 };
 
 class SelfDeclaration : public Declaration {
@@ -222,6 +262,14 @@ class ClassDeclaration : public Declaration {
   auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
     return members_;
   }
+  auto destructor() const -> std::optional<Nonnull<DestructorDeclaration*>> {
+    for (auto& x : members_) {
+      if (x->kind() == DeclarationKind::DestructorDeclaration) {
+        return llvm::cast<DestructorDeclaration>(x);
+      }
+    }
+    return std::nullopt;
+  }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
@@ -232,6 +280,7 @@ class ClassDeclaration : public Declaration {
   std::optional<Nonnull<TuplePattern*>> type_params_;
   std::optional<Nonnull<Expression*>> extends_;
   std::vector<Nonnull<Declaration*>> members_;
+  std::optional<Nonnull<FunctionDeclaration*>> destructor_;
 };
 
 // EXPERIMENTAL MIXIN FEATURE
@@ -412,15 +461,20 @@ class InterfaceDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
 
-  InterfaceDeclaration(SourceLocation source_loc, std::string name,
+  InterfaceDeclaration(Nonnull<Arena*> arena, SourceLocation source_loc,
+                       std::string name,
                        std::optional<Nonnull<TuplePattern*>> params,
-                       Nonnull<GenericBinding*> self,
                        std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::InterfaceDeclaration, source_loc),
         name_(std::move(name)),
         params_(std::move(params)),
-        self_(self),
-        members_(std::move(members)) {}
+        self_type_(arena->New<SelfDeclaration>(source_loc)),
+        members_(std::move(members)) {
+    // `interface X` has `Self:! X`.
+    auto self_type_ref = arena->New<IdentifierExpression>(source_loc, name);
+    self_type_ref->set_value_node(self_type_);
+    self_ = arena->New<GenericBinding>(source_loc, "Self", self_type_ref);
+  }
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromInterfaceDeclaration(node->kind());
@@ -431,6 +485,13 @@ class InterfaceDeclaration : public Declaration {
     return params_;
   }
   auto params() -> std::optional<Nonnull<TuplePattern*>> { return params_; }
+  // Get the type of `Self`, which is a reference to the interface itself, with
+  // parameters mapped to their values. For example, in `interface X(T:!
+  // Type)`, the self type is `X(T)`.
+  auto self_type() const -> Nonnull<const SelfDeclaration*> {
+    return self_type_;
+  }
+  auto self_type() -> Nonnull<SelfDeclaration*> { return self_type_; }
   auto self() const -> Nonnull<const GenericBinding*> { return self_; }
   auto self() -> Nonnull<GenericBinding*> { return self_; }
   auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
@@ -442,6 +503,7 @@ class InterfaceDeclaration : public Declaration {
  private:
   std::string name_;
   std::optional<Nonnull<TuplePattern*>> params_;
+  Nonnull<SelfDeclaration*> self_type_;
   Nonnull<GenericBinding*> self_;
   std::vector<Nonnull<Declaration*>> members_;
 };

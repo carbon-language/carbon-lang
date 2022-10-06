@@ -1180,6 +1180,90 @@ auto ParseTree::Parser::ParseWhileStatement() -> llvm::Optional<Node> {
                  /*has_error=*/!cond || !body);
 }
 
+auto ParseTree::Parser::ParseForStatement() -> llvm::Optional<Node> {
+  CARBON_RETURN_IF_STACK_LIMITED(llvm::None);
+  auto for_start = GetSubtreeStartPosition();
+  auto for_token = Consume(TokenKind::For());
+
+  // Parse the loop header.
+  auto header = [this]() -> llvm::Optional<Node> {
+    auto open_paren = ConsumeIf(TokenKind::OpenParen());
+    auto header_start = GetSubtreeStartPosition();
+
+    if (!open_paren) {
+      CARBON_DIAGNOSTIC(ExpectedParenAfter, Error,
+                        "Expected `(` after `{0}`. Recovering from missing `(` "
+                        "not implemented yet!",
+                        TokenKind);
+      emitter_.Emit(*position_, ExpectedParenAfter, TokenKind::For());
+      // TODO: A proper recovery strategy is needed here. For now, I assume that
+      // all brackets are properly balanced (i.e. each open bracket has a
+      // closing one).
+      // This is temporary until we come to a conclusion regarding the recovery
+      // tokens strategy.
+      return llvm::None;
+    }
+
+    bool iter_var_parsed = false;
+
+    if (NextTokenIs(TokenKind::Var())) {
+      auto var_token = Consume(TokenKind::Var());
+      auto var_start = GetSubtreeStartPosition();
+      auto pattern = ParsePattern(PatternKind::Variable);
+      AddNode(ParseNodeKind::VariableDeclaration(), var_token, var_start,
+              !pattern);
+      iter_var_parsed = true;
+    } else {
+      CARBON_DIAGNOSTIC(ExpectedVariableDeclaration, Error,
+                        "Expected `var` declaration.");
+      emitter_.Emit(*position_, ExpectedVariableDeclaration);
+
+      if (auto next_in = FindNextOf({TokenKind::In()}); next_in) {
+        SkipTo(*next_in);
+      }
+    }
+
+    // A separator is either an `in` or a `:`. Even though `:` is incorrect,
+    // accidentally typing it by a C++ programmer might be a common mistake that
+    // warrants special handling.
+    bool separator_parsed = false;
+    bool in_parsed = false;
+
+    if (NextTokenIs(TokenKind::In())) {
+      separator_parsed = true;
+      in_parsed = true;
+      AddLeafNode(ParseNodeKind::ForIn(), Consume(TokenKind::In()));
+    } else if (NextTokenIs(TokenKind::Colon())) {
+      separator_parsed = true;
+      CARBON_DIAGNOSTIC(ExpectedIn, Error, "`:` should be replaced by `in`.");
+      emitter_.Emit(*position_, ExpectedIn);
+      Consume(TokenKind::Colon());
+    } else {
+      CARBON_DIAGNOSTIC(ExpectedIn, Error,
+                        "Expected `in` after loop `var` declaration.");
+      emitter_.Emit(*position_, ExpectedIn);
+      SkipTo(tokens_.GetMatchedClosingToken(*open_paren));
+    }
+
+    // Only try to parse the container expression if a separator was parsed.
+    // This reduces the emitted error messages if the separator was missing
+    // altogether.
+    auto container_expr = separator_parsed ? ParseExpression() : llvm::None;
+
+    auto close_paren =
+        ParseCloseParen(*open_paren, ParseNodeKind::ForHeaderEnd());
+
+    return AddNode(
+        ParseNodeKind::ForHeader(), *open_paren, header_start,
+        !iter_var_parsed || !in_parsed || !container_expr || !close_paren);
+  }();
+
+  auto body = ParseCodeBlock();
+
+  return AddNode(ParseNodeKind::ForStatement(), for_token, for_start,
+                 !header || !body);
+}
+
 auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind,
                                               KeywordStatementArgument argument)
     -> llvm::Optional<Node> {
@@ -1219,6 +1303,9 @@ auto ParseTree::Parser::ParseStatement() -> llvm::Optional<Node> {
 
     case TokenKind::While():
       return ParseWhileStatement();
+
+    case TokenKind::For():
+      return ParseForStatement();
 
     case TokenKind::Continue():
       return ParseKeywordStatement(ParseNodeKind::ContinueStatement(),

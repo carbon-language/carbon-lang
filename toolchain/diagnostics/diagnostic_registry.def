@@ -58,6 +58,7 @@ CARBON_DIAGNOSTIC_KIND(ExpectedParenAfter)
 CARBON_DIAGNOSTIC_KIND(ExpectedSemiAfter)
 CARBON_DIAGNOSTIC_KIND(ExpectedSemiAfterExpression)
 CARBON_DIAGNOSTIC_KIND(ExpectedStructLiteralField)
+CARBON_DIAGNOSTIC_KIND(ExpectedVariableDeclaration)
 CARBON_DIAGNOSTIC_KIND(ExpectedVariableName)
 CARBON_DIAGNOSTIC_KIND(OperatorRequiresParentheses)
 CARBON_DIAGNOSTIC_KIND(StackLimitExceeded)
@@ -73,6 +74,9 @@ CARBON_DIAGNOSTIC_KIND(ExpectedLibraryName)
 CARBON_DIAGNOSTIC_KIND(MissingLibraryKeyword)
 CARBON_DIAGNOSTIC_KIND(ExpectedApiOrImpl)
 CARBON_DIAGNOSTIC_KIND(ExpectedSemiToEndPackageDirective)
+
+// For-specific diagnostics
+CARBON_DIAGNOSTIC_KIND(ExpectedIn)
 
 // ============================================================================
 // Other diagnostics

@@ -45,7 +45,7 @@ repos:
 
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
-    rev: f6c139c5215ce04fd3e73a900f1372942d58eca0 # frozen: 22.6.0
+    rev: 2018e667a6a36ee3fbfa8041cd36512f92f60d49 # frozen: 22.8.0
     hooks:
       - id: black
   - repo: https://github.com/pre-commit/mirrors-prettier
@@ -71,14 +71,14 @@ repos:
         types_or: [c++, proto]
         language: python
         args: ['-i']
-        additional_dependencies: ['clang-format==13.0.1']
+        additional_dependencies: ['clang-format==14.0.6']
       - id: explorer-format-grammar
         name: Format the explorer grammar file
         entry: explorer/syntax/format_grammar.py
         language: python
         files: ^explorer/syntax/(lexer.lpp|parser.ypp)$
         pass_filenames: false
-        additional_dependencies: ['clang-format==13.0.1']
+        additional_dependencies: ['clang-format==14.0.6']
 
   - repo: local
     hooks:
@@ -177,9 +177,10 @@ repos:
         exclude: |
           (?x)^(
               .bazelversion|
+              .github/pull_request_template.md|
               compile_flags.txt|
               third_party/.*|
-              bazel/llvm-patches/.*\.patch|
+              bazel/llvm_patches/.*\.patch|
               .*\.def|
               .*\.svg|
               .*/fuzzer_corpus/.*|

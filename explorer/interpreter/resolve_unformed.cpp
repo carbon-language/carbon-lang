@@ -43,7 +43,7 @@ auto FlowFacts::TakeAction(Nonnull<const AstNode*> node, ActionType action,
       auto entry = facts_.find(node);
       if (entry != facts_.end() &&
           entry->second.formed_state == FormedState::Unformed) {
-        return CompilationError(source_loc)
+        return ProgramError(source_loc)
                << "use of uninitialized variable " << name;
       }
       break;
@@ -140,7 +140,6 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
     case ExpressionKind::UnimplementedExpression:
     case ExpressionKind::FunctionTypeLiteral:
     case ExpressionKind::ArrayTypeLiteral:
-    case ExpressionKind::InstantiateImpl:
       break;
   }
   return Success();
@@ -284,11 +283,12 @@ static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
     // Checks formed/unformed state intraprocedurally.
     // Can be extended to an interprocedural analysis when a call graph is
     // available.
-    case DeclarationKind::FunctionDeclaration: {
-      auto& function = cast<FunctionDeclaration>(*declaration);
-      if (function.body().has_value()) {
+    case DeclarationKind::FunctionDeclaration:
+    case DeclarationKind::DestructorDeclaration: {
+      auto& callable = cast<CallableDeclaration>(*declaration);
+      if (callable.body().has_value()) {
         FlowFacts flow_facts;
-        CARBON_RETURN_IF_ERROR(ResolveUnformed(*function.body(), flow_facts,
+        CARBON_RETURN_IF_ERROR(ResolveUnformed(*callable.body(), flow_facts,
                                                FlowFacts::ActionType::None));
       }
       break;

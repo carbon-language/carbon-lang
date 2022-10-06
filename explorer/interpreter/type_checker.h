@@ -62,13 +62,13 @@ class TypeChecker {
                                  Nonnull<const Value*>>& dict,
                   Nonnull<const Value*> type) const -> Nonnull<const Value*>;
 
-  // If `impl` can be an implementation of interface `iface` for the
-  // given `type`, then return an expression that will produce the witness
-  // for this `impl` (at runtime). Otherwise return std::nullopt.
+  // If `impl` can be an implementation of interface `iface` for the given
+  // `type`, then return the witness for this `impl`. Otherwise return
+  // std::nullopt.
   auto MatchImpl(const InterfaceType& iface, Nonnull<const Value*> type,
                  const ImplScope::Impl& impl, const ImplScope& impl_scope,
                  SourceLocation source_loc) const
-      -> std::optional<Nonnull<Expression*>>;
+      -> std::optional<Nonnull<const Witness*>>;
 
   /*
   ** Finds the direct or indirect member of a class or mixin by its name and
@@ -88,14 +88,14 @@ class TypeChecker {
   // the constraint.
   auto MakeConstraintWitness(
       const ConstraintType& constraint,
-      std::vector<Nonnull<Expression*>> impl_constraint_witnesses,
-      SourceLocation source_loc) const -> Nonnull<Expression*>;
+      std::vector<Nonnull<const Witness*>> impl_constraint_witnesses,
+      SourceLocation source_loc) const -> Nonnull<const Witness*>;
 
   // Given the witnesses for the components of a constraint, form a witness for
   // the constraint.
-  auto MakeConstraintWitnessAccess(Nonnull<Expression*> witness,
+  auto MakeConstraintWitnessAccess(Nonnull<const Witness*> witness,
                                    size_t impl_offset) const
-      -> Nonnull<Expression*>;
+      -> Nonnull<const Witness*>;
 
  private:
   struct SingleStepEqualityContext;
@@ -192,7 +192,7 @@ class TypeChecker {
   auto DeclareDeclaration(Nonnull<Declaration*> d, const ScopeInfo& scope_info)
       -> ErrorOr<Success>;
 
-  auto DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
+  auto DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
                                   const ScopeInfo& scope_info)
       -> ErrorOr<Success>;
 
@@ -252,9 +252,9 @@ class TypeChecker {
   void BringPatternImplsIntoScope(Nonnull<const Pattern*> p,
                                   ImplScope& impl_scope);
 
-  // Create a reference to the given `impl` binding.
-  auto CreateImplReference(Nonnull<const ImplBinding*> impl_binding)
-      -> Nonnull<Expression*>;
+  // Create a witness for the given `impl` binding.
+  auto CreateImplBindingWitness(Nonnull<const ImplBinding*> impl_binding)
+      -> Nonnull<const Witness*>;
 
   // Add the given ImplBinding to the given `impl_scope`.
   void BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
@@ -275,7 +275,7 @@ class TypeChecker {
       -> ErrorOr<Success>;
 
   // Type check the body of the function.
-  auto TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
+  auto TypeCheckCallableDeclaration(Nonnull<CallableDeclaration*> f,
                                     const ImplScope& impl_scope)
       -> ErrorOr<Success>;
 
@@ -418,7 +418,7 @@ class TypeChecker {
   auto SatisfyImpls(llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
                     const ImplScope& impl_scope, SourceLocation source_loc,
                     const BindingMap& deduced_type_args,
-                    ImplExpMap& impls) const -> ErrorOr<Success>;
+                    ImplWitnessMap& impls) const -> ErrorOr<Success>;
 
   // Given an interface type, form a corresponding constraint type.
   auto MakeConstraintForInterface(SourceLocation source_loc,
@@ -430,14 +430,6 @@ class TypeChecker {
       SourceLocation source_loc,
       llvm::ArrayRef<Nonnull<const ConstraintType*>> constraints)
       -> Nonnull<const ConstraintType*>;
-
-  // Sets value_node.constant_value() to `value`. Can be called multiple
-  // times on the same value_node, so long as it is always called with
-  // the same value.
-  template <typename T>
-  void SetConstantValue(Nonnull<T*> value_node, Nonnull<const Value*> value);
-
-  void PrintConstants(llvm::raw_ostream& out);
 
   /*
   ** Adds a member of a declaration to collected_members_
@@ -454,7 +446,6 @@ class TypeChecker {
       -> CollectedMembersMap&;
 
   Nonnull<Arena*> arena_;
-  std::set<ValueNodeView> constants_;
   Builtins builtins_;
 
   // Maps a mixin/class declaration to all of its direct and indirect members.

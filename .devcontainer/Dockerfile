@@ -9,8 +9,9 @@ FROM ubuntu:22.04
 #   golang: Used for Bazelisk and Buildifier.
 #   python3: For Carbon tools.
 #   gnupg, software-properties-common, wget: For llvm.sh.
-RUN apt-get update
-RUN apt-get install -y \
+# apt-get update and install together per Docker best practice.
+RUN apt-get update && \
+  apt-get install -y \
   git \
   gnupg \
   golang \

@@ -250,6 +250,9 @@ class ParseTree::Parser {
   // Parses a while-statement.
   auto ParseWhileStatement() -> llvm::Optional<Node>;
 
+  // Parses a for-statement.
+  auto ParseForStatement() -> llvm::Optional<Node>;
+
   enum class KeywordStatementArgument {
     None,
     Optional,

@@ -2,10 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
+// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
+// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
 
 package ExplorerTest api;
@@ -46,7 +44,7 @@ fn Main() -> i32 {
   var a: Point(i32) = {.x = 1, .y = 1};
   var b: Point(i32) = {.x = 2, .y = 3};
   // TODO: This shouldn't be considered ambiguous.
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_unambiguous_impl_generic.carbon:[[@LINE+1]]: ambiguous implementations of interface Vector(T = i32) for class Point(T = i32)
+  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_unambiguous_impl_generic.carbon:[[@LINE+1]]: ambiguous implementations of interface Vector(T = i32) for class Point(T = i32)
   var p: Point(i32) = AddAndScaleGeneric(a, b, 5);
   return p.x - 15;
 }
