@@ -62,6 +62,7 @@ cc_library(
         ":static_scope",
         ":value_category",
         "//common:check",
+        "//common:error",
         "//common:indirect_value",
         "//common:ostream",
         "//explorer/common:arena",

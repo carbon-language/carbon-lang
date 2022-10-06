@@ -954,7 +954,7 @@ class ConstraintTypeBuilder {
   // Add an `impl` constraint -- `T is C` if not already present.
   // Returns the index of the impl constraint within the self witness.
   auto AddImplConstraint(ConstraintType::ImplConstraint impl) -> int {
-    for (ConstraintType::ImplConstraint &existing : impl_constraints_) {
+    for (ConstraintType::ImplConstraint& existing : impl_constraints_) {
       if (TypeEqual(existing.type, impl.type, std::nullopt) &&
           TypeEqual(existing.interface, impl.interface, std::nullopt)) {
         return &existing - impl_constraints_.data();
@@ -1172,8 +1172,9 @@ auto TypeChecker::Substitute(const Bindings& bindings,
         if (!old_binding->impl_binding()) {
           return std::nullopt;
         }
-        Nonnull<ImplBinding*> impl_binding = arena_->New<ImplBinding>(
-            new_binding->source_loc(), new_binding, &new_binding->static_type());
+        Nonnull<ImplBinding*> impl_binding =
+            arena_->New<ImplBinding>(new_binding->source_loc(), new_binding,
+                                     &new_binding->static_type());
         impl_binding->set_original(old_binding->impl_binding().value());
         auto* witness = arena_->New<BindingWitness>(impl_binding);
         impl_binding->set_symbolic_identity(witness);
@@ -1273,7 +1274,7 @@ auto TypeChecker::Substitute(const Bindings& bindings,
       const auto& witness = cast<ConstraintWitness>(*type);
       std::vector<Nonnull<const Witness*>> witnesses;
       witnesses.reserve(witness.witnesses().size());
-      for (auto* witness: witness.witnesses()) {
+      for (auto* witness : witness.witnesses()) {
         witnesses.push_back(cast<Witness>(Substitute(bindings, witness)));
       }
       return arena_->New<ConstraintWitness>(std::move(witnesses));
@@ -2683,7 +2684,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         builder.BringImplsIntoScope(*this, &inner_impl_scope);
       }
 
-
       // Type-check and apply the `where` clauses.
       for (Nonnull<WhereClause*> clause : where.clauses()) {
         CARBON_RETURN_IF_ERROR(TypeCheckWhereClause(clause, inner_impl_scope));
@@ -2957,8 +2957,7 @@ auto TypeChecker::TypeCheckPattern(
         // to `T:! <constraint T is X and T is Y>`.
         if (auto* constraint = dyn_cast<ConstraintType>(type)) {
           ConstraintTypeBuilder builder(arena_, binding.source_loc());
-          builder.AddAndSubstitute(*this, constraint, val, witness,
-                                   Bindings(),
+          builder.AddAndSubstitute(*this, constraint, val, witness, Bindings(),
                                    /*add_lookup_contexts=*/true);
           type = std::move(builder).Build(arena_);
         }
@@ -3880,7 +3879,8 @@ auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
       impl_decl->constraint_type()->VisitEqualValues(expected, visitor);
       if (!found_any) {
         return CompilationError(impl_decl->source_loc())
-               << "implementation missing " << *expected << "; have " << *impl_decl->constraint_type();
+               << "implementation missing " << *expected << "; have "
+               << *impl_decl->constraint_type();
       } else if (!found_value) {
         // TODO: It's not clear what the right rule is here. Clearly
         //   impl T as HasX & HasY where .X == .Y {}

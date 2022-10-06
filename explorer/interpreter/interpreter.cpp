@@ -541,21 +541,20 @@ auto Interpreter::EvalAssociatedConstant(
   Nonnull<const ConstraintType*> constraint =
       impl_witness.declaration().constraint_type();
   std::optional<Nonnull<const Value*>> result;
-  constraint->VisitEqualValues(assoc,
-                               [&](Nonnull<const Value*> equal_value) {
-                                 // TODO: The value might depend on the
-                                 // parameters of the impl. We need to
-                                 // substitute impl_witness.type_args() into the
-                                 // value or constraint.
-                                 if (isa<AssociatedConstant>(equal_value)) {
-                                   return true;
-                                 }
-                                 // TODO: This makes an arbitrary choice if
-                                 // there's more than one equal value. It's not
-                                 // clear how to handle that case.
-                                 result = equal_value;
-                                 return false;
-                               });
+  constraint->VisitEqualValues(assoc, [&](Nonnull<const Value*> equal_value) {
+    // TODO: The value might depend on the
+    // parameters of the impl. We need to
+    // substitute impl_witness.type_args() into the
+    // value or constraint.
+    if (isa<AssociatedConstant>(equal_value)) {
+      return true;
+    }
+    // TODO: This makes an arbitrary choice if
+    // there's more than one equal value. It's not
+    // clear how to handle that case.
+    result = equal_value;
+    return false;
+  });
   if (!result) {
     CARBON_FATAL() << impl_witness.declaration() << " with constraint "
                    << *constraint
@@ -1366,8 +1365,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       } else {
         //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
         // -> { fn pt -> rt :: {C, E, F} :: S, H}
-        return todo_.FinishAction(arena_->New<FunctionType>(
-            act.results()[0], act.results()[1]));
+        return todo_.FinishAction(
+            arena_->New<FunctionType>(act.results()[0], act.results()[1]));
       }
     }
     case ExpressionKind::ContinuationTypeLiteral: {
