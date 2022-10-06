@@ -19,16 +19,20 @@
 #include "explorer/interpreter/exec_program.h"
 #include "explorer/syntax/parse.h"
 #include "explorer/syntax/prelude.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/InitLLVM.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {
 
 namespace cl = llvm::cl;
+namespace path = llvm::sys::path;
 
-static auto Main(llvm::StringRef default_prelude_file, int argc, char* argv[])
-    -> bool {
+auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
+                  llvm::StringRef relative_prelude_path) -> int {
   llvm::setBugReportMsg(
       "Please report issues to "
       "https://github.com/carbon-language/carbon-lang/issues and include the "
@@ -47,9 +51,18 @@ static auto Main(llvm::StringRef default_prelude_file, int argc, char* argv[])
       "trace_file",
       cl::desc("Output file for tracing; set to `-` to output to stdout."));
 
-  // Find the path of the executable if possible and use that as a relative root
+  // Use the executable path as a base for the relative prelude path.
+  std::string exe =
+      llvm::sys::fs::getMainExecutable(argv[0], static_for_main_addr);
+  llvm::StringRef install_path = path::parent_path(exe);
+  llvm::SmallString<256> default_prelude_file(install_path);
+  path::append(default_prelude_file,
+               path::begin(relative_prelude_path, path::Style::posix),
+               path::end(relative_prelude_path));
+  std::string default_prelude_file_str(default_prelude_file);
   cl::opt<std::string> prelude_file_name("prelude", cl::desc("<prelude file>"),
-                                         cl::init(default_prelude_file.str()));
+                                         cl::init(default_prelude_file_str));
+
   cl::ParseCommandLineOptions(argc, argv);
 
   // Set up a stream for trace output.
@@ -64,7 +77,7 @@ static auto Main(llvm::StringRef default_prelude_file, int argc, char* argv[])
           std::make_unique<llvm::raw_fd_ostream>(trace_file_name, err);
       if (err) {
         llvm::errs() << err.message() << "\n";
-        return false;
+        return EXIT_FAILURE;
       }
       trace_stream = scoped_trace_stream.get();
     }
@@ -77,7 +90,7 @@ static auto Main(llvm::StringRef default_prelude_file, int argc, char* argv[])
     ast = *std::move(parse_result);
   } else {
     llvm::errs() << "SYNTAX ERROR: " << parse_result.error() << "\n";
-    return false;
+    return EXIT_FAILURE;
   }
 
   AddPrelude(prelude_file_name, &arena, &ast.declarations);
@@ -88,7 +101,7 @@ static auto Main(llvm::StringRef default_prelude_file, int argc, char* argv[])
     ast = *std::move(analyze_result);
   } else {
     llvm::errs() << "COMPILATION ERROR: " << analyze_result.error() << "\n";
-    return false;
+    return EXIT_FAILURE;
   }
 
   // Run the program.
@@ -103,15 +116,10 @@ static auto Main(llvm::StringRef default_prelude_file, int argc, char* argv[])
     }
   } else {
     llvm::errs() << "RUNTIME ERROR: " << exec_result.error() << "\n";
-    return false;
+    return EXIT_FAILURE;
   }
 
-  return true;
-}
-
-auto ExplorerMain(llvm::StringRef default_prelude_file, int argc, char** argv)
-    -> int {
-  return Main(default_prelude_file, argc, argv) ? EXIT_SUCCESS : EXIT_FAILURE;
+  return EXIT_SUCCESS;
 }
 
 }  // namespace Carbon

@@ -2895,8 +2895,6 @@ auto TypeChecker::TypeCheckPattern(
     if (expected) {
       **trace_stream_ << ", expecting " << **expected;
     }
-    **trace_stream_ << "\nconstants: ";
-    PrintConstants(**trace_stream_);
     **trace_stream_ << "\n";
   }
   switch (p->kind()) {
@@ -3442,13 +3440,12 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
   if (std::optional<Nonnull<Expression*>> return_expression =
           f->return_term().type_expression();
       return_expression.has_value()) {
-    // We ignore the return value because return type expressions can't bring
-    // new types into scope.
-    // Should we be doing SetConstantValue instead? -Jeremy
-    // And shouldn't the type of this be Type?
     CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> ret_type,
                             TypeCheckTypeExp(*return_expression, function_scope,
                                              /*concrete=*/false));
+    // TODO: This is setting the constant value of the return type. It would
+    // make more sense if this were called `set_constant_value` rather than
+    // `set_static_type`.
     f->return_term().set_static_type(ret_type);
   } else if (f->return_term().is_omitted()) {
     f->return_term().set_static_type(TupleValue::Empty());
@@ -3473,13 +3470,11 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
       std::move(impl_bindings)));
   switch (f->kind()) {
     case DeclarationKind::FunctionDeclaration:
-      SetConstantValue(
-          cast<FunctionDeclaration>(f),
+      f->set_constant_value(
           arena_->New<FunctionValue>(cast<FunctionDeclaration>(f)));
       break;
     case DeclarationKind::DestructorDeclaration:
-      SetConstantValue(
-          cast<DestructorDeclaration>(f),
+      f->set_constant_value(
           arena_->New<DestructorValue>(cast<DestructorDeclaration>(f)));
       break;
     default:
@@ -3568,8 +3563,8 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   // should have the value `MyType(T, U)`.
   Nonnull<NominalClassType*> self_type = arena_->New<NominalClassType>(
       class_decl, Bindings::SymbolicIdentity(arena_, bindings));
-  SetConstantValue(self, self_type);
   self->set_static_type(arena_->New<TypeOfClassType>(self_type));
+  self->set_constant_value(self_type);
 
   // The declarations of the members may refer to the class, so we must set the
   // constant value of the class and its static type before we start processing
@@ -3580,12 +3575,12 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     Nonnull<ParameterizedEntityName*> param_name =
         arena_->New<ParameterizedEntityName>(class_decl,
                                              *class_decl->type_params());
-    SetConstantValue(class_decl, param_name);
     class_decl->set_static_type(
         arena_->New<TypeOfParameterizedEntityName>(param_name));
+    class_decl->set_constant_value(param_name);
   } else {
-    SetConstantValue(class_decl, self_type);
     class_decl->set_static_type(&self->static_type());
+    class_decl->set_constant_value(self_type);
   }
 
   ScopeInfo class_scope_info =
@@ -3649,14 +3644,14 @@ auto TypeChecker::DeclareMixinDeclaration(Nonnull<MixinDeclaration*> mixin_decl,
 
     Nonnull<ParameterizedEntityName*> param_name =
         arena_->New<ParameterizedEntityName>(mixin_decl, *mixin_decl->params());
-    SetConstantValue(mixin_decl, param_name);
     mixin_decl->set_static_type(
         arena_->New<TypeOfParameterizedEntityName>(param_name));
+    mixin_decl->set_constant_value(param_name);
   } else {
     Nonnull<MixinPseudoType*> mixin_type =
         arena_->New<MixinPseudoType>(mixin_decl);
-    SetConstantValue(mixin_decl, mixin_type);
     mixin_decl->set_static_type(arena_->New<TypeOfMixinPseudoType>(mixin_type));
+    mixin_decl->set_constant_value(mixin_type);
   }
 
   // Process the Self parameter.
@@ -3775,9 +3770,9 @@ auto TypeChecker::DeclareInterfaceDeclaration(
 
     Nonnull<ParameterizedEntityName*> param_name =
         arena_->New<ParameterizedEntityName>(iface_decl, *iface_decl->params());
-    SetConstantValue(iface_decl, param_name);
     iface_decl->set_static_type(
         arena_->New<TypeOfParameterizedEntityName>(param_name));
+    iface_decl->set_constant_value(param_name);
 
     // Form the full symbolic type of the interface. This is used as part of
     // the value of associated constants, if they're referenced within the
@@ -3788,14 +3783,14 @@ auto TypeChecker::DeclareInterfaceDeclaration(
         iface_decl, Bindings::SymbolicIdentity(arena_, bindings));
   } else {
     iface_type = arena_->New<InterfaceType>(iface_decl);
-    SetConstantValue(iface_decl, iface_type);
     iface_decl->set_static_type(arena_->New<TypeOfInterfaceType>(iface_type));
+    iface_decl->set_constant_value(iface_type);
   }
 
   // Set the type of Self to be the instantiated interface.
   Nonnull<SelfDeclaration*> self_type = iface_decl->self_type();
   self_type->set_static_type(arena_->New<TypeType>());
-  SetConstantValue(self_type, iface_type);
+  self_type->set_constant_value(iface_type);
 
   // Process the Self parameter.
   CARBON_RETURN_IF_ERROR(TypeCheckPattern(iface_decl->self(), std::nullopt,
@@ -4164,17 +4159,17 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
   if (choice->type_params().has_value()) {
     Nonnull<ParameterizedEntityName*> param_name =
         arena_->New<ParameterizedEntityName>(choice, *choice->type_params());
-    SetConstantValue(choice, param_name);
     choice->set_static_type(
         arena_->New<TypeOfParameterizedEntityName>(param_name));
+    choice->set_constant_value(param_name);
     return Success();
   }
 
   auto ct = arena_->New<ChoiceType>(
       choice, Bindings::SymbolicIdentity(arena_, bindings));
 
-  SetConstantValue(choice, ct);
   choice->set_static_type(arena_->New<TypeOfChoiceType>(ct));
+  choice->set_constant_value(ct);
   return Success();
 }
 
@@ -4258,8 +4253,8 @@ auto TypeChecker::DeclareAliasDeclaration(Nonnull<AliasDeclaration*> alias,
   CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> target,
                           InterpExp(&alias->target(), arena_, trace_stream_));
 
-  SetConstantValue(alias, target);
   alias->set_static_type(&alias->target().static_type());
+  alias->set_constant_value(target);
   return Success();
 }
 
@@ -4448,22 +4443,6 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
   return Success();
 }
 
-template <typename T>
-void TypeChecker::SetConstantValue(Nonnull<T*> value_node,
-                                   Nonnull<const Value*> value) {
-  std::optional<Nonnull<const Value*>> old_value = value_node->constant_value();
-  CARBON_CHECK(!old_value.has_value());
-  value_node->set_constant_value(value);
-  CARBON_CHECK(constants_.insert(value_node).second);
-}
-
-void TypeChecker::PrintConstants(llvm::raw_ostream& out) {
-  llvm::ListSeparator sep;
-  for (const auto& value_node : constants_) {
-    out << sep << value_node;
-  }
-}
-
 auto TypeChecker::FindMixedMemberAndType(
     const std::string_view& name, llvm::ArrayRef<Nonnull<Declaration*>> members,
     const Nonnull<const Value*> enclosing_type)
@@ -4529,7 +4508,7 @@ auto TypeChecker::CollectMember(Nonnull<const Declaration*> enclosing_decl,
              << enclosing_decl_name
              << " because it clashes with an existing member"
              << " with the same name (declared at " << it->second->source_loc()
-             << ") ";
+             << ")";
     }
   }
   return Success();
