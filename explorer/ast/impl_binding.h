@@ -71,15 +71,10 @@ class ImplBinding : public AstNode {
     symbolic_identity_ = value;
   }
 
-  // The static type of the impl. Cannot be called before typechecking.
-  // TODO: An impl binding doesn't have a type. Can this be removed?
-  auto static_type() const -> const Value& { return **static_type_; }
-
-  // Sets the static type of the impl. Can only be called once, during
-  // typechecking.
-  void set_static_type(Nonnull<const Value*> type) {
-    CARBON_CHECK(!static_type_.has_value());
-    static_type_ = type;
+  // These functions exist only so that an `ImplBinding` can be used as a
+  // `ValueNodeView` as a key in a `StaticScope`.
+  auto static_type() const -> const Value& {
+    CARBON_FATAL() << "an ImplBinding has no type";
   }
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
@@ -98,7 +93,6 @@ class ImplBinding : public AstNode {
   Nonnull<const GenericBinding*> type_var_;
   std::optional<Nonnull<const Value*>> iface_;
   std::optional<Nonnull<const Value*>> symbolic_identity_;
-  std::optional<Nonnull<const Value*>> static_type_;
   std::optional<Nonnull<const ImplBinding*>> original_;
 };
 
