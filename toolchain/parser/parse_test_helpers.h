@@ -335,9 +335,9 @@ auto MatchParameters(Args... args) -> ExpectedNode {
 // definition with no parameters.
 template <typename... Args>
 auto MatchFunctionWithBody(Args... args) -> ExpectedNode {
-  return MatchFunctionDeclaration(
-      MatchDeclaredName(), MatchParameters(),
-      MatchCodeBlock(std::move(args)..., MatchCodeBlockEnd()));
+  return MatchFunctionEnd(
+      MatchFunction("fn"), MatchDeclaredName(), MatchParameters(),
+      MatchCodeBlockEnd(MatchCodeBlock("{"), std::move(args)...));
 }
 
 }  // namespace Testing

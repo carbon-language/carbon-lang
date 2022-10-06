@@ -25,6 +25,7 @@ class SemanticsIRFactory {
 
   void Build();
 
+  /*
   // Requires that a node have no children, to emphasize why the subtree isn't
   // otherwise checked.
   void RequireNodeEmpty(ParseTree::Node node);
@@ -43,20 +44,23 @@ class SemanticsIRFactory {
                              ParseTree::Node node, Semantics::NodeId target_id);
   void TransformExpression(llvm::SmallVector<Semantics::NodeRef, 0>& nodes,
                            ParseTree::Node node, Semantics::NodeId target_id);
-  // auto TransformExpressionStatement(ParseTree::Node node)
-  //   -> Semantics::Statement;
+  auto TransformExpressionStatement(ParseTree::Node node)
+    -> Semantics::Statement;
   void TransformFunctionDeclaration(
       llvm::SmallVector<Semantics::NodeRef, 0>& nodes, ParseTree::Node node);
   void TransformInfixOperator(llvm::SmallVector<Semantics::NodeRef, 0>& nodes,
                               ParseTree::Node node,
                               Semantics::NodeId target_id);
-  // auto TransformParameterList(ParseTree::Node node)
-  //   -> llvm::SmallVector<Semantics::PatternBinding, 0>
-  // auto TransformPatternBinding(ParseTree::Node node)
-  //   -> Semantics::PatternBinding;
-  // auto TransformReturnType(ParseTree::Node node) -> Semantics::Statement;
+  auto TransformParameterList(ParseTree::Node node)
+    -> llvm::SmallVector<Semantics::PatternBinding, 0>
+  auto TransformPatternBinding(ParseTree::Node node)
+    -> Semantics::PatternBinding;
+  auto TransformReturnType(ParseTree::Node node) -> Semantics::Statement;
   void TransformReturnStatement(llvm::SmallVector<Semantics::NodeRef, 0>& nodes,
                                 ParseTree::Node node);
+  void TransformVariableDeclaration(
+      llvm::SmallVector<Semantics::NodeRef, 0>& nodes, ParseTree::Node node);
+  */
 
   // Returns a unique ID for the SemanticsIR.
   auto next_id() -> Semantics::NodeId {

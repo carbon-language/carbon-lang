@@ -12,7 +12,7 @@
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
-//#include "toolchain/semantics/meta_node_block.h"
+// #include "toolchain/semantics/meta_node_block.h"
 #include "toolchain/semantics/nodes/binary_operator.h"
 #include "toolchain/semantics/parse_subtree_consumer.h"
 
@@ -34,17 +34,26 @@ auto SemanticsIRFactory::Build(const TokenizedBuffer& tokens,
 }
 
 void SemanticsIRFactory::Build() {
-  auto subtree = ParseSubtreeConsumer::ForTree(parse_tree());
-  semantics_.root_block_ =
-      TransformBlockSubtree(subtree, ParseNodeKind::FileEnd());
+  // Silence "unused" build warning.
+  tokens_ = nullptr;
+  for (const auto& node : parse_tree().postorder()) {
+    switch (auto node_kind = parse_tree().node_kind(node)) {
+      // TODO: This should be iterate
+      default: {
+        CARBON_FATAL() << "At index " << node.index() << ", unhandled "
+                       << node_kind;
+      }
+    }
+  }
 }
 
+/*
 void SemanticsIRFactory::RequireNodeEmpty(ParseTree::Node node) {
   auto subtree_size = parse_tree().node_subtree_size(node);
   CARBON_CHECK(subtree_size == 1)
       << "At index " << node.index() << ", expected "
       << parse_tree().node_kind(node)
-      << "would have subtree_size of 1, but was " << subtree_size;
+      << " would have subtree_size of 1, but was " << subtree_size;
 }
 
 auto SemanticsIRFactory::TransformBlockSubtree(ParseSubtreeConsumer& subtree,
@@ -65,9 +74,9 @@ auto SemanticsIRFactory::TransformBlockSubtree(ParseSubtreeConsumer& subtree,
       case ParseNodeKind::ReturnStatement():
         TransformReturnStatement(nodes, *child);
         break;
-      // case ParseNodeKind::VariableDeclaration():
-      //   // TODO: Handle.
-      //   break;
+      case ParseNodeKind::VariableDeclaration():
+        TransformVariableDeclaration(nodes, *child);
+        break;
       default:
         CARBON_FATAL() << "At index " << child->index() << ", unexpected "
                        << child_kind;
@@ -121,7 +130,6 @@ void SemanticsIRFactory::TransformExpression(
   }
 }
 
-/*
 auto SemanticsIRFactory::TransformExpressionStatement(ParseTree::Node node)
     -> Semantics::Statement {
   CARBON_CHECK(parse_tree().node_kind(node) ==
@@ -131,7 +139,6 @@ auto SemanticsIRFactory::TransformExpressionStatement(ParseTree::Node node)
   RequireNodeEmpty(subtree.RequireConsume(ParseNodeKind::StatementEnd()));
   return TransformExpression(subtree.RequireConsume());
 }
-*/
 
 void SemanticsIRFactory::TransformFunctionDeclaration(
     llvm::SmallVector<Semantics::NodeRef, 0>& nodes, ParseTree::Node node) {
@@ -183,7 +190,6 @@ void SemanticsIRFactory::TransformInfixOperator(
   TransformExpression(nodes, subtree.RequireConsume(), lhs_id);
 }
 
-/*
 auto SemanticsIRFactory::TransformParameterList(ParseTree::Node node)
     -> llvm::SmallVector<Semantics::PatternBinding, 0> {
   CARBON_CHECK(parse_tree().node_kind(node) ==
@@ -219,7 +225,6 @@ ParseNodeKind::PatternBinding());
       subtree.RequireConsume(ParseNodeKind::DeclaredName()));
   return Semantics::PatternBinding(node, name, type);
 }
-*/
 
 void SemanticsIRFactory::TransformReturnStatement(
     llvm::SmallVector<Semantics::NodeRef, 0>& nodes, ParseTree::Node node) {
@@ -242,13 +247,22 @@ void SemanticsIRFactory::TransformReturnStatement(
   }
 }
 
-/*
 auto SemanticsIRFactory::TransformReturnType(ParseTree::Node node)
     -> Semantics::Statement {
   CARBON_CHECK(parse_tree().node_kind(node) == ParseNodeKind::ReturnType());
 
   auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
   return TransformExpression(subtree.RequireConsume());
+}
+
+void SemanticsIRFactory::TransformVariableDeclaration(
+    llvm::SmallVector<Semantics::NodeRef, 0>& nodes, ParseTree::Node node) {
+  CARBON_CHECK(parse_tree().node_kind(node) ==
+ParseNodeKind::VariableDeclaration());
+
+  auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
+  RequireNodeEmpty(subtree.RequireConsume(ParseNodeKind::DeclarationEnd()));
+  RequireNodeEmpty(subtree.RequireConsume(ParseNodeKind::VariableInitializer()));
 }
 */
 

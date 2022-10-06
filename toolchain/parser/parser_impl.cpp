@@ -413,17 +413,22 @@ auto ParseTree::Parser::ParseFunctionSignature() -> bool {
 
 auto ParseTree::Parser::ParseCodeBlock() -> llvm::Optional<Node> {
   CARBON_RETURN_IF_STACK_LIMITED(llvm::None);
+  auto start = GetSubtreeStartPosition();
+
   llvm::Optional<TokenizedBuffer::Token> maybe_open_curly =
       ConsumeIf(TokenKind::OpenCurlyBrace());
   if (!maybe_open_curly) {
     // Recover by parsing a single statement.
     CARBON_DIAGNOSTIC(ExpectedCodeBlock, Error, "Expected braced code block.");
     emitter_.Emit(*position_, ExpectedCodeBlock);
-    return ParseStatement();
+    AddLeafNode(ParseNodeKind::CodeBlock(), *position_);
+    ParseStatement();
+    AddNode(ParseNodeKind::CodeBlockEnd(), *position_, start,
+            /*has_error=*/true);
   }
-  TokenizedBuffer::Token open_curly = *maybe_open_curly;
 
-  auto start = GetSubtreeStartPosition();
+  TokenizedBuffer::Token open_curly = *maybe_open_curly;
+  AddLeafNode(ParseNodeKind::CodeBlock(), open_curly);
 
   bool has_errors = false;
 
@@ -442,10 +447,8 @@ auto ParseTree::Parser::ParseCodeBlock() -> llvm::Optional<Node> {
 
   // We always reach here having set our position in the token stream to the
   // close curly brace.
-  AddLeafNode(ParseNodeKind::CodeBlockEnd(),
-              Consume(TokenKind::CloseCurlyBrace()));
-
-  return AddNode(ParseNodeKind::CodeBlock(), open_curly, start, has_errors);
+  return AddNode(ParseNodeKind::CodeBlockEnd(),
+                 Consume(TokenKind::CloseCurlyBrace()), start, has_errors);
 }
 
 auto ParseTree::Parser::ParsePackageDirective() -> Node {
@@ -532,10 +535,11 @@ auto ParseTree::Parser::ParsePackageDirective() -> Node {
 auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
   TokenizedBuffer::Token function_intro_token = Consume(TokenKind::Fn());
   auto start = GetSubtreeStartPosition();
+  AddLeafNode(ParseNodeKind::Function(), function_intro_token);
 
   auto add_error_function_node = [&] {
-    return AddNode(ParseNodeKind::FunctionDeclaration(), function_intro_token,
-                   start, /*has_error=*/true);
+    return AddNode(ParseNodeKind::FunctionEnd(), *position_, start,
+                   /*has_error=*/true);
   };
   CARBON_RETURN_IF_STACK_LIMITED(add_error_function_node());
 
@@ -593,8 +597,7 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
   }
 
   // Successfully parsed the function, add that node.
-  return AddNode(ParseNodeKind::FunctionDeclaration(), function_intro_token,
-                 start);
+  return AddNode(ParseNodeKind::FunctionEnd(), *position_, start);
 }
 
 auto ParseTree::Parser::ParseVariableDeclaration() -> Node {
