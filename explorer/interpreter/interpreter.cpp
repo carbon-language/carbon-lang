@@ -400,17 +400,22 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
       return todo_.FinishAction(value);
     }
     case ExpressionKind::SimpleMemberAccessExpression: {
+      const auto& access = cast<SimpleMemberAccessExpression>(exp);
       if (act.pos() == 0) {
         //    { {e.f :: C, E, F} :: S, H}
         // -> { e :: [].f :: C, E, F} :: S, H}
-        return todo_.Spawn(std::make_unique<LValAction>(
-            &cast<SimpleMemberAccessExpression>(exp).object()));
+        return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
       } else {
+        if (auto constant_value = access.constant_value()) {
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> instantiated,
+              InstantiateType(*constant_value, access.source_loc()));
+          return todo_.FinishAction(instantiated);
+        }
         //    { v :: [].f :: C, E, F} :: S, H}
         // -> { { &v.f :: C, E, F} :: S, H }
         Address object = cast<LValue>(*act.results()[0]).address();
-        Address member = object.SubobjectAddress(
-            cast<SimpleMemberAccessExpression>(exp).member());
+        Address member = object.SubobjectAddress(access.member());
         return todo_.FinishAction(arena_->New<LValue>(member));
       }
     }
@@ -419,6 +424,12 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
       if (act.pos() == 0) {
         return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
       } else {
+        if (auto constant_value = access.constant_value()) {
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> instantiated,
+              InstantiateType(*constant_value, access.source_loc()));
+          return todo_.FinishAction(instantiated);
+        }
         CARBON_CHECK(!access.member().interface().has_value())
             << "unexpected lvalue interface member";
         CARBON_ASSIGN_OR_RETURN(
@@ -976,6 +987,12 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             std::make_unique<WitnessAction>(access.impl().value()));
       } else {
         // Finally, produce the result.
+        if (auto constant_value = access.constant_value()) {
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> instantiated,
+              InstantiateType(*constant_value, access.source_loc()));
+          return todo_.FinishAction(instantiated);
+        }
         std::optional<Nonnull<const InterfaceType*>> found_in_interface =
             access.found_in_interface();
         if (found_in_interface) {
@@ -1041,6 +1058,12 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             std::make_unique<WitnessAction>(access.impl().value()));
       } else {
         // Finally, produce the result.
+        if (auto constant_value = access.constant_value()) {
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> instantiated,
+              InstantiateType(*constant_value, access.source_loc()));
+          return todo_.FinishAction(instantiated);
+        }
         std::optional<Nonnull<const InterfaceType*>> found_in_interface =
             access.member().interface();
         if (found_in_interface) {

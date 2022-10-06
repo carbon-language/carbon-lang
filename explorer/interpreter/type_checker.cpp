@@ -922,7 +922,7 @@ auto TypeChecker::ArgumentDeduction(
 //
 // TODO: The deduplication here is very inefficient. We should use value
 // canonicalization or hashing or similar to speed this up.
-class ConstraintTypeBuilder {
+class TypeChecker::ConstraintTypeBuilder {
  public:
   ConstraintTypeBuilder(Nonnull<Arena*> arena, SourceLocation source_loc)
       : ConstraintTypeBuilder(arena, MakeSelfBinding(arena, source_loc)) {}
@@ -958,7 +958,11 @@ class ConstraintTypeBuilder {
 
   // Adds an equality constraint -- `A == B`.
   void AddEqualityConstraint(ConstraintType::EqualityConstraint equal) {
-    CARBON_CHECK(equal.values.size() >= 2) << "degenerate equality constraint";
+    if (equal.values.size() < 2) {
+      // There's no need to track degenerate equality constraints. These can be
+      // formed by rewrites.
+      return;
+    }
 
     // TODO: Check to see if this constraint is already present and deduplicate
     // if so. We could also look for a superset / subset and keep the larger
@@ -966,6 +970,30 @@ class ConstraintTypeBuilder {
     // into a single `A == B == C` constraint, but that's more work than it's
     // worth doing here.
     equality_constraints_.push_back(std::move(equal));
+  }
+
+  auto AddRewriteConstraint(SourceLocation source_loc,
+                            ConstraintType::RewriteConstraint rewrite)
+      -> ErrorOr<Success> {
+    for (ConstraintType::RewriteConstraint existing : rewrite_constraints_) {
+      if (ValueEqual(existing.interface, rewrite.interface, std::nullopt) &&
+          // TODO: Want a "declares same entity" check.
+          GetName(*existing.constant) == GetName(*rewrite.constant)) {
+        if (ValueEqual(&existing.replacement->value(),
+                       &rewrite.replacement->value(), std::nullopt) &&
+            TypeEqual(&existing.replacement->static_type(),
+                      &rewrite.replacement->static_type(), std::nullopt)) {
+          return Success();
+        }
+        return ProgramError(source_loc)
+               << "multiple different rewrites for `.(" << *rewrite.interface
+               << "." << *GetName(*rewrite.constant) << ")`:\n"
+               << "  " << *existing.replacement << "\n"
+               << "  " << *rewrite.replacement;
+      }
+    }
+    rewrite_constraints_.push_back(std::move(rewrite));
+    return Success();
   }
 
   // Add a context for qualified name lookup, if not already present.
@@ -983,11 +1011,12 @@ class ConstraintTypeBuilder {
   // constraint's self binding. The `self_witness` is the witness for the
   // resulting constraint, and can be `GetSelfWitness()`. The `bindings`
   // parameter specifies any additional substitutions to perform.
-  void AddAndSubstitute(const TypeChecker& type_checker,
+  auto AddAndSubstitute(const TypeChecker& type_checker,
                         Nonnull<const ConstraintType*> constraint,
                         Nonnull<const Value*> self,
                         Nonnull<const Witness*> self_witness,
-                        const Bindings& bindings, bool add_lookup_contexts) {
+                        const Bindings& bindings, bool add_lookup_contexts)
+      -> ErrorOr<Success> {
     // First substitute into the impl bindings to form the full witness for
     // the constraint type.
     std::vector<Nonnull<const Witness*>> witnesses;
@@ -1014,6 +1043,24 @@ class ConstraintTypeBuilder {
                            *constraint, std::move(witnesses),
                            constraint->self_binding()->source_loc()));
 
+    // TODO: What happens if these rewrites appear in the impl constraints?
+    // TODO: What happens if these rewrites appear in each other?
+    for (const auto& rewrite_constraint : constraint->rewrite_constraints()) {
+      auto* interface = cast<InterfaceType>(type_checker.Substitute(
+          local_bindings, rewrite_constraint.interface));
+      Nonnull<const Value*> value = type_checker.Substitute(
+          local_bindings, &rewrite_constraint.replacement->value());
+      Nonnull<const Value*> type = type_checker.Substitute(
+          local_bindings, &rewrite_constraint.replacement->static_type());
+      auto* replacement = type_checker.arena_->New<ValueLiteral>(
+          rewrite_constraint.replacement->source_loc(), value, type,
+          ValueCategory::Let);
+      CARBON_RETURN_IF_ERROR(AddRewriteConstraint(
+          replacement->source_loc(), {.interface = interface,
+                                      .constant = rewrite_constraint.constant,
+                                      .replacement = replacement}));
+    }
+
     for (const auto& equality_constraint : constraint->equality_constraints()) {
       std::vector<Nonnull<const Value*>> values;
       for (const Value* value : equality_constraint.values) {
@@ -1033,6 +1080,8 @@ class ConstraintTypeBuilder {
                               local_bindings, lookup_context.context)});
       }
     }
+
+    return Success();
   }
 
   // Brings all the `impl`s accumulated so far into the given impl scope.
@@ -1048,7 +1097,8 @@ class ConstraintTypeBuilder {
     // Create the new type.
     auto* result = arena_->New<ConstraintType>(
         self_binding_, std::move(impl_constraints_),
-        std::move(equality_constraints_), std::move(lookup_contexts_));
+        std::move(equality_constraints_), std::move(rewrite_constraints_),
+        std::move(lookup_contexts_));
     // Update the impl binding to denote the constraint type itself.
     impl_binding_->set_interface(result);
     return result;
@@ -1094,6 +1144,7 @@ class ConstraintTypeBuilder {
   Nonnull<ImplBinding*> impl_binding_;
   std::vector<ConstraintType::ImplConstraint> impl_constraints_;
   std::vector<ConstraintType::EqualityConstraint> equality_constraints_;
+  std::vector<ConstraintType::RewriteConstraint> rewrite_constraints_;
   std::vector<ConstraintType::LookupContext> lookup_contexts_;
 };
 
@@ -1159,6 +1210,12 @@ class TypeChecker::SubstitutedGenericBindings {
 auto TypeChecker::Substitute(const Bindings& bindings,
                              Nonnull<const Value*> type) const
     -> Nonnull<const Value*> {
+  // Don't waste time recursively rebuilding a type if we have nothing to
+  // substitute.
+  if (bindings.empty()) {
+    return type;
+  }
+
   auto SubstituteIntoBindings =
       [&](Nonnull<const Bindings*> inner_bindings) -> Nonnull<const Bindings*> {
     BindingMap values;
@@ -1188,12 +1245,22 @@ auto TypeChecker::Substitute(const Bindings& bindings,
     case Value::Kind::AssociatedConstant: {
       const auto& assoc = cast<AssociatedConstant>(*type);
       Nonnull<const Value*> base = Substitute(bindings, &assoc.base());
-      Nonnull<const Value*> interface =
-          Substitute(bindings, &assoc.interface());
-      Nonnull<const Value*> witness = Substitute(bindings, &assoc.witness());
-      return arena_->New<AssociatedConstant>(
-          base, cast<InterfaceType>(interface), &assoc.constant(),
-          cast<Witness>(witness));
+      const auto* interface =
+          cast<InterfaceType>(Substitute(bindings, &assoc.interface()));
+      // If we're substituting into an associated constant, we may now be able
+      // to rewrite it to a concrete value.
+      if (std::optional<const ValueLiteral*> rewritten_value =
+              LookupRewriteInTypeOf(base, interface, &assoc.constant())) {
+        return &rewritten_value.value()->value();
+      }
+      const auto* witness =
+          cast<Witness>(Substitute(bindings, &assoc.witness()));
+      if (std::optional<const ValueLiteral*> rewritten_value =
+              LookupRewriteInWitness(witness, interface, &assoc.constant())) {
+        return &rewritten_value.value()->value();
+      }
+      return arena_->New<AssociatedConstant>(base, interface, &assoc.constant(),
+                                             witness);
     }
     case Value::Kind::TupleValue: {
       std::vector<Nonnull<const Value*>> elts;
@@ -1261,9 +1328,17 @@ auto TypeChecker::Substitute(const Bindings& bindings,
       const auto& constraint = cast<ConstraintType>(*type);
       ConstraintTypeBuilder builder(arena_,
                                     constraint.self_binding()->source_loc());
-      builder.AddAndSubstitute(*this, &constraint, builder.GetSelfType(),
-                               builder.GetSelfWitness(), bindings,
-                               /*add_lookup_contexts=*/true);
+      ErrorOr<Success> result =
+          builder.AddAndSubstitute(*this, &constraint, builder.GetSelfType(),
+                                   builder.GetSelfWitness(), bindings,
+                                   /*add_lookup_contexts=*/true);
+      if (!result.ok()) {
+        // TODO: Handle this better!
+        if (trace_stream_) {
+          **trace_stream_ << "substitution of " << constraint << " failed: "
+                          << result.error() << "\n";
+        }
+      }
       Nonnull<const ConstraintType*> new_constraint =
           std::move(builder).Build(arena_);
       if (trace_stream_) {
@@ -1469,12 +1544,13 @@ auto TypeChecker::MakeConstraintForInterface(
 auto TypeChecker::CombineConstraints(
     SourceLocation source_loc,
     llvm::ArrayRef<Nonnull<const ConstraintType*>> constraints)
-    -> Nonnull<const ConstraintType*> {
+    -> ErrorOr<Nonnull<const ConstraintType*>> {
   ConstraintTypeBuilder builder(arena_, source_loc);
   for (Nonnull<const ConstraintType*> constraint : constraints) {
-    builder.AddAndSubstitute(*this, constraint, builder.GetSelfType(),
-                             builder.GetSelfWitness(), Bindings(),
-                             /*add_lookup_contexts=*/true);
+    CARBON_RETURN_IF_ERROR(
+        builder.AddAndSubstitute(*this, constraint, builder.GetSelfType(),
+                                 builder.GetSelfWitness(), Bindings(),
+                                 /*add_lookup_contexts=*/true));
   }
   return std::move(builder).Build(arena_);
 }
@@ -1573,6 +1649,7 @@ static auto LookupInConstraint(SourceLocation source_loc,
     -> ErrorOr<ConstraintLookupResult> {
   // Find the set of lookup contexts.
   llvm::ArrayRef<ConstraintType::LookupContext> lookup_contexts;
+  llvm::ArrayRef<ConstraintType::RewriteConstraint> rewrites;
   ConstraintType::LookupContext interface_context[1];
   if (const auto* iface_type = dyn_cast<InterfaceType>(type)) {
     // For an interface, look into that interface alone.
@@ -1582,8 +1659,10 @@ static auto LookupInConstraint(SourceLocation source_loc,
   } else if (const auto* constraint_type = dyn_cast<ConstraintType>(type)) {
     // For a constraint, look in all of its lookup contexts.
     lookup_contexts = constraint_type->lookup_contexts();
+    rewrites = constraint_type->rewrite_constraints();
   } else {
-    // Other kinds of constraint, such as TypeType, have no lookup contexts.
+    // Other kinds of constraint, such as TypeType, have no lookup contexts
+    // and no rewrite constraints.
   }
 
   std::optional<ConstraintLookupResult> found;
@@ -1619,7 +1698,87 @@ static auto LookupInConstraint(SourceLocation source_loc,
     return ProgramError(source_loc)
            << lookup_kind << ", " << member_name << " not in " << *type;
   }
+
   return found.value();
+}
+
+// Look for a rewrite to use when naming the given interface member in a type
+// declared with the given type-of-type.
+static auto LookupRewrite(Nonnull<const Value*> type_of_type,
+                          Nonnull<const InterfaceType*> interface,
+                          Nonnull<const Declaration*> member)
+    -> std::optional<const ValueLiteral*> {
+  if (!isa<AssociatedConstantDeclaration>(member)) {
+    return std::nullopt;
+  }
+
+  // Find the set of rewrites. Only ConstraintTypes have rewrites.
+  llvm::ArrayRef<ConstraintType::RewriteConstraint> rewrites;
+  if (const auto* constraint_type = dyn_cast<ConstraintType>(type_of_type)) {
+    rewrites = constraint_type->rewrite_constraints();
+  }
+
+  for (ConstraintType::RewriteConstraint rewrite : rewrites) {
+    if (ValueEqual(interface, rewrite.interface, std::nullopt) &&
+        // TODO: Using name comparison here seems brittle.
+        GetName(*member) == GetName(*rewrite.constant)) {
+      // A ConstraintType can only have one rewrite per (interface, member)
+      // pair, so we don't need to check the rest.
+      return rewrite.replacement;
+    }
+  }
+
+  return std::nullopt;
+}
+
+auto TypeChecker::LookupRewriteInTypeOf(
+    Nonnull<const Value*> type, Nonnull<const InterfaceType*> interface,
+    Nonnull<const Declaration*> member) const
+    -> std::optional<const ValueLiteral*> {
+  // Given `(T:! C).Y`, look in `C` for rewrites.
+  if (auto* var_type = dyn_cast<VariableType>(type)) {
+    if (!var_type->binding().has_static_type()) {
+      // TODO: We looked for a rewrite before we finished type-checking the
+      // generic binding. Should this happen?
+      return std::nullopt;
+    }
+    return LookupRewrite(&var_type->binding().static_type(), interface, member);
+  }
+
+  // Given `(T.U).Y` for an associated type `U`, substitute into the type of
+  // `U` to find rewrites.
+  // TODO: This substitution can lead to infinite recursion.
+  if (auto* assoc_const = dyn_cast<AssociatedConstant>(type)) {
+    auto* assoc_type = &assoc_const->constant().binding().static_type();
+    Bindings bindings = assoc_const->interface().bindings();
+    bindings.Add(assoc_const->interface().declaration().self(),
+                 &assoc_const->base(), &assoc_const->witness());
+    Nonnull<const Value*> subst_type = Substitute(bindings, assoc_type);
+    return LookupRewrite(subst_type, interface, member);
+  }
+
+  return std::nullopt;
+}
+
+auto TypeChecker::LookupRewriteInWitness(
+    Nonnull<const Witness*> witness, Nonnull<const InterfaceType*> interface,
+    Nonnull<const Declaration*> member) const
+    -> std::optional<const ValueLiteral*> {
+  if (auto* impl_witness = dyn_cast<ImplWitness>(witness)) {
+    Nonnull<const Value*> constraint =
+        Substitute(impl_witness->bindings(),
+                   impl_witness->declaration().constraint_type());
+    return LookupRewrite(constraint, interface, member);
+  }
+  return std::nullopt;
+}
+
+// Rewrites a member access expression to produce the given constant value.
+static void RewriteMemberAccess(Nonnull<MemberAccessExpression*> access,
+                                Nonnull<const ValueLiteral*> value) {
+  access->set_static_type(&value->static_type());
+  access->set_value_category(value->value_category());
+  access->set_constant_value(&value->value());
 }
 
 // Determine whether the given member declaration declares an instance member.
@@ -1815,6 +1974,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               ConstraintLookupResult result,
               LookupInConstraint(e->source_loc(), "member access", &typeof_var,
                                  access.member_name()));
+          if (auto replacement =
+                  LookupRewrite(&typeof_var, result.interface, result.member)) {
+            RewriteMemberAccess(&access, *replacement);
+            return Success();
+          }
           // Compute a witness that the variable type implements this
           // interface. This will typically be either a reference to its
           // `ImplBinding` or, for a constraint, to a witness for an impl
@@ -1862,6 +2026,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               ConstraintLookupResult result,
               LookupInConstraint(e->source_loc(), "member access", &object_type,
                                  access.member_name()));
+          if (auto replacement = LookupRewrite(&object_type, result.interface,
+                                               result.member)) {
+            RewriteMemberAccess(&access, *replacement);
+            return Success();
+          }
           CARBON_ASSIGN_OR_RETURN(Nonnull<const Witness*> impl,
                                   impl_scope.Resolve(result.interface, type,
                                                      e->source_loc(), *this));
@@ -2032,6 +2201,12 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           // a type. The member will be found in the type of `value`, or in a
           // corresponding `impl` if `member_name` is an interface member.
           base_type = &access.object().static_type();
+          // TODO: We may still need a type_of_base_type here. Eg:
+          //   alias C = B where .A = i32;
+          //   fn F[T:! C](x: T) {
+          //     // `x.(B.A)` should be rewritten to `i32`.
+          //     var v: x.(B.A) = 0;
+          //   }
         }
       } else {
         // This is `value.(member_name)`, where `member_name` specifies a type.
@@ -2044,12 +2219,26 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       }
       access.set_is_type_access(has_instance && !is_instance_member);
 
-      // Perform impl selection if necessary.
-      if (std::optional<Nonnull<const Value*>> iface =
+      // Perform associated constant rewriting and impl selection if necessary.
+      if (std::optional<Nonnull<const InterfaceType*>> iface =
               member_name.interface()) {
+        // If we're naming an associated constant, we might have a rewrite for
+        // it that we can apply immediately.
+        if (auto replacement = LookupRewriteInTypeOf(
+                *base_type, *iface, *member_name.member().declaration())) {
+          RewriteMemberAccess(&access, *replacement);
+          return Success();
+        }
+
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Witness*> impl,
             impl_scope.Resolve(*iface, *base_type, e->source_loc(), *this));
+        if (std::optional<Nonnull<const ValueLiteral*>> replacement =
+                LookupRewriteInWitness(impl, *iface,
+                                       *member_name.member().declaration())) {
+          RewriteMemberAccess(&access, *replacement);
+          return Success();
+        }
         access.set_impl(impl);
       }
 
@@ -2252,9 +2441,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                        << " should be a constraint, found `" << *ts[i] << "`";
               }
             }
-            op.set_static_type(
-                arena_->New<TypeOfConstraintType>(CombineConstraints(
-                    e->source_loc(), {*constraints[0], *constraints[1]})));
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const ConstraintType*> result,
+                CombineConstraints(e->source_loc(),
+                                   {*constraints[0], *constraints[1]}));
+            op.set_static_type(arena_->New<TypeOfConstraintType>(result));
             op.set_value_category(ValueCategory::Let);
             return Success();
           }
@@ -2691,9 +2882,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       // Start with the given constraint, if any.
       ConstraintTypeBuilder builder(arena_, &self);
       if (base) {
-        builder.AddAndSubstitute(*this, *base, builder.GetSelfType(),
-                                 builder.GetSelfWitness(), Bindings(),
-                                 /*add_lookup_contexts=*/true);
+        CARBON_RETURN_IF_ERROR(
+            builder.AddAndSubstitute(*this, *base, builder.GetSelfType(),
+                                     builder.GetSelfWitness(), Bindings(),
+                                     /*add_lookup_contexts=*/true));
         // Constraints from the LHS of `where` are in scope in the RHS. But
         // constraints from earlier `where` clauses are not in scope in later
         // clauses.
@@ -2721,9 +2913,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               // Transform `where .B is (C where .D is E)` into
               // `where .B is C and .B.D is E` then add all the resulting
               // constraints.
-              builder.AddAndSubstitute(*this, constraint_type, type,
-                                       builder.GetSelfWitness(), Bindings(),
-                                       /*add_lookup_contexts=*/false);
+              CARBON_RETURN_IF_ERROR(
+                  builder.AddAndSubstitute(*this, constraint_type, type,
+                                           builder.GetSelfWitness(), Bindings(),
+                                           /*add_lookup_contexts=*/false));
             } else {
               return ProgramError(is_clause.constraint().source_loc())
                      << "expression after `is` does not resolve to a "
@@ -2744,6 +2937,45 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             if (!ValueEqual(lhs, rhs, std::nullopt)) {
               builder.AddEqualityConstraint({.values = {lhs, rhs}});
             }
+            break;
+          }
+          case WhereClauseKind::RewriteWhereClause: {
+            const auto& rewrite_clause = cast<RewriteWhereClause>(*clause);
+            CARBON_ASSIGN_OR_RETURN(
+                ConstraintLookupResult result,
+                LookupInConstraint(clause->source_loc(),
+                                   "rewrite constraint lookup", base_type,
+                                   rewrite_clause.member_name()));
+            const auto* constant =
+                dyn_cast<AssociatedConstantDeclaration>(result.member);
+            if (!constant) {
+              return ProgramError(clause->source_loc())
+                     << "in rewrite constraint lookup, `"
+                     << rewrite_clause.member_name()
+                     << "` does not name an associated constant";
+            }
+            // TODO: Should we enforce any type constraints on the replacement?
+            // Given
+            //
+            //   interface A {
+            //     let N:! i32;
+            //   }
+            //   fn F[T:! A where .N = (i32, i32)]() {}
+            //
+            // ... no call can ever succeed. Should we reject somehow? We want
+            // to preserve the type of the replacement in the case where it is
+            // a constraint type containing further rewrites.
+            CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> replacement_value,
+                                    InterpExp(&rewrite_clause.replacement(),
+                                              arena_, trace_stream_));
+            auto* replacement = arena_->New<ValueLiteral>(
+                rewrite_clause.source_loc(), replacement_value,
+                &rewrite_clause.replacement().static_type(),
+                ValueCategory::Let);
+            CARBON_RETURN_IF_ERROR(builder.AddRewriteConstraint(
+                rewrite_clause.source_loc(), {.interface = result.interface,
+                                              .constant = constant,
+                                              .replacement = replacement}));
             break;
           }
         }
@@ -2878,6 +3110,12 @@ auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
       }
       return Success();
     }
+    case WhereClauseKind::RewriteWhereClause: {
+      auto& rewrite_clause = cast<RewriteWhereClause>(*clause);
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckExp(&rewrite_clause.replacement(), impl_scope));
+      return Success();
+    }
   }
 }
 
@@ -2971,8 +3209,9 @@ auto TypeChecker::TypeCheckPattern(
         // to `T:! <constraint T is X and T is Y>`.
         if (auto* constraint = dyn_cast<ConstraintType>(type)) {
           ConstraintTypeBuilder builder(arena_, binding.source_loc());
-          builder.AddAndSubstitute(*this, constraint, val, witness, Bindings(),
-                                   /*add_lookup_contexts=*/true);
+          CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
+              *this, constraint, val, witness, Bindings(),
+              /*add_lookup_contexts=*/true));
           type = std::move(builder).Build(arena_);
         }
         impl_binding->set_interface(type);
@@ -3867,6 +4106,13 @@ auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
   for (Nonnull<Declaration*> m : iface_decl.members()) {
     if (auto* assoc = dyn_cast<AssociatedConstantDeclaration>(m)) {
       // An associated constant must be given exactly one value.
+      if (LookupRewrite(impl_decl->constraint_type(), iface_type, assoc)) {
+        // OK, named by `=` constraint.
+        // TODO: Type checking?
+        continue;
+      }
+
+      // TODO: Remove the rest of this and just reject if there's no `=`.
       Nonnull<const Value*> expected = arena_->New<AssociatedConstant>(
           self_type, iface_type, assoc, self_witness);
 
@@ -4034,9 +4280,10 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   // this `impl` implements.
   {
     ConstraintTypeBuilder builder(arena_, impl_decl->source_loc());
-    builder.AddAndSubstitute(*this, cast<ConstraintType>(constraint_type),
-                             impl_type_value, self_witness, Bindings(),
-                             /*add_lookup_contexts=*/true);
+    CARBON_RETURN_IF_ERROR(
+        builder.AddAndSubstitute(*this, cast<ConstraintType>(constraint_type),
+                                 impl_type_value, self_witness, Bindings(),
+                                 /*add_lookup_contexts=*/true));
     auto* resolved = std::move(builder).Build(arena_);
     impl_decl->set_constraint_type(cast<ConstraintType>(resolved));
     constraint_type = resolved;

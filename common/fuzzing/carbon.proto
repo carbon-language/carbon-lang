@@ -139,10 +139,16 @@ message EqualsWhereClause {
   optional Expression rhs = 2;
 }
 
+message RewriteWhereClause {
+  optional string member_name = 1;
+  optional Expression replacement = 2;
+}
+
 message WhereClause {
   oneof kind {
     IsWhereClause is = 1;
     EqualsWhereClause equals = 2;
+    RewriteWhereClause rewrite = 3;
   }
 }
 

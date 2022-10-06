@@ -237,6 +237,14 @@ static auto ExpressionToProto(const Expression& expression)
                 ExpressionToProto(cast<EqualsWhereClause>(where)->rhs());
             break;
           }
+          case WhereClauseKind::RewriteWhereClause: {
+            auto* rewrite = clause_proto.mutable_rewrite();
+            rewrite->set_member_name(
+                std::string(cast<RewriteWhereClause>(where)->member_name()));
+            *rewrite->mutable_replacement() = ExpressionToProto(
+                cast<RewriteWhereClause>(where)->replacement());
+            break;
+          }
         }
         *where_proto->add_clauses() = clause_proto;
       }

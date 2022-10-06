@@ -292,6 +292,12 @@ static auto ResolveNames(WhereClause& clause,
           ResolveNames(equals_clause.rhs(), enclosing_scope));
       break;
     }
+    case WhereClauseKind::RewriteWhereClause: {
+      auto& rewrite_clause = cast<RewriteWhereClause>(clause);
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(rewrite_clause.replacement(), enclosing_scope));
+      break;
+    }
   }
   return Success();
 }

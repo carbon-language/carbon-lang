@@ -431,6 +431,12 @@ void Value::Print(llvm::raw_ostream& out) const {
       }
       out << " where ";
       llvm::ListSeparator sep(" and ");
+      for (const ConstraintType::RewriteConstraint& rewrite :
+           constraint.rewrite_constraints()) {
+        out << sep << ".(" << *rewrite.interface << "."
+            << *GetName(*rewrite.constant)
+            << ") = " << rewrite.replacement->value();
+      }
       for (const ConstraintType::ImplConstraint& impl :
            constraint.impl_constraints()) {
         // TODO: Skip cases where `impl.type` is `.Self` and the interface is
@@ -439,6 +445,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       }
       for (const ConstraintType::EqualityConstraint& equality :
            constraint.equality_constraints()) {
+        // TODO: Skip cases matching something in `rewrite_constraints()`.
         out << sep;
         llvm::ListSeparator equal(" == ");
         for (Nonnull<const Value*> value : equality.values) {

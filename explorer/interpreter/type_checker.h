@@ -98,6 +98,7 @@ class TypeChecker {
 
  private:
   struct SingleStepEqualityContext;
+  class ConstraintTypeBuilder;
   class SubstitutedGenericBindings;
 
   // Information about the currently enclosing scopes.
@@ -431,7 +432,21 @@ class TypeChecker {
   auto CombineConstraints(
       SourceLocation source_loc,
       llvm::ArrayRef<Nonnull<const ConstraintType*>> constraints)
-      -> Nonnull<const ConstraintType*>;
+      -> ErrorOr<Nonnull<const ConstraintType*>>;
+
+  // Given `type.(interface.member)`, look for a rewrite in the declared type
+  // of `type`.
+  auto LookupRewriteInTypeOf(Nonnull<const Value*> type,
+                             Nonnull<const InterfaceType*> interface,
+                             Nonnull<const Declaration*> member) const
+      -> std::optional<const ValueLiteral*>;
+
+  // Given a witness value, look for a rewrite for the given associated
+  // constant.
+  auto LookupRewriteInWitness(Nonnull<const Witness*> witness,
+                              Nonnull<const InterfaceType*> interface,
+                              Nonnull<const Declaration*> member) const
+      -> std::optional<const ValueLiteral*>;
 
   /*
   ** Adds a member of a declaration to collected_members_

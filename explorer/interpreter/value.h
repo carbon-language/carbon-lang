@@ -775,6 +775,14 @@ class ConstraintType : public Value {
 
   using EqualityConstraint = Carbon::EqualityConstraint;
 
+  // A constraint indicating that access to an associated constant should be
+  // replaced by another value.
+  struct RewriteConstraint {
+    Nonnull<const InterfaceType*> interface;
+    Nonnull<const AssociatedConstantDeclaration*> constant;
+    Nonnull<const ValueLiteral*> replacement;
+  };
+
   // A context in which we might look up a name.
   struct LookupContext {
     Nonnull<const Value*> context;
@@ -784,11 +792,13 @@ class ConstraintType : public Value {
   explicit ConstraintType(Nonnull<const GenericBinding*> self_binding,
                           std::vector<ImplConstraint> impl_constraints,
                           std::vector<EqualityConstraint> equality_constraints,
+                          std::vector<RewriteConstraint> rewrite_constraints,
                           std::vector<LookupContext> lookup_contexts)
       : Value(Kind::ConstraintType),
         self_binding_(self_binding),
         impl_constraints_(std::move(impl_constraints)),
         equality_constraints_(std::move(equality_constraints)),
+        rewrite_constraints_(std::move(rewrite_constraints)),
         lookup_contexts_(std::move(lookup_contexts)) {}
 
   static auto classof(const Value* value) -> bool {
@@ -805,6 +815,10 @@ class ConstraintType : public Value {
 
   auto equality_constraints() const -> llvm::ArrayRef<EqualityConstraint> {
     return equality_constraints_;
+  }
+
+  auto rewrite_constraints() const -> llvm::ArrayRef<RewriteConstraint> {
+    return rewrite_constraints_;
   }
 
   auto lookup_contexts() const -> llvm::ArrayRef<LookupContext> {
@@ -826,6 +840,7 @@ class ConstraintType : public Value {
   Nonnull<const GenericBinding*> self_binding_;
   std::vector<ImplConstraint> impl_constraints_;
   std::vector<EqualityConstraint> equality_constraints_;
+  std::vector<RewriteConstraint> rewrite_constraints_;
   std::vector<LookupContext> lookup_contexts_;
 };
 
