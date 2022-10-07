@@ -50,9 +50,10 @@ jobs:
           max-num-of-reviewers: 1
 
       - id: assign-fallback
-        if:
-          steps.filter.outputs.leads != 'true' && steps.filter.outputs.explorer
-          != 'true' && steps.filter.outputs.toolchain != 'true'
+        if: |
+          steps.filter.outputs.leads != 'true' &&
+          steps.filter.outputs.explorer != 'true' &&
+          steps.filter.outputs.toolchain != 'true'
         uses: hkusu/review-assign-action@v1.3.0
         with:
           reviewers: chandlerc, jonmeow, josh11b, zygoloid
