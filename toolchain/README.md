@@ -84,24 +84,24 @@ fn foo() -> f64 {
 The node order is (with indentation to indicate nesting):
 
 ```
-  Index 0: Function
-  Index 1: DeclaredName
-    Index 2: ParameterListEnd
-  Index 3: ParameterList
-    Index 4: Literal
-  Index 5: ReturnType
-    Index 6: CodeBlock
-      Index 7: Literal
-      Index 8: StatementEnd
-    Index 9: ReturnStatement
-  Index 10: CodeBlockEnd
-Index 11: FunctionEnd
+    Index 0: DeclaredName
+      Index 1: ParameterListEnd
+    Index 2: ParameterList
+      Index 3: Literal
+    Index 4: ReturnType
+  Index 5: FunctionSignature
+      Index 6: Literal
+      Index 7: StatementEnd
+    Index 8: ReturnStatement
+    Index 9: CodeBlockEnd
+  Index 10: CodeBlock
+Index 11: Function
 Index 12: FileEnd
 ```
 
-This ordering allows for more efficient processing of a file: the intent is that
-when it's lowered into the SemanticsIR, non-template code can be type-checked as
-soon as nodes are encountered, decreasing SemanticsIR mutations.
+This ordering is focused on efficient translation into the SemanticsIR.
+Non-template code should be type-checked as soon as nodes are encountered,
+decreasing SemanticsIR mutations.
 
 While sometimes the beginning of the grammatical construct will be the parent,
 where introducer keywords are used, it will often be the _end_ of the

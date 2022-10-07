@@ -327,22 +327,19 @@ inline auto MatchDesignator(ExpectedNode lhs, std::string rhs) -> ExpectedNode {
 
 // Helper for matching a function parameter list.
 template <typename... Args>
-auto MatchParameters(Args... args) -> ExpectedNode {
-  return MatchParameterList("(", std::move(args)..., MatchParameterListEnd());
-}
-
-template <typename... Args>
-auto MatchFullCodeBlock(Args... args) -> ExpectedNode {
-  return MatchCodeBlockEnd("}", MatchCodeBlock("{"), std::move(args)...);
+auto MatchFullParameterList(Args... args) -> ExpectedNode {
+  return MatchParameterList("(", std::move(args)...,
+                            MatchParameterListEnd(")"));
 }
 
 // Helper for matching the statements in the body of a simple function
 // definition with no parameters.
-template <typename... Args>
-auto MatchFunctionWithBody(Args... args) -> ExpectedNode {
-  return MatchFunctionEnd(MatchFunction("fn"), MatchDeclaredName(),
-                          MatchParameters(),
-                          MatchFullCodeBlock(std::move(args)...));
+template <typename NameT, typename... Args>
+auto MatchSimpleFunction(NameT name, Args... args) -> ExpectedNode {
+  return MatchFunctionDeclaration(
+      "fn",
+      MatchFunctionSignature(MatchDeclaredName(name), MatchFullParameterList()),
+      MatchCodeBlock(std::move(args)..., MatchCodeBlockEnd()));
 }
 
 }  // namespace Testing
