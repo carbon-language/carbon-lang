@@ -918,11 +918,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       } else {
         //    { { v :: [][i] :: C, E, F} :: S, H}
         // -> { { v_i :: C, E, F} : S, H}
-        llvm::outs()<<__LINE__<<"\n";
-        llvm::outs()<<__LINE__<<" "<<exp<<"\n";
-        llvm::outs()<<*act.results()[0]<<"\n";
-        llvm::outs()<<__LINE__<<"\n";
-
         const auto& tuple = cast<TupleValue>(*act.results()[0]);
         int i = cast<IntValue>(*act.results()[1]).value();
         if (i < 0 || i >= static_cast<int>(tuple.elements().size())) {
