@@ -423,10 +423,11 @@ class TypeChecker {
                     const BindingMap& deduced_type_args,
                     ImplWitnessMap& impls) const -> ErrorOr<Success>;
 
-  // Given an interface type, form a corresponding constraint type.
+  // Given an interface type, form a corresponding constraint type. The
+  // interface must be a complete type.
   auto MakeConstraintForInterface(SourceLocation source_loc,
                                   Nonnull<const InterfaceType*> iface_type)
-      -> Nonnull<const ConstraintType*>;
+      -> ErrorOr<Nonnull<const ConstraintType*>>;
 
   // Given a list of constraint types, form the combined constraint.
   auto CombineConstraints(

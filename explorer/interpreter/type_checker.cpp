@@ -37,33 +37,6 @@ struct TypeChecker::SingleStepEqualityContext : public EqualityContext {
                             Nonnull<const ImplScope*> impl_scope)
       : type_checker_(type_checker), impl_scope_(impl_scope) {}
 
-  // Attempt to resolve the witness for the given associated constant in the
-  // in-scope `impl`s.
-  auto TryResolveWitness(Nonnull<const AssociatedConstant*> assoc,
-                         SourceLocation source_loc) const
-      -> ErrorOr<Nonnull<const ImplWitness*>> {
-    auto* impl_witness = dyn_cast<ImplWitness>(&assoc->witness());
-    if (impl_witness) {
-      return impl_witness;
-    }
-    if (type_checker_->trace_stream_) {
-      **type_checker_->trace_stream_ << "found symbolic witness "
-                                     << assoc->witness()
-                                     << "; performing impl scope lookup\n";
-    }
-
-    CARBON_ASSIGN_OR_RETURN(
-        Nonnull<const Witness*> witness,
-        impl_scope_->Resolve(&assoc->interface(), &assoc->base(), source_loc,
-                             *type_checker_));
-    impl_witness = dyn_cast<ImplWitness>(witness);
-    if (impl_witness) {
-      return impl_witness;
-    }
-    return ProgramError(source_loc) << "value of associated constant " << *assoc
-                                    << " depends on a generic parameter";
-  }
-
   // Visits the values that are equal to the given value and a single step away
   // according to an equality constraint that is either scope or within a final
   // impl corresponding to an associated constant. Stops and returns `false` if
@@ -86,15 +59,12 @@ struct TypeChecker::SingleStepEqualityContext : public EqualityContext {
     if (auto* assoc = dyn_cast<AssociatedConstant>(value)) {
       // Perform an impl lookup to see if we can resolve this constant.
       // The source location doesn't matter, we're discarding the diagnostics.
-      SourceLocation source_loc("", 0);
-      ErrorOr<Nonnull<const ImplWitness*>> impl_witness =
-          TryResolveWitness(assoc, source_loc);
-      if (impl_witness.ok()) {
+      if (auto* impl_witness = dyn_cast<ImplWitness>(assoc)) {
         // Instantiate the impl to find the concrete constraint it implements.
         Nonnull<const ConstraintType*> constraint =
-            (*impl_witness)->declaration().constraint_type();
+            impl_witness->declaration().constraint_type();
         constraint = cast<ConstraintType>(
-            type_checker_->Substitute((*impl_witness)->bindings(), constraint));
+            type_checker_->Substitute(impl_witness->bindings(), constraint));
         if (type_checker_->trace_stream_) {
           **type_checker_->trace_stream_ << "found constraint " << *constraint
                                          << " for associated constant "
@@ -109,7 +79,7 @@ struct TypeChecker::SingleStepEqualityContext : public EqualityContext {
         if (type_checker_->trace_stream_) {
           **type_checker_->trace_stream_
               << "Could not resolve associated constant " << *assoc << ": "
-              << impl_witness.error() << "\n";
+              << "value  depends on a generic parameter\n";
         }
       }
     }
@@ -1533,11 +1503,57 @@ auto TypeChecker::SatisfyImpls(
 
 auto TypeChecker::MakeConstraintForInterface(
     SourceLocation source_loc, Nonnull<const InterfaceType*> iface_type)
-    -> Nonnull<const ConstraintType*> {
+    -> ErrorOr<Nonnull<const ConstraintType*>> {
+  // TODO: Produce an error if the interface is declared but not defined.
   ConstraintTypeBuilder builder(arena_, source_loc);
-  builder.AddImplConstraint(
+  int index = builder.AddImplConstraint(
       {.type = builder.GetSelfType(), .interface = iface_type});
   builder.AddLookupContext({.context = iface_type});
+
+  // We may have additional constraints implied by the interface's members.
+  for (const Declaration* d : iface_type->declaration().members()) {
+    // TODO: Add constraints for any extended interfaces.
+
+    // An associated constant may impose constraints. Typically these will be
+    // impl constraints, but others are permitted, such as
+    //   interface X {
+    //     let T:! Y where .Self == i32;
+    //   }
+    // We translate X into a ConstraintType with `.Self.T is Y` as an impl
+    // constraint and `.Self.T == i32` as an equality constraint.
+    if (auto* assoc = dyn_cast<AssociatedConstantDeclaration>(d)) {
+      // Substitute into the declared type to find the type to use for the
+      // associated constant.
+      Bindings bindings = iface_type->bindings();
+      bindings.Add(
+          iface_type->declaration().self(), builder.GetSelfType(),
+          MakeConstraintWitnessAccess(builder.GetSelfWitness(), index));
+      Nonnull<const Value*> constraint =
+          Substitute(bindings, &assoc->static_type());
+
+      // Form a ConstraintType for the constraint.
+      if (auto* interface_type = dyn_cast<InterfaceType>(constraint)) {
+        CARBON_ASSIGN_OR_RETURN(
+            constraint, MakeConstraintForInterface(source_loc, interface_type));
+      }
+      if (!isa<ConstraintType>(constraint)) {
+        // No constraint to collect from this associated constant.
+        continue;
+      }
+
+      auto* assoc_self = arena_->New<AssociatedConstant>(
+          builder.GetSelfType(), iface_type, assoc,
+          MakeConstraintWitnessAccess(builder.GetSelfWitness(), index));
+
+      // Combine the associated constant's constraints into the constraints we
+      // build for the interface.
+      CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
+          *this, cast<ConstraintType>(constraint), assoc_self,
+          builder.GetSelfWitness(), Bindings(), /*add_lookup_contexts=*/false));
+    }
+  }
+
+  // TODO: Consider caching this.
   return std::move(builder).Build(arena_);
 }
 
@@ -1654,6 +1670,7 @@ static auto LookupInConstraint(SourceLocation source_loc,
   if (const auto* iface_type = dyn_cast<InterfaceType>(type)) {
     // For an interface, look into that interface alone.
     // TODO: Also look into any interfaces extended by it.
+    // TODO: Maybe just convert to a constraint type to reduce duplication?
     interface_context[0].context = iface_type;
     lookup_contexts = interface_context;
   } else if (const auto* constraint_type = dyn_cast<ConstraintType>(type)) {
@@ -2440,8 +2457,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             for (int i : {0, 1}) {
               if (auto* iface_type_type =
                       dyn_cast<TypeOfInterfaceType>(ts[i])) {
-                constraints[i] = MakeConstraintForInterface(
-                    e->source_loc(), &iface_type_type->interface_type());
+                CARBON_ASSIGN_OR_RETURN(
+                    constraints[i],
+                    MakeConstraintForInterface(
+                        e->source_loc(), &iface_type_type->interface_type()));
               } else if (auto* constraint_type_type =
                              dyn_cast<TypeOfConstraintType>(ts[i])) {
                 constraints[i] = &constraint_type_type->constraint_type();
@@ -2880,7 +2899,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       if (auto* constraint_type = dyn_cast<ConstraintType>(base_type)) {
         base = constraint_type;
       } else if (auto* interface_type = dyn_cast<InterfaceType>(base_type)) {
-        base = MakeConstraintForInterface(e->source_loc(), interface_type);
+        CARBON_ASSIGN_OR_RETURN(
+            base, MakeConstraintForInterface(e->source_loc(), interface_type));
       } else if (isa<TypeType>(base_type)) {
         // Start with an unconstrained type.
       } else {
@@ -4271,8 +4291,9 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
       Nonnull<const Value*> constraint_type,
       TypeCheckTypeExp(&impl_decl->interface(), impl_scope));
   if (auto* iface_type = dyn_cast<InterfaceType>(constraint_type)) {
-    constraint_type = MakeConstraintForInterface(
-        impl_decl->interface().source_loc(), iface_type);
+    CARBON_ASSIGN_OR_RETURN(
+        constraint_type, MakeConstraintForInterface(
+                             impl_decl->interface().source_loc(), iface_type));
   }
   if (!isa<ConstraintType>(constraint_type)) {
     return ProgramError(impl_decl->interface().source_loc())
