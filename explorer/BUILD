@@ -33,11 +33,12 @@ cc_library(
 cc_binary(
     name = "explorer",
     srcs = ["main_bin.cpp"],
+    env = macos_malloc_env(),
     deps = [
         ":main",
+        "//common:bazel_working_dir",
         "@llvm-project//llvm:Support",
     ],
-    env = macos_malloc_env(),
 )
 
 py_binary(
