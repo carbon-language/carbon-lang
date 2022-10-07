@@ -2671,12 +2671,22 @@ auto TypeChecker::TypeCheckTypeExp(Nonnull<Expression*> type_expression,
                                    const ImplScope& impl_scope, bool concrete)
     -> ErrorOr<Nonnull<const Value*>> {
   CARBON_RETURN_IF_ERROR(TypeCheckExp(type_expression, impl_scope));
+  llvm::outs()<<type_expression->static_type()<<"\n";
+
   CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
                           InterpExp(type_expression, arena_, trace_stream_));
   CARBON_RETURN_IF_ERROR(
       concrete ? ExpectIsConcreteType(type_expression->source_loc(), type)
                : ExpectIsType(type_expression->source_loc(), type));
   return type;
+}
+
+auto TypeChecker::TypeCheckTypeReturnDeclExp(Nonnull<Expression*> type_expression,
+                                   const ImplScope& impl_scope)
+    -> ErrorOr<Nonnull<const Value*>> {
+  CARBON_RETURN_IF_ERROR(TypeCheckExp(type_expression, impl_scope));
+  CARBON_RETURN_IF_ERROR(ExpectIsType(type_expression->source_loc(), &type_expression->static_type()));
+  return &type_expression->static_type();
 }
 
 auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
@@ -3265,9 +3275,14 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
     // new types into scope.
     // Should we be doing SetConstantValue instead? -Jeremy
     // And shouldn't the type of this be Type?
+    llvm::outs()<<"HAZEL 1"<<"\n";
     CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> ret_type,
-                            TypeCheckTypeExp(*return_expression, function_scope,
-                                             /*concrete=*/false));
+                            TypeCheckTypeReturnDeclExp(*return_expression, function_scope));
+
+
+
+    llvm::outs()<<"HAZEL 2"<<"\n";
+
     f->return_term().set_static_type(ret_type);
   } else if (f->return_term().is_omitted()) {
     f->return_term().set_static_type(TupleValue::Empty());
@@ -4095,10 +4110,12 @@ auto TypeChecker::TypeCheck(AST& ast) -> ErrorOr<Success> {
   ImplScope impl_scope;
   ScopeInfo top_level_scope_info = ScopeInfo::ForNonClassScope(&impl_scope);
   for (Nonnull<Declaration*> declaration : ast.declarations) {
+    llvm::outs()<<"declaration:"<<*declaration<<"\n";
     CARBON_RETURN_IF_ERROR(
         DeclareDeclaration(declaration, top_level_scope_info));
   }
   for (Nonnull<Declaration*> decl : ast.declarations) {
+    llvm::outs()<<"Test:"<<*decl<<"\n";
     CARBON_RETURN_IF_ERROR(
         TypeCheckDeclaration(decl, impl_scope, std::nullopt));
     // Check to see if this declaration is a builtin.
@@ -4200,6 +4217,7 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
     }
     case DeclarationKind::FunctionDeclaration: {
       auto& func_def = cast<CallableDeclaration>(*d);
+      llvm::outs()<<"Func"<<"\n";
       CARBON_RETURN_IF_ERROR(DeclareCallableDeclaration(&func_def, scope_info));
       break;
     }

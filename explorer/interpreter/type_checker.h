@@ -141,6 +141,10 @@ class TypeChecker {
                         const ImplScope& impl_scope, bool concrete = true)
       -> ErrorOr<Nonnull<const Value*>>;
 
+  auto TypeCheckTypeReturnDeclExp(Nonnull<Expression*> type_expression,
+                                               const ImplScope& impl_scope)
+      -> ErrorOr<Nonnull<const Value*>>;
+
   // Type checks and interprets `clause`, and validates it represents a valid
   // `where` clause.
   auto TypeCheckWhereClause(Nonnull<WhereClause*> clause,
