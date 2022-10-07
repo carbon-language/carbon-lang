@@ -7,16 +7,12 @@
 #include <stack>
 
 #include "common/check.h"
-#include "llvm/ADT/StringMap.h"
-#include "llvm/Support/FormatVariadic.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
-// #include "toolchain/semantics/meta_node_block.h"
 #include "toolchain/semantics/node_ref.h"
 #include "toolchain/semantics/nodes/binary_operator.h"
 #include "toolchain/semantics/nodes/integer_literal.h"
-#include "toolchain/semantics/parse_subtree_consumer.h"
 
 namespace Carbon {
 

@@ -6,7 +6,6 @@
 #define CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_IR_FACTORY_H_
 
 #include "toolchain/parser/parse_tree.h"
-#include "toolchain/semantics/parse_subtree_consumer.h"
 #include "toolchain/semantics/semantics_ir.h"
 
 namespace Carbon {
