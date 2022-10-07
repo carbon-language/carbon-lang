@@ -2671,10 +2671,8 @@ auto TypeChecker::TypeCheckTypeExp(Nonnull<Expression*> type_expression,
                                    const ImplScope& impl_scope, bool concrete)
     -> ErrorOr<Nonnull<const Value*>> {
   CARBON_RETURN_IF_ERROR(TypeCheckExp(type_expression, impl_scope));
-  llvm::outs()<<type_expression->static_type()<<"\n";
-
-  CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
-                          InterpExp(type_expression, arena_, trace_stream_));
+  CARBON_ASSIGN_OR_RETURN( Nonnull<const Value*> type,
+                            InterpExp(type_expression, arena_, trace_stream_));
   CARBON_RETURN_IF_ERROR(
       concrete ? ExpectIsConcreteType(type_expression->source_loc(), type)
                : ExpectIsType(type_expression->source_loc(), type));
@@ -2685,8 +2683,68 @@ auto TypeChecker::TypeCheckTypeReturnDeclExp(Nonnull<Expression*> type_expressio
                                    const ImplScope& impl_scope)
     -> ErrorOr<Nonnull<const Value*>> {
   CARBON_RETURN_IF_ERROR(TypeCheckExp(type_expression, impl_scope));
-  CARBON_RETURN_IF_ERROR(ExpectIsType(type_expression->source_loc(), &type_expression->static_type()));
-  return &type_expression->static_type();
+  Nonnull<const Value*> type;
+  if(type_expression->kind() == ExpressionKind::CallExpression){
+   type = &type_expression->static_type();
+   switch(type->kind()){
+     case Value::Kind::IntValue:
+     case Value::Kind::BoolValue:
+     case Value::Kind::FunctionValue:
+     case Value::Kind::DestructorValue:
+     case Value::Kind::BoundMethodValue:
+     case Value::Kind::PointerValue:
+     case Value::Kind::LValue:
+     case Value::Kind::StructValue:
+     case Value::Kind::NominalClassValue:
+     case Value::Kind::TupleValue:
+     case Value::Kind::UninitializedValue:
+     case Value::Kind::BindingPlaceholderValue:
+     case Value::Kind::AddrValue:
+     case Value::Kind::ContinuationValue:
+     case Value::Kind::StringValue:
+     case Value::Kind::AlternativeValue:
+     case Value::Kind::AlternativeConstructorValue:
+       break;
+     case Value::Kind::ImplWitness:
+     case Value::Kind::BindingWitness:
+     case Value::Kind::ConstraintWitness:
+     case Value::Kind::ConstraintImplWitness:
+     case Value::Kind::IntType:
+     case Value::Kind::BoolType:
+     case Value::Kind::TypeType:
+     case Value::Kind::FunctionType:
+     case Value::Kind::PointerType:
+     case Value::Kind::AutoType:
+     case Value::Kind::StructType:
+     case Value::Kind::NominalClassType:
+     case Value::Kind::MixinPseudoType:
+     case Value::Kind::InterfaceType:
+     case Value::Kind::ConstraintType:
+     case Value::Kind::ContinuationType:
+     case Value::Kind::VariableType:
+     case Value::Kind::AssociatedConstant:
+     case Value::Kind::ParameterizedEntityName:
+     case Value::Kind::MemberName:
+     case Value::Kind::StringType:
+     case Value::Kind::TypeOfClassType:
+     case Value::Kind::TypeOfMixinPseudoType:
+     case Value::Kind::TypeOfInterfaceType:
+     case Value::Kind::TypeOfConstraintType:
+     case Value::Kind::TypeOfParameterizedEntityName:
+     case Value::Kind::TypeOfMemberName:
+     case Value::Kind::StaticArrayType:
+     case Value::Kind::ChoiceType:
+     case Value::Kind::TypeOfChoiceType:
+       CARBON_ASSIGN_OR_RETURN(type,
+                               InterpExp(type_expression, arena_, trace_stream_));
+       break;
+   }
+  }else {
+    CARBON_ASSIGN_OR_RETURN(type,
+                            InterpExp(type_expression, arena_, trace_stream_));
+  }
+  CARBON_RETURN_IF_ERROR(ExpectIsType(type_expression->source_loc(), type));
+  return type;
 }
 
 auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
@@ -3275,13 +3333,12 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
     // new types into scope.
     // Should we be doing SetConstantValue instead? -Jeremy
     // And shouldn't the type of this be Type?
-    llvm::outs()<<"HAZEL 1"<<"\n";
     CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> ret_type,
                             TypeCheckTypeReturnDeclExp(*return_expression, function_scope));
 
-
-
-    llvm::outs()<<"HAZEL 2"<<"\n";
+    //CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> ret_type,
+      //                      TypeCheckTypeExp(*return_expression, function_scope,
+        //                                     /*concrete=*/false));
 
     f->return_term().set_static_type(ret_type);
   } else if (f->return_term().is_omitted()) {
@@ -4110,12 +4167,10 @@ auto TypeChecker::TypeCheck(AST& ast) -> ErrorOr<Success> {
   ImplScope impl_scope;
   ScopeInfo top_level_scope_info = ScopeInfo::ForNonClassScope(&impl_scope);
   for (Nonnull<Declaration*> declaration : ast.declarations) {
-    llvm::outs()<<"declaration:"<<*declaration<<"\n";
     CARBON_RETURN_IF_ERROR(
         DeclareDeclaration(declaration, top_level_scope_info));
   }
   for (Nonnull<Declaration*> decl : ast.declarations) {
-    llvm::outs()<<"Test:"<<*decl<<"\n";
     CARBON_RETURN_IF_ERROR(
         TypeCheckDeclaration(decl, impl_scope, std::nullopt));
     // Check to see if this declaration is a builtin.
@@ -4217,7 +4272,6 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
     }
     case DeclarationKind::FunctionDeclaration: {
       auto& func_def = cast<CallableDeclaration>(*d);
-      llvm::outs()<<"Func"<<"\n";
       CARBON_RETURN_IF_ERROR(DeclareCallableDeclaration(&func_def, scope_info));
       break;
     }

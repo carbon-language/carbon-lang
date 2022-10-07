@@ -7,6 +7,14 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
+// CHECK: 921
+// CHECK: 922 t[0]
+// CHECK: (Point{.x = 1, .y = 1}, Point{.x = 2, .y = 3})
+// CHECK: 924
+// CHECK: 921
+// CHECK: 922 t[1]
+// CHECK: (Point{.x = 1, .y = 1}, Point{.x = 2, .y = 3})
+// CHECK: 924
 // CHECK: result: 0
 
 package ExplorerTest api;

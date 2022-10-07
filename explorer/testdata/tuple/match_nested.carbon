@@ -7,6 +7,14 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
+// CHECK: 921
+// CHECK: 922 c[0]
+// CHECK: (3, 4)
+// CHECK: 924
+// CHECK: 921
+// CHECK: 922 c[1]
+// CHECK: (3, 4)
+// CHECK: 924
 // CHECK: result: 0
 
 package ExplorerTest api;
