@@ -71,14 +71,14 @@ repos:
         types_or: [c++, proto]
         language: python
         args: ['-i']
-        additional_dependencies: ['clang-format==13.0.1']
+        additional_dependencies: ['clang-format==14.0.6']
       - id: explorer-format-grammar
         name: Format the explorer grammar file
         entry: explorer/syntax/format_grammar.py
         language: python
         files: ^explorer/syntax/(lexer.lpp|parser.ypp)$
         pass_filenames: false
-        additional_dependencies: ['clang-format==13.0.1']
+        additional_dependencies: ['clang-format==14.0.6']
 
   - repo: local
     hooks:
