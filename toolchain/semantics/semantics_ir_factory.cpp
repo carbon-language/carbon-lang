@@ -18,14 +18,6 @@
 
 namespace Carbon {
 
-// The ParseTree is walked in reverse post order, meaning a lot of nodes are
-// added in reverse. This fixes that ordering to be the easier to understand
-// code ordering.
-template <typename T>
-static void FixReverseOrdering(T& container) {
-  std::reverse(container.begin(), container.end());
-}
-
 auto SemanticsIRFactory::Build(const TokenizedBuffer& tokens,
                                const ParseTree& parse_tree) -> SemanticsIR {
   SemanticsIRFactory builder(tokens, parse_tree);
@@ -33,18 +25,55 @@ auto SemanticsIRFactory::Build(const TokenizedBuffer& tokens,
   return builder.semantics_;
 }
 
+enum class Context {
+  FunctionSignature,
+  FunctionSignatureParameters,
+};
+
+// bazel run //toolchain/driver:carbon dump semantics-ir basic.carbon
 void SemanticsIRFactory::Build() {
   // Silence "unused" build warning.
   tokens_ = nullptr;
-  for (const auto& node : parse_tree().postorder()) {
+  auto range = parse_tree().postorder();
+  for (auto it = range.begin();; ++it) {
+    auto node = *it;
     switch (auto node_kind = parse_tree().node_kind(node)) {
+      case ParseNodeKind::CodeBlock(): {
+        break;
+      }
+      case ParseNodeKind::CodeBlockEnd(): {
+        break;
+      }
+      case ParseNodeKind::DeclaredName(): {
+        break;
+      }
+      case ParseNodeKind::Function(): {
+        break;
+      }
+      case ParseNodeKind::FunctionEnd(): {
+        break;
+      }
       // TODO: This should be iterate
+      case ParseNodeKind::FileEnd(): {
+        ++it;
+        CARBON_CHECK(it == range.end())
+            << "FileEnd should always be last, found "
+            << parse_tree().node_kind(*it);
+        return;
+      }
+      case ParseNodeKind::ParameterList(): {
+        break;
+      }
+      case ParseNodeKind::ParameterListEnd(): {
+        break;
+      }
       default: {
         CARBON_FATAL() << "At index " << node.index() << ", unhandled "
                        << node_kind;
       }
     }
   }
+  llvm_unreachable("Should always end at FileEnd");
 }
 
 /*
