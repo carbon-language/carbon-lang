@@ -5,10 +5,6 @@
 // RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
 // RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: 921
-// CHECK: 922 x[2]
-// CHECK: (0, 1)
-// CHECK: 924
 
 package ExplorerTest api;
 
