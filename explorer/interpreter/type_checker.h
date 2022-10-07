@@ -434,6 +434,10 @@ class TypeChecker {
       llvm::ArrayRef<Nonnull<const ConstraintType*>> constraints)
       -> ErrorOr<Nonnull<const ConstraintType*>>;
 
+  // Gets the type for the given associated constant.
+  auto GetTypeForAssociatedConstant(
+      Nonnull<const AssociatedConstant*> assoc) const -> Nonnull<const Value*>;
+
   // Given `type.(interface.member)`, look for a rewrite in the declared type
   // of `type`.
   auto LookupRewriteInTypeOf(Nonnull<const Value*> type,

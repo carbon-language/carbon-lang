@@ -1731,6 +1731,15 @@ static auto LookupRewrite(Nonnull<const Value*> type_of_type,
   return std::nullopt;
 }
 
+auto TypeChecker::GetTypeForAssociatedConstant(
+    Nonnull<const AssociatedConstant*> assoc) const -> Nonnull<const Value*> {
+  auto* assoc_type = &assoc->constant().static_type();
+  Bindings bindings = assoc->interface().bindings();
+  bindings.Add(assoc->interface().declaration().self(), &assoc->base(),
+               &assoc->witness());
+  return Substitute(bindings, assoc_type);
+}
+
 auto TypeChecker::LookupRewriteInTypeOf(
     Nonnull<const Value*> type, Nonnull<const InterfaceType*> interface,
     Nonnull<const Declaration*> member) const
@@ -1749,12 +1758,8 @@ auto TypeChecker::LookupRewriteInTypeOf(
   // `U` to find rewrites.
   // TODO: This substitution can lead to infinite recursion.
   if (auto* assoc_const = dyn_cast<AssociatedConstant>(type)) {
-    auto* assoc_type = &assoc_const->constant().binding().static_type();
-    Bindings bindings = assoc_const->interface().bindings();
-    bindings.Add(assoc_const->interface().declaration().self(),
-                 &assoc_const->base(), &assoc_const->witness());
-    Nonnull<const Value*> subst_type = Substitute(bindings, assoc_type);
-    return LookupRewrite(subst_type, interface, member);
+    return LookupRewrite(GetTypeForAssociatedConstant(assoc_const), interface,
+                         member);
   }
 
   return std::nullopt;
@@ -1963,19 +1968,27 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                    << " does not have a field named " << access.member_name();
           }
         }
-        case Value::Kind::VariableType: {
-          // This case handles access to a method on a receiver whose type
-          // is a type variable. For example, `x.foo` where the type of
-          // `x` is `T` and `foo` and `T` implements an interface that
-          // includes `foo`.
-          const Value& typeof_var =
-              cast<VariableType>(object_type).binding().static_type();
+        case Value::Kind::VariableType:
+        case Value::Kind::AssociatedConstant: {
+          // This case handles access to a method on a receiver whose type is a
+          // type variable or associated constant. For example, `x.foo` where
+          // the type of `x` is `T` and `T` implements an interface that
+          // includes `foo`, or `x.y().foo` where the type of `x` is `T` and
+          // the return type of `y()` is an associated constant from `T`'s
+          // constraint.
+          Nonnull<const Value*> constraint;
+          if (auto* var_type = dyn_cast<VariableType>(&object_type)) {
+            constraint = &var_type->binding().static_type();
+          } else {
+            constraint = GetTypeForAssociatedConstant(
+                cast<AssociatedConstant>(&object_type));
+          }
           CARBON_ASSIGN_OR_RETURN(
               ConstraintLookupResult result,
-              LookupInConstraint(e->source_loc(), "member access", &typeof_var,
+              LookupInConstraint(e->source_loc(), "member access", constraint,
                                  access.member_name()));
           if (auto replacement =
-                  LookupRewrite(&typeof_var, result.interface, result.member)) {
+                  LookupRewrite(constraint, result.interface, result.member)) {
             RewriteMemberAccess(&access, *replacement);
             return Success();
           }
@@ -1984,7 +1997,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           // `ImplBinding` or, for a constraint, to a witness for an impl
           // constraint within it.
           // TODO: We should only need to look at the impl binding for this
-          // variable, not everything in the impl scope, to find the witness.
+          // variable or witness for this associated constant, not everything in
+          // the impl scope, to find the witness.
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Witness*> witness,
               impl_scope.Resolve(result.interface, &object_type,
@@ -2159,6 +2173,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               return Success();
             }
             default:
+              // TODO: We should handle VariableType and AssociatedConstant
+              // here.
               return ProgramError(access.source_loc())
                      << "unsupported member access into type " << *type;
           }
@@ -2201,12 +2217,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           // a type. The member will be found in the type of `value`, or in a
           // corresponding `impl` if `member_name` is an interface member.
           base_type = &access.object().static_type();
-          // TODO: We may still need a type_of_base_type here. Eg:
-          //   alias C = B where .A = i32;
-          //   fn F[T:! C](x: T) {
-          //     // `x.(B.A)` should be rewritten to `i32`.
-          //     var v: x.(B.A) = 0;
-          //   }
         }
       } else {
         // This is `value.(member_name)`, where `member_name` specifies a type.
