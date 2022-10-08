@@ -1,0 +1,28 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+# Applies the "proposal rfc" label when a proposal is marked ready for review.
+
+name: Proposal ready for review
+on:
+  pull_request_target:
+    types:
+      - ready_for_review
+
+jobs:
+  proposal_ready:
+    if: contains(github.event.pull_request.labels.*.name, 'proposal')
+    runs-on: ubuntu-latest
+    steps:
+      - name: rfc
+        run: |
+          gh pr edit "${PR}" \
+            --remove-label "proposal draft" \
+            --remove-label "proposal accepted" \
+            --remove-label "proposal declined" \
+            --remove-label "proposal deferred" \
+            --add-label "proposal rfc"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.html_url }}

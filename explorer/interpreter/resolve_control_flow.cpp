@@ -18,7 +18,7 @@ namespace Carbon {
 // Aggregate information about a function being analyzed.
 struct FunctionData {
   // The function declaration.
-  Nonnull<FunctionDeclaration*> declaration;
+  Nonnull<CallableDeclaration*> declaration;
 
   // True if the function has a deduced return type, and we've already seen
   // a `return` statement in its body.
@@ -72,6 +72,7 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
                     "signature.";
         }
       }
+
       return Success();
     }
     case StatementKind::Break:
@@ -106,6 +107,11 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
       }
       return Success();
     }
+    case StatementKind::For: {
+      CARBON_RETURN_IF_ERROR(ResolveControlFlow(&cast<For>(*statement).body(),
+                                                statement, function));
+      return Success();
+    }
     case StatementKind::While:
       CARBON_RETURN_IF_ERROR(ResolveControlFlow(&cast<While>(*statement).body(),
                                                 statement, function));
@@ -133,18 +139,26 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
 
 auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
   switch (declaration->kind()) {
+    case DeclarationKind::DestructorDeclaration:
     case DeclarationKind::FunctionDeclaration: {
-      auto& function = cast<FunctionDeclaration>(*declaration);
-      if (function.body().has_value()) {
-        FunctionData data = {.declaration = &function};
+      auto& callable = cast<CallableDeclaration>(*declaration);
+      if (callable.body().has_value()) {
+        FunctionData data = {.declaration = &callable};
         CARBON_RETURN_IF_ERROR(
-            ResolveControlFlow(*function.body(), std::nullopt, &data));
+            ResolveControlFlow(*callable.body(), std::nullopt, &data));
       }
       break;
     }
     case DeclarationKind::ClassDeclaration: {
       auto& class_decl = cast<ClassDeclaration>(*declaration);
       for (Nonnull<Declaration*> member : class_decl.members()) {
+        CARBON_RETURN_IF_ERROR(ResolveControlFlow(member));
+      }
+      break;
+    }
+    case DeclarationKind::MixinDeclaration: {
+      auto& mixin_decl = cast<MixinDeclaration>(*declaration);
+      for (Nonnull<Declaration*> member : mixin_decl.members()) {
         CARBON_RETURN_IF_ERROR(ResolveControlFlow(member));
       }
       break;
@@ -168,6 +182,7 @@ auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
     case DeclarationKind::AssociatedConstantDeclaration:
     case DeclarationKind::SelfDeclaration:
     case DeclarationKind::AliasDeclaration:
+    case DeclarationKind::MixDeclaration:
       // do nothing
       break;
   }

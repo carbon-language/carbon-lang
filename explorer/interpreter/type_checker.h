@@ -19,6 +19,12 @@
 
 namespace Carbon {
 
+using CollectedMembersMap =
+    std::unordered_map<std::string_view, Nonnull<const Declaration*>>;
+
+using GlobalMembersMap =
+    std::unordered_map<Nonnull<const Declaration*>, CollectedMembersMap>;
+
 class TypeChecker {
  public:
   explicit TypeChecker(Nonnull<Arena*> arena,
@@ -56,26 +62,47 @@ class TypeChecker {
                                  Nonnull<const Value*>>& dict,
                   Nonnull<const Value*> type) const -> Nonnull<const Value*>;
 
-  // If `impl` can be an implementation of interface `iface` for the
-  // given `type`, then return an expression that will produce the witness
-  // for this `impl` (at runtime). Otherwise return std::nullopt.
+  // If `impl` can be an implementation of interface `iface` for the given
+  // `type`, then return the witness for this `impl`. Otherwise return
+  // std::nullopt.
   auto MatchImpl(const InterfaceType& iface, Nonnull<const Value*> type,
                  const ImplScope::Impl& impl, const ImplScope& impl_scope,
                  SourceLocation source_loc) const
-      -> std::optional<Nonnull<Expression*>>;
+      -> std::optional<Nonnull<const Witness*>>;
+
+  // Return the declaration of the member with the given name, from the class
+  // and its parents
+  auto LookupMember(std::string_view name, const ClassDeclaration& class_decl,
+                    Nonnull<const Value*> enclosing_type)
+      -> std::optional<
+          std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>;
+
+  /*
+  ** Finds the direct or indirect member of a class or mixin by its name and
+  ** returns the member's declaration and type. Indirect members are members of
+  ** mixins that are mixed by member mix declarations. If the member is an
+  ** indirect member from a mix declaration, then the Self type variable within
+  ** the member's type is substituted with the type of the enclosing declaration
+  ** containing the mix declaration.
+  */
+  auto FindMixedMemberAndType(const std::string_view& name,
+                              llvm::ArrayRef<Nonnull<Declaration*>> members,
+                              const Nonnull<const Value*> enclosing_type)
+      -> std::optional<
+          std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>;
 
   // Given the witnesses for the components of a constraint, form a witness for
   // the constraint.
   auto MakeConstraintWitness(
       const ConstraintType& constraint,
-      std::vector<Nonnull<Expression*>> impl_constraint_witnesses,
-      SourceLocation source_loc) const -> Nonnull<Expression*>;
+      std::vector<Nonnull<const Witness*>> impl_constraint_witnesses,
+      SourceLocation source_loc) const -> Nonnull<const Witness*>;
 
   // Given the witnesses for the components of a constraint, form a witness for
   // the constraint.
-  auto MakeConstraintWitnessAccess(Nonnull<Expression*> witness,
+  auto MakeConstraintWitnessAccess(Nonnull<const Witness*> witness,
                                    size_t impl_offset) const
-      -> Nonnull<Expression*>;
+      -> Nonnull<const Witness*>;
 
  private:
   struct SingleStepEqualityContext;
@@ -172,11 +199,14 @@ class TypeChecker {
   auto DeclareDeclaration(Nonnull<Declaration*> d, const ScopeInfo& scope_info)
       -> ErrorOr<Success>;
 
-  auto DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
+  auto DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
                                   const ScopeInfo& scope_info)
       -> ErrorOr<Success>;
 
   auto DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
+                               const ScopeInfo& scope_info) -> ErrorOr<Success>;
+
+  auto DeclareMixinDeclaration(Nonnull<MixinDeclaration*> mixin_decl,
                                const ScopeInfo& scope_info) -> ErrorOr<Success>;
 
   auto DeclareInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl,
@@ -229,9 +259,9 @@ class TypeChecker {
   void BringPatternImplsIntoScope(Nonnull<const Pattern*> p,
                                   ImplScope& impl_scope);
 
-  // Create a reference to the given `impl` binding.
-  auto CreateImplReference(Nonnull<const ImplBinding*> impl_binding)
-      -> Nonnull<Expression*>;
+  // Create a witness for the given `impl` binding.
+  auto CreateImplBindingWitness(Nonnull<const ImplBinding*> impl_binding)
+      -> Nonnull<const Witness*>;
 
   // Add the given ImplBinding to the given `impl_scope`.
   void BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
@@ -246,17 +276,29 @@ class TypeChecker {
   // declaration, such as the body of a function.
   // Dispatches to one of the following functions.
   // Assumes that DeclareDeclaration has already been invoked on `d`.
-  auto TypeCheckDeclaration(Nonnull<Declaration*> d,
-                            const ImplScope& impl_scope) -> ErrorOr<Success>;
+  auto TypeCheckDeclaration(
+      Nonnull<Declaration*> d, const ImplScope& impl_scope,
+      std::optional<Nonnull<const Declaration*>> enclosing_decl)
+      -> ErrorOr<Success>;
 
   // Type check the body of the function.
-  auto TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
+  auto TypeCheckCallableDeclaration(Nonnull<CallableDeclaration*> f,
                                     const ImplScope& impl_scope)
       -> ErrorOr<Success>;
 
   // Type check all the members of the class.
   auto TypeCheckClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                                  const ImplScope& impl_scope)
+      -> ErrorOr<Success>;
+
+  // Type check all the members of the mixin.
+  auto TypeCheckMixinDeclaration(Nonnull<const MixinDeclaration*> mixin_decl,
+                                 const ImplScope& impl_scope)
+      -> ErrorOr<Success>;
+
+  auto TypeCheckMixDeclaration(
+      Nonnull<MixDeclaration*> mix_decl, const ImplScope& impl_scope,
+      std::optional<Nonnull<const Declaration*>> enclosing_decl)
       -> ErrorOr<Success>;
 
   // Type check all the members of the interface.
@@ -383,7 +425,7 @@ class TypeChecker {
   auto SatisfyImpls(llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
                     const ImplScope& impl_scope, SourceLocation source_loc,
                     const BindingMap& deduced_type_args,
-                    ImplExpMap& impls) const -> ErrorOr<Success>;
+                    ImplWitnessMap& impls) const -> ErrorOr<Success>;
 
   // Given an interface type, form a corresponding constraint type.
   auto MakeConstraintForInterface(SourceLocation source_loc,
@@ -404,9 +446,26 @@ class TypeChecker {
 
   void PrintConstants(llvm::raw_ostream& out);
 
+  /*
+  ** Adds a member of a declaration to collected_members_
+  */
+  auto CollectMember(Nonnull<const Declaration*> enclosing_decl,
+                     Nonnull<const Declaration*> member_decl)
+      -> ErrorOr<Success>;
+
+  /*
+  ** Fetches all direct and indirect members of a class or mixin declaration
+  ** stored within collected_members_
+  */
+  auto FindCollectedMembers(Nonnull<const Declaration*> decl)
+      -> CollectedMembersMap&;
+
   Nonnull<Arena*> arena_;
   std::set<ValueNodeView> constants_;
   Builtins builtins_;
+
+  // Maps a mixin/class declaration to all of its direct and indirect members.
+  GlobalMembersMap collected_members_;
 
   std::optional<Nonnull<llvm::raw_ostream*>> trace_stream_;
 };

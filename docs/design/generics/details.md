@@ -223,7 +223,8 @@ have two methods:
 
 ```
 interface Vector {
-  // Here `Self` means "the type implementing this interface".
+  // Here the `Self` keyword means
+  // "the type implementing this interface".
   fn Add[me: Self](b: Self) -> Self;
   fn Scale[me: Self](v: f64) -> Self;
 }
@@ -257,7 +258,8 @@ class Point {
   var x: f64;
   var y: f64;
   impl as Vector {
-    // In this scope, "Self" is an alias for "Point".
+    // In this scope, the `Self` keyword is an
+    // alias for `Point`.
     fn Add[me: Self](b: Self) -> Self {
       return {.x = a.x + b.x, .y = a.y + b.y};
     }
@@ -364,7 +366,8 @@ class Point2 {
   var y: f64;
 
   external impl as Vector {
-    // In this scope, `Self` is an alias for `Point2`.
+    // In this scope, the `Self` keyword is an
+    // alias for `Point2`.
     fn Add[me: Self](b: Self) -> Self {
       return {.x = a.x + b.x, .y = a.y + b.y};
     }
@@ -389,7 +392,8 @@ class Point3 {
 }
 
 external impl Point3 as Vector {
-  // In this scope, `Self` is an alias for `Point3`.
+  // In this scope, the `Self` keyword is an
+  // alias for `Point3`.
   fn Add[me: Self](b: Self) -> Self {
     return {.x = a.x + b.x, .y = a.y + b.y};
   }
@@ -459,7 +463,7 @@ class Point4b {
       return {.x = a.x * v, .y = a.y * v};
     }
   }
-  alias Add = Vector.Add;  // Syntax TBD
+  alias Add = Vector.Add;
 }
 
 // OR:
@@ -1079,8 +1083,8 @@ other type-of-types, independent of order.
 Note that we do _not_ consider two type-of-types using the same name to mean the
 same thing to be a conflict. For example, combining a type-of-type with itself
 gives itself, `MyTypeOfType & MyTypeOfType == MyTypeOfType`. Also, given two
-[interface extensions](#interface-extension) of a common base interface, the sum
-should not conflict on any names in the common base.
+[interface extensions](#interface-extension) of a common base interface, the
+combination should not conflict on any names in the common base.
 
 **Rejected alternative:** Instead of using `&` as the combining operator, we
 considered using `+`,
@@ -2065,6 +2069,18 @@ class DynamicArray(T:! Type) {
 }
 ```
 
+The keyword `Self` can be used after the `as` in an `impl` declaration as a
+shorthand for the type being implemented, including in the `where` clause
+specifying the values of associated types, as in:
+
+```
+external impl VeryLongTypeName as Add
+    // `Self` here means `VeryLongTypeName`
+    where .Result == Self {
+  ...
+}
+```
+
 **Alternatives considered:** See
 [other syntax options considered in #731 for specifying associated types](/proposals/p0731.md#syntax-for-associated-constants).
 In particular, it was deemed that
@@ -2269,8 +2285,9 @@ class Complex {
   var imag: f64;
   // Can implement this interface more than once
   // as long as it has different arguments.
-  impl as EquatableWith(Complex) { ... }
   impl as EquatableWith(f64) { ... }
+  // Same as: impl as EquatableWith(Complex) { ... }
+  impl as EquatableWith(Self) { ... }
 }
 ```
 
@@ -2416,7 +2433,9 @@ type-of-type. Note that this expands the kinds of requirements that
 type-of-types can have from just interface requirements to also include the
 various kinds of constraints discussed later in this section. In addition, it
 can introduce relationships between different type variables, such as that a
-member of one is equal to the member of another.
+member of one is equal to the member of another. The `where` operator is not
+associative, so a type expression using multiple must use round parens `(`...`)`
+to specify grouping.
 
 **Comparison with other languages:** Both Swift and Rust use `where` clauses on
 declarations instead of in the expression syntax. These happen after the type
@@ -2793,6 +2812,29 @@ constraint ContainerIsSlice {
 
 Note that using the `constraint` approach we can name these constraints using
 `Self` instead of `.Self`, since they refer to the same type.
+
+The `.Self` construct follows these rules:
+
+-   `X :!` introduces `.Self:! Type`, where references to `.Self` are resolved
+    to `X`. This allows you to use `.Self` as an interface parameter as in
+    `X:! I(.Self)`.
+-   `A where` introduces `.Self:! A` and `.Foo` for each member `Foo` of `A`
+-   It's an error to reference `.Self` if it refers to more than one different
+    thing or isn't a type.
+-   You get the innermost, most-specific type for `.Self` if it is introduced
+    twice in a scope. By the previous rule, it is only legal if they all refer
+    to the same generic parameter.
+
+So in `X:! A where ...`, `.Self` is introduced twice, after the `:!` and the
+`where`. This is allowed since both times it means `X`. After the `:!`, `.Self`
+has the type `Type`, which gets refined to `A` after the `where`. In contrast,
+it is an error if `.Self` could mean two different things, as in:
+
+```
+// ❌ Illegal: `.Self` could mean `T` or `T.A`.
+fn F[T:! InterfaceA where .A is
+           (InterfaceB where .B == .Self)](x: T);
+```
 
 #### Parameterized type implements interface
 
@@ -5589,6 +5631,9 @@ a type to an implementation of an interface parameterized by that type.
 Generic associated types are about when this is a requirement of an interface.
 These are also called "associated type constructors."
 
+Rust has
+[stabilized this feature](https://github.com/rust-lang/rust/pull/96709).
+
 #### Higher-ranked types
 
 Higher-ranked types are used to represent this requirement in a function
@@ -5643,3 +5688,4 @@ parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 -   [#1144: Generic details 11: operator overloading](https://github.com/carbon-language/carbon-lang/pull/1144)
 -   [#1146: Generic details 12: parameterized types](https://github.com/carbon-language/carbon-lang/pull/1146)
 -   [#1327: Generics: `impl forall`](https://github.com/carbon-language/carbon-lang/pull/1327)
+-   [#2107: Clarify rules around `Self` and `.Self`](https://github.com/carbon-language/carbon-lang/pull/2107)

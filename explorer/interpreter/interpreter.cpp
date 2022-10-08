@@ -4,6 +4,8 @@
 
 #include "explorer/interpreter/interpreter.h"
 
+#include <llvm/Support/raw_ostream.h>
+
 #include <iterator>
 #include <map>
 #include <optional>
@@ -77,12 +79,16 @@ class Interpreter {
   auto StepExp() -> ErrorOr<Success>;
   // State transitions for lvalues.
   auto StepLvalue() -> ErrorOr<Success>;
+  // State transitions for witnesses.
+  auto StepWitness() -> ErrorOr<Success>;
   // State transitions for patterns.
   auto StepPattern() -> ErrorOr<Success>;
   // State transition for statements.
   auto StepStmt() -> ErrorOr<Success>;
   // State transition for declarations.
   auto StepDeclaration() -> ErrorOr<Success>;
+  // State transition for object destruction.
+  auto StepCleanUp() -> ErrorOr<Success>;
 
   auto CreateStruct(const std::vector<FieldInitializer>& fields,
                     const std::vector<Nonnull<const Value*>>& values)
@@ -142,6 +148,9 @@ class Interpreter {
                     Nonnull<const Value*> arg, ImplWitnessMap&& witnesses)
       -> ErrorOr<Success>;
 
+  auto CallDestructor(Nonnull<const DestructorDeclaration*> fun,
+                      Nonnull<const Value*> receiver) -> ErrorOr<Success>;
+
   void PrintState(llvm::raw_ostream& out);
 
   Phase phase() const { return phase_; }
@@ -192,6 +201,9 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
     case Operator::Mul:
       return arena_->New<IntValue>(cast<IntValue>(*args[0]).value() *
                                    cast<IntValue>(*args[1]).value());
+    case Operator::Div:
+      return arena_->New<IntValue>(cast<IntValue>(*args[0]).value() /
+                                   cast<IntValue>(*args[1]).value());
     case Operator::Mod:
       return arena_->New<IntValue>(cast<IntValue>(*args[0]).value() %
                                    cast<IntValue>(*args[1]).value());
@@ -214,6 +226,7 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
       return &cast<TypeOfConstraintType>(static_type)->constraint_type();
     case Operator::As:
     case Operator::Eq:
+    case Operator::NotEq:
     case Operator::Less:
     case Operator::LessEq:
     case Operator::Greater:
@@ -611,6 +624,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
   switch (value->kind()) {
     case Value::Kind::IntValue:
     case Value::Kind::FunctionValue:
+    case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LValue:
@@ -625,6 +639,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::PointerType:
     case Value::Kind::AutoType:
     case Value::Kind::NominalClassType:
+    case Value::Kind::MixinPseudoType:
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
     case Value::Kind::ImplWitness:
@@ -640,6 +655,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::StringType:
     case Value::Kind::StringValue:
     case Value::Kind::TypeOfClassType:
+    case Value::Kind::TypeOfMixinPseudoType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
@@ -731,6 +747,26 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
       return Convert(value, destination_type, source_loc);
     }
   }
+}
+
+auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
+                                 Nonnull<const Value*> receiver)
+    -> ErrorOr<Success> {
+  const DestructorDeclaration& method = *fun;
+  CARBON_CHECK(method.is_method());
+  RuntimeScope method_scope(&heap_);
+  BindingMap generic_args;
+  CARBON_CHECK(PatternMatch(&method.me_pattern().value(), receiver,
+                            fun->source_loc(), &method_scope, generic_args,
+                            trace_stream_, this->arena_));
+
+  CARBON_CHECK(method.body().has_value())
+      << "Calling a method that's missing a body";
+
+  auto act = std::make_unique<StatementAction>(*method.body());
+  method_scope.TransitState();
+  return todo_.Spawn(std::unique_ptr<Action>(std::move(act)),
+                     std::move(method_scope));
 }
 
 auto Interpreter::CallFunction(const CallExpression& call,
@@ -838,6 +874,9 @@ auto Interpreter::CallFunction(const CallExpression& call,
         case DeclarationKind::InterfaceDeclaration:
           return todo_.FinishAction(arena_->New<InterfaceType>(
               &cast<InterfaceDeclaration>(decl), bindings));
+        case DeclarationKind::ChoiceDeclaration:
+          return todo_.FinishAction(arena_->New<ChoiceType>(
+              &cast<ChoiceDeclaration>(decl), bindings));
         default:
           CARBON_FATAL() << "unknown kind of ParameterizedEntityName " << decl;
       }
@@ -860,7 +899,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       const InstantiateImpl& inst_impl = cast<InstantiateImpl>(exp);
       if (act.pos() == 0) {
         return todo_.Spawn(
-            std::make_unique<ExpressionAction>(inst_impl.generic_impl()));
+            std::make_unique<WitnessAction>(inst_impl.generic_impl()));
       }
       if (act.pos() == 1 && isa<SymbolicWitness>(act.results()[0])) {
         return todo_.FinishAction(arena_->New<SymbolicWitness>(&exp));
@@ -868,7 +907,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       if (act.pos() - 1 < int(inst_impl.impls().size())) {
         auto iter = inst_impl.impls().begin();
         std::advance(iter, act.pos() - 1);
-        return todo_.Spawn(std::make_unique<ExpressionAction>(iter->second));
+        return todo_.Spawn(
+            std::make_unique<WitnessAction>(cast<Witness>(iter->second)));
       } else {
         Nonnull<const ImplWitness*> generic_witness =
             cast<ImplWitness>(act.results()[0]);
@@ -960,7 +1000,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         // Next, if we're accessing an interface member, evaluate the `impl`
         // expression to find the corresponding witness.
         return todo_.Spawn(
-            std::make_unique<ExpressionAction>(access.impl().value()));
+            std::make_unique<WitnessAction>(access.impl().value()));
       } else {
         // Finally, produce the result.
         std::optional<Nonnull<const InterfaceType*>> found_in_interface =
@@ -1021,7 +1061,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         // Next, if we're accessing an interface member, evaluate the `impl`
         // expression to find the corresponding witness.
         return todo_.Spawn(
-            std::make_unique<ExpressionAction>(access.impl().value()));
+            std::make_unique<WitnessAction>(access.impl().value()));
       } else {
         // Finally, produce the result.
         std::optional<Nonnull<const InterfaceType*>> found_in_interface =
@@ -1144,7 +1184,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       } else if (num_impls > 0 && act.pos() < 2 + int(num_impls)) {
         auto iter = call.impls().begin();
         std::advance(iter, act.pos() - 2);
-        return todo_.Spawn(std::make_unique<ExpressionAction>(iter->second));
+        return todo_.Spawn(
+            std::make_unique<WitnessAction>(cast<Witness>(iter->second)));
       } else if (act.pos() == 2 + int(num_impls)) {
         //    { { v2 :: v1([]) :: C, E, F} :: S, H}
         // -> { {C',E',F'} :: {C, E, F} :: S, H}
@@ -1199,6 +1240,19 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           llvm::outs() << "\n";
           return todo_.FinishAction(TupleValue::Empty());
         }
+        case IntrinsicExpression::Intrinsic::Assert: {
+          CARBON_CHECK(args.size() == 2);
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> condition,
+              Convert(args[0], arena_->New<BoolType>(), exp.source_loc()));
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> string_value,
+              Convert(args[1], arena_->New<StringType>(), exp.source_loc()));
+          if (cast<BoolValue>(condition)->value() == false) {
+            return RuntimeError(exp.source_loc()) << *string_value;
+          }
+          return todo_.FinishAction(TupleValue::Empty());
+        }
         case IntrinsicExpression::Intrinsic::Alloc: {
           CARBON_CHECK(args.size() == 1);
           Address addr(heap_.AllocateValue(args[0]));
@@ -1213,8 +1267,10 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           CARBON_CHECK(args.size() == 2);
           const auto& low = cast<IntValue>(*args[0]).value();
           const auto& high = cast<IntValue>(*args[1]).value();
-          std::uniform_int_distribution<> distr(low, high);
-          int r = distr(generator);
+          CARBON_CHECK(high > low);
+          // We avoid using std::uniform_int_distribution because it's not
+          // reproducible across builds/platforms.
+          int r = (generator() % (high - low)) + low;
           return todo_.FinishAction(arena_->New<IntValue>(r));
         }
         case IntrinsicExpression::Intrinsic::IntEq: {
@@ -1383,6 +1439,26 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
   }  // switch (exp->kind)
 }
 
+auto Interpreter::StepWitness() -> ErrorOr<Success> {
+  Action& act = todo_.CurrentAction();
+  const Witness* witness = cast<WitnessAction>(act).witness();
+  if (trace_stream_) {
+    **trace_stream_ << "--- step witness " << *witness << " ." << act.pos()
+                    << ". --->\n";
+  }
+  switch (witness->kind()) {
+    case Value::Kind::SymbolicWitness:
+      return todo_.ReplaceWith(std::make_unique<ExpressionAction>(
+          &cast<SymbolicWitness>(witness)->impl_expression()));
+
+    case Value::Kind::ImplWitness:
+      return todo_.FinishAction(witness);
+
+    default:
+      CARBON_FATAL() << "unexpected kind of witness " << *witness;
+  }
+}
+
 auto Interpreter::StepPattern() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Pattern& pattern = cast<PatternAction>(act).pattern();
@@ -1503,7 +1579,78 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         }
       }
     }
+    case StatementKind::For: {
+      constexpr int TargetVarPosInResult = 0;
+      constexpr int CurrentIndexPosInResult = 1;
+      constexpr int EndIndexPosInResult = 2;
+      constexpr int LoopVarPosInResult = 3;
+      if (act.pos() == 0) {
+        return todo_.Spawn(
+            std::make_unique<ExpressionAction>(&cast<For>(stmt).loop_target()));
+      }
+      if (act.pos() == 1) {
+        Nonnull<const TupleValue*> source_array =
+            cast<const TupleValue>(act.results()[TargetVarPosInResult]);
+
+        auto end_index = static_cast<int>(source_array->elements().size());
+        if (end_index == 0) {
+          return todo_.FinishAction();
+        }
+        act.AddResult(arena_->New<IntValue>(0));
+        act.AddResult(arena_->New<IntValue>(end_index));
+        return todo_.Spawn(std::make_unique<PatternAction>(
+            &cast<For>(stmt).variable_declaration()));
+      }
+      if (act.pos() == 2) {
+        Nonnull<const BindingPlaceholderValue*> loop_var =
+            cast<const BindingPlaceholderValue>(
+                act.results()[LoopVarPosInResult]);
+        Nonnull<const TupleValue*> source_array =
+            cast<const TupleValue>(act.results()[TargetVarPosInResult]);
+
+        auto start_index =
+            cast<IntValue>(act.results()[CurrentIndexPosInResult])->value();
+        todo_.Initialize(*(loop_var->value_node()),
+                         source_array->elements()[start_index]);
+        act.ReplaceResult(CurrentIndexPosInResult,
+                          arena_->New<IntValue>(start_index + 1));
+        return todo_.Spawn(
+            std::make_unique<StatementAction>(&cast<For>(stmt).body()));
+      }
+      if (act.pos() >= 3) {
+        auto current_index =
+            cast<IntValue>(act.results()[CurrentIndexPosInResult])->value();
+        auto end_index =
+            cast<IntValue>(act.results()[EndIndexPosInResult])->value();
+
+        if (current_index < end_index) {
+          Nonnull<const TupleValue*> source_array =
+              cast<const TupleValue>(act.results()[TargetVarPosInResult]);
+          Nonnull<const BindingPlaceholderValue*> loop_var =
+              cast<const BindingPlaceholderValue>(
+                  act.results()[LoopVarPosInResult]);
+
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> assigned_array_element,
+              todo_.ValueOfNode(*(loop_var->value_node()), stmt.source_loc()));
+
+          auto lvalue = cast<LValue>(assigned_array_element);
+          CARBON_RETURN_IF_ERROR(heap_.Write(
+              lvalue->address(), source_array->elements()[current_index],
+              stmt.source_loc()));
+
+          act.ReplaceResult(CurrentIndexPosInResult,
+                            arena_->New<IntValue>(current_index + 1));
+          return todo_.Spawn(
+              std::make_unique<StatementAction>(&cast<For>(stmt).body()));
+        }
+      }
+      return todo_.FinishAction();
+    }
     case StatementKind::While:
+      // TODO: Rewrite While to use ReplaceResult to store condition result.
+      //       This will remove the inconsistency between the while and for
+      //       loops.
       if (act.pos() % 2 == 0) {
         //    { { (while (e) s) :: C, E, F} :: S, H}
         // -> { { e :: (while ([]) s) :: C, E, F} :: S, H}
@@ -1647,7 +1794,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         return todo_.FinishAction();
       }
     case StatementKind::ReturnVar: {
-      const ValueNodeView& value_node = cast<ReturnVar>(stmt).value_node();
+      const auto& ret_var = cast<ReturnVar>(stmt);
+      const ValueNodeView& value_node = ret_var.value_node();
       if (trace_stream_) {
         **trace_stream_ << "--- step returned var "
                         << cast<BindingPattern>(value_node.base()).name()
@@ -1658,10 +1806,9 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
                               todo_.ValueOfNode(value_node, stmt.source_loc()));
       if (const auto* lvalue = dyn_cast<LValue>(value)) {
         CARBON_ASSIGN_OR_RETURN(
-            value,
-            heap_.Read(lvalue->address(), value_node.base().source_loc()));
+            value, heap_.Read(lvalue->address(), ret_var.source_loc()));
       }
-      const FunctionDeclaration& function = cast<Return>(stmt).function();
+      const CallableDeclaration& function = cast<Return>(stmt).function();
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> return_value,
           Convert(value, &function.return_term().static_type(),
@@ -1677,7 +1824,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
         // -> { {v :: C', E', F'} :: S, H}
-        const FunctionDeclaration& function = cast<Return>(stmt).function();
+        const CallableDeclaration& function = cast<Return>(stmt).function();
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> return_value,
             Convert(act.results()[0], &function.return_term().static_type(),
@@ -1746,8 +1893,11 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
         return todo_.FinishAction();
       }
     }
+    case DeclarationKind::DestructorDeclaration:
     case DeclarationKind::FunctionDeclaration:
     case DeclarationKind::ClassDeclaration:
+    case DeclarationKind::MixinDeclaration:
+    case DeclarationKind::MixDeclaration:
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::AssociatedConstantDeclaration:
@@ -1757,6 +1907,51 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
       // These declarations have no run-time effects.
       return todo_.FinishAction();
   }
+}
+
+auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
+  Action& act = todo_.CurrentAction();
+  CleanupAction& cleanup = cast<CleanupAction>(act);
+  if (act.pos() < cleanup.locals_count()) {
+    auto lvalue = act.scope()->locals()[cleanup.locals_count() - act.pos() - 1];
+    SourceLocation source_loc("destructor", 1);
+    auto value = heap_.Read(lvalue->address(), source_loc);
+    if (value.ok()) {
+      if (act.scope()->DestructionState() < RuntimeScope::State::CleanUpped) {
+        if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
+          const auto& class_type = cast<NominalClassType>(class_obj->type());
+          const auto& class_dec = class_type.declaration();
+          if (class_dec.destructor().has_value()) {
+            return CallDestructor(*class_dec.destructor(), class_obj);
+          }
+        }
+      } else {
+        if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
+          const auto& class_type = cast<NominalClassType>(class_obj->type());
+          const auto& class_dec = class_type.declaration();
+          const auto& class_members = class_dec.members();
+          for (const auto& member : class_members) {
+            if (const auto* var = dyn_cast<VariableDeclaration>(member)) {
+              const auto& type = var->static_type();
+              if (const auto* c_type = dyn_cast<NominalClassType>(&type)) {
+                auto& c_dec = c_type->declaration();
+                if (c_dec.destructor().has_value()) {
+                  Address object = lvalue->address();
+                  Address mem = object.SubobjectAddress(Member(var));
+                  auto v = heap_.Read(mem, source_loc);
+                  act.scope()->TransitState();
+                  return CallDestructor(*c_dec.destructor(), *v);
+                }
+              }
+            }
+          }
+        }
+        act.scope()->TransitState();
+      }
+    }
+  }
+  todo_.Pop();
+  return Success();
 }
 
 // State transition.
@@ -1769,6 +1964,9 @@ auto Interpreter::Step() -> ErrorOr<Success> {
     case Action::Kind::ExpressionAction:
       CARBON_RETURN_IF_ERROR(StepExp());
       break;
+    case Action::Kind::WitnessAction:
+      CARBON_RETURN_IF_ERROR(StepWitness());
+      break;
     case Action::Kind::PatternAction:
       CARBON_RETURN_IF_ERROR(StepPattern());
       break;
@@ -1777,6 +1975,9 @@ auto Interpreter::Step() -> ErrorOr<Success> {
       break;
     case Action::Kind::DeclarationAction:
       CARBON_RETURN_IF_ERROR(StepDeclaration());
+      break;
+    case Action::Kind::CleanUpAction:
+      CARBON_RETURN_IF_ERROR(StepCleanUp());
       break;
     case Action::Kind::ScopeAction:
       CARBON_FATAL() << "ScopeAction escaped ActionStack";

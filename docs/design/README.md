@@ -6,13 +6,18 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
+> **STATUS:** Up-to-date on 09-Aug-2022, including proposals up through
+> [#1327](https://github.com/carbon-language/carbon-lang/pull/1327).
+
+> FIXME: add #2015
+
 <!-- toc -->
 
 ## Table of contents
 
--   [Overview](#overview)
+-   [Introduction](#introduction)
     -   [This document is provisional](#this-document-is-provisional)
--   [Hello, Carbon](#hello-carbon)
+    -   [Tour of the basics](#tour-of-the-basics)
 -   [Code and comments](#code-and-comments)
 -   [Build modes](#build-modes)
 -   [Types are values](#types-are-values)
@@ -117,7 +122,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- tocstop -->
 
-## Overview
+## Introduction
 
 This documentation describes the design of the Carbon language, and the
 rationale for that design. This documentation is an overview of the Carbon
@@ -134,38 +139,203 @@ This document includes much that is provisional or placeholder. This means that
 the syntax used, language rules, standard library, and other aspects of the
 design have things that have not been decided through the Carbon process. This
 preliminary material fills in gaps until aspects of the design can be filled in.
+Features that are provisional have been marked as such on a best-effort basis.
 
-## Hello, Carbon
+### Tour of the basics
 
 Here is a simple function showing some Carbon code:
 
 ```carbon
-import Console;
+import Math;
 
-// Prints the Fibonacci numbers less than `limit`.
-fn Fibonacci(limit: i64) {
-  var (a: i64, b: i64) = (0, 1);
-  while (a < limit) {
-    Console.Print(a, " ");
-    let next: i64 = a + b;
-    a = b;
-    b = next;
+// Returns the smallest factor of `n` > 1, and
+// whether `n` itself is prime.
+fn SmallestFactor(n: i32) -> (i32, bool) {
+  let limit: i32 = Math.Sqrt(n) as i32;
+  var i: i32 = 2;
+  while (i <= limit) {
+    let remainder: i32 = n % i;
+    if (remainder == 0) {
+      Carbon.Print("{0} is a factor of {1}", i, n);
+      return (i, false);
+    }
+    if (i == 2) {
+      i = 3;
+    } else {
+      // Skip even numbers once we get past `2`.
+      i += 2;
+    }
   }
-  Console.Print("\n");
+  return (n, true);
 }
 ```
 
 Carbon is a language that should feel familiar to C++ and C developers. This
 example has familiar constructs like [imports](#imports),
-[function definitions](#functions), [typed arguments](#binding-patterns), and
-[curly braces](#blocks-and-statements).
+[comments](#code-and-comments), [function definitions](#functions),
+[typed arguments](#binding-patterns), and [expressions](#expressions).
+[Statements](#blocks-and-statements) and
+[declarations](#declarations-definitions-and-scopes) are terminated with a `;`
+or something in curly braces `{`...`}`.
 
 A few other features that are unlike C or C++ may stand out. First,
 [declarations](#declarations-definitions-and-scopes) start with introducer
 keywords. `fn` introduces a function declaration, and `var` introduces a
-[variable declaration](#variable-var-declarations). You can also see a
-[_tuple_](#tuples), a composite type written as a comma-separated list inside
-parentheses. Unlike, say, Python, these types are strongly-typed as well.
+[variable declaration](#variable-var-declarations).
+
+The example starts with an [`import` declaration](#imports). Carbon imports are
+more like [C++ modules](https://en.cppreference.com/w/cpp/language/modules) than
+[textual inclusion during preprocessing using `#include`](https://en.cppreference.com/w/cpp/preprocessor/include).
+The `import` declaration imports a
+[library from a package](#files-libraries-packages). It must appear at the top
+of a Carbon source file, the first thing after the
+[optional `package` declaration](#package-declaration). Libraries can optionally
+be split into [api and implementation files](#files-libraries-packages), like
+C++'s header and source files but without requiring a source file in any cases.
+This declaration from the example:
+
+```carbon
+import Math;
+```
+
+imports the default library from package `Math`. The names from this library are
+accessible as members of `Math`, like `Math.Sqrt`. The `Carbon.Print` function
+comes from the `Carbon` package's prelude library which is
+[imported by default](#name-lookup-for-common-types). Unlike C++, the namespaces
+of different packages are kept separate, so there are no name conflicts.
+
+Carbon [comments](#code-and-comments) must be on a line by themselves starting
+with `//`:
+
+```carbon
+// Returns the smallest factor of `n` > 1, and
+// whether `n` itself is prime.
+...
+      // Skip even numbers once we get past `2`.
+```
+
+A [function definition](#functions) consists of:
+
+-   the `fn` keyword introducer,
+-   the function's name,
+-   a parameter list in round parens `(`...`)`,
+-   an optional `->` and return type, and
+-   a body inside curly braces `{`...`}`.
+
+```carbon
+fn SmallestFactor(n: i32) -> (i32, bool) {
+  ...
+      return (i, false);
+  ...
+  return (n, true);
+}
+```
+
+The body of the function is an ordered sequence of
+[statements](#blocks-and-statements) and
+[declarations](#declarations-definitions-and-scopes). Function execution ends
+when it reaches a `return` statement or the end of the function body. `return`
+statements can also specify an expression whose value is returned.
+
+Here `i32` refers to a signed [integer type](#integer-types), with 32 bits, and
+`bool` is the [boolean type](#bool). Carbon also has
+[floating-point types](#floating-point-types) like `f32` and `f64`, and
+[string types](#string-types).
+
+A [variable declaration](#variable-var-declarations) has three parts:
+
+-   the `var` keyword introducer,
+-   the name followed by a `:` and a type, declared the same way as a parameter
+    in a function signature, and
+-   an optional initializer.
+
+```carbon
+  var i: i32 = 2;
+```
+
+You can modify the value of a variable with an
+[assignment statement](#assignment-statements):
+
+```carbon
+      i = 3;
+      ...
+      i += 2;
+```
+
+[Constants are declared](#constant-let-declarations) with the `let` keyword
+introducer. The syntax parallels variable declarations except the initializer is
+required:
+
+```carbon
+  let limit: i32 = Math.Sqrt(n) as i32;
+  ...
+    let remainder: i32 = n % i;
+```
+
+The initializer `Math.Sqrt(n) as i32` is an [expression](#expressions). It first
+calls the `Math.Sqrt` function with `n` as the argument. Then, the `as` operator
+casts the floating-point return value to `i32`. Lossy conversions like that must
+be done explicitly.
+
+Other expressions include `n % i`, which applies the binary `%` modulo operator
+with `n` and `i` as arguments, and `remainder == 0`, which applies the `==`
+comparison operator producing a `bool` result. Expression return values are
+ignored when expressions are used as statements, as in this call to the
+`Carbon.Print` function:
+
+```carbon
+      Carbon.Print("{0} is a factor of {1}", i, n);
+```
+
+Function calls consist of the name of the function followed by the
+comma-separated argument list in round parentheses `(`...`)`.
+
+Control flow statements, including `if`, `while`, `for`, `break`, and
+`continue`, change the order that statements are executed, as they do in C++:
+
+```carbon
+  while (i <= limit) {
+    ...
+    if (remainder == 0) {
+      ...
+    }
+    if (i == 2) {
+      ...
+    } else {
+      ...
+    }
+  }
+```
+
+Every code block in curly braces `{`...`}` defines a scope. Names are visible
+from their declaration until the end of innermost scope containing it. So
+`remainder` in the example is visible until the curly brace `}` that closes the
+`while`.
+
+The example function uses a [_tuple_](#tuples), a
+[composite type](#composite-types), to return multiple values. Both tuple values
+and types are written using a comma-separated list inside parentheses. So
+`(i, false)` and `(n, true)` are tuple values, and `(i32, bool)` is their type.
+
+[Struct types](#struct-types) are similar, except their members are referenced
+by name instead of position. The example could be changed to use structs instead
+as follows:
+
+```carbon
+// Return type of `{.factor: i32, .prime: bool}` is a struct
+// with an `i32` field named `.factor`, and a `bool` field
+// named `.prime`.
+fn SmallestFactor(n: i32) -> {.factor: i32, .prime: bool} {
+  ...
+    if (remainder == 0) {
+      // Return a struct value.
+      return {.factor = i, .prime = false};
+    }
+  ...
+  // Return a struct value.
+  return {.factor = n, .prime = true};
+}
+```
 
 ## Code and comments
 
@@ -186,7 +356,7 @@ required to be the only non-whitespace on the line.
 > References:
 >
 > -   [Source files](code_and_name_organization/source_files.md)
-> -   [lexical conventions](lexical_conventions)
+> -   [Lexical conventions](lexical_conventions)
 > -   Proposal
 >     [#142: Unicode source files](https://github.com/carbon-language/carbon-lang/pull/142)
 > -   Proposal
@@ -209,10 +379,26 @@ The behavior of the Carbon compiler depends on the _build mode_:
 
 Expressions compute values in Carbon, and these values are always strongly typed
 much like in C++. However, an important difference from C++ is that types are
-themselves modeled as values; specifically, compile-time constant values. This
-means that the grammar for writing a type is the [expression](#expressions)
-grammar. Expressions written where a type is expected must be able to be
-evaluated at compile-time and must evaluate to a type value.
+themselves modeled as values; specifically, compile-time-constant values. This
+has a number of consequences:
+
+-   Names for types are in the same namespace shared with functions, variables,
+    namespaces, and so on.
+-   The grammar for writing a type is the [expression](#expressions) grammar,
+    not a separate grammar for types. As a result, Carbon doesn't use angle
+    brackets `<`...`>` in types, since `<` and `>` are used for comparison in
+    expressions.
+-   Function call syntax is used to specify parameters to a type, like
+    `HashMap(String, i64)`.
+
+Some values, such as `()` and `{}`, may even be used as types, but only act like
+types when they are in a type position, like after a `:` in a variable
+declaration or the return type after a `->` in a function declaration. Any
+expression in a type position must be
+[a constants or symbolic value](#value-categories-and-value-phases) so the
+compiler can resolve whether the value can be used as a type. This also puts
+limits on how much operators can do different things for types. This is good for
+consistency, but is a significant restriction on Carbon's design.
 
 ## Primitive types
 
@@ -225,21 +411,27 @@ Primitive types fall into the following categories:
 
 These are made available through the [prelude](#name-lookup-for-common-types).
 
-> References: [Primitive types](primitive_types.md)
-
 ### `bool`
 
 The type `bool` is a boolean type with two possible values: `true` and `false`.
+The names `bool`, `true`, and `false` are keywords.
 [Comparison expressions](#expressions) produce `bool` values. The condition
 arguments in [control-flow statements](#control-flow), like [`if`](#if-and-else)
 and [`while`](#while), and
 [`if`-`then`-`else` conditional expressions](#expressions) take `bool` values.
 
+> References:
+>
+> -   Question-for-leads issue
+>     [#750: Naming conventions for Carbon-provided features](https://github.com/carbon-language/carbon-lang/issues/750)
+> -   Proposal
+>     [#861: Naming conventions](https://github.com/carbon-language/carbon-lang/pull/861)
+
 ### Integer types
 
-The signed-integer type with bit width `N` may be written `Carbon.Int(N)`. For
-convenience and brevity, the common power-of-two sizes may be written with an
-`i` followed by the size: `i8`, `i16`, `i32`, `i64`, or `i128`. Signed-integer
+The signed-integer type with bit width `N` may be written `iN` or
+`Carbon.Int(N)`, as long as `N` is a positive multiple of 8. For example, `i32`
+is equivalent to `Carbon.Int(32)`. Signed-integer
 [overflow](expressions/arithmetic.md#overflow-and-other-error-conditions) is a
 programming error:
 
@@ -253,25 +445,40 @@ programming error:
     to a mathematically incorrect result, such as a two's complement result or
     zero.
 
-The unsigned-integer types are: `u8`, `u16`, `u32`, `u64`, `u128`, and
-`Carbon.UInt(N)`. Unsigned integer types wrap around on overflow, we strongly
-advise that they are not used except when those semantics are desired. These
-types are intended for bit manipulation or modular arithmetic as often found in
-[hashing](https://en.wikipedia.org/wiki/Hash_function),
+The unsigned-integer types are written `uN` or `Carbon.UInt(N)`, with `N` a
+positive multiple of 8. Unsigned integer types wrap around on overflow; we
+strongly advise that they are not used except when those semantics are desired.
+These types are intended for bit manipulation or modular arithmetic as often
+found in [hashing](https://en.wikipedia.org/wiki/Hash_function),
 [cryptography](https://en.wikipedia.org/wiki/Cryptography), and
 [PRNG](https://en.wikipedia.org/wiki/Pseudorandom_number_generator) use cases.
 Values which can never be negative, like sizes, but for which wrapping does not
 make sense
 [should use signed integer types](/proposals/p1083.md#dont-let-unsigned-arithmetic-wrap).
 
+Identifiers of the form `iN` and `uN` are _type literals_, resulting in the
+corresponding type.
+
+Not all operations will be supported for all bit sizes. For example, division
+may be limited to integers of at most 128 bits due to LLVM limitations.
+
+> **Open question:** Bit-field ([1](https://en.wikipedia.org/wiki/Bit_field),
+> [2](https://en.cppreference.com/w/cpp/language/bit_field)) support will need
+> some way to talk about non-multiple-of-eight-bit integers, even though Carbon
+> will likely not support pointers to those types.
+
 > References:
 >
 > -   Question-for-leads issue
 >     [#543: pick names for fixed-size integer types](https://github.com/carbon-language/carbon-lang/issues/543)
+> -   Question-for-leads issue
+>     [#750: Naming conventions for Carbon-provided features](https://github.com/carbon-language/carbon-lang/issues/750)
 > -   Proposal
->     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
+>     [#861: Naming conventions](https://github.com/carbon-language/carbon-lang/pull/861)
 > -   Proposal
 >     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
+> -   Proposal
+>     [#2015: Numeric type literal syntax](https://github.com/carbon-language/carbon-lang/pull/2015)
 
 #### Integer literals
 
@@ -281,8 +488,7 @@ Integers may be written in decimal, hexadecimal, or binary:
 -   `0x1FE` (hexadecimal)
 -   `0b1010` (binary)
 
-Underscores `_` may be used as digit separators, but for decimal and hexadecimal
-literals, they can only appear in conventional locations. Numeric literals are
+Underscores (`_`) may be used as digit separators. Numeric literals are
 case-sensitive: `0x`, `0b` must be lowercase, whereas hexadecimal digits must be
 uppercase. Integer literals never contain a `.`.
 
@@ -293,29 +499,51 @@ represent that value.
 
 > References:
 >
-> -   [Integer literals](lexical_conventions/numeric_literals.md#integer-literals)
+> -   [Integer literal syntax](lexical_conventions/numeric_literals.md#integer-literals)
+> -   [Numeric Literal Semantics](numeric_literals.md)
 > -   Proposal
 >     [#143: Numeric literals](https://github.com/carbon-language/carbon-lang/pull/143)
 > -   Proposal
 >     [#144: Numeric literal semantics](https://github.com/carbon-language/carbon-lang/pull/144)
 > -   Proposal
 >     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
+> -   Proposal
+>     [#1983: Weaken digit separator placement rules](https://github.com/carbon-language/carbon-lang/pull/1983)
 
 ### Floating-point types
 
-Floating-point types in Carbon have IEEE 754 semantics, use the round-to-nearest
+Floating-point types in Carbon have IEEE-754 semantics, use the round-to-nearest
 rounding mode, and do not set any floating-point exception state. They are named
-with an `f` and the number of bits: `f16`, `f32`, `f64`, and `f128`.
-[`BFloat16`](primitive_types.md#bfloat16) is also provided.
+with a _type literals_, consisting of `f` and the number of bits, which must be
+a multiple of 8. The type literal `fN` results in the type `Carbon.Float(N)`.
+These types will always be available:
+[`f16`](https://en.wikipedia.org/wiki/Half-precision_floating-point_format),
+[`f32`](https://en.wikipedia.org/wiki/Single-precision_floating-point_format),
+and
+[`f64`](https://en.wikipedia.org/wiki/Double-precision_floating-point_format).
+Other sizes may be available, depending on the platform, such as
+[`f80`](https://en.wikipedia.org/wiki/Extended_precision),
+[`f128`](https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format),
+or
+[`f256`](https://en.wikipedia.org/wiki/Octuple-precision_floating-point_format).
+
+Carbon also supports the
+[`BFloat16`](https://en.wikipedia.org/wiki/Bfloat16_floating-point_format)
+format, a 16-bit truncation of a "binary32" IEEE-754 format floating point
+number.
 
 > References:
 >
 > -   Question-for-leads issue
 >     [#543: pick names for fixed-size integer types](https://github.com/carbon-language/carbon-lang/issues/543)
+> -   Question-for-leads issue
+>     [#750: Naming conventions for Carbon-provided features](https://github.com/carbon-language/carbon-lang/issues/750)
 > -   Proposal
->     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
+>     [#861: Naming conventions](https://github.com/carbon-language/carbon-lang/pull/861)
 > -   Proposal
 >     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
+> -   Proposal
+>     [#2015: Numeric type literal syntax](https://github.com/carbon-language/carbon-lang/pull/2015)
 
 #### Floating-point literals
 
@@ -327,6 +555,7 @@ literals are supported:
 -   `123.456e789` (optional `+` or `-` after the `e`)
 -   `0x1.Ap123` (optional `+` or `-` after the `p`)
 
+As with integer literals, underscores (`_`) may be used as digit separators.
 Real-number literals always have a period (`.`) and a digit on each side of the
 period. When a real-number literal is interpreted as a value of a floating-point
 type, its value is the representable real number closest to the value of the
@@ -335,7 +564,8 @@ selected.
 
 > References:
 >
-> -   [Real-number literals](lexical_conventions/numeric_literals.md#real-number-literals)
+> -   [Real-number literal syntax](lexical_conventions/numeric_literals.md#real-number-literals)
+> -   [Numeric Literal Semantics](numeric_literals.md)
 > -   Proposal
 >     [#143: Numeric literals](https://github.com/carbon-language/carbon-lang/pull/143)
 > -   Proposal
@@ -344,14 +574,31 @@ selected.
 >     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
 > -   Proposal
 >     [#866: Allow ties in floating literals](https://github.com/carbon-language/carbon-lang/pull/866)
+> -   Proposal
+>     [#1983: Weaken digit separator placement rules](https://github.com/carbon-language/carbon-lang/pull/1983)
 
 ### String types
+
+> **Note:** This is provisional, no design for string types has been through the
+> proposal process yet.
 
 There are two string types:
 
 -   `String` - a byte sequence treated as containing UTF-8 encoded text.
 -   `StringView` - a read-only reference to a byte sequence treated as
     containing UTF-8 encoded text.
+
+There is an [implicit conversion](expressions/implicit_conversions.md) from
+`String` to `StringView`.
+
+> References:
+>
+> -   Question-for-leads issue
+>     [#750: Naming conventions for Carbon-provided features](https://github.com/carbon-language/carbon-lang/issues/750)
+> -   Proposal
+>     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
+> -   Proposal
+>     [#861: Naming conventions](https://github.com/carbon-language/carbon-lang/pull/861)
 
 #### String literals
 
@@ -390,21 +637,19 @@ are available for representing strings with `\`s and `"`s.
 
 ## Value categories and value phases
 
-**FIXME:** Should this be moved together with
-[Types are values](#types-are-values)?
-
-Every value has a
+Every expression has a
 [value category](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>),
 similar to [C++](https://en.cppreference.com/w/cpp/language/value_category),
 that is either _l-value_ or _r-value_. Carbon will automatically convert an
 l-value to an r-value, but not in the other direction.
 
-L-values have storage and a stable address. They may be modified, assuming their
-type is not [`const`](#const).
+L-value expressions refer to values that have storage and a stable address. They
+may be modified, assuming their type is not [`const`](#const).
 
-R-values may not have dedicated storage. This means they cannot be modified and
-their address generally cannot be taken. R-values are broken down into three
-kinds, called _value phases_:
+R-value expressions evaluate to values that may not have dedicated storage. This
+means they cannot be modified and their address generally cannot be taken. The
+values of r-value expressions are broken down into three kinds, called _value
+phases_:
 
 -   A _constant_ has a value known at compile time, and that value is available
     during type checking, for example to use as the size of an array. These
@@ -434,6 +679,10 @@ Constants convert to symbolic values and to runtime values. Symbolic values will
 generally convert into runtime values if an operation that inspects the value is
 performed on them. Runtime values will convert into constants or to symbolic
 values if constant evaluation of the runtime expression succeeds.
+
+> **Note:** Conversion of runtime values to other phases is provisional, as are
+> the semantics of r-values. See pending proposal
+> [#821: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/821).
 
 ## Composite types
 
@@ -470,6 +719,10 @@ fn DoubleTuple(x: (i32, i32)) -> (i32, i32) {
 
 Tuple types are
 [structural](https://en.wikipedia.org/wiki/Structural_type_system).
+
+> **Note:** This is provisional, no design for tuples has been through the
+> proposal process yet. Many of these questions were discussed in dropped
+> proposal [#111](https://github.com/carbon-language/carbon-lang/pull/111).
 
 > References: [Tuples](tuples.md)
 
@@ -521,6 +774,10 @@ type `Optional(T*)`.
 [stricter pointer provenance](https://www.ralfj.de/blog/2022/04/11/provenance-exposed.html)
 or restrictions on casts between pointers and integers.
 
+> **Note:** While the syntax for pointers has been decided, the semantics of
+> pointers are provisional, as is the syntax for optionals. See pending proposal
+> [#821: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/821).
+
 > References:
 >
 > -   Question-for-leads issue
@@ -547,10 +804,14 @@ Elements of an array may be accessed using square brackets (`[`...`]`), as in
 
 ```carbon
 a[i] = 2;
-Console.Print(a[0]);
+Carbon.Print(a[0]);
 ```
 
 > **TODO:** Slices
+
+> **Note:** This is provisional, no design for arrays has been through the
+> proposal process yet. See pending proposal
+> [#1928: Arrays](https://github.com/carbon-language/carbon-lang/pull/1928).
 
 ## Expressions
 
@@ -654,6 +915,9 @@ function or class itself is visible until the end of the enclosing scope.
 
 ## Patterns
 
+> **Note:** This is provisional, no design for patterns has been through the
+> proposal process yet.
+
 A _pattern_ says how to receive some data that is being matched against. There
 are two kinds of patterns:
 
@@ -662,9 +926,11 @@ are two kinds of patterns:
 -   _Irrefutable_ patterns are guaranteed to match, so long as the code
     type-checks.
 
-Irrefutable patterns are used in [function parameters](#functions),
+In the [introduction](#tour-of-the-basics), [function parameters](#functions),
 [variable `var` declarations](#variable-var-declarations), and
-[constant `let` declarations](#constant-let-declarations).
+[constant `let` declarations](#constant-let-declarations) use a "name `:` type"
+construction. That construction is an example of an irrefutable pattern, and in
+fact any irrefutable pattern may be used in those positions.
 [`match` statements](#match) can include both refutable patterns and irrefutable
 patterns.
 
@@ -782,6 +1048,9 @@ Here `x: i64` is the pattern, which is followed by an equal sign (`=`) and the
 value to match, `42`. The names from [binding patterns](#binding-patterns) are
 introduced into the enclosing [scope](#declarations-definitions-and-scopes).
 
+> **Note:** `let` declarations are provisional. See pending proposal
+> [#821: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/821).
+
 ### Variable `var` declarations
 
 A `var` declaration is similar, except with `var` bindings, so `x` here is an
@@ -897,6 +1166,10 @@ the caller, and dereferencing using `*` in the callee.
 Outputs of a function should prefer to be returned. Multiple values may be
 returned using a [tuple](#tuples) or [struct](#struct-types) type.
 
+> **Note:** The semantics of parameter passing are provisional. See pending
+> proposal
+> [#821: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/821).
+
 ### `auto` return type
 
 If `auto` is used in place of the return type, the return type of the function
@@ -967,6 +1240,9 @@ the assignment.
 Unlike C++, these assignments are statements, not expressions, and don't return
 a value.
 
+> **Note:** The semantics of assignment are provisional. See pending proposal
+> [#821: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/821).
+
 ### Control flow
 
 Blocks of statements are generally executed sequentially. Control-flow
@@ -1014,11 +1290,11 @@ For example:
 
 ```carbon
 if (fruit.IsYellow()) {
-  Console.Print("Banana!");
+  Carbon.Print("Banana!");
 } else if (fruit.IsOrange()) {
-  Console.Print("Orange!");
+  Carbon.Print("Orange!");
 } else {
-  Console.Print("Vegetable!");
+  Carbon.Print("Vegetable!");
 }
 ```
 
@@ -1047,10 +1323,10 @@ example, this prints `0`, `1`, `2`, then `Done!`:
 ```carbon
 var x: i32 = 0;
 while (x < 3) {
-  Console.Print(x);
+  Carbon.Print(x);
   ++x;
 }
-Console.Print("Done!");
+Carbon.Print("Done!");
 ```
 
 > References:
@@ -1066,7 +1342,7 @@ example, this prints each `String` value in `names`:
 
 ```carbon
 for (var name: String in names) {
-  Console.Print(name);
+  Carbon.Print(name);
 }
 ```
 
@@ -1086,14 +1362,20 @@ processed):
 ```carbon
 for (var step: Step in steps) {
   if (step.IsManual()) {
-    Console.Print("Reached manual step!");
+    Carbon.Print("Reached manual step!");
     break;
   }
   step.Process();
 }
 ```
 
-> References: [`break`](control_flow/loops.md#break)
+> References:
+>
+> -   [`break`](control_flow/loops.md#break)
+> -   Proposal
+>     [#340: Add C++-like `while` loops](https://github.com/carbon-language/carbon-lang/pull/340)
+> -   Proposal
+>     [#353: Add C++-like `for` loops](https://github.com/carbon-language/carbon-lang/pull/353)
 
 ##### `continue`
 
@@ -1109,11 +1391,17 @@ while (!f.EOF()) {
   if (line.IsEmpty()) {
     continue;
   }
-  Console.Print(line);
+  Carbon.Print(line);
 }
 ```
 
-> References: [`continue`](control_flow/loops.md#continue)
+> References:
+>
+> -   [`continue`](control_flow/loops.md#continue)
+> -   Proposal
+>     [#340: Add C++-like `while` loops](https://github.com/carbon-language/carbon-lang/pull/340)
+> -   Proposal
+>     [#353: Add C++-like `for` loops](https://github.com/carbon-language/carbon-lang/pull/353)
 
 #### `return`
 
@@ -1132,7 +1420,7 @@ fn PrintFirstN(n: i32) {
       // executed after a `return`.
       return;
     }
-    Console.Print(i);
+    Carbon.Print(i);
   }
 }
 ```
@@ -1223,6 +1511,9 @@ fn Foo() -> f32 {
 }
 ```
 
+> **Note:** This is provisional, no design for `match` statements has been
+> through the proposal process yet.
+
 > References:
 >
 > -   [Pattern matching](pattern_matching.md)
@@ -1230,8 +1521,6 @@ fn Foo() -> f32 {
 >     [#1283: how should pattern matching and implicit conversion interact?](https://github.com/carbon-language/carbon-lang/issues/1283)
 
 ## User-defined types
-
-> **TODO:** Maybe rename to "nominal types"?
 
 ### Classes
 
@@ -1316,7 +1605,9 @@ sprocket = {.x = 2, .y = 1, .payload = "Bounce"};
 
 > References:
 >
-> -   [Classes: Construction](classes.md#construction)
+> -   [Classes: Assignment](classes.md#assignment)
+> -   Proposal
+>     [#722: Nominal classes and methods](https://github.com/carbon-language/carbon-lang/pull/722)
 > -   Proposal
 >     [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
 
@@ -1363,6 +1654,12 @@ class Registered {
 ```
 
 This approach can also be used for types that can't be copied or moved.
+
+> References:
+>
+> -   [Classes: Construction](classes.md#construction)
+> -   Proposal
+>     [#722: Nominal classes and methods](https://github.com/carbon-language/carbon-lang/pull/722)
 
 #### Methods
 
@@ -1522,7 +1819,7 @@ class DerivedFromAbstract extends AbstractClass {
 
 > References:
 >
-> -   [Inheritance](classes.md#inheritance)
+> -   [Classes: Inheritance](classes.md#inheritance)
 > -   Proposal
 >     [#777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777)
 > -   Proposal
@@ -1546,6 +1843,8 @@ names resolvable by the compiler, and don't act like forward declarations.
 > -   [Access control for class members](classes.md#access-control)
 > -   Question-for-leads issue
 >     [#665: `private` vs `public` _syntax_ strategy, as well as other visibility tools like `external`/`api`/etc.](https://github.com/carbon-language/carbon-lang/issues/665)
+> -   Proposal
+>     [#777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777)
 > -   Question-for-leads issue
 >     [#971: Private interfaces in public API files](https://github.com/carbon-language/carbon-lang/issues/971)
 
@@ -1585,14 +1884,14 @@ type, use `UnsafeDelete`.
 
 > References:
 >
-> -   [Destructors](classes.md#destructors)
+> -   [Classes: Destructors](classes.md#destructors)
 > -   Proposal
 >     [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
 
 #### `const`
 
-**Note:** This is provisional, no design for `const` has been through the
-proposal process yet.
+> **Note:** This is provisional, no design for `const` has been through the
+> proposal process yet.
 
 For every type `MyClass`, there is the type `const MyClass` such that:
 
@@ -1672,6 +1971,12 @@ when returning a value from a function or by using the _move operator_ `~x`.
 This leaves `x` in an [unformed state](#unformed-state) and returns its old
 value.
 
+> **Note:** This is provisional. The move operator was discussed but not
+> proposed in accepted proposal
+> [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257).
+> See pending proposal
+> [#821: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/821).
+
 #### Mixins
 
 Mixins allow reuse with different trade-offs compared to
@@ -1681,7 +1986,9 @@ be done using
 [multiple inheritance](https://en.wikipedia.org/wiki/Multiple_inheritance) in
 C++.
 
-**TODO:** The design for mixins is still under development.
+> **TODO:** The design for mixins is still under development. The details here
+> are provisional. The mixin use case was included in accepted proposal
+> [#561: Basic classes: use cases, struct literals, struct types, and future work](https://github.com/carbon-language/carbon-lang/pull/561).
 
 ### Choice types
 
@@ -1921,7 +2228,7 @@ given name public.
 
 ### Package scope
 
-The top-level scope in a package is the scope of the package. This means:
+The top-level scope in a file is the scope of the package. This means:
 
 -   Within this scope (and its sub-namespaces), all visible names from the same
     package appear. This includes names from the same file, names from the `api`
@@ -1953,7 +2260,7 @@ class C {
     // ✅ Allowed: unambiguous
     C.F();
     // ❌ Error: ambiguous whether `P` means
-    // `package.P` or `package.P.F`.
+    // `package.P` or `package.C.P`.
     P.H();
     // ✅ Allowed
     package.P.H();
@@ -2036,6 +2343,12 @@ P.M.Q();
 >
 > -   ["Namespaces" in "Code and name organization"](code_and_name_organization/README.md#namespaces)
 > -   ["Package and namespace members" in "Qualified names and member access"](expressions/member_access.md#package-and-namespace-members)
+> -   Proposal
+>     [#107: Code and name organization](https://github.com/carbon-language/carbon-lang/pull/107)
+> -   Proposal
+>     [#989: Member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
+> -   Question-for-leads issue
+>     [#1136: what is the top-level scope in a source file, and what names are found there?](https://github.com/carbon-language/carbon-lang/issues/1136)
 
 ### Naming conventions
 
@@ -2071,10 +2384,23 @@ Note that the right-hand side of the equal sign (`=`) is a name not a value, so
 `alias four = 4;` is not allowed. This allows `alias` to work with entities like
 namespaces, which aren't values in Carbon.
 
-This can be used during an incremental migration when changing a name, or to
-include a name in a public API. For example, `alias` may be used to include a
-name from an interface implementation as a member of a class or
-[named constraint](generics/details.md#named-constraints), possibly renamed:
+This can be used during an incremental migration when changing a name. For
+example, `alias` would allow you to have two names for a data field in a class
+while clients were migrated between the old name and the new name.
+
+```carbon
+class MyClass {
+  var new_name: String;
+  alias old_name = new_name;
+}
+
+var x: MyClass = {.new_name = "hello"};
+Carbon.Assert(x.old_name == "hello");
+```
+
+Another use is to include a name in a public API. For example, `alias` may be
+used to include a name from an interface implementation as a member of a class
+or [named constraint](generics/details.md#named-constraints), possibly renamed:
 
 ```carbon
 class ContactInfo {
@@ -2093,9 +2419,13 @@ class ContactInfo {
 > -   [`alias` a name from an external impl](generics/details.md#external-impl)
 > -   [`alias` a name in a named constraint](generics/details.md#named-constraints)
 > -   Proposal
+>     [#107: Code and name organization](https://github.com/carbon-language/carbon-lang/pull/107)
+> -   Proposal
 >     [#553: Generics details part 1](https://github.com/carbon-language/carbon-lang/pull/553)
 > -   Question-for-leads issue
 >     [#749: Alias syntax](https://github.com/carbon-language/carbon-lang/issues/749)
+> -   Proposal
+>     [#989: Member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
 
 ### Name lookup
 
@@ -2175,6 +2505,9 @@ imported automatically into every `api` file. Dedicated type literal syntaxes
 like `i32` and `bool` refer to types defined within this package, based on the
 ["all APIs are library APIs" principle](/docs/project/principles/library_apis_only.md).
 
+> **TODO:** Prelude provisionally imports the `Carbon` package which includes
+> common facilities, like `Print` and the interfaces for operator overloading.
+
 > References:
 >
 > -   [Name lookup](name_lookup.md)
@@ -2226,16 +2559,20 @@ being passed as a separate explicit argument.
 
 ### Checked and template parameters
 
-The `:!` indicates that `T` is a _checked_ parameter passed at compile time.
+The `:!` indicates that the `T` parameter is generic, and therefore bound at
+compile time. Generic parameters may either be _checked_ or _template_, and
+default to checked.
+
 "Checked" here means that the body of `Min` is type checked when the function is
 defined, independent of the specific type values `T` is instantiated with, and
 name lookup is delegated to the constraint on `T` (`Ordered` in this case). This
 type checking is equivalent to saying the function would pass type checking
-given any type `T` that implements the `Ordered` interface. Then calls to `Min`
-only need to check that the deduced type value of `T` implements `Ordered`.
+given any type `T` that implements the `Ordered` interface. Subsequent calls to
+`Min` only need to check that the deduced type value of `T` implements
+`Ordered`.
 
-The parameter could alternatively be declared to be a _template_ parameter by
-prefixing with the `template` keyword, as in `template T:! Type`.
+The parameter could alternatively be declared to be a _template_ generic
+parameter by prefixing with the `template` keyword, as in `template T:! Type`.
 
 ```carbon
 fn Convert[template T:! Type](source: T, template U:! Type) -> U {
@@ -2247,6 +2584,15 @@ fn Foo(i: i32) -> f32 {
   // Instantiates with the `T` implicit argument set to `i32` and the `U`
   // explicit argument set to `f32`, then calls with the runtime value `i`.
   return Convert(i, f32);
+}
+```
+
+A template parameter can still use a constraint. The `Min` example could have
+been declared as:
+
+```carbon
+fn Min[template T:! Ordered](x: T, y: T) -> T {
+  return if x <= y then x else y;
 }
 ```
 
@@ -2329,7 +2675,7 @@ class Circle {
 
   impl as Printable {
     fn Print[me: Self]() {
-      Console.WriteLine("Circle with radius: {0}", me.radius);
+      Carbon.Print("Circle with radius: {0}", me.radius);
     }
   }
 }
@@ -2580,6 +2926,10 @@ indicate that they may not be specialized, subject to
 >     [#920: Generic parameterized impls (details 5)](https://github.com/carbon-language/carbon-lang/pull/920)
 > -   Proposal
 >     [#983: Generics details 7: final impls](https://github.com/carbon-language/carbon-lang/pull/983)
+> -   Question-for-leads issue
+>     [1192: Parameterized impl syntax](https://github.com/carbon-language/carbon-lang/issues/1192)
+> -   Proposal
+>     [#1327: Generics: `impl forall`](https://github.com/carbon-language/carbon-lang/pull/1327)
 
 ### Other features
 
@@ -2607,9 +2957,9 @@ Carbon generics have a number of other features, including:
     value with a type implementing an interface, and allows the functions in
     that interface to be called using
     [dynamic dispatch](https://en.wikipedia.org/wiki/Dynamic_dispatch), for some
-    interfaces marked "`dyn`-safe".
+    interfaces marked "`dyn`-safe". **Note:** Provisional.
 -   [Variadics](generics/details.md#variadic-arguments) supports variable-length
-    parameter lists.
+    parameter lists. **Note:** Provisional.
 
 > References:
 >
@@ -2870,6 +3220,9 @@ include:
 
 ### Importing and `#include`
 
+> **Note:** This is provisional, no design for importing C++ has been through
+> the proposal process yet.
+
 A C++ library header file may be [imported](#imports) into Carbon using an
 `import` declaration of the special `Cpp` package.
 
@@ -2906,6 +3259,9 @@ marker.
 
 ### ABI and dynamic linking
 
+> **Note:** This reflects goals and plans. No specific design for the
+> implementation has been through the proposal process yet.
+
 Carbon itself will not have a stable ABI for the language as a whole, and most
 language features will be designed around not having any ABI stability. Instead,
 we expect to add dedicated language features that are specifically designed to
@@ -2930,7 +3286,15 @@ available across this interop boundary will of course be restricted to what is
 expressible in the C ABI, and types may need explicit markers to have guaranteed
 ABI compatibility.
 
+> References:
+>
+> -   [Goals: Stable language and library ABI non-goal](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/project/goals.md#stable-language-and-library-abi)
+> -   [#175: C++ interoperability goals: Support mixing Carbon and C++ toolchains](/proposals/p0175.md#support-mixing-carbon-and-c-toolchains)
+
 ### Operator overloading
+
+> **Note:** This is provisional, no design for this has been through the
+> proposal process yet.
 
 [Operator overloading](#operator-overloading) is supported in Carbon, but is
 done by [implementing an interface](#interfaces-and-implementations) instead of
@@ -2971,6 +3335,9 @@ requiring changes to importers?
 
 ### Templates
 
+> **Note:** This is provisional, no design for this has been through the
+> proposal process yet.
+
 Carbon supports both
 [checked and template generics](#checked-and-template-parameters). This provides
 a migration path for C++ template code:
@@ -2998,6 +3365,9 @@ we will include the ability where possible to use a Carbon generic from C++ as
 if it were a C++ template.
 
 ### Standard types
+
+> **Note:** This is provisional, no design for this has been through the
+> proposal process yet.
 
 The Carbon integer types, like `i32` and `u64`, are considered equal to the
 corresponding fixed-width integer types in C++, like `int32_t` and `uint64_t`,
@@ -3063,11 +3433,20 @@ The reverse operation is also possible using a proxy object implementing a C++
 abstract base class and holding a pointer to a type implementing the
 corresponding interface.
 
+> References:
+>
+> -   Proposal
+>     [#561: Basic classes: use cases, struct literals, struct types, and future work](https://github.com/carbon-language/carbon-lang/pull/561)
+> -   Proposal
+>     [#777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777)
+
 ### Enums
 
 > **TODO**
 
 ## Unfinished tales
+
+> **Note:** Everything in this section is provisional and forward looking.
 
 ### Safety
 

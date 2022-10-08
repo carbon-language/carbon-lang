@@ -64,6 +64,8 @@ message OperatorExpression {
     LessEq = 21;
     Greater = 22;
     GreaterEq = 23;
+    NotEq = 24;
+    Div = 25;
   }
   optional Operator op = 1;
   repeated Expression arguments = 2;
@@ -265,6 +267,12 @@ message WhileStatement {
   optional BlockStatement body = 2;
 }
 
+message ForStatement {
+  optional BindingPattern var_decl = 1;
+  optional Expression target = 2;
+  optional BlockStatement body = 3;
+}
+
 message MatchClause {
   optional Pattern pattern = 1;
   optional Statement statement = 2;
@@ -306,6 +314,7 @@ message Statement {
     AwaitStatement await_statement = 12;
     BreakStatement break_statement = 13;
     ContinueStatement continue_statement = 14;
+    ForStatement for_statement = 15;
   }
 }
 
@@ -329,6 +338,11 @@ message FunctionDeclaration {
   optional TuplePattern param_pattern = 4;
   optional ReturnTerm return_term = 5;
   optional BlockStatement body = 6;
+}
+
+message DestructorDeclaration {
+  optional Pattern me_pattern = 1;
+  optional BlockStatement body = 2;
 }
 
 message ClassDeclaration {
@@ -382,6 +396,20 @@ message AliasDeclaration {
   optional Expression target = 2;
 }
 
+// EXPERIMENTAL MIXIN FEATURE
+message MixinDeclaration {
+  optional string name = 1;
+  repeated Declaration members = 2;
+  // Type params not implemented yet
+  // optional TuplePattern params = 3;
+  optional GenericBinding self = 4;
+}
+
+// EXPERIMENTAL MIXIN FEATURE
+message MixDeclaration {
+  optional Expression mixin = 1;
+}
+
 message Declaration {
   oneof kind {
     FunctionDeclaration function = 1;
@@ -392,6 +420,9 @@ message Declaration {
     ImplDeclaration impl = 6;
     AliasDeclaration alias = 7;
     LetDeclaration let = 8;
+    MixinDeclaration mixin = 9;
+    MixDeclaration mix = 10;
+    DestructorDeclaration destructor = 11;
   }
 }
 

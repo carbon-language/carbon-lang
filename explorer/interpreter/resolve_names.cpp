@@ -33,6 +33,15 @@ static auto AddExposedNames(const Declaration& declaration,
       // Nothing to do here
       break;
     }
+    case DeclarationKind::DestructorDeclaration: {
+      // TODO: Remove this code. With this code, it is possible to create not
+      // useful carbon code.
+      //       Without this code, a Segfault is generated
+      auto& func = cast<DestructorDeclaration>(declaration);
+      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(
+          "destructor", &func, StaticScope::NameStatus::KnownButNotDeclared));
+      break;
+    }
     case DeclarationKind::FunctionDeclaration: {
       auto& func = cast<FunctionDeclaration>(declaration);
       CARBON_RETURN_IF_ERROR(enclosing_scope.Add(
@@ -44,6 +53,17 @@ static auto AddExposedNames(const Declaration& declaration,
       CARBON_RETURN_IF_ERROR(
           enclosing_scope.Add(class_decl.name(), &class_decl,
                               StaticScope::NameStatus::KnownButNotDeclared));
+      break;
+    }
+    case DeclarationKind::MixinDeclaration: {
+      auto& mixin_decl = cast<MixinDeclaration>(declaration);
+      CARBON_RETURN_IF_ERROR(
+          enclosing_scope.Add(mixin_decl.name(), &mixin_decl,
+                              StaticScope::NameStatus::KnownButNotDeclared));
+      break;
+    }
+    case DeclarationKind::MixDeclaration: {
+      // Nothing to do here
       break;
     }
     case DeclarationKind::ChoiceDeclaration: {
@@ -413,6 +433,18 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
       CARBON_RETURN_IF_ERROR(ResolveNames(while_stmt.body(), enclosing_scope));
       break;
     }
+    case StatementKind::For: {
+      StaticScope statement_scope;
+      statement_scope.AddParent(&enclosing_scope);
+      auto& for_stmt = cast<For>(statement);
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(for_stmt.loop_target(), statement_scope));
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(for_stmt.variable_declaration(), statement_scope));
+      CARBON_RETURN_IF_ERROR(ResolveNames(for_stmt.body(), statement_scope));
+
+      break;
+    }
     case StatementKind::Match: {
       auto& match = cast<Match>(statement);
       CARBON_RETURN_IF_ERROR(ResolveNames(match.expression(), enclosing_scope));
@@ -508,8 +540,9 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
           ResolveMemberNames(impl.members(), impl_scope, bodies));
       break;
     }
+    case DeclarationKind::DestructorDeclaration:
     case DeclarationKind::FunctionDeclaration: {
-      auto& function = cast<FunctionDeclaration>(declaration);
+      auto& function = cast<CallableDeclaration>(declaration);
       StaticScope function_scope;
       function_scope.AddParent(&enclosing_scope);
       enclosing_scope.MarkDeclared(function.name());
@@ -551,16 +584,42 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
           ResolveMemberNames(class_decl.members(), class_scope, bodies));
       break;
     }
+    case DeclarationKind::MixinDeclaration: {
+      auto& mixin_decl = cast<MixinDeclaration>(declaration);
+      StaticScope mixin_scope;
+      mixin_scope.AddParent(&enclosing_scope);
+      enclosing_scope.MarkDeclared(mixin_decl.name());
+      if (mixin_decl.params().has_value()) {
+        CARBON_RETURN_IF_ERROR(
+            ResolveNames(**mixin_decl.params(), mixin_scope));
+      }
+      enclosing_scope.MarkUsable(mixin_decl.name());
+      CARBON_RETURN_IF_ERROR(mixin_scope.Add("Self", mixin_decl.self()));
+      CARBON_RETURN_IF_ERROR(
+          ResolveMemberNames(mixin_decl.members(), mixin_scope, bodies));
+      break;
+    }
+    case DeclarationKind::MixDeclaration: {
+      auto& mix_decl = cast<MixDeclaration>(declaration);
+      CARBON_RETURN_IF_ERROR(ResolveNames(mix_decl.mixin(), enclosing_scope));
+      break;
+    }
     case DeclarationKind::ChoiceDeclaration: {
       auto& choice = cast<ChoiceDeclaration>(declaration);
+      StaticScope choice_scope;
+      choice_scope.AddParent(&enclosing_scope);
       enclosing_scope.MarkDeclared(choice.name());
+      if (choice.type_params().has_value()) {
+        CARBON_RETURN_IF_ERROR(
+            ResolveNames(**choice.type_params(), choice_scope));
+      }
       // Alternative names are never used unqualified, so we don't need to
       // add the alternatives to a scope, or introduce a new scope; we only
       // need to check for duplicates.
       std::set<std::string_view> alternative_names;
       for (Nonnull<AlternativeSignature*> alternative : choice.alternatives()) {
         CARBON_RETURN_IF_ERROR(
-            ResolveNames(alternative->signature(), enclosing_scope));
+            ResolveNames(alternative->signature(), choice_scope));
         if (!alternative_names.insert(alternative->name()).second) {
           return CompilationError(alternative->source_loc())
                  << "Duplicate name `" << alternative->name()

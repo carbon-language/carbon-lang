@@ -65,16 +65,14 @@ language are well explained, justified, and reviewed by the community.
     [the template](/proposals/scripts/template.md).
 
 -   Proposal PRs start in draft mode. When proposal PRs are ready, click on
-    ["Ready for review"](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request#marking-a-pull-request-as-ready-for-review),
-    and change the
-    [Proposals project column](https://github.com/carbon-language/carbon-lang/projects/1)
-    to "RFC". The project column should be available as a dropdown under
-    "Projects" on the PR.
+    ["Ready for review"](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request#marking-a-pull-request-as-ready-for-review).
+    This will:
 
-    -   This will result in a Carbon lead being assigned to review the PR.
+    -   Route the proposal to a Carbon lead for review.
 
-    -   This also signifies an RFC (request for comment) from the entire
-        community.
+    -   Send the proposal as a broad RFC to the community.
+
+    -   Add the "proposal rfc" label for tracking.
 
 -   Contributors are encouraged to react with a _thumbs-up_ to proposal PRs if
     they are generally interested and supportive of the high-level direction
@@ -139,19 +137,13 @@ issues for longer discussion:
 
 -   When ready, click on
     ["Ready for review"](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request#marking-a-pull-request-as-ready-for-review)
-    in GitHub, and change the
-    [Proposals project column](https://github.com/carbon-language/carbon-lang/projects/1)
-    to "RFC". The project column should be available as a dropdown under
-    "Projects" on the PR.
+    in GitHub. This will:
 
-    -   This will result in the PR being assigned to an individual for review.
+    -   Route the proposal to a Carbon lead for review.
 
-    -   This will also send the proposal as a broad RFC to the community.
+    -   Send the proposal as a broad RFC to the community.
 
-    -   While setting the "RFC" project column will also add the "RFC" label,
-        the reverse is not true. Unfortunately, this is currently a limit of
-        GitHub automation. Similarly, Adding the "RFC" project column currently
-        does not set "Ready for review".
+    -   Add the "proposal rfc" label for tracking.
 
 -   Address comments where you can and they make sense.
 
@@ -181,7 +173,7 @@ issues for longer discussion:
 #### Community
 
 -   We use the
-    [Proposals dashboard](https://github.com/carbon-language/carbon-lang/projects/1)
+    ["proposal rfc" label](https://github.com/carbon-language/carbon-lang/pulls?q=is%3Apr+is%3Aopen+label%3A%22proposal+rfc%22)
     to track proposals that are in RFC.
 
     -   Anyone that is interested can participate once a proposal is ready for
@@ -333,10 +325,9 @@ to the leads to resolve. You can even do this before sending the proposal for
 review. Even after it's resolved, an open question issue can be reopened if new
 information comes up during the RFC.
 
-When opening issues, add them to the
-["Issues for leads" project](https://github.com/carbon-language/carbon-lang/projects/2)
-under "Questions". Carbon leads use this to locate and prioritize the issue for
-resolution.
+When opening issues, label them as
+[leads questions](https://github.com/carbon-language/carbon-lang/issues?q=is%3Aissue+is%3Aopen+label%3A%22leads+question%22).
+Carbon leads use this to locate and prioritize the issue for resolution.
 
 ### Review and RFC on proposal PRs
 
@@ -409,10 +400,8 @@ forms both the primary discussion thread and where the leads signal how it is
 resolved. We use issues both to track that there is a specific resolution
 expected and that there may be dependencies.
 
-We add blocking issues to the
-["Issues for leads" project](https://github.com/carbon-language/carbon-lang/projects/2)
-under "Blocking issues". Carbon leads use this to locate and prioritize the
-issue for resolution.
+We label blocking issues as
+[leads questions](https://github.com/carbon-language/carbon-lang/issues?q=is%3Aissue+is%3Aopen+label%3A%22leads+question%22).
 
 These issues can be created at any time and by any one. Issues can be created
 while the proposal is being drafted in order to help inform specific content

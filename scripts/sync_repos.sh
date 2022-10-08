@@ -1,4 +1,4 @@
-#!/bin/bash -eux
+#!/usr/bin/env bash
 #
 # Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 # Exceptions. See /LICENSE for license information.
@@ -6,6 +6,8 @@
 #
 # Sync directories in the main Carbon repository into dedicated child
 # repositories to better match repository-oriented installing and tooling.
+
+set -eux
 
 ORIGIN_DIR="$PWD"
 COMMIT_SHA="$(git rev-parse --short $GITHUB_SHA)"

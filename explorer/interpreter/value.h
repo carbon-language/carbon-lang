@@ -39,6 +39,7 @@ class Value {
   enum class Kind {
     IntValue,
     FunctionValue,
+    DestructorValue,
     BoundMethodValue,
     PointerValue,
     LValue,
@@ -58,6 +59,7 @@ class Value {
     AutoType,
     StructType,
     NominalClassType,
+    MixinPseudoType,
     InterfaceType,
     ConstraintType,
     ChoiceType,
@@ -73,6 +75,7 @@ class Value {
     StringType,
     StringValue,
     TypeOfClassType,
+    TypeOfMixinPseudoType,
     TypeOfInterfaceType,
     TypeOfConstraintType,
     TypeOfChoiceType,
@@ -182,6 +185,24 @@ class FunctionValue : public Value {
  private:
   Nonnull<const FunctionDeclaration*> declaration_;
   Nonnull<const Bindings*> bindings_ = Bindings::None();
+};
+
+// A destructor value.
+class DestructorValue : public Value {
+ public:
+  explicit DestructorValue(Nonnull<const DestructorDeclaration*> declaration)
+      : Value(Kind::DestructorValue), declaration_(declaration) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::DestructorValue;
+  }
+
+  auto declaration() const -> const DestructorDeclaration& {
+    return *declaration_;
+  }
+
+ private:
+  Nonnull<const DestructorDeclaration*> declaration_;
 };
 
 // A bound method value. It includes the receiver object.
@@ -633,11 +654,47 @@ class NominalClassType : public Value {
   std::optional<Nonnull<const NominalClassType*>> base_;
 };
 
+class MixinPseudoType : public Value {
+ public:
+  explicit MixinPseudoType(Nonnull<const MixinDeclaration*> declaration)
+      : Value(Kind::MixinPseudoType), declaration_(declaration) {
+    CARBON_CHECK(!declaration->params().has_value())
+        << "missing arguments for parameterized mixin type";
+  }
+  explicit MixinPseudoType(Nonnull<const MixinDeclaration*> declaration,
+                           Nonnull<const Bindings*> bindings)
+      : Value(Kind::MixinPseudoType),
+        declaration_(declaration),
+        bindings_(bindings) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::MixinPseudoType;
+  }
+
+  auto declaration() const -> const MixinDeclaration& { return *declaration_; }
+
+  auto bindings() const -> const Bindings& { return *bindings_; }
+
+  auto args() const -> const BindingMap& { return bindings_->args(); }
+
+  auto witnesses() const -> const ImplWitnessMap& {
+    return bindings_->witnesses();
+  }
+
+  auto FindFunction(const std::string_view& name) const
+      -> std::optional<Nonnull<const FunctionValue*>>;
+
+ private:
+  Nonnull<const MixinDeclaration*> declaration_;
+  Nonnull<const Bindings*> bindings_ = Bindings::None();
+};
+
 // Returns the value of the function named `name` in this class, or
 // nullopt if there is no such function.
 auto FindFunction(std::string_view name,
                   llvm::ArrayRef<Nonnull<Declaration*>> members)
     -> std::optional<Nonnull<const FunctionValue*>>;
+
 // Returns the value of the function named `name` in this class and its
 // parents, or nullopt if there is no such function.
 auto LookupFunction(std::string_view name, const ClassDeclaration& class_decl)
@@ -646,11 +703,6 @@ auto LookupFunction(std::string_view name, const ClassDeclaration& class_decl)
 // Return the declaration of the member with the given name.
 auto FindMember(std::string_view name,
                 llvm::ArrayRef<Nonnull<Declaration*>> members)
-    -> std::optional<Nonnull<const Declaration*>>;
-
-// Return the declaration of the member with the given name, from the class and
-// its parents
-auto LookupMember(std::string_view name, const ClassDeclaration& class_decl)
     -> std::optional<Nonnull<const Declaration*>>;
 
 // An interface type.
@@ -853,25 +905,36 @@ class SymbolicWitness : public Witness {
 // A choice type.
 class ChoiceType : public Value {
  public:
-  ChoiceType(std::string name, std::vector<NamedValue> alternatives)
+  ChoiceType(Nonnull<const ChoiceDeclaration*> declaration,
+             Nonnull<const Bindings*> bindings)
       : Value(Kind::ChoiceType),
-        name_(std::move(name)),
-        alternatives_(std::move(alternatives)) {}
+        declaration_(declaration),
+        bindings_(bindings) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ChoiceType;
   }
 
-  auto name() const -> const std::string& { return name_; }
+  auto name() const -> const std::string& { return declaration_->name(); }
 
   // Returns the parameter types of the alternative with the given name,
   // or nullopt if no such alternative is present.
   auto FindAlternative(std::string_view name) const
       -> std::optional<Nonnull<const Value*>>;
 
+  auto bindings() const -> const Bindings& { return *bindings_; }
+
+  auto type_args() const -> const BindingMap& { return bindings_->args(); }
+
+  auto declaration() const -> const ChoiceDeclaration& { return *declaration_; }
+
+  auto IsParameterized() const -> bool {
+    return declaration_->type_params().has_value();
+  }
+
  private:
-  std::string name_;
-  std::vector<NamedValue> alternatives_;
+  Nonnull<const ChoiceDeclaration*> declaration_;
+  Nonnull<const Bindings*> bindings_;
 };
 
 // A continuation type.
@@ -1102,6 +1165,21 @@ class TypeOfClassType : public Value {
 
  private:
   Nonnull<const NominalClassType*> class_type_;
+};
+
+class TypeOfMixinPseudoType : public Value {
+ public:
+  explicit TypeOfMixinPseudoType(Nonnull<const MixinPseudoType*> class_type)
+      : Value(Kind::TypeOfMixinPseudoType), mixin_type_(class_type) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::TypeOfMixinPseudoType;
+  }
+
+  auto mixin_type() const -> const MixinPseudoType& { return *mixin_type_; }
+
+ private:
+  Nonnull<const MixinPseudoType*> mixin_type_;
 };
 
 class TypeOfInterfaceType : public Value {

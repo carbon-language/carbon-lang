@@ -117,6 +117,10 @@ static auto OperatorToCarbon(const Fuzzing::OperatorExpression& operator_expr,
       BinaryOperatorToCarbon(arg0, " * ", arg1, out);
       break;
 
+    case Fuzzing::OperatorExpression::Div:
+      BinaryOperatorToCarbon(arg0, " / ", arg1, out);
+      break;
+
     case Fuzzing::OperatorExpression::Mod:
       BinaryOperatorToCarbon(arg0, " % ", arg1, out);
       break;
@@ -188,6 +192,9 @@ static auto OperatorToCarbon(const Fuzzing::OperatorExpression& operator_expr,
 
     case Fuzzing::OperatorExpression::BitShiftRight:
       BinaryOperatorToCarbon(arg0, " >> ", arg1, out);
+      break;
+    case Fuzzing::OperatorExpression::NotEq:
+      BinaryOperatorToCarbon(arg0, " != ", arg1, out);
       break;
   }
   out << ")";
@@ -586,6 +593,16 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
       BlockStatementToCarbon(while_statement.body(), out);
       break;
     }
+    case Fuzzing::Statement::kForStatement: {
+      const auto& for_statement = statement.for_statement();
+      out << "for (";
+      BindingPatternToCarbon(for_statement.var_decl(), out);
+      out << " in ";
+      ExpressionToCarbon(for_statement.target(), out);
+      out << ") ";
+      BlockStatementToCarbon(for_statement.body(), out);
+      break;
+    }
 
     case Fuzzing::Statement::kMatch: {
       const auto& match = statement.match();
@@ -660,6 +677,27 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
       out << "var x: i32;";
       break;
 
+    case Fuzzing::Declaration::kDestructor: {
+      const auto& function = declaration.destructor();
+      out << "destructor";
+      llvm::ListSeparator sep;
+      out << "[";
+      if (function.has_me_pattern()) {
+        // This is a class method.
+        out << sep;
+        PatternToCarbon(function.me_pattern(), out);
+      }
+      out << "]";
+
+      // Body is optional.
+      if (function.has_body()) {
+        out << "\n";
+        BlockStatementToCarbon(function.body(), out);
+      } else {
+        out << ";";
+      }
+      break;
+    }
     case Fuzzing::Declaration::kFunction: {
       const auto& function = declaration.function();
       out << "fn ";
@@ -708,6 +746,36 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
         out << "\n";
       }
       out << "}";
+      break;
+    }
+
+    // EXPERIMENTAL MIXIN FEATURE
+    case Fuzzing::Declaration::kMixin: {
+      const auto& mixin_declaration = declaration.mixin();
+      out << "__mixin ";
+      IdentifierToCarbon(mixin_declaration.name(), out);
+
+      // type params are not implemented yet
+      // if (mixin_declaration.has_params()) {
+      //  TuplePatternToCarbon(mixin_declaration.params(), out);
+      //}
+
+      out << "{\n";
+      for (const auto& member : mixin_declaration.members()) {
+        DeclarationToCarbon(member, out);
+        out << "\n";
+      }
+      out << "}";
+      // TODO: need to handle interface.self()?
+      break;
+    }
+
+    // EXPERIMENTAL MIXIN FEATURE
+    case Fuzzing::Declaration::kMix: {
+      const auto& mix_declaration = declaration.mix();
+      out << "__mix ";
+      ExpressionToCarbon(mix_declaration.mixin(), out);
+      out << ";";
       break;
     }
 

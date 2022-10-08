@@ -12,6 +12,15 @@
 
 namespace Carbon::Semantics {
 
+// Type-safe storage of NodeStore indices.
+struct NodeStoreIndex {
+  explicit NodeStoreIndex(int32_t index) : index(index) {}
+
+  operator int32_t() const { return index; }
+
+  int32_t index;
+};
+
 // The standard structure for nodes.
 //
 // This flyweight pattern is used so that each subtype can be stored in its own
@@ -19,7 +28,7 @@ namespace Carbon::Semantics {
 // quantities are being created.
 class NodeRef {
  public:
-  NodeRef() : NodeRef(NodeKind::Invalid, -1) {}
+  NodeRef() : NodeRef(NodeKind::Invalid, NodeStoreIndex(-1)) {}
 
   auto kind() -> NodeKind { return kind_; }
 
@@ -27,12 +36,12 @@ class NodeRef {
   template <typename... StoredNodeT>
   friend class NodeStoreBase;
 
-  NodeRef(NodeKind kind, int32_t index) : kind_(kind), index_(index) {}
+  NodeRef(NodeKind kind, NodeStoreIndex index) : kind_(kind), index_(index) {}
 
   NodeKind kind_;
 
   // The index of the named entity within its list.
-  int32_t index_;
+  NodeStoreIndex index_;
 };
 
 }  // namespace Carbon::Semantics

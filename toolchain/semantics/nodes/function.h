@@ -19,7 +19,7 @@ class Function {
  public:
   static constexpr NodeKind Kind = NodeKind::Function;
 
-  Function(ParseTree::Node node, int32_t id,
+  Function(ParseTree::Node node, NodeId id,
            // llvm::SmallVector<PatternBinding, 0> params,
            // llvm::SmallVector<NodeRef, 0> return_type,
            llvm::SmallVector<NodeRef, 0> body)
@@ -29,19 +29,20 @@ class Function {
         // return_expr_(return_expr),
         body_(std::move(body)) {}
 
-  void Print(llvm::raw_ostream& out,
-             std::function<void(NodeRef)> print_node_ref) const {
-    out << "Function(%" << id_ << ", {";
-    llvm::ListSeparator sep(", ");
-    for (auto& node_ref : body_) {
-      out << sep;
-      print_node_ref(node_ref);
-    }
-    out << "})";
+  void Print(
+      llvm::raw_ostream& out, int indent,
+      std::function<void(int, llvm::ArrayRef<NodeRef>)> print_block) const {
+    out << "Function(\n";
+    int content_intent = indent + 4;
+    out.indent(content_intent);
+    out << id_ << ",\n";
+    out.indent(content_intent);
+    print_block(content_intent, body_);
+    out << ")";
   }
 
   auto node() const -> ParseTree::Node { return node_; }
-  auto id() const -> int32_t { return id_; }
+  auto id() const -> NodeId { return id_; }
   // auto params() const -> llvm::ArrayRef<PatternBinding> { return params_; }
   // auto return_expr() const -> llvm::Optional<Statement> { return
   // return_expr_; }
@@ -52,7 +53,7 @@ class Function {
   ParseTree::Node node_;
 
   // The function's ID.
-  int32_t id_;
+  NodeId id_;
 
   // Regular function parameters.
   // llvm::SmallVector<PatternBinding, 0> params_;

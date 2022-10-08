@@ -292,6 +292,13 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::BoolValue:
       out << (cast<BoolValue>(*this).value() ? "true" : "false");
       break;
+    case Value::Kind::DestructorValue: {
+      const DestructorValue& destructor = cast<DestructorValue>(*this);
+      out << "destructor [ ";
+      out << destructor.declaration().me_pattern();
+      out << " ]";
+      break;
+    }
     case Value::Kind::FunctionValue: {
       const FunctionValue& fun = cast<FunctionValue>(*this);
       out << "fun<" << fun.declaration().name() << ">";
@@ -401,6 +408,20 @@ void Value::Print(llvm::raw_ostream& out) const {
       }
       break;
     }
+    case Value::Kind::MixinPseudoType: {
+      const auto& mixin_type = cast<MixinPseudoType>(*this);
+      out << "mixin ";
+      PrintNameWithBindings(out, &mixin_type.declaration(), mixin_type.args());
+      if (!mixin_type.witnesses().empty()) {
+        out << " witnesses ";
+        llvm::ListSeparator sep;
+        for (const auto& [impl_bind, witness] : mixin_type.witnesses()) {
+          out << sep << *witness;
+        }
+      }
+      // TODO: print the import interface
+      break;
+    }
     case Value::Kind::InterfaceType: {
       const auto& iface_type = cast<InterfaceType>(*this);
       out << "interface ";
@@ -491,6 +512,14 @@ void Value::Print(llvm::raw_ostream& out) const {
       break;
     case Value::Kind::TypeOfClassType:
       out << "typeof(" << cast<TypeOfClassType>(*this).class_type() << ")";
+      break;
+    case Value::Kind::TypeOfMixinPseudoType:
+      out << "typeof("
+          << cast<TypeOfMixinPseudoType>(*this)
+                 .mixin_type()
+                 .declaration()
+                 .name()
+          << ")";
       break;
     case Value::Kind::TypeOfInterfaceType:
       out << "typeof("
@@ -715,6 +744,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     }
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
+    case Value::Kind::DestructorValue:
     case Value::Kind::FunctionValue:
     case Value::Kind::BoundMethodValue:
     case Value::Kind::StructValue:
@@ -732,6 +762,8 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     case Value::Kind::MemberName:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
+    case Value::Kind::MixinPseudoType:
+    case Value::Kind::TypeOfMixinPseudoType:
       CARBON_FATAL() << "TypeEqual used to compare non-type values\n"
                      << *t1 << "\n"
                      << *t2;
@@ -766,6 +798,8 @@ auto ValueStructurallyEqual(
       return body1.has_value() == body2.has_value() &&
              (!body1.has_value() || *body1 == *body2);
     }
+    case Value::Kind::DestructorValue:
+      return false;
     case Value::Kind::BoundMethodValue: {
       const auto& m1 = cast<BoundMethodValue>(*v1);
       const auto& m2 = cast<BoundMethodValue>(*v2);
@@ -831,6 +865,7 @@ auto ValueStructurallyEqual(
     case Value::Kind::AutoType:
     case Value::Kind::StructType:
     case Value::Kind::NominalClassType:
+    case Value::Kind::MixinPseudoType:
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
     case Value::Kind::ImplWitness:
@@ -840,6 +875,7 @@ auto ValueStructurallyEqual(
     case Value::Kind::VariableType:
     case Value::Kind::StringType:
     case Value::Kind::TypeOfClassType:
+    case Value::Kind::TypeOfMixinPseudoType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
@@ -938,7 +974,8 @@ auto ConstraintType::VisitEqualValues(
 
 auto ChoiceType::FindAlternative(std::string_view name) const
     -> std::optional<Nonnull<const Value*>> {
-  for (const NamedValue& alternative : alternatives_) {
+  std::vector<NamedValue> alternatives = declaration_->members();
+  for (const NamedValue& alternative : alternatives) {
     if (alternative.name == name) {
       return alternative.value;
     }
@@ -951,8 +988,45 @@ auto FindFunction(std::string_view name,
     -> std::optional<Nonnull<const FunctionValue*>> {
   for (const auto& member : members) {
     switch (member->kind()) {
+      case DeclarationKind::MixDeclaration: {
+        const auto& mix_decl = cast<MixDeclaration>(*member);
+        Nonnull<const MixinPseudoType*> mixin = &mix_decl.mixin_value();
+        const auto res = mixin->FindFunction(name);
+        if (res.has_value()) {
+          return res;
+        }
+        break;
+      }
       case DeclarationKind::FunctionDeclaration: {
-        const auto& fun = cast<FunctionDeclaration>(*member);
+        const auto& fun = cast<CallableDeclaration>(*member);
+        if (fun.name() == name) {
+          return &cast<FunctionValue>(**fun.constant_value());
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }
+  return std::nullopt;
+}
+
+// TODO: Find out a way to remove code duplication
+auto MixinPseudoType::FindFunction(const std::string_view& name) const
+    -> std::optional<Nonnull<const FunctionValue*>> {
+  for (const auto& member : declaration().members()) {
+    switch (member->kind()) {
+      case DeclarationKind::MixDeclaration: {
+        const auto& mix_decl = cast<MixDeclaration>(*member);
+        Nonnull<const MixinPseudoType*> mixin = &mix_decl.mixin_value();
+        const auto res = mixin->FindFunction(name);
+        if (res.has_value()) {
+          return res;
+        }
+        break;
+      }
+      case DeclarationKind::FunctionDeclaration: {
+        const auto& fun = cast<CallableDeclaration>(*member);
         if (fun.name() == name) {
           return &cast<FunctionValue>(**fun.constant_value());
         }
@@ -989,22 +1063,6 @@ auto FindMember(std::string_view name,
       if (*mem_name == name) {
         return member;
       }
-    }
-  }
-  return std::nullopt;
-}
-
-auto LookupMember(std::string_view name, const ClassDeclaration& class_decl)
-    -> std::optional<Nonnull<const Declaration*>> {
-  if (auto member = FindMember(name, class_decl.members());
-      member.has_value()) {
-    return member;
-  }
-  if (class_decl.base()) {
-    const auto* t_parent_class =
-        dyn_cast<TypeOfClassType>(&class_decl.base().value()->static_type());
-    if (t_parent_class) {
-      return LookupMember(name, t_parent_class->class_type().declaration());
     }
   }
   return std::nullopt;

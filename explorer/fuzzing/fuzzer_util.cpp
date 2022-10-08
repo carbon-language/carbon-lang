@@ -7,13 +7,13 @@
 #include <google/protobuf/text_format.h>
 
 #include "common/check.h"
+#include "common/error.h"
 #include "common/fuzzing/proto_to_carbon.h"
 #include "explorer/interpreter/exec_program.h"
 #include "explorer/syntax/parse.h"
 #include "explorer/syntax/prelude.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/raw_ostream.h"
 #include "tools/cpp/runfiles/runfiles.h"
 
 namespace Carbon {
@@ -69,27 +69,21 @@ auto ProtoToCarbonWithMain(const Fuzzing::CompilationUnit& compilation_unit)
   return Carbon::ProtoToCarbon(compilation_unit) + (has_main ? "" : EmptyMain);
 }
 
-void ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit) {
+auto ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit)
+    -> ErrorOr<int> {
   const std::string source = ProtoToCarbonWithMain(compilation_unit);
 
   Arena arena;
-  ErrorOr<AST> ast = ParseFromString(&arena, "Fuzzer.carbon", source,
-                                     /*parser_debug=*/false);
-  if (!ast.ok()) {
-    llvm::errs() << "Parsing failed: " << ast.error().message() << "\n";
-    return;
-  }
+  CARBON_ASSIGN_OR_RETURN(AST ast,
+                          ParseFromString(&arena, "Fuzzer.carbon", source,
+                                          /*parser_debug=*/false));
   const ErrorOr<std::string> prelude_path =
       Internal::GetRunfilesFile("carbon/explorer/data/prelude.carbon");
-  CARBON_CHECK(prelude_path.ok()) << prelude_path.error().message();
-  AddPrelude(*prelude_path, &arena, &ast->declarations);
-  const ErrorOr<int> result =
-      ExecProgram(&arena, *ast, /*trace_stream=*/std::nullopt);
-  if (!result.ok()) {
-    llvm::errs() << "Execution failed: " << result.error().message() << "\n";
-    return;
-  }
-  llvm::outs() << "Executed OK: " << *result << "\n";
+  // Can't do anything without a prelude, so it's a fatal error.
+  CARBON_CHECK(prelude_path.ok()) << prelude_path.error();
+
+  AddPrelude(*prelude_path, &arena, &ast.declarations);
+  return ExecProgram(&arena, ast, /*trace_stream=*/std::nullopt);
 }
 
 }  // namespace Carbon

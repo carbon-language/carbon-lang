@@ -55,6 +55,7 @@ CONTINUATION         "__continuation"
 CONTINUATION_TYPE    "__Continuation"
 CONTINUE             "continue"
 DEFAULT              "default"
+DESTRUCTOR           "destructor"
 DOUBLE_ARROW         "=>"
 ELSE                 "else"
 EQUAL                "="
@@ -64,6 +65,7 @@ EXTERNAL             "external"
 FALSE                "false"
 FN                   "fn"
 FN_TYPE              "__Fn"
+FOR                  "for"
 FORALL               "forall"
 GREATER              ">"
 GREATER_EQUAL        ">="
@@ -71,6 +73,7 @@ GREATER_GREATER      ">>"
 IF                   "if"
 IMPL                 "impl"
 IMPORT               "import"
+IN                   "in"
 INTERFACE            "interface"
 IS                   "is"
 LEFT_CURLY_BRACE     "{"
@@ -83,7 +86,10 @@ LET                  "let"
 LIBRARY              "library"
 MATCH                "match"
 MINUS                "-"
+MIX                  "__mix"
+MIXIN                "__mixin"
 NOT                  "not"
+NOT_EQUAL            "!="
 OR                   "or"
 PACKAGE              "package"
 PERCENT              "%"
@@ -155,6 +161,7 @@ operand_start         [(A-Za-z0-9_\"]
 {CONTINUATION}        { return CARBON_SIMPLE_TOKEN(CONTINUATION);        }
 {CONTINUE}            { return CARBON_SIMPLE_TOKEN(CONTINUE);            }
 {DEFAULT}             { return CARBON_SIMPLE_TOKEN(DEFAULT);             }
+{DESTRUCTOR}          { return CARBON_SIMPLE_TOKEN(DESTRUCTOR);          }
 {DOUBLE_ARROW}        { return CARBON_SIMPLE_TOKEN(DOUBLE_ARROW);        }
 {ELSE}                { return CARBON_SIMPLE_TOKEN(ELSE);                }
 {EQUAL_EQUAL}         { return CARBON_SIMPLE_TOKEN(EQUAL_EQUAL);         }
@@ -165,6 +172,7 @@ operand_start         [(A-Za-z0-9_\"]
 {FN_TYPE}             { return CARBON_SIMPLE_TOKEN(FN_TYPE);             }
 {FN}                  { return CARBON_SIMPLE_TOKEN(FN);                  }
 {FORALL}              { return CARBON_SIMPLE_TOKEN(FORALL);              }
+{FOR}                 { return CARBON_SIMPLE_TOKEN(FOR);                 }
 {GREATER_EQUAL}       { return CARBON_SIMPLE_TOKEN(GREATER_EQUAL);       }
 {GREATER_GREATER}     { return CARBON_SIMPLE_TOKEN(GREATER_GREATER);     }
 {GREATER}             { return CARBON_SIMPLE_TOKEN(GREATER);             }
@@ -172,6 +180,7 @@ operand_start         [(A-Za-z0-9_\"]
 {IMPL}                { return CARBON_SIMPLE_TOKEN(IMPL);                }
 {IMPORT}              { return CARBON_SIMPLE_TOKEN(IMPORT);              }
 {INTERFACE}           { return CARBON_SIMPLE_TOKEN(INTERFACE);           }
+{IN}                  { return CARBON_SIMPLE_TOKEN(IN);                  }
 {IS}                  { return CARBON_SIMPLE_TOKEN(IS);                  }
 {LEFT_CURLY_BRACE}    { return CARBON_SIMPLE_TOKEN(LEFT_CURLY_BRACE);    }
 {LEFT_PARENTHESIS}    { return CARBON_SIMPLE_TOKEN(LEFT_PARENTHESIS);    }
@@ -183,6 +192,9 @@ operand_start         [(A-Za-z0-9_\"]
 {LIBRARY}             { return CARBON_SIMPLE_TOKEN(LIBRARY);             }
 {MATCH}               { return CARBON_SIMPLE_TOKEN(MATCH);               }
 {MINUS}               { return CARBON_SIMPLE_TOKEN(MINUS);               }
+{MIXIN}               { return CARBON_SIMPLE_TOKEN(MIXIN);               }
+{MIX}                 { return CARBON_SIMPLE_TOKEN(MIX);                 }
+{NOT_EQUAL}           { return CARBON_SIMPLE_TOKEN(NOT_EQUAL);           }
 {NOT}                 { return CARBON_SIMPLE_TOKEN(NOT);                 }
 {OR}                  { return CARBON_SIMPLE_TOKEN(OR);                  }
 {PACKAGE}             { return CARBON_SIMPLE_TOKEN(PACKAGE);             }
