@@ -163,6 +163,7 @@ static auto ResolveUnformed(Nonnull<const Pattern*> pattern,
       }
       break;
     case PatternKind::GenericBinding:
+    case PatternKind::MixinSelf:
     case PatternKind::AlternativePattern:
     case PatternKind::ExpressionPattern:
     case PatternKind::AutoPattern:
@@ -294,6 +295,8 @@ static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
       break;
     }
     case DeclarationKind::ClassDeclaration:
+    case DeclarationKind::MixinDeclaration:
+    case DeclarationKind::MixDeclaration:
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ImplDeclaration:
     case DeclarationKind::ChoiceDeclaration:

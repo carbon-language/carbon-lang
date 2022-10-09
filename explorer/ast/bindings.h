@@ -12,11 +12,11 @@
 namespace Carbon {
 
 class ImplBinding;
-class GenericBinding;
+class TypeVariableBinding;
 class Value;
 
 using BindingMap =
-    std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>;
+    std::map<Nonnull<const TypeVariableBinding*>, Nonnull<const Value*>>;
 using ImplWitnessMap =
     std::map<Nonnull<const ImplBinding*>, Nonnull<const Value*>>;
 

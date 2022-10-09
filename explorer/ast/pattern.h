@@ -23,6 +23,8 @@ namespace Carbon {
 
 class Value;
 
+class MixinDeclaration;
+
 // Abstract base class of all AST nodes representing patterns.
 //
 // Pattern and its derived classes support LLVM-style RTTI, including
@@ -228,21 +230,20 @@ class TuplePattern : public Pattern {
   std::vector<Nonnull<Pattern*>> fields_;
 };
 
-class GenericBinding : public Pattern {
+class TypeVariableBinding : public Pattern {
  public:
   using ImplementsCarbonValueNode = void;
 
-  GenericBinding(SourceLocation source_loc, std::string name,
-                 Nonnull<Expression*> type)
-      : Pattern(AstNodeKind::GenericBinding, source_loc),
-        name_(std::move(name)),
-        type_(type) {}
+  TypeVariableBinding(const TypeVariableBinding&) = delete;
+  auto operator=(const TypeVariableBinding&) -> TypeVariableBinding& = delete;
+
+  //~TypeVariableBinding() override = 0;
 
   void Print(llvm::raw_ostream& out) const override;
   void PrintID(llvm::raw_ostream& out) const override;
 
   static auto classof(const AstNode* node) -> bool {
-    return InheritsFromGenericBinding(node->kind());
+    return InheritsFromTypeVariableBinding(node->kind());
   }
 
   auto name() const -> const std::string& { return name_; }
@@ -274,14 +275,16 @@ class GenericBinding : public Pattern {
   }
 
   // Return the original generic binding.
-  auto original() const -> Nonnull<const GenericBinding*> {
+  auto original() const -> Nonnull<const TypeVariableBinding*> {
     if (original_.has_value())
       return *original_;
     else
       return this;
   }
   // Set the original generic binding.
-  void set_original(Nonnull<const GenericBinding*> orig) { original_ = orig; }
+  void set_original(Nonnull<const TypeVariableBinding*> orig) {
+    original_ = orig;
+  }
 
   // Returns whether this binding has been named as a type within its own type
   // expression via `.Self`. Set by type-checking.
@@ -292,13 +295,50 @@ class GenericBinding : public Pattern {
   // via `.Self`. May only be called during type-checking.
   void set_named_as_type_via_dot_self() { named_as_type_via_dot_self_ = true; }
 
+ protected:
+  // Constructor that relays its child class arguments to Pattern
+  TypeVariableBinding(AstNodeKind kind, SourceLocation source_loc,
+                      std::string name, Nonnull<Expression*> type)
+      : Pattern(kind, source_loc), name_(name), type_(type) {}
+
  private:
   std::string name_;
   Nonnull<Expression*> type_;
   std::optional<Nonnull<const Value*>> symbolic_identity_;
   std::optional<Nonnull<const ImplBinding*>> impl_binding_;
-  std::optional<Nonnull<const GenericBinding*>> original_;
+  std::optional<Nonnull<const TypeVariableBinding*>> original_;
   bool named_as_type_via_dot_self_ = false;
+};
+
+class GenericBinding : public TypeVariableBinding {
+ public:
+  GenericBinding(SourceLocation source_loc, std::string name,
+                 Nonnull<Expression*> type)
+      : TypeVariableBinding(AstNodeKind::GenericBinding, source_loc, name,
+                            type) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromGenericBinding(node->kind());
+  }
+};
+
+class MixinSelf : public TypeVariableBinding {
+ public:
+  MixinSelf(SourceLocation source_loc, Nonnull<Expression*> type)
+      : TypeVariableBinding(AstNodeKind::MixinSelf, source_loc, "Self", type) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromMixinSelf(node->kind());
+  }
+
+  auto mixin() const -> Nonnull<const MixinDeclaration*> {
+    return mixin_.value();
+  }
+
+  void set_mixin(Nonnull<const MixinDeclaration*> mixin) { mixin_ = mixin; }
+
+ private:
+  std::optional<Nonnull<const MixinDeclaration*>> mixin_;
 };
 
 // Converts paren_contents to a Pattern, interpreting the parentheses as

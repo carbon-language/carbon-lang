@@ -29,8 +29,9 @@ void Pattern::Print(llvm::raw_ostream& out) const {
       out << binding.name() << ": " << binding.type();
       break;
     }
-    case PatternKind::GenericBinding: {
-      const auto& binding = cast<GenericBinding>(*this);
+    case PatternKind::GenericBinding:
+    case PatternKind::MixinSelf: {
+      const auto& binding = cast<TypeVariableBinding>(*this);
       out << binding.name() << ":! " << binding.type();
       break;
     }
@@ -72,8 +73,9 @@ void Pattern::PrintID(llvm::raw_ostream& out) const {
       out << binding.name();
       break;
     }
-    case PatternKind::GenericBinding: {
-      const auto& binding = cast<GenericBinding>(*this);
+    case PatternKind::GenericBinding:
+    case PatternKind::MixinSelf: {
+      const auto& binding = cast<TypeVariableBinding>(*this);
       out << binding.name();
       break;
     }
@@ -124,6 +126,7 @@ auto VisitNestedPatterns(const Pattern& pattern,
     case PatternKind::AutoPattern:
     case PatternKind::ExpressionPattern:
     case PatternKind::GenericBinding:
+    case PatternKind::MixinSelf:
       return true;
   }
 }

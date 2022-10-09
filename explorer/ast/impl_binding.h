@@ -31,7 +31,7 @@ class ImplBinding : public AstNode {
   using ImplementsCarbonValueNode = void;
 
   ImplBinding(SourceLocation source_loc,
-              Nonnull<const GenericBinding*> type_var,
+              Nonnull<const TypeVariableBinding*> type_var,
               Nonnull<const Value*> iface)
       : AstNode(AstNodeKind::ImplBinding, source_loc),
         type_var_(type_var),
@@ -44,7 +44,9 @@ class ImplBinding : public AstNode {
   void PrintID(llvm::raw_ostream& out) const override;
 
   // The binding for the type variable.
-  auto type_var() const -> Nonnull<const GenericBinding*> { return type_var_; }
+  auto type_var() const -> Nonnull<const TypeVariableBinding*> {
+    return type_var_;
+  }
   // The interface being implemented.
   auto interface() const -> Nonnull<const Value*> { return iface_; }
 
@@ -83,7 +85,7 @@ class ImplBinding : public AstNode {
   void set_original(Nonnull<const ImplBinding*> orig) { original_ = orig; }
 
  private:
-  Nonnull<const GenericBinding*> type_var_;
+  Nonnull<const TypeVariableBinding*> type_var_;
   Nonnull<const Value*> iface_;
   std::optional<Nonnull<const Value*>> symbolic_identity_;
   std::optional<Nonnull<const Value*>> static_type_;

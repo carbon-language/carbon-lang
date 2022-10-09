@@ -616,6 +616,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::LValue:
     case Value::Kind::BoolValue:
     case Value::Kind::NominalClassValue:
+    case Value::Kind::MixinPseudoType:
     case Value::Kind::AlternativeValue:
     case Value::Kind::UninitializedValue:
     case Value::Kind::IntType:
@@ -640,6 +641,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::StringType:
     case Value::Kind::StringValue:
     case Value::Kind::TypeOfClassType:
+    case Value::Kind::TypeOfMixinPseudoType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
@@ -1410,6 +1412,10 @@ auto Interpreter::StepPattern() -> ErrorOr<Success> {
       const auto& binding = cast<GenericBinding>(pattern);
       return todo_.FinishAction(arena_->New<VariableType>(&binding));
     }
+    case PatternKind::MixinSelf: {
+      const auto& binding = cast<MixinSelf>(pattern);
+      return todo_.FinishAction(arena_->New<VariableType>(&binding));
+    }
     case PatternKind::TuplePattern: {
       const auto& tuple = cast<TuplePattern>(pattern);
       if (act.pos() < static_cast<int>(tuple.fields().size())) {
@@ -1821,6 +1827,8 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
     }
     case DeclarationKind::FunctionDeclaration:
     case DeclarationKind::ClassDeclaration:
+    case DeclarationKind::MixinDeclaration:
+    case DeclarationKind::MixDeclaration:
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::AssociatedConstantDeclaration:
