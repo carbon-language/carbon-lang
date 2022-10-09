@@ -2685,6 +2685,7 @@ auto TypeChecker::TypeCheckTypeReturnDeclExp(
   CARBON_RETURN_IF_ERROR(TypeCheckExp(type_expression, impl_scope));
   Nonnull<const Value*> type;
   if (type_expression->kind() == ExpressionKind::CallExpression) {
+    llvm::outs()<< "T:"<< *type_expression<<"\n";
     type = &type_expression->static_type();
     switch (type->kind()) {
       case Value::Kind::IntValue:
@@ -2704,28 +2705,29 @@ auto TypeChecker::TypeCheckTypeReturnDeclExp(
       case Value::Kind::StringValue:
       case Value::Kind::AlternativeValue:
       case Value::Kind::AlternativeConstructorValue:
+      case Value::Kind::IntType:
+      case Value::Kind::BoolType:
+      case Value::Kind::StringType:
+      case Value::Kind::PointerType:
+      case Value::Kind::NominalClassType:
+      case Value::Kind::InterfaceType:
+      case Value::Kind::ChoiceType:
+      case Value::Kind::ConstraintType:
+      case Value::Kind::MixinPseudoType:
+      case Value::Kind::TypeType:
         break;
+      case Value::Kind::AutoType:
       case Value::Kind::ImplWitness:
       case Value::Kind::BindingWitness:
       case Value::Kind::ConstraintWitness:
       case Value::Kind::ConstraintImplWitness:
-      case Value::Kind::IntType:
-      case Value::Kind::BoolType:
-      case Value::Kind::TypeType:
       case Value::Kind::FunctionType:
-      case Value::Kind::PointerType:
-      case Value::Kind::AutoType:
       case Value::Kind::StructType:
-      case Value::Kind::NominalClassType:
-      case Value::Kind::MixinPseudoType:
-      case Value::Kind::InterfaceType:
-      case Value::Kind::ConstraintType:
       case Value::Kind::ContinuationType:
       case Value::Kind::VariableType:
       case Value::Kind::AssociatedConstant:
       case Value::Kind::ParameterizedEntityName:
       case Value::Kind::MemberName:
-      case Value::Kind::StringType:
       case Value::Kind::TypeOfClassType:
       case Value::Kind::TypeOfMixinPseudoType:
       case Value::Kind::TypeOfInterfaceType:
@@ -2733,10 +2735,10 @@ auto TypeChecker::TypeCheckTypeReturnDeclExp(
       case Value::Kind::TypeOfParameterizedEntityName:
       case Value::Kind::TypeOfMemberName:
       case Value::Kind::StaticArrayType:
-      case Value::Kind::ChoiceType:
       case Value::Kind::TypeOfChoiceType:
-        CARBON_ASSIGN_OR_RETURN(
-            type, InterpExp(type_expression, arena_, trace_stream_));
+          CARBON_ASSIGN_OR_RETURN(
+              type, InterpExp(type_expression, arena_, trace_stream_));
+
         break;
     }
   } else {
