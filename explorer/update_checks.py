@@ -27,7 +27,9 @@ _AUTOUPDATE_MARKER = "// AUTOUPDATE: "
 _NOAUTOUPDATE_MARKER = "// NOAUTOUPDATE"
 
 # A regexp matching lines that contain line number references.
-_LINE_NUMBER_RE = r"((?:COMPILATION|RUNTIME) ERROR: [^:]*:)([1-9][0-9]*)(:.*)"
+_LINE_NUMBER_RE = (
+    r"((?:SYNTAX|COMPILATION|RUNTIME) ERROR: [^:]*:)([1-9][0-9]*)(:.*)"
+)
 
 
 def _get_tests() -> Set[str]:
@@ -91,7 +93,7 @@ class SimpleCheckLine(CheckLine):
 
     def format(self, **kwargs: Any) -> str:
         if self.expected:
-            return f"{self.indent}// CHECK: {self.expected}\n"
+            return f"{self.indent}// CHECK:{self.expected}\n"
         else:
             return f"{self.indent}// CHECK-EMPTY:\n"
 
@@ -116,7 +118,7 @@ class CheckLineWithLineNumber(CheckLine):
         delta = line_number_remap[self.line_number] - output_line_number
         # We use `:+d` here to produce `LINE-n` or `LINE+n` as appropriate.
         return (
-            f"{self.indent}// CHECK: {self.before}[[@LINE{delta:+d}]]"
+            f"{self.indent}// CHECK:{self.before}[[@LINE{delta:+d}]]"
             + f"{self.after}\n"
         )
 

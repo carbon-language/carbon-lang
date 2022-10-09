@@ -963,7 +963,7 @@ class Point {
   var y: f32;
 }
 
-fn Point.CreateXAxis(x: f32) -> Point;
+fn Point.CreateXAxis(x: f32) -> Point {
   // ✅ Allowed: `Point` type is complete.
   // Members of `Point` like `Create` are in scope.
   return Create(x, 0);
