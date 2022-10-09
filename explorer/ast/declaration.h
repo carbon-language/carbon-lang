@@ -500,12 +500,27 @@ class InterfaceDeclaration : public Declaration {
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
+  // Get the constraint type corresponding to this interface, or nullopt if
+  // this interface is incomplete.
+  auto constraint_type() const
+      -> std::optional<Nonnull<const ConstraintType*>> {
+    return constraint_type_;
+  }
+
+  // Set the constraint type corresponding to this interface. Can only be set
+  // once, by type-checking.
+  void set_constraint_type(Nonnull<const ConstraintType*> constraint_type) {
+    CARBON_CHECK(!constraint_type_);
+    constraint_type_ = constraint_type;
+  }
+
  private:
   std::string name_;
   std::optional<Nonnull<TuplePattern*>> params_;
   Nonnull<SelfDeclaration*> self_type_;
   Nonnull<GenericBinding*> self_;
   std::vector<Nonnull<Declaration*>> members_;
+  std::optional<Nonnull<const ConstraintType*>> constraint_type_;
 };
 
 class AssociatedConstantDeclaration : public Declaration {

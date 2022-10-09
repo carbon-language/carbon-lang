@@ -45,6 +45,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
     if (auto* assoc_const = dyn_cast_or_null<AssociatedConstantDeclaration>(
             field.member().declaration().value_or(nullptr))) {
       CARBON_CHECK(field.interface()) << "have witness but no interface";
+      // TODO: Use witness to find the value of the constant.
       return arena->New<AssociatedConstant>(v, *field.interface(), assoc_const,
                                             witness);
     }

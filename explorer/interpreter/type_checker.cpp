@@ -59,7 +59,7 @@ struct TypeChecker::SingleStepEqualityContext : public EqualityContext {
     if (auto* assoc = dyn_cast<AssociatedConstant>(value)) {
       // Perform an impl lookup to see if we can resolve this constant.
       // The source location doesn't matter, we're discarding the diagnostics.
-      if (auto* impl_witness = dyn_cast<ImplWitness>(assoc)) {
+      if (auto* impl_witness = dyn_cast<ImplWitness>(&assoc->witness())) {
         // Instantiate the impl to find the concrete constraint it implements.
         Nonnull<const ConstraintType*> constraint =
             impl_witness->declaration().constraint_type();
@@ -79,7 +79,8 @@ struct TypeChecker::SingleStepEqualityContext : public EqualityContext {
         if (type_checker_->trace_stream_) {
           **type_checker_->trace_stream_
               << "Could not resolve associated constant " << *assoc << ": "
-              << "value  depends on a generic parameter\n";
+              << "witness " << assoc->witness()
+              << " depends on a generic parameter\n";
         }
       }
     }
@@ -1134,9 +1135,8 @@ class TypeChecker::SubstitutedGenericBindings {
       return std::nullopt;
     }
     Nonnull<ImplBinding*> impl_binding =
-        type_checker_->arena_->New<ImplBinding>(new_binding->source_loc(),
-                                                new_binding,
-                                                &new_binding->static_type());
+        type_checker_->arena_->New<ImplBinding>(
+            new_binding->source_loc(), new_binding, &new_binding->static_type());
     impl_binding->set_original(old_binding->impl_binding().value());
     auto* witness = type_checker_->arena_->New<BindingWitness>(impl_binding);
     impl_binding->set_symbolic_identity(witness);
@@ -1207,6 +1207,10 @@ auto TypeChecker::Substitute(const Bindings& bindings,
     case Value::Kind::VariableType: {
       auto it = bindings.args().find(&cast<VariableType>(*type).binding());
       if (it == bindings.args().end()) {
+        if (trace_stream_) {
+          **trace_stream_ << "substitution: no value for binding " << *type
+                          << ", leaving alone\n";
+        }
         return type;
       } else {
         return it->second;
@@ -1326,6 +1330,10 @@ auto TypeChecker::Substitute(const Bindings& bindings,
       auto it =
           bindings.witnesses().find(cast<BindingWitness>(*type).binding());
       if (it == bindings.witnesses().end()) {
+        if (trace_stream_) {
+          **trace_stream_ << "substitution: no value for binding " << *type
+                          << ", leaving alone\n";
+        }
         return type;
       } else {
         return it->second;
@@ -1398,6 +1406,14 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
                             const ImplScope& impl_scope,
                             SourceLocation source_loc) const
     -> std::optional<Nonnull<const Witness*>> {
+  // Avoid cluttering the trace output with matches that could obviously never
+  // have worked.
+  // TODO: Eventually, ImplScope should filter by type structure before calling
+  // into here.
+  if (impl.interface->declaration().name() != iface.declaration().name()) {
+    return std::nullopt;
+  }
+
   if (trace_stream_) {
     **trace_stream_ << "MatchImpl: looking for " << *impl_type << " as "
                     << iface << "\n";
@@ -1459,11 +1475,8 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
     return impl.witness;
   }
 
-  // Only ImplWitnesses can be parameterized.
-  const ImplWitness* impl_witness = cast<ImplWitness>(impl.witness);
-  return arena_->New<ImplWitness>(
-      &impl_witness->declaration(),
-      arena_->New<Bindings>(std::move(deduced_args), std::move(impls)));
+  return cast<Witness>(Substitute(
+      Bindings(std::move(deduced_args), std::move(impls)), impl.witness));
 }
 
 auto TypeChecker::MakeConstraintWitness(
@@ -1504,56 +1517,21 @@ auto TypeChecker::SatisfyImpls(
 auto TypeChecker::MakeConstraintForInterface(
     SourceLocation source_loc, Nonnull<const InterfaceType*> iface_type)
     -> ErrorOr<Nonnull<const ConstraintType*>> {
-  // TODO: Produce an error if the interface is declared but not defined.
-  ConstraintTypeBuilder builder(arena_, source_loc);
-  int index = builder.AddImplConstraint(
-      {.type = builder.GetSelfType(), .interface = iface_type});
-  builder.AddLookupContext({.context = iface_type});
-
-  // We may have additional constraints implied by the interface's members.
-  for (const Declaration* d : iface_type->declaration().members()) {
-    // TODO: Add constraints for any extended interfaces.
-
-    // An associated constant may impose constraints. Typically these will be
-    // impl constraints, but others are permitted, such as
-    //   interface X {
-    //     let T:! Y where .Self == i32;
-    //   }
-    // We translate X into a ConstraintType with `.Self.T is Y` as an impl
-    // constraint and `.Self.T == i32` as an equality constraint.
-    if (auto* assoc = dyn_cast<AssociatedConstantDeclaration>(d)) {
-      // Substitute into the declared type to find the type to use for the
-      // associated constant.
-      Bindings bindings = iface_type->bindings();
-      bindings.Add(
-          iface_type->declaration().self(), builder.GetSelfType(),
-          MakeConstraintWitnessAccess(builder.GetSelfWitness(), index));
-      Nonnull<const Value*> constraint =
-          Substitute(bindings, &assoc->static_type());
-
-      // Form a ConstraintType for the constraint.
-      if (auto* interface_type = dyn_cast<InterfaceType>(constraint)) {
-        CARBON_ASSIGN_OR_RETURN(
-            constraint, MakeConstraintForInterface(source_loc, interface_type));
-      }
-      if (!isa<ConstraintType>(constraint)) {
-        // No constraint to collect from this associated constant.
-        continue;
-      }
-
-      auto* assoc_self = arena_->New<AssociatedConstant>(
-          builder.GetSelfType(), iface_type, assoc,
-          MakeConstraintWitnessAccess(builder.GetSelfWitness(), index));
-
-      // Combine the associated constant's constraints into the constraints we
-      // build for the interface.
-      CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
-          *this, cast<ConstraintType>(constraint), assoc_self,
-          builder.GetSelfWitness(), Bindings(), /*add_lookup_contexts=*/false));
-    }
+  auto constraint_type = iface_type->declaration().constraint_type();
+  if (!constraint_type) {
+    return ProgramError(source_loc)
+           << "use of " << *iface_type << " before it is completely defined";
   }
 
-  // TODO: Consider caching this.
+  if (iface_type->bindings().empty()) {
+    return *constraint_type;
+  }
+
+  ConstraintTypeBuilder builder(arena_, source_loc);
+  CARBON_RETURN_IF_ERROR(
+      builder.AddAndSubstitute(*this, *constraint_type, builder.GetSelfType(),
+                               builder.GetSelfWitness(), iface_type->bindings(),
+                               /*add_lookup_contexts=*/true));
   return std::move(builder).Build(arena_);
 }
 
@@ -2017,8 +1995,12 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           // variable or witness for this associated constant, not everything in
           // the impl scope, to find the witness.
           CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const ConstraintType*> iface_constraint,
+              MakeConstraintForInterface(access.source_loc(),
+                                         result.interface));
+          CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Witness*> witness,
-              impl_scope.Resolve(result.interface, &object_type,
+              impl_scope.Resolve(iface_constraint, &object_type,
                                  e->source_loc(), *this));
 
           Bindings bindings = result.interface->bindings();
@@ -2033,6 +2015,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           access.set_is_type_access(!IsInstanceMember(access.member()));
           access.set_static_type(inst_member_type);
 
+          // TODO: This is just a ConstraintImplWitness into the
+          // iface_constraint. If we can compute the right index, we can avoid
+          // re-resolving it.
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Witness*> impl,
               impl_scope.Resolve(result.interface, &object_type,
@@ -2062,6 +2047,13 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             RewriteMemberAccess(&access, *replacement);
             return Success();
           }
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const ConstraintType*> iface_constraint,
+              MakeConstraintForInterface(access.source_loc(),
+                                         result.interface));
+          CARBON_ASSIGN_OR_RETURN(Nonnull<const Witness*> witness,
+                                  impl_scope.Resolve(iface_constraint, type,
+                                                     e->source_loc(), *this));
           CARBON_ASSIGN_OR_RETURN(Nonnull<const Witness*> impl,
                                   impl_scope.Resolve(result.interface, type,
                                                      e->source_loc(), *this));
@@ -2083,7 +2075,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             // associated constant.
             const Value& member_type = result.member->static_type();
             Bindings bindings = result.interface->bindings();
-            bindings.Add(result.interface->declaration().self(), type, impl);
+            bindings.Add(result.interface->declaration().self(), type, witness);
             Nonnull<const Value*> inst_member_type =
                 Substitute(bindings, &member_type);
             access.set_static_type(inst_member_type);
@@ -2247,6 +2239,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       access.set_is_type_access(has_instance && !is_instance_member);
 
       // Perform associated constant rewriting and impl selection if necessary.
+      std::optional<Nonnull<const Witness*>> witness;
       if (std::optional<Nonnull<const InterfaceType*>> iface =
               member_name.interface()) {
         // If we're naming an associated constant, we might have a rewrite for
@@ -2257,6 +2250,12 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           return Success();
         }
 
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<const ConstraintType*> iface_constraint,
+            MakeConstraintForInterface(access.source_loc(), *iface));
+        CARBON_ASSIGN_OR_RETURN(witness,
+                                impl_scope.Resolve(iface_constraint, *base_type,
+                                                   e->source_loc(), *this));
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Witness*> impl,
             impl_scope.Resolve(*iface, *base_type, e->source_loc(), *this));
@@ -2274,8 +2273,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         if (member_name.interface()) {
           Nonnull<const InterfaceType*> iface_type = *member_name.interface();
           Bindings bindings = iface_type->bindings();
-          bindings.Add(iface_type->declaration().self(), *base_type,
-                       access.impl());
+          bindings.Add(iface_type->declaration().self(), *base_type, witness);
           return Substitute(bindings, member_type);
         }
         if (auto* class_type = dyn_cast<NominalClassType>(base_type.value())) {
@@ -3227,7 +3225,11 @@ auto TypeChecker::TypeCheckPattern(
       SetValue(&binding, val);
 
       // Create an impl binding if we have a constraint.
-      if (isa<InterfaceType, ConstraintType>(type)) {
+      if (auto* iface_type = dyn_cast<InterfaceType>(type)) {
+        CARBON_ASSIGN_OR_RETURN(
+            type, MakeConstraintForInterface(binding.source_loc(), iface_type));
+      }
+      if (auto* constraint = dyn_cast<ConstraintType>(type)) {
         Nonnull<ImplBinding*> impl_binding = arena_->New<ImplBinding>(
             binding.source_loc(), &binding, std::nullopt);
         auto* witness = arena_->New<BindingWitness>(impl_binding);
@@ -3237,13 +3239,11 @@ auto TypeChecker::TypeCheckPattern(
         // Substitute the VariableType as `.Self` of the constraint to form the
         // resolved type of the binding. Eg, `T:! X where .Self is Y` resolves
         // to `T:! <constraint T is X and T is Y>`.
-        if (auto* constraint = dyn_cast<ConstraintType>(type)) {
-          ConstraintTypeBuilder builder(arena_, binding.source_loc());
-          CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
-              *this, constraint, val, witness, Bindings(),
-              /*add_lookup_contexts=*/true));
-          type = std::move(builder).Build(arena_);
-        }
+        ConstraintTypeBuilder builder(arena_, binding.source_loc());
+        CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
+            *this, constraint, val, witness, Bindings(),
+            /*add_lookup_contexts=*/true));
+        type = std::move(builder).Build(arena_);
         impl_binding->set_interface(type);
 
         BringImplIntoScope(impl_binding, impl_scope);
@@ -4056,21 +4056,51 @@ auto TypeChecker::DeclareInterfaceDeclaration(
   self_type->set_static_type(arena_->New<TypeType>());
   self_type->set_constant_value(iface_type);
 
-  // Process the Self parameter.
-  CARBON_RETURN_IF_ERROR(TypeCheckPattern(iface_decl->self(), std::nullopt,
-                                          iface_scope, ValueCategory::Let));
-  auto* self_witness = cast<Witness>(
-      iface_decl->self()->impl_binding().value()->symbolic_identity().value());
+  // Build a constraint corresponding to this interface.
+  ConstraintTypeBuilder builder(arena_, iface_decl->self());
+  iface_decl->self()->set_static_type(iface_type);
+
+  // The impl constraint says only that the direct members of the interface are
+  // available. For any indirect constraints, we need to add separate entries
+  // to the constraint type. This ensures that all indirect constraints are
+  // lifted to the top level so they can be accessed directly and resolved
+  // independently if necessary.
+  int index = builder.AddImplConstraint(
+      {.type = builder.GetSelfType(), .interface = iface_type});
+  builder.AddLookupContext({.context = iface_type});
+  auto* impl_witness =
+      MakeConstraintWitnessAccess(builder.GetSelfWitness(), index);
 
   ScopeInfo iface_scope_info = ScopeInfo::ForNonClassScope(&iface_scope);
   for (Nonnull<Declaration*> m : iface_decl->members()) {
     CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, iface_scope_info));
 
     if (auto* assoc = dyn_cast<AssociatedConstantDeclaration>(m)) {
-      assoc->binding().set_symbolic_identity(arena_->New<AssociatedConstant>(
-          &iface_decl->self()->value(), iface_type, assoc, self_witness));
+      auto* assoc_value = arena_->New<AssociatedConstant>(
+          &iface_decl->self()->value(), iface_type, assoc, impl_witness);
+      assoc->binding().set_symbolic_identity(assoc_value);
+
+      // The type specified for the associated constant becomes a constraint
+      // for the interface: `let X:! Interface` adds a `Self.X is Interface`
+      // constraint that `impl`s must satisfy and users of the interface can
+      // rely on.
+      Nonnull<const Value*> constraint = &assoc->static_type();
+      if (auto* interface_type = dyn_cast<InterfaceType>(constraint)) {
+        CARBON_ASSIGN_OR_RETURN(
+            constraint,
+            MakeConstraintForInterface(assoc->source_loc(), interface_type));
+      }
+      if (auto* constraint_type = dyn_cast<ConstraintType>(constraint)) {
+        CARBON_RETURN_IF_ERROR(
+            builder.AddAndSubstitute(*this, constraint_type, assoc_value,
+                                     builder.GetSelfWitness(), Bindings(),
+                                     /*add_lookup_contexts=*/false));
+      }
     }
   }
+
+  iface_decl->set_constraint_type(std::move(builder).Build(arena_));
+
   if (trace_stream_) {
     **trace_stream_ << "** finished declaring interface " << iface_decl->name()
                     << "\n";
@@ -4130,6 +4160,7 @@ auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
                                       Nonnull<const ImplDeclaration*> impl_decl,
                                       Nonnull<const Value*> self_type,
                                       Nonnull<const Witness*> self_witness,
+                                      Nonnull<const Witness*> iface_witness,
                                       const ImplScope& impl_scope)
     -> ErrorOr<Success> {
   const auto& iface_decl = iface_type->declaration();
@@ -4194,7 +4225,7 @@ auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
       }
 
       Bindings bindings = iface_type->bindings();
-      bindings.Add(iface_decl.self(), self_type, self_witness);
+      bindings.Add(iface_decl.self(), self_type, iface_witness);
       Nonnull<const Value*> iface_mem_type =
           Substitute(bindings, &m->static_type());
       // TODO: How should the signature in the implementation be permitted
@@ -4209,8 +4240,8 @@ auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
 
 auto TypeChecker::CheckAndAddImplBindings(
     Nonnull<const ImplDeclaration*> impl_decl, Nonnull<const Value*> impl_type,
-    Nonnull<const Witness*> self_witness, const ScopeInfo& scope_info)
-    -> ErrorOr<Success> {
+    Nonnull<const Witness*> self_witness, Nonnull<const Witness*> impl_witness,
+    const ScopeInfo& scope_info) -> ErrorOr<Success> {
   // The deduced bindings are the parameters for all enclosing classes followed
   // by any deduced parameters written on the `impl` declaration itself.
   std::vector<Nonnull<const GenericBinding*>> deduced_bindings =
@@ -4237,8 +4268,27 @@ auto TypeChecker::CheckAndAddImplBindings(
       BringAssociatedConstantsIntoScope(constraint, impl_type, iface_type,
                                         iface_scope);
 
-      CARBON_RETURN_IF_ERROR(CheckImplIsComplete(
-          iface_type, impl_decl, impl_type, self_witness, iface_scope));
+      // Compute a witness that the implementing type implements this interface
+      // by resolving the interface constraint in a context where this `impl`
+      // is used for it. We don't actually want the whole `impl` to be in
+      // scope, though, because it could be partially specialized.
+      Nonnull<const Witness*> iface_witness;
+      {
+        ImplScope impl_scope;
+        impl_scope.AddParent(&iface_scope);
+        impl_scope.Add(impl_decl->constraint_type(), impl_type, impl_witness,
+                       *this);
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<const ConstraintType*> iface_constraint,
+            MakeConstraintForInterface(impl_decl->source_loc(), iface_type));
+        CARBON_ASSIGN_OR_RETURN(
+            iface_witness, impl_scope.Resolve(iface_constraint, impl_type,
+                                              impl_decl->source_loc(), *this));
+      }
+
+      CARBON_RETURN_IF_ERROR(CheckImplIsComplete(iface_type, impl_decl,
+                                                 impl_type, self_witness,
+                                                 iface_witness, iface_scope));
 
       // TODO: We should do this either before checking any interface or after
       // checking all of them, so that the order of lookup contexts doesn't
@@ -4283,41 +4333,58 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   // processing the interface, in case the interface expression uses `Self`.
   Nonnull<SelfDeclaration*> self = impl_decl->self();
   self->set_constant_value(impl_type_value);
-  // Static type set in call to `TypeCheckExp(...)` above.
   self->set_static_type(&impl_decl->impl_type()->static_type());
 
   // Check and interpret the interface.
   CARBON_ASSIGN_OR_RETURN(
-      Nonnull<const Value*> constraint_type,
+      Nonnull<const Value*> implemented_type,
       TypeCheckTypeExp(&impl_decl->interface(), impl_scope));
-  if (auto* iface_type = dyn_cast<InterfaceType>(constraint_type)) {
+  if (auto* iface_type = dyn_cast<InterfaceType>(implemented_type)) {
     CARBON_ASSIGN_OR_RETURN(
-        constraint_type, MakeConstraintForInterface(
+        implemented_type, MakeConstraintForInterface(
                              impl_decl->interface().source_loc(), iface_type));
   }
-  if (!isa<ConstraintType>(constraint_type)) {
+  if (!isa<ConstraintType>(implemented_type)) {
     return ProgramError(impl_decl->interface().source_loc())
            << "expected constraint after `as`, found value of type "
-           << *constraint_type;
+           << *implemented_type;
   }
 
-  // Build the self-witness. This is the witness used to demonstrate that this
-  // impl implements its constraint.
+  // Substitute the given type for `.Self` to form the resolved constraint that
+  // this `impl` implements.
+  Nonnull<const ConstraintType*> constraint_type;
+  {
+    ConstraintTypeBuilder builder(arena_, impl_decl->source_loc());
+    CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
+        *this, cast<ConstraintType>(implemented_type), impl_type_value,
+        builder.GetSelfWitness(), Bindings(),
+        /*add_lookup_contexts=*/true));
+    constraint_type = std::move(builder).Build(arena_);
+    impl_decl->set_constraint_type(constraint_type);
+  }
+
+  // Build the self witness. This is the witness used to demonstrate that
+  // this impl implements its lookup contexts.
   auto* self_witness = arena_->New<ImplWitness>(
       impl_decl,
       Bindings::SymbolicIdentity(arena_, impl_decl->deduced_parameters()));
 
-  // Substitute the given type for `.Self` to form the resolved constraint that
-  // this `impl` implements.
+  // Compute a witness that the impl implements its constraint.
+  Nonnull<const Witness*> impl_witness;
   {
-    ConstraintTypeBuilder builder(arena_, impl_decl->source_loc());
-    CARBON_RETURN_IF_ERROR(
-        builder.AddAndSubstitute(*this, cast<ConstraintType>(constraint_type),
-                                 impl_type_value, self_witness, Bindings(),
-                                 /*add_lookup_contexts=*/true));
-    auto* resolved = std::move(builder).Build(arena_);
-    impl_decl->set_constraint_type(cast<ConstraintType>(resolved));
-    constraint_type = resolved;
+    ImplScope self_impl_scope;
+    self_impl_scope.AddParent(&impl_scope);
+    // For each interface we're going to implement, this impl is the witness
+    // that that interface is implemented.
+    for (auto lookup : constraint_type->lookup_contexts()) {
+      if (auto* iface_type = dyn_cast<InterfaceType>(lookup.context)) {
+        self_impl_scope.Add(iface_type, impl_type_value, self_witness, *this);
+      }
+    }
+    // Ensure that's enough for our interface to be satisfied.
+    CARBON_ASSIGN_OR_RETURN(
+        impl_witness, self_impl_scope.Resolve(constraint_type, impl_type_value,
+                                              impl_decl->source_loc(), *this));
   }
 
   // Declare the impl members.
@@ -4327,15 +4394,8 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   }
 
   // Create the implied impl bindings.
-  CARBON_RETURN_IF_ERROR(CheckAndAddImplBindings(impl_decl, impl_type_value,
-                                                 self_witness, scope_info));
-
-  // Check the constraint is satisfied by the `impl`s we just created. This
-  // serves a couple of purposes:
-  //  - It ensures that any constraints in a `ConstraintType` are met.
-  //  - It rejects `impl`s that immediately introduce ambiguity.
-  CARBON_RETURN_IF_ERROR(impl_scope.Resolve(constraint_type, impl_type_value,
-                                            impl_decl->source_loc(), *this));
+  CARBON_RETURN_IF_ERROR(CheckAndAddImplBindings(
+      impl_decl, impl_type_value, self_witness, impl_witness, scope_info));
 
   if (trace_stream_) {
     **trace_stream_ << "** finished declaring impl " << *impl_decl->impl_type()

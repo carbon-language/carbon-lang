@@ -931,6 +931,8 @@ class ConstraintImplWitness : public Witness {
   // element.
   static auto Make(Nonnull<Arena*> arena, Nonnull<const Witness*> witness,
                    int index) -> Nonnull<const Witness*> {
+    CARBON_CHECK(!llvm::isa<ImplWitness>(witness))
+        << "impl witness has no components to access";
     if (auto* constraint_witness = llvm::dyn_cast<ConstraintWitness>(witness)) {
       return constraint_witness->witnesses()[index];
     }

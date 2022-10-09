@@ -222,6 +222,7 @@ class TypeChecker {
                            Nonnull<const ImplDeclaration*> impl_decl,
                            Nonnull<const Value*> self_type,
                            Nonnull<const Witness*> self_witness,
+                           Nonnull<const Witness*> iface_witness,
                            const ImplScope& impl_scope) -> ErrorOr<Success>;
 
   // Check that an `impl` declaration satisfies its constraints and add the
@@ -229,6 +230,7 @@ class TypeChecker {
   auto CheckAndAddImplBindings(Nonnull<const ImplDeclaration*> impl_decl,
                                Nonnull<const Value*> impl_type,
                                Nonnull<const Witness*> self_witness,
+                               Nonnull<const Witness*> impl_witness,
                                const ScopeInfo& scope_info) -> ErrorOr<Success>;
 
   auto DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
