@@ -288,8 +288,7 @@ class DeclarationAction : public Action {
 class CleanupAction : public Action {
  public:
   explicit CleanupAction(RuntimeScope scope)
-      : Action(Kind::CleanUpAction),
-        locals_count_(scope.locals().size()){
+      : Action(Kind::CleanUpAction), locals_count_(scope.locals().size()) {
     StartScope(std::move(scope));
   }
 
@@ -305,21 +304,25 @@ class CleanupAction : public Action {
 
 class DestroyAction : public Action {
  public:
-  explicit DestroyAction(Nonnull<const LValue*> lvalue,std::optional<Nonnull<const Value*>> value,std::optional<Nonnull<const Declaration*>> declaration)
-    :Action(Kind::DestroyAction), lvalue_(lvalue),declaration_(declaration),value_(value){
-  }
+  explicit DestroyAction(Nonnull<const LValue*> lvalue,
+                         std::optional<Nonnull<const Value*>> value,
+                         std::optional<Nonnull<const Declaration*>> declaration)
+      : Action(Kind::DestroyAction),
+        lvalue_(lvalue),
+        declaration_(declaration),
+        value_(value) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::DestroyAction;
   }
 
-  auto declaration() const -> std::optional<Nonnull<const Declaration*>> { return declaration_; }
+  auto declaration() const -> std::optional<Nonnull<const Declaration*>> {
+    return declaration_;
+  }
 
   auto lvalue() const -> Nonnull<const LValue*> { return lvalue_; }
 
-  auto value() const -> std::optional<Nonnull<const Value*>> {
-    return value_;
-  }
+  auto value() const -> std::optional<Nonnull<const Value*>> { return value_; }
 
  private:
   Nonnull<const LValue*> lvalue_;

@@ -98,10 +98,7 @@ auto RuntimeScope::Capture(
   return result;
 }
 
-
-void RuntimeScope::UpdateKind(RuntimeScope::Kind kind) {
-  kind_ = kind;
-}
+void RuntimeScope::UpdateKind(RuntimeScope::Kind kind) { kind_ = kind; }
 
 void Action::Print(llvm::raw_ostream& out) const {
   switch (kind()) {

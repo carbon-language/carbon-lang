@@ -5,12 +5,12 @@
 // RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
 // RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: DESTRUCTOR A 1
-// CHECK: DESTRUCTOR B 2
-// CHECK: DESTRUCTOR A 3
-// CHECK: DESTRUCTOR A 4
-// CHECK: DESTRUCTOR A 5
-// CHECK: result: 1
+// CHECK:DESTRUCTOR A 1
+// CHECK:DESTRUCTOR B 2
+// CHECK:DESTRUCTOR A 3
+// CHECK:DESTRUCTOR A 4
+// CHECK:DESTRUCTOR A 5
+// CHECK:result: 1
 
 package ExplorerTest api;
 
@@ -29,7 +29,7 @@ class B{
         Print("DESTRUCTOR B {0}",me.n);
     }
     fn Create(x: i32) -> B{
-       return {.n = x, .a1 = A.Create(3),.a2 = A.Create(4) };
+       return {.n = x, .a1 = A.Create(4),.a2 = A.Create(3) };
     }
     var a1: A;
     var n: i32;
