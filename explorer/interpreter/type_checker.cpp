@@ -1065,6 +1065,28 @@ class TypeChecker::ConstraintTypeBuilder {
   // Converts the builder into a ConstraintType. Note that this consumes the
   // builder.
   auto Build(Nonnull<Arena*> arena_) && -> Nonnull<const ConstraintType*> {
+    // Rewrite `Self.X is Y` to `Replacement is Y` if we have a rewrite for
+    // `Self.X`.
+    // TODO: Properly apply rewrites throughout all the constraints. Check for
+    // cycles. This is just a very short-term hack.
+    for (auto& impl_constraint : impl_constraints_) {
+      bool performed_rewrite;
+      do {
+        performed_rewrite = false;
+        if (auto* assoc = dyn_cast<AssociatedConstant>(impl_constraint.type)) {
+          if (ValueEqual(&assoc->base(), GetSelfType(), std::nullopt)) {
+            for (const auto& rewrite : rewrite_constraints_) {
+              if (&assoc->constant() == rewrite.constant &&
+                  ValueEqual(&assoc->interface(), rewrite.interface, std::nullopt)) {
+                impl_constraint.type = &rewrite.replacement->value();
+                performed_rewrite = true;
+              }
+            }
+          }
+        }
+      } while (performed_rewrite);
+    }
+
     // Create the new type.
     auto* result = arena_->New<ConstraintType>(
         self_binding_, std::move(impl_constraints_),

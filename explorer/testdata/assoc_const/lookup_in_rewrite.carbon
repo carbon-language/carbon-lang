@@ -34,6 +34,13 @@ interface Maker {
   fn Make() -> Result;
 }
 
+external impl i32 as Hashable {
+  fn Hash[me: Self]() -> i32 {
+    Print("i32.Hash");
+    return me;
+  }
+}
+
 fn F[T:! Maker where .Result = i32](x: T) -> i32 {
   // OK, can treat T.Make() as an i32.
   return T.Make() + 1;
