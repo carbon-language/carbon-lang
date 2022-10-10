@@ -134,8 +134,8 @@ void SemanticsIRFactory::Build() {
         PopFromStack(parse_tree(), node_stack, subtree_size);
 
         // TODO: At this point, it should be possible to forward-declare the
-        // function so that it can be called from its code block. For now, we just
-        // assemble the semantic function to associate the body.
+        // function so that it can be called from its code block. For now, we
+        // just assemble the semantic function to associate the body.
         llvm::SmallVector<Semantics::NodeRef> sem_ir;
 
         auto function_id = next_id();
