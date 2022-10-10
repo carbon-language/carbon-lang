@@ -1221,7 +1221,7 @@ TEST_F(ParseTreeTest, Printing) {
           "[",
           "{node_index: 5, kind: 'FunctionDeclaration', text: 'fn', "
           "subtree_size: 6, children: [",
-          "  {node_index: 3, kind: 'FunctionSignature', text: ';', "
+          "  {node_index: 3, kind: 'FunctionSignature', text: 'fn', "
           "subtree_size: 4, children: [",
           "    {node_index: 0, kind: 'DeclaredName', text: 'F'},",
           "    {node_index: 2, kind: 'ParameterList', text: '(', subtree_size: "
@@ -1257,7 +1257,7 @@ TEST_F(ParseTreeTest, PrintingAsYAML) {
   auto function_declaration_children = Yaml::SequenceValue{
       Yaml::MappingValue{{"node_index", "3"},
                          {"kind", "FunctionSignature"},
-                         {"text", ";"},
+                         {"text", "fn"},
                          {"subtree_size", "4"},
                          {"children", function_signature_children}},
       Yaml::MappingValue{

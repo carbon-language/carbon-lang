@@ -19,7 +19,7 @@ class Function {
  public:
   static constexpr NodeKind Kind = NodeKind::Function;
 
-  Function(ParseTree::Node node, NodeId id, llvm::SmallVector<NodeRef, 0> body)
+  Function(ParseTree::Node node, NodeId id, llvm::SmallVector<NodeRef> body)
       : node_(node), id_(id), body_(body) {}
 
   void Print(
@@ -46,7 +46,7 @@ class Function {
   // The function's ID.
   NodeId id_;
 
-  llvm::SmallVector<NodeRef, 0> body_;
+  llvm::SmallVector<NodeRef> body_;
 };
 
 }  // namespace Carbon::Semantics

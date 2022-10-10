@@ -25,8 +25,10 @@ auto SemanticsIRFactory::Build(const TokenizedBuffer& tokens,
 
 // An entry in the stack for traversing the ParseTree.
 // TODO: This is badly structured, and a redesign may be able to get rid of
-// SemanticsIR. Need to keep thinking about this, but for now this setup allows
-// for test consistency.
+// the need for `sem_ir`. Need to keep thinking about this, but for now
+// this setup allows for test consistency.
+// Alternately, maybe think about if we can group semantics for multiple nodes
+// so that we aren't constantly copying/reallocating vectors of NodeRefs.
 struct TraversalStackEntry {
   explicit TraversalStackEntry(ParseTree::Node parse_node)
       : parse_node(parse_node) {}
@@ -43,7 +45,7 @@ struct TraversalStackEntry {
         result_id(result_id) {}
 
   ParseTree::Node parse_node;
-  llvm::SmallVector<Semantics::NodeRef, 0> sem_ir;
+  llvm::SmallVector<Semantics::NodeRef> sem_ir;
   llvm::Optional<Semantics::NodeId> result_id;
 };
 
@@ -65,11 +67,16 @@ static auto GetBinaryOp(TokenKind kind) -> Semantics::BinaryOperator::Op {
   }
 }
 
-// bazel run //toolchain/driver:carbon dump semantics-ir
-// testdata/function/basic.carbon
+static auto PopFromStack(const ParseTree& parse_tree,
+                         llvm::SmallVector<TraversalStackEntry>& node_stack,
+                         int& subtree_size) -> void {
+  subtree_size -= parse_tree.node_subtree_size(node_stack.back().parse_node);
+  CARBON_CHECK(subtree_size >= 1);
+  node_stack.pop_back();
+}
+
 void SemanticsIRFactory::Build() {
-  // Silence "unused" build warning.
-  llvm::SmallVector<TraversalStackEntry, 0> node_stack;
+  llvm::SmallVector<TraversalStackEntry> node_stack;
   auto range = parse_tree().postorder();
   for (auto it = range.begin();; ++it) {
     auto parse_node = *it;
@@ -77,14 +84,13 @@ void SemanticsIRFactory::Build() {
     switch (auto parse_kind = parse_tree().node_kind(parse_node)) {
       case ParseNodeKind::CodeBlock(): {
         // Just merges children.
-        llvm::SmallVector<Semantics::NodeRef, 0> sem_ir;
+        llvm::SmallVector<Semantics::NodeRef> sem_ir;
         while (subtree_size > 1) {
-          subtree_size -=
-              parse_tree().node_subtree_size(node_stack.back().parse_node);
           sem_ir.insert(sem_ir.begin(), node_stack.back().sem_ir.begin(),
                         node_stack.back().sem_ir.end());
-          node_stack.pop_back();
+          PopFromStack(parse_tree(), node_stack, subtree_size);
         }
+        CARBON_CHECK(subtree_size == 1);
         node_stack.push_back(
             TraversalStackEntry(parse_node, std::move(sem_ir)));
         break;
@@ -97,26 +103,22 @@ void SemanticsIRFactory::Build() {
       }
       case ParseNodeKind::FunctionDeclaration(): {
         // Currently we only have definitions, so this is a CodeBlock.
-        subtree_size -=
-            parse_tree().node_subtree_size(node_stack.back().parse_node);
-        llvm::SmallVector<Semantics::NodeRef, 0> body =
+        llvm::SmallVector<Semantics::NodeRef> body =
             std::move(node_stack.back().sem_ir);
-        node_stack.pop_back();
+        PopFromStack(parse_tree(), node_stack, subtree_size);
 
         // Next is the FunctionSignature.
-        subtree_size -=
-            parse_tree().node_subtree_size(node_stack.back().parse_node);
-        CARBON_CHECK(subtree_size == 1);
-        llvm::SmallVector<Semantics::NodeRef, 0> sig =
+        llvm::SmallVector<Semantics::NodeRef> sig =
             std::move(node_stack.back().sem_ir);
-        node_stack.pop_back();
+        PopFromStack(parse_tree(), node_stack, subtree_size);
+        CARBON_CHECK(subtree_size == 1);
 
         // TODO: This replacement is in particular why I want to change
         // the IR setup now, but for now I want to just produce output that
         // satisfies tests without changes.
         auto orig_function = semantics_.nodes_.Get<Semantics::Function>(sig[0]);
         auto orig_set_name = semantics_.nodes_.Get<Semantics::SetName>(sig[1]);
-        llvm::SmallVector<Semantics::NodeRef, 0> sem_ir;
+        llvm::SmallVector<Semantics::NodeRef> sem_ir;
         auto function_id = next_id();
         sem_ir.push_back(semantics_.nodes_.Store(
             Semantics::Function(orig_function.node(), function_id, body)));
@@ -129,26 +131,22 @@ void SemanticsIRFactory::Build() {
       }
       case ParseNodeKind::FunctionSignature(): {
         // TODO: Skip over the parameter list for now.
-        subtree_size -=
-            parse_tree().node_subtree_size(node_stack.back().parse_node);
-        node_stack.pop_back();
+        PopFromStack(parse_tree(), node_stack, subtree_size);
 
         // TODO: At this point, it should be possible to forward-declare the
         // function so that it can be called a code block. For now, we just
         // assemble the semantic function to associate the body.
-        llvm::SmallVector<Semantics::NodeRef, 0> sem_ir;
+        llvm::SmallVector<Semantics::NodeRef> sem_ir;
 
         auto function_id = next_id();
         sem_ir.push_back(semantics_.nodes_.Store(
             Semantics::Function(parse_node, function_id, {})));
 
-        CARBON_CHECK(subtree_size == 2)
-            << "Should be 2 for DeclaredName and FunctionSignature, was "
-            << subtree_size;
         auto name_node = node_stack.back().parse_node;
         sem_ir.push_back(semantics_.nodes_.Store(Semantics::SetName(
             name_node, parse_tree().GetNodeText(name_node), function_id)));
-        node_stack.pop_back();
+        PopFromStack(parse_tree(), node_stack, subtree_size);
+        CARBON_CHECK(subtree_size == 1);
 
         node_stack.push_back(
             TraversalStackEntry(parse_node, std::move(sem_ir)));
@@ -168,21 +166,17 @@ void SemanticsIRFactory::Build() {
         return;
       }
       case ParseNodeKind::InfixOperator(): {
-        llvm::SmallVector<Semantics::NodeRef, 0> sem_ir;
+        llvm::SmallVector<Semantics::NodeRef> sem_ir;
 
-        subtree_size -=
-            parse_tree().node_subtree_size(node_stack.back().parse_node);
         sem_ir.insert(sem_ir.begin(), node_stack.back().sem_ir.begin(),
                       node_stack.back().sem_ir.end());
         auto rhs_id = *node_stack.back().result_id;
-        node_stack.pop_back();
+        PopFromStack(parse_tree(), node_stack, subtree_size);
 
-        subtree_size -=
-            parse_tree().node_subtree_size(node_stack.back().parse_node);
         sem_ir.insert(sem_ir.begin(), node_stack.back().sem_ir.begin(),
                       node_stack.back().sem_ir.end());
         auto lhs_id = *node_stack.back().result_id;
-        node_stack.pop_back();
+        PopFromStack(parse_tree(), node_stack, subtree_size);
 
         CARBON_CHECK(subtree_size == 1);
 
@@ -202,7 +196,7 @@ void SemanticsIRFactory::Build() {
         RequireNodeEmpty(parse_node, parse_kind, subtree_size);
         auto literal_id = next_id();
 
-        llvm::SmallVector<Semantics::NodeRef, 0> sem_ir;
+        llvm::SmallVector<Semantics::NodeRef> sem_ir;
         auto token = parse_tree().node_token(parse_node);
         switch (auto token_kind = tokens_->GetKind(token)) {
           case TokenKind::IntegerLiteral(): {
@@ -213,8 +207,6 @@ void SemanticsIRFactory::Build() {
           default:
             CARBON_FATAL() << "Unhandled kind: " << token_kind.Name();
         }
-        // TODO: This should transform into a usable parameter list. For now
-        // it's unused and only stored so that node counts match.
         node_stack.push_back(
             TraversalStackEntry(parse_node, std::move(sem_ir), literal_id));
         break;
@@ -230,12 +222,11 @@ void SemanticsIRFactory::Build() {
                               Semantics::Return(parse_node, llvm::None))}));
         } else {
           // Return should only ever have one expression child.
-          CARBON_CHECK(parse_tree().node_subtree_size(
-                           node_stack.back().parse_node) == subtree_size - 1);
-          llvm::SmallVector<Semantics::NodeRef, 0> sem_ir =
+          llvm::SmallVector<Semantics::NodeRef> sem_ir =
               std::move(node_stack.back().sem_ir);
           Semantics::NodeId result_id = *node_stack.back().result_id;
-          node_stack.pop_back();
+          PopFromStack(parse_tree(), node_stack, subtree_size);
+          CARBON_CHECK(subtree_size == 1);
           sem_ir.push_back(semantics_.nodes_.Store(
               Semantics::Return(parse_node, result_id)));
           node_stack.push_back(
@@ -247,10 +238,9 @@ void SemanticsIRFactory::Build() {
         // TODO: This should transform into a usable parameter list. For now
         // it's unused and only stored so that node counts match.
         while (subtree_size > 1) {
-          subtree_size -=
-              parse_tree().node_subtree_size(node_stack.back().parse_node);
-          node_stack.pop_back();
+          PopFromStack(parse_tree(), node_stack, subtree_size);
         }
+        CARBON_CHECK(subtree_size == 1);
         node_stack.push_back(TraversalStackEntry(parse_node));
         break;
       }

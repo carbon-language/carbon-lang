@@ -95,10 +95,19 @@ auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
                               TokenDiagnosticEmitter& emitter) -> ParseTree {
   ParseTree tree(tokens);
 
-  // We expect to have a 1:1 correspondence between tokens and tree nodes, so
-  // reserve the space we expect to need here to avoid allocation and copying
-  // overhead.
-  tree.node_impls_.reserve(tokens.size());
+  // Reserve the space we expect to need for nodes in order to avoid allocation
+  // and copying overhead. While most ParseTree nodes correspond to tokens,
+  // there will be a small number of virtual nodes added.
+  //
+  // This could use a heuristic to guess, but we believe this calculation will
+  // create negligible overhead and avoiding reallocation will pay off.
+  int tree_size = tokens.size();
+  for (const auto& token : tokens.tokens()) {
+    if (tokens.GetKind(token) == TokenKind::Fn()) {
+      ++tree_size;
+    }
+  }
+  tree.node_impls_.reserve(tree_size);
 
   Parser parser(tree, tokens, emitter);
   while (!parser.AtEndOfFile()) {
@@ -111,6 +120,9 @@ auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
 
   parser.AddLeafNode(ParseNodeKind::FileEnd(), *parser.position_);
 
+  CARBON_CHECK(tree.has_errors() || tree.size() == tree_size)
+      << "Failed to correctly calculate size: expected " << tree_size
+      << ", got " << tree.size();
   CARBON_CHECK(tree.Verify()) << "Parse tree built but does not verify!";
   return tree;
 }
@@ -400,9 +412,6 @@ auto ParseTree::Parser::ParseFunctionSignature() -> bool {
         return AddNode(ParseNodeKind::ParameterList(), open_paren, start,
                        has_errors);
       });
-  if (!params.has_value()) {
-    return false;
-  }
 
   auto start_return_type = GetSubtreeStartPosition();
   if (auto arrow = ConsumeIf(TokenKind::MinusGreater())) {
@@ -414,7 +423,7 @@ auto ParseTree::Parser::ParseFunctionSignature() -> bool {
     }
   }
 
-  return true;
+  return params.has_value();
 }
 
 auto ParseTree::Parser::ParseCodeBlock() -> llvm::Optional<Node> {
@@ -576,12 +585,12 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
   if (!ParseFunctionSignature()) {
     // Don't try to parse more of the function declaration, but consume a
     // declaration ending semicolon if found (without going to a new line).
-    AddNode(ParseNodeKind::FunctionSignature(), *position_, start,
+    AddNode(ParseNodeKind::FunctionSignature(), function_intro_token, start,
             /*has_error=*/true);
     return add_error_function_node(true);
   }
 
-  AddNode(ParseNodeKind::FunctionSignature(), *position_, start);
+  AddNode(ParseNodeKind::FunctionSignature(), function_intro_token, start);
 
   switch (NextTokenKind()) {
     case TokenKind::OpenCurlyBrace(): {
