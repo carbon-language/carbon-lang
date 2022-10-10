@@ -161,7 +161,7 @@ class Interpreter {
   auto CallDestructor(Nonnull<const DestructorDeclaration*> fun,
                       Nonnull<const Value*> receiver) -> ErrorOr<Success>;
 
-  auto DestroyTupleElement(Nonnull<const TupleValue*> tuple,std::size_t pos) -> std::optional<ErrorOr<Success>>;
+  auto DestroyTupleElement(Nonnull<const LValue*> lvalue, Nonnull<const TupleValue*> tuple,std::size_t pos) -> std::optional<ErrorOr<Success>>;
 
   void PrintState(llvm::raw_ostream& out);
 
@@ -1942,7 +1942,7 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
   }
 }
 
-auto Interpreter::DestroyTupleElement(Nonnull<const TupleValue*> tuple,std::size_t pos) -> std::optional<ErrorOr<Success>>{
+auto Interpreter::DestroyTupleElement(Nonnull<const LValue*> lvalue,Nonnull<const TupleValue*> tuple,std::size_t pos) -> std::optional<ErrorOr<Success>>{
   const auto& item = tuple->elements()[pos];
   if (const auto* class_obj = dyn_cast<NominalClassValue>(item)) {
     const auto& class_type = cast<NominalClassType>(class_obj->type());
@@ -1952,7 +1952,7 @@ auto Interpreter::DestroyTupleElement(Nonnull<const TupleValue*> tuple,std::size
     }
   }
   if( item->kind() == Value::Kind::TupleValue ) {
-    return todo_.Spawn(std::make_unique<DestroyAction>(item,std::nullopt));
+    return todo_.Spawn(std::make_unique<DestroyAction>(lvalue,item,std::nullopt));
   }
   return std::nullopt;
 }
@@ -1960,12 +1960,11 @@ auto Interpreter::DestroyTupleElement(Nonnull<const TupleValue*> tuple,std::size
 auto Interpreter::StepDestroy() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   DestroyAction& destroy_act = cast<DestroyAction>(act);
-  SourceLocation source_loc("destructor", 1);
   if(act.pos() == 0) {
     if(destroy_act.value()){
       if (const auto* tuple = dyn_cast<TupleValue>(*destroy_act.value())) {
         if (tuple->elements().size() > 0) {
-          auto res = DestroyTupleElement(tuple,tuple->elements().size() - 1);
+          auto res = DestroyTupleElement(destroy_act.lvalue(),tuple,tuple->elements().size() - 1);
           if(res){
             return std::move(*res);
           }
@@ -1978,25 +1977,6 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
           return CallDestructor(*class_dec.destructor(), class_obj);
         }
       }
-    }else if (!destroy_act.declaration()) {
-      auto value = heap_.Read(destroy_act.lvalue()->address(), source_loc);
-      if (value.ok()) {
-        if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
-          const auto& class_type = cast<NominalClassType>(class_obj->type());
-          const auto& class_dec = class_type.declaration();
-          if (class_dec.destructor().has_value()) {
-            return CallDestructor(*class_dec.destructor(), class_obj);
-          }
-        }
-        if (const auto* tuple = dyn_cast<TupleValue>(*value)) {
-          if (tuple->elements().size() > 0) {
-            auto res = DestroyTupleElement(tuple,tuple->elements().size() - 1);
-            if(res){
-              return std::move(*res);
-            }
-          }
-        }
-      }
     }
   }
   if(destroy_act.declaration()){
@@ -2004,44 +1984,29 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
     return Success();
   }
   if(act.pos() > 0 ){
-    if( destroy_act.value() ){
-      if (const auto* tuple = dyn_cast<TupleValue>(*destroy_act.value())) {
-        if (tuple->elements().size() > 0) {
-          int index = tuple->elements().size() - act.pos()-1;
-          if(index >= 0) {
-            auto res = DestroyTupleElement(tuple,index);
-            if(res){
-              return std::move(*res);
-            }
-          }
-        }
-      }
-      todo_.Pop();
-      return Success();
-    }
-    auto value = heap_.Read(destroy_act.lvalue()->address(), source_loc);
-    if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
+    if (const auto* class_obj = dyn_cast<NominalClassValue>(*destroy_act.value())) {
       const auto& class_type = cast<NominalClassType>(class_obj->type());
       const auto& class_dec = class_type.declaration();
-      int index = act.pos()-1;
+      int index = act.pos() - 1;
       if(index >= 0 && index < static_cast<int>(class_dec.members().size())) {
         const auto& member = class_dec.members()[index];
         if (const auto* var = dyn_cast<VariableDeclaration>(member)) {
           Address object = destroy_act.lvalue()->address();
           Address mem = object.SubobjectAddress(Member(var));
+          SourceLocation source_loc("destructor", 1);
           auto v = heap_.Read(mem, source_loc);
           return todo_.Spawn(
-              std::make_unique<DestroyAction>(*v, member));
+              std::make_unique<DestroyAction>(destroy_act.lvalue(),*v,member));
         }
         return todo_.Spawn(
-            std::make_unique<DestroyAction>(destroy_act.lvalue(), member));
+            std::make_unique<DestroyAction>(destroy_act.lvalue(), std::nullopt,member));
       }
     }
-    if (const auto* tuple = dyn_cast<TupleValue>(*value)) {
+    if (const auto* tuple = dyn_cast<TupleValue>(*destroy_act.value())) {
       if (tuple->elements().size() > 0) {
         int index = tuple->elements().size() - act.pos()-1;
         if(index >= 0) {
-          auto res = DestroyTupleElement(tuple,index);
+          auto res = DestroyTupleElement(destroy_act.lvalue(),tuple,index);
           if(res){
             return std::move(*res);
           }
@@ -2059,7 +2024,11 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
   if(act.scope()->kind() != RuntimeScope::Kind::Method ){
     if(act.pos() < cleanup.locals_count()){
       auto lvalue = act.scope()->locals()[cleanup.locals_count() - act.pos() - 1];
-      return todo_.Spawn(std::make_unique<DestroyAction>(lvalue,std::nullopt));
+      SourceLocation source_loc("destructor", 1);
+      auto value = heap_.Read(lvalue->address(), source_loc);
+      if(value.ok()) {
+        return todo_.Spawn(std::make_unique<DestroyAction>(lvalue, *value, std::nullopt));
+      }
     }
   }
   todo_.Pop();

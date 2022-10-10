@@ -305,10 +305,9 @@ class CleanupAction : public Action {
 
 class DestroyAction : public Action {
  public:
-  explicit DestroyAction(Nonnull<const LValue*> lvalue, std::optional<Nonnull<const Declaration*>> declaration)
-      : Action(Kind::DestroyAction), lvalue_(lvalue),declaration_(declaration),value_(std::nullopt){}
-  explicit DestroyAction(std::optional<Nonnull<const Value*>> value, std::optional<Nonnull<const Declaration*>> declaration)
-      : Action(Kind::DestroyAction), declaration_(declaration),value_(value){}
+  explicit DestroyAction(Nonnull<const LValue*> lvalue,std::optional<Nonnull<const Value*>> value,std::optional<Nonnull<const Declaration*>> declaration)
+    :Action(Kind::DestroyAction), lvalue_(lvalue),declaration_(declaration),value_(value){
+  }
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::DestroyAction;
