@@ -440,12 +440,12 @@ class Point4a {
   var x: f64;
   var y: f64;
   fn Add[me: Self](b: Self) -> Self {
-    return {.x = a.x + b.x, .y = a.y + b.y};
+    return {.x = me.x + b.x, .y = me.y + b.y};
   }
   external impl as Vector {
     alias Add = Point4a.Add;  // Syntax TBD
     fn Scale[me: Self](v: f64) -> Self {
-      return {.x = a.x * v, .y = a.y * v};
+      return {.x = me.x * v, .y = me.y * v};
     }
   }
 }
@@ -457,10 +457,10 @@ class Point4b {
   var y: f64;
   external impl as Vector {
     fn Add[me: Self](b: Self) -> Self {
-      return {.x = a.x + b.x, .y = a.y + b.y};
+      return {.x = me.x + b.x, .y = me.y + b.y};
     }
     fn Scale[me: Self](v: f64) -> Self {
-      return {.x = a.x * v, .y = a.y * v};
+      return {.x = me.x * v, .y = me.y * v};
     }
   }
   alias Add = Vector.Add;
@@ -472,14 +472,14 @@ class Point4c {
   var x: f64;
   var y: f64;
   fn Add[me: Self](b: Self) -> Self {
-    return {.x = a.x + b.x, .y = a.y + b.y};
+    return {.x = me.x + b.x, .y = me.y + b.y};
   }
 }
 
 external impl Point4c as Vector {
   alias Add = Point4c.Add;  // Syntax TBD
   fn Scale[me: Self](v: f64) -> Self {
-    return {.x = a.x * v, .y = a.y * v};
+    return {.x = me.x * v, .y = me.y * v};
   }
 }
 ```

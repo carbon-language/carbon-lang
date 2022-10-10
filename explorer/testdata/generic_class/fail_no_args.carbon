@@ -2,10 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
+// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
+// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
 
 package ExplorerTest api;
@@ -16,7 +14,7 @@ class Point(T:! Type) {
   }
 
   // Error: wrote `Point` instead of `Point(T)`, `Point` by itself is not a type.
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_no_args.carbon:[[@LINE+1]]: Expected a type, but got Point
+  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_no_args.carbon:[[@LINE+1]]: Expected a type, but got Point
   fn GetX[me: Point]() -> T {
     return me.x;
   }

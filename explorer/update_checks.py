@@ -93,7 +93,7 @@ class SimpleCheckLine(CheckLine):
 
     def format(self, **kwargs: Any) -> str:
         if self.expected:
-            return f"{self.indent}// CHECK: {self.expected}\n"
+            return f"{self.indent}// CHECK:{self.expected}\n"
         else:
             return f"{self.indent}// CHECK-EMPTY:\n"
 
@@ -118,7 +118,7 @@ class CheckLineWithLineNumber(CheckLine):
         delta = line_number_remap[self.line_number] - output_line_number
         # We use `:+d` here to produce `LINE-n` or `LINE+n` as appropriate.
         return (
-            f"{self.indent}// CHECK: {self.before}[[@LINE{delta:+d}]]"
+            f"{self.indent}// CHECK:{self.before}[[@LINE{delta:+d}]]"
             + f"{self.after}\n"
         )
 

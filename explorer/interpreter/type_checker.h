@@ -431,14 +431,6 @@ class TypeChecker {
       llvm::ArrayRef<Nonnull<const ConstraintType*>> constraints)
       -> Nonnull<const ConstraintType*>;
 
-  // Sets value_node.constant_value() to `value`. Can be called multiple
-  // times on the same value_node, so long as it is always called with
-  // the same value.
-  template <typename T>
-  void SetConstantValue(Nonnull<T*> value_node, Nonnull<const Value*> value);
-
-  void PrintConstants(llvm::raw_ostream& out);
-
   /*
   ** Adds a member of a declaration to collected_members_
   */
@@ -454,7 +446,6 @@ class TypeChecker {
       -> CollectedMembersMap&;
 
   Nonnull<Arena*> arena_;
-  std::set<ValueNodeView> constants_;
   Builtins builtins_;
 
   // Maps a mixin/class declaration to all of its direct and indirect members.
