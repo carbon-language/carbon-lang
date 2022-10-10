@@ -134,7 +134,7 @@ void SemanticsIRFactory::Build() {
         node_stack.pop_back();
 
         // TODO: At this point, it should be possible to forward-declare the
-        // function so that it can be called a code block. For now, we just
+        // function so that it can be called from its code block. For now, we just
         // assemble the semantic function to associate the body.
         llvm::SmallVector<Semantics::NodeRef, 0> sem_ir;
 
