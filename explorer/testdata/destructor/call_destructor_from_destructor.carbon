@@ -32,7 +32,7 @@ class B{
         Print("DESTRUCTOR B {0}",me.n);
     }
     fn Create(x: i32) -> B{
-       return {.n = x, .a1 = A.Create(4),.a2 = A.Create(3) };
+       return {.n = x, .a1 = A.Create(3),.a2 = A.Create(4) };
     }
     var a1: A;
     var n: i32;

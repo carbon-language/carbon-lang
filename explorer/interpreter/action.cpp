@@ -26,14 +26,14 @@ RuntimeScope::RuntimeScope(RuntimeScope&& other) noexcept
       // To transfer ownership of other.allocations_, we have to empty it out.
       allocations_(std::exchange(other.allocations_, {})),
       heap_(other.heap_),
-      destructor_scope_(other.destructor_scope_) {}
+      kind_(other.kind_) {}
 
 auto RuntimeScope::operator=(RuntimeScope&& rhs) noexcept -> RuntimeScope& {
   locals_ = std::move(rhs.locals_);
   // To transfer ownership of rhs.allocations_, we have to empty it out.
   allocations_ = std::exchange(rhs.allocations_, {});
   heap_ = rhs.heap_;
-  destructor_scope_ = rhs.destructor_scope_;
+  kind_ = rhs.kind_;
   return *this;
 }
 
@@ -98,20 +98,9 @@ auto RuntimeScope::Capture(
   return result;
 }
 
-void RuntimeScope::TransitState() {
-  if (destructor_scope_ == State::Normal) {
-    destructor_scope_ = State::Destructor;
-  } else if (destructor_scope_ == State::Destructor) {
-    destructor_scope_ = State::CleanUpped;
-  } else if (destructor_scope_ == State::Method) {
-    destructor_scope_ = State::Method;
-  } else {
-    destructor_scope_ = State::CleanUpped;
-  }
-}
 
-void RuntimeScope::TransitState(RuntimeScope::State state) {
-  destructor_scope_ = state;
+void RuntimeScope::UpdateKind(RuntimeScope::Kind kind) {
+  kind_ = kind;
 }
 
 void Action::Print(llvm::raw_ostream& out) const {
@@ -144,8 +133,8 @@ void Action::Print(llvm::raw_ostream& out) const {
     case Action::Kind::CleanUpAction:
       out << "clean up";
       break;
-    case Action::Kind::CleanUpTupleAction:
-      out << "clean up tuple";
+    case Action::Kind::DestroyAction:
+      out << "destroy";
       break;
   }
   out << "." << pos_ << ".";

@@ -27,7 +27,7 @@ namespace Carbon {
 // not compile-time constants.
 class RuntimeScope {
  public:
-  enum class State { Normal, Destructor, CleanUpped, Method };
+  enum class Kind { Block, Method };
 
   // Returns a RuntimeScope whose Get() operation for a given name returns the
   // storage owned by the first entry in `scopes` that defines that name. This
@@ -39,7 +39,7 @@ class RuntimeScope {
 
   // Constructs a RuntimeScope that allocates storage in `heap`.
   explicit RuntimeScope(Nonnull<HeapAllocationInterface*> heap)
-      : heap_(heap), destructor_scope_(State::Normal) {}
+      : heap_(heap), kind_(Kind::Block) {}
 
   // Moving a RuntimeScope transfers ownership of its allocations.
   RuntimeScope(RuntimeScope&&) noexcept;
@@ -73,19 +73,12 @@ class RuntimeScope {
     return res;
   }
 
-  // Return scope state
-  // Normal     = Scope is not bind at the top of a destructor call
-  // Destructor = Scope is bind to a destructor call and was not cleaned up,
+  // Return scope kind
+  // Block     = Scope is not bind at the top of a destructor call
   // Method     = Scope is bind at the top of a method
-  // CleanedUp  = Scope is bind to a destructor call and is cleaned up
-  auto DestructionState() const -> State { return destructor_scope_; }
+  auto kind() const -> Kind { return kind_; }
 
-  // Transit the state from Normal to Destructor
-  // Transit the state from Destructor to CleanUpped
-  // Transit the state form Method to Method
-  void TransitState();
-
-  void TransitState(State state);
+  void UpdateKind(Kind kind);
 
  private:
   llvm::MapVector<ValueNodeView, Nonnull<const LValue*>,
@@ -93,7 +86,7 @@ class RuntimeScope {
       locals_;
   std::vector<AllocationId> allocations_;
   Nonnull<HeapAllocationInterface*> heap_;
-  State destructor_scope_;
+  Kind kind_;
 };
 
 // An Action represents the current state of a self-contained computation,
@@ -120,7 +113,7 @@ class Action {
     ScopeAction,
     RecursiveAction,
     CleanUpAction,
-    CleanUpTupleAction
+    DestroyAction
   };
 
   Action(const Value&) = delete;
@@ -296,9 +289,7 @@ class CleanupAction : public Action {
  public:
   explicit CleanupAction(RuntimeScope scope)
       : Action(Kind::CleanUpAction),
-        locals_count_(scope.locals().size()),
-        class_members_(std::nullopt),
-        array_index_(-1) {
+        locals_count_(scope.locals().size()){
     StartScope(std::move(scope));
   }
 
@@ -308,44 +299,33 @@ class CleanupAction : public Action {
     return action->kind() == Kind::CleanUpAction;
   }
 
-  void set_me_value(Nonnull<const LValue*> me_value) { me_value_ = me_value; }
-
-  auto me_value() -> Nonnull<const LValue*> { return me_value_; }
-
-  auto class_members()
-      -> std::optional<llvm::ArrayRef<Nonnull<Declaration*>>>& {
-    return class_members_;
-  }
-
-  void set_class_members(
-      const llvm::ArrayRef<Nonnull<Declaration*>>& class_members) {
-    class_members_ = class_members;
-  }
-
-  void set_array_index(int index) { array_index_ = index; }
-
-  auto array_index() const -> int { return array_index_; }
-
  private:
   int locals_count_;
-  std::optional<llvm::ArrayRef<Nonnull<Declaration*>>> class_members_;
-  Nonnull<const LValue*> me_value_;
-  int array_index_;
 };
 
-class CleanupTupleAction : public Action {
+class DestroyAction : public Action {
  public:
-  explicit CleanupTupleAction(Nonnull<const TupleValue*> tuple)
-      : Action(Kind::CleanUpTupleAction), tuple_(tuple) {}
+  explicit DestroyAction(Nonnull<const LValue*> lvalue, std::optional<Nonnull<const Declaration*>> declaration)
+      : Action(Kind::DestroyAction), lvalue_(lvalue),declaration_(declaration),value_(std::nullopt){}
+  explicit DestroyAction(std::optional<Nonnull<const Value*>> value, std::optional<Nonnull<const Declaration*>> declaration)
+      : Action(Kind::DestroyAction), declaration_(declaration),value_(value){}
 
   static auto classof(const Action* action) -> bool {
-    return action->kind() == Kind::CleanUpTupleAction;
+    return action->kind() == Kind::DestroyAction;
   }
 
-  auto tuple() const -> Nonnull<const TupleValue*> { return tuple_; }
+  auto declaration() const -> std::optional<Nonnull<const Declaration*>> { return declaration_; }
+
+  auto lvalue() const -> Nonnull<const LValue*> { return lvalue_; }
+
+  auto value() const -> std::optional<Nonnull<const Value*>> {
+    return value_;
+  }
 
  private:
-  Nonnull<const TupleValue*> tuple_;
+  Nonnull<const LValue*> lvalue_;
+  std::optional<Nonnull<const Declaration*>> declaration_;
+  std::optional<Nonnull<const Value*>> value_;
 };
 
 // Action which does nothing except introduce a new scope into the action
