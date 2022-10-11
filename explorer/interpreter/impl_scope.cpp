@@ -169,8 +169,8 @@ static auto CombineResults(Nonnull<const InterfaceType*> iface_type,
     return a;
   }
   // TODO: Order the `impl`s based on type structure.
-  return ProgramError(source_loc) << "ambiguous implementations of "
-                                  << *iface_type << " for " << *type;
+  return ProgramError(source_loc)
+         << "ambiguous implementations of " << *iface_type << " for " << *type;
 }
 
 auto ImplScope::TryResolve(Nonnull<const InterfaceType*> iface_type,

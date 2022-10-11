@@ -95,7 +95,7 @@ class Expression : public AstNode {
 
 // A mixin for expressions that can be rewritten to a different expression by
 // type-checking.
-template<typename Base>
+template <typename Base>
 class RewritableMixin : public Base {
  public:
   using Base::Base;

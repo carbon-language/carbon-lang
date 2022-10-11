@@ -708,8 +708,8 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
       // same kind of type.
       // TODO: This seems like something we should be able to accept.
       return ProgramError(source_loc_) << "type error in " << context_ << "\n"
-                                      << "expected: " << *param << "\n"
-                                      << "actual: " << *arg;
+                                       << "expected: " << *param << "\n"
+                                       << "actual: " << *arg;
     }
 
     if (ValueEqual(param, arg, std::nullopt)) {
@@ -728,7 +728,8 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
   switch (param->kind()) {
     case Value::Kind::VariableType: {
       const auto& binding = cast<VariableType>(*param).binding();
-      if (auto it = deduced_values_.find(&binding); it != deduced_values_.end()) {
+      if (auto it = deduced_values_.find(&binding);
+          it != deduced_values_.end()) {
         it->second.push_back(arg);
       } else {
         return handle_non_deduced_type();
@@ -1105,8 +1106,9 @@ class TypeChecker::ConstraintTypeBuilder {
           return Success();
         }
         return ProgramError(source_loc)
-               << "multiple different rewrites for `.(" << *rewrite.interface
-               << "." << *GetName(*rewrite.constant) << ")`:\n"
+               << "multiple different rewrites for `.("
+               << *rewrite.interface << "." << *GetName(*rewrite.constant)
+               << ")`:\n"
                << "  " << *existing.replacement << "\n"
                << "  " << *rewrite.replacement;
       }
@@ -1225,7 +1227,8 @@ class TypeChecker::ConstraintTypeBuilder {
           if (ValueEqual(&assoc->base(), GetSelfType(), std::nullopt)) {
             for (const auto& rewrite : rewrite_constraints_) {
               if (&assoc->constant() == rewrite.constant &&
-                  ValueEqual(&assoc->interface(), rewrite.interface, std::nullopt)) {
+                  ValueEqual(&assoc->interface(), rewrite.interface,
+                             std::nullopt)) {
                 impl_constraint.type = &rewrite.replacement->value();
                 performed_rewrite = true;
               }
@@ -1305,8 +1308,9 @@ class TypeChecker::SubstitutedGenericBindings {
       return std::nullopt;
     }
     Nonnull<ImplBinding*> impl_binding =
-        type_checker_->arena_->New<ImplBinding>(
-            new_binding->source_loc(), new_binding, &new_binding->static_type());
+        type_checker_->arena_->New<ImplBinding>(new_binding->source_loc(),
+                                                new_binding,
+                                                &new_binding->static_type());
     impl_binding->set_original(old_binding->impl_binding().value());
     auto* witness = type_checker_->arena_->New<BindingWitness>(impl_binding);
     impl_binding->set_symbolic_identity(witness);
@@ -1491,8 +1495,8 @@ auto TypeChecker::Substitute(const Bindings& bindings,
       if (!result.ok()) {
         // TODO: Handle this better!
         if (trace_stream_) {
-          **trace_stream_ << "substitution of " << constraint << " failed: "
-                          << result.error() << "\n";
+          **trace_stream_ << "substitution of " << constraint
+                          << " failed: " << result.error() << "\n";
         }
       }
       Nonnull<const ConstraintType*> new_constraint =
@@ -4451,7 +4455,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   if (auto* iface_type = dyn_cast<InterfaceType>(implemented_type)) {
     CARBON_ASSIGN_OR_RETURN(
         implemented_type, MakeConstraintForInterface(
-                             impl_decl->interface().source_loc(), iface_type));
+                              impl_decl->interface().source_loc(), iface_type));
   }
   if (!isa<ConstraintType>(implemented_type)) {
     return ProgramError(impl_decl->interface().source_loc())
