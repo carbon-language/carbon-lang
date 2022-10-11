@@ -1477,14 +1477,25 @@ auto TypeChecker::Substitute(const Bindings& bindings,
       if (auto it = bindings.args().find(constraint.self_binding());
           it != bindings.args().end()) {
         // This happens when we substitute into the parameter type of a
-        // function that takes a `T:! Constraint` parameter. The type of that
-        // parameter loses meaning and has already been checked, so we relax it
-        // to `Type` here.
+        // function that takes a `T:! Constraint` parameter. In this case we
+        // produce the new type-of-type of the replacement type.
+        Nonnull<const Value*> type_of_type;
+        if (auto* var_type = dyn_cast<VariableType>(it->second)) {
+          type_of_type = &var_type->binding().static_type();
+        } else if (auto* assoc_type =
+                       dyn_cast<AssociatedConstant>(it->second)) {
+          type_of_type = GetTypeForAssociatedConstant(assoc_type);
+        } else {
+          type_of_type = arena_->New<TypeType>();
+        }
         if (trace_stream_) {
           **trace_stream_ << "substitution: self of constraint " << constraint
-                          << " is substituted, discarding constraint\n";
+                          << " is substituted, new type of type is "
+                          << *type_of_type << "\n";
         }
-        return arena_->New<TypeType>();
+        // TODO: Should we keep any part of the old constraint -- rewrites,
+        // equality constraints, etc?
+        return type_of_type;
       }
       ConstraintTypeBuilder builder(arena_,
                                     constraint.self_binding()->source_loc());
