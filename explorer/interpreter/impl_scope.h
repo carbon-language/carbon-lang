@@ -42,17 +42,21 @@ class TypeChecker;
 // scope.
 class ImplScope {
  public:
-  // Associates `iface` and `type` with the `impl` in this scope.
+  // Associates `iface` and `type` with the `impl` in this scope. If `iface` is
+  // a constraint type, it will be split into its constituent components, and
+  // any references to `.Self` are expected to have been substituted for the
+  // type implementing the constraint.
   void Add(Nonnull<const Value*> iface, Nonnull<const Value*> type,
            Nonnull<const Witness*> witness, const TypeChecker& type_checker);
   // For a parameterized impl, associates `iface` and `type`
-  // with the `impl` in this scope.
+  // with the `impl` in this scope. Otherwise, the same as the previous
+  // overload.
   void Add(Nonnull<const Value*> iface,
            llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
            Nonnull<const Value*> type,
            llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
            Nonnull<const Witness*> witness, const TypeChecker& type_checker);
-  // Add a list of impl constraints from a constraint type into scope. Any
+  // Adds a list of impl constraints from a constraint type into scope. Any
   // references to `.Self` are expected to have already been substituted for
   // the type implementing the constraint.
   void Add(llvm::ArrayRef<ConstraintType::ImplConstraint> impls,
@@ -60,12 +64,12 @@ class ImplScope {
            llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
            Nonnull<const Witness*> witness, const TypeChecker& type_checker);
 
-  // Add a type equality constraint.
+  // Adds a type equality constraint.
   void AddEqualityConstraint(Nonnull<const EqualityConstraint*> equal) {
     equalities_.push_back(equal);
   }
 
-  // Make `parent` a parent of this scope.
+  // Makes `parent` a parent of this scope.
   // REQUIRES: `parent` is not already a parent of this scope.
   void AddParent(Nonnull<const ImplScope*> parent);
 

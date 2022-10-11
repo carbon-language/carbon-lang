@@ -942,11 +942,6 @@ class ConstraintTypeBuilder {
     return cast<Witness>(impl_binding_->symbolic_identity().value());
   }
 
-  // Gets the impl binding for `.Self`.
-  auto GetImplBinding() const -> Nonnull<const ImplBinding*> {
-    return impl_binding_;
-  }
-
   // Adds an `impl` constraint -- `T is C` if not already present.
   // Returns the index of the impl constraint within the self witness.
   auto AddImplConstraint(ConstraintType::ImplConstraint impl) -> int {
