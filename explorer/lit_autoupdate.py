@@ -40,7 +40,7 @@ def main() -> None:
         parsed_args.build_mode,
         "--build_target",
         "//explorer",
-        "--substitute",
+        "--replace",
         "%{explorer}",
         "./bazel-bin/explorer/explorer",
         "--testdata",

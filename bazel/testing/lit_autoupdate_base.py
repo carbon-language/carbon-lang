@@ -15,7 +15,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
-from typing import Any, Dict, List, NamedTuple, Optional, Pattern, Set
+from typing import Any, Dict, List, NamedTuple, Optional, Pattern, Set, Tuple
 
 # A prefix followed by a command to run for autoupdating checked output.
 AUTOUPDATE_MARKER = "// AUTOUPDATE: "
@@ -27,8 +27,7 @@ NOAUTOUPDATE_MARKER = "// NOAUTOUPDATE"
 class UpdateArgs(NamedTuple):
     build_target: str
     line_number_pattern: Pattern
-    substitute_from: str
-    substitute_to: str
+    replacement: Tuple[str, str]
 
 
 def parse_args() -> argparse.Namespace:
@@ -55,12 +54,12 @@ def parse_args() -> argparse.Namespace:
         "only group.",
     )
     parser.add_argument(
-        "--substitute",
+        "--replace",
         nargs=2,
-        metavar=("FROM", "TO"),
+        metavar=("BEFORE", "AFTER"),
         required=True,
-        help="Adds a substitution of `FROM` with `TO`. Typically `FROM` will "
-        "look like `%{name}`",
+        help="Adds a replacement of `BEFORE` with `AFTER`. Typically `BEFORE` "
+        "will look like `%{name}`",
     )
     parser.add_argument(
         "--testdata",
@@ -144,65 +143,59 @@ class CheckLine(Line):
         return f"{self.indent}// CHECK:{result}\n"
 
 
-def should_produce_check_line(
-    check_line: CheckLine,
-    orig_line: Optional[OriginalLine],
-    autoupdate_index: int,
-) -> bool:
-    """Determine whether it's time to produce a given CHECK line."""
-    if not orig_line:
-        # If there's no original line, we have no choice.
-        return True
-    if orig_line.line_number <= autoupdate_index:
-        # Don't put any CHECK lines before the AUTOUPDATE line.
-        return False
-    if not check_line.line_numbers:
-        # Print CHECK lines that lack line numbers when they're reached.
-        return True
-    # Use the first line number of the check to decide location.
-    return orig_line.line_number >= check_line.line_numbers[0]
+class Autoupdate(NamedTuple):
+    line_number: int
+    cmd: str
 
 
-def update_check_once(update_args: UpdateArgs, test: str) -> bool:
-    """Updates the CHECK: lines for `test` by running explorer.
+def find_autoupdate(test: str, orig_lines: List[str]) -> Optional[Autoupdate]:
+    """Figures out whether autoupdate should occur.
 
-    Returns True if the number of lines changes.
+    For AUTOUPDATE, returns the line and command. For NOAUTOUPDATE, returns
+    None.
     """
-    with open(test) as f:
-        orig_lines = f.readlines()
-
-    # Remove old OUT.
-    autoupdate_index = None
-    noautoupdate_index = None
-    for line_index, line in enumerate(orig_lines):
+    found = 0
+    result = None
+    for line_number, line in enumerate(orig_lines):
         if line.startswith(AUTOUPDATE_MARKER):
-            autoupdate_index = line_index
-            autoupdate_cmd = line[len(AUTOUPDATE_MARKER) :]
-        if line.startswith(NOAUTOUPDATE_MARKER):
-            noautoupdate_index = line_index
-    if autoupdate_index is None:
-        if noautoupdate_index is None:
-            raise ValueError(
-                f"{test} must have either '{AUTOUPDATE_MARKER}' or "
-                f"'{NOAUTOUPDATE_MARKER}'"
-            )
-        else:
-            return False
-    elif noautoupdate_index is not None:
+            found += 1
+            result = Autoupdate(line_number, line[len(AUTOUPDATE_MARKER) :])
+        elif line.startswith(NOAUTOUPDATE_MARKER):
+            found += 1
+    if found == 0:
         raise ValueError(
-            f"{test} has both '{AUTOUPDATE_MARKER}' and "
-            f"'{NOAUTOUPDATE_MARKER}', must have only one"
+            f"{test} must have either '{AUTOUPDATE_MARKER}' or "
+            f"'{NOAUTOUPDATE_MARKER}'"
         )
+    elif found > 1:
+        raise ValueError(
+            f"{test} must have only one of '{AUTOUPDATE_MARKER}' or "
+            f"'{NOAUTOUPDATE_MARKER}'"
+        )
+    return result
 
+
+def replace_all(s: str, replacements: List[Tuple[str, str]]) -> str:
+    """Runs multiple replacements on a string."""
+    for before, after in replacements:
+        s = s.replace(before, after)
+    return s
+
+
+def get_actual_output(
+    update_args: UpdateArgs, test: str, autoupdate_cmd: str
+) -> List[str]:
+    """Runs the autoupdate command and returns the output lines."""
     # Mirror lit.cfg.py substitutions; bazel runs don't need --prelude.
-    autoupdate_cmd = autoupdate_cmd.replace(
-        update_args.substitute_from, update_args.substitute_to
+    # Also replaces `%s` with the test file.
+    autoupdate_cmd = replace_all(
+        autoupdate_cmd, [update_args.replacement, ("%s", test)]
     )
 
     # Run the autoupdate command to generate output.
     # (`bazel run` would serialize)
     p = subprocess.run(
-        autoupdate_cmd % test,
+        autoupdate_cmd,
         shell=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -213,48 +206,85 @@ def update_check_once(update_args: UpdateArgs, test: str) -> bool:
     # when used.
     # TODO: Maybe revisit and see if lit can be convinced to give a
     # root-relative path.
-    out = (
-        out.replace("{{", "{{[{][{]}}")
-        .replace("[[", "{{[[][[]}}")
-        .replace(test, "{{.*}}/%s" % test)
+    out = replace_all(
+        out,
+        [
+            ("{{", "{{[{][{]}}"),
+            ("[[", "{{[[][[]}}"),
+            (test, f"{{{{.*}}}}/{test}"),
+        ],
     )
-    out_lines = out.splitlines()
+    return out.splitlines()
 
-    orig_line_iter = iter(
-        OriginalLine(i, line) for i, line in enumerate(orig_lines)
-    )
-    check_line_iter = iter(
-        CheckLine(out_line, update_args.line_number_pattern)
-        for out_line in out_lines
-    )
-    next_orig_line: Optional[OriginalLine] = next(orig_line_iter, None)
-    next_check_line: Optional[CheckLine] = next(check_line_iter, None)
 
-    # Interleave the original lines and the CHECK: lines into a list of
-    # `result_lines`.
+def merge_lines(
+    line_number_pattern: Pattern,
+    autoupdate_line_number: int,
+    raw_orig_lines: List[str],
+    out_lines: List[str],
+) -> List[Line]:
+    """Merges the original output and new lines."""
+    orig_lines = [
+        OriginalLine(i, line)
+        for i, line in enumerate(raw_orig_lines)
+        # Remove CHECK lines in the original output.
+        if not line.lstrip().startswith("// CHECK")
+    ]
+    check_lines = [
+        CheckLine(out_line, line_number_pattern) for out_line in out_lines
+    ]
+
     result_lines: List[Line] = []
-    # Mapping from `orig_lines` indexes to `result_lines` indexes.
-    line_number_remap: Dict[int, int] = {}
-    while next_orig_line or next_check_line:
-        if next_check_line and should_produce_check_line(
-            next_check_line, next_orig_line, autoupdate_index
+    # CHECK lines must go after AUTOUPDATE.
+    while orig_lines and orig_lines[0].line_number <= autoupdate_line_number:
+        result_lines.append(orig_lines.pop(0))
+    # Interleave the original lines and the CHECK: lines.
+    while orig_lines and check_lines:
+        # Original lines go first when the CHECK line is known and later.
+        if (
+            check_lines[0].line_numbers
+            and check_lines[0].line_numbers[0] > orig_lines[0].line_number
         ):
-            # Indent the CHECK: line to match the next original line.
-            if next_orig_line:
-                match = re.match(" *", next_orig_line.text)
-                if match:
-                    next_check_line.indent = match[0]
-            result_lines.append(next_check_line)
-            next_check_line = next(check_line_iter, None)
+            result_lines.append(orig_lines.pop(0))
         else:
-            assert next_orig_line, "no lines left"
-            # Include this original line if it isn't a CHECK: line.
-            if not re.match(" *// CHECK", next_orig_line.text):
-                line_number_remap[next_orig_line.line_number] = len(
-                    result_lines
-                )
-                result_lines.append(next_orig_line)
-            next_orig_line = next(orig_line_iter, None)
+            check_line = check_lines.pop(0)
+            # Indent to match the next original line.
+            check_line.indent = re.findall("^ *", orig_lines[0].text)[0]
+            result_lines.append(check_line)
+    # One list is non-empty; append remaining lines from both to catch it.
+    result_lines.extend(orig_lines)
+    result_lines.extend(check_lines)
+
+    return result_lines
+
+
+def update_check(update_args: UpdateArgs, test: str) -> bool:
+    """Updates the CHECK: lines for `test` by running explorer.
+
+    Returns true if a change was made.
+    """
+    with open(test) as f:
+        orig_lines = f.readlines()
+
+    # Make sure we're supposed to autoupdate.
+    autoupdate = find_autoupdate(test, orig_lines)
+    if autoupdate is None:
+        return False
+
+    # Determine the merged output lines.
+    out_lines = get_actual_output(update_args, test, autoupdate.cmd)
+    result_lines = merge_lines(
+        update_args.line_number_pattern,
+        autoupdate.line_number,
+        orig_lines,
+        out_lines,
+    )
+
+    # Calculate the remap for original lines.
+    line_number_remap: Dict[int, int] = {}
+    for i, line in enumerate(result_lines):
+        if isinstance(line, OriginalLine):
+            line_number_remap[line.line_number] = i
 
     # Generate contents for any lines that depend on line numbers.
     formatted_result_lines = [
@@ -269,30 +299,25 @@ def update_check_once(update_args: UpdateArgs, test: str) -> bool:
     # Interleave the new CHECK: lines with the tested content.
     with open(test, "w") as f:
         f.writelines(formatted_result_lines)
-    return True
-
-
-def update_check(update_args: UpdateArgs, test: str) -> None:
-    """Wraps CHECK: updates for test files."""
-    # If the number of output lines changes, run again because output can be
-    # line-specific. However, output should stabilize immediately.
-    if update_check_once(update_args, test) and update_check_once(
-        update_args, test
-    ):
-        raise ValueError(f"The output of {test} kept changing")
-    print(".", end="", flush=True)
+        return True
 
 
 def update_checks(update_args: UpdateArgs, tests: Set[str]) -> None:
     """Runs bazel to update CHECK: lines in lit tests."""
 
+    def map_helper(test: str) -> bool:
+        updated = update_check(update_args, test)
+        print(".", end="", flush=True)
+        return updated
+
     print(f"Updating {len(tests)} lit test(s)...")
     with futures.ThreadPoolExecutor() as exec:
-        # list() iterates to propagate exceptions.
-        list(exec.map(lambda test: update_check(update_args, test), tests))
+        # list() iterates in order to immediately propagate exceptions.
+        results = list(exec.map(map_helper, tests))
+
     # Each update call indicates progress with a dot without a newline, so put a
     # newline to wrap.
-    print("\nUpdated lit tests.")
+    print(f"\nUpdated {results.count(True)} lit test(s).")
 
 
 def main() -> None:
@@ -324,8 +349,7 @@ def main() -> None:
         UpdateArgs(
             parsed_args.build_target,
             re.compile(parsed_args.line_number_pattern),
-            parsed_args.substitute[0],
-            parsed_args.substitute[1],
+            parsed_args.replace,
         ),
         tests,
     )
