@@ -26,16 +26,10 @@ void ImplScope::Add(Nonnull<const Value*> iface,
                     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
                     Nonnull<const Witness*> witness,
                     const TypeChecker& type_checker) {
-  if (auto* orig_constraint = dyn_cast<ConstraintType>(iface)) {
-    BindingMap map;
-    map[orig_constraint->self_binding()] = type;
-    const ConstraintType* constraint =
-        cast<ConstraintType>(type_checker.Substitute(map, orig_constraint));
-    for (size_t i = 0; i != constraint->impl_constraints().size(); ++i) {
-      ConstraintType::ImplConstraint impl = constraint->impl_constraints()[i];
-      Add(impl.interface, deduced, impl.type, impl_bindings,
-          type_checker.MakeConstraintWitnessAccess(witness, i), type_checker);
-    }
+  if (auto* constraint = dyn_cast<ConstraintType>(iface)) {
+    // The caller should have substituted `.Self` for `type` already.
+    Add(constraint->impl_constraints(), deduced, impl_bindings, witness,
+        type_checker);
     // A parameterized impl declaration doesn't contribute any equality
     // constraints to the scope. Instead, we'll resolve the equality
     // constraints by resolving a witness when needed.
@@ -54,6 +48,18 @@ void ImplScope::Add(Nonnull<const Value*> iface,
                     .witness = witness});
 }
 
+void ImplScope::Add(llvm::ArrayRef<ConstraintType::ImplConstraint> impls,
+                    llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
+                    llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
+                    Nonnull<const Witness*> witness,
+                    const TypeChecker& type_checker) {
+  for (size_t i = 0; i != impls.size(); ++i) {
+    ConstraintType::ImplConstraint impl = impls[i];
+    Add(impl.interface, deduced, impl.type, impl_bindings,
+        type_checker.MakeConstraintWitnessAccess(witness, i), type_checker);
+  }
+}
+
 void ImplScope::AddParent(Nonnull<const ImplScope*> parent) {
   parent_scopes_.push_back(parent);
 }
@@ -68,15 +74,29 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
   }
   if (const auto* constraint = dyn_cast<ConstraintType>(constraint_type)) {
     std::vector<Nonnull<const Witness*>> witnesses;
-    BindingMap map;
-    map[constraint->self_binding()] = impl_type;
     for (auto impl : constraint->impl_constraints()) {
+      // Note that later impl constraints can refer to earlier impl constraints
+      // via impl bindings. For example, in
+      //   `C where .Self.AssocType is D`,
+      // ... the `.Self.AssocType is D` constraint refers to the `.Self is C`
+      // constraint when naming `AssocType`. So incrementally build up a
+      // partial constraint witness as we go.
+      std::optional<Nonnull<const Witness*>> witness;
+      if (constraint->self_binding()->impl_binding()) {
+        // Note, this is a partial impl binding covering only the impl
+        // constraints that we've already seen. Earlier impl constraints should
+        // not be able to refer to impl bindings for later impl constraints.
+        witness = type_checker.MakeConstraintWitness(*constraint, witnesses,
+                                                     source_loc);
+      }
+      Bindings bindings;
+      bindings.Add(constraint->self_binding(), impl_type, witness);
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Witness*> result,
-          ResolveInterface(
-              cast<InterfaceType>(type_checker.Substitute(map, impl.interface)),
-              type_checker.Substitute(map, impl.type), source_loc,
-              type_checker));
+          ResolveInterface(cast<InterfaceType>(type_checker.Substitute(
+                               bindings, impl.interface)),
+                           type_checker.Substitute(bindings, impl.type),
+                           source_loc, type_checker));
       witnesses.push_back(result);
     }
     // TODO: Check satisfaction of same-type constraints.
