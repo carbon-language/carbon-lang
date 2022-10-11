@@ -281,10 +281,13 @@ def update_check(update_args: UpdateArgs, test: str) -> bool:
     )
 
     # Calculate the remap for original lines.
-    line_number_remap: Dict[int, int] = {}
-    for i, line in enumerate(result_lines):
-        if isinstance(line, OriginalLine):
-            line_number_remap[line.line_number] = i
+    line_number_remap = dict(
+        [
+            (line.line_number, i)
+            for i, line in enumerate(result_lines)
+            if isinstance(line, OriginalLine)
+        ]
+    )
 
     # Generate contents for any lines that depend on line numbers.
     formatted_result_lines = [
