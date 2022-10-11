@@ -37,24 +37,6 @@ class TypeChecker {
   // processed.
   auto TypeCheck(AST& ast) -> ErrorOr<Success>;
 
-  // Perform type argument deduction, matching the parameter value `param`
-  // against the argument value `arg`. Whenever there is an VariableType in the
-  // parameter, it is deduced to be the corresponding type inside the argument
-  // type. The argument and parameter will typically be types, but can be
-  // non-type values when deduction recurses into the arguments of a
-  // parameterized type.
-  // The `deduced` parameter is an accumulator, that is, it holds the
-  // results so-far.
-  // `allow_implicit_conversion` specifies whether implicit conversions are
-  // permitted from the argument to the parameter type. If so, an `impl_scope`
-  // must be provided.
-  auto ArgumentDeduction(
-      SourceLocation source_loc, const std::string& context,
-      llvm::ArrayRef<Nonnull<const GenericBinding*>> bindings_to_deduce,
-      BindingMap& deduced, Nonnull<const Value*> param,
-      Nonnull<const Value*> arg, bool allow_implicit_conversion,
-      const ImplScope& impl_scope) const -> ErrorOr<Success>;
-
   // Construct a type that is the same as `type` except that occurrences
   // of type variables (aka. `GenericBinding` and references to `ImplBinding`)
   // are replaced by their corresponding type or witness in `dict`.
@@ -100,6 +82,7 @@ class TypeChecker {
   struct SingleStepEqualityContext;
   class ConstraintTypeBuilder;
   class SubstitutedGenericBindings;
+  class ArgumentDeduction;
 
   // Information about the currently enclosing scopes.
   struct ScopeInfo {
@@ -380,13 +363,13 @@ class TypeChecker {
   //
   // TODO: Does not actually perform the conversion if a user-defined
   // conversion is needed. Should be used very rarely for that reason.
-  auto ExpectType(SourceLocation source_loc, const std::string& context,
+  auto ExpectType(SourceLocation source_loc, std::string_view context,
                   Nonnull<const Value*> expected, Nonnull<const Value*> actual,
                   const ImplScope& impl_scope) const -> ErrorOr<Success>;
 
   // Check whether `actual` is the same type as `expected` and halt with a
   // fatal compilation error if it is not.
-  auto ExpectExactType(SourceLocation source_loc, const std::string& context,
+  auto ExpectExactType(SourceLocation source_loc, std::string_view context,
                        Nonnull<const Value*> expected,
                        Nonnull<const Value*> actual,
                        const ImplScope& impl_scope) const -> ErrorOr<Success>;
@@ -415,15 +398,6 @@ class TypeChecker {
   auto GetBuiltinInterfaceType(SourceLocation source_loc,
                                BuiltinInterfaceName interface) const
       -> ErrorOr<Nonnull<const InterfaceType*>>;
-
-  // Find impls that satisfy all of the `impl_bindings`, but with the
-  // type variables in the `impl_bindings` replaced by the argument
-  // type in `deduced_type_args`.  The results are placed in the
-  // `impls` map.
-  auto SatisfyImpls(llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
-                    const ImplScope& impl_scope, SourceLocation source_loc,
-                    const BindingMap& deduced_type_args,
-                    ImplWitnessMap& impls) const -> ErrorOr<Success>;
 
   // Given an interface type, form a corresponding constraint type. The
   // interface must be a complete type.

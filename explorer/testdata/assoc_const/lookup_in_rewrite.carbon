@@ -7,7 +7,16 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK:result: 2
+// CHECK:1
+// CHECK:i32.Hash
+// CHECK:0
+// CHECK:Potato.(Hashable.Hash)
+// CHECK:1
+// CHECK:Potato.Hash
+// CHECK:2
+// CHECK:Potato.Hash
+// CHECK:2
+// CHECK:result: 0
 
 package ExplorerTest api;
 
@@ -63,6 +72,12 @@ fn I[T:! Maker where .Result = Potato](x: T) -> i32 {
   return p.Hash();
 }
 
+class IntFactory {
+  impl as Maker where .Result = i32 {
+    fn Make() -> i32 { return 0; }
+  }
+}
+
 class PotatoFactory {
   impl as Maker where .Result = Potato {
     fn Make() -> Potato { return {}; }
@@ -70,10 +85,12 @@ class PotatoFactory {
 }
 
 fn Main() -> i32 {
-  var f: PotatoFactory = {};
+  var f: IntFactory = {};
+  var g: PotatoFactory = {};
   Print("{0}", F(f));
   Print("{0}", G(f));
-  Print("{0}", H(f));
-  Print("{0}", I(f));
+  Print("{0}", G(g));
+  Print("{0}", H(g));
+  Print("{0}", I(g));
   return 0;
 }

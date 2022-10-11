@@ -38,12 +38,12 @@ fn CompareEqualValues[T:! EqWith(.Self)](format: String, a: T, b: T) {
   Print(format, if a != b then 0 else 1);
 }
 
-fn CompareDifferentValues[T:! EqWith(.Self)](format: String, a: T, b: T) {
+fn CompareDifferentValues[U:! EqWith(.Self)](format: String, a: U, b: U) {
   Print(format, if a == b then 0 else 1);
   Print(format, if a != b then 1 else 0);
 }
 
-fn CompareAll[T:! EqWith(.Self)](format: String, a: T, b: T) {
+fn CompareAll[V:! EqWith(.Self)](format: String, a: V, b: V) {
   CompareEqualValues(format, a, a);
   CompareEqualValues(format, b, b);
   CompareDifferentValues(format, a, b);

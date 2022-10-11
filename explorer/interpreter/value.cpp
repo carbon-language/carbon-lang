@@ -625,6 +625,9 @@ static auto BindingMapEqual(
 auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
                std::optional<Nonnull<const EqualityContext*>> equality_ctx)
     -> bool {
+  if (t1 == t2) {
+    return true;
+  }
   if (t1->kind() != t2->kind()) {
     if (isa<AssociatedConstant>(t1) || isa<AssociatedConstant>(t2)) {
       return ValueEqual(t1, t2, equality_ctx);
@@ -801,6 +804,9 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
 auto ValueStructurallyEqual(
     Nonnull<const Value*> v1, Nonnull<const Value*> v2,
     std::optional<Nonnull<const EqualityContext*>> equality_ctx) -> bool {
+  if (v1 == v2) {
+    return true;
+  }
   if (v1->kind() != v2->kind()) {
     return false;
   }
@@ -927,6 +933,10 @@ auto ValueStructurallyEqual(
 auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
                 std::optional<Nonnull<const EqualityContext*>> equality_ctx)
     -> bool {
+  if (v1 == v2) {
+    return true;
+  }
+
   // If we're given an equality context, check to see if it knows these values
   // are equal. Only perform the check if one or the other value is an
   // associated constant; otherwise we should be able to do better by looking
