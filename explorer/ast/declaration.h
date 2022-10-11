@@ -585,6 +585,8 @@ class ImplDeclaration : public Declaration {
   auto constraint_type() const -> Nonnull<const ConstraintType*> {
     return *constraint_type_;
   }
+  // Returns the deduced parameters specified on the impl declaration. This
+  // does not include any generic parameters from enclosing scopes.
   auto deduced_parameters() const
       -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
     return deduced_parameters_;

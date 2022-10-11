@@ -4354,15 +4354,8 @@ auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
 auto TypeChecker::CheckAndAddImplBindings(
     Nonnull<const ImplDeclaration*> impl_decl, Nonnull<const Value*> impl_type,
     Nonnull<const Witness*> self_witness, Nonnull<const Witness*> impl_witness,
+    llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings,
     const ScopeInfo& scope_info) -> ErrorOr<Success> {
-  // The deduced bindings are the parameters for all enclosing classes followed
-  // by any deduced parameters written on the `impl` declaration itself.
-  std::vector<Nonnull<const GenericBinding*>> deduced_bindings =
-      scope_info.bindings;
-  deduced_bindings.insert(deduced_bindings.end(),
-                          impl_decl->deduced_parameters().begin(),
-                          impl_decl->deduced_parameters().end());
-
   // Each interface that is a lookup context is required to be implemented by
   // the impl members. Other constraints are required to be satisfied by
   // either those impls or impls available elsewhere.
@@ -4427,10 +4420,13 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   }
   ImplScope impl_scope;
   impl_scope.AddParent(scope_info.innermost_scope);
+  std::vector<Nonnull<const GenericBinding*>> generic_bindings =
+      scope_info.bindings;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings;
 
   // Bring the deduced parameters into scope.
   for (Nonnull<GenericBinding*> deduced : impl_decl->deduced_parameters()) {
+    generic_bindings.push_back(deduced);
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(deduced, std::nullopt, impl_scope,
                                             ValueCategory::Let));
     CollectImplBindingsInPattern(deduced, impl_bindings);
@@ -4479,8 +4475,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   // Build the self witness. This is the witness used to demonstrate that
   // this impl implements its lookup contexts.
   auto* self_witness = arena_->New<ImplWitness>(
-      impl_decl,
-      Bindings::SymbolicIdentity(arena_, impl_decl->deduced_parameters()));
+      impl_decl, Bindings::SymbolicIdentity(arena_, generic_bindings));
 
   // Compute a witness that the impl implements its constraint.
   Nonnull<const Witness*> impl_witness;
@@ -4507,8 +4502,9 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   }
 
   // Create the implied impl bindings.
-  CARBON_RETURN_IF_ERROR(CheckAndAddImplBindings(
-      impl_decl, impl_type_value, self_witness, impl_witness, scope_info));
+  CARBON_RETURN_IF_ERROR(CheckAndAddImplBindings(impl_decl, impl_type_value,
+                                                 self_witness, impl_witness,
+                                                 generic_bindings, scope_info));
 
   if (trace_stream_) {
     **trace_stream_ << "** finished declaring impl " << *impl_decl->impl_type()
