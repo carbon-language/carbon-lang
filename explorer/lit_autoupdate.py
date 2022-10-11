@@ -36,8 +36,7 @@ def main() -> None:
     )
     args = [
         sys.argv[0],
-        "--build_mode",
-        parsed_args.build_mode,
+        # Flags to configure for explorer testing.
         "--build_target",
         "//explorer",
         "--replace",
@@ -47,6 +46,9 @@ def main() -> None:
         "explorer/testdata",
         "--line_number_pattern",
         r"(?<=\.carbon:)(\d+)(?=(?:\D|$))",
+        # Forwarded arguments.
+        "--build_mode",
+        parsed_args.build_mode,
     ] + parsed_args.tests
     os.execv(actual_py, args)
 
