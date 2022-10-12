@@ -24,15 +24,18 @@ AUTOUPDATE_MARKER = "// AUTOUPDATE: "
 NOAUTOUPDATE_MARKER = "// NOAUTOUPDATE"
 
 
-class UpdateArgs(NamedTuple):
+class ParsedArgs(NamedTuple):
+    build_mode: str
     build_target: str
     cmd_replace: Tuple[str, str]
     extra_check_replacements: List[Tuple[Pattern, Pattern, str]]
     line_number_format: str
     line_number_pattern: Pattern
+    testdata: str
+    tests: List[Path]
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args() -> ParsedArgs:
     """Parses command-line arguments and flags."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("tests", nargs="*")
@@ -85,10 +88,24 @@ def parse_args() -> argparse.Namespace:
         help="The path to the testdata to update, relative to the workspace "
         "root.",
     )
-    return parser.parse_args()
+    parsed_args = parser.parse_args()
+    extra_check_replacements = [
+        (re.compile(line_matcher), re.compile(before), after)
+        for line_matcher, before, after in parsed_args.extra_check_replacement
+    ]
+    return ParsedArgs(
+        build_mode=parsed_args.build_mode,
+        build_target=parsed_args.build_target,
+        cmd_replace=parsed_args.cmd_replace,
+        extra_check_replacements=extra_check_replacements,
+        line_number_format=parsed_args.line_number_format,
+        line_number_pattern=re.compile(parsed_args.line_number_pattern),
+        testdata=parsed_args.testdata,
+        tests=[Path(test).resolve() for test in parsed_args.tests],
+    )
 
 
-def get_tests(testdata: str) -> Set[str]:
+def get_tests(testdata: str) -> Set[Path]:
     """Get the list of tests from the filesystem."""
     tests = set()
     for root, _, files in os.walk(testdata):
@@ -97,7 +114,7 @@ def get_tests(testdata: str) -> Set[str]:
                 # Ignore the lit config.
                 continue
             if os.path.splitext(f)[1] == ".carbon":
-                tests.add(os.path.join(root, f))
+                tests.add(Path(root).joinpath(f))
             else:
                 exit(f"Unrecognized file type in testdata: {f}")
     return tests
@@ -203,8 +220,8 @@ def replace_all(s: str, replacements: List[Tuple[str, str]]) -> str:
     return s
 
 
-def get_actual_output(
-    update_args: UpdateArgs,
+def get_matchable_test_output(
+    parsed_args: ParsedArgs,
     test: str,
     autoupdate_cmd: str,
     extra_check_replacements: List[Tuple[Pattern, Pattern, str]],
@@ -213,7 +230,7 @@ def get_actual_output(
     # Mirror lit.cfg.py substitutions; bazel runs don't need --prelude.
     # Also replaces `%s` with the test file.
     autoupdate_cmd = replace_all(
-        autoupdate_cmd, [update_args.cmd_replace, ("%s", test)]
+        autoupdate_cmd, [parsed_args.cmd_replace, ("%s", test)]
     )
 
     # Run the autoupdate command to generate output.
@@ -291,26 +308,29 @@ def merge_lines(
     return result_lines
 
 
-def update_check(update_args: UpdateArgs, test: str) -> bool:
+def update_check(parsed_args: ParsedArgs, test: Path) -> bool:
     """Updates the CHECK: lines for `test` by running explorer.
 
     Returns true if a change was made.
     """
-    with open(test) as f:
+    with test.open() as f:
         orig_lines = f.readlines()
 
     # Make sure we're supposed to autoupdate.
-    autoupdate = find_autoupdate(test, orig_lines)
+    autoupdate = find_autoupdate(str(test), orig_lines)
     if autoupdate is None:
         return False
 
     # Determine the merged output lines.
-    out_lines = get_actual_output(
-        update_args, test, autoupdate.cmd, update_args.extra_check_replacements
+    out_lines = get_matchable_test_output(
+        parsed_args,
+        str(test),
+        autoupdate.cmd,
+        parsed_args.extra_check_replacements,
     )
     result_lines = merge_lines(
-        update_args.line_number_format,
-        update_args.line_number_pattern,
+        parsed_args.line_number_format,
+        parsed_args.line_number_pattern,
         autoupdate.line_number,
         orig_lines,
         out_lines,
@@ -340,16 +360,16 @@ def update_check(update_args: UpdateArgs, test: str) -> bool:
         return False
 
     # Interleave the new CHECK: lines with the tested content.
-    with open(test, "w") as f:
+    with test.open("w") as f:
         f.writelines(formatted_result_lines)
         return True
 
 
-def update_checks(update_args: UpdateArgs, tests: Set[str]) -> None:
+def update_checks(parsed_args: ParsedArgs, tests: Set[Path]) -> None:
     """Updates CHECK: lines in lit tests."""
 
-    def map_helper(test: str) -> bool:
-        updated = update_check(update_args, test)
+    def map_helper(test: Path) -> bool:
+        updated = update_check(parsed_args, test)
         print(".", end="", flush=True)
         return updated
 
@@ -364,10 +384,11 @@ def update_checks(update_args: UpdateArgs, tests: Set[str]) -> None:
 
 
 def main() -> None:
-    # Go to the repository root so that paths will match bazel's view.
-    os.chdir(Path(__file__).parent.parent.parent)
-
+    # Parse arguments relative to the working directory.
     parsed_args = parse_args()
+
+    # Remaining script logic should be relative to the repository root.
+    os.chdir(Path(__file__).parent.parent.parent)
 
     if parsed_args.tests:
         tests = set(parsed_args.tests)
@@ -388,20 +409,7 @@ def main() -> None:
     )
 
     # Run updates.
-    replacements = [
-        (re.compile(line_matcher), re.compile(before), after)
-        for line_matcher, before, after in parsed_args.extra_check_replacement
-    ]
-    update_checks(
-        UpdateArgs(
-            parsed_args.build_target,
-            parsed_args.cmd_replace,
-            replacements,
-            parsed_args.line_number_format,
-            re.compile(parsed_args.line_number_pattern),
-        ),
-        tests,
-    )
+    update_checks(parsed_args, tests)
 
 
 if __name__ == "__main__":
