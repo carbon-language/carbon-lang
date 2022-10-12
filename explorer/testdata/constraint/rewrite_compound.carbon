@@ -13,8 +13,7 @@ interface HasAssoc {
   let Assoc:! Type;
 }
 class X {
-  // TODO: Replace `==` with `=`.
-  external impl as HasAssoc where .Assoc == i32 {}
+  external impl as HasAssoc where .Assoc = i32 {}
 }
 
 alias WithoutRewrite = HasAssoc where .Assoc == i32;

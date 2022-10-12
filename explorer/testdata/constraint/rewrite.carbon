@@ -14,8 +14,7 @@ interface HasAssoc {
   let AssocVal:! i32;
 }
 class X {
-  // TODO: Replace `==` with `=`.
-  external impl as HasAssoc where .Assoc == i32 and .AssocVal == 2 {}
+  external impl as HasAssoc where .Assoc = i32 and .AssocVal = 2 {}
 }
 
 fn F[T:! HasAssoc where .Assoc = i32](x: T) -> i32 {

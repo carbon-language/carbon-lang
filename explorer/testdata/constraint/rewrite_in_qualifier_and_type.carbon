@@ -13,8 +13,7 @@ interface HasAssoc {
   let Assoc:! Type;
 }
 class X {
-  // TODO: Replace `==` with `=`.
-  external impl as HasAssoc where .Assoc == i32 {}
+  external impl as HasAssoc where .Assoc = i32 {}
 }
 
 fn H[T:! HasAssoc where .Assoc = i32, U:! Type where .Self == i32](a: T, b: U) -> i32 {
