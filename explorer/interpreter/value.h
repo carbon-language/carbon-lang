@@ -510,16 +510,20 @@ class FunctionType : public Value {
   };
 
   FunctionType(Nonnull<const Value*> parameters,
-               llvm::ArrayRef<GenericParameter> generic_parameters,
+               Nonnull<const Value*> return_type)
+      : FunctionType(parameters, {}, return_type, {}, {}) {}
+
+  FunctionType(Nonnull<const Value*> parameters,
+               std::vector<GenericParameter> generic_parameters,
                Nonnull<const Value*> return_type,
-               llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings,
-               llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings)
+               std::vector<Nonnull<const GenericBinding*>> deduced_bindings,
+               std::vector<Nonnull<const ImplBinding*>> impl_bindings)
       : Value(Kind::FunctionType),
         parameters_(parameters),
-        generic_parameters_(generic_parameters),
+        generic_parameters_(std::move(generic_parameters)),
         return_type_(return_type),
-        deduced_bindings_(deduced_bindings),
-        impl_bindings_(impl_bindings) {}
+        deduced_bindings_(std::move(deduced_bindings)),
+        impl_bindings_(std::move(impl_bindings)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionType;
@@ -842,13 +846,7 @@ class Witness : public Value {
 // The witness table for an impl.
 class ImplWitness : public Witness {
  public:
-  // Construct a witness for
-  // 1) a non-generic impl, or
-  // 2) a generic impl that has not yet been applied to type arguments.
-  explicit ImplWitness(Nonnull<const ImplDeclaration*> declaration)
-      : Witness(Kind::ImplWitness), declaration_(declaration) {}
-
-  // Construct an instantiated generic impl.
+  // Construct a witness for an impl.
   explicit ImplWitness(Nonnull<const ImplDeclaration*> declaration,
                        Nonnull<const Bindings*> bindings)
       : Witness(Kind::ImplWitness),

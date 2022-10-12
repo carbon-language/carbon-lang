@@ -98,7 +98,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         const auto& class_type = cast<NominalClassType>(object.type());
         std::optional<Nonnull<const FunctionValue*>> func =
             class_type.FindFunction(f);
-        if (func == std::nullopt) {
+        if (!func) {
           return ProgramError(source_loc) << "member " << f << " not in " << *v
                                           << " or its " << class_type;
         } else if ((*func)->declaration().is_method()) {
@@ -108,6 +108,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                                               &class_type.bindings());
         } else {
           // Found a class function
+          // TODO: This should not be reachable.
           return arena->New<FunctionValue>(&(*func)->declaration(),
                                            &class_type.bindings());
         }
@@ -499,7 +500,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "choice " << cast<ChoiceType>(*this).name();
       break;
     case Value::Kind::VariableType:
-      out << cast<VariableType>(*this).binding();
+      out << cast<VariableType>(*this).binding().name();
       break;
     case Value::Kind::AssociatedConstant: {
       const auto& assoc = cast<AssociatedConstant>(*this);
@@ -1065,11 +1066,11 @@ auto FindMember(std::string_view name,
 }
 
 void ImplBinding::Print(llvm::raw_ostream& out) const {
-  out << "impl binding " << *type_var_ << " as " << *iface_;
+  out << "impl binding " << *type_var_ << " as " << **iface_;
 }
 
 void ImplBinding::PrintID(llvm::raw_ostream& out) const {
-  out << *type_var_ << " as " << *iface_;
+  out << *type_var_ << " as " << **iface_;
 }
 
 }  // namespace Carbon

@@ -56,11 +56,10 @@ class TypeChecker {
       const ImplScope& impl_scope) const -> ErrorOr<Success>;
 
   // Construct a type that is the same as `type` except that occurrences
-  // of type variables (aka. `GenericBinding`) are replaced by their
-  // corresponding type in `dict`.
-  auto Substitute(const std::map<Nonnull<const GenericBinding*>,
-                                 Nonnull<const Value*>>& dict,
-                  Nonnull<const Value*> type) const -> Nonnull<const Value*>;
+  // of type variables (aka. `GenericBinding` and references to `ImplBinding`)
+  // are replaced by their corresponding type or witness in `dict`.
+  auto Substitute(const Bindings& dict, Nonnull<const Value*> type) const
+      -> Nonnull<const Value*>;
 
   // If `impl` can be an implementation of interface `iface` for the given
   // `type`, then return the witness for this `impl`. Otherwise return
@@ -94,11 +93,12 @@ class TypeChecker {
   // Given the witnesses for the components of a constraint, form a witness for
   // the constraint.
   auto MakeConstraintWitnessAccess(Nonnull<const Witness*> witness,
-                                   size_t impl_offset) const
+                                   int impl_offset) const
       -> Nonnull<const Witness*>;
 
  private:
   struct SingleStepEqualityContext;
+  class SubstitutedGenericBindings;
 
   // Information about the currently enclosing scopes.
   struct ScopeInfo {
@@ -220,12 +220,14 @@ class TypeChecker {
   auto CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
                            Nonnull<const ImplDeclaration*> impl_decl,
                            Nonnull<const Value*> self_type,
+                           Nonnull<const Witness*> self_witness,
                            const ImplScope& impl_scope) -> ErrorOr<Success>;
 
   // Check that an `impl` declaration satisfies its constraints and add the
   // corresponding `ImplBinding`s to the impl scope.
   auto CheckAndAddImplBindings(Nonnull<const ImplDeclaration*> impl_decl,
                                Nonnull<const Value*> impl_type,
+                               Nonnull<const Witness*> self_witness,
                                const ScopeInfo& scope_info) -> ErrorOr<Success>;
 
   auto DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,

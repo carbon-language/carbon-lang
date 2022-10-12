@@ -20,5 +20,6 @@ class Point {
 }
 
 fn Main() -> i32 {
-  return Point.(Vector.Dim);
+  var a: Point = {.x = 2, .y = 1};
+  return a.(Vector.Dim);
 }

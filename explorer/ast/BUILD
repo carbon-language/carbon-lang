@@ -37,6 +37,7 @@ cc_library(
 cc_library(
     name = "ast",
     srcs = [
+        "bindings.cpp",
         "declaration.cpp",
         "expression.cpp",
         "member.cpp",
@@ -45,6 +46,7 @@ cc_library(
     ],
     hdrs = [
         "ast.h",
+        "bindings.h",
         "declaration.h",
         "expression.h",
         "impl_binding.h",
@@ -55,12 +57,12 @@ cc_library(
     ],
     deps = [
         ":ast_node",
-        ":bindings",
         ":library_name",
         ":paren_contents",
         ":static_scope",
         ":value_category",
         "//common:check",
+        "//common:error",
         "//common:indirect_value",
         "//common:ostream",
         "//explorer/common:arena",
@@ -96,15 +98,6 @@ cc_test(
         "//common:gtest_main",
         "//explorer/common:arena",
         "@com_google_googletest//:gtest",
-    ],
-)
-
-cc_library(
-    name = "bindings",
-    srcs = ["bindings.cpp"],
-    hdrs = ["bindings.h"],
-    deps = [
-        "//explorer/common:nonnull",
     ],
 )
 
