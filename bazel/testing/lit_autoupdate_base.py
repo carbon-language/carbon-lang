@@ -346,7 +346,7 @@ def update_check(update_args: UpdateArgs, test: str) -> bool:
 
 
 def update_checks(update_args: UpdateArgs, tests: Set[str]) -> None:
-    """Runs bazel to update CHECK: lines in lit tests."""
+    """Updates CHECK: lines in lit tests."""
 
     def map_helper(test: str) -> bool:
         updated = update_check(update_args, test)
