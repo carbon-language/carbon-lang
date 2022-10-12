@@ -20,7 +20,7 @@ class WithType(T:! Has(Type)) {
 }
 
 fn Main() -> i32 {
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_use_at_compile_time.carbon:[[@LINE+1]]:  function call not allowed here
+  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_use_at_compile_time.carbon:[[@LINE+1]]:  function call not allowed in this context
   var v: WithType(i32).Get() = 0;
   return v;
 }

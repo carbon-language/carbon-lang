@@ -12,7 +12,7 @@ fn Id(t: Type) -> auto { return t; }
 
 // Test non-trivial type expression in return type.
 
-// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/function/auto_return/fail_modify_return_type.carbon:[[@LINE+1]]:  function call not allowed here
+// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/function/auto_return/fail_modify_return_type.carbon:[[@LINE+1]]:  function call not allowed in this context
 fn Main() -> Id(i32) {
   return 0;
 }

@@ -13,7 +13,7 @@ fn Id(t: Type) -> auto { return t; }
 // Test non-trivial type expression in variable declaration statement.
 
 fn Main() -> i32 {
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/function/auto_return/fail_type.carbon:[[@LINE+1]]:  function call not allowed here
+  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/function/auto_return/fail_type.carbon:[[@LINE+1]]:  function call not allowed in this context
   var x: Id(i32) = 0;
   return x;
 }

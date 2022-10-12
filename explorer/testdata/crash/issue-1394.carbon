@@ -12,7 +12,7 @@ fn apply[T:! Type, U:! Type](f: T, EmptyIdentifier: U)
 match (true[true]) {}
 }
 
-// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/crash/issue-1394.carbon:[[@LINE+1]]:  function call not allowed here
+// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/crash/issue-1394.carbon:[[@LINE+1]]:  function call not allowed in this context
 fn EmptyIdentifier() -> apply(true, true);
 
 fn Main() -> i32 {

@@ -25,7 +25,7 @@ fn GetInterface() -> Type { return Interface; }
 fn GetConstraint() -> Type { return Interface & AnotherInterface; }
 
 fn TestStruct() {
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/member_access/fail_evaluate_type_before_dot.carbon:[[@LINE+1]]:  function call not allowed here
+  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/member_access/fail_evaluate_type_before_dot.carbon:[[@LINE+1]]:  function call not allowed in this context
   var s: GetStruct() = {.n = 1};
   if (s.(GetStruct().n) == 1) {
     Print("Struct OK");
