@@ -76,8 +76,15 @@ class ImplScope {
   // Returns the associated impl for the given `constraint` and `type` in
   // the ancestor graph of this scope, or reports a compilation error
   // at `source_loc` there isn't exactly one matching impl.
+  //
+  // If any substitutions should be made into the constraint before resolving
+  // it, those should be passed in `bindings`. The witness returned will be for
+  // `constraint`, not for the result of substituting the bindings into the
+  // constraint. The substituted type might in general have a different shape
+  // of witness due to deduplication.
   auto Resolve(Nonnull<const Value*> constraint, Nonnull<const Value*> type,
-               SourceLocation source_loc, const TypeChecker& type_checker) const
+               SourceLocation source_loc, const TypeChecker& type_checker,
+               const Bindings& bindings = {}) const
       -> ErrorOr<Nonnull<const Witness*>>;
 
   // Visits the values that are a single step away from `value` according to an
