@@ -15,12 +15,7 @@ interface As(T:! Type) {
 
 // Implicitly convert `Self` to `T`.
 interface ImplicitAs(T:! Type) {
-  fn Convert[me: Self]() -> T;
-}
-
-// TODO: ImplicitAs(T) should extend As(T).
-impl forall [T:! Type, U:! ImplicitAs(T)] U as As(T) {
-  fn Convert[me: Self]() -> T { return me.Convert(); }
+  extends As(T);
 }
 
 // Every type implicitly converts to itself.

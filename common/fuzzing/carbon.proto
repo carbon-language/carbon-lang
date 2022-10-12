@@ -378,6 +378,15 @@ message LetDeclaration {
   // `let` declarations in general.
 }
 
+message InterfaceExtendsDeclaration {
+  optional Expression base = 1;
+}
+
+message InterfaceImplDeclaration {
+  optional Expression impl_type = 1;
+  optional Expression constraint = 2;
+}
+
 message InterfaceDeclaration {
   optional string name = 1;
   repeated Declaration members = 2;
@@ -429,6 +438,8 @@ message Declaration {
     MixinDeclaration mixin = 9;
     MixDeclaration mix = 10;
     DestructorDeclaration destructor = 11;
+    InterfaceExtendsDeclaration interface_extends = 12;
+    InterfaceImplDeclaration interface_impl = 13;
   }
 }
 

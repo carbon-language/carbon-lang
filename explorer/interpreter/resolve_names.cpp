@@ -82,6 +82,13 @@ static auto AddExposedNames(const Declaration& declaration,
       }
       break;
     }
+    case DeclarationKind::InterfaceExtendsDeclaration: {
+      // TODO: Should we add names from the extended constraint?
+      break;
+    }
+    case DeclarationKind::InterfaceImplDeclaration: {
+      break;
+    }
     case DeclarationKind::AssociatedConstantDeclaration: {
       auto& let = cast<AssociatedConstantDeclaration>(declaration);
       if (let.binding().name() != AnonymousName) {
@@ -640,6 +647,17 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
         CARBON_RETURN_IF_ERROR(
             ResolveNames(var.initializer(), enclosing_scope));
       }
+      break;
+    }
+    case DeclarationKind::InterfaceExtendsDeclaration: {
+      auto& extends = cast<InterfaceExtendsDeclaration>(declaration);
+      CARBON_RETURN_IF_ERROR(ResolveNames(*extends.base(), enclosing_scope));
+      break;
+    }
+    case DeclarationKind::InterfaceImplDeclaration: {
+      auto& impl = cast<InterfaceImplDeclaration>(declaration);
+      CARBON_RETURN_IF_ERROR(ResolveNames(*impl.impl_type(), enclosing_scope));
+      CARBON_RETURN_IF_ERROR(ResolveNames(*impl.constraint(), enclosing_scope));
       break;
     }
     case DeclarationKind::AssociatedConstantDeclaration: {

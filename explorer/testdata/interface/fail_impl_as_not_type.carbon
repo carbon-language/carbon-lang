@@ -8,9 +8,13 @@
 
 package ExplorerTest api;
 
-interface Bad {
-  // CHECK:SYNTAX ERROR: {{.*}}/explorer/testdata/interface/fail_bad_member_kind.carbon:[[@LINE+1]]: syntax error, unexpected VAR
-  var V: i32;
+interface A {}
+
+interface B {
+  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_impl_as_not_type.carbon:[[@LINE+1]]: Expected a type, but got 5
+  impl 5 as A;
 }
 
-fn Main() -> i32 { return 0; }
+fn Main() -> i32 {
+  return 0;
+}
