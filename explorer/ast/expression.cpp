@@ -360,6 +360,11 @@ void WhereClause::Print(llvm::raw_ostream& out) const {
       out << clause.lhs() << " == " << clause.rhs();
       break;
     }
+    case WhereClauseKind::RewriteWhereClause: {
+      auto& clause = cast<RewriteWhereClause>(*this);
+      out << "." << clause.member_name() << " = " << clause.replacement();
+      break;
+    }
   }
 }
 

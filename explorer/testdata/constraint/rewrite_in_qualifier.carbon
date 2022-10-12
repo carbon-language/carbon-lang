@@ -9,16 +9,23 @@
 
 package ExplorerTest api;
 
-interface Vector {
-  let Dim:! i32;
+interface HasAssoc {
+  let Assoc:! Type;
+}
+class X {
+  external impl as HasAssoc where .Assoc = i32 {}
 }
 
-class Point {
-  var x: i32;
-  var y: i32;
-  impl as Vector where .Dim == 2 {}
+alias WithoutRewrite = HasAssoc where .Assoc == i32;
+alias WithRewrite = HasAssoc where .Assoc = i32;
+
+fn G[T:! WithoutRewrite](x: T) -> i32 {
+  // TODO: We should reject this once `==` isn't applied automatically.
+  var a: T.(WithRewrite.Assoc) = 2;
+  return a;
 }
 
 fn Main() -> i32 {
-  return Point.(Vector.Dim);
+  var x: X = {};
+  return G(x);
 }

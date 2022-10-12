@@ -17,8 +17,8 @@ interface HasThreeTypes {
 fn F[T:! Type](x: (T, T, T));
 fn G[X:! HasThreeTypes where .A == .B and .B == .C and .C == .A](x: X) {
   // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_multiple_deduction.carbon:[[@LINE+3]]: deduced multiple different values for T:! Type:
-  // CHECK:  (X:! HasThreeTypes where .Self.A == .Self.B and .Self.B == .Self.C and .Self.C == .Self.A).A
-  // CHECK:  (X:! HasThreeTypes where .Self.A == .Self.B and .Self.B == .Self.C and .Self.C == .Self.A).B
+  // CHECK:  (X).A
+  // CHECK:  (X).B
   F(x.Make());
 }
 

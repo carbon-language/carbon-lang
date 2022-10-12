@@ -5,20 +5,26 @@
 // RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
 // RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK:result: 2
+// CHECK:result: 1
 
 package ExplorerTest api;
 
-interface Vector {
-  let Dim:! i32;
+interface HasAssoc {
+  let Assoc:! Type;
+}
+class X {
+  external impl as HasAssoc where .Assoc = i32 {}
 }
 
-class Point {
-  var x: i32;
-  var y: i32;
-  impl as Vector where .Dim == 2 {}
+alias WithoutRewrite = HasAssoc where .Assoc == i32;
+alias WithRewrite = HasAssoc where .Assoc = i32;
+
+fn F[T:! WithRewrite](x: T) -> i32 {
+  var a: T.(WithoutRewrite.Assoc) = 1;
+  return a;
 }
 
 fn Main() -> i32 {
-  return Point.(Vector.Dim);
+  var x: X = {};
+  return F(x);
 }

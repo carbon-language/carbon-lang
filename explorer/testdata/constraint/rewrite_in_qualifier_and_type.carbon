@@ -5,20 +5,24 @@
 // RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
 // RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK:result: 2
+// CHECK:result: 3
 
 package ExplorerTest api;
 
-interface Vector {
-  let Dim:! i32;
+interface HasAssoc {
+  let Assoc:! Type;
+}
+class X {
+  external impl as HasAssoc where .Assoc = i32 {}
 }
 
-class Point {
-  var x: i32;
-  var y: i32;
-  impl as Vector where .Dim == 2 {}
+fn H[T:! HasAssoc where .Assoc = i32, U:! Type where .Self == i32](a: T, b: U) -> i32 {
+  var a: T.((HasAssoc where .Assoc = U).Assoc) = 3;
+  return a;
 }
 
 fn Main() -> i32 {
-  return Point.(Vector.Dim);
+  var x: X = {};
+  var y: i32 = 0;
+  return H(x, y);
 }

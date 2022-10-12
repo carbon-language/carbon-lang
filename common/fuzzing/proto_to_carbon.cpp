@@ -409,6 +409,10 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
             out << " == ";
             ExpressionToCarbon(clause.equals().rhs(), out);
             break;
+          case Fuzzing::WhereClause::kRewrite:
+            out << "." << clause.rewrite().member_name() << " = ";
+            ExpressionToCarbon(clause.rewrite().replacement(), out);
+            break;
           case Fuzzing::WhereClause::KIND_NOT_SET:
             // Arbitrary default to avoid invalid syntax.
             out << ".Self == .Self";

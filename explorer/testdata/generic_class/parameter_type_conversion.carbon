@@ -5,20 +5,23 @@
 // RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
 // RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK:result: 2
+// CHECK:result: 4
 
 package ExplorerTest api;
 
-interface Vector {
-  let Dim:! i32;
+class Holder(N:! i32) {
+  fn Get() -> i32 {
+    return N;
+  }
 }
 
-class Point {
-  var x: i32;
-  var y: i32;
-  impl as Vector where .Dim == 2 {}
+class IntLike {
+  impl as ImplicitAs(i32) {
+    fn Convert[me: Self]() -> i32 { return 4; }
+  }
+  fn Make() -> IntLike { return {}; }
 }
 
 fn Main() -> i32 {
-  return Point.(Vector.Dim);
+  return Holder(IntLike.Make()).Get();
 }
