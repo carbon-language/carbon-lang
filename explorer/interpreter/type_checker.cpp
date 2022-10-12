@@ -1224,21 +1224,27 @@ class TypeChecker::ConstraintTypeBuilder {
     return Success();
   }
 
+  class ImplsInScopeTracker {
+    friend class ConstraintTypeBuilder;
+
+   private:
+    int num_added = 0;
+  };
+
   // Brings all the `impl`s accumulated so far into the given impl scope.
-  // Returns the number of impls added, which can be specified as `start_from`
-  // in a subsequent call to add only new `impl`s.
-  auto BringImplsIntoScope(const TypeChecker& type_checker,
-                           Nonnull<ImplScope*> impl_scope,
-                           std::optional<int> start_from = std::nullopt)
-      -> int {
+  // If this will be called more than once, an ImplsInScopeTracker can be
+  // provided to avoid adding the same impls more than once.
+  void BringImplsIntoScope(
+      const TypeChecker& type_checker, Nonnull<ImplScope*> impl_scope,
+      std::optional<Nonnull<ImplsInScopeTracker*>> tracker = std::nullopt) {
     llvm::ArrayRef<ConstraintType::ImplConstraint> impl_constraints =
         impl_constraints_;
-    if (start_from) {
-      impl_constraints = impl_constraints.drop_front(*start_from);
+    if (tracker) {
+      impl_constraints = impl_constraints.drop_front((*tracker)->num_added);
+      (*tracker)->num_added = impl_constraints_.size();
     }
     impl_scope->Add(impl_constraints, llvm::None, llvm::None, GetSelfWitness(),
                     type_checker);
-    return impl_constraints_.size();
   }
 
   // Converts the builder into a ConstraintType. Note that this consumes the
@@ -4208,6 +4214,7 @@ auto TypeChecker::DeclareInterfaceDeclaration(
 
   // Build a constraint corresponding to this interface.
   ConstraintTypeBuilder builder(arena_, iface_decl->self());
+  ConstraintTypeBuilder::ImplsInScopeTracker impl_tracker;
   iface_decl->self()->set_static_type(iface_type);
 
   // The impl constraint says only that the direct members of the interface are
@@ -4222,7 +4229,6 @@ auto TypeChecker::DeclareInterfaceDeclaration(
       MakeConstraintWitnessAccess(builder.GetSelfWitness(), index);
 
   ScopeInfo iface_scope_info = ScopeInfo::ForNonClassScope(&iface_scope);
-  std::optional<int> impl_constraints_added;
   for (Nonnull<Declaration*> m : iface_decl->members()) {
     CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, iface_scope_info));
 
@@ -4247,8 +4253,7 @@ auto TypeChecker::DeclareInterfaceDeclaration(
                                      builder.GetSelfWitness(), Bindings(),
                                      /*add_lookup_contexts=*/false));
         // Add any new impl constraints to the scope.
-        impl_constraints_added = builder.BringImplsIntoScope(
-            *this, &iface_scope, impl_constraints_added);
+        builder.BringImplsIntoScope(*this, &iface_scope, &impl_tracker);
       }
     }
   }
