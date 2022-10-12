@@ -498,7 +498,7 @@ auto TypeChecker::IsImplicitlyConvertible(
          impl_scope.Resolve(*iface_type, source, source_loc, *this).ok();
 }
 
-auto TypeChecker::ImplicitlyConvert(const std::string& context,
+auto TypeChecker::ImplicitlyConvert(std::string_view context,
                                     const ImplScope& impl_scope,
                                     Nonnull<Expression*> source,
                                     Nonnull<const Value*> destination)
@@ -657,14 +657,14 @@ class TypeChecker::ArgumentDeduction {
   // Adds a value for a binding that is not deduced but still participates in
   // substitution. For example, the `T` parameter in `fn F(T:! Type, x: T)`.
   void AddNonDeducedBindingValue(Nonnull<const GenericBinding*> binding,
-                                 Nonnull<const Value*> value) {
-    non_deduced_values_.push_back({binding, value});
+                                 Nonnull<Expression*> argument) {
+    non_deduced_values_.push_back({binding, argument});
   }
 
   // Finishes deduction and forms a set of substitutions that transform `param`
   // into `arg`.
-  auto Finish(const TypeChecker& type_checker,
-              const ImplScope& impl_scope) const -> ErrorOr<Bindings>;
+  auto Finish(TypeChecker& type_checker, const ImplScope& impl_scope) const
+      -> ErrorOr<Bindings>;
 
  private:
   SourceLocation source_loc_;
@@ -676,8 +676,9 @@ class TypeChecker::ArgumentDeduction {
   std::map<Nonnull<const GenericBinding*>,
            llvm::TinyPtrVector<Nonnull<const Value*>>>
       deduced_values_;
-  // Values for non-deduced bindings, such as parameters.
-  std::vector<std::pair<Nonnull<const GenericBinding*>, Nonnull<const Value*>>>
+  // Values for non-deduced bindings, such as parameters with corresponding
+  // argument expressions.
+  std::vector<std::pair<Nonnull<const GenericBinding*>, Nonnull<Expression*>>>
       non_deduced_values_;
 
   // Non-deduced mismatches that we deferred until we could perform
@@ -929,7 +930,7 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
   }
 }
 
-auto TypeChecker::ArgumentDeduction::Finish(const TypeChecker& type_checker,
+auto TypeChecker::ArgumentDeduction::Finish(TypeChecker& type_checker,
                                             const ImplScope& impl_scope) const
     -> ErrorOr<Bindings> {
   // Check deduced values and build our resulting `Bindings` set. We do this in
@@ -947,17 +948,20 @@ auto TypeChecker::ArgumentDeduction::Finish(const TypeChecker& type_checker,
 
     const Value* binding_type =
         type_checker.Substitute(bindings, &binding->static_type());
+    const Value* substituted_type =
+        type_checker.Substitute(bindings, binding_type);
     auto* first_value = values[0];
     for (auto* value : values) {
-      if (!IsTypeOfType(binding_type)) {
+      if (!IsTypeOfType(substituted_type)) {
         // TODO: It's not clear that conversions are or should be possible here.
         // If they are permitted, we should allow user-defined conversions, and
         // actually perform the conversion.
-        if (!type_checker.IsImplicitlyConvertible(value, binding_type,
+        if (!type_checker.IsImplicitlyConvertible(value, substituted_type,
                                                   impl_scope, false)) {
           return ProgramError(source_loc_)
                  << "cannot convert deduced value " << *value << " for "
-                 << binding->name() << " to parameter type " << *binding_type;
+                 << binding->name() << " to parameter type "
+                 << *substituted_type;
         }
       }
 
@@ -978,26 +982,43 @@ auto TypeChecker::ArgumentDeduction::Finish(const TypeChecker& type_checker,
     if (binding->impl_binding()) {
       CARBON_ASSIGN_OR_RETURN(
           witness, impl_scope.Resolve(binding_type, first_value, source_loc_,
-                                      type_checker));
+                                      type_checker, bindings));
     }
 
     bindings.Add(binding, first_value, witness);
   }
 
-  // Add non-deduced values. These are assumed to lexically follow the deduced
-  // bindings.
+  // Evaluate and add non-deduced values. These are assumed to lexically follow
+  // the deduced bindings, so any bindings the type might reference are now
+  // known.
   // TODO: This is not the case for `fn F(T:! Type, u: (V:! ImplicitAs(T)))`.
   // However, we intend to disallow that.
-  for (auto [binding, value] : non_deduced_values_) {
-    const Value* binding_type =
-        type_checker.Substitute(bindings, &binding->static_type());
+  for (auto [binding, arg] : non_deduced_values_) {
+    // Form the binding's resolved type and convert the argument expression to
+    // it.
+    const Value* binding_type = &binding->static_type();
+    const Value* substituted_type =
+        type_checker.Substitute(bindings, binding_type);
+    if (!IsTypeOfType(substituted_type)) {
+      CARBON_ASSIGN_OR_RETURN(
+          arg, type_checker.ImplicitlyConvert(context_, impl_scope, arg,
+                                              substituted_type));
+    }
+
+    // Evaluate the argument to get the value.
+    CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> value,
+                            InterpExp(arg, type_checker.arena_, trace_stream_));
+    if (trace_stream_) {
+      **trace_stream_ << "evaluated generic parameter " << *binding << " as "
+                      << *value << "\n";
+    }
 
     // Find a witness for the binding if needed.
     std::optional<Nonnull<const Witness*>> witness;
     if (binding->impl_binding()) {
       CARBON_ASSIGN_OR_RETURN(
-          witness,
-          impl_scope.Resolve(binding_type, value, source_loc_, type_checker));
+          witness, impl_scope.Resolve(binding_type, value, source_loc_,
+                                      type_checker, bindings));
     }
 
     bindings.Add(binding, value, witness);
@@ -1638,7 +1659,8 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
     return std::nullopt;
   }
 
-  if (ErrorOr<Bindings> bindings_or_error = deduction.Finish(*this, impl_scope);
+  if (ErrorOr<Bindings> bindings_or_error =
+          deduction.Finish(const_cast<TypeChecker&>(*this), impl_scope);
       !bindings_or_error.ok()) {
     if (trace_stream_) {
       **trace_stream_ << "impl does not match: " << bindings_or_error.error()
@@ -1710,7 +1732,7 @@ auto TypeChecker::DeduceCallBindings(
     const ImplScope& impl_scope) -> ErrorOr<Success> {
   llvm::ArrayRef<Nonnull<const Value*>> params =
       cast<TupleValue>(*params_type).elements();
-  llvm::ArrayRef<Nonnull<const Expression*>> args =
+  llvm::ArrayRef<Nonnull<Expression*>> args =
       cast<TupleLiteral>(call.argument()).fields();
   if (params.size() != args.size()) {
     return ProgramError(call.source_loc())
@@ -1726,19 +1748,12 @@ auto TypeChecker::DeduceCallBindings(
   // parameter.
   for (size_t i = 0; i < params.size(); ++i) {
     const Value* param = params[i];
-    const Expression* arg = args[i];
+    Expression* arg = args[i];
     if (!generic_params.empty() && generic_params.front().index == i) {
-      // The parameter is a `:!` binding. Evaluate and collect its value for
-      // use in later parameters and in the function body.
-      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> arg_value,
-                              InterpExp(arg, arena_, trace_stream_));
-      auto* binding = generic_params.front().binding;
+      // The parameter is a `:!` binding. Collect its argument so we can
+      // evaluate it when we're done with deduction.
+      deduction.AddNonDeducedBindingValue(generic_params.front().binding, arg);
       generic_params = generic_params.drop_front();
-      if (trace_stream_) {
-        **trace_stream_ << "evaluated generic parameter " << *binding << " as "
-                        << *arg_value << "\n";
-      }
-      deduction.AddNonDeducedBindingValue(binding, arg_value);
     } else {
       // Otherwise deduce its type from the corresponding argument.
       CARBON_RETURN_IF_ERROR(
@@ -1777,7 +1792,6 @@ static auto LookupInConstraint(SourceLocation source_loc,
     -> ErrorOr<ConstraintLookupResult> {
   // Find the set of lookup contexts.
   llvm::ArrayRef<ConstraintType::LookupContext> lookup_contexts;
-  llvm::ArrayRef<ConstraintType::RewriteConstraint> rewrites;
   ConstraintType::LookupContext interface_context[1];
   if (const auto* iface_type = dyn_cast<InterfaceType>(type)) {
     // For an interface, look into that interface alone.
@@ -1788,10 +1802,8 @@ static auto LookupInConstraint(SourceLocation source_loc,
   } else if (const auto* constraint_type = dyn_cast<ConstraintType>(type)) {
     // For a constraint, look in all of its lookup contexts.
     lookup_contexts = constraint_type->lookup_contexts();
-    rewrites = constraint_type->rewrite_constraints();
   } else {
-    // Other kinds of constraint, such as TypeType, have no lookup contexts
-    // and no rewrite constraints.
+    // Other kinds of constraint, such as TypeType, have no lookup contexts.
   }
 
   std::optional<ConstraintLookupResult> found;
@@ -1876,8 +1888,9 @@ auto TypeChecker::LookupRewriteInTypeOf(
   // Given `(T:! C).Y`, look in `C` for rewrites.
   if (auto* var_type = dyn_cast<VariableType>(type)) {
     if (!var_type->binding().has_static_type()) {
-      // TODO: We looked for a rewrite before we finished type-checking the
-      // generic binding. Should this happen?
+      // We looked for a rewrite before we finished type-checking the generic
+      // binding. This happens when forming the type of a generic binding. Just
+      // say there are no rewrites yet.
       return std::nullopt;
     }
     return LookupRewrite(&var_type->binding().static_type(), interface, member);
@@ -3116,17 +3129,17 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                      << rewrite_clause.member_name()
                      << "` does not name an associated constant";
             }
-            // TODO: Should we enforce any type constraints on the replacement?
-            // Given
+            // TODO: Decide what type constraints we want to impose on the
+            // replacement. Given
             //
             //   interface A {
             //     let N:! i32;
             //   }
             //   fn F[T:! A where .N = (i32, i32)]() {}
             //
-            // ... no call can ever succeed. Should we reject somehow? We want
-            // to preserve the type of the replacement in the case where it is
-            // a constraint type containing further rewrites.
+            // ... no call can ever succeed. Should we reject? We want to
+            // preserve the type of the replacement in the case where it is a
+            // constraint type containing further rewrites.
             CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> replacement_value,
                                     InterpExp(&rewrite_clause.replacement(),
                                               arena_, trace_stream_));
@@ -4297,7 +4310,6 @@ auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
       // An associated constant must be given exactly one value.
       if (LookupRewrite(impl_decl->constraint_type(), iface_type, assoc)) {
         // OK, named by `=` constraint.
-        // TODO: Type checking?
         continue;
       }
 

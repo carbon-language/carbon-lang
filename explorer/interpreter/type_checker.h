@@ -346,8 +346,7 @@ class TypeChecker {
 
   // Attempt to implicitly convert type-checked expression `source` to the type
   // `destination`.
-  auto ImplicitlyConvert(const std::string& context,
-                         const ImplScope& impl_scope,
+  auto ImplicitlyConvert(std::string_view context, const ImplScope& impl_scope,
                          Nonnull<Expression*> source,
                          Nonnull<const Value*> destination)
       -> ErrorOr<Nonnull<Expression*>>;

@@ -68,9 +68,12 @@ void ImplScope::AddParent(Nonnull<const ImplScope*> parent) {
 auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
                         Nonnull<const Value*> impl_type,
                         SourceLocation source_loc,
-                        const TypeChecker& type_checker) const
+                        const TypeChecker& type_checker,
+                        const Bindings& bindings) const
     -> ErrorOr<Nonnull<const Witness*>> {
   if (const auto* iface_type = dyn_cast<InterfaceType>(constraint_type)) {
+    iface_type =
+        cast<InterfaceType>(type_checker.Substitute(bindings, iface_type));
     return ResolveInterface(iface_type, impl_type, source_loc, type_checker);
   }
   if (const auto* constraint = dyn_cast<ConstraintType>(constraint_type)) {
@@ -90,13 +93,13 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
         witness = type_checker.MakeConstraintWitness(*constraint, witnesses,
                                                      source_loc);
       }
-      Bindings bindings;
-      bindings.Add(constraint->self_binding(), impl_type, witness);
+      Bindings local_bindings = bindings;
+      local_bindings.Add(constraint->self_binding(), impl_type, witness);
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Witness*> result,
           ResolveInterface(cast<InterfaceType>(type_checker.Substitute(
-                               bindings, impl.interface)),
-                           type_checker.Substitute(bindings, impl.type),
+                               local_bindings, impl.interface)),
+                           type_checker.Substitute(local_bindings, impl.type),
                            source_loc, type_checker));
       witnesses.push_back(result);
     }
