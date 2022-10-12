@@ -7,14 +7,11 @@
 
 package EmptyIdentifier impl;
 
-choice A{
+fn test() -> i32 {
+  return 1;
 }
-
-fn test() -> A {
-  "a"["1"];
-}
-fn foo() -> test();
 
 fn Main() -> i32 {
+  var x: test() = 1;
   return 0;
 }
