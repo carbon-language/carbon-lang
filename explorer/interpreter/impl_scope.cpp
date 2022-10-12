@@ -141,7 +141,8 @@ auto ImplScope::ResolveInterface(Nonnull<const InterfaceType*> iface_type,
   return *result;
 }
 
-// Combines the results of two impl lookups.
+// Combines the results of two impl lookups. In the event of a tie, arbitrarily
+// prefer `a` over `b`.
 static auto CombineResults(Nonnull<const InterfaceType*> iface_type,
                            Nonnull<const Value*> type,
                            SourceLocation source_loc,
@@ -149,24 +150,24 @@ static auto CombineResults(Nonnull<const InterfaceType*> iface_type,
                            std::optional<Nonnull<const Witness*>> b)
     -> ErrorOr<std::optional<Nonnull<const Witness*>>> {
   // If only one lookup succeeded, return that.
-  if (!a) {
-    return b;
-  }
   if (!b) {
     return a;
   }
+  if (!a) {
+    return b;
+  }
   // If either of them was a symbolic result, then they'll end up being
-  // equivalent. Pick whichever we found first.
-  if (!isa<ImplWitness>(*b)) {
+  // equivalent. In that case, pick `a`.
+  auto* impl_a = dyn_cast<ImplWitness>(*a);
+  auto* impl_b = dyn_cast<ImplWitness>(*b);
+  if (!impl_b) {
     return a;
   }
-  if (!isa<ImplWitness>(*a)) {
+  if (!impl_a) {
     return b;
   }
   // If they refer to the same `impl` declaration, it doesn't matter which one
-  // we pick.
-  auto* impl_a = cast<ImplWitness>(*a);
-  auto* impl_b = cast<ImplWitness>(*b);
+  // we pick, so we pick `a`.
   // TODO: Compare the identities of the `impl`s, not the declarations.
   if (&impl_a->declaration() == &impl_b->declaration()) {
     return a;

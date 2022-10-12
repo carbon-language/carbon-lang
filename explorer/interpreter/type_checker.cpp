@@ -952,17 +952,15 @@ auto TypeChecker::ArgumentDeduction::Finish(TypeChecker& type_checker,
         type_checker.Substitute(bindings, binding_type);
     auto* first_value = values[0];
     for (auto* value : values) {
-      if (!IsTypeOfType(substituted_type)) {
-        // TODO: It's not clear that conversions are or should be possible here.
-        // If they are permitted, we should allow user-defined conversions, and
-        // actually perform the conversion.
-        if (!type_checker.IsImplicitlyConvertible(value, substituted_type,
-                                                  impl_scope, false)) {
-          return ProgramError(source_loc_)
-                 << "cannot convert deduced value " << *value << " for "
-                 << binding->name() << " to parameter type "
-                 << *substituted_type;
-        }
+      // TODO: It's not clear that conversions are or should be possible here.
+      // If they are permitted, we should allow user-defined conversions, and
+      // actually perform the conversion.
+      if (!IsTypeOfType(substituted_type) &&
+          !type_checker.IsImplicitlyConvertible(value, substituted_type,
+                                                impl_scope, false)) {
+        return ProgramError(source_loc_)
+               << "cannot convert deduced value " << *value << " for "
+               << binding->name() << " to parameter type " << *substituted_type;
       }
 
       // All deductions are required to produce the same value. Note that we
@@ -1244,15 +1242,14 @@ class TypeChecker::ConstraintTypeBuilder {
       bool performed_rewrite;
       do {
         performed_rewrite = false;
-        if (auto* assoc = dyn_cast<AssociatedConstant>(impl_constraint.type)) {
-          if (ValueEqual(&assoc->base(), GetSelfType(), std::nullopt)) {
-            for (const auto& rewrite : rewrite_constraints_) {
-              if (&assoc->constant() == rewrite.constant &&
-                  ValueEqual(&assoc->interface(), rewrite.interface,
-                             std::nullopt)) {
-                impl_constraint.type = &rewrite.replacement->value();
-                performed_rewrite = true;
-              }
+        if (auto* assoc = dyn_cast<AssociatedConstant>(impl_constraint.type);
+            assoc && ValueEqual(&assoc->base(), GetSelfType(), std::nullopt)) {
+          for (const auto& rewrite : rewrite_constraints_) {
+            if (&assoc->constant() == rewrite.constant &&
+                ValueEqual(&assoc->interface(), rewrite.interface,
+                           std::nullopt)) {
+              impl_constraint.type = &rewrite.replacement->value();
+              performed_rewrite = true;
             }
           }
         }
