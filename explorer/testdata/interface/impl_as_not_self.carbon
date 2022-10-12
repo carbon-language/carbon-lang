@@ -13,18 +13,18 @@ interface ConvertsFromInt {
   impl i32 as ImplicitAs(Self);
 }
 
-fn F(T:! ConvertsFromInt, n: i32) -> T {
+fn ConvertIntTo(T:! ConvertsFromInt, n: i32) -> T {
   return n;
 }
 
-class C {
+class IntHolder {
   var n: i32;
 }
-external impl i32 as ImplicitAs(C) {
-  fn Convert[me: Self]() -> C { return {.n = me}; }
+external impl i32 as ImplicitAs(IntHolder) {
+  fn Convert[me: Self]() -> IntHolder { return {.n = me}; }
 }
-external impl C as ConvertsFromInt {}
+external impl IntHolder as ConvertsFromInt {}
 
 fn Main() -> i32 {
-  return F(C, 5).n;
+  return ConvertIntTo(IntHolder, 5).n;
 }

@@ -5,38 +5,38 @@
 // RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
 // RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK:C.G
+// CHECK:Carrot.G
 // CHECK:result: 5
 
 package ExplorerTest api;
 
-interface A(T:! Type) {
+interface Apple(T:! Type) {
   fn F[me: Self]() -> T;
 }
 
-interface B {
-  impl as A(i32);
+interface Banana {
+  impl as Apple(i32);
   fn G[me: Self]();
 }
 
-class C {
+class Carrot {
   var n: i32;
 }
 
-external impl C as A(i32) {
+external impl Carrot as Apple(i32) {
   fn F[me: Self]() -> i32 { return me.n; }
 }
 
-external impl C as B {
-  fn G[me: Self]() { Print("C.G"); }
+external impl Carrot as Banana {
+  fn G[me: Self]() { Print("Carrot.G"); }
 }
 
-fn H[T:! B](x: T) -> i32 {
+fn H[T:! Banana](x: T) -> i32 {
   x.G();
-  return x.(A(i32).F)();
+  return x.(Apple(i32).F)();
 }
 
 fn Main() -> i32 {
-  var c: C = {.n = 5};
+  var c: Carrot = {.n = 5};
   return H(c);
 }
