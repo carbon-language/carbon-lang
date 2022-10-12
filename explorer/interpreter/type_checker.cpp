@@ -1521,13 +1521,10 @@ auto TypeChecker::Substitute(const Bindings& bindings,
           builder.AddAndSubstitute(*this, &constraint, builder.GetSelfType(),
                                    builder.GetSelfWitness(), bindings,
                                    /*add_lookup_contexts=*/true);
-      if (!result.ok()) {
-        // TODO: Handle this better!
-        if (trace_stream_) {
-          **trace_stream_ << "substitution of " << constraint
-                          << " failed: " << result.error() << "\n";
-        }
-      }
+      // TODO: This appears to theoretically be possible, and should be handled
+      // better.
+      CARBON_CHECK(result.ok()) << "substitution into " << constraint
+                                << " failed: " << result.error();
       Nonnull<const ConstraintType*> new_constraint =
           std::move(builder).Build(arena_);
       if (trace_stream_) {
