@@ -9,10 +9,10 @@ package EmptyIdentifier impl;
 
 fn apply[T:! Type, U:! Type](f: T, EmptyIdentifier: U)
 {
-// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/crash/issue-1394.carbon:[[@LINE+1]]: expected a tuple
 match (true[true]) {}
 }
 
+// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/crash/issue-1394.carbon:[[@LINE+1]]:  function call not allowed here
 fn EmptyIdentifier() -> apply(true, true);
 
 fn Main() -> i32 {

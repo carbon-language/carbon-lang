@@ -2,10 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
+// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
+// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK:result: 0
 
 package ExplorerTest api;
 
@@ -16,6 +15,7 @@ fn F(T:! Type) -> Type {
 }
 
 fn Main() -> i32 {
+  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_instantiation_at_compile_time.carbon:[[@LINE+1]]:  function call not allowed here
   var v: F(i32) = {};
   var w: C(i32) = v;
   return 0;

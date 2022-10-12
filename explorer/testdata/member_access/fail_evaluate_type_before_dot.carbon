@@ -2,15 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
+// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
+// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK:Struct OK
-// CHECK:Choice OK
-// CHECK:Class OK
-// CHECK:Interface OK
-// CHECK:Constraint OK
-// CHECK:result: 0
 
 package Foo api;
 
@@ -31,6 +25,7 @@ fn GetInterface() -> Type { return Interface; }
 fn GetConstraint() -> Type { return Interface & AnotherInterface; }
 
 fn TestStruct() {
+  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/member_access/fail_evaluate_type_before_dot.carbon:[[@LINE+1]]:  function call not allowed here
   var s: GetStruct() = {.n = 1};
   if (s.(GetStruct().n) == 1) {
     Print("Struct OK");
