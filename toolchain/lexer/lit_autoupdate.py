@@ -31,21 +31,30 @@ def main() -> None:
     # Calls the main script with explorer settings. This uses execv in order to
     # avoid Python import behaviors.
     parsed_args = parse_args()
-    actual_py = Path(__file__).parent.parent.joinpath(
+    actual_py = Path(__file__).parent.parent.parent.joinpath(
         "bazel", "testing", "lit_autoupdate_base.py"
     )
     args = [
         sys.argv[0],
         # Flags to configure for explorer testing.
         "--build_target",
-        "//explorer",
+        "//toolchain/driver:carbon",
         "--cmd_replace",
-        "%{explorer}",
-        "./bazel-bin/explorer/explorer",
-        "--testdata",
-        "explorer/testdata",
+        "%{carbon}",
+        "./bazel-bin/toolchain/driver/carbon",
+        # Ignore the resulting column of EndOfFile because it's typically the
+        # end of the CHECK comment.
+        "--extra_check_replacement",
+        ".*'EndOfFile'",
+        r"column: (?:\d+)",
+        "column: {{[0-9]+}}",
+        # Ignore spaces that are used to columnize lines.
+        "--line_number_format",
+        "{{ *}}[[@LINE%(delta)s]]",
         "--line_number_pattern",
-        r"(?<=\.carbon:)(\d+)(?=(?:\D|$))",
+        r"(?<= line: )( *\d+)(?=,)",
+        "--testdata",
+        "toolchain/lexer/testdata",
         # Forwarded arguments.
         "--build_mode",
         parsed_args.build_mode,

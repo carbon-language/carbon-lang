@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // RUN: %{carbon} dump tokens %s 2>&1 | %{FileCheck-strict} %s
+// AUTOUPDATE: %{carbon} dump tokens %s
 
 // CHECK:token: { index:  0, kind:              'Fn', line: {{ *}}[[@LINE+7]], column:   1, indent: 1, spelling: 'fn', has_trailing_space: true }
 // CHECK:token: { index:  1, kind:      'Identifier', line: {{ *}}[[@LINE+6]], column:   4, indent: 1, spelling: 'run', identifier: 0 }
@@ -18,4 +19,4 @@ fn run(String program) {
   return True;
 // CHECK:token: { index: 10, kind: 'CloseCurlyBrace', line: {{ *}}[[@LINE+1]], column:   1, indent: 1, spelling: '}', opening_token: 6, has_trailing_space: true }
 }
-// CHECK:token: { index: 11, kind:       'EndOfFile', line: {{ *}}[[@LINE]], column: {{[0-9]+}}, indent: 1, spelling: '' }
+// CHECK:token: { index: 11, kind:       'EndOfFile', line: {{ *}}[[@LINE+0]], column: {{[0-9]+}}, indent: 1, spelling: '' }

@@ -26,8 +26,10 @@ NOAUTOUPDATE_MARKER = "// NOAUTOUPDATE"
 
 class UpdateArgs(NamedTuple):
     build_target: str
+    cmd_replace: Tuple[str, str]
+    extra_check_replacements: List[Tuple[Pattern, Pattern, str]]
+    line_number_format: str
     line_number_pattern: Pattern
-    replacement: Tuple[str, str]
 
 
 def parse_args() -> argparse.Namespace:
@@ -47,19 +49,34 @@ def parse_args() -> argparse.Namespace:
         help="The target to build.",
     )
     parser.add_argument(
+        "--cmd_replace",
+        nargs=2,
+        metavar=("BEFORE", "AFTER"),
+        required=True,
+        help="Adds a command replacement of `BEFORE` with `AFTER`. Typically "
+        "`BEFORE` will look like `%{name}`",
+    )
+    parser.add_argument(
+        "--extra_check_replacement",
+        nargs=3,
+        metavar=("MATCHING", "BEFORE", "AFTER"),
+        default=[],
+        action="append",
+        help="On a CHECK line with MATCHING, does a regex replacement of "
+        "BEFORE with AFTER.",
+    )
+    parser.add_argument(
+        "--line_number_format",
+        metavar="FORMAT",
+        default="[[@LINE%(delta)s]]",
+        help="An optional format string for line number delta replacements.",
+    )
+    parser.add_argument(
         "--line_number_pattern",
         metavar="PATTERN",
         required=True,
         help="A regular expression which matches line numbers to update as its "
         "only group.",
-    )
-    parser.add_argument(
-        "--replace",
-        nargs=2,
-        metavar=("BEFORE", "AFTER"),
-        required=True,
-        help="Adds a replacement of `BEFORE` with `AFTER`. Typically `BEFORE` "
-        "will look like `%{name}`",
     )
     parser.add_argument(
         "--testdata",
@@ -118,11 +135,13 @@ class CheckLine(Line):
     def __init__(
         self,
         out_line: str,
+        line_number_format: str,
         line_number_pattern: Pattern,
     ) -> None:
         super().__init__()
         self.indent = ""
         self.out_line = out_line.rstrip()
+        self.line_number_format = line_number_format
         self.line_number_pattern = line_number_pattern
         self.line_numbers = [
             int(n) - 1 for n in line_number_pattern.findall(self.out_line)
@@ -138,7 +157,9 @@ class CheckLine(Line):
             delta = line_number_remap[line_number] - output_line_number
             # We use `:+d` here to produce `LINE-n` or `LINE+n` as appropriate.
             result = self.line_number_pattern.sub(
-                f"[[@LINE{delta:+d}]]", result, count=1
+                self.line_number_format % {"delta": f"{delta:+d}"},
+                result,
+                count=1,
             )
         return f"{self.indent}// CHECK:{result}\n"
 
@@ -183,13 +204,16 @@ def replace_all(s: str, replacements: List[Tuple[str, str]]) -> str:
 
 
 def get_actual_output(
-    update_args: UpdateArgs, test: str, autoupdate_cmd: str
+    update_args: UpdateArgs,
+    test: str,
+    autoupdate_cmd: str,
+    extra_check_replacements: List[Tuple[Pattern, Pattern, str]],
 ) -> List[str]:
     """Runs the autoupdate command and returns the output lines."""
     # Mirror lit.cfg.py substitutions; bazel runs don't need --prelude.
     # Also replaces `%s` with the test file.
     autoupdate_cmd = replace_all(
-        autoupdate_cmd, [update_args.replacement, ("%s", test)]
+        autoupdate_cmd, [update_args.cmd_replace, ("%s", test)]
     )
 
     # Run the autoupdate command to generate output.
@@ -204,20 +228,28 @@ def get_actual_output(
 
     # `lit` uses full paths to the test file, so use a regex to ignore paths
     # when used.
-    # TODO: Maybe revisit and see if lit can be convinced to give a
-    # root-relative path.
     out = replace_all(
         out,
         [
             ("{{", "{{[{][{]}}"),
             ("[[", "{{[[][[]}}"),
+            # TODO: Maybe revisit and see if lit can be convinced to give a
+            # root-relative path.
             (test, f"{{{{.*}}}}/{test}"),
         ],
     )
-    return out.splitlines()
+    out_lines = out.splitlines()
+
+    for i, line in enumerate(out_lines):
+        for line_matcher, before, after in extra_check_replacements:
+            if line_matcher.match(line):
+                out_lines[i] = before.sub(after, line)
+
+    return out_lines
 
 
 def merge_lines(
+    line_number_format: str,
     line_number_pattern: Pattern,
     autoupdate_line_number: int,
     raw_orig_lines: List[str],
@@ -231,7 +263,8 @@ def merge_lines(
         if not line.lstrip().startswith("// CHECK")
     ]
     check_lines = [
-        CheckLine(out_line, line_number_pattern) for out_line in out_lines
+        CheckLine(out_line, line_number_format, line_number_pattern)
+        for out_line in out_lines
     ]
 
     result_lines: List[Line] = []
@@ -272,8 +305,11 @@ def update_check(update_args: UpdateArgs, test: str) -> bool:
         return False
 
     # Determine the merged output lines.
-    out_lines = get_actual_output(update_args, test, autoupdate.cmd)
+    out_lines = get_actual_output(
+        update_args, test, autoupdate.cmd, update_args.extra_check_replacements
+    )
     result_lines = merge_lines(
+        update_args.line_number_format,
         update_args.line_number_pattern,
         autoupdate.line_number,
         orig_lines,
@@ -288,6 +324,10 @@ def update_check(update_args: UpdateArgs, test: str) -> bool:
             if isinstance(line, OriginalLine)
         ]
     )
+    # If the last line of the original output was a CHECK, replace it with an
+    # empty line.
+    if orig_lines[-1].lstrip().startswith("// CHECK"):
+        line_number_remap[len(orig_lines) - 1] = len(result_lines) - 1
 
     # Generate contents for any lines that depend on line numbers.
     formatted_result_lines = [
@@ -348,11 +388,17 @@ def main() -> None:
     )
 
     # Run updates.
+    replacements = [
+        (re.compile(line_matcher), re.compile(before), after)
+        for line_matcher, before, after in parsed_args.extra_check_replacement
+    ]
     update_checks(
         UpdateArgs(
             parsed_args.build_target,
+            parsed_args.cmd_replace,
+            replacements,
+            parsed_args.line_number_format,
             re.compile(parsed_args.line_number_pattern),
-            parsed_args.replace,
         ),
         tests,
     )
