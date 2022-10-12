@@ -39,8 +39,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--build_mode",
         metavar="MODE",
-        required=True,
-        help="The build mode to use.",
+        default="opt",
+        help="The build mode to use. Defaults to opt for faster execution.",
     )
     parser.add_argument(
         "--build_target",
