@@ -4222,69 +4222,85 @@ auto TypeChecker::DeclareInterfaceDeclaration(
   for (Nonnull<Declaration*> m : iface_decl->members()) {
     CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, iface_scope_info));
 
-    // For an `extends C;` declaration, add `Self is C` to our constraint.
-    if (auto* extends = dyn_cast<InterfaceExtendsDeclaration>(m)) {
-      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> base,
-                              TypeCheckTypeExp(extends->base(), iface_scope));
-      auto* constraint_type = dyn_cast<ConstraintType>(base);
-      if (auto* interface_type = dyn_cast<InterfaceType>(base)) {
-        CARBON_ASSIGN_OR_RETURN(
-            constraint_type,
-            MakeConstraintForInterface(extends->source_loc(), interface_type));
+    // TODO: This should probably live in `DeclareDeclaration`, but it needs
+    // to update state that's not available from there.
+    switch (m->kind()) {
+      case DeclarationKind::InterfaceExtendsDeclaration: {
+        // For an `extends C;` declaration, add `Self is C` to our constraint.
+        auto* extends = cast<InterfaceExtendsDeclaration>(m);
+        CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> base,
+                                TypeCheckTypeExp(extends->base(), iface_scope));
+        auto* constraint_type = dyn_cast<ConstraintType>(base);
+        if (auto* interface_type = dyn_cast<InterfaceType>(base)) {
+          CARBON_ASSIGN_OR_RETURN(
+              constraint_type, MakeConstraintForInterface(extends->source_loc(),
+                                                          interface_type));
+        }
+        if (!constraint_type) {
+          return ProgramError(extends->source_loc())
+                 << "an interface can only extend a constraint, found "
+                 << *base;
+        }
+        CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
+            *this, constraint_type, builder.GetSelfType(),
+            builder.GetSelfWitness(), Bindings(),
+            /*add_lookup_contexts=*/true));
+        break;
       }
-      if (!constraint_type) {
-        return ProgramError(extends->source_loc())
-               << "an interface can only extend a constraint, found " << *base;
-      }
-      CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
-          *this, constraint_type, builder.GetSelfType(),
-          builder.GetSelfWitness(), Bindings(),
-          /*add_lookup_contexts=*/true));
-    }
 
-    // For an `impl X as Y;` declaration, add `X is Y` to our constraint.
-    if (auto* impl = dyn_cast<InterfaceImplDeclaration>(m)) {
-      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> impl_type,
-                              TypeCheckTypeExp(impl->impl_type(), iface_scope));
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> constraint,
-          TypeCheckTypeExp(impl->constraint(), iface_scope));
-      auto* constraint_type = dyn_cast<ConstraintType>(constraint);
-      if (auto* interface_type = dyn_cast<InterfaceType>(constraint)) {
+      case DeclarationKind::InterfaceImplDeclaration: {
+        // For an `impl X as Y;` declaration, add `X is Y` to our constraint.
+        auto* impl = cast<InterfaceImplDeclaration>(m);
         CARBON_ASSIGN_OR_RETURN(
-            constraint_type,
-            MakeConstraintForInterface(impl->source_loc(), interface_type));
-      }
-      if (!constraint_type) {
-        return ProgramError(impl->source_loc())
-               << "expected a constraint after `as`, found " << *constraint;
-      }
-      CARBON_RETURN_IF_ERROR(
-          builder.AddAndSubstitute(*this, constraint_type, impl_type,
-                                   builder.GetSelfWitness(), Bindings(),
-                                   /*add_lookup_contexts=*/false));
-    }
-
-    if (auto* assoc = dyn_cast<AssociatedConstantDeclaration>(m)) {
-      auto* assoc_value = arena_->New<AssociatedConstant>(
-          &iface_decl->self()->value(), iface_type, assoc, impl_witness);
-      assoc->binding().set_symbolic_identity(assoc_value);
-
-      // The type specified for the associated constant becomes a constraint
-      // for the interface: `let X:! Interface` adds a `Self.X is Interface`
-      // constraint that `impl`s must satisfy and users of the interface can
-      // rely on.
-      Nonnull<const Value*> constraint = &assoc->static_type();
-      if (auto* interface_type = dyn_cast<InterfaceType>(constraint)) {
+            Nonnull<const Value*> impl_type,
+            TypeCheckTypeExp(impl->impl_type(), iface_scope));
         CARBON_ASSIGN_OR_RETURN(
-            constraint,
-            MakeConstraintForInterface(assoc->source_loc(), interface_type));
-      }
-      if (auto* constraint_type = dyn_cast<ConstraintType>(constraint)) {
+            Nonnull<const Value*> constraint,
+            TypeCheckTypeExp(impl->constraint(), iface_scope));
+        auto* constraint_type = dyn_cast<ConstraintType>(constraint);
+        if (auto* interface_type = dyn_cast<InterfaceType>(constraint)) {
+          CARBON_ASSIGN_OR_RETURN(
+              constraint_type,
+              MakeConstraintForInterface(impl->source_loc(), interface_type));
+        }
+        if (!constraint_type) {
+          return ProgramError(impl->source_loc())
+                 << "expected a constraint after `as`, found " << *constraint;
+        }
         CARBON_RETURN_IF_ERROR(
-            builder.AddAndSubstitute(*this, constraint_type, assoc_value,
+            builder.AddAndSubstitute(*this, constraint_type, impl_type,
                                      builder.GetSelfWitness(), Bindings(),
                                      /*add_lookup_contexts=*/false));
+        break;
+      }
+
+      case DeclarationKind::AssociatedConstantDeclaration: {
+        auto* assoc = cast<AssociatedConstantDeclaration>(m);
+        auto* assoc_value = arena_->New<AssociatedConstant>(
+            &iface_decl->self()->value(), iface_type, assoc, impl_witness);
+        assoc->binding().set_symbolic_identity(assoc_value);
+
+        // The type specified for the associated constant becomes a
+        // constraint for the interface: `let X:! Interface` adds a `Self.X
+        // is Interface` constraint that `impl`s must satisfy and users of
+        // the interface can rely on.
+        Nonnull<const Value*> constraint = &assoc->static_type();
+        if (auto* interface_type = dyn_cast<InterfaceType>(constraint)) {
+          CARBON_ASSIGN_OR_RETURN(
+              constraint,
+              MakeConstraintForInterface(assoc->source_loc(), interface_type));
+        }
+        if (auto* constraint_type = dyn_cast<ConstraintType>(constraint)) {
+          CARBON_RETURN_IF_ERROR(
+              builder.AddAndSubstitute(*this, constraint_type, assoc_value,
+                                       builder.GetSelfWitness(), Bindings(),
+                                       /*add_lookup_contexts=*/false));
+        }
+        break;
+      }
+
+      default: {
+        break;
       }
     }
 

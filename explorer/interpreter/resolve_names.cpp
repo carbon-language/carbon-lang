@@ -29,10 +29,6 @@ static auto AddExposedNames(const Declaration& declaration,
                               StaticScope::NameStatus::KnownButNotDeclared));
       break;
     }
-    case DeclarationKind::ImplDeclaration: {
-      // Nothing to do here
-      break;
-    }
     case DeclarationKind::DestructorDeclaration: {
       // TODO: Remove this code. With this code, it is possible to create not
       // useful carbon code.
@@ -62,10 +58,6 @@ static auto AddExposedNames(const Declaration& declaration,
                               StaticScope::NameStatus::KnownButNotDeclared));
       break;
     }
-    case DeclarationKind::MixDeclaration: {
-      // Nothing to do here
-      break;
-    }
     case DeclarationKind::ChoiceDeclaration: {
       auto& choice = cast<ChoiceDeclaration>(declaration);
       CARBON_RETURN_IF_ERROR(
@@ -80,13 +72,6 @@ static auto AddExposedNames(const Declaration& declaration,
             enclosing_scope.Add(var.binding().name(), &var.binding(),
                                 StaticScope::NameStatus::KnownButNotDeclared));
       }
-      break;
-    }
-    case DeclarationKind::InterfaceExtendsDeclaration: {
-      // TODO: Should we add names from the extended constraint?
-      break;
-    }
-    case DeclarationKind::InterfaceImplDeclaration: {
       break;
     }
     case DeclarationKind::AssociatedConstantDeclaration: {
@@ -106,6 +91,13 @@ static auto AddExposedNames(const Declaration& declaration,
       auto& alias = cast<AliasDeclaration>(declaration);
       CARBON_RETURN_IF_ERROR(enclosing_scope.Add(
           alias.name(), &alias, StaticScope::NameStatus::KnownButNotDeclared));
+      break;
+    }
+    case DeclarationKind::ImplDeclaration:
+    case DeclarationKind::MixDeclaration:
+    case DeclarationKind::InterfaceExtendsDeclaration:
+    case DeclarationKind::InterfaceImplDeclaration: {
+      // These declarations don't have a name to expose.
       break;
     }
   }
