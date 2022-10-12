@@ -1224,10 +1224,26 @@ class TypeChecker::ConstraintTypeBuilder {
     return Success();
   }
 
+  class ImplsInScopeTracker {
+    friend class ConstraintTypeBuilder;
+
+   private:
+    int num_added = 0;
+  };
+
   // Brings all the `impl`s accumulated so far into the given impl scope.
-  void BringImplsIntoScope(const TypeChecker& type_checker,
-                           Nonnull<ImplScope*> impl_scope) {
-    impl_scope->Add(impl_constraints_, llvm::None, llvm::None, GetSelfWitness(),
+  // If this will be called more than once, an ImplsInScopeTracker can be
+  // provided to avoid adding the same impls more than once.
+  void BringImplsIntoScope(
+      const TypeChecker& type_checker, Nonnull<ImplScope*> impl_scope,
+      std::optional<Nonnull<ImplsInScopeTracker*>> tracker = std::nullopt) {
+    llvm::ArrayRef<ConstraintType::ImplConstraint> impl_constraints =
+        impl_constraints_;
+    if (tracker) {
+      impl_constraints = impl_constraints.drop_front((*tracker)->num_added);
+      (*tracker)->num_added = impl_constraints_.size();
+    }
+    impl_scope->Add(impl_constraints, llvm::None, llvm::None, GetSelfWitness(),
                     type_checker);
   }
 
@@ -4198,6 +4214,7 @@ auto TypeChecker::DeclareInterfaceDeclaration(
 
   // Build a constraint corresponding to this interface.
   ConstraintTypeBuilder builder(arena_, iface_decl->self());
+  ConstraintTypeBuilder::ImplsInScopeTracker impl_tracker;
   iface_decl->self()->set_static_type(iface_type);
 
   // The impl constraint says only that the direct members of the interface are
@@ -4235,6 +4252,8 @@ auto TypeChecker::DeclareInterfaceDeclaration(
             builder.AddAndSubstitute(*this, constraint_type, assoc_value,
                                      builder.GetSelfWitness(), Bindings(),
                                      /*add_lookup_contexts=*/false));
+        // Add any new impl constraints to the scope.
+        builder.BringImplsIntoScope(*this, &iface_scope, &impl_tracker);
       }
     }
   }
