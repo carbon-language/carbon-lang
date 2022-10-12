@@ -10,7 +10,7 @@ package ExplorerTest api;
 
 interface Iface {
   let T:! Type;
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_redefined.carbon:[[@LINE+1]]: Duplicate name `T` also found at {{.*}}/explorer/testdata/assoc_const/fail_redefined.carbon:12
+  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_redefined.carbon:[[@LINE+1]]: Duplicate name `T` also found at {{.*}}/explorer/testdata/assoc_const/fail_redefined.carbon:[[@LINE-1]]
   let T:! Type;
 }
 

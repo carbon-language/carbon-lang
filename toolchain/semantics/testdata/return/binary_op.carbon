@@ -3,16 +3,17 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // RUN: %{carbon} dump semantics-ir %s 2>&1 | %{FileCheck-strict} %s
+// AUTOUPDATE: %{carbon} dump semantics-ir %s
 // CHECK:{
 // CHECK:  Function(
-// CHECK:      %[[ID0:[0-9]+]],
+// CHECK:      %0,
 // CHECK:      {
-// CHECK:        IntegerLiteral(%[[ID1:[0-9]+]], 12),
-// CHECK:        IntegerLiteral(%[[ID2:[0-9]+]], 34),
-// CHECK:        BinaryOperator(%[[ID3:[0-9]+]], +, %[[ID1]], %[[ID2]]),
-// CHECK:        Return(%[[ID3]]),
+// CHECK:        IntegerLiteral(%3, 12),
+// CHECK:        IntegerLiteral(%2, 34),
+// CHECK:        BinaryOperator(%1, +, %3, %2),
+// CHECK:        Return(%1),
 // CHECK:      }),
-// CHECK:  SetName(`Main`, %[[ID0]]),
+// CHECK:  SetName(`Main`, %0),
 // CHECK:}
 
 fn Main() {

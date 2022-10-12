@@ -3,22 +3,23 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // RUN: %{carbon} dump semantics-ir %s 2>&1 | %{FileCheck-strict} %s
+// AUTOUPDATE: %{carbon} dump semantics-ir %s
 // CHECK:{
 // CHECK:  Function(
-// CHECK:      %[[ID0:[0-9]+]],
+// CHECK:      %2,
 // CHECK:      {
 // CHECK:      }),
-// CHECK:  SetName(`Foo`, %[[ID0]]),
+// CHECK:  SetName(`Foo`, %2),
 // CHECK:  Function(
-// CHECK:      %[[ID1:[0-9]+]],
+// CHECK:      %1,
 // CHECK:      {
 // CHECK:      }),
-// CHECK:  SetName(`Bar`, %[[ID1]]),
+// CHECK:  SetName(`Bar`, %1),
 // CHECK:  Function(
-// CHECK:      %[[ID2:[0-9]+]],
+// CHECK:      %0,
 // CHECK:      {
 // CHECK:      }),
-// CHECK:  SetName(`Baz`, %[[ID2]]),
+// CHECK:  SetName(`Baz`, %0),
 // CHECK:}
 
 fn Foo() {}
