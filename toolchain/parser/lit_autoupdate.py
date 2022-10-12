@@ -20,7 +20,6 @@ def main() -> None:
     actual_py = this_py.parent.parent.parent.joinpath(
         "bazel", "testing", "lit_autoupdate_base.py"
     )
-    print(__file__)
     args = [
         sys.argv[0],
         # Flags to configure for explorer testing.

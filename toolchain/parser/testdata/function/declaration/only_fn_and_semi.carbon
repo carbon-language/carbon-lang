@@ -5,7 +5,7 @@
 // RUN: %{not} %{carbon} dump parse-tree %s 2>&1 | %{FileCheck-strict} %s
 // AUTOUPDATE: %{carbon} dump parse-tree %s
 
-// CHECK:{{.*}}/toolchain/parser/testdata/function/only_fn_and_semi.carbon:[[@LINE+6]]:3: Expected function name after `fn` keyword.
+// CHECK:{{.*}}/toolchain/parser/testdata/function/declaration/only_fn_and_semi.carbon:[[@LINE+6]]:3: Expected function name after `fn` keyword.
 // CHECK:[
 // CHECK:{node_index: 1, kind: 'FunctionDeclaration', text: 'fn', has_error: yes, subtree_size: 2, children: [
 // CHECK:  {node_index: 0, kind: 'DeclarationEnd', text: ';'}]},

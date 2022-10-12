@@ -5,7 +5,7 @@
 // RUN: %{not} %{carbon} dump parse-tree %s 2>&1 | %{FileCheck-strict} %s
 // AUTOUPDATE: %{carbon} dump parse-tree %s
 
-// CHECK:{{.*}}/toolchain/parser/testdata/function/identifier_instead_of_sig.carbon:[[@LINE+7]]:8: Expected `(` after function name.
+// CHECK:{{.*}}/toolchain/parser/testdata/function/declaration/identifier_instead_of_sig.carbon:[[@LINE+7]]:8: Expected `(` after function name.
 // CHECK:[
 // CHECK:{node_index: 2, kind: 'FunctionDeclaration', text: 'fn', has_error: yes, subtree_size: 3, children: [
 // CHECK:  {node_index: 0, kind: 'DeclaredName', text: 'foo'},
