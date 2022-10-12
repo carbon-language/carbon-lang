@@ -16,7 +16,8 @@ from pathlib import Path
 def main() -> None:
     # Calls the main script with explorer settings. This uses execv in order to
     # avoid Python import behaviors.
-    actual_py = Path(__file__).parent.parent.parent.joinpath(
+    this_py = Path(__file__).resolve()
+    actual_py = this_py.parent.parent.parent.joinpath(
         "bazel", "testing", "lit_autoupdate_base.py"
     )
     args = [
