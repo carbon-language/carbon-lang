@@ -8,16 +8,18 @@
 
 package ExplorerTest api;
 
-interface X { fn F(); }
-impl i32 as X { fn F() {} }
+interface Iface { let N:! i32; }
 
-fn G[T:! X](v: T) -> Type {
-  v.F();
-  return i32;
+fn PickType(N: i32) -> Type { return i32; }
+
+fn F[T:! Iface](x: T) -> i32 {
+  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_unknown_value.carbon:[[@LINE+1]]: value of associated constant (T).N is not known
+  var x: PickType(T.N) = 0;
+  return x;
 }
 
+impl i32 as Iface where .N == 5 {}
+
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_call_at_compile_time.carbon:[[@LINE+1]]: Function would be called at compile-time
-  var v: G(0) = 0;
-  return v;
+  return F(0);
 }
