@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // TODO: This should have an error.
-// RUN: %{carbon} dump parse-tree %s 2>&1 | %{FileCheck-strict} %s
+// RUN: %{carbon} dump parse-tree %s | %{FileCheck-strict} %s
 // AUTOUPDATE: %{carbon} dump parse-tree %s
 
 fn F() {

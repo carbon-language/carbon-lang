@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{carbon} dump parse-tree %s 2>&1 | %{FileCheck-strict} %s
+// RUN: %{not} %{carbon} dump parse-tree %s | %{FileCheck-strict} %s
 // AUTOUPDATE: %{carbon} dump parse-tree %s
 
 // CHECK:{{.*}}/toolchain/parser/testdata/function/declaration/missing_name.carbon:[[@LINE+6]]:4: Expected function name after `fn` keyword.
