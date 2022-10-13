@@ -11,6 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 from abc import ABC, abstractmethod
 import argparse
 from concurrent import futures
+import logging
 import os
 from pathlib import Path
 import re
@@ -366,7 +367,10 @@ def update_checks(parsed_args: ParsedArgs, tests: Set[Path]) -> None:
     """Updates CHECK: lines in lit tests."""
 
     def map_helper(test: Path) -> bool:
-        updated = update_check(parsed_args, test)
+        try:
+            updated = update_check(parsed_args, test)
+        except Exception:
+            logging.exception(f"Failed to update {test}")
         print(".", end="", flush=True)
         return updated
 

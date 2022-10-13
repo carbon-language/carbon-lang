@@ -8,10 +8,8 @@
 
 package ExplorerTest api;
 
-// TODO: We should type-check the prelude before the main input so that we can
-// use it within the types of top-level declarations.
 // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_invalid_fnty.carbon:[[@LINE+2]]: type error in `-`:
-// CHECK:STDERR: missing declaration for builtin `Negate`
+// CHECK:STDERR: could not find implementation of interface Negate for bool
 fn f(g: __Fn(-true) -> true) {
 }
 
