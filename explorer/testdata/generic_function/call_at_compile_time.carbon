@@ -2,9 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
+// RUN: %{explorer} %s | %{FileCheck-strict} %s
+// RUN: %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -17,7 +18,6 @@ fn G[T:! X](v: T) -> Type {
 }
 
 fn Main() -> i32 {
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_call_at_compile_time.carbon:[[@LINE+1]]: Function would be called at compile-time
   var v: G(0) = 0;
   return v;
 }

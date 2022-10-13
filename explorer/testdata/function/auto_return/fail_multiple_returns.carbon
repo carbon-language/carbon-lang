@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
+// RUN: %{not} %{explorer} %s | %{FileCheck-strict} %s
+// RUN: %{not} %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
 
 package ExplorerTest api;
@@ -12,7 +12,7 @@ fn Add(x: i32, y: i32) -> auto {
   if (x == 0) {
     return x;
   } else if (y == 0) {
-    // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/function/auto_return/fail_multiple_returns.carbon:[[@LINE+1]]: Only one return is allowed in a function with an `auto` return type.
+    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/function/auto_return/fail_multiple_returns.carbon:[[@LINE+1]]: Only one return is allowed in a function with an `auto` return type.
     return y;
   } else {
     return x + y;

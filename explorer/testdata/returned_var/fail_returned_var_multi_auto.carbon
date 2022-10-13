@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
+// RUN: %{not} %{explorer} %s | %{FileCheck-strict} %s
+// RUN: %{not} %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
 
 package ExplorerTest api;
@@ -15,7 +15,7 @@ fn Foo(a: i32, b: i32) -> auto {
     return var;
   }
   ret = a - b;
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/returned_var/fail_returned_var_multi_auto.carbon:[[@LINE+1]]: Only one return is allowed in a function with an `auto` return type.
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/returned_var/fail_returned_var_multi_auto.carbon:[[@LINE+1]]: Only one return is allowed in a function with an `auto` return type.
   return var;
 }
 
