@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
+// RUN: %{not} %{explorer} %s | %{FileCheck-strict} %s
+// RUN: %{not} %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
 
 package ExplorerTest api;
@@ -14,7 +14,7 @@ class Point {
   }
 
   fn SetX[me: Point](x: i32) {
-    // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_method_args.carbon:[[@LINE+1]]: Cannot assign to rvalue 'x'
+    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_method_args.carbon:[[@LINE+1]]: Cannot assign to rvalue 'x'
     x = 10;
   }
 

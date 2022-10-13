@@ -23,11 +23,17 @@ AUTOUPDATE_MARKER = "// AUTOUPDATE: "
 # Indicates no autoupdate is requested.
 NOAUTOUPDATE_MARKER = "// NOAUTOUPDATE"
 
+# Standard replacements normally done in lit.cfg.py.
+MERGE_OUTPUT = "./bazel-bin/bazel/testing/merge_output"
+LIT_REPLACEMENTS = [
+    ("%{carbon}", f"{MERGE_OUTPUT} ./bazel-bin/toolchain/driver/carbon"),
+    ("%{explorer}", f"{MERGE_OUTPUT} ./bazel-bin/explorer/explorer"),
+]
+
 
 class ParsedArgs(NamedTuple):
     build_mode: str
-    build_target: str
-    cmd_replace: Tuple[str, str]
+    build_targets: List[str]
     extra_check_replacements: List[Tuple[Pattern, Pattern, str]]
     line_number_format: str
     line_number_pattern: Pattern
@@ -49,15 +55,8 @@ def parse_args() -> ParsedArgs:
         "--build_target",
         metavar="TARGET",
         required=True,
+        action="append",
         help="The target to build.",
-    )
-    parser.add_argument(
-        "--cmd_replace",
-        nargs=2,
-        metavar=("BEFORE", "AFTER"),
-        required=True,
-        help="Adds a command replacement of `BEFORE` with `AFTER`. Typically "
-        "`BEFORE` will look like `%{name}`",
     )
     parser.add_argument(
         "--extra_check_replacement",
@@ -95,8 +94,7 @@ def parse_args() -> ParsedArgs:
     ]
     return ParsedArgs(
         build_mode=parsed_args.build_mode,
-        build_target=parsed_args.build_target,
-        cmd_replace=parsed_args.cmd_replace,
+        build_targets=parsed_args.build_target,
         extra_check_replacements=extra_check_replacements,
         line_number_format=parsed_args.line_number_format,
         line_number_pattern=re.compile(parsed_args.line_number_pattern),
@@ -230,7 +228,7 @@ def get_matchable_test_output(
     # Mirror lit.cfg.py substitutions; bazel runs don't need --prelude.
     # Also replaces `%s` with the test file.
     autoupdate_cmd = replace_all(
-        autoupdate_cmd, [parsed_args.cmd_replace, ("%s", test)]
+        autoupdate_cmd, [("%s", test)] + LIT_REPLACEMENTS
     )
 
     # Run the autoupdate command to generate output.
@@ -404,8 +402,8 @@ def main() -> None:
             "build",
             "-c",
             parsed_args.build_mode,
-            parsed_args.build_target,
         ]
+        + parsed_args.build_targets,
     )
 
     # Run updates.

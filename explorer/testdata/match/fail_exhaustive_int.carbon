@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
+// RUN: %{not} %{explorer} %s | %{FileCheck-strict} %s
+// RUN: %{not} %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
 
 package ExplorerTest api;
@@ -13,7 +13,7 @@ fn A(n: i32) -> i32 {
     case 1 => { return 1; }
     case 2 => { return 2; }
   }
-// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/match/fail_exhaustive_int.carbon:[[@LINE+1]]: non-exhaustive match may allow control-flow to reach the end of a function that provides a `->` return type
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/match/fail_exhaustive_int.carbon:[[@LINE+1]]: non-exhaustive match may allow control-flow to reach the end of a function that provides a `->` return type
 }
 
 fn Main() -> i32 {

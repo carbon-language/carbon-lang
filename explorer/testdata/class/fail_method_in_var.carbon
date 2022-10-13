@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
+// RUN: %{not} %{explorer} %s | %{FileCheck-strict} %s
+// RUN: %{not} %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
 
 package ExplorerTest api;
@@ -15,7 +15,7 @@ class C {
 
 fn Main() -> i32 {
   var f: auto = C.F;
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_method_in_var.carbon:[[@LINE+1]]: Expected a type, but got member name G
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_method_in_var.carbon:[[@LINE+1]]: Expected a type, but got member name G
   var g: auto = C.G;
 
   return 0;
