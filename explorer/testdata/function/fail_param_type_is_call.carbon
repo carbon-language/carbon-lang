@@ -12,7 +12,7 @@ fn Id(t: Type) -> auto { return t; }
 
 // Test non-trivial type expression in parameter type.
 
-// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_param_type_is_call.carbon:[[@LINE+1]]:  function call not allowed in this context
+// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_param_type_is_call.carbon:[[@LINE+1]]: Function would be called at compile-time
 fn f(x: Id(i32)) -> i32 {
   return x;
 }

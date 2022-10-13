@@ -790,7 +790,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
     case Value::Kind::FunctionValue: {
       if (phase() == Phase::CompileTime) {
         return ProgramError(call.source_loc())
-               << " function call not allowed in this context";
+               << "Function would be called at compile-time";
       }
       const FunctionValue& fun_val = cast<FunctionValue>(*fun);
       const FunctionDeclaration& function = fun_val.declaration();

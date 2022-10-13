@@ -12,7 +12,7 @@ fn test() -> i32 {
 }
 
 fn Main() -> i32 {
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_var_type_is_call.carbon:[[@LINE+1]]:  function call not allowed in this context
+  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_var_type_is_call.carbon:[[@LINE+1]]: Function would be called at compile-time
   var x: test() = 1;
   return 0;
 }
