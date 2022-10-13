@@ -75,6 +75,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [No `static` variables](#no-static-variables)
     -   [Computed properties](#computed-properties)
     -   [Interfaces implemented for data classes](#interfaces-implemented-for-data-classes)
+-   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
 <!-- tocstop -->
@@ -2093,6 +2094,81 @@ comparable to `{.x = 3.14, .y = 2}`. The trick is how to declare the criteria
 that "`T` is comparable to `U` if they have the same field names in the same
 order, and for every field `x`, the type of `T.x` implements `ComparableTo` for
 the type of `U.x`."
+
+## Alternatives considered
+
+-   [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
+
+    -   [Require compile-time-proven initialization](/proposals/p0257.md#require-compile-time-proven-initialization)
+    -   [C/C++ uninitialized](/proposals/p0257.md#cc-uninitialized)
+    -   [Allow passing unformed objects to parameters or returning them?](/proposals/p0257.md#allow-passing-unformed-objects-to-parameters-or-returning-them)
+    -   [Allow assigning an unformed object to another unformed object?](/proposals/p0257.md#allow-assigning-an-unformed-object-to-another-unformed-object)
+    -   [Fully destructive move (Rust)](/proposals/p0257.md#fully-destructive-move-rust)
+    -   [Completely non-destructive move (C++)](/proposals/p0257.md#completely-non-destructive-move-c)
+    -   [Named return variable in place of a return type](/proposals/p0257.md#named-return-variable-in-place-of-a-return-type)
+    -   [Allow unformed members](/proposals/p0257.md#allow-unformed-members)
+
+-   [#561: Basic classes: use cases, struct literals, struct types, and future work](https://github.com/carbon-language/carbon-lang/pull/561)
+
+    -   [Early proposal #98](https://github.com/carbon-language/carbon-lang/pull/98)
+    -   [Interfaces implemented for anonymous data classes](/proposals/p0561.md#interfaces-implemented-for-anonymous-data-classes)
+    -   [Access control](/proposals/p0561.md#access-control)
+    -   [Introducer for structural data class types](/proposals/p0561.md#introducer-for-structural-data-class-types)
+    -   [Terminology](/proposals/p0561.md#terminology)
+
+-   [#722: Nominal classes and methods](https://github.com/carbon-language/carbon-lang/pull/722)
+
+    -   [Method syntax](/proposals/p0722.md#method-syntax)
+    -   [Marking mutating methods at the call site](/proposals/p0722.md#marking-mutating-methods-at-the-call-site)
+    -   [Differences between functions and methods](/proposals/p0722.md#differences-between-functions-and-methods)
+    -   [Specifying linkage as part of the access modifier](/proposals/p0722.md#specifying-linkage-as-part-of-the-access-modifier)
+    -   [Nominal data class](/proposals/p0722.md#nominal-data-class)
+    -   [Let constants](/proposals/p0722.md#let-constants)
+
+-   [#777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777)
+
+    -   [Classes are final by default](/proposals/p0777.md#classes-are-final-by-default)
+    -   [Allow keywords to be written when they would have no effect](/proposals/p0777.md#allow-keywords-to-be-written-when-they-would-have-no-effect)
+    -   [Different virtual override keywords](/proposals/p0777.md#different-virtual-override-keywords)
+    -   [Different virtual override keyword placement](/proposals/p0777.md#different-virtual-override-keyword-placement)
+    -   [Final methods](/proposals/p0777.md#final-methods)
+    -   [Constructors](/proposals/p0777.md#constructors)
+    -   [Implicit abstract classes](/proposals/p0777.md#implicit-abstract-classes)
+    -   [No extensible objects with non-virtual destructors](/proposals/p0777.md#no-extensible-objects-with-non-virtual-destructors)
+    -   [Separate "exact" and "or derived" variations on types](/proposals/p0777.md#separate-exact-and-or-derived-variations-on-types)
+    -   [Separate "exact" and "or derived" variations on pointers](/proposals/p0777.md#separate-exact-and-or-derived-variations-on-pointers)
+
+-   [#875: Principle: Information accumulation](https://github.com/carbon-language/carbon-lang/pull/875)
+
+    -   Allow information to be used before it is provided
+        [globally](/proposals/p0875.md#strict-global-consistency),
+        [within a file](/proposals/p0875.md#context-sensitive-local-consistency),
+        or
+        [within a top-level declaration](/proposals/p0875.md#top-down-with-minimally-deferred-type-checking).
+    -   [Do not allow inline method bodies to use members before they are declared](/proposals/p0875.md#strict-top-down)
+    -   [Do not allow separate declaration and definition](/proposals/p0875.md#disallow-separate-declaration-and-definition)
+
+-   [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
+
+    -   [Field order is not significant](/proposals/p0981.md#field-order-is-not-significant)
+    -   [Different field orders are incompatible](/proposals/p0981.md#different-field-orders-are-incompatible)
+    -   [Explicit instead of implicit conversions](/proposals/p0981.md#explicit-instead-of-implicit-conversions)
+
+-   [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
+
+    -   [Types implement destructor interface](/proposals/p1154.md#types-implement-destructor-interface)
+    -   [Prevent virtual function calls in destructors](/proposals/p1154.md#prevent-virtual-function-calls-in-destructors)
+    -   [Allow functions to act as destructors](/proposals/p1154.md#allow-functions-to-act-as-destructors)
+    -   [Allow private destructors](/proposals/p1154.md#allow-private-destructors)
+    -   [Allow multiple conditional destructors](/proposals/p1154.md#allow-multiple-conditional-destructors)
+    -   [Type-of-type naming](/proposals/p1154.md#type-of-type-naming)
+    -   [Other approaches to extensible classes without vtables](/proposals/p1154.md#other-approaches-to-extensible-classes-without-vtables)
+
+-   [#2107: Clarify rules around `Self` and `.Self`](https://github.com/carbon-language/carbon-lang/pull/2107)
+
+    -   [`Self` not a keyword](/proposals/p2107.md#self-not-a-keyword)
+    -   [Make `Self` a member of all types](/proposals/p2107.md#make-self-a-member-of-all-types)
+    -   [`where` operator could be associative](/proposals/p2107.md#where-operator-could-be-associative)
 
 ## References
 
