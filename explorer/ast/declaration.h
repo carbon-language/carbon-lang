@@ -93,15 +93,15 @@ class Declaration : public AstNode {
   // Returns whether this node has been declared.
   auto is_declared() const -> bool { return is_declared_; }
 
-  // Returns whether this node has been fully type-checked.
-  auto is_type_checked() const -> bool { return is_type_checked_; }
-
   // Set that this node is declared. Should only be called once, by the
   // type-checker, once the node is ready to be named and used.
   void set_is_declared() {
     CARBON_CHECK(!is_declared_) << "should not be declared twice";
     is_declared_ = true;
   }
+
+  // Returns whether this node has been fully type-checked.
+  auto is_type_checked() const -> bool { return is_type_checked_; }
 
   // Set that this node is type-checked. Should only be called once, by the
   // type-checker, once full type-checking is complete.

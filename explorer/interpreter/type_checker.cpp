@@ -351,8 +351,8 @@ static auto ExpectCompleteType(SourceLocation source_loc,
       return Success();
 
     case Value::Kind::TupleValue: {
-      // TODO: Should tuple types be complete only if all element types are
-      // complete?
+      // TODO: Tuple types should be complete only if all element types are
+      // complete.
       return Success();
     }
 

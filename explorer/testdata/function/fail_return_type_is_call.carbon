@@ -7,10 +7,9 @@
 
 package EmptyIdentifier impl;
 
-fn apply[T:! Type, U:! Type](f: T, EmptyIdentifier: U)
-{
-// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_return_type_is_call.carbon:[[@LINE+1]]: expected a tuple
-match (true[true]) {}
+fn apply[T:! Type, U:! Type](f: T, EmptyIdentifier: U) {
+  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_return_type_is_call.carbon:[[@LINE+1]]: expected a tuple
+  match (true[true]) {}
 }
 
 fn EmptyIdentifier() -> apply(true, true);
