@@ -8,9 +8,10 @@
 
 package ExplorerTest api;
 
-// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_invalid_fnty.carbon:[[@LINE+2]]: type error in `-`:
-// CHECK:could not find implementation of interface Negate for bool
-fn f(g: __Fn(-true) -> true) {
+class C {
+  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_use_before_typecheck.carbon:[[@LINE+1]]: incomplete type `class C` used in member access
+  var n: if not C.WrapInStruct() then i32 else {.n: i32};
+  fn WrapInStruct() -> bool { return true; }
 }
 
 fn Main() -> i32 {

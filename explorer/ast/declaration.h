@@ -90,6 +90,26 @@ class Declaration : public AstNode {
     return constant_value_;
   }
 
+  // Returns whether this node has been declared.
+  auto is_declared() const -> bool { return is_declared_; }
+
+  // Returns whether this node has been fully type-checked.
+  auto is_type_checked() const -> bool { return is_type_checked_; }
+
+  // Set that this node is declared. Should only be called once, by the
+  // type-checker, once the node is ready to be named and used.
+  void set_is_declared() {
+    CARBON_CHECK(!is_declared_) << "should not be declared twice";
+    is_declared_ = true;
+  }
+
+  // Set that this node is type-checked. Should only be called once, by the
+  // type-checker, once full type-checking is complete.
+  void set_is_type_checked() {
+    CARBON_CHECK(!is_type_checked_) << "should not be type-checked twice";
+    is_type_checked_ = true;
+  }
+
  protected:
   // Constructs a Declaration representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
@@ -100,6 +120,8 @@ class Declaration : public AstNode {
  private:
   std::optional<Nonnull<const Value*>> static_type_;
   std::optional<Nonnull<const Value*>> constant_value_;
+  bool is_declared_ = false;
+  bool is_type_checked_ = false;
 };
 
 class CallableDeclaration : public Declaration {

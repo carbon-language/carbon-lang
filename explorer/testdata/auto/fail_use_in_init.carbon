@@ -8,11 +8,9 @@
 
 package ExplorerTest api;
 
-// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_invalid_fnty.carbon:[[@LINE+2]]: type error in `-`:
-// CHECK:could not find implementation of interface Negate for bool
-fn f(g: __Fn(-true) -> true) {
-}
-
 fn Main() -> i32 {
+  // TODO: The error here should be that we aren't allowed to refer to 'a' yet.
+  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/auto/fail_use_in_init.carbon:[[@LINE+1]]: could not resolve 'a'
+  var a: auto = a;
   return 0;
 }

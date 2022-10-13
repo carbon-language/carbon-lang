@@ -8,9 +8,10 @@
 
 package ExplorerTest api;
 
-// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_invalid_fnty.carbon:[[@LINE+2]]: type error in `-`:
-// CHECK:could not find implementation of interface Negate for bool
-fn f(g: __Fn(-true) -> true) {
+interface Vector {
+  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_self_lookup_in_definition.carbon:[[@LINE+1]]: incomplete type `interface Vector` used in member access
+  fn ScalarZero() -> Self.ScalarType;
+  let ScalarType:! Type;
 }
 
 fn Main() -> i32 {

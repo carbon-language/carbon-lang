@@ -8,9 +8,10 @@
 
 package ExplorerTest api;
 
-// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_invalid_fnty.carbon:[[@LINE+2]]: type error in `-`:
-// CHECK:could not find implementation of interface Negate for bool
-fn f(g: __Fn(-true) -> true) {
+fn T() -> Type {
+  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_recurse_before_typecheck.carbon:[[@LINE+1]]: attempt to call function `T` that has not been fully type-checked
+  var v: T() = 0;
+  return i32;
 }
 
 fn Main() -> i32 {

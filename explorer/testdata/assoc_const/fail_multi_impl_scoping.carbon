@@ -28,9 +28,9 @@ class C(T:! Type) {
     fn FB() -> i32 {
       // OK, know that TB is i32 here.
       let v: Self.(B.TB) = 2;
-      // TODO: Don't know that TA is i32. It could be specialized.
-      // We should reject this once we support specialization.
+      // Don't know that TA is i32; it could be specialized.
       let w: Self.(A.TA) = 3;
+      // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_multi_impl_scoping.carbon:[[@LINE+1]]: type error in return value: '((class C(T = T)).TB).Result' is not implicitly convertible to 'i32'
       return v + w;
     }
   }
@@ -38,7 +38,6 @@ class C(T:! Type) {
 
 external impl C(i32) as B where .TB == () {
   fn FB() -> () { return (); }
-// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_multi_impl_scoping.carbon:[[@LINE+1]]: ambiguous implementations of interface B for class C(T = i32)
 }
 
 fn Main() -> i32 { return C(i32).FB(); }

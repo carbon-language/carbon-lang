@@ -8,9 +8,10 @@
 
 package ExplorerTest api;
 
-// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_invalid_fnty.carbon:[[@LINE+2]]: type error in `-`:
-// CHECK:could not find implementation of interface Negate for bool
-fn f(g: __Fn(-true) -> true) {
+choice C {
+  X,
+  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/choice/fail_recursive_use.carbon:[[@LINE+1]]: 'C' is not usable until after it has been completely declared
+  Y(if C.X then i32 else i32)
 }
 
 fn Main() -> i32 {

@@ -592,6 +592,13 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
           InstantiateBindings(&class_type.bindings(), source_loc));
       return arena_->New<NominalClassType>(&class_type.declaration(), bindings);
     }
+    case Value::Kind::ChoiceType: {
+      const auto& choice_type = cast<ChoiceType>(*type);
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Bindings*> bindings,
+          InstantiateBindings(&choice_type.bindings(), source_loc));
+      return arena_->New<ChoiceType>(&choice_type.declaration(), bindings);
+    }
     case Value::Kind::AssociatedConstant: {
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> type_value,
@@ -801,6 +808,16 @@ auto Interpreter::CallFunction(const CallExpression& call,
     case Value::Kind::FunctionValue: {
       const FunctionValue& fun_val = cast<FunctionValue>(*fun);
       const FunctionDeclaration& function = fun_val.declaration();
+      if (!function.body().has_value()) {
+        return ProgramError(call.source_loc())
+               << "attempt to call function `" << function.name()
+               << "` that has not been defined";
+      }
+      if (!function.is_type_checked()) {
+        return ProgramError(call.source_loc())
+               << "attempt to call function `" << function.name()
+               << "` that has not been fully type-checked";
+      }
       RuntimeScope binding_scope(&heap_);
       // Bring the class type arguments into scope.
       for (const auto& [bind, val] : fun_val.type_args()) {
@@ -830,8 +847,6 @@ auto Interpreter::CallFunction(const CallExpression& call,
       CARBON_CHECK(PatternMatch(
           &function.param_pattern().value(), converted_args, call.source_loc(),
           &function_scope, generic_args, trace_stream_, this->arena_));
-      CARBON_CHECK(function.body().has_value())
-          << "Calling a function that's missing a body";
       return todo_.Spawn(std::make_unique<StatementAction>(*function.body()),
                          std::move(function_scope));
     }
