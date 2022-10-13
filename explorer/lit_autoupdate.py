@@ -16,7 +16,8 @@ from pathlib import Path
 def main() -> None:
     # Calls the main script with explorer settings. This uses execv in order to
     # avoid Python import behaviors.
-    actual_py = Path(__file__).parent.parent.joinpath(
+    this_py = Path(__file__).resolve()
+    actual_py = this_py.parent.parent.joinpath(
         "bazel", "testing", "lit_autoupdate_base.py"
     )
     args = [
@@ -24,9 +25,6 @@ def main() -> None:
         # Flags to configure for explorer testing.
         "--build_target",
         "//explorer",
-        "--cmd_replace",
-        "%{explorer}",
-        "./bazel-bin/explorer/explorer",
         "--testdata",
         "explorer/testdata",
         "--line_number_pattern",

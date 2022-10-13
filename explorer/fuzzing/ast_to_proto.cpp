@@ -704,6 +704,21 @@ static auto DeclarationToProto(const Declaration& declaration)
       break;
     }
 
+    case DeclarationKind::InterfaceExtendsDeclaration: {
+      const auto& extends = cast<InterfaceExtendsDeclaration>(declaration);
+      auto* extends_proto = declaration_proto.mutable_interface_extends();
+      *extends_proto->mutable_base() = ExpressionToProto(*extends.base());
+      break;
+    }
+
+    case DeclarationKind::InterfaceImplDeclaration: {
+      const auto& impl = cast<InterfaceImplDeclaration>(declaration);
+      auto* impl_proto = declaration_proto.mutable_interface_impl();
+      *impl_proto->mutable_impl_type() = ExpressionToProto(*impl.impl_type());
+      *impl_proto->mutable_constraint() = ExpressionToProto(*impl.constraint());
+      break;
+    }
+
     case DeclarationKind::AssociatedConstantDeclaration: {
       const auto& assoc = cast<AssociatedConstantDeclaration>(declaration);
       auto* let_proto = declaration_proto.mutable_let();

@@ -11,7 +11,7 @@ jobs:
   assign_reviewer:
     runs-on: ubuntu-latest
     steps:
-      - id: path-filter
+      - id: filter
         uses: dorny/paths-filter@v2
         with:
           filters: |
@@ -29,31 +29,31 @@ jobs:
               - 'toolchain/**'
 
       - id: assign-leads
-        if: steps.changes.outputs.leads == 'true'
+        if: steps.filter.outputs.leads == 'true'
         uses: hkusu/review-assign-action@v1.3.0
         with:
           reviewers: KateGregory, chandlerc, zygoloid
           max-num-of-reviewers: 1
 
       - id: assign-explorer
-        if: steps.changes.outputs.explorer == 'true'
+        if: steps.filter.outputs.explorer == 'true'
         uses: hkusu/review-assign-action@v1.3.0
         with:
-          reviewers: geoffromer, jonmeow, jsiek, zygoloid
+          reviewers: geoffromer, jonmeow, zygoloid
           max-num-of-reviewers: 1
 
       - id: assign-toolchain
-        if: steps.changes.outputs.toolchain == 'true'
+        if: steps.filter.outputs.toolchain == 'true'
         uses: hkusu/review-assign-action@v1.3.0
         with:
           reviewers: chandlerc, jonmeow, zygoloid
           max-num-of-reviewers: 1
 
       - id: assign-fallback
-        if:
-          steps.changes.outputs.leads != 'true' &&
-          steps.changes.outputs.explorer != 'true' &&
-          steps.changes.outputs.toolchain != 'true'
+        if: |
+          steps.filter.outputs.leads != 'true' &&
+          steps.filter.outputs.explorer != 'true' &&
+          steps.filter.outputs.toolchain != 'true'
         uses: hkusu/review-assign-action@v1.3.0
         with:
           reviewers: chandlerc, jonmeow, josh11b, zygoloid
