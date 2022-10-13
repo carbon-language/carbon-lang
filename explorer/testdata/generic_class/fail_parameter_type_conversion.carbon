@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
+// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
+// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
 
 package ExplorerTest api;
@@ -22,7 +22,6 @@ class IntLike {
 }
 
 fn Main() -> i32 {
-  // TODO: Why is this considered a compile-time call?
   // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/parameter_type_conversion.carbon:[[@LINE+1]]: Function would be called at compile-time
   return Holder(IntLike.Make()).Get();
 }
