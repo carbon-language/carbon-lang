@@ -4,20 +4,20 @@
 //
 // RUN: %{carbon} dump parse-tree %s | %{FileCheck-strict} %s
 // AUTOUPDATE: %{carbon} dump parse-tree %s
-// CHECK:[
-// CHECK:{node_index: 10, kind: 'FunctionDeclaration', text: 'fn', subtree_size: 11, children: [
-// CHECK:  {node_index: 0, kind: 'DeclaredName', text: 'foo'},
-// CHECK:  {node_index: 2, kind: 'ParameterList', text: '(', subtree_size: 2, children: [
-// CHECK:    {node_index: 1, kind: 'ParameterListEnd', text: ')'}]},
-// CHECK:  {node_index: 4, kind: 'ReturnType', text: '->', subtree_size: 2, children: [
-// CHECK:    {node_index: 3, kind: 'Literal', text: 'f64'}]},
-// CHECK:  {node_index: 9, kind: 'CodeBlock', text: '{', subtree_size: 5, children: [
-// CHECK:    {node_index: 7, kind: 'ReturnStatement', text: 'return', subtree_size: 3, children: [
-// CHECK:      {node_index: 5, kind: 'Literal', text: '42'},
-// CHECK:      {node_index: 6, kind: 'StatementEnd', text: ';'}]},
-// CHECK:    {node_index: 8, kind: 'CodeBlockEnd', text: '}'}]}]},
-// CHECK:{node_index: 11, kind: 'FileEnd', text: ''},
-// CHECK:]
+// CHECK:STDOUT: [
+// CHECK:STDOUT: {node_index: 10, kind: 'FunctionDeclaration', text: 'fn', subtree_size: 11, children: [
+// CHECK:STDOUT:   {node_index: 0, kind: 'DeclaredName', text: 'foo'},
+// CHECK:STDOUT:   {node_index: 2, kind: 'ParameterList', text: '(', subtree_size: 2, children: [
+// CHECK:STDOUT:     {node_index: 1, kind: 'ParameterListEnd', text: ')'}]},
+// CHECK:STDOUT:   {node_index: 4, kind: 'ReturnType', text: '->', subtree_size: 2, children: [
+// CHECK:STDOUT:     {node_index: 3, kind: 'Literal', text: 'f64'}]},
+// CHECK:STDOUT:   {node_index: 9, kind: 'CodeBlock', text: '{', subtree_size: 5, children: [
+// CHECK:STDOUT:     {node_index: 7, kind: 'ReturnStatement', text: 'return', subtree_size: 3, children: [
+// CHECK:STDOUT:       {node_index: 5, kind: 'Literal', text: '42'},
+// CHECK:STDOUT:       {node_index: 6, kind: 'StatementEnd', text: ';'}]},
+// CHECK:STDOUT:     {node_index: 8, kind: 'CodeBlockEnd', text: '}'}]}]},
+// CHECK:STDOUT: {node_index: 11, kind: 'FileEnd', text: ''},
+// CHECK:STDOUT: ]
 
 fn foo() -> f64 {
   return 42;

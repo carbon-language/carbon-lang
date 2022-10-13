@@ -4,9 +4,9 @@
 //
 // RUN: %{not} %{carbon} dump parse-tree %s | %{FileCheck-strict} %s
 // AUTOUPDATE: %{carbon} dump parse-tree %s
+// CHECK:STDOUT: [
+// CHECK:STDOUT: {node_index: 0, kind: 'FileEnd', text: ''},
+// CHECK:STDOUT: ]
 
-// CHECK:{{.*}}/toolchain/parser/testdata/basics/no_intro_without_semi.carbon:[[@LINE+4]]:1: Unrecognized declaration introducer.
-// CHECK:[
-// CHECK:{node_index: 0, kind: 'FileEnd', text: ''},
-// CHECK:]
+// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/basics/no_intro_without_semi.carbon:[[@LINE+1]]:1: Unrecognized declaration introducer.
 foo bar baz

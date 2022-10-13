@@ -4,9 +4,9 @@
 //
 // RUN: %{carbon} dump parse-tree %s | %{FileCheck-strict} %s
 // AUTOUPDATE: %{carbon} dump parse-tree %s
-// CHECK:[
-// CHECK:{node_index: 0, kind: 'EmptyDeclaration', text: ';'},
-// CHECK:{node_index: 1, kind: 'FileEnd', text: ''},
-// CHECK:]
+// CHECK:STDOUT: [
+// CHECK:STDOUT: {node_index: 0, kind: 'EmptyDeclaration', text: ';'},
+// CHECK:STDOUT: {node_index: 1, kind: 'FileEnd', text: ''},
+// CHECK:STDOUT: ]
 
 ;

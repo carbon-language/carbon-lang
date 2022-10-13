@@ -25,9 +25,6 @@ def main() -> None:
         # Flags to configure for explorer testing.
         "--build_target",
         "//toolchain/driver:carbon",
-        "--cmd_replace",
-        "%{carbon}",
-        "./bazel-bin/toolchain/driver/carbon",
         "--line_number_pattern",
         r"(?<=\.carbon:)(\d+)(?=(?:\D|$))",
         "--testdata",
