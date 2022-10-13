@@ -2,15 +2,15 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
+// RUN: %{explorer} %s | %{FileCheck-strict} %s
+// RUN: %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK:Struct OK
-// CHECK:Choice OK
-// CHECK:Class OK
-// CHECK:Interface OK
-// CHECK:Constraint OK
-// CHECK:result: 0
+// CHECK:STDOUT: Struct OK
+// CHECK:STDOUT: Choice OK
+// CHECK:STDOUT: Class OK
+// CHECK:STDOUT: Interface OK
+// CHECK:STDOUT: Constraint OK
+// CHECK:STDOUT: result: 0
 
 package Foo api;
 

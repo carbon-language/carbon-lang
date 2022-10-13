@@ -5,6 +5,7 @@
 // RUN: %{explorer} %s | %{FileCheck-strict} %s
 // RUN: %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
+// CHECK:STDOUT: result: 4
 
 package ExplorerTest api;
 
@@ -22,6 +23,5 @@ class IntLike {
 }
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/parameter_type_conversion.carbon:[[@LINE+1]]: Function would be called at compile-time
   return Holder(IntLike.Make()).Get();
 }
