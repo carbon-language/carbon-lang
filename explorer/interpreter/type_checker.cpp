@@ -1249,7 +1249,7 @@ class TypeChecker::ConstraintTypeBuilder {
 
   // Converts the builder into a ConstraintType. Note that this consumes the
   // builder.
-  auto Build(Nonnull<Arena*> arena_) && -> Nonnull<const ConstraintType*> {
+  auto Build(Nonnull<Arena*> arena) && -> Nonnull<const ConstraintType*> {
     // Rewrite `Self.X is Y` to `Replacement is Y` if we have a rewrite for
     // `Self.X`.
     // TODO: Properly apply rewrites throughout all the constraints. Check for
@@ -1273,7 +1273,7 @@ class TypeChecker::ConstraintTypeBuilder {
     }
 
     // Create the new type.
-    auto* result = arena_->New<ConstraintType>(
+    auto* result = arena->New<ConstraintType>(
         self_binding_, std::move(impl_constraints_),
         std::move(equality_constraints_), std::move(rewrite_constraints_),
         std::move(lookup_contexts_));
@@ -1720,6 +1720,28 @@ auto TypeChecker::MakeConstraintForInterface(
   return std::move(builder).Build(arena_);
 }
 
+auto TypeChecker::ConvertToConstraintType(SourceLocation source_loc,
+                                          std::string_view context,
+                                          Nonnull<const Value*> constraint)
+    -> ErrorOr<Nonnull<const ConstraintType*>> {
+  if (const auto* constraint_type = dyn_cast<ConstraintType>(constraint)) {
+    return constraint_type;
+  }
+  if (const auto* iface_type = dyn_cast<InterfaceType>(constraint)) {
+    return MakeConstraintForInterface(source_loc, iface_type);
+  }
+  if (isa<TypeType>(constraint)) {
+    // TODO: Should we build this once and cache it?
+    ConstraintTypeBuilder builder(arena_, source_loc);
+    return std::move(builder).Build(arena_);
+  }
+  // TODO: Should we convert `TypeOfXType` into the constraint
+  //       `Type where .Self == X`?
+
+  return ProgramError(source_loc)
+         << "expected a constraint in " << context << ", found " << *constraint;
+}
+
 auto TypeChecker::CombineConstraints(
     SourceLocation source_loc,
     llvm::ArrayRef<Nonnull<const ConstraintType*>> constraints)
@@ -1794,17 +1816,11 @@ auto TypeChecker::LookupInConstraint(SourceLocation source_loc,
                                      std::string_view member_name)
     -> ErrorOr<ConstraintLookupResult> {
   // Find the set of lookup contexts.
-  llvm::ArrayRef<ConstraintType::LookupContext> lookup_contexts;
-  if (const auto* iface_type = dyn_cast<InterfaceType>(type)) {
-    CARBON_ASSIGN_OR_RETURN(type,
-                            MakeConstraintForInterface(source_loc, iface_type));
-  }
-  if (const auto* constraint_type = dyn_cast<ConstraintType>(type)) {
-    // For a constraint, look in all of its lookup contexts.
-    lookup_contexts = constraint_type->lookup_contexts();
-  } else {
-    // Other kinds of constraint, such as TypeType, have no lookup contexts.
-  }
+  CARBON_ASSIGN_OR_RETURN(
+      Nonnull<const ConstraintType*> constraint_type,
+      ConvertToConstraintType(source_loc, lookup_kind, type));
+  llvm::ArrayRef<ConstraintType::LookupContext> lookup_contexts =
+      constraint_type->lookup_contexts();
 
   std::optional<ConstraintLookupResult> found;
   for (ConstraintType::LookupContext lookup : lookup_contexts) {
@@ -1854,6 +1870,8 @@ static auto LookupRewrite(Nonnull<const Value*> type_of_type,
   }
 
   // Find the set of rewrites. Only ConstraintTypes have rewrites.
+  // TODO: If we can ever see an InterfaceType here, we should convert it to a
+  // constraint type.
   llvm::ArrayRef<ConstraintType::RewriteConstraint> rewrites;
   if (const auto* constraint_type = dyn_cast<ConstraintType>(type_of_type)) {
     rewrites = constraint_type->rewrite_constraints();
@@ -2600,6 +2618,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           if (IsTypeOfType(ts[0]) && IsTypeOfType(ts[1])) {
             std::optional<Nonnull<const ConstraintType*>> constraints[2];
             for (int i : {0, 1}) {
+              // TODO: This should be done based on the values, not their
+              // types.
               if (auto* iface_type_type =
                       dyn_cast<TypeOfInterfaceType>(ts[i])) {
                 CARBON_ASSIGN_OR_RETURN(
@@ -3040,32 +3060,22 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                               TypeCheckTypeExp(&self.type(), impl_scope));
       self.set_static_type(base_type);
 
-      std::optional<Nonnull<const ConstraintType*>> base;
-      if (auto* constraint_type = dyn_cast<ConstraintType>(base_type)) {
-        base = constraint_type;
-      } else if (auto* interface_type = dyn_cast<InterfaceType>(base_type)) {
-        CARBON_ASSIGN_OR_RETURN(
-            base, MakeConstraintForInterface(e->source_loc(), interface_type));
-      } else if (isa<TypeType>(base_type)) {
-        // Start with an unconstrained type.
-      } else {
-        return ProgramError(e->source_loc())
-               << "expected constraint as first operand of `where` expression, "
-               << "found " << *base_type;
-      }
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const ConstraintType*> base,
+          ConvertToConstraintType(where.source_loc(),
+                                  "first operand of `where` expression",
+                                  base_type));
 
-      // Start with the given constraint, if any.
+      // Start with the given constraint.
       ConstraintTypeBuilder builder(arena_, &self);
-      if (base) {
-        CARBON_RETURN_IF_ERROR(
-            builder.AddAndSubstitute(*this, *base, builder.GetSelfType(),
-                                     builder.GetSelfWitness(), Bindings(),
-                                     /*add_lookup_contexts=*/true));
-        // Constraints from the LHS of `where` are in scope in the RHS. But
-        // constraints from earlier `where` clauses are not in scope in later
-        // clauses.
-        builder.BringImplsIntoScope(*this, &inner_impl_scope);
-      }
+      CARBON_RETURN_IF_ERROR(
+          builder.AddAndSubstitute(*this, base, builder.GetSelfType(),
+                                   builder.GetSelfWitness(), Bindings(),
+                                   /*add_lookup_contexts=*/true));
+      // Constraints from the LHS of `where` are in scope in the RHS. But
+      // constraints from earlier `where` clauses are not in scope in later
+      // clauses.
+      builder.BringImplsIntoScope(*this, &inner_impl_scope);
 
       // Type-check and apply the `where` clauses.
       for (Nonnull<WhereClause*> clause : where.clauses()) {
@@ -3372,11 +3382,11 @@ auto TypeChecker::TypeCheckPattern(
       SetValue(&binding, val);
 
       // Create an impl binding if we have a constraint.
-      if (auto* iface_type = dyn_cast<InterfaceType>(type)) {
+      if (isa<ConstraintType, InterfaceType>(type)) {
         CARBON_ASSIGN_OR_RETURN(
-            type, MakeConstraintForInterface(binding.source_loc(), iface_type));
-      }
-      if (auto* constraint = dyn_cast<ConstraintType>(type)) {
+            Nonnull<const ConstraintType*> constraint,
+            ConvertToConstraintType(binding.source_loc(), "generic binding",
+                                    type));
         Nonnull<ImplBinding*> impl_binding = arena_->New<ImplBinding>(
             binding.source_loc(), &binding, std::nullopt);
         auto* witness = arena_->New<BindingWitness>(impl_binding);
@@ -4230,17 +4240,10 @@ auto TypeChecker::DeclareInterfaceDeclaration(
         auto* extends = cast<InterfaceExtendsDeclaration>(m);
         CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> base,
                                 TypeCheckTypeExp(extends->base(), iface_scope));
-        auto* constraint_type = dyn_cast<ConstraintType>(base);
-        if (auto* interface_type = dyn_cast<InterfaceType>(base)) {
-          CARBON_ASSIGN_OR_RETURN(
-              constraint_type, MakeConstraintForInterface(extends->source_loc(),
-                                                          interface_type));
-        }
-        if (!constraint_type) {
-          return ProgramError(extends->source_loc())
-                 << "an interface can only extend a constraint, found "
-                 << *base;
-        }
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<const ConstraintType*> constraint_type,
+            ConvertToConstraintType(m->source_loc(), "extends declaration",
+                                    base));
         CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
             *this, constraint_type, builder.GetSelfType(),
             builder.GetSelfWitness(), Bindings(),
@@ -4257,16 +4260,10 @@ auto TypeChecker::DeclareInterfaceDeclaration(
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> constraint,
             TypeCheckTypeExp(impl->constraint(), iface_scope));
-        auto* constraint_type = dyn_cast<ConstraintType>(constraint);
-        if (auto* interface_type = dyn_cast<InterfaceType>(constraint)) {
-          CARBON_ASSIGN_OR_RETURN(
-              constraint_type,
-              MakeConstraintForInterface(impl->source_loc(), interface_type));
-        }
-        if (!constraint_type) {
-          return ProgramError(impl->source_loc())
-                 << "expected a constraint after `as`, found " << *constraint;
-        }
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<const ConstraintType*> constraint_type,
+            ConvertToConstraintType(m->source_loc(), "impl as declaration",
+                                    constraint));
         CARBON_RETURN_IF_ERROR(
             builder.AddAndSubstitute(*this, constraint_type, impl_type,
                                      builder.GetSelfWitness(), Bindings(),
@@ -4285,12 +4282,12 @@ auto TypeChecker::DeclareInterfaceDeclaration(
         // is Interface` constraint that `impl`s must satisfy and users of
         // the interface can rely on.
         Nonnull<const Value*> constraint = &assoc->static_type();
-        if (auto* interface_type = dyn_cast<InterfaceType>(constraint)) {
+        if (isa<ConstraintType, InterfaceType>(constraint)) {
           CARBON_ASSIGN_OR_RETURN(
-              constraint,
-              MakeConstraintForInterface(assoc->source_loc(), interface_type));
-        }
-        if (auto* constraint_type = dyn_cast<ConstraintType>(constraint)) {
+              Nonnull<const ConstraintType*> constraint_type,
+              ConvertToConstraintType(assoc->source_loc(),
+                                      "type of associated constant",
+                                      constraint));
           CARBON_RETURN_IF_ERROR(
               builder.AddAndSubstitute(*this, constraint_type, assoc_value,
                                        builder.GetSelfWitness(), Bindings(),
@@ -4541,26 +4538,20 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   CARBON_ASSIGN_OR_RETURN(
       Nonnull<const Value*> implemented_type,
       TypeCheckTypeExp(&impl_decl->interface(), impl_scope));
-  if (auto* iface_type = dyn_cast<InterfaceType>(implemented_type)) {
-    CARBON_ASSIGN_OR_RETURN(
-        implemented_type, MakeConstraintForInterface(
-                              impl_decl->interface().source_loc(), iface_type));
-  }
-  if (!isa<ConstraintType>(implemented_type)) {
-    return ProgramError(impl_decl->interface().source_loc())
-           << "expected constraint after `as`, found value of type "
-           << *implemented_type;
-  }
+  CARBON_ASSIGN_OR_RETURN(
+      Nonnull<const ConstraintType*> implemented_constraint,
+      ConvertToConstraintType(impl_decl->interface().source_loc(),
+                              "impl declaration", implemented_type));
 
   // Substitute the given type for `.Self` to form the resolved constraint that
   // this `impl` implements.
   Nonnull<const ConstraintType*> constraint_type;
   {
     ConstraintTypeBuilder builder(arena_, impl_decl->source_loc());
-    CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
-        *this, cast<ConstraintType>(implemented_type), impl_type_value,
-        builder.GetSelfWitness(), Bindings(),
-        /*add_lookup_contexts=*/true));
+    CARBON_RETURN_IF_ERROR(
+        builder.AddAndSubstitute(*this, implemented_constraint, impl_type_value,
+                                 builder.GetSelfWitness(), Bindings(),
+                                 /*add_lookup_contexts=*/true));
     constraint_type = std::move(builder).Build(arena_);
     impl_decl->set_constraint_type(constraint_type);
   }
