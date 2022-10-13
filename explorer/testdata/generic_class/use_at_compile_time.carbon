@@ -2,9 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
+// RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
+// RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
+// CHECK:result: 0
 
 package ExplorerTest api;
 
@@ -20,7 +21,6 @@ class WithType(T:! Has(Type)) {
 }
 
 fn Main() -> i32 {
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_use_at_compile_time.carbon:[[@LINE+1]]: Function would be called at compile-time
   var v: WithType(i32).Get() = 0;
   return v;
 }

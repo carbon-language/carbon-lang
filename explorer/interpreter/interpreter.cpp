@@ -799,10 +799,6 @@ auto Interpreter::CallFunction(const CallExpression& call,
           alt.alt_name(), alt.choice_name(), arg));
     }
     case Value::Kind::FunctionValue: {
-      if (phase() == Phase::CompileTime) {
-        return ProgramError(call.source_loc())
-               << "Function would be called at compile-time";
-      }
       const FunctionValue& fun_val = cast<FunctionValue>(*fun);
       const FunctionDeclaration& function = fun_val.declaration();
       RuntimeScope binding_scope(&heap_);
