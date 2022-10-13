@@ -799,6 +799,10 @@ auto Interpreter::CallFunction(const CallExpression& call,
           alt.alt_name(), alt.choice_name(), arg));
     }
     case Value::Kind::FunctionValue: {
+      if (phase() == Phase::CompileTime) {
+        return ProgramError(call.source_loc())
+               << "Function would be called at compile-time";
+      }
       const FunctionValue& fun_val = cast<FunctionValue>(*fun);
       const FunctionDeclaration& function = fun_val.declaration();
       RuntimeScope binding_scope(&heap_);
@@ -1950,6 +1954,8 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
     case DeclarationKind::MixDeclaration:
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::InterfaceDeclaration:
+    case DeclarationKind::InterfaceExtendsDeclaration:
+    case DeclarationKind::InterfaceImplDeclaration:
     case DeclarationKind::AssociatedConstantDeclaration:
     case DeclarationKind::ImplDeclaration:
     case DeclarationKind::SelfDeclaration:

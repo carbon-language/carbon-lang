@@ -2,10 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
+// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
+// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -13,6 +12,7 @@ fn Id(t: Type) -> auto { return t; }
 
 // Test non-trivial type expression in parameter type.
 
+// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_param_type_is_call.carbon:[[@LINE+1]]: Function would be called at compile-time
 fn f(x: Id(i32)) -> i32 {
   return x;
 }

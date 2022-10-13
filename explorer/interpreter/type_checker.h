@@ -111,6 +111,12 @@ class TypeChecker {
     std::vector<Nonnull<const GenericBinding*>> bindings;
   };
 
+  // Result from a lookup in a constraint.
+  struct ConstraintLookupResult {
+    Nonnull<const InterfaceType*> interface;
+    Nonnull<const Declaration*> member;
+  };
+
   // Traverses the AST rooted at `e`, populating the static_type() of all nodes
   // and ensuring they follow Carbon's typing rules.
   //
@@ -405,6 +411,13 @@ class TypeChecker {
                                   Nonnull<const InterfaceType*> iface_type)
       -> ErrorOr<Nonnull<const ConstraintType*>>;
 
+  // Convert a value that is expected to represent a constraint into a
+  // `ConstraintType`.
+  auto ConvertToConstraintType(SourceLocation source_loc,
+                               std::string_view context,
+                               Nonnull<const Value*> constraint)
+      -> ErrorOr<Nonnull<const ConstraintType*>>;
+
   // Given a list of constraint types, form the combined constraint.
   auto CombineConstraints(
       SourceLocation source_loc,
@@ -414,6 +427,14 @@ class TypeChecker {
   // Gets the type for the given associated constant.
   auto GetTypeForAssociatedConstant(
       Nonnull<const AssociatedConstant*> assoc) const -> Nonnull<const Value*>;
+
+  // Look up a member name in a constraint, which might be a single interface or
+  // a compound constraint.
+  auto LookupInConstraint(SourceLocation source_loc,
+                          std::string_view lookup_kind,
+                          Nonnull<const Value*> type,
+                          std::string_view member_name)
+      -> ErrorOr<ConstraintLookupResult>;
 
   // Given `type.(interface.member)`, look for a rewrite in the declared type
   // of `type`.
