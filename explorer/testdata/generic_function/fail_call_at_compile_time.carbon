@@ -17,7 +17,7 @@ fn G[T:! X](v: T) -> Type {
 }
 
 fn Main() -> i32 {
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_call_at_compile_time.carbon:[[@LINE+1]]: Function would be called at compile-time
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_call_at_compile_time.carbon:[[@LINE+1]]: Function would be called at compile-time
   var v: G(0) = 0;
   return v;
 }

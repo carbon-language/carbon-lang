@@ -9,7 +9,7 @@
 package ExplorerTest api;
 
 interface Vector {
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_impl_as_not_constraint.carbon:[[@LINE+1]]: expected a constraint in impl as declaration, found i32
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_impl_as_not_constraint.carbon:[[@LINE+1]]: expected a constraint in impl as declaration, found i32
   impl Self as i32;
 }
 

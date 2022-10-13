@@ -9,7 +9,7 @@
 package ExplorerTest api;
 
 interface Vector {
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_extends_not_constraint.carbon:[[@LINE+1]]: expected a constraint in extends declaration, found i32
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_extends_not_constraint.carbon:[[@LINE+1]]: expected a constraint in extends declaration, found i32
   extends i32;
 }
 

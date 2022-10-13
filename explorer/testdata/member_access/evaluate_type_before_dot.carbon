@@ -5,12 +5,6 @@
 // RUN: %{explorer} %s | %{FileCheck-strict} %s
 // RUN: %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK:STDOUT: Struct OK
-// CHECK:STDOUT: Choice OK
-// CHECK:STDOUT: Class OK
-// CHECK:STDOUT: Interface OK
-// CHECK:STDOUT: Constraint OK
-// CHECK:STDOUT: result: 0
 
 package Foo api;
 
@@ -31,6 +25,7 @@ fn GetInterface() -> Type { return Interface; }
 fn GetConstraint() -> Type { return Interface & AnotherInterface; }
 
 fn TestStruct() {
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/member_access/evaluate_type_before_dot.carbon:[[@LINE+1]]: Function would be called at compile-time
   var s: GetStruct() = {.n = 1};
   if (s.(GetStruct().n) == 1) {
     Print("Struct OK");

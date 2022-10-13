@@ -8,7 +8,7 @@
 
 package ExplorerTest api;
 
-// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_impl_as_not_constraint.carbon:[[@LINE+1]]: expected a constraint in impl declaration, found i32
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_impl_as_not_constraint.carbon:[[@LINE+1]]: expected a constraint in impl declaration, found i32
 external impl i32 as i32 {}
 
 fn Main() -> i32 {

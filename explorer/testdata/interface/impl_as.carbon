@@ -5,8 +5,8 @@
 // RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
 // RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK:Carrot.G
-// CHECK:result: 5
+// CHECK:STDOUT: Carrot.G
+// CHECK:STDOUT: result: 5
 
 package ExplorerTest api;
 

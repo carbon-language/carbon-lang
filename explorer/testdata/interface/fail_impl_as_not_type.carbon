@@ -11,7 +11,7 @@ package ExplorerTest api;
 interface A {}
 
 interface B {
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_impl_as_not_type.carbon:[[@LINE+1]]: Expected a type, but got 5
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_impl_as_not_type.carbon:[[@LINE+1]]: Expected a type, but got 5
   impl 5 as A;
 }
 

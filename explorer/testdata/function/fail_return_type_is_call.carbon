@@ -12,7 +12,7 @@ fn apply[T:! Type, U:! Type](f: T, EmptyIdentifier: U)
 match (true[true]) {}
 }
 
-// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_return_type_is_call.carbon:[[@LINE+1]]: Function would be called at compile-time
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_return_type_is_call.carbon:[[@LINE+1]]: Function would be called at compile-time
 fn EmptyIdentifier() -> apply(true, true);
 
 fn Main() -> i32 {
