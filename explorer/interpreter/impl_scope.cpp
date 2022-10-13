@@ -103,7 +103,33 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
                            source_loc, type_checker));
       witnesses.push_back(result);
     }
-    // TODO: Check satisfaction of same-type constraints.
+
+    // Check that all equality constraints are satisfied in this scope.
+    if (llvm::ArrayRef<EqualityConstraint> equals =
+            constraint->equality_constraints();
+        !equals.empty()) {
+      std::optional<Nonnull<const Witness*>> witness;
+      if (constraint->self_binding()->impl_binding()) {
+        witness = type_checker.MakeConstraintWitness(*constraint, witnesses,
+                                                     source_loc);
+      }
+      Bindings local_bindings = bindings;
+      local_bindings.Add(constraint->self_binding(), impl_type, witness);
+      SingleStepEqualityContext equality_ctx(&type_checker, this);
+      for (auto& equal : equals) {
+        auto it = equal.values.begin();
+        Nonnull<const Value*> first =
+            type_checker.Substitute(local_bindings, *it++);
+        for (; it != equal.values.end(); ++it) {
+          Nonnull<const Value*> current =
+              type_checker.Substitute(local_bindings, *it);
+          if (!ValueEqual(first, current, &equality_ctx)) {
+            return ProgramError(source_loc) << "could not determine that "
+                                            << *first << " == " << *current;
+          }
+        }
+      }
+    }
     return type_checker.MakeConstraintWitness(*constraint, std::move(witnesses),
                                               source_loc);
   }
@@ -231,6 +257,51 @@ void ImplScope::Print(llvm::raw_ostream& out) const {
   for (const Nonnull<const ImplScope*>& parent : parent_scopes_) {
     out << *parent;
   }
+}
+
+auto SingleStepEqualityContext::VisitEqualValues(
+    Nonnull<const Value*> value,
+    llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const -> bool {
+  if (auto trace_stream = type_checker_->trace_stream()) {
+    **trace_stream << "looking for values equal to " << *value << " in\n"
+                   << *impl_scope_;
+  }
+
+  if (!impl_scope_->VisitEqualValues(value, visitor)) {
+    return false;
+  }
+
+  // Also look up and visit the corresponding impl if this is an associated
+  // constant.
+  // TODO: Is this necessary?
+  if (auto* assoc = dyn_cast<AssociatedConstant>(value)) {
+    // Perform an impl lookup to see if we can resolve this constant.
+    // The source location doesn't matter, we're discarding the diagnostics.
+    if (auto* impl_witness = dyn_cast<ImplWitness>(&assoc->witness())) {
+      // Instantiate the impl to find the concrete constraint it implements.
+      Nonnull<const ConstraintType*> constraint =
+          impl_witness->declaration().constraint_type();
+      constraint = cast<ConstraintType>(
+          type_checker_->Substitute(impl_witness->bindings(), constraint));
+      if (auto trace_stream = type_checker_->trace_stream()) {
+        **trace_stream << "found constraint " << *constraint
+                       << " for associated constant " << *assoc << "\n";
+      }
+
+      // Look for the value of this constant within that constraint.
+      if (!constraint->VisitEqualValues(value, visitor)) {
+        return false;
+      }
+    } else {
+      if (auto trace_stream = type_checker_->trace_stream()) {
+        **trace_stream << "Could not resolve associated constant " << *assoc
+                       << ": witness " << assoc->witness()
+                       << " depends on a generic parameter\n";
+      }
+    }
+  }
+
+  return true;
 }
 
 }  // namespace Carbon

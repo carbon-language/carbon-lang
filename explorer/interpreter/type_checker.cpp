@@ -32,68 +32,6 @@ using llvm::isa;
 
 namespace Carbon {
 
-struct TypeChecker::SingleStepEqualityContext : public EqualityContext {
- public:
-  SingleStepEqualityContext(Nonnull<const TypeChecker*> type_checker,
-                            Nonnull<const ImplScope*> impl_scope)
-      : type_checker_(type_checker), impl_scope_(impl_scope) {}
-
-  // Visits the values that are equal to the given value and a single step away
-  // according to an equality constraint that is either scope or within a final
-  // impl corresponding to an associated constant. Stops and returns `false` if
-  // the visitor returns `false`, otherwise returns `true`.
-  auto VisitEqualValues(Nonnull<const Value*> value,
-                        llvm::function_ref<bool(Nonnull<const Value*>)> visitor)
-      const -> bool override {
-    if (type_checker_->trace_stream_) {
-      **type_checker_->trace_stream_ << "looking for values equal to " << *value
-                                     << " in\n"
-                                     << *impl_scope_;
-    }
-
-    if (!impl_scope_->VisitEqualValues(value, visitor)) {
-      return false;
-    }
-
-    // Also look up and visit the corresponding impl if this is an associated
-    // constant.
-    if (auto* assoc = dyn_cast<AssociatedConstant>(value)) {
-      // Perform an impl lookup to see if we can resolve this constant.
-      // The source location doesn't matter, we're discarding the diagnostics.
-      if (auto* impl_witness = dyn_cast<ImplWitness>(&assoc->witness())) {
-        // Instantiate the impl to find the concrete constraint it implements.
-        Nonnull<const ConstraintType*> constraint =
-            impl_witness->declaration().constraint_type();
-        constraint = cast<ConstraintType>(
-            type_checker_->Substitute(impl_witness->bindings(), constraint));
-        if (type_checker_->trace_stream_) {
-          **type_checker_->trace_stream_ << "found constraint " << *constraint
-                                         << " for associated constant "
-                                         << *assoc << "\n";
-        }
-
-        // Look for the value of this constant within that constraint.
-        if (!constraint->VisitEqualValues(value, visitor)) {
-          return false;
-        }
-      } else {
-        if (type_checker_->trace_stream_) {
-          **type_checker_->trace_stream_
-              << "Could not resolve associated constant " << *assoc << ": "
-              << "witness " << assoc->witness()
-              << " depends on a generic parameter\n";
-        }
-      }
-    }
-
-    return true;
-  }
-
- private:
-  Nonnull<const TypeChecker*> type_checker_;
-  Nonnull<const ImplScope*> impl_scope_;
-};
-
 static void SetValue(Nonnull<Pattern*> pattern, Nonnull<const Value*> value) {
   // TODO: find some way to CHECK that `value` is identical to pattern->value(),
   // if it's already set. Unclear if `ValueEqual` is suitable, because it
@@ -3264,6 +3202,16 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 rewrite_clause.source_loc(), {.interface = result.interface,
                                               .constant = constant,
                                               .replacement = replacement}));
+            // Also find (or add) `.Self is I`, and add `.Self.T == V`.
+            int index = builder.AddImplConstraint(
+                {.type = builder.GetSelfType(), .interface = result.interface});
+            auto* witness =
+                MakeConstraintWitnessAccess(builder.GetSelfWitness(), index);
+            builder.AddEqualityConstraint(
+                {.values = {arena_->New<AssociatedConstant>(
+                                builder.GetSelfType(), result.interface,
+                                constant, witness),
+                            replacement_value}});
             break;
           }
         }
@@ -4684,6 +4632,11 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
       if (auto* iface_type = dyn_cast<InterfaceType>(lookup.context)) {
         self_impl_scope.Add(iface_type, impl_type_value, self_witness, *this);
       }
+    }
+    // This impl also provides all of its equalities.
+    // TODO: Only the ones from rewrite constraints.
+    for (auto &eq : constraint_type->equality_constraints()) {
+      self_impl_scope.AddEqualityConstraint(&eq);
     }
     // Ensure that's enough for our interface to be satisfied.
     CARBON_ASSIGN_OR_RETURN(
