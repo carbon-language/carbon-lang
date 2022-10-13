@@ -10,7 +10,7 @@ package ExplorerTest api;
 
 choice C {
   X,
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/choice/fail_recursive_use.carbon:[[@LINE+1]]: 'C' is not usable until after it has been completely declared
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/choice/fail_recursive_use.carbon:[[@LINE+1]]: 'C' is not usable until after it has been completely declared
   Y(if C.X then i32 else i32)
 }
 

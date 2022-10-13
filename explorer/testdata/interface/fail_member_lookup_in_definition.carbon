@@ -9,7 +9,7 @@
 package ExplorerTest api;
 
 interface Vector {
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_member_lookup_in_definition.carbon:[[@LINE+1]]: incomplete type `interface Vector` used in member access
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_member_lookup_in_definition.carbon:[[@LINE+1]]: incomplete type `interface Vector` used in member access
   fn ScalarZero() -> Vector.ScalarType;
   let ScalarType:! Type;
 }

@@ -5,7 +5,7 @@
 // RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
 // RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK:RUNTIME ERROR: <Main()>:0: attempt to call function `Main` that has not been defined
+// CHECK:STDERR: RUNTIME ERROR: <Main()>:0: attempt to call function `Main` that has not been defined
 
 package ExplorerTest api;
 

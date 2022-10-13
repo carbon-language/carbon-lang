@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
+// RUN: %{not} %{explorer} %s | %{FileCheck-strict} %s
+// RUN: %{not} %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
 
 package ExplorerTest api;
@@ -11,7 +11,7 @@ package ExplorerTest api;
 interface A {}
 
 interface B {
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_impl_as_not_type.carbon:[[@LINE+1]]: Expected a type, but got 5
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_impl_as_not_type.carbon:[[@LINE+1]]: Expected a type, but got 5
   impl 5 as A;
 }
 

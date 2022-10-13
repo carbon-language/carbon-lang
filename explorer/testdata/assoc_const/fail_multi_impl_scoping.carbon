@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
+// RUN: %{not} %{explorer} %s | %{FileCheck-strict} %s
+// RUN: %{not} %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
 
 package ExplorerTest api;
@@ -32,7 +32,7 @@ class C(T:! Type) {
       let w: Self.(A.TA) = 3;
       // TODO: This error is confusing. We should be diagnosing the previous
       // line because we don't know that `3` can be converted to `Self.(A.TA)`.
-      // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_multi_impl_scoping.carbon:[[@LINE+1]]: type error in return value: '((class C(T = T)).TB).Result' is not implicitly convertible to 'i32'
+      // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_multi_impl_scoping.carbon:[[@LINE+1]]: type error in return value: '((class C(T = T)).TB).Result' is not implicitly convertible to 'i32'
       return v + w;
     }
   }

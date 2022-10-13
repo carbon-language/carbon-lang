@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
+// RUN: %{not} %{explorer} %s | %{FileCheck-strict} %s
+// RUN: %{not} %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
 
 package Foo api;
@@ -14,7 +14,7 @@ class X {
   }
 }
 fn F[T:! A](a: T) -> i32 {
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/member_access/fail_vacuous_access_via_type_param.carbon:[[@LINE+1]]: expected name of instance member or interface member in compound member access, found fn () -> i32
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/member_access/fail_vacuous_access_via_type_param.carbon:[[@LINE+1]]: expected name of instance member or interface member in compound member access, found fn () -> i32
   return a.(T.F)();
 }
 fn Main() -> i32 {

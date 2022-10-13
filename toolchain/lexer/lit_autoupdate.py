@@ -14,7 +14,7 @@ from pathlib import Path
 
 
 def main() -> None:
-    # Calls the main script with explorer settings. This uses execv in order to
+    # Calls the main script with lexer settings. This uses execv in order to
     # avoid Python import behaviors.
     this_py = Path(__file__).resolve()
     actual_py = this_py.parent.parent.parent.joinpath(
@@ -22,12 +22,9 @@ def main() -> None:
     )
     args = [
         sys.argv[0],
-        # Flags to configure for explorer testing.
+        # Flags to configure for lexer testing.
         "--build_target",
         "//toolchain/driver:carbon",
-        "--cmd_replace",
-        "%{carbon}",
-        "./bazel-bin/toolchain/driver/carbon",
         # Ignore the resulting column of EndOfFile because it's typically the
         # end of the CHECK comment.
         "--extra_check_replacement",

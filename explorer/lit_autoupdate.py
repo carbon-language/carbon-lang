@@ -25,9 +25,6 @@ def main() -> None:
         # Flags to configure for explorer testing.
         "--build_target",
         "//explorer",
-        "--cmd_replace",
-        "%{explorer}",
-        "./bazel-bin/explorer/explorer",
         "--testdata",
         "explorer/testdata",
         "--line_number_pattern",

@@ -2,34 +2,34 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
+// RUN: %{explorer} %s | %{FileCheck-strict} %s
+// RUN: %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK:bool: 1
-// CHECK:bool: 1
-// CHECK:bool: 1
-// CHECK:bool: 1
-// CHECK:bool: 1
-// CHECK:bool: 1
-// CHECK:bool: 1
-// CHECK:bool: 1
-// CHECK:string: 1
-// CHECK:string: 1
-// CHECK:string: 1
-// CHECK:string: 1
-// CHECK:string: 1
-// CHECK:string: 1
-// CHECK:string: 1
-// CHECK:string: 1
-// CHECK:int: 1
-// CHECK:int: 1
-// CHECK:int: 1
-// CHECK:int: 1
-// CHECK:int: 1
-// CHECK:int: 1
-// CHECK:int: 1
-// CHECK:int: 1
-// CHECK:result: 0
+// CHECK:STDOUT: bool: 1
+// CHECK:STDOUT: bool: 1
+// CHECK:STDOUT: bool: 1
+// CHECK:STDOUT: bool: 1
+// CHECK:STDOUT: bool: 1
+// CHECK:STDOUT: bool: 1
+// CHECK:STDOUT: bool: 1
+// CHECK:STDOUT: bool: 1
+// CHECK:STDOUT: string: 1
+// CHECK:STDOUT: string: 1
+// CHECK:STDOUT: string: 1
+// CHECK:STDOUT: string: 1
+// CHECK:STDOUT: string: 1
+// CHECK:STDOUT: string: 1
+// CHECK:STDOUT: string: 1
+// CHECK:STDOUT: string: 1
+// CHECK:STDOUT: int: 1
+// CHECK:STDOUT: int: 1
+// CHECK:STDOUT: int: 1
+// CHECK:STDOUT: int: 1
+// CHECK:STDOUT: int: 1
+// CHECK:STDOUT: int: 1
+// CHECK:STDOUT: int: 1
+// CHECK:STDOUT: int: 1
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
