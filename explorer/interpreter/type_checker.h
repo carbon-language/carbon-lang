@@ -59,11 +59,12 @@ class TypeChecker {
   ** the member's type is substituted with the type of the enclosing declaration
   ** containing the mix declaration.
   */
-  auto FindMixedMemberAndType(const std::string_view& name,
+  auto FindMixedMemberAndType(SourceLocation source_loc,
+                              const std::string_view& name,
                               llvm::ArrayRef<Nonnull<Declaration*>> members,
                               const Nonnull<const Value*> enclosing_type)
-      -> std::optional<
-          std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>;
+      -> ErrorOr<std::optional<
+          std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>>;
 
   // Given the witnesses for the components of a constraint, form a witness for
   // the constraint.
@@ -314,11 +315,6 @@ class TypeChecker {
   // for control flow to leave that statement except via a `return`.
   auto ExpectReturnOnAllPaths(std::optional<Nonnull<Statement*>> opt_stmt,
                               SourceLocation source_loc) -> ErrorOr<Success>;
-
-  // Verifies that *value represents the result of a type expression,
-  // as opposed to a non-type value.
-  auto ExpectIsType(SourceLocation source_loc, Nonnull<const Value*> value)
-      -> ErrorOr<Success>;
 
   // Verifies that *value represents a concrete type, as opposed to a
   // type pattern or a non-type value.

@@ -282,14 +282,109 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
   }
 }
 
-auto TypeChecker::ExpectIsType(SourceLocation source_loc,
-                               Nonnull<const Value*> value)
+static auto ExpectIsType(SourceLocation source_loc, Nonnull<const Value*> value)
     -> ErrorOr<Success> {
   if (!IsType(value)) {
     return ProgramError(source_loc) << "Expected a type, but got " << *value;
   } else {
     return Success();
   }
+}
+
+// Expect that a type is complete. Issue a diagnostic if not.
+static auto ExpectCompleteType(SourceLocation source_loc,
+                               std::string_view context,
+                               Nonnull<const Value*> type) -> ErrorOr<Success> {
+  CARBON_RETURN_IF_ERROR(ExpectIsType(source_loc, type));
+
+  switch (type->kind()) {
+    case Value::Kind::IntValue:
+    case Value::Kind::FunctionValue:
+    case Value::Kind::DestructorValue:
+    case Value::Kind::BoundMethodValue:
+    case Value::Kind::PointerValue:
+    case Value::Kind::LValue:
+    case Value::Kind::BoolValue:
+    case Value::Kind::StructValue:
+    case Value::Kind::NominalClassValue:
+    case Value::Kind::AlternativeValue:
+    case Value::Kind::BindingPlaceholderValue:
+    case Value::Kind::AddrValue:
+    case Value::Kind::AlternativeConstructorValue:
+    case Value::Kind::ContinuationValue:
+    case Value::Kind::StringValue:
+    case Value::Kind::UninitializedValue:
+    case Value::Kind::ImplWitness:
+    case Value::Kind::BindingWitness:
+    case Value::Kind::ConstraintWitness:
+    case Value::Kind::ConstraintImplWitness:
+    case Value::Kind::ParameterizedEntityName:
+    case Value::Kind::MemberName:
+    case Value::Kind::TypeOfParameterizedEntityName:
+    case Value::Kind::TypeOfMemberName:
+    case Value::Kind::MixinPseudoType:
+    case Value::Kind::TypeOfMixinPseudoType:
+      CARBON_FATAL() << "should not see non-type values";
+
+    case Value::Kind::IntType:
+    case Value::Kind::BoolType:
+    case Value::Kind::StringType:
+    case Value::Kind::PointerType:
+    case Value::Kind::TypeOfClassType:
+    case Value::Kind::TypeOfInterfaceType:
+    case Value::Kind::TypeOfConstraintType:
+    case Value::Kind::TypeOfChoiceType:
+    case Value::Kind::TypeType:
+    case Value::Kind::FunctionType:
+    case Value::Kind::StructType:
+    case Value::Kind::ConstraintType:
+    case Value::Kind::ContinuationType:
+    case Value::Kind::VariableType:
+    case Value::Kind::AssociatedConstant: {
+      // These types are always complete.
+      return Success();
+    }
+
+    case Value::Kind::StaticArrayType:
+      // TODO: This should probably be complete only if the element type is
+      // complete.
+      return Success();
+
+    case Value::Kind::TupleValue: {
+      // TODO: Tuple types should be complete only if all element types are
+      // complete.
+      return Success();
+    }
+
+    // TODO: Once we support forward-declarations, make sure we have an actual
+    // definition in these cases.
+    case Value::Kind::NominalClassType: {
+      if (cast<NominalClassType>(type)->declaration().is_declared()) {
+        return Success();
+      }
+      break;
+    }
+    case Value::Kind::InterfaceType: {
+      if (cast<InterfaceType>(type)->declaration().is_declared()) {
+        return Success();
+      }
+      break;
+    }
+    case Value::Kind::ChoiceType: {
+      if (cast<ChoiceType>(type)->declaration().is_declared()) {
+        return Success();
+      }
+      break;
+    }
+
+    case Value::Kind::AutoType: {
+      // Undeduced `auto` is considered incomplete.
+      break;
+    }
+  }
+
+  return ProgramError(source_loc)
+         << "incomplete type `" << *type << "` used in " << context;
 }
 
 // Returns whether *value represents the type of a Carbon value, as
@@ -1702,11 +1797,12 @@ auto TypeChecker::MakeConstraintWitnessAccess(Nonnull<const Witness*> witness,
 auto TypeChecker::MakeConstraintForInterface(
     SourceLocation source_loc, Nonnull<const InterfaceType*> iface_type)
     -> ErrorOr<Nonnull<const ConstraintType*>> {
+  CARBON_RETURN_IF_ERROR(
+      ExpectCompleteType(source_loc, "constraint", iface_type));
+
   auto constraint_type = iface_type->declaration().constraint_type();
-  if (!constraint_type) {
-    return ProgramError(source_loc)
-           << "use of " << *iface_type << " before it is completely defined";
-  }
+  CARBON_CHECK(constraint_type)
+      << "complete interface should have a constraint type";
 
   if (iface_type->bindings().empty()) {
     return *constraint_type;
@@ -2065,6 +2161,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       auto& access = cast<SimpleMemberAccessExpression>(*e);
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.object(), impl_scope));
       const Value& object_type = access.object().static_type();
+      CARBON_RETURN_IF_ERROR(ExpectCompleteType(access.source_loc(),
+                                                "member access", &object_type));
       switch (object_type.kind()) {
         case Value::Kind::StructType: {
           const auto& struct_type = cast<StructType>(object_type);
@@ -2082,10 +2180,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         case Value::Kind::NominalClassType: {
           const auto& t_class = cast<NominalClassType>(object_type);
-          if (auto type_member = FindMixedMemberAndType(
-                  access.member_name(), t_class.declaration().members(),
-                  &t_class);
-              type_member.has_value()) {
+          CARBON_ASSIGN_OR_RETURN(
+              auto type_member, FindMixedMemberAndType(
+                                    access.source_loc(), access.member_name(),
+                                    t_class.declaration().members(), &t_class));
+          if (type_member.has_value()) {
             auto [member_type, member] = type_member.value();
             Nonnull<const Value*> field_type =
                 Substitute(t_class.bindings(), member_type);
@@ -2258,6 +2357,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> type,
               InterpExp(&access.object(), arena_, trace_stream_));
+          CARBON_RETURN_IF_ERROR(
+              ExpectCompleteType(access.source_loc(), "member access", type));
           switch (type->kind()) {
             case Value::Kind::StructType: {
               for (const auto& field : cast<StructType>(type)->fields()) {
@@ -2302,10 +2403,12 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             case Value::Kind::NominalClassType: {
               const NominalClassType& class_type =
                   cast<NominalClassType>(*type);
-              if (auto type_member = FindMixedMemberAndType(
-                      access.member_name(), class_type.declaration().members(),
-                      &class_type);
-                  type_member.has_value()) {
+              CARBON_ASSIGN_OR_RETURN(
+                  auto type_member,
+                  FindMixedMemberAndType(
+                      access.source_loc(), access.member_name(),
+                      class_type.declaration().members(), &class_type));
+              if (type_member.has_value()) {
                 auto [member_type, member] = type_member.value();
                 access.set_member(Member(member));
                 switch (member->kind()) {
@@ -3622,28 +3725,35 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
     }
     case StatementKind::VariableDefinition: {
       auto& var = cast<VariableDefinition>(*s);
+
+      // TODO: If the pattern contains a binding that implies a new impl is
+      // available, should that remain in scope for as long as its binding?
+      // ```
+      // var a: (T:! Widget) = ...;
+      // // Is the `impl T as Widget` in scope here?
+      // a.(Widget.F)();
+      // ```
       ImplScope var_scope;
       var_scope.AddParent(&impl_scope);
+      std::optional<Nonnull<const Value*>> init_type;
+
+      // Type-check the initializer before we inspect the type of the variable
+      // so we can use its type to deduce parts of the type of the binding.
       if (var.has_init()) {
         CARBON_RETURN_IF_ERROR(TypeCheckExp(&var.init(), impl_scope));
-        const Value& rhs_ty = var.init().static_type();
-        // TODO: If the pattern contains a binding that implies a new impl is
-        // available, should that remain in scope for as long as its binding?
-        // ```
-        // var a: (T:! Widget) = ...;
-        // // Is the `impl T as Widget` in scope here?
-        // a.(Widget.F)();
-        // ```
-        CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-            &var.pattern(), &rhs_ty, var_scope, var.value_category()));
+        init_type = &var.init().static_type();
+      }
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&var.pattern(), init_type,
+                                              var_scope, var.value_category()));
+      CARBON_RETURN_IF_ERROR(ExpectCompleteType(
+          var.source_loc(), "type of variable", &var.pattern().static_type()));
+
+      if (var.has_init()) {
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<Expression*> converted_init,
             ImplicitlyConvert("initializer of variable", impl_scope,
                               &var.init(), &var.pattern().static_type()));
         var.set_init(converted_init);
-      } else {
-        CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-            &var.pattern(), std::nullopt, var_scope, var.value_category()));
       }
       return Success();
     }
@@ -3926,7 +4036,7 @@ auto TypeChecker::TypeCheckCallableDeclaration(Nonnull<CallableDeclaration*> f,
   if (trace_stream_) {
     **trace_stream_ << "** checking function " << f->name() << "\n";
   }
-  // if f->return_term().is_auto(), the function body was already
+  // If f->return_term().is_auto(), the function body was already
   // type checked in DeclareFunctionDeclaration.
   if (f->body().has_value() && !f->return_term().is_auto()) {
     // Bring the impls into scope.
@@ -4452,6 +4562,8 @@ auto TypeChecker::CheckAndAddImplBindings(
   Nonnull<const ConstraintType*> constraint = impl_decl->constraint_type();
   for (auto lookup : constraint->lookup_contexts()) {
     if (auto* iface_type = dyn_cast<InterfaceType>(lookup.context)) {
+      CARBON_RETURN_IF_ERROR(ExpectCompleteType(
+          impl_decl->source_loc(), "impl declaration", iface_type));
       CARBON_RETURN_IF_ERROR(
           CheckImplIsDeducible(impl_decl->source_loc(), impl_type, iface_type,
                                deduced_bindings, *scope_info.innermost_scope));
@@ -4790,13 +4902,11 @@ auto TypeChecker::TypeCheck(AST& ast) -> ErrorOr<Success> {
   for (Nonnull<Declaration*> declaration : ast.declarations) {
     CARBON_RETURN_IF_ERROR(
         DeclareDeclaration(declaration, top_level_scope_info));
-  }
-  for (Nonnull<Declaration*> decl : ast.declarations) {
     CARBON_RETURN_IF_ERROR(
-        TypeCheckDeclaration(decl, impl_scope, std::nullopt));
+        TypeCheckDeclaration(declaration, impl_scope, std::nullopt));
     // Check to see if this declaration is a builtin.
     // TODO: Only do this when type-checking the prelude.
-    builtins_.Register(decl);
+    builtins_.Register(declaration);
   }
   CARBON_RETURN_IF_ERROR(TypeCheckExp(*ast.main_call, impl_scope));
   return Success();
@@ -4824,25 +4934,25 @@ auto TypeChecker::TypeCheckDeclaration(
     case DeclarationKind::FunctionDeclaration:
       CARBON_RETURN_IF_ERROR(TypeCheckCallableDeclaration(
           &cast<CallableDeclaration>(*d), impl_scope));
-      return Success();
+      break;
     case DeclarationKind::ClassDeclaration:
       CARBON_RETURN_IF_ERROR(
           TypeCheckClassDeclaration(&cast<ClassDeclaration>(*d), impl_scope));
-      return Success();
+      break;
     case DeclarationKind::MixinDeclaration: {
       CARBON_RETURN_IF_ERROR(
           TypeCheckMixinDeclaration(&cast<MixinDeclaration>(*d), impl_scope));
-      return Success();
+      break;
     }
     case DeclarationKind::MixDeclaration: {
       CARBON_RETURN_IF_ERROR(TypeCheckMixDeclaration(
           &cast<MixDeclaration>(*d), impl_scope, enclosing_decl));
-      return Success();
+      break;
     }
     case DeclarationKind::ChoiceDeclaration:
       CARBON_RETURN_IF_ERROR(
           TypeCheckChoiceDeclaration(&cast<ChoiceDeclaration>(*d), impl_scope));
-      return Success();
+      break;
     case DeclarationKind::VariableDeclaration: {
       auto& var = cast<VariableDeclaration>(*d);
       if (var.has_initializer()) {
@@ -4862,25 +4972,26 @@ auto TypeChecker::TypeCheckDeclaration(
                               &var.initializer(), &var.static_type()));
         var.set_initializer(converted_initializer);
       }
-      return Success();
+      break;
     }
     case DeclarationKind::InterfaceExtendsDeclaration: {
       // Checked in DeclareInterfaceDeclaration.
-      return Success();
+      break;
     }
     case DeclarationKind::InterfaceImplDeclaration: {
       // Checked in DeclareInterfaceDeclaration.
-      return Success();
+      break;
     }
     case DeclarationKind::AssociatedConstantDeclaration:
-      return Success();
+      break;
     case DeclarationKind::SelfDeclaration: {
       CARBON_FATAL() << "Unreachable TypeChecker `Self` declaration";
     }
     case DeclarationKind::AliasDeclaration: {
-      return Success();
+      break;
     }
   }
+  d->set_is_type_checked();
   return Success();
 }
 
@@ -4926,6 +5037,12 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
           Nonnull<const Value*> mixin,
           InterpExp(&mix_decl.mixin(), arena_, trace_stream_));
       mix_decl.set_mixin_value(cast<MixinPseudoType>(mixin));
+      auto& mixin_decl = mix_decl.mixin_value().declaration();
+      if (!mixin_decl.is_declared()) {
+        return ProgramError(mix_decl.source_loc())
+               << "incomplete mixin `" << mixin_decl.name()
+               << "` used in mix declaration";
+      }
       break;
     }
     case DeclarationKind::ChoiceDeclaration: {
@@ -4949,6 +5066,8 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
                                               var.value_category()));
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> declared_type,
                               InterpExp(&type, arena_, trace_stream_));
+      CARBON_RETURN_IF_ERROR(ExpectCompleteType(
+          var.source_loc(), "type of variable", declared_type));
       var.set_static_type(declared_type);
       break;
     }
@@ -4984,20 +5103,24 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       break;
     }
   }
+  d->set_is_declared();
   return Success();
 }
 
 auto TypeChecker::FindMixedMemberAndType(
-    const std::string_view& name, llvm::ArrayRef<Nonnull<Declaration*>> members,
+    SourceLocation source_loc, const std::string_view& name,
+    llvm::ArrayRef<Nonnull<Declaration*>> members,
     const Nonnull<const Value*> enclosing_type)
-    -> std::optional<
-        std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>> {
+    -> ErrorOr<std::optional<
+        std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>> {
   for (Nonnull<const Declaration*> member : members) {
     if (llvm::isa<MixDeclaration>(member)) {
       const auto& mix_decl = cast<MixDeclaration>(*member);
       Nonnull<const MixinPseudoType*> mixin = &mix_decl.mixin_value();
-      const auto res =
-          FindMixedMemberAndType(name, mixin->declaration().members(), mixin);
+      CARBON_ASSIGN_OR_RETURN(
+          const auto res,
+          FindMixedMemberAndType(source_loc, name,
+                                 mixin->declaration().members(), mixin));
       if (res.has_value()) {
         if (isa<NominalClassType>(enclosing_type)) {
           Bindings temp_map;
@@ -5005,7 +5128,7 @@ auto TypeChecker::FindMixedMemberAndType(
           temp_map.Add(mixin->declaration().self(), enclosing_type,
                        std::nullopt);
           const auto mix_member_type = Substitute(temp_map, res.value().first);
-          return std::make_pair(mix_member_type, res.value().second);
+          return {std::make_pair(mix_member_type, res.value().second)};
         } else {
           return res;
         }
@@ -5014,12 +5137,12 @@ auto TypeChecker::FindMixedMemberAndType(
     } else if (std::optional<std::string_view> mem_name = GetName(*member);
                mem_name.has_value()) {
       if (*mem_name == name) {
-        return std::make_pair(&member->static_type(), member);
+        return {std::make_pair(&member->static_type(), member)};
       }
     }
   }
 
-  return std::nullopt;
+  return {std::nullopt};
 }
 
 auto TypeChecker::CollectMember(Nonnull<const Declaration*> enclosing_decl,
