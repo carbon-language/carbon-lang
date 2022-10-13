@@ -20,13 +20,16 @@ config.name = "lit"
 config.suffixes = [".carbon"]
 config.test_format = lit.formats.ShTest()
 
+_MERGE_OUTPUT = fullpath("carbon/bazel/testing/merge_output")
+
 config.substitutions.append(
     (
         "%{carbon}",
-        fullpath("carbon/toolchain/driver/carbon"),
+        "%s %s" % (_MERGE_OUTPUT, fullpath("carbon/toolchain/driver/carbon")),
     )
 )
-_EXPLORER = "%s --prelude=%s" % (
+_EXPLORER = "%s %s --prelude=%s" % (
+    _MERGE_OUTPUT,
     fullpath("carbon/explorer/explorer"),
     fullpath("carbon/explorer/data/prelude.carbon"),
 )

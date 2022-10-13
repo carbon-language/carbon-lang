@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
+// RUN: %{not} %{explorer} %s | %{FileCheck-strict} %s
+// RUN: %{not} %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
 
 package ExplorerTest api;
@@ -11,6 +11,6 @@ package ExplorerTest api;
 fn Main() -> i32 {
   var (x: i32, y: i32);
   x = 1;
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/unformed/static/fail_local_pattern_declare.carbon:[[@LINE+1]]: use of uninitialized variable y
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/unformed/static/fail_local_pattern_declare.carbon:[[@LINE+1]]: use of uninitialized variable y
   return y;
 }

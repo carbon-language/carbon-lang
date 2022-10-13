@@ -2,19 +2,19 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
+// RUN: %{explorer} %s | %{FileCheck-strict} %s
+// RUN: %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK:1
-// CHECK:i32.Hash
-// CHECK:0
-// CHECK:Potato.(Hashable.Hash)
-// CHECK:1
-// CHECK:Potato.Hash
-// CHECK:2
-// CHECK:Potato.Hash
-// CHECK:2
-// CHECK:result: 0
+// CHECK:STDOUT: 1
+// CHECK:STDOUT: i32.Hash
+// CHECK:STDOUT: 0
+// CHECK:STDOUT: Potato.(Hashable.Hash)
+// CHECK:STDOUT: 1
+// CHECK:STDOUT: Potato.Hash
+// CHECK:STDOUT: 2
+// CHECK:STDOUT: Potato.Hash
+// CHECK:STDOUT: 2
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
