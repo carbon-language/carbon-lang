@@ -10,10 +10,13 @@ package ExplorerTest api;
 
 fn Id(t: Type) -> auto { return t; }
 
-// Test non-trivial type expression in variable declaration statement.
+// Test non-trivial type expression in parameter type.
+
+// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_param_type_is_call.carbon:[[@LINE+1]]:  function call not allowed in this context
+fn f(x: Id(i32)) -> i32 {
+  return x;
+}
 
 fn Main() -> i32 {
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/function/auto_return/fail_type.carbon:[[@LINE+1]]:  function call not allowed in this context
-  var x: Id(i32) = 0;
-  return x;
+  return f(0);
 }
