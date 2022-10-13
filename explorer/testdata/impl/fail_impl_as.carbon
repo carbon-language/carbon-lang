@@ -8,7 +8,7 @@
 
 package ExplorerTest api;
 
-// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_impl_as.carbon:[[@LINE+1]]: expected constraint after `as`, found value of type i32
+// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_impl_as.carbon:[[@LINE+1]]: expected a constraint in impl declaration, found i32
 external impl i32 as i32 {}
 
 fn Main() -> i32 {

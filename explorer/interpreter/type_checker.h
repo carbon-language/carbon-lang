@@ -411,6 +411,13 @@ class TypeChecker {
                                   Nonnull<const InterfaceType*> iface_type)
       -> ErrorOr<Nonnull<const ConstraintType*>>;
 
+  // Convert a value that is expected to represent a constraint into a
+  // `ConstraintType`.
+  auto ConvertToConstraintType(SourceLocation source_loc,
+                               std::string_view context,
+                               Nonnull<const Value*> constraint)
+      -> ErrorOr<Nonnull<const ConstraintType*>>;
+
   // Given a list of constraint types, form the combined constraint.
   auto CombineConstraints(
       SourceLocation source_loc,
