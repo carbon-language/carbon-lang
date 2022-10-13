@@ -33,7 +33,7 @@ LIT_REPLACEMENTS = [
 
 class ParsedArgs(NamedTuple):
     build_mode: str
-    build_targets: List[str]
+    build_target: str
     extra_check_replacements: List[Tuple[Pattern, Pattern, str]]
     line_number_format: str
     line_number_pattern: Pattern
@@ -55,7 +55,6 @@ def parse_args() -> ParsedArgs:
         "--build_target",
         metavar="TARGET",
         required=True,
-        action="append",
         help="The target to build.",
     )
     parser.add_argument(
@@ -94,7 +93,7 @@ def parse_args() -> ParsedArgs:
     ]
     return ParsedArgs(
         build_mode=parsed_args.build_mode,
-        build_targets=parsed_args.build_target,
+        build_target=parsed_args.build_target,
         extra_check_replacements=extra_check_replacements,
         line_number_format=parsed_args.line_number_format,
         line_number_pattern=re.compile(parsed_args.line_number_pattern),
@@ -402,8 +401,9 @@ def main() -> None:
             "build",
             "-c",
             parsed_args.build_mode,
+            "//bazel/testing:merge_output",
+            parsed_args.build_target,
         ]
-        + parsed_args.build_targets,
     )
 
     # Run updates.
