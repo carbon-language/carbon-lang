@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
+// RUN: %{not} %{explorer} %s | %{FileCheck-strict} %s
+// RUN: %{not} %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
 
 package ExplorerTest api;
@@ -13,7 +13,7 @@ interface Vector {
 }
 
 fn ScaleGeneric[T:! Vector](a: T, s: i32) -> T {
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_interface_missing_member.carbon:[[@LINE+1]]: member access, Scale not in interface Vector
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_interface_missing_member.carbon:[[@LINE+1]]: member access, Scale not in constraint interface Vector where T is interface Vector
   return a.Scale(s);
 }
 

@@ -2,16 +2,17 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{carbon} dump semantics-ir %s 2>&1 | %{FileCheck-strict} %s
-// CHECK:{
-// CHECK:  Function(
-// CHECK:      %[[ID0:[0-9]+]],
-// CHECK:      {
-// CHECK:        IntegerLiteral(%[[ID1:[0-9]+]], 0),
-// CHECK:        Return(%[[ID1]]),
-// CHECK:      }),
-// CHECK:  SetName(`Main`, %[[ID0]]),
-// CHECK:}
+// RUN: %{carbon} dump semantics-ir %s | %{FileCheck-strict} %s
+// AUTOUPDATE: %{carbon} dump semantics-ir %s
+// CHECK:STDOUT: {
+// CHECK:STDOUT:   Function(
+// CHECK:STDOUT:       %0,
+// CHECK:STDOUT:       {
+// CHECK:STDOUT:         IntegerLiteral(%1, 0),
+// CHECK:STDOUT:         Return(%1),
+// CHECK:STDOUT:       }),
+// CHECK:STDOUT:   SetName(`Main`, %0),
+// CHECK:STDOUT: }
 
 fn Main() {
   return 0;

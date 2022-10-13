@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
+// RUN: %{not} %{explorer} %s | %{FileCheck-strict} %s
+// RUN: %{not} %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
 
 package ExplorerTest api;
@@ -25,7 +25,7 @@ fn Main() -> i32 {
       n = n - 1;
     }
     case Ints.Two(x: auto, y: auto) => {
-      // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_match_choice.carbon:[[@LINE+1]]: Cannot assign to rvalue 'x'
+      // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_match_choice.carbon:[[@LINE+1]]: Cannot assign to rvalue 'x'
       x = 0;
     }
   }

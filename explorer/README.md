@@ -72,8 +72,8 @@ boilerplate at the top:
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
+// RUN: %{explorer} %s | %{FileCheck-strict} %s
+// RUN: %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
 // CHECK:result: 0
 
@@ -99,7 +99,7 @@ To explain this boilerplate:
         [`lit` substitution](https://llvm.org/docs/CommandGuide/lit.html#substitutions)
         for the path to the given test file.
 -   The `AUTOUPDATE` line indicates that `CHECK` lines will be automatically
-    inserted immediately below by the `./update_checks.py` script.
+    inserted immediately below by the `./lit_autoupdate.py` script.
 -   The `CHECK` lines indicate expected output, verified by `FileCheck`.
     -   Where a `CHECK` line contains text like `{{.*}}`, the double curly
         braces indicate a contained regular expression.
@@ -107,7 +107,7 @@ To explain this boilerplate:
 
 ### Useful commands
 
--   `./update_checks.py` -- Updates expected output.
+-   `./lit_autodupate.py` -- Updates expected output.
 -   `bazel test ... --test_output=errors` -- Runs tests and prints any errors.
 
 ### Updating fuzzer logic after making AST changes

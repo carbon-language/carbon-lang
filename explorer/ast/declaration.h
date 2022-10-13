@@ -500,12 +500,71 @@ class InterfaceDeclaration : public Declaration {
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
+  // Get the constraint type corresponding to this interface, or nullopt if
+  // this interface is incomplete.
+  auto constraint_type() const
+      -> std::optional<Nonnull<const ConstraintType*>> {
+    return constraint_type_;
+  }
+
+  // Set the constraint type corresponding to this interface. Can only be set
+  // once, by type-checking.
+  void set_constraint_type(Nonnull<const ConstraintType*> constraint_type) {
+    CARBON_CHECK(!constraint_type_);
+    constraint_type_ = constraint_type;
+  }
+
  private:
   std::string name_;
   std::optional<Nonnull<TuplePattern*>> params_;
   Nonnull<SelfDeclaration*> self_type_;
   Nonnull<GenericBinding*> self_;
   std::vector<Nonnull<Declaration*>> members_;
+  std::optional<Nonnull<const ConstraintType*>> constraint_type_;
+};
+
+// An `extends` declaration in an interface.
+class InterfaceExtendsDeclaration : public Declaration {
+ public:
+  InterfaceExtendsDeclaration(SourceLocation source_loc,
+                              Nonnull<Expression*> base)
+      : Declaration(AstNodeKind::InterfaceExtendsDeclaration, source_loc),
+        base_(base) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromInterfaceExtendsDeclaration(node->kind());
+  }
+
+  auto base() const -> const Expression* { return base_; }
+  auto base() -> Expression* { return base_; }
+
+ private:
+  Nonnull<Expression*> base_;
+};
+
+// An `impl ... as` declaration in an interface.
+class InterfaceImplDeclaration : public Declaration {
+ public:
+  InterfaceImplDeclaration(SourceLocation source_loc,
+                           Nonnull<Expression*> impl_type,
+                           Nonnull<Expression*> constraint)
+      : Declaration(AstNodeKind::InterfaceImplDeclaration, source_loc),
+        impl_type_(impl_type),
+        constraint_(constraint) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromInterfaceImplDeclaration(node->kind());
+  }
+
+  auto impl_type() const -> const Expression* { return impl_type_; }
+  auto impl_type() -> Expression* { return impl_type_; }
+
+  auto constraint() const -> const Expression* { return constraint_; }
+  auto constraint() -> Expression* { return constraint_; }
+
+ private:
+  Nonnull<Expression*> impl_type_;
+  Nonnull<Expression*> constraint_;
 };
 
 class AssociatedConstantDeclaration : public Declaration {
@@ -570,6 +629,8 @@ class ImplDeclaration : public Declaration {
   auto constraint_type() const -> Nonnull<const ConstraintType*> {
     return *constraint_type_;
   }
+  // Returns the deduced parameters specified on the impl declaration. This
+  // does not include any generic parameters from enclosing scopes.
   auto deduced_parameters() const
       -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
     return deduced_parameters_;

@@ -409,6 +409,10 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
             out << " == ";
             ExpressionToCarbon(clause.equals().rhs(), out);
             break;
+          case Fuzzing::WhereClause::kRewrite:
+            out << "." << clause.rewrite().member_name() << " = ";
+            ExpressionToCarbon(clause.rewrite().replacement(), out);
+            break;
           case Fuzzing::WhereClause::KIND_NOT_SET:
             // Arbitrary default to avoid invalid syntax.
             out << ".Self == .Self";
@@ -821,6 +825,24 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
         ExpressionToCarbon(let.initializer(), out);
       }
       */
+      out << ";";
+      break;
+    }
+
+    case Fuzzing::Declaration::kInterfaceExtends: {
+      const auto& extends = declaration.interface_extends();
+      out << "extends ";
+      ExpressionToCarbon(extends.base(), out);
+      out << ";";
+      break;
+    }
+
+    case Fuzzing::Declaration::kInterfaceImpl: {
+      const auto& impl = declaration.interface_impl();
+      out << "impl ";
+      ExpressionToCarbon(impl.impl_type(), out);
+      out << " as ";
+      ExpressionToCarbon(impl.constraint(), out);
       out << ";";
       break;
     }
