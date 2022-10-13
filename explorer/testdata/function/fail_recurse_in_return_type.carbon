@@ -5,19 +5,11 @@
 // RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
 // RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
+
 package ExplorerTest api;
 
-__mixin M1 {
-  fn F1[me: Self](x: Self) -> Self{
-     return x;
-  }
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_recursive_mixing.carbon:[[@LINE+1]]: incomplete mixin `M1` used in mix declaration
-  __mix M1;
-}
-
-class C {
-  __mix M1;
-}
+// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_recurse_in_return_type.carbon:[[@LINE+1]]: 'T' is not usable until after it has been completely declared
+fn T() -> T() { return i32; }
 
 fn Main() -> i32 {
   return 0;

@@ -30,6 +30,8 @@ class C(T:! Type) {
       let v: Self.(B.TB) = 2;
       // Don't know that TA is i32; it could be specialized.
       let w: Self.(A.TA) = 3;
+      // TODO: This error is confusing. We should be diagnosing the previous
+      // line because we don't know that `3` can be converted to `Self.(A.TA)`.
       // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_multi_impl_scoping.carbon:[[@LINE+1]]: type error in return value: '((class C(T = T)).TB).Result' is not implicitly convertible to 'i32'
       return v + w;
     }
