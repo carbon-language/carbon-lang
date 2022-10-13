@@ -523,6 +523,50 @@ class InterfaceDeclaration : public Declaration {
   std::optional<Nonnull<const ConstraintType*>> constraint_type_;
 };
 
+// An `extends` declaration in an interface.
+class InterfaceExtendsDeclaration : public Declaration {
+ public:
+  InterfaceExtendsDeclaration(SourceLocation source_loc,
+                              Nonnull<Expression*> base)
+      : Declaration(AstNodeKind::InterfaceExtendsDeclaration, source_loc),
+        base_(base) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromInterfaceExtendsDeclaration(node->kind());
+  }
+
+  auto base() const -> const Expression* { return base_; }
+  auto base() -> Expression* { return base_; }
+
+ private:
+  Nonnull<Expression*> base_;
+};
+
+// An `impl ... as` declaration in an interface.
+class InterfaceImplDeclaration : public Declaration {
+ public:
+  InterfaceImplDeclaration(SourceLocation source_loc,
+                           Nonnull<Expression*> impl_type,
+                           Nonnull<Expression*> constraint)
+      : Declaration(AstNodeKind::InterfaceImplDeclaration, source_loc),
+        impl_type_(impl_type),
+        constraint_(constraint) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromInterfaceImplDeclaration(node->kind());
+  }
+
+  auto impl_type() const -> const Expression* { return impl_type_; }
+  auto impl_type() -> Expression* { return impl_type_; }
+
+  auto constraint() const -> const Expression* { return constraint_; }
+  auto constraint() -> Expression* { return constraint_; }
+
+ private:
+  Nonnull<Expression*> impl_type_;
+  Nonnull<Expression*> constraint_;
+};
+
 class AssociatedConstantDeclaration : public Declaration {
  public:
   AssociatedConstantDeclaration(SourceLocation source_loc,

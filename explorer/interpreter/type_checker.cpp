@@ -1788,28 +1788,18 @@ auto TypeChecker::DeduceCallBindings(
   return Success();
 }
 
-struct ConstraintLookupResult {
-  Nonnull<const InterfaceType*> interface;
-  Nonnull<const Declaration*> member;
-};
-
-/// Look up a member name in a constraint, which might be a single interface or
-/// a compound constraint.
-static auto LookupInConstraint(SourceLocation source_loc,
-                               std::string_view lookup_kind,
-                               Nonnull<const Value*> type,
-                               std::string_view member_name)
+auto TypeChecker::LookupInConstraint(SourceLocation source_loc,
+                                     std::string_view lookup_kind,
+                                     Nonnull<const Value*> type,
+                                     std::string_view member_name)
     -> ErrorOr<ConstraintLookupResult> {
   // Find the set of lookup contexts.
   llvm::ArrayRef<ConstraintType::LookupContext> lookup_contexts;
-  ConstraintType::LookupContext interface_context[1];
   if (const auto* iface_type = dyn_cast<InterfaceType>(type)) {
-    // For an interface, look into that interface alone.
-    // TODO: Also look into any interfaces extended by it.
-    // TODO: Maybe just convert to a constraint type to reduce duplication?
-    interface_context[0].context = iface_type;
-    lookup_contexts = interface_context;
-  } else if (const auto* constraint_type = dyn_cast<ConstraintType>(type)) {
+    CARBON_ASSIGN_OR_RETURN(type,
+                            MakeConstraintForInterface(source_loc, iface_type));
+  }
+  if (const auto* constraint_type = dyn_cast<ConstraintType>(type)) {
     // For a constraint, look in all of its lookup contexts.
     lookup_contexts = constraint_type->lookup_contexts();
   } else {
@@ -4232,30 +4222,90 @@ auto TypeChecker::DeclareInterfaceDeclaration(
   for (Nonnull<Declaration*> m : iface_decl->members()) {
     CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, iface_scope_info));
 
-    if (auto* assoc = dyn_cast<AssociatedConstantDeclaration>(m)) {
-      auto* assoc_value = arena_->New<AssociatedConstant>(
-          &iface_decl->self()->value(), iface_type, assoc, impl_witness);
-      assoc->binding().set_symbolic_identity(assoc_value);
-
-      // The type specified for the associated constant becomes a constraint
-      // for the interface: `let X:! Interface` adds a `Self.X is Interface`
-      // constraint that `impl`s must satisfy and users of the interface can
-      // rely on.
-      Nonnull<const Value*> constraint = &assoc->static_type();
-      if (auto* interface_type = dyn_cast<InterfaceType>(constraint)) {
-        CARBON_ASSIGN_OR_RETURN(
-            constraint,
-            MakeConstraintForInterface(assoc->source_loc(), interface_type));
+    // TODO: This should probably live in `DeclareDeclaration`, but it needs
+    // to update state that's not available from there.
+    switch (m->kind()) {
+      case DeclarationKind::InterfaceExtendsDeclaration: {
+        // For an `extends C;` declaration, add `Self is C` to our constraint.
+        auto* extends = cast<InterfaceExtendsDeclaration>(m);
+        CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> base,
+                                TypeCheckTypeExp(extends->base(), iface_scope));
+        auto* constraint_type = dyn_cast<ConstraintType>(base);
+        if (auto* interface_type = dyn_cast<InterfaceType>(base)) {
+          CARBON_ASSIGN_OR_RETURN(
+              constraint_type, MakeConstraintForInterface(extends->source_loc(),
+                                                          interface_type));
+        }
+        if (!constraint_type) {
+          return ProgramError(extends->source_loc())
+                 << "an interface can only extend a constraint, found "
+                 << *base;
+        }
+        CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
+            *this, constraint_type, builder.GetSelfType(),
+            builder.GetSelfWitness(), Bindings(),
+            /*add_lookup_contexts=*/true));
+        break;
       }
-      if (auto* constraint_type = dyn_cast<ConstraintType>(constraint)) {
+
+      case DeclarationKind::InterfaceImplDeclaration: {
+        // For an `impl X as Y;` declaration, add `X is Y` to our constraint.
+        auto* impl = cast<InterfaceImplDeclaration>(m);
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<const Value*> impl_type,
+            TypeCheckTypeExp(impl->impl_type(), iface_scope));
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<const Value*> constraint,
+            TypeCheckTypeExp(impl->constraint(), iface_scope));
+        auto* constraint_type = dyn_cast<ConstraintType>(constraint);
+        if (auto* interface_type = dyn_cast<InterfaceType>(constraint)) {
+          CARBON_ASSIGN_OR_RETURN(
+              constraint_type,
+              MakeConstraintForInterface(impl->source_loc(), interface_type));
+        }
+        if (!constraint_type) {
+          return ProgramError(impl->source_loc())
+                 << "expected a constraint after `as`, found " << *constraint;
+        }
         CARBON_RETURN_IF_ERROR(
-            builder.AddAndSubstitute(*this, constraint_type, assoc_value,
+            builder.AddAndSubstitute(*this, constraint_type, impl_type,
                                      builder.GetSelfWitness(), Bindings(),
                                      /*add_lookup_contexts=*/false));
-        // Add any new impl constraints to the scope.
-        builder.BringImplsIntoScope(*this, &iface_scope, &impl_tracker);
+        break;
+      }
+
+      case DeclarationKind::AssociatedConstantDeclaration: {
+        auto* assoc = cast<AssociatedConstantDeclaration>(m);
+        auto* assoc_value = arena_->New<AssociatedConstant>(
+            &iface_decl->self()->value(), iface_type, assoc, impl_witness);
+        assoc->binding().set_symbolic_identity(assoc_value);
+
+        // The type specified for the associated constant becomes a
+        // constraint for the interface: `let X:! Interface` adds a `Self.X
+        // is Interface` constraint that `impl`s must satisfy and users of
+        // the interface can rely on.
+        Nonnull<const Value*> constraint = &assoc->static_type();
+        if (auto* interface_type = dyn_cast<InterfaceType>(constraint)) {
+          CARBON_ASSIGN_OR_RETURN(
+              constraint,
+              MakeConstraintForInterface(assoc->source_loc(), interface_type));
+        }
+        if (auto* constraint_type = dyn_cast<ConstraintType>(constraint)) {
+          CARBON_RETURN_IF_ERROR(
+              builder.AddAndSubstitute(*this, constraint_type, assoc_value,
+                                       builder.GetSelfWitness(), Bindings(),
+                                       /*add_lookup_contexts=*/false));
+        }
+        break;
+      }
+
+      default: {
+        break;
       }
     }
+
+    // Add any new impl constraints to the scope.
+    builder.BringImplsIntoScope(*this, &iface_scope, &impl_tracker);
   }
 
   iface_decl->set_constraint_type(std::move(builder).Build(arena_));
@@ -4365,6 +4415,9 @@ auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
                << "implementation provides multiple values for " << *expected
                << ": " << **found_value << " and " << **second_value;
       }
+    } else if (isa<InterfaceImplDeclaration, InterfaceExtendsDeclaration>(m)) {
+      // These get translated into constraints so there's nothing we need to
+      // check here.
     } else {
       // Every member function must be declared.
       std::optional<std::string_view> mem_name = GetName(*m);
@@ -4820,6 +4873,14 @@ auto TypeChecker::TypeCheckDeclaration(
       }
       return Success();
     }
+    case DeclarationKind::InterfaceExtendsDeclaration: {
+      // Checked in DeclareInterfaceDeclaration.
+      return Success();
+    }
+    case DeclarationKind::InterfaceImplDeclaration: {
+      // Checked in DeclareInterfaceDeclaration.
+      return Success();
+    }
     case DeclarationKind::AssociatedConstantDeclaration:
       return Success();
     case DeclarationKind::SelfDeclaration: {
@@ -4898,6 +4959,16 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> declared_type,
                               InterpExp(&type, arena_, trace_stream_));
       var.set_static_type(declared_type);
+      break;
+    }
+
+    case DeclarationKind::InterfaceExtendsDeclaration: {
+      // The semantic effects are handled by DeclareInterfaceDeclaration.
+      break;
+    }
+
+    case DeclarationKind::InterfaceImplDeclaration: {
+      // The semantic effects are handled by DeclareInterfaceDeclaration.
       break;
     }
 

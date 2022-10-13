@@ -23,6 +23,8 @@ abstract class Declaration : AstNode;
   class ChoiceDeclaration : Declaration;
   class VariableDeclaration : Declaration;
   class InterfaceDeclaration : Declaration;
+  class InterfaceExtendsDeclaration : Declaration;
+  class InterfaceImplDeclaration : Declaration;
   class AssociatedConstantDeclaration : Declaration;
   class ImplDeclaration : Declaration;
   class AliasDeclaration : Declaration;

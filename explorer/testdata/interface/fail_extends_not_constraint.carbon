@@ -8,9 +8,11 @@
 
 package ExplorerTest api;
 
-interface Bad {
-  // CHECK:SYNTAX ERROR: {{.*}}/explorer/testdata/interface/fail_bad_member_kind.carbon:[[@LINE+1]]: syntax error, unexpected VAR
-  var V: i32;
+interface Vector {
+  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_extends_not_constraint.carbon:[[@LINE+1]]: an interface can only extend a constraint, found i32
+  extends i32;
 }
 
-fn Main() -> i32 { return 0; }
+fn Main() -> i32 {
+  return 0;
+}

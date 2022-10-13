@@ -1271,6 +1271,18 @@ interface_body:
       $$.push_back(
           arena->New<AssociatedConstantDeclaration>(context.source_loc(), $3));
     }
+| interface_body EXTENDS expression SEMICOLON
+    {
+      $$ = $1;
+      $$.push_back(arena->New<InterfaceExtendsDeclaration>(context.source_loc(),
+                                                           $3));
+    }
+| interface_body IMPL impl_type AS type_or_where_expression SEMICOLON
+    {
+      $$ = $1;
+      $$.push_back(arena->New<InterfaceImplDeclaration>(context.source_loc(),
+                                                        $3, $5));
+    }
 ;
 impl_body:
   // Empty
