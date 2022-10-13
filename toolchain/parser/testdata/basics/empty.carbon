@@ -1,0 +1,9 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// RUN: %{carbon} dump parse-tree %s | %{FileCheck-strict} %s
+// AUTOUPDATE: %{carbon} dump parse-tree %s
+// CHECK:STDOUT: [
+// CHECK:STDOUT: {node_index: 0, kind: 'FileEnd', text: ''},
+// CHECK:STDOUT: ]
