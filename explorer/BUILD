@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("//bazel/cc_toolchains:rules.bzl", "cc_env")
+load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 
 package(default_visibility = [
     "//bazel/check_deps:__pkg__",
