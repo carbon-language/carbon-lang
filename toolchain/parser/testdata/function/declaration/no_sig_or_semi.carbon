@@ -5,9 +5,10 @@
 // RUN: %{not} %{carbon} dump parse-tree %s | %{FileCheck-strict} %s
 // AUTOUPDATE: %{carbon} dump parse-tree %s
 // CHECK:STDOUT: [
-// CHECK:STDOUT: {node_index: 1, kind: 'FunctionDeclaration', text: 'fn', has_error: yes, subtree_size: 2, children: [
-// CHECK:STDOUT:   {node_index: 0, kind: 'DeclaredName', text: 'foo'}]},
-// CHECK:STDOUT: {node_index: 2, kind: 'FileEnd', text: ''},
+// CHECK:STDOUT: {node_index: 2, kind: 'FunctionDeclaration', text: 'fn', has_error: yes, subtree_size: 3, children: [
+// CHECK:STDOUT:   {node_index: 0, kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:   {node_index: 1, kind: 'DeclaredName', text: 'foo'}]},
+// CHECK:STDOUT: {node_index: 3, kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
 // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/function/declaration/no_sig_or_semi.carbon:[[@LINE+1]]:7: Expected `(` after function name.

@@ -5,8 +5,8 @@
 // RUN: %{not} %{carbon} dump parse-tree %s | %{FileCheck-strict} %s
 // AUTOUPDATE: %{carbon} dump parse-tree %s
 // CHECK:STDOUT: [
-// CHECK:STDOUT: {node_index: 1, kind: 'FunctionDeclaration', text: 'fn', has_error: yes, subtree_size: 2, children: [
-// CHECK:STDOUT:   {node_index: 0, kind: 'DeclarationEnd', text: ';'}]},
+// CHECK:STDOUT: {node_index: 1, kind: 'FunctionDeclaration', text: ';', has_error: yes, subtree_size: 2, children: [
+// CHECK:STDOUT:   {node_index: 0, kind: 'FunctionIntroducer', text: 'fn'}]},
 // CHECK:STDOUT: {node_index: 2, kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 

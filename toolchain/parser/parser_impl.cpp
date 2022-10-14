@@ -96,18 +96,9 @@ auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
   ParseTree tree(tokens);
 
   // Reserve the space we expect to need for nodes in order to avoid allocation
-  // and copying overhead. While most ParseTree nodes correspond to tokens,
-  // there will be a small number of virtual nodes added.
-  //
-  // This could use a heuristic to guess, but we believe this calculation will
-  // create negligible overhead and avoiding reallocation will pay off.
-  int tree_size = tokens.size();
-  for (const auto& token : tokens.tokens()) {
-    if (tokens.GetKind(token) == TokenKind::Fn()) {
-      ++tree_size;
-    }
-  }
-  tree.node_impls_.reserve(tree_size);
+  // and copying overhead. This should be a one-to-one correspondence in an
+  // error-free tree.
+  tree.node_impls_.reserve(tokens.size());
 
   Parser parser(tree, tokens, emitter);
   while (!parser.AtEndOfFile()) {
@@ -120,8 +111,8 @@ auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
 
   parser.AddLeafNode(ParseNodeKind::FileEnd(), *parser.position_);
 
-  CARBON_CHECK(tree.has_errors() || tree.size() == tree_size)
-      << "Failed to correctly calculate size: expected " << tree_size
+  CARBON_CHECK(tree.has_errors() || tree.size() == tokens.size())
+      << "Failed to correctly calculate size: expected " << tokens.size()
       << ", got " << tree.size();
   CARBON_CHECK(tree.Verify()) << "Parse tree built but does not verify!";
   return tree;
@@ -427,40 +418,49 @@ auto ParseTree::Parser::ParseFunctionSignature() -> bool {
 }
 
 auto ParseTree::Parser::ParseCodeBlock() -> llvm::Optional<Node> {
+  return ParseCodeBlock(GetSubtreeStartPosition(),
+                        ParseNodeKind::CodeBlockStart(),
+                        ParseNodeKind::CodeBlock());
+}
+
+auto ParseTree::Parser::ParseCodeBlock(SubtreeStart subtree_start,
+                                       ParseNodeKind start_kind,
+                                       ParseNodeKind end_kind)
+    -> llvm::Optional<Node> {
   CARBON_RETURN_IF_STACK_LIMITED(llvm::None);
-  llvm::Optional<TokenizedBuffer::Token> maybe_open_curly =
+  llvm::Optional<TokenizedBuffer::Token> open_curly =
       ConsumeIf(TokenKind::OpenCurlyBrace());
-  if (!maybe_open_curly) {
+  if (!open_curly) {
     // Recover by parsing a single statement.
     CARBON_DIAGNOSTIC(ExpectedCodeBlock, Error, "Expected braced code block.");
     emitter_.Emit(*position_, ExpectedCodeBlock);
-    return ParseStatement();
+    // Use the unexpected token for the block start and end.
+    TokenizedBuffer::Token recovery_start = *position_;
+    AddNode(start_kind, recovery_start, subtree_start, /*has_error=*/true);
+    ParseStatement();
+    return AddNode(end_kind, recovery_start, subtree_start, /*has_error=*/true);
   }
-  TokenizedBuffer::Token open_curly = *maybe_open_curly;
 
-  auto start = GetSubtreeStartPosition();
-
-  bool has_errors = false;
+  AddNode(start_kind, *open_curly, subtree_start);
 
   // Loop over all the different possibly nested elements in the code block.
+  bool has_error = false;
   while (!NextTokenIs(TokenKind::CloseCurlyBrace())) {
     if (!ParseStatement()) {
-      // We detected and diagnosed an error of some kind. We can trivially skip
-      // to the actual close curly brace from here.
+      // We detected and diagnosed an error of some kind. We can trivially
+      // skip to the actual close curly brace from here.
       // TODO: It would be better to skip to the next semicolon, or the next
       // token at the start of a line with the same indent as this one.
-      SkipTo(tokens_.GetMatchedClosingToken(open_curly));
-      has_errors = true;
+      SkipTo(tokens_.GetMatchedClosingToken(*open_curly));
+      has_error = true;
       break;
     }
   }
 
   // We always reach here having set our position in the token stream to the
   // close curly brace.
-  AddLeafNode(ParseNodeKind::CodeBlockEnd(),
-              Consume(TokenKind::CloseCurlyBrace()));
-
-  return AddNode(ParseNodeKind::CodeBlock(), open_curly, start, has_errors);
+  return AddNode(end_kind, Consume(TokenKind::CloseCurlyBrace()), subtree_start,
+                 /*has_error=*/has_error);
 }
 
 auto ParseTree::Parser::ParsePackageDirective() -> Node {
@@ -545,13 +545,18 @@ auto ParseTree::Parser::ParsePackageDirective() -> Node {
 }
 
 auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
-  TokenizedBuffer::Token function_intro_token = Consume(TokenKind::Fn());
   auto start = GetSubtreeStartPosition();
+  TokenizedBuffer::Token function_intro_token = Consume(TokenKind::Fn());
+  AddLeafNode(ParseNodeKind::FunctionIntroducer(), function_intro_token);
 
+  // When handling errors before the start of the definition, treat it as a
+  // declaration. Recover to a semicolon when it makes sense as a possible
+  // function end, otherwise use the fn token for the error.
   auto add_error_function_node = [&](bool skip_past_likely_end) {
     if (skip_past_likely_end) {
       if (auto semi_token = SkipPastLikelyEnd(function_intro_token)) {
-        AddLeafNode(ParseNodeKind::DeclarationEnd(), *semi_token);
+        return AddNode(ParseNodeKind::FunctionDeclaration(), *semi_token, start,
+                       /*has_error=*/true);
       }
     }
     return AddNode(ParseNodeKind::FunctionDeclaration(), function_intro_token,
@@ -575,34 +580,28 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
     CARBON_DIAGNOSTIC(ExpectedFunctionParams, Error,
                       "Expected `(` after function name.");
     emitter_.Emit(open_paren, ExpectedFunctionParams);
-    AddNode(ParseNodeKind::FunctionSignature(), *position_, start,
-            /*has_error=*/true);
     return add_error_function_node(true);
   }
   TokenizedBuffer::Token close_paren =
       tokens_.GetMatchedClosingToken(open_paren);
 
   if (!ParseFunctionSignature()) {
-    // Don't try to parse more of the function declaration, but consume a
-    // declaration ending semicolon if found (without going to a new line).
-    AddNode(ParseNodeKind::FunctionSignature(), function_intro_token, start,
-            /*has_error=*/true);
     return add_error_function_node(true);
   }
-
-  AddNode(ParseNodeKind::FunctionSignature(), function_intro_token, start);
 
   switch (NextTokenKind()) {
     case TokenKind::OpenCurlyBrace(): {
       // Parse a definition which is represented as a code block.
-      if (!ParseCodeBlock()) {
-        return add_error_function_node(false);
+      if (auto node =
+              ParseCodeBlock(start, ParseNodeKind::FunctionDefinitionStart(),
+                             ParseNodeKind::FunctionDefinition())) {
+        return *node;
       }
-      break;
+      return add_error_function_node(false);
     }
     case TokenKind::Semi(): {
-      AddLeafNode(ParseNodeKind::DeclarationEnd(), Consume(TokenKind::Semi()));
-      break;
+      return AddNode(ParseNodeKind::FunctionDeclaration(),
+                     Consume(TokenKind::Semi()), start);
     }
     default: {
       CARBON_DIAGNOSTIC(
@@ -614,10 +613,6 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
                                      tokens_.GetLine(close_paren));
     }
   }
-
-  // Successfully parsed the function, add that node.
-  return AddNode(ParseNodeKind::FunctionDeclaration(), function_intro_token,
-                 start);
 }
 
 auto ParseTree::Parser::ParseVariableDeclaration() -> Node {
@@ -780,8 +775,8 @@ auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
         }
         kind = elem_kind;
 
-        // Struct type fields and value fields use the same grammar except that
-        // one has a `:` separator and the other has an `=` separator.
+        // Struct type fields and value fields use the same grammar except
+        // that one has a `:` separator and the other has an `=` separator.
         auto equal_or_colon_token =
             Consume(kind == Type ? TokenKind::Colon() : TokenKind::Equal());
         auto type_or_value = ParseExpression();
@@ -898,8 +893,8 @@ auto ParseTree::Parser::ParsePostfixExpression() -> llvm::Optional<Node> {
       default:
         return expression;
     }
-    // This is subject to an infinite loop if a child call fails, so monitor for
-    // stalling.
+    // This is subject to an infinite loop if a child call fails, so monitor
+    // for stalling.
     if (last_position == position_) {
       CARBON_CHECK(expression == llvm::None);
       return expression;
@@ -916,8 +911,8 @@ static auto IsAssumedStartOfOperand(TokenKind kind) -> bool {
                        TokenKind::StringLiteral()});
 }
 
-// Determines whether the given token is considered to be the end of an operand
-// according to the rules for infix operator parsing.
+// Determines whether the given token is considered to be the end of an
+// operand according to the rules for infix operator parsing.
 static auto IsAssumedEndOfOperand(TokenKind kind) -> bool {
   return kind.IsOneOf({TokenKind::CloseParen(), TokenKind::CloseCurlyBrace(),
                        TokenKind::CloseSquareBracket(), TokenKind::Identifier(),
@@ -925,9 +920,9 @@ static auto IsAssumedEndOfOperand(TokenKind kind) -> bool {
                        TokenKind::StringLiteral()});
 }
 
-// Determines whether the given token could possibly be the start of an operand.
-// This is conservatively correct, and will never incorrectly return `false`,
-// but can incorrectly return `true`.
+// Determines whether the given token could possibly be the start of an
+// operand. This is conservatively correct, and will never incorrectly return
+// `false`, but can incorrectly return `true`.
 static auto IsPossibleStartOfOperand(TokenKind kind) -> bool {
   return !kind.IsOneOf({TokenKind::CloseParen(), TokenKind::CloseCurlyBrace(),
                         TokenKind::CloseSquareBracket(), TokenKind::Comma(),
@@ -1214,11 +1209,11 @@ auto ParseTree::Parser::ParseForStatement() -> llvm::Optional<Node> {
                         "not implemented yet!",
                         TokenKind);
       emitter_.Emit(*position_, ExpectedParenAfter, TokenKind::For());
-      // TODO: A proper recovery strategy is needed here. For now, I assume that
-      // all brackets are properly balanced (i.e. each open bracket has a
+      // TODO: A proper recovery strategy is needed here. For now, I assume
+      // that all brackets are properly balanced (i.e. each open bracket has a
       // closing one).
-      // This is temporary until we come to a conclusion regarding the recovery
-      // tokens strategy.
+      // This is temporary until we come to a conclusion regarding the
+      // recovery tokens strategy.
       return llvm::None;
     }
 
@@ -1242,8 +1237,8 @@ auto ParseTree::Parser::ParseForStatement() -> llvm::Optional<Node> {
     }
 
     // A separator is either an `in` or a `:`. Even though `:` is incorrect,
-    // accidentally typing it by a C++ programmer might be a common mistake that
-    // warrants special handling.
+    // accidentally typing it by a C++ programmer might be a common mistake
+    // that warrants special handling.
     bool separator_parsed = false;
     bool in_parsed = false;
 

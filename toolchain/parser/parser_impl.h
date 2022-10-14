@@ -164,9 +164,13 @@ class ParseTree::Parser {
 
   // Parses a block of code: `{ ... }`.
   //
-  // These can form the definition for a function or be nested within a function
-  // definition. These contain variable declarations and statements.
+  // These contain variable declarations and statements.
   auto ParseCodeBlock() -> llvm::Optional<Node>;
+
+  // Similar to ParseCodeBlock(), but supports different ParseNodeKinds because
+  // function definitions are represented differently from other code blocks.
+  auto ParseCodeBlock(SubtreeStart subtree_start, ParseNodeKind start_kind,
+                      ParseNodeKind end_kind) -> llvm::Optional<Node>;
 
   // Parses a function declaration with an optional definition. Returns the
   // function parse node which is based on the `fn` introducer keyword.

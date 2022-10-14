@@ -129,6 +129,7 @@ void SemanticsIRFactory::Build() {
             TraversalStackEntry(parse_node, std::move(sem_ir)));
         break;
       }
+      /*
       case ParseNodeKind::FunctionSignature(): {
         // TODO: Skip over the parameter list for now.
         PopFromStack(parse_tree(), node_stack, subtree_size);
@@ -152,6 +153,7 @@ void SemanticsIRFactory::Build() {
             TraversalStackEntry(parse_node, std::move(sem_ir)));
         break;
       }
+      */
       case ParseNodeKind::FileEnd(): {
         CARBON_CHECK(subtree_size == 1);
         ++it;
@@ -244,7 +246,7 @@ void SemanticsIRFactory::Build() {
         node_stack.push_back(TraversalStackEntry(parse_node));
         break;
       }
-      case ParseNodeKind::CodeBlockEnd():
+      case ParseNodeKind::CodeBlockStart():
       case ParseNodeKind::ParameterListEnd():
       case ParseNodeKind::StatementEnd(): {
         // The token is ignored, but we track it for consistency.
