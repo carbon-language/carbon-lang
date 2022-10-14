@@ -13,7 +13,7 @@ package ExplorerTest api;
 interface Vector {
   let Dim:! i32;
 }
-external impl (i32, i32, i32) as Vector where .Dim == 3 {}
+external impl (i32, i32, i32) as Vector where .Dim = 3 {}
 
 class Point(Scalar:! Type, Dim:! i32) {}
 

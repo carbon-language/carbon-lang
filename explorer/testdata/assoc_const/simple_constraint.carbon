@@ -14,12 +14,12 @@ interface Frob {
   fn F[me: Self]() -> Result;
 }
 
-fn Use[T:! Frob where .Result == .Self](x: T) -> T {
+fn Use[T:! Frob where .Result = .Self](x: T) -> T {
   var v: T = x.F();
   return v;
 }
 
-impl i32 as Frob where .Result == i32 {
+impl i32 as Frob where .Result = i32 {
   fn F[me: Self]() -> i32 { return me + 1; }
 }
 

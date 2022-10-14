@@ -45,8 +45,7 @@ static void SetValue(Nonnull<Pattern*> pattern, Nonnull<const Value*> value) {
 auto TypeChecker::IsSameType(Nonnull<const Value*> type1,
                              Nonnull<const Value*> type2,
                              const ImplScope& impl_scope) const -> bool {
-  SingleStepEqualityContext equality_ctx(this, &impl_scope);
-  return TypeEqual(type1, type2, &equality_ctx);
+  return TypeEqual(type1, type2, std::nullopt);
 }
 
 auto TypeChecker::ExpectExactType(SourceLocation source_loc,
@@ -1161,8 +1160,8 @@ class TypeChecker::ConstraintTypeBuilder {
                << "multiple different rewrites for `.("
                << *rewrite.interface << "." << *GetName(*rewrite.constant)
                << ")`:\n"
-               << "  " << *existing.replacement << "\n"
-               << "  " << *rewrite.replacement;
+               << "  " << existing.replacement->value() << "\n"
+               << "  " << rewrite.replacement->value();
       }
     }
     rewrite_constraints_.push_back(std::move(rewrite));
@@ -1278,6 +1277,7 @@ class TypeChecker::ConstraintTypeBuilder {
     }
     impl_scope->Add(impl_constraints, llvm::None, llvm::None, GetSelfWitness(),
                     type_checker);
+    // TODO: Bring equality constraints into scope too.
   }
 
   // Converts the builder into a ConstraintType. Note that this consumes the
@@ -4425,50 +4425,11 @@ auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
   const auto& iface_decl = iface_type->declaration();
   for (Nonnull<Declaration*> m : iface_decl.members()) {
     if (auto* assoc = dyn_cast<AssociatedConstantDeclaration>(m)) {
-      // An associated constant must be given exactly one value.
-      if (LookupRewrite(impl_decl->constraint_type(), iface_type, assoc)) {
-        // OK, named by `=` constraint.
-        continue;
-      }
-
-      // TODO: Remove the rest of this and just reject if there's no `=`.
-      Nonnull<const Value*> expected = arena_->New<AssociatedConstant>(
-          self_type, iface_type, assoc, self_witness);
-
-      bool found_any = false;
-      std::optional<Nonnull<const Value*>> found_value;
-      std::optional<Nonnull<const Value*>> second_value;
-      auto visitor = [&](Nonnull<const Value*> equal_value) {
-        found_any = true;
-        if (!isa<AssociatedConstant>(equal_value)) {
-          if (!found_value ||
-              ValueEqual(equal_value, *found_value, std::nullopt)) {
-            found_value = equal_value;
-          } else {
-            second_value = equal_value;
-            return false;
-          }
-        }
-        return true;
-      };
-      impl_decl->constraint_type()->VisitEqualValues(expected, visitor);
-      if (!found_any) {
-        return ProgramError(impl_decl->source_loc())
-               << "implementation missing " << *expected << "; have "
-               << *impl_decl->constraint_type();
-      } else if (!found_value) {
-        // TODO: It's not clear what the right rule is here. Clearly
-        //   impl T as HasX & HasY where .X == .Y {}
-        // ... is insufficient to establish a value for either X or Y.
-        // But perhaps we can allow
-        //   impl forall [T:! HasX] T as HasY where .Y == .X {}
+      // An associated constant must be given a value.
+      if (!LookupRewrite(impl_decl->constraint_type(), iface_type, assoc)) {
         return ProgramError(impl_decl->source_loc())
                << "implementation doesn't provide a concrete value for "
-               << *expected;
-      } else if (second_value) {
-        return ProgramError(impl_decl->source_loc())
-               << "implementation provides multiple values for " << *expected
-               << ": " << **found_value << " and " << **second_value;
+               << *iface_type << "." << assoc->binding().name();
       }
     } else if (isa<InterfaceImplDeclaration, InterfaceExtendsDeclaration>(m)) {
       // These get translated into constraints so there's nothing we need to
@@ -4644,16 +4605,17 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
                                               impl_decl->source_loc(), *this));
   }
 
-  // Declare the impl members.
-  ScopeInfo impl_scope_info = ScopeInfo::ForNonClassScope(&impl_scope);
+  // Declare the impl members. An `impl` behaves like a class scope.
+  ScopeInfo impl_scope_info =
+      ScopeInfo::ForClassScope(scope_info, &impl_scope, generic_bindings);
   for (Nonnull<Declaration*> m : impl_decl->members()) {
     CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, impl_scope_info));
   }
 
   // Create the implied impl bindings.
-  CARBON_RETURN_IF_ERROR(CheckAndAddImplBindings(impl_decl, impl_type_value,
-                                                 self_witness, impl_witness,
-                                                 generic_bindings, scope_info));
+  CARBON_RETURN_IF_ERROR(
+      CheckAndAddImplBindings(impl_decl, impl_type_value, self_witness,
+                              impl_witness, generic_bindings, impl_scope_info));
 
   if (trace_stream_) {
     **trace_stream_ << "** finished declaring impl " << *impl_decl->impl_type()

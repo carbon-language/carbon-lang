@@ -26,7 +26,7 @@ class AlmostI32 {
   }
 }
 
-impl i32 as Frob where .Result == AlmostI32 {
+impl i32 as Frob where .Result = AlmostI32 {
   fn F[me: Self]() -> AlmostI32 { return {.val = me}; }
 }
 
