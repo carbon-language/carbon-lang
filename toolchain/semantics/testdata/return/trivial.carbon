@@ -6,11 +6,11 @@
 // AUTOUPDATE: %{carbon} dump semantics-ir %s
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   Function(
-// CHECK:STDOUT:       %0,
+// CHECK:STDOUT:       %1,
 // CHECK:STDOUT:       {
 // CHECK:STDOUT:         Return(None),
 // CHECK:STDOUT:       }),
-// CHECK:STDOUT:   SetName(`Main`, %0),
+// CHECK:STDOUT:   SetName(`Main`, %1),
 // CHECK:STDOUT: }
 
 fn Main() {
