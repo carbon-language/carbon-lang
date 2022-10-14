@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{carbon} dump parse-tree %s | %{FileCheck-strict} %s
 // AUTOUPDATE: %{carbon} dump parse-tree %s
+// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT: {node_index: 15, kind: 'FunctionDeclaration', text: 'fn', subtree_size: 16, children: [
 // CHECK:STDOUT:   {node_index: 0, kind: 'DeclaredName', text: 'F'},
@@ -26,10 +26,10 @@
 
 // NOTE: Move to its own directory when more tests are added.
 fn F() {
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/basics/invalid_designators.carbon:[[@LINE+1]]:5: Expected identifier after `.`.
+  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/basics/fail_invalid_designators.carbon:[[@LINE+1]]:5: Expected identifier after `.`.
   a.;
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/basics/invalid_designators.carbon:[[@LINE+1]]:5: Expected identifier after `.`.
+  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/basics/fail_invalid_designators.carbon:[[@LINE+1]]:5: Expected identifier after `.`.
   a.fn;
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/basics/invalid_designators.carbon:[[@LINE+1]]:5: Expected identifier after `.`.
+  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/basics/fail_invalid_designators.carbon:[[@LINE+1]]:5: Expected identifier after `.`.
   a.42;
 }

@@ -2,9 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: DESTRUCTOR A 1
 // CHECK:STDOUT: DESTRUCTOR B 2
 // CHECK:STDOUT: DESTRUCTOR A 3

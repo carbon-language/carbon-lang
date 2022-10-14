@@ -2,12 +2,11 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
-//
 // A lot of output is elided: this is only checking for a few things for simple
 // sanity checking on --parser_debug --trace_file=- output.
 //
 // NOAUTOUPDATE
+// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: ********** source program **********
 // CHECK:STDOUT: interface ImplicitAs {
 // CHECK:STDOUT: ********** type checking **********

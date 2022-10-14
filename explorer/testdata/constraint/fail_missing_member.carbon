@@ -2,16 +2,16 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 interface A { fn F() -> i32; }
 interface B { fn G() -> i32; }
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/missing_member.carbon:[[@LINE+1]]: member access, H not in constraint interface A & interface B where T is interface A and T is interface B
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/fail_missing_member.carbon:[[@LINE+1]]: member access, H not in constraint interface A & interface B where T is interface A and T is interface B
 fn Get[T:! A & B](n: T) -> i32 { return n.H(); }
 
 impl i32 as A {

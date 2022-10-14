@@ -4,14 +4,14 @@
 //
 // TODO: This SHOULD fail but doesn't presently.
 //
-// RUN: %{explorer} %s | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
-import Nonexistent;
+import ExplorerTest library "Nonexistent";
 
 fn Main() -> i32 {
   return 0;

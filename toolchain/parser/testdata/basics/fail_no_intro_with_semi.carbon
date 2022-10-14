@@ -2,12 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{carbon} dump parse-tree %s | %{FileCheck-strict} %s
 // AUTOUPDATE: %{carbon} dump parse-tree %s
+// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT: {node_index: 0, kind: 'EmptyDeclaration', text: ';', has_error: yes},
 // CHECK:STDOUT: {node_index: 1, kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/basics/no_intro_with_semi.carbon:[[@LINE+1]]:1: Unrecognized declaration introducer.
+// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/basics/fail_no_intro_with_semi.carbon:[[@LINE+1]]:1: Unrecognized declaration introducer.
 foo;
