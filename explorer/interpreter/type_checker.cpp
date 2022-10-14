@@ -3094,9 +3094,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       ImplScope inner_impl_scope;
       inner_impl_scope.AddParent(&impl_scope);
 
+      auto& self = where.self_binding();
+      ConstraintTypeBuilder builder(arena_, &self);
+
       // Note, we don't want to call `TypeCheckPattern` here. Most of the setup
       // for the self binding is instead done by the `ConstraintTypeBuilder`.
-      auto& self = where.self_binding();
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> base_type,
                               TypeCheckTypeExp(&self.type(), impl_scope));
       self.set_static_type(base_type);
@@ -3108,7 +3110,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                   base_type));
 
       // Start with the given constraint.
-      ConstraintTypeBuilder builder(arena_, &self);
       CARBON_RETURN_IF_ERROR(
           builder.AddAndSubstitute(*this, base, builder.GetSelfType(),
                                    builder.GetSelfWitness(), Bindings(),
@@ -3414,6 +3415,13 @@ auto TypeChecker::TypeCheckPattern(
     }
     case PatternKind::GenericBinding: {
       auto& binding = cast<GenericBinding>(*p);
+
+      // The binding can be referred to in its own type via `.Self`, so set up
+      // its symbolic identity before we type-check and interpret the type.
+      auto* val = arena_->New<VariableType>(&binding);
+      binding.set_symbolic_identity(val);
+      SetValue(&binding, val);
+
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
                               TypeCheckTypeExp(&binding.type(), impl_scope));
       if (expected) {
@@ -3427,10 +3435,6 @@ auto TypeChecker::TypeCheckPattern(
                << "`.Self` used in type of non-type binding `" << binding.name()
                << "`";
       }
-      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> val,
-                              InterpPattern(&binding, arena_, trace_stream_));
-      binding.set_symbolic_identity(val);
-      SetValue(&binding, val);
 
       // Create an impl binding if we have a constraint.
       if (isa<ConstraintType, InterfaceType>(type)) {

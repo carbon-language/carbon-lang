@@ -598,6 +598,14 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
       }
       return value;
     }
+    case Value::Kind::InterfaceType: {
+      const auto& interface_type = cast<InterfaceType>(*type);
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Bindings*> bindings,
+          InstantiateBindings(&interface_type.bindings(), source_loc));
+      return arena_->New<InterfaceType>(&interface_type.declaration(),
+                                        bindings);
+    }
     case Value::Kind::NominalClassType: {
       const auto& class_type = cast<NominalClassType>(*type);
       CARBON_ASSIGN_OR_RETURN(
