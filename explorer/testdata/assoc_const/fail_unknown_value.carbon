@@ -18,7 +18,7 @@ fn F[T:! Iface](x: T) -> i32 {
   return x;
 }
 
-impl i32 as Iface where .N == 5 {}
+impl i32 as Iface where .N = 5 {}
 
 fn Main() -> i32 {
   return F(0);

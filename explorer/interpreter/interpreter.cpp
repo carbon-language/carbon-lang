@@ -538,45 +538,44 @@ auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
 auto Interpreter::EvalAssociatedConstant(
     Nonnull<const AssociatedConstant*> assoc, SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
-  // Find the witness.
-  CARBON_ASSIGN_OR_RETURN(Nonnull<const Witness*> witness,
-                          InstantiateWitness(&assoc->witness()));
-  if (!isa<ImplWitness>(witness)) {
-    CARBON_CHECK(phase() == Phase::CompileTime)
-        << "symbolic witnesses should only be formed at compile time";
-    return ProgramError(source_loc)
-           << "value of associated constant " << *assoc << " is not known";
-  }
-
+  // Instantiate the associated constant.
   CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> base,
                           InstantiateType(&assoc->base(), source_loc));
   CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> interface,
                           InstantiateType(&assoc->interface(), source_loc));
+  CARBON_ASSIGN_OR_RETURN(Nonnull<const Witness*> witness,
+                          InstantiateWitness(&assoc->witness()));
   Nonnull<const AssociatedConstant*> instantiated_assoc =
       arena_->New<AssociatedConstant>(base, cast<InterfaceType>(interface),
                                       &assoc->constant(), witness);
 
-  auto& impl_witness = cast<ImplWitness>(*witness);
+  auto* impl_witness = dyn_cast<ImplWitness>(witness);
+  if (!impl_witness) {
+    CARBON_CHECK(phase() == Phase::CompileTime)
+        << "symbolic witnesses should only be formed at compile time";
+    return instantiated_assoc;
+  }
+
+  // We have an impl. Extract the value from it.
   Nonnull<const ConstraintType*> constraint =
-      impl_witness.declaration().constraint_type();
+      impl_witness->declaration().constraint_type();
   std::optional<Nonnull<const Value*>> result;
+  // TODO: We should pick the value from the rewrite constraint, not some other
+  // equality constraint that happens to be in the impl's constraint type.
   constraint->VisitEqualValues(instantiated_assoc,
                                [&](Nonnull<const Value*> equal_value) {
                                  // TODO: The value might depend on the
                                  // parameters of the impl. We need to
-                                 // substitute impl_witness.type_args() into the
-                                 // value or constraint.
+                                 // substitute impl_witness->type_args() into
+                                 // the value or constraint.
                                  if (isa<AssociatedConstant>(equal_value)) {
                                    return true;
                                  }
-                                 // TODO: This makes an arbitrary choice if
-                                 // there's more than one equal value. It's not
-                                 // clear how to handle that case.
                                  result = equal_value;
                                  return false;
                                });
   if (!result) {
-    CARBON_FATAL() << impl_witness.declaration() << " with constraint "
+    CARBON_FATAL() << impl_witness->declaration() << " with constraint "
                    << *constraint
                    << " is missing value for associated constant "
                    << *instantiated_assoc;
@@ -624,7 +623,7 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> type_value,
           EvalAssociatedConstant(cast<AssociatedConstant>(type), source_loc));
-      return InstantiateType(type_value, source_loc);
+      return type_value;
     }
     default:
       return type;
@@ -788,6 +787,10 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> value,
           EvalAssociatedConstant(cast<AssociatedConstant>(value), source_loc));
+      if (isa<AssociatedConstant>(value)) {
+        return ProgramError(source_loc)
+               << "value of associated constant " << *value << " is not known";
+      }
       return Convert(value, destination_type, source_loc);
     }
   }
