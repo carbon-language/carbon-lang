@@ -8,6 +8,17 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
+## Table of contents
+
+-   [Value categories](#value-categories)
+-   [Binding patterns and local variables with `let` and `var`](#binding-patterns-and-local-variables-with-let-and-var)
+    -   [Pattern match control flow](#pattern-match-control-flow)
+    -   [Pattern matching in local variables](#pattern-matching-in-local-variables)
+-   [Open questions](#open-questions)
+    -   [Slice or array nested value pattern matching](#slice-or-array-nested-value-pattern-matching)
+    -   [Generic/template pattern matching](#generictemplate-pattern-matching)
+    -   [Pattern matching as function overload resolution](#pattern-matching-as-function-overload-resolution)
+
 <!-- tocstop -->
 
 ## Value categories
@@ -39,7 +50,8 @@ fn Sum(x: i32, y: i32) -> i32 {
 
 A pattern can be introduced with the `var` keyword to create a _variable
 pattern_. This creates an L-value including the necessary storage. Every binding
-pattern name introduced within a variable pattern is also an L-value. When initialized, these patterns *move* their 
+pattern name introduced within a variable pattern is also an L-value. When
+initialized, these patterns _move_ their
 
 Local patterns can be introduced with `let` to get the default behavior of a
 readonly pattern, or they can be directly introduced with `var` to form a
