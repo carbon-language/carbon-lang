@@ -4600,7 +4600,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
     }
     // This impl also provides all of its equalities.
     // TODO: Only the ones from rewrite constraints.
-    for (auto &eq : constraint_type->equality_constraints()) {
+    for (auto& eq : constraint_type->equality_constraints()) {
       self_impl_scope.AddEqualityConstraint(&eq);
     }
     // Ensure that's enough for our interface to be satisfied.

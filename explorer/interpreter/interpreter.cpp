@@ -735,9 +735,12 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
               InstantiateType(destination_type, source_loc));
           return arena_->New<NominalClassValue>(inst_dest, value);
         }
-        default:
-          CARBON_FATAL() << "Can't convert value " << *value << " to type "
-                         << *destination_type;
+        default: {
+          CARBON_CHECK(isa<VariableType, AssociatedConstant>(destination_type))
+              << "Can't convert value " << *value << " to type "
+              << *destination_type;
+          return value;
+        }
       }
     }
     case Value::Kind::StructType: {
@@ -767,9 +770,12 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
                                            &array_type.element_type());
           break;
         }
-        default:
-          CARBON_FATAL() << "Can't convert value " << *value << " to type "
-                         << *destination_type;
+        default: {
+          CARBON_CHECK(isa<VariableType, AssociatedConstant>(destination_type))
+              << "Can't convert value " << *value << " to type "
+              << *destination_type;
+          return value;
+        }
       }
       CARBON_CHECK(tuple->elements().size() ==
                    destination_element_types.size());
