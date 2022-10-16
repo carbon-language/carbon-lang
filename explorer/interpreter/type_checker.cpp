@@ -3416,13 +3416,22 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   }
 
   std::optional<Nonnull<const NominalClassType*>> base_class;
-  if (class_decl->base()) {
-    const auto base_class_expr = class_decl->base();
-    CARBON_RETURN_IF_ERROR(TypeCheckExp(
-        Nonnull<Expression*>(base_class_expr.value()), class_scope));
-    const auto& type_of_class =
-        cast<TypeOfClassType>(base_class_expr.value()->static_type());
-    base_class = &type_of_class.class_type();
+  if (class_decl->base().has_value()) {
+    Nonnull<Expression*> base_class_expr = *class_decl->base();
+    CARBON_RETURN_IF_ERROR(TypeCheckExp(base_class_expr, class_scope));
+    const auto& base_type = base_class_expr->static_type();
+    switch (base_type.kind()) {
+      case Value::Kind::TypeOfClassType:
+        base_class = &cast<TypeOfClassType>(base_type).class_type();
+        break;
+      default:
+        return ProgramError(class_decl->source_loc())
+               << "Unsupported base class type for class `"
+               << class_decl->name()
+               << "`. Only simple classes are currently supported as base "
+                  "class.";
+        break;
+    }
   }
 
   std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;

@@ -231,7 +231,7 @@ class ClassDeclaration : public Declaration {
                    Nonnull<SelfDeclaration*> self_decl,
                    ClassExtensibility extensibility,
                    std::optional<Nonnull<TuplePattern*>> type_params,
-                   std::optional<Nonnull<IdentifierExpression*>> base,
+                   std::optional<Nonnull<Expression*>> base,
                    std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::ClassDeclaration, source_loc),
         name_(std::move(name)),
@@ -253,9 +253,7 @@ class ClassDeclaration : public Declaration {
   auto type_params() -> std::optional<Nonnull<TuplePattern*>> {
     return type_params_;
   }
-  auto base() const -> std::optional<Nonnull<IdentifierExpression*>> {
-    return base_;
-  }
+  auto base() const -> std::optional<Nonnull<Expression*>> { return base_; }
   auto self() const -> Nonnull<const SelfDeclaration*> { return self_decl_; }
   auto self() -> Nonnull<SelfDeclaration*> { return self_decl_; }
 
@@ -278,7 +276,7 @@ class ClassDeclaration : public Declaration {
   ClassExtensibility extensibility_;
   Nonnull<SelfDeclaration*> self_decl_;
   std::optional<Nonnull<TuplePattern*>> type_params_;
-  std::optional<Nonnull<IdentifierExpression*>> base_;
+  std::optional<Nonnull<Expression*>> base_;
   std::vector<Nonnull<Declaration*>> members_;
   std::optional<Nonnull<FunctionDeclaration*>> destructor_;
 };
