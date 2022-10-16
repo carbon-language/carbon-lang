@@ -386,37 +386,6 @@ static auto GetClassHierarchy(const NominalClassType& class_type)
   return all_classes;
 }
 
-// Returns all class members per class, from ancestor to child
-static auto GetAllClassMembers(const ClassDeclaration& class_decl)
-    -> std::vector<llvm::ArrayRef<Nonnull<Declaration*>>> {
-  const auto* curr_class_decl = &class_decl;
-  std::vector<llvm::ArrayRef<Nonnull<Declaration*>>> all_members{
-      curr_class_decl->members()};
-  while (curr_class_decl->base().has_value()) {
-    const auto type_of_class = llvm::dyn_cast<TypeOfClassType>(
-        &curr_class_decl->base().value()->static_type());
-    curr_class_decl = &type_of_class->class_type().declaration();
-    all_members.push_back(curr_class_decl->members());
-  }
-  std::reverse(all_members.begin(), all_members.end());
-  return all_members;
-}
-
-// Executes the given visitor on all members of the given class, from ancestor
-// to child class. Stops when the visitor returns an error and return it,
-// otherwise returns Success.
-static auto VisitAllClassMembers(
-    const ClassDeclaration& class_decl,
-    llvm::function_ref<ErrorOr<Success>(Nonnull<Declaration*>)> visitor)
-    -> ErrorOr<Success> {
-  for (const auto& members : GetAllClassMembers(class_decl)) {
-    for (const auto& m : members) {
-      CARBON_RETURN_IF_ERROR(visitor(m));
-    }
-  }
-  return Success();
-}
-
 auto TypeChecker::FieldTypes(const NominalClassType& class_type) const
     -> std::vector<NamedValue> {
   std::vector<NamedValue> field_types;
@@ -3513,23 +3482,6 @@ auto TypeChecker::TypeCheckClassDeclaration(
     CARBON_RETURN_IF_ERROR(TypeCheckDeclaration(m, class_scope, class_decl));
     CARBON_RETURN_IF_ERROR(CollectMember(class_decl, m));
   }
-  std::unordered_map<std::string_view, SourceLocation> member_names;
-  const auto check_duplicate_members =
-      [&member_names](Nonnull<Declaration*> m) -> ErrorOr<Success> {
-    if (const auto name = GetName(*m); name.has_value()) {
-      if (auto [_, inserted] = member_names.insert(
-              std::make_pair(name.value(), m->source_loc()));
-          !inserted) {
-        return ProgramError(m->source_loc())
-               << "A member named `" << name.value()
-               << "` already exists in this class or its parents";
-      };
-    }
-    return Success();
-  };
-  CARBON_RETURN_IF_ERROR(
-      VisitAllClassMembers(*class_decl, check_duplicate_members));
-
   if (trace_stream_) {
     **trace_stream_ << "** finished checking class " << class_decl->name()
                     << "\n";
