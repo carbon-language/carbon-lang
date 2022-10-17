@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
 // RUN: %{not} %{explorer-run}
 // RUN: %{not} %{explorer-run-trace}
 

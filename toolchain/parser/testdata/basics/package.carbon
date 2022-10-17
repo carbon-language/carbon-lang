@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// AUTOUPDATE: %{carbon} dump parse-tree %s
+// AUTOUPDATE
 // RUN: %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT: {node_index: 3, kind: 'PackageDirective', text: 'package', subtree_size: 4, children: [

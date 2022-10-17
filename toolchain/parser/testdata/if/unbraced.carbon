@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // TODO: This should have an error.
-// AUTOUPDATE: %{carbon} dump parse-tree %s
+// AUTOUPDATE
 // RUN: %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT: {node_index: 19, kind: 'FunctionDeclaration', text: 'fn', subtree_size: 20, children: [
