@@ -5,9 +5,10 @@
 // This won't auto-update because it uses a regex for the prelude line number,
 // so that it doesn't need to be updated on every prelude change.
 //
-// RUN: %{not} %{explorer} %s | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
+// This can't be autoupdated because the error line comes form a different file.
 // NOAUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/data/prelude.carbon:{{.*}}: "HALLO WELT"
 
 package ExplorerTest api;

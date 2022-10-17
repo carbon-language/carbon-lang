@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // RUN: %{not} %{carbon} --print-errors=streamed dump tokens %s | \
-// RUN:   %{FileCheck-strict} %s
+// RUN:   %{FileCheck-strict}
 // CHECK-COUNT-17:STDOUT: token: {{.*}}
 
 fn run(String program) {

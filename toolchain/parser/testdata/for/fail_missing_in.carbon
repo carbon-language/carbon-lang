@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{carbon} dump parse-tree %s | %{FileCheck-strict} %s
-// AUTOUPDATE: %{carbon} dump parse-tree %s
+// AUTOUPDATE
+// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT: {node_index: 19, kind: 'FunctionDeclaration', text: 'fn', subtree_size: 20, children: [
 // CHECK:STDOUT:   {node_index: 0, kind: 'DeclaredName', text: 'foo'},
@@ -29,7 +29,7 @@
 // CHECK:STDOUT: ]
 
 fn foo() {
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/for/missing_in.carbon:[[@LINE+1]]:19: Expected `in` after loop `var` declaration.
+  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/for/fail_missing_in.carbon:[[@LINE+1]]:19: Expected `in` after loop `var` declaration.
   for (var x: i32 y) {
     Print(x);
   }

@@ -14,8 +14,8 @@ from pathlib import Path
 
 
 def main() -> None:
-    # Calls the main script with explorer settings. This uses execv in order to
-    # avoid Python import behaviors.
+    # Calls the main script using execv in order to avoid Python import
+    # behaviors.
     this_py = Path(__file__).resolve()
     actual_py = this_py.parent.parent.joinpath(
         "bazel", "testing", "lit_autoupdate_base.py"
@@ -23,12 +23,11 @@ def main() -> None:
     args = [
         sys.argv[0],
         # Flags to configure for explorer testing.
-        "--build_target",
-        "//explorer",
-        "--testdata",
-        "explorer/testdata",
-        "--line_number_pattern",
-        r"(?<=\.carbon:)(\d+)(?=(?:\D|$))",
+        "--tool=explorer",
+        "--testdata=explorer/testdata",
+        r"--line_number_pattern=(?<=\.carbon:)(\d+)(?=(?:\D|$))",
+        "--lit_run=%{explorer-run}",
+        "--lit_run=%{explorer-run-trace}",
     ] + sys.argv[1:]
     os.execv(actual_py, args)
 
