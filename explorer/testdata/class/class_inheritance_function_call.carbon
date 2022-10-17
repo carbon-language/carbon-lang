@@ -7,30 +7,36 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: Func1
-// CHECK: Func2
+// CHECK: Class C, call 0
+// CHECK: Class D, call 0
+// CHECK: Class C, call 1
+// CHECK: Class C, call 2
+// CHECK: Class D, call 2
 // CHECK: result: 0
 
 package ExplorerTest api;
 
 class C {
-  fn Foo(v: i32) {
-    Print("Func{0}", v);
-  }
-  fn Func1[me:Self]() {
-    me.Foo(1);
+  fn FunctionC(var i: i32) {
+    Print("Class C, call {0}", i);
   }
 }
 
 class D extends C {
-  fn Func2[me:Self]() {
-    me.Foo(2);
+  fn FunctionD(var i: i32) {
+    C.FunctionC(i);
+    Print("Class D, call {0}", i);
   }
 }
 
 fn Main() -> i32 {
-  var d2: D = {};
-  d2.Func1();
-  d2.Func2();
+  // Calling function from class type
+  D.FunctionD(0);
+  // Note: D.FunctionC(0); is not accessible
+
+  // Calling function from class object
+  var d: D = {};
+  d.FunctionC(1);
+  d.FunctionD(2);
   return 0;
 }
