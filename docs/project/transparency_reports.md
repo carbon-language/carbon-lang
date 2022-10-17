@@ -15,9 +15,11 @@ and believe this kind of transparency is essential to sustaining that.
 
 ## Cadence and publishing
 
-We publish a report every N months in a GitHub discussion thread in the
+We publish a report quarterly in a GitHub discussion thread in the
 [transparency reports](https://github.com/carbon-language/carbon-lang/discussions/categories/transparency-reports)
 topic. We use the following template for each of these reports.
+
+We may publish outside of the quarterly cycle if needed for an urgent response.
 
 ## Template
 
