@@ -14,21 +14,21 @@ from pathlib import Path
 
 
 def main() -> None:
-    # Calls the main script with explorer settings. This uses execv in order to
-    # avoid Python import behaviors.
+    # Calls the main script using execv in order to avoid Python import
+    # behaviors.
     this_py = Path(__file__).resolve()
     actual_py = this_py.parent.parent.parent.joinpath(
         "bazel", "testing", "lit_autoupdate_base.py"
     )
     args = [
         sys.argv[0],
-        # Flags to configure for explorer testing.
-        "--build_target",
-        "//toolchain/driver:carbon",
-        "--line_number_pattern",
-        r"(?<=\.carbon:)(\d+)(?=(?:\D|$))",
-        "--testdata",
-        "toolchain/parser/testdata",
+        # Flags to configure for parser testing.
+        "--tool=carbon",
+        "--autoupdate_arg=dump",
+        "--autoupdate_arg=parse-tree",
+        r"--line_number_pattern=(?<=\.carbon:)(\d+)(?=(?:\D|$))",
+        "--lit_run=%{carbon-run-parser}",
+        "--testdata=toolchain/parser/testdata",
     ] + sys.argv[1:]
     os.execv(actual_py, args)
 

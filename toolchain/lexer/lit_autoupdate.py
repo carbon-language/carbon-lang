@@ -14,8 +14,8 @@ from pathlib import Path
 
 
 def main() -> None:
-    # Calls the main script with lexer settings. This uses execv in order to
-    # avoid Python import behaviors.
+    # Calls the main script using execv in order to avoid Python import
+    # behaviors.
     this_py = Path(__file__).resolve()
     actual_py = this_py.parent.parent.parent.joinpath(
         "bazel", "testing", "lit_autoupdate_base.py"
@@ -23,8 +23,9 @@ def main() -> None:
     args = [
         sys.argv[0],
         # Flags to configure for lexer testing.
-        "--build_target",
-        "//toolchain/driver:carbon",
+        "--tool=carbon",
+        "--autoupdate_arg=dump",
+        "--autoupdate_arg=tokens",
         # Ignore the resulting column of EndOfFile because it's typically the
         # end of the CHECK comment.
         "--extra_check_replacement",
@@ -32,12 +33,10 @@ def main() -> None:
         r"column: (?:\d+)",
         "column: {{[0-9]+}}",
         # Ignore spaces that are used to columnize lines.
-        "--line_number_format",
-        "{{ *}}[[@LINE%(delta)s]]",
-        "--line_number_pattern",
-        r"(?<= line: )( *\d+)(?=,)",
-        "--testdata",
-        "toolchain/lexer/testdata",
+        "--line_number_format={{ *}}[[@LINE%(delta)s]]",
+        r"--line_number_pattern=(?<= line: )( *\d+)(?=,)",
+        "--lit_run=%{carbon-run-tokens}",
+        "--testdata=toolchain/lexer/testdata",
     ] + sys.argv[1:]
     os.execv(actual_py, args)
 
