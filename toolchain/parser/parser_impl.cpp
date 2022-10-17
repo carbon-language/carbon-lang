@@ -102,7 +102,7 @@ auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
 
   Parser parser(tree, tokens, emitter);
   while (!parser.AtEndOfFile()) {
-    if (!parser.ParseDeclaration()) {
+    if (!parser.ParseDeclaration(ParseContext::File)) {
       // We don't have an enclosing parse tree node to mark as erroneous, so
       // just mark the tree as a whole.
       tree.has_errors_ = true;
@@ -283,19 +283,24 @@ auto ParseTree::Parser::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
   return llvm::None;
 }
 
-auto ParseTree::Parser::ParseCloseParen(TokenizedBuffer::Token open_paren,
-                                        ParseNodeKind kind)
+auto ParseTree::Parser::ParseCloseSymbol(TokenizedBuffer::Token open_symbol,
+                                         ParseNodeKind node_kind)
     -> llvm::Optional<Node> {
-  if (auto close_paren =
-          ConsumeAndAddLeafNodeIf(TokenKind::CloseParen(), kind)) {
-    return close_paren;
+  auto close_token = tokens_.GetMatchedClosingToken(open_symbol);
+  auto close_token_kind = tokens_.GetKind(close_token);
+
+  if (auto close_symbol =
+          ConsumeAndAddLeafNodeIf(close_token_kind, node_kind)) {
+    return close_symbol;
   }
 
   // TODO: Include the location of the matching open_paren in the diagnostic.
-  CARBON_DIAGNOSTIC(ExpectedCloseParen, Error, "Unexpected tokens before `)`.");
-  emitter_.Emit(*position_, ExpectedCloseParen);
-  SkipTo(tokens_.GetMatchedClosingToken(open_paren));
-  AddLeafNode(kind, Consume(TokenKind::CloseParen()));
+  CARBON_DIAGNOSTIC(ExpectedCloseSymbol, Error,
+                    "Unexpected tokens before `{0}`.", llvm::StringRef);
+  emitter_.Emit(*position_, ExpectedCloseSymbol,
+                tokens_.GetTokenText(close_token));
+  SkipTo(tokens_.GetMatchedClosingToken(open_symbol));
+  AddLeafNode(node_kind, Consume(close_token_kind));
   return llvm::None;
 }
 
@@ -544,7 +549,8 @@ auto ParseTree::Parser::ParsePackageDirective() -> Node {
                  package_start, /*has_error=*/false);
 }
 
-auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
+auto ParseTree::Parser::ParseFunctionDeclaration(Parser::ParseContext context)
+    -> Node {
   auto start = GetSubtreeStartPosition();
   TokenizedBuffer::Token function_intro_token = Consume(TokenKind::Fn());
   AddLeafNode(ParseNodeKind::FunctionIntroducer(), function_intro_token);
@@ -562,10 +568,12 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
     return AddNode(ParseNodeKind::FunctionDeclaration(), function_intro_token,
                    start, /*has_error=*/true);
   };
+
   CARBON_RETURN_IF_STACK_LIMITED(add_error_function_node(false));
 
-  if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
-                               ParseNodeKind::DeclaredName())) {
+  auto name_n = ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
+                                        ParseNodeKind::DeclaredName());
+  if (!name_n) {
     CARBON_DIAGNOSTIC(ExpectedFunctionName, Error,
                       "Expected function name after `fn` keyword.");
     emitter_.Emit(*position_, ExpectedFunctionName);
@@ -573,6 +581,70 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
     // kinds of tokens and try to "recover" here, but unclear that this is
     // really useful.
     return add_error_function_node(true);
+  }
+
+  // We can recover from a parse error while parsing the `me` param. Track
+  // whether parsing it was successful or not.
+  bool has_error = false;
+
+  if (context == ParseContext::Interface) {
+    [&]() {
+      auto open_bracket = ConsumeIf(TokenKind::OpenSquareBracket());
+
+      // If we failed to parse the associated method then this might an
+      // associated class function. Just exit and continue parsing.
+      if (!open_bracket) {
+        return;
+      }
+
+      auto open_bracket_pos = GetSubtreeStartPosition();
+
+      auto me_error_handler = [&]() {
+        CARBON_DIAGNOSTIC(ExpectedMeParam, Error,
+                          "Associated method `{0}` must have a `me` parameter "
+                          "of the form: `[me: "
+                          "Self] or [addr me: Self*]`.",
+                          llvm::StringRef);
+        emitter_.Emit(*position_, ExpectedMeParam, tree_.GetNodeText(*name_n));
+        has_error = true;
+
+        SkipTo(tokens_.GetMatchedClosingToken(*open_bracket));
+        Consume(tokens_.GetKind(*position_));
+
+        return;
+      };
+
+      // Try to parse [me: Self].
+      auto me = ConsumeAndAddLeafNodeIf(TokenKind::Me(), ParseNodeKind::Me());
+
+      // TODO: Parse `addr`.
+      if (!me) {
+        me_error_handler();
+        return;
+      }
+
+      auto colon =
+          ConsumeAndAddLeafNodeIf(TokenKind::Colon(), ParseNodeKind::MeColon());
+
+      if (!colon) {
+        me_error_handler();
+        return;
+      }
+
+      auto self =
+          ConsumeAndAddLeafNodeIf(TokenKind::Self(), ParseNodeKind::Self());
+
+      if (!self) {
+        me_error_handler();
+        return;
+      }
+
+      auto close_bracket =
+          ParseCloseSymbol(*open_bracket, ParseNodeKind::MeParamEnd());
+
+      AddNode(ParseNodeKind::MeParam(), *open_bracket, open_bracket_pos,
+              !close_bracket);
+    }();
   }
 
   TokenizedBuffer::Token open_paren = *position_;
@@ -591,6 +663,16 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
 
   switch (NextTokenKind()) {
     case TokenKind::OpenCurlyBrace(): {
+      if (context == ParseContext::Interface) {
+        CARBON_DIAGNOSTIC(
+            MethodImplNotAllowed, Error,
+            "Method implementations are not allowed in interfaces.");
+        emitter_.Emit(*position_, MethodImplNotAllowed);
+        // SkipMatchingGroup();
+
+        return add_error_function_node(true);
+      }
+
       // Parse a definition which is represented as a code block.
       if (auto node =
               ParseCodeBlock(start, ParseNodeKind::FunctionDefinitionStart(),
@@ -653,20 +735,52 @@ auto ParseTree::Parser::ParseVariableDeclaration() -> Node {
                  /*has_error=*/!pattern || !semi);
 }
 
+auto ParseTree::Parser::ParseInterface() -> Node {
+  // TODO Error handling including the stack thing. Re-read
+  // ParseFunctionDeclaration() to make sure everything is handled properly.
+  TokenizedBuffer::Token interface_intro_token =
+      Consume(TokenKind::Interface());
+  auto start = GetSubtreeStartPosition();
+
+  ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
+                          ParseNodeKind::DeclaredName());
+
+  auto open_curly_brace = ConsumeIf(TokenKind::OpenCurlyBrace());
+  auto body_start = GetSubtreeStartPosition();
+
+  while (!NextTokenIs(TokenKind::CloseCurlyBrace()) &&
+         !NextTokenIs(TokenKind::EndOfFile())) {
+    ParseDeclaration(ParseContext::Interface);
+  }
+
+  ConsumeAndAddLeafNodeIf(TokenKind::CloseCurlyBrace(),
+                          ParseNodeKind::InterfaceBodyEnd());
+
+  AddNode(ParseNodeKind::InterfaceBody(), *open_curly_brace, body_start);
+
+  return AddNode(ParseNodeKind::InterfaceDeclaration(), interface_intro_token,
+                 start);
+}
+
 auto ParseTree::Parser::ParseEmptyDeclaration() -> Node {
   return AddLeafNode(ParseNodeKind::EmptyDeclaration(),
                      Consume(TokenKind::Semi()));
 }
 
-auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
+// Create a parse context object to make parsing more context-aware?
+// For now, one element: are we parsing an interface?
+auto ParseTree::Parser::ParseDeclaration(ParseContext context)
+    -> llvm::Optional<Node> {
   CARBON_RETURN_IF_STACK_LIMITED(llvm::None);
   switch (NextTokenKind()) {
     case TokenKind::Package():
       return ParsePackageDirective();
     case TokenKind::Fn():
-      return ParseFunctionDeclaration();
+      return ParseFunctionDeclaration(context);
     case TokenKind::Var():
       return ParseVariableDeclaration();
+    case TokenKind::Interface():
+      return ParseInterface();
     case TokenKind::Semi():
       return ParseEmptyDeclaration();
     case TokenKind::EndOfFile():
@@ -818,6 +932,10 @@ auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
 
     case TokenKind::OpenCurlyBrace():
       return ParseBraceExpression();
+
+    case TokenKind::Self():
+      kind = ParseNodeKind::Self();
+      break;
 
     default:
       CARBON_DIAGNOSTIC(ExpectedExpression, Error, "Expected expression.");
@@ -1158,7 +1276,7 @@ auto ParseTree::Parser::ParseParenCondition(TokenKind introducer)
   }
 
   auto close_paren =
-      ParseCloseParen(*open_paren, ParseNodeKind::ConditionEnd());
+      ParseCloseSymbol(*open_paren, ParseNodeKind::ConditionEnd());
 
   return AddNode(ParseNodeKind::Condition(), *open_paren, start,
                  /*has_error=*/!expr || !close_paren);
@@ -1212,8 +1330,8 @@ auto ParseTree::Parser::ParseForStatement() -> llvm::Optional<Node> {
       // TODO: A proper recovery strategy is needed here. For now, I assume
       // that all brackets are properly balanced (i.e. each open bracket has a
       // closing one).
-      // This is temporary until we come to a conclusion regarding the
-      // recovery tokens strategy.
+      // This is temporary until we come to a conclusion regarding the recovery
+      // tokens strategy. See PR #235.
       return llvm::None;
     }
 
@@ -1264,7 +1382,7 @@ auto ParseTree::Parser::ParseForStatement() -> llvm::Optional<Node> {
     auto container_expr = separator_parsed ? ParseExpression() : llvm::None;
 
     auto close_paren =
-        ParseCloseParen(*open_paren, ParseNodeKind::ForHeaderEnd());
+        ParseCloseSymbol(*open_paren, ParseNodeKind::ForHeaderEnd());
 
     return AddNode(
         ParseNodeKind::ForHeader(), *open_paren, header_start,

@@ -23,6 +23,11 @@ class ParseTree::Parser {
   static auto Parse(TokenizedBuffer& tokens, TokenDiagnosticEmitter& emitter)
       -> ParseTree;
 
+  enum class ParseContext {
+    File,
+    Interface,
+  };
+
  private:
   class ScopedStackStep;
   struct SubtreeStart;
@@ -129,11 +134,11 @@ class ParseTree::Parser {
   auto SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
       -> llvm::Optional<TokenizedBuffer::Token>;
 
-  // Parses a close paren token corresponding to the given open paren token,
+  // Parses a close symbol token corresponding to the given open symbol token,
   // possibly skipping forward and diagnosing if necessary. Creates and returns
   // a parse node of the specified kind if successful.
-  auto ParseCloseParen(TokenizedBuffer::Token open_paren, ParseNodeKind kind)
-      -> llvm::Optional<Node>;
+  auto ParseCloseSymbol(TokenizedBuffer::Token open_symbol,
+                        ParseNodeKind node_kind) -> llvm::Optional<Node>;
 
   // Parses a comma-separated list with the given delimiters.
   template <typename ListElementParser, typename ListCompletionHandler>
@@ -176,10 +181,13 @@ class ParseTree::Parser {
 
   // Parses a function declaration with an optional definition. Returns the
   // function parse node which is based on the `fn` introducer keyword.
-  auto ParseFunctionDeclaration() -> Node;
+  auto ParseFunctionDeclaration(ParseContext context) -> Node;
 
   // Parses a variable declaration with an optional initializer.
   auto ParseVariableDeclaration() -> Node;
+
+  // Parses an interface declaration.
+  auto ParseInterface() -> Node;
 
   // Parses and returns an empty declaration node from a single semicolon token.
   auto ParseEmptyDeclaration() -> Node;
@@ -190,7 +198,7 @@ class ParseTree::Parser {
   // Tries to parse a declaration. If a declaration, even an empty one after
   // skipping errors, can be parsed, it is returned. There may be parse errors
   // even when a node is returned.
-  auto ParseDeclaration() -> llvm::Optional<Node>;
+  auto ParseDeclaration(ParseContext context) -> llvm::Optional<Node>;
 
   // Parses a parenthesized expression.
   auto ParseParenExpression() -> llvm::Optional<Node>;
