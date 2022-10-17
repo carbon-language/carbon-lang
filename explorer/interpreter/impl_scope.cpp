@@ -124,8 +124,9 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
           Nonnull<const Value*> current =
               type_checker.Substitute(local_bindings, *it);
           if (!ValueEqual(first, current, &equality_ctx)) {
-            return ProgramError(source_loc) << "could not determine that "
-                                            << *first << " == " << *current;
+            return ProgramError(source_loc)
+                   << "constraint requires that " << *first
+                   << " == " << *current << ", which is not known to be true";
           }
         }
       }

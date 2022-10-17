@@ -9,19 +9,27 @@
 package ExplorerTest api;
 
 interface Iface {
-  let N:! i32;
+  let T:! Type;
 }
 
-fn F(T:! Iface where .N == 5) {}
+fn F[T:! Iface where .T == i32](x: T) {}
 
-class Good {}
-class Bad {}
-external impl Good as Iface where .N = 5 {}
-external impl Bad as Iface where .N = 4 {}
+fn G[T:! Iface where .T == i32](x: T) {
+  F(x);
+}
+
+fn H[T:! Iface](x: T) {
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_equal_to_dependent_type.carbon:[[@LINE+1]]: constraint requires that (T).(Iface.T) == i32, which is not known to be true
+  F(x);
+}
+
+class Class {
+  impl as Iface where .T = i32 {}
+}
 
 fn Main() -> i32 {
-  F(Good);
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_different_value.carbon:[[@LINE+1]]: constraint requires that 4 == 5, which is not known to be true
-  F(Bad);
+  var x: Class = {};
+  G(x);
+  H(x);
   return 0;
 }

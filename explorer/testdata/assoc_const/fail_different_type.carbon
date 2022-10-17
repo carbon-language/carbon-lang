@@ -21,7 +21,7 @@ external impl Bad as Iface where .T = Bad {}
 
 fn Main() -> i32 {
   F(Good);
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_different_type.carbon:[[@LINE+1]]: could not determine that class Bad == i32
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_different_type.carbon:[[@LINE+1]]: constraint requires that class Bad == i32, which is not known to be true
   F(Bad);
   return 0;
 }
