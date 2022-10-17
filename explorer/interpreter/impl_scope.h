@@ -163,9 +163,9 @@ struct SingleStepEqualityContext : public EqualityContext {
       : type_checker_(type_checker), impl_scope_(impl_scope) {}
 
   // Visits the values that are equal to the given value and a single step away
-  // according to an equality constraint that is either scope or within a final
-  // impl corresponding to an associated constant. Stops and returns `false` if
-  // the visitor returns `false`, otherwise returns `true`.
+  // according to an equality constraint that is in the given impl scope. Stops
+  // and returns `false` if the visitor returns `false`, otherwise returns
+  // `true`.
   auto VisitEqualValues(Nonnull<const Value*> value,
                         llvm::function_ref<bool(Nonnull<const Value*>)> visitor)
       const -> bool override;

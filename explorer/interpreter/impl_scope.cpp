@@ -266,42 +266,7 @@ auto SingleStepEqualityContext::VisitEqualValues(
     **trace_stream << "looking for values equal to " << *value << " in\n"
                    << *impl_scope_;
   }
-
-  if (!impl_scope_->VisitEqualValues(value, visitor)) {
-    return false;
-  }
-
-  // Also look up and visit the corresponding impl if this is an associated
-  // constant.
-  // TODO: Is this necessary?
-  if (auto* assoc = dyn_cast<AssociatedConstant>(value)) {
-    // Perform an impl lookup to see if we can resolve this constant.
-    // The source location doesn't matter, we're discarding the diagnostics.
-    if (auto* impl_witness = dyn_cast<ImplWitness>(&assoc->witness())) {
-      // Instantiate the impl to find the concrete constraint it implements.
-      Nonnull<const ConstraintType*> constraint =
-          impl_witness->declaration().constraint_type();
-      constraint = cast<ConstraintType>(
-          type_checker_->Substitute(impl_witness->bindings(), constraint));
-      if (auto trace_stream = type_checker_->trace_stream()) {
-        **trace_stream << "found constraint " << *constraint
-                       << " for associated constant " << *assoc << "\n";
-      }
-
-      // Look for the value of this constant within that constraint.
-      if (!constraint->VisitEqualValues(value, visitor)) {
-        return false;
-      }
-    } else {
-      if (auto trace_stream = type_checker_->trace_stream()) {
-        **trace_stream << "Could not resolve associated constant " << *assoc
-                       << ": witness " << assoc->witness()
-                       << " depends on a generic parameter\n";
-      }
-    }
-  }
-
-  return true;
+  return impl_scope_->VisitEqualValues(value, visitor);
 }
 
 }  // namespace Carbon
