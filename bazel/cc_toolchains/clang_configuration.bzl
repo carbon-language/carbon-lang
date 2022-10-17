@@ -69,7 +69,7 @@ def _detect_system_clang(repository_ctx):
     if "clang" not in version_output:
         fail("Searching for clang or CC (%s), and found (%s), which is not a Clang compiler" % (cc, cc_path))
     clang_version, clang_version_for_cache = _clang_version(version_output)
-    return (cc_path, clang_version, clang_version_for_cache)
+    return (cc_path.realpath, clang_version, clang_version_for_cache)
 
 def _compute_clang_resource_dir(repository_ctx, clang):
     """Runs the `clang` binary to get its resource dir."""
@@ -165,16 +165,16 @@ def _configure_clang_toolchain_impl(repository_ctx):
     (clang, clang_version, clang_version_for_cache) = _detect_system_clang(
         repository_ctx,
     )
-    clang = clang.realpath.dirname.get_child("clang++")
+    clang_cpp = clang.dirname.get_child("clang++")
 
     # Compute the various directories used by Clang.
-    resource_dir = _compute_clang_resource_dir(repository_ctx, clang)
+    resource_dir = _compute_clang_resource_dir(repository_ctx, clang_cpp)
     sysroot_dir = None
     if repository_ctx.os.name.lower().startswith("mac os"):
         sysroot_dir = _compute_mac_os_sysroot(repository_ctx)
     include_dirs = _compute_clang_cpp_include_search_paths(
         repository_ctx,
-        clang,
+        clang_cpp,
         sysroot_dir,
     )
 
@@ -182,10 +182,10 @@ def _configure_clang_toolchain_impl(repository_ctx):
     # First look for llvm-ar adjacent to clang, so that if found,
     # it is most likely to match the same version as clang.
     # Otherwise, try PATH.
-    arpath = clang.dirname.get_child("llvm-ar")
-    if not arpath.exists:
-        arpath = repository_ctx.which("llvm-ar")
-        if not arpath:
+    ar_path = clang.dirname.get_child("llvm-ar")
+    if not ar_path.exists:
+        ar_path = repository_ctx.which("llvm-ar")
+        if not ar_path:
             fail("`llvm-ar` not found in PATH or adjacent to clang")
 
     # By default Windows uses '\' in its paths. These will be
@@ -199,7 +199,8 @@ def _configure_clang_toolchain_impl(repository_ctx):
         "clang_detected_variables.bzl",
         repository_ctx.attr._clang_detected_variables_template,
         substitutions = {
-            "{LLVM_BINDIR}": str(arpath.dirname),
+            "{LLVM_BINDIR}": str(ar_path.dirname),
+            "{LLVM_SYMBOLIZER}": str(ar_path.dirname.get_child("llvm-symbolizer")),
             "{CLANG_BINDIR}": str(clang.dirname),
             "{CLANG_VERSION}": str(clang_version),
             "{CLANG_VERSION_FOR_CACHE}": clang_version_for_cache.replace('"', "_").replace("\\", "_"),
