@@ -632,8 +632,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     return true;
   }
   if (t1->kind() != t2->kind()) {
-    if (isa<VariableType, AssociatedConstant>(t1) ||
-        isa<VariableType, AssociatedConstant>(t2)) {
+    if (IsValueKindDependent(t1) || IsValueKindDependent(t2)) {
       return ValueEqual(t1, t2, equality_ctx);
     }
     return false;
@@ -946,7 +945,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
   // associated constant; otherwise we should be able to do better by looking
   // at the structures of the values.
   if (equality_ctx) {
-    if (isa<VariableType, AssociatedConstant>(v1)) {
+    if (IsValueKindDependent(v1)) {
       auto visitor = [&](Nonnull<const Value*> maybe_v2) {
         return !ValueStructurallyEqual(v2, maybe_v2, equality_ctx);
       };
@@ -954,7 +953,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
         return true;
       }
     }
-    if (isa<VariableType, AssociatedConstant>(v2)) {
+    if (IsValueKindDependent(v2)) {
       auto visitor = [&](Nonnull<const Value*> maybe_v1) {
         return !ValueStructurallyEqual(v1, maybe_v1, equality_ctx);
       };

@@ -79,11 +79,6 @@ class TypeChecker {
                                    int impl_offset) const
       -> Nonnull<const Witness*>;
 
-  // Returns the trace stream, if one was provided.
-  auto trace_stream() const -> std::optional<Nonnull<llvm::raw_ostream*>> {
-    return trace_stream_;
-  }
-
  private:
   class ConstraintTypeBuilder;
   class SubstitutedGenericBindings;

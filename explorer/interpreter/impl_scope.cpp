@@ -115,7 +115,7 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
       }
       Bindings local_bindings = bindings;
       local_bindings.Add(constraint->self_binding(), impl_type, witness);
-      SingleStepEqualityContext equality_ctx(&type_checker, this);
+      SingleStepEqualityContext equality_ctx(this);
       for (auto& equal : equals) {
         auto it = equal.values.begin();
         Nonnull<const Value*> first =
@@ -262,10 +262,6 @@ void ImplScope::Print(llvm::raw_ostream& out) const {
 auto SingleStepEqualityContext::VisitEqualValues(
     Nonnull<const Value*> value,
     llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const -> bool {
-  if (auto trace_stream = type_checker_->trace_stream()) {
-    **trace_stream << "looking for values equal to " << *value << " in\n"
-                   << *impl_scope_;
-  }
   return impl_scope_->VisitEqualValues(value, visitor);
 }
 

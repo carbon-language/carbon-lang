@@ -736,7 +736,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
           return arena_->New<NominalClassValue>(inst_dest, value);
         }
         default: {
-          CARBON_CHECK(isa<VariableType, AssociatedConstant>(destination_type))
+          CARBON_CHECK(IsValueKindDependent(destination_type))
               << "Can't convert value " << *value << " to type "
               << *destination_type;
           return value;
@@ -771,7 +771,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
           break;
         }
         default: {
-          CARBON_CHECK(isa<VariableType, AssociatedConstant>(destination_type))
+          CARBON_CHECK(IsValueKindDependent(destination_type))
               << "Can't convert value " << *value << " to type "
               << *destination_type;
           return value;

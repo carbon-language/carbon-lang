@@ -158,9 +158,8 @@ class ImplScope {
 // scope.
 struct SingleStepEqualityContext : public EqualityContext {
  public:
-  SingleStepEqualityContext(Nonnull<const TypeChecker*> type_checker,
-                            Nonnull<const ImplScope*> impl_scope)
-      : type_checker_(type_checker), impl_scope_(impl_scope) {}
+  SingleStepEqualityContext(Nonnull<const ImplScope*> impl_scope)
+      : impl_scope_(impl_scope) {}
 
   // Visits the values that are equal to the given value and a single step away
   // according to an equality constraint that is in the given impl scope. Stops
@@ -171,7 +170,6 @@ struct SingleStepEqualityContext : public EqualityContext {
       const -> bool override;
 
  private:
-  Nonnull<const TypeChecker*> type_checker_;
   Nonnull<const ImplScope*> impl_scope_;
 };
 
