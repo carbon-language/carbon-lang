@@ -13,7 +13,7 @@
 
 package ExplorerTest api;
 
-class C {
+base class C {
   fn BasePrint(v: i32) {
     Print("Class {0}", v);
   }

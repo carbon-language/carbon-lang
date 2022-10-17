@@ -15,7 +15,7 @@
 
 package ExplorerTest api;
 
-class C {
+base class C {
   var var_c: i32;
 }
 

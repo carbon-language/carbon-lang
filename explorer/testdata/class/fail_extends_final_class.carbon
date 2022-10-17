@@ -8,9 +8,13 @@
 
 package ExplorerTest api;
 
-base class C {
+class C {
   fn F() {}
-// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_base_class.carbon:[[@LINE+1]]: Class prefixes `base` and `abstract` are not supported yet
+}
+
+class D extends C {
+  fn G() {}
+// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_extends_final_class.carbon:[[@LINE+1]]: Base class `C` is `final` and cannot inherited. Add the `base` or `abstract` class prefix to `C` to allow it to be inherited
 }
 
 fn Main() -> i32 {

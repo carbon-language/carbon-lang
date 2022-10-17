@@ -16,7 +16,7 @@
 
 package ExplorerTest api;
 
-class C {
+base class C {
   fn FunctionC(var i: i32) {
     Print("Class C, call {0}", i);
   }

@@ -14,7 +14,7 @@
 
 package ExplorerTest api;
 
-class C {
+base class C {
   fn Method1() {
     Print("Class C");
   }

@@ -3379,9 +3379,9 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   ImplScope class_scope;
   class_scope.AddParent(scope_info.innermost_scope);
 
-  if (class_decl->extensibility() != ClassExtensibility::None) {
+  if (class_decl->extensibility() == ClassExtensibility::Abstract) {
     return ProgramError(class_decl->source_loc())
-           << "Class prefixes `base` and `abstract` are not supported yet";
+           << "Class prefix `abstract` is not supported yet";
   }
 
   std::optional<Nonnull<const NominalClassType*>> base_class;
@@ -3392,6 +3392,15 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     switch (base_type.kind()) {
       case Value::Kind::TypeOfClassType:
         base_class = &cast<TypeOfClassType>(base_type).class_type();
+        if (base_class.value()->declaration().extensibility() ==
+            ClassExtensibility::None) {
+          return ProgramError(class_decl->source_loc())
+                 << "Base class `" << base_class.value()->declaration().name()
+                 << "` is `final` and cannot inherited. Add the `base` or "
+                    "`abstract` class prefix to `"
+                 << base_class.value()->declaration().name()
+                 << "` to allow it to be inherited";
+        }
         break;
       default:
         return ProgramError(class_decl->source_loc())
