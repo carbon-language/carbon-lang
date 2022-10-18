@@ -1720,9 +1720,9 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
             cast<IntValue>(act.results()[EndIndexPosInResult])->value();
 
         if (current_index < end_index) {
-          auto source_array =
+          const auto* source_array =
               cast<const TupleValue>(act.results()[TargetVarPosInResult]);
-          auto loop_var = cast<const BindingPlaceholderValue>(
+          const auto* loop_var = cast<const BindingPlaceholderValue>(
               act.results()[LoopVarPosInResult]);
 
           CARBON_ASSIGN_OR_RETURN(
