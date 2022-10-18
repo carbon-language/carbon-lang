@@ -20,7 +20,7 @@ Checks:
   -readability-function-cognitive-complexity, -readability-else-after-return,
   -readability-identifier-length, -readability-implicit-bool-conversion,
   -readability-magic-numbers, -readability-make-member-function-const,
-  -readability-qualified-auto,  -readability-static-definition-in-anonymous-namespace,
+  -readability-static-definition-in-anonymous-namespace,
   -readability-suspicious-call-argument, -readability-use-anyofallof
 WarningsAsErrors: true
 CheckOptions:
