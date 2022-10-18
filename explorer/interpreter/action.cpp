@@ -55,7 +55,10 @@ void RuntimeScope::Bind(ValueNodeView value_node, Nonnull<const Value*> value){
   CARBON_CHECK(value->kind() != Value::Kind::LValue);
   auto allocation_id = heap_->GetAllocationId(value);
   if(!allocation_id) {
-    Initialize(value_node,value);
+    auto id = heap_->AllocateValue(value);
+    auto [it, success] =
+        locals_.insert({value_node, heap_->arena().New<LValue>(Address(id))});
+    CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
   }else{
     auto [it, success] =
         locals_.insert({value_node, heap_->arena().New<LValue>(Address(*allocation_id))});
