@@ -5,6 +5,8 @@
 # libprotobuf_mutator uses cmake and doesn't provide a bazel BUILD file.
 # See https://github.com/google/libprotobuf-mutator/issues/91.
 
+exports_files(["LICENSE"])
+
 cc_library(
     name = "libprotobuf_mutator",
     srcs = glob(
@@ -16,7 +18,7 @@ cc_library(
         exclude = ["**/*_test.cc"],
     ),
     hdrs = ["src/libfuzzer/libfuzzer_macro.h"],
-    include_prefix = "libprotobuf_mutator",
+    strip_include_prefix = "src",
     visibility = ["//visibility:public"],
     deps = ["@com_google_protobuf//:protobuf"],
 )

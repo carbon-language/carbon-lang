@@ -11,7 +11,6 @@
 
 using llvm::cast;
 using llvm::dyn_cast;
-using llvm::isa;
 
 namespace Carbon {
 
