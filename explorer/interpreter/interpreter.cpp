@@ -696,7 +696,6 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::StringType:
     case Value::Kind::StringValue:
     case Value::Kind::TypeOfMixinPseudoType:
-    case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
     case Value::Kind::StaticArrayType:

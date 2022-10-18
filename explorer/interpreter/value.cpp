@@ -538,10 +538,6 @@ void Value::Print(llvm::raw_ostream& out) const {
                  .name()
           << ")";
       break;
-    case Value::Kind::TypeOfChoiceType:
-      out << "typeof(" << cast<TypeOfChoiceType>(*this).choice_type().name()
-          << ")";
-      break;
     case Value::Kind::TypeOfParameterizedEntityName:
       out << "parameterized entity name "
           << cast<TypeOfParameterizedEntityName>(*this).name();
@@ -728,10 +724,6 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     case Value::Kind::VariableType:
       return &cast<VariableType>(*t1).binding() ==
              &cast<VariableType>(*t2).binding();
-    case Value::Kind::TypeOfChoiceType:
-      return TypeEqual(&cast<TypeOfChoiceType>(*t1).choice_type(),
-                       &cast<TypeOfChoiceType>(*t2).choice_type(),
-                       equality_ctx);
     case Value::Kind::StaticArrayType: {
       const auto& array1 = cast<StaticArrayType>(*t1);
       const auto& array2 = cast<StaticArrayType>(*t2);
@@ -879,7 +871,6 @@ auto ValueStructurallyEqual(
     case Value::Kind::VariableType:
     case Value::Kind::StringType:
     case Value::Kind::TypeOfMixinPseudoType:
-    case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
     case Value::Kind::StaticArrayType:

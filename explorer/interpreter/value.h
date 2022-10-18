@@ -77,7 +77,6 @@ class Value {
     StringType,
     StringValue,
     TypeOfMixinPseudoType,
-    TypeOfChoiceType,
     TypeOfParameterizedEntityName,
     TypeOfMemberName,
     StaticArrayType,
@@ -1225,25 +1224,6 @@ class TypeOfMixinPseudoType : public Value {
 
  private:
   Nonnull<const MixinPseudoType*> mixin_type_;
-};
-
-// The type of an expression whose value is a choice type. Currently there is no
-// way to explicitly name such a type in Carbon code, but we are tentatively
-// using `typeof(ChoiceName)` as the debug-printing format, in anticipation of
-// something like that becoming valid Carbon syntax.
-class TypeOfChoiceType : public Value {
- public:
-  explicit TypeOfChoiceType(Nonnull<const ChoiceType*> choice_type)
-      : Value(Kind::TypeOfChoiceType), choice_type_(choice_type) {}
-
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::TypeOfChoiceType;
-  }
-
-  auto choice_type() const -> const ChoiceType& { return *choice_type_; }
-
- private:
-  Nonnull<const ChoiceType*> choice_type_;
 };
 
 // The type of an expression whose value is the name of a parameterized entity.

@@ -128,7 +128,6 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
     case Value::Kind::TypeOfMixinPseudoType:
-    case Value::Kind::TypeOfChoiceType:
       // A value of one of these types is itself always a type.
       return true;
   }
@@ -179,7 +178,6 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
     case Value::Kind::StringType:
-    case Value::Kind::TypeOfChoiceType:
     case Value::Kind::StaticArrayType:
       return true;
     case Value::Kind::AutoType:
@@ -261,7 +259,6 @@ static auto ExpectCompleteType(SourceLocation source_loc,
     case Value::Kind::BoolType:
     case Value::Kind::StringType:
     case Value::Kind::PointerType:
-    case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeType:
     case Value::Kind::FunctionType:
     case Value::Kind::StructType:
@@ -494,7 +491,6 @@ auto TypeChecker::IsImplicitlyConvertible(
       break;
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
-    case Value::Kind::TypeOfChoiceType:
       // TODO: These types should presumably also convert to constraint types.
       if (isa<TypeType>(destination)) {
         return true;
@@ -903,7 +899,6 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
     case Value::Kind::StringType:
-    case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName: {
       return handle_non_deduced_type();
@@ -1611,7 +1606,6 @@ auto TypeChecker::Substitute(const Bindings& bindings,
     case Value::Kind::MixinPseudoType:
       return type;
     case Value::Kind::TypeOfMixinPseudoType:
-    case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
       // TODO: We should substitute into the value and produce a new type of
@@ -2266,8 +2260,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           }
           return Success();
         }
-        case Value::Kind::TypeType:
-        case Value::Kind::TypeOfChoiceType: {
+        case Value::Kind::TypeType: {
           // This is member access into an unconstrained type. Evaluate it and
           // perform lookup in the result.
           CARBON_ASSIGN_OR_RETURN(
@@ -2805,36 +2798,17 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           CARBON_RETURN_IF_ERROR(DeduceCallBindings(
               call, &param_name.params().static_type(), generic_parameters,
               /*deduced_bindings=*/llvm::None, impl_bindings, impl_scope));
-          Nonnull<const Bindings*> bindings = &call.bindings();
 
-          const Declaration& decl = param_name.declaration();
-          switch (decl.kind()) {
-            case DeclarationKind::ClassDeclaration: {
-              call.set_static_type(arena_->New<TypeType>());
-              call.set_value_category(ValueCategory::Let);
-              break;
-            }
-            case DeclarationKind::InterfaceDeclaration: {
-              call.set_static_type(arena_->New<TypeType>());
-              call.set_value_category(ValueCategory::Let);
-              break;
-            }
-            case DeclarationKind::ChoiceDeclaration: {
-              Nonnull<ChoiceType*> ct = arena_->New<ChoiceType>(
-                  cast<ChoiceDeclaration>(&decl), bindings);
-              Nonnull<TypeOfChoiceType*> inst_choice_type =
-                  arena_->New<TypeOfChoiceType>(ct);
-              call.set_static_type(inst_choice_type);
-              call.set_value_category(ValueCategory::Let);
-              break;
-            }
-            default:
-              CARBON_FATAL()
-                  << "unknown type of ParameterizedEntityName for " << decl;
-          }
+          // Currently the only kinds of parameterized entities we support are
+          // types.
+          CARBON_CHECK(
+              isa<ClassDeclaration, InterfaceDeclaration, ChoiceDeclaration>(
+                  param_name.declaration()))
+              << "unknown type of ParameterizedEntityName for " << param_name;
+          call.set_static_type(arena_->New<TypeType>());
+          call.set_value_category(ValueCategory::Let);
           return Success();
         }
-        case Value::Kind::TypeOfChoiceType:
         default: {
           return ProgramError(e->source_loc())
                  << "in call `" << *e
@@ -4690,7 +4664,7 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
   auto ct = arena_->New<ChoiceType>(
       choice, Bindings::SymbolicIdentity(arena_, bindings));
 
-  choice->set_static_type(arena_->New<TypeOfChoiceType>(ct));
+  choice->set_static_type(arena_->New<TypeType>());
   choice->set_constant_value(ct);
   return Success();
 }
@@ -4751,7 +4725,6 @@ static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
     case Value::Kind::TypeType:
-    case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
       return true;
