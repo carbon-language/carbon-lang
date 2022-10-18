@@ -1299,7 +1299,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> string_value,
               Convert(args[1], arena_->New<StringType>(), exp.source_loc()));
-          if (!cast<BoolValue>(condition)->value()) {
+          bool condition_value = cast<BoolValue>(condition)->value();
+          if (!condition_value) {
             return ProgramError(exp.source_loc()) << *string_value;
           }
           return todo_.FinishAction(TupleValue::Empty());
