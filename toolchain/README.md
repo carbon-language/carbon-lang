@@ -84,19 +84,18 @@ fn foo() -> f64 {
 The node order is (with indentation to indicate nesting):
 
 ```
-    Index 0: DeclaredName
-      Index 1: ParameterListEnd
-    Index 2: ParameterList
-      Index 3: Literal
-    Index 4: ReturnType
-  Index 5: FunctionSignature
-      Index 6: Literal
-      Index 7: StatementEnd
-    Index 8: ReturnStatement
-    Index 9: CodeBlockEnd
-  Index 10: CodeBlock
-Index 11: Function
-Index 12: FileEnd
+    {node_index: 0, kind: 'FunctionIntroducer', text: 'fn'}
+    {node_index: 1, kind: 'DeclaredName', text: 'foo'}
+      {node_index: 2, kind: 'ParameterListEnd', text: ')'}
+    {node_index: 3, kind: 'ParameterList', text: '(', subtree_size: 2}
+      {node_index: 4, kind: 'Literal', text: 'f64'}
+    {node_index: 5, kind: 'ReturnType', text: '->', subtree_size: 2}
+  {node_index: 6, kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7}
+    {node_index: 7, kind: 'Literal', text: '42'}
+    {node_index: 8, kind: 'StatementEnd', text: ';'}
+  {node_index: 9, kind: 'ReturnStatement', text: 'return', subtree_size: 3}
+{node_index: 10, kind: 'FunctionDefinition', text: '}', subtree_size: 11}
+{node_index: 11, kind: 'FileEnd', text: ''}
 ```
 
 This ordering is focused on efficient translation into the SemanticsIR.
