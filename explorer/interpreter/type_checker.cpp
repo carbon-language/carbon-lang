@@ -127,7 +127,6 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::TypeType:
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
-    case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfMixinPseudoType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfConstraintType:
@@ -182,7 +181,6 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
     case Value::Kind::StringType:
-    case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
@@ -267,7 +265,6 @@ static auto ExpectCompleteType(SourceLocation source_loc,
     case Value::Kind::BoolType:
     case Value::Kind::StringType:
     case Value::Kind::PointerType:
-    case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
@@ -503,7 +500,6 @@ auto TypeChecker::IsImplicitlyConvertible(
       break;
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
-    case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfConstraintType:
@@ -916,7 +912,6 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
     case Value::Kind::StringType:
-    case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
@@ -1626,7 +1621,6 @@ auto TypeChecker::Substitute(const Bindings& bindings,
     case Value::Kind::StringType:
     case Value::Kind::MixinPseudoType:
       return type;
-    case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfMixinPseudoType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfConstraintType:
@@ -2287,7 +2281,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         case Value::Kind::TypeType:
         case Value::Kind::TypeOfChoiceType:
-        case Value::Kind::TypeOfClassType:
         case Value::Kind::TypeOfConstraintType:
         case Value::Kind::TypeOfInterfaceType: {
           // This is member access into an unconstrained type. Evaluate it and
@@ -2836,11 +2829,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           const Declaration& decl = param_name.declaration();
           switch (decl.kind()) {
             case DeclarationKind::ClassDeclaration: {
-              Nonnull<NominalClassType*> inst_class_type =
-                  arena_->New<NominalClassType>(&cast<ClassDeclaration>(decl),
-                                                bindings);
-              call.set_static_type(
-                  arena_->New<TypeOfClassType>(inst_class_type));
+              call.set_static_type(arena_->New<TypeType>());
               call.set_value_category(ValueCategory::Let);
               break;
             }
@@ -4045,7 +4034,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   // should have the value `MyType(T, U)`.
   Nonnull<NominalClassType*> self_type = arena_->New<NominalClassType>(
       class_decl, Bindings::SymbolicIdentity(arena_, bindings));
-  self->set_static_type(arena_->New<TypeOfClassType>(self_type));
+  self->set_static_type(arena_->New<TypeType>());
   self->set_constant_value(self_type);
 
   // The declarations of the members may refer to the class, so we must set the
@@ -4786,7 +4775,6 @@ static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
     case Value::Kind::TypeType:
-    case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:

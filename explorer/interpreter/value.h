@@ -76,7 +76,6 @@ class Value {
     ContinuationValue,  // A first-class continuation value.
     StringType,
     StringValue,
-    TypeOfClassType,
     TypeOfMixinPseudoType,
     TypeOfInterfaceType,
     TypeOfConstraintType,
@@ -640,10 +639,7 @@ class NominalClassType : public Value {
 
   auto type_args() const -> const BindingMap& { return bindings_->args(); }
 
-  // Witnesses for each of the class's impl bindings. These will not in general
-  // be set for class types that are only intended to be used within
-  // type-checking and not at runtime, such as in the static_type() of an
-  // expression or the type in a TypeOfClassType.
+  // Witnesses for each of the class's impl bindings.
   auto witnesses() const -> const ImplWitnessMap& {
     return bindings_->witnesses();
   }
@@ -1216,25 +1212,6 @@ class StringValue : public Value {
 
  private:
   std::string value_;
-};
-
-// The type of an expression whose value is a class type. Currently there is no
-// way to explicitly name such a type in Carbon code, but we are tentatively
-// using `typeof(ClassName)` as the debug-printing format, in anticipation of
-// something like that becoming valid Carbon syntax.
-class TypeOfClassType : public Value {
- public:
-  explicit TypeOfClassType(Nonnull<const NominalClassType*> class_type)
-      : Value(Kind::TypeOfClassType), class_type_(class_type) {}
-
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::TypeOfClassType;
-  }
-
-  auto class_type() const -> const NominalClassType& { return *class_type_; }
-
- private:
-  Nonnull<const NominalClassType*> class_type_;
 };
 
 class TypeOfMixinPseudoType : public Value {

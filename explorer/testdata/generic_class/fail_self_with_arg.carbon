@@ -11,7 +11,7 @@ package ExplorerTest api;
 class Point(T:! Type) {
 
   // Error: wrote `Self(T)` instead of `Self`.
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_self_with_arg.carbon:[[@LINE+1]]: in call `Self(T)`, expected callee to be a function, found `typeof(class Point(T = T))`
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_self_with_arg.carbon:[[@LINE+1]]: in call `Self(T)`, expected callee to be a function, found `Type`
   fn Origin(zero: T) -> Self(T) {
     return {.x = zero, .y = zero};
   }
