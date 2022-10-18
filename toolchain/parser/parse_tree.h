@@ -233,25 +233,6 @@ class ParseTree::Node {
   // error.
   Node() = default;
 
-  friend auto operator==(Node lhs, Node rhs) -> bool {
-    return lhs.index_ == rhs.index_;
-  }
-  friend auto operator!=(Node lhs, Node rhs) -> bool {
-    return lhs.index_ != rhs.index_;
-  }
-  friend auto operator<(Node lhs, Node rhs) -> bool {
-    return lhs.index_ < rhs.index_;
-  }
-  friend auto operator<=(Node lhs, Node rhs) -> bool {
-    return lhs.index_ <= rhs.index_;
-  }
-  friend auto operator>(Node lhs, Node rhs) -> bool {
-    return lhs.index_ > rhs.index_;
-  }
-  friend auto operator>=(Node lhs, Node rhs) -> bool {
-    return lhs.index_ >= rhs.index_;
-  }
-
   // Returns an opaque integer identifier of the node in the tree. Clients
   // should not expect any particular semantics from this value.
   //
@@ -296,10 +277,10 @@ class ParseTree::PostorderIterator
   PostorderIterator() = default;
 
   auto operator==(const PostorderIterator& rhs) const -> bool {
-    return node_ == rhs.node_;
+    return node_.index_ == rhs.node_.index_;
   }
   auto operator<(const PostorderIterator& rhs) const -> bool {
-    return node_ < rhs.node_;
+    return node_.index_ < rhs.node_.index_;
   }
 
   auto operator*() const -> Node { return node_; }
@@ -346,12 +327,12 @@ class ParseTree::SiblingIterator
   SiblingIterator() = default;
 
   auto operator==(const SiblingIterator& rhs) const -> bool {
-    return node_ == rhs.node_;
+    return node_.index_ == rhs.node_.index_;
   }
   auto operator<(const SiblingIterator& rhs) const -> bool {
     // Note that child iterators walk in reverse compared to the postorder
     // index.
-    return node_ > rhs.node_;
+    return node_.index_ > rhs.node_.index_;
   }
 
   auto operator*() const -> Node { return node_; }
