@@ -5,18 +5,15 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
-// CHECK:STDOUT: result: 10
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
-class A { var n: i32; }
-
-external impl A as MulWith(i32) where .Result = A {
-  fn Op[me: Self](rhs: i32) -> A { return {.n = me.n * rhs}; }
-}
+choice C {}
 
 fn Main() -> i32 {
-  var a: A = {.n = 5};
-  a = a * 2;
-  return a.n;
+  var a: auto = C;
+  // OK: Type of `C` is `Type`.
+  a = i32;
+  return 0;
 }

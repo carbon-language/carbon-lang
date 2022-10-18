@@ -12,7 +12,9 @@ interface HasType {
   let T:! Type;
 }
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_overspecified_impl.carbon:[[@LINE+1]]: implementation provides multiple values for (i32).T: i32 and {.a: i32}
-external impl i32 as HasType where .T == i32 and .T == {.a: i32} {}
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_overspecified_impl.carbon:[[@LINE+3]]: multiple different rewrites for `.(interface HasType.T)`:
+// CHECK:STDERR:   i32
+// CHECK:STDERR:   {.a: i32}
+external impl i32 as HasType where .T = i32 and .T = {.a: i32} {}
 
 fn Main() -> i32 { return 0; }

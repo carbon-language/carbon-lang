@@ -21,18 +21,18 @@ namespace Carbon {
 //
 // For example:
 //   CARBON_CHECK(is_valid) << "Data is not valid!";
-#define CARBON_CHECK(condition)                                           \
-  (condition) ? (void)0                                                   \
-              : CARBON_RAW_EXITING_STREAM()                               \
-                    << "CHECK failure at " << __FILE__ << ":" << __LINE__ \
-                    << ": " #condition                                    \
-                    << Carbon::Internal::ExitingStream::AddSeparator()
+#define CARBON_CHECK(...)                                                   \
+  (__VA_ARGS__) ? (void)0                                                   \
+                : CARBON_RAW_EXITING_STREAM()                               \
+                      << "CHECK failure at " << __FILE__ << ":" << __LINE__ \
+                      << ": " #__VA_ARGS__                                  \
+                      << Carbon::Internal::ExitingStream::AddSeparator()
 
 // DCHECK calls CHECK in debug mode, and does nothing otherwise.
 #ifndef NDEBUG
-#define CARBON_DCHECK(condition) CARBON_CHECK(condition)
+#define CARBON_DCHECK(...) CARBON_CHECK(__VA_ARGS__)
 #else
-#define CARBON_DCHECK(condition) CARBON_CHECK(true || (condition))
+#define CARBON_DCHECK(...) CARBON_CHECK(true || (__VA_ARGS__))
 #endif
 
 // This is similar to CHECK, but is unconditional. Writing CARBON_FATAL() is

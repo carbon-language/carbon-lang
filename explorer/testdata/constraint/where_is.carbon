@@ -5,18 +5,29 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
-// CHECK:STDOUT: result: 10
+// CHECK:STDOUT: i32.F
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
-class A { var n: i32; }
+interface Base {
+  fn F();
+}
 
-external impl A as MulWith(i32) where .Result = A {
-  fn Op[me: Self](rhs: i32) -> A { return {.n = me.n * rhs}; }
+interface Extension {
+  extends Base;
+}
+
+fn F[T:! Type where .Self is Extension](x: T) {
+  x.(Extension.F)();
+}
+
+impl i32 as Extension {
+  fn F() { Print("i32.F"); }
 }
 
 fn Main() -> i32 {
-  var a: A = {.n = 5};
-  a = a * 2;
-  return a.n;
+  var n: i32 = 0;
+  F(n);
+  return 0;
 }

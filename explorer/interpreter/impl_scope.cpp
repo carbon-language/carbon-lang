@@ -103,7 +103,34 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
                            source_loc, type_checker));
       witnesses.push_back(result);
     }
-    // TODO: Check satisfaction of same-type constraints.
+
+    // Check that all equality constraints are satisfied in this scope.
+    if (llvm::ArrayRef<EqualityConstraint> equals =
+            constraint->equality_constraints();
+        !equals.empty()) {
+      std::optional<Nonnull<const Witness*>> witness;
+      if (constraint->self_binding()->impl_binding()) {
+        witness = type_checker.MakeConstraintWitness(*constraint, witnesses,
+                                                     source_loc);
+      }
+      Bindings local_bindings = bindings;
+      local_bindings.Add(constraint->self_binding(), impl_type, witness);
+      SingleStepEqualityContext equality_ctx(this);
+      for (auto& equal : equals) {
+        auto it = equal.values.begin();
+        Nonnull<const Value*> first =
+            type_checker.Substitute(local_bindings, *it++);
+        for (; it != equal.values.end(); ++it) {
+          Nonnull<const Value*> current =
+              type_checker.Substitute(local_bindings, *it);
+          if (!ValueEqual(first, current, &equality_ctx)) {
+            return ProgramError(source_loc)
+                   << "constraint requires that " << *first
+                   << " == " << *current << ", which is not known to be true";
+          }
+        }
+      }
+    }
     return type_checker.MakeConstraintWitness(*constraint, std::move(witnesses),
                                               source_loc);
   }
@@ -231,6 +258,12 @@ void ImplScope::Print(llvm::raw_ostream& out) const {
   for (const Nonnull<const ImplScope*>& parent : parent_scopes_) {
     out << *parent;
   }
+}
+
+auto SingleStepEqualityContext::VisitEqualValues(
+    Nonnull<const Value*> value,
+    llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const -> bool {
+  return impl_scope_->VisitEqualValues(value, visitor);
 }
 
 }  // namespace Carbon

@@ -19,7 +19,7 @@ fn Use[T:! Frob](x: T) -> T.Result {
   return v;
 }
 
-impl i32 as Frob where .Result == i32 {
+impl i32 as Frob where .Result = i32 {
   fn F[me: Self]() -> i32 { return 0; }
 }
 

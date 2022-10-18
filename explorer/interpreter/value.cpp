@@ -512,7 +512,10 @@ void Value::Print(llvm::raw_ostream& out) const {
       break;
     case Value::Kind::AssociatedConstant: {
       const auto& assoc = cast<AssociatedConstant>(*this);
-      out << "(" << assoc.base() << ")." << assoc.constant().binding().name();
+      out << "(" << assoc.base() << ").(";
+      PrintNameWithBindings(out, &assoc.interface().declaration(),
+                            assoc.interface().args());
+      out << "." << assoc.constant().binding().name() << ")";
       break;
     }
     case Value::Kind::ContinuationValue: {
@@ -527,31 +530,12 @@ void Value::Print(llvm::raw_ostream& out) const {
       out.write_escaped(cast<StringValue>(*this).value());
       out << "\"";
       break;
-    case Value::Kind::TypeOfClassType:
-      out << "typeof(" << cast<TypeOfClassType>(*this).class_type() << ")";
-      break;
     case Value::Kind::TypeOfMixinPseudoType:
       out << "typeof("
           << cast<TypeOfMixinPseudoType>(*this)
                  .mixin_type()
                  .declaration()
                  .name()
-          << ")";
-      break;
-    case Value::Kind::TypeOfInterfaceType:
-      out << "typeof("
-          << cast<TypeOfInterfaceType>(*this)
-                 .interface_type()
-                 .declaration()
-                 .name()
-          << ")";
-      break;
-    case Value::Kind::TypeOfConstraintType:
-      out << "typeof(" << cast<TypeOfConstraintType>(*this).constraint_type()
-          << ")";
-      break;
-    case Value::Kind::TypeOfChoiceType:
-      out << "typeof(" << cast<TypeOfChoiceType>(*this).choice_type().name()
           << ")";
       break;
     case Value::Kind::TypeOfParameterizedEntityName:
@@ -629,7 +613,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     return true;
   }
   if (t1->kind() != t2->kind()) {
-    if (isa<AssociatedConstant>(t1) || isa<AssociatedConstant>(t2)) {
+    if (IsValueKindDependent(t1) || IsValueKindDependent(t2)) {
       return ValueEqual(t1, t2, equality_ctx);
     }
     return false;
@@ -740,21 +724,6 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     case Value::Kind::VariableType:
       return &cast<VariableType>(*t1).binding() ==
              &cast<VariableType>(*t2).binding();
-    case Value::Kind::TypeOfClassType:
-      return TypeEqual(&cast<TypeOfClassType>(*t1).class_type(),
-                       &cast<TypeOfClassType>(*t2).class_type(), equality_ctx);
-    case Value::Kind::TypeOfInterfaceType:
-      return TypeEqual(&cast<TypeOfInterfaceType>(*t1).interface_type(),
-                       &cast<TypeOfInterfaceType>(*t2).interface_type(),
-                       equality_ctx);
-    case Value::Kind::TypeOfConstraintType:
-      return TypeEqual(&cast<TypeOfConstraintType>(*t1).constraint_type(),
-                       &cast<TypeOfConstraintType>(*t2).constraint_type(),
-                       equality_ctx);
-    case Value::Kind::TypeOfChoiceType:
-      return TypeEqual(&cast<TypeOfChoiceType>(*t1).choice_type(),
-                       &cast<TypeOfChoiceType>(*t2).choice_type(),
-                       equality_ctx);
     case Value::Kind::StaticArrayType: {
       const auto& array1 = cast<StaticArrayType>(*t1);
       const auto& array2 = cast<StaticArrayType>(*t2);
@@ -901,11 +870,7 @@ auto ValueStructurallyEqual(
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
     case Value::Kind::StringType:
-    case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfMixinPseudoType:
-    case Value::Kind::TypeOfInterfaceType:
-    case Value::Kind::TypeOfConstraintType:
-    case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
     case Value::Kind::StaticArrayType:
@@ -942,7 +907,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
   // associated constant; otherwise we should be able to do better by looking
   // at the structures of the values.
   if (equality_ctx) {
-    if (isa<AssociatedConstant>(v1)) {
+    if (IsValueKindDependent(v1)) {
       auto visitor = [&](Nonnull<const Value*> maybe_v2) {
         return !ValueStructurallyEqual(v2, maybe_v2, equality_ctx);
       };
@@ -950,7 +915,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
         return true;
       }
     }
-    if (isa<AssociatedConstant>(v2)) {
+    if (IsValueKindDependent(v2)) {
       auto visitor = [&](Nonnull<const Value*> maybe_v1) {
         return !ValueStructurallyEqual(v1, maybe_v1, equality_ctx);
       };
