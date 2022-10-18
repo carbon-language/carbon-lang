@@ -6,10 +6,10 @@
 // RUN: %{carbon-run-semantics}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   Function(
-// CHECK:STDOUT:       %0,
+// CHECK:STDOUT:       %1,
 // CHECK:STDOUT:       {
 // CHECK:STDOUT:       }),
-// CHECK:STDOUT:   SetName(`Foo`, %0),
+// CHECK:STDOUT:   SetName(`Foo`, %1),
 // CHECK:STDOUT: }
 
 fn Foo() {}
