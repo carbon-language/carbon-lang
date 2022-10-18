@@ -77,7 +77,6 @@ class Value {
     StringType,
     StringValue,
     TypeOfMixinPseudoType,
-    TypeOfInterfaceType,
     TypeOfConstraintType,
     TypeOfChoiceType,
     TypeOfParameterizedEntityName,
@@ -1227,21 +1226,6 @@ class TypeOfMixinPseudoType : public Value {
 
  private:
   Nonnull<const MixinPseudoType*> mixin_type_;
-};
-
-class TypeOfInterfaceType : public Value {
- public:
-  explicit TypeOfInterfaceType(Nonnull<const InterfaceType*> iface_type)
-      : Value(Kind::TypeOfInterfaceType), iface_type_(iface_type) {}
-
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::TypeOfInterfaceType;
-  }
-
-  auto interface_type() const -> const InterfaceType& { return *iface_type_; }
-
- private:
-  Nonnull<const InterfaceType*> iface_type_;
 };
 
 class TypeOfConstraintType : public Value {
