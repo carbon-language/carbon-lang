@@ -53,10 +53,14 @@ void RuntimeScope::Print(llvm::raw_ostream& out) const {
 void RuntimeScope::Bind(ValueNodeView value_node, Nonnull<const Value*> value){
   CARBON_CHECK(!value_node.constant_value().has_value());
   CARBON_CHECK(value->kind() != Value::Kind::LValue);
-  auto id = heap_->AllocateValue(value);
-  auto [it, success] = locals_.insert(
-      {value_node, heap_->arena().New<LValue>(Address(id))});
-  CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
+  auto allocation_id = heap_->GetAllocationId(value);
+  if(!allocation_id) {
+    Initialize(value_node,value);
+  }else{
+    auto [it, success] =
+        locals_.insert({value_node, heap_->arena().New<LValue>(Address(*allocation_id))});
+    CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
+  }
 }
 
 void RuntimeScope::Initialize(ValueNodeView value_node,

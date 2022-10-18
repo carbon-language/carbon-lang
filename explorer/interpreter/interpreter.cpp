@@ -822,11 +822,6 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
   if (placeholder.value_node().has_value()) {
     method_scope.Bind(*placeholder.value_node(), receiver);
   }
-#if 0
-  CARBON_CHECK(PatternMatch(&method.me_pattern().value(), receiver,
-                            fun->source_loc(), &method_scope, generic_args,
-                            trace_stream_, this->arena_));
-#endif
   CARBON_CHECK(method.body().has_value())
       << "Calling a method that's missing a body";
 
