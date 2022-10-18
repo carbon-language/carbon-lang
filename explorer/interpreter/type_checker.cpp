@@ -4144,13 +4144,11 @@ auto TypeChecker::DeclareMixinDeclaration(Nonnull<MixinDeclaration*> mixin_decl,
 }
 
 // EXPERIMENTAL MIXIN FEATURE
-/*
-** Checks to see if mixin_decl is already within collected_members_. If it is,
-** then the mixin has already been type checked before either while type
-** checking a previous mix declaration or while type checking the original mixin
-** declaration. If not, then every member declaration is type checked and then
-** added to collected_members_ under the mixin_decl key.
-*/
+// Checks to see if mixin_decl is already within collected_members_. If it is,
+// then the mixin has already been type checked before either while type
+// checking a previous mix declaration or while type checking the original mixin
+// declaration. If not, then every member declaration is type checked and then
+// added to collected_members_ under the mixin_decl key.
 auto TypeChecker::TypeCheckMixinDeclaration(
     Nonnull<const MixinDeclaration*> mixin_decl, const ImplScope& impl_scope)
     -> ErrorOr<Success> {
@@ -4187,12 +4185,10 @@ auto TypeChecker::TypeCheckMixinDeclaration(
 }
 
 // EXPERIMENTAL MIXIN FEATURE
-/*
-** Type checks the mixin mentioned in the mix declaration.
-** TypeCheckMixinDeclaration ensures that the members of that mixin are
-** available in collected_members_. The mixin members are then collected as
-** members of the enclosing class or mixin declaration.
-*/
+// Type checks the mixin mentioned in the mix declaration.
+// TypeCheckMixinDeclaration ensures that the members of that mixin are
+// available in collected_members_. The mixin members are then collected as
+// members of the enclosing class or mixin declaration.
 auto TypeChecker::TypeCheckMixDeclaration(
     Nonnull<MixDeclaration*> mix_decl, const ImplScope& impl_scope,
     std::optional<Nonnull<const Declaration*>> enclosing_decl)
