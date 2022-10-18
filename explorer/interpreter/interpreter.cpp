@@ -281,7 +281,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       CARBON_CHECK(bindings.has_value());
       const auto& placeholder = cast<BindingPlaceholderValue>(*p);
       if (placeholder.value_node().has_value()) {
-          (*bindings)->Initialize(*placeholder.value_node(), v);
+        (*bindings)->Initialize(*placeholder.value_node(), v);
       }
       return true;
     }
@@ -900,16 +900,15 @@ auto Interpreter::CallFunction(const CallExpression& call,
       BindingMap generic_args;
       // Bind the receiver to the `me` parameter.
       auto p = &method.me_pattern().value();
-      if(p->kind() == Value::Kind::BindingPlaceholderValue) {
+      if (p->kind() == Value::Kind::BindingPlaceholderValue) {
         const auto& placeholder = cast<BindingPlaceholderValue>(*p);
         if (placeholder.value_node().has_value()) {
           method_scope.Bind(*placeholder.value_node(), m.receiver());
         }
-      }else{
+      } else {
         CARBON_CHECK(PatternMatch(&method.me_pattern().value(), m.receiver(),
-                                  call.source_loc(), &method_scope, generic_args,
-                                  trace_stream_, this->arena_));
-
+                                  call.source_loc(), &method_scope,
+                                  generic_args, trace_stream_, this->arena_));
       }
       // Bind the arguments to the parameters.
       CARBON_CHECK(PatternMatch(&method.param_pattern().value(), converted_args,
@@ -2110,7 +2109,8 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   CleanupAction& cleanup = cast<CleanupAction>(act);
   if (act.pos() < cleanup.allocations_count()) {
-    auto allocation = act.scope()->allocations()[cleanup.allocations_count() - act.pos() - 1];
+    auto allocation =
+        act.scope()->allocations()[cleanup.allocations_count() - act.pos() - 1];
     auto lvalue = arena_->New<LValue>(Address(allocation));
     SourceLocation source_loc("destructor", 1);
     auto value = heap_.Read(lvalue->address(), source_loc);

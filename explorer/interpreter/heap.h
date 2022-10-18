@@ -41,7 +41,8 @@ class Heap : public HeapAllocationInterface {
   auto Write(const Address& a, Nonnull<const Value*> v,
              SourceLocation source_loc) -> ErrorOr<Success>;
 
-  auto GetAllocationId(Nonnull<const Value*> v) const -> std::optional<AllocationId> override;
+  auto GetAllocationId(Nonnull<const Value*> v) const
+      -> std::optional<AllocationId> override;
 
   // Put the given value on the heap and mark its state.
   // Mark UninitializedValue as uninitialized and other values as alive.

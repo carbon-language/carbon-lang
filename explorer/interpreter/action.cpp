@@ -25,7 +25,7 @@ RuntimeScope::RuntimeScope(RuntimeScope&& other) noexcept
     : locals_(std::move(other.locals_)),
       // To transfer ownership of other.allocations_, we have to empty it out.
       allocations_(std::exchange(other.allocations_, {})),
-      heap_(other.heap_){}
+      heap_(other.heap_) {}
 
 auto RuntimeScope::operator=(RuntimeScope&& rhs) noexcept -> RuntimeScope& {
   locals_ = std::move(rhs.locals_);
@@ -50,18 +50,18 @@ void RuntimeScope::Print(llvm::raw_ostream& out) const {
   out << "}";
 }
 
-void RuntimeScope::Bind(ValueNodeView value_node, Nonnull<const Value*> value){
+void RuntimeScope::Bind(ValueNodeView value_node, Nonnull<const Value*> value) {
   CARBON_CHECK(!value_node.constant_value().has_value());
   CARBON_CHECK(value->kind() != Value::Kind::LValue);
   auto allocation_id = heap_->GetAllocationId(value);
-  if(!allocation_id) {
+  if (!allocation_id) {
     auto id = heap_->AllocateValue(value);
     auto [it, success] =
         locals_.insert({value_node, heap_->arena().New<LValue>(Address(id))});
     CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
-  }else{
-    auto [it, success] =
-        locals_.insert({value_node, heap_->arena().New<LValue>(Address(*allocation_id))});
+  } else {
+    auto [it, success] = locals_.insert(
+        {value_node, heap_->arena().New<LValue>(Address(*allocation_id))});
     CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
   }
 }

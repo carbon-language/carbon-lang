@@ -27,7 +27,6 @@ namespace Carbon {
 // not compile-time constants.
 class RuntimeScope {
  public:
-
   // Returns a RuntimeScope whose Get() operation for a given name returns the
   // storage owned by the first entry in `scopes` that defines that name. This
   // behavior is closely analogous to a `[&]` capture in C++, hence the name.
@@ -37,8 +36,7 @@ class RuntimeScope {
       -> RuntimeScope;
 
   // Constructs a RuntimeScope that allocates storage in `heap`.
-  explicit RuntimeScope(Nonnull<HeapAllocationInterface*> heap)
-      : heap_(heap) {}
+  explicit RuntimeScope(Nonnull<HeapAllocationInterface*> heap) : heap_(heap) {}
 
   // Moving a RuntimeScope transfers ownership of its allocations.
   RuntimeScope(RuntimeScope&&) noexcept;
@@ -66,7 +64,7 @@ class RuntimeScope {
       -> std::optional<Nonnull<const LValue*>>;
 
   // Returns the local values in created order
-  auto allocations() const -> const std::vector<AllocationId> & {
+  auto allocations() const -> const std::vector<AllocationId>& {
     return allocations_;
   }
 
@@ -277,7 +275,8 @@ class DeclarationAction : public Action {
 class CleanupAction : public Action {
  public:
   explicit CleanupAction(RuntimeScope scope)
-      : Action(Kind::CleanUpAction), allocations_count_(scope.allocations().size()) {
+      : Action(Kind::CleanUpAction),
+        allocations_count_(scope.allocations().size()) {
     StartScope(std::move(scope));
   }
 
