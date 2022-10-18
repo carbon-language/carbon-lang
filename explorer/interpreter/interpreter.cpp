@@ -1686,8 +1686,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
             std::make_unique<ExpressionAction>(&cast<For>(stmt).loop_target()));
       }
       if (act.pos() == 1) {
-        auto source_array =
-            cast<const TupleValue>(act.results()[TargetVarPosInResult]);
+        const auto* source_array =
+            cast<TupleValue>(act.results()[TargetVarPosInResult]);
 
         auto end_index = static_cast<int>(source_array->elements().size());
         if (end_index == 0) {
