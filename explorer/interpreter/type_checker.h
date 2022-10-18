@@ -67,9 +67,8 @@ class TypeChecker {
   // Given the witnesses for the components of a constraint, form a witness for
   // the constraint.
   auto MakeConstraintWitness(
-      const ConstraintType& constraint,
-      std::vector<Nonnull<const Witness*>> impl_constraint_witnesses,
-      SourceLocation source_loc) const -> Nonnull<const Witness*>;
+      std::vector<Nonnull<const Witness*>> impl_constraint_witnesses) const
+      -> Nonnull<const Witness*>;
 
   // Given the witnesses for the components of a constraint, form a witness for
   // the constraint.
@@ -168,7 +167,6 @@ class TypeChecker {
       CallExpression& call, Nonnull<const Value*> params,
       llvm::ArrayRef<FunctionType::GenericParameter> generic_params,
       llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings,
-      llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
       const ImplScope& impl_scope) -> ErrorOr<Success>;
 
   // Establish the `static_type` and `constant_value` of the
