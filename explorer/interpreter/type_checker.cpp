@@ -27,7 +27,6 @@
 
 using llvm::cast;
 using llvm::dyn_cast;
-using llvm::dyn_cast_or_null;
 using llvm::isa;
 
 namespace Carbon {
@@ -44,7 +43,7 @@ static void SetValue(Nonnull<Pattern*> pattern, Nonnull<const Value*> value) {
 
 auto TypeChecker::IsSameType(Nonnull<const Value*> type1,
                              Nonnull<const Value*> type2,
-                             const ImplScope& impl_scope) const -> bool {
+                             const ImplScope& /*impl_scope*/) const -> bool {
   return TypeEqual(type1, type2, std::nullopt);
 }
 
@@ -1076,7 +1075,7 @@ class TypeChecker::ConstraintTypeBuilder {
                         Nonnull<GenericBinding*> self_binding)
       : self_binding_(PrepareSelfBinding(arena, self_binding)),
         impl_binding_(AddImplBinding(arena, self_binding_)) {}
-  ConstraintTypeBuilder(Nonnull<Arena*> arena,
+  ConstraintTypeBuilder(Nonnull<Arena*> /*arena*/,
                         Nonnull<GenericBinding*> self_binding,
                         Nonnull<ImplBinding*> impl_binding)
       : self_binding_(self_binding), impl_binding_(impl_binding) {}
@@ -1326,7 +1325,6 @@ class TypeChecker::ConstraintTypeBuilder {
     return impl_binding;
   }
 
- private:
   Nonnull<GenericBinding*> self_binding_;
   Nonnull<ImplBinding*> impl_binding_;
   std::vector<ConstraintType::ImplConstraint> impl_constraints_;
@@ -1403,7 +1401,7 @@ auto TypeChecker::Substitute(const Bindings& bindings,
     return type;
   }
 
-  auto SubstituteIntoBindings =
+  auto substitute_into_bindings =
       [&](Nonnull<const Bindings*> inner_bindings) -> Nonnull<const Bindings*> {
     BindingMap values;
     for (const auto& [name, value] : inner_bindings->args()) {
@@ -1505,14 +1503,14 @@ auto TypeChecker::Substitute(const Bindings& bindings,
       Nonnull<const NominalClassType*> new_class_type =
           arena_->New<NominalClassType>(
               &class_type.declaration(),
-              SubstituteIntoBindings(&class_type.bindings()));
+              substitute_into_bindings(&class_type.bindings()));
       return new_class_type;
     }
     case Value::Kind::InterfaceType: {
       const auto& iface_type = cast<InterfaceType>(*type);
       Nonnull<const InterfaceType*> new_iface_type = arena_->New<InterfaceType>(
           &iface_type.declaration(),
-          SubstituteIntoBindings(&iface_type.bindings()));
+          substitute_into_bindings(&iface_type.bindings()));
       return new_iface_type;
     }
     case Value::Kind::ConstraintType: {
@@ -1561,7 +1559,8 @@ auto TypeChecker::Substitute(const Bindings& bindings,
     case Value::Kind::ImplWitness: {
       const auto& witness = cast<ImplWitness>(*type);
       return arena_->New<ImplWitness>(
-          &witness.declaration(), SubstituteIntoBindings(&witness.bindings()));
+          &witness.declaration(),
+          substitute_into_bindings(&witness.bindings()));
     }
     case Value::Kind::BindingWitness: {
       auto it =
@@ -1833,7 +1832,7 @@ auto TypeChecker::LookupInConstraint(SourceLocation source_loc,
       // constraints.
       continue;
     }
-    const InterfaceType& iface_type = cast<InterfaceType>(*lookup.context);
+    const auto& iface_type = cast<InterfaceType>(*lookup.context);
     if (std::optional<Nonnull<const Declaration*>> member =
             FindMember(member_name, iface_type.declaration().members());
         member.has_value()) {
@@ -2279,7 +2278,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                      << " does not have a field named " << access.member_name();
             }
             case Value::Kind::ChoiceType: {
-              const ChoiceType& choice = cast<ChoiceType>(*type);
+              const auto& choice = cast<ChoiceType>(*type);
               std::optional<Nonnull<const Value*>> parameter_types =
                   choice.FindAlternative(access.member_name());
               if (!parameter_types.has_value()) {
@@ -2305,8 +2304,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               return Success();
             }
             case Value::Kind::NominalClassType: {
-              const NominalClassType& class_type =
-                  cast<NominalClassType>(*type);
+              const auto& class_type = cast<NominalClassType>(*type);
               CARBON_ASSIGN_OR_RETURN(
                   auto type_member,
                   FindMixedMemberAndType(
@@ -2440,7 +2438,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         access.set_impl(impl);
       }
 
-      auto SubstituteIntoMemberType = [&]() {
+      auto substitute_into_member_type = [&]() {
         Nonnull<const Value*> member_type = &member_name.member().type();
         if (member_name.interface()) {
           Nonnull<const InterfaceType*> iface_type = *member_name.interface();
@@ -2460,7 +2458,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                    : DeclarationKind::VariableDeclaration) {
         case DeclarationKind::VariableDeclaration:
           if (has_instance) {
-            access.set_static_type(SubstituteIntoMemberType());
+            access.set_static_type(substitute_into_member_type());
             access.set_value_category(access.object().value_category());
             return Success();
           }
@@ -2472,14 +2470,14 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             CARBON_CHECK(!has_instance || is_instance_member ||
                          !member_name.base_type().has_value())
                 << "vacuous compound member access";
-            access.set_static_type(SubstituteIntoMemberType());
+            access.set_static_type(substitute_into_member_type());
             access.set_value_category(ValueCategory::Let);
             return Success();
           }
           break;
         }
         case DeclarationKind::AssociatedConstantDeclaration:
-          access.set_static_type(SubstituteIntoMemberType());
+          access.set_static_type(substitute_into_member_type());
           access.set_value_category(access.object().value_category());
           return Success();
         default:
@@ -2830,7 +2828,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           // TODO: Remove Print special casing once we have variadics or
           // overloads. Here, that's the name Print instead of __intrinsic_print
           // in errors.
-          if (args.size() < 1 || args.size() > 2) {
+          if (args.empty() || args.size() > 2) {
             return ProgramError(e->source_loc())
                    << "Print takes 1 or 2 arguments, received " << args.size();
           }
@@ -3402,9 +3400,10 @@ auto TypeChecker::TypeCheckPattern(
         }
         CARBON_RETURN_IF_ERROR(TypeCheckPattern(
             field, expected_field_type, impl_scope, enclosing_value_category));
-        if (trace_stream_)
+        if (trace_stream_) {
           **trace_stream_ << "finished checking tuple pattern field " << *field
                           << "\n";
+        }
         field_types.push_back(&field->static_type());
       }
       tuple.set_static_type(arena_->New<TupleValue>(std::move(field_types)));
@@ -3424,7 +3423,7 @@ auto TypeChecker::TypeCheckPattern(
         return ProgramError(alternative.source_loc())
                << "alternative pattern does not name a choice type.";
       }
-      const ChoiceType& choice_type = cast<ChoiceType>(*type);
+      const auto& choice_type = cast<ChoiceType>(*type);
       if (expected) {
         CARBON_RETURN_IF_ERROR(ExpectType(alternative.source_loc(),
                                           "alternative pattern", &choice_type,
@@ -3917,8 +3916,9 @@ auto TypeChecker::TypeCheckCallableDeclaration(Nonnull<CallableDeclaration*> f,
     function_scope.AddParent(&impl_scope);
     BringImplsIntoScope(cast<FunctionType>(f->static_type()).impl_bindings(),
                         function_scope);
-    if (trace_stream_)
+    if (trace_stream_) {
       **trace_stream_ << function_scope;
+    }
     CARBON_RETURN_IF_ERROR(TypeCheckStmt(*f->body(), function_scope));
     if (!f->return_term().is_omitted()) {
       CARBON_RETURN_IF_ERROR(
@@ -4321,7 +4321,7 @@ auto TypeChecker::CheckImplIsDeducible(
     SourceLocation source_loc, Nonnull<const Value*> impl_type,
     Nonnull<const InterfaceType*> impl_iface,
     llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings,
-    const ImplScope& impl_scope) -> ErrorOr<Success> {
+    const ImplScope& /*impl_scope*/) -> ErrorOr<Success> {
   ArgumentDeduction deduction(source_loc, "impl", deduced_bindings,
                               trace_stream_);
   CARBON_RETURN_IF_ERROR(deduction.Deduce(impl_type, impl_type,
@@ -4339,7 +4339,7 @@ auto TypeChecker::CheckImplIsDeducible(
 auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
                                       Nonnull<const ImplDeclaration*> impl_decl,
                                       Nonnull<const Value*> self_type,
-                                      Nonnull<const Witness*> self_witness,
+                                      Nonnull<const Witness*> /*self_witness*/,
                                       Nonnull<const Witness*> iface_witness,
                                       const ImplScope& impl_scope)
     -> ErrorOr<Success> {
@@ -4654,7 +4654,7 @@ auto TypeChecker::TypeCheckChoiceDeclaration(
   return Success();
 }
 
-static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
+static auto IsValidTypeForAliasTarget(Nonnull<const Value*> type) -> bool {
   switch (type->kind()) {
     case Value::Kind::IntValue:
     case Value::Kind::FunctionValue:

@@ -40,7 +40,7 @@ class TypeChecker {
   // Construct a type that is the same as `type` except that occurrences
   // of type variables (aka. `GenericBinding` and references to `ImplBinding`)
   // are replaced by their corresponding type or witness in `dict`.
-  auto Substitute(const Bindings& dict, Nonnull<const Value*> type) const
+  auto Substitute(const Bindings& bindings, Nonnull<const Value*> type) const
       -> Nonnull<const Value*>;
 
   // If `impl` can be an implementation of interface `iface` for the given
@@ -60,7 +60,7 @@ class TypeChecker {
   auto FindMixedMemberAndType(SourceLocation source_loc,
                               const std::string_view& name,
                               llvm::ArrayRef<Nonnull<Declaration*>> members,
-                              const Nonnull<const Value*> enclosing_type)
+                              Nonnull<const Value*> enclosing_type)
       -> ErrorOr<std::optional<
           std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>>;
 
@@ -298,7 +298,7 @@ class TypeChecker {
 
   // Type check all the members of the implementation.
   auto TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
-                                const ImplScope& impl_scope)
+                                const ImplScope& enclosing_scope)
       -> ErrorOr<Success>;
 
   // This currently does nothing, but perhaps that will change in the future.

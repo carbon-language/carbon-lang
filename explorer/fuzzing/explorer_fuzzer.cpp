@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include <libprotobuf_mutator/src/libfuzzer/libfuzzer_macro.h>
+#include <libfuzzer/libfuzzer_macro.h>
 
 #include "common/error.h"
 #include "explorer/fuzzing/fuzzer_util.h"
