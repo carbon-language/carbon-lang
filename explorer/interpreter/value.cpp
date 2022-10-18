@@ -20,7 +20,6 @@ namespace Carbon {
 using llvm::cast;
 using llvm::dyn_cast;
 using llvm::dyn_cast_or_null;
-using llvm::isa;
 
 auto StructValue::FindField(std::string_view name) const
     -> std::optional<Nonnull<const Value*>> {
@@ -39,7 +38,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
   std::string_view f = field.name();
 
   if (field.witness().has_value()) {
-    Nonnull<const Witness*> witness = cast<Witness>(*field.witness());
+    auto witness = cast<Witness>(*field.witness());
 
     // Associated constants.
     if (auto* assoc_const = dyn_cast_or_null<AssociatedConstantDeclaration>(
@@ -104,7 +103,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                                           << " or its " << class_type;
         } else if ((*func)->declaration().is_method()) {
           // Found a method. Turn it into a bound method.
-          const FunctionValue& m = cast<FunctionValue>(**func);
+          const auto& m = cast<FunctionValue>(**func);
           return arena->New<BoundMethodValue>(&m.declaration(), me_value,
                                               &class_type.bindings());
         } else {
@@ -125,7 +124,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
     }
     case Value::Kind::NominalClassType: {
       // Access a class function.
-      const NominalClassType& class_type = cast<NominalClassType>(*v);
+      const auto& class_type = cast<NominalClassType>(*v);
       std::optional<Nonnull<const FunctionValue*>> fun =
           class_type.FindFunction(f);
       if (fun == std::nullopt) {
@@ -178,7 +177,7 @@ static auto SetFieldImpl(
       return arena->New<StructValue>(elements);
     }
     case Value::Kind::NominalClassValue: {
-      const NominalClassValue& object = cast<NominalClassValue>(*value);
+      const auto& object = cast<NominalClassValue>(*value);
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inits,
                               SetFieldImpl(arena, &object.inits(), path_begin,
                                            path_end, field_value, source_loc));
@@ -207,7 +206,7 @@ auto Value::SetField(Nonnull<Arena*> arena, const FieldPath& path,
                      Nonnull<const Value*> field_value,
                      SourceLocation source_loc) const
     -> ErrorOr<Nonnull<const Value*>> {
-  return SetFieldImpl(arena, Nonnull<const Value*>(this),
+  return SetFieldImpl(arena, static_cast<Nonnull<const Value*>>(this),
                       path.components_.begin(), path.components_.end(),
                       field_value, source_loc);
 }
@@ -287,14 +286,14 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << (cast<BoolValue>(*this).value() ? "true" : "false");
       break;
     case Value::Kind::DestructorValue: {
-      const DestructorValue& destructor = cast<DestructorValue>(*this);
+      const auto& destructor = cast<DestructorValue>(*this);
       out << "destructor [ ";
       out << destructor.declaration().me_pattern();
       out << " ]";
       break;
     }
     case Value::Kind::FunctionValue: {
-      const FunctionValue& fun = cast<FunctionValue>(*this);
+      const auto& fun = cast<FunctionValue>(*this);
       out << "fun<" << fun.declaration().name() << ">";
       if (!fun.type_args().empty()) {
         out << "[";
@@ -315,7 +314,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       break;
     }
     case Value::Kind::BoundMethodValue: {
-      const BoundMethodValue& method = cast<BoundMethodValue>(*this);
+      const auto& method = cast<BoundMethodValue>(*this);
       out << "bound_method<" << method.declaration().name() << ">";
       if (!method.type_args().empty()) {
         out << "[";

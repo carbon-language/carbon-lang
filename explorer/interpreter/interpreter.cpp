@@ -160,7 +160,7 @@ class Interpreter {
 
   void PrintState(llvm::raw_ostream& out);
 
-  Phase phase() const { return phase_; }
+  auto phase() const -> Phase { return phase_; }
 
   Nonnull<Arena*> arena_;
 
@@ -836,7 +836,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
           alt.alt_name(), alt.choice_name(), arg));
     }
     case Value::Kind::FunctionValue: {
-      const FunctionValue& fun_val = cast<FunctionValue>(*fun);
+      const auto& fun_val = cast<FunctionValue>(*fun);
       const FunctionDeclaration& function = fun_val.declaration();
       if (!function.body().has_value()) {
         return ProgramError(call.source_loc())
@@ -1219,7 +1219,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       }
     }
     case ExpressionKind::CallExpression: {
-      const CallExpression& call = cast<CallExpression>(exp);
+      const auto& call = cast<CallExpression>(exp);
       unsigned int num_impls = call.impls().size();
       if (act.pos() == 0) {
         //    { {e1(e2) :: C, E, F} :: S, H}
@@ -1231,12 +1231,12 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         // -> { { e :: v([]) :: C, E, F} :: S, H}
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(&call.argument()));
-      } else if (num_impls > 0 && act.pos() < 2 + int(num_impls)) {
+      } else if (num_impls > 0 && act.pos() < 2 + static_cast<int>(num_impls)) {
         auto iter = call.impls().begin();
         std::advance(iter, act.pos() - 2);
         return todo_.Spawn(
             std::make_unique<WitnessAction>(cast<Witness>(iter->second)));
-      } else if (act.pos() == 2 + int(num_impls)) {
+      } else if (act.pos() == 2 + static_cast<int>(num_impls)) {
         //    { { v2 :: v1([]) :: C, E, F} :: S, H}
         // -> { {C',E',F'} :: {C, E, F} :: S, H}
         ImplWitnessMap witnesses;
@@ -1249,12 +1249,13 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         }
         return CallFunction(call, act.results()[0], act.results()[1],
                             std::move(witnesses));
-      } else if (act.pos() == 3 + int(num_impls)) {
+      } else if (act.pos() == 3 + static_cast<int>(num_impls)) {
         if (act.results().size() < 3 + num_impls) {
           // Control fell through without explicit return.
           return todo_.FinishAction(TupleValue::Empty());
         } else {
-          return todo_.FinishAction(act.results()[2 + int(num_impls)]);
+          return todo_.FinishAction(
+              act.results()[2 + static_cast<int>(num_impls)]);
         }
       } else {
         CARBON_FATAL() << "in StepExp with Call pos " << act.pos();
@@ -1298,7 +1299,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> string_value,
               Convert(args[1], arena_->New<StringType>(), exp.source_loc()));
-          if (cast<BoolValue>(condition)->value() == false) {
+          bool condition_value = cast<BoolValue>(condition)->value();
+          if (!condition_value) {
             return ProgramError(exp.source_loc()) << *string_value;
           }
           return todo_.FinishAction(TupleValue::Empty());
@@ -1684,8 +1686,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
             std::make_unique<ExpressionAction>(&cast<For>(stmt).loop_target()));
       }
       if (act.pos() == 1) {
-        Nonnull<const TupleValue*> source_array =
-            cast<const TupleValue>(act.results()[TargetVarPosInResult]);
+        const auto* source_array =
+            cast<TupleValue>(act.results()[TargetVarPosInResult]);
 
         auto end_index = static_cast<int>(source_array->elements().size());
         if (end_index == 0) {
@@ -1697,11 +1699,10 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
             &cast<For>(stmt).variable_declaration()));
       }
       if (act.pos() == 2) {
-        Nonnull<const BindingPlaceholderValue*> loop_var =
-            cast<const BindingPlaceholderValue>(
-                act.results()[LoopVarPosInResult]);
-        Nonnull<const TupleValue*> source_array =
-            cast<const TupleValue>(act.results()[TargetVarPosInResult]);
+        const auto* loop_var =
+            cast<BindingPlaceholderValue>(act.results()[LoopVarPosInResult]);
+        const auto* source_array =
+            cast<TupleValue>(act.results()[TargetVarPosInResult]);
 
         auto start_index =
             cast<IntValue>(act.results()[CurrentIndexPosInResult])->value();
@@ -1719,11 +1720,10 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
             cast<IntValue>(act.results()[EndIndexPosInResult])->value();
 
         if (current_index < end_index) {
-          Nonnull<const TupleValue*> source_array =
+          auto source_array =
               cast<const TupleValue>(act.results()[TargetVarPosInResult]);
-          Nonnull<const BindingPlaceholderValue*> loop_var =
-              cast<const BindingPlaceholderValue>(
-                  act.results()[LoopVarPosInResult]);
+          auto loop_var = cast<const BindingPlaceholderValue>(
+              act.results()[LoopVarPosInResult]);
 
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> assigned_array_element,
@@ -2008,7 +2008,7 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
 
 auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
-  CleanupAction& cleanup = cast<CleanupAction>(act);
+  auto& cleanup = cast<CleanupAction>(act);
   if (act.pos() < cleanup.locals_count()) {
     auto lvalue = act.scope()->locals()[cleanup.locals_count() - act.pos() - 1];
     SourceLocation source_loc("destructor", 1);
