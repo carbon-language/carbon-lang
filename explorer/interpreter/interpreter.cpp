@@ -1323,6 +1323,13 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           int r = (generator() % (high - low)) + low;
           return todo_.FinishAction(arena_->New<IntValue>(r));
         }
+        case IntrinsicExpression::Intrinsic::AsEqualType: {
+          CARBON_CHECK(args.size() == 2);
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> val,
+              Convert(args[0], args[1], intrinsic.source_loc()));
+          return todo_.FinishAction(val);
+        }
         case IntrinsicExpression::Intrinsic::IntEq: {
           CARBON_CHECK(args.size() == 2);
           auto lhs = cast<IntValue>(*args[0]).value();

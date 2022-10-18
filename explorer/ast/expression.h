@@ -715,6 +715,7 @@ class IntrinsicExpression : public Expression {
     Alloc,
     Dealloc,
     Rand,
+    AsEqualType,
     IntEq,
     StrEq,
     StrCompare,

@@ -2968,6 +2968,27 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
 
           return Success();
         }
+        case IntrinsicExpression::Intrinsic::AsEqualType: {
+          if (args.size() != 2) {
+            return ProgramError(e->source_loc())
+                   << "__intrinsic_as_equal_type takes 2 arguments";
+          }
+          if (!IsTypeOfType(&args[1]->static_type())) {
+            return ProgramError(e->source_loc())
+                   << "second argument should be a type";
+          }
+          CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
+                                  InterpExp(args[1], arena_, trace_stream_));
+          SingleStepEqualityContext equality_ctx(&impl_scope);
+          if (!TypeEqual(&args[0]->static_type(), type, &equality_ctx)) {
+            return ProgramError(e->source_loc())
+                   << "type " << args[0]->static_type()
+                   << " of first argument is not known to be equal to value "
+                   << *type << " of second argument";
+          }
+          e->set_static_type(type);
+          return Success();
+        }
         case IntrinsicExpression::Intrinsic::IntEq: {
           if (args.size() != 2) {
             return ProgramError(e->source_loc())

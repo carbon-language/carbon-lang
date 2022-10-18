@@ -18,21 +18,9 @@ interface ImplicitAs(T:! Type) {
   extends As(T);
 }
 
-// TODO: Should we just use an intrinsic for this?
-interface __EqualConverter {
-  let T:! Type;
-  fn Convert(t: T) -> Self;
-}
-fn __EqualConvert[T:! Type](t: T, U:! __EqualConverter where .T = T) -> U {
-  return U.Convert(t);
-}
-impl forall [U:! Type] U as __EqualConverter where .T = U {
-  fn Convert(u: U) -> U { return u; }
-}
-
 // Every type implicitly converts to single-step-equal types.
 impl forall [T:! Type, U:! Type where .Self == T] T as ImplicitAs(U) {
-  fn Convert[me: Self]() -> U { return __EqualConvert(me, U); }
+  fn Convert[me: Self]() -> U { return __intrinsic_as_equal_type(me, U); }
 }
 
 // TODO: Simplify this once we have variadics.

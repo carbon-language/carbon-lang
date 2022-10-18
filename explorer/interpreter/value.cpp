@@ -631,10 +631,10 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
   if (t1 == t2) {
     return true;
   }
+  if (IsValueKindDependent(t1) || IsValueKindDependent(t2)) {
+    return ValueEqual(t1, t2, equality_ctx);
+  }
   if (t1->kind() != t2->kind()) {
-    if (IsValueKindDependent(t1) || IsValueKindDependent(t2)) {
-      return ValueEqual(t1, t2, equality_ctx);
-    }
     return false;
   }
   switch (t1->kind()) {
@@ -675,9 +675,6 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
       return iface1.declaration().name() == iface2.declaration().name() &&
              BindingMapEqual(iface1.args(), iface2.args(), equality_ctx);
     }
-    case Value::Kind::AssociatedConstant:
-      // Associated constants are sometimes types.
-      return ValueEqual(t1, t2, equality_ctx);
     case Value::Kind::ConstraintType: {
       const auto& constraint1 = cast<ConstraintType>(*t1);
       const auto& constraint2 = cast<ConstraintType>(*t2);
@@ -740,9 +737,9 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     case Value::Kind::TypeType:
     case Value::Kind::StringType:
       return true;
+    case Value::Kind::AssociatedConstant:
     case Value::Kind::VariableType:
-      return &cast<VariableType>(*t1).binding() ==
-             &cast<VariableType>(*t2).binding();
+      CARBON_FATAL() << "dependent value kinds were handled earlier";
     case Value::Kind::TypeOfClassType:
       return TypeEqual(&cast<TypeOfClassType>(*t1).class_type(),
                        &cast<TypeOfClassType>(*t2).class_type(), equality_ctx);
@@ -885,6 +882,11 @@ auto ValueStructurallyEqual(
              TypeEqual(&assoc1.base(), &assoc2.base(), equality_ctx) &&
              TypeEqual(&assoc1.interface(), &assoc2.interface(), equality_ctx);
     }
+    case Value::Kind::VariableType: {
+      // We can't dispatch to TypeEqual because it dispatches to us.
+      return &cast<VariableType>(*v1).binding() ==
+             &cast<VariableType>(*v2).binding();
+    }
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
@@ -902,7 +904,6 @@ auto ValueStructurallyEqual(
     case Value::Kind::ConstraintImplWitness:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
-    case Value::Kind::VariableType:
     case Value::Kind::StringType:
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfMixinPseudoType:
