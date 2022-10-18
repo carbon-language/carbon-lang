@@ -538,10 +538,6 @@ void Value::Print(llvm::raw_ostream& out) const {
                  .name()
           << ")";
       break;
-    case Value::Kind::TypeOfConstraintType:
-      out << "typeof(" << cast<TypeOfConstraintType>(*this).constraint_type()
-          << ")";
-      break;
     case Value::Kind::TypeOfChoiceType:
       out << "typeof(" << cast<TypeOfChoiceType>(*this).choice_type().name()
           << ")";
@@ -732,10 +728,6 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     case Value::Kind::VariableType:
       return &cast<VariableType>(*t1).binding() ==
              &cast<VariableType>(*t2).binding();
-    case Value::Kind::TypeOfConstraintType:
-      return TypeEqual(&cast<TypeOfConstraintType>(*t1).constraint_type(),
-                       &cast<TypeOfConstraintType>(*t2).constraint_type(),
-                       equality_ctx);
     case Value::Kind::TypeOfChoiceType:
       return TypeEqual(&cast<TypeOfChoiceType>(*t1).choice_type(),
                        &cast<TypeOfChoiceType>(*t2).choice_type(),
@@ -887,7 +879,6 @@ auto ValueStructurallyEqual(
     case Value::Kind::VariableType:
     case Value::Kind::StringType:
     case Value::Kind::TypeOfMixinPseudoType:
-    case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:

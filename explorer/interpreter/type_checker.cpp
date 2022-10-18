@@ -128,7 +128,6 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
     case Value::Kind::TypeOfMixinPseudoType:
-    case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
       // A value of one of these types is itself always a type.
       return true;
@@ -180,7 +179,6 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
     case Value::Kind::StringType:
-    case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::StaticArrayType:
       return true;
@@ -263,7 +261,6 @@ static auto ExpectCompleteType(SourceLocation source_loc,
     case Value::Kind::BoolType:
     case Value::Kind::StringType:
     case Value::Kind::PointerType:
-    case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeType:
     case Value::Kind::FunctionType:
@@ -498,7 +495,6 @@ auto TypeChecker::IsImplicitlyConvertible(
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
     case Value::Kind::TypeOfChoiceType:
-    case Value::Kind::TypeOfConstraintType:
       // TODO: These types should presumably also convert to constraint types.
       if (isa<TypeType>(destination)) {
         return true;
@@ -907,7 +903,6 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
     case Value::Kind::StringType:
-    case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName: {
@@ -1616,7 +1611,6 @@ auto TypeChecker::Substitute(const Bindings& bindings,
     case Value::Kind::MixinPseudoType:
       return type;
     case Value::Kind::TypeOfMixinPseudoType:
-    case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
@@ -2273,8 +2267,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           return Success();
         }
         case Value::Kind::TypeType:
-        case Value::Kind::TypeOfChoiceType:
-        case Value::Kind::TypeOfConstraintType: {
+        case Value::Kind::TypeOfChoiceType: {
           // This is member access into an unconstrained type. Evaluate it and
           // perform lookup in the result.
           CARBON_ASSIGN_OR_RETURN(
@@ -3191,9 +3184,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
       }
 
-      where.set_static_type(
-          arena_->New<TypeOfConstraintType>(std::move(builder).Build(arena_)));
-      where.set_value_category(ValueCategory::Let);
+      where.set_rewritten_form(arena_->New<ValueLiteral>(
+          where.source_loc(), std::move(builder).Build(arena_),
+          arena_->New<TypeType>(), ValueCategory::Let));
       return Success();
     }
     case ExpressionKind::UnimplementedExpression:
@@ -3291,8 +3284,7 @@ auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
       auto& is_clause = cast<IsWhereClause>(*clause);
       CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(&is_clause.type(), impl_scope));
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&is_clause.constraint(), impl_scope));
-      if (!isa<TypeOfConstraintType, TypeType>(
-              is_clause.constraint().static_type())) {
+      if (!isa<TypeType>(is_clause.constraint().static_type())) {
         return ProgramError(is_clause.constraint().source_loc())
                << "expression after `is` does not resolve to a constraint, "
                << "found " << is_clause.constraint().static_type();
@@ -4759,7 +4751,6 @@ static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
     case Value::Kind::TypeType:
-    case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:

@@ -228,9 +228,6 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
       return heap_.Read(cast<PointerValue>(*args[0]).address(), source_loc);
     case Operator::AddressOf:
       return arena_->New<PointerValue>(cast<LValue>(*args[0]).address());
-    case Operator::BitwiseAnd:
-      // If & wasn't rewritten, it's being used to form a constraint.
-      return &cast<TypeOfConstraintType>(static_type)->constraint_type();
     case Operator::As:
     case Operator::Eq:
     case Operator::NotEq:
@@ -238,6 +235,7 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
     case Operator::LessEq:
     case Operator::Greater:
     case Operator::GreaterEq:
+    case Operator::BitwiseAnd:
     case Operator::BitwiseOr:
     case Operator::BitwiseXor:
     case Operator::BitShiftLeft:
@@ -698,7 +696,6 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::StringType:
     case Value::Kind::StringValue:
     case Value::Kind::TypeOfMixinPseudoType:
-    case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
@@ -1465,8 +1462,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       break;
     }
     case ExpressionKind::WhereExpression: {
-      return todo_.FinishAction(
-          &cast<TypeOfConstraintType>(exp.static_type()).constraint_type());
+      auto rewrite = cast<WhereExpression>(exp).rewritten_form();
+      CARBON_CHECK(rewrite) << "where expression should be rewritten";
+      return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
     }
     case ExpressionKind::UnimplementedExpression:
       CARBON_FATAL() << "Unimplemented: " << exp;

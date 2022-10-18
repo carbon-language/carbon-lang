@@ -77,7 +77,6 @@ class Value {
     StringType,
     StringValue,
     TypeOfMixinPseudoType,
-    TypeOfConstraintType,
     TypeOfChoiceType,
     TypeOfParameterizedEntityName,
     TypeOfMemberName,
@@ -1226,23 +1225,6 @@ class TypeOfMixinPseudoType : public Value {
 
  private:
   Nonnull<const MixinPseudoType*> mixin_type_;
-};
-
-class TypeOfConstraintType : public Value {
- public:
-  explicit TypeOfConstraintType(Nonnull<const ConstraintType*> constraint_type)
-      : Value(Kind::TypeOfConstraintType), constraint_type_(constraint_type) {}
-
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::TypeOfConstraintType;
-  }
-
-  auto constraint_type() const -> const ConstraintType& {
-    return *constraint_type_;
-  }
-
- private:
-  Nonnull<const ConstraintType*> constraint_type_;
 };
 
 // The type of an expression whose value is a choice type. Currently there is no
