@@ -1699,10 +1699,10 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
             &cast<For>(stmt).variable_declaration()));
       }
       if (act.pos() == 2) {
-        auto loop_var = cast<const BindingPlaceholderValue>(
+        const auto* loop_var = cast<BindingPlaceholderValue>(
             act.results()[LoopVarPosInResult]);
-        auto source_array =
-            cast<const TupleValue>(act.results()[TargetVarPosInResult]);
+        const auto* source_array =
+            cast<TupleValue>(act.results()[TargetVarPosInResult]);
 
         auto start_index =
             cast<IntValue>(act.results()[CurrentIndexPosInResult])->value();
