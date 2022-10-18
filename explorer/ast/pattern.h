@@ -275,10 +275,11 @@ class GenericBinding : public Pattern {
 
   // Return the original generic binding.
   auto original() const -> Nonnull<const GenericBinding*> {
-    if (original_.has_value())
+    if (original_.has_value()) {
       return *original_;
-    else
+    } else {
       return this;
+    }
   }
   // Set the original generic binding.
   void set_original(Nonnull<const GenericBinding*> orig) { original_ = orig; }

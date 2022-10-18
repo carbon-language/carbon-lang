@@ -8,6 +8,7 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -876,7 +877,7 @@ class RewriteWhereClause : public WhereClause {
                               std::string member_name,
                               Nonnull<Expression*> replacement)
       : WhereClause(WhereClauseKind::RewriteWhereClause, source_loc),
-        member_name_(member_name),
+        member_name_(std::move(member_name)),
         replacement_(replacement) {}
 
   static auto classof(const AstNode* node) {

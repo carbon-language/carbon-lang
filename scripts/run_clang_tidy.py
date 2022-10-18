@@ -10,6 +10,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import os
+import re
 import subprocess
 import sys
 
@@ -22,20 +23,26 @@ def main() -> None:
     # Ensure create_compdb has been run.
     subprocess.check_call(["./scripts/create_compdb.py"])
 
+    # Avoid adding a path filter if files are passed in.
     args = sys.argv[1:]
-    if not args or args[0] == "--fix":
+    if not args or "-fix" in args:
         args.append("^(?!.*/(bazel-|third_party)).*$")
 
+    # Use the run-clang-tidy version that should be with the rest of the clang
+    # toolchain. This exposes us to version skew with user-installed clang
+    # versions, but avoids version skew between the script and clang-tidy
+    # itself.
+    with Path(
+        "./bazel-execroot/external/bazel_cc_toolchain/"
+        "clang_detected_variables.bzl"
+    ).open() as f:
+        clang_vars = f.read()
+    clang_bindir_match = re.search(r"clang_bindir = \"(.*)\"", clang_vars)
+    assert clang_bindir_match is not None, clang_vars
+    run_clang_tidy = str(Path(clang_bindir_match[1]).joinpath("run-clang-tidy"))
+
     # Run clang-tidy from clang-tools-extra.
-    exit(
-        subprocess.call(
-            [
-                "./bazel-execroot/external/llvm-project/clang-tools-extra/"
-                "clang-tidy/tool/run-clang-tidy.py",
-            ]
-            + args
-        )
-    )
+    exit(subprocess.call([run_clang_tidy] + args))
 
 
 if __name__ == "__main__":
