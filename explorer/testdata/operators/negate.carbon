@@ -11,7 +11,7 @@ package ExplorerTest api;
 
 class A { var n: i32; }
 
-external impl A as Negate where .Result == A {
+external impl A as Negate where .Result = A {
   fn Op[me: Self]() -> A { return {.n = -me.n}; }
 }
 

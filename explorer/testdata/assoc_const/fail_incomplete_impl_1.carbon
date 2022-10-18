@@ -14,7 +14,7 @@ interface HasThreeTypes {
   let C:! Type;
 }
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_incomplete_impl_1.carbon:[[@LINE+1]]: implementation missing (i32).B; have constraint interface HasThreeTypes where i32 is interface HasThreeTypes and (i32).A == i32 and (i32).C == i32
-external impl i32 as HasThreeTypes where .A == i32 and .C == i32 {}
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_incomplete_impl_1.carbon:[[@LINE+1]]: implementation doesn't provide a concrete value for interface HasThreeTypes.B
+external impl i32 as HasThreeTypes where .A = i32 and .C = i32 {}
 
 fn Main() -> i32 { return 0; }

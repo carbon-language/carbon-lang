@@ -80,7 +80,6 @@ class TypeChecker {
       -> Nonnull<const Witness*>;
 
  private:
-  struct SingleStepEqualityContext;
   class ConstraintTypeBuilder;
   class SubstitutedGenericBindings;
   class ArgumentDeduction;

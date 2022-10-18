@@ -18,7 +18,7 @@ interface B {
 }
 
 class C(T:! Type) {
-  impl as A & B where .TA == i32 and .TB == i32 {
+  impl as A & B where .TA = i32 and .TB = i32 {
     fn FA() -> i32 {
       // OK, know that TA is i32 here.
       let v: Self.(A.TA) = 1;
@@ -29,10 +29,8 @@ class C(T:! Type) {
       // OK, know that TB is i32 here.
       let v: Self.(B.TB) = 2;
       // Don't know that TA is i32; it could be specialized.
+      // TODO: We should not accept this.
       let w: Self.(A.TA) = 3;
-      // TODO: This error is confusing. We should be diagnosing the previous
-      // line because we don't know that `3` can be converted to `Self.(A.TA)`.
-      // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_multi_impl_scoping.carbon:[[@LINE+1]]: type error in return value: '((class C(T = T)).TB).Result' is not implicitly convertible to 'i32'
       return v + w;
     }
   }
@@ -40,6 +38,7 @@ class C(T:! Type) {
 
 external impl C(i32) as B where .TB == () {
   fn FB() -> () { return (); }
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_multi_impl_scoping.carbon:[[@LINE+1]]: ambiguous implementations of interface B for class C(T = i32)
 }
 
 fn Main() -> i32 { return C(i32).FB(); }

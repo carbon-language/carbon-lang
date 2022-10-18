@@ -153,6 +153,26 @@ class ImplScope {
   std::vector<Nonnull<const ImplScope*>> parent_scopes_;
 };
 
+// An equality context that considers two values to be equal if they are a
+// single step apart according to an equality constraint in the given impl
+// scope.
+struct SingleStepEqualityContext : public EqualityContext {
+ public:
+  SingleStepEqualityContext(Nonnull<const ImplScope*> impl_scope)
+      : impl_scope_(impl_scope) {}
+
+  // Visits the values that are equal to the given value and a single step away
+  // according to an equality constraint that is in the given impl scope. Stops
+  // and returns `false` if the visitor returns `false`, otherwise returns
+  // `true`.
+  auto VisitEqualValues(Nonnull<const Value*> value,
+                        llvm::function_ref<bool(Nonnull<const Value*>)> visitor)
+      const -> bool override;
+
+ private:
+  Nonnull<const ImplScope*> impl_scope_;
+};
+
 }  // namespace Carbon
 
 #endif  // CARBON_EXPLORER_INTERPRETER_IMPL_SCOPE_H_

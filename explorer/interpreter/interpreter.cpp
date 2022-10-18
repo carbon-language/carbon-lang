@@ -538,35 +538,47 @@ auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
 auto Interpreter::EvalAssociatedConstant(
     Nonnull<const AssociatedConstant*> assoc, SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
-  // Find the witness.
+  // Instantiate the associated constant.
+  CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> base,
+                          InstantiateType(&assoc->base(), source_loc));
+  CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> interface,
+                          InstantiateType(&assoc->interface(), source_loc));
   CARBON_ASSIGN_OR_RETURN(Nonnull<const Witness*> witness,
                           InstantiateWitness(&assoc->witness()));
-  if (!isa<ImplWitness>(witness)) {
+  Nonnull<const AssociatedConstant*> instantiated_assoc =
+      arena_->New<AssociatedConstant>(base, cast<InterfaceType>(interface),
+                                      &assoc->constant(), witness);
+
+  auto* impl_witness = dyn_cast<ImplWitness>(witness);
+  if (!impl_witness) {
     CARBON_CHECK(phase() == Phase::CompileTime)
         << "symbolic witnesses should only be formed at compile time";
-    return ProgramError(source_loc)
-           << "value of associated constant " << *assoc << " is not known";
+    return instantiated_assoc;
   }
 
-  auto& impl_witness = cast<ImplWitness>(*witness);
+  // We have an impl. Extract the value from it.
   Nonnull<const ConstraintType*> constraint =
-      impl_witness.declaration().constraint_type();
+      impl_witness->declaration().constraint_type();
   std::optional<Nonnull<const Value*>> result;
-  constraint->VisitEqualValues(assoc, [&](Nonnull<const Value*> equal_value) {
-    // TODO: The value might depend on the parameters of the impl. We need to
-    // substitute impl_witness.type_args() into the value or constraint.
-    if (isa<AssociatedConstant>(equal_value)) {
-      return true;
-    }
-    // TODO: This makes an arbitrary choice if there's more than one equal
-    // value. It's not clear how to handle that case.
-    result = equal_value;
-    return false;
-  });
+  // TODO: We should pick the value from the rewrite constraint, not some other
+  // equality constraint that happens to be in the impl's constraint type.
+  constraint->VisitEqualValues(instantiated_assoc,
+                               [&](Nonnull<const Value*> equal_value) {
+                                 // TODO: The value might depend on the
+                                 // parameters of the impl. We need to
+                                 // substitute impl_witness->type_args() into
+                                 // the value or constraint.
+                                 if (isa<AssociatedConstant>(equal_value)) {
+                                   return true;
+                                 }
+                                 result = equal_value;
+                                 return false;
+                               });
   if (!result) {
-    CARBON_FATAL() << impl_witness.declaration() << " with constraint "
+    CARBON_FATAL() << impl_witness->declaration() << " with constraint "
                    << *constraint
-                   << " is missing value for associated constant " << *assoc;
+                   << " is missing value for associated constant "
+                   << *instantiated_assoc;
   }
   return *result;
 }
@@ -584,6 +596,14 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
                                 heap_.Read(lvalue->address(), source_loc));
       }
       return value;
+    }
+    case Value::Kind::InterfaceType: {
+      const auto& interface_type = cast<InterfaceType>(*type);
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Bindings*> bindings,
+          InstantiateBindings(&interface_type.bindings(), source_loc));
+      return arena_->New<InterfaceType>(&interface_type.declaration(),
+                                        bindings);
     }
     case Value::Kind::NominalClassType: {
       const auto& class_type = cast<NominalClassType>(*type);
@@ -603,7 +623,7 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> type_value,
           EvalAssociatedConstant(cast<AssociatedConstant>(type), source_loc));
-      return InstantiateType(type_value, source_loc);
+      return type_value;
     }
     default:
       return type;
@@ -715,9 +735,12 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
               InstantiateType(destination_type, source_loc));
           return arena_->New<NominalClassValue>(inst_dest, value);
         }
-        default:
-          CARBON_FATAL() << "Can't convert value " << *value << " to type "
-                         << *destination_type;
+        default: {
+          CARBON_CHECK(IsValueKindDependent(destination_type))
+              << "Can't convert value " << *value << " to type "
+              << *destination_type;
+          return value;
+        }
       }
     }
     case Value::Kind::StructType: {
@@ -747,9 +770,12 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
                                            &array_type.element_type());
           break;
         }
-        default:
-          CARBON_FATAL() << "Can't convert value " << *value << " to type "
-                         << *destination_type;
+        default: {
+          CARBON_CHECK(IsValueKindDependent(destination_type))
+              << "Can't convert value " << *value << " to type "
+              << *destination_type;
+          return value;
+        }
       }
       CARBON_CHECK(tuple->elements().size() ==
                    destination_element_types.size());
@@ -767,6 +793,10 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> value,
           EvalAssociatedConstant(cast<AssociatedConstant>(value), source_loc));
+      if (isa<AssociatedConstant>(value)) {
+        return ProgramError(source_loc)
+               << "value of associated constant " << *value << " is not known";
+      }
       return Convert(value, destination_type, source_loc);
     }
   }

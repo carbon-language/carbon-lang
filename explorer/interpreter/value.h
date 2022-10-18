@@ -121,6 +121,13 @@ class Value {
   const Kind kind_;
 };
 
+// Returns whether the fully-resolved kind that this value will eventually have
+// is currently unknown, because it depends on a generic parameter.
+inline bool IsValueKindDependent(Nonnull<const Value*> type) {
+  return type->kind() == Value::Kind::VariableType ||
+         type->kind() == Value::Kind::AssociatedConstant;
+}
+
 // Base class for types holding contextual information by which we can
 // determine whether values are equal.
 class EqualityContext {
