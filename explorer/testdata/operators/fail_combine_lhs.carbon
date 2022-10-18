@@ -8,16 +8,9 @@
 
 package ExplorerTest api;
 
-class Point {
-  fn Origin() -> Point {
-    return {.x = 0, .y = 0};
-  }
-  var x: i32;
-  var y: i32;
-}
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/operators/fail_combine_lhs.carbon:[[@LINE+1]]: expected a constraint in first operand of `&`, found i32
+fn F[T:! i32 & Type]();
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_instantiate_non_generic.carbon:[[@LINE+1]]: in call `Point(i32)`, expected callee to be a function, found `Type`
-  var p: Point(i32) = Point.Origin();
   return 0;
 }

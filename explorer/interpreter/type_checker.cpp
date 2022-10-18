@@ -127,11 +127,7 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::TypeType:
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
-    case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfMixinPseudoType:
-    case Value::Kind::TypeOfInterfaceType:
-    case Value::Kind::TypeOfConstraintType:
-    case Value::Kind::TypeOfChoiceType:
       // A value of one of these types is itself always a type.
       return true;
   }
@@ -182,10 +178,6 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
     case Value::Kind::StringType:
-    case Value::Kind::TypeOfClassType:
-    case Value::Kind::TypeOfInterfaceType:
-    case Value::Kind::TypeOfConstraintType:
-    case Value::Kind::TypeOfChoiceType:
     case Value::Kind::StaticArrayType:
       return true;
     case Value::Kind::AutoType:
@@ -267,10 +259,6 @@ static auto ExpectCompleteType(SourceLocation source_loc,
     case Value::Kind::BoolType:
     case Value::Kind::StringType:
     case Value::Kind::PointerType:
-    case Value::Kind::TypeOfClassType:
-    case Value::Kind::TypeOfInterfaceType:
-    case Value::Kind::TypeOfConstraintType:
-    case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeType:
     case Value::Kind::FunctionType:
     case Value::Kind::StructType:
@@ -503,10 +491,6 @@ auto TypeChecker::IsImplicitlyConvertible(
       break;
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
-    case Value::Kind::TypeOfClassType:
-    case Value::Kind::TypeOfChoiceType:
-    case Value::Kind::TypeOfInterfaceType:
-    case Value::Kind::TypeOfConstraintType:
       // TODO: These types should presumably also convert to constraint types.
       if (isa<TypeType>(destination)) {
         return true;
@@ -609,8 +593,7 @@ auto TypeChecker::BuildBuiltinMethodCall(const ImplScope& impl_scope,
 
   // Build an expression to perform the call `source.(interface.method)(args)`.
   Nonnull<Expression*> iface_expr = arena_->New<ValueLiteral>(
-      source_loc, iface_type, arena_->New<TypeOfInterfaceType>(iface_type),
-      ValueCategory::Let);
+      source_loc, iface_type, arena_->New<TypeType>(), ValueCategory::Let);
   Nonnull<Expression*> iface_member = arena_->New<SimpleMemberAccessExpression>(
       source_loc, iface_expr, method.name);
   Nonnull<Expression*> method_access =
@@ -916,10 +899,6 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
     case Value::Kind::StringType:
-    case Value::Kind::TypeOfClassType:
-    case Value::Kind::TypeOfInterfaceType:
-    case Value::Kind::TypeOfConstraintType:
-    case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName: {
       return handle_non_deduced_type();
@@ -1626,11 +1605,7 @@ auto TypeChecker::Substitute(const Bindings& bindings,
     case Value::Kind::StringType:
     case Value::Kind::MixinPseudoType:
       return type;
-    case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfMixinPseudoType:
-    case Value::Kind::TypeOfInterfaceType:
-    case Value::Kind::TypeOfConstraintType:
-    case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
       // TODO: We should substitute into the value and produce a new type of
@@ -2285,11 +2260,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           }
           return Success();
         }
-        case Value::Kind::TypeType:
-        case Value::Kind::TypeOfChoiceType:
-        case Value::Kind::TypeOfClassType:
-        case Value::Kind::TypeOfConstraintType:
-        case Value::Kind::TypeOfInterfaceType: {
+        case Value::Kind::TypeType: {
           // This is member access into an unconstrained type. Evaluate it and
           // perform lookup in the result.
           CARBON_ASSIGN_OR_RETURN(
@@ -2657,31 +2628,27 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           // `&` between type-of-types performs constraint combination.
           // TODO: Should this be done via an intrinsic?
           if (IsTypeOfType(ts[0]) && IsTypeOfType(ts[1])) {
-            std::optional<Nonnull<const ConstraintType*>> constraints[2];
-            for (int i : {0, 1}) {
-              // TODO: This should be done based on the values, not their
-              // types.
-              if (auto* iface_type_type =
-                      dyn_cast<TypeOfInterfaceType>(ts[i])) {
-                CARBON_ASSIGN_OR_RETURN(
-                    constraints[i],
-                    MakeConstraintForInterface(
-                        e->source_loc(), &iface_type_type->interface_type()));
-              } else if (auto* constraint_type_type =
-                             dyn_cast<TypeOfConstraintType>(ts[i])) {
-                constraints[i] = &constraint_type_type->constraint_type();
-              } else {
-                return ProgramError(op.arguments()[i]->source_loc())
-                       << "argument to " << ToString(op.op())
-                       << " should be a constraint, found `" << *ts[i] << "`";
-              }
-            }
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const Value*> lhs,
+                InterpExp(op.arguments()[0], arena_, trace_stream_));
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const Value*> rhs,
+                InterpExp(op.arguments()[1], arena_, trace_stream_));
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const ConstraintType*> lhs_constraint,
+                ConvertToConstraintType(op.arguments()[0]->source_loc(),
+                                        "first operand of `&`", lhs));
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const ConstraintType*> rhs_constraint,
+                ConvertToConstraintType(op.arguments()[1]->source_loc(),
+                                        "second operand of `&`", rhs));
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const ConstraintType*> result,
                 CombineConstraints(e->source_loc(),
-                                   {*constraints[0], *constraints[1]}));
-            op.set_static_type(arena_->New<TypeOfConstraintType>(result));
-            op.set_value_category(ValueCategory::Let);
+                                   {lhs_constraint, rhs_constraint}));
+            op.set_rewritten_form(arena_->New<ValueLiteral>(
+                op.source_loc(), result, arena_->New<TypeType>(),
+                ValueCategory::Let));
             return Success();
           }
           return handle_binary_operator(Builtins::BitAndWith);
@@ -2831,44 +2798,17 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           CARBON_RETURN_IF_ERROR(DeduceCallBindings(
               call, &param_name.params().static_type(), generic_parameters,
               /*deduced_bindings=*/llvm::None, impl_bindings, impl_scope));
-          Nonnull<const Bindings*> bindings = &call.bindings();
 
-          const Declaration& decl = param_name.declaration();
-          switch (decl.kind()) {
-            case DeclarationKind::ClassDeclaration: {
-              Nonnull<NominalClassType*> inst_class_type =
-                  arena_->New<NominalClassType>(&cast<ClassDeclaration>(decl),
-                                                bindings);
-              call.set_static_type(
-                  arena_->New<TypeOfClassType>(inst_class_type));
-              call.set_value_category(ValueCategory::Let);
-              break;
-            }
-            case DeclarationKind::InterfaceDeclaration: {
-              Nonnull<InterfaceType*> inst_iface_type =
-                  arena_->New<InterfaceType>(&cast<InterfaceDeclaration>(decl),
-                                             bindings);
-              call.set_static_type(
-                  arena_->New<TypeOfInterfaceType>(inst_iface_type));
-              call.set_value_category(ValueCategory::Let);
-              break;
-            }
-            case DeclarationKind::ChoiceDeclaration: {
-              Nonnull<ChoiceType*> ct = arena_->New<ChoiceType>(
-                  cast<ChoiceDeclaration>(&decl), bindings);
-              Nonnull<TypeOfChoiceType*> inst_choice_type =
-                  arena_->New<TypeOfChoiceType>(ct);
-              call.set_static_type(inst_choice_type);
-              call.set_value_category(ValueCategory::Let);
-              break;
-            }
-            default:
-              CARBON_FATAL()
-                  << "unknown type of ParameterizedEntityName for " << decl;
-          }
+          // Currently the only kinds of parameterized entities we support are
+          // types.
+          CARBON_CHECK(
+              isa<ClassDeclaration, InterfaceDeclaration, ChoiceDeclaration>(
+                  param_name.declaration()))
+              << "unknown type of ParameterizedEntityName for " << param_name;
+          call.set_static_type(arena_->New<TypeType>());
+          call.set_value_category(ValueCategory::Let);
           return Success();
         }
-        case Value::Kind::TypeOfChoiceType:
         default: {
           return ProgramError(e->source_loc())
                  << "in call `" << *e
@@ -3209,9 +3149,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
       }
 
-      where.set_static_type(
-          arena_->New<TypeOfConstraintType>(std::move(builder).Build(arena_)));
-      where.set_value_category(ValueCategory::Let);
+      where.set_rewritten_form(arena_->New<ValueLiteral>(
+          where.source_loc(), std::move(builder).Build(arena_),
+          arena_->New<TypeType>(), ValueCategory::Let));
       return Success();
     }
     case ExpressionKind::UnimplementedExpression:
@@ -3309,8 +3249,7 @@ auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
       auto& is_clause = cast<IsWhereClause>(*clause);
       CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(&is_clause.type(), impl_scope));
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&is_clause.constraint(), impl_scope));
-      if (!isa<TypeOfInterfaceType, TypeOfConstraintType, TypeType>(
-              is_clause.constraint().static_type())) {
+      if (!isa<TypeType>(is_clause.constraint().static_type())) {
         return ProgramError(is_clause.constraint().source_loc())
                << "expression after `is` does not resolve to a constraint, "
                << "found " << is_clause.constraint().static_type();
@@ -4036,7 +3975,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   // should have the value `MyType(T, U)`.
   Nonnull<NominalClassType*> self_type = arena_->New<NominalClassType>(
       class_decl, Bindings::SymbolicIdentity(arena_, bindings));
-  self->set_static_type(arena_->New<TypeOfClassType>(self_type));
+  self->set_static_type(arena_->New<TypeType>());
   self->set_constant_value(self_type);
 
   // The declarations of the members may refer to the class, so we must set the
@@ -4252,7 +4191,7 @@ auto TypeChecker::DeclareInterfaceDeclaration(
         iface_decl, Bindings::SymbolicIdentity(arena_, bindings));
   } else {
     iface_type = arena_->New<InterfaceType>(iface_decl);
-    iface_decl->set_static_type(arena_->New<TypeOfInterfaceType>(iface_type));
+    iface_decl->set_static_type(arena_->New<TypeType>());
     iface_decl->set_constant_value(iface_type);
   }
 
@@ -4712,7 +4651,7 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
   auto ct = arena_->New<ChoiceType>(
       choice, Bindings::SymbolicIdentity(arena_, bindings));
 
-  choice->set_static_type(arena_->New<TypeOfChoiceType>(ct));
+  choice->set_static_type(arena_->New<TypeType>());
   choice->set_constant_value(ct);
   return Success();
 }
@@ -4773,10 +4712,6 @@ static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
     case Value::Kind::TypeType:
-    case Value::Kind::TypeOfClassType:
-    case Value::Kind::TypeOfInterfaceType:
-    case Value::Kind::TypeOfConstraintType:
-    case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
       return true;
