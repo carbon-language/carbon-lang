@@ -25,7 +25,7 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       out << "match (" << match.expression() << ") {";
       if (depth < 0 || depth > 1) {
         out << "\n";
-        for (auto& clause : match.clauses()) {
+        for (const auto& clause : match.clauses()) {
           out << "case " << clause.pattern() << " =>\n";
           clause.statement().PrintDepth(depth - 1, out);
           out << "\n";

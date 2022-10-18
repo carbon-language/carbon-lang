@@ -38,11 +38,12 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
   std::string_view f = field.name();
 
   if (field.witness().has_value()) {
-    auto witness = cast<Witness>(*field.witness());
+    const auto* witness = cast<Witness>(*field.witness());
 
     // Associated constants.
-    if (auto* assoc_const = dyn_cast_or_null<AssociatedConstantDeclaration>(
-            field.member().declaration().value_or(nullptr))) {
+    if (const auto* assoc_const =
+            dyn_cast_or_null<AssociatedConstantDeclaration>(
+                field.member().declaration().value_or(nullptr))) {
       CARBON_CHECK(field.interface()) << "have witness but no interface";
       // TODO: Use witness to find the value of the constant.
       return arena->New<AssociatedConstant>(v, *field.interface(), assoc_const,
@@ -50,7 +51,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
     }
 
     // Associated functions.
-    if (auto* impl_witness = dyn_cast<ImplWitness>(witness)) {
+    if (const auto* impl_witness = dyn_cast<ImplWitness>(witness)) {
       if (std::optional<Nonnull<const Declaration*>> mem_decl =
               FindMember(f, impl_witness->declaration().members());
           mem_decl.has_value()) {
@@ -60,7 +61,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                                               &impl_witness->bindings());
         } else {
           // Class function.
-          auto* fun = cast<FunctionValue>(*fun_decl.constant_value());
+          const auto* fun = cast<FunctionValue>(*fun_decl.constant_value());
           return arena->New<FunctionValue>(&fun->declaration(),
                                            &impl_witness->bindings());
         }
@@ -88,7 +89,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       // Note that the value representation of an empty class is a
       // `StructType`, not a `StructValue`.
       std::optional<Nonnull<const Value*>> field;
-      if (auto* struct_value = dyn_cast<StructValue>(&object.inits())) {
+      if (const auto* struct_value = dyn_cast<StructValue>(&object.inits())) {
         field = struct_value->FindField(f);
       }
       if (field.has_value()) {
@@ -469,7 +470,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       const auto& witness = cast<ConstraintWitness>(*this);
       out << "(";
       llvm::ListSeparator sep;
-      for (auto* elem : witness.witnesses()) {
+      for (const auto* elem : witness.witnesses()) {
         out << sep << *elem;
       }
       out << ")";
@@ -940,7 +941,7 @@ auto EqualityConstraint::VisitEqualValues(
 
   // The value is in this group; pass all non-identical values in the group
   // to the visitor. First visit the values we already compared.
-  for (auto* val : llvm::make_range(values.begin(), first_equal)) {
+  for (const auto* val : llvm::make_range(values.begin(), first_equal)) {
     if (!visitor(val)) {
       return false;
     }
@@ -948,7 +949,7 @@ auto EqualityConstraint::VisitEqualValues(
   // Then visit any remaining non-identical values, skipping the one we already
   // found was identical.
   ++first_equal;
-  for (auto* val : llvm::make_range(first_equal, values.end())) {
+  for (const auto* val : llvm::make_range(first_equal, values.end())) {
     if (!ValueEqual(value, val, std::nullopt) && !visitor(val)) {
       return false;
     }

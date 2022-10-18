@@ -79,7 +79,7 @@ auto operator<<(std::ostream& os, const Value& v) -> std::ostream& {
     auto operator()(const MappingValue& v) -> void {
       out << "Yaml::MappingValue{";
       bool first = true;
-      for (auto& [key, value] : v) {
+      for (const auto& [key, value] : v) {
         if (first) {
           first = false;
         } else {
@@ -92,7 +92,7 @@ auto operator<<(std::ostream& os, const Value& v) -> std::ostream& {
     auto operator()(const SequenceValue& v) -> void {
       out << "Yaml::SequenceValue{";
       bool first = true;
-      for (auto& value : v) {
+      for (const auto& value : v) {
         if (first) {
           first = false;
         } else {

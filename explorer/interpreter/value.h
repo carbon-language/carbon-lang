@@ -932,7 +932,8 @@ class ConstraintImplWitness : public Witness {
                    int index) -> Nonnull<const Witness*> {
     CARBON_CHECK(!llvm::isa<ImplWitness>(witness))
         << "impl witness has no components to access";
-    if (auto* constraint_witness = llvm::dyn_cast<ConstraintWitness>(witness)) {
+    if (const auto* constraint_witness =
+            llvm::dyn_cast<ConstraintWitness>(witness)) {
       return constraint_witness->witnesses()[index];
     }
     return arena->New<ConstraintImplWitness>(witness, index);

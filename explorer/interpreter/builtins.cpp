@@ -11,7 +11,7 @@ using llvm::dyn_cast;
 namespace Carbon {
 
 void Builtins::Register(Nonnull<const Declaration*> decl) {
-  if (auto* interface = dyn_cast<InterfaceDeclaration>(decl)) {
+  if (const auto* interface = dyn_cast<InterfaceDeclaration>(decl)) {
     static std::map<std::string, int>* builtin_indexes = [] {
       std::map<std::string, int> builtin_indexes;
       for (int index = 0; index <= static_cast<int>(Builtin::Last); ++index) {

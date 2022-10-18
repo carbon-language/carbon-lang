@@ -285,7 +285,7 @@ class ClassDeclaration : public Declaration {
     return members_;
   }
   auto destructor() const -> std::optional<Nonnull<DestructorDeclaration*>> {
-    for (auto& x : members_) {
+    for (const auto& x : members_) {
       if (x->kind() == DeclarationKind::DestructorDeclaration) {
         return llvm::cast<DestructorDeclaration>(x);
       }
@@ -493,7 +493,7 @@ class InterfaceDeclaration : public Declaration {
         self_type_(arena->New<SelfDeclaration>(source_loc)),
         members_(std::move(members)) {
     // `interface X` has `Self:! X`.
-    auto self_type_ref = arena->New<IdentifierExpression>(source_loc, name);
+    auto* self_type_ref = arena->New<IdentifierExpression>(source_loc, name);
     self_type_ref->set_value_node(self_type_);
     self_ = arena->New<GenericBinding>(source_loc, "Self", self_type_ref);
   }
