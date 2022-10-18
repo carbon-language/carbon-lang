@@ -6,6 +6,7 @@
 #define CARBON_EXPLORER_AST_BINDINGS_H_
 
 #include <map>
+#include <utility>
 
 #include "explorer/common/nonnull.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -40,18 +41,19 @@ class Bindings {
       -> Nonnull<const Bindings*>;
 
   // Create an empty set of bindings.
-  Bindings() {}
+  Bindings() = default;
 
   // Create an instantiated set of bindings for use during evaluation,
   // containing both arguments and witnesses.
   Bindings(BindingMap args, ImplWitnessMap witnesses)
-      : args_(args), witnesses_(witnesses) {}
+      : args_(std::move(args)), witnesses_(std::move(witnesses)) {}
 
   enum NoWitnessesTag { NoWitnesses };
 
   // Create a set of bindings for use during type-checking, containing only the
   // arguments but not the corresponding witnesses.
-  Bindings(BindingMap args, NoWitnessesTag) : args_(args), witnesses_() {}
+  Bindings(BindingMap args, NoWitnessesTag /*unused*/)
+      : args_(std::move(args)) {}
 
   // Add a value, and perhaps a witness, for a generic binding.
   void Add(Nonnull<const GenericBinding*> binding, Nonnull<const Value*> value,

@@ -19,7 +19,7 @@ namespace {
 // an annotated range.
 class Annotations {
  public:
-  Annotations(llvm::StringRef annotated_source) {
+  explicit Annotations(llvm::StringRef annotated_source) {
     size_t index = annotated_source.find("$[[");
     if (index == llvm::StringRef::npos) {
       source_code_ = std::string(annotated_source);
@@ -39,11 +39,13 @@ class Annotations {
   }
 
   // Returns a view into the unannotated source.
-  llvm::StringRef source() const { return source_code_; }
+  auto source() const -> llvm::StringRef { return source_code_; }
 
   // Returns the offsets in the file representing the annotated range if they
   // exist and `{0, std::numeric_limits<size_t>::max()}` otherwise.
-  std::pair<size_t, size_t> range() const { return std::pair(start_, end_); }
+  auto range() const -> std::pair<size_t, size_t> {
+    return std::pair(start_, end_);
+  }
 
  private:
   std::string source_code_;

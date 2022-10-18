@@ -80,10 +80,11 @@ class ImplBinding : public AstNode {
 
   // Return the original impl binding.
   auto original() const -> Nonnull<const ImplBinding*> {
-    if (original_.has_value())
+    if (original_.has_value()) {
       return *original_;
-    else
+    } else {
       return this;
+    }
   }
 
   // Set the original impl binding.

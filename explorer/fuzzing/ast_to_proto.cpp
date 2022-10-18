@@ -772,7 +772,7 @@ static auto DeclarationToProto(const Declaration& declaration)
   return declaration_proto;
 }
 
-Fuzzing::CompilationUnit AstToProto(const AST& ast) {
+auto AstToProto(const AST& ast) -> Fuzzing::CompilationUnit {
   Fuzzing::CompilationUnit compilation_unit;
   *compilation_unit.mutable_package_statement() =
       LibraryNameToProto(ast.package);

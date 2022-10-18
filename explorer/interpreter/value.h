@@ -119,7 +119,7 @@ class Value {
 
 // Returns whether the fully-resolved kind that this value will eventually have
 // is currently unknown, because it depends on a generic parameter.
-inline bool IsValueKindDependent(Nonnull<const Value*> type) {
+inline auto IsValueKindDependent(Nonnull<const Value*> type) -> bool {
   return type->kind() == Value::Kind::VariableType ||
          type->kind() == Value::Kind::AssociatedConstant;
 }
@@ -352,8 +352,8 @@ class AlternativeConstructorValue : public Value {
   AlternativeConstructorValue(std::string_view alt_name,
                               std::string_view choice_name)
       : Value(Kind::AlternativeConstructorValue),
-        alt_name_(std::move(alt_name)),
-        choice_name_(std::move(choice_name)) {}
+        alt_name_(alt_name),
+        choice_name_(choice_name) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::AlternativeConstructorValue;
@@ -373,8 +373,8 @@ class AlternativeValue : public Value {
   AlternativeValue(std::string_view alt_name, std::string_view choice_name,
                    Nonnull<const Value*> argument)
       : Value(Kind::AlternativeValue),
-        alt_name_(std::move(alt_name)),
-        choice_name_(std::move(choice_name)),
+        alt_name_(alt_name),
+        choice_name_(choice_name),
         argument_(argument) {}
 
   static auto classof(const Value* value) -> bool {
@@ -398,7 +398,7 @@ class TupleValue : public Value {
   static auto Empty() -> Nonnull<const TupleValue*> {
     static const TupleValue empty =
         TupleValue(std::vector<Nonnull<const Value*>>());
-    return Nonnull<const TupleValue*>(&empty);
+    return static_cast<Nonnull<const TupleValue*>>(&empty);
   }
 
   explicit TupleValue(std::vector<Nonnull<const Value*>> elements)
@@ -788,7 +788,6 @@ class ConstraintType : public Value {
     Nonnull<const Value*> context;
   };
 
- public:
   explicit ConstraintType(Nonnull<const GenericBinding*> self_binding,
                           std::vector<ImplConstraint> impl_constraints,
                           std::vector<EqualityConstraint> equality_constraints,
