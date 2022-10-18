@@ -281,7 +281,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       CARBON_CHECK(bindings.has_value());
       const auto& placeholder = cast<BindingPlaceholderValue>(*p);
       if (placeholder.value_node().has_value()) {
-        (*bindings)->Initialize(*placeholder.value_node(), v);
+          (*bindings)->Initialize(*placeholder.value_node(), v);
       }
       return true;
     }
@@ -774,15 +774,21 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
   CARBON_CHECK(method.is_method());
   RuntimeScope method_scope(&heap_);
   BindingMap generic_args;
+
+  auto p = &method.me_pattern().value();
+  const auto& placeholder = cast<BindingPlaceholderValue>(*p);
+  if (placeholder.value_node().has_value()) {
+    method_scope.Bind(*placeholder.value_node(), receiver);
+  }
+#if 0
   CARBON_CHECK(PatternMatch(&method.me_pattern().value(), receiver,
                             fun->source_loc(), &method_scope, generic_args,
                             trace_stream_, this->arena_));
-
+#endif
   CARBON_CHECK(method.body().has_value())
       << "Calling a method that's missing a body";
 
   auto act = std::make_unique<StatementAction>(*method.body());
-  method_scope.UpdateKind(RuntimeScope::Kind::Method);
   return todo_.Spawn(std::unique_ptr<Action>(std::move(act)),
                      std::move(method_scope));
 }
@@ -834,7 +840,6 @@ auto Interpreter::CallFunction(const CallExpression& call,
           &function_scope, generic_args, trace_stream_, this->arena_));
       CARBON_CHECK(function.body().has_value())
           << "Calling a function that's missing a body";
-      function_scope.UpdateKind(RuntimeScope::Kind::Method);
       return todo_.Spawn(std::make_unique<StatementAction>(*function.body()),
                          std::move(function_scope));
     }
@@ -849,9 +854,18 @@ auto Interpreter::CallFunction(const CallExpression& call,
       RuntimeScope method_scope(&heap_);
       BindingMap generic_args;
       // Bind the receiver to the `me` parameter.
-      CARBON_CHECK(PatternMatch(&method.me_pattern().value(), m.receiver(),
-                                call.source_loc(), &method_scope, generic_args,
-                                trace_stream_, this->arena_));
+      auto p = &method.me_pattern().value();
+      if(p->kind() == Value::Kind::BindingPlaceholderValue) {
+        const auto& placeholder = cast<BindingPlaceholderValue>(*p);
+        if (placeholder.value_node().has_value()) {
+          method_scope.Bind(*placeholder.value_node(), m.receiver());
+        }
+      }else{
+        CARBON_CHECK(PatternMatch(&method.me_pattern().value(), m.receiver(),
+                                  call.source_loc(), &method_scope, generic_args,
+                                  trace_stream_, this->arena_));
+
+      }
       // Bind the arguments to the parameters.
       CARBON_CHECK(PatternMatch(&method.param_pattern().value(), converted_args,
                                 call.source_loc(), &method_scope, generic_args,
@@ -873,8 +887,6 @@ auto Interpreter::CallFunction(const CallExpression& call,
       }
       CARBON_CHECK(method.body().has_value())
           << "Calling a method that's missing a body";
-      method_scope.UpdateKind(RuntimeScope::Kind::Method);
-
       return todo_.Spawn(std::make_unique<StatementAction>(*method.body()),
                          std::move(method_scope));
     }
@@ -2030,16 +2042,14 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
 auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   CleanupAction& cleanup = cast<CleanupAction>(act);
-  if (act.scope()->kind() != RuntimeScope::Kind::Method) {
-    if (act.pos() < cleanup.locals_count()) {
-      auto lvalue =
-          act.scope()->locals()[cleanup.locals_count() - act.pos() - 1];
-      SourceLocation source_loc("destructor", 1);
-      auto value = heap_.Read(lvalue->address(), source_loc);
-      if (value.ok()) {
-        return todo_.Spawn(
-            std::make_unique<DestroyAction>(lvalue, *value, std::nullopt));
-      }
+  if (act.pos() < cleanup.allocations_count()) {
+    auto allocation = act.scope()->allocations()[cleanup.allocations_count() - act.pos() - 1];
+    auto lvalue = arena_->New<LValue>(Address(allocation));
+    SourceLocation source_loc("destructor", 1);
+    auto value = heap_.Read(lvalue->address(), source_loc);
+    if (value.ok()) {
+      return todo_.Spawn(
+          std::make_unique<DestroyAction>(lvalue, *value, std::nullopt));
     }
   }
   todo_.Pop();

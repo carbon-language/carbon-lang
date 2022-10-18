@@ -25,20 +25,18 @@ RuntimeScope::RuntimeScope(RuntimeScope&& other) noexcept
     : locals_(std::move(other.locals_)),
       // To transfer ownership of other.allocations_, we have to empty it out.
       allocations_(std::exchange(other.allocations_, {})),
-      heap_(other.heap_),
-      kind_(other.kind_) {}
+      heap_(other.heap_){}
 
 auto RuntimeScope::operator=(RuntimeScope&& rhs) noexcept -> RuntimeScope& {
   locals_ = std::move(rhs.locals_);
   // To transfer ownership of rhs.allocations_, we have to empty it out.
   allocations_ = std::exchange(rhs.allocations_, {});
   heap_ = rhs.heap_;
-  kind_ = rhs.kind_;
   return *this;
 }
 
 RuntimeScope::~RuntimeScope() {
-  for (AllocationId allocation : allocations_) {
+  for (auto allocation : allocations_) {
     heap_->Deallocate(allocation);
   }
 }
@@ -52,11 +50,20 @@ void RuntimeScope::Print(llvm::raw_ostream& out) const {
   out << "}";
 }
 
+void RuntimeScope::Bind(ValueNodeView value_node, Nonnull<const Value*> value){
+  CARBON_CHECK(!value_node.constant_value().has_value());
+  CARBON_CHECK(value->kind() != Value::Kind::LValue);
+  auto id = heap_->AllocateValue(value);
+  auto [it, success] = locals_.insert(
+      {value_node, heap_->arena().New<LValue>(Address(id))});
+  CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
+}
+
 void RuntimeScope::Initialize(ValueNodeView value_node,
                               Nonnull<const Value*> value) {
   CARBON_CHECK(!value_node.constant_value().has_value());
   CARBON_CHECK(value->kind() != Value::Kind::LValue);
-  allocations_.push_back(heap_->AllocateValue(value));
+  allocations_.push_back({heap_->AllocateValue(value)});
   auto [it, success] = locals_.insert(
       {value_node, heap_->arena().New<LValue>(Address(allocations_.back()))});
   CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
@@ -97,8 +104,6 @@ auto RuntimeScope::Capture(
   }
   return result;
 }
-
-void RuntimeScope::UpdateKind(RuntimeScope::Kind kind) { kind_ = kind; }
 
 void Action::Print(llvm::raw_ostream& out) const {
   switch (kind()) {

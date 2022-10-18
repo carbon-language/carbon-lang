@@ -27,7 +27,6 @@ namespace Carbon {
 // not compile-time constants.
 class RuntimeScope {
  public:
-  enum class Kind { Block, Method };
 
   // Returns a RuntimeScope whose Get() operation for a given name returns the
   // storage owned by the first entry in `scopes` that defines that name. This
@@ -39,7 +38,7 @@ class RuntimeScope {
 
   // Constructs a RuntimeScope that allocates storage in `heap`.
   explicit RuntimeScope(Nonnull<HeapAllocationInterface*> heap)
-      : heap_(heap), kind_(Kind::Block) {}
+      : heap_(heap) {}
 
   // Moving a RuntimeScope transfers ownership of its allocations.
   RuntimeScope(RuntimeScope&&) noexcept;
@@ -50,6 +49,8 @@ class RuntimeScope {
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+
+  void Bind(ValueNodeView value_node, Nonnull<const Value*> value);
 
   // Allocates storage for `value_node` in `heap`, and initializes it with
   // `value`.
@@ -65,20 +66,9 @@ class RuntimeScope {
       -> std::optional<Nonnull<const LValue*>>;
 
   // Returns the local values in created order
-  auto locals() const -> std::vector<Nonnull<const LValue*>> {
-    std::vector<Nonnull<const LValue*>> res;
-    for (auto& entry : locals_) {
-      res.push_back(entry.second);
-    }
-    return res;
+  auto allocations() const -> const std::vector<AllocationId> & {
+    return allocations_;
   }
-
-  // Return scope kind
-  // Block     = Scope is not bind at the top of a destructor call
-  // Method     = Scope is bind at the top of a method
-  auto kind() const -> Kind { return kind_; }
-
-  void UpdateKind(Kind kind);
 
  private:
   llvm::MapVector<ValueNodeView, Nonnull<const LValue*>,
@@ -86,7 +76,6 @@ class RuntimeScope {
       locals_;
   std::vector<AllocationId> allocations_;
   Nonnull<HeapAllocationInterface*> heap_;
-  Kind kind_;
 };
 
 // An Action represents the current state of a self-contained computation,
@@ -288,18 +277,18 @@ class DeclarationAction : public Action {
 class CleanupAction : public Action {
  public:
   explicit CleanupAction(RuntimeScope scope)
-      : Action(Kind::CleanUpAction), locals_count_(scope.locals().size()) {
+      : Action(Kind::CleanUpAction), allocations_count_(scope.allocations().size()) {
     StartScope(std::move(scope));
   }
 
-  auto locals_count() const -> int { return locals_count_; }
+  auto allocations_count() const -> int { return allocations_count_; }
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::CleanUpAction;
   }
 
  private:
-  int locals_count_;
+  int allocations_count_;
 };
 
 class DestroyAction : public Action {
