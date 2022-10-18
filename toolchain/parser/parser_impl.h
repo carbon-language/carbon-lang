@@ -169,6 +169,8 @@ class ParseTree::Parser {
 
   // Similar to ParseCodeBlock(), but supports different ParseNodeKinds because
   // function definitions are represented differently from other code blocks.
+  // If subtree_start is before start_kind, earlier nodes will be treated as
+  // children of the start_kind node.
   auto ParseCodeBlock(SubtreeStart subtree_start, ParseNodeKind start_kind,
                       ParseNodeKind end_kind) -> llvm::Optional<Node>;
 

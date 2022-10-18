@@ -182,7 +182,8 @@ void SemanticsIRFactory::Build() {
         break;
       }
       case ParseNodeKind::ReturnStatement(): {
-        // TODO: For now just blindly pop what should be StatementEnd.
+        CARBON_CHECK(parse_tree().node_kind(node_stack.back().parse_node) ==
+                     ParseNodeKind::StatementEnd());
         node_stack.pop_back();
 
         // TODO: Restructure ReturnStatement so that we can do this without
