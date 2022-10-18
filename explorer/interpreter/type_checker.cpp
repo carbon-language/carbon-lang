@@ -3132,25 +3132,16 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const Value*> constraint,
                 InterpExp(&is_clause.constraint(), arena_, trace_stream_));
-            if (auto* interface = dyn_cast<InterfaceType>(constraint)) {
-              // `where X is Y` produces an `impl` constraint.
-              builder.AddImplConstraint({.type = type, .interface = interface});
-            } else if (auto* constraint_type =
-                           dyn_cast<ConstraintType>(constraint)) {
-              // Transform `where .B is (C where .D is E)` into
-              // `where .B is C and .B.D is E` then add all the resulting
-              // constraints.
-              CARBON_RETURN_IF_ERROR(
-                  builder.AddAndSubstitute(*this, constraint_type, type,
-                                           builder.GetSelfWitness(), Bindings(),
-                                           /*add_lookup_contexts=*/false));
-            } else {
-              return ProgramError(is_clause.constraint().source_loc())
-                     << "expression after `is` does not resolve to a "
-                        "constraint, found value "
-                     << *constraint << " of type "
-                     << is_clause.constraint().static_type();
-            }
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const ConstraintType*> constraint_type,
+                ConvertToConstraintType(is_clause.source_loc(),
+                                        "expression after `is`", constraint));
+            // Transform `where .B is (C where .D is E)` into `where .B is C
+            // and .B.D is E` then add all the resulting constraints.
+            CARBON_RETURN_IF_ERROR(
+                builder.AddAndSubstitute(*this, constraint_type, type,
+                                         builder.GetSelfWitness(), Bindings(),
+                                         /*add_lookup_contexts=*/false));
             break;
           }
           case WhereClauseKind::EqualsWhereClause: {
