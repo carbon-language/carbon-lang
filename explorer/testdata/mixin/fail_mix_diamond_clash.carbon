@@ -2,9 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 package ExplorerTest api;
 
 __mixin M1 {
@@ -28,7 +28,7 @@ __mixin M3 {
 class C {
   __mix M2;
   __mix M3;
-// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_mix_diamond_clash.carbon:[[@LINE+1]]: Member named F1 (declared at {{.*}}/explorer/testdata/mixin/fail_mix_diamond_clash.carbon:13) is being mixed multiple times into C
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_mix_diamond_clash.carbon:[[@LINE+1]]: Member named F1 (declared at {{.*}}/explorer/testdata/mixin/fail_mix_diamond_clash.carbon:[[@LINE-18]]) is being mixed multiple times into C
 }
 
 fn Main() -> i32 {

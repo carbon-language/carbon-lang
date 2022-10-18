@@ -2,15 +2,15 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 fn id[T:! Type](x: T) -> T {
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_not_addable.carbon:[[@LINE+2]]: type error in `+`:
-  // CHECK:could not find implementation of interface AddWith(U = i32) for T:! Type
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_not_addable.carbon:[[@LINE+2]]: type error in `+`:
+  // CHECK:STDERR: could not find implementation of interface AddWith(U = i32) for T
   return x + 0;
 }
 

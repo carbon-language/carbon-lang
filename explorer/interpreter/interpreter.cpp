@@ -407,17 +407,22 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
       return todo_.FinishAction(value);
     }
     case ExpressionKind::SimpleMemberAccessExpression: {
+      const auto& access = cast<SimpleMemberAccessExpression>(exp);
       if (act.pos() == 0) {
         //    { {e.f :: C, E, F} :: S, H}
         // -> { e :: [].f :: C, E, F} :: S, H}
-        return todo_.Spawn(std::make_unique<LValAction>(
-            &cast<SimpleMemberAccessExpression>(exp).object()));
+        return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
       } else {
+        if (auto constant_value = access.constant_value()) {
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> instantiated,
+              InstantiateType(*constant_value, access.source_loc()));
+          return todo_.FinishAction(instantiated);
+        }
         //    { v :: [].f :: C, E, F} :: S, H}
         // -> { { &v.f :: C, E, F} :: S, H }
         Address object = cast<LValue>(*act.results()[0]).address();
-        Address member = object.SubobjectAddress(
-            cast<SimpleMemberAccessExpression>(exp).member());
+        Address member = object.SubobjectAddress(access.member());
         return todo_.FinishAction(arena_->New<LValue>(member));
       }
     }
@@ -426,6 +431,12 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
       if (act.pos() == 0) {
         return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
       } else {
+        if (auto constant_value = access.constant_value()) {
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> instantiated,
+              InstantiateType(*constant_value, access.source_loc()));
+          return todo_.FinishAction(instantiated);
+        }
         CARBON_CHECK(!access.member().interface().has_value())
             << "unexpected lvalue interface member";
         CARBON_ASSIGN_OR_RETURN(
@@ -534,41 +545,47 @@ auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
 auto Interpreter::EvalAssociatedConstant(
     Nonnull<const AssociatedConstant*> assoc, SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
-  // Find the witness.
+  // Instantiate the associated constant.
+  CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> base,
+                          InstantiateType(&assoc->base(), source_loc));
+  CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> interface,
+                          InstantiateType(&assoc->interface(), source_loc));
   CARBON_ASSIGN_OR_RETURN(Nonnull<const Witness*> witness,
                           InstantiateWitness(&assoc->witness()));
-  if (!isa<ImplWitness>(witness)) {
+  Nonnull<const AssociatedConstant*> instantiated_assoc =
+      arena_->New<AssociatedConstant>(base, cast<InterfaceType>(interface),
+                                      &assoc->constant(), witness);
+
+  auto* impl_witness = dyn_cast<ImplWitness>(witness);
+  if (!impl_witness) {
     CARBON_CHECK(phase() == Phase::CompileTime)
         << "symbolic witnesses should only be formed at compile time";
-    return ProgramError(source_loc)
-           << "value of associated constant " << *assoc << " is not known";
+    return instantiated_assoc;
   }
 
-  auto& impl_witness = cast<ImplWitness>(*witness);
+  // We have an impl. Extract the value from it.
   Nonnull<const ConstraintType*> constraint =
-      impl_witness.declaration().constraint_type();
-  Nonnull<const Value*> expected = arena_->New<AssociatedConstant>(
-      &constraint->self_binding()->value(), &assoc->interface(),
-      &assoc->constant(), &impl_witness);
+      impl_witness->declaration().constraint_type();
   std::optional<Nonnull<const Value*>> result;
-  constraint->VisitEqualValues(expected,
+  // TODO: We should pick the value from the rewrite constraint, not some other
+  // equality constraint that happens to be in the impl's constraint type.
+  constraint->VisitEqualValues(instantiated_assoc,
                                [&](Nonnull<const Value*> equal_value) {
                                  // TODO: The value might depend on the
                                  // parameters of the impl. We need to
-                                 // substitute impl_witness.type_args() into the
-                                 // value.
+                                 // substitute impl_witness->type_args() into
+                                 // the value or constraint.
                                  if (isa<AssociatedConstant>(equal_value)) {
                                    return true;
                                  }
-                                 // TODO: This makes an arbitrary choice if
-                                 // there's more than one equal value. It's not
-                                 // clear how to handle that case.
                                  result = equal_value;
                                  return false;
                                });
   if (!result) {
-    CARBON_FATAL() << impl_witness.declaration()
-                   << " is missing value for associated constant " << *assoc;
+    CARBON_FATAL() << impl_witness->declaration() << " with constraint "
+                   << *constraint
+                   << " is missing value for associated constant "
+                   << *instantiated_assoc;
   }
   return *result;
 }
@@ -587,6 +604,14 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
       }
       return value;
     }
+    case Value::Kind::InterfaceType: {
+      const auto& interface_type = cast<InterfaceType>(*type);
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Bindings*> bindings,
+          InstantiateBindings(&interface_type.bindings(), source_loc));
+      return arena_->New<InterfaceType>(&interface_type.declaration(),
+                                        bindings);
+    }
     case Value::Kind::NominalClassType: {
       const auto& class_type = cast<NominalClassType>(*type);
       CARBON_ASSIGN_OR_RETURN(
@@ -594,11 +619,18 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
           InstantiateBindings(&class_type.bindings(), source_loc));
       return arena_->New<NominalClassType>(&class_type.declaration(), bindings);
     }
+    case Value::Kind::ChoiceType: {
+      const auto& choice_type = cast<ChoiceType>(*type);
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Bindings*> bindings,
+          InstantiateBindings(&choice_type.bindings(), source_loc));
+      return arena_->New<ChoiceType>(&choice_type.declaration(), bindings);
+    }
     case Value::Kind::AssociatedConstant: {
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> type_value,
           EvalAssociatedConstant(cast<AssociatedConstant>(type), source_loc));
-      return InstantiateType(type_value, source_loc);
+      return type_value;
     }
     default:
       return type;
@@ -710,9 +742,12 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
               InstantiateType(destination_type, source_loc));
           return arena_->New<NominalClassValue>(inst_dest, value);
         }
-        default:
-          CARBON_FATAL() << "Can't convert value " << *value << " to type "
-                         << *destination_type;
+        default: {
+          CARBON_CHECK(IsValueKindDependent(destination_type))
+              << "Can't convert value " << *value << " to type "
+              << *destination_type;
+          return value;
+        }
       }
     }
     case Value::Kind::StructType: {
@@ -742,9 +777,12 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
                                            &array_type.element_type());
           break;
         }
-        default:
-          CARBON_FATAL() << "Can't convert value " << *value << " to type "
-                         << *destination_type;
+        default: {
+          CARBON_CHECK(IsValueKindDependent(destination_type))
+              << "Can't convert value " << *value << " to type "
+              << *destination_type;
+          return value;
+        }
       }
       CARBON_CHECK(tuple->elements().size() ==
                    destination_element_types.size());
@@ -762,6 +800,10 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> value,
           EvalAssociatedConstant(cast<AssociatedConstant>(value), source_loc));
+      if (isa<AssociatedConstant>(value)) {
+        return ProgramError(source_loc)
+               << "value of associated constant " << *value << " is not known";
+      }
       return Convert(value, destination_type, source_loc);
     }
   }
@@ -809,6 +851,16 @@ auto Interpreter::CallFunction(const CallExpression& call,
     case Value::Kind::FunctionValue: {
       const FunctionValue& fun_val = cast<FunctionValue>(*fun);
       const FunctionDeclaration& function = fun_val.declaration();
+      if (!function.body().has_value()) {
+        return ProgramError(call.source_loc())
+               << "attempt to call function `" << function.name()
+               << "` that has not been defined";
+      }
+      if (!function.is_type_checked()) {
+        return ProgramError(call.source_loc())
+               << "attempt to call function `" << function.name()
+               << "` that has not been fully type-checked";
+      }
       RuntimeScope binding_scope(&heap_);
       // Bring the class type arguments into scope.
       for (const auto& [bind, val] : fun_val.type_args()) {
@@ -838,8 +890,6 @@ auto Interpreter::CallFunction(const CallExpression& call,
       CARBON_CHECK(PatternMatch(
           &function.param_pattern().value(), converted_args, call.source_loc(),
           &function_scope, generic_args, trace_stream_, this->arena_));
-      CARBON_CHECK(function.body().has_value())
-          << "Calling a function that's missing a body";
       return todo_.Spawn(std::make_unique<StatementAction>(*function.body()),
                          std::move(function_scope));
     }
@@ -1004,6 +1054,12 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             std::make_unique<WitnessAction>(access.impl().value()));
       } else {
         // Finally, produce the result.
+        if (auto constant_value = access.constant_value()) {
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> instantiated,
+              InstantiateType(*constant_value, access.source_loc()));
+          return todo_.FinishAction(instantiated);
+        }
         std::optional<Nonnull<const InterfaceType*>> found_in_interface =
             access.found_in_interface();
         if (found_in_interface) {
@@ -1035,7 +1091,11 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           FieldPath::Component member(access.member(), found_in_interface,
                                       witness);
           const Value* aggregate;
-          if (const auto* lvalue = dyn_cast<LValue>(act.results()[0])) {
+          if (access.is_type_access()) {
+            CARBON_ASSIGN_OR_RETURN(
+                aggregate, InstantiateType(&access.object().static_type(),
+                                           access.source_loc()));
+          } else if (const auto* lvalue = dyn_cast<LValue>(act.results()[0])) {
             CARBON_ASSIGN_OR_RETURN(
                 aggregate,
                 this->heap_.Read(lvalue->address(), exp.source_loc()));
@@ -1065,6 +1125,12 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             std::make_unique<WitnessAction>(access.impl().value()));
       } else {
         // Finally, produce the result.
+        if (auto constant_value = access.constant_value()) {
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> instantiated,
+              InstantiateType(*constant_value, access.source_loc()));
+          return todo_.FinishAction(instantiated);
+        }
         std::optional<Nonnull<const InterfaceType*>> found_in_interface =
             access.member().interface();
         if (found_in_interface) {
@@ -1088,6 +1154,11 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         } else {
           // Access the object to find the named member.
           Nonnull<const Value*> object = act.results()[0];
+          if (access.is_type_access()) {
+            CARBON_ASSIGN_OR_RETURN(
+                object, InstantiateType(&access.object().static_type(),
+                                        access.source_loc()));
+          }
           std::optional<Nonnull<const Witness*>> witness;
           if (access.impl().has_value()) {
             witness = cast<Witness>(act.results()[1]);
@@ -1381,9 +1452,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       } else {
         //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
         // -> { fn pt -> rt :: {C, E, F} :: S, H}
-        return todo_.FinishAction(arena_->New<FunctionType>(
-            act.results()[0], llvm::None, act.results()[1], llvm::None,
-            llvm::None));
+        return todo_.FinishAction(
+            arena_->New<FunctionType>(act.results()[0], act.results()[1]));
       }
     }
     case ExpressionKind::ContinuationTypeLiteral: {
@@ -1947,6 +2017,8 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
     case DeclarationKind::MixDeclaration:
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::InterfaceDeclaration:
+    case DeclarationKind::InterfaceExtendsDeclaration:
+    case DeclarationKind::InterfaceImplDeclaration:
     case DeclarationKind::AssociatedConstantDeclaration:
     case DeclarationKind::ImplDeclaration:
     case DeclarationKind::SelfDeclaration:

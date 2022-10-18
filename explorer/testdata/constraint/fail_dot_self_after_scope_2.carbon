@@ -2,16 +2,16 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 interface FrobWith(T:! Type) {}
 
 fn F[T:! FrobWith(.Self),
-     // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/fail_dot_self_after_scope_2.carbon:[[@LINE+1]]: `.Self` used in type of non-type binding `U`
+     // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/fail_dot_self_after_scope_2.carbon:[[@LINE+1]]: `.Self` used in type of non-type binding `U`
      U:! .Self]() {
 }
 

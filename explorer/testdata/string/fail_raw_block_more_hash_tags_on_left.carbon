@@ -2,14 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:SYNTAX ERROR: {{.*}}/explorer/testdata/string/fail_raw_block_more_hash_tags_on_left.carbon:[[@LINE+1]]: Unexpected end of file
+  // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/string/fail_raw_block_more_hash_tags_on_left.carbon:[[@LINE+1]]: Unexpected end of file
   var s: String = ##"""
     error: there are more #s on the left than the right.
   """#;

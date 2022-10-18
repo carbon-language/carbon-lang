@@ -2,6 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//bazel/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -53,6 +54,7 @@ cc_fuzz_test(
 cc_binary(
     name = "carbon",
     srcs = ["driver_main.cpp"],
+    env = cc_env(),
     deps = [
         ":driver",
         "//common:bazel_working_dir",

@@ -2,16 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
-// TODO: We should type-check the prelude before the main input so that we can
-// use it within the types of top-level declarations.
-// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_invalid_fnty.carbon:[[@LINE+2]]: type error in `-`:
-// CHECK:missing declaration for builtin `Negate`
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_invalid_fnty.carbon:[[@LINE+2]]: type error in `-`:
+// CHECK:STDERR: could not find implementation of interface Negate for bool
 fn f(g: __Fn(-true) -> true) {
 }
 

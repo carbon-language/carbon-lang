@@ -2,9 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -30,7 +30,7 @@ class Point {
 
 fn Main() -> i32 {
   var p: Point = Point.Origin();
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/addr/fail_method_me_type.carbon:[[@LINE+1]]: type error in method access, receiver type: 'class Point' is not implicitly convertible to 'class Shape'
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/addr/fail_method_me_type.carbon:[[@LINE+1]]: type error in method access, receiver type: 'class Point' is not implicitly convertible to 'class Shape'
   var x: auto = p.GetSetX(42);
   if (p.x == 42) {
     return x;

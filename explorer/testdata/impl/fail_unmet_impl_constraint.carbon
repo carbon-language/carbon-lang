@@ -2,16 +2,16 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 interface A {}
 interface B {}
 
-// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_unmet_impl_constraint.carbon:[[@LINE+1]]: could not find implementation of interface B for i32
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_unmet_impl_constraint.carbon:[[@LINE+1]]: could not find implementation of interface B for i32
 external impl i32 as A where i32 is B {}
 
 fn Main() -> i32 {

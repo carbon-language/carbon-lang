@@ -15,17 +15,24 @@ interface As(T:! Type) {
 
 // Implicitly convert `Self` to `T`.
 interface ImplicitAs(T:! Type) {
-  fn Convert[me: Self]() -> T;
+  extends As(T);
 }
 
-// TODO: ImplicitAs(T) should extend As(T).
-impl forall [T:! Type, U:! ImplicitAs(T)] U as As(T) {
-  fn Convert[me: Self]() -> T { return me.Convert(); }
+// TODO: Should we just use an intrinsic for this?
+interface __EqualConverter {
+  let T:! Type;
+  fn Convert(t: T) -> Self;
+}
+fn __EqualConvert[T:! Type](t: T, U:! __EqualConverter where .T = T) -> U {
+  return U.Convert(t);
+}
+impl forall [U:! Type] U as __EqualConverter where .T = U {
+  fn Convert(u: U) -> U { return u; }
 }
 
-// Every type implicitly converts to itself.
-impl forall [T:! Type] T as ImplicitAs(T) {
-  fn Convert[me: Self]() -> T { return me; }
+// Every type implicitly converts to single-step-equal types.
+impl forall [T:! Type, U:! Type where .Self == T] T as ImplicitAs(U) {
+  fn Convert[me: Self]() -> U { return __EqualConvert(me, U); }
 }
 
 // TODO: Simplify this once we have variadics.
@@ -332,22 +339,22 @@ interface ModWith(U:! Type) {
 // TODO: constraint Mod { ... }
 
 // Note, these impls use the builtin addition for i32.
-external impl i32 as Negate where .Result == i32 {
+external impl i32 as Negate where .Result = i32 {
   fn Op[me: i32]() -> i32 { return -me; }
 }
-external impl i32 as AddWith(i32) where .Result == i32 {
+external impl i32 as AddWith(i32) where .Result = i32 {
   fn Op[me: i32](other: i32) -> i32 { return me + other; }
 }
-external impl i32 as SubWith(i32) where .Result == i32 {
+external impl i32 as SubWith(i32) where .Result = i32 {
   fn Op[me: i32](other: i32) -> i32 { return me - other; }
 }
-external impl i32 as MulWith(i32) where .Result == i32 {
+external impl i32 as MulWith(i32) where .Result = i32 {
   fn Op[me: i32](other: i32) -> i32 { return me * other; }
 }
-external impl i32 as DivWith(i32) where .Result == i32 {
+external impl i32 as DivWith(i32) where .Result = i32 {
   fn Op[me: i32](other: i32) -> i32 { return me / other; }
 }
-external impl i32 as ModWith(i32) where .Result == i32 {
+external impl i32 as ModWith(i32) where .Result = i32 {
   fn Op[me: i32](other: i32) -> i32 { return me % other; }
 }
 
@@ -370,7 +377,7 @@ interface BitAndWith(U:! Type) {
 }
 // TODO:
 // constraint BitAnd {
-//   extends BitAndWith(Self) where .Result == Self;
+//   extends BitAndWith(Self) where .Result = Self;
 // }
 
 // Binary `|`.
@@ -381,7 +388,7 @@ interface BitOrWith(U:! Type) {
 }
 // TODO:
 // constraint BitOr {
-//   extends BitOrWith(Self) where .Result == Self;
+//   extends BitOrWith(Self) where .Result = Self;
 // }
 
 // Binary `^`.
@@ -392,7 +399,7 @@ interface BitXorWith(U:! Type) {
 }
 // TODO:
 // constraint BitXor {
-//   extends BitXorWith(Self) where .Result == Self;
+//   extends BitXorWith(Self) where .Result = Self;
 // }
 
 // Binary `<<`.
@@ -403,7 +410,7 @@ interface LeftShiftWith(U:! Type) {
 }
 // TODO:
 // constraint LeftShift {
-//   extends LeftShiftWith(Self) where .Result == Self;
+//   extends LeftShiftWith(Self) where .Result = Self;
 // }
 
 // Binary `>>`.
@@ -414,35 +421,35 @@ interface RightShiftWith(U:! Type) {
 }
 // TODO:
 // constraint RightShift {
-//   extends RightShiftWith(Self) where .Result == Self;
+//   extends RightShiftWith(Self) where .Result = Self;
 // }
 
-external impl i32 as BitComplement where .Result == i32 {
+external impl i32 as BitComplement where .Result = i32 {
   fn Op[me: i32]() -> i32 {
     return __intrinsic_int_bit_complement(me);
   }
 }
-external impl i32 as BitAndWith(i32) where .Result == i32 {
+external impl i32 as BitAndWith(i32) where .Result = i32 {
   fn Op[me: i32](other: i32) -> i32 {
     return __intrinsic_int_bit_and(me, other);
   }
 }
-external impl i32 as BitOrWith(i32) where .Result == i32 {
+external impl i32 as BitOrWith(i32) where .Result = i32 {
   fn Op[me: i32](other: i32) -> i32 {
     return __intrinsic_int_bit_or(me, other);
   }
 }
-external impl i32 as BitXorWith(i32) where .Result == i32 {
+external impl i32 as BitXorWith(i32) where .Result = i32 {
   fn Op[me: i32](other: i32) -> i32 {
     return __intrinsic_int_bit_xor(me, other);
   }
 }
-external impl i32 as LeftShiftWith(i32) where .Result == i32 {
+external impl i32 as LeftShiftWith(i32) where .Result = i32 {
   fn Op[me: i32](other: i32) -> i32 {
     return __intrinsic_int_left_shift(me, other);
   }
 }
-external impl i32 as RightShiftWith(i32) where .Result == i32 {
+external impl i32 as RightShiftWith(i32) where .Result = i32 {
   fn Op[me: i32](other: i32) -> i32 {
     return __intrinsic_int_right_shift(me, other);
   }
