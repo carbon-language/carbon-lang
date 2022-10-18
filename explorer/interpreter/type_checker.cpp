@@ -3408,7 +3408,6 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                << class_decl->name()
                << "`. Only simple classes are currently supported as base "
                   "class.";
-        break;
     }
   }
 
