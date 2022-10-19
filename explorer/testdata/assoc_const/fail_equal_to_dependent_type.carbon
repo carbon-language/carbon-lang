@@ -19,7 +19,7 @@ fn G[U:! Iface where .T == i32](x: U) {
 }
 
 fn H[V:! Iface](x: V) {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}//usr/local/google/home/richardsmith/carbon-lang/explorer/testdata/assoc_const/fail_equal_to_dependent_type.carbon:[[@LINE+1]]: constraint requires that (T).(Iface.T) (with value (V).(Iface.T)) == i32, which is not known to be true
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_equal_to_dependent_type.carbon:[[@LINE+1]]: constraint requires that (T).(Iface.T) (with value (V).(Iface.T)) == i32, which is not known to be true
   F(x);
 }
 

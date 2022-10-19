@@ -3262,8 +3262,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<Expression*> converted_expression,
                 ImplicitlyConvert(
-                    "replacement in rewrite constraint", impl_scope,
-                    replacement_literal,
+                    "rewrite constraint", impl_scope, replacement_literal,
                     GetTypeForAssociatedConstant(constant_value)));
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const Value*> converted_value,
