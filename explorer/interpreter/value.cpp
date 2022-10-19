@@ -436,7 +436,7 @@ void Value::Print(llvm::raw_ostream& out) const {
            constraint.rewrite_constraints()) {
         out << sep << ".(" << *rewrite.interface << "."
             << *GetName(*rewrite.constant)
-            << ") = " << rewrite.replacement->value();
+            << ") = " << *rewrite.unconverted_replacement;
       }
       for (const ConstraintType::ImplConstraint& impl :
            constraint.impl_constraints()) {

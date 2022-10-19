@@ -19,6 +19,8 @@
 
 namespace Carbon {
 
+struct RewriteConstraint;
+
 using CollectedMembersMap =
     std::unordered_map<std::string_view, Nonnull<const Declaration*>>;
 
@@ -400,15 +402,15 @@ class TypeChecker {
 
   // Given an interface type, form a corresponding constraint type. The
   // interface must be a complete type.
-  auto MakeConstraintForInterface(SourceLocation source_loc,
-                                  Nonnull<const InterfaceType*> iface_type)
+  auto MakeConstraintForInterface(
+      SourceLocation source_loc, Nonnull<const InterfaceType*> iface_type) const
       -> ErrorOr<Nonnull<const ConstraintType*>>;
 
   // Convert a value that is expected to represent a constraint into a
   // `ConstraintType`.
   auto ConvertToConstraintType(SourceLocation source_loc,
                                std::string_view context,
-                               Nonnull<const Value*> constraint)
+                               Nonnull<const Value*> constraint) const
       -> ErrorOr<Nonnull<const ConstraintType*>>;
 
   // Given a list of constraint types, form the combined constraint.
@@ -434,14 +436,14 @@ class TypeChecker {
   auto LookupRewriteInTypeOf(Nonnull<const Value*> type,
                              Nonnull<const InterfaceType*> interface,
                              Nonnull<const Declaration*> member) const
-      -> std::optional<const ValueLiteral*>;
+      -> std::optional<const RewriteConstraint*>;
 
   // Given a witness value, look for a rewrite for the given associated
   // constant.
   auto LookupRewriteInWitness(Nonnull<const Witness*> witness,
                               Nonnull<const InterfaceType*> interface,
                               Nonnull<const Declaration*> member) const
-      -> std::optional<const ValueLiteral*>;
+      -> std::optional<const RewriteConstraint*>;
 
   // Adds a member of a declaration to collected_members_
   auto CollectMember(Nonnull<const Declaration*> enclosing_decl,

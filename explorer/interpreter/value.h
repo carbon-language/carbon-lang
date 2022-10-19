@@ -749,6 +749,21 @@ struct EqualityConstraint {
   std::vector<Nonnull<const Value*>> values;
 };
 
+// A constraint indicating that access to an associated constant should be
+// replaced by another value.
+struct RewriteConstraint {
+  // The interface whose constant is rewritten.
+  Nonnull<const InterfaceType*> interface;
+  // The associated constant that is rewritten.
+  Nonnull<const AssociatedConstantDeclaration*> constant;
+  // The replacement in its original type.
+  Nonnull<const Value*> unconverted_replacement;
+  // The type of the replacement.
+  Nonnull<const Value*> unconverted_replacement_type;
+  // The replacement after conversion to the type of the associated constant.
+  Nonnull<const Value*> converted_replacement;
+};
+
 // A type-of-type for an unknown constrained type.
 //
 // These types are formed by the `&` operator that combines constraints and by
@@ -773,15 +788,9 @@ class ConstraintType : public Value {
     Nonnull<const InterfaceType*> interface;
   };
 
-  using EqualityConstraint = Carbon::EqualityConstraint;
+  using RewriteConstraint = Carbon::RewriteConstraint;
 
-  // A constraint indicating that access to an associated constant should be
-  // replaced by another value.
-  struct RewriteConstraint {
-    Nonnull<const InterfaceType*> interface;
-    Nonnull<const AssociatedConstantDeclaration*> constant;
-    Nonnull<const ValueLiteral*> replacement;
-  };
+  using EqualityConstraint = Carbon::EqualityConstraint;
 
   // A context in which we might look up a name.
   struct LookupContext {

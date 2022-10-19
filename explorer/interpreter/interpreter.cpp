@@ -537,46 +537,39 @@ auto Interpreter::EvalAssociatedConstant(
     Nonnull<const AssociatedConstant*> assoc, SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
   // Instantiate the associated constant.
-  CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> base,
-                          InstantiateType(&assoc->base(), source_loc));
   CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> interface,
                           InstantiateType(&assoc->interface(), source_loc));
   CARBON_ASSIGN_OR_RETURN(Nonnull<const Witness*> witness,
                           InstantiateWitness(&assoc->witness()));
-  Nonnull<const AssociatedConstant*> instantiated_assoc =
-      arena_->New<AssociatedConstant>(base, cast<InterfaceType>(interface),
-                                      &assoc->constant(), witness);
 
   auto* impl_witness = dyn_cast<ImplWitness>(witness);
   if (!impl_witness) {
     CARBON_CHECK(phase() == Phase::CompileTime)
         << "symbolic witnesses should only be formed at compile time";
-    return instantiated_assoc;
+    CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> base,
+                            InstantiateType(&assoc->base(), source_loc));
+    return arena_->New<AssociatedConstant>(base, cast<InterfaceType>(interface),
+                                           &assoc->constant(), witness);
   }
 
   // We have an impl. Extract the value from it.
   Nonnull<const ConstraintType*> constraint =
       impl_witness->declaration().constraint_type();
   std::optional<Nonnull<const Value*>> result;
-  // TODO: We should pick the value from the rewrite constraint, not some other
-  // equality constraint that happens to be in the impl's constraint type.
-  constraint->VisitEqualValues(instantiated_assoc,
-                               [&](Nonnull<const Value*> equal_value) {
-                                 // TODO: The value might depend on the
-                                 // parameters of the impl. We need to
-                                 // substitute impl_witness->type_args() into
-                                 // the value or constraint.
-                                 if (isa<AssociatedConstant>(equal_value)) {
-                                   return true;
-                                 }
-                                 result = equal_value;
-                                 return false;
-                               });
+  for (auto& rewrite : constraint->rewrite_constraints()) {
+    if (rewrite.constant == &assoc->constant() &&
+        TypeEqual(rewrite.interface, interface, std::nullopt)) {
+      // TODO: The value might depend on the parameters of the impl. We need to
+      // substitute impl_witness->type_args() into the value.
+      result = rewrite.converted_replacement;
+      break;
+    }
+  }
   if (!result) {
     CARBON_FATAL() << impl_witness->declaration() << " with constraint "
                    << *constraint
                    << " is missing value for associated constant "
-                   << *instantiated_assoc;
+                   << *interface << "." << assoc->constant().binding().name();
   }
   return *result;
 }
