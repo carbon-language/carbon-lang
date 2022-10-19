@@ -2,6 +2,8 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("//bazel/macos_malloc:env.bzl", "macos_malloc_env")
+
 package(default_visibility = [
     "//bazel/check_deps:__pkg__",
     "//explorer:__subpackages__",
@@ -31,8 +33,10 @@ cc_library(
 cc_binary(
     name = "explorer",
     srcs = ["main_bin.cpp"],
+    env = macos_malloc_env(),
     deps = [
         ":main",
+        "//common:bazel_working_dir",
         "@llvm-project//llvm:Support",
     ],
 )

@@ -59,35 +59,51 @@ jobs:
           go get github.com/bazelbuild/bazelisk
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
-      # Setup to the latest LLVM and Clang release.
-      #
-      # Ideally we would use the pre-installed versions in the image, but the
-      # debian packages for LLVM-12 are broken due to several bugs:
-      # https://bugs.llvm.org/show_bug.cgi?id=43604
-      # https://bugs.llvm.org/show_bug.cgi?id=46321
-      #
-      # For now, we rely on Homebrew to manage installing a correctly built
-      # toolchain. We also take some care to be as resilient as possible to
-      # issues fetching and installing the toolchain.
-      - name: Setup LLVM and Clang
+      # On macOS, use Homebrew to install a recent LLVM and Clang.
+      - name: Setup LLVM and Clang (macOS)
+        if: matrix.os == 'macos-latest'
+        env:
+          HOMEBREW_NO_INSTALL_CLEANUP: 1
+          HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
         run: |
+          echo '*** Updating brew'
           brew update
+          echo '*** Installing LLVM deps'
           brew install --force-bottle --only-dependencies llvm
+          echo '*** Installing LLVM itself'
           brew install --force-bottle --force --verbose llvm
+          echo '*** brew info llvm'
           brew info llvm
+          echo '*** brew config'
           brew config
+          echo '*** Updating PATH'
           echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
+
+      # On Ubuntu, use apt.llvm.org to install a recent LLVM and Clang.
+      - name: Setup LLVM and Clang (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 15 all
+          rm llvm.sh
+          echo "/usr/lib/llvm-15/bin" >> $GITHUB_PATH
 
       # Print the various tool paths and versions to help in debugging.
       - name: Print tool debugging info
         run: |
+          echo '*** PATH'
           echo $PATH
+          echo '*** bazelisk'
           which bazelisk
           bazelisk --version
+          echo '*** python'
           which python
           python --version
+          echo '*** clang'
           which clang
           clang --version
+          echo '*** clang++'
           which clang++
           clang++ --version
 
@@ -101,10 +117,14 @@ jobs:
 
       # Add our bazel configuration and print basic info to ease debugging.
       - name: Configure Bazel and print info
+        env:
+          # Add a cache version for changes that bazel won't otherwise detect,
+          # like llvm version changes.
+          CACHE_VERSION: 1
         run: |
           cat >user.bazelrc <<EOF
           # Enable remote cache for our CI.
-          build --remote_cache=https://storage.googleapis.com/carbon-builds-github-${{ matrix.os }}
+          build --remote_cache=https://storage.googleapis.com/carbon-builds-github-v${CACHE_VERSION}-${{ matrix.os }}
           build --google_credentials=$HOME/gcp-builds-service-account.json
 
           # General build options.

@@ -33,6 +33,15 @@ static auto AddExposedNames(const Declaration& declaration,
       // Nothing to do here
       break;
     }
+    case DeclarationKind::DestructorDeclaration: {
+      // TODO: Remove this code. With this code, it is possible to create not
+      // useful carbon code.
+      //       Without this code, a Segfault is generated
+      auto& func = cast<DestructorDeclaration>(declaration);
+      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(
+          "destructor", &func, StaticScope::NameStatus::KnownButNotDeclared));
+      break;
+    }
     case DeclarationKind::FunctionDeclaration: {
       auto& func = cast<FunctionDeclaration>(declaration);
       CARBON_RETURN_IF_ERROR(enclosing_scope.Add(
@@ -258,9 +267,8 @@ static auto ResolveNames(Expression& expression,
     case ExpressionKind::TypeTypeLiteral:
     case ExpressionKind::ValueLiteral:
       break;
-    case ExpressionKind::InstantiateImpl:  // created after name resolution
     case ExpressionKind::UnimplementedExpression:
-      return CompilationError(expression.source_loc()) << "Unimplemented";
+      return ProgramError(expression.source_loc()) << "Unimplemented";
   }
   return Success();
 }
@@ -390,7 +398,7 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
       std::optional<ValueNodeView> returned_var_def_view =
           enclosing_scope.ResolveReturned();
       if (!returned_var_def_view.has_value()) {
-        return CompilationError(ret_var_stmt.source_loc())
+        return ProgramError(ret_var_stmt.source_loc())
                << "`return var` is not allowed without a returned var defined "
                   "in scope.";
       }
@@ -402,7 +410,7 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
       std::optional<ValueNodeView> returned_var_def_view =
           enclosing_scope.ResolveReturned();
       if (returned_var_def_view.has_value()) {
-        return CompilationError(ret_exp_stmt.source_loc())
+        return ProgramError(ret_exp_stmt.source_loc())
                << "`return <expression>` is not allowed with a returned var "
                   "defined in scope: "
                << returned_var_def_view->base().source_loc();
@@ -507,6 +515,8 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
         CARBON_RETURN_IF_ERROR(ResolveNames(**iface.params(), iface_scope));
       }
       enclosing_scope.MarkUsable(iface.name());
+      // Don't resolve names in the type of the self binding. The
+      // InterfaceDeclaration constructor already did that.
       CARBON_RETURN_IF_ERROR(iface_scope.Add("Self", iface.self()));
       CARBON_RETURN_IF_ERROR(
           ResolveMemberNames(iface.members(), iface_scope, bodies));
@@ -534,8 +544,9 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
           ResolveMemberNames(impl.members(), impl_scope, bodies));
       break;
     }
+    case DeclarationKind::DestructorDeclaration:
     case DeclarationKind::FunctionDeclaration: {
-      auto& function = cast<FunctionDeclaration>(declaration);
+      auto& function = cast<CallableDeclaration>(declaration);
       StaticScope function_scope;
       function_scope.AddParent(&enclosing_scope);
       enclosing_scope.MarkDeclared(function.name());
@@ -596,16 +607,22 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
     }
     case DeclarationKind::ChoiceDeclaration: {
       auto& choice = cast<ChoiceDeclaration>(declaration);
+      StaticScope choice_scope;
+      choice_scope.AddParent(&enclosing_scope);
       enclosing_scope.MarkDeclared(choice.name());
+      if (choice.type_params().has_value()) {
+        CARBON_RETURN_IF_ERROR(
+            ResolveNames(**choice.type_params(), choice_scope));
+      }
       // Alternative names are never used unqualified, so we don't need to
       // add the alternatives to a scope, or introduce a new scope; we only
       // need to check for duplicates.
       std::set<std::string_view> alternative_names;
       for (Nonnull<AlternativeSignature*> alternative : choice.alternatives()) {
         CARBON_RETURN_IF_ERROR(
-            ResolveNames(alternative->signature(), enclosing_scope));
+            ResolveNames(alternative->signature(), choice_scope));
         if (!alternative_names.insert(alternative->name()).second) {
-          return CompilationError(alternative->source_loc())
+          return ProgramError(alternative->source_loc())
                  << "Duplicate name `" << alternative->name()
                  << "` in choice type";
         }

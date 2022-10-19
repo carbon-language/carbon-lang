@@ -6,13 +6,16 @@
 
 #include <optional>
 
+#include "explorer/ast/bindings.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/expression.h"
+#include "explorer/ast/pattern.h"
 #include "llvm/Support/Casting.h"
 
 namespace Carbon {
 
 using ::llvm::cast;
+using ::llvm::dyn_cast;
 using ::llvm::isa;
 
 static auto ExpressionToProto(const Expression& expression)
@@ -53,6 +56,8 @@ static auto OperatorToProtoEnum(const Operator op)
       return Fuzzing::OperatorExpression::And;
     case Operator::Eq:
       return Fuzzing::OperatorExpression::Eq;
+    case Operator::NotEq:
+      return Fuzzing::OperatorExpression::NotEq;
     case Operator::Less:
       return Fuzzing::OperatorExpression::Less;
     case Operator::LessEq:
@@ -63,6 +68,8 @@ static auto OperatorToProtoEnum(const Operator op)
       return Fuzzing::OperatorExpression::GreaterEq;
     case Operator::Mul:
       return Fuzzing::OperatorExpression::Mul;
+    case Operator::Div:
+      return Fuzzing::OperatorExpression::Div;
     case Operator::Mod:
       return Fuzzing::OperatorExpression::Mod;
     case Operator::Or:
@@ -105,11 +112,11 @@ static auto ExpressionToProto(const Expression& expression)
     -> Fuzzing::Expression {
   Fuzzing::Expression expression_proto;
   switch (expression.kind()) {
-    case ExpressionKind::InstantiateImpl:
     case ExpressionKind::ValueLiteral: {
-      // These do not correspond to source syntax.
+      // This does not correspond to source syntax.
       break;
     }
+
     case ExpressionKind::CallExpression: {
       const auto& call = cast<CallExpression>(expression);
       auto* call_proto = expression_proto.mutable_call();
@@ -331,6 +338,15 @@ static auto GenericBindingToProto(const GenericBinding& binding)
   Fuzzing::GenericBinding binding_proto;
   binding_proto.set_name(binding.name());
   *binding_proto.mutable_type() = ExpressionToProto(binding.type());
+
+  return binding_proto;
+}
+
+static auto MixinSelfToProto(const MixinSelf& binding) -> Fuzzing::MixinSelf {
+  Fuzzing::MixinSelf binding_proto;
+  binding_proto.set_name(binding.name());
+  *binding_proto.mutable_type() = ExpressionToProto(binding.type());
+
   return binding_proto;
 }
 
@@ -349,6 +365,11 @@ static auto PatternToProto(const Pattern& pattern) -> Fuzzing::Pattern {
     case PatternKind::GenericBinding: {
       const auto& binding = cast<GenericBinding>(pattern);
       *pattern_proto.mutable_generic_binding() = GenericBindingToProto(binding);
+      break;
+    }
+    case PatternKind::MixinSelf: {
+      const auto& binding = cast<MixinSelf>(pattern);
+      *pattern_proto.mutable_mixin_self() = MixinSelfToProto(binding);
       break;
     }
     case PatternKind::BindingPattern: {
@@ -479,9 +500,16 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
           ExpressionToProto(match.expression());
       for (const Match::Clause& clause : match.clauses()) {
         auto* clause_proto = match_proto->add_clauses();
-        const bool is_default_clause =
-            clause.pattern().kind() == PatternKind::BindingPattern &&
-            cast<BindingPattern>(clause.pattern()).name() == AnonymousName;
+        // TODO: Working out whether we have a default clause after the fact
+        // like this is fragile.
+        bool is_default_clause = false;
+        if (auto* binding = dyn_cast<BindingPattern>(&clause.pattern())) {
+          if (binding->name() == AnonymousName &&
+              isa<AutoPattern>(binding->type()) &&
+              binding->source_loc() == binding->type().source_loc()) {
+            is_default_clause = true;
+          }
+        }
         if (is_default_clause) {
           clause_proto->set_is_default(true);
         } else {
@@ -554,6 +582,35 @@ static auto DeclarationToProto(const Declaration& declaration)
     -> Fuzzing::Declaration {
   Fuzzing::Declaration declaration_proto;
   switch (declaration.kind()) {
+    case DeclarationKind::DestructorDeclaration: {
+      const auto& function = cast<DestructorDeclaration>(declaration);
+      auto* function_proto = declaration_proto.mutable_destructor();
+      if (function.is_method()) {
+        switch (function.me_pattern().kind()) {
+          case PatternKind::AddrPattern:
+            *function_proto->mutable_me_pattern() =
+                PatternToProto(cast<AddrPattern>(function.me_pattern()));
+            break;
+          case PatternKind::BindingPattern:
+            *function_proto->mutable_me_pattern() =
+                PatternToProto(cast<BindingPattern>(function.me_pattern()));
+            break;
+          default:
+            // Parser shouldn't allow me_pattern to be anything other than
+            // AddrPattern or BindingPattern
+            CARBON_FATAL() << "me_pattern in method declaration can be either "
+                              "AddrPattern or BindingPattern. Actual pattern: "
+                           << function.me_pattern();
+            break;
+        }
+      }
+      if (function.body().has_value()) {
+        *function_proto->mutable_body() =
+            BlockStatementToProto(**function.body());
+      }
+      break;
+    }
+
     case DeclarationKind::FunctionDeclaration: {
       const auto& function = cast<FunctionDeclaration>(declaration);
       auto* function_proto = declaration_proto.mutable_function();
@@ -604,6 +661,29 @@ static auto DeclarationToProto(const Declaration& declaration)
       for (Nonnull<const Declaration*> member : class_decl.members()) {
         *class_proto->add_members() = DeclarationToProto(*member);
       }
+      break;
+    }
+
+    case DeclarationKind::MixinDeclaration: {
+      const auto& mixin = cast<MixinDeclaration>(declaration);
+      auto* mixin_proto = declaration_proto.mutable_mixin();
+      mixin_proto->set_name(mixin.name());
+      for (const auto& member : mixin.members()) {
+        *mixin_proto->add_members() = DeclarationToProto(*member);
+      }
+      // Type params not implemented yet
+      // if (mixin.params().has_value()) {
+      //  *mixin_proto->mutable_params() =
+      //      TuplePatternToProto(**mixin.params());
+      //}
+      *mixin_proto->mutable_self() = MixinSelfToProto(*mixin.self());
+      break;
+    }
+
+    case DeclarationKind::MixDeclaration: {
+      const auto& mix = cast<MixDeclaration>(declaration);
+      auto* mix_proto = declaration_proto.mutable_mix();
+      *mix_proto->mutable_mixin() = ExpressionToProto(mix.mixin());
       break;
     }
 

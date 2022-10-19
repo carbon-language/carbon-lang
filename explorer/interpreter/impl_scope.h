@@ -44,14 +44,14 @@ class ImplScope {
  public:
   // Associates `iface` and `type` with the `impl` in this scope.
   void Add(Nonnull<const Value*> iface, Nonnull<const Value*> type,
-           Nonnull<Expression*> impl, const TypeChecker& type_checker);
+           Nonnull<const Witness*> witness, const TypeChecker& type_checker);
   // For a parameterized impl, associates `iface` and `type`
   // with the `impl` in this scope.
   void Add(Nonnull<const Value*> iface,
            llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
            Nonnull<const Value*> type,
            llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
-           Nonnull<Expression*> impl, const TypeChecker& type_checker);
+           Nonnull<const Witness*> witness, const TypeChecker& type_checker);
 
   // Add a type equality constraint.
   void AddEqualityConstraint(Nonnull<const EqualityConstraint*> equal) {
@@ -67,7 +67,7 @@ class ImplScope {
   // at `source_loc` there isn't exactly one matching impl.
   auto Resolve(Nonnull<const Value*> constraint, Nonnull<const Value*> type,
                SourceLocation source_loc, const TypeChecker& type_checker) const
-      -> ErrorOr<Nonnull<Expression*>>;
+      -> ErrorOr<Nonnull<const Witness*>>;
 
   // Visits the values that are a single step away from `value` according to an
   // equality constraint that is in scope. That is, the values `v` such that we
@@ -94,7 +94,7 @@ class ImplScope {
     std::vector<Nonnull<const GenericBinding*>> deduced;
     Nonnull<const Value*> type;
     std::vector<Nonnull<const ImplBinding*>> impl_bindings;
-    Nonnull<Expression*> impl;
+    Nonnull<const Witness*> witness;
   };
 
  private:
@@ -104,7 +104,7 @@ class ImplScope {
   auto ResolveInterface(Nonnull<const InterfaceType*> iface,
                         Nonnull<const Value*> type, SourceLocation source_loc,
                         const TypeChecker& type_checker) const
-      -> ErrorOr<Nonnull<Expression*>>;
+      -> ErrorOr<Nonnull<const Witness*>>;
 
   // Returns the associated impl for the given `iface` and `type` in
   // the ancestor graph of this scope, returns std::nullopt if there
@@ -116,7 +116,7 @@ class ImplScope {
                   Nonnull<const Value*> type, SourceLocation source_loc,
                   const ImplScope& original_scope,
                   const TypeChecker& type_checker) const
-      -> ErrorOr<std::optional<Nonnull<Expression*>>>;
+      -> ErrorOr<std::optional<Nonnull<const Witness*>>>;
 
   // Returns the associated impl for the given `iface` and `type` in
   // this scope, returns std::nullopt if there is none, or reports
@@ -128,7 +128,7 @@ class ImplScope {
                    Nonnull<const Value*> impl_type, SourceLocation source_loc,
                    const ImplScope& original_scope,
                    const TypeChecker& type_checker) const
-      -> ErrorOr<std::optional<Nonnull<Expression*>>>;
+      -> ErrorOr<std::optional<Nonnull<const Witness*>>>;
 
   std::vector<Impl> impls_;
   std::vector<Nonnull<const EqualityConstraint*>> equalities_;

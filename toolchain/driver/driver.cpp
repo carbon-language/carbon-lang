@@ -14,6 +14,7 @@
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_tree.h"
+#include "toolchain/semantics/semantics_ir_factory.h"
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon {
@@ -36,25 +37,23 @@ auto GetSubcommand(llvm::StringRef name) -> Subcommand {
 }  // namespace
 
 auto Driver::RunFullCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
+  DiagnosticConsumer* consumer = &ConsoleDiagnosticConsumer();
+  std::unique_ptr<SortingDiagnosticConsumer> sorting_consumer;
+  // TODO: Figure out a command-line support library, this is temporary.
+  if (!args.empty() && args[0] == "--print-errors=streamed") {
+    args = args.drop_front();
+  } else {
+    sorting_consumer = std::make_unique<SortingDiagnosticConsumer>(*consumer);
+    consumer = sorting_consumer.get();
+  }
+
   if (args.empty()) {
     error_stream_ << "ERROR: No subcommand specified.\n";
     return false;
   }
 
   llvm::StringRef subcommand_text = args[0];
-  llvm::SmallVector<llvm::StringRef, 16> subcommand_args(
-      std::next(args.begin()), args.end());
-
-  DiagnosticConsumer* consumer = &ConsoleDiagnosticConsumer();
-  std::unique_ptr<SortingDiagnosticConsumer> sorting_consumer;
-  // TODO: Figure out command-line support (llvm::cl?), this is temporary.
-  if (!subcommand_args.empty() &&
-      subcommand_args[0] == "--print-errors=streamed") {
-    subcommand_args.erase(subcommand_args.begin());
-  } else {
-    sorting_consumer = std::make_unique<SortingDiagnosticConsumer>(*consumer);
-    consumer = sorting_consumer.get();
-  }
+  args = args.drop_front();
   switch (GetSubcommand(subcommand_text)) {
     case Subcommand::Unknown:
       error_stream_ << "ERROR: Unknown subcommand '" << subcommand_text
@@ -63,7 +62,7 @@ auto Driver::RunFullCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
 
 #define CARBON_SUBCOMMAND(Name, ...) \
   case Subcommand::Name:             \
-    return Run##Name##Subcommand(*consumer, subcommand_args);
+    return Run##Name##Subcommand(*consumer, args);
 #include "toolchain/driver/flags.def"
   }
   llvm_unreachable("All subcommands handled!");
@@ -105,9 +104,27 @@ auto Driver::RunHelpSubcommand(DiagnosticConsumer& /*consumer*/,
   return true;
 }
 
-auto Driver::RunDumpTokensSubcommand(DiagnosticConsumer& consumer,
-                                     llvm::ArrayRef<llvm::StringRef> args)
-    -> bool {
+enum class DumpMode { TokenizedBuffer, ParseTree, SemanticsIR, Unknown };
+
+auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
+                               llvm::ArrayRef<llvm::StringRef> args) -> bool {
+  if (args.empty()) {
+    error_stream_ << "ERROR: No dump mode specified.\n";
+    return false;
+  }
+
+  auto dump_mode = llvm::StringSwitch<DumpMode>(args.front())
+                       .Case("tokens", DumpMode::TokenizedBuffer)
+                       .Case("parse-tree", DumpMode::ParseTree)
+                       .Case("semantics-ir", DumpMode::SemanticsIR)
+                       .Default(DumpMode::Unknown);
+  if (dump_mode == DumpMode::Unknown) {
+    error_stream_ << "ERROR: Dump mode should be one of tokens, parse-tree, or "
+                     "semantics-ir.\n";
+    return false;
+  }
+  args = args.drop_front();
+
   if (args.empty()) {
     error_stream_ << "ERROR: No input file specified.\n";
     return false;
@@ -116,7 +133,7 @@ auto Driver::RunDumpTokensSubcommand(DiagnosticConsumer& consumer,
   llvm::StringRef input_file_name = args.front();
   args = args.drop_front();
   if (!args.empty()) {
-    ReportExtraArgs("dump-tokens", args);
+    ReportExtraArgs("dump", args);
     return false;
   }
 
@@ -130,42 +147,30 @@ auto Driver::RunDumpTokensSubcommand(DiagnosticConsumer& consumer,
                           });
     return false;
   }
+
   auto tokenized_source = TokenizedBuffer::Lex(*source, consumer);
-  consumer.Flush();
-  tokenized_source.Print(output_stream_);
-  return !tokenized_source.has_errors();
-}
-
-auto Driver::RunDumpParseTreeSubcommand(DiagnosticConsumer& consumer,
-                                        llvm::ArrayRef<llvm::StringRef> args)
-    -> bool {
-  if (args.empty()) {
-    error_stream_ << "ERROR: No input file specified.\n";
-    return false;
+  if (dump_mode == DumpMode::TokenizedBuffer) {
+    consumer.Flush();
+    tokenized_source.Print(output_stream_);
+    return !tokenized_source.has_errors();
   }
 
-  llvm::StringRef input_file_name = args.front();
-  args = args.drop_front();
-  if (!args.empty()) {
-    ReportExtraArgs("dump-parse-tree", args);
-    return false;
-  }
-
-  auto source = SourceBuffer::CreateFromFile(input_file_name);
-  if (!source) {
-    error_stream_ << "ERROR: Unable to open input source file: ";
-    llvm::handleAllErrors(source.takeError(),
-                          [&](const llvm::ErrorInfoBase& ei) {
-                            ei.log(error_stream_);
-                            error_stream_ << "\n";
-                          });
-    return false;
-  }
-  auto tokenized_source = TokenizedBuffer::Lex(*source, consumer);
   auto parse_tree = ParseTree::Parse(tokenized_source, consumer);
-  consumer.Flush();
-  parse_tree.Print(output_stream_);
-  return !tokenized_source.has_errors() && !parse_tree.has_errors();
+  if (dump_mode == DumpMode::ParseTree) {
+    consumer.Flush();
+    parse_tree.Print(output_stream_);
+    return !tokenized_source.has_errors() && !parse_tree.has_errors();
+  }
+
+  auto semantics_ir = SemanticsIRFactory::Build(tokenized_source, parse_tree);
+  if (dump_mode == DumpMode::SemanticsIR) {
+    consumer.Flush();
+    semantics_ir.Print(output_stream_);
+    // TODO: Return false when SemanticsIR has errors (not supported right now).
+    return !tokenized_source.has_errors() && !parse_tree.has_errors();
+  }
+
+  llvm_unreachable("should handle all dump modes");
 }
 
 auto Driver::ReportExtraArgs(llvm::StringRef subcommand_text,

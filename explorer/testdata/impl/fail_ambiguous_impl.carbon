@@ -2,10 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
+// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
+// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
 
 
@@ -37,7 +35,7 @@ external impl Point as Vector {
   fn Scale[me: Point](v: i32) -> Point {
       return {.x = me.x * v, .y = me.y * v};
   }
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_ambiguous_impl.carbon:[[@LINE+1]]: ambiguous implementations of interface Vector for class Point
+// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_ambiguous_impl.carbon:[[@LINE+1]]: ambiguous implementations of interface Vector for class Point
 }
 
 fn AddAndScaleGeneric[T:! Vector](a: T, b: T, s: i32) -> T {

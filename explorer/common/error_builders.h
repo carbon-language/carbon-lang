@@ -10,27 +10,15 @@
 
 namespace Carbon {
 
-// Builds an Error instance with the specified message. This should be used for
-// non-recoverable errors with user input.
+// Builds an Error instance with the specified message. This should be used
+// for errors in the user-supplied Carbon code is incorrect. Use CHECK/FATAL
+// instead for errors that indicate bugs in Explorer itself.
 //
 // For example:
 //   return ProgramError(line_num) << "Line is bad!";
-//   return ProgramError() << "Application is bad!";
-//
-// Where possible, try to identify the error as a compilation or runtime error.
-// Use CHECK/FATAL for internal errors. The generic program error option is
-// provided as a fallback for cases that don't fit those classifications.
-
-inline auto CompilationError(SourceLocation loc) -> ErrorBuilder {
-  return ErrorBuilder("COMPILATION ERROR", loc.ToString());
-}
 
 inline auto ProgramError(SourceLocation loc) -> ErrorBuilder {
-  return ErrorBuilder("PROGRAM ERROR", loc.ToString());
-}
-
-inline auto RuntimeError(SourceLocation loc) -> ErrorBuilder {
-  return ErrorBuilder("RUNTIME ERROR", loc.ToString());
+  return ErrorBuilder(loc.ToString());
 }
 
 }  // namespace Carbon

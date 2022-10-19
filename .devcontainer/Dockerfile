@@ -2,19 +2,40 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-ARG TAG=3.5.6
-FROM docker.io/homebrew/brew:${TAG}
+FROM ubuntu:22.04
 
-# Install libxcrypt using Homebrew.
-RUN brew install libxcrypt --overwrite
+# Install apt tools:
+#   git: Used by VS Code.
+#   golang: Used for Bazelisk and Buildifier.
+#   python3: For Carbon tools.
+#   gnupg, software-properties-common, wget: For llvm.sh.
+# apt-get update and install together per Docker best practice.
+RUN apt-get update && \
+  apt-get install -y \
+  git \
+  gnupg \
+  golang \
+  python3-pip \
+  python3.9 \
+  software-properties-common \
+  wget
 
-# Install all other dependencies using Homebrew.
-RUN brew install bazelisk node python@3.9
+ENV PATH="/root/go/bin:${PATH}"
+# Bazelisk is used for Carbon builds.
+RUN go install github.com/bazelbuild/bazelisk@v1.14.0
+RUN ln -s /root/go/bin/bazelisk /root/go/bin/bazel
+# Buildifier is used by the Bazel VS Code extension.
+RUN go install github.com/bazelbuild/buildtools/buildifier@5.1.0
 
-# Install all python dependencies modules using Pip.
+# Install LLVM from apt.llvm.org.
+RUN wget https://apt.llvm.org/llvm.sh
+RUN chmod +x llvm.sh
+RUN ./llvm.sh 15 all
+RUN rm llvm.sh
+# Add the lib dir to the PATH. This helps Bazel find clang and VS Code find
+# clangd, without version suffixes.
+ENV PATH="/usr/lib/llvm-15/bin:${PATH}"
+
+# Update pip and install black and pre-commit.
 RUN pip3 install -U pip
-RUN pip3 install pre-commit black codespell
-
-# Install Clang/LLVM using Homebrew.
-# Many Clang/LLVM releases aren't built with options we rely on.
-RUN brew install llvm
+RUN pip3 install black pre-commit

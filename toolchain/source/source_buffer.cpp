@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <limits>
 #include <system_error>
+#include <utility>
 #include <variant>
 
 #include "common/check.h"

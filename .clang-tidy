@@ -18,8 +18,8 @@ Checks:
   -modernize-use-nodiscard, performance-*, -performance-unnecessary-value-param,
   readability-*, -readability-convert-member-functions-to-static,
   -readability-function-cognitive-complexity, -readability-else-after-return,
-  -readability-implicit-bool-conversion, -readability-magic-numbers,
-  -readability-make-member-function-const,
+  -readability-identifier-length, -readability-implicit-bool-conversion,
+  -readability-magic-numbers, -readability-make-member-function-const,
   -readability-qualified-auto,  -readability-static-definition-in-anonymous-namespace,
   -readability-suspicious-call-argument, -readability-use-anyofallof
 WarningsAsErrors: true

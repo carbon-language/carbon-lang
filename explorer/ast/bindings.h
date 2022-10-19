@@ -47,6 +47,11 @@ class Bindings {
   // An empty set of bindings.
   static auto None() -> Nonnull<const Bindings*>;
 
+  // Determine whether this is an empty set of bindings.
+  [[nodiscard]] auto empty() const -> bool {
+    return args_.empty() && witnesses_.empty();
+  }
+
  private:
   BindingMap args_;
   ImplWitnessMap witnesses_;

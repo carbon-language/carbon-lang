@@ -448,6 +448,87 @@ auto ParseTree::Parser::ParseCodeBlock() -> llvm::Optional<Node> {
   return AddNode(ParseNodeKind::CodeBlock(), open_curly, start, has_errors);
 }
 
+auto ParseTree::Parser::ParsePackageDirective() -> Node {
+  TokenizedBuffer::Token package_intro_token = Consume(TokenKind::Package());
+  auto package_start = GetSubtreeStartPosition();
+  auto create_error_node = [&]() {
+    return AddNode(ParseNodeKind::PackageDirective(), package_intro_token,
+                   package_start,
+                   /*has_error=*/true);
+  };
+
+  CARBON_RETURN_IF_STACK_LIMITED(create_error_node());
+
+  auto exit_on_parse_error = [&]() {
+    SkipPastLikelyEnd(package_intro_token, [&](TokenizedBuffer::Token semi) {
+      return AddLeafNode(ParseNodeKind::PackageEnd(), semi);
+    });
+
+    return create_error_node();
+  };
+
+  if (!NextTokenIs(TokenKind::Identifier())) {
+    CARBON_DIAGNOSTIC(ExpectedIdentifierAfterPackage, Error,
+                      "Expected identifier after `package`.");
+    emitter_.Emit(*position_, ExpectedIdentifierAfterPackage);
+    return exit_on_parse_error();
+  }
+
+  AddLeafNode(ParseNodeKind::DeclaredName(), Consume(TokenKind::Identifier()));
+  bool library_parsed = false;
+
+  if (tokens_.GetKind(*(position_)) == TokenKind::Library()) {
+    auto library_start = GetSubtreeStartPosition();
+    auto library_decl_token = Consume(TokenKind::Library());
+
+    if (tokens_.GetKind(*(position_)) != TokenKind::StringLiteral()) {
+      CARBON_DIAGNOSTIC(
+          ExpectedLibraryName, Error,
+          "Expected a string literal to specify the library name.");
+      emitter_.Emit(*position_, ExpectedLibraryName);
+      return exit_on_parse_error();
+    }
+
+    AddLeafNode(ParseNodeKind::Literal(), Consume(TokenKind::StringLiteral()));
+    AddNode(ParseNodeKind::PackageLibrary(), library_decl_token, library_start,
+            /*has_error=*/false);
+    library_parsed = true;
+  }
+
+  auto api_or_impl_token = tokens_.GetKind(*(position_));
+
+  if (api_or_impl_token == TokenKind::Api()) {
+    AddLeafNode(ParseNodeKind::PackageApi(), Consume(TokenKind::Api()));
+  } else if (api_or_impl_token == TokenKind::Impl()) {
+    AddLeafNode(ParseNodeKind::PackageImpl(), Consume(TokenKind::Impl()));
+  } else if (!library_parsed &&
+             api_or_impl_token == TokenKind::StringLiteral()) {
+    // If we come acroess a string literal and we didn't parse `library "..."`
+    // yet, then most probably the user forgot to add `library` before the
+    // library name.
+    CARBON_DIAGNOSTIC(MissingLibraryKeyword, Error,
+                      "Missing `library` keyword.");
+    emitter_.Emit(*position_, MissingLibraryKeyword);
+    return exit_on_parse_error();
+  } else {
+    CARBON_DIAGNOSTIC(ExpectedApiOrImpl, Error, "Expected a `api` or `impl`.");
+    emitter_.Emit(*position_, ExpectedApiOrImpl);
+    return exit_on_parse_error();
+  }
+
+  if (tokens_.GetKind(*(position_)) != TokenKind::Semi()) {
+    CARBON_DIAGNOSTIC(ExpectedSemiToEndPackageDirective, Error,
+                      "Expected `;` to end package directive.");
+    emitter_.Emit(*position_, ExpectedSemiToEndPackageDirective);
+    return exit_on_parse_error();
+  }
+
+  AddLeafNode(ParseNodeKind::PackageEnd(), Consume(TokenKind::Semi()));
+
+  return AddNode(ParseNodeKind::PackageDirective(), package_intro_token,
+                 package_start, /*has_error=*/false);
+}
+
 auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
   TokenizedBuffer::Token function_intro_token = Consume(TokenKind::Fn());
   auto start = GetSubtreeStartPosition();
@@ -561,6 +642,8 @@ auto ParseTree::Parser::ParseEmptyDeclaration() -> Node {
 auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
   CARBON_RETURN_IF_STACK_LIMITED(llvm::None);
   switch (NextTokenKind()) {
+    case TokenKind::Package():
+      return ParsePackageDirective();
     case TokenKind::Fn():
       return ParseFunctionDeclaration();
     case TokenKind::Var():
@@ -574,6 +657,7 @@ auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
       break;
   }
 
+  // Should happen for packages now.
   // We didn't recognize an introducer for a valid declaration.
   CARBON_DIAGNOSTIC(UnrecognizedDeclaration, Error,
                     "Unrecognized declaration introducer.");
@@ -1096,6 +1180,90 @@ auto ParseTree::Parser::ParseWhileStatement() -> llvm::Optional<Node> {
                  /*has_error=*/!cond || !body);
 }
 
+auto ParseTree::Parser::ParseForStatement() -> llvm::Optional<Node> {
+  CARBON_RETURN_IF_STACK_LIMITED(llvm::None);
+  auto for_start = GetSubtreeStartPosition();
+  auto for_token = Consume(TokenKind::For());
+
+  // Parse the loop header.
+  auto header = [this]() -> llvm::Optional<Node> {
+    auto open_paren = ConsumeIf(TokenKind::OpenParen());
+    auto header_start = GetSubtreeStartPosition();
+
+    if (!open_paren) {
+      CARBON_DIAGNOSTIC(ExpectedParenAfter, Error,
+                        "Expected `(` after `{0}`. Recovering from missing `(` "
+                        "not implemented yet!",
+                        TokenKind);
+      emitter_.Emit(*position_, ExpectedParenAfter, TokenKind::For());
+      // TODO: A proper recovery strategy is needed here. For now, I assume that
+      // all brackets are properly balanced (i.e. each open bracket has a
+      // closing one).
+      // This is temporary until we come to a conclusion regarding the recovery
+      // tokens strategy.
+      return llvm::None;
+    }
+
+    bool iter_var_parsed = false;
+
+    if (NextTokenIs(TokenKind::Var())) {
+      auto var_token = Consume(TokenKind::Var());
+      auto var_start = GetSubtreeStartPosition();
+      auto pattern = ParsePattern(PatternKind::Variable);
+      AddNode(ParseNodeKind::VariableDeclaration(), var_token, var_start,
+              !pattern);
+      iter_var_parsed = true;
+    } else {
+      CARBON_DIAGNOSTIC(ExpectedVariableDeclaration, Error,
+                        "Expected `var` declaration.");
+      emitter_.Emit(*position_, ExpectedVariableDeclaration);
+
+      if (auto next_in = FindNextOf({TokenKind::In()}); next_in) {
+        SkipTo(*next_in);
+      }
+    }
+
+    // A separator is either an `in` or a `:`. Even though `:` is incorrect,
+    // accidentally typing it by a C++ programmer might be a common mistake that
+    // warrants special handling.
+    bool separator_parsed = false;
+    bool in_parsed = false;
+
+    if (NextTokenIs(TokenKind::In())) {
+      separator_parsed = true;
+      in_parsed = true;
+      AddLeafNode(ParseNodeKind::ForIn(), Consume(TokenKind::In()));
+    } else if (NextTokenIs(TokenKind::Colon())) {
+      separator_parsed = true;
+      CARBON_DIAGNOSTIC(ExpectedIn, Error, "`:` should be replaced by `in`.");
+      emitter_.Emit(*position_, ExpectedIn);
+      Consume(TokenKind::Colon());
+    } else {
+      CARBON_DIAGNOSTIC(ExpectedIn, Error,
+                        "Expected `in` after loop `var` declaration.");
+      emitter_.Emit(*position_, ExpectedIn);
+      SkipTo(tokens_.GetMatchedClosingToken(*open_paren));
+    }
+
+    // Only try to parse the container expression if a separator was parsed.
+    // This reduces the emitted error messages if the separator was missing
+    // altogether.
+    auto container_expr = separator_parsed ? ParseExpression() : llvm::None;
+
+    auto close_paren =
+        ParseCloseParen(*open_paren, ParseNodeKind::ForHeaderEnd());
+
+    return AddNode(
+        ParseNodeKind::ForHeader(), *open_paren, header_start,
+        !iter_var_parsed || !in_parsed || !container_expr || !close_paren);
+  }();
+
+  auto body = ParseCodeBlock();
+
+  return AddNode(ParseNodeKind::ForStatement(), for_token, for_start,
+                 !header || !body);
+}
+
 auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind,
                                               KeywordStatementArgument argument)
     -> llvm::Optional<Node> {
@@ -1135,6 +1303,9 @@ auto ParseTree::Parser::ParseStatement() -> llvm::Optional<Node> {
 
     case TokenKind::While():
       return ParseWhileStatement();
+
+    case TokenKind::For():
+      return ParseForStatement();
 
     case TokenKind::Continue():
       return ParseKeywordStatement(ParseNodeKind::ContinueStatement(),

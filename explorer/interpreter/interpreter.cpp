@@ -4,6 +4,8 @@
 
 #include "explorer/interpreter/interpreter.h"
 
+#include <llvm/Support/raw_ostream.h>
+
 #include <iterator>
 #include <map>
 #include <optional>
@@ -77,12 +79,16 @@ class Interpreter {
   auto StepExp() -> ErrorOr<Success>;
   // State transitions for lvalues.
   auto StepLvalue() -> ErrorOr<Success>;
+  // State transitions for witnesses.
+  auto StepWitness() -> ErrorOr<Success>;
   // State transitions for patterns.
   auto StepPattern() -> ErrorOr<Success>;
   // State transition for statements.
   auto StepStmt() -> ErrorOr<Success>;
   // State transition for declarations.
   auto StepDeclaration() -> ErrorOr<Success>;
+  // State transition for object destruction.
+  auto StepCleanUp() -> ErrorOr<Success>;
 
   auto CreateStruct(const std::vector<FieldInitializer>& fields,
                     const std::vector<Nonnull<const Value*>>& values)
@@ -97,10 +103,10 @@ class Interpreter {
                Nonnull<const Value*> destination_type,
                SourceLocation source_loc) -> ErrorOr<Nonnull<const Value*>>;
 
-  // Evaluate an expression immediately, recursively.
+  // Evaluate an expression immediately, recursively, and return its result.
   //
   // TODO: Stop using this.
-  auto EvalExpRecursively(Nonnull<const Expression*> exp)
+  auto EvalRecursively(std::unique_ptr<Action> action)
       -> ErrorOr<Nonnull<const Value*>>;
 
   // Evaluate an associated constant by evaluating its witness and looking
@@ -127,6 +133,8 @@ class Interpreter {
   //     __Fn (Point(T)) -> Point(U)
   // becomes
   //     __Fn (Point(i32)) -> Point(bool)
+  //
+  // TODO: This should be an Action.
   auto InstantiateType(Nonnull<const Value*> type, SourceLocation source_loc)
       -> ErrorOr<Nonnull<const Value*>>;
 
@@ -136,11 +144,19 @@ class Interpreter {
                            SourceLocation source_loc)
       -> ErrorOr<Nonnull<const Bindings*>>;
 
+  // Instantiate a witness by replacing all type variables and impl binding
+  // references that occur within it by the current values of those variables.
+  auto InstantiateWitness(Nonnull<const Witness*> witness)
+      -> ErrorOr<Nonnull<const Witness*>>;
+
   // Call the function `fun` with the given `arg` and the `witnesses`
   // for the function's impl bindings.
   auto CallFunction(const CallExpression& call, Nonnull<const Value*> fun,
                     Nonnull<const Value*> arg, ImplWitnessMap&& witnesses)
       -> ErrorOr<Success>;
+
+  auto CallDestructor(Nonnull<const DestructorDeclaration*> fun,
+                      Nonnull<const Value*> receiver) -> ErrorOr<Success>;
 
   void PrintState(llvm::raw_ostream& out);
 
@@ -192,6 +208,9 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
     case Operator::Mul:
       return arena_->New<IntValue>(cast<IntValue>(*args[0]).value() *
                                    cast<IntValue>(*args[1]).value());
+    case Operator::Div:
+      return arena_->New<IntValue>(cast<IntValue>(*args[0]).value() /
+                                   cast<IntValue>(*args[1]).value());
     case Operator::Mod:
       return arena_->New<IntValue>(cast<IntValue>(*args[0]).value() %
                                    cast<IntValue>(*args[1]).value());
@@ -214,6 +233,7 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
       return &cast<TypeOfConstraintType>(static_type)->constraint_type();
     case Operator::As:
     case Operator::Eq:
+    case Operator::NotEq:
     case Operator::Less:
     case Operator::LessEq:
     case Operator::Greater:
@@ -472,21 +492,20 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
     case ExpressionKind::WhereExpression:
     case ExpressionKind::DotSelfExpression:
     case ExpressionKind::ArrayTypeLiteral:
-    case ExpressionKind::InstantiateImpl:
       CARBON_FATAL() << "Can't treat expression as lvalue: " << exp;
     case ExpressionKind::UnimplementedExpression:
       CARBON_FATAL() << "Unimplemented: " << exp;
   }
 }
 
-auto Interpreter::EvalExpRecursively(Nonnull<const Expression*> exp)
+auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
     -> ErrorOr<Nonnull<const Value*>> {
   if (trace_stream_) {
-    **trace_stream_ << "--- recursive eval of " << *exp << "\n";
+    **trace_stream_ << "--- recursive eval\n";
     PrintState(**trace_stream_);
   }
   todo_.BeginRecursiveAction();
-  CARBON_RETURN_IF_ERROR(todo_.Spawn(std::make_unique<ExpressionAction>(exp)));
+  CARBON_RETURN_IF_ERROR(todo_.Spawn(std::move(action)));
   // Note that the only `RecursiveAction` we can encounter here is our own --
   // if a nested action begins a recursive action, it will run until that
   // action is finished and popped off the queue before returning to us.
@@ -509,15 +528,12 @@ auto Interpreter::EvalAssociatedConstant(
     Nonnull<const AssociatedConstant*> assoc, SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
   // Find the witness.
-  Nonnull<const Value*> witness = &assoc->witness();
-  if (auto* sym = dyn_cast<SymbolicWitness>(witness)) {
-    CARBON_ASSIGN_OR_RETURN(witness,
-                            EvalExpRecursively(&sym->impl_expression()));
-  }
+  CARBON_ASSIGN_OR_RETURN(Nonnull<const Witness*> witness,
+                          InstantiateWitness(&assoc->witness()));
   if (!isa<ImplWitness>(witness)) {
     CARBON_CHECK(phase() == Phase::CompileTime)
         << "symbolic witnesses should only be formed at compile time";
-    return CompilationError(source_loc)
+    return ProgramError(source_loc)
            << "value of associated constant " << *assoc << " is not known";
   }
 
@@ -592,16 +608,22 @@ auto Interpreter::InstantiateBindings(Nonnull<const Bindings*> bindings,
 
   ImplWitnessMap witnesses = bindings->witnesses();
   for (auto& [bind, witness] : witnesses) {
-    if (auto* sym = dyn_cast<SymbolicWitness>(witness)) {
-      CARBON_ASSIGN_OR_RETURN(witness,
-                              EvalExpRecursively(&sym->impl_expression()));
-    }
+    CARBON_ASSIGN_OR_RETURN(witness,
+                            InstantiateWitness(cast<Witness>(witness)));
   }
 
   if (args == bindings->args() && witnesses == bindings->witnesses()) {
     return bindings;
   }
   return arena_->New<Bindings>(std::move(args), std::move(witnesses));
+}
+
+auto Interpreter::InstantiateWitness(Nonnull<const Witness*> witness)
+    -> ErrorOr<Nonnull<const Witness*>> {
+  CARBON_ASSIGN_OR_RETURN(
+      Nonnull<const Value*> value,
+      EvalRecursively(std::make_unique<WitnessAction>(witness)));
+  return cast<Witness>(value);
 }
 
 auto Interpreter::Convert(Nonnull<const Value*> value,
@@ -611,12 +633,12 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
   switch (value->kind()) {
     case Value::Kind::IntValue:
     case Value::Kind::FunctionValue:
+    case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LValue:
     case Value::Kind::BoolValue:
     case Value::Kind::NominalClassValue:
-    case Value::Kind::MixinPseudoType:
     case Value::Kind::AlternativeValue:
     case Value::Kind::UninitializedValue:
     case Value::Kind::IntType:
@@ -626,10 +648,13 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::PointerType:
     case Value::Kind::AutoType:
     case Value::Kind::NominalClassType:
+    case Value::Kind::MixinPseudoType:
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
     case Value::Kind::ImplWitness:
-    case Value::Kind::SymbolicWitness:
+    case Value::Kind::BindingWitness:
+    case Value::Kind::ConstraintWitness:
+    case Value::Kind::ConstraintImplWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
@@ -733,6 +758,26 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
       return Convert(value, destination_type, source_loc);
     }
   }
+}
+
+auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
+                                 Nonnull<const Value*> receiver)
+    -> ErrorOr<Success> {
+  const DestructorDeclaration& method = *fun;
+  CARBON_CHECK(method.is_method());
+  RuntimeScope method_scope(&heap_);
+  BindingMap generic_args;
+  CARBON_CHECK(PatternMatch(&method.me_pattern().value(), receiver,
+                            fun->source_loc(), &method_scope, generic_args,
+                            trace_stream_, this->arena_));
+
+  CARBON_CHECK(method.body().has_value())
+      << "Calling a method that's missing a body";
+
+  auto act = std::make_unique<StatementAction>(*method.body());
+  method_scope.TransitState();
+  return todo_.Spawn(std::unique_ptr<Action>(std::move(act)),
+                     std::move(method_scope));
 }
 
 auto Interpreter::CallFunction(const CallExpression& call,
@@ -840,12 +885,15 @@ auto Interpreter::CallFunction(const CallExpression& call,
         case DeclarationKind::InterfaceDeclaration:
           return todo_.FinishAction(arena_->New<InterfaceType>(
               &cast<InterfaceDeclaration>(decl), bindings));
+        case DeclarationKind::ChoiceDeclaration:
+          return todo_.FinishAction(arena_->New<ChoiceType>(
+              &cast<ChoiceDeclaration>(decl), bindings));
         default:
           CARBON_FATAL() << "unknown kind of ParameterizedEntityName " << decl;
       }
     }
     default:
-      return RuntimeError(call.source_loc())
+      return ProgramError(call.source_loc())
              << "in call, expected a function, not " << *fun;
   }
 }
@@ -858,34 +906,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                     << " (" << exp.source_loc() << ") --->\n";
   }
   switch (exp.kind()) {
-    case ExpressionKind::InstantiateImpl: {
-      const InstantiateImpl& inst_impl = cast<InstantiateImpl>(exp);
-      if (act.pos() == 0) {
-        return todo_.Spawn(
-            std::make_unique<ExpressionAction>(inst_impl.generic_impl()));
-      }
-      if (act.pos() == 1 && isa<SymbolicWitness>(act.results()[0])) {
-        return todo_.FinishAction(arena_->New<SymbolicWitness>(&exp));
-      }
-      if (act.pos() - 1 < int(inst_impl.impls().size())) {
-        auto iter = inst_impl.impls().begin();
-        std::advance(iter, act.pos() - 1);
-        return todo_.Spawn(std::make_unique<ExpressionAction>(iter->second));
-      } else {
-        Nonnull<const ImplWitness*> generic_witness =
-            cast<ImplWitness>(act.results()[0]);
-        ImplWitnessMap witnesses;
-        int i = 0;
-        for (const auto& [impl_bind, impl_exp] : inst_impl.impls()) {
-          witnesses[impl_bind] = cast<Witness>(act.results()[i + 1]);
-          ++i;
-        }
-        return todo_.FinishAction(arena_->New<ImplWitness>(
-            &generic_witness->declaration(),
-            arena_->New<Bindings>(inst_impl.type_args(),
-                                  std::move(witnesses))));
-      }
-    }
     case ExpressionKind::IndexExpression: {
       if (act.pos() == 0) {
         //    { { e[i] :: C, E, F} :: S, H}
@@ -893,9 +913,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         return todo_.Spawn(std::make_unique<ExpressionAction>(
             &cast<IndexExpression>(exp).object()));
       } else if (act.pos() == 1) {
-        if (isa<SymbolicWitness>(act.results()[0])) {
-          return todo_.FinishAction(arena_->New<SymbolicWitness>(&exp));
-        }
         return todo_.Spawn(std::make_unique<ExpressionAction>(
             &cast<IndexExpression>(exp).offset()));
       } else {
@@ -904,7 +921,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         const auto& tuple = cast<TupleValue>(*act.results()[0]);
         int i = cast<IntValue>(*act.results()[1]).value();
         if (i < 0 || i >= static_cast<int>(tuple.elements().size())) {
-          return RuntimeError(exp.source_loc())
+          return ProgramError(exp.source_loc())
                  << "index " << i << " out of range in " << tuple;
         }
         return todo_.FinishAction(tuple.elements()[i]);
@@ -962,7 +979,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         // Next, if we're accessing an interface member, evaluate the `impl`
         // expression to find the corresponding witness.
         return todo_.Spawn(
-            std::make_unique<ExpressionAction>(access.impl().value()));
+            std::make_unique<WitnessAction>(access.impl().value()));
       } else {
         // Finally, produce the result.
         std::optional<Nonnull<const InterfaceType*>> found_in_interface =
@@ -1023,7 +1040,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         // Next, if we're accessing an interface member, evaluate the `impl`
         // expression to find the corresponding witness.
         return todo_.Spawn(
-            std::make_unique<ExpressionAction>(access.impl().value()));
+            std::make_unique<WitnessAction>(access.impl().value()));
       } else {
         // Finally, produce the result.
         std::optional<Nonnull<const InterfaceType*>> found_in_interface =
@@ -1146,7 +1163,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       } else if (num_impls > 0 && act.pos() < 2 + int(num_impls)) {
         auto iter = call.impls().begin();
         std::advance(iter, act.pos() - 2);
-        return todo_.Spawn(std::make_unique<ExpressionAction>(iter->second));
+        return todo_.Spawn(
+            std::make_unique<WitnessAction>(cast<Witness>(iter->second)));
       } else if (act.pos() == 2 + int(num_impls)) {
         //    { { v2 :: v1([]) :: C, E, F} :: S, H}
         // -> { {C',E',F'} :: {C, E, F} :: S, H}
@@ -1199,6 +1217,19 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           }
           // Implicit newline; currently no way to disable it.
           llvm::outs() << "\n";
+          return todo_.FinishAction(TupleValue::Empty());
+        }
+        case IntrinsicExpression::Intrinsic::Assert: {
+          CARBON_CHECK(args.size() == 2);
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> condition,
+              Convert(args[0], arena_->New<BoolType>(), exp.source_loc()));
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> string_value,
+              Convert(args[1], arena_->New<StringType>(), exp.source_loc()));
+          if (cast<BoolValue>(condition)->value() == false) {
+            return ProgramError(exp.source_loc()) << *string_value;
+          }
           return todo_.FinishAction(TupleValue::Empty());
         }
         case IntrinsicExpression::Intrinsic::Alloc: {
@@ -1385,6 +1416,72 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       }
     }
   }  // switch (exp->kind)
+}
+
+auto Interpreter::StepWitness() -> ErrorOr<Success> {
+  Action& act = todo_.CurrentAction();
+  const Witness* witness = cast<WitnessAction>(act).witness();
+  if (trace_stream_) {
+    **trace_stream_ << "--- step witness " << *witness << " ." << act.pos()
+                    << ". --->\n";
+  }
+  switch (witness->kind()) {
+    case Value::Kind::BindingWitness: {
+      const ImplBinding* binding = cast<BindingWitness>(witness)->binding();
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> value,
+          todo_.ValueOfNode(binding, binding->type_var()->source_loc()));
+      if (const auto* lvalue = dyn_cast<LValue>(value)) {
+        // TODO: Why do we store values for impl bindings on the heap?
+        CARBON_ASSIGN_OR_RETURN(
+            value,
+            heap_.Read(lvalue->address(), binding->type_var()->source_loc()));
+      }
+      return todo_.FinishAction(value);
+    }
+
+    case Value::Kind::ConstraintWitness: {
+      llvm::ArrayRef<Nonnull<const Witness*>> witnesses =
+          cast<ConstraintWitness>(witness)->witnesses();
+      if (act.pos() < static_cast<int>(witnesses.size())) {
+        return todo_.Spawn(
+            std::make_unique<WitnessAction>(witnesses[act.pos()]));
+      }
+      std::vector<Nonnull<const Witness*>> new_witnesses;
+      new_witnesses.reserve(witnesses.size());
+      for (auto* witness : act.results()) {
+        new_witnesses.push_back(cast<Witness>(witness));
+      }
+      return todo_.FinishAction(
+          arena_->New<ConstraintWitness>(std::move(new_witnesses)));
+    }
+
+    case Value::Kind::ConstraintImplWitness: {
+      auto* constraint_impl = cast<ConstraintImplWitness>(witness);
+      if (act.pos() == 0) {
+        return todo_.Spawn(std::make_unique<WitnessAction>(
+            constraint_impl->constraint_witness()));
+      }
+      return todo_.FinishAction(ConstraintImplWitness::Make(
+          arena_, cast<Witness>(act.results()[0]), constraint_impl->index()));
+    }
+
+    case Value::Kind::ImplWitness: {
+      auto* impl_witness = cast<ImplWitness>(witness);
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Bindings*> new_bindings,
+          InstantiateBindings(&impl_witness->bindings(),
+                              impl_witness->declaration().source_loc()));
+      return todo_.FinishAction(
+          new_bindings == &impl_witness->bindings()
+              ? impl_witness
+              : arena_->New<ImplWitness>(&impl_witness->declaration(),
+                                         new_bindings));
+    }
+
+    default:
+      CARBON_FATAL() << "unexpected kind of witness " << *witness;
+  }
 }
 
 auto Interpreter::StepPattern() -> ErrorOr<Success> {
@@ -1740,7 +1837,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         CARBON_ASSIGN_OR_RETURN(
             value, heap_.Read(lvalue->address(), ret_var.source_loc()));
       }
-      const FunctionDeclaration& function = cast<Return>(stmt).function();
+      const CallableDeclaration& function = cast<Return>(stmt).function();
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> return_value,
           Convert(value, &function.return_term().static_type(),
@@ -1756,7 +1853,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
         // -> { {v :: C', E', F'} :: S, H}
-        const FunctionDeclaration& function = cast<Return>(stmt).function();
+        const CallableDeclaration& function = cast<Return>(stmt).function();
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> return_value,
             Convert(act.results()[0], &function.return_term().static_type(),
@@ -1825,6 +1922,7 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
         return todo_.FinishAction();
       }
     }
+    case DeclarationKind::DestructorDeclaration:
     case DeclarationKind::FunctionDeclaration:
     case DeclarationKind::ClassDeclaration:
     case DeclarationKind::MixinDeclaration:
@@ -1840,6 +1938,51 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
   }
 }
 
+auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
+  Action& act = todo_.CurrentAction();
+  CleanupAction& cleanup = cast<CleanupAction>(act);
+  if (act.pos() < cleanup.locals_count()) {
+    auto lvalue = act.scope()->locals()[cleanup.locals_count() - act.pos() - 1];
+    SourceLocation source_loc("destructor", 1);
+    auto value = heap_.Read(lvalue->address(), source_loc);
+    if (value.ok()) {
+      if (act.scope()->DestructionState() < RuntimeScope::State::CleanUpped) {
+        if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
+          const auto& class_type = cast<NominalClassType>(class_obj->type());
+          const auto& class_dec = class_type.declaration();
+          if (class_dec.destructor().has_value()) {
+            return CallDestructor(*class_dec.destructor(), class_obj);
+          }
+        }
+      } else {
+        if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
+          const auto& class_type = cast<NominalClassType>(class_obj->type());
+          const auto& class_dec = class_type.declaration();
+          const auto& class_members = class_dec.members();
+          for (const auto& member : class_members) {
+            if (const auto* var = dyn_cast<VariableDeclaration>(member)) {
+              const auto& type = var->static_type();
+              if (const auto* c_type = dyn_cast<NominalClassType>(&type)) {
+                auto& c_dec = c_type->declaration();
+                if (c_dec.destructor().has_value()) {
+                  Address object = lvalue->address();
+                  Address mem = object.SubobjectAddress(Member(var));
+                  auto v = heap_.Read(mem, source_loc);
+                  act.scope()->TransitState();
+                  return CallDestructor(*c_dec.destructor(), *v);
+                }
+              }
+            }
+          }
+        }
+        act.scope()->TransitState();
+      }
+    }
+  }
+  todo_.Pop();
+  return Success();
+}
+
 // State transition.
 auto Interpreter::Step() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
@@ -1850,6 +1993,9 @@ auto Interpreter::Step() -> ErrorOr<Success> {
     case Action::Kind::ExpressionAction:
       CARBON_RETURN_IF_ERROR(StepExp());
       break;
+    case Action::Kind::WitnessAction:
+      CARBON_RETURN_IF_ERROR(StepWitness());
+      break;
     case Action::Kind::PatternAction:
       CARBON_RETURN_IF_ERROR(StepPattern());
       break;
@@ -1858,6 +2004,9 @@ auto Interpreter::Step() -> ErrorOr<Success> {
       break;
     case Action::Kind::DeclarationAction:
       CARBON_RETURN_IF_ERROR(StepDeclaration());
+      break;
+    case Action::Kind::CleanUpAction:
+      CARBON_RETURN_IF_ERROR(StepCleanUp());
       break;
     case Action::Kind::ScopeAction:
       CARBON_FATAL() << "ScopeAction escaped ActionStack";

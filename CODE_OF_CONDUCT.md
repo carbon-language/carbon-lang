@@ -208,7 +208,7 @@ comfortable, please consider including:
 -   Your account of what occurred, including any private chat logs or email.
 -   Links for any public records, including community discussions.
 -   Any extra context for the incident.
--   If you believe this incident is ongoing.
+-   Whether you believe this incident is ongoing.
 -   Any other information you believe we should have.
 
 ### What happens after contacting the conduct team?
@@ -302,9 +302,9 @@ involved:
     -   **Behavior:** A code of conduct violation through a single moderate
         incident, or a series of minor violations.
     -   **Action:** In addition to the correction action, a temporary
-        restriction barring interaction with the people involved for a specified
-        period of time, including unsolicited interaction with the conduct team.
-        Violating these terms may lead to a ban.
+        restriction forbidding interaction with the people involved for a
+        specified period of time, including unsolicited interaction with the
+        conduct team. Violating these terms may lead to a ban.
 1.  **Temporary ban**
     -   **Behavior:** A serious violation of the code of conduct, including
         sustained inappropriate behavior.

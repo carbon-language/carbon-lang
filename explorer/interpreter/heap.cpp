@@ -49,7 +49,7 @@ auto Heap::Write(const Address& a, Nonnull<const Value*> v,
 auto Heap::CheckAlive(AllocationId allocation, SourceLocation source_loc) const
     -> ErrorOr<Success> {
   if (states_[allocation.index_] == ValueState::Dead) {
-    return RuntimeError(source_loc)
+    return ProgramError(source_loc)
            << "undefined behavior: access to dead value "
            << *values_[allocation.index_];
   }
@@ -59,7 +59,7 @@ auto Heap::CheckAlive(AllocationId allocation, SourceLocation source_loc) const
 auto Heap::CheckInit(AllocationId allocation, SourceLocation source_loc) const
     -> ErrorOr<Success> {
   if (states_[allocation.index_] == ValueState::Uninitialized) {
-    return RuntimeError(source_loc)
+    return ProgramError(source_loc)
            << "undefined behavior: access to uninitialized value "
            << *values_[allocation.index_];
   }

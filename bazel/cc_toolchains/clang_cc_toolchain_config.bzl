@@ -20,6 +20,8 @@ load("@bazel_tools//tools/build_defs/cc:action_names.bzl", "ACTION_NAMES")
 load(
     ":clang_detected_variables.bzl",
     "clang_bindir",
+    "clang_version",
+    "clang_version_for_cache",
     "clang_include_dirs_list",
     "clang_resource_dir",
     "llvm_bindir",
@@ -97,6 +99,11 @@ def _impl(ctx):
         for name in [ACTION_NAMES.strip]
     ]
 
+    std_compile_flags = ["-std=c++17"]
+    # libc++ is only used on non-Windows platforms.
+    if ctx.attr.target_cpu != "x64_windows":
+        std_compile_flags.append("-stdlib=libc++")
+
     default_flags_feature = feature(
         name = "default_flags",
         enabled = True,
@@ -153,10 +160,7 @@ def _impl(ctx):
                 actions = all_cpp_compile_actions + all_link_actions,
                 flag_groups = ([
                     flag_group(
-                        flags = [
-                            "-std=c++17",
-                            "-stdlib=libc++",
-                        ],
+                        flags = std_compile_flags,
                     ),
                 ]),
             ),
@@ -188,6 +192,9 @@ def _impl(ctx):
                             "-D__DATE__=\"redacted\"",
                             "-D__TIMESTAMP__=\"redacted\"",
                             "-D__TIME__=\"redacted\"",
+                            # Pass the clang version as a define so that bazel
+                            # caching is more likely to notice version changes.
+                            "-DCLANG_VERSION_FOR_CACHE=\"%s\"" % clang_version_for_cache,
                         ],
                     ),
                     flag_group(
@@ -219,17 +226,6 @@ def _impl(ctx):
                     ACTION_NAMES.cpp_link_nodeps_dynamic_library,
                 ],
                 flag_groups = [flag_group(flags = ["-shared"])],
-            ),
-            flag_set(
-                actions = [
-                    ACTION_NAMES.cpp_link_executable,
-                ],
-                flag_groups = [
-                    flag_group(
-                        flags = ["-pie"],
-                        expand_if_available = "force_pic",
-                    ),
-                ],
             ),
             flag_set(
                 actions = all_link_actions,
@@ -312,12 +308,16 @@ def _impl(ctx):
     # minimal settings if both are enabled.
     minimal_debug_info_flags = feature(
         name = "minimal_debug_info_flags",
-        flag_sets = [flag_set(
-            actions = codegen_compile_actions,
-            flag_groups = [flag_group(flags = [
-                "-gmlt",
-            ])],
-        )],
+        flag_sets = [
+            flag_set(
+                actions = codegen_compile_actions,
+                flag_groups = [
+                    flag_group(
+                        flags = ["-gmlt"],
+                    ),
+                ],
+            ),
+        ],
     )
     default_debug_info_flags = feature(
         name = "default_debug_info_flags",
@@ -501,6 +501,13 @@ def _impl(ctx):
         implies = ["fuzzer"],
     )
 
+    # With clang 14 and lower, we expect it to be built with libc++ debug
+    # support. In later LLVM versions, we expect the assertions define to work.
+    if clang_version and clang_version <= 14:
+        libcpp_debug_flags = ["-D_LIBCPP_DEBUG=1"]
+    else:
+        libcpp_debug_flags = ["-D_LIBCPP_ENABLE_ASSERTIONS=1"]
+
     linux_flags_feature = feature(
         name = "linux_flags",
         enabled = True,
@@ -542,12 +549,38 @@ def _impl(ctx):
             ),
             flag_set(
                 actions = all_compile_actions,
-                flag_groups = [flag_group(flags = [
-                    # Enable libc++'s debug features.
-                    "-D_LIBCPP_DEBUG=1",
-                ])],
+                flag_groups = [flag_group(flags = libcpp_debug_flags)],
                 with_features = [
                     with_feature_set(not_features = ["opt"]),
+                ],
+            ),
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cpp_link_executable,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["-pie"],
+                        expand_if_available = "force_pic",
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    macos_flags_feature = feature(
+        name = "macos_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cpp_link_executable,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["-fpie"],
+                        expand_if_available = "force_pic",
+                    ),
                 ],
             ),
         ],
@@ -782,7 +815,13 @@ def _impl(ctx):
     if ctx.attr.target_cpu == "k8":
         features += [linux_flags_feature]
         sysroot = None
+    elif ctx.attr.target_cpu == "x64_windows":
+        # TODO: Need to figure out if we need to add windows specific features
+        # I think the .pdb debug files will need to be handled differently,
+        # so that might be an example where a feature must be added.
+        sysroot = None
     elif ctx.attr.target_cpu in ["darwin", "darwin_arm64"]:
+        features += [macos_flags_feature]
         sysroot = sysroot_dir
     else:
         fail("Unsupported target platform!")

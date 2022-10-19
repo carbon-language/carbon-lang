@@ -12,6 +12,7 @@ cc_library(
     deps = [
         "//common/fuzzing:carbon_cc_proto",
         "//explorer/ast",
+        "//explorer/ast:bindings",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -81,15 +82,12 @@ filegroup(
 cc_test(
     name = "fuzzer_util_test",
     srcs = ["fuzzer_util_test.cpp"],
-    args = [
-        "$(locations fuzzer_corpus_files)",
-    ],
     data = [
-        ":fuzzer_corpus_files",
         "//explorer:standard_libraries",
     ],
     deps = [
         ":fuzzer_util",
+        "//common:gtest_main",
         "@com_google_googletest//:gtest",
         "@com_google_protobuf//:protobuf_headers",
         "@llvm-project//llvm:Support",
@@ -125,6 +123,7 @@ cc_fuzz_test(
     corpus = glob(["fuzzer_corpus/*"]),
     deps = [
         ":fuzzer_util",
+        "//common:error",
         "@com_google_libprotobuf_mutator//:libprotobuf_mutator",
         "@llvm-project//llvm:Support",
     ],

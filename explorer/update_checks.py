@@ -8,6 +8,7 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
+import argparse
 from concurrent import futures
 import os
 import re
@@ -26,7 +27,9 @@ _AUTOUPDATE_MARKER = "// AUTOUPDATE: "
 _NOAUTOUPDATE_MARKER = "// NOAUTOUPDATE"
 
 # A regexp matching lines that contain line number references.
-_LINE_NUMBER_RE = r"((?:COMPILATION|RUNTIME) ERROR: [^:]*:)([1-9][0-9]*)(:.*)"
+_LINE_NUMBER_RE = (
+    r"((?:SYNTAX|COMPILATION|RUNTIME) ERROR: [^:]*:)([1-9][0-9]*)(:.*)"
+)
 
 
 def _get_tests() -> Set[str]:
@@ -90,7 +93,7 @@ class SimpleCheckLine(CheckLine):
 
     def format(self, **kwargs: Any) -> str:
         if self.expected:
-            return f"{self.indent}// CHECK: {self.expected}\n"
+            return f"{self.indent}// CHECK:{self.expected}\n"
         else:
             return f"{self.indent}// CHECK-EMPTY:\n"
 
@@ -115,7 +118,7 @@ class CheckLineWithLineNumber(CheckLine):
         delta = line_number_remap[self.line_number] - output_line_number
         # We use `:+d` here to produce `LINE-n` or `LINE+n` as appropriate.
         return (
-            f"{self.indent}// CHECK: {self.before}[[@LINE{delta:+d}]]"
+            f"{self.indent}// CHECK:{self.before}[[@LINE{delta:+d}]]"
             + f"{self.after}\n"
         )
 
@@ -265,17 +268,14 @@ def _update_check(test: str) -> None:
     print(".", end="", flush=True)
 
 
-def _update_checks() -> None:
+def _update_checks(tests: Set[str]) -> None:
     """Runs bazel to update CHECK: lines in lit tests."""
-    # TODO: It may be helpful if a list of tests can be passed in args; would
-    # want to use argparse for this.
-    tests = _get_tests()
 
     # Build all tests at once in order to allow parallel updates.
     print("Building explorer...")
     subprocess.check_call(["bazel", "build", "//explorer"])
 
-    print("Updating %d lit tests..." % len(tests))
+    print("Updating %d lit test(s)..." % len(tests))
     with futures.ThreadPoolExecutor() as exec:
         # list() iterates to propagate exceptions.
         list(exec.map(_update_check, tests))
@@ -288,7 +288,15 @@ def main() -> None:
     # Go to the repository root so that paths will match bazel's view.
     os.chdir(os.path.join(os.path.dirname(__file__), ".."))
 
-    _update_checks()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("tests", nargs="*")
+    args = parser.parse_args()
+    if args.tests:
+        tests = set(args.tests)
+    else:
+        print("HINT: run `update_checks.py f1 f2 ...` to update specific tests")
+        tests = _get_tests()
+    _update_checks(tests)
 
 
 if __name__ == "__main__":

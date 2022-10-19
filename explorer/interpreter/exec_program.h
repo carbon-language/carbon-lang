@@ -14,7 +14,12 @@
 
 namespace Carbon {
 
-// Runs the top-level declaration list.
+// Perform semantic analysis on the AST.
+auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
+                    std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
+    -> ErrorOr<AST>;
+
+// Run the program's `Main` function.
 auto ExecProgram(Nonnull<Arena*> arena, AST ast,
                  std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
     -> ErrorOr<int>;

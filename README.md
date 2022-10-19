@@ -266,8 +266,11 @@ semantics onto C++ such as Rust-inspired
 
 ## Getting started
 
-You can get started playing with Carbon by checking out the codebase and using
-the Carbon explorer:
+As there is no compiler yet, to try out Carbon, you can use the Carbon explorer
+to interpret Carbon code and print its output. You can try it out immediately at
+[compiler-explorer.com](http://carbon.compiler-explorer.com/).
+
+To build the Carbon explorer yourself, follow these instructions:
 
 ```shell
 # Install bazelisk using Homebrew.
@@ -302,12 +305,11 @@ Learn more about the Carbon project:
 Carbon is committed to a welcoming and inclusive environment where everyone can
 contribute.
 
+-   Most of Carbon's design discussions occur on
+    [Discord](https://discord.gg/ZjVdShJDAs).
 -   To watch for major release announcements, subscribe to our
     [Carbon release post on GitHub](https://github.com/carbon-language/carbon-lang/discussions/1020)
     and [star carbon-lang](https://github.com/carbon-language/carbon-lang).
--   To join the design discussion, join our
-    [GitHub forum](https://github.com/carbon-language/carbon-lang/discussions).
 -   See our [code of conduct](CODE_OF_CONDUCT.md) and
     [contributing guidelines](CONTRIBUTING.md) for information about the Carbon
     development community.
--   We discuss Carbon on [Discord](https://discord.gg/ZjVdShJDAs).

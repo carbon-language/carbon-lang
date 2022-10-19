@@ -32,7 +32,7 @@ auto Builtins::Get(SourceLocation source_loc, Builtin builtin) const
   std::optional<const Declaration*> result =
       builtins_[static_cast<int>(builtin)];
   if (!result.has_value()) {
-    return CompilationError(source_loc)
+    return ProgramError(source_loc)
            << "missing declaration for builtin `" << GetName(builtin) << "`";
   }
   return result.value();

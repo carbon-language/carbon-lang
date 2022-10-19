@@ -63,7 +63,7 @@ impl forall [U1:! Type, U2:! Type, U3:! Type,
 
 interface EqWith(U:! Type) {
   fn Equal[me: Self](other: U) -> bool;
-  // TODO: NotEqual with default impl
+  fn NotEqual[me: Self](other: U) -> bool;
 }
 // TODO: constraint Eq { ... }
 
@@ -76,17 +76,39 @@ impl forall [T2:! Type, U2:! Type, T1:! EqWith(T2), U1:! EqWith(U2)]
     let (r1: T2, r2: U2) = other;
     return l1 == r1 and l2 == r2;
   }
+  fn NotEqual[me: Self](other: (T2, U2)) -> bool {
+      let (l1: T1, l2: U1) = me;
+      let (r1: T2, r2: U2) = other;
+      return l1 != r1 or l2 != r2;
+    }
+}
+
+impl bool as EqWith(Self) {
+  fn Equal[me: Self](other: Self) -> bool {
+    return if me then other else not other;
+  }
+  fn NotEqual[me: Self](other: Self) -> bool {
+    return if me then not other else other;
+  }
 }
 
 impl i32 as EqWith(Self) {
   fn Equal[me: Self](other: Self) -> bool {
     return __intrinsic_int_eq(me, other);
   }
+
+  fn NotEqual[me: Self](other: Self) -> bool {
+    return not __intrinsic_int_eq(me, other);
+  }
 }
 
 impl String as EqWith(Self) {
   fn Equal[me: Self](other: Self) -> bool {
     return __intrinsic_str_eq(me, other);
+  }
+
+  fn NotEqual[me: Self](other: Self) -> bool {
+    return not __intrinsic_str_eq(me, other);
   }
 }
 
@@ -295,6 +317,13 @@ interface MulWith(U:! Type) {
 }
 // TODO: constraint Mul { ... }
 
+interface DivWith(U:! Type) {
+  // TODO: = Self
+  let Result:! Type;
+  fn Op[me: Self](other: U) -> Result;
+}
+// TODO: constraint Div { ... }
+
 interface ModWith(U:! Type) {
   // TODO: = Self
   let Result:! Type;
@@ -314,6 +343,9 @@ external impl i32 as SubWith(i32) where .Result == i32 {
 }
 external impl i32 as MulWith(i32) where .Result == i32 {
   fn Op[me: i32](other: i32) -> i32 { return me * other; }
+}
+external impl i32 as DivWith(i32) where .Result == i32 {
+  fn Op[me: i32](other: i32) -> i32 { return me / other; }
 }
 external impl i32 as ModWith(i32) where .Result == i32 {
   fn Op[me: i32](other: i32) -> i32 { return me % other; }
@@ -416,6 +448,43 @@ external impl i32 as RightShiftWith(i32) where .Result == i32 {
   }
 }
 
+//-------------------------
+// Optional
+//-------------------------
+choice OptionalElement(T:! Type) {
+  None(),
+  Element(T)
+}
+
+class Optional(T:! Type) {
+  fn CreateEmpty() -> Optional(T) {
+    return {.element = OptionalElement(T).None()};
+  }
+  fn Create(value: T) -> Optional(T) {
+    return {.element = OptionalElement(T).Element(value)};
+  }
+
+  fn HasValue[me: Self]() -> bool {
+    match(me.element) {
+      case OptionalElement(T).None() => { return false; }
+    }
+    return true;
+  }
+
+  fn Get[me: Self]() -> T {
+    var y: T;
+    match(me.element) {
+      case OptionalElement(T).Element(x: T) => {
+        return x;
+      }
+    }
+    // TODO: Use assert as soon as available
+    return y;
+  }
+
+  var element: OptionalElement(T);
+}
+
 // ------------------------
 // Miscellaneous utilities.
 // ------------------------
@@ -426,6 +495,10 @@ external impl i32 as RightShiftWith(i32) where .Result == i32 {
 // fn Print(format_str: String) {
 //   __intrinsic_print(format_str);
 // }
+
+fn Assert(condition: bool, message: String){
+    __intrinsic_assert(condition, message);
+}
 
 fn Rand(low: i32, high: i32) -> i32{
     return __intrinsic_rand(low,high);

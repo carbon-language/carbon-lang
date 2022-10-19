@@ -4,15 +4,18 @@
 
 #include <cstdlib>
 
-#include "llvm/ADT/Sequence.h"
+#include "common/bazel_working_dir.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/FileSystem.h"
 #include "toolchain/driver/driver.h"
 
 auto main(int argc, char** argv) -> int {
   if (argc < 1) {
     return EXIT_FAILURE;
   }
+
+  Carbon::SetWorkingDirForBazel();
 
   llvm::SmallVector<llvm::StringRef, 16> args(argv + 1, argv + argc);
   Carbon::Driver driver;
