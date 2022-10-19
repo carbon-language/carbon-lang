@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_IR_FACTORY_H_
 #define CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_IR_FACTORY_H_
 
+#include "common/check.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_ir.h"
 
@@ -18,15 +19,51 @@ class SemanticsIRFactory {
       -> SemanticsIR;
 
  private:
+  struct TraversalStackEntry {
+    ParseTree::Node parse_node;
+    llvm::Optional<SemanticsNodeId> result_id;
+  };
+
   explicit SemanticsIRFactory(const TokenizedBuffer& tokens,
                               const ParseTree& parse_tree)
       : tokens_(&tokens), semantics_(parse_tree) {}
 
-  void Build();
+  auto Build() -> void;
 
-  // Returns a unique ID for the SemanticsIR.
-  auto next_id() -> Semantics::NodeId {
-    return Semantics::NodeId(id_counter_++);
+  auto Push(ParseTree::Node parse_node) -> void {
+    node_stack_.push_back({parse_node, llvm::None});
+  }
+
+  auto Push(ParseTree::Node parse_node, SemanticsNodeKind node_kind,
+            SemanticsNodeArgs args) -> void {
+    auto node_id = semantics_.AddNode(node_kind, args);
+    node_stack_.push_back({parse_node, node_id});
+  }
+
+  auto Pop(ParseNodeKind pop_parse_kind) -> void {
+    auto back = node_stack_.back();
+    auto parse_kind = parse_tree().node_kind(back.parse_node);
+    CARBON_CHECK(parse_kind == pop_parse_kind)
+        << "Expected " << pop_parse_kind << ", found " << parse_kind;
+    CARBON_CHECK(!back.result_id) << "Expected no result ID on " << parse_kind;
+    node_stack_.pop_back();
+  }
+
+  auto PopWithResult() -> SemanticsNodeId {
+    auto back = node_stack_.back();
+    auto node_id = *back.result_id;
+    node_stack_.pop_back();
+    return node_id;
+  }
+
+  auto PopWithResult(ParseNodeKind pop_parse_kind) -> SemanticsNodeId {
+    auto back = node_stack_.back();
+    auto parse_kind = parse_tree().node_kind(back.parse_node);
+    auto node_id = *back.result_id;
+    CARBON_CHECK(parse_kind == pop_parse_kind)
+        << "Expected " << pop_parse_kind << ", found " << parse_kind;
+    node_stack_.pop_back();
+    return node_id;
   }
 
   // Convenience accessor.
@@ -38,8 +75,8 @@ class SemanticsIRFactory {
   // The SemanticsIR being constructed.
   SemanticsIR semantics_;
 
-  // A counter for unique IDs.
-  int32_t id_counter_ = 0;
+  // The stack during Build. Will contain file-level parse nodes on return.
+  llvm::SmallVector<TraversalStackEntry> node_stack_;
 };
 
 }  // namespace Carbon

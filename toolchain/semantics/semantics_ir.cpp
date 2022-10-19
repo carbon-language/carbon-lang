@@ -7,53 +7,80 @@
 #include "common/check.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/semantics/semantics_node.h"
 
 namespace Carbon {
 
+static auto PrintArgs(llvm::raw_ostream& /*out*/, int unused_no_args[0]) {}
+
+static auto PrintArgs(llvm::raw_ostream& out, SemanticsNodeId one_node) {
+  out << one_node;
+}
+
+static auto PrintArgs(llvm::raw_ostream& out, SemanticsTwoNodeIds two_nodes) {
+  out << two_nodes.nodes[0] << ", " << two_nodes.nodes[1];
+}
+
+static auto PrintArgs(llvm::raw_ostream& out,
+                      SemanticsIdentifierId identifier) {
+  out << identifier;
+}
+
+static auto PrintArgs(llvm::raw_ostream& out,
+                      SemanticsIntegerLiteralId identifier) {
+  out << identifier;
+}
+
 auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
-  PrintBlock(out, 0, root_block());
-  out << "\n";
-}
-
-auto SemanticsIR::PrintBlock(llvm::raw_ostream& out, int indent,
-                             llvm::ArrayRef<Semantics::NodeRef> node_refs) const
-    -> void {
-  out << "{\n";
-  int child_indent = indent + 2;
-  for (const auto& node_ref : node_refs) {
-    out.indent(child_indent);
-    Print(out, child_indent, node_ref);
-    out << ",\n";
+  out << "identifiers = {\n";
+  for (size_t i = 0; i < identifiers_.size(); ++i) {
+    out.indent(2);
+    out << SemanticsIdentifierId(i) << " = \"" << identifiers_[i] << "\";\n";
   }
-  out.indent(indent);
-  out << "}";
-}
+  out << "},\n";
 
-auto SemanticsIR::Print(llvm::raw_ostream& out, int indent,
-                        Semantics::NodeRef node_ref) const -> void {
-  switch (node_ref.kind()) {
-    case Semantics::NodeKind::BinaryOperator:
-      nodes_.Get<Semantics::BinaryOperator>(node_ref).Print(out);
-      return;
-    case Semantics::NodeKind::Function:
-      nodes_.Get<Semantics::Function>(node_ref).Print(
-          out, indent,
-          [&](int block_indent, llvm::ArrayRef<Semantics::NodeRef> block) {
-            PrintBlock(out, block_indent, block);
-          });
-      return;
-    case Semantics::NodeKind::IntegerLiteral:
-      nodes_.Get<Semantics::IntegerLiteral>(node_ref).Print(out);
-      return;
-    case Semantics::NodeKind::Return:
-      nodes_.Get<Semantics::Return>(node_ref).Print(out);
-      return;
-    case Semantics::NodeKind::SetName:
-      nodes_.Get<Semantics::SetName>(node_ref).Print(out);
-      return;
-    case Semantics::NodeKind::Invalid:
-      CARBON_FATAL() << "Invalid NodeRef kind";
+  out << "integer_literals = {\n";
+  for (size_t i = 0; i < integer_literals_.size(); ++i) {
+    out.indent(2);
+    out << SemanticsIntegerLiteralId(i) << " = " << integer_literals_[i]
+        << ";\n";
   }
+  out << "},\n";
+
+  out << "nodes = {\n";
+  int indent = 2;
+  for (size_t i = 0; i < nodes_.size(); ++i) {
+    SemanticsNode node = nodes_[i];
+
+    // Adjust indent for block contents.
+    switch (node.kind_) {
+      case SemanticsNodeKind::CodeBlockStart():
+      case SemanticsNodeKind::FunctionDefinitionStart():
+        out.indent(indent);
+        indent += 2;
+        break;
+      case SemanticsNodeKind::CodeBlockEnd():
+      case SemanticsNodeKind::FunctionDefinitionEnd():
+        indent -= 2;
+        out.indent(indent);
+        break;
+      default:
+        // No indentation change.
+        out.indent(indent);
+        break;
+    }
+
+    out << SemanticsNodeId(i) << " = " << node.kind() << "(";
+    switch (node.kind_) {
+#define CARBON_SEMANTICS_NODE_KIND(Name, Args) \
+  case SemanticsNodeKind::Name():              \
+    PrintArgs(out, node.one_of_args_.Args);    \
+    break;
+#include "toolchain/semantics/semantics_node_kind.def"
+    }
+    out << ");\n";
+  }
+  out << "}\n";
 }
 
 }  // namespace Carbon
