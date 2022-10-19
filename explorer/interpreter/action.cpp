@@ -70,7 +70,7 @@ void RuntimeScope::Initialize(ValueNodeView value_node,
                               Nonnull<const Value*> value) {
   CARBON_CHECK(!value_node.constant_value().has_value());
   CARBON_CHECK(value->kind() != Value::Kind::LValue);
-  allocations_.push_back({heap_->AllocateValue(value)});
+  allocations_.push_back(heap_->AllocateValue(value));
   auto [it, success] = locals_.insert(
       {value_node, heap_->arena().New<LValue>(Address(allocations_.back()))});
   CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
