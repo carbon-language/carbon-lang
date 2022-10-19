@@ -89,8 +89,7 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
         // Note, this is a partial impl binding covering only the impl
         // constraints that we've already seen. Earlier impl constraints should
         // not be able to refer to impl bindings for later impl constraints.
-        witness = type_checker.MakeConstraintWitness(*constraint, witnesses,
-                                                     source_loc);
+        witness = type_checker.MakeConstraintWitness(witnesses);
       }
       Bindings local_bindings = bindings;
       local_bindings.Add(constraint->self_binding(), impl_type, witness);
@@ -109,8 +108,7 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
         !equals.empty()) {
       std::optional<Nonnull<const Witness*>> witness;
       if (constraint->self_binding()->impl_binding()) {
-        witness = type_checker.MakeConstraintWitness(*constraint, witnesses,
-                                                     source_loc);
+        witness = type_checker.MakeConstraintWitness(witnesses);
       }
       Bindings local_bindings = bindings;
       local_bindings.Add(constraint->self_binding(), impl_type, witness);
@@ -130,8 +128,7 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
         }
       }
     }
-    return type_checker.MakeConstraintWitness(*constraint, std::move(witnesses),
-                                              source_loc);
+    return type_checker.MakeConstraintWitness(std::move(witnesses));
   }
   CARBON_FATAL() << "expected a constraint, not " << *constraint_type;
 }

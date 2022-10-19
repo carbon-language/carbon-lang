@@ -1173,9 +1173,7 @@ class TypeChecker::ConstraintTypeBuilder {
     for (const auto& impl_constraint : constraint->impl_constraints()) {
       Bindings local_bindings = bindings;
       local_bindings.Add(constraint->self_binding(), self,
-                         type_checker.MakeConstraintWitness(
-                             *constraint, witnesses,
-                             constraint->self_binding()->source_loc()));
+                         type_checker.MakeConstraintWitness(witnesses));
       int index = AddImplConstraint(
           {.type =
                type_checker.Substitute(local_bindings, impl_constraint.type),
@@ -1188,10 +1186,9 @@ class TypeChecker::ConstraintTypeBuilder {
     // Now form a complete witness and substitute it into the rest of the
     // constraint.
     Bindings local_bindings = bindings;
-    local_bindings.Add(constraint->self_binding(), self,
-                       type_checker.MakeConstraintWitness(
-                           *constraint, std::move(witnesses),
-                           constraint->self_binding()->source_loc()));
+    local_bindings.Add(
+        constraint->self_binding(), self,
+        type_checker.MakeConstraintWitness(std::move(witnesses)));
 
     // TODO: What happens if these rewrites appear in the impl constraints?
     // TODO: What happens if these rewrites appear in each other?
@@ -1694,9 +1691,8 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
 }
 
 auto TypeChecker::MakeConstraintWitness(
-    const ConstraintType& /*constraint*/,
-    std::vector<Nonnull<const Witness*>> impl_constraint_witnesses,
-    SourceLocation /*source_loc*/) const -> Nonnull<const Witness*> {
+    std::vector<Nonnull<const Witness*>> impl_constraint_witnesses) const
+    -> Nonnull<const Witness*> {
   return arena_->New<ConstraintWitness>(std::move(impl_constraint_witnesses));
 }
 
@@ -1768,7 +1764,6 @@ auto TypeChecker::DeduceCallBindings(
     CallExpression& call, Nonnull<const Value*> params_type,
     llvm::ArrayRef<FunctionType::GenericParameter> generic_params,
     llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings,
-    llvm::ArrayRef<Nonnull<const ImplBinding*>> /*impl_bindings*/,
     const ImplScope& impl_scope) -> ErrorOr<Success> {
   llvm::ArrayRef<Nonnull<const Value*>> params =
       cast<TupleValue>(*params_type).elements();
@@ -2760,7 +2755,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           }
           CARBON_RETURN_IF_ERROR(DeduceCallBindings(
               call, &fun_t.parameters(), fun_t.generic_parameters(),
-              fun_t.deduced_bindings(), fun_t.impl_bindings(), impl_scope));
+              fun_t.deduced_bindings(), impl_scope));
 
           // Substitute into the return type to determine the type of the call
           // expression.
@@ -2780,22 +2775,18 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
 
           // Collect the top-level generic parameters and their constraints.
           std::vector<FunctionType::GenericParameter> generic_parameters;
-          std::vector<Nonnull<const ImplBinding*>> impl_bindings;
           llvm::ArrayRef<Nonnull<const Pattern*>> params =
               param_name.params().fields();
           for (size_t i = 0; i != params.size(); ++i) {
             // TODO: Should we disallow all other kinds of top-level params?
             if (auto* binding = dyn_cast<GenericBinding>(params[i])) {
               generic_parameters.push_back({i, binding});
-              if (binding->impl_binding().has_value()) {
-                impl_bindings.push_back(*binding->impl_binding());
-              }
             }
           }
 
           CARBON_RETURN_IF_ERROR(DeduceCallBindings(
               call, &param_name.params().static_type(), generic_parameters,
-              /*deduced_bindings=*/llvm::None, impl_bindings, impl_scope));
+              /*deduced_bindings=*/llvm::None, impl_scope));
 
           // Currently the only kinds of parameterized entities we support are
           // types.
