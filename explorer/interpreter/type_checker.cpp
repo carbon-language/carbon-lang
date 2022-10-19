@@ -1296,8 +1296,8 @@ class TypeChecker::ConstraintTypeBuilder {
     // Figure out which constraints we're going to add.
     int first_impl_to_add =
         std::exchange(tracker->num_impls_added, impl_constraints_.size());
-    int first_equal_to_add = std::exchange(tracker->num_equals_added,
-                                           equality_constraints_.size());
+    int first_equal_to_add =
+        std::exchange(tracker->num_equals_added, equality_constraints_.size());
     llvm::ArrayRef<ConstraintType::ImplConstraint> impl_constraints =
         impl_constraints_;
 
@@ -1493,8 +1493,8 @@ auto TypeChecker::Substitute(const Bindings& bindings,
           cast<InterfaceType>(Substitute(bindings, &assoc.interface()));
       // If we're substituting into an associated constant, we may now be able
       // to rewrite it to a concrete value.
-      if (auto rewritten_value = LookupRewriteInTypeOf(
-              base, interface, &assoc.constant())) {
+      if (auto rewritten_value =
+              LookupRewriteInTypeOf(base, interface, &assoc.constant())) {
         return (*rewritten_value)->converted_replacement;
       }
       const auto* witness =
@@ -2004,9 +2004,9 @@ auto TypeChecker::GetTypeForAssociatedConstant(
   return Substitute(bindings, assoc_type);
 }
 
-auto TypeChecker::LookupRewriteInTypeOf(Nonnull<const Value*> type,
-                                        Nonnull<const InterfaceType*> interface,
-                                        Nonnull<const Declaration*> member) const
+auto TypeChecker::LookupRewriteInTypeOf(
+    Nonnull<const Value*> type, Nonnull<const InterfaceType*> interface,
+    Nonnull<const Declaration*> member) const
     -> std::optional<const ConstraintType::RewriteConstraint*> {
   // Given `(T:! C).Y`, look in `C` for rewrites.
   if (auto* var_type = dyn_cast<VariableType>(type)) {
