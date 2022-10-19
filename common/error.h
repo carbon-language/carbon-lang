@@ -133,7 +133,14 @@ class ErrorBuilder {
 
   // Accumulates string message.
   template <typename T>
-  [[nodiscard]] auto operator<<(const T& message) -> ErrorBuilder& {
+  [[nodiscard]] auto operator<<(const T& message) && -> ErrorBuilder&& {
+    *out_ << message;
+    return std::move(*this);
+  }
+
+  // Accumulates string message for an lvalue error builder.
+  template <typename T>
+  auto operator<<(const T& message) & -> ErrorBuilder& {
     *out_ << message;
     return *this;
   }

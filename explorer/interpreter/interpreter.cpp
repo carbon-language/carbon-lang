@@ -557,8 +557,8 @@ auto Interpreter::EvalAssociatedConstant(
       impl_witness->declaration().constraint_type();
   std::optional<Nonnull<const Value*>> result;
   for (auto& rewrite : constraint->rewrite_constraints()) {
-    if (rewrite.constant == &assoc->constant() &&
-        TypeEqual(rewrite.interface, interface, std::nullopt)) {
+    if (&rewrite.constant->constant() == &assoc->constant() &&
+        TypeEqual(&rewrite.constant->interface(), interface, std::nullopt)) {
       // TODO: The value might depend on the parameters of the impl. We need to
       // substitute impl_witness->type_args() into the value.
       result = rewrite.converted_replacement;

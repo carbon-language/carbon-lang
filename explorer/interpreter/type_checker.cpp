@@ -1151,9 +1151,7 @@ class TypeChecker::ConstraintTypeBuilder {
                             ConstraintType::RewriteConstraint rewrite)
       -> ErrorOr<Success> {
     for (ConstraintType::RewriteConstraint existing : rewrite_constraints_) {
-      if (ValueEqual(existing.interface, rewrite.interface, std::nullopt) &&
-          // TODO: Want a "declares same entity" check.
-          GetName(*existing.constant) == GetName(*rewrite.constant)) {
+      if (ValueEqual(existing.constant, rewrite.constant, std::nullopt)) {
         if (ValueEqual(existing.unconverted_replacement,
                        rewrite.unconverted_replacement, std::nullopt) &&
             TypeEqual(existing.unconverted_replacement_type,
@@ -1161,9 +1159,8 @@ class TypeChecker::ConstraintTypeBuilder {
           return Success();
         }
         return ProgramError(source_loc)
-               << "multiple different rewrites for `.("
-               << *rewrite.interface << "." << *GetName(*rewrite.constant)
-               << ")`:\n"
+               << "multiple different rewrites for `" << *rewrite.constant
+               << "`:\n"
                << "  " << *existing.unconverted_replacement << "\n"
                << "  " << *rewrite.unconverted_replacement;
       }
@@ -1226,22 +1223,35 @@ class TypeChecker::ConstraintTypeBuilder {
     // their corresponding equality constraints.
     // TODO: What happens if these rewrites appear in the impl constraints?
     // TODO: What happens if these rewrites appear in each other?
-    if (add_lookup_contexts) {
-      for (const auto& rewrite_constraint : constraint->rewrite_constraints()) {
-        auto* interface = cast<InterfaceType>(type_checker.Substitute(
-            local_bindings, rewrite_constraint.interface));
+    for (const auto& rewrite_constraint : constraint->rewrite_constraints()) {
+      auto* interface = cast<InterfaceType>(type_checker.Substitute(
+          local_bindings, &rewrite_constraint.constant->interface()));
+      Nonnull<const Value*> converted_value = type_checker.Substitute(
+          local_bindings, rewrite_constraint.converted_replacement);
+
+      // Form a symbolic value naming the non-rewritten associated constant.
+      // The impl constraint will always already exist.
+      int index = AddImplConstraint({.type = self, .interface = interface});
+      auto* witness =
+          type_checker.MakeConstraintWitnessAccess(self_witness, index);
+      auto* constant_value = arena_->New<AssociatedConstant>(
+          self, interface, &rewrite_constraint.constant->constant(), witness);
+
+      if (add_lookup_contexts) {
+        // Add the constraint `.(I.C) = V`, tracking the value and type prior
+        // to conversion for use in rewrites.
         Nonnull<const Value*> value = type_checker.Substitute(
             local_bindings, rewrite_constraint.unconverted_replacement);
         Nonnull<const Value*> type = type_checker.Substitute(
             local_bindings, rewrite_constraint.unconverted_replacement_type);
-        Nonnull<const Value*> converted_value = type_checker.Substitute(
-            local_bindings, rewrite_constraint.converted_replacement);
         CARBON_RETURN_IF_ERROR(AddRewriteConstraint(
-            source_loc, {.interface = interface,
-                         .constant = rewrite_constraint.constant,
+            source_loc, {.constant = constant_value,
                          .unconverted_replacement = value,
                          .unconverted_replacement_type = type,
                          .converted_replacement = converted_value}));
+      } else {
+        // Add the constraint `Self.(I.C) == V`.
+        AddEqualityConstraint({.values = {constant_value, converted_value}});
       }
     }
 
@@ -1312,12 +1322,9 @@ class TypeChecker::ConstraintTypeBuilder {
       bool performed_rewrite;
       do {
         performed_rewrite = false;
-        if (auto* assoc = dyn_cast<AssociatedConstant>(impl_constraint.type);
-            assoc && ValueEqual(&assoc->base(), GetSelfType(), std::nullopt)) {
+        if (auto* assoc = dyn_cast<AssociatedConstant>(impl_constraint.type)) {
           for (const auto& rewrite : rewrite_constraints_) {
-            if (&assoc->constant() == rewrite.constant &&
-                ValueEqual(&assoc->interface(), rewrite.interface,
-                           std::nullopt)) {
+            if (ValueEqual(assoc, rewrite.constant, std::nullopt)) {
               impl_constraint.type = rewrite.converted_replacement;
               performed_rewrite = true;
             }
@@ -1954,10 +1961,14 @@ static auto LookupRewrite(llvm::ArrayRef<RewriteConstraint> rewrites,
                           Nonnull<const InterfaceType*> interface,
                           Nonnull<const Declaration*> member)
     -> std::optional<const ConstraintType::RewriteConstraint*> {
+  if (!isa<AssociatedConstantDeclaration>(member)) {
+    return std::nullopt;
+  }
+
   for (auto& rewrite : rewrites) {
-    if (ValueEqual(interface, rewrite.interface, std::nullopt) &&
+    if (ValueEqual(interface, &rewrite.constant->interface(), std::nullopt) &&
         // TODO: Using name comparison here seems brittle.
-        GetName(*member) == GetName(*rewrite.constant)) {
+        GetName(*member) == GetName(rewrite.constant->constant())) {
       // A ConstraintType can only have one rewrite per (interface, member)
       // pair, so we don't need to check the rest.
       return &rewrite;
@@ -1973,10 +1984,6 @@ static auto LookupRewrite(Nonnull<const Value*> type_of_type,
                           Nonnull<const InterfaceType*> interface,
                           Nonnull<const Declaration*> member)
     -> std::optional<const ConstraintType::RewriteConstraint*> {
-  if (!isa<AssociatedConstantDeclaration>(member)) {
-    return std::nullopt;
-  }
-
   // Find the set of rewrites. Only ConstraintTypes have rewrites.
   // TODO: If we can ever see an InterfaceType here, we should convert it to a
   // constraint type.
@@ -3265,20 +3272,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             // Add the rewrite constraint.
             CARBON_RETURN_IF_ERROR(builder.AddRewriteConstraint(
                 rewrite_clause.source_loc(),
-                {.interface = result.interface,
-                 .constant = constant,
+                {.constant = constant_value,
                  .unconverted_replacement = replacement_value,
                  .unconverted_replacement_type =
                      &replacement_literal->static_type(),
                  .converted_replacement = converted_value}));
-
-            // Also add `.Self.T == V`.
-            // TODO: We'll need to remove this once we start applying rewrites
-            // to equality constraints, and instead look at both equality and
-            // rewrite constraints when checking that an impl binding is
-            // satisfied.
-            builder.AddEqualityConstraint(
-                {.values = {constant_value, replacement_value}});
             break;
           }
         }
@@ -4650,8 +4648,10 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   // Compute a witness that the impl implements its constraint.
   Nonnull<const Witness*> impl_witness;
   {
+    std::vector<EqualityConstraint> rewrite_constraints_as_equality_constraints;
     ImplScope self_impl_scope;
     self_impl_scope.AddParent(&impl_scope);
+
     // For each interface we're going to implement, this impl is the witness
     // that that interface is implemented.
     for (auto lookup : constraint_type->lookup_contexts()) {
@@ -4659,11 +4659,17 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
         self_impl_scope.Add(iface_type, impl_type_value, self_witness, *this);
       }
     }
-    // This impl also provides all of its equalities.
-    // TODO: Only the ones from rewrite constraints.
-    for (auto& eq : constraint_type->equality_constraints()) {
+
+    // This impl also provides all of the equalities from its rewrite
+    // constraints.
+    for (auto& rewrite : constraint_type->rewrite_constraints()) {
+      rewrite_constraints_as_equality_constraints.push_back(
+          {.values = {rewrite.constant, rewrite.converted_replacement}});
+    }
+    for (auto& eq : rewrite_constraints_as_equality_constraints) {
       self_impl_scope.AddEqualityConstraint(&eq);
     }
+
     // Ensure that's enough for our interface to be satisfied.
     CARBON_ASSIGN_OR_RETURN(
         impl_witness, self_impl_scope.Resolve(constraint_type, impl_type_value,
@@ -4713,6 +4719,8 @@ void TypeChecker::BringAssociatedConstantsIntoScope(
       }
     }
   }
+
+  // TODO: Find a way to bring rewrite constraints into scope.
 }
 
 auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,

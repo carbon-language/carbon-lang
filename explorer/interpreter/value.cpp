@@ -434,8 +434,10 @@ void Value::Print(llvm::raw_ostream& out) const {
       llvm::ListSeparator sep(" and ");
       for (const ConstraintType::RewriteConstraint& rewrite :
            constraint.rewrite_constraints()) {
-        out << sep << ".(" << *rewrite.interface << "."
-            << *GetName(*rewrite.constant)
+        out << sep << ".(";
+        PrintNameWithBindings(out, &rewrite.constant->interface().declaration(),
+                              rewrite.constant->interface().args());
+        out << "." << *GetName(rewrite.constant->constant())
             << ") = " << *rewrite.unconverted_replacement;
       }
       for (const ConstraintType::ImplConstraint& impl :
@@ -515,7 +517,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "(" << assoc.base() << ").(";
       PrintNameWithBindings(out, &assoc.interface().declaration(),
                             assoc.interface().args());
-      out << "." << assoc.constant().binding().name() << ")";
+      out << "." << *GetName(assoc.constant()) << ")";
       break;
     }
     case Value::Kind::ContinuationValue: {

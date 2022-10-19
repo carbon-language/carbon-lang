@@ -24,7 +24,7 @@
 namespace Carbon {
 
 class Action;
-class ImplScope;
+class AssociatedConstant;
 
 // Abstract base class of all AST nodes representing values.
 //
@@ -752,10 +752,8 @@ struct EqualityConstraint {
 // A constraint indicating that access to an associated constant should be
 // replaced by another value.
 struct RewriteConstraint {
-  // The interface whose constant is rewritten.
-  Nonnull<const InterfaceType*> interface;
-  // The associated constant that is rewritten.
-  Nonnull<const AssociatedConstantDeclaration*> constant;
+  // The associated constant value that is rewritten.
+  Nonnull<const AssociatedConstant*> constant;
   // The replacement in its original type.
   Nonnull<const Value*> unconverted_replacement;
   // The type of the replacement.
