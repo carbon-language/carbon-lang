@@ -19,15 +19,8 @@ class Function {
  public:
   static constexpr NodeKind Kind = NodeKind::Function;
 
-  Function(ParseTree::Node node, NodeId id,
-           // llvm::SmallVector<PatternBinding, 0> params,
-           // llvm::SmallVector<NodeRef, 0> return_type,
-           llvm::SmallVector<NodeRef, 0> body)
-      : node_(node),
-        id_(id),
-        // params_(std::move(params)),
-        // return_expr_(return_expr),
-        body_(std::move(body)) {}
+  Function(ParseTree::Node node, NodeId id, llvm::SmallVector<NodeRef> body)
+      : node_(node), id_(id), body_(body) {}
 
   void Print(
       llvm::raw_ostream& out, int indent,
@@ -43,9 +36,7 @@ class Function {
 
   auto node() const -> ParseTree::Node { return node_; }
   auto id() const -> NodeId { return id_; }
-  // auto params() const -> llvm::ArrayRef<PatternBinding> { return params_; }
-  // auto return_expr() const -> llvm::Optional<Statement> { return
-  // return_expr_; }
+  auto set_body(llvm::SmallVector<NodeRef, 0> body) { body_ = std::move(body); }
   auto body() const -> llvm::ArrayRef<NodeRef> { return body_; }
 
  private:
@@ -55,13 +46,7 @@ class Function {
   // The function's ID.
   NodeId id_;
 
-  // Regular function parameters.
-  // llvm::SmallVector<PatternBinding, 0> params_;
-
-  // The return type expression.
-  llvm::SmallVector<NodeRef, 0> return_type_;
-
-  llvm::SmallVector<NodeRef, 0> body_;
+  llvm::SmallVector<NodeRef> body_;
 };
 
 }  // namespace Carbon::Semantics

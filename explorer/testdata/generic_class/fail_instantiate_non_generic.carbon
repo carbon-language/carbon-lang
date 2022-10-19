@@ -17,7 +17,7 @@ class Point {
 }
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_instantiate_non_generic.carbon:[[@LINE+1]]: in call `Point(i32)`, expected callee to be a function, found `typeof(class Point)`
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_instantiate_non_generic.carbon:[[@LINE+1]]: in call `Point(i32)`, expected callee to be a function, found `Type`
   var p: Point(i32) = Point.Origin();
   return 0;
 }

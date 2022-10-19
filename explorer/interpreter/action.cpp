@@ -150,7 +150,7 @@ void Action::Print(llvm::raw_ostream& out) const {
   if (!results_.empty()) {
     out << " [[";
     llvm::ListSeparator sep;
-    for (auto& result : results_) {
+    for (const auto& result : results_) {
       out << sep << *result;
     }
     out << "]]";

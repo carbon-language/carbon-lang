@@ -9,7 +9,7 @@
 package ExplorerTest api;
 
 class Point(T:! Type) {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_two_arg_lists.carbon:[[@LINE+1]]: in call `Point(T)(T)`, expected callee to be a function, found `typeof(class Point(T = T))`
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_two_arg_lists.carbon:[[@LINE+1]]: in call `Point(T)(T)`, expected callee to be a function, found `Type`
   fn Origin(zero: T) -> Point(T)(T) {
     return {.x = zero, .y = zero};
   }

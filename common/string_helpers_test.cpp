@@ -11,7 +11,6 @@
 
 #include "llvm/Support/Error.h"
 
-using ::llvm::toString;
 using ::testing::Eq;
 using ::testing::Optional;
 

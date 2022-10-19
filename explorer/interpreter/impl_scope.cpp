@@ -11,7 +11,6 @@
 
 using llvm::cast;
 using llvm::dyn_cast;
-using llvm::isa;
 
 namespace Carbon {
 
@@ -27,7 +26,7 @@ void ImplScope::Add(Nonnull<const Value*> iface,
                     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
                     Nonnull<const Witness*> witness,
                     const TypeChecker& type_checker) {
-  if (auto* constraint = dyn_cast<ConstraintType>(iface)) {
+  if (const auto* constraint = dyn_cast<ConstraintType>(iface)) {
     // The caller should have substituted `.Self` for `type` already.
     Add(constraint->impl_constraints(), deduced, impl_bindings, witness,
         type_checker);
@@ -35,7 +34,8 @@ void ImplScope::Add(Nonnull<const Value*> iface,
     // constraints to the scope. Instead, we'll resolve the equality
     // constraints by resolving a witness when needed.
     if (deduced.empty()) {
-      for (auto& equality_constraint : constraint->equality_constraints()) {
+      for (const auto& equality_constraint :
+           constraint->equality_constraints()) {
         equalities_.push_back(&equality_constraint);
       }
     }
@@ -90,8 +90,7 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
         // Note, this is a partial impl binding covering only the impl
         // constraints that we've already seen. Earlier impl constraints should
         // not be able to refer to impl bindings for later impl constraints.
-        witness = type_checker.MakeConstraintWitness(*constraint, witnesses,
-                                                     source_loc);
+        witness = type_checker.MakeConstraintWitness(witnesses);
       }
       Bindings local_bindings = bindings;
       local_bindings.Add(constraint->self_binding(), impl_type, witness);
@@ -110,13 +109,12 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
         !equals.empty()) {
       std::optional<Nonnull<const Witness*>> witness;
       if (constraint->self_binding()->impl_binding()) {
-        witness = type_checker.MakeConstraintWitness(*constraint, witnesses,
-                                                     source_loc);
+        witness = type_checker.MakeConstraintWitness(witnesses);
       }
       Bindings local_bindings = bindings;
       local_bindings.Add(constraint->self_binding(), impl_type, witness);
       SingleStepEqualityContext equality_ctx(this);
-      for (auto& equal : equals) {
+      for (const auto& equal : equals) {
         auto it = equal.values.begin();
         Nonnull<const Value*> first =
             type_checker.Substitute(local_bindings, *it++);
@@ -131,8 +129,7 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
         }
       }
     }
-    return type_checker.MakeConstraintWitness(*constraint, std::move(witnesses),
-                                              source_loc);
+    return type_checker.MakeConstraintWitness(std::move(witnesses));
   }
   CARBON_FATAL() << "expected a constraint, not " << *constraint_type;
 }
@@ -185,8 +182,8 @@ static auto CombineResults(Nonnull<const InterfaceType*> iface_type,
   }
   // If either of them was a symbolic result, then they'll end up being
   // equivalent. In that case, pick `a`.
-  auto* impl_a = dyn_cast<ImplWitness>(*a);
-  auto* impl_b = dyn_cast<ImplWitness>(*b);
+  const auto* impl_a = dyn_cast<ImplWitness>(*a);
+  const auto* impl_b = dyn_cast<ImplWitness>(*b);
   if (!impl_b) {
     return a;
   }

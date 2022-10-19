@@ -351,17 +351,17 @@ WhereClause::~WhereClause() = default;
 void WhereClause::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
     case WhereClauseKind::IsWhereClause: {
-      auto& clause = cast<IsWhereClause>(*this);
+      const auto& clause = cast<IsWhereClause>(*this);
       out << clause.type() << " is " << clause.constraint();
       break;
     }
     case WhereClauseKind::EqualsWhereClause: {
-      auto& clause = cast<EqualsWhereClause>(*this);
+      const auto& clause = cast<EqualsWhereClause>(*this);
       out << clause.lhs() << " == " << clause.rhs();
       break;
     }
     case WhereClauseKind::RewriteWhereClause: {
-      auto& clause = cast<RewriteWhereClause>(*this);
+      const auto& clause = cast<RewriteWhereClause>(*this);
       out << "." << clause.member_name() << " = " << clause.replacement();
       break;
     }

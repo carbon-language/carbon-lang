@@ -40,7 +40,7 @@ class TypeChecker {
   // Construct a type that is the same as `type` except that occurrences
   // of type variables (aka. `GenericBinding` and references to `ImplBinding`)
   // are replaced by their corresponding type or witness in `dict`.
-  auto Substitute(const Bindings& dict, Nonnull<const Value*> type) const
+  auto Substitute(const Bindings& bindings, Nonnull<const Value*> type) const
       -> Nonnull<const Value*>;
 
   // If `impl` can be an implementation of interface `iface` for the given
@@ -51,27 +51,24 @@ class TypeChecker {
                  SourceLocation source_loc) const
       -> std::optional<Nonnull<const Witness*>>;
 
-  /*
-  ** Finds the direct or indirect member of a class or mixin by its name and
-  ** returns the member's declaration and type. Indirect members are members of
-  ** mixins that are mixed by member mix declarations. If the member is an
-  ** indirect member from a mix declaration, then the Self type variable within
-  ** the member's type is substituted with the type of the enclosing declaration
-  ** containing the mix declaration.
-  */
+  // Finds the direct or indirect member of a class or mixin by its name and
+  // returns the member's declaration and type. Indirect members are members of
+  // mixins that are mixed by member mix declarations. If the member is an
+  // indirect member from a mix declaration, then the Self type variable within
+  // the member's type is substituted with the type of the enclosing declaration
+  // containing the mix declaration.
   auto FindMixedMemberAndType(SourceLocation source_loc,
                               const std::string_view& name,
                               llvm::ArrayRef<Nonnull<Declaration*>> members,
-                              const Nonnull<const Value*> enclosing_type)
+                              Nonnull<const Value*> enclosing_type)
       -> ErrorOr<std::optional<
           std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>>;
 
   // Given the witnesses for the components of a constraint, form a witness for
   // the constraint.
   auto MakeConstraintWitness(
-      const ConstraintType& constraint,
-      std::vector<Nonnull<const Witness*>> impl_constraint_witnesses,
-      SourceLocation source_loc) const -> Nonnull<const Witness*>;
+      std::vector<Nonnull<const Witness*>> impl_constraint_witnesses) const
+      -> Nonnull<const Witness*>;
 
   // Given the witnesses for the components of a constraint, form a witness for
   // the constraint.
@@ -170,7 +167,6 @@ class TypeChecker {
       CallExpression& call, Nonnull<const Value*> params,
       llvm::ArrayRef<FunctionType::GenericParameter> generic_params,
       llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings,
-      llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
       const ImplScope& impl_scope) -> ErrorOr<Success>;
 
   // Establish the `static_type` and `constant_value` of the
@@ -302,7 +298,7 @@ class TypeChecker {
 
   // Type check all the members of the implementation.
   auto TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
-                                const ImplScope& impl_scope)
+                                const ImplScope& enclosing_scope)
       -> ErrorOr<Success>;
 
   // This currently does nothing, but perhaps that will change in the future.
@@ -445,17 +441,13 @@ class TypeChecker {
                               Nonnull<const Declaration*> member) const
       -> std::optional<const ValueLiteral*>;
 
-  /*
-  ** Adds a member of a declaration to collected_members_
-  */
+  // Adds a member of a declaration to collected_members_
   auto CollectMember(Nonnull<const Declaration*> enclosing_decl,
                      Nonnull<const Declaration*> member_decl)
       -> ErrorOr<Success>;
 
-  /*
-  ** Fetches all direct and indirect members of a class or mixin declaration
-  ** stored within collected_members_
-  */
+  // Fetches all direct and indirect members of a class or mixin declaration
+  // stored within collected_members_
   auto FindCollectedMembers(Nonnull<const Declaration*> decl)
       -> CollectedMembersMap&;
 

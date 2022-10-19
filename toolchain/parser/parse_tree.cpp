@@ -104,7 +104,7 @@ auto ParseTree::Print(llvm::raw_ostream& output) const -> void {
     Node n;
     int depth;
     std::tie(n, depth) = node_stack.pop_back_val();
-    auto& n_impl = node_impls_[n.index()];
+    const auto& n_impl = node_impls_[n.index()];
 
     for (int unused_indent : llvm::seq(0, depth)) {
       (void)unused_indent;
@@ -153,7 +153,7 @@ auto ParseTree::Verify() const -> bool {
   // Verify basic tree structure invariants.
   llvm::SmallVector<ParseTree::Node, 16> ancestors;
   for (Node n : llvm::reverse(postorder())) {
-    auto& n_impl = node_impls_[n.index()];
+    const auto& n_impl = node_impls_[n.index()];
 
     if (n_impl.has_error && !has_errors_) {
       llvm::errs()
@@ -165,7 +165,7 @@ auto ParseTree::Verify() const -> bool {
     if (n_impl.subtree_size > 1) {
       if (!ancestors.empty()) {
         auto parent_n = ancestors.back();
-        auto& parent_n_impl = node_impls_[parent_n.index()];
+        const auto& parent_n_impl = node_impls_[parent_n.index()];
         int end_index = n.index() - n_impl.subtree_size;
         int parent_end_index = parent_n.index() - parent_n_impl.subtree_size;
         if (parent_end_index > end_index) {

@@ -24,18 +24,6 @@ cc_library(
 )
 
 cc_library(
-    name = "parse_subtree_consumer",
-    srcs = ["parse_subtree_consumer.cpp"],
-    hdrs = ["parse_subtree_consumer.h"],
-    deps = [
-        "//common:check",
-        "//toolchain/parser:parse_node_kind",
-        "//toolchain/parser:parse_tree",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
     name = "semantics_ir",
     srcs = ["semantics_ir.cpp"],
     hdrs = [
@@ -57,7 +45,6 @@ cc_library(
     hdrs = ["semantics_ir_factory.h"],
     deps = [
         ":nodes",
-        ":parse_subtree_consumer",
         ":semantics_ir",
         "//common:check",
         "//toolchain/lexer:token_kind",

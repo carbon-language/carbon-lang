@@ -76,11 +76,7 @@ class Value {
     ContinuationValue,  // A first-class continuation value.
     StringType,
     StringValue,
-    TypeOfClassType,
     TypeOfMixinPseudoType,
-    TypeOfInterfaceType,
-    TypeOfConstraintType,
-    TypeOfChoiceType,
     TypeOfParameterizedEntityName,
     TypeOfMemberName,
     StaticArrayType,
@@ -123,7 +119,7 @@ class Value {
 
 // Returns whether the fully-resolved kind that this value will eventually have
 // is currently unknown, because it depends on a generic parameter.
-inline bool IsValueKindDependent(Nonnull<const Value*> type) {
+inline auto IsValueKindDependent(Nonnull<const Value*> type) -> bool {
   return type->kind() == Value::Kind::VariableType ||
          type->kind() == Value::Kind::AssociatedConstant;
 }
@@ -356,8 +352,8 @@ class AlternativeConstructorValue : public Value {
   AlternativeConstructorValue(std::string_view alt_name,
                               std::string_view choice_name)
       : Value(Kind::AlternativeConstructorValue),
-        alt_name_(std::move(alt_name)),
-        choice_name_(std::move(choice_name)) {}
+        alt_name_(alt_name),
+        choice_name_(choice_name) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::AlternativeConstructorValue;
@@ -377,8 +373,8 @@ class AlternativeValue : public Value {
   AlternativeValue(std::string_view alt_name, std::string_view choice_name,
                    Nonnull<const Value*> argument)
       : Value(Kind::AlternativeValue),
-        alt_name_(std::move(alt_name)),
-        choice_name_(std::move(choice_name)),
+        alt_name_(alt_name),
+        choice_name_(choice_name),
         argument_(argument) {}
 
   static auto classof(const Value* value) -> bool {
@@ -402,7 +398,7 @@ class TupleValue : public Value {
   static auto Empty() -> Nonnull<const TupleValue*> {
     static const TupleValue empty =
         TupleValue(std::vector<Nonnull<const Value*>>());
-    return Nonnull<const TupleValue*>(&empty);
+    return static_cast<Nonnull<const TupleValue*>>(&empty);
   }
 
   explicit TupleValue(std::vector<Nonnull<const Value*>> elements)
@@ -640,10 +636,7 @@ class NominalClassType : public Value {
 
   auto type_args() const -> const BindingMap& { return bindings_->args(); }
 
-  // Witnesses for each of the class's impl bindings. These will not in general
-  // be set for class types that are only intended to be used within
-  // type-checking and not at runtime, such as in the static_type() of an
-  // expression or the type in a TypeOfClassType.
+  // Witnesses for each of the class's impl bindings.
   auto witnesses() const -> const ImplWitnessMap& {
     return bindings_->witnesses();
   }
@@ -795,7 +788,6 @@ class ConstraintType : public Value {
     Nonnull<const Value*> context;
   };
 
- public:
   explicit ConstraintType(Nonnull<const GenericBinding*> self_binding,
                           std::vector<ImplConstraint> impl_constraints,
                           std::vector<EqualityConstraint> equality_constraints,
@@ -940,7 +932,8 @@ class ConstraintImplWitness : public Witness {
                    int index) -> Nonnull<const Witness*> {
     CARBON_CHECK(!llvm::isa<ImplWitness>(witness))
         << "impl witness has no components to access";
-    if (auto* constraint_witness = llvm::dyn_cast<ConstraintWitness>(witness)) {
+    if (const auto* constraint_witness =
+            llvm::dyn_cast<ConstraintWitness>(witness)) {
       return constraint_witness->witnesses()[index];
     }
     return arena->New<ConstraintImplWitness>(witness, index);
@@ -1218,25 +1211,6 @@ class StringValue : public Value {
   std::string value_;
 };
 
-// The type of an expression whose value is a class type. Currently there is no
-// way to explicitly name such a type in Carbon code, but we are tentatively
-// using `typeof(ClassName)` as the debug-printing format, in anticipation of
-// something like that becoming valid Carbon syntax.
-class TypeOfClassType : public Value {
- public:
-  explicit TypeOfClassType(Nonnull<const NominalClassType*> class_type)
-      : Value(Kind::TypeOfClassType), class_type_(class_type) {}
-
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::TypeOfClassType;
-  }
-
-  auto class_type() const -> const NominalClassType& { return *class_type_; }
-
- private:
-  Nonnull<const NominalClassType*> class_type_;
-};
-
 class TypeOfMixinPseudoType : public Value {
  public:
   explicit TypeOfMixinPseudoType(Nonnull<const MixinPseudoType*> class_type)
@@ -1250,57 +1224,6 @@ class TypeOfMixinPseudoType : public Value {
 
  private:
   Nonnull<const MixinPseudoType*> mixin_type_;
-};
-
-class TypeOfInterfaceType : public Value {
- public:
-  explicit TypeOfInterfaceType(Nonnull<const InterfaceType*> iface_type)
-      : Value(Kind::TypeOfInterfaceType), iface_type_(iface_type) {}
-
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::TypeOfInterfaceType;
-  }
-
-  auto interface_type() const -> const InterfaceType& { return *iface_type_; }
-
- private:
-  Nonnull<const InterfaceType*> iface_type_;
-};
-
-class TypeOfConstraintType : public Value {
- public:
-  explicit TypeOfConstraintType(Nonnull<const ConstraintType*> constraint_type)
-      : Value(Kind::TypeOfConstraintType), constraint_type_(constraint_type) {}
-
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::TypeOfConstraintType;
-  }
-
-  auto constraint_type() const -> const ConstraintType& {
-    return *constraint_type_;
-  }
-
- private:
-  Nonnull<const ConstraintType*> constraint_type_;
-};
-
-// The type of an expression whose value is a choice type. Currently there is no
-// way to explicitly name such a type in Carbon code, but we are tentatively
-// using `typeof(ChoiceName)` as the debug-printing format, in anticipation of
-// something like that becoming valid Carbon syntax.
-class TypeOfChoiceType : public Value {
- public:
-  explicit TypeOfChoiceType(Nonnull<const ChoiceType*> choice_type)
-      : Value(Kind::TypeOfChoiceType), choice_type_(choice_type) {}
-
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::TypeOfChoiceType;
-  }
-
-  auto choice_type() const -> const ChoiceType& { return *choice_type_; }
-
- private:
-  Nonnull<const ChoiceType*> choice_type_;
 };
 
 // The type of an expression whose value is the name of a parameterized entity.

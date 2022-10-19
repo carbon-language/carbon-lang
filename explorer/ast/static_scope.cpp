@@ -12,8 +12,7 @@
 namespace Carbon {
 
 auto StaticScope::Add(const std::string& name, ValueNodeView entity,
-                      NameStatus status /* = NameStatus::Usable*/)
-    -> ErrorOr<Success> {
+                      NameStatus status) -> ErrorOr<Success> {
   auto [it, inserted] = declared_names_.insert({name, {entity, status}});
   if (!inserted) {
     if (it->second.entity != entity) {

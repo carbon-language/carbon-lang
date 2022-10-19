@@ -158,7 +158,7 @@ class ImplScope {
 // scope.
 struct SingleStepEqualityContext : public EqualityContext {
  public:
-  SingleStepEqualityContext(Nonnull<const ImplScope*> impl_scope)
+  explicit SingleStepEqualityContext(Nonnull<const ImplScope*> impl_scope)
       : impl_scope_(impl_scope) {}
 
   // Visits the values that are equal to the given value and a single step away

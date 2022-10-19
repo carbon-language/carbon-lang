@@ -155,34 +155,34 @@ TEST_F(ParseTreeTest, PrintingAsYAML) {
   tree.Print(print_stream);
   print_stream.flush();
 
-  EXPECT_THAT(
-      Yaml::Value::FromText(print_output),
-      ElementsAre(Yaml::SequenceValue{
-          Yaml::MappingValue{
-              {"node_index", "4"},
-              {"kind", "FunctionDeclaration"},
-              {"text", "fn"},
-              {"subtree_size", "5"},
-              {"children",
-               Yaml::SequenceValue{
-                   Yaml::MappingValue{{"node_index", "0"},
-                                      {"kind", "DeclaredName"},
-                                      {"text", "F"}},
-                   Yaml::MappingValue{{"node_index", "2"},
-                                      {"kind", "ParameterList"},
-                                      {"text", "("},
-                                      {"subtree_size", "2"},
-                                      {"children",  //
-                                       Yaml::SequenceValue{Yaml::MappingValue{
-                                           {"node_index", "1"},
-                                           {"kind", "ParameterListEnd"},
-                                           {"text", ")"}}}}},
-                   Yaml::MappingValue{{"node_index", "3"},
-                                      {"kind", "DeclarationEnd"},
-                                      {"text", ";"}}}}},
-          Yaml::MappingValue{{"node_index", "5"},  //
-                             {"kind", "FileEnd"},
-                             {"text", ""}}}));
+  auto parameter_list = Yaml::SequenceValue{
+      Yaml::MappingValue{
+          {"node_index", "2"}, {"kind", "ParameterListEnd"}, {"text", ")"}},
+  };
+
+  auto function_decl = Yaml::SequenceValue{
+      Yaml::MappingValue{
+          {"node_index", "0"}, {"kind", "FunctionIntroducer"}, {"text", "fn"}},
+      Yaml::MappingValue{
+          {"node_index", "1"}, {"kind", "DeclaredName"}, {"text", "F"}},
+      Yaml::MappingValue{{"node_index", "3"},
+                         {"kind", "ParameterList"},
+                         {"text", "("},
+                         {"subtree_size", "2"},
+                         {"children", parameter_list}},
+  };
+
+  auto file = Yaml::SequenceValue{
+      Yaml::MappingValue{{"node_index", "4"},
+                         {"kind", "FunctionDeclaration"},
+                         {"text", ";"},
+                         {"subtree_size", "5"},
+                         {"children", function_decl}},
+      Yaml::MappingValue{
+          {"node_index", "5"}, {"kind", "FileEnd"}, {"text", ""}},
+  };
+
+  EXPECT_THAT(Yaml::Value::FromText(print_output), ElementsAre(file));
 }
 
 TEST_F(ParseTreeTest, RecursionLimit) {
