@@ -510,16 +510,20 @@ class FunctionType : public Value {
   };
 
   FunctionType(Nonnull<const Value*> parameters,
-               llvm::ArrayRef<GenericParameter> generic_parameters,
+               Nonnull<const Value*> return_type)
+      : FunctionType(parameters, {}, return_type, {}, {}) {}
+
+  FunctionType(Nonnull<const Value*> parameters,
+               std::vector<GenericParameter> generic_parameters,
                Nonnull<const Value*> return_type,
-               llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings,
-               llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings)
+               std::vector<Nonnull<const GenericBinding*>> deduced_bindings,
+               std::vector<Nonnull<const ImplBinding*>> impl_bindings)
       : Value(Kind::FunctionType),
         parameters_(parameters),
-        generic_parameters_(generic_parameters),
+        generic_parameters_(std::move(generic_parameters)),
         return_type_(return_type),
-        deduced_bindings_(deduced_bindings),
-        impl_bindings_(impl_bindings) {}
+        deduced_bindings_(std::move(deduced_bindings)),
+        impl_bindings_(std::move(impl_bindings)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionType;
@@ -785,6 +789,14 @@ class ConstraintType : public Value {
 
   using EqualityConstraint = Carbon::EqualityConstraint;
 
+  // A constraint indicating that access to an associated constant should be
+  // replaced by another value.
+  struct RewriteConstraint {
+    Nonnull<const InterfaceType*> interface;
+    Nonnull<const AssociatedConstantDeclaration*> constant;
+    Nonnull<const ValueLiteral*> replacement;
+  };
+
   // A context in which we might look up a name.
   struct LookupContext {
     Nonnull<const Value*> context;
@@ -794,11 +806,13 @@ class ConstraintType : public Value {
   explicit ConstraintType(Nonnull<const GenericBinding*> self_binding,
                           std::vector<ImplConstraint> impl_constraints,
                           std::vector<EqualityConstraint> equality_constraints,
+                          std::vector<RewriteConstraint> rewrite_constraints,
                           std::vector<LookupContext> lookup_contexts)
       : Value(Kind::ConstraintType),
         self_binding_(self_binding),
         impl_constraints_(std::move(impl_constraints)),
         equality_constraints_(std::move(equality_constraints)),
+        rewrite_constraints_(std::move(rewrite_constraints)),
         lookup_contexts_(std::move(lookup_contexts)) {}
 
   static auto classof(const Value* value) -> bool {
@@ -815,6 +829,10 @@ class ConstraintType : public Value {
 
   auto equality_constraints() const -> llvm::ArrayRef<EqualityConstraint> {
     return equality_constraints_;
+  }
+
+  auto rewrite_constraints() const -> llvm::ArrayRef<RewriteConstraint> {
+    return rewrite_constraints_;
   }
 
   auto lookup_contexts() const -> llvm::ArrayRef<LookupContext> {
@@ -836,6 +854,7 @@ class ConstraintType : public Value {
   Nonnull<const GenericBinding*> self_binding_;
   std::vector<ImplConstraint> impl_constraints_;
   std::vector<EqualityConstraint> equality_constraints_;
+  std::vector<RewriteConstraint> rewrite_constraints_;
   std::vector<LookupContext> lookup_contexts_;
 };
 
@@ -856,13 +875,7 @@ class Witness : public Value {
 // The witness table for an impl.
 class ImplWitness : public Witness {
  public:
-  // Construct a witness for
-  // 1) a non-generic impl, or
-  // 2) a generic impl that has not yet been applied to type arguments.
-  explicit ImplWitness(Nonnull<const ImplDeclaration*> declaration)
-      : Witness(Kind::ImplWitness), declaration_(declaration) {}
-
-  // Construct an instantiated generic impl.
+  // Construct a witness for an impl.
   explicit ImplWitness(Nonnull<const ImplDeclaration*> declaration,
                        Nonnull<const Bindings*> bindings)
       : Witness(Kind::ImplWitness),
@@ -932,6 +945,8 @@ class ConstraintImplWitness : public Witness {
   // element.
   static auto Make(Nonnull<Arena*> arena, Nonnull<const Witness*> witness,
                    int index) -> Nonnull<const Witness*> {
+    CARBON_CHECK(!llvm::isa<ImplWitness>(witness))
+        << "impl witness has no components to access";
     if (auto* constraint_witness = llvm::dyn_cast<ConstraintWitness>(witness)) {
       return constraint_witness->witnesses()[index];
     }

@@ -2,12 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK:Interface: 2
-// CHECK:Op: 2
-// CHECK:result: 0
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: Interface: 2
+// CHECK:STDOUT: Op: 2
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 

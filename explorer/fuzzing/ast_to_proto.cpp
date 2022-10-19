@@ -237,6 +237,14 @@ static auto ExpressionToProto(const Expression& expression)
                 ExpressionToProto(cast<EqualsWhereClause>(where)->rhs());
             break;
           }
+          case WhereClauseKind::RewriteWhereClause: {
+            auto* rewrite = clause_proto.mutable_rewrite();
+            rewrite->set_member_name(
+                std::string(cast<RewriteWhereClause>(where)->member_name()));
+            *rewrite->mutable_replacement() = ExpressionToProto(
+                cast<RewriteWhereClause>(where)->replacement());
+            break;
+          }
         }
         *where_proto->add_clauses() = clause_proto;
       }
@@ -693,6 +701,21 @@ static auto DeclarationToProto(const Declaration& declaration)
         *var_proto->mutable_initializer() =
             ExpressionToProto(var.initializer());
       }
+      break;
+    }
+
+    case DeclarationKind::InterfaceExtendsDeclaration: {
+      const auto& extends = cast<InterfaceExtendsDeclaration>(declaration);
+      auto* extends_proto = declaration_proto.mutable_interface_extends();
+      *extends_proto->mutable_base() = ExpressionToProto(*extends.base());
+      break;
+    }
+
+    case DeclarationKind::InterfaceImplDeclaration: {
+      const auto& impl = cast<InterfaceImplDeclaration>(declaration);
+      auto* impl_proto = declaration_proto.mutable_interface_impl();
+      *impl_proto->mutable_impl_type() = ExpressionToProto(*impl.impl_type());
+      *impl_proto->mutable_constraint() = ExpressionToProto(*impl.constraint());
       break;
     }
 

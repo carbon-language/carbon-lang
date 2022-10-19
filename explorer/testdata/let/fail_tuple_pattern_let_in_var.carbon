@@ -2,14 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:SYNTAX ERROR: {{.*}}/explorer/testdata/let/fail_tuple_pattern_let_in_var.carbon:[[@LINE+1]]: syntax error, unexpected LET
+  // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/let/fail_tuple_pattern_let_in_var.carbon:[[@LINE+1]]: syntax error, unexpected LET
   var (var a: auto, b: auto, let c: auto, d: auto) = (1, 2, 3, 4);
   return 0;
 }

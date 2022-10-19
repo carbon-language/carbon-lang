@@ -2,12 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK:structs equal: 0
-// CHECK:structs not equal: 1
-// CHECK:result: 0
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: structs equal: 0
+// CHECK:STDOUT: structs not equal: 1
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 

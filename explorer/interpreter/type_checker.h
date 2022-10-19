@@ -37,30 +37,11 @@ class TypeChecker {
   // processed.
   auto TypeCheck(AST& ast) -> ErrorOr<Success>;
 
-  // Perform type argument deduction, matching the parameter value `param`
-  // against the argument value `arg`. Whenever there is an VariableType in the
-  // parameter, it is deduced to be the corresponding type inside the argument
-  // type. The argument and parameter will typically be types, but can be
-  // non-type values when deduction recurses into the arguments of a
-  // parameterized type.
-  // The `deduced` parameter is an accumulator, that is, it holds the
-  // results so-far.
-  // `allow_implicit_conversion` specifies whether implicit conversions are
-  // permitted from the argument to the parameter type. If so, an `impl_scope`
-  // must be provided.
-  auto ArgumentDeduction(
-      SourceLocation source_loc, const std::string& context,
-      llvm::ArrayRef<Nonnull<const GenericBinding*>> bindings_to_deduce,
-      BindingMap& deduced, Nonnull<const Value*> param,
-      Nonnull<const Value*> arg, bool allow_implicit_conversion,
-      const ImplScope& impl_scope) const -> ErrorOr<Success>;
-
   // Construct a type that is the same as `type` except that occurrences
-  // of type variables (aka. `GenericBinding`) are replaced by their
-  // corresponding type in `dict`.
-  auto Substitute(const std::map<Nonnull<const GenericBinding*>,
-                                 Nonnull<const Value*>>& dict,
-                  Nonnull<const Value*> type) const -> Nonnull<const Value*>;
+  // of type variables (aka. `GenericBinding` and references to `ImplBinding`)
+  // are replaced by their corresponding type or witness in `dict`.
+  auto Substitute(const Bindings& dict, Nonnull<const Value*> type) const
+      -> Nonnull<const Value*>;
 
   // If `impl` can be an implementation of interface `iface` for the given
   // `type`, then return the witness for this `impl`. Otherwise return
@@ -74,8 +55,8 @@ class TypeChecker {
   // and its parents
   auto LookupMember(std::string_view name, const ClassDeclaration& class_decl,
                     Nonnull<const Value*> enclosing_type)
-      -> std::optional<
-          std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>;
+      -> ErrorOr<std::optional<
+          std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>>;
 
   /*
   ** Finds the direct or indirect member of a class or mixin by its name and
@@ -88,8 +69,8 @@ class TypeChecker {
   auto FindMixedMemberAndType(const std::string_view& name,
                               llvm::ArrayRef<Nonnull<Declaration*>> members,
                               const Nonnull<const Value*> enclosing_type)
-      -> std::optional<
-          std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>;
+      -> ErrorOr<std::optional<
+          std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>>;
 
   // Given the witnesses for the components of a constraint, form a witness for
   // the constraint.
@@ -101,11 +82,14 @@ class TypeChecker {
   // Given the witnesses for the components of a constraint, form a witness for
   // the constraint.
   auto MakeConstraintWitnessAccess(Nonnull<const Witness*> witness,
-                                   size_t impl_offset) const
+                                   int impl_offset) const
       -> Nonnull<const Witness*>;
 
  private:
   struct SingleStepEqualityContext;
+  class ConstraintTypeBuilder;
+  class SubstitutedGenericBindings;
+  class ArgumentDeduction;
 
   // Information about the currently enclosing scopes.
   struct ScopeInfo {
@@ -132,6 +116,12 @@ class TypeChecker {
     Nonnull<ImplScope*> innermost_non_class_scope;
     // The enclosing generic bindings, if any.
     std::vector<Nonnull<const GenericBinding*>> bindings;
+  };
+
+  // Result from a lookup in a constraint.
+  struct ConstraintLookupResult {
+    Nonnull<const InterfaceType*> interface;
+    Nonnull<const Declaration*> member;
   };
 
   // Traverses the AST rooted at `e`, populating the static_type() of all nodes
@@ -227,13 +217,18 @@ class TypeChecker {
   auto CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
                            Nonnull<const ImplDeclaration*> impl_decl,
                            Nonnull<const Value*> self_type,
+                           Nonnull<const Witness*> self_witness,
+                           Nonnull<const Witness*> iface_witness,
                            const ImplScope& impl_scope) -> ErrorOr<Success>;
 
   // Check that an `impl` declaration satisfies its constraints and add the
   // corresponding `ImplBinding`s to the impl scope.
-  auto CheckAndAddImplBindings(Nonnull<const ImplDeclaration*> impl_decl,
-                               Nonnull<const Value*> impl_type,
-                               const ScopeInfo& scope_info) -> ErrorOr<Success>;
+  auto CheckAndAddImplBindings(
+      Nonnull<const ImplDeclaration*> impl_decl,
+      Nonnull<const Value*> impl_type, Nonnull<const Witness*> self_witness,
+      Nonnull<const Witness*> impl_witness,
+      llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings,
+      const ScopeInfo& scope_info) -> ErrorOr<Success>;
 
   auto DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
                               const ScopeInfo& scope_info) -> ErrorOr<Success>;
@@ -327,11 +322,6 @@ class TypeChecker {
   auto ExpectReturnOnAllPaths(std::optional<Nonnull<Statement*>> opt_stmt,
                               SourceLocation source_loc) -> ErrorOr<Success>;
 
-  // Verifies that *value represents the result of a type expression,
-  // as opposed to a non-type value.
-  auto ExpectIsType(SourceLocation source_loc, Nonnull<const Value*> value)
-      -> ErrorOr<Success>;
-
   // Verifies that *value represents a concrete type, as opposed to a
   // type pattern or a non-type value.
   auto ExpectIsConcreteType(SourceLocation source_loc,
@@ -364,8 +354,7 @@ class TypeChecker {
 
   // Attempt to implicitly convert type-checked expression `source` to the type
   // `destination`.
-  auto ImplicitlyConvert(const std::string& context,
-                         const ImplScope& impl_scope,
+  auto ImplicitlyConvert(std::string_view context, const ImplScope& impl_scope,
                          Nonnull<Expression*> source,
                          Nonnull<const Value*> destination)
       -> ErrorOr<Nonnull<Expression*>>;
@@ -382,13 +371,13 @@ class TypeChecker {
   //
   // TODO: Does not actually perform the conversion if a user-defined
   // conversion is needed. Should be used very rarely for that reason.
-  auto ExpectType(SourceLocation source_loc, const std::string& context,
+  auto ExpectType(SourceLocation source_loc, std::string_view context,
                   Nonnull<const Value*> expected, Nonnull<const Value*> actual,
                   const ImplScope& impl_scope) const -> ErrorOr<Success>;
 
   // Check whether `actual` is the same type as `expected` and halt with a
   // fatal compilation error if it is not.
-  auto ExpectExactType(SourceLocation source_loc, const std::string& context,
+  auto ExpectExactType(SourceLocation source_loc, std::string_view context,
                        Nonnull<const Value*> expected,
                        Nonnull<const Value*> actual,
                        const ImplScope& impl_scope) const -> ErrorOr<Success>;
@@ -418,25 +407,50 @@ class TypeChecker {
                                BuiltinInterfaceName interface) const
       -> ErrorOr<Nonnull<const InterfaceType*>>;
 
-  // Find impls that satisfy all of the `impl_bindings`, but with the
-  // type variables in the `impl_bindings` replaced by the argument
-  // type in `deduced_type_args`.  The results are placed in the
-  // `impls` map.
-  auto SatisfyImpls(llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
-                    const ImplScope& impl_scope, SourceLocation source_loc,
-                    const BindingMap& deduced_type_args,
-                    ImplWitnessMap& impls) const -> ErrorOr<Success>;
-
-  // Given an interface type, form a corresponding constraint type.
+  // Given an interface type, form a corresponding constraint type. The
+  // interface must be a complete type.
   auto MakeConstraintForInterface(SourceLocation source_loc,
                                   Nonnull<const InterfaceType*> iface_type)
-      -> Nonnull<const ConstraintType*>;
+      -> ErrorOr<Nonnull<const ConstraintType*>>;
+
+  // Convert a value that is expected to represent a constraint into a
+  // `ConstraintType`.
+  auto ConvertToConstraintType(SourceLocation source_loc,
+                               std::string_view context,
+                               Nonnull<const Value*> constraint)
+      -> ErrorOr<Nonnull<const ConstraintType*>>;
 
   // Given a list of constraint types, form the combined constraint.
   auto CombineConstraints(
       SourceLocation source_loc,
       llvm::ArrayRef<Nonnull<const ConstraintType*>> constraints)
-      -> Nonnull<const ConstraintType*>;
+      -> ErrorOr<Nonnull<const ConstraintType*>>;
+
+  // Gets the type for the given associated constant.
+  auto GetTypeForAssociatedConstant(
+      Nonnull<const AssociatedConstant*> assoc) const -> Nonnull<const Value*>;
+
+  // Look up a member name in a constraint, which might be a single interface or
+  // a compound constraint.
+  auto LookupInConstraint(SourceLocation source_loc,
+                          std::string_view lookup_kind,
+                          Nonnull<const Value*> type,
+                          std::string_view member_name)
+      -> ErrorOr<ConstraintLookupResult>;
+
+  // Given `type.(interface.member)`, look for a rewrite in the declared type
+  // of `type`.
+  auto LookupRewriteInTypeOf(Nonnull<const Value*> type,
+                             Nonnull<const InterfaceType*> interface,
+                             Nonnull<const Declaration*> member) const
+      -> std::optional<const ValueLiteral*>;
+
+  // Given a witness value, look for a rewrite for the given associated
+  // constant.
+  auto LookupRewriteInWitness(Nonnull<const Witness*> witness,
+                              Nonnull<const InterfaceType*> interface,
+                              Nonnull<const Declaration*> member) const
+      -> std::optional<const ValueLiteral*>;
 
   /*
   ** Adds a member of a declaration to collected_members_

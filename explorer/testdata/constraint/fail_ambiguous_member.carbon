@@ -2,16 +2,16 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 interface A { fn F() -> i32; }
 interface B { fn F() -> i32; }
 
-// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/fail_ambiguous_member.carbon:[[@LINE+1]]: ambiguous member access, F found in interface A and interface B
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/fail_ambiguous_member.carbon:[[@LINE+1]]: ambiguous member access, F found in interface A and interface B
 fn Get[T:! A & B](n: T) -> i32 { return n.F(); }
 
 impl i32 as A {

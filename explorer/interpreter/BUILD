@@ -25,7 +25,6 @@ cc_library(
         "//common:check",
         "//common:ostream",
         "//explorer/ast",
-        "//explorer/ast:bindings",
         "//explorer/common:arena",
         "//explorer/common:error_builders",
         "//explorer/common:nonnull",

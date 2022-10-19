@@ -2,15 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: Class D
-// CHECK: d.value = 2
-// CHECK: d.GetValue() = 2
-// CHECK: result: 0
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: Class D
+// CHECK:STDOUT: d.value = 2
+// CHECK:STDOUT: d.GetValue() = 2
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 

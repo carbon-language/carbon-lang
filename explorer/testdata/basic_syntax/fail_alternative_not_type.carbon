@@ -2,13 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
-// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_alternative_not_type.carbon:[[@LINE+1]]: Expected a type, but got (42)
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_alternative_not_type.carbon:[[@LINE+1]]: Expected a type, but got (42)
 choice C { X(42) }
 
 fn Main() -> i32 {

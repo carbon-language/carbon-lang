@@ -2,14 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 fn CompareStr(s: String) -> i32 {
-  // CHECK:SYNTAX ERROR: {{.*}}/explorer/testdata/string/fail_raw_block_single_line.carbon:[[@LINE+1]]: Invalid block string: Too few lines
+  // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/string/fail_raw_block_single_line.carbon:[[@LINE+1]]: Invalid block string: Too few lines
   if (s == #"""raw string literal starting with """#) {
     return 0;
   }
