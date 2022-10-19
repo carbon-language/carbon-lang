@@ -1257,28 +1257,37 @@ class TypeChecker::ConstraintTypeBuilder {
     return Success();
   }
 
-  class ImplsInScopeTracker {
+  class ConstraintsInScopeTracker {
     friend class ConstraintTypeBuilder;
 
    private:
-    int num_added = 0;
+    int num_impls_added = 0;
+    int num_equals_added = 0;
   };
 
-  // Brings all the `impl`s accumulated so far into the given impl scope.
-  // If this will be called more than once, an ImplsInScopeTracker can be
-  // provided to avoid adding the same impls more than once.
-  void BringImplsIntoScope(
-      const TypeChecker& type_checker, Nonnull<ImplScope*> impl_scope,
-      std::optional<Nonnull<ImplsInScopeTracker*>> tracker = std::nullopt) {
+  // Brings all the constraints accumulated so far into the given impl scope,
+  // as if we built the constraint type and then added it into the scope. If
+  // this will be called more than once, an ImplsInScopeTracker can be provided
+  // to avoid adding the same impls more than once.
+  void BringConstraintsIntoScope(const TypeChecker& type_checker,
+                                 Nonnull<ImplScope*> impl_scope,
+                                 Nonnull<ConstraintsInScopeTracker*> tracker) {
+    // Figure out which constraints we're going to add.
+    int first_impl_to_add =
+        std::exchange(tracker->num_impls_added, impl_constraints_.size());
+    int first_equal_to_add = std::exchange(tracker->num_equals_added,
+                                           equality_constraints_.size());
     llvm::ArrayRef<ConstraintType::ImplConstraint> impl_constraints =
         impl_constraints_;
-    if (tracker) {
-      impl_constraints = impl_constraints.drop_front((*tracker)->num_added);
-      (*tracker)->num_added = impl_constraints_.size();
+
+    // Add all of the new constraints.
+    impl_scope->Add(impl_constraints.drop_front(first_impl_to_add), llvm::None,
+                    llvm::None, GetSelfWitness(), type_checker);
+    for (int i = first_equal_to_add;
+         i != static_cast<int>(equality_constraints_.size()); ++i) {
+      impl_scope->AddEqualityConstraint(
+          arena_->New<EqualityConstraint>(equality_constraints_[i]));
     }
-    impl_scope->Add(impl_constraints, llvm::None, llvm::None, GetSelfWitness(),
-                    type_checker);
-    // TODO: Bring equality constraints into scope too.
   }
 
   // Converts the builder into a ConstraintType. Note that this consumes the
@@ -3059,6 +3068,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
 
       auto& self = where.self_binding();
       ConstraintTypeBuilder builder(arena_, &self);
+      ConstraintTypeBuilder::ConstraintsInScopeTracker constraint_tracker;
 
       // Note, we don't want to call `TypeCheckPattern` here. Most of the setup
       // for the self binding is instead done by the `ConstraintTypeBuilder`.
@@ -3077,13 +3087,15 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           *this, where.source_loc(), base, builder.GetSelfType(),
           builder.GetSelfWitness(), Bindings(),
           /*add_lookup_contexts=*/true));
-      // Constraints from the LHS of `where` are in scope in the RHS. But
-      // constraints from earlier `where` clauses are not in scope in later
-      // clauses.
-      builder.BringImplsIntoScope(*this, &inner_impl_scope);
 
       // Type-check and apply the `where` clauses.
       for (Nonnull<WhereClause*> clause : where.clauses()) {
+        // Constraints from the LHS of `where` are in scope in the RHS, and
+        // constraints from earlier `where` clauses are in scope in later
+        // clauses.
+        builder.BringConstraintsIntoScope(*this, &inner_impl_scope,
+                                          &constraint_tracker);
+
         CARBON_RETURN_IF_ERROR(TypeCheckWhereClause(clause, inner_impl_scope));
 
         switch (clause->kind()) {
@@ -3428,7 +3440,7 @@ auto TypeChecker::TypeCheckPattern(
         CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
             *this, binding.source_loc(), constraint, val, witness, Bindings(),
             /*add_lookup_contexts=*/true));
-        type = std::move(builder).Build(arena_);
+        type = std::move(builder).Build();
 
         BringImplIntoScope(impl_binding, impl_scope);
       }
@@ -4245,7 +4257,7 @@ auto TypeChecker::DeclareInterfaceDeclaration(
 
   // Build a constraint corresponding to this interface.
   ConstraintTypeBuilder builder(arena_, iface_decl->self());
-  ConstraintTypeBuilder::ImplsInScopeTracker impl_tracker;
+  ConstraintTypeBuilder::ConstraintsInScopeTracker constraint_tracker;
   iface_decl->self()->set_static_type(iface_type);
 
   // The impl constraint says only that the direct members of the interface are
@@ -4333,10 +4345,10 @@ auto TypeChecker::DeclareInterfaceDeclaration(
     }
 
     // Add any new impl constraints to the scope.
-    builder.BringImplsIntoScope(*this, &iface_scope, &impl_tracker);
+    builder.BringConstraintsIntoScope(*this, &iface_scope, &constraint_tracker);
   }
 
-  iface_decl->set_constraint_type(std::move(builder).Build(arena_));
+  iface_decl->set_constraint_type(std::move(builder).Build());
 
   if (trace_stream_) {
     **trace_stream_ << "** finished declaring interface " << iface_decl->name()
@@ -4546,7 +4558,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
         *this, impl_decl->source_loc(), implemented_constraint, impl_type_value,
         builder.GetSelfWitness(), Bindings(),
         /*add_lookup_contexts=*/true));
-    constraint_type = std::move(builder).Build(arena_);
+    constraint_type = std::move(builder).Build();
     impl_decl->set_constraint_type(constraint_type);
   }
 
