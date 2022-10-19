@@ -462,6 +462,10 @@ class TypeChecker {
   GlobalMembersMap collected_members_;
 
   std::optional<Nonnull<llvm::raw_ostream*>> trace_stream_;
+
+  // `where` expressions that are currently being built. These may have
+  // rewrites that are not yet visible in any type.
+  std::vector<ConstraintTypeBuilder*> partial_where_expressions_;
 };
 
 }  // namespace Carbon

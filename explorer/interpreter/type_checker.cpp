@@ -1095,6 +1095,16 @@ class TypeChecker::ConstraintTypeBuilder {
         self_binding_(self_binding),
         impl_binding_(impl_binding) {}
 
+  // Returns the self binding for this builder.
+  auto self_binding() const -> Nonnull<const GenericBinding*> {
+    return self_binding_;
+  }
+
+  // Returns the current set of rewrite constraints for this builder.
+  auto rewrite_constraints() const -> llvm::ArrayRef<RewriteConstraint> {
+    return rewrite_constraints_;
+  }
+
   // Produces a type that refers to the `.Self` type of the constraint.
   auto GetSelfType() const -> Nonnull<const Value*> {
     return &self_binding_->value();
@@ -1901,6 +1911,25 @@ auto TypeChecker::LookupInConstraint(SourceLocation source_loc,
 }
 
 // Look for a rewrite to use when naming the given interface member in a type
+// that has the given list of rewrites.
+static auto LookupRewrite(llvm::ArrayRef<RewriteConstraint> rewrites,
+                          Nonnull<const InterfaceType*> interface,
+                          Nonnull<const Declaration*> member)
+    -> std::optional<const ConstraintType::RewriteConstraint*> {
+  for (auto& rewrite : rewrites) {
+    if (ValueEqual(interface, rewrite.interface, std::nullopt) &&
+        // TODO: Using name comparison here seems brittle.
+        GetName(*member) == GetName(*rewrite.constant)) {
+      // A ConstraintType can only have one rewrite per (interface, member)
+      // pair, so we don't need to check the rest.
+      return &rewrite;
+    }
+  }
+
+  return std::nullopt;
+}
+
+// Look for a rewrite to use when naming the given interface member in a type
 // declared with the given type-of-type.
 static auto LookupRewrite(Nonnull<const Value*> type_of_type,
                           Nonnull<const InterfaceType*> interface,
@@ -1918,17 +1947,7 @@ static auto LookupRewrite(Nonnull<const Value*> type_of_type,
     rewrites = constraint_type->rewrite_constraints();
   }
 
-  for (auto& rewrite : rewrites) {
-    if (ValueEqual(interface, rewrite.interface, std::nullopt) &&
-        // TODO: Using name comparison here seems brittle.
-        GetName(*member) == GetName(*rewrite.constant)) {
-      // A ConstraintType can only have one rewrite per (interface, member)
-      // pair, so we don't need to check the rest.
-      return &rewrite;
-    }
-  }
-
-  return std::nullopt;
+  return LookupRewrite(rewrites, interface, member);
 }
 
 auto TypeChecker::GetTypeForAssociatedConstant(
@@ -1951,6 +1970,15 @@ auto TypeChecker::LookupRewriteInTypeOf(Nonnull<const Value*> type,
       // binding. This happens when forming the type of a generic binding. Just
       // say there are no rewrites yet.
       return std::nullopt;
+    }
+    // If the type is the self type of an incomplete `where` expression, find
+    // its set of rewrites. These rewrites may not be complete -- earlier
+    // rewrites will have been applied to later ones, but not vice versa -- but
+    // those are the intended semantics in this case.
+    for (auto* where : partial_where_expressions_) {
+      if (&var_type->binding() == where->self_binding()) {
+        return LookupRewrite(where->rewrite_constraints(), interface, member);
+      }
     }
     return LookupRewrite(&var_type->binding().static_type(), interface, member);
   }
@@ -3069,6 +3097,20 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       auto& self = where.self_binding();
       ConstraintTypeBuilder builder(arena_, &self);
       ConstraintTypeBuilder::ConstraintsInScopeTracker constraint_tracker;
+
+      // Keep track of the builder so that we can look up its rewrites while
+      // processing later constraints.
+      struct TrackPartialWhereBuilderRAII {
+        TrackPartialWhereBuilderRAII(TypeChecker& type_checker,
+                                     ConstraintTypeBuilder& builder)
+            : type_checker_(type_checker) {
+          type_checker_.partial_where_expressions_.push_back(&builder);
+        }
+        ~TrackPartialWhereBuilderRAII() {
+          type_checker_.partial_where_expressions_.pop_back();
+        }
+        TypeChecker& type_checker_;
+      } partial_where_tracker(*this, builder);
 
       // Note, we don't want to call `TypeCheckPattern` here. Most of the setup
       // for the self binding is instead done by the `ConstraintTypeBuilder`.
