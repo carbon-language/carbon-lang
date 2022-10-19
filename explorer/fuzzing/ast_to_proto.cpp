@@ -495,7 +495,7 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
         // TODO: Working out whether we have a default clause after the fact
         // like this is fragile.
         bool is_default_clause = false;
-        if (auto* binding = dyn_cast<BindingPattern>(&clause.pattern())) {
+        if (const auto* binding = dyn_cast<BindingPattern>(&clause.pattern())) {
           if (binding->name() == AnonymousName &&
               isa<AutoPattern>(binding->type()) &&
               binding->source_loc() == binding->type().source_loc()) {

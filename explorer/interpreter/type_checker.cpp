@@ -331,7 +331,7 @@ auto TypeChecker::ExpectIsConcreteType(SourceLocation source_loc,
 static auto FindField(llvm::ArrayRef<NamedValue> fields,
                       const std::string& field_name)
     -> std::optional<NamedValue> {
-  auto it = std::find_if(
+  const auto* it = std::find_if(
       fields.begin(), fields.end(),
       [&](const NamedValue& field) { return field.name == field_name; });
   if (it == fields.end()) {
@@ -555,7 +555,7 @@ auto TypeChecker::GetBuiltinInterfaceType(SourceLocation source_loc,
   // Find the builtin interface declaration.
   CARBON_ASSIGN_OR_RETURN(Nonnull<const Declaration*> builtin_decl,
                           builtins_.Get(source_loc, interface.builtin));
-  auto* iface_decl = dyn_cast<InterfaceDeclaration>(builtin_decl);
+  const auto* iface_decl = dyn_cast<InterfaceDeclaration>(builtin_decl);
   if (!iface_decl || !iface_decl->constant_value()) {
     return bad_builtin();
   }
@@ -639,12 +639,12 @@ class TypeChecker::ArgumentDeduction {
     if (trace_stream_) {
       **trace_stream_ << "performing argument deduction for bindings: ";
       llvm::ListSeparator sep;
-      for (auto* binding : bindings_to_deduce) {
+      for (const auto* binding : bindings_to_deduce) {
         **trace_stream_ << sep << *binding;
       }
       **trace_stream_ << "\n";
     }
-    for (auto* binding : bindings_to_deduce) {
+    for (const auto* binding : bindings_to_deduce) {
       deduced_values_.insert({binding, {}});
     }
   }
@@ -658,7 +658,7 @@ class TypeChecker::ArgumentDeduction {
   // Finds a binding to deduce that has not been deduced, if any exist.
   auto FindUndeducedBinding() const
       -> std::optional<Nonnull<const GenericBinding*>> {
-    for (auto* binding : deduced_bindings_in_order_) {
+    for (const auto* binding : deduced_bindings_in_order_) {
       llvm::ArrayRef<Nonnull<const Value*>> values =
           deduced_values_.find(binding)->second;
       if (values.empty()) {
@@ -947,7 +947,7 @@ auto TypeChecker::ArgumentDeduction::Finish(TypeChecker& type_checker,
   // declaration order so that any bindings used in the type of a later binding
   // have known values before we check that binding.
   Bindings bindings;
-  for (auto* binding : deduced_bindings_in_order_) {
+  for (const auto* binding : deduced_bindings_in_order_) {
     llvm::ArrayRef<Nonnull<const Value*>> values =
         deduced_values_.find(binding)->second;
     if (values.empty()) {
@@ -960,8 +960,8 @@ auto TypeChecker::ArgumentDeduction::Finish(TypeChecker& type_checker,
         type_checker.Substitute(bindings, &binding->static_type());
     const Value* substituted_type =
         type_checker.Substitute(bindings, binding_type);
-    auto* first_value = values[0];
-    for (auto* value : values) {
+    const auto* first_value = values[0];
+    for (const auto* value : values) {
       // TODO: It's not clear that conversions are or should be possible here.
       // If they are permitted, we should allow user-defined conversions, and
       // actually perform the conversion.
@@ -1033,7 +1033,7 @@ auto TypeChecker::ArgumentDeduction::Finish(TypeChecker& type_checker,
   }
 
   // Check non-deduced potential mismatches now we can substitute into them.
-  for (auto& mismatch : non_deduced_mismatches_) {
+  for (const auto& mismatch : non_deduced_mismatches_) {
     const Value* subst_param_type =
         type_checker.Substitute(bindings, mismatch.param);
     CARBON_RETURN_IF_ERROR(
@@ -1193,7 +1193,7 @@ class TypeChecker::ConstraintTypeBuilder {
     // TODO: What happens if these rewrites appear in the impl constraints?
     // TODO: What happens if these rewrites appear in each other?
     for (const auto& rewrite_constraint : constraint->rewrite_constraints()) {
-      auto* interface = cast<InterfaceType>(type_checker.Substitute(
+      const auto* interface = cast<InterfaceType>(type_checker.Substitute(
           local_bindings, rewrite_constraint.interface));
       Nonnull<const Value*> value = type_checker.Substitute(
           local_bindings, &rewrite_constraint.replacement->value());
@@ -1266,7 +1266,8 @@ class TypeChecker::ConstraintTypeBuilder {
       bool performed_rewrite;
       do {
         performed_rewrite = false;
-        if (auto* assoc = dyn_cast<AssociatedConstant>(impl_constraint.type);
+        if (const auto* assoc =
+                dyn_cast<AssociatedConstant>(impl_constraint.type);
             assoc && ValueEqual(&assoc->base(), GetSelfType(), std::nullopt)) {
           for (const auto& rewrite : rewrite_constraints_) {
             if (&assoc->constant() == rewrite.constant &&
@@ -1461,7 +1462,7 @@ auto TypeChecker::Substitute(const Bindings& bindings,
     case Value::Kind::StructType: {
       std::vector<NamedValue> fields;
       for (const auto& [name, value] : cast<StructType>(*type).fields()) {
-        auto new_type = Substitute(bindings, value);
+        const auto* new_type = Substitute(bindings, value);
         fields.push_back({name, new_type});
       }
       return arena_->New<StructType>(std::move(fields));
@@ -1487,8 +1488,10 @@ auto TypeChecker::Substitute(const Bindings& bindings,
 
       // Apply substitution to parameter and return types and create the new
       // function type.
-      auto param = Substitute(subst_bindings.bindings(), &fn_type.parameters());
-      auto ret = Substitute(subst_bindings.bindings(), &fn_type.return_type());
+      const auto* param =
+          Substitute(subst_bindings.bindings(), &fn_type.parameters());
+      const auto* ret =
+          Substitute(subst_bindings.bindings(), &fn_type.return_type());
       return arena_->New<FunctionType>(
           param, std::move(generic_parameters), ret,
           std::move(deduced_bindings),
@@ -1521,9 +1524,9 @@ auto TypeChecker::Substitute(const Bindings& bindings,
         // function that takes a `T:! Constraint` parameter. In this case we
         // produce the new type-of-type of the replacement type.
         Nonnull<const Value*> type_of_type;
-        if (auto* var_type = dyn_cast<VariableType>(it->second)) {
+        if (const auto* var_type = dyn_cast<VariableType>(it->second)) {
           type_of_type = &var_type->binding().static_type();
-        } else if (auto* assoc_type =
+        } else if (const auto* assoc_type =
                        dyn_cast<AssociatedConstant>(it->second)) {
           type_of_type = GetTypeForAssociatedConstant(assoc_type);
         } else {
@@ -1579,7 +1582,7 @@ auto TypeChecker::Substitute(const Bindings& bindings,
       const auto& witness = cast<ConstraintWitness>(*type);
       std::vector<Nonnull<const Witness*>> witnesses;
       witnesses.reserve(witness.witnesses().size());
-      for (auto* witness : witness.witnesses()) {
+      for (const auto* witness : witness.witnesses()) {
         witnesses.push_back(cast<Witness>(Substitute(bindings, witness)));
       }
       return arena_->New<ConstraintWitness>(std::move(witnesses));
@@ -1895,7 +1898,7 @@ static auto LookupRewrite(Nonnull<const Value*> type_of_type,
 
 auto TypeChecker::GetTypeForAssociatedConstant(
     Nonnull<const AssociatedConstant*> assoc) const -> Nonnull<const Value*> {
-  auto* assoc_type = &assoc->constant().static_type();
+  const auto* assoc_type = &assoc->constant().static_type();
   Bindings bindings = assoc->interface().bindings();
   bindings.Add(assoc->interface().declaration().self(), &assoc->base(),
                &assoc->witness());
@@ -1907,7 +1910,7 @@ auto TypeChecker::LookupRewriteInTypeOf(
     Nonnull<const Declaration*> member) const
     -> std::optional<const ValueLiteral*> {
   // Given `(T:! C).Y`, look in `C` for rewrites.
-  if (auto* var_type = dyn_cast<VariableType>(type)) {
+  if (const auto* var_type = dyn_cast<VariableType>(type)) {
     if (!var_type->binding().has_static_type()) {
       // We looked for a rewrite before we finished type-checking the generic
       // binding. This happens when forming the type of a generic binding. Just
@@ -1920,7 +1923,7 @@ auto TypeChecker::LookupRewriteInTypeOf(
   // Given `(T.U).Y` for an associated type `U`, substitute into the type of
   // `U` to find rewrites.
   // TODO: This substitution can lead to infinite recursion.
-  if (auto* assoc_const = dyn_cast<AssociatedConstant>(type)) {
+  if (const auto* assoc_const = dyn_cast<AssociatedConstant>(type)) {
     return LookupRewrite(GetTypeForAssociatedConstant(assoc_const), interface,
                          member);
   }
@@ -1932,7 +1935,7 @@ auto TypeChecker::LookupRewriteInWitness(
     Nonnull<const Witness*> witness, Nonnull<const InterfaceType*> interface,
     Nonnull<const Declaration*> member) const
     -> std::optional<const ValueLiteral*> {
-  if (auto* impl_witness = dyn_cast<ImplWitness>(witness)) {
+  if (const auto* impl_witness = dyn_cast<ImplWitness>(witness)) {
     Nonnull<const Value*> constraint =
         Substitute(impl_witness->bindings(),
                    impl_witness->declaration().constraint_type());
@@ -2103,7 +2106,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 access.set_value_category(access.object().value_category());
                 break;
               case DeclarationKind::FunctionDeclaration: {
-                auto func_decl = cast<FunctionDeclaration>(member);
+                const auto* func_decl = cast<FunctionDeclaration>(member);
                 if (func_decl->is_method() && func_decl->me_pattern().kind() ==
                                                   PatternKind::AddrPattern) {
                   access.set_is_field_addr_me_method();
@@ -2143,7 +2146,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           // the return type of `y()` is an associated constant from `T`'s
           // constraint.
           Nonnull<const Value*> constraint;
-          if (auto* var_type = dyn_cast<VariableType>(&object_type)) {
+          if (const auto* var_type = dyn_cast<VariableType>(&object_type)) {
             constraint = &var_type->binding().static_type();
           } else {
             constraint = GetTypeForAssociatedConstant(
@@ -2446,7 +2449,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           bindings.Add(iface_type->declaration().self(), *base_type, witness);
           return Substitute(bindings, member_type);
         }
-        if (auto* class_type = dyn_cast<NominalClassType>(base_type.value())) {
+        if (const auto* class_type =
+                dyn_cast<NominalClassType>(base_type.value())) {
           return Substitute(class_type->bindings(), member_type);
         }
         return member_type;
@@ -2779,7 +2783,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               param_name.params().fields();
           for (size_t i = 0; i != params.size(); ++i) {
             // TODO: Should we disallow all other kinds of top-level params?
-            if (auto* binding = dyn_cast<GenericBinding>(params[i])) {
+            if (const auto* binding = dyn_cast<GenericBinding>(params[i])) {
               generic_parameters.push_back({i, binding});
             }
           }
@@ -2863,7 +2867,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             return ProgramError(e->source_loc())
                    << "__intrinsic_new takes 1 argument";
           }
-          auto arg_type = &args[0]->static_type();
+          const auto* arg_type = &args[0]->static_type();
           e->set_static_type(arena_->New<PointerType>(arg_type));
           e->set_value_category(ValueCategory::Let);
           return Success();
@@ -2873,7 +2877,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             return ProgramError(e->source_loc())
                    << "__intrinsic_new takes 1 argument";
           }
-          auto arg_type = &args[0]->static_type();
+          const auto* arg_type = &args[0]->static_type();
           CARBON_RETURN_IF_ERROR(
               ExpectPointerType(e->source_loc(), "*", arg_type));
           e->set_static_type(TupleValue::Empty());
@@ -3126,7 +3130,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             // Also find (or add) `.Self is I`, and add `.Self.T == V`.
             int index = builder.AddImplConstraint(
                 {.type = builder.GetSelfType(), .interface = result.interface});
-            auto* witness =
+            const auto* witness =
                 MakeConstraintWitnessAccess(builder.GetSelfWitness(), index);
             builder.AddEqualityConstraint(
                 {.values = {arena_->New<AssociatedConstant>(
@@ -3174,7 +3178,7 @@ void TypeChecker::CollectGenericBindingsInPattern(
     Nonnull<const Pattern*> p,
     std::vector<Nonnull<const GenericBinding*>>& generic_bindings) {
   VisitNestedPatterns(*p, [&](const Pattern& pattern) {
-    if (auto* binding = dyn_cast<GenericBinding>(&pattern)) {
+    if (const auto* binding = dyn_cast<GenericBinding>(&pattern)) {
       generic_bindings.push_back(binding);
     }
     return true;
@@ -3185,7 +3189,7 @@ void TypeChecker::CollectImplBindingsInPattern(
     Nonnull<const Pattern*> p,
     std::vector<Nonnull<const ImplBinding*>>& impl_bindings) {
   VisitNestedPatterns(*p, [&](const Pattern& pattern) {
-    if (auto* binding = dyn_cast<GenericBinding>(&pattern)) {
+    if (const auto* binding = dyn_cast<GenericBinding>(&pattern)) {
       if (binding->impl_binding().has_value()) {
         impl_bindings.push_back(binding->impl_binding().value());
       }
@@ -3484,7 +3488,7 @@ auto TypeChecker::TypeCheckPattern(
                                               expected_ptr, impl_scope,
                                               enclosing_value_category));
 
-      if (auto* inner_binding_type =
+      if (const auto* inner_binding_type =
               dyn_cast<PointerType>(&addr_pattern.binding().static_type())) {
         addr_pattern.set_static_type(&inner_binding_type->type());
       } else {
@@ -3831,7 +3835,7 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
   std::vector<FunctionType::GenericParameter> generic_parameters;
   for (size_t i = 0; i != f->param_pattern().fields().size(); ++i) {
     const Pattern* param_pattern = f->param_pattern().fields()[i];
-    if (auto* binding = dyn_cast<GenericBinding>(param_pattern)) {
+    if (const auto* binding = dyn_cast<GenericBinding>(param_pattern)) {
       generic_parameters.push_back({i, binding});
     } else {
       CollectGenericBindingsInPattern(param_pattern, deduced_bindings);
@@ -4133,7 +4137,7 @@ auto TypeChecker::TypeCheckMixDeclaration(
 
   CARBON_CHECK(enclosing_decl.has_value());
   Nonnull<const Declaration*> encl_decl = enclosing_decl.value();
-  auto& mixin_decl = mix_decl->mixin_value().declaration();
+  const auto& mixin_decl = mix_decl->mixin_value().declaration();
   CARBON_RETURN_IF_ERROR(TypeCheckMixinDeclaration(&mixin_decl, impl_scope));
   CollectedMembersMap& mix_members = FindCollectedMembers(&mixin_decl);
 
@@ -4204,7 +4208,7 @@ auto TypeChecker::DeclareInterfaceDeclaration(
   int index = builder.AddImplConstraint(
       {.type = builder.GetSelfType(), .interface = iface_type});
   builder.AddLookupContext({.context = iface_type});
-  auto* impl_witness =
+  const auto* impl_witness =
       MakeConstraintWitnessAccess(builder.GetSelfWitness(), index);
 
   ScopeInfo iface_scope_info = ScopeInfo::ForNonClassScope(&iface_scope);
@@ -4391,7 +4395,7 @@ auto TypeChecker::CheckAndAddImplBindings(
   // either those impls or impls available elsewhere.
   Nonnull<const ConstraintType*> constraint = impl_decl->constraint_type();
   for (auto lookup : constraint->lookup_contexts()) {
-    if (auto* iface_type = dyn_cast<InterfaceType>(lookup.context)) {
+    if (const auto* iface_type = dyn_cast<InterfaceType>(lookup.context)) {
       CARBON_RETURN_IF_ERROR(ExpectCompleteType(
           impl_decl->source_loc(), "impl declaration", iface_type));
       CARBON_RETURN_IF_ERROR(
@@ -4511,13 +4515,13 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
     // For each interface we're going to implement, this impl is the witness
     // that that interface is implemented.
     for (auto lookup : constraint_type->lookup_contexts()) {
-      if (auto* iface_type = dyn_cast<InterfaceType>(lookup.context)) {
+      if (const auto* iface_type = dyn_cast<InterfaceType>(lookup.context)) {
         self_impl_scope.Add(iface_type, impl_type_value, self_witness, *this);
       }
     }
     // This impl also provides all of its equalities.
     // TODO: Only the ones from rewrite constraints.
-    for (auto& eq : constraint_type->equality_constraints()) {
+    for (const auto& eq : constraint_type->equality_constraints()) {
       self_impl_scope.AddEqualityConstraint(&eq);
     }
     // Ensure that's enough for our interface to be satisfied.
@@ -4557,7 +4561,7 @@ void TypeChecker::BringAssociatedConstantsIntoScope(
 
   for (const auto& eq : constraint->equality_constraints()) {
     for (Nonnull<const Value*> value : eq.values) {
-      if (auto* assoc = dyn_cast<AssociatedConstant>(value)) {
+      if (const auto* assoc = dyn_cast<AssociatedConstant>(value)) {
         if (assocs_in_interface.count(&assoc->constant()) &&
             ValueEqual(&assoc->base(), self, std::nullopt) &&
             ValueEqual(&assoc->interface(), interface, std::nullopt)) {
@@ -4639,7 +4643,7 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
     return Success();
   }
 
-  auto ct = arena_->New<ChoiceType>(
+  auto* ct = arena_->New<ChoiceType>(
       choice, Bindings::SymbolicIdentity(arena_, bindings));
 
   choice->set_static_type(arena_->New<TypeType>());
@@ -4869,7 +4873,7 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
           Nonnull<const Value*> mixin,
           InterpExp(&mix_decl.mixin(), arena_, trace_stream_));
       mix_decl.set_mixin_value(cast<MixinPseudoType>(mixin));
-      auto& mixin_decl = mix_decl.mixin_value().declaration();
+      const auto& mixin_decl = mix_decl.mixin_value().declaration();
       if (!mixin_decl.is_declared()) {
         return ProgramError(mix_decl.source_loc())
                << "incomplete mixin `" << mixin_decl.name()
@@ -4959,7 +4963,8 @@ auto TypeChecker::FindMixedMemberAndType(
           // TODO: What is the type of Self? Do we ever need a witness?
           temp_map.Add(mixin->declaration().self(), enclosing_type,
                        std::nullopt);
-          const auto mix_member_type = Substitute(temp_map, res.value().first);
+          const auto* const mix_member_type =
+              Substitute(temp_map, res.value().first);
           return {std::make_pair(mix_member_type, res.value().second)};
         } else {
           return res;

@@ -13,10 +13,10 @@ using llvm::isa;
 namespace Carbon {
 
 auto AbstractPattern::kind() const -> Kind {
-  if (auto* pattern = value_.dyn_cast<const Pattern*>()) {
+  if (const auto* pattern = value_.dyn_cast<const Pattern*>()) {
     return Compound;
   }
-  if (auto* value = value_.dyn_cast<const Value*>()) {
+  if (const auto* value = value_.dyn_cast<const Value*>()) {
     if (isa<TupleValue, AlternativeValue, BoolValue>(value)) {
       return Compound;
     }
@@ -28,14 +28,14 @@ auto AbstractPattern::kind() const -> Kind {
 
 auto AbstractPattern::discriminator() const -> std::string_view {
   CARBON_CHECK(kind() == Compound);
-  if (auto* pattern = value_.dyn_cast<const Pattern*>()) {
-    if (auto* alt_pattern = dyn_cast<AlternativePattern>(pattern)) {
+  if (const auto* pattern = value_.dyn_cast<const Pattern*>()) {
+    if (const auto* alt_pattern = dyn_cast<AlternativePattern>(pattern)) {
       return alt_pattern->alternative_name();
     }
-  } else if (auto* value = value_.dyn_cast<const Value*>()) {
-    if (auto* alt = dyn_cast<AlternativeValue>(value)) {
+  } else if (const auto* value = value_.dyn_cast<const Value*>()) {
+    if (const auto* alt = dyn_cast<AlternativeValue>(value)) {
       return alt->alt_name();
-    } else if (auto* bool_val = dyn_cast<BoolValue>(value)) {
+    } else if (const auto* bool_val = dyn_cast<BoolValue>(value)) {
       return bool_val->value() ? "true" : "false";
     }
   }
@@ -43,16 +43,16 @@ auto AbstractPattern::discriminator() const -> std::string_view {
 }
 
 auto AbstractPattern::elements_size() const -> int {
-  if (auto* pattern = value_.dyn_cast<const Pattern*>()) {
-    if (auto* tuple_pattern = dyn_cast<TuplePattern>(pattern)) {
+  if (const auto* pattern = value_.dyn_cast<const Pattern*>()) {
+    if (const auto* tuple_pattern = dyn_cast<TuplePattern>(pattern)) {
       return tuple_pattern->fields().size();
     } else if (isa<AlternativePattern>(pattern)) {
       return 1;
     }
-  } else if (auto* value = value_.dyn_cast<const Value*>()) {
-    if (auto* tuple = dyn_cast<TupleValue>(value)) {
+  } else if (const auto* value = value_.dyn_cast<const Value*>()) {
+    if (const auto* tuple = dyn_cast<TupleValue>(value)) {
       return tuple->elements().size();
-    } else if (auto* alt = dyn_cast<AlternativeValue>(value)) {
+    } else if (const auto* alt = dyn_cast<AlternativeValue>(value)) {
       return 1;
     }
   }
@@ -61,22 +61,23 @@ auto AbstractPattern::elements_size() const -> int {
 
 void AbstractPattern::AppendElementsTo(
     std::vector<AbstractPattern>& out) const {
-  if (auto* pattern = value_.dyn_cast<const Pattern*>()) {
-    if (auto* tuple_pattern = dyn_cast<TuplePattern>(pattern)) {
+  if (const auto* pattern = value_.dyn_cast<const Pattern*>()) {
+    if (const auto* tuple_pattern = dyn_cast<TuplePattern>(pattern)) {
       auto fields = tuple_pattern->fields();
       out.insert(out.end(), fields.begin(), fields.end());
-    } else if (auto* alt_pattern = dyn_cast<AlternativePattern>(pattern)) {
+    } else if (const auto* alt_pattern =
+                   dyn_cast<AlternativePattern>(pattern)) {
       out.push_back(&alt_pattern->arguments());
     }
-  } else if (auto* value = value_.dyn_cast<const Value*>()) {
-    if (auto* tuple = dyn_cast<TupleValue>(value)) {
-      auto* tuple_type = cast<TupleValue>(type_);
+  } else if (const auto* value = value_.dyn_cast<const Value*>()) {
+    if (const auto* tuple = dyn_cast<TupleValue>(value)) {
+      const auto* tuple_type = cast<TupleValue>(type_);
       CARBON_CHECK(tuple->elements().size() == tuple_type->elements().size());
       for (size_t i = 0; i != tuple->elements().size(); ++i) {
         out.push_back(
             AbstractPattern(tuple->elements()[i], tuple_type->elements()[i]));
       }
-    } else if (auto* alt = dyn_cast<AlternativeValue>(value)) {
+    } else if (const auto* alt = dyn_cast<AlternativeValue>(value)) {
       out.push_back(AbstractPattern(
           &alt->argument(),
           *cast<ChoiceType>(type_)->FindAlternative(alt->alt_name())));
@@ -172,21 +173,21 @@ auto PatternMatrix::FirstColumnDiscriminators() const -> DiscriminatorSet {
   std::optional<int> num_discrims;
   std::optional<int> elem_size;
 
-  for (auto& row : matrix_) {
+  for (const auto& row : matrix_) {
     CARBON_CHECK(!row.empty());
     switch (row[0].kind()) {
       case AbstractPattern::Wildcard:
         continue;
       case AbstractPattern::Compound: {
         const Value& type = row[0].type();
-        if (auto* tuple = dyn_cast<TupleValue>(&type)) {
+        if (const auto* tuple = dyn_cast<TupleValue>(&type)) {
           // If we find a tuple match, we've found all constructors (there's
           // only one!) and none were missing.
           return {
               .found = {{.discriminator = {},
                          .size = static_cast<int>(tuple->elements().size())}},
               .any_missing = false};
-        } else if (auto* choice = dyn_cast<ChoiceType>(&type)) {
+        } else if (const auto* choice = dyn_cast<ChoiceType>(&type)) {
           num_discrims = choice->declaration().alternatives().size();
           elem_size = 1;
         } else if (isa<BoolType>(type)) {
@@ -252,7 +253,7 @@ auto PatternMatrix::SpecializeRow(llvm::ArrayRef<AbstractPattern> row,
 auto PatternMatrix::Specialize(DiscriminatorInfo discriminator) const
     -> PatternMatrix {
   PatternMatrix specialized;
-  for (auto& row : matrix_) {
+  for (const auto& row : matrix_) {
     // TODO: If we add support for "or" patterns, specialization might
     // produce multiple rows here.
     if (auto new_row = SpecializeRow(row, discriminator)) {
@@ -266,7 +267,7 @@ auto PatternMatrix::Specialize(DiscriminatorInfo discriminator) const
 // to be `value`, and is not matched.
 auto PatternMatrix::Specialize(const Value& value) const -> PatternMatrix {
   PatternMatrix specialized;
-  for (auto& row : matrix_) {
+  for (const auto& row : matrix_) {
     CARBON_CHECK(!row.empty());
     switch (row[0].kind()) {
       case AbstractPattern::Wildcard:
@@ -289,7 +290,7 @@ auto PatternMatrix::Specialize(const Value& value) const -> PatternMatrix {
 // discriminator matching none of the non-wildcard patterns.
 auto PatternMatrix::Default() const -> PatternMatrix {
   PatternMatrix default_matrix;
-  for (auto& row : matrix_) {
+  for (const auto& row : matrix_) {
     CARBON_CHECK(!row.empty());
     switch (row[0].kind()) {
       case AbstractPattern::Wildcard:

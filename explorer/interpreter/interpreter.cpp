@@ -192,7 +192,7 @@ void Interpreter::PrintState(llvm::raw_ostream& out) {
   out << "\nmemory: " << heap_;
   out << "\n}\n";
 }
-auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
+auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> /*static_type*/,
                            const std::vector<Nonnull<const Value*>>& args,
                            SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
@@ -306,7 +306,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
         }
         case Value::Kind::UninitializedValue: {
           const auto& p_tup = cast<TupleValue>(*p);
-          for (auto& ele : p_tup.elements()) {
+          for (const auto& ele : p_tup.elements()) {
             if (!PatternMatch(ele, arena->New<UninitializedValue>(ele),
                               source_loc, bindings, generic_args, trace_stream,
                               arena)) {
@@ -547,7 +547,7 @@ auto Interpreter::EvalAssociatedConstant(
       arena_->New<AssociatedConstant>(base, cast<InterfaceType>(interface),
                                       &assoc->constant(), witness);
 
-  auto* impl_witness = dyn_cast<ImplWitness>(witness);
+  const auto* impl_witness = dyn_cast<ImplWitness>(witness);
   if (!impl_witness) {
     CARBON_CHECK(phase() == Phase::CompileTime)
         << "symbolic witnesses should only be formed at compile time";
@@ -740,7 +740,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::StructType: {
       // The value `{}` has kind `StructType` not `StructValue`. This value can
       // be converted to an empty class type.
-      if (auto* destination_class_type =
+      if (const auto* destination_class_type =
               dyn_cast<NominalClassType>(destination_type)) {
         CARBON_CHECK(cast<StructType>(*value).fields().empty())
             << "only an empty struct type value converts to class type";
@@ -1195,7 +1195,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         } else if ((op.op() == Operator::And || op.op() == Operator::Or) &&
                    act.pos() == 1) {
           // Short-circuit evaluation for 'and' & 'or'
-          auto operand_value = cast<BoolValue>(act.results()[act.pos() - 1]);
+          const auto* operand_value =
+              cast<BoolValue>(act.results()[act.pos() - 1]);
           if ((op.op() == Operator::Or && operand_value->value()) ||
               (op.op() == Operator::And && !operand_value->value())) {
             return todo_.FinishAction(operand_value);
@@ -1323,14 +1324,14 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           CARBON_CHECK(args.size() == 2);
           auto lhs = cast<IntValue>(*args[0]).value();
           auto rhs = cast<IntValue>(*args[1]).value();
-          auto result = arena_->New<BoolValue>(lhs == rhs);
+          auto* result = arena_->New<BoolValue>(lhs == rhs);
           return todo_.FinishAction(result);
         }
         case IntrinsicExpression::Intrinsic::StrEq: {
           CARBON_CHECK(args.size() == 2);
-          auto& lhs = cast<StringValue>(*args[0]).value();
-          auto& rhs = cast<StringValue>(*args[1]).value();
-          auto result = arena_->New<BoolValue>(lhs == rhs);
+          const auto& lhs = cast<StringValue>(*args[0]).value();
+          const auto& rhs = cast<StringValue>(*args[1]).value();
+          auto* result = arena_->New<BoolValue>(lhs == rhs);
           return todo_.FinishAction(result);
         }
         case IntrinsicExpression::Intrinsic::IntCompare: {
@@ -1338,29 +1339,29 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           auto lhs = cast<IntValue>(*args[0]).value();
           auto rhs = cast<IntValue>(*args[1]).value();
           if (lhs < rhs) {
-            auto result = arena_->New<IntValue>(-1);
+            auto* result = arena_->New<IntValue>(-1);
             return todo_.FinishAction(result);
           }
           if (lhs == rhs) {
-            auto result = arena_->New<IntValue>(0);
+            auto* result = arena_->New<IntValue>(0);
             return todo_.FinishAction(result);
           }
-          auto result = arena_->New<IntValue>(1);
+          auto* result = arena_->New<IntValue>(1);
           return todo_.FinishAction(result);
         }
         case IntrinsicExpression::Intrinsic::StrCompare: {
           CARBON_CHECK(args.size() == 2);
-          auto& lhs = cast<StringValue>(*args[0]).value();
-          auto& rhs = cast<StringValue>(*args[1]).value();
+          const auto& lhs = cast<StringValue>(*args[0]).value();
+          const auto& rhs = cast<StringValue>(*args[1]).value();
           if (lhs < rhs) {
-            auto result = arena_->New<IntValue>(-1);
+            auto* result = arena_->New<IntValue>(-1);
             return todo_.FinishAction(result);
           }
           if (lhs == rhs) {
-            auto result = arena_->New<IntValue>(0);
+            auto* result = arena_->New<IntValue>(0);
             return todo_.FinishAction(result);
           }
-          auto result = arena_->New<IntValue>(1);
+          auto* result = arena_->New<IntValue>(1);
           return todo_.FinishAction(result);
         }
         case IntrinsicExpression::Intrinsic::IntBitComplement: {
@@ -1516,7 +1517,7 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
       }
       std::vector<Nonnull<const Witness*>> new_witnesses;
       new_witnesses.reserve(witnesses.size());
-      for (auto* witness : act.results()) {
+      for (const auto* witness : act.results()) {
         new_witnesses.push_back(cast<Witness>(witness));
       }
       return todo_.FinishAction(
@@ -1524,7 +1525,7 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
     }
 
     case Value::Kind::ConstraintImplWitness: {
-      auto* constraint_impl = cast<ConstraintImplWitness>(witness);
+      const auto* constraint_impl = cast<ConstraintImplWitness>(witness);
       if (act.pos() == 0) {
         return todo_.Spawn(std::make_unique<WitnessAction>(
             constraint_impl->constraint_witness()));
@@ -1534,7 +1535,7 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
     }
 
     case Value::Kind::ImplWitness: {
-      auto* impl_witness = cast<ImplWitness>(witness);
+      const auto* impl_witness = cast<ImplWitness>(witness);
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Bindings*> new_bindings,
           InstantiateBindings(&impl_witness->bindings(),
@@ -1724,7 +1725,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
               Nonnull<const Value*> assigned_array_element,
               todo_.ValueOfNode(*(loop_var->value_node()), stmt.source_loc()));
 
-          auto lvalue = cast<LValue>(assigned_array_element);
+          const auto* lvalue = cast<LValue>(assigned_array_element);
           CARBON_RETURN_IF_ERROR(heap_.Write(
               lvalue->address(), source_array->elements()[current_index],
               stmt.source_loc()));
@@ -1926,7 +1927,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       const auto& continuation = cast<Continuation>(stmt);
       // Create a continuation object by creating a frame similar the
       // way one is created in a function call.
-      auto fragment = arena_->New<ContinuationValue::StackFragment>();
+      auto* fragment = arena_->New<ContinuationValue::StackFragment>();
       stack_fragments_.push_back(fragment);
       todo_.InitializeFragment(*fragment, &continuation.body());
       // Bind the continuation object to the continuation variable
@@ -1935,7 +1936,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       return todo_.FinishAction();
     }
     case StatementKind::Run: {
-      auto& run = cast<Run>(stmt);
+      const auto& run = cast<Run>(stmt);
       if (act.pos() == 0) {
         // Evaluate the argument of the run statement.
         return todo_.Spawn(std::make_unique<ExpressionAction>(&run.argument()));
@@ -2005,7 +2006,8 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   auto& cleanup = cast<CleanupAction>(act);
   if (act.pos() < cleanup.locals_count()) {
-    auto lvalue = act.scope()->locals()[cleanup.locals_count() - act.pos() - 1];
+    const auto* lvalue =
+        act.scope()->locals()[cleanup.locals_count() - act.pos() - 1];
     SourceLocation source_loc("destructor", 1);
     auto value = heap_.Read(lvalue->address(), source_loc);
     if (value.ok()) {
@@ -2026,7 +2028,7 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
             if (const auto* var = dyn_cast<VariableDeclaration>(member)) {
               const auto& type = var->static_type();
               if (const auto* c_type = dyn_cast<NominalClassType>(&type)) {
-                auto& c_dec = c_type->declaration();
+                const auto& c_dec = c_type->declaration();
                 if (c_dec.destructor().has_value()) {
                   Address object = lvalue->address();
                   Address mem = object.SubobjectAddress(Member(var));

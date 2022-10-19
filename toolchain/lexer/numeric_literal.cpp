@@ -360,7 +360,7 @@ auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
   // groups of 3 or 4 digits (4 or 5 characters), respectively.
   int stride = (radix == Radix::Decimal ? 4 : 5);
   int remaining_digit_separators = num_digit_separators;
-  auto pos = text.end();
+  const auto* pos = text.end();
   while (pos - text.begin() >= stride) {
     pos -= stride;
     if (*pos != '_') {
