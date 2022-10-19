@@ -20,7 +20,7 @@ class Function {
   static constexpr NodeKind Kind = NodeKind::Function;
 
   Function(ParseTree::Node node, NodeId id, llvm::SmallVector<NodeRef> body)
-      : node_(node), id_(id), body_(body) {}
+      : node_(node), id_(id), body_(std::move(body)) {}
 
   void Print(
       llvm::raw_ostream& out, int indent,

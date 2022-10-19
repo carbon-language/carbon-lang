@@ -31,7 +31,7 @@ TEST(ProtoToCarbonTest, Roundtrip) {
   int parsed_ok_count = 0;
   for (const llvm::StringRef f : *carbon_files) {
     Carbon::Arena arena;
-    const ErrorOr<AST> ast = Carbon::Parse(&arena, f, /*trace=*/false);
+    const ErrorOr<AST> ast = Carbon::Parse(&arena, f, /*parser_debug=*/false);
     if (ast.ok()) {
       ++parsed_ok_count;
       const std::string source_from_proto = ProtoToCarbon(AstToProto(*ast));
@@ -39,7 +39,7 @@ TEST(ProtoToCarbonTest, Roundtrip) {
                    << "Carbon file: " << f << ", source from proto:\n"
                    << source_from_proto);
       const ErrorOr<AST> ast_from_proto = Carbon::ParseFromString(
-          &arena, f, source_from_proto, /*trace=*/false);
+          &arena, f, source_from_proto, /*parser_debug=*/false);
 
       if (ast_from_proto.ok()) {
         EXPECT_EQ(AstToString(*ast), AstToString(*ast_from_proto));

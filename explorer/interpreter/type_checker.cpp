@@ -1101,7 +1101,7 @@ class TypeChecker::ConstraintTypeBuilder {
         return i;
       }
     }
-    impl_constraints_.push_back(std::move(impl));
+    impl_constraints_.push_back(impl);
     return impl_constraints_.size() - 1;
   }
 
@@ -1142,7 +1142,7 @@ class TypeChecker::ConstraintTypeBuilder {
                << "  " << rewrite.replacement->value();
       }
     }
-    rewrite_constraints_.push_back(std::move(rewrite));
+    rewrite_constraints_.push_back(rewrite);
     return Success();
   }
 
@@ -1153,7 +1153,7 @@ class TypeChecker::ConstraintTypeBuilder {
         return;
       }
     }
-    lookup_contexts_.push_back(std::move(context));
+    lookup_contexts_.push_back(context);
   }
 
   // Adds all the constraints from another constraint type. The given value
