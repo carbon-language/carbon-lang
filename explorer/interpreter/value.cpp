@@ -99,7 +99,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         // Look for a method in the object's class
         const auto& class_type = cast<NominalClassType>(object.type());
         std::optional<Nonnull<const FunctionValue*>> func =
-            LookupFunction(f, class_type.declaration());
+            FindFunctionWithParents(f, class_type.declaration());
         if (!func) {
           return ProgramError(source_loc) << "member " << f << " not in " << *v
                                           << " or its " << class_type;
@@ -128,7 +128,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       // Access a class function.
       const NominalClassType& class_type = cast<NominalClassType>(*v);
       std::optional<Nonnull<const FunctionValue*>> fun =
-          LookupFunction(f, class_type.declaration());
+          FindFunctionWithParents(f, class_type.declaration());
       if (fun == std::nullopt) {
         return ProgramError(source_loc)
                << "class function " << f << " not in " << *v;
@@ -1071,7 +1071,8 @@ auto MixinPseudoType::FindFunction(const std::string_view& name) const
   return std::nullopt;
 }
 
-auto LookupFunction(std::string_view name, const ClassDeclaration& class_decl)
+auto FindFunctionWithParents(std::string_view name,
+                             const ClassDeclaration& class_decl)
     -> std::optional<Nonnull<const FunctionValue*>> {
   if (auto fun = FindFunction(name, class_decl.members()); fun.has_value()) {
     return fun;
@@ -1080,7 +1081,8 @@ auto LookupFunction(std::string_view name, const ClassDeclaration& class_decl)
     const auto* t_parent_class =
         dyn_cast<TypeOfClassType>(&class_decl.base().value()->static_type());
     if (t_parent_class) {
-      return LookupFunction(name, t_parent_class->class_type().declaration());
+      return FindFunctionWithParents(
+          name, t_parent_class->class_type().declaration());
     }
   }
   return std::nullopt;

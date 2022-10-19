@@ -53,8 +53,9 @@ class TypeChecker {
 
   // Return the declaration of the member with the given name, from the class
   // and its parents
-  auto LookupMember(std::string_view name, const ClassDeclaration& class_decl,
-                    Nonnull<const Value*> enclosing_type)
+  auto FindMemberWithParents(std::string_view name,
+                             const ClassDeclaration& class_decl,
+                             Nonnull<const Value*> enclosing_type)
       -> ErrorOr<std::optional<
           std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>>;
 

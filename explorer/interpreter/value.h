@@ -703,7 +703,8 @@ auto FindFunction(std::string_view name,
 
 // Returns the value of the function named `name` in this class and its
 // parents, or nullopt if there is no such function.
-auto LookupFunction(std::string_view name, const ClassDeclaration& class_decl)
+auto FindFunctionWithParents(std::string_view name,
+                             const ClassDeclaration& class_decl)
     -> std::optional<Nonnull<const FunctionValue*>>;
 
 // Return the declaration of the member with the given name.

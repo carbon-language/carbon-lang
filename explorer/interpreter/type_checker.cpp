@@ -2204,8 +2204,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         case Value::Kind::NominalClassType: {
           const auto& t_class = cast<NominalClassType>(object_type);
           CARBON_ASSIGN_OR_RETURN(
-              const auto res, LookupMember(access.member_name(),
-                                           t_class.declaration(), &t_class));
+              const auto res,
+              FindMemberWithParents(access.member_name(), t_class.declaration(),
+                                    &t_class));
           if (res.has_value()) {
             auto [member_type, member] = res.value();
             Nonnull<const Value*> field_type =
@@ -5152,9 +5153,9 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
   return Success();
 }
 
-auto TypeChecker::LookupMember(std::string_view name,
-                               const ClassDeclaration& class_decl,
-                               Nonnull<const Value*> enclosing_type)
+auto TypeChecker::FindMemberWithParents(std::string_view name,
+                                        const ClassDeclaration& class_decl,
+                                        Nonnull<const Value*> enclosing_type)
     -> ErrorOr<std::optional<
         std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>> {
   CARBON_ASSIGN_OR_RETURN(
@@ -5167,8 +5168,8 @@ auto TypeChecker::LookupMember(std::string_view name,
     const auto* t_parent_class =
         dyn_cast<TypeOfClassType>(&base.value()->static_type());
     if (t_parent_class) {
-      return LookupMember(name, t_parent_class->class_type().declaration(),
-                          t_parent_class);
+      return FindMemberWithParents(
+          name, t_parent_class->class_type().declaration(), t_parent_class);
     }
   }
   return {std::nullopt};
