@@ -24,6 +24,7 @@
 #include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Error.h"
+#include "llvm/Support/SaveAndRestore.h"
 
 using llvm::cast;
 using llvm::dyn_cast;
@@ -1491,6 +1492,7 @@ auto TypeChecker::Substitute(const Bindings& bindings,
       }
       const auto* witness =
           cast<Witness>(Substitute(bindings, &assoc.witness()));
+      witness = RefineWitness(witness, base, interface);
       if (auto rewritten_value =
               LookupRewriteInWitness(witness, interface, &assoc.constant())) {
         return (*rewritten_value)->converted_replacement;
@@ -1677,6 +1679,42 @@ auto TypeChecker::Substitute(const Bindings& bindings,
       // interface.
       // TODO: Implement substitution for these cases.
       return type;
+  }
+}
+
+auto TypeChecker::RefineWitness(Nonnull<const Witness*> witness,
+                                Nonnull<const Value*> type,
+                                Nonnull<const Value*> constraint) const
+    -> Nonnull<const Witness*> {
+  if (!top_level_impl_scope_) {
+    return witness;
+  }
+
+  // See if this is already resolved as some number of layers of
+  // ConstraintImplWitness applied to an ImplWitness.
+  Nonnull<const Witness*> inner_witness = witness;
+  while (auto* inner_constraint_impl_witness =
+             dyn_cast<ConstraintImplWitness>(inner_witness)) {
+    inner_witness = inner_constraint_impl_witness->constraint_witness();
+  }
+  if (isa<ImplWitness>(inner_witness)) {
+    return witness;
+  }
+
+  // No source location; diagnostics will be discarded.
+  SourceLocation source_loc("", 0);
+
+  // Attempt to look for an impl witness in the top-level impl scope.
+  if (auto refined_witness = (*top_level_impl_scope_)
+                                 ->Resolve(constraint, type, source_loc, *this);
+      refined_witness.ok()) {
+    return *refined_witness;
+  } else {
+    if (trace_stream_) {
+      **trace_stream_ << "could not refine " << *witness << ": "
+                      << refined_witness.error().message() << "\n";
+    }
+    return witness;
   }
 }
 
@@ -4837,6 +4875,11 @@ auto TypeChecker::DeclareAliasDeclaration(Nonnull<AliasDeclaration*> alias,
 auto TypeChecker::TypeCheck(AST& ast) -> ErrorOr<Success> {
   ImplScope impl_scope;
   ScopeInfo top_level_scope_info = ScopeInfo::ForNonClassScope(&impl_scope);
+
+  // Track that `impl_scope` is the top-level `ImplScope`.
+  llvm::SaveAndRestore<decltype(top_level_impl_scope_)>
+      set_top_level_impl_scope(top_level_impl_scope_, &impl_scope);
+
   for (Nonnull<Declaration*> declaration : ast.declarations) {
     CARBON_RETURN_IF_ERROR(
         DeclareDeclaration(declaration, top_level_scope_info));

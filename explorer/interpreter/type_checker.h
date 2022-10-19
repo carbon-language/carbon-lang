@@ -45,6 +45,14 @@ class TypeChecker {
   auto Substitute(const Bindings& dict, Nonnull<const Value*> type) const
       -> Nonnull<const Value*>;
 
+  // Attempts to refine a witness that might be symbolic into an impl witness,
+  // using `impl` declarations that have been declared and type-checked so far.
+  // If a more precise witness cannot be found, returns `witness`.
+  auto RefineWitness(Nonnull<const Witness*> witness,
+                     Nonnull<const Value*> type,
+                     Nonnull<const Value*> constraint) const
+      -> Nonnull<const Witness*>;
+
   // If `impl` can be an implementation of interface `iface` for the given
   // `type`, then return the witness for this `impl`. Otherwise return
   // std::nullopt.
@@ -462,6 +470,11 @@ class TypeChecker {
   GlobalMembersMap collected_members_;
 
   std::optional<Nonnull<llvm::raw_ostream*>> trace_stream_;
+
+  // The top-level ImplScope, containing `impl` declarations that should be
+  // usable from any context. This is used when we want to try to refine a
+  // symbolic witness into an impl witness during substitution.
+  std::optional<const ImplScope*> top_level_impl_scope_;
 
   // `where` expressions that are currently being built. These may have
   // rewrites that are not yet visible in any type.
