@@ -914,6 +914,17 @@ class WhereExpression : public RewritableMixin<Expression> {
   auto self_binding() const -> const GenericBinding& { return *self_binding_; }
   auto self_binding() -> GenericBinding& { return *self_binding_; }
 
+  auto enclosing_dot_self() const
+      -> std::optional<Nonnull<const GenericBinding*>> {
+    return enclosing_dot_self_;
+  }
+  // Sets the enclosing value of `.Self`. Can only be called once, by name
+  // resolution.
+  void set_enclosing_dot_self(Nonnull<const GenericBinding*> dot_self) {
+    CARBON_CHECK(!enclosing_dot_self_ || enclosing_dot_self_ == dot_self);
+    enclosing_dot_self_ = dot_self;
+  }
+
   auto clauses() const -> llvm::ArrayRef<Nonnull<const WhereClause*>> {
     return clauses_;
   }
@@ -922,6 +933,7 @@ class WhereExpression : public RewritableMixin<Expression> {
  private:
   Nonnull<GenericBinding*> self_binding_;
   std::vector<Nonnull<WhereClause*>> clauses_;
+  std::optional<Nonnull<const GenericBinding*>> enclosing_dot_self_;
 };
 
 // An expression whose semantics have not been implemented. This can be used

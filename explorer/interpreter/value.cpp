@@ -430,6 +430,9 @@ void Value::Print(llvm::raw_ostream& out) const {
       for (const LookupContext& ctx : constraint.lookup_contexts()) {
         out << combine << *ctx.context;
       }
+      if (constraint.lookup_contexts().empty()) {
+        out << "Type";
+      }
       out << " where ";
       llvm::ListSeparator sep(" and ");
       for (const RewriteConstraint& rewrite :
@@ -447,7 +450,6 @@ void Value::Print(llvm::raw_ostream& out) const {
       }
       for (const EqualityConstraint& equality :
            constraint.equality_constraints()) {
-        // TODO: Skip cases matching something in `rewrite_constraints()`.
         out << sep;
         llvm::ListSeparator equal(" == ");
         for (Nonnull<const Value*> value : equality.values) {

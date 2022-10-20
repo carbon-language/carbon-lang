@@ -544,6 +544,11 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
                                 destination));
     CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> source_value,
                             InterpExp(source, arena_, trace_stream_));
+    if (trace_stream_) {
+      **trace_stream_ << "converting type " << *source_value
+                      << " to constraint " << *destination_constraint << " for "
+                      << context << " in scope " << impl_scope << "\n";
+    }
     // Note, we discard the witness. We don't actually need it in order to
     // perform the conversion, but we do want to know it exists.
     CARBON_RETURN_IF_ERROR(impl_scope.Resolve(
@@ -1107,7 +1112,7 @@ class TypeChecker::ConstraintTypeBuilder {
   ConstraintTypeBuilder(Nonnull<Arena*> arena,
                         Nonnull<GenericBinding*> self_binding)
       : arena_(arena),
-        self_binding_(PrepareSelfBinding(arena, self_binding)),
+        self_binding_(self_binding),
         impl_binding_(AddImplBinding(arena, self_binding_)) {}
   ConstraintTypeBuilder(Nonnull<Arena*> arena,
                         Nonnull<GenericBinding*> self_binding,
@@ -1387,25 +1392,25 @@ class TypeChecker::ConstraintTypeBuilder {
     return result;
   }
 
- private:
-  // Makes a generic binding to serve as the `.Self` of this constraint type.
-  static auto MakeSelfBinding(Nonnull<Arena*> arena, SourceLocation source_loc)
-      -> Nonnull<GenericBinding*> {
-    // Note, the type-of-type here is a placeholder and isn't really
-    // meaningful.
-    return arena->New<GenericBinding>(source_loc, ".Self",
-                                      arena->New<TypeTypeLiteral>(source_loc));
-  }
-
-  // Sets up a `.Self` binding to act as the self type of this constraint.
-  static auto PrepareSelfBinding(Nonnull<Arena*> arena,
-                                 Nonnull<GenericBinding*> self_binding)
-      -> Nonnull<GenericBinding*> {
+  // Sets up a `.Self` binding to act as the self type of a constraint.
+  static void PrepareSelfBinding(Nonnull<Arena*> arena,
+                                 Nonnull<GenericBinding*> self_binding) {
     Nonnull<const Value*> self = arena->New<VariableType>(self_binding);
     // TODO: Do we really need both of these?
     self_binding->set_symbolic_identity(self);
     self_binding->set_value(self);
-    return self_binding;
+  }
+
+ private:
+  // Makes a generic binding to serve as the `.Self` of a constraint type.
+  static auto MakeSelfBinding(Nonnull<Arena*> arena, SourceLocation source_loc)
+      -> Nonnull<GenericBinding*> {
+    // Note, the type-of-type here is a placeholder and isn't really
+    // meaningful.
+    auto* result = arena->New<GenericBinding>(
+        source_loc, ".Self", arena->New<TypeTypeLiteral>(source_loc));
+    PrepareSelfBinding(arena, result);
+    return result;
   }
 
   // Adds an impl binding to the given self binding.
@@ -2058,6 +2063,7 @@ auto TypeChecker::LookupRewriteInTypeOf(
       // We looked for a rewrite before we finished type-checking the generic
       // binding. This happens when forming the type of a generic binding. Just
       // say there are no rewrites yet.
+      // TODO: `.Self` substitution should fix this.
       return std::nullopt;
     }
     return LookupRewrite(&var_type->binding().static_type(), interface, member);
@@ -2069,8 +2075,10 @@ auto TypeChecker::LookupRewriteInTypeOf(
   if (const auto* assoc_const = dyn_cast<AssociatedConstant>(type)) {
     if (!assoc_const->constant().has_static_type()) {
       // We looked for a rewrite before we finished type-checking the
-      // associated constant. This can happens when a use of `.Self` occurs
-      // within the constant's type. Just say there are no rewrites yet.
+      // associated constant. This happens when forming the type of the
+      // associated constant, if `.Self` is used to access an associated
+      // constant. Just say that there are not rewrites yet.
+      // TODO: `.Self` substitution should fix this.
       return std::nullopt;
     }
     // The following is an expanded version of
@@ -3203,6 +3211,18 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       inner_impl_scope.AddParent(&impl_scope);
 
       auto& self = where.self_binding();
+
+      // If there's some enclosing `.Self` value, our self is symbolically
+      // equal to that. Otherwise it's a new type variable.
+      if (auto enclosing_dot_self = where.enclosing_dot_self()) {
+        // TODO: We need to also enforce that our `.Self` does end up being the
+        // same as the enclosing type.
+        self.set_symbolic_identity(*(*enclosing_dot_self)->symbolic_identity());
+        self.set_value(&(*enclosing_dot_self)->value());
+      } else {
+        ConstraintTypeBuilder::PrepareSelfBinding(arena_, &self);
+      }
+
       ConstraintTypeBuilder builder(arena_, &self);
       ConstraintTypeBuilder::ConstraintsInScopeTracker constraint_tracker;
 
@@ -3317,7 +3337,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<Expression*> converted_expression,
                 ImplicitlyConvert(
-                    "rewrite constraint", impl_scope, replacement_literal,
+                    "rewrite constraint", inner_impl_scope, replacement_literal,
                     GetTypeForAssociatedConstant(constant_value)));
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const Value*> converted_value,
@@ -4429,6 +4449,7 @@ auto TypeChecker::DeclareInterfaceDeclaration(
   self_type->set_constant_value(iface_type);
 
   // Build a constraint corresponding to this interface.
+  ConstraintTypeBuilder::PrepareSelfBinding(arena_, iface_decl->self());
   ConstraintTypeBuilder builder(arena_, iface_decl->self());
   ConstraintTypeBuilder::ConstraintsInScopeTracker constraint_tracker;
   iface_decl->self()->set_static_type(iface_type);

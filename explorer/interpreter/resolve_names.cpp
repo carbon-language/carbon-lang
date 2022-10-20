@@ -239,6 +239,14 @@ static auto ResolveNames(Expression& expression,
       auto& where = cast<WhereExpression>(expression);
       CARBON_RETURN_IF_ERROR(
           ResolveNames(where.self_binding().type(), enclosing_scope));
+      // If we're already in a `.Self` context, remember it so that we can
+      // reuse its value for the inner `.Self`.
+      if (auto enclosing_dot_self =
+              enclosing_scope.Resolve(".Self", where.source_loc());
+          enclosing_dot_self.ok()) {
+        where.set_enclosing_dot_self(
+            &cast<GenericBinding>(enclosing_dot_self->base()));
+      }
       // Introduce `.Self` into scope on the right of the `where` keyword.
       StaticScope where_scope;
       where_scope.AddParent(&enclosing_scope);
