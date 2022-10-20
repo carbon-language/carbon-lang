@@ -33,14 +33,14 @@ static auto PrintArgs(llvm::raw_ostream& out,
 
 auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
   out << "identifiers = {\n";
-  for (size_t i = 0; i < identifiers_.size(); ++i) {
+  for (int32_t i = 0; i < static_cast<int32_t>(identifiers_.size()); ++i) {
     out.indent(2);
     out << SemanticsIdentifierId(i) << " = \"" << identifiers_[i] << "\";\n";
   }
   out << "},\n";
 
   out << "integer_literals = {\n";
-  for (size_t i = 0; i < integer_literals_.size(); ++i) {
+  for (int32_t i = 0; i < static_cast<int32_t>(integer_literals_.size()); ++i) {
     out.indent(2);
     out << SemanticsIntegerLiteralId(i) << " = " << integer_literals_[i]
         << ";\n";
@@ -49,7 +49,7 @@ auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
 
   out << "nodes = {\n";
   int indent = 2;
-  for (size_t i = 0; i < nodes_.size(); ++i) {
+  for (int32_t i = 0; i < static_cast<int32_t>(nodes_.size()); ++i) {
     SemanticsNode node = nodes_[i];
 
     // Adjust indent for block contents.
