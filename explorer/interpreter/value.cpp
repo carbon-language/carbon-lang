@@ -426,13 +426,12 @@ void Value::Print(llvm::raw_ostream& out) const {
       const auto& constraint = cast<ConstraintType>(*this);
       out << "constraint ";
       llvm::ListSeparator combine(" & ");
-      for (const ConstraintType::LookupContext& ctx :
-           constraint.lookup_contexts()) {
+      for (const LookupContext& ctx : constraint.lookup_contexts()) {
         out << combine << *ctx.context;
       }
       out << " where ";
       llvm::ListSeparator sep(" and ");
-      for (const ConstraintType::RewriteConstraint& rewrite :
+      for (const RewriteConstraint& rewrite :
            constraint.rewrite_constraints()) {
         out << sep << ".(";
         PrintNameWithBindings(out, &rewrite.constant->interface().declaration(),
@@ -440,13 +439,12 @@ void Value::Print(llvm::raw_ostream& out) const {
         out << "." << *GetName(rewrite.constant->constant())
             << ") = " << *rewrite.unconverted_replacement;
       }
-      for (const ConstraintType::ImplConstraint& impl :
-           constraint.impl_constraints()) {
+      for (const ImplConstraint& impl : constraint.impl_constraints()) {
         // TODO: Skip cases where `impl.type` is `.Self` and the interface is
         // in `lookup_contexts()`.
         out << sep << *impl.type << " is " << *impl.interface;
       }
-      for (const ConstraintType::EqualityConstraint& equality :
+      for (const EqualityConstraint& equality :
            constraint.equality_constraints()) {
         // TODO: Skip cases matching something in `rewrite_constraints()`.
         out << sep;

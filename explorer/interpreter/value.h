@@ -732,7 +732,15 @@ class InterfaceType : public Value {
   Nonnull<const Bindings*> bindings_ = Bindings::None();
 };
 
-// A collection of values that are known to be the same.
+// A constraint that requires implementation of an interface.
+struct ImplConstraint {
+  // The type that is required to implement the interface.
+  Nonnull<const Value*> type;
+  // The interface that is required to be implemented.
+  Nonnull<const InterfaceType*> interface;
+};
+
+// A constraint that a collection of values are known to be the same.
 struct EqualityConstraint {
   // Visit the values in this equality constraint that are a single step away
   // from the given value according to this equality constraint. That is: if
@@ -762,6 +770,11 @@ struct RewriteConstraint {
   Nonnull<const Value*> converted_replacement;
 };
 
+// A context in which we might look up a name.
+struct LookupContext {
+  Nonnull<const Value*> context;
+};
+
 // A type-of-type for an unknown constrained type.
 //
 // These types are formed by the `&` operator that combines constraints and by
@@ -780,21 +793,6 @@ struct RewriteConstraint {
 // `VariableType` naming the `self_binding`.
 class ConstraintType : public Value {
  public:
-  // A required implementation of an interface.
-  struct ImplConstraint {
-    Nonnull<const Value*> type;
-    Nonnull<const InterfaceType*> interface;
-  };
-
-  using RewriteConstraint = Carbon::RewriteConstraint;
-
-  using EqualityConstraint = Carbon::EqualityConstraint;
-
-  // A context in which we might look up a name.
-  struct LookupContext {
-    Nonnull<const Value*> context;
-  };
-
   explicit ConstraintType(Nonnull<const GenericBinding*> self_binding,
                           std::vector<ImplConstraint> impl_constraints,
                           std::vector<EqualityConstraint> equality_constraints,

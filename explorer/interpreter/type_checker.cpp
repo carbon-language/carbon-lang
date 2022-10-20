@@ -1119,9 +1119,9 @@ class TypeChecker::ConstraintTypeBuilder {
 
   // Adds an `impl` constraint -- `T is C` if not already present.
   // Returns the index of the impl constraint within the self witness.
-  auto AddImplConstraint(ConstraintType::ImplConstraint impl) -> int {
+  auto AddImplConstraint(ImplConstraint impl) -> int {
     for (int i = 0; i != static_cast<int>(impl_constraints_.size()); ++i) {
-      ConstraintType::ImplConstraint& existing = impl_constraints_[i];
+      ImplConstraint& existing = impl_constraints_[i];
       if (TypeEqual(existing.type, impl.type, std::nullopt) &&
           TypeEqual(existing.interface, impl.interface, std::nullopt)) {
         return i;
@@ -1132,7 +1132,7 @@ class TypeChecker::ConstraintTypeBuilder {
   }
 
   // Adds an equality constraint -- `A == B`.
-  void AddEqualityConstraint(ConstraintType::EqualityConstraint equal) {
+  void AddEqualityConstraint(EqualityConstraint equal) {
     if (equal.values.size() < 2) {
       // There's no need to track degenerate equality constraints. These can be
       // formed by rewrites.
@@ -1148,9 +1148,8 @@ class TypeChecker::ConstraintTypeBuilder {
   }
 
   auto AddRewriteConstraint(SourceLocation source_loc,
-                            ConstraintType::RewriteConstraint rewrite)
-      -> ErrorOr<Success> {
-    for (ConstraintType::RewriteConstraint existing : rewrite_constraints_) {
+                            RewriteConstraint rewrite) -> ErrorOr<Success> {
+    for (RewriteConstraint existing : rewrite_constraints_) {
       if (ValueEqual(existing.constant, rewrite.constant, std::nullopt)) {
         if (ValueEqual(existing.unconverted_replacement,
                        rewrite.unconverted_replacement, std::nullopt) &&
@@ -1170,8 +1169,8 @@ class TypeChecker::ConstraintTypeBuilder {
   }
 
   // Add a context for qualified name lookup, if not already present.
-  void AddLookupContext(ConstraintType::LookupContext context) {
-    for (ConstraintType::LookupContext existing : lookup_contexts_) {
+  void AddLookupContext(LookupContext context) {
+    for (LookupContext existing : lookup_contexts_) {
       if (ValueEqual(existing.context, context.context, std::nullopt)) {
         return;
       }
@@ -1296,11 +1295,10 @@ class TypeChecker::ConstraintTypeBuilder {
     int first_equal_to_add =
         std::exchange(tracker->num_equals_added, equality_constraints_.size());
     auto new_impl_constraints =
-        llvm::ArrayRef<ConstraintType::ImplConstraint>(impl_constraints_)
+        llvm::ArrayRef<ImplConstraint>(impl_constraints_)
             .drop_front(first_impl_to_add);
     auto new_equality_constraints =
-        llvm::ArrayRef<ConstraintType::EqualityConstraint>(
-            equality_constraints_)
+        llvm::ArrayRef<EqualityConstraint>(equality_constraints_)
             .drop_front(first_equal_to_add);
 
     // Add all of the new constraints.
@@ -1382,10 +1380,10 @@ class TypeChecker::ConstraintTypeBuilder {
   Nonnull<Arena*> arena_;
   Nonnull<GenericBinding*> self_binding_;
   Nonnull<ImplBinding*> impl_binding_;
-  std::vector<ConstraintType::ImplConstraint> impl_constraints_;
-  std::vector<ConstraintType::EqualityConstraint> equality_constraints_;
-  std::vector<ConstraintType::RewriteConstraint> rewrite_constraints_;
-  std::vector<ConstraintType::LookupContext> lookup_contexts_;
+  std::vector<ImplConstraint> impl_constraints_;
+  std::vector<EqualityConstraint> equality_constraints_;
+  std::vector<RewriteConstraint> rewrite_constraints_;
+  std::vector<LookupContext> lookup_contexts_;
 };
 
 // A collection of substituted `GenericBinding`s and `ImplBinding`s.
@@ -1916,11 +1914,11 @@ auto TypeChecker::LookupInConstraint(SourceLocation source_loc,
   CARBON_ASSIGN_OR_RETURN(
       Nonnull<const ConstraintType*> constraint_type,
       ConvertToConstraintType(source_loc, lookup_kind, type));
-  llvm::ArrayRef<ConstraintType::LookupContext> lookup_contexts =
+  llvm::ArrayRef<LookupContext> lookup_contexts =
       constraint_type->lookup_contexts();
 
   std::optional<ConstraintLookupResult> found;
-  for (ConstraintType::LookupContext lookup : lookup_contexts) {
+  for (LookupContext lookup : lookup_contexts) {
     if (!isa<InterfaceType>(lookup.context)) {
       // TODO: Support other kinds of lookup context, notably named
       // constraints.
@@ -1961,7 +1959,7 @@ auto TypeChecker::LookupInConstraint(SourceLocation source_loc,
 static auto LookupRewrite(llvm::ArrayRef<RewriteConstraint> rewrites,
                           Nonnull<const InterfaceType*> interface,
                           Nonnull<const Declaration*> member)
-    -> std::optional<const ConstraintType::RewriteConstraint*> {
+    -> std::optional<const RewriteConstraint*> {
   if (!isa<AssociatedConstantDeclaration>(member)) {
     return std::nullopt;
   }
@@ -1984,11 +1982,11 @@ static auto LookupRewrite(llvm::ArrayRef<RewriteConstraint> rewrites,
 static auto LookupRewrite(Nonnull<const Value*> type_of_type,
                           Nonnull<const InterfaceType*> interface,
                           Nonnull<const Declaration*> member)
-    -> std::optional<const ConstraintType::RewriteConstraint*> {
+    -> std::optional<const RewriteConstraint*> {
   // Find the set of rewrites. Only ConstraintTypes have rewrites.
   // TODO: If we can ever see an InterfaceType here, we should convert it to a
   // constraint type.
-  llvm::ArrayRef<ConstraintType::RewriteConstraint> rewrites;
+  llvm::ArrayRef<RewriteConstraint> rewrites;
   if (const auto* constraint_type = dyn_cast<ConstraintType>(type_of_type)) {
     rewrites = constraint_type->rewrite_constraints();
   }
@@ -2008,7 +2006,7 @@ auto TypeChecker::GetTypeForAssociatedConstant(
 auto TypeChecker::LookupRewriteInTypeOf(
     Nonnull<const Value*> type, Nonnull<const InterfaceType*> interface,
     Nonnull<const Declaration*> member) const
-    -> std::optional<const ConstraintType::RewriteConstraint*> {
+    -> std::optional<const RewriteConstraint*> {
   // Given `(T:! C).Y`, look in `C` for rewrites.
   if (const auto* var_type = dyn_cast<VariableType>(type)) {
     if (!var_type->binding().has_static_type()) {
@@ -2043,7 +2041,7 @@ auto TypeChecker::LookupRewriteInTypeOf(
 auto TypeChecker::LookupRewriteInWitness(
     Nonnull<const Witness*> witness, Nonnull<const InterfaceType*> interface,
     Nonnull<const Declaration*> member) const
-    -> std::optional<const ConstraintType::RewriteConstraint*> {
+    -> std::optional<const RewriteConstraint*> {
   if (const auto* impl_witness = dyn_cast<ImplWitness>(witness)) {
     Nonnull<const Value*> constraint =
         Substitute(impl_witness->bindings(),
@@ -2054,9 +2052,8 @@ auto TypeChecker::LookupRewriteInWitness(
 }
 
 // Rewrites a member access expression to produce the given constant value.
-static void RewriteMemberAccess(
-    Nonnull<MemberAccessExpression*> access,
-    Nonnull<const ConstraintType::RewriteConstraint*> value) {
+static void RewriteMemberAccess(Nonnull<MemberAccessExpression*> access,
+                                Nonnull<const RewriteConstraint*> value) {
   access->set_value_category(ValueCategory::Let);
   access->set_static_type(value->unconverted_replacement_type);
   access->set_constant_value(value->unconverted_replacement);
