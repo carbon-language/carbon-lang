@@ -17,7 +17,10 @@ cc_library(
 
 cc_library(
     name = "semantics_ir",
-    srcs = ["semantics_ir.cpp"],
+    srcs = [
+        "semantics_ir.cpp",
+        "semantics_node.cpp",
+    ],
     hdrs = [
         "semantics_ir.h",
         "semantics_node.h",

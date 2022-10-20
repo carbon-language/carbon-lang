@@ -41,10 +41,9 @@ class SemanticsIR {
     return id;
   }
 
-  auto AddNode(SemanticsNodeKind node_kind, SemanticsNodeArgs args)
-      -> SemanticsNodeId {
+  auto AddNode(SemanticsNode node) -> SemanticsNodeId {
     SemanticsNodeId id(nodes_.size());
-    nodes_.push_back(SemanticsNode(node_kind, args));
+    nodes_.push_back(node);
     return id;
   }
 

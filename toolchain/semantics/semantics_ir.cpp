@@ -11,26 +11,6 @@
 
 namespace Carbon {
 
-static auto PrintArgs(llvm::raw_ostream& /*out*/, int unused_no_args[0]) {}
-
-static auto PrintArgs(llvm::raw_ostream& out, SemanticsNodeId one_node) {
-  out << one_node;
-}
-
-static auto PrintArgs(llvm::raw_ostream& out, SemanticsTwoNodeIds two_nodes) {
-  out << two_nodes.nodes[0] << ", " << two_nodes.nodes[1];
-}
-
-static auto PrintArgs(llvm::raw_ostream& out,
-                      SemanticsIdentifierId identifier) {
-  out << identifier;
-}
-
-static auto PrintArgs(llvm::raw_ostream& out,
-                      SemanticsIntegerLiteralId identifier) {
-  out << identifier;
-}
-
 auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
   out << "identifiers = {\n";
   for (int32_t i = 0; i < static_cast<int32_t>(identifiers_.size()); ++i) {
@@ -53,7 +33,7 @@ auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
     SemanticsNode node = nodes_[i];
 
     // Adjust indent for block contents.
-    switch (node.kind_) {
+    switch (node.kind()) {
       case SemanticsNodeKind::CodeBlockStart():
       case SemanticsNodeKind::FunctionDefinitionStart():
         out.indent(indent);
@@ -70,15 +50,7 @@ auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
         break;
     }
 
-    out << SemanticsNodeId(i) << " = " << node.kind() << "(";
-    switch (node.kind_) {
-#define CARBON_SEMANTICS_NODE_KIND(Name, Args) \
-  case SemanticsNodeKind::Name():              \
-    PrintArgs(out, node.one_of_args_.Args);    \
-    break;
-#include "toolchain/semantics/semantics_node_kind.def"
-    }
-    out << ");\n";
+    out << SemanticsNodeId(i) << " = " << node << ";\n";
   }
   out << "}\n";
 }

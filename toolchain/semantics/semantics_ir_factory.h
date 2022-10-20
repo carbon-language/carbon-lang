@@ -34,9 +34,8 @@ class SemanticsIRFactory {
     node_stack_.push_back({parse_node, llvm::None});
   }
 
-  auto Push(ParseTree::Node parse_node, SemanticsNodeKind node_kind,
-            SemanticsNodeArgs args) -> void {
-    auto node_id = semantics_.AddNode(node_kind, args);
+  auto Push(ParseTree::Node parse_node, SemanticsNode node) -> void {
+    auto node_id = semantics_.AddNode(node);
     node_stack_.push_back({parse_node, node_id});
   }
 

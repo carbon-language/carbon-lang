@@ -20,16 +20,6 @@ auto SemanticsIRFactory::Build(const TokenizedBuffer& tokens,
   return builder.semantics_;
 }
 
-// Converts a TokenKind to a BinaryOperator operator.
-static auto GetBinaryOp(TokenKind kind) -> SemanticsNodeKind {
-  switch (kind) {
-    case TokenKind::Plus():
-      return SemanticsNodeKind::BinaryOperatorAdd();
-    default:
-      CARBON_FATAL() << "Unrecognized token kind: " << kind.Name();
-  }
-}
-
 void SemanticsIRFactory::Build() {
   auto range = parse_tree().postorder();
   for (auto it = range.begin();; ++it) {
@@ -38,7 +28,7 @@ void SemanticsIRFactory::Build() {
       case ParseNodeKind::DeclaredName(): {
         auto text = parse_tree().GetNodeText(parse_node);
         auto identifier_id = semantics_.AddIdentifier(text);
-        Push(parse_node, SemanticsNodeKind::Identifier(), identifier_id);
+        Push(parse_node, SemanticsNode::MakeIdentifier(identifier_id));
         break;
       }
       case ParseNodeKind::FunctionDefinition(): {
@@ -48,7 +38,7 @@ void SemanticsIRFactory::Build() {
           node_stack_.pop_back();
         }
         Pop(ParseNodeKind::FunctionDefinitionStart());
-        semantics_.AddNode(SemanticsNodeKind::FunctionDefinitionEnd(), {});
+        semantics_.AddNode(SemanticsNode::MakeFunctionDefinitionEnd());
         Push(parse_node);
         break;
       }
@@ -57,9 +47,8 @@ void SemanticsIRFactory::Build() {
         auto name_node_id = PopWithResult(ParseNodeKind::DeclaredName());
         Pop(ParseNodeKind::FunctionIntroducer());
         auto decl_id = semantics_.AddNode(
-            SemanticsNodeKind::FunctionDeclaration(), name_node_id);
-        semantics_.AddNode(SemanticsNodeKind::FunctionDefinitionStart(),
-                           decl_id);
+            SemanticsNode::MakeFunctionDeclaration(name_node_id));
+        semantics_.AddNode(SemanticsNode::MakeFunctionDefinitionStart(decl_id));
         Push(parse_node);
         break;
       }
@@ -76,9 +65,14 @@ void SemanticsIRFactory::Build() {
 
         // Figure out the operator for the token.
         auto token = parse_tree().node_token(parse_node);
-        auto token_kind = tokens_->GetKind(token);
-        auto op = GetBinaryOp(token_kind);
-        Push(parse_node, op, SemanticsTwoNodeIds{lhs_id, rhs_id});
+        switch (auto token_kind = tokens_->GetKind(token)) {
+          case TokenKind::Plus():
+            Push(parse_node,
+                 SemanticsNode::MakeBinaryOperatorAdd(lhs_id, rhs_id));
+            break;
+          default:
+            CARBON_FATAL() << "Unrecognized token kind: " << token_kind.Name();
+        }
         break;
       }
       case ParseNodeKind::Literal(): {
@@ -87,7 +81,7 @@ void SemanticsIRFactory::Build() {
           case TokenKind::IntegerLiteral(): {
             auto id =
                 semantics_.AddIntegerLiteral(tokens_->GetIntegerLiteral(token));
-            Push(parse_node, SemanticsNodeKind::IntegerLiteral(), id);
+            Push(parse_node, SemanticsNode::MakeIntegerLiteral(id));
             break;
           }
           default:
@@ -101,10 +95,10 @@ void SemanticsIRFactory::Build() {
         // TODO: Restructure ReturnStatement so that we can do this without
         // looking at the subtree size.
         if (parse_tree().node_subtree_size(parse_node) == 2) {
-          Push(parse_node, SemanticsNodeKind::Return(), {});
+          Push(parse_node, SemanticsNode::MakeReturn());
         } else {
           auto arg = PopWithResult();
-          Push(parse_node, SemanticsNodeKind::ReturnExpression(), arg);
+          Push(parse_node, SemanticsNode::MakeReturnExpression(arg));
         }
         break;
       }

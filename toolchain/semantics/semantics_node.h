@@ -50,15 +50,13 @@ struct SemanticsTwoNodeIds {
 
 union SemanticsNodeArgs {
   SemanticsNodeArgs() {}
-  // Allow implicit construction for simpler calls.
-  // NOLINTBEGIN(google-explicit-constructor)
-  SemanticsNodeArgs(SemanticsNodeId one_node) : one_node(one_node) {}
-  SemanticsNodeArgs(SemanticsTwoNodeIds two_nodes) : two_nodes(two_nodes) {}
-  SemanticsNodeArgs(SemanticsIdentifierId identifier)
+  explicit SemanticsNodeArgs(SemanticsNodeId one_node) : one_node(one_node) {}
+  explicit SemanticsNodeArgs(SemanticsTwoNodeIds two_nodes)
+      : two_nodes(two_nodes) {}
+  explicit SemanticsNodeArgs(SemanticsIdentifierId identifier)
       : identifier(identifier) {}
-  SemanticsNodeArgs(SemanticsIntegerLiteralId integer_literal)
+  explicit SemanticsNodeArgs(SemanticsIntegerLiteralId integer_literal)
       : integer_literal(integer_literal) {}
-  // NOLINTEND(google-explicit-constructor)
 
   int no_args[0];
   SemanticsNodeId one_node;
@@ -71,15 +69,55 @@ static_assert(sizeof(SemanticsNodeArgs) == 8, "Unexpected OneOfArgs size");
 // The standard structure for nodes.
 class SemanticsNode {
  public:
+  // Define factory functions for each node kind. These should improve type
+  // safety by enforcing argument counts.
+#define CARBON_SEMANTICS_MAKE_no_args(Name)                               \
+  static auto Make##Name()->SemanticsNode {                               \
+    return SemanticsNode(SemanticsNodeKind::Name(), SemanticsNodeArgs()); \
+  }
+#define CARBON_SEMANTICS_MAKE_one_node(Name)                        \
+  static auto Make##Name(SemanticsNodeId one_node)->SemanticsNode { \
+    return SemanticsNode(SemanticsNodeKind::Name(),                 \
+                         SemanticsNodeArgs(one_node));              \
+  }
+#define CARBON_SEMANTICS_MAKE_two_nodes(Name)                          \
+  static auto Make##Name(SemanticsNodeId node1, SemanticsNodeId node2) \
+      ->SemanticsNode {                                                \
+    return SemanticsNode(                                              \
+        SemanticsNodeKind::Name(),                                     \
+        SemanticsNodeArgs(SemanticsTwoNodeIds{node1, node2}));         \
+  }
+#define CARBON_SEMANTICS_MAKE_identifier(Name)                              \
+  static auto Make##Name(SemanticsIdentifierId identifier)->SemanticsNode { \
+    return SemanticsNode(SemanticsNodeKind::Name(),                         \
+                         SemanticsNodeArgs(identifier));                    \
+  }
+#define CARBON_SEMANTICS_MAKE_integer_literal(Name)                 \
+  static auto Make##Name(SemanticsIntegerLiteralId integer_literal) \
+      ->SemanticsNode {                                             \
+    return SemanticsNode(SemanticsNodeKind::Name(),                 \
+                         SemanticsNodeArgs(integer_literal));       \
+  }
+
+#define CARBON_SEMANTICS_NODE_KIND(Name, ArgsType) \
+  CARBON_SEMANTICS_MAKE_##ArgsType(Name)
+#include "toolchain/semantics/semantics_node_kind.def"
+
+#undef CARBON_SEMANTICS_MAKE_no_args
+#undef CARBON_SEMANTICS_MAKE_one_node
+#undef CARBON_SEMANTICS_MAKE_two_nodes
+#undef CARBON_SEMANTICS_MAKE_identifier
+#undef CARBON_SEMANTICS_MAKE_integer_literal
+
   SemanticsNode() : kind_(SemanticsNodeKind::Invalid()) {}
 
   auto kind() -> SemanticsNodeKind { return kind_; }
 
- private:
-  friend class SemanticsIR;
+  void Print(llvm::raw_ostream& out) const;
 
-  explicit SemanticsNode(SemanticsNodeKind kind, SemanticsNodeArgs one_of_args)
-      : kind_(kind), one_of_args_(std::move(one_of_args)) {}
+ private:
+  SemanticsNode(SemanticsNodeKind kind, SemanticsNodeArgs one_of_args)
+      : kind_(kind), one_of_args_(one_of_args) {}
 
   SemanticsNodeKind kind_;
 
