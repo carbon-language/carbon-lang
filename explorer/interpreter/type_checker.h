@@ -16,10 +16,9 @@
 #include "explorer/interpreter/dictionary.h"
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
+#include "explorer/interpreter/value.h"
 
 namespace Carbon {
-
-struct RewriteConstraint;
 
 using CollectedMembersMap =
     std::unordered_map<std::string_view, Nonnull<const Declaration*>>;

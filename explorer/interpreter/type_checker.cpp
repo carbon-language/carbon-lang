@@ -20,6 +20,7 @@
 #include "explorer/interpreter/pattern_analysis.h"
 #include "explorer/interpreter/value.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Support/Casting.h"
@@ -1294,16 +1295,19 @@ class TypeChecker::ConstraintTypeBuilder {
         std::exchange(tracker->num_impls_added, impl_constraints_.size());
     int first_equal_to_add =
         std::exchange(tracker->num_equals_added, equality_constraints_.size());
-    llvm::ArrayRef<ConstraintType::ImplConstraint> impl_constraints =
-        impl_constraints_;
+    auto new_impl_constraints =
+        llvm::ArrayRef<ConstraintType::ImplConstraint>(impl_constraints_)
+            .drop_front(first_impl_to_add);
+    auto new_equality_constraints =
+        llvm::ArrayRef<ConstraintType::EqualityConstraint>(
+            equality_constraints_)
+            .drop_front(first_equal_to_add);
 
     // Add all of the new constraints.
-    impl_scope->Add(impl_constraints.drop_front(first_impl_to_add), llvm::None,
-                    llvm::None, GetSelfWitness(), type_checker);
-    for (int i = first_equal_to_add;
-         i != static_cast<int>(equality_constraints_.size()); ++i) {
-      impl_scope->AddEqualityConstraint(
-          arena_->New<EqualityConstraint>(equality_constraints_[i]));
+    impl_scope->Add(new_impl_constraints, llvm::None, llvm::None,
+                    GetSelfWitness(), type_checker);
+    for (auto& equal : new_equality_constraints) {
+      impl_scope->AddEqualityConstraint(arena_->New<EqualityConstraint>(equal));
     }
   }
 
@@ -1594,7 +1598,7 @@ auto TypeChecker::Substitute(const Bindings& bindings,
       }
       ConstraintTypeBuilder builder(arena_,
                                     constraint.self_binding()->source_loc());
-      // Diagnostics are discarded.
+      // Diagnostics are discarded (except in CHECK failure message).
       SourceLocation source_loc("", 0);
       ErrorOr<Success> result = builder.AddAndSubstitute(
           *this, source_loc, &constraint, builder.GetSelfType(),
@@ -3138,17 +3142,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
 
       // Keep track of the builder so that we can look up its rewrites while
       // processing later constraints.
-      struct TrackPartialWhereBuilderRAII {
-        TrackPartialWhereBuilderRAII(TypeChecker& type_checker,
-                                     ConstraintTypeBuilder& builder)
-            : type_checker_(type_checker) {
-          type_checker_.partial_where_expressions_.push_back(&builder);
-        }
-        ~TrackPartialWhereBuilderRAII() {
-          type_checker_.partial_where_expressions_.pop_back();
-        }
-        TypeChecker& type_checker_;
-      } partial_where_tracker(*this, builder);
+      partial_where_expressions_.push_back(&builder);
+      auto pop_partial_where =
+          llvm::make_scope_exit([&] { partial_where_expressions_.pop_back(); });
 
       // Note, we don't want to call `TypeCheckPattern` here. Most of the setup
       // for the self binding is instead done by the `ConstraintTypeBuilder`.
