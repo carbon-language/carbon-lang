@@ -2122,15 +2122,15 @@ package Geometry library "Shapes" api;
 
 Parts of this declaration may be omitted:
 
--   If the library keyword is not specified, as in `package Geometry api;`, this
-    file contributes to the default library.
+-   If the package name is omitted, as in `package library "Main" api;`, the
+    file contributes to the default package. No other package may import from
+    the default package.
 
     -   **Note:** This is provisional, no design has been through the proposal
         process yet.
 
--   If the package name is omitted, as in `package library "Main" api;`, the
-    file contributes to the default package. No other package may import from
-    the default package.
+-   If the library keyword is not specified, as in `package Geometry api;`, this
+    file contributes to the default library.
 
 A program need not use the default package, but if it does, it should contain
 the entry-point function. By default, the entry-point function is `Run` from the
