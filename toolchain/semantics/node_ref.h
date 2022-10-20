@@ -16,8 +16,6 @@ namespace Carbon::Semantics {
 struct NodeStoreIndex {
   explicit NodeStoreIndex(int32_t index) : index(index) {}
 
-  operator int32_t() const { return index; }
-
   int32_t index;
 };
 

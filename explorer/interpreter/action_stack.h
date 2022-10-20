@@ -90,7 +90,7 @@ class ActionStack {
       -> ErrorOr<Success>;
   // Replace the current action with another action that produces the same kind
   // of result and run it next.
-  auto ReplaceWith(std::unique_ptr<Action> child) -> ErrorOr<Success>;
+  auto ReplaceWith(std::unique_ptr<Action> replacement) -> ErrorOr<Success>;
 
   // Start a new recursive action.
   auto BeginRecursiveAction() {

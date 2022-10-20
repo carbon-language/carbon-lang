@@ -6,12 +6,12 @@
 // RUN: %{carbon-run-semantics}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   Function(
-// CHECK:STDOUT:       %0,
+// CHECK:STDOUT:       %2,
 // CHECK:STDOUT:       {
 // CHECK:STDOUT:         IntegerLiteral(%1, 0),
 // CHECK:STDOUT:         Return(%1),
 // CHECK:STDOUT:       }),
-// CHECK:STDOUT:   SetName(`Main`, %0),
+// CHECK:STDOUT:   SetName(`Main`, %2),
 // CHECK:STDOUT: }
 
 fn Main() {

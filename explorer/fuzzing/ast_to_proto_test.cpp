@@ -121,7 +121,7 @@ TEST(AstToProtoTest, SetsAllProtoFields) {
 }  // namespace
 }  // namespace Carbon::Testing
 
-int main(int argc, char** argv) {
+auto main(int argc, char** argv) -> int {
   ::testing::InitGoogleTest(&argc, argv);
   // gtest should remove flags, leaving just input files.
   Carbon::Testing::carbon_files =

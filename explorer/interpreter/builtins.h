@@ -20,7 +20,7 @@ namespace Carbon {
 
 class Builtins {
  public:
-  explicit Builtins() {}
+  explicit Builtins() = default;
 
   enum class Builtin {
     // Conversions.

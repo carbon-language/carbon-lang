@@ -6,14 +6,14 @@
 // RUN: %{carbon-run-semantics}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   Function(
-// CHECK:STDOUT:       %0,
+// CHECK:STDOUT:       %4,
 // CHECK:STDOUT:       {
-// CHECK:STDOUT:         IntegerLiteral(%3, 12),
+// CHECK:STDOUT:         IntegerLiteral(%1, 12),
 // CHECK:STDOUT:         IntegerLiteral(%2, 34),
-// CHECK:STDOUT:         BinaryOperator(%1, +, %3, %2),
-// CHECK:STDOUT:         Return(%1),
+// CHECK:STDOUT:         BinaryOperator(%3, +, %1, %2),
+// CHECK:STDOUT:         Return(%3),
 // CHECK:STDOUT:       }),
-// CHECK:STDOUT:   SetName(`Main`, %0),
+// CHECK:STDOUT:   SetName(`Main`, %4),
 // CHECK:STDOUT: }
 
 fn Main() {
