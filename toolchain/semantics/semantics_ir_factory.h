@@ -65,7 +65,7 @@ class SemanticsIRFactory {
     return node_id;
   }
 
-  // Declare handlers for all nodes. These will be individually defined.
+  // Parse node handlers.
   auto HandleDeclaredName(ParseTree::Node parse_node) -> void;
   auto HandleFunctionDefinition(ParseTree::Node parse_node) -> void;
   auto HandleFunctionDefinitionStart(ParseTree::Node parse_node) -> void;
