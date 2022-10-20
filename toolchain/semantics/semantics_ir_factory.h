@@ -65,6 +65,15 @@ class SemanticsIRFactory {
     return node_id;
   }
 
+  // Parse node handlers.
+  auto HandleDeclaredName(ParseTree::Node parse_node) -> void;
+  auto HandleFunctionDefinition(ParseTree::Node parse_node) -> void;
+  auto HandleFunctionDefinitionStart(ParseTree::Node parse_node) -> void;
+  auto HandleInfixOperator(ParseTree::Node parse_node) -> void;
+  auto HandleLiteral(ParseTree::Node parse_node) -> void;
+  auto HandleParameterList(ParseTree::Node parse_node) -> void;
+  auto HandleReturnStatement(ParseTree::Node parse_node) -> void;
+
   // Convenience accessor.
   auto parse_tree() -> const ParseTree& { return *semantics_.parse_tree_; }
 
