@@ -2154,7 +2154,7 @@ default package.
 
 > **Note:** This is provisional, designs for making the package name optional
 > have not been through the proposal process yet. See
-> [#2323](https://github.com/carbon-language/carbon-lang/issues/2323).
+> [#2001](https://github.com/carbon-language/carbon-lang/issues/2001).
 
 After the package declaration, files may include `import` declarations. These
 include the package name and optionally `library` followed by the library name.
