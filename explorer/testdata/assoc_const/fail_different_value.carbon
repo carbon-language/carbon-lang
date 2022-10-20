@@ -21,7 +21,7 @@ external impl Bad as Iface where .N = 4 {}
 
 fn Main() -> i32 {
   F(Good);
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_different_value.carbon:[[@LINE+1]]: constraint requires that 4 == 5, which is not known to be true
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_different_value.carbon:[[@LINE+1]]: constraint requires that (T).(Iface.N) (with value 4) == 5, which is not known to be true
   F(Bad);
   return 0;
 }
