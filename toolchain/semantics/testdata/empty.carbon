@@ -4,5 +4,9 @@
 //
 // AUTOUPDATE
 // RUN: %{carbon-run-semantics}
-// CHECK:STDOUT: {
+// CHECK:STDOUT: identifiers = {
+// CHECK:STDOUT: },
+// CHECK:STDOUT: integer_literals = {
+// CHECK:STDOUT: },
+// CHECK:STDOUT: nodes = {
 // CHECK:STDOUT: }

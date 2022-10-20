@@ -1,0 +1,50 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// Note that this is an X-macro header.
+//
+// It does not use `#include` guards, and instead is designed to be `#include`ed
+// after the x-macro is defined in order for its inclusion to expand to the
+// desired output. The x-macro for this header is `CARBON_PARSE_NODE_KIND`. The
+// definition provided will be removed at the end of this file to clean up.
+
+#ifndef CARBON_SEMANTICS_NODE_KIND
+#error "Must define the x-macro to use this file."
+#endif
+
+// No args.
+CARBON_SEMANTICS_NODE_KIND(Invalid, no_args)
+
+// Two nodes: lhs and rhs.
+CARBON_SEMANTICS_NODE_KIND(BinaryOperatorAdd, two_nodes)
+
+// No args.
+CARBON_SEMANTICS_NODE_KIND(CodeBlockStart, no_args)
+
+// No args.
+CARBON_SEMANTICS_NODE_KIND(CodeBlockEnd, no_args)
+
+// One node: the name.
+// TODO: Add a declaration scope as a second arg.
+CARBON_SEMANTICS_NODE_KIND(FunctionDeclaration, one_node)
+
+// One node: the FunctionDeclaration.
+CARBON_SEMANTICS_NODE_KIND(FunctionDefinitionStart, one_node)
+
+// No args.
+CARBON_SEMANTICS_NODE_KIND(FunctionDefinitionEnd, no_args)
+
+// The decalred IdentifierId.
+CARBON_SEMANTICS_NODE_KIND(Identifier, identifier)
+
+// The declared IntegerLiteralId.
+CARBON_SEMANTICS_NODE_KIND(IntegerLiteral, integer_literal)
+
+// No args.
+CARBON_SEMANTICS_NODE_KIND(Return, no_args)
+
+// One node: the return expression.
+CARBON_SEMANTICS_NODE_KIND(ReturnExpression, one_node)
+
+#undef CARBON_SEMANTICS_NODE_KIND
