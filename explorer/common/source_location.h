@@ -15,6 +15,13 @@ namespace Carbon {
 
 class SourceLocation {
  public:
+  // Produce a source location that is known to not be used, because it is fed
+  // into an operation that creates no AST nodes and whose diagnostics are
+  // discarded.
+  static auto DiagnosticsIgnored() -> SourceLocation {
+    return SourceLocation("", 0);
+  }
+
   // The filename should be eternal or arena-allocated to eliminate copies.
   constexpr SourceLocation(const char* filename, int line_num)
       : filename_(filename), line_num_(line_num) {}

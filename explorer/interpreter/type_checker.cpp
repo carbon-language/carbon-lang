@@ -500,8 +500,7 @@ auto TypeChecker::IsImplicitlyConvertible(
   }
 
   // We didn't find a builtin implicit conversion. Try a user-defined one.
-  // The source location doesn't matter, we're discarding the diagnostics.
-  SourceLocation source_loc("", 0);
+  SourceLocation source_loc = SourceLocation::DiagnosticsIgnored();
   ErrorOr<Nonnull<const InterfaceType*>> iface_type = GetBuiltinInterfaceType(
       source_loc, BuiltinInterfaceName{Builtins::ImplicitAs, destination});
   return iface_type.ok() &&
@@ -1598,16 +1597,14 @@ auto TypeChecker::Substitute(const Bindings& bindings,
       }
       ConstraintTypeBuilder builder(arena_,
                                     constraint.self_binding()->source_loc());
-      // Diagnostics are discarded (except in CHECK failure message).
-      SourceLocation source_loc("", 0);
       ErrorOr<Success> result = builder.AddAndSubstitute(
-          *this, source_loc, &constraint, builder.GetSelfType(),
-          builder.GetSelfWitness(), bindings,
+          *this, SourceLocation::DiagnosticsIgnored(), &constraint,
+          builder.GetSelfType(), builder.GetSelfWitness(), bindings,
           /*add_lookup_contexts=*/true);
       // TODO: This appears to theoretically be possible, and should be handled
       // better.
       CARBON_CHECK(result.ok()) << "substitution into " << constraint
-                                << " failed: " << result.error();
+                                << " failed: " << result.error().message();
       Nonnull<const ConstraintType*> new_constraint =
           std::move(builder).Build();
       if (trace_stream_) {
@@ -1711,12 +1708,11 @@ auto TypeChecker::RefineWitness(Nonnull<const Witness*> witness,
     return witness;
   }
 
-  // No source location; diagnostics will be discarded.
-  SourceLocation source_loc("", 0);
-
   // Attempt to look for an impl witness in the top-level impl scope.
-  if (auto refined_witness = (*top_level_impl_scope_)
-                                 ->Resolve(constraint, type, source_loc, *this);
+  if (auto refined_witness =
+          (*top_level_impl_scope_)
+              ->Resolve(constraint, type, SourceLocation::DiagnosticsIgnored(),
+                        *this);
       refined_witness.ok()) {
     return *refined_witness;
   } else {
