@@ -2103,6 +2103,11 @@ to coordinate to avoid name conflicts, but not across packages.
 
 ### Package declaration
 
+> **Note:** This is provisional, designs for a default package, making the
+> package name optional, and omitting the `package` declaration have not been
+> through the proposal process yet. See
+> [#2323](https://github.com/carbon-language/carbon-lang/issues/2323).
+
 Files start with an optional package declaration, consisting of:
 
 -   the `package` keyword introducer,
@@ -2129,17 +2134,11 @@ Parts of this declaration may be omitted:
 -   If the library keyword is not specified, as in `package Geometry api;`, this
     file contributes to the default library.
 
-    -   **Note:** This is provisional, no design has been through the proposal
-        process yet.
-
 -   If a file has no package declaration at all, it is the `api` file belonging
     to the default package and default library. This is particularly for tests
     and smaller examples. No other library can import this library even from
     within the default package. It can be split across multiple `impl` files
     using a `package impl;` package declaration.
-
-    -   **Note:** This is provisional, no design has been through the proposal
-        process yet.
 
 A program need not use the default package, but if it does, it should contain
 the entry-point function. By default, the entry-point function is `Run` from the
@@ -2152,6 +2151,10 @@ default package.
 >     [#107: Code and name organization](https://github.com/carbon-language/carbon-lang/pull/107)
 
 ### Imports
+
+> **Note:** This is provisional, designs for making the package name optional
+> have not been through the proposal process yet. See
+> [#2323](https://github.com/carbon-language/carbon-lang/issues/2323).
 
 After the package declaration, files may include `import` declarations. These
 include the package name and optionally `library` followed by the library name.
