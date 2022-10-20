@@ -21,6 +21,8 @@ class SemanticsNodeKind {
   };
 
  public:
+  // `clang-format` has a bug with spacing around `->` returns in macros. See
+  // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
 #define CARBON_SEMANTICS_NODE_KIND(Name, ...)       \
   static constexpr auto Name()->SemanticsNodeKind { \
     return SemanticsNodeKind(KindEnum::Name);       \

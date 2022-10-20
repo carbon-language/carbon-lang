@@ -34,7 +34,7 @@ struct SemanticsIdentifierId {
   int32_t id;
 };
 
-// Type-safe storage of identifiers.
+// Type-safe storage of integer literals.
 struct SemanticsIntegerLiteralId {
   SemanticsIntegerLiteralId() : id(-1) {}
   explicit SemanticsIntegerLiteralId(int32_t id) : id(id) {}
@@ -49,7 +49,9 @@ struct SemanticsTwoNodeIds {
 };
 
 union SemanticsNodeArgs {
-  SemanticsNodeArgs() {}
+  struct None {};
+
+  SemanticsNodeArgs() : no_args() {}
   explicit SemanticsNodeArgs(SemanticsNodeId one_node) : one_node(one_node) {}
   explicit SemanticsNodeArgs(SemanticsTwoNodeIds two_nodes)
       : two_nodes(two_nodes) {}
@@ -58,12 +60,16 @@ union SemanticsNodeArgs {
   explicit SemanticsNodeArgs(SemanticsIntegerLiteralId integer_literal)
       : integer_literal(integer_literal) {}
 
-  int no_args[0];
+  None no_args;
   SemanticsNodeId one_node;
   SemanticsTwoNodeIds two_nodes;
   SemanticsIdentifierId identifier;
   SemanticsIntegerLiteralId integer_literal;
 };
+// TODO: This is currently 8 bytes only because of two_nodes; others are only 4
+// bytes. The NodeKind is 1 byte; if we reduced this structure to 7 bytes (3.5
+// bytes per node), we could potentially change SemanticsNode from 12 bytes to 8
+// bytes. This may be worth investigating further.
 static_assert(sizeof(SemanticsNodeArgs) == 8, "Unexpected OneOfArgs size");
 
 // The standard structure for nodes.
@@ -71,6 +77,8 @@ class SemanticsNode {
  public:
   // Define factory functions for each node kind. These should improve type
   // safety by enforcing argument counts.
+  // `clang-format` has a bug with spacing around `->` returns here. See
+  // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
 #define CARBON_SEMANTICS_MAKE_no_args(Name)                               \
   static auto Make##Name()->SemanticsNode {                               \
     return SemanticsNode(SemanticsNodeKind::Name(), SemanticsNodeArgs()); \

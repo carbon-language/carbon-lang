@@ -6,7 +6,8 @@
 
 namespace Carbon {
 
-static auto PrintArgs(llvm::raw_ostream& /*out*/, const int* /*no_args*/) {}
+static auto PrintArgs(llvm::raw_ostream& /*out*/,
+                      const SemanticsNodeArgs::None /*no_args*/) {}
 
 static auto PrintArgs(llvm::raw_ostream& out, SemanticsNodeId one_node) {
   out << one_node;
