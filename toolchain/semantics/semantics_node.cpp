@@ -23,8 +23,8 @@ static auto PrintArgs(llvm::raw_ostream& out,
 }
 
 static auto PrintArgs(llvm::raw_ostream& out,
-                      SemanticsIntegerLiteralId identifier) {
-  out << identifier;
+                      SemanticsIntegerLiteralId integer_literal) {
+  out << integer_literal;
 }
 
 void SemanticsNode::Print(llvm::raw_ostream& out) const {
