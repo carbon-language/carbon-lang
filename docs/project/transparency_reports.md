@@ -10,8 +10,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 Carbon regularly publishes transparency reports that cover conduct issues that
 have come up in our spaces as well as the moderation and other actions taken in
-response. We prioritize keeping the Carbon community [welcoming and inclusive]()
-and believe this kind of transparency is essential to sustaining that.
+response. We prioritize keeping the Carbon community
+[welcoming and inclusive](/docs/project/goals.md#community-and-culture) and
+believe this kind of transparency is essential to sustaining that.
 
 ## Cadence and publishing
 
@@ -73,7 +74,7 @@ Code of Conduct when this report was published:
 
     _[Number of related incidents, and corresponding moderation interventions]_
 
-_[Final observations]_
+### Closing observations
 
 Thank you all for helping us keep such a fantastic Carbon community,
 
