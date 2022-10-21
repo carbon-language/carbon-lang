@@ -98,6 +98,7 @@ cc_library(
         ":matcher",
         "@llvm-project//clang:ast_matchers",
         "@llvm-project//clang:type_nodes_gen",
+        "@llvm-project//llvm:Support",
     ],
 )
 

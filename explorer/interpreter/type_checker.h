@@ -16,6 +16,7 @@
 #include "explorer/interpreter/dictionary.h"
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
+#include "explorer/interpreter/value.h"
 
 namespace Carbon {
 
@@ -40,8 +41,16 @@ class TypeChecker {
   // Construct a type that is the same as `type` except that occurrences
   // of type variables (aka. `GenericBinding` and references to `ImplBinding`)
   // are replaced by their corresponding type or witness in `dict`.
-  auto Substitute(const Bindings& dict, Nonnull<const Value*> type) const
+  auto Substitute(const Bindings& bindings, Nonnull<const Value*> type) const
       -> Nonnull<const Value*>;
+
+  // Attempts to refine a witness that might be symbolic into an impl witness,
+  // using `impl` declarations that have been declared and type-checked so far.
+  // If a more precise witness cannot be found, returns `witness`.
+  auto RefineWitness(Nonnull<const Witness*> witness,
+                     Nonnull<const Value*> type,
+                     Nonnull<const Value*> constraint) const
+      -> Nonnull<const Witness*>;
 
   // If `impl` can be an implementation of interface `iface` for the given
   // `type`, then return the witness for this `impl`. Otherwise return
@@ -59,26 +68,23 @@ class TypeChecker {
       -> ErrorOr<std::optional<
           std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>>;
 
-  /*
-  ** Finds the direct or indirect member of a class or mixin by its name and
-  ** returns the member's declaration and type. Indirect members are members of
-  ** mixins that are mixed by member mix declarations. If the member is an
-  ** indirect member from a mix declaration, then the Self type variable within
-  ** the member's type is substituted with the type of the enclosing declaration
-  ** containing the mix declaration.
-  */
+  // Finds the direct or indirect member of a class or mixin by its name and
+  // returns the member's declaration and type. Indirect members are members of
+  // mixins that are mixed by member mix declarations. If the member is an
+  // indirect member from a mix declaration, then the Self type variable within
+  // the member's type is substituted with the type of the enclosing declaration
+  // containing the mix declaration.
   auto FindMixedMemberAndType(const std::string_view& name,
                               llvm::ArrayRef<Nonnull<Declaration*>> members,
-                              const Nonnull<const Value*> enclosing_type)
+                              Nonnull<const Value*> enclosing_type)
       -> ErrorOr<std::optional<
           std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>>;
 
   // Given the witnesses for the components of a constraint, form a witness for
   // the constraint.
   auto MakeConstraintWitness(
-      const ConstraintType& constraint,
-      std::vector<Nonnull<const Witness*>> impl_constraint_witnesses,
-      SourceLocation source_loc) const -> Nonnull<const Witness*>;
+      std::vector<Nonnull<const Witness*>> impl_constraint_witnesses) const
+      -> Nonnull<const Witness*>;
 
   // Given the witnesses for the components of a constraint, form a witness for
   // the constraint.
@@ -87,7 +93,6 @@ class TypeChecker {
       -> Nonnull<const Witness*>;
 
  private:
-  struct SingleStepEqualityContext;
   class ConstraintTypeBuilder;
   class SubstitutedGenericBindings;
   class ArgumentDeduction;
@@ -178,7 +183,6 @@ class TypeChecker {
       CallExpression& call, Nonnull<const Value*> params,
       llvm::ArrayRef<FunctionType::GenericParameter> generic_params,
       llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings,
-      llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
       const ImplScope& impl_scope) -> ErrorOr<Success>;
 
   // Establish the `static_type` and `constant_value` of the
@@ -310,7 +314,7 @@ class TypeChecker {
 
   // Type check all the members of the implementation.
   auto TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
-                                const ImplScope& impl_scope)
+                                const ImplScope& enclosing_scope)
       -> ErrorOr<Success>;
 
   // This currently does nothing, but perhaps that will change in the future.
@@ -410,15 +414,15 @@ class TypeChecker {
 
   // Given an interface type, form a corresponding constraint type. The
   // interface must be a complete type.
-  auto MakeConstraintForInterface(SourceLocation source_loc,
-                                  Nonnull<const InterfaceType*> iface_type)
+  auto MakeConstraintForInterface(
+      SourceLocation source_loc, Nonnull<const InterfaceType*> iface_type) const
       -> ErrorOr<Nonnull<const ConstraintType*>>;
 
   // Convert a value that is expected to represent a constraint into a
   // `ConstraintType`.
   auto ConvertToConstraintType(SourceLocation source_loc,
                                std::string_view context,
-                               Nonnull<const Value*> constraint)
+                               Nonnull<const Value*> constraint) const
       -> ErrorOr<Nonnull<const ConstraintType*>>;
 
   // Given a list of constraint types, form the combined constraint.
@@ -444,26 +448,22 @@ class TypeChecker {
   auto LookupRewriteInTypeOf(Nonnull<const Value*> type,
                              Nonnull<const InterfaceType*> interface,
                              Nonnull<const Declaration*> member) const
-      -> std::optional<const ValueLiteral*>;
+      -> std::optional<const RewriteConstraint*>;
 
   // Given a witness value, look for a rewrite for the given associated
   // constant.
   auto LookupRewriteInWitness(Nonnull<const Witness*> witness,
                               Nonnull<const InterfaceType*> interface,
                               Nonnull<const Declaration*> member) const
-      -> std::optional<const ValueLiteral*>;
+      -> std::optional<const RewriteConstraint*>;
 
-  /*
-  ** Adds a member of a declaration to collected_members_
-  */
+  // Adds a member of a declaration to collected_members_
   auto CollectMember(Nonnull<const Declaration*> enclosing_decl,
                      Nonnull<const Declaration*> member_decl)
       -> ErrorOr<Success>;
 
-  /*
-  ** Fetches all direct and indirect members of a class or mixin declaration
-  ** stored within collected_members_
-  */
+  // Fetches all direct and indirect members of a class or mixin declaration
+  // stored within collected_members_
   auto FindCollectedMembers(Nonnull<const Declaration*> decl)
       -> CollectedMembersMap&;
 
@@ -474,6 +474,15 @@ class TypeChecker {
   GlobalMembersMap collected_members_;
 
   std::optional<Nonnull<llvm::raw_ostream*>> trace_stream_;
+
+  // The top-level ImplScope, containing `impl` declarations that should be
+  // usable from any context. This is used when we want to try to refine a
+  // symbolic witness into an impl witness during substitution.
+  std::optional<const ImplScope*> top_level_impl_scope_;
+
+  // `where` expressions that are currently being built. These may have
+  // rewrites that are not yet visible in any type.
+  std::vector<ConstraintTypeBuilder*> partial_where_expressions_;
 };
 
 }  // namespace Carbon

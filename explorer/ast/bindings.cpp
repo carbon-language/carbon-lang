@@ -36,7 +36,7 @@ auto Bindings::SymbolicIdentity(
     llvm::ArrayRef<Nonnull<const GenericBinding*>> bindings)
     -> Nonnull<const Bindings*> {
   auto* result = arena->New<Bindings>();
-  for (auto* binding : bindings) {
+  for (const auto* binding : bindings) {
     std::optional<Nonnull<const Value*>> witness;
     if (binding->impl_binding()) {
       witness = *binding->impl_binding().value()->symbolic_identity();

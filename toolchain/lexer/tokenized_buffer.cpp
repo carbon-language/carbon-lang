@@ -603,14 +603,14 @@ auto TokenizedBuffer::GetColumnNumber(Token token) const -> int {
 }
 
 auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
-  auto& token_info = GetTokenInfo(token);
+  const auto& token_info = GetTokenInfo(token);
   llvm::StringRef fixed_spelling = token_info.kind.GetFixedSpelling();
   if (!fixed_spelling.empty()) {
     return fixed_spelling;
   }
 
   if (token_info.kind == TokenKind::Error()) {
-    auto& line_info = GetLineInfo(token_info.token_line);
+    const auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
     return source_->text().substr(token_start, token_info.error_length);
   }
@@ -619,7 +619,7 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
   // separators the author included.
   if (token_info.kind == TokenKind::IntegerLiteral() ||
       token_info.kind == TokenKind::RealLiteral()) {
-    auto& line_info = GetLineInfo(token_info.token_line);
+    const auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
     llvm::Optional<LexedNumericLiteral> relexed_token =
         LexedNumericLiteral::Lex(source_->text().substr(token_start));
@@ -630,7 +630,7 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
   // Refer back to the source text to find the original spelling, including
   // escape sequences etc.
   if (token_info.kind == TokenKind::StringLiteral()) {
-    auto& line_info = GetLineInfo(token_info.token_line);
+    const auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
     llvm::Optional<LexedStringLiteral> relexed_token =
         LexedStringLiteral::Lex(source_->text().substr(token_start));
@@ -641,7 +641,7 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
   // Refer back to the source text to avoid needing to reconstruct the
   // spelling from the size.
   if (token_info.kind.IsSizedTypeLiteral()) {
-    auto& line_info = GetLineInfo(token_info.token_line);
+    const auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
     llvm::StringRef suffix =
         source_->text().substr(token_start + 1).take_while(IsDecimalDigit);
@@ -658,7 +658,7 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
 }
 
 auto TokenizedBuffer::GetIdentifier(Token token) const -> Identifier {
-  auto& token_info = GetTokenInfo(token);
+  const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::Identifier())
       << "The token must be an identifier!";
   return token_info.id;
@@ -666,21 +666,21 @@ auto TokenizedBuffer::GetIdentifier(Token token) const -> Identifier {
 
 auto TokenizedBuffer::GetIntegerLiteral(Token token) const
     -> const llvm::APInt& {
-  auto& token_info = GetTokenInfo(token);
+  const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::IntegerLiteral())
       << "The token must be an integer literal!";
   return literal_int_storage_[token_info.literal_index];
 }
 
 auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealLiteralValue {
-  auto& token_info = GetTokenInfo(token);
+  const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::RealLiteral())
       << "The token must be a real literal!";
 
   // Note that every real literal is at least three characters long, so we can
   // safely look at the second character to determine whether we have a
   // decimal or hexadecimal literal.
-  auto& line_info = GetLineInfo(token_info.token_line);
+  const auto& line_info = GetLineInfo(token_info.token_line);
   int64_t token_start = line_info.start + token_info.column;
   char second_char = source_->text()[token_start + 1];
   bool is_decimal = second_char != 'x' && second_char != 'b';
@@ -689,7 +689,7 @@ auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealLiteralValue {
 }
 
 auto TokenizedBuffer::GetStringLiteral(Token token) const -> llvm::StringRef {
-  auto& token_info = GetTokenInfo(token);
+  const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::StringLiteral())
       << "The token must be a string literal!";
   return literal_string_storage_[token_info.literal_index];
@@ -697,7 +697,7 @@ auto TokenizedBuffer::GetStringLiteral(Token token) const -> llvm::StringRef {
 
 auto TokenizedBuffer::GetTypeLiteralSize(Token token) const
     -> const llvm::APInt& {
-  auto& token_info = GetTokenInfo(token);
+  const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind.IsSizedTypeLiteral())
       << "The token must be a sized type literal!";
   return literal_int_storage_[token_info.literal_index];
@@ -705,7 +705,7 @@ auto TokenizedBuffer::GetTypeLiteralSize(Token token) const
 
 auto TokenizedBuffer::GetMatchedClosingToken(Token opening_token) const
     -> Token {
-  auto& opening_token_info = GetTokenInfo(opening_token);
+  const auto& opening_token_info = GetTokenInfo(opening_token);
   CARBON_CHECK(opening_token_info.kind.IsOpeningSymbol())
       << "The token must be an opening group symbol!";
   return opening_token_info.closing_token;
@@ -713,7 +713,7 @@ auto TokenizedBuffer::GetMatchedClosingToken(Token opening_token) const
 
 auto TokenizedBuffer::GetMatchedOpeningToken(Token closing_token) const
     -> Token {
-  auto& closing_token_info = GetTokenInfo(closing_token);
+  const auto& closing_token_info = GetTokenInfo(closing_token);
   CARBON_CHECK(closing_token_info.kind.IsClosingSymbol())
       << "The token must be an closing group symbol!";
   return closing_token_info.opening_token;
@@ -804,7 +804,7 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
                                  PrintWidths widths) const -> void {
   widths.Widen(GetTokenPrintWidths(token));
   int token_index = token.index_;
-  auto& token_info = GetTokenInfo(token);
+  const auto& token_info = GetTokenInfo(token);
   llvm::StringRef token_text = GetTokenText(token);
 
   // Output the main chunk using one format string. We have to do the
@@ -899,7 +899,7 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
   // Find the first line starting after the given location. Note that we can't
   // inspect `line.length` here because it is not necessarily correct for the
   // final line during lexing (but will be correct later for the parse tree).
-  auto line_it = std::partition_point(
+  auto* line_it = std::partition_point(
       buffer_->line_infos_.begin(), buffer_->line_infos_.end(),
       [offset](const LineInfo& line) { return line.start <= offset; });
   bool incomplete_line_info = last_line_lexed_to_column_ != nullptr &&

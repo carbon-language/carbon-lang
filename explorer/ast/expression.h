@@ -8,6 +8,7 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -876,7 +877,7 @@ class RewriteWhereClause : public WhereClause {
                               std::string member_name,
                               Nonnull<Expression*> replacement)
       : WhereClause(WhereClauseKind::RewriteWhereClause, source_loc),
-        member_name_(member_name),
+        member_name_(std::move(member_name)),
         replacement_(replacement) {}
 
   static auto classof(const AstNode* node) {
@@ -897,12 +898,12 @@ class RewriteWhereClause : public WhereClause {
 //
 // The first operand is rewritten to a generic binding, for example
 // `.Self:! AddableWith(i32)`, which may be used in the clauses.
-class WhereExpression : public Expression {
+class WhereExpression : public RewritableMixin<Expression> {
  public:
   explicit WhereExpression(SourceLocation source_loc,
                            Nonnull<GenericBinding*> self_binding,
                            std::vector<Nonnull<WhereClause*>> clauses)
-      : Expression(AstNodeKind::WhereExpression, source_loc),
+      : RewritableMixin(AstNodeKind::WhereExpression, source_loc),
         self_binding_(self_binding),
         clauses_(std::move(clauses)) {}
 

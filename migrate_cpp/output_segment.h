@@ -37,7 +37,7 @@ class OutputSegment {
   // instead. However, most other types we intend to support as they become
   // necessary.
   template <typename T>
-  static constexpr bool IsSupportedClangASTNodeType() {
+  static constexpr auto IsSupportedClangASTNodeType() -> bool {
     return std::is_convertible_v<T*, clang::Stmt*> ||
            std::is_convertible_v<T*, clang::Decl*>;
   }
@@ -62,7 +62,7 @@ class OutputSegment {
   friend struct OutputWriter;
 
   template <typename T>
-  T& AssertNotNull(T* ptr) {
+  auto AssertNotNull(T* ptr) -> T& {
     CARBON_CHECK(ptr != nullptr);
     return *ptr;
   }

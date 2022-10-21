@@ -33,29 +33,27 @@ static constexpr std::string_view AnonymousName = "_";
 template <typename NodeType, typename = void>
 static constexpr bool ImplementsValueNode = false;
 
-/*
-  ValueNode is an interface implemented by AstNodes that can be associated
-  with a value, such as declarations and bindings. The interface consists of
-  the following methods:
-
-  // Returns the constant associated with the node.
-  // This is called by the interpreter, not the type checker.
-  auto constant_value() const -> std::optional<Nonnull<const Value*>>;
-
-  // Returns the symbolic compile-time identity of the node.
-  // This is called by the type checker, not the interpreter.
-  auto symbolic_identity() const -> std::optional<Nonnull<const Value*>>;
-
-  // Returns the static type of an IdentifierExpression that names *this.
-  auto static_type() const -> const Value&;
-
-  // Returns the value category of an IdentifierExpression that names *this.
-  auto value_category() const -> ValueCategory;
-
-  // Print the node's identity (e.g. its name).
-  void PrintID(llvm::raw_ostream& out) const;
-
-*/
+// ValueNode is an interface implemented by AstNodes that can be associated
+// with a value, such as declarations and bindings. The interface consists of
+// the following methods:
+//
+// // Returns the constant associated with the node.
+// // This is called by the interpreter, not the type checker.
+// auto constant_value() const -> std::optional<Nonnull<const Value*>>;
+//
+// // Returns the symbolic compile-time identity of the node.
+// // This is called by the type checker, not the interpreter.
+// auto symbolic_identity() const -> std::optional<Nonnull<const Value*>>;
+//
+// // Returns the static type of an IdentifierExpression that names *this.
+// auto static_type() const -> const Value&;
+//
+// // Returns the value category of an IdentifierExpression that names *this.
+// auto value_category() const -> ValueCategory;
+//
+// // Print the node's identity (e.g. its name).
+// void PrintID(llvm::raw_ostream& out) const;
+//
 // TODO: consider turning the above documentation into real code, as sketched
 // at https://godbolt.org/z/186oEozhc
 

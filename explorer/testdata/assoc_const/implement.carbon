@@ -16,7 +16,7 @@ interface Vector {
 class Point {
   var x: i32;
   var y: i32;
-  impl as Vector where .Dim == 2 {}
+  impl as Vector where .Dim = 2 {}
 }
 
 fn Main() -> i32 {

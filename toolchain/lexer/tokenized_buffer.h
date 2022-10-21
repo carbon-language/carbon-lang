@@ -47,7 +47,7 @@ class TokenizedBufferToken {
  public:
   using Token = TokenizedBufferToken;
 
-  TokenizedBufferToken() = default;
+  TokenizedBufferToken() : TokenizedBufferToken(-1) {}
 
   friend auto operator==(Token lhs, Token rhs) -> bool {
     return lhs.index_ == rhs.index_;

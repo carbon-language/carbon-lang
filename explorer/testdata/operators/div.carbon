@@ -11,7 +11,7 @@ package ExplorerTest api;
 
 class A { var n: i32; }
 
-external impl A as DivWith(i32) where .Result == A {
+external impl A as DivWith(i32) where .Result = A {
   fn Op[me: Self](rhs: i32) -> A { return {.n = me.n / rhs}; }
 }
 
