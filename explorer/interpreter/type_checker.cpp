@@ -2073,7 +2073,7 @@ auto TypeChecker::LookupRewriteInTypeOf(
       // within the constant's type. Just say there are no rewrites yet.
       return std::nullopt;
     }
-    // The follows is an expanded version of
+    // The following is an expanded version of
     //  return LookupRewrite(GetTypeForAssociatedConstant(assoc_const),
     //                       interface, member);
     // where we substitute as little as possible to try to avoid infinite

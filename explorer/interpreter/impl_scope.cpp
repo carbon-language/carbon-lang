@@ -157,12 +157,11 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
       for (auto& rewrite : rewrites) {
         Nonnull<const Value*> constant =
             type_checker.Substitute(local_bindings, rewrite.constant);
-        Nonnull<const Value*> replacement = rewrite.converted_replacement;
-        Nonnull<const Value*> value =
-            type_checker.Substitute(local_bindings, replacement);
-        CARBON_RETURN_IF_ERROR(
-            CheckEqualOrDiagnose(source_loc, rewrite.constant, constant,
-                                 replacement, value, &equality_ctx));
+        Nonnull<const Value*> value = type_checker.Substitute(
+            local_bindings, rewrite.converted_replacement);
+        CARBON_RETURN_IF_ERROR(CheckEqualOrDiagnose(
+            source_loc, rewrite.constant, constant,
+            rewrite.converted_replacement, value, &equality_ctx));
       }
     }
     return type_checker.MakeConstraintWitness(std::move(witnesses));

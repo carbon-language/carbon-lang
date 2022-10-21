@@ -52,7 +52,6 @@ class TypeChecker {
                      Nonnull<const Value*> constraint) const
       -> Nonnull<const Witness*>;
 
-
   // If `impl` can be an implementation of interface `iface` for the given
   // `type`, then return the witness for this `impl`. Otherwise return
   // std::nullopt.
