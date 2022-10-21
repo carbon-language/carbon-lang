@@ -60,14 +60,20 @@ class TypeChecker {
                  SourceLocation source_loc) const
       -> std::optional<Nonnull<const Witness*>>;
 
+  // Return the declaration of the member with the given name, from the class
+  // and its parents
+  auto FindMemberWithParents(std::string_view name,
+                             Nonnull<const NominalClassType*> enclosing_type)
+      -> ErrorOr<std::optional<
+          std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>>;
+
   // Finds the direct or indirect member of a class or mixin by its name and
   // returns the member's declaration and type. Indirect members are members of
   // mixins that are mixed by member mix declarations. If the member is an
   // indirect member from a mix declaration, then the Self type variable within
   // the member's type is substituted with the type of the enclosing declaration
   // containing the mix declaration.
-  auto FindMixedMemberAndType(SourceLocation source_loc,
-                              const std::string_view& name,
+  auto FindMixedMemberAndType(const std::string_view& name,
                               llvm::ArrayRef<Nonnull<Declaration*>> members,
                               Nonnull<const Value*> enclosing_type)
       -> ErrorOr<std::optional<

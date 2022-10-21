@@ -8,13 +8,13 @@
 
 package ExplorerTest api;
 
-class A {
+class C {
   fn F() {}
 }
 
-class B extends A {
-  fn F() {}
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_class_extends.carbon:[[@LINE+1]]: Class extension with `extends` is not supported yet
+class D extends C {
+  fn G() {}
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_extends_final_class.carbon:[[@LINE+1]]: Base class `C` is `final` and cannot inherited. Add the `base` or `abstract` class prefix to `C` to allow it to be inherited
 }
 
 fn Main() -> i32 {

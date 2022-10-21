@@ -8,9 +8,10 @@
 
 package ExplorerTest api;
 
-base class C {
-  fn F() {}
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_base_class.carbon:[[@LINE+1]]: Class prefixes `base` and `abstract` are not supported yet
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_extends_non_class.carbon:[[@LINE+1]]: Expected a type, but got 3
+class C extends 3 {
+  var x: i32;
+  var y: i32;
 }
 
 fn Main() -> i32 {

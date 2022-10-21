@@ -620,11 +620,14 @@ class NominalClassType : public Value {
 
   // Construct a fully instantiated generic class type to represent the
   // run-time type of an object.
-  explicit NominalClassType(Nonnull<const ClassDeclaration*> declaration,
-                            Nonnull<const Bindings*> bindings)
+  explicit NominalClassType(
+      Nonnull<const ClassDeclaration*> declaration,
+      Nonnull<const Bindings*> bindings,
+      std::optional<Nonnull<const NominalClassType*>> base = std::nullopt)
       : Value(Kind::NominalClassType),
         declaration_(declaration),
-        bindings_(bindings) {}
+        bindings_(bindings),
+        base_(base) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassType;
@@ -633,6 +636,10 @@ class NominalClassType : public Value {
   auto declaration() const -> const ClassDeclaration& { return *declaration_; }
 
   auto bindings() const -> const Bindings& { return *bindings_; }
+
+  auto base() const -> std::optional<Nonnull<const NominalClassType*>> {
+    return base_;
+  }
 
   auto type_args() const -> const BindingMap& { return bindings_->args(); }
 
@@ -647,14 +654,10 @@ class NominalClassType : public Value {
     return declaration_->type_params().has_value() && type_args().empty();
   }
 
-  // Returns the value of the function named `name` in this class, or
-  // nullopt if there is no such function.
-  auto FindFunction(std::string_view name) const
-      -> std::optional<Nonnull<const FunctionValue*>>;
-
  private:
   Nonnull<const ClassDeclaration*> declaration_;
   Nonnull<const Bindings*> bindings_ = Bindings::None();
+  std::optional<Nonnull<const NominalClassType*>> base_;
 };
 
 class MixinPseudoType : public Value {
@@ -691,6 +694,18 @@ class MixinPseudoType : public Value {
   Nonnull<const MixinDeclaration*> declaration_;
   Nonnull<const Bindings*> bindings_ = Bindings::None();
 };
+
+// Returns the value of the function named `name` in this class, or
+// nullopt if there is no such function.
+auto FindFunction(std::string_view name,
+                  llvm::ArrayRef<Nonnull<Declaration*>> members)
+    -> std::optional<Nonnull<const FunctionValue*>>;
+
+// Returns the value of the function named `name` in this class and its
+// parents, or nullopt if there is no such function.
+auto FindFunctionWithParents(std::string_view name,
+                             const ClassDeclaration& class_decl)
+    -> std::optional<Nonnull<const FunctionValue*>>;
 
 // Return the declaration of the member with the given name.
 auto FindMember(std::string_view name,
