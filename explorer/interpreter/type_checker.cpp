@@ -1169,21 +1169,6 @@ class TypeChecker::ConstraintTypeBuilder {
 
   auto AddRewriteConstraint(SourceLocation source_loc,
                             RewriteConstraint rewrite) -> ErrorOr<Success> {
-    for (RewriteConstraint existing : rewrite_constraints_) {
-      if (ValueEqual(existing.constant, rewrite.constant, std::nullopt)) {
-        if (ValueEqual(existing.unconverted_replacement,
-                       rewrite.unconverted_replacement, std::nullopt) &&
-            TypeEqual(existing.unconverted_replacement_type,
-                      rewrite.unconverted_replacement_type, std::nullopt)) {
-          return Success();
-        }
-        return ProgramError(source_loc)
-               << "multiple different rewrites for `" << *rewrite.constant
-               << "`:\n"
-               << "  " << *existing.unconverted_replacement << "\n"
-               << "  " << *rewrite.unconverted_replacement;
-      }
-    }
     rewrite_constraints_.push_back(rewrite);
     return Success();
   }
@@ -1342,8 +1327,41 @@ class TypeChecker::ConstraintTypeBuilder {
   // This should be done when attaching constraints to a declared name, not
   // when simply forming a constraint type for later use in the type of a
   // declared name.
-  auto Resolve(TypeChecker& type_checker, SourceLocation source_loc)
-      -> ErrorOr<Success> {
+  auto Resolve(TypeChecker& type_checker, SourceLocation source_loc,
+               const ImplScope& impl_scope) -> ErrorOr<Success> {
+    // Check for conflicting rewrites.
+    // TODO: Avoid the quadratic behavior.
+    for (int i = 0; i != static_cast<int>(rewrite_constraints_.size()); ++i) {
+      auto& rewrite_a = rewrite_constraints_[i];
+      for (auto rewrite_b :
+           llvm::makeArrayRef(rewrite_constraints_).drop_front(i + 1)) {
+        if (ValueEqual(rewrite_a.constant, rewrite_b.constant, std::nullopt)) {
+          if (ValueEqual(rewrite_a.unconverted_replacement,
+                         rewrite_b.unconverted_replacement, std::nullopt) &&
+              TypeEqual(rewrite_a.unconverted_replacement_type,
+                        rewrite_b.unconverted_replacement_type, std::nullopt)) {
+            // We don't need to do any more checks for this `rewrite_a` value.
+            // `rewrite_b` will be compared against the next matching value,
+            // and so on.
+            break;
+          }
+          return ProgramError(source_loc)
+                 << "multiple different rewrites for `" << *rewrite_a.constant
+                 << "`:\n"
+                 << "  " << *rewrite_a.unconverted_replacement << "\n"
+                 << "  " << *rewrite_b.unconverted_replacement;
+        }
+      }
+    }
+
+    // Compute the converted replacement values for rewrites.
+    for (auto& rewrite : rewrite_constraints_) {
+      CARBON_ASSIGN_OR_RETURN(
+          rewrite.converted_replacement,
+          type_checker.GetConvertedReplacementForRewriteConstraint(
+              source_loc, rewrite, impl_scope));
+    }
+
     // Rewrite `Self.X is Y` to `Replacement is Y` if we have a rewrite for
     // `Self.X`.
     // TODO: Properly apply rewrites throughout all the constraints. Check for
@@ -1355,8 +1373,7 @@ class TypeChecker::ConstraintTypeBuilder {
         if (const auto* assoc =
                 dyn_cast<AssociatedConstant>(impl_constraint.type)) {
           for (const auto& rewrite : rewrite_constraints_) {
-            if (ValueEqual(assoc, rewrite.constant, std::nullopt) &&
-                rewrite.converted_replacement) {
+            if (ValueEqual(assoc, rewrite.constant, std::nullopt)) {
               impl_constraint.type = *rewrite.converted_replacement;
               performed_rewrite = true;
             }
@@ -2006,8 +2023,7 @@ static auto LookupRewrite(llvm::ArrayRef<RewriteConstraint> rewrites,
 
   for (auto& rewrite : rewrites) {
     if (ValueEqual(interface, &rewrite.constant->interface(), std::nullopt) &&
-        // TODO: Using name comparison here seems brittle.
-        GetName(*member) == GetName(rewrite.constant->constant())) {
+        member == &rewrite.constant->constant()) {
       // A ConstraintType can only have one rewrite per (interface, member)
       // pair, so we don't need to check the rest.
       return &rewrite;
@@ -2095,8 +2111,41 @@ auto TypeChecker::LookupRewriteInTypeOf(
   // `U` to find rewrites.
   // TODO: This substitution can lead to infinite recursion.
   if (const auto* assoc_const = dyn_cast<AssociatedConstant>(type)) {
-    return LookupRewrite(GetTypeForAssociatedConstant(assoc_const), interface,
-                         member);
+    if (!assoc_const->constant().has_static_type()) {
+      // We looked for a rewrite before we finished type-checking the
+      // associated constant. This can happens when a use of `.Self` occurs
+      // within the constant's type. Just say there are no rewrites yet.
+      return std::nullopt;
+    }
+    // The follows is an expanded version of
+    //  return LookupRewrite(GetTypeForAssociatedConstant(assoc_const),
+    //                       interface, member);
+    // where we substitute as little as possible to try to avoid infinite
+    // recursion.
+    if (auto* constraint = dyn_cast<ConstraintType>(&assoc_const->constant().static_type())) {
+      for (auto rewrite : constraint->rewrite_constraints()) {
+        if (&rewrite.constant->constant() != &assoc_const->constant()) {
+          continue;
+        }
+        Bindings bindings = assoc_const->interface().bindings();
+        bindings.Add(assoc_const->interface().declaration().self(),
+                     &assoc_const->base(), &assoc_const->witness());
+        if (ValueEqual(interface,
+                       Substitute(bindings, &rewrite.constant->interface()),
+                       std::nullopt)) {
+          RewriteConstraint substituted = {
+              // Not substituted, but our callers don't need it.
+              .constant = rewrite.constant,
+              .unconverted_replacement =
+                  Substitute(bindings, rewrite.unconverted_replacement),
+              .unconverted_replacement_type =
+                  Substitute(bindings, rewrite.unconverted_replacement_type),
+              .converted_replacement =
+                  Substitute(bindings, *rewrite.converted_replacement)};
+          return arena_->New<RewriteConstraint>(substituted);
+        }
+      }
+    }
   }
 
   return std::nullopt;
@@ -3307,10 +3356,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 .unconverted_replacement_type =
                     &rewrite_clause.replacement().static_type(),
                 .converted_replacement = std::nullopt};
-            CARBON_ASSIGN_OR_RETURN(
-                rewrite.converted_replacement,
-                GetConvertedReplacementForRewriteConstraint(
-                    rewrite_clause.source_loc(), rewrite, impl_scope));
             // Add the rewrite constraint.
             CARBON_RETURN_IF_ERROR(builder.AddRewriteConstraint(
                 rewrite_clause.source_loc(), rewrite));
@@ -3675,12 +3720,14 @@ auto TypeChecker::TypeCheckGenericBinding(GenericBinding& binding,
     // Substitute the VariableType as `.Self` of the constraint to form the
     // resolved type of the binding. Eg, `T:! X where .Self is Y` resolves
     // to `T:! <constraint T is X and T is Y>`.
+    auto* binding_self_type = arena_->New<VariableType>(&binding);
     ConstraintTypeBuilder builder(arena_, &binding, impl_binding);
     CARBON_RETURN_IF_ERROR(
         builder.AddAndSubstitute(*this, binding.source_loc(), constraint,
-                                 symbolic_value, witness, Bindings(),
+                                 binding_self_type, witness, Bindings(),
                                  /*add_lookup_contexts=*/true));
-    CARBON_RETURN_IF_ERROR(builder.Resolve(*this, binding.type().source_loc()));
+    CARBON_RETURN_IF_ERROR(
+        builder.Resolve(*this, binding.type().source_loc(), impl_scope));
     type = std::move(builder).Build();
 
     BringImplIntoScope(impl_binding, impl_scope);
@@ -4706,8 +4753,8 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
         *this, impl_decl->source_loc(), implemented_constraint, impl_type_value,
         builder.GetSelfWitness(), Bindings(),
         /*add_lookup_contexts=*/true));
-    CARBON_RETURN_IF_ERROR(
-        builder.Resolve(*this, impl_decl->interface().source_loc()));
+    CARBON_RETURN_IF_ERROR(builder.Resolve(
+        *this, impl_decl->interface().source_loc(), impl_scope));
     constraint_type = std::move(builder).Build();
     impl_decl->set_constraint_type(constraint_type);
   }
