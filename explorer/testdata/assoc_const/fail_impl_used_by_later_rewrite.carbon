@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -17,7 +17,7 @@ interface Y(T:! Type) {
 interface Z {
   // The `i32 is X(.Self)` constraint is indirectly required by
   // specifying that `.M = i32`.
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/indirect_constraints.carbon:[[@LINE+1]]: could not find implementation of interface X(T = N) for i32
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_impl_used_by_later_rewrite.carbon:[[@LINE+1]]: could not find implementation of interface X(T = N) for i32
   let N:! Y(.Self) where i32 is X(.Self) and .M = i32;
 }
 

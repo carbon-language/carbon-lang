@@ -559,8 +559,6 @@ auto Interpreter::EvalAssociatedConstant(
   for (auto& rewrite : constraint->rewrite_constraints()) {
     if (&rewrite.constant->constant() == &assoc->constant() &&
         TypeEqual(&rewrite.constant->interface(), interface, std::nullopt)) {
-      CARBON_CHECK(*rewrite.converted_replacement)
-          << "impl has no value for replacement for " << *rewrite.constant;
       // TODO: The value might depend on the parameters of the impl. We need to
       // substitute impl_witness->type_args() into the value.
       result = rewrite.converted_replacement;

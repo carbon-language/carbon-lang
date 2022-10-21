@@ -443,11 +443,6 @@ class TypeChecker {
   auto GetTypeForAssociatedConstant(
       Nonnull<const AssociatedConstant*> assoc) const -> Nonnull<const Value*>;
 
-  // Gets the converted replacement value for a rewrite constraint.
-  auto GetConvertedReplacementForRewriteConstraint(
-      SourceLocation source_loc, const RewriteConstraint& rewrite,
-      const ImplScope& impl_scope) -> ErrorOr<Nonnull<const Value*>>;
-
   // Look up a member name in a constraint, which might be a single interface or
   // a compound constraint.
   auto LookupInConstraint(SourceLocation source_loc,

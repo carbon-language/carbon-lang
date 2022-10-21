@@ -783,7 +783,7 @@ struct RewriteConstraint {
   Nonnull<const Value*> unconverted_replacement_type;
   // The replacement after conversion to the type of the associated constant,
   // if this has been determined.
-  std::optional<Nonnull<const Value*>> converted_replacement;
+  Nonnull<const Value*> converted_replacement;
 };
 
 // A context in which we might look up a name.
