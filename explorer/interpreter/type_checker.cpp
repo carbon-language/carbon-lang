@@ -2078,7 +2078,8 @@ auto TypeChecker::LookupRewriteInTypeOf(
     //                       interface, member);
     // where we substitute as little as possible to try to avoid infinite
     // recursion.
-    if (auto* constraint = dyn_cast<ConstraintType>(&assoc_const->constant().static_type())) {
+    if (auto* constraint =
+            dyn_cast<ConstraintType>(&assoc_const->constant().static_type())) {
       for (auto rewrite : constraint->rewrite_constraints()) {
         if (&rewrite.constant->constant() != &assoc_const->constant()) {
           continue;
