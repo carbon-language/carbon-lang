@@ -1322,10 +1322,9 @@ class TypeChecker::ConstraintTypeBuilder {
   // declared name.
   auto Resolve(TypeChecker& type_checker, SourceLocation source_loc,
                const ImplScope& impl_scope) -> ErrorOr<Success> {
-    // TODO: Rename this list to something more general.
-    type_checker.partial_where_expressions_.push_back(this);
-    auto pop_partial_where = llvm::make_scope_exit(
-        [&] { type_checker.partial_where_expressions_.pop_back(); });
+    type_checker.partial_constraint_types_.push_back(this);
+    auto pop_partial_constraint_type = llvm::make_scope_exit(
+        [&] { type_checker.partial_constraint_types_.pop_back(); });
 
     // Check for conflicting rewrites.
     // TODO: Avoid the quadratic behavior.
@@ -2042,13 +2041,14 @@ auto TypeChecker::LookupRewriteInTypeOf(
     Nonnull<const Value*> type, Nonnull<const InterfaceType*> interface,
     Nonnull<const Declaration*> member) const
     -> std::optional<const RewriteConstraint*> {
-  // If the type is the self type of an incomplete `where` expression, find its
-  // set of rewrites. These rewrites may not be complete -- earlier rewrites
-  // will have been applied to later ones, but not vice versa -- but those are
-  // the intended semantics in this case.
-  for (auto* where : partial_where_expressions_) {
-    if (ValueEqual(type, where->GetSelfType(), std::nullopt)) {
-      return LookupRewrite(where->rewrite_constraints(), interface, member);
+  // If the type is the self type of an incomplete `where` expression or a
+  // constraint type we're in the process of resolving, find its set of
+  // rewrites. These rewrites may not be complete -- earlier rewrites will have
+  // been applied to later ones, but not vice versa -- but those are the
+  // intended semantics in this case.
+  for (auto* builder : partial_constraint_types_) {
+    if (ValueEqual(type, builder->GetSelfType(), std::nullopt)) {
+      return LookupRewrite(builder->rewrite_constraints(), interface, member);
     }
   }
 
@@ -3208,9 +3208,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
 
       // Keep track of the builder so that we can look up its rewrites while
       // processing later constraints.
-      partial_where_expressions_.push_back(&builder);
-      auto pop_partial_where =
-          llvm::make_scope_exit([&] { partial_where_expressions_.pop_back(); });
+      partial_constraint_types_.push_back(&builder);
+      auto pop_partial_constraint_type =
+          llvm::make_scope_exit([&] { partial_constraint_types_.pop_back(); });
 
       // Note, we don't want to call `TypeCheckPattern` here. Most of the setup
       // for the self binding is instead done by the `ConstraintTypeBuilder`.
