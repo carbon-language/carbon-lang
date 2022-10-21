@@ -974,10 +974,15 @@ class Square {
   fn GetArea[me: Self]() -> f32 {
     // ✅ OK: performs name lookup on `me`.
     return me.size * me.size;
-    // ❌ Error: an instance is required.
+    // ❌ Error: finds `Square.size`, but an instance is required.
     return size * size;
     // ❌ Error: an instance is required.
     return Square.size * Square.size;
+    // ✅ OK: performs instance binding with `me`.
+    return me.(Square.size) * me.(Square.size);
+    // ✅ OK: uses unqualified name lookup to find `Square.size`, then performs
+    // instance binding with `me`.
+    return me.(size) * me.(size);
   }
 
   fn GetDoubled[me: Self]() -> Square {
