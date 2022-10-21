@@ -378,10 +378,8 @@ static auto GetClassHierarchy(const NominalClassType& class_type)
     -> std::vector<Nonnull<const NominalClassType*>> {
   Nonnull<const NominalClassType*> curr_class_type = &class_type;
   std::vector<Nonnull<const NominalClassType*>> all_classes{curr_class_type};
-  while (curr_class_type->declaration().base().has_value()) {
-    const auto type_of_class = llvm::dyn_cast<TypeOfClassType>(
-        &curr_class_type->declaration().base().value()->static_type());
-    curr_class_type = &type_of_class->class_type();
+  while (curr_class_type->base().has_value()) {
+    curr_class_type = curr_class_type->base().value();
     all_classes.push_back(curr_class_type);
   }
   return all_classes;
@@ -2225,8 +2223,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           const auto& t_class = cast<NominalClassType>(object_type);
           CARBON_ASSIGN_OR_RETURN(
               const auto res,
-              FindMemberWithParents(access.member_name(), t_class.declaration(),
-                                    &t_class));
+              FindMemberWithParents(access.member_name(), &t_class));
           if (res.has_value()) {
             auto [member_type, member] = res.value();
             Nonnull<const Value*> field_type =
@@ -4103,13 +4100,13 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   }
 
   std::optional<Nonnull<const NominalClassType*>> base_class;
-  if (class_decl->base().has_value()) {
-    Nonnull<Expression*> base_class_expr = *class_decl->base();
-    CARBON_RETURN_IF_ERROR(TypeCheckExp(base_class_expr, class_scope));
-    const auto& base_type = base_class_expr->static_type();
-    switch (base_type.kind()) {
-      case Value::Kind::TypeOfClassType:
-        base_class = &cast<TypeOfClassType>(base_type).class_type();
+  if (class_decl->base_expr().has_value()) {
+    Nonnull<Expression*> base_class_expr = *class_decl->base_expr();
+    CARBON_ASSIGN_OR_RETURN(const auto base_type,
+                            TypeCheckTypeExp(base_class_expr, class_scope));
+    switch (base_type->kind()) {
+      case Value::Kind::NominalClassType:
+        base_class = cast<NominalClassType>(base_type);
         if (base_class.value()->declaration().extensibility() ==
             ClassExtensibility::None) {
           return ProgramError(class_decl->source_loc())
@@ -4119,6 +4116,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                  << base_class.value()->declaration().name()
                  << "` to allow it to be inherited";
         }
+        class_decl->set_base(&base_class.value()->declaration());
         break;
       default:
         return ProgramError(class_decl->source_loc())
@@ -5132,24 +5130,19 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
   return Success();
 }
 
-auto TypeChecker::FindMemberWithParents(std::string_view name,
-                                        const ClassDeclaration& class_decl,
-                                        Nonnull<const Value*> enclosing_type)
+auto TypeChecker::FindMemberWithParents(
+    std::string_view name, Nonnull<const NominalClassType*> class_type)
     -> ErrorOr<std::optional<
         std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>> {
   CARBON_ASSIGN_OR_RETURN(
       const auto res,
-      FindMixedMemberAndType(name, class_decl.members(), enclosing_type));
+      FindMixedMemberAndType(name, class_type->declaration().members(),
+                             class_type));
   if (res.has_value()) {
     return res;
   }
-  if (const auto base = class_decl.base(); base.has_value()) {
-    const auto* t_parent_class =
-        dyn_cast<TypeOfClassType>(&base.value()->static_type());
-    if (t_parent_class) {
-      return FindMemberWithParents(
-          name, t_parent_class->class_type().declaration(), t_parent_class);
-    }
+  if (const auto base = class_type->base(); base.has_value()) {
+    return FindMemberWithParents(name, base.value());
   }
   return {std::nullopt};
 }

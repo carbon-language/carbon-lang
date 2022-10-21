@@ -1044,13 +1044,8 @@ auto FindFunctionWithParents(std::string_view name,
   if (auto fun = FindFunction(name, class_decl.members()); fun.has_value()) {
     return fun;
   }
-  if (class_decl.base()) {
-    const auto* t_parent_class =
-        dyn_cast<TypeOfClassType>(&class_decl.base().value()->static_type());
-    if (t_parent_class) {
-      return FindFunctionWithParents(
-          name, t_parent_class->class_type().declaration());
-    }
+  if (class_decl.base().has_value()) {
+    return FindFunctionWithParents(name, *class_decl.base().value());
   }
   return std::nullopt;
 }

@@ -260,7 +260,7 @@ class ClassDeclaration : public Declaration {
         extensibility_(extensibility),
         self_decl_(self_decl),
         type_params_(type_params),
-        base_(base),
+        base_expr_(base),
         members_(std::move(members)) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -275,7 +275,9 @@ class ClassDeclaration : public Declaration {
   auto type_params() -> std::optional<Nonnull<TuplePattern*>> {
     return type_params_;
   }
-  auto base() const -> std::optional<Nonnull<Expression*>> { return base_; }
+  auto base_expr() const -> std::optional<Nonnull<Expression*>> {
+    return base_expr_;
+  }
   auto self() const -> Nonnull<const SelfDeclaration*> { return self_decl_; }
   auto self() -> Nonnull<SelfDeclaration*> { return self_decl_; }
 
@@ -293,14 +295,22 @@ class ClassDeclaration : public Declaration {
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
+  auto base() const -> std::optional<Nonnull<const ClassDeclaration*>> {
+    return base_;
+  }
+  void set_base(Nonnull<const ClassDeclaration*> base_decl) {
+    base_ = base_decl;
+  }
+
  private:
   std::string name_;
   ClassExtensibility extensibility_;
   Nonnull<SelfDeclaration*> self_decl_;
   std::optional<Nonnull<TuplePattern*>> type_params_;
-  std::optional<Nonnull<Expression*>> base_;
+  std::optional<Nonnull<Expression*>> base_expr_;
   std::vector<Nonnull<Declaration*>> members_;
   std::optional<Nonnull<FunctionDeclaration*>> destructor_;
+  std::optional<Nonnull<const ClassDeclaration*>> base_;
 };
 
 // EXPERIMENTAL MIXIN FEATURE
