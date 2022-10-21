@@ -1010,14 +1010,6 @@ example:
 ```carbon
 class List {
   // ❌ Error: `Iterator` has not yet been defined.
-  fn Iterate() -> Iterator*;
-  fn Iterate() -> Iterator;
-
-  class Iterator;
-
-  // ✅ OK: A forward declaration is sufficient to produce a pointer.
-  fn Iterate() -> Iterator*;
-  // ❌ Error: A forward declaration cannot be used to return a value.
   fn Iterate() -> Iterator;
 
   class Iterator {
