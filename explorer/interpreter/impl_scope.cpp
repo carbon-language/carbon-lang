@@ -157,9 +157,6 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
       for (auto& rewrite : rewrites) {
         Nonnull<const Value*> constant =
             type_checker.Substitute(local_bindings, rewrite.constant);
-        // TODO: Can this happen? `i32 as (A where .T = 5)` seems like it
-        // should hit this case. Should the caller resolve the constraint in
-        // that case?
         CARBON_CHECK(rewrite.converted_replacement)
             << "missing converted replacement when resolving constraint";
         Nonnull<const Value*> replacement = *rewrite.converted_replacement;

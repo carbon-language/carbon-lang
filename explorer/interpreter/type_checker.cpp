@@ -1235,7 +1235,6 @@ class TypeChecker::ConstraintTypeBuilder {
           local_bindings, &rewrite_constraint.constant->interface()));
       std::optional<Nonnull<const Value*>> converted_value;
       if (auto old_converted = rewrite_constraint.converted_replacement) {
-        // TODO: Figure out if we should substitute into this or recreated it.
         converted_value =
             type_checker.Substitute(local_bindings, *old_converted);
       }
@@ -1265,6 +1264,7 @@ class TypeChecker::ConstraintTypeBuilder {
         AddEqualityConstraint({.values = {constant_value, *converted_value}});
       } else {
         // TODO: We still need an equality constraint here.
+        CARBON_FATAL() << "unhandled case: merging an unresolved constraint";
       }
     }
 
