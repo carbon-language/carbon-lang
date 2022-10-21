@@ -1128,13 +1128,13 @@ class TypeChecker::ConstraintTypeBuilder {
 
   // Produces a type that refers to the `.Self` type of the constraint.
   auto GetSelfType() const -> Nonnull<const Value*> {
-    return &self_binding_->value();
+    return *self_binding_->symbolic_identity();
   }
 
   // Gets a witness that `.Self` implements the eventual constraint type built
   // by this builder.
   auto GetSelfWitness() const -> Nonnull<const Witness*> {
-    return cast<Witness>(impl_binding_->symbolic_identity().value());
+    return cast<Witness>(*impl_binding_->symbolic_identity());
   }
 
   // Adds an `impl` constraint -- `T is C` if not already present.
@@ -1195,6 +1195,12 @@ class TypeChecker::ConstraintTypeBuilder {
                         Nonnull<const Witness*> self_witness,
                         const Bindings& bindings, bool add_lookup_contexts)
       -> ErrorOr<Success> {
+    if (type_checker.trace_stream_) {
+      **type_checker.trace_stream_
+          << "merging " << *constraint << " into constraint with "
+          << *constraint->self_binding() << " ~> " << *self << "\n";
+    }
+
     // First substitute into the impl bindings to form the full witness for
     // the constraint type.
     std::vector<Nonnull<const Witness*>> witnesses;
@@ -1329,6 +1335,11 @@ class TypeChecker::ConstraintTypeBuilder {
   // declared name.
   auto Resolve(TypeChecker& type_checker, SourceLocation source_loc,
                const ImplScope& impl_scope) -> ErrorOr<Success> {
+    // TODO: Rename this list to something more general.
+    type_checker.partial_where_expressions_.push_back(this);
+    auto pop_partial_where = llvm::make_scope_exit(
+        [&] { type_checker.partial_where_expressions_.pop_back(); });
+
     // Check for conflicting rewrites.
     // TODO: Avoid the quadratic behavior.
     for (int i = 0; i != static_cast<int>(rewrite_constraints_.size()); ++i) {
@@ -1360,6 +1371,11 @@ class TypeChecker::ConstraintTypeBuilder {
           rewrite.converted_replacement,
           type_checker.GetConvertedReplacementForRewriteConstraint(
               source_loc, rewrite, impl_scope));
+      if (type_checker.trace_stream_) {
+        **type_checker.trace_stream_ << "resolved value for "
+                                     << *rewrite.constant << " as "
+                                     << **rewrite.converted_replacement << "\n";
+      }
     }
 
     // Rewrite `Self.X is Y` to `Replacement is Y` if we have a rewrite for
@@ -2087,6 +2103,16 @@ auto TypeChecker::LookupRewriteInTypeOf(
     Nonnull<const Value*> type, Nonnull<const InterfaceType*> interface,
     Nonnull<const Declaration*> member) const
     -> std::optional<const RewriteConstraint*> {
+  // If the type is the self type of an incomplete `where` expression, find its
+  // set of rewrites. These rewrites may not be complete -- earlier rewrites
+  // will have been applied to later ones, but not vice versa -- but those are
+  // the intended semantics in this case.
+  for (auto* where : partial_where_expressions_) {
+    if (ValueEqual(type, where->GetSelfType(), std::nullopt)) {
+      return LookupRewrite(where->rewrite_constraints(), interface, member);
+    }
+  }
+
   // Given `(T:! C).Y`, look in `C` for rewrites.
   if (const auto* var_type = dyn_cast<VariableType>(type)) {
     if (!var_type->binding().has_static_type()) {
@@ -2094,15 +2120,6 @@ auto TypeChecker::LookupRewriteInTypeOf(
       // binding. This happens when forming the type of a generic binding. Just
       // say there are no rewrites yet.
       return std::nullopt;
-    }
-    // If the type is the self type of an incomplete `where` expression, find
-    // its set of rewrites. These rewrites may not be complete -- earlier
-    // rewrites will have been applied to later ones, but not vice versa -- but
-    // those are the intended semantics in this case.
-    for (auto* where : partial_where_expressions_) {
-      if (&var_type->binding() == where->self_binding()) {
-        return LookupRewrite(where->rewrite_constraints(), interface, member);
-      }
     }
     return LookupRewrite(&var_type->binding().static_type(), interface, member);
   }
@@ -3726,9 +3743,16 @@ auto TypeChecker::TypeCheckGenericBinding(GenericBinding& binding,
         builder.AddAndSubstitute(*this, binding.source_loc(), constraint,
                                  binding_self_type, witness, Bindings(),
                                  /*add_lookup_contexts=*/true));
+    if (trace_stream_) {
+      **trace_stream_ << "resolving constraint type for " << binding << " from "
+                      << *constraint << "\n";
+    }
     CARBON_RETURN_IF_ERROR(
         builder.Resolve(*this, binding.type().source_loc(), impl_scope));
     type = std::move(builder).Build();
+    if (trace_stream_) {
+      **trace_stream_ << "resolved constraint type is " << *type << "\n";
+    }
 
     BringImplIntoScope(impl_binding, impl_scope);
   }
@@ -4748,14 +4772,33 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   // this `impl` implements.
   Nonnull<const ConstraintType*> constraint_type;
   {
-    ConstraintTypeBuilder builder(arena_, impl_decl->source_loc());
+    // TODO: Combine this with the SelfDeclaration.
+    auto* self_binding = arena_->New<GenericBinding>(self->source_loc(), "Self",
+                                                     impl_decl->impl_type());
+    self_binding->set_symbolic_identity(impl_type_value);
+    self_binding->set_value(impl_type_value);
+    auto* impl_binding = arena_->New<ImplBinding>(self_binding->source_loc(),
+                                                  self_binding, std::nullopt);
+    impl_binding->set_symbolic_identity(
+        arena_->New<BindingWitness>(impl_binding));
+    self_binding->set_impl_binding(impl_binding);
+
+    ConstraintTypeBuilder builder(arena_, self_binding, impl_binding);
     CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
         *this, impl_decl->source_loc(), implemented_constraint, impl_type_value,
         builder.GetSelfWitness(), Bindings(),
         /*add_lookup_contexts=*/true));
+    if (trace_stream_) {
+      **trace_stream_ << "resolving impl constraint type for " << *impl_decl
+                      << " from " << *implemented_constraint << "\n";
+    }
     CARBON_RETURN_IF_ERROR(builder.Resolve(
         *this, impl_decl->interface().source_loc(), impl_scope));
     constraint_type = std::move(builder).Build();
+    if (trace_stream_) {
+      **trace_stream_ << "resolving impl constraint type as "
+                      << *constraint_type << "\n";
+    }
     impl_decl->set_constraint_type(constraint_type);
   }
 
