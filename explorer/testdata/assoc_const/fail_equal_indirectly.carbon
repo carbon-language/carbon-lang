@@ -25,8 +25,8 @@ fn G[U:! Type where .Self == i32, T:! Iface where .T = U](x: T, y: U) {
 }
 
 // Not OK: would require looking through two levels of `==`.
-fn H[U:! Type where .Self == i32, T:! Iface where .T == U](x: T, y: U) {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_equal_indirectly.carbon:[[@LINE+1]]: constraint requires that (T).(Iface.T) == i32, which is not known to be true
+fn H[V:! Type where .Self == i32, W:! Iface where .T == V](x: W, y: V) {
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_equal_indirectly.carbon:[[@LINE+1]]: constraint requires that (T).(Iface.T) (with value (W).(Iface.T)) == i32, which is not known to be true
   F(x);
 }
 

@@ -16,6 +16,7 @@
 #include "explorer/interpreter/dictionary.h"
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
+#include "explorer/interpreter/value.h"
 
 namespace Carbon {
 
@@ -42,6 +43,14 @@ class TypeChecker {
   // are replaced by their corresponding type or witness in `dict`.
   auto Substitute(const Bindings& bindings, Nonnull<const Value*> type) const
       -> Nonnull<const Value*>;
+
+  // Attempts to refine a witness that might be symbolic into an impl witness,
+  // using `impl` declarations that have been declared and type-checked so far.
+  // If a more precise witness cannot be found, returns `witness`.
+  auto RefineWitness(Nonnull<const Witness*> witness,
+                     Nonnull<const Value*> type,
+                     Nonnull<const Value*> constraint) const
+      -> Nonnull<const Witness*>;
 
   // If `impl` can be an implementation of interface `iface` for the given
   // `type`, then return the witness for this `impl`. Otherwise return
@@ -398,15 +407,15 @@ class TypeChecker {
 
   // Given an interface type, form a corresponding constraint type. The
   // interface must be a complete type.
-  auto MakeConstraintForInterface(SourceLocation source_loc,
-                                  Nonnull<const InterfaceType*> iface_type)
+  auto MakeConstraintForInterface(
+      SourceLocation source_loc, Nonnull<const InterfaceType*> iface_type) const
       -> ErrorOr<Nonnull<const ConstraintType*>>;
 
   // Convert a value that is expected to represent a constraint into a
   // `ConstraintType`.
   auto ConvertToConstraintType(SourceLocation source_loc,
                                std::string_view context,
-                               Nonnull<const Value*> constraint)
+                               Nonnull<const Value*> constraint) const
       -> ErrorOr<Nonnull<const ConstraintType*>>;
 
   // Given a list of constraint types, form the combined constraint.
@@ -432,14 +441,14 @@ class TypeChecker {
   auto LookupRewriteInTypeOf(Nonnull<const Value*> type,
                              Nonnull<const InterfaceType*> interface,
                              Nonnull<const Declaration*> member) const
-      -> std::optional<const ValueLiteral*>;
+      -> std::optional<const RewriteConstraint*>;
 
   // Given a witness value, look for a rewrite for the given associated
   // constant.
   auto LookupRewriteInWitness(Nonnull<const Witness*> witness,
                               Nonnull<const InterfaceType*> interface,
                               Nonnull<const Declaration*> member) const
-      -> std::optional<const ValueLiteral*>;
+      -> std::optional<const RewriteConstraint*>;
 
   // Adds a member of a declaration to collected_members_
   auto CollectMember(Nonnull<const Declaration*> enclosing_decl,
@@ -458,6 +467,15 @@ class TypeChecker {
   GlobalMembersMap collected_members_;
 
   std::optional<Nonnull<llvm::raw_ostream*>> trace_stream_;
+
+  // The top-level ImplScope, containing `impl` declarations that should be
+  // usable from any context. This is used when we want to try to refine a
+  // symbolic witness into an impl witness during substitution.
+  std::optional<const ImplScope*> top_level_impl_scope_;
+
+  // `where` expressions that are currently being built. These may have
+  // rewrites that are not yet visible in any type.
+  std::vector<ConstraintTypeBuilder*> partial_where_expressions_;
 };
 
 }  // namespace Carbon

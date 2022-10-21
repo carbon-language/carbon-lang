@@ -102,7 +102,7 @@ TEST(AstToProtoTest, SetsAllProtoFields) {
   Carbon::Fuzzing::CompilationUnit merged_proto;
   for (const llvm::StringRef f : *carbon_files) {
     Carbon::Arena arena;
-    const ErrorOr<AST> ast = Carbon::Parse(&arena, f, /*trace=*/false);
+    const ErrorOr<AST> ast = Carbon::Parse(&arena, f, /*parser_debug=*/false);
     if (ast.ok()) {
       merged_proto.MergeFrom(AstToProto(*ast));
     }

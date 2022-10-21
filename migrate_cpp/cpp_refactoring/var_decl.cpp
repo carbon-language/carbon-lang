@@ -5,6 +5,7 @@
 #include "migrate_cpp/cpp_refactoring/var_decl.h"
 
 #include "clang/ASTMatchers/ASTMatchers.h"
+#include "llvm/Support/FormatVariadic.h"
 
 namespace cam = ::clang::ast_matchers;
 
@@ -54,7 +55,8 @@ auto VarDecl::GetTypeStr(const clang::VarDecl& decl) -> std::string {
     } else if (range_str.empty()) {
       segments.push_back({type_loc_class, qual_str});
     } else {
-      segments.push_back({type_loc_class, qual_str + " " + range_str});
+      segments.push_back(
+          {type_loc_class, llvm::formatv("{0} {1}", qual_str, range_str)});
     }
 
     type_loc = type_loc.getNextTypeLoc();

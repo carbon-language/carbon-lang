@@ -14,12 +14,12 @@ interface Iface {
 
 fn F[T:! Iface where .T == i32](x: T) {}
 
-fn G[T:! Iface where .T == i32](x: T) {
+fn G[U:! Iface where .T == i32](x: U) {
   F(x);
 }
 
-fn H[T:! Iface](x: T) {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_equal_to_dependent_type.carbon:[[@LINE+1]]: constraint requires that (T).(Iface.T) == i32, which is not known to be true
+fn H[V:! Iface](x: V) {
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_equal_to_dependent_type.carbon:[[@LINE+1]]: constraint requires that (T).(Iface.T) (with value (V).(Iface.T)) == i32, which is not known to be true
   F(x);
 }
 
