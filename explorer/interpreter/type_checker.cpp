@@ -756,15 +756,6 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
   // different forms. In this case, we require an implicit conversion to exist,
   // or for an exact type match if implicit conversions are not permitted.
   auto handle_non_deduced_type = [&]() -> ErrorOr<Success> {
-    if (!IsConcreteType(param)) {
-      // Parameter type contains a nested `auto` and argument type isn't the
-      // same kind of type.
-      // TODO: This seems like something we should be able to accept.
-      return ProgramError(source_loc_) << "type error in " << context_ << "\n"
-                                       << "expected: " << *param << "\n"
-                                       << "actual: " << *arg;
-    }
-
     if (ValueEqual(param, arg, std::nullopt)) {
       return Success();
     }

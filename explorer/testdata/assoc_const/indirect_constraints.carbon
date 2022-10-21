@@ -17,12 +17,12 @@ interface Y(T:! Type) {
 interface Z {
   // The `i32 is X(.Self)` constraint is indirectly required by
   // specifying that `.M = i32`.
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/indirect_constraints.carbon:[[@LINE+1]]: could not find implementation of interface X(T = (Self).(Z.N)) for i32
   let N:! Y(.Self) where i32 is X(.Self) and .M = i32;
 }
 
 impl i32 as X(i32) {}
 impl i32 as Y(i32) where .M = i32 {}
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/indirect_constraints.carbon:[[@LINE+1]]: could not find implementation of interface Y(T = (.Self).(Z.N)) for i32
 impl i32 as Z where .N = i32 {}
 
 fn F[A:! Z](a: A) -> A { return a; }
