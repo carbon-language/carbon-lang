@@ -37,7 +37,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Member functions](#member-functions)
         -   [Class functions](#class-functions)
         -   [Methods](#methods)
-        -   [Name lookup in member function definitions](#name-lookup-in-member-function-definitions)
+        -   [Deferred member function definitions](#deferred-member-function-definitions)
+        -   [Name lookup in classes](#name-lookup-in-classes)
     -   [Nominal data classes](#nominal-data-classes)
     -   [Member type](#member-type)
     -   [Let](#let)
@@ -914,22 +915,18 @@ the `me` parameter must be in the same list in square brackets `[`...`]`. The
 `me` parameter may appear in any position in that list, as long as it appears
 after any names needed to describe its type.
 
-#### Name lookup in member function definitions
+#### Deferred member function definitions
 
 When defining a member function lexically inline, the body is deferred and
 processed as if it appeared immediately after the end of the outermost enclosing
 class, like in C++.
 
-For example, given a class with all inline function definitions:
+For example, given a class with inline function definitions:
 
 ```carbon
 class Point {
   fn Distance[me: Self]() -> f32 {
     return Math.Sqrt(me.x * me.x + me.y * me.y);
-  }
-
-  fn CreatePolar(r: f32, theta: f32) -> Point {
-    return Point.Create(r * Math.Cos(theta), r * Math.Sin(theta));
   }
 
   fn Create(x: f32, y: f32) -> Point {
@@ -946,7 +943,6 @@ These are all parsed as if they were defined outside the class scope:
 ```carbon
 class Point {
   fn Distance[me: Self]() -> f32;
-  fn CreatePolar(r: f32, theta: f32) -> Point;
   fn Create(x: f32, y: f32) -> Point;
 
   var x: f32;
@@ -957,22 +953,86 @@ fn Point.Distance[me: Self]() -> f32 {
   return Math.Sqrt(me.x * me.x + me.y * me.y);
 }
 
-fn Point.CreatePolar(r: f32, theta: f32) -> Point {
-  return Point.Create(r * Math.Cos(theta), r * Math.Sin(theta));
-}
-
 fn Point.Create(x: f32, y: f32) -> Point {
   return {.x = x, .y = y};
 }
 ```
 
-Additional details for name lookup are being asked as part of
-[#2286: Clarifications for name lookup in classes](https://github.com/carbon-language/carbon-lang/issues/2286):
+#### Name lookup in classes
 
--   Should unqualified name lookup be supported? For example, `Create()` instead
-    of `Point.Create()`.
--   Should instances be usable to access type members? For example,
-    `Point.Create(0, 0).Create(0,0)`.
+[Member access](expressions/member_access.md) is an expression; details are
+covered there. Because function definitions are
+[deferred](#deferred-member-function-definitions), name lookup in classes works
+the same regardless of whether a function is inline. The class body forms a
+scope for name lookup, and function definitions can perform unqualified name
+lookup within that scope.
+
+For example:
+
+```carbon
+class Square {
+  fn GetArea[me: Self]() -> f32 {
+    // ✅ OK: performs name lookup on `me`.
+    return me.size * me.size;
+    // ❌ Error: an instance is required.
+    return size * size;
+    // ❌ Error: an instance is required.
+    return Square.size * Square.size;
+  }
+
+  fn GetDoubled[me: Self]() -> Square {
+    // ✅ OK: performs name lookup on `Square` for `Create`.
+    return Square.Create(me.size);
+    // ✅ OK: performs unqualified name lookup within class scope for `Create`.
+    return Create(me.size);
+    // ✅ OK: performs name lookup on `me` for `Create`.
+    return me.Create(me.size);
+  }
+
+  fn Create(size: f32) -> Square;
+
+  var size: f32;
+}
+```
+
+The example's name lookups refer to `Create` and `size` which are defined after
+the example member access; this is valid because of
+[deferred member function definitions](#deferred-member-function-definitions).
+
+However, function signatures must still complete lookup without deferring. For
+example:
+
+```carbon
+class List {
+  // ❌ Error: `Iterator` has not yet been defined.
+  fn Iterate() -> Iterator*;
+  fn Iterate() -> Iterator;
+
+  class Iterator;
+
+  // ✅ OK: A forward declaration is sufficient to produce a pointer.
+  fn Iterate() -> Iterator*;
+  // ❌ Error: A forward declaration cannot be used to return a value.
+  fn Iterate() -> Iterator;
+
+  class Iterator {
+    ...
+  }
+
+  // ✅ OK: The definition of Iterator is now available.
+  fn Iterate() -> Iterator;
+}
+```
+
+An out-of-line function definition's full signature is evaluated as if in-scope.
+For example:
+
+```carbon
+// ✅ OK: Performs unqualified name lookup into `List` for `Iterator`.
+fn List.Iterate() -> Iterator {
+  ...
+}
+```
 
 ### Nominal data classes
 
