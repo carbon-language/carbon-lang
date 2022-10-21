@@ -8,20 +8,24 @@
 package ExplorerTest api;
 
 __mixin M1 {
-  export fn F1[me: Self](x: Self) -> Self{
-     return x;
+  fn Square(x: i32) -> i32{
+     return x * x;
   }
 }
 
 __mixin M2 {
-  export fn F1() {
+  export fn Twice(x: i32) -> i32{
+    return x + x;
   }
+  __mix M1;
 }
 
 class C {
-  __mix M1;
   __mix M2;
-// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_mix_members_clash.carbon:[[@LINE+1]]: Member named F1 (declared at {{.*}}/explorer/testdata/mixin/fail_mix_members_clash.carbon:18) cannot be mixed into C because it clashes with an existing member with the same name (declared at {{.*}}/explorer/testdata/mixin/fail_mix_members_clash.carbon:13)
+  fn Foo[me: Self](a: i32, b: i32) -> i32{
+// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_use_non_export_member_from_class.carbon:[[@LINE+1]]: class C does not have a field named Square
+     return me.Twice(3) + me.Square(5);
+  }
 }
 
 fn Main() -> i32 {

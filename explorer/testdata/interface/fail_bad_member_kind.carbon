@@ -9,7 +9,7 @@
 package ExplorerTest api;
 
 interface Bad {
-  // CHECK:SYNTAX ERROR: {{.*}}/explorer/testdata/interface/fail_bad_member_kind.carbon:[[@LINE+1]]: syntax error, unexpected VAR, expecting FN or LET or RIGHT_CURLY_BRACE
+  // CHECK:SYNTAX ERROR: {{.*}}/explorer/testdata/interface/fail_bad_member_kind.carbon:[[@LINE+1]]: syntax error, unexpected VAR, expecting EXPORT or FN or LET or RIGHT_CURLY_BRACE
   var V: i32;
 }
 

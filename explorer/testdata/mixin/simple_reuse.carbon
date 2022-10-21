@@ -10,7 +10,7 @@
 package ExplorerTest api;
 
 __mixin Operations {
-  fn Square[me: Self](x:i32) -> i32{
+  export fn Square[me: Self](x:i32) -> i32{
     return x * x;
   }
 }

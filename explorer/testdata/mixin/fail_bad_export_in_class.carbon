@@ -9,25 +9,11 @@
 // AUTOUPDATE: %{explorer} %s
 package ExplorerTest api;
 
-__mixin Operations {
-  fn Cube[me: Self](x:i32) -> i32{
-  //CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-reuse-in-declaration.carbon:[[@LINE+1]]: mixin Operations does not have a field named Square
-    return x * me.Square(x);
-  }
-}
-
-class Point {
-  fn Origin() -> Point {
-    return {.x = 0, .y = 0};
-  }
-
-  var x: i32;
-  var y: i32;
-  __mix Operations;
+class C {
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_bad_export_in_class.carbon:[[@LINE+1]]: 'export' qualifier only applies within a mixin declaration.
+  export fn fail() {}
 }
 
 fn Main() -> i32 {
-  var p: Point = Point.Origin();
-  p.x = 3;
-  return p.Cube(p.x) - 27;
+  return 0;
 }

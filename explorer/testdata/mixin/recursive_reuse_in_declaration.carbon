@@ -18,7 +18,7 @@ __mixin Operations {
     }
     return x * me.Factorial(x - 1);
   }
-  fn F[me: Self](x:i32, y:i32) -> i32{
+  export fn F[me: Self](x:i32, y:i32) -> i32{
     return me.Factorial(x) - me.Factorial(y);
   }
 }

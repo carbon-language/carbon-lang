@@ -316,6 +316,7 @@ auto DestructorDeclaration::CreateDestructor(
 
 auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
                                  SourceLocation source_loc, std::string name,
+                                 bool is_exported,
                                  std::vector<Nonnull<AstNode*>> deduced_params,
                                  Nonnull<TuplePattern*> param_pattern,
                                  ReturnTerm return_term,
@@ -325,7 +326,7 @@ auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
   CARBON_ASSIGN_OR_RETURN(split_params,
                           SplitDeducedParameters(source_loc, deduced_params));
   return arena->New<FunctionDeclaration>(
-      source_loc, name, std::move(split_params.resolved_params),
+      source_loc, name, is_exported, std::move(split_params.resolved_params),
       split_params.me_pattern, param_pattern, return_term, body);
 }
 

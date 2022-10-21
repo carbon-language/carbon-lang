@@ -60,6 +60,7 @@ DOUBLE_ARROW         "=>"
 ELSE                 "else"
 EQUAL                "="
 EQUAL_EQUAL          "=="
+EXPORT               "export"
 EXTENDS              "extends"
 EXTERNAL             "external"
 FALSE                "false"
@@ -166,6 +167,7 @@ operand_start         [(A-Za-z0-9_\"]
 {ELSE}                { return CARBON_SIMPLE_TOKEN(ELSE);                }
 {EQUAL_EQUAL}         { return CARBON_SIMPLE_TOKEN(EQUAL_EQUAL);         }
 {EQUAL}               { return CARBON_SIMPLE_TOKEN(EQUAL);               }
+{EXPORT}              { return CARBON_SIMPLE_TOKEN(EXPORT);              }
 {EXTENDS}             { return CARBON_SIMPLE_TOKEN(EXTENDS);             }
 {EXTERNAL}            { return CARBON_SIMPLE_TOKEN(EXTERNAL);            }
 {FALSE}               { return CARBON_SIMPLE_TOKEN(FALSE);               }

@@ -1600,9 +1600,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         case Value::Kind::NominalClassType: {
           const auto& t_class = cast<NominalClassType>(object_type);
-          if (auto type_member = FindMixedMemberAndType(
-                  access.member_name(), t_class.declaration().members(),
-                  &t_class);
+          if (auto type_member = FindMixedMemberAndTypeFromClass(
+                  access.member_name(), &t_class);
               type_member.has_value()) {
             auto [member_type, member] = type_member.value();
             Nonnull<const Value*> field_type =
@@ -1656,9 +1655,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           // declaration
           if (binding.kind() == PatternKind::MixinSelf) {
             auto& self = cast<MixinSelf>(binding);
-            auto type_member = FindMixedMemberAndType(
-                access.member_name(), self.mixin()->members(),
-                self.mixin()->constant_value().value());
+            auto type_member = FindMixedMemberAndTypeFromMixin(
+                access.member_name(), self.mixin()->members(), false);
             if (!type_member.has_value() &&
                 binding.type().kind() == ExpressionKind::TypeTypeLiteral) {
               return ProgramError(e->source_loc())
@@ -1809,9 +1807,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             case Value::Kind::NominalClassType: {
               const NominalClassType& class_type =
                   cast<NominalClassType>(*type);
-              if (auto type_member = FindMixedMemberAndType(
-                      access.member_name(), class_type.declaration().members(),
-                      &class_type);
+              if (auto type_member = FindMixedMemberAndTypeFromClass(
+                      access.member_name(), &class_type);
                   type_member.has_value()) {
                 auto [member_type, member] = type_member.value();
                 access.set_member(Member(member));
@@ -4168,11 +4165,23 @@ auto TypeChecker::TypeCheckDeclaration(
           TypeCheckImplDeclaration(&cast<ImplDeclaration>(*d), impl_scope));
       break;
     }
-    case DeclarationKind::DestructorDeclaration:
-    case DeclarationKind::FunctionDeclaration:
-      CARBON_RETURN_IF_ERROR(TypeCheckCallableDeclaration(
-          &cast<CallableDeclaration>(*d), impl_scope));
+    case DeclarationKind::DestructorDeclaration: {
+      auto destr = &cast<DestructorDeclaration>(*d);
+      CARBON_RETURN_IF_ERROR(TypeCheckCallableDeclaration(destr, impl_scope));
       return Success();
+    }
+    case DeclarationKind::FunctionDeclaration: {
+      auto func = &cast<FunctionDeclaration>(*d);
+      if (func->is_exported() &&
+          (!enclosing_decl.has_value() ||
+           (enclosing_decl.has_value() &&
+            !isa<MixinDeclaration>(enclosing_decl.value())))) {
+        return ProgramError(func->source_loc())
+               << "'export' qualifier only applies within a mixin declaration.";
+      }
+      CARBON_RETURN_IF_ERROR(TypeCheckCallableDeclaration(func, impl_scope));
+      return Success();
+    }
     case DeclarationKind::ClassDeclaration:
       CARBON_RETURN_IF_ERROR(
           TypeCheckClassDeclaration(&cast<ClassDeclaration>(*d), impl_scope));
@@ -4316,26 +4325,53 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
   }
   return Success();
 }
-auto TypeChecker::FindMixedMemberAndType(
-    const std::string_view& name, llvm::ArrayRef<Nonnull<Declaration*>> members,
-    const Nonnull<const Value*> enclosing_type)
+
+auto TypeChecker::FindMixedMemberAndTypeFromClass(
+    const std::string_view& name, const Nonnull<const NominalClassType*> cls)
     -> std::optional<
         std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>> {
-  for (Nonnull<const Declaration*> member : members) {
+  for (Nonnull<const Declaration*> member : cls->declaration().members()) {
     if (llvm::isa<MixDeclaration>(member)) {
       const auto& mix_decl = cast<MixDeclaration>(*member);
       Nonnull<const MixinPseudoType*> mixin = &mix_decl.mixin_value();
-      const auto res =
-          FindMixedMemberAndType(name, mixin->declaration().members(), mixin);
+      const auto res = FindMixedMemberAndTypeFromMixin(
+          name, mixin->declaration().members(), true);
       if (res.has_value()) {
-        if (isa<NominalClassType>(enclosing_type)) {
-          BindingMap temp_map;
-          temp_map[mixin->declaration().self()] = enclosing_type;
-          const auto mix_member_type = Substitute(temp_map, res.value().first);
-          return std::make_pair(mix_member_type, res.value().second);
-        } else {
-          return res;
-        }
+        BindingMap temp_map;
+        temp_map[mixin->declaration().self()] = cls;
+        const auto mix_member_type = Substitute(temp_map, res.value().first);
+        return std::make_pair(mix_member_type, res.value().second);
+      }
+
+    } else if (std::optional<std::string_view> mem_name = GetName(*member);
+               mem_name.has_value()) {
+      if (*mem_name == name) {
+        return std::make_pair(&member->static_type(), member);
+      }
+    }
+  }
+
+  return std::nullopt;
+}
+
+auto TypeChecker::FindMixedMemberAndTypeFromMixin(
+    const std::string_view& name, llvm::ArrayRef<Nonnull<Declaration*>> members,
+    bool through_mix_decl)
+    -> std::optional<
+        std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>> {
+  for (Nonnull<const Declaration*> member : members) {
+    if (auto* func = dyn_cast<FunctionDeclaration>(member);
+        through_mix_decl && func && !func->is_exported()) {
+      continue;  // ignore non-export members when injecting members through a
+                 // mix declaration.
+    }
+    if (llvm::isa<MixDeclaration>(member)) {
+      const auto& mix_decl = cast<MixDeclaration>(*member);
+      Nonnull<const MixinPseudoType*> mixin = &mix_decl.mixin_value();
+      const auto res = FindMixedMemberAndTypeFromMixin(
+          name, mixin->declaration().members(), true);
+      if (res.has_value()) {
+        return res;
       }
 
     } else if (std::optional<std::string_view> mem_name = GetName(*member);

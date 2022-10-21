@@ -8,7 +8,7 @@
 package ExplorerTest api;
 
 __mixin M1 {
-  fn F1[me: Self](x: Self) -> Self{
+  export fn F1[me: Self](x: Self) -> Self{
      return x;
   }
   // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_circular_mixing.carbon:[[@LINE+1]]: 'M3' has not been declared yet
@@ -16,14 +16,14 @@ __mixin M1 {
 }
 
 __mixin M2 {
-  fn F2() {
+  export fn F2() {
   }
   __mix M1;
 }
 
 __mixin M3 {
   __mix M2;
-  fn F3() {
+  export fn F3() {
   }
 }
 

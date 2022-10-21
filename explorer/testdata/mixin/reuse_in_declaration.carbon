@@ -2,20 +2,23 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
+// RUN: %{explorer} %s 2>&1 | \
+// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
+// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
+// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
+// CHECK: result: 0
 
 package ExplorerTest api;
 
 __mixin Operations {
-  export fn Square[me: Self](x:i32) -> i32{
+  fn Square[me: Self](x:i32) -> i32 {
     return x * x;
   }
+  export fn Cube[me: Self](x:i32) -> i32 {
+    return x * me.Square(x);
+  }
 }
-
-// CHECK:SYNTAX ERROR: {{.*}}/explorer/testdata/mixin/fail_mix_in_global.carbon:[[@LINE+1]]: syntax error, unexpected MIX, expecting END_OF_FILE
-__mix Operations;
 
 class Point {
   fn Origin() -> Point {
@@ -42,6 +45,6 @@ fn Main() -> i32 {
   var p: Point = Point.Origin();
   var c: Complex = Complex.Zero();
   p.x = 3;
-  c.r = 3;
-  return p.Square(p.y) - c.Square(c.i);
+  c.r = 4;
+  return p.Cube(p.x) - c.Cube(c.r) + 37;
 }

@@ -11,7 +11,7 @@ package ExplorerTest api;
 
 __mixin Operations {
   // Here Self which is both the input and output type is a type variable
-  fn F[me: Self](x: Self) -> Self {
+  export fn F[me: Self](x: Self) -> Self {
      return x;
   }
 }

@@ -71,16 +71,32 @@ class TypeChecker {
       -> std::optional<Nonnull<const Witness*>>;
 
   /*
-  ** Finds the direct or indirect member of a class or mixin by its name and
-  ** returns the member's declaration and type. Indirect members are members of
-  ** mixins that are mixed by member mix declarations. If the member is an
-  ** indirect member from a mix declaration, then the Self type variable within
-  ** the member's type is substituted with the type of the enclosing declaration
-  ** containing the mix declaration.
+  ** Finds the direct or indirect member of a class by its name and returns the
+  ** member's declaration and type. Indirect members are members of mixins that
+  ** are mixed by member mix declarations. If the member is an indirect member
+  ** from a mix declaration, then the Self type variable within the member's
+  ** type is substituted with the type of the class
   */
-  auto FindMixedMemberAndType(const std::string_view& name,
-                              llvm::ArrayRef<Nonnull<Declaration*>> members,
-                              const Nonnull<const Value*> enclosing_type)
+  auto FindMixedMemberAndTypeFromClass(
+      const std::string_view& name, const Nonnull<const NominalClassType*> cls)
+      -> std::optional<
+          std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>;
+
+  /*
+  ** Finds the direct or indirect member of a mixin by its name and returns the
+  ** member's declaration and type. Indirect members are members of mixins that
+  ** are mixed by member mix declarations. If through_mix_decl is true then a
+  ** call to this function was done through a member mix declaration to search
+  ** for indirect member corresponding to the input name. When we are finding
+  ** indirect members i.e. when through_mix_decl is true, we don't consider
+  ** mixin members without the 'export' qualifier. When through_mix_decl is
+  ** false, this function was called from the body of a mixin member method and
+  ** we have to consider those members in our search that don't have the
+  ** 'export' qualifier as well.
+  */
+  auto FindMixedMemberAndTypeFromMixin(
+      const std::string_view& name,
+      llvm::ArrayRef<Nonnull<Declaration*>> members, bool through_mix_decl)
       -> std::optional<
           std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>;
 

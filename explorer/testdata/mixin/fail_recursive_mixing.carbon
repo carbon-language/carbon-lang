@@ -10,7 +10,7 @@
 package ExplorerTest api;
 
 __mixin M1 {
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail-recursive-mixing.carbon:[[@LINE+1]]: 'M1' is not usable until after it has been completely declared
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_recursive_mixing.carbon:[[@LINE+1]]: 'M1' is not usable until after it has been completely declared
   __mix M1;
 }
 

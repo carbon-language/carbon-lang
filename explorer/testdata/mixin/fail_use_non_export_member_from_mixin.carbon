@@ -5,17 +5,22 @@
 // RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
 // RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
 // AUTOUPDATE: %{explorer} %s
-
 package ExplorerTest api;
 
-interface A {
-  // TODO: Use `let T:! Type;` here once we support it.
-  fn T();
+__mixin M1 {
+  fn Square(x: i32) -> i32{
+     return x * x;
+  }
 }
 
-external impl i32 as A {
-  // CHECK:SYNTAX ERROR: {{.*}}/explorer/testdata/impl/fail_bad_member_kind.carbon:[[@LINE+1]]: syntax error, unexpected CLASS, expecting ALIAS or EXPORT or FN or RIGHT_CURLY_BRACE
-  class T {}
+__mixin M2 {
+  export fn Cube[me:Self](x: i32) -> i32{
+// CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_use_non_export_member_from_mixin.carbon:[[@LINE+1]]: mixin M2 does not have a field named Square
+    return x * me.Square(x);
+  }
+  __mix M1;
 }
 
-fn Main() -> i32 { return 0; }
+fn Main() -> i32 {
+  return 0;
+}

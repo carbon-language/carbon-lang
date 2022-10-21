@@ -156,7 +156,7 @@ class FunctionDeclaration : public CallableDeclaration {
   using ImplementsCarbonValueNode = void;
 
   static auto Create(Nonnull<Arena*> arena, SourceLocation source_loc,
-                     std::string name,
+                     std::string name, bool is_exported,
                      std::vector<Nonnull<AstNode*>> deduced_params,
                      Nonnull<TuplePattern*> param_pattern,
                      ReturnTerm return_term,
@@ -165,6 +165,7 @@ class FunctionDeclaration : public CallableDeclaration {
 
   // Use `Create()` instead. This is public only so Arena::New() can call it.
   FunctionDeclaration(SourceLocation source_loc, std::string name,
+                      bool is_exported,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,
                       std::optional<Nonnull<Pattern*>> me_pattern,
                       Nonnull<TuplePattern*> param_pattern,
@@ -172,11 +173,17 @@ class FunctionDeclaration : public CallableDeclaration {
                       std::optional<Nonnull<Block*>> body)
       : CallableDeclaration(AstNodeKind::FunctionDeclaration, source_loc,
                             std::move(name), std::move(deduced_params),
-                            me_pattern, param_pattern, return_term, body) {}
+                            me_pattern, param_pattern, return_term, body),
+        is_exported_(is_exported) {}
+
+  auto is_exported() const -> bool { return is_exported_; }
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromFunctionDeclaration(node->kind());
   }
+
+ private:
+  bool is_exported_;
 };
 
 class DestructorDeclaration : public CallableDeclaration {

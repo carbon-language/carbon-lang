@@ -8,20 +8,20 @@
 package ExplorerTest api;
 
 __mixin M1 {
-  fn F1[me: Self](x: Self) -> Self{
+  export fn F1[me: Self](x: Self) -> Self{
      return x;
   }
 }
 
 __mixin M2 {
-  fn F2() {
+  export fn F2() {
   }
   __mix M1;
 }
 
 __mixin M3 {
   __mix M1;
-  fn F3() {
+  export fn F3() {
   }
 }
 

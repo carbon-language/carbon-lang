@@ -2,20 +2,16 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
+// RUN: %{not} %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
+// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: result: 0
-
 package ExplorerTest api;
 
 __mixin Operations {
-  fn Square[me: Self](x:i32) -> i32 {
-    return x * x;
-  }
-  fn Cube[me: Self](x:i32) -> i32 {
+  export fn Cube[me: Self](x:i32) -> i32{
+  //CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_reuse_in_declaration.carbon:[[@LINE+1]]: mixin Operations does not have a field named Square
     return x * me.Square(x);
   }
 }
@@ -30,21 +26,8 @@ class Point {
   __mix Operations;
 }
 
-class Complex {
-  fn Zero() -> Complex {
-    return {.r = 0, .i = 0};
-  }
-
-  var r: i32;
-  var i: i32;
-  __mix Operations;
-}
-
-
 fn Main() -> i32 {
   var p: Point = Point.Origin();
-  var c: Complex = Complex.Zero();
   p.x = 3;
-  c.r = 4;
-  return p.Cube(p.x) - c.Cube(c.r) + 37;
+  return p.Cube(p.x) - 27;
 }
