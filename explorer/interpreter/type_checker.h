@@ -52,6 +52,7 @@ class TypeChecker {
                      Nonnull<const Value*> constraint) const
       -> Nonnull<const Witness*>;
 
+
   // If `impl` can be an implementation of interface `iface` for the given
   // `type`, then return the witness for this `impl`. Otherwise return
   // std::nullopt.
@@ -160,6 +161,14 @@ class TypeChecker {
                         ImplScope& impl_scope,
                         ValueCategory enclosing_value_category)
       -> ErrorOr<Success>;
+
+  // Type checks a generic binding. `symbolic_value` is the symbolic name by
+  // which this generic binding is known in its scope. `impl_scope` is updated
+  // with the impl implied by the binding, if any.
+  auto TypeCheckGenericBinding(GenericBinding& binding,
+                               std::string_view context,
+                               Nonnull<const Value*> symbolic_value,
+                               ImplScope& impl_scope) -> ErrorOr<Success>;
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `s`.
   //
@@ -433,6 +442,11 @@ class TypeChecker {
   // Gets the type for the given associated constant.
   auto GetTypeForAssociatedConstant(
       Nonnull<const AssociatedConstant*> assoc) const -> Nonnull<const Value*>;
+
+  // Gets the converted replacement value for a rewrite constraint.
+  auto GetConvertedReplacementForRewriteConstraint(
+      SourceLocation source_loc, const RewriteConstraint& rewrite,
+      const ImplScope& impl_scope) -> ErrorOr<Nonnull<const Value*>>;
 
   // Look up a member name in a constraint, which might be a single interface or
   // a compound constraint.
