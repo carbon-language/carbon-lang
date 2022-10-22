@@ -804,6 +804,7 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
   RuntimeScope method_scope(&heap_);
   BindingMap generic_args;
 
+  // TODO: move this logic into PatternMatch, and call it here.
   auto p = &method.me_pattern().value();
   const auto& placeholder = cast<BindingPlaceholderValue>(*p);
   if (placeholder.value_node().has_value()) {
