@@ -8,7 +8,7 @@
 
 package ExplorerTest api;
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_invalid_var_expression.carbon:[[@LINE+1]]: Expected expression for variable type
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_invalid_var_expression.carbon:[[@LINE+1]]: Expected initializer for auto type
 var a: auto;
 
 fn Main() -> i32 { return 0; }

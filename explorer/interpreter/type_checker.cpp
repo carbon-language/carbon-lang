@@ -5486,9 +5486,8 @@ auto TypeChecker::TypeCheckDeclaration(
       if (var.has_initializer()) {
         CARBON_RETURN_IF_ERROR(TypeCheckExp(&var.initializer(), impl_scope));
       }
-      const auto* binding_type =
-          dyn_cast<ExpressionPattern>(&var.binding().type());
-      if (binding_type == nullptr) {
+
+      if (!(llvm::isa<ExpressionPattern>(&var.binding().type()) || llvm::isa<AutoPattern>(&var.binding().type()))) {
         // TODO: consider adding support for `auto`
         return ProgramError(var.source_loc())
                << "Type of a top-level variable must be an expression.";
@@ -5580,6 +5579,29 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       auto& var = cast<VariableDeclaration>(*d);
       // Associate the variable name with it's declared type in the
       // compile-time symbol table.
+
+
+      if (llvm::isa<AutoPattern>(var.binding().type())) {
+        if (!var.has_initializer()) {
+          return ProgramError(var.binding().type().source_loc())
+                 << "Expected initializer for auto type";
+        } else {
+          std::optional<Nonnull<const Value*>> init_type;
+
+          CARBON_RETURN_IF_ERROR(TypeCheckExp(&var.initializer(), *scope_info.innermost_scope));
+          init_type = &var.initializer().static_type();
+
+          CARBON_RETURN_IF_ERROR(
+              TypeCheckPattern(&var.binding(), init_type, *scope_info.innermost_scope, var.value_category()));
+
+          CARBON_RETURN_IF_ERROR(ExpectCompleteType(
+            var.source_loc(), "type of variable", *init_type));
+          var.set_static_type(*init_type);
+          break;
+
+        }
+      }
+
       if (!llvm::isa<ExpressionPattern>(var.binding().type())) {
         return ProgramError(var.binding().type().source_loc())
                << "Expected expression for variable type";
