@@ -37,6 +37,7 @@ auto RuntimeScope::operator=(RuntimeScope&& rhs) noexcept -> RuntimeScope& {
 
 RuntimeScope::~RuntimeScope() {
   for (auto allocation : allocations_) {
+    // TODO: move this into StepCleanUp
     heap_->Deallocate(allocation);
   }
 }
