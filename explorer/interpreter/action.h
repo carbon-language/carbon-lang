@@ -273,6 +273,7 @@ class DeclarationAction : public Action {
   Nonnull<const Declaration*> declaration_;
 };
 
+// An Action which implements destroying all local allocations in a scope.
 class CleanupAction : public Action {
  public:
   explicit CleanupAction(RuntimeScope scope)
