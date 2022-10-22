@@ -292,6 +292,7 @@ class CleanupAction : public Action {
   int allocations_count_;
 };
 
+// An Action which implements destroying a single value, including all nested values.
 class DestroyAction : public Action {
  public:
   explicit DestroyAction(Nonnull<const LValue*> lvalue,
