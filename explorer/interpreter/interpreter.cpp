@@ -889,6 +889,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
       // Bind the receiver to the `me` parameter.
       auto p = &method.me_pattern().value();
       if (p->kind() == Value::Kind::BindingPlaceholderValue) {
+        // TODO: move this logic into PatternMatch
         const auto& placeholder = cast<BindingPlaceholderValue>(*p);
         if (placeholder.value_node().has_value()) {
           method_scope.Bind(*placeholder.value_node(), m.receiver());
