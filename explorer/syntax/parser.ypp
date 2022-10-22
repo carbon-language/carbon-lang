@@ -97,6 +97,7 @@
 %token <std::string> sized_type_literal
 %token <std::string> string_literal
 %type <std::string> designator
+%type <std::pair<std::string, std::string>> qualified_designator
 %type <ImplKind> impl_kind
 %type <Nonnull<Expression*>> impl_type
 %type <std::pair<LibraryName, bool>> package_directive
@@ -723,7 +724,13 @@ if_expression:
 expression:
   if_expression
 ;
-designator: PERIOD identifier { $$ = $2; }
+designator:
+  PERIOD identifier
+    { $$ = $2; }
+;
+qualified_designator:
+  PERIOD LEFT_PARENTHESIS identifier PERIOD identifier RIGHT_PARENTHESIS
+    { $$ = std::make_pair($3, $5); }
 ;
 paren_expression: paren_expression_base
     { $$ = ExpressionFromParenContents(arena, context.source_loc(), $1); }
@@ -761,10 +768,17 @@ struct_literal:
 struct_literal_contents:
   designator EQUAL expression
     { $$ = {FieldInitializer($1, $3)}; }
+|  qualified_designator EQUAL expression
+    { $$ = {FieldInitializer($1.second, $3, $1.first)}; }
 | struct_literal_contents COMMA designator EQUAL expression
     {
       $$ = std::move($1);
       $$.push_back(FieldInitializer($3, $5));
+    }
+| struct_literal_contents COMMA qualified_designator EQUAL expression
+    {
+      $$ = std::move($1);
+      $$.push_back(FieldInitializer($3.second, $5, $3.first));
     }
 ;
 

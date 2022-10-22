@@ -23,6 +23,9 @@ struct NamedValue {
 
   // The field's value.
   Nonnull<const Value*> value;
+
+  // The field's qualifier.
+  std::optional<std::string> qualifier = {};
 };
 
 // A member of a type.

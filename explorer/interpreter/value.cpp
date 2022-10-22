@@ -5,6 +5,7 @@
 #include "explorer/interpreter/value.h"
 
 #include <algorithm>
+#include <optional>
 
 #include "common/check.h"
 #include "explorer/ast/declaration.h"
@@ -22,10 +23,12 @@ using llvm::cast;
 using llvm::dyn_cast;
 using llvm::dyn_cast_or_null;
 
-auto StructValue::FindField(std::string_view name) const
+auto StructValue::FindField(std::string_view name,
+                            std::optional<std::string> qualifier) const
     -> std::optional<Nonnull<const Value*>> {
   for (const NamedValue& element : elements_) {
-    if (element.name == name) {
+    if (element.name == name &&
+        (!qualifier || qualifier == element.qualifier)) {
       return element.value;
     }
   }
@@ -378,8 +381,10 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::StructType: {
       out << "{";
       llvm::ListSeparator sep;
-      for (const auto& [name, type] : cast<StructType>(*this).fields()) {
-        out << sep << "." << name << ": " << *type;
+      for (const auto& [name, type, qualifier] :
+           cast<StructType>(*this).fields()) {
+        out << sep << "." << (qualifier ? qualifier.value() + "." : "") << name
+            << ": " << *type;
       }
       out << "}";
       break;

@@ -124,10 +124,14 @@ class RewritableMixin : public Base {
 // A FieldInitializer represents the initialization of a single struct field.
 class FieldInitializer {
  public:
-  FieldInitializer(std::string name, Nonnull<Expression*> expression)
-      : name_(std::move(name)), expression_(expression) {}
+  FieldInitializer(std::string name, Nonnull<Expression*> expression,
+                   std::optional<std::string> qualifier = {})
+      : name_(std::move(name)),
+        qualifier_(std::move(qualifier)),
+        expression_(expression) {}
 
   auto name() const -> const std::string& { return name_; }
+  auto qualifier() const -> std::optional<std::string> { return qualifier_; }
 
   auto expression() const -> const Expression& { return *expression_; }
   auto expression() -> Expression& { return *expression_; }
@@ -135,6 +139,9 @@ class FieldInitializer {
  private:
   // The field name. Cannot be empty.
   std::string name_;
+
+  // The field qualifier.
+  std::optional<std::string> qualifier_;
 
   // The expression that initializes the field.
   Nonnull<Expression*> expression_;

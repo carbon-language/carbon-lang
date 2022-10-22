@@ -338,11 +338,14 @@ auto TypeChecker::ExpectIsConcreteType(SourceLocation source_loc,
 
 // Returns the named field, or None if not found.
 static auto FindField(llvm::ArrayRef<NamedValue> fields,
-                      const std::string& field_name)
+                      const std::string& field_name,
+                      const std::optional<std::string>& field_qualifier = {})
     -> std::optional<NamedValue> {
-  const auto* it = std::find_if(
-      fields.begin(), fields.end(),
-      [&](const NamedValue& field) { return field.name == field_name; });
+  const auto* it =
+      std::find_if(fields.begin(), fields.end(), [&](const NamedValue& field) {
+        return field.name == field_name &&
+               (!field_qualifier || field_qualifier == field.qualifier);
+      });
   if (it == fields.end()) {
     return std::nullopt;
   }
@@ -357,8 +360,8 @@ auto TypeChecker::FieldTypesImplicitlyConvertible(
     return false;
   }
   for (const auto& source_field : source_fields) {
-    std::optional<NamedValue> destination_field =
-        FindField(destination_fields, source_field.name);
+    std::optional<NamedValue> destination_field = FindField(
+        destination_fields, source_field.name, source_field.qualifier);
     if (!destination_field.has_value() ||
         !IsImplicitlyConvertible(source_field.value,
                                  destination_field.value().value, impl_scope,
@@ -396,7 +399,9 @@ auto TypeChecker::FieldTypes(const NominalClassType& class_type) const
           Nonnull<const Value*> field_type =
               Substitute(class_type->bindings(), &var.binding().static_type());
           field_types.push_back(
-              {.name = var.binding().name(), .value = field_type});
+              {.name = var.binding().name(),
+               .value = field_type,
+               .qualifier = class_type->declaration().name()});
           break;
         }
         default:
@@ -1534,9 +1539,10 @@ auto TypeChecker::Substitute(const Bindings& bindings,
     }
     case Value::Kind::StructType: {
       std::vector<NamedValue> fields;
-      for (const auto& [name, value] : cast<StructType>(*type).fields()) {
+      for (const auto& [name, value, qualifier] :
+           cast<StructType>(*type).fields()) {
         const auto* new_type = Substitute(bindings, value);
-        fields.push_back({name, new_type});
+        fields.push_back({name, new_type, qualifier});
       }
       return arena_->New<StructType>(std::move(fields));
     }
@@ -2168,7 +2174,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         CARBON_RETURN_IF_ERROR(TypeCheckExp(&arg.expression(), impl_scope));
         CARBON_RETURN_IF_ERROR(ExpectIsConcreteType(
             arg.expression().source_loc(), &arg.expression().static_type()));
-        arg_types.push_back({arg.name(), &arg.expression().static_type()});
+        arg_types.push_back(
+            {arg.name(), &arg.expression().static_type(), arg.qualifier()});
       }
       e->set_static_type(arena_->New<StructType>(std::move(arg_types)));
       e->set_value_category(ValueCategory::Let);

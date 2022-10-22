@@ -321,7 +321,8 @@ class StructValue : public Value {
 
   // Returns the value of the field named `name` in this struct, or
   // nullopt if there is no such field.
-  auto FindField(std::string_view name) const
+  auto FindField(std::string_view name,
+                 std::optional<std::string> qualifier = {}) const
       -> std::optional<Nonnull<const Value*>>;
 
  private:
