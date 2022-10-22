@@ -48,6 +48,7 @@ class RuntimeScope {
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
+  // Binds `value` as the value of `value_node`.
   void Bind(ValueNodeView value_node, Nonnull<const Value*> value);
 
   // Allocates storage for `value_node` in `heap`, and initializes it with
