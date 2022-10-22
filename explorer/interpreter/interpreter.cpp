@@ -2032,6 +2032,8 @@ auto Interpreter::DestroyTupleElement(Nonnull<const LValue*> lvalue,
 }
 
 auto Interpreter::StepDestroy() -> ErrorOr<Success> {
+  // TODO: find a way to avoid dyn_cast in this code, and instead use static type
+  // information the way the compiler would.
   Action& act = todo_.CurrentAction();
   DestroyAction& destroy_act = cast<DestroyAction>(act);
   if (act.pos() == 0) {
