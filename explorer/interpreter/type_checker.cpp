@@ -391,23 +391,32 @@ static auto GetClassHierarchy(const NominalClassType& class_type)
 auto TypeChecker::FieldTypes(const NominalClassType& class_type) const
     -> std::vector<NamedValue> {
   std::vector<NamedValue> field_types;
-  for (const auto class_type : GetClassHierarchy(class_type)) {
-    for (Nonnull<Declaration*> m : class_type->declaration().members()) {
-      switch (m->kind()) {
-        case DeclarationKind::VariableDeclaration: {
-          const auto& var = cast<VariableDeclaration>(*m);
-          Nonnull<const Value*> field_type =
-              Substitute(class_type->bindings(), &var.binding().static_type());
-          field_types.push_back(
-              {.name = var.binding().name(),
-               .value = field_type,
-               .qualifier = class_type->declaration().name()});
-          break;
-        }
-        default:
-          break;
+  for (Nonnull<Declaration*> m : class_type.declaration().members()) {
+    switch (m->kind()) {
+      case DeclarationKind::VariableDeclaration: {
+        const auto& var = cast<VariableDeclaration>(*m);
+        Nonnull<const Value*> field_type =
+            Substitute(class_type.bindings(), &var.binding().static_type());
+        field_types.push_back({.name = var.binding().name(),
+                               .value = field_type,
+                               .qualifier = class_type.declaration().name()});
+        break;
       }
+      default:
+        break;
     }
+  }
+  return field_types;
+}
+
+auto TypeChecker::FieldTypesWithParents(
+    const NominalClassType& class_type) const -> std::vector<NamedValue> {
+  std::vector<NamedValue> field_types;
+  for (const auto* const class_type : GetClassHierarchy(class_type)) {
+    const auto fields = FieldTypes(*class_type);
+    field_types.insert(field_types.begin(),
+                       std::make_move_iterator(fields.begin()),
+                       std::make_move_iterator(fields.end()));
   }
   return field_types;
 }
@@ -438,7 +447,7 @@ auto TypeChecker::IsImplicitlyConvertible(
         case Value::Kind::NominalClassType:
           if (FieldTypesImplicitlyConvertible(
                   cast<StructType>(*source).fields(),
-                  FieldTypes(cast<NominalClassType>(*destination)),
+                  FieldTypesWithParents(cast<NominalClassType>(*destination)),
                   impl_scope)) {
             return true;
           }

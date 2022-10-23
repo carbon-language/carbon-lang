@@ -335,6 +335,10 @@ class TypeChecker {
   auto FieldTypes(const NominalClassType& class_type) const
       -> std::vector<NamedValue>;
 
+  // Returns the field names and types of the class and its parents.
+  auto FieldTypesWithParents(const NominalClassType& class_type) const
+      -> std::vector<NamedValue>;
+
   // Returns true if source_fields and destination_fields contain the same set
   // of names, and each value in source_fields is implicitly convertible to
   // the corresponding value in destination_fields. All values in both arguments
