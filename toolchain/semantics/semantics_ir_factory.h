@@ -5,8 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_IR_FACTORY_H_
 #define CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_IR_FACTORY_H_
 
+#include "common/check.h"
 #include "toolchain/parser/parse_tree.h"
-#include "toolchain/semantics/parse_subtree_consumer.h"
 #include "toolchain/semantics/semantics_ir.h"
 
 namespace Carbon {
@@ -19,46 +19,60 @@ class SemanticsIRFactory {
       -> SemanticsIR;
 
  private:
+  struct TraversalStackEntry {
+    ParseTree::Node parse_node;
+    llvm::Optional<SemanticsNodeId> result_id;
+  };
+
   explicit SemanticsIRFactory(const TokenizedBuffer& tokens,
                               const ParseTree& parse_tree)
       : tokens_(&tokens), semantics_(parse_tree) {}
 
-  void Build();
+  auto Build() -> void;
 
-  // Requires that a node have no children, to emphasize why the subtree isn't
-  // otherwise checked.
-  void RequireNodeEmpty(ParseTree::Node node);
+  auto Push(ParseTree::Node parse_node) -> void {
+    node_stack_.push_back({parse_node, llvm::None});
+  }
 
-  // Transforms a block subtree, such as a file or CodeBlock, into its semantic
-  // nodes.
-  auto TransformBlockSubtree(ParseSubtreeConsumer& subtree,
-                             ParseNodeKind end_kind)
-      -> llvm::SmallVector<Semantics::NodeRef, 0>;
+  auto Push(ParseTree::Node parse_node, SemanticsNode node) -> void {
+    auto node_id = semantics_.AddNode(node);
+    node_stack_.push_back({parse_node, node_id});
+  }
 
-  // Each of these takes a parse tree node and does a transformation based on
-  // its type. These functions are per ParseNodeKind.
-  auto TransformCodeBlock(ParseTree::Node node)
-      -> llvm::SmallVector<Semantics::NodeRef, 0>;
-  void TransformDeclaredName(llvm::SmallVector<Semantics::NodeRef, 0>& nodes,
-                             ParseTree::Node node, int32_t target_id);
-  void TransformExpression(llvm::SmallVector<Semantics::NodeRef, 0>& nodes,
-                           ParseTree::Node node, int32_t target_id);
-  // auto TransformExpressionStatement(ParseTree::Node node)
-  //   -> Semantics::Statement;
-  void TransformFunctionDeclaration(
-      llvm::SmallVector<Semantics::NodeRef, 0>& nodes, ParseTree::Node node);
-  void TransformInfixOperator(llvm::SmallVector<Semantics::NodeRef, 0>& nodes,
-                              ParseTree::Node node, int32_t target_id);
-  // auto TransformParameterList(ParseTree::Node node)
-  //   -> llvm::SmallVector<Semantics::PatternBinding, 0>
-  // auto TransformPatternBinding(ParseTree::Node node)
-  //   -> Semantics::PatternBinding;
-  // auto TransformReturnType(ParseTree::Node node) -> Semantics::Statement;
-  void TransformReturnStatement(llvm::SmallVector<Semantics::NodeRef, 0>& nodes,
-                                ParseTree::Node node);
+  auto Pop(ParseNodeKind pop_parse_kind) -> void {
+    auto back = node_stack_.back();
+    auto parse_kind = parse_tree().node_kind(back.parse_node);
+    CARBON_CHECK(parse_kind == pop_parse_kind)
+        << "Expected " << pop_parse_kind << ", found " << parse_kind;
+    CARBON_CHECK(!back.result_id) << "Expected no result ID on " << parse_kind;
+    node_stack_.pop_back();
+  }
 
-  // Returns a unique ID for the SemanticsIR.
-  auto next_id() -> int32_t { return id_counter_++; }
+  auto PopWithResult() -> SemanticsNodeId {
+    auto back = node_stack_.back();
+    auto node_id = *back.result_id;
+    node_stack_.pop_back();
+    return node_id;
+  }
+
+  auto PopWithResult(ParseNodeKind pop_parse_kind) -> SemanticsNodeId {
+    auto back = node_stack_.back();
+    auto parse_kind = parse_tree().node_kind(back.parse_node);
+    auto node_id = *back.result_id;
+    CARBON_CHECK(parse_kind == pop_parse_kind)
+        << "Expected " << pop_parse_kind << ", found " << parse_kind;
+    node_stack_.pop_back();
+    return node_id;
+  }
+
+  // Parse node handlers.
+  auto HandleDeclaredName(ParseTree::Node parse_node) -> void;
+  auto HandleFunctionDefinition(ParseTree::Node parse_node) -> void;
+  auto HandleFunctionDefinitionStart(ParseTree::Node parse_node) -> void;
+  auto HandleInfixOperator(ParseTree::Node parse_node) -> void;
+  auto HandleLiteral(ParseTree::Node parse_node) -> void;
+  auto HandleParameterList(ParseTree::Node parse_node) -> void;
+  auto HandleReturnStatement(ParseTree::Node parse_node) -> void;
 
   // Convenience accessor.
   auto parse_tree() -> const ParseTree& { return *semantics_.parse_tree_; }
@@ -69,8 +83,8 @@ class SemanticsIRFactory {
   // The SemanticsIR being constructed.
   SemanticsIR semantics_;
 
-  // A counter for unique IDs.
-  int32_t id_counter_ = 0;
+  // The stack during Build. Will contain file-level parse nodes on return.
+  llvm::SmallVector<TraversalStackEntry> node_stack_;
 };
 
 }  // namespace Carbon

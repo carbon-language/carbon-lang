@@ -7,31 +7,52 @@
 #include "common/check.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/semantics/semantics_node.h"
 
 namespace Carbon {
 
-void SemanticsIR::Print(llvm::raw_ostream& out,
-                        Semantics::NodeRef node_ref) const {
-  switch (node_ref.kind()) {
-    case Semantics::NodeKind::BinaryOperator:
-      nodes_.Get<Semantics::BinaryOperator>(node_ref).Print(out);
-      return;
-    case Semantics::NodeKind::Function:
-      nodes_.Get<Semantics::Function>(node_ref).Print(
-          out, [&](Semantics::NodeRef other) { Print(out, other); });
-      return;
-    case Semantics::NodeKind::IntegerLiteral:
-      nodes_.Get<Semantics::IntegerLiteral>(node_ref).Print(out);
-      return;
-    case Semantics::NodeKind::Return:
-      nodes_.Get<Semantics::Return>(node_ref).Print(out);
-      return;
-    case Semantics::NodeKind::SetName:
-      nodes_.Get<Semantics::SetName>(node_ref).Print(out);
-      return;
-    case Semantics::NodeKind::Invalid:
-      CARBON_FATAL() << "Invalid NodeRef kind";
+auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
+  out << "identifiers = {\n";
+  for (int32_t i = 0; i < static_cast<int32_t>(identifiers_.size()); ++i) {
+    out.indent(2);
+    out << SemanticsIdentifierId(i) << " = \"" << identifiers_[i] << "\";\n";
   }
+  out << "},\n";
+
+  out << "integer_literals = {\n";
+  for (int32_t i = 0; i < static_cast<int32_t>(integer_literals_.size()); ++i) {
+    out.indent(2);
+    out << SemanticsIntegerLiteralId(i) << " = " << integer_literals_[i]
+        << ";\n";
+  }
+  out << "},\n";
+
+  out << "nodes = {\n";
+  int indent = 2;
+  for (int32_t i = 0; i < static_cast<int32_t>(nodes_.size()); ++i) {
+    SemanticsNode node = nodes_[i];
+
+    // Adjust indent for block contents.
+    switch (node.kind()) {
+      case SemanticsNodeKind::CodeBlockStart():
+      case SemanticsNodeKind::FunctionDefinitionStart():
+        out.indent(indent);
+        indent += 2;
+        break;
+      case SemanticsNodeKind::CodeBlockEnd():
+      case SemanticsNodeKind::FunctionDefinitionEnd():
+        indent -= 2;
+        out.indent(indent);
+        break;
+      default:
+        // No indentation change.
+        out.indent(indent);
+        break;
+    }
+
+    out << SemanticsNodeId(i) << " = " << node << ";\n";
+  }
+  out << "}\n";
 }
 
 }  // namespace Carbon

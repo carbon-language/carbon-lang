@@ -37,8 +37,13 @@ class LexedStringLiteral {
   [[nodiscard]] auto is_terminated() const -> bool { return is_terminated_; }
 
  private:
+  enum MultiLineKind { NotMultiLine, MultiLine, MultiLineWithDoubleQuotes };
+
+  struct Introducer;
+
   LexedStringLiteral(llvm::StringRef text, llvm::StringRef content,
-                     int hash_level, bool multi_line, bool is_terminated)
+                     int hash_level, MultiLineKind multi_line,
+                     bool is_terminated)
       : text_(text),
         content_(content),
         hash_level_(hash_level),
@@ -55,7 +60,7 @@ class LexedStringLiteral {
   // The number of `#`s preceding the opening `"` or `"""`.
   int hash_level_;
   // Whether this was a multi-line string literal.
-  bool multi_line_;
+  MultiLineKind multi_line_;
   // Whether the literal is valid, or should only be used for errors.
   bool is_terminated_;
 };

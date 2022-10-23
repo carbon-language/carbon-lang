@@ -6,11 +6,14 @@
 #define CARBON_EXPLORER_AST_BINDINGS_H_
 
 #include <map>
+#include <utility>
 
 #include "explorer/common/nonnull.h"
+#include "llvm/ADT/ArrayRef.h"
 
 namespace Carbon {
 
+class Arena;
 class ImplBinding;
 class GenericBinding;
 class Value;
@@ -27,16 +30,34 @@ using ImplWitnessMap =
 // will have the same set of bindings.
 class Bindings {
  public:
+  // Gets an empty set of bindings.
+  static auto None() -> Nonnull<const Bindings*>;
+
+  // Makes a set of symbolic identity bindings for the given collection of
+  // generic bindings and their impl bindings.
+  static auto SymbolicIdentity(
+      Nonnull<Arena*> arena,
+      llvm::ArrayRef<Nonnull<const GenericBinding*>> bindings)
+      -> Nonnull<const Bindings*>;
+
+  // Create an empty set of bindings.
+  Bindings() = default;
+
   // Create an instantiated set of bindings for use during evaluation,
   // containing both arguments and witnesses.
   Bindings(BindingMap args, ImplWitnessMap witnesses)
-      : args_(args), witnesses_(witnesses) {}
+      : args_(std::move(args)), witnesses_(std::move(witnesses)) {}
 
   enum NoWitnessesTag { NoWitnesses };
 
   // Create a set of bindings for use during type-checking, containing only the
   // arguments but not the corresponding witnesses.
-  Bindings(BindingMap args, NoWitnessesTag) : args_(args), witnesses_() {}
+  Bindings(BindingMap args, NoWitnessesTag /*unused*/)
+      : args_(std::move(args)) {}
+
+  // Add a value, and perhaps a witness, for a generic binding.
+  void Add(Nonnull<const GenericBinding*> binding, Nonnull<const Value*> value,
+           std::optional<Nonnull<const Value*>> witness);
 
   // Argument values corresponding to generic bindings.
   auto args() const -> const BindingMap& { return args_; }
@@ -44,8 +65,10 @@ class Bindings {
   // Witnesses corresponding to impl bindings.
   auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
 
-  // An empty set of bindings.
-  static auto None() -> Nonnull<const Bindings*>;
+  // Determine whether this is an empty set of bindings.
+  [[nodiscard]] auto empty() const -> bool {
+    return args_.empty() && witnesses_.empty();
+  }
 
  private:
   BindingMap args_;

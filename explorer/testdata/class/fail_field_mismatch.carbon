@@ -2,11 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -16,7 +14,7 @@ class Point {
 }
 
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_field_mismatch.carbon:[[@LINE+1]]: type error in name binding: '{.x: i32, .z: i32}' is not implicitly convertible to 'class Point'
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_field_mismatch.carbon:[[@LINE+1]]: type error in name binding: '{.x: i32, .z: i32}' is not implicitly convertible to 'class Point'
   var p: Point = {.x = 1, .z = 2};
   return p.x - 1;
 }

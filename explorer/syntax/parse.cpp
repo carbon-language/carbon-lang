@@ -54,7 +54,7 @@ auto Parse(Nonnull<Arena*> arena, std::string_view input_file_name,
   // Prepare the lexer.
   yyscan_t scanner;
   yylex_init(&scanner);
-  auto buffer = yy_create_buffer(input_file, YY_BUF_SIZE, scanner);
+  auto* buffer = yy_create_buffer(input_file, YY_BUF_SIZE, scanner);
   yy_switch_to_buffer(buffer, scanner);
 
   ErrorOr<AST> result =
@@ -74,7 +74,7 @@ auto ParseFromString(Nonnull<Arena*> arena, std::string_view input_file_name,
   // Prepare the lexer.
   yyscan_t scanner;
   yylex_init(&scanner);
-  auto buffer =
+  auto* buffer =
       yy_scan_bytes(file_contents.data(), file_contents.size(), scanner);
   yy_switch_to_buffer(buffer, scanner);
 

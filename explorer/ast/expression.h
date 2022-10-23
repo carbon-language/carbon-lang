@@ -8,6 +8,7 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -26,6 +27,7 @@
 namespace Carbon {
 
 class Value;
+class Witness;
 class MemberName;
 class VariableType;
 class InterfaceType;
@@ -92,6 +94,33 @@ class Expression : public AstNode {
   std::optional<ValueCategory> value_category_;
 };
 
+// A mixin for expressions that can be rewritten to a different expression by
+// type-checking.
+template <typename Base>
+class RewritableMixin : public Base {
+ public:
+  using Base::Base;
+
+  // Set the rewritten form of this expression. Can only be called during type
+  // checking.
+  auto set_rewritten_form(const Expression* rewritten_form) -> void {
+    CARBON_CHECK(!rewritten_form_.has_value()) << "rewritten form set twice";
+    rewritten_form_ = rewritten_form;
+    this->set_static_type(&rewritten_form->static_type());
+    this->set_value_category(rewritten_form->value_category());
+  }
+
+  // Get the rewritten form of this expression. A rewritten form is used when
+  // the expression is rewritten as a function call on an interface. A
+  // rewritten form is not used when providing built-in operator semantics.
+  auto rewritten_form() const -> std::optional<Nonnull<const Expression*>> {
+    return rewritten_form_;
+  }
+
+ private:
+  std::optional<Nonnull<const Expression*>> rewritten_form_;
+};
+
 // A FieldInitializer represents the initialization of a single struct field.
 class FieldInitializer {
  public:
@@ -123,11 +152,17 @@ enum class Operator {
   BitShiftRight,
   Complement,
   Deref,
+  Div,
   Eq,
+  Less,
+  LessEq,
+  Greater,
+  GreaterEq,
   Mul,
   Mod,
   Neg,
   Not,
+  NotEq,
   Or,
   Sub,
   Ptr,
@@ -198,21 +233,82 @@ class DotSelfExpression : public Expression {
   std::optional<Nonnull<GenericBinding*>> self_binding_;
 };
 
-class SimpleMemberAccessExpression : public Expression {
+class MemberAccessExpression : public Expression {
+ public:
+  explicit MemberAccessExpression(AstNodeKind kind, SourceLocation source_loc,
+                                  Nonnull<Expression*> object)
+      : Expression(kind, source_loc), object_(object) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromMemberAccessExpression(node->kind());
+  }
+
+  auto object() const -> const Expression& { return *object_; }
+  auto object() -> Expression& { return *object_; }
+
+  // Can only be called by type-checking, if a conversion was required.
+  void set_object(Nonnull<Expression*> object) { object_ = object; }
+
+  // Returns true if this is an access of a member of the type of the object,
+  // rather than an access of a member of the object itself. In this case, the
+  // value of the object expression is ignored, and the type is accessed
+  // instead.
+  //
+  // For example, given `x: Class`, `x.StaticFunction` is a type access
+  // equivalent to `T.StaticFunction`, and given `T:! Interface` and `y: T`,
+  // `y.AssociatedConstant` is a type access equivalent to
+  // `T.AssociatedConstant`.
+  auto is_type_access() const -> bool { return is_type_access_; }
+
+  // Can only be called once, during typechecking.
+  void set_is_type_access(bool type_access) { is_type_access_ = type_access; }
+
+  // If `object` has a generic type, returns the witness value, which might be
+  // either concrete or symbolic. Otherwise, returns `std::nullopt`. Should not
+  // be called before typechecking.
+  auto impl() const -> std::optional<Nonnull<const Witness*>> { return impl_; }
+
+  // Can only be called once, during typechecking.
+  void set_impl(Nonnull<const Witness*> impl) {
+    CARBON_CHECK(!impl_.has_value());
+    impl_ = impl;
+  }
+
+  // Returns the constant value of this expression, if one has been set. This
+  // value will be used instead of accessing a member. Even if this is present,
+  // the operand of the member access expression must still be evaluated, in
+  // case it has side effects.
+  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return constant_value_;
+  }
+
+  // Sets the value returned by constant_value(). Can only be called once,
+  // during typechecking.
+  void set_constant_value(Nonnull<const Value*> value) {
+    CARBON_CHECK(!constant_value_.has_value());
+    constant_value_ = value;
+  }
+
+ private:
+  Nonnull<Expression*> object_;
+  bool is_type_access_ = false;
+  std::optional<Nonnull<const Witness*>> impl_;
+  std::optional<Nonnull<const Value*>> constant_value_;
+};
+
+class SimpleMemberAccessExpression : public MemberAccessExpression {
  public:
   explicit SimpleMemberAccessExpression(SourceLocation source_loc,
                                         Nonnull<Expression*> object,
                                         std::string member_name)
-      : Expression(AstNodeKind::SimpleMemberAccessExpression, source_loc),
-        object_(object),
+      : MemberAccessExpression(AstNodeKind::SimpleMemberAccessExpression,
+                               source_loc, object),
         member_name_(std::move(member_name)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromSimpleMemberAccessExpression(node->kind());
   }
 
-  auto object() const -> const Expression& { return *object_; }
-  auto object() -> Expression& { return *object_; }
   auto member_name() const -> const std::string& { return member_name_; }
 
   // Returns the `Member` that the member name resolved to.
@@ -230,25 +326,13 @@ class SimpleMemberAccessExpression : public Expression {
 
   // Returns true if the field is a method that has a "me" declaration in an
   // AddrPattern.
+  // TODO: Should be in MemberAccessExpression.
   auto is_field_addr_me_method() const -> bool {
     return is_field_addr_me_method_;
   }
 
   // Can only be called once, during typechecking.
   void set_is_field_addr_me_method() { is_field_addr_me_method_ = true; }
-
-  // If `object` has a generic type, returns the `ImplBinding` that
-  // identifies its witness table. Otherwise, returns `std::nullopt`. Should not
-  // be called before typechecking.
-  auto impl() const -> std::optional<Nonnull<const Expression*>> {
-    return impl_;
-  }
-
-  // Can only be called once, during typechecking.
-  void set_impl(Nonnull<const Expression*> impl) {
-    CARBON_CHECK(!impl_.has_value());
-    impl_ = impl;
-  }
 
   // If `object` is a constrained type parameter and `member` was found in an
   // interface, returns that interface. Should not be called before
@@ -265,11 +349,9 @@ class SimpleMemberAccessExpression : public Expression {
   }
 
  private:
-  Nonnull<Expression*> object_;
   std::string member_name_;
   std::optional<Member> member_;
   bool is_field_addr_me_method_ = false;
-  std::optional<Nonnull<const Expression*>> impl_;
   std::optional<Nonnull<const InterfaceType*>> found_in_interface_;
 };
 
@@ -286,21 +368,19 @@ class SimpleMemberAccessExpression : public Expression {
 //
 // Note that the `path` is evaluated during type-checking, not at runtime, so
 // the corresponding `member` is determined statically.
-class CompoundMemberAccessExpression : public Expression {
+class CompoundMemberAccessExpression : public MemberAccessExpression {
  public:
   explicit CompoundMemberAccessExpression(SourceLocation source_loc,
                                           Nonnull<Expression*> object,
                                           Nonnull<Expression*> path)
-      : Expression(AstNodeKind::CompoundMemberAccessExpression, source_loc),
-        object_(object),
+      : MemberAccessExpression(AstNodeKind::CompoundMemberAccessExpression,
+                               source_loc, object),
         path_(path) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromCompoundMemberAccessExpression(node->kind());
   }
 
-  auto object() const -> const Expression& { return *object_; }
-  auto object() -> Expression& { return *object_; }
   auto path() const -> const Expression& { return *path_; }
   auto path() -> Expression& { return *path_; }
 
@@ -317,26 +397,9 @@ class CompoundMemberAccessExpression : public Expression {
     member_ = member;
   }
 
-  // Returns the expression to use to compute the witness table, if this
-  // expression names an interface member.
-  auto impl() const -> std::optional<Nonnull<const Expression*>> {
-    return impl_;
-  }
-
-  // Can only be called once, during typechecking.
-  void set_impl(Nonnull<const Expression*> impl) {
-    CARBON_CHECK(!impl_.has_value());
-    impl_ = impl;
-  }
-
-  // Can only be called by type-checking, if a conversion was required.
-  void set_object(Nonnull<Expression*> object) { object_ = object; }
-
  private:
-  Nonnull<Expression*> object_;
   Nonnull<Expression*> path_;
   std::optional<Nonnull<const MemberName*>> member_;
-  std::optional<Nonnull<const Expression*>> impl_;
 };
 
 class IndexExpression : public Expression {
@@ -492,11 +555,11 @@ class StructTypeLiteral : public Expression {
   std::vector<FieldInitializer> fields_;
 };
 
-class OperatorExpression : public Expression {
+class OperatorExpression : public RewritableMixin<Expression> {
  public:
   explicit OperatorExpression(SourceLocation source_loc, Operator op,
                               std::vector<Nonnull<Expression*>> arguments)
-      : Expression(AstNodeKind::OperatorExpression, source_loc),
+      : RewritableMixin(AstNodeKind::OperatorExpression, source_loc),
         op_(op),
         arguments_(std::move(arguments)) {}
 
@@ -512,28 +575,10 @@ class OperatorExpression : public Expression {
     return arguments_;
   }
 
-  // Set the rewritten form of this expression. Can only be called during type
-  // checking.
-  auto set_rewritten_form(const Expression* rewritten_form) -> void {
-    CARBON_CHECK(!rewritten_form_.has_value()) << "rewritten form set twice";
-    rewritten_form_ = rewritten_form;
-    set_static_type(&rewritten_form->static_type());
-    set_value_category(rewritten_form->value_category());
-  }
-  // Get the rewritten form of this expression. A rewritten form is used when
-  // the expression is rewritten as a function call on an interface. A
-  // rewritten form is not used when providing built-in operator semantics.
-  auto rewritten_form() const -> std::optional<Nonnull<const Expression*>> {
-    return rewritten_form_;
-  }
-
  private:
   Operator op_;
   std::vector<Nonnull<Expression*>> arguments_;
-  std::optional<Nonnull<const Expression*>> rewritten_form_;
 };
-
-using ImplExpMap = std::map<Nonnull<const ImplBinding*>, Nonnull<Expression*>>;
 
 class CallExpression : public Expression {
  public:
@@ -542,7 +587,8 @@ class CallExpression : public Expression {
                           Nonnull<Expression*> argument)
       : Expression(AstNodeKind::CallExpression, source_loc),
         function_(function),
-        argument_(argument) {}
+        argument_(argument),
+        bindings_({}, {}) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromCallExpression(node->kind());
@@ -553,23 +599,20 @@ class CallExpression : public Expression {
   auto argument() const -> const Expression& { return *argument_; }
   auto argument() -> Expression& { return *argument_; }
 
-  // Maps each of `function`'s impl bindings to an expression
-  // that constructs a witness table.
-  // Should not be called before typechecking, or if `function` is not
-  // a generic function.
-  auto impls() const -> const ImplExpMap& { return impls_; }
+  auto bindings() -> const Bindings& { return bindings_; }
 
   // Can only be called once, during typechecking.
-  void set_impls(const ImplExpMap& impls) {
-    CARBON_CHECK(impls_.empty());
-    impls_ = impls;
+  void set_bindings(Bindings bindings) {
+    CARBON_CHECK(bindings_.args().empty() && bindings_.witnesses().empty());
+    bindings_ = std::move(bindings);
   }
 
-  auto deduced_args() const -> const BindingMap& { return deduced_args_; }
+  auto deduced_args() const -> const BindingMap& { return bindings_.args(); }
 
-  void set_deduced_args(const BindingMap& deduced_args) {
-    deduced_args_ = deduced_args;
-  }
+  // Maps each of `function`'s impl bindings to a witness.
+  // Should not be called before typechecking, or if `function` is not
+  // a generic function.
+  auto impls() const -> const ImplWitnessMap& { return bindings_.witnesses(); }
 
   // Can only be called by type-checking, if a conversion was required.
   void set_argument(Nonnull<Expression*> argument) { argument_ = argument; }
@@ -577,8 +620,7 @@ class CallExpression : public Expression {
  private:
   Nonnull<Expression*> function_;
   Nonnull<Expression*> argument_;
-  ImplExpMap impls_;
-  BindingMap deduced_args_;
+  Bindings bindings_;
 };
 
 class FunctionTypeLiteral : public Expression {
@@ -676,12 +718,15 @@ class IntrinsicExpression : public Expression {
     Rand,
     IntEq,
     StrEq,
+    StrCompare,
+    IntCompare,
     IntBitAnd,
     IntBitOr,
     IntBitXor,
     IntBitComplement,
     IntLeftShift,
     IntRightShift,
+    Assert,
   };
 
   // Returns the enumerator corresponding to the intrinsic named `name`,
@@ -822,16 +867,43 @@ class EqualsWhereClause : public WhereClause {
   Nonnull<Expression*> rhs_;
 };
 
+// An `=` where clause.
+//
+// For example, `Constraint where .Type = i32` specifies that the associated
+// type `.Type` is rewritten to `i32` whenever used.
+class RewriteWhereClause : public WhereClause {
+ public:
+  explicit RewriteWhereClause(SourceLocation source_loc,
+                              std::string member_name,
+                              Nonnull<Expression*> replacement)
+      : WhereClause(WhereClauseKind::RewriteWhereClause, source_loc),
+        member_name_(std::move(member_name)),
+        replacement_(replacement) {}
+
+  static auto classof(const AstNode* node) {
+    return InheritsFromRewriteWhereClause(node->kind());
+  }
+
+  auto member_name() const -> std::string_view { return member_name_; }
+
+  auto replacement() const -> const Expression& { return *replacement_; }
+  auto replacement() -> Expression& { return *replacement_; }
+
+ private:
+  std::string member_name_;
+  Nonnull<Expression*> replacement_;
+};
+
 // A `where` expression: `AddableWith(i32) where .Result == i32`.
 //
 // The first operand is rewritten to a generic binding, for example
 // `.Self:! AddableWith(i32)`, which may be used in the clauses.
-class WhereExpression : public Expression {
+class WhereExpression : public RewritableMixin<Expression> {
  public:
   explicit WhereExpression(SourceLocation source_loc,
                            Nonnull<GenericBinding*> self_binding,
                            std::vector<Nonnull<WhereClause*>> clauses)
-      : Expression(AstNodeKind::WhereExpression, source_loc),
+      : RewritableMixin(AstNodeKind::WhereExpression, source_loc),
         self_binding_(self_binding),
         clauses_(std::move(clauses)) {}
 
@@ -850,35 +922,6 @@ class WhereExpression : public Expression {
  private:
   Nonnull<GenericBinding*> self_binding_;
   std::vector<Nonnull<WhereClause*>> clauses_;
-};
-
-// Instantiate a generic impl.
-class InstantiateImpl : public Expression {
- public:
-  using ImplementsCarbonValueNode = void;
-
-  explicit InstantiateImpl(SourceLocation source_loc,
-                           Nonnull<Expression*> generic_impl,
-                           const BindingMap& type_args, const ImplExpMap& impls)
-      : Expression(AstNodeKind::InstantiateImpl, source_loc),
-        generic_impl_(generic_impl),
-        type_args_(type_args),
-        impls_(impls) {}
-
-  static auto classof(const AstNode* node) -> bool {
-    return InheritsFromInstantiateImpl(node->kind());
-  }
-  auto generic_impl() const -> Nonnull<Expression*> { return generic_impl_; }
-  auto type_args() const -> const BindingMap& { return type_args_; }
-
-  // Maps each of the impl bindings to an expression that constructs
-  // the witness table for that impl.
-  auto impls() const -> const ImplExpMap& { return impls_; }
-
- private:
-  Nonnull<Expression*> generic_impl_;
-  BindingMap type_args_;
-  ImplExpMap impls_;
 };
 
 // An expression whose semantics have not been implemented. This can be used

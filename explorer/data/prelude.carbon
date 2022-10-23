@@ -15,17 +15,24 @@ interface As(T:! Type) {
 
 // Implicitly convert `Self` to `T`.
 interface ImplicitAs(T:! Type) {
-  fn Convert[me: Self]() -> T;
+  extends As(T);
 }
 
-// TODO: ImplicitAs(T) should extend As(T).
-impl forall [T:! Type, U:! ImplicitAs(T)] U as As(T) {
-  fn Convert[me: Self]() -> T { return me.Convert(); }
+// TODO: Should we just use an intrinsic for this?
+interface __EqualConverter {
+  let T:! Type;
+  fn Convert(t: T) -> Self;
+}
+fn __EqualConvert[T:! Type](t: T, U:! __EqualConverter where .T = T) -> U {
+  return U.Convert(t);
+}
+impl forall [U:! Type] U as __EqualConverter where .T = U {
+  fn Convert(u: U) -> U { return u; }
 }
 
-// Every type implicitly converts to itself.
-impl forall [T:! Type] T as ImplicitAs(T) {
-  fn Convert[me: Self]() -> T { return me; }
+// Every type implicitly converts to single-step-equal types.
+impl forall [T:! Type, U:! Type where .Self == T] T as ImplicitAs(U) {
+  fn Convert[me: Self]() -> U { return __EqualConvert(me, U); }
 }
 
 // TODO: Simplify this once we have variadics.
@@ -57,9 +64,13 @@ impl forall [U1:! Type, U2:! Type, U3:! Type,
 // Comparison interfaces.
 // ----------------------
 
+// ----------------------
+// EQUAL
+// ----------------------
+
 interface EqWith(U:! Type) {
-  fn Equal[me: Self](other: U) -> Bool;
-  // TODO: NotEqual with default impl
+  fn Equal[me: Self](other: U) -> bool;
+  fn NotEqual[me: Self](other: U) -> bool;
 }
 // TODO: constraint Eq { ... }
 
@@ -67,22 +78,218 @@ interface EqWith(U:! Type) {
 // TODO: Simplify this once we have variadics
 impl forall [T2:! Type, U2:! Type, T1:! EqWith(T2), U1:! EqWith(U2)]
     (T1, U1) as EqWith((T2, U2)) {
-  fn Equal[me: Self](other: (T2, U2)) -> Bool {
+  fn Equal[me: Self](other: (T2, U2)) -> bool {
     let (l1: T1, l2: U1) = me;
     let (r1: T2, r2: U2) = other;
     return l1 == r1 and l2 == r2;
   }
+  fn NotEqual[me: Self](other: (T2, U2)) -> bool {
+      let (l1: T1, l2: U1) = me;
+      let (r1: T2, r2: U2) = other;
+      return l1 != r1 or l2 != r2;
+    }
+}
+
+impl bool as EqWith(Self) {
+  fn Equal[me: Self](other: Self) -> bool {
+    return if me then other else not other;
+  }
+  fn NotEqual[me: Self](other: Self) -> bool {
+    return if me then not other else other;
+  }
 }
 
 impl i32 as EqWith(Self) {
-  fn Equal[me: Self](other: Self) -> Bool {
+  fn Equal[me: Self](other: Self) -> bool {
     return __intrinsic_int_eq(me, other);
+  }
+
+  fn NotEqual[me: Self](other: Self) -> bool {
+    return not __intrinsic_int_eq(me, other);
   }
 }
 
 impl String as EqWith(Self) {
-  fn Equal[me: Self](other: Self) -> Bool {
+  fn Equal[me: Self](other: Self) -> bool {
     return __intrinsic_str_eq(me, other);
+  }
+
+  fn NotEqual[me: Self](other: Self) -> bool {
+    return not __intrinsic_str_eq(me, other);
+  }
+}
+
+// ----------------------
+// COMPARE
+// ----------------------
+
+choice Ordering {
+  Less,
+  Equivalent,
+  Greater,
+  Incomparable
+}
+
+interface CompareWith(U:! Type) {
+  fn Compare[me: Self](u: U) -> Ordering;
+  // TODO: Add `default fn` for Less, LessOrEquivalent, Greater, and GreaterOrEquivalent once it's available.
+}
+// TODO: constraint Ordered { ... }
+
+impl i32 as CompareWith(Self) {
+  fn Compare[me: Self](other: Self) -> Ordering {
+    var comp: i32 = __intrinsic_int_compare(me, other);
+    if (comp == -1) {
+      return Ordering.Less();
+    }
+    if (comp == 0) {
+      return Ordering.Equivalent();
+    }
+    if (comp == 1) {
+      return Ordering.Greater();
+    }
+    return Ordering.Incomparable();
+
+  }
+}
+
+impl String as CompareWith(Self) {
+  fn Compare[me: Self](other: Self) -> Ordering {
+    var comp: i32 = __intrinsic_str_compare(me, other);
+    if (comp == -1) {
+      return Ordering.Less();
+    }
+    if (comp == 0) {
+      return Ordering.Equivalent();
+    }
+    if (comp == 1) {
+      return Ordering.Greater();
+    }
+    return Ordering.Incomparable();
+  }
+}
+
+interface LessWith(U:! Type) {
+  fn Less[me: Self](other: U) -> bool;
+}
+
+interface LessEqWith(U:! Type) {
+  fn LessEq[me: Self](other: U) -> bool;
+}
+
+interface GreaterWith(U:! Type) {
+  fn Greater[me: Self](other: U) -> bool;
+}
+
+interface GreaterEqWith(U:! Type) {
+  fn GreaterEq[me: Self](other: U) -> bool;
+}
+
+impl i32 as LessWith(Self) {
+  fn Less[me: Self](other: Self) -> bool {
+    var comp: Ordering = me.(CompareWith(i32).Compare)(other);
+    match (comp) {
+      case Ordering.Less() => {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+impl String as LessWith(Self) {
+  fn Less[me: Self](other: Self) -> bool {
+    var comp: Ordering =  me.(CompareWith(String).Compare)(other);
+    match(comp){
+      case Ordering.Less() => {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+impl i32 as LessEqWith(Self) {
+  fn LessEq[me: Self](other: Self) -> bool {
+    var comp: Ordering =  me.(CompareWith(i32).Compare)(other);
+    match(comp){
+      case Ordering.Less() => {
+        return true;
+      }
+      case Ordering.Equivalent() => {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+impl String as LessEqWith(Self) {
+  fn LessEq[me: Self](other: Self) -> bool {
+    var comp: Ordering =  me.(CompareWith(String).Compare)(other);
+    match(comp){
+      case Ordering.Less() => {
+        return true;
+      }
+      case Ordering.Equivalent() => {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+impl i32 as GreaterWith(Self) {
+  fn Greater[me: Self](other: Self) -> bool {
+    var comp: Ordering =  me.(CompareWith(i32).Compare)(other);
+    match(comp){
+      case Ordering.Greater() => {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+impl String as GreaterWith(Self) {
+  fn Greater[me: Self](other: Self) -> bool {
+    var comp: Ordering =  me.(CompareWith(String).Compare)(other);
+    match(comp){
+      case Ordering.Greater() => {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+impl i32 as GreaterEqWith(Self) {
+  fn GreaterEq[me: Self](other: Self) -> bool {
+    var comp: Ordering =  me.(CompareWith(i32).Compare)(other);
+    match(comp){
+      case Ordering.Greater() => {
+        return true;
+      }
+      case Ordering.Equivalent() => {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+impl String as GreaterEqWith(Self) {
+  fn GreaterEq[me: Self](other: Self) -> bool {
+    var comp: Ordering =  me.(CompareWith(String).Compare)(other);
+    match(comp){
+      case Ordering.Greater() => {
+        return true;
+      }
+      case Ordering.Equivalent() => {
+        return true;
+      }
+    }
+    return false;
   }
 }
 
@@ -117,6 +324,13 @@ interface MulWith(U:! Type) {
 }
 // TODO: constraint Mul { ... }
 
+interface DivWith(U:! Type) {
+  // TODO: = Self
+  let Result:! Type;
+  fn Op[me: Self](other: U) -> Result;
+}
+// TODO: constraint Div { ... }
+
 interface ModWith(U:! Type) {
   // TODO: = Self
   let Result:! Type;
@@ -125,19 +339,22 @@ interface ModWith(U:! Type) {
 // TODO: constraint Mod { ... }
 
 // Note, these impls use the builtin addition for i32.
-external impl i32 as Negate where .Result == i32 {
+external impl i32 as Negate where .Result = i32 {
   fn Op[me: i32]() -> i32 { return -me; }
 }
-external impl i32 as AddWith(i32) where .Result == i32 {
+external impl i32 as AddWith(i32) where .Result = i32 {
   fn Op[me: i32](other: i32) -> i32 { return me + other; }
 }
-external impl i32 as SubWith(i32) where .Result == i32 {
+external impl i32 as SubWith(i32) where .Result = i32 {
   fn Op[me: i32](other: i32) -> i32 { return me - other; }
 }
-external impl i32 as MulWith(i32) where .Result == i32 {
+external impl i32 as MulWith(i32) where .Result = i32 {
   fn Op[me: i32](other: i32) -> i32 { return me * other; }
 }
-external impl i32 as ModWith(i32) where .Result == i32 {
+external impl i32 as DivWith(i32) where .Result = i32 {
+  fn Op[me: i32](other: i32) -> i32 { return me / other; }
+}
+external impl i32 as ModWith(i32) where .Result = i32 {
   fn Op[me: i32](other: i32) -> i32 { return me % other; }
 }
 
@@ -160,7 +377,7 @@ interface BitAndWith(U:! Type) {
 }
 // TODO:
 // constraint BitAnd {
-//   extends BitAndWith(Self) where .Result == Self;
+//   extends BitAndWith(Self) where .Result = Self;
 // }
 
 // Binary `|`.
@@ -171,7 +388,7 @@ interface BitOrWith(U:! Type) {
 }
 // TODO:
 // constraint BitOr {
-//   extends BitOrWith(Self) where .Result == Self;
+//   extends BitOrWith(Self) where .Result = Self;
 // }
 
 // Binary `^`.
@@ -182,7 +399,7 @@ interface BitXorWith(U:! Type) {
 }
 // TODO:
 // constraint BitXor {
-//   extends BitXorWith(Self) where .Result == Self;
+//   extends BitXorWith(Self) where .Result = Self;
 // }
 
 // Binary `<<`.
@@ -193,7 +410,7 @@ interface LeftShiftWith(U:! Type) {
 }
 // TODO:
 // constraint LeftShift {
-//   extends LeftShiftWith(Self) where .Result == Self;
+//   extends LeftShiftWith(Self) where .Result = Self;
 // }
 
 // Binary `>>`.
@@ -204,38 +421,75 @@ interface RightShiftWith(U:! Type) {
 }
 // TODO:
 // constraint RightShift {
-//   extends RightShiftWith(Self) where .Result == Self;
+//   extends RightShiftWith(Self) where .Result = Self;
 // }
 
-external impl i32 as BitComplement where .Result == i32 {
+external impl i32 as BitComplement where .Result = i32 {
   fn Op[me: i32]() -> i32 {
     return __intrinsic_int_bit_complement(me);
   }
 }
-external impl i32 as BitAndWith(i32) where .Result == i32 {
+external impl i32 as BitAndWith(i32) where .Result = i32 {
   fn Op[me: i32](other: i32) -> i32 {
     return __intrinsic_int_bit_and(me, other);
   }
 }
-external impl i32 as BitOrWith(i32) where .Result == i32 {
+external impl i32 as BitOrWith(i32) where .Result = i32 {
   fn Op[me: i32](other: i32) -> i32 {
     return __intrinsic_int_bit_or(me, other);
   }
 }
-external impl i32 as BitXorWith(i32) where .Result == i32 {
+external impl i32 as BitXorWith(i32) where .Result = i32 {
   fn Op[me: i32](other: i32) -> i32 {
     return __intrinsic_int_bit_xor(me, other);
   }
 }
-external impl i32 as LeftShiftWith(i32) where .Result == i32 {
+external impl i32 as LeftShiftWith(i32) where .Result = i32 {
   fn Op[me: i32](other: i32) -> i32 {
     return __intrinsic_int_left_shift(me, other);
   }
 }
-external impl i32 as RightShiftWith(i32) where .Result == i32 {
+external impl i32 as RightShiftWith(i32) where .Result = i32 {
   fn Op[me: i32](other: i32) -> i32 {
     return __intrinsic_int_right_shift(me, other);
   }
+}
+
+//-------------------------
+// Optional
+//-------------------------
+choice OptionalElement(T:! Type) {
+  None(),
+  Element(T)
+}
+
+class Optional(T:! Type) {
+  fn CreateEmpty() -> Optional(T) {
+    return {.element = OptionalElement(T).None()};
+  }
+  fn Create(value: T) -> Optional(T) {
+    return {.element = OptionalElement(T).Element(value)};
+  }
+
+  fn HasValue[me: Self]() -> bool {
+    match(me.element) {
+      case OptionalElement(T).None() => { return false; }
+    }
+    return true;
+  }
+
+  fn Get[me: Self]() -> T {
+    var y: T;
+    match(me.element) {
+      case OptionalElement(T).Element(x: T) => {
+        return x;
+      }
+    }
+    // TODO: Use assert as soon as available
+    return y;
+  }
+
+  var element: OptionalElement(T);
 }
 
 // ------------------------
@@ -248,6 +502,10 @@ external impl i32 as RightShiftWith(i32) where .Result == i32 {
 // fn Print(format_str: String) {
 //   __intrinsic_print(format_str);
 // }
+
+fn Assert(condition: bool, message: String){
+    __intrinsic_assert(condition, message);
+}
 
 fn Rand(low: i32, high: i32) -> i32{
     return __intrinsic_rand(low,high);

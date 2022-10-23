@@ -58,7 +58,7 @@ struct TestValue {
   TestValue(TestValue&& other) noexcept : state("move constructed") {
     other.state = "move constructed from";
   }
-  auto operator=(const TestValue&) noexcept -> TestValue& {
+  auto operator=(const TestValue& /*unused*/) noexcept -> TestValue& {
     state = "copy assigned";
     return *this;
   }

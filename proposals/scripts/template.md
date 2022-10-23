@@ -13,6 +13,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [TODO: Initial proposal setup](#todo-initial-proposal-setup)
+-   [Abstract](#abstract)
 -   [Problem](#problem)
 -   [Background](#background)
 -   [Proposal](#proposal)
@@ -28,7 +29,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 1. Copy this template to `new.md`, and create a commit.
 2. Create a GitHub pull request, to get a pull request number.
-    - Add the `proposal` and `WIP` labels to the pull request.
+    - Add the `proposal draft` label to the pull request.
 3. Rename `new.md` to `/proposals/p####.md`, where `####` should be the pull
    request number.
 4. Update the title of the proposal (the `TODO` on line 1).
@@ -37,6 +38,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 TODOs indicate where content should be updated for a proposal. See
 [Carbon Governance and Evolution](/docs/project/evolution.md) for more details.
+
+## Abstract
+
+TODO: Describe, in a succinct paragraph, the gist of this document. This
+paragraph should be reproduced verbatim in the PR summary.
 
 ## Problem
 

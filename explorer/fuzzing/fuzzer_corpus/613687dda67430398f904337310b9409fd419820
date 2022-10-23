@@ -1,0 +1,994 @@
+compilation_unit {
+  package_statement {
+    package_name: "Foo"
+  }
+  is_api: true
+  declarations {
+    choice {
+      name: "Choice"
+      alternatives {
+        name: "Alternative"
+        signature {
+        }
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name: "Class"
+      members {
+        function {
+          name: "F"
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "n"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              int_type_literal {
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  operator {
+                    op: Add
+                    arguments {
+                      identifier {
+                        name: "n"
+                      }
+                    }
+                    arguments {
+                      int_literal {
+                        value: 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    interface {
+      name: "Interface"
+      members {
+        function {
+          name: "G"
+          me_pattern {
+            binding_pattern {
+              name: "me"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "Self"
+              }
+            }
+          }
+        }
+      }
+      self {
+        name: "Self"
+        type {
+          type_type_literal {
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    interface {
+      name: "AnotherInterface"
+      self {
+        name: "Self"
+        type {
+          type_type_literal {
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        int_type_literal {
+        }
+      }
+      interface {
+        identifier {
+          name: "Interface"
+        }
+      }
+      members {
+        function {
+          name: "G"
+          me_pattern {
+            binding_pattern {
+              name: "me"
+              type {
+                expression_pattern {
+                  expression {
+                    int_type_literal {
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              int_type_literal {
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  operator {
+                    op: Add
+                    arguments {
+                      identifier {
+                        name: "me"
+                      }
+                    }
+                    arguments {
+                      int_literal {
+                        value: 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        int_type_literal {
+        }
+      }
+      interface {
+        identifier {
+          name: "AnotherInterface"
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "GetStruct"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          type_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              struct_type_literal {
+                fields {
+                  name: "n"
+                  expression {
+                    int_type_literal {
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "GetChoice"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          type_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              identifier {
+                name: "Choice"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "GetClass"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          type_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              identifier {
+                name: "Class"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "GetInterface"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          type_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              identifier {
+                name: "Interface"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "GetConstraint"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          type_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              operator {
+                op: BitwiseAnd
+                arguments {
+                  identifier {
+                    name: "Interface"
+                  }
+                }
+                arguments {
+                  identifier {
+                    name: "AnotherInterface"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "TestStruct"
+      param_pattern {
+      }
+      return_term {
+        kind: Omitted
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "s"
+                type {
+                  expression_pattern {
+                    expression {
+                      call {
+                        function {
+                          identifier {
+                            name: "GetStruct"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              struct_literal {
+                fields {
+                  name: "n"
+                  expression {
+                    int_literal {
+                      value: 1
+                    }
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: Eq
+                arguments {
+                  compound_member_access {
+                    object {
+                      identifier {
+                        name: "s"
+                      }
+                    }
+                    path {
+                      simple_member_access {
+                        field: "n"
+                        object {
+                          call {
+                            function {
+                              identifier {
+                                name: "GetStruct"
+                              }
+                            }
+                            argument {
+                              tuple_literal {
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 1
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                expression_statement {
+                  expression {
+                    call {
+                      function {
+                        identifier {
+                          name: "Print"
+                        }
+                      }
+                      argument {
+                        tuple_literal {
+                          fields {
+                            string_literal {
+                              value: "Struct OK"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "TestChoice"
+      param_pattern {
+      }
+      return_term {
+        kind: Omitted
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "c"
+                type {
+                  expression_pattern {
+                    expression {
+                      call {
+                        function {
+                          identifier {
+                            name: "GetChoice"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              call {
+                function {
+                  simple_member_access {
+                    field: "Alternative"
+                    object {
+                      call {
+                        function {
+                          identifier {
+                            name: "GetChoice"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          match {
+            expression {
+              identifier {
+                name: "c"
+              }
+            }
+            clauses {
+              pattern {
+                expression_pattern {
+                  expression {
+                    call {
+                      function {
+                        simple_member_access {
+                          field: "Alternative"
+                          object {
+                            call {
+                              function {
+                                identifier {
+                                  name: "GetChoice"
+                                }
+                              }
+                              argument {
+                                tuple_literal {
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                      argument {
+                        tuple_literal {
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              statement {
+                block {
+                  statements {
+                    expression_statement {
+                      expression {
+                        call {
+                          function {
+                            identifier {
+                              name: "Print"
+                            }
+                          }
+                          argument {
+                            tuple_literal {
+                              fields {
+                                string_literal {
+                                  value: "Choice OK"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "TestClass"
+      param_pattern {
+      }
+      return_term {
+        kind: Omitted
+      }
+      body {
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: Eq
+                arguments {
+                  call {
+                    function {
+                      simple_member_access {
+                        field: "F"
+                        object {
+                          call {
+                            function {
+                              identifier {
+                                name: "GetClass"
+                              }
+                            }
+                            argument {
+                              tuple_literal {
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          int_literal {
+                            value: 1
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 2
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                expression_statement {
+                  expression {
+                    call {
+                      function {
+                        identifier {
+                          name: "Print"
+                        }
+                      }
+                      argument {
+                        tuple_literal {
+                          fields {
+                            string_literal {
+                              value: "Class OK"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "TestInterface"
+      param_pattern {
+      }
+      return_term {
+        kind: Omitted
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "n"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              int_literal {
+                value: 1
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: Eq
+                arguments {
+                  call {
+                    function {
+                      compound_member_access {
+                        object {
+                          identifier {
+                            name: "n"
+                          }
+                        }
+                        path {
+                          simple_member_access {
+                            field: "G"
+                            object {
+                              call {
+                                function {
+                                  identifier {
+                                    name: "GetInterface"
+                                  }
+                                }
+                                argument {
+                                  tuple_literal {
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                      }
+                    }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 2
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                expression_statement {
+                  expression {
+                    call {
+                      function {
+                        identifier {
+                          name: "Print"
+                        }
+                      }
+                      argument {
+                        tuple_literal {
+                          fields {
+                            string_literal {
+                              value: "Interface OK"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "TestConstraint"
+      param_pattern {
+      }
+      return_term {
+        kind: Omitted
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "n"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              int_literal {
+                value: 1
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: Eq
+                arguments {
+                  call {
+                    function {
+                      compound_member_access {
+                        object {
+                          identifier {
+                            name: "n"
+                          }
+                        }
+                        path {
+                          simple_member_access {
+                            field: "G"
+                            object {
+                              call {
+                                function {
+                                  identifier {
+                                    name: "GetConstraint"
+                                  }
+                                }
+                                argument {
+                                  tuple_literal {
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                      }
+                    }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 2
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                expression_statement {
+                  expression {
+                    call {
+                      function {
+                        identifier {
+                          name: "Print"
+                        }
+                      }
+                      argument {
+                        tuple_literal {
+                          fields {
+                            string_literal {
+                              value: "Constraint OK"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "TestStruct"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "TestChoice"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "TestClass"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "TestInterface"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "TestConstraint"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              int_literal {
+                value: 0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

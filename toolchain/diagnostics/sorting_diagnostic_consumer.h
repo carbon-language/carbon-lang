@@ -26,7 +26,8 @@ class SortingDiagnosticConsumer : public DiagnosticConsumer {
 
   // Sorts and flushes buffered diagnostics.
   void Flush() override {
-    llvm::sort(diagnostics_, [](const Diagnostic& lhs, const Diagnostic& rhs) {
+    llvm::stable_sort(diagnostics_, [](const Diagnostic& lhs,
+                                       const Diagnostic& rhs) {
       return std::tie(lhs.location.line_number, lhs.location.column_number) <
              std::tie(rhs.location.line_number, rhs.location.column_number);
     });

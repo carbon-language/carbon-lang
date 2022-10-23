@@ -37,6 +37,7 @@ TEST(SortedDiagnosticEmitterTest, SortErrors) {
   emitter.Emit({"f", 1, 3}, TestDiagnostic, "M3");
   emitter.Emit({"f", 3, 4}, TestDiagnostic, "M4");
   emitter.Emit({"f", 3, 2}, TestDiagnostic, "M5");
+  emitter.Emit({"f", 3, 2}, TestDiagnostic, "M6");
 
   InSequence s;
   EXPECT_CALL(consumer, HandleDiagnostic(
@@ -51,6 +52,9 @@ TEST(SortedDiagnosticEmitterTest, SortErrors) {
   EXPECT_CALL(consumer, HandleDiagnostic(
                             IsDiagnostic(DiagnosticKind::TestDiagnostic,
                                          DiagnosticLevel::Error, 3, 2, "M5")));
+  EXPECT_CALL(consumer, HandleDiagnostic(
+                            IsDiagnostic(DiagnosticKind::TestDiagnostic,
+                                         DiagnosticLevel::Error, 3, 2, "M6")));
   EXPECT_CALL(consumer, HandleDiagnostic(
                             IsDiagnostic(DiagnosticKind::TestDiagnostic,
                                          DiagnosticLevel::Error, 3, 4, "M4")));

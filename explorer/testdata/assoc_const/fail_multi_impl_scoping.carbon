@@ -2,11 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -20,7 +18,7 @@ interface B {
 }
 
 class C(T:! Type) {
-  impl as A & B where .TA == i32 and .TB == i32 {
+  impl as A & B where .TA = i32 and .TB = i32 {
     fn FA() -> i32 {
       // OK, know that TA is i32 here.
       let v: Self.(A.TA) = 1;
@@ -30,8 +28,8 @@ class C(T:! Type) {
     fn FB() -> i32 {
       // OK, know that TB is i32 here.
       let v: Self.(B.TB) = 2;
-      // TODO: Don't know that TA is i32. It could be specialized.
-      // We should reject this once we support specialization.
+      // Don't know that TA is i32; it could be specialized.
+      // TODO: We should not accept this.
       let w: Self.(A.TA) = 3;
       return v + w;
     }
@@ -40,7 +38,7 @@ class C(T:! Type) {
 
 external impl C(i32) as B where .TB == () {
   fn FB() -> () { return (); }
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_multi_impl_scoping.carbon:[[@LINE+1]]: ambiguous implementations of interface B for class C(T = i32)
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_multi_impl_scoping.carbon:[[@LINE+1]]: ambiguous implementations of interface B for class C(T = i32)
 }
 
 fn Main() -> i32 { return C(i32).FB(); }

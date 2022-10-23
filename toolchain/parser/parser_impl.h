@@ -64,14 +64,15 @@ class ParseTree::Parser {
   //
   // This sets up the next sibling of the node to be the next node in the parse
   // tree's preorder sequence.
-  auto AddLeafNode(ParseNodeKind kind, TokenizedBuffer::Token token) -> Node;
+  auto AddLeafNode(ParseNodeKind kind, TokenizedBuffer::Token token,
+                   bool has_error = false) -> Node;
 
-  // Composes `consumeIf` and `addLeafNode`, propagating the failure case
+  // Composes `ConsumeIf` and `AddLeafNode`, propagating the failure case
   // through the optional.
   auto ConsumeAndAddLeafNodeIf(TokenKind t_kind, ParseNodeKind n_kind)
       -> llvm::Optional<Node>;
 
-  // Marks the node `N` as having some parse errors and that the tree contains
+  // Marks the node `n` as having some parse errors and that the tree contains
   // a node with a parse error.
   auto MarkNodeError(Node n) -> void;
 
@@ -123,11 +124,10 @@ class ParseTree::Parser {
   //   less indentation, there is likely a missing semicolon. Continued
   //   declarations or statements across multiple lines should be indented.
   //
-  // If we find a semicolon based on this skipping, we call `on_semi_` to try
-  // to build a parse node to represent it, and will return that node.
+  // If we find a semicolon based on this skipping, we return that token.
   // Otherwise we will return an empty optional.
-  auto SkipPastLikelyEnd(TokenizedBuffer::Token skip_root, SemiHandler on_semi)
-      -> llvm::Optional<Node>;
+  auto SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
+      -> llvm::Optional<TokenizedBuffer::Token>;
 
   // Parses a close paren token corresponding to the given open paren token,
   // possibly skipping forward and diagnosing if necessary. Creates and returns
@@ -164,9 +164,15 @@ class ParseTree::Parser {
 
   // Parses a block of code: `{ ... }`.
   //
-  // These can form the definition for a function or be nested within a function
-  // definition. These contain variable declarations and statements.
+  // These contain variable declarations and statements.
   auto ParseCodeBlock() -> llvm::Optional<Node>;
+
+  // Similar to ParseCodeBlock(), but supports different ParseNodeKinds because
+  // function definitions are represented differently from other code blocks.
+  // If subtree_start is before start_kind, earlier nodes will be treated as
+  // children of the start_kind node.
+  auto ParseCodeBlock(SubtreeStart subtree_start, ParseNodeKind start_kind,
+                      ParseNodeKind end_kind) -> llvm::Optional<Node>;
 
   // Parses a function declaration with an optional definition. Returns the
   // function parse node which is based on the `fn` introducer keyword.
@@ -177,6 +183,9 @@ class ParseTree::Parser {
 
   // Parses and returns an empty declaration node from a single semicolon token.
   auto ParseEmptyDeclaration() -> Node;
+
+  // Parses a package directive.
+  auto ParsePackageDirective() -> Node;
 
   // Tries to parse a declaration. If a declaration, even an empty one after
   // skipping errors, can be parsed, it is returned. There may be parse errors
@@ -246,6 +255,9 @@ class ParseTree::Parser {
 
   // Parses a while-statement.
   auto ParseWhileStatement() -> llvm::Optional<Node>;
+
+  // Parses a for-statement.
+  auto ParseForStatement() -> llvm::Optional<Node>;
 
   enum class KeywordStatementArgument {
     None,

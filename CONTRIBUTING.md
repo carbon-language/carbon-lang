@@ -21,6 +21,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Contributor License Agreements (CLAs)](#contributor-license-agreements-clas)
         -   [Future CLA plans](#future-cla-plans)
     -   [Collaboration systems](#collaboration-systems)
+        -   [Getting access](#getting-access)
     -   [Contribution tools](#contribution-tools)
     -   [Contribution guidelines and standards](#contribution-guidelines-and-standards)
         -   [Guidelines and philosophy for contributions](#guidelines-and-philosophy-for-contributions)
@@ -60,10 +61,10 @@ information here in our contributing guide, especially the
 ### Help comment on proposals
 
 If you're looking for a quick way to contribute, commenting on proposals is a
-way to provide proposal authors with a breadth of feedback.
-[Issues for leads](https://github.com/carbon-language/carbon-lang/projects/2)
+way to provide proposal authors with a breadth of feedback. The
+["leads questions" label](https://github.com/carbon-language/carbon-lang/issues?q=is%3Aissue+is%3Aopen+label%3A%22leads+question%22)
 has questions the community is looking for a decision on. The
-[list of open proposals](https://github.com/carbon-language/carbon-lang/issues?q=is%3Aopen+label%3Aproposal+draft%3Afalse)
+[list of open proposals](https://github.com/carbon-language/carbon-lang/pulls?q=is%3Apr+is%3Aopen+label%3A%22proposal+rfc%22)
 will have more mature proposals that are nearing a decision. For more about the
 difference, see the [evolution process](docs/project/evolution.md).
 
@@ -143,7 +144,7 @@ the Code of Conduct.
 -   [The GitHub carbon-language organization](https://github.com/carbon-language)
     is used for our repositories.
 -   [Discord](https://discord.gg/ZjVdShJDAs) is used for chat.
--   [A shared Google Drive](https://drive.google.com/corp/drive/folders/18AFPsUWNXfAloZx0tRHTsrdCWUlJLpeW)
+-   [A shared Google Drive](https://drive.google.com/drive/folders/1aC5JJ5EcI8B7cgVDrLvO7WNw97F0LpS2)
     is used for all of our Google Docs, particularly proposal drafts.
 -   [Google Calendar](https://calendar.google.com/calendar/embed?src=c_07td7k4qjq0ssb4gdl6bmbnkik%40group.calendar.google.com)
     is used for meeting invites and project reminders. Contributors may add
@@ -157,18 +158,39 @@ the Code of Conduct.
         which are unstructured meeting slots used for discussing proposals,
         tooling, and other Carbon topics based on who attends.
 
-Note that commenting on Google Docs, attending meetings, and some label changes
-in GitHub will require some contributor access: make sure you've
-[signed the CLA](#contributor-license-agreements-clas) then ask for access on
-[#getting-started](https://discord.com/channels/655572317891461132/655577725347561492)
-on Discord.
+#### Getting access
+
+Our collaboration systems are all viewable publicly, and most can be joined
+without particular requests. However, some require extra permissions, such as
+editing Google Docs, joining meetings, or some details of the proposal process.
+
+When requesting any of the following access, please provide a reason for the
+access. All requests require a
+[signed CLA](#contributor-license-agreements-clas).
+
+-   Google Docs/Calendar commenter access:
+    [join group](https://groups.google.com/a/carbon-lang.dev/g/commenters/about)
+    -   Grants commenter access to Carbon Language documents, as well as the
+        ability to view Calendar events.
+-   Google Docs/Calendar contributor access:
+    [join group](https://groups.google.com/a/carbon-lang.dev/g/contributors/about)
+    -   Grants edit access to Carbon Language documents, as well as the ability
+        to edit Calendar events.
+-   GitHub Label/project contributor access:
+    [ask on #access-requests](https://discord.com/channels/655572317891461132/1006221387574292540)
+    -   Don't forget to mention your GitHub username.
+    -   Used by the proposal process.
+
+If you simply want to chime in on GitHub or Discord, none of this is needed. If
+you're interested in joining meetings, ask for commenter access. If you're
+trying to write proposals, both types of contributor access will help.
 
 ### Contribution tools
 
 Please see our [contribution tool](/docs/project/contribution_tools.md)
 documentation for information on setting up a git client for Carbon development,
 as well as helpful tooling that will ease the contribution process. For example,
-[pre-commit](/docs/project/contribution_tools.md#pre-commit) is used to simplify
+[pre-commit](https://pre-commit.com) is used to simplify
 [code review](/docs/project/code_review.md).
 
 ### Contribution guidelines and standards
@@ -229,8 +251,9 @@ follow the Carbon documentation and coding styles.
 Changes to Carbon documentation follow the
 [Google developer documentation style guide](https://developers.google.com/style).
 
-Markdown files should additionally use
-[Prettier](/docs/project/contribution_tools.md#prettier) for formatting.
+Markdown files should additionally use [Prettier](https://prettier.io) for
+formatting, which we automate with
+[pre-commit](/docs/project/contribution_tools.md#main-tools).
 
 Other style points to be aware of are:
 
@@ -257,7 +280,7 @@ A license is required at the top of all documents and files.
 ### Google Docs
 
 Google Docs all use
-[this template](https://docs.google.com/document/d/1sqEnIWWZKTrtMz2XgD7_RqvogwbI0tBQjAZIvOabQsw/template/preview).
+[this template](https://docs.google.com/document/d/1tAwE0230PDxweVruHUVY6DSfSnrJF2LnLOWXQYqNJuI/template/preview?usp=sharing&resourcekey=0-zsrwCWP7ictbxhCuePk-fw).
 It puts the license at the top of every page if printed.
 
 ### Markdown
@@ -294,7 +317,7 @@ incremental changes and preserves a simple linear history.
 ## Acknowledgements
 
 Carbon's Contributing guidelines are based on
-[Tensorflow](https://github.com/tensorflow/tensorflow/blob/master/CONTRIBUTING.md)
+[TensorFlow](https://github.com/tensorflow/tensorflow/blob/master/CONTRIBUTING.md)
 and [Flutter](https://github.com/flutter/flutter/blob/master/CONTRIBUTING.md)
 guidelines. Many thanks to these communities for their help in providing a
 basis.

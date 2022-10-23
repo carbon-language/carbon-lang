@@ -2,15 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/alias/fail_self_alias.carbon:[[@LINE+1]]: 'a' is not usable until after it has been completely declared
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/alias/fail_self_alias.carbon:[[@LINE+1]]: 'a' is not usable until after it has been completely declared
 alias a = a;
 
 fn Main() -> i32 {

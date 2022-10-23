@@ -25,7 +25,6 @@ cc_library(
         "//common:check",
         "//common:ostream",
         "//explorer/ast",
-        "//explorer/ast:bindings",
         "//explorer/common:arena",
         "//explorer/common:error_builders",
         "//explorer/common:nonnull",
@@ -40,6 +39,7 @@ cc_library(
     deps = [
         ":action_and_value",
         ":stack",
+        "//common:error",
         "//common:ostream",
         "//explorer/ast",
         "@llvm-project//llvm:Support",
@@ -74,6 +74,7 @@ cc_library(
         ":interpreter",
         ":resolve_control_flow",
         ":resolve_names",
+        ":resolve_unformed",
         ":type_checker",
         "//common:check",
         "//common:ostream",
@@ -177,6 +178,22 @@ cc_library(
 )
 
 cc_library(
+    name = "pattern_analysis",
+    srcs = [
+        "pattern_analysis.cpp",
+    ],
+    hdrs = [
+        "pattern_analysis.h",
+    ],
+    deps = [
+        ":action_and_value",
+        "//common:error",
+        "//explorer/ast",
+        "//explorer/common:nonnull",
+        "@llvm-project//llvm:Support",
+    ],
+)
+cc_library(
     name = "type_checker",
     srcs = [
         "builtins.cpp",
@@ -192,6 +209,7 @@ cc_library(
         ":action_and_value",
         ":dictionary",
         ":interpreter",
+        ":pattern_analysis",
         "//common:error",
         "//common:ostream",
         "//explorer/ast",
@@ -199,6 +217,24 @@ cc_library(
         "//explorer/common:error_builders",
         "//explorer/common:nonnull",
         "//explorer/common:source_location",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "resolve_unformed",
+    srcs = [
+        "resolve_unformed.cpp",
+    ],
+    hdrs = [
+        "resolve_unformed.h",
+    ],
+    deps = [
+        "//common:check",
+        "//explorer/ast",
+        "//explorer/ast:static_scope",
+        "//explorer/common:error_builders",
+        "//explorer/common:nonnull",
         "@llvm-project//llvm:Support",
     ],
 )

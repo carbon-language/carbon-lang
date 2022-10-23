@@ -23,8 +23,8 @@ fn Foo() {}
 
 TEST(ParseTest, ParseFromString) {
   Arena arena;
-  ErrorOr<AST> parse_result =
-      ParseFromString(&arena, "file.carbon", FileContents, /*trace=*/false);
+  ErrorOr<AST> parse_result = ParseFromString(
+      &arena, "file.carbon", FileContents, /*parser_debug=*/false);
   ASSERT_TRUE(parse_result.ok());
   EXPECT_EQ(parse_result->declarations.size(), 1);
 }

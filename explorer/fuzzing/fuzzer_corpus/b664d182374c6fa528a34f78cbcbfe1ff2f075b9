@@ -1,0 +1,109 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    function {
+      name: "snd"
+      deduced_parameters {
+        name: "T"
+        type {
+          type_type_literal {
+          }
+        }
+      }
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "x"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+        fields {
+          binding_pattern {
+            name: "y"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "T"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          identifier {
+            name: "T"
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              identifier {
+                name: "y"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "snd"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      int_literal {
+                        value: 0
+                      }
+                    }
+                    fields {
+                      int_literal {
+                        value: 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -2,18 +2,16 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: result: 4
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: result: 4
 
 package ExplorerTest api;
 
 class A { var n: i32; }
 
-external impl A as BitXorWith(i32) where .Result == A {
+external impl A as BitXorWith(i32) where .Result = A {
   fn Op[me: Self](rhs: i32) -> A { return {.n = me.n ^ rhs}; }
 }
 

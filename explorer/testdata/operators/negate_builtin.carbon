@@ -2,17 +2,20 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: result: -3
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: Interface: -3
+// CHECK:STDOUT: Op: -3
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
-fn DoNegate[T:! Negate where .Result == .Self](x: T) -> T { return -x; }
-
 fn Main() -> i32 {
-  return DoNegate(3);
+  var val: i32 = 3;
+  // Make sure that both the interface and operator work with i32. These rely on
+  // builtin arithmetic more directly.
+  Print("Interface: {0}", val.(Negate.Op)());
+  Print("Op: {0}", -val);
+  return 0;
 }

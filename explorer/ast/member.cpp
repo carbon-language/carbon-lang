@@ -15,7 +15,7 @@ Member::Member(Nonnull<const NamedValue*> struct_member)
     : member_(struct_member) {}
 
 auto Member::name() const -> std::string_view {
-  if (const Declaration* decl = member_.dyn_cast<const Declaration*>()) {
+  if (const auto* decl = member_.dyn_cast<const Declaration*>()) {
     return GetName(*decl).value();
   } else {
     return member_.get<const NamedValue*>()->name;
@@ -23,7 +23,7 @@ auto Member::name() const -> std::string_view {
 }
 
 auto Member::type() const -> const Value& {
-  if (const Declaration* decl = member_.dyn_cast<const Declaration*>()) {
+  if (const auto* decl = member_.dyn_cast<const Declaration*>()) {
     return decl->static_type();
   } else {
     return *member_.get<const NamedValue*>()->value;
@@ -31,7 +31,7 @@ auto Member::type() const -> const Value& {
 }
 
 auto Member::declaration() const -> std::optional<Nonnull<const Declaration*>> {
-  if (const Declaration* decl = member_.dyn_cast<const Declaration*>()) {
+  if (const auto* decl = member_.dyn_cast<const Declaration*>()) {
     return decl;
   }
   return std::nullopt;

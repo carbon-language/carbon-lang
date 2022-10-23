@@ -1,0 +1,109 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "p"
+                type {
+                  expression_pattern {
+                    expression {
+                      operator {
+                        op: Ptr
+                        arguments {
+                          int_type_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              call {
+                function {
+                  simple_member_access {
+                    field: "New"
+                    object {
+                      identifier {
+                        name: "heap"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      int_literal {
+                        value: 5
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  simple_member_access {
+                    field: "Delete"
+                    object {
+                      identifier {
+                        name: "heap"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "p"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              operator {
+                op: Deref
+                arguments {
+                  identifier {
+                    name: "p"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
