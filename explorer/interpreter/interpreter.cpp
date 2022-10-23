@@ -161,10 +161,6 @@ class Interpreter {
   auto CallDestructor(Nonnull<const DestructorDeclaration*> fun,
                       Nonnull<const Value*> receiver) -> ErrorOr<Success>;
 
-  auto DestroyTupleElement(Nonnull<const LValue*> lvalue,
-                           Nonnull<const TupleValue*> tuple, std::size_t pos)
-      -> std::optional<ErrorOr<Success>>;
-
   void PrintState(llvm::raw_ostream& out);
 
   auto phase() const -> Phase { return phase_; }
@@ -2011,25 +2007,6 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
       // These declarations have no run-time effects.
       return todo_.FinishAction();
   }
-}
-
-auto Interpreter::DestroyTupleElement(Nonnull<const LValue*> lvalue,
-                                      Nonnull<const TupleValue*> tuple,
-                                      std::size_t pos)
-    -> std::optional<ErrorOr<Success>> {
-  const auto& item = tuple->elements()[pos];
-  if (const auto* class_obj = dyn_cast<NominalClassValue>(item)) {
-    const auto& class_type = cast<NominalClassType>(class_obj->type());
-    const auto& class_dec = class_type.declaration();
-    if (class_dec.destructor().has_value()) {
-      return CallDestructor(*class_dec.destructor(), class_obj);
-    }
-  }
-  if (item->kind() == Value::Kind::TupleValue) {
-    return todo_.Spawn(
-        std::make_unique<DestroyAction>(lvalue, item, std::nullopt));
-  }
-  return std::nullopt;
 }
 
 auto Interpreter::StepDestroy() -> ErrorOr<Success> {

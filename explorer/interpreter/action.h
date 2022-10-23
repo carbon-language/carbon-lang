@@ -63,7 +63,7 @@ class RuntimeScope {
   // Returns the local storage for value_node, if it has storage local to
   // this scope.
   auto Get(ValueNodeView value_node) const
-      -> std::optional<Nonnull<const LValue*>>;
+      -> std::optional<Nonnull<const Value*>>;
 
   // Returns the local values in created order
   auto allocations() const -> const std::vector<AllocationId>& {
@@ -71,7 +71,7 @@ class RuntimeScope {
   }
 
  private:
-  llvm::MapVector<ValueNodeView, Nonnull<const LValue*>,
+  llvm::MapVector<ValueNodeView, Nonnull<const Value*>,
                   std::map<ValueNodeView, unsigned>>
       locals_;
   std::vector<AllocationId> allocations_;
