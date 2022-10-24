@@ -11,9 +11,9 @@
 // CHECK:STDOUT:     {node_index: 14, kind: 'FunctionDeclaration', text: 'fn', has_error: yes, subtree_size: 14, children: [
 // CHECK:STDOUT:       {node_index: 1, kind: 'DeclaredName', text: 'Add'},
 // CHECK:STDOUT:       {node_index: 6, kind: 'MeParam', text: '[', subtree_size: 5, children: [
-// CHECK:STDOUT:         {node_index: 2, kind: 'Me', text: 'me'},
-// CHECK:STDOUT:         {node_index: 3, kind: 'MeColon', text: ':'},
-// CHECK:STDOUT:         {node_index: 4, kind: 'Self', text: 'Self'},
+// CHECK:STDOUT:         {node_index: 4, kind: 'PatternBinding', text: ':', subtree_size: 3, children: [
+// CHECK:STDOUT:           {node_index: 2, kind: 'Me', text: 'me'},
+// CHECK:STDOUT:           {node_index: 3, kind: 'Self', text: 'Self'}]},
 // CHECK:STDOUT:         {node_index: 5, kind: 'MeParamEnd', text: ']'}]},
 // CHECK:STDOUT:       {node_index: 11, kind: 'ParameterList', text: '(', subtree_size: 5, children: [
 // CHECK:STDOUT:         {node_index: 9, kind: 'PatternBinding', text: ':', subtree_size: 3, children: [

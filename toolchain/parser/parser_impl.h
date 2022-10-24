@@ -281,10 +281,7 @@ class ParseTree::Parser {
   // Parses a statement.
   auto ParseStatement() -> llvm::Optional<Node>;
 
-  enum class PatternKind {
-    Parameter,
-    Variable,
-  };
+  enum class PatternKind { Parameter, Variable, MeParameter };
 
   // Parses a pattern.
   auto ParsePattern(PatternKind kind) -> llvm::Optional<Node>;

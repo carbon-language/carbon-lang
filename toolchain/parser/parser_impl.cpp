@@ -361,7 +361,8 @@ auto ParseTree::Parser::ParseList(TokenKind open, TokenKind close,
 
 auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
   CARBON_RETURN_IF_STACK_LIMITED(llvm::None);
-  if (NextTokenIs(TokenKind::Identifier()) &&
+  if (kind != PatternKind::MeParameter &&
+      NextTokenIs(TokenKind::Identifier()) &&
       tokens_.GetKind(*(position_ + 1)) == TokenKind::Colon()) {
     // identifier `:` type
     auto start = GetSubtreeStartPosition();
@@ -371,6 +372,38 @@ auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
     auto type = ParseType();
     return AddNode(ParseNodeKind::PatternBinding(), colon, start,
                    /*has_error=*/!type);
+  }
+
+  auto valid_me_param =
+      (kind == PatternKind::MeParameter && NextTokenIs(TokenKind::Me()) &&
+       tokens_.GetKind(*(position_ + 1)) == TokenKind::Colon() &&
+       tokens_.GetKind(*(position_ + 2)) == TokenKind::Self());
+
+  if (valid_me_param) {
+    auto start = GetSubtreeStartPosition();
+    AddLeafNode(ParseNodeKind::Me(), Consume(TokenKind::Me()));
+    auto colon = Consume(TokenKind::Colon());
+    AddLeafNode(ParseNodeKind::Self(), Consume(TokenKind::Self()));
+
+    return AddNode(ParseNodeKind::PatternBinding(), colon, start);
+  }
+
+  auto valid_me_addr_param =
+      (kind == PatternKind::MeParameter && NextTokenIs(TokenKind::Addr()) &&
+       tokens_.GetKind(*(position_ + 1)) == TokenKind::Me() &&
+       tokens_.GetKind(*(position_ + 2)) == TokenKind::Colon() &&
+       tokens_.GetKind(*(position_ + 3)) == TokenKind::Self() &&
+       tokens_.GetKind(*(position_ + 4)) == TokenKind::Star());
+
+  if (valid_me_addr_param) {
+    auto start = GetSubtreeStartPosition();
+    AddLeafNode(ParseNodeKind::Addr(), Consume(TokenKind::Addr()));
+    AddLeafNode(ParseNodeKind::Me(), Consume(TokenKind::Me()));
+    auto colon = Consume(TokenKind::Colon());
+    AddLeafNode(ParseNodeKind::Self(), Consume(TokenKind::Self()));
+    AddLeafNode(ParseNodeKind::SelfPointer(), Consume(TokenKind::Star()));
+
+    return AddNode(ParseNodeKind::PatternBinding(), colon, start);
   }
 
   switch (kind) {
@@ -384,6 +417,11 @@ auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
       CARBON_DIAGNOSTIC(ExpectedVariableName, Error,
                         "Expected pattern in `var` declaration.");
       emitter_.Emit(*position_, ExpectedVariableName);
+      break;
+
+    case PatternKind::MeParameter:
+      // Error reporting is deferred to the caller for more context-aware error
+      // messages.
       break;
   }
 
@@ -599,7 +637,7 @@ auto ParseTree::Parser::ParseFunctionDeclaration(Parser::ParseContext context)
 
       auto open_bracket_pos = GetSubtreeStartPosition();
 
-      auto me_error_handler = [&]() {
+      if (!ParsePattern(PatternKind::MeParameter)) {
         CARBON_DIAGNOSTIC(ExpectedMeParam, Error,
                           "Associated method `{0}` must have a `me` parameter "
                           "of the form: `[me: "
@@ -610,32 +648,6 @@ auto ParseTree::Parser::ParseFunctionDeclaration(Parser::ParseContext context)
 
         SkipTo(tokens_.GetMatchedClosingToken(*open_bracket));
         Consume(tokens_.GetKind(*position_));
-
-        return;
-      };
-
-      // Try to parse [me: Self].
-      auto me = ConsumeAndAddLeafNodeIf(TokenKind::Me(), ParseNodeKind::Me());
-
-      // TODO: Parse `addr`.
-      if (!me) {
-        me_error_handler();
-        return;
-      }
-
-      auto colon =
-          ConsumeAndAddLeafNodeIf(TokenKind::Colon(), ParseNodeKind::MeColon());
-
-      if (!colon) {
-        me_error_handler();
-        return;
-      }
-
-      auto self =
-          ConsumeAndAddLeafNodeIf(TokenKind::Self(), ParseNodeKind::Self());
-
-      if (!self) {
-        me_error_handler();
         return;
       }
 
@@ -736,11 +748,15 @@ auto ParseTree::Parser::ParseVariableDeclaration() -> Node {
 }
 
 auto ParseTree::Parser::ParseInterface() -> Node {
-  // TODO Error handling including the stack thing. Re-read
-  // ParseFunctionDeclaration() to make sure everything is handled properly.
   TokenizedBuffer::Token interface_intro_token =
       Consume(TokenKind::Interface());
   auto start = GetSubtreeStartPosition();
+
+  auto add_error_function_node = [&] {
+    return AddNode(ParseNodeKind::FunctionDeclaration(), interface_intro_token,
+                   start, /*has_error=*/true);
+  };
+  CARBON_RETURN_IF_STACK_LIMITED(add_error_function_node());
 
   ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
                           ParseNodeKind::DeclaredName());
@@ -767,8 +783,6 @@ auto ParseTree::Parser::ParseEmptyDeclaration() -> Node {
                      Consume(TokenKind::Semi()));
 }
 
-// Create a parse context object to make parsing more context-aware?
-// For now, one element: are we parsing an interface?
 auto ParseTree::Parser::ParseDeclaration(ParseContext context)
     -> llvm::Optional<Node> {
   CARBON_RETURN_IF_STACK_LIMITED(llvm::None);
