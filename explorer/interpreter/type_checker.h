@@ -393,6 +393,12 @@ class TypeChecker {
                        Nonnull<const Value*> actual,
                        const ImplScope& impl_scope) const -> ErrorOr<Success>;
 
+  // Implementation of Substitute. Does not check that bindings are nonempty,
+  // nor does it trace its progress.
+  auto SubstituteImpl(const Bindings& bindings,
+                      Nonnull<const Value*> type) const
+      -> Nonnull<const Value*>;
+
   // The name of a builtin interface, with any arguments.
   struct BuiltinInterfaceName {
     Builtins::Builtin builtin;

@@ -1094,6 +1094,32 @@ auto TypeChecker::ArgumentDeduction::Finish(TypeChecker& type_checker,
   return std::move(bindings);
 }
 
+namespace {
+// A queue implemented as a small-size-optimized fixed-size ring buffer.
+template <typename T>
+class SmallRingBufferQueue {
+ public:
+  SmallRingBufferQueue(size_t max_size) : storage(max_size) {}
+  void Push(T v) {
+    CARBON_CHECK(size < static_cast<int>(storage.size()));
+    storage[(begin + size) % storage.size()] = std::move(v);
+    ++size;
+  }
+  auto Pop() -> std::optional<T> {
+    if (!size) {
+      return std::nullopt;
+    }
+    --size;
+    return std::move(storage[(begin + size) % storage.size()]);
+  }
+
+ protected:
+  llvm::SmallVector<T> storage;
+  int begin = 0;
+  int size = 0;
+};
+}  // namespace
+
 // Builder for constraint types.
 //
 // This type supports incrementally building a constraint type by adding
@@ -1103,6 +1129,12 @@ auto TypeChecker::ArgumentDeduction::Finish(TypeChecker& type_checker,
 // canonicalization or hashing or similar to speed this up.
 class TypeChecker::ConstraintTypeBuilder {
  public:
+  // Information about a rewrite constraint that is currently being rewritten.
+  struct RewriteInfo {
+    Nonnull<const RewriteConstraint*> rewrite;
+    bool rewrite_used = false;
+  };
+
   ConstraintTypeBuilder(Nonnull<Arena*> arena, SourceLocation source_loc)
       : ConstraintTypeBuilder(arena, MakeSelfBinding(arena, source_loc)) {}
   ConstraintTypeBuilder(Nonnull<Arena*> arena,
@@ -1125,6 +1157,10 @@ class TypeChecker::ConstraintTypeBuilder {
   // Returns the current set of rewrite constraints for this builder.
   auto rewrite_constraints() const -> llvm::ArrayRef<RewriteConstraint> {
     return rewrite_constraints_;
+  }
+
+  auto currently_rewriting() const -> std::optional<Nonnull<RewriteInfo*>> {
+    return currently_rewriting_;
   }
 
   // Produces a type that refers to the `.Self` type of the constraint.
@@ -1327,49 +1363,123 @@ class TypeChecker::ConstraintTypeBuilder {
     auto pop_partial_constraint_type = llvm::make_scope_exit(
         [&] { type_checker.partial_constraint_types_.pop_back(); });
 
-    // Check for conflicting rewrites.
+    // Check for conflicting rewrites and deduplicate.
     // TODO: Avoid the quadratic behavior.
-    for (int i = 0; i != static_cast<int>(rewrite_constraints_.size()); ++i) {
-      auto& rewrite_a = rewrite_constraints_[i];
-      for (auto rewrite_b :
-           llvm::makeArrayRef(rewrite_constraints_).drop_front(i + 1)) {
+    std::vector<RewriteConstraint> new_rewrite_constraints;
+    for (auto& rewrite_a : rewrite_constraints_) {
+      bool found_existing = false;
+      for (auto& rewrite_b : new_rewrite_constraints) {
         if (ValueEqual(rewrite_a.constant, rewrite_b.constant, std::nullopt)) {
           if (ValueEqual(rewrite_a.unconverted_replacement,
                          rewrite_b.unconverted_replacement, std::nullopt) &&
               TypeEqual(rewrite_a.unconverted_replacement_type,
                         rewrite_b.unconverted_replacement_type, std::nullopt)) {
-            // We don't need to do any more checks for this `rewrite_a` value.
-            // `rewrite_b` will be compared against the next matching value,
-            // and so on.
+            found_existing = true;
             break;
           }
           return ProgramError(source_loc)
                  << "multiple different rewrites for `" << *rewrite_a.constant
                  << "`:\n"
-                 << "  " << *rewrite_a.unconverted_replacement << "\n"
-                 << "  " << *rewrite_b.unconverted_replacement;
+                 << "  " << *rewrite_b.unconverted_replacement << "\n"
+                 << "  " << *rewrite_a.unconverted_replacement;
         }
+      }
+      if (!found_existing) {
+        new_rewrite_constraints.push_back(rewrite_a);
+      }
+    }
+    rewrite_constraints_ = std::move(new_rewrite_constraints);
+
+    // Rebuild a value with our updated rewrite constraints. Because this
+    // builder is in scope as a partial constraint type, if we perform a null
+    // substitution any nested associated constants will be rebuilt.
+    auto rebuild = [&](Nonnull<const Value*> value) {
+      Bindings null_bindings;
+      return type_checker.SubstituteImpl(null_bindings, value);
+    };
+
+    SmallRingBufferQueue<Nonnull<RewriteConstraint*>> rewrite_queue(
+        rewrite_constraints_.size());
+    for (auto& rewrite : rewrite_constraints_) {
+      if (type_checker.trace_stream_) {
+        **type_checker.trace_stream_ << "initial rewrite of "
+                                     << *rewrite.constant << " is "
+                                     << *rewrite.converted_replacement << "\n";
+      }
+      rewrite_queue.Push(&rewrite);
+    }
+
+    // Apply rewrites to each other and find a fixed point.
+    int rewrite_iterations = 0;
+    while (auto rewrite_entry = rewrite_queue.Pop()) {
+      auto* rewrite = *rewrite_entry;
+
+      // Track that we are rewriting this rewrite.
+      RewriteInfo info = {.rewrite = rewrite};
+      currently_rewriting_ = &info;
+      auto clear_currently_rewriting =
+          llvm::make_scope_exit([&] { currently_rewriting_ = std::nullopt; });
+
+      // Rebuild the rewrite and see if it changed.
+      Nonnull<const Value*> rebuilt = rebuild(rewrite->converted_replacement);
+      if (info.rewrite_used) {
+        // This would result in an infinite loop.
+        return ProgramError(source_loc)
+               << "rewrite of " << *rewrite->constant
+               << " applies within its own resolved expansion of " << *rebuilt;
+      }
+      if (!ValueEqual(rebuilt, rewrite->converted_replacement, std::nullopt)) {
+        if (type_checker.trace_stream_) {
+          **type_checker.trace_stream_ << "rewrote rewrite of "
+                                       << *rewrite->constant << " to "
+                                       << *rebuilt << "\n";
+        }
+        rewrite->converted_replacement = rebuilt;
+        // Now we've rewritten this rewrite, we might find more rewrites apply
+        // to the portion we rewrote.
+        rewrite_queue.Push(rewrite);
+      } else {
+        if (type_checker.trace_stream_) {
+          **type_checker.trace_stream_ << "rewrite of " << *rewrite->constant
+                                       << " converged to " << *rebuilt << "\n";
+        }
+      }
+      ++rewrite_iterations;
+      // This iteration limit exists only to prevent large fuzzer-generated
+      // examples from leading to long compile times. If the limit is hit in a
+      // real example, it should be increased.
+      if (rewrite_iterations > 1000) {
+        return ProgramError(source_loc)
+               << "reached iteration limit resolving rewrite constraints";
+      }
+    }
+    currently_rewriting_ = std::nullopt;
+
+    // Apply rewrites through the rest of the rewrite constraints.
+    for (auto& rewrite : rewrite_constraints_) {
+      rewrite.unconverted_replacement =
+          rebuild(rewrite.unconverted_replacement);
+      rewrite.unconverted_replacement_type =
+          rebuild(rewrite.unconverted_replacement_type);
+    }
+
+    // Apply rewrites throughout impl constraints.
+    for (auto& impl_constraint : impl_constraints_) {
+      impl_constraint.type = rebuild(impl_constraint.type);
+      impl_constraint.interface =
+          cast<InterfaceType>(rebuild(impl_constraint.interface));
+    }
+
+    // Apply rewrites throughout equality constraints.
+    for (auto& equality_constraint : equality_constraints_) {
+      for (auto*& value : equality_constraint.values) {
+        value = rebuild(value);
       }
     }
 
-    // Rewrite `Self.X is Y` to `Replacement is Y` if we have a rewrite for
-    // `Self.X`.
-    // TODO: Properly apply rewrites throughout all the constraints. Check for
-    // cycles. This is just a very short-term hack.
-    for (auto& impl_constraint : impl_constraints_) {
-      bool performed_rewrite;
-      do {
-        performed_rewrite = false;
-        if (const auto* assoc =
-                dyn_cast<AssociatedConstant>(impl_constraint.type)) {
-          for (const auto& rewrite : rewrite_constraints_) {
-            if (ValueEqual(assoc, rewrite.constant, std::nullopt)) {
-              impl_constraint.type = rewrite.converted_replacement;
-              performed_rewrite = true;
-            }
-          }
-        }
-      } while (performed_rewrite);
+    // Apply rewrites throughout lookup contexts.
+    for (auto& lookup_context : lookup_contexts_) {
+      lookup_context.context = rebuild(lookup_context.context);
     }
 
     return Success();
@@ -1429,6 +1539,7 @@ class TypeChecker::ConstraintTypeBuilder {
   std::vector<EqualityConstraint> equality_constraints_;
   std::vector<RewriteConstraint> rewrite_constraints_;
   std::vector<LookupContext> lookup_contexts_;
+  std::optional<RewriteInfo*> currently_rewriting_;
 };
 
 // A collection of substituted `GenericBinding`s and `ImplBinding`s.
@@ -1499,15 +1610,34 @@ auto TypeChecker::Substitute(const Bindings& bindings,
     return type;
   }
 
+  auto* result = SubstituteImpl(bindings, type);
+
+  if (trace_stream_) {
+    **trace_stream_ << "substitution of {";
+    llvm::ListSeparator sep;
+    for (const auto& [name, value] : bindings.args()) {
+      **trace_stream_ << sep << *name << " -> " << *value;
+    }
+    for (const auto& [name, value] : bindings.witnesses()) {
+      **trace_stream_ << sep << *name << " -> " << *value;
+    }
+    **trace_stream_ << "}\n  old: " << *type << "\n  new: " << *result << "\n";
+  }
+  return result;
+}
+
+auto TypeChecker::SubstituteImpl(const Bindings& bindings,
+                                 Nonnull<const Value*> type) const
+    -> Nonnull<const Value*> {
   auto substitute_into_bindings =
       [&](Nonnull<const Bindings*> inner_bindings) -> Nonnull<const Bindings*> {
     BindingMap values;
     for (const auto& [name, value] : inner_bindings->args()) {
-      values[name] = Substitute(bindings, value);
+      values[name] = SubstituteImpl(bindings, value);
     }
     ImplWitnessMap witnesses;
     for (const auto& [name, value] : inner_bindings->witnesses()) {
-      witnesses[name] = Substitute(bindings, value);
+      witnesses[name] = SubstituteImpl(bindings, value);
     }
     if (values == inner_bindings->args() &&
         witnesses == inner_bindings->witnesses()) {
@@ -1531,9 +1661,9 @@ auto TypeChecker::Substitute(const Bindings& bindings,
     }
     case Value::Kind::AssociatedConstant: {
       const auto& assoc = cast<AssociatedConstant>(*type);
-      Nonnull<const Value*> base = Substitute(bindings, &assoc.base());
+      Nonnull<const Value*> base = SubstituteImpl(bindings, &assoc.base());
       const auto* interface =
-          cast<InterfaceType>(Substitute(bindings, &assoc.interface()));
+          cast<InterfaceType>(SubstituteImpl(bindings, &assoc.interface()));
       // If we're substituting into an associated constant, we may now be able
       // to rewrite it to a concrete value.
       if (auto rewritten_value =
@@ -1541,7 +1671,7 @@ auto TypeChecker::Substitute(const Bindings& bindings,
         return (*rewritten_value)->converted_replacement;
       }
       const auto* witness =
-          cast<Witness>(Substitute(bindings, &assoc.witness()));
+          cast<Witness>(SubstituteImpl(bindings, &assoc.witness()));
       witness = RefineWitness(witness, base, interface);
       if (auto rewritten_value =
               LookupRewriteInWitness(witness, interface, &assoc.constant())) {
@@ -1553,14 +1683,14 @@ auto TypeChecker::Substitute(const Bindings& bindings,
     case Value::Kind::TupleValue: {
       std::vector<Nonnull<const Value*>> elts;
       for (const auto& elt : cast<TupleValue>(*type).elements()) {
-        elts.push_back(Substitute(bindings, elt));
+        elts.push_back(SubstituteImpl(bindings, elt));
       }
       return arena_->New<TupleValue>(elts);
     }
     case Value::Kind::StructType: {
       std::vector<NamedValue> fields;
       for (const auto& [name, value] : cast<StructType>(*type).fields()) {
-        const auto* new_type = Substitute(bindings, value);
+        const auto* new_type = SubstituteImpl(bindings, value);
         fields.push_back({name, new_type});
       }
       return arena_->New<StructType>(std::move(fields));
@@ -1587,9 +1717,9 @@ auto TypeChecker::Substitute(const Bindings& bindings,
       // Apply substitution to parameter and return types and create the new
       // function type.
       const auto* param =
-          Substitute(subst_bindings.bindings(), &fn_type.parameters());
+          SubstituteImpl(subst_bindings.bindings(), &fn_type.parameters());
       const auto* ret =
-          Substitute(subst_bindings.bindings(), &fn_type.return_type());
+          SubstituteImpl(subst_bindings.bindings(), &fn_type.return_type());
       return arena_->New<FunctionType>(
           param, std::move(generic_parameters), ret,
           std::move(deduced_bindings),
@@ -1597,7 +1727,7 @@ auto TypeChecker::Substitute(const Bindings& bindings,
     }
     case Value::Kind::PointerType: {
       return arena_->New<PointerType>(
-          Substitute(bindings, &cast<PointerType>(*type).type()));
+          SubstituteImpl(bindings, &cast<PointerType>(*type).type()));
     }
     case Value::Kind::NominalClassType: {
       const auto& class_type = cast<NominalClassType>(*type);
@@ -1676,7 +1806,7 @@ auto TypeChecker::Substitute(const Bindings& bindings,
       std::vector<Nonnull<const Witness*>> witnesses;
       witnesses.reserve(witness.witnesses().size());
       for (const auto* witness : witness.witnesses()) {
-        witnesses.push_back(cast<Witness>(Substitute(bindings, witness)));
+        witnesses.push_back(cast<Witness>(SubstituteImpl(bindings, witness)));
       }
       return arena_->New<ConstraintWitness>(std::move(witnesses));
     }
@@ -1684,7 +1814,7 @@ auto TypeChecker::Substitute(const Bindings& bindings,
       const auto& witness = cast<ConstraintImplWitness>(*type);
       return ConstraintImplWitness::Make(
           arena_,
-          cast<Witness>(Substitute(bindings, witness.constraint_witness())),
+          cast<Witness>(SubstituteImpl(bindings, witness.constraint_witness())),
           witness.index());
     }
     case Value::Kind::StaticArrayType:
@@ -2048,7 +2178,17 @@ auto TypeChecker::LookupRewriteInTypeOf(
   // intended semantics in this case.
   for (auto* builder : partial_constraint_types_) {
     if (ValueEqual(type, builder->GetSelfType(), std::nullopt)) {
-      return LookupRewrite(builder->rewrite_constraints(), interface, member);
+      if (auto result = LookupRewrite(builder->rewrite_constraints(), interface,
+                                      member)) {
+        // If we're in the middle of rewriting this rewrite, let the constraint
+        // type builder know it applies within itself.
+        if (auto currently_rewriting = builder->currently_rewriting();
+            currently_rewriting && (*currently_rewriting)->rewrite == *result) {
+          (*currently_rewriting)->rewrite_used = true;
+          return std::nullopt;
+        }
+        return result;
+      }
     }
   }
 
