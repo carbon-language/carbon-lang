@@ -293,7 +293,8 @@ class CleanupAction : public Action {
   int allocations_count_;
 };
 
-// An Action which implements destroying a single value, including all nested values.
+// An Action which implements destroying a single value, including all nested
+// values.
 class DestroyAction : public Action {
  public:
   // lvalue: Address of the object to be destroyed
@@ -304,9 +305,7 @@ class DestroyAction : public Action {
   //         and the value is the member of the class
   explicit DestroyAction(Nonnull<const LValue*> lvalue,
                          Nonnull<const Value*> value)
-      : Action(Kind::DestroyAction),
-        lvalue_(lvalue),
-        value_(value) {}
+      : Action(Kind::DestroyAction), lvalue_(lvalue), value_(value) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::DestroyAction;

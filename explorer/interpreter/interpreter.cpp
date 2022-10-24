@@ -2010,8 +2010,8 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
 }
 
 auto Interpreter::StepDestroy() -> ErrorOr<Success> {
-  // TODO: find a way to avoid dyn_cast in this code, and instead use static type
-  // information the way the compiler would.
+  // TODO: find a way to avoid dyn_cast in this code, and instead use static
+  // type information the way the compiler would.
   Action& act = todo_.CurrentAction();
   DestroyAction& destroy_act = cast<DestroyAction>(act);
   if (act.pos() == 0) {
@@ -2041,8 +2041,8 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
           return todo_.Spawn(
               std::make_unique<DestroyAction>(destroy_act.lvalue(), item));
         }
-        //Type of tuple element is integral type e.g. i32
-        //or the type has no destructor
+        // Type of tuple element is integral type e.g. i32
+        // or the type has no destructor
       }
     }
   }
@@ -2060,8 +2060,8 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
           Address mem = object.SubobjectAddress(Member(var));
           SourceLocation source_loc("destructor", 1);
           auto v = heap_.Read(mem, source_loc);
-          return todo_.Spawn(std::make_unique<DestroyAction>(
-              destroy_act.lvalue(), *v));
+          return todo_.Spawn(
+              std::make_unique<DestroyAction>(destroy_act.lvalue(), *v));
         }
       }
     }
@@ -2081,12 +2081,11 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
     auto value = heap_.Read(lvalue->address(), source_loc);
     // Step over uninitialized values
     if (value.ok()) {
-      return todo_.Spawn(
-          std::make_unique<DestroyAction>(lvalue, *value));
+      return todo_.Spawn(std::make_unique<DestroyAction>(lvalue, *value));
     }
-    /*CARBON_ASSIGN_OR_RETURN(auto value, heap_.Read(lvalue->address(), source_loc));
-    return todo_.Spawn(
-      std::make_unique<DestroyAction>(lvalue, value, std::nullopt));*/
+    /*CARBON_ASSIGN_OR_RETURN(auto value, heap_.Read(lvalue->address(),
+    source_loc)); return todo_.Spawn( std::make_unique<DestroyAction>(lvalue,
+    value, std::nullopt));*/
   }
   todo_.Pop();
   return Success();
