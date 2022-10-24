@@ -71,7 +71,7 @@ class RuntimeScope {
   // Returns the local values in created order
   auto locals() const -> std::vector<Nonnull<const LValue*>> {
     std::vector<Nonnull<const LValue*>> res;
-    for (auto& entry : locals_) {
+    for (const auto& entry : locals_) {
       res.push_back(entry.second);
     }
     return res;

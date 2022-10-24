@@ -2,9 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -18,7 +18,7 @@ interface B {
 }
 
 class C(T:! Type) {
-  impl as A & B where .TA == i32 and .TB == i32 {
+  impl as A & B where .TA = i32 and .TB = i32 {
     fn FA() -> i32 {
       // OK, know that TA is i32 here.
       let v: Self.(A.TA) = 1;
@@ -28,8 +28,8 @@ class C(T:! Type) {
     fn FB() -> i32 {
       // OK, know that TB is i32 here.
       let v: Self.(B.TB) = 2;
-      // TODO: Don't know that TA is i32. It could be specialized.
-      // We should reject this once we support specialization.
+      // Don't know that TA is i32; it could be specialized.
+      // TODO: We should not accept this.
       let w: Self.(A.TA) = 3;
       return v + w;
     }

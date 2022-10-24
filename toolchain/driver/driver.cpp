@@ -85,12 +85,12 @@ auto Driver::RunHelpSubcommand(DiagnosticConsumer& /*consumer*/,
   };
 
   int max_subcommand_width = 0;
-  for (auto subcommand_and_help : SubcommandsAndHelp) {
+  for (const auto* subcommand_and_help : SubcommandsAndHelp) {
     max_subcommand_width = std::max(
         max_subcommand_width, static_cast<int>(subcommand_and_help[0].size()));
   }
 
-  for (auto subcommand_and_help : SubcommandsAndHelp) {
+  for (const auto* subcommand_and_help : SubcommandsAndHelp) {
     llvm::StringRef subcommand_text = subcommand_and_help[0];
     // TODO: We should wrap this to the number of columns left after the
     // subcommand on the terminal, and using a hanging indent.

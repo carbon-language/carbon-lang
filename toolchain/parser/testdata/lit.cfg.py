@@ -1,0 +1,1 @@
+../../../bazel/testing/lit.cfg.py

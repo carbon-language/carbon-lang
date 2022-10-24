@@ -90,6 +90,26 @@ class Declaration : public AstNode {
     return constant_value_;
   }
 
+  // Returns whether this node has been declared.
+  auto is_declared() const -> bool { return is_declared_; }
+
+  // Set that this node is declared. Should only be called once, by the
+  // type-checker, once the node is ready to be named and used.
+  void set_is_declared() {
+    CARBON_CHECK(!is_declared_) << "should not be declared twice";
+    is_declared_ = true;
+  }
+
+  // Returns whether this node has been fully type-checked.
+  auto is_type_checked() const -> bool { return is_type_checked_; }
+
+  // Set that this node is type-checked. Should only be called once, by the
+  // type-checker, once full type-checking is complete.
+  void set_is_type_checked() {
+    CARBON_CHECK(!is_type_checked_) << "should not be type-checked twice";
+    is_type_checked_ = true;
+  }
+
  protected:
   // Constructs a Declaration representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
@@ -100,6 +120,8 @@ class Declaration : public AstNode {
  private:
   std::optional<Nonnull<const Value*>> static_type_;
   std::optional<Nonnull<const Value*>> constant_value_;
+  bool is_declared_ = false;
+  bool is_type_checked_ = false;
 };
 
 class CallableDeclaration : public Declaration {
@@ -231,14 +253,14 @@ class ClassDeclaration : public Declaration {
                    Nonnull<SelfDeclaration*> self_decl,
                    ClassExtensibility extensibility,
                    std::optional<Nonnull<TuplePattern*>> type_params,
-                   std::optional<Nonnull<Expression*>> extends,
+                   std::optional<Nonnull<Expression*>> base,
                    std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::ClassDeclaration, source_loc),
         name_(std::move(name)),
         extensibility_(extensibility),
         self_decl_(self_decl),
         type_params_(type_params),
-        extends_(extends),
+        base_expr_(base),
         members_(std::move(members)) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -253,8 +275,8 @@ class ClassDeclaration : public Declaration {
   auto type_params() -> std::optional<Nonnull<TuplePattern*>> {
     return type_params_;
   }
-  auto extends() const -> std::optional<Nonnull<Expression*>> {
-    return extends_;
+  auto base_expr() const -> std::optional<Nonnull<Expression*>> {
+    return base_expr_;
   }
   auto self() const -> Nonnull<const SelfDeclaration*> { return self_decl_; }
   auto self() -> Nonnull<SelfDeclaration*> { return self_decl_; }
@@ -263,7 +285,7 @@ class ClassDeclaration : public Declaration {
     return members_;
   }
   auto destructor() const -> std::optional<Nonnull<DestructorDeclaration*>> {
-    for (auto& x : members_) {
+    for (const auto& x : members_) {
       if (x->kind() == DeclarationKind::DestructorDeclaration) {
         return llvm::cast<DestructorDeclaration>(x);
       }
@@ -273,14 +295,22 @@ class ClassDeclaration : public Declaration {
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
+  auto base() const -> std::optional<Nonnull<const ClassDeclaration*>> {
+    return base_;
+  }
+  void set_base(Nonnull<const ClassDeclaration*> base_decl) {
+    base_ = base_decl;
+  }
+
  private:
   std::string name_;
   ClassExtensibility extensibility_;
   Nonnull<SelfDeclaration*> self_decl_;
   std::optional<Nonnull<TuplePattern*>> type_params_;
-  std::optional<Nonnull<Expression*>> extends_;
+  std::optional<Nonnull<Expression*>> base_expr_;
   std::vector<Nonnull<Declaration*>> members_;
   std::optional<Nonnull<FunctionDeclaration*>> destructor_;
+  std::optional<Nonnull<const ClassDeclaration*>> base_;
 };
 
 // EXPERIMENTAL MIXIN FEATURE
@@ -294,7 +324,7 @@ class MixinDeclaration : public Declaration {
                    std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::MixinDeclaration, source_loc),
         name_(std::move(name)),
-        params_(std::move(params)),
+        params_(params),
         self_(self),
         members_(std::move(members)) {}
 
@@ -467,11 +497,11 @@ class InterfaceDeclaration : public Declaration {
                        std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::InterfaceDeclaration, source_loc),
         name_(std::move(name)),
-        params_(std::move(params)),
+        params_(params),
         self_type_(arena->New<SelfDeclaration>(source_loc)),
         members_(std::move(members)) {
     // `interface X` has `Self:! X`.
-    auto self_type_ref = arena->New<IdentifierExpression>(source_loc, name);
+    auto* self_type_ref = arena->New<IdentifierExpression>(source_loc, name);
     self_type_ref->set_value_node(self_type_);
     self_ = arena->New<GenericBinding>(source_loc, "Self", self_type_ref);
   }
@@ -666,10 +696,10 @@ class AliasDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
 
-  explicit AliasDeclaration(SourceLocation source_loc, const std::string& name,
+  explicit AliasDeclaration(SourceLocation source_loc, std::string name,
                             Nonnull<Expression*> target)
       : Declaration(AstNodeKind::AliasDeclaration, source_loc),
-        name_(name),
+        name_(std::move(name)),
         target_(target) {}
 
   static auto classof(const AstNode* node) -> bool {

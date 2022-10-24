@@ -2,9 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
@@ -12,8 +12,8 @@ package ExplorerTest api;
 class A { fn F[me: Self]() -> i32 { return 0; } }
 
 fn Main() -> i32 {
-  // {} is a bit strange; its type is {}. Make sure we can properly convert a
-  // value of type {} to type TypeOfClassType.
+  // {} is a bit strange: its type is {}. Make sure we can properly convert a
+  // value of type {} to class type.
   var a: A = {};
   return a.F();
 }

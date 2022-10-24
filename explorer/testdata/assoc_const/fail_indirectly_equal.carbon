@@ -2,9 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -23,7 +23,7 @@ fn F2[U:! A where .T == i32](x: i32) -> U.T {
 }
 
 fn F3[T:! A where .T == i32, U:! A where .T == i32](x: T.T) -> U.T {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_indirectly_equal.carbon:[[@LINE+1]]: type error in return value: '(T).T' is not implicitly convertible to '(U).T'
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_indirectly_equal.carbon:[[@LINE+1]]: type error in return value: '(T).(A.T)' is not implicitly convertible to '(U).(A.T)'
   return x;
 }
 

@@ -192,7 +192,7 @@ auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
 }
 
 auto ResolveControlFlow(AST& ast) -> ErrorOr<Success> {
-  for (auto declaration : ast.declarations) {
+  for (auto* declaration : ast.declarations) {
     CARBON_RETURN_IF_ERROR(ResolveControlFlow(declaration));
   }
   return Success();

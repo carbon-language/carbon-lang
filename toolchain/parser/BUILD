@@ -49,27 +49,12 @@ cc_library(
     ],
 )
 
-cc_library(
-    name = "parse_test_helpers",
-    testonly = 1,
-    hdrs = ["parse_test_helpers.h"],
-    deps = [
-        ":parse_node_kind",
-        ":parse_tree",
-        "//common:check",
-        "//toolchain/lexer:tokenized_buffer",
-        "@com_google_googletest//:gtest",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
 cc_test(
     name = "parse_tree_test",
     size = "small",
     srcs = ["parse_tree_test.cpp"],
     deps = [
         ":parse_node_kind",
-        ":parse_test_helpers",
         ":parse_tree",
         "//common:gtest_main",
         "//common:ostream",

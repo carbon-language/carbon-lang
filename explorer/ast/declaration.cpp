@@ -227,7 +227,7 @@ auto GetName(const Declaration& declaration)
     case DeclarationKind::ImplDeclaration:
       return std::nullopt;
     case DeclarationKind::SelfDeclaration:
-      return cast<SelfDeclaration>(declaration).name();
+      return SelfDeclaration::name();
     case DeclarationKind::AliasDeclaration: {
       return cast<AliasDeclaration>(declaration).name();
     }

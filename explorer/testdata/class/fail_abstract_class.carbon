@@ -2,15 +2,15 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 abstract class C {
   fn F() {}
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_abstract_class.carbon:[[@LINE+1]]: Class prefixes `base` and `abstract` are not supported yet
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_abstract_class.carbon:[[@LINE+1]]: Class prefix `abstract` is not supported yet
 }
 
 fn Main() -> i32 {

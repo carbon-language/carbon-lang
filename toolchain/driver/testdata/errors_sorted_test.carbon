@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{carbon} dump tokens %s | %{FileCheck-strict} %s
+// RUN: %{not} %{carbon-run-tokens}
 // CHECK-COUNT-17:STDOUT: token: {{.*}}
 
 // CHECK:STDERR: {{.*}}/errors_sorted_test.carbon:[[@LINE+1]]:24: Closing symbol does not match most recent opening symbol.

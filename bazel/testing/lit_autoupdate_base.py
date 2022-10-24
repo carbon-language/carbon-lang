@@ -18,27 +18,42 @@ import subprocess
 from typing import Any, Dict, List, NamedTuple, Optional, Pattern, Set, Tuple
 
 # A prefix followed by a command to run for autoupdating checked output.
-AUTOUPDATE_MARKER = "// AUTOUPDATE: "
+AUTOUPDATE_MARKER = "// AUTOUPDATE"
 
 # Indicates no autoupdate is requested.
 NOAUTOUPDATE_MARKER = "// NOAUTOUPDATE"
 
 # Standard replacements normally done in lit.cfg.py.
 MERGE_OUTPUT = "./bazel-bin/bazel/testing/merge_output"
-LIT_REPLACEMENTS = [
-    ("%{carbon}", f"{MERGE_OUTPUT} ./bazel-bin/toolchain/driver/carbon"),
-    ("%{explorer}", f"{MERGE_OUTPUT} ./bazel-bin/explorer/explorer"),
-]
+
+
+class Tool(NamedTuple):
+    build_target: str
+    autoupdate_cmd: List[str]
+
+
+tools = {
+    "carbon": Tool(
+        "//toolchain/driver:carbon",
+        [MERGE_OUTPUT, "./bazel-bin/toolchain/driver/carbon"],
+    ),
+    "explorer": Tool(
+        "//explorer",
+        [MERGE_OUTPUT, "./bazel-bin/explorer/explorer"],
+    ),
+}
 
 
 class ParsedArgs(NamedTuple):
+    autoupdate_args: List[str]
     build_mode: str
-    build_target: str
     extra_check_replacements: List[Tuple[Pattern, Pattern, str]]
     line_number_format: str
     line_number_pattern: Pattern
+    lit_run: List[str]
     testdata: str
     tests: List[Path]
+    tool: str
 
 
 def parse_args() -> ParsedArgs:
@@ -46,16 +61,17 @@ def parse_args() -> ParsedArgs:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("tests", nargs="*")
     parser.add_argument(
+        "--autoupdate_arg",
+        metavar="COMMAND",
+        default=[],
+        action="append",
+        help="Optional arguments to pass to the autoupdate command.",
+    )
+    parser.add_argument(
         "--build_mode",
         metavar="MODE",
         default="opt",
         help="The build mode to use. Defaults to opt for faster execution.",
-    )
-    parser.add_argument(
-        "--build_target",
-        metavar="TARGET",
-        required=True,
-        help="The target to build.",
     )
     parser.add_argument(
         "--extra_check_replacement",
@@ -80,11 +96,25 @@ def parse_args() -> ParsedArgs:
         "only group.",
     )
     parser.add_argument(
+        "--lit_run",
+        metavar="COMMAND",
+        required=True,
+        action="append",
+        help="RUN lines to set.",
+    )
+    parser.add_argument(
         "--testdata",
         metavar="PATH",
         required=True,
         help="The path to the testdata to update, relative to the workspace "
         "root.",
+    )
+    parser.add_argument(
+        "--tool",
+        metavar="TOOL",
+        required=True,
+        choices=tools.keys(),
+        help="The tool being tested.",
     )
     parsed_args = parser.parse_args()
     extra_check_replacements = [
@@ -92,13 +122,15 @@ def parse_args() -> ParsedArgs:
         for line_matcher, before, after in parsed_args.extra_check_replacement
     ]
     return ParsedArgs(
+        autoupdate_args=parsed_args.autoupdate_arg,
         build_mode=parsed_args.build_mode,
-        build_target=parsed_args.build_target,
         extra_check_replacements=extra_check_replacements,
         line_number_format=parsed_args.line_number_format,
         line_number_pattern=re.compile(parsed_args.line_number_pattern),
+        lit_run=parsed_args.lit_run,
         testdata=parsed_args.testdata,
         tests=[Path(test).resolve() for test in parsed_args.tests],
+        tool=parsed_args.tool,
     )
 
 
@@ -132,6 +164,16 @@ class OriginalLine(Line):
 
     def __init__(self, line_number: int, text: str) -> None:
         self.line_number = line_number
+        self.text = text
+
+    def format(self, **kwargs: Any) -> str:
+        return self.text
+
+
+class RunLine(Line):
+    """A RUN line."""
+
+    def __init__(self, text: str) -> None:
         self.text = text
 
     def format(self, **kwargs: Any) -> str:
@@ -178,23 +220,17 @@ class CheckLine(Line):
         return f"{self.indent}// CHECK:{result}\n"
 
 
-class Autoupdate(NamedTuple):
-    line_number: int
-    cmd: str
-
-
-def find_autoupdate(test: str, orig_lines: List[str]) -> Optional[Autoupdate]:
+def find_autoupdate(test: str, orig_lines: List[str]) -> Optional[int]:
     """Figures out whether autoupdate should occur.
 
-    For AUTOUPDATE, returns the line and command. For NOAUTOUPDATE, returns
-    None.
+    For AUTOUPDATE, returns the line. For NOAUTOUPDATE, returns None.
     """
     found = 0
     result = None
     for line_number, line in enumerate(orig_lines):
         if line.startswith(AUTOUPDATE_MARKER):
             found += 1
-            result = Autoupdate(line_number, line[len(AUTOUPDATE_MARKER) :])
+            result = line_number
         elif line.startswith(NOAUTOUPDATE_MARKER):
             found += 1
     if found == 0:
@@ -218,23 +254,16 @@ def replace_all(s: str, replacements: List[Tuple[str, str]]) -> str:
 
 
 def get_matchable_test_output(
-    parsed_args: ParsedArgs,
-    test: str,
-    autoupdate_cmd: str,
+    autoupdate_args: List[str],
     extra_check_replacements: List[Tuple[Pattern, Pattern, str]],
+    tool: str,
+    test: str,
 ) -> List[str]:
     """Runs the autoupdate command and returns the output lines."""
-    # Mirror lit.cfg.py substitutions; bazel runs don't need --prelude.
-    # Also replaces `%s` with the test file.
-    autoupdate_cmd = replace_all(
-        autoupdate_cmd, [("%s", test)] + LIT_REPLACEMENTS
-    )
-
     # Run the autoupdate command to generate output.
     # (`bazel run` would serialize)
     p = subprocess.run(
-        autoupdate_cmd,
-        shell=True,
+        tools[tool].autoupdate_cmd + autoupdate_args + [test],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
@@ -262,9 +291,17 @@ def get_matchable_test_output(
     return out_lines
 
 
+def is_replaced(line: str) -> bool:
+    """Returns true if autoupdate should replace the line."""
+    line = line.lstrip()
+    return line.startswith("// CHECK") or line.startswith("// RUN:")
+
+
 def merge_lines(
     line_number_format: str,
     line_number_pattern: Pattern,
+    lit_run: List[str],
+    test: str,
     autoupdate_line_number: int,
     raw_orig_lines: List[str],
     out_lines: List[str],
@@ -273,8 +310,7 @@ def merge_lines(
     orig_lines = [
         OriginalLine(i, line)
         for i, line in enumerate(raw_orig_lines)
-        # Remove CHECK lines in the original output.
-        if not line.lstrip().startswith("// CHECK")
+        if not is_replaced(line)
     ]
     check_lines = [
         CheckLine(out_line, line_number_format, line_number_pattern)
@@ -285,6 +321,11 @@ def merge_lines(
     # CHECK lines must go after AUTOUPDATE.
     while orig_lines and orig_lines[0].line_number <= autoupdate_line_number:
         result_lines.append(orig_lines.pop(0))
+    for line in lit_run:
+        run_not = ""
+        if Path(test).name.startswith("fail_"):
+            run_not = "%{not} "
+        result_lines.append(RunLine(f"// RUN: {run_not}{line}\n"))
     # Interleave the original lines and the CHECK: lines.
     while orig_lines and check_lines:
         # Original lines go first when the CHECK line is known and later.
@@ -314,21 +355,23 @@ def update_check(parsed_args: ParsedArgs, test: Path) -> bool:
         orig_lines = f.readlines()
 
     # Make sure we're supposed to autoupdate.
-    autoupdate = find_autoupdate(str(test), orig_lines)
-    if autoupdate is None:
+    autoupdate_line = find_autoupdate(str(test), orig_lines)
+    if autoupdate_line is None:
         return False
 
     # Determine the merged output lines.
     out_lines = get_matchable_test_output(
-        parsed_args,
-        str(test),
-        autoupdate.cmd,
+        parsed_args.autoupdate_args,
         parsed_args.extra_check_replacements,
+        parsed_args.tool,
+        str(test),
     )
     result_lines = merge_lines(
         parsed_args.line_number_format,
         parsed_args.line_number_pattern,
-        autoupdate.line_number,
+        parsed_args.lit_run,
+        str(test),
+        autoupdate_line,
         orig_lines,
         out_lines,
     )
@@ -366,7 +409,10 @@ def update_checks(parsed_args: ParsedArgs, tests: Set[Path]) -> None:
     """Updates CHECK: lines in lit tests."""
 
     def map_helper(test: Path) -> bool:
-        updated = update_check(parsed_args, test)
+        try:
+            updated = update_check(parsed_args, test)
+        except Exception as e:
+            raise ValueError(f"Failed to update {test}") from e
         print(".", end="", flush=True)
         return updated
 
@@ -402,7 +448,7 @@ def main() -> None:
             "-c",
             parsed_args.build_mode,
             "//bazel/testing:merge_output",
-            parsed_args.build_target,
+            tools[parsed_args.tool].build_target,
         ]
     )
 

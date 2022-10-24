@@ -24,7 +24,7 @@
 namespace Carbon {
 
 class Action;
-class ImplScope;
+class AssociatedConstant;
 
 // Abstract base class of all AST nodes representing values.
 //
@@ -76,11 +76,7 @@ class Value {
     ContinuationValue,  // A first-class continuation value.
     StringType,
     StringValue,
-    TypeOfClassType,
     TypeOfMixinPseudoType,
-    TypeOfInterfaceType,
-    TypeOfConstraintType,
-    TypeOfChoiceType,
     TypeOfParameterizedEntityName,
     TypeOfMemberName,
     StaticArrayType,
@@ -120,6 +116,13 @@ class Value {
  private:
   const Kind kind_;
 };
+
+// Returns whether the fully-resolved kind that this value will eventually have
+// is currently unknown, because it depends on a generic parameter.
+inline auto IsValueKindDependent(Nonnull<const Value*> type) -> bool {
+  return type->kind() == Value::Kind::VariableType ||
+         type->kind() == Value::Kind::AssociatedConstant;
+}
 
 // Base class for types holding contextual information by which we can
 // determine whether values are equal.
@@ -349,8 +352,8 @@ class AlternativeConstructorValue : public Value {
   AlternativeConstructorValue(std::string_view alt_name,
                               std::string_view choice_name)
       : Value(Kind::AlternativeConstructorValue),
-        alt_name_(std::move(alt_name)),
-        choice_name_(std::move(choice_name)) {}
+        alt_name_(alt_name),
+        choice_name_(choice_name) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::AlternativeConstructorValue;
@@ -370,8 +373,8 @@ class AlternativeValue : public Value {
   AlternativeValue(std::string_view alt_name, std::string_view choice_name,
                    Nonnull<const Value*> argument)
       : Value(Kind::AlternativeValue),
-        alt_name_(std::move(alt_name)),
-        choice_name_(std::move(choice_name)),
+        alt_name_(alt_name),
+        choice_name_(choice_name),
         argument_(argument) {}
 
   static auto classof(const Value* value) -> bool {
@@ -395,7 +398,7 @@ class TupleValue : public Value {
   static auto Empty() -> Nonnull<const TupleValue*> {
     static const TupleValue empty =
         TupleValue(std::vector<Nonnull<const Value*>>());
-    return Nonnull<const TupleValue*>(&empty);
+    return static_cast<Nonnull<const TupleValue*>>(&empty);
   }
 
   explicit TupleValue(std::vector<Nonnull<const Value*>> elements)
@@ -617,11 +620,14 @@ class NominalClassType : public Value {
 
   // Construct a fully instantiated generic class type to represent the
   // run-time type of an object.
-  explicit NominalClassType(Nonnull<const ClassDeclaration*> declaration,
-                            Nonnull<const Bindings*> bindings)
+  explicit NominalClassType(
+      Nonnull<const ClassDeclaration*> declaration,
+      Nonnull<const Bindings*> bindings,
+      std::optional<Nonnull<const NominalClassType*>> base = std::nullopt)
       : Value(Kind::NominalClassType),
         declaration_(declaration),
-        bindings_(bindings) {}
+        bindings_(bindings),
+        base_(base) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassType;
@@ -631,12 +637,13 @@ class NominalClassType : public Value {
 
   auto bindings() const -> const Bindings& { return *bindings_; }
 
+  auto base() const -> std::optional<Nonnull<const NominalClassType*>> {
+    return base_;
+  }
+
   auto type_args() const -> const BindingMap& { return bindings_->args(); }
 
-  // Witnesses for each of the class's impl bindings. These will not in general
-  // be set for class types that are only intended to be used within
-  // type-checking and not at runtime, such as in the static_type() of an
-  // expression or the type in a TypeOfClassType.
+  // Witnesses for each of the class's impl bindings.
   auto witnesses() const -> const ImplWitnessMap& {
     return bindings_->witnesses();
   }
@@ -647,14 +654,10 @@ class NominalClassType : public Value {
     return declaration_->type_params().has_value() && type_args().empty();
   }
 
-  // Returns the value of the function named `name` in this class, or
-  // nullopt if there is no such function.
-  auto FindFunction(std::string_view name) const
-      -> std::optional<Nonnull<const FunctionValue*>>;
-
  private:
   Nonnull<const ClassDeclaration*> declaration_;
   Nonnull<const Bindings*> bindings_ = Bindings::None();
+  std::optional<Nonnull<const NominalClassType*>> base_;
 };
 
 class MixinPseudoType : public Value {
@@ -691,6 +694,18 @@ class MixinPseudoType : public Value {
   Nonnull<const MixinDeclaration*> declaration_;
   Nonnull<const Bindings*> bindings_ = Bindings::None();
 };
+
+// Returns the value of the function named `name` in this class, or
+// nullopt if there is no such function.
+auto FindFunction(std::string_view name,
+                  llvm::ArrayRef<Nonnull<Declaration*>> members)
+    -> std::optional<Nonnull<const FunctionValue*>>;
+
+// Returns the value of the function named `name` in this class and its
+// parents, or nullopt if there is no such function.
+auto FindFunctionWithParents(std::string_view name,
+                             const ClassDeclaration& class_decl)
+    -> std::optional<Nonnull<const FunctionValue*>>;
 
 // Return the declaration of the member with the given name.
 auto FindMember(std::string_view name,
@@ -732,7 +747,15 @@ class InterfaceType : public Value {
   Nonnull<const Bindings*> bindings_ = Bindings::None();
 };
 
-// A collection of values that are known to be the same.
+// A constraint that requires implementation of an interface.
+struct ImplConstraint {
+  // The type that is required to implement the interface.
+  Nonnull<const Value*> type;
+  // The interface that is required to be implemented.
+  Nonnull<const InterfaceType*> interface;
+};
+
+// A constraint that a collection of values are known to be the same.
 struct EqualityConstraint {
   // Visit the values in this equality constraint that are a single step away
   // from the given value according to this equality constraint. That is: if
@@ -747,6 +770,24 @@ struct EqualityConstraint {
       llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const -> bool;
 
   std::vector<Nonnull<const Value*>> values;
+};
+
+// A constraint indicating that access to an associated constant should be
+// replaced by another value.
+struct RewriteConstraint {
+  // The associated constant value that is rewritten.
+  Nonnull<const AssociatedConstant*> constant;
+  // The replacement in its original type.
+  Nonnull<const Value*> unconverted_replacement;
+  // The type of the replacement.
+  Nonnull<const Value*> unconverted_replacement_type;
+  // The replacement after conversion to the type of the associated constant.
+  Nonnull<const Value*> converted_replacement;
+};
+
+// A context in which we might look up a name.
+struct LookupContext {
+  Nonnull<const Value*> context;
 };
 
 // A type-of-type for an unknown constrained type.
@@ -766,28 +807,6 @@ struct EqualityConstraint {
 // Within these properties, the constrained type can be referred to with a
 // `VariableType` naming the `self_binding`.
 class ConstraintType : public Value {
- public:
-  // A required implementation of an interface.
-  struct ImplConstraint {
-    Nonnull<const Value*> type;
-    Nonnull<const InterfaceType*> interface;
-  };
-
-  using EqualityConstraint = Carbon::EqualityConstraint;
-
-  // A constraint indicating that access to an associated constant should be
-  // replaced by another value.
-  struct RewriteConstraint {
-    Nonnull<const InterfaceType*> interface;
-    Nonnull<const AssociatedConstantDeclaration*> constant;
-    Nonnull<const ValueLiteral*> replacement;
-  };
-
-  // A context in which we might look up a name.
-  struct LookupContext {
-    Nonnull<const Value*> context;
-  };
-
  public:
   explicit ConstraintType(Nonnull<const GenericBinding*> self_binding,
                           std::vector<ImplConstraint> impl_constraints,
@@ -933,7 +952,8 @@ class ConstraintImplWitness : public Witness {
                    int index) -> Nonnull<const Witness*> {
     CARBON_CHECK(!llvm::isa<ImplWitness>(witness))
         << "impl witness has no components to access";
-    if (auto* constraint_witness = llvm::dyn_cast<ConstraintWitness>(witness)) {
+    if (const auto* constraint_witness =
+            llvm::dyn_cast<ConstraintWitness>(witness)) {
       return constraint_witness->witnesses()[index];
     }
     return arena->New<ConstraintImplWitness>(witness, index);
@@ -1211,25 +1231,6 @@ class StringValue : public Value {
   std::string value_;
 };
 
-// The type of an expression whose value is a class type. Currently there is no
-// way to explicitly name such a type in Carbon code, but we are tentatively
-// using `typeof(ClassName)` as the debug-printing format, in anticipation of
-// something like that becoming valid Carbon syntax.
-class TypeOfClassType : public Value {
- public:
-  explicit TypeOfClassType(Nonnull<const NominalClassType*> class_type)
-      : Value(Kind::TypeOfClassType), class_type_(class_type) {}
-
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::TypeOfClassType;
-  }
-
-  auto class_type() const -> const NominalClassType& { return *class_type_; }
-
- private:
-  Nonnull<const NominalClassType*> class_type_;
-};
-
 class TypeOfMixinPseudoType : public Value {
  public:
   explicit TypeOfMixinPseudoType(Nonnull<const MixinPseudoType*> class_type)
@@ -1243,57 +1244,6 @@ class TypeOfMixinPseudoType : public Value {
 
  private:
   Nonnull<const MixinPseudoType*> mixin_type_;
-};
-
-class TypeOfInterfaceType : public Value {
- public:
-  explicit TypeOfInterfaceType(Nonnull<const InterfaceType*> iface_type)
-      : Value(Kind::TypeOfInterfaceType), iface_type_(iface_type) {}
-
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::TypeOfInterfaceType;
-  }
-
-  auto interface_type() const -> const InterfaceType& { return *iface_type_; }
-
- private:
-  Nonnull<const InterfaceType*> iface_type_;
-};
-
-class TypeOfConstraintType : public Value {
- public:
-  explicit TypeOfConstraintType(Nonnull<const ConstraintType*> constraint_type)
-      : Value(Kind::TypeOfConstraintType), constraint_type_(constraint_type) {}
-
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::TypeOfConstraintType;
-  }
-
-  auto constraint_type() const -> const ConstraintType& {
-    return *constraint_type_;
-  }
-
- private:
-  Nonnull<const ConstraintType*> constraint_type_;
-};
-
-// The type of an expression whose value is a choice type. Currently there is no
-// way to explicitly name such a type in Carbon code, but we are tentatively
-// using `typeof(ChoiceName)` as the debug-printing format, in anticipation of
-// something like that becoming valid Carbon syntax.
-class TypeOfChoiceType : public Value {
- public:
-  explicit TypeOfChoiceType(Nonnull<const ChoiceType*> choice_type)
-      : Value(Kind::TypeOfChoiceType), choice_type_(choice_type) {}
-
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::TypeOfChoiceType;
-  }
-
-  auto choice_type() const -> const ChoiceType& { return *choice_type_; }
-
- private:
-  Nonnull<const ChoiceType*> choice_type_;
 };
 
 // The type of an expression whose value is the name of a parameterized entity.

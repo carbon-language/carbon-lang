@@ -131,9 +131,17 @@ class ErrorBuilder {
       : location_(std::move(location)),
         out_(std::make_unique<llvm::raw_string_ostream>(message_)) {}
 
-  // Accumulates string message.
+  // Accumulates string message to a temporary `ErrorBuilder`. After streaming,
+  // the builder must be converted to an `Error` or `ErrorOr`.
   template <typename T>
-  [[nodiscard]] auto operator<<(const T& message) -> ErrorBuilder& {
+  [[nodiscard]] auto operator<<(const T& message) && -> ErrorBuilder&& {
+    *out_ << message;
+    return std::move(*this);
+  }
+
+  // Accumulates string message for an lvalue error builder.
+  template <typename T>
+  auto operator<<(const T& message) & -> ErrorBuilder& {
     *out_ << message;
     return *this;
   }
