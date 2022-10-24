@@ -2015,48 +2015,41 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   DestroyAction& destroy_act = cast<DestroyAction>(act);
   if (act.pos() == 0) {
-    if (destroy_act.value()) {
-      if (const auto* class_obj =
-              dyn_cast<NominalClassValue>(*destroy_act.value())) {
-        const auto& class_type = cast<NominalClassType>(class_obj->type());
-        const auto& class_dec = class_type.declaration();
-        if (class_dec.destructor().has_value()) {
-          return CallDestructor(*class_dec.destructor(), class_obj);
-        }
+    if (const auto* class_obj =
+            dyn_cast<NominalClassValue>(destroy_act.value())) {
+      const auto& class_type = cast<NominalClassType>(class_obj->type());
+      const auto& class_dec = class_type.declaration();
+      if (class_dec.destructor().has_value()) {
+        return CallDestructor(*class_dec.destructor(), class_obj);
       }
     }
   }
-  if (destroy_act.declaration()) {
-    todo_.Pop();
-    return Success();
-  }
-  if (destroy_act.value()) {
-    if (const auto* tuple = dyn_cast<TupleValue>(*destroy_act.value())) {
-      if (tuple->elements().size() > 0) {
-        int index = tuple->elements().size() - act.pos() - 1;
-        if (index >= 0) {
-          const auto& item = tuple->elements()[index];
-          if (const auto* class_obj = dyn_cast<NominalClassValue>(item)) {
-            const auto& class_type = cast<NominalClassType>(class_obj->type());
-            const auto& class_dec = class_type.declaration();
-            if (class_dec.destructor().has_value()) {
-              return CallDestructor(*class_dec.destructor(), class_obj);
-            }
+
+  if (const auto* tuple = dyn_cast<TupleValue>(destroy_act.value())) {
+    if (tuple->elements().size() > 0) {
+      int index = tuple->elements().size() - act.pos() - 1;
+      if (index >= 0) {
+        const auto& item = tuple->elements()[index];
+        if (const auto* class_obj = dyn_cast<NominalClassValue>(item)) {
+          const auto& class_type = cast<NominalClassType>(class_obj->type());
+          const auto& class_dec = class_type.declaration();
+          if (class_dec.destructor().has_value()) {
+            return CallDestructor(*class_dec.destructor(), class_obj);
           }
-          if (item->kind() == Value::Kind::TupleValue) {
-            return todo_.Spawn(
-                std::make_unique<DestroyAction>(destroy_act.lvalue(), item, std::nullopt));
-          }
-          //Type of tuple element is integral type e.g. i32
-          //or the type has no destructor
         }
+        if (item->kind() == Value::Kind::TupleValue) {
+          return todo_.Spawn(
+              std::make_unique<DestroyAction>(destroy_act.lvalue(), item));
+        }
+        //Type of tuple element is integral type e.g. i32
+        //or the type has no destructor
       }
     }
   }
 
   if (act.pos() > 0) {
     if (const auto* class_obj =
-            dyn_cast<NominalClassValue>(*destroy_act.value())) {
+            dyn_cast<NominalClassValue>(destroy_act.value())) {
       const auto& class_type = cast<NominalClassType>(class_obj->type());
       const auto& class_dec = class_type.declaration();
       int index = class_dec.members().size() - act.pos();
@@ -2068,10 +2061,8 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
           SourceLocation source_loc("destructor", 1);
           auto v = heap_.Read(mem, source_loc);
           return todo_.Spawn(std::make_unique<DestroyAction>(
-              destroy_act.lvalue(), *v, member));
+              destroy_act.lvalue(), *v));
         }
-        return todo_.Spawn(std::make_unique<DestroyAction>(
-            destroy_act.lvalue(), std::nullopt, member));
       }
     }
   }
@@ -2091,7 +2082,7 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
     // Step over uninitialized values
     if (value.ok()) {
       return todo_.Spawn(
-          std::make_unique<DestroyAction>(lvalue, *value, std::nullopt));
+          std::make_unique<DestroyAction>(lvalue, *value));
     }
     /*CARBON_ASSIGN_OR_RETURN(auto value, heap_.Read(lvalue->address(), source_loc));
     return todo_.Spawn(

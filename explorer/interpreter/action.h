@@ -296,30 +296,29 @@ class CleanupAction : public Action {
 // An Action which implements destroying a single value, including all nested values.
 class DestroyAction : public Action {
  public:
+  // lvalue: Address of the object to be destroyed
+  // value:  The value to be destroyed
+  //         In most cases the lvalue address points to value
+  //         In the case that the member of a class is to be destroyed, points
+  //         the lvalue points to the address of the class object
+  //         and the value is the member of the class
   explicit DestroyAction(Nonnull<const LValue*> lvalue,
-                         std::optional<Nonnull<const Value*>> value,
-                         std::optional<Nonnull<const Declaration*>> declaration)
+                         Nonnull<const Value*> value)
       : Action(Kind::DestroyAction),
         lvalue_(lvalue),
-        declaration_(declaration),
         value_(value) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::DestroyAction;
   }
 
-  auto declaration() const -> std::optional<Nonnull<const Declaration*>> {
-    return declaration_;
-  }
-
   auto lvalue() const -> Nonnull<const LValue*> { return lvalue_; }
 
-  auto value() const -> std::optional<Nonnull<const Value*>> { return value_; }
+  auto value() const -> Nonnull<const Value*> { return value_; }
 
  private:
   Nonnull<const LValue*> lvalue_;
-  std::optional<Nonnull<const Declaration*>> declaration_;
-  std::optional<Nonnull<const Value*>> value_;
+  Nonnull<const Value*> value_;
 };
 
 // Action which does nothing except introduce a new scope into the action
