@@ -49,13 +49,13 @@ void ImplScope::Add(Nonnull<const Value*> iface,
                     .witness = witness});
 }
 
-void ImplScope::Add(llvm::ArrayRef<ConstraintType::ImplConstraint> impls,
+void ImplScope::Add(llvm::ArrayRef<ImplConstraint> impls,
                     llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
                     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
                     Nonnull<const Witness*> witness,
                     const TypeChecker& type_checker) {
   for (size_t i = 0; i != impls.size(); ++i) {
-    ConstraintType::ImplConstraint impl = impls[i];
+    ImplConstraint impl = impls[i];
     Add(impl.interface, deduced, impl.type, impl_bindings,
         type_checker.MakeConstraintWitnessAccess(witness, i), type_checker);
   }
@@ -172,7 +172,7 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
 auto ImplScope::VisitEqualValues(
     Nonnull<const Value*> value,
     llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const -> bool {
-  for (Nonnull<const ConstraintType::EqualityConstraint*> eq : equalities_) {
+  for (Nonnull<const EqualityConstraint*> eq : equalities_) {
     if (!eq->VisitEqualValues(value, visitor)) {
       return false;
     }
@@ -279,7 +279,7 @@ void ImplScope::Print(llvm::raw_ostream& out) const {
   for (const Impl& impl : impls_) {
     out << sep << *(impl.type) << " as " << *(impl.interface);
   }
-  for (Nonnull<const ConstraintType::EqualityConstraint*> eq : equalities_) {
+  for (Nonnull<const EqualityConstraint*> eq : equalities_) {
     out << sep;
     llvm::ListSeparator equal(" == ");
     for (Nonnull<const Value*> value : eq->values) {

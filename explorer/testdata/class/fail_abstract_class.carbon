@@ -10,7 +10,7 @@ package ExplorerTest api;
 
 abstract class C {
   fn F() {}
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_abstract_class.carbon:[[@LINE+1]]: Class prefixes `base` and `abstract` are not supported yet
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_abstract_class.carbon:[[@LINE+1]]: Class prefix `abstract` is not supported yet
 }
 
 fn Main() -> i32 {

@@ -7,14 +7,21 @@
 #include <algorithm>
 #include <iterator>
 #include <map>
+#include <optional>
 #include <set>
+#include <string>
+#include <string_view>
+#include <unordered_set>
 #include <vector>
 
 #include "common/error.h"
 #include "common/ostream.h"
 #include "explorer/ast/declaration.h"
+#include "explorer/ast/expression.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
+#include "explorer/common/nonnull.h"
+#include "explorer/common/source_location.h"
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
 #include "explorer/interpreter/pattern_analysis.h"
@@ -366,21 +373,35 @@ auto TypeChecker::FieldTypesImplicitlyConvertible(
   return true;
 }
 
+// Returns all class members from class and its parent classes.
+static auto GetClassHierarchy(const NominalClassType& class_type)
+    -> std::vector<Nonnull<const NominalClassType*>> {
+  Nonnull<const NominalClassType*> curr_class_type = &class_type;
+  std::vector<Nonnull<const NominalClassType*>> all_classes{curr_class_type};
+  while (curr_class_type->base().has_value()) {
+    curr_class_type = curr_class_type->base().value();
+    all_classes.push_back(curr_class_type);
+  }
+  return all_classes;
+}
+
 auto TypeChecker::FieldTypes(const NominalClassType& class_type) const
     -> std::vector<NamedValue> {
   std::vector<NamedValue> field_types;
-  for (Nonnull<Declaration*> m : class_type.declaration().members()) {
-    switch (m->kind()) {
-      case DeclarationKind::VariableDeclaration: {
-        const auto& var = cast<VariableDeclaration>(*m);
-        Nonnull<const Value*> field_type =
-            Substitute(class_type.bindings(), &var.binding().static_type());
-        field_types.push_back(
-            {.name = var.binding().name(), .value = field_type});
-        break;
+  for (const auto class_type : GetClassHierarchy(class_type)) {
+    for (Nonnull<Declaration*> m : class_type->declaration().members()) {
+      switch (m->kind()) {
+        case DeclarationKind::VariableDeclaration: {
+          const auto& var = cast<VariableDeclaration>(*m);
+          Nonnull<const Value*> field_type =
+              Substitute(class_type->bindings(), &var.binding().static_type());
+          field_types.push_back(
+              {.name = var.binding().name(), .value = field_type});
+          break;
+        }
+        default:
+          break;
       }
-      default:
-        break;
     }
   }
   return field_types;
@@ -500,8 +521,7 @@ auto TypeChecker::IsImplicitlyConvertible(
   }
 
   // We didn't find a builtin implicit conversion. Try a user-defined one.
-  // The source location doesn't matter, we're discarding the diagnostics.
-  SourceLocation source_loc("", 0);
+  SourceLocation source_loc = SourceLocation::DiagnosticsIgnored();
   ErrorOr<Nonnull<const InterfaceType*>> iface_type = GetBuiltinInterfaceType(
       source_loc, BuiltinInterfaceName{Builtins::ImplicitAs, destination});
   return iface_type.ok() &&
@@ -1119,9 +1139,9 @@ class TypeChecker::ConstraintTypeBuilder {
 
   // Adds an `impl` constraint -- `T is C` if not already present.
   // Returns the index of the impl constraint within the self witness.
-  auto AddImplConstraint(ConstraintType::ImplConstraint impl) -> int {
+  auto AddImplConstraint(ImplConstraint impl) -> int {
     for (int i = 0; i != static_cast<int>(impl_constraints_.size()); ++i) {
-      ConstraintType::ImplConstraint& existing = impl_constraints_[i];
+      ImplConstraint& existing = impl_constraints_[i];
       if (TypeEqual(existing.type, impl.type, std::nullopt) &&
           TypeEqual(existing.interface, impl.interface, std::nullopt)) {
         return i;
@@ -1132,7 +1152,7 @@ class TypeChecker::ConstraintTypeBuilder {
   }
 
   // Adds an equality constraint -- `A == B`.
-  void AddEqualityConstraint(ConstraintType::EqualityConstraint equal) {
+  void AddEqualityConstraint(EqualityConstraint equal) {
     if (equal.values.size() < 2) {
       // There's no need to track degenerate equality constraints. These can be
       // formed by rewrites.
@@ -1148,9 +1168,8 @@ class TypeChecker::ConstraintTypeBuilder {
   }
 
   auto AddRewriteConstraint(SourceLocation source_loc,
-                            ConstraintType::RewriteConstraint rewrite)
-      -> ErrorOr<Success> {
-    for (ConstraintType::RewriteConstraint existing : rewrite_constraints_) {
+                            RewriteConstraint rewrite) -> ErrorOr<Success> {
+    for (RewriteConstraint existing : rewrite_constraints_) {
       if (ValueEqual(existing.constant, rewrite.constant, std::nullopt)) {
         if (ValueEqual(existing.unconverted_replacement,
                        rewrite.unconverted_replacement, std::nullopt) &&
@@ -1170,8 +1189,8 @@ class TypeChecker::ConstraintTypeBuilder {
   }
 
   // Add a context for qualified name lookup, if not already present.
-  void AddLookupContext(ConstraintType::LookupContext context) {
-    for (ConstraintType::LookupContext existing : lookup_contexts_) {
+  void AddLookupContext(LookupContext context) {
+    for (LookupContext existing : lookup_contexts_) {
       if (ValueEqual(existing.context, context.context, std::nullopt)) {
         return;
       }
@@ -1296,11 +1315,10 @@ class TypeChecker::ConstraintTypeBuilder {
     int first_equal_to_add =
         std::exchange(tracker->num_equals_added, equality_constraints_.size());
     auto new_impl_constraints =
-        llvm::ArrayRef<ConstraintType::ImplConstraint>(impl_constraints_)
+        llvm::ArrayRef<ImplConstraint>(impl_constraints_)
             .drop_front(first_impl_to_add);
     auto new_equality_constraints =
-        llvm::ArrayRef<ConstraintType::EqualityConstraint>(
-            equality_constraints_)
+        llvm::ArrayRef<EqualityConstraint>(equality_constraints_)
             .drop_front(first_equal_to_add);
 
     // Add all of the new constraints.
@@ -1382,10 +1400,10 @@ class TypeChecker::ConstraintTypeBuilder {
   Nonnull<Arena*> arena_;
   Nonnull<GenericBinding*> self_binding_;
   Nonnull<ImplBinding*> impl_binding_;
-  std::vector<ConstraintType::ImplConstraint> impl_constraints_;
-  std::vector<ConstraintType::EqualityConstraint> equality_constraints_;
-  std::vector<ConstraintType::RewriteConstraint> rewrite_constraints_;
-  std::vector<ConstraintType::LookupContext> lookup_contexts_;
+  std::vector<ImplConstraint> impl_constraints_;
+  std::vector<EqualityConstraint> equality_constraints_;
+  std::vector<RewriteConstraint> rewrite_constraints_;
+  std::vector<LookupContext> lookup_contexts_;
 };
 
 // A collection of substituted `GenericBinding`s and `ImplBinding`s.
@@ -1598,16 +1616,14 @@ auto TypeChecker::Substitute(const Bindings& bindings,
       }
       ConstraintTypeBuilder builder(arena_,
                                     constraint.self_binding()->source_loc());
-      // Diagnostics are discarded (except in CHECK failure message).
-      SourceLocation source_loc("", 0);
       ErrorOr<Success> result = builder.AddAndSubstitute(
-          *this, source_loc, &constraint, builder.GetSelfType(),
-          builder.GetSelfWitness(), bindings,
+          *this, SourceLocation::DiagnosticsIgnored(), &constraint,
+          builder.GetSelfType(), builder.GetSelfWitness(), bindings,
           /*add_lookup_contexts=*/true);
       // TODO: This appears to theoretically be possible, and should be handled
       // better.
       CARBON_CHECK(result.ok()) << "substitution into " << constraint
-                                << " failed: " << result.error();
+                                << " failed: " << result.error().message();
       Nonnull<const ConstraintType*> new_constraint =
           std::move(builder).Build();
       if (trace_stream_) {
@@ -1711,12 +1727,11 @@ auto TypeChecker::RefineWitness(Nonnull<const Witness*> witness,
     return witness;
   }
 
-  // No source location; diagnostics will be discarded.
-  SourceLocation source_loc("", 0);
-
   // Attempt to look for an impl witness in the top-level impl scope.
-  if (auto refined_witness = (*top_level_impl_scope_)
-                                 ->Resolve(constraint, type, source_loc, *this);
+  if (auto refined_witness =
+          (*top_level_impl_scope_)
+              ->Resolve(constraint, type, SourceLocation::DiagnosticsIgnored(),
+                        *this);
       refined_witness.ok()) {
     return *refined_witness;
   } else {
@@ -1916,11 +1931,11 @@ auto TypeChecker::LookupInConstraint(SourceLocation source_loc,
   CARBON_ASSIGN_OR_RETURN(
       Nonnull<const ConstraintType*> constraint_type,
       ConvertToConstraintType(source_loc, lookup_kind, type));
-  llvm::ArrayRef<ConstraintType::LookupContext> lookup_contexts =
+  llvm::ArrayRef<LookupContext> lookup_contexts =
       constraint_type->lookup_contexts();
 
   std::optional<ConstraintLookupResult> found;
-  for (ConstraintType::LookupContext lookup : lookup_contexts) {
+  for (LookupContext lookup : lookup_contexts) {
     if (!isa<InterfaceType>(lookup.context)) {
       // TODO: Support other kinds of lookup context, notably named
       // constraints.
@@ -1961,7 +1976,7 @@ auto TypeChecker::LookupInConstraint(SourceLocation source_loc,
 static auto LookupRewrite(llvm::ArrayRef<RewriteConstraint> rewrites,
                           Nonnull<const InterfaceType*> interface,
                           Nonnull<const Declaration*> member)
-    -> std::optional<const ConstraintType::RewriteConstraint*> {
+    -> std::optional<const RewriteConstraint*> {
   if (!isa<AssociatedConstantDeclaration>(member)) {
     return std::nullopt;
   }
@@ -1984,11 +1999,11 @@ static auto LookupRewrite(llvm::ArrayRef<RewriteConstraint> rewrites,
 static auto LookupRewrite(Nonnull<const Value*> type_of_type,
                           Nonnull<const InterfaceType*> interface,
                           Nonnull<const Declaration*> member)
-    -> std::optional<const ConstraintType::RewriteConstraint*> {
+    -> std::optional<const RewriteConstraint*> {
   // Find the set of rewrites. Only ConstraintTypes have rewrites.
   // TODO: If we can ever see an InterfaceType here, we should convert it to a
   // constraint type.
-  llvm::ArrayRef<ConstraintType::RewriteConstraint> rewrites;
+  llvm::ArrayRef<RewriteConstraint> rewrites;
   if (const auto* constraint_type = dyn_cast<ConstraintType>(type_of_type)) {
     rewrites = constraint_type->rewrite_constraints();
   }
@@ -2008,7 +2023,7 @@ auto TypeChecker::GetTypeForAssociatedConstant(
 auto TypeChecker::LookupRewriteInTypeOf(
     Nonnull<const Value*> type, Nonnull<const InterfaceType*> interface,
     Nonnull<const Declaration*> member) const
-    -> std::optional<const ConstraintType::RewriteConstraint*> {
+    -> std::optional<const RewriteConstraint*> {
   // Given `(T:! C).Y`, look in `C` for rewrites.
   if (const auto* var_type = dyn_cast<VariableType>(type)) {
     if (!var_type->binding().has_static_type()) {
@@ -2043,7 +2058,7 @@ auto TypeChecker::LookupRewriteInTypeOf(
 auto TypeChecker::LookupRewriteInWitness(
     Nonnull<const Witness*> witness, Nonnull<const InterfaceType*> interface,
     Nonnull<const Declaration*> member) const
-    -> std::optional<const ConstraintType::RewriteConstraint*> {
+    -> std::optional<const RewriteConstraint*> {
   if (const auto* impl_witness = dyn_cast<ImplWitness>(witness)) {
     Nonnull<const Value*> constraint =
         Substitute(impl_witness->bindings(),
@@ -2054,9 +2069,8 @@ auto TypeChecker::LookupRewriteInWitness(
 }
 
 // Rewrites a member access expression to produce the given constant value.
-static void RewriteMemberAccess(
-    Nonnull<MemberAccessExpression*> access,
-    Nonnull<const ConstraintType::RewriteConstraint*> value) {
+static void RewriteMemberAccess(Nonnull<MemberAccessExpression*> access,
+                                Nonnull<const RewriteConstraint*> value) {
   access->set_value_category(ValueCategory::Let);
   access->set_static_type(value->unconverted_replacement_type);
   access->set_constant_value(value->unconverted_replacement);
@@ -2201,11 +2215,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         case Value::Kind::NominalClassType: {
           const auto& t_class = cast<NominalClassType>(object_type);
           CARBON_ASSIGN_OR_RETURN(
-              auto type_member, FindMixedMemberAndType(
-                                    access.source_loc(), access.member_name(),
-                                    t_class.declaration().members(), &t_class));
-          if (type_member.has_value()) {
-            auto [member_type, member] = type_member.value();
+              const auto res,
+              FindMemberWithParents(access.member_name(), &t_class));
+          if (res.has_value()) {
+            auto [member_type, member] = res.value();
             Nonnull<const Value*> field_type =
                 Substitute(t_class.bindings(), member_type);
             access.set_member(Member(member));
@@ -2420,9 +2433,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               const auto& class_type = cast<NominalClassType>(*type);
               CARBON_ASSIGN_OR_RETURN(
                   auto type_member,
-                  FindMixedMemberAndType(
-                      access.source_loc(), access.member_name(),
-                      class_type.declaration().members(), &class_type));
+                  FindMixedMemberAndType(access.member_name(),
+                                         class_type.declaration().members(),
+                                         &class_type));
               if (type_member.has_value()) {
                 auto [member_type, member] = type_member.value();
                 access.set_member(Member(member));
@@ -4074,13 +4087,37 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   ImplScope class_scope;
   class_scope.AddParent(scope_info.innermost_scope);
 
-  if (class_decl->extensibility() != ClassExtensibility::None) {
+  if (class_decl->extensibility() == ClassExtensibility::Abstract) {
     return ProgramError(class_decl->source_loc())
-           << "Class prefixes `base` and `abstract` are not supported yet";
+           << "Class prefix `abstract` is not supported yet";
   }
-  if (class_decl->extends()) {
-    return ProgramError(class_decl->source_loc())
-           << "Class extension with `extends` is not supported yet";
+
+  std::optional<Nonnull<const NominalClassType*>> base_class;
+  if (class_decl->base_expr().has_value()) {
+    Nonnull<Expression*> base_class_expr = *class_decl->base_expr();
+    CARBON_ASSIGN_OR_RETURN(const auto base_type,
+                            TypeCheckTypeExp(base_class_expr, class_scope));
+    switch (base_type->kind()) {
+      case Value::Kind::NominalClassType:
+        base_class = cast<NominalClassType>(base_type);
+        if (base_class.value()->declaration().extensibility() ==
+            ClassExtensibility::None) {
+          return ProgramError(class_decl->source_loc())
+                 << "Base class `" << base_class.value()->declaration().name()
+                 << "` is `final` and cannot inherited. Add the `base` or "
+                    "`abstract` class prefix to `"
+                 << base_class.value()->declaration().name()
+                 << "` to allow it to be inherited";
+        }
+        class_decl->set_base(&base_class.value()->declaration());
+        break;
+      default:
+        return ProgramError(class_decl->source_loc())
+               << "Unsupported base class type for class `"
+               << class_decl->name()
+               << "`. Only simple classes are currently supported as base "
+                  "class.";
+    }
   }
 
   std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
@@ -4097,7 +4134,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   // For class declaration `class MyType(T:! Type, U:! AnInterface)`, `Self`
   // should have the value `MyType(T, U)`.
   Nonnull<NominalClassType*> self_type = arena_->New<NominalClassType>(
-      class_decl, Bindings::SymbolicIdentity(arena_, bindings));
+      class_decl, Bindings::SymbolicIdentity(arena_, bindings), base_class);
   self->set_static_type(arena_->New<TypeType>());
   self->set_constant_value(self_type);
 
@@ -5086,9 +5123,25 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
   return Success();
 }
 
+auto TypeChecker::FindMemberWithParents(
+    std::string_view name, Nonnull<const NominalClassType*> class_type)
+    -> ErrorOr<std::optional<
+        std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>> {
+  CARBON_ASSIGN_OR_RETURN(
+      const auto res,
+      FindMixedMemberAndType(name, class_type->declaration().members(),
+                             class_type));
+  if (res.has_value()) {
+    return res;
+  }
+  if (const auto base = class_type->base(); base.has_value()) {
+    return FindMemberWithParents(name, base.value());
+  }
+  return {std::nullopt};
+}
+
 auto TypeChecker::FindMixedMemberAndType(
-    SourceLocation source_loc, const std::string_view& name,
-    llvm::ArrayRef<Nonnull<Declaration*>> members,
+    const std::string_view& name, llvm::ArrayRef<Nonnull<Declaration*>> members,
     const Nonnull<const Value*> enclosing_type)
     -> ErrorOr<std::optional<
         std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>> {
@@ -5098,8 +5151,7 @@ auto TypeChecker::FindMixedMemberAndType(
       Nonnull<const MixinPseudoType*> mixin = &mix_decl.mixin_value();
       CARBON_ASSIGN_OR_RETURN(
           const auto res,
-          FindMixedMemberAndType(source_loc, name,
-                                 mixin->declaration().members(), mixin));
+          FindMixedMemberAndType(name, mixin->declaration().members(), mixin));
       if (res.has_value()) {
         if (isa<NominalClassType>(enclosing_type)) {
           Bindings temp_map;

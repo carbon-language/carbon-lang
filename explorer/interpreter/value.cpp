@@ -7,6 +7,7 @@
 #include <algorithm>
 
 #include "common/check.h"
+#include "explorer/ast/declaration.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "explorer/interpreter/action.h"
@@ -98,7 +99,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         // Look for a method in the object's class
         const auto& class_type = cast<NominalClassType>(object.type());
         std::optional<Nonnull<const FunctionValue*>> func =
-            class_type.FindFunction(f);
+            FindFunctionWithParents(f, class_type.declaration());
         if (!func) {
           return ProgramError(source_loc) << "member " << f << " not in " << *v
                                           << " or its " << class_type;
@@ -127,7 +128,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       // Access a class function.
       const auto& class_type = cast<NominalClassType>(*v);
       std::optional<Nonnull<const FunctionValue*>> fun =
-          class_type.FindFunction(f);
+          FindFunctionWithParents(f, class_type.declaration());
       if (fun == std::nullopt) {
         return ProgramError(source_loc)
                << "class function " << f << " not in " << *v;
@@ -426,13 +427,12 @@ void Value::Print(llvm::raw_ostream& out) const {
       const auto& constraint = cast<ConstraintType>(*this);
       out << "constraint ";
       llvm::ListSeparator combine(" & ");
-      for (const ConstraintType::LookupContext& ctx :
-           constraint.lookup_contexts()) {
+      for (const LookupContext& ctx : constraint.lookup_contexts()) {
         out << combine << *ctx.context;
       }
       out << " where ";
       llvm::ListSeparator sep(" and ");
-      for (const ConstraintType::RewriteConstraint& rewrite :
+      for (const RewriteConstraint& rewrite :
            constraint.rewrite_constraints()) {
         out << sep << ".(";
         PrintNameWithBindings(out, &rewrite.constant->interface().declaration(),
@@ -440,13 +440,12 @@ void Value::Print(llvm::raw_ostream& out) const {
         out << "." << *GetName(rewrite.constant->constant())
             << ") = " << *rewrite.unconverted_replacement;
       }
-      for (const ConstraintType::ImplConstraint& impl :
-           constraint.impl_constraints()) {
+      for (const ImplConstraint& impl : constraint.impl_constraints()) {
         // TODO: Skip cases where `impl.type` is `.Self` and the interface is
         // in `lookup_contexts()`.
         out << sep << *impl.type << " is " << *impl.interface;
       }
-      for (const ConstraintType::EqualityConstraint& equality :
+      for (const EqualityConstraint& equality :
            constraint.equality_constraints()) {
         // TODO: Skip cases matching something in `rewrite_constraints()`.
         out << sep;
@@ -981,9 +980,10 @@ auto ChoiceType::FindAlternative(std::string_view name) const
   return std::nullopt;
 }
 
-auto NominalClassType::FindFunction(std::string_view name) const
+auto FindFunction(std::string_view name,
+                  llvm::ArrayRef<Nonnull<Declaration*>> members)
     -> std::optional<Nonnull<const FunctionValue*>> {
-  for (const auto& member : declaration().members()) {
+  for (const auto& member : members) {
     switch (member->kind()) {
       case DeclarationKind::MixDeclaration: {
         const auto& mix_decl = cast<MixDeclaration>(*member);
@@ -1032,6 +1032,18 @@ auto MixinPseudoType::FindFunction(const std::string_view& name) const
       default:
         break;
     }
+  }
+  return std::nullopt;
+}
+
+auto FindFunctionWithParents(std::string_view name,
+                             const ClassDeclaration& class_decl)
+    -> std::optional<Nonnull<const FunctionValue*>> {
+  if (auto fun = FindFunction(name, class_decl.members()); fun.has_value()) {
+    return fun;
+  }
+  if (class_decl.base().has_value()) {
+    return FindFunctionWithParents(name, *class_decl.base().value());
   }
   return std::nullopt;
 }
