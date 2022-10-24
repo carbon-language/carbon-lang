@@ -11,7 +11,7 @@ namespace Carbon {
 // to a variable or a value. A variable can be mutated, and can have its
 // address taken, whereas a value cannot.
 enum class ValueCategory {
-  // A variable. This roughly corresponds to a C and C++ lvalue.
+  // A variable. This roughly corresponds to a C++ lvalue.
   Var,
   // A value. This roughly corresponds to a C and C++ rvalue.
   Let,
