@@ -13,7 +13,7 @@ namespace Carbon {
 enum class ValueCategory {
   // A variable. This roughly corresponds to a C++ lvalue.
   Var,
-  // A value. This roughly corresponds to a C and C++ rvalue.
+  // A value. This roughly corresponds to a C++ rvalue.
   Let,
 };
 
