@@ -17,14 +17,15 @@ interface Y(T:! Type) {
 interface Z {
   // The `i32 is X(.Self)` constraint is indirectly required by
   // specifying that `.M = i32`.
-  // TODO: This testcase should be accepted, but is currently not because the
-  // two `.Self`s here refer to different symbolic types.
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_impl_used_by_later_rewrite.carbon:[[@LINE+1]]: could not find implementation of interface X(T = N) for i32
   let N:! Y(.Self) where i32 is X(.Self) and .M = i32;
 }
 
 impl i32 as X(i32) {}
 impl i32 as Y(i32) where .M = i32 {}
+// TODO: This testcase should be accepted, but is currently not because the
+// rewrite for `.N` is not properly applied to impl constraints within the type
+// of N.
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_impl_used_by_later_rewrite.carbon:[[@LINE+1]]: could not find implementation of interface Y(T = (.Self).(Z.N)) for i32
 impl i32 as Z where .N = i32 {}
 
 fn F[A:! Z](a: A) -> A { return a; }
