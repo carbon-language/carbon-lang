@@ -2083,9 +2083,6 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
     if (value.ok()) {
       return todo_.Spawn(std::make_unique<DestroyAction>(lvalue, *value));
     }
-    /*CARBON_ASSIGN_OR_RETURN(auto value, heap_.Read(lvalue->address(),
-    source_loc)); return todo_.Spawn( std::make_unique<DestroyAction>(lvalue,
-    value, std::nullopt));*/
   }
   todo_.Pop();
   return Success();
