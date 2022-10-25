@@ -356,7 +356,7 @@ auto TypeChecker::FieldTypesImplicitlyConvertible(
   if (source_fields.size() != destination_fields.size()) {
     return false;
   }
-  // exist every field name in destination
+  // Ensure every field name exists in the destination.
   for (const auto& dest_field : destination_fields) {
     if (!FindField(source_fields, dest_field.name)) {
       return false;
