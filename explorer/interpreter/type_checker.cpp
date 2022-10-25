@@ -1387,7 +1387,6 @@ class TypeChecker::ConstraintTypeBuilder {
   static void PrepareSelfBinding(Nonnull<Arena*> arena,
                                  Nonnull<GenericBinding*> self_binding) {
     Nonnull<const Value*> self = arena->New<VariableType>(self_binding);
-    // TODO: Do we really need both of these?
     self_binding->set_symbolic_identity(self);
     self_binding->set_value(self);
   }

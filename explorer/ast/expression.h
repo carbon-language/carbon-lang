@@ -918,7 +918,7 @@ class WhereExpression : public RewritableMixin<Expression> {
       -> std::optional<Nonnull<const GenericBinding*>> {
     return enclosing_dot_self_;
   }
-  // Sets the enclosing value of `.Self`. Can only be called once, by name
+  // Sets the enclosing value of `.Self`. Can only be called during name
   // resolution.
   void set_enclosing_dot_self(Nonnull<const GenericBinding*> dot_self) {
     CARBON_CHECK(!enclosing_dot_self_ || enclosing_dot_self_ == dot_self);
