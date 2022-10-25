@@ -64,7 +64,7 @@ Other language interoperability layers that may offer useful examples are:
     for Carbon.
 
 -   [JavaScript/TypeScript](https://www.typescriptlang.org/docs/handbook/migrating-from-javascript.html)
-    is similar to C and C++, where one language is essentially a subset of the
+    is similar to C/C++, where one language is essentially a subset of the
     other, allowing high interoperability. This is an interesting reference
     point, but we are looking at a different approach with a clearer boundary.
 
