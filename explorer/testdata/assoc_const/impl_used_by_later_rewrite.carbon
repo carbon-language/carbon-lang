@@ -3,8 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -22,10 +23,6 @@ interface Z {
 
 impl i32 as X(i32) {}
 impl i32 as Y(i32) where .M = i32 {}
-// TODO: This testcase should be accepted, but is currently not because the
-// rewrite for `.N` is not properly applied to impl constraints within the type
-// of N.
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_impl_used_by_later_rewrite.carbon:[[@LINE+1]]: could not find implementation of interface Y(T = (.Self).(Z.N)) for i32
 impl i32 as Z where .N = i32 {}
 
 fn F[A:! Z](a: A) -> A { return a; }

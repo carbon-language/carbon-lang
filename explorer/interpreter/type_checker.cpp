@@ -3552,9 +3552,7 @@ auto TypeChecker::TypeCheckPattern(
                << binding;
       }
 
-      auto* val = arena_->New<VariableType>(&binding);
-      return TypeCheckGenericBinding(binding, "generic binding", val,
-                                     impl_scope);
+      return TypeCheckGenericBinding(binding, "generic binding", impl_scope);
     }
     case PatternKind::TuplePattern: {
       auto& tuple = cast<TuplePattern>(*p);
@@ -3675,11 +3673,11 @@ auto TypeChecker::TypeCheckPattern(
 
 auto TypeChecker::TypeCheckGenericBinding(GenericBinding& binding,
                                           std::string_view context,
-                                          Nonnull<const Value*> symbolic_value,
                                           ImplScope& impl_scope)
     -> ErrorOr<Success> {
   // The binding can be referred to in its own type via `.Self`, so set up
   // its symbolic identity before we type-check and interpret the type.
+  auto* symbolic_value = arena_->New<VariableType>(&binding);
   binding.set_symbolic_identity(symbolic_value);
   SetValue(&binding, symbolic_value);
 
@@ -3705,9 +3703,8 @@ auto TypeChecker::TypeCheckGenericBinding(GenericBinding& binding,
     // Substitute the VariableType as `.Self` of the constraint to form the
     // resolved type of the binding. Eg, `T:! X where .Self is Y` resolves
     // to `T:! <constraint T is X and T is Y>`.
-    auto* binding_self_type = arena_->New<VariableType>(&binding);
     ConstraintTypeBuilder builder(arena_, &binding, impl_binding);
-    builder.AddAndSubstitute(*this, constraint, binding_self_type, witness,
+    builder.AddAndSubstitute(*this, constraint, symbolic_value, witness,
                              Bindings(), /*add_lookup_contexts=*/true);
     if (trace_stream_) {
       **trace_stream_ << "resolving constraint type for " << binding << " from "
@@ -4503,12 +4500,19 @@ auto TypeChecker::DeclareInterfaceDeclaration(
 
       case DeclarationKind::AssociatedConstantDeclaration: {
         auto* assoc = cast<AssociatedConstantDeclaration>(m);
-        auto* assoc_value = arena_->New<AssociatedConstant>(
-            &iface_decl->self()->value(), iface_type, assoc, impl_witness);
         CARBON_RETURN_IF_ERROR(TypeCheckGenericBinding(
-            assoc->binding(), "associated constant", assoc_value, iface_scope));
+            assoc->binding(), "associated constant", iface_scope));
         Nonnull<const Value*> constraint = &assoc->binding().static_type();
         assoc->set_static_type(constraint);
+
+        // The constant value is used if the constant is named later in the
+        // same interface. Note that this differs from the symbolic identity of
+        // the binding, which was set in TypeCheckGenericBinding to a
+        // VariableType naming the binding so that .Self resolves to the
+        // binding itself.
+        auto* assoc_value = arena_->New<AssociatedConstant>(
+            &iface_decl->self()->value(), iface_type, assoc, impl_witness);
+        assoc->set_constant_value(assoc_value);
 
         // The type specified for the associated constant becomes a
         // constraint for the interface: `let X:! Interface` adds a `Self.X
