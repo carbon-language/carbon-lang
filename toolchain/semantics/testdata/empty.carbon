@@ -9,6 +9,6 @@
 // CHECK:STDOUT: integer_literals = {
 // CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
-// CHECK:STDOUT:   %block{0} = {
+// CHECK:STDOUT:   block0 = {
 // CHECK:STDOUT:   },
 // CHECK:STDOUT: }

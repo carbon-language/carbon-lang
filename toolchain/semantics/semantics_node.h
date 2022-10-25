@@ -19,7 +19,7 @@ struct SemanticsNodeId {
   SemanticsNodeId(SemanticsNodeId const&) = default;
   auto operator=(const SemanticsNodeId& other) -> SemanticsNodeId& = default;
 
-  void Print(llvm::raw_ostream& out) const { out << "%" << id; }
+  void Print(llvm::raw_ostream& out) const { out << "node" << id; }
 
   int32_t id;
 };
@@ -29,7 +29,7 @@ struct SemanticsIdentifierId {
   SemanticsIdentifierId() : id(-1) {}
   explicit SemanticsIdentifierId(int32_t id) : id(id) {}
 
-  void Print(llvm::raw_ostream& out) const { out << "%ident{" << id << "}"; }
+  void Print(llvm::raw_ostream& out) const { out << "ident" << id; }
 
   int32_t id;
 };
@@ -39,7 +39,7 @@ struct SemanticsIntegerLiteralId {
   SemanticsIntegerLiteralId() : id(-1) {}
   explicit SemanticsIntegerLiteralId(int32_t id) : id(id) {}
 
-  void Print(llvm::raw_ostream& out) const { out << "%int{" << id << "}"; }
+  void Print(llvm::raw_ostream& out) const { out << "int" << id; }
 
   int32_t id;
 };
@@ -49,7 +49,7 @@ struct SemanticsNodeBlockId {
   SemanticsNodeBlockId() : id(-1) {}
   explicit SemanticsNodeBlockId(int32_t id) : id(id) {}
 
-  void Print(llvm::raw_ostream& out) const { out << "%block{" << id << "}"; }
+  void Print(llvm::raw_ostream& out) const { out << "block" << id; }
 
   int32_t id;
 };

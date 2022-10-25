@@ -33,6 +33,7 @@ auto SemanticsParseTreeHandler::Build() -> void {
       }
       case ParseNodeKind::FileEnd(): {
         ++it;
+        CARBON_CHECK(node_block_stack_.size() == 1) << node_block_stack_.size();
         CARBON_CHECK(it == range.end())
             << "FileEnd should always be last, found "
             << parse_tree_->node_kind(*it);
