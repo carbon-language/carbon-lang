@@ -11,14 +11,16 @@
 
 namespace Carbon {
 
-// The main semantic analysis entry.
+// Handles processing of a ParseTree for semantics.
 class SemanticsParseTreeHandler {
  public:
+  // Stores references for work.
   explicit SemanticsParseTreeHandler(const TokenizedBuffer& tokens,
                                      const ParseTree& parse_tree,
                                      SemanticsIR& semantics)
       : tokens_(&tokens), parse_tree_(&parse_tree), semantics_(&semantics) {}
 
+  // Outputs the ParseTree information into SemanticsIR.
   auto Build() -> void;
 
  private:
