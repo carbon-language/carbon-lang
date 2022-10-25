@@ -1128,13 +1128,13 @@ class TypeChecker::ConstraintTypeBuilder {
 
   // Produces a type that refers to the `.Self` type of the constraint.
   auto GetSelfType() const -> Nonnull<const Value*> {
-    return &self_binding_->value();
+    return *self_binding_->symbolic_identity();
   }
 
   // Gets a witness that `.Self` implements the eventual constraint type built
   // by this builder.
   auto GetSelfWitness() const -> Nonnull<const Witness*> {
-    return cast<Witness>(impl_binding_->symbolic_identity().value());
+    return cast<Witness>(*impl_binding_->symbolic_identity());
   }
 
   // Adds an `impl` constraint -- `T is C` if not already present.
@@ -1167,25 +1167,8 @@ class TypeChecker::ConstraintTypeBuilder {
     equality_constraints_.push_back(std::move(equal));
   }
 
-  auto AddRewriteConstraint(SourceLocation source_loc,
-                            RewriteConstraint rewrite) -> ErrorOr<Success> {
-    for (RewriteConstraint existing : rewrite_constraints_) {
-      if (ValueEqual(existing.constant, rewrite.constant, std::nullopt)) {
-        if (ValueEqual(existing.unconverted_replacement,
-                       rewrite.unconverted_replacement, std::nullopt) &&
-            TypeEqual(existing.unconverted_replacement_type,
-                      rewrite.unconverted_replacement_type, std::nullopt)) {
-          return Success();
-        }
-        return ProgramError(source_loc)
-               << "multiple different rewrites for `" << *rewrite.constant
-               << "`:\n"
-               << "  " << *existing.unconverted_replacement << "\n"
-               << "  " << *rewrite.unconverted_replacement;
-      }
-    }
+  void AddRewriteConstraint(RewriteConstraint rewrite) {
     rewrite_constraints_.push_back(rewrite);
-    return Success();
   }
 
   // Add a context for qualified name lookup, if not already present.
@@ -1203,13 +1186,17 @@ class TypeChecker::ConstraintTypeBuilder {
   // constraint's self binding. The `self_witness` is the witness for the
   // resulting constraint, and can be `GetSelfWitness()`. The `bindings`
   // parameter specifies any additional substitutions to perform.
-  auto AddAndSubstitute(const TypeChecker& type_checker,
-                        SourceLocation source_loc,
+  void AddAndSubstitute(const TypeChecker& type_checker,
                         Nonnull<const ConstraintType*> constraint,
                         Nonnull<const Value*> self,
                         Nonnull<const Witness*> self_witness,
-                        const Bindings& bindings, bool add_lookup_contexts)
-      -> ErrorOr<Success> {
+                        const Bindings& bindings, bool add_lookup_contexts) {
+    if (type_checker.trace_stream_) {
+      **type_checker.trace_stream_
+          << "merging " << *constraint << " into constraint with "
+          << *constraint->self_binding() << " ~> " << *self << "\n";
+    }
+
     // First substitute into the impl bindings to form the full witness for
     // the constraint type.
     std::vector<Nonnull<const Witness*>> witnesses;
@@ -1260,11 +1247,10 @@ class TypeChecker::ConstraintTypeBuilder {
             local_bindings, rewrite_constraint.unconverted_replacement);
         Nonnull<const Value*> type = type_checker.Substitute(
             local_bindings, rewrite_constraint.unconverted_replacement_type);
-        CARBON_RETURN_IF_ERROR(AddRewriteConstraint(
-            source_loc, {.constant = constant_value,
-                         .unconverted_replacement = value,
-                         .unconverted_replacement_type = type,
-                         .converted_replacement = converted_value}));
+        AddRewriteConstraint({.constant = constant_value,
+                              .unconverted_replacement = value,
+                              .unconverted_replacement_type = type,
+                              .converted_replacement = converted_value});
       } else {
         // Add the constraint `Self.(I.C) == V`.
         AddEqualityConstraint({.values = {constant_value, converted_value}});
@@ -1290,8 +1276,6 @@ class TypeChecker::ConstraintTypeBuilder {
                               local_bindings, lookup_context.context)});
       }
     }
-
-    return Success();
   }
 
   class ConstraintsInScopeTracker {
@@ -1329,9 +1313,44 @@ class TypeChecker::ConstraintTypeBuilder {
     }
   }
 
-  // Converts the builder into a ConstraintType. Note that this consumes the
-  // builder.
-  auto Build() && -> Nonnull<const ConstraintType*> {
+  // Resolve this set of constraints. Form values for rewrite constraints,
+  // apply the rewrites within the other constraints, and produce a
+  // self-consistent set of constraints or diagnose if that is not possible.
+  //
+  // This should be done when attaching constraints to a declared name, not
+  // when simply forming a constraint type for later use in the type of a
+  // declared name.
+  auto Resolve(TypeChecker& type_checker, SourceLocation source_loc,
+               const ImplScope& impl_scope) -> ErrorOr<Success> {
+    type_checker.partial_constraint_types_.push_back(this);
+    auto pop_partial_constraint_type = llvm::make_scope_exit(
+        [&] { type_checker.partial_constraint_types_.pop_back(); });
+
+    // Check for conflicting rewrites.
+    // TODO: Avoid the quadratic behavior.
+    for (int i = 0; i != static_cast<int>(rewrite_constraints_.size()); ++i) {
+      auto& rewrite_a = rewrite_constraints_[i];
+      for (auto rewrite_b :
+           llvm::makeArrayRef(rewrite_constraints_).drop_front(i + 1)) {
+        if (ValueEqual(rewrite_a.constant, rewrite_b.constant, std::nullopt)) {
+          if (ValueEqual(rewrite_a.unconverted_replacement,
+                         rewrite_b.unconverted_replacement, std::nullopt) &&
+              TypeEqual(rewrite_a.unconverted_replacement_type,
+                        rewrite_b.unconverted_replacement_type, std::nullopt)) {
+            // We don't need to do any more checks for this `rewrite_a` value.
+            // `rewrite_b` will be compared against the next matching value,
+            // and so on.
+            break;
+          }
+          return ProgramError(source_loc)
+                 << "multiple different rewrites for `" << *rewrite_a.constant
+                 << "`:\n"
+                 << "  " << *rewrite_a.unconverted_replacement << "\n"
+                 << "  " << *rewrite_b.unconverted_replacement;
+        }
+      }
+    }
+
     // Rewrite `Self.X is Y` to `Replacement is Y` if we have a rewrite for
     // `Self.X`.
     // TODO: Properly apply rewrites throughout all the constraints. Check for
@@ -1352,6 +1371,12 @@ class TypeChecker::ConstraintTypeBuilder {
       } while (performed_rewrite);
     }
 
+    return Success();
+  }
+
+  // Converts the builder into a ConstraintType. Note that this consumes the
+  // builder.
+  auto Build() && -> Nonnull<const ConstraintType*> {
     // Create the new type.
     auto* result = arena_->New<ConstraintType>(
         self_binding_, std::move(impl_constraints_),
@@ -1616,14 +1641,9 @@ auto TypeChecker::Substitute(const Bindings& bindings,
       }
       ConstraintTypeBuilder builder(arena_,
                                     constraint.self_binding()->source_loc());
-      ErrorOr<Success> result = builder.AddAndSubstitute(
-          *this, SourceLocation::DiagnosticsIgnored(), &constraint,
-          builder.GetSelfType(), builder.GetSelfWitness(), bindings,
-          /*add_lookup_contexts=*/true);
-      // TODO: This appears to theoretically be possible, and should be handled
-      // better.
-      CARBON_CHECK(result.ok()) << "substitution into " << constraint
-                                << " failed: " << result.error().message();
+      builder.AddAndSubstitute(*this, &constraint, builder.GetSelfType(),
+                               builder.GetSelfWitness(), bindings,
+                               /*add_lookup_contexts=*/true);
       Nonnull<const ConstraintType*> new_constraint =
           std::move(builder).Build();
       if (trace_stream_) {
@@ -1828,10 +1848,9 @@ auto TypeChecker::MakeConstraintForInterface(
   }
 
   ConstraintTypeBuilder builder(arena_, source_loc);
-  CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
-      *this, source_loc, *constraint_type, builder.GetSelfType(),
-      builder.GetSelfWitness(), iface_type->bindings(),
-      /*add_lookup_contexts=*/true));
+  builder.AddAndSubstitute(*this, *constraint_type, builder.GetSelfType(),
+                           builder.GetSelfWitness(), iface_type->bindings(),
+                           /*add_lookup_contexts=*/true);
   return std::move(builder).Build();
 }
 
@@ -1861,10 +1880,9 @@ auto TypeChecker::CombineConstraints(
     -> ErrorOr<Nonnull<const ConstraintType*>> {
   ConstraintTypeBuilder builder(arena_, source_loc);
   for (Nonnull<const ConstraintType*> constraint : constraints) {
-    CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
-        *this, source_loc, constraint, builder.GetSelfType(),
-        builder.GetSelfWitness(), Bindings(),
-        /*add_lookup_contexts=*/true));
+    builder.AddAndSubstitute(*this, constraint, builder.GetSelfType(),
+                             builder.GetSelfWitness(), Bindings(),
+                             /*add_lookup_contexts=*/true);
   }
   return std::move(builder).Build();
 }
@@ -1983,8 +2001,7 @@ static auto LookupRewrite(llvm::ArrayRef<RewriteConstraint> rewrites,
 
   for (auto& rewrite : rewrites) {
     if (ValueEqual(interface, &rewrite.constant->interface(), std::nullopt) &&
-        // TODO: Using name comparison here seems brittle.
-        GetName(*member) == GetName(rewrite.constant->constant())) {
+        member == &rewrite.constant->constant()) {
       // A ConstraintType can only have one rewrite per (interface, member)
       // pair, so we don't need to check the rest.
       return &rewrite;
@@ -2024,6 +2041,17 @@ auto TypeChecker::LookupRewriteInTypeOf(
     Nonnull<const Value*> type, Nonnull<const InterfaceType*> interface,
     Nonnull<const Declaration*> member) const
     -> std::optional<const RewriteConstraint*> {
+  // If the type is the self type of an incomplete `where` expression or a
+  // constraint type we're in the process of resolving, find its set of
+  // rewrites. These rewrites may not be complete -- earlier rewrites will have
+  // been applied to later ones, but not vice versa -- but those are the
+  // intended semantics in this case.
+  for (auto* builder : partial_constraint_types_) {
+    if (ValueEqual(type, builder->GetSelfType(), std::nullopt)) {
+      return LookupRewrite(builder->rewrite_constraints(), interface, member);
+    }
+  }
+
   // Given `(T:! C).Y`, look in `C` for rewrites.
   if (const auto* var_type = dyn_cast<VariableType>(type)) {
     if (!var_type->binding().has_static_type()) {
@@ -2032,15 +2060,6 @@ auto TypeChecker::LookupRewriteInTypeOf(
       // say there are no rewrites yet.
       return std::nullopt;
     }
-    // If the type is the self type of an incomplete `where` expression, find
-    // its set of rewrites. These rewrites may not be complete -- earlier
-    // rewrites will have been applied to later ones, but not vice versa -- but
-    // those are the intended semantics in this case.
-    for (auto* where : partial_where_expressions_) {
-      if (&var_type->binding() == where->self_binding()) {
-        return LookupRewrite(where->rewrite_constraints(), interface, member);
-      }
-    }
     return LookupRewrite(&var_type->binding().static_type(), interface, member);
   }
 
@@ -2048,8 +2067,42 @@ auto TypeChecker::LookupRewriteInTypeOf(
   // `U` to find rewrites.
   // TODO: This substitution can lead to infinite recursion.
   if (const auto* assoc_const = dyn_cast<AssociatedConstant>(type)) {
-    return LookupRewrite(GetTypeForAssociatedConstant(assoc_const), interface,
-                         member);
+    if (!assoc_const->constant().has_static_type()) {
+      // We looked for a rewrite before we finished type-checking the
+      // associated constant. This can happens when a use of `.Self` occurs
+      // within the constant's type. Just say there are no rewrites yet.
+      return std::nullopt;
+    }
+    // The following is an expanded version of
+    //  return LookupRewrite(GetTypeForAssociatedConstant(assoc_const),
+    //                       interface, member);
+    // where we substitute as little as possible to try to avoid infinite
+    // recursion.
+    if (auto* constraint =
+            dyn_cast<ConstraintType>(&assoc_const->constant().static_type())) {
+      for (auto rewrite : constraint->rewrite_constraints()) {
+        if (&rewrite.constant->constant() != &assoc_const->constant()) {
+          continue;
+        }
+        Bindings bindings = assoc_const->interface().bindings();
+        bindings.Add(assoc_const->interface().declaration().self(),
+                     &assoc_const->base(), &assoc_const->witness());
+        if (ValueEqual(interface,
+                       Substitute(bindings, &rewrite.constant->interface()),
+                       std::nullopt)) {
+          RewriteConstraint substituted = {
+              // Not substituted, but our callers don't need it.
+              .constant = rewrite.constant,
+              .unconverted_replacement =
+                  Substitute(bindings, rewrite.unconverted_replacement),
+              .unconverted_replacement_type =
+                  Substitute(bindings, rewrite.unconverted_replacement_type),
+              .converted_replacement =
+                  Substitute(bindings, rewrite.converted_replacement)};
+          return arena_->New<RewriteConstraint>(substituted);
+        }
+      }
+    }
   }
 
   return std::nullopt;
@@ -3155,9 +3208,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
 
       // Keep track of the builder so that we can look up its rewrites while
       // processing later constraints.
-      partial_where_expressions_.push_back(&builder);
-      auto pop_partial_where =
-          llvm::make_scope_exit([&] { partial_where_expressions_.pop_back(); });
+      partial_constraint_types_.push_back(&builder);
+      auto pop_partial_constraint_type =
+          llvm::make_scope_exit([&] { partial_constraint_types_.pop_back(); });
 
       // Note, we don't want to call `TypeCheckPattern` here. Most of the setup
       // for the self binding is instead done by the `ConstraintTypeBuilder`.
@@ -3172,10 +3225,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                   base_type));
 
       // Start with the given constraint.
-      CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
-          *this, where.source_loc(), base, builder.GetSelfType(),
-          builder.GetSelfWitness(), Bindings(),
-          /*add_lookup_contexts=*/true));
+      builder.AddAndSubstitute(*this, base, builder.GetSelfType(),
+                               builder.GetSelfWitness(), Bindings(),
+                               /*add_lookup_contexts=*/true);
 
       // Type-check and apply the `where` clauses.
       for (Nonnull<WhereClause*> clause : where.clauses()) {
@@ -3202,10 +3254,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                         "expression after `is`", constraint));
             // Transform `where .B is (C where .D is E)` into `where .B is C
             // and .B.D is E` then add all the resulting constraints.
-            CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
-                *this, is_clause.source_loc(), constraint_type, type,
-                builder.GetSelfWitness(), Bindings(),
-                /*add_lookup_contexts=*/false));
+            builder.AddAndSubstitute(*this, constraint_type, type,
+                                     builder.GetSelfWitness(), Bindings(),
+                                     /*add_lookup_contexts=*/false);
             break;
           }
           case WhereClauseKind::EqualsWhereClause: {
@@ -3253,10 +3304,12 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> replacement_value,
                                     InterpExp(&rewrite_clause.replacement(),
                                               arena_, trace_stream_));
+            Nonnull<const Value*> replacement_type =
+                &rewrite_clause.replacement().static_type();
+
             auto* replacement_literal = arena_->New<ValueLiteral>(
                 rewrite_clause.source_loc(), replacement_value,
-                &rewrite_clause.replacement().static_type(),
-                ValueCategory::Let);
+                replacement_type, ValueCategory::Let);
 
             // Convert the replacement value to the type of the associated
             // constant and find the converted value. This is the value that
@@ -3271,13 +3324,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 InterpExp(converted_expression, arena_, trace_stream_));
 
             // Add the rewrite constraint.
-            CARBON_RETURN_IF_ERROR(builder.AddRewriteConstraint(
-                rewrite_clause.source_loc(),
+            builder.AddRewriteConstraint(
                 {.constant = constant_value,
                  .unconverted_replacement = replacement_value,
-                 .unconverted_replacement_type =
-                     &replacement_literal->static_type(),
-                 .converted_replacement = converted_value}));
+                 .unconverted_replacement_type = replacement_type,
+                 .converted_replacement = converted_value});
             break;
           }
         }
@@ -3479,53 +3530,16 @@ auto TypeChecker::TypeCheckPattern(
     }
     case PatternKind::GenericBinding: {
       auto& binding = cast<GenericBinding>(*p);
-
-      // The binding can be referred to in its own type via `.Self`, so set up
-      // its symbolic identity before we type-check and interpret the type.
-      auto* val = arena_->New<VariableType>(&binding);
-      binding.set_symbolic_identity(val);
-      SetValue(&binding, val);
-
-      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
-                              TypeCheckTypeExp(&binding.type(), impl_scope));
       if (expected) {
         return ProgramError(binding.type().source_loc())
                << "Generic binding may not occur in pattern with expected "
                   "type: "
                << binding;
       }
-      if (binding.named_as_type_via_dot_self() && !IsTypeOfType(type)) {
-        return ProgramError(binding.type().source_loc())
-               << "`.Self` used in type of non-type binding `" << binding.name()
-               << "`";
-      }
 
-      // Create an impl binding if we have a constraint.
-      if (isa<ConstraintType, InterfaceType>(type)) {
-        CARBON_ASSIGN_OR_RETURN(
-            Nonnull<const ConstraintType*> constraint,
-            ConvertToConstraintType(binding.source_loc(), "generic binding",
-                                    type));
-        Nonnull<ImplBinding*> impl_binding = arena_->New<ImplBinding>(
-            binding.source_loc(), &binding, std::nullopt);
-        auto* witness = arena_->New<BindingWitness>(impl_binding);
-        impl_binding->set_symbolic_identity(witness);
-        binding.set_impl_binding(impl_binding);
-
-        // Substitute the VariableType as `.Self` of the constraint to form the
-        // resolved type of the binding. Eg, `T:! X where .Self is Y` resolves
-        // to `T:! <constraint T is X and T is Y>`.
-        ConstraintTypeBuilder builder(arena_, &binding, impl_binding);
-        CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
-            *this, binding.source_loc(), constraint, val, witness, Bindings(),
-            /*add_lookup_contexts=*/true));
-        type = std::move(builder).Build();
-
-        BringImplIntoScope(impl_binding, impl_scope);
-      }
-
-      binding.set_static_type(type);
-      return Success();
+      auto* val = arena_->New<VariableType>(&binding);
+      return TypeCheckGenericBinding(binding, "generic binding", val,
+                                     impl_scope);
     }
     case PatternKind::TuplePattern: {
       auto& tuple = cast<TuplePattern>(*p);
@@ -3642,6 +3656,60 @@ auto TypeChecker::TypeCheckPattern(
       SetValue(&addr_pattern, pattern_value);
       return Success();
   }
+}
+
+auto TypeChecker::TypeCheckGenericBinding(GenericBinding& binding,
+                                          std::string_view context,
+                                          Nonnull<const Value*> symbolic_value,
+                                          ImplScope& impl_scope)
+    -> ErrorOr<Success> {
+  // The binding can be referred to in its own type via `.Self`, so set up
+  // its symbolic identity before we type-check and interpret the type.
+  binding.set_symbolic_identity(symbolic_value);
+  SetValue(&binding, symbolic_value);
+
+  CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
+                          TypeCheckTypeExp(&binding.type(), impl_scope));
+  if (binding.named_as_type_via_dot_self() && !IsTypeOfType(type)) {
+    return ProgramError(binding.type().source_loc())
+           << "`.Self` used in type of non-type " << context << " `"
+           << binding.name() << "`";
+  }
+
+  // Create an impl binding if we have a constraint.
+  if (isa<ConstraintType, InterfaceType>(type)) {
+    CARBON_ASSIGN_OR_RETURN(
+        Nonnull<const ConstraintType*> constraint,
+        ConvertToConstraintType(binding.source_loc(), context, type));
+    Nonnull<ImplBinding*> impl_binding =
+        arena_->New<ImplBinding>(binding.source_loc(), &binding, std::nullopt);
+    auto* witness = arena_->New<BindingWitness>(impl_binding);
+    impl_binding->set_symbolic_identity(witness);
+    binding.set_impl_binding(impl_binding);
+
+    // Substitute the VariableType as `.Self` of the constraint to form the
+    // resolved type of the binding. Eg, `T:! X where .Self is Y` resolves
+    // to `T:! <constraint T is X and T is Y>`.
+    auto* binding_self_type = arena_->New<VariableType>(&binding);
+    ConstraintTypeBuilder builder(arena_, &binding, impl_binding);
+    builder.AddAndSubstitute(*this, constraint, binding_self_type, witness,
+                             Bindings(), /*add_lookup_contexts=*/true);
+    if (trace_stream_) {
+      **trace_stream_ << "resolving constraint type for " << binding << " from "
+                      << *constraint << "\n";
+    }
+    CARBON_RETURN_IF_ERROR(
+        builder.Resolve(*this, binding.type().source_loc(), impl_scope));
+    type = std::move(builder).Build();
+    if (trace_stream_) {
+      **trace_stream_ << "resolved constraint type is " << *type << "\n";
+    }
+
+    BringImplIntoScope(impl_binding, impl_scope);
+  }
+
+  binding.set_static_type(type);
+  return Success();
 }
 
 auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
@@ -4392,10 +4460,9 @@ auto TypeChecker::DeclareInterfaceDeclaration(
             Nonnull<const ConstraintType*> constraint_type,
             ConvertToConstraintType(m->source_loc(), "extends declaration",
                                     base));
-        CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
-            *this, m->source_loc(), constraint_type, builder.GetSelfType(),
-            builder.GetSelfWitness(), Bindings(),
-            /*add_lookup_contexts=*/true));
+        builder.AddAndSubstitute(*this, constraint_type, builder.GetSelfType(),
+                                 builder.GetSelfWitness(), Bindings(),
+                                 /*add_lookup_contexts=*/true);
         break;
       }
 
@@ -4412,10 +4479,9 @@ auto TypeChecker::DeclareInterfaceDeclaration(
             Nonnull<const ConstraintType*> constraint_type,
             ConvertToConstraintType(m->source_loc(), "impl as declaration",
                                     constraint));
-        CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
-            *this, m->source_loc(), constraint_type, impl_type,
-            builder.GetSelfWitness(), Bindings(),
-            /*add_lookup_contexts=*/false));
+        builder.AddAndSubstitute(*this, constraint_type, impl_type,
+                                 builder.GetSelfWitness(), Bindings(),
+                                 /*add_lookup_contexts=*/false);
         break;
       }
 
@@ -4423,23 +4489,19 @@ auto TypeChecker::DeclareInterfaceDeclaration(
         auto* assoc = cast<AssociatedConstantDeclaration>(m);
         auto* assoc_value = arena_->New<AssociatedConstant>(
             &iface_decl->self()->value(), iface_type, assoc, impl_witness);
-        assoc->binding().set_symbolic_identity(assoc_value);
+        CARBON_RETURN_IF_ERROR(TypeCheckGenericBinding(
+            assoc->binding(), "associated constant", assoc_value, iface_scope));
+        Nonnull<const Value*> constraint = &assoc->binding().static_type();
+        assoc->set_static_type(constraint);
 
         // The type specified for the associated constant becomes a
         // constraint for the interface: `let X:! Interface` adds a `Self.X
         // is Interface` constraint that `impl`s must satisfy and users of
         // the interface can rely on.
-        Nonnull<const Value*> constraint = &assoc->static_type();
-        if (isa<ConstraintType, InterfaceType>(constraint)) {
-          CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const ConstraintType*> constraint_type,
-              ConvertToConstraintType(assoc->source_loc(),
-                                      "type of associated constant",
-                                      constraint));
-          CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
-              *this, assoc->source_loc(), constraint_type, assoc_value,
-              builder.GetSelfWitness(), Bindings(),
-              /*add_lookup_contexts=*/false));
+        if (auto* constraint_type = dyn_cast<ConstraintType>(constraint)) {
+          builder.AddAndSubstitute(*this, constraint_type, assoc_value,
+                                   builder.GetSelfWitness(), Bindings(),
+                                   /*add_lookup_contexts=*/false);
         }
         break;
       }
@@ -4658,12 +4720,32 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   // this `impl` implements.
   Nonnull<const ConstraintType*> constraint_type;
   {
-    ConstraintTypeBuilder builder(arena_, impl_decl->source_loc());
-    CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
-        *this, impl_decl->source_loc(), implemented_constraint, impl_type_value,
-        builder.GetSelfWitness(), Bindings(),
-        /*add_lookup_contexts=*/true));
+    // TODO: Combine this with the SelfDeclaration.
+    auto* self_binding = arena_->New<GenericBinding>(self->source_loc(), "Self",
+                                                     impl_decl->impl_type());
+    self_binding->set_symbolic_identity(impl_type_value);
+    self_binding->set_value(impl_type_value);
+    auto* impl_binding = arena_->New<ImplBinding>(self_binding->source_loc(),
+                                                  self_binding, std::nullopt);
+    impl_binding->set_symbolic_identity(
+        arena_->New<BindingWitness>(impl_binding));
+    self_binding->set_impl_binding(impl_binding);
+
+    ConstraintTypeBuilder builder(arena_, self_binding, impl_binding);
+    builder.AddAndSubstitute(*this, implemented_constraint, impl_type_value,
+                             builder.GetSelfWitness(), Bindings(),
+                             /*add_lookup_contexts=*/true);
+    if (trace_stream_) {
+      **trace_stream_ << "resolving impl constraint type for " << *impl_decl
+                      << " from " << *implemented_constraint << "\n";
+    }
+    CARBON_RETURN_IF_ERROR(builder.Resolve(
+        *this, impl_decl->interface().source_loc(), impl_scope));
     constraint_type = std::move(builder).Build();
+    if (trace_stream_) {
+      **trace_stream_ << "resolving impl constraint type as "
+                      << *constraint_type << "\n";
+    }
     impl_decl->set_constraint_type(constraint_type);
   }
 
@@ -4990,16 +5072,12 @@ auto TypeChecker::TypeCheckDeclaration(
       }
       break;
     }
-    case DeclarationKind::InterfaceExtendsDeclaration: {
+    case DeclarationKind::InterfaceExtendsDeclaration:
+    case DeclarationKind::InterfaceImplDeclaration:
+    case DeclarationKind::AssociatedConstantDeclaration: {
       // Checked in DeclareInterfaceDeclaration.
       break;
     }
-    case DeclarationKind::InterfaceImplDeclaration: {
-      // Checked in DeclareInterfaceDeclaration.
-      break;
-    }
-    case DeclarationKind::AssociatedConstantDeclaration:
-      break;
     case DeclarationKind::SelfDeclaration: {
       CARBON_FATAL() << "Unreachable TypeChecker `Self` declaration";
     }
@@ -5088,24 +5166,10 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       break;
     }
 
-    case DeclarationKind::InterfaceExtendsDeclaration: {
-      // The semantic effects are handled by DeclareInterfaceDeclaration.
-      break;
-    }
-
-    case DeclarationKind::InterfaceImplDeclaration: {
-      // The semantic effects are handled by DeclareInterfaceDeclaration.
-      break;
-    }
-
+    case DeclarationKind::InterfaceExtendsDeclaration:
+    case DeclarationKind::InterfaceImplDeclaration:
     case DeclarationKind::AssociatedConstantDeclaration: {
-      auto& let = cast<AssociatedConstantDeclaration>(*d);
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> type,
-          TypeCheckTypeExp(&let.binding().type(), *scope_info.innermost_scope));
-      let.binding().set_static_type(type);
-      let.set_static_type(type);
-      // The symbolic identity is set by DeclareInterfaceDeclaration.
+      // The semantic effects are handled by DeclareInterfaceDeclaration.
       break;
     }
 
