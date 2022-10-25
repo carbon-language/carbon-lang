@@ -4,6 +4,8 @@
 
 #include "toolchain/semantics/semantics_node.h"
 
+#include "toolchain/semantics/semantics_builtin_kind.h"
+
 namespace Carbon {
 
 static auto PrintArgs(llvm::raw_ostream& /*out*/,
@@ -15,6 +17,10 @@ static auto PrintArgs(llvm::raw_ostream& out, SemanticsNodeId one_node) {
 
 static auto PrintArgs(llvm::raw_ostream& out, SemanticsTwoNodeIds two_nodes) {
   out << two_nodes.nodes[0] << ", " << two_nodes.nodes[1];
+}
+
+static auto PrintArgs(llvm::raw_ostream& out, SemanticsBuiltinKind builtin) {
+  out << builtin;
 }
 
 static auto PrintArgs(llvm::raw_ostream& out,

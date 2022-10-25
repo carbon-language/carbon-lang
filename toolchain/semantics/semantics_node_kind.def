@@ -19,6 +19,9 @@ CARBON_SEMANTICS_NODE_KIND(Invalid, no_args)
 // Two nodes: lhs and rhs.
 CARBON_SEMANTICS_NODE_KIND(BinaryOperatorAdd, two_nodes)
 
+// A builtin.
+CARBON_SEMANTICS_NODE_KIND(Builtin, builtin)
+
 // The code block.
 CARBON_SEMANTICS_NODE_KIND(CodeBlock, node_block)
 

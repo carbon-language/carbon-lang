@@ -19,6 +19,8 @@ namespace Carbon {
 // Provides semantic analysis on a ParseTree.
 class SemanticsIR {
  public:
+  SemanticsIR() { BuildBuiltins(); }
+
   // Adds the IR for the provided ParseTree.
   auto Build(const TokenizedBuffer& tokens, const ParseTree& parse_tree)
       -> void;
@@ -28,6 +30,8 @@ class SemanticsIR {
 
  private:
   friend class SemanticsParseTreeHandler;
+
+  auto BuildBuiltins() -> void;
 
   auto AddIdentifier(llvm::StringRef identifier) -> SemanticsIdentifierId {
     SemanticsIdentifierId id(identifiers_.size());

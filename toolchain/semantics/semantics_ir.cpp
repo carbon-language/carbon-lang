@@ -12,6 +12,8 @@
 
 namespace Carbon {
 
+auto SemanticsIR::BuildBuiltins() -> void {}
+
 auto SemanticsIR::Build(const TokenizedBuffer& tokens,
                         const ParseTree& parse_tree) -> void {
   SemanticsParseTreeHandler(tokens, parse_tree, *this).Build();

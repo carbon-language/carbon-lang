@@ -163,7 +163,6 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   }
 
   SemanticsIR semantics_ir;
-  semantics_ir.BuildBuiltins();
   semantics_ir.Build(tokenized_source, parse_tree);
   if (dump_mode == DumpMode::SemanticsIR) {
     consumer.Flush();

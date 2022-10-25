@@ -8,6 +8,7 @@
 #include <cstdint>
 
 #include "common/ostream.h"
+#include "toolchain/semantics/semantics_builtin_kind.h"
 #include "toolchain/semantics/semantics_node_kind.h"
 
 namespace Carbon {
@@ -70,6 +71,7 @@ union SemanticsNodeArgs {
   explicit SemanticsNodeArgs(SemanticsTwoNodeIds two_nodes)
       : two_nodes(two_nodes) {}
 
+  explicit SemanticsNodeArgs(SemanticsBuiltinKind builtin) : builtin(builtin) {}
   explicit SemanticsNodeArgs(SemanticsIdentifierId identifier)
       : identifier(identifier) {}
   explicit SemanticsNodeArgs(SemanticsIntegerLiteralId integer_literal)
@@ -83,6 +85,7 @@ union SemanticsNodeArgs {
   SemanticsNodeId one_node;
   SemanticsTwoNodeIds two_nodes;
 
+  SemanticsBuiltinKind builtin;
   SemanticsIdentifierId identifier;
   SemanticsIntegerLiteralId integer_literal;
   SemanticsNodeBlockId node_block;
@@ -118,6 +121,11 @@ class SemanticsNode {
         SemanticsNodeArgs(SemanticsTwoNodeIds{node1, node2}));         \
   }
 
+#define CARBON_SEMANTICS_MAKE_builtin(Name)                             \
+  static auto Make##Name(SemanticsBuiltinKind builtin)->SemanticsNode { \
+    return SemanticsNode(SemanticsNodeKind::Name(),                     \
+                         SemanticsNodeArgs(builtin));                   \
+  }
 #define CARBON_SEMANTICS_MAKE_identifier(Name)                              \
   static auto Make##Name(SemanticsIdentifierId identifier)->SemanticsNode { \
     return SemanticsNode(SemanticsNodeKind::Name(),                         \
@@ -151,9 +159,11 @@ class SemanticsNode {
 #undef CARBON_SEMANTICS_MAKE_one_node
 #undef CARBON_SEMANTICS_MAKE_two_nodes
 
+#undef CARBON_SEMANTICS_MAKE_builtin
 #undef CARBON_SEMANTICS_MAKE_identifier
 #undef CARBON_SEMANTICS_MAKE_integer_literal
 #undef CARBON_SEMANTICS_MAKE_node_block
+#undef CARBON_SEMANTICS_MAKE_node_and_node_block
 
   SemanticsNode() : kind_(SemanticsNodeKind::Invalid()) {}
 
@@ -166,7 +176,7 @@ class SemanticsNode {
       : kind_(kind), one_of_args_(one_of_args) {}
 
   SemanticsNodeKind kind_;
-
+  SemanticsNodeId type_;
   SemanticsNodeArgs one_of_args_;
 };
 
