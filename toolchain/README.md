@@ -124,8 +124,7 @@ keeping the code simple seems better until the language design stabilizes.
 ## Semantics
 
 The [SemanticsIR](semantics/semantics_ir.h) is the output of semantic
-processing. It's currently built using
-[a factory](semantics/semantics_ir_factory.h).
+processing.
 
 The intent is that a `SemanticsIR` looks closer to a series of instructions than
 a tree. This is in order to better align with the LLVM IR structure which will

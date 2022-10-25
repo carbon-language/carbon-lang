@@ -19,14 +19,13 @@ namespace Carbon {
 // Provides semantic analysis on a ParseTree.
 class SemanticsIR {
  public:
+  SemanticsIR(const TokenizedBuffer& tokens, const ParseTree& parse_tree);
+
   // Prints the full IR.
   auto Print(llvm::raw_ostream& out) const -> void;
 
  private:
-  friend class SemanticsIRFactory;
-
-  explicit SemanticsIR(const ParseTree& parse_tree)
-      : parse_tree_(&parse_tree) {}
+  friend class SemanticsParseTreeHandler;
 
   auto AddIdentifier(llvm::StringRef identifier) -> SemanticsIdentifierId {
     SemanticsIdentifierId id(identifiers_.size());
@@ -50,8 +49,6 @@ class SemanticsIR {
   llvm::SmallVector<llvm::StringRef> identifiers_;
   llvm::SmallVector<llvm::APInt> integer_literals_;
   llvm::SmallVector<SemanticsNode> nodes_;
-
-  const ParseTree* parse_tree_;
 };
 
 }  // namespace Carbon
