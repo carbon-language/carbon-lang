@@ -18,16 +18,10 @@ interface Z {
   // We reject this even though it is the responsibility of the `impl as Z` to
   // provide a type `N` such that `i32 is X(N)`. We might want to treat this as
   // an implied constraint and allow this in the future.
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_implied_constraints.carbon:[[@LINE+1]]: could not find implementation of interface X(T = N) for i32
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_implied_constraints.carbon:[[@LINE+1]]: could not find implementation of interface X(T = (Self).(Z.N)) for i32
   let N:! Y(.Self) where .M = i32;
 }
 
-impl i32 as X(i32) {}
-impl i32 as Y(i32) where .M = i32 {}
-impl i32 as Z where .N = i32 {}
-
-fn F[A:! Z](a: A) -> A { return a; }
-
 fn Main() -> i32 {
-  return F(0);
+  return 0;
 }
