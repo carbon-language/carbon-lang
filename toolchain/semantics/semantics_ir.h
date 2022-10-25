@@ -45,11 +45,17 @@ class SemanticsIR {
   }
 
   // Starts a new node block.
-  auto AddNodeBlock()
-      -> std::pair<SemanticsNodeBlockId, llvm::SmallVector<SemanticsNode>*> {
+  auto AddNodeBlock() -> SemanticsNodeBlockId {
     SemanticsNodeBlockId id(node_blocks_.size());
     node_blocks_.resize(node_blocks_.size() + 1);
-    return std::make_pair(id, &node_blocks_.back());
+    return id;
+  }
+
+  auto AddNode(SemanticsNodeBlockId block_id, SemanticsNode node) {
+    auto& block = node_blocks_[block_id.id];
+    SemanticsNodeId node_id(block.size());
+    block.push_back(node);
+    return node_id;
   }
 
   llvm::SmallVector<llvm::StringRef> identifiers_;

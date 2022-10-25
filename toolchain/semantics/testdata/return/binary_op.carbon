@@ -15,6 +15,7 @@
 // CHECK:STDOUT:   block0 = {
 // CHECK:STDOUT:     node0 = Identifier(ident0);
 // CHECK:STDOUT:     node1 = FunctionDeclaration(node0);
+// CHECK:STDOUT:     node2 = FunctionDefinition(node1, block1);
 // CHECK:STDOUT:   },
 // CHECK:STDOUT:   block1 = {
 // CHECK:STDOUT:     node0 = IntegerLiteral(int0);

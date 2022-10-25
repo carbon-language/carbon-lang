@@ -13,7 +13,7 @@ namespace Carbon {
 
 auto SemanticsParseTreeHandler::Build() -> void {
   // Add a block for the ParseTree.
-  node_block_stack_.push_back(semantics_->AddNodeBlock().second);
+  node_block_stack_.push_back(semantics_->AddNodeBlock());
 
   auto range = parse_tree_->postorder();
   for (auto it = range.begin();; ++it) {
@@ -71,11 +71,8 @@ auto SemanticsParseTreeHandler::Build() -> void {
   llvm_unreachable("Should always end at FileEnd");
 }
 
-auto SemanticsParseTreeHandler::AddNodeToBlock(SemanticsNode node)
-    -> SemanticsNodeId {
-  SemanticsNodeId node_id(node_block_stack_.back()->size());
-  node_block_stack_.back()->push_back(node);
-  return node_id;
+auto SemanticsParseTreeHandler::AddNode(SemanticsNode node) -> SemanticsNodeId {
+  return semantics_->AddNode(node_block_stack_.back(), node);
 }
 
 auto SemanticsParseTreeHandler::Push(ParseTree::Node parse_node) -> void {
@@ -84,7 +81,7 @@ auto SemanticsParseTreeHandler::Push(ParseTree::Node parse_node) -> void {
 
 auto SemanticsParseTreeHandler::Push(ParseTree::Node parse_node,
                                      SemanticsNode node) -> void {
-  auto node_id = AddNodeToBlock(node);
+  auto node_id = AddNode(node);
   node_stack_.push_back({parse_node, node_id});
 }
 
@@ -140,11 +137,10 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinitionStart(
   auto name_node_id = PopWithResult(ParseNodeKind::DeclaredName());
   Pop(ParseNodeKind::FunctionIntroducer());
 
-  auto decl_id =
-      AddNodeToBlock(SemanticsNode::MakeFunctionDeclaration(name_node_id));
-  auto [block_id, block] = semantics_->AddNodeBlock();
-  AddNodeToBlock(SemanticsNode::MakeFunctionDefinition(decl_id, block_id));
-  node_block_stack_.push_back(block);
+  auto decl_id = AddNode(SemanticsNode::MakeFunctionDeclaration(name_node_id));
+  auto block_id = semantics_->AddNodeBlock();
+  AddNode(SemanticsNode::MakeFunctionDefinition(decl_id, block_id));
+  node_block_stack_.push_back(block_id);
   Push(parse_node);
 }
 
