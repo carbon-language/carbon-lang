@@ -2790,14 +2790,14 @@ values for the `ElementType` member of the interface using a `where` clause:
 
 ```carbon
 class IntStack {
-  impl as StackInterface where .ElementType == i32 {
+  impl as StackInterface where .ElementType = i32 {
     fn Push[addr me: Self*](value: i32);
     // ...
   }
 }
 
 class FruitStack {
-  impl as StackInterface where .ElementType == Fruit {
+  impl as StackInterface where .ElementType = Fruit {
     fn Push[addr me: Self*](value: Fruit);
     // ...
   }
@@ -3030,7 +3030,7 @@ to type `T` and the second argument to type `U`, add the `like` keyword to both
 types in the `impl` declaration, as in:
 
 ```carbon
-external impl like T as AddWith(like U) where .Result == V {
+external impl like T as AddWith(like U) where .Result = V {
   // `Self` is `T` here
   fn Op[me: Self](other: U) -> V { ... }
 }
@@ -3136,7 +3136,7 @@ The common type is specified by implementing the `CommonTypeWith` interface:
 
 ```carbon
 // Common type of `A` and `B` is `C`.
-impl A as CommonTypeWith(B) where .Result == C { }
+impl A as CommonTypeWith(B) where .Result = C { }
 ```
 
 The common type is required to be a type that both types have an
@@ -3192,7 +3192,7 @@ available to C++ and a subset of C++ APIs will be available to Carbon.
 
 > References:
 >
-> -   [Bidirectional interoperability with C/C++](interoperability/README.md)
+> -   [Bidirectional interoperability with C and C++](interoperability/README.md)
 > -   Proposal
 >     [#175: C++ interoperability goals](https://github.com/carbon-language/carbon-lang/pull/175)
 

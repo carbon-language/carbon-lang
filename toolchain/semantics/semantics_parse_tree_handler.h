@@ -72,6 +72,8 @@ class SemanticsParseTreeHandler {
   // The stack during Build. Will contain file-level parse nodes on return.
   llvm::SmallVector<TraversalStackEntry> node_stack_;
 
+  // The stack of node blocks during build. Only updated on ParseTree nodes that
+  // affect the stack.
   llvm::SmallVector<llvm::SmallVector<SemanticsNode>*> node_block_stack_;
 };
 

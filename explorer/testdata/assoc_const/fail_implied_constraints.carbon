@@ -22,12 +22,6 @@ interface Z {
   let N:! Y(.Self) where .M = i32;
 }
 
-impl i32 as X(i32) {}
-impl i32 as Y(i32) where .M = i32 {}
-impl i32 as Z where .N = i32 {}
-
-fn F[A:! Z](a: A) -> A { return a; }
-
 fn Main() -> i32 {
-  return F(0);
+  return 0;
 }

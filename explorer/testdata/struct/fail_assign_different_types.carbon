@@ -8,7 +8,9 @@
 
 package ExplorerTest api;
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/fail_infinite_self_ptr.carbon:[[@LINE+1]]: `.Self` used in type of non-type generic binding `T`
-fn F[T:! .Self*]() {}
-
-fn Main() -> i32 { return 0; }
+fn Main() -> i32 {
+  var p: auto = {.x = 0, .y = 0};
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/struct/fail_assign_different_types.carbon:[[@LINE+1]]: type error in assignment: '{.y: i32}' is not implicitly convertible to '{.x: i32, .y: i32}'
+  p = {.y = 0};
+  return 0;
+}

@@ -77,8 +77,7 @@ static auto AddExposedNames(const Declaration& declaration,
     case DeclarationKind::AssociatedConstantDeclaration: {
       const auto& let = cast<AssociatedConstantDeclaration>(declaration);
       if (let.binding().name() != AnonymousName) {
-        CARBON_RETURN_IF_ERROR(
-            enclosing_scope.Add(let.binding().name(), &let.binding()));
+        CARBON_RETURN_IF_ERROR(enclosing_scope.Add(let.binding().name(), &let));
       }
       break;
     }
@@ -239,6 +238,14 @@ static auto ResolveNames(Expression& expression,
       auto& where = cast<WhereExpression>(expression);
       CARBON_RETURN_IF_ERROR(
           ResolveNames(where.self_binding().type(), enclosing_scope));
+      // If we're already in a `.Self` context, remember it so that we can
+      // reuse its value for the inner `.Self`.
+      if (auto enclosing_dot_self =
+              enclosing_scope.Resolve(".Self", where.source_loc());
+          enclosing_dot_self.ok()) {
+        where.set_enclosing_dot_self(
+            &cast<GenericBinding>(enclosing_dot_self->base()));
+      }
       // Introduce `.Self` into scope on the right of the `where` keyword.
       StaticScope where_scope;
       where_scope.AddParent(&enclosing_scope);
@@ -658,7 +665,9 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
     }
     case DeclarationKind::AssociatedConstantDeclaration: {
       auto& let = cast<AssociatedConstantDeclaration>(declaration);
-      CARBON_RETURN_IF_ERROR(ResolveNames(let.binding(), enclosing_scope));
+      StaticScope constant_scope;
+      constant_scope.AddParent(&enclosing_scope);
+      CARBON_RETURN_IF_ERROR(ResolveNames(let.binding(), constant_scope));
       break;
     }
 

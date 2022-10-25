@@ -161,6 +161,13 @@ class TypeChecker {
                         ValueCategory enclosing_value_category)
       -> ErrorOr<Success>;
 
+  // Type checks a generic binding. `symbolic_value` is the symbolic name by
+  // which this generic binding is known in its scope. `impl_scope` is updated
+  // with the impl implied by the binding, if any.
+  auto TypeCheckGenericBinding(GenericBinding& binding,
+                               std::string_view context, ImplScope& impl_scope)
+      -> ErrorOr<Success>;
+
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `s`.
   //
   // REQUIRES: f.return_term().has_static_type() || f.return_term().is_auto(),
@@ -479,9 +486,9 @@ class TypeChecker {
   // symbolic witness into an impl witness during substitution.
   std::optional<const ImplScope*> top_level_impl_scope_;
 
-  // `where` expressions that are currently being built. These may have
+  // Constraint types that are currently being resolved. These may have
   // rewrites that are not yet visible in any type.
-  std::vector<ConstraintTypeBuilder*> partial_where_expressions_;
+  std::vector<ConstraintTypeBuilder*> partial_constraint_types_;
 };
 
 }  // namespace Carbon
