@@ -154,6 +154,7 @@ class SemanticsNode {
 #undef CARBON_SEMANTICS_MAKE_identifier
 #undef CARBON_SEMANTICS_MAKE_integer_literal
 #undef CARBON_SEMANTICS_MAKE_node_block
+#undef CARBON_SEMANTICS_MAKE_node_and_node_block
 
   SemanticsNode() : kind_(SemanticsNodeKind::Invalid()) {}
 
