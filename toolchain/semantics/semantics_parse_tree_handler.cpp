@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/semantics/semantics_file_builder.h"
+#include "toolchain/semantics/semantics_parse_tree_handler.h"
 
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
@@ -11,7 +11,7 @@
 
 namespace Carbon {
 
-auto SemanticsFileBuilder::Build() -> void {
+auto SemanticsParseTreeHandler::Build() -> void {
   auto range = parse_tree_->postorder();
   for (auto it = range.begin();; ++it) {
     auto parse_node = *it;
@@ -67,15 +67,15 @@ auto SemanticsFileBuilder::Build() -> void {
   llvm_unreachable("Should always end at FileEnd");
 }
 
-auto SemanticsFileBuilder::HandleDeclaredName(ParseTree::Node parse_node)
+auto SemanticsParseTreeHandler::HandleDeclaredName(ParseTree::Node parse_node)
     -> void {
   auto text = parse_tree_->GetNodeText(parse_node);
   auto identifier_id = semantics_->AddIdentifier(text);
   Push(parse_node, SemanticsNode::MakeIdentifier(identifier_id));
 }
 
-auto SemanticsFileBuilder::HandleFunctionDefinition(ParseTree::Node parse_node)
-    -> void {
+auto SemanticsParseTreeHandler::HandleFunctionDefinition(
+    ParseTree::Node parse_node) -> void {
   // Merges code block children up under the FunctionDefinitionStart.
   while (parse_tree_->node_kind(node_stack_.back().parse_node) !=
          ParseNodeKind::FunctionDefinitionStart()) {
@@ -86,7 +86,7 @@ auto SemanticsFileBuilder::HandleFunctionDefinition(ParseTree::Node parse_node)
   Push(parse_node);
 }
 
-auto SemanticsFileBuilder::HandleFunctionDefinitionStart(
+auto SemanticsParseTreeHandler::HandleFunctionDefinitionStart(
     ParseTree::Node parse_node) -> void {
   Pop(ParseNodeKind::ParameterList());
   auto name_node_id = PopWithResult(ParseNodeKind::DeclaredName());
@@ -97,7 +97,7 @@ auto SemanticsFileBuilder::HandleFunctionDefinitionStart(
   Push(parse_node);
 }
 
-auto SemanticsFileBuilder::HandleInfixOperator(ParseTree::Node parse_node)
+auto SemanticsParseTreeHandler::HandleInfixOperator(ParseTree::Node parse_node)
     -> void {
   auto rhs_id = PopWithResult();
   auto lhs_id = PopWithResult();
@@ -113,7 +113,8 @@ auto SemanticsFileBuilder::HandleInfixOperator(ParseTree::Node parse_node)
   }
 }
 
-auto SemanticsFileBuilder::HandleLiteral(ParseTree::Node parse_node) -> void {
+auto SemanticsParseTreeHandler::HandleLiteral(ParseTree::Node parse_node)
+    -> void {
   auto token = parse_tree_->node_token(parse_node);
   switch (auto token_kind = tokens_->GetKind(token)) {
     case TokenKind::IntegerLiteral(): {
@@ -127,7 +128,7 @@ auto SemanticsFileBuilder::HandleLiteral(ParseTree::Node parse_node) -> void {
   }
 }
 
-auto SemanticsFileBuilder::HandleParameterList(ParseTree::Node parse_node)
+auto SemanticsParseTreeHandler::HandleParameterList(ParseTree::Node parse_node)
     -> void {
   // TODO: This should transform into a usable parameter list. For now
   // it's unused and only stored so that node counts match.
@@ -137,8 +138,8 @@ auto SemanticsFileBuilder::HandleParameterList(ParseTree::Node parse_node)
   Push(parse_node);
 }
 
-auto SemanticsFileBuilder::HandleReturnStatement(ParseTree::Node parse_node)
-    -> void {
+auto SemanticsParseTreeHandler::HandleReturnStatement(
+    ParseTree::Node parse_node) -> void {
   Pop(ParseNodeKind::StatementEnd());
 
   // TODO: Restructure ReturnStatement so that we can do this without

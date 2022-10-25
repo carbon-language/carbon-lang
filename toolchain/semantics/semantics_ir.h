@@ -25,7 +25,7 @@ class SemanticsIR {
   auto Print(llvm::raw_ostream& out) const -> void;
 
  private:
-  friend class SemanticsFileBuilder;
+  friend class SemanticsParseTreeHandler;
 
   auto AddIdentifier(llvm::StringRef identifier) -> SemanticsIdentifierId {
     SemanticsIdentifierId id(identifiers_.size());

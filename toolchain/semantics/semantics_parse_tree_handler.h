@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_FILE_BUILDER_H_
-#define CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_FILE_BUILDER_H_
+#ifndef CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_PARSE_TREE_HANDLER_H_
+#define CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_PARSE_TREE_HANDLER_H_
 
 #include "common/check.h"
 #include "toolchain/parser/parse_tree.h"
@@ -12,11 +12,11 @@
 namespace Carbon {
 
 // The main semantic analysis entry.
-class SemanticsFileBuilder {
+class SemanticsParseTreeHandler {
  public:
-  explicit SemanticsFileBuilder(const TokenizedBuffer& tokens,
-                                const ParseTree& parse_tree,
-                                SemanticsIR& semantics)
+  explicit SemanticsParseTreeHandler(const TokenizedBuffer& tokens,
+                                     const ParseTree& parse_tree,
+                                     SemanticsIR& semantics)
       : tokens_(&tokens), parse_tree_(&parse_tree), semantics_(&semantics) {}
 
   auto Build() -> void;
@@ -86,4 +86,4 @@ class SemanticsFileBuilder {
 
 }  // namespace Carbon
 
-#endif  // CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_FILE_BUILDER_H_
+#endif  // CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_PARSE_TREE_HANDLER_H_

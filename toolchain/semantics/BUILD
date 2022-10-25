@@ -18,12 +18,12 @@ cc_library(
 cc_library(
     name = "semantics_ir",
     srcs = [
-        "semantics_file_builder.cpp",
+        "semantics_parse_tree_handler.cpp",
         "semantics_ir.cpp",
         "semantics_node.cpp",
     ],
     hdrs = [
-        "semantics_file_builder.h",
+        "semantics_parse_tree_handler.h",
         "semantics_ir.h",
         "semantics_node.h",
     ],

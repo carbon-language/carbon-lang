@@ -7,14 +7,14 @@
 #include "common/check.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/lexer/tokenized_buffer.h"
-#include "toolchain/semantics/semantics_file_builder.h"
 #include "toolchain/semantics/semantics_node.h"
+#include "toolchain/semantics/semantics_parse_tree_handler.h"
 
 namespace Carbon {
 
 SemanticsIR::SemanticsIR(const TokenizedBuffer& tokens,
                          const ParseTree& parse_tree) {
-  SemanticsFileBuilder(tokens, parse_tree, *this).Build();
+  SemanticsParseTreeHandler(tokens, parse_tree, *this).Build();
 }
 
 auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
