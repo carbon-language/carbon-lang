@@ -2106,7 +2106,7 @@ the type of `U.x`."
 -   [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
 
     -   [Require compile-time-proven initialization](/proposals/p0257.md#require-compile-time-proven-initialization)
-    -   [C/C++ uninitialized](/proposals/p0257.md#cc-uninitialized)
+    -   [C and C++ uninitialized](/proposals/p0257.md#c-and-c-uninitialized)
     -   [Allow passing unformed objects to parameters or returning them?](/proposals/p0257.md#allow-passing-unformed-objects-to-parameters-or-returning-them)
     -   [Allow assigning an unformed object to another unformed object?](/proposals/p0257.md#allow-assigning-an-unformed-object-to-another-unformed-object)
     -   [Fully destructive move (Rust)](/proposals/p0257.md#fully-destructive-move-rust)

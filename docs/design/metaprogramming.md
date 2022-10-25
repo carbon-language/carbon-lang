@@ -29,4 +29,4 @@ context -- that proposal may replace this.
 
 Carbon provides metaprogramming facilities that look similar to regular Carbon
 code. These are structured, and do not offer inclusion or arbitrary
-preprocessing of source text such as C/C++ does.
+preprocessing of source text such as C and C++ do.
