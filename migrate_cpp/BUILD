@@ -36,6 +36,10 @@ cc_library(
         "@llvm-project//clang:tooling_core",
         "@llvm-project//llvm:Support",
     ],
+    visibility = [
+      # For dependency checking. Remove once it has a binary using it.
+      "//bazel/check_deps:__pkg__",
+    ],
 )
 
 cc_test(
