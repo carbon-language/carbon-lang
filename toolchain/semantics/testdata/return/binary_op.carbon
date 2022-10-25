@@ -13,14 +13,14 @@
 // CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   %block{0} = {
-// CHECK:STDOUT:   %0 = Identifier(%ident{0});
-// CHECK:STDOUT:   %1 = FunctionDeclaration(%0);
-// CHECK:STDOUT:   %2 = FunctionDefinitionStart(%1);
-// CHECK:STDOUT:     %3 = IntegerLiteral(%int{0});
-// CHECK:STDOUT:     %4 = IntegerLiteral(%int{1});
-// CHECK:STDOUT:     %5 = BinaryOperatorAdd(%3, %4);
-// CHECK:STDOUT:     %6 = ReturnExpression(%5);
-// CHECK:STDOUT:   %7 = FunctionDefinitionEnd();
+// CHECK:STDOUT:     %0 = Identifier(%ident{0});
+// CHECK:STDOUT:     %1 = FunctionDeclaration(%0);
+// CHECK:STDOUT:   },
+// CHECK:STDOUT:   %block{1} = {
+// CHECK:STDOUT:     %0 = IntegerLiteral(%int{0});
+// CHECK:STDOUT:     %1 = IntegerLiteral(%int{1});
+// CHECK:STDOUT:     %2 = BinaryOperatorAdd(%0, %1);
+// CHECK:STDOUT:     %3 = ReturnExpression(%2);
 // CHECK:STDOUT:   },
 // CHECK:STDOUT: }
 

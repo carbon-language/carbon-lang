@@ -129,7 +129,7 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinition(
     node_stack_.pop_back();
   }
   Pop(ParseNodeKind::FunctionDefinitionStart());
-  AddNodeToBlock(SemanticsNode::MakeFunctionDefinitionEnd());
+  node_block_stack_.pop_back();
   Push(parse_node);
 }
 
@@ -138,9 +138,12 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinitionStart(
   Pop(ParseNodeKind::ParameterList());
   auto name_node_id = PopWithResult(ParseNodeKind::DeclaredName());
   Pop(ParseNodeKind::FunctionIntroducer());
+
   auto decl_id =
       AddNodeToBlock(SemanticsNode::MakeFunctionDeclaration(name_node_id));
-  AddNodeToBlock(SemanticsNode::MakeFunctionDefinitionStart(decl_id));
+  auto [block_id, block] = semantics_->AddNodeBlock();
+  AddNodeToBlock(SemanticsNode::MakeFunctionDefinition(decl_id, block_id));
+  node_block_stack_.push_back(block);
   Push(parse_node);
 }
 

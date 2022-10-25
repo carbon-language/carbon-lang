@@ -13,18 +13,14 @@
 // CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   %block{0} = {
-// CHECK:STDOUT:   %0 = Identifier(%ident{0});
-// CHECK:STDOUT:   %1 = FunctionDeclaration(%0);
-// CHECK:STDOUT:   %2 = FunctionDefinitionStart(%1);
-// CHECK:STDOUT:   %3 = FunctionDefinitionEnd();
-// CHECK:STDOUT:   %4 = Identifier(%ident{1});
-// CHECK:STDOUT:   %5 = FunctionDeclaration(%4);
-// CHECK:STDOUT:   %6 = FunctionDefinitionStart(%5);
-// CHECK:STDOUT:   %7 = FunctionDefinitionEnd();
-// CHECK:STDOUT:   %8 = Identifier(%ident{2});
-// CHECK:STDOUT:   %9 = FunctionDeclaration(%8);
-// CHECK:STDOUT:   %10 = FunctionDefinitionStart(%9);
-// CHECK:STDOUT:   %11 = FunctionDefinitionEnd();
+// CHECK:STDOUT:     %0 = Identifier(%ident{0});
+// CHECK:STDOUT:     %1 = FunctionDeclaration(%0);
+// CHECK:STDOUT:   },
+// CHECK:STDOUT:   %block{1} = {
+// CHECK:STDOUT:   },
+// CHECK:STDOUT:   %block{2} = {
+// CHECK:STDOUT:   },
+// CHECK:STDOUT:   %block{3} = {
 // CHECK:STDOUT:   },
 // CHECK:STDOUT: }
 

@@ -11,11 +11,11 @@
 // CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   %block{0} = {
-// CHECK:STDOUT:   %0 = Identifier(%ident{0});
-// CHECK:STDOUT:   %1 = FunctionDeclaration(%0);
-// CHECK:STDOUT:   %2 = FunctionDefinitionStart(%1);
-// CHECK:STDOUT:     %3 = Return();
-// CHECK:STDOUT:   %4 = FunctionDefinitionEnd();
+// CHECK:STDOUT:     %0 = Identifier(%ident{0});
+// CHECK:STDOUT:     %1 = FunctionDeclaration(%0);
+// CHECK:STDOUT:   },
+// CHECK:STDOUT:   %block{1} = {
+// CHECK:STDOUT:     %0 = Return();
 // CHECK:STDOUT:   },
 // CHECK:STDOUT: }
 
