@@ -45,7 +45,7 @@ def add_substitutions():
         f"{filecheck_allow_unmatched} --implicit-check-not={{{{.}}}}"
     )
 
-    add_substitution("carbon", f"{tools['merge_output']} {tools['carbon']}")
+    add_substitution("carbon", f"{run_carbon}")
     add_substitution(
         "carbon-run-parser",
         f"{run_carbon} dump parse-tree %s | {filecheck_strict}",
