@@ -17,7 +17,9 @@ auto SemanticsIR::Build(const TokenizedBuffer& tokens,
   SemanticsParseTreeHandler(tokens, parse_tree, *this).Build();
 }
 
-auto SemanticsIR::BuildBuiltins() -> void {}
+auto SemanticsIR::BuildBuiltins() -> void {
+  // TODO: Implement.
+}
 
 auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
   constexpr int Indent = 2;
