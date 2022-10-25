@@ -165,9 +165,8 @@ class TypeChecker {
   // which this generic binding is known in its scope. `impl_scope` is updated
   // with the impl implied by the binding, if any.
   auto TypeCheckGenericBinding(GenericBinding& binding,
-                               std::string_view context,
-                               Nonnull<const Value*> symbolic_value,
-                               ImplScope& impl_scope) -> ErrorOr<Success>;
+                               std::string_view context, ImplScope& impl_scope)
+      -> ErrorOr<Success>;
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `s`.
   //

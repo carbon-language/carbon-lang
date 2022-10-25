@@ -77,8 +77,7 @@ static auto AddExposedNames(const Declaration& declaration,
     case DeclarationKind::AssociatedConstantDeclaration: {
       const auto& let = cast<AssociatedConstantDeclaration>(declaration);
       if (let.binding().name() != AnonymousName) {
-        CARBON_RETURN_IF_ERROR(
-            enclosing_scope.Add(let.binding().name(), &let.binding()));
+        CARBON_RETURN_IF_ERROR(enclosing_scope.Add(let.binding().name(), &let));
       }
       break;
     }
@@ -666,7 +665,9 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
     }
     case DeclarationKind::AssociatedConstantDeclaration: {
       auto& let = cast<AssociatedConstantDeclaration>(declaration);
-      CARBON_RETURN_IF_ERROR(ResolveNames(let.binding(), enclosing_scope));
+      StaticScope constant_scope;
+      constant_scope.AddParent(&enclosing_scope);
+      CARBON_RETURN_IF_ERROR(ResolveNames(let.binding(), constant_scope));
       break;
     }
 
