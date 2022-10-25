@@ -22,8 +22,6 @@ class SemanticsIR {
   // Adds the IR for the provided ParseTree.
   auto Build(const TokenizedBuffer& tokens, const ParseTree& parse_tree)
       -> void;
-  // Adds the IR for builtins.
-  auto BuildBuiltins() -> void;
 
   // Prints the full IR.
   auto Print(llvm::raw_ostream& out) const -> void;
