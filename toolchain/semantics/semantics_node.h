@@ -29,7 +29,7 @@ struct SemanticsIdentifierId {
   SemanticsIdentifierId() : id(-1) {}
   explicit SemanticsIdentifierId(int32_t id) : id(id) {}
 
-  void Print(llvm::raw_ostream& out) const { out << "%s" << id; }
+  void Print(llvm::raw_ostream& out) const { out << "%ident{" << id << "}"; }
 
   int32_t id;
 };
@@ -39,7 +39,17 @@ struct SemanticsIntegerLiteralId {
   SemanticsIntegerLiteralId() : id(-1) {}
   explicit SemanticsIntegerLiteralId(int32_t id) : id(id) {}
 
-  void Print(llvm::raw_ostream& out) const { out << "%s" << id; }
+  void Print(llvm::raw_ostream& out) const { out << "%int{" << id << "}"; }
+
+  int32_t id;
+};
+
+// Type-safe storage of node blocks.
+struct SemanticsNodeBlockId {
+  SemanticsNodeBlockId() : id(-1) {}
+  explicit SemanticsNodeBlockId(int32_t id) : id(id) {}
+
+  void Print(llvm::raw_ostream& out) const { out << "%block{" << id << "}"; }
 
   int32_t id;
 };

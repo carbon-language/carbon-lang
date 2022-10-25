@@ -12,51 +12,44 @@
 
 namespace Carbon {
 
-SemanticsIR::SemanticsIR(const TokenizedBuffer& tokens,
-                         const ParseTree& parse_tree) {
+auto SemanticsIR::Build(const TokenizedBuffer& tokens,
+                        const ParseTree& parse_tree) -> void {
   SemanticsParseTreeHandler(tokens, parse_tree, *this).Build();
 }
 
+auto SemanticsIR::BuildBuiltins() -> void {}
+
 auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
+  constexpr int Indent = 2;
+
   out << "identifiers = {\n";
   for (int32_t i = 0; i < static_cast<int32_t>(identifiers_.size()); ++i) {
-    out.indent(2);
+    out.indent(Indent);
     out << SemanticsIdentifierId(i) << " = \"" << identifiers_[i] << "\";\n";
   }
   out << "},\n";
 
   out << "integer_literals = {\n";
   for (int32_t i = 0; i < static_cast<int32_t>(integer_literals_.size()); ++i) {
-    out.indent(2);
+    out.indent(Indent);
     out << SemanticsIntegerLiteralId(i) << " = " << integer_literals_[i]
         << ";\n";
   }
   out << "},\n";
 
-  out << "nodes = {\n";
-  int indent = 2;
-  for (int32_t i = 0; i < static_cast<int32_t>(nodes_.size()); ++i) {
-    SemanticsNode node = nodes_[i];
+  out << "node_blocks = {\n";
+  for (int32_t i = 0; i < static_cast<int32_t>(node_blocks_.size()); ++i) {
+    out.indent(Indent);
+    out << SemanticsNodeBlockId(i) << " = {\n";
 
-    // Adjust indent for block contents.
-    switch (node.kind()) {
-      case SemanticsNodeKind::CodeBlockStart():
-      case SemanticsNodeKind::FunctionDefinitionStart():
-        out.indent(indent);
-        indent += 2;
-        break;
-      case SemanticsNodeKind::CodeBlockEnd():
-      case SemanticsNodeKind::FunctionDefinitionEnd():
-        indent -= 2;
-        out.indent(indent);
-        break;
-      default:
-        // No indentation change.
-        out.indent(indent);
-        break;
+    const auto& node_block = node_blocks_[i];
+    for (int32_t i = 0; i < static_cast<int32_t>(node_block.size()); ++i) {
+      out.indent(2 * Indent);
+      out << SemanticsNodeId(i) << " = " << node_block[i] << ";\n";
     }
 
-    out << SemanticsNodeId(i) << " = " << node << ";\n";
+    out.indent(Indent);
+    out << "},\n";
   }
   out << "}\n";
 }

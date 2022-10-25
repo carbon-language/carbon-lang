@@ -8,5 +8,7 @@
 // CHECK:STDOUT: },
 // CHECK:STDOUT: integer_literals = {
 // CHECK:STDOUT: },
-// CHECK:STDOUT: nodes = {
+// CHECK:STDOUT: node_blocks = {
+// CHECK:STDOUT:   %block{0} = {
+// CHECK:STDOUT:   },
 // CHECK:STDOUT: }
