@@ -353,8 +353,8 @@ auto TypeChecker::FieldTypesImplicitlyConvertible(
     llvm::ArrayRef<NamedValue> source_fields,
     llvm::ArrayRef<NamedValue> destination_fields,
     const ImplScope& impl_scope) const -> bool {
-  // Todo: If default fields are implemented, the
-  //       code must be adapted to skip them
+  // TODO: If default fields are implemented, the
+  // code must be adapted to skip them.
   // Ensure every field name exists in the destination.
   for (const auto& dest_field : destination_fields) {
     if (!FindField(source_fields, dest_field.name)) {
