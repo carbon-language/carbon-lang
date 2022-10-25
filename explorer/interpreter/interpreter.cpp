@@ -707,8 +707,9 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
                destination_struct_type.fields()) {
             std::optional<Nonnull<const Value*>> old_value =
                 struct_val.FindField(field_name);
-            if(!old_value) {
-              return ProgramError(source_loc) << "Expected field name: "<< field_name;
+            if (!old_value) {
+              return ProgramError(source_loc)
+                     << "Expected field name: " << field_name;
             }
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const Value*> val,
