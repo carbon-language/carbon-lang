@@ -4383,6 +4383,32 @@ An interface or named constraint may be forward declared subject to these rules:
     interface using `MyInterface.MemberName` or constrain a member using a
     `where` clause.
 
+If `C` is the name of an incomplete interface or named constraint, then it can
+be used in the following contexts:
+
+-   ✅ `T:! C`
+-   ✅ `C & D`
+    -   There may be conflicts between `C` and `D` making this invalid that will
+        only be discovered once they are both complete.
+-   ✅ `interface `...` { impl as C; }`
+-   ✅ `constraint `...` { impl as C; }`
+-   ✅ `T:! C` ... `T is C`
+-   ✅ `T:! A & C` ... `T is C`
+
+An incomplete `C` cannot be used in the following contexts:
+
+-   ❌ `T:! C` ... `T.X`
+-   ❌ `T:! C where `...
+-   ❌ `interface `...` { impl U as C; }` for `U != Self`
+-   ❌ `constraint `...` { impl U as C; }` for `U != Self`
+-   ❌ `class `...` { impl as C; }`
+    -   The names of `C` are added to the class, and so those names need to be
+        known.
+-   ❌ `external impl `...` as C;`
+    -   To check that all associated constants of `C` are assigned values.
+-   ❌ `T:! C` ... `T is A` where `A != C` is an interface or constraint
+    -   Need to see the definition of `C` to see if it implies `A`.
+
 ### Declaring implementations
 
 The declaration of an interface implementation consists of:
@@ -5689,3 +5715,4 @@ parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 -   [#1146: Generic details 12: parameterized types](https://github.com/carbon-language/carbon-lang/pull/1146)
 -   [#1327: Generics: `impl forall`](https://github.com/carbon-language/carbon-lang/pull/1327)
 -   [#2107: Clarify rules around `Self` and `.Self`](https://github.com/carbon-language/carbon-lang/pull/2107)
+-   [#2347: What can be done with an incomplete interface](https://github.com/carbon-language/carbon-lang/pull/2347)
