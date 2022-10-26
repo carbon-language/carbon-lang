@@ -72,6 +72,19 @@ class SemanticsNode {
     CARBON_CHECK(kind_ == SemanticsNodeKind::BinaryOperatorAdd());
     return {SemanticsNodeId(arg0_), SemanticsNodeId(arg1_)};
   }
+#define CARBON_SEMANTICS_MAKE_node_block(Name)                             \
+  static auto Make##Name(SemanticsNodeBlockId node_block)->SemanticsNode { \
+    return SemanticsNode(SemanticsNodeKind::Name(),                        \
+                         SemanticsNodeArgs(node_block));                   \
+  }
+#define CARBON_SEMANTICS_MAKE_node_and_node_block(Name)                      \
+  static auto Make##Name(SemanticsNodeId node,                               \
+                         SemanticsNodeBlockId node_block)                    \
+      ->SemanticsNode {                                                      \
+    return SemanticsNode(                                                    \
+        SemanticsNodeKind::Name(),                                           \
+        SemanticsNodeArgs(SemanticsNodeIdAndNodeBlockId{node, node_block})); \
+  }
 
   static auto MakeCodeBlock(SemanticsNodeBlockId node_block) -> SemanticsNode {
     return SemanticsNode(SemanticsNodeKind::CodeBlock(), node_block.id);
