@@ -19,23 +19,17 @@ CARBON_SEMANTICS_NODE_KIND(Invalid, no_args)
 // Two nodes: lhs and rhs.
 CARBON_SEMANTICS_NODE_KIND(BinaryOperatorAdd, two_nodes)
 
-// No args.
-CARBON_SEMANTICS_NODE_KIND(CodeBlockStart, no_args)
-
-// No args.
-CARBON_SEMANTICS_NODE_KIND(CodeBlockEnd, no_args)
+// The code block.
+CARBON_SEMANTICS_NODE_KIND(CodeBlock, node_block)
 
 // One node: the name.
 // TODO: Add a declaration scope as a second arg.
 CARBON_SEMANTICS_NODE_KIND(FunctionDeclaration, one_node)
 
-// One node: the FunctionDeclaration.
-CARBON_SEMANTICS_NODE_KIND(FunctionDefinitionStart, one_node)
+// Two nodes: a FunctionDeclaration and its body.
+CARBON_SEMANTICS_NODE_KIND(FunctionDefinition, node_and_node_block)
 
-// No args.
-CARBON_SEMANTICS_NODE_KIND(FunctionDefinitionEnd, no_args)
-
-// The decalred IdentifierId.
+// The declared IdentifierId.
 CARBON_SEMANTICS_NODE_KIND(Identifier, identifier)
 
 // The declared IntegerLiteralId.

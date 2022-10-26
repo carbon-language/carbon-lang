@@ -27,6 +27,15 @@ static auto PrintArgs(llvm::raw_ostream& out,
   out << integer_literal;
 }
 
+static auto PrintArgs(llvm::raw_ostream& out, SemanticsNodeBlockId node_block) {
+  out << node_block;
+}
+
+static auto PrintArgs(llvm::raw_ostream& out,
+                      SemanticsNodeIdAndNodeBlockId node_and_node_block) {
+  out << node_and_node_block.node << ", " << node_and_node_block.node_block;
+}
+
 void SemanticsNode::Print(llvm::raw_ostream& out) const {
   out << kind_ << "(";
   switch (kind_) {

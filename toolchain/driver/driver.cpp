@@ -162,7 +162,8 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
     return !tokenized_source.has_errors() && !parse_tree.has_errors();
   }
 
-  SemanticsIR semantics_ir(tokenized_source, parse_tree);
+  SemanticsIR semantics_ir;
+  semantics_ir.Build(tokenized_source, parse_tree);
   if (dump_mode == DumpMode::SemanticsIR) {
     consumer.Flush();
     semantics_ir.Print(output_stream_);
