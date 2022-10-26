@@ -21,6 +21,7 @@ namespace Carbon {
 using llvm::cast;
 using llvm::dyn_cast;
 using llvm::dyn_cast_or_null;
+using llvm::isa;
 
 auto StructValue::FindField(std::string_view name) const
     -> std::optional<Nonnull<const Value*>> {
@@ -87,13 +88,8 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
     case Value::Kind::NominalClassValue: {
       const auto& object = cast<NominalClassValue>(*v);
       // Look for a field.
-      // Note that the value representation of an empty class is a
-      // `StructType`, not a `StructValue`.
-      std::optional<Nonnull<const Value*>> field;
-      if (const auto* struct_value = dyn_cast<StructValue>(&object.inits())) {
-        field = struct_value->FindField(f);
-      }
-      if (field.has_value()) {
+      if (std::optional<Nonnull<const Value*>> field =
+              cast<StructValue>(object.inits()).FindField(f)) {
         return *field;
       } else {
         // Look for a method in the object's class
@@ -185,9 +181,10 @@ static auto SetFieldImpl(
                                            path_end, field_value, source_loc));
       return arena->New<NominalClassValue>(&object.type(), inits);
     }
+    case Value::Kind::TupleType:
     case Value::Kind::TupleValue: {
       std::vector<Nonnull<const Value*>> elements =
-          cast<TupleValue>(*value).elements();
+          cast<TupleValueBase>(*value).elements();
       // TODO(geoffromer): update FieldPath to hold integers as well as strings.
       int index = std::stoi(std::string((*path_begin).name()));
       if (index < 0 || static_cast<size_t>(index) >= elements.size()) {
@@ -197,7 +194,11 @@ static auto SetFieldImpl(
       CARBON_ASSIGN_OR_RETURN(
           elements[index], SetFieldImpl(arena, elements[index], path_begin + 1,
                                         path_end, field_value, source_loc));
-      return arena->New<TupleValue>(elements);
+      if (isa<TupleType>(value)) {
+        return arena->New<TupleType>(elements);
+      } else {
+        return arena->New<TupleValue>(elements);
+      }
     }
     default:
       CARBON_FATAL() << "field access not allowed for value " << *value;
@@ -272,10 +273,12 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << cast<NominalClassType>(s.type()).declaration().name() << s.inits();
       break;
     }
+    case Value::Kind::TupleType:
     case Value::Kind::TupleValue: {
       out << "(";
       llvm::ListSeparator sep;
-      for (Nonnull<const Value*> element : cast<TupleValue>(*this).elements()) {
+      for (Nonnull<const Value*> element :
+           cast<TupleValueBase>(*this).elements()) {
         out << sep << *element;
       }
       out << ")";
@@ -705,9 +708,10 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     }
     case Value::Kind::ChoiceType:
       return cast<ChoiceType>(*t1).name() == cast<ChoiceType>(*t2).name();
+    case Value::Kind::TupleType:
     case Value::Kind::TupleValue: {
-      const auto& tup1 = cast<TupleValue>(*t1);
-      const auto& tup2 = cast<TupleValue>(*t2);
+      const auto& tup1 = cast<TupleValueBase>(*t1);
+      const auto& tup2 = cast<TupleValueBase>(*t2);
       if (tup1.elements().size() != tup2.elements().size()) {
         return false;
       }
@@ -806,11 +810,12 @@ auto ValueStructurallyEqual(
              body1.has_value() == body2.has_value() &&
              (!body1.has_value() || *body1 == *body2);
     }
+    case Value::Kind::TupleType:
     case Value::Kind::TupleValue: {
       const std::vector<Nonnull<const Value*>>& elements1 =
-          cast<TupleValue>(*v1).elements();
+          cast<TupleValueBase>(*v1).elements();
       const std::vector<Nonnull<const Value*>>& elements2 =
-          cast<TupleValue>(*v2).elements();
+          cast<TupleValueBase>(*v2).elements();
       if (elements1.size() != elements2.size()) {
         return false;
       }

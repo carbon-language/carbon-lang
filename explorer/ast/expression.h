@@ -504,21 +504,15 @@ class TupleLiteral : public Expression {
   std::vector<Nonnull<Expression*>> fields_;
 };
 
-// A non-empty literal value of a struct type.
-//
-// It can't be empty because the syntax `{}` is a struct type literal as well
-// as a literal value of that type, so for consistency we always represent it
-// as a StructTypeLiteral rather than let it oscillate unpredictably between
-// the two.
+// A literal value of a struct type.
 class StructLiteral : public Expression {
  public:
+  explicit StructLiteral(SourceLocation loc) : StructLiteral(loc, {}) {}
+
   explicit StructLiteral(SourceLocation loc,
                          std::vector<FieldInitializer> fields)
       : Expression(AstNodeKind::StructLiteral, loc),
-        fields_(std::move(fields)) {
-    CARBON_CHECK(!fields_.empty())
-        << "`{}` is represented as a StructTypeLiteral, not a StructLiteral.";
-  }
+        fields_(std::move(fields)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromStructLiteral(node->kind());
@@ -533,16 +527,17 @@ class StructLiteral : public Expression {
 
 // A literal representing a struct type.
 //
-// Code that handles this type may sometimes need to have special-case handling
-// for `{}`, which is a struct value in addition to being a struct type.
+// Note that a struct type literal can't be empty because `{}` is a struct
+// value. However, that value implicitly converts to a type.
 class StructTypeLiteral : public Expression {
  public:
-  explicit StructTypeLiteral(SourceLocation loc) : StructTypeLiteral(loc, {}) {}
-
   explicit StructTypeLiteral(SourceLocation loc,
                              std::vector<FieldInitializer> fields)
       : Expression(AstNodeKind::StructTypeLiteral, loc),
-        fields_(std::move(fields)) {}
+        fields_(std::move(fields)) {
+    CARBON_CHECK(!fields_.empty())
+        << "`{}` is represented as a StructLiteral, not a StructTypeLiteral.";
+  }
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromStructTypeLiteral(node->kind());
@@ -551,8 +546,22 @@ class StructTypeLiteral : public Expression {
   auto fields() const -> llvm::ArrayRef<FieldInitializer> { return fields_; }
   auto fields() -> llvm::MutableArrayRef<FieldInitializer> { return fields_; }
 
+  // Returns the constant value of this expression.
+  auto constant_value() const -> const Value& {
+    CARBON_CHECK(constant_value_);
+    return **constant_value_;
+  }
+
+  // Sets the value returned by constant_value(). Can only be called once,
+  // during typechecking.
+  void set_constant_value(Nonnull<const Value*> value) {
+    CARBON_CHECK(!constant_value_.has_value());
+    constant_value_ = value;
+  }
+
  private:
   std::vector<FieldInitializer> fields_;
+  std::optional<Nonnull<const Value*>> constant_value_;
 };
 
 class OperatorExpression : public RewritableMixin<Expression> {
@@ -641,9 +650,23 @@ class FunctionTypeLiteral : public Expression {
   auto return_type() const -> const Expression& { return *return_type_; }
   auto return_type() -> Expression& { return *return_type_; }
 
+  // Returns the constant value of this expression.
+  auto constant_value() const -> const Value& {
+    CARBON_CHECK(constant_value_);
+    return **constant_value_;
+  }
+
+  // Sets the value returned by constant_value(). Can only be called once,
+  // during typechecking.
+  void set_constant_value(Nonnull<const Value*> value) {
+    CARBON_CHECK(!constant_value_.has_value());
+    constant_value_ = value;
+  }
+
  private:
   Nonnull<TupleLiteral*> parameter_;
   Nonnull<Expression*> return_type_;
+  std::optional<Nonnull<const Value*>> constant_value_;
 };
 
 class BoolTypeLiteral : public Expression {
@@ -934,6 +957,36 @@ class WhereExpression : public RewritableMixin<Expression> {
   Nonnull<GenericBinding*> self_binding_;
   std::vector<Nonnull<WhereClause*>> clauses_;
   std::optional<Nonnull<const GenericBinding*>> enclosing_dot_self_;
+};
+
+// A builtin conversion to a type determined by type-checking. These are
+// created by type-checking when a type conversion is found to be necessary but
+// that conversion is implemented directly rather than by an `ImplicitAs`
+// implementation.
+class BuiltinConvertExpression : public Expression {
+ public:
+  BuiltinConvertExpression(Nonnull<Expression*> source_expression,
+                           Nonnull<const Value*> destination_type)
+      : Expression(AstNodeKind::BuiltinConvertExpression,
+                   source_expression->source_loc()),
+        source_expression_(source_expression) {
+    set_static_type(destination_type);
+    set_value_category(ValueCategory::Let);
+  }
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromBuiltinConvertExpression(node->kind());
+  }
+
+  auto source_expression() -> Nonnull<Expression*> {
+    return source_expression_;
+  }
+  auto source_expression() const -> Nonnull<const Expression*> {
+    return source_expression_;
+  }
+
+ private:
+  Nonnull<Expression*> source_expression_;
 };
 
 // An expression whose semantics have not been implemented. This can be used

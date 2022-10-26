@@ -289,11 +289,13 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       generic_args[&var_type.binding()] = v;
       return true;
     }
+    case Value::Kind::TupleType:
     case Value::Kind::TupleValue:
       switch (v->kind()) {
+        case Value::Kind::TupleType:
         case Value::Kind::TupleValue: {
-          const auto& p_tup = cast<TupleValue>(*p);
-          const auto& v_tup = cast<TupleValue>(*v);
+          const auto& p_tup = cast<TupleValueBase>(*p);
+          const auto& v_tup = cast<TupleValueBase>(*v);
           CARBON_CHECK(p_tup.elements().size() == v_tup.elements().size());
           for (size_t i = 0; i < p_tup.elements().size(); ++i) {
             if (!PatternMatch(p_tup.elements()[i], v_tup.elements()[i],
@@ -305,7 +307,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
           return true;
         }
         case Value::Kind::UninitializedValue: {
-          const auto& p_tup = cast<TupleValue>(*p);
+          const auto& p_tup = cast<TupleValueBase>(*p);
           for (const auto& ele : p_tup.elements()) {
             if (!PatternMatch(ele, arena->New<UninitializedValue>(ele),
                               source_loc, bindings, generic_args, trace_stream,
@@ -501,6 +503,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
     case ExpressionKind::WhereExpression:
     case ExpressionKind::DotSelfExpression:
     case ExpressionKind::ArrayTypeLiteral:
+    case ExpressionKind::BuiltinConvertExpression:
       CARBON_FATAL() << "Can't treat expression as lvalue: " << exp;
     case ExpressionKind::UnimplementedExpression:
       CARBON_FATAL() << "Unimplemented: " << exp;
@@ -669,6 +672,8 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::TypeType:
     case Value::Kind::FunctionType:
     case Value::Kind::PointerType:
+    case Value::Kind::TupleType:
+    case Value::Kind::StructType:
     case Value::Kind::AutoType:
     case Value::Kind::NominalClassType:
     case Value::Kind::MixinPseudoType:
@@ -722,6 +727,13 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
               InstantiateType(destination_type, source_loc));
           return arena_->New<NominalClassValue>(inst_dest, value);
         }
+        case Value::Kind::TypeType:
+        case Value::Kind::ConstraintType:
+        case Value::Kind::InterfaceType: {
+          CARBON_CHECK(struct_val.elements().empty())
+              << "only empty structs convert to Type";
+          return arena_->New<StructType>();
+        }
         default: {
           CARBON_CHECK(IsValueKindDependent(destination_type))
               << "Can't convert value " << *value << " to type "
@@ -730,32 +742,24 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
         }
       }
     }
-    case Value::Kind::StructType: {
-      // The value `{}` has kind `StructType` not `StructValue`. This value can
-      // be converted to an empty class type.
-      if (const auto* destination_class_type =
-              dyn_cast<NominalClassType>(destination_type)) {
-        CARBON_CHECK(cast<StructType>(*value).fields().empty())
-            << "only an empty struct type value converts to class type";
-        CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inst_dest,
-                                InstantiateType(destination_type, source_loc));
-        return arena_->New<NominalClassValue>(inst_dest, value);
-      }
-      return value;
-    }
     case Value::Kind::TupleValue: {
       const auto& tuple = cast<TupleValue>(value);
       std::vector<Nonnull<const Value*>> destination_element_types;
       switch (destination_type->kind()) {
-        case Value::Kind::TupleValue:
+        case Value::Kind::TupleType:
           destination_element_types =
-              cast<TupleValue>(destination_type)->elements();
+              cast<TupleType>(destination_type)->elements();
           break;
         case Value::Kind::StaticArrayType: {
           const auto& array_type = cast<StaticArrayType>(*destination_type);
           destination_element_types.resize(array_type.size(),
                                            &array_type.element_type());
           break;
+        }
+        case Value::Kind::TypeType:
+        case Value::Kind::ConstraintType:
+        case Value::Kind::InterfaceType: {
+          return arena_->New<TupleType>(tuple->elements());
         }
         default: {
           CARBON_CHECK(IsValueKindDependent(destination_type))
@@ -988,17 +992,12 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       }
     }
     case ExpressionKind::StructTypeLiteral: {
-      const auto& struct_type = cast<StructTypeLiteral>(exp);
-      if (act.pos() < static_cast<int>(struct_type.fields().size())) {
-        return todo_.Spawn(std::make_unique<ExpressionAction>(
-            &struct_type.fields()[act.pos()].expression()));
-      } else {
-        std::vector<NamedValue> fields;
-        for (size_t i = 0; i < struct_type.fields().size(); ++i) {
-          fields.push_back({struct_type.fields()[i].name(), act.results()[i]});
-        }
-        return todo_.FinishAction(arena_->New<StructType>(std::move(fields)));
-      }
+      CARBON_CHECK(act.pos() == 0);
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> instantiated,
+          InstantiateType(&cast<StructTypeLiteral>(exp).constant_value(),
+                          exp.source_loc()));
+      return todo_.FinishAction(instantiated);
     }
     case ExpressionKind::SimpleMemberAccessExpression: {
       const auto& access = cast<SimpleMemberAccessExpression>(exp);
@@ -1406,20 +1405,12 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       return todo_.FinishAction(arena_->New<TypeType>());
     }
     case ExpressionKind::FunctionTypeLiteral: {
-      if (act.pos() == 0) {
-        return todo_.Spawn(std::make_unique<ExpressionAction>(
-            &cast<FunctionTypeLiteral>(exp).parameter()));
-      } else if (act.pos() == 1) {
-        //    { { pt :: fn [] -> e :: C, E, F} :: S, H}
-        // -> { { e :: fn pt -> []) :: C, E, F} :: S, H}
-        return todo_.Spawn(std::make_unique<ExpressionAction>(
-            &cast<FunctionTypeLiteral>(exp).return_type()));
-      } else {
-        //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
-        // -> { fn pt -> rt :: {C, E, F} :: S, H}
-        return todo_.FinishAction(
-            arena_->New<FunctionType>(act.results()[0], act.results()[1]));
-      }
+      CARBON_CHECK(act.pos() == 0);
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> instantiated,
+          InstantiateType(&cast<FunctionTypeLiteral>(exp).constant_value(),
+                          exp.source_loc()));
+      return todo_.FinishAction(instantiated);
     }
     case ExpressionKind::ContinuationTypeLiteral: {
       CARBON_CHECK(act.pos() == 0);
@@ -1436,7 +1427,13 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     }
     case ExpressionKind::ValueLiteral: {
       CARBON_CHECK(act.pos() == 0);
-      return todo_.FinishAction(&cast<ValueLiteral>(exp).value());
+      auto* value = &cast<ValueLiteral>(exp).value();
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> destination,
+          InstantiateType(&exp.static_type(), exp.source_loc()));
+      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> result,
+                              Convert(value, destination, exp.source_loc()));
+      return todo_.FinishAction(result);
     }
     case ExpressionKind::IfExpression: {
       const auto& if_expr = cast<IfExpression>(exp);
@@ -1457,6 +1454,23 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       auto rewrite = cast<WhereExpression>(exp).rewritten_form();
       CARBON_CHECK(rewrite) << "where expression should be rewritten";
       return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
+    }
+    case ExpressionKind::BuiltinConvertExpression: {
+      const auto& convert_expr = cast<BuiltinConvertExpression>(exp);
+      if (act.pos() == 0) {
+        return todo_.Spawn(std::make_unique<ExpressionAction>(
+            convert_expr.source_expression()));
+      } else {
+        CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> destination,
+                                InstantiateType(&convert_expr.static_type(),
+                                                convert_expr.source_loc()));
+        // TODO: Remove all calls to Convert other than this one. We shouldn't
+        // need them any more.
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<const Value*> result,
+            Convert(act.results()[0], destination, convert_expr.source_loc()));
+        return todo_.FinishAction(result);
+      }
     }
     case ExpressionKind::UnimplementedExpression:
       CARBON_FATAL() << "Unimplemented: " << exp;

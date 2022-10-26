@@ -72,6 +72,7 @@ abstract class Expression : AstNode;
   class IntrinsicExpression : Expression;
   class IfExpression : Expression;
   class WhereExpression : Expression;
+  class BuiltinConvertExpression : Expression;
   class UnimplementedExpression : Expression;
   class ArrayTypeLiteral : Expression;
 abstract class WhereClause : AstNode;
