@@ -7,14 +7,10 @@
 namespace Carbon {
 
 static auto PrintArgs(llvm::raw_ostream& /*out*/,
-                      const SemanticsNodeArgs::None /*no_args*/) {}
+                      const SemanticsNode::NoArgs /*no_args*/) {}
 
-static auto PrintArgs(llvm::raw_ostream& out, SemanticsNodeId one_node) {
-  out << one_node;
-}
-
-static auto PrintArgs(llvm::raw_ostream& out, SemanticsTwoNodeIds two_nodes) {
-  out << two_nodes.nodes[0] << ", " << two_nodes.nodes[1];
+static auto PrintArgs(llvm::raw_ostream& out, SemanticsNodeId arg0) {
+  out << arg0;
 }
 
 static auto PrintArgs(llvm::raw_ostream& out,
@@ -31,17 +27,19 @@ static auto PrintArgs(llvm::raw_ostream& out, SemanticsNodeBlockId node_block) {
   out << node_block;
 }
 
-static auto PrintArgs(llvm::raw_ostream& out,
-                      SemanticsNodeIdAndNodeBlockId node_and_node_block) {
-  out << node_and_node_block.node << ", " << node_and_node_block.node_block;
+template <typename T0, typename T1>
+static auto PrintArgs(llvm::raw_ostream& out, std::pair<T0, T1> args) {
+  PrintArgs(out, args.first);
+  out << ", ";
+  PrintArgs(out, args.second);
 }
 
 void SemanticsNode::Print(llvm::raw_ostream& out) const {
   out << kind_ << "(";
   switch (kind_) {
-#define CARBON_SEMANTICS_NODE_KIND(Name, Args) \
-  case SemanticsNodeKind::Name():              \
-    PrintArgs(out, one_of_args_.Args);         \
+#define CARBON_SEMANTICS_NODE_KIND(Name) \
+  case SemanticsNodeKind::Name():        \
+    PrintArgs(out, Get##Name());         \
     break;
 #include "toolchain/semantics/semantics_node_kind.def"
   }

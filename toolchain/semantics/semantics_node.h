@@ -7,6 +7,7 @@
 
 #include <cstdint>
 
+#include "common/check.h"
 #include "common/ostream.h"
 #include "toolchain/semantics/semantics_node_kind.h"
 
@@ -54,122 +55,107 @@ struct SemanticsNodeBlockId {
   int32_t id;
 };
 
-struct SemanticsTwoNodeIds {
-  SemanticsNodeId nodes[2];
-};
-struct SemanticsNodeIdAndNodeBlockId {
-  SemanticsNodeId node;
-  SemanticsNodeBlockId node_block;
-};
-
-union SemanticsNodeArgs {
-  struct None {};
-
-  SemanticsNodeArgs() : no_args() {}
-  explicit SemanticsNodeArgs(SemanticsNodeId one_node) : one_node(one_node) {}
-  explicit SemanticsNodeArgs(SemanticsTwoNodeIds two_nodes)
-      : two_nodes(two_nodes) {}
-
-  explicit SemanticsNodeArgs(SemanticsIdentifierId identifier)
-      : identifier(identifier) {}
-  explicit SemanticsNodeArgs(SemanticsIntegerLiteralId integer_literal)
-      : integer_literal(integer_literal) {}
-  explicit SemanticsNodeArgs(SemanticsNodeBlockId node_block)
-      : node_block(node_block) {}
-  explicit SemanticsNodeArgs(SemanticsNodeIdAndNodeBlockId node_and_node_block)
-      : node_and_node_block(node_and_node_block) {}
-
-  None no_args;
-  SemanticsNodeId one_node;
-  SemanticsTwoNodeIds two_nodes;
-
-  SemanticsIdentifierId identifier;
-  SemanticsIntegerLiteralId integer_literal;
-  SemanticsNodeBlockId node_block;
-  SemanticsNodeIdAndNodeBlockId node_and_node_block;
-};
-// TODO: This is currently 8 bytes only because of two_nodes; others are only 4
-// bytes. The NodeKind is 1 byte; if we reduced this structure to 7 bytes (3.5
-// bytes per node), we could potentially change SemanticsNode from 12 bytes to 8
-// bytes. This may be worth investigating further.
-static_assert(sizeof(SemanticsNodeArgs) == 8, "Unexpected OneOfArgs size");
-
 // The standard structure for nodes.
 class SemanticsNode {
  public:
-  // Define factory functions for each node kind. These should improve type
-  // safety by enforcing argument counts.
-  // `clang-format` has a bug with spacing around `->` returns here. See
-  // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
-#define CARBON_SEMANTICS_MAKE_no_args(Name)                               \
-  static auto Make##Name()->SemanticsNode {                               \
-    return SemanticsNode(SemanticsNodeKind::Name(), SemanticsNodeArgs()); \
+  struct NoArgs {};
+
+  auto GetInvalid() const -> NoArgs { CARBON_FATAL() << "Invalid access"; }
+
+  static auto MakeBinaryOperatorAdd(SemanticsNodeId lhs, SemanticsNodeId rhs)
+      -> SemanticsNode {
+    return SemanticsNode(SemanticsNodeKind::BinaryOperatorAdd(), lhs.id,
+                         rhs.id);
   }
-#define CARBON_SEMANTICS_MAKE_one_node(Name)                        \
-  static auto Make##Name(SemanticsNodeId one_node)->SemanticsNode { \
-    return SemanticsNode(SemanticsNodeKind::Name(),                 \
-                         SemanticsNodeArgs(one_node));              \
-  }
-#define CARBON_SEMANTICS_MAKE_two_nodes(Name)                          \
-  static auto Make##Name(SemanticsNodeId node1, SemanticsNodeId node2) \
-      ->SemanticsNode {                                                \
-    return SemanticsNode(                                              \
-        SemanticsNodeKind::Name(),                                     \
-        SemanticsNodeArgs(SemanticsTwoNodeIds{node1, node2}));         \
+  auto GetBinaryOperatorAdd() const
+      -> std::pair<SemanticsNodeId, SemanticsNodeId> {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::BinaryOperatorAdd());
+    return {SemanticsNodeId(arg0_), SemanticsNodeId(arg1_)};
   }
 
-#define CARBON_SEMANTICS_MAKE_identifier(Name)                              \
-  static auto Make##Name(SemanticsIdentifierId identifier)->SemanticsNode { \
-    return SemanticsNode(SemanticsNodeKind::Name(),                         \
-                         SemanticsNodeArgs(identifier));                    \
+  static auto MakeCodeBlock(SemanticsNodeBlockId node_block) -> SemanticsNode {
+    return SemanticsNode(SemanticsNodeKind::CodeBlock(), node_block.id);
   }
-#define CARBON_SEMANTICS_MAKE_integer_literal(Name)                 \
-  static auto Make##Name(SemanticsIntegerLiteralId integer_literal) \
-      ->SemanticsNode {                                             \
-    return SemanticsNode(SemanticsNodeKind::Name(),                 \
-                         SemanticsNodeArgs(integer_literal));       \
-  }
-#define CARBON_SEMANTICS_MAKE_node_block(Name)                             \
-  static auto Make##Name(SemanticsNodeBlockId node_block)->SemanticsNode { \
-    return SemanticsNode(SemanticsNodeKind::Name(),                        \
-                         SemanticsNodeArgs(node_block));                   \
-  }
-#define CARBON_SEMANTICS_MAKE_node_and_node_block(Name)                      \
-  static auto Make##Name(SemanticsNodeId node,                               \
-                         SemanticsNodeBlockId node_block)                    \
-      ->SemanticsNode {                                                      \
-    return SemanticsNode(                                                    \
-        SemanticsNodeKind::Name(),                                           \
-        SemanticsNodeArgs(SemanticsNodeIdAndNodeBlockId{node, node_block})); \
+  auto GetCodeBlock() const -> SemanticsNodeBlockId {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::CodeBlock());
+    return SemanticsNodeBlockId(arg0_);
   }
 
-#define CARBON_SEMANTICS_NODE_KIND(Name, ArgsType) \
-  CARBON_SEMANTICS_MAKE_##ArgsType(Name)
-#include "toolchain/semantics/semantics_node_kind.def"
+  static auto MakeFunctionDeclaration(SemanticsNodeId name) -> SemanticsNode {
+    return SemanticsNode(SemanticsNodeKind::FunctionDeclaration(), name.id);
+  }
+  auto GetFunctionDeclaration() const -> SemanticsNodeId {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::FunctionDeclaration());
+    return SemanticsNodeId(arg0_);
+  }
 
-#undef CARBON_SEMANTICS_MAKE_no_args
-#undef CARBON_SEMANTICS_MAKE_one_node
-#undef CARBON_SEMANTICS_MAKE_two_nodes
+  static auto MakeFunctionDefinition(SemanticsNodeId decl,
+                                     SemanticsNodeBlockId node_block)
+      -> SemanticsNode {
+    return SemanticsNode(SemanticsNodeKind::FunctionDefinition(), decl.id,
+                         node_block.id);
+  }
+  auto GetFunctionDefinition() const
+      -> std::pair<SemanticsNodeId, SemanticsNodeBlockId> {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::FunctionDefinition());
+    return {SemanticsNodeId(arg0_), SemanticsNodeBlockId(arg1_)};
+  }
 
-#undef CARBON_SEMANTICS_MAKE_identifier
-#undef CARBON_SEMANTICS_MAKE_integer_literal
-#undef CARBON_SEMANTICS_MAKE_node_block
-#undef CARBON_SEMANTICS_MAKE_node_and_node_block
+  static auto MakeIdentifier(SemanticsIdentifierId identifier)
+      -> SemanticsNode {
+    return SemanticsNode(SemanticsNodeKind::Identifier(), identifier.id);
+  }
+  auto GetIdentifier() const -> SemanticsIdentifierId {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::Identifier());
+    return SemanticsIdentifierId(arg0_);
+  }
 
-  SemanticsNode() : kind_(SemanticsNodeKind::Invalid()) {}
+  static auto MakeIntegerLiteral(SemanticsIntegerLiteralId integer)
+      -> SemanticsNode {
+    return SemanticsNode(SemanticsNodeKind::IntegerLiteral(), integer.id);
+  }
+  auto GetIntegerLiteral() const -> SemanticsIntegerLiteralId {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::IntegerLiteral());
+    return SemanticsIntegerLiteralId(arg0_);
+  }
+
+  static auto MakeReturn() -> SemanticsNode {
+    return SemanticsNode(SemanticsNodeKind::Return());
+  }
+  auto GetReturn() const -> NoArgs {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::Return());
+    return {};
+  }
+
+  static auto MakeReturnExpression(SemanticsNodeId expr) -> SemanticsNode {
+    return SemanticsNode(SemanticsNodeKind::ReturnExpression(), expr.id);
+  }
+  auto GetReturnExpression() const -> SemanticsNodeId {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::ReturnExpression());
+    return SemanticsNodeId(arg0_);
+  }
+
+  SemanticsNode() : SemanticsNode(SemanticsNodeKind::Invalid()) {}
 
   auto kind() -> SemanticsNodeKind { return kind_; }
 
   void Print(llvm::raw_ostream& out) const;
 
  private:
-  SemanticsNode(SemanticsNodeKind kind, SemanticsNodeArgs one_of_args)
-      : kind_(kind), one_of_args_(one_of_args) {}
+  explicit SemanticsNode(SemanticsNodeKind kind, int32_t arg0 = -1,
+                         int32_t arg1 = -1)
+      : kind_(kind), arg0_(arg0), arg1_(arg1) {}
 
   SemanticsNodeKind kind_;
-
-  SemanticsNodeArgs one_of_args_;
+  int32_t arg0_;
+  int32_t arg1_;
 };
+
+// TODO: This is currently 12 bytes because we sometimes have 2 arguments for a
+// pair of SemanticsNodes. If SemanticsNode was tracked in 3.5 bytes, we could
+// potentially change SemanticsNode to 8 bytes. This may be worth investigating
+// further.
+static_assert(sizeof(SemanticsNode) == 12, "Unexpected SemanticsNode size");
 
 }  // namespace Carbon
 
