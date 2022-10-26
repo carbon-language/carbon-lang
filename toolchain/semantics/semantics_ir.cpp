@@ -7,12 +7,26 @@
 #include "common/check.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/semantics/semantics_builtin_kind.h"
 #include "toolchain/semantics/semantics_node.h"
 #include "toolchain/semantics/semantics_parse_tree_handler.h"
 
 namespace Carbon {
 
-auto SemanticsIR::BuildBuiltins() -> void {}
+auto SemanticsIR::BuildBuiltins() -> void {
+  CARBON_CHECK(node_blocks_.empty())
+      << "BuildBuiltins must be called before blocks are added.";
+
+  auto block_id = AddNodeBlock();
+  auto type_type_name =
+      AddNode(block_id, SemanticsNode::MakeIdentifier(AddIdentifier("Type")));
+  auto type_type_builtin = AddNode(
+      block_id, SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::TypeType()));
+
+  CARBON_CHECK(node_blocks_.size() == 1)
+      << "BuildBuiltins should only produce 1 block, actual: "
+      << node_blocks_.size();
+}
 
 auto SemanticsIR::Build(const TokenizedBuffer& tokens,
                         const ParseTree& parse_tree) -> void {
