@@ -65,8 +65,8 @@ class SemanticsNode {
 
   static auto MakeBinaryOperatorAdd(SemanticsNodeId lhs, SemanticsNodeId rhs)
       -> SemanticsNode {
-    return SemanticsNode(SemanticsNodeKind::BinaryOperatorAdd(), lhs.id,
-                         rhs.id);
+    return SemanticsNode(SemanticsNodeKind::BinaryOperatorAdd(),
+                         SemanticsNodeId(), lhs.id, rhs.id);
   }
   auto GetAsBinaryOperatorAdd() const
       -> std::pair<SemanticsNodeId, SemanticsNodeId> {
@@ -76,7 +76,8 @@ class SemanticsNode {
 
   static auto MakeBindName(SemanticsIdentifierId name, SemanticsNodeId node)
       -> SemanticsNode {
-    return SemanticsNode(SemanticsNodeKind::BindName(), name.id, node.id);
+    return SemanticsNode(SemanticsNodeKind::BindName(), SemanticsNodeId(),
+                         name.id, node.id);
   }
   auto GetAsBindName() const
       -> std::pair<SemanticsIdentifierId, SemanticsNodeId> {
@@ -84,8 +85,10 @@ class SemanticsNode {
     return {SemanticsIdentifierId(arg0_), SemanticsNodeId(arg1_)};
   }
 
-  static auto MakeBuiltin(SemanticsBuiltinKind builtin_kind) -> SemanticsNode {
-    return SemanticsNode(SemanticsNodeKind::Builtin(), builtin_kind.AsInt());
+  static auto MakeBuiltin(SemanticsBuiltinKind builtin_kind,
+                          SemanticsNodeId type) -> SemanticsNode {
+    return SemanticsNode(SemanticsNodeKind::Builtin(), type,
+                         builtin_kind.AsInt());
   }
   auto GetAsBuiltin() const -> SemanticsBuiltinKind {
     CARBON_CHECK(kind_ == SemanticsNodeKind::Builtin());
@@ -93,7 +96,8 @@ class SemanticsNode {
   }
 
   static auto MakeCodeBlock(SemanticsNodeBlockId node_block) -> SemanticsNode {
-    return SemanticsNode(SemanticsNodeKind::CodeBlock(), node_block.id);
+    return SemanticsNode(SemanticsNodeKind::CodeBlock(), SemanticsNodeId(),
+                         node_block.id);
   }
   auto GetAsCodeBlock() const -> SemanticsNodeBlockId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::CodeBlock());
@@ -102,7 +106,8 @@ class SemanticsNode {
 
   // TODO: The signature should be added as a parameter.
   static auto MakeFunctionDeclaration() -> SemanticsNode {
-    return SemanticsNode(SemanticsNodeKind::FunctionDeclaration());
+    return SemanticsNode(SemanticsNodeKind::FunctionDeclaration(),
+                         SemanticsNodeId());
   }
   auto GetAsFunctionDeclaration() const -> NoArgs {
     CARBON_CHECK(kind_ == SemanticsNodeKind::FunctionDeclaration());
@@ -112,8 +117,8 @@ class SemanticsNode {
   static auto MakeFunctionDefinition(SemanticsNodeId decl,
                                      SemanticsNodeBlockId node_block)
       -> SemanticsNode {
-    return SemanticsNode(SemanticsNodeKind::FunctionDefinition(), decl.id,
-                         node_block.id);
+    return SemanticsNode(SemanticsNodeKind::FunctionDefinition(),
+                         SemanticsNodeId(), decl.id, node_block.id);
   }
   auto GetAsFunctionDefinition() const
       -> std::pair<SemanticsNodeId, SemanticsNodeBlockId> {
@@ -123,7 +128,8 @@ class SemanticsNode {
 
   static auto MakeIntegerLiteral(SemanticsIntegerLiteralId integer)
       -> SemanticsNode {
-    return SemanticsNode(SemanticsNodeKind::IntegerLiteral(), integer.id);
+    return SemanticsNode(SemanticsNodeKind::IntegerLiteral(), SemanticsNodeId(),
+                         integer.id);
   }
   auto GetAsIntegerLiteral() const -> SemanticsIntegerLiteralId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::IntegerLiteral());
@@ -131,7 +137,7 @@ class SemanticsNode {
   }
 
   static auto MakeReturn() -> SemanticsNode {
-    return SemanticsNode(SemanticsNodeKind::Return());
+    return SemanticsNode(SemanticsNodeKind::Return(), SemanticsNodeId());
   }
   auto GetAsReturn() const -> NoArgs {
     CARBON_CHECK(kind_ == SemanticsNodeKind::Return());
@@ -139,34 +145,38 @@ class SemanticsNode {
   }
 
   static auto MakeReturnExpression(SemanticsNodeId expr) -> SemanticsNode {
-    return SemanticsNode(SemanticsNodeKind::ReturnExpression(), expr.id);
+    return SemanticsNode(SemanticsNodeKind::ReturnExpression(),
+                         SemanticsNodeId(), expr.id);
   }
   auto GetAsReturnExpression() const -> SemanticsNodeId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::ReturnExpression());
     return SemanticsNodeId(arg0_);
   }
 
-  SemanticsNode() : SemanticsNode(SemanticsNodeKind::Invalid()) {}
+  SemanticsNode()
+      : SemanticsNode(SemanticsNodeKind::Invalid(), SemanticsNodeId()) {}
 
   auto kind() -> SemanticsNodeKind { return kind_; }
+  auto type() -> SemanticsNodeId { return type_; }
 
   void Print(llvm::raw_ostream& out) const;
 
  private:
-  explicit SemanticsNode(SemanticsNodeKind kind, int32_t arg0 = -1,
-                         int32_t arg1 = -1)
-      : kind_(kind), arg0_(arg0), arg1_(arg1) {}
+  explicit SemanticsNode(SemanticsNodeKind kind, SemanticsNodeId type,
+                         int32_t arg0 = -1, int32_t arg1 = -1)
+      : kind_(kind), type_(type), arg0_(arg0), arg1_(arg1) {}
 
   SemanticsNodeKind kind_;
+  SemanticsNodeId type_;
   int32_t arg0_;
   int32_t arg1_;
 };
 
-// TODO: This is currently 12 bytes because we sometimes have 2 arguments for a
-// pair of SemanticsNodes. If SemanticsNode was tracked in 3.5 bytes, we could
-// potentially change SemanticsNode to 8 bytes. This may be worth investigating
-// further.
-static_assert(sizeof(SemanticsNode) == 12, "Unexpected SemanticsNode size");
+// TODO: This is currently 16 bytes because we sometimes have 2 arguments for a
+// pair of SemanticsNodes. However, SemanticsNodeKind is 1 byte; if args
+// were 3.5 bytes, we could potentially shrink SemanticsNode by 4 bytes. This
+// may be worth investigating further.
+static_assert(sizeof(SemanticsNode) == 16, "Unexpected SemanticsNode size");
 
 }  // namespace Carbon
 

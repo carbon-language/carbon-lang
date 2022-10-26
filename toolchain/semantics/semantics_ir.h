@@ -60,6 +60,7 @@ class SemanticsIR {
     return node_id;
   }
 
+  SemanticsNodeId builtins_[SemanticsBuiltinKind::Count];
   llvm::SmallVector<llvm::StringRef> identifiers_;
   llvm::SmallVector<llvm::APInt> integer_literals_;
   llvm::SmallVector<llvm::SmallVector<SemanticsNode>> node_blocks_;

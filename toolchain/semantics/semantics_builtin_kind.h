@@ -21,6 +21,14 @@ class SemanticsBuiltinKind {
   };
 
  public:
+  static constexpr int Count = []() constexpr {
+    int count = 0;
+#define CARBON_SEMANTICS_BUILTIN_KIND(Name) ++count;
+#include "toolchain/semantics/semantics_builtin_kind.def"
+    return count;
+  }
+  ();
+
   // `clang-format` has a bug with spacing around `->` returns in macros. See
   // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
 #define CARBON_SEMANTICS_BUILTIN_KIND(Name)            \

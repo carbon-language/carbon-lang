@@ -12,8 +12,9 @@
 // CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   block0 = {
-// CHECK:STDOUT:     node0 = Builtin(TypeType);
+// CHECK:STDOUT:     node0 = Builtin(TypeType): node0;
 // CHECK:STDOUT:     node1 = BindName(ident0, node0);
+// CHECK:STDOUT:     node2 = Builtin(Int32): node0;
 // CHECK:STDOUT:   },
 // CHECK:STDOUT:   block1 = {
 // CHECK:STDOUT:     node0 = FunctionDeclaration();

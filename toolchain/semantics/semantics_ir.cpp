@@ -18,11 +18,19 @@ auto SemanticsIR::BuildBuiltins() -> void {
       << "BuildBuiltins must be called before blocks are added.";
 
   auto block_id = AddNodeBlock();
-  // TODO: Store this for quick reference?
+
   auto builtin_type_type = AddNode(
-      block_id, SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::TypeType()));
+      block_id, SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::TypeType(),
+                                           SemanticsNodeId(0)));
+  builtins_[SemanticsBuiltinKind::TypeType().AsInt()] = builtin_type_type;
+  CARBON_CHECK(builtin_type_type.id == 0)
+      << "TypeType's type must be self-referential.";
   AddNode(block_id, SemanticsNode::MakeBindName(AddIdentifier("Type"),
                                                 builtin_type_type));
+
+  builtins_[SemanticsBuiltinKind::Int32().AsInt()] =
+      AddNode(block_id, SemanticsNode::MakeBuiltin(
+                            SemanticsBuiltinKind::Int32(), builtin_type_type));
 
   CARBON_CHECK(node_blocks_.size() == 1)
       << "BuildBuiltins should only produce 1 block, actual: "
