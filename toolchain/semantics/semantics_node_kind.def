@@ -13,32 +13,15 @@
 #error "Must define the x-macro to use this file."
 #endif
 
-// No args.
-CARBON_SEMANTICS_NODE_KIND(Invalid, no_args)
+CARBON_SEMANTICS_NODE_KIND(Invalid)
 
-// Two nodes: lhs and rhs.
-CARBON_SEMANTICS_NODE_KIND(BinaryOperatorAdd, two_nodes)
-
-// The code block.
-CARBON_SEMANTICS_NODE_KIND(CodeBlock, node_block)
-
-// One node: the name.
-// TODO: Add a declaration scope as a second arg.
-CARBON_SEMANTICS_NODE_KIND(FunctionDeclaration, one_node)
-
-// Two nodes: a FunctionDeclaration and its body.
-CARBON_SEMANTICS_NODE_KIND(FunctionDefinition, node_and_node_block)
-
-// The declared IdentifierId.
-CARBON_SEMANTICS_NODE_KIND(Identifier, identifier)
-
-// The declared IntegerLiteralId.
-CARBON_SEMANTICS_NODE_KIND(IntegerLiteral, integer_literal)
-
-// No args.
-CARBON_SEMANTICS_NODE_KIND(Return, no_args)
-
-// One node: the return expression.
-CARBON_SEMANTICS_NODE_KIND(ReturnExpression, one_node)
+CARBON_SEMANTICS_NODE_KIND(BinaryOperatorAdd)
+CARBON_SEMANTICS_NODE_KIND(CodeBlock)
+CARBON_SEMANTICS_NODE_KIND(FunctionDeclaration)
+CARBON_SEMANTICS_NODE_KIND(FunctionDefinition)
+CARBON_SEMANTICS_NODE_KIND(Identifier)
+CARBON_SEMANTICS_NODE_KIND(IntegerLiteral)
+CARBON_SEMANTICS_NODE_KIND(Return)
+CARBON_SEMANTICS_NODE_KIND(ReturnExpression)
 
 #undef CARBON_SEMANTICS_NODE_KIND
