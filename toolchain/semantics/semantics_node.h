@@ -60,14 +60,14 @@ class SemanticsNode {
  public:
   struct NoArgs {};
 
-  auto GetInvalid() const -> NoArgs { CARBON_FATAL() << "Invalid access"; }
+  auto GetAsInvalid() const -> NoArgs { CARBON_FATAL() << "Invalid access"; }
 
   static auto MakeBinaryOperatorAdd(SemanticsNodeId lhs, SemanticsNodeId rhs)
       -> SemanticsNode {
     return SemanticsNode(SemanticsNodeKind::BinaryOperatorAdd(), lhs.id,
                          rhs.id);
   }
-  auto GetBinaryOperatorAdd() const
+  auto GetAsBinaryOperatorAdd() const
       -> std::pair<SemanticsNodeId, SemanticsNodeId> {
     CARBON_CHECK(kind_ == SemanticsNodeKind::BinaryOperatorAdd());
     return {SemanticsNodeId(arg0_), SemanticsNodeId(arg1_)};
@@ -76,7 +76,7 @@ class SemanticsNode {
   static auto MakeCodeBlock(SemanticsNodeBlockId node_block) -> SemanticsNode {
     return SemanticsNode(SemanticsNodeKind::CodeBlock(), node_block.id);
   }
-  auto GetCodeBlock() const -> SemanticsNodeBlockId {
+  auto GetAsCodeBlock() const -> SemanticsNodeBlockId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::CodeBlock());
     return SemanticsNodeBlockId(arg0_);
   }
@@ -84,7 +84,7 @@ class SemanticsNode {
   static auto MakeFunctionDeclaration(SemanticsNodeId name) -> SemanticsNode {
     return SemanticsNode(SemanticsNodeKind::FunctionDeclaration(), name.id);
   }
-  auto GetFunctionDeclaration() const -> SemanticsNodeId {
+  auto GetAsFunctionDeclaration() const -> SemanticsNodeId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::FunctionDeclaration());
     return SemanticsNodeId(arg0_);
   }
@@ -95,7 +95,7 @@ class SemanticsNode {
     return SemanticsNode(SemanticsNodeKind::FunctionDefinition(), decl.id,
                          node_block.id);
   }
-  auto GetFunctionDefinition() const
+  auto GetAsFunctionDefinition() const
       -> std::pair<SemanticsNodeId, SemanticsNodeBlockId> {
     CARBON_CHECK(kind_ == SemanticsNodeKind::FunctionDefinition());
     return {SemanticsNodeId(arg0_), SemanticsNodeBlockId(arg1_)};
@@ -105,7 +105,7 @@ class SemanticsNode {
       -> SemanticsNode {
     return SemanticsNode(SemanticsNodeKind::Identifier(), identifier.id);
   }
-  auto GetIdentifier() const -> SemanticsIdentifierId {
+  auto GetAsIdentifier() const -> SemanticsIdentifierId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::Identifier());
     return SemanticsIdentifierId(arg0_);
   }
@@ -114,7 +114,7 @@ class SemanticsNode {
       -> SemanticsNode {
     return SemanticsNode(SemanticsNodeKind::IntegerLiteral(), integer.id);
   }
-  auto GetIntegerLiteral() const -> SemanticsIntegerLiteralId {
+  auto GetAsIntegerLiteral() const -> SemanticsIntegerLiteralId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::IntegerLiteral());
     return SemanticsIntegerLiteralId(arg0_);
   }
@@ -122,7 +122,7 @@ class SemanticsNode {
   static auto MakeReturn() -> SemanticsNode {
     return SemanticsNode(SemanticsNodeKind::Return());
   }
-  auto GetReturn() const -> NoArgs {
+  auto GetAsReturn() const -> NoArgs {
     CARBON_CHECK(kind_ == SemanticsNodeKind::Return());
     return {};
   }
@@ -130,7 +130,7 @@ class SemanticsNode {
   static auto MakeReturnExpression(SemanticsNodeId expr) -> SemanticsNode {
     return SemanticsNode(SemanticsNodeKind::ReturnExpression(), expr.id);
   }
-  auto GetReturnExpression() const -> SemanticsNodeId {
+  auto GetAsReturnExpression() const -> SemanticsNodeId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::ReturnExpression());
     return SemanticsNodeId(arg0_);
   }
