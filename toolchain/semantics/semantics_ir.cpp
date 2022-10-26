@@ -18,10 +18,11 @@ auto SemanticsIR::BuildBuiltins() -> void {
       << "BuildBuiltins must be called before blocks are added.";
 
   auto block_id = AddNodeBlock();
-  auto type_type_name =
-      AddNode(block_id, SemanticsNode::MakeIdentifier(AddIdentifier("Type")));
-  auto type_type_builtin = AddNode(
+  // TODO: Store this for quick reference?
+  auto builtin_type_type = AddNode(
       block_id, SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::TypeType()));
+  AddNode(block_id, SemanticsNode::MakeBindName(AddIdentifier("Type"),
+                                                builtin_type_type));
 
   CARBON_CHECK(node_blocks_.size() == 1)
       << "BuildBuiltins should only produce 1 block, actual: "

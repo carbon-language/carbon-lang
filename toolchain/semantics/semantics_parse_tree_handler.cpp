@@ -19,10 +19,6 @@ auto SemanticsParseTreeHandler::Build() -> void {
   for (auto it = range.begin();; ++it) {
     auto parse_node = *it;
     switch (auto parse_kind = parse_tree_->node_kind(parse_node)) {
-      case ParseNodeKind::DeclaredName(): {
-        HandleDeclaredName(parse_node);
-        break;
-      }
       case ParseNodeKind::FunctionDefinition(): {
         HandleFunctionDefinition(parse_node);
         break;
@@ -55,6 +51,7 @@ auto SemanticsParseTreeHandler::Build() -> void {
         HandleReturnStatement(parse_node);
         break;
       }
+      case ParseNodeKind::DeclaredName():
       case ParseNodeKind::FunctionIntroducer():
       case ParseNodeKind::ParameterListEnd():
       case ParseNodeKind::StatementEnd(): {
@@ -112,11 +109,13 @@ auto SemanticsParseTreeHandler::PopWithResult(ParseNodeKind pop_parse_kind)
   return node_id;
 }
 
-auto SemanticsParseTreeHandler::HandleDeclaredName(ParseTree::Node parse_node)
-    -> void {
-  auto text = parse_tree_->GetNodeText(parse_node);
-  auto identifier_id = semantics_->AddIdentifier(text);
-  Push(parse_node, SemanticsNode::MakeIdentifier(identifier_id));
+auto SemanticsParseTreeHandler::AddIdentifier(ParseTree::Node decl_node)
+    -> SemanticsIdentifierId {
+  CARBON_CHECK(parse_tree_->node_kind(decl_node) ==
+               ParseNodeKind::DeclaredName())
+      << parse_tree_->node_kind(decl_node);
+  auto text = parse_tree_->GetNodeText(decl_node);
+  return semantics_->AddIdentifier(text);
 }
 
 auto SemanticsParseTreeHandler::HandleFunctionDefinition(
@@ -134,10 +133,12 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinition(
 auto SemanticsParseTreeHandler::HandleFunctionDefinitionStart(
     ParseTree::Node parse_node) -> void {
   Pop(ParseNodeKind::ParameterList());
-  auto name_node_id = PopWithResult(ParseNodeKind::DeclaredName());
+  auto name = AddIdentifier(node_stack_.back().parse_node);
+  node_stack_.pop_back();
   Pop(ParseNodeKind::FunctionIntroducer());
 
-  auto decl_id = AddNode(SemanticsNode::MakeFunctionDeclaration(name_node_id));
+  auto decl_id = AddNode(SemanticsNode::MakeFunctionDeclaration());
+  AddNode(SemanticsNode::MakeBindName(name, decl_id));
   auto block_id = semantics_->AddNodeBlock();
   AddNode(SemanticsNode::MakeFunctionDefinition(decl_id, block_id));
   node_block_stack_.push_back(block_id);

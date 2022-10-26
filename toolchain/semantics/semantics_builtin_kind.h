@@ -46,9 +46,15 @@ class SemanticsBuiltinKind {
   // Gets a friendly name for the token for logging or debugging.
   [[nodiscard]] auto name() const -> llvm::StringRef;
 
-  // Enable conversion to our private enum, including in a `constexpr` context,
-  // to enable usage in `switch` and `case`. The enum remains private and
-  // nothing else should be using this function.
+  // Support conversion to and from an int32_t for SemanticNode storage.
+  auto AsInt() -> int32_t { return static_cast<int32_t>(kind_); }
+  static auto FromInt(int32_t val) -> SemanticsBuiltinKind {
+    return SemanticsBuiltinKind(static_cast<KindEnum>(val));
+  }
+
+  // Enable conversion to our private enum, including in a `constexpr`
+  // context, to enable usage in `switch` and `case`. The enum remains
+  // private and nothing else should be using this function.
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr operator KindEnum() const { return kind_; }
 

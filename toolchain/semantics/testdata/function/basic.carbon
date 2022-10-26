@@ -5,17 +5,22 @@
 // AUTOUPDATE
 // RUN: %{carbon-run-semantics}
 // CHECK:STDOUT: identifiers = {
-// CHECK:STDOUT:   ident0 = "Foo";
+// CHECK:STDOUT:   ident0 = "Type";
+// CHECK:STDOUT:   ident1 = "Foo";
 // CHECK:STDOUT: },
 // CHECK:STDOUT: integer_literals = {
 // CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   block0 = {
-// CHECK:STDOUT:     node0 = Identifier(ident0);
-// CHECK:STDOUT:     node1 = FunctionDeclaration(node0);
-// CHECK:STDOUT:     node2 = FunctionDefinition(node1, block1);
+// CHECK:STDOUT:     node0 = Builtin(TypeType);
+// CHECK:STDOUT:     node1 = BindName(ident0, node0);
 // CHECK:STDOUT:   },
 // CHECK:STDOUT:   block1 = {
+// CHECK:STDOUT:     node0 = FunctionDeclaration();
+// CHECK:STDOUT:     node1 = BindName(ident1, node0);
+// CHECK:STDOUT:     node2 = FunctionDefinition(node0, block2);
+// CHECK:STDOUT:   },
+// CHECK:STDOUT:   block2 = {
 // CHECK:STDOUT:   },
 // CHECK:STDOUT: }
 

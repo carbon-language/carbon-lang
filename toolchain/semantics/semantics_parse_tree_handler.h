@@ -30,6 +30,9 @@ class SemanticsParseTreeHandler {
     llvm::Optional<SemanticsNodeId> result_id;
   };
 
+  // Adds an identifier for a DeclaredName node, returning its reference.
+  auto AddIdentifier(ParseTree::Node decl_node) -> SemanticsIdentifierId;
+
   // Adds a node to the current block, returning the produced ID.
   auto AddNode(SemanticsNode node) -> SemanticsNodeId;
 

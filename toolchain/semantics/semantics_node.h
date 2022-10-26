@@ -74,6 +74,24 @@ class SemanticsNode {
     return {SemanticsNodeId(arg0_), SemanticsNodeId(arg1_)};
   }
 
+  static auto MakeBindName(SemanticsIdentifierId name, SemanticsNodeId node)
+      -> SemanticsNode {
+    return SemanticsNode(SemanticsNodeKind::BindName(), name.id, node.id);
+  }
+  auto GetBindName() const
+      -> std::pair<SemanticsIdentifierId, SemanticsNodeId> {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::BindName());
+    return {SemanticsIdentifierId(arg0_), SemanticsNodeId(arg1_)};
+  }
+
+  static auto MakeBuiltin(SemanticsBuiltinKind builtin_kind) -> SemanticsNode {
+    return SemanticsNode(SemanticsNodeKind::Builtin(), builtin_kind.AsInt());
+  }
+  auto GetBuiltin() const -> SemanticsBuiltinKind {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::Builtin());
+    return SemanticsBuiltinKind::FromInt(arg0_);
+  }
+
   static auto MakeCodeBlock(SemanticsNodeBlockId node_block) -> SemanticsNode {
     return SemanticsNode(SemanticsNodeKind::CodeBlock(), node_block.id);
   }
@@ -82,12 +100,13 @@ class SemanticsNode {
     return SemanticsNodeBlockId(arg0_);
   }
 
-  static auto MakeFunctionDeclaration(SemanticsNodeId name) -> SemanticsNode {
-    return SemanticsNode(SemanticsNodeKind::FunctionDeclaration(), name.id);
+  // TODO: The signature should be added as a parameter.
+  static auto MakeFunctionDeclaration() -> SemanticsNode {
+    return SemanticsNode(SemanticsNodeKind::FunctionDeclaration());
   }
-  auto GetFunctionDeclaration() const -> SemanticsNodeId {
+  auto GetFunctionDeclaration() const -> NoArgs {
     CARBON_CHECK(kind_ == SemanticsNodeKind::FunctionDeclaration());
-    return SemanticsNodeId(arg0_);
+    return {};
   }
 
   static auto MakeFunctionDefinition(SemanticsNodeId decl,
@@ -100,15 +119,6 @@ class SemanticsNode {
       -> std::pair<SemanticsNodeId, SemanticsNodeBlockId> {
     CARBON_CHECK(kind_ == SemanticsNodeKind::FunctionDefinition());
     return {SemanticsNodeId(arg0_), SemanticsNodeBlockId(arg1_)};
-  }
-
-  static auto MakeIdentifier(SemanticsIdentifierId identifier)
-      -> SemanticsNode {
-    return SemanticsNode(SemanticsNodeKind::Identifier(), identifier.id);
-  }
-  auto GetIdentifier() const -> SemanticsIdentifierId {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::Identifier());
-    return SemanticsIdentifierId(arg0_);
   }
 
   static auto MakeIntegerLiteral(SemanticsIntegerLiteralId integer)
