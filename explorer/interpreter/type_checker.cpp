@@ -5,6 +5,7 @@
 #include "explorer/interpreter/type_checker.h"
 
 #include <algorithm>
+#include <deque>
 #include <iterator>
 #include <map>
 #include <optional>
@@ -1094,31 +1095,44 @@ auto TypeChecker::ArgumentDeduction::Finish(TypeChecker& type_checker,
   return std::move(bindings);
 }
 
-namespace {
-// A queue implemented as a small-size-optimized fixed-size ring buffer.
-template <typename T>
-class SmallRingBufferQueue {
- public:
-  SmallRingBufferQueue(size_t max_size) : storage(max_size) {}
-  void Push(T v) {
-    CARBON_CHECK(size < static_cast<int>(storage.size()));
-    storage[(begin + size) % storage.size()] = std::move(v);
-    ++size;
-  }
-  auto Pop() -> std::optional<T> {
-    if (!size) {
-      return std::nullopt;
-    }
-    --size;
-    return std::move(storage[(begin + size) % storage.size()]);
+// Look for a rewrite to use when naming the given interface member in a type
+// that has the given list of rewrites.
+static auto LookupRewrite(llvm::ArrayRef<RewriteConstraint> rewrites,
+                          Nonnull<const InterfaceType*> interface,
+                          Nonnull<const Declaration*> member)
+    -> std::optional<const RewriteConstraint*> {
+  if (!isa<AssociatedConstantDeclaration>(member)) {
+    return std::nullopt;
   }
 
- protected:
-  llvm::SmallVector<T> storage;
-  int begin = 0;
-  int size = 0;
-};
-}  // namespace
+  for (auto& rewrite : rewrites) {
+    if (ValueEqual(interface, &rewrite.constant->interface(), std::nullopt) &&
+        member == &rewrite.constant->constant()) {
+      // A ConstraintType can only have one rewrite per (interface, member)
+      // pair, so we don't need to check the rest.
+      return &rewrite;
+    }
+  }
+
+  return std::nullopt;
+}
+
+// Look for a rewrite to use when naming the given interface member in a type
+// declared with the given type-of-type.
+static auto LookupRewrite(Nonnull<const Value*> type_of_type,
+                          Nonnull<const InterfaceType*> interface,
+                          Nonnull<const Declaration*> member)
+    -> std::optional<const RewriteConstraint*> {
+  // Find the set of rewrites. Only ConstraintTypes have rewrites.
+  // TODO: If we can ever see an InterfaceType here, we should convert it to a
+  // constraint type.
+  llvm::ArrayRef<RewriteConstraint> rewrites;
+  if (const auto* constraint_type = dyn_cast<ConstraintType>(type_of_type)) {
+    rewrites = constraint_type->rewrite_constraints();
+  }
+
+  return LookupRewrite(rewrites, interface, member);
+}
 
 // Builder for constraint types.
 //
@@ -1132,7 +1146,10 @@ class TypeChecker::ConstraintTypeBuilder {
   // Information about a rewrite constraint that is currently being rewritten.
   struct RewriteInfo {
     Nonnull<const RewriteConstraint*> rewrite;
-    bool rewrite_used = false;
+    // Whether the rewrite has been found to refer to itself. If so, the
+    // self-reference will not be expanded. `Resolve` uses this to detect
+    // rewrites that cannot be resolved due to cycles.
+    bool rewrite_references_itself = false;
   };
 
   ConstraintTypeBuilder(Nonnull<Arena*> arena, SourceLocation source_loc)
@@ -1159,8 +1176,8 @@ class TypeChecker::ConstraintTypeBuilder {
     return rewrite_constraints_;
   }
 
-  auto currently_rewriting() const -> std::optional<Nonnull<RewriteInfo*>> {
-    return currently_rewriting_;
+  auto current_rewrite_info() -> std::optional<Nonnull<RewriteInfo*>> {
+    return current_rewrite_info_;
   }
 
   // Produces a type that refers to the `.Self` type of the constraint.
@@ -1261,8 +1278,6 @@ class TypeChecker::ConstraintTypeBuilder {
     // constraint, then rewrites for this added constraint become rewrites for
     // the resulting constraint. Otherwise, discard the rewrites and keep only
     // their corresponding equality constraints.
-    // TODO: What happens if these rewrites appear in the impl constraints?
-    // TODO: What happens if these rewrites appear in each other?
     for (const auto& rewrite_constraint : constraint->rewrite_constraints()) {
       const auto* interface = cast<InterfaceType>(type_checker.Substitute(
           local_bindings, &rewrite_constraint.constant->interface()));
@@ -1359,129 +1374,9 @@ class TypeChecker::ConstraintTypeBuilder {
   // declared name.
   auto Resolve(TypeChecker& type_checker, SourceLocation source_loc,
                const ImplScope& impl_scope) -> ErrorOr<Success> {
-    type_checker.partial_constraint_types_.push_back(this);
-    auto pop_partial_constraint_type = llvm::make_scope_exit(
-        [&] { type_checker.partial_constraint_types_.pop_back(); });
-
-    // Check for conflicting rewrites and deduplicate.
-    // TODO: Avoid the quadratic behavior.
-    std::vector<RewriteConstraint> new_rewrite_constraints;
-    for (auto& rewrite_a : rewrite_constraints_) {
-      bool found_existing = false;
-      for (auto& rewrite_b : new_rewrite_constraints) {
-        if (ValueEqual(rewrite_a.constant, rewrite_b.constant, std::nullopt)) {
-          if (ValueEqual(rewrite_a.unconverted_replacement,
-                         rewrite_b.unconverted_replacement, std::nullopt) &&
-              TypeEqual(rewrite_a.unconverted_replacement_type,
-                        rewrite_b.unconverted_replacement_type, std::nullopt)) {
-            found_existing = true;
-            break;
-          }
-          return ProgramError(source_loc)
-                 << "multiple different rewrites for `" << *rewrite_a.constant
-                 << "`:\n"
-                 << "  " << *rewrite_b.unconverted_replacement << "\n"
-                 << "  " << *rewrite_a.unconverted_replacement;
-        }
-      }
-      if (!found_existing) {
-        new_rewrite_constraints.push_back(rewrite_a);
-      }
-    }
-    rewrite_constraints_ = std::move(new_rewrite_constraints);
-
-    // Rebuild a value with our updated rewrite constraints. Because this
-    // builder is in scope as a partial constraint type, if we perform a null
-    // substitution any nested associated constants will be rebuilt.
-    auto rebuild = [&](Nonnull<const Value*> value) {
-      Bindings null_bindings;
-      return type_checker.SubstituteImpl(null_bindings, value);
-    };
-
-    SmallRingBufferQueue<Nonnull<RewriteConstraint*>> rewrite_queue(
-        rewrite_constraints_.size());
-    for (auto& rewrite : rewrite_constraints_) {
-      if (type_checker.trace_stream_) {
-        **type_checker.trace_stream_ << "initial rewrite of "
-                                     << *rewrite.constant << " is "
-                                     << *rewrite.converted_replacement << "\n";
-      }
-      rewrite_queue.Push(&rewrite);
-    }
-
-    // Apply rewrites to each other and find a fixed point.
-    int rewrite_iterations = 0;
-    while (auto rewrite_entry = rewrite_queue.Pop()) {
-      auto* rewrite = *rewrite_entry;
-
-      // Track that we are rewriting this rewrite.
-      RewriteInfo info = {.rewrite = rewrite};
-      currently_rewriting_ = &info;
-      auto clear_currently_rewriting =
-          llvm::make_scope_exit([&] { currently_rewriting_ = std::nullopt; });
-
-      // Rebuild the rewrite and see if it changed.
-      Nonnull<const Value*> rebuilt = rebuild(rewrite->converted_replacement);
-      if (info.rewrite_used) {
-        // This would result in an infinite loop.
-        return ProgramError(source_loc)
-               << "rewrite of " << *rewrite->constant
-               << " applies within its own resolved expansion of " << *rebuilt;
-      }
-      if (!ValueEqual(rebuilt, rewrite->converted_replacement, std::nullopt)) {
-        if (type_checker.trace_stream_) {
-          **type_checker.trace_stream_ << "rewrote rewrite of "
-                                       << *rewrite->constant << " to "
-                                       << *rebuilt << "\n";
-        }
-        rewrite->converted_replacement = rebuilt;
-        // Now we've rewritten this rewrite, we might find more rewrites apply
-        // to the portion we rewrote.
-        rewrite_queue.Push(rewrite);
-      } else {
-        if (type_checker.trace_stream_) {
-          **type_checker.trace_stream_ << "rewrite of " << *rewrite->constant
-                                       << " converged to " << *rebuilt << "\n";
-        }
-      }
-      ++rewrite_iterations;
-      // This iteration limit exists only to prevent large fuzzer-generated
-      // examples from leading to long compile times. If the limit is hit in a
-      // real example, it should be increased.
-      if (rewrite_iterations > 1000) {
-        return ProgramError(source_loc)
-               << "reached iteration limit resolving rewrite constraints";
-      }
-    }
-    currently_rewriting_ = std::nullopt;
-
-    // Apply rewrites through the rest of the rewrite constraints.
-    for (auto& rewrite : rewrite_constraints_) {
-      rewrite.unconverted_replacement =
-          rebuild(rewrite.unconverted_replacement);
-      rewrite.unconverted_replacement_type =
-          rebuild(rewrite.unconverted_replacement_type);
-    }
-
-    // Apply rewrites throughout impl constraints.
-    for (auto& impl_constraint : impl_constraints_) {
-      impl_constraint.type = rebuild(impl_constraint.type);
-      impl_constraint.interface =
-          cast<InterfaceType>(rebuild(impl_constraint.interface));
-    }
-
-    // Apply rewrites throughout equality constraints.
-    for (auto& equality_constraint : equality_constraints_) {
-      for (auto*& value : equality_constraint.values) {
-        value = rebuild(value);
-      }
-    }
-
-    // Apply rewrites throughout lookup contexts.
-    for (auto& lookup_context : lookup_contexts_) {
-      lookup_context.context = rebuild(lookup_context.context);
-    }
-
+    CARBON_RETURN_IF_ERROR(DeduplicateRewrites(source_loc));
+    CARBON_RETURN_IF_ERROR(ApplyRewritesToRewrites(type_checker, source_loc));
+    ApplyRewritesToConstraints(type_checker);
     return Success();
   }
 
@@ -1532,6 +1427,141 @@ class TypeChecker::ConstraintTypeBuilder {
     return impl_binding;
   }
 
+  // Check for conflicting rewrites and deduplicate.
+  auto DeduplicateRewrites(SourceLocation source_loc) -> ErrorOr<Success> {
+    std::vector<RewriteConstraint> new_rewrite_constraints;
+    for (auto& rewrite_a : rewrite_constraints_) {
+      if (auto existing_rewrite = LookupRewrite(
+              new_rewrite_constraints, &rewrite_a.constant->interface(),
+              &rewrite_a.constant->constant())) {
+        auto& rewrite_b = **existing_rewrite;
+        if (ValueEqual(rewrite_a.unconverted_replacement,
+                       rewrite_b.unconverted_replacement, std::nullopt) &&
+            TypeEqual(rewrite_a.unconverted_replacement_type,
+                      rewrite_b.unconverted_replacement_type, std::nullopt)) {
+          // This is a duplicate, ignore it.
+          continue;
+        }
+        return ProgramError(source_loc)
+               << "multiple different rewrites for `" << *rewrite_a.constant
+               << "`:\n"
+               << "  " << *rewrite_b.unconverted_replacement << "\n"
+               << "  " << *rewrite_a.unconverted_replacement;
+      }
+      new_rewrite_constraints.push_back(rewrite_a);
+    }
+    rewrite_constraints_ = std::move(new_rewrite_constraints);
+    return Success();
+  }
+
+  // Apply rewrites to each other and find a fixed point, or diagnose if there
+  // is a cycle.
+  auto ApplyRewritesToRewrites(TypeChecker& type_checker,
+                               SourceLocation source_loc) -> ErrorOr<Success> {
+    // Add this builder to the type checker's scope so that it considers our
+    // rewrites.
+    type_checker.partial_constraint_types_.push_back(this);
+    auto pop_partial_constraint_type = llvm::make_scope_exit(
+        [&] { type_checker.partial_constraint_types_.pop_back(); });
+
+    std::deque<Nonnull<RewriteConstraint*>> rewrite_queue;
+    for (auto& rewrite : rewrite_constraints_) {
+      if (type_checker.trace_stream_) {
+        **type_checker.trace_stream_ << "initial rewrite of "
+                                     << *rewrite.constant << " is "
+                                     << *rewrite.converted_replacement << "\n";
+      }
+      rewrite_queue.push_back(&rewrite);
+    }
+
+    int rewrite_iterations = 0;
+    while (!rewrite_queue.empty()) {
+      auto* rewrite = rewrite_queue.front();
+      rewrite_queue.pop_front();
+
+      // This iteration limit exists only to prevent large fuzzer-generated
+      // examples from leading to long compile times. If the limit is hit in a
+      // real example, it should be increased.
+      if (rewrite_iterations > 1000) {
+        return ProgramError(source_loc)
+               << "reached iteration limit resolving rewrite constraints";
+      }
+      ++rewrite_iterations;
+
+      // Rebuild the rewrite and see if it changed. Also track whether it
+      // attempted to reference itself recursively.
+      RewriteInfo info = {.rewrite = rewrite};
+      current_rewrite_info_ = &info;
+      Nonnull<const Value*> rebuilt =
+          type_checker.RebuildValue(rewrite->converted_replacement);
+      current_rewrite_info_ = std::nullopt;
+
+      if (info.rewrite_references_itself) {
+        // This would result in an infinite loop.
+        return ProgramError(source_loc)
+               << "rewrite of " << *rewrite->constant
+               << " applies within its own resolved expansion of " << *rebuilt;
+      }
+
+      if (!ValueEqual(rebuilt, rewrite->converted_replacement, std::nullopt)) {
+        if (type_checker.trace_stream_) {
+          **type_checker.trace_stream_ << "rewrote rewrite of "
+                                       << *rewrite->constant << " to "
+                                       << *rebuilt << "\n";
+        }
+        rewrite->converted_replacement = rebuilt;
+        // Now we've rewritten this rewrite, we might find more rewrites apply
+        // to the portion we rewrote.
+        rewrite_queue.push_back(rewrite);
+      } else {
+        if (type_checker.trace_stream_) {
+          **type_checker.trace_stream_ << "rewrite of " << *rewrite->constant
+                                       << " converged to " << *rebuilt << "\n";
+        }
+      }
+    }
+
+    return Success();
+  }
+
+  // Apply the rewrite constraints throughout our constraints.
+  auto ApplyRewritesToConstraints(TypeChecker& type_checker) -> void {
+    // Add this builder to the type checker's scope so that it considers our
+    // rewrites.
+    type_checker.partial_constraint_types_.push_back(this);
+    auto pop_partial_constraint_type = llvm::make_scope_exit(
+        [&] { type_checker.partial_constraint_types_.pop_back(); });
+
+    // Apply rewrites through the rewrite constraints. We assume that the
+    // converted replacements have already been rewritten fully.
+    for (auto& rewrite : rewrite_constraints_) {
+      rewrite.unconverted_replacement =
+          type_checker.RebuildValue(rewrite.unconverted_replacement);
+      rewrite.unconverted_replacement_type =
+          type_checker.RebuildValue(rewrite.unconverted_replacement_type);
+    }
+
+    // Apply rewrites throughout impl constraints.
+    for (auto& impl_constraint : impl_constraints_) {
+      impl_constraint.type = type_checker.RebuildValue(impl_constraint.type);
+      impl_constraint.interface = cast<InterfaceType>(
+          type_checker.RebuildValue(impl_constraint.interface));
+    }
+
+    // Apply rewrites throughout equality constraints.
+    for (auto& equality_constraint : equality_constraints_) {
+      for (auto*& value : equality_constraint.values) {
+        value = type_checker.RebuildValue(value);
+      }
+    }
+
+    // Apply rewrites throughout lookup contexts.
+    for (auto& lookup_context : lookup_contexts_) {
+      lookup_context.context =
+          type_checker.RebuildValue(lookup_context.context);
+    }
+  }
+
   Nonnull<Arena*> arena_;
   Nonnull<GenericBinding*> self_binding_;
   Nonnull<ImplBinding*> impl_binding_;
@@ -1539,7 +1569,7 @@ class TypeChecker::ConstraintTypeBuilder {
   std::vector<EqualityConstraint> equality_constraints_;
   std::vector<RewriteConstraint> rewrite_constraints_;
   std::vector<LookupContext> lookup_contexts_;
-  std::optional<RewriteInfo*> currently_rewriting_;
+  std::optional<RewriteInfo*> current_rewrite_info_;
 };
 
 // A collection of substituted `GenericBinding`s and `ImplBinding`s.
@@ -1624,6 +1654,11 @@ auto TypeChecker::Substitute(const Bindings& bindings,
     **trace_stream_ << "}\n  old: " << *type << "\n  new: " << *result << "\n";
   }
   return result;
+}
+
+auto TypeChecker::RebuildValue(Nonnull<const Value*> value) const
+    -> Nonnull<const Value*> {
+  return SubstituteImpl(Bindings(), value);
 }
 
 auto TypeChecker::SubstituteImpl(const Bindings& bindings,
@@ -2119,45 +2154,6 @@ auto TypeChecker::LookupInConstraint(SourceLocation source_loc,
   return found.value();
 }
 
-// Look for a rewrite to use when naming the given interface member in a type
-// that has the given list of rewrites.
-static auto LookupRewrite(llvm::ArrayRef<RewriteConstraint> rewrites,
-                          Nonnull<const InterfaceType*> interface,
-                          Nonnull<const Declaration*> member)
-    -> std::optional<const RewriteConstraint*> {
-  if (!isa<AssociatedConstantDeclaration>(member)) {
-    return std::nullopt;
-  }
-
-  for (auto& rewrite : rewrites) {
-    if (ValueEqual(interface, &rewrite.constant->interface(), std::nullopt) &&
-        member == &rewrite.constant->constant()) {
-      // A ConstraintType can only have one rewrite per (interface, member)
-      // pair, so we don't need to check the rest.
-      return &rewrite;
-    }
-  }
-
-  return std::nullopt;
-}
-
-// Look for a rewrite to use when naming the given interface member in a type
-// declared with the given type-of-type.
-static auto LookupRewrite(Nonnull<const Value*> type_of_type,
-                          Nonnull<const InterfaceType*> interface,
-                          Nonnull<const Declaration*> member)
-    -> std::optional<const RewriteConstraint*> {
-  // Find the set of rewrites. Only ConstraintTypes have rewrites.
-  // TODO: If we can ever see an InterfaceType here, we should convert it to a
-  // constraint type.
-  llvm::ArrayRef<RewriteConstraint> rewrites;
-  if (const auto* constraint_type = dyn_cast<ConstraintType>(type_of_type)) {
-    rewrites = constraint_type->rewrite_constraints();
-  }
-
-  return LookupRewrite(rewrites, interface, member);
-}
-
 auto TypeChecker::GetTypeForAssociatedConstant(
     Nonnull<const AssociatedConstant*> assoc) const -> Nonnull<const Value*> {
   const auto* assoc_type = &assoc->constant().static_type();
@@ -2181,10 +2177,12 @@ auto TypeChecker::LookupRewriteInTypeOf(
       if (auto result = LookupRewrite(builder->rewrite_constraints(), interface,
                                       member)) {
         // If we're in the middle of rewriting this rewrite, let the constraint
-        // type builder know it applies within itself.
-        if (auto currently_rewriting = builder->currently_rewriting();
-            currently_rewriting && (*currently_rewriting)->rewrite == *result) {
-          (*currently_rewriting)->rewrite_used = true;
+        // type builder know it applies within itself, and don't expand it
+        // within itself.
+        if (auto current_rewrite_info = builder->current_rewrite_info();
+            current_rewrite_info &&
+            (*current_rewrite_info)->rewrite == *result) {
+          (*current_rewrite_info)->rewrite_references_itself = true;
           return std::nullopt;
         }
         return result;
@@ -2197,8 +2195,8 @@ auto TypeChecker::LookupRewriteInTypeOf(
     if (!var_type->binding().has_static_type()) {
       // We looked for a rewrite before we finished type-checking the generic
       // binding. This happens when forming the type of a generic binding. Just
-      // say there are no rewrites yet.
-      // TODO: `.Self` substitution should fix this.
+      // say there are no rewrites yet; any rewrites will be applied when the
+      // constraint on the binding's type is resolved.
       return std::nullopt;
     }
     return LookupRewrite(&var_type->binding().static_type(), interface, member);
@@ -2206,14 +2204,13 @@ auto TypeChecker::LookupRewriteInTypeOf(
 
   // Given `(T.U).Y` for an associated type `U`, substitute into the type of
   // `U` to find rewrites.
-  // TODO: This substitution can lead to infinite recursion.
   if (const auto* assoc_const = dyn_cast<AssociatedConstant>(type)) {
     if (!assoc_const->constant().has_static_type()) {
       // We looked for a rewrite before we finished type-checking the
       // associated constant. This happens when forming the type of the
       // associated constant, if `.Self` is used to access an associated
-      // constant. Just say that there are not rewrites yet.
-      // TODO: `.Self` substitution should fix this.
+      // constant. Just say that there are not rewrites yet; any rewrites will
+      // be applied when the constraint on the binding's type is resolved.
       return std::nullopt;
     }
     // The following is an expanded version of
@@ -2233,6 +2230,7 @@ auto TypeChecker::LookupRewriteInTypeOf(
         if (ValueEqual(interface,
                        Substitute(bindings, &rewrite.constant->interface()),
                        std::nullopt)) {
+          // TODO: These substitutions can lead to infinite recursion.
           RewriteConstraint substituted = {
               // Not substituted, but our callers don't need it.
               .constant = rewrite.constant,
