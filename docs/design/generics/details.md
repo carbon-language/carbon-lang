@@ -4390,8 +4390,9 @@ be used in the following contexts:
 -   ✅ `C & D`
     -   There may be conflicts between `C` and `D` making this invalid that will
         only be discovered once they are both complete.
--   ✅ `interface `...` { impl as C; }`
--   ✅ `constraint `...` { impl as C; }`
+-   ✅ `interface `...` { impl` ... `as C; }` or
+    `constraint `...` { impl` ... `as C; }`
+    -   Nothing implied by implementing `C` will be visible until `C` is complete.
 -   ✅ `T:! C` ... `T is C`
 -   ✅ `T:! A & C` ... `T is C`
 -   ✅ `external impl `...` as C;`
@@ -4402,8 +4403,12 @@ An incomplete `C` cannot be used in the following contexts:
 
 -   ❌ `T:! C` ... `T.X`
 -   ❌ `T:! C where `...
--   ❌ `interface `...` { impl U as C; }` for `U != Self`
--   ❌ `constraint `...` { impl U as C; }` for `U != Self`
+-   ?? `interface `...` { extends C; }`
+    -   Open question: if we detect name collisions between the members of the
+        interface and `C` when the interface is defined, then we need `C` to be
+        complete. If we instead only generate errors on ambiguous use of members
+        with the same name, as we do with `A & B`, then we don't need to require
+        `C` to be complete.
 -   ❌ `class `...` { impl as C; }`
     -   The names of `C` are added to the class, and so those names need to be
         known.
