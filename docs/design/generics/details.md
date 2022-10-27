@@ -4415,7 +4415,7 @@ An incomplete `C` cannot be used in the following contexts:
         known.
 -   ❌ `T:! C` ... `T is A` where `A != C` is an interface or constraint
     -   Need to see the definition of `C` to see if it implies `A`.
--   ❌ `external impl `...`as C {`...` }`
+-   ❌ `external impl` ... `as C {` ... `}`
 
 ### Declaring implementations
 
