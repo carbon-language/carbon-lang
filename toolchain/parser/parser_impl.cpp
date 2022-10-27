@@ -374,36 +374,34 @@ auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
                    /*has_error=*/!type);
   }
 
-  auto valid_me_param =
+  auto possible_me_param =
       (kind == PatternKind::MeParameter && NextTokenIs(TokenKind::Me()) &&
-       tokens_.GetKind(*(position_ + 1)) == TokenKind::Colon() &&
-       tokens_.GetKind(*(position_ + 2)) == TokenKind::Self());
+       tokens_.GetKind(*(position_ + 1)) == TokenKind::Colon());
 
-  if (valid_me_param) {
+  if (possible_me_param) {
     auto start = GetSubtreeStartPosition();
     AddLeafNode(ParseNodeKind::Me(), Consume(TokenKind::Me()));
     auto colon = Consume(TokenKind::Colon());
-    AddLeafNode(ParseNodeKind::Self(), Consume(TokenKind::Self()));
+    auto type = ParseType();
 
-    return AddNode(ParseNodeKind::PatternBinding(), colon, start);
+    return AddNode(ParseNodeKind::PatternBinding(), colon, start,
+                   /*has_error*/ !type);
   }
 
-  auto valid_me_addr_param =
+  auto possible_me_addr_param =
       (kind == PatternKind::MeParameter && NextTokenIs(TokenKind::Addr()) &&
        tokens_.GetKind(*(position_ + 1)) == TokenKind::Me() &&
-       tokens_.GetKind(*(position_ + 2)) == TokenKind::Colon() &&
-       tokens_.GetKind(*(position_ + 3)) == TokenKind::Self() &&
-       tokens_.GetKind(*(position_ + 4)) == TokenKind::Star());
+       tokens_.GetKind(*(position_ + 2)) == TokenKind::Colon());
 
-  if (valid_me_addr_param) {
+  if (possible_me_addr_param) {
     auto start = GetSubtreeStartPosition();
     AddLeafNode(ParseNodeKind::Addr(), Consume(TokenKind::Addr()));
     AddLeafNode(ParseNodeKind::Me(), Consume(TokenKind::Me()));
     auto colon = Consume(TokenKind::Colon());
-    AddLeafNode(ParseNodeKind::Self(), Consume(TokenKind::Self()));
-    AddLeafNode(ParseNodeKind::SelfPointer(), Consume(TokenKind::Star()));
+    auto type = ParseType();
 
-    return AddNode(ParseNodeKind::PatternBinding(), colon, start);
+    return AddNode(ParseNodeKind::PatternBinding(), colon, start,
+                   /*has_error*/ !type);
   }
 
   switch (kind) {
