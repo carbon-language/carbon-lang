@@ -393,6 +393,17 @@ class TypeChecker {
                        Nonnull<const Value*> actual,
                        const ImplScope& impl_scope) const -> ErrorOr<Success>;
 
+  // Rebuild a value in the current type-checking context. Applies any rewrites
+  // that are in scope and attempts to resolve associated constants using impls
+  // that have been declared since the value was formed.
+  auto RebuildValue(Nonnull<const Value*> value) const -> Nonnull<const Value*>;
+
+  // Implementation of Substitute and RebuildValue. Does not check that
+  // bindings are nonempty, nor does it trace its progress.
+  auto SubstituteImpl(const Bindings& bindings,
+                      Nonnull<const Value*> type) const
+      -> Nonnull<const Value*>;
+
   // The name of a builtin interface, with any arguments.
   struct BuiltinInterfaceName {
     Builtins::Builtin builtin;
