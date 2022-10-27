@@ -638,8 +638,7 @@ auto ParseTree::Parser::ParseFunctionDeclaration(Parser::ParseContext context)
       if (!ParsePattern(PatternKind::MeParameter)) {
         CARBON_DIAGNOSTIC(ExpectedMeParam, Error,
                           "Associated method `{0}` must have a `me` parameter "
-                          "of the form: `[me: "
-                          "Self] or [addr me: Self*]`.",
+                          "of the form: `[me: <T>] or [addr me: <T>]`.",
                           llvm::StringRef);
         emitter_.Emit(*position_, ExpectedMeParam, tree_.GetNodeText(*name_n));
         has_error = true;
@@ -693,7 +692,7 @@ auto ParseTree::Parser::ParseFunctionDeclaration(Parser::ParseContext context)
     }
     case TokenKind::Semi(): {
       return AddNode(ParseNodeKind::FunctionDeclaration(),
-                     Consume(TokenKind::Semi()), start);
+                     Consume(TokenKind::Semi()), start, has_error);
     }
     default: {
       CARBON_DIAGNOSTIC(
