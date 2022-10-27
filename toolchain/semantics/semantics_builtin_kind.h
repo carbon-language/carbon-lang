@@ -21,13 +21,8 @@ class SemanticsBuiltinKind {
   };
 
  public:
-  static constexpr int Count = []() constexpr {
-    int count = 0;
-#define CARBON_SEMANTICS_BUILTIN_KIND(Name) ++count;
-#include "toolchain/semantics/semantics_builtin_kind.def"
-    return count;
-  }
-  ();
+  // The count of enum values excluding Invalid.
+  static constexpr uint8_t ValidCount = static_cast<uint8_t>(KindEnum::Invalid);
 
   // `clang-format` has a bug with spacing around `->` returns in macros. See
   // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.

@@ -13,9 +13,11 @@
 #error "Must define the x-macro to use this file."
 #endif
 
-CARBON_SEMANTICS_BUILTIN_KIND(Invalid)
-
 CARBON_SEMANTICS_BUILTIN_KIND(TypeType)
-CARBON_SEMANTICS_BUILTIN_KIND(Int32)
+CARBON_SEMANTICS_BUILTIN_KIND(IntegerLiteralType)
+
+// Keep invalid last, so that we can use values as array indices without needing
+// an invalid entry.
+CARBON_SEMANTICS_BUILTIN_KIND(Invalid)
 
 #undef CARBON_SEMANTICS_BUILTIN_KIND

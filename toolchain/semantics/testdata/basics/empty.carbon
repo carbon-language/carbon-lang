@@ -4,17 +4,16 @@
 //
 // AUTOUPDATE
 // RUN: %{carbon-run-semantics}
+// CHECK:STDOUT: cross_reference_irs.size == 2,
+// CHECK:STDOUT: cross_references = {
+// CHECK:STDOUT:   node_xref0 = "xref(ir0, block0, node0)";
+// CHECK:STDOUT:   node_xref1 = "xref(ir0, block0, node1)";
+// CHECK:STDOUT: },
 // CHECK:STDOUT: identifiers = {
-// CHECK:STDOUT:   ident0 = "Type";
 // CHECK:STDOUT: },
 // CHECK:STDOUT: integer_literals = {
 // CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   block0 = {
-// CHECK:STDOUT:     node0 = Builtin(TypeType): node0;
-// CHECK:STDOUT:     node1 = BindName(ident0, node0);
-// CHECK:STDOUT:     node2 = Builtin(Int32): node0;
-// CHECK:STDOUT:   },
-// CHECK:STDOUT:   block1 = {
 // CHECK:STDOUT:   },
 // CHECK:STDOUT: }

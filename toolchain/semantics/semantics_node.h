@@ -16,12 +16,38 @@ namespace Carbon {
 
 // Type-safe storage of Node IDs.
 struct SemanticsNodeId {
+  static constexpr int32_t CrossReferenceBit = 0x8000'0000;
+
+  // Constructs a cross-reference node ID.
+  static auto MakeCrossReference(int32_t id) -> SemanticsNodeId {
+    return SemanticsNodeId(id | CrossReferenceBit);
+  }
+  // Constructs a cross-reference node ID for a builtin. This relies on
+  // SemanticsIR guarantees for builtin cross-reference placement.
+  static auto MakeBuiltinReference(SemanticsBuiltinKind kind)
+      -> SemanticsNodeId {
+    return MakeCrossReference(kind.AsInt());
+  }
+
   SemanticsNodeId() : id(-1) {}
   explicit SemanticsNodeId(int32_t id) : id(id) {}
   SemanticsNodeId(SemanticsNodeId const&) = default;
   auto operator=(const SemanticsNodeId& other) -> SemanticsNodeId& = default;
 
-  void Print(llvm::raw_ostream& out) const { out << "node" << id; }
+  auto is_cross_reference() const -> bool { return id & CrossReferenceBit; }
+  // Returns the ID for a cross-reference, just handling removal of the marker
+  // bit.
+  auto GetAsCrossReference() const -> int32_t {
+    return id & ~CrossReferenceBit;
+  }
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    if (is_cross_reference()) {
+      out << "node_xref" << GetAsCrossReference();
+    } else {
+      out << "node" << id;
+    }
+  }
 
   int32_t id;
 };
@@ -31,7 +57,7 @@ struct SemanticsIdentifierId {
   SemanticsIdentifierId() : id(-1) {}
   explicit SemanticsIdentifierId(int32_t id) : id(id) {}
 
-  void Print(llvm::raw_ostream& out) const { out << "ident" << id; }
+  auto Print(llvm::raw_ostream& out) const -> void { out << "ident" << id; }
 
   int32_t id;
 };
@@ -41,7 +67,7 @@ struct SemanticsIntegerLiteralId {
   SemanticsIntegerLiteralId() : id(-1) {}
   explicit SemanticsIntegerLiteralId(int32_t id) : id(id) {}
 
-  void Print(llvm::raw_ostream& out) const { out << "int" << id; }
+  auto Print(llvm::raw_ostream& out) const -> void { out << "int" << id; }
 
   int32_t id;
 };
@@ -51,7 +77,7 @@ struct SemanticsNodeBlockId {
   SemanticsNodeBlockId() : id(-1) {}
   explicit SemanticsNodeBlockId(int32_t id) : id(id) {}
 
-  void Print(llvm::raw_ostream& out) const { out << "block" << id; }
+  auto Print(llvm::raw_ostream& out) const -> void { out << "block" << id; }
 
   int32_t id;
 };
@@ -128,7 +154,9 @@ class SemanticsNode {
 
   static auto MakeIntegerLiteral(SemanticsIntegerLiteralId integer)
       -> SemanticsNode {
-    return SemanticsNode(SemanticsNodeKind::IntegerLiteral(), SemanticsNodeId(),
+    return SemanticsNode(SemanticsNodeKind::IntegerLiteral(),
+                         SemanticsNodeId::MakeBuiltinReference(
+                             SemanticsBuiltinKind::IntegerLiteralType()),
                          integer.id);
   }
   auto GetAsIntegerLiteral() const -> SemanticsIntegerLiteralId {
@@ -159,7 +187,7 @@ class SemanticsNode {
   auto kind() -> SemanticsNodeKind { return kind_; }
   auto type() -> SemanticsNodeId { return type_; }
 
-  void Print(llvm::raw_ostream& out) const;
+  auto Print(llvm::raw_ostream& out) const -> void;
 
  private:
   explicit SemanticsNode(SemanticsNodeKind kind, SemanticsNodeId type,
