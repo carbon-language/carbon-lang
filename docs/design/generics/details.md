@@ -4394,6 +4394,9 @@ be used in the following contexts:
 -   ✅ `constraint `...` { impl as C; }`
 -   ✅ `T:! C` ... `T is C`
 -   ✅ `T:! A & C` ... `T is C`
+-   ✅ `external impl `...` as C;`
+    -   Checking that all associated constants of `C` are correctly assigned
+        values will be delayed until `C` is complete.
 
 An incomplete `C` cannot be used in the following contexts:
 
@@ -4404,10 +4407,9 @@ An incomplete `C` cannot be used in the following contexts:
 -   ❌ `class `...` { impl as C; }`
     -   The names of `C` are added to the class, and so those names need to be
         known.
--   ❌ `external impl `...` as C;`
-    -   To check that all associated constants of `C` are assigned values.
 -   ❌ `T:! C` ... `T is A` where `A != C` is an interface or constraint
     -   Need to see the definition of `C` to see if it implies `A`.
+-   ❌ `external impl `...` as C { `...` }`
 
 ### Declaring implementations
 
