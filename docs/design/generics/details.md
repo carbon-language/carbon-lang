@@ -4390,9 +4390,10 @@ be used in the following contexts:
 -   ✅ `C & D`
     -   There may be conflicts between `C` and `D` making this invalid that will
         only be discovered once they are both complete.
--   ✅ `interface `...` { impl` ... `as C; }` or
-    `constraint `...` { impl` ... `as C; }`
-    -   Nothing implied by implementing `C` will be visible until `C` is complete.
+-   ✅ `interface `...` { impl` ... `as C; }` or `constraint `...` { impl` ...
+    `as C; }`
+    -   Nothing implied by implementing `C` will be visible until `C` is
+        complete.
 -   ✅ `T:! C` ... `T is C`
 -   ✅ `T:! A & C` ... `T is C`
 -   ✅ `external impl `...` as C;`
@@ -4414,7 +4415,7 @@ An incomplete `C` cannot be used in the following contexts:
         known.
 -   ❌ `T:! C` ... `T is A` where `A != C` is an interface or constraint
     -   Need to see the definition of `C` to see if it implies `A`.
--   ❌ `external impl `...` as C { `...` }`
+-   ❌ `external impl `...`as C {`...` }`
 
 ### Declaring implementations
 
