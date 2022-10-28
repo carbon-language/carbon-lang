@@ -27,7 +27,7 @@ struct SemanticsCrossReferenceIRId {
 };
 
 // A cross-reference between node blocks or IRs; essentially, anything that's
-// note in the same SemanticsNodeBlock as the referencing node.
+// not in the same SemanticsNodeBlock as the referencing node.
 struct SemanticsCrossReference {
   SemanticsCrossReference() = default;
   SemanticsCrossReference(SemanticsCrossReferenceIRId ir,
