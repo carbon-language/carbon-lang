@@ -16,7 +16,7 @@ __mixin M1 {
 }
 
 __mixin M2 {
-  __mix M1;
+  export __mix M1;
   export fn Square[me: Self](x:i32) -> i32{
     return x * x;
   }

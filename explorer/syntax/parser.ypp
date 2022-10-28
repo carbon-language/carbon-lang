@@ -1086,8 +1086,11 @@ alias_declaration: ALIAS identifier EQUAL expression SEMICOLON
     { $$ = arena->New<AliasDeclaration>(context.source_loc(), $2, $4); }
 ;
 // EXPERIMENTAL MIXIN FEATURE
-mix_declaration: MIX expression SEMICOLON
-    { $$ = arena->New<MixDeclaration>(context.source_loc(), $2); }
+mix_declaration:
+  MIX expression SEMICOLON
+    { $$ = arena->New<MixDeclaration>(context.source_loc(), $2, false); }
+| EXPORT MIX expression SEMICOLON
+    { $$ = arena->New<MixDeclaration>(context.source_loc(), $3, true); }
 ;
 alternative:
   identifier tuple

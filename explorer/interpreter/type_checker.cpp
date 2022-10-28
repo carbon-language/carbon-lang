@@ -4367,6 +4367,10 @@ auto TypeChecker::FindMixedMemberAndTypeFromMixin(
     }
     if (llvm::isa<MixDeclaration>(member)) {
       const auto& mix_decl = cast<MixDeclaration>(*member);
+      if (through_mix_decl && !mix_decl.is_exported()) {
+        continue;  // ignore non-export members when injecting members through a
+                   // mix declaration.
+      }
       Nonnull<const MixinPseudoType*> mixin = &mix_decl.mixin_value();
       const auto res = FindMixedMemberAndTypeFromMixin(
           name, mixin->declaration().members(), true);

@@ -333,9 +333,11 @@ class MixinDeclaration : public Declaration {
 class MixDeclaration : public Declaration {
  public:
   MixDeclaration(SourceLocation source_loc,
-                 std::optional<Nonnull<Expression*>> mixin_type)
+                 std::optional<Nonnull<Expression*>> mixin_type,
+                 bool is_exported)
       : Declaration(AstNodeKind::MixDeclaration, source_loc),
-        mixin_(mixin_type) {}
+        mixin_(mixin_type),
+        is_exported_(is_exported) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromMixDeclaration(node->kind());
@@ -349,9 +351,12 @@ class MixDeclaration : public Declaration {
     mixin_value_ = mixin_value;
   }
 
+  auto is_exported() const -> bool { return is_exported_; }
+
  private:
   std::optional<Nonnull<Expression*>> mixin_;
   Nonnull<const MixinPseudoType*> mixin_value_;
+  bool is_exported_;
 };
 
 class AlternativeSignature : public AstNode {
