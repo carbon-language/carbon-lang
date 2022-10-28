@@ -5068,6 +5068,9 @@ auto TypeChecker::CheckAndAddImplBindings(
       scope_info.innermost_non_class_scope->Add(
           iface_type, deduced_bindings, impl_type, impl_decl->impl_bindings(),
           self_witness, *this);
+    } else if (isa<NamedConstraintType>(lookup.context)) {
+      // Nothing to check here, since a named constraint can't introduce any
+      // associated entities.
     } else {
       // TODO: Add support for implementing `adapter`s.
       return ProgramError(impl_decl->source_loc())
