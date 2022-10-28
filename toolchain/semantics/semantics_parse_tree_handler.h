@@ -5,7 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_PARSE_TREE_HANDLER_H_
 #define CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_PARSE_TREE_HANDLER_H_
 
-#include "common/check.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node.h"
@@ -29,6 +28,9 @@ class SemanticsParseTreeHandler {
     ParseTree::Node parse_node;
     llvm::Optional<SemanticsNodeId> result_id;
   };
+
+  // Adds an identifier for a DeclaredName node, returning its reference.
+  auto AddIdentifier(ParseTree::Node decl_node) -> SemanticsIdentifierId;
 
   // Adds a node to the current block, returning the produced ID.
   auto AddNode(SemanticsNode node) -> SemanticsNodeId;
