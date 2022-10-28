@@ -1146,11 +1146,9 @@ auto TypeChecker::ArgumentDeduction::Finish(TypeChecker& type_checker,
     const Value* binding_type = &binding->static_type();
     const Value* substituted_type =
         type_checker.Substitute(bindings, binding_type);
-    if (!IsTypeOfType(substituted_type)) {
-      CARBON_ASSIGN_OR_RETURN(
-          arg, type_checker.ImplicitlyConvert(context_, impl_scope, arg,
-                                              substituted_type));
-    }
+    CARBON_ASSIGN_OR_RETURN(
+        arg, type_checker.ImplicitlyConvert(context_, impl_scope, arg,
+                                            substituted_type));
 
     // Evaluate the argument to get the value.
     CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> value,
