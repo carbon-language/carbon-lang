@@ -735,7 +735,8 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
           return arena_->New<StructType>();
         }
         default: {
-          CARBON_CHECK(IsValueKindDependent(destination_type))
+          CARBON_CHECK(IsValueKindDependent(destination_type) ||
+                       isa<TypeType, ConstraintType>(destination_type))
               << "Can't convert value " << *value << " to type "
               << *destination_type;
           return value;
@@ -769,7 +770,8 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
           return arena_->New<TupleType>(std::move(new_elements));
         }
         default: {
-          CARBON_CHECK(IsValueKindDependent(destination_type))
+          CARBON_CHECK(IsValueKindDependent(destination_type) ||
+                       isa<TypeType, ConstraintType>(destination_type))
               << "Can't convert value " << *value << " to type "
               << *destination_type;
           return value;

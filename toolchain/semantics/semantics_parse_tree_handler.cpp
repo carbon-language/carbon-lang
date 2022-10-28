@@ -12,6 +12,9 @@
 namespace Carbon {
 
 auto SemanticsParseTreeHandler::Build() -> void {
+  // Add a block for the ParseTree.
+  node_block_stack_.push_back(semantics_->AddNodeBlock());
+
   auto range = parse_tree_->postorder();
   for (auto it = range.begin();; ++it) {
     auto parse_node = *it;
@@ -30,6 +33,7 @@ auto SemanticsParseTreeHandler::Build() -> void {
       }
       case ParseNodeKind::FileEnd(): {
         ++it;
+        CARBON_CHECK(node_block_stack_.size() == 1) << node_block_stack_.size();
         CARBON_CHECK(it == range.end())
             << "FileEnd should always be last, found "
             << parse_tree_->node_kind(*it);
@@ -67,6 +71,47 @@ auto SemanticsParseTreeHandler::Build() -> void {
   llvm_unreachable("Should always end at FileEnd");
 }
 
+auto SemanticsParseTreeHandler::AddNode(SemanticsNode node) -> SemanticsNodeId {
+  return semantics_->AddNode(node_block_stack_.back(), node);
+}
+
+auto SemanticsParseTreeHandler::Push(ParseTree::Node parse_node) -> void {
+  node_stack_.push_back({parse_node, llvm::None});
+}
+
+auto SemanticsParseTreeHandler::Push(ParseTree::Node parse_node,
+                                     SemanticsNode node) -> void {
+  auto node_id = AddNode(node);
+  node_stack_.push_back({parse_node, node_id});
+}
+
+auto SemanticsParseTreeHandler::Pop(ParseNodeKind pop_parse_kind) -> void {
+  auto back = node_stack_.back();
+  auto parse_kind = parse_tree_->node_kind(back.parse_node);
+  CARBON_CHECK(parse_kind == pop_parse_kind)
+      << "Expected " << pop_parse_kind << ", found " << parse_kind;
+  CARBON_CHECK(!back.result_id) << "Expected no result ID on " << parse_kind;
+  node_stack_.pop_back();
+}
+
+auto SemanticsParseTreeHandler::PopWithResult() -> SemanticsNodeId {
+  auto back = node_stack_.back();
+  auto node_id = *back.result_id;
+  node_stack_.pop_back();
+  return node_id;
+}
+
+auto SemanticsParseTreeHandler::PopWithResult(ParseNodeKind pop_parse_kind)
+    -> SemanticsNodeId {
+  auto back = node_stack_.back();
+  auto parse_kind = parse_tree_->node_kind(back.parse_node);
+  auto node_id = *back.result_id;
+  CARBON_CHECK(parse_kind == pop_parse_kind)
+      << "Expected " << pop_parse_kind << ", found " << parse_kind;
+  node_stack_.pop_back();
+  return node_id;
+}
+
 auto SemanticsParseTreeHandler::HandleDeclaredName(ParseTree::Node parse_node)
     -> void {
   auto text = parse_tree_->GetNodeText(parse_node);
@@ -82,7 +127,7 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinition(
     node_stack_.pop_back();
   }
   Pop(ParseNodeKind::FunctionDefinitionStart());
-  semantics_->AddNode(SemanticsNode::MakeFunctionDefinitionEnd());
+  node_block_stack_.pop_back();
   Push(parse_node);
 }
 
@@ -91,9 +136,11 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinitionStart(
   Pop(ParseNodeKind::ParameterList());
   auto name_node_id = PopWithResult(ParseNodeKind::DeclaredName());
   Pop(ParseNodeKind::FunctionIntroducer());
-  auto decl_id =
-      semantics_->AddNode(SemanticsNode::MakeFunctionDeclaration(name_node_id));
-  semantics_->AddNode(SemanticsNode::MakeFunctionDefinitionStart(decl_id));
+
+  auto decl_id = AddNode(SemanticsNode::MakeFunctionDeclaration(name_node_id));
+  auto block_id = semantics_->AddNodeBlock();
+  AddNode(SemanticsNode::MakeFunctionDefinition(decl_id, block_id));
+  node_block_stack_.push_back(block_id);
   Push(parse_node);
 }
 
