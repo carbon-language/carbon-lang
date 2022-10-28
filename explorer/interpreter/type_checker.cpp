@@ -27,8 +27,8 @@
 #include "explorer/interpreter/pattern_analysis.h"
 #include "explorer/interpreter/value.h"
 #include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Support/Casting.h"
@@ -550,8 +550,7 @@ auto TypeChecker::IsImplicitlyConvertible(
         case Value::Kind::ConstraintType: {
           // A tuple value converts to a type if all of its fields do.
           bool all_types = true;
-          for (Nonnull<const Value*> source_element :
-               source_tuple.elements()) {
+          for (Nonnull<const Value*> source_element : source_tuple.elements()) {
             if (!IsImplicitlyConvertible(
                     source_element, destination, impl_scope,
                     /*allow_user_defined_conversions=*/false)) {
