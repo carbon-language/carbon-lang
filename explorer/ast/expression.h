@@ -1056,9 +1056,23 @@ class ArrayTypeLiteral : public Expression {
   }
   auto size_expression() -> Expression& { return *size_expression_; }
 
+  // Returns the constant value of this expression.
+  auto constant_value() const -> const Value& {
+    CARBON_CHECK(constant_value_);
+    return **constant_value_;
+  }
+
+  // Sets the value returned by constant_value(). Can only be called once,
+  // during typechecking.
+  void set_constant_value(Nonnull<const Value*> value) {
+    CARBON_CHECK(!constant_value_.has_value());
+    constant_value_ = value;
+  }
+
  private:
   Nonnull<Expression*> element_type_expression_;
   Nonnull<Expression*> size_expression_;
+  std::optional<Nonnull<const Value*>> constant_value_;
 };
 
 // Converts paren_contents to an Expression, interpreting the parentheses as

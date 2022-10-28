@@ -743,7 +743,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
       }
     }
     case Value::Kind::TupleValue: {
-      const auto& tuple = cast<TupleValue>(value);
+      const auto* tuple = cast<TupleValue>(value);
       std::vector<Nonnull<const Value*>> destination_element_types;
       switch (destination_type->kind()) {
         case Value::Kind::TupleType:
@@ -759,7 +759,14 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
         case Value::Kind::TypeType:
         case Value::Kind::ConstraintType:
         case Value::Kind::InterfaceType: {
-          return arena_->New<TupleType>(tuple->elements());
+          std::vector<Nonnull<const Value*>> new_elements;
+          Nonnull<const Value*> type_type = arena_->New<TypeType>();
+          for (Nonnull<const Value*> value : tuple->elements()) {
+            CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> value_as_type,
+                                    Convert(value, type_type, source_loc));
+            new_elements.push_back(value_as_type);
+          }
+          return arena_->New<TupleType>(std::move(new_elements));
         }
         default: {
           CARBON_CHECK(IsValueKindDependent(destination_type))
@@ -1425,6 +1432,14 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       CARBON_CHECK(act.pos() == 0);
       return todo_.FinishAction(arena_->New<StringType>());
     }
+    case ExpressionKind::ArrayTypeLiteral: {
+      CARBON_CHECK(act.pos() == 0);
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> instantiated,
+          InstantiateType(&cast<ArrayTypeLiteral>(exp).constant_value(),
+                          exp.source_loc()));
+      return todo_.FinishAction(instantiated);
+    }
     case ExpressionKind::ValueLiteral: {
       CARBON_CHECK(act.pos() == 0);
       auto* value = &cast<ValueLiteral>(exp).value();
@@ -1474,19 +1489,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     }
     case ExpressionKind::UnimplementedExpression:
       CARBON_FATAL() << "Unimplemented: " << exp;
-    case ExpressionKind::ArrayTypeLiteral: {
-      const auto& array_literal = cast<ArrayTypeLiteral>(exp);
-      if (act.pos() == 0) {
-        return todo_.Spawn(std::make_unique<ExpressionAction>(
-            &array_literal.element_type_expression()));
-      } else if (act.pos() == 1) {
-        return todo_.Spawn(std::make_unique<ExpressionAction>(
-            &array_literal.size_expression()));
-      } else {
-        return todo_.FinishAction(arena_->New<StaticArrayType>(
-            act.results()[0], cast<IntValue>(act.results()[1])->value()));
-      }
-    }
   }  // switch (exp->kind)
 }
 

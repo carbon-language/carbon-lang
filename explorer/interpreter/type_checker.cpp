@@ -2319,7 +2319,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           return Success();
         }
         default:
-          return ProgramError(e->source_loc()) << "expected a tuple";
+          return ProgramError(e->source_loc())
+                 << "only arrays and tuples can be indexed, found "
+                 << object_type;
       }
     }
     case ExpressionKind::TupleLiteral: {
@@ -3473,9 +3475,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       CARBON_FATAL() << "Unimplemented: " << *e;
     case ExpressionKind::ArrayTypeLiteral: {
       auto& array_literal = cast<ArrayTypeLiteral>(*e);
-      CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(
-          &array_literal.element_type_expression(), impl_scope));
-
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> element_type,
+          TypeCheckTypeExp(&array_literal.element_type_expression(),
+                           impl_scope));
       CARBON_RETURN_IF_ERROR(
           TypeCheckExp(&array_literal.size_expression(), impl_scope));
       CARBON_RETURN_IF_ERROR(ExpectExactType(
@@ -3491,6 +3494,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       }
       array_literal.set_static_type(arena_->New<TypeType>());
       array_literal.set_value_category(ValueCategory::Let);
+      array_literal.set_constant_value(arena_->New<StaticArrayType>(
+          element_type, cast<IntValue>(size_value)->value()));
       return Success();
     }
   }
