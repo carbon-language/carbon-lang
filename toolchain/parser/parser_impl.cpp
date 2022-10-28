@@ -5,6 +5,7 @@
 #include "toolchain/parser/parser_impl.h"
 
 #include <cstdlib>
+#include <memory>
 
 #include "common/check.h"
 #include "llvm/ADT/Optional.h"
@@ -19,6 +20,11 @@ namespace Carbon {
 
 CARBON_DIAGNOSTIC(ExpectedSemiAfterExpression, Error,
                   "Expected `;` after expression.");
+
+// May be omitted a couple different ways by ParseOperatorExpression.
+CARBON_DIAGNOSTIC(
+    OperatorRequiresParentheses, Error,
+    "Parentheses are required to disambiguate operator precedence.");
 
 // Manages the parser's stack depth, particularly decrementing on destruction.
 // This should only be instantiated through RETURN_IF_STACK_LIMITED.
@@ -163,14 +169,6 @@ auto ParseTree::Parser::MarkNodeError(Node n) -> void {
   tree_.node_impls_[n.index_].has_error = true;
   tree_.has_errors_ = true;
 }
-
-// A marker for the start of a node's subtree.
-//
-// This is used to track the size of the node's subtree. It can be used
-// repeatedly if multiple subtrees start at the same position.
-struct ParseTree::Parser::SubtreeStart {
-  int tree_size;
-};
 
 auto ParseTree::Parser::GetSubtreeStartPosition() -> SubtreeStart {
   return {static_cast<int>(tree_.node_impls_.size())};
@@ -1024,23 +1022,22 @@ auto ParseTree::Parser::IsTrailingOperatorInfix() -> bool {
   return false;
 }
 
-auto ParseTree::Parser::ParseOperatorExpression(
-    PrecedenceGroup ambient_precedence) -> llvm::Optional<Node> {
-  // May be omitted a couple different ways here.
-  CARBON_DIAGNOSTIC(
-      OperatorRequiresParentheses, Error,
-      "Parentheses are required to disambiguate operator precedence.");
-
-  CARBON_RETURN_IF_STACK_LIMITED(llvm::None);
+auto ParseTree::Parser::NonRecursiveParseOperatorExpressionStart(
+    PrecedenceGroup ambient_precedence, llvm::Optional<Node>* result) -> void {
   auto start = GetSubtreeStartPosition();
-
-  llvm::Optional<Node> lhs;
-  PrecedenceGroup lhs_precedence = PrecedenceGroup::ForPostfixExpression();
-
   // Check for a prefix operator.
   if (auto operator_precedence = PrecedenceGroup::ForLeading(NextTokenKind());
       !operator_precedence) {
-    lhs = ParsePostfixExpression();
+    // Run a child ParsePostfixExpression then resume parsing this
+    // OperatorExpression.
+    action_stack_.push_back([this, ambient_precedence, result, start]() {
+      llvm::Optional<Node> lhs = ParsePostfixExpression();
+      action_stack_.push_back([this, ambient_precedence, result, start, lhs]() {
+        NonRecursiveParseOperatorExpressionLoop(
+            ambient_precedence, result, start, lhs,
+            PrecedenceGroup::ForPostfixExpression());
+      });
+    });
   } else {
     if (PrecedenceGroup::GetPriority(ambient_precedence,
                                      *operator_precedence) !=
@@ -1054,16 +1051,38 @@ auto ParseTree::Parser::ParseOperatorExpression(
     }
 
     auto operator_token = Consume(NextTokenKind());
-    bool has_errors = !ParseOperatorExpression(*operator_precedence);
-    lhs = AddNode(ParseNodeKind::PrefixOperator(), operator_token, start,
-                  has_errors);
-    lhs_precedence = *operator_precedence;
+    // Allocate step 1's result on the heap so that it can be used to pass
+    // data between lambdas.
+    auto* child_parse = new llvm::Optional<Node>();
+    // Step 2: Resume the loop.
+    action_stack_.push_back([this, ambient_precedence, result, start,
+                             operator_precedence, operator_token,
+                             child_parse]() {
+      bool has_errors = !*child_parse;
+      llvm::Optional<Node> lhs = AddNode(ParseNodeKind::PrefixOperator(),
+                                         operator_token, start, has_errors);
+      PrecedenceGroup lhs_precedence = *operator_precedence;
+      NonRecursiveParseOperatorExpressionLoop(ambient_precedence, result, start,
+                                              lhs, lhs_precedence);
+      delete child_parse;
+    });
+    // Step 1: Run another parse.
+    action_stack_.push_back([this, operator_precedence, child_parse]() {
+      NonRecursiveParseOperatorExpressionStart(*operator_precedence,
+                                               child_parse);
+    });
   }
+}
 
+auto ParseTree::Parser::NonRecursiveParseOperatorExpressionLoop(
+    PrecedenceGroup ambient_precedence, llvm::Optional<Node>* result,
+    SubtreeStart start, llvm::Optional<Node> lhs,
+    PrecedenceGroup lhs_precedence) -> void {
   // Consume a sequence of infix and postfix operators.
   while (auto trailing_operator = PrecedenceGroup::ForTrailing(
              NextTokenKind(), IsTrailingOperatorInfix())) {
-    auto [operator_precedence, is_binary] = *trailing_operator;
+    auto operator_precedence = trailing_operator->level;
+    auto is_binary = trailing_operator->is_binary;
 
     // TODO: If this operator is ambiguous with either the ambient precedence
     // or the LHS precedence, and there's a variant with a different fixity
@@ -1072,7 +1091,8 @@ auto ParseTree::Parser::ParseOperatorExpression(
         OperatorPriority::RightFirst) {
       // The precedence rules don't permit this operator in this context. Try
       // again in the enclosing expression context.
-      return lhs;
+      *result = lhs;
+      return;
     }
 
     if (PrecedenceGroup::GetPriority(lhs_precedence, operator_precedence) !=
@@ -1090,9 +1110,25 @@ auto ParseTree::Parser::ParseOperatorExpression(
     auto operator_token = Consume(NextTokenKind());
 
     if (is_binary) {
-      auto rhs = ParseOperatorExpression(operator_precedence);
-      lhs = AddNode(ParseNodeKind::InfixOperator(), operator_token, start,
+      // Allocate step 1's result on the heap so that it can be used to pass
+      // data between lambdas.
+      auto* rhs = new llvm::Optional<Node>();
+      // Step 2: Restart the loop.
+      action_stack_.push_back([this, ambient_precedence, result, start, lhs,
+                               operator_precedence, operator_token, rhs]() {
+        llvm::Optional<Node> new_lhs =
+            AddNode(ParseNodeKind::InfixOperator(), operator_token, start,
                     /*has_error=*/!lhs || !rhs);
+        NonRecursiveParseOperatorExpressionLoop(
+            ambient_precedence, result, start, new_lhs, operator_precedence);
+        delete rhs;
+      });
+      // Step 1: Run another parse.
+      action_stack_.push_back([this, operator_precedence, rhs]() {
+        NonRecursiveParseOperatorExpressionStart(operator_precedence, rhs);
+      });
+      // Return so that steps run non-recursively.
+      return;
     } else {
       lhs = AddNode(ParseNodeKind::PostfixOperator(), operator_token, start,
                     /*has_error=*/!lhs);
@@ -1100,7 +1136,17 @@ auto ParseTree::Parser::ParseOperatorExpression(
     lhs_precedence = operator_precedence;
   }
 
-  return lhs;
+  *result = lhs;
+}
+
+auto ParseTree::Parser::ParseOperatorExpression(
+    PrecedenceGroup ambient_precedence) -> llvm::Optional<Node> {
+  CARBON_RETURN_IF_STACK_LIMITED(llvm::None);
+  llvm::Optional<Node> result;
+  RunAction([this, ambient_precedence, &result]() {
+    NonRecursiveParseOperatorExpressionStart(ambient_precedence, &result);
+  });
+  return result;
 }
 
 auto ParseTree::Parser::ParseExpression() -> llvm::Optional<Node> {

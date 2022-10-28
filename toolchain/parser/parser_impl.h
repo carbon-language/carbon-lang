@@ -25,7 +25,14 @@ class ParseTree::Parser {
 
  private:
   class ScopedStackStep;
-  struct SubtreeStart;
+
+  // A marker for the start of a node's subtree.
+  //
+  // This is used to track the size of the node's subtree. It can be used
+  // repeatedly if multiple subtrees start at the same position.
+  struct SubtreeStart {
+    int tree_size;
+  };
 
   explicit Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
                   TokenDiagnosticEmitter& emitter);
@@ -238,6 +245,13 @@ class ParseTree::Parser {
   auto ParseOperatorExpression(PrecedenceGroup precedence)
       -> llvm::Optional<Node>;
 
+  auto NonRecursiveParseOperatorExpressionStart(
+      PrecedenceGroup ambient_precedence, llvm::Optional<Node>* result) -> void;
+  auto NonRecursiveParseOperatorExpressionLoop(
+      PrecedenceGroup ambient_precedence, llvm::Optional<Node>* result,
+      SubtreeStart start, llvm::Optional<Node> lhs,
+      PrecedenceGroup lhs_precedence) -> void;
+
   // Parses an expression.
   auto ParseExpression() -> llvm::Optional<Node>;
 
@@ -294,6 +308,82 @@ class ParseTree::Parser {
   // Managed through RETURN_IF_STACK_LIMITED, which should be invoked by all
   // functions.
   int stack_depth_ = 0;
+
+  /*
+  Alternative approach: define more of a continuation-like approach, use enums
+  to class ParseAction { public: explicit ParseAction(Parser* parser) :
+  parser_(parser) {} virtual ~ParseAction() = default; virtual auto Run() ->
+  void = 0;
+
+   protected:
+    auto parser() -> Parser* { return parser_; }
+
+   private:
+    Parser* parser_;
+  };
+
+  class ParsePostfixParseAction : public ParseAction {
+   public:
+    // TODO: This is just a wrapper, and should be converted more completely.
+    auto Run() -> void override {
+      result_ = parser()->ParsePostfixExpression();
+      parser()->action_stack_.pop_back();
+    }
+    auto result() -> llvm::Optional<Node> { return result_; }
+
+   private:
+    llvm::Optional<Node> result_;
+  };
+
+  class OperatorExpressionParseAction : public ParseAction {
+   public:
+    OperatorExpressionParseAction(ParseTree::Parser* parser,
+                                  PrecedenceGroup ambient_precedence)
+        : ParseAction(parser),
+          ambient_precedence_(ambient_precedence),
+          start_(parser->GetSubtreeStartPosition()) {}
+
+    auto Run() -> void override;
+    auto result() -> llvm::Optional<Node> { return result_; }
+
+   private:
+    enum class State {
+      Start,
+      ResumeInitialPostfix,
+      ResumeInitialOperator,
+      ResumeLoop,
+    };
+
+    PrecedenceGroup ambient_precedence_;
+    SubtreeStart start_;
+    State state_ = State::Start;
+    llvm::Optional<Node> result_;
+  };
+
+  auto RunAction(ParseAction* action) -> void {
+    llvm::SmallVector<ParseAction*> saved_action_stack;
+    saved_action_stack.swap(action_stack_);
+    action_stack_.emplace_back(action);
+    while (!action_stack_.empty()) {
+      action_stack_.back()->Run();
+    }
+    saved_action_stack.swap(action_stack_);
+  }
+
+  llvm::SmallVector<ParseAction*> action_stack_;
+  */
+
+  auto RunAction(std::function<void()> action) -> void {
+    llvm::SmallVector<std::function<void()>> saved_action_stack;
+    saved_action_stack.swap(action_stack_);
+    action_stack_.emplace_back(action);
+    while (!action_stack_.empty()) {
+      action_stack_.pop_back_val()();
+    }
+    saved_action_stack.swap(action_stack_);
+  }
+
+  llvm::SmallVector<std::function<void()>> action_stack_;
 };
 
 }  // namespace Carbon
