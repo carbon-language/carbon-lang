@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // RUN: %{carbon-run-parser}
-// AUTOUPDATE: %{carbon} dump parse-tree %s
 // CHECK:STDOUT: [
 // CHECK:STDOUT: {node_index: 74, kind: 'InterfaceDeclaration', text: 'interface', subtree_size: 75, children: [
 // CHECK:STDOUT:   {node_index: 0, kind: 'DeclaredName', text: 'foo'},

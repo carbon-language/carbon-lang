@@ -80,6 +80,7 @@ CARBON_DIAGNOSTIC_KIND(ExpectedIn)
 
 // Interface-specific diagnostics
 CARBON_DIAGNOSTIC_KIND(MethodImplNotAllowed)
+CARBON_DIAGNOSTIC_KIND(ExpectedInterfaceName)
 
 // Class and interface diagnostics
 CARBON_DIAGNOSTIC_KIND(ExpectedMeParam)

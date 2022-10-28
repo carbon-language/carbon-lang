@@ -677,7 +677,6 @@ auto ParseTree::Parser::ParseFunctionDeclaration(Parser::ParseContext context)
             MethodImplNotAllowed, Error,
             "Method implementations are not allowed in interfaces.");
         emitter_.Emit(*position_, MethodImplNotAllowed);
-        // SkipMatchingGroup();
 
         return add_error_function_node(true);
       }
@@ -749,14 +748,21 @@ auto ParseTree::Parser::ParseInterface() -> Node {
       Consume(TokenKind::Interface());
   auto start = GetSubtreeStartPosition();
 
-  auto add_error_function_node = [&] {
-    return AddNode(ParseNodeKind::FunctionDeclaration(), interface_intro_token,
+  auto add_error_node = [&] {
+    return AddNode(ParseNodeKind::InterfaceDeclaration(), interface_intro_token,
                    start, /*has_error=*/true);
   };
-  CARBON_RETURN_IF_STACK_LIMITED(add_error_function_node());
+  CARBON_RETURN_IF_STACK_LIMITED(add_error_node());
 
-  ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
-                          ParseNodeKind::DeclaredName());
+  bool has_error = false;
+
+  if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
+                               ParseNodeKind::DeclaredName())) {
+    CARBON_DIAGNOSTIC(ExpectedInterfaceName, Error,
+                      "Expected function name after `interface` keyword.");
+    emitter_.Emit(*position_, ExpectedInterfaceName);
+    has_error = true;
+  }
 
   auto open_curly_brace = ConsumeIf(TokenKind::OpenCurlyBrace());
   auto body_start = GetSubtreeStartPosition();
@@ -772,7 +778,7 @@ auto ParseTree::Parser::ParseInterface() -> Node {
   AddNode(ParseNodeKind::InterfaceBody(), *open_curly_brace, body_start);
 
   return AddNode(ParseNodeKind::InterfaceDeclaration(), interface_intro_token,
-                 start);
+                 start, has_error);
 }
 
 auto ParseTree::Parser::ParseEmptyDeclaration() -> Node {
