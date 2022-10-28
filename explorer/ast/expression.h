@@ -525,26 +525,17 @@ class StructLiteral : public Expression {
   std::vector<FieldInitializer> fields_;
 };
 
-// A literal representing a struct type.
-//
-// Note that a struct type literal can't be empty because `{}` is a struct
-// value. However, that value implicitly converts to a type.
-class StructTypeLiteral : public Expression {
+// A base class for literals with a constant value determined by type-checking.
+class ConstantValueLiteral : public Expression {
  public:
-  explicit StructTypeLiteral(SourceLocation loc,
-                             std::vector<FieldInitializer> fields)
-      : Expression(AstNodeKind::StructTypeLiteral, loc),
-        fields_(std::move(fields)) {
-    CARBON_CHECK(!fields_.empty())
-        << "`{}` is represented as a StructLiteral, not a StructTypeLiteral.";
-  }
+  explicit ConstantValueLiteral(
+      AstNodeKind kind, SourceLocation source_loc,
+      std::optional<Nonnull<const Value*>> constant_value = std::nullopt)
+      : Expression(kind, source_loc), constant_value_(constant_value) {}
 
   static auto classof(const AstNode* node) -> bool {
-    return InheritsFromStructTypeLiteral(node->kind());
+    return InheritsFromConstantValueLiteral(node->kind());
   }
-
-  auto fields() const -> llvm::ArrayRef<FieldInitializer> { return fields_; }
-  auto fields() -> llvm::MutableArrayRef<FieldInitializer> { return fields_; }
 
   // Returns the constant value of this expression.
   auto constant_value() const -> const Value& {
@@ -560,8 +551,32 @@ class StructTypeLiteral : public Expression {
   }
 
  private:
-  std::vector<FieldInitializer> fields_;
   std::optional<Nonnull<const Value*>> constant_value_;
+};
+
+// A literal representing a struct type.
+//
+// Note that a struct type literal can't be empty because `{}` is a struct
+// value. However, that value implicitly converts to a type.
+class StructTypeLiteral : public ConstantValueLiteral {
+ public:
+  explicit StructTypeLiteral(SourceLocation loc,
+                             std::vector<FieldInitializer> fields)
+      : ConstantValueLiteral(AstNodeKind::StructTypeLiteral, loc),
+        fields_(std::move(fields)) {
+    CARBON_CHECK(!fields_.empty())
+        << "`{}` is represented as a StructLiteral, not a StructTypeLiteral.";
+  }
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromStructTypeLiteral(node->kind());
+  }
+
+  auto fields() const -> llvm::ArrayRef<FieldInitializer> { return fields_; }
+  auto fields() -> llvm::MutableArrayRef<FieldInitializer> { return fields_; }
+
+ private:
+  std::vector<FieldInitializer> fields_;
 };
 
 class OperatorExpression : public RewritableMixin<Expression> {
@@ -632,12 +647,12 @@ class CallExpression : public Expression {
   Bindings bindings_;
 };
 
-class FunctionTypeLiteral : public Expression {
+class FunctionTypeLiteral : public ConstantValueLiteral {
  public:
   explicit FunctionTypeLiteral(SourceLocation source_loc,
                                Nonnull<TupleLiteral*> parameter,
                                Nonnull<Expression*> return_type)
-      : Expression(AstNodeKind::FunctionTypeLiteral, source_loc),
+      : ConstantValueLiteral(AstNodeKind::FunctionTypeLiteral, source_loc),
         parameter_(parameter),
         return_type_(return_type) {}
 
@@ -650,23 +665,9 @@ class FunctionTypeLiteral : public Expression {
   auto return_type() const -> const Expression& { return *return_type_; }
   auto return_type() -> Expression& { return *return_type_; }
 
-  // Returns the constant value of this expression.
-  auto constant_value() const -> const Value& {
-    CARBON_CHECK(constant_value_);
-    return **constant_value_;
-  }
-
-  // Sets the value returned by constant_value(). Can only be called once,
-  // during typechecking.
-  void set_constant_value(Nonnull<const Value*> value) {
-    CARBON_CHECK(!constant_value_.has_value());
-    constant_value_ = value;
-  }
-
  private:
   Nonnull<TupleLiteral*> parameter_;
   Nonnull<Expression*> return_type_;
-  std::optional<Nonnull<const Value*>> constant_value_;
 };
 
 class BoolTypeLiteral : public Expression {
@@ -711,13 +712,13 @@ class TypeTypeLiteral : public Expression {
 
 // A literal value. This is used in desugaring, and can't be expressed in
 // source syntax.
-class ValueLiteral : public Expression {
+class ValueLiteral : public ConstantValueLiteral {
  public:
   // Value literals are created by type-checking, and so are created with their
   // type and value category already known.
   ValueLiteral(SourceLocation source_loc, Nonnull<const Value*> value,
                Nonnull<const Value*> type, ValueCategory value_category)
-      : Expression(AstNodeKind::ValueLiteral, source_loc), value_(value) {
+      : ConstantValueLiteral(AstNodeKind::ValueLiteral, source_loc, value) {
     set_static_type(type);
     set_value_category(value_category);
   }
@@ -725,11 +726,6 @@ class ValueLiteral : public Expression {
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromValueLiteral(node->kind());
   }
-
-  auto value() const -> const Value& { return *value_; }
-
- private:
-  Nonnull<const Value*> value_;
 };
 
 class IntrinsicExpression : public Expression {
@@ -1029,14 +1025,14 @@ class UnimplementedExpression : public Expression {
 };
 
 // A literal representing a statically-sized array type.
-class ArrayTypeLiteral : public Expression {
+class ArrayTypeLiteral : public ConstantValueLiteral {
  public:
   // Constructs an array type literal which uses the given expressions to
   // represent the element type and size.
   ArrayTypeLiteral(SourceLocation source_loc,
                    Nonnull<Expression*> element_type_expression,
                    Nonnull<Expression*> size_expression)
-      : Expression(AstNodeKind::ArrayTypeLiteral, source_loc),
+      : ConstantValueLiteral(AstNodeKind::ArrayTypeLiteral, source_loc),
         element_type_expression_(element_type_expression),
         size_expression_(size_expression) {}
 
@@ -1056,23 +1052,9 @@ class ArrayTypeLiteral : public Expression {
   }
   auto size_expression() -> Expression& { return *size_expression_; }
 
-  // Returns the constant value of this expression.
-  auto constant_value() const -> const Value& {
-    CARBON_CHECK(constant_value_);
-    return **constant_value_;
-  }
-
-  // Sets the value returned by constant_value(). Can only be called once,
-  // during typechecking.
-  void set_constant_value(Nonnull<const Value*> value) {
-    CARBON_CHECK(!constant_value_.has_value());
-    constant_value_ = value;
-  }
-
  private:
   Nonnull<Expression*> element_type_expression_;
   Nonnull<Expression*> size_expression_;
-  std::optional<Nonnull<const Value*>> constant_value_;
 };
 
 // Converts paren_contents to an Expression, interpreting the parentheses as

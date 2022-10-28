@@ -791,7 +791,16 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> value,
           EvalAssociatedConstant(cast<AssociatedConstant>(value), source_loc));
-      if (isa<AssociatedConstant>(value)) {
+      if (auto* new_const = dyn_cast<AssociatedConstant>(value)) {
+        // TODO: Detect whether conversions are required in type-checking.
+        if (isa<TypeType, ConstraintType, InterfaceType>(destination_type) &&
+            isa<TypeType, ConstraintType, InterfaceType>(
+                new_const->constant().static_type())) {
+          // No further conversions are required.
+          return value;
+        }
+        // We need to convert this, and we don't know how because we don't have
+        // the value yet.
         return ProgramError(source_loc)
                << "value of associated constant " << *value << " is not known";
       }
@@ -997,14 +1006,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         return todo_.FinishAction(
             CreateStruct(literal.fields(), act.results()));
       }
-    }
-    case ExpressionKind::StructTypeLiteral: {
-      CARBON_CHECK(act.pos() == 0);
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> instantiated,
-          InstantiateType(&cast<StructTypeLiteral>(exp).constant_value(),
-                          exp.source_loc()));
-      return todo_.FinishAction(instantiated);
     }
     case ExpressionKind::SimpleMemberAccessExpression: {
       const auto& access = cast<SimpleMemberAccessExpression>(exp);
@@ -1411,14 +1412,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       CARBON_CHECK(act.pos() == 0);
       return todo_.FinishAction(arena_->New<TypeType>());
     }
-    case ExpressionKind::FunctionTypeLiteral: {
-      CARBON_CHECK(act.pos() == 0);
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> instantiated,
-          InstantiateType(&cast<FunctionTypeLiteral>(exp).constant_value(),
-                          exp.source_loc()));
-      return todo_.FinishAction(instantiated);
-    }
     case ExpressionKind::ContinuationTypeLiteral: {
       CARBON_CHECK(act.pos() == 0);
       return todo_.FinishAction(arena_->New<ContinuationType>());
@@ -1432,17 +1425,12 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       CARBON_CHECK(act.pos() == 0);
       return todo_.FinishAction(arena_->New<StringType>());
     }
-    case ExpressionKind::ArrayTypeLiteral: {
-      CARBON_CHECK(act.pos() == 0);
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> instantiated,
-          InstantiateType(&cast<ArrayTypeLiteral>(exp).constant_value(),
-                          exp.source_loc()));
-      return todo_.FinishAction(instantiated);
-    }
+    case ExpressionKind::FunctionTypeLiteral:
+    case ExpressionKind::StructTypeLiteral:
+    case ExpressionKind::ArrayTypeLiteral:
     case ExpressionKind::ValueLiteral: {
       CARBON_CHECK(act.pos() == 0);
-      auto* value = &cast<ValueLiteral>(exp).value();
+      auto* value = &cast<ConstantValueLiteral>(exp).constant_value();
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> destination,
           InstantiateType(&exp.static_type(), exp.source_loc()));
