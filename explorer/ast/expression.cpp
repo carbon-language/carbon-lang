@@ -257,6 +257,12 @@ void Expression::Print(llvm::raw_ostream& out) const {
       }
       break;
     }
+    case ExpressionKind::BuiltinConvertExpression: {
+      // These don't represent source syntax, so just print the original
+      // expression.
+      out << *cast<BuiltinConvertExpression>(this)->source_expression();
+      break;
+    }
     case ExpressionKind::UnimplementedExpression: {
       const auto& unimplemented = cast<UnimplementedExpression>(*this);
       out << "UnimplementedExpression<" << unimplemented.label() << ">(";
@@ -332,6 +338,7 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
     case ExpressionKind::CompoundMemberAccessExpression:
     case ExpressionKind::IfExpression:
     case ExpressionKind::WhereExpression:
+    case ExpressionKind::BuiltinConvertExpression:
     case ExpressionKind::TupleLiteral:
     case ExpressionKind::StructLiteral:
     case ExpressionKind::StructTypeLiteral:
