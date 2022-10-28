@@ -390,7 +390,11 @@ message InterfaceImplDeclaration {
 message InterfaceDeclaration {
   optional string name = 1;
   repeated Declaration members = 2;
-  optional GenericBinding self = 3;
+}
+
+message ConstraintDeclaration {
+  optional string name = 1;
+  repeated Declaration members = 2;
 }
 
 message ImplDeclaration {
@@ -440,6 +444,7 @@ message Declaration {
     DestructorDeclaration destructor = 11;
     InterfaceExtendsDeclaration interface_extends = 12;
     InterfaceImplDeclaration interface_impl = 13;
+    ConstraintDeclaration constraint = 14;
   }
 }
 

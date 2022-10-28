@@ -64,6 +64,7 @@ class Value {
     TupleType,
     MixinPseudoType,
     InterfaceType,
+    NamedConstraintType,
     ConstraintType,
     ChoiceType,
     ContinuationType,  // The type of a continuation.
@@ -769,6 +770,31 @@ class InterfaceType : public Value {
 
  private:
   Nonnull<const InterfaceDeclaration*> declaration_;
+  Nonnull<const Bindings*> bindings_ = Bindings::None();
+};
+
+// A named constraint type.
+class NamedConstraintType : public Value {
+ public:
+  explicit NamedConstraintType(
+      Nonnull<const ConstraintDeclaration*> declaration,
+      Nonnull<const Bindings*> bindings)
+      : Value(Kind::NamedConstraintType),
+        declaration_(declaration),
+        bindings_(bindings) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::NamedConstraintType;
+  }
+
+  auto declaration() const -> const ConstraintDeclaration& {
+    return *declaration_;
+  }
+
+  auto bindings() const -> const Bindings& { return *bindings_; }
+
+ private:
+  Nonnull<const ConstraintDeclaration*> declaration_;
   Nonnull<const Bindings*> bindings_ = Bindings::None();
 };
 

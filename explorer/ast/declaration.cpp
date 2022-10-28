@@ -15,8 +15,9 @@ Declaration::~Declaration() = default;
 
 void Declaration::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
-    case DeclarationKind::InterfaceDeclaration: {
-      const auto& iface_decl = cast<InterfaceDeclaration>(*this);
+    case DeclarationKind::InterfaceDeclaration:
+    case DeclarationKind::ConstraintDeclaration: {
+      const auto& iface_decl = cast<ConstraintTypeDeclaration>(*this);
       PrintID(out);
       out << " {\n";
       for (Nonnull<Declaration*> m : iface_decl.members()) {
@@ -120,6 +121,11 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
       out << "interface " << iface_decl.name();
       break;
     }
+    case DeclarationKind::ConstraintDeclaration: {
+      const auto& constraint_decl = cast<ConstraintDeclaration>(*this);
+      out << "constraint " << constraint_decl.name();
+      break;
+    }
     case DeclarationKind::ImplDeclaration: {
       const auto& impl_decl = cast<ImplDeclaration>(*this);
       switch (impl_decl.kind()) {
@@ -217,7 +223,8 @@ auto GetName(const Declaration& declaration)
     case DeclarationKind::ChoiceDeclaration:
       return cast<ChoiceDeclaration>(declaration).name();
     case DeclarationKind::InterfaceDeclaration:
-      return cast<InterfaceDeclaration>(declaration).name();
+    case DeclarationKind::ConstraintDeclaration:
+      return cast<ConstraintTypeDeclaration>(declaration).name();
     case DeclarationKind::VariableDeclaration:
       return cast<VariableDeclaration>(declaration).binding().name();
     case DeclarationKind::AssociatedConstantDeclaration:

@@ -599,6 +599,14 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
       return arena_->New<InterfaceType>(&interface_type.declaration(),
                                         bindings);
     }
+    case Value::Kind::NamedConstraintType: {
+      const auto& constraint_type = cast<NamedConstraintType>(*type);
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Bindings*> bindings,
+          InstantiateBindings(&constraint_type.bindings(), source_loc));
+      return arena_->New<NamedConstraintType>(&constraint_type.declaration(),
+                                              bindings);
+    }
     case Value::Kind::NominalClassType: {
       const auto& class_type = cast<NominalClassType>(*type);
       CARBON_ASSIGN_OR_RETURN(
@@ -678,6 +686,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::NominalClassType:
     case Value::Kind::MixinPseudoType:
     case Value::Kind::InterfaceType:
+    case Value::Kind::NamedConstraintType:
     case Value::Kind::ConstraintType:
     case Value::Kind::ImplWitness:
     case Value::Kind::BindingWitness:
@@ -729,6 +738,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
         }
         case Value::Kind::TypeType:
         case Value::Kind::ConstraintType:
+        case Value::Kind::NamedConstraintType:
         case Value::Kind::InterfaceType: {
           CARBON_CHECK(struct_val.elements().empty())
               << "only empty structs convert to Type";
@@ -759,6 +769,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
         }
         case Value::Kind::TypeType:
         case Value::Kind::ConstraintType:
+        case Value::Kind::NamedConstraintType:
         case Value::Kind::InterfaceType: {
           std::vector<Nonnull<const Value*>> new_elements;
           Nonnull<const Value*> type_type = arena_->New<TypeType>();
@@ -795,8 +806,9 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
           EvalAssociatedConstant(cast<AssociatedConstant>(value), source_loc));
       if (auto* new_const = dyn_cast<AssociatedConstant>(value)) {
         // TODO: Detect whether conversions are required in type-checking.
-        if (isa<TypeType, ConstraintType, InterfaceType>(destination_type) &&
-            isa<TypeType, ConstraintType, InterfaceType>(
+        if (isa<TypeType, ConstraintType, NamedConstraintType, InterfaceType>(
+                destination_type) &&
+            isa<TypeType, ConstraintType, NamedConstraintType, InterfaceType>(
                 new_const->constant().static_type())) {
           // No further conversions are required.
           return value;
@@ -944,6 +956,9 @@ auto Interpreter::CallFunction(const CallExpression& call,
         case DeclarationKind::InterfaceDeclaration:
           return todo_.FinishAction(arena_->New<InterfaceType>(
               &cast<InterfaceDeclaration>(decl), bindings));
+        case DeclarationKind::ConstraintDeclaration:
+          return todo_.FinishAction(arena_->New<NamedConstraintType>(
+              &cast<ConstraintDeclaration>(decl), bindings));
         case DeclarationKind::ChoiceDeclaration:
           return todo_.FinishAction(arena_->New<ChoiceType>(
               &cast<ChoiceDeclaration>(decl), bindings));
@@ -1049,7 +1064,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           CARBON_CHECK(phase() == Phase::CompileTime)
               << "should not form MemberNames at runtime";
           std::optional<const Value*> type_result;
-          if (!isa<InterfaceType, ConstraintType>(act.results()[0])) {
+          if (!isa<InterfaceType, NamedConstraintType, ConstraintType>(
+                  act.results()[0])) {
             type_result = act.results()[0];
           }
           MemberName* member_name = arena_->New<MemberName>(
@@ -1987,6 +2003,7 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
     case DeclarationKind::MixDeclaration:
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::InterfaceDeclaration:
+    case DeclarationKind::ConstraintDeclaration:
     case DeclarationKind::InterfaceExtendsDeclaration:
     case DeclarationKind::InterfaceImplDeclaration:
     case DeclarationKind::AssociatedConstantDeclaration:
