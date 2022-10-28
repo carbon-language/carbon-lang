@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
-// CHECK:STDOUT: result: 6
+// CHECK:STDOUT: result: 12
 
 package ExplorerTest api;
 

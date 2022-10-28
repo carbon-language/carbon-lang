@@ -5,8 +5,7 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
-// CHECK:STDOUT: Carrot.G
-// CHECK:STDOUT: result: 5
+// CHECK:STDOUT: result: 12
 
 package ExplorerTest api;
 

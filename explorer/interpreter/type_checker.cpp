@@ -4801,11 +4801,11 @@ auto TypeChecker::DeclareConstraintTypeDeclaration(
   // this interface.
   std::optional<Nonnull<const Witness*>> iface_impl_witness;
   if (is_interface) {
-    // The impl constraint says only that the direct members of the interface are
-    // available. For any indirect constraints, we need to add separate entries
-    // to the constraint type. This ensures that all indirect constraints are
-    // lifted to the top level so they can be accessed directly and resolved
-    // independently if necessary.
+    // The impl constraint says only that the direct members of the interface
+    // are available. For any indirect constraints, we need to add separate
+    // entries to the constraint type. This ensures that all indirect
+    // constraints are lifted to the top level so they can be accessed directly
+    // and resolved independently if necessary.
     int index = builder.AddImplConstraint(
         {.type = builder.GetSelfType(),
          .interface = cast<InterfaceType>(constraint_type)});
@@ -4902,7 +4902,8 @@ auto TypeChecker::DeclareConstraintTypeDeclaration(
 
       default: {
         CARBON_FATAL()
-            << "unexpected declaration in constraint type declaration:\n" << *m;
+            << "unexpected declaration in constraint type declaration:\n"
+            << *m;
         break;
       }
     }
