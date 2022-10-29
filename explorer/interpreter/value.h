@@ -61,6 +61,7 @@ class Value {
     AutoType,
     StructType,
     NominalClassType,
+    TupleType,
     MixinPseudoType,
     InterfaceType,
     ConstraintType,
@@ -298,20 +299,13 @@ class BoolValue : public Value {
   bool value_;
 };
 
-// A non-empty value of a struct type.
-//
-// It can't be empty because `{}` is a struct type as well as a value of that
-// type, so for consistency we always represent it as a StructType rather than
-// let it oscillate unpredictably between the two. However, this means code
-// that handles StructValue instances may also need to be able to handle
-// StructType instances.
+// A value of a struct type. Note that the expression `{}` is a value of type
+// `{} as Type`; the former is a `StructValue` and the latter is a
+// `StructType`.
 class StructValue : public Value {
  public:
   explicit StructValue(std::vector<NamedValue> elements)
-      : Value(Kind::StructValue), elements_(std::move(elements)) {
-    CARBON_CHECK(!elements_.empty())
-        << "`{}` is represented as a StructType, not a StructValue.";
-  }
+      : Value(Kind::StructValue), elements_(std::move(elements)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::StructValue;
@@ -391,10 +385,32 @@ class AlternativeValue : public Value {
   Nonnull<const Value*> argument_;
 };
 
-// A tuple value.
-class TupleValue : public Value {
+// Base class for tuple types and tuple values. These are the same other than
+// their type-of-type, but we separate them to make it easier to tell types and
+// values apart.
+class TupleValueBase : public Value {
  public:
-  // An empty tuple, also known as the unit type.
+  explicit TupleValueBase(Value::Kind kind,
+                          std::vector<Nonnull<const Value*>> elements)
+      : Value(kind), elements_(std::move(elements)) {}
+
+  auto elements() const -> llvm::ArrayRef<Nonnull<const Value*>> {
+    return elements_;
+  }
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::TupleValue ||
+           value->kind() == Kind::TupleType;
+  }
+
+ private:
+  std::vector<Nonnull<const Value*>> elements_;
+};
+
+// A tuple value.
+class TupleValue : public TupleValueBase {
+ public:
+  // An empty tuple.
   static auto Empty() -> Nonnull<const TupleValue*> {
     static const TupleValue empty =
         TupleValue(std::vector<Nonnull<const Value*>>());
@@ -402,18 +418,30 @@ class TupleValue : public Value {
   }
 
   explicit TupleValue(std::vector<Nonnull<const Value*>> elements)
-      : Value(Kind::TupleValue), elements_(std::move(elements)) {}
+      : TupleValueBase(Kind::TupleValue, std::move(elements)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::TupleValue;
   }
+};
 
-  auto elements() const -> llvm::ArrayRef<Nonnull<const Value*>> {
-    return elements_;
+// A tuple type. This is the result of converting a tuple value containing
+// only types to type Type.
+class TupleType : public TupleValueBase {
+ public:
+  // The unit type.
+  static auto Empty() -> Nonnull<const TupleType*> {
+    static const TupleType empty =
+        TupleType(std::vector<Nonnull<const Value*>>());
+    return static_cast<Nonnull<const TupleType*>>(&empty);
   }
 
- private:
-  std::vector<Nonnull<const Value*>> elements_;
+  explicit TupleType(std::vector<Nonnull<const Value*>> elements)
+      : TupleValueBase(Kind::TupleType, std::move(elements)) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::TupleType;
+  }
 };
 
 // A binding placeholder value.
@@ -587,9 +615,6 @@ class AutoType : public Value {
 };
 
 // A struct type.
-//
-// Code that handles this type may sometimes need to have special-case handling
-// for `{}`, which is a struct value in addition to being a struct type.
 class StructType : public Value {
  public:
   StructType() : StructType(std::vector<NamedValue>{}) {}

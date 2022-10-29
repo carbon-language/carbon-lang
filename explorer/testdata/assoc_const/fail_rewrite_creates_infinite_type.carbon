@@ -8,10 +8,13 @@
 
 package ExplorerTest api;
 
-__mixin Operations {}
+interface HasType {
+  let T:! Type;
+}
+
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_rewrite_creates_infinite_type.carbon:[[@LINE+1]]: rewrite of (H).(HasType.T) applies within its own resolved expansion of (H).(HasType.T)*
+fn F[H:! HasType where .T = .T*]() {}
 
 fn Main() -> i32 {
-   // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_mix_as_type_expr.carbon:[[@LINE+1]]: invalid use of mixin Operations
-   var a: Operations;
-   return 0;
+  return 0;
 }

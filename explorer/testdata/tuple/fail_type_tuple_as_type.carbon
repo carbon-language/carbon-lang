@@ -8,10 +8,12 @@
 
 package ExplorerTest api;
 
-__mixin Operations {}
+fn F[T:! ((), ())](x: T) -> () {
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/tuple/fail_type_tuple_as_type.carbon:[[@LINE+1]]: only arrays and tuples can be indexed, found T
+  return x[0];
+}
 
 fn Main() -> i32 {
-   // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_mix_as_type_expr.carbon:[[@LINE+1]]: invalid use of mixin Operations
-   var a: Operations;
-   return 0;
+  F(((), ()));
+  return 0;
 }

@@ -115,6 +115,12 @@ static auto ExpressionToProto(const Expression& expression)
       break;
     }
 
+    case ExpressionKind::BuiltinConvertExpression: {
+      expression_proto = ExpressionToProto(
+          *cast<BuiltinConvertExpression>(expression).source_expression());
+      break;
+    }
+
     case ExpressionKind::CallExpression: {
       const auto& call = cast<CallExpression>(expression);
       auto* call_proto = expression_proto.mutable_call();

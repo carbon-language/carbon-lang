@@ -333,11 +333,6 @@ class TypeChecker {
   auto ExpectReturnOnAllPaths(std::optional<Nonnull<Statement*>> opt_stmt,
                               SourceLocation source_loc) -> ErrorOr<Success>;
 
-  // Verifies that *value represents a concrete type, as opposed to a
-  // type pattern or a non-type value.
-  auto ExpectIsConcreteType(SourceLocation source_loc,
-                            Nonnull<const Value*> value) -> ErrorOr<Success>;
-
   // Returns the field names of the class together with their types.
   auto FieldTypes(const NominalClassType& class_type) const
       -> std::vector<NamedValue>;
@@ -387,6 +382,10 @@ class TypeChecker {
                          Nonnull<const Value*> destination)
       -> ErrorOr<Nonnull<Expression*>>;
 
+  // Checks that the given type is not a placeholder type. Diagnoses otherwise.
+  auto ExpectNonPlaceholderType(SourceLocation source_loc,
+                                Nonnull<const Value*> type) -> ErrorOr<Success>;
+
   // Determine whether `type1` and `type2` are considered to be the same type
   // in the given scope. This is true if they're structurally identical or if
   // there is an equality relation in scope that specifies that they are the
@@ -409,6 +408,17 @@ class TypeChecker {
                        Nonnull<const Value*> expected,
                        Nonnull<const Value*> actual,
                        const ImplScope& impl_scope) const -> ErrorOr<Success>;
+
+  // Rebuild a value in the current type-checking context. Applies any rewrites
+  // that are in scope and attempts to resolve associated constants using impls
+  // that have been declared since the value was formed.
+  auto RebuildValue(Nonnull<const Value*> value) const -> Nonnull<const Value*>;
+
+  // Implementation of Substitute and RebuildValue. Does not check that
+  // bindings are nonempty, nor does it trace its progress.
+  auto SubstituteImpl(const Bindings& bindings,
+                      Nonnull<const Value*> type) const
+      -> Nonnull<const Value*>;
 
   // The name of a builtin interface, with any arguments.
   struct BuiltinInterfaceName {

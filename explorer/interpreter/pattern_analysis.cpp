@@ -71,7 +71,7 @@ void AbstractPattern::AppendElementsTo(
     }
   } else if (const auto* value = value_.dyn_cast<const Value*>()) {
     if (const auto* tuple = dyn_cast<TupleValue>(value)) {
-      const auto* tuple_type = cast<TupleValue>(type_);
+      const auto* tuple_type = cast<TupleType>(type_);
       CARBON_CHECK(tuple->elements().size() == tuple_type->elements().size());
       for (size_t i = 0; i != tuple->elements().size(); ++i) {
         out.push_back(
@@ -180,7 +180,7 @@ auto PatternMatrix::FirstColumnDiscriminators() const -> DiscriminatorSet {
         continue;
       case AbstractPattern::Compound: {
         const Value& type = row[0].type();
-        if (const auto* tuple = dyn_cast<TupleValue>(&type)) {
+        if (const auto* tuple = dyn_cast<TupleType>(&type)) {
           // If we find a tuple match, we've found all constructors (there's
           // only one!) and none were missing.
           return {
