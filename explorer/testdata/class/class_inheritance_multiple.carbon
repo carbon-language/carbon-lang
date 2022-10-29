@@ -5,29 +5,38 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
+// CHECK:STDOUT: A
+// CHECK:STDOUT: c.a: 1
+// CHECK:STDOUT: c.b: 2
+// CHECK:STDOUT: c.c: 3
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
 base class A {
   fn FunctionA() {}
-  var var_a: i32;
+  var a: i32;
+  var aa: String;
 }
 
 base class B extends A {
   fn FunctionB() {}
-  var var_b: i32;
+  var b: i32;
 }
 
 class C extends B {
   fn FunctionC() {}
-  var var_c: i32;
+  var c: i32;
 }
 
 fn Main() -> i32 {
-  var c: C = {.var_a=1, .var_b=2, .var_c=3};
+  var c: C = {.base={.base={.aa="A", .a=1}, .b=2, }, .c=3};
   c.FunctionA();
   c.FunctionB();
   c.FunctionC();
+  Print(c.aa);
+  Print("c.a: {0}", c.a);
+  Print("c.b: {0}", c.b);
+  Print("c.c: {0}", c.c);
   return 0;
 }
