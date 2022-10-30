@@ -15,6 +15,13 @@ namespace Carbon {
 
 class SourceLocation {
  public:
+  // Produce a source location that is known to not be used, because it is fed
+  // into an operation that creates no AST nodes and whose diagnostics are
+  // discarded.
+  static auto DiagnosticsIgnored() -> SourceLocation {
+    return SourceLocation("", 0);
+  }
+
   // The filename should be eternal or arena-allocated to eliminate copies.
   constexpr SourceLocation(const char* filename, int line_num)
       : filename_(filename), line_num_(line_num) {}
@@ -32,6 +39,12 @@ class SourceLocation {
 
   void Print(llvm::raw_ostream& out) const {
     out << filename_ << ":" << line_num_;
+  }
+  auto ToString() const -> std::string {
+    std::string result;
+    llvm::raw_string_ostream out(result);
+    Print(out);
+    return result;
   }
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 

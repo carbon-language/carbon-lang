@@ -42,32 +42,50 @@ class TypeChecker;
 // scope.
 class ImplScope {
  public:
-  // Associates `iface` and `type` with the `impl` in this scope.
+  // Associates `iface` and `type` with the `impl` in this scope. If `iface` is
+  // a constraint type, it will be split into its constituent components, and
+  // any references to `.Self` are expected to have been substituted for the
+  // type implementing the constraint.
   void Add(Nonnull<const Value*> iface, Nonnull<const Value*> type,
-           Nonnull<Expression*> impl, const TypeChecker& type_checker);
+           Nonnull<const Witness*> witness, const TypeChecker& type_checker);
   // For a parameterized impl, associates `iface` and `type`
-  // with the `impl` in this scope.
+  // with the `impl` in this scope. Otherwise, the same as the previous
+  // overload.
   void Add(Nonnull<const Value*> iface,
            llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
            Nonnull<const Value*> type,
            llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
-           Nonnull<Expression*> impl, const TypeChecker& type_checker);
+           Nonnull<const Witness*> witness, const TypeChecker& type_checker);
+  // Adds a list of impl constraints from a constraint type into scope. Any
+  // references to `.Self` are expected to have already been substituted for
+  // the type implementing the constraint.
+  void Add(llvm::ArrayRef<ImplConstraint> impls,
+           llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
+           llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
+           Nonnull<const Witness*> witness, const TypeChecker& type_checker);
 
-  // Add a type equality constraint.
+  // Adds a type equality constraint.
   void AddEqualityConstraint(Nonnull<const EqualityConstraint*> equal) {
     equalities_.push_back(equal);
   }
 
-  // Make `parent` a parent of this scope.
+  // Makes `parent` a parent of this scope.
   // REQUIRES: `parent` is not already a parent of this scope.
   void AddParent(Nonnull<const ImplScope*> parent);
 
   // Returns the associated impl for the given `constraint` and `type` in
   // the ancestor graph of this scope, or reports a compilation error
   // at `source_loc` there isn't exactly one matching impl.
+  //
+  // If any substitutions should be made into the constraint before resolving
+  // it, those should be passed in `bindings`. The witness returned will be for
+  // `constraint`, not for the result of substituting the bindings into the
+  // constraint. The substituted type might in general have a different shape
+  // of witness due to deduplication.
   auto Resolve(Nonnull<const Value*> constraint, Nonnull<const Value*> type,
-               SourceLocation source_loc, const TypeChecker& type_checker) const
-      -> ErrorOr<Nonnull<Expression*>>;
+               SourceLocation source_loc, const TypeChecker& type_checker,
+               const Bindings& bindings = {}) const
+      -> ErrorOr<Nonnull<const Witness*>>;
 
   // Visits the values that are a single step away from `value` according to an
   // equality constraint that is in scope. That is, the values `v` such that we
@@ -94,7 +112,7 @@ class ImplScope {
     std::vector<Nonnull<const GenericBinding*>> deduced;
     Nonnull<const Value*> type;
     std::vector<Nonnull<const ImplBinding*>> impl_bindings;
-    Nonnull<Expression*> impl;
+    Nonnull<const Witness*> witness;
   };
 
  private:
@@ -104,7 +122,7 @@ class ImplScope {
   auto ResolveInterface(Nonnull<const InterfaceType*> iface,
                         Nonnull<const Value*> type, SourceLocation source_loc,
                         const TypeChecker& type_checker) const
-      -> ErrorOr<Nonnull<Expression*>>;
+      -> ErrorOr<Nonnull<const Witness*>>;
 
   // Returns the associated impl for the given `iface` and `type` in
   // the ancestor graph of this scope, returns std::nullopt if there
@@ -116,7 +134,7 @@ class ImplScope {
                   Nonnull<const Value*> type, SourceLocation source_loc,
                   const ImplScope& original_scope,
                   const TypeChecker& type_checker) const
-      -> ErrorOr<std::optional<Nonnull<Expression*>>>;
+      -> ErrorOr<std::optional<Nonnull<const Witness*>>>;
 
   // Returns the associated impl for the given `iface` and `type` in
   // this scope, returns std::nullopt if there is none, or reports
@@ -128,11 +146,31 @@ class ImplScope {
                    Nonnull<const Value*> impl_type, SourceLocation source_loc,
                    const ImplScope& original_scope,
                    const TypeChecker& type_checker) const
-      -> ErrorOr<std::optional<Nonnull<Expression*>>>;
+      -> ErrorOr<std::optional<Nonnull<const Witness*>>>;
 
   std::vector<Impl> impls_;
   std::vector<Nonnull<const EqualityConstraint*>> equalities_;
   std::vector<Nonnull<const ImplScope*>> parent_scopes_;
+};
+
+// An equality context that considers two values to be equal if they are a
+// single step apart according to an equality constraint in the given impl
+// scope.
+struct SingleStepEqualityContext : public EqualityContext {
+ public:
+  explicit SingleStepEqualityContext(Nonnull<const ImplScope*> impl_scope)
+      : impl_scope_(impl_scope) {}
+
+  // Visits the values that are equal to the given value and a single step away
+  // according to an equality constraint that is in the given impl scope. Stops
+  // and returns `false` if the visitor returns `false`, otherwise returns
+  // `true`.
+  auto VisitEqualValues(Nonnull<const Value*> value,
+                        llvm::function_ref<bool(Nonnull<const Value*>)> visitor)
+      const -> bool override;
+
+ private:
+  Nonnull<const ImplScope*> impl_scope_;
 };
 
 }  // namespace Carbon

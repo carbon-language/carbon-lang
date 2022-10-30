@@ -2,18 +2,16 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/print/fail_type.carbon:[[@LINE+3]]: type error in Print argument 1
-  // CHECK: expected: i32
-  // CHECK: actual: {.x: i32}
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/print/fail_type.carbon:[[@LINE+3]]: type error in Print argument 1
+  // CHECK:STDERR: expected: i32
+  // CHECK:STDERR: actual: {.x: i32}
   Print("{0}", {.x = 1});
   return 0;
 }

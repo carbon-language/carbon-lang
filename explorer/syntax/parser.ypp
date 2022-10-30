@@ -59,9 +59,9 @@
   #include <cstdlib>
   #include <vector>
 
-  #include "common/check.h"
   #include "explorer/syntax/parse_and_lex_context.h"
   #include "llvm/ADT/StringExtras.h"
+  #include "llvm/Support/FormatVariadic.h"
   #include "llvm/Support/raw_ostream.h"
 }  // %code top
 
@@ -104,10 +104,16 @@
 %type <std::vector<LibraryName>> import_directives
 %type <std::string> optional_library_path
 %type <bool> api_or_impl
+%type <ClassExtensibility> class_declaration_extensibility
+%type <std::optional<Nonnull<Expression*>>> class_declaration_extends
 %type <Nonnull<Declaration*>> declaration
 %type <Nonnull<FunctionDeclaration*>> function_declaration
+%type <Nonnull<DestructorDeclaration*>> destructor_declaration;
+%type <Nonnull<MixDeclaration*>> mix_declaration
 %type <Nonnull<AliasDeclaration*>> alias_declaration
 %type <std::vector<Nonnull<Declaration*>>> declaration_list
+%type <std::vector<Nonnull<Declaration*>>> class_body
+%type <std::vector<Nonnull<Declaration*>>> mixin_body
 %type <std::vector<Nonnull<Declaration*>>> interface_body
 %type <std::vector<Nonnull<Declaration*>>> impl_body
 %type <Nonnull<Statement*>> statement
@@ -119,18 +125,26 @@
 %type <Nonnull<Expression*>> primary_expression
 %type <Nonnull<Expression*>> postfix_expression
 %type <Nonnull<Expression*>> ref_deref_expression
-%type <Nonnull<Expression*>> combine_lhs
-%type <Nonnull<Expression*>> combine_expression
 %type <Nonnull<Expression*>> type_expression
 %type <Nonnull<Expression*>> fn_type_expression
 %type <Nonnull<Expression*>> minus_expression
-%type <Nonnull<Expression*>> multiplicative_operand
+%type <Nonnull<Expression*>> complement_expression
+%type <Nonnull<Expression*>> unary_expression
+%type <Nonnull<Expression*>> simple_binary_operand
 %type <Nonnull<Expression*>> multiplicative_lhs
 %type <Nonnull<Expression*>> multiplicative_expression
 %type <Nonnull<Expression*>> additive_operand
 %type <Nonnull<Expression*>> additive_lhs
 %type <Nonnull<Expression*>> additive_expression
-%type <Nonnull<Expression*>> as_operand
+%type <Nonnull<Expression*>> modulo_expression
+%type <Nonnull<Expression*>> bitwise_and_lhs
+%type <Nonnull<Expression*>> bitwise_and_expression
+%type <Nonnull<Expression*>> bitwise_or_lhs
+%type <Nonnull<Expression*>> bitwise_or_expression
+%type <Nonnull<Expression*>> bitwise_xor_lhs
+%type <Nonnull<Expression*>> bitwise_xor_expression
+%type <Nonnull<Expression*>> bitwise_expression
+%type <Nonnull<Expression*>> bit_shift_expression
 %type <Nonnull<Expression*>> as_expression
 %type <Nonnull<Expression*>> unimpl_expression
 %type <Nonnull<Expression*>> value_expression
@@ -150,6 +164,7 @@
 %type <Nonnull<Expression*>> statement_expression
 %type <Nonnull<Expression*>> if_expression
 %type <Nonnull<Expression*>> expression
+%type <Nonnull<Expression*>> mixin_import
 %type <Nonnull<GenericBinding*>> generic_binding
 %type <Nonnull<Pattern*>> deduced_param
 %type <std::vector<Nonnull<AstNode*>>> deduced_params
@@ -165,7 +180,6 @@
 %type <std::vector<FieldInitializer>> struct_type_literal_contents
 %type <Nonnull<TupleLiteral*>> tuple
 %type <std::string> binding_lhs
-%type <std::optional<Nonnull<Pattern*>>> receiver
 %type <Nonnull<BindingPattern*>> variable_declaration
 %type <ParenContents<Expression>> paren_expression_base
 %type <ParenContents<Expression>> paren_expression_contents
@@ -180,10 +194,12 @@
 %type <std::vector<Nonnull<AlternativeSignature*>>> alternative_list_contents
 %type <BisonWrap<Match::Clause>> clause
 %type <std::vector<Match::Clause>> clause_list
+%type <Operator> comparison_operator;
 
 %token
   // Most tokens have their spelling defined in lexer.lpp.
   // table-begin
+  ABSTRACT
   ADDR
   ALIAS
   AMPERSAND
@@ -193,8 +209,10 @@
   AS
   AUTO
   AWAIT
+  BASE
   BOOL
   BREAK
+  CARET
   CASE
   CHOICE
   CLASS
@@ -205,31 +223,46 @@
   CONTINUATION_TYPE
   CONTINUE
   DEFAULT
+  DESTRUCTOR
   DOUBLE_ARROW
   ELSE
   EQUAL
   EQUAL_EQUAL
+  EXTENDS
   EXTERNAL
   FALSE
   FN
   FN_TYPE
+  FOR
   FORALL
+  GREATER
+  GREATER_EQUAL
+  GREATER_GREATER
   IF
   IMPL
   IMPORT
+  IN
   INTERFACE
   IS
   LEFT_CURLY_BRACE
   LEFT_PARENTHESIS
   LEFT_SQUARE_BRACKET
+  LESS
+  LESS_EQUAL
+  LESS_LESS
   LET
   LIBRARY
   MATCH
   MINUS
+  MIX
+  MIXIN
   NOT
+  NOT_EQUAL
   OR
   PACKAGE
+  PERCENT
   PERIOD
+  PIPE
   PLUS
   RETURN
   RETURNED
@@ -324,11 +357,18 @@ primary_expression:
     { $$ = arena->New<BoolLiteral>(context.source_loc(), false); }
 | sized_type_literal
     {
-      int val;
-      CARBON_CHECK(llvm::to_integer(llvm::StringRef($1).substr(1), val));
-      CARBON_CHECK($1[0] == 'i' && val == 32)
-          << "Only i32 is supported for now: " << $1;
-      $$ = arena->New<IntTypeLiteral>(context.source_loc());
+      int val = 0;
+      if (!llvm::to_integer(llvm::StringRef($1).substr(1), val)) {
+        context.RecordSyntaxError(
+            llvm::formatv("Invalid type literal: {0}", $1));
+        YYERROR;
+      } else if ($1[0] != 'i' || val != 32) {
+        context.RecordSyntaxError(
+            llvm::formatv("Only i32 is supported for now: {0}", $1));
+        YYERROR;
+      } else {
+        $$ = arena->New<IntTypeLiteral>(context.source_loc());
+      }
     }
 | SELF
     // TODO: Should we create a new TypeLiteral for `Self`?
@@ -403,21 +443,9 @@ fn_type_expression:
   FN_TYPE tuple ARROW type_expression
     { $$ = arena->New<FunctionTypeLiteral>(context.source_loc(), $2, $4); }
 ;
-combine_lhs:
-  ref_deref_expression
-| combine_expression
-;
-combine_expression:
-  combine_lhs AMPERSAND ref_deref_expression
-    {
-      $$ = arena->New<OperatorExpression>(
-          context.source_loc(), Operator::Combine,
-          std::vector<Nonnull<Expression*>>({$1, $3}));
-    }
-;
 type_expression:
   ref_deref_expression
-| combine_expression
+| bitwise_and_expression
 | fn_type_expression
 ;
 minus_expression:
@@ -429,29 +457,50 @@ minus_expression:
           std::vector<Nonnull<Expression*>>({$2}));
     }
 ;
-multiplicative_operand:
+complement_expression:
+  // ref_deref_expression excluded due to precedence diamond.
+  CARET ref_deref_expression
+    {
+      $$ = arena->New<OperatorExpression>(
+          context.source_loc(), Operator::Complement,
+          std::vector<Nonnull<Expression*>>({$2}));
+    }
+;
+unary_expression:
+  // ref_deref_expression excluded due to precedence diamond.
+  minus_expression
+| complement_expression
+;
+// A simple_binary_operand is an operand of a binary operator
+// that is not itself a binary operator expression.
+simple_binary_operand:
   ref_deref_expression
-| minus_expression
+| unary_expression
 ;
 multiplicative_lhs:
-  ref_deref_expression
+  simple_binary_operand
 | multiplicative_expression
 ;
 multiplicative_expression:
-  minus_expression
-| multiplicative_lhs BINARY_STAR multiplicative_operand
+  multiplicative_lhs BINARY_STAR simple_binary_operand
     {
       $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::Mul,
           std::vector<Nonnull<Expression*>>({$1, $3}));
     }
+| multiplicative_lhs SLASH simple_binary_operand
+    {
+      $$ = arena->New<OperatorExpression>(
+          context.source_loc(), Operator::Div,
+          std::vector<Nonnull<Expression*>>({$1, $3}));
+    }
 ;
 additive_operand:
-  ref_deref_expression
+  simple_binary_operand
 | multiplicative_expression
 ;
 additive_lhs:
-  ref_deref_expression
+  simple_binary_operand
 | additive_expression
 ;
 additive_expression:
@@ -469,12 +518,71 @@ additive_expression:
           std::vector<Nonnull<Expression*>>({$1, $3}));
     }
 ;
-as_operand:
-  minus_expression
-| ref_deref_expression
+modulo_expression:
+  simple_binary_operand PERCENT simple_binary_operand
+    {
+      $$ = arena->New<OperatorExpression>(
+          context.source_loc(), Operator::Mod,
+          std::vector<Nonnull<Expression*>>({$1, $3}));
+    }
+;
+bitwise_and_lhs:
+  simple_binary_operand
+| bitwise_and_expression
+;
+bitwise_and_expression:
+  bitwise_and_lhs AMPERSAND simple_binary_operand
+    {
+      $$ = arena->New<OperatorExpression>(
+          context.source_loc(), Operator::BitwiseAnd,
+          std::vector<Nonnull<Expression*>>({$1, $3}));
+    }
+;
+bitwise_or_lhs:
+  simple_binary_operand
+| bitwise_or_expression
+;
+bitwise_or_expression:
+  bitwise_or_lhs PIPE simple_binary_operand
+    {
+      $$ = arena->New<OperatorExpression>(
+          context.source_loc(), Operator::BitwiseOr,
+          std::vector<Nonnull<Expression*>>({$1, $3}));
+    }
+;
+bitwise_xor_lhs:
+  simple_binary_operand
+| bitwise_xor_expression
+;
+bitwise_xor_expression:
+  bitwise_xor_lhs CARET simple_binary_operand
+    {
+      $$ = arena->New<OperatorExpression>(
+          context.source_loc(), Operator::BitwiseXor,
+          std::vector<Nonnull<Expression*>>({$1, $3}));
+    }
+;
+bitwise_expression:
+  bitwise_and_expression
+| bitwise_or_expression
+| bitwise_xor_expression
+;
+bit_shift_expression:
+  simple_binary_operand LESS_LESS simple_binary_operand
+    {
+      $$ = arena->New<OperatorExpression>(
+          context.source_loc(), Operator::BitShiftLeft,
+          std::vector<Nonnull<Expression*>>({$1, $3}));
+    }
+| simple_binary_operand GREATER_GREATER simple_binary_operand
+    {
+      $$ = arena->New<OperatorExpression>(
+          context.source_loc(), Operator::BitShiftRight,
+          std::vector<Nonnull<Expression*>>({$1, $3}));
+    }
 ;
 as_expression:
-  as_operand AS as_operand
+  simple_binary_operand AS simple_binary_operand
     {
       $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::As,
@@ -493,20 +601,37 @@ value_expression:
   // ref_deref_expression excluded due to precedence diamond.
   additive_expression
 | as_expression
-| combine_expression
+| bitwise_expression
+| bit_shift_expression
 | fn_type_expression
+| modulo_expression
+| unary_expression
 | unimpl_expression
 ;
 comparison_operand:
   ref_deref_expression
 | value_expression
 ;
+comparison_operator:
+  EQUAL_EQUAL
+    { $$ = Operator::Eq; }
+| LESS
+    { $$ = Operator::Less; }
+| LESS_EQUAL
+    { $$ = Operator::LessEq; }
+|  GREATER
+    { $$ = Operator::Greater; }
+| GREATER_EQUAL
+    { $$ = Operator::GreaterEq; }
+| NOT_EQUAL
+    { $$ = Operator::NotEq; }
+;
 comparison_expression:
   value_expression
-| comparison_operand EQUAL_EQUAL comparison_operand
+| comparison_operand comparison_operator comparison_operand
     {
       $$ = arena->New<OperatorExpression>(
-          context.source_loc(), Operator::Eq,
+          context.source_loc(), $2,
           std::vector<Nonnull<Expression*>>({$1, $3}));
     }
 ;
@@ -558,6 +683,9 @@ where_clause:
     { $$ = arena->New<IsWhereClause>(context.source_loc(), $1, $3); }
 | comparison_operand EQUAL_EQUAL comparison_operand
     { $$ = arena->New<EqualsWhereClause>(context.source_loc(), $1, $3); }
+// TODO: .(expression) = expression
+| designator EQUAL comparison_operand
+    { $$ = arena->New<RewriteWhereClause>(context.source_loc(), $1, $3); }
 ;
 where_clause_list:
   where_clause
@@ -572,7 +700,7 @@ where_expression:
   type_expression WHERE where_clause_list
     {
       auto* self =
-          arena -> New<GenericBinding>(context.source_loc(), ".Self", $1);
+          arena->New<GenericBinding>(context.source_loc(), ".Self", $1);
       $$ = arena->New<WhereExpression>(context.source_loc(), self, $3);
     }
 ;
@@ -619,13 +747,15 @@ paren_expression_contents:
     { $$ = {.elements = {$1}, .has_trailing_comma = false}; }
 | paren_expression_contents COMMA expression
     {
-      $$ = $1;
+      $$ = std::move($1);
       $$.elements.push_back($3);
     }
 ;
 
 struct_literal:
-  LEFT_CURLY_BRACE struct_literal_contents RIGHT_CURLY_BRACE
+  LEFT_CURLY_BRACE RIGHT_CURLY_BRACE
+    { $$ = arena->New<StructLiteral>(context.source_loc()); }
+| LEFT_CURLY_BRACE struct_literal_contents RIGHT_CURLY_BRACE
     { $$ = arena->New<StructLiteral>(context.source_loc(), $2); }
 | LEFT_CURLY_BRACE struct_literal_contents COMMA RIGHT_CURLY_BRACE
     { $$ = arena->New<StructLiteral>(context.source_loc(), $2); }
@@ -635,15 +765,13 @@ struct_literal_contents:
     { $$ = {FieldInitializer($1, $3)}; }
 | struct_literal_contents COMMA designator EQUAL expression
     {
-      $$ = $1;
+      $$ = std::move($1);
       $$.push_back(FieldInitializer($3, $5));
     }
 ;
 
 struct_type_literal:
-  LEFT_CURLY_BRACE RIGHT_CURLY_BRACE
-    { $$ = arena->New<StructTypeLiteral>(context.source_loc()); }
-| LEFT_CURLY_BRACE struct_type_literal_contents RIGHT_CURLY_BRACE
+  LEFT_CURLY_BRACE struct_type_literal_contents RIGHT_CURLY_BRACE
     { $$ = arena->New<StructTypeLiteral>(context.source_loc(), $2); }
 | LEFT_CURLY_BRACE struct_type_literal_contents COMMA RIGHT_CURLY_BRACE
     { $$ = arena->New<StructTypeLiteral>(context.source_loc(), $2); }
@@ -653,7 +781,7 @@ struct_type_literal_contents:
     { $$ = {FieldInitializer($1, $3)}; }
 | struct_type_literal_contents COMMA designator COLON expression
   {
-    $$ = $1;
+    $$ = std::move($1);
     $$.push_back(FieldInitializer($3, $5));
   }
 ;
@@ -689,7 +817,7 @@ non_expression_pattern:
       if (alternative_pattern.ok()) {
         $$ = *alternative_pattern;
       } else {
-        context.RecordSyntaxError(alternative_pattern.error().message());
+        context.RecordSyntaxError(std::move(alternative_pattern).error());
         YYERROR;
       }
     }
@@ -727,12 +855,12 @@ paren_pattern_contents:
     }
 | paren_pattern_contents COMMA expression
     {
-      $$ = $1;
+      $$ = std::move($1);
       $$.elements.push_back(arena->New<ExpressionPattern>($3));
     }
 | paren_pattern_contents COMMA non_expression_pattern
     {
-      $$ = $1;
+      $$ = std::move($1);
       $$.elements.push_back($3);
     }
 ;
@@ -769,7 +897,7 @@ clause_list:
     { $$ = {}; }
 | clause_list clause
     {
-      $$ = $1;
+      $$ = std::move($1);
       $$.push_back($2);
     }
 ;
@@ -787,6 +915,12 @@ statement:
       $$ = arena->New<VariableDefinition>(
           context.source_loc(), $2, $4, ValueCategory::Var,
           VariableDefinition::DefinitionType::Var);
+    }
+| RETURNED VAR variable_declaration SEMICOLON
+    {
+      $$ = arena->New<VariableDefinition>(
+          context.source_loc(), $3, std::nullopt, ValueCategory::Var,
+          VariableDefinition::DefinitionType::Returned);
     }
 | RETURNED VAR variable_declaration EQUAL expression SEMICOLON
     {
@@ -827,6 +961,8 @@ statement:
     { $$ = arena->New<Run>(context.source_loc(), $2); }
 | AWAIT SEMICOLON
     { $$ = arena->New<Await>(context.source_loc()); }
+| FOR LEFT_PARENTHESIS variable_declaration IN type_expression RIGHT_PARENTHESIS block
+    { $$ = arena->New<For>(context.source_loc(), $3, $5, $7); }
 ;
 if_statement:
   IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS block optional_else
@@ -891,7 +1027,7 @@ deduced_param_list:
     { $$ = {$1}; }
 | deduced_param_list COMMA deduced_param
     {
-      $$ = $1;  // TODO: can we std::move here?
+      $$ = std::move($1);
       $$.push_back($3);
     }
 ;
@@ -907,34 +1043,26 @@ impl_deduced_params:
 | FORALL LEFT_SQUARE_BRACKET deduced_param_list RIGHT_SQUARE_BRACKET
     { $$ = $3; }
 ;
-receiver:
-  // Empty
-    { $$ = std::nullopt; }
-| LEFT_CURLY_BRACE variable_declaration RIGHT_CURLY_BRACE
-    { $$ = $2; }
-| LEFT_CURLY_BRACE ADDR variable_declaration RIGHT_CURLY_BRACE
-    { $$ = arena->New<AddrPattern>(context.source_loc(), $3); }
-;
 function_declaration:
-  FN identifier deduced_params receiver maybe_empty_tuple_pattern return_term block
+  FN identifier deduced_params maybe_empty_tuple_pattern return_term block
     {
       ErrorOr<FunctionDeclaration*> fn = FunctionDeclaration::Create(
-          arena, context.source_loc(), $2, $3, $4, $5, $6, $7);
+          arena, context.source_loc(), $2, $3, $4, $5, $6);
       if (fn.ok()) {
         $$ = *fn;
       } else {
-        context.RecordSyntaxError(fn.error().message());
+        context.RecordSyntaxError(std::move(fn).error());
         YYERROR;
       }
     }
-| FN identifier deduced_params receiver maybe_empty_tuple_pattern return_term SEMICOLON
+| FN identifier deduced_params maybe_empty_tuple_pattern return_term SEMICOLON
     {
       ErrorOr<FunctionDeclaration*> fn = FunctionDeclaration::Create(
-          arena, context.source_loc(), $2, $3, $4, $5, $6, std::nullopt);
+          arena, context.source_loc(), $2, $3, $4, $5, std::nullopt);
       if (fn.ok()) {
         $$ = *fn;
       } else {
-        context.RecordSyntaxError(fn.error().message());
+        context.RecordSyntaxError(std::move(fn).error());
         YYERROR;
       }
     }
@@ -947,6 +1075,10 @@ variable_declaration: identifier COLON pattern
 ;
 alias_declaration: ALIAS identifier EQUAL expression SEMICOLON
     { $$ = arena->New<AliasDeclaration>(context.source_loc(), $2, $4); }
+;
+// EXPERIMENTAL MIXIN FEATURE
+mix_declaration: MIX expression SEMICOLON
+    { $$ = arena->New<MixDeclaration>(context.source_loc(), $2); }
 ;
 alternative:
   identifier tuple
@@ -962,16 +1094,16 @@ alternative_list:
   // Empty
     { $$ = {}; }
 | alternative_list_contents
-    { $$ = $1; }
+    { $$ = std::move($1); }
 | alternative_list_contents COMMA
-    { $$ = $1; }
+    { $$ = std::move($1); }
 ;
 alternative_list_contents:
   alternative
     { $$ = {std::move($1)}; }
 | alternative_list_contents COMMA alternative
     {
-      $$ = $1;
+      $$ = std::move($1);
       $$.push_back(std::move($3));
     }
 ;
@@ -981,17 +1113,50 @@ type_params:
 | tuple_pattern
     { $$ = $1; }
 ;
+// EXPERIMENTAL MIXIN FEATURE
+mixin_import:
+  // Empty
+    { $$ = arena->New<TypeTypeLiteral>(context.source_loc()); }
+| FOR expression
+    {
+      context.RecordSyntaxError("'for' not supported currently");
+      YYERROR;
+      // $$ = $2;
+    }
+;
+class_declaration_extensibility:
+  // Empty
+    { $$ = Carbon::ClassExtensibility::None; }
+| ABSTRACT
+    { $$ = Carbon::ClassExtensibility::Abstract; }
+| BASE
+    { $$ = Carbon::ClassExtensibility::Base; }
+;
+class_declaration_extends:
+  // Empty
+    { $$ = std::nullopt; }
+| EXTENDS expression
+    { $$ = $2; }
+;
 declaration:
   function_declaration
     { $$ = $1; }
-| CLASS identifier type_params LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
+| destructor_declaration
+    { $$ = $1; }
+| class_declaration_extensibility CLASS identifier type_params class_declaration_extends LEFT_CURLY_BRACE class_body RIGHT_CURLY_BRACE
     {
       $$ = arena->New<ClassDeclaration>(
-          context.source_loc(), $2,
-          arena->New<SelfDeclaration>(context.source_loc()), $3, $5);
+          context.source_loc(), $3,
+          arena->New<SelfDeclaration>(context.source_loc()), $1, $4, $5, $7);
     }
-| CHOICE identifier LEFT_CURLY_BRACE alternative_list RIGHT_CURLY_BRACE
-    { $$ = arena->New<ChoiceDeclaration>(context.source_loc(), $2, $4); }
+| MIXIN identifier type_params mixin_import LEFT_CURLY_BRACE mixin_body RIGHT_CURLY_BRACE
+    {
+      // EXPERIMENTAL MIXN FEATURE
+      auto self = arena->New<GenericBinding>(context.source_loc(), "Self", $4);
+      $$ = arena->New<MixinDeclaration>(context.source_loc(), $2, $3, self, $6);
+    }
+| CHOICE identifier type_params LEFT_CURLY_BRACE alternative_list RIGHT_CURLY_BRACE
+    { $$ = arena->New<ChoiceDeclaration>(context.source_loc(), $2, $3, $5); }
 | VAR variable_declaration SEMICOLON
     {
       $$ = arena->New<VariableDeclaration>(context.source_loc(), $2,
@@ -1009,13 +1174,7 @@ declaration:
     }
 | INTERFACE identifier type_params LEFT_CURLY_BRACE interface_body RIGHT_CURLY_BRACE
     {
-      // TODO: Type of `Self` should be the interface being declared, not
-      // `Type`.
-      auto ty_ty = arena -> New<TypeTypeLiteral>(context.source_loc());
-      // TODO: Should this be switched to use a `SelfDeclaration` instead?
-      auto self =
-          arena -> New<GenericBinding>(context.source_loc(), "Self", ty_ty);
-      $$ = arena->New<InterfaceDeclaration>(context.source_loc(), $2, $3, self,
+      $$ = arena->New<InterfaceDeclaration>(arena, context.source_loc(), $2, $3,
                                             $5);
     }
 | impl_kind IMPL impl_deduced_params impl_type AS type_or_where_expression LEFT_CURLY_BRACE impl_body RIGHT_CURLY_BRACE
@@ -1025,7 +1184,7 @@ declaration:
       if (impl.ok()) {
         $$ = *impl;
       } else {
-        context.RecordSyntaxError(impl.error().message());
+        context.RecordSyntaxError(std::move(impl).error());
         YYERROR;
       }
     }
@@ -1043,12 +1202,58 @@ impl_type:
     { $$ = arena->New<IdentifierExpression>(context.source_loc(), "Self"); }
 | type_expression
 ;
+destructor_declaration:
+  DESTRUCTOR deduced_params block
+  {
+    ErrorOr<DestructorDeclaration*> fn =
+        DestructorDeclaration::CreateDestructor(
+            arena, context.source_loc(), $2,
+            arena->New<TuplePattern>(context.source_loc(),
+                                     std::vector<Nonnull<Pattern*>>()),
+            ReturnTerm::Omitted(context.source_loc()), $3);
+    if (fn.ok()) {
+      $$ = *fn;
+    } else {
+      context.RecordSyntaxError(std::move(fn).error());
+      YYERROR;
+    }
+  }
+;
 declaration_list:
   // Empty
     { $$ = {}; }
 | declaration_list declaration
     {
-      $$ = $1;
+      $$ = std::move($1);
+      $$.push_back(Nonnull<Declaration*>($2));
+    }
+;
+class_body:
+  // Empty
+    { $$ = {}; }
+| class_body declaration
+    {
+      $$ = std::move($1);
+      $$.push_back(Nonnull<Declaration*>($2));
+    }
+| class_body mix_declaration
+    {
+      $$ = std::move($1);
+      $$.push_back(Nonnull<Declaration*>($2));
+    }
+;
+// EXPERIMENTAL MIXIN FEATURE
+mixin_body:
+  // Empty
+    { $$ = {}; }
+| mixin_body function_declaration
+    {
+      $$ = std::move($1);
+      $$.push_back(Nonnull<Declaration*>($2));
+    }
+| mixin_body mix_declaration
+    {
+      $$ = std::move($1);
       $$.push_back(Nonnull<Declaration*>($2));
     }
 ;
@@ -1057,14 +1262,26 @@ interface_body:
     { $$ = {}; }
 | interface_body function_declaration
     {
-      $$ = $1;
+      $$ = std::move($1);
       $$.push_back($2);
     }
 | interface_body LET generic_binding SEMICOLON
     {
-      $$ = $1;
+      $$ = std::move($1);
       $$.push_back(
           arena->New<AssociatedConstantDeclaration>(context.source_loc(), $3));
+    }
+| interface_body EXTENDS expression SEMICOLON
+    {
+      $$ = std::move($1);
+      $$.push_back(arena->New<InterfaceExtendsDeclaration>(context.source_loc(),
+                                                           $3));
+    }
+| interface_body IMPL impl_type AS type_or_where_expression SEMICOLON
+    {
+      $$ = std::move($1);
+      $$.push_back(arena->New<InterfaceImplDeclaration>(context.source_loc(),
+                                                        $3, $5));
     }
 ;
 impl_body:
@@ -1072,12 +1289,12 @@ impl_body:
     { $$ = {}; }
 | impl_body function_declaration
     {
-      $$ = $1;
+      $$ = std::move($1);
       $$.push_back($2);
     }
 | impl_body alias_declaration
     {
-      $$ = $1;
+      $$ = std::move($1);
       $$.push_back($2);
     }
 ;

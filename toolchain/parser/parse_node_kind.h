@@ -33,7 +33,7 @@ class ParseNodeKind {
   };
 
  public:
-  // The formatting for this macro is weird due to a `clang-format` bug. See
+  // `clang-format` has a bug with spacing around `->` returns in macros. See
   // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
 #define CARBON_PARSE_NODE_KIND(Name)            \
   static constexpr auto Name()->ParseNodeKind { \
@@ -41,8 +41,9 @@ class ParseNodeKind {
   }
 #include "toolchain/parser/parse_node_kind.def"
 
-  // The default constructor is deleted as objects of this type should always be
-  // constructed using the above factory functions for each unique kind.
+  // The default constructor is deleted because objects of this type should
+  // always be constructed using the above factory functions for each unique
+  // kind.
   ParseNodeKind() = delete;
 
   friend auto operator==(ParseNodeKind lhs, ParseNodeKind rhs) -> bool {
@@ -57,7 +58,7 @@ class ParseNodeKind {
 
   // Enable conversion to our private enum, including in a `constexpr` context,
   // to enable usage in `switch` and `case`. The enum remains private and
-  // nothing else should be using this.
+  // nothing else should be using this function.
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr operator KindEnum() const { return kind_; }
 

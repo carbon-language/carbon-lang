@@ -23,19 +23,37 @@ struct Success {};
 class [[nodiscard]] Error {
  public:
   // Represents an error state.
-  explicit Error(llvm::Twine message) : message_(message.str()) {
+  explicit Error(llvm::Twine location, llvm::Twine message)
+      : location_(location.str()), message_(message.str()) {
     CARBON_CHECK(!message_.empty()) << "Errors must have a message.";
   }
 
-  Error(Error&& other) noexcept : message_(std::move(other.message_)) {}
+  // Represents an error with no associated location.
+  // TODO: Consider using two different types.
+  explicit Error(llvm::Twine message) : Error("", message) {}
 
-  // Prints the error string. Note this marks as used.
-  void Print(llvm::raw_ostream& out) const { out << message(); }
+  Error(Error&& other) noexcept
+      : location_(std::move(other.location_)),
+        message_(std::move(other.message_)) {}
+
+  // Prints the error string.
+  void Print(llvm::raw_ostream& out) const {
+    if (!location().empty()) {
+      out << location() << ": ";
+    }
+    out << message();
+  }
+
+  // Returns a string describing the location of the error, such as
+  // "file.cc:123".
+  auto location() const -> const std::string& { return location_; }
 
   // Returns the error message.
   auto message() const -> const std::string& { return message_; }
 
  private:
+  // The location associated with the error.
+  std::string location_;
   // The error message.
   std::string message_;
 };
@@ -109,25 +127,36 @@ class [[nodiscard]] ErrorOr {
 // `Error` and `ErrorOr<T>`.
 class ErrorBuilder {
  public:
-  ErrorBuilder() : out_(std::make_unique<llvm::raw_string_ostream>(message_)) {}
+  explicit ErrorBuilder(std::string location = "")
+      : location_(std::move(location)),
+        out_(std::make_unique<llvm::raw_string_ostream>(message_)) {}
 
-  // Accumulates string message.
+  // Accumulates string message to a temporary `ErrorBuilder`. After streaming,
+  // the builder must be converted to an `Error` or `ErrorOr`.
   template <typename T>
-  [[nodiscard]] auto operator<<(const T& message) -> ErrorBuilder& {
+  [[nodiscard]] auto operator<<(const T& message) && -> ErrorBuilder&& {
+    *out_ << message;
+    return std::move(*this);
+  }
+
+  // Accumulates string message for an lvalue error builder.
+  template <typename T>
+  auto operator<<(const T& message) & -> ErrorBuilder& {
     *out_ << message;
     return *this;
   }
 
   // NOLINTNEXTLINE(google-explicit-constructor): Implicit cast for returns.
-  operator Error() { return Error(message_); }
+  operator Error() { return Error(location_, message_); }
 
   template <typename T>
   // NOLINTNEXTLINE(google-explicit-constructor): Implicit cast for returns.
   operator ErrorOr<T>() {
-    return Error(message_);
+    return Error(location_, message_);
   }
 
  private:
+  std::string location_;
   std::string message_;
   // Use a pointer to allow move construction.
   std::unique_ptr<llvm::raw_string_ostream> out_;

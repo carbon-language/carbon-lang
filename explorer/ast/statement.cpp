@@ -25,7 +25,7 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       out << "match (" << match.expression() << ") {";
       if (depth < 0 || depth > 1) {
         out << "\n";
-        for (auto& clause : match.clauses()) {
+        for (const auto& clause : match.clauses()) {
           out << "case " << clause.pattern() << " =>\n";
           clause.statement().PrintDepth(depth - 1, out);
           out << "\n";
@@ -40,6 +40,13 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       const auto& while_stmt = cast<While>(*this);
       out << "while (" << while_stmt.condition() << ")\n";
       while_stmt.body().PrintDepth(depth - 1, out);
+      break;
+    }
+    case StatementKind::For: {
+      const auto& for_stmt = cast<For>(*this);
+      out << "for (" << for_stmt.variable_declaration() << " in "
+          << for_stmt.loop_target() << ")\n";
+      for_stmt.body().PrintDepth(depth - 1, out);
       break;
     }
     case StatementKind::Break:

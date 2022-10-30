@@ -2,17 +2,15 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 fn f((var x: i32, y: i32)) -> i32 {
   x = 0;
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_function_args.carbon:[[@LINE+1]]: Cannot assign to rvalue 'y'
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_function_args.carbon:[[@LINE+1]]: Cannot assign to rvalue 'y'
   y = 0;
   return x - 1;
 }

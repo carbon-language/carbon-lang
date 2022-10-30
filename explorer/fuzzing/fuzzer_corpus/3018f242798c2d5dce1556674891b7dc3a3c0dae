@@ -1,0 +1,161 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    function {
+      name: "swap"
+      deduced_parameters {
+        name: "T"
+        type {
+          type_type_literal {
+          }
+        }
+      }
+      deduced_parameters {
+        name: "U"
+        type {
+          type_type_literal {
+          }
+        }
+      }
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "tuple"
+            type {
+              expression_pattern {
+                expression {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "T"
+                      }
+                    }
+                    fields {
+                      identifier {
+                        name: "U"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          tuple_literal {
+            fields {
+              identifier {
+                name: "U"
+              }
+            }
+            fields {
+              identifier {
+                name: "T"
+              }
+            }
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              tuple_literal {
+                fields {
+                  index {
+                    object {
+                      identifier {
+                        name: "tuple"
+                      }
+                    }
+                    offset {
+                      int_literal {
+                        value: 1
+                      }
+                    }
+                  }
+                }
+                fields {
+                  index {
+                    object {
+                      identifier {
+                        name: "tuple"
+                      }
+                    }
+                    offset {
+                      int_literal {
+                        value: 0
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              index {
+                object {
+                  call {
+                    function {
+                      identifier {
+                        name: "swap"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          tuple_literal {
+                            fields {
+                              int_literal {
+                                value: 0
+                              }
+                            }
+                            fields {
+                              bool_literal {
+                                value: true
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                offset {
+                  int_literal {
+                    value: 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

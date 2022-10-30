@@ -76,6 +76,7 @@ The following words are interpreted as keywords:
 -   `protected`
 -   `return`
 -   `returned`
+-   `Self`
 -   `then`
 -   `var`
 -   `virtual`

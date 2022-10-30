@@ -47,7 +47,7 @@ class TokenizedBufferToken {
  public:
   using Token = TokenizedBufferToken;
 
-  TokenizedBufferToken() = default;
+  TokenizedBufferToken() : TokenizedBufferToken(-1) {}
 
   friend auto operator==(Token lhs, Token rhs) -> bool {
     return lhs.index_ == rhs.index_;
@@ -227,7 +227,7 @@ class TokenizedBuffer {
     // If true, the value is mantissa * 10^exponent.
     [[nodiscard]] auto IsDecimal() const -> bool { return is_decimal_; }
 
-    void Print(llvm::raw_ostream& output_stream) const {
+    auto Print(llvm::raw_ostream& output_stream) const -> void {
       output_stream << Mantissa() << "*" << (is_decimal_ ? "10" : "2") << "^"
                     << Exponent();
     }
@@ -351,7 +351,7 @@ class TokenizedBuffer {
   // line-oriented shell tools from `grep` to `awk`.
   auto Print(llvm::raw_ostream& output_stream) const -> void;
 
-  // Prints a description of a single token.  See `print` for details on the
+  // Prints a description of a single token.  See `Print` for details on the
   // format.
   auto PrintToken(llvm::raw_ostream& output_stream, Token token) const -> void;
 
@@ -400,8 +400,8 @@ class TokenizedBuffer {
 
     int index;
     int kind;
-    int column;
     int line;
+    int column;
     int indent;
   };
 
@@ -440,7 +440,7 @@ class TokenizedBuffer {
     int64_t start;
 
     // The byte length of the line. Does not include the newline character (or a
-    // null terminator or EOF).
+    // nul-terminator or EOF).
     int32_t length;
 
     // The byte offset from the start of the line of the first non-whitespace

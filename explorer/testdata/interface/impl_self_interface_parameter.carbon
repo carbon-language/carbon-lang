@@ -2,16 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: result: 0
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
-interface AddWith(T:! Type) {
+interface MyAddWith(T:! Type) {
   fn Op[me: Self](b: T) -> Self;
 }
 
@@ -21,13 +19,13 @@ class Point {
 }
 
 // Allowed: `Self` means `Point` after `as`
-impl Point as AddWith(Self) {
+impl Point as MyAddWith(Self) {
   fn Op[me: Point](b: Point) -> Point {
     return {.x = me.x + b.x, .y = me.y + b.y};
   }
 }
 
-fn DoAddGeneric[T:! Type, U:! AddWith(T)](a: U, b: T) -> U {
+fn DoAddGeneric[T:! Type, U:! MyAddWith(T)](a: U, b: T) -> U {
   return a.Op(b);
 }
 

@@ -21,7 +21,9 @@ auto ProtoToCarbonWithMain(const Fuzzing::CompilationUnit& compilation_unit)
     -> std::string;
 
 // Parses and executes a fuzzer-generated program.
-void ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit);
+// Returns program result if execution was successful.
+auto ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit)
+    -> ErrorOr<int>;
 
 namespace Internal {
 

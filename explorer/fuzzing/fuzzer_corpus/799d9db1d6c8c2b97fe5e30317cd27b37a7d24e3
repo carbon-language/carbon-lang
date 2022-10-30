@@ -1,0 +1,225 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    interface {
+      name: "Has"
+      members {
+        function {
+          name: "Get"
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "T"
+              }
+            }
+          }
+        }
+      }
+      self {
+        name: "Self"
+        type {
+          type_type_literal {
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        int_type_literal {
+        }
+      }
+      interface {
+        call {
+          function {
+            identifier {
+              name: "Has"
+            }
+          }
+          argument {
+            tuple_literal {
+              fields {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name: "Get"
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              type_type_literal {
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  identifier {
+                    name: "Self"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name: "WithType"
+      members {
+        function {
+          name: "Get"
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              type_type_literal {
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  call {
+                    function {
+                      simple_member_access {
+                        field: "Get"
+                        object {
+                          identifier {
+                            name: "T"
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      type_params {
+        fields {
+          generic_binding {
+            name: "T"
+            type {
+              call {
+                function {
+                  identifier {
+                    name: "Has"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      type_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "v"
+                type {
+                  expression_pattern {
+                    expression {
+                      call {
+                        function {
+                          simple_member_access {
+                            field: "Get"
+                            object {
+                              call {
+                                function {
+                                  identifier {
+                                    name: "WithType"
+                                  }
+                                }
+                                argument {
+                                  tuple_literal {
+                                    fields {
+                                      int_type_literal {
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              int_literal {
+                value: 0
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              identifier {
+                name: "v"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

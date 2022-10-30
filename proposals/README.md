@@ -9,7 +9,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Proposal lists
 
 -   [All proposals](https://github.com/carbon-language/carbon-lang/pulls?q=is%3Apr+label%3Aproposal)
--   [Accepted proposals](https://github.com/carbon-language/carbon-lang/pulls?q=is%3Apr+label%3Aproposal+label%3A%22decision%3A+accepted%22)
+-   [Accepted proposals](https://github.com/carbon-language/carbon-lang/pulls?q=is%3Apr+label%3A%22proposal+accepted%22)
 
 ## Directory structure
 

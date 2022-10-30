@@ -56,7 +56,7 @@ TEST_F(LexerTest, HandlesEmptyBuffer) {
 }
 
 TEST_F(LexerTest, TracksLinesAndColumns) {
-  auto buffer = Lex("\n  ;;\n   ;;;\n   x\"foo\" \"\"\"baz\n  a\n \"\"\" y");
+  auto buffer = Lex("\n  ;;\n   ;;;\n   x\"foo\" '''baz\n  a\n ''' y");
   EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer,
               HasTokens(llvm::ArrayRef<ExpectedToken>{
@@ -721,10 +721,10 @@ TEST_F(LexerTest, StringLiterals) {
   llvm::StringLiteral testcase = R"(
     "hello world\n"
 
-    """foo
+    '''foo
       test \
       \xAB
-     """ trailing
+     ''' trailing
 
       #"""#
 
@@ -770,7 +770,8 @@ TEST_F(LexerTest, StringLiterals) {
                    .indent_column = 5,
                    .string_contents = {"\\0\"foo\"\\1"}},
 
-                  // """x""" is three string literals, not one.
+                  // """x""" is three string literals, not one invalid
+                  // attempt at a block string literal.
                   {.kind = TokenKind::StringLiteral(),
                    .line = 15,
                    .column = 5,
@@ -794,18 +795,18 @@ TEST_F(LexerTest, InvalidStringLiterals) {
   llvm::StringLiteral invalid[] = {
       // clang-format off
       R"(")",
-      R"("""
-      "")",
+      R"('''
+      '')",
       R"("\)",
       R"("\")",
       R"("\\)",
       R"("\\\")",
-      R"(""")",
-      R"("""
+      R"(''')",
+      R"('''
       )",
-      R"("""\)",
-      R"(#"""
-      """)",
+      R"('''\)",
+      R"(#'''
+      ''')",
       // clang-format on
   };
 
@@ -1173,6 +1174,19 @@ TEST_F(LexerTest, PrintingAsYaml) {
                                                {"column", "1"},
                                                {"indent", "1"},
                                                {"spelling", ""}}}}));
+}
+
+TEST_F(LexerTest, PrintToken) {
+  auto buffer = Lex("0x9");
+  ASSERT_FALSE(buffer.has_errors());
+  std::string print_output;
+  llvm::raw_string_ostream print_stream(print_output);
+  buffer.Print(print_stream);
+  llvm::StringRef print = print_stream.str();
+  EXPECT_THAT(GetAndDropLine(print),
+              StrEq("token: { index: 0, kind: 'IntegerLiteral', line: 1, "
+                    "column: 1, indent: 1, spelling: '0x9', value: `9`, "
+                    "has_trailing_space: true }"));
 }
 
 }  // namespace

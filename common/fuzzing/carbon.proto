@@ -52,8 +52,20 @@ message OperatorExpression {
     Or = 9;
     Sub = 10;
     Ptr = 11;
-    Combine = 12;
+    BitwiseAnd = 12;
     As = 13;
+    Mod = 14;
+    Complement = 15;
+    BitwiseOr = 16;
+    BitwiseXor = 17;
+    BitShiftLeft = 18;
+    BitShiftRight = 19;
+    Less = 20;
+    LessEq = 21;
+    Greater = 22;
+    GreaterEq = 23;
+    NotEq = 24;
+    Div = 25;
   }
   optional Operator op = 1;
   repeated Expression arguments = 2;
@@ -82,17 +94,6 @@ message IdentifierExpression {
 
 message DesignatorExpression {
   optional string name = 1;
-}
-
-message IntrinsicExpression {
-  enum Intrinsic {
-    UnknownIntrinsic = 0;
-    Print = 1;
-    Alloc = 2;
-    Dealloc = 3;
-  }
-  optional Intrinsic intrinsic = 1;
-  optional TupleLiteralExpression argument = 2;
 }
 
 message IfExpression {
@@ -138,10 +139,16 @@ message EqualsWhereClause {
   optional Expression rhs = 2;
 }
 
+message RewriteWhereClause {
+  optional string member_name = 1;
+  optional Expression replacement = 2;
+}
+
 message WhereClause {
   oneof kind {
     IsWhereClause is = 1;
     EqualsWhereClause equals = 2;
+    RewriteWhereClause rewrite = 3;
   }
 }
 
@@ -161,7 +168,6 @@ message Expression {
     StructLiteralExpression struct_literal = 7;
     StructTypeLiteralExpression struct_type_literal = 8;
     IdentifierExpression identifier = 9;
-    IntrinsicExpression intrinsic = 10;
     IfExpression if_expression = 11;
     BoolTypeLiteral bool_type_literal = 12;
     BoolLiteral bool_literal = 13;
@@ -267,6 +273,12 @@ message WhileStatement {
   optional BlockStatement body = 2;
 }
 
+message ForStatement {
+  optional BindingPattern var_decl = 1;
+  optional Expression target = 2;
+  optional BlockStatement body = 3;
+}
+
 message MatchClause {
   optional Pattern pattern = 1;
   optional Statement statement = 2;
@@ -308,6 +320,7 @@ message Statement {
     AwaitStatement await_statement = 12;
     BreakStatement break_statement = 13;
     ContinueStatement continue_statement = 14;
+    ForStatement for_statement = 15;
   }
 }
 
@@ -331,6 +344,11 @@ message FunctionDeclaration {
   optional TuplePattern param_pattern = 4;
   optional ReturnTerm return_term = 5;
   optional BlockStatement body = 6;
+}
+
+message DestructorDeclaration {
+  optional Pattern me_pattern = 1;
+  optional BlockStatement body = 2;
 }
 
 message ClassDeclaration {
@@ -360,6 +378,15 @@ message LetDeclaration {
   // `let` declarations in general.
 }
 
+message InterfaceExtendsDeclaration {
+  optional Expression base = 1;
+}
+
+message InterfaceImplDeclaration {
+  optional Expression impl_type = 1;
+  optional Expression constraint = 2;
+}
+
 message InterfaceDeclaration {
   optional string name = 1;
   repeated Declaration members = 2;
@@ -384,6 +411,20 @@ message AliasDeclaration {
   optional Expression target = 2;
 }
 
+// EXPERIMENTAL MIXIN FEATURE
+message MixinDeclaration {
+  optional string name = 1;
+  repeated Declaration members = 2;
+  // Type params not implemented yet
+  // optional TuplePattern params = 3;
+  optional GenericBinding self = 4;
+}
+
+// EXPERIMENTAL MIXIN FEATURE
+message MixDeclaration {
+  optional Expression mixin = 1;
+}
+
 message Declaration {
   oneof kind {
     FunctionDeclaration function = 1;
@@ -394,6 +435,11 @@ message Declaration {
     ImplDeclaration impl = 6;
     AliasDeclaration alias = 7;
     LetDeclaration let = 8;
+    MixinDeclaration mixin = 9;
+    MixDeclaration mix = 10;
+    DestructorDeclaration destructor = 11;
+    InterfaceExtendsDeclaration interface_extends = 12;
+    InterfaceImplDeclaration interface_impl = 13;
   }
 }
 

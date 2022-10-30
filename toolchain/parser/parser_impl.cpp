@@ -95,9 +95,9 @@ auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
                               TokenDiagnosticEmitter& emitter) -> ParseTree {
   ParseTree tree(tokens);
 
-  // We expect to have a 1:1 correspondence between tokens and tree nodes, so
-  // reserve the space we expect to need here to avoid allocation and copying
-  // overhead.
+  // Reserve the space we expect to need for nodes in order to avoid allocation
+  // and copying overhead. This should be a one-to-one correspondence in an
+  // error-free tree.
   tree.node_impls_.reserve(tokens.size());
 
   Parser parser(tree, tokens, emitter);
@@ -111,6 +111,9 @@ auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
 
   parser.AddLeafNode(ParseNodeKind::FileEnd(), *parser.position_);
 
+  CARBON_CHECK(tree.has_errors() || tree.size() == tokens.size())
+      << "Failed to correctly calculate size: expected " << tokens.size()
+      << ", got " << tree.size();
   CARBON_CHECK(tree.Verify()) << "Parse tree built but does not verify!";
   return tree;
 }
@@ -135,9 +138,13 @@ auto ParseTree::Parser::ConsumeIf(TokenKind kind)
 }
 
 auto ParseTree::Parser::AddLeafNode(ParseNodeKind kind,
-                                    TokenizedBuffer::Token token) -> Node {
+                                    TokenizedBuffer::Token token,
+                                    bool has_error) -> Node {
   Node n(tree_.node_impls_.size());
   tree_.node_impls_.push_back(NodeImpl(kind, token, /*subtree_size_arg=*/1));
+  if (has_error) {
+    MarkNodeError(n);
+  }
   return n;
 }
 
@@ -229,9 +236,8 @@ auto ParseTree::Parser::FindNextOf(
   }
 }
 
-auto ParseTree::Parser::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root,
-                                          SemiHandler on_semi)
-    -> llvm::Optional<Node> {
+auto ParseTree::Parser::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
+    -> llvm::Optional<TokenizedBuffer::Token> {
   if (AtEndOfFile()) {
     return llvm::None;
   }
@@ -261,7 +267,7 @@ auto ParseTree::Parser::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root,
     // We assume that a semicolon is always intended to be the end of the
     // current construct.
     if (auto semi = ConsumeIf(TokenKind::Semi())) {
-      return on_semi(*semi);
+      return semi;
     }
 
     // Skip over any matching group of tokens_.
@@ -408,71 +414,165 @@ auto ParseTree::Parser::ParseFunctionSignature() -> bool {
     }
   }
 
-  return params.hasValue();
+  return params.has_value();
 }
 
 auto ParseTree::Parser::ParseCodeBlock() -> llvm::Optional<Node> {
+  return ParseCodeBlock(GetSubtreeStartPosition(),
+                        ParseNodeKind::CodeBlockStart(),
+                        ParseNodeKind::CodeBlock());
+}
+
+auto ParseTree::Parser::ParseCodeBlock(SubtreeStart subtree_start,
+                                       ParseNodeKind start_kind,
+                                       ParseNodeKind end_kind)
+    -> llvm::Optional<Node> {
   CARBON_RETURN_IF_STACK_LIMITED(llvm::None);
-  llvm::Optional<TokenizedBuffer::Token> maybe_open_curly =
+  llvm::Optional<TokenizedBuffer::Token> open_curly =
       ConsumeIf(TokenKind::OpenCurlyBrace());
-  if (!maybe_open_curly) {
+  if (!open_curly) {
     // Recover by parsing a single statement.
     CARBON_DIAGNOSTIC(ExpectedCodeBlock, Error, "Expected braced code block.");
     emitter_.Emit(*position_, ExpectedCodeBlock);
-    return ParseStatement();
+    // Use the unexpected token for the block start and end.
+    TokenizedBuffer::Token recovery_start = *position_;
+    AddNode(start_kind, recovery_start, subtree_start, /*has_error=*/true);
+    ParseStatement();
+    return AddNode(end_kind, recovery_start, subtree_start, /*has_error=*/true);
   }
-  TokenizedBuffer::Token open_curly = *maybe_open_curly;
 
-  auto start = GetSubtreeStartPosition();
-
-  bool has_errors = false;
+  AddNode(start_kind, *open_curly, subtree_start);
 
   // Loop over all the different possibly nested elements in the code block.
+  bool has_error = false;
   while (!NextTokenIs(TokenKind::CloseCurlyBrace())) {
     if (!ParseStatement()) {
-      // We detected and diagnosed an error of some kind. We can trivially skip
-      // to the actual close curly brace from here.
+      // We detected and diagnosed an error of some kind. We can trivially
+      // skip to the actual close curly brace from here.
       // TODO: It would be better to skip to the next semicolon, or the next
       // token at the start of a line with the same indent as this one.
-      SkipTo(tokens_.GetMatchedClosingToken(open_curly));
-      has_errors = true;
+      SkipTo(tokens_.GetMatchedClosingToken(*open_curly));
+      has_error = true;
       break;
     }
   }
 
   // We always reach here having set our position in the token stream to the
   // close curly brace.
-  AddLeafNode(ParseNodeKind::CodeBlockEnd(),
-              Consume(TokenKind::CloseCurlyBrace()));
+  return AddNode(end_kind, Consume(TokenKind::CloseCurlyBrace()), subtree_start,
+                 /*has_error=*/has_error);
+}
 
-  return AddNode(ParseNodeKind::CodeBlock(), open_curly, start, has_errors);
+auto ParseTree::Parser::ParsePackageDirective() -> Node {
+  TokenizedBuffer::Token package_intro_token = Consume(TokenKind::Package());
+  auto package_start = GetSubtreeStartPosition();
+  auto create_error_node = [&]() {
+    return AddNode(ParseNodeKind::PackageDirective(), package_intro_token,
+                   package_start,
+                   /*has_error=*/true);
+  };
+
+  CARBON_RETURN_IF_STACK_LIMITED(create_error_node());
+
+  auto exit_on_parse_error = [&]() {
+    if (auto semi_token = SkipPastLikelyEnd(package_intro_token)) {
+      AddLeafNode(ParseNodeKind::PackageEnd(), *semi_token);
+    }
+
+    return create_error_node();
+  };
+
+  if (!NextTokenIs(TokenKind::Identifier())) {
+    CARBON_DIAGNOSTIC(ExpectedIdentifierAfterPackage, Error,
+                      "Expected identifier after `package`.");
+    emitter_.Emit(*position_, ExpectedIdentifierAfterPackage);
+    return exit_on_parse_error();
+  }
+
+  AddLeafNode(ParseNodeKind::DeclaredName(), Consume(TokenKind::Identifier()));
+  bool library_parsed = false;
+
+  if (tokens_.GetKind(*(position_)) == TokenKind::Library()) {
+    auto library_start = GetSubtreeStartPosition();
+    auto library_decl_token = Consume(TokenKind::Library());
+
+    if (tokens_.GetKind(*(position_)) != TokenKind::StringLiteral()) {
+      CARBON_DIAGNOSTIC(
+          ExpectedLibraryName, Error,
+          "Expected a string literal to specify the library name.");
+      emitter_.Emit(*position_, ExpectedLibraryName);
+      return exit_on_parse_error();
+    }
+
+    AddLeafNode(ParseNodeKind::Literal(), Consume(TokenKind::StringLiteral()));
+    AddNode(ParseNodeKind::PackageLibrary(), library_decl_token, library_start,
+            /*has_error=*/false);
+    library_parsed = true;
+  }
+
+  auto api_or_impl_token = tokens_.GetKind(*(position_));
+
+  if (api_or_impl_token == TokenKind::Api()) {
+    AddLeafNode(ParseNodeKind::PackageApi(), Consume(TokenKind::Api()));
+  } else if (api_or_impl_token == TokenKind::Impl()) {
+    AddLeafNode(ParseNodeKind::PackageImpl(), Consume(TokenKind::Impl()));
+  } else if (!library_parsed &&
+             api_or_impl_token == TokenKind::StringLiteral()) {
+    // If we come acroess a string literal and we didn't parse `library "..."`
+    // yet, then most probably the user forgot to add `library` before the
+    // library name.
+    CARBON_DIAGNOSTIC(MissingLibraryKeyword, Error,
+                      "Missing `library` keyword.");
+    emitter_.Emit(*position_, MissingLibraryKeyword);
+    return exit_on_parse_error();
+  } else {
+    CARBON_DIAGNOSTIC(ExpectedApiOrImpl, Error, "Expected a `api` or `impl`.");
+    emitter_.Emit(*position_, ExpectedApiOrImpl);
+    return exit_on_parse_error();
+  }
+
+  if (tokens_.GetKind(*(position_)) != TokenKind::Semi()) {
+    CARBON_DIAGNOSTIC(ExpectedSemiToEndPackageDirective, Error,
+                      "Expected `;` to end package directive.");
+    emitter_.Emit(*position_, ExpectedSemiToEndPackageDirective);
+    return exit_on_parse_error();
+  }
+
+  AddLeafNode(ParseNodeKind::PackageEnd(), Consume(TokenKind::Semi()));
+
+  return AddNode(ParseNodeKind::PackageDirective(), package_intro_token,
+                 package_start, /*has_error=*/false);
 }
 
 auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
-  TokenizedBuffer::Token function_intro_token = Consume(TokenKind::Fn());
   auto start = GetSubtreeStartPosition();
+  TokenizedBuffer::Token function_intro_token = Consume(TokenKind::Fn());
+  AddLeafNode(ParseNodeKind::FunctionIntroducer(), function_intro_token);
 
-  auto add_error_function_node = [&] {
+  // When handling errors before the start of the definition, treat it as a
+  // declaration. Recover to a semicolon when it makes sense as a possible
+  // function end, otherwise use the fn token for the error.
+  auto add_error_function_node = [&](bool skip_past_likely_end) {
+    if (skip_past_likely_end) {
+      if (auto semi_token = SkipPastLikelyEnd(function_intro_token)) {
+        return AddNode(ParseNodeKind::FunctionDeclaration(), *semi_token, start,
+                       /*has_error=*/true);
+      }
+    }
     return AddNode(ParseNodeKind::FunctionDeclaration(), function_intro_token,
                    start, /*has_error=*/true);
   };
-  CARBON_RETURN_IF_STACK_LIMITED(add_error_function_node());
+  CARBON_RETURN_IF_STACK_LIMITED(add_error_function_node(false));
 
-  auto handle_semi_in_error_recovery = [&](TokenizedBuffer::Token semi) {
-    return AddLeafNode(ParseNodeKind::DeclarationEnd(), semi);
-  };
-
-  auto name_n = ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
-                                        ParseNodeKind::DeclaredName());
-  if (!name_n) {
+  if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
+                               ParseNodeKind::DeclaredName())) {
     CARBON_DIAGNOSTIC(ExpectedFunctionName, Error,
                       "Expected function name after `fn` keyword.");
     emitter_.Emit(*position_, ExpectedFunctionName);
     // TODO: We could change the lexer to allow us to synthesize certain
     // kinds of tokens and try to "recover" here, but unclear that this is
     // really useful.
-    SkipPastLikelyEnd(function_intro_token, handle_semi_in_error_recovery);
-    return add_error_function_node();
+    return add_error_function_node(true);
   }
 
   TokenizedBuffer::Token open_paren = *position_;
@@ -480,40 +580,39 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
     CARBON_DIAGNOSTIC(ExpectedFunctionParams, Error,
                       "Expected `(` after function name.");
     emitter_.Emit(open_paren, ExpectedFunctionParams);
-    SkipPastLikelyEnd(function_intro_token, handle_semi_in_error_recovery);
-    return add_error_function_node();
+    return add_error_function_node(true);
   }
   TokenizedBuffer::Token close_paren =
       tokens_.GetMatchedClosingToken(open_paren);
 
   if (!ParseFunctionSignature()) {
-    // Don't try to parse more of the function declaration, but consume a
-    // declaration ending semicolon if found (without going to a new line).
-    SkipPastLikelyEnd(function_intro_token, handle_semi_in_error_recovery);
-    return add_error_function_node();
+    return add_error_function_node(true);
   }
 
-  // See if we should parse a definition which is represented as a code block.
-  if (NextTokenIs(TokenKind::OpenCurlyBrace())) {
-    if (!ParseCodeBlock()) {
-      return add_error_function_node();
+  switch (NextTokenKind()) {
+    case TokenKind::OpenCurlyBrace(): {
+      // Parse a definition which is represented as a code block.
+      if (auto node =
+              ParseCodeBlock(start, ParseNodeKind::FunctionDefinitionStart(),
+                             ParseNodeKind::FunctionDefinition())) {
+        return *node;
+      }
+      return add_error_function_node(false);
     }
-  } else if (!ConsumeAndAddLeafNodeIf(TokenKind::Semi(),
-                                      ParseNodeKind::DeclarationEnd())) {
-    CARBON_DIAGNOSTIC(
-        ExpectedFunctionBodyOrSemi, Error,
-        "Expected function definition or `;` after function declaration.");
-    emitter_.Emit(*position_, ExpectedFunctionBodyOrSemi);
-    if (tokens_.GetLine(*position_) == tokens_.GetLine(close_paren)) {
+    case TokenKind::Semi(): {
+      return AddNode(ParseNodeKind::FunctionDeclaration(),
+                     Consume(TokenKind::Semi()), start);
+    }
+    default: {
+      CARBON_DIAGNOSTIC(
+          ExpectedFunctionBodyOrSemi, Error,
+          "Expected function definition or `;` after function declaration.");
+      emitter_.Emit(*position_, ExpectedFunctionBodyOrSemi);
       // Only need to skip if we've not already found a new line.
-      SkipPastLikelyEnd(function_intro_token, handle_semi_in_error_recovery);
+      return add_error_function_node(tokens_.GetLine(*position_) ==
+                                     tokens_.GetLine(close_paren));
     }
-    return add_error_function_node();
   }
-
-  // Successfully parsed the function, add that node.
-  return AddNode(ParseNodeKind::FunctionDeclaration(), function_intro_token,
-                 start);
 }
 
 auto ParseTree::Parser::ParseVariableDeclaration() -> Node {
@@ -544,9 +643,10 @@ auto ParseTree::Parser::ParseVariableDeclaration() -> Node {
                                       ParseNodeKind::DeclarationEnd());
   if (!semi) {
     emitter_.Emit(*position_, ExpectedSemiAfterExpression);
-    SkipPastLikelyEnd(var_token, [&](TokenizedBuffer::Token semi) {
-      return AddLeafNode(ParseNodeKind::DeclarationEnd(), semi);
-    });
+    if (auto semi_token = SkipPastLikelyEnd(var_token)) {
+      semi = AddLeafNode(ParseNodeKind::DeclarationEnd(), *semi_token,
+                         /*has_error=*/true);
+    }
   }
 
   return AddNode(ParseNodeKind::VariableDeclaration(), var_token, start,
@@ -561,6 +661,8 @@ auto ParseTree::Parser::ParseEmptyDeclaration() -> Node {
 auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
   CARBON_RETURN_IF_STACK_LIMITED(llvm::None);
   switch (NextTokenKind()) {
+    case TokenKind::Package():
+      return ParsePackageDirective();
     case TokenKind::Fn():
       return ParseFunctionDeclaration();
     case TokenKind::Var():
@@ -574,6 +676,7 @@ auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
       break;
   }
 
+  // Should happen for packages now.
   // We didn't recognize an introducer for a valid declaration.
   CARBON_DIAGNOSTIC(UnrecognizedDeclaration, Error,
                     "Unrecognized declaration introducer.");
@@ -581,12 +684,9 @@ auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
 
   // Skip forward past any end of a declaration we simply didn't understand so
   // that we can find the start of the next declaration or the end of a scope.
-  if (auto found_semi_n =
-          SkipPastLikelyEnd(*position_, [&](TokenizedBuffer::Token semi) {
-            return AddLeafNode(ParseNodeKind::EmptyDeclaration(), semi);
-          })) {
-    MarkNodeError(*found_semi_n);
-    return *found_semi_n;
+  if (auto semi_token = SkipPastLikelyEnd(*position_)) {
+    return AddLeafNode(ParseNodeKind::EmptyDeclaration(), *semi_token,
+                       /*has_error=*/true);
   }
 
   // Nothing, not even a semicolon found.
@@ -675,8 +775,8 @@ auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
         }
         kind = elem_kind;
 
-        // Struct type fields and value fields use the same grammar except that
-        // one has a `:` separator and the other has an `=` separator.
+        // Struct type fields and value fields use the same grammar except
+        // that one has a `:` separator and the other has an `=` separator.
         auto equal_or_colon_token =
             Consume(kind == Type ? TokenKind::Colon() : TokenKind::Equal());
         auto type_or_value = ParseExpression();
@@ -793,8 +893,8 @@ auto ParseTree::Parser::ParsePostfixExpression() -> llvm::Optional<Node> {
       default:
         return expression;
     }
-    // This is subject to an infinite loop if a child call fails, so monitor for
-    // stalling.
+    // This is subject to an infinite loop if a child call fails, so monitor
+    // for stalling.
     if (last_position == position_) {
       CARBON_CHECK(expression == llvm::None);
       return expression;
@@ -811,8 +911,8 @@ static auto IsAssumedStartOfOperand(TokenKind kind) -> bool {
                        TokenKind::StringLiteral()});
 }
 
-// Determines whether the given token is considered to be the end of an operand
-// according to the rules for infix operator parsing.
+// Determines whether the given token is considered to be the end of an
+// operand according to the rules for infix operator parsing.
 static auto IsAssumedEndOfOperand(TokenKind kind) -> bool {
   return kind.IsOneOf({TokenKind::CloseParen(), TokenKind::CloseCurlyBrace(),
                        TokenKind::CloseSquareBracket(), TokenKind::Identifier(),
@@ -820,9 +920,9 @@ static auto IsAssumedEndOfOperand(TokenKind kind) -> bool {
                        TokenKind::StringLiteral()});
 }
 
-// Determines whether the given token could possibly be the start of an operand.
-// This is conservatively correct, and will never incorrectly return `false`,
-// but can incorrectly return `true`.
+// Determines whether the given token could possibly be the start of an
+// operand. This is conservatively correct, and will never incorrectly return
+// `false`, but can incorrectly return `true`.
 static auto IsPossibleStartOfOperand(TokenKind kind) -> bool {
   return !kind.IsOneOf({TokenKind::CloseParen(), TokenKind::CloseCurlyBrace(),
                         TokenKind::CloseSquareBracket(), TokenKind::Comma(),
@@ -1029,12 +1129,9 @@ auto ParseTree::Parser::ParseExpressionStatement() -> llvm::Optional<Node> {
     emitter_.Emit(*position_, ExpectedSemiAfterExpression);
   }
 
-  if (auto recovery_node =
-          SkipPastLikelyEnd(start_token, [&](TokenizedBuffer::Token semi) {
-            return AddNode(ParseNodeKind::ExpressionStatement(), semi, start,
-                           true);
-          })) {
-    return recovery_node;
+  if (auto semi_token = SkipPastLikelyEnd(start_token)) {
+    return AddNode(ParseNodeKind::ExpressionStatement(), *semi_token, start,
+                   /*has_error=*/true);
   }
 
   // Found junk not even followed by a `;`.
@@ -1096,6 +1193,90 @@ auto ParseTree::Parser::ParseWhileStatement() -> llvm::Optional<Node> {
                  /*has_error=*/!cond || !body);
 }
 
+auto ParseTree::Parser::ParseForStatement() -> llvm::Optional<Node> {
+  CARBON_RETURN_IF_STACK_LIMITED(llvm::None);
+  auto for_start = GetSubtreeStartPosition();
+  auto for_token = Consume(TokenKind::For());
+
+  // Parse the loop header.
+  auto header = [this]() -> llvm::Optional<Node> {
+    auto open_paren = ConsumeIf(TokenKind::OpenParen());
+    auto header_start = GetSubtreeStartPosition();
+
+    if (!open_paren) {
+      CARBON_DIAGNOSTIC(ExpectedParenAfter, Error,
+                        "Expected `(` after `{0}`. Recovering from missing `(` "
+                        "not implemented yet!",
+                        TokenKind);
+      emitter_.Emit(*position_, ExpectedParenAfter, TokenKind::For());
+      // TODO: A proper recovery strategy is needed here. For now, I assume
+      // that all brackets are properly balanced (i.e. each open bracket has a
+      // closing one).
+      // This is temporary until we come to a conclusion regarding the
+      // recovery tokens strategy.
+      return llvm::None;
+    }
+
+    bool iter_var_parsed = false;
+
+    if (NextTokenIs(TokenKind::Var())) {
+      auto var_token = Consume(TokenKind::Var());
+      auto var_start = GetSubtreeStartPosition();
+      auto pattern = ParsePattern(PatternKind::Variable);
+      AddNode(ParseNodeKind::VariableDeclaration(), var_token, var_start,
+              !pattern);
+      iter_var_parsed = true;
+    } else {
+      CARBON_DIAGNOSTIC(ExpectedVariableDeclaration, Error,
+                        "Expected `var` declaration.");
+      emitter_.Emit(*position_, ExpectedVariableDeclaration);
+
+      if (auto next_in = FindNextOf({TokenKind::In()}); next_in) {
+        SkipTo(*next_in);
+      }
+    }
+
+    // A separator is either an `in` or a `:`. Even though `:` is incorrect,
+    // accidentally typing it by a C++ programmer might be a common mistake
+    // that warrants special handling.
+    bool separator_parsed = false;
+    bool in_parsed = false;
+
+    if (NextTokenIs(TokenKind::In())) {
+      separator_parsed = true;
+      in_parsed = true;
+      AddLeafNode(ParseNodeKind::ForIn(), Consume(TokenKind::In()));
+    } else if (NextTokenIs(TokenKind::Colon())) {
+      separator_parsed = true;
+      CARBON_DIAGNOSTIC(ExpectedIn, Error, "`:` should be replaced by `in`.");
+      emitter_.Emit(*position_, ExpectedIn);
+      Consume(TokenKind::Colon());
+    } else {
+      CARBON_DIAGNOSTIC(ExpectedIn, Error,
+                        "Expected `in` after loop `var` declaration.");
+      emitter_.Emit(*position_, ExpectedIn);
+      SkipTo(tokens_.GetMatchedClosingToken(*open_paren));
+    }
+
+    // Only try to parse the container expression if a separator was parsed.
+    // This reduces the emitted error messages if the separator was missing
+    // altogether.
+    auto container_expr = separator_parsed ? ParseExpression() : llvm::None;
+
+    auto close_paren =
+        ParseCloseParen(*open_paren, ParseNodeKind::ForHeaderEnd());
+
+    return AddNode(
+        ParseNodeKind::ForHeader(), *open_paren, header_start,
+        !iter_var_parsed || !in_parsed || !container_expr || !close_paren);
+  }();
+
+  auto body = ParseCodeBlock();
+
+  return AddNode(ParseNodeKind::ForStatement(), for_token, for_start,
+                 !header || !body);
+}
+
 auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind,
                                               KeywordStatementArgument argument)
     -> llvm::Optional<Node> {
@@ -1135,6 +1316,9 @@ auto ParseTree::Parser::ParseStatement() -> llvm::Optional<Node> {
 
     case TokenKind::While():
       return ParseWhileStatement();
+
+    case TokenKind::For():
+      return ParseForStatement();
 
     case TokenKind::Continue():
       return ParseKeywordStatement(ParseNodeKind::ContinueStatement(),

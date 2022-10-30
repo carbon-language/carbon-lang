@@ -31,7 +31,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Operations performed field-wise](#operations-performed-field-wise)
 -   [Nominal class types](#nominal-class-types)
     -   [Forward declaration](#forward-declaration)
-    -   [Self](#self)
+    -   [`Self`](#self)
     -   [Construction](#construction)
         -   [Assignment](#assignment)
     -   [Member functions](#member-functions)
@@ -46,6 +46,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Virtual methods](#virtual-methods)
             -   [Virtual override keywords](#virtual-override-keywords)
         -   [Subtyping](#subtyping)
+        -   [`Self` refers to the current type](#self-refers-to-the-current-type)
         -   [Constructors](#constructors)
             -   [Partial facet](#partial-facet)
             -   [Usage](#usage)
@@ -74,6 +75,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [No `static` variables](#no-static-variables)
     -   [Computed properties](#computed-properties)
     -   [Interfaces implemented for data classes](#interfaces-implemented-for-data-classes)
+-   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
 <!-- tocstop -->
@@ -730,7 +732,7 @@ class GraphNode {
 **Open question:** What is specifically allowed and forbidden with an incomplete
 type has not yet been decided.
 
-### Self
+### `Self`
 
 A `class` definition may provisionally include references to its own name in
 limited ways. These limitations arise from the type not being complete until the
@@ -743,8 +745,8 @@ class IntListNode {
 }
 ```
 
-An equivalent definition of `IntListNode`, since `Self` is an alias for the
-current type, is:
+An equivalent definition of `IntListNode`, since the `Self` keyword is an alias
+for the current type, is:
 
 ```
 class IntListNode {
@@ -759,6 +761,7 @@ class IntListNode {
 class IntList {
   class IntListNode {
     var data: i32;
+    // `Self` is `IntListNode`, not `IntList`.
     var next: Self*;
   }
   var first: IntListNode*;
@@ -831,7 +834,7 @@ members of the type, while methods can only be called on instances.
 #### Class functions
 
 A class function is like a
-[C++ static member function or method](<https://en.wikipedia.org/wiki/Static_(keyword)#Static_method>),
+[C++ static member function](https://en.cppreference.com/w/cpp/language/static#Static_member_functions),
 and is declared like a function at file scope. The declaration can include a
 definition of the function body, or that definition can be provided out of line
 after the class definition is finished. A common use is for constructor
@@ -961,7 +964,7 @@ class Point {
   var y: f32;
 }
 
-fn Point.CreateXAxis(x: f32) -> Point;
+fn Point.CreateXAxis(x: f32) -> Point {
   // ✅ Allowed: `Point` type is complete.
   // Members of `Point` like `Create` are in scope.
   return Create(x, 0);
@@ -1197,6 +1200,55 @@ base class Extensible { ... }
 
 abstract class ExtensibleBase { ... }
 class ExactlyExtensible extends ExtensibleBase { ... }
+```
+
+#### `Self` refers to the current type
+
+Note that `Self` in a class definition means "the current type being defined"
+not "the type implementing this method." To implement a method in a derived
+class that uses `Self` in the declaration in the base class, only the type of
+`me` should change:
+
+```
+base class B1 {
+  virtual fn F[me: Self](x: Self) -> Self;
+  // Means exactly the same thing as:
+  //   virtual fn F[me: B1](x: B1) -> B1;
+}
+
+class D1 extends B1 {
+  // ❌ Illegal:
+  //   impl fn F[me: Self](x: Self) -> Self;
+  // since that would mean the same thing as:
+  //   impl fn F[me: Self](x: D1) -> D1;
+  // and `D1` is a different type than `B1`.
+
+  // ✅ Allowed: Parameter and return types
+  //  of `F` match declaration in `B1`.
+  impl fn F[me: Self](x: B1) -> B1;
+  // Or: impl fn F[me: D1](x: B1) -> B1;
+}
+```
+
+The exception is when there is a [subtyping relationship](#subtyping) such that
+it would be legal for a caller using the base classes signature to actually be
+calling the derived implementation, as in:
+
+```
+base class B2 {
+  virtual fn Clone[me: Self]() -> Self*;
+  // Means exactly the same thing as:
+  //   virtual fn Clone[me: B2]() -> B2*;
+}
+
+class D2 extends B2 {
+  // ✅ Allowed
+  impl fn Clone[me: Self]() -> Self*;
+  // Means the same thing as:
+  //   impl fn Clone[me: D2]() -> D2*;
+  // which is allowed since `D2*` is a
+  // subtype of `B2*`.
+}
 ```
 
 #### Constructors
@@ -1755,8 +1807,8 @@ declaration with all of the optional parameters in an option struct:
 ```
 fn SortIntVector(
     v: Vector(i32)*,
-    options: {.stable: Bool = false,
-              .descending: Bool = false} = {}) {
+    options: {.stable: bool = false,
+              .descending: bool = false} = {}) {
   // Code using `options.stable` and `options.descending`.
 }
 
@@ -1780,7 +1832,7 @@ We might instead support destructuring struct patterns with defaults:
 ```
 fn SortIntVector(
     v: Vector(i32)*,
-    {stable: Bool = false, descending: Bool = false}) {
+    {stable: bool = false, descending: bool = false}) {
   // Code using `stable` and `descending`.
 }
 ```
@@ -1814,9 +1866,9 @@ Some discussion on this topic has occurred in:
 
 -   [question-for-leads issue #505 on named parameters](https://github.com/carbon-language/carbon-lang/issues/505)
 -   labeled params brainstorming docs
-    [1](https://docs.google.com/document/d/1a1wI8SHGh3HYV8SUWPIKhg48ZW2glUlAMIIS3aec5dY/edit),
-    [2](https://docs.google.com/document/d/1u6GORSkcgThMAiYKOqsgALcEviEtcghGb5TTVT-U-N0/edit)
--   ["match" in syntax choices doc](https://docs.google.com/document/d/1iuytei37LPg_tEd6xe-O6P_bpN7TIbEjNtFMLYW2Nno/edit#heading=h.y566d16ivoy2)
+    [1](https://docs.google.com/document/d/1Ui2OEHLwa9LZ6ktc1joJqE7_N-ZHX2gBvBpaFw6DUy8/edit?usp=sharing&resourcekey=0-6bEnyc03QePVcttPRSFoew),
+    [2](https://docs.google.com/document/d/1kK_tti4DwPqa3Oh5CgA5pWSx0g3bKlZG1yREMpq9uiU/edit?usp=sharing&resourcekey=0-oFV6tXtCVu1bcHz4oCMyMQ)
+-   ["match" in syntax choices doc](https://docs.google.com/document/d/1EhZA3AlY9TaCMho9jz2ynFxK-6eS6BwMAkE5jNYQzEA/edit?usp=sharing&resourcekey=0-QXEoh-b4_sQG2u636gIa1A#heading=h.y566d16ivoy2)
 
 ### Inheritance
 
@@ -1863,7 +1915,7 @@ There are some opportunities to improve on and simplify the C++ story:
     aren't friends of the base class.
 
 **References:** This was discussed in
-[the open discussion on 2021-07-12](https://docs.google.com/document/d/1QCdKQ33rki-kCDrxi8UHy3a36dtW0WdMqpUzluGSrz4/edit?resourcekey=0-bZmNUiueOiH_sysJNqnT9A#heading=h.40jlsrcgp8mr).
+[the open discussion on 2021-07-12](https://docs.google.com/document/d/14vAcURDKeH6LZ_TQCMRGpNJrXSZCACQqDy29YH19XGo/edit#heading=h.40jlsrcgp8mr).
 
 #### Interop with C++ inheritance
 
@@ -2049,11 +2101,77 @@ that "`T` is comparable to `U` if they have the same field names in the same
 order, and for every field `x`, the type of `T.x` implements `ComparableTo` for
 the type of `U.x`."
 
+## Alternatives considered
+
+-   [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
+
+    -   [Require compile-time-proven initialization](/proposals/p0257.md#require-compile-time-proven-initialization)
+    -   [C and C++ uninitialized](/proposals/p0257.md#c-and-c-uninitialized)
+    -   [Allow passing unformed objects to parameters or returning them?](/proposals/p0257.md#allow-passing-unformed-objects-to-parameters-or-returning-them)
+    -   [Allow assigning an unformed object to another unformed object?](/proposals/p0257.md#allow-assigning-an-unformed-object-to-another-unformed-object)
+    -   [Fully destructive move (Rust)](/proposals/p0257.md#fully-destructive-move-rust)
+    -   [Completely non-destructive move (C++)](/proposals/p0257.md#completely-non-destructive-move-c)
+    -   [Named return variable in place of a return type](/proposals/p0257.md#named-return-variable-in-place-of-a-return-type)
+    -   [Allow unformed members](/proposals/p0257.md#allow-unformed-members)
+
+-   [#561: Basic classes: use cases, struct literals, struct types, and future work](https://github.com/carbon-language/carbon-lang/pull/561)
+
+    -   [Early proposal #98](https://github.com/carbon-language/carbon-lang/pull/98)
+    -   [Interfaces implemented for anonymous data classes](/proposals/p0561.md#interfaces-implemented-for-anonymous-data-classes)
+    -   [Access control](/proposals/p0561.md#access-control)
+    -   [Introducer for structural data class types](/proposals/p0561.md#introducer-for-structural-data-class-types)
+    -   [Terminology](/proposals/p0561.md#terminology)
+
+-   [#722: Nominal classes and methods](https://github.com/carbon-language/carbon-lang/pull/722)
+
+    -   [Method syntax](/proposals/p0722.md#method-syntax)
+    -   [Marking mutating methods at the call site](/proposals/p0722.md#marking-mutating-methods-at-the-call-site)
+    -   [Differences between functions and methods](/proposals/p0722.md#differences-between-functions-and-methods)
+    -   [Specifying linkage as part of the access modifier](/proposals/p0722.md#specifying-linkage-as-part-of-the-access-modifier)
+    -   [Nominal data class](/proposals/p0722.md#nominal-data-class)
+    -   [Let constants](/proposals/p0722.md#let-constants)
+
+-   [#777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777)
+
+    -   [Classes are final by default](/proposals/p0777.md#classes-are-final-by-default)
+    -   [Allow keywords to be written when they would have no effect](/proposals/p0777.md#allow-keywords-to-be-written-when-they-would-have-no-effect)
+    -   [Different virtual override keywords](/proposals/p0777.md#different-virtual-override-keywords)
+    -   [Different virtual override keyword placement](/proposals/p0777.md#different-virtual-override-keyword-placement)
+    -   [Final methods](/proposals/p0777.md#final-methods)
+    -   [Constructors](/proposals/p0777.md#constructors)
+    -   [Implicit abstract classes](/proposals/p0777.md#implicit-abstract-classes)
+    -   [No extensible objects with non-virtual destructors](/proposals/p0777.md#no-extensible-objects-with-non-virtual-destructors)
+    -   [Separate "exact" and "or derived" variations on types](/proposals/p0777.md#separate-exact-and-or-derived-variations-on-types)
+    -   [Separate "exact" and "or derived" variations on pointers](/proposals/p0777.md#separate-exact-and-or-derived-variations-on-pointers)
+
+-   [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
+
+    -   [Field order is not significant](/proposals/p0981.md#field-order-is-not-significant)
+    -   [Different field orders are incompatible](/proposals/p0981.md#different-field-orders-are-incompatible)
+    -   [Explicit instead of implicit conversions](/proposals/p0981.md#explicit-instead-of-implicit-conversions)
+
+-   [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
+
+    -   [Types implement destructor interface](/proposals/p1154.md#types-implement-destructor-interface)
+    -   [Prevent virtual function calls in destructors](/proposals/p1154.md#prevent-virtual-function-calls-in-destructors)
+    -   [Allow functions to act as destructors](/proposals/p1154.md#allow-functions-to-act-as-destructors)
+    -   [Allow private destructors](/proposals/p1154.md#allow-private-destructors)
+    -   [Allow multiple conditional destructors](/proposals/p1154.md#allow-multiple-conditional-destructors)
+    -   [Type-of-type naming](/proposals/p1154.md#type-of-type-naming)
+    -   [Other approaches to extensible classes without vtables](/proposals/p1154.md#other-approaches-to-extensible-classes-without-vtables)
+
+-   [#2107: Clarify rules around `Self` and `.Self`](https://github.com/carbon-language/carbon-lang/pull/2107)
+
+    -   [`Self` not a keyword](/proposals/p2107.md#self-not-a-keyword)
+    -   [Make `Self` a member of all types](/proposals/p2107.md#make-self-a-member-of-all-types)
+    -   [`where` operator could be associative](/proposals/p2107.md#where-operator-could-be-associative)
+
 ## References
 
 -   [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
--   [#561: Basic classes: use cases, struct literals, struct types, and future wor](https://github.com/carbon-language/carbon-lang/pull/561)
+-   [#561: Basic classes: use cases, struct literals, struct types, and future work](https://github.com/carbon-language/carbon-lang/pull/561)
 -   [#722: Nominal classes and methods](https://github.com/carbon-language/carbon-lang/pull/722)
 -   [#777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777)
 -   [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
 -   [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
+-   [#2107: Clarify rules around `Self` and `.Self`](https://github.com/carbon-language/carbon-lang/pull/2107)

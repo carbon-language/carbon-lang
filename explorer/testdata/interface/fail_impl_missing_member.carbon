@@ -2,11 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -22,7 +20,7 @@ class Point {
     fn Add[me: Point](b: Point) -> Point {
       return {.x = me.x + b.x, .y = me.y + b.y};
     }
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_impl_missing_member.carbon:[[@LINE+1]]: implementation missing Scale
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_impl_missing_member.carbon:[[@LINE+1]]: implementation missing Scale
   }
 }
 

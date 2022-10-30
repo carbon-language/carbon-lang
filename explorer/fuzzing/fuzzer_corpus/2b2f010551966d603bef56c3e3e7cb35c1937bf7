@@ -1,0 +1,323 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    interface {
+      name: "A"
+      members {
+        function {
+          name: "F"
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              int_type_literal {
+              }
+            }
+          }
+        }
+      }
+      self {
+        name: "Self"
+        type {
+          type_type_literal {
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    interface {
+      name: "B"
+      members {
+        function {
+          name: "F"
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              int_type_literal {
+              }
+            }
+          }
+        }
+      }
+      self {
+        name: "Self"
+        type {
+          type_type_literal {
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        int_type_literal {
+        }
+      }
+      interface {
+        identifier {
+          name: "A"
+        }
+      }
+      members {
+        function {
+          name: "F"
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              int_type_literal {
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  int_literal {
+                    value: 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        int_type_literal {
+        }
+      }
+      interface {
+        identifier {
+          name: "B"
+        }
+      }
+      members {
+        function {
+          name: "F"
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              int_type_literal {
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  int_literal {
+                    value: 2
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "GetAB"
+      param_pattern {
+        fields {
+          generic_binding {
+            name: "T"
+            type {
+              where {
+                base {
+                  identifier {
+                    name: "B"
+                  }
+                }
+                clauses {
+                  is {
+                    type {
+                      designator {
+                        name: "Self"
+                      }
+                    }
+                    constraint {
+                      identifier {
+                        name: "A"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              operator {
+                op: Add
+                arguments {
+                  operator {
+                    op: Add
+                    arguments {
+                      operator {
+                        op: Mul
+                        arguments {
+                          int_literal {
+                            value: 100
+                          }
+                        }
+                        arguments {
+                          call {
+                            function {
+                              compound_member_access {
+                                object {
+                                  identifier {
+                                    name: "T"
+                                  }
+                                }
+                                path {
+                                  simple_member_access {
+                                    field: "F"
+                                    object {
+                                      identifier {
+                                        name: "A"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                            argument {
+                              tuple_literal {
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    arguments {
+                      operator {
+                        op: Mul
+                        arguments {
+                          int_literal {
+                            value: 10
+                          }
+                        }
+                        arguments {
+                          call {
+                            function {
+                              compound_member_access {
+                                object {
+                                  identifier {
+                                    name: "T"
+                                  }
+                                }
+                                path {
+                                  simple_member_access {
+                                    field: "F"
+                                    object {
+                                      identifier {
+                                        name: "B"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                            argument {
+                              tuple_literal {
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                arguments {
+                  call {
+                    function {
+                      simple_member_access {
+                        field: "F"
+                        object {
+                          identifier {
+                            name: "T"
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "GetAB"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,144 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    function {
+      name: "Recurse"
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "x"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+        fields {
+          binding_pattern {
+            name: "do_recurse"
+            type {
+              expression_pattern {
+                expression {
+                  bool_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Auto
+      }
+      body {
+        statements {
+          if_statement {
+            condition {
+              identifier {
+                name: "do_recurse"
+              }
+            }
+            then_block {
+              statements {
+                expression_statement {
+                  expression {
+                    call {
+                      function {
+                        identifier {
+                          name: "Recurse"
+                        }
+                      }
+                      argument {
+                        tuple_literal {
+                          fields {
+                            identifier {
+                              name: "x"
+                            }
+                          }
+                          fields {
+                            bool_literal {
+                              value: false
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              identifier {
+                name: "x"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              operator {
+                op: Sub
+                arguments {
+                  call {
+                    function {
+                      identifier {
+                        name: "Recurse"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          int_literal {
+                            value: 1
+                          }
+                        }
+                        fields {
+                          bool_literal {
+                            value: true
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 3
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
