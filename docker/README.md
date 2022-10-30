@@ -6,7 +6,7 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
--   ubuntu:20.04
+-   ubuntu:22.04
 
 ## Build and run image
 
