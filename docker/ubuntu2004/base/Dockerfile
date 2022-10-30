@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-FROM ubuntu:20.04 as carbon-ubuntu2004-base
+FROM ubuntu:22.04 as carbon-ubuntu2004-base
 
 RUN apt-get update && \
     apt-get install zlib1g-dev build-essential curl file git ruby-full locales --no-install-recommends -y && \
@@ -27,4 +27,3 @@ RUN pip3 install -U pip
 RUN pip3 install pre-commit
 
 USER root
-
