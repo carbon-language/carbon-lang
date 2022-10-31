@@ -1,7 +1,7 @@
 {
   "name": "carbon-lang",
   "build": {
-    "dockerfile": "Dockerfile",
+    "dockerfile": "../docker/ubuntu2204/base/Dockerfile",
     "args": {
       "TAG": "3.5.6"
     }

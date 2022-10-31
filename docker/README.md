@@ -6,7 +6,7 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
--   ubuntu:22.04
+ubuntu:22.04
 
 ## Build and run image
 
@@ -15,19 +15,19 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 Building the base image is required.
 
 ```
-docker build -t carbon-ubuntu2004-base ./ubuntu2004/base
+docker build -t carbon-ubuntu2204-base ./ubuntu2204/base
 ```
 
 Build image using git repository
 
 ```bash
-docker build -t carbon ./ubuntu2004/github
+docker build -t carbon ./ubuntu2204/github
 ```
 
 Build image using copy instruction
 
 ```bash
-docker build -f ./ubuntu2004/Dockerfile -t carbon ..
+docker build -f ./ubuntu2204/Dockerfile -t carbon ..
 ```
 
 Run image
