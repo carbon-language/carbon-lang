@@ -24,7 +24,7 @@ to complex syntax with
 
 **C++ has also prioritized backwards compatibility** including both syntax and
 [ABI](https://en.wikipedia.org/wiki/Application_binary_interface). This is
-heavily motivated by preserving its access to existing C/C++ ecosystems, and
+heavily motivated by preserving its access to existing C and C++ ecosystems, and
 forms one of the foundations of common Linux package management approaches. A
 consequence is that rather than changing or replacing language designs to
 simplify and improve the language, features have overwhelmingly been added over

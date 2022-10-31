@@ -3,8 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -17,9 +18,6 @@ interface Y(T:! Type) {
 interface Z {
   // The `i32 is X(.Self)` constraint is indirectly required by
   // specifying that `.M = i32`.
-  // TODO: This testcase should be accepted, but is currently not because the
-  // two `.Self`s here refer to different symbolic types.
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_impl_used_by_later_rewrite.carbon:[[@LINE+1]]: could not find implementation of interface X(T = N) for i32
   let N:! Y(.Self) where i32 is X(.Self) and .M = i32;
 }
 

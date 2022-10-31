@@ -19,7 +19,7 @@ cc_library(
         "//toolchain/diagnostics:sorting_diagnostic_consumer",
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_tree",
-        "//toolchain/semantics:semantics_ir_factory",
+        "//toolchain/semantics:semantics_ir",
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Support",
     ],

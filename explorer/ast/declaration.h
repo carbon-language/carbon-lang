@@ -599,6 +599,8 @@ class InterfaceImplDeclaration : public Declaration {
 
 class AssociatedConstantDeclaration : public Declaration {
  public:
+  using ImplementsCarbonValueNode = void;
+
   AssociatedConstantDeclaration(SourceLocation source_loc,
                                 Nonnull<GenericBinding*> binding)
       : Declaration(AstNodeKind::AssociatedConstantDeclaration, source_loc),

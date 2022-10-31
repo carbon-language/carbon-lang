@@ -14,7 +14,7 @@
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_tree.h"
-#include "toolchain/semantics/semantics_ir_factory.h"
+#include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon {
@@ -162,7 +162,9 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
     return !tokenized_source.has_errors() && !parse_tree.has_errors();
   }
 
-  auto semantics_ir = SemanticsIRFactory::Build(tokenized_source, parse_tree);
+  const SemanticsIR builtin_ir = SemanticsIR::MakeBuiltinIR();
+  const SemanticsIR semantics_ir =
+      SemanticsIR::MakeFromParseTree(builtin_ir, tokenized_source, parse_tree);
   if (dump_mode == DumpMode::SemanticsIR) {
     consumer.Flush();
     semantics_ir.Print(output_stream_);
