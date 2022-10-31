@@ -361,47 +361,45 @@ auto ParseTree::Parser::ParseList(TokenKind open, TokenKind close,
 
 auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
   CARBON_RETURN_IF_STACK_LIMITED(llvm::None);
-  if (kind != PatternKind::MeParameter &&
-      NextTokenIs(TokenKind::Identifier()) &&
-      tokens_.GetKind(*(position_ + 1)) == TokenKind::Colon()) {
-    // identifier `:` type
-    auto start = GetSubtreeStartPosition();
-    AddLeafNode(ParseNodeKind::DeclaredName(),
-                Consume(TokenKind::Identifier()));
-    auto colon = Consume(TokenKind::Colon());
-    auto type = ParseType();
-    return AddNode(ParseNodeKind::PatternBinding(), colon, start,
-                   /*has_error=*/!type);
-  }
+  auto start = GetSubtreeStartPosition();
 
-  auto possible_me_param =
-      (kind == PatternKind::MeParameter && NextTokenIs(TokenKind::Me()) &&
-       tokens_.GetKind(*(position_ + 1)) == TokenKind::Colon());
-
-  if (possible_me_param) {
-    auto start = GetSubtreeStartPosition();
-    AddLeafNode(ParseNodeKind::Me(), Consume(TokenKind::Me()));
+  auto continue_parsing = [&] {
     auto colon = Consume(TokenKind::Colon());
     auto type = ParseType();
 
     return AddNode(ParseNodeKind::PatternBinding(), colon, start,
                    /*has_error*/ !type);
+  };
+
+  if (kind != PatternKind::MeParameter &&
+      NextTokenIs(TokenKind::Identifier()) &&
+      tokens_.GetKind(*(position_ + 1)) == TokenKind::Colon()) {
+    // identifier `:` type
+    AddLeafNode(ParseNodeKind::DeclaredName(),
+                Consume(TokenKind::Identifier()));
+    return continue_parsing();
   }
 
+  // me `:` type
+  auto possible_me_param =
+      (kind == PatternKind::MeParameter && NextTokenIs(TokenKind::Me()) &&
+       tokens_.GetKind(*(position_ + 1)) == TokenKind::Colon());
+
+  if (possible_me_param) {
+    AddLeafNode(ParseNodeKind::Me(), Consume(TokenKind::Me()));
+    return continue_parsing();
+  }
+
+  // addr me `:` type
   auto possible_me_addr_param =
       (kind == PatternKind::MeParameter && NextTokenIs(TokenKind::Addr()) &&
        tokens_.GetKind(*(position_ + 1)) == TokenKind::Me() &&
        tokens_.GetKind(*(position_ + 2)) == TokenKind::Colon());
 
   if (possible_me_addr_param) {
-    auto start = GetSubtreeStartPosition();
     AddLeafNode(ParseNodeKind::Addr(), Consume(TokenKind::Addr()));
     AddLeafNode(ParseNodeKind::Me(), Consume(TokenKind::Me()));
-    auto colon = Consume(TokenKind::Colon());
-    auto type = ParseType();
-
-    return AddNode(ParseNodeKind::PatternBinding(), colon, start,
-                   /*has_error*/ !type);
+    return continue_parsing();
   }
 
   switch (kind) {
