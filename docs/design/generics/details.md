@@ -4404,18 +4404,32 @@ An incomplete `C` cannot be used in the following contexts:
 
 -   ❌ `T:! C` ... `T.X`
 -   ❌ `T:! C where `...
--   ?? `interface `...` { extends C; }`
-    -   Open question: if we detect name collisions between the members of the
-        interface and `C` when the interface is defined, then we need `C` to be
-        complete. If we instead only generate errors on ambiguous use of members
-        with the same name, as we do with `A & B`, then we don't need to require
-        `C` to be complete.
 -   ❌ `class `...` { impl as C; }`
     -   The names of `C` are added to the class, and so those names need to be
         known.
--   ❌ `T:! C` ... `T is A` where `A != C` is an interface or constraint
+-   ❌ `T:! C` ... `T is A` where `A` is an interface or named constraint
+    different from `C`
     -   Need to see the definition of `C` to see if it implies `A`.
 -   ❌ `external impl` ... `as C {` ... `}`
+
+**Future work:** It is currently undecided whether an interface needs to be
+complete to be extended, as in:
+
+```
+interface I { extends C; }
+```
+
+There are three different approaches being considered:
+
+-   If we detect name collisions between the members of the interface `I` and
+    `C` when the interface `I` is defined, then we need `C` to be complete.
+-   If we instead only generate errors on ambiguous use of members with the same
+    name, as we do with `A & B`, then we don't need to require `C` to be
+    complete.
+-   Another option, being discussed in
+    [#2355](https://github.com/carbon-language/carbon-lang/issues/2355), is that
+    names in interface `I` shadow the names in any interface being extended,
+    then `C` would not be required to be complete.
 
 ### Declaring implementations
 
