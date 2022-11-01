@@ -753,7 +753,9 @@ paren_expression_contents:
 ;
 
 struct_literal:
-  LEFT_CURLY_BRACE struct_literal_contents RIGHT_CURLY_BRACE
+  LEFT_CURLY_BRACE RIGHT_CURLY_BRACE
+    { $$ = arena->New<StructLiteral>(context.source_loc()); }
+| LEFT_CURLY_BRACE struct_literal_contents RIGHT_CURLY_BRACE
     { $$ = arena->New<StructLiteral>(context.source_loc(), $2); }
 | LEFT_CURLY_BRACE struct_literal_contents COMMA RIGHT_CURLY_BRACE
     { $$ = arena->New<StructLiteral>(context.source_loc(), $2); }
@@ -769,9 +771,7 @@ struct_literal_contents:
 ;
 
 struct_type_literal:
-  LEFT_CURLY_BRACE RIGHT_CURLY_BRACE
-    { $$ = arena->New<StructTypeLiteral>(context.source_loc()); }
-| LEFT_CURLY_BRACE struct_type_literal_contents RIGHT_CURLY_BRACE
+  LEFT_CURLY_BRACE struct_type_literal_contents RIGHT_CURLY_BRACE
     { $$ = arena->New<StructTypeLiteral>(context.source_loc(), $2); }
 | LEFT_CURLY_BRACE struct_type_literal_contents COMMA RIGHT_CURLY_BRACE
     { $$ = arena->New<StructTypeLiteral>(context.source_loc(), $2); }

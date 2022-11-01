@@ -271,8 +271,10 @@ static auto ResolveNames(Expression& expression,
     case ExpressionKind::StringLiteral:
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
-    case ExpressionKind::ValueLiteral:
       break;
+    case ExpressionKind::ValueLiteral:
+    case ExpressionKind::BuiltinConvertExpression:
+      CARBON_FATAL() << "should not exist before type checking";
     case ExpressionKind::UnimplementedExpression:
       return ProgramError(expression.source_loc()) << "Unimplemented";
   }

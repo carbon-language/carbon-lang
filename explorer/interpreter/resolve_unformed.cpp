@@ -121,6 +121,11 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
           &cast<SimpleMemberAccessExpression>(*expression).object(), flow_facts,
           FlowFacts::ActionType::Check));
       break;
+    case ExpressionKind::BuiltinConvertExpression:
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(
+          cast<BuiltinConvertExpression>(*expression).source_expression(),
+          flow_facts, FlowFacts::ActionType::Check));
+      break;
     case ExpressionKind::DotSelfExpression:
     case ExpressionKind::IntLiteral:
     case ExpressionKind::BoolLiteral:

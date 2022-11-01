@@ -8,10 +8,7 @@
 
 package ExplorerTest api;
 
-__mixin Operations {}
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/tuple/fail_nontype_tuple_as_type.carbon:[[@LINE+1]]: type error in type of name binding: '(i32, i32)' is not implicitly convertible to 'Type'
+fn F[T:! (i32, i32)](x: T);
 
-fn Main() -> i32 {
-   // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_mix_as_type_expr.carbon:[[@LINE+1]]: invalid use of mixin Operations
-   var a: Operations;
-   return 0;
-}
+fn Main() -> i32;

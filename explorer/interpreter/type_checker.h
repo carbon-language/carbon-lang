@@ -333,11 +333,6 @@ class TypeChecker {
   auto ExpectReturnOnAllPaths(std::optional<Nonnull<Statement*>> opt_stmt,
                               SourceLocation source_loc) -> ErrorOr<Success>;
 
-  // Verifies that *value represents a concrete type, as opposed to a
-  // type pattern or a non-type value.
-  auto ExpectIsConcreteType(SourceLocation source_loc,
-                            Nonnull<const Value*> value) -> ErrorOr<Success>;
-
   // Returns the field names of the class together with their types.
   auto FieldTypes(const NominalClassType& class_type) const
       -> std::vector<NamedValue>;
@@ -369,6 +364,10 @@ class TypeChecker {
                          Nonnull<Expression*> source,
                          Nonnull<const Value*> destination)
       -> ErrorOr<Nonnull<Expression*>>;
+
+  // Checks that the given type is not a placeholder type. Diagnoses otherwise.
+  auto ExpectNonPlaceholderType(SourceLocation source_loc,
+                                Nonnull<const Value*> type) -> ErrorOr<Success>;
 
   // Determine whether `type1` and `type2` are considered to be the same type
   // in the given scope. This is true if they're structurally identical or if
