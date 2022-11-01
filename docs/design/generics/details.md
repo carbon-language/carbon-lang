@@ -4396,7 +4396,8 @@ be used in the following contexts:
         complete.
 -   ✅ `T:! C` ... `T is C`
 -   ✅ `T:! A & C` ... `T is C`
-    -   This includes constructs requiring `T is C` such as `T as C` or `U:! C = T`.
+    -   This includes constructs requiring `T is C` such as `T as C` or
+        `U:! C = T`.
 -   ✅ `external impl `...` as C;`
     -   Checking that all associated constants of `C` are correctly assigned
         values will be delayed until `C` is complete.
