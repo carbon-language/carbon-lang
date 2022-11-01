@@ -16,6 +16,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/parser/parse_node_kind.h"
+#include "toolchain/parser/parser2.h"
 #include "toolchain/parser/parser_impl.h"
 
 namespace Carbon {
@@ -27,7 +28,8 @@ auto ParseTree::Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer)
   TokenDiagnosticEmitter emitter(translator, consumer);
 
   // Delegate to the parser.
-  return Parser::Parse(tokens, emitter);
+  // NOTE: Edit this to swap between Parser and Parser2.
+  return Parser2::Parse(tokens, emitter);
 }
 
 auto ParseTree::postorder() const -> llvm::iterator_range<PostorderIterator> {

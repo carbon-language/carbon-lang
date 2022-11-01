@@ -17,6 +17,17 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "parser_state",
+    srcs = ["parser_state.cpp"],
+    hdrs = ["parser_state.h"],
+    textual_hdrs = ["parser_state.def"],
+    deps = [
+        "//common:ostream",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_test(
     name = "parse_node_kind_test",
     size = "small",
@@ -35,10 +46,13 @@ cc_library(
         "parse_tree.cpp",
         "parser_impl.cpp",
         "parser_impl.h",
+        "parser2.cpp",
+        "parser2.h",
     ],
     hdrs = ["parse_tree.h"],
     deps = [
         ":parse_node_kind",
+        ":parser_state",
         ":precedence",
         "//common:check",
         "//common:ostream",

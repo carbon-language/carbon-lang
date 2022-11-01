@@ -101,7 +101,7 @@ class TokenKind {
   constexpr operator KindEnum() const { return kind_value_; }
 
   // Prints the TokenKind, typically for diagnostics.
-  void Print(llvm::raw_ostream& out) const { out << GetFixedSpelling(); }
+  void Print(llvm::raw_ostream& out) const { out << Name(); }
 
  private:
   constexpr explicit TokenKind(KindEnum kind_value) : kind_value_(kind_value) {}
