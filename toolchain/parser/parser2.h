@@ -6,13 +6,11 @@
 #define CARBON_TOOLCHAIN_PARSER_PARSER2_H_
 
 #include "llvm/ADT/Optional.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/parser/parser_state.h"
-#include "toolchain/parser/precedence.h"
 
 namespace Carbon {
 
@@ -30,9 +28,13 @@ class Parser2 {
   }
 
  private:
+  // Used to track state on state_stack_.
   struct StateStackEntry {
+    // The state.
     ParserState state;
+    // The token indicating the start of a tracked subtree.
     TokenizedBuffer::Token start_token;
+    // The offset within the ParseTree of the subtree start.
     int32_t subtree_start;
   };
 
@@ -62,18 +64,16 @@ class Parser2 {
   auto ConsumeIf(TokenKind kind) -> llvm::Optional<TokenizedBuffer::Token>;
 
   // Gets the kind of the next token to be consumed.
-  auto NextTokenKind() const -> TokenKind {
-    return tokens_.GetKind(*position_);
-  }
+  auto PositionKind() const -> TokenKind { return tokens_.GetKind(*position_); }
 
   // Tests whether the next token to be consumed is of the specified kind.
-  auto NextTokenIs(TokenKind kind) const -> bool {
-    return NextTokenKind() == kind;
+  auto PositionIs(TokenKind kind) const -> bool {
+    return PositionKind() == kind;
   }
 
   // If the token is an opening symbol for a matched group, skips to the matched
   // closing symbol and returns true. Otherwise, returns false.
-  auto SkipMatchingGroup(TokenizedBuffer::Token token) -> bool;
+  auto SkipMatchingGroup() -> bool;
 
   // Skips forward to move past the likely end of a declaration or statement.
   //
@@ -90,8 +90,9 @@ class Parser2 {
   //   less indentation, there is likely a missing semicolon. Continued
   //   declarations or statements across multiple lines should be indented.
   //
-  // Returns true if stopping at a semicolon as the likely end.
-  auto SkipPastLikelyEnd(TokenizedBuffer::Token skip_root) -> bool;
+  // Returns a semicolon token if one is the likely end.
+  auto SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
+      -> llvm::Optional<TokenizedBuffer::Token>;
 
   // Skip forward to the given token. Verifies that it is actually forward.
   auto SkipTo(TokenizedBuffer::Token t) -> void;
@@ -99,6 +100,11 @@ class Parser2 {
   auto PushState(ParserState state) -> void {
     state_stack_.push_back({state, *position_, tree_.size()});
   }
+
+  // When handling errors before the start of the definition, treat it as a
+  // declaration. Recover to a semicolon when it makes sense as a possible
+  // function end, otherwise use the fn token for the error.
+  auto HandleFunctionError(bool skip_past_likely_end) -> void;
 
 #define CARBON_PARSER_STATE(Name) auto Handle##Name##State()->void;
 #include "toolchain/parser/parser_state.def"

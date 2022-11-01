@@ -15,5 +15,7 @@
 
 CARBON_PARSER_STATE(Declaration)
 CARBON_PARSER_STATE(FunctionIntroducer)
+CARBON_PARSER_STATE(FunctionParameterList)
+CARBON_PARSER_STATE(FunctionParameterListDone)
 
 #undef CARBON_PARSER_STATE
