@@ -68,7 +68,7 @@ class LinkedList(T:! Type) {
   }
   fn GetByIndex[addr me: Self*](target_index: i32) -> Optional(T) {
     if(target_index > (*me).len - 1 or target_index < 0) {
-      // Not in possible change
+      // Not in possible range
       return Optional(T).CreateEmpty();
     }
     var search_backwards:bool = target_index > (*me).len / 2;
