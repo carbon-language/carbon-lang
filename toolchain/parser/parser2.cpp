@@ -28,8 +28,6 @@ Parser2::Parser2(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
   CARBON_CHECK(tokens_.GetKind(*end_) == TokenKind::EndOfFile())
       << "TokenizedBuffer should end with EndOfFile, ended with "
       << tokens_.GetKind(*end_).Name();
-  (void)tree_;
-  (void)emitter_;
 }
 
 auto Parser2::AddLeafNode(ParseNodeKind kind, TokenizedBuffer::Token token,
