@@ -28,14 +28,26 @@ class Parser2 {
   }
 
  private:
+  // Supported kinds of patterns for HandlePattern.
+  enum class PatternKind { Parameter, Variable };
+
   // Used to track state on state_stack_.
   struct StateStackEntry {
+    StateStackEntry(ParserState state, TokenizedBuffer::Token token,
+                    int32_t subtree_start)
+        : state(state), token(token), subtree_start(subtree_start) {}
+
     // The state.
     ParserState state;
-    // The token indicating the start of a tracked subtree.
-    TokenizedBuffer::Token start_token;
+    // A token providing context based on the subtree. This will typically be
+    // the first token in the subtree, but may sometimes be a token within. It
+    // will typically be used for the subtree's root node.
+    TokenizedBuffer::Token token;
     // The offset within the ParseTree of the subtree start.
     int32_t subtree_start;
+    // Set to true  to indicate that an error was found, and that contextual
+    // error recovery may be needed.
+    bool has_error = false;
   };
 
   Parser2(ParseTree& tree, TokenizedBuffer& tokens,
@@ -97,8 +109,9 @@ class Parser2 {
   // Skip forward to the given token. Verifies that it is actually forward.
   auto SkipTo(TokenizedBuffer::Token t) -> void;
 
+  // Pushes a new state with the current position for context.
   auto PushState(ParserState state) -> void {
-    state_stack_.push_back({state, *position_, tree_.size()});
+    state_stack_.push_back(StateStackEntry(state, *position_, tree_.size()));
   }
 
   auto HandleExpressionPrimary() -> void;
@@ -108,6 +121,17 @@ class Parser2 {
   // function end, otherwise use the fn token for the error.
   auto HandleFunctionError(bool skip_past_likely_end) -> void;
 
+  // Handles parsing of a function parameter list, including commas and the
+  // close paren.
+  auto HandleFunctionParameterList(bool is_start) -> void;
+
+  // Handles the start of a pattern.
+  // If the start of the pattern is invalid, it's the responsibility of the
+  // outside context to advance past the pattern.
+  auto HandlePatternStart(PatternKind pattern_kind) -> void;
+
+  // `clang-format` has a bug with spacing around `->` returns in macros. See
+  // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
 #define CARBON_PARSER_STATE(Name) auto Handle##Name##State()->void;
 #include "toolchain/parser/parser_state.def"
 
