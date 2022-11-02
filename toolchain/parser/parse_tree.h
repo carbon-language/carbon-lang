@@ -145,6 +145,7 @@ class ParseTree {
  private:
   class Parser;
   friend Parser;
+  friend class Parser2;
 
   // The in-memory representation of data used for a particular node in the
   // tree.
@@ -152,6 +153,15 @@ class ParseTree {
     explicit NodeImpl(ParseNodeKind k, TokenizedBuffer::Token t,
                       int subtree_size_arg)
         : kind(k), token(t), subtree_size(subtree_size_arg) {}
+
+    // TODO: Parser2 only uses this construct. Can remove the other if we
+    // switch.
+    NodeImpl(ParseNodeKind kind, bool has_error, TokenizedBuffer::Token token,
+             int subtree_size)
+        : kind(kind),
+          has_error(has_error),
+          token(token),
+          subtree_size(subtree_size) {}
 
     // The kind of this node. Note that this is only a single byte.
     ParseNodeKind kind;
