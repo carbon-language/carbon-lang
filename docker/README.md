@@ -45,7 +45,7 @@ docker run carbon bazel run //explorer -- ./explorer/testdata/print/format_only.
 ### Using a mounted volume
 
 ```bash
-docker run -w /carbon-lang -v /path/to/carbon-lang:/carbon-lang carbon-ubuntu2004-base bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
+docker run -w /carbon-lang -v /path/to/carbon-lang:/carbon-lang carbon-ubuntu2204-base bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
 ```
 
 -   navigate to repository root
