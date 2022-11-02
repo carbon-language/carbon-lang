@@ -101,6 +101,8 @@ class Parser2 {
     state_stack_.push_back({state, *position_, tree_.size()});
   }
 
+  auto HandleExpressionPrimary() -> void;
+
   // When handling errors before the start of the definition, treat it as a
   // declaration. Recover to a semicolon when it makes sense as a possible
   // function end, otherwise use the fn token for the error.

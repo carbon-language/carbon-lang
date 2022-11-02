@@ -14,8 +14,12 @@
 #endif
 
 CARBON_PARSER_STATE(Declaration)
+CARBON_PARSER_STATE(Expression)
 CARBON_PARSER_STATE(FunctionIntroducer)
 CARBON_PARSER_STATE(FunctionParameterList)
 CARBON_PARSER_STATE(FunctionParameterListDone)
+CARBON_PARSER_STATE(FunctionDefinitionEnd)
+CARBON_PARSER_STATE(ReturnStatement)
+CARBON_PARSER_STATE(StatementScope)
 
 #undef CARBON_PARSER_STATE
