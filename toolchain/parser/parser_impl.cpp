@@ -363,7 +363,7 @@ auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
   CARBON_RETURN_IF_STACK_LIMITED(llvm::None);
   auto start = GetSubtreeStartPosition();
 
-  auto continue_parsing = [&] {
+  auto finish_parsing_pattern_binding = [&] {
     auto colon = Consume(TokenKind::Colon());
     auto type = ParseType();
 
@@ -377,7 +377,7 @@ auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
     // identifier `:` type
     AddLeafNode(ParseNodeKind::DeclaredName(),
                 Consume(TokenKind::Identifier()));
-    return continue_parsing();
+    return finish_parsing_pattern_binding();
   }
 
   // me `:` type
@@ -387,7 +387,7 @@ auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
 
   if (possible_me_param) {
     AddLeafNode(ParseNodeKind::Me(), Consume(TokenKind::Me()));
-    return continue_parsing();
+    return finish_parsing_pattern_binding();
   }
 
   // addr me `:` type
@@ -399,7 +399,7 @@ auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
   if (possible_me_addr_param) {
     AddLeafNode(ParseNodeKind::Addr(), Consume(TokenKind::Addr()));
     AddLeafNode(ParseNodeKind::Me(), Consume(TokenKind::Me()));
-    return continue_parsing();
+    return finish_parsing_pattern_binding();
   }
 
   switch (kind) {
