@@ -5,11 +5,11 @@
 // AUTOUPDATE
 // RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
-// CHECK:STDOUT: {node_index: 4, kind: 'VariableDeclaration', text: 'var', has_error: yes, subtree_size: 5, children: [
-// CHECK:STDOUT:   {node_index: 3, kind: 'VariableInitializer', text: '=', subtree_size: 4, children: [
-// CHECK:STDOUT:     {node_index: 2, kind: 'ParenExpression', text: '(', has_error: yes, subtree_size: 3, children: [
 // CHECK:STDOUT:       {node_index: 0, kind: 'NameReference', text: 'foo'},
-// CHECK:STDOUT:       {node_index: 1, kind: 'ParenExpressionEnd', text: ')'}]}]}]},
+// CHECK:STDOUT:       {node_index: 1, kind: 'ParenExpressionEnd', text: ')'},
+// CHECK:STDOUT:     {node_index: 2, kind: 'ParenExpression', text: '(', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:   {node_index: 3, kind: 'VariableInitializer', text: '=', subtree_size: 4},
+// CHECK:STDOUT: {node_index: 4, kind: 'VariableDeclaration', text: 'var', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT: {node_index: 5, kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 

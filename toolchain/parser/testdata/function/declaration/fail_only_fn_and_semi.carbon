@@ -5,8 +5,8 @@
 // AUTOUPDATE
 // RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
-// CHECK:STDOUT: {node_index: 1, kind: 'FunctionDeclaration', text: ';', has_error: yes, subtree_size: 2, children: [
-// CHECK:STDOUT:   {node_index: 0, kind: 'FunctionIntroducer', text: 'fn'}]},
+// CHECK:STDOUT:   {node_index: 0, kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT: {node_index: 1, kind: 'FunctionDeclaration', text: ';', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT: {node_index: 2, kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
