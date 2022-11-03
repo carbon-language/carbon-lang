@@ -75,6 +75,11 @@ class Parser2 {
   // advances to the next position. Otherwise returns an empty optional.
   auto ConsumeIf(TokenKind kind) -> llvm::Optional<TokenizedBuffer::Token>;
 
+  // Find the next token of any of the given kinds at the current bracketing
+  // level.
+  auto FindNextOf(std::initializer_list<TokenKind> desired_kinds)
+      -> llvm::Optional<TokenizedBuffer::Token>;
+
   // Gets the kind of the next token to be consumed.
   auto PositionKind() const -> TokenKind { return tokens_.GetKind(*position_); }
 
@@ -111,15 +116,31 @@ class Parser2 {
 
   // Pushes a new state with the current position for context.
   auto PushState(ParserState state) -> void {
-    state_stack_.push_back(StateStackEntry(state, *position_, tree_.size()));
+    PushState(StateStackEntry(state, *position_, tree_.size()));
   }
+
+  // Pushes a new state with the token for context.
+  auto PushState(ParserState state, TokenizedBuffer::Token token) -> void {
+    PushState(StateStackEntry(state, token, tree_.size()));
+  }
+
+  // Pushes a constructed state onto the stack.
+  auto PushState(StateStackEntry state) -> void {
+    state_stack_.push_back(state);
+  }
+
+  // Pops the state and keeps the value for inspection.
+  auto PopState() -> StateStackEntry { return state_stack_.pop_back_val(); }
+
+  auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }
 
   auto HandleExpressionPrimary() -> void;
 
   // When handling errors before the start of the definition, treat it as a
   // declaration. Recover to a semicolon when it makes sense as a possible
   // function end, otherwise use the fn token for the error.
-  auto HandleFunctionError(bool skip_past_likely_end) -> void;
+  auto HandleFunctionError(StateStackEntry state, bool skip_past_likely_end)
+      -> void;
 
   // Handles parsing of a function parameter list, including commas and the
   // close paren.
