@@ -188,5 +188,24 @@ TEST(DriverTest, DumpErrors) {
   EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
 }
 
+TEST(DriverTest, DumpParseTree) {
+  RawTestOstream test_output_stream;
+  RawTestOstream test_error_stream;
+  Driver driver = Driver(test_output_stream, test_error_stream);
+
+  auto test_file_path = CreateTestFile("var v: Int = 42;");
+  EXPECT_TRUE(driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(),
+                                       {"parse-tree", test_file_path}));
+  EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
+  // Verify there is output without examining it.
+  EXPECT_FALSE(test_output_stream.TakeStr().empty());
+
+  // Check that the subcommand dispatch works.
+  EXPECT_TRUE(driver.RunFullCommand({"dump", "parse-tree", test_file_path}));
+  EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
+  // Verify there is output without examining it.
+  EXPECT_FALSE(test_output_stream.TakeStr().empty());
+}
+
 }  // namespace
 }  // namespace Carbon::Testing
