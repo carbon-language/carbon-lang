@@ -207,7 +207,7 @@ auto Parser2::HandleDeclarationState() -> void {
   }
 }
 
-auto Parser2::HandleExpressionPrimary() -> void {
+auto Parser2::HandleExpressionFormPrimary() -> void {
   // TODO: Handle OpenParen and OpenCurlyBrace.
   switch (PositionKind()) {
     case TokenKind::Identifier():
@@ -237,7 +237,7 @@ auto Parser2::HandleExpressionState() -> void {
   auto state = PopState();
   (void)state;
 
-  HandleExpressionPrimary();
+  HandleExpressionFormPrimary();
 }
 
 auto Parser2::HandleExpressionForTypeState() -> void {
@@ -246,7 +246,7 @@ auto Parser2::HandleExpressionForTypeState() -> void {
   auto state = PopState();
   (void)state;
 
-  HandleExpressionPrimary();
+  HandleExpressionFormPrimary();
 }
 
 auto Parser2::HandleFunctionError(StateStackEntry state,

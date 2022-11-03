@@ -134,7 +134,10 @@ class Parser2 {
 
   auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }
 
-  auto HandleExpressionPrimary() -> void;
+  // Parses a primary expression, which is either a terminal portion of an
+  // expression tree, such as an identifier or literal, or a parenthesized
+  // expression.
+  auto HandleExpressionFormPrimary() -> void;
 
   // When handling errors before the start of the definition, treat it as a
   // declaration. Recover to a semicolon when it makes sense as a possible
