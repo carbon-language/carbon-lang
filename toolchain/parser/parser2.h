@@ -64,7 +64,7 @@ class Parser2 {
                    bool has_error = false) -> void;
 
   auto AddNode(ParseNodeKind kind, TokenizedBuffer::Token token,
-               int subtree_start, bool has_error = false) -> void;
+               int subtree_start, bool has_error) -> void;
 
   // Composes `ConsumeIf` and `AddLeafNode`, returning false when ConsumeIf
   // fails.
@@ -132,6 +132,10 @@ class Parser2 {
   // Pops the state and keeps the value for inspection.
   auto PopState() -> StateStackEntry { return state_stack_.pop_back_val(); }
 
+  // Pops the state and discards it.
+  auto PopAndDiscardState() -> void { state_stack_.pop_back(); }
+
+  // Propagates an error up the state stack, to the parent state.
   auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }
 
   // Parses a primary expression, which is either a terminal portion of an
@@ -148,6 +152,10 @@ class Parser2 {
   // Handles parsing of a function parameter list, including commas and the
   // close paren.
   auto HandleFunctionParameterList(bool is_start) -> void;
+
+  // Handles the `;` after a keyword statement.
+  auto HandleKeywordStatementFinish(TokenKind token_kind,
+                                    ParseNodeKind node_kind) -> void;
 
   // Handles the start of a pattern.
   // If the start of the pattern is invalid, it's the responsibility of the

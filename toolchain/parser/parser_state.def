@@ -23,6 +23,10 @@ CARBON_PARSER_STATE(Expression)
 // As with Expression, but specifically uses the Type precedence grouping.
 CARBON_PARSER_STATE(ExpressionForType)
 
+// Handles the `;` for an expression statement, which is different from most
+// keyword statements.
+CARBON_PARSER_STATE(ExpressionStatementFinish)
+
 // Handles processing of a function's `fn <name>(`, and enqueues parameter list
 // handling.
 CARBON_PARSER_STATE(FunctionIntroducer)
@@ -45,6 +49,9 @@ CARBON_PARSER_STATE(FunctionSignatureFinish)
 // Finishes a function definition.
 CARBON_PARSER_STATE(FunctionDefinitionFinish)
 
+// StatementFinish variants are just handling the `;` expectation.
+CARBON_PARSER_STATE(KeywordStatementFinishForReturn)
+
 // Handles pattern parsing for a function parameter, enqueuing type expression
 // processing. Proceeds to the matching Finish state when done.
 CARBON_PARSER_STATE(PatternForFunctionParameter)
@@ -52,9 +59,6 @@ CARBON_PARSER_STATE(PatternForFunctionParameter)
 // Finishes function parameter processing, including `,`. If there are more
 // parameters, enqueues another parameter processing state.
 CARBON_PARSER_STATE(PatternForFunctionParameterFinish)
-
-// Handles processing of a `return` statement.
-CARBON_PARSER_STATE(ReturnStatement)
 
 // Handles processing of statements within a scope.
 CARBON_PARSER_STATE(StatementScope)
