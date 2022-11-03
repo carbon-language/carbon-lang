@@ -13,18 +13,50 @@
 #error "Must define the x-macro to use this file."
 #endif
 
+// Handles processing of a declaration scope. Things like fn, class, interface,
+// and so on.
 CARBON_PARSER_STATE(Declaration)
+
+// Handles processing of an expression.
 CARBON_PARSER_STATE(Expression)
+
+// As with Expression, but specifically uses the Type precedence grouping.
 CARBON_PARSER_STATE(ExpressionForType)
+
+// Handles processing of a function's `fn <name>(`, and enqueues parameter list
+// handling.
 CARBON_PARSER_STATE(FunctionIntroducer)
+
+// Handles processing of a function's parameter list `)`.
 CARBON_PARSER_STATE(FunctionParameterListFinish)
+
+// Handles processing of a function's syntax after `)`, primarily the
+// possibility a `->` return type is there. Always enqueues signature finish
+// handling.
 CARBON_PARSER_STATE(FunctionAfterParameterList)
+
+// Finishes a function return type.
 CARBON_PARSER_STATE(FunctionReturnTypeFinish)
+
+// Finishes a function signature. If it's a declaration, the function is done;
+// otherwise, this also starts definition processing.
 CARBON_PARSER_STATE(FunctionSignatureFinish)
+
+// Finishes a function definition.
 CARBON_PARSER_STATE(FunctionDefinitionFinish)
+
+// Handles pattern parsing for a function parameter, enqueuing type expression
+// processing. Proceeds to the matching Finish state when done.
 CARBON_PARSER_STATE(PatternForFunctionParameter)
+
+// Finishes function parameter processing, including `,`. If there are more
+// parameters, enqueues another parameter processing state.
 CARBON_PARSER_STATE(PatternForFunctionParameterFinish)
+
+// Handles processing of a `return` statement.
 CARBON_PARSER_STATE(ReturnStatement)
+
+// Handles processing of statements within a scope.
 CARBON_PARSER_STATE(StatementScope)
 
 #undef CARBON_PARSER_STATE
