@@ -66,14 +66,14 @@ class LinkedList(T:! Type) {
     (*current_head_value).set_prev(v_wrapped);
     (*me).head = v_wrapped;
   }
-  fn GetByIndex[addr me: Self*](target_index: i32) -> Optional(T) {
-    if(target_index > (*me).len - 1 or target_index < 0) {
+  fn GetByIndex[me: Self](target_index: i32) -> Optional(T) {
+    if(target_index > me.len - 1 or target_index < 0) {
       // Not in possible range
       return Optional(T).CreateEmpty();
     }
-    var search_backwards:bool = target_index > (*me).len / 2;
-    var iter:Optional(Node(T)*) = if search_backwards then (*me).tail else (*me).head;
-    var c:i32 = if search_backwards then (*me).len -1 else 0;
+    var search_backwards:bool = target_index > me.len / 2;
+    var iter:Optional(Node(T)*) = if search_backwards then me.tail else me.head;
+    var c:i32 = if search_backwards then me.len -1 else 0;
     while(c != target_index) {
       var node: Node(T) = *(iter.Get());
       if(search_backwards) {
@@ -100,8 +100,8 @@ class LinkedList(T:! Type) {
     (*me).tail = Optional(Node(T)*).CreateEmpty();
     (*me).len = 0; 
   }
-  fn Length[addr me:Self*]() -> i32 {
-    return (*me).len;
+  fn Length[me:Self]() -> i32 {
+    return me.len;
   }
   var head: Optional(Node(T)*);
   var tail: Optional(Node(T)*);
@@ -130,10 +130,8 @@ fn Main() -> i32 {
 
   var second_list: auto = LinkedList(i32*).Create();
   var number: i32 = 1337;
-  if(true) {
-    var number_ptr: i32* = &number;
-    second_list.PushBack(number_ptr);
-  }
+  var number_ptr: i32* = &number;
+  second_list.PushBack(number_ptr);
   var retrieved_ptr:i32* = second_list.GetByIndex(0).Get();
   var value: i32 = *retrieved_ptr;
   Print("Value {0}", value);
