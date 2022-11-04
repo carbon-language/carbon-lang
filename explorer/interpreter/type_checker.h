@@ -210,9 +210,9 @@ class TypeChecker {
   auto DeclareMixinDeclaration(Nonnull<MixinDeclaration*> mixin_decl,
                                const ScopeInfo& scope_info) -> ErrorOr<Success>;
 
-  auto DeclareInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl,
-                                   const ScopeInfo& scope_info)
-      -> ErrorOr<Success>;
+  auto DeclareConstraintTypeDeclaration(
+      Nonnull<ConstraintTypeDeclaration*> constraint_decl,
+      const ScopeInfo& scope_info) -> ErrorOr<Success>;
 
   // Check that the deduced parameters of an impl are actually deducible from
   // the form of the interface, for a declaration of the form
@@ -307,10 +307,10 @@ class TypeChecker {
       std::optional<Nonnull<const Declaration*>> enclosing_decl)
       -> ErrorOr<Success>;
 
-  // Type check all the members of the interface.
-  auto TypeCheckInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl,
-                                     const ImplScope& impl_scope)
-      -> ErrorOr<Success>;
+  // Type check all the members of the interface or named constraint.
+  auto TypeCheckConstraintTypeDeclaration(
+      Nonnull<ConstraintTypeDeclaration*> constraint_decl,
+      const ImplScope& impl_scope) -> ErrorOr<Success>;
 
   // Bring the associated constants in `constraint` that constrain the
   // implementation of `interface` for `self` into `scope`.
@@ -427,12 +427,6 @@ class TypeChecker {
   auto GetBuiltinInterfaceType(SourceLocation source_loc,
                                BuiltinInterfaceName interface) const
       -> ErrorOr<Nonnull<const InterfaceType*>>;
-
-  // Given an interface type, form a corresponding constraint type. The
-  // interface must be a complete type.
-  auto MakeConstraintForInterface(
-      SourceLocation source_loc, Nonnull<const InterfaceType*> iface_type) const
-      -> ErrorOr<Nonnull<const ConstraintType*>>;
 
   // Convert a value that is expected to represent a constraint into a
   // `ConstraintType`.

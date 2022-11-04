@@ -8,10 +8,9 @@
 
 package ExplorerTest api;
 
-// This declaration is not allowed.
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/function/auto_return/fail_separate_decl.carbon:[[@LINE+1]]: Function declaration has deduced return type but no body
-fn ComputeSum(x: i32, y: i32) -> auto;
-
-fn Main() -> i32 {
-  return ComputeSum(1, 2) - 3;
+constraint X {
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/named_constraint/fail_associated_constant.carbon:[[@LINE+1]]: associated constant not permitted in named constraint
+  let N:! Type;
 }
+
+fn Main() -> i32 { return 0; }

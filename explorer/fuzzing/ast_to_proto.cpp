@@ -739,8 +739,16 @@ static auto DeclarationToProto(const Declaration& declaration)
       for (const auto& member : interface.members()) {
         *interface_proto->add_members() = DeclarationToProto(*member);
       }
-      *interface_proto->mutable_self() =
-          GenericBindingToProto(*interface.self());
+      break;
+    }
+
+    case DeclarationKind::ConstraintDeclaration: {
+      const auto& constraint = cast<ConstraintDeclaration>(declaration);
+      auto* constraint_proto = declaration_proto.mutable_constraint();
+      constraint_proto->set_name(constraint.name());
+      for (const auto& member : constraint.members()) {
+        *constraint_proto->add_members() = DeclarationToProto(*member);
+      }
       break;
     }
 

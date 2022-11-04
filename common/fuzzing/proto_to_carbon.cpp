@@ -855,7 +855,19 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
         out << "\n";
       }
       out << "}";
-      // TODO: need to handle interface.self()?
+      break;
+    }
+
+    case Fuzzing::Declaration::kConstraint: {
+      const auto& constraint = declaration.constraint();
+      out << "constraint ";
+      IdentifierToCarbon(constraint.name(), out);
+      out << " {\n";
+      for (const auto& member : constraint.members()) {
+        DeclarationToCarbon(member, out);
+        out << "\n";
+      }
+      out << "}";
       break;
     }
 
