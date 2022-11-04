@@ -13,7 +13,7 @@ TEST(CheckTest, CheckTrue) { CARBON_CHECK(true); }
 
 TEST(CheckTest, CheckFalse) {
   ASSERT_DEATH({ CARBON_CHECK(false); },
-               "\\d+\\.\tCHECK failure at common/check_test.cpp:\\d+: false\n");
+               "\nCHECK failure at common/check_test.cpp:\\d+: false\n");
 }
 
 TEST(CheckTest, CheckFalseHasStackDump) {
@@ -31,9 +31,8 @@ TEST(CheckTest, CheckTrueCallbackNotUsed) {
 }
 
 TEST(CheckTest, CheckFalseMessage) {
-  ASSERT_DEATH(
-      { CARBON_CHECK(false) << "msg"; },
-      "\\d+\\.\tCHECK failure at common/check_test.cpp:.+: false: msg\n");
+  ASSERT_DEATH({ CARBON_CHECK(false) << "msg"; },
+               "\nCHECK failure at common/check_test.cpp:.+: false: msg\n");
 }
 
 TEST(CheckTest, CheckOutputForms) {
@@ -45,7 +44,7 @@ TEST(CheckTest, CheckOutputForms) {
 
 TEST(CheckTest, Fatal) {
   ASSERT_DEATH({ CARBON_FATAL() << "msg"; },
-               "\\d+\\.\tFATAL failure at common/check_test.cpp:.+: msg\n");
+               "\nFATAL failure at common/check_test.cpp:.+: msg\n");
 }
 
 TEST(CheckTest, FatalHasStackDump) {
@@ -56,7 +55,7 @@ auto FatalNoReturnRequired() -> int { CARBON_FATAL() << "msg"; }
 
 TEST(ErrorTest, FatalNoReturnRequired) {
   ASSERT_DEATH({ FatalNoReturnRequired(); },
-               "\\d+\\.\tFATAL failure at common/check_test.cpp:.+: msg\n");
+               "\nFATAL failure at common/check_test.cpp:.+: msg\n");
 }
 
 }  // namespace

@@ -25,7 +25,9 @@ class ExitingStream {
   // Internal type used in macros to dispatch to the `operator|` overload.
   struct Helper {};
 
-  ExitingStream() : buffer_(buffer_str_) {}
+  ExitingStream()
+      // Prefix the buffer with the current bug report message.
+      : buffer_str_(llvm::getBugReportMsg()), buffer_(buffer_str_) {}
 
   [[noreturn]] ~ExitingStream() {
     llvm_unreachable(
@@ -58,7 +60,11 @@ class ExitingStream {
   // output and exit the program. We do this in a binary operator rather than
   // the destructor to ensure good debug info and backtraces for errors.
   [[noreturn]] friend auto operator|(Helper /*helper*/, ExitingStream& stream) {
-    llvm::PrettyStackTraceString str(stream.buffer_str_.c_str());
+    stream.buffer_ << "\n";
+    // The buffer will start with the bug report message; we replace that so
+    // that the streamed message is printed _between_ the default bug report
+    // message and stack information.
+    llvm::setBugReportMsg(stream.buffer_str_.c_str());
     // It's useful to exit the program with `std::abort()` for integration with
     // debuggers and other tools. We also assume LLVM's exit handling is
     // installed, which will stack trace on `std::abort()`.
