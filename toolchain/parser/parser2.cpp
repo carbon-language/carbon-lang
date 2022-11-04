@@ -25,7 +25,7 @@ class Parser2::PrettyStackTraceParseState : public llvm::PrettyStackTraceEntry {
 
   auto print(llvm::raw_ostream& output) const -> void override {
     output << "Parser stack:\n";
-    for (int i = parser_->state_stack_.size() - 1; i >= 0; --i) {
+    for (int i = 0; i < static_cast<int>(parser_->state_stack_.size()); ++i) {
       const auto& entry = parser_->state_stack_[i];
       output << "\t" << i << ".\t" << entry.state << " @ " << entry.start_token
              << ":" << parser_->tokens_.GetKind(entry.start_token).Name()
