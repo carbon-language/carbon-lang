@@ -797,6 +797,7 @@ auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
 }
 
 auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
+  CARBON_FATAL() << "x";
   CARBON_RETURN_IF_STACK_LIMITED(llvm::None);
   llvm::Optional<ParseNodeKind> kind;
   switch (NextTokenKind()) {

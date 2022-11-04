@@ -14,7 +14,10 @@ cc_library(
 
 cc_library(
     name = "check",
-    srcs = ["check_internal.h"],
+    srcs = [
+        "check_internal.cpp",
+        "check_internal.h",
+    ],
     hdrs = ["check.h"],
     deps = [
         "@llvm-project//llvm:Support",

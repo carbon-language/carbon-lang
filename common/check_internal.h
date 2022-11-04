@@ -8,7 +8,7 @@
 #include <cstdlib>
 
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace Carbon::Internal {
@@ -27,14 +27,10 @@ class ExitingStream {
 
   ExitingStream()
       // Prefix the buffer with the current bug report message.
-      : buffer_str_(llvm::getBugReportMsg()), buffer_(buffer_str_) {}
+      : buffer_(buffer_str_) {}
 
-  [[noreturn]] ~ExitingStream() {
-    llvm_unreachable(
-        "Exiting streams should only be constructed by check.h macros that "
-        "ensure the special operator| exits the program prior to their "
-        "destruction!");
-  }
+  // Never called.
+  [[noreturn]] ~ExitingStream();
 
   // If the bool cast occurs, it's because the condition is false. This supports
   // && short-circuiting the creation of ExitingStream.
@@ -59,19 +55,14 @@ class ExitingStream {
   // Low-precedence binary operator overload used in check.h macros to flush the
   // output and exit the program. We do this in a binary operator rather than
   // the destructor to ensure good debug info and backtraces for errors.
-  [[noreturn]] friend auto operator|(Helper /*helper*/, ExitingStream& stream) {
-    stream.buffer_ << "\n";
-    // The buffer will start with the bug report message; we replace that so
-    // that the streamed message is printed _between_ the default bug report
-    // message and stack information.
-    llvm::setBugReportMsg(stream.buffer_str_.c_str());
-    // It's useful to exit the program with `std::abort()` for integration with
-    // debuggers and other tools. We also assume LLVM's exit handling is
-    // installed, which will stack trace on `std::abort()`.
-    std::abort();
+  [[noreturn]] friend auto operator|(Helper /*helper*/, ExitingStream& stream)
+      -> void {
+    stream.Done();
   }
 
  private:
+  [[noreturn]] auto Done() -> void;
+
   // Whether a separator should be printed if << is used again.
   bool separator_ = false;
 
