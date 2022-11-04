@@ -152,6 +152,7 @@ static auto FinishActionKindFor(Action::Kind kind) -> FinishActionKind {
       return FinishActionKind::NoValue;
     case Action::Kind::ScopeAction:
     case Action::Kind::CleanUpAction:
+    case Action::Kind::DestroyAction:
       return FinishActionKind::NeverCalled;
   }
 }
@@ -313,11 +314,7 @@ void ActionStack::PopScopes(
   while (!todo_.IsEmpty() && llvm::isa<ScopeAction>(*todo_.Top())) {
     auto act = todo_.Pop();
     if (act->scope()) {
-      if ((*act->scope()).DestructionState() <
-          RuntimeScope::State::CleanUpped) {
-        (*act->scope()).TransitState();
-        cleanup_stack.push(std::move(act));
-      }
+      cleanup_stack.push(std::move(act));
     }
   }
 }
