@@ -2430,6 +2430,27 @@ static auto IsInstanceMember(Member member) {
   }
 }
 
+auto TypeChecker::CheckAddrMeAccess(
+    Nonnull<MemberAccessExpression*> access,
+    Nonnull<const FunctionDeclaration*> func_decl, const Bindings& bindings,
+    const ImplScope& impl_scope) -> ErrorOr<Success> {
+  if (func_decl->is_method() &&
+      func_decl->me_pattern().kind() == PatternKind::AddrPattern) {
+    access->set_is_addr_me_method();
+    Nonnull<const Value*> me_type =
+        Substitute(bindings, &func_decl->me_pattern().static_type());
+    CARBON_RETURN_IF_ERROR(
+        ExpectExactType(access->source_loc(), "method access, receiver type",
+                        me_type, &access->object().static_type(), impl_scope));
+    if (access->object().value_category() != ValueCategory::Var) {
+      return ProgramError(access->source_loc())
+             << "method " << *access
+             << " requires its receiver to be an lvalue";
+    }
+  }
+  return Success();
+}
+
 auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                const ImplScope& impl_scope)
     -> ErrorOr<Success> {
@@ -2568,21 +2589,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 break;
               case DeclarationKind::FunctionDeclaration: {
                 const auto* func_decl = cast<FunctionDeclaration>(member);
-                if (func_decl->is_method() && func_decl->me_pattern().kind() ==
-                                                  PatternKind::AddrPattern) {
-                  access.set_is_field_addr_me_method();
-                  Nonnull<const Value*> me_type =
-                      Substitute(t_class.bindings(),
-                                 &func_decl->me_pattern().static_type());
-                  CARBON_RETURN_IF_ERROR(ExpectType(
-                      e->source_loc(), "method access, receiver type", me_type,
-                      &access.object().static_type(), impl_scope));
-                  if (access.object().value_category() != ValueCategory::Var) {
-                    return ProgramError(e->source_loc())
-                           << "method " << access.member_name()
-                           << " requires its receiver to be an lvalue";
-                  }
-                }
+                CARBON_RETURN_IF_ERROR(CheckAddrMeAccess(
+                    &access, func_decl, t_class.bindings(), impl_scope));
                 access.set_value_category(ValueCategory::Let);
                 break;
               }
@@ -2649,6 +2657,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           access.set_found_in_interface(result.interface);
           access.set_is_type_access(!IsInstanceMember(access.member()));
           access.set_static_type(inst_member_type);
+
+          if (auto* func_decl = dyn_cast<FunctionDeclaration>(result.member)) {
+            CARBON_RETURN_IF_ERROR(
+                CheckAddrMeAccess(&access, func_decl, bindings, impl_scope));
+          }
 
           // TODO: This is just a ConstraintImplWitness into the
           // iface_constraint. If we can compute the right index, we can avoid
@@ -2904,19 +2917,23 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         access.set_impl(impl);
       }
 
-      auto substitute_into_member_type = [&]() {
-        Nonnull<const Value*> member_type = &member_name.member().type();
+      auto bindings_for_member = [&]() -> Bindings {
         if (member_name.interface()) {
           Nonnull<const InterfaceType*> iface_type = *member_name.interface();
           Bindings bindings = iface_type->bindings();
           bindings.Add(iface_type->declaration().self(), *base_type, witness);
-          return Substitute(bindings, member_type);
+          return bindings;
         }
         if (const auto* class_type =
                 dyn_cast<NominalClassType>(base_type.value())) {
-          return Substitute(class_type->bindings(), member_type);
+          return class_type->bindings();
         }
-        return member_type;
+        return Bindings();
+      };
+
+      auto substitute_into_member_type = [&]() {
+        Nonnull<const Value*> member_type = &member_name.member().type();
+        return Substitute(bindings_for_member(), member_type);
       };
 
       switch (std::optional<Nonnull<const Declaration*>> decl =
@@ -2939,6 +2956,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 << "vacuous compound member access";
             access.set_static_type(substitute_into_member_type());
             access.set_value_category(ValueCategory::Let);
+            CARBON_RETURN_IF_ERROR(
+                CheckAddrMeAccess(&access, cast<FunctionDeclaration>(*decl),
+                                  bindings_for_member(), impl_scope));
             return Success();
           }
           break;

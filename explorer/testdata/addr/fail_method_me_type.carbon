@@ -30,7 +30,9 @@ class Point {
 
 fn Main() -> i32 {
   var p: Point = Point.Origin();
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/addr/fail_method_me_type.carbon:[[@LINE+1]]: type error in method access, receiver type: 'class Point' is not implicitly convertible to 'class Shape'
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/addr/fail_method_me_type.carbon:[[@LINE+3]]: type error in method access, receiver type
+  // CHECK:STDERR: expected: class Shape
+  // CHECK:STDERR: actual: class Point
   var x: auto = p.GetSetX(42);
   if (p.x == 42) {
     return x;
