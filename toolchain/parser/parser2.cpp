@@ -9,12 +9,33 @@
 
 #include "common/check.h"
 #include "llvm/ADT/Optional.h"
+#include "llvm/Support/PrettyStackTrace.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
 #include "toolchain/parser/parse_tree.h"
 
 namespace Carbon {
+
+class Parser2::PrettyStackTraceParseState : public llvm::PrettyStackTraceEntry {
+ public:
+  explicit PrettyStackTraceParseState(const Parser2* parser)
+      : parser_(parser) {}
+  ~PrettyStackTraceParseState() override = default;
+
+  auto print(llvm::raw_ostream& output) const -> void override {
+    output << "Parser stack:\n";
+    for (int i = 0; i < static_cast<int>(parser_->state_stack_.size()); ++i) {
+      const auto& entry = parser_->state_stack_[i];
+      output << "\t" << i << ".\t" << entry.state << " @ " << entry.start_token
+             << ":" << parser_->tokens_.GetKind(entry.start_token).Name()
+             << "\n";
+    }
+  }
+
+ private:
+  const Parser2* parser_;
+};
 
 Parser2::Parser2(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
                  TokenDiagnosticEmitter& emitter)
@@ -71,6 +92,10 @@ auto Parser2::ConsumeIf(TokenKind kind)
 }
 
 auto Parser2::Parse() -> void {
+#ifndef NDEBUG
+  PrettyStackTraceParseState pretty_stack(this);
+#endif
+
   PushState(ParserState::Declaration());
   while (!state_stack_.empty()) {
     switch (state_stack_.back().state) {
