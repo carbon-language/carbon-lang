@@ -66,6 +66,12 @@ class Parser2 {
   auto AddNode(ParseNodeKind kind, TokenizedBuffer::Token token,
                int subtree_start, bool has_error) -> void;
 
+  // Parses a close paren token corresponding to the given open paren token,
+  // possibly skipping forward and diagnosing if necessary. Creates a parse node
+  // of the specified kind if successful.
+  auto ConsumeAndAddCloseParen(TokenizedBuffer::Token open_paren,
+                               ParseNodeKind close_kind) -> bool;
+
   // Composes `ConsumeIf` and `AddLeafNode`, returning false when ConsumeIf
   // fails.
   auto ConsumeAndAddLeafNodeIf(TokenKind token_kind, ParseNodeKind node_kind)
@@ -149,6 +155,9 @@ class Parser2 {
   auto HandleFunctionError(StateStackEntry state, bool skip_past_likely_end)
       -> void;
 
+  // Handles a code block in the context of a statement scope.
+  auto HandleCodeBlock() -> void;
+
   // Handles parsing of a function parameter list, including commas and the
   // close paren.
   auto HandleFunctionParameterList(bool is_start) -> void;
@@ -161,6 +170,14 @@ class Parser2 {
   // If the start of the pattern is invalid, it's the responsibility of the
   // outside context to advance past the pattern.
   auto HandlePatternStart(PatternKind pattern_kind) -> void;
+
+  // Handles a single statement. While typically within a statement block, this
+  // can also be used for error recovery where we expect a statement block and
+  // are missing braces.
+  auto HandleStatement(TokenKind token_kind) -> void;
+
+  // Handles a `if` statement at the start `if` token.
+  auto HandleStatementIf() -> void;
 
   // `clang-format` has a bug with spacing around `->` returns in macros. See
   // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.

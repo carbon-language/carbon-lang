@@ -52,6 +52,23 @@ CARBON_PARSER_STATE(FunctionDefinitionFinish)
 // StatementFinish variants are just handling the `;` expectation.
 CARBON_PARSER_STATE(KeywordStatementFinishForReturn)
 
+// Handles the processing of a `(condition)` up through the expression.
+CARBON_PARSER_STATE(ParenCondition)
+
+// Finishes the processing of a `(condition)` after the expression.
+CARBON_PARSER_STATE(ParenConditionFinish)
+
+// Handles `if` processing between the condition and start of the first code
+// block.
+CARBON_PARSER_STATE(StatementIfConditionFinish)
+
+// Handles `if` processing after the end of the first code block, with the
+// optional `else`.
+CARBON_PARSER_STATE(StatementIfThenBlockFinish)
+
+// Handles `if` processing after a provided `else` code block.
+CARBON_PARSER_STATE(StatementIfElseBlockFinish)
+
 // Handles pattern parsing for a function parameter, enqueuing type expression
 // processing. Proceeds to the matching Finish state when done.
 CARBON_PARSER_STATE(PatternForFunctionParameter)

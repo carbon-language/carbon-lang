@@ -49,6 +49,22 @@ auto Parser2::AddNode(ParseNodeKind kind, TokenizedBuffer::Token token,
   }
 }
 
+auto Parser2::ConsumeAndAddCloseParen(TokenizedBuffer::Token open_paren,
+                                      ParseNodeKind close_kind) -> bool {
+  if (ConsumeAndAddLeafNodeIf(TokenKind::CloseParen(), close_kind)) {
+    return true;
+  }
+
+  // TODO: Include the location of the matching open_paren in the diagnostic.
+  CARBON_DIAGNOSTIC(ExpectedCloseParen, Error, "Unexpected tokens before `)`.");
+  emitter_.Emit(*position_, ExpectedCloseParen);
+
+  SkipTo(tokens_.GetMatchedClosingToken(open_paren));
+  AddLeafNode(close_kind, *position_);
+  ++position_;
+  return false;
+}
+
 auto Parser2::ConsumeAndAddLeafNodeIf(TokenKind token_kind,
                                       ParseNodeKind node_kind) -> bool {
   auto token = ConsumeIf(token_kind);
@@ -173,6 +189,8 @@ auto Parser2::SkipTo(TokenizedBuffer::Token t) -> void {
   position_ = TokenizedBuffer::TokenIterator(t);
   CARBON_CHECK(position_ != end_) << "Skipped past EOF.";
 }
+
+auto Parser2::HandleCodeBlock() -> void {}
 
 auto Parser2::HandleDeclarationState() -> void {
   // This maintains the current state unless we're at the end of the file.
@@ -469,6 +487,43 @@ auto Parser2::HandleKeywordStatementFinishForReturnState() -> void {
                                ParseNodeKind::ReturnStatement());
 }
 
+auto Parser2::HandleParenConditionState() -> void {
+  auto state = PopState();
+
+  auto open_paren = ConsumeIf(TokenKind::OpenParen());
+  if (open_paren) {
+    state.token = *open_paren;
+  } else {
+    CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "Expected `(` after `{0}`.",
+                      TokenKind);
+    emitter_.Emit(*position_, ExpectedParenAfter, tokens_.GetKind(state.token));
+  }
+
+  // TODO: This should be adding a ConditionStart here instead of ConditionEnd
+  // later, so this does state modification instead of a simpler push.
+  state.state = ParserState::ParenConditionFinish();
+  PushState(state);
+  PushState(ParserState::Expression());
+}
+
+auto Parser2::HandleParenConditionFinishState() -> void {
+  auto state = PopState();
+
+  if (tokens_.GetKind(state.token) != TokenKind::OpenParen()) {
+    // Don't expect a matching closing paren if there wasn't an opening paren.
+    // TODO: Should probably push nodes on this state in order to have the
+    // condition wrapped, but it wasn't before, so not doing it for consistency.
+    ReturnErrorOnState();
+    return;
+  }
+
+  bool close_paren =
+      ConsumeAndAddCloseParen(state.token, ParseNodeKind::ConditionEnd());
+
+  return AddNode(ParseNodeKind::Condition(), state.token, state.subtree_start,
+                 /*has_error=*/state.has_error || !close_paren);
+}
+
 auto Parser2::HandlePatternForFunctionParameterState() -> void {
   HandlePatternStart(PatternKind::Parameter);
 }
@@ -528,15 +583,63 @@ auto Parser2::HandlePatternForFunctionParameterFinishState() -> void {
   }
 }
 
-auto Parser2::HandleStatementScopeState() -> void {
-  // This maintains the current state until we're at the end of the scope.
+auto Parser2::HandleStatementIf() -> void {
+  PushState(ParserState::StatementIfConditionFinish());
+  PushState(ParserState::ParenCondition());
+  ++position_;
+}
 
-  switch (PositionKind()) {
-    case TokenKind::CloseCurlyBrace(): {
-      auto state = PopState();
-      if (state.has_error) {
-        ReturnErrorOnState();
-      }
+auto Parser2::HandleStatementIfConditionFinishState() -> void {
+  auto state = PopState();
+
+  state.state = ParserState::StatementIfThenBlockFinish();
+  PushState(state);
+  HandleCodeBlock();
+}
+
+auto Parser2::HandleStatementIfThenBlockFinishState() -> void {
+  auto state = PopState();
+
+  if (ConsumeAndAddLeafNodeIf(TokenKind::Else(),
+                              ParseNodeKind::IfStatementElse())) {
+    state.state = ParserState::StatementIfElseBlockFinish();
+    PushState(state);
+    // `else if` is permitted as a special case.
+    if (PositionIs(TokenKind::If())) {
+      HandleStatementIf();
+    } else {
+      HandleCodeBlock();
+    }
+  } else {
+    AddNode(ParseNodeKind::IfStatement(), state.token, state.subtree_start,
+            state.has_error);
+  }
+}
+
+auto Parser2::HandleStatementIfElseBlockFinishState() -> void {
+  auto state = PopState();
+
+  /*
+  auto then_case = ParseCodeBlock();
+  bool else_has_errors = false;
+  if (ConsumeAndAddLeafNodeIf(TokenKind::Else(),
+                              ParseNodeKind::IfStatementElse())) {
+    // 'else if' is permitted as a special case.
+    if (NextTokenIs(TokenKind::If())) {
+      else_has_errors = !ParseIfStatement();
+    } else {
+      else_has_errors = !ParseCodeBlock();
+    }
+  }
+  return AddNode(ParseNodeKind::IfStatement(), if_token, start,
+                 / *has_error=* /!cond || !then_case || else_has_errors);
+  */
+}
+
+auto Parser2::HandleStatement(TokenKind token_kind) -> void {
+  switch (token_kind) {
+    case TokenKind::If(): {
+      HandleStatementIf();
       break;
     }
     case TokenKind::Return(): {
@@ -559,6 +662,20 @@ auto Parser2::HandleStatementScopeState() -> void {
       PushState(ParserState::Expression());
       break;
     }
+  }
+}
+
+auto Parser2::HandleStatementScopeState() -> void {
+  // This maintains the current state until we're at the end of the scope.
+
+  auto token_kind = PositionKind();
+  if (token_kind == TokenKind::CloseCurlyBrace()) {
+    auto state = PopState();
+    if (state.has_error) {
+      ReturnErrorOnState();
+    }
+  } else {
+    HandleStatement(token_kind);
   }
 }
 
