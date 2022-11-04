@@ -228,7 +228,28 @@ static auto PrintNameWithBindings(llvm::raw_ostream& out,
     out << ")";
   }
 }
-
+void IntType::PrintType(const SizedTypesType type, llvm::raw_ostream& out) {
+  switch(type) {
+    case SizedTypesType::I32:
+      out << "i32";
+      break;
+    case SizedTypesType::U8:
+      out << "u8";
+      break;
+    case SizedTypesType::I8:
+      out << "i8";
+      break;
+    case SizedTypesType::U16:
+      out << "u16";
+      break;
+    case SizedTypesType::I16:
+      out << "i16";
+      break;
+    default:
+      out << "<unknown sized type>";
+      break;
+  }
+}
 void Value::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
     case Value::Kind::AlternativeConstructorValue: {
@@ -349,7 +370,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "bool";
       break;
     case Value::Kind::IntType:
-      out << "i32";
+      IntType::PrintType(cast<IntType>(*this).type(), out);
       break;
     case Value::Kind::TypeType:
       out << "Type";

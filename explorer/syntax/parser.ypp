@@ -362,12 +362,46 @@ primary_expression:
         context.RecordSyntaxError(
             llvm::formatv("Invalid type literal: {0}", $1));
         YYERROR;
-      } else if ($1[0] != 'i' || val != 32) {
-        context.RecordSyntaxError(
-            llvm::formatv("Only i32 is supported for now: {0}", $1));
-        YYERROR;
       } else {
-        $$ = arena->New<IntTypeLiteral>(context.source_loc());
+        char typeChar = $1[0];
+        SizedTypesType type;
+        if(typeChar == 'u') {
+          switch(val) {
+            case 8:
+              type = SizedTypesType::U8;
+              break;
+            case 16:
+              type = SizedTypesType::U16;
+              break;
+            default: 
+              context.RecordSyntaxError(
+                  llvm::formatv("Unsupported Number Type: {0}", $1));
+              YYERROR;
+              break;
+          }
+        } else if (typeChar == 'i') {
+          switch(val) {
+            case 8:
+              type = SizedTypesType::I8;
+              break;
+            case 16:
+              type = SizedTypesType::I16;
+              break;
+            case 32:
+              type = SizedTypesType::I32;
+              break;
+            default: 
+              context.RecordSyntaxError(
+                  llvm::formatv("Unsupported Number Type: {0}", $1));
+              YYERROR;
+              break;
+          }
+        } else {
+          context.RecordSyntaxError(
+              llvm::formatv("Unsupported Number Type: {0}", $1));
+          YYERROR;
+        }
+        $$ = arena->New<IntTypeLiteral>(context.source_loc(), type);
       }
     }
 | SELF

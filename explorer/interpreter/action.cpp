@@ -18,7 +18,6 @@
 #include "llvm/Support/Casting.h"
 
 namespace Carbon {
-
 using llvm::cast;
 
 RuntimeScope::RuntimeScope(RuntimeScope&& other) noexcept

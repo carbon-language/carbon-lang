@@ -295,6 +295,29 @@ void Expression::Print(llvm::raw_ostream& out) const {
   }
 }
 
+void IntTypeLiteral::PrintType(const SizedTypesType type, llvm::raw_ostream& out) {
+  switch(type) {
+    case SizedTypesType::I32:
+      out << "i32";
+      break;
+    case SizedTypesType::U8:
+      out << "u8";
+      break;
+    case SizedTypesType::I8:
+      out << "i8";
+      break;
+    case SizedTypesType::U16:
+      out << "u16";
+      break;
+    case SizedTypesType::I16:
+      out << "i16";
+      break;
+    default:
+      out << "<unknown sized type>";
+      break;
+  }
+}
+
 void Expression::PrintID(llvm::raw_ostream& out) const {
   switch (kind()) {
     case ExpressionKind::IdentifierExpression:
@@ -313,7 +336,7 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
       out << "bool";
       break;
     case ExpressionKind::IntTypeLiteral:
-      out << "i32";
+      IntTypeLiteral::PrintType(cast<IntTypeLiteral>(*this).type(), out);
       break;
     case ExpressionKind::StringLiteral:
       out << "\"";

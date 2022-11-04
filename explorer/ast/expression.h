@@ -140,6 +140,14 @@ class FieldInitializer {
   Nonnull<Expression*> expression_;
 };
 
+enum class SizedTypesType {
+  I32,
+  U8,
+  I8,
+  U16,
+  I16
+};
+
 enum class Operator {
   Add,
   AddressOf,
@@ -682,12 +690,16 @@ class BoolTypeLiteral : public Expression {
 
 class IntTypeLiteral : public Expression {
  public:
-  explicit IntTypeLiteral(SourceLocation source_loc)
-      : Expression(AstNodeKind::IntTypeLiteral, source_loc) {}
+  explicit IntTypeLiteral(SourceLocation source_loc, SizedTypesType type)
+      : Expression(AstNodeKind::IntTypeLiteral, source_loc), type_(type) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromIntTypeLiteral(node->kind());
   }
+  static void PrintType(const SizedTypesType type, llvm::raw_ostream& out);
+  auto type() const -> SizedTypesType { return type_; }
+ private:
+  SizedTypesType type_;
 };
 
 class ContinuationTypeLiteral : public Expression {

@@ -657,7 +657,11 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
                           SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
   switch (value->kind()) {
-    case Value::Kind::IntValue:
+    case Value::Kind::IntValue: {
+      const auto& type = cast<IntType>(*destination_type);
+      const int int_value = cast<IntValue>(*value).value();
+      return arena_->New<IntValue>(int_value, type.type());
+     }
     case Value::Kind::FunctionValue:
     case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
@@ -1404,7 +1408,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     }
     case ExpressionKind::IntTypeLiteral: {
       CARBON_CHECK(act.pos() == 0);
-      return todo_.FinishAction(arena_->New<IntType>());
+      SizedTypesType size_type = (cast<IntTypeLiteral>(exp).type());
+      return todo_.FinishAction(arena_->New<IntType>(size_type));
     }
     case ExpressionKind::BoolTypeLiteral: {
       CARBON_CHECK(act.pos() == 0);
