@@ -658,10 +658,14 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     -> ErrorOr<Nonnull<const Value*>> {
   switch (value->kind()) {
     case Value::Kind::IntValue: {
-      const auto& type = cast<IntType>(*destination_type);
-      const int int_value = cast<IntValue>(*value).value();
-      return arena_->New<IntValue>(int_value, type.type());
-     }
+      if(destination_type->kind() == Value::Kind::IntType) {
+        const auto& type = cast<IntType>(*destination_type);
+        const int int_value = cast<IntValue>(*value).value();
+        return arena_->New<IntValue>(int_value, type.type());
+      } else {
+        return value;
+      }
+    }
     case Value::Kind::FunctionValue:
     case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
