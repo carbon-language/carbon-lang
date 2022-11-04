@@ -68,6 +68,8 @@ class TokenizedBufferToken {
     return lhs.index_ >= rhs.index_;
   }
 
+  auto Print(llvm::raw_ostream& output) const -> void { output << index_; }
+
  private:
   friend TokenizedBuffer;
 

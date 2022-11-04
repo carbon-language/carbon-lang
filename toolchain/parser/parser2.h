@@ -28,6 +28,8 @@ class Parser2 {
   }
 
  private:
+  class PrettyStackTraceParseState;
+
   // Used to track state on state_stack_.
   struct StateStackEntry {
     // The state.
