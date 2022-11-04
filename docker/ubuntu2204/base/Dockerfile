@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-FROM ubuntu:22.04
+FROM ubuntu:22.04 as carbon-ubuntu2204-base
 
 # Install apt tools:
 #   git: Used by VS Code.
@@ -21,9 +21,11 @@ RUN apt-get update && \
   wget
 
 ENV PATH="/root/go/bin:${PATH}"
+
 # Bazelisk is used for Carbon builds.
 RUN go install github.com/bazelbuild/bazelisk@v1.14.0
 RUN ln -s /root/go/bin/bazelisk /root/go/bin/bazel
+
 # Buildifier is used by the Bazel VS Code extension.
 RUN go install github.com/bazelbuild/buildtools/buildifier@5.1.0
 
@@ -32,6 +34,7 @@ RUN wget https://apt.llvm.org/llvm.sh
 RUN chmod +x llvm.sh
 RUN ./llvm.sh 15 all
 RUN rm llvm.sh
+
 # Add the lib dir to the PATH. This helps Bazel find clang and VS Code find
 # clangd, without version suffixes.
 ENV PATH="/usr/lib/llvm-15/bin:${PATH}"

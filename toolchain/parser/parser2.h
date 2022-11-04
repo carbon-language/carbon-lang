@@ -31,6 +31,9 @@ class Parser2 {
   // Supported kinds of patterns for HandlePattern.
   enum class PatternKind { Parameter, Variable };
 
+  // Helper class for tracing state_stack_ on crashes.
+  class PrettyStackTraceParseState;
+
   // Used to track state on state_stack_.
   struct StateStackEntry {
     StateStackEntry(ParserState state, TokenizedBuffer::Token token,
