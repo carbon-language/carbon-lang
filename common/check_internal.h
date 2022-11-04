@@ -25,7 +25,7 @@ class ExitingStream {
   // Internal type used in macros to dispatch to the `operator|` overload.
   struct Helper {};
 
-  ExitingStream() : buffer(buffer_str) {}
+  ExitingStream() : buffer_(buffer_str_) {}
 
   [[noreturn]] ~ExitingStream() {
     llvm_unreachable(
@@ -42,10 +42,10 @@ class ExitingStream {
   template <typename T>
   auto operator<<(const T& message) -> ExitingStream& {
     if (separator_) {
-      buffer << ": ";
+      buffer_ << ": ";
       separator_ = false;
     }
-    buffer << message;
+    buffer_ << message;
     return *this;
   }
 
@@ -58,7 +58,7 @@ class ExitingStream {
   // output and exit the program. We do this in a binary operator rather than
   // the destructor to ensure good debug info and backtraces for errors.
   [[noreturn]] friend auto operator|(Helper /*helper*/, ExitingStream& stream) {
-    llvm::PrettyStackTraceString str(stream.buffer_str.c_str());
+    llvm::PrettyStackTraceString str(stream.buffer_str_.c_str());
     // It's useful to exit the program with `std::abort()` for integration with
     // debuggers and other tools. We also assume LLVM's exit handling is
     // installed, which will stack trace on `std::abort()`.
@@ -69,8 +69,8 @@ class ExitingStream {
   // Whether a separator should be printed if << is used again.
   bool separator_ = false;
 
-  std::string buffer_str;
-  llvm::raw_string_ostream buffer;
+  std::string buffer_str_;
+  llvm::raw_string_ostream buffer_;
 };
 
 }  // namespace Carbon::Internal
