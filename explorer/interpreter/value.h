@@ -146,117 +146,112 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
     -> bool;
 
 class SizedInteger {
-  public:
-    explicit SizedInteger(SizedTypesType type, int intValue) : type_(type) {}
-    explicit SizedInteger() {}
-    auto type() const -> SizedTypesType { return type_; };
-    virtual int value() const = 0;
-    virtual ~SizedInteger() = default;
-  private:
-    SizedTypesType type_;
+ public:
+  explicit SizedInteger(SizedTypesType type, int intValue) : type_(type) {}
+  explicit SizedInteger() {}
+  auto type() const -> SizedTypesType { return type_; };
+  virtual int value() const = 0;
+  virtual ~SizedInteger() = default;
+
+ private:
+  SizedTypesType type_;
 };
 
 class SizedIntegerU8 : public SizedInteger {
-  public:
-    SizedIntegerU8(int value) : SizedInteger(SizedTypesType::U8, value) {
-     sized_value_ = static_cast<uint8_t>(value); 
-    }
-    int value() const override {
-      return static_cast<int>(sized_value_);
-    }
-private:
+ public:
+  SizedIntegerU8(int value) : SizedInteger(SizedTypesType::U8, value) {
+    sized_value_ = static_cast<uint8_t>(value);
+  }
+  int value() const override { return static_cast<int>(sized_value_); }
+
+ private:
   uint8_t sized_value_;
 };
 
 class SizedIntegerI8 : public SizedInteger {
-  public:
-    SizedIntegerI8(int value) : SizedInteger(SizedTypesType::I8, value) {
-     sized_value_ = static_cast<int8_t>(value); 
-    }
-    int value() const override {
-      return static_cast<int>(sized_value_);
-    }
-private:
+ public:
+  SizedIntegerI8(int value) : SizedInteger(SizedTypesType::I8, value) {
+    sized_value_ = static_cast<int8_t>(value);
+  }
+  int value() const override { return static_cast<int>(sized_value_); }
+
+ private:
   int8_t sized_value_;
 };
 
 class SizedIntegerI16 : public SizedInteger {
-  public:
-    SizedIntegerI16(int value) : SizedInteger(SizedTypesType::I16, value) {
-     sized_value_ = static_cast<int16_t>(value); 
-    }
-    int value() const override {
-      return static_cast<int>(sized_value_);
-    }
-private:
+ public:
+  SizedIntegerI16(int value) : SizedInteger(SizedTypesType::I16, value) {
+    sized_value_ = static_cast<int16_t>(value);
+  }
+  int value() const override { return static_cast<int>(sized_value_); }
+
+ private:
   int16_t sized_value_;
 };
 
 class SizedIntegerU16 : public SizedInteger {
-  public:
-    SizedIntegerU16(int value) : SizedInteger(SizedTypesType::U16, value) {
-     sized_value_ = static_cast<uint16_t>(value); 
-    }
-    int value() const override {
-      return static_cast<int>(sized_value_);
-    }
-private:
+ public:
+  SizedIntegerU16(int value) : SizedInteger(SizedTypesType::U16, value) {
+    sized_value_ = static_cast<uint16_t>(value);
+  }
+  int value() const override { return static_cast<int>(sized_value_); }
+
+ private:
   uint16_t sized_value_;
 };
 
 class SizedIntegerI32 : public SizedInteger {
-  public:
-    SizedIntegerI32(int value) : SizedInteger(SizedTypesType::I32, value) {
-     sized_value_ = static_cast<int32_t>(value); 
-    }
-    int value() const override {
-      return static_cast<int>(sized_value_);
-    }
-private:
-  int32_t sized_value_;
+ public:
+  SizedIntegerI32(int value) : SizedInteger(SizedTypesType::I32, value) {
+    sized_value_ = static_cast<int32_t>(value);
+  }
+  int value() const override { return static_cast<int>(sized_value_); }
 
+ private:
+  int32_t sized_value_;
 };
 // An integer value.
 class IntValue : public Value {
-  public:
-    explicit IntValue(int value) : Value(Kind::IntValue){
-      set_type(value, SizedTypesType::I32);
+ public:
+  explicit IntValue(int value) : Value(Kind::IntValue) {
+    set_type(value, SizedTypesType::I32);
+  }
 
-    }
+  explicit IntValue(int value, SizedTypesType type) : Value(Kind::IntValue) {
+    set_type(value, type);
+  }
 
-    explicit IntValue(int value, SizedTypesType type) : Value(Kind::IntValue) {
-      set_type(value, type);
+  void set_type(int value, SizedTypesType type) {
+    switch (type) {
+      case SizedTypesType::I32:
+        container_ = std::make_shared<SizedIntegerI32>(SizedIntegerI32(value));
+        break;
+      case SizedTypesType::U8:
+        container_ = std::make_shared<SizedIntegerU8>(SizedIntegerU8(value));
+        break;
+      case SizedTypesType::I8:
+        container_ = std::make_shared<SizedIntegerI8>(SizedIntegerI8(value));
+        break;
+      case SizedTypesType::U16:
+        container_ = std::make_shared<SizedIntegerU16>(SizedIntegerU16(value));
+        break;
+      case SizedTypesType::I16:
+        container_ = std::make_shared<SizedIntegerI16>(SizedIntegerI16(value));
+        break;
+      default:
+        container_ = std::make_shared<SizedIntegerI32>(SizedIntegerI32(value));
     }
+  }
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::IntValue;
+  }
 
-    void set_type(int value, SizedTypesType type) {
-      switch(type) {
-        case SizedTypesType::I32:
-          container_ = std::make_shared<SizedIntegerI32>(SizedIntegerI32(value));
-          break;
-        case SizedTypesType::U8:
-          container_ = std::make_shared<SizedIntegerU8>(SizedIntegerU8(value));
-          break;
-        case SizedTypesType::I8:
-          container_ = std::make_shared<SizedIntegerI8>(SizedIntegerI8(value));
-          break;
-        case SizedTypesType::U16:
-          container_ = std::make_shared<SizedIntegerU16>(SizedIntegerU16(value));
-          break;
-        case SizedTypesType::I16:
-          container_ = std::make_shared<SizedIntegerI16>(SizedIntegerI16(value));
-          break;
-        default:
-          container_ = std::make_shared<SizedIntegerI32>(SizedIntegerI32(value));
-      }
-    }
-    static auto classof(const Value* value) -> bool {
-      return value->kind() == Kind::IntValue;
-    }
+  auto value() const -> int { return container_->value(); }
+  auto type() const -> SizedTypesType { return container_->type(); }
 
-    auto value() const -> int { return container_->value(); }
-    auto type() const -> SizedTypesType { return container_->type(); }
-  private:
-    std::shared_ptr<SizedInteger> container_;
+ private:
+  std::shared_ptr<SizedInteger> container_;
 };
 
 // A function value.
@@ -604,11 +599,12 @@ class IntType : public Value {
   IntType() : Value(Kind::IntType), type_(SizedTypesType::I32) {}
 
   IntType(SizedTypesType type) : Value(Kind::IntType), type_(type) {}
-  auto type() const -> SizedTypesType {return type_; }
+  auto type() const -> SizedTypesType { return type_; }
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::IntType;
   }
   static void PrintType(const SizedTypesType type, llvm::raw_ostream& out);
+
  private:
   SizedTypesType type_;
 };

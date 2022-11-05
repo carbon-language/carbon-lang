@@ -365,22 +365,22 @@ primary_expression:
       } else {
         char typeChar = $1[0];
         SizedTypesType type;
-        if(typeChar == 'u') {
-          switch(val) {
+        if (typeChar == 'u') {
+          switch (val) {
             case 8:
               type = SizedTypesType::U8;
               break;
             case 16:
               type = SizedTypesType::U16;
               break;
-            default: 
+            default:
               context.RecordSyntaxError(
                   llvm::formatv("Unsupported Number Type: {0}", $1));
               YYERROR;
               break;
           }
         } else if (typeChar == 'i') {
-          switch(val) {
+          switch (val) {
             case 8:
               type = SizedTypesType::I8;
               break;
@@ -390,7 +390,7 @@ primary_expression:
             case 32:
               type = SizedTypesType::I32;
               break;
-            default: 
+            default:
               context.RecordSyntaxError(
                   llvm::formatv("Unsupported Number Type: {0}", $1));
               YYERROR;

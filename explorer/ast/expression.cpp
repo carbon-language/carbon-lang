@@ -295,8 +295,9 @@ void Expression::Print(llvm::raw_ostream& out) const {
   }
 }
 
-void IntTypeLiteral::PrintType(const SizedTypesType type, llvm::raw_ostream& out) {
-  switch(type) {
+void IntTypeLiteral::PrintType(const SizedTypesType type,
+                               llvm::raw_ostream& out) {
+  switch (type) {
     case SizedTypesType::I32:
       out << "i32";
       break;
