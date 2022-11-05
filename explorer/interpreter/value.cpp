@@ -229,7 +229,7 @@ static auto PrintNameWithBindings(llvm::raw_ostream& out,
   }
 }
 void IntType::PrintType(const SizedTypesType type, llvm::raw_ostream& out) {
-  switch(type) {
+  switch (type) {
     case SizedTypesType::I32:
       out << "i32";
       break;

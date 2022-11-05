@@ -140,13 +140,7 @@ class FieldInitializer {
   Nonnull<Expression*> expression_;
 };
 
-enum class SizedTypesType {
-  I32,
-  U8,
-  I8,
-  U16,
-  I16
-};
+enum class SizedTypesType { I32, U8, I8, U16, I16 };
 
 enum class Operator {
   Add,
@@ -698,6 +692,7 @@ class IntTypeLiteral : public Expression {
   }
   static void PrintType(const SizedTypesType type, llvm::raw_ostream& out);
   auto type() const -> SizedTypesType { return type_; }
+
  private:
   SizedTypesType type_;
 };
