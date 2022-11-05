@@ -13,6 +13,10 @@
 #error "Must define the x-macro to use this file."
 #endif
 
+// Handles processing at the `}` on a typical code block, after a statement
+// scope is done.
+CARBON_PARSER_STATE(CodeBlockFinish)
+
 // Handles processing of a declaration scope. Things like fn, class, interface,
 // and so on.
 CARBON_PARSER_STATE(Declaration)

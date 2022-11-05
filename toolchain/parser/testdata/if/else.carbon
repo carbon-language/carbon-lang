@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // RUN: %{carbon-run-parser}
 // CHECK:STDOUT: [
-// CHECK:STDOUT: {node_index: 60, kind: 'FunctionDefinition', text: '}', subtree_size: 61, children: [
+// CHECK:STDOUT: {node_index: 51, kind: 'FunctionDefinition', text: '}', subtree_size: 52, children: [
 // CHECK:STDOUT:   {node_index: 4, kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5, children: [
 // CHECK:STDOUT:     {node_index: 0, kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {node_index: 1, kind: 'DeclaredName', text: 'F'},
@@ -35,38 +35,29 @@
 // CHECK:STDOUT:       {node_index: 24, kind: 'CodeBlockStart', text: '{'},
 // CHECK:STDOUT:       {node_index: 26, kind: 'ExpressionStatement', text: ';', subtree_size: 2, children: [
 // CHECK:STDOUT:         {node_index: 25, kind: 'NameReference', text: 'e'}]}]}]},
-// CHECK:STDOUT:   {node_index: 59, kind: 'IfStatement', text: 'if', subtree_size: 31, children: [
+// CHECK:STDOUT:   {node_index: 50, kind: 'IfStatement', text: 'if', subtree_size: 22, children: [
 // CHECK:STDOUT:     {node_index: 31, kind: 'Condition', text: '(', subtree_size: 3, children: [
 // CHECK:STDOUT:       {node_index: 29, kind: 'NameReference', text: 'x'},
 // CHECK:STDOUT:       {node_index: 30, kind: 'ConditionEnd', text: ')'}]},
-// CHECK:STDOUT:     {node_index: 38, kind: 'CodeBlock', text: '}', subtree_size: 7, children: [
+// CHECK:STDOUT:     {node_index: 35, kind: 'CodeBlock', text: '}', subtree_size: 4, children: [
 // CHECK:STDOUT:       {node_index: 32, kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:       {node_index: 37, kind: 'ExpressionStatement', text: ';', subtree_size: 5, children: [
-// CHECK:STDOUT:         {node_index: 36, kind: 'CallExpression', text: '(', subtree_size: 4, children: [
-// CHECK:STDOUT:           {node_index: 33, kind: 'NameReference', text: 'G'},
-// CHECK:STDOUT:           {node_index: 34, kind: 'Literal', text: '1'},
-// CHECK:STDOUT:           {node_index: 35, kind: 'CallExpressionEnd', text: ')'}]}]}]},
-// CHECK:STDOUT:     {node_index: 39, kind: 'IfStatementElse', text: 'else'},
-// CHECK:STDOUT:     {node_index: 58, kind: 'IfStatement', text: 'if', subtree_size: 19, children: [
-// CHECK:STDOUT:       {node_index: 42, kind: 'Condition', text: '(', subtree_size: 3, children: [
-// CHECK:STDOUT:         {node_index: 40, kind: 'NameReference', text: 'x'},
-// CHECK:STDOUT:         {node_index: 41, kind: 'ConditionEnd', text: ')'}]},
-// CHECK:STDOUT:       {node_index: 49, kind: 'CodeBlock', text: '}', subtree_size: 7, children: [
-// CHECK:STDOUT:         {node_index: 43, kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:         {node_index: 48, kind: 'ExpressionStatement', text: ';', subtree_size: 5, children: [
-// CHECK:STDOUT:           {node_index: 47, kind: 'CallExpression', text: '(', subtree_size: 4, children: [
-// CHECK:STDOUT:             {node_index: 44, kind: 'NameReference', text: 'G'},
-// CHECK:STDOUT:             {node_index: 45, kind: 'Literal', text: '2'},
-// CHECK:STDOUT:             {node_index: 46, kind: 'CallExpressionEnd', text: ')'}]}]}]},
-// CHECK:STDOUT:       {node_index: 50, kind: 'IfStatementElse', text: 'else'},
-// CHECK:STDOUT:       {node_index: 57, kind: 'CodeBlock', text: '}', subtree_size: 7, children: [
-// CHECK:STDOUT:         {node_index: 51, kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:         {node_index: 56, kind: 'ExpressionStatement', text: ';', subtree_size: 5, children: [
-// CHECK:STDOUT:           {node_index: 55, kind: 'CallExpression', text: '(', subtree_size: 4, children: [
-// CHECK:STDOUT:             {node_index: 52, kind: 'NameReference', text: 'G'},
-// CHECK:STDOUT:             {node_index: 53, kind: 'Literal', text: '3'},
-// CHECK:STDOUT:             {node_index: 54, kind: 'CallExpressionEnd', text: ')'}]}]}]}]}]}]},
-// CHECK:STDOUT: {node_index: 61, kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:       {node_index: 34, kind: 'ExpressionStatement', text: ';', subtree_size: 2, children: [
+// CHECK:STDOUT:         {node_index: 33, kind: 'NameReference', text: 'f'}]}]},
+// CHECK:STDOUT:     {node_index: 36, kind: 'IfStatementElse', text: 'else'},
+// CHECK:STDOUT:     {node_index: 49, kind: 'IfStatement', text: 'if', subtree_size: 13, children: [
+// CHECK:STDOUT:       {node_index: 39, kind: 'Condition', text: '(', subtree_size: 3, children: [
+// CHECK:STDOUT:         {node_index: 37, kind: 'NameReference', text: 'x'},
+// CHECK:STDOUT:         {node_index: 38, kind: 'ConditionEnd', text: ')'}]},
+// CHECK:STDOUT:       {node_index: 43, kind: 'CodeBlock', text: '}', subtree_size: 4, children: [
+// CHECK:STDOUT:         {node_index: 40, kind: 'CodeBlockStart', text: '{'},
+// CHECK:STDOUT:         {node_index: 42, kind: 'ExpressionStatement', text: ';', subtree_size: 2, children: [
+// CHECK:STDOUT:           {node_index: 41, kind: 'NameReference', text: 'g'}]}]},
+// CHECK:STDOUT:       {node_index: 44, kind: 'IfStatementElse', text: 'else'},
+// CHECK:STDOUT:       {node_index: 48, kind: 'CodeBlock', text: '}', subtree_size: 4, children: [
+// CHECK:STDOUT:         {node_index: 45, kind: 'CodeBlockStart', text: '{'},
+// CHECK:STDOUT:         {node_index: 47, kind: 'ExpressionStatement', text: ';', subtree_size: 2, children: [
+// CHECK:STDOUT:           {node_index: 46, kind: 'NameReference', text: 'h'}]}]}]}]}]},
+// CHECK:STDOUT: {node_index: 52, kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
 fn F() {
@@ -79,7 +70,7 @@ fn F() {
   } else {
     e;
   }
-  if (x) { G(1); }
-  else if (x) { G(2); }
-  else { G(3); }
+  if (x) { f; }
+  else if (x) { g; }
+  else { h; }
 }

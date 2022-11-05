@@ -27,13 +27,23 @@ class Parser2::PrettyStackTraceParseState : public llvm::PrettyStackTraceEntry {
     output << "Parser stack:\n";
     for (int i = 0; i < static_cast<int>(parser_->state_stack_.size()); ++i) {
       const auto& entry = parser_->state_stack_[i];
-      output << "\t" << i << ".\t" << entry.state << " @ " << entry.start_token
-             << ":" << parser_->tokens_.GetKind(entry.start_token).Name()
-             << "\n";
+      output << "\t" << i << ".\t" << entry.state;
+      Print(output, entry.token);
     }
+    output << "\tabort\tposition_";
+    Print(output, *parser_->position_);
   }
 
  private:
+  auto Print(llvm::raw_ostream& output, TokenizedBuffer::Token token) const
+      -> void {
+    auto line = parser_->tokens_.GetLine(token);
+    output << " @ " << parser_->tokens_.GetLineNumber(line) << ":"
+           << parser_->tokens_.GetColumnNumber(token) << ":"
+           << " token " << token << " : "
+           << parser_->tokens_.GetKind(token).Name() << "\n";
+  }
+
   const Parser2* parser_;
 };
 
@@ -214,7 +224,36 @@ auto Parser2::SkipTo(TokenizedBuffer::Token t) -> void {
   CARBON_CHECK(position_ != end_) << "Skipped past EOF.";
 }
 
-auto Parser2::HandleCodeBlock() -> void {}
+auto Parser2::HandleCodeBlock() -> void {
+  PushState(ParserState::CodeBlockFinish());
+  if (ConsumeAndAddLeafNodeIf(TokenKind::OpenCurlyBrace(),
+                              ParseNodeKind::CodeBlockStart())) {
+    PushState(ParserState::StatementScope());
+  } else {
+    AddLeafNode(ParseNodeKind::CodeBlockStart(), *position_,
+                /*has_error=*/true);
+
+    // Recover by parsing a single statement.
+    CARBON_DIAGNOSTIC(ExpectedCodeBlock, Error, "Expected braced code block.");
+    emitter_.Emit(*position_, ExpectedCodeBlock);
+
+    HandleStatement(PositionKind());
+  }
+}
+
+auto Parser2::HandleCodeBlockFinishState() -> void {
+  auto state = PopState();
+
+  // If the block started with an open curly, this is a close curly.
+  if (tokens_.GetKind(state.token) == TokenKind::OpenCurlyBrace()) {
+    AddNode(ParseNodeKind::CodeBlock(), *position_, state.subtree_start,
+            state.has_error);
+    ++position_;
+  } else {
+    AddNode(ParseNodeKind::CodeBlock(), state.token, state.subtree_start,
+            /*has_error=*/true);
+  }
+}
 
 auto Parser2::HandleDeclarationState() -> void {
   // This maintains the current state unless we're at the end of the file.
@@ -268,7 +307,8 @@ auto Parser2::HandleExpressionFormPrimary() -> void {
     default:
       CARBON_DIAGNOSTIC(ExpectedExpression, Error, "Expected expression.");
       emitter_.Emit(*position_, ExpectedExpression);
-      break;
+      ReturnErrorOnState();
+      return;
   }
   ++position_;
 }
@@ -642,22 +682,8 @@ auto Parser2::HandleStatementIfThenBlockFinishState() -> void {
 
 auto Parser2::HandleStatementIfElseBlockFinishState() -> void {
   auto state = PopState();
-
-  /*
-  auto then_case = ParseCodeBlock();
-  bool else_has_errors = false;
-  if (ConsumeAndAddLeafNodeIf(TokenKind::Else(),
-                              ParseNodeKind::IfStatementElse())) {
-    // 'else if' is permitted as a special case.
-    if (NextTokenIs(TokenKind::If())) {
-      else_has_errors = !ParseIfStatement();
-    } else {
-      else_has_errors = !ParseCodeBlock();
-    }
-  }
-  return AddNode(ParseNodeKind::IfStatement(), if_token, start,
-                 / *has_error=* /!cond || !then_case || else_has_errors);
-  */
+  AddNode(ParseNodeKind::IfStatement(), state.token, state.subtree_start,
+          state.has_error);
 }
 
 auto Parser2::HandleStatement(TokenKind token_kind) -> void {
