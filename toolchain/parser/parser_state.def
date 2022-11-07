@@ -24,6 +24,16 @@ CARBON_PARSER_STATE(Declaration)
 // Handles processing of an expression.
 CARBON_PARSER_STATE(Expression)
 
+// Handles processing of an expression.
+CARBON_PARSER_STATE(ExpressionResume)
+CARBON_PARSER_STATE(ExpressionResumeForPrefix)
+
+// TODO
+CARBON_PARSER_STATE(ExpressionInPostfix)
+
+// TODO
+CARBON_PARSER_STATE(ExpressionInPostfixResume)
+
 // As with Expression, but specifically uses the Type precedence grouping.
 CARBON_PARSER_STATE(ExpressionForType)
 
@@ -53,14 +63,17 @@ CARBON_PARSER_STATE(FunctionSignatureFinish)
 // Finishes a function definition.
 CARBON_PARSER_STATE(FunctionDefinitionFinish)
 
-// StatementFinish variants are just handling the `;` expectation.
-CARBON_PARSER_STATE(KeywordStatementFinishForReturn)
-
 // Handles the processing of a `(condition)` up through the expression.
 CARBON_PARSER_STATE(ParenCondition)
 
 // Finishes the processing of a `(condition)` after the expression.
 CARBON_PARSER_STATE(ParenConditionFinish)
+
+// Handles `break` processing at the `;`.
+CARBON_PARSER_STATE(StatementBreakFinish)
+
+// Handles `continue` processing at the `;`.
+CARBON_PARSER_STATE(StatementContinueFinish)
 
 // Handles `if` processing between the condition and start of the first code
 // block.
@@ -72,6 +85,15 @@ CARBON_PARSER_STATE(StatementIfThenBlockFinish)
 
 // Handles `if` processing after a provided `else` code block.
 CARBON_PARSER_STATE(StatementIfElseBlockFinish)
+
+// Handles `return` processing at the `;`.
+CARBON_PARSER_STATE(StatementReturnFinish)
+
+// Handles `while` processing between the condition and start of the code block.
+CARBON_PARSER_STATE(StatementWhileConditionFinish)
+
+// Handles `while` processing after the end of the code block.
+CARBON_PARSER_STATE(StatementWhileBlockFinish)
 
 // Handles pattern parsing for a function parameter, enqueuing type expression
 // processing. Proceeds to the matching Finish state when done.

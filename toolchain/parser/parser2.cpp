@@ -17,6 +17,35 @@
 
 namespace Carbon {
 
+// May be omitted a couple different ways as part of operator parsing.
+CARBON_DIAGNOSTIC(
+    OperatorRequiresParentheses, Error,
+    "Parentheses are required to disambiguate operator precedence.");
+
+// A relative location for characters in errors.
+enum class RelativeLocation : int8_t {
+  Around,
+  After,
+  Before,
+};
+
+// Adapts RelativeLocation for use with formatv.
+static auto operator<<(llvm::raw_ostream& out, RelativeLocation loc)
+    -> llvm::raw_ostream& {
+  switch (loc) {
+    case RelativeLocation::Around:
+      out << "around";
+      break;
+    case RelativeLocation::After:
+      out << "after";
+      break;
+    case RelativeLocation::Before:
+      out << "before";
+      break;
+  }
+  return out;
+}
+
 class Parser2::PrettyStackTraceParseState : public llvm::PrettyStackTraceEntry {
  public:
   explicit PrettyStackTraceParseState(const Parser2* parser)
@@ -30,7 +59,7 @@ class Parser2::PrettyStackTraceParseState : public llvm::PrettyStackTraceEntry {
       output << "\t" << i << ".\t" << entry.state;
       Print(output, entry.token);
     }
-    output << "\tabort\tposition_";
+    output << "\tcursor\tposition_";
     Print(output, *parser_->position_);
   }
 
@@ -142,24 +171,6 @@ auto Parser2::FindNextOf(std::initializer_list<TokenKind> desired_kinds)
   }
 }
 
-auto Parser2::Parse() -> void {
-  // Traces state_stack_. This runs even in opt because it's low overhead.
-  PrettyStackTraceParseState pretty_stack(this);
-
-  PushState(ParserState::Declaration());
-  while (!state_stack_.empty()) {
-    switch (state_stack_.back().state) {
-#define CARBON_PARSER_STATE(Name) \
-  case ParserState::Name():       \
-    Handle##Name##State();        \
-    break;
-#include "toolchain/parser/parser_state.def"
-    }
-  }
-
-  AddLeafNode(ParseNodeKind::FileEnd(), *position_);
-}
-
 auto Parser2::SkipMatchingGroup() -> bool {
   if (!PositionKind().IsOpeningSymbol()) {
     return false;
@@ -241,6 +252,143 @@ auto Parser2::HandleCodeBlock() -> void {
   }
 }
 
+// Determines whether the given token is considered to be the start of an
+// operand according to the rules for infix operator parsing.
+static auto IsAssumedStartOfOperand(TokenKind kind) -> bool {
+  return kind.IsOneOf({TokenKind::OpenParen(), TokenKind::Identifier(),
+                       TokenKind::IntegerLiteral(), TokenKind::RealLiteral(),
+                       TokenKind::StringLiteral()});
+}
+
+// Determines whether the given token is considered to be the end of an
+// operand according to the rules for infix operator parsing.
+static auto IsAssumedEndOfOperand(TokenKind kind) -> bool {
+  return kind.IsOneOf({TokenKind::CloseParen(), TokenKind::CloseCurlyBrace(),
+                       TokenKind::CloseSquareBracket(), TokenKind::Identifier(),
+                       TokenKind::IntegerLiteral(), TokenKind::RealLiteral(),
+                       TokenKind::StringLiteral()});
+}
+
+// Determines whether the given token could possibly be the start of an
+// operand. This is conservatively correct, and will never incorrectly return
+// `false`, but can incorrectly return `true`.
+static auto IsPossibleStartOfOperand(TokenKind kind) -> bool {
+  return !kind.IsOneOf({TokenKind::CloseParen(), TokenKind::CloseCurlyBrace(),
+                        TokenKind::CloseSquareBracket(), TokenKind::Comma(),
+                        TokenKind::Semi(), TokenKind::Colon()});
+}
+
+auto Parser2::IsLexicallyValidInfixOperator() -> bool {
+  CARBON_CHECK(position_ != end_) << "Expected an operator token.";
+
+  bool leading_space = tokens_.HasLeadingWhitespace(*position_);
+  bool trailing_space = tokens_.HasTrailingWhitespace(*position_);
+
+  // If there's whitespace on both sides, it's an infix operator.
+  if (leading_space && trailing_space) {
+    return true;
+  }
+
+  // If there's whitespace on exactly one side, it's not an infix operator.
+  if (leading_space || trailing_space) {
+    return false;
+  }
+
+  // Otherwise, for an infix operator, the preceding token must be any close
+  // bracket, identifier, or literal and the next token must be an open paren,
+  // identifier, or literal.
+  if (position_ == tokens_.tokens().begin() ||
+      !IsAssumedEndOfOperand(tokens_.GetKind(*(position_ - 1))) ||
+      !IsAssumedStartOfOperand(tokens_.GetKind(*(position_ + 1)))) {
+    return false;
+  }
+
+  return true;
+}
+
+auto Parser2::IsTrailingOperatorInfix() -> bool {
+  if (position_ == end_) {
+    return false;
+  }
+
+  // An operator that follows the infix operator rules is parsed as
+  // infix, unless the next token means that it can't possibly be.
+  if (IsLexicallyValidInfixOperator() &&
+      IsPossibleStartOfOperand(tokens_.GetKind(*(position_ + 1)))) {
+    return true;
+  }
+
+  // A trailing operator with leading whitespace that's not valid as infix is
+  // not valid at all. If the next token looks like the start of an operand,
+  // then parse as infix, otherwise as postfix. Either way we'll produce a
+  // diagnostic later on.
+  if (tokens_.HasLeadingWhitespace(*position_) &&
+      IsAssumedStartOfOperand(tokens_.GetKind(*(position_ + 1)))) {
+    return true;
+  }
+
+  return false;
+}
+
+auto Parser2::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
+  if (fixity == OperatorFixity::Infix) {
+    // Infix operators must satisfy the infix operator rules.
+    if (!IsLexicallyValidInfixOperator()) {
+      CARBON_DIAGNOSTIC(BinaryOperatorRequiresWhitespace, Error,
+                        "Whitespace missing {0} binary operator.",
+                        RelativeLocation);
+      emitter_.Emit(*position_, BinaryOperatorRequiresWhitespace,
+                    tokens_.HasLeadingWhitespace(*position_)
+                        ? RelativeLocation::After
+                        : (tokens_.HasTrailingWhitespace(*position_)
+                               ? RelativeLocation::Before
+                               : RelativeLocation::Around));
+    }
+  } else {
+    bool prefix = fixity == OperatorFixity::Prefix;
+
+    // Whitespace is not permitted between a symbolic pre/postfix operator and
+    // its operand.
+    if (PositionKind().IsSymbol() &&
+        (prefix ? tokens_.HasTrailingWhitespace(*position_)
+                : tokens_.HasLeadingWhitespace(*position_))) {
+      CARBON_DIAGNOSTIC(UnaryOperatorHasWhitespace, Error,
+                        "Whitespace is not allowed {0} this unary operator.",
+                        RelativeLocation);
+      emitter_.Emit(
+          *position_, UnaryOperatorHasWhitespace,
+          prefix ? RelativeLocation::After : RelativeLocation::Before);
+    }
+    // Pre/postfix operators must not satisfy the infix operator rules.
+    if (IsLexicallyValidInfixOperator()) {
+      CARBON_DIAGNOSTIC(UnaryOperatorRequiresWhitespace, Error,
+                        "Whitespace is required {0} this unary operator.",
+                        RelativeLocation);
+      emitter_.Emit(
+          *position_, UnaryOperatorRequiresWhitespace,
+          prefix ? RelativeLocation::Before : RelativeLocation::After);
+    }
+  }
+}
+
+auto Parser2::Parse() -> void {
+  // Traces state_stack_. This runs even in opt because it's low overhead.
+  PrettyStackTraceParseState pretty_stack(this);
+
+  PushState(ParserState::Declaration());
+  while (!state_stack_.empty()) {
+    switch (state_stack_.back().state) {
+#define CARBON_PARSER_STATE(Name) \
+  case ParserState::Name():       \
+    Handle##Name##State();        \
+    break;
+#include "toolchain/parser/parser_state.def"
+    }
+  }
+
+  AddLeafNode(ParseNodeKind::FileEnd(), *position_);
+}
+
 auto Parser2::HandleCodeBlockFinishState() -> void {
   auto state = PopState();
 
@@ -288,7 +436,45 @@ auto Parser2::HandleDeclarationState() -> void {
   }
 }
 
-auto Parser2::HandleExpressionFormPrimary() -> void {
+/*
+auto ParseTree::Parser::ParseDesignatorExpression(SubtreeStart start,
+                                                  ParseNodeKind kind,
+                                                  bool has_errors)
+    -> llvm::Optional<Node> {
+  // `.` identifier
+  auto dot = Consume(TokenKind::Period());
+  auto name = ConsumeIf(TokenKind::Identifier());
+  if (name) {
+    AddLeafNode(ParseNodeKind::DesignatedName(), *name);
+  } else {
+    CARBON_DIAGNOSTIC(ExpectedIdentifierAfterDot, Error,
+                      "Expected identifier after `.`.");
+    emitter_.Emit(*position_, ExpectedIdentifierAfterDot);
+    // If we see a keyword, assume it was intended to be the designated name.
+    // TODO: Should keywords be valid in designators?
+    if (NextTokenKind().IsKeyword()) {
+      name = Consume(NextTokenKind());
+      auto name_node = AddLeafNode(ParseNodeKind::DesignatedName(), *name);
+      MarkNodeError(name_node);
+    } else {
+      has_errors = true;
+    }
+  }
+
+  Node result = AddNode(kind, dot, start, has_errors);
+  return name ? result : llvm::Optional<Node>();
+}
+*/
+
+auto Parser2::HandleExpressionInPostfixState() -> void {
+  PopAndDiscardState();
+
+  // Regardless of success or failure, we'll continue to the Resume state.
+  PushState(ParserState::ExpressionInPostfixResume());
+
+  // Parses a primary expression, which is either a terminal portion of an
+  // expression tree, such as an identifier or literal, or a parenthesized
+  // expression.
   // TODO: Handle OpenParen and OpenCurlyBrace.
   switch (PositionKind()) {
     case TokenKind::Identifier():
@@ -313,13 +499,201 @@ auto Parser2::HandleExpressionFormPrimary() -> void {
   ++position_;
 }
 
+auto Parser2::HandleExpressionInPostfixResumeState() -> void {
+  // This is a cyclic state that repeats, so the state is not popped.
+
+  switch (PositionKind()) {
+    case TokenKind::Period():
+      // expression = ParseDesignatorExpression(
+      //     start, ParseNodeKind::DesignatorExpression(), !expression);
+      CARBON_FATAL() << "TODO";
+      break;
+
+    case TokenKind::OpenParen():
+      // expression = ParseCallExpression(start, !expression);
+      CARBON_FATAL() << "TODO";
+      break;
+
+    default:
+      PopAndDiscardState();
+      break;
+  }
+}
+
+auto Parser2::HandleExpressionAsOperator(PrecedenceGroup ambient_precedence)
+    -> void {
+  // Check for a prefix operator.
+  if (auto operator_precedence = PrecedenceGroup::ForLeading(PositionKind())) {
+    if (PrecedenceGroup::GetPriority(ambient_precedence,
+                                     *operator_precedence) !=
+        OperatorPriority::RightFirst) {
+      // The precedence rules don't permit this prefix operator in this
+      // context. Diagnose this, but carry on and parse it anyway.
+      emitter_.Emit(*position_, OperatorRequiresParentheses);
+    } else {
+      // Check that this operator follows the proper whitespace rules.
+      DiagnoseOperatorFixity(OperatorFixity::Prefix);
+    }
+
+    PushStateForExpression(ParserState::ExpressionResumeForPrefix(),
+                           ambient_precedence, *operator_precedence);
+    ++position_;
+    PushState(ParserState::Expression());
+  } else {
+    PushStateForExpression(ParserState::ExpressionResume(), ambient_precedence,
+                           PrecedenceGroup::ForPostfixExpression());
+    PushState(ParserState::ExpressionInPostfix());
+  }
+}
+
+auto Parser2::HandleExpressionResumeState() -> void {
+  auto state = PopState();
+
+  auto trailing_operator =
+      PrecedenceGroup::ForTrailing(PositionKind(), IsTrailingOperatorInfix());
+  if (!trailing_operator) {
+    return;
+  }
+  auto [operator_precedence, is_binary] = *trailing_operator;
+
+  // TODO: If this operator is ambiguous with either the ambient precedence
+  // or the LHS precedence, and there's a variant with a different fixity
+  // that would work, use that one instead for error recovery.
+  if (PrecedenceGroup::GetPriority(state.ambient_precedence,
+                                   operator_precedence) !=
+      OperatorPriority::RightFirst) {
+    // The precedence rules don't permit this operator in this context. Try
+    // again in the enclosing expression context.
+    return;
+  }
+
+  if (PrecedenceGroup::GetPriority(state.lhs_precedence, operator_precedence) !=
+      OperatorPriority::LeftFirst) {
+    // Either the LHS operator and this operator are ambiguous, or the
+    // LHS operator is a unary operator that can't be nested within
+    // this operator. Either way, parentheses are required.
+    emitter_.Emit(*position_, OperatorRequiresParentheses);
+    state.has_error = true;
+  } else {
+    DiagnoseOperatorFixity(is_binary ? OperatorFixity::Infix
+                                     : OperatorFixity::Postfix);
+  }
+
+  state.token = *position_;
+  ++position_;
+
+  if (is_binary) {
+    CARBON_FATAL() << "binary";
+    /*
+    auto rhs = ParseOperatorExpression(operator_precedence);
+    AddNode(ParseNodeKind::InfixOperator(), state.token, state.subtree_start,
+                  state.has_error || !rhs);
+    */
+  } else {
+    AddNode(ParseNodeKind::PostfixOperator(), state.token, state.subtree_start,
+            state.has_error);
+  }
+  state.lhs_precedence = operator_precedence;
+  PushState(state);
+}
+
+auto Parser2::HandleExpressionResumeForPrefixState() -> void {
+  auto state = PopState();
+
+  AddNode(ParseNodeKind::PrefixOperator(), state.token, state.subtree_start,
+          state.has_error);
+  state.state = ParserState::ExpressionResume();
+  PushState(state);
+}
+
+/*
+auto ParseTree::Parser::ParseOperatorExpression(
+    PrecedenceGroup ambient_precedence) -> llvm::Optional<Node> {
+  // May be omitted a couple different ways here.
+  CARBON_DIAGNOSTIC(
+      OperatorRequiresParentheses, Error,
+      "Parentheses are required to disambiguate operator precedence.");
+
+  CARBON_RETURN_IF_STACK_LIMITED(llvm::None);
+  auto start = GetSubtreeStartPosition();
+
+  llvm::Optional<Node> lhs;
+  PrecedenceGroup lhs_precedence = PrecedenceGroup::ForPostfixExpression();
+
+  // Check for a prefix operator.
+  if (auto operator_precedence = PrecedenceGroup::ForLeading(NextTokenKind());
+      !operator_precedence) {
+    lhs = ParsePostfixExpression();
+  } else {
+    if (PrecedenceGroup::GetPriority(ambient_precedence,
+                                     *operator_precedence) !=
+        OperatorPriority::RightFirst) {
+      // The precedence rules don't permit this prefix operator in this
+      // context. Diagnose this, but carry on and parse it anyway.
+      emitter_.Emit(*position_, OperatorRequiresParentheses);
+    } else {
+      // Check that this operator follows the proper whitespace rules.
+      DiagnoseOperatorFixity(OperatorFixity::Prefix);
+    }
+
+    auto operator_token = Consume(NextTokenKind());
+    bool has_errors = !ParseOperatorExpression(*operator_precedence);
+    lhs = AddNode(ParseNodeKind::PrefixOperator(), operator_token, start,
+                  has_errors);
+    lhs_precedence = *operator_precedence;
+  }
+
+  // Consume a sequence of infix and postfix operators.
+  while (auto trailing_operator = PrecedenceGroup::ForTrailing(
+             NextTokenKind(), IsTrailingOperatorInfix())) {
+    auto [operator_precedence, is_binary] = *trailing_operator;
+
+    // TODO: If this operator is ambiguous with either the ambient precedence
+    // or the LHS precedence, and there's a variant with a different fixity
+    // that would work, use that one instead for error recovery.
+    if (PrecedenceGroup::GetPriority(ambient_precedence, operator_precedence) !=
+        OperatorPriority::RightFirst) {
+      // The precedence rules don't permit this operator in this context. Try
+      // again in the enclosing expression context.
+      return lhs;
+    }
+
+    if (PrecedenceGroup::GetPriority(lhs_precedence, operator_precedence) !=
+        OperatorPriority::LeftFirst) {
+      // Either the LHS operator and this operator are ambiguous, or the
+      // LHS operator is a unary operator that can't be nested within
+      // this operator. Either way, parentheses are required.
+      emitter_.Emit(*position_, OperatorRequiresParentheses);
+      lhs = llvm::None;
+    } else {
+      DiagnoseOperatorFixity(is_binary ? OperatorFixity::Infix
+                                       : OperatorFixity::Postfix);
+    }
+
+    auto operator_token = Consume(NextTokenKind());
+
+    if (is_binary) {
+      auto rhs = ParseOperatorExpression(operator_precedence);
+      lhs = AddNode(ParseNodeKind::InfixOperator(), operator_token, start,
+                    / *has_error=* /!lhs || !rhs);
+    } else {
+      lhs = AddNode(ParseNodeKind::PostfixOperator(), operator_token, start,
+                    / *has_error=* /!lhs);
+    }
+    lhs_precedence = operator_precedence;
+  }
+
+  return lhs;
+}
+*/
+
 auto Parser2::HandleExpressionState() -> void {
   // TODO: This is temporary, we should need this state. If not, maybe add an
   // overload that uses pop_back instead of pop_back_val.
   auto state = PopState();
   (void)state;
 
-  HandleExpressionFormPrimary();
+  HandleExpressionAsOperator(PrecedenceGroup::ForTopLevelExpression());
 }
 
 auto Parser2::HandleExpressionForTypeState() -> void {
@@ -328,7 +702,7 @@ auto Parser2::HandleExpressionForTypeState() -> void {
   auto state = PopState();
   (void)state;
 
-  HandleExpressionFormPrimary();
+  HandleExpressionAsOperator(PrecedenceGroup::ForType());
 }
 
 auto Parser2::HandleExpressionStatementFinishState() -> void {
@@ -528,29 +902,6 @@ auto Parser2::HandlePatternStart(PatternKind pattern_kind) -> void {
   position_ += 2;
 }
 
-auto Parser2::HandleKeywordStatementFinish(TokenKind token_kind,
-                                           ParseNodeKind node_kind) -> void {
-  auto state = PopState();
-
-  auto semi =
-      ConsumeAndAddLeafNodeIf(TokenKind::Semi(), ParseNodeKind::StatementEnd());
-  if (!semi) {
-    CARBON_DIAGNOSTIC(ExpectedSemiAfter, Error, "Expected `;` after `{0}`.",
-                      TokenKind);
-    emitter_.Emit(*position_, ExpectedSemiAfter, token_kind);
-    if (auto semi_token = SkipPastLikelyEnd(state.token)) {
-      AddLeafNode(ParseNodeKind::StatementEnd(), *semi_token,
-                  /*has_error=*/true);
-    }
-  }
-  AddNode(node_kind, state.token, state.subtree_start, state.has_error);
-}
-
-auto Parser2::HandleKeywordStatementFinishForReturnState() -> void {
-  HandleKeywordStatementFinish(TokenKind::Return(),
-                               ParseNodeKind::ReturnStatement());
-}
-
 auto Parser2::HandleParenConditionState() -> void {
   auto state = PopState();
 
@@ -647,6 +998,16 @@ auto Parser2::HandlePatternForFunctionParameterFinishState() -> void {
   }
 }
 
+auto Parser2::HandleStatementBreakFinishState() -> void {
+  HandleStatementKeywordFinish(TokenKind::Break(),
+                               ParseNodeKind::BreakStatement());
+}
+
+auto Parser2::HandleStatementContinueFinishState() -> void {
+  HandleStatementKeywordFinish(TokenKind::Continue(),
+                               ParseNodeKind::ContinueStatement());
+}
+
 auto Parser2::HandleStatementIf() -> void {
   PushState(ParserState::StatementIfConditionFinish());
   PushState(ParserState::ParenCondition());
@@ -682,7 +1043,51 @@ auto Parser2::HandleStatementIfThenBlockFinishState() -> void {
 
 auto Parser2::HandleStatementIfElseBlockFinishState() -> void {
   auto state = PopState();
+
   AddNode(ParseNodeKind::IfStatement(), state.token, state.subtree_start,
+          state.has_error);
+}
+
+auto Parser2::HandleStatementKeywordFinish(TokenKind token_kind,
+                                           ParseNodeKind node_kind) -> void {
+  auto state = PopState();
+
+  if (!ConsumeAndAddLeafNodeIf(TokenKind::Semi(),
+                               ParseNodeKind::StatementEnd())) {
+    CARBON_DIAGNOSTIC(ExpectedSemiAfter, Error, "Expected `;` after `{0}`.",
+                      TokenKind);
+    emitter_.Emit(*position_, ExpectedSemiAfter, token_kind);
+    if (auto semi_token = SkipPastLikelyEnd(state.token)) {
+      AddLeafNode(ParseNodeKind::StatementEnd(), *semi_token,
+                  /*has_error=*/true);
+    }
+  }
+  AddNode(node_kind, state.token, state.subtree_start, state.has_error);
+}
+
+auto Parser2::HandleStatementReturnFinishState() -> void {
+  HandleStatementKeywordFinish(TokenKind::Return(),
+                               ParseNodeKind::ReturnStatement());
+}
+
+auto Parser2::HandleStatementWhile() -> void {
+  PushState(ParserState::StatementWhileConditionFinish());
+  PushState(ParserState::ParenCondition());
+  ++position_;
+}
+
+auto Parser2::HandleStatementWhileConditionFinishState() -> void {
+  auto state = PopState();
+
+  state.state = ParserState::StatementWhileBlockFinish();
+  PushState(state);
+  HandleCodeBlock();
+}
+
+auto Parser2::HandleStatementWhileBlockFinishState() -> void {
+  auto state = PopState();
+
+  AddNode(ParseNodeKind::WhileStatement(), state.token, state.subtree_start,
           state.has_error);
 }
 
@@ -690,6 +1095,16 @@ auto Parser2::HandleStatement(TokenKind token_kind) -> void {
   switch (token_kind) {
     case TokenKind::If(): {
       HandleStatementIf();
+      break;
+    }
+    case TokenKind::Break(): {
+      PushState(ParserState::StatementBreakFinish());
+      ++position_;
+      break;
+    }
+    case TokenKind::Continue(): {
+      PushState(ParserState::StatementContinueFinish());
+      ++position_;
       break;
     }
     case TokenKind::Return(): {
@@ -701,10 +1116,14 @@ auto Parser2::HandleStatement(TokenKind token_kind) -> void {
                 /*has_error=*/false);
         position_ += 2;
       } else {
-        PushState(ParserState::KeywordStatementFinishForReturn());
+        PushState(ParserState::StatementReturnFinish());
         ++position_;
         PushState(ParserState::Expression());
       }
+      break;
+    }
+    case TokenKind::While(): {
+      HandleStatementWhile();
       break;
     }
     default: {

@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // RUN: %{carbon-run-parser}
 // CHECK:STDOUT: [
-// CHECK:STDOUT: {node_index: 64, kind: 'FunctionDefinition', text: '}', subtree_size: 65, children: [
+// CHECK:STDOUT: {node_index: 54, kind: 'FunctionDefinition', text: '}', subtree_size: 55, children: [
 // CHECK:STDOUT:   {node_index: 12, kind: 'FunctionDefinitionStart', text: '{', subtree_size: 13, children: [
 // CHECK:STDOUT:     {node_index: 0, kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {node_index: 1, kind: 'DeclaredName', text: 'F'},
@@ -59,18 +59,8 @@
 // CHECK:STDOUT:       {node_index: 48, kind: 'NameReference', text: 'n'},
 // CHECK:STDOUT:       {node_index: 51, kind: 'InfixOperator', text: '*', subtree_size: 3, children: [
 // CHECK:STDOUT:         {node_index: 49, kind: 'NameReference', text: 'n'},
-// CHECK:STDOUT:         {node_index: 50, kind: 'NameReference', text: 'n'}]}]}]},
-// CHECK:STDOUT:   {node_index: 63, kind: 'ExpressionStatement', text: ';', subtree_size: 10, children: [
-// CHECK:STDOUT:     {node_index: 62, kind: 'CallExpression', text: '(', subtree_size: 9, children: [
-// CHECK:STDOUT:       {node_index: 54, kind: 'NameReference', text: 'G'},
-// CHECK:STDOUT:       {node_index: 56, kind: 'PostfixOperator', text: '*', subtree_size: 2, children: [
-// CHECK:STDOUT:         {node_index: 55, kind: 'Literal', text: 'i32'}]},
-// CHECK:STDOUT:       {node_index: 57, kind: 'CallExpressionComma', text: ','},
-// CHECK:STDOUT:       {node_index: 60, kind: 'InfixOperator', text: '*', subtree_size: 3, children: [
-// CHECK:STDOUT:         {node_index: 58, kind: 'NameReference', text: 'n'},
-// CHECK:STDOUT:         {node_index: 59, kind: 'NameReference', text: 'n'}]},
-// CHECK:STDOUT:       {node_index: 61, kind: 'CallExpressionEnd', text: ')'}]}]}]},
-// CHECK:STDOUT: {node_index: 65, kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:         {node_index: 50, kind: 'NameReference', text: 'n'}]}]}]}]},
+// CHECK:STDOUT: {node_index: 55, kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
 fn F(p: i32*, n: i32) {
@@ -80,5 +70,4 @@ fn F(p: i32*, n: i32) {
   n = n * n;
   n = n * *p;
   n = n*n;
-  G(i32*, n * n);
 }
