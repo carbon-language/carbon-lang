@@ -263,6 +263,13 @@ class MemberAccessExpression : public Expression {
   // Can only be called once, during typechecking.
   void set_is_type_access(bool type_access) { is_type_access_ = type_access; }
 
+  // Returns true if the member is a method that has a "me" declaration in an
+  // AddrPattern.
+  auto is_addr_me_method() const -> bool { return is_addr_me_method_; }
+
+  // Can only be called once, during typechecking.
+  void set_is_addr_me_method() { is_addr_me_method_ = true; }
+
   // If `object` has a generic type, returns the witness value, which might be
   // either concrete or symbolic. Otherwise, returns `std::nullopt`. Should not
   // be called before typechecking.
@@ -292,6 +299,7 @@ class MemberAccessExpression : public Expression {
  private:
   Nonnull<Expression*> object_;
   bool is_type_access_ = false;
+  bool is_addr_me_method_ = false;
   std::optional<Nonnull<const Witness*>> impl_;
   std::optional<Nonnull<const Value*>> constant_value_;
 };
@@ -324,16 +332,6 @@ class SimpleMemberAccessExpression : public MemberAccessExpression {
     member_ = member;
   }
 
-  // Returns true if the field is a method that has a "me" declaration in an
-  // AddrPattern.
-  // TODO: Should be in MemberAccessExpression.
-  auto is_field_addr_me_method() const -> bool {
-    return is_field_addr_me_method_;
-  }
-
-  // Can only be called once, during typechecking.
-  void set_is_field_addr_me_method() { is_field_addr_me_method_ = true; }
-
   // If `object` is a constrained type parameter and `member` was found in an
   // interface, returns that interface. Should not be called before
   // typechecking.
@@ -351,7 +349,6 @@ class SimpleMemberAccessExpression : public MemberAccessExpression {
  private:
   std::string member_name_;
   std::optional<Member> member_;
-  bool is_field_addr_me_method_ = false;
   std::optional<Nonnull<const InterfaceType*>> found_in_interface_;
 };
 

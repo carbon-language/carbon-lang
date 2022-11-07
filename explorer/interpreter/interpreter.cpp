@@ -1043,7 +1043,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       bool forming_member_name = isa<TypeOfMemberName>(&access.static_type());
       if (act.pos() == 0) {
         // First, evaluate the first operand.
-        if (access.is_field_addr_me_method()) {
+        if (access.is_addr_me_method()) {
           return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
         } else {
           return todo_.Spawn(
@@ -1119,8 +1119,12 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       bool forming_member_name = isa<TypeOfMemberName>(&access.static_type());
       if (act.pos() == 0) {
         // First, evaluate the first operand.
-        return todo_.Spawn(
-            std::make_unique<ExpressionAction>(&access.object()));
+        if (access.is_addr_me_method()) {
+          return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
+        } else {
+          return todo_.Spawn(
+              std::make_unique<ExpressionAction>(&access.object()));
+        }
       } else if (act.pos() == 1 && access.impl().has_value() &&
                  !forming_member_name) {
         // Next, if we're accessing an interface member, evaluate the `impl`
