@@ -325,8 +325,12 @@ class StructValue : public Value {
 // A value of a nominal class type, i.e., an object.
 class NominalClassValue : public Value {
  public:
-  NominalClassValue(Nonnull<const Value*> type, Nonnull<const Value*> inits)
-      : Value(Kind::NominalClassValue), type_(type), inits_(inits) {}
+  NominalClassValue(Nonnull<const Value*> type, Nonnull<const Value*> inits,
+                    std::optional<Nonnull<const NominalClassValue*>> base)
+      : Value(Kind::NominalClassValue),
+        type_(type),
+        inits_(inits),
+        base_(base) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassValue;
@@ -334,10 +338,16 @@ class NominalClassValue : public Value {
 
   auto type() const -> const Value& { return *type_; }
   auto inits() const -> const Value& { return *inits_; }
+  auto base() const -> std::optional<Nonnull<const NominalClassValue*>> {
+    return base_;
+  }
+
+  static const std::string base_field;
 
  private:
   Nonnull<const Value*> type_;
   Nonnull<const Value*> inits_;  // The initializing StructValue.
+  std::optional<Nonnull<const NominalClassValue*>> base_;
 };
 
 // An alternative constructor value.

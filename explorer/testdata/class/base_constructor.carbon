@@ -3,8 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: 1
+// CHECK:STDOUT: 2
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -18,7 +21,6 @@ base class A {
 class B extends A {
   fn Create() -> Self {
     // Note: This syntax is supported per the design, but currently XFAIL for the explorer.
-    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_base_constructor.carbon:[[@LINE+1]]: error converting struct to class: using the result of a function call for the `.base` field is not supported yet.
     return {.base = A.Create(), .value_b = 2};
   }
   var value_b: i32;

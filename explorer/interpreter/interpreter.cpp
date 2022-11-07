@@ -22,6 +22,7 @@
 #include "explorer/interpreter/action.h"
 #include "explorer/interpreter/action_stack.h"
 #include "explorer/interpreter/stack.h"
+#include "explorer/interpreter/value.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Error.h"
@@ -102,6 +103,12 @@ class Interpreter {
   auto Convert(Nonnull<const Value*> value,
                Nonnull<const Value*> destination_type,
                SourceLocation source_loc) -> ErrorOr<Nonnull<const Value*>>;
+
+  // Instantiate a class and its base class(es) from an init struct
+  auto InstantiateClassWithBase(Nonnull<const StructValue*> init,
+                                Nonnull<const NominalClassType*> class_type,
+                                SourceLocation source_loc)
+      -> ErrorOr<Nonnull<NominalClassValue*>>;
 
   // Evaluate an expression immediately, recursively, and return its result.
   //
@@ -604,7 +611,8 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Bindings*> bindings,
           InstantiateBindings(&class_type.bindings(), source_loc));
-      return arena_->New<NominalClassType>(&class_type.declaration(), bindings);
+      return arena_->New<NominalClassType>(&class_type.declaration(), bindings,
+                                           class_type.base());
     }
     case Value::Kind::ChoiceType: {
       const auto& choice_type = cast<ChoiceType>(*type);
@@ -650,6 +658,51 @@ auto Interpreter::InstantiateWitness(Nonnull<const Witness*> witness)
       Nonnull<const Value*> value,
       EvalRecursively(std::make_unique<WitnessAction>(witness)));
   return cast<Witness>(value);
+}
+
+auto Interpreter::InstantiateClassWithBase(
+    Nonnull<const StructValue*> init_struct,
+    Nonnull<const NominalClassType*> class_type, SourceLocation source_loc)
+    -> ErrorOr<Nonnull<NominalClassValue*>> {
+  std::vector<NamedValue> struct_values;
+  std::optional<Nonnull<const NominalClassValue*>> base_instance;
+  for (const auto& field : init_struct->elements()) {
+    if (field.name == NominalClassValue::base_field) {
+      if (!class_type->base().has_value()) {
+        CARBON_FATAL() << "Invalid 'base' field for class '"
+                       << class_type->declaration().name()
+                       << "' without base class.";
+      }
+      switch (field.value->kind()) {
+        case Value::Kind::NominalClassValue: {
+          base_instance = cast<NominalClassValue>(field.value);
+          break;
+        }
+        case Value::Kind::StructValue: {
+          CARBON_ASSIGN_OR_RETURN(
+              auto base,
+              Convert(field.value, class_type->base().value(), source_loc));
+          base_instance = cast<NominalClassValue>(base);
+          break;
+        }
+        default: {
+          CARBON_FATAL()
+              << "Unhandled base value type while initializing class '"
+              << class_type->declaration().name() << "' from a struct";
+        }
+      }
+    } else {
+      struct_values.push_back(field);
+    }
+  }
+  // Instantiate the `destination_type` to obtain the runtime
+  // type of the object.
+  CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inst_class,
+                          InstantiateType(class_type, source_loc));
+  auto* converted_init_struct =
+      arena_->New<StructValue>(std::move(struct_values));
+  return arena_->New<NominalClassValue>(inst_class, converted_init_struct,
+                                        base_instance);
 }
 
 auto Interpreter::Convert(Nonnull<const Value*> value,
@@ -720,12 +773,12 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
           return arena_->New<StructValue>(std::move(new_elements));
         }
         case Value::Kind::NominalClassType: {
-          // Instantiate the `destination_type` to obtain the runtime
-          // type of the object.
           CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Value*> inst_dest,
-              InstantiateType(destination_type, source_loc));
-          return arena_->New<NominalClassValue>(inst_dest, value);
+              auto class_value,
+              InstantiateClassWithBase(cast<StructValue>(value),
+                                       cast<NominalClassType>(destination_type),
+                                       source_loc));
+          return class_value;
         }
         case Value::Kind::TypeType:
         case Value::Kind::ConstraintType:

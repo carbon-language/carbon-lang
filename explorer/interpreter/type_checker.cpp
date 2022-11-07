@@ -453,8 +453,9 @@ auto TypeChecker::FieldTypesWithParents(
   auto fields = FieldTypes(class_type);
   if (class_type.base().has_value()) {
     auto base_fields = FieldTypesWithParents(*class_type.base().value());
-    fields.emplace_back(NamedValue{
-        .name = "base", .value = (new StructType(std::move(base_fields)))});
+    fields.emplace_back(
+        NamedValue{.name = NominalClassValue::base_field,
+                   .value = (new StructType(std::move(base_fields)))});
   }
   return fields;
 }
@@ -464,9 +465,10 @@ auto TypeChecker::StructImplicitlyConvertibleToClass(
     const ImplScope& impl_scope, bool allow_user_defined_conversions) const
     -> bool {
   std::vector<NamedValue> struct_fields{source_struct.fields()};
-  const auto base_it =
-      std::find_if(struct_fields.begin(), struct_fields.end(),
-                   [](const auto& field) { return field.name == "base"; });
+  const auto base_it = std::find_if(
+      struct_fields.begin(), struct_fields.end(), [](const auto& field) {
+        return field.name == NominalClassValue::base_field;
+      });
   std::optional<const Value*> base_value;
   if (base_it != struct_fields.end()) {
     base_value = base_it->value;
@@ -620,49 +622,6 @@ auto TypeChecker::IsImplicitlyConvertible(
          impl_scope.Resolve(*iface_type, source, source_loc, *this).ok();
 }
 
-auto TypeChecker::FlattenClassInitStruct(SourceLocation source_loc,
-                                         const ImplScope& impl_scope,
-                                         Nonnull<StructLiteral*> source)
-    -> ErrorOr<Nonnull<Expression*>> {
-  std::vector<FieldInitializer> flattened_content;
-  std::optional<llvm::MutableArrayRef<FieldInitializer>> next_fields{
-      source->fields()};
-  while (next_fields.has_value()) {
-    auto fields = next_fields.value();
-    next_fields.reset();
-    for (auto& field : fields) {
-      if (field.name() == "base") {
-        switch (field.expression().kind()) {
-          case ExpressionKind::StructLiteral:
-            // TODO: Push back class name to associate to NamedValue?
-            next_fields = cast<StructLiteral>(field.expression()).fields();
-            break;
-          case ExpressionKind::StructTypeLiteral:
-            // Empty struct
-            break;
-          case ExpressionKind::CallExpression:
-            return ProgramError(source_loc)
-                   << "error converting struct to class: using the result of a "
-                      "function call for the `.base` field "
-                      "is not supported yet.";
-          default:
-            return ProgramError(source_loc)
-                   << "error converting struct to class: the `.base` field "
-                      "refers to an unsupported value";
-        }
-      } else {
-        // TODO: Does field with identical name already exist??
-        flattened_content.push_back(
-            FieldInitializer{field.name(), &field.expression()});
-      }
-    }
-  }
-  Nonnull<Expression*> flattened_exp =
-      arena_->New<StructLiteral>(source->source_loc(), flattened_content);
-  CARBON_RETURN_IF_ERROR(TypeCheckExp(flattened_exp, impl_scope));
-  return flattened_exp;
-}
-
 auto TypeChecker::ImplicitlyConvert(std::string_view context,
                                     const ImplScope& impl_scope,
                                     Nonnull<Expression*> source,
@@ -719,14 +678,14 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
       return source;
     }
 
-    if (source->kind() == ExpressionKind::StructLiteral &&
-        destination->kind() == Value::Kind::NominalClassType) {
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<Expression*> converted,
-          FlattenClassInitStruct(source->source_loc(), impl_scope,
-                                 cast<StructLiteral>(source)));
-      return converted;
-    }
+    // if (source->kind() == ExpressionKind::StructLiteral &&
+    //     destination->kind() == Value::Kind::NominalClassType) {
+    //   CARBON_ASSIGN_OR_RETURN(
+    //       Nonnull<Expression*> converted,
+    //       FlattenClassInitStruct(source->source_loc(), impl_scope,
+    //                              cast<StructLiteral>(source)));
+    //   return converted;
+    // }
 
     // Perform the builtin conversion.
     return arena_->New<BuiltinConvertExpression>(source, destination);
@@ -1955,7 +1914,8 @@ auto TypeChecker::SubstituteImpl(const Bindings& bindings,
       Nonnull<const NominalClassType*> new_class_type =
           arena_->New<NominalClassType>(
               &class_type.declaration(),
-              substitute_into_bindings(&class_type.bindings()));
+              substitute_into_bindings(&class_type.bindings()),
+              class_type.base());
       return new_class_type;
     }
     case Value::Kind::InterfaceType: {
