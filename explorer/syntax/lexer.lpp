@@ -51,6 +51,7 @@ CLASS                "class"
 COLON                ":"
 COLON_BANG           ":!"
 COMMA                ","
+CONSTRAINT           "constraint"
 CONTINUATION         "__continuation"
 CONTINUATION_TYPE    "__Continuation"
 CONTINUE             "continue"
@@ -157,6 +158,7 @@ operand_start         [(A-Za-z0-9_\"]
 {COLON_BANG}          { return CARBON_SIMPLE_TOKEN(COLON_BANG);          }
 {COLON}               { return CARBON_SIMPLE_TOKEN(COLON);               }
 {COMMA}               { return CARBON_SIMPLE_TOKEN(COMMA);               }
+{CONSTRAINT}          { return CARBON_SIMPLE_TOKEN(CONSTRAINT);          }
 {CONTINUATION_TYPE}   { return CARBON_SIMPLE_TOKEN(CONTINUATION_TYPE);   }
 {CONTINUATION}        { return CARBON_SIMPLE_TOKEN(CONTINUATION);        }
 {CONTINUE}            { return CARBON_SIMPLE_TOKEN(CONTINUE);            }

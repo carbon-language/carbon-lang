@@ -487,15 +487,18 @@ class VariableDeclaration : public Declaration {
   ValueCategory value_category_;
 };
 
-class InterfaceDeclaration : public Declaration {
+// Base class for constraint and interface declarations. Interfaces and named
+// constraints behave the same in most respects, but only interfaces can
+// introduce new associated functions and constants.
+class ConstraintTypeDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
 
-  InterfaceDeclaration(Nonnull<Arena*> arena, SourceLocation source_loc,
-                       std::string name,
-                       std::optional<Nonnull<TuplePattern*>> params,
-                       std::vector<Nonnull<Declaration*>> members)
-      : Declaration(AstNodeKind::InterfaceDeclaration, source_loc),
+  ConstraintTypeDeclaration(AstNodeKind kind, Nonnull<Arena*> arena,
+                            SourceLocation source_loc, std::string name,
+                            std::optional<Nonnull<TuplePattern*>> params,
+                            std::vector<Nonnull<Declaration*>> members)
+      : Declaration(kind, source_loc),
         name_(std::move(name)),
         params_(params),
         self_type_(arena->New<SelfDeclaration>(source_loc)),
@@ -507,7 +510,7 @@ class InterfaceDeclaration : public Declaration {
   }
 
   static auto classof(const AstNode* node) -> bool {
-    return InheritsFromInterfaceDeclaration(node->kind());
+    return InheritsFromConstraintTypeDeclaration(node->kind());
   }
 
   auto name() const -> const std::string& { return name_; }
@@ -551,6 +554,42 @@ class InterfaceDeclaration : public Declaration {
   Nonnull<GenericBinding*> self_;
   std::vector<Nonnull<Declaration*>> members_;
   std::optional<Nonnull<const ConstraintType*>> constraint_type_;
+};
+
+// A `interface` declaration.
+class InterfaceDeclaration : public ConstraintTypeDeclaration {
+ public:
+  using ImplementsCarbonValueNode = void;
+
+  InterfaceDeclaration(Nonnull<Arena*> arena, SourceLocation source_loc,
+                       std::string name,
+                       std::optional<Nonnull<TuplePattern*>> params,
+                       std::vector<Nonnull<Declaration*>> members)
+      : ConstraintTypeDeclaration(AstNodeKind::InterfaceDeclaration, arena,
+                                  source_loc, std::move(name), params,
+                                  std::move(members)) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromInterfaceDeclaration(node->kind());
+  }
+};
+
+// A `constraint` declaration, such as `constraint X { impl as Y; }`.
+class ConstraintDeclaration : public ConstraintTypeDeclaration {
+ public:
+  using ImplementsCarbonValueNode = void;
+
+  ConstraintDeclaration(Nonnull<Arena*> arena, SourceLocation source_loc,
+                        std::string name,
+                        std::optional<Nonnull<TuplePattern*>> params,
+                        std::vector<Nonnull<Declaration*>> members)
+      : ConstraintTypeDeclaration(AstNodeKind::ConstraintDeclaration, arena,
+                                  source_loc, std::move(name), params,
+                                  std::move(members)) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromConstraintDeclaration(node->kind());
+  }
 };
 
 // An `extends` declaration in an interface.

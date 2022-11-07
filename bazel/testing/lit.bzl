@@ -22,14 +22,27 @@ def glob_lit_tests(driver, data, test_file_exts, **kwargs):
         exclude_directories = 1,
     )
     data.append("@llvm-project//llvm:lit")
+    suites = dict()
     for f in test_files:
         if f.split(".")[-1] not in test_file_exts:
             continue
+        test = "%s.test" % f
         native.py_test(
-            name = "%s.test" % f,
+            name = test,
             srcs = ["//bazel/testing:lit_test.py"],
             main = "//bazel/testing:lit_test.py",
             data = data + [driver, f],
             args = ["--package_name=%s" % native.package_name(), "--"],
             **kwargs
         )
+
+        # Cluster tests by directory in order to produce suites. For example,
+        # foo/bar/baz.carbon.test is added to suites :foo and :foo/bar.
+        dirs = f.split("/")[:-1]
+        for num_parts in range(1, 1 + len(dirs)):
+            dir = "/".join(dirs[:num_parts])
+            if dir not in suites:
+                suites[dir] = []
+            suites[dir].append(test)
+    for suite, tests in suites.items():
+        native.test_suite(name = suite, tests = tests)

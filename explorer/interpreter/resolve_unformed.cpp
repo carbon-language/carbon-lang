@@ -303,6 +303,7 @@ static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
     case DeclarationKind::MixDeclaration:
     case DeclarationKind::MixinDeclaration:
     case DeclarationKind::InterfaceDeclaration:
+    case DeclarationKind::ConstraintDeclaration:
     case DeclarationKind::ImplDeclaration:
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::VariableDeclaration:
