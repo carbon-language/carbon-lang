@@ -678,15 +678,6 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
       return source;
     }
 
-    // if (source->kind() == ExpressionKind::StructLiteral &&
-    //     destination->kind() == Value::Kind::NominalClassType) {
-    //   CARBON_ASSIGN_OR_RETURN(
-    //       Nonnull<Expression*> converted,
-    //       FlattenClassInitStruct(source->source_loc(), impl_scope,
-    //                              cast<StructLiteral>(source)));
-    //   return converted;
-    // }
-
     // Perform the builtin conversion.
     return arena_->New<BuiltinConvertExpression>(source, destination);
   }
