@@ -341,13 +341,6 @@ class TypeChecker {
   auto FieldTypesWithBase(const NominalClassType& class_type) const
       -> std::vector<NamedValue>;
 
-  // Flattens a nested struct used for class initialization that uses the
-  // `.base=` attribute
-  auto FlattenClassInitStruct(SourceLocation source_loc,
-                              const ImplScope& impl_scope,
-                              Nonnull<StructLiteral*> source)
-      -> ErrorOr<Nonnull<Expression*>>;
-
   // Returns true if source_fields and destination_fields contain the same set
   // of names, and each value in source_fields is implicitly convertible to
   // the corresponding value in destination_fields. All values in both arguments
