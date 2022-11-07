@@ -457,11 +457,11 @@ auto TypeChecker::FieldTypes(const NominalClassType& class_type) const
   return field_types;
 }
 
-auto TypeChecker::FieldTypesWithParents(
-    const NominalClassType& class_type) const -> std::vector<NamedValue> {
+auto TypeChecker::FieldTypesWithBase(const NominalClassType& class_type) const
+    -> std::vector<NamedValue> {
   auto fields = FieldTypes(class_type);
   if (class_type.base().has_value()) {
-    auto base_fields = FieldTypesWithParents(*class_type.base().value());
+    auto base_fields = FieldTypesWithBase(*class_type.base().value());
     fields.emplace_back(
         NamedValue{.name = NominalClassValue::base_field,
                    .value = (new StructType(std::move(base_fields)))});

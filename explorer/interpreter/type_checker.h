@@ -338,7 +338,7 @@ class TypeChecker {
       -> std::vector<NamedValue>;
 
   // Returns the field names and types of the class and its parents.
-  auto FieldTypesWithParents(const NominalClassType& class_type) const
+  auto FieldTypesWithBase(const NominalClassType& class_type) const
       -> std::vector<NamedValue>;
 
   // Flattens a nested struct used for class initialization that uses the
