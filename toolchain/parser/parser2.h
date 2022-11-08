@@ -168,6 +168,12 @@ class Parser2 {
     return PositionKind() == kind;
   }
 
+  // Pops the state and keeps the value for inspection.
+  auto PopState() -> StateStackEntry { return state_stack_.pop_back_val(); }
+
+  // Pops the state and discards it.
+  auto PopAndDiscardState() -> void { state_stack_.pop_back(); }
+
   // Pushes a new state with the current position for context.
   auto PushState(ParserState state) -> void {
     PushState(StateStackEntry(state, *position_, tree_.size()));
@@ -198,16 +204,8 @@ class Parser2 {
     state_stack_.push_back(state);
   }
 
-  // Pops the state and keeps the value for inspection.
-  auto PopState() -> StateStackEntry { return state_stack_.pop_back_val(); }
-
-  // Pops the state and discards it.
-  auto PopAndDiscardState() -> void { state_stack_.pop_back(); }
-
   // Propagates an error up the state stack, to the parent state.
   auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }
-
-  auto HandleExpressionAsOperator(PrecedenceGroup ambient_precedence) -> void;
 
   // When handling errors before the start of the definition, treat it as a
   // declaration. Recover to a semicolon when it makes sense as a possible

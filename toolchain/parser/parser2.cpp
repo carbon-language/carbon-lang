@@ -239,7 +239,7 @@ auto Parser2::HandleCodeBlock() -> void {
   PushState(ParserState::CodeBlockFinish());
   if (ConsumeAndAddLeafNodeIf(TokenKind::OpenCurlyBrace(),
                               ParseNodeKind::CodeBlockStart())) {
-    PushState(ParserState::StatementScope());
+    PushState(ParserState::StatementScopeLoop());
   } else {
     AddLeafNode(ParseNodeKind::CodeBlockStart(), *position_,
                 /*has_error=*/true);
@@ -406,6 +406,7 @@ auto Parser2::HandleCodeBlockFinishState() -> void {
 auto Parser2::HandleDeclarationState() -> void {
   // This maintains the current state unless we're at the end of the file.
 
+  // TODO: INCOMPLETE
   switch (PositionKind()) {
     case TokenKind::EndOfFile(): {
       PopAndDiscardState();
@@ -436,46 +437,43 @@ auto Parser2::HandleDeclarationState() -> void {
   }
 }
 
-/*
-auto ParseTree::Parser::ParseDesignatorExpression(SubtreeStart start,
-                                                  ParseNodeKind kind,
-                                                  bool has_errors)
-    -> llvm::Optional<Node> {
+auto Parser2::HandleDesignatorExpressionState() -> void {
+  auto state = PopState();
+
   // `.` identifier
-  auto dot = Consume(TokenKind::Period());
-  auto name = ConsumeIf(TokenKind::Identifier());
-  if (name) {
-    AddLeafNode(ParseNodeKind::DesignatedName(), *name);
-  } else {
+  auto dot = ConsumeIf(TokenKind::Period());
+  CARBON_CHECK(dot);
+  if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
+                               ParseNodeKind::DesignatedName())) {
     CARBON_DIAGNOSTIC(ExpectedIdentifierAfterDot, Error,
                       "Expected identifier after `.`.");
     emitter_.Emit(*position_, ExpectedIdentifierAfterDot);
     // If we see a keyword, assume it was intended to be the designated name.
     // TODO: Should keywords be valid in designators?
-    if (NextTokenKind().IsKeyword()) {
-      name = Consume(NextTokenKind());
-      auto name_node = AddLeafNode(ParseNodeKind::DesignatedName(), *name);
-      MarkNodeError(name_node);
+    if (PositionKind().IsKeyword()) {
+      AddLeafNode(ParseNodeKind::DesignatedName(), *position_,
+                  /*has_error=*/true);
+      ++position_;
     } else {
-      has_errors = true;
+      state.has_error = true;
+      ReturnErrorOnState();
     }
   }
 
-  Node result = AddNode(kind, dot, start, has_errors);
-  return name ? result : llvm::Optional<Node>();
+  AddNode(ParseNodeKind::DesignatorExpression(), *dot, state.subtree_start,
+          state.has_error);
 }
-*/
 
 auto Parser2::HandleExpressionInPostfixState() -> void {
   PopAndDiscardState();
 
-  // Regardless of success or failure, we'll continue to the Resume state.
-  PushState(ParserState::ExpressionInPostfixResume());
+  // Regardless of success or failure, we'll continue to the Loop state.
+  PushState(ParserState::ExpressionInPostfixLoop());
 
   // Parses a primary expression, which is either a terminal portion of an
   // expression tree, such as an identifier or literal, or a parenthesized
   // expression.
-  // TODO: Handle OpenParen and OpenCurlyBrace.
+  // TODO: INCOMPLETE: Handle OpenParen and OpenCurlyBrace.
   switch (PositionKind()) {
     case TokenKind::Identifier():
       AddLeafNode(ParseNodeKind::NameReference(), *position_);
@@ -499,51 +497,28 @@ auto Parser2::HandleExpressionInPostfixState() -> void {
   ++position_;
 }
 
-auto Parser2::HandleExpressionInPostfixResumeState() -> void {
-  // This is a cyclic state that repeats, so the state is not popped.
+auto Parser2::HandleExpressionInPostfixLoopState() -> void {
+  // This is a cyclic state that repeats, so this state is typically pushed back
+  // on.
+  auto state = PopState();
 
   switch (PositionKind()) {
     case TokenKind::Period():
-      // expression = ParseDesignatorExpression(
-      //     start, ParseNodeKind::DesignatorExpression(), !expression);
-      CARBON_FATAL() << "TODO";
+      PushState(state);
+      state.state = ParserState::DesignatorExpression();
+      PushState(state);
       break;
 
     case TokenKind::OpenParen():
       // expression = ParseCallExpression(start, !expression);
-      CARBON_FATAL() << "TODO";
+      CARBON_FATAL() << "TODO: INCOMPLETE";
       break;
 
     default:
-      PopAndDiscardState();
+      if (state.has_error) {
+        ReturnErrorOnState();
+      }
       break;
-  }
-}
-
-auto Parser2::HandleExpressionAsOperator(PrecedenceGroup ambient_precedence)
-    -> void {
-  // Check for a prefix operator.
-  if (auto operator_precedence = PrecedenceGroup::ForLeading(PositionKind())) {
-    if (PrecedenceGroup::GetPriority(ambient_precedence,
-                                     *operator_precedence) !=
-        OperatorPriority::RightFirst) {
-      // The precedence rules don't permit this prefix operator in this
-      // context. Diagnose this, but carry on and parse it anyway.
-      emitter_.Emit(*position_, OperatorRequiresParentheses);
-    } else {
-      // Check that this operator follows the proper whitespace rules.
-      DiagnoseOperatorFixity(OperatorFixity::Prefix);
-    }
-
-    PushStateForExpressionLoop(ParserState::ExpressionLoopForPrefix(),
-                               ambient_precedence, *operator_precedence);
-    ++position_;
-    PushStateForExpression(*operator_precedence);
-  } else {
-    PushStateForExpressionLoop(ParserState::ExpressionLoop(),
-                               ambient_precedence,
-                               PrecedenceGroup::ForPostfixExpression());
-    PushState(ParserState::ExpressionInPostfix());
   }
 }
 
@@ -553,6 +528,9 @@ auto Parser2::HandleExpressionLoopState() -> void {
   auto trailing_operator =
       PrecedenceGroup::ForTrailing(PositionKind(), IsTrailingOperatorInfix());
   if (!trailing_operator) {
+    if (state.has_error) {
+      ReturnErrorOnState();
+    }
     return;
   }
   auto [operator_precedence, is_binary] = *trailing_operator;
@@ -565,6 +543,9 @@ auto Parser2::HandleExpressionLoopState() -> void {
       OperatorPriority::RightFirst) {
     // The precedence rules don't permit this operator in this context. Try
     // again in the enclosing expression context.
+    if (state.has_error) {
+      ReturnErrorOnState();
+    }
     return;
   }
 
@@ -590,9 +571,10 @@ auto Parser2::HandleExpressionLoopState() -> void {
     PushState(state);
     PushStateForExpression(operator_precedence);
   } else {
-    PushState(state);
     AddNode(ParseNodeKind::PostfixOperator(), state.token, state.subtree_start,
             state.has_error);
+    state.has_error = false;
+    PushState(state);
   }
 }
 
@@ -602,6 +584,7 @@ auto Parser2::HandleExpressionLoopForBinaryState() -> void {
   AddNode(ParseNodeKind::InfixOperator(), state.token, state.subtree_start,
           state.has_error);
   state.state = ParserState::ExpressionLoop();
+  state.has_error = false;
   PushState(state);
 }
 
@@ -611,6 +594,7 @@ auto Parser2::HandleExpressionLoopForPrefixState() -> void {
   AddNode(ParseNodeKind::PrefixOperator(), state.token, state.subtree_start,
           state.has_error);
   state.state = ParserState::ExpressionLoop();
+  state.has_error = false;
   PushState(state);
 }
 
@@ -619,7 +603,29 @@ auto Parser2::HandleExpressionState() -> void {
   // overload that uses pop_back instead of pop_back_val.
   auto state = PopState();
 
-  HandleExpressionAsOperator(state.ambient_precedence);
+  // Check for a prefix operator.
+  if (auto operator_precedence = PrecedenceGroup::ForLeading(PositionKind())) {
+    if (PrecedenceGroup::GetPriority(state.ambient_precedence,
+                                     *operator_precedence) !=
+        OperatorPriority::RightFirst) {
+      // The precedence rules don't permit this prefix operator in this
+      // context. Diagnose this, but carry on and parse it anyway.
+      emitter_.Emit(*position_, OperatorRequiresParentheses);
+    } else {
+      // Check that this operator follows the proper whitespace rules.
+      DiagnoseOperatorFixity(OperatorFixity::Prefix);
+    }
+
+    PushStateForExpressionLoop(ParserState::ExpressionLoopForPrefix(),
+                               state.ambient_precedence, *operator_precedence);
+    ++position_;
+    PushStateForExpression(*operator_precedence);
+  } else {
+    PushStateForExpressionLoop(ParserState::ExpressionLoop(),
+                               state.ambient_precedence,
+                               PrecedenceGroup::ForPostfixExpression());
+    PushState(ParserState::ExpressionInPostfix());
+  }
 }
 
 auto Parser2::HandleExpressionStatementFinishState() -> void {
@@ -749,7 +755,7 @@ auto Parser2::HandleFunctionSignatureFinishState() -> void {
       state.has_error = false;
       state.state = ParserState::FunctionDefinitionFinish();
       PushState(state);
-      PushState(ParserState::StatementScope());
+      PushState(ParserState::StatementScopeLoop());
       break;
     }
     default: {
@@ -783,7 +789,7 @@ auto Parser2::HandlePatternStart(PatternKind pattern_kind) -> void {
       break;
     }
     case PatternKind::Variable: {
-      CARBON_FATAL() << "TODO";
+      CARBON_FATAL() << "TODO: INCOMPLETE";
       break;
     }
   }
@@ -1050,7 +1056,7 @@ auto Parser2::HandleStatement(TokenKind token_kind) -> void {
   }
 }
 
-auto Parser2::HandleStatementScopeState() -> void {
+auto Parser2::HandleStatementScopeLoopState() -> void {
   // This maintains the current state until we're at the end of the scope.
 
   auto token_kind = PositionKind();

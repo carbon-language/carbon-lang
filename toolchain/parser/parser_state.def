@@ -21,6 +21,9 @@ CARBON_PARSER_STATE(CodeBlockFinish)
 // and so on.
 CARBON_PARSER_STATE(Declaration)
 
+// Handles a designator expression, such as `.z` in `x.(y.z)`.
+CARBON_PARSER_STATE(DesignatorExpression)
+
 // Handles processing of an expression.
 CARBON_PARSER_STATE(Expression)
 
@@ -29,11 +32,13 @@ CARBON_PARSER_STATE(ExpressionLoop)
 CARBON_PARSER_STATE(ExpressionLoopForBinary)
 CARBON_PARSER_STATE(ExpressionLoopForPrefix)
 
-// TODO
+// Handles the initial part of postfix expressions, such as an identifier or
+// literal value, then proceeds to the loop.
 CARBON_PARSER_STATE(ExpressionInPostfix)
 
-// TODO
-CARBON_PARSER_STATE(ExpressionInPostfixResume)
+// Handles looping through elements following the initial postfix expression,
+// such as designators or parenthesized parameters.
+CARBON_PARSER_STATE(ExpressionInPostfixLoop)
 
 // Handles the `;` for an expression statement, which is different from most
 // keyword statements.
@@ -102,6 +107,6 @@ CARBON_PARSER_STATE(PatternForFunctionParameter)
 CARBON_PARSER_STATE(PatternForFunctionParameterFinish)
 
 // Handles processing of statements within a scope.
-CARBON_PARSER_STATE(StatementScope)
+CARBON_PARSER_STATE(StatementScopeLoop)
 
 #undef CARBON_PARSER_STATE
