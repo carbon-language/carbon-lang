@@ -89,11 +89,17 @@ auto ParseTree::GetNodeText(Node n) const -> llvm::StringRef {
 }
 
 auto ParseTree::PrintNode(llvm::raw_ostream& output, Node n, int depth,
-                          bool adding_children) const -> bool {
+                          bool preorder) const -> bool {
   const auto& n_impl = node_impls_[n.index()];
   output.indent(2 * depth);
-  output << "{node_index: " << n.index_ << ", kind: '" << n_impl.kind.name()
-         << "', text: '" << tokens_->GetTokenText(n_impl.token) << "'";
+  output << "{";
+  // If children are being added, include node_index in order to disambiguate
+  // nodes.
+  if (preorder) {
+    output << "node_index : " << n.index_ << ", ";
+  }
+  output << "kind : '" << n_impl.kind.name() << "', text: '"
+         << tokens_->GetTokenText(n_impl.token) << "'";
 
   if (n_impl.has_error) {
     output << ", has_error: yes";
@@ -101,7 +107,7 @@ auto ParseTree::PrintNode(llvm::raw_ostream& output, Node n, int depth,
 
   if (n_impl.subtree_size > 1) {
     output << ", subtree_size: " << n_impl.subtree_size;
-    if (adding_children) {
+    if (preorder) {
       output << ", children: [\n";
       return true;
     }
@@ -146,9 +152,9 @@ auto ParseTree::Print(llvm::raw_ostream& output, bool preorder) const -> void {
 
   output << "[\n";
   // The parse tree is stored in postorder. The preorder can be constructed
-  // by reversing the order of each level of siblings within an RPO. The sibling
-  // iterators are directly built around RPO and so can be used with a stack to
-  // produce preorder.
+  // by reversing the order of each level of siblings within an RPO. The
+  // sibling iterators are directly built around RPO and so can be used with a
+  // stack to produce preorder.
 
   // The roots, like siblings, are in RPO (so reversed), but we add them in
   // order here because we'll pop off the stack effectively reversing then.
@@ -178,8 +184,8 @@ auto ParseTree::Print(llvm::raw_ostream& output, bool preorder) const -> void {
       output << "]}";
     }
 
-    // We always end with a comma and a new line as we'll move to the next node
-    // at whatever the current level ends up being.
+    // We always end with a comma and a new line as we'll move to the next
+    // node at whatever the current level ends up being.
     output << ",\n";
   }
   output << "]\n";

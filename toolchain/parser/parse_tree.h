@@ -223,10 +223,10 @@ class ParseTree {
   // should be used to actually parse the tokens into a tree.
   explicit ParseTree(TokenizedBuffer& tokens_arg) : tokens_(&tokens_arg) {}
 
-  // Prints a single node for Print(). Returns true when adding_children and
-  // there are children.
+  // Prints a single node for Print(). Returns true when preorder and there are
+  // children.
   auto PrintNode(llvm::raw_ostream& output, Node n, int depth,
-                 bool adding_children) const -> bool;
+                 bool preorder) const -> bool;
 
   // Depth-first postorder sequence of node implementation data.
   llvm::SmallVector<NodeImpl, 0> node_impls_;
