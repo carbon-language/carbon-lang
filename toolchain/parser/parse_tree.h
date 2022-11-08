@@ -112,14 +112,14 @@ class ParseTree {
   //
   // In both, a node is formatted as:
   //   ```
-  //   {node_index: 0, kind: 'foo', text: '...'}
+  //   {kind: 'foo', text: '...'}
   //   ```
   //
   // The top level is formatted as an array of these nodes.
   //   ```
   //   [
-  //   {node_index: 0, kind: 'foo', text: '...'},
-  //   {node_index: 1, kind: 'foo', text: '...'},
+  //   {kind: 'foo', text: '...'},
+  //   {kind: 'foo', text: '...'},
   //   ...
   //   ]
   //   ```
@@ -127,13 +127,13 @@ class ParseTree {
   // In postorder, nodes are indented in order to indicate depth. For example, a
   // node with two children, one of them with an error:
   //   ```
-  //     {node_index: 0, kind: 'bar', text: '...', has_error: yes},
-  //     {node_index: 1, kind: 'baz', text: '...'}
-  //   {node_index: 2, kind: 'foo', text: '...', subtree_size: 2}
+  //     {kind: 'bar', text: '...', has_error: yes},
+  //     {kind: 'baz', text: '...'}
+  //   {kind: 'foo', text: '...', subtree_size: 2}
   //   ```
   //
-  // In preorder, nodes are marked as children. For example, a node with two
-  // children, one of them with an error:
+  // In preorder, nodes are marked as children with postorder (storage) index.
+  // For example, a node with two children, one of them with an error:
   //   ```
   //   {node_index: 2, kind: 'foo', text: '...', subtree_size: 2, children: [
   //     {node_index: 0, kind: 'bar', text: '...', has_error: yes},
