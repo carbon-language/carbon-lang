@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-name: Leads questions
+name: Leads question
 description: >
   Ask the leads for feedback on an important issue, such as a language design
   choice.
