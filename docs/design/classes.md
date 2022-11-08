@@ -1021,11 +1021,12 @@ class List {
 }
 ```
 
-An out-of-line function definition's full signature is evaluated as if in-scope.
-For example:
+An out-of-line function definition's parameters, return type, and body are
+evaluated as if in-scope. For example:
 
 ```carbon
-// ✅ OK: Performs unqualified name lookup into `List` for `Iterator`.
+// ✅ OK: The return type performs unqualified name lookup into `List` for
+// `Iterator`.
 fn List.Iterate() -> Iterator {
   ...
 }
