@@ -464,6 +464,36 @@ auto Parser2::HandleDesignatorExpressionState() -> void {
           state.has_error);
 }
 
+auto Parser2::HandleExpressionState() -> void {
+  // TODO: This is temporary, we should need this state. If not, maybe add an
+  // overload that uses pop_back instead of pop_back_val.
+  auto state = PopState();
+
+  // Check for a prefix operator.
+  if (auto operator_precedence = PrecedenceGroup::ForLeading(PositionKind())) {
+    if (PrecedenceGroup::GetPriority(state.ambient_precedence,
+                                     *operator_precedence) !=
+        OperatorPriority::RightFirst) {
+      // The precedence rules don't permit this prefix operator in this
+      // context. Diagnose this, but carry on and parse it anyway.
+      emitter_.Emit(*position_, OperatorRequiresParentheses);
+    } else {
+      // Check that this operator follows the proper whitespace rules.
+      DiagnoseOperatorFixity(OperatorFixity::Prefix);
+    }
+
+    PushStateForExpressionLoop(ParserState::ExpressionLoopForPrefix(),
+                               state.ambient_precedence, *operator_precedence);
+    ++position_;
+    PushStateForExpression(*operator_precedence);
+  } else {
+    PushStateForExpressionLoop(ParserState::ExpressionLoop(),
+                               state.ambient_precedence,
+                               PrecedenceGroup::ForPostfixExpression());
+    PushState(ParserState::ExpressionInPostfix());
+  }
+}
+
 auto Parser2::HandleExpressionInPostfixState() -> void {
   PopAndDiscardState();
 
@@ -596,36 +626,6 @@ auto Parser2::HandleExpressionLoopForPrefixState() -> void {
   state.state = ParserState::ExpressionLoop();
   state.has_error = false;
   PushState(state);
-}
-
-auto Parser2::HandleExpressionState() -> void {
-  // TODO: This is temporary, we should need this state. If not, maybe add an
-  // overload that uses pop_back instead of pop_back_val.
-  auto state = PopState();
-
-  // Check for a prefix operator.
-  if (auto operator_precedence = PrecedenceGroup::ForLeading(PositionKind())) {
-    if (PrecedenceGroup::GetPriority(state.ambient_precedence,
-                                     *operator_precedence) !=
-        OperatorPriority::RightFirst) {
-      // The precedence rules don't permit this prefix operator in this
-      // context. Diagnose this, but carry on and parse it anyway.
-      emitter_.Emit(*position_, OperatorRequiresParentheses);
-    } else {
-      // Check that this operator follows the proper whitespace rules.
-      DiagnoseOperatorFixity(OperatorFixity::Prefix);
-    }
-
-    PushStateForExpressionLoop(ParserState::ExpressionLoopForPrefix(),
-                               state.ambient_precedence, *operator_precedence);
-    ++position_;
-    PushStateForExpression(*operator_precedence);
-  } else {
-    PushStateForExpressionLoop(ParserState::ExpressionLoop(),
-                               state.ambient_precedence,
-                               PrecedenceGroup::ForPostfixExpression());
-    PushState(ParserState::ExpressionInPostfix());
-  }
 }
 
 auto Parser2::HandleExpressionStatementFinishState() -> void {
