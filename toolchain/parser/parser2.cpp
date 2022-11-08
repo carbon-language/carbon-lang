@@ -582,18 +582,26 @@ auto Parser2::HandleExpressionResumeState() -> void {
   state.token = *position_;
   ++position_;
 
+  state.lhs_precedence = operator_precedence;
+
   if (is_binary) {
-    CARBON_FATAL() << "binary";
-    /*
-    auto rhs = ParseOperatorExpression(operator_precedence);
-    AddNode(ParseNodeKind::InfixOperator(), state.token, state.subtree_start,
-                  state.has_error || !rhs);
-    */
+    state.state = ParserState::ExpressionResumeForBinary();
+    PushState(state);
+    PushStateForExpression(ParserState::Expression(), operator_precedence,
+                           state.lhs_precedence);
   } else {
+    PushState(state);
     AddNode(ParseNodeKind::PostfixOperator(), state.token, state.subtree_start,
             state.has_error);
   }
-  state.lhs_precedence = operator_precedence;
+}
+
+auto Parser2::HandleExpressionResumeForBinaryState() -> void {
+  auto state = PopState();
+
+  AddNode(ParseNodeKind::InfixOperator(), state.token, state.subtree_start,
+          state.has_error);
+  state.state = ParserState::ExpressionResume();
   PushState(state);
 }
 
@@ -606,94 +614,12 @@ auto Parser2::HandleExpressionResumeForPrefixState() -> void {
   PushState(state);
 }
 
-/*
-auto ParseTree::Parser::ParseOperatorExpression(
-    PrecedenceGroup ambient_precedence) -> llvm::Optional<Node> {
-  // May be omitted a couple different ways here.
-  CARBON_DIAGNOSTIC(
-      OperatorRequiresParentheses, Error,
-      "Parentheses are required to disambiguate operator precedence.");
-
-  CARBON_RETURN_IF_STACK_LIMITED(llvm::None);
-  auto start = GetSubtreeStartPosition();
-
-  llvm::Optional<Node> lhs;
-  PrecedenceGroup lhs_precedence = PrecedenceGroup::ForPostfixExpression();
-
-  // Check for a prefix operator.
-  if (auto operator_precedence = PrecedenceGroup::ForLeading(NextTokenKind());
-      !operator_precedence) {
-    lhs = ParsePostfixExpression();
-  } else {
-    if (PrecedenceGroup::GetPriority(ambient_precedence,
-                                     *operator_precedence) !=
-        OperatorPriority::RightFirst) {
-      // The precedence rules don't permit this prefix operator in this
-      // context. Diagnose this, but carry on and parse it anyway.
-      emitter_.Emit(*position_, OperatorRequiresParentheses);
-    } else {
-      // Check that this operator follows the proper whitespace rules.
-      DiagnoseOperatorFixity(OperatorFixity::Prefix);
-    }
-
-    auto operator_token = Consume(NextTokenKind());
-    bool has_errors = !ParseOperatorExpression(*operator_precedence);
-    lhs = AddNode(ParseNodeKind::PrefixOperator(), operator_token, start,
-                  has_errors);
-    lhs_precedence = *operator_precedence;
-  }
-
-  // Consume a sequence of infix and postfix operators.
-  while (auto trailing_operator = PrecedenceGroup::ForTrailing(
-             NextTokenKind(), IsTrailingOperatorInfix())) {
-    auto [operator_precedence, is_binary] = *trailing_operator;
-
-    // TODO: If this operator is ambiguous with either the ambient precedence
-    // or the LHS precedence, and there's a variant with a different fixity
-    // that would work, use that one instead for error recovery.
-    if (PrecedenceGroup::GetPriority(ambient_precedence, operator_precedence) !=
-        OperatorPriority::RightFirst) {
-      // The precedence rules don't permit this operator in this context. Try
-      // again in the enclosing expression context.
-      return lhs;
-    }
-
-    if (PrecedenceGroup::GetPriority(lhs_precedence, operator_precedence) !=
-        OperatorPriority::LeftFirst) {
-      // Either the LHS operator and this operator are ambiguous, or the
-      // LHS operator is a unary operator that can't be nested within
-      // this operator. Either way, parentheses are required.
-      emitter_.Emit(*position_, OperatorRequiresParentheses);
-      lhs = llvm::None;
-    } else {
-      DiagnoseOperatorFixity(is_binary ? OperatorFixity::Infix
-                                       : OperatorFixity::Postfix);
-    }
-
-    auto operator_token = Consume(NextTokenKind());
-
-    if (is_binary) {
-      auto rhs = ParseOperatorExpression(operator_precedence);
-      lhs = AddNode(ParseNodeKind::InfixOperator(), operator_token, start,
-                    / *has_error=* /!lhs || !rhs);
-    } else {
-      lhs = AddNode(ParseNodeKind::PostfixOperator(), operator_token, start,
-                    / *has_error=* /!lhs);
-    }
-    lhs_precedence = operator_precedence;
-  }
-
-  return lhs;
-}
-*/
-
 auto Parser2::HandleExpressionState() -> void {
   // TODO: This is temporary, we should need this state. If not, maybe add an
   // overload that uses pop_back instead of pop_back_val.
   auto state = PopState();
-  (void)state;
 
-  HandleExpressionAsOperator(PrecedenceGroup::ForTopLevelExpression());
+  HandleExpressionAsOperator(state.ambient_precedence);
 }
 
 auto Parser2::HandleExpressionForTypeState() -> void {

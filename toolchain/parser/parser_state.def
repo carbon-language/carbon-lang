@@ -26,6 +26,7 @@ CARBON_PARSER_STATE(Expression)
 
 // Handles processing of an expression.
 CARBON_PARSER_STATE(ExpressionResume)
+CARBON_PARSER_STATE(ExpressionResumeForBinary)
 CARBON_PARSER_STATE(ExpressionResumeForPrefix)
 
 // TODO
