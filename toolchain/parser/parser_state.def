@@ -25,18 +25,15 @@ CARBON_PARSER_STATE(Declaration)
 CARBON_PARSER_STATE(Expression)
 
 // Handles processing of an expression.
-CARBON_PARSER_STATE(ExpressionResume)
-CARBON_PARSER_STATE(ExpressionResumeForBinary)
-CARBON_PARSER_STATE(ExpressionResumeForPrefix)
+CARBON_PARSER_STATE(ExpressionLoop)
+CARBON_PARSER_STATE(ExpressionLoopForBinary)
+CARBON_PARSER_STATE(ExpressionLoopForPrefix)
 
 // TODO
 CARBON_PARSER_STATE(ExpressionInPostfix)
 
 // TODO
 CARBON_PARSER_STATE(ExpressionInPostfixResume)
-
-// As with Expression, but specifically uses the Type precedence grouping.
-CARBON_PARSER_STATE(ExpressionForType)
 
 // Handles the `;` for an expression statement, which is different from most
 // keyword statements.

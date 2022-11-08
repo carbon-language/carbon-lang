@@ -173,10 +173,17 @@ class Parser2 {
     PushState(StateStackEntry(state, *position_, tree_.size()));
   }
 
-  // Pushes a new state with precedence for expressions.
-  auto PushStateForExpression(ParserState state,
-                              PrecedenceGroup ambient_precedence,
-                              PrecedenceGroup lhs_precedence) -> void {
+  // Pushes a new expression state with specific precedence.
+  auto PushStateForExpression(PrecedenceGroup ambient_precedence) -> void {
+    PushState(StateStackEntry(ParserState::Expression(), ambient_precedence,
+                              PrecedenceGroup::ForTopLevelExpression(),
+                              *position_, tree_.size()));
+  }
+
+  // Pushes a new state with detailed precedence for expression resume states.
+  auto PushStateForExpressionLoop(ParserState state,
+                                  PrecedenceGroup ambient_precedence,
+                                  PrecedenceGroup lhs_precedence) -> void {
     PushState(StateStackEntry(state, ambient_precedence, lhs_precedence,
                               *position_, tree_.size()));
   }
@@ -213,7 +220,7 @@ class Parser2 {
 
   // Resumes processing of an expression, with the recently processed expression
   // indicated by the passed node_kind.
-  auto HandleExpressionResume(StateStackEntry state) -> void;
+  auto HandleExpressionLoop(StateStackEntry state) -> void;
 
   // Handles parsing of a function parameter list, including commas and the
   // close paren.

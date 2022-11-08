@@ -535,18 +535,19 @@ auto Parser2::HandleExpressionAsOperator(PrecedenceGroup ambient_precedence)
       DiagnoseOperatorFixity(OperatorFixity::Prefix);
     }
 
-    PushStateForExpression(ParserState::ExpressionResumeForPrefix(),
-                           ambient_precedence, *operator_precedence);
+    PushStateForExpressionLoop(ParserState::ExpressionLoopForPrefix(),
+                               ambient_precedence, *operator_precedence);
     ++position_;
-    PushState(ParserState::Expression());
+    PushStateForExpression(*operator_precedence);
   } else {
-    PushStateForExpression(ParserState::ExpressionResume(), ambient_precedence,
-                           PrecedenceGroup::ForPostfixExpression());
+    PushStateForExpressionLoop(ParserState::ExpressionLoop(),
+                               ambient_precedence,
+                               PrecedenceGroup::ForPostfixExpression());
     PushState(ParserState::ExpressionInPostfix());
   }
 }
 
-auto Parser2::HandleExpressionResumeState() -> void {
+auto Parser2::HandleExpressionLoopState() -> void {
   auto state = PopState();
 
   auto trailing_operator =
@@ -585,10 +586,9 @@ auto Parser2::HandleExpressionResumeState() -> void {
   state.lhs_precedence = operator_precedence;
 
   if (is_binary) {
-    state.state = ParserState::ExpressionResumeForBinary();
+    state.state = ParserState::ExpressionLoopForBinary();
     PushState(state);
-    PushStateForExpression(ParserState::Expression(), operator_precedence,
-                           state.lhs_precedence);
+    PushStateForExpression(operator_precedence);
   } else {
     PushState(state);
     AddNode(ParseNodeKind::PostfixOperator(), state.token, state.subtree_start,
@@ -596,21 +596,21 @@ auto Parser2::HandleExpressionResumeState() -> void {
   }
 }
 
-auto Parser2::HandleExpressionResumeForBinaryState() -> void {
+auto Parser2::HandleExpressionLoopForBinaryState() -> void {
   auto state = PopState();
 
   AddNode(ParseNodeKind::InfixOperator(), state.token, state.subtree_start,
           state.has_error);
-  state.state = ParserState::ExpressionResume();
+  state.state = ParserState::ExpressionLoop();
   PushState(state);
 }
 
-auto Parser2::HandleExpressionResumeForPrefixState() -> void {
+auto Parser2::HandleExpressionLoopForPrefixState() -> void {
   auto state = PopState();
 
   AddNode(ParseNodeKind::PrefixOperator(), state.token, state.subtree_start,
           state.has_error);
-  state.state = ParserState::ExpressionResume();
+  state.state = ParserState::ExpressionLoop();
   PushState(state);
 }
 
@@ -620,15 +620,6 @@ auto Parser2::HandleExpressionState() -> void {
   auto state = PopState();
 
   HandleExpressionAsOperator(state.ambient_precedence);
-}
-
-auto Parser2::HandleExpressionForTypeState() -> void {
-  // TODO: This is temporary, we should need this state. If not, maybe add an
-  // overload that uses pop_back instead of pop_back_val.
-  auto state = PopState();
-  (void)state;
-
-  HandleExpressionAsOperator(PrecedenceGroup::ForType());
 }
 
 auto Parser2::HandleExpressionStatementFinishState() -> void {
@@ -729,7 +720,7 @@ auto Parser2::HandleFunctionAfterParameterListState() -> void {
   if (PositionIs(TokenKind::MinusGreater())) {
     PushState(ParserState::FunctionReturnTypeFinish());
     ++position_;
-    PushState(ParserState::ExpressionForType());
+    PushStateForExpression(PrecedenceGroup::ForType());
   }
 }
 
@@ -823,7 +814,7 @@ auto Parser2::HandlePatternStart(PatternKind pattern_kind) -> void {
   // node.
   state.token = *(position_ + 1);
   PushState(state);
-  PushState(ParserState::ExpressionForType());
+  PushStateForExpression(PrecedenceGroup::ForType());
   AddLeafNode(ParseNodeKind::DeclaredName(), *position_);
   position_ += 2;
 }
