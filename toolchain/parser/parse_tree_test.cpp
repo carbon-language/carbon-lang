@@ -156,22 +156,15 @@ TEST_F(ParseTreeTest, PrintPostorderAsYAML) {
   print_stream.flush();
 
   auto file = Yaml::SequenceValue{
+      Yaml::MappingValue{{"kind", "FunctionIntroducer"}, {"text", "fn"}},
+      Yaml::MappingValue{{"kind", "DeclaredName"}, {"text", "F"}},
+      Yaml::MappingValue{{"kind", "ParameterListEnd"}, {"text", ")"}},
       Yaml::MappingValue{
-          {"node_index", "0"}, {"kind", "FunctionIntroducer"}, {"text", "fn"}},
-      Yaml::MappingValue{
-          {"node_index", "1"}, {"kind", "DeclaredName"}, {"text", "F"}},
-      Yaml::MappingValue{
-          {"node_index", "2"}, {"kind", "ParameterListEnd"}, {"text", ")"}},
-      Yaml::MappingValue{{"node_index", "3"},
-                         {"kind", "ParameterList"},
-                         {"text", "("},
-                         {"subtree_size", "2"}},
-      Yaml::MappingValue{{"node_index", "4"},
-                         {"kind", "FunctionDeclaration"},
+          {"kind", "ParameterList"}, {"text", "("}, {"subtree_size", "2"}},
+      Yaml::MappingValue{{"kind", "FunctionDeclaration"},
                          {"text", ";"},
                          {"subtree_size", "5"}},
-      Yaml::MappingValue{
-          {"node_index", "5"}, {"kind", "FileEnd"}, {"text", ""}},
+      Yaml::MappingValue{{"kind", "FileEnd"}, {"text", ""}},
   };
 
   EXPECT_THAT(Yaml::Value::FromText(print_output), ElementsAre(file));
