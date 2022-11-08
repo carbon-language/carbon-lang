@@ -969,7 +969,6 @@ auto Parser2::HandleStatementIfThenBlockFinishState() -> void {
 
 auto Parser2::HandleStatementIfElseBlockFinishState() -> void {
   auto state = PopState();
-
   AddNode(ParseNodeKind::IfStatement(), state.token, state.subtree_start,
           state.has_error);
 }

@@ -88,13 +88,73 @@ auto ParseTree::GetNodeText(Node n) const -> llvm::StringRef {
   return tokens_->GetTokenText(node_impls_[n.index_].token);
 }
 
+auto ParseTree::PrintNode(llvm::raw_ostream& output, Node n, int depth,
+                          bool preorder) const -> bool {
+  const auto& n_impl = node_impls_[n.index()];
+  output.indent(2 * depth);
+  output << "{";
+  // If children are being added, include node_index in order to disambiguate
+  // nodes.
+  if (preorder) {
+    output << "node_index: " << n.index_ << ", ";
+  }
+  output << "kind: '" << n_impl.kind.name() << "', text: '"
+         << tokens_->GetTokenText(n_impl.token) << "'";
+
+  if (n_impl.has_error) {
+    output << ", has_error: yes";
+  }
+
+  if (n_impl.subtree_size > 1) {
+    output << ", subtree_size: " << n_impl.subtree_size;
+    if (preorder) {
+      output << ", children: [\n";
+      return true;
+    }
+  }
+  output << "}";
+  return false;
+}
+
 auto ParseTree::Print(llvm::raw_ostream& output) const -> void {
+  // Walk the tree just to calculate depths for each node.
+  llvm::SmallVector<int> indents;
+  indents.append(size(), 0);
+
+  llvm::SmallVector<std::pair<Node, int>, 16> node_stack;
+  for (Node n : roots()) {
+    node_stack.push_back({n, 0});
+  }
+
+  while (!node_stack.empty()) {
+    Node n;
+    int depth;
+    std::tie(n, depth) = node_stack.pop_back_val();
+    for (Node sibling_n : children(n)) {
+      indents[sibling_n.index()] = depth + 1;
+      node_stack.push_back({sibling_n, depth + 1});
+    }
+  }
+
   output << "[\n";
-  // The parse tree is stored in postorder, but the most natural order to
-  // visualize is preorder. This is a tree, so the preorder can be constructed
-  // by reversing the order of each level of siblings within an RPO. The sibling
-  // iterators are directly built around RPO and so can be used with a stack to
-  // produce preorder.
+  for (Node n : postorder()) {
+    PrintNode(output, n, indents[n.index()], /*adding_children=*/false);
+    output << ",\n";
+  }
+  output << "]\n";
+}
+
+auto ParseTree::Print(llvm::raw_ostream& output, bool preorder) const -> void {
+  if (!preorder) {
+    Print(output);
+    return;
+  }
+
+  output << "[\n";
+  // The parse tree is stored in postorder. The preorder can be constructed
+  // by reversing the order of each level of siblings within an RPO. The
+  // sibling iterators are directly built around RPO and so can be used with a
+  // stack to produce preorder.
 
   // The roots, like siblings, are in RPO (so reversed), but we add them in
   // order here because we'll pop off the stack effectively reversing then.
@@ -107,36 +167,15 @@ auto ParseTree::Print(llvm::raw_ostream& output) const -> void {
     Node n;
     int depth;
     std::tie(n, depth) = node_stack.pop_back_val();
-    const auto& n_impl = node_impls_[n.index()];
 
-    for (int unused_indent : llvm::seq(0, depth)) {
-      (void)unused_indent;
-      output << "  ";
-    }
-
-    output << "{node_index: " << n.index_ << ", kind: '" << n_impl.kind.name()
-           << "', text: '" << tokens_->GetTokenText(n_impl.token) << "'";
-
-    if (n_impl.has_error) {
-      output << ", has_error: yes";
-    }
-
-    if (n_impl.subtree_size > 1) {
-      output << ", subtree_size: " << n_impl.subtree_size;
-      // Has children, so we descend.
-      output << ", children: [\n";
-      // We append the children in order here as well because they will get
-      // reversed when popped off the stack.
+    if (PrintNode(output, n, depth, /*adding_children=*/true)) {
+      // Has children, so we descend. We append the children in order here as
+      // well because they will get reversed when popped off the stack.
       for (Node sibling_n : children(n)) {
         node_stack.push_back({sibling_n, depth + 1});
       }
       continue;
     }
-
-    // This node is finished, so close it up.
-    CARBON_CHECK(n_impl.subtree_size == 1)
-        << "Subtree size must always be a positive integer!";
-    output << "}";
 
     int next_depth = node_stack.empty() ? 0 : node_stack.back().second;
     CARBON_CHECK(next_depth <= depth) << "Cannot have the next depth increase!";
@@ -145,8 +184,8 @@ auto ParseTree::Print(llvm::raw_ostream& output) const -> void {
       output << "]}";
     }
 
-    // We always end with a comma and a new line as we'll move to the next node
-    // at whatever the current level ends up being.
+    // We always end with a comma and a new line as we'll move to the next
+    // node at whatever the current level ends up being.
     output << ",\n";
   }
   output << "]\n";

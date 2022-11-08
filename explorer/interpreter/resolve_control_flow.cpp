@@ -163,8 +163,9 @@ auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
       }
       break;
     }
-    case DeclarationKind::InterfaceDeclaration: {
-      auto& iface_decl = cast<InterfaceDeclaration>(*declaration);
+    case DeclarationKind::InterfaceDeclaration:
+    case DeclarationKind::ConstraintDeclaration: {
+      auto& iface_decl = cast<ConstraintTypeDeclaration>(*declaration);
       for (Nonnull<Declaration*> member : iface_decl.members()) {
         CARBON_RETURN_IF_ERROR(ResolveControlFlow(member));
       }

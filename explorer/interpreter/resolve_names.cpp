@@ -22,8 +22,9 @@ namespace Carbon {
 static auto AddExposedNames(const Declaration& declaration,
                             StaticScope& enclosing_scope) -> ErrorOr<Success> {
   switch (declaration.kind()) {
-    case DeclarationKind::InterfaceDeclaration: {
-      const auto& iface_decl = cast<InterfaceDeclaration>(declaration);
+    case DeclarationKind::InterfaceDeclaration:
+    case DeclarationKind::ConstraintDeclaration: {
+      const auto& iface_decl = cast<ConstraintTypeDeclaration>(declaration);
       CARBON_RETURN_IF_ERROR(
           enclosing_scope.Add(iface_decl.name(), &iface_decl,
                               StaticScope::NameStatus::KnownButNotDeclared));
@@ -517,8 +518,9 @@ static auto ResolveMemberNames(llvm::ArrayRef<Nonnull<Declaration*>> members,
 static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
                          ResolveFunctionBodies bodies) -> ErrorOr<Success> {
   switch (declaration.kind()) {
-    case DeclarationKind::InterfaceDeclaration: {
-      auto& iface = cast<InterfaceDeclaration>(declaration);
+    case DeclarationKind::InterfaceDeclaration:
+    case DeclarationKind::ConstraintDeclaration: {
+      auto& iface = cast<ConstraintTypeDeclaration>(declaration);
       StaticScope iface_scope;
       iface_scope.AddParent(&enclosing_scope);
       enclosing_scope.MarkDeclared(iface.name());
@@ -527,7 +529,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
       }
       enclosing_scope.MarkUsable(iface.name());
       // Don't resolve names in the type of the self binding. The
-      // InterfaceDeclaration constructor already did that.
+      // ConstraintTypeDeclaration constructor already did that.
       CARBON_RETURN_IF_ERROR(iface_scope.Add("Self", iface.self()));
       CARBON_RETURN_IF_ERROR(
           ResolveMemberNames(iface.members(), iface_scope, bodies));

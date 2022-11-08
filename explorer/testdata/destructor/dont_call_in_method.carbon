@@ -5,7 +5,6 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
-// AUTOUPDATE: %{explorer} %s
 // CHECK:STDOUT: TEST
 // CHECK:STDOUT: TEST 2
 // CHECK:STDOUT: DESTRUCTOR A 1

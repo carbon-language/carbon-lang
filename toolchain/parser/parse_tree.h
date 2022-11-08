@@ -102,36 +102,48 @@ class ParseTree {
   // the underlying source text.
   [[nodiscard]] auto GetNodeText(Node n) const -> llvm::StringRef;
 
+  // See the other Print comments.
+  auto Print(llvm::raw_ostream& output) const -> void;
+
   // Prints a description of the parse tree to the provided `raw_ostream`.
   //
-  // While the parse tree is represented as a postorder sequence, we print it in
-  // preorder to make it easier to visualize and read. The node indices are the
-  // postorder indices. The print out represents each node as a YAML record,
-  // with children nested within it.
+  // The tree may be printed in either preorder or postorder. Output represents
+  // each node as a YAML record; in preorder, children are nested.
   //
-  // A single node without children is formatted as:
-  // ```
-  // {node_index: 0, kind: 'foo', text: '...'}
-  // ```
-  // A node with two children, one of them with an error:
-  // ```
-  // {node_index: 2, kind: 'foo', text: '...', children: [
-  //   {node_index: 0, kind: 'bar', text: '...', has_error: yes},
-  //   {node_index: 1, kind: 'baz', text: '...'}]}
-  // ```
+  // In both, a node is formatted as:
+  //   ```
+  //   {kind: 'foo', text: '...'}
+  //   ```
+  //
   // The top level is formatted as an array of these nodes.
-  // ```
-  // [
-  // {node_index: 1, kind: 'foo', text: '...'},
-  // {node_index: 0, kind: 'foo', text: '...'},
-  // ...
-  // ]
-  // ```
+  //   ```
+  //   [
+  //   {kind: 'foo', text: '...'},
+  //   {kind: 'foo', text: '...'},
+  //   ...
+  //   ]
+  //   ```
+  //
+  // In postorder, nodes are indented in order to indicate depth. For example, a
+  // node with two children, one of them with an error:
+  //   ```
+  //     {kind: 'bar', text: '...', has_error: yes},
+  //     {kind: 'baz', text: '...'}
+  //   {kind: 'foo', text: '...', subtree_size: 2}
+  //   ```
+  //
+  // In preorder, nodes are marked as children with postorder (storage) index.
+  // For example, a node with two children, one of them with an error:
+  //   ```
+  //   {node_index: 2, kind: 'foo', text: '...', subtree_size: 2, children: [
+  //     {node_index: 0, kind: 'bar', text: '...', has_error: yes},
+  //     {node_index: 1, kind: 'baz', text: '...'}]}
+  //   ```
   //
   // This can be parsed as YAML using tools like `python-yq` combined with `jq`
   // on the command line. The format is also reasonably amenable to other
   // line-oriented shell tools from `grep` to `awk`.
-  auto Print(llvm::raw_ostream& output) const -> void;
+  auto Print(llvm::raw_ostream& output, bool preorder) const -> void;
 
   // Verifies the parse tree structure.
   //
@@ -210,6 +222,11 @@ class ParseTree {
   // Wires up the reference to the tokenized buffer. The global `parse` routine
   // should be used to actually parse the tokens into a tree.
   explicit ParseTree(TokenizedBuffer& tokens_arg) : tokens_(&tokens_arg) {}
+
+  // Prints a single node for Print(). Returns true when preorder and there are
+  // children.
+  auto PrintNode(llvm::raw_ostream& output, Node n, int depth,
+                 bool preorder) const -> bool;
 
   // Depth-first postorder sequence of node implementation data.
   llvm::SmallVector<NodeImpl, 0> node_impls_;
