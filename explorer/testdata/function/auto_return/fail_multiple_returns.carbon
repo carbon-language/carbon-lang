@@ -8,7 +8,7 @@
 
 package ExplorerTest api;
 
-fn Add(x: i32, y: i32) -> auto {
+fn ComputeSum(x: i32, y: i32) -> auto {
   if (x == 0) {
     return x;
   } else if (y == 0) {
@@ -20,5 +20,5 @@ fn Add(x: i32, y: i32) -> auto {
 }
 
 fn Main() -> i32 {
-  return Add(1, 2) - 3;
+  return ComputeSum(1, 2) - 3;
 }

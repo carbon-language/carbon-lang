@@ -18,7 +18,7 @@ interface ImplicitAs(T:! Type) {
   extends As(T);
 }
 
-// TODO: Should we just use an intrinsic for this?
+// TODO: This should be private.
 interface __EqualConverter {
   let T:! Type;
   fn Convert(t: T) -> Self;
@@ -72,8 +72,10 @@ interface EqWith(U:! Type) {
   fn Equal[me: Self](other: U) -> bool;
   fn NotEqual[me: Self](other: U) -> bool;
 }
-// TODO: constraint Eq { ... }
 
+constraint Eq {
+  extends EqWith(Self);
+}
 
 // TODO: Simplify this once we have variadics
 impl forall [T2:! Type, U2:! Type, T1:! EqWith(T2), U1:! EqWith(U2)]
@@ -130,11 +132,14 @@ choice Ordering {
   Incomparable
 }
 
+// TODO: Per the design, this should be named `OrderedWith`.
 interface CompareWith(U:! Type) {
   fn Compare[me: Self](u: U) -> Ordering;
   // TODO: Add `default fn` for Less, LessOrEquivalent, Greater, and GreaterOrEquivalent once it's available.
 }
-// TODO: constraint Ordered { ... }
+constraint Ordered {
+  extends CompareWith(Self);
+}
 
 impl i32 as CompareWith(Self) {
   fn Compare[me: Self](other: Self) -> Ordering {
@@ -308,35 +313,45 @@ interface AddWith(U:! Type) {
   let Result:! Type;
   fn Op[me: Self](other: U) -> Result;
 }
-// TODO: constraint Add { ... }
+constraint Add {
+  extends AddWith(Self) where .Result = Self;
+}
 
 interface SubWith(U:! Type) {
   // TODO: = Self
   let Result:! Type;
   fn Op[me: Self](other: U) -> Result;
 }
-// TODO: constraint Sub { ... }
+constraint Sub {
+  extends SubWith(Self) where .Result = Self;
+}
 
 interface MulWith(U:! Type) {
   // TODO: = Self
   let Result:! Type;
   fn Op[me: Self](other: U) -> Result;
 }
-// TODO: constraint Mul { ... }
+constraint Mul {
+  extends MulWith(Self) where .Result = Self;
+}
 
 interface DivWith(U:! Type) {
   // TODO: = Self
   let Result:! Type;
   fn Op[me: Self](other: U) -> Result;
 }
-// TODO: constraint Div { ... }
+constraint Div {
+  extends DivWith(Self) where .Result = Self;
+}
 
 interface ModWith(U:! Type) {
   // TODO: = Self
   let Result:! Type;
   fn Op[me: Self](other: U) -> Result;
 }
-// TODO: constraint Mod { ... }
+constraint Mod {
+  extends ModWith(Self) where .Result = Self;
+}
 
 // Note, these impls use the builtin addition for i32.
 external impl i32 as Negate where .Result = i32 {
@@ -375,10 +390,9 @@ interface BitAndWith(U:! Type) {
   let Result:! Type;
   fn Op[me: Self](other: U) -> Result;
 }
-// TODO:
-// constraint BitAnd {
-//   extends BitAndWith(Self) where .Result = Self;
-// }
+constraint BitAnd {
+  extends BitAndWith(Self) where .Result = Self;
+}
 
 // Binary `|`.
 interface BitOrWith(U:! Type) {
@@ -386,10 +400,9 @@ interface BitOrWith(U:! Type) {
   let Result:! Type;
   fn Op[me: Self](other: U) -> Result;
 }
-// TODO:
-// constraint BitOr {
-//   extends BitOrWith(Self) where .Result = Self;
-// }
+constraint BitOr {
+  extends BitOrWith(Self) where .Result = Self;
+}
 
 // Binary `^`.
 interface BitXorWith(U:! Type) {
@@ -397,10 +410,9 @@ interface BitXorWith(U:! Type) {
   let Result:! Type;
   fn Op[me: Self](other: U) -> Result;
 }
-// TODO:
-// constraint BitXor {
-//   extends BitXorWith(Self) where .Result = Self;
-// }
+constraint BitXor {
+  extends BitXorWith(Self) where .Result = Self;
+}
 
 // Binary `<<`.
 interface LeftShiftWith(U:! Type) {
@@ -408,10 +420,9 @@ interface LeftShiftWith(U:! Type) {
   let Result:! Type;
   fn Op[me: Self](other: U) -> Result;
 }
-// TODO:
-// constraint LeftShift {
-//   extends LeftShiftWith(Self) where .Result = Self;
-// }
+constraint LeftShift {
+  extends LeftShiftWith(Self) where .Result = Self;
+}
 
 // Binary `>>`.
 interface RightShiftWith(U:! Type) {
@@ -419,10 +430,9 @@ interface RightShiftWith(U:! Type) {
   let Result:! Type;
   fn Op[me: Self](other: U) -> Result;
 }
-// TODO:
-// constraint RightShift {
-//   extends RightShiftWith(Self) where .Result = Self;
-// }
+constraint RightShift {
+  extends RightShiftWith(Self) where .Result = Self;
+}
 
 external impl i32 as BitComplement where .Result = i32 {
   fn Op[me: i32]() -> i32 {

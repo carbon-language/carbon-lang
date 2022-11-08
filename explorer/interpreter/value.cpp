@@ -59,7 +59,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
           mem_decl.has_value()) {
         const auto& fun_decl = cast<FunctionDeclaration>(**mem_decl);
         if (fun_decl.is_method()) {
-          return arena->New<BoundMethodValue>(&fun_decl, v,
+          return arena->New<BoundMethodValue>(&fun_decl, me_value,
                                               &impl_witness->bindings());
         } else {
           // Class function.
@@ -423,12 +423,19 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::InterfaceType: {
       const auto& iface_type = cast<InterfaceType>(*this);
       out << "interface ";
-      PrintNameWithBindings(out, &iface_type.declaration(), iface_type.args());
+      PrintNameWithBindings(out, &iface_type.declaration(),
+                            iface_type.bindings().args());
+      break;
+    }
+    case Value::Kind::NamedConstraintType: {
+      const auto& constraint_type = cast<NamedConstraintType>(*this);
+      out << "constraint ";
+      PrintNameWithBindings(out, &constraint_type.declaration(),
+                            constraint_type.bindings().args());
       break;
     }
     case Value::Kind::ConstraintType: {
       const auto& constraint = cast<ConstraintType>(*this);
-      out << "constraint ";
       llvm::ListSeparator combine(" & ");
       for (const LookupContext& ctx : constraint.lookup_contexts()) {
         out << combine << *ctx.context;
@@ -653,14 +660,23 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
       const auto& class1 = cast<NominalClassType>(*t1);
       const auto& class2 = cast<NominalClassType>(*t2);
       return class1.declaration().name() == class2.declaration().name() &&
-             BindingMapEqual(class1.type_args(), class2.type_args(),
+             BindingMapEqual(class1.bindings().args(), class2.bindings().args(),
                              equality_ctx);
     }
     case Value::Kind::InterfaceType: {
       const auto& iface1 = cast<InterfaceType>(*t1);
       const auto& iface2 = cast<InterfaceType>(*t2);
       return iface1.declaration().name() == iface2.declaration().name() &&
-             BindingMapEqual(iface1.args(), iface2.args(), equality_ctx);
+             BindingMapEqual(iface1.bindings().args(), iface2.bindings().args(),
+                             equality_ctx);
+    }
+    case Value::Kind::NamedConstraintType: {
+      const auto& constraint1 = cast<NamedConstraintType>(*t1);
+      const auto& constraint2 = cast<NamedConstraintType>(*t2);
+      return constraint1.declaration().name() ==
+                 constraint2.declaration().name() &&
+             BindingMapEqual(constraint1.bindings().args(),
+                             constraint2.bindings().args(), equality_ctx);
     }
     case Value::Kind::AssociatedConstant:
       // Associated constants are sometimes types.
@@ -869,6 +885,7 @@ auto ValueStructurallyEqual(
     case Value::Kind::NominalClassType:
     case Value::Kind::MixinPseudoType:
     case Value::Kind::InterfaceType:
+    case Value::Kind::NamedConstraintType:
     case Value::Kind::ConstraintType:
     case Value::Kind::ImplWitness:
     case Value::Kind::BindingWitness:

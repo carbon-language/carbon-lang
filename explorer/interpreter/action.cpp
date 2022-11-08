@@ -25,20 +25,19 @@ RuntimeScope::RuntimeScope(RuntimeScope&& other) noexcept
     : locals_(std::move(other.locals_)),
       // To transfer ownership of other.allocations_, we have to empty it out.
       allocations_(std::exchange(other.allocations_, {})),
-      heap_(other.heap_),
-      destructor_scope_(other.destructor_scope_) {}
+      heap_(other.heap_) {}
 
 auto RuntimeScope::operator=(RuntimeScope&& rhs) noexcept -> RuntimeScope& {
   locals_ = std::move(rhs.locals_);
   // To transfer ownership of rhs.allocations_, we have to empty it out.
   allocations_ = std::exchange(rhs.allocations_, {});
   heap_ = rhs.heap_;
-  destructor_scope_ = rhs.destructor_scope_;
   return *this;
 }
 
 RuntimeScope::~RuntimeScope() {
-  for (AllocationId allocation : allocations_) {
+  for (auto allocation : allocations_) {
+    // TODO: move this into StepCleanUp
     heap_->Deallocate(allocation);
   }
 }
@@ -50,6 +49,22 @@ void RuntimeScope::Print(llvm::raw_ostream& out) const {
     out << sep << value_node.base() << ": " << *value;
   }
   out << "}";
+}
+
+void RuntimeScope::Bind(ValueNodeView value_node, Nonnull<const Value*> value) {
+  CARBON_CHECK(!value_node.constant_value().has_value());
+  CARBON_CHECK(value->kind() != Value::Kind::LValue);
+  auto allocation_id = heap_->GetAllocationId(value);
+  if (!allocation_id) {
+    auto id = heap_->AllocateValue(value);
+    auto [it, success] =
+        locals_.insert({value_node, heap_->arena().New<LValue>(Address(id))});
+    CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
+  } else {
+    auto [it, success] = locals_.insert(
+        {value_node, heap_->arena().New<LValue>(Address(*allocation_id))});
+    CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
+  }
 }
 
 void RuntimeScope::Initialize(ValueNodeView value_node,
@@ -98,16 +113,6 @@ auto RuntimeScope::Capture(
   return result;
 }
 
-void RuntimeScope::TransitState() {
-  if (destructor_scope_ == State::Normal) {
-    destructor_scope_ = State::Destructor;
-  } else if (destructor_scope_ == State::Destructor) {
-    destructor_scope_ = State::CleanUpped;
-  } else {
-    destructor_scope_ = State::CleanUpped;
-  }
-}
-
 void Action::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
     case Action::Kind::LValAction:
@@ -137,6 +142,9 @@ void Action::Print(llvm::raw_ostream& out) const {
       break;
     case Action::Kind::CleanUpAction:
       out << "clean up";
+      break;
+    case Action::Kind::DestroyAction:
+      out << "destroy";
       break;
   }
   out << "." << pos_ << ".";

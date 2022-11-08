@@ -89,6 +89,9 @@ class Interpreter {
   auto StepDeclaration() -> ErrorOr<Success>;
   // State transition for object destruction.
   auto StepCleanUp() -> ErrorOr<Success>;
+  auto StepDestroy() -> ErrorOr<Success>;
+  // State transition for tuple destruction.
+  auto StepCleanUpTuple() -> ErrorOr<Success>;
 
   auto CreateStruct(const std::vector<FieldInitializer>& fields,
                     const std::vector<Nonnull<const Value*>>& values)
@@ -599,6 +602,14 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
       return arena_->New<InterfaceType>(&interface_type.declaration(),
                                         bindings);
     }
+    case Value::Kind::NamedConstraintType: {
+      const auto& constraint_type = cast<NamedConstraintType>(*type);
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Bindings*> bindings,
+          InstantiateBindings(&constraint_type.bindings(), source_loc));
+      return arena_->New<NamedConstraintType>(&constraint_type.declaration(),
+                                              bindings);
+    }
     case Value::Kind::NominalClassType: {
       const auto& class_type = cast<NominalClassType>(*type);
       CARBON_ASSIGN_OR_RETURN(
@@ -678,6 +689,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::NominalClassType:
     case Value::Kind::MixinPseudoType:
     case Value::Kind::InterfaceType:
+    case Value::Kind::NamedConstraintType:
     case Value::Kind::ConstraintType:
     case Value::Kind::ImplWitness:
     case Value::Kind::BindingWitness:
@@ -729,6 +741,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
         }
         case Value::Kind::TypeType:
         case Value::Kind::ConstraintType:
+        case Value::Kind::NamedConstraintType:
         case Value::Kind::InterfaceType: {
           CARBON_CHECK(struct_val.elements().empty())
               << "only empty structs convert to Type";
@@ -759,6 +772,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
         }
         case Value::Kind::TypeType:
         case Value::Kind::ConstraintType:
+        case Value::Kind::NamedConstraintType:
         case Value::Kind::InterfaceType: {
           std::vector<Nonnull<const Value*>> new_elements;
           Nonnull<const Value*> type_type = arena_->New<TypeType>();
@@ -795,8 +809,9 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
           EvalAssociatedConstant(cast<AssociatedConstant>(value), source_loc));
       if (auto* new_const = dyn_cast<AssociatedConstant>(value)) {
         // TODO: Detect whether conversions are required in type-checking.
-        if (isa<TypeType, ConstraintType, InterfaceType>(destination_type) &&
-            isa<TypeType, ConstraintType, InterfaceType>(
+        if (isa<TypeType, ConstraintType, NamedConstraintType, InterfaceType>(
+                destination_type) &&
+            isa<TypeType, ConstraintType, NamedConstraintType, InterfaceType>(
                 new_const->constant().static_type())) {
           // No further conversions are required.
           return value;
@@ -818,15 +833,17 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
   CARBON_CHECK(method.is_method());
   RuntimeScope method_scope(&heap_);
   BindingMap generic_args;
-  CARBON_CHECK(PatternMatch(&method.me_pattern().value(), receiver,
-                            fun->source_loc(), &method_scope, generic_args,
-                            trace_stream_, this->arena_));
 
+  // TODO: move this logic into PatternMatch, and call it here.
+  auto p = &method.me_pattern().value();
+  const auto& placeholder = cast<BindingPlaceholderValue>(*p);
+  if (placeholder.value_node().has_value()) {
+    method_scope.Bind(*placeholder.value_node(), receiver);
+  }
   CARBON_CHECK(method.body().has_value())
       << "Calling a method that's missing a body";
 
   auto act = std::make_unique<StatementAction>(*method.body());
-  method_scope.TransitState();
   return todo_.Spawn(std::unique_ptr<Action>(std::move(act)),
                      std::move(method_scope));
 }
@@ -900,9 +917,18 @@ auto Interpreter::CallFunction(const CallExpression& call,
       RuntimeScope method_scope(&heap_);
       BindingMap generic_args;
       // Bind the receiver to the `me` parameter.
-      CARBON_CHECK(PatternMatch(&method.me_pattern().value(), m.receiver(),
-                                call.source_loc(), &method_scope, generic_args,
-                                trace_stream_, this->arena_));
+      auto p = &method.me_pattern().value();
+      if (p->kind() == Value::Kind::BindingPlaceholderValue) {
+        // TODO: move this logic into PatternMatch
+        const auto& placeholder = cast<BindingPlaceholderValue>(*p);
+        if (placeholder.value_node().has_value()) {
+          method_scope.Bind(*placeholder.value_node(), m.receiver());
+        }
+      } else {
+        CARBON_CHECK(PatternMatch(&method.me_pattern().value(), m.receiver(),
+                                  call.source_loc(), &method_scope,
+                                  generic_args, trace_stream_, this->arena_));
+      }
       // Bind the arguments to the parameters.
       CARBON_CHECK(PatternMatch(&method.param_pattern().value(), converted_args,
                                 call.source_loc(), &method_scope, generic_args,
@@ -944,6 +970,9 @@ auto Interpreter::CallFunction(const CallExpression& call,
         case DeclarationKind::InterfaceDeclaration:
           return todo_.FinishAction(arena_->New<InterfaceType>(
               &cast<InterfaceDeclaration>(decl), bindings));
+        case DeclarationKind::ConstraintDeclaration:
+          return todo_.FinishAction(arena_->New<NamedConstraintType>(
+              &cast<ConstraintDeclaration>(decl), bindings));
         case DeclarationKind::ChoiceDeclaration:
           return todo_.FinishAction(arena_->New<ChoiceType>(
               &cast<ChoiceDeclaration>(decl), bindings));
@@ -1014,7 +1043,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       bool forming_member_name = isa<TypeOfMemberName>(&access.static_type());
       if (act.pos() == 0) {
         // First, evaluate the first operand.
-        if (access.is_field_addr_me_method()) {
+        if (access.is_addr_me_method()) {
           return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
         } else {
           return todo_.Spawn(
@@ -1049,7 +1078,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           CARBON_CHECK(phase() == Phase::CompileTime)
               << "should not form MemberNames at runtime";
           std::optional<const Value*> type_result;
-          if (!isa<InterfaceType, ConstraintType>(act.results()[0])) {
+          if (!isa<InterfaceType, NamedConstraintType, ConstraintType>(
+                  act.results()[0])) {
             type_result = act.results()[0];
           }
           MemberName* member_name = arena_->New<MemberName>(
@@ -1089,8 +1119,12 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       bool forming_member_name = isa<TypeOfMemberName>(&access.static_type());
       if (act.pos() == 0) {
         // First, evaluate the first operand.
-        return todo_.Spawn(
-            std::make_unique<ExpressionAction>(&access.object()));
+        if (access.is_addr_me_method()) {
+          return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
+        } else {
+          return todo_.Spawn(
+              std::make_unique<ExpressionAction>(&access.object()));
+        }
       } else if (act.pos() == 1 && access.impl().has_value() &&
                  !forming_member_name) {
         // Next, if we're accessing an interface member, evaluate the `impl`
@@ -1987,6 +2021,7 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
     case DeclarationKind::MixDeclaration:
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::InterfaceDeclaration:
+    case DeclarationKind::ConstraintDeclaration:
     case DeclarationKind::InterfaceExtendsDeclaration:
     case DeclarationKind::InterfaceImplDeclaration:
     case DeclarationKind::AssociatedConstantDeclaration:
@@ -1998,46 +2033,79 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
   }
 }
 
-auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
+auto Interpreter::StepDestroy() -> ErrorOr<Success> {
+  // TODO: find a way to avoid dyn_cast in this code, and instead use static
+  // type information the way the compiler would.
   Action& act = todo_.CurrentAction();
-  auto& cleanup = cast<CleanupAction>(act);
-  if (act.pos() < cleanup.locals_count()) {
-    const auto* lvalue =
-        act.scope()->locals()[cleanup.locals_count() - act.pos() - 1];
-    SourceLocation source_loc("destructor", 1);
-    auto value = heap_.Read(lvalue->address(), source_loc);
-    if (value.ok()) {
-      if (act.scope()->DestructionState() < RuntimeScope::State::CleanUpped) {
-        if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
+  DestroyAction& destroy_act = cast<DestroyAction>(act);
+  if (act.pos() == 0) {
+    if (const auto* class_obj =
+            dyn_cast<NominalClassValue>(destroy_act.value())) {
+      const auto& class_type = cast<NominalClassType>(class_obj->type());
+      const auto& class_dec = class_type.declaration();
+      if (class_dec.destructor().has_value()) {
+        return CallDestructor(*class_dec.destructor(), class_obj);
+      }
+    }
+  }
+
+  if (const auto* tuple = dyn_cast<TupleValue>(destroy_act.value())) {
+    if (tuple->elements().size() > 0) {
+      int index = tuple->elements().size() - act.pos() - 1;
+      if (index >= 0) {
+        const auto& item = tuple->elements()[index];
+        if (const auto* class_obj = dyn_cast<NominalClassValue>(item)) {
           const auto& class_type = cast<NominalClassType>(class_obj->type());
           const auto& class_dec = class_type.declaration();
           if (class_dec.destructor().has_value()) {
             return CallDestructor(*class_dec.destructor(), class_obj);
           }
         }
-      } else {
-        if (const auto* class_obj = dyn_cast<NominalClassValue>(*value)) {
-          const auto& class_type = cast<NominalClassType>(class_obj->type());
-          const auto& class_dec = class_type.declaration();
-          const auto& class_members = class_dec.members();
-          for (const auto& member : class_members) {
-            if (const auto* var = dyn_cast<VariableDeclaration>(member)) {
-              const auto& type = var->static_type();
-              if (const auto* c_type = dyn_cast<NominalClassType>(&type)) {
-                const auto& c_dec = c_type->declaration();
-                if (c_dec.destructor().has_value()) {
-                  Address object = lvalue->address();
-                  Address mem = object.SubobjectAddress(Member(var));
-                  auto v = heap_.Read(mem, source_loc);
-                  act.scope()->TransitState();
-                  return CallDestructor(*c_dec.destructor(), *v);
-                }
-              }
-            }
-          }
+        if (item->kind() == Value::Kind::TupleValue) {
+          return todo_.Spawn(
+              std::make_unique<DestroyAction>(destroy_act.lvalue(), item));
         }
-        act.scope()->TransitState();
+        // Type of tuple element is integral type e.g. i32
+        // or the type has no destructor
       }
+    }
+  }
+
+  if (act.pos() > 0) {
+    if (const auto* class_obj =
+            dyn_cast<NominalClassValue>(destroy_act.value())) {
+      const auto& class_type = cast<NominalClassType>(class_obj->type());
+      const auto& class_dec = class_type.declaration();
+      int index = class_dec.members().size() - act.pos();
+      if (index >= 0 && index < static_cast<int>(class_dec.members().size())) {
+        const auto& member = class_dec.members()[index];
+        if (const auto* var = dyn_cast<VariableDeclaration>(member)) {
+          Address object = destroy_act.lvalue()->address();
+          Address mem = object.SubobjectAddress(Member(var));
+          SourceLocation source_loc("destructor", 1);
+          auto v = heap_.Read(mem, source_loc);
+          return todo_.Spawn(
+              std::make_unique<DestroyAction>(destroy_act.lvalue(), *v));
+        }
+      }
+    }
+  }
+  todo_.Pop();
+  return Success();
+}
+
+auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
+  Action& act = todo_.CurrentAction();
+  CleanupAction& cleanup = cast<CleanupAction>(act);
+  if (act.pos() < cleanup.allocations_count()) {
+    auto allocation =
+        act.scope()->allocations()[cleanup.allocations_count() - act.pos() - 1];
+    auto lvalue = arena_->New<LValue>(Address(allocation));
+    SourceLocation source_loc("destructor", 1);
+    auto value = heap_.Read(lvalue->address(), source_loc);
+    // Step over uninitialized values
+    if (value.ok()) {
+      return todo_.Spawn(std::make_unique<DestroyAction>(lvalue, *value));
     }
   }
   todo_.Pop();
@@ -2068,6 +2136,9 @@ auto Interpreter::Step() -> ErrorOr<Success> {
       break;
     case Action::Kind::CleanUpAction:
       CARBON_RETURN_IF_ERROR(StepCleanUp());
+      break;
+    case Action::Kind::DestroyAction:
+      CARBON_RETURN_IF_ERROR(StepDestroy());
       break;
     case Action::Kind::ScopeAction:
       CARBON_FATAL() << "ScopeAction escaped ActionStack";

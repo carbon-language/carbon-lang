@@ -191,7 +191,7 @@ considering if they fit your workflow.
         -   After following the
             [installation instructions](https://code.visualstudio.com/docs/remote/containers#_installation),
             you should be prompted to use Carbon's
-            [devcontainer](/.devcontainer/Dockerfile) with "Reopen in
+            [devcontainer](/.devcontainer/devcontainer.json) with "Reopen in
             container".
 
 ### Manually building Clang and LLVM (not recommended)
