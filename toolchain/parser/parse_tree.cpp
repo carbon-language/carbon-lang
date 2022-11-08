@@ -96,7 +96,7 @@ auto ParseTree::PrintNode(llvm::raw_ostream& output, Node n, int depth,
   // If children are being added, include node_index in order to disambiguate
   // nodes.
   if (preorder) {
-    output << "node_index : " << n.index_ << ", ";
+    output << "node_index: " << n.index_ << ", ";
   }
   output << "kind : '" << n_impl.kind.name() << "', text: '"
          << tokens_->GetTokenText(n_impl.token) << "'";
