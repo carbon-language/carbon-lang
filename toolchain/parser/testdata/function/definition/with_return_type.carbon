@@ -5,18 +5,18 @@
 // AUTOUPDATE
 // RUN: %{carbon-run-parser}
 // CHECK:STDOUT: [
-// CHECK:STDOUT:     {kind : 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:     {kind : 'DeclaredName', text: 'foo'},
-// CHECK:STDOUT:       {kind : 'ParameterListEnd', text: ')'},
-// CHECK:STDOUT:     {kind : 'ParameterList', text: '(', subtree_size: 2},
-// CHECK:STDOUT:       {kind : 'Literal', text: 'f64'},
-// CHECK:STDOUT:     {kind : 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:   {kind : 'FunctionDefinitionStart', text: '{', subtree_size: 7},
-// CHECK:STDOUT:     {kind : 'Literal', text: '42'},
-// CHECK:STDOUT:     {kind : 'StatementEnd', text: ';'},
-// CHECK:STDOUT:   {kind : 'ReturnStatement', text: 'return', subtree_size: 3},
-// CHECK:STDOUT: {kind : 'FunctionDefinition', text: '}', subtree_size: 11},
-// CHECK:STDOUT: {kind : 'FileEnd', text: ''},
+// CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:     {kind: 'DeclaredName', text: 'foo'},
+// CHECK:STDOUT:       {kind: 'ParameterListEnd', text: ')'},
+// CHECK:STDOUT:     {kind: 'ParameterList', text: '(', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'Literal', text: 'f64'},
+// CHECK:STDOUT:     {kind: 'ReturnType', text: '->', subtree_size: 2},
+// CHECK:STDOUT:   {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7},
+// CHECK:STDOUT:     {kind: 'Literal', text: '42'},
+// CHECK:STDOUT:     {kind: 'StatementEnd', text: ';'},
+// CHECK:STDOUT:   {kind: 'ReturnStatement', text: 'return', subtree_size: 3},
+// CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 11},
+// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
 fn foo() -> f64 {

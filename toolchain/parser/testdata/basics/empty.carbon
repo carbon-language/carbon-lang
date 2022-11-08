@@ -5,5 +5,5 @@
 // AUTOUPDATE
 // RUN: %{carbon-run-parser}
 // CHECK:STDOUT: [
-// CHECK:STDOUT: {kind : 'FileEnd', text: ''},
+// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
