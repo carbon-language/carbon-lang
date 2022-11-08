@@ -5,8 +5,8 @@
 // AUTOUPDATE
 // RUN: %{carbon-run-parser}
 // CHECK:STDOUT: [
-// CHECK:STDOUT: {node_index: 0, kind: 'EmptyDeclaration', text: ';'},
-// CHECK:STDOUT: {node_index: 1, kind: 'FileEnd', text: ''},
+// CHECK:STDOUT: {kind: 'EmptyDeclaration', text: ';'},
+// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
 ;
