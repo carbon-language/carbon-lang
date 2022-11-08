@@ -7,17 +7,9 @@
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'F'},
-// CHECK:STDOUT:         {kind: 'DeclaredName', text: 'p'},
-// CHECK:STDOUT:           {kind: 'Literal', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'PostfixOperator', text: '*', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ParameterListComma', text: ','},
-// CHECK:STDOUT:         {kind: 'DeclaredName', text: 'n'},
-// CHECK:STDOUT:         {kind: 'Literal', text: 'i32'},
-// CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ParameterListEnd', text: ')'},
-// CHECK:STDOUT:     {kind: 'ParameterList', text: '(', subtree_size: 10},
-// CHECK:STDOUT:   {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 13},
+// CHECK:STDOUT:     {kind: 'ParameterList', text: '(', subtree_size: 2},
+// CHECK:STDOUT:   {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'NameReference', text: 'G'},
 // CHECK:STDOUT:         {kind: 'Literal', text: 'i32'},
 // CHECK:STDOUT:       {kind: 'PostfixOperator', text: '*', subtree_size: 2},
@@ -28,10 +20,10 @@
 // CHECK:STDOUT:       {kind: 'CallExpressionEnd', text: ')'},
 // CHECK:STDOUT:     {kind: 'CallExpression', text: '(', subtree_size: 9},
 // CHECK:STDOUT:   {kind: 'ExpressionStatement', text: ';', subtree_size: 10},
-// CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 24},
+// CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 16},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-fn F(p: i32*, n: i32) {
+fn F() {
   G(i32*, n * n);
 }
