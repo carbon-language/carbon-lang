@@ -90,16 +90,16 @@ class Parser2 {
 
   auto Parse() -> void;
 
-  // Adds a node to the parse tree that is fully parsed, has no children
-  // ("leaf"), and has a subsequent sibling.
-  //
-  // This sets up the next sibling of the node to be the next node in the parse
-  // tree's preorder sequence.
+  // Adds a node to the parse tree that has no children (a leaf).
   auto AddLeafNode(ParseNodeKind kind, TokenizedBuffer::Token token,
                    bool has_error = false) -> void;
 
+  // Adds a node to the parse tree that has children.
   auto AddNode(ParseNodeKind kind, TokenizedBuffer::Token token,
                int subtree_start, bool has_error) -> void;
+
+  // Returns the current position and moves past it.
+  auto Consume() -> TokenizedBuffer::Token { return *(position_++); }
 
   // Parses a close paren token corresponding to the given open paren token,
   // possibly skipping forward and diagnosing if necessary. Creates a parse node

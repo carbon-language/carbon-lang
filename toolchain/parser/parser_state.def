@@ -66,6 +66,9 @@ CARBON_PARSER_STATE(FunctionSignatureFinish)
 // Finishes a function definition.
 CARBON_PARSER_STATE(FunctionDefinitionFinish)
 
+// Handles `package`.
+CARBON_PARSER_STATE(Package)
+
 // Handles the processing of a `(condition)` up through the expression.
 CARBON_PARSER_STATE(ParenCondition)
 
@@ -77,6 +80,18 @@ CARBON_PARSER_STATE(StatementBreakFinish)
 
 // Handles `continue` processing at the `;`.
 CARBON_PARSER_STATE(StatementContinueFinish)
+
+// Handles `for` processing of `(var`, proceeding to a pattern before continuing.
+CARBON_PARSER_STATE(StatementForHeader)
+
+// Handles `for` procesisng of `in`, proceeding to an expression before continuing.
+CARBON_PARSER_STATE(StatementForHeaderIn)
+
+// Handles `for` processing of `)`, proceeding to the statement block.
+CARBON_PARSER_STATE(StatementForHeaderFinish)
+
+// Handles `for` processing at the final `}`.
+CARBON_PARSER_STATE(StatementForFinish)
 
 // Handles `if` processing between the condition and start of the first code
 // block.
