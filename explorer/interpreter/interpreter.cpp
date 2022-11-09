@@ -8,6 +8,7 @@
 
 #include <iterator>
 #include <map>
+#include <memory>
 #include <optional>
 #include <random>
 #include <utility>
@@ -15,6 +16,7 @@
 #include <vector>
 
 #include "common/check.h"
+#include "common/error.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/expression.h"
 #include "explorer/common/arena.h"
@@ -2089,47 +2091,21 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
   // type information the way the compiler would.
   Action& act = todo_.CurrentAction();
   DestroyAction& destroy_act = cast<DestroyAction>(act);
-  if (act.pos() == 0) {
-    if (const auto* class_obj =
-            dyn_cast<NominalClassValue>(destroy_act.value())) {
-      const auto& class_type = cast<NominalClassType>(class_obj->type());
-      const auto& class_dec = class_type.declaration();
-      if (class_dec.destructor().has_value()) {
-        return CallDestructor(*class_dec.destructor(), class_obj);
-      }
-    }
-  }
-
-  if (const auto* tuple = dyn_cast<TupleValue>(destroy_act.value())) {
-    if (tuple->elements().size() > 0) {
-      int index = tuple->elements().size() - act.pos() - 1;
-      if (index >= 0) {
-        const auto& item = tuple->elements()[index];
-        if (const auto* class_obj = dyn_cast<NominalClassValue>(item)) {
-          const auto& class_type = cast<NominalClassType>(class_obj->type());
-          const auto& class_dec = class_type.declaration();
-          if (class_dec.destructor().has_value()) {
-            return CallDestructor(*class_dec.destructor(), class_obj);
-          }
+  switch (destroy_act.value()->kind()) {
+    case Value::Kind::NominalClassValue: {
+      const auto* class_obj = cast<NominalClassValue>(destroy_act.value());
+      const auto& class_decl =
+          cast<NominalClassType>(class_obj->type()).declaration();
+      const auto member_count = static_cast<int>(class_decl.members().size());
+      if (act.pos() == 0) {
+        if (auto destructor = class_decl.destructor()) {
+          return CallDestructor(*destructor, class_obj);
+        } else {
+          return todo_.RunAgain();
         }
-        if (item->kind() == Value::Kind::TupleValue) {
-          return todo_.Spawn(
-              std::make_unique<DestroyAction>(destroy_act.lvalue(), item));
-        }
-        // Type of tuple element is integral type e.g. i32
-        // or the type has no destructor
-      }
-    }
-  }
-
-  if (act.pos() > 0) {
-    if (const auto* class_obj =
-            dyn_cast<NominalClassValue>(destroy_act.value())) {
-      const auto& class_type = cast<NominalClassType>(class_obj->type());
-      const auto& class_dec = class_type.declaration();
-      int index = class_dec.members().size() - act.pos();
-      if (index >= 0 && index < static_cast<int>(class_dec.members().size())) {
-        const auto& member = class_dec.members()[index];
+      } else if (act.pos() <= member_count) {
+        int index = class_decl.members().size() - act.pos();
+        const auto& member = class_decl.members()[index];
         if (const auto* var = dyn_cast<VariableDeclaration>(member)) {
           Address object = destroy_act.lvalue()->address();
           Address mem = object.SubobjectAddress(Member(var));
@@ -2137,12 +2113,48 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
           auto v = heap_.Read(mem, source_loc);
           return todo_.Spawn(
               std::make_unique<DestroyAction>(destroy_act.lvalue(), *v));
+        } else {
+          return todo_.RunAgain();
         }
+      } else if (act.pos() == member_count + 1) {
+        if (auto base = class_obj->base()) {
+          return todo_.Spawn(std::make_unique<DestroyAction>(
+              destroy_act.lvalue(), base.value()));
+        } else {
+          return todo_.RunAgain();
+        }
+      } else {
+        todo_.Pop();
+        return Success();
       }
     }
+    case Value::Kind::TupleValue: {
+      const auto* tuple = cast<TupleValue>(destroy_act.value());
+      const auto element_count = static_cast<int>(tuple->elements().size());
+      if (act.pos() < element_count) {
+        int index = element_count - act.pos() - 1;
+        const auto& item = tuple->elements()[index];
+        switch (item->kind()) {
+          case Value::Kind::NominalClassValue:
+          case Value::Kind::TupleValue:
+            return todo_.Spawn(
+                std::make_unique<DestroyAction>(destroy_act.lvalue(), item));
+          default:
+            // Type of tuple element is integral type e.g. i32
+            // or the type has no destructor
+            return todo_.RunAgain();
+        }
+      } else {
+        todo_.Pop();
+        return Success();
+      }
+    }
+    default:
+      // These declarations have no run-time effects.
+      todo_.Pop();
+      return Success();
   }
-  todo_.Pop();
-  return Success();
+  CARBON_FATAL() << "Unreachable";
 }
 
 auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
