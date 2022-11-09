@@ -61,7 +61,10 @@ class Parser2 {
     // error recovery may be needed.
     bool has_error = false;
 
-    // Precedence information used for operator states.
+    // Precedence information used by expression states in order to determine
+    // operator precedence. The ambient_precedence deals with how the expression
+    // should interact with outside context, while the lhs_precedence is
+    // specific to the lhs of an operator expression.
     PrecedenceGroup ambient_precedence;
     PrecedenceGroup lhs_precedence;
 
