@@ -61,7 +61,10 @@ class Parser2 {
     // error recovery may be needed.
     bool has_error = false;
 
-    // Precedence information used for operator states.
+    // Precedence information used by expression states in order to determine
+    // operator precedence. The ambient_precedence deals with how the expression
+    // should interact with outside context, while the lhs_precedence is
+    // specific to the lhs of an operator expression.
     PrecedenceGroup ambient_precedence;
     PrecedenceGroup lhs_precedence;
 
@@ -215,10 +218,6 @@ class Parser2 {
 
   // Handles a code block in the context of a statement scope.
   auto HandleCodeBlock() -> void;
-
-  // Resumes processing of an expression, with the recently processed expression
-  // indicated by the passed node_kind.
-  auto HandleExpressionLoop(StateStackEntry state) -> void;
 
   // Handles parsing of a function parameter list, including commas and the
   // close paren.

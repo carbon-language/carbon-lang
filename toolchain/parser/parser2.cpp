@@ -17,7 +17,7 @@
 
 namespace Carbon {
 
-// May be omitted a couple different ways as part of operator parsing.
+// May be emitted a couple different ways as part of operator parsing.
 CARBON_DIAGNOSTIC(
     OperatorRequiresParentheses, Error,
     "Parentheses are required to disambiguate operator precedence.");
@@ -465,8 +465,6 @@ auto Parser2::HandleDesignatorExpressionState() -> void {
 }
 
 auto Parser2::HandleExpressionState() -> void {
-  // TODO: This is temporary, we should need this state. If not, maybe add an
-  // overload that uses pop_back instead of pop_back_val.
   auto state = PopState();
 
   // Check for a prefix operator.
