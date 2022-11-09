@@ -37,7 +37,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Member functions](#member-functions)
         -   [Class functions](#class-functions)
         -   [Methods](#methods)
-        -   [Name lookup in member function definitions](#name-lookup-in-member-function-definitions)
+        -   [Deferred member function definitions](#deferred-member-function-definitions)
+        -   [Name lookup in classes](#name-lookup-in-classes)
     -   [Nominal data classes](#nominal-data-classes)
     -   [Member type](#member-type)
     -   [Let](#let)
@@ -914,71 +915,122 @@ the `me` parameter must be in the same list in square brackets `[`...`]`. The
 `me` parameter may appear in any position in that list, as long as it appears
 after any names needed to describe its type.
 
-#### Name lookup in member function definitions
+#### Deferred member function definitions
 
-When defining a member function lexically inline, we delay type checking of the
-function body until the definition of the current type is complete. This means
-that name lookup _for members of objects_ is also delayed. That means that you
-can reference `me.F()` in a lexically inline method definition even before the
-declaration of `F` in that class definition. However, other names still need to
-be declared before they are used. This includes unqualified names, names within
-namespaces, and names _for members of types_.
+When defining a member function lexically inline, the body is deferred and
+processed as if it appeared immediately after the end of the outermost enclosing
+class, like in C++.
 
-```
+For example, given a class with inline function definitions:
+
+```carbon
 class Point {
   fn Distance[me: Self]() -> f32 {
-    // ✅ Allowed: `x` and `y` are names for members of an object,
-    // and so lookup is delayed until `type_of(me) == Self` is complete.
     return Math.Sqrt(me.x * me.x + me.y * me.y);
   }
 
-  fn CreatePolarInvalid(r: f32, theta: f32) -> Point {
-    // ❌ Forbidden: unqualified name used before declaration.
-    return Create(r * Math.Cos(theta), r * Math.Sin(theta));
-  }
-  fn CreatePolarValid1(r: f32, theta: f32) -> Point {
-    // ❌ Forbidden: `Create` is not yet declared.
-    return Point.Create(r * Math.Cos(theta), r * Math.Sin(theta));
-  }
-  fn CreatePolarValid2(r: f32, theta: f32) -> Point {
-    // ❌ Forbidden: `Create` is not yet declared.
-    return Self.Create(r * Math.Cos(theta), r * Math.Sin(theta));
-  }
-
   fn Create(x: f32, y: f32) -> Point {
-    // ✅ Allowed: checking that conversion of `{.x: f32, .y: f32}`
-    // to `Point` is delayed until `Point` is complete.
     return {.x = x, .y = y};
   }
 
-  fn CreateXEqualsY(xy: f32) -> Point {
-    // ✅ Allowed: `Create` is declared earlier.
-    return Create(xy, xy);
-  }
+  var x: f32;
+  var y: f32;
+}
+```
 
-  fn CreateXAxis(x: f32) -> Point;
+These are all parsed as if they were defined outside the class scope:
 
-  fn Angle[me: Self]() -> f32;
+```carbon
+class Point {
+  fn Distance[me: Self]() -> f32;
+  fn Create(x: f32, y: f32) -> Point;
 
   var x: f32;
   var y: f32;
 }
 
-fn Point.CreateXAxis(x: f32) -> Point {
-  // ✅ Allowed: `Point` type is complete.
-  // Members of `Point` like `Create` are in scope.
-  return Create(x, 0);
+fn Point.Distance[me: Self]() -> f32 {
+  return Math.Sqrt(me.x * me.x + me.y * me.y);
 }
 
-fn Point.Angle[me: Self]() -> f32 {
-  // ✅ Allowed: `Point` type is complete.
-  // Function is checked immediately.
-  return Math.ATan2(me.y, me.x);
+fn Point.Create(x: f32, y: f32) -> Point {
+  return {.x = x, .y = y};
 }
 ```
 
-**Note:** The details of name lookup are still being decided in issue
-[#472: Open question: Calling functions defined later in the same file](https://github.com/carbon-language/carbon-lang/issues/472).
+#### Name lookup in classes
+
+[Member access](expressions/member_access.md) is an expression; details are
+covered there. Because function definitions are
+[deferred](#deferred-member-function-definitions), name lookup in classes works
+the same regardless of whether a function is inline. The class body forms a
+scope for name lookup, and function definitions can perform unqualified name
+lookup within that scope.
+
+For example:
+
+```carbon
+class Square {
+  fn GetArea[me: Self]() -> f32 {
+    // ✅ OK: performs name lookup on `me`.
+    return me.size * me.size;
+    // ❌ Error: finds `Square.size`, but an instance is required.
+    return size * size;
+    // ❌ Error: an instance is required.
+    return Square.size * Square.size;
+    // ✅ OK: performs instance binding with `me`.
+    return me.(Square.size) * me.(Square.size);
+    // ✅ OK: uses unqualified name lookup to find `Square.size`, then performs
+    // instance binding with `me`.
+    return me.(size) * me.(size);
+  }
+
+  fn GetDoubled[me: Self]() -> Square {
+    // ✅ OK: performs name lookup on `Square` for `Create`.
+    return Square.Create(me.size);
+    // ✅ OK: performs unqualified name lookup within class scope for `Create`.
+    return Create(me.size);
+    // ✅ OK: performs name lookup on `me` for `Create`.
+    return me.Create(me.size);
+  }
+
+  fn Create(size: f32) -> Square;
+
+  var size: f32;
+}
+```
+
+The example's name lookups refer to `Create` and `size` which are defined after
+the example member access; this is valid because of
+[deferred member function definitions](#deferred-member-function-definitions).
+
+However, function signatures must still complete lookup without deferring. For
+example:
+
+```carbon
+class List {
+  // ❌ Error: `Iterator` has not yet been defined.
+  fn Iterate() -> Iterator;
+
+  class Iterator {
+    ...
+  }
+
+  // ✅ OK: The definition of Iterator is now available.
+  fn Iterate() -> Iterator;
+}
+```
+
+An out-of-line function definition's parameters, return type, and body are
+evaluated as if in-scope. For example:
+
+```carbon
+// ✅ OK: The return type performs unqualified name lookup into `List` for
+// `Iterator`.
+fn List.Iterate() -> Iterator {
+  ...
+}
+```
 
 ### Nominal data classes
 
@@ -2144,6 +2196,16 @@ the type of `U.x`."
     -   [Separate "exact" and "or derived" variations on types](/proposals/p0777.md#separate-exact-and-or-derived-variations-on-types)
     -   [Separate "exact" and "or derived" variations on pointers](/proposals/p0777.md#separate-exact-and-or-derived-variations-on-pointers)
 
+-   [#875: Principle: Information accumulation](https://github.com/carbon-language/carbon-lang/pull/875)
+
+    -   Allow information to be used before it is provided
+        [globally](/proposals/p0875.md#strict-global-consistency),
+        [within a file](/proposals/p0875.md#context-sensitive-local-consistency),
+        or
+        [within a top-level declaration](/proposals/p0875.md#top-down-with-minimally-deferred-type-checking).
+    -   [Do not allow inline method bodies to use members before they are declared](/proposals/p0875.md#strict-top-down)
+    -   [Do not allow separate declaration and definition](/proposals/p0875.md#disallow-separate-declaration-and-definition)
+
 -   [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
 
     -   [Field order is not significant](/proposals/p0981.md#field-order-is-not-significant)
@@ -2166,12 +2228,18 @@ the type of `U.x`."
     -   [Make `Self` a member of all types](/proposals/p2107.md#make-self-a-member-of-all-types)
     -   [`where` operator could be associative](/proposals/p2107.md#where-operator-could-be-associative)
 
+-   [#2287: Allow unqualified name lookup for class members](https://github.com/carbon-language/carbon-lang/pull/2287)
+
+    -   [No unqualified lookup when defining outside a scope](/proposals/p2287.md#no-unqualified-lookup-when-defining-outside-a-scope)
+
 ## References
 
 -   [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
 -   [#561: Basic classes: use cases, struct literals, struct types, and future work](https://github.com/carbon-language/carbon-lang/pull/561)
 -   [#722: Nominal classes and methods](https://github.com/carbon-language/carbon-lang/pull/722)
 -   [#777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777)
+-   [#875: Principle: Information accumulation](https://github.com/carbon-language/carbon-lang/pull/875)
 -   [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
 -   [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
 -   [#2107: Clarify rules around `Self` and `.Self`](https://github.com/carbon-language/carbon-lang/pull/2107)
+-   [#2287: Allow unqualified name lookup for class members](https://github.com/carbon-language/carbon-lang/pull/2287)
