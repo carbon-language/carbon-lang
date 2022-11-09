@@ -5,28 +5,28 @@
 // AUTOUPDATE
 // RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
-// CHECK:STDOUT: {node_index: 20, kind: 'FunctionDefinition', text: '}', subtree_size: 21, children: [
-// CHECK:STDOUT:   {node_index: 4, kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5, children: [
-// CHECK:STDOUT:     {node_index: 0, kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:     {node_index: 1, kind: 'DeclaredName', text: 'foo'},
-// CHECK:STDOUT:     {node_index: 3, kind: 'ParameterList', text: '(', subtree_size: 2, children: [
-// CHECK:STDOUT:       {node_index: 2, kind: 'ParameterListEnd', text: ')'}]}]},
-// CHECK:STDOUT:   {node_index: 19, kind: 'ForStatement', text: 'for', subtree_size: 15, children: [
-// CHECK:STDOUT:     {node_index: 11, kind: 'ForHeader', text: '(', has_error: yes, subtree_size: 7, children: [
-// CHECK:STDOUT:       {node_index: 8, kind: 'VariableDeclaration', text: 'var', subtree_size: 4, children: [
-// CHECK:STDOUT:         {node_index: 7, kind: 'PatternBinding', text: ':', subtree_size: 3, children: [
-// CHECK:STDOUT:           {node_index: 5, kind: 'DeclaredName', text: 'x'},
-// CHECK:STDOUT:           {node_index: 6, kind: 'Literal', text: 'i32'}]}]},
-// CHECK:STDOUT:       {node_index: 9, kind: 'NameReference', text: 'y'},
-// CHECK:STDOUT:       {node_index: 10, kind: 'ForHeaderEnd', text: ')'}]},
-// CHECK:STDOUT:     {node_index: 18, kind: 'CodeBlock', text: '}', subtree_size: 7, children: [
-// CHECK:STDOUT:       {node_index: 12, kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:       {node_index: 17, kind: 'ExpressionStatement', text: ';', subtree_size: 5, children: [
-// CHECK:STDOUT:         {node_index: 16, kind: 'CallExpression', text: '(', subtree_size: 4, children: [
-// CHECK:STDOUT:           {node_index: 13, kind: 'NameReference', text: 'Print'},
-// CHECK:STDOUT:           {node_index: 14, kind: 'NameReference', text: 'x'},
-// CHECK:STDOUT:           {node_index: 15, kind: 'CallExpressionEnd', text: ')'}]}]}]}]}]},
-// CHECK:STDOUT: {node_index: 21, kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:     {kind: 'DeclaredName', text: 'foo'},
+// CHECK:STDOUT:       {kind: 'ParameterListEnd', text: ')'},
+// CHECK:STDOUT:     {kind: 'ParameterList', text: '(', subtree_size: 2},
+// CHECK:STDOUT:   {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
+// CHECK:STDOUT:           {kind: 'DeclaredName', text: 'x'},
+// CHECK:STDOUT:           {kind: 'Literal', text: 'i32'},
+// CHECK:STDOUT:         {kind: 'PatternBinding', text: ':', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'VariableDeclaration', text: 'var', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'NameReference', text: 'y'},
+// CHECK:STDOUT:       {kind: 'ForHeaderEnd', text: ')'},
+// CHECK:STDOUT:     {kind: 'ForHeader', text: '(', has_error: yes, subtree_size: 7},
+// CHECK:STDOUT:       {kind: 'CodeBlockStart', text: '{'},
+// CHECK:STDOUT:           {kind: 'NameReference', text: 'Print'},
+// CHECK:STDOUT:           {kind: 'NameReference', text: 'x'},
+// CHECK:STDOUT:           {kind: 'CallExpressionEnd', text: ')'},
+// CHECK:STDOUT:         {kind: 'CallExpression', text: '(', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'ExpressionStatement', text: ';', subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'CodeBlock', text: '}', subtree_size: 7},
+// CHECK:STDOUT:   {kind: 'ForStatement', text: 'for', subtree_size: 15},
+// CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 21},
+// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
 fn foo() {

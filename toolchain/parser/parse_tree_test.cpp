@@ -146,13 +146,37 @@ TEST_F(ParseTreeTest, StructErrors) {
   }
 }
 
-TEST_F(ParseTreeTest, PrintingAsYAML) {
+TEST_F(ParseTreeTest, PrintPostorderAsYAML) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn F();");
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_FALSE(tree.has_errors());
   std::string print_output;
   llvm::raw_string_ostream print_stream(print_output);
   tree.Print(print_stream);
+  print_stream.flush();
+
+  auto file = Yaml::SequenceValue{
+      Yaml::MappingValue{{"kind", "FunctionIntroducer"}, {"text", "fn"}},
+      Yaml::MappingValue{{"kind", "DeclaredName"}, {"text", "F"}},
+      Yaml::MappingValue{{"kind", "ParameterListEnd"}, {"text", ")"}},
+      Yaml::MappingValue{
+          {"kind", "ParameterList"}, {"text", "("}, {"subtree_size", "2"}},
+      Yaml::MappingValue{{"kind", "FunctionDeclaration"},
+                         {"text", ";"},
+                         {"subtree_size", "5"}},
+      Yaml::MappingValue{{"kind", "FileEnd"}, {"text", ""}},
+  };
+
+  EXPECT_THAT(Yaml::Value::FromText(print_output), ElementsAre(file));
+}
+
+TEST_F(ParseTreeTest, PrintPreorderAsYAML) {
+  TokenizedBuffer tokens = GetTokenizedBuffer("fn F();");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_FALSE(tree.has_errors());
+  std::string print_output;
+  llvm::raw_string_ostream print_stream(print_output);
+  tree.Print(print_stream, /*preorder=*/true);
   print_stream.flush();
 
   auto parameter_list = Yaml::SequenceValue{

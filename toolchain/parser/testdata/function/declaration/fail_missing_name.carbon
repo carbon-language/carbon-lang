@@ -5,9 +5,9 @@
 // AUTOUPDATE
 // RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
-// CHECK:STDOUT: {node_index: 1, kind: 'FunctionDeclaration', text: ';', has_error: yes, subtree_size: 2, children: [
-// CHECK:STDOUT:   {node_index: 0, kind: 'FunctionIntroducer', text: 'fn'}]},
-// CHECK:STDOUT: {node_index: 2, kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT: {kind: 'FunctionDeclaration', text: ';', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
 // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/function/declaration/fail_missing_name.carbon:[[@LINE+1]]:4: Expected function name after `fn` keyword.
