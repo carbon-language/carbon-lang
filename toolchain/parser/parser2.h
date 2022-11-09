@@ -216,10 +216,6 @@ class Parser2 {
   // Handles a code block in the context of a statement scope.
   auto HandleCodeBlock() -> void;
 
-  // Resumes processing of an expression, with the recently processed expression
-  // indicated by the passed node_kind.
-  auto HandleExpressionLoop(StateStackEntry state) -> void;
-
   // Handles parsing of a function parameter list, including commas and the
   // close paren.
   auto HandleFunctionParameterList(bool is_start) -> void;
