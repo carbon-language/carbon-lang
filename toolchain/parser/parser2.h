@@ -229,20 +229,30 @@ class Parser2 {
   // outside context to advance past the pattern.
   auto HandlePatternStart(PatternKind pattern_kind) -> void;
 
+  // Handles the end of a pattern.
+  auto HandlePatternFinish() -> bool;
+
   // Handles a single statement. While typically within a statement block, this
   // can also be used for error recovery where we expect a statement block and
   // are missing braces.
   auto HandleStatement(TokenKind token_kind) -> void;
 
-  // Handles a `if` statement at the start `if` token.
+  // Handles a `if` statement the start token.
   auto HandleStatementIf() -> void;
 
   // Handles the `;` after a keyword statement.
   auto HandleStatementKeywordFinish(TokenKind token_kind,
                                     ParseNodeKind node_kind) -> void;
 
-  // Handles a `while` statement at the start `while` token.
+  // Handles a `while` statement at the start token.
   auto HandleStatementWhile() -> void;
+
+  // Handles a `var` keyword at the start token. The semicolon requirement will
+  // be transmitted to HandleVarFinish.
+  auto HandleVar(bool require_semicolon) -> void;
+
+  // Handles final processing of a `var` keyword.
+  auto HandleVarFinish(bool require_semicolon) -> void;
 
   // `clang-format` has a bug with spacing around `->` returns in macros. See
   // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.

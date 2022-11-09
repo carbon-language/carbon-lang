@@ -75,16 +75,33 @@ CARBON_PARSER_STATE(ParenCondition)
 // Finishes the processing of a `(condition)` after the expression.
 CARBON_PARSER_STATE(ParenConditionFinish)
 
+// Handles pattern parsing for a function parameter, enqueuing type expression
+// processing. Proceeds to the matching Finish state when done.
+CARBON_PARSER_STATE(PatternForFunctionParameter)
+
+// Finishes function parameter processing, including `,`. If there are more
+// parameters, enqueues another parameter processing state.
+CARBON_PARSER_STATE(PatternForFunctionParameterFinish)
+
+// Handles pattern parsing for a `var` statement, enqueuing type expression
+// processing. Proceeds to the matching Finish state when done.
+CARBON_PARSER_STATE(PatternForVariable)
+
+// Finishes `var` pattern processing.
+CARBON_PARSER_STATE(PatternForVariableFinish)
+
 // Handles `break` processing at the `;`.
 CARBON_PARSER_STATE(StatementBreakFinish)
 
 // Handles `continue` processing at the `;`.
 CARBON_PARSER_STATE(StatementContinueFinish)
 
-// Handles `for` processing of `(var`, proceeding to a pattern before continuing.
+// Handles `for` processing of `(var`, proceeding to a pattern before
+// continuing.
 CARBON_PARSER_STATE(StatementForHeader)
 
-// Handles `for` procesisng of `in`, proceeding to an expression before continuing.
+// Handles `for` procesisng of `in`, proceeding to an expression before
+// continuing.
 CARBON_PARSER_STATE(StatementForHeaderIn)
 
 // Handles `for` processing of `)`, proceeding to the statement block.
@@ -113,15 +130,20 @@ CARBON_PARSER_STATE(StatementWhileConditionFinish)
 // Handles `while` processing after the end of the code block.
 CARBON_PARSER_STATE(StatementWhileBlockFinish)
 
-// Handles pattern parsing for a function parameter, enqueuing type expression
-// processing. Proceeds to the matching Finish state when done.
-CARBON_PARSER_STATE(PatternForFunctionParameter)
-
-// Finishes function parameter processing, including `,`. If there are more
-// parameters, enqueues another parameter processing state.
-CARBON_PARSER_STATE(PatternForFunctionParameterFinish)
-
 // Handles processing of statements within a scope.
 CARBON_PARSER_STATE(StatementScopeLoop)
+
+// Handles `var` after the pattern, either followed by an initializer or the
+// semicolon.
+CARBON_PARSER_STATE(VarAfterPattern)
+
+// Handles `var` after the initializer, wrapping up its subtree.
+CARBON_PARSER_STATE(VarAfterInitializer)
+
+// Handles `var` parsing at the end, with a semicolon.
+CARBON_PARSER_STATE(VarFinishWithSemicolon)
+
+// Handles `var` parsing at the end, without a semicolon.
+CARBON_PARSER_STATE(VarFinishWithoutSemicolon)
 
 #undef CARBON_PARSER_STATE
