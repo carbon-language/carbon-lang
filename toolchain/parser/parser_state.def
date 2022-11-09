@@ -13,6 +13,12 @@
 #error "Must define the x-macro to use this file."
 #endif
 
+CARBON_PARSER_STATE(Call)
+
+CARBON_PARSER_STATE(CallParameterLoop)
+
+CARBON_PARSER_STATE(CallFinish)
+
 // Handles processing at the `}` on a typical code block, after a statement
 // scope is done.
 CARBON_PARSER_STATE(CodeBlockFinish)

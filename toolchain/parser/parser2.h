@@ -163,6 +163,11 @@ class Parser2 {
   // whether there's an error, it's expected that parsing continues.
   auto DiagnoseOperatorFixity(OperatorFixity fixity) -> void;
 
+  // Returns whether the current position is a comma. Handles cases where
+  // invalid tokens are present by advancing the position, and may emit errors.
+  // Pass already_has_error in order to suppress duplicate errors.
+  auto IsListComma(bool already_has_error) -> bool;
+
   // Gets the kind of the next token to be consumed.
   auto PositionKind() const -> TokenKind { return tokens_.GetKind(*position_); }
 
@@ -218,10 +223,6 @@ class Parser2 {
 
   // Handles a code block in the context of a statement scope.
   auto HandleCodeBlock() -> void;
-
-  // Handles parsing of a function parameter list, including commas and the
-  // close paren.
-  auto HandleFunctionParameterList(bool is_start) -> void;
 
   // Handles the start of a pattern.
   // If the start of the pattern is invalid, it's the responsibility of the
