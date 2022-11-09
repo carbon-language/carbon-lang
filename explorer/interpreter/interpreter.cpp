@@ -107,7 +107,7 @@ class Interpreter {
                Nonnull<const Value*> destination_type,
                SourceLocation source_loc) -> ErrorOr<Nonnull<const Value*>>;
 
-  // Instantiate a class and its base class(es) from an init struct
+  // Instantiate a class and its base class(es) from an init struct.
   auto InstantiateClassWithBase(Nonnull<const StructValue*> init,
                                 Nonnull<const NominalClassType*> class_type,
                                 SourceLocation source_loc)
@@ -678,12 +678,10 @@ auto Interpreter::InstantiateClassWithBase(
   std::vector<NamedValue> struct_values;
   std::optional<Nonnull<const NominalClassValue*>> base_instance;
   for (const auto& field : init_struct->elements()) {
-    if (field.name == NominalClassValue::base_field) {
-      if (!class_type->base().has_value()) {
-        CARBON_FATAL() << "Invalid 'base' field for class '"
-                       << class_type->declaration().name()
-                       << "' without base class.";
-      }
+    if (field.name == NominalClassValue::BaseField) {
+      CARBON_CHECK(class_type->base().has_value())
+          << "Invalid 'base' field for class '"
+          << class_type->declaration().name() << "' without base class.";
       switch (field.value->kind()) {
         case Value::Kind::NominalClassValue: {
           base_instance = cast<NominalClassValue>(field.value);

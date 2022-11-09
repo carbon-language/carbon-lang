@@ -26,8 +26,6 @@ using llvm::dyn_cast;
 using llvm::dyn_cast_or_null;
 using llvm::isa;
 
-const std::string NominalClassValue::base_field = "base";
-
 auto StructValue::FindField(std::string_view name) const
     -> std::optional<Nonnull<const Value*>> {
   for (const NamedValue& element : elements_) {
@@ -41,8 +39,7 @@ auto StructValue::FindField(std::string_view name) const
 static auto FindClassField(Nonnull<const NominalClassValue*> object,
                            std::string_view name)
     -> std::optional<Nonnull<const Value*>> {
-  if (auto field = cast<StructValue>(object->inits()).FindField(name);
-      field.has_value()) {
+  if (auto field = cast<StructValue>(object->inits()).FindField(name)) {
     return field;
   }
   if (object->base().has_value()) {
@@ -107,8 +104,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       const auto& object = cast<NominalClassValue>(*v);
       // Look for a field.
       if (std::optional<Nonnull<const Value*>> field =
-              FindClassField(&object, f);
-          field.has_value()) {
+              FindClassField(&object, f)) {
         return *field;
       } else {
         // Look for a method in the object's class

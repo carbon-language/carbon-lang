@@ -326,6 +326,8 @@ class StructValue : public Value {
 // A value of a nominal class type, i.e., an object.
 class NominalClassValue : public Value {
  public:
+  static constexpr llvm::StringLiteral BaseField{"base"};
+
   NominalClassValue(Nonnull<const Value*> type, Nonnull<const Value*> inits,
                     std::optional<Nonnull<const NominalClassValue*>> base)
       : Value(Kind::NominalClassValue),
@@ -342,8 +344,6 @@ class NominalClassValue : public Value {
   auto base() const -> std::optional<Nonnull<const NominalClassValue*>> {
     return base_;
   }
-
-  static const std::string base_field;
 
  private:
   Nonnull<const Value*> type_;

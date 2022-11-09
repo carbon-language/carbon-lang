@@ -463,8 +463,8 @@ auto TypeChecker::FieldTypesWithBase(const NominalClassType& class_type) const
   if (class_type.base().has_value()) {
     auto base_fields = FieldTypesWithBase(*class_type.base().value());
     fields.emplace_back(
-        NamedValue{.name = NominalClassValue::base_field,
-                   .value = (new StructType(std::move(base_fields)))});
+        NamedValue{.name = std::string(NominalClassValue::BaseField),
+                   .value = new StructType(std::move(base_fields))});
   }
   return fields;
 }
@@ -476,7 +476,7 @@ auto TypeChecker::StructImplicitlyConvertibleToClass(
   std::vector<NamedValue> struct_fields{source_struct.fields()};
   const auto base_it = std::find_if(
       struct_fields.begin(), struct_fields.end(), [](const auto& field) {
-        return field.name == NominalClassValue::base_field;
+        return field.name == NominalClassValue::BaseField;
       });
   std::optional<const Value*> base_value;
   if (base_it != struct_fields.end()) {
@@ -490,11 +490,10 @@ auto TypeChecker::StructImplicitlyConvertibleToClass(
                                        impl_scope)) {
     return false;
   }
-  if (base_value.has_value()) {
-    if (!IsImplicitlyConvertible(base_value.value(), dest_class.base().value(),
-                                 impl_scope, allow_user_defined_conversions)) {
-      return false;
-    }
+  if (base_value.has_value() &&
+      !IsImplicitlyConvertible(base_value.value(), dest_class.base().value(),
+                               impl_scope, allow_user_defined_conversions)) {
+    return false;
   }
   return true;
 }
