@@ -2087,10 +2087,8 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
 }
 
 auto Interpreter::StepDestroy() -> ErrorOr<Success> {
-  // TODO: find a way to avoid dyn_cast in this code, and instead use static
-  // type information the way the compiler would.
-  Action& act = todo_.CurrentAction();
-  DestroyAction& destroy_act = cast<DestroyAction>(act);
+  const Action& act = todo_.CurrentAction();
+  const auto& destroy_act = cast<DestroyAction>(act);
   switch (destroy_act.value()->kind()) {
     case Value::Kind::NominalClassValue: {
       const auto* class_obj = cast<NominalClassValue>(destroy_act.value());
@@ -2104,15 +2102,17 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
           return todo_.RunAgain();
         }
       } else if (act.pos() <= member_count) {
-        int index = class_decl.members().size() - act.pos();
+        const int index = class_decl.members().size() - act.pos();
         const auto& member = class_decl.members()[index];
         if (const auto* var = dyn_cast<VariableDeclaration>(member)) {
-          Address object = destroy_act.lvalue()->address();
-          Address mem = object.SubobjectAddress(Member(var));
-          SourceLocation source_loc("destructor", 1);
-          auto v = heap_.Read(mem, source_loc);
+          const Address object = destroy_act.lvalue()->address();
+          const Address mem = object.SubobjectAddress(Member(var));
+          const auto v = heap_.Read(mem, SourceLocation("destructor", 1));
+          CARBON_CHECK(v.ok())
+              << "Failed to read member `" << var->binding().name()
+              << "` from class `" << class_decl.name() << "`";
           return todo_.Spawn(
-              std::make_unique<DestroyAction>(destroy_act.lvalue(), *v));
+              std::make_unique<DestroyAction>(arena_->New<LValue>(mem), *v));
         } else {
           return todo_.RunAgain();
         }
@@ -2132,7 +2132,7 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
       const auto* tuple = cast<TupleValue>(destroy_act.value());
       const auto element_count = static_cast<int>(tuple->elements().size());
       if (act.pos() < element_count) {
-        int index = element_count - act.pos() - 1;
+        const int index = element_count - act.pos() - 1;
         const auto& item = tuple->elements()[index];
         switch (item->kind()) {
           case Value::Kind::NominalClassValue:
