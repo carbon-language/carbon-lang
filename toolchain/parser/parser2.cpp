@@ -374,14 +374,16 @@ auto Parser2::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
   }
 }
 
-auto Parser2::IsListComma(bool already_has_error) -> bool {
+auto Parser2::IsListDone(ParseNodeKind comma_kind, bool already_has_error)
+    -> bool {
   // Handle tokens following a parameter.
   switch (PositionKind()) {
     case TokenKind::CloseParen(): {
-      return false;
+      return true;
     }
     case TokenKind::Comma(): {
-      return true;
+      AddLeafNode(comma_kind, Consume());
+      return PositionIs(TokenKind::CloseParen());
     }
     default: {
       // Don't error twice for the same issue.
@@ -398,7 +400,20 @@ auto Parser2::IsListComma(bool already_has_error) -> bool {
       // The lexer guarantees that parentheses are balanced.
       CARBON_CHECK(end_of_element) << "missing matching `)` for `(`";
       SkipTo(*end_of_element);
-      return PositionKind() == TokenKind::Comma();
+
+      // Repeat the check in the wrapping switch.
+      switch (PositionKind()) {
+        case TokenKind::CloseParen(): {
+          return true;
+        }
+        case TokenKind::Comma(): {
+          AddLeafNode(comma_kind, Consume());
+          return PositionIs(TokenKind::CloseParen());
+        }
+        default: {
+          CARBON_FATAL() << "FindNextOf error";
+        }
+      }
     }
   }
 }
@@ -421,43 +436,95 @@ auto Parser2::Parse() -> void {
   AddLeafNode(ParseNodeKind::FileEnd(), *position_);
 }
 
-auto Parser2::HandleCallState() -> void {
+auto Parser2::HandleCallExpressionState() -> void {
   auto state = PopState();
 
   // TODO: When swapping () start/end, this should AddLeafNode the open before
   // continuing.
-  state.state = ParserState::CallFinish();
+  state.state = ParserState::CallExpressionFinish();
   PushState(state);
   // Advance past the open paren.
   ++position_;
-  if (PositionKind() != TokenKind::CloseParen()) {
-    PushState(ParserState::CallParameterLoop());
+  if (!PositionIs(TokenKind::CloseParen())) {
+    PushState(ParserState::CallExpressionParameterFinish());
     PushState(ParserState::Expression());
   }
 }
 
-auto Parser2::HandleCallParameterLoopState() -> void {
+auto Parser2::HandleCallExpressionParameterFinishState() -> void {
   auto state = PopState();
 
   if (state.has_error) {
     ReturnErrorOnState();
   }
 
-  if (!IsListComma(state.has_error)) {
-    return;
+  if (!IsListDone(ParseNodeKind::CallExpressionComma(), state.has_error)) {
+    PushState(ParserState::CallExpressionParameterFinish());
+    PushState(ParserState::Expression());
   }
-
-  // We are guaranteed to now be at a comma.
-  AddLeafNode(ParseNodeKind::CallExpressionComma(), Consume());
-  PushState(ParserState::CallParameterLoop());
-  PushState(ParserState::Expression());
 }
 
-auto Parser2::HandleCallFinishState() -> void {
+auto Parser2::HandleCallExpressionFinishState() -> void {
   auto state = PopState();
 
   AddLeafNode(ParseNodeKind::CallExpressionEnd(), Consume());
   AddNode(ParseNodeKind::CallExpression(), state.token, state.subtree_start,
+          state.has_error);
+}
+
+auto Parser2::HandleParenExpressionState() -> void {
+  auto state = PopState();
+
+  // TODO: When swapping () start/end, this should AddLeafNode the open before
+  // continuing.
+
+  // Advance past the open paren.
+  CARBON_CHECK(PositionIs(TokenKind::OpenParen()));
+  ++position_;
+  if (PositionIs(TokenKind::CloseParen())) {
+    state.state = ParserState::ParenExpressionFinishAsTuple();
+  } else {
+    state.state = ParserState::ParenExpressionParameterFinish();
+    PushState(state);
+    PushState(ParserState::Expression());
+  }
+}
+
+auto Parser2::HandleParenExpressionParameterFinish(bool as_tuple) -> void {
+  auto state = PopState();
+
+  if (IsListDone(ParseNodeKind::TupleLiteralComma(), state.has_error)) {
+    state.state = as_tuple ? ParserState::ParenExpressionFinishAsTuple()
+                           : ParserState::ParenExpressionFinish();
+    PushState(state);
+  } else {
+    state.state = ParserState::ParenExpressionParameterFinishAsTuple();
+    PushState(state);
+    PushState(ParserState::Expression());
+  }
+}
+
+auto Parser2::HandleParenExpressionParameterFinishState() -> void {
+  HandleParenExpressionParameterFinish(/*as_tuple=*/false);
+}
+
+auto Parser2::HandleParenExpressionParameterFinishAsTupleState() -> void {
+  HandleParenExpressionParameterFinish(/*as_tuple=*/true);
+}
+
+auto Parser2::HandleParenExpressionFinishState() -> void {
+  auto state = PopState();
+
+  AddLeafNode(ParseNodeKind::ParenExpressionEnd(), Consume());
+  AddNode(ParseNodeKind::ParenExpression(), state.token, state.subtree_start,
+          state.has_error);
+}
+
+auto Parser2::HandleParenExpressionFinishAsTupleState() -> void {
+  auto state = PopState();
+
+  AddLeafNode(ParseNodeKind::TupleLiteralEnd(), Consume());
+  AddNode(ParseNodeKind::TupleLiteral(), state.token, state.subtree_start,
           state.has_error);
 }
 
@@ -575,19 +642,26 @@ auto Parser2::HandleExpressionState() -> void {
 auto Parser2::HandleExpressionInPostfixState() -> void {
   auto state = PopState();
 
+  // Continue to the loop state.
+  state.state = ParserState::ExpressionInPostfixLoop();
+
   // Parses a primary expression, which is either a terminal portion of an
   // expression tree, such as an identifier or literal, or a parenthesized
   // expression.
   switch (PositionKind()) {
     case TokenKind::Identifier(): {
-      AddLeafNode(ParseNodeKind::NameReference(), *position_);
+      AddLeafNode(ParseNodeKind::NameReference(), Consume());
+      PushState(state);
       break;
     }
     case TokenKind::OpenCurlyBrace(): {
+      // ParseBraceExpression
       CARBON_FATAL() << "TODO: INCOMPLETE";
     }
     case TokenKind::OpenParen(): {
-      CARBON_FATAL() << "TODO: INCOMPLETE";
+      PushState(state);
+      PushState(ParserState::ParenExpression());
+      return;
     }
     case TokenKind::IntegerLiteral():
     case TokenKind::RealLiteral():
@@ -595,21 +669,17 @@ auto Parser2::HandleExpressionInPostfixState() -> void {
     case TokenKind::IntegerTypeLiteral():
     case TokenKind::UnsignedIntegerTypeLiteral():
     case TokenKind::FloatingPointTypeLiteral(): {
-      AddLeafNode(ParseNodeKind::Literal(), *position_);
+      AddLeafNode(ParseNodeKind::Literal(), Consume());
+      PushState(state);
       break;
     }
     default: {
       CARBON_DIAGNOSTIC(ExpectedExpression, Error, "Expected expression.");
       emitter_.Emit(*position_, ExpectedExpression);
       ReturnErrorOnState();
-      return;
+      break;
     }
   }
-
-  // Continue to the loop state.
-  state.state = ParserState::ExpressionInPostfixLoop();
-  PushState(state);
-  ++position_;
 }
 
 auto Parser2::HandleExpressionInPostfixLoopState() -> void {
@@ -617,7 +687,6 @@ auto Parser2::HandleExpressionInPostfixLoopState() -> void {
   // on.
   auto state = PopState();
 
-  CARBON_CHECK(*position_ != state.token) << "Position didn't change";
   state.token = *position_;
 
   switch (PositionKind()) {
@@ -629,7 +698,7 @@ auto Parser2::HandleExpressionInPostfixLoopState() -> void {
     }
     case TokenKind::OpenParen(): {
       PushState(state);
-      state.state = ParserState::Call();
+      state.state = ParserState::CallExpression();
       PushState(state);
       break;
     }
@@ -784,7 +853,7 @@ auto Parser2::HandleFunctionIntroducerState() -> void {
   PushState(ParserState::FunctionParameterListFinish());
   // Advance past the open paren.
   ++position_;
-  if (PositionKind() != TokenKind::CloseParen()) {
+  if (!PositionIs(TokenKind::CloseParen())) {
     PushState(ParserState::PatternForFunctionParameter());
   }
 }
@@ -1045,13 +1114,7 @@ auto Parser2::HandlePatternForFunctionParameterState() -> void {
 auto Parser2::HandlePatternForFunctionParameterFinishState() -> void {
   bool has_error = HandlePatternFinish();
 
-  if (!IsListComma(has_error)) {
-    return;
-  }
-
-  // We are guaranteed to now be at a comma.
-  AddLeafNode(ParseNodeKind::ParameterListComma(), Consume());
-  if (PositionKind() != TokenKind::CloseParen()) {
+  if (!IsListDone(ParseNodeKind::ParameterListComma(), has_error)) {
     PushState(ParserState::PatternForFunctionParameter());
   }
 }
