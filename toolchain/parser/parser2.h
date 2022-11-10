@@ -88,6 +88,16 @@ class Parser2 {
   static_assert(sizeof(StateStackEntry) == 12,
                 "StateStackEntry has unexpected size!");
 
+  // Possible return values for FindListToken.
+  enum class ListTokenKind {
+    Comma,
+    Close,
+    CommaClose,
+  };
+
+  // The kind of brace expression being evaluated.
+  enum class BraceExpressionKind { Unknown, Value, Type };
+
   Parser2(ParseTree& tree, TokenizedBuffer& tokens,
           TokenDiagnosticEmitter& emitter);
 
@@ -163,12 +173,14 @@ class Parser2 {
   // whether there's an error, it's expected that parsing continues.
   auto DiagnoseOperatorFixity(OperatorFixity fixity) -> void;
 
-  // If the current position is a `,`, consumes it and adds the provided token.
-  // Returns true if the current position (possibly after consuming the comma)
-  // is a `)`. Handles cases where invalid tokens are present by advancing the
+  // If the current position is a `,`, consumes it, adds the provided token, and
+  // returns `Comma`. Returns `Close` if the current position is close_token
+  // (for example, `)`). `CommaClose` indicates it found both (for example,
+  // `,)`). Handles cases where invalid tokens are present by advancing the
   // position, and may emit errors. Pass already_has_error in order to suppress
   // duplicate errors.
-  auto IsListDone(ParseNodeKind comma_kind, bool already_has_error) -> bool;
+  auto ConsumeListToken(ParseNodeKind comma_kind, TokenKind close_kind,
+                        bool already_has_error) -> ListTokenKind;
 
   // Gets the kind of the next token to be consumed.
   auto PositionKind() const -> TokenKind { return tokens_.GetKind(*position_); }
@@ -217,14 +229,42 @@ class Parser2 {
   // Propagates an error up the state stack, to the parent state.
   auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }
 
+  // Returns the appropriate ParserState for the input kind.
+  static auto BraceExpressionKindToParserState(BraceExpressionKind kind,
+                                               ParserState type,
+                                               ParserState value,
+                                               ParserState unknown)
+      -> ParserState;
+
+  // Prints a diagnostic for brace expression syntax errors.
+  auto HandleBraceExpressionParameterError(StateStackEntry state,
+                                           BraceExpressionKind kind) -> void;
+
+  // Handles BraceExpressionParameterAs(Type|Value|Unknown).
+  auto HandleBraceExpressionParameter(BraceExpressionKind kind) -> void;
+
+  // Handles BraceExpressionParameterAfterDesignatorAs(Type|Value|Unknown).
+  auto HandleBraceExpressionParameterAfterDesignator(BraceExpressionKind kind)
+      -> void;
+
+  // Handles BraceExpressionParameterFinishAs(Type|Value|Unknown).
+  auto HandleBraceExpressionParameterFinish(BraceExpressionKind kind) -> void;
+
+  // Handles BraceExpressionFinishAs(Type|Value|Unknown).
+  auto HandleBraceExpressionFinish(BraceExpressionKind kind) -> void;
+
+  // Handles a code block in the context of a statement scope.
+  auto HandleCodeBlock() -> void;
+
+  // Handles a designator expression in either normal expression or struct
+  // contexts.
+  auto HandleDesignatorExpression(bool as_struct) -> void;
+
   // When handling errors before the start of the definition, treat it as a
   // declaration. Recover to a semicolon when it makes sense as a possible
   // function end, otherwise use the fn token for the error.
   auto HandleFunctionError(StateStackEntry state, bool skip_past_likely_end)
       -> void;
-
-  // Handles a code block in the context of a statement scope.
-  auto HandleCodeBlock() -> void;
 
   // Handles a parenthesized expression parameter, with a parameter indicating
   // whether we already know this to be a tuple.

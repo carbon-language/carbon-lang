@@ -374,47 +374,33 @@ auto Parser2::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
   }
 }
 
-auto Parser2::IsListDone(ParseNodeKind comma_kind, bool already_has_error)
-    -> bool {
-  // Handle tokens following a parameter.
-  switch (PositionKind()) {
-    case TokenKind::CloseParen(): {
-      return true;
+auto Parser2::ConsumeListToken(ParseNodeKind comma_kind, TokenKind close_kind,
+                               bool already_has_error) -> ListTokenKind {
+  if (!PositionIs(TokenKind::Comma()) && !PositionIs(close_kind)) {
+    // Don't error a second time on the same element.
+    if (!already_has_error) {
+      CARBON_DIAGNOSTIC(UnexpectedTokenAfterListElement, Error,
+                        "Expected `,` or `{0}`.", TokenKind);
+      emitter_.Emit(*position_, UnexpectedTokenAfterListElement, close_kind);
+      ReturnErrorOnState();
     }
-    case TokenKind::Comma(): {
-      AddLeafNode(comma_kind, Consume());
-      return PositionIs(TokenKind::CloseParen());
-    }
-    default: {
-      // Don't error twice for the same issue.
-      if (!already_has_error) {
-        CARBON_DIAGNOSTIC(UnexpectedTokenAfterListElement, Error,
-                          "Expected `,` or `)`.");
-        emitter_.Emit(*position_, UnexpectedTokenAfterListElement);
-        ReturnErrorOnState();
-      }
 
-      // Recover from the invalid token.
-      auto end_of_element =
-          FindNextOf({TokenKind::Comma(), TokenKind::CloseParen()});
-      // The lexer guarantees that parentheses are balanced.
-      CARBON_CHECK(end_of_element) << "missing matching `)` for `(`";
-      SkipTo(*end_of_element);
+    // Recover from the invalid token.
+    auto end_of_element = FindNextOf({TokenKind::Comma(), close_kind});
+    // The lexer guarantees that parentheses are balanced.
+    CARBON_CHECK(end_of_element)
+        << "missing matching `" << close_kind.GetOpeningSymbol() << "` for `"
+        << close_kind << "`";
 
-      // Repeat the check in the wrapping switch.
-      switch (PositionKind()) {
-        case TokenKind::CloseParen(): {
-          return true;
-        }
-        case TokenKind::Comma(): {
-          AddLeafNode(comma_kind, Consume());
-          return PositionIs(TokenKind::CloseParen());
-        }
-        default: {
-          CARBON_FATAL() << "FindNextOf error";
-        }
-      }
-    }
+    SkipTo(*end_of_element);
+  }
+
+  if (PositionIs(close_kind)) {
+    return ListTokenKind::Close;
+  } else {
+    AddLeafNode(comma_kind, Consume());
+    return PositionIs(close_kind) ? ListTokenKind::CommaClose
+                                  : ListTokenKind::Comma;
   }
 }
 
@@ -434,6 +420,212 @@ auto Parser2::Parse() -> void {
   }
 
   AddLeafNode(ParseNodeKind::FileEnd(), *position_);
+}
+
+auto Parser2::HandleBraceExpressionState() -> void {
+  auto state = PopState();
+
+  state.state = ParserState::BraceExpressionFinishAsUnknown();
+  PushState(state);
+
+  // TODO: When swapping {} start/end, this should AddLeafNode the open before
+  // continuing.
+
+  // Advance past the open brace.
+  CARBON_CHECK(PositionIs(TokenKind::OpenCurlyBrace()));
+  ++position_;
+  if (!PositionIs(TokenKind::CloseCurlyBrace())) {
+    PushState(ParserState::BraceExpressionParameterAsUnknown());
+  }
+}
+
+auto Parser2::BraceExpressionKindToParserState(BraceExpressionKind kind,
+                                               ParserState type,
+                                               ParserState value,
+                                               ParserState unknown)
+    -> ParserState {
+  switch (kind) {
+    case BraceExpressionKind::Type: {
+      return type;
+    }
+    case BraceExpressionKind::Value: {
+      return value;
+    }
+    case BraceExpressionKind::Unknown: {
+      return unknown;
+    }
+  }
+}
+
+auto Parser2::HandleBraceExpressionParameterError(StateStackEntry state,
+                                                  BraceExpressionKind kind)
+    -> void {
+  CARBON_DIAGNOSTIC(ExpectedStructLiteralField, Error, "Expected {0}{1}{2}.",
+                    llvm::StringRef, llvm::StringRef, llvm::StringRef);
+  bool can_be_type = kind != BraceExpressionKind::Value;
+  bool can_be_value = kind != BraceExpressionKind::Type;
+  emitter_.Emit(*position_, ExpectedStructLiteralField,
+                can_be_type ? "`.field: type`" : "",
+                (can_be_type && can_be_value) ? " or " : "",
+                can_be_value ? "`.field = value`" : "");
+
+  state.state = BraceExpressionKindToParserState(
+      kind, ParserState::BraceExpressionParameterFinishAsType(),
+      ParserState::BraceExpressionParameterFinishAsValue(),
+      ParserState::BraceExpressionParameterFinishAsUnknown());
+  PushState(state);
+}
+
+auto Parser2::HandleBraceExpressionParameter(BraceExpressionKind kind) -> void {
+  auto state = PopState();
+
+  if (!PositionIs(TokenKind::Period())) {
+    HandleBraceExpressionParameterError(state, kind);
+    return;
+  }
+
+  state.state = BraceExpressionKindToParserState(
+      kind, ParserState::BraceExpressionParameterAfterDesignatorAsType(),
+      ParserState::BraceExpressionParameterAfterDesignatorAsValue(),
+      ParserState::BraceExpressionParameterAfterDesignatorAsUnknown());
+  PushState(state);
+  PushState(ParserState::DesignatorExpressionAsStruct());
+}
+
+auto Parser2::HandleBraceExpressionParameterAsTypeState() -> void {
+  HandleBraceExpressionParameter(BraceExpressionKind::Type);
+}
+
+auto Parser2::HandleBraceExpressionParameterAsValueState() -> void {
+  HandleBraceExpressionParameter(BraceExpressionKind::Value);
+}
+
+auto Parser2::HandleBraceExpressionParameterAsUnknownState() -> void {
+  HandleBraceExpressionParameter(BraceExpressionKind::Unknown);
+}
+
+auto Parser2::HandleBraceExpressionParameterAfterDesignator(
+    BraceExpressionKind kind) -> void {
+  auto state = PopState();
+
+  if (state.has_error) {
+    auto recovery_pos = FindNextOf(
+        {TokenKind::Equal(), TokenKind::Colon(), TokenKind::Comma()});
+    if (!recovery_pos || tokens_.GetKind(*recovery_pos) == TokenKind::Comma()) {
+      state.state = BraceExpressionKindToParserState(
+          kind, ParserState::BraceExpressionParameterFinishAsType(),
+          ParserState::BraceExpressionParameterFinishAsValue(),
+          ParserState::BraceExpressionParameterFinishAsUnknown());
+      PushState(state);
+      return;
+    }
+    SkipTo(*recovery_pos);
+  }
+
+  // Work out the kind of this element.
+  auto elem_kind = BraceExpressionKind::Unknown;
+  if (PositionIs(TokenKind::Colon())) {
+    elem_kind = BraceExpressionKind::Type;
+  } else if (PositionIs(TokenKind::Equal())) {
+    elem_kind = BraceExpressionKind::Value;
+  }
+  // Unknown kinds and changes between type and value are errors.
+  if (elem_kind == BraceExpressionKind::Unknown ||
+      (kind != BraceExpressionKind::Unknown && elem_kind != kind)) {
+    HandleBraceExpressionParameterError(state, kind);
+    return;
+  }
+
+  // If we're setting the kind, update the BraceExpressionFinish state.
+  if (kind == BraceExpressionKind::Unknown) {
+    kind = elem_kind;
+    auto finish_state = PopState();
+    CARBON_CHECK(finish_state.state ==
+                 ParserState::BraceExpressionFinishAsUnknown());
+    finish_state.state = BraceExpressionKindToParserState(
+        kind, ParserState::BraceExpressionFinishAsType(),
+        ParserState::BraceExpressionFinishAsValue(),
+        ParserState::BraceExpressionFinishAsUnknown());
+    PushState(finish_state);
+  }
+
+  state.state = BraceExpressionKindToParserState(
+      kind, ParserState::BraceExpressionParameterFinishAsType(),
+      ParserState::BraceExpressionParameterFinishAsValue(),
+      ParserState::BraceExpressionParameterFinishAsUnknown());
+
+  state.token = Consume();
+
+  // Struct type fields and value fields use the same grammar except
+  // that one has a `:` separator and the other has an `=` separator.
+  PushState(state);
+  PushState(ParserState::Expression());
+}
+
+auto Parser2::HandleBraceExpressionParameterAfterDesignatorAsTypeState()
+    -> void {
+  HandleBraceExpressionParameterAfterDesignator(BraceExpressionKind::Type);
+}
+
+auto Parser2::HandleBraceExpressionParameterAfterDesignatorAsValueState()
+    -> void {
+  HandleBraceExpressionParameterAfterDesignator(BraceExpressionKind::Value);
+}
+
+auto Parser2::HandleBraceExpressionParameterAfterDesignatorAsUnknownState()
+    -> void {
+  HandleBraceExpressionParameterAfterDesignator(BraceExpressionKind::Unknown);
+}
+
+auto Parser2::HandleBraceExpressionParameterFinish(BraceExpressionKind kind)
+    -> void {
+  auto state = PopState();
+
+  AddNode(kind == BraceExpressionKind::Type ? ParseNodeKind::StructFieldType()
+                                            : ParseNodeKind::StructFieldValue(),
+          state.token, state.subtree_start, state.has_error);
+
+  if (ConsumeListToken(ParseNodeKind::StructComma(),
+                       TokenKind::CloseCurlyBrace(),
+                       state.has_error) == ListTokenKind::Comma) {
+    PushState(BraceExpressionKindToParserState(
+        kind, ParserState::BraceExpressionParameterAsType(),
+        ParserState::BraceExpressionParameterAsValue(),
+        ParserState::BraceExpressionParameterAsUnknown()));
+  }
+}
+
+auto Parser2::HandleBraceExpressionParameterFinishAsTypeState() -> void {
+  HandleBraceExpressionParameterFinish(BraceExpressionKind::Type);
+}
+
+auto Parser2::HandleBraceExpressionParameterFinishAsValueState() -> void {
+  HandleBraceExpressionParameterFinish(BraceExpressionKind::Value);
+}
+
+auto Parser2::HandleBraceExpressionParameterFinishAsUnknownState() -> void {
+  HandleBraceExpressionParameterFinish(BraceExpressionKind::Unknown);
+}
+
+auto Parser2::HandleBraceExpressionFinish(BraceExpressionKind kind) -> void {
+  auto state = PopState();
+
+  AddLeafNode(ParseNodeKind::StructEnd(), Consume());
+  AddNode(kind == BraceExpressionKind::Type ? ParseNodeKind::StructTypeLiteral()
+                                            : ParseNodeKind::StructLiteral(),
+          state.token, state.subtree_start, state.has_error);
+}
+
+auto Parser2::HandleBraceExpressionFinishAsTypeState() -> void {
+  HandleBraceExpressionFinish(BraceExpressionKind::Type);
+}
+
+auto Parser2::HandleBraceExpressionFinishAsValueState() -> void {
+  HandleBraceExpressionFinish(BraceExpressionKind::Value);
+}
+
+auto Parser2::HandleBraceExpressionFinishAsUnknownState() -> void {
+  HandleBraceExpressionFinish(BraceExpressionKind::Unknown);
 }
 
 auto Parser2::HandleCallExpressionState() -> void {
@@ -458,7 +650,9 @@ auto Parser2::HandleCallExpressionParameterFinishState() -> void {
     ReturnErrorOnState();
   }
 
-  if (!IsListDone(ParseNodeKind::CallExpressionComma(), state.has_error)) {
+  if (ConsumeListToken(ParseNodeKind::CallExpressionComma(),
+                       TokenKind::CloseParen(),
+                       state.has_error) == ListTokenKind::Comma) {
     PushState(ParserState::CallExpressionParameterFinish());
     PushState(ParserState::Expression());
   }
@@ -469,62 +663,6 @@ auto Parser2::HandleCallExpressionFinishState() -> void {
 
   AddLeafNode(ParseNodeKind::CallExpressionEnd(), Consume());
   AddNode(ParseNodeKind::CallExpression(), state.token, state.subtree_start,
-          state.has_error);
-}
-
-auto Parser2::HandleParenExpressionState() -> void {
-  auto state = PopState();
-
-  // TODO: When swapping () start/end, this should AddLeafNode the open before
-  // continuing.
-
-  // Advance past the open paren.
-  CARBON_CHECK(PositionIs(TokenKind::OpenParen()));
-  ++position_;
-  if (PositionIs(TokenKind::CloseParen())) {
-    state.state = ParserState::ParenExpressionFinishAsTuple();
-  } else {
-    state.state = ParserState::ParenExpressionParameterFinish();
-    PushState(state);
-    PushState(ParserState::Expression());
-  }
-}
-
-auto Parser2::HandleParenExpressionParameterFinish(bool as_tuple) -> void {
-  auto state = PopState();
-
-  if (IsListDone(ParseNodeKind::TupleLiteralComma(), state.has_error)) {
-    state.state = as_tuple ? ParserState::ParenExpressionFinishAsTuple()
-                           : ParserState::ParenExpressionFinish();
-    PushState(state);
-  } else {
-    state.state = ParserState::ParenExpressionParameterFinishAsTuple();
-    PushState(state);
-    PushState(ParserState::Expression());
-  }
-}
-
-auto Parser2::HandleParenExpressionParameterFinishState() -> void {
-  HandleParenExpressionParameterFinish(/*as_tuple=*/false);
-}
-
-auto Parser2::HandleParenExpressionParameterFinishAsTupleState() -> void {
-  HandleParenExpressionParameterFinish(/*as_tuple=*/true);
-}
-
-auto Parser2::HandleParenExpressionFinishState() -> void {
-  auto state = PopState();
-
-  AddLeafNode(ParseNodeKind::ParenExpressionEnd(), Consume());
-  AddNode(ParseNodeKind::ParenExpression(), state.token, state.subtree_start,
-          state.has_error);
-}
-
-auto Parser2::HandleParenExpressionFinishAsTupleState() -> void {
-  auto state = PopState();
-
-  AddLeafNode(ParseNodeKind::TupleLiteralEnd(), Consume());
-  AddNode(ParseNodeKind::TupleLiteral(), state.token, state.subtree_start,
           state.has_error);
 }
 
@@ -584,7 +722,7 @@ auto Parser2::HandleDeclarationState() -> void {
   }
 }
 
-auto Parser2::HandleDesignatorExpressionState() -> void {
+auto Parser2::HandleDesignatorExpression(bool as_struct) -> void {
   auto state = PopState();
 
   // `.` identifier
@@ -607,8 +745,17 @@ auto Parser2::HandleDesignatorExpressionState() -> void {
     }
   }
 
-  AddNode(ParseNodeKind::DesignatorExpression(), *dot, state.subtree_start,
-          state.has_error);
+  AddNode(as_struct ? ParseNodeKind::StructFieldDesignator()
+                    : ParseNodeKind::DesignatorExpression(),
+          *dot, state.subtree_start, state.has_error);
+}
+
+auto Parser2::HandleDesignatorExpressionState() -> void {
+  HandleDesignatorExpression(/*as_struct=*/false);
+}
+
+auto Parser2::HandleDesignatorExpressionAsStructState() -> void {
+  HandleDesignatorExpression(/*as_struct=*/true);
 }
 
 auto Parser2::HandleExpressionState() -> void {
@@ -655,13 +802,14 @@ auto Parser2::HandleExpressionInPostfixState() -> void {
       break;
     }
     case TokenKind::OpenCurlyBrace(): {
-      // ParseBraceExpression
-      CARBON_FATAL() << "TODO: INCOMPLETE";
+      PushState(state);
+      PushState(ParserState::BraceExpression());
+      break;
     }
     case TokenKind::OpenParen(): {
       PushState(state);
       PushState(ParserState::ParenExpression());
-      return;
+      break;
     }
     case TokenKind::IntegerLiteral():
     case TokenKind::RealLiteral():
@@ -1046,6 +1194,80 @@ auto Parser2::HandleParenConditionFinishState() -> void {
                  /*has_error=*/state.has_error || !close_paren);
 }
 
+auto Parser2::HandleParenExpressionState() -> void {
+  auto state = PopState();
+
+  // TODO: When swapping () start/end, this should AddLeafNode the open before
+  // continuing.
+
+  // Advance past the open paren.
+  CARBON_CHECK(PositionIs(TokenKind::OpenParen()));
+  ++position_;
+  if (PositionIs(TokenKind::CloseParen())) {
+    state.state = ParserState::ParenExpressionFinishAsTuple();
+    PushState(state);
+  } else {
+    state.state = ParserState::ParenExpressionFinish();
+    PushState(state);
+    PushState(ParserState::ParenExpressionParameterFinish());
+    PushState(ParserState::Expression());
+  }
+}
+
+auto Parser2::HandleParenExpressionParameterFinish(bool as_tuple) -> void {
+  auto state = PopState();
+
+  auto list_token_kind =
+      ConsumeListToken(ParseNodeKind::TupleLiteralComma(),
+                       TokenKind::CloseParen(), state.has_error);
+  if (list_token_kind == ListTokenKind::Close) {
+    return;
+  }
+
+  // If this is the first item and a comma was found, switch to tuple handling.
+  // Note this could be `(expr,)` so we may not reuse the current state, but
+  // it's still necessary to switch the parent.
+  if (!as_tuple) {
+    state.state = ParserState::ParenExpressionParameterFinishAsTuple();
+
+    auto finish_state = PopState();
+    CARBON_CHECK(finish_state.state == ParserState::ParenExpressionFinish())
+        << "Unexpected parent state, found: " << finish_state.state;
+    finish_state.state = ParserState::ParenExpressionFinishAsTuple();
+    PushState(finish_state);
+  }
+
+  // On a comma, push another expression handler.
+  if (list_token_kind == ListTokenKind::Comma) {
+    PushState(state);
+    PushState(ParserState::Expression());
+  }
+}
+
+auto Parser2::HandleParenExpressionParameterFinishState() -> void {
+  HandleParenExpressionParameterFinish(/*as_tuple=*/false);
+}
+
+auto Parser2::HandleParenExpressionParameterFinishAsTupleState() -> void {
+  HandleParenExpressionParameterFinish(/*as_tuple=*/true);
+}
+
+auto Parser2::HandleParenExpressionFinishState() -> void {
+  auto state = PopState();
+
+  AddLeafNode(ParseNodeKind::ParenExpressionEnd(), Consume());
+  AddNode(ParseNodeKind::ParenExpression(), state.token, state.subtree_start,
+          state.has_error);
+}
+
+auto Parser2::HandleParenExpressionFinishAsTupleState() -> void {
+  auto state = PopState();
+
+  AddLeafNode(ParseNodeKind::TupleLiteralEnd(), Consume());
+  AddNode(ParseNodeKind::TupleLiteral(), state.token, state.subtree_start,
+          state.has_error);
+}
+
 auto Parser2::HandlePatternStart(PatternKind pattern_kind) -> void {
   auto state = PopState();
 
@@ -1114,7 +1336,9 @@ auto Parser2::HandlePatternForFunctionParameterState() -> void {
 auto Parser2::HandlePatternForFunctionParameterFinishState() -> void {
   bool has_error = HandlePatternFinish();
 
-  if (!IsListDone(ParseNodeKind::ParameterListComma(), has_error)) {
+  if (ConsumeListToken(ParseNodeKind::ParameterListComma(),
+                       TokenKind::CloseParen(),
+                       has_error) == ListTokenKind::Comma) {
     PushState(ParserState::PatternForFunctionParameter());
   }
 }

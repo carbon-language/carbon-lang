@@ -13,6 +13,32 @@
 #error "Must define the x-macro to use this file."
 #endif
 
+// Handles the `{` of a brace expression.
+CARBON_PARSER_STATE(BraceExpression)
+
+// Handles a brace expression parameter. Note this will always start as unknown,
+// but should be known after the first valid parameter. All later inconsistent
+// parameters are invalid.
+CARBON_PARSER_STATE(BraceExpressionParameterAsType)
+CARBON_PARSER_STATE(BraceExpressionParameterAsValue)
+CARBON_PARSER_STATE(BraceExpressionParameterAsUnknown)
+
+// Handles a brace expression parameter after the initial designator. This
+// should be at a `:` or `=`, depending on whether it's a type or value literal.
+CARBON_PARSER_STATE(BraceExpressionParameterAfterDesignatorAsType)
+CARBON_PARSER_STATE(BraceExpressionParameterAfterDesignatorAsValue)
+CARBON_PARSER_STATE(BraceExpressionParameterAfterDesignatorAsUnknown)
+
+// Handles the end of a brace expression parameter.
+CARBON_PARSER_STATE(BraceExpressionParameterFinishAsType)
+CARBON_PARSER_STATE(BraceExpressionParameterFinishAsValue)
+CARBON_PARSER_STATE(BraceExpressionParameterFinishAsUnknown)
+
+// Handles the `}` of a brace expression.
+CARBON_PARSER_STATE(BraceExpressionFinishAsType)
+CARBON_PARSER_STATE(BraceExpressionFinishAsValue)
+CARBON_PARSER_STATE(BraceExpressionFinishAsUnknown)
+
 // Handles a call expression `(...)`.
 CARBON_PARSER_STATE(CallExpression)
 
@@ -33,12 +59,21 @@ CARBON_PARSER_STATE(Declaration)
 // Handles a designator expression, such as `.z` in `x.(y.z)`.
 CARBON_PARSER_STATE(DesignatorExpression)
 
+// As with DesignatorExpression, but for a struct literal.
+CARBON_PARSER_STATE(DesignatorExpressionAsStruct)
+
 // Handles processing of an expression.
 CARBON_PARSER_STATE(Expression)
 
 // Handles processing of an expression.
 CARBON_PARSER_STATE(ExpressionLoop)
+
+// Completes an ExpressionLoop pass by adding an infix operator, then goes back
+// to ExpressionLoop.
 CARBON_PARSER_STATE(ExpressionLoopForBinary)
+
+// Completes an ExpressionLoop pass by adding a prefix operator, then goes back
+// to ExpressionLoop.
 CARBON_PARSER_STATE(ExpressionLoopForPrefix)
 
 // Handles the initial part of postfix expressions, such as an identifier or
