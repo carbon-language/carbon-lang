@@ -238,7 +238,9 @@ auto Parser2::SkipTo(TokenizedBuffer::Token t) -> void {
   CARBON_CHECK(position_ != end_) << "Skipped past EOF.";
 }
 
-auto Parser2::HandleCodeBlock() -> void {
+auto Parser2::HandleCodeBlockState() -> void {
+  PopAndDiscardState();
+
   PushState(ParserState::CodeBlockFinish());
   if (ConsumeAndAddLeafNodeIf(TokenKind::OpenCurlyBrace(),
                               ParseNodeKind::CodeBlockStart())) {
@@ -251,7 +253,7 @@ auto Parser2::HandleCodeBlock() -> void {
     CARBON_DIAGNOSTIC(ExpectedCodeBlock, Error, "Expected braced code block.");
     emitter_.Emit(*position_, ExpectedCodeBlock);
 
-    HandleStatement(PositionKind());
+    PushState(ParserState::Statement());
   }
 }
 
@@ -408,7 +410,7 @@ auto Parser2::Parse() -> void {
   // Traces state_stack_. This runs even in opt because it's low overhead.
   PrettyStackTraceParseState pretty_stack(this);
 
-  PushState(ParserState::Declaration());
+  PushState(ParserState::DeclarationLoop());
   while (!state_stack_.empty()) {
     switch (state_stack_.back().state) {
 #define CARBON_PARSER_STATE(Name) \
@@ -490,7 +492,7 @@ auto Parser2::HandleBraceExpressionParameter(BraceExpressionKind kind) -> void {
       ParserState::BraceExpressionParameterAfterDesignatorAsValue(),
       ParserState::BraceExpressionParameterAfterDesignatorAsUnknown());
   PushState(state);
-  PushState(ParserState::DesignatorExpressionAsStruct());
+  PushState(ParserState::DesignatorAsStruct());
 }
 
 auto Parser2::HandleBraceExpressionParameterAsTypeState() -> void {
@@ -681,7 +683,7 @@ auto Parser2::HandleCodeBlockFinishState() -> void {
   }
 }
 
-auto Parser2::HandleDeclarationState() -> void {
+auto Parser2::HandleDeclarationLoopState() -> void {
   // This maintains the current state unless we're at the end of the file.
 
   switch (PositionKind()) {
@@ -706,7 +708,7 @@ auto Parser2::HandleDeclarationState() -> void {
       break;
     }
     case TokenKind::Var(): {
-      HandleVar(/*require_semicolon=*/true);
+      PushState(ParserState::VarAsRequireSemicolon());
       break;
     }
     default: {
@@ -723,7 +725,7 @@ auto Parser2::HandleDeclarationState() -> void {
   }
 }
 
-auto Parser2::HandleDesignatorExpression(bool as_struct) -> void {
+auto Parser2::HandleDesignator(bool as_struct) -> void {
   auto state = PopState();
 
   // `.` identifier
@@ -751,12 +753,12 @@ auto Parser2::HandleDesignatorExpression(bool as_struct) -> void {
           *dot, state.subtree_start, state.has_error);
 }
 
-auto Parser2::HandleDesignatorExpressionState() -> void {
-  HandleDesignatorExpression(/*as_struct=*/false);
+auto Parser2::HandleDesignatorAsExpressionState() -> void {
+  HandleDesignator(/*as_struct=*/false);
 }
 
-auto Parser2::HandleDesignatorExpressionAsStructState() -> void {
-  HandleDesignatorExpression(/*as_struct=*/true);
+auto Parser2::HandleDesignatorAsStructState() -> void {
+  HandleDesignator(/*as_struct=*/true);
 }
 
 auto Parser2::HandleExpressionState() -> void {
@@ -802,16 +804,6 @@ auto Parser2::HandleExpressionInPostfixState() -> void {
       PushState(state);
       break;
     }
-    case TokenKind::OpenCurlyBrace(): {
-      PushState(state);
-      PushState(ParserState::BraceExpression());
-      break;
-    }
-    case TokenKind::OpenParen(): {
-      PushState(state);
-      PushState(ParserState::ParenExpression());
-      break;
-    }
     case TokenKind::IntegerLiteral():
     case TokenKind::RealLiteral():
     case TokenKind::StringLiteral():
@@ -820,6 +812,16 @@ auto Parser2::HandleExpressionInPostfixState() -> void {
     case TokenKind::FloatingPointTypeLiteral(): {
       AddLeafNode(ParseNodeKind::Literal(), Consume());
       PushState(state);
+      break;
+    }
+    case TokenKind::OpenCurlyBrace(): {
+      PushState(state);
+      PushState(ParserState::BraceExpression());
+      break;
+    }
+    case TokenKind::OpenParen(): {
+      PushState(state);
+      PushState(ParserState::ParenExpression());
       break;
     }
     default: {
@@ -841,7 +843,7 @@ auto Parser2::HandleExpressionInPostfixLoopState() -> void {
   switch (PositionKind()) {
     case TokenKind::Period(): {
       PushState(state);
-      state.state = ParserState::DesignatorExpression();
+      state.state = ParserState::DesignatorAsExpression();
       PushState(state);
       break;
     }
@@ -1003,7 +1005,7 @@ auto Parser2::HandleFunctionIntroducerState() -> void {
   // Advance past the open paren.
   ++position_;
   if (!PositionIs(TokenKind::CloseParen())) {
-    PushState(ParserState::PatternForFunctionParameter());
+    PushState(ParserState::PatternAsFunctionParameter());
   }
 }
 
@@ -1210,7 +1212,7 @@ auto Parser2::HandleParenExpressionState() -> void {
   } else {
     state.state = ParserState::ParenExpressionFinish();
     PushState(state);
-    PushState(ParserState::ParenExpressionParameterFinish());
+    PushState(ParserState::ParenExpressionParameterFinishAsUnknown());
     PushState(ParserState::Expression());
   }
 }
@@ -1245,7 +1247,7 @@ auto Parser2::HandleParenExpressionParameterFinish(bool as_tuple) -> void {
   }
 }
 
-auto Parser2::HandleParenExpressionParameterFinishState() -> void {
+auto Parser2::HandleParenExpressionParameterFinishAsUnknownState() -> void {
   HandleParenExpressionParameterFinish(/*as_tuple=*/false);
 }
 
@@ -1275,11 +1277,11 @@ auto Parser2::HandlePatternStart(PatternKind pattern_kind) -> void {
   // Ensure the finish state always follows.
   switch (pattern_kind) {
     case PatternKind::Parameter: {
-      state.state = ParserState::PatternForFunctionParameterFinish();
+      state.state = ParserState::PatternAsFunctionParameterFinish();
       break;
     }
     case PatternKind::Variable: {
-      state.state = ParserState::PatternForVariableFinish();
+      state.state = ParserState::PatternAsVariableFinish();
       break;
     }
   }
@@ -1330,26 +1332,73 @@ auto Parser2::HandlePatternFinish() -> bool {
   return false;
 }
 
-auto Parser2::HandlePatternForFunctionParameterState() -> void {
+auto Parser2::HandlePatternAsFunctionParameterState() -> void {
   HandlePatternStart(PatternKind::Parameter);
 }
 
-auto Parser2::HandlePatternForFunctionParameterFinishState() -> void {
+auto Parser2::HandlePatternAsFunctionParameterFinishState() -> void {
   bool has_error = HandlePatternFinish();
 
   if (ConsumeListToken(ParseNodeKind::ParameterListComma(),
                        TokenKind::CloseParen(),
                        has_error) == ListTokenKind::Comma) {
-    PushState(ParserState::PatternForFunctionParameter());
+    PushState(ParserState::PatternAsFunctionParameter());
   }
 }
 
-auto Parser2::HandlePatternForVariableState() -> void {
+auto Parser2::HandlePatternAsVariableState() -> void {
   HandlePatternStart(PatternKind::Variable);
 }
 
-auto Parser2::HandlePatternForVariableFinishState() -> void {
+auto Parser2::HandlePatternAsVariableFinishState() -> void {
   HandlePatternFinish();
+}
+
+auto Parser2::HandleStatementState() -> void {
+  PopAndDiscardState();
+
+  switch (PositionKind()) {
+    case TokenKind::Break(): {
+      PushState(ParserState::StatementBreakFinish());
+      ++position_;
+      break;
+    }
+    case TokenKind::Continue(): {
+      PushState(ParserState::StatementContinueFinish());
+      ++position_;
+      break;
+    }
+    case TokenKind::For(): {
+      // Process the header as a child of the for so that we can get consistent
+      // starts.
+      // TODO: When reorganizing components, we can probably make this flatter.
+      PushState(ParserState::StatementForFinish());
+      ++position_;
+      PushState(ParserState::StatementForHeader());
+      break;
+    }
+    case TokenKind::If(): {
+      PushState(ParserState::StatementIf());
+      break;
+    }
+    case TokenKind::Return(): {
+      PushState(ParserState::StatementReturn());
+      break;
+    }
+    case TokenKind::Var(): {
+      PushState(ParserState::VarAsRequireSemicolon());
+      break;
+    }
+    case TokenKind::While(): {
+      PushState(ParserState::StatementWhile());
+      break;
+    }
+    default: {
+      PushState(ParserState::ExpressionStatementFinish());
+      PushState(ParserState::Expression());
+      break;
+    }
+  }
 }
 
 auto Parser2::HandleStatementBreakFinishState() -> void {
@@ -1378,7 +1427,7 @@ auto Parser2::HandleStatementForHeaderState() -> void {
     // This is temporary until we come to a conclusion regarding the
     // recovery tokens strategy.
     ReturnErrorOnState();
-    HandleCodeBlock();
+    PushState(ParserState::CodeBlock());
     return;
   }
 
@@ -1386,7 +1435,7 @@ auto Parser2::HandleStatementForHeaderState() -> void {
 
   if (PositionIs(TokenKind::Var())) {
     PushState(state);
-    HandleVar(/*require_semicolon=*/false);
+    PushState(ParserState::VarAsNoSemicolon());
   } else {
     CARBON_DIAGNOSTIC(ExpectedVariableDeclaration, Error,
                       "Expected `var` declaration.");
@@ -1438,7 +1487,7 @@ auto Parser2::HandleStatementForHeaderFinishState() -> void {
   AddNode(ParseNodeKind::ForHeader(), state.token, state.subtree_start,
           state.has_error);
 
-  HandleCodeBlock();
+  PushState(ParserState::CodeBlock());
 }
 
 auto Parser2::HandleStatementForFinishState() -> void {
@@ -1448,7 +1497,9 @@ auto Parser2::HandleStatementForFinishState() -> void {
           state.has_error);
 }
 
-auto Parser2::HandleStatementIf() -> void {
+auto Parser2::HandleStatementIfState() -> void {
+  PopAndDiscardState();
+
   PushState(ParserState::StatementIfConditionFinish());
   PushState(ParserState::ParenCondition());
   ++position_;
@@ -1459,7 +1510,7 @@ auto Parser2::HandleStatementIfConditionFinishState() -> void {
 
   state.state = ParserState::StatementIfThenBlockFinish();
   PushState(state);
-  HandleCodeBlock();
+  PushState(ParserState::CodeBlock());
 }
 
 auto Parser2::HandleStatementIfThenBlockFinishState() -> void {
@@ -1470,11 +1521,8 @@ auto Parser2::HandleStatementIfThenBlockFinishState() -> void {
     state.state = ParserState::StatementIfElseBlockFinish();
     PushState(state);
     // `else if` is permitted as a special case.
-    if (PositionIs(TokenKind::If())) {
-      HandleStatementIf();
-    } else {
-      HandleCodeBlock();
-    }
+    PushState(PositionIs(TokenKind::If()) ? ParserState::StatementIf()
+                                          : ParserState::CodeBlock());
   } else {
     AddNode(ParseNodeKind::IfStatement(), state.token, state.subtree_start,
             state.has_error);
@@ -1504,17 +1552,75 @@ auto Parser2::HandleStatementKeywordFinish(TokenKind token_kind,
   AddNode(node_kind, state.token, state.subtree_start, state.has_error);
 }
 
+auto Parser2::HandleStatementReturnState() -> void {
+  auto state = PopState();
+
+  state.state = ParserState::StatementReturnFinish();
+  PushState(state);
+  ++position_;
+  if (!PositionIs(TokenKind::Semi())) {
+    PushState(ParserState::Expression());
+  }
+}
+
 auto Parser2::HandleStatementReturnFinishState() -> void {
   HandleStatementKeywordFinish(TokenKind::Return(),
                                ParseNodeKind::ReturnStatement());
 }
 
+auto Parser2::HandleStatementScopeLoopState() -> void {
+  // This maintains the current state until we're at the end of the scope.
+
+  auto token_kind = PositionKind();
+  if (token_kind == TokenKind::CloseCurlyBrace()) {
+    auto state = PopState();
+    if (state.has_error) {
+      ReturnErrorOnState();
+    }
+  } else {
+    PushState(ParserState::Statement());
+  }
+}
+
+auto Parser2::HandleStatementWhileState() -> void {
+  PopAndDiscardState();
+
+  PushState(ParserState::StatementWhileConditionFinish());
+  PushState(ParserState::ParenCondition());
+  ++position_;
+}
+
+auto Parser2::HandleStatementWhileConditionFinishState() -> void {
+  auto state = PopState();
+
+  state.state = ParserState::StatementWhileBlockFinish();
+  PushState(state);
+  PushState(ParserState::CodeBlock());
+}
+
+auto Parser2::HandleStatementWhileBlockFinishState() -> void {
+  auto state = PopState();
+
+  AddNode(ParseNodeKind::WhileStatement(), state.token, state.subtree_start,
+          state.has_error);
+}
+
 auto Parser2::HandleVar(bool require_semicolon) -> void {
-  PushState(require_semicolon ? ParserState::VarFinishWithSemicolon()
-                              : ParserState::VarFinishWithoutSemicolon());
+  PopAndDiscardState();
+
+  PushState(require_semicolon ? ParserState::VarFinishAsRequireSemicolon()
+                              : ParserState::VarFinishAsNoSemicolon());
   PushState(ParserState::VarAfterPattern());
   ++position_;
-  PushState(ParserState::PatternForVariable());
+  PushState(ParserState::PatternAsVariable());
+}
+
+auto Parser2::HandleVarAsRequireSemicolonState() -> void {
+  HandleVar(/*require_semicolon=*/true);
+}
+
+auto Parser2::HandleVarAsNoSemicolonState() -> void {
+  HandleVar(/*require_semicolon=*/false);
 }
 
 auto Parser2::HandleVarAfterPatternState() -> void {
@@ -1563,103 +1669,12 @@ auto Parser2::HandleVarFinish(bool require_semicolon) -> void {
                  state.subtree_start, state.has_error);
 }
 
-auto Parser2::HandleVarFinishWithSemicolonState() -> void {
+auto Parser2::HandleVarFinishAsRequireSemicolonState() -> void {
   HandleVarFinish(/*require_semicolon=*/true);
 }
 
-auto Parser2::HandleVarFinishWithoutSemicolonState() -> void {
+auto Parser2::HandleVarFinishAsNoSemicolonState() -> void {
   HandleVarFinish(/*require_semicolon=*/false);
-}
-
-auto Parser2::HandleStatementWhile() -> void {
-  PushState(ParserState::StatementWhileConditionFinish());
-  PushState(ParserState::ParenCondition());
-  ++position_;
-}
-
-auto Parser2::HandleStatementWhileConditionFinishState() -> void {
-  auto state = PopState();
-
-  state.state = ParserState::StatementWhileBlockFinish();
-  PushState(state);
-  HandleCodeBlock();
-}
-
-auto Parser2::HandleStatementWhileBlockFinishState() -> void {
-  auto state = PopState();
-
-  AddNode(ParseNodeKind::WhileStatement(), state.token, state.subtree_start,
-          state.has_error);
-}
-
-auto Parser2::HandleStatement(TokenKind token_kind) -> void {
-  switch (token_kind) {
-    case TokenKind::Break(): {
-      PushState(ParserState::StatementBreakFinish());
-      ++position_;
-      break;
-    }
-    case TokenKind::Continue(): {
-      PushState(ParserState::StatementContinueFinish());
-      ++position_;
-      break;
-    }
-    case TokenKind::For(): {
-      // Process the header as a child of the for so that we can get consistent
-      // starts.
-      // TODO: When reorganizing components, we can probably make this flatter.
-      PushState(ParserState::StatementForFinish());
-      ++position_;
-      PushState(ParserState::StatementForHeader());
-      break;
-    }
-    case TokenKind::If(): {
-      HandleStatementIf();
-      break;
-    }
-    case TokenKind::Return(): {
-      auto return_token = *position_;
-      if (tokens_.GetKind(*(position_ + 1)) == TokenKind::Semi()) {
-        int subtree_start = tree_.size();
-        AddLeafNode(ParseNodeKind::StatementEnd(), *(position_ + 1));
-        AddNode(ParseNodeKind::ReturnStatement(), return_token, subtree_start,
-                /*has_error=*/false);
-        position_ += 2;
-      } else {
-        PushState(ParserState::StatementReturnFinish());
-        ++position_;
-        PushState(ParserState::Expression());
-      }
-      break;
-    }
-    case TokenKind::Var(): {
-      HandleVar(/*require_semicolon=*/true);
-      break;
-    }
-    case TokenKind::While(): {
-      HandleStatementWhile();
-      break;
-    }
-    default: {
-      PushState(ParserState::ExpressionStatementFinish());
-      PushState(ParserState::Expression());
-      break;
-    }
-  }
-}
-
-auto Parser2::HandleStatementScopeLoopState() -> void {
-  // This maintains the current state until we're at the end of the scope.
-
-  auto token_kind = PositionKind();
-  if (token_kind == TokenKind::CloseCurlyBrace()) {
-    auto state = PopState();
-    if (state.has_error) {
-      ReturnErrorOnState();
-    }
-  } else {
-    HandleStatement(token_kind);
-  }
 }
 
 }  // namespace Carbon

@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_PARSER_PARSER2_H_
 #define CARBON_TOOLCHAIN_PARSER_PARSER2_H_
 
+#include "common/check.h"
 #include "llvm/ADT/Optional.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
@@ -224,6 +225,8 @@ class Parser2 {
   // Pushes a constructed state onto the stack.
   auto PushState(StateStackEntry state) -> void {
     state_stack_.push_back(state);
+    // Verify the stack doesn't grow unbounded by programming error.
+    CARBON_CHECK(state_stack_.size() < (1 << 20));
   }
 
   // Propagates an error up the state stack, to the parent state.
@@ -253,12 +256,8 @@ class Parser2 {
   // Handles BraceExpressionFinishAs(Type|Value|Unknown).
   auto HandleBraceExpressionFinish(BraceExpressionKind kind) -> void;
 
-  // Handles a code block in the context of a statement scope.
-  auto HandleCodeBlock() -> void;
-
-  // Handles a designator expression in either normal expression or struct
-  // contexts.
-  auto HandleDesignatorExpression(bool as_struct) -> void;
+  // Handles DesignatorAs.
+  auto HandleDesignator(bool as_struct) -> void;
 
   // When handling errors before the start of the definition, treat it as a
   // declaration. Recover to a semicolon when it makes sense as a possible
@@ -266,8 +265,7 @@ class Parser2 {
   auto HandleFunctionError(StateStackEntry state, bool skip_past_likely_end)
       -> void;
 
-  // Handles a parenthesized expression parameter, with a parameter indicating
-  // whether we already know this to be a tuple.
+  // Handles ParenExpressionParameterFinish(AsUnknown|AsTuple)
   auto HandleParenExpressionParameterFinish(bool as_tuple) -> void;
 
   // Handles the start of a pattern.
@@ -278,26 +276,14 @@ class Parser2 {
   // Handles the end of a pattern.
   auto HandlePatternFinish() -> bool;
 
-  // Handles a single statement. While typically within a statement block, this
-  // can also be used for error recovery where we expect a statement block and
-  // are missing braces.
-  auto HandleStatement(TokenKind token_kind) -> void;
-
-  // Handles a `if` statement the start token.
-  auto HandleStatementIf() -> void;
-
   // Handles the `;` after a keyword statement.
   auto HandleStatementKeywordFinish(TokenKind token_kind,
                                     ParseNodeKind node_kind) -> void;
 
-  // Handles a `while` statement at the start token.
-  auto HandleStatementWhile() -> void;
-
-  // Handles a `var` keyword at the start token. The semicolon requirement will
-  // be transmitted to HandleVarFinish.
+  // Handles VarAs(RequireSemicolon|NoSemicolon).
   auto HandleVar(bool require_semicolon) -> void;
 
-  // Handles final processing of a `var` keyword.
+  // Handles VarFinishAs(RequireSemicolon|NoSemicolon).
   auto HandleVarFinish(bool require_semicolon) -> void;
 
   // `clang-format` has a bug with spacing around `->` returns in macros. See
