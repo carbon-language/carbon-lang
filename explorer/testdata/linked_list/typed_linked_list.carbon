@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
-// CHECK:STDOUT: String array length is: 7
+// CHECK:STDOUT: String list length is: 7
 // CHECK:STDOUT: This is a String Entry 4
 // CHECK:STDOUT: Value 1337
 // CHECK:STDOUT: result: 0
@@ -33,7 +33,7 @@ class Node(T:! Type) {
 class LinkedList(T:! Type) {
   fn Create() -> LinkedList(T) {
     return {
-      .head = Optional(Node(T)*).CreateEmpty(),    
+      .head = Optional(Node(T)*).CreateEmpty(),
       .tail = Optional(Node(T)*).CreateEmpty(),
       .len = 0
     };
@@ -46,7 +46,7 @@ class LinkedList(T:! Type) {
       return;
     }
     var last: Optional(Node(T)*) = (*me).tail;
-    var last_value:Node(T)* = last.Get(); 
+    var last_value:Node(T)* = last.Get();
     var v_wrapped:Optional(Node(T)*) = Optional(Node(T)*).Create(heap.New(Node(T).Create(value)));
     (*last_value).set_next(v_wrapped);
     (*v_wrapped.Get()).set_prev(last);
@@ -89,7 +89,7 @@ class LinkedList(T:! Type) {
   fn Clear[addr me: Self*]() {
     if((*me).len == 0) {
       return;
-    } 
+    }
     var iter: auto = (*me).head;
     while(iter.HasValue()) {
       var current: auto = iter;
@@ -98,7 +98,7 @@ class LinkedList(T:! Type) {
     }
     (*me).head = Optional(Node(T)*).CreateEmpty();
     (*me).tail = Optional(Node(T)*).CreateEmpty();
-    (*me).len = 0; 
+    (*me).len = 0;
   }
   fn Length[me:Self]() -> i32 {
     return me.len;
@@ -117,7 +117,7 @@ fn Main() -> i32 {
   test_list.PushBack("This is a String Entry 4");
   test_list.PushBack("This is a String Entry 5");
   test_list.PushFront("This is a prepended String -1");
-  Print("String array length is: {0}", test_list.Length());
+  Print("String list length is: {0}", test_list.Length());
   var search_index:i32 = 5;
   var retrieved_entry: auto = test_list.GetByIndex(search_index);
   if(retrieved_entry.HasValue()) {
