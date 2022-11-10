@@ -57,7 +57,7 @@ class Parser2 {
 
     // The state.
     ParserState state;
-    // Set to true  to indicate that an error was found, and that contextual
+    // Set to true to indicate that an error was found, and that contextual
     // error recovery may be needed.
     bool has_error = false;
 
