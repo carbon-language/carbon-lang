@@ -28,8 +28,6 @@ auto ParseTree::Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer)
   TokenDiagnosticEmitter emitter(translator, consumer);
 
   // Delegate to the parser.
-  // TODO: Edit this to swap between Parser and Parser2. This is manual in order
-  // to avoid test duplication.
   return Parser2::Parse(tokens, emitter);
 }
 

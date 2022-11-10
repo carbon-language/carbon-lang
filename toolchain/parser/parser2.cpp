@@ -473,6 +473,7 @@ auto Parser2::HandleBraceExpressionParameterError(StateStackEntry state,
       kind, ParserState::BraceExpressionParameterFinishAsType(),
       ParserState::BraceExpressionParameterFinishAsValue(),
       ParserState::BraceExpressionParameterFinishAsUnknown());
+  state.has_error = true;
   PushState(state);
 }
 
