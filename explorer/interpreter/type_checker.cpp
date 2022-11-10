@@ -1935,11 +1935,15 @@ auto TypeChecker::SubstituteImpl(const Bindings& bindings,
     }
     case Value::Kind::NominalClassType: {
       const auto& class_type = cast<NominalClassType>(*type);
+      auto base_type = class_type.base();
+      if (base_type.has_value()) {
+        base_type = cast<NominalClassType>(
+            SubstituteImpl(base_type.value()->bindings(), base_type.value()));
+      }
       Nonnull<const NominalClassType*> new_class_type =
           arena_->New<NominalClassType>(
               &class_type.declaration(),
-              substitute_into_bindings(&class_type.bindings()),
-              class_type.base());
+              substitute_into_bindings(&class_type.bindings()), base_type);
       return new_class_type;
     }
     case Value::Kind::InterfaceType: {
@@ -4555,27 +4559,25 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     Nonnull<Expression*> base_class_expr = *class_decl->base_expr();
     CARBON_ASSIGN_OR_RETURN(const auto base_type,
                             TypeCheckTypeExp(base_class_expr, class_scope));
-    switch (base_type->kind()) {
-      case Value::Kind::NominalClassType:
-        base_class = cast<NominalClassType>(base_type);
-        if (base_class.value()->declaration().extensibility() ==
-            ClassExtensibility::None) {
-          return ProgramError(class_decl->source_loc())
-                 << "Base class `" << base_class.value()->declaration().name()
-                 << "` is `final` and cannot inherited. Add the `base` or "
-                    "`abstract` class prefix to `"
-                 << base_class.value()->declaration().name()
-                 << "` to allow it to be inherited";
-        }
-        class_decl->set_base(&base_class.value()->declaration());
-        break;
-      default:
-        return ProgramError(class_decl->source_loc())
-               << "Unsupported base class type for class `"
-               << class_decl->name()
-               << "`. Only simple classes are currently supported as base "
-                  "class.";
+    if (base_type->kind() != Value::Kind::NominalClassType) {
+      return ProgramError(class_decl->source_loc())
+             << "Unsupported base class type for class `" << class_decl->name()
+             << "`. Only simple classes are currently supported as base "
+                "class.";
     }
+
+    base_class = cast<NominalClassType>(base_type);
+    if (base_class.value()->declaration().extensibility() ==
+        ClassExtensibility::None) {
+      return ProgramError(class_decl->source_loc())
+             << "Base class `" << base_class.value()->declaration().name()
+             << "` is `final` and cannot inherited. Add the `base` or "
+                "`abstract` class prefix to `"
+             << base_class.value()->declaration().name()
+             << "` to allow it to be inherited";
+    }
+    class_decl->set_base_type(base_class);
+    class_decl->set_base(&base_class.value()->declaration());
   }
 
   std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;

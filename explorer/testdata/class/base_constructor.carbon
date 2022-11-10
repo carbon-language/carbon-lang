@@ -20,7 +20,6 @@ base class A {
 
 class B extends A {
   fn Create() -> Self {
-    // Note: This syntax is supported per the design, but currently XFAIL for the explorer.
     return {.base = A.Create(), .value_b = 2};
   }
   var value_b: i32;
