@@ -11,6 +11,7 @@
 #include "toolchain/parser/parse_node_kind.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/parser/parser_state.h"
+#include "toolchain/parser/precedence.h"
 
 namespace Carbon {
 
@@ -28,6 +29,9 @@ class Parser2 {
   }
 
  private:
+  // Possible operator fixities for errors.
+  enum class OperatorFixity { Prefix, Infix, Postfix };
+
   // Supported kinds of patterns for HandlePattern.
   enum class PatternKind { Parameter, Variable };
 
@@ -38,20 +42,51 @@ class Parser2 {
   struct StateStackEntry {
     StateStackEntry(ParserState state, TokenizedBuffer::Token token,
                     int32_t subtree_start)
-        : state(state), token(token), subtree_start(subtree_start) {}
+        : StateStackEntry(state, PrecedenceGroup::ForTopLevelExpression(),
+                          PrecedenceGroup::ForTopLevelExpression(), token,
+                          subtree_start) {}
+
+    StateStackEntry(ParserState state, PrecedenceGroup ambient_precedence,
+                    PrecedenceGroup lhs_precedence,
+                    TokenizedBuffer::Token token, int32_t subtree_start)
+        : state(state),
+          ambient_precedence(ambient_precedence),
+          lhs_precedence(lhs_precedence),
+          token(token),
+          subtree_start(subtree_start) {}
 
     // The state.
     ParserState state;
+    // Set to true to indicate that an error was found, and that contextual
+    // error recovery may be needed.
+    bool has_error = false;
+
+    // Precedence information used by expression states in order to determine
+    // operator precedence. The ambient_precedence deals with how the expression
+    // should interact with outside context, while the lhs_precedence is
+    // specific to the lhs of an operator expression.
+    PrecedenceGroup ambient_precedence;
+    PrecedenceGroup lhs_precedence;
+
     // A token providing context based on the subtree. This will typically be
     // the first token in the subtree, but may sometimes be a token within. It
     // will typically be used for the subtree's root node.
     TokenizedBuffer::Token token;
     // The offset within the ParseTree of the subtree start.
     int32_t subtree_start;
-    // Set to true  to indicate that an error was found, and that contextual
-    // error recovery may be needed.
-    bool has_error = false;
   };
+
+  // We expect StateStackEntry to fit into 12 bytes:
+  //   state = 1 byte
+  //   has_error = 1 byte
+  //   ambient_precedence = 1 byte
+  //   lhs_precedence = 1 byte
+  //   token = 4 bytes
+  //   subtree_start = 4 bytes
+  // If it becomes bigger, it'd be worth examining better packing; it should be
+  // feasible to pack the 1-byte entries more tightly.
+  static_assert(sizeof(StateStackEntry) == 12,
+                "StateStackEntry has unexpected size!");
 
   Parser2(ParseTree& tree, TokenizedBuffer& tokens,
           TokenDiagnosticEmitter& emitter);
@@ -89,14 +124,6 @@ class Parser2 {
   auto FindNextOf(std::initializer_list<TokenKind> desired_kinds)
       -> llvm::Optional<TokenizedBuffer::Token>;
 
-  // Gets the kind of the next token to be consumed.
-  auto PositionKind() const -> TokenKind { return tokens_.GetKind(*position_); }
-
-  // Tests whether the next token to be consumed is of the specified kind.
-  auto PositionIs(TokenKind kind) const -> bool {
-    return PositionKind() == kind;
-  }
-
   // If the token is an opening symbol for a matched group, skips to the matched
   // closing symbol and returns true. Otherwise, returns false.
   auto SkipMatchingGroup() -> bool;
@@ -123,9 +150,51 @@ class Parser2 {
   // Skip forward to the given token. Verifies that it is actually forward.
   auto SkipTo(TokenizedBuffer::Token t) -> void;
 
+  // Returns true if the current token satisfies the lexical validity rules
+  // for an infix operator.
+  auto IsLexicallyValidInfixOperator() -> bool;
+
+  // Determines whether the current trailing operator should be treated as
+  // infix.
+  auto IsTrailingOperatorInfix() -> bool;
+
+  // Diagnoses whether the current token is not written properly for the given
+  // fixity. For example, because mandatory whitespace is missing. Regardless of
+  // whether there's an error, it's expected that parsing continues.
+  auto DiagnoseOperatorFixity(OperatorFixity fixity) -> void;
+
+  // Gets the kind of the next token to be consumed.
+  auto PositionKind() const -> TokenKind { return tokens_.GetKind(*position_); }
+
+  // Tests whether the next token to be consumed is of the specified kind.
+  auto PositionIs(TokenKind kind) const -> bool {
+    return PositionKind() == kind;
+  }
+
+  // Pops the state and keeps the value for inspection.
+  auto PopState() -> StateStackEntry { return state_stack_.pop_back_val(); }
+
+  // Pops the state and discards it.
+  auto PopAndDiscardState() -> void { state_stack_.pop_back(); }
+
   // Pushes a new state with the current position for context.
   auto PushState(ParserState state) -> void {
     PushState(StateStackEntry(state, *position_, tree_.size()));
+  }
+
+  // Pushes a new expression state with specific precedence.
+  auto PushStateForExpression(PrecedenceGroup ambient_precedence) -> void {
+    PushState(StateStackEntry(ParserState::Expression(), ambient_precedence,
+                              PrecedenceGroup::ForTopLevelExpression(),
+                              *position_, tree_.size()));
+  }
+
+  // Pushes a new state with detailed precedence for expression resume states.
+  auto PushStateForExpressionLoop(ParserState state,
+                                  PrecedenceGroup ambient_precedence,
+                                  PrecedenceGroup lhs_precedence) -> void {
+    PushState(StateStackEntry(state, ambient_precedence, lhs_precedence,
+                              *position_, tree_.size()));
   }
 
   // Pushes a new state with the token for context.
@@ -138,19 +207,8 @@ class Parser2 {
     state_stack_.push_back(state);
   }
 
-  // Pops the state and keeps the value for inspection.
-  auto PopState() -> StateStackEntry { return state_stack_.pop_back_val(); }
-
-  // Pops the state and discards it.
-  auto PopAndDiscardState() -> void { state_stack_.pop_back(); }
-
   // Propagates an error up the state stack, to the parent state.
   auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }
-
-  // Parses a primary expression, which is either a terminal portion of an
-  // expression tree, such as an identifier or literal, or a parenthesized
-  // expression.
-  auto HandleExpressionFormPrimary() -> void;
 
   // When handling errors before the start of the definition, treat it as a
   // declaration. Recover to a semicolon when it makes sense as a possible
@@ -165,10 +223,6 @@ class Parser2 {
   // close paren.
   auto HandleFunctionParameterList(bool is_start) -> void;
 
-  // Handles the `;` after a keyword statement.
-  auto HandleKeywordStatementFinish(TokenKind token_kind,
-                                    ParseNodeKind node_kind) -> void;
-
   // Handles the start of a pattern.
   // If the start of the pattern is invalid, it's the responsibility of the
   // outside context to advance past the pattern.
@@ -181,6 +235,13 @@ class Parser2 {
 
   // Handles a `if` statement at the start `if` token.
   auto HandleStatementIf() -> void;
+
+  // Handles the `;` after a keyword statement.
+  auto HandleStatementKeywordFinish(TokenKind token_kind,
+                                    ParseNodeKind node_kind) -> void;
+
+  // Handles a `while` statement at the start `while` token.
+  auto HandleStatementWhile() -> void;
 
   // `clang-format` has a bug with spacing around `->` returns in macros. See
   // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
