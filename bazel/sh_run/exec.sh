@@ -4,7 +4,10 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-# Don't pass BUILD_WORKING_DIRECTORY to the subcommand because args will use
-# pwd-relative paths.
-unset BUILD_WORKING_DIRECTORY
-exec "$@"
+ARGS=("$@")
+for i in "${!ARGS[@]}"; do
+  if [[ -e "${ARGS[$i]}" ]]; then
+    ARGS[$i]="$(realpath ${ARGS[$i]})"
+  fi
+done
+exec "${ARGS[@]}"
