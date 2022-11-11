@@ -10,5 +10,5 @@
 // CHECK:STDERR: AddNode block0: BindName(ident0, node0)
 
 fn Foo() {
-  return 0;
+  return;
 }
