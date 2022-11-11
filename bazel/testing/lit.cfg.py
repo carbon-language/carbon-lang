@@ -66,6 +66,7 @@ def add_substitutions():
         f"{run_explorer} --parser_debug --trace_file=- | "
         f"{filecheck_allow_unmatched}",
     )
+    add_substitution("FileCheck-allow-unmatched", filecheck_allow_unmatched)
     add_substitution("FileCheck-strict", filecheck_strict)
     add_substitution("not", tools["not"])
 
