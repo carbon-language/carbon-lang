@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_PARSER_PARSER2_H_
 #define CARBON_TOOLCHAIN_PARSER_PARSER2_H_
 
+#include "common/check.h"
 #include "llvm/ADT/Optional.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
@@ -88,21 +89,31 @@ class Parser2 {
   static_assert(sizeof(StateStackEntry) == 12,
                 "StateStackEntry has unexpected size!");
 
+  // Possible return values for FindListToken.
+  enum class ListTokenKind {
+    Comma,
+    Close,
+    CommaClose,
+  };
+
+  // The kind of brace expression being evaluated.
+  enum class BraceExpressionKind { Unknown, Value, Type };
+
   Parser2(ParseTree& tree, TokenizedBuffer& tokens,
           TokenDiagnosticEmitter& emitter);
 
   auto Parse() -> void;
 
-  // Adds a node to the parse tree that is fully parsed, has no children
-  // ("leaf"), and has a subsequent sibling.
-  //
-  // This sets up the next sibling of the node to be the next node in the parse
-  // tree's preorder sequence.
+  // Adds a node to the parse tree that has no children (a leaf).
   auto AddLeafNode(ParseNodeKind kind, TokenizedBuffer::Token token,
                    bool has_error = false) -> void;
 
+  // Adds a node to the parse tree that has children.
   auto AddNode(ParseNodeKind kind, TokenizedBuffer::Token token,
                int subtree_start, bool has_error) -> void;
+
+  // Returns the current position and moves past it.
+  auto Consume() -> TokenizedBuffer::Token { return *(position_++); }
 
   // Parses a close paren token corresponding to the given open paren token,
   // possibly skipping forward and diagnosing if necessary. Creates a parse node
@@ -163,6 +174,15 @@ class Parser2 {
   // whether there's an error, it's expected that parsing continues.
   auto DiagnoseOperatorFixity(OperatorFixity fixity) -> void;
 
+  // If the current position is a `,`, consumes it, adds the provided token, and
+  // returns `Comma`. Returns `Close` if the current position is close_token
+  // (for example, `)`). `CommaClose` indicates it found both (for example,
+  // `,)`). Handles cases where invalid tokens are present by advancing the
+  // position, and may emit errors. Pass already_has_error in order to suppress
+  // duplicate errors.
+  auto ConsumeListToken(ParseNodeKind comma_kind, TokenKind close_kind,
+                        bool already_has_error) -> ListTokenKind;
+
   // Gets the kind of the next token to be consumed.
   auto PositionKind() const -> TokenKind { return tokens_.GetKind(*position_); }
 
@@ -205,10 +225,39 @@ class Parser2 {
   // Pushes a constructed state onto the stack.
   auto PushState(StateStackEntry state) -> void {
     state_stack_.push_back(state);
+    // Verify the stack doesn't grow unbounded by programming error.
+    CARBON_CHECK(state_stack_.size() < (1 << 20));
   }
 
   // Propagates an error up the state stack, to the parent state.
   auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }
+
+  // Returns the appropriate ParserState for the input kind.
+  static auto BraceExpressionKindToParserState(BraceExpressionKind kind,
+                                               ParserState type,
+                                               ParserState value,
+                                               ParserState unknown)
+      -> ParserState;
+
+  // Prints a diagnostic for brace expression syntax errors.
+  auto HandleBraceExpressionParameterError(StateStackEntry state,
+                                           BraceExpressionKind kind) -> void;
+
+  // Handles BraceExpressionParameterAs(Type|Value|Unknown).
+  auto HandleBraceExpressionParameter(BraceExpressionKind kind) -> void;
+
+  // Handles BraceExpressionParameterAfterDesignatorAs(Type|Value|Unknown).
+  auto HandleBraceExpressionParameterAfterDesignator(BraceExpressionKind kind)
+      -> void;
+
+  // Handles BraceExpressionParameterFinishAs(Type|Value|Unknown).
+  auto HandleBraceExpressionParameterFinish(BraceExpressionKind kind) -> void;
+
+  // Handles BraceExpressionFinishAs(Type|Value|Unknown).
+  auto HandleBraceExpressionFinish(BraceExpressionKind kind) -> void;
+
+  // Handles DesignatorAs.
+  auto HandleDesignator(bool as_struct) -> void;
 
   // When handling errors before the start of the definition, treat it as a
   // declaration. Recover to a semicolon when it makes sense as a possible
@@ -216,32 +265,26 @@ class Parser2 {
   auto HandleFunctionError(StateStackEntry state, bool skip_past_likely_end)
       -> void;
 
-  // Handles a code block in the context of a statement scope.
-  auto HandleCodeBlock() -> void;
-
-  // Handles parsing of a function parameter list, including commas and the
-  // close paren.
-  auto HandleFunctionParameterList(bool is_start) -> void;
+  // Handles ParenExpressionParameterFinish(AsUnknown|AsTuple)
+  auto HandleParenExpressionParameterFinish(bool as_tuple) -> void;
 
   // Handles the start of a pattern.
   // If the start of the pattern is invalid, it's the responsibility of the
   // outside context to advance past the pattern.
   auto HandlePatternStart(PatternKind pattern_kind) -> void;
 
-  // Handles a single statement. While typically within a statement block, this
-  // can also be used for error recovery where we expect a statement block and
-  // are missing braces.
-  auto HandleStatement(TokenKind token_kind) -> void;
-
-  // Handles a `if` statement at the start `if` token.
-  auto HandleStatementIf() -> void;
+  // Handles the end of a pattern.
+  auto HandlePatternFinish() -> bool;
 
   // Handles the `;` after a keyword statement.
   auto HandleStatementKeywordFinish(TokenKind token_kind,
                                     ParseNodeKind node_kind) -> void;
 
-  // Handles a `while` statement at the start `while` token.
-  auto HandleStatementWhile() -> void;
+  // Handles VarAs(RequireSemicolon|NoSemicolon).
+  auto HandleVar(bool require_semicolon) -> void;
+
+  // Handles VarFinishAs(RequireSemicolon|NoSemicolon).
+  auto HandleVarFinish(bool require_semicolon) -> void;
 
   // `clang-format` has a bug with spacing around `->` returns in macros. See
   // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
