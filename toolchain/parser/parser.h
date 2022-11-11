@@ -16,6 +16,8 @@
 
 namespace Carbon {
 
+// This parser uses a stack for state transitions. See parser_state.def for
+// state documentation.
 class Parser {
  public:
   // Parses the tokens into a parse tree, emitting any errors encountered.
@@ -265,16 +267,11 @@ class Parser {
   auto HandleFunctionError(StateStackEntry state, bool skip_past_likely_end)
       -> void;
 
-  // Handles ParenExpressionParameterFinish(AsUnknown|AsTuple)
+  // Handles ParenExpressionParameterFinish(AsUnknown|AsTuple).
   auto HandleParenExpressionParameterFinish(bool as_tuple) -> void;
 
-  // Handles the start of a pattern.
-  // If the start of the pattern is invalid, it's the responsibility of the
-  // outside context to advance past the pattern.
-  auto HandlePatternStart(PatternKind pattern_kind) -> void;
-
-  // Handles the end of a pattern.
-  auto HandlePatternFinish() -> bool;
+  // Handles PatternAs(FunctionParameter|Variable).
+  auto HandlePattern(PatternKind pattern_kind) -> void;
 
   // Handles the `;` after a keyword statement.
   auto HandleStatementKeywordFinish(TokenKind token_kind,

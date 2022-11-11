@@ -218,6 +218,22 @@ CARBON_PARSER_STATE(ExpressionStatementFinish)
 //   2. FunctionAfterParameterList
 CARBON_PARSER_STATE(FunctionIntroducer)
 
+// Starts function parameter processing.
+//
+// Always:
+//   1. PatternAsFunctionParameter
+//   2. FunctionParameterFinish
+CARBON_PARSER_STATE(FunctionParameter)
+
+// Finishes function parameter processing, including `,`. If there are more
+// parameters, enqueues another parameter processing state.
+//
+// If `Comma` without `CloseParen`:
+//   1. FunctionParameter
+// Else:
+//   (state done)
+CARBON_PARSER_STATE(FunctionParameterFinish)
+
 // Handles processing of a function's parameter list `)`.
 //
 // Always:
@@ -312,41 +328,22 @@ CARBON_PARSER_STATE(ParenExpressionParameterFinishAsTuple)
 CARBON_PARSER_STATE(ParenExpressionFinish)
 CARBON_PARSER_STATE(ParenExpressionFinishAsTuple)
 
-// Handles pattern parsing for a function parameter, enqueuing type expression
-// processing. Proceeds to the matching Finish state when done.
+// Handles pattern parsing for a pattern, enqueuing type expression processing.
+// This covers function parameter and `var` support.
 //
 // If valid:
 //   1. Expression
-//   2. PatternAsFunctionParameterFinish
+//   2. PatternFinish
 // Else:
-//   1. PatternAsFunctionParameterFinish
+//   1. PatternFinish
 CARBON_PARSER_STATE(PatternAsFunctionParameter)
-
-// Finishes function parameter processing, including `,`. If there are more
-// parameters, enqueues another parameter processing state.
-//
-// If `Comma` without `CloseParen`:
-//   1. PatternAsFunctionParameter
-// Else:
-//   (state done)
-CARBON_PARSER_STATE(PatternAsFunctionParameterFinish)
-
-// Handles pattern parsing for a `var` statement, enqueuing type expression
-// processing. Proceeds to the matching Finish state when done.
-//
-//
-// If valid:
-//   1. Expression
-//   2. PatternAsVariableFinish
-// Else:
-//   1. PatternAsVariableFinish
 CARBON_PARSER_STATE(PatternAsVariable)
 
-// Finishes `var` pattern processing.
+// Finishes pattern processing.
 //
 // Always:
 //   (state done)
-CARBON_PARSER_STATE(PatternAsVariableFinish)
+CARBON_PARSER_STATE(PatternFinish)
 
 // Handles a single statement. While typically within a statement block, this
 // can also be used for error recovery where we expect a statement block and
