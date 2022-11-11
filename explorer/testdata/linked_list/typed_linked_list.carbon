@@ -66,26 +66,6 @@ class LinkedList(T:! Type) {
     (*current_head_value).set_prev(v_wrapped);
     (*me).head = v_wrapped;
   }
-  fn GetByIndex[me: Self](target_index: i32) -> Optional(T) {
-    if(target_index > me.len - 1 or target_index < 0) {
-      // Not in possible range
-      return Optional(T).CreateEmpty();
-    }
-    var search_backwards:bool = target_index > me.len / 2;
-    var iter:Optional(Node(T)*) = if search_backwards then me.tail else me.head;
-    var c:i32 = if search_backwards then me.len -1 else 0;
-    while(c != target_index) {
-      var node: Node(T) = *(iter.Get());
-      if(search_backwards) {
-        c = c - 1;
-        iter = node.prev;
-      } else {
-        iter = node.next;
-        c = c + 1;
-      }
-    }
-    return (*(iter.Get())).value;
-  }
   fn Clear[addr me: Self*]() {
     if((*me).len == 0) {
       return;
@@ -108,6 +88,31 @@ class LinkedList(T:! Type) {
   var len: i32;
 }
 
+// This function exists as a helper the context of this test case specifically and does not represent
+// the common case for index based lookups in list like structures.
+fn GetListEntryByIndex[T:! Type](list: LinkedList(T)*, target_index: i32) -> Optional(T) {
+  let list_length: i32 = (*list).Length();
+  if(target_index > list_length - 1 or target_index < 0) {
+    // Not in possible range
+    return Optional(T).CreateEmpty();
+  }
+  var search_backwards:bool = target_index > list_length / 2;
+  var iter:Optional(Node(T)*) = if search_backwards then (*list).tail else (*list).head;
+  var c:i32 = if search_backwards then list_length -1 else 0;
+  while(c != target_index) {
+    var node: Node(T) = *(iter.Get());
+    if(search_backwards) {
+      c = c - 1;
+      iter = node.prev;
+    } else {
+      iter = node.next;
+      c = c + 1;
+    }
+  }
+
+  return (*(iter.Get())).value;
+}
+
 fn Main() -> i32 {
   var test_list:auto = LinkedList(String).Create();
   test_list.PushBack("This is a String Entry 0");
@@ -119,7 +124,7 @@ fn Main() -> i32 {
   test_list.PushFront("This is a prepended String -1");
   Print("String list length is: {0}", test_list.Length());
   var search_index:i32 = 5;
-  var retrieved_entry: auto = test_list.GetByIndex(search_index);
+  var retrieved_entry: auto = GetListEntryByIndex(&test_list,search_index);
   if(retrieved_entry.HasValue()) {
     var retrieved_value:String = retrieved_entry.Get();
     Print(retrieved_value);
@@ -132,7 +137,7 @@ fn Main() -> i32 {
   var number: i32 = 1337;
   var number_ptr: i32* = &number;
   second_list.PushBack(number_ptr);
-  var retrieved_ptr:i32* = second_list.GetByIndex(0).Get();
+  var retrieved_ptr:i32* = GetListEntryByIndex(&second_list, 0).Get();
   var value: i32 = *retrieved_ptr;
   Print("Value {0}", value);
   return 0;
