@@ -46,11 +46,6 @@ class ParseTree {
   class PostorderIterator;
   class SiblingIterator;
 
-  // The maximum stack depth allowed while recursing the parse tree.
-  // This is meant to approximate system stack limits, but we may need to find a
-  // better way to track what the system is enforcing.
-  static constexpr int StackDepthLimit = 200;
-
   // Parses the token buffer into a `ParseTree`.
   //
   // This is the factory function which is used to build parse trees.
@@ -155,19 +150,11 @@ class ParseTree {
   [[nodiscard]] auto Verify() const -> bool;
 
  private:
-  class Parser;
-  friend Parser;
-  friend class Parser2;
+  friend class Parser;
 
   // The in-memory representation of data used for a particular node in the
   // tree.
   struct NodeImpl {
-    explicit NodeImpl(ParseNodeKind k, TokenizedBuffer::Token t,
-                      int subtree_size_arg)
-        : kind(k), token(t), subtree_size(subtree_size_arg) {}
-
-    // TODO: Parser2 only uses this construct. Can remove the other if we
-    // switch.
     NodeImpl(ParseNodeKind kind, bool has_error, TokenizedBuffer::Token token,
              int subtree_size)
         : kind(kind),
@@ -294,7 +281,6 @@ class ParseTree::Node {
 
  private:
   friend ParseTree;
-  friend Parser;
   friend PostorderIterator;
   friend SiblingIterator;
 

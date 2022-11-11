@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/parser/parser2.h"
+#include "toolchain/parser/parser.h"
 
 #include <cstdlib>
 #include <memory>
@@ -49,10 +49,9 @@ static auto operator<<(llvm::raw_ostream& out, RelativeLocation loc)
   return out;
 }
 
-class Parser2::PrettyStackTraceParseState : public llvm::PrettyStackTraceEntry {
+class Parser::PrettyStackTraceParseState : public llvm::PrettyStackTraceEntry {
  public:
-  explicit PrettyStackTraceParseState(const Parser2* parser)
-      : parser_(parser) {}
+  explicit PrettyStackTraceParseState(const Parser* parser) : parser_(parser) {}
   ~PrettyStackTraceParseState() override = default;
 
   auto print(llvm::raw_ostream& output) const -> void override {
@@ -76,11 +75,11 @@ class Parser2::PrettyStackTraceParseState : public llvm::PrettyStackTraceEntry {
            << parser_->tokens_.GetKind(token).Name() << "\n";
   }
 
-  const Parser2* parser_;
+  const Parser* parser_;
 };
 
-Parser2::Parser2(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
-                 TokenDiagnosticEmitter& emitter)
+Parser::Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
+               TokenDiagnosticEmitter& emitter)
     : tree_(tree_arg),
       tokens_(tokens_arg),
       emitter_(emitter),
@@ -93,8 +92,8 @@ Parser2::Parser2(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
       << tokens_.GetKind(*end_).Name();
 }
 
-auto Parser2::AddLeafNode(ParseNodeKind kind, TokenizedBuffer::Token token,
-                          bool has_error) -> void {
+auto Parser::AddLeafNode(ParseNodeKind kind, TokenizedBuffer::Token token,
+                         bool has_error) -> void {
   tree_.node_impls_.push_back(
       ParseTree::NodeImpl(kind, has_error, token, /*subtree_size=*/1));
   if (has_error) {
@@ -102,8 +101,8 @@ auto Parser2::AddLeafNode(ParseNodeKind kind, TokenizedBuffer::Token token,
   }
 }
 
-auto Parser2::AddNode(ParseNodeKind kind, TokenizedBuffer::Token token,
-                      int subtree_start, bool has_error) -> void {
+auto Parser::AddNode(ParseNodeKind kind, TokenizedBuffer::Token token,
+                     int subtree_start, bool has_error) -> void {
   int subtree_size = tree_.size() - subtree_start + 1;
   tree_.node_impls_.push_back(
       ParseTree::NodeImpl(kind, has_error, token, subtree_size));
@@ -112,8 +111,8 @@ auto Parser2::AddNode(ParseNodeKind kind, TokenizedBuffer::Token token,
   }
 }
 
-auto Parser2::ConsumeAndAddCloseParen(TokenizedBuffer::Token open_paren,
-                                      ParseNodeKind close_kind) -> bool {
+auto Parser::ConsumeAndAddCloseParen(TokenizedBuffer::Token open_paren,
+                                     ParseNodeKind close_kind) -> bool {
   if (ConsumeAndAddLeafNodeIf(TokenKind::CloseParen(), close_kind)) {
     return true;
   }
@@ -128,8 +127,8 @@ auto Parser2::ConsumeAndAddCloseParen(TokenizedBuffer::Token open_paren,
   return false;
 }
 
-auto Parser2::ConsumeAndAddLeafNodeIf(TokenKind token_kind,
-                                      ParseNodeKind node_kind) -> bool {
+auto Parser::ConsumeAndAddLeafNodeIf(TokenKind token_kind,
+                                     ParseNodeKind node_kind) -> bool {
   auto token = ConsumeIf(token_kind);
   if (!token) {
     return false;
@@ -139,7 +138,7 @@ auto Parser2::ConsumeAndAddLeafNodeIf(TokenKind token_kind,
   return true;
 }
 
-auto Parser2::ConsumeIf(TokenKind kind)
+auto Parser::ConsumeIf(TokenKind kind)
     -> llvm::Optional<TokenizedBuffer::Token> {
   if (!PositionIs(kind)) {
     return llvm::None;
@@ -149,7 +148,7 @@ auto Parser2::ConsumeIf(TokenKind kind)
   return token;
 }
 
-auto Parser2::FindNextOf(std::initializer_list<TokenKind> desired_kinds)
+auto Parser::FindNextOf(std::initializer_list<TokenKind> desired_kinds)
     -> llvm::Optional<TokenizedBuffer::Token> {
   auto new_position = position_;
   while (true) {
@@ -174,7 +173,7 @@ auto Parser2::FindNextOf(std::initializer_list<TokenKind> desired_kinds)
   }
 }
 
-auto Parser2::SkipMatchingGroup() -> bool {
+auto Parser::SkipMatchingGroup() -> bool {
   if (!PositionKind().IsOpeningSymbol()) {
     return false;
   }
@@ -184,7 +183,7 @@ auto Parser2::SkipMatchingGroup() -> bool {
   return true;
 }
 
-auto Parser2::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
+auto Parser::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
     -> llvm::Optional<TokenizedBuffer::Token> {
   if (position_ == end_) {
     return llvm::None;
@@ -231,14 +230,14 @@ auto Parser2::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
   return llvm::None;
 }
 
-auto Parser2::SkipTo(TokenizedBuffer::Token t) -> void {
+auto Parser::SkipTo(TokenizedBuffer::Token t) -> void {
   CARBON_CHECK(t >= *position_) << "Tried to skip backwards from " << position_
                                 << " to " << TokenizedBuffer::TokenIterator(t);
   position_ = TokenizedBuffer::TokenIterator(t);
   CARBON_CHECK(position_ != end_) << "Skipped past EOF.";
 }
 
-auto Parser2::HandleCodeBlockState() -> void {
+auto Parser::HandleCodeBlockState() -> void {
   PopAndDiscardState();
 
   PushState(ParserState::CodeBlockFinish());
@@ -283,7 +282,7 @@ static auto IsPossibleStartOfOperand(TokenKind kind) -> bool {
                         TokenKind::Semi(), TokenKind::Colon()});
 }
 
-auto Parser2::IsLexicallyValidInfixOperator() -> bool {
+auto Parser::IsLexicallyValidInfixOperator() -> bool {
   CARBON_CHECK(position_ != end_) << "Expected an operator token.";
 
   bool leading_space = tokens_.HasLeadingWhitespace(*position_);
@@ -311,7 +310,7 @@ auto Parser2::IsLexicallyValidInfixOperator() -> bool {
   return true;
 }
 
-auto Parser2::IsTrailingOperatorInfix() -> bool {
+auto Parser::IsTrailingOperatorInfix() -> bool {
   if (position_ == end_) {
     return false;
   }
@@ -335,7 +334,7 @@ auto Parser2::IsTrailingOperatorInfix() -> bool {
   return false;
 }
 
-auto Parser2::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
+auto Parser::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
   if (fixity == OperatorFixity::Infix) {
     // Infix operators must satisfy the infix operator rules.
     if (!IsLexicallyValidInfixOperator()) {
@@ -376,8 +375,8 @@ auto Parser2::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
   }
 }
 
-auto Parser2::ConsumeListToken(ParseNodeKind comma_kind, TokenKind close_kind,
-                               bool already_has_error) -> ListTokenKind {
+auto Parser::ConsumeListToken(ParseNodeKind comma_kind, TokenKind close_kind,
+                              bool already_has_error) -> ListTokenKind {
   if (!PositionIs(TokenKind::Comma()) && !PositionIs(close_kind)) {
     // Don't error a second time on the same element.
     if (!already_has_error) {
@@ -406,7 +405,7 @@ auto Parser2::ConsumeListToken(ParseNodeKind comma_kind, TokenKind close_kind,
   }
 }
 
-auto Parser2::Parse() -> void {
+auto Parser::Parse() -> void {
   // Traces state_stack_. This runs even in opt because it's low overhead.
   PrettyStackTraceParseState pretty_stack(this);
 
@@ -424,7 +423,7 @@ auto Parser2::Parse() -> void {
   AddLeafNode(ParseNodeKind::FileEnd(), *position_);
 }
 
-auto Parser2::HandleBraceExpressionState() -> void {
+auto Parser::HandleBraceExpressionState() -> void {
   auto state = PopState();
 
   state.state = ParserState::BraceExpressionFinishAsUnknown();
@@ -441,10 +440,10 @@ auto Parser2::HandleBraceExpressionState() -> void {
   }
 }
 
-auto Parser2::BraceExpressionKindToParserState(BraceExpressionKind kind,
-                                               ParserState type,
-                                               ParserState value,
-                                               ParserState unknown)
+auto Parser::BraceExpressionKindToParserState(BraceExpressionKind kind,
+                                              ParserState type,
+                                              ParserState value,
+                                              ParserState unknown)
     -> ParserState {
   switch (kind) {
     case BraceExpressionKind::Type: {
@@ -459,8 +458,8 @@ auto Parser2::BraceExpressionKindToParserState(BraceExpressionKind kind,
   }
 }
 
-auto Parser2::HandleBraceExpressionParameterError(StateStackEntry state,
-                                                  BraceExpressionKind kind)
+auto Parser::HandleBraceExpressionParameterError(StateStackEntry state,
+                                                 BraceExpressionKind kind)
     -> void {
   CARBON_DIAGNOSTIC(ExpectedStructLiteralField, Error, "Expected {0}{1}{2}.",
                     llvm::StringRef, llvm::StringRef, llvm::StringRef);
@@ -479,7 +478,7 @@ auto Parser2::HandleBraceExpressionParameterError(StateStackEntry state,
   PushState(state);
 }
 
-auto Parser2::HandleBraceExpressionParameter(BraceExpressionKind kind) -> void {
+auto Parser::HandleBraceExpressionParameter(BraceExpressionKind kind) -> void {
   auto state = PopState();
 
   if (!PositionIs(TokenKind::Period())) {
@@ -495,19 +494,19 @@ auto Parser2::HandleBraceExpressionParameter(BraceExpressionKind kind) -> void {
   PushState(ParserState::DesignatorAsStruct());
 }
 
-auto Parser2::HandleBraceExpressionParameterAsTypeState() -> void {
+auto Parser::HandleBraceExpressionParameterAsTypeState() -> void {
   HandleBraceExpressionParameter(BraceExpressionKind::Type);
 }
 
-auto Parser2::HandleBraceExpressionParameterAsValueState() -> void {
+auto Parser::HandleBraceExpressionParameterAsValueState() -> void {
   HandleBraceExpressionParameter(BraceExpressionKind::Value);
 }
 
-auto Parser2::HandleBraceExpressionParameterAsUnknownState() -> void {
+auto Parser::HandleBraceExpressionParameterAsUnknownState() -> void {
   HandleBraceExpressionParameter(BraceExpressionKind::Unknown);
 }
 
-auto Parser2::HandleBraceExpressionParameterAfterDesignator(
+auto Parser::HandleBraceExpressionParameterAfterDesignator(
     BraceExpressionKind kind) -> void {
   auto state = PopState();
 
@@ -565,22 +564,22 @@ auto Parser2::HandleBraceExpressionParameterAfterDesignator(
   PushState(ParserState::Expression());
 }
 
-auto Parser2::HandleBraceExpressionParameterAfterDesignatorAsTypeState()
+auto Parser::HandleBraceExpressionParameterAfterDesignatorAsTypeState()
     -> void {
   HandleBraceExpressionParameterAfterDesignator(BraceExpressionKind::Type);
 }
 
-auto Parser2::HandleBraceExpressionParameterAfterDesignatorAsValueState()
+auto Parser::HandleBraceExpressionParameterAfterDesignatorAsValueState()
     -> void {
   HandleBraceExpressionParameterAfterDesignator(BraceExpressionKind::Value);
 }
 
-auto Parser2::HandleBraceExpressionParameterAfterDesignatorAsUnknownState()
+auto Parser::HandleBraceExpressionParameterAfterDesignatorAsUnknownState()
     -> void {
   HandleBraceExpressionParameterAfterDesignator(BraceExpressionKind::Unknown);
 }
 
-auto Parser2::HandleBraceExpressionParameterFinish(BraceExpressionKind kind)
+auto Parser::HandleBraceExpressionParameterFinish(BraceExpressionKind kind)
     -> void {
   auto state = PopState();
 
@@ -598,19 +597,19 @@ auto Parser2::HandleBraceExpressionParameterFinish(BraceExpressionKind kind)
   }
 }
 
-auto Parser2::HandleBraceExpressionParameterFinishAsTypeState() -> void {
+auto Parser::HandleBraceExpressionParameterFinishAsTypeState() -> void {
   HandleBraceExpressionParameterFinish(BraceExpressionKind::Type);
 }
 
-auto Parser2::HandleBraceExpressionParameterFinishAsValueState() -> void {
+auto Parser::HandleBraceExpressionParameterFinishAsValueState() -> void {
   HandleBraceExpressionParameterFinish(BraceExpressionKind::Value);
 }
 
-auto Parser2::HandleBraceExpressionParameterFinishAsUnknownState() -> void {
+auto Parser::HandleBraceExpressionParameterFinishAsUnknownState() -> void {
   HandleBraceExpressionParameterFinish(BraceExpressionKind::Unknown);
 }
 
-auto Parser2::HandleBraceExpressionFinish(BraceExpressionKind kind) -> void {
+auto Parser::HandleBraceExpressionFinish(BraceExpressionKind kind) -> void {
   auto state = PopState();
 
   AddLeafNode(ParseNodeKind::StructEnd(), Consume());
@@ -619,19 +618,19 @@ auto Parser2::HandleBraceExpressionFinish(BraceExpressionKind kind) -> void {
           state.token, state.subtree_start, state.has_error);
 }
 
-auto Parser2::HandleBraceExpressionFinishAsTypeState() -> void {
+auto Parser::HandleBraceExpressionFinishAsTypeState() -> void {
   HandleBraceExpressionFinish(BraceExpressionKind::Type);
 }
 
-auto Parser2::HandleBraceExpressionFinishAsValueState() -> void {
+auto Parser::HandleBraceExpressionFinishAsValueState() -> void {
   HandleBraceExpressionFinish(BraceExpressionKind::Value);
 }
 
-auto Parser2::HandleBraceExpressionFinishAsUnknownState() -> void {
+auto Parser::HandleBraceExpressionFinishAsUnknownState() -> void {
   HandleBraceExpressionFinish(BraceExpressionKind::Unknown);
 }
 
-auto Parser2::HandleCallExpressionState() -> void {
+auto Parser::HandleCallExpressionState() -> void {
   auto state = PopState();
 
   // TODO: When swapping () start/end, this should AddLeafNode the open before
@@ -646,7 +645,7 @@ auto Parser2::HandleCallExpressionState() -> void {
   }
 }
 
-auto Parser2::HandleCallExpressionParameterFinishState() -> void {
+auto Parser::HandleCallExpressionParameterFinishState() -> void {
   auto state = PopState();
 
   if (state.has_error) {
@@ -661,7 +660,7 @@ auto Parser2::HandleCallExpressionParameterFinishState() -> void {
   }
 }
 
-auto Parser2::HandleCallExpressionFinishState() -> void {
+auto Parser::HandleCallExpressionFinishState() -> void {
   auto state = PopState();
 
   AddLeafNode(ParseNodeKind::CallExpressionEnd(), Consume());
@@ -669,7 +668,7 @@ auto Parser2::HandleCallExpressionFinishState() -> void {
           state.has_error);
 }
 
-auto Parser2::HandleCodeBlockFinishState() -> void {
+auto Parser::HandleCodeBlockFinishState() -> void {
   auto state = PopState();
 
   // If the block started with an open curly, this is a close curly.
@@ -683,7 +682,7 @@ auto Parser2::HandleCodeBlockFinishState() -> void {
   }
 }
 
-auto Parser2::HandleDeclarationLoopState() -> void {
+auto Parser::HandleDeclarationLoopState() -> void {
   // This maintains the current state unless we're at the end of the file.
 
   switch (PositionKind()) {
@@ -725,7 +724,7 @@ auto Parser2::HandleDeclarationLoopState() -> void {
   }
 }
 
-auto Parser2::HandleDesignator(bool as_struct) -> void {
+auto Parser::HandleDesignator(bool as_struct) -> void {
   auto state = PopState();
 
   // `.` identifier
@@ -753,15 +752,15 @@ auto Parser2::HandleDesignator(bool as_struct) -> void {
           *dot, state.subtree_start, state.has_error);
 }
 
-auto Parser2::HandleDesignatorAsExpressionState() -> void {
+auto Parser::HandleDesignatorAsExpressionState() -> void {
   HandleDesignator(/*as_struct=*/false);
 }
 
-auto Parser2::HandleDesignatorAsStructState() -> void {
+auto Parser::HandleDesignatorAsStructState() -> void {
   HandleDesignator(/*as_struct=*/true);
 }
 
-auto Parser2::HandleExpressionState() -> void {
+auto Parser::HandleExpressionState() -> void {
   auto state = PopState();
 
   // Check for a prefix operator.
@@ -789,7 +788,7 @@ auto Parser2::HandleExpressionState() -> void {
   }
 }
 
-auto Parser2::HandleExpressionInPostfixState() -> void {
+auto Parser::HandleExpressionInPostfixState() -> void {
   auto state = PopState();
 
   // Continue to the loop state.
@@ -833,7 +832,7 @@ auto Parser2::HandleExpressionInPostfixState() -> void {
   }
 }
 
-auto Parser2::HandleExpressionInPostfixLoopState() -> void {
+auto Parser::HandleExpressionInPostfixLoopState() -> void {
   // This is a cyclic state that repeats, so this state is typically pushed back
   // on.
   auto state = PopState();
@@ -862,7 +861,7 @@ auto Parser2::HandleExpressionInPostfixLoopState() -> void {
   }
 }
 
-auto Parser2::HandleExpressionLoopState() -> void {
+auto Parser::HandleExpressionLoopState() -> void {
   auto state = PopState();
 
   auto trailing_operator =
@@ -916,7 +915,7 @@ auto Parser2::HandleExpressionLoopState() -> void {
   }
 }
 
-auto Parser2::HandleExpressionLoopForBinaryState() -> void {
+auto Parser::HandleExpressionLoopForBinaryState() -> void {
   auto state = PopState();
 
   AddNode(ParseNodeKind::InfixOperator(), state.token, state.subtree_start,
@@ -926,7 +925,7 @@ auto Parser2::HandleExpressionLoopForBinaryState() -> void {
   PushState(state);
 }
 
-auto Parser2::HandleExpressionLoopForPrefixState() -> void {
+auto Parser::HandleExpressionLoopForPrefixState() -> void {
   auto state = PopState();
 
   AddNode(ParseNodeKind::PrefixOperator(), state.token, state.subtree_start,
@@ -936,7 +935,7 @@ auto Parser2::HandleExpressionLoopForPrefixState() -> void {
   PushState(state);
 }
 
-auto Parser2::HandleExpressionStatementFinishState() -> void {
+auto Parser::HandleExpressionStatementFinishState() -> void {
   auto state = PopState();
 
   if (auto semi = ConsumeIf(TokenKind::Semi())) {
@@ -960,8 +959,8 @@ auto Parser2::HandleExpressionStatementFinishState() -> void {
   ReturnErrorOnState();
 }
 
-auto Parser2::HandleFunctionError(StateStackEntry state,
-                                  bool skip_past_likely_end) -> void {
+auto Parser::HandleFunctionError(StateStackEntry state,
+                                 bool skip_past_likely_end) -> void {
   auto token = state.token;
   if (skip_past_likely_end) {
     if (auto semi = SkipPastLikelyEnd(token)) {
@@ -972,7 +971,7 @@ auto Parser2::HandleFunctionError(StateStackEntry state,
           /*has_error=*/true);
 }
 
-auto Parser2::HandleFunctionIntroducerState() -> void {
+auto Parser::HandleFunctionIntroducerState() -> void {
   auto state = PopState();
 
   if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
@@ -1009,7 +1008,7 @@ auto Parser2::HandleFunctionIntroducerState() -> void {
   }
 }
 
-auto Parser2::HandleFunctionParameterListFinishState() -> void {
+auto Parser::HandleFunctionParameterListFinishState() -> void {
   auto state = PopState();
 
   CARBON_CHECK(ConsumeAndAddLeafNodeIf(TokenKind::CloseParen(),
@@ -1019,7 +1018,7 @@ auto Parser2::HandleFunctionParameterListFinishState() -> void {
           state.has_error);
 }
 
-auto Parser2::HandleFunctionAfterParameterListState() -> void {
+auto Parser::HandleFunctionAfterParameterListState() -> void {
   auto state = PopState();
 
   // Regardless of whether there's a return type, we'll finish the signature.
@@ -1035,14 +1034,14 @@ auto Parser2::HandleFunctionAfterParameterListState() -> void {
   }
 }
 
-auto Parser2::HandleFunctionReturnTypeFinishState() -> void {
+auto Parser::HandleFunctionReturnTypeFinishState() -> void {
   auto state = PopState();
 
   AddNode(ParseNodeKind::ReturnType(), state.token, state.subtree_start,
           state.has_error);
 }
 
-auto Parser2::HandleFunctionSignatureFinishState() -> void {
+auto Parser::HandleFunctionSignatureFinishState() -> void {
   auto state = PopState();
 
   switch (PositionKind()) {
@@ -1075,13 +1074,13 @@ auto Parser2::HandleFunctionSignatureFinishState() -> void {
   }
 }
 
-auto Parser2::HandleFunctionDefinitionFinishState() -> void {
+auto Parser::HandleFunctionDefinitionFinishState() -> void {
   auto state = PopState();
   AddNode(ParseNodeKind::FunctionDefinition(), Consume(), state.subtree_start,
           state.has_error);
 }
 
-auto Parser2::HandlePackageState() -> void {
+auto Parser::HandlePackageState() -> void {
   auto state = PopState();
 
   auto exit_on_parse_error = [&]() {
@@ -1160,7 +1159,7 @@ auto Parser2::HandlePackageState() -> void {
           /*has_error=*/false);
 }
 
-auto Parser2::HandleParenConditionState() -> void {
+auto Parser::HandleParenConditionState() -> void {
   auto state = PopState();
 
   auto open_paren = ConsumeIf(TokenKind::OpenParen());
@@ -1179,7 +1178,7 @@ auto Parser2::HandleParenConditionState() -> void {
   PushState(ParserState::Expression());
 }
 
-auto Parser2::HandleParenConditionFinishState() -> void {
+auto Parser::HandleParenConditionFinishState() -> void {
   auto state = PopState();
 
   if (tokens_.GetKind(state.token) != TokenKind::OpenParen()) {
@@ -1197,7 +1196,7 @@ auto Parser2::HandleParenConditionFinishState() -> void {
                  /*has_error=*/state.has_error || !close_paren);
 }
 
-auto Parser2::HandleParenExpressionState() -> void {
+auto Parser::HandleParenExpressionState() -> void {
   auto state = PopState();
 
   // TODO: When swapping () start/end, this should AddLeafNode the open before
@@ -1217,7 +1216,7 @@ auto Parser2::HandleParenExpressionState() -> void {
   }
 }
 
-auto Parser2::HandleParenExpressionParameterFinish(bool as_tuple) -> void {
+auto Parser::HandleParenExpressionParameterFinish(bool as_tuple) -> void {
   auto state = PopState();
 
   auto list_token_kind =
@@ -1247,15 +1246,15 @@ auto Parser2::HandleParenExpressionParameterFinish(bool as_tuple) -> void {
   }
 }
 
-auto Parser2::HandleParenExpressionParameterFinishAsUnknownState() -> void {
+auto Parser::HandleParenExpressionParameterFinishAsUnknownState() -> void {
   HandleParenExpressionParameterFinish(/*as_tuple=*/false);
 }
 
-auto Parser2::HandleParenExpressionParameterFinishAsTupleState() -> void {
+auto Parser::HandleParenExpressionParameterFinishAsTupleState() -> void {
   HandleParenExpressionParameterFinish(/*as_tuple=*/true);
 }
 
-auto Parser2::HandleParenExpressionFinishState() -> void {
+auto Parser::HandleParenExpressionFinishState() -> void {
   auto state = PopState();
 
   AddLeafNode(ParseNodeKind::ParenExpressionEnd(), Consume());
@@ -1263,7 +1262,7 @@ auto Parser2::HandleParenExpressionFinishState() -> void {
           state.has_error);
 }
 
-auto Parser2::HandleParenExpressionFinishAsTupleState() -> void {
+auto Parser::HandleParenExpressionFinishAsTupleState() -> void {
   auto state = PopState();
 
   AddLeafNode(ParseNodeKind::TupleLiteralEnd(), Consume());
@@ -1271,7 +1270,7 @@ auto Parser2::HandleParenExpressionFinishAsTupleState() -> void {
           state.has_error);
 }
 
-auto Parser2::HandlePatternStart(PatternKind pattern_kind) -> void {
+auto Parser::HandlePatternStart(PatternKind pattern_kind) -> void {
   auto state = PopState();
 
   // Ensure the finish state always follows.
@@ -1317,7 +1316,7 @@ auto Parser2::HandlePatternStart(PatternKind pattern_kind) -> void {
   position_ += 2;
 }
 
-auto Parser2::HandlePatternFinish() -> bool {
+auto Parser::HandlePatternFinish() -> bool {
   auto state = PopState();
 
   // If an error was encountered, propagate it without adding a node.
@@ -1332,11 +1331,11 @@ auto Parser2::HandlePatternFinish() -> bool {
   return false;
 }
 
-auto Parser2::HandlePatternAsFunctionParameterState() -> void {
+auto Parser::HandlePatternAsFunctionParameterState() -> void {
   HandlePatternStart(PatternKind::Parameter);
 }
 
-auto Parser2::HandlePatternAsFunctionParameterFinishState() -> void {
+auto Parser::HandlePatternAsFunctionParameterFinishState() -> void {
   bool has_error = HandlePatternFinish();
 
   if (ConsumeListToken(ParseNodeKind::ParameterListComma(),
@@ -1346,15 +1345,15 @@ auto Parser2::HandlePatternAsFunctionParameterFinishState() -> void {
   }
 }
 
-auto Parser2::HandlePatternAsVariableState() -> void {
+auto Parser::HandlePatternAsVariableState() -> void {
   HandlePatternStart(PatternKind::Variable);
 }
 
-auto Parser2::HandlePatternAsVariableFinishState() -> void {
+auto Parser::HandlePatternAsVariableFinishState() -> void {
   HandlePatternFinish();
 }
 
-auto Parser2::HandleStatementState() -> void {
+auto Parser::HandleStatementState() -> void {
   PopAndDiscardState();
 
   switch (PositionKind()) {
@@ -1401,17 +1400,17 @@ auto Parser2::HandleStatementState() -> void {
   }
 }
 
-auto Parser2::HandleStatementBreakFinishState() -> void {
+auto Parser::HandleStatementBreakFinishState() -> void {
   HandleStatementKeywordFinish(TokenKind::Break(),
                                ParseNodeKind::BreakStatement());
 }
 
-auto Parser2::HandleStatementContinueFinishState() -> void {
+auto Parser::HandleStatementContinueFinishState() -> void {
   HandleStatementKeywordFinish(TokenKind::Continue(),
                                ParseNodeKind::ContinueStatement());
 }
 
-auto Parser2::HandleStatementForHeaderState() -> void {
+auto Parser::HandleStatementForHeaderState() -> void {
   auto state = PopState();
 
   auto open_paren = ConsumeIf(TokenKind::OpenParen());
@@ -1449,7 +1448,7 @@ auto Parser2::HandleStatementForHeaderState() -> void {
   }
 }
 
-auto Parser2::HandleStatementForHeaderInState() -> void {
+auto Parser::HandleStatementForHeaderInState() -> void {
   auto state = PopState();
 
   state.state = ParserState::StatementForHeaderFinish();
@@ -1477,7 +1476,7 @@ auto Parser2::HandleStatementForHeaderInState() -> void {
   PushState(ParserState::Expression());
 }
 
-auto Parser2::HandleStatementForHeaderFinishState() -> void {
+auto Parser::HandleStatementForHeaderFinishState() -> void {
   auto state = PopState();
 
   if (!ConsumeAndAddCloseParen(state.token, ParseNodeKind::ForHeaderEnd())) {
@@ -1490,14 +1489,14 @@ auto Parser2::HandleStatementForHeaderFinishState() -> void {
   PushState(ParserState::CodeBlock());
 }
 
-auto Parser2::HandleStatementForFinishState() -> void {
+auto Parser::HandleStatementForFinishState() -> void {
   auto state = PopState();
 
   AddNode(ParseNodeKind::ForStatement(), state.token, state.subtree_start,
           state.has_error);
 }
 
-auto Parser2::HandleStatementIfState() -> void {
+auto Parser::HandleStatementIfState() -> void {
   PopAndDiscardState();
 
   PushState(ParserState::StatementIfConditionFinish());
@@ -1505,7 +1504,7 @@ auto Parser2::HandleStatementIfState() -> void {
   ++position_;
 }
 
-auto Parser2::HandleStatementIfConditionFinishState() -> void {
+auto Parser::HandleStatementIfConditionFinishState() -> void {
   auto state = PopState();
 
   state.state = ParserState::StatementIfThenBlockFinish();
@@ -1513,7 +1512,7 @@ auto Parser2::HandleStatementIfConditionFinishState() -> void {
   PushState(ParserState::CodeBlock());
 }
 
-auto Parser2::HandleStatementIfThenBlockFinishState() -> void {
+auto Parser::HandleStatementIfThenBlockFinishState() -> void {
   auto state = PopState();
 
   if (ConsumeAndAddLeafNodeIf(TokenKind::Else(),
@@ -1529,14 +1528,14 @@ auto Parser2::HandleStatementIfThenBlockFinishState() -> void {
   }
 }
 
-auto Parser2::HandleStatementIfElseBlockFinishState() -> void {
+auto Parser::HandleStatementIfElseBlockFinishState() -> void {
   auto state = PopState();
   AddNode(ParseNodeKind::IfStatement(), state.token, state.subtree_start,
           state.has_error);
 }
 
-auto Parser2::HandleStatementKeywordFinish(TokenKind token_kind,
-                                           ParseNodeKind node_kind) -> void {
+auto Parser::HandleStatementKeywordFinish(TokenKind token_kind,
+                                          ParseNodeKind node_kind) -> void {
   auto state = PopState();
 
   if (!ConsumeAndAddLeafNodeIf(TokenKind::Semi(),
@@ -1552,7 +1551,7 @@ auto Parser2::HandleStatementKeywordFinish(TokenKind token_kind,
   AddNode(node_kind, state.token, state.subtree_start, state.has_error);
 }
 
-auto Parser2::HandleStatementReturnState() -> void {
+auto Parser::HandleStatementReturnState() -> void {
   auto state = PopState();
 
   state.state = ParserState::StatementReturnFinish();
@@ -1563,12 +1562,12 @@ auto Parser2::HandleStatementReturnState() -> void {
   }
 }
 
-auto Parser2::HandleStatementReturnFinishState() -> void {
+auto Parser::HandleStatementReturnFinishState() -> void {
   HandleStatementKeywordFinish(TokenKind::Return(),
                                ParseNodeKind::ReturnStatement());
 }
 
-auto Parser2::HandleStatementScopeLoopState() -> void {
+auto Parser::HandleStatementScopeLoopState() -> void {
   // This maintains the current state until we're at the end of the scope.
 
   auto token_kind = PositionKind();
@@ -1582,7 +1581,7 @@ auto Parser2::HandleStatementScopeLoopState() -> void {
   }
 }
 
-auto Parser2::HandleStatementWhileState() -> void {
+auto Parser::HandleStatementWhileState() -> void {
   PopAndDiscardState();
 
   PushState(ParserState::StatementWhileConditionFinish());
@@ -1590,7 +1589,7 @@ auto Parser2::HandleStatementWhileState() -> void {
   ++position_;
 }
 
-auto Parser2::HandleStatementWhileConditionFinishState() -> void {
+auto Parser::HandleStatementWhileConditionFinishState() -> void {
   auto state = PopState();
 
   state.state = ParserState::StatementWhileBlockFinish();
@@ -1598,14 +1597,14 @@ auto Parser2::HandleStatementWhileConditionFinishState() -> void {
   PushState(ParserState::CodeBlock());
 }
 
-auto Parser2::HandleStatementWhileBlockFinishState() -> void {
+auto Parser::HandleStatementWhileBlockFinishState() -> void {
   auto state = PopState();
 
   AddNode(ParseNodeKind::WhileStatement(), state.token, state.subtree_start,
           state.has_error);
 }
 
-auto Parser2::HandleVar(bool require_semicolon) -> void {
+auto Parser::HandleVar(bool require_semicolon) -> void {
   PopAndDiscardState();
 
   PushState(require_semicolon ? ParserState::VarFinishAsRequireSemicolon()
@@ -1615,15 +1614,15 @@ auto Parser2::HandleVar(bool require_semicolon) -> void {
   PushState(ParserState::PatternAsVariable());
 }
 
-auto Parser2::HandleVarAsRequireSemicolonState() -> void {
+auto Parser::HandleVarAsRequireSemicolonState() -> void {
   HandleVar(/*require_semicolon=*/true);
 }
 
-auto Parser2::HandleVarAsNoSemicolonState() -> void {
+auto Parser::HandleVarAsNoSemicolonState() -> void {
   HandleVar(/*require_semicolon=*/false);
 }
 
-auto Parser2::HandleVarAfterPatternState() -> void {
+auto Parser::HandleVarAfterPatternState() -> void {
   auto state = PopState();
 
   if (state.has_error) {
@@ -1641,14 +1640,14 @@ auto Parser2::HandleVarAfterPatternState() -> void {
   }
 }
 
-auto Parser2::HandleVarAfterInitializerState() -> void {
+auto Parser::HandleVarAfterInitializerState() -> void {
   auto state = PopState();
 
   AddNode(ParseNodeKind::VariableInitializer(), state.token,
           state.subtree_start, state.has_error);
 }
 
-auto Parser2::HandleVarFinish(bool require_semicolon) -> void {
+auto Parser::HandleVarFinish(bool require_semicolon) -> void {
   auto state = PopState();
 
   if (require_semicolon) {
@@ -1669,11 +1668,11 @@ auto Parser2::HandleVarFinish(bool require_semicolon) -> void {
                  state.subtree_start, state.has_error);
 }
 
-auto Parser2::HandleVarFinishAsRequireSemicolonState() -> void {
+auto Parser::HandleVarFinishAsRequireSemicolonState() -> void {
   HandleVarFinish(/*require_semicolon=*/true);
 }
 
-auto Parser2::HandleVarFinishAsNoSemicolonState() -> void {
+auto Parser::HandleVarFinishAsNoSemicolonState() -> void {
   HandleVarFinish(/*require_semicolon=*/false);
 }
 
