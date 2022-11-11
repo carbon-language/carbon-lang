@@ -155,12 +155,6 @@ class ParseTree {
   // The in-memory representation of data used for a particular node in the
   // tree.
   struct NodeImpl {
-    explicit NodeImpl(ParseNodeKind k, TokenizedBuffer::Token t,
-                      int subtree_size_arg)
-        : kind(k), token(t), subtree_size(subtree_size_arg) {}
-
-    // TODO: Parser only uses this construct. Can remove the other if we
-    // switch.
     NodeImpl(ParseNodeKind kind, bool has_error, TokenizedBuffer::Token token,
              int subtree_size)
         : kind(kind),
