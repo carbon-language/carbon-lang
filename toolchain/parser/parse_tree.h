@@ -155,9 +155,7 @@ class ParseTree {
   [[nodiscard]] auto Verify() const -> bool;
 
  private:
-  class Parser;
-  friend Parser;
-  friend class Parser2;
+  friend class Parser;
 
   // The in-memory representation of data used for a particular node in the
   // tree.
@@ -166,7 +164,7 @@ class ParseTree {
                       int subtree_size_arg)
         : kind(k), token(t), subtree_size(subtree_size_arg) {}
 
-    // TODO: Parser2 only uses this construct. Can remove the other if we
+    // TODO: Parser only uses this construct. Can remove the other if we
     // switch.
     NodeImpl(ParseNodeKind kind, bool has_error, TokenizedBuffer::Token token,
              int subtree_size)
@@ -294,7 +292,6 @@ class ParseTree::Node {
 
  private:
   friend ParseTree;
-  friend Parser;
   friend PostorderIterator;
   friend SiblingIterator;
 
