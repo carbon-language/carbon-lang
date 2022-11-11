@@ -18,11 +18,11 @@ class SemanticsParseTreeHandler {
   explicit SemanticsParseTreeHandler(const TokenizedBuffer& tokens,
                                      const ParseTree& parse_tree,
                                      SemanticsIR& semantics,
-                                     llvm::raw_ostream* vlog_stream_)
+                                     llvm::raw_ostream* vlog_stream)
       : tokens_(&tokens),
         parse_tree_(&parse_tree),
         semantics_(&semantics),
-        vlog_stream_(vlog_stream_) {}
+        vlog_stream_(vlog_stream) {}
 
   // Outputs the ParseTree information into SemanticsIR.
   auto Build() -> void;
