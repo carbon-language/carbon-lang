@@ -47,7 +47,8 @@ class Driver {
   // Returns true if appropriate help text was found and printed. If an invalid
   // positional parameter (or flag) is provided, returns false.
   auto RunHelpSubcommand(DiagnosticConsumer& consumer,
-                         llvm::ArrayRef<llvm::StringRef> args) -> bool;
+                         llvm::ArrayRef<llvm::StringRef> args, bool verbose)
+      -> bool;
 
   // Subcommand that dumps internal compilation information for the provided
   // source file.
@@ -59,7 +60,8 @@ class Driver {
   // returns false and any information about the failure is printed to the
   // registered error stream (stderr by default).
   auto RunDumpSubcommand(DiagnosticConsumer& consumer,
-                         llvm::ArrayRef<llvm::StringRef> args) -> bool;
+                         llvm::ArrayRef<llvm::StringRef> args, bool verbose)
+      -> bool;
 
  private:
   auto ReportExtraArgs(llvm::StringRef subcommand_text,

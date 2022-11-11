@@ -46,10 +46,12 @@ auto SemanticsIR::MakeBuiltinIR() -> SemanticsIR {
 
 auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
                                     const TokenizedBuffer& tokens,
-                                    const ParseTree& parse_tree)
+                                    const ParseTree& parse_tree,
+                                    llvm::raw_ostream* verbose_stream)
     -> SemanticsIR {
   SemanticsIR semantics(builtin_ir);
-  SemanticsParseTreeHandler(tokens, parse_tree, semantics).Build();
+  SemanticsParseTreeHandler(tokens, parse_tree, semantics, verbose_stream)
+      .Build();
   return semantics;
 }
 
