@@ -53,8 +53,7 @@ class SemanticsIR {
   static auto MakeFromParseTree(const SemanticsIR& builtin_ir,
                                 const TokenizedBuffer& tokens,
                                 const ParseTree& parse_tree,
-                                llvm::raw_ostream* verbose_stream)
-      -> SemanticsIR;
+                                llvm::raw_ostream* vlog_stream_) -> SemanticsIR;
 
   // Prints the full IR.
   auto Print(llvm::raw_ostream& out) const -> void;

@@ -18,11 +18,11 @@ class SemanticsParseTreeHandler {
   explicit SemanticsParseTreeHandler(const TokenizedBuffer& tokens,
                                      const ParseTree& parse_tree,
                                      SemanticsIR& semantics,
-                                     llvm::raw_ostream* verbose_stream)
+                                     llvm::raw_ostream* vlog_stream_)
       : tokens_(&tokens),
         parse_tree_(&parse_tree),
         semantics_(&semantics),
-        verbose_stream_(verbose_stream) {}
+        vlog_stream_(vlog_stream_) {}
 
   // Outputs the ParseTree information into SemanticsIR.
   auto Build() -> void;
@@ -82,7 +82,7 @@ class SemanticsParseTreeHandler {
   SemanticsIR* semantics_;
 
   // Whether to print verbose output.
-  llvm::raw_ostream* verbose_stream_;
+  llvm::raw_ostream* vlog_stream_;
 
   // The stack during Build. Will contain file-level parse nodes on return.
   llvm::SmallVector<TraversalStackEntry> node_stack_;

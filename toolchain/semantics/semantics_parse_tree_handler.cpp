@@ -4,6 +4,7 @@
 
 #include "toolchain/semantics/semantics_parse_tree_handler.h"
 
+#include "common/vlog.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
@@ -61,9 +62,7 @@ auto SemanticsParseTreeHandler::Build() -> void {
   PrettyStackTraceNodeStack pretty_node_stack(this);
   PrettyStackTraceNodeBlockStack pretty_node_block_stack(this);
 
-  if (verbose_stream_) {
-    *verbose_stream_ << "*** SemanticsParseTreeHandler::Build Begin ***\n";
-  }
+  CARBON_VLOG() << "*** SemanticsParseTreeHandler::Build Begin ***\n";
   // Add a block for the ParseTree.
   node_block_stack_.push_back(semantics_->AddNodeBlock());
 
@@ -85,9 +84,7 @@ auto SemanticsParseTreeHandler::Build() -> void {
         CARBON_CHECK(it == range.end())
             << "FileEnd should always be last, found "
             << parse_tree_->node_kind(*it);
-        if (verbose_stream_) {
-          *verbose_stream_ << "*** SemanticsParseTreeHandler::Build End ***\n";
-        }
+        CARBON_VLOG() << "*** SemanticsParseTreeHandler::Build End ***\n";
         return;
       }
       case ParseNodeKind::InfixOperator(): {
@@ -124,18 +121,14 @@ auto SemanticsParseTreeHandler::Build() -> void {
 }
 
 auto SemanticsParseTreeHandler::AddNode(SemanticsNode node) -> SemanticsNodeId {
-  if (verbose_stream_) {
-    *verbose_stream_ << "AddNode " << node_block_stack_.back() << ": " << node
-                     << "\n";
-  }
+  CARBON_VLOG() << "AddNode " << node_block_stack_.back() << ": " << node
+                << "\n";
   return semantics_->AddNode(node_block_stack_.back(), node);
 }
 
 auto SemanticsParseTreeHandler::Push(ParseTree::Node parse_node) -> void {
-  if (verbose_stream_) {
-    *verbose_stream_ << "Push " << node_stack_.size() << ": "
-                     << parse_tree_->node_kind(parse_node) << "\n";
-  }
+  CARBON_VLOG() << "Push " << node_stack_.size() << ": "
+                << parse_tree_->node_kind(parse_node) << "\n";
   CARBON_CHECK(node_stack_.size() < (1 << 20))
       << "Excessive stack size: likely infinite loop";
   node_stack_.push_back({parse_node, llvm::None});
@@ -143,11 +136,9 @@ auto SemanticsParseTreeHandler::Push(ParseTree::Node parse_node) -> void {
 
 auto SemanticsParseTreeHandler::Push(ParseTree::Node parse_node,
                                      SemanticsNode node) -> void {
-  if (verbose_stream_) {
-    *verbose_stream_ << "Push " << node_stack_.size() << ": "
-                     << parse_tree_->node_kind(parse_node) << " -> "
-                     << node.kind() << "\n";
-  }
+  CARBON_VLOG() << "Push " << node_stack_.size() << ": "
+                << parse_tree_->node_kind(parse_node) << " -> " << node.kind()
+                << "\n";
   CARBON_CHECK(node_stack_.size() < (1 << 20))
       << "Excessive stack size: likely infinite loop";
   auto node_id = AddNode(node);
@@ -157,10 +148,8 @@ auto SemanticsParseTreeHandler::Push(ParseTree::Node parse_node,
 auto SemanticsParseTreeHandler::Pop(ParseNodeKind pop_parse_kind) -> void {
   auto back = node_stack_.pop_back_val();
   auto parse_kind = parse_tree_->node_kind(back.parse_node);
-  if (verbose_stream_) {
-    *verbose_stream_ << "Pop " << node_stack_.size() << ": " << pop_parse_kind
-                     << "\n";
-  }
+  CARBON_VLOG() << "Pop " << node_stack_.size() << ": " << pop_parse_kind
+                << "\n";
   CARBON_CHECK(parse_kind == pop_parse_kind)
       << "Expected " << pop_parse_kind << ", found " << parse_kind;
   CARBON_CHECK(!back.result_id) << "Expected no result ID on " << parse_kind;
@@ -169,11 +158,9 @@ auto SemanticsParseTreeHandler::Pop(ParseNodeKind pop_parse_kind) -> void {
 auto SemanticsParseTreeHandler::PopWithResult() -> SemanticsNodeId {
   auto back = node_stack_.pop_back_val();
   auto node_id = *back.result_id;
-  if (verbose_stream_) {
-    *verbose_stream_ << "Pop " << node_stack_.size() << ": any ("
-                     << parse_tree_->node_kind(back.parse_node) << ") -> "
-                     << node_id << "\n";
-  }
+  CARBON_VLOG() << "Pop " << node_stack_.size() << ": any ("
+                << parse_tree_->node_kind(back.parse_node) << ") -> " << node_id
+                << "\n";
   return node_id;
 }
 
@@ -182,10 +169,8 @@ auto SemanticsParseTreeHandler::PopWithResult(ParseNodeKind pop_parse_kind)
   auto back = node_stack_.pop_back_val();
   auto parse_kind = parse_tree_->node_kind(back.parse_node);
   auto node_id = *back.result_id;
-  if (verbose_stream_) {
-    *verbose_stream_ << "Pop " << node_stack_.size() << ": " << pop_parse_kind
-                     << ") -> " << node_id << "\n";
-  }
+  CARBON_VLOG() << "Pop " << node_stack_.size() << ": " << pop_parse_kind
+                << ") -> " << node_id << "\n";
   CARBON_CHECK(parse_kind == pop_parse_kind)
       << "Expected " << pop_parse_kind << ", found " << parse_kind;
   return node_id;
