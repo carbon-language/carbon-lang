@@ -39,12 +39,11 @@ auto GetSubcommand(llvm::StringRef name) -> Subcommand {
 auto Driver::RunFullCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   DiagnosticConsumer* consumer = &ConsoleDiagnosticConsumer();
   std::unique_ptr<SortingDiagnosticConsumer> sorting_consumer;
-  bool verbose = false;
   // TODO: Figure out a command-line support library, this is temporary.
   if (!args.empty() && args[0] == "-v") {
     args = args.drop_front();
     // Note this implies streamed output in order to interleave.
-    verbose = true;
+    vlog_stream_ = &error_stream_;
   } else if (!args.empty() && args[0] == "--print-errors=streamed") {
     args = args.drop_front();
   } else {
@@ -67,15 +66,14 @@ auto Driver::RunFullCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
 
 #define CARBON_SUBCOMMAND(Name, ...) \
   case Subcommand::Name:             \
-    return Run##Name##Subcommand(*consumer, args, verbose);
+    return Run##Name##Subcommand(*consumer, args);
 #include "toolchain/driver/flags.def"
   }
   llvm_unreachable("All subcommands handled!");
 }
 
 auto Driver::RunHelpSubcommand(DiagnosticConsumer& /*consumer*/,
-                               llvm::ArrayRef<llvm::StringRef> args,
-                               bool /*verbose*/) -> bool {
+                               llvm::ArrayRef<llvm::StringRef> args) -> bool {
   // TODO: We should support getting detailed help on a subcommand by looking
   // for it as a positional parameter here.
   if (!args.empty()) {
@@ -113,8 +111,7 @@ auto Driver::RunHelpSubcommand(DiagnosticConsumer& /*consumer*/,
 enum class DumpMode { TokenizedBuffer, ParseTree, SemanticsIR, Unknown };
 
 auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
-                               llvm::ArrayRef<llvm::StringRef> args,
-                               bool verbose) -> bool {
+                               llvm::ArrayRef<llvm::StringRef> args) -> bool {
   if (args.empty()) {
     error_stream_ << "ERROR: No dump mode specified.\n";
     return false;
@@ -177,9 +174,8 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   }
 
   const SemanticsIR builtin_ir = SemanticsIR::MakeBuiltinIR();
-  const SemanticsIR semantics_ir =
-      SemanticsIR::MakeFromParseTree(builtin_ir, tokenized_source, parse_tree,
-                                     verbose ? &error_stream_ : nullptr);
+  const SemanticsIR semantics_ir = SemanticsIR::MakeFromParseTree(
+      builtin_ir, tokenized_source, parse_tree, vlog_stream_);
   if (dump_mode == DumpMode::SemanticsIR) {
     consumer.Flush();
     semantics_ir.Print(output_stream_);
