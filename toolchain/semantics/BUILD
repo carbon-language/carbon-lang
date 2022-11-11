@@ -29,20 +29,21 @@ cc_library(
 cc_library(
     name = "semantics_ir",
     srcs = [
-        "semantics_parse_tree_handler.cpp",
         "semantics_ir.cpp",
         "semantics_node.cpp",
+        "semantics_parse_tree_handler.cpp",
     ],
     hdrs = [
-        "semantics_parse_tree_handler.h",
         "semantics_ir.h",
         "semantics_node.h",
+        "semantics_parse_tree_handler.h",
     ],
     deps = [
         ":semantics_builtin_kind",
         ":semantics_node_kind",
         "//common:check",
         "//common:ostream",
+        "//common:vlog",
         "//toolchain/lexer:token_kind",
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_node_kind",

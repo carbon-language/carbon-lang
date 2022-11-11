@@ -67,6 +67,7 @@ class Driver {
 
   llvm::raw_ostream& output_stream_;
   llvm::raw_ostream& error_stream_;
+  llvm::raw_ostream* vlog_stream_ = nullptr;
 };
 
 }  // namespace Carbon

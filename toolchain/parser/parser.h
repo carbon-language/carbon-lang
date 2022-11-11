@@ -225,8 +225,8 @@ class Parser {
   // Pushes a constructed state onto the stack.
   auto PushState(StateStackEntry state) -> void {
     state_stack_.push_back(state);
-    // Verify the stack doesn't grow unbounded by programming error.
-    CARBON_CHECK(state_stack_.size() < (1 << 20));
+    CARBON_CHECK(state_stack_.size() < (1 << 20))
+        << "Excessive stack size: likely infinite loop";
   }
 
   // Propagates an error up the state stack, to the parent state.
