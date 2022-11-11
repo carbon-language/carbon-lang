@@ -41,12 +41,6 @@ class Parser {
 
   // Used to track state on state_stack_.
   struct StateStackEntry {
-    StateStackEntry(ParserState state, TokenizedBuffer::Token token,
-                    int32_t subtree_start)
-        : StateStackEntry(state, PrecedenceGroup::ForTopLevelExpression(),
-                          PrecedenceGroup::ForTopLevelExpression(), token,
-                          subtree_start) {}
-
     StateStackEntry(ParserState state, PrecedenceGroup ambient_precedence,
                     PrecedenceGroup lhs_precedence,
                     TokenizedBuffer::Token token, int32_t subtree_start)
@@ -199,7 +193,9 @@ class Parser {
 
   // Pushes a new state with the current position for context.
   auto PushState(ParserState state) -> void {
-    PushState(StateStackEntry(state, *position_, tree_.size()));
+    PushState(StateStackEntry(state, PrecedenceGroup::ForTopLevelExpression(),
+                              PrecedenceGroup::ForTopLevelExpression(),
+                              *position_, tree_.size()));
   }
 
   // Pushes a new expression state with specific precedence.
@@ -215,11 +211,6 @@ class Parser {
                                   PrecedenceGroup lhs_precedence) -> void {
     PushState(StateStackEntry(state, ambient_precedence, lhs_precedence,
                               *position_, tree_.size()));
-  }
-
-  // Pushes a new state with the token for context.
-  auto PushState(ParserState state, TokenizedBuffer::Token token) -> void {
-    PushState(StateStackEntry(state, token, tree_.size()));
   }
 
   // Pushes a constructed state onto the stack.
