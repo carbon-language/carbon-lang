@@ -2,6 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("//bazel/sh_run:rules.bzl", "glob_sh_run")
 load("//bazel/testing:lit.bzl", "glob_lit_tests")
 
 glob_lit_tests(
@@ -13,6 +14,12 @@ glob_lit_tests(
     ],
     driver = "lit.cfg.py",
     test_file_exts = ["carbon"],
+)
+
+glob_sh_run(
+    args = ["$(location //explorer)"],
+    data = ["//explorer"],
+    file_exts = ["carbon"],
 )
 
 filegroup(
