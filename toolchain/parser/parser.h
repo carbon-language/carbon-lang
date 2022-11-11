@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_PARSER_PARSER2_H_
-#define CARBON_TOOLCHAIN_PARSER_PARSER2_H_
+#ifndef CARBON_TOOLCHAIN_PARSER_PARSER_H_
+#define CARBON_TOOLCHAIN_PARSER_PARSER_H_
 
 #include "common/check.h"
 #include "llvm/ADT/Optional.h"
@@ -16,7 +16,7 @@
 
 namespace Carbon {
 
-class Parser2 {
+class Parser {
  public:
   // Parses the tokens into a parse tree, emitting any errors encountered.
   //
@@ -24,7 +24,7 @@ class Parser2 {
   static auto Parse(TokenizedBuffer& tokens, TokenDiagnosticEmitter& emitter)
       -> ParseTree {
     ParseTree tree(tokens);
-    Parser2 parser(tree, tokens, emitter);
+    Parser parser(tree, tokens, emitter);
     parser.Parse();
     return tree;
   }
@@ -99,8 +99,8 @@ class Parser2 {
   // The kind of brace expression being evaluated.
   enum class BraceExpressionKind { Unknown, Value, Type };
 
-  Parser2(ParseTree& tree, TokenizedBuffer& tokens,
-          TokenDiagnosticEmitter& emitter);
+  Parser(ParseTree& tree, TokenizedBuffer& tokens,
+         TokenDiagnosticEmitter& emitter);
 
   auto Parse() -> void;
 
@@ -225,8 +225,8 @@ class Parser2 {
   // Pushes a constructed state onto the stack.
   auto PushState(StateStackEntry state) -> void {
     state_stack_.push_back(state);
-    // Verify the stack doesn't grow unbounded by programming error.
-    CARBON_CHECK(state_stack_.size() < (1 << 20));
+    CARBON_CHECK(state_stack_.size() < (1 << 20))
+        << "Excessive stack size: likely infinite loop";
   }
 
   // Propagates an error up the state stack, to the parent state.
@@ -305,4 +305,4 @@ class Parser2 {
 
 }  // namespace Carbon
 
-#endif  // CARBON_TOOLCHAIN_PARSER_PARSER2_H_
+#endif  // CARBON_TOOLCHAIN_PARSER_PARSER_H_

@@ -56,10 +56,8 @@ cc_library(
     name = "parse_tree",
     srcs = [
         "parse_tree.cpp",
-        "parser_impl.cpp",
-        "parser_impl.h",
-        "parser2.cpp",
-        "parser2.h",
+        "parser.cpp",
+        "parser.h",
     ],
     hdrs = ["parse_tree.h"],
     deps = [

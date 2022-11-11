@@ -72,4 +72,10 @@ class ExitingStream {
 
 }  // namespace Carbon::Internal
 
+// Raw exiting stream. This should be used when building forms of exiting
+// macros. It evaluates to a temporary `ExitingStream` object that can be
+// manipulated, streamed into, and then will exit the program.
+#define CARBON_CHECK_INTERNAL_STREAM() \
+  Carbon::Internal::ExitingStream::Helper() | Carbon::Internal::ExitingStream()
+
 #endif  // CARBON_COMMON_CHECK_INTERNAL_H_
