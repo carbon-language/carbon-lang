@@ -22,7 +22,7 @@ struct NamedValue {
       : name(name), value(value) {}
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(name, value);
   }
 
@@ -43,7 +43,7 @@ class Member {
   explicit Member(Nonnull<const NamedValue*> struct_member);
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     auto decl = declaration();
     return decl ? f(*decl) : f(*struct_member());
   }

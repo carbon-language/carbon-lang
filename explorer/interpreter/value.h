@@ -172,7 +172,7 @@ class IntValue : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(value_);
   }
 
@@ -199,7 +199,7 @@ class FunctionValue : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(declaration_, bindings_);
   }
 
@@ -231,7 +231,7 @@ class DestructorValue : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(declaration_);
   }
 
@@ -265,7 +265,7 @@ class BoundMethodValue : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(declaration_, receiver_, bindings_);
   }
 
@@ -300,7 +300,7 @@ class LValue : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(value_);
   }
 
@@ -321,7 +321,7 @@ class PointerValue : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(value_);
   }
 
@@ -341,7 +341,7 @@ class BoolValue : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(value_);
   }
 
@@ -364,7 +364,7 @@ class StructValue : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(elements_);
   }
 
@@ -390,7 +390,7 @@ class NominalClassValue : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(type_, inits_);
   }
 
@@ -416,7 +416,7 @@ class AlternativeConstructorValue : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(alt_name_, choice_name_);
   }
 
@@ -443,7 +443,7 @@ class AlternativeValue : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(alt_name_, choice_name_, argument_);
   }
 
@@ -476,7 +476,7 @@ class TupleValueBase : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(elements_);
   }
 
@@ -537,7 +537,7 @@ class BindingPlaceholderValue : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return value_node_ ? f(*value_node_) : f();
   }
 
@@ -560,7 +560,7 @@ class AddrValue : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(pattern_);
   }
 
@@ -581,7 +581,7 @@ class UninitializedValue : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(pattern_);
   }
 
@@ -601,7 +601,7 @@ class IntType : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f();
   }
 };
@@ -616,7 +616,7 @@ class BoolType : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f();
   }
 };
@@ -631,7 +631,7 @@ class TypeType : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f();
   }
 };
@@ -668,7 +668,7 @@ class FunctionType : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(parameters_, generic_parameters_, return_type_, deduced_bindings_,
              impl_bindings_);
   }
@@ -712,7 +712,7 @@ class PointerType : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(type_);
   }
 
@@ -732,7 +732,7 @@ class AutoType : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f();
   }
 };
@@ -750,7 +750,7 @@ class StructType : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(fields_);
   }
 
@@ -786,7 +786,7 @@ class NominalClassType : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(declaration_, bindings_, base_);
   }
 
@@ -835,7 +835,7 @@ class MixinPseudoType : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(declaration_, bindings_);
   }
 
@@ -893,7 +893,7 @@ class InterfaceType : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(declaration_, bindings_);
   }
 
@@ -929,7 +929,7 @@ class NamedConstraintType : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(declaration_, bindings_);
   }
 
@@ -954,10 +954,10 @@ struct ImplConstraint {
 
 // A constraint that a collection of values are known to be the same.
 struct EqualityConstraint {
-  // Visit the values in this equality constraint that are a single step away
-  // from the given value according to this equality constraint. That is: if
-  // `value` is identical to a value in `values`, then call the visitor on all
-  // values in `values` that are not identical to `value`. Otherwise, do not
+  // Visit the values in this equality constraint that are a single step
+  // away from the given value according to this equality constraint. That is:
+  // if `value` is identical to a value in `values`, then call the visitor on
+  // all values in `values` that are not identical to `value`. Otherwise, do not
   // call the visitor.
   //
   // Stops and returns `false` if any call to the visitor returns `false`,
@@ -1022,7 +1022,7 @@ class ConstraintType : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(self_binding_, impl_constraints_, equality_constraints_,
              rewrite_constraints_, lookup_contexts_);
   }
@@ -1095,7 +1095,7 @@ class ImplWitness : public Witness {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(declaration_, bindings_);
   }
 
@@ -1126,7 +1126,7 @@ class BindingWitness : public Witness {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(binding_);
   }
 
@@ -1148,7 +1148,7 @@ class ConstraintWitness : public Witness {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(witnesses_);
   }
 
@@ -1192,7 +1192,7 @@ class ConstraintImplWitness : public Witness {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(constraint_witness_, index_);
   }
 
@@ -1233,7 +1233,7 @@ class ChoiceType : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(declaration_, bindings_);
   }
 
@@ -1269,7 +1269,7 @@ class ContinuationType : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f();
   }
 };
@@ -1285,7 +1285,7 @@ class VariableType : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(binding_);
   }
 
@@ -1311,7 +1311,7 @@ class ParameterizedEntityName : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(declaration_, params_);
   }
 
@@ -1346,7 +1346,7 @@ class MemberName : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(base_type_, interface_, member_);
   }
 
@@ -1390,7 +1390,7 @@ class AssociatedConstant : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(base_, interface_, constant_, witness_);
   }
 
@@ -1461,7 +1461,7 @@ class ContinuationValue : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(stack_);
   }
 
@@ -1484,7 +1484,7 @@ class StringType : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f();
   }
 };
@@ -1500,7 +1500,7 @@ class StringValue : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(value_);
   }
 
@@ -1520,7 +1520,7 @@ class TypeOfMixinPseudoType : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(mixin_type_);
   }
 
@@ -1544,7 +1544,7 @@ class TypeOfParameterizedEntityName : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(name_);
   }
 
@@ -1572,7 +1572,7 @@ class TypeOfMemberName : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(member_);
   }
 
@@ -1601,7 +1601,7 @@ class StaticArrayType : public Value {
   }
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(element_type_, size_);
   }
 

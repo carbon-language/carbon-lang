@@ -56,7 +56,7 @@ class Bindings {
       : args_(std::move(args)) {}
 
   template <typename F>
-  auto Visit(F f) const {
+  auto Decompose(F f) const {
     return f(args_, witnesses_);
   }
 

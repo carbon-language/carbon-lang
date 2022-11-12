@@ -9,11 +9,11 @@
 
 namespace Carbon {
 
-// A no-op visitor used to implement `IsTransformable`. The `operator()`
-// function returns `true_type` if it's called with arguments that can be used
-// to construct `T`, and `false_type` otherwise.
+// A no-op visitor used to implement `IsRecursivelyTransformable`. The
+// `operator()` function returns `true_type` if it's called with arguments that
+// can be used to construct `T`, and `false_type` otherwise.
 template <typename T>
-struct IsTransformableVisitor {
+struct IsRecursivelyTransformableVisitor {
   template <typename... Args>
   auto operator()(Args&&... args)
       -> std::integral_constant<bool, std::is_constructible_v<T, Args...>>;
@@ -22,15 +22,16 @@ struct IsTransformableVisitor {
 // A type trait that indicates whether `T` is transformable. A transformable
 // type provides a function
 //
-// template<typename F> void Visit(F f) const;
+// template<typename F> void Decompose(F f) const;
 //
 // that takes a callable `f` and passes it an argument list that can be passed
 // to the constructor of `T` to create an equivalent value.
 template <typename T, typename = std::true_type>
-constexpr bool IsTransformable = false;
+constexpr bool IsRecursivelyTransformable = false;
 template <typename T>
-constexpr bool IsTransformable<T, decltype(std::declval<const T>().Visit(
-                                      IsTransformableVisitor<T>{}))> = true;
+constexpr bool IsRecursivelyTransformable<
+    T, decltype(std::declval<const T>().Decompose(
+           IsRecursivelyTransformableVisitor<T>{}))> = true;
 
 // Base class for transforms of visitable data types.
 template <typename Derived>
@@ -43,18 +44,21 @@ class TransformBase {
     return static_cast<Derived&>(*this)(std::forward<T>(v));
   }
 
-  // Visitable values are recursively transformed by default.
-  template <typename T, std::enable_if_t<IsTransformable<T>, void*> = nullptr>
+  // Transformable values are recursively transformed by default.
+  template <typename T,
+            std::enable_if_t<IsRecursivelyTransformable<T>, void*> = nullptr>
   auto operator()(const T& value) -> T {
-    return value.Visit([&](auto&&... elements) {
+    return value.Decompose([&](auto&&... elements) {
       return T{Transform(decltype(elements)(elements))...};
     });
   }
 
-  // Visitable pointers are recursively transformed and reallocated by default.
-  template <typename T, std::enable_if_t<IsTransformable<T>, void*> = nullptr>
+  // Transformable pointers are recursively transformed and reallocated by
+  // default.
+  template <typename T,
+            std::enable_if_t<IsRecursivelyTransformable<T>, void*> = nullptr>
   auto operator()(Nonnull<const T*> value) -> auto{
-    return value->Visit([&](auto&&... elements) {
+    return value->Decompose([&](auto&&... elements) {
       return AllocateTrait<T>::New(arena_,
                                    Transform(decltype(elements)(elements))...);
     });
@@ -130,9 +134,9 @@ class ValueTransform : public TransformBase<Derived> {
   // For values, dispatch on the value kind and recursively transform.
   auto operator()(Nonnull<const Value*> value) -> Nonnull<const Value*> {
     switch (value->kind()) {
-#define VALUE_KIND_CASE(T)             \
-  case Value::Kind::T:                 \
-    static_assert(IsTransformable<T>); \
+#define VALUE_KIND_CASE(T)                        \
+  case Value::Kind::T:                            \
+    static_assert(IsRecursivelyTransformable<T>); \
     return this->Transform(llvm::cast<T>(value));
       FOR_EACH_VALUE_KIND(VALUE_KIND_CASE)
 #undef VALUE_KIND_CASE
