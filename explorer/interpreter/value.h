@@ -26,6 +26,16 @@ namespace Carbon {
 class Action;
 class AssociatedConstant;
 
+// A trait type that describes how to allocate an instance of `T` in an arena.
+// Returns the created object, which is not required to be of type `T`.
+template <typename T>
+struct AllocateTrait {
+  template <typename... Args>
+  static auto New(Nonnull<Arena*> arena, Args&&... args) -> Nonnull<const T*> {
+    return arena->New<T>(std::forward<Args>(args)...);
+  }
+};
+
 // Abstract base class of all AST nodes representing values.
 //
 // Value and its derived classes support LLVM-style RTTI, including
@@ -36,7 +46,7 @@ class AssociatedConstant;
 // details.
 class Value {
  public:
-   // An X-macro to apply a macro to each kind of Value.
+  // An X-macro to apply a macro to each kind of Value.
 #define FOR_EACH_VALUE_KIND(X)     \
   X(IntValue)                      \
   X(FunctionValue)                 \
@@ -1197,6 +1207,16 @@ class ConstraintImplWitness : public Witness {
  private:
   Nonnull<const Witness*> constraint_witness_;
   int index_;
+};
+
+// Allocate a `ConstraintImplWitness` using the custom `Make` function.
+template <>
+struct AllocateTrait<ConstraintImplWitness> {
+  template <typename... Args>
+  static auto New(Nonnull<Arena*> arena, Args&&... args)
+      -> Nonnull<const Witness*> {
+    return ConstraintImplWitness::Make(arena, std::forward<Args>(args)...);
+  }
 };
 
 // A choice type.

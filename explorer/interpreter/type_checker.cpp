@@ -27,6 +27,7 @@
 #include "explorer/interpreter/interpreter.h"
 #include "explorer/interpreter/pattern_analysis.h"
 #include "explorer/interpreter/value.h"
+#include "explorer/interpreter/value_transform.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
@@ -1796,86 +1797,28 @@ auto TypeChecker::RebuildValue(Nonnull<const Value*> value) const
   return SubstituteImpl(Bindings(), value);
 }
 
-struct PlaceholderVisitor {
-  template <typename... T>
-  void operator()(T&&... args) {}
-};
-
-// A type is visitable if we can call `Visit` with a `PlaecholderVisitor` and
-// it returns `void`.
-template <typename T, typename = void>
-constexpr bool IsVisitable = false;
-template <typename T>
-constexpr bool
-    IsVisitable<T, decltype(std::declval<T>().Visit(PlaceholderVisitor{}))> =
-        true;
-
-template <typename T>
-struct TypeId {};
-
-class TypeChecker::SubstituteTransform {
+class TypeChecker::SubstituteTransform
+    : public ValueTransform<SubstituteTransform> {
  public:
   SubstituteTransform(Nonnull<const TypeChecker*> type_checker,
-                      Nonnull<Arena*> arena,
-                      std::optional<Nonnull<llvm::raw_ostream*>> trace_stream,
                       const Bindings& bindings)
-      : type_checker_(type_checker),
-        arena_(arena),
-        trace_stream_(trace_stream),
-        bindings(bindings) {}
+      : ValueTransform(type_checker->arena_),
+        type_checker_(type_checker),
+        bindings_(bindings) {}
 
-  template<typename T>
-  auto Transform(T &&v) -> decltype(auto) {
-    return (*this)(std::forward<T>(v));
-  }
+  using ValueTransform::operator();
+  // TODO: This should not be necessary in addition to the previous `using`,
+  // but currently is needed to work around an apparent Clang bug.
+  using TransformBase<SubstituteTransform>::operator();
 
-  template <typename T>
-  auto operator()(const T& visitable) -> std::enable_if_t<IsVisitable<T>, T> {
-    return visitable.Visit([&](auto&&... elements) {
-      return T{Transform(decltype(elements)(elements))...};
-    });
-  }
-
-  template <typename T, typename... Args>
-  auto New(TypeId<T>, Args&&... args) {
-    return arena_->New<T>(std::forward<Args>(args)...);
-  }
-
-  template <typename... Args>
-  auto New(TypeId<ConstraintImplWitness>, Args&&... args) {
-    return ConstraintImplWitness::Make(arena_, std::forward<Args>(args)...);
-  }
-
-  template <typename T, std::enable_if_t<IsVisitable<T>, void*> = nullptr>
-  auto operator()(Nonnull<const T*> value) {
-    return value->Visit([&](auto&&... elements) {
-      return New(TypeId<T>(), Transform(decltype(elements)(elements))...);
-    });
-  }
-
-  auto operator()(Nonnull<const Bindings*> inner_bindings)
-      -> Nonnull<const Bindings*> {
-    BindingMap values;
-    for (const auto& [name, value] : inner_bindings->args()) {
-      values[name] = Transform(value);
-    }
-    ImplWitnessMap witnesses;
-    for (const auto& [name, value] : inner_bindings->witnesses()) {
-      witnesses[name] = Transform(value);
-    }
-    if (values == inner_bindings->args() &&
-        witnesses == inner_bindings->witnesses()) {
-      return inner_bindings;
-    }
-    return arena_->New<Bindings>(std::move(values), std::move(witnesses));
-  }
-
-  auto operator()(Nonnull<const VariableType*> var_type) -> Nonnull<const Value*> {
-    auto it = bindings.args().find(&var_type->binding());
-    if (it == bindings.args().end()) {
-      if (trace_stream_) {
-        **trace_stream_ << "substitution: no value for binding " << *var_type
-                        << ", leaving alone\n";
+  // Replace a `VariableType` with its binding value if available.
+  auto operator()(Nonnull<const VariableType*> var_type)
+      -> Nonnull<const Value*> {
+    auto it = bindings_.args().find(&var_type->binding());
+    if (it == bindings_.args().end()) {
+      if (auto& trace_stream = type_checker_->trace_stream_) {
+        **trace_stream << "substitution: no value for binding " << *var_type
+                       << ", leaving alone\n";
       }
       return var_type;
     } else {
@@ -1883,12 +1826,14 @@ class TypeChecker::SubstituteTransform {
     }
   }
 
-  auto operator()(Nonnull<const BindingWitness*> witness) -> Nonnull<const Value*> {
-    auto it = bindings.witnesses().find(witness->binding());
-    if (it == bindings.witnesses().end()) {
-      if (trace_stream_) {
-        **trace_stream_ << "substitution: no value for binding " << *witness
-                        << ", leaving alone\n";
+  // Replace a `BindingWitness` with its binding value if available.
+  auto operator()(Nonnull<const BindingWitness*> witness)
+      -> Nonnull<const Value*> {
+    auto it = bindings_.witnesses().find(witness->binding());
+    if (it == bindings_.witnesses().end()) {
+      if (auto& trace_stream = type_checker_->trace_stream_) {
+        **trace_stream << "substitution: no value for binding " << *witness
+                       << ", leaving alone\n";
       }
       return witness;
     } else {
@@ -1896,7 +1841,9 @@ class TypeChecker::SubstituteTransform {
     }
   }
 
-  auto operator()(Nonnull<const AssociatedConstant*> assoc) -> Nonnull<const Value*> {
+  // For an associated constant, look for a rewrite.
+  auto operator()(Nonnull<const AssociatedConstant*> assoc)
+      -> Nonnull<const Value*> {
     Nonnull<const Value*> base = Transform(&assoc->base());
     Nonnull<const InterfaceType*> interface = Transform(&assoc->interface());
     // If we're substituting into an associated constant, we may now be able
@@ -1911,13 +1858,16 @@ class TypeChecker::SubstituteTransform {
             witness, interface, &assoc->constant())) {
       return (*rewritten_value)->converted_replacement;
     }
-    return arena_->New<AssociatedConstant>(base, interface, &assoc->constant(),
-                                           witness);
+    return type_checker_->arena_->New<AssociatedConstant>(
+        base, interface, &assoc->constant(), witness);
   }
 
+  // Rebuilding a function type needs special handling to build new bindings.
+  // TODO: This is probably not specific to substitution, and would apply to
+  // other transforms too.
   auto operator()(Nonnull<const FunctionType*> fn_type)
       -> Nonnull<const FunctionType*> {
-    SubstitutedGenericBindings subst_bindings(type_checker_, bindings);
+    SubstitutedGenericBindings subst_bindings(type_checker_, bindings_);
 
     // Apply substitution to into generic parameters and deduced bindings.
     std::vector<FunctionType::GenericParameter> generic_parameters;
@@ -1939,15 +1889,17 @@ class TypeChecker::SubstituteTransform {
                                                       &fn_type->parameters());
     const auto* ret = type_checker_->SubstituteImpl(subst_bindings.bindings(),
                                                     &fn_type->return_type());
-    return arena_->New<FunctionType>(
+    return type_checker_->arena_->New<FunctionType>(
         param, std::move(generic_parameters), ret, std::move(deduced_bindings),
         std::move(subst_bindings).TakeImplBindings());
   }
 
+  // Substituting into a `ConstraintType` needs special handling if we replace
+  // its self type.
   auto operator()(Nonnull<const ConstraintType*> constraint)
       -> Nonnull<const Value*> {
-    if (auto it = bindings.args().find(constraint->self_binding());
-        it != bindings.args().end()) {
+    if (auto it = bindings_.args().find(constraint->self_binding());
+        it != bindings_.args().end()) {
       // This happens when we substitute into the parameter type of a
       // function that takes a `T:! Constraint` parameter. In this case we
       // produce the new type-of-type of the replacement type.
@@ -1958,101 +1910,39 @@ class TypeChecker::SubstituteTransform {
                      dyn_cast<AssociatedConstant>(it->second)) {
         type_of_type = type_checker_->GetTypeForAssociatedConstant(assoc_type);
       } else {
-        type_of_type = arena_->New<TypeType>();
+        type_of_type = type_checker_->arena_->New<TypeType>();
       }
-      if (trace_stream_) {
-        **trace_stream_ << "substitution: self of constraint " << *constraint
-                        << " is substituted, new type of type is "
-                        << *type_of_type << "\n";
+      if (auto& trace_stream = type_checker_->trace_stream_) {
+        **trace_stream << "substitution: self of constraint " << *constraint
+                       << " is substituted, new type of type is "
+                       << *type_of_type << "\n";
       }
       // TODO: Should we keep any part of the old constraint -- rewrites,
       // equality constraints, etc?
       return type_of_type;
     }
-    ConstraintTypeBuilder builder(arena_,
+    ConstraintTypeBuilder builder(type_checker_->arena_,
                                   constraint->self_binding()->source_loc());
     builder.AddAndSubstitute(*type_checker_, constraint, builder.GetSelfType(),
-                             builder.GetSelfWitness(), bindings,
+                             builder.GetSelfWitness(), bindings_,
                              /*add_lookup_contexts=*/true);
     Nonnull<const ConstraintType*> new_constraint = std::move(builder).Build();
-    if (trace_stream_) {
-      **trace_stream_ << "substitution: " << *constraint << " => "
-                      << *new_constraint << "\n";
+    if (auto& trace_stream = type_checker_->trace_stream_) {
+      **trace_stream << "substitution: " << *constraint << " => "
+                     << *new_constraint << "\n";
     }
     return new_constraint;
   }
 
-  auto operator()(Nonnull<ContinuationValue::StackFragment*> stack_fragment)
-      -> Nonnull<ContinuationValue::StackFragment*> {
-    return stack_fragment;
-  }
-
-  auto operator()(Address addr) -> Address {
-    return addr;
-  }
-
-  auto operator()(ValueNodeView value_node) -> ValueNodeView {
-    return value_node;
-  }
-
-  template <typename T>
-  auto operator()(const T& v) -> std::enable_if_t<std::is_fundamental_v<T>, T> {
-    return v;
-  }
-
-  template <typename T>
-  auto operator()(const std::optional<T>& v) -> std::optional<T> {
-    if (!v) {
-      return std::nullopt;
-    }
-    return Transform(*v);
-  }
-
-  template<typename T>
-  auto operator()(const std::vector<T>& vec) -> std::vector<T> {
-    std::vector<T> result;
-    result.reserve(vec.size());
-    for (auto& value : vec) {
-      result.push_back(Transform(value));
-    }
-    return result;
-  }
-
-  auto operator()(const std::string& str) -> const std::string& { return str; }
-
-  auto operator()(Nonnull<const Value*> value) -> Nonnull<const Value*> {
-    switch (value->kind()) {
-#define VALUE_KIND_CASE(T) \
-  case Value::Kind::T:     \
-    return Transform(cast<T>(value));
-      FOR_EACH_VALUE_KIND(VALUE_KIND_CASE)
-#undef VALUE_KIND_CASE
-    }
-  }
-  auto operator()(Nonnull<const Witness*> value) -> Nonnull<const Witness*> {
-    return cast<Witness>(Transform(cast<Value>(value)));
-  }
-
-  template <typename NodeT>
-  auto operator()(Nonnull<const NodeT*> node)
-      -> std::enable_if_t<std::is_base_of_v<AstNode, NodeT>,
-                          Nonnull<const NodeT*>> {
-    return node;
-  }
-
  private:
-  // TODO: Rename.
   Nonnull<const TypeChecker*> type_checker_;
-  Nonnull<Arena*> arena_;
-  std::optional<Nonnull<llvm::raw_ostream*>> trace_stream_;
-  const Bindings& bindings;
+  const Bindings& bindings_;
 };
 
 auto TypeChecker::SubstituteImpl(const Bindings& bindings,
                                  Nonnull<const Value*> type) const
     -> Nonnull<const Value*> {
-  SubstituteTransform transform(this, arena_, trace_stream_, bindings);
-  return transform.Transform(type);
+  return SubstituteTransform(this, bindings).Transform(type);
 }
 
 auto TypeChecker::RefineWitness(Nonnull<const Witness*> witness,

@@ -15,6 +15,7 @@ cc_library(
     hdrs = [
         "action.h",
         "value.h",
+        "value_transform.h",
     ],
     deps = [
         ":address",

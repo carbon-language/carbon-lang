@@ -42,7 +42,8 @@ class Member {
   explicit Member(Nonnull<const Declaration*> declaration);
   explicit Member(Nonnull<const NamedValue*> struct_member);
 
-  template<typename F> auto Visit(F f) const {
+  template <typename F>
+  auto Visit(F f) const {
     auto decl = declaration();
     return decl ? f(*decl) : f(*struct_member());
   }
