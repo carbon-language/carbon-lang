@@ -18,6 +18,14 @@ class Value;
 
 // A NamedValue represents a value with a name, such as a single struct field.
 struct NamedValue {
+  NamedValue(std::string name, Nonnull<const Value*> value)
+      : name(name), value(value) {}
+
+  template <typename F>
+  auto Visit(F f) const {
+    return f(name, value);
+  }
+
   // The field name.
   std::string name;
 
@@ -34,12 +42,19 @@ class Member {
   explicit Member(Nonnull<const Declaration*> declaration);
   explicit Member(Nonnull<const NamedValue*> struct_member);
 
+  template<typename F> auto Visit(F f) const {
+    auto decl = declaration();
+    return decl ? f(*decl) : f(*struct_member());
+  }
+
   // The name of the member.
   auto name() const -> std::string_view;
   // The declared type of the member, which might include type variables.
   auto type() const -> const Value&;
   // A declaration of the member, if any exists.
   auto declaration() const -> std::optional<Nonnull<const Declaration*>>;
+  // The NamedValue for a struct member, if appropriate.
+  auto struct_member() const -> std::optional<Nonnull<const NamedValue*>>;
 
  private:
   llvm::PointerUnion<Nonnull<const Declaration*>, Nonnull<const NamedValue*>>

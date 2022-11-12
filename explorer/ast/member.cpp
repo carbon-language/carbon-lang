@@ -37,4 +37,12 @@ auto Member::declaration() const -> std::optional<Nonnull<const Declaration*>> {
   return std::nullopt;
 }
 
+auto Member::struct_member() const
+    -> std::optional<Nonnull<const NamedValue*>> {
+  if (const auto* member = member_.dyn_cast<const NamedValue*>()) {
+    return member;
+  }
+  return std::nullopt;
+}
+
 }  // namespace Carbon
