@@ -17,13 +17,22 @@ class SemanticsParseTreeHandler {
   // Stores references for work.
   explicit SemanticsParseTreeHandler(const TokenizedBuffer& tokens,
                                      const ParseTree& parse_tree,
-                                     SemanticsIR& semantics)
-      : tokens_(&tokens), parse_tree_(&parse_tree), semantics_(&semantics) {}
+                                     SemanticsIR& semantics,
+                                     llvm::raw_ostream* vlog_stream)
+      : tokens_(&tokens),
+        parse_tree_(&parse_tree),
+        semantics_(&semantics),
+        vlog_stream_(vlog_stream) {}
 
   // Outputs the ParseTree information into SemanticsIR.
   auto Build() -> void;
 
  private:
+  // Prints the node_stack_ on stack dumps.
+  class PrettyStackTraceNodeStack;
+  // Prints the node_block_stack_ on stack dumps.
+  class PrettyStackTraceNodeBlockStack;
+
   struct TraversalStackEntry {
     ParseTree::Node parse_node;
     llvm::Optional<SemanticsNodeId> result_id;
@@ -71,6 +80,9 @@ class SemanticsParseTreeHandler {
 
   // The SemanticsIR being added to.
   SemanticsIR* semantics_;
+
+  // Whether to print verbose output.
+  llvm::raw_ostream* vlog_stream_;
 
   // The stack during Build. Will contain file-level parse nodes on return.
   llvm::SmallVector<TraversalStackEntry> node_stack_;

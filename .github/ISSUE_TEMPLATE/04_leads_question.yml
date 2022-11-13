@@ -2,11 +2,11 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-name: Issue for leads
+name: Leads question
 description: >
   Ask the leads for feedback on an important issue, such as a language design
   choice.
-labels: [issue for leads]
+labels: [leads question]
 body:
   - type: markdown
     attributes:
