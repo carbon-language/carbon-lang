@@ -358,12 +358,6 @@ class TypeChecker {
       llvm::ArrayRef<NamedValue> destination_fields,
       const ImplScope& impl_scope) const -> bool;
 
-  // Returns true if source_struct is implicitly convertible to dest_class.
-  auto StructImplicitlyConvertibleToClass(
-      const StructType& source_struct, const NominalClassType& dest_class,
-      const ImplScope& impl_scope, bool allow_user_defined_conversions) const
-      -> bool;
-
   // Returns true if *source is implicitly convertible to *destination. *source
   // and *destination must be concrete types.
   //

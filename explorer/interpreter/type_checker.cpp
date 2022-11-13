@@ -460,42 +460,12 @@ auto TypeChecker::FieldTypes(const NominalClassType& class_type) const
 auto TypeChecker::FieldTypesWithBase(const NominalClassType& class_type) const
     -> std::vector<NamedValue> {
   auto fields = FieldTypes(class_type);
-  if (class_type.base().has_value()) {
-    auto base_fields = FieldTypesWithBase(*class_type.base().value());
-    fields.emplace_back(
-        NamedValue{.name = std::string(NominalClassValue::BaseField),
-                   .value = new StructType(std::move(base_fields))});
+  if (const auto base_type = class_type.base()) {
+    auto base_fields = FieldTypesWithBase(*base_type.value());
+    fields.emplace_back(NamedValue{std::string(NominalClassValue::BaseField),
+                                   base_type.value()});
   }
   return fields;
-}
-
-auto TypeChecker::StructImplicitlyConvertibleToClass(
-    const StructType& source_struct, const NominalClassType& dest_class,
-    const ImplScope& impl_scope, bool allow_user_defined_conversions) const
-    -> bool {
-  std::vector<NamedValue> struct_fields{source_struct.fields()};
-  const auto base_it = std::find_if(
-      struct_fields.begin(), struct_fields.end(), [](const auto& field) {
-        return field.name == NominalClassValue::BaseField;
-      });
-  std::optional<const Value*> base_value;
-  if (base_it != struct_fields.end()) {
-    base_value = base_it->value;
-    struct_fields.erase(base_it);
-  }
-  if (base_value.has_value() != dest_class.base().has_value()) {
-    return false;
-  }
-  if (!FieldTypesImplicitlyConvertible(struct_fields, FieldTypes(dest_class),
-                                       impl_scope)) {
-    return false;
-  }
-  if (base_value.has_value() &&
-      !IsImplicitlyConvertible(base_value.value(), dest_class.base().value(),
-                               impl_scope, allow_user_defined_conversions)) {
-    return false;
-  }
-  return true;
 }
 
 auto TypeChecker::IsImplicitlyConvertible(
@@ -522,10 +492,11 @@ auto TypeChecker::IsImplicitlyConvertible(
           }
           break;
         case Value::Kind::NominalClassType:
-          if (StructImplicitlyConvertibleToClass(
-                  cast<StructType>(*source),
-                  cast<NominalClassType>(*destination), impl_scope,
-                  allow_user_defined_conversions)) {
+          if (IsImplicitlyConvertible(
+                  source,
+                  arena_->New<StructType>(
+                      FieldTypesWithBase(cast<NominalClassType>(*destination))),
+                  impl_scope, allow_user_defined_conversions)) {
             return true;
           }
           break;
