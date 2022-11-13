@@ -59,14 +59,6 @@ floating-point types defined in the standard library permit conversion from
 integer and rational literal types whose values are between the minimum and
 maximum finite value representable in the floating-point type.
 
-### TODO
-
-This document needs to be updated once we have resolved how to reference things
-brought in by the prelude. `BigInt`, `Rational`, `IntLiteral`, and
-`FloatLiteral` will likely be accessed through a package prefix like
-`Carbon.BigInt` or `Core.BigInt`, and the [Defined Types](#defined-types)
-section will need to be updated to reflect those.
-
 ### Numeric literal syntax
 
 Numeric Literal syntax is covered in the
@@ -76,79 +68,46 @@ and binary integer literals, and decimal and hexadecimal real number literals.
 
 ### Defined Types
 
-The following types are defined in the Carbon prelude:
+The syntax for a two's complement signed integer, the unsigned integer, and the
+floating-point number corresponds to a lowercase 'i', 'u', or 'f' character,
+respectively, indicating the type followed by a numeric value specifying the
+width.
 
--   An arbitrary-precision integer type.
+As a regular expression, this can be illustrated as:
 
-    ```
-    class BigInt;
-    ```
-
--   A rational type, parameterized by a type used for its numerator and
-    denominator.
-
-    ```
-    class Rational(T:! Type);
-    ```
-
-    The exact constraints on `T` are not yet decided.
-
--   A type representing integer literals.
-
-    ```
-    class IntLiteral(N:! BigInt);
-    ```
-
--   A type representing floating-point literals.
-
-    ```
-    class FloatLiteral(X:! Rational(BigInt));
-    ```
-
-All of these types are usable during compilation. `BigInt` supports the same
-operations as `Int(n)`. `Rational(T)` supports the same operations as
-`Float(n)`.
-
-The types `IntLiteral(n)` and `FloatLiteral(x)` also support primitive integer
-and floating-point operations such as arithmetic and comparison, but these
-operations are typically heterogeneous: for example, an addition between
-`IntLiteral(n)` and `IntLiteral(m)` produces a value of type
-`IntLiteral(n + m)`.
-
-### Implicit conversions
-
-`IntLiteral(n)` converts to any sufficiently large integer type, as if by:
-
-```
-impl forall [template N:! BigInt, template M:! BigInt]
-    IntLiteral(N) as ImplicitAs(Carbon.Int(M))
-    if N >= Carbon.Int(M).MinValue as BigInt and N <= Carbon.Int(M).MaxValue as BigInt {
-  ...
-}
-impl forall [template N:! BigInt, template M:! BigInt]
-    IntLiteral(N) as ImplicitAs(Carbon.UInt(M))
-    if N >= Carbon.UInt(M).MinValue as BigInt and N <= Carbon.UInt(M).MaxValue as BigInt {
-  ...
-}
+```re
+([iuf])([1-9][0-9]*)
 ```
 
-The above is for exposition purposes only; various parts of this syntax are not
-yet decided.
+Capture group 1 indicates either an 'i' for a two's complement signed integer
+type, a 'u' for an unsigned integer type, or an 'f' for an
+[IEEE-754](https://en.wikipedia.org/wiki/IEEE_754) binary floating-point number
+type. Capture group 2 specifies the width in bits. Note that this bit width is
+restricted to a multiple of 8.
 
-Similarly, `IntLiteral(x)` and `FloatLiteral(x)` convert to any sufficiently
-large floating-point type, and produce the nearest representable floating-point
-value.
+Examples of this syntax include:
 
-Conversions in which `x` lies exactly half-way between two values are rounded to
-the value in which the mantissa is even, as defined in the IEEE 754 standard and
-as was decided in
-[proposal #866](https://github.com/carbon-language/carbon-lang/pull/866).
-
-Conversions in which `x` is outside the range of finite values of the
-floating-point type are rejected rather than saturating to the finite range or
-producing an infinity.
+-   `i16` - A 16-bit two's complement signed integer type
+-   `u32` - A 32-bit unsigned integer type
+-   `f64` - A 64-bit IEEE-754 binary floating-point number type
 
 ## Examples
+
+```carbon
+package sample api;
+
+fn Sum(x: i32, y: i32) -> i32 {
+  return x + y;
+}
+
+fn Main() -> i32 {
+  return Sum(4, 2);
+}
+```
+
+In the above example, `Sum` has parameters `x` and `y`, each of which is typed
+as a 32-bit two's complement signed integer. `Main` then returns the output of
+`Sum` as a 32-bit two's complement signed integer.
 
 ```carbon
 // This is OK: the initializer is of the integer literal type with value
@@ -222,5 +181,3 @@ var v: i8 = OneHigher(255);
 >     [#144: Numeric literal semantics](https://github.com/carbon-language/carbon-lang/pull/144)
 > -   Proposal
 >     [#866: Allow ties in floating literals](https://github.com/carbon-language/carbon-lang/pull/866)
-> -   Issue
->     [#1998: Make proposal for numeric type literal syntax](https://github.com/carbon-language/carbon-lang/issues/1998#issuecomment-1212644291)
