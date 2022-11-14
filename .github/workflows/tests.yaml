@@ -6,7 +6,7 @@ name: test
 
 on:
   push:
-    branches: [trunk]
+    branches: [brew]
     paths:
       # Conservatively run the tests. However, skip them if the only paths in
       # the pull request match files that we know don't impact the build.
@@ -71,7 +71,7 @@ jobs:
           echo '*** Installing LLVM deps'
           brew keg_only --force-bottle --only-dependencies llvm
           echo '*** Installing LLVM itself'
-          brew keg_only  --force-bottle --force --verbose llvm
+          brew keg_only --force-bottle --force --verbose llvm
           echo '*** brew info llvm'
           brew info llvm
           echo '*** brew config'
