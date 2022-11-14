@@ -30,7 +30,8 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        build_mode: [fastbuild, opt]
+        build_mode: [opt]
+        #build_mode: [fastbuild, opt]
     runs-on: ${{ matrix.os }}
     steps:
       # Checkout the pull request head or the branch.
@@ -85,7 +86,7 @@ jobs:
         run: |
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
-          echo 'Acquire::Retries "10";' > /etc/apt/apt.conf.d/80-retries
+          sudo bash -c "echo 'Acquire::Retries \"10\";' > /etc/apt/apt.conf.d/80-retries"
           sudo ./llvm.sh 15 all
           rm llvm.sh
           echo "/usr/lib/llvm-15/bin" >> $GITHUB_PATH
