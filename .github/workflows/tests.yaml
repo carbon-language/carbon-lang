@@ -68,10 +68,6 @@ jobs:
         run: |
           echo '*** Updating brew'
           brew update
-          echo '*** Installing LLVM deps'
-          # We overwrite any existing links to address non-homebrew conflicts
-          # (python3 in particular).
-          brew install --force-bottle --overwrite --only-dependencies llvm
           echo '*** Installing LLVM itself'
           brew install --force-bottle --force --verbose llvm
           echo '*** brew info llvm'
