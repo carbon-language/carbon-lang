@@ -302,6 +302,8 @@ class ClassDeclaration : public Declaration {
   void set_base(Nonnull<const ClassDeclaration*> base_decl) {
     base_ = base_decl;
   }
+  // Returns the original base type, before instantiation & substitutions
+  // Use `NominalClassType::base()` to get the instantiated type.
   auto base_type() const -> std::optional<Nonnull<const NominalClassType*>> {
     return base_type_;
   }
