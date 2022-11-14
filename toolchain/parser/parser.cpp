@@ -122,8 +122,7 @@ auto Parser::ConsumeAndAddCloseParen(TokenizedBuffer::Token open_paren,
   emitter_.Emit(*position_, ExpectedCloseParen);
 
   SkipTo(tokens_.GetMatchedClosingToken(open_paren));
-  AddLeafNode(close_kind, *position_);
-  ++position_;
+  AddLeafNode(close_kind, Consume());
   return false;
 }
 
@@ -143,9 +142,7 @@ auto Parser::ConsumeIf(TokenKind kind)
   if (!PositionIs(kind)) {
     return llvm::None;
   }
-  auto token = *position_;
-  ++position_;
-  return token;
+  return Consume();
 }
 
 auto Parser::FindNextOf(std::initializer_list<TokenKind> desired_kinds)
@@ -673,9 +670,8 @@ auto Parser::HandleCodeBlockFinishState() -> void {
 
   // If the block started with an open curly, this is a close curly.
   if (tokens_.GetKind(state.token) == TokenKind::OpenCurlyBrace()) {
-    AddNode(ParseNodeKind::CodeBlock(), *position_, state.subtree_start,
+    AddNode(ParseNodeKind::CodeBlock(), Consume(), state.subtree_start,
             state.has_error);
-    ++position_;
   } else {
     AddNode(ParseNodeKind::CodeBlock(), state.token, state.subtree_start,
             /*has_error=*/true);
@@ -692,8 +688,7 @@ auto Parser::HandleDeclarationLoopState() -> void {
     }
     case TokenKind::Fn(): {
       PushState(ParserState::FunctionIntroducer());
-      AddLeafNode(ParseNodeKind::FunctionIntroducer(), *position_);
-      ++position_;
+      AddLeafNode(ParseNodeKind::FunctionIntroducer(), Consume());
       break;
     }
     case TokenKind::Package(): {
@@ -702,8 +697,7 @@ auto Parser::HandleDeclarationLoopState() -> void {
       break;
     }
     case TokenKind::Semi(): {
-      AddLeafNode(ParseNodeKind::EmptyDeclaration(), *position_);
-      ++position_;
+      AddLeafNode(ParseNodeKind::EmptyDeclaration(), Consume());
       break;
     }
     case TokenKind::Var(): {
@@ -738,9 +732,8 @@ auto Parser::HandleDesignator(bool as_struct) -> void {
     // If we see a keyword, assume it was intended to be the designated name.
     // TODO: Should keywords be valid in designators?
     if (PositionKind().IsKeyword()) {
-      AddLeafNode(ParseNodeKind::DesignatedName(), *position_,
+      AddLeafNode(ParseNodeKind::DesignatedName(), Consume(),
                   /*has_error=*/true);
-      ++position_;
     } else {
       state.has_error = true;
       ReturnErrorOnState();
