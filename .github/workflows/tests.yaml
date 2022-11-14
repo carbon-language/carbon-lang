@@ -83,7 +83,8 @@ jobs:
         run: |
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
-          sudo ./llvm.sh 15 all
+          # Retry once in case of apt.llvm.org flakiness.
+          sudo ./llvm.sh 15 all || sleep 10 && sudo ./llvm.sh 15 all
           rm llvm.sh
           echo "/usr/lib/llvm-15/bin" >> $GITHUB_PATH
 
