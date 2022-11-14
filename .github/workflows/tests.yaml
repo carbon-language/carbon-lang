@@ -68,8 +68,10 @@ jobs:
         run: |
           echo '*** Updating brew'
           brew update
+          echo '*** Installing Python'
+          brew install --force-bottle --force --overwrite --verbose python@3.11
           echo '*** Installing LLVM itself'
-          brew install --force-bottle --force --overwrite --verbose llvm python
+          brew install --force-bottle --force --overwrite --verbose llvm
           echo '*** brew info llvm'
           brew info llvm
           echo '*** brew config'
@@ -83,8 +85,8 @@ jobs:
         run: |
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
-          # Retry once in case of apt.llvm.org flakiness.
-          sudo ./llvm.sh 15 all || sleep 10 && sudo ./llvm.sh 15 all
+          echo 'Acquire::Retries "10";' > /etc/apt/apt.conf.d/80-retries
+          sudo ./llvm.sh 15 all
           rm llvm.sh
           echo "/usr/lib/llvm-15/bin" >> $GITHUB_PATH
 
