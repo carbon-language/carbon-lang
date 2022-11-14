@@ -4,7 +4,7 @@
 
 """Rule for a lit test."""
 
-def glob_lit_tests(driver, data, test_file_exts, **kwargs):
+def glob_lit_tests(driver, data, test_file_exts, exclude = None, **kwargs):
     """Runs `lit` on test_dir.
 
     `lit` reference:
@@ -15,10 +15,14 @@ def glob_lit_tests(driver, data, test_file_exts, **kwargs):
       data: A list of tools to provide to the tests. These will be aliased for
         execution.
       test_file_exts: A list of extensions to use for tests.
+      exclude: A list of paths to exclude from the glob.
       **kwargs: Any additional parameters for the generated py_test.
     """
+    if not exclude:
+        exclude = []
     test_files = native.glob(
         ["**"],
+        exclude = exclude,
         exclude_directories = 1,
     )
     data.append("@llvm-project//llvm:lit")
@@ -33,6 +37,7 @@ def glob_lit_tests(driver, data, test_file_exts, **kwargs):
             main = "//bazel/testing:lit_test.py",
             data = data + [driver, f],
             args = ["--package_name=%s" % native.package_name(), "--"],
+            size = "small",
             **kwargs
         )
 
