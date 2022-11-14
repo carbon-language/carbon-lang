@@ -659,7 +659,7 @@ class NominalClassType : public Value {
   explicit NominalClassType(
       Nonnull<const ClassDeclaration*> declaration,
       Nonnull<const Bindings*> bindings,
-      std::optional<Nonnull<const NominalClassType*>> base = std::nullopt)
+      std::optional<Nonnull<const NominalClassType*>> base)
       : Value(Kind::NominalClassType),
         declaration_(declaration),
         bindings_(bindings),

@@ -12,6 +12,7 @@
 #include <set>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <unordered_set>
 #include <vector>
 
@@ -19,7 +20,6 @@
 #include "common/ostream.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/expression.h"
-#include "explorer/ast/member.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "explorer/common/nonnull.h"
@@ -460,42 +460,12 @@ auto TypeChecker::FieldTypes(const NominalClassType& class_type) const
 auto TypeChecker::FieldTypesWithBase(const NominalClassType& class_type) const
     -> std::vector<NamedValue> {
   auto fields = FieldTypes(class_type);
-  if (class_type.base().has_value()) {
-    auto base_fields = FieldTypesWithBase(*class_type.base().value());
-    fields.emplace_back(
-        NamedValue{.name = std::string(NominalClassValue::BaseField),
-                   .value = new StructType(std::move(base_fields))});
+  if (const auto base_type = class_type.base()) {
+    auto base_fields = FieldTypesWithBase(*base_type.value());
+    fields.emplace_back(NamedValue{std::string(NominalClassValue::BaseField),
+                                   base_type.value()});
   }
   return fields;
-}
-
-auto TypeChecker::StructImplicitlyConvertibleToClass(
-    const StructType& source_struct, const NominalClassType& dest_class,
-    const ImplScope& impl_scope, bool allow_user_defined_conversions) const
-    -> bool {
-  std::vector<NamedValue> struct_fields{source_struct.fields()};
-  const auto base_it = std::find_if(
-      struct_fields.begin(), struct_fields.end(), [](const auto& field) {
-        return field.name == NominalClassValue::BaseField;
-      });
-  std::optional<const Value*> base_value;
-  if (base_it != struct_fields.end()) {
-    base_value = base_it->value;
-    struct_fields.erase(base_it);
-  }
-  if (base_value.has_value() != dest_class.base().has_value()) {
-    return false;
-  }
-  if (!FieldTypesImplicitlyConvertible(struct_fields, FieldTypes(dest_class),
-                                       impl_scope)) {
-    return false;
-  }
-  if (base_value.has_value() &&
-      !IsImplicitlyConvertible(base_value.value(), dest_class.base().value(),
-                               impl_scope, allow_user_defined_conversions)) {
-    return false;
-  }
-  return true;
 }
 
 auto TypeChecker::IsImplicitlyConvertible(
@@ -522,10 +492,11 @@ auto TypeChecker::IsImplicitlyConvertible(
           }
           break;
         case Value::Kind::NominalClassType:
-          if (StructImplicitlyConvertibleToClass(
-                  cast<StructType>(*source),
-                  cast<NominalClassType>(*destination), impl_scope,
-                  allow_user_defined_conversions)) {
+          if (IsImplicitlyConvertible(
+                  source,
+                  arena_->New<StructType>(
+                      FieldTypesWithBase(cast<NominalClassType>(*destination))),
+                  impl_scope, allow_user_defined_conversions)) {
             return true;
           }
           break;
@@ -1935,11 +1906,15 @@ auto TypeChecker::SubstituteImpl(const Bindings& bindings,
     }
     case Value::Kind::NominalClassType: {
       const auto& class_type = cast<NominalClassType>(*type);
+      auto base_type = class_type.base();
+      if (base_type.has_value()) {
+        base_type = cast<NominalClassType>(
+            SubstituteImpl(base_type.value()->bindings(), base_type.value()));
+      }
       Nonnull<const NominalClassType*> new_class_type =
           arena_->New<NominalClassType>(
               &class_type.declaration(),
-              substitute_into_bindings(&class_type.bindings()),
-              class_type.base());
+              substitute_into_bindings(&class_type.bindings()), base_type);
       return new_class_type;
     }
     case Value::Kind::InterfaceType: {
@@ -2606,9 +2581,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               const auto res,
               FindMemberWithParents(access.member_name(), &t_class));
           if (res.has_value()) {
-            auto [member_type, member] = res.value();
+            auto [member_type, member, member_t_class] = res.value();
             Nonnull<const Value*> field_type =
-                Substitute(t_class.bindings(), member_type);
+                Substitute(member_t_class->bindings(), member_type);
             access.set_member(Member(member));
             access.set_static_type(field_type);
             access.set_is_type_access(!IsInstanceMember(access.member()));
@@ -4555,27 +4530,25 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     Nonnull<Expression*> base_class_expr = *class_decl->base_expr();
     CARBON_ASSIGN_OR_RETURN(const auto base_type,
                             TypeCheckTypeExp(base_class_expr, class_scope));
-    switch (base_type->kind()) {
-      case Value::Kind::NominalClassType:
-        base_class = cast<NominalClassType>(base_type);
-        if (base_class.value()->declaration().extensibility() ==
-            ClassExtensibility::None) {
-          return ProgramError(class_decl->source_loc())
-                 << "Base class `" << base_class.value()->declaration().name()
-                 << "` is `final` and cannot inherited. Add the `base` or "
-                    "`abstract` class prefix to `"
-                 << base_class.value()->declaration().name()
-                 << "` to allow it to be inherited";
-        }
-        class_decl->set_base(&base_class.value()->declaration());
-        break;
-      default:
-        return ProgramError(class_decl->source_loc())
-               << "Unsupported base class type for class `"
-               << class_decl->name()
-               << "`. Only simple classes are currently supported as base "
-                  "class.";
+    if (base_type->kind() != Value::Kind::NominalClassType) {
+      return ProgramError(class_decl->source_loc())
+             << "Unsupported base class type for class `" << class_decl->name()
+             << "`. Only simple classes are currently supported as base "
+                "class.";
     }
+
+    base_class = cast<NominalClassType>(base_type);
+    if (base_class.value()->declaration().extensibility() ==
+        ClassExtensibility::None) {
+      return ProgramError(class_decl->source_loc())
+             << "Base class `" << base_class.value()->declaration().name()
+             << "` is `final` and cannot inherited. Add the `base` or "
+                "`abstract` class prefix to `"
+             << base_class.value()->declaration().name()
+             << "` to allow it to be inherited";
+    }
+    class_decl->set_base_type(base_class);
+    class_decl->set_base(&base_class.value()->declaration());
   }
 
   std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
@@ -5644,17 +5617,18 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
 }
 
 auto TypeChecker::FindMemberWithParents(
-    std::string_view name, Nonnull<const NominalClassType*> class_type)
+    std::string_view name, Nonnull<const NominalClassType*> enclosing_class)
     -> ErrorOr<std::optional<
-        std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>> {
+        std::tuple<Nonnull<const Value*>, Nonnull<const Declaration*>,
+                   Nonnull<const NominalClassType*>>>> {
   CARBON_ASSIGN_OR_RETURN(
       const auto res,
-      FindMixedMemberAndType(name, class_type->declaration().members(),
-                             class_type));
+      FindMixedMemberAndType(name, enclosing_class->declaration().members(),
+                             enclosing_class));
   if (res.has_value()) {
-    return res;
+    return {std::make_tuple(res->first, res->second, enclosing_class)};
   }
-  if (const auto base = class_type->base(); base.has_value()) {
+  if (const auto base = enclosing_class->base(); base.has_value()) {
     return FindMemberWithParents(name, base.value());
   }
   return {std::nullopt};

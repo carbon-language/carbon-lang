@@ -109,10 +109,10 @@ class Interpreter {
                Nonnull<const Value*> destination_type,
                SourceLocation source_loc) -> ErrorOr<Nonnull<const Value*>>;
 
-  // Instantiate a class and its base class(es) from an init struct.
-  auto InstantiateClassWithBase(Nonnull<const StructValue*> init,
-                                Nonnull<const NominalClassType*> class_type,
-                                SourceLocation source_loc)
+  // Create a class value and its base class(es) from an init struct.
+  auto ConvertStructToClass(Nonnull<const StructValue*> init,
+                            Nonnull<const NominalClassType*> class_type,
+                            SourceLocation source_loc)
       -> ErrorOr<Nonnull<NominalClassValue*>>;
 
   // Evaluate an expression immediately, recursively, and return its result.
@@ -621,11 +621,17 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
     }
     case Value::Kind::NominalClassType: {
       const auto& class_type = cast<NominalClassType>(*type);
+      std::optional<Nonnull<const NominalClassType*>> base = class_type.base();
+      if (base.has_value()) {
+        CARBON_ASSIGN_OR_RETURN(const auto inst_base,
+                                InstantiateType(base.value(), source_loc));
+        base = cast<NominalClassType>(inst_base);
+      }
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Bindings*> bindings,
           InstantiateBindings(&class_type.bindings(), source_loc));
       return arena_->New<NominalClassType>(&class_type.declaration(), bindings,
-                                           class_type.base());
+                                           base);
     }
     case Value::Kind::ChoiceType: {
       const auto& choice_type = cast<ChoiceType>(*type);
@@ -673,43 +679,29 @@ auto Interpreter::InstantiateWitness(Nonnull<const Witness*> witness)
   return cast<Witness>(value);
 }
 
-auto Interpreter::InstantiateClassWithBase(
+auto Interpreter::ConvertStructToClass(
     Nonnull<const StructValue*> init_struct,
     Nonnull<const NominalClassType*> class_type, SourceLocation source_loc)
     -> ErrorOr<Nonnull<NominalClassValue*>> {
   std::vector<NamedValue> struct_values;
   std::optional<Nonnull<const NominalClassValue*>> base_instance;
+  // Instantiate the `destination_type` to obtain the runtime
+  // type of the object.
+  CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inst_class,
+                          InstantiateType(class_type, source_loc));
   for (const auto& field : init_struct->elements()) {
     if (field.name == NominalClassValue::BaseField) {
       CARBON_CHECK(class_type->base().has_value())
           << "Invalid 'base' field for class '"
           << class_type->declaration().name() << "' without base class.";
-      switch (field.value->kind()) {
-        case Value::Kind::NominalClassValue: {
-          base_instance = cast<NominalClassValue>(field.value);
-          break;
-        }
-        case Value::Kind::StructValue: {
-          CARBON_ASSIGN_OR_RETURN(
-              auto base,
-              Convert(field.value, class_type->base().value(), source_loc));
-          base_instance = cast<NominalClassValue>(base);
-          break;
-        }
-        default: {
-          CARBON_FATAL()
-              << "Unhandled base value type while initializing class '"
-              << class_type->declaration().name() << "' from a struct";
-        }
-      }
+      CARBON_ASSIGN_OR_RETURN(
+          auto base,
+          Convert(field.value, class_type->base().value(), source_loc));
+      base_instance = cast<NominalClassValue>(base);
     } else {
       struct_values.push_back(field);
     }
   }
-  // Instantiate the `destination_type` to obtain the runtime
-  // type of the object.
-  CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inst_class,
-                          InstantiateType(class_type, source_loc));
   auto* converted_init_struct =
       arena_->New<StructValue>(std::move(struct_values));
   return arena_->New<NominalClassValue>(inst_class, converted_init_struct,
@@ -787,9 +779,9 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
         case Value::Kind::NominalClassType: {
           CARBON_ASSIGN_OR_RETURN(
               auto class_value,
-              InstantiateClassWithBase(cast<StructValue>(value),
-                                       cast<NominalClassType>(destination_type),
-                                       source_loc));
+              ConvertStructToClass(cast<StructValue>(value),
+                                   cast<NominalClassType>(destination_type),
+                                   source_loc));
           return class_value;
         }
         case Value::Kind::TypeType:
@@ -1017,9 +1009,11 @@ auto Interpreter::CallFunction(const CallExpression& call,
       Nonnull<const Bindings*> bindings =
           arena_->New<Bindings>(std::move(generic_args), std::move(witnesses));
       switch (decl.kind()) {
-        case DeclarationKind::ClassDeclaration:
+        case DeclarationKind::ClassDeclaration: {
+          const auto& class_decl = cast<ClassDeclaration>(decl);
           return todo_.FinishAction(arena_->New<NominalClassType>(
-              &cast<ClassDeclaration>(decl), bindings));
+              &class_decl, bindings, class_decl.base_type()));
+        }
         case DeclarationKind::InterfaceDeclaration:
           return todo_.FinishAction(arena_->New<InterfaceType>(
               &cast<InterfaceDeclaration>(decl), bindings));

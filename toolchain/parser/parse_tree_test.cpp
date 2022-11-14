@@ -209,7 +209,7 @@ TEST_F(ParseTreeTest, PrintPreorderAsYAML) {
   EXPECT_THAT(Yaml::Value::FromText(print_output), ElementsAre(file));
 }
 
-TEST_F(ParseTreeTest, RecursionLimit) {
+TEST_F(ParseTreeTest, HighRecursion) {
   std::string code = "fn Foo() { return ";
   code.append(10000, '(');
   code.append(10000, ')');
@@ -217,31 +217,8 @@ TEST_F(ParseTreeTest, RecursionLimit) {
   TokenizedBuffer tokens = GetTokenizedBuffer(code);
   ASSERT_FALSE(tokens.has_errors());
   Testing::MockDiagnosticConsumer consumer;
-  // Recursion might be exceeded multiple times due to quirks in parse tree
-  // handling; we only need to be sure it's hit at least once for test
-  // correctness.
-  EXPECT_CALL(consumer, HandleDiagnostic(IsDiagnosticMessage(
-                            llvm::formatv("Exceeded recursion limit ({0})",
-                                          ParseTree::StackDepthLimit)
-                                .str())))
-      .Times(AtLeast(1));
   ParseTree tree = ParseTree::Parse(tokens, consumer);
-  EXPECT_TRUE(tree.has_errors());
-}
-
-TEST_F(ParseTreeTest, ParsePostfixExpressionRegression) {
-  // Stack depth errors could cause ParsePostfixExpression to infinitely loop
-  // when calling children and those children error. Because of the fragility of
-  // stack depth, this tries a few different values.
-  for (int n = 0; n <= 10; ++n) {
-    std::string code = "var x: auto = ";
-    code.append(ParseTree::StackDepthLimit - n, '*');
-    code += "(z);";
-    TokenizedBuffer tokens = GetTokenizedBuffer(code);
-    ASSERT_FALSE(tokens.has_errors());
-    ParseTree tree = ParseTree::Parse(tokens, consumer);
-    EXPECT_TRUE(tree.has_errors());
-  }
+  EXPECT_FALSE(tree.has_errors());
 }
 
 TEST_F(ParseTreeTest, PackageErrors) {

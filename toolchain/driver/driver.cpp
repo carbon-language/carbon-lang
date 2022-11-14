@@ -40,7 +40,11 @@ auto Driver::RunFullCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   DiagnosticConsumer* consumer = &ConsoleDiagnosticConsumer();
   std::unique_ptr<SortingDiagnosticConsumer> sorting_consumer;
   // TODO: Figure out a command-line support library, this is temporary.
-  if (!args.empty() && args[0] == "--print-errors=streamed") {
+  if (!args.empty() && args[0] == "-v") {
+    args = args.drop_front();
+    // Note this implies streamed output in order to interleave.
+    vlog_stream_ = &error_stream_;
+  } else if (!args.empty() && args[0] == "--print-errors=streamed") {
     args = args.drop_front();
   } else {
     sorting_consumer = std::make_unique<SortingDiagnosticConsumer>(*consumer);
@@ -170,8 +174,8 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   }
 
   const SemanticsIR builtin_ir = SemanticsIR::MakeBuiltinIR();
-  const SemanticsIR semantics_ir =
-      SemanticsIR::MakeFromParseTree(builtin_ir, tokenized_source, parse_tree);
+  const SemanticsIR semantics_ir = SemanticsIR::MakeFromParseTree(
+      builtin_ir, tokenized_source, parse_tree, vlog_stream_);
   if (dump_mode == DumpMode::SemanticsIR) {
     consumer.Flush();
     semantics_ir.Print(output_stream_);

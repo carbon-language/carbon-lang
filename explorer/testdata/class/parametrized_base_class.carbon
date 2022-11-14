@@ -5,29 +5,33 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
-// CHECK:STDOUT: 1
 // CHECK:STDOUT: 2
+// CHECK:STDOUT: 1
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
-base class A {
-  fn Create() -> Self {
-    return {.value_a = 1};
-  }
-  var value_a: i32;
+interface Number {
+  fn Zero() -> Self;
+  fn Add[me: Self](other: Self) -> Self;
 }
 
-class B extends A {
-  fn Create() -> Self {
-    return {.base = A.Create(), .value_b = 2};
-  }
+external impl i32 as Number {
+  fn Zero() -> i32 { return 0; }
+  fn Add[me: i32](other: i32) -> i32 { return me + other; }
+}
+
+base class A(T:! Number) {
+  var value_a: T;
+}
+
+class B extends A(i32) {
   var value_b: i32;
 }
 
 fn Main() -> i32 {
-  var b: B = B.Create();
-  Print("{0}", b.value_a);
+  var b: B = {.base = {.value_a = 1}, .value_b = 2};
   Print("{0}", b.value_b);
+  Print("{0}", b.value_a);
   return 0;
 }

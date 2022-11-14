@@ -60,12 +60,13 @@ class TypeChecker {
                  SourceLocation source_loc) const
       -> std::optional<Nonnull<const Witness*>>;
 
-  // Return the declaration of the member with the given name, from the class
-  // and its parents
+  // Return the declaration of the member with the given name and the class type
+  // that owns it, from the class and its parents
   auto FindMemberWithParents(std::string_view name,
-                             Nonnull<const NominalClassType*> enclosing_type)
+                             Nonnull<const NominalClassType*> enclosing_class)
       -> ErrorOr<std::optional<
-          std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>>;
+          std::tuple<Nonnull<const Value*>, Nonnull<const Declaration*>,
+                     Nonnull<const NominalClassType*>>>>;
 
   // Finds the direct or indirect member of a class or mixin by its name and
   // returns the member's declaration and type. Indirect members are members of
@@ -357,12 +358,6 @@ class TypeChecker {
       llvm::ArrayRef<NamedValue> source_fields,
       llvm::ArrayRef<NamedValue> destination_fields,
       const ImplScope& impl_scope) const -> bool;
-
-  // Returns true if source_struct is implicitly convertible to dest_class.
-  auto StructImplicitlyConvertibleToClass(
-      const StructType& source_struct, const NominalClassType& dest_class,
-      const ImplScope& impl_scope, bool allow_user_defined_conversions) const
-      -> bool;
 
   // Returns true if *source is implicitly convertible to *destination. *source
   // and *destination must be concrete types.
