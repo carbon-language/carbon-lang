@@ -68,6 +68,11 @@ jobs:
         run: |
           echo '*** Updating brew'
           brew update
+          echo '*** Installing Python'
+          # Explicitly use --overwrite because of file conflicts in
+          # /usr/local/bin with GitHub's installed version. If this stops being
+          # required, great!
+          brew install --force-bottle --overwrite python@3.11
           echo '*** Installing LLVM deps'
           brew install --force-bottle --only-dependencies llvm
           echo '*** Installing LLVM itself'
