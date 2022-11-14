@@ -12,6 +12,7 @@
 #include <set>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <unordered_set>
 #include <vector>
 
@@ -2580,9 +2581,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               const auto res,
               FindMemberWithParents(access.member_name(), &t_class));
           if (res.has_value()) {
-            auto [member_type, member] = res.value();
+            auto [member_type, member, member_t_class] = res.value();
             Nonnull<const Value*> field_type =
-                Substitute(t_class.bindings(), member_type);
+                Substitute(member_t_class->bindings(), member_type);
             access.set_member(Member(member));
             access.set_static_type(field_type);
             access.set_is_type_access(!IsInstanceMember(access.member()));
@@ -5616,17 +5617,18 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
 }
 
 auto TypeChecker::FindMemberWithParents(
-    std::string_view name, Nonnull<const NominalClassType*> class_type)
+    std::string_view name, Nonnull<const NominalClassType*> enclosing_class)
     -> ErrorOr<std::optional<
-        std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>> {
+        std::tuple<Nonnull<const Value*>, Nonnull<const Declaration*>,
+                   Nonnull<const NominalClassType*>>>> {
   CARBON_ASSIGN_OR_RETURN(
       const auto res,
-      FindMixedMemberAndType(name, class_type->declaration().members(),
-                             class_type));
+      FindMixedMemberAndType(name, enclosing_class->declaration().members(),
+                             enclosing_class));
   if (res.has_value()) {
-    return res;
+    return {std::make_tuple(res->first, res->second, enclosing_class)};
   }
-  if (const auto base = class_type->base(); base.has_value()) {
+  if (const auto base = enclosing_class->base(); base.has_value()) {
     return FindMemberWithParents(name, base.value());
   }
   return {std::nullopt};
