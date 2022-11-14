@@ -347,7 +347,7 @@ def merge_lines(
 
 
 def update_check(parsed_args: ParsedArgs, test: Path) -> bool:
-    """Updates the CHECK: lines for `test` by running explorer.
+    """Updates the CHECK: lines for `test` by running the tool.
 
     Returns true if a change was made.
     """
@@ -440,7 +440,7 @@ def main() -> None:
         tests = get_tests(parsed_args.testdata)
 
     # Build inputs.
-    print("Building explorer...")
+    print(f"Building {parsed_args.tool}...")
     subprocess.check_call(
         [
             "bazel",
