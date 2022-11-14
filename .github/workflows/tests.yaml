@@ -30,7 +30,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        build_mode: [opt]
+        build_mode: [fastbuild, opt]
         #build_mode: [fastbuild, opt]
     runs-on: ${{ matrix.os }}
     steps:
