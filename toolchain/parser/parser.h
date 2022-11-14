@@ -277,8 +277,7 @@ class Parser {
   auto HandlePatternFinish() -> bool;
 
   // Handles the `;` after a keyword statement.
-  auto HandleStatementKeywordFinish(TokenKind token_kind,
-                                    ParseNodeKind node_kind) -> void;
+  auto HandleStatementKeywordFinish(ParseNodeKind node_kind) -> void;
 
   // Handles VarAs(RequireSemicolon|NoSemicolon).
   auto HandleVar(bool require_semicolon) -> void;
