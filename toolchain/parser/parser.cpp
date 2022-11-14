@@ -1457,9 +1457,7 @@ auto Parser::HandleStatementForHeaderInState() -> void {
     if (auto colon = ConsumeIf(TokenKind::Colon())) {
       CARBON_DIAGNOSTIC(ExpectedIn, Error, "`:` should be replaced by `in`.");
       emitter_.Emit(*colon, ExpectedIn);
-      // TODO: Should probably add a ForIn node for consistency in ParseTree
-      // structure, but doesn't for consistency with the old implementation.
-      state.has_error = true;
+      AddLeafNode(ParseNodeKind::ForIn(), *colon, /*has_error=*/true);
     } else {
       CARBON_DIAGNOSTIC(ExpectedIn, Error,
                         "Expected `in` after loop `var` declaration.");
