@@ -71,7 +71,7 @@ jobs:
           echo '*** Installing LLVM deps'
           brew keg_only --force-bottle --only-dependencies llvm
           echo '*** Installing LLVM itself'
-          brew keg_only --force-bottle --force --verbose llvm
+          brew keg_only  --force-bottle --force --verbose llvm
           echo '*** brew info llvm'
           brew info llvm
           echo '*** brew config'
