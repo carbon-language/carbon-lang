@@ -69,9 +69,9 @@ jobs:
           echo '*** Updating brew'
           brew update
           echo '*** Installing LLVM deps'
-          brew install --force-bottle --only-dependencies llvm
+          brew keg_only --force-bottle --only-dependencies llvm
           echo '*** Installing LLVM itself'
-          brew install --force-bottle --force --verbose llvm
+          brew keg_only --force-bottle --force --verbose llvm
           echo '*** brew info llvm'
           brew info llvm
           echo '*** brew config'
