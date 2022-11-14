@@ -31,7 +31,6 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         build_mode: [fastbuild, opt]
-        #build_mode: [fastbuild, opt]
     runs-on: ${{ matrix.os }}
     steps:
       # Checkout the pull request head or the branch.
