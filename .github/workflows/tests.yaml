@@ -69,7 +69,7 @@ jobs:
           echo '*** Updating brew'
           brew update
           echo '*** Installing LLVM itself'
-          brew install --force-bottle --force --verbose llvm
+          brew install --force-bottle --force --overwrite --verbose llvm python
           echo '*** brew info llvm'
           brew info llvm
           echo '*** brew config'
