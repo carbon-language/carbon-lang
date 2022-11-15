@@ -36,6 +36,7 @@ class TokenizedBuffer;
 // `HasError` returning true.
 class TokenizedBuffer {
  private:
+  // Forward declarations for use in public DataIndex types.
   struct IdentifierInfo;
   struct LineInfo;
   struct TokenInfo;
@@ -49,6 +50,7 @@ class TokenizedBuffer {
   // buffer. `Token` objects from different `TokenizedBuffer`s cannot be
   // meaningfully compared.
   using Token = DataIndex<TokenInfo>;
+  using TokenIterator = DataIterator<TokenInfo>;
 
   // A lightweight handle to a lexed line in a `TokenizedBuffer`.
   //
@@ -63,8 +65,6 @@ class TokenizedBuffer {
   // table. `Identifier` objects will compare equal if they refer to the same
   // identifier spelling. Where the identifier was written is not preserved.
   using Identifier = DataIndex<IdentifierInfo>;
-
-  using TokenIterator = DataIterator<TokenInfo>;
 
   // The value of a real literal.
   //

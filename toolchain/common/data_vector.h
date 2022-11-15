@@ -62,6 +62,8 @@ class DataIndex {
   int32_t index_;
 };
 
+// Similar to DataIndex, but with some extra operations to support use as an
+// iterator.
 template <typename DataType>
 class DataIterator
     : public llvm::iterator_facade_base<DataIterator<DataType>,
@@ -106,6 +108,8 @@ class DataIterator
   DataIndex<DataType> index_;
 };
 
+// A thin wrapper around SmallVector that emphasizes use of DataIndex for
+// indexing.
 template <typename DataType>
 class DataVector {
  public:
