@@ -31,7 +31,8 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        # https://github.com/actions/runner-images
+        os: [macos-12]
         # TODO
         #build_mode: [fastbuild, opt]
         build_mode: [opt]
@@ -63,13 +64,16 @@ jobs:
           go get github.com/bazelbuild/bazelisk
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
-      # On macOS, use Homebrew to install a recent LLVM and Clang.
+      # Use 14 following:
+      # https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
       - name: Setup LLVM and Clang (macOS)
         if: matrix.os == 'macos-latest'
         run: |
           echo '*** Updating PATH'
           echo "$(brew --prefix llvm@14)/bin" >> $GITHUB_PATH
 
+      # Use v14 following:
+      # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md
       - name: Setup LLVM and Clang (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
