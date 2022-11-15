@@ -59,15 +59,6 @@ jobs:
           # Match the min version listed in docs/project/contribution_tools.md
           python-version: '3.9'
 
-      # On macOS we need Go and to use it to install Bazelisk.
-      - uses: actions/setup-go@v3
-        if: matrix.os == 'macos-12'
-      - name: Install bazelisk
-        if: matrix.os == 'macos-12'
-        run: |
-          go get github.com/bazelbuild/bazelisk
-          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-
       # Use LLVM 14 following:
       # https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
       - name: Setup LLVM and Clang (macOS)
