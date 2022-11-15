@@ -6,8 +6,6 @@ name: test
 
 on:
   push:
-    # TODO
-    #branches: [trunk]
     branches: [brew]
     paths:
       # Conservatively run the tests. However, skip them if the only paths in
@@ -27,6 +25,12 @@ on:
       - '!CODEOWNERS'
       - '!.git*'
 
+# Cancel previous workflows on the PR when there are multiple fast commits.
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     strategy:
@@ -34,11 +38,8 @@ jobs:
         # At present, these images are newer than "latest". We use them to test
         # against more recent tooling versions.
         # https://github.com/actions/runner-images
-        # TODO
         os: [ubuntu-22.04, macos-12]
-        # TODO
-        #build_mode: [fastbuild, opt]
-        build_mode: [opt]
+        build_mode: [fastbuild, opt]
     runs-on: ${{ matrix.os }}
     steps:
       # Checkout the pull request head or the branch.
