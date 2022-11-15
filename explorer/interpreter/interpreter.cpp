@@ -81,8 +81,6 @@ class Interpreter {
   auto StepLvalue() -> ErrorOr<Success>;
   // State transitions for witnesses.
   auto StepWitness() -> ErrorOr<Success>;
-  // State transitions for patterns.
-  auto StepPattern() -> ErrorOr<Success>;
   // State transition for statements.
   auto StepStmt() -> ErrorOr<Success>;
   // State transition for declarations.
@@ -1582,85 +1580,6 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
   }
 }
 
-auto Interpreter::StepPattern() -> ErrorOr<Success> {
-  Action& act = todo_.CurrentAction();
-  const Pattern& pattern = cast<PatternAction>(act).pattern();
-  if (trace_stream_) {
-    **trace_stream_ << "--- step pattern " << pattern << " ." << act.pos()
-                    << ". (" << pattern.source_loc() << ") --->\n";
-  }
-  switch (pattern.kind()) {
-    case PatternKind::AutoPattern: {
-      CARBON_CHECK(act.pos() == 0);
-      return todo_.FinishAction(arena_->New<AutoType>());
-    }
-    case PatternKind::BindingPattern: {
-      const auto& binding = cast<BindingPattern>(pattern);
-      if (binding.name() != AnonymousName) {
-        return todo_.FinishAction(
-            arena_->New<BindingPlaceholderValue>(&binding));
-      } else {
-        return todo_.FinishAction(arena_->New<BindingPlaceholderValue>());
-      }
-    }
-    case PatternKind::GenericBinding: {
-      const auto& binding = cast<GenericBinding>(pattern);
-      return todo_.FinishAction(arena_->New<VariableType>(&binding));
-    }
-    case PatternKind::TuplePattern: {
-      const auto& tuple = cast<TuplePattern>(pattern);
-      if (act.pos() < static_cast<int>(tuple.fields().size())) {
-        //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
-        //    H}
-        // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
-        // H}
-        return todo_.Spawn(
-            std::make_unique<PatternAction>(tuple.fields()[act.pos()]));
-      } else {
-        return todo_.FinishAction(arena_->New<TupleValue>(act.results()));
-      }
-    }
-    case PatternKind::AlternativePattern: {
-      const auto& alternative = cast<AlternativePattern>(pattern);
-      if (act.pos() == 0) {
-        return todo_.Spawn(
-            std::make_unique<ExpressionAction>(&alternative.choice_type()));
-      } else if (act.pos() == 1) {
-        return todo_.Spawn(
-            std::make_unique<PatternAction>(&alternative.arguments()));
-      } else {
-        CARBON_CHECK(act.pos() == 2);
-        const auto& choice_type = cast<ChoiceType>(*act.results()[0]);
-        return todo_.FinishAction(arena_->New<AlternativeValue>(
-            alternative.alternative_name(), choice_type.name(),
-            act.results()[1]));
-      }
-    }
-    case PatternKind::ExpressionPattern:
-      if (act.pos() == 0) {
-        return todo_.Spawn(std::make_unique<ExpressionAction>(
-            &cast<ExpressionPattern>(pattern).expression()));
-      } else {
-        return todo_.FinishAction(act.results()[0]);
-      }
-    case PatternKind::VarPattern:
-      if (act.pos() == 0) {
-        return todo_.Spawn(std::make_unique<PatternAction>(
-            &cast<VarPattern>(pattern).pattern()));
-      } else {
-        return todo_.FinishAction(act.results()[0]);
-      }
-    case PatternKind::AddrPattern:
-      const auto& addr = cast<AddrPattern>(pattern);
-      if (act.pos() == 0) {
-        return todo_.Spawn(std::make_unique<PatternAction>(&addr.binding()));
-      } else {
-        return todo_.FinishAction(arena_->New<AddrValue>(act.results()[0]));
-      }
-      break;
-  }
-}
-
 auto Interpreter::StepStmt() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Statement& stmt = cast<StatementAction>(act).statement();
@@ -1706,7 +1625,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       constexpr int TargetVarPosInResult = 0;
       constexpr int CurrentIndexPosInResult = 1;
       constexpr int EndIndexPosInResult = 2;
-      constexpr int LoopVarPosInResult = 3;
+      const auto* loop_var = &cast<BindingPlaceholderValue>(
+          cast<For>(stmt).variable_declaration().value());
       if (act.pos() == 0) {
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(&cast<For>(stmt).loop_target()));
@@ -1715,23 +1635,13 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         const auto* source_array =
             cast<TupleValue>(act.results()[TargetVarPosInResult]);
 
+        int start_index = 0;
         auto end_index = static_cast<int>(source_array->elements().size());
         if (end_index == 0) {
           return todo_.FinishAction();
         }
-        act.AddResult(arena_->New<IntValue>(0));
+        act.AddResult(arena_->New<IntValue>(start_index));
         act.AddResult(arena_->New<IntValue>(end_index));
-        return todo_.Spawn(std::make_unique<PatternAction>(
-            &cast<For>(stmt).variable_declaration()));
-      }
-      if (act.pos() == 2) {
-        const auto* loop_var =
-            cast<BindingPlaceholderValue>(act.results()[LoopVarPosInResult]);
-        const auto* source_array =
-            cast<TupleValue>(act.results()[TargetVarPosInResult]);
-
-        auto start_index =
-            cast<IntValue>(act.results()[CurrentIndexPosInResult])->value();
         todo_.Initialize(*(loop_var->value_node()),
                          source_array->elements()[start_index]);
         act.ReplaceResult(CurrentIndexPosInResult,
@@ -1739,7 +1649,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         return todo_.Spawn(
             std::make_unique<StatementAction>(&cast<For>(stmt).body()));
       }
-      if (act.pos() >= 3) {
+      if (act.pos() >= 2) {
         auto current_index =
             cast<IntValue>(act.results()[CurrentIndexPosInResult])->value();
         auto end_index =
@@ -1748,8 +1658,6 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         if (current_index < end_index) {
           const auto* source_array =
               cast<const TupleValue>(act.results()[TargetVarPosInResult]);
-          const auto* loop_var = cast<const BindingPlaceholderValue>(
-              act.results()[LoopVarPosInResult]);
 
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> assigned_array_element,
@@ -2125,9 +2033,6 @@ auto Interpreter::Step() -> ErrorOr<Success> {
     case Action::Kind::WitnessAction:
       CARBON_RETURN_IF_ERROR(StepWitness());
       break;
-    case Action::Kind::PatternAction:
-      CARBON_RETURN_IF_ERROR(StepPattern());
-      break;
     case Action::Kind::StatementAction:
       CARBON_RETURN_IF_ERROR(StepStmt());
       break;
@@ -2192,15 +2097,6 @@ auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena,
   Interpreter interpreter(Phase::CompileTime, arena, trace_stream);
   CARBON_RETURN_IF_ERROR(
       interpreter.RunAllSteps(std::make_unique<ExpressionAction>(e)));
-  return interpreter.result();
-}
-
-auto InterpPattern(Nonnull<const Pattern*> p, Nonnull<Arena*> arena,
-                   std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
-    -> ErrorOr<Nonnull<const Value*>> {
-  Interpreter interpreter(Phase::CompileTime, arena, trace_stream);
-  CARBON_RETURN_IF_ERROR(
-      interpreter.RunAllSteps(std::make_unique<PatternAction>(p)));
   return interpreter.result();
 }
 
