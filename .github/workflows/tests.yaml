@@ -32,7 +32,9 @@ jobs:
     strategy:
       matrix:
         # https://github.com/actions/runner-images
-        os: [macos-12]
+        # TODO
+        #os: [ubuntu-22.04, macos-12]
+        os: [ubuntu-22.04]
         # TODO
         #build_mode: [fastbuild, opt]
         build_mode: [opt]
@@ -77,6 +79,7 @@ jobs:
       - name: Setup LLVM and Clang (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
+          sudo apt install libc++-dev
           echo "/usr/lib/llvm-14/bin" >> $GITHUB_PATH
 
       # Print the various tool paths and versions to help in debugging.
