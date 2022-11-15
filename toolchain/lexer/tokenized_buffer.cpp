@@ -728,7 +728,7 @@ auto TokenizedBuffer::IsRecoveryToken(Token token) const -> bool {
 }
 
 auto TokenizedBuffer::GetLineNumber(Line line) const -> int {
-  return line->index() + 1;
+  return line.index() + 1;
 }
 
 auto TokenizedBuffer::GetIndentColumnNumber(Line line) const -> int {
@@ -852,15 +852,15 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
 }
 
 auto TokenizedBuffer::GetLineInfo(Line line) -> LineInfo& {
-  return line_infos_[*line];
+  return line_infos_[line];
 }
 
 auto TokenizedBuffer::GetLineInfo(Line line) const -> const LineInfo& {
-  return line_infos_[*line];
+  return line_infos_[line];
 }
 
 auto TokenizedBuffer::AddLine(LineInfo info) -> Line {
-  return Line(line_infos_.push_back(info));
+  return line_infos_.push_back(info);
 }
 
 auto TokenizedBuffer::GetTokenInfo(Token token) -> TokenInfo& {

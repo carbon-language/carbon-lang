@@ -55,7 +55,7 @@ class TokenizedBuffer {
   // Each `Line` object refers to a specific line in the source code that was
   // lexed. They can be compared directly to establish that they refer to the
   // same line or the relative position of different lines within the source.
-  using Line = DataIterator<LineInfo>;
+  using Line = DataIndex<LineInfo>;
 
   // A lightweight handle to a lexed identifier in a `TokenizedBuffer`.
   //
