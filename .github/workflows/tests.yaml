@@ -6,7 +6,7 @@ name: test
 
 on:
   push:
-    branches: [brew]
+    branches: [brew ]
     paths:
       # Conservatively run the tests. However, skip them if the only paths in
       # the pull request match files that we know don't impact the build.
