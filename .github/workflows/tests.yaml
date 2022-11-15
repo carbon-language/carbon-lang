@@ -70,6 +70,11 @@ jobs:
           echo '*** Updating PATH'
           echo "$(brew --prefix llvm@14)/bin" >> $GITHUB_PATH
 
+      - name: Setup LLVM and Clang (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          echo "/usr/lib/llvm-14/bin" >> $GITHUB_PATH
+
       # Print the various tool paths and versions to help in debugging.
       - name: Print tool debugging info
         run: |
