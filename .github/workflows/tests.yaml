@@ -31,10 +31,11 @@ jobs:
   test:
     strategy:
       matrix:
+        # At present, these images are newer than "latest". We use them to test
+        # against more recent tooling versions.
         # https://github.com/actions/runner-images
         # TODO
-        #os: [ubuntu-22.04, macos-12]
-        os: [ubuntu-22.04]
+        os: [ubuntu-22.04, macos-12]
         # TODO
         #build_mode: [fastbuild, opt]
         build_mode: [opt]
@@ -66,20 +67,18 @@ jobs:
           go get github.com/bazelbuild/bazelisk
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
-      # Use 14 following:
+      # Use LLVM 14 following:
       # https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
       - name: Setup LLVM and Clang (macOS)
         if: matrix.os == 'macos-12'
         run: |
-          echo '*** Updating PATH'
           echo "$(brew --prefix llvm@14)/bin" >> $GITHUB_PATH
 
-      # Use v14 following:
+      # Use LLVM 14 following:
       # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md
       - name: Setup LLVM and Clang (Linux)
         if: matrix.os == 'ubuntu-22.04'
         run: |
-          sudo apt install libc++-dev
           echo "/usr/lib/llvm-14/bin" >> $GITHUB_PATH
 
       # Print the various tool paths and versions to help in debugging.
