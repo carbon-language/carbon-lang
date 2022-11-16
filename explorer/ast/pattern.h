@@ -71,7 +71,10 @@ class Pattern : public AstNode {
 
   // Sets the value of this pattern. Can only be called once, during
   // typechecking.
-  void set_value(Nonnull<const Value*> value) { value_ = value; }
+  void set_value(Nonnull<const Value*> value) {
+    CARBON_CHECK(!value_) << "set_value called more than once";
+    value_ = value;
+  }
 
   // Returns whether the value has been set. Should only be called
   // during typechecking: before typechecking it's guaranteed to be false,

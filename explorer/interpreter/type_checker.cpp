@@ -42,16 +42,6 @@ using llvm::isa;
 
 namespace Carbon {
 
-static void SetValue(Nonnull<Pattern*> pattern, Nonnull<const Value*> value) {
-  // TODO: find some way to CHECK that `value` is identical to pattern->value(),
-  // if it's already set. Unclear if `ValueEqual` is suitable, because it
-  // currently focuses more on "real" values, and disallows the pseudo-values
-  // like `BindingPlaceholderValue` that we get in pattern evaluation.
-  if (!pattern->has_value()) {
-    pattern->set_value(value);
-  }
-}
-
 auto TypeChecker::IsSameType(Nonnull<const Value*> type1,
                              Nonnull<const Value*> type2,
                              const ImplScope& /*impl_scope*/) const -> bool {
@@ -3822,6 +3812,7 @@ auto TypeChecker::TypeCheckPattern(
   switch (p->kind()) {
     case PatternKind::AutoPattern: {
       p->set_static_type(arena_->New<TypeType>());
+      p->set_value(arena_->New<AutoType>());
       return Success();
     }
     case PatternKind::BindingPattern: {
@@ -3834,9 +3825,7 @@ auto TypeChecker::TypeCheckPattern(
       }
       CARBON_RETURN_IF_ERROR(TypeCheckPattern(
           &binding.type(), std::nullopt, impl_scope, enclosing_value_category));
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> type,
-          InterpPattern(&binding.type(), arena_, trace_stream_));
+      Nonnull<const Value*> type = &binding.type().value();
       // Convert to a type.
       // TODO: Convert the pattern before interpreting it rather than doing
       // this as a separate step.
@@ -3878,9 +3867,9 @@ auto TypeChecker::TypeCheckPattern(
       CARBON_CHECK(!IsPlaceholderType(type))
           << "should be no way to write a placeholder type";
       binding.set_static_type(type);
-      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> binding_value,
-                              InterpPattern(&binding, arena_, trace_stream_));
-      SetValue(&binding, binding_value);
+      binding.set_value(binding.name() != AnonymousName
+                            ? arena_->New<BindingPlaceholderValue>(&binding)
+                            : arena_->New<BindingPlaceholderValue>());
 
       if (!binding.has_value_category()) {
         binding.set_value_category(enclosing_value_category);
@@ -3901,6 +3890,7 @@ auto TypeChecker::TypeCheckPattern(
     case PatternKind::TuplePattern: {
       auto& tuple = cast<TuplePattern>(*p);
       std::vector<Nonnull<const Value*>> field_types;
+      std::vector<Nonnull<const Value*>> field_patterns;
       if (expected && (*expected)->kind() != Value::Kind::TupleType) {
         return ProgramError(p->source_loc()) << "didn't expect a tuple";
       }
@@ -3921,11 +3911,10 @@ auto TypeChecker::TypeCheckPattern(
                           << "\n";
         }
         field_types.push_back(&field->static_type());
+        field_patterns.push_back(&field->value());
       }
       tuple.set_static_type(arena_->New<TupleType>(std::move(field_types)));
-      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> tuple_value,
-                              InterpPattern(&tuple, arena_, trace_stream_));
-      SetValue(&tuple, tuple_value);
+      tuple.set_value(arena_->New<TupleValue>(std::move(field_patterns)));
       return Success();
     }
     case PatternKind::AlternativePattern: {
@@ -3962,10 +3951,9 @@ auto TypeChecker::TypeCheckPattern(
           TypeCheckPattern(&alternative.arguments(), substituted_parameter_type,
                            impl_scope, enclosing_value_category));
       alternative.set_static_type(&choice_type);
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> alternative_value,
-          InterpPattern(&alternative, arena_, trace_stream_));
-      SetValue(&alternative, alternative_value);
+      alternative.set_value(arena_->New<AlternativeValue>(
+          alternative.alternative_name(), choice_type.name(),
+          &alternative.arguments().value()));
       return Success();
     }
     case PatternKind::ExpressionPattern: {
@@ -3973,8 +3961,8 @@ auto TypeChecker::TypeCheckPattern(
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&expression, impl_scope));
       p->set_static_type(&expression.static_type());
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> expr_value,
-                              InterpPattern(p, arena_, trace_stream_));
-      SetValue(p, expr_value);
+                              InterpExp(&expression, arena_, trace_stream_));
+      p->set_value(expr_value);
       return Success();
     }
     case PatternKind::VarPattern: {
@@ -3984,13 +3972,10 @@ auto TypeChecker::TypeCheckPattern(
                                               impl_scope,
                                               var_pattern.value_category()));
       var_pattern.set_static_type(&var_pattern.pattern().static_type());
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> pattern_value,
-          InterpPattern(&var_pattern, arena_, trace_stream_));
-      SetValue(&var_pattern, pattern_value);
+      var_pattern.set_value(&var_pattern.pattern().value());
       return Success();
     }
-    case PatternKind::AddrPattern:
+    case PatternKind::AddrPattern: {
       std::optional<Nonnull<const Value*>> expected_ptr;
       auto& addr_pattern = cast<AddrPattern>(*p);
       if (expected) {
@@ -4007,11 +3992,10 @@ auto TypeChecker::TypeCheckPattern(
         return ProgramError(addr_pattern.source_loc())
                << "Type associated with addr must be a pointer type.";
       }
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> pattern_value,
-          InterpPattern(&addr_pattern, arena_, trace_stream_));
-      SetValue(&addr_pattern, pattern_value);
+      addr_pattern.set_value(
+          arena_->New<AddrValue>(&addr_pattern.binding().value()));
       return Success();
+    }
   }
 }
 
@@ -4023,7 +4007,7 @@ auto TypeChecker::TypeCheckGenericBinding(GenericBinding& binding,
   // its symbolic identity before we type-check and interpret the type.
   auto* symbolic_value = arena_->New<VariableType>(&binding);
   binding.set_symbolic_identity(symbolic_value);
-  SetValue(&binding, symbolic_value);
+  binding.set_value(symbolic_value);
 
   CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
                           TypeCheckTypeExp(&binding.type(), impl_scope));
