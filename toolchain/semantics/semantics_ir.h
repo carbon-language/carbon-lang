@@ -7,6 +7,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/lexer/numeric_literal.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_node.h"
 
@@ -53,6 +54,7 @@ class SemanticsIR {
   static auto MakeFromParseTree(const SemanticsIR& builtin_ir,
                                 const TokenizedBuffer& tokens,
                                 const ParseTree& parse_tree,
+                                DiagnosticConsumer& consumer,
                                 llvm::raw_ostream* vlog_stream) -> SemanticsIR;
 
   // Prints the full IR.
@@ -68,20 +70,23 @@ class SemanticsIR {
       : cross_reference_irs_({&builtins, this}),
         cross_references_(builtins.cross_references_) {}
 
+  auto GetNode(SemanticsNodeBlockId block_id, SemanticsNodeId node_id)
+      -> SemanticsNode {
+    if (node_id.is_cross_reference()) {
+      auto ref = cross_references_[node_id.GetAsCrossReference()];
+      return cross_reference_irs_[ref.ir.id]
+          ->node_blocks_[ref.node_block.id][ref.node.id];
+    } else {
+      return node_blocks_[block_id.id][node_id.id];
+    }
+  }
+
   // Adds an identifier, returning an ID to reference it.
   // TODO: Deduplicate strings.
   // TODO: Probably make generic for all strings, including literals.
   auto AddIdentifier(llvm::StringRef identifier) -> SemanticsIdentifierId {
     SemanticsIdentifierId id(identifiers_.size());
     identifiers_.push_back(identifier);
-    return id;
-  }
-
-  // Adds an integer literal, returning an ID to reference it.
-  auto AddIntegerLiteral(llvm::APInt integer_literal)
-      -> SemanticsIntegerLiteralId {
-    SemanticsIntegerLiteralId id(integer_literals_.size());
-    integer_literals_.push_back(integer_literal);
     return id;
   }
 
@@ -116,9 +121,6 @@ class SemanticsIR {
 
   // Storage for identifiers.
   llvm::SmallVector<llvm::StringRef> identifiers_;
-
-  // Storage for integer literals.
-  llvm::SmallVector<llvm::APInt> integer_literals_;
 
   // Storage for blocks within the IR.
   llvm::SmallVector<llvm::SmallVector<SemanticsNode>> node_blocks_;

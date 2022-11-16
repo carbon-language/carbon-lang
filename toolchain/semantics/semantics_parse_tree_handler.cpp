@@ -9,6 +9,7 @@
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
+#include "toolchain/semantics/semantics_builtin_kind.h"
 #include "toolchain/semantics/semantics_node.h"
 
 namespace Carbon {
@@ -217,11 +218,26 @@ auto SemanticsParseTreeHandler::HandleInfixOperator(ParseTree::Node parse_node)
   auto rhs_id = PopWithResult();
   auto lhs_id = PopWithResult();
 
+  auto block = node_block_stack_.back();
+  auto lhs_type = semantics_->GetNode(block, lhs_id).type();
+  auto rhs_type = semantics_->GetNode(block, rhs_id).type();
+  SemanticsNodeId result_type = lhs_type;
+  // TODO: This should attempt a type conversion, but there's not enough
+  // implemented to do that right now.
+  if (lhs_type.id != rhs_type.id) {
+    // TODO: This is a poor diagnostic, and should be expanded.
+    CARBON_DIAGNOSTIC(TypeMismatch, Error, "Type mismatch");
+    emitter_->Emit(parse_tree_->node_token(parse_node), TypeMismatch);
+    result_type = SemanticsNodeId::MakeBuiltinReference(
+        SemanticsBuiltinKind::InvalidType());
+  }
+
   // Figure out the operator for the token.
   auto token = parse_tree_->node_token(parse_node);
   switch (auto token_kind = tokens_->GetKind(token)) {
     case TokenKind::Plus():
-      Push(parse_node, SemanticsNode::MakeBinaryOperatorAdd(lhs_id, rhs_id));
+      Push(parse_node,
+           SemanticsNode::MakeBinaryOperatorAdd(result_type, lhs_id, rhs_id));
       break;
     default:
       CARBON_FATAL() << "Unrecognized token kind: " << token_kind.Name();
@@ -233,9 +249,11 @@ auto SemanticsParseTreeHandler::HandleLiteral(ParseTree::Node parse_node)
   auto token = parse_tree_->node_token(parse_node);
   switch (auto token_kind = tokens_->GetKind(token)) {
     case TokenKind::IntegerLiteral(): {
-      auto id =
-          semantics_->AddIntegerLiteral(tokens_->GetIntegerLiteral(token));
-      Push(parse_node, SemanticsNode::MakeIntegerLiteral(id));
+      Push(parse_node, SemanticsNode::MakeIntegerLiteral());
+      break;
+    }
+    case TokenKind::RealLiteral(): {
+      Push(parse_node, SemanticsNode::MakeRealLiteral());
       break;
     }
     default:
@@ -261,8 +279,9 @@ auto SemanticsParseTreeHandler::HandleReturnStatement(
     Push(parse_node, SemanticsNode::MakeReturn());
   } else {
     auto arg = PopWithResult();
+    auto arg_type = semantics_->GetNode(node_block_stack_.back(), arg).type();
     Pop(ParseNodeKind::ReturnStatementStart());
-    Push(parse_node, SemanticsNode::MakeReturnExpression(arg));
+    Push(parse_node, SemanticsNode::MakeReturnExpression(arg_type, arg));
   }
 }
 

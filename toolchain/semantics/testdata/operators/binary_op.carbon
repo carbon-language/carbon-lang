@@ -22,10 +22,12 @@
 // CHECK:STDOUT:   },
 // CHECK:STDOUT:   block1 = {
 // CHECK:STDOUT:     node0 = IntegerLiteral(): node_xref2;
-// CHECK:STDOUT:     node1 = ReturnExpression(node0): node_xref2;
+// CHECK:STDOUT:     node1 = IntegerLiteral(): node_xref2;
+// CHECK:STDOUT:     node2 = BinaryOperatorAdd(node0, node1): node_xref2;
+// CHECK:STDOUT:     node3 = ReturnExpression(node2): node_xref2;
 // CHECK:STDOUT:   },
 // CHECK:STDOUT: }
 
 fn Main() {
-  return 0;
+  return 12 + 34;
 }

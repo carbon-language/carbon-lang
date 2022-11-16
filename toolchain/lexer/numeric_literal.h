@@ -32,7 +32,7 @@ class LexedNumericLiteral {
     Radix radix;
     // The mantissa, represented as a variable-width unsigned integer.
     llvm::APInt mantissa;
-    // The exponent, represented as a variable-width signed integer..
+    // The exponent, represented as a variable-width signed integer.
     llvm::APInt exponent;
   };
 

@@ -62,16 +62,6 @@ struct SemanticsIdentifierId {
   int32_t id;
 };
 
-// Type-safe storage of integer literals.
-struct SemanticsIntegerLiteralId {
-  SemanticsIntegerLiteralId() : id(-1) {}
-  explicit SemanticsIntegerLiteralId(int32_t id) : id(id) {}
-
-  auto Print(llvm::raw_ostream& out) const -> void { out << "int" << id; }
-
-  int32_t id;
-};
-
 // Type-safe storage of node blocks.
 struct SemanticsNodeBlockId {
   SemanticsNodeBlockId() : id(-1) {}
@@ -89,10 +79,10 @@ class SemanticsNode {
 
   auto GetAsInvalid() const -> NoArgs { CARBON_FATAL() << "Invalid access"; }
 
-  static auto MakeBinaryOperatorAdd(SemanticsNodeId lhs, SemanticsNodeId rhs)
-      -> SemanticsNode {
-    return SemanticsNode(SemanticsNodeKind::BinaryOperatorAdd(),
-                         SemanticsNodeId(), lhs.id, rhs.id);
+  static auto MakeBinaryOperatorAdd(SemanticsNodeId type, SemanticsNodeId lhs,
+                                    SemanticsNodeId rhs) -> SemanticsNode {
+    return SemanticsNode(SemanticsNodeKind::BinaryOperatorAdd(), type, lhs.id,
+                         rhs.id);
   }
   auto GetAsBinaryOperatorAdd() const
       -> std::pair<SemanticsNodeId, SemanticsNodeId> {
@@ -152,19 +142,30 @@ class SemanticsNode {
     return {SemanticsNodeId(arg0_), SemanticsNodeBlockId(arg1_)};
   }
 
-  static auto MakeIntegerLiteral(SemanticsIntegerLiteralId integer)
-      -> SemanticsNode {
+  static auto MakeIntegerLiteral() -> SemanticsNode {
     return SemanticsNode(SemanticsNodeKind::IntegerLiteral(),
                          SemanticsNodeId::MakeBuiltinReference(
-                             SemanticsBuiltinKind::IntegerLiteralType()),
-                         integer.id);
+                             SemanticsBuiltinKind::IntegerLiteralType()));
   }
-  auto GetAsIntegerLiteral() const -> SemanticsIntegerLiteralId {
+  auto GetAsIntegerLiteral() const -> NoArgs {
     CARBON_CHECK(kind_ == SemanticsNodeKind::IntegerLiteral());
-    return SemanticsIntegerLiteralId(arg0_);
+    return {};
+  }
+
+  static auto MakeRealLiteral() -> SemanticsNode {
+    return SemanticsNode(SemanticsNodeKind::RealLiteral(),
+                         SemanticsNodeId::MakeBuiltinReference(
+                             SemanticsBuiltinKind::RealLiteralType()));
+  }
+  auto GetAsRealLiteral() const -> NoArgs {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::RealLiteral());
+    return {};
   }
 
   static auto MakeReturn() -> SemanticsNode {
+    // The actual type is `()`. However, code dealing with `return;` should
+    // understand the type without checking, so it's not necessary but could be
+    // specified if needed.
     return SemanticsNode(SemanticsNodeKind::Return(), SemanticsNodeId());
   }
   auto GetAsReturn() const -> NoArgs {
@@ -172,9 +173,9 @@ class SemanticsNode {
     return {};
   }
 
-  static auto MakeReturnExpression(SemanticsNodeId expr) -> SemanticsNode {
-    return SemanticsNode(SemanticsNodeKind::ReturnExpression(),
-                         SemanticsNodeId(), expr.id);
+  static auto MakeReturnExpression(SemanticsNodeId type, SemanticsNodeId expr)
+      -> SemanticsNode {
+    return SemanticsNode(SemanticsNodeKind::ReturnExpression(), type, expr.id);
   }
   auto GetAsReturnExpression() const -> SemanticsNodeId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::ReturnExpression());
