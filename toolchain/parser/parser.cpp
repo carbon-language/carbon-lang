@@ -429,12 +429,9 @@ auto Parser::HandleBraceExpressionState() -> void {
   state.state = ParserState::BraceExpressionFinishAsUnknown();
   PushState(state);
 
-  // TODO: When swapping {} start/end, this should AddLeafNode the open before
-  // continuing.
-
-  // Advance past the open brace.
-  CARBON_CHECK(PositionIs(TokenKind::OpenCurlyBrace()));
-  ++position_;
+  CARBON_CHECK(ConsumeAndAddLeafNodeIf(
+      TokenKind::OpenCurlyBrace(),
+      ParseNodeKind::StructLiteralOrTypeLiteralStart()));
   if (!PositionIs(TokenKind::CloseCurlyBrace())) {
     PushState(ParserState::BraceExpressionParameterAsUnknown());
   }
@@ -612,10 +609,9 @@ auto Parser::HandleBraceExpressionParameterFinishAsUnknownState() -> void {
 auto Parser::HandleBraceExpressionFinish(BraceExpressionKind kind) -> void {
   auto state = PopState();
 
-  AddLeafNode(ParseNodeKind::StructEnd(), Consume());
   AddNode(kind == BraceExpressionKind::Type ? ParseNodeKind::StructTypeLiteral()
                                             : ParseNodeKind::StructLiteral(),
-          state.token, state.subtree_start, state.has_error);
+          Consume(), state.subtree_start, state.has_error);
 }
 
 auto Parser::HandleBraceExpressionFinishAsTypeState() -> void {
