@@ -1004,6 +1004,27 @@ auto Parser::HandleFunctionIntroducerState() -> void {
   // Advance past the open paren.
   ++position_;
   if (!PositionIs(TokenKind::CloseParen())) {
+    PushState(ParserState::FunctionParameter());
+  }
+}
+
+auto Parser::HandleFunctionParameterState() -> void {
+  PopAndDiscardState();
+
+  PushState(ParserState::FunctionParameterFinish());
+  PushState(ParserState::PatternAsFunctionParameter());
+}
+
+auto Parser::HandleFunctionParameterFinishState() -> void {
+  auto state = PopState();
+
+  if (state.has_error) {
+    ReturnErrorOnState();
+  }
+
+  if (ConsumeListToken(ParseNodeKind::ParameterListComma(),
+                       TokenKind::CloseParen(),
+                       state.has_error) == ListTokenKind::Comma) {
     PushState(ParserState::PatternAsFunctionParameter());
   }
 }
@@ -1270,20 +1291,11 @@ auto Parser::HandleParenExpressionFinishAsTupleState() -> void {
           state.has_error);
 }
 
-auto Parser::HandlePatternStart(PatternKind pattern_kind) -> void {
+auto Parser::HandlePattern(PatternKind pattern_kind) -> void {
   auto state = PopState();
 
   // Ensure the finish state always follows.
-  switch (pattern_kind) {
-    case PatternKind::Parameter: {
-      state.state = ParserState::PatternAsFunctionParameterFinish();
-      break;
-    }
-    case PatternKind::Variable: {
-      state.state = ParserState::PatternAsVariableFinish();
-      break;
-    }
-  }
+  state.state = ParserState::PatternFinish();
 
   // Handle an invalid pattern introducer.
   if (!PositionIs(TokenKind::Identifier()) ||
@@ -1316,41 +1328,26 @@ auto Parser::HandlePatternStart(PatternKind pattern_kind) -> void {
   position_ += 2;
 }
 
-auto Parser::HandlePatternFinish() -> bool {
+auto Parser::HandlePatternAsFunctionParameterState() -> void {
+  HandlePattern(PatternKind::Parameter);
+}
+
+auto Parser::HandlePatternAsVariableState() -> void {
+  HandlePattern(PatternKind::Variable);
+}
+
+auto Parser::HandlePatternFinishState() -> void {
   auto state = PopState();
 
   // If an error was encountered, propagate it without adding a node.
   if (state.has_error) {
     ReturnErrorOnState();
-    return true;
+    return;
   }
 
   // TODO: may need to mark has_error if !type.
   AddNode(ParseNodeKind::PatternBinding(), state.token, state.subtree_start,
           /*has_error=*/false);
-  return false;
-}
-
-auto Parser::HandlePatternAsFunctionParameterState() -> void {
-  HandlePatternStart(PatternKind::Parameter);
-}
-
-auto Parser::HandlePatternAsFunctionParameterFinishState() -> void {
-  bool has_error = HandlePatternFinish();
-
-  if (ConsumeListToken(ParseNodeKind::ParameterListComma(),
-                       TokenKind::CloseParen(),
-                       has_error) == ListTokenKind::Comma) {
-    PushState(ParserState::PatternAsFunctionParameter());
-  }
-}
-
-auto Parser::HandlePatternAsVariableState() -> void {
-  HandlePatternStart(PatternKind::Variable);
-}
-
-auto Parser::HandlePatternAsVariableFinishState() -> void {
-  HandlePatternFinish();
 }
 
 auto Parser::HandleStatementState() -> void {
