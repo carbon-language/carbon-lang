@@ -67,6 +67,15 @@ struct SemanticsNodeBlockId {
   SemanticsNodeBlockId() : id(-1) {}
   explicit SemanticsNodeBlockId(int32_t id) : id(id) {}
 
+  friend auto operator==(SemanticsNodeBlockId lhs, SemanticsNodeBlockId rhs)
+      -> bool {
+    return lhs.id == rhs.id;
+  }
+  friend auto operator!=(SemanticsNodeBlockId lhs, SemanticsNodeBlockId rhs)
+      -> bool {
+    return lhs.id != rhs.id;
+  }
+
   auto Print(llvm::raw_ostream& out) const -> void { out << "block" << id; }
 
   int32_t id;
@@ -185,8 +194,8 @@ class SemanticsNode {
   SemanticsNode()
       : SemanticsNode(SemanticsNodeKind::Invalid(), SemanticsNodeId()) {}
 
-  auto kind() -> SemanticsNodeKind { return kind_; }
-  auto type() -> SemanticsNodeId { return type_; }
+  auto kind() const -> SemanticsNodeKind { return kind_; }
+  auto type() const -> SemanticsNodeId { return type_; }
 
   auto Print(llvm::raw_ostream& out) const -> void;
 

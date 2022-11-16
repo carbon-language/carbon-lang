@@ -219,8 +219,8 @@ auto SemanticsParseTreeHandler::HandleInfixOperator(ParseTree::Node parse_node)
   auto lhs_id = PopWithResult();
 
   auto block = node_block_stack_.back();
-  auto lhs_type = semantics_->GetNode(block, lhs_id).type();
-  auto rhs_type = semantics_->GetNode(block, rhs_id).type();
+  auto lhs_type = semantics_->GetType(block, lhs_id);
+  auto rhs_type = semantics_->GetType(block, rhs_id);
   SemanticsNodeId result_type = lhs_type;
   // TODO: This should attempt a type conversion, but there's not enough
   // implemented to do that right now.
@@ -279,7 +279,7 @@ auto SemanticsParseTreeHandler::HandleReturnStatement(
     Push(parse_node, SemanticsNode::MakeReturn());
   } else {
     auto arg = PopWithResult();
-    auto arg_type = semantics_->GetNode(node_block_stack_.back(), arg).type();
+    auto arg_type = semantics_->GetType(node_block_stack_.back(), arg);
     Pop(ParseNodeKind::ReturnStatementStart());
     Push(parse_node, SemanticsNode::MakeReturnExpression(arg_type, arg));
   }
