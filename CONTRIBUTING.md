@@ -172,10 +172,16 @@ access. All requests require a
     [join group](https://groups.google.com/a/carbon-lang.dev/g/commenters/about)
     -   Grants commenter access to Carbon Language documents, as well as the
         ability to view Calendar events.
+    -   After you apply to join, please let us know on
+        [#access-requests](https://discord.com/channels/655572317891461132/1006221387574292540):
+        we don't get notifications otherwise.
 -   Google Docs/Calendar contributor access:
     [join group](https://groups.google.com/a/carbon-lang.dev/g/contributors/about)
     -   Grants edit access to Carbon Language documents, as well as the ability
         to edit Calendar events.
+    -   After you apply to join, please let us know on
+        [#access-requests](https://discord.com/channels/655572317891461132/1006221387574292540):
+        we don't get notifications otherwise.
 -   GitHub Label/project contributor access:
     [ask on #access-requests](https://discord.com/channels/655572317891461132/1006221387574292540)
     -   Don't forget to mention your GitHub username.
