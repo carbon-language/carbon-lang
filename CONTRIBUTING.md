@@ -182,7 +182,7 @@ access. All requests require a
         -   [Google Calendar](https://calendar.google.com/calendar/embed?src=c_07td7k4qjq0ssb4gdl6bmbnkik%40group.calendar.google.com):
             View and edit event details.
     -   After you apply to join, please let us know on
-        [#access-requests](https://discord.com/channels/655572317891461132/1006221387574292540):
+        [#access-requests](https://discord.com/channels/655572317891461132/1006221387574292540);
         we don't get notifications otherwise.
 -   GitHub Label/project contributor access:
     [ask on #access-requests](https://discord.com/channels/655572317891461132/1006221387574292540)
