@@ -171,7 +171,7 @@ access. All requests require a
 -   Google Docs/Calendar access groups:
     -   **Commenter** access:
         [join group](https://groups.google.com/a/carbon-lang.dev/g/commenters/about)
-        -   Google Docs: Comments on files.
+        -   Google Docs: Comment on files.
         -   Google Calendar: View event details.
     -   **Contributor** access:
         [join group](https://groups.google.com/a/carbon-lang.dev/g/contributors/about)
