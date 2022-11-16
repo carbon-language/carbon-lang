@@ -1356,12 +1356,12 @@ auto Parser::HandleStatementState() -> void {
   switch (PositionKind()) {
     case TokenKind::Break(): {
       PushState(ParserState::StatementBreakFinish());
-      ++position_;
+      AddLeafNode(ParseNodeKind::BreakStatementStart(), Consume());
       break;
     }
     case TokenKind::Continue(): {
       PushState(ParserState::StatementContinueFinish());
-      ++position_;
+      AddLeafNode(ParseNodeKind::ContinueStatementStart(), Consume());
       break;
     }
     case TokenKind::For(): {
@@ -1398,13 +1398,11 @@ auto Parser::HandleStatementState() -> void {
 }
 
 auto Parser::HandleStatementBreakFinishState() -> void {
-  HandleStatementKeywordFinish(TokenKind::Break(),
-                               ParseNodeKind::BreakStatement());
+  HandleStatementKeywordFinish(ParseNodeKind::BreakStatement());
 }
 
 auto Parser::HandleStatementContinueFinishState() -> void {
-  HandleStatementKeywordFinish(TokenKind::Continue(),
-                               ParseNodeKind::ContinueStatement());
+  HandleStatementKeywordFinish(ParseNodeKind::ContinueStatement());
 }
 
 auto Parser::HandleStatementForHeaderState() -> void {
@@ -1529,37 +1527,38 @@ auto Parser::HandleStatementIfElseBlockFinishState() -> void {
           state.has_error);
 }
 
-auto Parser::HandleStatementKeywordFinish(TokenKind token_kind,
-                                          ParseNodeKind node_kind) -> void {
+auto Parser::HandleStatementKeywordFinish(ParseNodeKind node_kind) -> void {
   auto state = PopState();
 
-  if (!ConsumeAndAddLeafNodeIf(TokenKind::Semi(),
-                               ParseNodeKind::StatementEnd())) {
+  auto semi = ConsumeIf(TokenKind::Semi());
+  if (!semi) {
     CARBON_DIAGNOSTIC(ExpectedSemiAfter, Error, "Expected `;` after `{0}`.",
                       TokenKind);
-    emitter_.Emit(*position_, ExpectedSemiAfter, token_kind);
-    if (auto semi_token = SkipPastLikelyEnd(state.token)) {
-      AddLeafNode(ParseNodeKind::StatementEnd(), *semi_token,
-                  /*has_error=*/true);
+    emitter_.Emit(*position_, ExpectedSemiAfter, tokens_.GetKind(state.token));
+    state.has_error = true;
+    // Recover to the next semicolon if possible, otherwise indicate the
+    // keyword for the error.
+    semi = SkipPastLikelyEnd(state.token);
+    if (!semi) {
+      semi = state.token;
     }
   }
-  AddNode(node_kind, state.token, state.subtree_start, state.has_error);
+  AddNode(node_kind, *semi, state.subtree_start, state.has_error);
 }
 
 auto Parser::HandleStatementReturnState() -> void {
   auto state = PopState();
-
   state.state = ParserState::StatementReturnFinish();
   PushState(state);
-  ++position_;
+
+  AddLeafNode(ParseNodeKind::ReturnStatementStart(), Consume());
   if (!PositionIs(TokenKind::Semi())) {
     PushState(ParserState::Expression());
   }
 }
 
 auto Parser::HandleStatementReturnFinishState() -> void {
-  HandleStatementKeywordFinish(TokenKind::Return(),
-                               ParseNodeKind::ReturnStatement());
+  HandleStatementKeywordFinish(ParseNodeKind::ReturnStatement());
 }
 
 auto Parser::HandleStatementScopeLoopState() -> void {

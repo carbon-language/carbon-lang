@@ -106,7 +106,7 @@ auto SemanticsParseTreeHandler::Build() -> void {
       case ParseNodeKind::DeclaredName():
       case ParseNodeKind::FunctionIntroducer():
       case ParseNodeKind::ParameterListEnd():
-      case ParseNodeKind::StatementEnd(): {
+      case ParseNodeKind::ReturnStatementStart(): {
         // The token has no action, but we still track it for the stack.
         Push(parse_node);
         break;
@@ -255,14 +255,13 @@ auto SemanticsParseTreeHandler::HandleParameterList(ParseTree::Node parse_node)
 
 auto SemanticsParseTreeHandler::HandleReturnStatement(
     ParseTree::Node parse_node) -> void {
-  Pop(ParseNodeKind::StatementEnd());
-
-  // TODO: Restructure ReturnStatement so that we can do this without
-  // looking at the subtree size.
-  if (parse_tree_->node_subtree_size(parse_node) == 2) {
+  if (parse_tree_->node_kind(node_stack_.back().parse_node) ==
+      ParseNodeKind::ReturnStatementStart()) {
+    Pop(ParseNodeKind::ReturnStatementStart());
     Push(parse_node, SemanticsNode::MakeReturn());
   } else {
     auto arg = PopWithResult();
+    Pop(ParseNodeKind::ReturnStatementStart());
     Push(parse_node, SemanticsNode::MakeReturnExpression(arg));
   }
 }
