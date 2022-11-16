@@ -97,7 +97,9 @@ class SemanticsIR {
         // TODO: If the type is a local reference within a block other than the
         // present one, we don't really want to add a cross reference at this
         // point. Does this mean types should be required to be cross
-        // references?
+        // references? And maybe always with a presence in the current IR's
+        // cross-references, so that equality is straightforward even though
+        // resolving the actual type is a two-step process?
         CARBON_FATAL() << "Need to think more about this case";
       }
     } else {
