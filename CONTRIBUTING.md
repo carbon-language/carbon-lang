@@ -168,17 +168,15 @@ When requesting any of the following access, please provide a reason for the
 access. All requests require a
 [signed CLA](#contributor-license-agreements-clas).
 
--   Google Docs/Calendar commenter access:
-    [join group](https://groups.google.com/a/carbon-lang.dev/g/commenters/about)
-    -   Grants commenter access to Carbon Language documents, as well as the
-        ability to view Calendar events.
-    -   After you apply to join, please let us know on
-        [#access-requests](https://discord.com/channels/655572317891461132/1006221387574292540):
-        we don't get notifications otherwise.
--   Google Docs/Calendar contributor access:
-    [join group](https://groups.google.com/a/carbon-lang.dev/g/contributors/about)
-    -   Grants edit access to Carbon Language documents, as well as the ability
-        to edit Calendar events.
+-   Google Docs/Calendar access groups:
+    -   **Commenter** access:
+        [join group](https://groups.google.com/a/carbon-lang.dev/g/commenters/about)
+        -   Google Docs: Comments on files.
+        -   Google Calendar: View event details.
+    -   **Contributor** access:
+        [join group](https://groups.google.com/a/carbon-lang.dev/g/contributors/about)
+        -   Google Docs: Add, edit, and comment on files.
+        -   Google Calendar: View and edit event details.
     -   After you apply to join, please let us know on
         [#access-requests](https://discord.com/channels/655572317891461132/1006221387574292540):
         we don't get notifications otherwise.
