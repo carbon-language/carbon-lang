@@ -224,12 +224,15 @@ auto SemanticsParseTreeHandler::HandleInfixOperator(ParseTree::Node parse_node)
   SemanticsNodeId result_type = lhs_type;
   // TODO: This should attempt a type conversion, but there's not enough
   // implemented to do that right now.
-  if (lhs_type.id != rhs_type.id) {
-    // TODO: This is a poor diagnostic, and should be expanded.
-    CARBON_DIAGNOSTIC(TypeMismatch, Error, "Type mismatch");
-    emitter_->Emit(parse_tree_->node_token(parse_node), TypeMismatch);
-    result_type = SemanticsNodeId::MakeBuiltinReference(
+  if (lhs_type != rhs_type) {
+    auto invalid_type = SemanticsNodeId::MakeBuiltinReference(
         SemanticsBuiltinKind::InvalidType());
+    if (lhs_type != invalid_type && rhs_type != invalid_type) {
+      // TODO: This is a poor diagnostic, and should be expanded.
+      CARBON_DIAGNOSTIC(TypeMismatch, Error, "Type mismatch");
+      emitter_->Emit(parse_tree_->node_token(parse_node), TypeMismatch);
+    }
+    result_type = invalid_type;
   }
 
   // Figure out the operator for the token.

@@ -41,6 +41,13 @@ struct SemanticsNodeId {
     return id & ~CrossReferenceBit;
   }
 
+  friend auto operator==(SemanticsNodeId lhs, SemanticsNodeId rhs) -> bool {
+    return lhs.id == rhs.id;
+  }
+  friend auto operator!=(SemanticsNodeId lhs, SemanticsNodeId rhs) -> bool {
+    return lhs.id != rhs.id;
+  }
+
   auto Print(llvm::raw_ostream& out) const -> void {
     if (is_cross_reference()) {
       out << "node_xref" << GetAsCrossReference();
@@ -56,6 +63,15 @@ struct SemanticsNodeId {
 struct SemanticsIdentifierId {
   SemanticsIdentifierId() : id(-1) {}
   explicit SemanticsIdentifierId(int32_t id) : id(id) {}
+
+  friend auto operator==(SemanticsIdentifierId lhs, SemanticsIdentifierId rhs)
+      -> bool {
+    return lhs.id == rhs.id;
+  }
+  friend auto operator!=(SemanticsIdentifierId lhs, SemanticsIdentifierId rhs)
+      -> bool {
+    return lhs.id != rhs.id;
+  }
 
   auto Print(llvm::raw_ostream& out) const -> void { out << "ident" << id; }
 
