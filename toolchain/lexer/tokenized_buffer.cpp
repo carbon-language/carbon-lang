@@ -84,7 +84,7 @@ class TokenizedBuffer::Lexer {
   };
 
   Lexer(TokenizedBuffer& buffer, DiagnosticConsumer& consumer)
-      : buffer_(buffer),
+      : buffer_(&buffer),
         translator_(buffer, &current_column_),
         emitter_(translator_, consumer),
         token_translator_(buffer, &current_column_),
@@ -97,16 +97,16 @@ class TokenizedBuffer::Lexer {
   auto HandleNewline() -> void {
     current_line_info_->length = current_column_;
 
-    current_line_ = buffer_.AddLine(
+    current_line_ = buffer_->AddLine(
         {current_line_info_->start + current_column_ + 1, 0, 0});
-    current_line_info_ = &buffer_.GetLineInfo(current_line_);
+    current_line_info_ = &buffer_->GetLineInfo(current_line_);
     current_column_ = 0;
     set_indent_ = false;
   }
 
   auto NoteWhitespace() -> void {
-    if (!buffer_.token_infos_.empty()) {
-      buffer_.token_infos_.back().has_trailing_space = true;
+    if (!buffer_->token_infos_.empty()) {
+      buffer_->token_infos_.back().has_trailing_space = true;
     }
   }
 
@@ -203,28 +203,28 @@ class TokenizedBuffer::Lexer {
     return VariantMatch(
         literal->ComputeValue(emitter_),
         [&](LexedNumericLiteral::IntegerValue&& value) {
-          auto token = buffer_.AddToken({.kind = TokenKind::IntegerLiteral(),
-                                         .token_line = current_line_,
-                                         .column = int_column});
-          buffer_.GetTokenInfo(token).literal_index =
-              buffer_.literal_int_storage_.size();
-          buffer_.literal_int_storage_.push_back(std::move(value.value));
+          auto token = buffer_->AddToken({.kind = TokenKind::IntegerLiteral(),
+                                          .token_line = current_line_,
+                                          .column = int_column});
+          buffer_->GetTokenInfo(token).literal_index =
+              buffer_->literal_int_storage_.size();
+          buffer_->literal_int_storage_.push_back(std::move(value.value));
           return token;
         },
         [&](LexedNumericLiteral::RealValue&& value) {
-          auto token = buffer_.AddToken({.kind = TokenKind::RealLiteral(),
-                                         .token_line = current_line_,
-                                         .column = int_column});
-          buffer_.GetTokenInfo(token).literal_index =
-              buffer_.literal_int_storage_.size();
-          buffer_.literal_int_storage_.push_back(std::move(value.mantissa));
-          buffer_.literal_int_storage_.push_back(std::move(value.exponent));
-          CARBON_CHECK(buffer_.GetRealLiteral(token).IsDecimal() ==
+          auto token = buffer_->AddToken({.kind = TokenKind::RealLiteral(),
+                                          .token_line = current_line_,
+                                          .column = int_column});
+          buffer_->GetTokenInfo(token).literal_index =
+              buffer_->literal_int_storage_.size();
+          buffer_->literal_int_storage_.push_back(std::move(value.mantissa));
+          buffer_->literal_int_storage_.push_back(std::move(value.exponent));
+          CARBON_CHECK(buffer_->GetRealLiteral(token).IsDecimal() ==
                        (value.radix == LexedNumericLiteral::Radix::Decimal));
           return token;
         },
         [&](LexedNumericLiteral::UnrecoverableError) {
-          auto token = buffer_.AddToken({
+          auto token = buffer_->AddToken({
               .kind = TokenKind::Error(),
               .token_line = current_line_,
               .column = int_column,
@@ -270,22 +270,22 @@ class TokenizedBuffer::Lexer {
 
     if (literal->is_terminated()) {
       auto token =
-          buffer_.AddToken({.kind = TokenKind::StringLiteral(),
-                            .token_line = string_line,
-                            .column = string_column,
-                            .literal_index = static_cast<int32_t>(
-                                buffer_.literal_string_storage_.size())});
-      buffer_.literal_string_storage_.push_back(
+          buffer_->AddToken({.kind = TokenKind::StringLiteral(),
+                             .token_line = string_line,
+                             .column = string_column,
+                             .literal_index = static_cast<int32_t>(
+                                 buffer_->literal_string_storage_.size())});
+      buffer_->literal_string_storage_.push_back(
           literal->ComputeValue(emitter_));
       return token;
     } else {
       CARBON_DIAGNOSTIC(UnterminatedString, Error,
                         "String is missing a terminator.");
       emitter_.Emit(literal->text().begin(), UnterminatedString);
-      return buffer_.AddToken({.kind = TokenKind::Error(),
-                               .token_line = string_line,
-                               .column = string_column,
-                               .error_length = literal_size});
+      return buffer_->AddToken({.kind = TokenKind::Error(),
+                                .token_line = string_line,
+                                .column = string_column,
+                                .error_length = literal_size});
     }
   }
 
@@ -307,7 +307,7 @@ class TokenizedBuffer::Lexer {
     CloseInvalidOpenGroups(kind);
 
     const char* location = source_text.begin();
-    Token token = buffer_.AddToken(
+    Token token = buffer_->AddToken(
         {.kind = kind, .token_line = current_line_, .column = current_column_});
     current_column_ += kind.GetFixedSpelling().size();
     source_text = source_text.drop_front(kind.GetFixedSpelling().size());
@@ -323,7 +323,7 @@ class TokenizedBuffer::Lexer {
       return token;
     }
 
-    TokenInfo& closing_token_info = buffer_.GetTokenInfo(token);
+    TokenInfo& closing_token_info = buffer_->GetTokenInfo(token);
 
     // Check that there is a matching opening symbol before we consume this as
     // a closing symbol.
@@ -341,7 +341,7 @@ class TokenizedBuffer::Lexer {
 
     // Finally can handle a normal closing symbol.
     Token opening_token = open_groups_.pop_back_val();
-    TokenInfo& opening_token_info = buffer_.GetTokenInfo(opening_token);
+    TokenInfo& opening_token_info = buffer_->GetTokenInfo(opening_token);
     opening_token_info.closing_token = token;
     closing_token_info.opening_token = opening_token;
     return token;
@@ -377,7 +377,7 @@ class TokenizedBuffer::Lexer {
 
     llvm::StringRef suffix = word.substr(1);
     if (!CanLexInteger(emitter_, suffix)) {
-      return buffer_.AddToken(
+      return buffer_->AddToken(
           {.kind = TokenKind::Error(),
            .token_line = current_line_,
            .column = column,
@@ -388,11 +388,11 @@ class TokenizedBuffer::Lexer {
       return LexResult::NoMatch();
     }
 
-    auto token = buffer_.AddToken(
+    auto token = buffer_->AddToken(
         {.kind = *kind, .token_line = current_line_, .column = column});
-    buffer_.GetTokenInfo(token).literal_index =
-        buffer_.literal_int_storage_.size();
-    buffer_.literal_int_storage_.push_back(std::move(suffix_value));
+    buffer_->GetTokenInfo(token).literal_index =
+        buffer_->literal_int_storage_.size();
+    buffer_->literal_int_storage_.push_back(std::move(suffix_value));
     return token;
   }
 
@@ -405,7 +405,7 @@ class TokenizedBuffer::Lexer {
 
     while (!open_groups_.empty()) {
       Token opening_token = open_groups_.back();
-      TokenKind opening_kind = buffer_.GetTokenInfo(opening_token).kind;
+      TokenKind opening_kind = buffer_->GetTokenInfo(opening_token).kind;
       if (kind == opening_kind.GetClosingSymbol()) {
         return;
       }
@@ -416,30 +416,30 @@ class TokenizedBuffer::Lexer {
           "Closing symbol does not match most recent opening symbol.");
       token_emitter_.Emit(opening_token, MismatchedClosing);
 
-      CARBON_CHECK(!buffer_.tokens().empty())
+      CARBON_CHECK(!buffer_->tokens().empty())
           << "Must have a prior opening token!";
-      Token prev_token = buffer_.tokens().end()[-1];
+      Token prev_token = buffer_->tokens().end()[-1];
 
       // TODO: do a smarter backwards scan for where to put the closing
       // token.
-      Token closing_token = buffer_.AddToken(
+      Token closing_token = buffer_->AddToken(
           {.kind = opening_kind.GetClosingSymbol(),
-           .has_trailing_space = buffer_.HasTrailingWhitespace(prev_token),
+           .has_trailing_space = buffer_->HasTrailingWhitespace(prev_token),
            .is_recovery = true,
            .token_line = current_line_,
            .column = current_column_});
-      TokenInfo& opening_token_info = buffer_.GetTokenInfo(opening_token);
-      TokenInfo& closing_token_info = buffer_.GetTokenInfo(closing_token);
+      TokenInfo& opening_token_info = buffer_->GetTokenInfo(opening_token);
+      TokenInfo& closing_token_info = buffer_->GetTokenInfo(closing_token);
       opening_token_info.closing_token = closing_token;
       closing_token_info.opening_token = opening_token;
     }
   }
 
   auto GetOrCreateIdentifier(llvm::StringRef text) -> Identifier {
-    auto insert_result = buffer_.identifier_map_.insert(
-        {text, Identifier(buffer_.identifier_infos_.size())});
+    auto insert_result = buffer_->identifier_map_.insert(
+        {text, Identifier(buffer_->identifier_infos_.size())});
     if (insert_result.second) {
-      buffer_.identifier_infos_.push_back({text});
+      buffer_->identifier_infos_.push_back({text});
     }
     return insert_result.first->second;
   }
@@ -475,16 +475,16 @@ class TokenizedBuffer::Lexer {
 #include "toolchain/lexer/token_registry.def"
                          .Default(TokenKind::Error());
     if (kind != TokenKind::Error()) {
-      return buffer_.AddToken({.kind = kind,
-                               .token_line = current_line_,
-                               .column = identifier_column});
+      return buffer_->AddToken({.kind = kind,
+                                .token_line = current_line_,
+                                .column = identifier_column});
     }
 
     // Otherwise we have a generic identifier.
-    return buffer_.AddToken({.kind = TokenKind::Identifier(),
-                             .token_line = current_line_,
-                             .column = identifier_column,
-                             .id = GetOrCreateIdentifier(identifier_text)});
+    return buffer_->AddToken({.kind = TokenKind::Identifier(),
+                              .token_line = current_line_,
+                              .column = identifier_column,
+                              .id = GetOrCreateIdentifier(identifier_text)});
   }
 
   auto LexError(llvm::StringRef& source_text) -> LexResult {
@@ -509,7 +509,7 @@ class TokenizedBuffer::Lexer {
       error_text = source_text.take_front(1);
     }
 
-    auto token = buffer_.AddToken(
+    auto token = buffer_->AddToken(
         {.kind = TokenKind::Error(),
          .token_line = current_line_,
          .column = current_column_,
@@ -524,13 +524,13 @@ class TokenizedBuffer::Lexer {
   }
 
   auto AddEndOfFileToken() -> void {
-    buffer_.AddToken({.kind = TokenKind::EndOfFile(),
-                      .token_line = current_line_,
-                      .column = current_column_});
+    buffer_->AddToken({.kind = TokenKind::EndOfFile(),
+                       .token_line = current_line_,
+                       .column = current_column_});
   }
 
  private:
-  TokenizedBuffer& buffer_;
+  TokenizedBuffer* buffer_;
 
   SourceBufferLocationTranslator translator_;
   LexerDiagnosticEmitter emitter_;
