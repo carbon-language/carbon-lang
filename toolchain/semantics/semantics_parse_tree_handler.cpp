@@ -105,7 +105,7 @@ auto SemanticsParseTreeHandler::Build() -> void {
       }
       case ParseNodeKind::DeclaredName():
       case ParseNodeKind::FunctionIntroducer():
-      case ParseNodeKind::ParameterListEnd():
+      case ParseNodeKind::ParameterListStart():
       case ParseNodeKind::ReturnStatementStart(): {
         // The token has no action, but we still track it for the stack.
         Push(parse_node);
@@ -249,7 +249,7 @@ auto SemanticsParseTreeHandler::HandleParameterList(ParseTree::Node parse_node)
   // it's unused and only stored so that node counts match.
   // TODO: Reorder with ParameterListStart so that we can traverse without
   // subtree_size.
-  Pop(ParseNodeKind::ParameterListEnd());
+  Pop(ParseNodeKind::ParameterListStart());
   Push(parse_node);
 }
 

@@ -7,6 +7,7 @@
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'foo'},
+// CHECK:STDOUT:       {kind: 'ParameterListStart', text: '('},
 // CHECK:STDOUT:         {kind: 'DeclaredName', text: 'bar'},
 // CHECK:STDOUT:         {kind: 'Literal', text: 'i64'},
 // CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 3},
@@ -14,8 +15,7 @@
 // CHECK:STDOUT:         {kind: 'DeclaredName', text: 'baz'},
 // CHECK:STDOUT:         {kind: 'Literal', text: 'i64'},
 // CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ParameterListEnd', text: ')'},
-// CHECK:STDOUT:     {kind: 'ParameterList', text: '(', subtree_size: 9},
+// CHECK:STDOUT:     {kind: 'ParameterList', text: ')', subtree_size: 9},
 // CHECK:STDOUT:   {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 12},
 // CHECK:STDOUT:       {kind: 'NameReference', text: 'foo'},
 // CHECK:STDOUT:       {kind: 'NameReference', text: 'baz'},
