@@ -812,7 +812,7 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
   output_stream << llvm::formatv(
       "token: { index: {0}, kind: {1}, line: {2}, column: {3}, indent: {4}, "
       "spelling: '{5}'",
-      token.Format(widths.index),
+      token.FormatWidth(widths.index),
       llvm::right_justify(
           (llvm::Twine("'") + token_info.kind.Name() + "'").str(),
           widths.kind + 2),

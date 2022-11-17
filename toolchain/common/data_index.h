@@ -82,7 +82,7 @@ class DataIndex {
   auto Print(llvm::raw_ostream& output) const -> void { output << index_; }
 
   // Formats the index to a given width.
-  auto Format(int width) const -> llvm::FormattedNumber {
+  auto FormatWidth(int width) const -> llvm::FormattedNumber {
     return llvm::format_decimal(index_, width);
   }
 
