@@ -7,6 +7,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/lexer/numeric_literal.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_node.h"
 
@@ -20,6 +21,15 @@ namespace Carbon {
 struct SemanticsCrossReferenceIRId {
   SemanticsCrossReferenceIRId() : id(-1) {}
   constexpr explicit SemanticsCrossReferenceIRId(int32_t id) : id(id) {}
+
+  friend auto operator==(SemanticsCrossReferenceIRId lhs,
+                         SemanticsCrossReferenceIRId rhs) -> bool {
+    return lhs.id == rhs.id;
+  }
+  friend auto operator!=(SemanticsCrossReferenceIRId lhs,
+                         SemanticsCrossReferenceIRId rhs) -> bool {
+    return lhs.id != rhs.id;
+  }
 
   auto Print(llvm::raw_ostream& out) const -> void { out << "ir" << id; }
 
@@ -53,6 +63,7 @@ class SemanticsIR {
   static auto MakeFromParseTree(const SemanticsIR& builtin_ir,
                                 const TokenizedBuffer& tokens,
                                 const ParseTree& parse_tree,
+                                DiagnosticConsumer& consumer,
                                 llvm::raw_ostream* vlog_stream) -> SemanticsIR;
 
   // Prints the full IR.
@@ -61,12 +72,40 @@ class SemanticsIR {
  private:
   friend class SemanticsParseTreeHandler;
 
+  // As noted under cross_reference_irs_, the current IR must always be at
+  // index 1. This is a constant for that.
+  static constexpr auto ThisIR = SemanticsCrossReferenceIRId(1);
+
   // For the builtin IR only.
   SemanticsIR() : SemanticsIR(*this) {}
   // For most IRs.
   SemanticsIR(const SemanticsIR& builtins)
       : cross_reference_irs_({&builtins, this}),
         cross_references_(builtins.cross_references_) {}
+
+  auto GetType(SemanticsNodeBlockId block_id, SemanticsNodeId node_id)
+      -> SemanticsNodeId {
+    if (node_id.is_cross_reference()) {
+      auto ref = cross_references_[node_id.GetAsCrossReference()];
+      auto type = cross_reference_irs_[ref.ir.id]
+                      ->node_blocks_[ref.node_block.id][ref.node.id]
+                      .type();
+      if (type.is_cross_reference() ||
+          (ref.ir == ThisIR && ref.node_block == block_id)) {
+        return type;
+      } else {
+        // TODO: If the type is a local reference within a block other than the
+        // present one, we don't really want to add a cross reference at this
+        // point. Does this mean types should be required to be cross
+        // references? And maybe always with a presence in the current IR's
+        // cross-references, so that equality is straightforward even though
+        // resolving the actual type is a two-step process?
+        CARBON_FATAL() << "Need to think more about this case";
+      }
+    } else {
+      return node_blocks_[block_id.id][node_id.id].type();
+    }
+  }
 
   // Adds an identifier, returning an ID to reference it.
   // TODO: Deduplicate strings.

@@ -175,7 +175,7 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
 
   const SemanticsIR builtin_ir = SemanticsIR::MakeBuiltinIR();
   const SemanticsIR semantics_ir = SemanticsIR::MakeFromParseTree(
-      builtin_ir, tokenized_source, parse_tree, vlog_stream_);
+      builtin_ir, tokenized_source, parse_tree, consumer, vlog_stream_);
   if (dump_mode == DumpMode::SemanticsIR) {
     consumer.Flush();
     semantics_ir.Print(output_stream_);

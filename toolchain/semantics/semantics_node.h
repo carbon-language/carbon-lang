@@ -42,6 +42,13 @@ struct SemanticsNodeId {
     return id & ~CrossReferenceBit;
   }
 
+  friend auto operator==(SemanticsNodeId lhs, SemanticsNodeId rhs) -> bool {
+    return lhs.id == rhs.id;
+  }
+  friend auto operator!=(SemanticsNodeId lhs, SemanticsNodeId rhs) -> bool {
+    return lhs.id != rhs.id;
+  }
+
   auto Print(llvm::raw_ostream& out) const -> void {
     if (is_cross_reference()) {
       out << "node_xref" << GetAsCrossReference();
@@ -58,6 +65,15 @@ struct SemanticsIdentifierId {
   SemanticsIdentifierId() : id(-1) {}
   explicit SemanticsIdentifierId(int32_t id) : id(id) {}
 
+  friend auto operator==(SemanticsIdentifierId lhs, SemanticsIdentifierId rhs)
+      -> bool {
+    return lhs.id == rhs.id;
+  }
+  friend auto operator!=(SemanticsIdentifierId lhs, SemanticsIdentifierId rhs)
+      -> bool {
+    return lhs.id != rhs.id;
+  }
+
   auto Print(llvm::raw_ostream& out) const -> void { out << "ident" << id; }
 
   int32_t id;
@@ -68,6 +84,15 @@ struct SemanticsIntegerLiteralId {
   SemanticsIntegerLiteralId() : id(-1) {}
   explicit SemanticsIntegerLiteralId(int32_t id) : id(id) {}
 
+  friend auto operator==(SemanticsIntegerLiteralId lhs,
+                         SemanticsIntegerLiteralId rhs) -> bool {
+    return lhs.id == rhs.id;
+  }
+  friend auto operator!=(SemanticsIntegerLiteralId lhs,
+                         SemanticsIntegerLiteralId rhs) -> bool {
+    return lhs.id != rhs.id;
+  }
+
   auto Print(llvm::raw_ostream& out) const -> void { out << "int" << id; }
 
   int32_t id;
@@ -77,6 +102,15 @@ struct SemanticsIntegerLiteralId {
 struct SemanticsNodeBlockId {
   SemanticsNodeBlockId() : id(-1) {}
   explicit SemanticsNodeBlockId(int32_t id) : id(id) {}
+
+  friend auto operator==(SemanticsNodeBlockId lhs, SemanticsNodeBlockId rhs)
+      -> bool {
+    return lhs.id == rhs.id;
+  }
+  friend auto operator!=(SemanticsNodeBlockId lhs, SemanticsNodeBlockId rhs)
+      -> bool {
+    return lhs.id != rhs.id;
+  }
 
   auto Print(llvm::raw_ostream& out) const -> void { out << "block" << id; }
 
@@ -91,10 +125,10 @@ class SemanticsNode {
   auto GetAsInvalid() const -> NoArgs { CARBON_FATAL() << "Invalid access"; }
 
   static auto MakeBinaryOperatorAdd(ParseTree::Node parse_node,
-                                    SemanticsNodeId lhs, SemanticsNodeId rhs)
-      -> SemanticsNode {
+                                    SemanticsNodeId type, SemanticsNodeId lhs,
+                                    SemanticsNodeId rhs) -> SemanticsNode {
     return SemanticsNode(parse_node, SemanticsNodeKind::BinaryOperatorAdd(),
-                         SemanticsNodeId(), lhs.id, rhs.id);
+                         type, lhs.id, rhs.id);
   }
   auto GetAsBinaryOperatorAdd() const
       -> std::pair<SemanticsNodeId, SemanticsNodeId> {
@@ -173,7 +207,20 @@ class SemanticsNode {
     return SemanticsIntegerLiteralId(arg0_);
   }
 
+  static auto MakeRealLiteral(ParseTree::Node parse_node) -> SemanticsNode {
+    return SemanticsNode(parse_node, SemanticsNodeKind::RealLiteral(),
+                         SemanticsNodeId::MakeBuiltinReference(
+                             SemanticsBuiltinKind::RealLiteralType()));
+  }
+  auto GetAsRealLiteral() const -> NoArgs {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::RealLiteral());
+    return {};
+  }
+
   static auto MakeReturn(ParseTree::Node parse_node) -> SemanticsNode {
+    // The actual type is `()`. However, code dealing with `return;` should
+    // understand the type without checking, so it's not necessary but could be
+    // specified if needed.
     return SemanticsNode(parse_node, SemanticsNodeKind::Return(),
                          SemanticsNodeId());
   }
@@ -183,9 +230,10 @@ class SemanticsNode {
   }
 
   static auto MakeReturnExpression(ParseTree::Node parse_node,
-                                   SemanticsNodeId expr) -> SemanticsNode {
+                                   SemanticsNodeId type, SemanticsNodeId expr)
+      -> SemanticsNode {
     return SemanticsNode(parse_node, SemanticsNodeKind::ReturnExpression(),
-                         SemanticsNodeId(), expr.id);
+                         type, expr.id);
   }
   auto GetAsReturnExpression() const -> SemanticsNodeId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::ReturnExpression());

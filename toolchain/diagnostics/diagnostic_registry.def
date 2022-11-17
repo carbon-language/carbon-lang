@@ -79,6 +79,12 @@ CARBON_DIAGNOSTIC_KIND(ExpectedSemiToEndPackageDirective)
 CARBON_DIAGNOSTIC_KIND(ExpectedIn)
 
 // ============================================================================
+// Semantics diagnostics
+// ============================================================================
+
+CARBON_DIAGNOSTIC_KIND(TypeMismatch)
+
+// ============================================================================
 // Other diagnostics
 // ============================================================================
 
