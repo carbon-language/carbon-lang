@@ -27,7 +27,9 @@ auto ParseTree::Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer)
   TokenDiagnosticEmitter emitter(translator, consumer);
 
   // Delegate to the parser.
-  return Parser::Parse(tokens, emitter);
+  auto tree = Parser::Parse(tokens, emitter);
+  CARBON_CHECK(tree.Verify());
+  return tree;
 }
 
 auto ParseTree::postorder() const -> llvm::iterator_range<PostorderIterator> {

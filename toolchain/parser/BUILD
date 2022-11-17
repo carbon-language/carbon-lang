@@ -12,6 +12,7 @@ cc_library(
     hdrs = ["parse_node_kind.h"],
     textual_hdrs = ["parse_node_kind.def"],
     deps = [
+        "//common:check",
         "//common:ostream",
         "@llvm-project//llvm:Support",
     ],
