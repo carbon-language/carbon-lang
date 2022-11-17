@@ -706,14 +706,11 @@ auto Parser::HandleDeclarationLoopState() -> void {
                         "Unrecognized declaration introducer.");
       emitter_->Emit(*position_, UnrecognizedDeclaration);
       auto cursor = *position_;
-      if (auto semi = SkipPastLikelyEnd(cursor)) {
-        AddLeafNode(ParseNodeKind::EmptyDeclaration(), *semi,
-                    /*has_error=*/true);
-      } else {
-        // Use the cursor prior to the skip to produce a local error.
-        AddLeafNode(ParseNodeKind::EmptyDeclaration(), cursor,
-                    /*has_error=*/true);
-      }
+      auto semi = SkipPastLikelyEnd(cursor);
+      // Locate the EmptyDeclaration at the semi when found, but use the
+      // original cursor location for an error when not.
+      AddLeafNode(ParseNodeKind::EmptyDeclaration(), semi ? *semi : cursor,
+                  /*has_error=*/true);
       break;
     }
   }
