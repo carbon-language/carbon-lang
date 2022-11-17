@@ -44,11 +44,11 @@ namespace Internal {
 // meaningfully compared.
 //
 // All other APIs to query a `Token` are on the `TokenizedBuffer`.
-class TokenizedBufferToken : public IndexBase<TokenizedBufferToken> {
+class TokenizedBufferToken : public IndexBase {
  public:
   using Token = TokenizedBufferToken;
 
-  using IndexBase<TokenizedBufferToken>::IndexBase;
+  using IndexBase::IndexBase;
 
   friend auto operator<(Token lhs, Token rhs) -> bool {
     return lhs.index < rhs.index;
@@ -90,9 +90,9 @@ class TokenizedBuffer {
   // same line or the relative position of different lines within the source.
   //
   // All other APIs to query a `Line` are on the `TokenizedBuffer`.
-  class Line : public IndexBase<Line> {
+  class Line : public IndexBase {
    public:
-    using IndexBase<Line>::IndexBase;
+    using IndexBase::IndexBase;
 
     friend auto operator<(Line lhs, Line rhs) -> bool {
       return lhs.index < rhs.index;
@@ -119,8 +119,8 @@ class TokenizedBuffer {
   // identifier spelling. Where the identifier was written is not preserved.
   //
   // All other APIs to query a `Identifier` are on the `TokenizedBuffer`.
-  class Identifier : public IndexBase<Identifier> {
-    using IndexBase<Identifier>::IndexBase;
+  class Identifier : public IndexBase {
+    using IndexBase::IndexBase;
   };
 
   // Random-access iterator over tokens within the buffer.
