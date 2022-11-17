@@ -17,7 +17,7 @@
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/raw_ostream.h"
-#include "toolchain/common/data_index.h"
+#include "toolchain/common/index_base.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/source/source_buffer.h"
@@ -25,6 +25,46 @@
 namespace Carbon {
 
 class TokenizedBuffer;
+
+namespace Internal {
+
+// A lightweight handle to a lexed token in a `TokenizedBuffer`.
+//
+// This type's preferred name is `TokenizedBuffer::Token` and is only defined
+// outside the class to break a dependency cycle.
+//
+// `Token` objects are designed to be passed by value, not reference or
+// pointer. They are also designed to be small and efficient to store in data
+// structures.
+//
+// `Token` objects from the same `TokenizedBuffer` can be compared with each
+// other, both for being the same token within the buffer, and to establish
+// relative position within the token stream that has been lexed out of the
+// buffer. `Token` objects from different `TokenizedBuffer`s cannot be
+// meaningfully compared.
+//
+// All other APIs to query a `Token` are on the `TokenizedBuffer`.
+class TokenizedBufferToken : public IndexBase<TokenizedBufferToken> {
+ public:
+  using Token = TokenizedBufferToken;
+
+  using IndexBase<TokenizedBufferToken>::IndexBase;
+
+  friend auto operator<(Token lhs, Token rhs) -> bool {
+    return lhs.index < rhs.index;
+  }
+  friend auto operator<=(Token lhs, Token rhs) -> bool {
+    return lhs.index <= rhs.index;
+  }
+  friend auto operator>(Token lhs, Token rhs) -> bool {
+    return lhs.index > rhs.index;
+  }
+  friend auto operator>=(Token lhs, Token rhs) -> bool {
+    return lhs.index >= rhs.index;
+  }
+};
+
+}  // namespace Internal
 
 // A buffer of tokenized Carbon source code.
 //
@@ -35,36 +75,94 @@ class TokenizedBuffer;
 // Lexing errors result in a potentially incomplete sequence of tokens and
 // `HasError` returning true.
 class TokenizedBuffer {
- private:
-  // Forward declarations for use in public DataIndex types.
-  struct IdentifierInfo;
-  struct LineInfo;
-  struct TokenInfo;
-
  public:
   // A lightweight handle to a lexed token in a `TokenizedBuffer`.
-  //
-  // `Token` objects from the same `TokenizedBuffer` can be compared with each
-  // other, both for being the same token within the buffer, and to establish
-  // relative position within the token stream that has been lexed out of the
-  // buffer. `Token` objects from different `TokenizedBuffer`s cannot be
-  // meaningfully compared.
-  using Token = DataIndex<TokenInfo>;
-  using TokenIterator = DataIterator<TokenInfo>;
+  using Token = Internal::TokenizedBufferToken;
 
   // A lightweight handle to a lexed line in a `TokenizedBuffer`.
+  //
+  // `Line` objects are designed to be passed by value, not reference or
+  // pointer. They are also designed to be small and efficient to store in data
+  // structures.
   //
   // Each `Line` object refers to a specific line in the source code that was
   // lexed. They can be compared directly to establish that they refer to the
   // same line or the relative position of different lines within the source.
-  using Line = DataIndex<LineInfo>;
+  //
+  // All other APIs to query a `Line` are on the `TokenizedBuffer`.
+  class Line : public IndexBase<Line> {
+   public:
+    using IndexBase<Line>::IndexBase;
+
+    friend auto operator<(Line lhs, Line rhs) -> bool {
+      return lhs.index < rhs.index;
+    }
+    friend auto operator<=(Line lhs, Line rhs) -> bool {
+      return lhs.index <= rhs.index;
+    }
+    friend auto operator>(Line lhs, Line rhs) -> bool {
+      return lhs.index > rhs.index;
+    }
+    friend auto operator>=(Line lhs, Line rhs) -> bool {
+      return lhs.index >= rhs.index;
+    }
+  };
 
   // A lightweight handle to a lexed identifier in a `TokenizedBuffer`.
+  //
+  // `Identifier` objects are designed to be passed by value, not reference or
+  // pointer. They are also designed to be small and efficient to store in data
+  // structures.
   //
   // Each identifier lexed is canonicalized to a single entry in the identifier
   // table. `Identifier` objects will compare equal if they refer to the same
   // identifier spelling. Where the identifier was written is not preserved.
-  using Identifier = DataIndex<IdentifierInfo>;
+  //
+  // All other APIs to query a `Identifier` are on the `TokenizedBuffer`.
+  class Identifier : public IndexBase<Identifier> {
+    using IndexBase<Identifier>::IndexBase;
+  };
+
+  // Random-access iterator over tokens within the buffer.
+  class TokenIterator
+      : public llvm::iterator_facade_base<
+            TokenIterator, std::random_access_iterator_tag, const Token, int> {
+   public:
+    TokenIterator() = default;
+
+    explicit TokenIterator(Token token) : token_(token) {}
+
+    auto operator==(const TokenIterator& rhs) const -> bool {
+      return token_ == rhs.token_;
+    }
+    auto operator<(const TokenIterator& rhs) const -> bool {
+      return token_ < rhs.token_;
+    }
+
+    auto operator*() const -> const Token& { return token_; }
+
+    using iterator_facade_base::operator-;
+    auto operator-(const TokenIterator& rhs) const -> int {
+      return token_.index - rhs.token_.index;
+    }
+
+    auto operator+=(int n) -> TokenIterator& {
+      token_.index += n;
+      return *this;
+    }
+    auto operator-=(int n) -> TokenIterator& {
+      token_.index -= n;
+      return *this;
+    }
+
+    // Prints the raw token index.
+    auto Print(llvm::raw_ostream& output) const -> void;
+
+   private:
+    friend class TokenizedBuffer;
+
+    Token token_;
+  };
 
   // The value of a real literal.
   //
@@ -77,12 +175,11 @@ class TokenizedBuffer {
    public:
     // The mantissa, represented as an unsigned integer.
     [[nodiscard]] auto Mantissa() const -> const llvm::APInt& {
-      return literal_index_.In(buffer_->literal_int_storage_);
+      return buffer_->literal_int_storage_[literal_index_];
     }
     // The exponent, represented as a signed integer.
     [[nodiscard]] auto Exponent() const -> const llvm::APInt& {
-      auto next_index = *(DataIterator<llvm::APInt>(literal_index_) + 1);
-      return next_index.In(buffer_->literal_int_storage_);
+      return buffer_->literal_int_storage_[literal_index_ + 1];
     }
     // If false, the value is mantissa * 2^exponent.
     // If true, the value is mantissa * 10^exponent.
@@ -96,20 +193,21 @@ class TokenizedBuffer {
    private:
     friend class TokenizedBuffer;
 
-    RealLiteralValue(const TokenizedBuffer* buffer,
-                     DataIndex<llvm::APInt> literal_index, bool is_decimal)
+    RealLiteralValue(const TokenizedBuffer* buffer, int32_t literal_index,
+                     bool is_decimal)
         : buffer_(buffer),
           literal_index_(literal_index),
           is_decimal_(is_decimal) {}
 
     const TokenizedBuffer* buffer_;
-    DataIndex<llvm::APInt> literal_index_;
+    int32_t literal_index_;
     bool is_decimal_;
   };
 
   // A diagnostic location translator that maps token locations into source
   // buffer locations.
-  class TokenLocationTranslator : public DiagnosticLocationTranslator<Token> {
+  class TokenLocationTranslator
+      : public DiagnosticLocationTranslator<Internal::TokenizedBufferToken> {
    public:
     explicit TokenLocationTranslator(TokenizedBuffer& buffer,
                                      int* last_line_lexed_to_column)
@@ -219,7 +317,8 @@ class TokenizedBuffer {
   [[nodiscard]] auto has_errors() const -> bool { return has_errors_; }
 
   [[nodiscard]] auto tokens() const -> llvm::iterator_range<TokenIterator> {
-    return TokenIterator::MakeRange(token_infos_);
+    return llvm::make_range(TokenIterator(Token(0)),
+                            TokenIterator(Token(token_infos_.size())));
   }
 
   [[nodiscard]] auto size() const -> int { return token_infos_.size(); }
@@ -264,11 +363,6 @@ class TokenizedBuffer {
     int indent;
   };
 
-  union LiteralIndex {
-    DataIndex<llvm::APInt> integer;
-    DataIndex<std::string> string;
-  };
-
   struct TokenInfo {
     TokenKind kind;
 
@@ -291,7 +385,7 @@ class TokenizedBuffer {
           "Unable to pack token and identifier index into the same space!");
 
       Identifier id;
-      LiteralIndex literal_index;
+      int32_t literal_index;
       Token closing_token;
       Token opening_token;
       int32_t error_length;

@@ -5,8 +5,8 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "data_index",
-    hdrs = ["data_index.h"],
+    name = "index_base",
+    hdrs = ["index_base.h"],
     deps = [
         "//common:ostream",
         "@llvm-project//llvm:Support",
