@@ -106,7 +106,7 @@ auto SemanticsParseTreeHandler::Build() -> void {
       }
       case ParseNodeKind::DeclaredName():
       case ParseNodeKind::FunctionIntroducer():
-      case ParseNodeKind::ParameterListEnd():
+      case ParseNodeKind::ParameterListStart():
       case ParseNodeKind::ReturnStatementStart(): {
         // The token has no action, but we still track it for the stack.
         Push(parse_node);
@@ -201,14 +201,16 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinition(
 auto SemanticsParseTreeHandler::HandleFunctionDefinitionStart(
     ParseTree::Node parse_node) -> void {
   Pop(ParseNodeKind::ParameterList());
-  auto name = AddIdentifier(node_stack_.back().parse_node);
+  auto name_node = node_stack_.back().parse_node;
+  auto name = AddIdentifier(name_node);
   node_stack_.pop_back();
+  auto fn_node = node_stack_.back().parse_node;
   Pop(ParseNodeKind::FunctionIntroducer());
 
-  auto decl_id = AddNode(SemanticsNode::MakeFunctionDeclaration());
-  AddNode(SemanticsNode::MakeBindName(name, decl_id));
+  auto decl_id = AddNode(SemanticsNode::MakeFunctionDeclaration(fn_node));
+  AddNode(SemanticsNode::MakeBindName(name_node, name, decl_id));
   auto block_id = semantics_->AddNodeBlock();
-  AddNode(SemanticsNode::MakeFunctionDefinition(decl_id, block_id));
+  AddNode(SemanticsNode::MakeFunctionDefinition(parse_node, decl_id, block_id));
   node_block_stack_.push_back(block_id);
   Push(parse_node);
 }
@@ -239,8 +241,8 @@ auto SemanticsParseTreeHandler::HandleInfixOperator(ParseTree::Node parse_node)
   auto token = parse_tree_->node_token(parse_node);
   switch (auto token_kind = tokens_->GetKind(token)) {
     case TokenKind::Plus():
-      Push(parse_node,
-           SemanticsNode::MakeBinaryOperatorAdd(result_type, lhs_id, rhs_id));
+      Push(parse_node, SemanticsNode::MakeBinaryOperatorAdd(
+                           parse_node, result_type, lhs_id, rhs_id));
       break;
     default:
       CARBON_FATAL() << "Unrecognized token kind: " << token_kind.Name();
@@ -252,11 +254,11 @@ auto SemanticsParseTreeHandler::HandleLiteral(ParseTree::Node parse_node)
   auto token = parse_tree_->node_token(parse_node);
   switch (auto token_kind = tokens_->GetKind(token)) {
     case TokenKind::IntegerLiteral(): {
-      Push(parse_node, SemanticsNode::MakeIntegerLiteral());
+      Push(parse_node, SemanticsNode::MakeIntegerLiteral(parse_node));
       break;
     }
     case TokenKind::RealLiteral(): {
-      Push(parse_node, SemanticsNode::MakeRealLiteral());
+      Push(parse_node, SemanticsNode::MakeRealLiteral(parse_node));
       break;
     }
     default:
@@ -270,7 +272,7 @@ auto SemanticsParseTreeHandler::HandleParameterList(ParseTree::Node parse_node)
   // it's unused and only stored so that node counts match.
   // TODO: Reorder with ParameterListStart so that we can traverse without
   // subtree_size.
-  Pop(ParseNodeKind::ParameterListEnd());
+  Pop(ParseNodeKind::ParameterListStart());
   Push(parse_node);
 }
 
@@ -279,12 +281,13 @@ auto SemanticsParseTreeHandler::HandleReturnStatement(
   if (parse_tree_->node_kind(node_stack_.back().parse_node) ==
       ParseNodeKind::ReturnStatementStart()) {
     Pop(ParseNodeKind::ReturnStatementStart());
-    Push(parse_node, SemanticsNode::MakeReturn());
+    Push(parse_node, SemanticsNode::MakeReturn(parse_node));
   } else {
     auto arg = PopWithResult();
     auto arg_type = semantics_->GetType(node_block_stack_.back(), arg);
     Pop(ParseNodeKind::ReturnStatementStart());
-    Push(parse_node, SemanticsNode::MakeReturnExpression(arg_type, arg));
+    Push(parse_node,
+         SemanticsNode::MakeReturnExpression(parse_node, arg_type, arg));
   }
 }
 

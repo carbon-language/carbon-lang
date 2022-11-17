@@ -180,7 +180,9 @@ class Parser {
                         bool already_has_error) -> ListTokenKind;
 
   // Gets the kind of the next token to be consumed.
-  auto PositionKind() const -> TokenKind { return tokens_.GetKind(*position_); }
+  auto PositionKind() const -> TokenKind {
+    return tokens_->GetKind(*position_);
+  }
 
   // Tests whether the next token to be consumed is of the specified kind.
   auto PositionIs(TokenKind kind) const -> bool {
@@ -197,14 +199,14 @@ class Parser {
   auto PushState(ParserState state) -> void {
     PushState(StateStackEntry(state, PrecedenceGroup::ForTopLevelExpression(),
                               PrecedenceGroup::ForTopLevelExpression(),
-                              *position_, tree_.size()));
+                              *position_, tree_->size()));
   }
 
   // Pushes a new expression state with specific precedence.
   auto PushStateForExpression(PrecedenceGroup ambient_precedence) -> void {
     PushState(StateStackEntry(ParserState::Expression(), ambient_precedence,
                               PrecedenceGroup::ForTopLevelExpression(),
-                              *position_, tree_.size()));
+                              *position_, tree_->size()));
   }
 
   // Pushes a new state with detailed precedence for expression resume states.
@@ -212,7 +214,7 @@ class Parser {
                                   PrecedenceGroup ambient_precedence,
                                   PrecedenceGroup lhs_precedence) -> void {
     PushState(StateStackEntry(state, ambient_precedence, lhs_precedence,
-                              *position_, tree_.size()));
+                              *position_, tree_->size()));
   }
 
   // Pushes a constructed state onto the stack.
@@ -278,9 +280,9 @@ class Parser {
 #define CARBON_PARSER_STATE(Name) auto Handle##Name##State()->void;
 #include "toolchain/parser/parser_state.def"
 
-  ParseTree& tree_;
-  TokenizedBuffer& tokens_;
-  TokenDiagnosticEmitter& emitter_;
+  ParseTree* tree_;
+  TokenizedBuffer* tokens_;
+  TokenDiagnosticEmitter* emitter_;
 
   // The current position within the token buffer.
   TokenizedBuffer::TokenIterator position_;
