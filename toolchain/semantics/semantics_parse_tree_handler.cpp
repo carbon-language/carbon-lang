@@ -254,10 +254,13 @@ auto SemanticsParseTreeHandler::HandleLiteral(ParseTree::Node parse_node)
   auto token = parse_tree_->node_token(parse_node);
   switch (auto token_kind = tokens_->GetKind(token)) {
     case TokenKind::IntegerLiteral(): {
-      Push(parse_node, SemanticsNode::MakeIntegerLiteral(parse_node));
+      auto id =
+          semantics_->AddIntegerLiteral(tokens_->GetIntegerLiteral(token));
+      Push(parse_node, SemanticsNode::MakeIntegerLiteral(parse_node, id));
       break;
     }
     case TokenKind::RealLiteral(): {
+      // TODO: Add storage of the Real literal.
       Push(parse_node, SemanticsNode::MakeRealLiteral(parse_node));
       break;
     }

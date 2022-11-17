@@ -116,6 +116,14 @@ class SemanticsIR {
     return id;
   }
 
+  // Adds an integer literal, returning an ID to reference it.
+  auto AddIntegerLiteral(llvm::APInt integer_literal)
+      -> SemanticsIntegerLiteralId {
+    SemanticsIntegerLiteralId id(integer_literals_.size());
+    integer_literals_.push_back(integer_literal);
+    return id;
+  }
+
   // Adds an empty new node block, returning an ID to reference it and add
   // items.
   auto AddNodeBlock() -> SemanticsNodeBlockId {
@@ -147,6 +155,9 @@ class SemanticsIR {
 
   // Storage for identifiers.
   llvm::SmallVector<llvm::StringRef> identifiers_;
+
+  // Storage for integer literals.
+  llvm::SmallVector<llvm::APInt> integer_literals_;
 
   // Storage for blocks within the IR.
   llvm::SmallVector<llvm::SmallVector<SemanticsNode>> node_blocks_;

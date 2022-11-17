@@ -16,6 +16,8 @@
 // CHECK:STDOUT:   ident1 = "Bar";
 // CHECK:STDOUT:   ident2 = "Baz";
 // CHECK:STDOUT: },
+// CHECK:STDOUT: integer_literals = {
+// CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   block0 = {
 // CHECK:STDOUT:     node0 = FunctionDeclaration();

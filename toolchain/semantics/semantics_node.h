@@ -79,6 +79,25 @@ struct SemanticsIdentifierId {
   int32_t id;
 };
 
+// Type-safe storage of integer literals.
+struct SemanticsIntegerLiteralId {
+  SemanticsIntegerLiteralId() : id(-1) {}
+  explicit SemanticsIntegerLiteralId(int32_t id) : id(id) {}
+
+  friend auto operator==(SemanticsIntegerLiteralId lhs,
+                         SemanticsIntegerLiteralId rhs) -> bool {
+    return lhs.id == rhs.id;
+  }
+  friend auto operator!=(SemanticsIntegerLiteralId lhs,
+                         SemanticsIntegerLiteralId rhs) -> bool {
+    return lhs.id != rhs.id;
+  }
+
+  auto Print(llvm::raw_ostream& out) const -> void { out << "int" << id; }
+
+  int32_t id;
+};
+
 // Type-safe storage of node blocks.
 struct SemanticsNodeBlockId {
   SemanticsNodeBlockId() : id(-1) {}
@@ -175,14 +194,17 @@ class SemanticsNode {
     return {SemanticsNodeId(arg0_), SemanticsNodeBlockId(arg1_)};
   }
 
-  static auto MakeIntegerLiteral(ParseTree::Node parse_node) -> SemanticsNode {
+  static auto MakeIntegerLiteral(ParseTree::Node parse_node,
+                                 SemanticsIntegerLiteralId integer)
+      -> SemanticsNode {
     return SemanticsNode(parse_node, SemanticsNodeKind::IntegerLiteral(),
                          SemanticsNodeId::MakeBuiltinReference(
-                             SemanticsBuiltinKind::IntegerLiteralType()));
+                             SemanticsBuiltinKind::IntegerLiteralType()),
+                         integer.id);
   }
-  auto GetAsIntegerLiteral() const -> NoArgs {
+  auto GetAsIntegerLiteral() const -> SemanticsIntegerLiteralId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::IntegerLiteral());
-    return {};
+    return SemanticsIntegerLiteralId(arg0_);
   }
 
   static auto MakeRealLiteral(ParseTree::Node parse_node) -> SemanticsNode {

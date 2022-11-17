@@ -14,6 +14,8 @@
 // CHECK:STDOUT: identifiers = {
 // CHECK:STDOUT:   ident0 = "Foo";
 // CHECK:STDOUT: },
+// CHECK:STDOUT: integer_literals = {
+// CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   block0 = {
 // CHECK:STDOUT:     node0 = FunctionDeclaration();

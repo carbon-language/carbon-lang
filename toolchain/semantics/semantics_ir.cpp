@@ -93,6 +93,14 @@ auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
   }
   out << "},\n";
 
+  out << "integer_literals = {\n";
+  for (int32_t i = 0; i < static_cast<int32_t>(integer_literals_.size()); ++i) {
+    out.indent(Indent);
+    out << SemanticsIntegerLiteralId(i) << " = " << integer_literals_[i]
+        << ";\n";
+  }
+  out << "},\n";
+
   out << "node_blocks = {\n";
   for (int32_t i = 0; i < static_cast<int32_t>(node_blocks_.size()); ++i) {
     out.indent(Indent);

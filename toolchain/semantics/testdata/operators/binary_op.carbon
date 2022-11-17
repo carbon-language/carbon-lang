@@ -14,6 +14,10 @@
 // CHECK:STDOUT: identifiers = {
 // CHECK:STDOUT:   ident0 = "Main";
 // CHECK:STDOUT: },
+// CHECK:STDOUT: integer_literals = {
+// CHECK:STDOUT:   int0 = 12;
+// CHECK:STDOUT:   int1 = 34;
+// CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   block0 = {
 // CHECK:STDOUT:     node0 = FunctionDeclaration();
@@ -21,8 +25,8 @@
 // CHECK:STDOUT:     node2 = FunctionDefinition(node0, block1);
 // CHECK:STDOUT:   },
 // CHECK:STDOUT:   block1 = {
-// CHECK:STDOUT:     node0 = IntegerLiteral(): node_xref2;
-// CHECK:STDOUT:     node1 = IntegerLiteral(): node_xref2;
+// CHECK:STDOUT:     node0 = IntegerLiteral(int0): node_xref2;
+// CHECK:STDOUT:     node1 = IntegerLiteral(int1): node_xref2;
 // CHECK:STDOUT:     node2 = BinaryOperatorAdd(node0, node1): node_xref2;
 // CHECK:STDOUT:     node3 = ReturnExpression(node2): node_xref2;
 // CHECK:STDOUT:   },
