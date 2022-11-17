@@ -527,4 +527,8 @@ CARBON_PARSER_STATE(VarAfterInitializer)
 CARBON_PARSER_STATE(VarFinishAsRequireSemicolon)
 CARBON_PARSER_STATE(VarFinishAsNoSemicolon)
 
+CARBON_PARSER_STATE(InterfaceIntroducer)
+CARBON_PARSER_STATE(InterfaceDefinitionLoop)
+CARBON_PARSER_STATE(InterfaceDefinitionFinish)
+
 #undef CARBON_PARSER_STATE

@@ -701,6 +701,11 @@ auto Parser::HandleDeclarationLoopState() -> void {
       PushState(ParserState::VarAsRequireSemicolon());
       break;
     }
+    case TokenKind::Interface(): {
+      PushState(ParserState::InterfaceIntroducer());
+      ++position_;
+      break;
+    }
     default: {
       CARBON_DIAGNOSTIC(UnrecognizedDeclaration, Error,
                         "Unrecognized declaration introducer.");
@@ -1658,4 +1663,72 @@ auto Parser::HandleVarFinishAsNoSemicolonState() -> void {
   HandleVarFinish(/*require_semicolon=*/false);
 }
 
+auto Parser::HandleInterfaceIntroducerState() -> void {
+  auto state = PopState();
+
+  if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
+                               ParseNodeKind::DeclaredName())) {
+    CARBON_DIAGNOSTIC(ExpectedInterfaceName, Error,
+                      "Expected interface name after `interface` keyword.");
+    emitter_.Emit(*position_, ExpectedInterfaceName);
+    state.has_error = true;
+  }
+
+  bool has_open_curly_brace = true;
+
+  if (!PositionIs(TokenKind::OpenCurlyBrace())) {
+    CARBON_DIAGNOSTIC(ExpectedInterfaceOpenCurlyBrace, Error,
+                      "Expected `{{` to start interface definition.");
+    emitter_.Emit(*position_, ExpectedInterfaceOpenCurlyBrace);
+    state.has_error = true;
+
+    if (auto next_open_curly_brace = FindNextOf({TokenKind::OpenCurlyBrace()});
+        next_open_curly_brace) {
+      SkipTo(*next_open_curly_brace);
+    } else {
+      has_open_curly_brace = false;
+    }
+  }
+
+  state.state = ParserState::InterfaceDefinitionFinish();
+  PushState(state);
+
+  if (has_open_curly_brace) {
+    PushState(ParserState::InterfaceDefinitionLoop());
+    ++position_;
+  }
+}
+
+auto Parser::HandleInterfaceDefinitionLoopState() -> void {
+  switch (PositionKind()) {
+    case TokenKind::CloseCurlyBrace(): {
+      AddLeafNode(ParseNodeKind::InterfaceBodyEnd(), *position_);
+      ++position_;
+
+      auto open_curly_state = PopState();
+      AddNode(ParseNodeKind::InterfaceBody(), open_curly_state.token,
+              open_curly_state.subtree_start, open_curly_state.has_error);
+
+      break;
+    }
+      // TODO Handle possible declarations inside interface body.
+    default: {
+      CARBON_DIAGNOSTIC(UnrecognizedDeclaration, Error,
+                        "Unrecognized declaration introducer.");
+      emitter_.Emit(*position_, UnrecognizedDeclaration);
+      tree_.has_errors_ = true;
+      if (auto semi = SkipPastLikelyEnd(*position_)) {
+        AddLeafNode(ParseNodeKind::EmptyDeclaration(), *semi,
+                    /*has_error=*/true);
+      }
+      break;
+    }
+  }
+}
+
+auto Parser::HandleInterfaceDefinitionFinishState() -> void {
+  auto interface_state = PopState();
+  AddNode(ParseNodeKind::InterfaceDeclaration(), interface_state.token,
+          interface_state.subtree_start, interface_state.has_error);
+}
 }  // namespace Carbon
