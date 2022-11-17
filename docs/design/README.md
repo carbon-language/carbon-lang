@@ -540,7 +540,6 @@ number.
 >     [#861: Naming conventions](https://github.com/carbon-language/carbon-lang/pull/861)
 > -   Proposal
 >     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
-> -   Proposal
 
 #### Floating-point literals
 

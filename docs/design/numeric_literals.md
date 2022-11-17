@@ -83,6 +83,15 @@ type, a 'u' for an unsigned integer type, or an 'f' for an
 type. Capture group 2 specifies the width in bits. Note that this bit width is
 restricted to a multiple of 8.
 
+Conversions in which `x` lies exactly half-way between two values are rounded to
+the value in which the mantissa is even, as defined in the IEEE 754 standard and
+as was decided in
+[proposal #866](https://github.com/carbon-language/carbon-lang/pull/866).
+
+Conversions in which `x` is outside the range of finite values of the
+floating-point type are rejected rather than saturating to the finite range or
+producing an infinity.
+
 Examples of this syntax include:
 
 -   `i16` - A 16-bit two's complement signed integer type
