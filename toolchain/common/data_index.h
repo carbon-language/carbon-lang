@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_COMMON_DATA_VECTOR_H_
-#define CARBON_TOOLCHAIN_COMMON_DATA_VECTOR_H_
+#ifndef CARBON_TOOLCHAIN_COMMON_DATA_INDEX_H_
+#define CARBON_TOOLCHAIN_COMMON_DATA_INDEX_H_
 
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
@@ -14,16 +14,28 @@ namespace Carbon {
 
 template <typename DataType>
 class DataIterator;
-template <typename DataType>
-class DataVector;
 
-// A lightweight handle to an item in DataVector.
+// A lightweight handle to an item in a SmallVector.
 //
 // DataIndex is designed to be passed by value, not reference or pointer. They
 // are also designed to be small and efficient to store in data structures.
 template <typename DataType>
 class DataIndex {
  public:
+  template <typename VectorT>
+  auto Append(VectorT& data, const DataType& el) -> DataIndex {
+    DataIndex index(data.size());
+    data.push_back(el);
+    return index;
+  }
+
+  template <typename VectorT>
+  static auto Append(VectorT& data, DataType&& el) -> DataIndex {
+    DataIndex index(data.size());
+    data.push_back(el);
+    return index;
+  }
+
   DataIndex() : index_(-1) {}
 
   friend auto operator==(DataIndex lhs, DataIndex rhs) -> bool {
@@ -45,7 +57,15 @@ class DataIndex {
     return lhs.index_ >= rhs.index_;
   }
 
-  auto index() const -> int32_t { return index_; }
+  template <typename VectorT>
+  auto In(const VectorT& data) const -> const DataType& {
+    return data[index_];
+  }
+
+  template <typename VectorT>
+  auto In(VectorT& data) const -> DataType& {
+    return data[index_];
+  }
 
   auto Print(llvm::raw_ostream& output) const -> void { output << index_; }
 
@@ -53,9 +73,10 @@ class DataIndex {
     return llvm::format_decimal(index_, width);
   }
 
+  auto raw_index() const -> int32_t { return index_; }
+
  private:
   friend DataIterator<DataType>;
-  friend DataVector<DataType>;
 
   explicit DataIndex(int index) : index_(index) {}
 
@@ -70,6 +91,13 @@ class DataIterator
                                         std::random_access_iterator_tag,
                                         const DataIndex<DataType>, int> {
  public:
+  template <typename VectorT>
+  static auto MakeRange(const VectorT& data)
+      -> llvm::iterator_range<DataIterator> {
+    return llvm::make_range(DataIterator(DataIndex<DataType>(0)),
+                            DataIterator(DataIndex<DataType>(data.size())));
+  }
+
   DataIterator() = default;
 
   explicit DataIterator(DataIndex<DataType> index) : index_(index) {}
@@ -108,54 +136,6 @@ class DataIterator
   DataIndex<DataType> index_;
 };
 
-// A thin wrapper around SmallVector that emphasizes use of DataIndex for
-// indexing.
-template <typename DataType>
-class DataVector {
- public:
-  using Index = DataIndex<DataType>;
-  using Iterator = DataIterator<DataType>;
-
-  auto empty() const -> bool { return data_.empty(); }
-  auto size() const -> size_t { return data_.size(); }
-
-  auto back() -> DataType& { return data_.back(); }
-  auto back() const -> const DataType& { return data_.back(); }
-
-  auto begin() const -> typename llvm::SmallVector<DataType>::const_iterator {
-    return data_.begin();
-  }
-  auto end() const -> typename llvm::SmallVector<DataType>::const_iterator {
-    return data_.end();
-  }
-
-  auto next_index() -> Index { return Index(data_.size()); }
-
-  auto push_back(const DataType& el) -> Index {
-    Index index(data_.size());
-    data_.push_back(el);
-    return index;
-  }
-
-  auto push_back(DataType&& el) -> Index {
-    Index index(data_.size());
-    data_.push_back(el);
-    return index;
-  }
-
-  auto operator[](Index index) -> DataType& { return data_[index.index_]; }
-  auto operator[](Index index) const -> const DataType& {
-    return data_[index.index_];
-  }
-
-  auto range() const -> llvm::iterator_range<Iterator> {
-    return llvm::make_range(Iterator(Index(0)), Iterator(Index(data_.size())));
-  }
-
- private:
-  llvm::SmallVector<DataType> data_;
-};
-
 }  // namespace Carbon
 
-#endif  // CARBON_TOOLCHAIN_COMMON_DATA_VECTOR_H_
+#endif  // CARBON_TOOLCHAIN_COMMON_DATA_INDEX_H_

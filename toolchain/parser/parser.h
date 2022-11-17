@@ -16,6 +16,8 @@
 
 namespace Carbon {
 
+// This parser uses a stack for state transitions. See parser_state.def for
+// state documentation.
 class Parser {
  public:
   // Parses the tokens into a parse tree, emitting any errors encountered.
@@ -41,12 +43,6 @@ class Parser {
 
   // Used to track state on state_stack_.
   struct StateStackEntry {
-    StateStackEntry(ParserState state, TokenizedBuffer::Token token,
-                    int32_t subtree_start)
-        : StateStackEntry(state, PrecedenceGroup::ForTopLevelExpression(),
-                          PrecedenceGroup::ForTopLevelExpression(), token,
-                          subtree_start) {}
-
     StateStackEntry(ParserState state, PrecedenceGroup ambient_precedence,
                     PrecedenceGroup lhs_precedence,
                     TokenizedBuffer::Token token, int32_t subtree_start)
@@ -184,7 +180,9 @@ class Parser {
                         bool already_has_error) -> ListTokenKind;
 
   // Gets the kind of the next token to be consumed.
-  auto PositionKind() const -> TokenKind { return tokens_.GetKind(*position_); }
+  auto PositionKind() const -> TokenKind {
+    return tokens_->GetKind(*position_);
+  }
 
   // Tests whether the next token to be consumed is of the specified kind.
   auto PositionIs(TokenKind kind) const -> bool {
@@ -199,14 +197,16 @@ class Parser {
 
   // Pushes a new state with the current position for context.
   auto PushState(ParserState state) -> void {
-    PushState(StateStackEntry(state, *position_, tree_.size()));
+    PushState(StateStackEntry(state, PrecedenceGroup::ForTopLevelExpression(),
+                              PrecedenceGroup::ForTopLevelExpression(),
+                              *position_, tree_->size()));
   }
 
   // Pushes a new expression state with specific precedence.
   auto PushStateForExpression(PrecedenceGroup ambient_precedence) -> void {
     PushState(StateStackEntry(ParserState::Expression(), ambient_precedence,
                               PrecedenceGroup::ForTopLevelExpression(),
-                              *position_, tree_.size()));
+                              *position_, tree_->size()));
   }
 
   // Pushes a new state with detailed precedence for expression resume states.
@@ -214,12 +214,7 @@ class Parser {
                                   PrecedenceGroup ambient_precedence,
                                   PrecedenceGroup lhs_precedence) -> void {
     PushState(StateStackEntry(state, ambient_precedence, lhs_precedence,
-                              *position_, tree_.size()));
-  }
-
-  // Pushes a new state with the token for context.
-  auto PushState(ParserState state, TokenizedBuffer::Token token) -> void {
-    PushState(StateStackEntry(state, token, tree_.size()));
+                              *position_, tree_->size()));
   }
 
   // Pushes a constructed state onto the stack.
@@ -265,20 +260,14 @@ class Parser {
   auto HandleFunctionError(StateStackEntry state, bool skip_past_likely_end)
       -> void;
 
-  // Handles ParenExpressionParameterFinish(AsUnknown|AsTuple)
+  // Handles ParenExpressionParameterFinish(AsUnknown|AsTuple).
   auto HandleParenExpressionParameterFinish(bool as_tuple) -> void;
 
-  // Handles the start of a pattern.
-  // If the start of the pattern is invalid, it's the responsibility of the
-  // outside context to advance past the pattern.
-  auto HandlePatternStart(PatternKind pattern_kind) -> void;
-
-  // Handles the end of a pattern.
-  auto HandlePatternFinish() -> bool;
+  // Handles PatternAs(FunctionParameter|Variable).
+  auto HandlePattern(PatternKind pattern_kind) -> void;
 
   // Handles the `;` after a keyword statement.
-  auto HandleStatementKeywordFinish(TokenKind token_kind,
-                                    ParseNodeKind node_kind) -> void;
+  auto HandleStatementKeywordFinish(ParseNodeKind node_kind) -> void;
 
   // Handles VarAs(RequireSemicolon|NoSemicolon).
   auto HandleVar(bool require_semicolon) -> void;
@@ -291,9 +280,9 @@ class Parser {
 #define CARBON_PARSER_STATE(Name) auto Handle##Name##State()->void;
 #include "toolchain/parser/parser_state.def"
 
-  ParseTree& tree_;
-  TokenizedBuffer& tokens_;
-  TokenDiagnosticEmitter& emitter_;
+  ParseTree* tree_;
+  TokenizedBuffer* tokens_;
+  TokenDiagnosticEmitter* emitter_;
 
   // The current position within the token buffer.
   TokenizedBuffer::TokenIterator position_;

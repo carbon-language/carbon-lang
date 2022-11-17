@@ -168,14 +168,22 @@ When requesting any of the following access, please provide a reason for the
 access. All requests require a
 [signed CLA](#contributor-license-agreements-clas).
 
--   Google Docs/Calendar commenter access:
-    [join group](https://groups.google.com/a/carbon-lang.dev/g/commenters/about)
-    -   Grants commenter access to Carbon Language documents, as well as the
-        ability to view Calendar events.
--   Google Docs/Calendar contributor access:
-    [join group](https://groups.google.com/a/carbon-lang.dev/g/contributors/about)
-    -   Grants edit access to Carbon Language documents, as well as the ability
-        to edit Calendar events.
+-   Google Docs/Calendar access groups:
+    -   **Commenter** access:
+        [join group](https://groups.google.com/a/carbon-lang.dev/g/commenters/about)
+        -   [Google Docs](https://drive.google.com/drive/folders/1aC5JJ5EcI8B7cgVDrLvO7WNw97F0LpS2):
+            Comment on files.
+        -   [Google Calendar](https://calendar.google.com/calendar/embed?src=c_07td7k4qjq0ssb4gdl6bmbnkik%40group.calendar.google.com):
+            View event details.
+    -   **Contributor** access:
+        [join group](https://groups.google.com/a/carbon-lang.dev/g/contributors/about)
+        -   [Google Docs](https://drive.google.com/drive/folders/1aC5JJ5EcI8B7cgVDrLvO7WNw97F0LpS2):
+            Add, edit, and comment on files.
+        -   [Google Calendar](https://calendar.google.com/calendar/embed?src=c_07td7k4qjq0ssb4gdl6bmbnkik%40group.calendar.google.com):
+            View and edit event details.
+    -   After you apply to join, please let us know on
+        [#access-requests](https://discord.com/channels/655572317891461132/1006221387574292540);
+        we don't get notifications otherwise.
 -   GitHub Label/project contributor access:
     [ask on #access-requests](https://discord.com/channels/655572317891461132/1006221387574292540)
     -   Don't forget to mention your GitHub username.

@@ -17,7 +17,7 @@
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/raw_ostream.h"
-#include "toolchain/common/data_vector.h"
+#include "toolchain/common/data_index.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/source/source_buffer.h"
@@ -77,12 +77,12 @@ class TokenizedBuffer {
    public:
     // The mantissa, represented as an unsigned integer.
     [[nodiscard]] auto Mantissa() const -> const llvm::APInt& {
-      return buffer_->literal_int_storage_[literal_index_];
+      return literal_index_.In(buffer_->literal_int_storage_);
     }
     // The exponent, represented as a signed integer.
     [[nodiscard]] auto Exponent() const -> const llvm::APInt& {
-      return buffer_->literal_int_storage_[*(
-          DataIterator<llvm::APInt>(literal_index_) + 1)];
+      auto next_index = *(DataIterator<llvm::APInt>(literal_index_) + 1);
+      return next_index.In(buffer_->literal_int_storage_);
     }
     // If false, the value is mantissa * 2^exponent.
     // If true, the value is mantissa * 10^exponent.
@@ -219,7 +219,7 @@ class TokenizedBuffer {
   [[nodiscard]] auto has_errors() const -> bool { return has_errors_; }
 
   [[nodiscard]] auto tokens() const -> llvm::iterator_range<TokenIterator> {
-    return token_infos_.range();
+    return TokenIterator::MakeRange(token_infos_);
   }
 
   [[nodiscard]] auto size() const -> int { return token_infos_.size(); }
@@ -334,17 +334,17 @@ class TokenizedBuffer {
 
   SourceBuffer* source_;
 
-  DataVector<TokenInfo> token_infos_;
+  llvm::SmallVector<TokenInfo, 16> token_infos_;
 
-  DataVector<LineInfo> line_infos_;
+  llvm::SmallVector<LineInfo, 16> line_infos_;
 
-  DataVector<IdentifierInfo> identifier_infos_;
+  llvm::SmallVector<IdentifierInfo, 16> identifier_infos_;
 
   // Storage for integers that form part of the value of a numeric or type
   // literal.
-  DataVector<llvm::APInt> literal_int_storage_;
+  llvm::SmallVector<llvm::APInt, 16> literal_int_storage_;
 
-  DataVector<std::string> literal_string_storage_;
+  llvm::SmallVector<std::string, 16> literal_string_storage_;
 
   llvm::DenseMap<llvm::StringRef, Identifier> identifier_map_;
 

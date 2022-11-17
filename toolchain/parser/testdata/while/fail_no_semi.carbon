@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{carbon-run-parser}
+// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'F'},
@@ -19,7 +19,7 @@
 // CHECK:STDOUT:         {kind: 'Condition', text: '(', subtree_size: 3},
 // CHECK:STDOUT:           {kind: 'CodeBlockStart', text: '{'},
 // CHECK:STDOUT:             {kind: 'BreakStatementStart', text: 'break'},
-// CHECK:STDOUT:           {kind: 'BreakStatement', text: ';', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'BreakStatement', text: 'break', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'CodeBlock', text: '}', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'IfStatement', text: 'if', subtree_size: 8},
 // CHECK:STDOUT:           {kind: 'NameReference', text: 'c'},
@@ -27,7 +27,7 @@
 // CHECK:STDOUT:         {kind: 'Condition', text: '(', subtree_size: 3},
 // CHECK:STDOUT:           {kind: 'CodeBlockStart', text: '{'},
 // CHECK:STDOUT:             {kind: 'ContinueStatementStart', text: 'continue'},
-// CHECK:STDOUT:           {kind: 'ContinueStatement', text: ';', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'ContinueStatement', text: 'continue', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'CodeBlock', text: '}', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'IfStatement', text: 'if', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'CodeBlock', text: '}', subtree_size: 18},
@@ -39,10 +39,12 @@
 fn F() {
   while (a) {
     if (b) {
-      break;
+      break
+    // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/while/fail_no_semi.carbon:[[@LINE+1]]:5: Expected `;` after `break`.
     }
     if (c) {
-      continue;
+      continue
+    // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/while/fail_no_semi.carbon:[[@LINE+1]]:5: Expected `;` after `continue`.
     }
   }
 }

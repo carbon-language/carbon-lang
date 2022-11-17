@@ -158,9 +158,9 @@ TEST_F(ParseTreeTest, PrintPostorderAsYAML) {
   auto file = Yaml::SequenceValue{
       Yaml::MappingValue{{"kind", "FunctionIntroducer"}, {"text", "fn"}},
       Yaml::MappingValue{{"kind", "DeclaredName"}, {"text", "F"}},
-      Yaml::MappingValue{{"kind", "ParameterListEnd"}, {"text", ")"}},
+      Yaml::MappingValue{{"kind", "ParameterListStart"}, {"text", "("}},
       Yaml::MappingValue{
-          {"kind", "ParameterList"}, {"text", "("}, {"subtree_size", "2"}},
+          {"kind", "ParameterList"}, {"text", ")"}, {"subtree_size", "2"}},
       Yaml::MappingValue{{"kind", "FunctionDeclaration"},
                          {"text", ";"},
                          {"subtree_size", "5"}},
@@ -181,7 +181,7 @@ TEST_F(ParseTreeTest, PrintPreorderAsYAML) {
 
   auto parameter_list = Yaml::SequenceValue{
       Yaml::MappingValue{
-          {"node_index", "2"}, {"kind", "ParameterListEnd"}, {"text", ")"}},
+          {"node_index", "2"}, {"kind", "ParameterListStart"}, {"text", "("}},
   };
 
   auto function_decl = Yaml::SequenceValue{
@@ -191,7 +191,7 @@ TEST_F(ParseTreeTest, PrintPreorderAsYAML) {
           {"node_index", "1"}, {"kind", "DeclaredName"}, {"text", "F"}},
       Yaml::MappingValue{{"node_index", "3"},
                          {"kind", "ParameterList"},
-                         {"text", "("},
+                         {"text", ")"},
                          {"subtree_size", "2"},
                          {"children", parameter_list}},
   };
