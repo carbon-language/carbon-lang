@@ -22,18 +22,25 @@ class DataIterator;
 template <typename DataType>
 class DataIndex {
  public:
+  // Appends an element to the data, and returns the added index.
   template <typename VectorT>
-  auto Append(VectorT& data, const DataType& el) -> DataIndex {
+  static auto Append(VectorT& data, const DataType& el) -> DataIndex {
     DataIndex index(data.size());
     data.push_back(el);
     return index;
   }
-
   template <typename VectorT>
   static auto Append(VectorT& data, DataType&& el) -> DataIndex {
     DataIndex index(data.size());
     data.push_back(el);
     return index;
+  }
+
+  // Returns what the index will be if an element is manually added to the data,
+  // after this call.
+  template <typename VectorT>
+  static auto BeforeManualAppend(const VectorT& data) -> DataIndex {
+    return DataIndex(data.size());
   }
 
   DataIndex() : index_(-1) {}
@@ -57,11 +64,11 @@ class DataIndex {
     return lhs.index_ >= rhs.index_;
   }
 
+  // Returns the element at the index in data.
   template <typename VectorT>
   auto In(const VectorT& data) const -> const DataType& {
     return data[index_];
   }
-
   template <typename VectorT>
   auto In(VectorT& data) const -> DataType& {
     return data[index_];
@@ -69,6 +76,7 @@ class DataIndex {
 
   auto Print(llvm::raw_ostream& output) const -> void { output << index_; }
 
+  // Formats the index to a given width.
   auto Format(int width) const -> llvm::FormattedNumber {
     return llvm::format_decimal(index_, width);
   }

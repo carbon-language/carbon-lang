@@ -437,7 +437,7 @@ class TokenizedBuffer::Lexer {
 
   auto GetOrCreateIdentifier(llvm::StringRef text) -> Identifier {
     auto insert_result = buffer_->identifier_map_.insert(
-        {text, buffer_->identifier_infos_.next_index()});
+        {text, Identifier::BeforeManualAppend(buffer_->identifier_infos_)});
     if (insert_result.second) {
       buffer_->identifier_infos_.push_back({text});
     }
@@ -669,7 +669,7 @@ auto TokenizedBuffer::GetIntegerLiteral(Token token) const
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::IntegerLiteral())
       << "The token must be an integer literal!";
-  return literal_int_storage_[token_info.literal_index.integer];
+  return token_info.literal_index.integer.In(literal_int_storage_);
 }
 
 auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealLiteralValue {
@@ -692,7 +692,7 @@ auto TokenizedBuffer::GetStringLiteral(Token token) const -> llvm::StringRef {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::StringLiteral())
       << "The token must be a string literal!";
-  return literal_string_storage_[token_info.literal_index.string];
+  return token_info.literal_index.string.In(literal_string_storage_);
 }
 
 auto TokenizedBuffer::GetTypeLiteralSize(Token token) const
@@ -700,7 +700,7 @@ auto TokenizedBuffer::GetTypeLiteralSize(Token token) const
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind.IsSizedTypeLiteral())
       << "The token must be a sized type literal!";
-  return literal_int_storage_[token_info.literal_index.integer];
+  return token_info.literal_index.integer.In(literal_int_storage_);
 }
 
 auto TokenizedBuffer::GetMatchedClosingToken(Token opening_token) const
@@ -733,7 +733,7 @@ auto TokenizedBuffer::IsRecoveryToken(Token token) const -> bool {
 }
 
 auto TokenizedBuffer::GetLineNumber(Line line) const -> int {
-  return line.index() + 1;
+  return line.raw_index() + 1;
 }
 
 auto TokenizedBuffer::GetIndentColumnNumber(Line line) const -> int {
@@ -742,7 +742,7 @@ auto TokenizedBuffer::GetIndentColumnNumber(Line line) const -> int {
 
 auto TokenizedBuffer::GetIdentifierText(Identifier identifier) const
     -> llvm::StringRef {
-  return identifier_infos_[identifier].text;
+  return identifier.In(identifier_infos_).text;
 }
 
 auto TokenizedBuffer::PrintWidths::Widen(const PrintWidths& widths) -> void {
@@ -869,7 +869,7 @@ auto TokenizedBuffer::AddLine(LineInfo info) -> Line {
 }
 
 auto TokenizedBuffer::GetTokenInfo(Token token) -> TokenInfo& {
-  return token.In(token);
+  return token.In(token_infos_);
 }
 
 auto TokenizedBuffer::GetTokenInfo(Token token) const -> const TokenInfo& {
