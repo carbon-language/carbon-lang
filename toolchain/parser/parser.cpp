@@ -428,7 +428,7 @@ auto Parser::HandleBraceExpressionState() -> void {
 
   CARBON_CHECK(ConsumeAndAddLeafNodeIf(
       TokenKind::OpenCurlyBrace(),
-      ParseNodeKind::StructLiteralOrTypeLiteralStart()));
+      ParseNodeKind::StructLiteralOrStructTypeLiteralStart()));
   if (!PositionIs(TokenKind::CloseCurlyBrace())) {
     PushState(ParserState::BraceExpressionParameterAsUnknown());
   }

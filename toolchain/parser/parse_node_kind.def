@@ -77,7 +77,7 @@ CARBON_PARSE_NODE_KIND(PostfixOperator)
 // Struct literals.
 CARBON_PARSE_NODE_KIND(StructLiteral)
 CARBON_PARSE_NODE_KIND(StructTypeLiteral)
-CARBON_PARSE_NODE_KIND(StructLiteralOrTypeLiteralStart)
+CARBON_PARSE_NODE_KIND(StructLiteralOrStructTypeLiteralStart)
 CARBON_PARSE_NODE_KIND(StructFieldDesignator)
 CARBON_PARSE_NODE_KIND(StructFieldValue)
 CARBON_PARSE_NODE_KIND(StructFieldType)
