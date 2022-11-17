@@ -255,7 +255,7 @@ class TokenizedBuffer {
    public:
     explicit TokenLocationTranslator(const TokenizedBuffer* buffer,
                                      int* last_line_lexed_to_column)
-        : buffer_(&buffer),
+        : buffer_(buffer),
           last_line_lexed_to_column_(last_line_lexed_to_column) {}
 
     // Map the given token into a diagnostic location.
@@ -377,9 +377,9 @@ class TokenizedBuffer {
   class SourceBufferLocationTranslator
       : public DiagnosticLocationTranslator<const char*> {
    public:
-    explicit SourceBufferLocationTranslator(const TokenizedBuffer& buffer,
+    explicit SourceBufferLocationTranslator(const TokenizedBuffer* buffer,
                                             int* last_line_lexed_to_column)
-        : buffer_(&buffer),
+        : buffer_(buffer),
           last_line_lexed_to_column_(last_line_lexed_to_column) {}
 
     // Map the given position within the source buffer into a diagnostic
