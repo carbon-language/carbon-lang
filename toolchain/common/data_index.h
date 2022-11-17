@@ -20,6 +20,10 @@ class DataIterator;
 //
 // DataIndex is designed to be passed by value, not reference or pointer. They
 // are also designed to be small and efficient to store in data structures.
+//
+// This templates VectorT on calls instead of using SmallVector explicitly
+// mainly so that the DataType need not be fully declared before declaring
+// DataIndex<DataType>.
 template <typename DataType>
 class DataIndex {
  public:
