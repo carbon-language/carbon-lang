@@ -705,9 +705,13 @@ auto Parser::HandleDeclarationLoopState() -> void {
       CARBON_DIAGNOSTIC(UnrecognizedDeclaration, Error,
                         "Unrecognized declaration introducer.");
       emitter_->Emit(*position_, UnrecognizedDeclaration);
-      tree_->has_errors_ = true;
-      if (auto semi = SkipPastLikelyEnd(*position_)) {
+      auto cursor = *position_;
+      if (auto semi = SkipPastLikelyEnd(cursor)) {
         AddLeafNode(ParseNodeKind::EmptyDeclaration(), *semi,
+                    /*has_error=*/true);
+      } else {
+        // Use the cursor prior to the skip to produce a local error.
+        AddLeafNode(ParseNodeKind::EmptyDeclaration(), cursor,
                     /*has_error=*/true);
       }
       break;
