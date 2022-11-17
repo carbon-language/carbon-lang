@@ -15,7 +15,8 @@ namespace Carbon {
 template <typename DataType>
 class DataIterator;
 
-// A lightweight handle to an item in a SmallVector.
+// A lightweight handle to an item in a SmallVector. These are constructed using
+// `Append(data, el)` then used with `index.In(data)`.
 //
 // DataIndex is designed to be passed by value, not reference or pointer. They
 // are also designed to be small and efficient to store in data structures.
@@ -81,6 +82,8 @@ class DataIndex {
     return llvm::format_decimal(index_, width);
   }
 
+  // The raw index. This should only be used when the index value has a
+  // semantic meaning, instead of just being a handle.
   auto raw_index() const -> int32_t { return index_; }
 
  private:
