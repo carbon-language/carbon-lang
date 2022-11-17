@@ -987,11 +987,8 @@ auto Parser::HandleFunctionIntroducerState() -> void {
   // function parsing.
   state.state = ParserState::FunctionAfterParameterList();
   PushState(state);
-  // TODO: When swapping () start/end, this should AddLeafNode the open before
-  // continuing.
   PushState(ParserState::FunctionParameterListFinish());
-  // Advance past the open paren.
-  ++position_;
+  AddLeafNode(ParseNodeKind::ParameterListStart(), Consume());
   if (!PositionIs(TokenKind::CloseParen())) {
     PushState(ParserState::FunctionParameter());
   }
@@ -1021,10 +1018,8 @@ auto Parser::HandleFunctionParameterFinishState() -> void {
 auto Parser::HandleFunctionParameterListFinishState() -> void {
   auto state = PopState();
 
-  CARBON_CHECK(ConsumeAndAddLeafNodeIf(TokenKind::CloseParen(),
-                                       ParseNodeKind::ParameterListEnd()))
-      << PositionKind().Name();
-  AddNode(ParseNodeKind::ParameterList(), state.token, state.subtree_start,
+  CARBON_CHECK(PositionIs(TokenKind::CloseParen())) << PositionKind().Name();
+  AddNode(ParseNodeKind::ParameterList(), Consume(), state.subtree_start,
           state.has_error);
 }
 

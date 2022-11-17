@@ -7,8 +7,8 @@
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'F'},
-// CHECK:STDOUT:       {kind: 'ParameterListEnd', text: ')'},
-// CHECK:STDOUT:     {kind: 'ParameterList', text: '(', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'ParameterListStart', text: '('},
+// CHECK:STDOUT:     {kind: 'ParameterList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:   {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'NameReference', text: 'n'},
 // CHECK:STDOUT:       {kind: 'PrefixOperator', text: '++', subtree_size: 2},
