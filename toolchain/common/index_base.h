@@ -20,7 +20,7 @@ class DataIterator;
 // DataIndex is designed to be passed by value, not reference or pointer. They
 // are also designed to be small and efficient to store in data structures.
 //
-// The template type is unused; it's only there for some degree of type safety.
+// This uses CRTP only to provide operators that work for the child type.
 template <typename IndexType>
 struct IndexBase {
   IndexBase() : index(-1) {}
