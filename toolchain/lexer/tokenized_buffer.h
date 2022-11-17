@@ -253,7 +253,7 @@ class TokenizedBuffer {
   class TokenLocationTranslator
       : public DiagnosticLocationTranslator<Internal::TokenizedBufferToken> {
    public:
-    explicit TokenLocationTranslator(const TokenizedBuffer& buffer,
+    explicit TokenLocationTranslator(const TokenizedBuffer* buffer,
                                      int* last_line_lexed_to_column)
         : buffer_(&buffer),
           last_line_lexed_to_column_(last_line_lexed_to_column) {}
