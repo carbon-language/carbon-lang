@@ -8,14 +8,14 @@
 // CHECK:STDOUT:   {kind: 'DeclaredName', text: 'bar'},
 // CHECK:STDOUT:     {kind: 'InterfaceBodyEnd', text: '}'},
 // CHECK:STDOUT:   {kind: 'InterfaceBody', text: '{', subtree_size: 2},
-// CHECK:STDOUT: {kind: 'InterfaceDeclaration', text: 'interface', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT: {kind: 'InterfaceDefinition', text: 'interface', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:   {kind: 'DeclaredName', text: 'foo'},
-// CHECK:STDOUT: {kind: 'InterfaceDeclaration', text: 'interface', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT: {kind: 'InterfaceDefinition', text: 'interface', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/interface/expected_open_curly.carbon:[[@LINE+1]]:15: Expected `{` to start interface defintion.
+// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/interface/fail_missing_open_curly.carbon:[[@LINE+1]]:15: Expected `{` to start interface definition.
 interface bar baz {}
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/interface/expected_open_curly.carbon:[[@LINE+1]]:14: Expected `{` to start interface defintion.
+// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/interface/fail_missing_open_curly.carbon:[[@LINE+1]]:14: Expected `{` to start interface definition.
 interface foo

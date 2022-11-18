@@ -114,7 +114,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldType, TodoFixParseNode)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructComma, 0)
 
 // Interfaces
-CARBON_PARSE_NODE_KIND(InterfaceDeclaration)
+CARBON_PARSE_NODE_KIND(InterfaceDefinition)
 CARBON_PARSE_NODE_KIND(InterfaceBody)
 CARBON_PARSE_NODE_KIND(InterfaceBodyEnd)
 

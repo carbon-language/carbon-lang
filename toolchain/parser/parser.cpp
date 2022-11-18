@@ -1700,14 +1700,17 @@ auto Parser::HandleInterfaceIntroducerState() -> void {
 }
 
 auto Parser::HandleInterfaceDefinitionLoopState() -> void {
+  // This maintains the current state unless we're at the end of the interface
+  // definition.
+
   switch (PositionKind()) {
     case TokenKind::CloseCurlyBrace(): {
       AddLeafNode(ParseNodeKind::InterfaceBodyEnd(), *position_);
       ++position_;
 
-      auto open_curly_state = PopState();
-      AddNode(ParseNodeKind::InterfaceBody(), open_curly_state.token,
-              open_curly_state.subtree_start, open_curly_state.has_error);
+      auto state = PopState();
+      AddNode(ParseNodeKind::InterfaceBody(), state.token, state.subtree_start,
+              state.has_error);
 
       break;
     }
@@ -1716,10 +1719,11 @@ auto Parser::HandleInterfaceDefinitionLoopState() -> void {
       CARBON_DIAGNOSTIC(UnrecognizedDeclaration, Error,
                         "Unrecognized declaration introducer.");
       emitter_.Emit(*position_, UnrecognizedDeclaration);
-      tree_.has_errors_ = true;
       if (auto semi = SkipPastLikelyEnd(*position_)) {
         AddLeafNode(ParseNodeKind::EmptyDeclaration(), *semi,
                     /*has_error=*/true);
+      } else {
+        ReturnErrorOnState();
       }
       break;
     }
@@ -1727,8 +1731,8 @@ auto Parser::HandleInterfaceDefinitionLoopState() -> void {
 }
 
 auto Parser::HandleInterfaceDefinitionFinishState() -> void {
-  auto interface_state = PopState();
-  AddNode(ParseNodeKind::InterfaceDeclaration(), interface_state.token,
-          interface_state.subtree_start, interface_state.has_error);
+  auto state = PopState();
+  AddNode(ParseNodeKind::InterfaceDefinition(), state.token,
+          state.subtree_start, state.has_error);
 }
 }  // namespace Carbon
