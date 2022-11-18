@@ -137,10 +137,12 @@ cc_library(
         ":heap",
         ":stack",
         "//common:check",
+        "//common:error",
         "//common:ostream",
         "//explorer/ast",
         "//explorer/common:arena",
         "//explorer/common:error_builders",
+        "//explorer/common:source_location",
         "@llvm-project//llvm:Support",
     ],
 )
