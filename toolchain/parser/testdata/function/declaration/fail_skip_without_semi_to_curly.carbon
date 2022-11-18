@@ -5,6 +5,7 @@
 // AUTOUPDATE
 // RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
+// CHECK:STDOUT: {kind: 'EmptyDeclaration', text: 'struct', has_error: yes},
 // CHECK:STDOUT:   {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:   {kind: 'DeclaredName', text: 'F'},
 // CHECK:STDOUT:     {kind: 'ParameterListStart', text: '('},
