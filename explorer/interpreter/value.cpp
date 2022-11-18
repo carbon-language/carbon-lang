@@ -132,6 +132,13 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       return arena->New<FunctionValue>(&(*fun)->declaration(),
                                        &class_type.bindings());
     }
+    case Value::Kind::TupleValue: {
+      const auto& tuple = cast<TupleValue>(*v);
+      const auto index = field.member().index();
+      CARBON_CHECK(index)
+          << "Invalid member access for a TupleValue: index required";
+      return tuple.elements()[index.value()];
+    }
     default:
       CARBON_FATAL() << "field access not allowed for value " << *v;
   }
@@ -185,8 +192,10 @@ static auto SetFieldImpl(
     case Value::Kind::TupleValue: {
       std::vector<Nonnull<const Value*>> elements =
           cast<TupleValueBase>(*value).elements();
-      // TODO(geoffromer): update FieldPath to hold integers as well as strings.
-      int index = std::stoi(std::string((*path_begin).name()));
+      const auto index_opt = (*path_begin).index();
+      CARBON_CHECK(index)
+          << "FieldPath::index() is required to have a value for TupleValue";
+      int index = index_opt.value();
       if (index < 0 || static_cast<size_t>(index) >= elements.size()) {
         return ProgramError(source_loc) << "index " << (*path_begin).name()
                                         << " out of range in " << *value;

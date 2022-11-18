@@ -49,6 +49,7 @@ class FieldPath {
     auto member() const -> Member { return member_; }
 
     auto name() const -> std::string_view { return member_.name(); }
+    auto index() const -> std::optional<size_t> { return member_.index(); }
 
     auto interface() const -> std::optional<Nonnull<const InterfaceType*>> {
       return interface_;

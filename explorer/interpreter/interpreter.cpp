@@ -456,14 +456,10 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         //    { v :: [][i] :: C, E, F} :: S, H}
         // -> { { &v[i] :: C, E, F} :: S, H }
         Address object = cast<LValue>(*act.results()[0]).address();
-        // TODO: Add support to `Member` for naming tuple fields rather than
-        // pretending we have struct fields with numerical names.
-        std::string f =
-            std::to_string(cast<IntValue>(*act.results()[1]).value());
-        auto* tuple_field_as_struct_field =
-            arena_->New<NamedValue>(NamedValue{f, &exp.static_type()});
-        Address field =
-            object.SubobjectAddress(Member(tuple_field_as_struct_field));
+        const auto index = cast<IntValue>(*act.results()[1]).value();
+        auto* tuple_field = arena_->New<IndexedValue>(
+            IndexedValue{static_cast<size_t>(index), &exp.static_type()});
+        Address field = object.SubobjectAddress(Member(tuple_field));
         return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
