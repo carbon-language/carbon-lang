@@ -363,7 +363,7 @@ CARBON_PARSER_STATE(PatternFinish)
 // If `Return`:
 //   1. StatementReturn
 // If `Var`:
-//   1. VarAsRequireSemicolon
+//   1. VarAsSemicolon
 // If `While`:
 //   1. StatementWhile
 // Else:
@@ -389,7 +389,7 @@ CARBON_PARSER_STATE(StatementContinueFinish)
 // If no `OpenParen`:
 //   1. CodeBlock
 // If `Var`:
-//   1. VarAsNoSemicolon
+//   1. VarAsFor
 //   2. StatementForHeaderIn
 // Else:
 //   1. StatementForHeaderIn
@@ -500,9 +500,9 @@ CARBON_PARSER_STATE(StatementWhileBlockFinish)
 // Always:
 //   1. PatternAsVariable
 //   2. VarAfterPattern
-//   3. VarFinishAs(RequireSemicolon|NoSemicolon)
-CARBON_PARSER_STATE(VarAsRequireSemicolon)
-CARBON_PARSER_STATE(VarAsNoSemicolon)
+//   3. VarFinishAs(Semicolon|For)
+CARBON_PARSER_STATE(VarAsSemicolon)
+CARBON_PARSER_STATE(VarAsFor)
 
 // Handles `var` after the pattern, either followed by an initializer or the
 // semicolon.
@@ -524,7 +524,7 @@ CARBON_PARSER_STATE(VarAfterInitializer)
 //
 // Always:
 //   (state done)
-CARBON_PARSER_STATE(VarFinishAsRequireSemicolon)
-CARBON_PARSER_STATE(VarFinishAsNoSemicolon)
+CARBON_PARSER_STATE(VarFinishAsSemicolon)
+CARBON_PARSER_STATE(VarFinishAsFor)
 
 #undef CARBON_PARSER_STATE

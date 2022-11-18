@@ -690,7 +690,6 @@ auto Parser::HandleDeclarationLoopState() -> void {
     }
     case TokenKind::Package(): {
       PushState(ParserState::Package());
-      ++position_;
       break;
     }
     case TokenKind::Semi(): {
@@ -698,7 +697,7 @@ auto Parser::HandleDeclarationLoopState() -> void {
       break;
     }
     case TokenKind::Var(): {
-      PushState(ParserState::VarAsRequireSemicolon());
+      PushState(ParserState::VarAsSemicolon());
       break;
     }
     default: {
@@ -1090,12 +1089,13 @@ auto Parser::HandleFunctionDefinitionFinishState() -> void {
 auto Parser::HandlePackageState() -> void {
   auto state = PopState();
 
+  AddLeafNode(ParseNodeKind::PackageIntroducer(), Consume());
+
   auto exit_on_parse_error = [&]() {
-    if (auto semi_token = SkipPastLikelyEnd(state.token)) {
-      AddLeafNode(ParseNodeKind::PackageEnd(), *semi_token);
-    }
-    return AddNode(ParseNodeKind::PackageDirective(), state.token,
-                   state.subtree_start, /*has_error=*/true);
+    auto semi_token = SkipPastLikelyEnd(state.token);
+    return AddNode(ParseNodeKind::Package(),
+                   semi_token ? *semi_token : state.token, state.subtree_start,
+                   /*has_error=*/true);
   };
 
   if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
@@ -1153,8 +1153,7 @@ auto Parser::HandlePackageState() -> void {
     }
   }
 
-  if (!ConsumeAndAddLeafNodeIf(TokenKind::Semi(),
-                               ParseNodeKind::PackageEnd())) {
+  if (!PositionIs(TokenKind::Semi())) {
     CARBON_DIAGNOSTIC(ExpectedSemiToEndPackageDirective, Error,
                       "Expected `;` to end package directive.");
     emitter_->Emit(*position_, ExpectedSemiToEndPackageDirective);
@@ -1162,7 +1161,7 @@ auto Parser::HandlePackageState() -> void {
     return;
   }
 
-  AddNode(ParseNodeKind::PackageDirective(), state.token, state.subtree_start,
+  AddNode(ParseNodeKind::Package(), Consume(), state.subtree_start,
           /*has_error=*/false);
 }
 
@@ -1369,7 +1368,7 @@ auto Parser::HandleStatementState() -> void {
       break;
     }
     case TokenKind::Var(): {
-      PushState(ParserState::VarAsRequireSemicolon());
+      PushState(ParserState::VarAsSemicolon());
       break;
     }
     case TokenKind::While(): {
@@ -1416,7 +1415,7 @@ auto Parser::HandleStatementForHeaderState() -> void {
 
   if (PositionIs(TokenKind::Var())) {
     PushState(state);
-    PushState(ParserState::VarAsNoSemicolon());
+    PushState(ParserState::VarAsFor());
   } else {
     CARBON_DIAGNOSTIC(ExpectedVariableDeclaration, Error,
                       "Expected `var` declaration.");
@@ -1424,6 +1423,7 @@ auto Parser::HandleStatementForHeaderState() -> void {
 
     if (auto next_in = FindNextOf({TokenKind::In()})) {
       SkipTo(*next_in);
+      ++position_;
     }
     state.has_error = true;
     PushState(state);
@@ -1434,24 +1434,6 @@ auto Parser::HandleStatementForHeaderInState() -> void {
   auto state = PopState();
 
   state.state = ParserState::StatementForHeaderFinish();
-
-  if (!ConsumeAndAddLeafNodeIf(TokenKind::In(), ParseNodeKind::ForIn())) {
-    if (auto colon = ConsumeIf(TokenKind::Colon())) {
-      CARBON_DIAGNOSTIC(ExpectedIn, Error, "`:` should be replaced by `in`.");
-      emitter_->Emit(*colon, ExpectedIn);
-      AddLeafNode(ParseNodeKind::ForIn(), *colon, /*has_error=*/true);
-    } else {
-      CARBON_DIAGNOSTIC(ExpectedIn, Error,
-                        "Expected `in` after loop `var` declaration.");
-      emitter_->Emit(*position_, ExpectedIn);
-      SkipTo(tokens_->GetMatchedClosingToken(state.token));
-
-      state.has_error = true;
-      PushState(state);
-      return;
-    }
-  }
-
   PushState(state);
   PushState(ParserState::Expression());
 }
@@ -1586,23 +1568,25 @@ auto Parser::HandleStatementWhileBlockFinishState() -> void {
           state.has_error);
 }
 
-auto Parser::HandleVar(bool require_semicolon) -> void {
+auto Parser::HandleVar(VarKind var_kind) -> void {
   PopAndDiscardState();
 
-  PushState(require_semicolon ? ParserState::VarFinishAsRequireSemicolon()
-                              : ParserState::VarFinishAsNoSemicolon());
+  // These will start at the `var`.
+  PushState(var_kind == VarKind::Semicolon ? ParserState::VarFinishAsSemicolon()
+                                           : ParserState::VarFinishAsFor());
   PushState(ParserState::VarAfterPattern());
-  ++position_;
+
+  AddLeafNode(ParseNodeKind::VariableIntroducer(), Consume());
+
+  // This will start at the pattern.
   PushState(ParserState::PatternAsVariable());
 }
 
-auto Parser::HandleVarAsRequireSemicolonState() -> void {
-  HandleVar(/*require_semicolon=*/true);
+auto Parser::HandleVarAsSemicolonState() -> void {
+  HandleVar(VarKind::Semicolon);
 }
 
-auto Parser::HandleVarAsNoSemicolonState() -> void {
-  HandleVar(/*require_semicolon=*/false);
-}
+auto Parser::HandleVarAsForState() -> void { HandleVar(VarKind::For); }
 
 auto Parser::HandleVarAfterPatternState() -> void {
   auto state = PopState();
@@ -1629,33 +1613,43 @@ auto Parser::HandleVarAfterInitializerState() -> void {
           state.subtree_start, state.has_error);
 }
 
-auto Parser::HandleVarFinish(bool require_semicolon) -> void {
+auto Parser::HandleVarFinishAsSemicolonState() -> void {
   auto state = PopState();
 
-  if (require_semicolon) {
-    auto semi = ConsumeAndAddLeafNodeIf(TokenKind::Semi(),
-                                        ParseNodeKind::DeclarationEnd());
-    if (!semi) {
-      emitter_->Emit(*position_, ExpectedSemiAfterExpression);
-      if (auto semi_token = SkipPastLikelyEnd(state.token)) {
-        AddLeafNode(ParseNodeKind::DeclarationEnd(), *semi_token,
-                    /*has_error=*/true);
-      } else {
-        state.has_error = true;
-      }
+  auto end_token = state.token;
+  if (PositionIs(TokenKind::Semi())) {
+    end_token = Consume();
+  } else {
+    emitter_->Emit(*position_, ExpectedSemiAfterExpression);
+    state.has_error = true;
+    if (auto semi_token = SkipPastLikelyEnd(state.token)) {
+      end_token = *semi_token;
     }
   }
-
-  return AddNode(ParseNodeKind::VariableDeclaration(), state.token,
-                 state.subtree_start, state.has_error);
+  AddNode(ParseNodeKind::VariableDeclaration(), end_token, state.subtree_start,
+          state.has_error);
 }
 
-auto Parser::HandleVarFinishAsRequireSemicolonState() -> void {
-  HandleVarFinish(/*require_semicolon=*/true);
-}
+auto Parser::HandleVarFinishAsForState() -> void {
+  auto state = PopState();
 
-auto Parser::HandleVarFinishAsNoSemicolonState() -> void {
-  HandleVarFinish(/*require_semicolon=*/false);
+  auto end_token = state.token;
+  if (PositionIs(TokenKind::In())) {
+    end_token = Consume();
+  } else if (PositionIs(TokenKind::Colon())) {
+    CARBON_DIAGNOSTIC(ExpectedIn, Error, "`:` should be replaced by `in`.");
+    emitter_->Emit(*position_, ExpectedIn);
+    state.has_error = true;
+    end_token = Consume();
+  } else {
+    CARBON_DIAGNOSTIC(ExpectedIn, Error,
+                      "Expected `in` after loop `var` declaration.");
+    emitter_->Emit(*position_, ExpectedIn);
+    state.has_error = true;
+  }
+
+  AddNode(ParseNodeKind::ForIn(), end_token, state.subtree_start,
+          state.has_error);
 }
 
 }  // namespace Carbon
