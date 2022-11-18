@@ -147,6 +147,13 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       return arena->New<FunctionValue>(&(*fun)->declaration(),
                                        &class_type.bindings());
     }
+    case Value::Kind::TupleValue: {
+      const auto& tuple = cast<TupleValue>(*v);
+      const auto index = field.member().index();
+      CARBON_CHECK(index)
+          << "Invalid member access for a TupleValue: index required";
+      return tuple.elements()[index.value()];
+    }
     default:
       CARBON_FATAL() << "field access not allowed for value " << *v;
   }

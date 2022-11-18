@@ -21,6 +21,7 @@
 #include "explorer/ast/expression.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
+#include "explorer/common/source_location.h"
 #include "explorer/interpreter/action.h"
 #include "explorer/interpreter/action_stack.h"
 #include "explorer/interpreter/stack.h"
@@ -2100,13 +2101,13 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
         const auto& member = class_decl.members()[index];
         if (const auto* var = dyn_cast<VariableDeclaration>(member)) {
           const Address object = destroy_act.lvalue()->address();
-          const Address mem = object.SubobjectAddress(Member(var));
-          const auto v = heap_.Read(mem, SourceLocation("destructor", 1));
+          const Address var_addr = object.SubobjectAddress(Member(var));
+          const auto v = heap_.Read(var_addr, SourceLocation("destructor", 1));
           CARBON_CHECK(v.ok())
               << "Failed to read member `" << var->binding().name()
               << "` from class `" << class_decl.name() << "`";
-          return todo_.Spawn(
-              std::make_unique<DestroyAction>(arena_->New<LValue>(mem), *v));
+          return todo_.Spawn(std::make_unique<DestroyAction>(
+              arena_->New<LValue>(var_addr), *v));
         } else {
           return todo_.RunAgain();
         }
@@ -2124,19 +2125,23 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
     }
     case Value::Kind::TupleValue: {
       const auto* tuple = cast<TupleValue>(destroy_act.value());
-      const auto element_count = static_cast<int>(tuple->elements().size());
-      if (act.pos() < element_count) {
-        const int index = element_count - act.pos() - 1;
+      const auto element_count = tuple->elements().size();
+      if (static_cast<size_t>(act.pos()) < element_count) {
+        const size_t index = element_count - act.pos() - 1;
         const auto& item = tuple->elements()[index];
-        switch (item->kind()) {
-          case Value::Kind::NominalClassValue:
-          case Value::Kind::TupleValue:
-            return todo_.Spawn(
-                std::make_unique<DestroyAction>(destroy_act.lvalue(), item));
-          default:
-            // Type of tuple element is integral type e.g. i32
-            // or the type has no destructor
-            return todo_.RunAgain();
+        const auto object_addr = destroy_act.lvalue()->address();
+        auto* tuple_field =
+            arena_->New<IndexedValue>(IndexedValue{index, item});
+        Address field_address =
+            object_addr.SubobjectAddress(Member(tuple_field));
+        if (item->kind() == Value::Kind::NominalClassValue ||
+            item->kind() == Value::Kind::TupleValue) {
+          return todo_.Spawn(std::make_unique<DestroyAction>(
+              arena_->New<LValue>(field_address), item));
+        } else {
+          // Type of tuple element is integral type e.g. i32
+          // or the type has no destructor
+          return todo_.RunAgain();
         }
       } else {
         todo_.Pop();
