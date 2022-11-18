@@ -47,8 +47,7 @@ auto ParseNodeKind::child_count() const -> int32_t {
 #include "toolchain/parser/parse_node_kind.def"
   };
   auto child_count = ChildCount[static_cast<int>(kind_)];
-  // TODO: Currently using -2 as a placeholder value for nodes that need to be
-  // restructured for postorder. This can be >= 0 once that's fixed.
+  // TODO: Allows -2 to mean "unsupported"; see parse_node_kind.def.
   CARBON_CHECK(child_count != -1);
   return child_count;
 }

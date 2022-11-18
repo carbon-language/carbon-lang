@@ -216,8 +216,7 @@ auto ParseTree::Verify() const -> llvm::Optional<Error> {
         }
       }
     } else if (n_impl.kind.child_count() == -2) {
-      // TODO: This case should be eliminated, but for now it's supported for
-      // nodes which need to be fixed.
+      // TODO: Allows -2 to mean "unsupported"; see parse_node_kind.def.
       while (subtree_size < n_impl.subtree_size && !nodes.empty()) {
         auto child_impl = node_impls_[nodes.pop_back_val().index()];
         subtree_size += child_impl.subtree_size;
