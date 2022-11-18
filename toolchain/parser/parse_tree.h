@@ -207,7 +207,10 @@ class ParseTree {
 
   // Wires up the reference to the tokenized buffer. The global `parse` routine
   // should be used to actually parse the tokens into a tree.
-  explicit ParseTree(TokenizedBuffer& tokens_arg) : tokens_(&tokens_arg) {}
+  explicit ParseTree(TokenizedBuffer& tokens_arg) : tokens_(&tokens_arg) {
+    // If the tree is valid, there will be one node per token, so reserve once.
+    node_impls_.reserve(tokens_->size());
+  }
 
   // Prints a single node for Print(). Returns true when preorder and there are
   // children.

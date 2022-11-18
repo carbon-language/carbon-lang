@@ -240,6 +240,7 @@ auto ParseTree::Verify() const -> llvm::Optional<Error> {
     }
     nodes.push_back(n);
   }
+
   // Remaining nodes should all be roots in the tree; make sure they line up.
   CARBON_CHECK(nodes.back().index() ==
                static_cast<int32_t>(node_impls_.size()) - 1)
@@ -255,6 +256,14 @@ auto ParseTree::Verify() const -> llvm::Optional<Error> {
           n.index(), n_impl.kind, n_impl.subtree_size, prev_index));
     }
     prev_index = n.index();
+  }
+
+  if (!has_errors_ &&
+      static_cast<int32_t>(node_impls_.size()) != tokens_->size()) {
+    return Error(
+        llvm::formatv("ParseTree has {0} nodes and no errors, but "
+                      "TokenizedBuffer has {1} tokens.",
+                      node_impls_.size(), tokens_->size()));
   }
   return llvm::None;
 }
