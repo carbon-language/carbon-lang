@@ -253,16 +253,16 @@ class TokenizedBuffer {
   class TokenLocationTranslator
       : public DiagnosticLocationTranslator<Internal::TokenizedBufferToken> {
    public:
-    explicit TokenLocationTranslator(TokenizedBuffer& buffer,
+    explicit TokenLocationTranslator(const TokenizedBuffer* buffer,
                                      int* last_line_lexed_to_column)
-        : buffer_(&buffer),
+        : buffer_(buffer),
           last_line_lexed_to_column_(last_line_lexed_to_column) {}
 
     // Map the given token into a diagnostic location.
     auto GetLocation(Token token) -> DiagnosticLocation override;
 
    private:
-    TokenizedBuffer* buffer_;
+    const TokenizedBuffer* buffer_;
     // Passed to SourceBufferLocationTranslator.
     int* last_line_lexed_to_column_;
   };
@@ -377,9 +377,9 @@ class TokenizedBuffer {
   class SourceBufferLocationTranslator
       : public DiagnosticLocationTranslator<const char*> {
    public:
-    explicit SourceBufferLocationTranslator(TokenizedBuffer& buffer,
+    explicit SourceBufferLocationTranslator(const TokenizedBuffer* buffer,
                                             int* last_line_lexed_to_column)
-        : buffer_(&buffer),
+        : buffer_(buffer),
           last_line_lexed_to_column_(last_line_lexed_to_column) {}
 
     // Map the given position within the source buffer into a diagnostic
@@ -387,7 +387,7 @@ class TokenizedBuffer {
     auto GetLocation(const char* loc) -> DiagnosticLocation override;
 
    private:
-    TokenizedBuffer* buffer_;
+    const TokenizedBuffer* buffer_;
     // The last lexed column, for determining whether the last line should be
     // checked for unlexed newlines. May be null after lexing is complete.
     int* last_line_lexed_to_column_;

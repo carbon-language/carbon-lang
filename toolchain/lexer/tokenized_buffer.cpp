@@ -85,9 +85,9 @@ class TokenizedBuffer::Lexer {
 
   Lexer(TokenizedBuffer& buffer, DiagnosticConsumer& consumer)
       : buffer_(&buffer),
-        translator_(buffer, &current_column_),
+        translator_(&buffer, &current_column_),
         emitter_(translator_, consumer),
-        token_translator_(buffer, &current_column_),
+        token_translator_(&buffer, &current_column_),
         token_emitter_(token_translator_, consumer),
         current_line_(buffer.AddLine({0, 0, 0})),
         current_line_info_(&buffer.GetLineInfo(current_line_)) {}
@@ -944,7 +944,7 @@ auto TokenizedBuffer::TokenLocationTranslator::GetLocation(Token token)
   // Find the corresponding file location.
   // TODO: Should we somehow indicate in the diagnostic location if this token
   // is a recovery token that doesn't correspond to the original source?
-  return SourceBufferLocationTranslator(*buffer_, last_line_lexed_to_column_)
+  return SourceBufferLocationTranslator(buffer_, last_line_lexed_to_column_)
       .GetLocation(token_start);
 }
 
