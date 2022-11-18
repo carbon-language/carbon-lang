@@ -290,6 +290,19 @@ def _impl(ctx):
         ],
     )
 
+    cpu_flags = feature(
+        name = "cpu_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = all_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    "-march=native",
+                ])],
+            ),
+        ],
+    )
+
     # Handle different levels and forms of debug info emission with individual
     # features so that they can be ordered and the defaults can override the
     # minimal settings if both are enabled.
@@ -782,6 +795,7 @@ def _impl(ctx):
         default_flags_feature,
         minimal_optimization_flags,
         default_optimization_flags,
+        cpu_flags,
         minimal_debug_info_flags,
         default_debug_info_flags,
         preserve_call_stacks,
