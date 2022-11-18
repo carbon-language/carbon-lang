@@ -64,15 +64,15 @@ class ParseNodeKind {
 
   void Print(llvm::raw_ostream& out) const { out << name(); }
 
-  // Returns true if the node is bracketed; otherwise, subtree_size is used.
-  auto has_bracket() -> bool;
+  // Returns true if the node is bracketed; otherwise, child_count is used.
+  auto has_bracket() const -> bool;
 
   // Returns the bracketing character for the node. Requires that has_bracket is
   // true.
-  auto bracket() -> ParseNodeKind;
+  auto bracket() const -> ParseNodeKind;
 
-  // Returns the subtree size for the node. Requires that has_bracket is false.
-  auto subtree_size() -> int32_t;
+  // Returns the child_count for the node. Requires that has_bracket is false.
+  auto child_count() const -> int32_t;
 
  private:
   constexpr explicit ParseNodeKind(KindEnum k) : kind_(k) {}

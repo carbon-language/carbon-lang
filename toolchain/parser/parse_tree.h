@@ -7,12 +7,12 @@
 
 #include <iterator>
 
+#include "common/error.h"
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
-#include "llvm/Support/raw_ostream.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
@@ -140,14 +140,13 @@ class ParseTree {
   // line-oriented shell tools from `grep` to `awk`.
   auto Print(llvm::raw_ostream& output, bool preorder) const -> void;
 
-  // Verifies the parse tree structure.
+  // Verifies the parse tree structure. Checks invariants of the parse tree
+  // structure and returns verification errors.
   //
-  // This tries to check any invariants of the parse tree structure and write
-  // out information about it to stderr. Returns false if anything fails to
-  // verify. This is primarily intended to be used as a debugging aid. A typical
-  // usage is to `assert` on the result. This routine doesn't directly assert so
-  // that it can be used even when asserts are disabled or within a debugger.
-  [[nodiscard]] auto Verify() const -> bool;
+  // This is primarily intended to be used as a
+  // debugging aid. This routine doesn't directly CHECK so that it can be used
+  // within a debugger.
+  [[nodiscard]] auto Verify() const -> llvm::Optional<Error>;
 
  private:
   friend class Parser;

@@ -17,20 +17,22 @@ auto ParseNodeKind::name() const -> llvm::StringRef {
   return Names[static_cast<int>(kind_)];
 }
 
-auto ParseNodeKind::has_bracket() -> bool {
+auto ParseNodeKind::has_bracket() const -> bool {
   static constexpr bool HasBracket[] = {
-#define CARBON_PARSE_NODE_KIND_BRACKETED(...) true,
-#define CARBON_PARSE_NODE_KIND_SIZED(...) false,
+#define CARBON_PARSE_NODE_KIND_BRACKET(...) true,
+#define CARBON_PARSE_NODE_KIND_CHILD_COUNT(...) false,
 #include "toolchain/parser/parse_node_kind.def"
   };
   return HasBracket[static_cast<int>(kind_)];
 }
 
-auto ParseNodeKind::bracket() -> ParseNodeKind {
+auto ParseNodeKind::bracket() const -> ParseNodeKind {
+  // Nodes are never self-bracketed, so we use that for nodes that instead set
+  // child_count.
   static constexpr ParseNodeKind Bracket[] = {
-#define CARBON_PARSE_NODE_KIND_BRACKETED(Name, BracketName) \
+#define CARBON_PARSE_NODE_KIND_BRACKET(Name, BracketName) \
   ParseNodeKind::BracketName(),
-#define CARBON_PARSE_NODE_KIND_SIZED(Name, ...) ParseNodeKind::Name(),
+#define CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, ...) ParseNodeKind::Name(),
 #include "toolchain/parser/parse_node_kind.def"
   };
   auto bracket = Bracket[static_cast<int>(kind_)];
@@ -38,15 +40,17 @@ auto ParseNodeKind::bracket() -> ParseNodeKind {
   return bracket;
 }
 
-auto ParseNodeKind::subtree_size() -> int32_t {
-  static constexpr int32_t SubtreeSize[] = {
-#define CARBON_PARSE_NODE_KIND_BRACKETED() -1,
-#define CARBON_PARSE_NODE_KIND_SIZED(Name, Size) Size,
+auto ParseNodeKind::child_count() const -> int32_t {
+  static constexpr int32_t ChildCount[] = {
+#define CARBON_PARSE_NODE_KIND_BRACKET(...) -1,
+#define CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, Size) Size,
 #include "toolchain/parser/parse_node_kind.def"
   };
-  auto subtree_size = SubtreeSize[static_cast<int>(kind_)];
-  CARBON_CHECK(subtree_size != -1);
-  return subtree_size;
+  auto child_count = ChildCount[static_cast<int>(kind_)];
+  // TODO: Currently using -2 as a placeholder value for nodes that need to be
+  // restructured for postorder. This can be >= 0 once that's fixed.
+  CARBON_CHECK(child_count != -1);
+  return child_count;
 }
 
 }  // namespace Carbon

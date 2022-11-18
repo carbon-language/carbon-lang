@@ -66,6 +66,7 @@ cc_library(
         ":parser_state",
         ":precedence",
         "//common:check",
+        "//common:error",
         "//common:ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:token_kind",
