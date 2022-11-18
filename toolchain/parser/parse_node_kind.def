@@ -1,18 +1,34 @@
 // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 // Exceptions. See /LICENSE for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// SPDX-License-Identifier: ApacheTodoFixParseNode.0 WITH LLVM-exception
 //
 // Note that this is an X-macro header.
 //
 // It does not use `#include` guards, and instead is designed to be `#include`ed
 // after the x-macro is defined in order for its inclusion to expand to the
-// desired output. The x-macro for this header is `CARBON_PARSE_NODE_KIND`. The
-// definition provided will be removed at the end of this file to clean up.
+// desired output.
+//
+// x-macros come in three forms:
+//   CARBON_PARSE_NODE_KIND(Name)
+//     Used as a fallback if other macros are missing.
+//   CARBON_PARSE_NODE_KIND_BRACKET(Name, BracketName)
+//     Defines a bracketed node kind. BracketName should refer to the node kind
+//     that is the _start_ of the bracketed range.
+//   CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, ChildCount)
+//     Defines a parse node with a set number of children, often 0. This count
+//     must be correct even when the node contains errors.
+//
+// Macro definitions  will be removed at the end of this file to clean up.
+//
+// TODO: Using CHILD_COUNT(..., TodoFixParseNode) to indicate nodes which need to be fixed,
+// sometimes due to inconsistent output in error modes. This is also handled in
+// ParseNodeKind::child_count() and ParseTree::Verify(). All of that can be
+// cleaned up once remainining nodes are fixed.
 
 #if !(defined(CARBON_PARSE_NODE_KIND) ||          \
       (defined(CARBON_PARSE_NODE_KIND_BRACKET) && \
        defined(CARBON_PARSE_NODE_KIND_CHILD_COUNT)))
-#error "Must define the CARBON_PARSE_NODE_KIND x-macro to use this file."
+#error "Must define CARBON_PARSE_NODE_KIND family x-macros to use this file."
 #endif
 
 // The BRACKET and CHILD_COUNT macros will use CARBON_PARSE_NODE_KIND by default
@@ -25,17 +41,12 @@
   CARBON_PARSE_NODE_KIND(Name)
 #endif
 
-// TODO: Using CHILD_COUNT(..., -2) to indicate nodes which need to be fixed,
-// sometimes due to inconsistent output in error modes. This is also handled in
-// ParseNodeKind::child_count() and ParseTree::Verify(). All of that can be
-// cleaned up once remainining nodes are fixed.
-
 // Declarations.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(DeclarationEnd, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(EmptyDeclaration, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(DeclaredName, 0)
 
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageDirective, -2)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageDirective, TodoFixParseNode)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageApi, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageImpl, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageLibrary, 1)
@@ -50,7 +61,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParameterListStart, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParameterListComma, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PatternBinding, 2)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnType, 1)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableDeclaration, -2)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableDeclaration, TodoFixParseNode)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableInitializer, 1)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(FileEnd, 0)
 
@@ -58,10 +69,10 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(FileEnd, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(CodeBlockStart, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ExpressionStatement, 1)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfStatement, -2)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfStatement, TodoFixParseNode)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfStatementElse, 0)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(WhileStatement, -2)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(Condition, -2)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(WhileStatement, TodoFixParseNode)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(Condition, TodoFixParseNode)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ConditionEnd, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(ContinueStatement, ContinueStatementStart)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ContinueStatementStart, 0)
@@ -69,22 +80,22 @@ CARBON_PARSE_NODE_KIND_BRACKET(BreakStatement, BreakStatementStart)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(BreakStatementStart, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(ReturnStatement, ReturnStatementStart)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnStatementStart, 0)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ForStatement, -2)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ForHeader, -2)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ForStatement, TodoFixParseNode)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ForHeader, TodoFixParseNode)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ForHeaderEnd, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ForIn, 0)
 
 // Expressions.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(Literal, 0)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(TupleLiteral, -2)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(TupleLiteral, TodoFixParseNode)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(TupleLiteralComma, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(TupleLiteralEnd, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(NameReference, 0)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParenExpression, -2)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParenExpression, TodoFixParseNode)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParenExpressionEnd, 0)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(DesignatorExpression, -2)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(DesignatorExpression, TodoFixParseNode)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(DesignatedName, 0)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExpression, -2)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExpression, TodoFixParseNode)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExpressionComma, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExpressionEnd, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PrefixOperator, 1)
@@ -97,9 +108,9 @@ CARBON_PARSE_NODE_KIND_BRACKET(StructLiteral,
 CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral,
                                StructLiteralOrStructTypeLiteralStart)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructLiteralOrStructTypeLiteralStart, 0)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldDesignator, -2)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldValue, -2)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldType, -2)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldDesignator, TodoFixParseNode)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldValue, TodoFixParseNode)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldType, TodoFixParseNode)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructComma, 0)
 
 #undef CARBON_PARSE_NODE_KIND

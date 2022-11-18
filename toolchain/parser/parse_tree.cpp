@@ -215,8 +215,7 @@ auto ParseTree::Verify() const -> llvm::Optional<Error> {
           break;
         }
       }
-    } else if (n_impl.kind.child_count() == -2) {
-      // TODO: Allows -2 to mean "unsupported"; see parse_node_kind.def.
+    } else if (n_impl.kind.child_count() == ParseNodeKind::TodoFixParseNode) {
       while (subtree_size < n_impl.subtree_size && !nodes.empty()) {
         auto child_impl = node_impls_[nodes.pop_back_val().index()];
         subtree_size += child_impl.subtree_size;
