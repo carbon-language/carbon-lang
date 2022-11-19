@@ -127,8 +127,11 @@ auto Parser::ConsumeAndAddOpenParen(TokenizedBuffer::Token default_token,
 
 auto Parser::ConsumeAndAddCloseParen(StateStackEntry state,
                                      ParseNodeKind close_kind) -> void {
-  if (tokens_->GetKind(*(TokenizedBuffer::TokenIterator(state.token) + 1)) !=
-      TokenKind::OpenParen()) {
+  // state.token should point at the introducer, with the paren one after the
+  // introducer.
+  auto expected_paren = *(TokenizedBuffer::TokenIterator(state.token) + 1);
+
+  if (tokens_->GetKind(expected_paren) != TokenKind::OpenParen()) {
     AddNode(close_kind, state.token, state.subtree_start, /*has_error=*/true);
   } else if (auto close_token = ConsumeIf(TokenKind::CloseParen())) {
     AddNode(close_kind, *close_token, state.subtree_start, state.has_error);
@@ -138,7 +141,7 @@ auto Parser::ConsumeAndAddCloseParen(StateStackEntry state,
                       "Unexpected tokens before `)`.");
     emitter_->Emit(*position_, ExpectedCloseParen);
 
-    SkipTo(tokens_->GetMatchedClosingToken(state.token));
+    SkipTo(tokens_->GetMatchedClosingToken(expected_paren));
     AddNode(close_kind, state.token, state.subtree_start, /*has_error=*/true);
   }
 }

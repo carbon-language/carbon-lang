@@ -158,7 +158,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(ForStatement, 2)
 //   (expression)
 // IfCondition
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfConditionStart, 0)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfCondition, 2)
+CARBON_PARSE_NODE_KIND_BRACKET(IfCondition, IfConditionStart)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfStatement, TodoFixParseNode)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfStatementElse, 0)
 
@@ -171,7 +171,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfStatementElse, 0)
 //   CodeBlock
 // WhileStatement
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(WhileConditionStart, 0)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(WhileCondition, 2)
+CARBON_PARSE_NODE_KIND_BRACKET(WhileCondition, WhileConditionStart)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(WhileStatement, 2)
 
 // Expressions.
