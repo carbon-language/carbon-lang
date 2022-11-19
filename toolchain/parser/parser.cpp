@@ -1560,12 +1560,11 @@ auto Parser::HandleStatementWhileBlockFinishState() -> void {
           state.has_error);
 }
 
-auto Parser::HandleVar(VarKind var_kind) -> void {
+auto Parser::HandleVar(ParserState finish_state) -> void {
   PopAndDiscardState();
 
   // These will start at the `var`.
-  PushState(var_kind == VarKind::Semicolon ? ParserState::VarFinishAsSemicolon()
-                                           : ParserState::VarFinishAsFor());
+  PushState(finish_state);
   PushState(ParserState::VarAfterPattern());
 
   AddLeafNode(ParseNodeKind::VariableIntroducer(), Consume());
@@ -1575,10 +1574,12 @@ auto Parser::HandleVar(VarKind var_kind) -> void {
 }
 
 auto Parser::HandleVarAsSemicolonState() -> void {
-  HandleVar(VarKind::Semicolon);
+  HandleVar(ParserState::VarFinishAsSemicolon());
 }
 
-auto Parser::HandleVarAsForState() -> void { HandleVar(VarKind::For); }
+auto Parser::HandleVarAsForState() -> void {
+  HandleVar(ParserState::VarFinishAsFor());
+}
 
 auto Parser::HandleVarAfterPatternState() -> void {
   auto state = PopState();

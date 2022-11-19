@@ -44,9 +44,6 @@ class Parser {
   // Supported kinds for HandlePattern.
   enum class PatternKind { Parameter, Variable };
 
-  // Supported kinds for HandleVar.
-  enum class VarKind { Semicolon, For };
-
   // Helper class for tracing state_stack_ on crashes.
   class PrettyStackTraceParseState;
 
@@ -279,7 +276,7 @@ class Parser {
   auto HandleStatementKeywordFinish(ParseNodeKind node_kind) -> void;
 
   // Handles VarAs(Semicolon|For).
-  auto HandleVar(VarKind var_kind) -> void;
+  auto HandleVar(ParserState finish_state) -> void;
 
   // `clang-format` has a bug with spacing around `->` returns in macros. See
   // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
