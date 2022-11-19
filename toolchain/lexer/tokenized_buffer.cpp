@@ -653,14 +653,14 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
   }
 
   CARBON_CHECK(token_info.kind == TokenKind::Identifier())
-      << "Only identifiers have stored text!";
+      << "Only identifiers have stored text: " << token_info.kind.Name();
   return GetIdentifierText(token_info.id);
 }
 
 auto TokenizedBuffer::GetIdentifier(Token token) const -> Identifier {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::Identifier())
-      << "The token must be an identifier!";
+      << "The token must be an identifier: " << token_info.kind.Name();
   return token_info.id;
 }
 
@@ -668,14 +668,14 @@ auto TokenizedBuffer::GetIntegerLiteral(Token token) const
     -> const llvm::APInt& {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::IntegerLiteral())
-      << "The token must be an integer literal!";
+      << "The token must be an integer literal: " << token_info.kind.Name();
   return literal_int_storage_[token_info.literal_index];
 }
 
 auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealLiteralValue {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::RealLiteral())
-      << "The token must be a real literal!";
+      << "The token must be a real literal: " << token_info.kind.Name();
 
   // Note that every real literal is at least three characters long, so we can
   // safely look at the second character to determine whether we have a
@@ -691,7 +691,7 @@ auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealLiteralValue {
 auto TokenizedBuffer::GetStringLiteral(Token token) const -> llvm::StringRef {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::StringLiteral())
-      << "The token must be a string literal!";
+      << "The token must be a string literal: " << token_info.kind.Name();
   return literal_string_storage_[token_info.literal_index];
 }
 
@@ -699,7 +699,7 @@ auto TokenizedBuffer::GetTypeLiteralSize(Token token) const
     -> const llvm::APInt& {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind.IsSizedTypeLiteral())
-      << "The token must be a sized type literal!";
+      << "The token must be a sized type literal: " << token_info.kind.Name();
   return literal_int_storage_[token_info.literal_index];
 }
 
@@ -707,7 +707,8 @@ auto TokenizedBuffer::GetMatchedClosingToken(Token opening_token) const
     -> Token {
   const auto& opening_token_info = GetTokenInfo(opening_token);
   CARBON_CHECK(opening_token_info.kind.IsOpeningSymbol())
-      << "The token must be an opening group symbol!";
+      << "The token must be an opening group symbol: "
+      << opening_token_info.kind.Name();
   return opening_token_info.closing_token;
 }
 
@@ -715,7 +716,8 @@ auto TokenizedBuffer::GetMatchedOpeningToken(Token closing_token) const
     -> Token {
   const auto& closing_token_info = GetTokenInfo(closing_token);
   CARBON_CHECK(closing_token_info.kind.IsClosingSymbol())
-      << "The token must be an closing group symbol!";
+      << "The token must be an closing group symbol: "
+      << closing_token_info.kind.Name();
   return closing_token_info.opening_token;
 }
 
