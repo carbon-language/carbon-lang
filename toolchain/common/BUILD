@@ -5,6 +5,15 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
+    name = "index_base",
+    hdrs = ["index_base.h"],
+    deps = [
+        "//common:ostream",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "yaml_test_helpers",
     testonly = 1,
     srcs = ["yaml_test_helpers.cpp"],

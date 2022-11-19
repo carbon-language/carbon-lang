@@ -17,6 +17,7 @@
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/raw_ostream.h"
+#include "toolchain/common/index_base.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/source/source_buffer.h"
@@ -43,39 +44,24 @@ namespace Internal {
 // meaningfully compared.
 //
 // All other APIs to query a `Token` are on the `TokenizedBuffer`.
-class TokenizedBufferToken {
+class TokenizedBufferToken : public IndexBase {
  public:
   using Token = TokenizedBufferToken;
 
-  TokenizedBufferToken() : TokenizedBufferToken(-1) {}
+  using IndexBase::IndexBase;
 
-  friend auto operator==(Token lhs, Token rhs) -> bool {
-    return lhs.index_ == rhs.index_;
-  }
-  friend auto operator!=(Token lhs, Token rhs) -> bool {
-    return lhs.index_ != rhs.index_;
-  }
   friend auto operator<(Token lhs, Token rhs) -> bool {
-    return lhs.index_ < rhs.index_;
+    return lhs.index < rhs.index;
   }
   friend auto operator<=(Token lhs, Token rhs) -> bool {
-    return lhs.index_ <= rhs.index_;
+    return lhs.index <= rhs.index;
   }
   friend auto operator>(Token lhs, Token rhs) -> bool {
-    return lhs.index_ > rhs.index_;
+    return lhs.index > rhs.index;
   }
   friend auto operator>=(Token lhs, Token rhs) -> bool {
-    return lhs.index_ >= rhs.index_;
+    return lhs.index >= rhs.index;
   }
-
-  auto Print(llvm::raw_ostream& output) const -> void { output << index_; }
-
- private:
-  friend TokenizedBuffer;
-
-  explicit TokenizedBufferToken(int index) : index_(index) {}
-
-  int32_t index_;
 };
 
 }  // namespace Internal
@@ -104,35 +90,22 @@ class TokenizedBuffer {
   // same line or the relative position of different lines within the source.
   //
   // All other APIs to query a `Line` are on the `TokenizedBuffer`.
-  class Line {
+  class Line : public IndexBase {
    public:
-    Line() = default;
+    using IndexBase::IndexBase;
 
-    friend auto operator==(Line lhs, Line rhs) -> bool {
-      return lhs.index_ == rhs.index_;
-    }
-    friend auto operator!=(Line lhs, Line rhs) -> bool {
-      return lhs.index_ != rhs.index_;
-    }
     friend auto operator<(Line lhs, Line rhs) -> bool {
-      return lhs.index_ < rhs.index_;
+      return lhs.index < rhs.index;
     }
     friend auto operator<=(Line lhs, Line rhs) -> bool {
-      return lhs.index_ <= rhs.index_;
+      return lhs.index <= rhs.index;
     }
     friend auto operator>(Line lhs, Line rhs) -> bool {
-      return lhs.index_ > rhs.index_;
+      return lhs.index > rhs.index;
     }
     friend auto operator>=(Line lhs, Line rhs) -> bool {
-      return lhs.index_ >= rhs.index_;
+      return lhs.index >= rhs.index;
     }
-
-   private:
-    friend class TokenizedBuffer;
-
-    explicit Line(int index) : index_(index) {}
-
-    int32_t index_;
   };
 
   // A lightweight handle to a lexed identifier in a `TokenizedBuffer`.
@@ -146,25 +119,8 @@ class TokenizedBuffer {
   // identifier spelling. Where the identifier was written is not preserved.
   //
   // All other APIs to query a `Identifier` are on the `TokenizedBuffer`.
-  class Identifier {
-   public:
-    Identifier() = default;
-
-    // Most normal APIs are provided by the `TokenizedBuffer`, we just support
-    // basic comparison operations.
-    friend auto operator==(Identifier lhs, Identifier rhs) -> bool {
-      return lhs.index_ == rhs.index_;
-    }
-    friend auto operator!=(Identifier lhs, Identifier rhs) -> bool {
-      return lhs.index_ != rhs.index_;
-    }
-
-   private:
-    friend class TokenizedBuffer;
-
-    explicit Identifier(int index) : index_(index) {}
-
-    int32_t index_;
+  class Identifier : public IndexBase {
+    using IndexBase::IndexBase;
   };
 
   // Random-access iterator over tokens within the buffer.
@@ -187,15 +143,15 @@ class TokenizedBuffer {
 
     using iterator_facade_base::operator-;
     auto operator-(const TokenIterator& rhs) const -> int {
-      return token_.index_ - rhs.token_.index_;
+      return token_.index - rhs.token_.index;
     }
 
     auto operator+=(int n) -> TokenIterator& {
-      token_.index_ += n;
+      token_.index += n;
       return *this;
     }
     auto operator-=(int n) -> TokenIterator& {
-      token_.index_ -= n;
+      token_.index -= n;
       return *this;
     }
 
