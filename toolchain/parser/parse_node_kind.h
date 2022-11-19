@@ -70,11 +70,12 @@ class ParseNodeKind {
   // Returns true if the node is bracketed; otherwise, child_count is used.
   auto has_bracket() const -> bool;
 
-  // Returns the bracketing character for the node. Requires that has_bracket is
-  // true.
+  // Returns the bracketing node kind for the current node kind. Requires that
+  // has_bracket is true.
   auto bracket() const -> ParseNodeKind;
 
-  // Returns the child_count for the node. Requires that has_bracket is false.
+  // Returns the number of children that the node must have, often 0. Requires
+  // that has_bracket is false.
   auto child_count() const -> int32_t;
 
  private:
