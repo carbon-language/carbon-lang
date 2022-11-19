@@ -142,7 +142,7 @@ auto Parser::ConsumeAndAddCloseParen(StateStackEntry state,
     emitter_->Emit(*position_, ExpectedCloseParen);
 
     SkipTo(tokens_->GetMatchedClosingToken(expected_paren));
-    AddNode(close_kind, state.token, state.subtree_start, /*has_error=*/true);
+    AddNode(close_kind, Consume(), state.subtree_start, /*has_error=*/true);
   }
 }
 
