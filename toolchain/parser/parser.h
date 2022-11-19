@@ -41,9 +41,6 @@ class Parser {
   // Supported kinds for HandleBraceExpression.
   enum class BraceExpressionKind { Unknown, Value, Type };
 
-  // Supported kinds for HandleParenCondition.
-  enum class ParenConditionKind { If, While };
-
   // Supported kinds for HandlePattern.
   enum class PatternKind { Parameter, Variable };
 
@@ -113,9 +110,15 @@ class Parser {
   // Returns the current position and moves past it.
   auto Consume() -> TokenizedBuffer::Token { return *(position_++); }
 
+  // Parses an open paren token, possibly diagnosing if necessary. Creates a
+  // leaf parse node of the specified start kind. The default_token is used when
+  // there's no open paren.
+  auto ConsumeAndAddOpenParen(TokenizedBuffer::Token default_token,
+                              ParseNodeKind start_kind) -> void;
+
   // Parses a close paren token corresponding to the given open paren token,
   // possibly skipping forward and diagnosing if necessary. Creates a parse node
-  // of the specified kind at the end.
+  // of the specified close kind.
   auto ConsumeAndAddCloseParen(StateStackEntry state, ParseNodeKind close_kind)
       -> void;
 
@@ -263,7 +266,8 @@ class Parser {
       -> void;
 
   // Handles ParenConditionAs(If|While)
-  auto HandleParenCondition(ParenConditionKind kind) -> void;
+  auto HandleParenCondition(ParseNodeKind start_kind, ParserState finish_state)
+      -> void;
 
   // Handles ParenExpressionParameterFinishAs(Unknown|Tuple).
   auto HandleParenExpressionParameterFinish(bool as_tuple) -> void;

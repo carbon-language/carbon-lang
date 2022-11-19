@@ -22,6 +22,9 @@ CARBON_DIAGNOSTIC(
     OperatorRequiresParentheses, Error,
     "Parentheses are required to disambiguate operator precedence.");
 
+CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "Expected `(` after `{0}`.",
+                  TokenKind);
+
 CARBON_DIAGNOSTIC(ExpectedSemiAfterExpression, Error,
                   "Expected `;` after expression.");
 
@@ -111,9 +114,21 @@ auto Parser::AddNode(ParseNodeKind kind, TokenizedBuffer::Token token,
   }
 }
 
+auto Parser::ConsumeAndAddOpenParen(TokenizedBuffer::Token default_token,
+                                    ParseNodeKind start_kind) -> void {
+  if (auto open_paren = ConsumeIf(TokenKind::OpenParen())) {
+    AddLeafNode(start_kind, *open_paren, /*has_error=*/false);
+  } else {
+    emitter_->Emit(*position_, ExpectedParenAfter,
+                   tokens_->GetKind(default_token));
+    AddLeafNode(start_kind, default_token, /*has_error=*/true);
+  }
+}
+
 auto Parser::ConsumeAndAddCloseParen(StateStackEntry state,
                                      ParseNodeKind close_kind) -> void {
-  if (tokens_->GetKind(state.token) != TokenKind::OpenParen()) {
+  if (tokens_->GetKind(*(TokenizedBuffer::TokenIterator(state.token) + 1)) !=
+      TokenKind::OpenParen()) {
     AddNode(close_kind, state.token, state.subtree_start, /*has_error=*/true);
   } else if (auto close_token = ConsumeIf(TokenKind::CloseParen())) {
     AddNode(close_kind, *close_token, state.subtree_start, state.has_error);
@@ -1167,43 +1182,25 @@ auto Parser::HandlePackageState() -> void {
           /*has_error=*/false);
 }
 
-auto Parser::HandleParenCondition(ParenConditionKind cond_kind) -> void {
+auto Parser::HandleParenCondition(ParseNodeKind start_kind,
+                                  ParserState finish_state) -> void {
   auto state = PopState();
 
-  auto open_paren = ConsumeIf(TokenKind::OpenParen());
-  if (!open_paren) {
-    CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "Expected `(` after `{0}`.",
-                      TokenKind);
-    emitter_->Emit(*position_, ExpectedParenAfter,
-                   tokens_->GetKind(state.token));
-    state.has_error = true;
-    // Recover by using the token for the open paren.
-    open_paren = state.token;
-  }
+  ConsumeAndAddOpenParen(state.token, start_kind);
 
-  switch (cond_kind) {
-    case ParenConditionKind::If:
-      state.state = ParserState::ParenConditionFinishAsIf();
-      AddLeafNode(ParseNodeKind::IfConditionStart(), *open_paren,
-                  state.has_error);
-      break;
-    case ParenConditionKind::While:
-      state.state = ParserState::ParenConditionFinishAsWhile();
-      AddLeafNode(ParseNodeKind::WhileConditionStart(), *open_paren,
-                  state.has_error);
-      break;
-  }
-
+  state.state = finish_state;
   PushState(state);
   PushState(ParserState::Expression());
 }
 
 auto Parser::HandleParenConditionAsIfState() -> void {
-  HandleParenCondition(ParenConditionKind::If);
+  HandleParenCondition(ParseNodeKind::IfConditionStart(),
+                       ParserState::ParenConditionFinishAsIf());
 }
 
 auto Parser::HandleParenConditionAsWhileState() -> void {
-  HandleParenCondition(ParenConditionKind::While);
+  HandleParenCondition(ParseNodeKind::WhileConditionStart(),
+                       ParserState::ParenConditionFinishAsWhile());
 }
 
 auto Parser::HandleParenConditionFinishAsIfState() -> void {
@@ -1366,12 +1363,9 @@ auto Parser::HandleStatementState() -> void {
       break;
     }
     case TokenKind::For(): {
-      // Process the header as a child of the for so that we can get consistent
-      // starts.
-      // TODO: When reorganizing components, we can probably make this flatter.
       PushState(ParserState::StatementForFinish());
-      ++position_;
       PushState(ParserState::StatementForHeader());
+      ++position_;
       break;
     }
     case TokenKind::If(): {
@@ -1409,22 +1403,7 @@ auto Parser::HandleStatementContinueFinishState() -> void {
 auto Parser::HandleStatementForHeaderState() -> void {
   auto state = PopState();
 
-  auto open_paren = ConsumeIf(TokenKind::OpenParen());
-  if (!open_paren) {
-    CARBON_DIAGNOSTIC(ExpectedParenAfter, Error,
-                      "Expected `(` after `{0}`. Recovering from missing `(` "
-                      "not implemented yet!",
-                      TokenKind);
-    emitter_->Emit(*position_, ExpectedParenAfter, TokenKind::For());
-    // TODO: A proper recovery strategy is needed here. For now, I assume
-    // that all brackets are properly balanced (i.e. each open bracket has a
-    // closing one).
-    // This is temporary until we come to a conclusion regarding the
-    // recovery tokens strategy.
-    ReturnErrorOnState();
-    PushState(ParserState::CodeBlock());
-    return;
-  }
+  ConsumeAndAddOpenParen(state.token, ParseNodeKind::ForHeaderStart());
 
   state.state = ParserState::StatementForHeaderIn();
 
@@ -1559,8 +1538,8 @@ auto Parser::HandleStatementWhileState() -> void {
   PopAndDiscardState();
 
   PushState(ParserState::StatementWhileConditionFinish());
-  ++position_;
   PushState(ParserState::ParenConditionAsWhile());
+  ++position_;
 }
 
 auto Parser::HandleStatementWhileConditionFinishState() -> void {

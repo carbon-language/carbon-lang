@@ -63,6 +63,14 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageImpl, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageLibrary, 1)
 CARBON_PARSE_NODE_KIND_BRACKET(Package, PackageIntroducer)
 
+// A code block:
+//   CodeBlockStart
+//   (statements)
+// CodeBlock
+CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(CodeBlockStart, 0)
+
+
 // `fn`:
 //     FunctionIntroducer
 //     DeclaredName
@@ -99,28 +107,35 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(PatternBinding, 2)
 //   VariableIntroducer
 //   (pattern)
 //     (expression)
-//   VariableInitializer
+//   optional VariableInitializer
 // VariableDeclaration
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableIntroducer, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableInitializer, 1)
 CARBON_PARSE_NODE_KIND_BRACKET(VariableDeclaration, VariableIntroducer)
 
-// Statements.
-CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(CodeBlockStart, 0)
+// An expression statement:
+//   (expression)
+// Statement
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ExpressionStatement, 1)
-CARBON_PARSE_NODE_KIND_BRACKET(ContinueStatement, ContinueStatementStart)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ContinueStatementStart, 0)
-CARBON_PARSE_NODE_KIND_BRACKET(BreakStatement, BreakStatementStart)
+
+// `break`:
+//   BreakStatementStart
+// BreakStatement
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(BreakStatement, 1)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(BreakStatementStart, 0)
+
+// `continue`:
+//   ContinueStatementStart
+// ContinueStatement
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ContinueStatement, 1)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ContinueStatementStart, 0)
+
+// `return`:
+//   ReturnStatementStart
+//   (optional expression)
+// ReturnStatement
 CARBON_PARSE_NODE_KIND_BRACKET(ReturnStatement, ReturnStatementStart)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnStatementStart, 0)
-
-// `if`:
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfConditionStart, 0)
-CARBON_PARSE_NODE_KIND_BRACKET(IfCondition, IfCondition)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfStatement, TodoFixParseNode)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfStatementElse, 0)
 
 // `for`:
 //     ForHeaderStart
@@ -136,6 +151,16 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(ForHeaderStart, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(ForIn, VariableIntroducer)
 CARBON_PARSE_NODE_KIND_BRACKET(ForHeader, ForHeaderStart)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ForStatement, 2)
+
+// `if`:
+// TODO: Still thinking about structure.
+//   IfConditionStart
+//   (expression)
+// IfCondition
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfConditionStart, 0)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfCondition, 2)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfStatement, TodoFixParseNode)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfStatementElse, 0)
 
 // `while`:
 //     WhileConditionStart

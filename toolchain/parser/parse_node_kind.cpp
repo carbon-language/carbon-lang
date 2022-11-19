@@ -36,7 +36,7 @@ auto ParseNodeKind::bracket() const -> ParseNodeKind {
 #include "toolchain/parser/parse_node_kind.def"
   };
   auto bracket = Bracket[static_cast<int>(kind_)];
-  CARBON_CHECK(bracket != kind_);
+  CARBON_CHECK(bracket != kind_) << *this;
   return bracket;
 }
 
@@ -48,7 +48,7 @@ auto ParseNodeKind::child_count() const -> int32_t {
   };
   auto child_count = ChildCount[static_cast<int>(kind_)];
   // TODO: Allows TodoFixParseNode; see parse_node_kind.def.
-  CARBON_CHECK(child_count != -1);
+  CARBON_CHECK(child_count != -1) << *this;
   return child_count;
 }
 

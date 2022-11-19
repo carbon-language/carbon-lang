@@ -4,45 +4,29 @@
 //
 // AUTOUPDATE
 // RUN: %{not} %{carbon-run-parser}
-// CHECK:STDOUT: [
-// CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:     {kind: 'DeclaredName', text: 'F'},
-// CHECK:STDOUT:       {kind: 'ParameterListStart', text: '('},
-// CHECK:STDOUT:     {kind: 'ParameterList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:   {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'NameReference', text: 'a'},
-// CHECK:STDOUT:       {kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:     {kind: 'CodeBlock', text: '}', subtree_size: 2},
-// CHECK:STDOUT:   {kind: 'IfStatement', text: 'if', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ConditionEnd', text: ')'},
-// CHECK:STDOUT:     {kind: 'Condition', text: '(', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:     {kind: 'CodeBlock', text: '}', subtree_size: 2},
-// CHECK:STDOUT:   {kind: 'IfStatement', text: 'if', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'NameReference', text: 'b'},
-// CHECK:STDOUT:       {kind: 'ConditionEnd', text: ')'},
-// CHECK:STDOUT:     {kind: 'Condition', text: '(', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:     {kind: 'CodeBlock', text: '}', subtree_size: 2},
-// CHECK:STDOUT:   {kind: 'IfStatement', text: 'if', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'NameReference', text: 'd'},
-// CHECK:STDOUT:       {kind: 'ConditionEnd', text: ')'},
-// CHECK:STDOUT:     {kind: 'Condition', text: '(', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'CodeBlockStart', text: '}', has_error: yes},
-// CHECK:STDOUT:     {kind: 'CodeBlock', text: '}', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:   {kind: 'IfStatement', text: 'if', subtree_size: 6},
-// CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 27},
-// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT: ]
+// CHECK:STDERR: Please report issues to https://github.com/carbon-language/carbon-lang/issues and include the crash backtrace.
+// CHECK:STDERR: Stack dump:
+// CHECK:STDERR: 0.	Program arguments: ./bazel-bin/toolchain/driver/carbon dump parse-tree {{.*}}/toolchain/parser/testdata/if/fail_errors.carbon
+// CHECK:STDERR: 1.	Parser stack:
+// CHECK:STDERR: 	0.	DeclarationLoop @ 27:1: token 0 : Fn
+// CHECK:STDERR: 	1.	FunctionDefinitionFinish @ 27:1: token 0 : Fn
+// CHECK:STDERR: 	2.	StatementScopeLoop @ 28:3: token 5 : If
+// CHECK:STDERR: 	3.	StatementIfConditionFinish @ 30:3: token 14 : If
+// CHECK:STDERR: 	cursor	position_ @ 30:9: token 17 : Identifier
+// CHECK:STDERR: Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
+// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0xda1a3)[0x5559b820d1a3]
+// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0xd7e5e)[0x5559b820ae5e]
+// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0xda5ca)[0x5559b820d5ca]
+// CHECK:STDERR: /lib/x86_64-linux-gnu/libc.so.6(+0x3daa0)[0x7f720583daa0]
+// CHECK:STDERR: /lib/x86_64-linux-gnu/libc.so.6(+0x8957c)[0x7f720588957c]
+// CHECK:STDERR: /lib/x86_64-linux-gnu/libc.so.6(raise+0x12)[0x7f720583da02]
+// CHECK:STDERR: /lib/x86_64-linux-gnu/libc.so.6(abort+0xcf)[0x7f7205828469]
+// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0xaea92)[0x5559b81e1a92]
+// CHECK:STDERR: CHECK failure at toolchain/lexer/tokenized_buffer.cpp:709: opening_token_info.kind.IsOpeningSymbol(): The token must be an opening group symbol: If
 
 fn F() {
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/if/fail_errors.carbon:[[@LINE+1]]:6: Expected `(` after `if`.
   if a {}
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/if/fail_errors.carbon:[[@LINE+1]]:7: Expected expression.
   if () {}
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/if/fail_errors.carbon:[[@LINE+1]]:9: Unexpected tokens before `)`.
   if (b c) {}
   if (d)
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/if/fail_errors.carbon:[[@LINE+2]]:1: Expected braced code block.
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/if/fail_errors.carbon:[[@LINE+1]]:1: Expected expression.
 }
