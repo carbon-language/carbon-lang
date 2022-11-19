@@ -286,14 +286,16 @@ CARBON_PARSER_STATE(Package)
 //
 // Always:
 //   1. Expression
-//   2. ParenConditionFinish
-CARBON_PARSER_STATE(ParenCondition)
+//   2. ParenConditionAs(If|While)Finish
+CARBON_PARSER_STATE(ParenConditionAsIf)
+CARBON_PARSER_STATE(ParenConditionAsWhile)
 
 // Finishes the processing of a `(condition)` after the expression.
 //
 // Always:
 //   (state done)
-CARBON_PARSER_STATE(ParenConditionFinish)
+CARBON_PARSER_STATE(ParenConditionFinishAsIf)
+CARBON_PARSER_STATE(ParenConditionFinishAsWhile)
 
 // Handles the `(` of a parenthesized expression.
 //
@@ -420,7 +422,7 @@ CARBON_PARSER_STATE(StatementForFinish)
 // Handles `if` processing at the start.
 //
 // Always:
-//   1. ParenCondition
+//   1. ParenConditionAsIf
 //   2. StatementIfConditionFinish
 CARBON_PARSER_STATE(StatementIf)
 
@@ -478,7 +480,7 @@ CARBON_PARSER_STATE(StatementScopeLoop)
 // Handles `while` processing.
 //
 // Always:
-//   1. ParenCondition
+//   1. ParenConditionAsWhile
 //   2. StatementWhileConditionFinish
 CARBON_PARSER_STATE(StatementWhile)
 

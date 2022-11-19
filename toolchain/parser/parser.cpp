@@ -111,19 +111,21 @@ auto Parser::AddNode(ParseNodeKind kind, TokenizedBuffer::Token token,
   }
 }
 
-auto Parser::ConsumeAndAddCloseParen(TokenizedBuffer::Token open_paren,
-                                     ParseNodeKind close_kind) -> bool {
-  if (ConsumeAndAddLeafNodeIf(TokenKind::CloseParen(), close_kind)) {
-    return true;
+auto Parser::ConsumeAndAddCloseParen(StateStackEntry state,
+                                     ParseNodeKind close_kind) -> void {
+  if (tokens_->GetKind(state.token) != TokenKind::OpenParen()) {
+    AddNode(close_kind, state.token, state.subtree_start, /*has_error=*/true);
+  } else if (auto close_token = ConsumeIf(TokenKind::CloseParen())) {
+    AddNode(close_kind, *close_token, state.subtree_start, state.has_error);
+  } else {
+    // TODO: Include the location of the matching open_paren in the diagnostic.
+    CARBON_DIAGNOSTIC(ExpectedCloseParen, Error,
+                      "Unexpected tokens before `)`.");
+    emitter_->Emit(*position_, ExpectedCloseParen);
+
+    SkipTo(tokens_->GetMatchedClosingToken(state.token));
+    AddNode(close_kind, state.token, state.subtree_start, /*has_error=*/true);
   }
-
-  // TODO: Include the location of the matching open_paren in the diagnostic.
-  CARBON_DIAGNOSTIC(ExpectedCloseParen, Error, "Unexpected tokens before `)`.");
-  emitter_->Emit(*position_, ExpectedCloseParen);
-
-  SkipTo(tokens_->GetMatchedClosingToken(open_paren));
-  AddLeafNode(close_kind, Consume());
-  return false;
 }
 
 auto Parser::ConsumeAndAddLeafNodeIf(TokenKind token_kind,
@@ -1165,42 +1167,55 @@ auto Parser::HandlePackageState() -> void {
           /*has_error=*/false);
 }
 
-auto Parser::HandleParenConditionState() -> void {
+auto Parser::HandleParenCondition(ParenConditionKind cond_kind) -> void {
   auto state = PopState();
 
   auto open_paren = ConsumeIf(TokenKind::OpenParen());
-  if (open_paren) {
-    state.token = *open_paren;
-  } else {
+  if (!open_paren) {
     CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "Expected `(` after `{0}`.",
                       TokenKind);
     emitter_->Emit(*position_, ExpectedParenAfter,
                    tokens_->GetKind(state.token));
+    state.has_error = true;
+    // Recover by using the token for the open paren.
+    open_paren = state.token;
   }
 
-  // TODO: This should be adding a ConditionStart here instead of ConditionEnd
-  // later, so this does state modification instead of a simpler push.
-  state.state = ParserState::ParenConditionFinish();
+  switch (cond_kind) {
+    case ParenConditionKind::If:
+      state.state = ParserState::ParenConditionFinishAsIf();
+      AddLeafNode(ParseNodeKind::IfConditionStart(), *open_paren,
+                  state.has_error);
+      break;
+    case ParenConditionKind::While:
+      state.state = ParserState::ParenConditionFinishAsWhile();
+      AddLeafNode(ParseNodeKind::WhileConditionStart(), *open_paren,
+                  state.has_error);
+      break;
+  }
+
   PushState(state);
   PushState(ParserState::Expression());
 }
 
-auto Parser::HandleParenConditionFinishState() -> void {
+auto Parser::HandleParenConditionAsIfState() -> void {
+  HandleParenCondition(ParenConditionKind::If);
+}
+
+auto Parser::HandleParenConditionAsWhileState() -> void {
+  HandleParenCondition(ParenConditionKind::While);
+}
+
+auto Parser::HandleParenConditionFinishAsIfState() -> void {
   auto state = PopState();
 
-  if (tokens_->GetKind(state.token) != TokenKind::OpenParen()) {
-    // Don't expect a matching closing paren if there wasn't an opening paren.
-    // TODO: Should probably push nodes on this state in order to have the
-    // condition wrapped, but it wasn't before, so not doing it for consistency.
-    ReturnErrorOnState();
-    return;
-  }
+  ConsumeAndAddCloseParen(state, ParseNodeKind::IfCondition());
+}
 
-  bool close_paren =
-      ConsumeAndAddCloseParen(state.token, ParseNodeKind::ConditionEnd());
+auto Parser::HandleParenConditionFinishAsWhileState() -> void {
+  auto state = PopState();
 
-  return AddNode(ParseNodeKind::Condition(), state.token, state.subtree_start,
-                 /*has_error=*/state.has_error || !close_paren);
+  ConsumeAndAddCloseParen(state, ParseNodeKind::WhileCondition());
 }
 
 auto Parser::HandleParenExpressionState() -> void {
@@ -1441,12 +1456,7 @@ auto Parser::HandleStatementForHeaderInState() -> void {
 auto Parser::HandleStatementForHeaderFinishState() -> void {
   auto state = PopState();
 
-  if (!ConsumeAndAddCloseParen(state.token, ParseNodeKind::ForHeaderEnd())) {
-    state.has_error = true;
-  }
-
-  AddNode(ParseNodeKind::ForHeader(), state.token, state.subtree_start,
-          state.has_error);
+  ConsumeAndAddCloseParen(state, ParseNodeKind::ForHeader());
 
   PushState(ParserState::CodeBlock());
 }
@@ -1462,7 +1472,7 @@ auto Parser::HandleStatementIfState() -> void {
   PopAndDiscardState();
 
   PushState(ParserState::StatementIfConditionFinish());
-  PushState(ParserState::ParenCondition());
+  PushState(ParserState::ParenConditionAsIf());
   ++position_;
 }
 
@@ -1549,8 +1559,8 @@ auto Parser::HandleStatementWhileState() -> void {
   PopAndDiscardState();
 
   PushState(ParserState::StatementWhileConditionFinish());
-  PushState(ParserState::ParenCondition());
   ++position_;
+  PushState(ParserState::ParenConditionAsWhile());
 }
 
 auto Parser::HandleStatementWhileConditionFinishState() -> void {

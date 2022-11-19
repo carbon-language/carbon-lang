@@ -35,10 +35,19 @@ class Parser {
   // Possible operator fixities for errors.
   enum class OperatorFixity { Prefix, Infix, Postfix };
 
-  // Supported kinds of patterns for HandlePattern.
+  // Possible return values for FindListToken.
+  enum class ListTokenKind { Comma, Close, CommaClose };
+
+  // Supported kinds for HandleBraceExpression.
+  enum class BraceExpressionKind { Unknown, Value, Type };
+
+  // Supported kinds for HandleParenCondition.
+  enum class ParenConditionKind { If, While };
+
+  // Supported kinds for HandlePattern.
   enum class PatternKind { Parameter, Variable };
 
-  // Supported kinds of `var` syntaxes for HandleVar.
+  // Supported kinds for HandleVar.
   enum class VarKind { Semicolon, For };
 
   // Helper class for tracing state_stack_ on crashes.
@@ -88,16 +97,6 @@ class Parser {
   static_assert(sizeof(StateStackEntry) == 12,
                 "StateStackEntry has unexpected size!");
 
-  // Possible return values for FindListToken.
-  enum class ListTokenKind {
-    Comma,
-    Close,
-    CommaClose,
-  };
-
-  // The kind of brace expression being evaluated.
-  enum class BraceExpressionKind { Unknown, Value, Type };
-
   Parser(ParseTree& tree, TokenizedBuffer& tokens,
          TokenDiagnosticEmitter& emitter);
 
@@ -116,9 +115,9 @@ class Parser {
 
   // Parses a close paren token corresponding to the given open paren token,
   // possibly skipping forward and diagnosing if necessary. Creates a parse node
-  // of the specified kind if successful.
-  auto ConsumeAndAddCloseParen(TokenizedBuffer::Token open_paren,
-                               ParseNodeKind close_kind) -> bool;
+  // of the specified kind at the end.
+  auto ConsumeAndAddCloseParen(StateStackEntry state, ParseNodeKind close_kind)
+      -> void;
 
   // Composes `ConsumeIf` and `AddLeafNode`, returning false when ConsumeIf
   // fails.
@@ -263,7 +262,10 @@ class Parser {
   auto HandleFunctionError(StateStackEntry state, bool skip_past_likely_end)
       -> void;
 
-  // Handles ParenExpressionParameterFinish(AsUnknown|AsTuple).
+  // Handles ParenConditionAs(If|While)
+  auto HandleParenCondition(ParenConditionKind kind) -> void;
+
+  // Handles ParenExpressionParameterFinishAs(Unknown|Tuple).
   auto HandleParenExpressionParameterFinish(bool as_tuple) -> void;
 
   // Handles PatternAs(FunctionParameter|Variable).
