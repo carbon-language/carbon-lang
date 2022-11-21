@@ -1670,7 +1670,7 @@ auto Parser::HandleInterfaceIntroducerState() -> void {
                                ParseNodeKind::DeclaredName())) {
     CARBON_DIAGNOSTIC(ExpectedInterfaceName, Error,
                       "Expected interface name after `interface` keyword.");
-    emitter_.Emit(*position_, ExpectedInterfaceName);
+    emitter_->Emit(*position_, ExpectedInterfaceName);
     state.has_error = true;
   }
 
@@ -1679,7 +1679,7 @@ auto Parser::HandleInterfaceIntroducerState() -> void {
   if (!PositionIs(TokenKind::OpenCurlyBrace())) {
     CARBON_DIAGNOSTIC(ExpectedInterfaceOpenCurlyBrace, Error,
                       "Expected `{{` to start interface definition.");
-    emitter_.Emit(*position_, ExpectedInterfaceOpenCurlyBrace);
+    emitter_->Emit(*position_, ExpectedInterfaceOpenCurlyBrace);
     state.has_error = true;
 
     if (auto next_open_curly_brace = FindNextOf({TokenKind::OpenCurlyBrace()});
@@ -1718,7 +1718,7 @@ auto Parser::HandleInterfaceDefinitionLoopState() -> void {
     default: {
       CARBON_DIAGNOSTIC(UnrecognizedDeclaration, Error,
                         "Unrecognized declaration introducer.");
-      emitter_.Emit(*position_, UnrecognizedDeclaration);
+      emitter_->Emit(*position_, UnrecognizedDeclaration);
       if (auto semi = SkipPastLikelyEnd(*position_)) {
         AddLeafNode(ParseNodeKind::EmptyDeclaration(), *semi,
                     /*has_error=*/true);
