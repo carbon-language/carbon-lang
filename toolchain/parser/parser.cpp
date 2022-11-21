@@ -1705,12 +1705,12 @@ auto Parser::HandleInterfaceDefinitionLoopState() -> void {
 
   switch (PositionKind()) {
     case TokenKind::CloseCurlyBrace(): {
-      AddLeafNode(ParseNodeKind::InterfaceBodyEnd(), *position_);
-      ++position_;
-
       auto state = PopState();
-      AddNode(ParseNodeKind::InterfaceBody(), state.token, state.subtree_start,
+      AddLeafNode(ParseNodeKind::InterfaceBodyStart(), state.token);
+
+      AddNode(ParseNodeKind::InterfaceBody(), *position_, state.subtree_start,
               state.has_error);
+      ++position_;
 
       break;
     }

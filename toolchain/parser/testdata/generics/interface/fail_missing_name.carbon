@@ -5,8 +5,8 @@
 // AUTOUPDATE
 // RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
-// CHECK:STDOUT:     {kind: 'InterfaceBodyEnd', text: '}'},
-// CHECK:STDOUT:   {kind: 'InterfaceBody', text: '{', subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'InterfaceBodyStart', text: '{'},
+// CHECK:STDOUT:   {kind: 'InterfaceBody', text: '}', subtree_size: 2},
 // CHECK:STDOUT: {kind: 'InterfaceDefinition', text: 'interface', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
