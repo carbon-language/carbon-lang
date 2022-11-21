@@ -9,8 +9,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 > **STATUS:** Up-to-date on 09-Aug-2022, including proposals up through
 > [#1327](https://github.com/carbon-language/carbon-lang/pull/1327).
 
-> FIXME: add #2015
-
 <!-- toc -->
 
 ## Table of contents
@@ -469,6 +467,7 @@ may be limited to integers of at most 128 bits due to LLVM limitations.
 
 > References:
 >
+> -   [Numeric Type Literal](numeric_type_literals.md)
 > -   Question-for-leads issue
 >     [#543: pick names for fixed-size integer types](https://github.com/carbon-language/carbon-lang/issues/543)
 > -   Question-for-leads issue
@@ -534,6 +533,7 @@ number.
 
 > References:
 >
+> -   [Numeric Type Literal](numeric_type_literals.md)
 > -   Question-for-leads issue
 >     [#543: pick names for fixed-size integer types](https://github.com/carbon-language/carbon-lang/issues/543)
 > -   Question-for-leads issue
