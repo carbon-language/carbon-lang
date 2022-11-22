@@ -1695,7 +1695,7 @@ auto Parser::HandleInterfaceIntroducerState() -> void {
 
   if (has_open_curly_brace) {
     PushState(ParserState::InterfaceDefinitionLoop());
-    ++position_;
+    AddLeafNode(ParseNodeKind::InterfaceBodyStart(), Consume());
   }
 }
 
@@ -1706,7 +1706,6 @@ auto Parser::HandleInterfaceDefinitionLoopState() -> void {
   switch (PositionKind()) {
     case TokenKind::CloseCurlyBrace(): {
       auto state = PopState();
-      AddLeafNode(ParseNodeKind::InterfaceBodyStart(), state.token);
 
       AddNode(ParseNodeKind::InterfaceBody(), *position_, state.subtree_start,
               state.has_error);
