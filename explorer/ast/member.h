@@ -7,6 +7,7 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 
 #include "explorer/common/nonnull.h"
 #include "llvm/ADT/PointerUnion.h"
@@ -45,10 +46,17 @@ class Member {
   explicit Member(Nonnull<const NamedValue*> struct_member);
   explicit Member(Nonnull<const IndexedValue*> tuple_member);
 
-  // The name of the member.
-  auto name() const -> std::string_view;
-  // The index of the member, if any
-  auto index() const -> std::optional<size_t>;
+  // Return whether the member's name matches `name`.
+  auto IsNamed(std::string_view name) const -> bool;
+  // Prints the Member
+  void Print(llvm::raw_ostream& out) const;
+
+  // The index of the member. Requires *this to represent a positional member
+  auto name() const -> std::optional<std::string_view>;
+  // Return whether the member is positional.
+  auto isPositional() const -> bool;
+  // The index of the member. Requires *this to represent a positional member
+  auto index() const -> size_t;
   // The declared type of the member, which might include type variables.
   auto type() const -> const Value&;
   // A declaration of the member, if any exists.

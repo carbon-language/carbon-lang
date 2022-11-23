@@ -11,6 +11,7 @@
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "explorer/interpreter/action.h"
+#include "explorer/interpreter/field_path.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
@@ -33,12 +34,36 @@ auto StructValue::FindField(std::string_view name) const
   return std::nullopt;
 }
 
-static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
-                      const FieldPath::Component& field,
-                      SourceLocation source_loc, Nonnull<const Value*> me_value)
+static auto GetPositionalMember(Nonnull<const Value*> v,
+                                const FieldPath::Component& field,
+                                SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
-  std::string_view f = field.name();
+  CARBON_CHECK(field.member().isPositional())
+      << "Invalid non-positional member";
+  switch (v->kind()) {
+    case Value::Kind::TupleValue: {
+      const auto& tuple = cast<TupleValue>(*v);
+      const auto index = field.member().index();
+      if (index < 0 || index >= tuple.elements().size()) {
+        return ProgramError(source_loc)
+               << "index " << index << " out of range for " << *v;
+      }
+      return tuple.elements()[index];
+    }
+    default:
+      return ProgramError(source_loc)
+             << "Invalid positional argument for value " << *v;
+  }
+}
 
+static auto GetNamedMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
+                           const FieldPath::Component& field,
+                           SourceLocation source_loc,
+                           Nonnull<const Value*> me_value)
+    -> ErrorOr<Nonnull<const Value*>> {
+  const auto field_name = field.name();
+  CARBON_CHECK(field_name) << "Invalid unnamed member";
+  const auto f = field_name.value();
   if (field.witness().has_value()) {
     const auto* witness = cast<Witness>(*field.witness());
 
@@ -132,16 +157,18 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       return arena->New<FunctionValue>(&(*fun)->declaration(),
                                        &class_type.bindings());
     }
-    case Value::Kind::TupleValue: {
-      const auto& tuple = cast<TupleValue>(*v);
-      const auto index = field.member().index();
-      CARBON_CHECK(index)
-          << "Invalid member access for a TupleValue: index required";
-      return tuple.elements()[index.value()];
-    }
     default:
       CARBON_FATAL() << "field access not allowed for value " << *v;
   }
+}
+
+static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
+                      const FieldPath::Component& field,
+                      SourceLocation source_loc, Nonnull<const Value*> me_value)
+    -> ErrorOr<Nonnull<const Value*>> {
+  return field.member().isPositional()
+             ? GetPositionalMember(v, field, source_loc)
+             : GetNamedMember(arena, v, field, source_loc, me_value);
 }
 
 auto Value::GetMember(Nonnull<Arena*> arena, const FieldPath& path,
@@ -170,11 +197,11 @@ static auto SetFieldImpl(
       std::vector<NamedValue> elements = cast<StructValue>(*value).elements();
       auto it =
           llvm::find_if(elements, [path_begin](const NamedValue& element) {
-            return element.name == (*path_begin).name();
+            return (*path_begin).IsNamed(element.name);
           });
       if (it == elements.end()) {
         return ProgramError(source_loc)
-               << "field " << (*path_begin).name() << " not in " << *value;
+               << "field " << *path_begin << " not in " << *value;
       }
       CARBON_ASSIGN_OR_RETURN(
           it->value, SetFieldImpl(arena, it->value, path_begin + 1, path_end,
@@ -192,13 +219,10 @@ static auto SetFieldImpl(
     case Value::Kind::TupleValue: {
       std::vector<Nonnull<const Value*>> elements =
           cast<TupleValueBase>(*value).elements();
-      const auto index_opt = (*path_begin).index();
-      CARBON_CHECK(index)
-          << "FieldPath::index() is required to have a value for TupleValue";
-      int index = index_opt.value();
-      if (index < 0 || static_cast<size_t>(index) >= elements.size()) {
-        return ProgramError(source_loc) << "index " << (*path_begin).name()
-                                        << " out of range in " << *value;
+      const auto index = (*path_begin).index();
+      if (index < 0 || index >= elements.size()) {
+        return ProgramError(source_loc)
+               << "index " << index << " out of range in " << *value;
       }
       CARBON_ASSIGN_OR_RETURN(
           elements[index], SetFieldImpl(arena, elements[index], path_begin + 1,
@@ -519,7 +543,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       if (member_name.interface().has_value()) {
         out << *member_name.interface().value();
       }
-      out << "." << member_name.name();
+      out << "." << member_name;
       if (member_name.base_type().has_value() &&
           member_name.interface().has_value()) {
         out << ")";
@@ -565,7 +589,7 @@ void Value::Print(llvm::raw_ostream& out) const {
           << cast<TypeOfParameterizedEntityName>(*this).name();
       break;
     case Value::Kind::TypeOfMemberName: {
-      out << "member name " << cast<TypeOfMemberName>(*this).member().name();
+      out << "member name " << cast<TypeOfMemberName>(*this).member();
       break;
     }
     case Value::Kind::StaticArrayType: {

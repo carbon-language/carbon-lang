@@ -1142,6 +1142,9 @@ class MemberName : public Value {
     return value->kind() == Kind::MemberName;
   }
 
+  // Prints the member name or identifier.
+  void Print(llvm::raw_ostream& out) const { member_.Print(out); }
+
   // The type for which `name` is a member or a member of an `impl`.
   auto base_type() const -> std::optional<Nonnull<const Value*>> {
     return base_type_;
@@ -1152,8 +1155,6 @@ class MemberName : public Value {
   }
   // The member.
   auto member() const -> Member { return member_; }
-  // The name of the member.
-  auto name() const -> std::string_view { return member().name(); }
 
  private:
   std::optional<Nonnull<const Value*>> base_type_;
