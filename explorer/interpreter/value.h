@@ -1136,6 +1136,7 @@ class MemberName : public Value {
         member_(member) {
     CARBON_CHECK(base_type || interface)
         << "member name must be in a type, an interface, or both";
+    CARBON_CHECK(member_.hasName()) << "member must have a name";
   }
 
   static auto classof(const Value* value) -> bool {
@@ -1155,6 +1156,8 @@ class MemberName : public Value {
   }
   // The member.
   auto member() const -> Member { return member_; }
+  // The name of the member.
+  auto name() const -> std::string_view { return member().name(); }
 
  private:
   std::optional<Nonnull<const Value*>> base_type_;
