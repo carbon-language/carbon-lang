@@ -56,7 +56,7 @@ class Member {
   // Return whether the member is named, i.e. has a name.
   auto hasName() const -> bool;
 
-  // The index of the member. Requires *this to represent a named member.
+  // The name of the member. Requires *this to represent a named member.
   auto name() const -> std::string_view;
   // The index of the member. Requires *this to represent a positional member.
   auto index() const -> size_t;
