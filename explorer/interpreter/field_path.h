@@ -54,11 +54,6 @@ class FieldPath {
       return member_.IsNamed(name);
     }
 
-    auto name() const -> std::optional<std::string_view> {
-      return member_.name();
-    }
-    auto index() const -> size_t { return member_.index(); }
-
     auto interface() const -> std::optional<Nonnull<const InterfaceType*>> {
       return interface_;
     }

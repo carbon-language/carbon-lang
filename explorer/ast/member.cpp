@@ -4,8 +4,6 @@
 
 #include "explorer/ast/member.h"
 
-#include <optional>
-
 #include "common/check.h"
 #include "explorer/ast/declaration.h"
 
