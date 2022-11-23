@@ -38,8 +38,7 @@ static auto GetPositionalMember(Nonnull<const Value*> v,
                                 const FieldPath::Component& field,
                                 SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
-  CARBON_CHECK(field.member().isPositional())
-      << "Invalid non-positional member";
+  CARBON_CHECK(field.member().hasPosition()) << "Invalid non-positional member";
   switch (v->kind()) {
     case Value::Kind::TupleValue: {
       const auto& tuple = cast<TupleValue>(*v);
@@ -166,7 +165,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                       const FieldPath::Component& field,
                       SourceLocation source_loc, Nonnull<const Value*> me_value)
     -> ErrorOr<Nonnull<const Value*>> {
-  return field.member().isPositional()
+  return field.member().hasPosition()
              ? GetPositionalMember(v, field, source_loc)
              : GetNamedMember(arena, v, field, source_loc, me_value);
 }

@@ -51,11 +51,14 @@ class Member {
   // Prints the Member
   void Print(llvm::raw_ostream& out) const;
 
-  // The index of the member. Requires *this to represent a positional member
-  auto name() const -> std::optional<std::string_view>;
-  // Return whether the member is positional.
-  auto isPositional() const -> bool;
-  // The index of the member. Requires *this to represent a positional member
+  // Return whether the member is positional, i.e. has an index.
+  auto hasPosition() const -> bool;
+  // Return whether the member is named, i.e. has a name.
+  auto hasName() const -> bool;
+
+  // The index of the member. Requires *this to represent a named member.
+  auto name() const -> std::string_view;
+  // The index of the member. Requires *this to represent a positional member.
   auto index() const -> size_t;
   // The declared type of the member, which might include type variables.
   auto type() const -> const Value&;

@@ -5,7 +5,6 @@
 #include "explorer/ast/member.h"
 
 #include <optional>
-#include <string_view>
 
 #include "common/check.h"
 #include "explorer/ast/declaration.h"
@@ -21,30 +20,34 @@ Member::Member(Nonnull<const NamedValue*> struct_member)
 Member::Member(Nonnull<const IndexedValue*> tuple_member)
     : member_(tuple_member) {}
 
-auto Member::name() const -> std::optional<std::string_view> {
+auto Member::IsNamed(std::string_view other_name) const -> bool {
+  return hasName() && name() == other_name;
+}
+
+auto Member::name() const -> std::string_view {
+  CARBON_CHECK(hasName()) << "Unnamed member does not have a name()";
   if (const auto* decl = member_.dyn_cast<const Declaration*>()) {
     return GetName(*decl).value();
   } else if (const auto* named_valued = member_.dyn_cast<const NamedValue*>()) {
     return named_valued->name;
   } else {
-    return std::nullopt;
+    CARBON_FATAL() << "Unreachable";
   }
 }
 
-auto Member::IsNamed(std::string_view other_name) const -> bool {
-  const auto member_name = name();
-  return member_name && other_name == member_name;
-}
-
-auto Member::isPositional() const -> bool {
+auto Member::hasPosition() const -> bool {
   return member_.dyn_cast<const IndexedValue*>() != nullptr;
 }
 
+auto Member::hasName() const -> bool {
+  // Both are currently mutually exclusive
+  return !hasPosition();
+}
+
 auto Member::index() const -> size_t {
-  const auto* value = member_.dyn_cast<const IndexedValue*>();
-  CARBON_CHECK(value)
-      << "Member::index() requires to be used with a positional member";
-  return value->index;
+  CARBON_CHECK(hasPosition())
+      << "Non-positional member does not have an index()";
+  return member_.dyn_cast<const IndexedValue*>()->index;
 }
 
 auto Member::type() const -> const Value& {
@@ -65,9 +68,8 @@ auto Member::declaration() const -> std::optional<Nonnull<const Declaration*>> {
 }
 
 void Member::Print(llvm::raw_ostream& out) const {
-  const auto member_name = name();
-  if (member_name) {
-    out << member_name.value();
+  if (hasName()) {
+    out << name();
   } else if (const auto* value = member_.dyn_cast<const IndexedValue*>()) {
     out << "element #" << member_.get<const IndexedValue*>()->index;
   } else {
