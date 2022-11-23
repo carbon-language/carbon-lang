@@ -1,4 +1,3 @@
-
 # Numeric Type Literal Semantics
 
 <!--
@@ -20,7 +19,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Overview
 
-Carbon's introduce a simple keyword-like syntax of `iN`, `uN`, and `fN` for two's complement integers, unsigned integers, and [IEEE-754](https://en.wikipedia.org/wiki/IEEE_754) floating-point numbers, respectively. Where `N` can be a positive multiple of 8, including the common power-of-two sizes (for example, `N = 8, 16, 32`).
+Carbon's introduce a simple keyword-like syntax of `iN`, `uN`, and `fN` for
+two's complement integers, unsigned integers, and
+[IEEE-754](https://en.wikipedia.org/wiki/IEEE_754) floating-point numbers,
+respectively. Where `N` can be a positive multiple of 8, including the common
+power-of-two sizes (for example, `N = 8, 16, 32`).
 
 Examples of this syntax include:
 
@@ -56,4 +59,4 @@ as a 32-bit two's complement signed integer. `Main` then returns the output of
 -   Proposal
     [#2015: Numeric type literal syntax](https://github.com/carbon-language/carbon-lang/pull/2015)
 -   Issue
-     [#1998: Make proposal for numeric type literal syntax](https://github.com/carbon-language/carbon-lang/issues/1998#issuecomment-1212644291)
+    [#1998: Make proposal for numeric type literal syntax](https://github.com/carbon-language/carbon-lang/issues/1998#issuecomment-1212644291)

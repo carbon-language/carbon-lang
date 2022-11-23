@@ -476,7 +476,8 @@ may be limited to integers of at most 128 bits due to LLVM limitations.
 >     [#861: Naming conventions](https://github.com/carbon-language/carbon-lang/pull/861)
 > -   Proposal
 >     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
-> -   Proposal [#2015: Numeric type literal syntax](https://github.com/carbon-language/carbon-lang/pull/2015)
+> -   Proposal
+>     [#2015: Numeric type literal syntax](https://github.com/carbon-language/carbon-lang/pull/2015)
 
 #### Integer literals
 
@@ -541,7 +542,8 @@ number.
 >     [#861: Naming conventions](https://github.com/carbon-language/carbon-lang/pull/861)
 > -   Proposal
 >     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
-> -   Proposal [#2015: Numeric type literal syntax](https://github.com/carbon-language/carbon-lang/pull/2015)
+> -   Proposal
+>     [#2015: Numeric type literal syntax](https://github.com/carbon-language/carbon-lang/pull/2015)
 
 #### Floating-point literals
 
