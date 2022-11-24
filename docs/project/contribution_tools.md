@@ -148,10 +148,10 @@ These tools are essential for work on Carbon.
 `pre-commit install`. When set up in this mode, it will check for issues when
 `git commit` is run. A typical commit workflow looks like:
 
-1. `git commit` to try committing files. This automatically executes
-   `pre-commit run`, which may fail and leave files modified for cleanup.
-2. `git add .` to add the automatically modifications done by `pre-commit`.
-3. `git commit` again.
+1.  `git commit` to try committing files. This automatically executes
+    `pre-commit run`, which may fail and leave files modified for cleanup.
+2.  `git add .` to add the automatically modifications done by `pre-commit`.
+3.  `git commit` again.
 
 You can also use `pre-commit run` to check pending changes without `git commit`,
 or `pre-commit run -a` to run on all files in the repository.
@@ -222,7 +222,7 @@ get `$PATH` changes.
 It may be necessary to run `bazel clean` after updating versions in order to
 clean up cached state.
 
-macOS only: In case of "llvm-ar no such file or directory" error see 
+macOS only: In case of "llvm-ar no such file or directory" error see
 [llvm-fix](https://tipseason.com/carbon-language-execvp-error/)
 
 ### Asking for help
