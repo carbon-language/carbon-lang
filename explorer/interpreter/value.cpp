@@ -800,7 +800,24 @@ auto ValueStructurallyEqual(
     return true;
   }
   if (v1->kind() != v2->kind()) {
-    return false;
+    switch (v1->kind()) {
+      case Value::Kind::AlternativeValue:
+      case Value::Kind::AlternativeConstructorValue: {
+        switch (v2->kind()) {
+          case Value::Kind::AlternativeValue:
+          case Value::Kind::AlternativeConstructorValue: {
+            const auto& a1 = cast<AlternativeBase>(*v1);
+            const auto& a2 = cast<AlternativeBase>(*v2);
+            return a1.choice_name() == a2.choice_name() &&
+                   a1.alt_name() == a2.alt_name();
+          }
+          default:
+            return false;
+        }
+      }
+      default:
+        return false;
+    }
   }
   switch (v1->kind()) {
     case Value::Kind::IntValue:
@@ -875,6 +892,12 @@ auto ValueStructurallyEqual(
              TypeEqual(&assoc1.base(), &assoc2.base(), equality_ctx) &&
              TypeEqual(&assoc1.interface(), &assoc2.interface(), equality_ctx);
     }
+    case Value::Kind::AlternativeConstructorValue: {
+      const auto& a1 = cast<AlternativeConstructorValue>(*v1);
+      const auto& a2 = cast<AlternativeConstructorValue>(*v2);
+      return a1.choice_name() == a2.choice_name() &&
+             a1.alt_name() == a2.alt_name();
+    }
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
@@ -904,7 +927,6 @@ auto ValueStructurallyEqual(
     case Value::Kind::AlternativeValue:
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
-    case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LValue:
@@ -949,7 +971,6 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
       }
     }
   }
-
   return ValueStructurallyEqual(v1, v2, equality_ctx);
 }
 

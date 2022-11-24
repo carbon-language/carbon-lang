@@ -341,17 +341,15 @@ class NominalClassValue : public Value {
   Nonnull<const Value*> inits_;  // The initializing StructValue.
 };
 
-// An alternative constructor value.
-class AlternativeConstructorValue : public Value {
+class AlternativeBase : public Value {
  public:
-  AlternativeConstructorValue(std::string_view alt_name,
-                              std::string_view choice_name)
-      : Value(Kind::AlternativeConstructorValue),
-        alt_name_(alt_name),
-        choice_name_(choice_name) {}
+  AlternativeBase(Kind kind, std::string_view alt_name,
+                  std::string_view choice_name)
+      : Value(kind), alt_name_(alt_name), choice_name_(choice_name) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::AlternativeConstructorValue;
+    return value->kind() == Kind::AlternativeConstructorValue ||
+           value->kind() == Kind::AlternativeValue;
   }
 
   auto alt_name() const -> const std::string& { return alt_name_; }
@@ -362,27 +360,34 @@ class AlternativeConstructorValue : public Value {
   std::string choice_name_;
 };
 
+// An alternative constructor value.
+class AlternativeConstructorValue : public AlternativeBase {
+ public:
+  AlternativeConstructorValue(std::string_view alt_name,
+                              std::string_view choice_name)
+      : AlternativeBase(Kind::AlternativeConstructorValue, alt_name,
+                        choice_name) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::AlternativeConstructorValue;
+  }
+};
+
 // An alternative value.
-class AlternativeValue : public Value {
+class AlternativeValue : public AlternativeBase {
  public:
   AlternativeValue(std::string_view alt_name, std::string_view choice_name,
                    Nonnull<const Value*> argument)
-      : Value(Kind::AlternativeValue),
-        alt_name_(alt_name),
-        choice_name_(choice_name),
+      : AlternativeBase(Kind::AlternativeValue, alt_name, choice_name),
         argument_(argument) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::AlternativeValue;
   }
 
-  auto alt_name() const -> const std::string& { return alt_name_; }
-  auto choice_name() const -> const std::string& { return choice_name_; }
   auto argument() const -> const Value& { return *argument_; }
 
  private:
-  std::string alt_name_;
-  std::string choice_name_;
   Nonnull<const Value*> argument_;
 };
 

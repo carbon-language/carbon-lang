@@ -2767,7 +2767,13 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               // choice type alternative?
               access.set_member(Member(arena_->New<NamedValue>(
                   NamedValue{access.member_name(), type})));
-              access.set_static_type(type);
+              const auto& fun_t = cast<FunctionType>(type);
+              const auto& tuple_t = cast<TupleValueBase>(fun_t->parameters());
+              if (tuple_t.elements().size() == 0) {
+                access.set_static_type(&fun_t->return_type());
+              } else {
+                access.set_static_type(type);
+              }
               access.set_value_category(ValueCategory::Let);
               return Success();
             }
@@ -3220,6 +3226,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&call.function(), impl_scope));
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&call.argument(), impl_scope));
       switch (call.function().static_type().kind()) {
+        case Value::Kind::ChoiceType: {
+          call.set_static_type(&call.function().static_type());
+          return Success();
+        }
         case Value::Kind::FunctionType: {
           const auto& fun_t = cast<FunctionType>(call.function().static_type());
           if (trace_stream_) {
@@ -4172,6 +4182,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
             var.init().source_loc(), &var.init().static_type()));
         init_type = &var.init().static_type();
       }
+
       CARBON_RETURN_IF_ERROR(TypeCheckPattern(&var.pattern(), init_type,
                                               var_scope, var.value_category()));
       CARBON_RETURN_IF_ERROR(ExpectCompleteType(
