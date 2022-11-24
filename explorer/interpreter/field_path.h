@@ -42,16 +42,16 @@ class FieldPath {
   // need `witness`, a pointer to the witness table containing that field.
   class Component {
    public:
-    explicit Component(Member member) : member_(member) {}
-    Component(Member member,
+    explicit Component(Nonnull<const Member*> member) : member_(member) {}
+    Component(Nonnull<const Member*> member,
               std::optional<Nonnull<const InterfaceType*>> interface,
               std::optional<Nonnull<const Witness*>> witness)
         : member_(member), interface_(interface), witness_(witness) {}
 
-    auto member() const -> Member { return member_; }
+    auto member() const -> Nonnull<const Member*> { return member_; }
 
     auto IsNamed(std::string_view name) const -> bool {
-      return member_.IsNamed(name);
+      return member_->IsNamed(name);
     }
 
     auto interface() const -> std::optional<Nonnull<const InterfaceType*>> {
@@ -62,16 +62,17 @@ class FieldPath {
       return witness_;
     }
 
-    void Print(llvm::raw_ostream& out) const { return member_.Print(out); }
+    void Print(llvm::raw_ostream& out) const { return member_->Print(out); }
 
    private:
-    Member member_;
+    Nonnull<const Member*> member_;
     std::optional<Nonnull<const InterfaceType*>> interface_;
     std::optional<Nonnull<const Witness*>> witness_;
   };
 
   // Constructs a FieldPath consisting of a single step.
-  explicit FieldPath(Member member) : components_({Component(member)}) {}
+  explicit FieldPath(Nonnull<const Member*> member)
+      : components_({Component(member)}) {}
   explicit FieldPath(const Component& f) : components_({f}) {}
 
   FieldPath(const FieldPath&) = default;
@@ -83,7 +84,7 @@ class FieldPath {
   auto IsEmpty() const -> bool { return components_.empty(); }
 
   // Appends `member` to the end of *this.
-  auto Append(Member member) -> void {
+  auto Append(Nonnull<const Member*> member) -> void {
     components_.push_back(Component(member));
   }
 

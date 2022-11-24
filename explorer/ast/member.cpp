@@ -8,71 +8,45 @@
 #include "explorer/ast/declaration.h"
 
 namespace Carbon {
-
-Member::Member(Nonnull<const Declaration*> declaration)
-    : member_(declaration) {}
-
-Member::Member(Nonnull<const NamedValue*> struct_member)
-    : member_(struct_member) {}
-
-Member::Member(Nonnull<const IndexedValue*> tuple_member)
-    : member_(tuple_member) {}
-
-auto Member::IsNamed(std::string_view other_name) const -> bool {
-  return hasName() && name() == other_name;
+NominalMember::NominalMember(Nonnull<const Declaration*> declaration)
+    : Member(MemberKind::NominalMember, GetName(*declaration).value()),
+      member_(declaration) {
+  CARBON_CHECK(name_) << "Missing name for NominalMember";
 }
+NominalMember::NominalMember(Nonnull<const NamedValue*> struct_member)
+    : Member(MemberKind::NominalMember, struct_member->name),
+      member_(struct_member) {}
 
-auto Member::name() const -> std::string_view {
-  CARBON_CHECK(hasName()) << "Unnamed member does not have a name()";
-  if (const auto* decl = member_.dyn_cast<const Declaration*>()) {
-    return GetName(*decl).value();
-  } else if (const auto* named_valued = member_.dyn_cast<const NamedValue*>()) {
-    return named_valued->name;
-  } else {
-    CARBON_FATAL() << "Unreachable";
-  }
-}
+NominalMember::NominalMember(const NominalMember& other)
+    : Member(other.kind(), other.name_.value()), member_(other.member_) {}
 
-auto Member::hasPosition() const -> bool {
-  return member_.dyn_cast<const IndexedValue*>() != nullptr;
-}
+NominalMember::NominalMember(NominalMember&& other) noexcept
+    : Member(other.kind(), other.name_.value()), member_(other.member_) {}
 
-auto Member::hasName() const -> bool {
-  // Both are currently mutually exclusive
-  return !hasPosition();
-}
+auto NominalMember::name() const -> std::string_view { return name_.value(); }
 
-auto Member::index() const -> size_t {
-  CARBON_CHECK(hasPosition())
-      << "Non-positional member does not have an index()";
-  return member_.dyn_cast<const IndexedValue*>()->index;
-}
-
-auto Member::type() const -> const Value& {
+auto NominalMember::type() const -> const Value& {
   if (const auto* decl = member_.dyn_cast<const Declaration*>()) {
     return decl->static_type();
-  } else if (const auto* named_valued = member_.dyn_cast<const NamedValue*>()) {
-    return *named_valued->value;
   } else {
-    return *member_.get<const IndexedValue*>()->value;
+    const auto* named_valued = member_.dyn_cast<const NamedValue*>();
+    return *named_valued->value;
   }
 }
 
-auto Member::declaration() const -> std::optional<Nonnull<const Declaration*>> {
+auto NominalMember::declaration() const
+    -> std::optional<Nonnull<const Declaration*>> {
   if (const auto* decl = member_.dyn_cast<const Declaration*>()) {
     return decl;
   }
   return std::nullopt;
 }
 
-void Member::Print(llvm::raw_ostream& out) const {
-  if (hasName()) {
-    out << name();
-  } else if (const auto* value = member_.dyn_cast<const IndexedValue*>()) {
-    out << "element #" << member_.get<const IndexedValue*>()->index;
-  } else {
-    CARBON_FATAL() << "Unhandled member type";
-  }
+void NominalMember::Print(llvm::raw_ostream& out) const { out << name(); }
+
+// Prints the Member
+void PositionalMember::Print(llvm::raw_ostream& out) const {
+  out << "element #" << index_;
 }
 
 }  // namespace Carbon

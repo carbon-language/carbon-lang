@@ -66,7 +66,7 @@ class Address {
 
   // If *this represents the address of an object with a field named
   // `field_name`, this method returns the address of that field.
-  auto SubobjectAddress(Member member) const -> Address {
+  auto SubobjectAddress(Nonnull<const Member*> member) const -> Address {
     Address result = *this;
     result.field_path_.Append(member);
     return result;

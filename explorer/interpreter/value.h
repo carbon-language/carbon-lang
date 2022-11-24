@@ -1129,14 +1129,13 @@ class MemberName : public Value {
  public:
   MemberName(std::optional<Nonnull<const Value*>> base_type,
              std::optional<Nonnull<const InterfaceType*>> interface,
-             Member member)
+             NominalMember member)
       : Value(Kind::MemberName),
         base_type_(base_type),
         interface_(interface),
-        member_(member) {
+        member_(std::move(member)) {
     CARBON_CHECK(base_type || interface)
         << "member name must be in a type, an interface, or both";
-    CARBON_CHECK(member_.hasName()) << "member must have a name";
   }
 
   static auto classof(const Value* value) -> bool {
@@ -1155,14 +1154,14 @@ class MemberName : public Value {
     return interface_;
   }
   // The member.
-  auto member() const -> Member { return member_; }
+  auto member() const -> const NominalMember& { return member_; }
   // The name of the member.
   auto name() const -> std::string_view { return member().name(); }
 
  private:
   std::optional<Nonnull<const Value*>> base_type_;
   std::optional<Nonnull<const InterfaceType*>> interface_;
-  Member member_;
+  NominalMember member_;
 };
 
 // A symbolic value representing an associated constant.
@@ -1330,8 +1329,8 @@ class TypeOfParameterizedEntityName : public Value {
 // as the member name in a compound member access.
 class TypeOfMemberName : public Value {
  public:
-  explicit TypeOfMemberName(Member member)
-      : Value(Kind::TypeOfMemberName), member_(member) {}
+  explicit TypeOfMemberName(NominalMember member)
+      : Value(Kind::TypeOfMemberName), member_(std::move(member)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::TypeOfMemberName;
@@ -1339,10 +1338,10 @@ class TypeOfMemberName : public Value {
 
   // TODO: consider removing this or moving it elsewhere in the AST,
   // since it's arguably part of the expression value rather than its type.
-  auto member() const -> Member { return member_; }
+  auto member() const -> NominalMember { return member_; }
 
  private:
-  Member member_;
+  NominalMember member_;
 };
 
 // The type of a statically-sized array.

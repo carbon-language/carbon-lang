@@ -8,6 +8,7 @@
 
 #include "common/check.h"
 #include "explorer/ast/declaration.h"
+#include "explorer/ast/member.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "explorer/interpreter/action.h"
@@ -38,11 +39,13 @@ static auto GetPositionalMember(Nonnull<const Value*> v,
                                 const FieldPath::Component& field,
                                 SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
-  CARBON_CHECK(field.member().hasPosition()) << "Invalid non-positional member";
+  CARBON_CHECK(field.member()->kind() == MemberKind::PositionalMember)
+      << "Invalid non-positional member";
+  const auto* pos_member = cast<PositionalMember>(field.member());
   switch (v->kind()) {
     case Value::Kind::TupleValue: {
       const auto& tuple = cast<TupleValue>(*v);
-      const auto index = field.member().index();
+      const auto index = pos_member->index();
       if (index < 0 || index >= tuple.elements().size()) {
         return ProgramError(source_loc)
                << "index " << index << " out of range for " << *v;
@@ -60,15 +63,17 @@ static auto GetNamedMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                            SourceLocation source_loc,
                            Nonnull<const Value*> me_value)
     -> ErrorOr<Nonnull<const Value*>> {
-  CARBON_CHECK(field.member().hasName()) << "Invalid unnamed member";
-  const auto f = field.member().name();
+  CARBON_CHECK(field.member()->kind() == MemberKind::NominalMember)
+      << "Invalid unnamed member";
+  const auto* nom_member = cast<NominalMember>(field.member());
+  const auto f = nom_member->name();
   if (field.witness().has_value()) {
     const auto* witness = cast<Witness>(*field.witness());
 
     // Associated constants.
     if (const auto* assoc_const =
             dyn_cast_or_null<AssociatedConstantDeclaration>(
-                field.member().declaration().value_or(nullptr))) {
+                nom_member->declaration().value_or(nullptr))) {
       CARBON_CHECK(field.interface()) << "have witness but no interface";
       // TODO: Use witness to find the value of the constant.
       return arena->New<AssociatedConstant>(v, *field.interface(), assoc_const,
@@ -164,7 +169,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                       const FieldPath::Component& field,
                       SourceLocation source_loc, Nonnull<const Value*> me_value)
     -> ErrorOr<Nonnull<const Value*>> {
-  return field.member().hasPosition()
+  return field.member()->kind() == MemberKind::PositionalMember
              ? GetPositionalMember(v, field, source_loc)
              : GetNamedMember(arena, v, field, source_loc, me_value);
 }
@@ -215,11 +220,13 @@ static auto SetFieldImpl(
     }
     case Value::Kind::TupleType:
     case Value::Kind::TupleValue: {
+      CARBON_CHECK((*path_begin).member()->kind() ==
+                   MemberKind::PositionalMember)
+          << "Invalid non-positional member for tuple";
       std::vector<Nonnull<const Value*>> elements =
           cast<TupleValueBase>(*value).elements();
-      CARBON_CHECK((*path_begin).member().hasPosition())
-          << "Invalid non-positional member for tuple";
-      const auto index = (*path_begin).member().index();
+      const auto index =
+          cast<PositionalMember>((*path_begin).member())->index();
       if (index < 0 || index >= elements.size()) {
         return ProgramError(source_loc)
                << "index " << index << " out of range in " << *value;

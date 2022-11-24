@@ -319,18 +319,15 @@ class SimpleMemberAccessExpression : public MemberAccessExpression {
 
   auto member_name() const -> const std::string& { return member_name_; }
 
-  // Returns the `Member` that the member name resolved to.
+  // Returns the `NominalMember` that the member name resolved to.
   // Should not be called before typechecking.
-  auto member() const -> const Member& {
+  auto member() const -> const NominalMember& {
     CARBON_CHECK(member_.has_value());
-    return *member_;
+    return *member_.value();
   }
 
   // Can only be called once, during typechecking.
-  void set_member(Member member) {
-    CARBON_CHECK(!member_.has_value());
-    member_ = member;
-  }
+  void set_member(Nonnull<const NominalMember*> member) { member_ = member; }
 
   // If `object` is a constrained type parameter and `member` was found in an
   // interface, returns that interface. Should not be called before
@@ -348,7 +345,7 @@ class SimpleMemberAccessExpression : public MemberAccessExpression {
 
  private:
   std::string member_name_;
-  std::optional<Member> member_;
+  std::optional<Nonnull<const NominalMember*>> member_;
   std::optional<Nonnull<const InterfaceType*>> found_in_interface_;
 };
 

@@ -416,7 +416,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         //    { v :: [].f :: C, E, F} :: S, H}
         // -> { { &v.f :: C, E, F} :: S, H }
         Address object = cast<LValue>(*act.results()[0]).address();
-        Address member = object.SubobjectAddress(access.member());
+        Address member = object.SubobjectAddress(&access.member());
         return todo_.FinishAction(arena_->New<LValue>(member));
       }
     }
@@ -438,7 +438,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
             Convert(act.results()[0], *access.member().base_type(),
                     exp.source_loc()));
         Address object = cast<LValue>(*val).address();
-        Address field = object.SubobjectAddress(access.member().member());
+        Address field = object.SubobjectAddress(&access.member().member());
         return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
@@ -457,9 +457,8 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         // -> { { &v[i] :: C, E, F} :: S, H }
         Address object = cast<LValue>(*act.results()[0]).address();
         const auto index = cast<IntValue>(*act.results()[1]).value();
-        auto* tuple_field = arena_->New<IndexedValue>(
-            IndexedValue{static_cast<size_t>(index), &exp.static_type()});
-        Address field = object.SubobjectAddress(Member(tuple_field));
+        Address field = object.SubobjectAddress(arena_->New<PositionalMember>(
+            static_cast<size_t>(index), &exp.static_type()));
         return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
@@ -1086,7 +1085,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           if (access.impl().has_value()) {
             witness = cast<Witness>(act.results()[1]);
           }
-          FieldPath::Component member(access.member(), found_in_interface,
+          FieldPath::Component member(&access.member(), found_in_interface,
                                       witness);
           const Value* aggregate;
           if (access.is_type_access()) {
@@ -1171,7 +1170,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                 object, Convert(object, *access.member().base_type(),
                                 exp.source_loc()));
           }
-          FieldPath::Component field(access.member().member(),
+          FieldPath::Component field(&access.member().member(),
                                      found_in_interface, witness);
           CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> member,
                                   object->GetMember(arena_, FieldPath(field),
@@ -1985,7 +1984,8 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
         const auto& member = class_dec.members()[index];
         if (const auto* var = dyn_cast<VariableDeclaration>(member)) {
           Address object = destroy_act.lvalue()->address();
-          Address mem = object.SubobjectAddress(Member(var));
+          Address mem =
+              object.SubobjectAddress(arena_->New<NominalMember>(var));
           SourceLocation source_loc("destructor", 1);
           auto v = heap_.Read(mem, source_loc);
           return todo_.Spawn(
