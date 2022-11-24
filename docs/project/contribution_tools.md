@@ -222,6 +222,9 @@ get `$PATH` changes.
 It may be necessary to run `bazel clean` after updating versions in order to
 clean up cached state.
 
+macOS only: In case of "llvm-ar no such file or directory" error see 
+[llvm-fix](https://tipseason.com/carbon-language-execvp-error/)
+
 ### Asking for help
 
 If you're having trouble resolving issues, please ask on
