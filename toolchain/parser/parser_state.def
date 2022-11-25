@@ -557,4 +557,14 @@ CARBON_PARSER_STATE(VarAfterInitializer)
 CARBON_PARSER_STATE(VarFinishAsSemicolon)
 CARBON_PARSER_STATE(VarFinishAsFor)
 
+CARBON_PARSER_STATE(FunctionAfterMeParam)
+// To parse starting from `[`.
+// CARBON_PARSER_STATE(MeParam)
+// To parse until `]`.
+CARBON_PARSER_STATE(MeParamFinish)
+// To parse starting from `me`.
+CARBON_PARSER_STATE(MePattern)
+// To parse until before `]`.
+CARBON_PARSER_STATE(MePatternFinish)
+
 #undef CARBON_PARSER_STATE

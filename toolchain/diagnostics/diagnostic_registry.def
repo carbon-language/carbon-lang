@@ -81,6 +81,10 @@ CARBON_DIAGNOSTIC_KIND(ExpectedIn)
 // Interface-specific diagnostics
 CARBON_DIAGNOSTIC_KIND(ExpectedInterfaceName)
 CARBON_DIAGNOSTIC_KIND(ExpectedInterfaceOpenCurlyBrace)
+CARBON_DIAGNOSTIC_KIND(MethodImplNotAllowed)
+
+// Class and interface diagnostics
+CARBON_DIAGNOSTIC_KIND(ExpectedMeParam)
 
 // ============================================================================
 // Semantics diagnostics

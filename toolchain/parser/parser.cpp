@@ -88,7 +88,8 @@ Parser::Parser(ParseTree& tree, TokenizedBuffer& tokens,
       emitter_(&emitter),
       vlog_stream_(vlog_stream),
       position_(tokens_->tokens().begin()),
-      end_(tokens_->tokens().end()) {
+      end_(tokens_->tokens().end()),
+      stack_context_(ParseContext::File) {
   CARBON_CHECK(position_ != end_) << "Empty TokenizedBuffer";
   --end_;
   CARBON_CHECK(tokens_->GetKind(*end_) == TokenKind::EndOfFile())
@@ -852,6 +853,11 @@ auto Parser::HandleExpressionInPostfixState() -> void {
       PushState(ParserState::ParenExpression());
       break;
     }
+    case TokenKind::Self(): {
+      AddLeafNode(ParseNodeKind::Self(), Consume());
+      PushState(state);
+      break;
+    }
     default: {
       CARBON_DIAGNOSTIC(ExpectedExpression, Error, "Expected expression.");
       emitter_->Emit(*position_, ExpectedExpression);
@@ -1015,6 +1021,30 @@ auto Parser::HandleFunctionIntroducerState() -> void {
     return;
   }
 
+  if (stack_context_ == ParseContext::Interface) {
+    auto started_parsing_me_param = [&]() {
+      if (!PositionIs(TokenKind::OpenSquareBracket())) {
+        return false;
+      }
+
+      state.state = ParserState::FunctionAfterMeParam();
+      PushState(state);
+
+      PushState(ParserState::MeParamFinish());
+      // This is for sure a `[`, we can safely create the corresponding node.
+      AddLeafNode(ParseNodeKind::MeParamStart(), Consume());
+      // Push state to handle `me`'s pattern binding.
+      PushState(ParserState::MePattern());
+      return true;
+    }();
+
+    if (started_parsing_me_param) {
+      // The remaining part of the function signature will be handled by
+      // `FunctionAfterMeParam`.
+      return;
+    }
+  }
+
   if (!PositionIs(TokenKind::OpenParen())) {
     CARBON_DIAGNOSTIC(ExpectedFunctionParams, Error,
                       "Expected `(` after function name.");
@@ -1029,6 +1059,35 @@ auto Parser::HandleFunctionIntroducerState() -> void {
   PushState(state);
   PushState(ParserState::FunctionParameterListFinish());
   AddLeafNode(ParseNodeKind::ParameterListStart(), Consume());
+  if (!PositionIs(TokenKind::CloseParen())) {
+    PushState(ParserState::FunctionParameter());
+  }
+}
+
+auto Parser::HandleMeParamFinishState() -> void {
+  auto state = PopState();
+  AddNode(ParseNodeKind::MeParam(), Consume(), state.subtree_start,
+          state.has_error);
+}
+
+auto Parser::HandleFunctionAfterMeParamState() -> void {
+  auto state = PopState();
+
+  if (!PositionIs(TokenKind::OpenParen())) {
+    CARBON_DIAGNOSTIC(ExpectedFunctionParams, Error,
+                      "Expected `(` after function name.");
+    emitter_->Emit(*position_, ExpectedFunctionParams);
+    HandleFunctionError(state, true);
+    return;
+  }
+
+  // Parse the parameter list as its own subtree; once that pops, resume
+  // function parsing.
+  state.state = ParserState::FunctionAfterParameterList();
+  PushState(state);
+  PushState(ParserState::FunctionParameterListFinish());
+  AddLeafNode(ParseNodeKind::ParameterListStart(), Consume());
+
   if (!PositionIs(TokenKind::CloseParen())) {
     PushState(ParserState::FunctionParameter());
   }
@@ -1307,13 +1366,55 @@ auto Parser::HandleParenExpressionFinishAsTupleState() -> void {
           state.has_error);
 }
 
+auto Parser::HandleMePatternState() -> void {
+  auto state = PopState();
+
+  // Ensure the finish state always follows.
+  state.state = ParserState::MePatternFinish();
+
+  // me `:` type
+  auto possible_me_param =
+      (PositionIs(TokenKind::Me()) &&
+       tokens_->GetKind(*(position_ + 1)) == TokenKind::Colon());
+
+  // addr me `:` type
+  auto possible_me_addr_param =
+      (PositionIs(TokenKind::Addr()) &&
+       tokens_->GetKind(*(position_ + 1)) == TokenKind::Me() &&
+       tokens_->GetKind(*(position_ + 2)) == TokenKind::Colon());
+
+  if (possible_me_param) {
+    // Switch the context token to the colon, so that it'll be used for the root
+    // node.
+    state.token = *(position_ + 1);
+    PushState(state);
+    PushStateForExpression(PrecedenceGroup::ForType());
+    AddLeafNode(ParseNodeKind::Me(), *position_);
+    position_ += 2;
+    return;
+  } else if (possible_me_addr_param) {
+    state.token = *(position_ + 2);
+    PushState(state);
+    PushStateForExpression(PrecedenceGroup::ForType());
+    auto size = tree_->size();
+    AddLeafNode(ParseNodeKind::Addr(), *position_);
+    AddNode(ParseNodeKind::MeAddr(), *(position_ + 1), size, false);
+    position_ += 3;
+    return;
+  }
+
+  // TODO error handling.
+  state.has_error = true;
+  PushState(state);
+}
+
 auto Parser::HandlePattern(PatternKind pattern_kind) -> void {
   auto state = PopState();
 
   // Ensure the finish state always follows.
   state.state = ParserState::PatternFinish();
 
-  // Handle an invalid pattern introducer.
+  // Handle an invalid pattern introducer for parameters and variables.
   if (!PositionIs(TokenKind::Identifier()) ||
       tokens_->GetKind(*(position_ + 1)) != TokenKind::Colon()) {
     switch (pattern_kind) {
@@ -1327,6 +1428,10 @@ auto Parser::HandlePattern(PatternKind pattern_kind) -> void {
         CARBON_DIAGNOSTIC(ExpectedVariableName, Error,
                           "Expected pattern in `var` declaration.");
         emitter_->Emit(*position_, ExpectedVariableName);
+        break;
+      }
+      case PatternKind::MeParam: {
+        // Me param validation comes later.
         break;
       }
     }
@@ -1350,6 +1455,19 @@ auto Parser::HandlePatternAsFunctionParameterState() -> void {
 
 auto Parser::HandlePatternAsVariableState() -> void {
   HandlePattern(PatternKind::Variable);
+}
+
+auto Parser::HandleMePatternFinishState() -> void {
+  // TODO For now an exact copy of the next method.
+  auto state = PopState();
+  if (state.has_error) {
+    ReturnErrorOnState();
+    return;
+  }
+
+  // TODO: may need to mark has_error if !type.
+  AddNode(ParseNodeKind::PatternBinding(), state.token, state.subtree_start,
+          /*has_error=*/false);
 }
 
 auto Parser::HandlePatternFinishState() -> void {
@@ -1662,6 +1780,7 @@ auto Parser::HandleVarFinishAsForState() -> void {
 
 auto Parser::HandleInterfaceIntroducerState() -> void {
   auto state = PopState();
+  stack_context_ = ParseContext::Interface;
 
   if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
                                ParseNodeKind::DeclaredName())) {
@@ -1711,7 +1830,11 @@ auto Parser::HandleInterfaceDefinitionLoopState() -> void {
 
       break;
     }
-      // TODO: Handle possible declarations inside interface body.
+    case TokenKind::Fn(): {
+      PushState(ParserState::FunctionIntroducer());
+      AddLeafNode(ParseNodeKind::FunctionIntroducer(), Consume());
+      break;
+    }
     default: {
       CARBON_DIAGNOSTIC(UnrecognizedDeclaration, Error,
                         "Unrecognized declaration introducer.");
@@ -1731,6 +1854,7 @@ auto Parser::HandleInterfaceDefinitionFinishState() -> void {
   auto state = PopState();
   AddNode(ParseNodeKind::InterfaceDefinition(), state.token,
           state.subtree_start, state.has_error);
+  stack_context_ = ParseContext::File;
 }
 
 }  // namespace Carbon
