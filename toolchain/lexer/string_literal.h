@@ -5,9 +5,9 @@
 #ifndef CARBON_TOOLCHAIN_LEXER_STRING_LITERAL_H_
 #define CARBON_TOOLCHAIN_LEXER_STRING_LITERAL_H_
 
+#include <optional>
 #include <string>
 
-#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
@@ -20,7 +20,7 @@ class LexedStringLiteral {
   // an invalid literal indicates a string prefix was found, but it's malformed
   // and is returning a partial string literal to assist error construction.
   static auto Lex(llvm::StringRef source_text)
-      -> llvm::Optional<LexedStringLiteral>;
+      -> std::optional<LexedStringLiteral>;
 
   // Expand any escape sequences in the given string literal and compute the
   // resulting value. This handles error recovery internally and cannot fail.

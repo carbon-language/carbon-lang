@@ -6,6 +6,19 @@ workspace(name = "carbon")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+skylib_version = "1.3.0"
+
+http_archive(
+    name = "bazel_skylib",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/{version}/bazel-skylib-{version}.tar.gz".format(version=skylib_version),
+        "https://github.com/bazelbuild/bazel-skylib/releases/download/{version}/bazel-skylib-{version}.tar.gz".format(version=skylib_version),
+    ],
+    sha256 = "74d544d96f4a5bb630d465ca8bbcfe231e3594e5aae57e1edbf17a6eb3ca2506",
+)
+#load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+#bazel_skylib_workspace()
+
 ###############################################################################
 # Python rules
 ###############################################################################
@@ -101,7 +114,7 @@ http_archive(
 
 # We pin to specific upstream commits and try to track top-of-tree reasonably
 # closely rather than pinning to a specific release.
-llvm_version = "6fa65f8a98967a5d2d2a6863e0f67a40d2961905"
+llvm_version = "ecfa2d3d9943a48411d04a4b3103c42b4653d9af"
 
 http_archive(
     name = "llvm-raw",
@@ -111,7 +124,7 @@ http_archive(
         "@carbon//bazel/llvm_patches:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
         "@carbon//bazel/llvm_patches:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
     ],
-    sha256 = "0a3929c5f2fe756820277be7b10e95f7480e7cb7f297ec574d3e9ddeac9068d7",
+    sha256 = "8e9cbb937b1a40536cd809e09603a1810d86a8c314fee0cca36fc493e78289e5",
     strip_prefix = "llvm-project-%s" % llvm_version,
     urls = ["https://github.com/llvm/llvm-project/archive/%s.tar.gz" % llvm_version],
 )

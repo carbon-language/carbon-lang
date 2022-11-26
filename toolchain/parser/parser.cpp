@@ -6,9 +6,9 @@
 
 #include <cstdlib>
 #include <memory>
+#include <optional>
 
 #include "common/check.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
@@ -138,7 +138,7 @@ auto Parser::ConsumeAndAddLeafNodeIf(TokenKind token_kind,
 }
 
 auto Parser::ConsumeIf(TokenKind kind)
-    -> llvm::Optional<TokenizedBuffer::Token> {
+    -> std::optional<TokenizedBuffer::Token> {
   if (!PositionIs(kind)) {
     return llvm::None;
   }
@@ -146,7 +146,7 @@ auto Parser::ConsumeIf(TokenKind kind)
 }
 
 auto Parser::FindNextOf(std::initializer_list<TokenKind> desired_kinds)
-    -> llvm::Optional<TokenizedBuffer::Token> {
+    -> std::optional<TokenizedBuffer::Token> {
   auto new_position = position_;
   while (true) {
     TokenizedBuffer::Token token = *new_position;
@@ -181,7 +181,7 @@ auto Parser::SkipMatchingGroup() -> bool {
 }
 
 auto Parser::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
-    -> llvm::Optional<TokenizedBuffer::Token> {
+    -> std::optional<TokenizedBuffer::Token> {
   if (position_ == end_) {
     return llvm::None;
   }

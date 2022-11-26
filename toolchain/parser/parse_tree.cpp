@@ -5,10 +5,10 @@
 #include "toolchain/parser/parse_tree.h"
 
 #include <cstdlib>
+#include <optional>
 
 #include "common/check.h"
 #include "common/error.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/lexer/tokenized_buffer.h"
@@ -188,7 +188,7 @@ auto ParseTree::Print(llvm::raw_ostream& output, bool preorder) const -> void {
   output << "]\n";
 }
 
-auto ParseTree::Verify() const -> llvm::Optional<Error> {
+auto ParseTree::Verify() const -> std::optional<Error> {
   llvm::SmallVector<ParseTree::Node> nodes;
   // Traverse the tree in postorder.
   for (Node n : postorder()) {

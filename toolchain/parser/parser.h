@@ -5,8 +5,9 @@
 #ifndef CARBON_TOOLCHAIN_PARSER_PARSER_H_
 #define CARBON_TOOLCHAIN_PARSER_PARSER_H_
 
+#include <optional>
+
 #include "common/check.h"
-#include "llvm/ADT/Optional.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
@@ -124,12 +125,12 @@ class Parser {
 
   // If the current position's token matches this `Kind`, returns it and
   // advances to the next position. Otherwise returns an empty optional.
-  auto ConsumeIf(TokenKind kind) -> llvm::Optional<TokenizedBuffer::Token>;
+  auto ConsumeIf(TokenKind kind) -> std::optional<TokenizedBuffer::Token>;
 
   // Find the next token of any of the given kinds at the current bracketing
   // level.
   auto FindNextOf(std::initializer_list<TokenKind> desired_kinds)
-      -> llvm::Optional<TokenizedBuffer::Token>;
+      -> std::optional<TokenizedBuffer::Token>;
 
   // If the token is an opening symbol for a matched group, skips to the matched
   // closing symbol and returns true. Otherwise, returns false.
@@ -152,7 +153,7 @@ class Parser {
   //
   // Returns a semicolon token if one is the likely end.
   auto SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
-      -> llvm::Optional<TokenizedBuffer::Token>;
+      -> std::optional<TokenizedBuffer::Token>;
 
   // Skip forward to the given token. Verifies that it is actually forward.
   auto SkipTo(TokenizedBuffer::Token t) -> void;
