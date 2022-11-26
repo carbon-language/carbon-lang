@@ -95,7 +95,10 @@ aims to fill an analogous role for C++:
 
 -   JavaScript → TypeScript
 -   Java → Kotlin
--   C++ → **_Carbon_**
+-   C++ → **Rust**
+-   Windows → LINUX
+-   IDE → VIM
+-   OS API → Text files
 
 ## Language Goals
 
