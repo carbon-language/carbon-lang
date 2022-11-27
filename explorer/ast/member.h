@@ -114,6 +114,27 @@ class PositionalMember : public Member {
   const size_t index_;
   const Nonnull<const Value*> type_;
 };
+
+// A positional member of a type.
+//
+// This is a member of a tuple, or other index-based value.
+class BaseClass : public Member {
+ public:
+  explicit BaseClass(Nonnull<const Value*> type)
+      : Member(MemberKind::BaseClass), type_(type) {}
+
+  // Prints the Member
+  void Print(llvm::raw_ostream& out) const override;
+
+  static auto classof(const Member* member) -> bool {
+    return InheritsFromBaseClass(member->kind());
+  }
+
+  auto type() const -> const Value& override { return *type_; }
+
+ private:
+  const Nonnull<const Value*> type_;
+};
 }  // namespace Carbon
 
 #endif  // CARBON_EXPLORER_AST_MEMBER_H_

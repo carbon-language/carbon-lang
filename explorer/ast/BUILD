@@ -129,6 +129,19 @@ cc_library(
 )
 
 cc_test(
+    name = "member_test",
+    srcs = ["member_test.cpp"],
+    deps = [
+        ":ast",
+        ":paren_contents",
+        "//common:gtest_main",
+        "//explorer/common:arena",
+        "@com_google_googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
     name = "pattern_test",
     srcs = ["pattern_test.cpp"],
     deps = [

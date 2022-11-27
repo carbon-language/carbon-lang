@@ -35,6 +35,24 @@ auto StructValue::FindField(std::string_view name) const
   return std::nullopt;
 }
 
+static auto GetSpecialMember(Nonnull<const Value*> v,
+                             const FieldPath::Component& field,
+                             SourceLocation source_loc)
+    -> ErrorOr<Nonnull<const Value*>> {
+  switch (field.member()->kind()) {
+    case MemberKind::BaseClass: {
+      const auto& class_value = cast<NominalClassValue>(*v);
+      const auto base = cast<NominalClassType>(class_value.type()).base();
+      if (!base.has_value()) {
+        return ProgramError(source_loc) << "Non-existent base class for " << *v;
+      }
+      return base.value();
+    }
+    default:
+      CARBON_FATAL() << "Invalid members type";
+  }
+}
+
 static auto GetPositionalMember(Nonnull<const Value*> v,
                                 const FieldPath::Component& field,
                                 SourceLocation source_loc)
@@ -169,9 +187,14 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                       const FieldPath::Component& field,
                       SourceLocation source_loc, Nonnull<const Value*> me_value)
     -> ErrorOr<Nonnull<const Value*>> {
-  return field.member()->kind() == MemberKind::PositionalMember
-             ? GetPositionalMember(v, field, source_loc)
-             : GetNamedMember(arena, v, field, source_loc, me_value);
+  switch (field.member()->kind()) {
+    case MemberKind::PositionalMember:
+      return GetPositionalMember(v, field, source_loc);
+    case MemberKind::NominalMember:
+      return GetNamedMember(arena, v, field, source_loc, me_value);
+    default:
+      return GetSpecialMember(v, field, source_loc);
+  }
 }
 
 auto Value::GetMember(Nonnull<Arena*> arena, const FieldPath& path,

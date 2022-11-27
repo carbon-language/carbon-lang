@@ -13,6 +13,7 @@ NominalMember::NominalMember(Nonnull<const Declaration*> declaration)
       member_(declaration) {
   CARBON_CHECK(name_) << "Missing name for NominalMember";
 }
+
 NominalMember::NominalMember(Nonnull<const NamedValue*> struct_member)
     : Member(MemberKind::NominalMember, struct_member->name),
       member_(struct_member) {}
@@ -48,5 +49,7 @@ void NominalMember::Print(llvm::raw_ostream& out) const { out << name(); }
 void PositionalMember::Print(llvm::raw_ostream& out) const {
   out << "element #" << index_;
 }
+
+void BaseClass::Print(llvm::raw_ostream& out) const { out << "base class"; }
 
 }  // namespace Carbon
