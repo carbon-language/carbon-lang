@@ -16,8 +16,6 @@ http_archive(
     ],
     sha256 = "74d544d96f4a5bb630d465ca8bbcfe231e3594e5aae57e1edbf17a6eb3ca2506",
 )
-#load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
-#bazel_skylib_workspace()
 
 ###############################################################################
 # Python rules
