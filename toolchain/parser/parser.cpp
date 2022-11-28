@@ -720,6 +720,11 @@ auto Parser::HandleDeclarationLoopState() -> void {
       PushState(ParserState::VarAsSemicolon());
       break;
     }
+    case TokenKind::Interface(): {
+      PushState(ParserState::InterfaceIntroducer());
+      ++position_;
+      break;
+    }
     default: {
       CARBON_DIAGNOSTIC(UnrecognizedDeclaration, Error,
                         "Unrecognized declaration introducer.");
@@ -1643,6 +1648,73 @@ auto Parser::HandleVarFinishAsForState() -> void {
 
   AddNode(ParseNodeKind::ForIn(), end_token, state.subtree_start,
           state.has_error);
+}
+
+auto Parser::HandleInterfaceIntroducerState() -> void {
+  auto state = PopState();
+
+  if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
+                               ParseNodeKind::DeclaredName())) {
+    CARBON_DIAGNOSTIC(ExpectedInterfaceName, Error,
+                      "Expected interface name after `interface` keyword.");
+    emitter_->Emit(*position_, ExpectedInterfaceName);
+    state.has_error = true;
+  }
+
+  bool parse_body = true;
+
+  if (!PositionIs(TokenKind::OpenCurlyBrace())) {
+    CARBON_DIAGNOSTIC(ExpectedInterfaceOpenCurlyBrace, Error,
+                      "Expected `{{` to start interface definition.");
+    emitter_->Emit(*position_, ExpectedInterfaceOpenCurlyBrace);
+    state.has_error = true;
+
+    SkipPastLikelyEnd(state.token);
+    parse_body = false;
+  }
+
+  state.state = ParserState::InterfaceDefinitionFinish();
+  PushState(state);
+
+  if (parse_body) {
+    PushState(ParserState::InterfaceDefinitionLoop());
+    AddLeafNode(ParseNodeKind::InterfaceBodyStart(), Consume());
+  }
+}
+
+auto Parser::HandleInterfaceDefinitionLoopState() -> void {
+  // This maintains the current state unless we're at the end of the interface
+  // definition.
+
+  switch (PositionKind()) {
+    case TokenKind::CloseCurlyBrace(): {
+      auto state = PopState();
+
+      AddNode(ParseNodeKind::InterfaceBody(), Consume(), state.subtree_start,
+              state.has_error);
+
+      break;
+    }
+      // TODO: Handle possible declarations inside interface body.
+    default: {
+      CARBON_DIAGNOSTIC(UnrecognizedDeclaration, Error,
+                        "Unrecognized declaration introducer.");
+      emitter_->Emit(*position_, UnrecognizedDeclaration);
+      if (auto semi = SkipPastLikelyEnd(*position_)) {
+        AddLeafNode(ParseNodeKind::EmptyDeclaration(), *semi,
+                    /*has_error=*/true);
+      } else {
+        ReturnErrorOnState();
+      }
+      break;
+    }
+  }
+}
+
+auto Parser::HandleInterfaceDefinitionFinishState() -> void {
+  auto state = PopState();
+  AddNode(ParseNodeKind::InterfaceDefinition(), state.token,
+          state.subtree_start, state.has_error);
 }
 
 }  // namespace Carbon
