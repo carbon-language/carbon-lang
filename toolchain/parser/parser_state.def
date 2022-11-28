@@ -296,7 +296,7 @@ CARBON_PARSER_STATE(InterfaceDefinitionLoop)
 // Handles processing of a intefaces's `interface <name> {`.
 //
 // If invalid:
-//   (state done)
+//   1. InterfaceDefinitionFinish
 // If `{` is missing:
 //   1. InterfaceDefinitionFinish
 // Else:
@@ -554,6 +554,5 @@ CARBON_PARSER_STATE(VarAfterInitializer)
 //   (state done)
 CARBON_PARSER_STATE(VarFinishAsRequireSemicolon)
 CARBON_PARSER_STATE(VarFinishAsNoSemicolon)
-
 
 #undef CARBON_PARSER_STATE

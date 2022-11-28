@@ -1674,7 +1674,7 @@ auto Parser::HandleInterfaceIntroducerState() -> void {
     state.has_error = true;
   }
 
-  bool has_open_curly_brace = true;
+  bool parse_body = true;
 
   if (!PositionIs(TokenKind::OpenCurlyBrace())) {
     CARBON_DIAGNOSTIC(ExpectedInterfaceOpenCurlyBrace, Error,
@@ -1682,18 +1682,14 @@ auto Parser::HandleInterfaceIntroducerState() -> void {
     emitter_->Emit(*position_, ExpectedInterfaceOpenCurlyBrace);
     state.has_error = true;
 
-    if (auto next_open_curly_brace = FindNextOf({TokenKind::OpenCurlyBrace()});
-        next_open_curly_brace) {
-      SkipTo(*next_open_curly_brace);
-    } else {
-      has_open_curly_brace = false;
-    }
+    SkipPastLikelyEnd(state.token);
+    parse_body = false;
   }
 
   state.state = ParserState::InterfaceDefinitionFinish();
   PushState(state);
 
-  if (has_open_curly_brace) {
+  if (parse_body) {
     PushState(ParserState::InterfaceDefinitionLoop());
     AddLeafNode(ParseNodeKind::InterfaceBodyStart(), Consume());
   }
@@ -1707,9 +1703,8 @@ auto Parser::HandleInterfaceDefinitionLoopState() -> void {
     case TokenKind::CloseCurlyBrace(): {
       auto state = PopState();
 
-      AddNode(ParseNodeKind::InterfaceBody(), *position_, state.subtree_start,
+      AddNode(ParseNodeKind::InterfaceBody(), Consume(), state.subtree_start,
               state.has_error);
-      ++position_;
 
       break;
     }
@@ -1734,4 +1729,5 @@ auto Parser::HandleInterfaceDefinitionFinishState() -> void {
   AddNode(ParseNodeKind::InterfaceDefinition(), state.token,
           state.subtree_start, state.has_error);
 }
+
 }  // namespace Carbon
