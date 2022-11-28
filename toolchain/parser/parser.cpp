@@ -1118,7 +1118,7 @@ auto Parser::HandlePackageState() -> void {
 
   auto exit_on_parse_error = [&]() {
     auto semi_token = SkipPastLikelyEnd(state.token);
-    return AddNode(ParseNodeKind::Package(),
+    return AddNode(ParseNodeKind::PackageDirective(),
                    semi_token ? *semi_token : state.token, state.subtree_start,
                    /*has_error=*/true);
   };
@@ -1186,7 +1186,7 @@ auto Parser::HandlePackageState() -> void {
     return;
   }
 
-  AddNode(ParseNodeKind::Package(), Consume(), state.subtree_start,
+  AddNode(ParseNodeKind::PackageDirective(), Consume(), state.subtree_start,
           /*has_error=*/false);
 }
 
