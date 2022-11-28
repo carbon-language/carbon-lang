@@ -1708,7 +1708,7 @@ auto Parser::HandleInterfaceDefinitionLoopState() -> void {
 
       break;
     }
-      // TODO Handle possible declarations inside interface body.
+      // TODO: Handle possible declarations inside interface body.
     default: {
       CARBON_DIAGNOSTIC(UnrecognizedDeclaration, Error,
                         "Unrecognized declaration introducer.");
