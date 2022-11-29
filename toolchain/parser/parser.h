@@ -124,6 +124,10 @@ class Parser {
   auto ConsumeAndAddLeafNodeIf(TokenKind token_kind, ParseNodeKind node_kind)
       -> bool;
 
+  // Returns the current position and moves past it. Requires the token is the
+  // expected kind.
+  auto ConsumeChecked(TokenKind kind) -> TokenizedBuffer::Token;
+
   // If the current position's token matches this `Kind`, returns it and
   // advances to the next position. Otherwise returns an empty optional.
   auto ConsumeIf(TokenKind kind) -> llvm::Optional<TokenizedBuffer::Token>;

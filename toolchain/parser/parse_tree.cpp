@@ -26,7 +26,7 @@ auto ParseTree::Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer)
   // Delegate to the parser.
   auto tree = Parser::Parse(tokens, emitter);
   auto verify_error = tree.Verify();
-  CARBON_CHECK(!verify_error) << *verify_error;
+  CARBON_CHECK(!verify_error) << tree << *verify_error;
   return tree;
 }
 
@@ -214,11 +214,6 @@ auto ParseTree::Verify() const -> llvm::Optional<Error> {
         if (n_impl.kind.bracket() == child_impl.kind) {
           break;
         }
-      }
-    } else if (n_impl.kind.child_count() == ParseNodeKind::TodoFixParseNode) {
-      while (subtree_size < n_impl.subtree_size && !nodes.empty()) {
-        auto child_impl = node_impls_[nodes.pop_back_val().index()];
-        subtree_size += child_impl.subtree_size;
       }
     } else {
       for (int i = 0; i < n_impl.kind.child_count(); ++i) {

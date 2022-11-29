@@ -11,16 +11,18 @@
 // CHECK:STDOUT:     {kind: 'ParameterList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:   {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'NameReference', text: 'a'},
-// CHECK:STDOUT:     {kind: 'DesignatorExpression', text: '.', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:   {kind: 'ExpressionStatement', text: ';', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'DesignatedName', text: ';', has_error: yes},
+// CHECK:STDOUT:     {kind: 'DesignatorExpression', text: '.', subtree_size: 3},
+// CHECK:STDOUT:   {kind: 'ExpressionStatement', text: ';', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'NameReference', text: 'a'},
 // CHECK:STDOUT:       {kind: 'DesignatedName', text: 'fn', has_error: yes},
 // CHECK:STDOUT:     {kind: 'DesignatorExpression', text: '.', subtree_size: 3},
 // CHECK:STDOUT:   {kind: 'ExpressionStatement', text: ';', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'NameReference', text: 'a'},
-// CHECK:STDOUT:     {kind: 'DesignatorExpression', text: '.', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:   {kind: 'ExpressionStatement', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 16},
+// CHECK:STDOUT:       {kind: 'DesignatedName', text: '42', has_error: yes},
+// CHECK:STDOUT:     {kind: 'DesignatorExpression', text: '.', subtree_size: 3},
+// CHECK:STDOUT:   {kind: 'ExpressionStatement', text: ';', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 18},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
@@ -30,6 +32,7 @@ fn F() {
   a.;
   // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/basics/fail_invalid_designators.carbon:[[@LINE+1]]:5: Expected identifier after `.`.
   a.fn;
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/basics/fail_invalid_designators.carbon:[[@LINE+1]]:5: Expected identifier after `.`.
+  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/basics/fail_invalid_designators.carbon:[[@LINE+2]]:5: Expected identifier after `.`.
+  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/basics/fail_invalid_designators.carbon:[[@LINE+1]]:5: Expected `;` after expression.
   a.42;
 }

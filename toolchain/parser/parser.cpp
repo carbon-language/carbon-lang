@@ -157,6 +157,12 @@ auto Parser::ConsumeAndAddLeafNodeIf(TokenKind token_kind,
   return true;
 }
 
+auto Parser::ConsumeChecked(TokenKind kind) -> TokenizedBuffer::Token {
+  CARBON_CHECK(PositionIs(kind))
+      << "Required " << kind.Name() << ", found " << PositionKind().Name();
+  return Consume();
+}
+
 auto Parser::ConsumeIf(TokenKind kind)
     -> llvm::Optional<TokenizedBuffer::Token> {
   if (!PositionIs(kind)) {
@@ -598,9 +604,15 @@ auto Parser::HandleBraceExpressionParameterFinish(BraceExpressionKind kind)
     -> void {
   auto state = PopState();
 
-  AddNode(kind == BraceExpressionKind::Type ? ParseNodeKind::StructFieldType()
-                                            : ParseNodeKind::StructFieldValue(),
-          state.token, state.subtree_start, state.has_error);
+  if (state.has_error) {
+    AddLeafNode(ParseNodeKind::StructFieldUnknown(), state.token,
+                /*has_error=*/true);
+  } else {
+    AddNode(kind == BraceExpressionKind::Type
+                ? ParseNodeKind::StructFieldType()
+                : ParseNodeKind::StructFieldValue(),
+            state.token, state.subtree_start, /*has_error=*/false);
+  }
 
   if (ConsumeListToken(ParseNodeKind::StructComma(),
                        TokenKind::CloseCurlyBrace(),
@@ -647,12 +659,11 @@ auto Parser::HandleBraceExpressionFinishAsUnknownState() -> void {
 auto Parser::HandleCallExpressionState() -> void {
   auto state = PopState();
 
-  // TODO: When swapping () start/end, this should AddLeafNode the open before
-  // continuing.
   state.state = ParserState::CallExpressionFinish();
   PushState(state);
-  // Advance past the open paren.
-  ++position_;
+
+  AddNode(ParseNodeKind::CallExpressionStart(), Consume(), state.subtree_start,
+          state.has_error);
   if (!PositionIs(TokenKind::CloseParen())) {
     PushState(ParserState::CallExpressionParameterFinish());
     PushState(ParserState::Expression());
@@ -677,8 +688,7 @@ auto Parser::HandleCallExpressionParameterFinishState() -> void {
 auto Parser::HandleCallExpressionFinishState() -> void {
   auto state = PopState();
 
-  AddLeafNode(ParseNodeKind::CallExpressionEnd(), Consume());
-  AddNode(ParseNodeKind::CallExpression(), state.token, state.subtree_start,
+  AddNode(ParseNodeKind::CallExpression(), Consume(), state.subtree_start,
           state.has_error);
 }
 
@@ -744,8 +754,8 @@ auto Parser::HandleDesignator(bool as_struct) -> void {
   auto state = PopState();
 
   // `.` identifier
-  auto dot = ConsumeIf(TokenKind::Period());
-  CARBON_CHECK(dot);
+  auto dot = ConsumeChecked(TokenKind::Period());
+
   if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
                                ParseNodeKind::DesignatedName())) {
     CARBON_DIAGNOSTIC(ExpectedIdentifierAfterDot, Error,
@@ -757,14 +767,19 @@ auto Parser::HandleDesignator(bool as_struct) -> void {
       AddLeafNode(ParseNodeKind::DesignatedName(), Consume(),
                   /*has_error=*/true);
     } else {
-      state.has_error = true;
-      ReturnErrorOnState();
+      AddLeafNode(ParseNodeKind::DesignatedName(), *position_,
+                  /*has_error=*/true);
+      if (as_struct) {
+        // Indicate the error to the parent state so that it can avoid producing
+        // more errors.
+        ReturnErrorOnState();
+      }
     }
   }
 
   AddNode(as_struct ? ParseNodeKind::StructFieldDesignator()
                     : ParseNodeKind::DesignatorExpression(),
-          *dot, state.subtree_start, state.has_error);
+          dot, state.subtree_start, state.has_error);
 }
 
 auto Parser::HandleDesignatorAsExpressionState() -> void {
@@ -1044,8 +1059,8 @@ auto Parser::HandleFunctionParameterFinishState() -> void {
 auto Parser::HandleFunctionParameterListFinishState() -> void {
   auto state = PopState();
 
-  CARBON_CHECK(PositionIs(TokenKind::CloseParen())) << PositionKind().Name();
-  AddNode(ParseNodeKind::ParameterList(), Consume(), state.subtree_start,
+  AddNode(ParseNodeKind::ParameterList(),
+          ConsumeChecked(TokenKind::CloseParen()), state.subtree_start,
           state.has_error);
 }
 
@@ -1226,12 +1241,10 @@ auto Parser::HandleParenConditionFinishAsWhileState() -> void {
 auto Parser::HandleParenExpressionState() -> void {
   auto state = PopState();
 
-  // TODO: When swapping () start/end, this should AddLeafNode the open before
-  // continuing.
-
   // Advance past the open paren.
-  CARBON_CHECK(PositionIs(TokenKind::OpenParen()));
-  ++position_;
+  AddLeafNode(ParseNodeKind::ParenExpressionOrTupleLiteralStart(),
+              ConsumeChecked(TokenKind::OpenParen()));
+
   if (PositionIs(TokenKind::CloseParen())) {
     state.state = ParserState::ParenExpressionFinishAsTuple();
     PushState(state);
@@ -1284,16 +1297,14 @@ auto Parser::HandleParenExpressionParameterFinishAsTupleState() -> void {
 auto Parser::HandleParenExpressionFinishState() -> void {
   auto state = PopState();
 
-  AddLeafNode(ParseNodeKind::ParenExpressionEnd(), Consume());
-  AddNode(ParseNodeKind::ParenExpression(), state.token, state.subtree_start,
+  AddNode(ParseNodeKind::ParenExpression(), Consume(), state.subtree_start,
           state.has_error);
 }
 
 auto Parser::HandleParenExpressionFinishAsTupleState() -> void {
   auto state = PopState();
 
-  AddLeafNode(ParseNodeKind::TupleLiteralEnd(), Consume());
-  AddNode(ParseNodeKind::TupleLiteral(), state.token, state.subtree_start,
+  AddNode(ParseNodeKind::TupleLiteral(), Consume(), state.subtree_start,
           state.has_error);
 }
 
@@ -1659,6 +1670,12 @@ auto Parser::HandleInterfaceIntroducerState() -> void {
                       "Expected interface name after `interface` keyword.");
     emitter_->Emit(*position_, ExpectedInterfaceName);
     state.has_error = true;
+
+    // Add a name node even when it's not present because it's used for subtree
+    // bracketing on interfaces.
+    // TODO: Either fix this or normalize it, still deciding on the right
+    // approach.
+    AddLeafNode(ParseNodeKind::DeclaredName(), state.token, /*has_error=*/true);
   }
 
   bool parse_body = true;
