@@ -72,7 +72,7 @@ for contribution.
 ## Recursive Importance of issue_manage
 If recursion is defined as a small problem,
 within a larger problem; and that small problem
-having the same indica constituents,
+having the same constituents,
 of the larger problem;
 and that smaller problem is solved repeatedly,
 with small and incremental differences; then,
