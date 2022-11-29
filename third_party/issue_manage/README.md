@@ -62,6 +62,8 @@ Leads of the Carbon project may potentially
 be able to use this tool to
 manage issues that are
 assigned to new contributors.
+
+
 ## Possible Usage as a Runtime Error Handler
 Not sure how exceptions are handled currently.
 The concept behind issue_manage is that
@@ -85,6 +87,7 @@ within the experimental Carbon development.
 Development of issue_manage, is 
 an exercise for a new contributors to,
 get familiar with contributing to Carbon development.
+
 ## Creating issue_manage
 New contributors may possibly not have used Carbon previously.
 Creating the `issue_manage` tool is an exercise in
