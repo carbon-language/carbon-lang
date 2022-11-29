@@ -38,7 +38,6 @@ static auto GetPositionalMember(Nonnull<const Value*> v,
                                 const FieldPath::Component& field,
                                 SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
-  CARBON_CHECK(field.member().hasPosition()) << "Invalid non-positional member";
   switch (v->kind()) {
     case Value::Kind::TupleValue: {
       const auto& tuple = cast<TupleValue>(*v);
@@ -60,7 +59,6 @@ static auto GetNamedMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                            SourceLocation source_loc,
                            Nonnull<const Value*> me_value)
     -> ErrorOr<Nonnull<const Value*>> {
-  CARBON_CHECK(field.member().hasName()) << "Invalid unnamed member";
   const auto f = field.member().name();
   if (field.witness().has_value()) {
     const auto* witness = cast<Witness>(*field.witness());
@@ -217,8 +215,6 @@ static auto SetFieldImpl(
     case Value::Kind::TupleValue: {
       std::vector<Nonnull<const Value*>> elements =
           cast<TupleValueBase>(*value).elements();
-      CARBON_CHECK((*path_begin).member().hasPosition())
-          << "Invalid non-positional member for tuple";
       const auto index = (*path_begin).member().index();
       if (index < 0 || index >= elements.size()) {
         return ProgramError(source_loc)
