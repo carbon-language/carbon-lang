@@ -5,6 +5,7 @@
 // AUTOUPDATE
 // RUN: %{carbon-run-parser}
 // CHECK:STDOUT: [
+// CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'x'},
 // CHECK:STDOUT:       {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
 // CHECK:STDOUT:           {kind: 'DesignatedName', text: 'a'},
@@ -30,8 +31,8 @@
 // CHECK:STDOUT:       {kind: 'StructFieldValue', text: '=', subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'StructLiteral', text: '}', subtree_size: 11},
 // CHECK:STDOUT:   {kind: 'VariableInitializer', text: '=', subtree_size: 12},
-// CHECK:STDOUT:   {kind: 'DeclarationEnd', text: ';'},
-// CHECK:STDOUT: {kind: 'VariableDeclaration', text: 'var', subtree_size: 27},
+// CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 27},
+// CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'y'},
 // CHECK:STDOUT:       {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
 // CHECK:STDOUT:     {kind: 'StructLiteral', text: '}', subtree_size: 2},
@@ -39,8 +40,8 @@
 // CHECK:STDOUT:       {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
 // CHECK:STDOUT:     {kind: 'StructLiteral', text: '}', subtree_size: 2},
 // CHECK:STDOUT:   {kind: 'VariableInitializer', text: '=', subtree_size: 3},
-// CHECK:STDOUT:   {kind: 'DeclarationEnd', text: ';'},
-// CHECK:STDOUT: {kind: 'VariableDeclaration', text: 'var', subtree_size: 9},
+// CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 9},
+// CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'z'},
 // CHECK:STDOUT:       {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
 // CHECK:STDOUT:           {kind: 'DesignatedName', text: 'n'},
@@ -58,8 +59,7 @@
 // CHECK:STDOUT:       {kind: 'StructComma', text: ','},
 // CHECK:STDOUT:     {kind: 'StructLiteral', text: '}', subtree_size: 7},
 // CHECK:STDOUT:   {kind: 'VariableInitializer', text: '=', subtree_size: 8},
-// CHECK:STDOUT:   {kind: 'DeclarationEnd', text: ';'},
-// CHECK:STDOUT: {kind: 'VariableDeclaration', text: 'var', subtree_size: 19},
+// CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 19},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 

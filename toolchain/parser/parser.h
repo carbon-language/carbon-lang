@@ -35,7 +35,13 @@ class Parser {
   // Possible operator fixities for errors.
   enum class OperatorFixity { Prefix, Infix, Postfix };
 
-  // Supported kinds of patterns for HandlePattern.
+  // Possible return values for FindListToken.
+  enum class ListTokenKind { Comma, Close, CommaClose };
+
+  // Supported kinds for HandleBraceExpression.
+  enum class BraceExpressionKind { Unknown, Value, Type };
+
+  // Supported kinds for HandlePattern.
   enum class PatternKind { Parameter, Variable };
 
   // Helper class for tracing state_stack_ on crashes.
@@ -85,16 +91,6 @@ class Parser {
   static_assert(sizeof(StateStackEntry) == 12,
                 "StateStackEntry has unexpected size!");
 
-  // Possible return values for FindListToken.
-  enum class ListTokenKind {
-    Comma,
-    Close,
-    CommaClose,
-  };
-
-  // The kind of brace expression being evaluated.
-  enum class BraceExpressionKind { Unknown, Value, Type };
-
   Parser(ParseTree& tree, TokenizedBuffer& tokens,
          TokenDiagnosticEmitter& emitter);
 
@@ -111,11 +107,17 @@ class Parser {
   // Returns the current position and moves past it.
   auto Consume() -> TokenizedBuffer::Token { return *(position_++); }
 
+  // Parses an open paren token, possibly diagnosing if necessary. Creates a
+  // leaf parse node of the specified start kind. The default_token is used when
+  // there's no open paren.
+  auto ConsumeAndAddOpenParen(TokenizedBuffer::Token default_token,
+                              ParseNodeKind start_kind) -> void;
+
   // Parses a close paren token corresponding to the given open paren token,
   // possibly skipping forward and diagnosing if necessary. Creates a parse node
-  // of the specified kind if successful.
-  auto ConsumeAndAddCloseParen(TokenizedBuffer::Token open_paren,
-                               ParseNodeKind close_kind) -> bool;
+  // of the specified close kind.
+  auto ConsumeAndAddCloseParen(StateStackEntry state, ParseNodeKind close_kind)
+      -> void;
 
   // Composes `ConsumeIf` and `AddLeafNode`, returning false when ConsumeIf
   // fails.
@@ -260,7 +262,11 @@ class Parser {
   auto HandleFunctionError(StateStackEntry state, bool skip_past_likely_end)
       -> void;
 
-  // Handles ParenExpressionParameterFinish(AsUnknown|AsTuple).
+  // Handles ParenConditionAs(If|While)
+  auto HandleParenCondition(ParseNodeKind start_kind, ParserState finish_state)
+      -> void;
+
+  // Handles ParenExpressionParameterFinishAs(Unknown|Tuple).
   auto HandleParenExpressionParameterFinish(bool as_tuple) -> void;
 
   // Handles PatternAs(FunctionParameter|Variable).
@@ -269,11 +275,8 @@ class Parser {
   // Handles the `;` after a keyword statement.
   auto HandleStatementKeywordFinish(ParseNodeKind node_kind) -> void;
 
-  // Handles VarAs(RequireSemicolon|NoSemicolon).
-  auto HandleVar(bool require_semicolon) -> void;
-
-  // Handles VarFinishAs(RequireSemicolon|NoSemicolon).
-  auto HandleVarFinish(bool require_semicolon) -> void;
+  // Handles VarAs(Semicolon|For).
+  auto HandleVar(ParserState finish_state) -> void;
 
   // `clang-format` has a bug with spacing around `->` returns in macros. See
   // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
