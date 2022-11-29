@@ -63,7 +63,7 @@ be able to use this tool to
 manage issues that are
 assigned to new contributors.
 ## Possible Usage as a Runtime Error Handler
-Not sure how exceptional are handled currently.
+Not sure how exceptions are handled currently.
 The concept behind issue_manage is that
 new contributors can start contributing successfully,
 without completely knowing or following properly
