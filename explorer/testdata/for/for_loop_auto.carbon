@@ -2,28 +2,23 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: HALLO WELT
-// CHECK: HALLO WELT
-// CHECK: HALLO WELT
-// CHECK: HALLO WELT
-// CHECK: result: 4
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: HALLO WELT 0
+// CHECK:STDOUT: HALLO WELT 1
+// CHECK:STDOUT: HALLO WELT 2
+// CHECK:STDOUT: HALLO WELT 3
+// CHECK:STDOUT: result: 4
 
 package ExplorerTest api;
 
-
-
-
 fn Main() -> i32 {
-  var ar: [i32; 4] = (0, 1,2,3);
-  var count : i32 = 0;
-  for( x: auto in ar){
-      Print("HALLO WELT ", x);
-      count = count +1;
+  var ar: [i32; 4] = (0, 1, 2, 3);
+  var count: i32 = 0;
+  for (x: auto in ar) {
+    Print("HALLO WELT {0}", x);
+    count = count + 1;
   }
   return count;
 }

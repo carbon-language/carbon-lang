@@ -117,6 +117,10 @@ static auto OperatorToCarbon(const Fuzzing::OperatorExpression& operator_expr,
       BinaryOperatorToCarbon(arg0, " * ", arg1, out);
       break;
 
+    case Fuzzing::OperatorExpression::Div:
+      BinaryOperatorToCarbon(arg0, " / ", arg1, out);
+      break;
+
     case Fuzzing::OperatorExpression::Mod:
       BinaryOperatorToCarbon(arg0, " % ", arg1, out);
       break;
@@ -405,6 +409,10 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
             out << " == ";
             ExpressionToCarbon(clause.equals().rhs(), out);
             break;
+          case Fuzzing::WhereClause::kRewrite:
+            out << "." << clause.rewrite().member_name() << " = ";
+            ExpressionToCarbon(clause.rewrite().replacement(), out);
+            break;
           case Fuzzing::WhereClause::KIND_NOT_SET:
             // Arbitrary default to avoid invalid syntax.
             out << ".Self == .Self";
@@ -673,6 +681,27 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
       out << "var x: i32;";
       break;
 
+    case Fuzzing::Declaration::kDestructor: {
+      const auto& function = declaration.destructor();
+      out << "destructor";
+      llvm::ListSeparator sep;
+      out << "[";
+      if (function.has_me_pattern()) {
+        // This is a class method.
+        out << sep;
+        PatternToCarbon(function.me_pattern(), out);
+      }
+      out << "]";
+
+      // Body is optional.
+      if (function.has_body()) {
+        out << "\n";
+        BlockStatementToCarbon(function.body(), out);
+      } else {
+        out << ";";
+      }
+      break;
+    }
     case Fuzzing::Declaration::kFunction: {
       const auto& function = declaration.function();
       out << "fn ";
@@ -790,12 +819,28 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
       PatternToCarbon(let.pattern(), out);
 
       // TODO: Print out the initializer once it's supported.
-      /*
-      if (let.has_initializer()) {
-        out << " = ";
-        ExpressionToCarbon(let.initializer(), out);
-      }
-      */
+      // if (let.has_initializer()) {
+      //   out << " = ";
+      //   ExpressionToCarbon(let.initializer(), out);
+      // }
+      out << ";";
+      break;
+    }
+
+    case Fuzzing::Declaration::kInterfaceExtends: {
+      const auto& extends = declaration.interface_extends();
+      out << "extends ";
+      ExpressionToCarbon(extends.base(), out);
+      out << ";";
+      break;
+    }
+
+    case Fuzzing::Declaration::kInterfaceImpl: {
+      const auto& impl = declaration.interface_impl();
+      out << "impl ";
+      ExpressionToCarbon(impl.impl_type(), out);
+      out << " as ";
+      ExpressionToCarbon(impl.constraint(), out);
       out << ";";
       break;
     }
@@ -810,7 +855,19 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
         out << "\n";
       }
       out << "}";
-      // TODO: need to handle interface.self()?
+      break;
+    }
+
+    case Fuzzing::Declaration::kConstraint: {
+      const auto& constraint = declaration.constraint();
+      out << "constraint ";
+      IdentifierToCarbon(constraint.name(), out);
+      out << " {\n";
+      for (const auto& member : constraint.members()) {
+        DeclarationToCarbon(member, out);
+        out << "\n";
+      }
+      out << "}";
       break;
     }
 

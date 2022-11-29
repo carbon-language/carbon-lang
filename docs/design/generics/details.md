@@ -440,12 +440,12 @@ class Point4a {
   var x: f64;
   var y: f64;
   fn Add[me: Self](b: Self) -> Self {
-    return {.x = a.x + b.x, .y = a.y + b.y};
+    return {.x = me.x + b.x, .y = me.y + b.y};
   }
   external impl as Vector {
     alias Add = Point4a.Add;  // Syntax TBD
     fn Scale[me: Self](v: f64) -> Self {
-      return {.x = a.x * v, .y = a.y * v};
+      return {.x = me.x * v, .y = me.y * v};
     }
   }
 }
@@ -457,10 +457,10 @@ class Point4b {
   var y: f64;
   external impl as Vector {
     fn Add[me: Self](b: Self) -> Self {
-      return {.x = a.x + b.x, .y = a.y + b.y};
+      return {.x = me.x + b.x, .y = me.y + b.y};
     }
     fn Scale[me: Self](v: f64) -> Self {
-      return {.x = a.x * v, .y = a.y * v};
+      return {.x = me.x * v, .y = me.y * v};
     }
   }
   alias Add = Vector.Add;
@@ -472,14 +472,14 @@ class Point4c {
   var x: f64;
   var y: f64;
   fn Add[me: Self](b: Self) -> Self {
-    return {.x = a.x + b.x, .y = a.y + b.y};
+    return {.x = me.x + b.x, .y = me.y + b.y};
   }
 }
 
 external impl Point4c as Vector {
   alias Add = Point4c.Add;  // Syntax TBD
   fn Scale[me: Self](v: f64) -> Self {
-    return {.x = a.x * v, .y = a.y * v};
+    return {.x = me.x * v, .y = me.y * v};
   }
 }
 ```
@@ -4383,6 +4383,56 @@ An interface or named constraint may be forward declared subject to these rules:
     interface using `MyInterface.MemberName` or constrain a member using a
     `where` clause.
 
+If `C` is the name of an incomplete interface or named constraint, then it can
+be used in the following contexts:
+
+-   ✅ `T:! C`
+-   ✅ `C & D`
+    -   There may be conflicts between `C` and `D` making this invalid that will
+        only be discovered once they are both complete.
+-   ✅ `interface `...` { impl` ... `as C; }` or `constraint `...` { impl` ...
+    `as C; }`
+    -   Nothing implied by implementing `C` will be visible until `C` is
+        complete.
+-   ✅ `T:! C` ... `T is C`
+-   ✅ `T:! A & C` ... `T is C`
+    -   This includes constructs requiring `T is C` such as `T as C` or
+        `U:! C = T`.
+-   ✅ `external impl `...` as C;`
+    -   Checking that all associated constants of `C` are correctly assigned
+        values will be delayed until `C` is complete.
+
+An incomplete `C` cannot be used in the following contexts:
+
+-   ❌ `T:! C` ... `T.X`
+-   ❌ `T:! C where `...
+-   ❌ `class `...` { impl as C; }`
+    -   The names of `C` are added to the class, and so those names need to be
+        known.
+-   ❌ `T:! C` ... `T is A` where `A` is an interface or named constraint
+    different from `C`
+    -   Need to see the definition of `C` to see if it implies `A`.
+-   ❌ `external impl` ... `as C {` ... `}`
+
+**Future work:** It is currently undecided whether an interface needs to be
+complete to be extended, as in:
+
+```
+interface I { extends C; }
+```
+
+There are three different approaches being considered:
+
+-   If we detect name collisions between the members of the interface `I` and
+    `C` when the interface `I` is defined, then we need `C` to be complete.
+-   If we instead only generate errors on ambiguous use of members with the same
+    name, as we do with `A & B`, then we don't need to require `C` to be
+    complete.
+-   Another option, being discussed in
+    [#2355](https://github.com/carbon-language/carbon-lang/issues/2355), is that
+    names in interface `I` shadow the names in any interface being extended,
+    then `C` would not be required to be complete.
+
 ### Declaring implementations
 
 The declaration of an interface implementation consists of:
@@ -5631,6 +5681,9 @@ a type to an implementation of an interface parameterized by that type.
 Generic associated types are about when this is a requirement of an interface.
 These are also called "associated type constructors."
 
+Rust has
+[stabilized this feature](https://github.com/rust-lang/rust/pull/96709).
+
 #### Higher-ranked types
 
 Higher-ranked types are used to represent this requirement in a function
@@ -5686,3 +5739,4 @@ parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 -   [#1146: Generic details 12: parameterized types](https://github.com/carbon-language/carbon-lang/pull/1146)
 -   [#1327: Generics: `impl forall`](https://github.com/carbon-language/carbon-lang/pull/1327)
 -   [#2107: Clarify rules around `Self` and `.Self`](https://github.com/carbon-language/carbon-lang/pull/2107)
+-   [#2347: What can be done with an incomplete interface](https://github.com/carbon-language/carbon-lang/pull/2347)

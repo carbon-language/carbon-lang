@@ -2,17 +2,15 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: Struct OK
-// CHECK: Choice OK
-// CHECK: Class OK
-// CHECK: Interface OK
-// CHECK: Constraint OK
-// CHECK: result: 0
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: Struct OK
+// CHECK:STDOUT: Choice OK
+// CHECK:STDOUT: Class OK
+// CHECK:STDOUT: Interface OK
+// CHECK:STDOUT: Constraint OK
+// CHECK:STDOUT: result: 0
 
 package Foo api;
 

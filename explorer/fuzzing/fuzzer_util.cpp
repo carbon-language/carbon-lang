@@ -83,6 +83,8 @@ auto ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit)
   CARBON_CHECK(prelude_path.ok()) << prelude_path.error();
 
   AddPrelude(*prelude_path, &arena, &ast.declarations);
+  CARBON_ASSIGN_OR_RETURN(
+      ast, AnalyzeProgram(&arena, ast, /*trace_stream=*/std::nullopt));
   return ExecProgram(&arena, ast, /*trace_stream=*/std::nullopt);
 }
 

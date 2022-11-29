@@ -62,7 +62,7 @@ in line with accepted designs. It may in some rare cases extend to exploring
 experimental or prototype directions whose design is under active consideration.
 
 The term "code review" in the Carbon project is not only about "code". We expect
-changes to any files to be reviewed, including documentation and any other
+changes to any file to be reviewed, including documentation and any other
 material stored in the repository.
 
 ## Who should review?
@@ -216,11 +216,6 @@ far. It is still possible to shrink a change so much that it becomes nonsensical
 in isolation. For example, a change without appropriate tests is not
 self-contained.
 
-You may want to use a set of
-[stacked pull requests](pull_request_workflow.md#stacking-dependent-pull-requests)
-rather than a single, larger pull request in order to keep changes easy to
-review.
-
 ### Responding to review comments
 
 Many comments have easy and simple responses. The easiest is **"Done"**. When
@@ -247,6 +242,21 @@ it if needed.
 For non-optional comments, this section provides several suggestions on how best
 to make progress. If none of these work, you may need to
 [resolve an impasse or conflict](#resolving-an-impasse-or-conflict).
+
+In response to suggestions, update the files in the pull request in new commits.
+Rebasing, squashing, or force-pushing commits can break GitHub's comment
+associations, and it makes it harder to determine what's changed since the last
+review. With regular pushes, GitHub can show individual deltas, giving
+additional flexibility to the reviewer. We squash pull requests when we merge
+them, so the end result is the same.
+
+It is good to reply to every comment so that the reviewer knows you saw them.
+Best practice is to send the reply to all of the comments at once, after the
+files in the pull request have been updated. If there are a lot of replies, it
+can be helpful to include a message saying whether the pull request is now ready
+for another round of review, or press the "Re-request review" button to the
+right of the reviewer's name:
+![The re-request review button on GitHub](https://user-images.githubusercontent.com/711534/189789784-fcf18d1b-137b-48ba-959a-0d05cee36c2d.png)
 
 #### Responding to questions or confusion
 

@@ -2,18 +2,21 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: result: 1
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: Interface: 5
+// CHECK:STDOUT: Op: 5
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
-// TODO: T:! Sub
-fn DoSub[T:! SubWith(.Self) where .Result == .Self](x: T, y: T) -> T { return x - y; }
-
 fn Main() -> i32 {
-  return DoSub(3, 2);
+  var lhs: i32 = 8;
+  var rhs: i32 = 3;
+  // Make sure that both the interface and operator work with i32. These rely on
+  // builtin arithmetic more directly.
+  Print("Interface: {0}", lhs.(SubWith(i32).Op)(rhs));
+  Print("Op: {0}", lhs - rhs);
+  return 0;
 }

@@ -168,14 +168,22 @@ When requesting any of the following access, please provide a reason for the
 access. All requests require a
 [signed CLA](#contributor-license-agreements-clas).
 
--   Google Docs/Calendar commenter access:
-    [join group](https://groups.google.com/a/carbon-lang.dev/g/commenters/about)
-    -   Grants commenter access to Carbon Language documents, as well as the
-        ability to view Calendar events.
--   Google Docs/Calendar contributor access:
-    [join group](https://groups.google.com/a/carbon-lang.dev/g/contributors/about)
-    -   Grants edit access to Carbon Language documents, as well as the ability
-        to edit Calendar events.
+-   Google Docs/Calendar access groups:
+    -   **Commenter** access:
+        [join group](https://groups.google.com/a/carbon-lang.dev/g/commenters/about)
+        -   [Google Docs](https://drive.google.com/drive/folders/1aC5JJ5EcI8B7cgVDrLvO7WNw97F0LpS2):
+            Comment on files.
+        -   [Google Calendar](https://calendar.google.com/calendar/embed?src=c_07td7k4qjq0ssb4gdl6bmbnkik%40group.calendar.google.com):
+            View event details.
+    -   **Contributor** access:
+        [join group](https://groups.google.com/a/carbon-lang.dev/g/contributors/about)
+        -   [Google Docs](https://drive.google.com/drive/folders/1aC5JJ5EcI8B7cgVDrLvO7WNw97F0LpS2):
+            Add, edit, and comment on files.
+        -   [Google Calendar](https://calendar.google.com/calendar/embed?src=c_07td7k4qjq0ssb4gdl6bmbnkik%40group.calendar.google.com):
+            View and edit event details.
+    -   After you apply to join, please let us know on
+        [#access-requests](https://discord.com/channels/655572317891461132/1006221387574292540);
+        we don't get notifications otherwise.
 -   GitHub Label/project contributor access:
     [ask on #access-requests](https://discord.com/channels/655572317891461132/1006221387574292540)
     -   Don't forget to mention your GitHub username.
@@ -190,7 +198,7 @@ trying to write proposals, both types of contributor access will help.
 Please see our [contribution tool](/docs/project/contribution_tools.md)
 documentation for information on setting up a git client for Carbon development,
 as well as helpful tooling that will ease the contribution process. For example,
-[pre-commit](/docs/project/contribution_tools.md#pre-commit) is used to simplify
+[pre-commit](https://pre-commit.com) is used to simplify
 [code review](/docs/project/code_review.md).
 
 ### Contribution guidelines and standards
@@ -251,8 +259,9 @@ follow the Carbon documentation and coding styles.
 Changes to Carbon documentation follow the
 [Google developer documentation style guide](https://developers.google.com/style).
 
-Markdown files should additionally use
-[Prettier](/docs/project/contribution_tools.md#prettier) for formatting.
+Markdown files should additionally use [Prettier](https://prettier.io) for
+formatting, which we automate with
+[pre-commit](/docs/project/contribution_tools.md#main-tools).
 
 Other style points to be aware of are:
 

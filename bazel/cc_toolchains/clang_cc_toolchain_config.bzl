@@ -20,6 +20,8 @@ load("@bazel_tools//tools/build_defs/cc:action_names.bzl", "ACTION_NAMES")
 load(
     ":clang_detected_variables.bzl",
     "clang_bindir",
+    "clang_version",
+    "clang_version_for_cache",
     "clang_include_dirs_list",
     "clang_resource_dir",
     "llvm_bindir",
@@ -190,6 +192,9 @@ def _impl(ctx):
                             "-D__DATE__=\"redacted\"",
                             "-D__TIMESTAMP__=\"redacted\"",
                             "-D__TIME__=\"redacted\"",
+                            # Pass the clang version as a define so that bazel
+                            # caching is more likely to notice version changes.
+                            "-DCLANG_VERSION_FOR_CACHE=\"%s\"" % clang_version_for_cache,
                         ],
                     ),
                     flag_group(
@@ -221,17 +226,6 @@ def _impl(ctx):
                     ACTION_NAMES.cpp_link_nodeps_dynamic_library,
                 ],
                 flag_groups = [flag_group(flags = ["-shared"])],
-            ),
-            flag_set(
-                actions = [
-                    ACTION_NAMES.cpp_link_executable,
-                ],
-                flag_groups = [
-                    flag_group(
-                        flags = ["-pie"],
-                        expand_if_available = "force_pic",
-                    ),
-                ],
             ),
             flag_set(
                 actions = all_link_actions,
@@ -273,19 +267,6 @@ def _impl(ctx):
                 flag_groups = [flag_group(flags = [
                     "-O1",
                 ])],
-            ),
-            # Use a conditional flag set for enabling the fast instruction
-            # selector to work around an LLVM bug:
-            # https://github.com/llvm/llvm-project/issues/56133
-            flag_set(
-                actions = codegen_compile_actions,
-                flag_groups = [flag_group(flags = [
-                    "-mllvm",
-                    "-fast-isel",
-                ])],
-                with_features = [
-                    with_feature_set(not_features = ["fuzzer"]),
-                ],
             ),
         ],
     )
@@ -507,6 +488,13 @@ def _impl(ctx):
         implies = ["fuzzer"],
     )
 
+    # With clang 14 and lower, we expect it to be built with libc++ debug
+    # support. In later LLVM versions, we expect the assertions define to work.
+    if clang_version and clang_version <= 14:
+        libcpp_debug_flags = ["-D_LIBCPP_DEBUG=1"]
+    else:
+        libcpp_debug_flags = ["-D_LIBCPP_ENABLE_ASSERTIONS=1"]
+
     linux_flags_feature = feature(
         name = "linux_flags",
         enabled = True,
@@ -548,12 +536,38 @@ def _impl(ctx):
             ),
             flag_set(
                 actions = all_compile_actions,
-                flag_groups = [flag_group(flags = [
-                    # Enable libc++'s debug features.
-                    "-D_LIBCPP_DEBUG=1",
-                ])],
+                flag_groups = [flag_group(flags = libcpp_debug_flags)],
                 with_features = [
                     with_feature_set(not_features = ["opt"]),
+                ],
+            ),
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cpp_link_executable,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["-pie"],
+                        expand_if_available = "force_pic",
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    macos_flags_feature = feature(
+        name = "macos_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cpp_link_executable,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["-fpie"],
+                        expand_if_available = "force_pic",
+                    ),
                 ],
             ),
         ],
@@ -794,6 +808,7 @@ def _impl(ctx):
         # so that might be an example where a feature must be added.
         sysroot = None
     elif ctx.attr.target_cpu in ["darwin", "darwin_arm64"]:
+        features += [macos_flags_feature]
         sysroot = sysroot_dir
     else:
         fail("Unsupported target platform!")

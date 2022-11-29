@@ -17,6 +17,36 @@ def _run(repository_ctx, cmd):
 
     return exec_result
 
+def _clang_version(version_output):
+    """Returns version information, or a (None, "unknown") tuple if not found.
+
+    Returns both the major version number (14) and the full version number for
+    caching.
+    """
+    clang_version = None
+    clang_version_for_cache = "unknown"
+
+    version_prefix = "clang version "
+    version_start = version_output.find(version_prefix)
+    if version_start == -1:
+        # No version
+        return (clang_version, clang_version_for_cache)
+    version_start += len(version_prefix)
+
+    # Find the newline.
+    version_newline = version_output.find("\n", version_start)
+    if version_newline == -1:
+        return (clang_version, clang_version_for_cache)
+    clang_version_for_cache = version_output[version_start:version_newline]
+
+    # Find a dot to indicate something like 'clang version 14.0.6', and grab the
+    # major version.
+    version_dot = version_output.find(".", version_start)
+    if version_dot != -1 and version_dot < version_newline:
+        clang_version = int(version_output[version_start:version_dot])
+
+    return (clang_version, clang_version_for_cache)
+
 def _detect_system_clang(repository_ctx):
     """Detects whether the system-provided clang can be used.
 
@@ -38,7 +68,8 @@ def _detect_system_clang(repository_ctx):
     version_output = _run(repository_ctx, [cc_path, "--version"]).stdout
     if "clang" not in version_output:
         fail("Searching for clang or CC (%s), and found (%s), which is not a Clang compiler" % (cc, cc_path))
-    return cc_path
+    clang_version, clang_version_for_cache = _clang_version(version_output)
+    return (cc_path.realpath, clang_version, clang_version_for_cache)
 
 def _compute_clang_resource_dir(repository_ctx, clang):
     """Runs the `clang` binary to get its resource dir."""
@@ -66,14 +97,14 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
 
     # Create an empty temp file for Clang to use
     if repository_ctx.os.name.lower().startswith("windows"):
-        repository_ctx.file('_temp', '')
+        repository_ctx.file("_temp", "")
 
     # Read in an empty input file. If we are building from
     # Windows, then we create an empty temp file. Clang
     # on Windows does not like it when you pass a non-existent file.
     if repository_ctx.os.name.lower().startswith("windows"):
-        repository_ctx.file('_temp', '')
-        input_file = repository_ctx.path('_temp')
+        repository_ctx.file("_temp", "")
+        input_file = repository_ctx.path("_temp")
     else:
         input_file = "/dev/null"
 
@@ -112,8 +143,10 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
     include_begin = output.index("#include <...> search starts here:") + 1
     include_end = output.index("End of search list.", include_begin)
 
+    # Suffix present on framework paths.
+    framework_suffix = " (framework directory)"
     return [
-        repository_ctx.path(s.lstrip(" "))
+        repository_ctx.path(s.lstrip(" ").removesuffix(framework_suffix))
         for s in output[include_begin:include_end]
     ]
 
@@ -129,17 +162,19 @@ def _configure_clang_toolchain_impl(repository_ctx):
     # here as the other LLVM tools may not be symlinked into the PATH even if
     # `clang` is. We also insist on finding the basename of `clang++` as that is
     # important for C vs. C++ compiles.
-    clang = _detect_system_clang(repository_ctx)
-    clang = clang.realpath.dirname.get_child("clang++")
+    (clang, clang_version, clang_version_for_cache) = _detect_system_clang(
+        repository_ctx,
+    )
+    clang_cpp = clang.dirname.get_child("clang++")
 
     # Compute the various directories used by Clang.
-    resource_dir = _compute_clang_resource_dir(repository_ctx, clang)
+    resource_dir = _compute_clang_resource_dir(repository_ctx, clang_cpp)
     sysroot_dir = None
     if repository_ctx.os.name.lower().startswith("mac os"):
         sysroot_dir = _compute_mac_os_sysroot(repository_ctx)
     include_dirs = _compute_clang_cpp_include_search_paths(
         repository_ctx,
-        clang,
+        clang_cpp,
         sysroot_dir,
     )
 
@@ -147,10 +182,10 @@ def _configure_clang_toolchain_impl(repository_ctx):
     # First look for llvm-ar adjacent to clang, so that if found,
     # it is most likely to match the same version as clang.
     # Otherwise, try PATH.
-    arpath = clang.dirname.get_child("llvm-ar")
-    if not arpath.exists:
-        arpath = repository_ctx.which("llvm-ar")
-        if not arpath:
+    ar_path = clang.dirname.get_child("llvm-ar")
+    if not ar_path.exists:
+        ar_path = repository_ctx.which("llvm-ar")
+        if not ar_path:
             fail("`llvm-ar` not found in PATH or adjacent to clang")
 
     # By default Windows uses '\' in its paths. These will be
@@ -164,8 +199,11 @@ def _configure_clang_toolchain_impl(repository_ctx):
         "clang_detected_variables.bzl",
         repository_ctx.attr._clang_detected_variables_template,
         substitutions = {
-            "{LLVM_BINDIR}": str(arpath.dirname),
+            "{LLVM_BINDIR}": str(ar_path.dirname),
+            "{LLVM_SYMBOLIZER}": str(ar_path.dirname.get_child("llvm-symbolizer")),
             "{CLANG_BINDIR}": str(clang.dirname),
+            "{CLANG_VERSION}": str(clang_version),
+            "{CLANG_VERSION_FOR_CACHE}": clang_version_for_cache.replace('"', "_").replace("\\", "_"),
             "{CLANG_RESOURCE_DIR}": resource_dir,
             "{CLANG_INCLUDE_DIRS_LIST}": str(
                 [str(path) for path in include_dirs],

@@ -5,8 +5,19 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
+    name = "bazel_working_dir",
+    hdrs = ["bazel_working_dir.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "check",
-    srcs = ["check_internal.h"],
+    srcs = [
+        "check_internal.cpp",
+        "check_internal.h",
+    ],
     hdrs = ["check.h"],
     deps = [
         "@llvm-project//llvm:Support",
@@ -107,5 +118,24 @@ cc_test(
         "//common:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "vlog",
+    srcs = ["vlog_internal.h"],
+    hdrs = ["vlog.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "vlog_test",
+    srcs = ["vlog_test.cpp"],
+    deps = [
+        ":vlog",
+        "//common:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )

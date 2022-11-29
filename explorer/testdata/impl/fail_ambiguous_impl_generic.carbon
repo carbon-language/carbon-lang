@@ -2,11 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -24,7 +22,7 @@ fn Main() -> i32 {
   let b: A(i32) = {};
   F(a);
   G(b);
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_ambiguous_impl_generic.carbon:[[@LINE+1]]: ambiguous implementations of interface B(T = i32) for class A(T = i32)
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_ambiguous_impl_generic.carbon:[[@LINE+1]]: ambiguous implementations of interface B(T = i32) for class A(T = i32)
   F(b);
   return 0;
 }

@@ -17,7 +17,7 @@ auto ParseAndLexContext::RecordSyntaxError(Error error) -> Parser::symbol_type {
 
 auto ParseAndLexContext::RecordSyntaxError(const std::string& message)
     -> Parser::symbol_type {
-  return RecordSyntaxError(CompilationError(source_loc()) << message);
+  return RecordSyntaxError(ProgramError(source_loc()) << message);
 }
 
 }  // namespace Carbon

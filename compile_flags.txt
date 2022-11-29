@@ -70,6 +70,10 @@ bazel-execroot/external/com_google_googletest
 -iquote
 bazel-bin/external/com_google_googletest
 -iquote
+bazel-execroot/external/com_googlesource_code_re2
+-iquote
+bazel-bin/external/com_googlesource_code_re2
+-iquote
 bazel-execroot/external/bazel_tools
 -iquote
 bazel-bin/external/bazel_tools
@@ -94,6 +98,14 @@ bazel-bin/external/com_google_googletest/googletest
 bazel-execroot/external/com_google_googletest/googletest/include
 -isystem
 bazel-bin/external/com_google_googletest/googletest/include
+-isystem
+bazel-execroot/external/com_google_libprotobuf_mutator/src
+-isystem
+bazel-bin/external/com_google_libprotobuf_mutator/src
+-isystem
+bazel-execroot/external/com_github_protocolbuffers_protobuf/src
+-isystem
+bazel-bin/external/com_github_protocolbuffers_protobuf/src
 -std=c++17
 -stdlib=libc++
 -no-canonical-prefixes

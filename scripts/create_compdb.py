@@ -57,7 +57,7 @@ print("Building compilation database...")
 # stand-alone files. This is a bit simpler than scraping the actual compile
 # actions and allows us to directly index header-only libraries easily and
 # pro-actively index the specific headers in the project.
-source_files_query = subprocess.run(
+source_files_query = subprocess.check_output(
     [
         bazel,
         "query",
@@ -67,11 +67,9 @@ source_files_query = subprocess.run(
         "--incompatible_display_source_file_location",
         'filter(".*\\.(h|cpp|cc|c|cxx)$", kind("source file", deps(//...)))',
     ],
-    check=True,
-    stdout=subprocess.PIPE,
     stderr=subprocess.DEVNULL,
     universal_newlines=True,
-).stdout
+)
 source_files = [
     Path(line.split(":")[0]) for line in source_files_query.splitlines()
 ]
@@ -97,7 +95,8 @@ print(
 )
 
 # Now collect the generated file labels.
-generated_file_labels = subprocess.run(
+# cc_proto_library generates files, but they aren't seen with "generated file".
+generated_file_labels = subprocess.check_output(
     [
         bazel,
         "query",
@@ -106,25 +105,25 @@ generated_file_labels = subprocess.run(
         (
             'filter(".*\\.(h|cpp|cc|c|cxx|def|inc)$",'
             'kind("generated file", deps(//...)))'
+            " union "
+            'kind("cc_proto_library", deps(//...))'
         ),
     ],
-    check=True,
-    stdout=subprocess.PIPE,
     stderr=subprocess.DEVNULL,
     universal_newlines=True,
-).stdout.splitlines()
+).splitlines()
 print("Found %d generated files..." % (len(generated_file_labels),))
 
 # Directly build these labels so that indexing can find them. Allow this to
 # fail in case there are build errors in the client, and just warn the user
 # that they may be missing generated files.
 print("Building the generated files so that tools can find them...")
-subprocess.run([bazel, "build", "--keep_going"] + generated_file_labels)
+subprocess.check_call([bazel, "build", "--keep_going"] + generated_file_labels)
 
 # Also build some specific targets that depend on external packages so those are
 # fetched and linked into the Bazel execution root. We try to use cheap files
 # where possible, but in some cases need to create a virtual include directory.
-subprocess.run(
+subprocess.check_call(
     [
         bazel,
         "build",
@@ -132,7 +131,10 @@ subprocess.run(
         "@llvm-project//llvm:LICENSE.TXT",
         "@com_google_absl//:LICENSE",
         "@com_google_googletest//:LICENSE",
+        "@com_googlesource_code_re2//:LICENSE",
         "@com_github_google_benchmark//:benchmark",
+        "@com_google_libprotobuf_mutator//:LICENSE",
+        "@com_google_protobuf//:any_proto",
     ]
 )
 

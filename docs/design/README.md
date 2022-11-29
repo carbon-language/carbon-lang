@@ -637,18 +637,19 @@ are available for representing strings with `\`s and `"`s.
 
 ## Value categories and value phases
 
-Every value has a
+Every expression has a
 [value category](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>),
 similar to [C++](https://en.cppreference.com/w/cpp/language/value_category),
 that is either _l-value_ or _r-value_. Carbon will automatically convert an
 l-value to an r-value, but not in the other direction.
 
-L-values have storage and a stable address. They may be modified, assuming their
-type is not [`const`](#const).
+L-value expressions refer to values that have storage and a stable address. They
+may be modified, assuming their type is not [`const`](#const).
 
-R-values may not have dedicated storage. This means they cannot be modified and
-their address generally cannot be taken. R-values are broken down into three
-kinds, called _value phases_:
+R-value expressions evaluate to values that may not have dedicated storage. This
+means they cannot be modified and their address generally cannot be taken. The
+values of r-value expressions are broken down into three kinds, called _value
+phases_:
 
 -   A _constant_ has a value known at compile time, and that value is available
     during type checking, for example to use as the size of an array. These
@@ -2102,6 +2103,11 @@ to coordinate to avoid name conflicts, but not across packages.
 
 ### Package declaration
 
+> **Note:** This is provisional, designs for a default package, making the
+> package name optional, and omitting the `package` declaration have not been
+> through the proposal process yet. See
+> [#2323](https://github.com/carbon-language/carbon-lang/issues/2323).
+
 Files start with an optional package declaration, consisting of:
 
 -   the `package` keyword introducer,
@@ -2124,8 +2130,10 @@ Parts of this declaration may be omitted:
 -   If the package name is omitted, as in `package library "Main" api;`, the
     file contributes to the default package. No other package may import from
     the default package.
+
 -   If the library keyword is not specified, as in `package Geometry api;`, this
     file contributes to the default library.
+
 -   If a file has no package declaration at all, it is the `api` file belonging
     to the default package and default library. This is particularly for tests
     and smaller examples. No other library can import this library even from
@@ -2143,6 +2151,10 @@ default package.
 >     [#107: Code and name organization](https://github.com/carbon-language/carbon-lang/pull/107)
 
 ### Imports
+
+> **Note:** This is provisional, designs for making the package name optional
+> have not been through the proposal process yet. See
+> [#2001](https://github.com/carbon-language/carbon-lang/issues/2001).
 
 After the package declaration, files may include `import` declarations. These
 include the package name and optionally `library` followed by the library name.
@@ -2558,16 +2570,20 @@ being passed as a separate explicit argument.
 
 ### Checked and template parameters
 
-The `:!` indicates that `T` is a _checked_ parameter passed at compile time.
+The `:!` indicates that the `T` parameter is generic, and therefore bound at
+compile time. Generic parameters may either be _checked_ or _template_, and
+default to checked.
+
 "Checked" here means that the body of `Min` is type checked when the function is
 defined, independent of the specific type values `T` is instantiated with, and
 name lookup is delegated to the constraint on `T` (`Ordered` in this case). This
 type checking is equivalent to saying the function would pass type checking
-given any type `T` that implements the `Ordered` interface. Then calls to `Min`
-only need to check that the deduced type value of `T` implements `Ordered`.
+given any type `T` that implements the `Ordered` interface. Subsequent calls to
+`Min` only need to check that the deduced type value of `T` implements
+`Ordered`.
 
-The parameter could alternatively be declared to be a _template_ parameter by
-prefixing with the `template` keyword, as in `template T:! Type`.
+The parameter could alternatively be declared to be a _template_ generic
+parameter by prefixing with the `template` keyword, as in `template T:! Type`.
 
 ```carbon
 fn Convert[template T:! Type](source: T, template U:! Type) -> U {
@@ -2579,6 +2595,15 @@ fn Foo(i: i32) -> f32 {
   // Instantiates with the `T` implicit argument set to `i32` and the `U`
   // explicit argument set to `f32`, then calls with the runtime value `i`.
   return Convert(i, f32);
+}
+```
+
+A template parameter can still use a constraint. The `Min` example could have
+been declared as:
+
+```carbon
+fn Min[template T:! Ordered](x: T, y: T) -> T {
+  return if x <= y then x else y;
 }
 ```
 
@@ -2765,14 +2790,14 @@ values for the `ElementType` member of the interface using a `where` clause:
 
 ```carbon
 class IntStack {
-  impl as StackInterface where .ElementType == i32 {
+  impl as StackInterface where .ElementType = i32 {
     fn Push[addr me: Self*](value: i32);
     // ...
   }
 }
 
 class FruitStack {
-  impl as StackInterface where .ElementType == Fruit {
+  impl as StackInterface where .ElementType = Fruit {
     fn Push[addr me: Self*](value: Fruit);
     // ...
   }
@@ -3005,7 +3030,7 @@ to type `T` and the second argument to type `U`, add the `like` keyword to both
 types in the `impl` declaration, as in:
 
 ```carbon
-external impl like T as AddWith(like U) where .Result == V {
+external impl like T as AddWith(like U) where .Result = V {
   // `Self` is `T` here
   fn Op[me: Self](other: U) -> V { ... }
 }
@@ -3111,7 +3136,7 @@ The common type is specified by implementing the `CommonTypeWith` interface:
 
 ```carbon
 // Common type of `A` and `B` is `C`.
-impl A as CommonTypeWith(B) where .Result == C { }
+impl A as CommonTypeWith(B) where .Result = C { }
 ```
 
 The common type is required to be a type that both types have an
@@ -3167,7 +3192,7 @@ available to C++ and a subset of C++ APIs will be available to Carbon.
 
 > References:
 >
-> -   [Bidirectional interoperability with C/C++](interoperability/README.md)
+> -   [Bidirectional interoperability with C and C++](interoperability/README.md)
 > -   Proposal
 >     [#175: C++ interoperability goals](https://github.com/carbon-language/carbon-lang/pull/175)
 

@@ -50,7 +50,7 @@ token has a matching closing bracket token.
 ## Parsing
 
 The [ParseTree](parser/parse_tree.h) is the output of parsing, but most logic is
-in [ParserImpl](parser/parser_impl.h).
+in [Parser](parser/parser.h).
 
 The parse tree faithfully represents the tree structure of the source program,
 interpreted according to the Carbon grammar. No semantics are associated with
@@ -65,15 +65,7 @@ did not match the grammar, but we were still able to parse some subexpressions,
 as an aid for non-compiler tools such as syntax highlighters or refactoring
 tools.
 
-Many functions in the parser return `llvm::Optional<T>`. A return value of
-`llvm::None` indicates that parsing has failed and an error diagnostic has
-already been produced, and that the current region of the parse tree might not
-meet its invariants so that the caller should create an invalid parse tree node.
-Other return values indicate that parsing was either successful or that any
-encountered errors have been recovered from, so the caller can create a valid
-parse tree node.
-
-The produced `ParseTree` is in reverse postorder. For example, given the code:
+The produced `ParseTree` is in postorder. For example, given the code:
 
 ```carbon
 fn foo() -> f64 {
@@ -84,42 +76,36 @@ fn foo() -> f64 {
 The node order is (with indentation to indicate nesting):
 
 ```
-  Index 0: kind DeclaredName
-    Index 1: kind ParameterListEnd
-  Index 2: kind ParameterList
-    Index 3: kind Literal
-  Index 4: kind ReturnType
-      Index 5: kind Literal
-      Index 6: kind StatementEnd
-    Index 7: kind ReturnStatement
-    Index 8: kind CodeBlockEnd
-  Index 9: kind CodeBlock
-Index 10: kind FunctionDeclaration
-Index 11: kind FileEnd
+    {node_index: 0, kind: 'FunctionIntroducer', text: 'fn'}
+    {node_index: 1, kind: 'DeclaredName', text: 'foo'}
+      {node_index: 2, kind: 'ParameterListEnd', text: ')'}
+    {node_index: 3, kind: 'ParameterList', text: '(', subtree_size: 2}
+      {node_index: 4, kind: 'Literal', text: 'f64'}
+    {node_index: 5, kind: 'ReturnType', text: '->', subtree_size: 2}
+  {node_index: 6, kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7}
+    {node_index: 7, kind: 'Literal', text: '42'}
+    {node_index: 8, kind: 'StatementEnd', text: ';'}
+  {node_index: 9, kind: 'ReturnStatement', text: 'return', subtree_size: 3}
+{node_index: 10, kind: 'FunctionDefinition', text: '}', subtree_size: 11}
+{node_index: 11, kind: 'FileEnd', text: ''}
 ```
 
-This is done this way in order to allow for more efficient processing of a file.
-As a consequence, the `SemanticsIR` does a lot of reversal of the ParseTree
-ordering in order to visit code in source order.
+This ordering is focused on efficient translation into the SemanticsIR.
+Non-template code should be type-checked as soon as nodes are encountered,
+decreasing SemanticsIR mutations.
 
-### Stack overflow
+While sometimes the beginning of the grammatical construct will be the parent,
+where introducer keywords are used, it will often be the _end_ of the
+grammatical construct that is the parent: this is so that a postorder traversal
+of the tree can see the kind of grammatical construct being built first, and
+handle child nodes taking that into account.
 
-The `ParseTree` has been prone to stack overflows. As a consequence,
-`CARBON_RETURN_IF_STACK_LIMITED` is checked at the start of most functions in
-order to avoid errors. This manages depth increments and, when the scope exits,
-decrements.
-
-#### Future work
-
-We are interested in eventually exploring ways to adjust the parser design to be
-non-recursive and remove this limitation, but it hasn't yet been a priority and
-keeping the code simple seems better until the language design stabilizes.
+TODO: Document flow.
 
 ## Semantics
 
 The [SemanticsIR](semantics/semantics_ir.h) is the output of semantic
-processing. It's currently built using
-[a factory](semantics/semantics_ir_factory.h).
+processing.
 
 The intent is that a `SemanticsIR` looks closer to a series of instructions than
 a tree. This is in order to better align with the LLVM IR structure which will

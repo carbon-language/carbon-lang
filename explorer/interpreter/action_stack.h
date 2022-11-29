@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <optional>
+#include <stack>
 
 #include "common/ostream.h"
 #include "explorer/ast/statement.h"
@@ -87,9 +88,9 @@ class ActionStack {
   auto Spawn(std::unique_ptr<Action> child) -> ErrorOr<Success>;
   auto Spawn(std::unique_ptr<Action> child, RuntimeScope scope)
       -> ErrorOr<Success>;
-  // Replace the current action with another action of the same kind and run it
-  // next.
-  auto ReplaceWith(std::unique_ptr<Action> child) -> ErrorOr<Success>;
+  // Replace the current action with another action that produces the same kind
+  // of result and run it next.
+  auto ReplaceWith(std::unique_ptr<Action> replacement) -> ErrorOr<Success>;
 
   // Start a new recursive action.
   auto BeginRecursiveAction() {
@@ -118,14 +119,30 @@ class ActionStack {
   // Suspends execution of the currently-executing continuation.
   auto Suspend() -> ErrorOr<Success>;
 
+  void Pop() { todo_.Pop(); }
+
  private:
   // Pop any ScopeActions from the top of the stack, propagating results as
   // needed, to restore the invariant that todo_.Top() is not a ScopeAction.
-  void PopScopes();
+  // Store the popped scope action into cleanup_stack, so that the destructor
+  // can be called for the variables
+  void PopScopes(std::stack<std::unique_ptr<Action>>& cleanup_stack);
 
   // Set `result` as the result of the Action most recently removed from the
   // stack.
   void SetResult(Nonnull<const Value*> result);
+
+  auto UnwindToWithCaptureScopesToDestroy(Nonnull<const Statement*> ast_node)
+      -> std::stack<std::unique_ptr<Action>>;
+
+  auto UnwindPastWithCaptureScopesToDestroy(Nonnull<const Statement*> ast_node)
+      -> std::stack<std::unique_ptr<Action>>;
+
+  // Create CleanUpActions for all actions
+  void PushCleanUpActions(std::stack<std::unique_ptr<Action>> actions);
+
+  // Create and push a CleanUpAction on the stack
+  void PushCleanUpAction(std::unique_ptr<Action> act);
 
   // TODO: consider defining a non-nullable unique_ptr-like type to use here.
   Stack<std::unique_ptr<Action>> todo_;

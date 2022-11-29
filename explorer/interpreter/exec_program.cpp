@@ -18,12 +18,12 @@
 
 namespace Carbon {
 
-auto ExecProgram(Nonnull<Arena*> arena, AST ast,
-                 std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
-    -> ErrorOr<int> {
+auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
+                    std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
+    -> ErrorOr<AST> {
   if (trace_stream) {
     **trace_stream << "********** source program **********\n";
-    for (const auto decl : ast.declarations) {
+    for (auto* const decl : ast.declarations) {
       **trace_stream << *decl;
     }
   }
@@ -51,9 +51,17 @@ auto ExecProgram(Nonnull<Arena*> arena, AST ast,
   CARBON_RETURN_IF_ERROR(ResolveUnformed(ast));
   if (trace_stream) {
     **trace_stream << "********** printing declarations **********\n";
-    for (const auto decl : ast.declarations) {
+    for (auto* const decl : ast.declarations) {
       **trace_stream << *decl;
     }
+  }
+  return ast;
+}
+
+auto ExecProgram(Nonnull<Arena*> arena, AST ast,
+                 std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
+    -> ErrorOr<int> {
+  if (trace_stream) {
     **trace_stream << "********** starting execution **********\n";
   }
   return InterpProgram(ast, arena, trace_stream);

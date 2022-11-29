@@ -20,7 +20,7 @@ namespace Carbon {
 
 class Builtins {
  public:
-  explicit Builtins() {}
+  explicit Builtins() = default;
 
   enum class Builtin {
     // Conversions.
@@ -40,6 +40,7 @@ class Builtins {
     AddWith,
     SubWith,
     MulWith,
+    DivWith,
     ModWith,
 
     // Bitwise and shift.
@@ -64,6 +65,7 @@ class Builtins {
   static constexpr Builtin AddWith = Builtin::AddWith;
   static constexpr Builtin SubWith = Builtin::SubWith;
   static constexpr Builtin MulWith = Builtin::MulWith;
+  static constexpr Builtin DivWith = Builtin::DivWith;
   static constexpr Builtin ModWith = Builtin::ModWith;
   static constexpr Builtin BitComplement = Builtin::BitComplement;
   static constexpr Builtin BitAndWith = Builtin::BitAndWith;
@@ -88,11 +90,11 @@ class Builtins {
  private:
   static constexpr int NumBuiltins = static_cast<int>(Builtin::Last) + 1;
   static constexpr const char* BuiltinNames[NumBuiltins] = {
-      "As",         "ImplicitAs",    "EqWith",        "LessWith",
-      "LessEqWith", "GreaterWith",   "GreaterEqWith", "CompareWith",
-      "Negate",     "AddWith",       "SubWith",       "MulWith",
-      "ModWith",    "BitComplement", "BitAndWith",    "BitOrWith",
-      "BitXorWith", "LeftShiftWith", "RightShiftWith"};
+      "As",         "ImplicitAs",  "EqWith",        "LessWith",
+      "LessEqWith", "GreaterWith", "GreaterEqWith", "CompareWith",
+      "Negate",     "AddWith",     "SubWith",       "MulWith",
+      "DivWith",    "ModWith",     "BitComplement", "BitAndWith",
+      "BitOrWith",  "BitXorWith",  "LeftShiftWith", "RightShiftWith"};
 
   std::optional<Nonnull<const Declaration*>> builtins_[NumBuiltins] = {};
 };
