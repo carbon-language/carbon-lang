@@ -1097,8 +1097,8 @@ auto FindFunctionWithParents(std::string_view name,
   if (auto fun = FindFunction(name, class_decl.members()); fun.has_value()) {
     return fun;
   }
-  if (class_decl.base().has_value()) {
-    return FindFunctionWithParents(name, *class_decl.base().value());
+  if (const auto base_type = class_decl.base_type(); base_type.has_value()) {
+    return FindFunctionWithParents(name, base_type.value()->declaration());
   }
   return std::nullopt;
 }
