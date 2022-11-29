@@ -4548,7 +4548,6 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
              << "` to allow it to be inherited";
     }
     class_decl->set_base_type(base_class);
-    class_decl->set_base(&base_class.value()->declaration());
   }
 
   std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
