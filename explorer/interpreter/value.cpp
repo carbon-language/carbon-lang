@@ -363,7 +363,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       if (!fn_type.deduced_bindings().empty()) {
         out << "[";
         llvm::ListSeparator sep;
-        for (Nonnull<const GenericBinding*> deduced :
+        for (Nonnull<const TypeVariableBinding*> deduced :
              fn_type.deduced_bindings()) {
           out << sep << *deduced;
         }

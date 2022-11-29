@@ -20,8 +20,9 @@ __mixin M {
 class C {
   __mix M;
   fn Foo[me: Self](a: i32, b: i32) -> i32{
+     var t: i32 = me.Twice(3);
 // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_use_non_export_simple.carbon:[[@LINE+1]]: class C does not have a field named Square
-     return me.Twice(3) + me.Square(5);
+     return t + me.Square(5);
   }
 }
 

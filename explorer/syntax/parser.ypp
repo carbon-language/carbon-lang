@@ -1130,11 +1130,7 @@ mixin_import:
   // Empty
     { $$ = arena->New<TypeTypeLiteral>(context.source_loc()); }
 | FOR expression
-    {
-      context.RecordSyntaxError("'for' not supported currently");
-      YYERROR;
-      // $$ = $2;
-    }
+    { $$ = $2; }
 ;
 class_declaration_extensibility:
   // Empty

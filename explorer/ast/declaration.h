@@ -319,6 +319,15 @@ class MixinDeclaration : public Declaration {
   auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
     return members_;
   }
+  void set_constraint_type(Nonnull<const ConstraintType*> constraint_type) {
+    constraint_type_ = constraint_type;
+  }
+  auto constraint_type() const -> Nonnull<const ConstraintType*> {
+    return *constraint_type_;
+  }
+  auto has_constraint_type() const -> bool {
+    return constraint_type_.has_value();
+  }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
@@ -327,6 +336,7 @@ class MixinDeclaration : public Declaration {
   std::optional<Nonnull<TuplePattern*>> params_;
   Nonnull<MixinSelf*> self_;
   std::vector<Nonnull<Declaration*>> members_;
+  std::optional<Nonnull<const ConstraintType*>> constraint_type_;
 };
 
 // EXPERIMENTAL MIXIN FEATURE

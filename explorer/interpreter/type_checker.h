@@ -50,7 +50,7 @@ class TypeChecker {
   // must be provided.
   auto ArgumentDeduction(
       SourceLocation source_loc, const std::string& context,
-      llvm::ArrayRef<Nonnull<const GenericBinding*>> bindings_to_deduce,
+      llvm::ArrayRef<Nonnull<const TypeVariableBinding*>> bindings_to_deduce,
       BindingMap& deduced, Nonnull<const Value*> param,
       Nonnull<const Value*> arg, bool allow_implicit_conversion,
       const ImplScope& impl_scope) const -> ErrorOr<Success>;
@@ -126,7 +126,7 @@ class TypeChecker {
 
     static auto ForClassScope(
         const ScopeInfo& outer, Nonnull<ImplScope*> class_impl_scope,
-        std::vector<Nonnull<const GenericBinding*>> class_bindings)
+        std::vector<Nonnull<const TypeVariableBinding*>> class_bindings)
         -> ScopeInfo {
       return {.innermost_scope = class_impl_scope,
               .innermost_non_class_scope = outer.innermost_non_class_scope,
@@ -139,8 +139,8 @@ class TypeChecker {
     // The innermost enclosing non-class impl scope, where impl declarations
     // should introduce new impls.
     Nonnull<ImplScope*> innermost_non_class_scope;
-    // The enclosing generic bindings, if any.
-    std::vector<Nonnull<const GenericBinding*>> bindings;
+    // The enclosing type variable bindings, if any.
+    std::vector<Nonnull<const TypeVariableBinding*>> bindings;
   };
 
   // Traverses the AST rooted at `e`, populating the static_type() of all nodes
@@ -195,7 +195,7 @@ class TypeChecker {
   auto DeduceCallBindings(
       CallExpression& call, Nonnull<const Value*> params,
       llvm::ArrayRef<FunctionType::GenericParameter> generic_params,
-      llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings,
+      llvm::ArrayRef<Nonnull<const TypeVariableBinding*>> deduced_bindings,
       llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
       const ImplScope& impl_scope) -> ErrorOr<Success>;
 
@@ -228,7 +228,7 @@ class TypeChecker {
   auto CheckImplIsDeducible(
       SourceLocation source_loc, Nonnull<const Value*> impl_type,
       Nonnull<const InterfaceType*> impl_iface,
-      llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings,
+      llvm::ArrayRef<Nonnull<const TypeVariableBinding*>> deduced_bindings,
       const ImplScope& impl_scope) -> ErrorOr<Success>;
 
   // Check that each required declaration in an implementation of the given
@@ -253,10 +253,10 @@ class TypeChecker {
   auto DeclareAliasDeclaration(Nonnull<AliasDeclaration*> alias,
                                const ScopeInfo& scope_info) -> ErrorOr<Success>;
 
-  // Find all of the GenericBindings in the given pattern.
-  void CollectGenericBindingsInPattern(
+  // Find all of the TypeVariableBindings in the given pattern.
+  void CollectTypeVariableBindingsInPattern(
       Nonnull<const Pattern*> p,
-      std::vector<Nonnull<const GenericBinding*>>& generic_bindings);
+      std::vector<Nonnull<const TypeVariableBinding*>>& generic_bindings);
 
   // Find all of the ImplBindings in the given pattern. The pattern is required
   // to have already been type-checked.

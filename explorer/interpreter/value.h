@@ -506,14 +506,15 @@ class FunctionType : public Value {
   //     fn MakeEmptyVector(T:! Type) -> Vector(T);
   struct GenericParameter {
     size_t index;
-    Nonnull<const GenericBinding*> binding;
+    Nonnull<const TypeVariableBinding*> binding;
   };
 
-  FunctionType(Nonnull<const Value*> parameters,
-               llvm::ArrayRef<GenericParameter> generic_parameters,
-               Nonnull<const Value*> return_type,
-               llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings,
-               llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings)
+  FunctionType(
+      Nonnull<const Value*> parameters,
+      llvm::ArrayRef<GenericParameter> generic_parameters,
+      Nonnull<const Value*> return_type,
+      llvm::ArrayRef<Nonnull<const TypeVariableBinding*>> deduced_bindings,
+      llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings)
       : Value(Kind::FunctionType),
         parameters_(parameters),
         generic_parameters_(generic_parameters),
@@ -536,7 +537,7 @@ class FunctionType : public Value {
   // All generic bindings in this function's signature that should be deduced
   // in a call. This excludes any generic parameters.
   auto deduced_bindings() const
-      -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
+      -> llvm::ArrayRef<Nonnull<const TypeVariableBinding*>> {
     return deduced_bindings_;
   }
   // The bindings for the witness tables (impls) required by the
@@ -549,7 +550,7 @@ class FunctionType : public Value {
   Nonnull<const Value*> parameters_;
   std::vector<GenericParameter> generic_parameters_;
   Nonnull<const Value*> return_type_;
-  std::vector<Nonnull<const GenericBinding*>> deduced_bindings_;
+  std::vector<Nonnull<const TypeVariableBinding*>> deduced_bindings_;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings_;
 };
 

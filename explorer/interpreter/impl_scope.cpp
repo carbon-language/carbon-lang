@@ -21,7 +21,7 @@ void ImplScope::Add(Nonnull<const Value*> iface, Nonnull<const Value*> type,
 }
 
 void ImplScope::Add(Nonnull<const Value*> iface,
-                    llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
+                    llvm::ArrayRef<Nonnull<const TypeVariableBinding*>> deduced,
                     Nonnull<const Value*> type,
                     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
                     Nonnull<const Witness*> witness,

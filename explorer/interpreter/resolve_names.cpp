@@ -590,6 +590,8 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
       StaticScope mixin_scope;
       mixin_scope.AddParent(&enclosing_scope);
       enclosing_scope.MarkDeclared(mixin_decl.name());
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(mixin_decl.self()->type(), mixin_scope));
       if (mixin_decl.params().has_value()) {
         CARBON_RETURN_IF_ERROR(
             ResolveNames(**mixin_decl.params(), mixin_scope));

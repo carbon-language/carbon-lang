@@ -48,7 +48,7 @@ class ImplScope {
   // For a parameterized impl, associates `iface` and `type`
   // with the `impl` in this scope.
   void Add(Nonnull<const Value*> iface,
-           llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
+           llvm::ArrayRef<Nonnull<const TypeVariableBinding*>> deduced,
            Nonnull<const Value*> type,
            llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
            Nonnull<const Witness*> witness, const TypeChecker& type_checker);
@@ -91,7 +91,7 @@ class ImplScope {
   // later are impl bindings, that is, parameters for witnesses.
   struct Impl {
     Nonnull<const InterfaceType*> interface;
-    std::vector<Nonnull<const GenericBinding*>> deduced;
+    std::vector<Nonnull<const TypeVariableBinding*>> deduced;
     Nonnull<const Value*> type;
     std::vector<Nonnull<const ImplBinding*>> impl_bindings;
     Nonnull<const Witness*> witness;

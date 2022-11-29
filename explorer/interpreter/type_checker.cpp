@@ -631,7 +631,7 @@ auto TypeChecker::ExpectType(SourceLocation source_loc,
 
 auto TypeChecker::ArgumentDeduction(
     SourceLocation source_loc, const std::string& context,
-    llvm::ArrayRef<Nonnull<const GenericBinding*>> bindings_to_deduce,
+    llvm::ArrayRef<Nonnull<const TypeVariableBinding*>> bindings_to_deduce,
     BindingMap& deduced, Nonnull<const Value*> param, Nonnull<const Value*> arg,
     bool allow_implicit_conversion, const ImplScope& impl_scope) const
     -> ErrorOr<Success> {
@@ -1050,7 +1050,7 @@ auto TypeChecker::Substitute(const BindingMap& dict,
       // Create new generic parameters and generic bindings
       // and add them to new_dict.
       std::vector<FunctionType::GenericParameter> generic_parameters;
-      std::vector<Nonnull<const GenericBinding*>> deduced_bindings;
+      std::vector<Nonnull<const TypeVariableBinding*>> deduced_bindings;
       std::map<Nonnull<const TypeVariableBinding*>,
                Nonnull<const TypeVariableBinding*>>
           bind_map;  // Map old generic bindings to new ones.
@@ -1069,16 +1069,17 @@ auto TypeChecker::Substitute(const BindingMap& dict,
         new_dict[gp.binding] = arena_->New<VariableType>(new_gp.binding);
         bind_map[gp.binding] = new_gb;
       }
-      for (Nonnull<const GenericBinding*> gb : fn_type.deduced_bindings()) {
-        Nonnull<const Value*> new_type = Substitute(dict, &gb->static_type());
+      for (Nonnull<const TypeVariableBinding*> tvb :
+           fn_type.deduced_bindings()) {
+        Nonnull<const Value*> new_type = Substitute(dict, &tvb->static_type());
         Nonnull<GenericBinding*> new_gb = arena_->New<GenericBinding>(
-            gb->source_loc(), gb->name(),
-            (Expression*)&gb->type());  // How to avoid the cast? -jsiek
-        new_gb->set_original(gb->original());
+            tvb->source_loc(), tvb->name(),
+            (Expression*)&tvb->type());  // How to avoid the cast? -jsiek
+        new_gb->set_original(tvb->original());
         new_gb->set_static_type(new_type);
         deduced_bindings.push_back(new_gb);
-        new_dict[gb] = arena_->New<VariableType>(new_gb);
-        bind_map[gb] = new_gb;
+        new_dict[tvb] = arena_->New<VariableType>(new_gb);
+        bind_map[tvb] = new_gb;
       }
       // Apply substitution to impl bindings and update their
       // `type_var` pointers to the new generic bindings.
@@ -1340,7 +1341,7 @@ auto TypeChecker::CombineConstraints(
 auto TypeChecker::DeduceCallBindings(
     CallExpression& call, Nonnull<const Value*> params_type,
     llvm::ArrayRef<FunctionType::GenericParameter> generic_params,
-    llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings,
+    llvm::ArrayRef<Nonnull<const TypeVariableBinding*>> deduced_bindings,
     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
     const ImplScope& impl_scope) -> ErrorOr<Success> {
   llvm::ArrayRef<Nonnull<const Value*>> params =
@@ -1384,7 +1385,7 @@ auto TypeChecker::DeduceCallBindings(
   CARBON_CHECK(generic_params.empty())
       << "did not find all generic parameters in parameter list";
 
-  for (Nonnull<const GenericBinding*> deduced_param : deduced_bindings) {
+  for (Nonnull<const TypeVariableBinding*> deduced_param : deduced_bindings) {
     // TODO: change the following to a CHECK once the real checking
     // has been added to the type checking of function signatures.
     if (auto it = generic_bindings.find(deduced_param);
@@ -2636,12 +2637,12 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
   }
 }
 
-void TypeChecker::CollectGenericBindingsInPattern(
+void TypeChecker::CollectTypeVariableBindingsInPattern(
     Nonnull<const Pattern*> p,
-    std::vector<Nonnull<const GenericBinding*>>& generic_bindings) {
+    std::vector<Nonnull<const TypeVariableBinding*>>& bindings) {
   VisitNestedPatterns(*p, [&](const Pattern& pattern) {
-    if (auto* binding = dyn_cast<GenericBinding>(&pattern)) {
-      generic_bindings.push_back(binding);
+    if (auto* binding = dyn_cast<TypeVariableBinding>(&pattern)) {
+      bindings.push_back(binding);
     }
     return true;
   });
@@ -2651,7 +2652,7 @@ void TypeChecker::CollectImplBindingsInPattern(
     Nonnull<const Pattern*> p,
     std::vector<Nonnull<const ImplBinding*>>& impl_bindings) {
   VisitNestedPatterns(*p, [&](const Pattern& pattern) {
-    if (auto* binding = dyn_cast<GenericBinding>(&pattern)) {
+    if (auto* binding = dyn_cast<TypeVariableBinding>(&pattern)) {
       if (binding->impl_binding().has_value()) {
         impl_bindings.push_back(binding->impl_binding().value());
       }
@@ -3265,20 +3266,20 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
   }
   ImplScope function_scope;
   function_scope.AddParent(scope_info.innermost_scope);
-  std::vector<Nonnull<const GenericBinding*>> deduced_bindings;
+  std::vector<Nonnull<const TypeVariableBinding*>> deduced_bindings;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings;
   // Bring the deduced parameters into scope.
   for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(
         deduced, std::nullopt, function_scope, ValueCategory::Let));
-    CollectGenericBindingsInPattern(deduced, deduced_bindings);
+    CollectTypeVariableBindingsInPattern(deduced, deduced_bindings);
     CollectImplBindingsInPattern(deduced, impl_bindings);
   }
   // Type check the receiver pattern.
   if (f->is_method()) {
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(
         &f->me_pattern(), std::nullopt, function_scope, ValueCategory::Let));
-    CollectGenericBindingsInPattern(&f->me_pattern(), deduced_bindings);
+    CollectTypeVariableBindingsInPattern(&f->me_pattern(), deduced_bindings);
     CollectImplBindingsInPattern(&f->me_pattern(), impl_bindings);
   }
   // Type check the parameter pattern.
@@ -3294,7 +3295,7 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
     if (auto* binding = dyn_cast<GenericBinding>(param_pattern)) {
       generic_parameters.push_back({i, binding});
     } else {
-      CollectGenericBindingsInPattern(param_pattern, deduced_bindings);
+      CollectTypeVariableBindingsInPattern(param_pattern, deduced_bindings);
     }
   }
 
@@ -3409,12 +3410,13 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
            << "Class extension with `extends` is not supported yet";
   }
 
-  std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
+  std::vector<Nonnull<const TypeVariableBinding*>> bindings =
+      scope_info.bindings;
   if (class_decl->type_params().has_value()) {
     Nonnull<TuplePattern*> type_params = *class_decl->type_params();
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(type_params, std::nullopt,
                                             class_scope, ValueCategory::Let));
-    CollectGenericBindingsInPattern(type_params, bindings);
+    CollectTypeVariableBindingsInPattern(type_params, bindings);
     if (trace_stream_) {
       **trace_stream_ << class_scope;
     }
@@ -3525,8 +3527,31 @@ auto TypeChecker::DeclareMixinDeclaration(Nonnull<MixinDeclaration*> mixin_decl,
   // Process the Self parameter.
   CARBON_RETURN_IF_ERROR(TypeCheckPattern(mixin_decl->self(), std::nullopt,
                                           mixin_scope, ValueCategory::Let));
+  std::vector<Nonnull<const TypeVariableBinding*>> bindings =
+      scope_info.bindings;
+  CollectTypeVariableBindingsInPattern(mixin_decl->self(), bindings);
 
-  ScopeInfo mixin_scope_info = ScopeInfo::ForNonClassScope(&mixin_scope);
+  // Check the import type
+  Nonnull<const Value*> import_constraint_type =
+      &mixin_decl->self()->static_type();
+
+  if (auto* iface_type = dyn_cast<InterfaceType>(import_constraint_type)) {
+    import_constraint_type = MakeConstraintForInterface(
+        iface_type->declaration().source_loc(), iface_type);
+  }
+
+  if (auto* constraint_type =
+          dyn_cast<ConstraintType>(import_constraint_type)) {
+    mixin_decl->set_constraint_type(constraint_type);
+  } else if (!isa<TypeType>(import_constraint_type)) {
+    return ProgramError(mixin_decl->source_loc())
+           << "Expected constraint after `for`, found "
+           << *import_constraint_type;
+  }
+
+  ScopeInfo mixin_scope_info =
+      ScopeInfo::ForClassScope(scope_info, &mixin_scope, std::move(bindings));
+
   for (Nonnull<Declaration*> m : mixin_decl->members()) {
     CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, mixin_scope_info));
   }
@@ -3567,6 +3592,7 @@ auto TypeChecker::TypeCheckMixinDeclaration(
   if (mixin_decl->params().has_value()) {
     BringPatternImplsIntoScope(*mixin_decl->params(), mixin_scope);
   }
+  BringPatternImplsIntoScope(cast<Pattern>(mixin_decl->self()), mixin_scope);
   if (trace_stream_) {
     **trace_stream_ << mixin_scope;
   }
@@ -3595,15 +3621,18 @@ auto TypeChecker::TypeCheckMixDeclaration(
   if (trace_stream_) {
     **trace_stream_ << "** checking " << *mix_decl << "\n";
   }
-  // TODO(darshal): Check if the imports (interface mentioned in the 'for'
-  // clause) of the mixin being mixed are being impl'd in the enclosed
-  // class/mixin declaration This raises the question of how to handle impl
-  // declarations in mixin declarations
 
   CARBON_CHECK(enclosing_decl.has_value());
   Nonnull<const Declaration*> encl_decl = enclosing_decl.value();
   auto& mixin_decl = mix_decl->mixin_value().declaration();
   CARBON_RETURN_IF_ERROR(TypeCheckMixinDeclaration(&mixin_decl, impl_scope));
+  if (mixin_decl.has_constraint_type()) {
+    CARBON_CHECK(encl_decl->constant_value().has_value());
+    // TODO(darshal): Does this need a better error message?
+    CARBON_RETURN_IF_ERROR(impl_scope.Resolve(
+        mixin_decl.constraint_type(), encl_decl->constant_value().value(),
+        encl_decl->source_loc(), *this));
+  }
   CollectedMembersMap& mix_members = FindCollectedMembers(&mixin_decl);
 
   // Merge members collected in the enclosing declaration with the members
@@ -3645,8 +3674,9 @@ auto TypeChecker::DeclareInterfaceDeclaration(
     // Form the full symbolic type of the interface. This is used as part of
     // the value of associated constants, if they're referenced within the
     // interface itself.
-    std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
-    CollectGenericBindingsInPattern(*iface_decl->params(), bindings);
+    std::vector<Nonnull<const TypeVariableBinding*>> bindings =
+        scope_info.bindings;
+    CollectTypeVariableBindingsInPattern(*iface_decl->params(), bindings);
     BindingMap generic_args;
     for (auto* binding : bindings) {
       generic_args[binding] = *binding->symbolic_identity();
@@ -3714,7 +3744,7 @@ auto TypeChecker::TypeCheckInterfaceDeclaration(
 auto TypeChecker::CheckImplIsDeducible(
     SourceLocation source_loc, Nonnull<const Value*> impl_type,
     Nonnull<const InterfaceType*> impl_iface,
-    llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings,
+    llvm::ArrayRef<Nonnull<const TypeVariableBinding*>> deduced_bindings,
     const ImplScope& impl_scope) -> ErrorOr<Success> {
   BindingMap deduced_args;
   CARBON_RETURN_IF_ERROR(ArgumentDeduction(
@@ -3815,7 +3845,7 @@ auto TypeChecker::CheckAndAddImplBindings(
     const ScopeInfo& scope_info) -> ErrorOr<Success> {
   // The deduced bindings are the parameters for all enclosing classes followed
   // by any deduced parameters written on the `impl` declaration itself.
-  std::vector<Nonnull<const GenericBinding*>> deduced_bindings =
+  std::vector<Nonnull<const TypeVariableBinding*>> deduced_bindings =
       scope_info.bindings;
   deduced_bindings.insert(deduced_bindings.end(),
                           impl_decl->deduced_parameters().begin(),
@@ -4003,12 +4033,13 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
     -> ErrorOr<Success> {
   ImplScope choice_scope;
   choice_scope.AddParent(scope_info.innermost_scope);
-  std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
+  std::vector<Nonnull<const TypeVariableBinding*>> bindings =
+      scope_info.bindings;
   if (choice->type_params().has_value()) {
     Nonnull<TuplePattern*> type_params = *choice->type_params();
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(type_params, std::nullopt,
                                             choice_scope, ValueCategory::Let));
-    CollectGenericBindingsInPattern(type_params, bindings);
+    CollectTypeVariableBindingsInPattern(type_params, bindings);
     if (trace_stream_) {
       **trace_stream_ << choice_scope;
     }
