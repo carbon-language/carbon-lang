@@ -300,7 +300,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       const auto& s = cast<NominalClassValue>(*this);
       out << cast<NominalClassType>(s.type()).declaration().name() << s.inits();
       if (s.base().has_value()) {
-        out << ", " << *s.base().value();
+        out << " base " << *s.base().value();
       }
       break;
     }
