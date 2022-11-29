@@ -769,11 +769,9 @@ auto Parser::HandleDesignator(bool as_struct) -> void {
     } else {
       AddLeafNode(ParseNodeKind::DesignatedName(), *position_,
                   /*has_error=*/true);
-      if (as_struct) {
-        // Indicate the error to the parent state so that it can avoid producing
-        // more errors.
-        ReturnErrorOnState();
-      }
+      // Indicate the error to the parent state so that it can avoid producing
+      // more errors.
+      ReturnErrorOnState();
     }
   }
 

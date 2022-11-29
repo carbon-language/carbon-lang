@@ -13,7 +13,7 @@
 // CHECK:STDOUT:       {kind: 'NameReference', text: 'a'},
 // CHECK:STDOUT:       {kind: 'DesignatedName', text: ';', has_error: yes},
 // CHECK:STDOUT:     {kind: 'DesignatorExpression', text: '.', subtree_size: 3},
-// CHECK:STDOUT:   {kind: 'ExpressionStatement', text: ';', subtree_size: 4},
+// CHECK:STDOUT:   {kind: 'ExpressionStatement', text: ';', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'NameReference', text: 'a'},
 // CHECK:STDOUT:       {kind: 'DesignatedName', text: 'fn', has_error: yes},
 // CHECK:STDOUT:     {kind: 'DesignatorExpression', text: '.', subtree_size: 3},
@@ -32,7 +32,6 @@ fn F() {
   a.;
   // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/basics/fail_invalid_designators.carbon:[[@LINE+1]]:5: Expected identifier after `.`.
   a.fn;
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/basics/fail_invalid_designators.carbon:[[@LINE+2]]:5: Expected identifier after `.`.
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/basics/fail_invalid_designators.carbon:[[@LINE+1]]:5: Expected `;` after expression.
+  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/basics/fail_invalid_designators.carbon:[[@LINE+1]]:5: Expected identifier after `.`.
   a.42;
 }
