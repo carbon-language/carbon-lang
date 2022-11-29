@@ -62,6 +62,29 @@ Leads of the Carbon project may potentially
 be able to use this tool to
 manage issues that are
 assigned to new contributors.
+## Possible Usage as a Runtime Error Handler
+Not sure how exceptional are handled currently.
+The concept behind issue_manage is that
+new contributors can start contributing successfully,
+without completely knowing or following properly
+the design and style requirements
+for contribution.
+## Recursive Importance of issue_manage
+If recursion is defined as a small problem,
+within a larger problem; and that small problem
+having the same indica constituents,
+of the larger problem;
+and that smaller problem is solved repeatedly,
+with small and incremental differences; then,
+the theory is that issue_manage will help
+be an important tool to use for
+increasing Carbon project successes.
+Essentially, issue_manage is an experimental tool,
+within the experimental Carbon development.
+## Getting Familiar with Carbon
+Development of issue_manage, is 
+an exercise for a new contributors to,
+get familiar with contributing to Carbon development.
 ## Creating issue_manage
 New contributors may possibly not have used Carbon previously.
 Creating the `issue_manage` tool is an exercise in
