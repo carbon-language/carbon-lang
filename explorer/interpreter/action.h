@@ -96,7 +96,6 @@ class Action {
     LValAction,
     ExpressionAction,
     WitnessAction,
-    PatternAction,
     StatementAction,
     DeclarationAction,
     ScopeAction,
@@ -218,24 +217,6 @@ class WitnessAction : public Action {
 
  private:
   Nonnull<const Witness*> witness_;
-};
-
-// An Action which implements evaluation of a Pattern. The result is expressed
-// as a Value.
-class PatternAction : public Action {
- public:
-  explicit PatternAction(Nonnull<const Pattern*> pattern)
-      : Action(Kind::PatternAction), pattern_(pattern) {}
-
-  static auto classof(const Action* action) -> bool {
-    return action->kind() == Kind::PatternAction;
-  }
-
-  // The Pattern this Action evaluates.
-  auto pattern() const -> const Pattern& { return *pattern_; }
-
- private:
-  Nonnull<const Pattern*> pattern_;
 };
 
 // An Action which implements execution of a Statement. Does not produce a

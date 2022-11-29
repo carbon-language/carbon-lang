@@ -44,6 +44,7 @@ cc_library(
         "//common:check",
         "//common:ostream",
         "//common:vlog",
+        "//toolchain/lexer:numeric_literal",
         "//toolchain/lexer:token_kind",
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_node_kind",

@@ -9,6 +9,7 @@
 
 #include "common/check.h"
 #include "common/ostream.h"
+#include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_builtin_kind.h"
 #include "toolchain/semantics/semantics_node_kind.h"
 
@@ -41,6 +42,13 @@ struct SemanticsNodeId {
     return id & ~CrossReferenceBit;
   }
 
+  friend auto operator==(SemanticsNodeId lhs, SemanticsNodeId rhs) -> bool {
+    return lhs.id == rhs.id;
+  }
+  friend auto operator!=(SemanticsNodeId lhs, SemanticsNodeId rhs) -> bool {
+    return lhs.id != rhs.id;
+  }
+
   auto Print(llvm::raw_ostream& out) const -> void {
     if (is_cross_reference()) {
       out << "node_xref" << GetAsCrossReference();
@@ -57,6 +65,15 @@ struct SemanticsIdentifierId {
   SemanticsIdentifierId() : id(-1) {}
   explicit SemanticsIdentifierId(int32_t id) : id(id) {}
 
+  friend auto operator==(SemanticsIdentifierId lhs, SemanticsIdentifierId rhs)
+      -> bool {
+    return lhs.id == rhs.id;
+  }
+  friend auto operator!=(SemanticsIdentifierId lhs, SemanticsIdentifierId rhs)
+      -> bool {
+    return lhs.id != rhs.id;
+  }
+
   auto Print(llvm::raw_ostream& out) const -> void { out << "ident" << id; }
 
   int32_t id;
@@ -67,6 +84,15 @@ struct SemanticsIntegerLiteralId {
   SemanticsIntegerLiteralId() : id(-1) {}
   explicit SemanticsIntegerLiteralId(int32_t id) : id(id) {}
 
+  friend auto operator==(SemanticsIntegerLiteralId lhs,
+                         SemanticsIntegerLiteralId rhs) -> bool {
+    return lhs.id == rhs.id;
+  }
+  friend auto operator!=(SemanticsIntegerLiteralId lhs,
+                         SemanticsIntegerLiteralId rhs) -> bool {
+    return lhs.id != rhs.id;
+  }
+
   auto Print(llvm::raw_ostream& out) const -> void { out << "int" << id; }
 
   int32_t id;
@@ -76,6 +102,15 @@ struct SemanticsIntegerLiteralId {
 struct SemanticsNodeBlockId {
   SemanticsNodeBlockId() : id(-1) {}
   explicit SemanticsNodeBlockId(int32_t id) : id(id) {}
+
+  friend auto operator==(SemanticsNodeBlockId lhs, SemanticsNodeBlockId rhs)
+      -> bool {
+    return lhs.id == rhs.id;
+  }
+  friend auto operator!=(SemanticsNodeBlockId lhs, SemanticsNodeBlockId rhs)
+      -> bool {
+    return lhs.id != rhs.id;
+  }
 
   auto Print(llvm::raw_ostream& out) const -> void { out << "block" << id; }
 
@@ -89,10 +124,11 @@ class SemanticsNode {
 
   auto GetAsInvalid() const -> NoArgs { CARBON_FATAL() << "Invalid access"; }
 
-  static auto MakeBinaryOperatorAdd(SemanticsNodeId lhs, SemanticsNodeId rhs)
-      -> SemanticsNode {
-    return SemanticsNode(SemanticsNodeKind::BinaryOperatorAdd(),
-                         SemanticsNodeId(), lhs.id, rhs.id);
+  static auto MakeBinaryOperatorAdd(ParseTree::Node parse_node,
+                                    SemanticsNodeId type, SemanticsNodeId lhs,
+                                    SemanticsNodeId rhs) -> SemanticsNode {
+    return SemanticsNode(parse_node, SemanticsNodeKind::BinaryOperatorAdd(),
+                         type, lhs.id, rhs.id);
   }
   auto GetAsBinaryOperatorAdd() const
       -> std::pair<SemanticsNodeId, SemanticsNodeId> {
@@ -100,10 +136,11 @@ class SemanticsNode {
     return {SemanticsNodeId(arg0_), SemanticsNodeId(arg1_)};
   }
 
-  static auto MakeBindName(SemanticsIdentifierId name, SemanticsNodeId node)
+  static auto MakeBindName(ParseTree::Node parse_node,
+                           SemanticsIdentifierId name, SemanticsNodeId node)
       -> SemanticsNode {
-    return SemanticsNode(SemanticsNodeKind::BindName(), SemanticsNodeId(),
-                         name.id, node.id);
+    return SemanticsNode(parse_node, SemanticsNodeKind::BindName(),
+                         SemanticsNodeId(), name.id, node.id);
   }
   auto GetAsBindName() const
       -> std::pair<SemanticsIdentifierId, SemanticsNodeId> {
@@ -113,7 +150,9 @@ class SemanticsNode {
 
   static auto MakeBuiltin(SemanticsBuiltinKind builtin_kind,
                           SemanticsNodeId type) -> SemanticsNode {
-    return SemanticsNode(SemanticsNodeKind::Builtin(), type,
+    // Builtins won't have a ParseTree node associated, so we provide the
+    // default invalid one.
+    return SemanticsNode(ParseTree::Node(), SemanticsNodeKind::Builtin(), type,
                          builtin_kind.AsInt());
   }
   auto GetAsBuiltin() const -> SemanticsBuiltinKind {
@@ -121,9 +160,10 @@ class SemanticsNode {
     return SemanticsBuiltinKind::FromInt(arg0_);
   }
 
-  static auto MakeCodeBlock(SemanticsNodeBlockId node_block) -> SemanticsNode {
-    return SemanticsNode(SemanticsNodeKind::CodeBlock(), SemanticsNodeId(),
-                         node_block.id);
+  static auto MakeCodeBlock(ParseTree::Node parse_node,
+                            SemanticsNodeBlockId node_block) -> SemanticsNode {
+    return SemanticsNode(parse_node, SemanticsNodeKind::CodeBlock(),
+                         SemanticsNodeId(), node_block.id);
   }
   auto GetAsCodeBlock() const -> SemanticsNodeBlockId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::CodeBlock());
@@ -131,8 +171,9 @@ class SemanticsNode {
   }
 
   // TODO: The signature should be added as a parameter.
-  static auto MakeFunctionDeclaration() -> SemanticsNode {
-    return SemanticsNode(SemanticsNodeKind::FunctionDeclaration(),
+  static auto MakeFunctionDeclaration(ParseTree::Node parse_node)
+      -> SemanticsNode {
+    return SemanticsNode(parse_node, SemanticsNodeKind::FunctionDeclaration(),
                          SemanticsNodeId());
   }
   auto GetAsFunctionDeclaration() const -> NoArgs {
@@ -140,10 +181,11 @@ class SemanticsNode {
     return {};
   }
 
-  static auto MakeFunctionDefinition(SemanticsNodeId decl,
+  static auto MakeFunctionDefinition(ParseTree::Node parse_node,
+                                     SemanticsNodeId decl,
                                      SemanticsNodeBlockId node_block)
       -> SemanticsNode {
-    return SemanticsNode(SemanticsNodeKind::FunctionDefinition(),
+    return SemanticsNode(parse_node, SemanticsNodeKind::FunctionDefinition(),
                          SemanticsNodeId(), decl.id, node_block.id);
   }
   auto GetAsFunctionDefinition() const
@@ -152,9 +194,10 @@ class SemanticsNode {
     return {SemanticsNodeId(arg0_), SemanticsNodeBlockId(arg1_)};
   }
 
-  static auto MakeIntegerLiteral(SemanticsIntegerLiteralId integer)
+  static auto MakeIntegerLiteral(ParseTree::Node parse_node,
+                                 SemanticsIntegerLiteralId integer)
       -> SemanticsNode {
-    return SemanticsNode(SemanticsNodeKind::IntegerLiteral(),
+    return SemanticsNode(parse_node, SemanticsNodeKind::IntegerLiteral(),
                          SemanticsNodeId::MakeBuiltinReference(
                              SemanticsBuiltinKind::IntegerLiteralType()),
                          integer.id);
@@ -164,17 +207,33 @@ class SemanticsNode {
     return SemanticsIntegerLiteralId(arg0_);
   }
 
-  static auto MakeReturn() -> SemanticsNode {
-    return SemanticsNode(SemanticsNodeKind::Return(), SemanticsNodeId());
+  static auto MakeRealLiteral(ParseTree::Node parse_node) -> SemanticsNode {
+    return SemanticsNode(parse_node, SemanticsNodeKind::RealLiteral(),
+                         SemanticsNodeId::MakeBuiltinReference(
+                             SemanticsBuiltinKind::RealLiteralType()));
+  }
+  auto GetAsRealLiteral() const -> NoArgs {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::RealLiteral());
+    return {};
+  }
+
+  static auto MakeReturn(ParseTree::Node parse_node) -> SemanticsNode {
+    // The actual type is `()`. However, code dealing with `return;` should
+    // understand the type without checking, so it's not necessary but could be
+    // specified if needed.
+    return SemanticsNode(parse_node, SemanticsNodeKind::Return(),
+                         SemanticsNodeId());
   }
   auto GetAsReturn() const -> NoArgs {
     CARBON_CHECK(kind_ == SemanticsNodeKind::Return());
     return {};
   }
 
-  static auto MakeReturnExpression(SemanticsNodeId expr) -> SemanticsNode {
-    return SemanticsNode(SemanticsNodeKind::ReturnExpression(),
-                         SemanticsNodeId(), expr.id);
+  static auto MakeReturnExpression(ParseTree::Node parse_node,
+                                   SemanticsNodeId type, SemanticsNodeId expr)
+      -> SemanticsNode {
+    return SemanticsNode(parse_node, SemanticsNodeKind::ReturnExpression(),
+                         type, expr.id);
   }
   auto GetAsReturnExpression() const -> SemanticsNodeId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::ReturnExpression());
@@ -182,29 +241,37 @@ class SemanticsNode {
   }
 
   SemanticsNode()
-      : SemanticsNode(SemanticsNodeKind::Invalid(), SemanticsNodeId()) {}
+      : SemanticsNode(ParseTree::Node(), SemanticsNodeKind::Invalid(),
+                      SemanticsNodeId()) {}
 
-  auto kind() -> SemanticsNodeKind { return kind_; }
-  auto type() -> SemanticsNodeId { return type_; }
+  auto parse_node() const -> ParseTree::Node { return parse_node_; }
+  auto kind() const -> SemanticsNodeKind { return kind_; }
+  auto type() const -> SemanticsNodeId { return type_; }
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
  private:
-  explicit SemanticsNode(SemanticsNodeKind kind, SemanticsNodeId type,
-                         int32_t arg0 = -1, int32_t arg1 = -1)
-      : kind_(kind), type_(type), arg0_(arg0), arg1_(arg1) {}
+  explicit SemanticsNode(ParseTree::Node parse_node, SemanticsNodeKind kind,
+                         SemanticsNodeId type, int32_t arg0 = -1,
+                         int32_t arg1 = -1)
+      : parse_node_(parse_node),
+        kind_(kind),
+        type_(type),
+        arg0_(arg0),
+        arg1_(arg1) {}
 
+  ParseTree::Node parse_node_;
   SemanticsNodeKind kind_;
   SemanticsNodeId type_;
   int32_t arg0_;
   int32_t arg1_;
 };
 
-// TODO: This is currently 16 bytes because we sometimes have 2 arguments for a
+// TODO: This is currently 20 bytes because we sometimes have 2 arguments for a
 // pair of SemanticsNodes. However, SemanticsNodeKind is 1 byte; if args
 // were 3.5 bytes, we could potentially shrink SemanticsNode by 4 bytes. This
 // may be worth investigating further.
-static_assert(sizeof(SemanticsNode) == 16, "Unexpected SemanticsNode size");
+static_assert(sizeof(SemanticsNode) == 20, "Unexpected SemanticsNode size");
 
 }  // namespace Carbon
 

@@ -124,9 +124,6 @@ void Action::Print(llvm::raw_ostream& out) const {
     case Action::Kind::WitnessAction:
       out << *cast<WitnessAction>(*this).witness() << " ";
       break;
-    case Action::Kind::PatternAction:
-      out << cast<PatternAction>(*this).pattern() << " ";
-      break;
     case Action::Kind::StatementAction:
       cast<StatementAction>(*this).statement().PrintDepth(1, out);
       out << " ";
