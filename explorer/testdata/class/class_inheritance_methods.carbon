@@ -31,7 +31,7 @@ class D extends C {
 }
 
 fn Main() -> i32 {
-  var d: D = {.value_c = 1, .value_d = 2};
+  var d: D = {.base = {.value_c = 1}, .value_d = 2};
   d.Method1();
   d.Method2();
   return 0;
