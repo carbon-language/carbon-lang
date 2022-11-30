@@ -49,45 +49,30 @@ static auto FindClassField(Nonnull<const NominalClassValue*> object,
   return std::nullopt;
 }
 
-static auto GetSpecialMember(Nonnull<const Value*> v,
-                             const FieldPath::Component& field,
-                             SourceLocation source_loc)
+static auto GetBaseClassOjectMember(
+    Nonnull<const NominalClassValue*> class_value, SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
-  switch (field.member()->kind()) {
-    case MemberKind::BaseClassObjectMember: {
-      const auto& class_value = cast<NominalClassValue>(*v);
-      const auto base = cast<NominalClassType>(class_value.type()).base();
-      if (!base.has_value()) {
-        return ProgramError(source_loc) << "Non-existent base class for " << *v;
-      }
-      return base.value();
-    }
-    default:
-      CARBON_FATAL() << "Invalid members type";
+  const auto base = cast<NominalClassType>(class_value->type()).base();
+  if (!base.has_value()) {
+    return ProgramError(source_loc)
+           << "Non-existent base class for " << *class_value;
   }
+  return base.value();
 }
 
-static auto GetPositionalMember(Nonnull<const Value*> v,
+static auto GetPositionalMember(Nonnull<const TupleValue*> tuple,
                                 const FieldPath::Component& field,
                                 SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
   CARBON_CHECK(field.member()->kind() == MemberKind::PositionalMember)
       << "Invalid non-positional member";
   const auto* pos_member = cast<PositionalMember>(field.member());
-  switch (v->kind()) {
-    case Value::Kind::TupleValue: {
-      const auto& tuple = cast<TupleValue>(*v);
-      const auto index = pos_member->index();
-      if (index < 0 || index >= tuple.elements().size()) {
-        return ProgramError(source_loc)
-               << "index " << index << " out of range for " << *v;
-      }
-      return tuple.elements()[index];
-    }
-    default:
-      return ProgramError(source_loc)
-             << "Invalid positional argument for value " << *v;
+  const auto index = pos_member->index();
+  if (index < 0 || index >= tuple->elements().size()) {
+    return ProgramError(source_loc)
+           << "index " << index << " out of range for " << *tuple;
   }
+  return tuple->elements()[index];
 }
 
 static auto GetNamedMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
@@ -202,12 +187,21 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                       SourceLocation source_loc, Nonnull<const Value*> me_value)
     -> ErrorOr<Nonnull<const Value*>> {
   switch (field.member()->kind()) {
-    case MemberKind::PositionalMember:
-      return GetPositionalMember(v, field, source_loc);
     case MemberKind::NominalMember:
       return GetNamedMember(arena, v, field, source_loc, me_value);
-    default:
-      return GetSpecialMember(v, field, source_loc);
+    case MemberKind::PositionalMember: {
+      if (const auto* tuple = dyn_cast<TupleValue>(v)) {
+        return GetPositionalMember(tuple, field, source_loc);
+      } else {
+        CARBON_FATAL() << "Invalid value for positional member";
+      }
+    }
+    case MemberKind::BaseClassObjectMember:
+      if (const auto* class_value = dyn_cast<NominalClassValue>(v)) {
+        return GetBaseClassOjectMember(class_value, source_loc);
+      } else {
+        CARBON_FATAL() << "Invalid value for positional member";
+      }
   }
 }
 
