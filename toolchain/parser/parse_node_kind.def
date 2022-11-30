@@ -19,11 +19,6 @@
 //     must be correct even when the node contains errors.
 //
 // Macro definitions  will be removed at the end of this file to clean up.
-//
-// TODO: Using CHILD_COUNT(..., TodoFixParseNode) to indicate nodes which need to be fixed,
-// sometimes due to inconsistent output in error modes. This is also handled in
-// ParseNodeKind::child_count() and ParseTree::Verify(). All of that can be
-// cleaned up once remainining nodes are fixed.
 
 #if !(defined(CARBON_PARSE_NODE_KIND) ||          \
       (defined(CARBON_PARSE_NODE_KIND_BRACKET) && \
@@ -52,8 +47,8 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(DeclaredName, 0)
 
 // `package`:
 //   PackageIntroducer
-//   (name)
-//     (library)
+//   _external_: DeclaredName
+//     _external_: Literal
 //   PackageLibrary
 //   PackageApi or PackageImpl
 // PackageDirective
@@ -65,24 +60,23 @@ CARBON_PARSE_NODE_KIND_BRACKET(PackageDirective, PackageIntroducer)
 
 // A code block:
 //   CodeBlockStart
-//   (statements)
+//   _external_: statements
 // CodeBlock
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(CodeBlockStart, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart)
 
-
 // `fn`:
 //     FunctionIntroducer
 //     DeclaredName
-//     (parameter list)
-//       (expression)
+//     _external_: ParameterList
+//       _external_: type expression
 //     ReturnType
 //   FunctionDefinitionStart
-//   (statements)
+//   _external_: statements
 // FunctionDefinition
 //
-// Or, for a declaration, FunctionDeclaration will end it where
-// FunctionDefinitionStart is for a definition.
+// The above is a definition; for a declaration, FunctionDeclaration will end it
+// where FunctionDefinitionStart is for a definition.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(FunctionIntroducer, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnType, 1)
 CARBON_PARSE_NODE_KIND_BRACKET(FunctionDefinitionStart, FunctionIntroducer)
@@ -91,22 +85,26 @@ CARBON_PARSE_NODE_KIND_BRACKET(FunctionDeclaration, FunctionIntroducer)
 
 // A parameter list:
 //   ParamertListStart
-//   (expressions separated by ParameterListComma)
+//   _external_: expression
+//   ParameterListComma
 // ParameterList
+//
+// Expressions and ParameterListComma may repeat with ParameterListComma as a
+// separator.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParameterListStart, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParameterListComma, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(ParameterList, ParameterListStart)
 
 // A pattern binding, such as `name: Type`:
 //   DeclaredName
-//   (type expression)
+//   _external_: type expression
 // PatternBinding
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PatternBinding, 2)
 
 // `var`:
 //   VariableIntroducer
-//   (pattern)
-//     (expression)
+//   _external_: PatternBinding
+//     _external_: expression
 //   optional VariableInitializer
 // VariableDeclaration
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableIntroducer, 0)
@@ -114,98 +112,178 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableInitializer, 1)
 CARBON_PARSE_NODE_KIND_BRACKET(VariableDeclaration, VariableIntroducer)
 
 // An expression statement:
-//   (expression)
-// Statement
+//   _external_: expression
+// ExpressionStatement
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ExpressionStatement, 1)
 
 // `break`:
 //   BreakStatementStart
 // BreakStatement
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(BreakStatement, 1)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(BreakStatementStart, 0)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(BreakStatement, 1)
 
 // `continue`:
 //   ContinueStatementStart
 // ContinueStatement
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ContinueStatement, 1)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ContinueStatementStart, 0)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ContinueStatement, 1)
 
 // `return`:
 //   ReturnStatementStart
-//   (optional expression)
+//   _external_: expression
 // ReturnStatement
-CARBON_PARSE_NODE_KIND_BRACKET(ReturnStatement, ReturnStatementStart)
+//
+// The child expression is optional.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnStatementStart, 0)
+CARBON_PARSE_NODE_KIND_BRACKET(ReturnStatement, ReturnStatementStart)
 
 // `for`:
 //     ForHeaderStart
-//       (var)
-//     ForIn (versus a normal `var`, replaces VariableDeclaration)
-//     (expression)
+//       VariableIntroducer
+//       _external_: PatternBinding
+//         _external_: type expression
+//     ForIn
+//     _external_: expression
 //   ForHeader
-//     CodeBlockStart
-//     (statements)
-//   CodeBlock
+//   _external_: CodeBlock
 // ForStatement
+//
+// Versus a normal `var`, ForIn replaces VariableDeclaration.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ForHeaderStart, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(ForIn, VariableIntroducer)
 CARBON_PARSE_NODE_KIND_BRACKET(ForHeader, ForHeaderStart)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ForStatement, 2)
 
-// `if`:
-// TODO: Still thinking about structure.
-//   IfConditionStart
-//   (expression)
-// IfCondition
+// `if` + `else`:
+//     IfConditionStart
+//     _external_: expression
+//   IfCondition
+//   _external_: CodeBlock
+//   IfStatementElse
+//   _external_: CodeBlock or IfStatement
+// IfStatement
+//
+// IfStatementElse and the following node are optional based on `else` presence.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfConditionStart, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(IfCondition, IfConditionStart)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfStatement, TodoFixParseNode)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfStatementElse, 0)
+CARBON_PARSE_NODE_KIND_BRACKET(IfStatement, IfCondition)
 
 // `while`:
 //     WhileConditionStart
-//     (expression)
+//     _external_: expression
 //   WhileCondition
-//     CodeBlockStart
-//     (statements)
-//   CodeBlock
+//   _external_: CodeBlock
 // WhileStatement
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(WhileConditionStart, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(WhileCondition, WhileConditionStart)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(WhileStatement, 2)
 
-// Expressions.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(Literal, 0)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(TupleLiteral, TodoFixParseNode)
+// Parenthesized expressions:
+//   ParenExpressionOrTupleLiteralStart
+//   _external_: expression
+// ParenExpression
+
+// Tuples:
+//   ParenExpressionOrTupleLiteralStart
+//   _external_: expression
+//   TupleLiteralComma
+// TupleLiteral
+//
+// Expressions and TupleLiteralComma may repeat with TupleLiteralComma as a
+// separator.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParenExpressionOrTupleLiteralStart, 0)
+CARBON_PARSE_NODE_KIND_BRACKET(ParenExpression,
+                               ParenExpressionOrTupleLiteralStart)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(TupleLiteralComma, 0)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(TupleLiteralEnd, 0)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(NameReference, 0)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParenExpression, TodoFixParseNode)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParenExpressionEnd, 0)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(DesignatorExpression, TodoFixParseNode)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(DesignatedName, 0)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExpression, TodoFixParseNode)
+CARBON_PARSE_NODE_KIND_BRACKET(TupleLiteral, ParenExpressionOrTupleLiteralStart)
+
+// Call expressions, such as `a()`:
+//     _external_: expression
+//   CallExpressionStart
+//   _external_: expression
+//   CallExpressionComma
+// CallExpression
+//
+// Expressions and CallExpressionComma may repeat with CallExpressionComma as a
+// separator.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExpressionStart, 1)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExpressionComma, 0)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExpressionEnd, 0)
+CARBON_PARSE_NODE_KIND_BRACKET(CallExpression, CallExpressionStart)
+
+// A designator expression, such as `a.b`:
+//   _external_: DesignatedName or lhs expression
+//   _external_: DesignatedName
+// DesignatorExpression
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(DesignatedName, 0)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(DesignatorExpression, 2)
+
+// A literal.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(Literal, 0)
+
+// A reference to an identifier.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(NameReference, 0)
+
+// A prefix operator:
+//   _external_: expression
+// PrefixOperator
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PrefixOperator, 1)
+
+// An infix operator:
+//   _external_: lhs expression
+//   _external_: rhs expression
+// InfixOperator
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(InfixOperator, 2)
+
+// A postfix operator:
+//   _external_: expression
+// PostfixOperator
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PostfixOperator, 1)
 
-// Struct literals.
+// Struct literals, such as `{.a = 0}`:
+//   StructLiteralOrStructTypeLiteralStart
+//       _external_: DesignatedName
+//     StructFieldDesignator
+//     _external_: expression
+//   StructFieldValue
+//   StructComma
+// StructLiteral
+//
+//
+// Struct type literals, such as `{.a: i32}`:
+//       _external_: DesignatedName
+//     StructFieldDesignator
+//     _external_: type expression
+//   StructFieldType
+//   StructComma
+// StructTypeLiteral
+//
+// Elements (StructFieldValue and StructFieldType, respectively) and StructComma
+// may repeat with StructComma as a separator.
+//
+// When a valid StructFieldType or StructFieldValue cannot be formed, elements
+// may be replaced by StructFieldUnknown, which may have a preceding sibling
+// StructFieldDesignator if one was successfully parsed.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructLiteralOrStructTypeLiteralStart, 0)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldDesignator, 1)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldValue, 2)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldType, 2)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldUnknown, 0)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructComma, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(StructLiteral,
                                StructLiteralOrStructTypeLiteralStart)
 CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral,
                                StructLiteralOrStructTypeLiteralStart)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructLiteralOrStructTypeLiteralStart, 0)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldDesignator, TodoFixParseNode)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldValue, TodoFixParseNode)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldType, TodoFixParseNode)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructComma, 0)
 
-// Interfaces
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(InterfaceDefinition, TodoFixParseNode)
+// `interface`:
+//   _external_: DeclaredName
+//     InterfaceBodyStart
+//     _external_: statements
+//   InterfaceBodyEnd
+// InterfaceDefinition
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(InterfaceBodyStart, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(InterfaceBody, InterfaceBodyStart)
+CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDefinition, DeclaredName)
 
 #undef CARBON_PARSE_NODE_KIND
 #undef CARBON_PARSE_NODE_KIND_BRACKET

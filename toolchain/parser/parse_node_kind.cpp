@@ -47,8 +47,7 @@ auto ParseNodeKind::child_count() const -> int32_t {
 #include "toolchain/parser/parse_node_kind.def"
   };
   auto child_count = ChildCount[static_cast<int>(kind_)];
-  // TODO: Allows TodoFixParseNode; see parse_node_kind.def.
-  CARBON_CHECK(child_count != -1) << *this;
+  CARBON_CHECK(child_count >= 0) << *this;
   return child_count;
 }
 

@@ -33,9 +33,6 @@ class ParseNodeKind {
   };
 
  public:
-  // TODO: See parse_node_kind.def.
-  static constexpr int32_t TodoFixParseNode = -2;
-
   // `clang-format` has a bug with spacing around `->` returns in macros. See
   // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
 #define CARBON_PARSE_NODE_KIND(Name)            \
