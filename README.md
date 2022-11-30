@@ -304,8 +304,10 @@ Learn more about the Carbon project:
 
 Past Carbon focused talks from the community:
 
--   [Carbon Language: An experimental successor to C++](https://www.youtube.com/watch?v=omrY53kbVoA), CppNorth 2022
--   [Carbon Language: Syntax and trade-offs](https://www.youtube.com/watch?v=9Y2ivB8VaIs), Core C++ 2022
+-   [Carbon Language: An experimental successor to C++](https://www.youtube.com/watch?v=omrY53kbVoA),
+    CppNorth 2022
+-   [Carbon Language: Syntax and trade-offs](https://www.youtube.com/watch?v=9Y2ivB8VaIs),
+    Core C++ 2022
 
 ## Join us
 
