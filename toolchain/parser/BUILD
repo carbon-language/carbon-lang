@@ -12,17 +12,7 @@ cc_library(
     hdrs = ["parse_node_kind.h"],
     textual_hdrs = ["parse_node_kind.def"],
     deps = [
-        "//common:ostream",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "parser_state",
-    srcs = ["parser_state.cpp"],
-    hdrs = ["parser_state.h"],
-    textual_hdrs = ["parser_state.def"],
-    deps = [
+        "//common:check",
         "//common:ostream",
         "@llvm-project//llvm:Support",
     ],
@@ -41,13 +31,34 @@ cc_test(
 )
 
 cc_library(
+    name = "parser_state",
+    srcs = ["parser_state.cpp"],
+    hdrs = ["parser_state.h"],
+    textual_hdrs = ["parser_state.def"],
+    deps = [
+        "//common:ostream",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "parser_state_test",
+    size = "small",
+    srcs = ["parser_state_test.cpp"],
+    deps = [
+        ":parser_state",
+        "//common:gtest_main",
+        "@com_google_googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "parse_tree",
     srcs = [
         "parse_tree.cpp",
-        "parser_impl.cpp",
-        "parser_impl.h",
-        "parser2.cpp",
-        "parser2.h",
+        "parser.cpp",
+        "parser.h",
     ],
     hdrs = ["parse_tree.h"],
     deps = [
@@ -55,6 +66,7 @@ cc_library(
         ":parser_state",
         ":precedence",
         "//common:check",
+        "//common:error",
         "//common:ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:token_kind",

@@ -101,7 +101,9 @@ To explain this boilerplate:
 ### Useful commands
 
 -   `./lit_autodupate.py` -- Updates expected output.
+    -   This can be combined with `git diff` to see changes in output.
 -   `bazel test ... --test_output=errors` -- Runs tests and prints any errors.
+-   `bazel run testdata/DIR/FILE.carbon.run` -- Runs explorer on the file.
 
 ### Updating fuzzer logic after making AST changes
 

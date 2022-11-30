@@ -5,10 +5,10 @@
 // AUTOUPDATE
 // RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
-// CHECK:STDOUT: {node_index: 2, kind: 'FunctionDeclaration', text: 'fn', has_error: yes, subtree_size: 3, children: [
-// CHECK:STDOUT:   {node_index: 0, kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:   {node_index: 1, kind: 'DeclaredName', text: 'foo'}]},
-// CHECK:STDOUT: {node_index: 3, kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:   {kind: 'DeclaredName', text: 'foo'},
+// CHECK:STDOUT: {kind: 'FunctionDeclaration', text: 'fn', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
 // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/function/declaration/fail_no_sig_or_semi.carbon:[[@LINE+1]]:7: Expected `(` after function name.

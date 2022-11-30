@@ -40,7 +40,11 @@ auto Driver::RunFullCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   DiagnosticConsumer* consumer = &ConsoleDiagnosticConsumer();
   std::unique_ptr<SortingDiagnosticConsumer> sorting_consumer;
   // TODO: Figure out a command-line support library, this is temporary.
-  if (!args.empty() && args[0] == "--print-errors=streamed") {
+  if (!args.empty() && args[0] == "-v") {
+    args = args.drop_front();
+    // Note this implies streamed output in order to interleave.
+    vlog_stream_ = &error_stream_;
+  } else if (!args.empty() && args[0] == "--print-errors=streamed") {
     args = args.drop_front();
   } else {
     sorting_consumer = std::make_unique<SortingDiagnosticConsumer>(*consumer);
@@ -125,6 +129,13 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   }
   args = args.drop_front();
 
+  auto parse_tree_preorder = false;
+  if (dump_mode == DumpMode::ParseTree && !args.empty() &&
+      args.front() == "--preorder") {
+    args = args.drop_front();
+    parse_tree_preorder = true;
+  }
+
   if (args.empty()) {
     error_stream_ << "ERROR: No input file specified.\n";
     return false;
@@ -158,13 +169,13 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   auto parse_tree = ParseTree::Parse(tokenized_source, consumer);
   if (dump_mode == DumpMode::ParseTree) {
     consumer.Flush();
-    parse_tree.Print(output_stream_);
+    parse_tree.Print(output_stream_, parse_tree_preorder);
     return !tokenized_source.has_errors() && !parse_tree.has_errors();
   }
 
   const SemanticsIR builtin_ir = SemanticsIR::MakeBuiltinIR();
-  const SemanticsIR semantics_ir =
-      SemanticsIR::MakeFromParseTree(builtin_ir, tokenized_source, parse_tree);
+  const SemanticsIR semantics_ir = SemanticsIR::MakeFromParseTree(
+      builtin_ir, tokenized_source, parse_tree, consumer, vlog_stream_);
   if (dump_mode == DumpMode::SemanticsIR) {
     consumer.Flush();
     semantics_ir.Print(output_stream_);

@@ -7,12 +7,12 @@
 
 #include <iterator>
 
+#include "common/error.h"
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
-#include "llvm/Support/raw_ostream.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
@@ -45,11 +45,6 @@ class ParseTree {
   class Node;
   class PostorderIterator;
   class SiblingIterator;
-
-  // The maximum stack depth allowed while recursing the parse tree.
-  // This is meant to approximate system stack limits, but we may need to find a
-  // better way to track what the system is enforcing.
-  static constexpr int StackDepthLimit = 200;
 
   // Parses the token buffer into a `ParseTree`.
   //
@@ -102,60 +97,63 @@ class ParseTree {
   // the underlying source text.
   [[nodiscard]] auto GetNodeText(Node n) const -> llvm::StringRef;
 
+  // See the other Print comments.
+  auto Print(llvm::raw_ostream& output) const -> void;
+
   // Prints a description of the parse tree to the provided `raw_ostream`.
   //
-  // While the parse tree is represented as a postorder sequence, we print it in
-  // preorder to make it easier to visualize and read. The node indices are the
-  // postorder indices. The print out represents each node as a YAML record,
-  // with children nested within it.
+  // The tree may be printed in either preorder or postorder. Output represents
+  // each node as a YAML record; in preorder, children are nested.
   //
-  // A single node without children is formatted as:
-  // ```
-  // {node_index: 0, kind: 'foo', text: '...'}
-  // ```
-  // A node with two children, one of them with an error:
-  // ```
-  // {node_index: 2, kind: 'foo', text: '...', children: [
-  //   {node_index: 0, kind: 'bar', text: '...', has_error: yes},
-  //   {node_index: 1, kind: 'baz', text: '...'}]}
-  // ```
+  // In both, a node is formatted as:
+  //   ```
+  //   {kind: 'foo', text: '...'}
+  //   ```
+  //
   // The top level is formatted as an array of these nodes.
-  // ```
-  // [
-  // {node_index: 1, kind: 'foo', text: '...'},
-  // {node_index: 0, kind: 'foo', text: '...'},
-  // ...
-  // ]
-  // ```
+  //   ```
+  //   [
+  //   {kind: 'foo', text: '...'},
+  //   {kind: 'foo', text: '...'},
+  //   ...
+  //   ]
+  //   ```
+  //
+  // In postorder, nodes are indented in order to indicate depth. For example, a
+  // node with two children, one of them with an error:
+  //   ```
+  //     {kind: 'bar', text: '...', has_error: yes},
+  //     {kind: 'baz', text: '...'}
+  //   {kind: 'foo', text: '...', subtree_size: 2}
+  //   ```
+  //
+  // In preorder, nodes are marked as children with postorder (storage) index.
+  // For example, a node with two children, one of them with an error:
+  //   ```
+  //   {node_index: 2, kind: 'foo', text: '...', subtree_size: 2, children: [
+  //     {node_index: 0, kind: 'bar', text: '...', has_error: yes},
+  //     {node_index: 1, kind: 'baz', text: '...'}]}
+  //   ```
   //
   // This can be parsed as YAML using tools like `python-yq` combined with `jq`
   // on the command line. The format is also reasonably amenable to other
   // line-oriented shell tools from `grep` to `awk`.
-  auto Print(llvm::raw_ostream& output) const -> void;
+  auto Print(llvm::raw_ostream& output, bool preorder) const -> void;
 
-  // Verifies the parse tree structure.
+  // Verifies the parse tree structure. Checks invariants of the parse tree
+  // structure and returns verification errors.
   //
-  // This tries to check any invariants of the parse tree structure and write
-  // out information about it to stderr. Returns false if anything fails to
-  // verify. This is primarily intended to be used as a debugging aid. A typical
-  // usage is to `assert` on the result. This routine doesn't directly assert so
-  // that it can be used even when asserts are disabled or within a debugger.
-  [[nodiscard]] auto Verify() const -> bool;
+  // This is primarily intended to be used as a
+  // debugging aid. This routine doesn't directly CHECK so that it can be used
+  // within a debugger.
+  [[nodiscard]] auto Verify() const -> llvm::Optional<Error>;
 
  private:
-  class Parser;
-  friend Parser;
-  friend class Parser2;
+  friend class Parser;
 
   // The in-memory representation of data used for a particular node in the
   // tree.
   struct NodeImpl {
-    explicit NodeImpl(ParseNodeKind k, TokenizedBuffer::Token t,
-                      int subtree_size_arg)
-        : kind(k), token(t), subtree_size(subtree_size_arg) {}
-
-    // TODO: Parser2 only uses this construct. Can remove the other if we
-    // switch.
     NodeImpl(ParseNodeKind kind, bool has_error, TokenizedBuffer::Token token,
              int subtree_size)
         : kind(kind),
@@ -209,7 +207,15 @@ class ParseTree {
 
   // Wires up the reference to the tokenized buffer. The global `parse` routine
   // should be used to actually parse the tokens into a tree.
-  explicit ParseTree(TokenizedBuffer& tokens_arg) : tokens_(&tokens_arg) {}
+  explicit ParseTree(TokenizedBuffer& tokens_arg) : tokens_(&tokens_arg) {
+    // If the tree is valid, there will be one node per token, so reserve once.
+    node_impls_.reserve(tokens_->size());
+  }
+
+  // Prints a single node for Print(). Returns true when preorder and there are
+  // children.
+  auto PrintNode(llvm::raw_ostream& output, Node n, int depth,
+                 bool preorder) const -> bool;
 
   // Depth-first postorder sequence of node implementation data.
   llvm::SmallVector<NodeImpl, 0> node_impls_;
@@ -277,7 +283,6 @@ class ParseTree::Node {
 
  private:
   friend ParseTree;
-  friend Parser;
   friend PostorderIterator;
   friend SiblingIterator;
 

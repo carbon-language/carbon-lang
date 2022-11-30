@@ -23,7 +23,7 @@ class D extends C {
 
 fn Main() -> i32 {
   // Initialization
-  var d: D = {.var_c= 1, .var_d= 2};
+  var d: D = {.base = {.var_c= 1}, .var_d= 2};
 
   // Read
   Print("Read var_c={0}", d.var_c);

@@ -50,7 +50,7 @@ token has a matching closing bracket token.
 ## Parsing
 
 The [ParseTree](parser/parse_tree.h) is the output of parsing, but most logic is
-in [ParserImpl](parser/parser_impl.h).
+in [Parser](parser/parser.h).
 
 The parse tree faithfully represents the tree structure of the source program,
 interpreted according to the Carbon grammar. No semantics are associated with
@@ -64,14 +64,6 @@ This is intended to model the situation where parsing failed because the code
 did not match the grammar, but we were still able to parse some subexpressions,
 as an aid for non-compiler tools such as syntax highlighters or refactoring
 tools.
-
-Many functions in the parser return `llvm::Optional<T>`. A return value of
-`llvm::None` indicates that parsing has failed and an error diagnostic has
-already been produced, and that the current region of the parse tree might not
-meet its invariants so that the caller should create an invalid parse tree node.
-Other return values indicate that parsing was either successful or that any
-encountered errors have been recovered from, so the caller can create a valid
-parse tree node.
 
 The produced `ParseTree` is in postorder. For example, given the code:
 
@@ -108,18 +100,7 @@ grammatical construct that is the parent: this is so that a postorder traversal
 of the tree can see the kind of grammatical construct being built first, and
 handle child nodes taking that into account.
 
-### Stack overflow
-
-The `ParseTree` has been prone to stack overflows. As a consequence,
-`CARBON_RETURN_IF_STACK_LIMITED` is checked at the start of most functions in
-order to avoid errors. This manages depth increments and, when the scope exits,
-decrements.
-
-#### Future work
-
-We are interested in eventually exploring ways to adjust the parser design to be
-non-recursive and remove this limitation, but it hasn't yet been a priority and
-keeping the code simple seems better until the language design stabilizes.
+TODO: Document flow.
 
 ## Semantics
 

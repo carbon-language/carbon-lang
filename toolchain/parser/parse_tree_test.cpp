@@ -146,7 +146,7 @@ TEST_F(ParseTreeTest, StructErrors) {
   }
 }
 
-TEST_F(ParseTreeTest, PrintingAsYAML) {
+TEST_F(ParseTreeTest, PrintPostorderAsYAML) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn F();");
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_FALSE(tree.has_errors());
@@ -155,9 +155,33 @@ TEST_F(ParseTreeTest, PrintingAsYAML) {
   tree.Print(print_stream);
   print_stream.flush();
 
+  auto file = Yaml::SequenceValue{
+      Yaml::MappingValue{{"kind", "FunctionIntroducer"}, {"text", "fn"}},
+      Yaml::MappingValue{{"kind", "DeclaredName"}, {"text", "F"}},
+      Yaml::MappingValue{{"kind", "ParameterListStart"}, {"text", "("}},
+      Yaml::MappingValue{
+          {"kind", "ParameterList"}, {"text", ")"}, {"subtree_size", "2"}},
+      Yaml::MappingValue{{"kind", "FunctionDeclaration"},
+                         {"text", ";"},
+                         {"subtree_size", "5"}},
+      Yaml::MappingValue{{"kind", "FileEnd"}, {"text", ""}},
+  };
+
+  EXPECT_THAT(Yaml::Value::FromText(print_output), ElementsAre(file));
+}
+
+TEST_F(ParseTreeTest, PrintPreorderAsYAML) {
+  TokenizedBuffer tokens = GetTokenizedBuffer("fn F();");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_FALSE(tree.has_errors());
+  std::string print_output;
+  llvm::raw_string_ostream print_stream(print_output);
+  tree.Print(print_stream, /*preorder=*/true);
+  print_stream.flush();
+
   auto parameter_list = Yaml::SequenceValue{
       Yaml::MappingValue{
-          {"node_index", "2"}, {"kind", "ParameterListEnd"}, {"text", ")"}},
+          {"node_index", "2"}, {"kind", "ParameterListStart"}, {"text", "("}},
   };
 
   auto function_decl = Yaml::SequenceValue{
@@ -167,7 +191,7 @@ TEST_F(ParseTreeTest, PrintingAsYAML) {
           {"node_index", "1"}, {"kind", "DeclaredName"}, {"text", "F"}},
       Yaml::MappingValue{{"node_index", "3"},
                          {"kind", "ParameterList"},
-                         {"text", "("},
+                         {"text", ")"},
                          {"subtree_size", "2"},
                          {"children", parameter_list}},
   };
@@ -185,7 +209,7 @@ TEST_F(ParseTreeTest, PrintingAsYAML) {
   EXPECT_THAT(Yaml::Value::FromText(print_output), ElementsAre(file));
 }
 
-TEST_F(ParseTreeTest, RecursionLimit) {
+TEST_F(ParseTreeTest, HighRecursion) {
   std::string code = "fn Foo() { return ";
   code.append(10000, '(');
   code.append(10000, ')');
@@ -193,31 +217,8 @@ TEST_F(ParseTreeTest, RecursionLimit) {
   TokenizedBuffer tokens = GetTokenizedBuffer(code);
   ASSERT_FALSE(tokens.has_errors());
   Testing::MockDiagnosticConsumer consumer;
-  // Recursion might be exceeded multiple times due to quirks in parse tree
-  // handling; we only need to be sure it's hit at least once for test
-  // correctness.
-  EXPECT_CALL(consumer, HandleDiagnostic(IsDiagnosticMessage(
-                            llvm::formatv("Exceeded recursion limit ({0})",
-                                          ParseTree::StackDepthLimit)
-                                .str())))
-      .Times(AtLeast(1));
   ParseTree tree = ParseTree::Parse(tokens, consumer);
-  EXPECT_TRUE(tree.has_errors());
-}
-
-TEST_F(ParseTreeTest, ParsePostfixExpressionRegression) {
-  // Stack depth errors could cause ParsePostfixExpression to infinitely loop
-  // when calling children and those children error. Because of the fragility of
-  // stack depth, this tries a few different values.
-  for (int n = 0; n <= 10; ++n) {
-    std::string code = "var x: auto = ";
-    code.append(ParseTree::StackDepthLimit - n, '*');
-    code += "(z);";
-    TokenizedBuffer tokens = GetTokenizedBuffer(code);
-    ASSERT_FALSE(tokens.has_errors());
-    ParseTree tree = ParseTree::Parse(tokens, consumer);
-    EXPECT_TRUE(tree.has_errors());
-  }
+  EXPECT_FALSE(tree.has_errors());
 }
 
 TEST_F(ParseTreeTest, PackageErrors) {

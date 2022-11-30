@@ -25,11 +25,20 @@ on:
       - '!CODEOWNERS'
       - '!.git*'
 
+# Cancel previous workflows on the PR when there are multiple fast commits.
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        # At present, these images are newer than "latest". We use them to test
+        # against more recent tooling versions.
+        # https://github.com/actions/runner-images
+        os: [ubuntu-22.04, macos-12]
         build_mode: [fastbuild, opt]
     runs-on: ${{ matrix.os }}
     steps:
@@ -50,44 +59,19 @@ jobs:
           # Match the min version listed in docs/project/contribution_tools.md
           python-version: '3.9'
 
-      # On macOS we need Go and to use it to install Bazelisk.
-      - uses: actions/setup-go@v3
-        if: matrix.os == 'macos-latest'
-      - name: Install bazelisk
-        if: matrix.os == 'macos-latest'
-        run: |
-          go get github.com/bazelbuild/bazelisk
-          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-
-      # On macOS, use Homebrew to install a recent LLVM and Clang.
+      # Use LLVM 14 following:
+      # https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
       - name: Setup LLVM and Clang (macOS)
-        if: matrix.os == 'macos-latest'
-        env:
-          HOMEBREW_NO_INSTALL_CLEANUP: 1
-          HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
+        if: matrix.os == 'macos-12'
         run: |
-          echo '*** Updating brew'
-          brew update
-          echo '*** Installing LLVM deps'
-          brew install --force-bottle --only-dependencies llvm
-          echo '*** Installing LLVM itself'
-          brew install --force-bottle --force --verbose llvm
-          echo '*** brew info llvm'
-          brew info llvm
-          echo '*** brew config'
-          brew config
-          echo '*** Updating PATH'
-          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
+          echo "$(brew --prefix llvm@14)/bin" >> $GITHUB_PATH
 
-      # On Ubuntu, use apt.llvm.org to install a recent LLVM and Clang.
-      - name: Setup LLVM and Clang (Ubuntu)
-        if: matrix.os == 'ubuntu-latest'
+      # Use LLVM 14 following:
+      # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md
+      - name: Setup LLVM and Clang (Linux)
+        if: matrix.os == 'ubuntu-22.04'
         run: |
-          wget https://apt.llvm.org/llvm.sh
-          chmod +x llvm.sh
-          sudo ./llvm.sh 15 all
-          rm llvm.sh
-          echo "/usr/lib/llvm-15/bin" >> $GITHUB_PATH
+          echo "/usr/lib/llvm-14/bin" >> $GITHUB_PATH
 
       # Print the various tool paths and versions to help in debugging.
       - name: Print tool debugging info
@@ -115,6 +99,16 @@ jobs:
           echo "$GCP_BUILDS_SERVICE_ACCOUNT" \
             | base64 -d > $HOME/gcp-builds-service-account.json
 
+      # We need to replace the `.` with a `_` for the build cache.
+      - name: Setup LLVM and Clang (macOS)
+        if: matrix.os == 'macos-12'
+        run: |
+          echo "os_for_cache=macos-12" >> $GITHUB_ENV
+      - name: Setup LLVM and Clang (Linux)
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          echo "os_for_cache=ubuntu-22_04" >> $GITHUB_ENV
+
       # Add our bazel configuration and print basic info to ease debugging.
       - name: Configure Bazel and print info
         env:
@@ -124,7 +118,7 @@ jobs:
         run: |
           cat >user.bazelrc <<EOF
           # Enable remote cache for our CI.
-          build --remote_cache=https://storage.googleapis.com/carbon-builds-github-v${CACHE_VERSION}-${{ matrix.os }}
+          build --remote_cache=https://storage.googleapis.com/carbon-builds-github-v${CACHE_VERSION}-${{ env.os_for_cache }}
           build --google_credentials=$HOME/gcp-builds-service-account.json
 
           # General build options.

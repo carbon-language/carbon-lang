@@ -12,6 +12,7 @@
 #include <set>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <unordered_set>
 #include <vector>
 
@@ -41,16 +42,6 @@ using llvm::dyn_cast;
 using llvm::isa;
 
 namespace Carbon {
-
-static void SetValue(Nonnull<Pattern*> pattern, Nonnull<const Value*> value) {
-  // TODO: find some way to CHECK that `value` is identical to pattern->value(),
-  // if it's already set. Unclear if `ValueEqual` is suitable, because it
-  // currently focuses more on "real" values, and disallows the pseudo-values
-  // like `BindingPlaceholderValue` that we get in pattern evaluation.
-  if (!pattern->has_value()) {
-    pattern->set_value(value);
-  }
-}
 
 auto TypeChecker::IsSameType(Nonnull<const Value*> type1,
                              Nonnull<const Value*> type2,
@@ -436,38 +427,35 @@ auto TypeChecker::FieldTypesImplicitlyConvertible(
   return true;
 }
 
-// Returns all class members from class and its parent classes.
-static auto GetClassHierarchy(const NominalClassType& class_type)
-    -> std::vector<Nonnull<const NominalClassType*>> {
-  Nonnull<const NominalClassType*> curr_class_type = &class_type;
-  std::vector<Nonnull<const NominalClassType*>> all_classes{curr_class_type};
-  while (curr_class_type->base().has_value()) {
-    curr_class_type = curr_class_type->base().value();
-    all_classes.push_back(curr_class_type);
-  }
-  return all_classes;
-}
-
 auto TypeChecker::FieldTypes(const NominalClassType& class_type) const
     -> std::vector<NamedValue> {
   std::vector<NamedValue> field_types;
-  for (const auto class_type : GetClassHierarchy(class_type)) {
-    for (Nonnull<Declaration*> m : class_type->declaration().members()) {
-      switch (m->kind()) {
-        case DeclarationKind::VariableDeclaration: {
-          const auto& var = cast<VariableDeclaration>(*m);
-          Nonnull<const Value*> field_type =
-              Substitute(class_type->bindings(), &var.binding().static_type());
-          field_types.push_back(
-              {.name = var.binding().name(), .value = field_type});
-          break;
-        }
-        default:
-          break;
+  for (Nonnull<Declaration*> m : class_type.declaration().members()) {
+    switch (m->kind()) {
+      case DeclarationKind::VariableDeclaration: {
+        const auto& var = cast<VariableDeclaration>(*m);
+        Nonnull<const Value*> field_type =
+            Substitute(class_type.bindings(), &var.binding().static_type());
+        field_types.push_back(
+            {.name = var.binding().name(), .value = field_type});
+        break;
       }
+      default:
+        break;
     }
   }
   return field_types;
+}
+
+auto TypeChecker::FieldTypesWithBase(const NominalClassType& class_type) const
+    -> std::vector<NamedValue> {
+  auto fields = FieldTypes(class_type);
+  if (const auto base_type = class_type.base()) {
+    auto base_fields = FieldTypesWithBase(*base_type.value());
+    fields.emplace_back(NamedValue{std::string(NominalClassValue::BaseField),
+                                   base_type.value()});
+  }
+  return fields;
 }
 
 auto TypeChecker::IsImplicitlyConvertible(
@@ -494,10 +482,11 @@ auto TypeChecker::IsImplicitlyConvertible(
           }
           break;
         case Value::Kind::NominalClassType:
-          if (FieldTypesImplicitlyConvertible(
-                  cast<StructType>(*source).fields(),
-                  FieldTypes(cast<NominalClassType>(*destination)),
-                  impl_scope)) {
+          if (IsImplicitlyConvertible(
+                  source,
+                  arena_->New<StructType>(
+                      FieldTypesWithBase(cast<NominalClassType>(*destination))),
+                  impl_scope, allow_user_defined_conversions)) {
             return true;
           }
           break;
@@ -1907,10 +1896,15 @@ auto TypeChecker::SubstituteImpl(const Bindings& bindings,
     }
     case Value::Kind::NominalClassType: {
       const auto& class_type = cast<NominalClassType>(*type);
+      auto base_type = class_type.base();
+      if (base_type.has_value()) {
+        base_type = cast<NominalClassType>(
+            SubstituteImpl(base_type.value()->bindings(), base_type.value()));
+      }
       Nonnull<const NominalClassType*> new_class_type =
           arena_->New<NominalClassType>(
               &class_type.declaration(),
-              substitute_into_bindings(&class_type.bindings()));
+              substitute_into_bindings(&class_type.bindings()), base_type);
       return new_class_type;
     }
     case Value::Kind::InterfaceType: {
@@ -2577,9 +2571,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               const auto res,
               FindMemberWithParents(access.member_name(), &t_class));
           if (res.has_value()) {
-            auto [member_type, member] = res.value();
+            auto [member_type, member, member_t_class] = res.value();
             Nonnull<const Value*> field_type =
-                Substitute(t_class.bindings(), member_type);
+                Substitute(member_t_class->bindings(), member_type);
             access.set_member(Member(member));
             access.set_static_type(field_type);
             access.set_is_type_access(!IsInstanceMember(access.member()));
@@ -3822,6 +3816,7 @@ auto TypeChecker::TypeCheckPattern(
   switch (p->kind()) {
     case PatternKind::AutoPattern: {
       p->set_static_type(arena_->New<TypeType>());
+      p->set_value(arena_->New<AutoType>());
       return Success();
     }
     case PatternKind::BindingPattern: {
@@ -3834,9 +3829,7 @@ auto TypeChecker::TypeCheckPattern(
       }
       CARBON_RETURN_IF_ERROR(TypeCheckPattern(
           &binding.type(), std::nullopt, impl_scope, enclosing_value_category));
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> type,
-          InterpPattern(&binding.type(), arena_, trace_stream_));
+      Nonnull<const Value*> type = &binding.type().value();
       // Convert to a type.
       // TODO: Convert the pattern before interpreting it rather than doing
       // this as a separate step.
@@ -3878,9 +3871,9 @@ auto TypeChecker::TypeCheckPattern(
       CARBON_CHECK(!IsPlaceholderType(type))
           << "should be no way to write a placeholder type";
       binding.set_static_type(type);
-      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> binding_value,
-                              InterpPattern(&binding, arena_, trace_stream_));
-      SetValue(&binding, binding_value);
+      binding.set_value(binding.name() != AnonymousName
+                            ? arena_->New<BindingPlaceholderValue>(&binding)
+                            : arena_->New<BindingPlaceholderValue>());
 
       if (!binding.has_value_category()) {
         binding.set_value_category(enclosing_value_category);
@@ -3901,6 +3894,7 @@ auto TypeChecker::TypeCheckPattern(
     case PatternKind::TuplePattern: {
       auto& tuple = cast<TuplePattern>(*p);
       std::vector<Nonnull<const Value*>> field_types;
+      std::vector<Nonnull<const Value*>> field_patterns;
       if (expected && (*expected)->kind() != Value::Kind::TupleType) {
         return ProgramError(p->source_loc()) << "didn't expect a tuple";
       }
@@ -3921,11 +3915,10 @@ auto TypeChecker::TypeCheckPattern(
                           << "\n";
         }
         field_types.push_back(&field->static_type());
+        field_patterns.push_back(&field->value());
       }
       tuple.set_static_type(arena_->New<TupleType>(std::move(field_types)));
-      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> tuple_value,
-                              InterpPattern(&tuple, arena_, trace_stream_));
-      SetValue(&tuple, tuple_value);
+      tuple.set_value(arena_->New<TupleValue>(std::move(field_patterns)));
       return Success();
     }
     case PatternKind::AlternativePattern: {
@@ -3962,10 +3955,9 @@ auto TypeChecker::TypeCheckPattern(
           TypeCheckPattern(&alternative.arguments(), substituted_parameter_type,
                            impl_scope, enclosing_value_category));
       alternative.set_static_type(&choice_type);
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> alternative_value,
-          InterpPattern(&alternative, arena_, trace_stream_));
-      SetValue(&alternative, alternative_value);
+      alternative.set_value(arena_->New<AlternativeValue>(
+          alternative.alternative_name(), choice_type.name(),
+          &alternative.arguments().value()));
       return Success();
     }
     case PatternKind::ExpressionPattern: {
@@ -3973,8 +3965,8 @@ auto TypeChecker::TypeCheckPattern(
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&expression, impl_scope));
       p->set_static_type(&expression.static_type());
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> expr_value,
-                              InterpPattern(p, arena_, trace_stream_));
-      SetValue(p, expr_value);
+                              InterpExp(&expression, arena_, trace_stream_));
+      p->set_value(expr_value);
       return Success();
     }
     case PatternKind::VarPattern: {
@@ -3984,13 +3976,10 @@ auto TypeChecker::TypeCheckPattern(
                                               impl_scope,
                                               var_pattern.value_category()));
       var_pattern.set_static_type(&var_pattern.pattern().static_type());
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> pattern_value,
-          InterpPattern(&var_pattern, arena_, trace_stream_));
-      SetValue(&var_pattern, pattern_value);
+      var_pattern.set_value(&var_pattern.pattern().value());
       return Success();
     }
-    case PatternKind::AddrPattern:
+    case PatternKind::AddrPattern: {
       std::optional<Nonnull<const Value*>> expected_ptr;
       auto& addr_pattern = cast<AddrPattern>(*p);
       if (expected) {
@@ -4007,11 +3996,10 @@ auto TypeChecker::TypeCheckPattern(
         return ProgramError(addr_pattern.source_loc())
                << "Type associated with addr must be a pointer type.";
       }
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> pattern_value,
-          InterpPattern(&addr_pattern, arena_, trace_stream_));
-      SetValue(&addr_pattern, pattern_value);
+      addr_pattern.set_value(
+          arena_->New<AddrValue>(&addr_pattern.binding().value()));
       return Success();
+    }
   }
 }
 
@@ -4023,7 +4011,7 @@ auto TypeChecker::TypeCheckGenericBinding(GenericBinding& binding,
   // its symbolic identity before we type-check and interpret the type.
   auto* symbolic_value = arena_->New<VariableType>(&binding);
   binding.set_symbolic_identity(symbolic_value);
-  SetValue(&binding, symbolic_value);
+  binding.set_value(symbolic_value);
 
   CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
                           TypeCheckTypeExp(&binding.type(), impl_scope));
@@ -4526,27 +4514,24 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     Nonnull<Expression*> base_class_expr = *class_decl->base_expr();
     CARBON_ASSIGN_OR_RETURN(const auto base_type,
                             TypeCheckTypeExp(base_class_expr, class_scope));
-    switch (base_type->kind()) {
-      case Value::Kind::NominalClassType:
-        base_class = cast<NominalClassType>(base_type);
-        if (base_class.value()->declaration().extensibility() ==
-            ClassExtensibility::None) {
-          return ProgramError(class_decl->source_loc())
-                 << "Base class `" << base_class.value()->declaration().name()
-                 << "` is `final` and cannot inherited. Add the `base` or "
-                    "`abstract` class prefix to `"
-                 << base_class.value()->declaration().name()
-                 << "` to allow it to be inherited";
-        }
-        class_decl->set_base(&base_class.value()->declaration());
-        break;
-      default:
-        return ProgramError(class_decl->source_loc())
-               << "Unsupported base class type for class `"
-               << class_decl->name()
-               << "`. Only simple classes are currently supported as base "
-                  "class.";
+    if (base_type->kind() != Value::Kind::NominalClassType) {
+      return ProgramError(class_decl->source_loc())
+             << "Unsupported base class type for class `" << class_decl->name()
+             << "`. Only simple classes are currently supported as base "
+                "class.";
     }
+
+    base_class = cast<NominalClassType>(base_type);
+    if (base_class.value()->declaration().extensibility() ==
+        ClassExtensibility::None) {
+      return ProgramError(class_decl->source_loc())
+             << "Base class `" << base_class.value()->declaration().name()
+             << "` is `final` and cannot inherited. Add the `base` or "
+                "`abstract` class prefix to `"
+             << base_class.value()->declaration().name()
+             << "` to allow it to be inherited";
+    }
+    class_decl->set_base_type(base_class);
   }
 
   std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
@@ -5615,17 +5600,18 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
 }
 
 auto TypeChecker::FindMemberWithParents(
-    std::string_view name, Nonnull<const NominalClassType*> class_type)
+    std::string_view name, Nonnull<const NominalClassType*> enclosing_class)
     -> ErrorOr<std::optional<
-        std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>> {
+        std::tuple<Nonnull<const Value*>, Nonnull<const Declaration*>,
+                   Nonnull<const NominalClassType*>>>> {
   CARBON_ASSIGN_OR_RETURN(
       const auto res,
-      FindMixedMemberAndType(name, class_type->declaration().members(),
-                             class_type));
+      FindMixedMemberAndType(name, enclosing_class->declaration().members(),
+                             enclosing_class));
   if (res.has_value()) {
-    return res;
+    return {std::make_tuple(res->first, res->second, enclosing_class)};
   }
-  if (const auto base = class_type->base(); base.has_value()) {
+  if (const auto base = enclosing_class->base(); base.has_value()) {
     return FindMemberWithParents(name, base.value());
   }
   return {std::nullopt};
