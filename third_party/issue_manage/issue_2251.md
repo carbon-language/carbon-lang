@@ -23,20 +23,8 @@ Carbon docs appropriately.
 This Carbon docs tree should be written in
 markdown here.
 The pdf file then becomes deletable.
-## Categorized Topics Before Cloning Carbon Docs Tree
+## Categorized Topics that Need to be Moved to Carbon Docs Tree
 - style rule
-  - braces
-    - conditional
-      - if
-    - switch
-      - case blocks
-        - variable scope
-          - -Wimplicit-fallthrough
-    - loop statements
-    - casing
-      - being followed
-    - comments on closing namespaces
-      - clang-format checks
   - we deviate
     - explorer
       - fix
@@ -62,34 +50,12 @@ irrelevant
       - global consistency
     - Modern and evolving
       - easy to learn
-- match
-  - syntax
-  - braces
-  - fallthrough
-    - explicit
-- goto
-- design
-  - Expressions
-    - interpreted
-      - partial precedence ordering
-        - Expression components
-        - most developers understand
-        - parentheses
-          - fallthrough
-- C++ code mirror what we expect Carbon code to look like
-  - can't change fallthrough behavior
-    - break will still be there
-    - example by zygoloid
-       - Recursion
-       - references
-  - braces have less utility and are more just repetitive when there's no variable
-being scoped
 - Carbon without C++ experience
   - Lists
 ____
 Modern and evolving
 Solid language foundations that are easy to learn, especially if you have used C++
-## Carbon Docs Design Table of Contents
+## Carbon Docs Design Table of Contents with Points of Issue 2251 Added 
 ### Introduction
 ### Code and comments
 ### Build modes
@@ -98,12 +64,47 @@ Solid language foundations that are easy to learn, especially if you have used C
 ### Value categories and value phases
 ### Composite types
 ### Expressions
+- interpreted
+  - partial precedence ordering
+    - Expression components
+    - most developers understand
+    - parentheses
+      - fallthrough
 ### Declarations, Definitions, and Scopes 
+- C++ code mirror what we expect Carbon code to look like
+  - can't change fallthrough behavior
+    - break will still be there
+    - example by zygoloid
+       - Recursion
+       - references
+  - braces have less utility and are more just repetitive when there's no variable
+being scoped
 ### Patterns
 ### Name-binding declarations
 ### Functions
+- style rule 
+  - braces
+    - conditional
+      - if
+    - switch
+      - case blocks
+        - variable scope
+          - -Wimplicit-fallthrough
+    - loop statements
+- match
+  - syntax
+  - braces
+  - fallthrough
+    - explicit
+- goto
 ### User-defined types
 ### Names
+- style rule
+  - braces 
+    - casing
+      - being followed
+    - comments on closing namespaces
+      - clang-format checks
 ### Generics
 ### Bidirectional interoperability with C and C++
 ### Unfinished tales
