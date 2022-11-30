@@ -5,8 +5,11 @@
 #include "explorer/interpreter/value.h"
 
 #include <algorithm>
+#include <optional>
+#include <string_view>
 
 #include "common/check.h"
+#include "common/error.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/member.h"
 #include "explorer/common/arena.h"
@@ -31,6 +34,17 @@ auto StructValue::FindField(std::string_view name) const
     if (element.name == name) {
       return element.value;
     }
+  }
+  return std::nullopt;
+}
+static auto FindClassField(Nonnull<const NominalClassValue*> object,
+                           std::string_view name)
+    -> std::optional<Nonnull<const Value*>> {
+  if (auto field = cast<StructValue>(object->inits()).FindField(name)) {
+    return field;
+  }
+  if (object->base().has_value()) {
+    return FindClassField(object->base().value(), name);
   }
   return std::nullopt;
 }
@@ -135,7 +149,7 @@ static auto GetNamedMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       const auto& object = cast<NominalClassValue>(*v);
       // Look for a field.
       if (std::optional<Nonnull<const Value*>> field =
-              cast<StructValue>(object.inits()).FindField(f)) {
+              FindClassField(&object, f)) {
         return *field;
       } else {
         // Look for a method in the object's class
@@ -236,10 +250,23 @@ static auto SetFieldImpl(
     }
     case Value::Kind::NominalClassValue: {
       const auto& object = cast<NominalClassValue>(*value);
-      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inits,
-                              SetFieldImpl(arena, &object.inits(), path_begin,
-                                           path_end, field_value, source_loc));
-      return arena->New<NominalClassValue>(&object.type(), inits);
+      if (auto inits = SetFieldImpl(arena, &object.inits(), path_begin,
+                                    path_end, field_value, source_loc);
+          inits.ok()) {
+        return arena->New<NominalClassValue>(&object.type(), *inits,
+                                             object.base());
+      } else if (object.base().has_value()) {
+        auto new_base = SetFieldImpl(arena, object.base().value(), path_begin,
+                                     path_end, field_value, source_loc);
+        if (new_base.ok()) {
+          return arena->New<NominalClassValue>(
+              &object.type(), &object.inits(),
+              cast<NominalClassValue>(*new_base));
+        }
+      }
+      // Failed to match, show full object content
+      return ProgramError(source_loc)
+             << "field " << *path_begin << " not in " << *value;
     }
     case Value::Kind::TupleType:
     case Value::Kind::TupleValue: {
@@ -334,6 +361,9 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::NominalClassValue: {
       const auto& s = cast<NominalClassValue>(*this);
       out << cast<NominalClassType>(s.type()).declaration().name() << s.inits();
+      if (s.base().has_value()) {
+        out << " base " << *s.base().value();
+      }
       break;
     }
     case Value::Kind::TupleType:
@@ -1129,8 +1159,8 @@ auto FindFunctionWithParents(std::string_view name,
   if (auto fun = FindFunction(name, class_decl.members()); fun.has_value()) {
     return fun;
   }
-  if (class_decl.base().has_value()) {
-    return FindFunctionWithParents(name, *class_decl.base().value());
+  if (const auto base_type = class_decl.base_type(); base_type.has_value()) {
+    return FindFunctionWithParents(name, base_type.value()->declaration());
   }
   return std::nullopt;
 }

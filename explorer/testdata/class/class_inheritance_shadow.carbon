@@ -31,7 +31,7 @@ class D extends C {
 
 fn Main() -> i32 {
   // Initialize derived value first, base value second
-  var d: D = {.value = 2, .value = 1};
+  var d: D = {.value = 2, .base={.value = 1}};
   d.Method1();
 
   Print("d.value = {0}", d.value);

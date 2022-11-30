@@ -724,7 +724,9 @@ if_expression:
 expression:
   if_expression
 ;
-designator: PERIOD identifier { $$ = $2; }
+designator:
+  PERIOD identifier { $$ = $2; }
+| PERIOD BASE { $$ = "base"; }
 ;
 paren_expression: paren_expression_base
     { $$ = ExpressionFromParenContents(arena, context.source_loc(), $1); }
