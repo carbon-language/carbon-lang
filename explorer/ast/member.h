@@ -33,8 +33,6 @@ struct NamedValue {
 class Member {
  protected:
   explicit Member(MemberKind kind) : kind_(kind) {}
-  explicit Member(MemberKind kind, std::string_view name)
-      : name_(name), kind_(kind) {}
 
  public:
   virtual ~Member() = default;
@@ -43,9 +41,7 @@ class Member {
   virtual void Print(llvm::raw_ostream& out) const = 0;
 
   // Return whether the member's name matches `name`.
-  auto IsNamed(std::string_view name) const -> bool {
-    return name_ && name_.value() == name;
-  }
+  virtual auto IsNamed(std::string_view name) const -> bool = 0;
 
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
@@ -53,9 +49,6 @@ class Member {
 
   // The declared type of the member, which might include type variables.
   virtual auto type() const -> const Value& = 0;
-
- protected:
-  const std::optional<const std::string_view> name_;
 
  private:
   const MemberKind kind_;
@@ -69,12 +62,11 @@ class NominalMember : public Member {
  public:
   explicit NominalMember(Nonnull<const Declaration*> declaration);
   explicit NominalMember(Nonnull<const NamedValue*> struct_member);
-  NominalMember(const NominalMember& other);
-  NominalMember(NominalMember&& other) noexcept;
-  ~NominalMember() override = default;
 
   // Prints the Member
   void Print(llvm::raw_ostream& out) const override;
+
+  auto IsNamed(std::string_view name) const -> bool override;
 
   static auto classof(const Member* member) -> bool {
     return InheritsFromNominalMember(member->kind());
@@ -103,6 +95,9 @@ class PositionalMember : public Member {
   // Prints the Member
   void Print(llvm::raw_ostream& out) const override;
 
+  // Return whether the member's name matches `name`.
+  auto IsNamed(std::string_view name) const -> bool override;
+
   static auto classof(const Member* member) -> bool {
     return InheritsFromPositionalMember(member->kind());
   }
@@ -115,19 +110,22 @@ class PositionalMember : public Member {
   const Nonnull<const Value*> type_;
 };
 
-// A positional member of a type.
+// A base class object.
 //
-// This is a member of a tuple, or other index-based value.
-class BaseClass : public Member {
+// This is the base class object of a class value.
+class BaseClassObjectMember : public Member {
  public:
-  explicit BaseClass(Nonnull<const Value*> type)
-      : Member(MemberKind::BaseClass), type_(type) {}
+  explicit BaseClassObjectMember(Nonnull<const Value*> type)
+      : Member(MemberKind::BaseClassObjectMember), type_(type) {}
 
   // Prints the Member
   void Print(llvm::raw_ostream& out) const override;
 
+  // Return whether the member's name matches `name`.
+  auto IsNamed(std::string_view name) const -> bool override;
+
   static auto classof(const Member* member) -> bool {
-    return InheritsFromBaseClass(member->kind());
+    return InheritsFromBaseClassObjectMember(member->kind());
   }
 
   auto type() const -> const Value& override { return *type_; }

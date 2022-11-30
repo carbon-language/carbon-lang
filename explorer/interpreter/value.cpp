@@ -54,7 +54,7 @@ static auto GetSpecialMember(Nonnull<const Value*> v,
                              SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
   switch (field.member()->kind()) {
-    case MemberKind::BaseClass: {
+    case MemberKind::BaseClassObjectMember: {
       const auto& class_value = cast<NominalClassValue>(*v);
       const auto base = cast<NominalClassType>(class_value.type()).base();
       if (!base.has_value()) {

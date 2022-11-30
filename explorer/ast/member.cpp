@@ -9,29 +9,30 @@
 
 namespace Carbon {
 NominalMember::NominalMember(Nonnull<const Declaration*> declaration)
-    : Member(MemberKind::NominalMember, GetName(*declaration).value()),
-      member_(declaration) {
-  CARBON_CHECK(name_) << "Missing name for NominalMember";
-}
+    : Member(MemberKind::NominalMember), member_(declaration) {}
 
 NominalMember::NominalMember(Nonnull<const NamedValue*> struct_member)
-    : Member(MemberKind::NominalMember, struct_member->name),
-      member_(struct_member) {}
+    : Member(MemberKind::NominalMember), member_(struct_member) {}
 
-NominalMember::NominalMember(const NominalMember& other)
-    : Member(other.kind(), other.name_.value()), member_(other.member_) {}
+auto NominalMember::IsNamed(std::string_view name) const -> bool {
+  return this->name() == name;
+}
 
-NominalMember::NominalMember(NominalMember&& other) noexcept
-    : Member(other.kind(), other.name_.value()), member_(other.member_) {}
-
-auto NominalMember::name() const -> std::string_view { return name_.value(); }
+auto NominalMember::name() const -> std::string_view {
+  if (const auto* decl = member_.dyn_cast<const Declaration*>()) {
+    return GetName(*decl).value();
+  } else {
+    const auto* named_value = member_.dyn_cast<const NamedValue*>();
+    return named_value->name;
+  }
+}
 
 auto NominalMember::type() const -> const Value& {
   if (const auto* decl = member_.dyn_cast<const Declaration*>()) {
     return decl->static_type();
   } else {
-    const auto* named_valued = member_.dyn_cast<const NamedValue*>();
-    return *named_valued->value;
+    const auto* named_value = member_.dyn_cast<const NamedValue*>();
+    return *named_value->value;
   }
 }
 
@@ -50,6 +51,18 @@ void PositionalMember::Print(llvm::raw_ostream& out) const {
   out << "element #" << index_;
 }
 
-void BaseClass::Print(llvm::raw_ostream& out) const { out << "base class"; }
+// Return whether the member's name matches `name`.
+auto PositionalMember::IsNamed(std::string_view /*name*/) const -> bool {
+  return false;
+}
+
+void BaseClassObjectMember::Print(llvm::raw_ostream& out) const {
+  out << "base class";
+}
+
+// Return whether the member's name matches `name`.
+auto BaseClassObjectMember::IsNamed(std::string_view /*name*/) const -> bool {
+  return false;
+}
 
 }  // namespace Carbon

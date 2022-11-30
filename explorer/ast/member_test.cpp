@@ -102,7 +102,7 @@ TEST_F(MemberTest, PositionalMemberIsNamed) {
 }
 
 TEST_F(MemberTest, BaseClassIsNamed) {
-  BaseClass member(arena.New<TestValue>(1));
+  BaseClassObjectMember member(arena.New<TestValue>(1));
   EXPECT_FALSE(member.IsNamed("anything"));
 }
 }  // namespace

@@ -85,4 +85,4 @@ abstract class WhereClause : AstNode;
 root class Member;
   class NominalMember : Member;
   class PositionalMember : Member;
-  class BaseClass : Member;
+  class BaseClassObjectMember : Member;

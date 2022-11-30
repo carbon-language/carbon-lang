@@ -2410,8 +2410,7 @@ static void RewriteMemberAccess(Nonnull<MemberAccessExpression*> access,
 // Determine whether the given member declaration declares an instance member.
 static auto IsInstanceMember(Nonnull<const Member*> member) {
   switch (member->kind()) {
-    case MemberKind::BaseClass:
-      [[fallthrough]];
+    case MemberKind::BaseClassObjectMember:
     case MemberKind::PositionalMember:
       return true;
     case MemberKind::NominalMember:
