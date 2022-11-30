@@ -104,6 +104,9 @@ bazel test //...:all
 > export PATH="${HOME}/.brew/bin:${PATH}"
 > # For `llvm`:
 > export PATH="$(brew --prefix llvm)/bin:${PATH}"
+> export LDFLAGS="-L/usr/local/opt/llvm/lib"
+> export CPPFLAGS="-I/usr/local/opt/llvm/include"
+> export CC=$(which clang)
 > ```
 
 <!-- google-doc-style-resume -->
@@ -216,14 +219,12 @@ been built with, particularly when it comes to system-installed versions. If you
 run `clang --version`, you should see at least version 14. If you see an older
 version, please update.
 
-macOS only: After installing from Homebrew, you may need to open a new shell to
-get `$PATH` changes.
+System installs of macOS typically won't work, for example being an old LLVM
+version or missing llvm-ar; [setup commands](#setup-commands) includes LLVM from
+Homebrew for this reason.
 
 It may be necessary to run `bazel clean` after updating versions in order to
 clean up cached state.
-
-macOS only: In case of "llvm-ar no such file or directory" error see
-[llvm-fix](https://tipseason.com/carbon-language-execvp-error/)
 
 ### Asking for help
 
