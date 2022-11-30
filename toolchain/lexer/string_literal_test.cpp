@@ -93,7 +93,7 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
   for (llvm::StringLiteral test : valid) {
     SCOPED_TRACE(test);
     llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(test);
-    EXPECT_TRUE(result.hasValue());
+    EXPECT_TRUE(result.has_value());
     if (result) {
       EXPECT_EQ(result->text(), test);
     }
@@ -118,7 +118,7 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
   for (llvm::StringLiteral test : invalid) {
     SCOPED_TRACE(test);
     llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(test);
-    EXPECT_TRUE(result.hasValue());
+    EXPECT_TRUE(result.has_value());
     if (result) {
       EXPECT_FALSE(result->is_terminated());
     }
