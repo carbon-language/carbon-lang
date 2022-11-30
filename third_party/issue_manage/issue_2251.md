@@ -90,22 +90,22 @@ ____
 Modern and evolving
 Solid language foundations that are easy to learn, especially if you have used C++
 ## Carbon Docs Design Table of Contents
-- Introduction
-- Code and comments
-- Build modes
-- Types are values
-- Primitive types
-- Value categories and value phases
-- Composite types
-- Expressions
-- Declarations, Definitions, and Scopes 
-- Patterns
-- Name-binding declarations
-- Functions
-- User-defined types
-- Names
-- Generics
-- Bidirectional interoperability with C and C++
-- Unfinished tales
+### Introduction
+### Code and comments
+### Build modes
+### Types are values
+### Primitive types
+### Value categories and value phases
+### Composite types
+### Expressions
+### Declarations, Definitions, and Scopes 
+### Patterns
+### Name-binding declarations
+### Functions
+### User-defined types
+### Names
+### Generics
+### Bidirectional interoperability with C and C++
+### Unfinished tales
 
 
