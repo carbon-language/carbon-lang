@@ -67,7 +67,7 @@ auto LexedStringLiteral::Introducer::Lex(llvm::StringRef source_text)
         .kind = NotMultiLine, .terminator = "\"", .prefix_size = 1};
   }
 
-  return llvm::None;
+  return std::nullopt;
 }
 
 namespace {
@@ -101,7 +101,7 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
   const std::optional<Introducer> introducer =
       Introducer::Lex(source_text.substr(hash_level));
   if (!introducer) {
-    return llvm::None;
+    return std::nullopt;
   }
 
   cursor += introducer->prefix_size;

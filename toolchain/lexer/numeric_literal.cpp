@@ -36,7 +36,7 @@ auto LexedNumericLiteral::Lex(llvm::StringRef source_text)
   LexedNumericLiteral result;
 
   if (source_text.empty() || !IsDecimalDigit(source_text.front())) {
-    return llvm::None;
+    return std::nullopt;
   }
 
   bool seen_plus_minus = false;

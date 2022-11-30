@@ -50,11 +50,11 @@ class PrecedenceGroup {
   static auto ForType() -> PrecedenceGroup;
 
   // Look up the operator information of the given prefix operator token, or
-  // return llvm::None if the given token is not a prefix operator.
+  // return std::nullopt if the given token is not a prefix operator.
   static auto ForLeading(TokenKind kind) -> std::optional<PrecedenceGroup>;
 
   // Look up the operator information of the given infix or postfix operator
-  // token, or return llvm::None if the given token is not an infix or postfix
+  // token, or return std::nullopt if the given token is not an infix or postfix
   // operator. `infix` indicates whether this is a valid infix operator, but is
   // only considered if the same operator symbol is available as both infix and
   // postfix.

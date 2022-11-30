@@ -264,7 +264,7 @@ auto ParseTree::Verify() const -> std::optional<Error> {
                       "TokenizedBuffer has {1} tokens.",
                       node_impls_.size(), tokens_->size()));
   }
-  return llvm::None;
+  return std::nullopt;
 }
 
 auto ParseTree::Node::Print(llvm::raw_ostream& output) const -> void {

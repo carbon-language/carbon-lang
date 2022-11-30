@@ -211,7 +211,7 @@ auto PrecedenceGroup::ForLeading(TokenKind kind)
       return PrecedenceGroup(BitwisePrefix);
 
     default:
-      return llvm::None;
+      return std::nullopt;
   }
 }
 
@@ -311,7 +311,7 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
       break;
   }
 
-  return llvm::None;
+  return std::nullopt;
 }
 
 auto PrecedenceGroup::GetPriority(PrecedenceGroup left, PrecedenceGroup right)
