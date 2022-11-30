@@ -24,44 +24,9 @@ This Carbon docs tree should be written in
 markdown here.
 The pdf file then becomes deletable.
 
-
-
 ## Categorized Topics that Need to be Moved to Carbon Docs Tree
-- style rule
+None. All topics moved.
 
-  - we deviate
-    - explorer
-      - fix
-    - not followed
-      - accumulate more
-      - cost
-      - not retain style rules
-  - add automated checks
-    - clang
-  - remove the style rule
-  - don't automatically check
-    - The code inconsistencies in explorer concerning case may be
-irrelevant
-  - leads decision
-  - code structure
-  - pull requests
-    - frequent contributors
-    - style compliance
-    - review process
-    - contributor gap
-      - unequal treatment
-      - new contributors
-      - global consistency
-    - Modern and evolving
-      - easy to learn
-
-
-
-- Carbon without C++ experience
-  - Lists
-____
-Modern and evolving
-Solid language foundations that are easy to learn, especially if you have used C++
 ## Carbon Docs Design Table of Contents with Points of Issue 2251 Added 
 ### Introduction
 ### Code and comments
@@ -70,6 +35,9 @@ Solid language foundations that are easy to learn, especially if you have used C
 ### Primitive types
 ### Value categories and value phases
 ### Composite types
+- Carbon without C++ experience
+  - Lists
+
 ### Expressions
 - interpreted
   - partial precedence ordering
@@ -77,22 +45,10 @@ Solid language foundations that are easy to learn, especially if you have used C
     - most developers understand
     - parentheses
       - fallthrough
-### Declarations, Definitions, and Scopes 
 
-- C++ code mirror what we expect Carbon code to look like
-  - can't change fallthrough behavior
-    - break will still be there
-    - example by zygoloid
-       - Recursion
-       - references
+### Declarations, Definitions, and Scopes 
   - braces have less utility and are more just repetitive when there's no variable
 being scoped
-
-
-
-
-
-
 
 ### Patterns
 ### Name-binding declarations
@@ -112,6 +68,8 @@ being scoped
   - fallthrough
     - explicit
 - goto
+- code structure
+
 ### User-defined types
 ### Names
 - style rule
@@ -120,9 +78,45 @@ being scoped
       - being followed
     - comments on closing namespaces
       - clang-format checks
+
 ### Generics
 ### Bidirectional interoperability with C and C++
-### Unfinished tales
+- C++ code mirror what we expect Carbon code to look like
+  - can't change fallthrough behavior
+    - break will still be there
+    - example by zygoloid
+       - Recursion
+       - references
 
+### Unfinished tales
+- style rule
+  - we deviate
+    - explorer
+      - fix
+    - not followed
+      - accumulate more
+      - cost
+      - not retain style rules
+  - add automated checks
+    - clang
+  - remove the style rule
+  - don't automatically check
+    - The code inconsistencies in explorer concerning case may be
+irrelevant
+  - leads decision
+  - pull requests
+    - frequent contributors
+    - style compliance
+    - review process
+    - contributor gap
+      - unequal treatment
+      - new contributors
+      - global consistency
+    - Modern and evolving
+      - easy to learn
+
+____
+Modern and evolving
+Solid language foundations that are easy to learn, especially if you have used C++
 
 
