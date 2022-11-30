@@ -23,25 +23,12 @@ Carbon docs appropriately.
 This Carbon docs tree should be written in
 markdown here.
 The pdf file then becomes deletable.
-<<<< issue_manage
-## Categorized Topics Before Cloning Carbon Docs Tree
-- style rule
-  - braces
-    - conditional
-      - if
-    - switch
-      - case blocks
-        - variable scope
-          - -Wimplicit-fallthrough
-    - loop statements
-    - casing
-      - being followed
-    - comments on closing namespaces
-      - clang-format checks
-====
+
+
+
 ## Categorized Topics that Need to be Moved to Carbon Docs Tree
 - style rule
->>>> trunk
+
   - we deviate
     - explorer
       - fix
@@ -67,22 +54,9 @@ irrelevant
       - global consistency
     - Modern and evolving
       - easy to learn
-<<<< issue_manage
-- match
-  - syntax
-  - braces
-  - fallthrough
-    - explicit
-- goto
-- design
-  - Expressions
-    - interpreted
-      - partial precedence ordering
-        - Expression components
-        - most developers understand
-        - parentheses
-          - fallthrough
-====
+
+
+
 - Carbon without C++ experience
   - Lists
 ____
@@ -104,7 +78,7 @@ Solid language foundations that are easy to learn, especially if you have used C
     - parentheses
       - fallthrough
 ### Declarations, Definitions, and Scopes 
->>>> trunk
+
 - C++ code mirror what we expect Carbon code to look like
   - can't change fallthrough behavior
     - break will still be there
@@ -113,13 +87,13 @@ Solid language foundations that are easy to learn, especially if you have used C
        - references
   - braces have less utility and are more just repetitive when there's no variable
 being scoped
-<<<< issue_manage
-- Carbon without C++ experience
-  - Lists
-____
-Modern and evolving
-Solid language foundations that are easy to learn, especially if you have used C++
-====
+
+
+
+
+
+
+
 ### Patterns
 ### Name-binding declarations
 ### Functions
@@ -149,6 +123,6 @@ Solid language foundations that are easy to learn, especially if you have used C
 ### Generics
 ### Bidirectional interoperability with C and C++
 ### Unfinished tales
-trunk
+
 
 
