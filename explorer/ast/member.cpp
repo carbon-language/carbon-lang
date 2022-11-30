@@ -19,11 +19,11 @@ Member::Member(Nonnull<const IndexedValue*> tuple_member)
     : member_(tuple_member) {}
 
 auto Member::IsNamed(std::string_view other_name) const -> bool {
-  return hasName() && name() == other_name;
+  return HasName() && name() == other_name;
 }
 
 auto Member::name() const -> std::string_view {
-  CARBON_CHECK(hasName()) << "Unnamed member does not have a name()";
+  CARBON_CHECK(HasName()) << "Unnamed member does not have a name()";
   if (const auto* decl = member_.dyn_cast<const Declaration*>()) {
     return GetName(*decl).value();
   } else if (const auto* named_valued = member_.dyn_cast<const NamedValue*>()) {
@@ -33,17 +33,17 @@ auto Member::name() const -> std::string_view {
   }
 }
 
-auto Member::hasPosition() const -> bool {
+auto Member::HasPosition() const -> bool {
   return member_.dyn_cast<const IndexedValue*>() != nullptr;
 }
 
-auto Member::hasName() const -> bool {
+auto Member::HasName() const -> bool {
   // Both are currently mutually exclusive
-  return !hasPosition();
+  return !HasPosition();
 }
 
-auto Member::index() const -> size_t {
-  CARBON_CHECK(hasPosition())
+auto Member::index() const -> int {
+  CARBON_CHECK(HasPosition())
       << "Non-positional member does not have an index()";
   return member_.dyn_cast<const IndexedValue*>()->index;
 }
@@ -66,7 +66,7 @@ auto Member::declaration() const -> std::optional<Nonnull<const Declaration*>> {
 }
 
 void Member::Print(llvm::raw_ostream& out) const {
-  if (hasName()) {
+  if (HasName()) {
     out << name();
   } else if (const auto* value = member_.dyn_cast<const IndexedValue*>()) {
     out << "element #" << member_.get<const IndexedValue*>()->index;

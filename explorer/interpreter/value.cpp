@@ -57,7 +57,7 @@ static auto GetPositionalMember(Nonnull<const Value*> v,
     case Value::Kind::TupleValue: {
       const auto& tuple = cast<TupleValue>(*v);
       const auto index = field.member().index();
-      if (index < 0 || index >= tuple.elements().size()) {
+      if (index < 0 || index >= static_cast<int>(tuple.elements().size())) {
         return ProgramError(source_loc)
                << "index " << index << " out of range for " << *v;
       }
@@ -177,7 +177,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                       const FieldPath::Component& field,
                       SourceLocation source_loc, Nonnull<const Value*> me_value)
     -> ErrorOr<Nonnull<const Value*>> {
-  return field.member().hasPosition()
+  return field.member().HasPosition()
              ? GetPositionalMember(v, field, source_loc)
              : GetNamedMember(arena, v, field, source_loc, me_value);
 }
@@ -244,7 +244,7 @@ static auto SetFieldImpl(
       std::vector<Nonnull<const Value*>> elements =
           cast<TupleValueBase>(*value).elements();
       const auto index = (*path_begin).member().index();
-      if (index < 0 || index >= elements.size()) {
+      if (index < 0 || index >= static_cast<int>(elements.size())) {
         return ProgramError(source_loc)
                << "index " << index << " out of range in " << *value;
       }

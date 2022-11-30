@@ -1146,7 +1146,7 @@ class MemberName : public Value {
         member_(member) {
     CARBON_CHECK(base_type || interface)
         << "member name must be in a type, an interface, or both";
-    CARBON_CHECK(member_.hasName()) << "member must have a name";
+    CARBON_CHECK(member_.HasName()) << "member must have a name";
   }
 
   static auto classof(const Value* value) -> bool {

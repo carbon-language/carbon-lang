@@ -27,10 +27,10 @@ struct NamedValue {
 };
 
 // A IndexedValue represents a value identified by an index, such as a tuple
-// field
+// field.
 struct IndexedValue {
   // The field index.
-  size_t index;
+  int index;
 
   // The field's value.
   Nonnull<const Value*> value;
@@ -52,14 +52,14 @@ class Member {
   void Print(llvm::raw_ostream& out) const;
 
   // Return whether the member is positional, i.e. has an index.
-  auto hasPosition() const -> bool;
+  auto HasPosition() const -> bool;
   // Return whether the member is named, i.e. has a name.
-  auto hasName() const -> bool;
+  auto HasName() const -> bool;
 
   // The name of the member. Requires *this to represent a named member.
   auto name() const -> std::string_view;
   // The index of the member. Requires *this to represent a positional member.
-  auto index() const -> size_t;
+  auto index() const -> int;
   // The declared type of the member, which might include type variables.
   auto type() const -> const Value&;
   // A declaration of the member, if any exists.
