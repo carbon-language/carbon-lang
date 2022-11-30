@@ -166,7 +166,7 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
     return !tokenized_source.has_errors();
   }
 
-  auto parse_tree = ParseTree::Parse(tokenized_source, consumer);
+  auto parse_tree = ParseTree::Parse(tokenized_source, consumer, vlog_stream_);
   if (dump_mode == DumpMode::ParseTree) {
     consumer.Flush();
     parse_tree.Print(output_stream_, parse_tree_preorder);

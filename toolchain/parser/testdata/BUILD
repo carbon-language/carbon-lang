@@ -25,3 +25,15 @@ glob_sh_run(
     data = ["//toolchain/driver:carbon"],
     file_exts = ["carbon"],
 )
+
+glob_sh_run(
+    args = [
+        "$(location //toolchain/driver:carbon)",
+        "-v",
+        "dump",
+        "parse-tree",
+    ],
+    data = ["//toolchain/driver:carbon"],
+    file_exts = ["carbon"],
+    run_ext = "verbose",
+)
