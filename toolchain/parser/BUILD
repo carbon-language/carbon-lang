@@ -68,6 +68,7 @@ cc_library(
         "//common:check",
         "//common:error",
         "//common:ostream",
+        "//common:vlog",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:token_kind",
         "//toolchain/lexer:tokenized_buffer",

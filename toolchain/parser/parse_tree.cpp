@@ -17,14 +17,14 @@
 
 namespace Carbon {
 
-auto ParseTree::Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer)
-    -> ParseTree {
+auto ParseTree::Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
+                      llvm::raw_ostream* vlog_stream) -> ParseTree {
   TokenizedBuffer::TokenLocationTranslator translator(
       &tokens, /*last_line_lexed_to_column=*/nullptr);
   TokenDiagnosticEmitter emitter(translator, consumer);
 
   // Delegate to the parser.
-  auto tree = Parser::Parse(tokens, emitter);
+  auto tree = Parser::Parse(tokens, emitter, vlog_stream);
   auto verify_error = tree.Verify();
   CARBON_CHECK(!verify_error) << tree << *verify_error;
   return tree;
