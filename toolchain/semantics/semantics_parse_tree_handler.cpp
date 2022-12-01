@@ -113,7 +113,7 @@ auto SemanticsParseTreeHandler::Build() -> void {
         break;
       }
       default: {
-        CARBON_FATAL() << "In ParseTree at index " << parse_node.index()
+        CARBON_FATAL() << "In ParseTree at index " << parse_node
                        << ", unhandled NodeKind " << parse_kind;
       }
     }
