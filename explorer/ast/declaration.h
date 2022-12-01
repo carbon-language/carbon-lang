@@ -28,6 +28,7 @@ namespace Carbon {
 
 class MixinPseudoType;
 class ConstraintType;
+class NominalClassType;
 
 // Abstract base class of all AST nodes representing patterns.
 //
@@ -275,9 +276,6 @@ class ClassDeclaration : public Declaration {
   auto type_params() -> std::optional<Nonnull<TuplePattern*>> {
     return type_params_;
   }
-  auto base_expr() const -> std::optional<Nonnull<Expression*>> {
-    return base_expr_;
-  }
   auto self() const -> Nonnull<const SelfDeclaration*> { return self_decl_; }
   auto self() -> Nonnull<SelfDeclaration*> { return self_decl_; }
 
@@ -295,11 +293,18 @@ class ClassDeclaration : public Declaration {
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
-  auto base() const -> std::optional<Nonnull<const ClassDeclaration*>> {
-    return base_;
+  auto base_expr() const -> std::optional<Nonnull<Expression*>> {
+    return base_expr_;
   }
-  void set_base(Nonnull<const ClassDeclaration*> base_decl) {
-    base_ = base_decl;
+
+  // Returns the original base type, before instantiation & substitutions
+  // Use `NominalClassType::base()` to get the instantiated type.
+  auto base_type() const -> std::optional<Nonnull<const NominalClassType*>> {
+    return base_type_;
+  }
+  void set_base_type(
+      std::optional<Nonnull<const NominalClassType*>> base_type) {
+    base_type_ = base_type;
   }
 
  private:
@@ -311,6 +316,7 @@ class ClassDeclaration : public Declaration {
   std::vector<Nonnull<Declaration*>> members_;
   std::optional<Nonnull<FunctionDeclaration*>> destructor_;
   std::optional<Nonnull<const ClassDeclaration*>> base_;
+  std::optional<Nonnull<const NominalClassType*>> base_type_;
 };
 
 // EXPERIMENTAL MIXIN FEATURE

@@ -123,6 +123,9 @@ CARBON_PARSER_STATE(CodeBlockFinish)
 // If `Var`:
 //   1. Var
 //   2. DeclarationLoop
+// If `interface`:
+//   1. InterfaceIntroducer
+//   2. DeclarationLoop
 // Else:
 //   1. DeclarationLoop
 CARBON_PARSER_STATE(DeclarationLoop)
@@ -276,6 +279,31 @@ CARBON_PARSER_STATE(FunctionSignatureFinish)
 //   (state done)
 CARBON_PARSER_STATE(FunctionDefinitionFinish)
 
+// Finishes an interface definition.
+//
+// Always:
+//   (state done)
+CARBON_PARSER_STATE(InterfaceDefinitionFinish)
+
+// Handles parsing the body of an interface.
+//
+// If `}`:
+//   (state done)
+// Else:
+//   1. InterfaceDefinitionLoop
+CARBON_PARSER_STATE(InterfaceDefinitionLoop)
+
+// Handles processing of a intefaces's `interface <name> {`.
+//
+// If invalid:
+//   1. InterfaceDefinitionFinish
+// If `{` is missing:
+//   1. InterfaceDefinitionFinish
+// Else:
+//   1. InterfaceDefinitionLoop
+//   2. InterfaceDefinitionFinish
+CARBON_PARSER_STATE(InterfaceIntroducer)
+
 // Handles `package`.
 //
 // Always:
@@ -286,14 +314,16 @@ CARBON_PARSER_STATE(Package)
 //
 // Always:
 //   1. Expression
-//   2. ParenConditionFinish
-CARBON_PARSER_STATE(ParenCondition)
+//   2. ParenConditionAs(If|While)Finish
+CARBON_PARSER_STATE(ParenConditionAsIf)
+CARBON_PARSER_STATE(ParenConditionAsWhile)
 
 // Finishes the processing of a `(condition)` after the expression.
 //
 // Always:
 //   (state done)
-CARBON_PARSER_STATE(ParenConditionFinish)
+CARBON_PARSER_STATE(ParenConditionFinishAsIf)
+CARBON_PARSER_STATE(ParenConditionFinishAsWhile)
 
 // Handles the `(` of a parenthesized expression.
 //
@@ -363,7 +393,7 @@ CARBON_PARSER_STATE(PatternFinish)
 // If `Return`:
 //   1. StatementReturn
 // If `Var`:
-//   1. VarAsRequireSemicolon
+//   1. VarAsSemicolon
 // If `While`:
 //   1. StatementWhile
 // Else:
@@ -389,7 +419,7 @@ CARBON_PARSER_STATE(StatementContinueFinish)
 // If no `OpenParen`:
 //   1. CodeBlock
 // If `Var`:
-//   1. VarAsNoSemicolon
+//   1. VarAsFor
 //   2. StatementForHeaderIn
 // Else:
 //   1. StatementForHeaderIn
@@ -420,7 +450,7 @@ CARBON_PARSER_STATE(StatementForFinish)
 // Handles `if` processing at the start.
 //
 // Always:
-//   1. ParenCondition
+//   1. ParenConditionAsIf
 //   2. StatementIfConditionFinish
 CARBON_PARSER_STATE(StatementIf)
 
@@ -478,7 +508,7 @@ CARBON_PARSER_STATE(StatementScopeLoop)
 // Handles `while` processing.
 //
 // Always:
-//   1. ParenCondition
+//   1. ParenConditionAsWhile
 //   2. StatementWhileConditionFinish
 CARBON_PARSER_STATE(StatementWhile)
 
@@ -500,9 +530,9 @@ CARBON_PARSER_STATE(StatementWhileBlockFinish)
 // Always:
 //   1. PatternAsVariable
 //   2. VarAfterPattern
-//   3. VarFinishAs(RequireSemicolon|NoSemicolon)
-CARBON_PARSER_STATE(VarAsRequireSemicolon)
-CARBON_PARSER_STATE(VarAsNoSemicolon)
+//   3. VarFinishAs(Semicolon|For)
+CARBON_PARSER_STATE(VarAsSemicolon)
+CARBON_PARSER_STATE(VarAsFor)
 
 // Handles `var` after the pattern, either followed by an initializer or the
 // semicolon.
@@ -524,7 +554,7 @@ CARBON_PARSER_STATE(VarAfterInitializer)
 //
 // Always:
 //   (state done)
-CARBON_PARSER_STATE(VarFinishAsRequireSemicolon)
-CARBON_PARSER_STATE(VarFinishAsNoSemicolon)
+CARBON_PARSER_STATE(VarFinishAsSemicolon)
+CARBON_PARSER_STATE(VarFinishAsFor)
 
 #undef CARBON_PARSER_STATE
