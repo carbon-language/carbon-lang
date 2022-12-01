@@ -58,7 +58,7 @@ struct ExpectedToken {
   int indent_column = -1;
   bool recovery = false;
   llvm::StringRef text = "";
-  llvm::Optional<llvm::StringRef> string_contents = llvm::None;
+  std::optional<llvm::StringRef> string_contents = std::nullopt;
 };
 
 // TODO: Consider rewriting this into a `TokenEq` matcher which is used inside

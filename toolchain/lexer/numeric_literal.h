@@ -5,11 +5,11 @@
 #ifndef CARBON_TOOLCHAIN_LEXER_NUMERIC_LITERAL_H_
 #define CARBON_TOOLCHAIN_LEXER_NUMERIC_LITERAL_H_
 
+#include <optional>
 #include <utility>
 #include <variant>
 
 #include "llvm/ADT/APInt.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
@@ -44,7 +44,7 @@ class LexedNumericLiteral {
   //
   // The supplied `source_text` must outlive the return value.
   static auto Lex(llvm::StringRef source_text)
-      -> llvm::Optional<LexedNumericLiteral>;
+      -> std::optional<LexedNumericLiteral>;
 
   // Compute the value of the token, if possible. Emit diagnostics to the given
   // emitter if the token is not valid.

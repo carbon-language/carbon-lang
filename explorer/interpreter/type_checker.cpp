@@ -1483,7 +1483,7 @@ class TypeChecker::ConstraintTypeBuilder {
             .drop_front(first_equal_to_add);
 
     // Add all of the new constraints.
-    impl_scope->Add(new_impl_constraints, llvm::None, llvm::None,
+    impl_scope->Add(new_impl_constraints, std::nullopt, std::nullopt,
                     GetSelfWitness(), type_checker);
     for (auto& equal : new_equality_constraints) {
       impl_scope->AddEqualityConstraint(arena_->New<EqualityConstraint>(equal));
@@ -3265,7 +3265,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
 
           CARBON_RETURN_IF_ERROR(DeduceCallBindings(
               call, &param_name.params().static_type(), generic_parameters,
-              /*deduced_bindings=*/llvm::None, impl_scope));
+              /*deduced_bindings=*/std::nullopt, impl_scope));
 
           // Currently the only kinds of parameterized entities we support are
           // types.

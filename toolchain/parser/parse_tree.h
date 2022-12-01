@@ -146,7 +146,7 @@ class ParseTree {
   // This is primarily intended to be used as a
   // debugging aid. This routine doesn't directly CHECK so that it can be used
   // within a debugger.
-  [[nodiscard]] auto Verify() const -> llvm::Optional<Error>;
+  [[nodiscard]] auto Verify() const -> std::optional<Error>;
 
  private:
   friend class Parser;

@@ -37,7 +37,7 @@ class SemanticsParseTreeHandler {
 
   struct TraversalStackEntry {
     ParseTree::Node parse_node;
-    llvm::Optional<SemanticsNodeId> result_id;
+    std::optional<SemanticsNodeId> result_id;
   };
 
   // Adds an identifier for a DeclaredName node, returning its reference.

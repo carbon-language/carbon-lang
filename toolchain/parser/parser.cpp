@@ -6,9 +6,9 @@
 
 #include <cstdlib>
 #include <memory>
+#include <optional>
 
 #include "common/check.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
@@ -165,15 +165,15 @@ auto Parser::ConsumeChecked(TokenKind kind) -> TokenizedBuffer::Token {
 }
 
 auto Parser::ConsumeIf(TokenKind kind)
-    -> llvm::Optional<TokenizedBuffer::Token> {
+    -> std::optional<TokenizedBuffer::Token> {
   if (!PositionIs(kind)) {
-    return llvm::None;
+    return std::nullopt;
   }
   return Consume();
 }
 
 auto Parser::FindNextOf(std::initializer_list<TokenKind> desired_kinds)
-    -> llvm::Optional<TokenizedBuffer::Token> {
+    -> std::optional<TokenizedBuffer::Token> {
   auto new_position = position_;
   while (true) {
     TokenizedBuffer::Token token = *new_position;
@@ -185,7 +185,7 @@ auto Parser::FindNextOf(std::initializer_list<TokenKind> desired_kinds)
     // Step to the next token at the current bracketing level.
     if (kind.IsClosingSymbol() || kind == TokenKind::EndOfFile()) {
       // There are no more tokens at this level.
-      return llvm::None;
+      return std::nullopt;
     } else if (kind.IsOpeningSymbol()) {
       new_position = TokenizedBuffer::TokenIterator(
           tokens_->GetMatchedClosingToken(token));
@@ -208,9 +208,9 @@ auto Parser::SkipMatchingGroup() -> bool {
 }
 
 auto Parser::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
-    -> llvm::Optional<TokenizedBuffer::Token> {
+    -> std::optional<TokenizedBuffer::Token> {
   if (position_ == end_) {
-    return llvm::None;
+    return std::nullopt;
   }
 
   TokenizedBuffer::Line root_line = tokens_->GetLine(skip_root);
@@ -232,7 +232,7 @@ auto Parser::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
     if (PositionIs(TokenKind::CloseCurlyBrace())) {
       // Immediately bail out if we hit an unmatched close curly, this will
       // pop us up a level of the syntax grouping.
-      return llvm::None;
+      return std::nullopt;
     }
 
     // We assume that a semicolon is always intended to be the end of the
@@ -251,7 +251,7 @@ auto Parser::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
   } while (position_ != end_ &&
            is_same_line_or_indent_greater_than_root(*position_));
 
-  return llvm::None;
+  return std::nullopt;
 }
 
 auto Parser::SkipTo(TokenizedBuffer::Token t) -> void {
