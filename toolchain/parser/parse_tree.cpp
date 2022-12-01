@@ -93,7 +93,7 @@ auto ParseTree::PrintNode(llvm::raw_ostream& output, Node n, int depth,
   // If children are being added, include node_index in order to disambiguate
   // nodes.
   if (preorder) {
-    output << "node_index: " << n.index << ", ";
+    output << "node_index: " << n << ", ";
   }
   output << "kind: '" << n_impl.kind.name() << "', text: '"
          << tokens_->GetTokenText(n_impl.token) << "'";
@@ -207,7 +207,7 @@ auto ParseTree::Verify() const -> std::optional<Error> {
           return Error(
               llvm::formatv("Node #{0} is a {1} with bracket {2}, but didn't "
                             "find the bracket.",
-                            n.index, n_impl.kind, n_impl.kind.bracket()));
+                            n, n_impl.kind, n_impl.kind.bracket()));
         }
         auto child_impl = node_impls_[nodes.pop_back_val().index];
         subtree_size += child_impl.subtree_size;
@@ -221,7 +221,7 @@ auto ParseTree::Verify() const -> std::optional<Error> {
           return Error(llvm::formatv(
               "Node #{0} is a {1} with child_count {2}, but only had {3} "
               "nodes to consume.",
-              n.index, n_impl.kind, n_impl.kind.child_count(), i));
+              n, n_impl.kind, n_impl.kind.child_count(), i));
         }
         auto child_impl = node_impls_[nodes.pop_back_val().index];
         subtree_size += child_impl.subtree_size;
@@ -229,8 +229,8 @@ auto ParseTree::Verify() const -> std::optional<Error> {
     }
     if (n_impl.subtree_size != subtree_size) {
       return Error(llvm::formatv(
-          "Node #{0} is a {1} with subtree_size of {2}, but calculated {3}.",
-          n.index, n_impl.kind, n_impl.subtree_size, subtree_size));
+          "Node #{0} is a {1} with subtree_size of {2}, but calculated {3}.", n,
+          n_impl.kind, n_impl.subtree_size, subtree_size));
     }
     nodes.push_back(n);
   }
@@ -238,7 +238,7 @@ auto ParseTree::Verify() const -> std::optional<Error> {
   // Remaining nodes should all be roots in the tree; make sure they line up.
   CARBON_CHECK(nodes.back().index ==
                static_cast<int32_t>(node_impls_.size()) - 1)
-      << nodes.back().index << " " << node_impls_.size() - 1;
+      << nodes.back() << " " << node_impls_.size() - 1;
   int prev_index = -1;
   for (const auto& n : nodes) {
     const auto& n_impl = node_impls_[n.index];
@@ -247,7 +247,7 @@ auto ParseTree::Verify() const -> std::optional<Error> {
       return Error(
           llvm::formatv("Node #{0} is a root {1} with subtree_size {2}, but "
                         "previous root was at #{3}.",
-                        n.index, n_impl.kind, n_impl.subtree_size, prev_index));
+                        n, n_impl.kind, n_impl.subtree_size, prev_index));
     }
     prev_index = n.index;
   }

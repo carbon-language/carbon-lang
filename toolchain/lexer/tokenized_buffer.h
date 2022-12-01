@@ -26,7 +26,6 @@ namespace Carbon {
 
 class TokenizedBuffer;
 
-
 // A buffer of tokenized Carbon source code.
 //
 // This is constructed by lexing the source code text into a series of tokens.
