@@ -26,7 +26,6 @@ namespace Carbon {
 
 class TokenizedBuffer;
 
-namespace Internal {}  // namespace Internal
 
 // A buffer of tokenized Carbon source code.
 //
