@@ -3761,7 +3761,7 @@ class Array(T:! Type, template N:! Int) {
 ```
 
 The `impl` declarations in the body of a `class` definition must be for the
-class being defined. It is an error to define `impl i32 as Printable` inside
+class being defined. It is an error to declare `impl i32 as Printable` inside
 `class Array`.
 
 It is legal to add the keyword `external` before the `impl` keyword to switch to
