@@ -82,10 +82,11 @@ class Parser::PrettyStackTraceParseState : public llvm::PrettyStackTraceEntry {
 };
 
 Parser::Parser(ParseTree& tree, TokenizedBuffer& tokens,
-               TokenDiagnosticEmitter& emitter)
+               TokenDiagnosticEmitter& emitter, llvm::raw_ostream* vlog_stream)
     : tree_(&tree),
       tokens_(&tokens),
       emitter_(&emitter),
+      vlog_stream_(vlog_stream),
       position_(tokens_->tokens().begin()),
       end_(tokens_->tokens().end()) {
   CARBON_CHECK(position_ != end_) << "Empty TokenizedBuffer";
@@ -432,6 +433,8 @@ auto Parser::Parse() -> void {
   // Traces state_stack_. This runs even in opt because it's low overhead.
   PrettyStackTraceParseState pretty_stack(this);
 
+  CARBON_VLOG() << "*** Parser::Parse Begin ***\n";
+
   PushState(ParserState::DeclarationLoop());
   while (!state_stack_.empty()) {
     switch (state_stack_.back().state) {
@@ -444,6 +447,8 @@ auto Parser::Parse() -> void {
   }
 
   AddLeafNode(ParseNodeKind::FileEnd(), *position_);
+
+  CARBON_VLOG() << "*** Parser::Parse End ***\n";
 }
 
 auto Parser::HandleBraceExpressionState() -> void {

@@ -49,8 +49,8 @@ class ParseTree {
   // Parses the token buffer into a `ParseTree`.
   //
   // This is the factory function which is used to build parse trees.
-  static auto Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer)
-      -> ParseTree;
+  static auto Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
+                    llvm::raw_ostream* vlog_stream) -> ParseTree;
 
   // Tests whether there are any errors in the parse tree.
   [[nodiscard]] auto has_errors() const -> bool { return has_errors_; }
