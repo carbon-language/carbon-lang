@@ -1999,12 +1999,14 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
           cast<NominalClassType>(class_obj->type()).declaration();
       const auto member_count = static_cast<int>(class_decl.members().size());
       if (act.pos() == 0) {
+        // Run the destructor, if there is one.
         if (auto destructor = class_decl.destructor()) {
           return CallDestructor(*destructor, class_obj);
         } else {
           return todo_.RunAgain();
         }
       } else if (act.pos() <= member_count) {
+        // Destroy members.
         const int index = class_decl.members().size() - act.pos();
         const auto& member = class_decl.members()[index];
         if (const auto* var = dyn_cast<VariableDeclaration>(member)) {
@@ -2020,6 +2022,7 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
           return todo_.RunAgain();
         }
       } else if (act.pos() == member_count + 1) {
+        // Destroy the parent, if there is one.
         if (auto base = class_obj->base()) {
           return todo_.Spawn(std::make_unique<DestroyAction>(
               destroy_act.lvalue(), base.value()));
@@ -2047,8 +2050,8 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
           return todo_.Spawn(std::make_unique<DestroyAction>(
               arena_->New<LValue>(field_address), item));
         } else {
-          // Type of tuple element is integral type e.g. i32
-          // or the type has no destructor
+          // The tuple element's type is an integral type (e.g., i32)
+          // or the type doesn't support destruction.
           return todo_.RunAgain();
         }
       } else {
