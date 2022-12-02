@@ -2922,6 +2922,10 @@ external impl forall [T:! Type where .Self is B] T as A {}
 external impl forall [T:! B] T as A {}
 ```
 
+This clarifies the meaning of the `where` clause and reduces the number of
+redundant ways to express a restriction, following the
+[one-way principle](/docs/project/principles/one_way.md).
+
 **Alternative considered:** This rule was added in proposal
 [#2376](https://github.com/carbon-language/carbon-lang/pull/2376), which
 [considered whether this rule should be added](/proposals/p2376.md#alternatives-considered).
