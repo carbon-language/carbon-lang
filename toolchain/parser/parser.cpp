@@ -1045,34 +1045,24 @@ auto Parser::HandleFunctionIntroducerState() -> void {
     }
   }
 
-  if (!PositionIs(TokenKind::OpenParen())) {
-    CARBON_DIAGNOSTIC(ExpectedFunctionParams, Error,
-                      "Expected `(` after function name.");
-    emitter_->Emit(*position_, ExpectedFunctionParams);
-    HandleFunctionError(state, true);
-    return;
-  }
-
-  // Parse the parameter list as its own subtree; once that pops, resume
-  // function parsing.
-  state.state = ParserState::FunctionAfterParameterList();
-  PushState(state);
-  PushState(ParserState::FunctionParameterListFinish());
-  AddLeafNode(ParseNodeKind::ParameterListStart(), Consume());
-  if (!PositionIs(TokenKind::CloseParen())) {
-    PushState(ParserState::FunctionParameter());
-  }
+  ParseFunctionParameterList(state);
 }
 
 auto Parser::HandleMeParamFinishState() -> void {
   auto state = PopState();
+  CARBON_CHECK(tokens_->GetKind(*position_) == TokenKind::CloseSquareBracket())
+      << "Expected current token to be: `]`, found: "
+      << tokens_->GetKind(state.token);
   AddNode(ParseNodeKind::MeParam(), Consume(), state.subtree_start,
           state.has_error);
 }
 
 auto Parser::HandleFunctionAfterMeParamState() -> void {
   auto state = PopState();
+  ParseFunctionParameterList(state);
+}
 
+auto Parser::ParseFunctionParameterList(StateStackEntry& state) -> void {
   if (!PositionIs(TokenKind::OpenParen())) {
     CARBON_DIAGNOSTIC(ExpectedFunctionParams, Error,
                       "Expected `(` after function name.");
@@ -1155,6 +1145,15 @@ auto Parser::HandleFunctionSignatureFinishState() -> void {
       break;
     }
     case TokenKind::OpenCurlyBrace(): {
+      if (stack_context_ == ParseContext::Interface) {
+        CARBON_DIAGNOSTIC(
+            MethodImplNotAllowed, Error,
+            "Method implementations are not allowed in interfaces.");
+        emitter_->Emit(*position_, MethodImplNotAllowed);
+        HandleFunctionError(state, /* skip_past_likely_end */ true);
+        break;
+      }
+
       AddNode(ParseNodeKind::FunctionDefinitionStart(), Consume(),
               state.subtree_start, state.has_error);
       // Any error is recorded on the FunctionDefinitionStart.
@@ -1370,18 +1369,12 @@ auto Parser::HandleMePatternState() -> void {
   auto state = PopState();
 
   // Ensure the finish state always follows.
-  state.state = ParserState::MePatternFinish();
+  state.state = ParserState::PatternFinish();
 
   // me `:` type
   auto possible_me_param =
       (PositionIs(TokenKind::Me()) &&
        tokens_->GetKind(*(position_ + 1)) == TokenKind::Colon());
-
-  // addr me `:` type
-  auto possible_me_addr_param =
-      (PositionIs(TokenKind::Addr()) &&
-       tokens_->GetKind(*(position_ + 1)) == TokenKind::Me() &&
-       tokens_->GetKind(*(position_ + 2)) == TokenKind::Colon());
 
   if (possible_me_param) {
     // Switch the context token to the colon, so that it'll be used for the root
@@ -1392,7 +1385,15 @@ auto Parser::HandleMePatternState() -> void {
     AddLeafNode(ParseNodeKind::Me(), *position_);
     position_ += 2;
     return;
-  } else if (possible_me_addr_param) {
+  }
+
+  // addr me `:` type
+  auto possible_me_addr_param =
+      (PositionIs(TokenKind::Addr()) &&
+       tokens_->GetKind(*(position_ + 1)) == TokenKind::Me() &&
+       tokens_->GetKind(*(position_ + 2)) == TokenKind::Colon());
+
+  if (possible_me_addr_param) {
     state.token = *(position_ + 2);
     PushState(state);
     PushStateForExpression(PrecedenceGroup::ForType());
@@ -1403,7 +1404,10 @@ auto Parser::HandleMePatternState() -> void {
     return;
   }
 
-  // TODO error handling.
+  CARBON_DIAGNOSTIC(
+      ExpectedMeParam, Error,
+      "`me` parameter must be of the form: `[me: <T>] or [addr me: <T>]`.");
+  emitter_->Emit(*position_, ExpectedMeParam);
   state.has_error = true;
   PushState(state);
 }
@@ -1455,19 +1459,6 @@ auto Parser::HandlePatternAsFunctionParameterState() -> void {
 
 auto Parser::HandlePatternAsVariableState() -> void {
   HandlePattern(PatternKind::Variable);
-}
-
-auto Parser::HandleMePatternFinishState() -> void {
-  // TODO For now an exact copy of the next method.
-  auto state = PopState();
-  if (state.has_error) {
-    ReturnErrorOnState();
-    return;
-  }
-
-  // TODO: may need to mark has_error if !type.
-  AddNode(ParseNodeKind::PatternBinding(), state.token, state.subtree_start,
-          /*has_error=*/false);
 }
 
 auto Parser::HandlePatternFinishState() -> void {

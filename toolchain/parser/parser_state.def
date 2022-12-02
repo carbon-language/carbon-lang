@@ -564,7 +564,5 @@ CARBON_PARSER_STATE(FunctionAfterMeParam)
 CARBON_PARSER_STATE(MeParamFinish)
 // To parse starting from `me`.
 CARBON_PARSER_STATE(MePattern)
-// To parse until before `]`.
-CARBON_PARSER_STATE(MePatternFinish)
 
 #undef CARBON_PARSER_STATE
