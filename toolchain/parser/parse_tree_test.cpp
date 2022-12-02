@@ -48,7 +48,7 @@ TEST_F(ParseTreeTest, DefaultInvalid) {
 
 TEST_F(ParseTreeTest, IsValid) {
   TokenizedBuffer tokens = GetTokenizedBuffer("");
-  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  ParseTree tree = ParseTree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
   EXPECT_TRUE((*tree.postorder().begin()).is_valid());
 }
 
@@ -91,7 +91,8 @@ TEST_F(ParseTreeTest, OperatorWhitespaceErrors) {
   for (auto [input, kind] : testcases) {
     TokenizedBuffer tokens = GetTokenizedBuffer(input);
     ErrorTrackingDiagnosticConsumer error_tracker(consumer);
-    ParseTree tree = ParseTree::Parse(tokens, error_tracker);
+    ParseTree tree =
+        ParseTree::Parse(tokens, error_tracker, /*vlog_stream=*/nullptr);
     EXPECT_THAT(tree.has_errors(), Eq(kind == Failed)) << input;
     EXPECT_THAT(error_tracker.seen_error(), Eq(kind != Valid)) << input;
   }
@@ -141,14 +142,15 @@ TEST_F(ParseTreeTest, StructErrors) {
     TokenizedBuffer tokens = GetTokenizedBuffer(testcase.input);
     Testing::MockDiagnosticConsumer consumer;
     EXPECT_CALL(consumer, HandleDiagnostic(testcase.diag_matcher));
-    ParseTree tree = ParseTree::Parse(tokens, consumer);
+    ParseTree tree =
+        ParseTree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
     EXPECT_TRUE(tree.has_errors());
   }
 }
 
 TEST_F(ParseTreeTest, PrintPostorderAsYAML) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn F();");
-  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  ParseTree tree = ParseTree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
   EXPECT_FALSE(tree.has_errors());
   std::string print_output;
   llvm::raw_string_ostream print_stream(print_output);
@@ -172,7 +174,7 @@ TEST_F(ParseTreeTest, PrintPostorderAsYAML) {
 
 TEST_F(ParseTreeTest, PrintPreorderAsYAML) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn F();");
-  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  ParseTree tree = ParseTree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
   EXPECT_FALSE(tree.has_errors());
   std::string print_output;
   llvm::raw_string_ostream print_stream(print_output);
@@ -217,7 +219,7 @@ TEST_F(ParseTreeTest, HighRecursion) {
   TokenizedBuffer tokens = GetTokenizedBuffer(code);
   ASSERT_FALSE(tokens.has_errors());
   Testing::MockDiagnosticConsumer consumer;
-  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  ParseTree tree = ParseTree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
   EXPECT_FALSE(tree.has_errors());
 }
 
@@ -248,7 +250,8 @@ TEST_F(ParseTreeTest, PackageErrors) {
     TokenizedBuffer tokens = GetTokenizedBuffer(testcase.input);
     Testing::MockDiagnosticConsumer consumer;
     EXPECT_CALL(consumer, HandleDiagnostic(testcase.diag_matcher));
-    ParseTree tree = ParseTree::Parse(tokens, consumer);
+    ParseTree tree =
+        ParseTree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
     EXPECT_TRUE(tree.has_errors());
   }
 }

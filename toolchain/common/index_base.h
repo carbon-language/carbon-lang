@@ -22,14 +22,24 @@ class DataIterator;
 // DataIndex is designed to be passed by value, not reference or pointer. They
 // are also designed to be small and efficient to store in data structures.
 struct IndexBase {
-  IndexBase() : index(-1) {}
-  explicit IndexBase(int index) : index(index) {}
+  static constexpr int32_t InvalidIndex = -1;
+
+  constexpr IndexBase() : index(InvalidIndex) {}
+  constexpr explicit IndexBase(int index) : index(index) {}
 
   auto Print(llvm::raw_ostream& output) const -> void { output << index; }
+
+  auto is_valid() -> bool { return index != InvalidIndex; }
 
   int32_t index;
 };
 
+// Like IndexBase, but also provides < and > comparison operators.
+struct ComparableIndexBase : public IndexBase {
+  using IndexBase::IndexBase;
+};
+
+// Equality comparison for both IndexBase and ComparableIndexBase.
 template <typename IndexType,
           typename std::enable_if_t<std::is_base_of_v<IndexBase, IndexType>>* =
               nullptr>
@@ -41,6 +51,28 @@ template <typename IndexType,
               nullptr>
 auto operator!=(IndexType lhs, IndexType rhs) -> bool {
   return lhs.index != rhs.index;
+}
+
+// The < and > comparisons for only ComparableIndexBase.
+template <typename IndexType, typename std::enable_if_t<std::is_base_of_v<
+                                  ComparableIndexBase, IndexType>>* = nullptr>
+auto operator<(IndexType lhs, IndexType rhs) -> bool {
+  return lhs.index < rhs.index;
+}
+template <typename IndexType, typename std::enable_if_t<std::is_base_of_v<
+                                  ComparableIndexBase, IndexType>>* = nullptr>
+auto operator<=(IndexType lhs, IndexType rhs) -> bool {
+  return lhs.index <= rhs.index;
+}
+template <typename IndexType, typename std::enable_if_t<std::is_base_of_v<
+                                  ComparableIndexBase, IndexType>>* = nullptr>
+auto operator>(IndexType lhs, IndexType rhs) -> bool {
+  return lhs.index > rhs.index;
+}
+template <typename IndexType, typename std::enable_if_t<std::is_base_of_v<
+                                  ComparableIndexBase, IndexType>>* = nullptr>
+auto operator>=(IndexType lhs, IndexType rhs) -> bool {
+  return lhs.index >= rhs.index;
 }
 
 }  // namespace Carbon

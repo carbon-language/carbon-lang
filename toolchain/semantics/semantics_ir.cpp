@@ -26,7 +26,7 @@ auto SemanticsIR::MakeBuiltinIR() -> SemanticsIR {
                                            SemanticsNodeId(TypeOfTypeType)));
   semantics.cross_references_[SemanticsBuiltinKind::TypeType().AsInt()] =
       SemanticsCrossReference(BuiltinIR, block_id, type_type);
-  CARBON_CHECK(type_type.id == TypeOfTypeType)
+  CARBON_CHECK(type_type.index == TypeOfTypeType)
       << "TypeType's type must be self-referential.";
 
   constexpr int32_t TypeOfInvalidType = 1;
@@ -35,7 +35,7 @@ auto SemanticsIR::MakeBuiltinIR() -> SemanticsIR {
                                            SemanticsNodeId(TypeOfInvalidType)));
   semantics.cross_references_[SemanticsBuiltinKind::InvalidType().AsInt()] =
       SemanticsCrossReference(BuiltinIR, block_id, invalid_type);
-  CARBON_CHECK(invalid_type.id == TypeOfInvalidType)
+  CARBON_CHECK(invalid_type.index == TypeOfInvalidType)
       << "InvalidType's type must be self-referential.";
 
   auto integer_literal_type = semantics.AddNode(
