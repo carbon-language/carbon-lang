@@ -136,6 +136,7 @@ cc_test(
         ":paren_contents",
         "//common:gtest_main",
         "//explorer/common:arena",
+        "//explorer/interpreter:action_and_value",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

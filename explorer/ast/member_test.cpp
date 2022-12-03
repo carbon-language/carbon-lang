@@ -12,22 +12,9 @@
 #include "explorer/ast/bindings.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/expression.h"
-#include "explorer/ast/paren_contents.h"
 #include "explorer/common/arena.h"
+#include "explorer/interpreter/value.h"
 #include "llvm/Support/Casting.h"
-
-// Fake Value classes to avoid depending on /explorer/interpreter
-namespace Carbon {
-class Value {};
-class TestValue : public Value {
- public:
-  TestValue(int i) : i_(i) {}
-  auto value() const -> int { return i_; }
-
- private:
-  int i_;
-};
-}  // namespace Carbon
 
 namespace Carbon::Testing {
 namespace {
@@ -49,7 +36,7 @@ TEST_F(MemberTest, NominalMemberType) {
                                 arena.New<AutoPattern>(src_loc),
                                 ValueCategory::Var),
       std::nullopt, ValueCategory::Var};
-  const auto static_type = arena.New<TestValue>(1);
+  const auto* static_type = arena.New<IntValue>(1);
   decl.set_static_type(static_type);
   NominalMember member_decl(&decl);
 
@@ -68,7 +55,7 @@ TEST_F(MemberTest, NominalMemberDeclaration) {
                                 arena.New<AutoPattern>(src_loc),
                                 ValueCategory::Var),
       std::nullopt, ValueCategory::Var};
-  const auto static_type = arena.New<TestValue>(1);
+  const auto* static_type = arena.New<IntValue>(1);
   NominalMember member_decl(&decl);
 
   EXPECT_TRUE(member_decl.declaration());
@@ -91,18 +78,18 @@ TEST_F(MemberTest, NominalMemberIsNamed) {
   EXPECT_FALSE(member_decl.IsNamed("anything"));
 
   NominalMember member_val(
-      arena.New<NamedValue>(NamedValue{"valuename", arena.New<TestValue>(1)}));
+      arena.New<NamedValue>(NamedValue{"valuename", arena.New<IntValue>(1)}));
   EXPECT_TRUE(member_val.IsNamed("valuename"));
   EXPECT_FALSE(member_val.IsNamed("anything"));
 }
 
 TEST_F(MemberTest, PositionalMemberIsNamed) {
-  PositionalMember member(1, arena.New<TestValue>(1));
+  PositionalMember member(1, arena.New<IntValue>(1));
   EXPECT_FALSE(member.IsNamed("anything"));
 }
 
 TEST_F(MemberTest, BaseClassIsNamed) {
-  BaseClassObjectMember member(arena.New<TestValue>(1));
+  BaseClassObjectMember member(arena.New<IntValue>(1));
   EXPECT_FALSE(member.IsNamed("anything"));
 }
 }  // namespace
