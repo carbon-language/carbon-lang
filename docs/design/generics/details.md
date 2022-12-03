@@ -59,6 +59,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Recursive constraints](#recursive-constraints)
         -   [Parameterized type implements interface](#parameterized-type-implements-interface)
         -   [Another type implements parameterized interface](#another-type-implements-parameterized-interface)
+    -   [Constraints must use a designator](#constraints-must-use-a-designator)
     -   [Implied constraints](#implied-constraints)
         -   [Must be legal type argument constraints](#must-be-legal-type-argument-constraints)
     -   [Referencing names in the interface being defined](#referencing-names-in-the-interface-being-defined)
@@ -2459,7 +2460,8 @@ naming some classes of constraints.
 
 We might need to write a function that only works with a specific value of an
 [associated constant](#associated-constants) `N`. In this case, the name of the
-associated constant is written first, followed by an `=`, and then the value:
+associated constant is written after a `.`, followed by an `=`, and then the
+value:
 
 ```
 fn PrintPoint2D[PointT:! NSpacePoint where .N = 2](p: PointT) {
@@ -2474,6 +2476,10 @@ interface Has2DPoint {
   let PointT:! NSpacePoint where .N = 2;
 }
 ```
+
+The "dot followed by the name of a member" construct, `.N` in the examples
+above, is called a _designator_. A designator refers to the value of that member
+for whatever type is to satisfy this constraint.
 
 To name such a constraint, you may use a `let` or a `constraint` declaration:
 
@@ -2878,6 +2884,51 @@ fn Double[T:! Mul where i32 is As(.Self)](x: T) -> T {
   return x * (2 as T);
 }
 ```
+
+### Constraints must use a designator
+
+We don't allow a `where` constraint unless it applies a restriction to the
+current type. This means referring to some
+[designator](#set-an-associated-constant-to-a-specific-value), like
+`.MemberName`, or [`.Self`](#recursive-constraints). Examples:
+
+-   `Container where .ElementType = i32`
+-   `Type where Vector(.Self) is Sortable`
+-   `Addable where i32 is AddableWith(.Result)`
+
+Constraints that only refer to other types should be moved to the type that is
+declared last. So:
+
+```carbon
+// ❌ Error: `where A == B` does not use `.Self` or a designator
+fn F[A:! Type, B:! Type, C:! Type where A == B](a: A, b: B, c: C);
+```
+
+must be replaced by:
+
+```carbon
+// ✅ Allowed
+fn F[A:! Type, B:! Type where A == .Self, C:! Type](a: A, b: B, c: C);
+```
+
+This includes `where` clauses used in an `impl` declaration:
+
+```
+// ❌ Error: `where T is B` does not use `.Self` or a designator
+external impl forall [T:! Type] T as A where T is B {}
+// ✅ Allowed
+external impl forall [T:! Type where .Self is B] T as A {}
+// ✅ Allowed
+external impl forall [T:! B] T as A {}
+```
+
+This clarifies the meaning of the `where` clause and reduces the number of
+redundant ways to express a restriction, following the
+[one-way principle](/docs/project/principles/one_way.md).
+
+**Alternative considered:** This rule was added in proposal
+[#2376](https://github.com/carbon-language/carbon-lang/pull/2376), which
+[considered whether this rule should be added](/proposals/p2376.md#alternatives-considered).
 
 ### Implied constraints
 
@@ -3682,7 +3733,7 @@ interface when its element type satisfies the same interface:
     if the element type is comparable.
 -   A container is copyable if its elements are.
 
-To do this with an [`external impl`](#external-impl), specify a more-specific
+To do this with an [out-of-line `impl`](#external-impl), specify a more-specific
 `Self` type to the left of the `as` in the declaration:
 
 ```
@@ -3712,6 +3763,10 @@ class Array(T:! Type, template N:! Int) {
   impl forall [P:! Printable] Array(P, N) as Printable { ... }
 }
 ```
+
+All internal `impl` declarations in the body of a `class` definition must be for
+the class being defined. It is an error to declare `impl i32 as Printable`
+inside `class Array`.
 
 It is legal to add the keyword `external` before the `impl` keyword to switch to
 an external impl defined lexically within the class scope. Inside the scope,
@@ -4663,7 +4718,9 @@ interface CommonType(T:! Type) {
 ```
 
 Note however that `CommonType` is still incomplete inside its definition, so no
-constraints on members of `CommonType` are allowed.
+constraints on members of `CommonType` are allowed, and that this `impl T as`
+declaration
+[must involve `Self`](#interface-requiring-other-interfaces-revisited).
 
 ```
 interface CommonType(T:! Type) {
@@ -4929,6 +4986,26 @@ interface Iterable {
   // Equivalent to: impl as Equatable;
 }
 ```
+
+An `impl`...`as` constraint in an `interface`, or `constraint`, definition must
+still use `Self` in some way. It can be the implicit `Self` when nothing is
+specified between `impl` and `as`, or it can be an argument to either the type
+or interface. For example:
+
+-   ✅ Allowed: `impl as Equatable`
+-   ✅ Allowed: `impl Self as Equatable`
+-   ✅ Allowed: `impl Vector(Self) as Equatable`
+-   ✅ Allowed: `impl i32 as CommonTypeWith(Self)`
+-   ✅ Allowed: `impl Self as CommonTypeWith(Self)`
+-   ❌ Error: `impl i32 as Equatable`
+-   ❌ Error: `impl T as Equatable` where `T` is some parameter to the interface
+
+This restriction allows the Carbon compiler to know where to look for facts
+about a type. If `impl i32 as Equatable` could appear in any `interface`
+definition, that implies having to search all of them when considering what
+interfaces `i32` implements. This creates a coherence problem, since then the
+set of facts true for a type would depend on which interfaces have been
+imported.
 
 When implementing an interface with an `impl as` requirement, that requirement
 must be satisfied by an implementation in an imported library, an implementation
@@ -5740,3 +5817,4 @@ parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 -   [#1327: Generics: `impl forall`](https://github.com/carbon-language/carbon-lang/pull/1327)
 -   [#2107: Clarify rules around `Self` and `.Self`](https://github.com/carbon-language/carbon-lang/pull/2107)
 -   [#2347: What can be done with an incomplete interface](https://github.com/carbon-language/carbon-lang/pull/2347)
+-   [#2376: Constraints must use `Self`](https://github.com/carbon-language/carbon-lang/pull/2376)
