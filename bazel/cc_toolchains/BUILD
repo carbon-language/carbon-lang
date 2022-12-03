@@ -8,7 +8,10 @@ load("@bazel_skylib//lib:selects.bzl", "selects")
 # Matches when asan is enabled on a macOS platform.
 selects.config_setting_group(
     name = "macos_asan",
-    match_all = [":is_macos", ":macos_asan_build_modes"],
+    match_all = [
+        ":is_macos",
+        ":macos_asan_build_modes",
+    ],
 )
 
 # For use by rules.bzl.
@@ -22,7 +25,10 @@ config_setting(
 # Matches build modes where asan is enabled.
 selects.config_setting_group(
     name = "macos_asan_build_modes",
-    match_any = [":dbg", ":fastbuild"],
+    match_any = [
+        ":dbg",
+        ":fastbuild",
+    ],
 )
 
 # For use by rules.bzl.
