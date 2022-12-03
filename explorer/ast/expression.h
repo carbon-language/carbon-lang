@@ -15,7 +15,7 @@
 #include "common/ostream.h"
 #include "explorer/ast/ast_node.h"
 #include "explorer/ast/bindings.h"
-#include "explorer/ast/member.h"
+#include "explorer/ast/element.h"
 #include "explorer/ast/paren_contents.h"
 #include "explorer/ast/static_scope.h"
 #include "explorer/ast/value_category.h"
@@ -319,15 +319,15 @@ class SimpleMemberAccessExpression : public MemberAccessExpression {
 
   auto member_name() const -> const std::string& { return member_name_; }
 
-  // Returns the `NominalMember` that the member name resolved to.
+  // Returns the `MemberElement` that the member name resolved to.
   // Should not be called before typechecking.
-  auto member() const -> const NominalMember& {
+  auto member() const -> const MemberElement& {
     CARBON_CHECK(member_.has_value());
     return *member_.value();
   }
 
   // Can only be called once, during typechecking.
-  void set_member(Nonnull<const NominalMember*> member) { member_ = member; }
+  void set_member(Nonnull<const MemberElement*> member) { member_ = member; }
 
   // If `object` is a constrained type parameter and `member` was found in an
   // interface, returns that interface. Should not be called before
@@ -345,7 +345,7 @@ class SimpleMemberAccessExpression : public MemberAccessExpression {
 
  private:
   std::string member_name_;
-  std::optional<Nonnull<const NominalMember*>> member_;
+  std::optional<Nonnull<const MemberElement*>> member_;
   std::optional<Nonnull<const InterfaceType*>> found_in_interface_;
 };
 

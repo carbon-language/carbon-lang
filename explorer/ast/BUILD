@@ -40,7 +40,7 @@ cc_library(
         "bindings.cpp",
         "declaration.cpp",
         "expression.cpp",
-        "member.cpp",
+        "element.cpp",
         "pattern.cpp",
         "statement.cpp",
     ],
@@ -50,7 +50,7 @@ cc_library(
         "declaration.h",
         "expression.h",
         "impl_binding.h",
-        "member.h",
+        "element.h",
         "pattern.h",
         "return_term.h",
         "statement.h",
@@ -129,8 +129,8 @@ cc_library(
 )
 
 cc_test(
-    name = "member_test",
-    srcs = ["member_test.cpp"],
+    name = "element_test",
+    srcs = ["element_test.cpp"],
     deps = [
         ":ast",
         ":paren_contents",

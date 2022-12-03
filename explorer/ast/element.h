@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_EXPLORER_AST_MEMBER_H_
-#define CARBON_EXPLORER_AST_MEMBER_H_
+#ifndef CARBON_EXPLORER_AST_ELEMENT_H_
+#define CARBON_EXPLORER_AST_ELEMENT_H_
 
 #include <optional>
 #include <string>
@@ -30,12 +30,12 @@ struct NamedValue {
 // A generic member of a type.
 //
 // This is can be a named, positional or other type of member.
-class Member {
+class Element {
  protected:
-  explicit Member(MemberKind kind) : kind_(kind) {}
+  explicit Element(ElementKind kind) : kind_(kind) {}
 
  public:
-  virtual ~Member() = default;
+  virtual ~Element() = default;
 
   // Prints the Member
   virtual void Print(llvm::raw_ostream& out) const = 0;
@@ -45,31 +45,31 @@ class Member {
 
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
-  auto kind() const -> MemberKind { return kind_; }
+  auto kind() const -> ElementKind { return kind_; }
 
   // The declared type of the member, which might include type variables.
   virtual auto type() const -> const Value& = 0;
 
  private:
-  const MemberKind kind_;
+  const ElementKind kind_;
 };
 
 // A named member of a type.
 //
 // This is either a declared member of a class, interface, or similar, or a
 // member of a struct with no declaration.
-class NominalMember : public Member {
+class MemberElement : public Element {
  public:
-  explicit NominalMember(Nonnull<const Declaration*> declaration);
-  explicit NominalMember(Nonnull<const NamedValue*> struct_member);
+  explicit MemberElement(Nonnull<const Declaration*> declaration);
+  explicit MemberElement(Nonnull<const NamedValue*> struct_member);
 
   // Prints the Member
   void Print(llvm::raw_ostream& out) const override;
 
   auto IsNamed(std::string_view name) const -> bool override;
 
-  static auto classof(const Member* member) -> bool {
-    return InheritsFromNominalMember(member->kind());
+  static auto classof(const Element* member) -> bool {
+    return InheritsFromMemberElement(member->kind());
   }
 
   auto type() const -> const Value& override;
@@ -81,16 +81,16 @@ class NominalMember : public Member {
  private:
   const llvm::PointerUnion<Nonnull<const Declaration*>,
                            Nonnull<const NamedValue*>>
-      member_;
+      element_;
 };
 
 // A positional member of a type.
 //
 // This is a member of a tuple, or other index-based value.
-class PositionalMember : public Member {
+class TupleElement : public Element {
  public:
-  explicit PositionalMember(size_t index, Nonnull<const Value*> type)
-      : Member(MemberKind::PositionalMember), index_(index), type_(type) {}
+  explicit TupleElement(size_t index, Nonnull<const Value*> type)
+      : Element(ElementKind::TupleElement), index_(index), type_(type) {}
 
   // Prints the Member
   void Print(llvm::raw_ostream& out) const override;
@@ -98,8 +98,8 @@ class PositionalMember : public Member {
   // Return whether the member's name matches `name`.
   auto IsNamed(std::string_view name) const -> bool override;
 
-  static auto classof(const Member* member) -> bool {
-    return InheritsFromPositionalMember(member->kind());
+  static auto classof(const Element* member) -> bool {
+    return InheritsFromTupleElement(member->kind());
   }
 
   auto index() const -> size_t { return index_; }
@@ -113,10 +113,10 @@ class PositionalMember : public Member {
 // A base class object.
 //
 // This is the base class object of a class value.
-class BaseClassObjectMember : public Member {
+class BaseElement : public Element {
  public:
-  explicit BaseClassObjectMember(Nonnull<const Value*> type)
-      : Member(MemberKind::BaseClassObjectMember), type_(type) {}
+  explicit BaseElement(Nonnull<const Value*> type)
+      : Element(ElementKind::BaseElement), type_(type) {}
 
   // Prints the Member
   void Print(llvm::raw_ostream& out) const override;
@@ -124,8 +124,8 @@ class BaseClassObjectMember : public Member {
   // Return whether the member's name matches `name`.
   auto IsNamed(std::string_view name) const -> bool override;
 
-  static auto classof(const Member* member) -> bool {
-    return InheritsFromBaseClassObjectMember(member->kind());
+  static auto classof(const Element* member) -> bool {
+    return InheritsFromBaseElement(member->kind());
   }
 
   auto type() const -> const Value& override { return *type_; }
@@ -135,4 +135,4 @@ class BaseClassObjectMember : public Member {
 };
 }  // namespace Carbon
 
-#endif  // CARBON_EXPLORER_AST_MEMBER_H_
+#endif  // CARBON_EXPLORER_AST_ELEMENT_H_
