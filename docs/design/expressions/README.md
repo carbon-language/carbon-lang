@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Operators](#operators)
 -   [Conversions and casts](#conversions-and-casts)
 -   [`if` expressions](#if-expressions)
+-   [Numeric type literals expressions](#numeric-type-literals-expressions)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
@@ -297,6 +298,17 @@ fn Run(args: Span(StringView)) {
 ```
 
 `if` expressions are analogous to `?:` ternary expressions in C and C++.
+
+## Numeric type literals expressions
+
+An [Numeric type literals expression](literals.md) set fixed-size scalar number
+types, the type can be set to positive multiple of 8 bit number.
+
+Examples of numeric type literals:
+
+-   `i16` - A 16-bit two's complement signed integer type
+-   `u32` - A 32-bit unsigned integer type
+-   `f64` - A 64-bit IEEE-754 binary floating-point number type
 
 ## Alternatives considered
 
