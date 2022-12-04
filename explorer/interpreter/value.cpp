@@ -68,7 +68,7 @@ static auto GetTupleElement(Nonnull<const TupleValue*> tuple,
   CARBON_CHECK(path_comp.element()->kind() == ElementKind::TupleElement)
       << "Invalid non-tuple member";
   const auto* tuple_element = cast<TupleElement>(path_comp.element());
-  const auto index = tuple_element->index();
+  const size_t index = tuple_element->index();
   if (index < 0 || index >= tuple->elements().size()) {
     return ProgramError(source_loc)
            << "index " << index << " out of range for " << *tuple;
@@ -269,7 +269,7 @@ static auto SetFieldImpl(
           << "Invalid non-positional member for tuple";
       std::vector<Nonnull<const Value*>> elements =
           cast<TupleValueBase>(*value).elements();
-      const auto index = cast<TupleElement>((*path_begin).element())->index();
+      const size_t index = cast<TupleElement>((*path_begin).element())->index();
       if (index < 0 || index >= elements.size()) {
         return ProgramError(source_loc)
                << "index " << index << " out of range in " << *value;

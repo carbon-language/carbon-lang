@@ -465,8 +465,8 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         // -> { { &v[i] :: C, E, F} :: S, H }
         Address object = cast<LValue>(*act.results()[0]).address();
         const auto index = cast<IntValue>(*act.results()[1]).value();
-        Address field = object.ElementAddress(arena_->New<TupleElement>(
-            static_cast<size_t>(index), &exp.static_type()));
+        Address field = object.ElementAddress(
+            arena_->New<TupleElement>(index, &exp.static_type()));
         return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }

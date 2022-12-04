@@ -89,7 +89,7 @@ class MemberElement : public Element {
 // This is a member of a tuple, or other index-based value.
 class TupleElement : public Element {
  public:
-  explicit TupleElement(size_t index, Nonnull<const Value*> type)
+  explicit TupleElement(int index, Nonnull<const Value*> type)
       : Element(ElementKind::TupleElement), index_(index), type_(type) {}
 
   // Prints the Member
@@ -102,11 +102,11 @@ class TupleElement : public Element {
     return InheritsFromTupleElement(member->kind());
   }
 
-  auto index() const -> size_t { return index_; }
+  auto index() const -> int { return index_; }
   auto type() const -> const Value& override { return *type_; }
 
  private:
-  const size_t index_;
+  const int index_;
   const Nonnull<const Value*> type_;
 };
 
