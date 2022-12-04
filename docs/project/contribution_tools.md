@@ -104,9 +104,6 @@ bazel test //...:all
 > export PATH="${HOME}/.brew/bin:${PATH}"
 > # For `llvm`:
 > export PATH="$(brew --prefix llvm)/bin:${PATH}"
-> export LDFLAGS="-L/usr/local/opt/llvm/lib"
-> export CPPFLAGS="-I/usr/local/opt/llvm/include"
-> export CC=$(which clang)
 > ```
 
 <!-- google-doc-style-resume -->
