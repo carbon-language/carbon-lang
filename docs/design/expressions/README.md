@@ -301,14 +301,12 @@ fn Run(args: Span(StringView)) {
 
 ## Numeric type literals expressions
 
-An [Numeric type literals expression](literals.md) set fixed-size scalar number
-types, the type can be set to positive multiple of 8 bit number.
+Carbon's syntax provides a simple way to represent different types of integers
+and floating-point numbers. Each type is identified with a keyword-like syntax,
+prefixed with either `i`, `u`, or `f` followed by a multiple of 8, representing
+the size of the data type.
 
-Examples of numeric type literals:
-
--   `i16` - A 16-bit two's complement signed integer type
--   `u32` - A 32-bit unsigned integer type
--   `f64` - A 64-bit IEEE-754 binary floating-point number type
+The types referred to as [Numeric type literals expression](literals.md).
 
 ## Alternatives considered
 

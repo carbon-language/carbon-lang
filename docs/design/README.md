@@ -467,7 +467,7 @@ may be limited to integers of at most 128 bits due to LLVM limitations.
 
 > References:
 >
-> -   [Numeric Type Literal](numeric_type_literals.md)
+> -   [Numeric type literal expression](expressions/literals.md)
 > -   Question-for-leads issue
 >     [#543: pick names for fixed-size integer types](https://github.com/carbon-language/carbon-lang/issues/543)
 > -   Question-for-leads issue
@@ -533,7 +533,7 @@ number.
 
 > References:
 >
-> -   [Numeric Type Literal](numeric_type_literals.md)
+> -   [Numeric type literal expression](expressions/literals.md)
 > -   Question-for-leads issue
 >     [#543: pick names for fixed-size integer types](https://github.com/carbon-language/carbon-lang/issues/543)
 > -   Question-for-leads issue
