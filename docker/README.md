@@ -21,25 +21,25 @@ docker build -t carbon-ubuntu2204-base ./ubuntu2204/base
 Build image using git repository
 
 ```bash
-docker build -t carbon-ubuntu2004 ./ubuntu2204/github
+docker build -t carbon-ubuntu2204 ./ubuntu2204/github
 ```
 
 Build image using copy instruction
 
 ```bash
-docker build -f ./ubuntu2204/Dockerfile -t carbon-ubuntu2004 ..
+docker build -f ./ubuntu2204/Dockerfile -t carbon-ubuntu2204 ..
 ```
 
 Run image
 
 ```bash
-docker run carbon-ubuntu2004
+docker run carbon-ubuntu2204
 ```
 
 Run image using specific file
 
 ```bash
-docker run carbon-ubuntu2004 bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
+docker run carbon-ubuntu2204 bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
 ```
 
 ### Using a mounted volume
@@ -51,5 +51,5 @@ cd ..
 ```
 
 ```bash
-docker run -w "/carbon-lang" -v "${PWD}:/carbon-lang" "carbon-ubuntu2004-base" bazel run "//explorer" -- "./explorer/testdata/print/format_only.carbon"
+docker run -w "/carbon-lang" -v "${PWD}:/carbon-lang" "carbon-ubuntu2204-base" bazel run "//explorer" -- "./explorer/testdata/print/format_only.carbon"
 ```
