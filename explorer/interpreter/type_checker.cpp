@@ -4504,11 +4504,6 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   ImplScope class_scope;
   class_scope.AddParent(scope_info.innermost_scope);
 
-  if (class_decl->extensibility() == ClassExtensibility::Abstract) {
-    return ProgramError(class_decl->source_loc())
-           << "Class prefix `abstract` is not supported yet";
-  }
-
   std::optional<Nonnull<const NominalClassType*>> base_class;
   if (class_decl->base_expr().has_value()) {
     Nonnull<Expression*> base_class_expr = *class_decl->base_expr();

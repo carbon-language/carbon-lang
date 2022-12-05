@@ -9,10 +9,11 @@
 package ExplorerTest api;
 
 abstract class C {
-  fn F() {}
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_abstract_class.carbon:[[@LINE+1]]: Class prefix `abstract` is not supported yet
+  var a: i32;
 }
 
 fn Main() -> i32 {
+  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/testdata/class/fail_instantiate_abstract_assign.carbon:[[@LINE+1]]: Cannot instantiate abstract class C
+  var c: C;
   return 0;
 }

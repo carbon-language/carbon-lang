@@ -1777,6 +1777,15 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
     }
     case StatementKind::VariableDefinition: {
       const auto& definition = cast<VariableDefinition>(stmt);
+      const auto* dest_type = &definition.pattern().static_type();
+      if (const auto* dest_class = dyn_cast<NominalClassType>(dest_type)) {
+        if (dest_class->declaration().extensibility() ==
+            ClassExtensibility::Abstract) {
+          return ProgramError(stmt.source_loc())
+                 << "Cannot instantiate abstract class "
+                 << dest_class->declaration().name();
+        }
+      }
       if (act.pos() == 0 && definition.has_init()) {
         //    { {(var x = e) :: C, E, F} :: S, H}
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
@@ -1790,8 +1799,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         Nonnull<const Value*> v;
         if (definition.has_init()) {
           CARBON_ASSIGN_OR_RETURN(
-              v, Convert(act.results()[0], &definition.pattern().static_type(),
-                         stmt.source_loc()));
+              v, Convert(act.results()[0], dest_type, stmt.source_loc()));
         } else {
           v = arena_->New<UninitializedValue>(p);
         }
