@@ -571,11 +571,19 @@ CARBON_PARSER_STATE(VarFinishAsFor)
 //   2. FunctionAfterParameterList
 CARBON_PARSER_STATE(FunctionAfterMeParam)
 
-// To parse starting from `[`.
-// CARBON_PARSER_STATE(MeParam)
-// To parse until `]`.
+// To handle `me` param parsing at the end.
+//
+// Always:
+//   (state done)
 CARBON_PARSER_STATE(MeParamFinish)
+
 // To parse starting from `me`.
+//
+// If valid:
+//   1. Expression
+//   2. PatternFinish
+// Else:
+//   1. PatternFinish
 CARBON_PARSER_STATE(MePattern)
 
 #undef CARBON_PARSER_STATE
