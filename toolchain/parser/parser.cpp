@@ -1050,6 +1050,7 @@ auto Parser::HandleFunctionIntroducerState() -> void {
 
 auto Parser::HandleMeParamFinishState() -> void {
   auto state = PopState();
+
   CARBON_CHECK(tokens_->GetKind(*position_) == TokenKind::CloseSquareBracket())
       << "Expected current token to be: `]`, found: "
       << tokens_->GetKind(state.token);
@@ -1409,6 +1410,14 @@ auto Parser::HandleMePatternState() -> void {
       "`me` parameter must be of the form: `[me: <T>] or [addr me: <T>]`.");
   emitter_->Emit(*position_, ExpectedMeParam);
   state.has_error = true;
+
+  // Try to recover by skipping to the next `]`.
+  if (auto next_close_square_bracket =
+          FindNextOf({TokenKind::CloseSquareBracket()});
+      next_close_square_bracket) {
+    SkipTo(*next_close_square_bracket);
+  }
+
   PushState(state);
 }
 

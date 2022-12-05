@@ -213,7 +213,7 @@ CARBON_PARSER_STATE(ExpressionStatementFinish)
 // If invalid:
 //   (state done)
 // If parenthesized parameters:
-//   1. PatternAsFunctionParameter
+//   1. FunctionParameter
 //   2. FunctionParameterListFinish
 //   3. FunctionAfterParameterList
 // Else:
@@ -557,7 +557,20 @@ CARBON_PARSER_STATE(VarAfterInitializer)
 CARBON_PARSER_STATE(VarFinishAsSemicolon)
 CARBON_PARSER_STATE(VarFinishAsFor)
 
+// Handles processing of a functions' syntax after a `me` paramter's `]`. This
+// applies only to interfaces and classes.
+//
+// If invalid:
+//   (state done)
+// If parenthesized parameters:
+//   1. FunctionParameter
+//   2. FunctionParameterListFinish
+//   3. FunctionAfterParameterList
+// Else:
+//   1. FunctionParameterListFinish
+//   2. FunctionAfterParameterList
 CARBON_PARSER_STATE(FunctionAfterMeParam)
+
 // To parse starting from `[`.
 // CARBON_PARSER_STATE(MeParam)
 // To parse until `]`.

@@ -3,17 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{carbon-run-parser}
+// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'DeclaredName', text: 'foo'},
 // CHECK:STDOUT:     {kind: 'InterfaceBodyStart', text: '{'},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'DeclaredName', text: 'Add'},
-// CHECK:STDOUT:         {kind: 'MeParamStart', text: '['},
-// CHECK:STDOUT:           {kind: 'Me', text: 'me'},
-// CHECK:STDOUT:           {kind: 'Self', text: 'Self'},
-// CHECK:STDOUT:         {kind: 'PatternBinding', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'MeParam', text: ']', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'ParameterListStart', text: '('},
 // CHECK:STDOUT:           {kind: 'DeclaredName', text: 'b'},
 // CHECK:STDOUT:           {kind: 'Self', text: 'Self'},
@@ -21,31 +16,11 @@
 // CHECK:STDOUT:       {kind: 'ParameterList', text: ')', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'Self', text: 'Self'},
 // CHECK:STDOUT:       {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FunctionDeclaration', text: ';', subtree_size: 15},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'DeclaredName', text: 'Add'},
-// CHECK:STDOUT:         {kind: 'MeParamStart', text: '['},
-// CHECK:STDOUT:           {kind: 'Me', text: 'me'},
-// CHECK:STDOUT:           {kind: 'NameReference', text: 'foo'},
-// CHECK:STDOUT:         {kind: 'PatternBinding', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'MeParam', text: ']', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'ParameterListStart', text: '('},
-// CHECK:STDOUT:           {kind: 'DeclaredName', text: 'b'},
-// CHECK:STDOUT:           {kind: 'Self', text: 'Self'},
-// CHECK:STDOUT:         {kind: 'PatternBinding', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ParameterList', text: ')', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'Self', text: 'Self'},
-// CHECK:STDOUT:       {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FunctionDeclaration', text: ';', subtree_size: 15},
+// CHECK:STDOUT:     {kind: 'FunctionDeclaration', text: ';', subtree_size: 10},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'DeclaredName', text: 'Sub'},
 // CHECK:STDOUT:         {kind: 'MeParamStart', text: '['},
-// CHECK:STDOUT:             {kind: 'Addr', text: 'addr'},
-// CHECK:STDOUT:           {kind: 'MeAddr', text: 'me', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'Self', text: 'Self'},
-// CHECK:STDOUT:           {kind: 'PostfixOperator', text: '*', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'PatternBinding', text: ':', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'MeParam', text: ']', subtree_size: 7},
+// CHECK:STDOUT:       {kind: 'MeParam', text: ']', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'ParameterListStart', text: '('},
 // CHECK:STDOUT:           {kind: 'DeclaredName', text: 'b'},
 // CHECK:STDOUT:           {kind: 'Self', text: 'Self'},
@@ -53,16 +28,11 @@
 // CHECK:STDOUT:       {kind: 'ParameterList', text: ')', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'Self', text: 'Self'},
 // CHECK:STDOUT:       {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FunctionDeclaration', text: ';', subtree_size: 17},
+// CHECK:STDOUT:     {kind: 'FunctionDeclaration', text: ';', subtree_size: 12},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'DeclaredName', text: 'Sub'},
+// CHECK:STDOUT:       {kind: 'DeclaredName', text: 'Mul'},
 // CHECK:STDOUT:         {kind: 'MeParamStart', text: '['},
-// CHECK:STDOUT:             {kind: 'Addr', text: 'addr'},
-// CHECK:STDOUT:           {kind: 'MeAddr', text: 'me', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'NameReference', text: 'foo'},
-// CHECK:STDOUT:           {kind: 'PostfixOperator', text: '*', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'PatternBinding', text: ':', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'MeParam', text: ']', subtree_size: 7},
+// CHECK:STDOUT:       {kind: 'MeParam', text: ']', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'ParameterListStart', text: '('},
 // CHECK:STDOUT:           {kind: 'DeclaredName', text: 'b'},
 // CHECK:STDOUT:           {kind: 'Self', text: 'Self'},
@@ -70,24 +40,39 @@
 // CHECK:STDOUT:       {kind: 'ParameterList', text: ')', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'Self', text: 'Self'},
 // CHECK:STDOUT:       {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FunctionDeclaration', text: ';', subtree_size: 17},
+// CHECK:STDOUT:     {kind: 'FunctionDeclaration', text: ';', subtree_size: 12},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'DeclaredName', text: 'FooFactory'},
+// CHECK:STDOUT:       {kind: 'DeclaredName', text: 'Rem'},
+// CHECK:STDOUT:         {kind: 'MeParamStart', text: '['},
+// CHECK:STDOUT:       {kind: 'MeParam', text: ']', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'ParameterListStart', text: '('},
-// CHECK:STDOUT:       {kind: 'ParameterList', text: ')', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'DeclaredName', text: 'b'},
+// CHECK:STDOUT:           {kind: 'Self', text: 'Self'},
+// CHECK:STDOUT:         {kind: 'PatternBinding', text: ':', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'ParameterList', text: ')', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'Self', text: 'Self'},
 // CHECK:STDOUT:       {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FunctionDeclaration', text: ';', subtree_size: 7},
-// CHECK:STDOUT:   {kind: 'InterfaceBody', text: '}', subtree_size: 73},
-// CHECK:STDOUT: {kind: 'InterfaceDefinition', text: 'interface', subtree_size: 75},
+// CHECK:STDOUT:     {kind: 'FunctionDeclaration', text: ';', subtree_size: 12},
+// CHECK:STDOUT:   {kind: 'InterfaceBody', text: '}', subtree_size: 48},
+// CHECK:STDOUT: {kind: 'InterfaceDefinition', text: 'interface', subtree_size: 50},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 interface foo {
-  fn Add[me: Self](b: Self) -> Self;
-  fn Add[me: foo](b: Self) -> Self;
+  fn Add(b: Self) -> Self;
 
-  fn Sub[addr me: Self*](b: Self) -> Self;
-  fn Sub[addr me: foo*](b: Self) -> Self;
+  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/interface/fail_me_param_required.carbon:[[@LINE+1]]:10: `me` parameter must be of the form: `[me: <T>] or [addr me: <T>]`.
+  fn Sub[me Self](b: Self) -> Self;
 
-  fn FooFactory() -> Self;
+  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/interface/fail_me_param_required.carbon:[[@LINE+1]]:10: `me` parameter must be of the form: `[me: <T>] or [addr me: <T>]`.
+  fn Mul[Self](b: Self) -> Self;
+
+  // TODO The recovery token is currently inserted after the `;`:
+  // ```
+  // fn Div[me: Self(b: Self) -> Self;]
+  // ```
+  // Fix and uncomment this to test error handling.
+  // fn Div[me: Self(b: Self) -> Self;
+
+  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/interface/fail_me_param_required.carbon:[[@LINE+1]]:10: `me` parameter must be of the form: `[me: <T>] or [addr me: <T>]`.
+  fn Rem[](b: Self) -> Self;
 }
