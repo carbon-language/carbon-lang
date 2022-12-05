@@ -18,7 +18,7 @@ class D extends C {
 
 fn Main() -> i32 {
   var d: D = { .base = {.a = 1}, .b = 2 };
-  // XFAIL: Not supported yet.
+  // Not supported yet.
   // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_abstract_class_subtyping.carbon:[[@LINE+1]]: type error in name binding: 'class D*' is not implicitly convertible to 'class C*'
   var c: C* = &d;
   return 0;
