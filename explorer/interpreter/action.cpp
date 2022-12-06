@@ -36,7 +36,8 @@ auto RuntimeScope::operator=(RuntimeScope&& rhs) noexcept -> RuntimeScope& {
 }
 
 RuntimeScope::~RuntimeScope() {
-  for (AllocationId allocation : allocations_) {
+  for (auto allocation : allocations_) {
+    // TODO: move this into StepCleanUp
     heap_->Deallocate(allocation);
   }
 }
@@ -48,6 +49,22 @@ void RuntimeScope::Print(llvm::raw_ostream& out) const {
     out << sep << value_node.base() << ": " << *value;
   }
   out << "}";
+}
+
+void RuntimeScope::Bind(ValueNodeView value_node, Nonnull<const Value*> value) {
+  CARBON_CHECK(!value_node.constant_value().has_value());
+  CARBON_CHECK(value->kind() != Value::Kind::LValue);
+  auto allocation_id = heap_->GetAllocationId(value);
+  if (!allocation_id) {
+    auto id = heap_->AllocateValue(value);
+    auto [it, success] =
+        locals_.insert({value_node, heap_->arena().New<LValue>(Address(id))});
+    CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
+  } else {
+    auto [it, success] = locals_.insert(
+        {value_node, heap_->arena().New<LValue>(Address(*allocation_id))});
+    CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
+  }
 }
 
 void RuntimeScope::Initialize(ValueNodeView value_node,
@@ -62,10 +79,11 @@ void RuntimeScope::Initialize(ValueNodeView value_node,
 
 void RuntimeScope::Merge(RuntimeScope other) {
   CARBON_CHECK(heap_ == other.heap_);
-  locals_.merge(other.locals_);
-  CARBON_CHECK(other.locals_.empty())
-      << "Duplicate definition of " << other.locals_.size()
-      << " names, including " << other.locals_.begin()->first.base();
+  for (auto& element : other.locals_) {
+    CARBON_CHECK(locals_.count(element.first) == 0)
+        << "Duplicate definition of" << element.first;
+    locals_.insert(element);
+  }
   allocations_.insert(allocations_.end(), other.allocations_.begin(),
                       other.allocations_.end());
   other.allocations_.clear();
@@ -103,8 +121,8 @@ void Action::Print(llvm::raw_ostream& out) const {
     case Action::Kind::ExpressionAction:
       out << cast<ExpressionAction>(*this).expression() << " ";
       break;
-    case Action::Kind::PatternAction:
-      out << cast<PatternAction>(*this).pattern() << " ";
+    case Action::Kind::WitnessAction:
+      out << *cast<WitnessAction>(*this).witness() << " ";
       break;
     case Action::Kind::StatementAction:
       cast<StatementAction>(*this).statement().PrintDepth(1, out);
@@ -119,12 +137,18 @@ void Action::Print(llvm::raw_ostream& out) const {
     case Action::Kind::RecursiveAction:
       out << "recursive";
       break;
+    case Action::Kind::CleanUpAction:
+      out << "clean up";
+      break;
+    case Action::Kind::DestroyAction:
+      out << "destroy";
+      break;
   }
   out << "." << pos_ << ".";
   if (!results_.empty()) {
     out << " [[";
     llvm::ListSeparator sep;
-    for (auto& result : results_) {
+    for (const auto& result : results_) {
       out << sep << *result;
     }
     out << "]]";

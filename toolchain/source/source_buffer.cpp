@@ -12,11 +12,12 @@
 #include <cerrno>
 #include <cstdint>
 #include <limits>
+#include <optional>
 #include <system_error>
+#include <utility>
 #include <variant>
 
 #include "common/check.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/Support/Error.h"
 
@@ -36,7 +37,7 @@ auto SourceBuffer::CreateFromText(llvm::Twine text, llvm::StringRef filename)
   std::string buffer = text.str();
   auto size_check = CheckContentSize(buffer.size());
   if (size_check) {
-    return size_check;
+    return std::move(size_check);
   }
   return SourceBuffer(filename.str(), std::move(buffer));
 }
@@ -74,15 +75,15 @@ auto SourceBuffer::CreateFromFile(llvm::StringRef filename)
   }
   auto size_check = CheckContentSize(size);
   if (size_check) {
-    return size_check;
+    return std::move(size_check);
   }
 
   errno = 0;
   void* mapped_text = mmap(nullptr, size, PROT_READ,
-#ifdef __APPLE__
-                           MAP_PRIVATE,
-#else
+#if defined(__linux__)
                            MAP_PRIVATE | MAP_POPULATE,
+#else
+                           MAP_PRIVATE,
 #endif
                            file_descriptor, /*offset=*/0);
   // The `MAP_FAILED` macro may expand to a cast to pointer that `clang-tidy`

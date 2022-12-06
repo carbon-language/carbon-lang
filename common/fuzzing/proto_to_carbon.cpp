@@ -117,6 +117,14 @@ static auto OperatorToCarbon(const Fuzzing::OperatorExpression& operator_expr,
       BinaryOperatorToCarbon(arg0, " * ", arg1, out);
       break;
 
+    case Fuzzing::OperatorExpression::Div:
+      BinaryOperatorToCarbon(arg0, " / ", arg1, out);
+      break;
+
+    case Fuzzing::OperatorExpression::Mod:
+      BinaryOperatorToCarbon(arg0, " % ", arg1, out);
+      break;
+
     case Fuzzing::OperatorExpression::Ptr:
       PostfixUnaryOperatorToCarbon(arg0, "*", out);
       break;
@@ -145,13 +153,48 @@ static auto OperatorToCarbon(const Fuzzing::OperatorExpression& operator_expr,
     case Fuzzing::OperatorExpression::Eq:
       BinaryOperatorToCarbon(arg0, " == ", arg1, out);
       break;
+    case Fuzzing::OperatorExpression::Less:
+      BinaryOperatorToCarbon(arg0, " < ", arg1, out);
+      break;
+    case Fuzzing::OperatorExpression::LessEq:
+      BinaryOperatorToCarbon(arg0, " <= ", arg1, out);
+      break;
+    case Fuzzing::OperatorExpression::GreaterEq:
+      BinaryOperatorToCarbon(arg0, " >= ", arg1, out);
+      break;
+    case Fuzzing::OperatorExpression::Greater:
+      BinaryOperatorToCarbon(arg0, " > ", arg1, out);
+      break;
 
     case Fuzzing::OperatorExpression::Or:
       BinaryOperatorToCarbon(arg0, " or ", arg1, out);
       break;
 
-    case Fuzzing::OperatorExpression::Combine:
+    case Fuzzing::OperatorExpression::Complement:
+      PrefixUnaryOperatorToCarbon("^", arg0, out);
+      break;
+
+    case Fuzzing::OperatorExpression::BitwiseAnd:
       BinaryOperatorToCarbon(arg0, " & ", arg1, out);
+      break;
+
+    case Fuzzing::OperatorExpression::BitwiseOr:
+      BinaryOperatorToCarbon(arg0, " | ", arg1, out);
+      break;
+
+    case Fuzzing::OperatorExpression::BitwiseXor:
+      BinaryOperatorToCarbon(arg0, " ^ ", arg1, out);
+      break;
+
+    case Fuzzing::OperatorExpression::BitShiftLeft:
+      BinaryOperatorToCarbon(arg0, " << ", arg1, out);
+      break;
+
+    case Fuzzing::OperatorExpression::BitShiftRight:
+      BinaryOperatorToCarbon(arg0, " >> ", arg1, out);
+      break;
+    case Fuzzing::OperatorExpression::NotEq:
+      BinaryOperatorToCarbon(arg0, " != ", arg1, out);
       break;
   }
   out << ")";
@@ -285,27 +328,6 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
       break;
     }
 
-    case Fuzzing::Expression::kIntrinsic: {
-      const auto& intrinsic = expression.intrinsic();
-      switch (intrinsic.intrinsic()) {
-        case Fuzzing::IntrinsicExpression::UnknownIntrinsic:
-          // Arbitrary default to avoid getting invalid syntax.
-          out << "__intrinsic_print";
-          break;
-
-        case Fuzzing::IntrinsicExpression::Print:
-          out << "__intrinsic_print";
-          break;
-        case Fuzzing::IntrinsicExpression::Alloc:
-          out << "__intrinsic_new";
-          break;
-        case Fuzzing::IntrinsicExpression::Dealloc:
-          out << "__intrinsic_delete";
-          break;
-      }
-      TupleLiteralExpressionToCarbon(intrinsic.argument(), out);
-    } break;
-
     case Fuzzing::Expression::kIfExpression: {
       const auto& if_expression = expression.if_expression();
       out << "if ";
@@ -318,7 +340,7 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
     }
 
     case Fuzzing::Expression::kBoolTypeLiteral:
-      out << "Bool";
+      out << "bool";
       break;
 
     case Fuzzing::Expression::kBoolLiteral: {
@@ -386,6 +408,10 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
             ExpressionToCarbon(clause.equals().lhs(), out);
             out << " == ";
             ExpressionToCarbon(clause.equals().rhs(), out);
+            break;
+          case Fuzzing::WhereClause::kRewrite:
+            out << "." << clause.rewrite().member_name() << " = ";
+            ExpressionToCarbon(clause.rewrite().replacement(), out);
             break;
           case Fuzzing::WhereClause::KIND_NOT_SET:
             // Arbitrary default to avoid invalid syntax.
@@ -571,6 +597,16 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
       BlockStatementToCarbon(while_statement.body(), out);
       break;
     }
+    case Fuzzing::Statement::kForStatement: {
+      const auto& for_statement = statement.for_statement();
+      out << "for (";
+      BindingPatternToCarbon(for_statement.var_decl(), out);
+      out << " in ";
+      ExpressionToCarbon(for_statement.target(), out);
+      out << ") ";
+      BlockStatementToCarbon(for_statement.body(), out);
+      break;
+    }
 
     case Fuzzing::Statement::kMatch: {
       const auto& match = statement.match();
@@ -645,6 +681,27 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
       out << "var x: i32;";
       break;
 
+    case Fuzzing::Declaration::kDestructor: {
+      const auto& function = declaration.destructor();
+      out << "destructor";
+      llvm::ListSeparator sep;
+      out << "[";
+      if (function.has_me_pattern()) {
+        // This is a class method.
+        out << sep;
+        PatternToCarbon(function.me_pattern(), out);
+      }
+      out << "]";
+
+      // Body is optional.
+      if (function.has_body()) {
+        out << "\n";
+        BlockStatementToCarbon(function.body(), out);
+      } else {
+        out << ";";
+      }
+      break;
+    }
     case Fuzzing::Declaration::kFunction: {
       const auto& function = declaration.function();
       out << "fn ";
@@ -696,6 +753,36 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
       break;
     }
 
+    // EXPERIMENTAL MIXIN FEATURE
+    case Fuzzing::Declaration::kMixin: {
+      const auto& mixin_declaration = declaration.mixin();
+      out << "__mixin ";
+      IdentifierToCarbon(mixin_declaration.name(), out);
+
+      // type params are not implemented yet
+      // if (mixin_declaration.has_params()) {
+      //  TuplePatternToCarbon(mixin_declaration.params(), out);
+      //}
+
+      out << "{\n";
+      for (const auto& member : mixin_declaration.members()) {
+        DeclarationToCarbon(member, out);
+        out << "\n";
+      }
+      out << "}";
+      // TODO: need to handle interface.self()?
+      break;
+    }
+
+    // EXPERIMENTAL MIXIN FEATURE
+    case Fuzzing::Declaration::kMix: {
+      const auto& mix_declaration = declaration.mix();
+      out << "__mix ";
+      ExpressionToCarbon(mix_declaration.mixin(), out);
+      out << ";";
+      break;
+    }
+
     case Fuzzing::Declaration::kChoice: {
       const auto& choice = declaration.choice();
       out << "choice ";
@@ -732,12 +819,28 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
       PatternToCarbon(let.pattern(), out);
 
       // TODO: Print out the initializer once it's supported.
-      /*
-      if (let.has_initializer()) {
-        out << " = ";
-        ExpressionToCarbon(let.initializer(), out);
-      }
-      */
+      // if (let.has_initializer()) {
+      //   out << " = ";
+      //   ExpressionToCarbon(let.initializer(), out);
+      // }
+      out << ";";
+      break;
+    }
+
+    case Fuzzing::Declaration::kInterfaceExtends: {
+      const auto& extends = declaration.interface_extends();
+      out << "extends ";
+      ExpressionToCarbon(extends.base(), out);
+      out << ";";
+      break;
+    }
+
+    case Fuzzing::Declaration::kInterfaceImpl: {
+      const auto& impl = declaration.interface_impl();
+      out << "impl ";
+      ExpressionToCarbon(impl.impl_type(), out);
+      out << " as ";
+      ExpressionToCarbon(impl.constraint(), out);
       out << ";";
       break;
     }
@@ -752,7 +855,19 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
         out << "\n";
       }
       out << "}";
-      // TODO: need to handle interface.self()?
+      break;
+    }
+
+    case Fuzzing::Declaration::kConstraint: {
+      const auto& constraint = declaration.constraint();
+      out << "constraint ";
+      IdentifierToCarbon(constraint.name(), out);
+      out << " {\n";
+      for (const auto& member : constraint.members()) {
+        DeclarationToCarbon(member, out);
+        out << "\n";
+      }
+      out << "}";
       break;
     }
 

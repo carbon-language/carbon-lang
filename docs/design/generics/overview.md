@@ -159,7 +159,7 @@ Example:
 ```
 interface Comparable {
   // `Less` is an associated method.
-  fn Less[me: Self](rhs: Self) -> Bool;
+  fn Less[me: Self](rhs: Self) -> bool;
 }
 ```
 
@@ -218,13 +218,13 @@ class Song {
 // the library defining `Song` or `Comparable`.
 external impl Song as Comparable {
   // Could use either `Self` or `Song` here.
-  fn Less[me: Self](rhs: Self) -> Bool { ... }
+  fn Less[me: Self](rhs: Self) -> bool { ... }
 }
 ```
 
 Implementations may be defined within the class definition itself or
-out-of-line. Implementations may optionally be start with the `external` keyword
-to say the members of the interface are not members of the class. Out-of-line
+out-of-line. Implementations may optionally start with the `external` keyword to
+say the members of the interface are not members of the class. Out-of-line
 implementations must be external. External implementations may be defined in the
 library defining either the class or the interface.
 
@@ -350,7 +350,7 @@ Interfaces can require other interfaces be implemented:
 
 ```
 interface Equatable {
-  fn IsEqual[me: Self](rhs: Self) -> Bool;
+  fn IsEqual[me: Self](rhs: Self) -> bool;
 }
 
 // `Iterable` requires that `Equatable` is implemented.
@@ -386,7 +386,7 @@ methods in the implementation of the derived interface.
 class Key {
   // ...
   impl as Hashable {
-    fn IsEqual[me: Key](rhs: Key) -> Bool { ... }
+    fn IsEqual[me: Key](rhs: Key) -> bool { ... }
     fn Hash[me: Key]() -> u64 { ... }
   }
   // No need to separately implement `Equatable`.
@@ -493,7 +493,7 @@ cast from `T` to `CDCover`.
 
 ### Adapting types
 
-Carbon has a mechanism called [adapting types](terminology.md#adapting-a-type))
+Carbon has a mechanism called [adapting types](terminology.md#adapting-a-type)
 to create new types that are [compatible](terminology.md#compatible-types) with
 existing types but with different interface implementations. This could be used
 to add or replace implementations, or define implementations for reuse.
@@ -535,7 +535,7 @@ interface Stack {
   let ElementType:! Movable;
   fn Push[addr me: Self*](value: ElementType);
   fn Pop[addr me: Self*]() -> ElementType;
-  fn IsEmpty[addr me: Self*]() -> Bool;
+  fn IsEmpty[addr me: Self*]() -> bool;
 }
 ```
 
@@ -561,7 +561,7 @@ those types to be different. An element in a hash map might have type
 
 ```
 interface Equatable(T:! Type) {
-  fn IsEqual[me: Self](compare_to: T) -> Bool;
+  fn IsEqual[me: Self](compare_to: T) -> bool;
 }
 ```
 

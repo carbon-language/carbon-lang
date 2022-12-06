@@ -9,30 +9,24 @@
 
 namespace Carbon {
 
-// Raw exiting stream. This should be used when building other forms of exiting
-// macros like those below. It evaluates to a temporary `ExitingStream` object
-// that can be manipulated, streamed into, and then will exit the program.
-#define CARBON_RAW_EXITING_STREAM() \
-  Carbon::Internal::ExitingStream::Helper() | Carbon::Internal::ExitingStream()
-
 // Checks the given condition, and if it's false, prints a stack, streams the
 // error message, then exits. This should be used for unexpected errors, such as
 // a bug in the application.
 //
 // For example:
 //   CARBON_CHECK(is_valid) << "Data is not valid!";
-#define CARBON_CHECK(condition)                                           \
-  (condition) ? (void)0                                                   \
-              : CARBON_RAW_EXITING_STREAM()                               \
-                    << "CHECK failure at " << __FILE__ << ":" << __LINE__ \
-                    << ": " #condition                                    \
-                    << Carbon::Internal::ExitingStream::AddSeparator()
+#define CARBON_CHECK(...)                                                   \
+  (__VA_ARGS__) ? (void)0                                                   \
+                : CARBON_CHECK_INTERNAL_STREAM()                            \
+                      << "CHECK failure at " << __FILE__ << ":" << __LINE__ \
+                      << ": " #__VA_ARGS__                                  \
+                      << Carbon::Internal::ExitingStream::AddSeparator()
 
 // DCHECK calls CHECK in debug mode, and does nothing otherwise.
 #ifndef NDEBUG
-#define CARBON_DCHECK(condition) CARBON_CHECK(condition)
+#define CARBON_DCHECK(...) CARBON_CHECK(__VA_ARGS__)
 #else
-#define CARBON_DCHECK(condition) CARBON_CHECK(true || (condition))
+#define CARBON_DCHECK(...) CARBON_CHECK(true || (__VA_ARGS__))
 #endif
 
 // This is similar to CHECK, but is unconditional. Writing CARBON_FATAL() is
@@ -41,8 +35,8 @@ namespace Carbon {
 //
 // For example:
 //   CARBON_FATAL() << "Unreachable!";
-#define CARBON_FATAL()        \
-  CARBON_RAW_EXITING_STREAM() \
+#define CARBON_FATAL()           \
+  CARBON_CHECK_INTERNAL_STREAM() \
       << "FATAL failure at " << __FILE__ << ":" << __LINE__ << ": "
 
 }  // namespace Carbon

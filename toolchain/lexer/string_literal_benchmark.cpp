@@ -4,6 +4,7 @@
 
 #include <benchmark/benchmark.h>
 
+#include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/lexer/string_literal.h"
 
 namespace Carbon::Testing {
@@ -24,6 +25,10 @@ static void BM_ValidString_Simple(benchmark::State& state) {
 }
 
 static void BM_ValidString_Multiline(benchmark::State& state) {
+  BM_ValidString(state, "'''\n", "\n'''");
+}
+
+static void BM_ValidString_MultilineDoubleQuote(benchmark::State& state) {
   BM_ValidString(state, "\"\"\"\n", "\n\"\"\"");
 }
 
@@ -33,6 +38,7 @@ static void BM_ValidString_Raw(benchmark::State& state) {
 
 BENCHMARK(BM_ValidString_Simple);
 BENCHMARK(BM_ValidString_Multiline);
+BENCHMARK(BM_ValidString_MultilineDoubleQuote);
 BENCHMARK(BM_ValidString_Raw);
 
 static void BM_IncompleteWithRepeatedEscapes(benchmark::State& state,
@@ -59,6 +65,11 @@ static void BM_IncompleteWithEscapes_Simple(benchmark::State& state) {
 }
 
 static void BM_IncompleteWithEscapes_Multiline(benchmark::State& state) {
+  BM_IncompleteWithRepeatedEscapes(state, "'''\n", "\\");
+}
+
+static void BM_IncompleteWithEscapes_MultilineDoubleQuote(
+    benchmark::State& state) {
   BM_IncompleteWithRepeatedEscapes(state, "\"\"\"\n", "\\");
 }
 
@@ -68,7 +79,41 @@ static void BM_IncompleteWithEscapes_Raw(benchmark::State& state) {
 
 BENCHMARK(BM_IncompleteWithEscapes_Simple);
 BENCHMARK(BM_IncompleteWithEscapes_Multiline);
+BENCHMARK(BM_IncompleteWithEscapes_MultilineDoubleQuote);
 BENCHMARK(BM_IncompleteWithEscapes_Raw);
+
+static void BM_SimpleStringValue(benchmark::State& state,
+                                 std::string_view introducer,
+                                 std::string_view terminator) {
+  std::string x(introducer);
+  x.append(100000, 'a');
+  x.append(terminator);
+  for (auto _ : state) {
+    LexedStringLiteral::Lex(x)->ComputeValue(
+        NullDiagnosticEmitter<const char*>());
+  }
+}
+
+static void BM_SimpleStringValue_Simple(benchmark::State& state) {
+  BM_SimpleStringValue(state, "\"", "\"");
+}
+
+static void BM_SimpleStringValue_Multiline(benchmark::State& state) {
+  BM_SimpleStringValue(state, "'''\n", "\n'''");
+}
+
+static void BM_SimpleStringValue_MultilineDoubleQuote(benchmark::State& state) {
+  BM_SimpleStringValue(state, "\"\"\"\n", "\n\"\"\"");
+}
+
+static void BM_SimpleStringValue_Raw(benchmark::State& state) {
+  BM_SimpleStringValue(state, "#\"", "\"#");
+}
+
+BENCHMARK(BM_SimpleStringValue_Simple);
+BENCHMARK(BM_SimpleStringValue_Multiline);
+BENCHMARK(BM_SimpleStringValue_MultilineDoubleQuote);
+BENCHMARK(BM_SimpleStringValue_Raw);
 
 }  // namespace
 }  // namespace Carbon::Testing

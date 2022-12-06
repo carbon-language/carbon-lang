@@ -9,6 +9,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 import argparse
 import os
 from pathlib import Path
+import shutil
 import subprocess
 
 
@@ -33,9 +34,16 @@ def main():
         "-v",
     ]
 
-    # Force tests to be explicit about command paths.
+    # Force tests to be explicit about command paths. Some tools are required by
+    # bazel's py_binary output in order to find python3, so we add these. The
+    # list of tools may prove to be fragile: if so, we may need to change or
+    # remove the PATH hiding.
+    system_tools = Path(os.environ["TEST_TMPDIR"]).joinpath("system_tools")
+    system_tools.mkdir()
+    for tool in ("env", "grep", "python3", "sh", "which"):
+        system_tools.joinpath(tool).symlink_to(shutil.which(tool))
     env = os.environ.copy()
-    del env["PATH"]
+    env["PATH"] = str(system_tools)
 
     # Run lit.
     try:

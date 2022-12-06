@@ -22,7 +22,7 @@
 
 namespace Carbon {
 
-class FunctionDeclaration;
+class CallableDeclaration;
 
 class Statement : public AstNode {
  public:
@@ -203,11 +203,11 @@ class Return : public Statement {
   // Note that this function does not represent an edge in the tree
   // structure of the AST: the return value is not a child of this node,
   // but an ancestor.
-  auto function() const -> const FunctionDeclaration& { return **function_; }
-  auto function() -> FunctionDeclaration& { return **function_; }
+  auto function() const -> const CallableDeclaration& { return **function_; }
+  auto function() -> CallableDeclaration& { return **function_; }
 
   // Can only be called once, by ResolveControlFlow.
-  void set_function(Nonnull<FunctionDeclaration*> function) {
+  void set_function(Nonnull<CallableDeclaration*> function) {
     CARBON_CHECK(!function_.has_value());
     function_ = function;
   }
@@ -217,7 +217,7 @@ class Return : public Statement {
       : Statement(node_kind, source_loc) {}
 
  private:
-  std::optional<Nonnull<FunctionDeclaration*>> function_;
+  std::optional<Nonnull<CallableDeclaration*>> function_;
 };
 
 class ReturnVar : public Return {
@@ -295,6 +295,38 @@ class While : public Statement {
 
  private:
   Nonnull<Expression*> condition_;
+  Nonnull<Block*> body_;
+};
+
+class For : public Statement {
+ public:
+  For(SourceLocation source_loc, Nonnull<BindingPattern*> variable_declaration,
+      Nonnull<Expression*> loop_target, Nonnull<Block*> body)
+      : Statement(AstNodeKind::For, source_loc),
+        variable_declaration_(variable_declaration),
+        loop_target_(loop_target),
+        body_(body) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromFor(node->kind());
+  }
+
+  auto variable_declaration() const -> const BindingPattern& {
+    return *variable_declaration_;
+  }
+  auto variable_declaration() -> BindingPattern& {
+    return *variable_declaration_;
+  }
+
+  auto loop_target() const -> const Expression& { return *loop_target_; }
+  auto loop_target() -> Expression& { return *loop_target_; }
+
+  auto body() const -> const Block& { return *body_; }
+  auto body() -> Block& { return *body_; }
+
+ private:
+  Nonnull<BindingPattern*> variable_declaration_;
+  Nonnull<Expression*> loop_target_;
   Nonnull<Block*> body_;
 };
 

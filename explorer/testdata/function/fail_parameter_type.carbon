@@ -2,16 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 // 42 cannot be used as the type of a parameter.
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_parameter_type.carbon:[[@LINE+1]]: Expected a type, but got 42
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_parameter_type.carbon:[[@LINE+1]]: type error in type of name binding: 'i32' is not implicitly convertible to 'Type'
 fn f(x: 42) -> i32 {
   return x - 1;
 }

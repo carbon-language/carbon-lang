@@ -5,7 +5,9 @@
 #ifndef CARBON_EXPLORER_INTERPRETER_ACTION_H_
 #define CARBON_EXPLORER_INTERPRETER_ACTION_H_
 
+#include <list>
 #include <map>
+#include <tuple>
 #include <vector>
 
 #include "common/ostream.h"
@@ -16,6 +18,7 @@
 #include "explorer/interpreter/heap_allocation_interface.h"
 #include "explorer/interpreter/stack.h"
 #include "explorer/interpreter/value.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
@@ -45,8 +48,12 @@ class RuntimeScope {
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
+  // Binds `value` as the value of `value_node`.
+  void Bind(ValueNodeView value_node, Nonnull<const Value*> value);
+
   // Allocates storage for `value_node` in `heap`, and initializes it with
   // `value`.
+  // TODO: Update existing callers to use Bind instead, where appropriate.
   void Initialize(ValueNodeView value_node, Nonnull<const Value*> value);
 
   // Transfers the names and allocations from `other` into *this. The two
@@ -58,8 +65,15 @@ class RuntimeScope {
   auto Get(ValueNodeView value_node) const
       -> std::optional<Nonnull<const LValue*>>;
 
+  // Returns the local values in created order
+  auto allocations() const -> const std::vector<AllocationId>& {
+    return allocations_;
+  }
+
  private:
-  std::map<ValueNodeView, Nonnull<const LValue*>> locals_;
+  llvm::MapVector<ValueNodeView, Nonnull<const LValue*>,
+                  std::map<ValueNodeView, unsigned>>
+      locals_;
   std::vector<AllocationId> allocations_;
   Nonnull<HeapAllocationInterface*> heap_;
 };
@@ -81,11 +95,13 @@ class Action {
   enum class Kind {
     LValAction,
     ExpressionAction,
-    PatternAction,
+    WitnessAction,
     StatementAction,
     DeclarationAction,
     ScopeAction,
     RecursiveAction,
+    CleanUpAction,
+    DestroyAction
   };
 
   Action(const Value&) = delete;
@@ -116,7 +132,10 @@ class Action {
   auto results() const -> const std::vector<Nonnull<const Value*>>& {
     return results_;
   }
-
+  void ReplaceResult(std::size_t index, Nonnull<const Value*> value) {
+    CARBON_CHECK(index < results_.size());
+    results_[index] = value;
+  }
   // Appends `result` to `results`.
   void AddResult(Nonnull<const Value*> result) { results_.push_back(result); }
 
@@ -182,22 +201,22 @@ class ExpressionAction : public Action {
   Nonnull<const Expression*> expression_;
 };
 
-// An Action which implements evaluation of a Pattern. The result is expressed
-// as a Value.
-class PatternAction : public Action {
+// An Action which implements evaluation of a Witness to resolve it in the
+// local context.
+class WitnessAction : public Action {
  public:
-  explicit PatternAction(Nonnull<const Pattern*> pattern)
-      : Action(Kind::PatternAction), pattern_(pattern) {}
+  explicit WitnessAction(Nonnull<const Witness*> witness)
+      : Action(Kind::WitnessAction), witness_(witness) {}
 
   static auto classof(const Action* action) -> bool {
-    return action->kind() == Kind::PatternAction;
+    return action->kind() == Kind::WitnessAction;
   }
 
-  // The Pattern this Action evaluates.
-  auto pattern() const -> const Pattern& { return *pattern_; }
+  // The Witness this Action resolves.
+  auto witness() const -> Nonnull<const Witness*> { return witness_; }
 
  private:
-  Nonnull<const Pattern*> pattern_;
+  Nonnull<const Witness*> witness_;
 };
 
 // An Action which implements execution of a Statement. Does not produce a
@@ -234,6 +253,52 @@ class DeclarationAction : public Action {
 
  private:
   Nonnull<const Declaration*> declaration_;
+};
+
+// An Action which implements destroying all local allocations in a scope.
+class CleanupAction : public Action {
+ public:
+  explicit CleanupAction(RuntimeScope scope)
+      : Action(Kind::CleanUpAction),
+        allocations_count_(scope.allocations().size()) {
+    StartScope(std::move(scope));
+  }
+
+  auto allocations_count() const -> int { return allocations_count_; }
+
+  static auto classof(const Action* action) -> bool {
+    return action->kind() == Kind::CleanUpAction;
+  }
+
+ private:
+  int allocations_count_;
+};
+
+// An Action which implements destroying a single value, including all nested
+// values.
+class DestroyAction : public Action {
+ public:
+  // lvalue: Address of the object to be destroyed
+  // value:  The value to be destroyed
+  //         In most cases the lvalue address points to value
+  //         In the case that the member of a class is to be destroyed, points
+  //         the lvalue points to the address of the class object
+  //         and the value is the member of the class
+  explicit DestroyAction(Nonnull<const LValue*> lvalue,
+                         Nonnull<const Value*> value)
+      : Action(Kind::DestroyAction), lvalue_(lvalue), value_(value) {}
+
+  static auto classof(const Action* action) -> bool {
+    return action->kind() == Kind::DestroyAction;
+  }
+
+  auto lvalue() const -> Nonnull<const LValue*> { return lvalue_; }
+
+  auto value() const -> Nonnull<const Value*> { return value_; }
+
+ private:
+  Nonnull<const LValue*> lvalue_;
+  Nonnull<const Value*> value_;
 };
 
 // Action which does nothing except introduce a new scope into the action

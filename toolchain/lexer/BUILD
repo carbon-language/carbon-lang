@@ -132,6 +132,7 @@ cc_binary(
     srcs = ["string_literal_benchmark.cpp"],
     deps = [
         ":string_literal",
+        "//toolchain/diagnostics:null_diagnostics",
         "@com_github_google_benchmark//:benchmark_main",
     ],
 )
@@ -179,6 +180,7 @@ cc_library(
         "//common:check",
         "//common:ostream",
         "//common:string_helpers",
+        "//toolchain/common:index_base",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Support",

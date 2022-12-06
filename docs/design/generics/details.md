@@ -59,6 +59,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Recursive constraints](#recursive-constraints)
         -   [Parameterized type implements interface](#parameterized-type-implements-interface)
         -   [Another type implements parameterized interface](#another-type-implements-parameterized-interface)
+    -   [Constraints must use a designator](#constraints-must-use-a-designator)
     -   [Implied constraints](#implied-constraints)
         -   [Must be legal type argument constraints](#must-be-legal-type-argument-constraints)
     -   [Referencing names in the interface being defined](#referencing-names-in-the-interface-being-defined)
@@ -153,13 +154,13 @@ pass in `T` explicitly, so it can be a
 [deduced parameters](overview.md#deduced-parameters) in the Generics overview
 doc). Basically, the user passes in a value for `val`, and the type of `val`
 determines `T`. `T` still gets passed into the function though, and it plays an
-important role -- it defines the implementation of the interface. We can think
-of the interface as defining a struct type whose members are function pointers,
-and an implementation of an interface as a value of that struct with actual
-function pointer values. So an implementation is a table of function pointers
-(one per function defined in the interface) that gets passed into a function as
-the type argument. For more on this, see
-[the implementation model section](#implementation-model) below.
+important role -- it defines the key used to look up interface implementations.
+
+We can think of the interface as defining a struct type whose members are
+function pointers, and an implementation of an interface as a value of that
+struct with actual function pointer values. An implementation is a table mapping
+the interface's functions to function pointers. For more on this, see
+[the implementation model section](#implementation-model).
 
 In addition to function pointer members, interfaces can include any constants
 that belong to a type. For example, the
@@ -223,7 +224,8 @@ have two methods:
 
 ```
 interface Vector {
-  // Here `Self` means "the type implementing this interface".
+  // Here the `Self` keyword means
+  // "the type implementing this interface".
   fn Add[me: Self](b: Self) -> Self;
   fn Scale[me: Self](v: f64) -> Self;
 }
@@ -257,7 +259,8 @@ class Point {
   var x: f64;
   var y: f64;
   impl as Vector {
-    // In this scope, "Self" is an alias for "Point".
+    // In this scope, the `Self` keyword is an
+    // alias for `Point`.
     fn Add[me: Self](b: Self) -> Self {
       return {.x = a.x + b.x, .y = a.y + b.y};
     }
@@ -364,7 +367,8 @@ class Point2 {
   var y: f64;
 
   external impl as Vector {
-    // In this scope, `Self` is an alias for `Point2`.
+    // In this scope, the `Self` keyword is an
+    // alias for `Point2`.
     fn Add[me: Self](b: Self) -> Self {
       return {.x = a.x + b.x, .y = a.y + b.y};
     }
@@ -389,7 +393,8 @@ class Point3 {
 }
 
 external impl Point3 as Vector {
-  // In this scope, `Self` is an alias for `Point3`.
+  // In this scope, the `Self` keyword is an
+  // alias for `Point3`.
   fn Add[me: Self](b: Self) -> Self {
     return {.x = a.x + b.x, .y = a.y + b.y};
   }
@@ -436,12 +441,12 @@ class Point4a {
   var x: f64;
   var y: f64;
   fn Add[me: Self](b: Self) -> Self {
-    return {.x = a.x + b.x, .y = a.y + b.y};
+    return {.x = me.x + b.x, .y = me.y + b.y};
   }
   external impl as Vector {
     alias Add = Point4a.Add;  // Syntax TBD
     fn Scale[me: Self](v: f64) -> Self {
-      return {.x = a.x * v, .y = a.y * v};
+      return {.x = me.x * v, .y = me.y * v};
     }
   }
 }
@@ -453,13 +458,13 @@ class Point4b {
   var y: f64;
   external impl as Vector {
     fn Add[me: Self](b: Self) -> Self {
-      return {.x = a.x + b.x, .y = a.y + b.y};
+      return {.x = me.x + b.x, .y = me.y + b.y};
     }
     fn Scale[me: Self](v: f64) -> Self {
-      return {.x = a.x * v, .y = a.y * v};
+      return {.x = me.x * v, .y = me.y * v};
     }
   }
-  alias Add = Vector.Add;  // Syntax TBD
+  alias Add = Vector.Add;
 }
 
 // OR:
@@ -468,14 +473,14 @@ class Point4c {
   var x: f64;
   var y: f64;
   fn Add[me: Self](b: Self) -> Self {
-    return {.x = a.x + b.x, .y = a.y + b.y};
+    return {.x = me.x + b.x, .y = me.y + b.y};
   }
 }
 
 external impl Point4c as Vector {
   alias Add = Point4c.Add;  // Syntax TBD
   fn Scale[me: Self](v: f64) -> Self {
-    return {.x = a.x * v, .y = a.y * v};
+    return {.x = me.x * v, .y = me.y * v};
   }
 }
 ```
@@ -727,10 +732,14 @@ implements an interface:
 
 -   [Interfaces](#interfaces) are types of witness tables.
 -   [Impls](#implementing-interfaces) are witness table values.
--   The compiler rewrites functions with an implicit type argument
-    (`fn Foo[InterfaceName:! T](...)`) to have an actual argument with type
-    determined by the interface, and supplied at the callsite using a value
-    determined by the impl.
+
+Type checking is done with just the interface. The impl is used during code
+generation time, possibly using
+[monomorphization](https://en.wikipedia.org/wiki/Monomorphization) to have a
+separate instantiation of the function for each combination of the generic
+argument values. The compiler is free to use other implementation strategies,
+such as passing the witness table for any needed implementations, if that can be
+predicted.
 
 For the example above, [the Vector interface](#interfaces) could be thought of
 defining a witness table type like:
@@ -765,26 +774,11 @@ var VectorForPoint: Vector  = {
 };
 ```
 
-Finally we can define a generic function and call it, like
-[`AddAndScaleGeneric` from the "Generics" section](#generics) by making the
-witness table an explicit argument to the function:
-
-```
-fn AddAndScaleGeneric
-    (t:! Vector, a: t.Self, b: t.Self, s: f64) -> t.Self {
-  return t.Scale(t.Add(a, b), s);
-}
-// Point implements Vector.
-var v: Point = AddAndScaleGeneric(VectorForPoint, a, w, 2.5);
-```
-
-The rule is that generic arguments (declared using `:!`) are passed at compile
-time, so the actual value of the `t` argument here can be used to generate the
-code for `AddAndScaleGeneric`. So `AddAndScaleGeneric` is using a
-[static-dispatch witness table](terminology.md#static-dispatch-witness-table).
-
-Note that this implementation strategy only works for impls that the caller
-knows the callee needs.
+Since generic arguments (where the parameter is declared using `:!`) are passed
+at compile time, so the actual value of `VectorForPoint` can be used to generate
+the code for functions using that impl. This is the
+[static-dispatch witness table](terminology.md#static-dispatch-witness-table)
+approach.
 
 ## Interfaces recap
 
@@ -1090,8 +1084,8 @@ other type-of-types, independent of order.
 Note that we do _not_ consider two type-of-types using the same name to mean the
 same thing to be a conflict. For example, combining a type-of-type with itself
 gives itself, `MyTypeOfType & MyTypeOfType == MyTypeOfType`. Also, given two
-[interface extensions](#interface-extension) of a common base interface, the sum
-should not conflict on any names in the common base.
+[interface extensions](#interface-extension) of a common base interface, the
+combination should not conflict on any names in the common base.
 
 **Rejected alternative:** Instead of using `&` as the combining operator, we
 considered using `+`,
@@ -1134,7 +1128,7 @@ for adding requirements for interfaces used for
 interface is enough to be able to use the operator to access the functionality.
 
 **Alternatives considered:** See
-[Carbon: Access to interface methods](https://docs.google.com/document/d/1u_i_s31OMI_apPur7WmVxcYq6MUXsG3oCiKwH893GRI/edit?usp=sharing&resourcekey=0-0lzSNebBMtUBi4lStL825g).
+[Carbon: Access to interface methods](https://docs.google.com/document/d/17IXDdu384x1t9RimQ01bhx4-nWzs4ZEeke4eO6ImQNc/edit?resourcekey=0-Fe44R-0DhQBlw0gs2ujNJA).
 
 **Comparison with other languages:** This `&` operation on interfaces works very
 similarly to Rust's `+` operation, with the main difference being how you
@@ -1254,7 +1248,7 @@ Examples:
     [Boost.Graph library](https://www.boost.org/doc/libs/1_74_0/libs/graph/doc/)
     [graph concepts](https://www.boost.org/doc/libs/1_74_0/libs/graph/doc/graph_concepts.html#fig:graph-concepts)
     has many refining relationships between concepts.
-    [Carbon generics use case: graph library](https://docs.google.com/document/d/1xk0GLtpBl2OOnf3F_6Z-A3DtTt-r7wdOZ5wPipYUSO0/edit?usp=sharing&resourcekey=0-mBSmwn6b6jwbLaQw2WG6OA)
+    [Carbon generics use case: graph library](https://docs.google.com/document/d/15Brjv8NO_96jseSesqer5HbghqSTJICJ_fTaZOH0Mg4/edit?usp=sharing&resourcekey=0-CYSbd6-xF8vYHv9m1rolEQ)
     shows how those concepts might be translated into Carbon interfaces.
 -   The [C++ concepts](https://en.cppreference.com/w/cpp/named_req) for
     containers, iterators, and concurrency include many requirement
@@ -1383,7 +1377,7 @@ interface MovieCodec {
 #### Diamond dependency issue
 
 Consider this set of interfaces, simplified from
-[this example generic graph library doc](https://docs.google.com/document/d/1xk0GLtpBl2OOnf3F_6Z-A3DtTt-r7wdOZ5wPipYUSO0/edit?resourcekey=0-mBSmwn6b6jwbLaQw2WG6OA#):
+[this example generic graph library doc](https://docs.google.com/document/d/15Brjv8NO_96jseSesqer5HbghqSTJICJ_fTaZOH0Mg4/edit?usp=sharing&resourcekey=0-CYSbd6-xF8vYHv9m1rolEQ):
 
 ```
 interface Graph {
@@ -2076,6 +2070,18 @@ class DynamicArray(T:! Type) {
 }
 ```
 
+The keyword `Self` can be used after the `as` in an `impl` declaration as a
+shorthand for the type being implemented, including in the `where` clause
+specifying the values of associated types, as in:
+
+```
+external impl VeryLongTypeName as Add
+    // `Self` here means `VeryLongTypeName`
+    where .Result == Self {
+  ...
+}
+```
+
 **Alternatives considered:** See
 [other syntax options considered in #731 for specifying associated types](/proposals/p0731.md#syntax-for-associated-constants).
 In particular, it was deemed that
@@ -2280,8 +2286,9 @@ class Complex {
   var imag: f64;
   // Can implement this interface more than once
   // as long as it has different arguments.
-  impl as EquatableWith(Complex) { ... }
   impl as EquatableWith(f64) { ... }
+  // Same as: impl as EquatableWith(Complex) { ... }
+  impl as EquatableWith(Self) { ... }
 }
 ```
 
@@ -2427,7 +2434,9 @@ type-of-type. Note that this expands the kinds of requirements that
 type-of-types can have from just interface requirements to also include the
 various kinds of constraints discussed later in this section. In addition, it
 can introduce relationships between different type variables, such as that a
-member of one is equal to the member of another.
+member of one is equal to the member of another. The `where` operator is not
+associative, so a type expression using multiple must use round parens `(`...`)`
+to specify grouping.
 
 **Comparison with other languages:** Both Swift and Rust use `where` clauses on
 declarations instead of in the expression syntax. These happen after the type
@@ -2451,7 +2460,8 @@ naming some classes of constraints.
 
 We might need to write a function that only works with a specific value of an
 [associated constant](#associated-constants) `N`. In this case, the name of the
-associated constant is written first, followed by an `=`, and then the value:
+associated constant is written after a `.`, followed by an `=`, and then the
+value:
 
 ```
 fn PrintPoint2D[PointT:! NSpacePoint where .N = 2](p: PointT) {
@@ -2466,6 +2476,10 @@ interface Has2DPoint {
   let PointT:! NSpacePoint where .N = 2;
 }
 ```
+
+The "dot followed by the name of a member" construct, `.N` in the examples
+above, is called a _designator_. A designator refers to the value of that member
+for whatever type is to satisfy this constraint.
 
 To name such a constraint, you may use a `let` or a `constraint` declaration:
 
@@ -2805,6 +2819,29 @@ constraint ContainerIsSlice {
 Note that using the `constraint` approach we can name these constraints using
 `Self` instead of `.Self`, since they refer to the same type.
 
+The `.Self` construct follows these rules:
+
+-   `X :!` introduces `.Self:! Type`, where references to `.Self` are resolved
+    to `X`. This allows you to use `.Self` as an interface parameter as in
+    `X:! I(.Self)`.
+-   `A where` introduces `.Self:! A` and `.Foo` for each member `Foo` of `A`
+-   It's an error to reference `.Self` if it refers to more than one different
+    thing or isn't a type.
+-   You get the innermost, most-specific type for `.Self` if it is introduced
+    twice in a scope. By the previous rule, it is only legal if they all refer
+    to the same generic parameter.
+
+So in `X:! A where ...`, `.Self` is introduced twice, after the `:!` and the
+`where`. This is allowed since both times it means `X`. After the `:!`, `.Self`
+has the type `Type`, which gets refined to `A` after the `where`. In contrast,
+it is an error if `.Self` could mean two different things, as in:
+
+```
+// ❌ Illegal: `.Self` could mean `T` or `T.A`.
+fn F[T:! InterfaceA where .A is
+           (InterfaceB where .B == .Self)](x: T);
+```
+
 #### Parameterized type implements interface
 
 There are times when a function will pass a generic type parameter of the
@@ -2847,6 +2884,51 @@ fn Double[T:! Mul where i32 is As(.Self)](x: T) -> T {
   return x * (2 as T);
 }
 ```
+
+### Constraints must use a designator
+
+We don't allow a `where` constraint unless it applies a restriction to the
+current type. This means referring to some
+[designator](#set-an-associated-constant-to-a-specific-value), like
+`.MemberName`, or [`.Self`](#recursive-constraints). Examples:
+
+-   `Container where .ElementType = i32`
+-   `Type where Vector(.Self) is Sortable`
+-   `Addable where i32 is AddableWith(.Result)`
+
+Constraints that only refer to other types should be moved to the type that is
+declared last. So:
+
+```carbon
+// ❌ Error: `where A == B` does not use `.Self` or a designator
+fn F[A:! Type, B:! Type, C:! Type where A == B](a: A, b: B, c: C);
+```
+
+must be replaced by:
+
+```carbon
+// ✅ Allowed
+fn F[A:! Type, B:! Type where A == .Self, C:! Type](a: A, b: B, c: C);
+```
+
+This includes `where` clauses used in an `impl` declaration:
+
+```
+// ❌ Error: `where T is B` does not use `.Self` or a designator
+external impl forall [T:! Type] T as A where T is B {}
+// ✅ Allowed
+external impl forall [T:! Type where .Self is B] T as A {}
+// ✅ Allowed
+external impl forall [T:! B] T as A {}
+```
+
+This clarifies the meaning of the `where` clause and reduces the number of
+redundant ways to express a restriction, following the
+[one-way principle](/docs/project/principles/one_way.md).
+
+**Alternative considered:** This rule was added in proposal
+[#2376](https://github.com/carbon-language/carbon-lang/pull/2376), which
+[considered whether this rule should be added](/proposals/p2376.md#alternatives-considered).
 
 ### Implied constraints
 
@@ -3651,7 +3733,7 @@ interface when its element type satisfies the same interface:
     if the element type is comparable.
 -   A container is copyable if its elements are.
 
-To do this with an [`external impl`](#external-impl), specify a more-specific
+To do this with an [out-of-line `impl`](#external-impl), specify a more-specific
 `Self` type to the left of the `as` in the declaration:
 
 ```
@@ -3681,6 +3763,10 @@ class Array(T:! Type, template N:! Int) {
   impl forall [P:! Printable] Array(P, N) as Printable { ... }
 }
 ```
+
+All internal `impl` declarations in the body of a `class` definition must be for
+the class being defined. It is an error to declare `impl i32 as Printable`
+inside `class Array`.
 
 It is legal to add the keyword `external` before the `impl` keyword to switch to
 an external impl defined lexically within the class scope. Inside the scope,
@@ -4352,6 +4438,56 @@ An interface or named constraint may be forward declared subject to these rules:
     interface using `MyInterface.MemberName` or constrain a member using a
     `where` clause.
 
+If `C` is the name of an incomplete interface or named constraint, then it can
+be used in the following contexts:
+
+-   ✅ `T:! C`
+-   ✅ `C & D`
+    -   There may be conflicts between `C` and `D` making this invalid that will
+        only be discovered once they are both complete.
+-   ✅ `interface `...` { impl` ... `as C; }` or `constraint `...` { impl` ...
+    `as C; }`
+    -   Nothing implied by implementing `C` will be visible until `C` is
+        complete.
+-   ✅ `T:! C` ... `T is C`
+-   ✅ `T:! A & C` ... `T is C`
+    -   This includes constructs requiring `T is C` such as `T as C` or
+        `U:! C = T`.
+-   ✅ `external impl `...` as C;`
+    -   Checking that all associated constants of `C` are correctly assigned
+        values will be delayed until `C` is complete.
+
+An incomplete `C` cannot be used in the following contexts:
+
+-   ❌ `T:! C` ... `T.X`
+-   ❌ `T:! C where `...
+-   ❌ `class `...` { impl as C; }`
+    -   The names of `C` are added to the class, and so those names need to be
+        known.
+-   ❌ `T:! C` ... `T is A` where `A` is an interface or named constraint
+    different from `C`
+    -   Need to see the definition of `C` to see if it implies `A`.
+-   ❌ `external impl` ... `as C {` ... `}`
+
+**Future work:** It is currently undecided whether an interface needs to be
+complete to be extended, as in:
+
+```
+interface I { extends C; }
+```
+
+There are three different approaches being considered:
+
+-   If we detect name collisions between the members of the interface `I` and
+    `C` when the interface `I` is defined, then we need `C` to be complete.
+-   If we instead only generate errors on ambiguous use of members with the same
+    name, as we do with `A & B`, then we don't need to require `C` to be
+    complete.
+-   Another option, being discussed in
+    [#2355](https://github.com/carbon-language/carbon-lang/issues/2355), is that
+    names in interface `I` shadow the names in any interface being extended,
+    then `C` would not be required to be complete.
+
 ### Declaring implementations
 
 The declaration of an interface implementation consists of:
@@ -4582,7 +4718,9 @@ interface CommonType(T:! Type) {
 ```
 
 Note however that `CommonType` is still incomplete inside its definition, so no
-constraints on members of `CommonType` are allowed.
+constraints on members of `CommonType` are allowed, and that this `impl T as`
+declaration
+[must involve `Self`](#interface-requiring-other-interfaces-revisited).
 
 ```
 interface CommonType(T:! Type) {
@@ -4848,6 +4986,26 @@ interface Iterable {
   // Equivalent to: impl as Equatable;
 }
 ```
+
+An `impl`...`as` constraint in an `interface`, or `constraint`, definition must
+still use `Self` in some way. It can be the implicit `Self` when nothing is
+specified between `impl` and `as`, or it can be an argument to either the type
+or interface. For example:
+
+-   ✅ Allowed: `impl as Equatable`
+-   ✅ Allowed: `impl Self as Equatable`
+-   ✅ Allowed: `impl Vector(Self) as Equatable`
+-   ✅ Allowed: `impl i32 as CommonTypeWith(Self)`
+-   ✅ Allowed: `impl Self as CommonTypeWith(Self)`
+-   ❌ Error: `impl i32 as Equatable`
+-   ❌ Error: `impl T as Equatable` where `T` is some parameter to the interface
+
+This restriction allows the Carbon compiler to know where to look for facts
+about a type. If `impl i32 as Equatable` could appear in any `interface`
+definition, that implies having to search all of them when considering what
+interfaces `i32` implements. This creates a coherence problem, since then the
+set of facts true for a type would depend on which interfaces have been
+imported.
 
 When implementing an interface with an `impl as` requirement, that requirement
 must be satisfied by an implementation in an imported library, an implementation
@@ -5600,6 +5758,9 @@ a type to an implementation of an interface parameterized by that type.
 Generic associated types are about when this is a requirement of an interface.
 These are also called "associated type constructors."
 
+Rust has
+[stabilized this feature](https://github.com/rust-lang/rust/pull/96709).
+
 #### Higher-ranked types
 
 Higher-ranked types are used to represent this requirement in a function
@@ -5654,3 +5815,6 @@ parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 -   [#1144: Generic details 11: operator overloading](https://github.com/carbon-language/carbon-lang/pull/1144)
 -   [#1146: Generic details 12: parameterized types](https://github.com/carbon-language/carbon-lang/pull/1146)
 -   [#1327: Generics: `impl forall`](https://github.com/carbon-language/carbon-lang/pull/1327)
+-   [#2107: Clarify rules around `Self` and `.Self`](https://github.com/carbon-language/carbon-lang/pull/2107)
+-   [#2347: What can be done with an incomplete interface](https://github.com/carbon-language/carbon-lang/pull/2347)
+-   [#2376: Constraints must use `Self`](https://github.com/carbon-language/carbon-lang/pull/2376)

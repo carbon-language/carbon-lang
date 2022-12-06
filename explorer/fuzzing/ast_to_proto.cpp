@@ -13,6 +13,7 @@
 namespace Carbon {
 
 using ::llvm::cast;
+using ::llvm::dyn_cast;
 using ::llvm::isa;
 
 static auto ExpressionToProto(const Expression& expression)
@@ -53,14 +54,38 @@ static auto OperatorToProtoEnum(const Operator op)
       return Fuzzing::OperatorExpression::And;
     case Operator::Eq:
       return Fuzzing::OperatorExpression::Eq;
+    case Operator::NotEq:
+      return Fuzzing::OperatorExpression::NotEq;
+    case Operator::Less:
+      return Fuzzing::OperatorExpression::Less;
+    case Operator::LessEq:
+      return Fuzzing::OperatorExpression::LessEq;
+    case Operator::Greater:
+      return Fuzzing::OperatorExpression::Greater;
+    case Operator::GreaterEq:
+      return Fuzzing::OperatorExpression::GreaterEq;
     case Operator::Mul:
       return Fuzzing::OperatorExpression::Mul;
+    case Operator::Div:
+      return Fuzzing::OperatorExpression::Div;
+    case Operator::Mod:
+      return Fuzzing::OperatorExpression::Mod;
     case Operator::Or:
       return Fuzzing::OperatorExpression::Or;
     case Operator::Sub:
       return Fuzzing::OperatorExpression::Sub;
-    case Operator::Combine:
-      return Fuzzing::OperatorExpression::Combine;
+    case Operator::BitwiseAnd:
+      return Fuzzing::OperatorExpression::BitwiseAnd;
+    case Operator::BitwiseOr:
+      return Fuzzing::OperatorExpression::BitwiseOr;
+    case Operator::BitwiseXor:
+      return Fuzzing::OperatorExpression::BitwiseXor;
+    case Operator::BitShiftLeft:
+      return Fuzzing::OperatorExpression::BitShiftLeft;
+    case Operator::BitShiftRight:
+      return Fuzzing::OperatorExpression::BitShiftRight;
+    case Operator::Complement:
+      return Fuzzing::OperatorExpression::Complement;
   }
 }
 
@@ -85,11 +110,17 @@ static auto ExpressionToProto(const Expression& expression)
     -> Fuzzing::Expression {
   Fuzzing::Expression expression_proto;
   switch (expression.kind()) {
-    case ExpressionKind::InstantiateImpl:
     case ExpressionKind::ValueLiteral: {
-      // These do not correspond to source syntax.
+      // This does not correspond to source syntax.
       break;
     }
+
+    case ExpressionKind::BuiltinConvertExpression: {
+      expression_proto = ExpressionToProto(
+          *cast<BuiltinConvertExpression>(expression).source_expression());
+      break;
+    }
+
     case ExpressionKind::CallExpression: {
       const auto& call = cast<CallExpression>(expression);
       auto* call_proto = expression_proto.mutable_call();
@@ -212,6 +243,14 @@ static auto ExpressionToProto(const Expression& expression)
                 ExpressionToProto(cast<EqualsWhereClause>(where)->rhs());
             break;
           }
+          case WhereClauseKind::RewriteWhereClause: {
+            auto* rewrite = clause_proto.mutable_rewrite();
+            rewrite->set_member_name(
+                std::string(cast<RewriteWhereClause>(where)->member_name()));
+            *rewrite->mutable_replacement() = ExpressionToProto(
+                cast<RewriteWhereClause>(where)->replacement());
+            break;
+          }
         }
         *where_proto->add_clauses() = clause_proto;
       }
@@ -226,20 +265,10 @@ static auto ExpressionToProto(const Expression& expression)
 
     case ExpressionKind::IntrinsicExpression: {
       const auto& intrinsic = cast<IntrinsicExpression>(expression);
-      auto* intrinsic_proto = expression_proto.mutable_intrinsic();
-      switch (intrinsic.intrinsic()) {
-        case IntrinsicExpression::Intrinsic::Print:
-          intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::Print);
-          break;
-        case IntrinsicExpression::Intrinsic::Alloc:
-          intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::Alloc);
-          break;
-        case IntrinsicExpression::Intrinsic::Dealloc:
-          intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::Dealloc);
-          break;
-      }
-      *intrinsic_proto->mutable_argument() =
-          TupleLiteralExpressionToProto(intrinsic.args());
+      auto* call_proto = expression_proto.mutable_call();
+      call_proto->mutable_function()->mutable_identifier()->set_name(
+          std::string(intrinsic.name()));
+      *call_proto->mutable_argument() = ExpressionToProto(intrinsic.args());
       break;
     }
 
@@ -469,9 +498,16 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
           ExpressionToProto(match.expression());
       for (const Match::Clause& clause : match.clauses()) {
         auto* clause_proto = match_proto->add_clauses();
-        const bool is_default_clause =
-            clause.pattern().kind() == PatternKind::BindingPattern &&
-            cast<BindingPattern>(clause.pattern()).name() == AnonymousName;
+        // TODO: Working out whether we have a default clause after the fact
+        // like this is fragile.
+        bool is_default_clause = false;
+        if (const auto* binding = dyn_cast<BindingPattern>(&clause.pattern())) {
+          if (binding->name() == AnonymousName &&
+              isa<AutoPattern>(binding->type()) &&
+              binding->source_loc() == binding->type().source_loc()) {
+            is_default_clause = true;
+          }
+        }
         if (is_default_clause) {
           clause_proto->set_is_default(true);
         } else {
@@ -511,6 +547,16 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
       // Initializes with the default value; there's nothing to set.
       statement_proto.mutable_continue_statement();
       break;
+
+    case StatementKind::For: {
+      const auto& for_stmt = cast<For>(statement);
+      auto* for_proto = statement_proto.mutable_for_statement();
+      *for_proto->mutable_var_decl() =
+          BindingPatternToProto(for_stmt.variable_declaration());
+      *for_proto->mutable_target() = ExpressionToProto(for_stmt.loop_target());
+      *for_proto->mutable_body() = BlockStatementToProto(for_stmt.body());
+      break;
+    }
   }
   return statement_proto;
 }
@@ -534,6 +580,35 @@ static auto DeclarationToProto(const Declaration& declaration)
     -> Fuzzing::Declaration {
   Fuzzing::Declaration declaration_proto;
   switch (declaration.kind()) {
+    case DeclarationKind::DestructorDeclaration: {
+      const auto& function = cast<DestructorDeclaration>(declaration);
+      auto* function_proto = declaration_proto.mutable_destructor();
+      if (function.is_method()) {
+        switch (function.me_pattern().kind()) {
+          case PatternKind::AddrPattern:
+            *function_proto->mutable_me_pattern() =
+                PatternToProto(cast<AddrPattern>(function.me_pattern()));
+            break;
+          case PatternKind::BindingPattern:
+            *function_proto->mutable_me_pattern() =
+                PatternToProto(cast<BindingPattern>(function.me_pattern()));
+            break;
+          default:
+            // Parser shouldn't allow me_pattern to be anything other than
+            // AddrPattern or BindingPattern
+            CARBON_FATAL() << "me_pattern in method declaration can be either "
+                              "AddrPattern or BindingPattern. Actual pattern: "
+                           << function.me_pattern();
+            break;
+        }
+      }
+      if (function.body().has_value()) {
+        *function_proto->mutable_body() =
+            BlockStatementToProto(**function.body());
+      }
+      break;
+    }
+
     case DeclarationKind::FunctionDeclaration: {
       const auto& function = cast<FunctionDeclaration>(declaration);
       auto* function_proto = declaration_proto.mutable_function();
@@ -587,6 +662,29 @@ static auto DeclarationToProto(const Declaration& declaration)
       break;
     }
 
+    case DeclarationKind::MixinDeclaration: {
+      const auto& mixin = cast<MixinDeclaration>(declaration);
+      auto* mixin_proto = declaration_proto.mutable_mixin();
+      mixin_proto->set_name(mixin.name());
+      for (const auto& member : mixin.members()) {
+        *mixin_proto->add_members() = DeclarationToProto(*member);
+      }
+      // Type params not implemented yet
+      // if (mixin.params().has_value()) {
+      //  *mixin_proto->mutable_params() =
+      //      TuplePatternToProto(**mixin.params());
+      //}
+      *mixin_proto->mutable_self() = GenericBindingToProto(*mixin.self());
+      break;
+    }
+
+    case DeclarationKind::MixDeclaration: {
+      const auto& mix = cast<MixDeclaration>(declaration);
+      auto* mix_proto = declaration_proto.mutable_mix();
+      *mix_proto->mutable_mixin() = ExpressionToProto(mix.mixin());
+      break;
+    }
+
     case DeclarationKind::ChoiceDeclaration: {
       const auto& choice = cast<ChoiceDeclaration>(declaration);
       auto* choice_proto = declaration_proto.mutable_choice();
@@ -612,6 +710,21 @@ static auto DeclarationToProto(const Declaration& declaration)
       break;
     }
 
+    case DeclarationKind::InterfaceExtendsDeclaration: {
+      const auto& extends = cast<InterfaceExtendsDeclaration>(declaration);
+      auto* extends_proto = declaration_proto.mutable_interface_extends();
+      *extends_proto->mutable_base() = ExpressionToProto(*extends.base());
+      break;
+    }
+
+    case DeclarationKind::InterfaceImplDeclaration: {
+      const auto& impl = cast<InterfaceImplDeclaration>(declaration);
+      auto* impl_proto = declaration_proto.mutable_interface_impl();
+      *impl_proto->mutable_impl_type() = ExpressionToProto(*impl.impl_type());
+      *impl_proto->mutable_constraint() = ExpressionToProto(*impl.constraint());
+      break;
+    }
+
     case DeclarationKind::AssociatedConstantDeclaration: {
       const auto& assoc = cast<AssociatedConstantDeclaration>(declaration);
       auto* let_proto = declaration_proto.mutable_let();
@@ -626,8 +739,16 @@ static auto DeclarationToProto(const Declaration& declaration)
       for (const auto& member : interface.members()) {
         *interface_proto->add_members() = DeclarationToProto(*member);
       }
-      *interface_proto->mutable_self() =
-          GenericBindingToProto(*interface.self());
+      break;
+    }
+
+    case DeclarationKind::ConstraintDeclaration: {
+      const auto& constraint = cast<ConstraintDeclaration>(declaration);
+      auto* constraint_proto = declaration_proto.mutable_constraint();
+      constraint_proto->set_name(constraint.name());
+      for (const auto& member : constraint.members()) {
+        *constraint_proto->add_members() = DeclarationToProto(*member);
+      }
       break;
     }
 
@@ -665,7 +786,7 @@ static auto DeclarationToProto(const Declaration& declaration)
   return declaration_proto;
 }
 
-Fuzzing::CompilationUnit AstToProto(const AST& ast) {
+auto AstToProto(const AST& ast) -> Fuzzing::CompilationUnit {
   Fuzzing::CompilationUnit compilation_unit;
   *compilation_unit.mutable_package_statement() =
       LibraryNameToProto(ast.package);

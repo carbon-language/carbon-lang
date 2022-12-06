@@ -2,14 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{carbon} dump-tokens --print-errors=streamed %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
+// RUN: %{not} %{carbon} --print-errors=streamed dump tokens %s | \
+// RUN:   %{FileCheck-strict}
+// CHECK-COUNT-17:STDOUT: token: {{.*}}
 
 fn run(String program) {
   return True;
 
 var x = 3a;
 
-// CHECK: {{.*}}/errors_streamed_test.carbon:11:10: Invalid digit 'a' in decimal numeric literal.
-// CHECK: {{.*}}/errors_streamed_test.carbon:8:24: Closing symbol does not match most recent opening symbol.
-// CHECK-COUNT-17: token: {{.*}}
+// CHECK:STDERR:{{.*}}/errors_streamed_test.carbon:[[@LINE-2]]:10: Invalid digit 'a' in decimal numeric literal.
+// CHECK:STDERR:{{.*}}/errors_streamed_test.carbon:[[@LINE-6]]:24: Closing symbol does not match most recent opening symbol.

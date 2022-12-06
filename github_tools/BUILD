@@ -30,23 +30,3 @@ py_test(
     python_version = "PY3",
     deps = [":pr_comments"],
 )
-
-py_binary(
-    name = "update_label_access",
-    srcs = ["update_label_access.py"],
-    python_version = "PY3",
-    deps = [
-        "github_helpers",
-        requirement("pygithub"),
-    ],
-)
-
-py_test(
-    name = "update_label_access_test",
-    srcs = ["update_label_access_test.py"],
-    python_version = "PY3",
-    deps = [
-        ":pr_comments",
-        ":update_label_access",
-    ],
-)

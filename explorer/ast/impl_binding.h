@@ -32,7 +32,7 @@ class ImplBinding : public AstNode {
 
   ImplBinding(SourceLocation source_loc,
               Nonnull<const GenericBinding*> type_var,
-              Nonnull<const Value*> iface)
+              std::optional<Nonnull<const Value*>> iface)
       : AstNode(AstNodeKind::ImplBinding, source_loc),
         type_var_(type_var),
         iface_(iface) {}
@@ -45,8 +45,19 @@ class ImplBinding : public AstNode {
 
   // The binding for the type variable.
   auto type_var() const -> Nonnull<const GenericBinding*> { return type_var_; }
-  // The interface being implemented.
-  auto interface() const -> Nonnull<const Value*> { return iface_; }
+  // The constraint being implemented.
+  // TODO: Rename this to `constraint`.
+  auto interface() const -> Nonnull<const Value*> {
+    CARBON_CHECK(iface_) << "interface has not been set yet";
+    return *iface_;
+  }
+
+  // Set the interface being implemented, if not set by the constructor. Should
+  // only be called by typechecking.
+  void set_interface(Nonnull<const Value*> iface) {
+    CARBON_CHECK(!iface_) << "interface set twice";
+    iface_ = iface;
+  }
 
   // Required for the ValueNode interface
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
@@ -60,23 +71,20 @@ class ImplBinding : public AstNode {
     symbolic_identity_ = value;
   }
 
-  // The static type of the impl. Cannot be called before typechecking.
-  auto static_type() const -> const Value& { return **static_type_; }
-
-  // Sets the static type of the impl. Can only be called once, during
-  // typechecking.
-  void set_static_type(Nonnull<const Value*> type) {
-    CARBON_CHECK(!static_type_.has_value());
-    static_type_ = type;
+  // These functions exist only so that an `ImplBinding` can be used as a
+  // `ValueNodeView` as a key in a `StaticScope`.
+  auto static_type() const -> const Value& {
+    CARBON_FATAL() << "an ImplBinding has no type";
   }
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
   // Return the original impl binding.
   auto original() const -> Nonnull<const ImplBinding*> {
-    if (original_.has_value())
+    if (original_.has_value()) {
       return *original_;
-    else
+    } else {
       return this;
+    }
   }
 
   // Set the original impl binding.
@@ -84,9 +92,8 @@ class ImplBinding : public AstNode {
 
  private:
   Nonnull<const GenericBinding*> type_var_;
-  Nonnull<const Value*> iface_;
+  std::optional<Nonnull<const Value*>> iface_;
   std::optional<Nonnull<const Value*>> symbolic_identity_;
-  std::optional<Nonnull<const Value*>> static_type_;
   std::optional<Nonnull<const ImplBinding*>> original_;
 };
 

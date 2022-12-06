@@ -2,11 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -20,7 +18,7 @@ class Point {
   var y: i32;
 }
 
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_external_impl_self.carbon:[[@LINE+1]]: could not resolve 'Self'
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_external_impl_self.carbon:[[@LINE+1]]: could not resolve 'Self'
 external impl Self as Vector {
   fn Add[me: Point](b: Point) -> Point {
     return {.x = me.x + b.x, .y = me.y + b.y};

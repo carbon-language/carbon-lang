@@ -5,29 +5,29 @@
 #include "toolchain/parser/parse_tree.h"
 
 #include <cstdlib>
+#include <optional>
 
 #include "common/check.h"
-#include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/Optional.h"
+#include "common/error.h"
 #include "llvm/ADT/Sequence.h"
-#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/iterator.h"
-#include "llvm/Support/raw_ostream.h"
-#include "toolchain/lexer/token_kind.h"
+#include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
-#include "toolchain/parser/parser_impl.h"
+#include "toolchain/parser/parser.h"
 
 namespace Carbon {
 
-auto ParseTree::Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer)
-    -> ParseTree {
+auto ParseTree::Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
+                      llvm::raw_ostream* vlog_stream) -> ParseTree {
   TokenizedBuffer::TokenLocationTranslator translator(
-      tokens, /*last_line_lexed_to_column=*/nullptr);
+      &tokens, /*last_line_lexed_to_column=*/nullptr);
   TokenDiagnosticEmitter emitter(translator, consumer);
 
   // Delegate to the parser.
-  return Parser::Parse(tokens, emitter);
+  auto tree = Parser::Parse(tokens, emitter, vlog_stream);
+  auto verify_error = tree.Verify();
+  CARBON_CHECK(!verify_error) << tree << *verify_error;
+  return tree;
 }
 
 auto ParseTree::postorder() const -> llvm::iterator_range<PostorderIterator> {
@@ -40,8 +40,8 @@ auto ParseTree::postorder(Node n) const
   CARBON_CHECK(n.is_valid());
   // The postorder ends after this node, the root, and begins at the start of
   // its subtree.
-  int end_index = n.index_ + 1;
-  int start_index = end_index - node_impls_[n.index_].subtree_size;
+  int end_index = n.index + 1;
+  int start_index = end_index - node_impls_[n.index].subtree_size;
   return {PostorderIterator(Node(start_index)),
           PostorderIterator(Node(end_index))};
 }
@@ -49,8 +49,8 @@ auto ParseTree::postorder(Node n) const
 auto ParseTree::children(Node n) const
     -> llvm::iterator_range<SiblingIterator> {
   CARBON_CHECK(n.is_valid());
-  int end_index = n.index_ - node_impls_[n.index_].subtree_size;
-  return {SiblingIterator(*this, Node(n.index_ - 1)),
+  int end_index = n.index - node_impls_[n.index].subtree_size;
+  return {SiblingIterator(*this, Node(n.index - 1)),
           SiblingIterator(*this, Node(end_index))};
 }
 
@@ -62,36 +62,96 @@ auto ParseTree::roots() const -> llvm::iterator_range<SiblingIterator> {
 
 auto ParseTree::node_has_error(Node n) const -> bool {
   CARBON_CHECK(n.is_valid());
-  return node_impls_[n.index_].has_error;
+  return node_impls_[n.index].has_error;
 }
 
 auto ParseTree::node_kind(Node n) const -> ParseNodeKind {
   CARBON_CHECK(n.is_valid());
-  return node_impls_[n.index_].kind;
+  return node_impls_[n.index].kind;
 }
 
 auto ParseTree::node_token(Node n) const -> TokenizedBuffer::Token {
   CARBON_CHECK(n.is_valid());
-  return node_impls_[n.index_].token;
+  return node_impls_[n.index].token;
 }
 
 auto ParseTree::node_subtree_size(Node n) const -> int32_t {
   CARBON_CHECK(n.is_valid());
-  return node_impls_[n.index_].subtree_size;
+  return node_impls_[n.index].subtree_size;
 }
 
 auto ParseTree::GetNodeText(Node n) const -> llvm::StringRef {
   CARBON_CHECK(n.is_valid());
-  return tokens_->GetTokenText(node_impls_[n.index_].token);
+  return tokens_->GetTokenText(node_impls_[n.index].token);
+}
+
+auto ParseTree::PrintNode(llvm::raw_ostream& output, Node n, int depth,
+                          bool preorder) const -> bool {
+  const auto& n_impl = node_impls_[n.index];
+  output.indent(2 * depth);
+  output << "{";
+  // If children are being added, include node_index in order to disambiguate
+  // nodes.
+  if (preorder) {
+    output << "node_index: " << n << ", ";
+  }
+  output << "kind: '" << n_impl.kind.name() << "', text: '"
+         << tokens_->GetTokenText(n_impl.token) << "'";
+
+  if (n_impl.has_error) {
+    output << ", has_error: yes";
+  }
+
+  if (n_impl.subtree_size > 1) {
+    output << ", subtree_size: " << n_impl.subtree_size;
+    if (preorder) {
+      output << ", children: [\n";
+      return true;
+    }
+  }
+  output << "}";
+  return false;
 }
 
 auto ParseTree::Print(llvm::raw_ostream& output) const -> void {
+  // Walk the tree just to calculate depths for each node.
+  llvm::SmallVector<int> indents;
+  indents.append(size(), 0);
+
+  llvm::SmallVector<std::pair<Node, int>, 16> node_stack;
+  for (Node n : roots()) {
+    node_stack.push_back({n, 0});
+  }
+
+  while (!node_stack.empty()) {
+    Node n;
+    int depth;
+    std::tie(n, depth) = node_stack.pop_back_val();
+    for (Node sibling_n : children(n)) {
+      indents[sibling_n.index] = depth + 1;
+      node_stack.push_back({sibling_n, depth + 1});
+    }
+  }
+
   output << "[\n";
-  // The parse tree is stored in postorder, but the most natural order to
-  // visualize is preorder. This is a tree, so the preorder can be constructed
-  // by reversing the order of each level of siblings within an RPO. The sibling
-  // iterators are directly built around RPO and so can be used with a stack to
-  // produce preorder.
+  for (Node n : postorder()) {
+    PrintNode(output, n, indents[n.index], /*adding_children=*/false);
+    output << ",\n";
+  }
+  output << "]\n";
+}
+
+auto ParseTree::Print(llvm::raw_ostream& output, bool preorder) const -> void {
+  if (!preorder) {
+    Print(output);
+    return;
+  }
+
+  output << "[\n";
+  // The parse tree is stored in postorder. The preorder can be constructed
+  // by reversing the order of each level of siblings within an RPO. The
+  // sibling iterators are directly built around RPO and so can be used with a
+  // stack to produce preorder.
 
   // The roots, like siblings, are in RPO (so reversed), but we add them in
   // order here because we'll pop off the stack effectively reversing then.
@@ -104,36 +164,15 @@ auto ParseTree::Print(llvm::raw_ostream& output) const -> void {
     Node n;
     int depth;
     std::tie(n, depth) = node_stack.pop_back_val();
-    auto& n_impl = node_impls_[n.index()];
 
-    for (int unused_indent : llvm::seq(0, depth)) {
-      (void)unused_indent;
-      output << "  ";
-    }
-
-    output << "{node_index: " << n.index_ << ", kind: '" << n_impl.kind.name()
-           << "', text: '" << tokens_->GetTokenText(n_impl.token) << "'";
-
-    if (n_impl.has_error) {
-      output << ", has_error: yes";
-    }
-
-    if (n_impl.subtree_size > 1) {
-      output << ", subtree_size: " << n_impl.subtree_size;
-      // Has children, so we descend.
-      output << ", children: [\n";
-      // We append the children in order here as well because they will get
-      // reversed when popped off the stack.
+    if (PrintNode(output, n, depth, /*adding_children=*/true)) {
+      // Has children, so we descend. We append the children in order here as
+      // well because they will get reversed when popped off the stack.
       for (Node sibling_n : children(n)) {
         node_stack.push_back({sibling_n, depth + 1});
       }
       continue;
     }
-
-    // This node is finished, so close it up.
-    CARBON_CHECK(n_impl.subtree_size == 1)
-        << "Subtree size must always be a positive integer!";
-    output << "}";
 
     int next_depth = node_stack.empty() ? 0 : node_stack.back().second;
     CARBON_CHECK(next_depth <= depth) << "Cannot have the next depth increase!";
@@ -142,89 +181,95 @@ auto ParseTree::Print(llvm::raw_ostream& output) const -> void {
       output << "]}";
     }
 
-    // We always end with a comma and a new line as we'll move to the next node
-    // at whatever the current level ends up being.
+    // We always end with a comma and a new line as we'll move to the next
+    // node at whatever the current level ends up being.
     output << ",\n";
   }
   output << "]\n";
 }
 
-auto ParseTree::Verify() const -> bool {
-  // Verify basic tree structure invariants.
-  llvm::SmallVector<ParseTree::Node, 16> ancestors;
-  for (Node n : llvm::reverse(postorder())) {
-    auto& n_impl = node_impls_[n.index()];
+auto ParseTree::Verify() const -> std::optional<Error> {
+  llvm::SmallVector<ParseTree::Node> nodes;
+  // Traverse the tree in postorder.
+  for (Node n : postorder()) {
+    const auto& n_impl = node_impls_[n.index];
 
     if (n_impl.has_error && !has_errors_) {
-      llvm::errs()
-          << "Node #" << n.index()
-          << " has errors, but the tree is not marked as having any.\n";
-      return false;
+      return Error(llvm::formatv(
+          "Node #{0} has errors, but the tree is not marked as having any.",
+          n.index));
     }
 
-    if (n_impl.subtree_size > 1) {
-      if (!ancestors.empty()) {
-        auto parent_n = ancestors.back();
-        auto& parent_n_impl = node_impls_[parent_n.index()];
-        int end_index = n.index() - n_impl.subtree_size;
-        int parent_end_index = parent_n.index() - parent_n_impl.subtree_size;
-        if (parent_end_index > end_index) {
-          llvm::errs() << "Node #" << n.index() << " has a subtree size of "
-                       << n_impl.subtree_size
-                       << " which extends beyond its parent's (node #"
-                       << parent_n.index() << ") subtree (size "
-                       << parent_n_impl.subtree_size << ")\n";
-          return false;
+    int subtree_size = 1;
+    if (n_impl.kind.has_bracket()) {
+      while (true) {
+        if (nodes.empty()) {
+          return Error(
+              llvm::formatv("Node #{0} is a {1} with bracket {2}, but didn't "
+                            "find the bracket.",
+                            n, n_impl.kind, n_impl.kind.bracket()));
+        }
+        auto child_impl = node_impls_[nodes.pop_back_val().index];
+        subtree_size += child_impl.subtree_size;
+        if (n_impl.kind.bracket() == child_impl.kind) {
+          break;
         }
       }
-      // Has children, so we descend.
-      ancestors.push_back(n);
-      continue;
-    }
-
-    if (n_impl.subtree_size < 1) {
-      llvm::errs() << "Node #" << n.index()
-                   << " has an invalid subtree size of " << n_impl.subtree_size
-                   << "!\n";
-      return false;
-    }
-
-    // We're going to pop off some levels of the tree. Check each ancestor to
-    // make sure the offsets are correct.
-    int next_index = n.index() - 1;
-    while (!ancestors.empty()) {
-      ParseTree::Node parent_n = ancestors.back();
-      if ((parent_n.index() - node_impls_[parent_n.index()].subtree_size) !=
-          next_index) {
-        break;
+    } else {
+      for (int i = 0; i < n_impl.kind.child_count(); ++i) {
+        if (nodes.empty()) {
+          return Error(llvm::formatv(
+              "Node #{0} is a {1} with child_count {2}, but only had {3} "
+              "nodes to consume.",
+              n, n_impl.kind, n_impl.kind.child_count(), i));
+        }
+        auto child_impl = node_impls_[nodes.pop_back_val().index];
+        subtree_size += child_impl.subtree_size;
       }
-      ancestors.pop_back();
     }
-  }
-  if (!ancestors.empty()) {
-    llvm::errs()
-        << "Finished walking the parse tree and there are still ancestors:\n";
-    for (Node ancestor_n : ancestors) {
-      llvm::errs() << "  Node #" << ancestor_n.index() << "\n";
+    if (n_impl.subtree_size != subtree_size) {
+      return Error(llvm::formatv(
+          "Node #{0} is a {1} with subtree_size of {2}, but calculated {3}.", n,
+          n_impl.kind, n_impl.subtree_size, subtree_size));
     }
-    return false;
+    nodes.push_back(n);
   }
 
-  return true;
-}
+  // Remaining nodes should all be roots in the tree; make sure they line up.
+  CARBON_CHECK(nodes.back().index ==
+               static_cast<int32_t>(node_impls_.size()) - 1)
+      << nodes.back() << " " << node_impls_.size() - 1;
+  int prev_index = -1;
+  for (const auto& n : nodes) {
+    const auto& n_impl = node_impls_[n.index];
 
-auto ParseTree::Node::Print(llvm::raw_ostream& output) const -> void {
-  output << index();
+    if (n.index - n_impl.subtree_size != prev_index) {
+      return Error(
+          llvm::formatv("Node #{0} is a root {1} with subtree_size {2}, but "
+                        "previous root was at #{3}.",
+                        n, n_impl.kind, n_impl.subtree_size, prev_index));
+    }
+    prev_index = n.index;
+  }
+
+  if (!has_errors_ &&
+      static_cast<int32_t>(node_impls_.size()) != tokens_->size()) {
+    return Error(
+        llvm::formatv("ParseTree has {0} nodes and no errors, but "
+                      "TokenizedBuffer has {1} tokens.",
+                      node_impls_.size(), tokens_->size()));
+  }
+  return std::nullopt;
 }
 
 auto ParseTree::PostorderIterator::Print(llvm::raw_ostream& output) const
     -> void {
-  output << node_.index();
+  output << node_;
 }
 
 auto ParseTree::SiblingIterator::Print(llvm::raw_ostream& output) const
     -> void {
-  output << node_.index();
+  output << node_;
 }
 
 }  // namespace Carbon

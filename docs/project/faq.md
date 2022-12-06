@@ -17,6 +17,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [How complete is Carbon's design?](#how-complete-is-carbons-design)
     -   [How many people are involved in Carbon?](#how-many-people-are-involved-in-carbon)
     -   [Is there a demo?](#is-there-a-demo)
+    -   [Where should I ask questions about Carbon Language?](#where-should-i-ask-questions-about-carbon-language)
+    -   [Why isn't there a Carbon Language logo?](#why-isnt-there-a-carbon-language-logo)
 -   [Why build Carbon?](#why-build-carbon)
     -   [Why is performance critical?](#why-is-performance-critical)
     -   [What level of C++ interoperability is expected?](#what-level-of-c-interoperability-is-expected)
@@ -28,13 +30,17 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [If you can use Rust, ignore Carbon](#if-you-can-use-rust-ignore-carbon)
         -   [Why is adopting Rust difficult for C++ codebases?](#why-is-adopting-rust-difficult-for-c-codebases)
     -   [Why not a garbage collected language, like Java, Kotlin, or Go?](#why-not-a-garbage-collected-language-like-java-kotlin-or-go)
+-   [How were specific feature designs chosen?](#how-were-specific-feature-designs-chosen)
+    -   [Why aren't `<` and `>` used as delimiters?](#why-arent--and--used-as-delimiters)
+    -   [Why do variable declarations have to start with `var` or `let`?](#why-do-variable-declarations-have-to-start-with-var-or-let)
+    -   [Why do variable declarations have to have types?](#why-do-variable-declarations-have-to-have-types)
 -   [How will Carbon work?](#how-will-carbon-work)
     -   [What compiler infrastructure is Carbon using?](#what-compiler-infrastructure-is-carbon-using)
     -   [How will Carbon's bidirectional C++ interoperability work?](#how-will-carbons-bidirectional-c-interoperability-work)
     -   [How do Carbon generics differ from templates?](#how-do-carbon-generics-differ-from-templates)
     -   [What is Carbon's memory model?](#what-is-carbons-memory-model)
     -   [How will Carbon achieve memory safety?](#how-will-carbon-achieve-memory-safety)
--   [How will the Carbon _project_ work?](#how-will-the-carbon-_project_-work)
+-   [How will the Carbon _project_ work?](#how-will-the-carbon-project-work)
     -   [Where does development occur?](#where-does-development-occur)
     -   [How does Carbon make decisions?](#how-does-carbon-make-decisions)
     -   [What happens when a decision was wrong?](#what-happens-when-a-decision-was-wrong)
@@ -42,6 +48,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Why make Carbon open source?](#why-make-carbon-open-source)
     -   [Why does Carbon have a CLA?](#why-does-carbon-have-a-cla)
     -   [Who pays for Carbon's infrastructure?](#who-pays-for-carbons-infrastructure)
+-   [How can I contribute to Carbon?](#how-can-i-contribute-to-carbon)
+    -   [What are the prerequisites for contributing to Carbon Language's design and tools?](#what-are-the-prerequisites-for-contributing-to-carbon-languages-design-and-tools)
+    -   [When do we revisit decisions or reopen discussions?](#when-do-we-revisit-decisions-or-reopen-discussions)
+    -   [What can I do if I disagree with a design decision?](#what-can-i-do-if-i-disagree-with-a-design-decision)
+    -   [How can I best say "I like X" or "I don't like X"?](#how-can-i-best-say-i-like-x-or-i-dont-like-x)
 
 <!-- tocstop -->
 
@@ -103,7 +114,7 @@ Yes! A prototype interpreter demo `explorer` can be used to execute simple
 examples. For example:
 
 ```
-$ bazel run //explorer -- ./explorer/testdata/basic_syntax/print.carbon
+$ bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
 ```
 
 Example source files can be found under
@@ -112,10 +123,31 @@ Example source files can be found under
 Carbon can also be explored interactively on
 [https://carbon.compiler-explorer.com](https://carbon.compiler-explorer.com/).
 
+### Where should I ask questions about Carbon Language?
+
+Please ask questions and hold discussions either by using
+[GitHub Discussions](https://github.com/carbon-language/carbon-lang/discussions)
+or
+[#language-questions on Discord](https://discord.com/channels/655572317891461132/998959756045713438).
+
+GitHub Issues should be reserved for missing features, bugs, and anything else
+that is fixable by way of a Pull Request.
+
+### Why isn't there a Carbon Language logo?
+
+Establishing a Carbon Language logo isn't a priority right now. Remember that
+this project is an _experiment_, and so we think it's best to concentrate
+efforts on ensuring that the language succeeds at its goals instead.
+
+We have a few drafts in the works, but it requires a fair amount of work to get
+right, and getting it wrong is costly, so we won't be adding one in the near
+future. Don't suggest logos, because we need to be careful about how we create
+one.
+
 ## Why build Carbon?
 
-See the [project README](#why-build-carbon) for an overview of the motivation
-for Carbon. This section dives into specific questions in that space.
+See the [project README](/README.md#why-build-carbon) for an overview of the
+motivation for Carbon. This section dives into specific questions in that space.
 
 ### Why is performance critical?
 
@@ -146,7 +178,7 @@ For example, considering a pure C++ application:
 <a href="/docs/images/snippets.md#c">
 <!--
 Edit snippet in /docs/images/snippets.md and:
-https://drive.google.com/drive/folders/1-rsUjiya7dSZ87L8kpZmu3MZghRVxzLA
+https://drive.google.com/drive/folders/1QrBXiy_X74YsOueeC0IYlgyolWIhvusB
 -->
 <img src="/docs/images/cpp_snippet.svg" width="600"
      alt="A snippet of C++ code. Follow the link to read it.">
@@ -157,7 +189,7 @@ It's possible to migrate a single function to Carbon:
 <a href="/docs/images/snippets.md#mixed">
 <!--
 Edit snippet in /docs/images/snippets.md and:
-https://drive.google.com/drive/folders/1-rsUjiya7dSZ87L8kpZmu3MZghRVxzLA
+https://drive.google.com/drive/folders/1QrBXiy_X74YsOueeC0IYlgyolWIhvusB
 -->
 <img src="/docs/images/mixed_snippet.svg" width="600"
      alt="A snippet of mixed Carbon and C++ code. Follow the link to read it.">
@@ -281,6 +313,98 @@ over performance. This trade-off makes sense for many applications, and we
 actively encourage using these languages in those cases. However, we need a
 solution for C++ use-cases that require its full performance, low-level control,
 and access to hardware.
+
+## How were specific feature designs chosen?
+
+Throughout the design, we include 'Alternatives considered' and 'References'
+sections which can be used to research the decision process for a particular
+design.
+
+### Why aren't `<` and `>` used as delimiters?
+
+[One of our goals for Carbon](/docs/project/goals.md#fast-and-scalable-development)
+is that it should support parsing without contextual or semantic information,
+and experience with C++ has shown that using `<` as both a binary operator and
+an opening delimiter makes that goal difficult to achieve.
+
+For example, in C++, the expression `a<b>(c)` could parse as either a function
+call with a template argument `b` and an ordinary argument `c`, or as a chained
+comparison `(a < b) > (c)`. In order to resolve the ambiguity, the compiler has
+to perform name lookup on `a` to determine whether there's a function named `a`
+in scope.
+
+It's also worth noting that Carbon
+[doesn't use _any_ kind of brackets](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/README.md#checked-and-template-parameters)
+to mark template or generic parameters, so if Carbon had angle brackets, they
+would mean something different than they do in C++, which could cause confusion.
+We do use square brackets to mark _deduced_ parameters, as in:
+
+```
+fn Sort[T:! Comparable](a: Vector(T)*)
+```
+
+But deduced parameters aren't the same thing as template parameters. In
+particular, deduced parameters are never mentioned at the callsite, so those
+square brackets are never part of the expression syntax.
+
+See [Proposal #676: `:!` generic syntax](/proposals/p0676.md) for more
+background on how and why we chose our current generics syntax.
+
+### Why do variable declarations have to start with `var` or `let`?
+
+In Carbon, a declaration of a single variable looks like this:
+
+```
+var the_answer: i32 = 42;
+```
+
+But this is just the most common case. The syntax between `var` and `=` can be
+any [irrefutable pattern](/docs/design/README.md#patterns), not just a single
+variable binding. For example:
+
+```
+var ((x: i32, _: i32), y: auto) = ((1, 2), (3, 4));
+```
+
+This code is valid, and initializes `x` to `1` and `y` to `(3, 4)`. In the
+future, we will probably also support destructuring structs in a similar way,
+and many other kinds of patterns are possible.
+
+Now consider how that example would look if the `var` token were not required:
+
+```
+((x: i32, _: i32), y: auto) = ((1, 2), (3, 4));
+```
+
+With this example, the parser would need to look four tokens ahead to determine
+that it's parsing a variable declaration rather than an expression. With more
+deeply-nested patterns, it would have to look ahead farther. Avoiding this sort
+of unbounded lookahead is an important part of our
+[fast and scalable development](/docs/project/goals.md#fast-and-scalable-development)
+goal.
+
+### Why do variable declarations have to have types?
+
+As discussed above, Carbon variable declarations are actually doing a form of
+pattern matching. In a declaration like this:
+
+```
+var the_answer: i32 = 42;
+```
+
+`the_answer: i32` is an example of a _binding pattern_, which matches any value
+of the appropriate type, and binds the given name to it. The `: i32` can't be
+omitted, because `the_answer` on its own is an expression, and any Carbon
+expression is also a valid pattern, which matches if the value being matched is
+equal to the value of the expression. So `var the_answer = 42;` would try to
+match `42` with the value of the expression `the_answer`, which requires a
+variable named `the_answer` to already exist.
+
+There are other ways of approaching pattern matching, but there are tradeoffs.
+Pattern matching is still on a provisional design, and as of August 2022 it
+hasn't been fully reviewed with alternatives considered. A future proposal for
+pattern matching will need to weigh the tradeoffs in more detail, and may come
+to a different decision.
 
 ## How will Carbon work?
 
@@ -434,3 +558,83 @@ Carbon is currently bootstrapping infrastructure with the help of Google. As
 soon as a foundation is ready to oversee infrastructure, such as
 [continuous integration](https://en.wikipedia.org/wiki/Continuous_integration)
 and the CLA, we plan to transfer them so they are run by the community.
+
+## How can I contribute to Carbon?
+
+There are many ways to contribute, and we appreciate all of them. Begin by
+reading the project's [Contributing](/CONTRIBUTING.md) page to learn more about
+how you can contribute.
+
+### What are the prerequisites for contributing to Carbon Language's design and tools?
+
+**[Carbon Language isn't ready for use](#how-soon-can-we-use-carbon). This
+section is for people wishing to participate in designing and implementing the
+language.**
+
+Carbon is being designed to migrate C++ codebases and to look familiar to C++
+programmers. As such, familiarity with C++ is very important. Carbon is also
+trying to learn from other programming languages, so having broad experience
+with other programming languages will be helpful to see tradeoffs in design
+decisions.
+
+The Carbon toolchain is being implemented in C++, and we also use Python and
+Starlark. As we're building off of the LLVM project, familiarity with Clang and
+other parts of LLVM will be advantageous, but not required.
+
+Our [contribution tools](/docs/project/contribution_tools.md) page documents
+specific tools we use when building.
+
+### When do we revisit decisions or reopen discussions?
+
+Once a decision is made through the [evolution process](evolution.md) the
+community should treat it as _firmly_ decided. This doesn't mean that the
+decision is _definitely_ right or set in stone, it just means we'd like the
+community to focus time and energy on other issues in the name of progress.
+
+Sometimes, it will be appropriate to revisit a decision; for example, when there
+is new information introduced, a new community joins Carbon, or there is an
+order of magnitude growth in the community. These cases are handled as new
+proposals through the [evolution process](evolution.md).
+
+For example, we have done this with digit separators: we missed important
+_domain_ conventions and had overly restricted where separators are allowed,
+[an issue was filed with the new information](https://github.com/carbon-language/carbon-lang/issues/1485),
+and we're fixing the choice.
+
+See also the related questions
+[What happens when a decision was wrong?](#what-happens-when-a-decision-was-wrong),
+[How does Carbon make decisions?](#how-does-carbon-make-decisions), and
+[What can I do if I disagree with a design decision?](#what-can-i-do-if-i-disagree-with-a-design-decision).
+
+### What can I do if I disagree with a design decision?
+
+We invite you to give us constructive feedback. Some of Carbon's design
+decisions are made with the _expectation_ of receiving community feedback. We
+understand that many decisions won't be universally popular, but we'd still like
+to understand the community's reaction to Carbon.
+
+We encourage you to investigate why Carbon came to be the way it is. Designs
+will include links to the proposals and important alternatives considered that
+led to them, typically linked at the bottom. Read through and understand the
+context and rationale behind the decisions you are concerned about. You may find
+that your concerns were already thoroughly discussed. If not, you will be in a
+better place to present your thoughts in a convincing way.
+
+Changing decisions that have come out of the [evolution process](evolution.md)
+involves a formal process. See
+[When do we revisit decisions or reopen discussions?](#when-do-we-revisit-decisions-or-reopen-discussions).
+For these issues in particular, please be aware that other community members may
+choose to not actively engage in detailed discussions, especially if the
+discussion seems to be revisiting points made in the past.
+
+If after reading this answer you are not sure how to proceed please feel free to
+ask (see
+[Where should I ask questions?](#where-should-i-ask-questions-about-carbon-language)).
+
+### How can I best say "I like X" or "I don't like X"?
+
+Both Discord and GitHub Discussions allow you to give an emoji "reaction" to
+individual posts. If you'd like to amplify what has already been said, please
+use these instead of posting messages that re-state substantially the same
+thing. These make conversations easier to follow and understand general
+sentiment in discussions involving many people.

@@ -127,8 +127,8 @@ TEST(DriverTest, DumpTokens) {
   Driver driver = Driver(test_output_stream, test_error_stream);
 
   auto test_file_path = CreateTestFile("Hello World");
-  EXPECT_TRUE(driver.RunDumpTokensSubcommand(ConsoleDiagnosticConsumer(),
-                                             {test_file_path}));
+  EXPECT_TRUE(driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(),
+                                       {"tokens", test_file_path}));
   EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
   auto tokenized_text = test_output_stream.TakeStr();
 
@@ -158,27 +158,32 @@ TEST(DriverTest, DumpTokens) {
                                                {"spelling", ""}}}}));
 
   // Check that the subcommand dispatch works.
-  EXPECT_TRUE(driver.RunFullCommand({"dump-tokens", test_file_path}));
+  EXPECT_TRUE(driver.RunFullCommand({"dump", "tokens", test_file_path}));
   EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
   EXPECT_THAT(test_output_stream.TakeStr(), StrEq(tokenized_text));
 }
 
-TEST(DriverTest, DumpTokenErrors) {
+TEST(DriverTest, DumpErrors) {
   RawTestOstream test_output_stream;
   RawTestOstream test_error_stream;
   Driver driver = Driver(test_output_stream, test_error_stream);
 
-  EXPECT_FALSE(driver.RunDumpTokensSubcommand(ConsoleDiagnosticConsumer(), {}));
+  EXPECT_FALSE(driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(), {"foo"}));
   EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
   EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
 
   EXPECT_FALSE(
-      driver.RunDumpTokensSubcommand(ConsoleDiagnosticConsumer(), {"--xyz"}));
+      driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(), {"--xyz"}));
   EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
   EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
 
-  EXPECT_FALSE(driver.RunDumpTokensSubcommand(ConsoleDiagnosticConsumer(),
-                                              {"/not/a/real/file/name"}));
+  EXPECT_FALSE(
+      driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(), {"tokens"}));
+  EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
+  EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
+
+  EXPECT_FALSE(driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(),
+                                        {"tokens", "/not/a/real/file/name"}));
   EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
   EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
 }
@@ -189,54 +194,17 @@ TEST(DriverTest, DumpParseTree) {
   Driver driver = Driver(test_output_stream, test_error_stream);
 
   auto test_file_path = CreateTestFile("var v: Int = 42;");
-  EXPECT_TRUE(driver.RunDumpParseTreeSubcommand(ConsoleDiagnosticConsumer(),
-                                                {test_file_path}));
+  EXPECT_TRUE(driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(),
+                                       {"parse-tree", test_file_path}));
   EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
-  auto tokenized_text = test_output_stream.TakeStr();
-
-  EXPECT_THAT(
-      Yaml::Value::FromText(tokenized_text),
-      ElementsAre(Yaml::SequenceValue{
-          Yaml::MappingValue{
-              {"node_index", "6"},
-              {"kind", "VariableDeclaration"},
-              {"text", "var"},
-              {"subtree_size", "7"},
-              {"children",
-               Yaml::SequenceValue{
-                   Yaml::MappingValue{
-                       {"node_index", "2"},
-                       {"kind", "PatternBinding"},
-                       {"text", ":"},
-                       {"subtree_size", "3"},
-                       {"children",
-                        Yaml::SequenceValue{
-                            Yaml::MappingValue{{"node_index", "0"},
-                                               {"kind", "DeclaredName"},
-                                               {"text", "v"}},
-                            Yaml::MappingValue{{"node_index", "1"},
-                                               {"kind", "NameReference"},
-                                               {"text", "Int"}}}}},
-                   Yaml::MappingValue{{"node_index", "4"},
-                                      {"kind", "VariableInitializer"},
-                                      {"text", "="},
-                                      {"subtree_size", "2"},
-                                      {"children",  //
-                                       Yaml::SequenceValue{Yaml::MappingValue{
-                                           {"node_index", "3"},
-                                           {"kind", "Literal"},
-                                           {"text", "42"}}}}},
-                   Yaml::MappingValue{{"node_index", "5"},
-                                      {"kind", "DeclarationEnd"},
-                                      {"text", ";"}}}}},
-          Yaml::MappingValue{{"node_index", "7"},  //
-                             {"kind", "FileEnd"},
-                             {"text", ""}}}));
+  // Verify there is output without examining it.
+  EXPECT_FALSE(test_output_stream.TakeStr().empty());
 
   // Check that the subcommand dispatch works.
-  EXPECT_TRUE(driver.RunFullCommand({"dump-parse-tree", test_file_path}));
+  EXPECT_TRUE(driver.RunFullCommand({"dump", "parse-tree", test_file_path}));
   EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_output_stream.TakeStr(), StrEq(tokenized_text));
+  // Verify there is output without examining it.
+  EXPECT_FALSE(test_output_stream.TakeStr().empty());
 }
 
 }  // namespace
