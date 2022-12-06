@@ -328,13 +328,11 @@ class StructValue : public Value {
 class NominalClassValue : public Value {
  public:
   static constexpr llvm::StringLiteral BaseField{"base"};
+  using VTable =
+      std::unordered_map<std::string, Nonnull<const CallableDeclaration*>>;
 
   NominalClassValue(Nonnull<const Value*> type, Nonnull<const Value*> inits,
-                    std::optional<Nonnull<const NominalClassValue*>> base)
-      : Value(Kind::NominalClassValue),
-        type_(type),
-        inits_(inits),
-        base_(base) {}
+                    std::optional<Nonnull<const NominalClassValue*>> base);
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassValue;
@@ -345,12 +343,13 @@ class NominalClassValue : public Value {
   auto base() const -> std::optional<Nonnull<const NominalClassValue*>> {
     return base_;
   }
+  auto vtable() const -> const NominalClassValue::VTable& { return vtable_; }
 
  private:
   Nonnull<const Value*> type_;
   Nonnull<const Value*> inits_;  // The initializing StructValue.
+  const NominalClassValue::VTable vtable_;
   std::optional<Nonnull<const NominalClassValue*>> base_;
-  std::unordered_map<std::string, Nonnull<FunctionDeclaration*>> vtable_;
 };
 
 // An alternative constructor value.
@@ -686,6 +685,9 @@ class NominalClassType : public Value {
     return bindings_->witnesses();
   }
 
+  auto vtable() const -> const NominalClassValue::VTable& { return vtable_; };
+  void set_vtable(const NominalClassValue::VTable& vtable) { vtable_ = vtable; }
+
   // Returns whether this a parameterized class. That is, a class with
   // parameters and no corresponding arguments.
   auto IsParameterized() const -> bool {
@@ -696,6 +698,7 @@ class NominalClassType : public Value {
   Nonnull<const ClassDeclaration*> declaration_;
   Nonnull<const Bindings*> bindings_ = Bindings::None();
   std::optional<Nonnull<const NominalClassType*>> base_;
+  NominalClassValue::VTable vtable_;
 };
 
 class MixinPseudoType : public Value {

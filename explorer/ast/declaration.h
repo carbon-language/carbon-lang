@@ -162,7 +162,7 @@ class CallableDeclaration : public Declaration {
   auto return_term() -> ReturnTerm& { return return_term_; }
   auto body() const -> std::optional<Nonnull<const Block*>> { return body_; }
   auto body() -> std::optional<Nonnull<Block*>> { return body_; }
-  auto is_virtual() -> bool { return is_virtual_; }
+  auto is_virtual() const -> bool { return is_virtual_; }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 

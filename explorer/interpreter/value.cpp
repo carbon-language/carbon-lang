@@ -36,6 +36,15 @@ auto StructValue::FindField(std::string_view name) const
   return std::nullopt;
 }
 
+NominalClassValue::NominalClassValue(
+    Nonnull<const Value*> type, Nonnull<const Value*> inits,
+    std::optional<Nonnull<const NominalClassValue*>> base)
+    : Value(Kind::NominalClassValue),
+      type_(type),
+      inits_(inits),
+      vtable_(cast<NominalClassType>(type)->vtable()),
+      base_(base) {}
+
 static auto FindClassField(Nonnull<const NominalClassValue*> object,
                            std::string_view name)
     -> std::optional<Nonnull<const Value*>> {
@@ -108,6 +117,11 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         return *field;
       } else {
         // Look for a method in the object's class
+        if (const auto res = object.vtable().find(std::string(f));
+            res != object.vtable().end()) {
+          const auto& fun = cast<CallableDeclaration>(*res->second);
+          return &cast<FunctionValue>(**fun.constant_value());
+        }
         const auto& class_type = cast<NominalClassType>(object.type());
         std::optional<Nonnull<const FunctionValue*>> func =
             FindFunctionWithParents(f, class_type.declaration());

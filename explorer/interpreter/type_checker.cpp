@@ -4545,12 +4545,26 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     }
   }
 
+  // Generate vtable for the type
+  // TODO: Only generate when...
+  NominalClassValue::VTable class_vtable =
+      base_class ? base_class.value()->vtable() : NominalClassValue::VTable();
+  for (const auto* m : class_decl->members()) {
+    if (const auto* method = dyn_cast<FunctionDeclaration>(m);
+        method && method->is_virtual()) {
+      class_vtable[method->name()] = method;
+    }
+  }
+
   // For class declaration `class MyType(T:! Type, U:! AnInterface)`, `Self`
   // should have the value `MyType(T, U)`.
   Nonnull<NominalClassType*> self_type = arena_->New<NominalClassType>(
       class_decl, Bindings::SymbolicIdentity(arena_, bindings), base_class);
   self->set_static_type(arena_->New<TypeType>());
   self->set_constant_value(self_type);
+
+  // TODO: Setter or constructor?
+  self_type->set_vtable(class_vtable);
 
   // The declarations of the members may refer to the class, so we must set the
   // constant value of the class and its static type before we start processing
