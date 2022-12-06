@@ -5,7 +5,9 @@
 #ifndef CARBON_EXPLORER_INTERPRETER_FIELD_PATH_H_
 #define CARBON_EXPLORER_INTERPRETER_FIELD_PATH_H_
 
+#include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "common/ostream.h"
@@ -48,7 +50,9 @@ class FieldPath {
 
     auto member() const -> Member { return member_; }
 
-    auto name() const -> std::string_view { return member_.name(); }
+    auto IsNamed(std::string_view name) const -> bool {
+      return member_.IsNamed(name);
+    }
 
     auto interface() const -> std::optional<Nonnull<const InterfaceType*>> {
       return interface_;
@@ -58,7 +62,7 @@ class FieldPath {
       return witness_;
     }
 
-    void Print(llvm::raw_ostream& out) const { out << name(); }
+    void Print(llvm::raw_ostream& out) const { return member_.Print(out); }
 
    private:
     Member member_;
