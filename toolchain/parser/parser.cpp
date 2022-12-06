@@ -1021,44 +1021,45 @@ auto Parser::HandleFunctionIntroducerState() -> void {
     return;
   }
 
-  if (stack_context_ == ParseContext::Interface) {
-    auto started_parsing_me_param = [&]() {
-      if (!PositionIs(TokenKind::OpenSquareBracket())) {
-        return false;
-      }
-
-      state.state = ParserState::FunctionAfterMeParam();
-      PushState(state);
-
-      PushState(ParserState::MeParamFinish());
-      // This is for sure a `[`, we can safely create the corresponding node.
-      AddLeafNode(ParseNodeKind::MeParamStart(), Consume());
-      // Push state to handle `me`'s pattern binding.
-      PushState(ParserState::MePattern());
-      return true;
-    }();
-
-    if (started_parsing_me_param) {
-      // The remaining part of the function signature will be handled by
-      // `FunctionAfterMeParam`.
-      return;
+  auto started_parsing_deduced_param_list = [&]() {
+    if (!PositionIs(TokenKind::OpenSquareBracket())) {
+      return false;
     }
+
+    state.state = ParserState::FunctionAfterDeducedParameterList();
+    PushState(state);
+
+    PushState(ParserState::DeducedParameterListFinish());
+    // This is for sure a `[`, we can safely create the corresponding node.
+    AddLeafNode(ParseNodeKind::DeducedParameterListStart(), Consume());
+    // TODO For now only `me` is supported. When other types of deduced
+    // parameters need to be added, we will probably need to push a more
+    // general state.
+    // Push state to handle `me`'s pattern binding.
+    PushState(ParserState::MePattern());
+    return true;
+  }();
+
+  if (started_parsing_deduced_param_list) {
+    // The remaining part of the function signature will be handled by
+    // `FunctionAfterDeducedParameterList`.
+    return;
   }
 
   ParseFunctionParameterList(state);
 }
 
-auto Parser::HandleMeParamFinishState() -> void {
+auto Parser::HandleDeducedParameterListFinishState() -> void {
   auto state = PopState();
 
   CARBON_CHECK(tokens_->GetKind(*position_) == TokenKind::CloseSquareBracket())
       << "Expected current token to be: `]`, found: "
       << tokens_->GetKind(state.token);
-  AddNode(ParseNodeKind::MeParam(), Consume(), state.subtree_start,
+  AddNode(ParseNodeKind::DeducedParameterList(), Consume(), state.subtree_start,
           state.has_error);
 }
 
-auto Parser::HandleFunctionAfterMeParamState() -> void {
+auto Parser::HandleFunctionAfterDeducedParameterListState() -> void {
   auto state = PopState();
   ParseFunctionParameterList(state);
 }
@@ -1151,7 +1152,7 @@ auto Parser::HandleFunctionSignatureFinishState() -> void {
             MethodImplNotAllowed, Error,
             "Method implementations are not allowed in interfaces.");
         emitter_->Emit(*position_, MethodImplNotAllowed);
-        HandleFunctionError(state, /* skip_past_likely_end */ true);
+        HandleFunctionError(state, /*skip_past_likely_end=*/true);
         break;
       }
 

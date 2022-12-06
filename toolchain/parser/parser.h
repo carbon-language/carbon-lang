@@ -301,8 +301,6 @@ class Parser {
   // Handles PatternAs(FunctionParameter|Variable).
   auto HandlePattern(PatternKind pattern_kind) -> void;
 
-  auto HandleMePattern() -> void;
-
   // Handles the `;` after a keyword statement.
   auto HandleStatementKeywordFinish(ParseNodeKind node_kind) -> void;
 
@@ -329,7 +327,7 @@ class Parser {
   TokenizedBuffer::TokenIterator end_;
 
   llvm::SmallVector<StateStackEntry> state_stack_;
-  // TODO This can be a mini-stack of contexts rather than a simple variable.
+  // TODO: This can be a mini-stack of contexts rather than a simple variable.
   ParseContext stack_context_;
 };
 

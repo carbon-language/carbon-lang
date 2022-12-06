@@ -569,13 +569,13 @@ CARBON_PARSER_STATE(VarFinishAsFor)
 // Else:
 //   1. FunctionParameterListFinish
 //   2. FunctionAfterParameterList
-CARBON_PARSER_STATE(FunctionAfterMeParam)
+CARBON_PARSER_STATE(FunctionAfterDeducedParameterList)
 
 // To handle `me` param parsing at the end.
 //
 // Always:
 //   (state done)
-CARBON_PARSER_STATE(MeParamFinish)
+CARBON_PARSER_STATE(DeducedParameterListFinish)
 
 // To parse starting from `me`.
 //
