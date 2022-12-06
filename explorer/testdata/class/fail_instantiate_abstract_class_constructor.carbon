@@ -9,6 +9,7 @@
 package ExplorerTest api;
 
 abstract class C {
+  // TODO: Returning `Self` for an abstract class should error: `partial Self` should be used instead. This should be updated when `partial` is implemented.
   fn Create() -> Self {
     return { .a = 1 };
   }
