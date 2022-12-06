@@ -291,14 +291,27 @@ def _impl(ctx):
         ],
     )
 
-    cpu_flags = feature(
-        name = "cpu_flags",
+    x86_64_cpu_flags = feature(
+        name = "x86_64_cpu_flags",
         enabled = True,
         flag_sets = [
             flag_set(
                 actions = all_compile_actions,
                 flag_groups = [flag_group(flags = [
-                    "-march=native",
+                    "-march=x86-64-v3",
+                ])],
+            ),
+        ],
+    )
+
+    aarch64_cpu_flags = feature(
+        name = "aarch64_cpu_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = all_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    "-march=armv8.2-a",
                 ])],
             ),
         ],
@@ -796,7 +809,6 @@ def _impl(ctx):
         default_flags_feature,
         minimal_optimization_flags,
         default_optimization_flags,
-        cpu_flags,
         minimal_debug_info_flags,
         default_debug_info_flags,
         preserve_call_stacks,
@@ -827,6 +839,12 @@ def _impl(ctx):
         sysroot = sysroot_dir
     else:
         fail("Unsupported target platform!")
+
+    # TODO: Need to support non-macOS ARM platforms here.
+    if ctx.attr.target_cpu == "darwin_arm64":
+        features += [aarch64_cpu_flags]
+    else:
+        features += [x86_64_cpu_flags]
 
     # Finally append the libraries to link and any final flags.
     features += [
