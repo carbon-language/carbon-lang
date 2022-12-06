@@ -7,6 +7,7 @@
 
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -349,6 +350,7 @@ class NominalClassValue : public Value {
   Nonnull<const Value*> type_;
   Nonnull<const Value*> inits_;  // The initializing StructValue.
   std::optional<Nonnull<const NominalClassValue*>> base_;
+  std::unordered_map<std::string, Nonnull<FunctionDeclaration*>> vtable_;
 };
 
 // An alternative constructor value.
