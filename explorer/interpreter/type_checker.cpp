@@ -577,6 +577,22 @@ auto TypeChecker::IsImplicitlyConvertible(
       // work, because that depends on the source value, and we only have its
       // type.
       return IsTypeOfType(destination);
+    case Value::Kind::PointerType: {
+      if (destination->kind() != Value::Kind::PointerType) {
+        break;
+      }
+      const auto* src_ptr = cast<PointerType>(source);
+      const auto* dest_ptr = cast<PointerType>(destination);
+      if (src_ptr->type().kind() != Value::Kind::NominalClassType ||
+          dest_ptr->type().kind() != Value::Kind::NominalClassType) {
+        break;
+      }
+      const auto& src_class = cast<NominalClassType>(src_ptr->type());
+      if (src_class.InheritsClass(&cast<NominalClassType>(dest_ptr->type()))) {
+        return true;
+      }
+      break;
+    }
     default:
       break;
   }
@@ -1904,7 +1920,8 @@ auto TypeChecker::SubstituteImpl(const Bindings& bindings,
       Nonnull<const NominalClassType*> new_class_type =
           arena_->New<NominalClassType>(
               &class_type.declaration(),
-              substitute_into_bindings(&class_type.bindings()), base_type);
+              substitute_into_bindings(&class_type.bindings()), base_type,
+              class_type.vtable());
       return new_class_type;
     }
     case Value::Kind::InterfaceType: {
@@ -4540,10 +4557,24 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     }
   }
 
+  // Generate vtable for the type if necessary
+  std::optional<NominalClassValue::VTable> class_vtable;
+  if (class_decl->extensibility() != ClassExtensibility::None) {
+    class_vtable =
+        base_class ? base_class.value()->vtable() : NominalClassValue::VTable();
+    for (const auto* m : class_decl->members()) {
+      if (const auto* method = dyn_cast<FunctionDeclaration>(m);
+          method && method->is_virtual()) {
+        (*class_vtable)[method->name()] = method;
+      }
+    }
+  }
+
   // For class declaration `class MyType(T:! Type, U:! AnInterface)`, `Self`
   // should have the value `MyType(T, U)`.
   Nonnull<NominalClassType*> self_type = arena_->New<NominalClassType>(
-      class_decl, Bindings::SymbolicIdentity(arena_, bindings), base_class);
+      class_decl, Bindings::SymbolicIdentity(arena_, bindings), base_class,
+      class_vtable);
   self->set_static_type(arena_->New<TypeType>());
   self->set_constant_value(self_type);
 

@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "common/check.h"
+#include "common/error.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/expression.h"
 #include "explorer/common/arena.h"
@@ -623,7 +624,7 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
           Nonnull<const Bindings*> bindings,
           InstantiateBindings(&class_type.bindings(), source_loc));
       return arena_->New<NominalClassType>(&class_type.declaration(), bindings,
-                                           base);
+                                           base, class_type.vtable());
     }
     case Value::Kind::ChoiceType: {
       const auto& choice_type = cast<ChoiceType>(*type);
@@ -709,7 +710,6 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::FunctionValue:
     case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
-    case Value::Kind::PointerValue:
     case Value::Kind::LValue:
     case Value::Kind::BoolValue:
     case Value::Kind::NominalClassValue:
@@ -860,6 +860,40 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
       }
       return Convert(value, destination_type, source_loc);
     }
+    case Value::Kind::PointerValue: {
+      CARBON_CHECK(destination_type->kind() == Value::Kind::PointerType)
+          << "Unsupported pointer conversion destination type";
+      const auto* src_ptr = cast<PointerValue>(value);
+      const auto* dest_ptr_type = cast<PointerType>(destination_type);
+
+      // Get pointed value
+      CARBON_ASSIGN_OR_RETURN(const auto* pointee,
+                              heap_.Read(src_ptr->address(), source_loc))
+      CARBON_CHECK(pointee->kind() == Value::Kind::NominalClassValue &&
+                   dest_ptr_type->type().kind() ==
+                       Value::Kind::NominalClassType)
+          << "Unexpected object, only pointer conversions for subtyping within "
+             "class hierarchy are supported";
+
+      std::optional<Nonnull<const NominalClassValue*>> class_subobj =
+          cast<NominalClassValue>(pointee);
+      auto new_addr = src_ptr->address();
+      while (class_subobj) {
+        // Compare value pointer address
+        if (trace_stream_)
+          **trace_stream_ << class_subobj.value()->type() << " -> "
+                          << dest_ptr_type->type() << "\n";
+        if (TypeEqual(&class_subobj.value()->type(), &dest_ptr_type->type(),
+                      std::nullopt)) {
+          return arena_->New<PointerValue>(new_addr);
+        }
+        class_subobj = class_subobj.value()->base();
+        // TODO: Append base member to Address, not supported yet.
+        // new_addr = new_addr.SubobjectAddress(BaseMember());
+      }
+      return ProgramError(source_loc)
+             << "Unable to convert " << *pointee << " to " << *dest_ptr_type;
+    }
   }
 }
 
@@ -1004,7 +1038,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
         case DeclarationKind::ClassDeclaration: {
           const auto& class_decl = cast<ClassDeclaration>(decl);
           return todo_.FinishAction(arena_->New<NominalClassType>(
-              &class_decl, bindings, class_decl.base_type()));
+              &class_decl, bindings, class_decl.base_type(), std::nullopt));
         }
         case DeclarationKind::InterfaceDeclaration:
           return todo_.FinishAction(arena_->New<InterfaceType>(

@@ -104,11 +104,12 @@
 %type <std::vector<LibraryName>> import_directives
 %type <std::string> optional_library_path
 %type <bool> api_or_impl
+%type <bool> virtual_override
 %type <ClassExtensibility> class_declaration_extensibility
 %type <std::optional<Nonnull<Expression*>>> class_declaration_extends
 %type <Nonnull<Declaration*>> declaration
 %type <Nonnull<FunctionDeclaration*>> function_declaration
-%type <Nonnull<DestructorDeclaration*>> destructor_declaration;
+%type <Nonnull<DestructorDeclaration*>> destructor_declaration
 %type <Nonnull<MixDeclaration*>> mix_declaration
 %type <Nonnull<AliasDeclaration*>> alias_declaration
 %type <std::vector<Nonnull<Declaration*>>> declaration_list
@@ -281,6 +282,7 @@
   UNDERSCORE
   UNIMPL_EXAMPLE
   VAR
+  VIRTUAL
   WHERE
   WHILE
   // table-end
@@ -1046,11 +1048,17 @@ impl_deduced_params:
 | FORALL LEFT_SQUARE_BRACKET deduced_param_list RIGHT_SQUARE_BRACKET
     { $$ = $3; }
 ;
+virtual_override:
+  // Empty
+    { $$ = false; }
+| VIRTUAL
+    { $$ = true; }
+;
 function_declaration:
-  FN identifier deduced_params maybe_empty_tuple_pattern return_term block
+  virtual_override FN identifier deduced_params maybe_empty_tuple_pattern return_term block
     {
       ErrorOr<FunctionDeclaration*> fn = FunctionDeclaration::Create(
-          arena, context.source_loc(), $2, $3, $4, $5, $6);
+          arena, context.source_loc(), $3, $4, $5, $6, $7, $1);
       if (fn.ok()) {
         $$ = *fn;
       } else {
@@ -1058,10 +1066,10 @@ function_declaration:
         YYERROR;
       }
     }
-| FN identifier deduced_params maybe_empty_tuple_pattern return_term SEMICOLON
+| virtual_override FN identifier deduced_params maybe_empty_tuple_pattern return_term SEMICOLON
     {
       ErrorOr<FunctionDeclaration*> fn = FunctionDeclaration::Create(
-          arena, context.source_loc(), $2, $3, $4, $5, std::nullopt);
+          arena, context.source_loc(), $3, $4, $5, $6, std::nullopt, $1);
       if (fn.ok()) {
         $$ = *fn;
       } else {
