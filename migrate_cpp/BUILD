@@ -25,6 +25,10 @@ cc_library(
     name = "rewriter",
     srcs = ["rewriter.cpp"],
     hdrs = ["rewriter.h"],
+    visibility = [
+        # For dependency checking. Remove once it has a binary using it.
+        "//bazel/check_deps:__pkg__",
+    ],
     deps = [
         ":output_segment",
         "//common:check",
@@ -35,10 +39,6 @@ cc_library(
         "@llvm-project//clang:tooling",
         "@llvm-project//clang:tooling_core",
         "@llvm-project//llvm:Support",
-    ],
-    visibility = [
-      # For dependency checking. Remove once it has a binary using it.
-      "//bazel/check_deps:__pkg__",
     ],
 )
 

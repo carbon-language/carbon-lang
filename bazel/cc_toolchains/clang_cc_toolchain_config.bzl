@@ -20,10 +20,10 @@ load("@bazel_tools//tools/build_defs/cc:action_names.bzl", "ACTION_NAMES")
 load(
     ":clang_detected_variables.bzl",
     "clang_bindir",
-    "clang_version",
-    "clang_version_for_cache",
     "clang_include_dirs_list",
     "clang_resource_dir",
+    "clang_version",
+    "clang_version_for_cache",
     "llvm_bindir",
     "sysroot_dir",
 )
@@ -100,6 +100,7 @@ def _impl(ctx):
     ]
 
     std_compile_flags = ["-std=c++17"]
+
     # libc++ is only used on non-Windows platforms.
     if ctx.attr.target_cpu != "x64_windows":
         std_compile_flags.append("-stdlib=libc++")
