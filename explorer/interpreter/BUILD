@@ -16,6 +16,8 @@ cc_library(
         "action.h",
         "value.h",
     ],
+    # Exposed to resolve `member_test` dependencies.
+    visibility = ["//explorer/ast:__pkg__"],
     deps = [
         ":address",
         ":dictionary",
@@ -31,8 +33,6 @@ cc_library(
         "//explorer/common:nonnull",
         "@llvm-project//llvm:Support",
     ],
-    # Exposed to resolve `member_test` dependencies.
-    visibility = ["//explorer/ast:__pkg__"],
 )
 
 cc_library(
