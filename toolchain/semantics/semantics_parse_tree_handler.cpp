@@ -63,7 +63,6 @@ auto SemanticsParseTreeHandler::Build() -> void {
   PrettyStackTraceNodeStack pretty_node_stack(this);
   PrettyStackTraceNodeBlockStack pretty_node_block_stack(this);
 
-  CARBON_VLOG() << "*** SemanticsParseTreeHandler::Build Begin ***\n";
   // Add a block for the ParseTree.
   node_block_stack_.push_back(semantics_->AddNodeBlock());
 
@@ -85,7 +84,6 @@ auto SemanticsParseTreeHandler::Build() -> void {
         CARBON_CHECK(it == range.end())
             << "FileEnd should always be last, found "
             << parse_tree_->node_kind(*it);
-        CARBON_VLOG() << "*** SemanticsParseTreeHandler::Build End ***\n";
         return;
       }
       case ParseNodeKind::InfixOperator(): {
