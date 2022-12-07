@@ -148,7 +148,7 @@ class SemanticsNode {
       -> SemanticsNode {
     return SemanticsNode(parse_node, SemanticsNodeKind::IntegerLiteral(),
                          SemanticsNodeId::MakeBuiltinReference(
-                             SemanticsBuiltinKind::IntegerLiteralType()),
+                             SemanticsBuiltinKind::IntegerType()),
                          integer.index);
   }
   auto GetAsIntegerLiteral() const -> SemanticsIntegerLiteralId {
@@ -159,7 +159,7 @@ class SemanticsNode {
   static auto MakeRealLiteral(ParseTree::Node parse_node) -> SemanticsNode {
     return SemanticsNode(parse_node, SemanticsNodeKind::RealLiteral(),
                          SemanticsNodeId::MakeBuiltinReference(
-                             SemanticsBuiltinKind::RealLiteralType()));
+                             SemanticsBuiltinKind::RealType()));
   }
   auto GetAsRealLiteral() const -> NoArgs {
     CARBON_CHECK(kind_ == SemanticsNodeKind::RealLiteral());
