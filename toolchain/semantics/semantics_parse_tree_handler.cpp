@@ -305,6 +305,8 @@ auto SemanticsParseTreeHandler::HandleParameterList(ParseTree::Node parse_node)
 
 auto SemanticsParseTreeHandler::HandlePatternBinding(ParseTree::Node parse_node)
     -> void {
+  // TODO: Create storage for the type, use that for the bind instead of the
+  // type itself.
   auto type_id = PopWithResult();
 
   auto name_node = node_stack_.back().parse_node;
