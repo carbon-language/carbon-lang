@@ -10,11 +10,11 @@
 package ExplorerTest api;
 
 interface Runnable {
-  fn Run[me: Self]() -> i32;
+  fn Run[self: Self]() -> i32;
 }
 
 interface Walkable {
-  fn Walk[me: Self]() -> i32;
+  fn Walk[self: Self]() -> i32;
 }
 
 constraint Traversible {
@@ -23,11 +23,11 @@ constraint Traversible {
 }
 
 external impl i32 as Traversible {
-  fn Run[me: i32]() -> i32 {
-    return 10 * me;
+  fn Run[self: i32]() -> i32 {
+    return 10 * self;
   }
-  fn Walk[me: i32]() -> i32 {
-    return me + 1;
+  fn Walk[self: i32]() -> i32 {
+    return self + 1;
   }
 }
 

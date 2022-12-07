@@ -265,14 +265,14 @@ namespace {
 
 // The deduced parameters of a function declaration.
 struct DeducedParameters {
-  // The `me` parameter, if any.
-  std::optional<Nonnull<Pattern*>> me_pattern;
+  // The `self` parameter, if any.
+  std::optional<Nonnull<Pattern*>> self_pattern;
 
   // All other deduced parameters.
   std::vector<Nonnull<GenericBinding*>> resolved_params;
 };
 
-// Split the `me` pattern (if any) out of `deduced_params`.
+// Split the `self` pattern (if any) out of `deduced_params`.
 auto SplitDeducedParameters(
     SourceLocation source_loc,
     const std::vector<Nonnull<AstNode*>>& deduced_params)
@@ -285,32 +285,32 @@ auto SplitDeducedParameters(
         break;
       case AstNodeKind::BindingPattern: {
         Nonnull<BindingPattern*> binding = &cast<BindingPattern>(*param);
-        if (binding->name() != "me") {
+        if (binding->name() != "self") {
           return ProgramError(source_loc)
                  << "illegal binding pattern in implicit parameter list";
         }
-        if (result.me_pattern.has_value()) {
+        if (result.self_pattern.has_value()) {
           return ProgramError(source_loc)
-                 << "parameter list cannot contain more than one `me` "
+                 << "parameter list cannot contain more than one `self` "
                     "parameter";
         }
-        result.me_pattern = binding;
+        result.self_pattern = binding;
         break;
       }
       case AstNodeKind::AddrPattern: {
         Nonnull<AddrPattern*> addr_pattern = &cast<AddrPattern>(*param);
         Nonnull<BindingPattern*> binding =
             &cast<BindingPattern>(addr_pattern->binding());
-        if (binding->name() != "me") {
+        if (binding->name() != "self") {
           return ProgramError(source_loc)
                  << "illegal binding pattern in implicit parameter list";
         }
-        if (result.me_pattern.has_value()) {
+        if (result.self_pattern.has_value()) {
           return ProgramError(source_loc)
-                 << "parameter list cannot contain more than one `me` "
+                 << "parameter list cannot contain more than one `self` "
                     "parameter";
         }
-        result.me_pattern = addr_pattern;
+        result.self_pattern = addr_pattern;
         break;
       }
       default:
@@ -333,7 +333,7 @@ auto DestructorDeclaration::CreateDestructor(
                           SplitDeducedParameters(source_loc, deduced_params));
   return arena->New<DestructorDeclaration>(
       source_loc, std::move(split_params.resolved_params),
-      split_params.me_pattern, param_pattern, return_term, body);
+      split_params.self_pattern, param_pattern, return_term, body);
 }
 
 auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
@@ -348,7 +348,7 @@ auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
                           SplitDeducedParameters(source_loc, deduced_params));
   return arena->New<FunctionDeclaration>(
       source_loc, name, std::move(split_params.resolved_params),
-      split_params.me_pattern, param_pattern, return_term, body);
+      split_params.self_pattern, param_pattern, return_term, body);
 }
 
 void CallableDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {

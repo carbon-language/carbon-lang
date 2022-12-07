@@ -11,9 +11,9 @@
 package ExplorerTest api;
 
 class A{
-    destructor[me: Self]{
-        Print("DESTRUCTOR A {0}",me.n);
-        if(me.n == 3){
+    destructor[self: Self]{
+        Print("DESTRUCTOR A {0}",self.n);
+        if(self.n == 3){
             return;
         }
         Print("DESTRUCTOR A: This message should not printed");

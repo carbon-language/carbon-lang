@@ -15,7 +15,7 @@
 package ExplorerTest api;
 
 interface Maker(T:! Type) {
-  fn Make[me: Self]() -> T;
+  fn Make[self: Self]() -> T;
 }
 
 constraint IndirectMaker(T:! Type) {
@@ -29,7 +29,7 @@ constraint MoreIndirectMaker {
 class PointerFactory {
   var p: i32*;
   external impl as Maker(i32*) {
-    fn Make[me: Self]() -> i32* { return me.p; }
+    fn Make[self: Self]() -> i32* { return self.p; }
   }
 }
 

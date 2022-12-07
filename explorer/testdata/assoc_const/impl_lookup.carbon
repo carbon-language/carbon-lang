@@ -11,7 +11,7 @@ package ExplorerTest api;
 
 interface Frob {
   let Result:! Type;
-  fn F[me: Self]() -> Result;
+  fn F[self: Self]() -> Result;
 }
 
 fn Use[T:! Frob](x: T) -> T.Result {
@@ -22,12 +22,12 @@ fn Use[T:! Frob](x: T) -> T.Result {
 class AlmostI32 {
   var val: i32;
   impl as ImplicitAs(i32) {
-    fn Convert[me: Self]() -> i32 { return me.val; }
+    fn Convert[self: Self]() -> i32 { return self.val; }
   }
 }
 
 impl i32 as Frob where .Result = AlmostI32 {
-  fn F[me: Self]() -> AlmostI32 { return {.val = me}; }
+  fn F[self: Self]() -> AlmostI32 { return {.val = self}; }
 }
 
 fn Main() -> i32 {

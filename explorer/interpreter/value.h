@@ -91,7 +91,7 @@ class Value {
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   // Returns the sub-Value specified by `path`, which must be a valid field
-  // path for *this. If the sub-Value is a method and its me_pattern is an
+  // path for *this. If the sub-Value is a method and its self_pattern is an
   // AddrPattern, then pass the LValue representing the receiver as `me_value`,
   // otherwise pass `*this`.
   auto GetMember(Nonnull<Arena*> arena, const FieldPath& path,
@@ -1146,11 +1146,15 @@ class MemberName : public Value {
         member_(member) {
     CARBON_CHECK(base_type || interface)
         << "member name must be in a type, an interface, or both";
+    CARBON_CHECK(member_.HasName()) << "member must have a name";
   }
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::MemberName;
   }
+
+  // Prints the member name or identifier.
+  void Print(llvm::raw_ostream& out) const { member_.Print(out); }
 
   // The type for which `name` is a member or a member of an `impl`.
   auto base_type() const -> std::optional<Nonnull<const Value*>> {

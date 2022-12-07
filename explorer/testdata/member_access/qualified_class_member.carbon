@@ -9,7 +9,7 @@
 
 package Foo api;
 class X {
-  fn F[me: Self](o: Self) -> Self { return {.n = me.n + o.n}; }
+  fn F[self: Self](o: Self) -> Self { return {.n = self.n + o.n}; }
   var n: i32;
 }
 fn Main() -> i32 {

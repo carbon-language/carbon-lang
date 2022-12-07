@@ -11,7 +11,7 @@ package ExplorerTest api;
 
 class TypeLike {
   impl as ImplicitAs(Type) {
-    fn Convert[me: Self]() -> Type { return i32; }
+    fn Convert[self: Self]() -> Type { return i32; }
   }
   fn Make() -> Self { return {}; }
 }

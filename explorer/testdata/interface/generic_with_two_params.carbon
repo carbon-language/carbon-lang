@@ -10,19 +10,19 @@
 package ExplorerTest api;
 
 interface Vector {
-  fn Add[me: Self](b: Self) -> Self;
-  fn Scale[me: Self](v: i32) -> Self;
+  fn Add[self: Self](b: Self) -> Self;
+  fn Scale[self: Self](v: i32) -> Self;
 }
 
 class Point1 {
   var x: i32;
   var y: i32;
   impl Point1 as Vector {
-    fn Add[me: Point1](b: Point1) -> Point1 {
-      return {.x = me.x + b.x, .y = me.y + b.y};
+    fn Add[self: Point1](b: Point1) -> Point1 {
+      return {.x = self.x + b.x, .y = self.y + b.y};
     }
-    fn Scale[me: Point1](v: i32) -> Point1 {
-      return {.x = me.x * v, .y = me.y * v};
+    fn Scale[self: Point1](v: i32) -> Point1 {
+      return {.x = self.x * v, .y = self.y * v};
     }
   }
 }
@@ -31,11 +31,11 @@ class Point2 {
   var x: i32;
   var y: i32;
   impl Point2 as Vector {
-    fn Add[me: Point2](b: Point2) -> Point2 {
-      return {.x = me.x + b.x + 1, .y = me.y + b.y + 1};
+    fn Add[self: Point2](b: Point2) -> Point2 {
+      return {.x = self.x + b.x + 1, .y = self.y + b.y + 1};
     }
-    fn Scale[me: Point2](v: i32) -> Point2 {
-      return {.x = me.x * v * 2, .y = me.y * v * 2};
+    fn Scale[self: Point2](v: i32) -> Point2 {
+      return {.x = self.x * v * 2, .y = self.y * v * 2};
     }
   }
 }

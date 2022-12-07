@@ -11,7 +11,7 @@ package ExplorerTest api;
 
 interface MyHashable {
   let Result:! Type;
-  fn Hash[me: Self]() -> Result;
+  fn Hash[self: Self]() -> Result;
 }
 
 constraint HashToIntConvertible {
@@ -21,13 +21,13 @@ constraint HashToIntConvertible {
 
 class MyHashValue {
   external impl as ImplicitAs(i32) {
-    fn Convert[me: Self]() -> i32 { return 4; }
+    fn Convert[self: Self]() -> i32 { return 4; }
   }
 }
 
 class Widget {
   external impl as MyHashable where .Result = MyHashValue {
-    fn Hash[me: Self]() -> MyHashValue { return {}; }
+    fn Hash[self: Self]() -> MyHashValue { return {}; }
   }
 }
 

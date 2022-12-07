@@ -10,7 +10,7 @@
 package ExplorerTest api;
 
 __mixin Operations {
-  fn Square[me: Self](x:i32) -> i32{
+  fn Square[self: Self](x:i32) -> i32{
     return x * x;
   }
 }
@@ -18,8 +18,8 @@ __mixin Operations {
 class Point {
   var x: i32;
   var y: i32;
-  fn DistanceSquare[me:Self](other:Self) -> i32 {
-    return me.Square(me.x - other.x) + me.Square(me.y - other.y);
+  fn DistanceSquare[self: Self](other:Self) -> i32 {
+    return self.Square(self.x - other.x) + self.Square(self.y - other.y);
   }
   __mix Operations;
 }
@@ -28,8 +28,8 @@ class Complex {
   var r: i32;
   var i: i32;
   __mix Operations;
-  fn AbsSquare[me:Self]() -> i32 {
-    return me.Square(me.r) + me.Square(me.i);
+  fn AbsSquare[self: Self]() -> i32 {
+    return self.Square(self.r) + self.Square(self.i);
   }
 }
 

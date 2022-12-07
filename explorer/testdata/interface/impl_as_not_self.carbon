@@ -21,7 +21,7 @@ class IntHolder {
   var n: i32;
 }
 external impl i32 as ImplicitAs(IntHolder) {
-  fn Convert[me: Self]() -> IntHolder { return {.n = me}; }
+  fn Convert[self: Self]() -> IntHolder { return {.n = self}; }
 }
 external impl IntHolder as ConvertsFromInt {}
 
