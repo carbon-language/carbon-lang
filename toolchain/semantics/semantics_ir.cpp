@@ -39,16 +39,15 @@ auto SemanticsIR::MakeBuiltinIR() -> SemanticsIR {
       << "InvalidType's type must be self-referential.";
 
   auto integer_literal_type = semantics.AddNode(
-      block_id, SemanticsNode::MakeBuiltin(
-                    SemanticsBuiltinKind::IntegerLiteralType(), type_type));
-  semantics
-      .cross_references_[SemanticsBuiltinKind::IntegerLiteralType().AsInt()] =
+      block_id, SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::IntegerType(),
+                                           type_type));
+  semantics.cross_references_[SemanticsBuiltinKind::IntegerType().AsInt()] =
       SemanticsCrossReference(BuiltinIR, block_id, integer_literal_type);
 
   auto real_literal_type = semantics.AddNode(
-      block_id, SemanticsNode::MakeBuiltin(
-                    SemanticsBuiltinKind::RealLiteralType(), type_type));
-  semantics.cross_references_[SemanticsBuiltinKind::RealLiteralType().AsInt()] =
+      block_id,
+      SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::RealType(), type_type));
+  semantics.cross_references_[SemanticsBuiltinKind::RealType().AsInt()] =
       SemanticsCrossReference(BuiltinIR, block_id, real_literal_type);
 
   CARBON_CHECK(semantics.node_blocks_.size() == 1)

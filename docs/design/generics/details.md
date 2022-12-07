@@ -1561,7 +1561,9 @@ This allows developers to provide implementations of new interfaces (as in
 -   You can add any declaration that you could add to a class except for
     declarations that would change the representation of the type. This means
     you can add methods, functions, interface implementations, and aliases, but
-    not fields, base classes, or virtual functions.
+    not fields, base classes, or virtual functions. The specific implementations
+    of virtual functions are part of the type representation, and so no virtual
+    functions may be overridden in an adapter either.
 -   The adapted type is compatible with the original type, and that relationship
     is an equivalence class, so all of `Song`, `SongByTitle`, `FormattedSong`,
     and `FormattedSongByTitle` end up compatible with each other.
@@ -3759,7 +3761,7 @@ To define these `impl`s inline in a `class` definition, include a `forall`
 clause with a more-specific type between the `impl` and `as` keywords.
 
 ```
-class Array(T:! Type, template N:! Int) {
+class Array(T:! Type, template N:! i64) {
   impl forall [P:! Printable] Array(P, N) as Printable { ... }
 }
 ```
@@ -5688,7 +5690,7 @@ class Optional(T:! Movable) {
     return {.storage = U.MakeNone()};
   }
   fn Some(x: T) -> Self {
-    return {.storage = u.Make(x)};
+    return {.storage = U.Make(x)};
   }
   ...
   private var storage: U.Storage;

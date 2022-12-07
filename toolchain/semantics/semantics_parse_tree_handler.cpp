@@ -103,6 +103,16 @@ auto SemanticsParseTreeHandler::Push(ParseTree::Node parse_node,
   node_stack_.push_back({parse_node, node_id});
 }
 
+auto SemanticsParseTreeHandler::Push(ParseTree::Node parse_node,
+                                     SemanticsNodeId node_id) -> void {
+  CARBON_VLOG() << "Push " << node_stack_.size() << ": "
+                << parse_tree_->node_kind(parse_node) << " -> " << node_id
+                << "\n";
+  CARBON_CHECK(node_stack_.size() < (1 << 20))
+      << "Excessive stack size: likely infinite loop";
+  node_stack_.push_back({parse_node, node_id});
+}
+
 auto SemanticsParseTreeHandler::Pop(ParseNodeKind pop_parse_kind) -> void {
   auto back = node_stack_.pop_back_val();
   auto parse_kind = parse_tree_->node_kind(back.parse_node);
@@ -363,6 +373,13 @@ auto SemanticsParseTreeHandler::HandleLiteral(ParseTree::Node parse_node)
       Push(parse_node, SemanticsNode::MakeRealLiteral(parse_node));
       break;
     }
+    case TokenKind::IntegerTypeLiteral(): {
+      auto text = tokens_->GetTokenText(token);
+      CARBON_CHECK(text == "i32") << "Currently only i32 is allowed";
+      Push(parse_node, SemanticsNodeId::MakeBuiltinReference(
+                           SemanticsBuiltinKind::IntegerType()));
+      break;
+    }
     default:
       CARBON_FATAL() << "Unhandled kind: " << token_kind.Name();
   }
@@ -427,9 +444,18 @@ auto SemanticsParseTreeHandler::HandleParenExpressionOrTupleLiteralStart(
   CARBON_FATAL() << "TODO";
 }
 
-auto SemanticsParseTreeHandler::HandlePatternBinding(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandlePatternBinding(ParseTree::Node parse_node)
+    -> void {
+  // TODO: Create storage for the type, use that for the bind instead of the
+  // type itself.
+  auto type_id = PopWithResult();
+
+  auto name_node = node_stack_.back().parse_node;
+  auto name = AddIdentifier(name_node);
+  node_stack_.pop_back();
+
+  Push(parse_node,
+       AddNode(SemanticsNode::MakeBindName(name_node, name, type_id)));
 }
 
 auto SemanticsParseTreeHandler::HandlePostfixOperator(
@@ -519,13 +545,18 @@ auto SemanticsParseTreeHandler::HandleTupleLiteralComma(
 }
 
 auto SemanticsParseTreeHandler::HandleVariableDeclaration(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> void {
+  // TODO: Initializers would assign to the PatternBinding, but this code
+  // doesn't handle it right now.
+  PopWithResult();
+  Pop(ParseNodeKind::VariableIntroducer());
+  Push(parse_node);
 }
 
 auto SemanticsParseTreeHandler::HandleVariableIntroducer(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> void {
+  // No action, just a bracketing node.
+  Push(parse_node);
 }
 
 auto SemanticsParseTreeHandler::HandleVariableInitializer(

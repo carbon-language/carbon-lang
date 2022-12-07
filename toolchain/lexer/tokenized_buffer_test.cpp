@@ -1032,22 +1032,6 @@ auto GetAndDropLine(llvm::StringRef& text) -> std::string {
   return line.str();
 }
 
-TEST_F(LexerTest, PrintingBasic) {
-  auto buffer = Lex(";");
-  ASSERT_FALSE(buffer.has_errors());
-  std::string print_storage;
-  llvm::raw_string_ostream print_stream(print_storage);
-  buffer.Print(print_stream);
-  llvm::StringRef print = print_stream.str();
-  EXPECT_THAT(GetAndDropLine(print),
-              StrEq("token: { index: 0, kind:      'Semi', line: 1, column: 1, "
-                    "indent: 1, spelling: ';', has_trailing_space: true }"));
-  EXPECT_THAT(GetAndDropLine(print),
-              StrEq("token: { index: 1, kind: 'EndOfFile', line: 1, column: 2, "
-                    "indent: 1, spelling: '' }"));
-  EXPECT_TRUE(print.empty()) << print;
-}
-
 TEST_F(LexerTest, PrintingInteger) {
   auto buffer = Lex("123");
   ASSERT_FALSE(buffer.has_errors());
@@ -1055,11 +1039,13 @@ TEST_F(LexerTest, PrintingInteger) {
   llvm::raw_string_ostream print_stream(print_storage);
   buffer.Print(print_stream);
   llvm::StringRef print = print_stream.str();
+  EXPECT_THAT(GetAndDropLine(print), StrEq("["));
   EXPECT_THAT(GetAndDropLine(print),
-              StrEq("token: { index: 0, kind: 'IntegerLiteral', line: 1, "
+              StrEq("{ index: 0, kind: 'IntegerLiteral', line: 1, "
                     "column: 1, indent: 1, spelling: '123', value: `123`, "
-                    "has_trailing_space: true }"));
+                    "has_trailing_space: true },"));
   EXPECT_THAT(GetAndDropLine(print), HasSubstr("'EndOfFile'"));
+  EXPECT_THAT(GetAndDropLine(print), StrEq("]"));
   EXPECT_TRUE(print.empty()) << print;
 }
 
@@ -1070,12 +1056,14 @@ TEST_F(LexerTest, PrintingReal) {
   llvm::raw_string_ostream print_stream(print_storage);
   buffer.Print(print_stream);
   llvm::StringRef print = print_stream.str();
+  EXPECT_THAT(GetAndDropLine(print), StrEq("["));
   EXPECT_THAT(
       GetAndDropLine(print),
-      StrEq(
-          "token: { index: 0, kind: 'RealLiteral', line: 1, column: 1, indent: "
-          "1, spelling: '2.5', value: `25*10^-1`, has_trailing_space: true }"));
+      StrEq("{ index: 0, kind: 'RealLiteral', line: 1, column: 1, indent: "
+            "1, spelling: '2.5', value: `25*10^-1`, has_trailing_space: true "
+            "},"));
   EXPECT_THAT(GetAndDropLine(print), HasSubstr("'EndOfFile'"));
+  EXPECT_THAT(GetAndDropLine(print), StrEq("]"));
   EXPECT_TRUE(print.empty()) << print;
 }
 
@@ -1087,25 +1075,27 @@ TEST_F(LexerTest, PrintingPadding) {
   llvm::raw_string_ostream print_stream(print_storage);
   buffer.Print(print_stream);
   llvm::StringRef print = print_stream.str();
+  EXPECT_THAT(GetAndDropLine(print), StrEq("["));
   EXPECT_THAT(GetAndDropLine(print),
-              StrEq("token: { index: 0, kind:  'OpenParen', line: 1, column: "
-                    "1, indent: 1, spelling: '(', closing_token: 4 }"));
+              StrEq("{ index: 0, kind:  'OpenParen', line: 1, column: "
+                    "1, indent: 1, spelling: '(', closing_token: 4 },"));
   EXPECT_THAT(GetAndDropLine(print),
-              StrEq("token: { index: 1, kind:       'Semi', line: 1, column: "
-                    "2, indent: 1, spelling: ';' }"));
+              StrEq("{ index: 1, kind:       'Semi', line: 1, column: "
+                    "2, indent: 1, spelling: ';' },"));
   EXPECT_THAT(GetAndDropLine(print),
-              StrEq("token: { index: 2, kind: 'Identifier', line: 1, column: "
-                    "3, indent: 1, spelling: 'foo', identifier: 0 }"));
+              StrEq("{ index: 2, kind: 'Identifier', line: 1, column: "
+                    "3, indent: 1, spelling: 'foo', identifier: 0 },"));
   EXPECT_THAT(GetAndDropLine(print),
-              StrEq("token: { index: 3, kind:       'Semi', line: 1, column: "
-                    "6, indent: 1, spelling: ';' }"));
+              StrEq("{ index: 3, kind:       'Semi', line: 1, column: "
+                    "6, indent: 1, spelling: ';' },"));
   EXPECT_THAT(GetAndDropLine(print),
-              StrEq("token: { index: 4, kind: 'CloseParen', line: 1, column: "
+              StrEq("{ index: 4, kind: 'CloseParen', line: 1, column: "
                     "7, indent: 1, spelling: ')', opening_token: 0, "
-                    "has_trailing_space: true }"));
+                    "has_trailing_space: true },"));
   EXPECT_THAT(GetAndDropLine(print),
-              StrEq("token: { index: 5, kind:  'EndOfFile', line: 1, column: "
-                    "8, indent: 1, spelling: '' }"));
+              StrEq("{ index: 5, kind:  'EndOfFile', line: 1, column: "
+                    "8, indent: 1, spelling: '' },"));
+  EXPECT_THAT(GetAndDropLine(print), StrEq("]"));
   EXPECT_TRUE(print.empty()) << print;
 }
 
@@ -1117,22 +1107,20 @@ TEST_F(LexerTest, PrintingPaddingDigits) {
   llvm::raw_string_ostream print_stream(print_storage);
   buffer.Print(print_stream);
   llvm::StringRef print = print_stream.str();
-  EXPECT_THAT(
-      GetAndDropLine(print),
-      StrEq("token: { index: 0, kind:      'Semi', line:  1, column:  1, "
-            "indent: 1, spelling: ';', has_trailing_space: true }"));
-  EXPECT_THAT(
-      GetAndDropLine(print),
-      StrEq("token: { index: 1, kind:      'Semi', line: 11, column:  9, "
-            "indent: 9, spelling: ';' }"));
-  EXPECT_THAT(
-      GetAndDropLine(print),
-      StrEq("token: { index: 2, kind:      'Semi', line: 11, column: 10, "
-            "indent: 9, spelling: ';', has_trailing_space: true }"));
-  EXPECT_THAT(
-      GetAndDropLine(print),
-      StrEq("token: { index: 3, kind: 'EndOfFile', line: 11, column: 11, "
-            "indent: 9, spelling: '' }"));
+  EXPECT_THAT(GetAndDropLine(print), StrEq("["));
+  EXPECT_THAT(GetAndDropLine(print),
+              StrEq("{ index: 0, kind:      'Semi', line:  1, column:  1, "
+                    "indent: 1, spelling: ';', has_trailing_space: true },"));
+  EXPECT_THAT(GetAndDropLine(print),
+              StrEq("{ index: 1, kind:      'Semi', line: 11, column:  9, "
+                    "indent: 9, spelling: ';' },"));
+  EXPECT_THAT(GetAndDropLine(print),
+              StrEq("{ index: 2, kind:      'Semi', line: 11, column: 10, "
+                    "indent: 9, spelling: ';', has_trailing_space: true },"));
+  EXPECT_THAT(GetAndDropLine(print),
+              StrEq("{ index: 3, kind: 'EndOfFile', line: 11, column: 11, "
+                    "indent: 9, spelling: '' },"));
+  EXPECT_THAT(GetAndDropLine(print), StrEq("]"));
   EXPECT_TRUE(print.empty()) << print;
 }
 
@@ -1146,34 +1134,34 @@ TEST_F(LexerTest, PrintingAsYaml) {
   print_stream.flush();
 
   EXPECT_THAT(Yaml::Value::FromText(print_output),
-              ElementsAre(Yaml::MappingValue{
-                  {"token", Yaml::MappingValue{{"index", "0"},
-                                               {"kind", "Semi"},
-                                               {"line", "2"},
-                                               {"column", "2"},
-                                               {"indent", "2"},
-                                               {"spelling", ";"},
-                                               {"has_trailing_space", "true"}}},
-                  {"token", Yaml::MappingValue{{"index", "1"},
-                                               {"kind", "Semi"},
-                                               {"line", "5"},
-                                               {"column", "1"},
-                                               {"indent", "1"},
-                                               {"spelling", ";"},
-                                               {"has_trailing_space", "true"}}},
-                  {"token", Yaml::MappingValue{{"index", "2"},
-                                               {"kind", "Semi"},
-                                               {"line", "5"},
-                                               {"column", "3"},
-                                               {"indent", "1"},
-                                               {"spelling", ";"},
-                                               {"has_trailing_space", "true"}}},
-                  {"token", Yaml::MappingValue{{"index", "3"},
-                                               {"kind", "EndOfFile"},
-                                               {"line", "15"},
-                                               {"column", "1"},
-                                               {"indent", "1"},
-                                               {"spelling", ""}}}}));
+              ElementsAre(Yaml::SequenceValue{
+                  Yaml::MappingValue{{"index", "0"},
+                                     {"kind", "Semi"},
+                                     {"line", "2"},
+                                     {"column", "2"},
+                                     {"indent", "2"},
+                                     {"spelling", ";"},
+                                     {"has_trailing_space", "true"}},
+                  Yaml::MappingValue{{"index", "1"},
+                                     {"kind", "Semi"},
+                                     {"line", "5"},
+                                     {"column", "1"},
+                                     {"indent", "1"},
+                                     {"spelling", ";"},
+                                     {"has_trailing_space", "true"}},
+                  Yaml::MappingValue{{"index", "2"},
+                                     {"kind", "Semi"},
+                                     {"line", "5"},
+                                     {"column", "3"},
+                                     {"indent", "1"},
+                                     {"spelling", ";"},
+                                     {"has_trailing_space", "true"}},
+                  Yaml::MappingValue{{"index", "3"},
+                                     {"kind", "EndOfFile"},
+                                     {"line", "15"},
+                                     {"column", "1"},
+                                     {"indent", "1"},
+                                     {"spelling", ""}}}));
 }
 
 TEST_F(LexerTest, PrintToken) {
@@ -1183,10 +1171,11 @@ TEST_F(LexerTest, PrintToken) {
   llvm::raw_string_ostream print_stream(print_output);
   buffer.Print(print_stream);
   llvm::StringRef print = print_stream.str();
+  EXPECT_THAT(GetAndDropLine(print), StrEq("["));
   EXPECT_THAT(GetAndDropLine(print),
-              StrEq("token: { index: 0, kind: 'IntegerLiteral', line: 1, "
+              StrEq("{ index: 0, kind: 'IntegerLiteral', line: 1, "
                     "column: 1, indent: 1, spelling: '0x9', value: `9`, "
-                    "has_trailing_space: true }"));
+                    "has_trailing_space: true },"));
 }
 
 }  // namespace
