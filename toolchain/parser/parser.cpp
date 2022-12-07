@@ -853,8 +853,8 @@ auto Parser::HandleExpressionInPostfixState() -> void {
       PushState(ParserState::ParenExpression());
       break;
     }
-    case TokenKind::Self(): {
-      AddLeafNode(ParseNodeKind::Self(), Consume());
+    case TokenKind::SelfType(): {
+      AddLeafNode(ParseNodeKind::SelfType(), Consume());
       PushState(state);
       break;
     }
@@ -1036,7 +1036,7 @@ auto Parser::HandleFunctionIntroducerState() -> void {
     // parameters need to be added, we will probably need to push a more
     // general state.
     // Push state to handle `me`'s pattern binding.
-    PushState(ParserState::MePattern());
+    PushState(ParserState::SelfPattern());
     return true;
   }();
 
@@ -1367,7 +1367,7 @@ auto Parser::HandleParenExpressionFinishAsTupleState() -> void {
           state.has_error);
 }
 
-auto Parser::HandleMePatternState() -> void {
+auto Parser::HandleSelfPatternState() -> void {
   auto state = PopState();
 
   // Ensure the finish state always follows.
@@ -1375,7 +1375,7 @@ auto Parser::HandleMePatternState() -> void {
 
   // me `:` type
   auto possible_me_param =
-      (PositionIs(TokenKind::Me()) &&
+      (PositionIs(TokenKind::SelfParameter()) &&
        tokens_->GetKind(*(position_ + 1)) == TokenKind::Colon());
 
   if (possible_me_param) {
@@ -1384,7 +1384,7 @@ auto Parser::HandleMePatternState() -> void {
     state.token = *(position_ + 1);
     PushState(state);
     PushStateForExpression(PrecedenceGroup::ForType());
-    AddLeafNode(ParseNodeKind::Me(), *position_);
+    AddLeafNode(ParseNodeKind::SelfDeducedParameter(), *position_);
     position_ += 2;
     return;
   }
@@ -1392,7 +1392,7 @@ auto Parser::HandleMePatternState() -> void {
   // addr me `:` type
   auto possible_me_addr_param =
       (PositionIs(TokenKind::Addr()) &&
-       tokens_->GetKind(*(position_ + 1)) == TokenKind::Me() &&
+       tokens_->GetKind(*(position_ + 1)) == TokenKind::SelfParameter() &&
        tokens_->GetKind(*(position_ + 2)) == TokenKind::Colon());
 
   if (possible_me_addr_param) {
@@ -1400,8 +1400,9 @@ auto Parser::HandleMePatternState() -> void {
     PushState(state);
     PushStateForExpression(PrecedenceGroup::ForType());
     auto size = tree_->size();
-    AddLeafNode(ParseNodeKind::Addr(), *position_);
-    AddNode(ParseNodeKind::MeAddr(), *(position_ + 1), size, false);
+    AddLeafNode(ParseNodeKind::Address(), *position_);
+    AddNode(ParseNodeKind::SelfDeducedParameterAddress(), *(position_ + 1),
+            size, false);
     position_ += 3;
     return;
   }
@@ -1444,8 +1445,8 @@ auto Parser::HandlePattern(PatternKind pattern_kind) -> void {
         emitter_->Emit(*position_, ExpectedVariableName);
         break;
       }
-      case PatternKind::MeParam: {
-        // Me param validation comes later.
+      case PatternKind::SelfParameter: {
+        // `self` param validation comes later.
         break;
       }
     }

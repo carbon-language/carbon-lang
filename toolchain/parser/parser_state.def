@@ -557,8 +557,8 @@ CARBON_PARSER_STATE(VarAfterInitializer)
 CARBON_PARSER_STATE(VarFinishAsSemicolon)
 CARBON_PARSER_STATE(VarFinishAsFor)
 
-// Handles processing of a functions' syntax after a `me` paramter's `]`. This
-// applies only to interfaces and classes.
+// Handles processing of a functions' syntax after the deduced parameter lists's
+// `]`. This applies only to interfaces and classes.
 //
 // If invalid:
 //   (state done)
@@ -571,19 +571,19 @@ CARBON_PARSER_STATE(VarFinishAsFor)
 //   2. FunctionAfterParameterList
 CARBON_PARSER_STATE(FunctionAfterDeducedParameterList)
 
-// To handle `me` param parsing at the end.
+// To handle parsing deduced parameter list at the end.
 //
 // Always:
 //   (state done)
 CARBON_PARSER_STATE(DeducedParameterListFinish)
 
-// To parse starting from `me`.
+// To start parsing `self` deduced parameter.
 //
 // If valid:
 //   1. Expression
 //   2. PatternFinish
 // Else:
 //   1. PatternFinish
-CARBON_PARSER_STATE(MePattern)
+CARBON_PARSER_STATE(SelfPattern)
 
 #undef CARBON_PARSER_STATE

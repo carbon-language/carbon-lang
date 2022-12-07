@@ -44,7 +44,7 @@ class Parser {
   enum class BraceExpressionKind { Unknown, Value, Type };
 
   // Supported kinds for HandlePattern.
-  enum class PatternKind { Parameter, Variable, MeParam };
+  enum class PatternKind { Parameter, Variable, SelfParameter };
 
   // Gives information about the language construct/context being parsed. For
   // now, a simple enum but can be extended later to provide more information as
