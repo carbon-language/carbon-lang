@@ -37,15 +37,6 @@ class SemanticsBuiltinKind {
   // kind.
   SemanticsBuiltinKind() = delete;
 
-  friend auto operator==(SemanticsBuiltinKind lhs, SemanticsBuiltinKind rhs)
-      -> bool {
-    return lhs.kind_ == rhs.kind_;
-  }
-  friend auto operator!=(SemanticsBuiltinKind lhs, SemanticsBuiltinKind rhs)
-      -> bool {
-    return lhs.kind_ != rhs.kind_;
-  }
-
   // Gets a friendly name for the token for logging or debugging.
   [[nodiscard]] auto name() const -> llvm::StringRef;
 
