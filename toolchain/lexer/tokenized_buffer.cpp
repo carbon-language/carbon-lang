@@ -788,10 +788,12 @@ auto TokenizedBuffer::Print(llvm::raw_ostream& output_stream) const -> void {
     widths.Widen(GetTokenPrintWidths(token));
   }
 
+  output_stream << "[\n";
   for (Token token : tokens()) {
     PrintToken(output_stream, token, widths);
     output_stream << "\n";
   }
+  output_stream << "]\n";
 }
 
 auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
@@ -810,7 +812,7 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
   // justification manually in order to use the dynamically computed widths
   // and get the quotes included.
   output_stream << llvm::formatv(
-      "token: { index: {0}, kind: {1}, line: {2}, column: {3}, indent: {4}, "
+      "{ index: {0}, kind: {1}, line: {2}, column: {3}, indent: {4}, "
       "spelling: '{5}'",
       llvm::format_decimal(token_index, widths.index),
       llvm::right_justify(
@@ -855,7 +857,7 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
     output_stream << ", recovery: true";
   }
 
-  output_stream << " }";
+  output_stream << " },";
 }
 
 auto TokenizedBuffer::GetLineInfo(Line line) -> LineInfo& {
