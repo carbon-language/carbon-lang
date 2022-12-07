@@ -38,7 +38,7 @@ var block: String = '''
     The winds grow high; so do your stomachs, lords.
     How irksome is this music to my heart!
     When such strings jar, what hope of harmony?
-    I pray, my lords, let self compound this strife.
+    I pray, my lords, let me compound this strife.
         -- History of Henry VI, Part II, Act II, Scene 1, W. Shakespeare
     ''';
 

@@ -432,7 +432,7 @@ expectations.
 ## Merging pull requests
 
 Pull requests are ready to be merged when reviewers have indicated they're happy
-(for example, "LGTM" or "Looks good to self") or have approved the pull request.
+(for example, "LGTM" or "Looks good to me") or have approved the pull request.
 While all merges require at least one approval, a reviewer might approve before
 others are finished reviewing; all reviewers should be given time to comment to
 ensure there's a consensus.
