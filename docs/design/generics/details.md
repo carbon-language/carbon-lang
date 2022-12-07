@@ -3761,7 +3761,7 @@ To define these `impl`s inline in a `class` definition, include a `forall`
 clause with a more-specific type between the `impl` and `as` keywords.
 
 ```
-class Array(T:! Type, template N:! Int) {
+class Array(T:! Type, template N:! i64) {
   impl forall [P:! Printable] Array(P, N) as Printable { ... }
 }
 ```
@@ -5690,7 +5690,7 @@ class Optional(T:! Movable) {
     return {.storage = U.MakeNone()};
   }
   fn Some(x: T) -> Self {
-    return {.storage = u.Make(x)};
+    return {.storage = U.Make(x)};
   }
   ...
   private var storage: U.Storage;
