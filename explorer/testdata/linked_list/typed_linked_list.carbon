@@ -5,10 +5,6 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
-// CHECK:STDOUT: String list length is: 7
-// CHECK:STDOUT: This is a String Entry 4
-// CHECK:STDOUT: Value 1337
-// CHECK:STDOUT: result: 0
 package ExplorerTest api;
 
 class Node(T:! Type) {
@@ -46,6 +42,7 @@ class LinkedList(T:! Type) {
       return;
     }
     var last: Optional(Node(T)*) = (*self).tail;
+    // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/testdata/linked_list/typed_linked_list.carbon:[[@LINE+1]]: Unable to convert Node{.value = Optional{.element = alt OptionalElement.Element ("This is a String Entry 0")}, .next = Optional{.element = alt OptionalElement.None ()}, .prev = Optional{.element = alt OptionalElement.None ()}} to class Node(T = T)*
     var last_value:Node(T)* = last.Get();
     var v_wrapped:Optional(Node(T)*) = Optional(Node(T)*).Create(heap.New(Node(T).Create(value)));
     (*last_value).set_next(v_wrapped);
