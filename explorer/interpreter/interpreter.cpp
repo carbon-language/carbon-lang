@@ -870,53 +870,28 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
 
       // Get pointed value
       const auto* src_ptr = cast<PointerValue>(value);
-      const auto* dest_ptr = cast<PointerType>(destination_type);
       CARBON_ASSIGN_OR_RETURN(const auto* pointee,
                               heap_.Read(src_ptr->address(), source_loc))
-      const auto& dest_type = cast<NominalClassType>(dest_ptr->type());
-      switch (pointee->kind()) {
-        case Value::Kind::NominalClassType: {
-          std::optional<Nonnull<const NominalClassType*>> class_type =
-              cast<NominalClassType>(pointee);
-          auto new_addr = src_ptr->address();
-          while (class_type) {
-            // Compare value pointer address
-            if (trace_stream_)
-              **trace_stream_ << *class_type.value() << " -> " << dest_type
-                              << "\n";
-            if (TypeEqual(class_type.value(), &dest_type, std::nullopt)) {
-              return arena_->New<PointerValue>(new_addr);
-            }
-            class_type = class_type.value()->base();
-            new_addr =
-                new_addr.ElementAddress(arena_->New<BaseElement>(&dest_type));
-          }
-          return ProgramError(source_loc)
-                 << "Unable to convert " << *pointee << " to " << *dest_ptr;
-        }
-        case Value::Kind::NominalClassValue: {
-          std::optional<Nonnull<const NominalClassValue*>> class_subobj =
-              cast<NominalClassValue>(pointee);
-          auto new_addr = src_ptr->address();
-          while (class_subobj) {
-            // Compare value pointer address
-            if (trace_stream_)
-              **trace_stream_ << class_subobj.value()->type() << " -> "
-                              << dest_ptr->type() << "\n";
-            if (TypeEqual(&class_subobj.value()->type(), &dest_ptr->type(),
-                          std::nullopt)) {
-              return arena_->New<PointerValue>(new_addr);
-            }
-            class_subobj = class_subobj.value()->base();
-            new_addr =
-                new_addr.ElementAddress(arena_->New<BaseElement>(&dest_type));
-          }
-          return ProgramError(source_loc)
-                 << "Unable to convert " << *pointee << " to " << *dest_ptr;
-        }
-        default:
-          CARBON_FATAL() << "Invalid pointee type " << *pointee;
+      if (pointee->kind() == Value::Kind::NominalClassType) {
+        // TODO: When does that happen? Just return as-is?
+        return value;
       }
+
+      const auto* dest_ptr = cast<PointerType>(destination_type);
+      std::optional<Nonnull<const NominalClassValue*>> class_subobj =
+          cast<NominalClassValue>(pointee);
+      auto new_addr = src_ptr->address();
+      while (class_subobj) {
+        if (TypeEqual(&class_subobj.value()->type(), &dest_ptr->type(),
+                      std::nullopt)) {
+          return arena_->New<PointerValue>(new_addr);
+        }
+        class_subobj = class_subobj.value()->base();
+        new_addr = new_addr.ElementAddress(
+            arena_->New<BaseElement>(&dest_ptr->type()));
+      }
+      return ProgramError(source_loc)
+             << "Unable to convert " << *pointee << " to " << *dest_ptr;
     }
   }
 }
