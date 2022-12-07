@@ -205,7 +205,7 @@ auto SemanticsParseTreeHandler::HandleDesignatorExpression(
 }
 
 auto SemanticsParseTreeHandler::HandleEmptyDeclaration(
-    ParseTree::Node parse_node) -> void {
+    ParseTree::Node /*parse_node*/) -> void {
   CARBON_FATAL() << "TODO";
 }
 
