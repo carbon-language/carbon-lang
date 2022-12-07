@@ -7,26 +7,28 @@
 // RUN: %{explorer-run-trace}
 // CHECK:STDOUT: c.Foo() -> 5
 // CHECK:STDOUT: d.Foo() -> 4
+// CHECK:STDOUT: cc.Foo() -> 5
+// CHECK:STDOUT: cc.Bar() -> 10
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
 base class C {
   var a: i32;
-  virtual fn Foo[me: Self]() -> i32 {
+  virtual fn Foo[self: Self]() -> i32 {
     return 5;
   }
-  fn Bar[me: Self]() -> i32 {
+  fn Bar[self: Self]() -> i32 {
     return 10;
   }
 }
 
 class D extends C {
   var b: i32;
-  fn Foo[me: Self]() -> i32 {
+  fn Foo[self: Self]() -> i32 {
     return 4;
   }
-  fn Bar[me: Self]() -> i32 {
+  fn Bar[self: Self]() -> i32 {
     return 11;
   }
 }
