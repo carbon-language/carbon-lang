@@ -60,10 +60,10 @@
 interface foo {
   fn Add(b: Self) -> Self;
 
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/interface/fail_me_param_required.carbon:[[@LINE+1]]:10: `me` parameter must be of the form: `[me: <T>] or [addr me: <T>]`.
+  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/interface/fail_me_param_required.carbon:[[@LINE+1]]:10: Deduced parameters must be of the form: `<name>: <Type>` or `addr <name>: <Type>`.
   fn Sub[me Self](b: Self) -> Self;
 
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/interface/fail_me_param_required.carbon:[[@LINE+1]]:10: `me` parameter must be of the form: `[me: <T>] or [addr me: <T>]`.
+  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/interface/fail_me_param_required.carbon:[[@LINE+1]]:10: Deduced parameters must be of the form: `<name>: <Type>` or `addr <name>: <Type>`.
   fn Mul[Self](b: Self) -> Self;
 
   // TODO The recovery token is currently inserted after the `;`:
@@ -73,6 +73,6 @@ interface foo {
   // Fix and uncomment this to test error handling.
   // fn Div[me: Self(b: Self) -> Self;
 
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/interface/fail_me_param_required.carbon:[[@LINE+1]]:10: `me` parameter must be of the form: `[me: <T>] or [addr me: <T>]`.
+  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/interface/fail_me_param_required.carbon:[[@LINE+1]]:10: Deduced parameters must be of the form: `<name>: <Type>` or `addr <name>: <Type>`.
   fn Rem[](b: Self) -> Self;
 }

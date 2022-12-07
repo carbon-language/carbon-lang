@@ -1032,7 +1032,7 @@ auto Parser::HandleFunctionIntroducerState() -> void {
     PushState(ParserState::DeducedParameterListFinish());
     // This is for sure a `[`, we can safely create the corresponding node.
     AddLeafNode(ParseNodeKind::DeducedParameterListStart(), Consume());
-    // TODO For now only `me` is supported. When other types of deduced
+    // TODO: For now only `me` is supported. When other types of deduced
     // parameters need to be added, we will probably need to push a more
     // general state.
     // Push state to handle `me`'s pattern binding.
@@ -1407,10 +1407,10 @@ auto Parser::HandleSelfPatternState() -> void {
     return;
   }
 
-  CARBON_DIAGNOSTIC(
-      ExpectedMeParam, Error,
-      "`me` parameter must be of the form: `[me: <T>] or [addr me: <T>]`.");
-  emitter_->Emit(*position_, ExpectedMeParam);
+  CARBON_DIAGNOSTIC(ExpectedDeducedParam, Error,
+                    "Deduced parameters must be of the form: `<name>: <Type>` "
+                    "or `addr <name>: <Type>`.");
+  emitter_->Emit(*position_, ExpectedDeducedParam);
   state.has_error = true;
 
   // Try to recover by skipping to the next `]`.
