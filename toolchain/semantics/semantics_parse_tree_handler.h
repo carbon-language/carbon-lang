@@ -37,8 +37,11 @@ class SemanticsParseTreeHandler {
 
   struct TraversalStackEntry {
     ParseTree::Node parse_node;
-    std::optional<SemanticsNodeId> result_id;
+    // The result_id may be invalid if there's no result.
+    SemanticsNodeId result_id;
   };
+  static_assert(sizeof(TraversalStackEntry) == 8,
+                "Unexpected TraversalStackEntry size");
 
   // Adds an identifier for a DeclaredName node, returning its reference.
   auto AddIdentifier(ParseTree::Node decl_node) -> SemanticsIdentifierId;

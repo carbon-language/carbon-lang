@@ -27,8 +27,8 @@ class SemanticsParseTreeHandler::PrettyStackTraceNodeStack
       const auto& entry = handler_->node_stack_[i];
       output << "\t" << i << ".\t"
              << handler_->parse_tree_->node_kind(entry.parse_node);
-      if (entry.result_id) {
-        output << " -> " << *entry.result_id;
+      if (entry.result_id.is_valid()) {
+        output << " -> " << entry.result_id;
       }
       output << "\n";
     }
@@ -130,7 +130,7 @@ auto SemanticsParseTreeHandler::Push(ParseTree::Node parse_node) -> void {
                 << parse_tree_->node_kind(parse_node) << "\n";
   CARBON_CHECK(node_stack_.size() < (1 << 20))
       << "Excessive stack size: likely infinite loop";
-  node_stack_.push_back({parse_node, std::nullopt});
+  node_stack_.push_back({parse_node, SemanticsNodeId()});
 }
 
 auto SemanticsParseTreeHandler::Push(ParseTree::Node parse_node,
@@ -151,15 +151,18 @@ auto SemanticsParseTreeHandler::Pop(ParseNodeKind pop_parse_kind) -> void {
                 << "\n";
   CARBON_CHECK(parse_kind == pop_parse_kind)
       << "Expected " << pop_parse_kind << ", found " << parse_kind;
-  CARBON_CHECK(!back.result_id) << "Expected no result ID on " << parse_kind;
+  CARBON_CHECK(!back.result_id.is_valid())
+      << "Expected no result ID on " << parse_kind;
 }
 
 auto SemanticsParseTreeHandler::PopWithResult() -> SemanticsNodeId {
   auto back = node_stack_.pop_back_val();
-  auto node_id = *back.result_id;
+  auto node_id = back.result_id;
   CARBON_VLOG() << "Pop " << node_stack_.size() << ": any ("
                 << parse_tree_->node_kind(back.parse_node) << ") -> " << node_id
                 << "\n";
+  CARBON_CHECK(node_id.is_valid())
+      << "Invalid PopWithResult on " << parse_tree_->node_kind(back.parse_node);
   return node_id;
 }
 
@@ -167,11 +170,13 @@ auto SemanticsParseTreeHandler::PopWithResult(ParseNodeKind pop_parse_kind)
     -> SemanticsNodeId {
   auto back = node_stack_.pop_back_val();
   auto parse_kind = parse_tree_->node_kind(back.parse_node);
-  auto node_id = *back.result_id;
+  auto node_id = back.result_id;
   CARBON_VLOG() << "Pop " << node_stack_.size() << ": " << pop_parse_kind
                 << ") -> " << node_id << "\n";
   CARBON_CHECK(parse_kind == pop_parse_kind)
       << "Expected " << pop_parse_kind << ", found " << parse_kind;
+  CARBON_CHECK(node_id.is_valid())
+      << "Invalid PopWithResult with " << parse_kind;
   return node_id;
 }
 
