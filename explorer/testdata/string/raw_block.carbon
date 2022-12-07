@@ -10,10 +10,10 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  var s: String = #"""
+  var s: String = #'''
     A "block" ""string"" literal
       with indent.
-    """#;
+    '''#;
   if (s == #"A \#"block\#" \#"\#"string\#"\#" literal\#n  with indent.\#n"#) {
     return 0;
   } else {
