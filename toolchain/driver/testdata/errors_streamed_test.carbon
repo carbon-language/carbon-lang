@@ -4,7 +4,9 @@
 //
 // RUN: %{not} %{carbon} --print-errors=streamed dump tokens %s | \
 // RUN:   %{FileCheck-strict}
-// CHECK-COUNT-17:STDOUT: token: {{.*}}
+// CHECK:STDOUT: [
+// CHECK-COUNT-17:STDOUT: {{.*}}
+// CHECK:STDOUT: ]
 
 fn run(String program) {
   return True;

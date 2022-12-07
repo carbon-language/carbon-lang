@@ -171,7 +171,7 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
     tokenized_source.Print(output_stream_);
     return !tokenized_source.has_errors();
   }
-  CARBON_VLOG() << tokenized_source;
+  CARBON_VLOG() << "tokenized_buffer: " << tokenized_source;
 
   CARBON_VLOG() << "*** ParseTree::Parse ***\n";
   auto parse_tree = ParseTree::Parse(tokenized_source, consumer, vlog_stream_);
@@ -181,7 +181,7 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
     parse_tree.Print(output_stream_, parse_tree_preorder);
     return !tokenized_source.has_errors() && !parse_tree.has_errors();
   }
-  CARBON_VLOG() << parse_tree;
+  CARBON_VLOG() << "parse_tree: " << parse_tree;
 
   const SemanticsIR builtin_ir = SemanticsIR::MakeBuiltinIR();
   CARBON_VLOG() << "*** SemanticsIR::MakeFromParseTree ***\n";
@@ -194,7 +194,7 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
     // TODO: Return false when SemanticsIR has errors (not supported right now).
     return !tokenized_source.has_errors() && !parse_tree.has_errors();
   }
-  CARBON_VLOG() << semantics_ir;
+  CARBON_VLOG() << "semantics_ir: " << semantics_ir;
 
   llvm_unreachable("should handle all dump modes");
 }
