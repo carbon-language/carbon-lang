@@ -10,7 +10,7 @@ package ExplorerTest api;
 
 interface MyAddWith(T:! Type) {
   let Result:! Type;
-  fn Op[me: Self](other: T) -> Result;
+  fn Op[self: Self](other: T) -> Result;
 }
 
 constraint MyAdd {
@@ -18,7 +18,7 @@ constraint MyAdd {
 }
 
 external impl i32 as MyAdd {
-  fn Op[me: i32](other: i32) -> i32 { return me + other; }
+  fn Op[self: i32](other: i32) -> i32 { return self + other; }
 }
 
 fn Main() -> i32 {

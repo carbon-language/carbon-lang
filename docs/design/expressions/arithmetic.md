@@ -194,7 +194,7 @@ following family of interfaces:
 // Unary `-`.
 interface Negate {
   let Result:! Type = Self;
-  fn Op[me: Self]() -> Result;
+  fn Op[self: Self]() -> Result;
 }
 ```
 
@@ -202,7 +202,7 @@ interface Negate {
 // Binary `+`.
 interface AddWith(U:! Type) {
   let Result:! Type = Self;
-  fn Op[me: Self](other: U) -> Result;
+  fn Op[self: Self](other: U) -> Result;
 }
 constraint Add {
   extends AddWith(Self) where .Result = Self;
@@ -213,7 +213,7 @@ constraint Add {
 // Binary `-`.
 interface SubWith(U:! Type) {
   let Result:! Type = Self;
-  fn Op[me: Self](other: U) -> Result;
+  fn Op[self: Self](other: U) -> Result;
 }
 constraint Sub {
   extends SubWith(Self) where .Result = Self;
@@ -224,7 +224,7 @@ constraint Sub {
 // Binary `*`.
 interface MulWith(U:! Type) {
   let Result:! Type = Self;
-  fn Op[me: Self](other: U) -> Result;
+  fn Op[self: Self](other: U) -> Result;
 }
 constraint Mul {
   extends MulWith(Self) where .Result = Self;
@@ -235,7 +235,7 @@ constraint Mul {
 // Binary `/`.
 interface DivWith(U:! Type) {
   let Result:! Type = Self;
-  fn Op[me: Self](other: U) -> Result;
+  fn Op[self: Self](other: U) -> Result;
 }
 constraint Div {
   extends DivWith(Self) where .Result = Self;
@@ -246,7 +246,7 @@ constraint Div {
 // Binary `%`.
 interface ModWith(U:! Type) {
   let Result:! Type = Self;
-  fn Op[me: Self](other: U) -> Result;
+  fn Op[self: Self](other: U) -> Result;
 }
 constraint Mod {
   extends ModWith(Self) where .Result = Self;

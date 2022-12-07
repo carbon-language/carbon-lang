@@ -661,8 +661,8 @@ associated types. An associated type is a kind of
 // Stack using associated types
 interface Stack {
   let ElementType:! Type;
-  fn Push[addr me: Self*](value: ElementType);
-  fn Pop[addr me: Self*]() -> ElementType;
+  fn Push[addr self: Self*](value: ElementType);
+  fn Pop[addr self: Self*]() -> ElementType;
 }
 
 // Works on any type implementing `Stack`. Return type
@@ -698,7 +698,7 @@ another type:
 ```
 interface AddWith(T:! Type) {
   let ResultType:! Type;
-  fn Add[me: Self](rhs: T) -> ResultType;
+  fn Add[self: Self](rhs: T) -> ResultType;
 }
 ```
 

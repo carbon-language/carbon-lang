@@ -16,8 +16,8 @@
 package ExplorerTest api;
 
 class A{
-    destructor[me: Self]{
-        Print("DESTRUCTOR A {0}",me.n);
+    destructor[self: Self]{
+        Print("DESTRUCTOR A {0}",self.n);
     }
     var n: i32;
 }

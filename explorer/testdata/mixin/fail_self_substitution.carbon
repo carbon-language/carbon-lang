@@ -9,7 +9,7 @@
 package ExplorerTest api;
 
 __mixin Operations {
-  fn F[me: Self](x: Self) -> Self{
+  fn F[self: Self](x: Self) -> Self{
      return x;
   }
 }

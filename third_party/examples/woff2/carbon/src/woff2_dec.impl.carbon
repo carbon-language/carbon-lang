@@ -747,7 +747,7 @@ fn ReconstructTransformedHmtx(transformed_buf: const uint8_t*,
     lsbs.push_back(lsb);
   }
 
-  // bake me a shiny new hmtx table
+  // bake self a shiny new hmtx table
   var hmtx_output_size: uint32_t = 2 * num_glyphs + 2 * num_hmetrics;
   var hmtx_table: std::vector<uint8_t>(hmtx_output_size);
   var dst: uint8_t* = &hmtx_table[0];
