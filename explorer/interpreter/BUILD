@@ -19,7 +19,7 @@ cc_library(
     deps = [
         ":address",
         ":dictionary",
-        ":field_path",
+        ":element_path",
         ":heap_allocation_interface",
         ":stack",
         "//common:check",
@@ -31,6 +31,8 @@ cc_library(
         "//explorer/common:nonnull",
         "@llvm-project//llvm:Support",
     ],
+    # Exposed to resolve `member_test` dependencies.
+    visibility = ["//explorer/ast:__pkg__"],
 )
 
 cc_library(
@@ -51,7 +53,7 @@ cc_library(
     name = "address",
     hdrs = ["address.h"],
     deps = [
-        ":field_path",
+        ":element_path",
         "//common:ostream",
         "@llvm-project//llvm:Support",
     ],
@@ -86,8 +88,8 @@ cc_library(
 )
 
 cc_library(
-    name = "field_path",
-    hdrs = ["field_path.h"],
+    name = "element_path",
+    hdrs = ["element_path.h"],
     deps = [
         "//common:ostream",
         "//explorer/ast",
