@@ -152,7 +152,8 @@ auto SemanticsParseTreeHandler::Pop(ParseNodeKind pop_parse_kind) -> void {
   CARBON_CHECK(parse_kind == pop_parse_kind)
       << "Expected " << pop_parse_kind << ", found " << parse_kind;
   CARBON_CHECK(!back.result_id.is_valid())
-      << "Expected no result ID on " << parse_kind;
+      << "Expected no result ID on " << parse_kind << ", was "
+      << back.result_id;
 }
 
 auto SemanticsParseTreeHandler::PopWithResult() -> SemanticsNodeId {
