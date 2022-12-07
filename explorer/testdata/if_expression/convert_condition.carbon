@@ -13,8 +13,8 @@ class LazyEq {
   var v1: i32;
   var v2: i32;
   impl as ImplicitAs(bool) {
-    fn Convert[me: Self]() -> bool {
-      return me.v1 == me.v2;
+    fn Convert[self: Self]() -> bool {
+      return self.v1 == self.v2;
     }
   }
   fn Make(v1: i32, v2: i32) -> Self {

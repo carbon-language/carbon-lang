@@ -25,8 +25,8 @@ class ListElement{
     };
   }
 
-  fn set[addr me: Self*] (value: Optional(ListElement*)){
-    (*me).next = value;
+  fn set[addr self: Self*] (value: Optional(ListElement*)){
+    (*self).next = value;
   }
 
   var element: Optional(i32);
@@ -37,12 +37,12 @@ class List{
   fn Create() -> List{
     return {.next = Optional(ListElement*).CreateEmpty() };
   }
-  fn insert[addr me: Self*] (value: i32){
-    if( not (*me).next.HasValue() ){
-      (*me).next = Optional(ListElement*).Create( heap.New(ListElement.Create(value)) );
+  fn insert[addr self: Self*] (value: i32){
+    if( not (*self).next.HasValue() ){
+      (*self).next = Optional(ListElement*).Create( heap.New(ListElement.Create(value)) );
       return;
     }
-    var iter: Optional(ListElement*) = (*me).next;
+    var iter: Optional(ListElement*) = (*self).next;
     var node: auto = (iter.Get());
     while((*node).next.HasValue()){
       iter = (*node).next;
@@ -53,8 +53,8 @@ class List{
     (*v).set(x);
   }
 
-  fn print[me: Self] (){
-    var iter: Optional(ListElement*) = me.next;
+  fn print[self: Self] (){
+    var iter: Optional(ListElement*) = self.next;
     while(iter.HasValue()){
       var node: auto = *(iter.Get());
       Print("{0}",node.element.Get());
@@ -63,14 +63,14 @@ class List{
     }
   }
 
-  fn clean[addr me: Self*] (){
-    var head: auto = (*me).next;
+  fn clean[addr self: Self*] (){
+    var head: auto = (*self).next;
     while(head.HasValue()){
       var tmp: auto = head;
       head = (*head.Get()).next;
       heap.Delete(tmp.Get());
     }
-    (*me).next= Optional(ListElement*).CreateEmpty();
+    (*self).next= Optional(ListElement*).CreateEmpty();
   }
 
   var next: Optional(ListElement*);

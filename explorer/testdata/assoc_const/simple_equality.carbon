@@ -11,7 +11,7 @@ package ExplorerTest api;
 
 interface Frob {
   let Result:! Type;
-  fn F[me: Self]() -> Result;
+  fn F[self: Self]() -> Result;
 }
 
 fn Use[T:! Frob](x: T) -> T.Result {
@@ -20,7 +20,7 @@ fn Use[T:! Frob](x: T) -> T.Result {
 }
 
 impl i32 as Frob where .Result = i32 {
-  fn F[me: Self]() -> i32 { return 0; }
+  fn F[self: Self]() -> i32 { return 0; }
 }
 
 fn Main() -> i32 {

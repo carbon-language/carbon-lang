@@ -11,7 +11,7 @@ package ExplorerTest api;
 
 interface Number {
   fn Zero() -> Self;
-  fn Add[me: Self](other: Self) -> Self;
+  fn Add[self: Self](other: Self) -> Self;
 }
 
 class Point(T:! Number) {
@@ -21,14 +21,14 @@ class Point(T:! Number) {
 
 external impl i32 as Number {
   fn Zero() -> i32 { return 0; }
-  fn Add[me: i32](other: i32) -> i32 { return me + other; }
+  fn Add[self: i32](other: i32) -> i32 { return self + other; }
 }
 
 external impl forall [U:! Number] Point(U) as Number {
   // Allowed: `Self` means `Point(U)` here.
   fn Zero() -> Self { return {.x = U.Zero(), .y = U.Zero() }; }
-  fn Add[me: Self](other: Self) -> Self {
-    return {.x = me.x.Add(other.x), .y = me.y.Add(other.y)};
+  fn Add[self: Self](other: Self) -> Self {
+    return {.x = self.x.Add(other.x), .y = self.y.Add(other.y)};
   }
 }
 

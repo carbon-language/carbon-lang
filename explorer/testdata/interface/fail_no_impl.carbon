@@ -9,8 +9,8 @@
 package ExplorerTest api;
 
 interface Vector {
-  fn Add[me: Self](b: Self) -> Self;
-  fn Scale[me: Self](v: i32) -> Self;
+  fn Add[self: Self](b: Self) -> Self;
+  fn Scale[self: Self](v: i32) -> Self;
 }
 
 class Point {

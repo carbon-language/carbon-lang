@@ -10,7 +10,7 @@ package ExplorerTest api;
 
 class A {}
 impl A as ImplicitAs(i32) {
-  fn Convert[me: Self]() -> i32 { return 1; }
+  fn Convert[self: Self]() -> i32 { return 1; }
 }
 
 fn Main() -> i32 {

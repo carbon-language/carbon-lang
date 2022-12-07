@@ -584,21 +584,22 @@ static auto DeclarationToProto(const Declaration& declaration)
       const auto& function = cast<DestructorDeclaration>(declaration);
       auto* function_proto = declaration_proto.mutable_destructor();
       if (function.is_method()) {
-        switch (function.me_pattern().kind()) {
+        switch (function.self_pattern().kind()) {
           case PatternKind::AddrPattern:
-            *function_proto->mutable_me_pattern() =
-                PatternToProto(cast<AddrPattern>(function.me_pattern()));
+            *function_proto->mutable_self_pattern() =
+                PatternToProto(cast<AddrPattern>(function.self_pattern()));
             break;
           case PatternKind::BindingPattern:
-            *function_proto->mutable_me_pattern() =
-                PatternToProto(cast<BindingPattern>(function.me_pattern()));
+            *function_proto->mutable_self_pattern() =
+                PatternToProto(cast<BindingPattern>(function.self_pattern()));
             break;
           default:
-            // Parser shouldn't allow me_pattern to be anything other than
+            // Parser shouldn't allow self_pattern to be anything other than
             // AddrPattern or BindingPattern
-            CARBON_FATAL() << "me_pattern in method declaration can be either "
-                              "AddrPattern or BindingPattern. Actual pattern: "
-                           << function.me_pattern();
+            CARBON_FATAL()
+                << "self_pattern in method declaration can be either "
+                   "AddrPattern or BindingPattern. Actual pattern: "
+                << function.self_pattern();
             break;
         }
       }
@@ -619,21 +620,22 @@ static auto DeclarationToProto(const Declaration& declaration)
             GenericBindingToProto(*binding);
       }
       if (function.is_method()) {
-        switch (function.me_pattern().kind()) {
+        switch (function.self_pattern().kind()) {
           case PatternKind::AddrPattern:
-            *function_proto->mutable_me_pattern() =
-                PatternToProto(cast<AddrPattern>(function.me_pattern()));
+            *function_proto->mutable_self_pattern() =
+                PatternToProto(cast<AddrPattern>(function.self_pattern()));
             break;
           case PatternKind::BindingPattern:
-            *function_proto->mutable_me_pattern() =
-                PatternToProto(cast<BindingPattern>(function.me_pattern()));
+            *function_proto->mutable_self_pattern() =
+                PatternToProto(cast<BindingPattern>(function.self_pattern()));
             break;
           default:
-            // Parser shouldn't allow me_pattern to be anything other than
+            // Parser shouldn't allow self_pattern to be anything other than
             // AddrPattern or BindingPattern
-            CARBON_FATAL() << "me_pattern in method declaration can be either "
-                              "AddrPattern or BindingPattern. Actual pattern: "
-                           << function.me_pattern();
+            CARBON_FATAL()
+                << "self_pattern in method declaration can be either "
+                   "AddrPattern or BindingPattern. Actual pattern: "
+                << function.self_pattern();
             break;
         }
       }

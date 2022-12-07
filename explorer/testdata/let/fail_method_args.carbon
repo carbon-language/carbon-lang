@@ -13,7 +13,7 @@ class Point {
     return {.x = 0, .y = 0};
   }
 
-  fn SetX[me: Point](x: i32) {
+  fn SetX[self: Point](x: i32) {
     // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_method_args.carbon:[[@LINE+1]]: Cannot assign to rvalue 'x'
     x = 10;
   }

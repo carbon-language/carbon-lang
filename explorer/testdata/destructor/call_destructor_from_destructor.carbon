@@ -15,8 +15,8 @@
 package ExplorerTest api;
 
 class A{
-    destructor[me: Self]{
-        Print("DESTRUCTOR A {0}",me.n);
+    destructor[self: Self]{
+        Print("DESTRUCTOR A {0}",self.n);
     }
     fn Create(x: i32) -> A{
         return {.n = x};
@@ -25,8 +25,8 @@ class A{
 }
 
 class B{
-    destructor[me: Self]{
-        Print("DESTRUCTOR B {0}",me.n);
+    destructor[self: Self]{
+        Print("DESTRUCTOR B {0}",self.n);
     }
     fn Create(x: i32) -> B{
        return {.n = x, .a1 = A.Create(4),.a2 = A.Create(3) };

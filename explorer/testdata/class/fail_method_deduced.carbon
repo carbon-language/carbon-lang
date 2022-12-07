@@ -10,7 +10,7 @@ package ExplorerTest api;
 
 class C {
   fn F() {}
-  fn G[me: Self]() {}
+  fn G[self: Self]() {}
 }
 
 fn H[T:! Type](x: T) {}
