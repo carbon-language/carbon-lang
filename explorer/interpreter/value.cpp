@@ -379,7 +379,7 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::DestructorValue: {
       const auto& destructor = cast<DestructorValue>(*this);
       out << "destructor [ ";
-      out << destructor.declaration().me_pattern();
+      out << destructor.declaration().self_pattern();
       out << " ]";
       break;
     }

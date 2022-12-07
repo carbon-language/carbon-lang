@@ -7,11 +7,11 @@
 
 #include <cstdint>
 #include <iterator>
+#include <optional>
 
 #include "common/ostream.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/iterator.h"
@@ -26,46 +26,6 @@ namespace Carbon {
 
 class TokenizedBuffer;
 
-namespace Internal {
-
-// A lightweight handle to a lexed token in a `TokenizedBuffer`.
-//
-// This type's preferred name is `TokenizedBuffer::Token` and is only defined
-// outside the class to break a dependency cycle.
-//
-// `Token` objects are designed to be passed by value, not reference or
-// pointer. They are also designed to be small and efficient to store in data
-// structures.
-//
-// `Token` objects from the same `TokenizedBuffer` can be compared with each
-// other, both for being the same token within the buffer, and to establish
-// relative position within the token stream that has been lexed out of the
-// buffer. `Token` objects from different `TokenizedBuffer`s cannot be
-// meaningfully compared.
-//
-// All other APIs to query a `Token` are on the `TokenizedBuffer`.
-class TokenizedBufferToken : public IndexBase {
- public:
-  using Token = TokenizedBufferToken;
-
-  using IndexBase::IndexBase;
-
-  friend auto operator<(Token lhs, Token rhs) -> bool {
-    return lhs.index < rhs.index;
-  }
-  friend auto operator<=(Token lhs, Token rhs) -> bool {
-    return lhs.index <= rhs.index;
-  }
-  friend auto operator>(Token lhs, Token rhs) -> bool {
-    return lhs.index > rhs.index;
-  }
-  friend auto operator>=(Token lhs, Token rhs) -> bool {
-    return lhs.index >= rhs.index;
-  }
-};
-
-}  // namespace Internal
-
 // A buffer of tokenized Carbon source code.
 //
 // This is constructed by lexing the source code text into a series of tokens.
@@ -77,7 +37,21 @@ class TokenizedBufferToken : public IndexBase {
 class TokenizedBuffer {
  public:
   // A lightweight handle to a lexed token in a `TokenizedBuffer`.
-  using Token = Internal::TokenizedBufferToken;
+  //
+  // `Token` objects are designed to be passed by value, not reference or
+  // pointer. They are also designed to be small and efficient to store in data
+  // structures.
+  //
+  // `Token` objects from the same `TokenizedBuffer` can be compared with each
+  // other, both for being the same token within the buffer, and to establish
+  // relative position within the token stream that has been lexed out of the
+  // buffer. `Token` objects from different `TokenizedBuffer`s cannot be
+  // meaningfully compared.
+  //
+  // All other APIs to query a `Token` are on the `TokenizedBuffer`.
+  struct Token : public ComparableIndexBase {
+    using ComparableIndexBase::ComparableIndexBase;
+  };
 
   // A lightweight handle to a lexed line in a `TokenizedBuffer`.
   //
@@ -90,22 +64,8 @@ class TokenizedBuffer {
   // same line or the relative position of different lines within the source.
   //
   // All other APIs to query a `Line` are on the `TokenizedBuffer`.
-  class Line : public IndexBase {
-   public:
-    using IndexBase::IndexBase;
-
-    friend auto operator<(Line lhs, Line rhs) -> bool {
-      return lhs.index < rhs.index;
-    }
-    friend auto operator<=(Line lhs, Line rhs) -> bool {
-      return lhs.index <= rhs.index;
-    }
-    friend auto operator>(Line lhs, Line rhs) -> bool {
-      return lhs.index > rhs.index;
-    }
-    friend auto operator>=(Line lhs, Line rhs) -> bool {
-      return lhs.index >= rhs.index;
-    }
+  struct Line : public ComparableIndexBase {
+    using ComparableIndexBase::ComparableIndexBase;
   };
 
   // A lightweight handle to a lexed identifier in a `TokenizedBuffer`.
@@ -119,7 +79,7 @@ class TokenizedBuffer {
   // identifier spelling. Where the identifier was written is not preserved.
   //
   // All other APIs to query a `Identifier` are on the `TokenizedBuffer`.
-  class Identifier : public IndexBase {
+  struct Identifier : public IndexBase {
     using IndexBase::IndexBase;
   };
 
@@ -206,8 +166,7 @@ class TokenizedBuffer {
 
   // A diagnostic location translator that maps token locations into source
   // buffer locations.
-  class TokenLocationTranslator
-      : public DiagnosticLocationTranslator<Internal::TokenizedBufferToken> {
+  class TokenLocationTranslator : public DiagnosticLocationTranslator<Token> {
    public:
     explicit TokenLocationTranslator(const TokenizedBuffer* buffer,
                                      int* last_line_lexed_to_column)

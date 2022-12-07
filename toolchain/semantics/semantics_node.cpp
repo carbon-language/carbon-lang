@@ -31,7 +31,7 @@ void SemanticsNode::Print(llvm::raw_ostream& out) const {
 #include "toolchain/semantics/semantics_node_kind.def"
   }
   out << ")";
-  if (type_.id != -1) {
+  if (type_.index != -1) {
     out << ": " << type_;
   }
 }

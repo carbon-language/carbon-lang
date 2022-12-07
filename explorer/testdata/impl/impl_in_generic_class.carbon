@@ -10,12 +10,12 @@
 package ExplorerTest api;
 
 interface I(T:! Type) {
-  fn F[me: Self](t: T, o: Self) -> Self;
+  fn F[self: Self](t: T, o: Self) -> Self;
 }
 
 class X(U:! Type) {
   impl as I(U) {
-    fn F[me: Self](u: U, o: Self) -> Self { return {.m = u, .n = me.n + o.n}; }
+    fn F[self: Self](u: U, o: Self) -> Self { return {.m = u, .n = self.n + o.n}; }
   }
   var m: U;
   var n: i32;

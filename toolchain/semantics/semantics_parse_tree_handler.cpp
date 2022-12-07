@@ -113,7 +113,7 @@ auto SemanticsParseTreeHandler::Build() -> void {
         break;
       }
       default: {
-        CARBON_FATAL() << "In ParseTree at index " << parse_node.index()
+        CARBON_FATAL() << "In ParseTree at index " << parse_node
                        << ", unhandled NodeKind " << parse_kind;
       }
     }
@@ -132,7 +132,7 @@ auto SemanticsParseTreeHandler::Push(ParseTree::Node parse_node) -> void {
                 << parse_tree_->node_kind(parse_node) << "\n";
   CARBON_CHECK(node_stack_.size() < (1 << 20))
       << "Excessive stack size: likely infinite loop";
-  node_stack_.push_back({parse_node, llvm::None});
+  node_stack_.push_back({parse_node, std::nullopt});
 }
 
 auto SemanticsParseTreeHandler::Push(ParseTree::Node parse_node,

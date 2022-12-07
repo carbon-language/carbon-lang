@@ -263,7 +263,7 @@ class MemberAccessExpression : public Expression {
   // Can only be called once, during typechecking.
   void set_is_type_access(bool type_access) { is_type_access_ = type_access; }
 
-  // Returns true if the member is a method that has a "me" declaration in an
+  // Returns true if the member is a method that has a "self" declaration in an
   // AddrPattern.
   auto is_addr_me_method() const -> bool { return is_addr_me_method_; }
 

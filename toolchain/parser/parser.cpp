@@ -6,9 +6,9 @@
 
 #include <cstdlib>
 #include <memory>
+#include <optional>
 
 #include "common/check.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
@@ -82,10 +82,11 @@ class Parser::PrettyStackTraceParseState : public llvm::PrettyStackTraceEntry {
 };
 
 Parser::Parser(ParseTree& tree, TokenizedBuffer& tokens,
-               TokenDiagnosticEmitter& emitter)
+               TokenDiagnosticEmitter& emitter, llvm::raw_ostream* vlog_stream)
     : tree_(&tree),
       tokens_(&tokens),
       emitter_(&emitter),
+      vlog_stream_(vlog_stream),
       position_(tokens_->tokens().begin()),
       end_(tokens_->tokens().end()) {
   CARBON_CHECK(position_ != end_) << "Empty TokenizedBuffer";
@@ -157,16 +158,22 @@ auto Parser::ConsumeAndAddLeafNodeIf(TokenKind token_kind,
   return true;
 }
 
+auto Parser::ConsumeChecked(TokenKind kind) -> TokenizedBuffer::Token {
+  CARBON_CHECK(PositionIs(kind))
+      << "Required " << kind.Name() << ", found " << PositionKind().Name();
+  return Consume();
+}
+
 auto Parser::ConsumeIf(TokenKind kind)
-    -> llvm::Optional<TokenizedBuffer::Token> {
+    -> std::optional<TokenizedBuffer::Token> {
   if (!PositionIs(kind)) {
-    return llvm::None;
+    return std::nullopt;
   }
   return Consume();
 }
 
 auto Parser::FindNextOf(std::initializer_list<TokenKind> desired_kinds)
-    -> llvm::Optional<TokenizedBuffer::Token> {
+    -> std::optional<TokenizedBuffer::Token> {
   auto new_position = position_;
   while (true) {
     TokenizedBuffer::Token token = *new_position;
@@ -178,7 +185,7 @@ auto Parser::FindNextOf(std::initializer_list<TokenKind> desired_kinds)
     // Step to the next token at the current bracketing level.
     if (kind.IsClosingSymbol() || kind == TokenKind::EndOfFile()) {
       // There are no more tokens at this level.
-      return llvm::None;
+      return std::nullopt;
     } else if (kind.IsOpeningSymbol()) {
       new_position = TokenizedBuffer::TokenIterator(
           tokens_->GetMatchedClosingToken(token));
@@ -201,9 +208,9 @@ auto Parser::SkipMatchingGroup() -> bool {
 }
 
 auto Parser::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
-    -> llvm::Optional<TokenizedBuffer::Token> {
+    -> std::optional<TokenizedBuffer::Token> {
   if (position_ == end_) {
-    return llvm::None;
+    return std::nullopt;
   }
 
   TokenizedBuffer::Line root_line = tokens_->GetLine(skip_root);
@@ -225,7 +232,7 @@ auto Parser::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
     if (PositionIs(TokenKind::CloseCurlyBrace())) {
       // Immediately bail out if we hit an unmatched close curly, this will
       // pop us up a level of the syntax grouping.
-      return llvm::None;
+      return std::nullopt;
     }
 
     // We assume that a semicolon is always intended to be the end of the
@@ -244,7 +251,7 @@ auto Parser::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
   } while (position_ != end_ &&
            is_same_line_or_indent_greater_than_root(*position_));
 
-  return llvm::None;
+  return std::nullopt;
 }
 
 auto Parser::SkipTo(TokenizedBuffer::Token t) -> void {
@@ -426,6 +433,8 @@ auto Parser::Parse() -> void {
   // Traces state_stack_. This runs even in opt because it's low overhead.
   PrettyStackTraceParseState pretty_stack(this);
 
+  CARBON_VLOG() << "*** Parser::Parse Begin ***\n";
+
   PushState(ParserState::DeclarationLoop());
   while (!state_stack_.empty()) {
     switch (state_stack_.back().state) {
@@ -438,6 +447,8 @@ auto Parser::Parse() -> void {
   }
 
   AddLeafNode(ParseNodeKind::FileEnd(), *position_);
+
+  CARBON_VLOG() << "*** Parser::Parse End ***\n";
 }
 
 auto Parser::HandleBraceExpressionState() -> void {
@@ -598,9 +609,15 @@ auto Parser::HandleBraceExpressionParameterFinish(BraceExpressionKind kind)
     -> void {
   auto state = PopState();
 
-  AddNode(kind == BraceExpressionKind::Type ? ParseNodeKind::StructFieldType()
-                                            : ParseNodeKind::StructFieldValue(),
-          state.token, state.subtree_start, state.has_error);
+  if (state.has_error) {
+    AddLeafNode(ParseNodeKind::StructFieldUnknown(), state.token,
+                /*has_error=*/true);
+  } else {
+    AddNode(kind == BraceExpressionKind::Type
+                ? ParseNodeKind::StructFieldType()
+                : ParseNodeKind::StructFieldValue(),
+            state.token, state.subtree_start, /*has_error=*/false);
+  }
 
   if (ConsumeListToken(ParseNodeKind::StructComma(),
                        TokenKind::CloseCurlyBrace(),
@@ -647,12 +664,11 @@ auto Parser::HandleBraceExpressionFinishAsUnknownState() -> void {
 auto Parser::HandleCallExpressionState() -> void {
   auto state = PopState();
 
-  // TODO: When swapping () start/end, this should AddLeafNode the open before
-  // continuing.
   state.state = ParserState::CallExpressionFinish();
   PushState(state);
-  // Advance past the open paren.
-  ++position_;
+
+  AddNode(ParseNodeKind::CallExpressionStart(), Consume(), state.subtree_start,
+          state.has_error);
   if (!PositionIs(TokenKind::CloseParen())) {
     PushState(ParserState::CallExpressionParameterFinish());
     PushState(ParserState::Expression());
@@ -677,8 +693,7 @@ auto Parser::HandleCallExpressionParameterFinishState() -> void {
 auto Parser::HandleCallExpressionFinishState() -> void {
   auto state = PopState();
 
-  AddLeafNode(ParseNodeKind::CallExpressionEnd(), Consume());
-  AddNode(ParseNodeKind::CallExpression(), state.token, state.subtree_start,
+  AddNode(ParseNodeKind::CallExpression(), Consume(), state.subtree_start,
           state.has_error);
 }
 
@@ -744,8 +759,8 @@ auto Parser::HandleDesignator(bool as_struct) -> void {
   auto state = PopState();
 
   // `.` identifier
-  auto dot = ConsumeIf(TokenKind::Period());
-  CARBON_CHECK(dot);
+  auto dot = ConsumeChecked(TokenKind::Period());
+
   if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
                                ParseNodeKind::DesignatedName())) {
     CARBON_DIAGNOSTIC(ExpectedIdentifierAfterDot, Error,
@@ -757,14 +772,17 @@ auto Parser::HandleDesignator(bool as_struct) -> void {
       AddLeafNode(ParseNodeKind::DesignatedName(), Consume(),
                   /*has_error=*/true);
     } else {
-      state.has_error = true;
+      AddLeafNode(ParseNodeKind::DesignatedName(), *position_,
+                  /*has_error=*/true);
+      // Indicate the error to the parent state so that it can avoid producing
+      // more errors.
       ReturnErrorOnState();
     }
   }
 
   AddNode(as_struct ? ParseNodeKind::StructFieldDesignator()
                     : ParseNodeKind::DesignatorExpression(),
-          *dot, state.subtree_start, state.has_error);
+          dot, state.subtree_start, state.has_error);
 }
 
 auto Parser::HandleDesignatorAsExpressionState() -> void {
@@ -1044,8 +1062,8 @@ auto Parser::HandleFunctionParameterFinishState() -> void {
 auto Parser::HandleFunctionParameterListFinishState() -> void {
   auto state = PopState();
 
-  CARBON_CHECK(PositionIs(TokenKind::CloseParen())) << PositionKind().Name();
-  AddNode(ParseNodeKind::ParameterList(), Consume(), state.subtree_start,
+  AddNode(ParseNodeKind::ParameterList(),
+          ConsumeChecked(TokenKind::CloseParen()), state.subtree_start,
           state.has_error);
 }
 
@@ -1226,12 +1244,10 @@ auto Parser::HandleParenConditionFinishAsWhileState() -> void {
 auto Parser::HandleParenExpressionState() -> void {
   auto state = PopState();
 
-  // TODO: When swapping () start/end, this should AddLeafNode the open before
-  // continuing.
-
   // Advance past the open paren.
-  CARBON_CHECK(PositionIs(TokenKind::OpenParen()));
-  ++position_;
+  AddLeafNode(ParseNodeKind::ParenExpressionOrTupleLiteralStart(),
+              ConsumeChecked(TokenKind::OpenParen()));
+
   if (PositionIs(TokenKind::CloseParen())) {
     state.state = ParserState::ParenExpressionFinishAsTuple();
     PushState(state);
@@ -1284,16 +1300,14 @@ auto Parser::HandleParenExpressionParameterFinishAsTupleState() -> void {
 auto Parser::HandleParenExpressionFinishState() -> void {
   auto state = PopState();
 
-  AddLeafNode(ParseNodeKind::ParenExpressionEnd(), Consume());
-  AddNode(ParseNodeKind::ParenExpression(), state.token, state.subtree_start,
+  AddNode(ParseNodeKind::ParenExpression(), Consume(), state.subtree_start,
           state.has_error);
 }
 
 auto Parser::HandleParenExpressionFinishAsTupleState() -> void {
   auto state = PopState();
 
-  AddLeafNode(ParseNodeKind::TupleLiteralEnd(), Consume());
-  AddNode(ParseNodeKind::TupleLiteral(), state.token, state.subtree_start,
+  AddNode(ParseNodeKind::TupleLiteral(), Consume(), state.subtree_start,
           state.has_error);
 }
 
@@ -1659,6 +1673,12 @@ auto Parser::HandleInterfaceIntroducerState() -> void {
                       "Expected interface name after `interface` keyword.");
     emitter_->Emit(*position_, ExpectedInterfaceName);
     state.has_error = true;
+
+    // Add a name node even when it's not present because it's used for subtree
+    // bracketing on interfaces.
+    // TODO: Either fix this or normalize it, still deciding on the right
+    // approach.
+    AddLeafNode(ParseNodeKind::DeclaredName(), state.token, /*has_error=*/true);
   }
 
   bool parse_body = true;

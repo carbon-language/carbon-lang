@@ -1483,7 +1483,7 @@ class TypeChecker::ConstraintTypeBuilder {
             .drop_front(first_equal_to_add);
 
     // Add all of the new constraints.
-    impl_scope->Add(new_impl_constraints, llvm::None, llvm::None,
+    impl_scope->Add(new_impl_constraints, std::nullopt, std::nullopt,
                     GetSelfWitness(), type_checker);
     for (auto& equal : new_equality_constraints) {
       impl_scope->AddEqualityConstraint(arena_->New<EqualityConstraint>(equal));
@@ -2436,10 +2436,10 @@ auto TypeChecker::CheckAddrMeAccess(
     Nonnull<const FunctionDeclaration*> func_decl, const Bindings& bindings,
     const ImplScope& impl_scope) -> ErrorOr<Success> {
   if (func_decl->is_method() &&
-      func_decl->me_pattern().kind() == PatternKind::AddrPattern) {
+      func_decl->self_pattern().kind() == PatternKind::AddrPattern) {
     access->set_is_addr_me_method();
     Nonnull<const Value*> me_type =
-        Substitute(bindings, &func_decl->me_pattern().static_type());
+        Substitute(bindings, &func_decl->self_pattern().static_type());
     CARBON_RETURN_IF_ERROR(
         ExpectExactType(access->source_loc(), "method access, receiver type",
                         me_type, &access->object().static_type(), impl_scope));
@@ -3273,7 +3273,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
 
           CARBON_RETURN_IF_ERROR(DeduceCallBindings(
               call, &param_name.params().static_type(), generic_parameters,
-              /*deduced_bindings=*/llvm::None, impl_scope));
+              /*deduced_bindings=*/std::nullopt, impl_scope));
 
           // Currently the only kinds of parameterized entities we support are
           // types.
@@ -4388,9 +4388,9 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
   // Type check the receiver pattern.
   if (f->is_method()) {
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-        &f->me_pattern(), std::nullopt, function_scope, ValueCategory::Let));
-    CollectGenericBindingsInPattern(&f->me_pattern(), deduced_bindings);
-    CollectImplBindingsInPattern(&f->me_pattern(), impl_bindings);
+        &f->self_pattern(), std::nullopt, function_scope, ValueCategory::Let));
+    CollectGenericBindingsInPattern(&f->self_pattern(), deduced_bindings);
+    CollectImplBindingsInPattern(&f->self_pattern(), impl_bindings);
   }
   // Type check the parameter pattern.
   CARBON_RETURN_IF_ERROR(TypeCheckPattern(&f->param_pattern(), std::nullopt,
@@ -4511,11 +4511,6 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
 
   ImplScope class_scope;
   class_scope.AddParent(scope_info.innermost_scope);
-
-  if (class_decl->extensibility() == ClassExtensibility::Abstract) {
-    return ProgramError(class_decl->source_loc())
-           << "Class prefix `abstract` is not supported yet";
-  }
 
   std::optional<Nonnull<const NominalClassType*>> base_class;
   if (class_decl->base_expr().has_value()) {

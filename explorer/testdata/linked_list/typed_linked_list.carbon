@@ -19,11 +19,11 @@ class Node(T:! Type) {
       .prev = Optional(Node(T)*).CreateEmpty()
     };
   }
-  fn set_next[addr me:Self*](n: Optional(Node(T)*)) {
-    (*me).next = n;
+  fn set_next[addr self: Self*](n: Optional(Node(T)*)) {
+    (*self).next = n;
   }
-  fn set_prev[addr me:Self*](n: Optional(Node(T)*)) {
-    (*me).prev = n;
+  fn set_prev[addr self: Self*](n: Optional(Node(T)*)) {
+    (*self).prev = n;
   }
   var value: Optional(T);
   var next: Optional(Node(T)*);
@@ -38,50 +38,50 @@ class LinkedList(T:! Type) {
       .len = 0
     };
   }
-  fn PushBack[addr me: Self*](value:T) {
-    (*me).len = (*me).len + 1;
-    if(not (*me).head.HasValue()) {
-      (*me).head = Optional(Node(T)*).Create(heap.New(Node(T).Create(value)));
-      (*me).tail = (*me).head;
+  fn PushBack[addr self: Self*](value:T) {
+    (*self).len = (*self).len + 1;
+    if(not (*self).head.HasValue()) {
+      (*self).head = Optional(Node(T)*).Create(heap.New(Node(T).Create(value)));
+      (*self).tail = (*self).head;
       return;
     }
-    var last: Optional(Node(T)*) = (*me).tail;
+    var last: Optional(Node(T)*) = (*self).tail;
     var last_value:Node(T)* = last.Get();
     var v_wrapped:Optional(Node(T)*) = Optional(Node(T)*).Create(heap.New(Node(T).Create(value)));
     (*last_value).set_next(v_wrapped);
     (*v_wrapped.Get()).set_prev(last);
-    (*me).tail = v_wrapped;
+    (*self).tail = v_wrapped;
   }
-  fn PushFront[addr me: Self*](value:T) {
-    (*me).len = (*me).len + 1;
-    if(not (*me).head.HasValue()) {
-      (*me).head = Optional(Node(T)*).Create(heap.New(Node(T).Create(value)));
-      (*me).tail = (*me).head;
+  fn PushFront[addr self: Self*](value:T) {
+    (*self).len = (*self).len + 1;
+    if(not (*self).head.HasValue()) {
+      (*self).head = Optional(Node(T)*).Create(heap.New(Node(T).Create(value)));
+      (*self).tail = (*self).head;
       return;
     }
     var v_wrapped:Optional(Node(T)*) = Optional(Node(T)*).Create(heap.New(Node(T).Create(value)));
-    var current_head: Optional(Node(T)*) = (*me).head;
+    var current_head: Optional(Node(T)*) = (*self).head;
     var current_head_value: Node(T)* = current_head.Get();
     (*v_wrapped.Get()).set_next(current_head);
     (*current_head_value).set_prev(v_wrapped);
-    (*me).head = v_wrapped;
+    (*self).head = v_wrapped;
   }
-  fn Clear[addr me: Self*]() {
-    if((*me).len == 0) {
+  fn Clear[addr self: Self*]() {
+    if((*self).len == 0) {
       return;
     }
-    var iter: auto = (*me).head;
+    var iter: auto = (*self).head;
     while(iter.HasValue()) {
       var current: auto = iter;
       iter = (*iter.Get()).next;
       heap.Delete(current.Get());
     }
-    (*me).head = Optional(Node(T)*).CreateEmpty();
-    (*me).tail = Optional(Node(T)*).CreateEmpty();
-    (*me).len = 0;
+    (*self).head = Optional(Node(T)*).CreateEmpty();
+    (*self).tail = Optional(Node(T)*).CreateEmpty();
+    (*self).len = 0;
   }
-  fn Length[me:Self]() -> i32 {
-    return me.len;
+  fn Length[self: Self]() -> i32 {
+    return self.len;
   }
   var head: Optional(Node(T)*);
   var tail: Optional(Node(T)*);

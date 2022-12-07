@@ -300,6 +300,15 @@ Learn more about the Carbon project:
 -   [Carbon Explorer](/explorer)
 -   [FAQ](/docs/project/faq.md)
 
+## Conference talks
+
+Past Carbon focused talks from the community:
+
+-   [Carbon Language: An experimental successor to C++](https://www.youtube.com/watch?v=omrY53kbVoA),
+    CppNorth 2022
+-   [Carbon Language: Syntax and trade-offs](https://www.youtube.com/watch?v=9Y2ivB8VaIs),
+    Core C++ 2022
+
 ## Join us
 
 Carbon is committed to a welcoming and inclusive environment where everyone can

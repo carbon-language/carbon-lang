@@ -872,7 +872,7 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
   BindingMap generic_args;
 
   // TODO: move this logic into PatternMatch, and call it here.
-  auto p = &method.me_pattern().value();
+  auto p = &method.self_pattern().value();
   const auto& placeholder = cast<BindingPlaceholderValue>(*p);
   if (placeholder.value_node().has_value()) {
     method_scope.Bind(*placeholder.value_node(), receiver);
@@ -953,8 +953,8 @@ auto Interpreter::CallFunction(const CallExpression& call,
                   call.source_loc()));
       RuntimeScope method_scope(&heap_);
       BindingMap generic_args;
-      // Bind the receiver to the `me` parameter.
-      auto p = &method.me_pattern().value();
+      // Bind the receiver to the `self` parameter.
+      auto p = &method.self_pattern().value();
       if (p->kind() == Value::Kind::BindingPlaceholderValue) {
         // TODO: move this logic into PatternMatch
         const auto& placeholder = cast<BindingPlaceholderValue>(*p);
@@ -962,7 +962,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
           method_scope.Bind(*placeholder.value_node(), m.receiver());
         }
       } else {
-        CARBON_CHECK(PatternMatch(&method.me_pattern().value(), m.receiver(),
+        CARBON_CHECK(PatternMatch(&method.self_pattern().value(), m.receiver(),
                                   call.source_loc(), &method_scope,
                                   generic_args, trace_stream_, this->arena_));
       }
@@ -1773,6 +1773,15 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
     }
     case StatementKind::VariableDefinition: {
       const auto& definition = cast<VariableDefinition>(stmt);
+      const auto* dest_type = &definition.pattern().static_type();
+      if (const auto* dest_class = dyn_cast<NominalClassType>(dest_type)) {
+        if (dest_class->declaration().extensibility() ==
+            ClassExtensibility::Abstract) {
+          return ProgramError(stmt.source_loc())
+                 << "Cannot instantiate abstract class "
+                 << dest_class->declaration().name();
+        }
+      }
       if (act.pos() == 0 && definition.has_init()) {
         //    { {(var x = e) :: C, E, F} :: S, H}
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
@@ -1786,8 +1795,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         Nonnull<const Value*> v;
         if (definition.has_init()) {
           CARBON_ASSIGN_OR_RETURN(
-              v, Convert(act.results()[0], &definition.pattern().static_type(),
-                         stmt.source_loc()));
+              v, Convert(act.results()[0], dest_type, stmt.source_loc()));
         } else {
           v = arena_->New<UninitializedValue>(p);
         }

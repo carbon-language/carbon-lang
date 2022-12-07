@@ -18,22 +18,9 @@ class SemanticsIRForTest;
 namespace Carbon {
 
 // The ID of a cross-referenced IR (within cross_reference_irs_).
-struct SemanticsCrossReferenceIRId {
-  SemanticsCrossReferenceIRId() : id(-1) {}
-  constexpr explicit SemanticsCrossReferenceIRId(int32_t id) : id(id) {}
-
-  friend auto operator==(SemanticsCrossReferenceIRId lhs,
-                         SemanticsCrossReferenceIRId rhs) -> bool {
-    return lhs.id == rhs.id;
-  }
-  friend auto operator!=(SemanticsCrossReferenceIRId lhs,
-                         SemanticsCrossReferenceIRId rhs) -> bool {
-    return lhs.id != rhs.id;
-  }
-
-  auto Print(llvm::raw_ostream& out) const -> void { out << "ir" << id; }
-
-  int32_t id;
+struct SemanticsCrossReferenceIRId : public IndexBase {
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void { out << "ir" << index; }
 };
 
 // A cross-reference between node blocks or IRs; essentially, anything that's
@@ -87,8 +74,8 @@ class SemanticsIR {
       -> SemanticsNodeId {
     if (node_id.is_cross_reference()) {
       auto ref = cross_references_[node_id.GetAsCrossReference()];
-      auto type = cross_reference_irs_[ref.ir.id]
-                      ->node_blocks_[ref.node_block.id][ref.node.id]
+      auto type = cross_reference_irs_[ref.ir.index]
+                      ->node_blocks_[ref.node_block.index][ref.node.index]
                       .type();
       if (type.is_cross_reference() ||
           (ref.ir == ThisIR && ref.node_block == block_id)) {
@@ -103,7 +90,7 @@ class SemanticsIR {
         CARBON_FATAL() << "Need to think more about this case";
       }
     } else {
-      return node_blocks_[block_id.id][node_id.id].type();
+      return node_blocks_[block_id.index][node_id.index].type();
     }
   }
 
@@ -135,7 +122,7 @@ class SemanticsIR {
   // Adds a node to a specified block, returning an ID to reference the node.
   auto AddNode(SemanticsNodeBlockId block_id, SemanticsNode node)
       -> SemanticsNodeId {
-    auto& block = node_blocks_[block_id.id];
+    auto& block = node_blocks_[block_id.index];
     SemanticsNodeId node_id(block.size());
     block.push_back(node);
     return node_id;

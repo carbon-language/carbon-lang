@@ -14,8 +14,8 @@ class Point {
     return {.x = 0, .y = 0};
   }
 
-  fn GetX[me: Point]() -> i32 {
-    return me.x;
+  fn GetX[self: Point]() -> i32 {
+    return self.x;
   }
 
   var x: i32;

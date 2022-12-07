@@ -15,11 +15,11 @@ class MyType {
   var value: i32;
 
   impl as EqWith(Self) {
-    fn Equal[me: Self](other: Self) -> bool {
-      return me.value == other.value;
+    fn Equal[self: Self](other: Self) -> bool {
+      return self.value == other.value;
     }
-    fn NotEqual[me: Self](other: Self) -> bool{
-      return me.value != other.value;
+    fn NotEqual[self: Self](other: Self) -> bool{
+      return self.value != other.value;
     }
   }
 }

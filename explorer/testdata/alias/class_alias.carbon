@@ -13,16 +13,16 @@
 package ExplorerTest api;
 
 interface Addable {
-  fn Add[me: Self](k: i32) -> Self;
+  fn Add[self: Self](k: i32) -> Self;
 }
 impl i32 as Addable {
-  fn Add[me: Self](k: i32) -> Self { return me + k; }
+  fn Add[self: Self](k: i32) -> Self { return self + k; }
 }
 
 class Class { var n: i32; }
 class GenericClass(T:! Addable) {
   var m: T;
-  fn Get[me: Self](n: i32) -> T { return me.m.Add(n); }
+  fn Get[self: Self](n: i32) -> T { return self.m.Add(n); }
 }
 
 alias ClassAlias = Class;

@@ -13,9 +13,9 @@ package ExplorerTest api;
 class B {
   var x: i32;
 
-  fn GetSetX[addr me: Self*](x: i32) -> i32 {
-    var oldX: auto = (*me).x;
-    (*me).x = x;
+  fn GetSetX[addr self: Self*](x: i32) -> i32 {
+    var oldX: auto = (*self).x;
+    (*self).x = x;
     return oldX;
   }
 }

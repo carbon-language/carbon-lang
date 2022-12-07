@@ -15,16 +15,16 @@ base class C {
   fn BasePrint(v: i32) {
     Print("Class {0}", v);
   }
-  fn Method1[me:Self]() {
-    me.BasePrint(me.value_c);
+  fn Method1[self: Self]() {
+    self.BasePrint(self.value_c);
   }
 
   var value_c: i32;
 }
 
 class D extends C {
-  fn Method2[me:Self]() {
-    me.BasePrint(me.value_d);
+  fn Method2[self: Self]() {
+    self.BasePrint(self.value_d);
   }
 
   var value_d: i32;

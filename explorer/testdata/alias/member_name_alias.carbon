@@ -11,19 +11,19 @@ package ExplorerTest api;
 
 interface I {
   fn F() -> i32;
-  fn M[me: Self]() -> i32;
+  fn M[self: Self]() -> i32;
 }
 class A {
   var n: i32;
   impl as I {
     fn F() -> i32 { return 1; }
-    fn M[me: Self]() -> i32 { return 2; }
+    fn M[self: Self]() -> i32 { return 2; }
   }
-  fn G[me: Self]() -> i32 { return 3; }
+  fn G[self: Self]() -> i32 { return 3; }
 }
 impl i32 as I {
   fn F() -> i32 { return 4; }
-  fn M[me: Self]() -> i32 { return 5; }
+  fn M[self: Self]() -> i32 { return 5; }
 }
 
 alias IF = I.F;
