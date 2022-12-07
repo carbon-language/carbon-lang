@@ -15,9 +15,9 @@ class Point {
     return {.x = 0, .y = 0};
   }
 
-  fn GetSetX[addr me: Point*](x: i32) -> i32 {
-    var old: auto = (*me).x;
-    (*me).x = x;
+  fn GetSetX[addr self: Point*](x: i32) -> i32 {
+    var old: auto = (*self).x;
+    (*self).x = x;
     return old;
   }
 

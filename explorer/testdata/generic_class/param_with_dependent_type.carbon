@@ -10,7 +10,7 @@
 package ExplorerTest api;
 
 class Point(T:! Type, V:! T) {
-  fn Get[me: Self]() -> T {
+  fn Get[self: Self]() -> T {
     return V;
   }
 }

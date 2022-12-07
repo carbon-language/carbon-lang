@@ -13,22 +13,22 @@
 package ExplorerTest api;
 
 class A{
-    destructor[me: Self]{
-        Print("DESTRUCTOR A {0}",me.n);
+    destructor[self: Self]{
+        Print("DESTRUCTOR A {0}",self.n);
     }
     var n: i32;
 }
 
 class B{
-    destructor[me: Self]{
-        Print("DESTRUCTOR B {0}",me.n);
+    destructor[self: Self]{
+        Print("DESTRUCTOR B {0}",self.n);
     }
     var n: i32;
 }
 
 class C{
-    destructor[me: Self]{
-        Print("DESTRUCTOR C {0}",me.n);
+    destructor[self: Self]{
+        Print("DESTRUCTOR C {0}",self.n);
     }
     var n: i32;
 }

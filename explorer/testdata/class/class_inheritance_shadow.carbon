@@ -16,8 +16,8 @@ base class C {
   fn Method1() {
     Print("Class C");
   }
-  fn GetValue[me: Self]() -> i32 {
-    return me.value;
+  fn GetValue[self: Self]() -> i32 {
+    return self.value;
   }
   var value: i32;
 }

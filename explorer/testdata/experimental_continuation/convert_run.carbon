@@ -15,8 +15,8 @@ class Wrap(T:! Type) {
 fn MakeWrap[T:! Type](x: T) -> Wrap(T) { return {.v = x}; }
 
 impl forall [T:! Type] Wrap(T) as ImplicitAs(T) {
-  fn Convert[me: Self]() -> T {
-    return me.v;
+  fn Convert[self: Self]() -> T {
+    return self.v;
   }
 }
 

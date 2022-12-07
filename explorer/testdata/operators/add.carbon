@@ -12,7 +12,7 @@ package ExplorerTest api;
 class A { var n: i32; }
 
 external impl A as Add {
-  fn Op[me: Self](rhs: A) -> A { return {.n = me.n + rhs.n}; }
+  fn Op[self: Self](rhs: A) -> A { return {.n = self.n + rhs.n}; }
 }
 
 fn Main() -> i32 {

@@ -568,7 +568,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
       }
       if (function.is_method()) {
         CARBON_RETURN_IF_ERROR(
-            ResolveNames(function.me_pattern(), function_scope));
+            ResolveNames(function.self_pattern(), function_scope));
       }
       CARBON_RETURN_IF_ERROR(
           ResolveNames(function.param_pattern(), function_scope));

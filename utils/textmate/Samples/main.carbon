@@ -7,11 +7,11 @@
 package Carbon api;
 
 interface HasValueParam(T:! Type, V:! T) {
-  fn Go[me: Self]() -> T;
+  fn Go[self: Self]() -> T;
 }
 
 impl () as HasValueParam(i32, 5) {
-  fn Go[me: Self]() -> i32 { return 42; }
+  fn Go[self: Self]() -> i32 { return 42; }
 }
 
 class Point {

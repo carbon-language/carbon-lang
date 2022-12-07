@@ -13,12 +13,12 @@ package ExplorerTest api;
 
 interface Number {
   fn Zero() -> Self;
-  fn Add[me: Self](other: Self) -> Self;
+  fn Add[self: Self](other: Self) -> Self;
 }
 
 external impl i32 as Number {
   fn Zero() -> i32 { return 0; }
-  fn Add[me: i32](other: i32) -> i32 { return me + other; }
+  fn Add[self: i32](other: i32) -> i32 { return self + other; }
 }
 
 base class A(T:! Number) {

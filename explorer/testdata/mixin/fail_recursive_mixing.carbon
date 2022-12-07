@@ -8,7 +8,7 @@
 package ExplorerTest api;
 
 __mixin M1 {
-  fn F1[me: Self](x: Self) -> Self{
+  fn F1[self: Self](x: Self) -> Self{
      return x;
   }
   // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_recursive_mixing.carbon:[[@LINE+1]]: incomplete mixin `M1` used in mix declaration

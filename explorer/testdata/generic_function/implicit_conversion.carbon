@@ -10,10 +10,10 @@
 package ExplorerTest api;
 
 interface IntLike {
-  fn Convert[me: Self]() -> i32;
+  fn Convert[self: Self]() -> i32;
 }
 impl i32 as IntLike {
-  fn Convert[me: i32]() -> i32 { return me; }
+  fn Convert[self: i32]() -> i32 { return self; }
 }
 
 fn add[T:! IntLike](x: {.a: T, .b: ({.m: i32, .n: T}, i32)}) -> i32 {

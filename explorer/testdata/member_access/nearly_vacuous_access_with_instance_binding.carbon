@@ -8,10 +8,10 @@
 // CHECK:STDOUT: result: 1
 
 package Foo api;
-interface A { fn F[me: Self]() -> i32; }
+interface A { fn F[self: Self]() -> i32; }
 class X {
   impl as A {
-    fn F[me: Self]() -> i32 { return 1; }
+    fn F[self: Self]() -> i32 { return 1; }
   }
 }
 fn Main() -> i32 {

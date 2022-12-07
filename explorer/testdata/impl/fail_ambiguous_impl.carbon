@@ -10,8 +10,8 @@
 package ExplorerTest api;
 
 interface Vector {
-  fn Add[me: Self](b: Self) -> Self;
-  fn Scale[me: Self](v: i32) -> Self;
+  fn Add[self: Self](b: Self) -> Self;
+  fn Scale[self: Self](v: i32) -> Self;
 }
 
 class Point {
@@ -20,20 +20,20 @@ class Point {
 }
 
 external impl Point as Vector {
-  fn Add[me: Point](b: Point) -> Point {
-      return {.x = me.x + b.x, .y = me.y + b.y};
+  fn Add[self: Point](b: Point) -> Point {
+      return {.x = self.x + b.x, .y = self.y + b.y};
   }
-  fn Scale[me: Point](v: i32) -> Point {
-      return {.x = me.x * v, .y = me.y * v};
+  fn Scale[self: Point](v: i32) -> Point {
+      return {.x = self.x * v, .y = self.y * v};
   }
 }
 
 external impl Point as Vector {
-  fn Add[me: Point](b: Point) -> Point {
-      return {.x = me.x + b.x, .y = me.y + b.y};
+  fn Add[self: Point](b: Point) -> Point {
+      return {.x = self.x + b.x, .y = self.y + b.y};
   }
-  fn Scale[me: Point](v: i32) -> Point {
-      return {.x = me.x * v, .y = me.y * v};
+  fn Scale[self: Point](v: i32) -> Point {
+      return {.x = self.x * v, .y = self.y * v};
   }
 // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_ambiguous_impl.carbon:[[@LINE+1]]: ambiguous implementations of interface Vector for class Point
 }
