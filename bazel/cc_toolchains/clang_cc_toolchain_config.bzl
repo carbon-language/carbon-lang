@@ -298,7 +298,7 @@ def _impl(ctx):
             flag_set(
                 actions = all_compile_actions,
                 flag_groups = [flag_group(flags = [
-                    "-march=x86-64-v3",
+                    "-march=x86-64-v2",
                 ])],
             ),
         ],
