@@ -98,14 +98,23 @@ auto SemanticsParseTreeHandler::Build() -> void {
         HandleParameterList(parse_node);
         break;
       }
+      case ParseNodeKind::PatternBinding(): {
+        HandlePatternBinding(parse_node);
+        break;
+      }
       case ParseNodeKind::ReturnStatement(): {
         HandleReturnStatement(parse_node);
+        break;
+      }
+      case ParseNodeKind::VariableDeclaration(): {
+        HandleVariableDeclaration(parse_node);
         break;
       }
       case ParseNodeKind::DeclaredName():
       case ParseNodeKind::FunctionIntroducer():
       case ParseNodeKind::ParameterListStart():
-      case ParseNodeKind::ReturnStatementStart(): {
+      case ParseNodeKind::ReturnStatementStart():
+      case ParseNodeKind::VariableIntroducer(): {
         // The token has no action, but we still track it for the stack.
         Push(parse_node);
         break;
@@ -141,6 +150,16 @@ auto SemanticsParseTreeHandler::Push(ParseTree::Node parse_node,
   CARBON_CHECK(node_stack_.size() < (1 << 20))
       << "Excessive stack size: likely infinite loop";
   auto node_id = AddNode(node);
+  node_stack_.push_back({parse_node, node_id});
+}
+
+auto SemanticsParseTreeHandler::Push(ParseTree::Node parse_node,
+                                     SemanticsNodeId node_id) -> void {
+  CARBON_VLOG() << "Push " << node_stack_.size() << ": "
+                << parse_tree_->node_kind(parse_node) << " -> " << node_id
+                << "\n";
+  CARBON_CHECK(node_stack_.size() < (1 << 20))
+      << "Excessive stack size: likely infinite loop";
   node_stack_.push_back({parse_node, node_id});
 }
 
@@ -262,6 +281,13 @@ auto SemanticsParseTreeHandler::HandleLiteral(ParseTree::Node parse_node)
       Push(parse_node, SemanticsNode::MakeRealLiteral(parse_node));
       break;
     }
+    case TokenKind::IntegerTypeLiteral(): {
+      auto text = tokens_->GetTokenText(token);
+      CARBON_CHECK(text == "i32") << "Currently only i32 is allowed";
+      Push(parse_node, SemanticsNodeId::MakeBuiltinReference(
+                           SemanticsBuiltinKind::IntegerType()));
+      break;
+    }
     default:
       CARBON_FATAL() << "Unhandled kind: " << token_kind.Name();
   }
@@ -277,6 +303,18 @@ auto SemanticsParseTreeHandler::HandleParameterList(ParseTree::Node parse_node)
   Push(parse_node);
 }
 
+auto SemanticsParseTreeHandler::HandlePatternBinding(ParseTree::Node parse_node)
+    -> void {
+  auto type_id = PopWithResult();
+
+  auto name_node = node_stack_.back().parse_node;
+  auto name = AddIdentifier(name_node);
+  node_stack_.pop_back();
+
+  Push(parse_node,
+       AddNode(SemanticsNode::MakeBindName(name_node, name, type_id)));
+}
+
 auto SemanticsParseTreeHandler::HandleReturnStatement(
     ParseTree::Node parse_node) -> void {
   if (parse_tree_->node_kind(node_stack_.back().parse_node) ==
@@ -290,6 +328,15 @@ auto SemanticsParseTreeHandler::HandleReturnStatement(
     Push(parse_node,
          SemanticsNode::MakeReturnExpression(parse_node, arg_type, arg));
   }
+}
+
+auto SemanticsParseTreeHandler::HandleVariableDeclaration(
+    ParseTree::Node parse_node) -> void {
+  // TODO: Initializers would assign to the PatternBinding, but this code
+  // doesn't handle it right now.
+  PopWithResult();
+  Pop(ParseNodeKind::VariableIntroducer());
+  Push(parse_node);
 }
 
 }  // namespace Carbon
