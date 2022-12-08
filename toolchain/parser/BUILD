@@ -14,7 +14,6 @@ cc_library(
     deps = [
         "//common:check",
         "//common:ostream",
-        "//toolchain/common:enum_base",
         "@llvm-project//llvm:Support",
     ],
 )

@@ -75,7 +75,7 @@ class Parser::PrettyStackTraceParseState : public llvm::PrettyStackTraceEntry {
     output << " @ " << parser_->tokens_->GetLineNumber(line) << ":"
            << parser_->tokens_->GetColumnNumber(token) << ":"
            << " token " << token << " : "
-           << parser_->tokens_->GetKind(token).name() << "\n";
+           << parser_->tokens_->GetKind(token).Name() << "\n";
   }
 
   const Parser* parser_;
@@ -93,7 +93,7 @@ Parser::Parser(ParseTree& tree, TokenizedBuffer& tokens,
   --end_;
   CARBON_CHECK(tokens_->GetKind(*end_) == TokenKind::EndOfFile())
       << "TokenizedBuffer should end with EndOfFile, ended with "
-      << tokens_->GetKind(*end_).name();
+      << tokens_->GetKind(*end_).Name();
 }
 
 auto Parser::AddLeafNode(ParseNodeKind kind, TokenizedBuffer::Token token,
@@ -160,7 +160,7 @@ auto Parser::ConsumeAndAddLeafNodeIf(TokenKind token_kind,
 
 auto Parser::ConsumeChecked(TokenKind kind) -> TokenizedBuffer::Token {
   CARBON_CHECK(PositionIs(kind))
-      << "Required " << kind.name() << ", found " << PositionKind().name();
+      << "Required " << kind.Name() << ", found " << PositionKind().Name();
   return Consume();
 }
 

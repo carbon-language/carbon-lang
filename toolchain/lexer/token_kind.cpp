@@ -9,13 +9,21 @@
 
 namespace Carbon {
 
+auto TokenKind::Name() const -> llvm::StringRef {
+  static constexpr llvm::StringLiteral Names[] = {
+#define CARBON_TOKEN(TokenName) #TokenName,
+#include "toolchain/lexer/token_registry.def"
+  };
+  return Names[static_cast<int>(kind_value_)];
+}
+
 auto TokenKind::IsSymbol() const -> bool {
   static constexpr bool Table[] = {
 #define CARBON_TOKEN(TokenName) false,
 #define CARBON_SYMBOL_TOKEN(TokenName, Spelling) true,
-#include "toolchain/lexer/token_kind.def"
+#include "toolchain/lexer/token_registry.def"
   };
-  return Table[static_cast<int>(val_)];
+  return Table[static_cast<int>(kind_value_)];
 }
 
 auto TokenKind::IsGroupingSymbol() const -> bool {
@@ -25,9 +33,9 @@ auto TokenKind::IsGroupingSymbol() const -> bool {
   true,
 #define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName) \
   true,
-#include "toolchain/lexer/token_kind.def"
+#include "toolchain/lexer/token_registry.def"
   };
-  return Table[static_cast<int>(val_)];
+  return Table[static_cast<int>(kind_value_)];
 }
 
 auto TokenKind::IsOpeningSymbol() const -> bool {
@@ -35,9 +43,9 @@ auto TokenKind::IsOpeningSymbol() const -> bool {
 #define CARBON_TOKEN(TokenName) false,
 #define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName) \
   true,
-#include "toolchain/lexer/token_kind.def"
+#include "toolchain/lexer/token_registry.def"
   };
-  return Table[static_cast<int>(val_)];
+  return Table[static_cast<int>(kind_value_)];
 }
 
 auto TokenKind::GetClosingSymbol() const -> TokenKind {
@@ -45,9 +53,9 @@ auto TokenKind::GetClosingSymbol() const -> TokenKind {
 #define CARBON_TOKEN(TokenName) Error(),
 #define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName) \
   ClosingName(),
-#include "toolchain/lexer/token_kind.def"
+#include "toolchain/lexer/token_registry.def"
   };
-  auto result = Table[static_cast<int>(val_)];
+  auto result = Table[static_cast<int>(kind_value_)];
   CARBON_CHECK(result != Error()) << "Only opening symbols are valid!";
   return result;
 }
@@ -57,9 +65,9 @@ auto TokenKind::IsClosingSymbol() const -> bool {
 #define CARBON_TOKEN(TokenName) false,
 #define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName) \
   true,
-#include "toolchain/lexer/token_kind.def"
+#include "toolchain/lexer/token_registry.def"
   };
-  return Table[static_cast<int>(val_)];
+  return Table[static_cast<int>(kind_value_)];
 }
 
 auto TokenKind::GetOpeningSymbol() const -> TokenKind {
@@ -67,9 +75,9 @@ auto TokenKind::GetOpeningSymbol() const -> TokenKind {
 #define CARBON_TOKEN(TokenName) Error(),
 #define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName) \
   OpeningName(),
-#include "toolchain/lexer/token_kind.def"
+#include "toolchain/lexer/token_registry.def"
   };
-  auto result = Table[static_cast<int>(val_)];
+  auto result = Table[static_cast<int>(kind_value_)];
   CARBON_CHECK(result != Error()) << "Only closing symbols are valid!";
   return result;
 }
@@ -78,9 +86,9 @@ auto TokenKind::IsKeyword() const -> bool {
   static constexpr bool Table[] = {
 #define CARBON_TOKEN(TokenName) false,
 #define CARBON_KEYWORD_TOKEN(TokenName, Spelling) true,
-#include "toolchain/lexer/token_kind.def"
+#include "toolchain/lexer/token_registry.def"
   };
-  return Table[static_cast<int>(val_)];
+  return Table[static_cast<int>(kind_value_)];
 }
 
 auto TokenKind::IsSizedTypeLiteral() const -> bool {
@@ -94,9 +102,9 @@ auto TokenKind::GetFixedSpelling() const -> llvm::StringRef {
 #define CARBON_TOKEN(TokenName) "",
 #define CARBON_SYMBOL_TOKEN(TokenName, Spelling) Spelling,
 #define CARBON_KEYWORD_TOKEN(TokenName, Spelling) Spelling,
-#include "toolchain/lexer/token_kind.def"
+#include "toolchain/lexer/token_registry.def"
   };
-  return Table[static_cast<int>(val_)];
+  return Table[static_cast<int>(kind_value_)];
 }
 
 }  // namespace Carbon

@@ -20,11 +20,6 @@
 //
 // Macro definitions  will be removed at the end of this file to clean up.
 
-// For compatibility with enum_base.def.
-#ifdef CARBON_ENUM_DEF_PATH
-#define CARBON_PARSE_NODE_KIND(Name) CARBON_ENUM_ENTRY(Name)
-#endif
-
 #if !(defined(CARBON_PARSE_NODE_KIND) ||          \
       (defined(CARBON_PARSE_NODE_KIND_BRACKET) && \
        defined(CARBON_PARSE_NODE_KIND_CHILD_COUNT)))
