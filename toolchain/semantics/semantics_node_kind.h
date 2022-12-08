@@ -11,44 +11,12 @@
 
 namespace Carbon {
 
-class SemanticsNodeKind {
- private:
-  // Note that this must be declared earlier in the class so that its type can
-  // be used, for example in the conversion operator.
-  enum class KindEnum : uint8_t {
-#define CARBON_SEMANTICS_NODE_KIND(Name, ...) Name,
-#include "toolchain/semantics/semantics_node_kind.def"
-  };
+#define CARBON_ENUM_BASE_NAME SemanticsNodeKindBase
+#define CARBON_ENUM_DEF_PATH "toolchain/semantics/semantics_node_kind.def"
+#include "toolchain/common/enum_base.def"
 
- public:
-  // `clang-format` has a bug with spacing around `->` returns in macros. See
-  // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
-#define CARBON_SEMANTICS_NODE_KIND(Name, ...)       \
-  static constexpr auto Name()->SemanticsNodeKind { \
-    return SemanticsNodeKind(KindEnum::Name);       \
-  }
-#include "toolchain/semantics/semantics_node_kind.def"
-
-  // The default constructor is deleted because objects of this type should
-  // always be constructed using the above factory functions for each unique
-  // kind.
-  SemanticsNodeKind() = delete;
-
-  // Gets a friendly name for the token for logging or debugging.
-  [[nodiscard]] auto name() const -> llvm::StringRef;
-
-  // Enable conversion to our private enum, including in a `constexpr` context,
-  // to enable usage in `switch` and `case`. The enum remains private and
-  // nothing else should be using this function.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr operator KindEnum() const { return kind_; }
-
-  void Print(llvm::raw_ostream& out) const { out << name(); }
-
- private:
-  constexpr explicit SemanticsNodeKind(KindEnum k) : kind_(k) {}
-
-  KindEnum kind_;
+class SemanticsNodeKind : public SemanticsNodeKindBase<SemanticsNodeKind> {
+  using SemanticsNodeKindBase::SemanticsNodeKindBase;
 };
 
 // We expect the node kind to fit compactly into 8 bits.

@@ -9,7 +9,7 @@
 //   #define CARBON_ENUM_DEF_PATH "my_xmacros.def"
 //   #include "toolchain/common/enum_base.def"
 //
-//   class MyEnum : MyEnumBase<MyEnum> {
+//   class MyEnum : public MyEnumBase<MyEnum> {
 //    public:
 //     (any custom APIs)
 //    protected:
@@ -17,7 +17,7 @@
 //   };
 //
 // my_xmacros.def will provide:
-//   #ifdef CARBON_ENUM_BASE_NAME
+//   #ifdef CARBON_ENUM_DEF_PATH
 //   #define MY_XMACRO(Name) CARBON_ENUM_ENTRY(Name)
 //   #endif
 //

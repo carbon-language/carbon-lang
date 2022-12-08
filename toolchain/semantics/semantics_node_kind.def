@@ -9,6 +9,11 @@
 // desired output. The x-macro for this header is `CARBON_PARSE_NODE_KIND`. The
 // definition provided will be removed at the end of this file to clean up.
 
+// For compatibility with enum_base.def.
+#ifdef CARBON_ENUM_DEF_PATH
+#define CARBON_SEMANTICS_NODE_KIND(Name) CARBON_ENUM_ENTRY(Name)
+#endif
+
 #ifndef CARBON_SEMANTICS_NODE_KIND
 #error "Must define the x-macro to use this file."
 #endif

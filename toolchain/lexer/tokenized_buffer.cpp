@@ -293,7 +293,7 @@ class TokenizedBuffer::Lexer {
     TokenKind kind = llvm::StringSwitch<TokenKind>(source_text)
 #define CARBON_SYMBOL_TOKEN(Name, Spelling) \
   .StartsWith(Spelling, TokenKind::Name())
-#include "toolchain/lexer/token_registry.def"
+#include "toolchain/lexer/token_kind.def"
                          .Default(TokenKind::Error());
     if (kind == TokenKind::Error()) {
       return LexResult::NoMatch();
@@ -472,7 +472,7 @@ class TokenizedBuffer::Lexer {
     // Check if the text matches a keyword token, and if so use that.
     TokenKind kind = llvm::StringSwitch<TokenKind>(identifier_text)
 #define CARBON_KEYWORD_TOKEN(Name, Spelling) .Case(Spelling, TokenKind::Name())
-#include "toolchain/lexer/token_registry.def"
+#include "toolchain/lexer/token_kind.def"
                          .Default(TokenKind::Error());
     if (kind != TokenKind::Error()) {
       return buffer_->AddToken({.kind = kind,
@@ -500,7 +500,7 @@ class TokenizedBuffer::Lexer {
       }
       return llvm::StringSwitch<bool>(llvm::StringRef(&c, 1))
 #define CARBON_SYMBOL_TOKEN(Name, Spelling) .StartsWith(Spelling, false)
-#include "toolchain/lexer/token_registry.def"
+#include "toolchain/lexer/token_kind.def"
           .Default(true);
     });
     if (error_text.empty()) {
@@ -653,14 +653,14 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
   }
 
   CARBON_CHECK(token_info.kind == TokenKind::Identifier())
-      << token_info.kind.Name();
+      << token_info.kind.name();
   return GetIdentifierText(token_info.id);
 }
 
 auto TokenizedBuffer::GetIdentifier(Token token) const -> Identifier {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::Identifier())
-      << token_info.kind.Name();
+      << token_info.kind.name();
   return token_info.id;
 }
 
@@ -668,14 +668,14 @@ auto TokenizedBuffer::GetIntegerLiteral(Token token) const
     -> const llvm::APInt& {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::IntegerLiteral())
-      << token_info.kind.Name();
+      << token_info.kind.name();
   return literal_int_storage_[token_info.literal_index];
 }
 
 auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealLiteralValue {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::RealLiteral())
-      << token_info.kind.Name();
+      << token_info.kind.name();
 
   // Note that every real literal is at least three characters long, so we can
   // safely look at the second character to determine whether we have a
@@ -691,14 +691,14 @@ auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealLiteralValue {
 auto TokenizedBuffer::GetStringLiteral(Token token) const -> llvm::StringRef {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::StringLiteral())
-      << token_info.kind.Name();
+      << token_info.kind.name();
   return literal_string_storage_[token_info.literal_index];
 }
 
 auto TokenizedBuffer::GetTypeLiteralSize(Token token) const
     -> const llvm::APInt& {
   const auto& token_info = GetTokenInfo(token);
-  CARBON_CHECK(token_info.kind.IsSizedTypeLiteral()) << token_info.kind.Name();
+  CARBON_CHECK(token_info.kind.IsSizedTypeLiteral()) << token_info.kind.name();
   return literal_int_storage_[token_info.literal_index];
 }
 
@@ -706,7 +706,7 @@ auto TokenizedBuffer::GetMatchedClosingToken(Token opening_token) const
     -> Token {
   const auto& opening_token_info = GetTokenInfo(opening_token);
   CARBON_CHECK(opening_token_info.kind.IsOpeningSymbol())
-      << opening_token_info.kind.Name();
+      << opening_token_info.kind.name();
   return opening_token_info.closing_token;
 }
 
@@ -714,7 +714,7 @@ auto TokenizedBuffer::GetMatchedOpeningToken(Token closing_token) const
     -> Token {
   const auto& closing_token_info = GetTokenInfo(closing_token);
   CARBON_CHECK(closing_token_info.kind.IsClosingSymbol())
-      << closing_token_info.kind.Name();
+      << closing_token_info.kind.name();
   return closing_token_info.opening_token;
 }
 
@@ -769,7 +769,7 @@ static auto ComputeDecimalPrintedWidth(int number) -> int {
 auto TokenizedBuffer::GetTokenPrintWidths(Token token) const -> PrintWidths {
   PrintWidths widths = {};
   widths.index = ComputeDecimalPrintedWidth(token_infos_.size());
-  widths.kind = GetKind(token).Name().size();
+  widths.kind = GetKind(token).name().size();
   widths.line = ComputeDecimalPrintedWidth(GetLineNumber(token));
   widths.column = ComputeDecimalPrintedWidth(GetColumnNumber(token));
   widths.indent =
@@ -814,7 +814,7 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
       "spelling: '{5}'",
       llvm::format_decimal(token_index, widths.index),
       llvm::right_justify(
-          (llvm::Twine("'") + token_info.kind.Name() + "'").str(),
+          (llvm::Twine("'") + token_info.kind.name() + "'").str(),
           widths.kind + 2),
       llvm::format_decimal(GetLineNumber(token_info.token_line), widths.line),
       llvm::format_decimal(GetColumnNumber(token), widths.column),

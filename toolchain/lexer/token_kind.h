@@ -14,30 +14,12 @@
 
 namespace Carbon {
 
-class TokenKind {
-  // Note that this must be declared earlier in the class so that its type can
-  // be used, for example in the conversion operator.
-  enum class KindEnum : int8_t {
-#define CARBON_TOKEN(TokenName) TokenName,
-#include "toolchain/lexer/token_registry.def"
-  };
+#define CARBON_ENUM_BASE_NAME TokenKindBase
+#define CARBON_ENUM_DEF_PATH "toolchain/lexer/token_kind.def"
+#include "toolchain/common/enum_base.def"
 
+class TokenKind : public TokenKindBase<TokenKind> {
  public:
-  // The formatting for this macro is weird due to a `clang-format` bug. See
-  // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
-#define CARBON_TOKEN(TokenName)                  \
-  static constexpr auto TokenName()->TokenKind { \
-    return TokenKind(KindEnum::TokenName);       \
-  }
-#include "toolchain/lexer/token_registry.def"
-
-  // The default constructor is deleted as objects of this type should always be
-  // constructed using the above factory functions for each unique kind.
-  TokenKind() = delete;
-
-  // Get a friendly name for the token for logging or debugging.
-  [[nodiscard]] auto Name() const -> llvm::StringRef;
-
   // Test whether this kind of token is a simple symbol sequence (punctuation,
   // not letters) that appears directly in the source text and can be
   // unambiguously lexed with `starts_with` logic. While these may appear
@@ -87,19 +69,12 @@ class TokenKind {
     return false;
   }
 
-  // Enable conversion to our private enum, including in a `constexpr` context,
-  // to enable usage in `switch` and `case`. The enum remains private and
-  // nothing else should be using this.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr operator KindEnum() const { return kind_value_; }
-
-  // Prints the TokenKind, typically for diagnostics.
+  // Prints the TokenKind. This implementation is primarily for diagnostics
+  // instead of tracing, which is why it uses the fixed spelling.
   void Print(llvm::raw_ostream& out) const { out << GetFixedSpelling(); }
 
  private:
-  constexpr explicit TokenKind(KindEnum kind_value) : kind_value_(kind_value) {}
-
-  KindEnum kind_value_;
+  using TokenKindBase::TokenKindBase;
 };
 
 }  // namespace Carbon

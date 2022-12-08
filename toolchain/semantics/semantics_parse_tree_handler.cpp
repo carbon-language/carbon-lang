@@ -243,7 +243,7 @@ auto SemanticsParseTreeHandler::HandleInfixOperator(ParseTree::Node parse_node)
                            parse_node, result_type, lhs_id, rhs_id));
       break;
     default:
-      CARBON_FATAL() << "Unrecognized token kind: " << token_kind.Name();
+      CARBON_FATAL() << "Unrecognized token kind: " << token_kind.name();
   }
 }
 
@@ -263,7 +263,7 @@ auto SemanticsParseTreeHandler::HandleLiteral(ParseTree::Node parse_node)
       break;
     }
     default:
-      CARBON_FATAL() << "Unhandled kind: " << token_kind.Name();
+      CARBON_FATAL() << "Unhandled kind: " << token_kind.name();
   }
 }
 

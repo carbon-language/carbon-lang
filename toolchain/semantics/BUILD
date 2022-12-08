@@ -17,11 +17,11 @@ cc_library(
 
 cc_library(
     name = "semantics_node_kind",
-    srcs = ["semantics_node_kind.cpp"],
     hdrs = ["semantics_node_kind.h"],
     textual_hdrs = ["semantics_node_kind.def"],
     deps = [
         "//common:ostream",
+        "//toolchain/common:enum_base",
         "@llvm-project//llvm:Support",
     ],
 )
