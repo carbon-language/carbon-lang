@@ -23,12 +23,16 @@ struct SemanticsNodeId : public IndexBase {
   static auto MakeCrossReference(int32_t index) -> SemanticsNodeId {
     return SemanticsNodeId(index | CrossReferenceBit);
   }
+
   // Constructs a cross-reference node ID for a builtin. This relies on
   // SemanticsIR guarantees for builtin cross-reference placement.
   static auto MakeBuiltinReference(SemanticsBuiltinKind kind)
       -> SemanticsNodeId {
     return MakeCrossReference(kind.AsInt());
   }
+
+  // Constructs an explicitly invalid instance.
+  static auto MakeInvalid() -> SemanticsNodeId { return SemanticsNodeId(); }
 
   using IndexBase::IndexBase;
 
