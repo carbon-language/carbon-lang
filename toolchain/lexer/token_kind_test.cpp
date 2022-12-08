@@ -24,59 +24,59 @@ constexpr llvm::StringLiteral SymbolRegex =
 // We restrict keywords to be lowercase ASCII letters and underscores.
 constexpr llvm::StringLiteral KeywordRegex = "[a-z_]+";
 
-#define CARBON_TOKEN(TokenName)                               \
-  TEST(TokenKindTest, TokenName) {                            \
-    EXPECT_EQ(#TokenName, TokenKind::TokenName().Name());     \
-    EXPECT_FALSE(TokenKind::TokenName().IsSymbol());          \
-    EXPECT_FALSE(TokenKind::TokenName().IsKeyword());         \
-    EXPECT_EQ("", TokenKind::TokenName().GetFixedSpelling()); \
+#define CARBON_TOKEN(TokenName)                             \
+  TEST(TokenKindTest, TokenName) {                          \
+    EXPECT_EQ(#TokenName, TokenKind::TokenName().name());   \
+    EXPECT_FALSE(TokenKind::TokenName().is_symbol());       \
+    EXPECT_FALSE(TokenKind::TokenName().is_keyword());      \
+    EXPECT_EQ("", TokenKind::TokenName().fixed_spelling()); \
   }
-#define CARBON_SYMBOL_TOKEN(TokenName, Spelling)                    \
-  TEST(TokenKindTest, TokenName) {                                  \
-    EXPECT_EQ(#TokenName, TokenKind::TokenName().Name());           \
-    EXPECT_TRUE(TokenKind::TokenName().IsSymbol());                 \
-    EXPECT_FALSE(TokenKind::TokenName().IsGroupingSymbol());        \
-    EXPECT_FALSE(TokenKind::TokenName().IsOpeningSymbol());         \
-    EXPECT_FALSE(TokenKind::TokenName().IsClosingSymbol());         \
-    EXPECT_FALSE(TokenKind::TokenName().IsKeyword());               \
-    EXPECT_EQ(Spelling, TokenKind::TokenName().GetFixedSpelling()); \
-    EXPECT_THAT(Spelling, MatchesRegex(SymbolRegex.str()));         \
+#define CARBON_SYMBOL_TOKEN(TokenName, Spelling)                  \
+  TEST(TokenKindTest, TokenName) {                                \
+    EXPECT_EQ(#TokenName, TokenKind::TokenName().name());         \
+    EXPECT_TRUE(TokenKind::TokenName().is_symbol());              \
+    EXPECT_FALSE(TokenKind::TokenName().is_grouping_symbol());    \
+    EXPECT_FALSE(TokenKind::TokenName().is_opening_symbol());     \
+    EXPECT_FALSE(TokenKind::TokenName().is_closing_symbol());     \
+    EXPECT_FALSE(TokenKind::TokenName().is_keyword());            \
+    EXPECT_EQ(Spelling, TokenKind::TokenName().fixed_spelling()); \
+    EXPECT_THAT(Spelling, MatchesRegex(SymbolRegex.str()));       \
   }
 #define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName) \
   TEST(TokenKindTest, TokenName) {                                          \
-    EXPECT_EQ(#TokenName, TokenKind::TokenName().Name());                   \
-    EXPECT_TRUE(TokenKind::TokenName().IsSymbol());                         \
-    EXPECT_TRUE(TokenKind::TokenName().IsGroupingSymbol());                 \
-    EXPECT_TRUE(TokenKind::TokenName().IsOpeningSymbol());                  \
+    EXPECT_EQ(#TokenName, TokenKind::TokenName().name());                   \
+    EXPECT_TRUE(TokenKind::TokenName().is_symbol());                        \
+    EXPECT_TRUE(TokenKind::TokenName().is_grouping_symbol());               \
+    EXPECT_TRUE(TokenKind::TokenName().is_opening_symbol());                \
     EXPECT_EQ(TokenKind::ClosingName(),                                     \
-              TokenKind::TokenName().GetClosingSymbol());                   \
-    EXPECT_FALSE(TokenKind::TokenName().IsClosingSymbol());                 \
-    EXPECT_FALSE(TokenKind::TokenName().IsKeyword());                       \
-    EXPECT_EQ(Spelling, TokenKind::TokenName().GetFixedSpelling());         \
+              TokenKind::TokenName().closing_symbol());                     \
+    EXPECT_FALSE(TokenKind::TokenName().is_closing_symbol());               \
+    EXPECT_FALSE(TokenKind::TokenName().is_keyword());                      \
+    EXPECT_EQ(Spelling, TokenKind::TokenName().fixed_spelling());           \
     EXPECT_THAT(Spelling, MatchesRegex(SymbolRegex.str()));                 \
   }
 #define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName) \
   TEST(TokenKindTest, TokenName) {                                          \
-    EXPECT_EQ(#TokenName, TokenKind::TokenName().Name());                   \
-    EXPECT_TRUE(TokenKind::TokenName().IsSymbol());                         \
-    EXPECT_TRUE(TokenKind::TokenName().IsGroupingSymbol());                 \
-    EXPECT_FALSE(TokenKind::TokenName().IsOpeningSymbol());                 \
-    EXPECT_TRUE(TokenKind::TokenName().IsClosingSymbol());                  \
+    EXPECT_EQ(#TokenName, TokenKind::TokenName().name());                   \
+    EXPECT_TRUE(TokenKind::TokenName().is_symbol());                        \
+    EXPECT_TRUE(TokenKind::TokenName().is_grouping_symbol());               \
+    EXPECT_FALSE(TokenKind::TokenName().is_opening_symbol());               \
+    EXPECT_TRUE(TokenKind::TokenName().is_closing_symbol());                \
     EXPECT_EQ(TokenKind::OpeningName(),                                     \
-              TokenKind::TokenName().GetOpeningSymbol());                   \
-    EXPECT_FALSE(TokenKind::TokenName().IsKeyword());                       \
-    EXPECT_EQ(Spelling, TokenKind::TokenName().GetFixedSpelling());         \
+              TokenKind::TokenName().opening_symbol());                     \
+    EXPECT_FALSE(TokenKind::TokenName().is_keyword());                      \
+    EXPECT_EQ(Spelling, TokenKind::TokenName().fixed_spelling());           \
     EXPECT_THAT(Spelling, MatchesRegex(SymbolRegex.str()));                 \
   }
-#define CARBON_KEYWORD_TOKEN(TokenName, Spelling)                   \
-  TEST(TokenKindTest, TokenName) {                                  \
-    EXPECT_EQ(#TokenName, TokenKind::TokenName().Name());           \
-    EXPECT_FALSE(TokenKind::TokenName().IsSymbol());                \
-    EXPECT_TRUE(TokenKind::TokenName().IsKeyword());                \
-    EXPECT_EQ(Spelling, TokenKind::TokenName().GetFixedSpelling()); \
-    EXPECT_THAT(Spelling, MatchesRegex(KeywordRegex.str()));        \
+#define CARBON_KEYWORD_TOKEN(TokenName, Spelling)                 \
+  TEST(TokenKindTest, TokenName) {                                \
+    EXPECT_EQ(#TokenName, TokenKind::TokenName().name());         \
+    EXPECT_FALSE(TokenKind::TokenName().is_symbol());             \
+    EXPECT_TRUE(TokenKind::TokenName().is_keyword());             \
+    EXPECT_EQ(Spelling, TokenKind::TokenName().fixed_spelling()); \
+    EXPECT_THAT(Spelling, MatchesRegex(KeywordRegex.str()));      \
   }
-#include "toolchain/lexer/token_registry.def"
+#include "toolchain/lexer/token_kind.def"
 
 // Verify that the symbol tokens are sorted from longest to shortest. This is
 // important to ensure that simply in-order testing will identify tokens
@@ -87,7 +87,7 @@ TEST(TokenKindTest, SymbolsInDescendingLength) {
   EXPECT_LE(llvm::StringRef(Spelling).size(), previous_length)          \
       << "Symbol token not in descending length order: " << #TokenName; \
   previous_length = llvm::StringRef(Spelling).size();
-#include "toolchain/lexer/token_registry.def"
+#include "toolchain/lexer/token_kind.def"
   EXPECT_GT(previous_length, 0);
 }
 
