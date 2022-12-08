@@ -12,22 +12,15 @@
 // CHECK:STDOUT:   node_xref3 = xref(ir0, block0, node3);
 // CHECK:STDOUT: },
 // CHECK:STDOUT: identifiers = {
-// CHECK:STDOUT:   ident0 = "Main";
-// CHECK:STDOUT:   ident1 = "x";
+// CHECK:STDOUT:   ident0 = "x";
 // CHECK:STDOUT: },
 // CHECK:STDOUT: integer_literals = {
 // CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   block0 = {
-// CHECK:STDOUT:     node0 = FunctionDeclaration();
-// CHECK:STDOUT:     node1 = BindName(ident0, node0);
-// CHECK:STDOUT:     node2 = FunctionDefinition(node0, block1);
-// CHECK:STDOUT:   },
-// CHECK:STDOUT:   block1 = {
-// CHECK:STDOUT:     node0 = BindName(ident1, node_xref2);
+// CHECK:STDOUT:     node0 = VarStorage(): node_xref2;
+// CHECK:STDOUT:     node1 = BindName(ident0, node0): node_xref2;
 // CHECK:STDOUT:   },
 // CHECK:STDOUT: }
 
-fn Main() {
-  var x: i32;
-}
+var x: i32;

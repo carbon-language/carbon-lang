@@ -282,7 +282,9 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinitionStart(
   Pop(ParseNodeKind::FunctionIntroducer());
 
   auto decl_id = AddNode(SemanticsNode::MakeFunctionDeclaration(fn_node));
-  AddNode(SemanticsNode::MakeBindName(name_node, name, decl_id));
+  // TODO: Propagate the type of the function.
+  AddNode(SemanticsNode::MakeBindName(name_node, SemanticsNodeId::MakeInvalid(),
+                                      name, decl_id));
   auto block_id = semantics_->AddNodeBlock();
   AddNode(SemanticsNode::MakeFunctionDefinition(parse_node, decl_id, block_id));
   node_block_stack_.push_back(block_id);
@@ -452,16 +454,23 @@ auto SemanticsParseTreeHandler::HandleParenExpressionOrTupleLiteralStart(
 
 auto SemanticsParseTreeHandler::HandlePatternBinding(ParseTree::Node parse_node)
     -> void {
-  // TODO: Create storage for the type, use that for the bind instead of the
-  // type itself.
-  auto type_id = PopWithResult();
+  // Allocate storage.
+  auto type = node_stack_.pop_back_val();
+  CARBON_CHECK(type.result_id.is_valid());
+  auto storage_id =
+      AddNode(SemanticsNode::MakeVarStorage(parse_node, type.result_id));
 
-  auto name_node = node_stack_.back().parse_node;
-  auto name = AddIdentifier(name_node);
-  node_stack_.pop_back();
+  // Get the name.
+  auto name_node = node_stack_.pop_back_val().parse_node;
+  auto name_id = AddIdentifier(name_node);
 
-  Push(parse_node,
-       AddNode(SemanticsNode::MakeBindName(name_node, name, type_id)));
+  // Bind the name to storage.
+  AddNode(SemanticsNode::MakeBindName(name_node, type.result_id, name_id,
+                                      storage_id));
+
+  // If this node's result is used, it'll be for the storage address, so provide
+  // that.
+  Push(parse_node, storage_id);
 }
 
 auto SemanticsParseTreeHandler::HandlePostfixOperator(
@@ -554,9 +563,13 @@ auto SemanticsParseTreeHandler::HandleVariableDeclaration(
     ParseTree::Node parse_node) -> void {
   // TODO: Initializers would assign to the PatternBinding, but this code
   // doesn't handle it right now.
-  PopWithResult();
+  auto storage_id = PopWithResult(ParseNodeKind::PatternBinding());
+  if (auto init = PopWithResultIf(ParseNodeKind::VariableInitializer())) {
+    AddNode(
+        SemanticsNode::MakeAssign(parse_node, storage_id, storage_id, *init));
+  }
   Pop(ParseNodeKind::VariableIntroducer());
-  Push(parse_node);
+  Push(parse_node, storage_id);
 }
 
 auto SemanticsParseTreeHandler::HandleVariableIntroducer(
@@ -566,8 +579,9 @@ auto SemanticsParseTreeHandler::HandleVariableIntroducer(
 }
 
 auto SemanticsParseTreeHandler::HandleVariableInitializer(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> void {
+  // The child is the expression; propagate it for the parent.
+  Push(parse_node, PopWithResult());
 }
 
 auto SemanticsParseTreeHandler::HandleWhileCondition(
