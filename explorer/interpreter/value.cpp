@@ -53,7 +53,7 @@ static auto FindClassField(Nonnull<const NominalClassValue*> object,
 static auto GetBaseElement(Nonnull<const NominalClassValue*> class_value,
                            SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
-  const auto base = cast<NominalClassType>(class_value->type()).base();
+  const auto base = cast<NominalClassValue>(class_value)->base();
   if (!base.has_value()) {
     return ProgramError(source_loc)
            << "Non-existent base class for " << *class_value;
