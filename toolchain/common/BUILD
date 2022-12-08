@@ -5,6 +5,11 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
+    name = "enum_base",
+    textual_hdrs = ["enum_base.def"],
+)
+
+cc_library(
     name = "index_base",
     hdrs = ["index_base.h"],
     deps = [
