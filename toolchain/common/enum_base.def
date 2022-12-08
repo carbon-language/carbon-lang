@@ -20,6 +20,11 @@
 //   #ifdef CARBON_ENUM_BASE_NAME
 //   #define MY_XMACRO(Name) CARBON_ENUM_ENTRY(Name)
 //   #endif
+//
+// Specific macro values are available as:
+//   MyEnum::Name()
+//
+// They will be usable in a switch statement, e.g. `case MyEnum::Name():`.
 
 #ifndef CARBON_ENUM_DEF_PATH
 #error "Must define CARBON_ENUM_DEF_PATH"
