@@ -12,6 +12,7 @@ cc_library(
     hdrs = ["parse_node_kind.h"],
     textual_hdrs = ["parse_node_kind.def"],
     deps = [
+        "//common:check",
         "//common:ostream",
         "@llvm-project//llvm:Support",
     ],
@@ -65,7 +66,9 @@ cc_library(
         ":parser_state",
         ":precedence",
         "//common:check",
+        "//common:error",
         "//common:ostream",
+        "//common:vlog",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:token_kind",
         "//toolchain/lexer:tokenized_buffer",

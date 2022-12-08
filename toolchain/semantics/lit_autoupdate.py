@@ -26,9 +26,7 @@ def main() -> None:
         "--tool=carbon",
         "--autoupdate_arg=dump",
         "--autoupdate_arg=semantics-ir",
-        # TODO: This should eventually have lines in output, but it doesn't
-        # right now.
-        "--line_number_pattern=UNUSED",
+        r"--line_number_pattern=(?<=\.carbon:)(\d+)(?=(?:\D|$))",
         "--lit_run=%{carbon-run-semantics}",
         "--testdata=toolchain/semantics/testdata",
     ] + sys.argv[1:]

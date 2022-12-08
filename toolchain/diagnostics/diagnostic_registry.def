@@ -78,6 +78,16 @@ CARBON_DIAGNOSTIC_KIND(ExpectedSemiToEndPackageDirective)
 // For-specific diagnostics
 CARBON_DIAGNOSTIC_KIND(ExpectedIn)
 
+// Interface-specific diagnostics
+CARBON_DIAGNOSTIC_KIND(ExpectedInterfaceName)
+CARBON_DIAGNOSTIC_KIND(ExpectedInterfaceOpenCurlyBrace)
+
+// ============================================================================
+// Semantics diagnostics
+// ============================================================================
+
+CARBON_DIAGNOSTIC_KIND(TypeMismatch)
+
 // ============================================================================
 // Other diagnostics
 // ============================================================================

@@ -30,7 +30,7 @@ struct LexedStringLiteral::Introducer {
   int prefix_size;
 
   // Lex the introducer for a string literal, after any '#'s.
-  static auto Lex(llvm::StringRef source_text) -> llvm::Optional<Introducer>;
+  static auto Lex(llvm::StringRef source_text) -> std::optional<Introducer>;
 };
 
 // Lex the introducer for a string literal, after any '#'s.
@@ -38,7 +38,7 @@ struct LexedStringLiteral::Introducer {
 // We lex multi-line literals when spelled with either ''' or """ for error
 // recovery purposes, and reject """ literals after lexing.
 auto LexedStringLiteral::Introducer::Lex(llvm::StringRef source_text)
-    -> llvm::Optional<Introducer> {
+    -> std::optional<Introducer> {
   MultiLineKind kind = NotMultiLine;
   llvm::StringRef indicator;
   if (source_text.startswith(MultiLineIndicator)) {
@@ -67,7 +67,7 @@ auto LexedStringLiteral::Introducer::Lex(llvm::StringRef source_text)
         .kind = NotMultiLine, .terminator = "\"", .prefix_size = 1};
   }
 
-  return llvm::None;
+  return std::nullopt;
 }
 
 namespace {
@@ -88,7 +88,7 @@ struct alignas(8) CharSet {
 }  // namespace
 
 auto LexedStringLiteral::Lex(llvm::StringRef source_text)
-    -> llvm::Optional<LexedStringLiteral> {
+    -> std::optional<LexedStringLiteral> {
   int64_t cursor = 0;
   const int64_t source_text_size = source_text.size();
 
@@ -98,10 +98,10 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
   }
   const int hash_level = cursor;
 
-  const llvm::Optional<Introducer> introducer =
+  const std::optional<Introducer> introducer =
       Introducer::Lex(source_text.substr(hash_level));
   if (!introducer) {
-    return llvm::None;
+    return std::nullopt;
   }
 
   cursor += introducer->prefix_size;

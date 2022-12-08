@@ -34,13 +34,6 @@ auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena,
                std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
     -> ErrorOr<Nonnull<const Value*>>;
 
-// Interprets `p` at compile-time, allocating values on `arena` and
-// printing traces if `trace` is true. The caller must ensure that all the
-// code this evaluates has been typechecked.
-auto InterpPattern(Nonnull<const Pattern*> p, Nonnull<Arena*> arena,
-                   std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
-    -> ErrorOr<Nonnull<const Value*>>;
-
 // Attempts to match `v` against the pattern `p`, returning whether matching
 // is successful. If it is, populates **bindings with the variables bound by
 // the match; `bindings` should only be nullopt in contexts where `p`

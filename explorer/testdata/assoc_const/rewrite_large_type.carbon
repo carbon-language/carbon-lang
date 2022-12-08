@@ -2,9 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// AUTOUPDATE
+// This doesn't check trace output because it's too slow with it.
+// NOAUTOUPDATE
 // RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: result: 1
 
 package ExplorerTest api;
@@ -47,13 +47,13 @@ fn DoSplat(
   return CallSplat(M.T0, n);
 }
 
-interface First { fn Op[me: Self]() -> i32; }
+interface First { fn Op[self: Self]() -> i32; }
 impl i32 as First {
-  fn Op[me: Self]() -> i32 { return me; }
+  fn Op[self: Self]() -> i32 { return self; }
 }
 impl forall [T:! First] (T, T, T) as First {
-  fn Op[me: Self]() -> i32 {
-    let (a: T, b: T, c: T) = me;
+  fn Op[self: Self]() -> i32 {
+    let (a: T, b: T, c: T) = self;
     return a.Op();
   }
 }

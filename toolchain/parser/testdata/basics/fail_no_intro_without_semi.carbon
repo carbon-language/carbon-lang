@@ -5,6 +5,7 @@
 // AUTOUPDATE
 // RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
+// CHECK:STDOUT: {kind: 'EmptyDeclaration', text: 'foo', has_error: yes},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 

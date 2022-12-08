@@ -7,12 +7,12 @@
 
 #include <iterator>
 
+#include "common/error.h"
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
-#include "llvm/Support/raw_ostream.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
@@ -42,15 +42,15 @@ namespace Carbon {
 // applied.
 class ParseTree {
  public:
-  class Node;
+  struct Node;
   class PostorderIterator;
   class SiblingIterator;
 
   // Parses the token buffer into a `ParseTree`.
   //
   // This is the factory function which is used to build parse trees.
-  static auto Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer)
-      -> ParseTree;
+  static auto Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
+                    llvm::raw_ostream* vlog_stream) -> ParseTree;
 
   // Tests whether there are any errors in the parse tree.
   [[nodiscard]] auto has_errors() const -> bool { return has_errors_; }
@@ -140,14 +140,13 @@ class ParseTree {
   // line-oriented shell tools from `grep` to `awk`.
   auto Print(llvm::raw_ostream& output, bool preorder) const -> void;
 
-  // Verifies the parse tree structure.
+  // Verifies the parse tree structure. Checks invariants of the parse tree
+  // structure and returns verification errors.
   //
-  // This tries to check any invariants of the parse tree structure and write
-  // out information about it to stderr. Returns false if anything fails to
-  // verify. This is primarily intended to be used as a debugging aid. A typical
-  // usage is to `assert` on the result. This routine doesn't directly assert so
-  // that it can be used even when asserts are disabled or within a debugger.
-  [[nodiscard]] auto Verify() const -> bool;
+  // This is primarily intended to be used as a
+  // debugging aid. This routine doesn't directly CHECK so that it can be used
+  // within a debugger.
+  [[nodiscard]] auto Verify() const -> std::optional<Error>;
 
  private:
   friend class Parser;
@@ -208,7 +207,10 @@ class ParseTree {
 
   // Wires up the reference to the tokenized buffer. The global `parse` routine
   // should be used to actually parse the tokens into a tree.
-  explicit ParseTree(TokenizedBuffer& tokens_arg) : tokens_(&tokens_arg) {}
+  explicit ParseTree(TokenizedBuffer& tokens_arg) : tokens_(&tokens_arg) {
+    // If the tree is valid, there will be one node per token, so reserve once.
+    node_impls_.reserve(tokens_->size());
+  }
 
   // Prints a single node for Print(). Returns true when preorder and there are
   // children.
@@ -239,60 +241,8 @@ class ParseTree {
 //
 // That said, nodes can be compared and are part of a depth-first pre-order
 // sequence across all nodes in the parse tree.
-class ParseTree::Node {
- public:
-  // Node handles are default constructable, but such a node cannot be used
-  // for anything. It just allows it to be initialized later through
-  // assignment. Any other operation on a default constructed node is an
-  // error.
-  Node() = default;
-
-  friend auto operator==(Node lhs, Node rhs) -> bool {
-    return lhs.index_ == rhs.index_;
-  }
-  friend auto operator!=(Node lhs, Node rhs) -> bool {
-    return lhs.index_ != rhs.index_;
-  }
-  friend auto operator<(Node lhs, Node rhs) -> bool {
-    return lhs.index_ < rhs.index_;
-  }
-  friend auto operator<=(Node lhs, Node rhs) -> bool {
-    return lhs.index_ <= rhs.index_;
-  }
-  friend auto operator>(Node lhs, Node rhs) -> bool {
-    return lhs.index_ > rhs.index_;
-  }
-  friend auto operator>=(Node lhs, Node rhs) -> bool {
-    return lhs.index_ >= rhs.index_;
-  }
-
-  // Returns an opaque integer identifier of the node in the tree. Clients
-  // should not expect any particular semantics from this value.
-  //
-  // TODO: Maybe we can switch to stream operator overloads?
-  [[nodiscard]] auto index() const -> int { return index_; }
-
-  // Prints the node index.
-  auto Print(llvm::raw_ostream& output) const -> void;
-
-  // Returns true if the node is valid; in other words, it was not default
-  // initialized.
-  auto is_valid() -> bool { return index_ != InvalidValue; }
-
- private:
-  friend ParseTree;
-  friend PostorderIterator;
-  friend SiblingIterator;
-
-  // Value for uninitialized nodes.
-  static constexpr int InvalidValue = -1;
-
-  // Constructs a node with a specific index into the parse tree's postorder
-  // sequence of node implementations.
-  explicit Node(int index) : index_(index) {}
-
-  // The index of this node's implementation in the postorder sequence.
-  int32_t index_ = InvalidValue;
+struct ParseTree::Node : public ComparableIndexBase {
+  using ComparableIndexBase::ComparableIndexBase;
 };
 
 // A random-access iterator to the depth-first postorder sequence of parse nodes
@@ -318,15 +268,15 @@ class ParseTree::PostorderIterator
   auto operator*() const -> Node { return node_; }
 
   auto operator-(const PostorderIterator& rhs) const -> int {
-    return node_.index_ - rhs.node_.index_;
+    return node_.index - rhs.node_.index;
   }
 
   auto operator+=(int offset) -> PostorderIterator& {
-    node_.index_ += offset;
+    node_.index += offset;
     return *this;
   }
   auto operator-=(int offset) -> PostorderIterator& {
-    node_.index_ -= offset;
+    node_.index -= offset;
     return *this;
   }
 
@@ -371,7 +321,7 @@ class ParseTree::SiblingIterator
 
   using iterator_facade_base::operator++;
   auto operator++() -> SiblingIterator& {
-    node_.index_ -= std::abs(tree_->node_impls_[node_.index_].subtree_size);
+    node_.index -= std::abs(tree_->node_impls_[node_.index].subtree_size);
     return *this;
   }
 

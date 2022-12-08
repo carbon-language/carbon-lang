@@ -12,7 +12,7 @@ interface HasThreeTypes {
   let A:! Type;
   let B:! Type;
   let C:! Type;
-  fn Make[me: Self]() -> (A, B, C);
+  fn Make[self: Self]() -> (A, B, C);
 }
 fn F[T:! Type](x: (T, T, T));
 fn G[X:! HasThreeTypes where .A == .B and .B == .C and .C == .A](x: X) {

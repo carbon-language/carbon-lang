@@ -10,7 +10,7 @@ package ExplorerTest api;
 
 interface Container {
   let Element:! Type;
-  fn Front[me: Self]() -> Element;
+  fn Front[self: Self]() -> Element;
 }
 
 fn A[T:! Container where .Element == i32](x: T) -> T.Element {

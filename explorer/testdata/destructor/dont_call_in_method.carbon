@@ -17,13 +17,13 @@ class B{
 }
 
 class A{
-    destructor[me: Self]{
-        Print("DESTRUCTOR A {0}",me.n);
+    destructor[self: Self]{
+        Print("DESTRUCTOR A {0}",self.n);
     }
-    fn test[me: Self](){
+    fn test[self: Self](){
         Print("TEST");
     }
-    fn test2[me: Self](){
+    fn test2[self: Self](){
         Print("TEST 2");
     }
     var n: i32;

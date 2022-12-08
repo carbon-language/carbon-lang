@@ -11,7 +11,7 @@ package ExplorerTest api;
 
 interface Container {
   let Element:! Type;
-  fn Front[me: Self]() -> Element;
+  fn Front[self: Self]() -> Element;
 }
 
 fn A[T:! Container where .Element = i32](x: T) -> T.Element {
@@ -23,8 +23,8 @@ fn B[T:! Container where .Element == i32](x: T) -> T.Element {
 }
 
 external impl (i32, i32) as Container where .Element = i32 {
-  fn Front[me: Self]() -> i32 {
-    let (a: i32, b: i32) = me;
+  fn Front[self: Self]() -> i32 {
+    let (a: i32, b: i32) = self;
     return a;
   }
 }

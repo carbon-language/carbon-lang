@@ -24,6 +24,7 @@ cc_library(
         ":heap_allocation_interface",
         ":stack",
         "//common:check",
+        "//common:error",
         "//common:ostream",
         "//explorer/ast",
         "//explorer/common:arena",
@@ -194,6 +195,7 @@ cc_library(
         "@llvm-project//llvm:Support",
     ],
 )
+
 cc_library(
     name = "type_checker",
     srcs = [

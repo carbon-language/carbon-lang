@@ -14,7 +14,7 @@ choice A {
 }
 
 impl i32 as ImplicitAs(A) {
-  fn Convert[me: Self]() -> A { return A.Value(me + 1); }
+  fn Convert[self: Self]() -> A { return A.Value(self + 1); }
 }
 
 fn Main() -> i32 {

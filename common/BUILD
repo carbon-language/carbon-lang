@@ -120,3 +120,22 @@ cc_test(
         "@llvm-project//llvm:Support",
     ],
 )
+
+cc_library(
+    name = "vlog",
+    srcs = ["vlog_internal.h"],
+    hdrs = ["vlog.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "vlog_test",
+    srcs = ["vlog_test.cpp"],
+    deps = [
+        ":vlog",
+        "//common:gtest_main",
+        "@com_google_googletest//:gtest",
+    ],
+)

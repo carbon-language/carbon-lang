@@ -24,17 +24,17 @@ class MyOptional(T:! Type){
        return { .element = MyOptionalElement(T).Element(value) };
    }
 
-    fn has_value[me: Self] () -> bool{
-        var x: MyOptionalElement(T) = me.element;
+    fn has_value[self: Self] () -> bool{
+        var x: MyOptionalElement(T) = self.element;
         match(x){
             case MyOptionalElement(T).None() => { return false; }
         }
         return false;
     }
 
-    fn get[me: Self] () -> T {
+    fn get[self: Self] () -> T {
         var y: T;
-        var x: MyOptionalElement(T) = me.element;
+        var x: MyOptionalElement(T) = self.element;
         match(x){
             case MyOptionalElement(T).Element( var x: T ) =>{
                 return x;

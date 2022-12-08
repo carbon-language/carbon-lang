@@ -22,6 +22,7 @@
 #include "explorer/interpreter/action.h"
 #include "explorer/interpreter/action_stack.h"
 #include "explorer/interpreter/stack.h"
+#include "explorer/interpreter/value.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Error.h"
@@ -81,8 +82,6 @@ class Interpreter {
   auto StepLvalue() -> ErrorOr<Success>;
   // State transitions for witnesses.
   auto StepWitness() -> ErrorOr<Success>;
-  // State transitions for patterns.
-  auto StepPattern() -> ErrorOr<Success>;
   // State transition for statements.
   auto StepStmt() -> ErrorOr<Success>;
   // State transition for declarations.
@@ -105,6 +104,12 @@ class Interpreter {
   auto Convert(Nonnull<const Value*> value,
                Nonnull<const Value*> destination_type,
                SourceLocation source_loc) -> ErrorOr<Nonnull<const Value*>>;
+
+  // Create a class value and its base class(es) from an init struct.
+  auto ConvertStructToClass(Nonnull<const StructValue*> init,
+                            Nonnull<const NominalClassType*> class_type,
+                            SourceLocation source_loc)
+      -> ErrorOr<Nonnull<NominalClassValue*>>;
 
   // Evaluate an expression immediately, recursively, and return its result.
   //
@@ -458,14 +463,10 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         //    { v :: [][i] :: C, E, F} :: S, H}
         // -> { { &v[i] :: C, E, F} :: S, H }
         Address object = cast<LValue>(*act.results()[0]).address();
-        // TODO: Add support to `Member` for naming tuple fields rather than
-        // pretending we have struct fields with numerical names.
-        std::string f =
-            std::to_string(cast<IntValue>(*act.results()[1]).value());
-        auto* tuple_field_as_struct_field =
-            arena_->New<NamedValue>(NamedValue{f, &exp.static_type()});
-        Address field =
-            object.SubobjectAddress(Member(tuple_field_as_struct_field));
+        const auto index = cast<IntValue>(*act.results()[1]).value();
+        auto* tuple_field =
+            arena_->New<IndexedValue>(IndexedValue{index, &exp.static_type()});
+        Address field = object.SubobjectAddress(Member(tuple_field));
         return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
@@ -612,10 +613,17 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
     }
     case Value::Kind::NominalClassType: {
       const auto& class_type = cast<NominalClassType>(*type);
+      std::optional<Nonnull<const NominalClassType*>> base = class_type.base();
+      if (base.has_value()) {
+        CARBON_ASSIGN_OR_RETURN(const auto inst_base,
+                                InstantiateType(base.value(), source_loc));
+        base = cast<NominalClassType>(inst_base);
+      }
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Bindings*> bindings,
           InstantiateBindings(&class_type.bindings(), source_loc));
-      return arena_->New<NominalClassType>(&class_type.declaration(), bindings);
+      return arena_->New<NominalClassType>(&class_type.declaration(), bindings,
+                                           base);
     }
     case Value::Kind::ChoiceType: {
       const auto& choice_type = cast<ChoiceType>(*type);
@@ -661,6 +669,35 @@ auto Interpreter::InstantiateWitness(Nonnull<const Witness*> witness)
       Nonnull<const Value*> value,
       EvalRecursively(std::make_unique<WitnessAction>(witness)));
   return cast<Witness>(value);
+}
+
+auto Interpreter::ConvertStructToClass(
+    Nonnull<const StructValue*> init_struct,
+    Nonnull<const NominalClassType*> class_type, SourceLocation source_loc)
+    -> ErrorOr<Nonnull<NominalClassValue*>> {
+  std::vector<NamedValue> struct_values;
+  std::optional<Nonnull<const NominalClassValue*>> base_instance;
+  // Instantiate the `destination_type` to obtain the runtime
+  // type of the object.
+  CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inst_class,
+                          InstantiateType(class_type, source_loc));
+  for (const auto& field : init_struct->elements()) {
+    if (field.name == NominalClassValue::BaseField) {
+      CARBON_CHECK(class_type->base().has_value())
+          << "Invalid 'base' field for class '"
+          << class_type->declaration().name() << "' without base class.";
+      CARBON_ASSIGN_OR_RETURN(
+          auto base,
+          Convert(field.value, class_type->base().value(), source_loc));
+      base_instance = cast<NominalClassValue>(base);
+    } else {
+      struct_values.push_back(field);
+    }
+  }
+  auto* converted_init_struct =
+      arena_->New<StructValue>(std::move(struct_values));
+  return arena_->New<NominalClassValue>(inst_class, converted_init_struct,
+                                        base_instance);
 }
 
 auto Interpreter::Convert(Nonnull<const Value*> value,
@@ -732,12 +769,12 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
           return arena_->New<StructValue>(std::move(new_elements));
         }
         case Value::Kind::NominalClassType: {
-          // Instantiate the `destination_type` to obtain the runtime
-          // type of the object.
           CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Value*> inst_dest,
-              InstantiateType(destination_type, source_loc));
-          return arena_->New<NominalClassValue>(inst_dest, value);
+              auto class_value,
+              ConvertStructToClass(cast<StructValue>(value),
+                                   cast<NominalClassType>(destination_type),
+                                   source_loc));
+          return class_value;
         }
         case Value::Kind::TypeType:
         case Value::Kind::ConstraintType:
@@ -835,7 +872,7 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
   BindingMap generic_args;
 
   // TODO: move this logic into PatternMatch, and call it here.
-  auto p = &method.me_pattern().value();
+  auto p = &method.self_pattern().value();
   const auto& placeholder = cast<BindingPlaceholderValue>(*p);
   if (placeholder.value_node().has_value()) {
     method_scope.Bind(*placeholder.value_node(), receiver);
@@ -916,8 +953,8 @@ auto Interpreter::CallFunction(const CallExpression& call,
                   call.source_loc()));
       RuntimeScope method_scope(&heap_);
       BindingMap generic_args;
-      // Bind the receiver to the `me` parameter.
-      auto p = &method.me_pattern().value();
+      // Bind the receiver to the `self` parameter.
+      auto p = &method.self_pattern().value();
       if (p->kind() == Value::Kind::BindingPlaceholderValue) {
         // TODO: move this logic into PatternMatch
         const auto& placeholder = cast<BindingPlaceholderValue>(*p);
@@ -925,7 +962,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
           method_scope.Bind(*placeholder.value_node(), m.receiver());
         }
       } else {
-        CARBON_CHECK(PatternMatch(&method.me_pattern().value(), m.receiver(),
+        CARBON_CHECK(PatternMatch(&method.self_pattern().value(), m.receiver(),
                                   call.source_loc(), &method_scope,
                                   generic_args, trace_stream_, this->arena_));
       }
@@ -964,9 +1001,11 @@ auto Interpreter::CallFunction(const CallExpression& call,
       Nonnull<const Bindings*> bindings =
           arena_->New<Bindings>(std::move(generic_args), std::move(witnesses));
       switch (decl.kind()) {
-        case DeclarationKind::ClassDeclaration:
+        case DeclarationKind::ClassDeclaration: {
+          const auto& class_decl = cast<ClassDeclaration>(decl);
           return todo_.FinishAction(arena_->New<NominalClassType>(
-              &cast<ClassDeclaration>(decl), bindings));
+              &class_decl, bindings, class_decl.base_type()));
+        }
         case DeclarationKind::InterfaceDeclaration:
           return todo_.FinishAction(arena_->New<InterfaceType>(
               &cast<InterfaceDeclaration>(decl), bindings));
@@ -1582,85 +1621,6 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
   }
 }
 
-auto Interpreter::StepPattern() -> ErrorOr<Success> {
-  Action& act = todo_.CurrentAction();
-  const Pattern& pattern = cast<PatternAction>(act).pattern();
-  if (trace_stream_) {
-    **trace_stream_ << "--- step pattern " << pattern << " ." << act.pos()
-                    << ". (" << pattern.source_loc() << ") --->\n";
-  }
-  switch (pattern.kind()) {
-    case PatternKind::AutoPattern: {
-      CARBON_CHECK(act.pos() == 0);
-      return todo_.FinishAction(arena_->New<AutoType>());
-    }
-    case PatternKind::BindingPattern: {
-      const auto& binding = cast<BindingPattern>(pattern);
-      if (binding.name() != AnonymousName) {
-        return todo_.FinishAction(
-            arena_->New<BindingPlaceholderValue>(&binding));
-      } else {
-        return todo_.FinishAction(arena_->New<BindingPlaceholderValue>());
-      }
-    }
-    case PatternKind::GenericBinding: {
-      const auto& binding = cast<GenericBinding>(pattern);
-      return todo_.FinishAction(arena_->New<VariableType>(&binding));
-    }
-    case PatternKind::TuplePattern: {
-      const auto& tuple = cast<TuplePattern>(pattern);
-      if (act.pos() < static_cast<int>(tuple.fields().size())) {
-        //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
-        //    H}
-        // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
-        // H}
-        return todo_.Spawn(
-            std::make_unique<PatternAction>(tuple.fields()[act.pos()]));
-      } else {
-        return todo_.FinishAction(arena_->New<TupleValue>(act.results()));
-      }
-    }
-    case PatternKind::AlternativePattern: {
-      const auto& alternative = cast<AlternativePattern>(pattern);
-      if (act.pos() == 0) {
-        return todo_.Spawn(
-            std::make_unique<ExpressionAction>(&alternative.choice_type()));
-      } else if (act.pos() == 1) {
-        return todo_.Spawn(
-            std::make_unique<PatternAction>(&alternative.arguments()));
-      } else {
-        CARBON_CHECK(act.pos() == 2);
-        const auto& choice_type = cast<ChoiceType>(*act.results()[0]);
-        return todo_.FinishAction(arena_->New<AlternativeValue>(
-            alternative.alternative_name(), choice_type.name(),
-            act.results()[1]));
-      }
-    }
-    case PatternKind::ExpressionPattern:
-      if (act.pos() == 0) {
-        return todo_.Spawn(std::make_unique<ExpressionAction>(
-            &cast<ExpressionPattern>(pattern).expression()));
-      } else {
-        return todo_.FinishAction(act.results()[0]);
-      }
-    case PatternKind::VarPattern:
-      if (act.pos() == 0) {
-        return todo_.Spawn(std::make_unique<PatternAction>(
-            &cast<VarPattern>(pattern).pattern()));
-      } else {
-        return todo_.FinishAction(act.results()[0]);
-      }
-    case PatternKind::AddrPattern:
-      const auto& addr = cast<AddrPattern>(pattern);
-      if (act.pos() == 0) {
-        return todo_.Spawn(std::make_unique<PatternAction>(&addr.binding()));
-      } else {
-        return todo_.FinishAction(arena_->New<AddrValue>(act.results()[0]));
-      }
-      break;
-  }
-}
-
 auto Interpreter::StepStmt() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Statement& stmt = cast<StatementAction>(act).statement();
@@ -1706,7 +1666,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       constexpr int TargetVarPosInResult = 0;
       constexpr int CurrentIndexPosInResult = 1;
       constexpr int EndIndexPosInResult = 2;
-      constexpr int LoopVarPosInResult = 3;
+      const auto* loop_var = &cast<BindingPlaceholderValue>(
+          cast<For>(stmt).variable_declaration().value());
       if (act.pos() == 0) {
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(&cast<For>(stmt).loop_target()));
@@ -1715,23 +1676,13 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         const auto* source_array =
             cast<TupleValue>(act.results()[TargetVarPosInResult]);
 
+        int start_index = 0;
         auto end_index = static_cast<int>(source_array->elements().size());
         if (end_index == 0) {
           return todo_.FinishAction();
         }
-        act.AddResult(arena_->New<IntValue>(0));
+        act.AddResult(arena_->New<IntValue>(start_index));
         act.AddResult(arena_->New<IntValue>(end_index));
-        return todo_.Spawn(std::make_unique<PatternAction>(
-            &cast<For>(stmt).variable_declaration()));
-      }
-      if (act.pos() == 2) {
-        const auto* loop_var =
-            cast<BindingPlaceholderValue>(act.results()[LoopVarPosInResult]);
-        const auto* source_array =
-            cast<TupleValue>(act.results()[TargetVarPosInResult]);
-
-        auto start_index =
-            cast<IntValue>(act.results()[CurrentIndexPosInResult])->value();
         todo_.Initialize(*(loop_var->value_node()),
                          source_array->elements()[start_index]);
         act.ReplaceResult(CurrentIndexPosInResult,
@@ -1739,7 +1690,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         return todo_.Spawn(
             std::make_unique<StatementAction>(&cast<For>(stmt).body()));
       }
-      if (act.pos() >= 3) {
+      if (act.pos() >= 2) {
         auto current_index =
             cast<IntValue>(act.results()[CurrentIndexPosInResult])->value();
         auto end_index =
@@ -1748,8 +1699,6 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         if (current_index < end_index) {
           const auto* source_array =
               cast<const TupleValue>(act.results()[TargetVarPosInResult]);
-          const auto* loop_var = cast<const BindingPlaceholderValue>(
-              act.results()[LoopVarPosInResult]);
 
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> assigned_array_element,
@@ -1824,6 +1773,15 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
     }
     case StatementKind::VariableDefinition: {
       const auto& definition = cast<VariableDefinition>(stmt);
+      const auto* dest_type = &definition.pattern().static_type();
+      if (const auto* dest_class = dyn_cast<NominalClassType>(dest_type)) {
+        if (dest_class->declaration().extensibility() ==
+            ClassExtensibility::Abstract) {
+          return ProgramError(stmt.source_loc())
+                 << "Cannot instantiate abstract class "
+                 << dest_class->declaration().name();
+        }
+      }
       if (act.pos() == 0 && definition.has_init()) {
         //    { {(var x = e) :: C, E, F} :: S, H}
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
@@ -1837,8 +1795,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         Nonnull<const Value*> v;
         if (definition.has_init()) {
           CARBON_ASSIGN_OR_RETURN(
-              v, Convert(act.results()[0], &definition.pattern().static_type(),
-                         stmt.source_loc()));
+              v, Convert(act.results()[0], dest_type, stmt.source_loc()));
         } else {
           v = arena_->New<UninitializedValue>(p);
         }
@@ -2125,9 +2082,6 @@ auto Interpreter::Step() -> ErrorOr<Success> {
     case Action::Kind::WitnessAction:
       CARBON_RETURN_IF_ERROR(StepWitness());
       break;
-    case Action::Kind::PatternAction:
-      CARBON_RETURN_IF_ERROR(StepPattern());
-      break;
     case Action::Kind::StatementAction:
       CARBON_RETURN_IF_ERROR(StepStmt());
       break;
@@ -2192,15 +2146,6 @@ auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena,
   Interpreter interpreter(Phase::CompileTime, arena, trace_stream);
   CARBON_RETURN_IF_ERROR(
       interpreter.RunAllSteps(std::make_unique<ExpressionAction>(e)));
-  return interpreter.result();
-}
-
-auto InterpPattern(Nonnull<const Pattern*> p, Nonnull<Arena*> arena,
-                   std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
-    -> ErrorOr<Nonnull<const Value*>> {
-  Interpreter interpreter(Phase::CompileTime, arena, trace_stream);
-  CARBON_RETURN_IF_ERROR(
-      interpreter.RunAllSteps(std::make_unique<PatternAction>(p)));
   return interpreter.result();
 }
 

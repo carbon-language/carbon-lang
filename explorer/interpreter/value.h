@@ -107,7 +107,7 @@ class Value {
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   // Returns the sub-Value specified by `path`, which must be a valid field
-  // path for *this. If the sub-Value is a method and its me_pattern is an
+  // path for *this. If the sub-Value is a method and its self_pattern is an
   // AddrPattern, then pass the LValue representing the receiver as `me_value`,
   // otherwise pass `*this`.
   auto GetMember(Nonnull<Arena*> arena, const FieldPath& path,
@@ -382,8 +382,14 @@ class StructValue : public Value {
 // A value of a nominal class type, i.e., an object.
 class NominalClassValue : public Value {
  public:
-  NominalClassValue(Nonnull<const Value*> type, Nonnull<const Value*> inits)
-      : Value(Kind::NominalClassValue), type_(type), inits_(inits) {}
+  static constexpr llvm::StringLiteral BaseField{"base"};
+
+  NominalClassValue(Nonnull<const Value*> type, Nonnull<const Value*> inits,
+                    std::optional<Nonnull<const NominalClassValue*>> base)
+      : Value(Kind::NominalClassValue),
+        type_(type),
+        inits_(inits),
+        base_(base) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassValue;
@@ -391,15 +397,19 @@ class NominalClassValue : public Value {
 
   template <typename F>
   auto Decompose(F f) const {
-    return f(type_, inits_);
+    return f(type_, inits_, base_);
   }
 
   auto type() const -> const Value& { return *type_; }
   auto inits() const -> const Value& { return *inits_; }
+  auto base() const -> std::optional<Nonnull<const NominalClassValue*>> {
+    return base_;
+  }
 
  private:
   Nonnull<const Value*> type_;
   Nonnull<const Value*> inits_;  // The initializing StructValue.
+  std::optional<Nonnull<const NominalClassValue*>> base_;
 };
 
 // An alternative constructor value.
@@ -775,7 +785,7 @@ class NominalClassType : public Value {
   explicit NominalClassType(
       Nonnull<const ClassDeclaration*> declaration,
       Nonnull<const Bindings*> bindings,
-      std::optional<Nonnull<const NominalClassType*>> base = std::nullopt)
+      std::optional<Nonnull<const NominalClassType*>> base)
       : Value(Kind::NominalClassType),
         declaration_(declaration),
         bindings_(bindings),
@@ -1339,6 +1349,7 @@ class MemberName : public Value {
         member_(member) {
     CARBON_CHECK(base_type || interface)
         << "member name must be in a type, an interface, or both";
+    CARBON_CHECK(member_.HasName()) << "member must have a name";
   }
 
   static auto classof(const Value* value) -> bool {
@@ -1349,6 +1360,9 @@ class MemberName : public Value {
   auto Decompose(F f) const {
     return f(base_type_, interface_, member_);
   }
+
+  // Prints the member name or identifier.
+  void Print(llvm::raw_ostream& out) const { member_.Print(out); }
 
   // The type for which `name` is a member or a member of an `impl`.
   auto base_type() const -> std::optional<Nonnull<const Value*>> {

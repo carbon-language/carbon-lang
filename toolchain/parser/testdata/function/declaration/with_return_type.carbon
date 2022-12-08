@@ -7,8 +7,8 @@
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:   {kind: 'DeclaredName', text: 'foo'},
-// CHECK:STDOUT:     {kind: 'ParameterListEnd', text: ')'},
-// CHECK:STDOUT:   {kind: 'ParameterList', text: '(', subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'ParameterListStart', text: '('},
+// CHECK:STDOUT:   {kind: 'ParameterList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'Literal', text: 'u32'},
 // CHECK:STDOUT:   {kind: 'ReturnType', text: '->', subtree_size: 2},
 // CHECK:STDOUT: {kind: 'FunctionDeclaration', text: ';', subtree_size: 7},

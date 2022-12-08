@@ -20,10 +20,10 @@ load("@bazel_tools//tools/build_defs/cc:action_names.bzl", "ACTION_NAMES")
 load(
     ":clang_detected_variables.bzl",
     "clang_bindir",
-    "clang_version",
-    "clang_version_for_cache",
     "clang_include_dirs_list",
     "clang_resource_dir",
+    "clang_version",
+    "clang_version_for_cache",
     "llvm_bindir",
     "sysroot_dir",
 )
@@ -100,6 +100,7 @@ def _impl(ctx):
     ]
 
     std_compile_flags = ["-std=c++17"]
+
     # libc++ is only used on non-Windows platforms.
     if ctx.attr.target_cpu != "x64_windows":
         std_compile_flags.append("-stdlib=libc++")
@@ -285,6 +286,32 @@ def _impl(ctx):
                 actions = codegen_compile_actions,
                 flag_groups = [flag_group(flags = [
                     "-O3",
+                ])],
+            ),
+        ],
+    )
+
+    x86_64_cpu_flags = feature(
+        name = "x86_64_cpu_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = all_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    "-march=x86-64-v2",
+                ])],
+            ),
+        ],
+    )
+
+    aarch64_cpu_flags = feature(
+        name = "aarch64_cpu_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = all_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    "-march=armv8.2-a",
                 ])],
             ),
         ],
@@ -812,6 +839,12 @@ def _impl(ctx):
         sysroot = sysroot_dir
     else:
         fail("Unsupported target platform!")
+
+    # TODO: Need to support non-macOS ARM platforms here.
+    if ctx.attr.target_cpu == "darwin_arm64":
+        features += [aarch64_cpu_flags]
+    else:
+        features += [x86_64_cpu_flags]
 
     # Finally append the libraries to link and any final flags.
     features += [

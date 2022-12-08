@@ -5,12 +5,16 @@
 #include "explorer/interpreter/value.h"
 
 #include <algorithm>
+#include <optional>
+#include <string_view>
 
 #include "common/check.h"
+#include "common/error.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "explorer/interpreter/action.h"
+#include "explorer/interpreter/field_path.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
@@ -33,12 +37,44 @@ auto StructValue::FindField(std::string_view name) const
   return std::nullopt;
 }
 
-static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
-                      const FieldPath::Component& field,
-                      SourceLocation source_loc, Nonnull<const Value*> me_value)
-    -> ErrorOr<Nonnull<const Value*>> {
-  std::string_view f = field.name();
+static auto FindClassField(Nonnull<const NominalClassValue*> object,
+                           std::string_view name)
+    -> std::optional<Nonnull<const Value*>> {
+  if (auto field = cast<StructValue>(object->inits()).FindField(name)) {
+    return field;
+  }
+  if (object->base().has_value()) {
+    return FindClassField(object->base().value(), name);
+  }
+  return std::nullopt;
+}
 
+static auto GetPositionalMember(Nonnull<const Value*> v,
+                                const FieldPath::Component& field,
+                                SourceLocation source_loc)
+    -> ErrorOr<Nonnull<const Value*>> {
+  switch (v->kind()) {
+    case Value::Kind::TupleValue: {
+      const auto& tuple = cast<TupleValue>(*v);
+      const auto index = field.member().index();
+      if (index < 0 || index >= static_cast<int>(tuple.elements().size())) {
+        return ProgramError(source_loc)
+               << "index " << index << " out of range for " << *v;
+      }
+      return tuple.elements()[index];
+    }
+    default:
+      return ProgramError(source_loc)
+             << "Invalid positional argument for value " << *v;
+  }
+}
+
+static auto GetNamedMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
+                           const FieldPath::Component& field,
+                           SourceLocation source_loc,
+                           Nonnull<const Value*> me_value)
+    -> ErrorOr<Nonnull<const Value*>> {
+  const auto f = field.member().name();
   if (field.witness().has_value()) {
     const auto* witness = cast<Witness>(*field.witness());
 
@@ -89,7 +125,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       const auto& object = cast<NominalClassValue>(*v);
       // Look for a field.
       if (std::optional<Nonnull<const Value*>> field =
-              cast<StructValue>(object.inits()).FindField(f)) {
+              FindClassField(&object, f)) {
         return *field;
       } else {
         // Look for a method in the object's class
@@ -137,6 +173,15 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
   }
 }
 
+static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
+                      const FieldPath::Component& field,
+                      SourceLocation source_loc, Nonnull<const Value*> me_value)
+    -> ErrorOr<Nonnull<const Value*>> {
+  return field.member().HasPosition()
+             ? GetPositionalMember(v, field, source_loc)
+             : GetNamedMember(arena, v, field, source_loc, me_value);
+}
+
 auto Value::GetMember(Nonnull<Arena*> arena, const FieldPath& path,
                       SourceLocation source_loc,
                       Nonnull<const Value*> me_value) const
@@ -163,11 +208,11 @@ static auto SetFieldImpl(
       std::vector<NamedValue> elements = cast<StructValue>(*value).elements();
       auto it =
           llvm::find_if(elements, [path_begin](const NamedValue& element) {
-            return element.name == (*path_begin).name();
+            return (*path_begin).IsNamed(element.name);
           });
       if (it == elements.end()) {
         return ProgramError(source_loc)
-               << "field " << (*path_begin).name() << " not in " << *value;
+               << "field " << *path_begin << " not in " << *value;
       }
       CARBON_ASSIGN_OR_RETURN(
           it->value, SetFieldImpl(arena, it->value, path_begin + 1, path_end,
@@ -176,20 +221,32 @@ static auto SetFieldImpl(
     }
     case Value::Kind::NominalClassValue: {
       const auto& object = cast<NominalClassValue>(*value);
-      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inits,
-                              SetFieldImpl(arena, &object.inits(), path_begin,
-                                           path_end, field_value, source_loc));
-      return arena->New<NominalClassValue>(&object.type(), inits);
+      if (auto inits = SetFieldImpl(arena, &object.inits(), path_begin,
+                                    path_end, field_value, source_loc);
+          inits.ok()) {
+        return arena->New<NominalClassValue>(&object.type(), *inits,
+                                             object.base());
+      } else if (object.base().has_value()) {
+        auto new_base = SetFieldImpl(arena, object.base().value(), path_begin,
+                                     path_end, field_value, source_loc);
+        if (new_base.ok()) {
+          return arena->New<NominalClassValue>(
+              &object.type(), &object.inits(),
+              cast<NominalClassValue>(*new_base));
+        }
+      }
+      // Failed to match, show full object content
+      return ProgramError(source_loc)
+             << "field " << *path_begin << " not in " << *value;
     }
     case Value::Kind::TupleType:
     case Value::Kind::TupleValue: {
       std::vector<Nonnull<const Value*>> elements =
           cast<TupleValueBase>(*value).elements();
-      // TODO(geoffromer): update FieldPath to hold integers as well as strings.
-      int index = std::stoi(std::string((*path_begin).name()));
-      if (index < 0 || static_cast<size_t>(index) >= elements.size()) {
-        return ProgramError(source_loc) << "index " << (*path_begin).name()
-                                        << " out of range in " << *value;
+      const auto index = (*path_begin).member().index();
+      if (index < 0 || index >= static_cast<int>(elements.size())) {
+        return ProgramError(source_loc)
+               << "index " << index << " out of range in " << *value;
       }
       CARBON_ASSIGN_OR_RETURN(
           elements[index], SetFieldImpl(arena, elements[index], path_begin + 1,
@@ -271,6 +328,9 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::NominalClassValue: {
       const auto& s = cast<NominalClassValue>(*this);
       out << cast<NominalClassType>(s.type()).declaration().name() << s.inits();
+      if (s.base().has_value()) {
+        out << " base " << *s.base().value();
+      }
       break;
     }
     case Value::Kind::TupleType:
@@ -293,7 +353,7 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::DestructorValue: {
       const auto& destructor = cast<DestructorValue>(*this);
       out << "destructor [ ";
-      out << destructor.declaration().me_pattern();
+      out << destructor.declaration().self_pattern();
       out << " ]";
       break;
     }
@@ -510,7 +570,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       if (member_name.interface().has_value()) {
         out << *member_name.interface().value();
       }
-      out << "." << member_name.name();
+      out << "." << member_name;
       if (member_name.base_type().has_value() &&
           member_name.interface().has_value()) {
         out << ")";
@@ -556,7 +616,7 @@ void Value::Print(llvm::raw_ostream& out) const {
           << cast<TypeOfParameterizedEntityName>(*this).name();
       break;
     case Value::Kind::TypeOfMemberName: {
-      out << "member name " << cast<TypeOfMemberName>(*this).member().name();
+      out << "member name " << cast<TypeOfMemberName>(*this).member();
       break;
     }
     case Value::Kind::StaticArrayType: {
@@ -1066,8 +1126,8 @@ auto FindFunctionWithParents(std::string_view name,
   if (auto fun = FindFunction(name, class_decl.members()); fun.has_value()) {
     return fun;
   }
-  if (class_decl.base().has_value()) {
-    return FindFunctionWithParents(name, *class_decl.base().value());
+  if (const auto base_type = class_decl.base_type(); base_type.has_value()) {
+    return FindFunctionWithParents(name, base_type.value()->declaration());
   }
   return std::nullopt;
 }

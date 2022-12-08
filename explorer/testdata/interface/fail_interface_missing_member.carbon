@@ -9,7 +9,7 @@
 package ExplorerTest api;
 
 interface Vector {
-  fn Add[me: Self](b: Self) -> Self;
+  fn Add[self: Self](b: Self) -> Self;
 }
 
 fn ScaleGeneric[T:! Vector](a: T, s: i32) -> T {
@@ -21,8 +21,8 @@ class Point {
   var x: i32;
   var y: i32;
   impl Point as Vector {
-    fn Add[me: Point](b: Point) -> Point {
-      return {.x = me.x + b.x, .y = me.y + b.y};
+    fn Add[self: Point](b: Point) -> Point {
+      return {.x = self.x + b.x, .y = self.y + b.y};
     }
   }
 }

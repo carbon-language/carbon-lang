@@ -395,10 +395,26 @@ postfix_expression:
       $$ = arena->New<SimpleMemberAccessExpression>(context.source_loc(), $1,
                                                     $2);
     }
+| postfix_expression ARROW identifier
+    {
+      auto deref = arena->New<OperatorExpression>(
+          context.source_loc(), Operator::Deref,
+          std::vector<Nonnull<Expression*>>({$1}));
+      $$ = arena->New<SimpleMemberAccessExpression>(context.source_loc(), deref,
+                                                    $3);
+    }
 | postfix_expression PERIOD LEFT_PARENTHESIS expression RIGHT_PARENTHESIS
     {
       $$ = arena->New<CompoundMemberAccessExpression>(context.source_loc(), $1,
                                                       $4);
+    }
+| postfix_expression ARROW LEFT_PARENTHESIS expression RIGHT_PARENTHESIS
+    {
+      auto deref = arena->New<OperatorExpression>(
+          context.source_loc(), Operator::Deref,
+          std::vector<Nonnull<Expression*>>({$1}));
+      $$ = arena->New<CompoundMemberAccessExpression>(context.source_loc(),
+                                                      deref, $4);
     }
 | postfix_expression LEFT_SQUARE_BRACKET expression RIGHT_SQUARE_BRACKET
     { $$ = arena->New<IndexExpression>(context.source_loc(), $1, $3); }
@@ -724,7 +740,9 @@ if_expression:
 expression:
   if_expression
 ;
-designator: PERIOD identifier { $$ = $2; }
+designator:
+  PERIOD identifier { $$ = $2; }
+| PERIOD BASE { $$ = "base"; }
 ;
 paren_expression: paren_expression_base
     { $$ = ExpressionFromParenContents(arena, context.source_loc(), $1); }

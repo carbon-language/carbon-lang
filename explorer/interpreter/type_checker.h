@@ -60,12 +60,13 @@ class TypeChecker {
                  SourceLocation source_loc) const
       -> std::optional<Nonnull<const Witness*>>;
 
-  // Return the declaration of the member with the given name, from the class
-  // and its parents
+  // Return the declaration of the member with the given name and the class type
+  // that owns it, from the class and its parents
   auto FindMemberWithParents(std::string_view name,
-                             Nonnull<const NominalClassType*> enclosing_type)
+                             Nonnull<const NominalClassType*> enclosing_class)
       -> ErrorOr<std::optional<
-          std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>>;
+          std::tuple<Nonnull<const Value*>, Nonnull<const Declaration*>,
+                     Nonnull<const NominalClassType*>>>>;
 
   // Finds the direct or indirect member of a class or mixin by its name and
   // returns the member's declaration and type. Indirect members are members of
@@ -130,9 +131,9 @@ class TypeChecker {
     Nonnull<const Declaration*> member;
   };
 
-  // Checks a member access that might be accessing a function taking `addr me:
-  // Self*`. If it does, this function marks the member access accordingly and
-  // ensures the object argument is an lvalue.
+  // Checks a member access that might be accessing a function taking `addr
+  // self: Self*`. If it does, this function marks the member access accordingly
+  // and ensures the object argument is an lvalue.
   auto CheckAddrMeAccess(Nonnull<MemberAccessExpression*> access,
                          Nonnull<const FunctionDeclaration*> func_decl,
                          const Bindings& bindings, const ImplScope& impl_scope)
@@ -344,6 +345,10 @@ class TypeChecker {
 
   // Returns the field names of the class together with their types.
   auto FieldTypes(const NominalClassType& class_type) const
+      -> std::vector<NamedValue>;
+
+  // Returns the field names and types of the class and its parents.
+  auto FieldTypesWithBase(const NominalClassType& class_type) const
       -> std::vector<NamedValue>;
 
   // Returns true if source_fields and destination_fields contain the same set

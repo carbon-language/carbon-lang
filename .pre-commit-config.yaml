@@ -60,11 +60,11 @@ repos:
         args: ['-r', '.']
         language: python
         files: |
-          '(?x)^(
+          (?x)^(
             .*BUILD.*|
             .*WORKSPACE.*|
             .*\.bzl
-          )$'
+          )$
       - id: clang-format
         name: clang-format
         entry: clang-format
@@ -87,7 +87,7 @@ repos:
         name: Check header guards
         entry: scripts/check_header_guards.py
         language: python
-        files: '^.*\.h$'
+        files: ^.*\.h$
       - id: check-sha-filenames
         # This may rename files, so it's deliberately between formatters and
         # linters.

@@ -144,7 +144,6 @@ static auto FinishActionKindFor(Action::Kind kind) -> FinishActionKind {
     case Action::Kind::ExpressionAction:
     case Action::Kind::WitnessAction:
     case Action::Kind::LValAction:
-    case Action::Kind::PatternAction:
       return FinishActionKind::Value;
     case Action::Kind::StatementAction:
     case Action::Kind::DeclarationAction:

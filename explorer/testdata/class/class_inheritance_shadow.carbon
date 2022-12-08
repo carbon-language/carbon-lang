@@ -16,8 +16,8 @@ base class C {
   fn Method1() {
     Print("Class C");
   }
-  fn GetValue[me: Self]() -> i32 {
-    return me.value;
+  fn GetValue[self: Self]() -> i32 {
+    return self.value;
   }
   var value: i32;
 }
@@ -31,7 +31,7 @@ class D extends C {
 
 fn Main() -> i32 {
   // Initialize derived value first, base value second
-  var d: D = {.value = 2, .value = 1};
+  var d: D = {.value = 2, .base={.value = 1}};
   d.Method1();
 
   Print("d.value = {0}", d.value);
