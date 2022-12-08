@@ -639,6 +639,12 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
           EvalAssociatedConstant(cast<AssociatedConstant>(type), source_loc));
       return type_value;
     }
+    case Value::Kind::PointerType: {
+      const auto* ptr = cast<PointerType>(type);
+      CARBON_ASSIGN_OR_RETURN(const auto* actual_type,
+                              InstantiateType(&ptr->type(), source_loc));
+      return arena_->New<PointerType>(actual_type);
+    }
     default:
       return type;
   }
@@ -873,7 +879,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
       CARBON_ASSIGN_OR_RETURN(const auto* pointee,
                               heap_.Read(src_ptr->address(), source_loc))
       if (pointee->kind() == Value::Kind::NominalClassType) {
-        // TODO: When does that happen? Just return as-is?
+        // TODO: When does that happen? Just return as-is.
         return value;
       }
 
@@ -890,8 +896,11 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
         new_addr = new_addr.ElementAddress(
             arena_->New<BaseElement>(&dest_ptr->type()));
       }
-      return ProgramError(source_loc)
-             << "Unable to convert " << *pointee << " to " << *dest_ptr;
+
+      // Unable to resolve, return as-is.
+      // TODO: Produce error instead once we can properly substitute
+      // parametrized types for pointers in function call parameters.
+      return value;
     }
   }
 }
