@@ -66,66 +66,16 @@ auto SemanticsParseTreeHandler::Build() -> void {
   // Add a block for the ParseTree.
   node_block_stack_.push_back(semantics_->AddNodeBlock());
 
-  auto range = parse_tree_->postorder();
-  for (auto it = range.begin();; ++it) {
-    auto parse_node = *it;
+  for (auto parse_node : parse_tree_->postorder()) {
     switch (auto parse_kind = parse_tree_->node_kind(parse_node)) {
-      case ParseNodeKind::FunctionDefinition(): {
-        HandleFunctionDefinition(parse_node);
-        break;
-      }
-      case ParseNodeKind::FunctionDefinitionStart(): {
-        HandleFunctionDefinitionStart(parse_node);
-        break;
-      }
-      case ParseNodeKind::FileEnd(): {
-        ++it;
-        CARBON_CHECK(node_block_stack_.size() == 1) << node_block_stack_.size();
-        CARBON_CHECK(it == range.end())
-            << "FileEnd should always be last, found "
-            << parse_tree_->node_kind(*it);
-        return;
-      }
-      case ParseNodeKind::InfixOperator(): {
-        HandleInfixOperator(parse_node);
-        break;
-      }
-      case ParseNodeKind::Literal(): {
-        HandleLiteral(parse_node);
-        break;
-      }
-      case ParseNodeKind::ParameterList(): {
-        HandleParameterList(parse_node);
-        break;
-      }
-      case ParseNodeKind::PatternBinding(): {
-        HandlePatternBinding(parse_node);
-        break;
-      }
-      case ParseNodeKind::ReturnStatement(): {
-        HandleReturnStatement(parse_node);
-        break;
-      }
-      case ParseNodeKind::VariableDeclaration(): {
-        HandleVariableDeclaration(parse_node);
-        break;
-      }
-      case ParseNodeKind::DeclaredName():
-      case ParseNodeKind::FunctionIntroducer():
-      case ParseNodeKind::ParameterListStart():
-      case ParseNodeKind::ReturnStatementStart():
-      case ParseNodeKind::VariableIntroducer(): {
-        // The token has no action, but we still track it for the stack.
-        Push(parse_node);
-        break;
-      }
-      default: {
-        CARBON_FATAL() << "In ParseTree at index " << parse_node
-                       << ", unhandled NodeKind " << parse_kind;
-      }
+#define CARBON_PARSE_NODE_KIND(Name) \
+  case ParseNodeKind::Name(): {      \
+    Handle##Name(parse_node);        \
+    break;                           \
+  }
+#include "toolchain/parser/parse_node_kind.def"
     }
   }
-  llvm_unreachable("Should always end at FileEnd");
 }
 
 auto SemanticsParseTreeHandler::AddNode(SemanticsNode node) -> SemanticsNodeId {
@@ -209,6 +159,107 @@ auto SemanticsParseTreeHandler::AddIdentifier(ParseTree::Node decl_node)
   return semantics_->AddIdentifier(text);
 }
 
+auto SemanticsParseTreeHandler::HandleBreakStatement(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleBreakStatementStart(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleCallExpression(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleCallExpressionComma(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleCallExpressionStart(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleCodeBlock(ParseTree::Node /*parse_node*/)
+    -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleCodeBlockStart(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleContinueStatement(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleContinueStatementStart(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleDeclaredName(ParseTree::Node parse_node)
+    -> void {
+  // The parent is responsible for binding the name.
+  Push(parse_node);
+}
+
+auto SemanticsParseTreeHandler::HandleDesignatedName(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleDesignatorExpression(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleEmptyDeclaration(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleExpressionStatement(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleFileEnd(ParseTree::Node /*parse_node*/)
+    -> void {
+  CARBON_CHECK(node_block_stack_.size() == 1) << node_block_stack_.size();
+}
+
+auto SemanticsParseTreeHandler::HandleForHeader(ParseTree::Node /*parse_node*/)
+    -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleForHeaderStart(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleForIn(ParseTree::Node /*parse_node*/)
+    -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleForStatement(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleFunctionDeclaration(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
 auto SemanticsParseTreeHandler::HandleFunctionDefinition(
     ParseTree::Node parse_node) -> void {
   // Merges code block children up under the FunctionDefinitionStart.
@@ -236,6 +287,32 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinitionStart(
   AddNode(SemanticsNode::MakeFunctionDefinition(parse_node, decl_id, block_id));
   node_block_stack_.push_back(block_id);
   Push(parse_node);
+}
+
+auto SemanticsParseTreeHandler::HandleFunctionIntroducer(
+    ParseTree::Node parse_node) -> void {
+  // No action, just a bracketing node.
+  Push(parse_node);
+}
+
+auto SemanticsParseTreeHandler::HandleIfCondition(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleIfConditionStart(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleIfStatement(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleIfStatementElse(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
 }
 
 auto SemanticsParseTreeHandler::HandleInfixOperator(ParseTree::Node parse_node)
@@ -272,6 +349,21 @@ auto SemanticsParseTreeHandler::HandleInfixOperator(ParseTree::Node parse_node)
   }
 }
 
+auto SemanticsParseTreeHandler::HandleInterfaceBody(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleInterfaceBodyStart(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleInterfaceDefinition(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
 auto SemanticsParseTreeHandler::HandleLiteral(ParseTree::Node parse_node)
     -> void {
   auto token = parse_tree_->node_token(parse_node);
@@ -299,14 +391,63 @@ auto SemanticsParseTreeHandler::HandleLiteral(ParseTree::Node parse_node)
   }
 }
 
+auto SemanticsParseTreeHandler::HandleNameReference(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandlePackageApi(ParseTree::Node /*parse_node*/)
+    -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandlePackageDirective(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandlePackageImpl(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandlePackageIntroducer(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandlePackageLibrary(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
 auto SemanticsParseTreeHandler::HandleParameterList(ParseTree::Node parse_node)
     -> void {
   // TODO: This should transform into a usable parameter list. For now
   // it's unused and only stored so that node counts match.
-  // TODO: Reorder with ParameterListStart so that we can traverse without
-  // subtree_size.
   Pop(ParseNodeKind::ParameterListStart());
   Push(parse_node);
+}
+
+auto SemanticsParseTreeHandler::HandleParameterListComma(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleParameterListStart(
+    ParseTree::Node parse_node) -> void {
+  // TODO: See HandleParameterList.
+  Push(parse_node);
+}
+
+auto SemanticsParseTreeHandler::HandleParenExpression(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleParenExpressionOrTupleLiteralStart(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
 }
 
 auto SemanticsParseTreeHandler::HandlePatternBinding(ParseTree::Node parse_node)
@@ -321,6 +462,16 @@ auto SemanticsParseTreeHandler::HandlePatternBinding(ParseTree::Node parse_node)
 
   Push(parse_node,
        AddNode(SemanticsNode::MakeBindName(name_node, name, type_id)));
+}
+
+auto SemanticsParseTreeHandler::HandlePostfixOperator(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandlePrefixOperator(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
 }
 
 auto SemanticsParseTreeHandler::HandleReturnStatement(
@@ -338,6 +489,67 @@ auto SemanticsParseTreeHandler::HandleReturnStatement(
   }
 }
 
+auto SemanticsParseTreeHandler::HandleReturnStatementStart(
+    ParseTree::Node parse_node) -> void {
+  // No action, just a bracketing node.
+  Push(parse_node);
+}
+
+auto SemanticsParseTreeHandler::HandleReturnType(ParseTree::Node /*parse_node*/)
+    -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleStructComma(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleStructFieldDesignator(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleStructFieldType(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleStructFieldUnknown(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleStructFieldValue(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleStructLiteral(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleStructLiteralOrStructTypeLiteralStart(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleStructTypeLiteral(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleTupleLiteral(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleTupleLiteralComma(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
 auto SemanticsParseTreeHandler::HandleVariableDeclaration(
     ParseTree::Node parse_node) -> void {
   // TODO: Initializers would assign to the PatternBinding, but this code
@@ -345,6 +557,32 @@ auto SemanticsParseTreeHandler::HandleVariableDeclaration(
   PopWithResult();
   Pop(ParseNodeKind::VariableIntroducer());
   Push(parse_node);
+}
+
+auto SemanticsParseTreeHandler::HandleVariableIntroducer(
+    ParseTree::Node parse_node) -> void {
+  // No action, just a bracketing node.
+  Push(parse_node);
+}
+
+auto SemanticsParseTreeHandler::HandleVariableInitializer(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleWhileCondition(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleWhileConditionStart(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleWhileStatement(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
 }
 
 }  // namespace Carbon

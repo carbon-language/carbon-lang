@@ -72,15 +72,9 @@ class SemanticsParseTreeHandler {
   auto PopWithResult(ParseNodeKind pop_parse_kind) -> SemanticsNodeId;
 
   // Parse node handlers.
-  auto HandleDeclaredName(ParseTree::Node parse_node) -> void;
-  auto HandleFunctionDefinition(ParseTree::Node parse_node) -> void;
-  auto HandleFunctionDefinitionStart(ParseTree::Node parse_node) -> void;
-  auto HandleInfixOperator(ParseTree::Node parse_node) -> void;
-  auto HandleLiteral(ParseTree::Node parse_node) -> void;
-  auto HandleParameterList(ParseTree::Node parse_node) -> void;
-  auto HandlePatternBinding(ParseTree::Node parse_node) -> void;
-  auto HandleReturnStatement(ParseTree::Node parse_node) -> void;
-  auto HandleVariableDeclaration(ParseTree::Node parse_node) -> void;
+#define CARBON_PARSE_NODE_KIND(Name) \
+  auto Handle##Name(ParseTree::Node parse_node)->void;
+#include "toolchain/parser/parse_node_kind.def"
 
   // Tokens for getting data on literals.
   const TokenizedBuffer* tokens_;
