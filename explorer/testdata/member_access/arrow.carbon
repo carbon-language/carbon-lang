@@ -5,7 +5,11 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
-// CHECK:STDOUT: result: 4
+// CHECK:STDOUT: 1
+// CHECK:STDOUT: 1
+// CHECK:STDOUT: 1
+// CHECK:STDOUT: 1
+// CHECK:STDOUT: result: 0
 
 package Foo api;
 class X {
@@ -15,5 +19,9 @@ class X {
 fn Main() -> i32 {
   var v: X = {.n = 1};
   let p: X* = &v;
-  return p->n + p->(X.n) + p->F() + p->(X.F)();
+  Print("{0}", p->n);
+  Print("{0}", p->(X.n));
+  Print("{0}", p->F());
+  Print("{0}", p->(X.F)());
+  return 0;
 }
