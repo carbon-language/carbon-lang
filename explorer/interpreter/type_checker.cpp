@@ -873,7 +873,12 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
                                             bool allow_implicit_conversion)
     -> ErrorOr<Success> {
   if (trace_stream_) {
-    **trace_stream_ << "deducing " << *param << " from " << *arg << "\n";
+    **trace_stream_ << "deducing " << *param
+                    << " (kind = " << static_cast<int>(param->kind())
+                    << ") from " << *arg << "\n";
+    if (param != arg) {
+      **trace_stream_ << "deducing arg from itself\n";
+    }
   }
 
   // Handle the case where we can't perform deduction, either because the
@@ -1776,10 +1781,12 @@ auto TypeChecker::Substitute(const Bindings& bindings,
     return type;
   }
 
-  auto* result = SubstituteImpl(bindings, type);
+  static int counter = 0;
+  ++counter;
 
   if (trace_stream_) {
-    **trace_stream_ << "substitution of {";
+    **trace_stream_ << "(" << counter << ") substituting " << *type
+                    << " with {";
     llvm::ListSeparator sep;
     for (const auto& [name, value] : bindings.args()) {
       **trace_stream_ << sep << *name << " -> " << *value;
@@ -1787,7 +1794,14 @@ auto TypeChecker::Substitute(const Bindings& bindings,
     for (const auto& [name, value] : bindings.witnesses()) {
       **trace_stream_ << sep << *name << " -> " << *value;
     }
-    **trace_stream_ << "}\n  old: " << *type << "\n  new: " << *result << "\n";
+    **trace_stream_ << "}\n";
+  }
+
+  auto* result = SubstituteImpl(bindings, type);
+
+  if (trace_stream_) {
+    **trace_stream_ << "(" << counter << ") substituted type is " << *result
+                    << "\n";
   }
   return result;
 }
@@ -2104,6 +2118,9 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
   }
 
   ArgumentDeduction deduction(source_loc, "match", impl.deduced, trace_stream_);
+  if (trace_stream_) {
+    **trace_stream_ << "Applying Deduce to impl\n";
+  }
   if (ErrorOr<Success> e =
           deduction.Deduce(impl.type, impl_type,
                            /*allow_implicit_conversion=*/false);
@@ -2114,6 +2131,9 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
     return std::nullopt;
   }
 
+  if (trace_stream_) {
+    **trace_stream_ << "Applying Deduce to iface\n";
+  }
   if (ErrorOr<Success> e = deduction.Deduce(
           impl.interface, &iface, /*allow_implicit_conversion=*/false);
       !e.ok()) {

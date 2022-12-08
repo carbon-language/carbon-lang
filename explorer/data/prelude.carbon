@@ -465,6 +465,40 @@ external impl i32 as RightShiftWith(i32) where .Result = i32 {
   }
 }
 
+// ---------------------------------
+// Indexing interfaces.
+// ---------------------------------
+
+interface IndexWith(SubscriptType1:! Type) {
+  let ElementType:! Type;
+  fn At[me: Self](subscript: SubscriptType1) -> ElementType;
+  fn Addr[addr me: Self*](subscript: SubscriptType1) -> ElementType*;
+}
+
+interface IndirectIndexWith(SubscriptType2:! Type) {
+  let ElementType:! Type;
+  impl as IndexWith(SubscriptType2) where .ElementType = ElementType;
+  fn Addr[me: Self](subscript: SubscriptType2) -> ElementType*;
+}
+
+// Edits from p2274:
+// - omitted `final`
+// - `where` in head instead of `let` in body
+// - `->` not supported
+// - Can't resolve `ElementType`
+// - `index` should have been `subscript`
+// - Changed parentheses on T.....ElementType
+external impl forall
+    [SubscriptType3:! Type, T:! IndirectIndexWith(SubscriptType3)]
+    T as IndexWith(SubscriptType3) where .ElementType = T.(IndirectIndexWith(SubscriptType3).ElementType) {
+  fn At[me: Self](subscript: SubscriptType3) -> T.(IndirectIndexWith(SubscriptType3).ElementType) {
+    return *(me.(IndirectIndexWith(SubscriptType3).Addr)(subscript));
+  }
+  fn Addr[addr me: Self*](subscript: SubscriptType3) -> T.(IndirectIndexWith(SubscriptType3).ElementType)* {
+    return (*me).(IndirectIndexWith(SubscriptType3).Addr)(subscript);
+  }
+}
+
 //-------------------------
 // Optional
 //-------------------------
