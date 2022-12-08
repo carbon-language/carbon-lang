@@ -54,22 +54,22 @@ class Element {
   const ElementKind kind_;
 };
 
-// A named member of a type.
+// A named element of a type.
 //
 // This is either a declared member of a class, interface, or similar, or a
 // member of a struct with no declaration.
-class MemberElement : public Element {
+class NamedElement : public Element {
  public:
-  explicit MemberElement(Nonnull<const Declaration*> declaration);
-  explicit MemberElement(Nonnull<const NamedValue*> struct_member);
+  explicit NamedElement(Nonnull<const Declaration*> declaration);
+  explicit NamedElement(Nonnull<const NamedValue*> struct_member);
 
-  // Prints the Member
+  // Prints the element's name
   void Print(llvm::raw_ostream& out) const override;
 
   auto IsNamed(std::string_view name) const -> bool override;
 
   static auto classof(const Element* member) -> bool {
-    return InheritsFromMemberElement(member->kind());
+    return InheritsFromNamedElement(member->kind());
   }
 
   auto type() const -> const Value& override;
@@ -84,22 +84,22 @@ class MemberElement : public Element {
       element_;
 };
 
-// A positional member of a type.
+// A positional element of a type.
 //
-// This is a member of a tuple, or other index-based value.
-class TupleElement : public Element {
+// This is a positional tuple element, or other index-based value.
+class PositionalElement : public Element {
  public:
-  explicit TupleElement(int index, Nonnull<const Value*> type)
-      : Element(ElementKind::TupleElement), index_(index), type_(type) {}
+  explicit PositionalElement(int index, Nonnull<const Value*> type)
+      : Element(ElementKind::PositionalElement), index_(index), type_(type) {}
 
-  // Prints the Member
+  // Prints the element
   void Print(llvm::raw_ostream& out) const override;
 
   // Return whether the member's name matches `name`.
   auto IsNamed(std::string_view name) const -> bool override;
 
   static auto classof(const Element* member) -> bool {
-    return InheritsFromTupleElement(member->kind());
+    return InheritsFromPositionalElement(member->kind());
   }
 
   auto index() const -> int { return index_; }

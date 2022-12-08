@@ -61,13 +61,13 @@ static auto GetBaseElement(Nonnull<const NominalClassValue*> class_value,
   return base.value();
 }
 
-static auto GetTupleElement(Nonnull<const TupleValue*> tuple,
-                            const ElementPath::Component& path_comp,
-                            SourceLocation source_loc)
+static auto GetPositionalElement(Nonnull<const TupleValue*> tuple,
+                                 const ElementPath::Component& path_comp,
+                                 SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
-  CARBON_CHECK(path_comp.element()->kind() == ElementKind::TupleElement)
+  CARBON_CHECK(path_comp.element()->kind() == ElementKind::PositionalElement)
       << "Invalid non-tuple member";
-  const auto* tuple_element = cast<TupleElement>(path_comp.element());
+  const auto* tuple_element = cast<PositionalElement>(path_comp.element());
   const size_t index = tuple_element->index();
   if (index < 0 || index >= tuple->elements().size()) {
     return ProgramError(source_loc)
@@ -76,14 +76,14 @@ static auto GetTupleElement(Nonnull<const TupleValue*> tuple,
   return tuple->elements()[index];
 }
 
-static auto GetMemberElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
-                             const ElementPath::Component& field,
-                             SourceLocation source_loc,
-                             Nonnull<const Value*> me_value)
+static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
+                            const ElementPath::Component& field,
+                            SourceLocation source_loc,
+                            Nonnull<const Value*> me_value)
     -> ErrorOr<Nonnull<const Value*>> {
-  CARBON_CHECK(field.element()->kind() == ElementKind::MemberElement)
-      << "Invalid non-member element";
-  const auto* member = cast<MemberElement>(field.element());
+  CARBON_CHECK(field.element()->kind() == ElementKind::NamedElement)
+      << "Invalid element, expecting NamedElement";
+  const auto* member = cast<NamedElement>(field.element());
   const auto f = member->name();
   if (field.witness().has_value()) {
     const auto* witness = cast<Witness>(*field.witness());
@@ -188,13 +188,13 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                       SourceLocation source_loc, Nonnull<const Value*> me_value)
     -> ErrorOr<Nonnull<const Value*>> {
   switch (path_comp.element()->kind()) {
-    case ElementKind::MemberElement:
-      return GetMemberElement(arena, v, path_comp, source_loc, me_value);
-    case ElementKind::TupleElement: {
+    case ElementKind::NamedElement:
+      return GetNamedElement(arena, v, path_comp, source_loc, me_value);
+    case ElementKind::PositionalElement: {
       if (const auto* tuple = dyn_cast<TupleValue>(v)) {
-        return GetTupleElement(tuple, path_comp, source_loc);
+        return GetPositionalElement(tuple, path_comp, source_loc);
       } else {
-        CARBON_FATAL() << "Invalid value for tuple element";
+        CARBON_FATAL() << "Invalid value for positional element";
       }
     }
     case ElementKind::BaseElement:
@@ -265,11 +265,13 @@ static auto SetFieldImpl(
     }
     case Value::Kind::TupleType:
     case Value::Kind::TupleValue: {
-      CARBON_CHECK((*path_begin).element()->kind() == ElementKind::TupleElement)
+      CARBON_CHECK((*path_begin).element()->kind() ==
+                   ElementKind::PositionalElement)
           << "Invalid non-positional member for tuple";
       std::vector<Nonnull<const Value*>> elements =
           cast<TupleValueBase>(*value).elements();
-      const size_t index = cast<TupleElement>((*path_begin).element())->index();
+      const size_t index =
+          cast<PositionalElement>((*path_begin).element())->index();
       if (index < 0 || index >= elements.size()) {
         return ProgramError(source_loc)
                << "index " << index << " out of range in " << *value;

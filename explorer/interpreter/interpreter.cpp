@@ -466,7 +466,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         Address object = cast<LValue>(*act.results()[0]).address();
         const auto index = cast<IntValue>(*act.results()[1]).value();
         Address field = object.ElementAddress(
-            arena_->New<TupleElement>(index, &exp.static_type()));
+            arena_->New<PositionalElement>(index, &exp.static_type()));
         return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
@@ -2038,7 +2038,7 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
         const auto& member = class_dec.members()[index];
         if (const auto* var = dyn_cast<VariableDeclaration>(member)) {
           Address object = destroy_act.lvalue()->address();
-          Address mem = object.ElementAddress(arena_->New<MemberElement>(var));
+          Address mem = object.ElementAddress(arena_->New<NamedElement>(var));
           SourceLocation source_loc("destructor", 1);
           auto v = heap_.Read(mem, source_loc);
           return todo_.Spawn(

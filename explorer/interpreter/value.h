@@ -1139,7 +1139,7 @@ class MemberName : public Value {
  public:
   MemberName(std::optional<Nonnull<const Value*>> base_type,
              std::optional<Nonnull<const InterfaceType*>> interface,
-             MemberElement member)
+             NamedElement member)
       : Value(Kind::MemberName),
         base_type_(base_type),
         interface_(interface),
@@ -1164,14 +1164,14 @@ class MemberName : public Value {
     return interface_;
   }
   // The member.
-  auto member() const -> const MemberElement& { return member_; }
+  auto member() const -> const NamedElement& { return member_; }
   // The name of the member.
   auto name() const -> std::string_view { return member().name(); }
 
  private:
   std::optional<Nonnull<const Value*>> base_type_;
   std::optional<Nonnull<const InterfaceType*>> interface_;
-  MemberElement member_;
+  NamedElement member_;
 };
 
 // A symbolic value representing an associated constant.
@@ -1339,7 +1339,7 @@ class TypeOfParameterizedEntityName : public Value {
 // as the member name in a compound member access.
 class TypeOfMemberName : public Value {
  public:
-  explicit TypeOfMemberName(MemberElement member)
+  explicit TypeOfMemberName(NamedElement member)
       : Value(Kind::TypeOfMemberName), member_(std::move(member)) {}
 
   static auto classof(const Value* value) -> bool {
@@ -1348,10 +1348,10 @@ class TypeOfMemberName : public Value {
 
   // TODO: consider removing this or moving it elsewhere in the AST,
   // since it's arguably part of the expression value rather than its type.
-  auto member() const -> MemberElement { return member_; }
+  auto member() const -> NamedElement { return member_; }
 
  private:
-  MemberElement member_;
+  NamedElement member_;
 };
 
 // The type of a statically-sized array.
