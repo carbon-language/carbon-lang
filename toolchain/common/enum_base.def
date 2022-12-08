@@ -16,7 +16,7 @@
 //     using MyEnumBase::MyEnumBase;
 //   };
 //
-// my_xmacros.def will include a line:
+// my_xmacros.def will provide:
 //   #ifdef CARBON_ENUM_BASE_NAME
 //   #define MY_XMACRO(Name) CARBON_ENUM_ENTRY(Name)
 //   #endif
