@@ -169,8 +169,10 @@ several ways, including:
 
 -   On [Discord](https://discord.gg/ZjVdShJDAs), DM ModMail. This will
     automatically option available moderators.
-    -   Look for `ModMail` on the user list, and click the name to send a direct
-        message.
+    -   Look for ModMail in the user list under "Bots", and click the name to
+        send a direct message.
+    -   Moderators can also be found and messaged similarly, but ModMail is
+        preferred.
 -   Emailing the [conduct team](#conduct-team) directly at
     conduct@carbon-lang.dev. Bear in mind that
     [responses may take time](#what-happens-after-contacting-the-conduct-team).
