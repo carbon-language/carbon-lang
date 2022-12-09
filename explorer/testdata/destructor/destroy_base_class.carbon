@@ -12,8 +12,8 @@
 package ExplorerTest api;
 
 base class A {
-    destructor[me: Self]{
-        Print("DESTRUCTOR A {0}",me.a);
+    destructor[self: Self]{
+        Print("DESTRUCTOR A {0}", self.a);
     }
     var a: i32;
 }
@@ -23,8 +23,8 @@ base class B extends A {
 }
 
 class C extends B {
-    destructor[me: Self]{
-        Print("DESTRUCTOR C {0}",me.c);
+    destructor[self: Self]{
+        Print("DESTRUCTOR C {0}", self.c);
     }
     var c: i32;
 }
