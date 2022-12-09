@@ -915,10 +915,10 @@ struct ImplConstraint {
 
 // A constraint that a collection of values are known to be the same.
 struct EqualityConstraint {
-  // Visit the values in this equality constraint that are a single step
-  // away from the given value according to this equality constraint. That is:
-  // if `value` is identical to a value in `values`, then call the visitor on
-  // all values in `values` that are not identical to `value`. Otherwise, do not
+  // Visit the values in this equality constraint that are a single step away
+  // from the given value according to this equality constraint. That is: if
+  // `value` is identical to a value in `values`, then call the visitor on all
+  // values in `values` that are not identical to `value`. Otherwise, do not
   // call the visitor.
   //
   // Stops and returns `false` if any call to the visitor returns `false`,

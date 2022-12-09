@@ -1796,9 +1796,6 @@ class TypeChecker::SubstituteTransform
         bindings_(bindings) {}
 
   using ValueTransform::operator();
-  // TODO: This should not be necessary in addition to the previous `using`,
-  // but currently is needed to work around an apparent Clang bug.
-  using TransformBase<SubstituteTransform>::operator();
 
   // Replace a `VariableType` with its binding value if available.
   auto operator()(Nonnull<const VariableType*> var_type)

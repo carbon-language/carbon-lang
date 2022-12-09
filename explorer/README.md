@@ -61,7 +61,11 @@ in `explorer` itself should be reported with
 
 Many of explorer's data structures provide a `Decompose` method, which allows
 simple data types to be generically decomposed into their fields. This is
-designed to resemble the planned structure of Carbon's `Data` interface.
+designed to provide the planned functionality of Carbon's `Data` interface,
+which allows an operation to be defined in terms of the same operation being
+performed on the fields of a data type. (The precise details of that interface
+are not yet designed, but it is likely to be implemented similarly to this
+`Decompose` function.)
 
 The `Decompose` function for a type takes a function and calls it with the
 fields of that type. For example:

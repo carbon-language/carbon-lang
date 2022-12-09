@@ -113,8 +113,11 @@ class ValueTransform : public TransformBase<Derived> {
   using TransformBase<Derived>::operator();
 
   // Leave references to AST nodes alone by default.
+  // The 'int = 0' parameter avoids this function hiding the `operator()(const
+  // T*)` in the base class. We can remove this once we start using a compiler
+  // that implements P1787R6.
   template <typename NodeT>
-  auto operator()(Nonnull<const NodeT*> node)
+  auto operator()(Nonnull<const NodeT*> node, int = 0)
       -> std::enable_if_t<std::is_base_of_v<AstNode, NodeT>,
                           Nonnull<const NodeT*>> {
     return node;
