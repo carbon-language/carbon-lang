@@ -46,58 +46,9 @@ struct AllocateTrait {
 // details.
 class Value {
  public:
-  // An X-macro to apply a macro to each kind of Value.
-#define FOR_EACH_VALUE_KIND(X)     \
-  X(IntValue)                      \
-  X(FunctionValue)                 \
-  X(DestructorValue)               \
-  X(BoundMethodValue)              \
-  X(PointerValue)                  \
-  X(LValue)                        \
-  X(BoolValue)                     \
-  X(StructValue)                   \
-  X(NominalClassValue)             \
-  X(AlternativeValue)              \
-  X(TupleValue)                    \
-  X(UninitializedValue)            \
-  X(ImplWitness)                   \
-  X(BindingWitness)                \
-  X(ConstraintWitness)             \
-  X(ConstraintImplWitness)         \
-  X(IntType)                       \
-  X(BoolType)                      \
-  X(TypeType)                      \
-  X(FunctionType)                  \
-  X(PointerType)                   \
-  X(AutoType)                      \
-  X(StructType)                    \
-  X(NominalClassType)              \
-  X(TupleType)                     \
-  X(MixinPseudoType)               \
-  X(InterfaceType)                 \
-  X(NamedConstraintType)           \
-  X(ConstraintType)                \
-  X(ChoiceType)                    \
-  X(ContinuationType)              \
-  X(VariableType)                  \
-  X(AssociatedConstant)            \
-  X(ParameterizedEntityName)       \
-  X(MemberName)                    \
-  X(BindingPlaceholderValue)       \
-  X(AddrValue)                     \
-  X(AlternativeConstructorValue)   \
-  X(ContinuationValue)             \
-  X(StringType)                    \
-  X(StringValue)                   \
-  X(TypeOfMixinPseudoType)         \
-  X(TypeOfParameterizedEntityName) \
-  X(TypeOfMemberName)              \
-  X(StaticArrayType)
-
   enum class Kind {
-#define KIND_ENUMERATOR(name) name,
-    FOR_EACH_VALUE_KIND(KIND_ENUMERATOR)
-#undef KIND_ENUMERATOR
+#define CARBON_VALUE_KIND(kind) kind,
+#include "explorer/interpreter/value_kinds.def"
   };
 
   Value(const Value&) = delete;

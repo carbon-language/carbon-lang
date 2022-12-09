@@ -134,12 +134,11 @@ class ValueTransform : public TransformBase<Derived> {
   // For values, dispatch on the value kind and recursively transform.
   auto operator()(Nonnull<const Value*> value) -> Nonnull<const Value*> {
     switch (value->kind()) {
-#define VALUE_KIND_CASE(T)                        \
+#define CARBON_VALUE_KIND(T)                      \
   case Value::Kind::T:                            \
     static_assert(IsRecursivelyTransformable<T>); \
     return this->Transform(llvm::cast<T>(value));
-      FOR_EACH_VALUE_KIND(VALUE_KIND_CASE)
-#undef VALUE_KIND_CASE
+#include "explorer/interpreter/value_kinds.def"
     }
   }
   auto operator()(Nonnull<const Witness*> value) -> Nonnull<const Witness*> {

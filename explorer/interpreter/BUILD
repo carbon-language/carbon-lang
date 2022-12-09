@@ -17,6 +17,9 @@ cc_library(
         "value.h",
         "value_transform.h",
     ],
+    textual_hdrs = [
+        "value_kinds.def",
+    ],
     deps = [
         ":address",
         ":dictionary",
