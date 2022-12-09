@@ -167,8 +167,9 @@ shared with new members without the permission of the reporter.
 If you believe someone is violating the code of conduct, you can report it
 several ways, including:
 
--   On [Discord](https://discord.gg/ZjVdShJDAs), DM ModMail. This will option an
-    available moderator to respond.
+-   On [Discord](https://discord.gg/ZjVdShJDAs), DM ModMail. It may require
+    confirmation that you want help on the Carbon Language server. An available
+    moderator will respond.
     -   Look for ModMail in the user list under "Bots", and click the name to
         send a direct message.
     -   Moderators can also be found and messaged similarly, but ModMail is
