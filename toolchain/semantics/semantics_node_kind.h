@@ -34,13 +34,6 @@ class SemanticsNodeKind {
   // kind.
   SemanticsNodeKind() = delete;
 
-  friend auto operator==(SemanticsNodeKind lhs, SemanticsNodeKind rhs) -> bool {
-    return lhs.kind_ == rhs.kind_;
-  }
-  friend auto operator!=(SemanticsNodeKind lhs, SemanticsNodeKind rhs) -> bool {
-    return lhs.kind_ != rhs.kind_;
-  }
-
   // Gets a friendly name for the token for logging or debugging.
   [[nodiscard]] auto name() const -> llvm::StringRef;
 

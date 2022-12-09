@@ -35,13 +35,6 @@ class TokenKind {
   // constructed using the above factory functions for each unique kind.
   TokenKind() = delete;
 
-  friend auto operator==(TokenKind lhs, TokenKind rhs) -> bool {
-    return lhs.kind_value_ == rhs.kind_value_;
-  }
-  friend auto operator!=(TokenKind lhs, TokenKind rhs) -> bool {
-    return lhs.kind_value_ != rhs.kind_value_;
-  }
-
   // Get a friendly name for the token for logging or debugging.
   [[nodiscard]] auto name() const -> llvm::StringRef;
 
