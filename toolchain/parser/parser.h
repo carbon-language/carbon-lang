@@ -307,8 +307,6 @@ class Parser {
   // Handles VarAs(Semicolon|For).
   auto HandleVar(ParserState finish_state) -> void;
 
-  auto ParseFunctionParameterList(StateStackEntry& state) -> void;
-
   // `clang-format` has a bug with spacing around `->` returns in macros. See
   // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
 #define CARBON_PARSER_STATE(Name) auto Handle##Name##State()->void;

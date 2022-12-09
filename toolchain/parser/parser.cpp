@@ -1046,7 +1046,10 @@ auto Parser::HandleFunctionIntroducerState() -> void {
     return;
   }
 
-  ParseFunctionParameterList(state);
+  // If there was no deduced parameter list, continue parsing as if we just
+  // finished handling the deduced parameter list.
+  state.state = ParserState::FunctionAfterDeducedParameterList();
+  PushState(state);
 }
 
 auto Parser::HandleDeducedParameterListFinishState() -> void {
@@ -1061,10 +1064,7 @@ auto Parser::HandleDeducedParameterListFinishState() -> void {
 
 auto Parser::HandleFunctionAfterDeducedParameterListState() -> void {
   auto state = PopState();
-  ParseFunctionParameterList(state);
-}
 
-auto Parser::ParseFunctionParameterList(StateStackEntry& state) -> void {
   if (!PositionIs(TokenKind::OpenParen())) {
     CARBON_DIAGNOSTIC(ExpectedFunctionParams, Error,
                       "Expected `(` after function name.");
