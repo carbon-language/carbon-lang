@@ -428,8 +428,8 @@ and [`while`](#while), and
 ### Integer types
 
 The signed-integer type with bit width `N` may be written `iN`, as long as `N`
-is a positive multiple of 8. For example, `i32` is equivalent to
-`Carbon.Int(32)`. Signed-integer
+is a positive multiple of 8. For example, `i32` is a signed 32-bit integer.
+Signed-integer
 [overflow](expressions/arithmetic.md#overflow-and-other-error-conditions) is a
 programming error:
 
@@ -443,10 +443,10 @@ programming error:
     to a mathematically incorrect result, such as a two's complement result or
     zero.
 
-The unsigned-integer types are written `uN`, with `N` a positive multiple of 8.
-Unsigned integer types wrap around on overflow; we strongly advise that they are
-not used except when those semantics are desired. These types are intended for
-bit manipulation or modular arithmetic as often found in
+The unsigned-integer types may be written `uN`, with `N` a positive multiple
+of 8. Unsigned integer types wrap around on overflow; we strongly advise that
+they are not used except when those semantics are desired. These types are
+intended for bit manipulation or modular arithmetic as often found in
 [hashing](https://en.wikipedia.org/wiki/Hash_function),
 [cryptography](https://en.wikipedia.org/wiki/Cryptography), and
 [PRNG](https://en.wikipedia.org/wiki/Pseudorandom_number_generator) use cases.
