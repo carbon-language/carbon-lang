@@ -6,7 +6,8 @@ package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "enum_base",
-    textual_hdrs = ["enum_base.def"],
+    hdrs = ["enum_base.h"],
+    deps = ["//common:ostream"],
 )
 
 cc_library(

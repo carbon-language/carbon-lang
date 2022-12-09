@@ -5,15 +5,31 @@
 #ifndef CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_BUILTIN_KIND_H_
 #define CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_BUILTIN_KIND_H_
 
-#include <cstdint>
-
-#include "common/ostream.h"
+#include "toolchain/common/enum_base.h"
 
 namespace Carbon {
 
-#define CARBON_ENUM_BASE_NAME SemanticsBuiltinKindBase
-#define CARBON_ENUM_DEF_PATH "toolchain/semantics/semantics_builtin_kind.def"
-#include "toolchain/common/enum_base.def"
+#define CARBON_SEMANTICS_BUILTIN_KINDS(X)                                  \
+  /* Tracks expressions which are valid as types. */                       \
+  X(TypeType)                                                              \
+                                                                           \
+  /* Used when a SemanticNode has an invalid type, which should then be    \
+   * ignored for future type checking.                                     \
+   */                                                                      \
+  X(InvalidType)                                                           \
+                                                                           \
+  /* The type of an integer literal. */                                    \
+  X(IntegerLiteralType)                                                    \
+                                                                           \
+  /* The type of a real literal. */                                        \
+  X(RealLiteralType)                                                       \
+                                                                           \
+  /* Keep Invalid last, so that we can use values as array indices without \
+   * needing an invalid entry.                                             \
+   */                                                                      \
+  X(Invalid)
+
+CARBON_ENUM_BASE(SemanticsBuiltinKindBase, CARBON_SEMANTICS_BUILTIN_KINDS)
 
 class SemanticsBuiltinKind
     : public SemanticsBuiltinKindBase<SemanticsBuiltinKind> {
