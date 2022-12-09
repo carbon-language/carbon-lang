@@ -10,6 +10,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
+-   [Overview](#overview)
 -   [Numeric type literals](#numeric-type-literals)
     -   [Usage](#usage)
     -   [Alternatives considered](#alternatives-considered)
