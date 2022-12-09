@@ -1,4 +1,4 @@
-# Numeric type literal expression
+# Literal expressions
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -10,19 +10,26 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [Overview](#overview)
+-   [Numeric type literals](#numeric-type-literals)
     -   [Usage](#usage)
--   [Alternatives considered](#alternatives-considered)
+    -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
 <!-- tocstop -->
 
 ## Overview
 
-Carbon's introduce a simple keyword-like syntax of `iN`, `uN`, and `fN` for
-two's complement integers, unsigned integers, and
+This document is intended to cover all literal expressions, excluding numeric,
+floats and strings, which are covered in the
+[Lexical Conventions](../lexical_conventions/README.md) section. For now, the
+document explains the numeric type literals.
+
+## Numeric type literals
+
+Carbon has a simple keyword-like syntax of `iN`, `uN`, and `fN` for two's
+complement integers, unsigned integers, and
 [IEEE-754](https://en.wikipedia.org/wiki/IEEE_754) floating-point numbers,
-respectively. Where `N` can be a positive multiple of 8, including the common
+respectively. Here, `N` can be a positive multiple of 8, including the common
 power-of-two sizes (for example, `N = 8, 16, 32`).
 
 Examples of this syntax include:
@@ -49,14 +56,16 @@ In the above example, `Sum` has parameters `x` and `y`, each of which is typed
 as a 32-bit two's complement signed integer. `Main` then returns the output of
 `Sum` as a 32-bit two's complement signed integer.
 
-## Alternatives considered
+### Alternatives considered
 
--   [Alternatives considered](/proposals/p2015.md#alternatives-considered)
+-   [C++ LP64 convention](/proposals/p2015.md#c-lp64-convention)
+-   [Type name with length suffix](/proposals/p2015.md#type-name-with-length-suffix)
+-   [Uppercase suffixes](/proposals/p2015.md#uppercase-suffixes)
+-   [Additional bit sizes](/proposals/p2015.md#additional-bit-sizes)
 
 ## References
 
--   [Rationale](/proposals/p2015.md#rationale)
+-   Issue
+    [#543: pick names for fixed-size integer types](https://github.com/carbon-language/carbon-lang/issues/543)
 -   Proposal
     [#2015: Numeric type literal syntax](https://github.com/carbon-language/carbon-lang/pull/2015)
--   Issue
-    [#1998: Make proposal for numeric type literal syntax](https://github.com/carbon-language/carbon-lang/issues/1998#issuecomment-1212644291)

@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Operators](#operators)
 -   [Conversions and casts](#conversions-and-casts)
 -   [`if` expressions](#if-expressions)
--   [Numeric type literals expressions](#numeric-type-literals-expressions)
+-   [Numeric type literal expressions](#numeric-type-literal-expressions)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
@@ -299,14 +299,15 @@ fn Run(args: Span(StringView)) {
 
 `if` expressions are analogous to `?:` ternary expressions in C and C++.
 
-## Numeric type literals expressions
+## Numeric type literal expressions
 
 Carbon's syntax provides a simple way to represent different types of integers
 and floating-point numbers. Each type is identified with a keyword-like syntax,
 prefixed with either `i`, `u`, or `f` followed by a multiple of 8, representing
-the size of the data type.
+the size in bits of the data type.
 
-The types referred to as [Numeric type literals expression](literals.md).
+These are referred to as
+[numeric type literals](literals.md#numeric-type-literals).
 
 ## Alternatives considered
 
