@@ -179,13 +179,14 @@ static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                                        &class_type.bindings());
     }
     default:
-      CARBON_FATAL() << "field access not allowed for value " << *v;
+      CARBON_FATAL() << "named element access not supported for value " << *v;
   }
 }
 
-static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
-                      const ElementPath::Component& path_comp,
-                      SourceLocation source_loc, Nonnull<const Value*> me_value)
+static auto GetElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
+                       const ElementPath::Component& path_comp,
+                       SourceLocation source_loc,
+                       Nonnull<const Value*> me_value)
     -> ErrorOr<Nonnull<const Value*>> {
   switch (path_comp.element()->kind()) {
     case ElementKind::NamedElement:
@@ -206,14 +207,14 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
   }
 }
 
-auto Value::GetMember(Nonnull<Arena*> arena, const ElementPath& path,
-                      SourceLocation source_loc,
-                      Nonnull<const Value*> me_value) const
+auto Value::GetElement(Nonnull<Arena*> arena, const ElementPath& path,
+                       SourceLocation source_loc,
+                       Nonnull<const Value*> me_value) const
     -> ErrorOr<Nonnull<const Value*>> {
   Nonnull<const Value*> value(this);
   for (const ElementPath::Component& field : path.components_) {
     CARBON_ASSIGN_OR_RETURN(
-        value, Carbon::GetMember(arena, value, field, source_loc, me_value));
+        value, Carbon::GetElement(arena, value, field, source_loc, me_value));
   }
   return value;
 }

@@ -1147,8 +1147,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           }
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> member_value,
-              aggregate->GetMember(arena_, ElementPath(member),
-                                   exp.source_loc(), act.results()[0]));
+              aggregate->GetElement(arena_, ElementPath(member),
+                                    exp.source_loc(), act.results()[0]));
           return todo_.FinishAction(member_value);
         }
       }
@@ -1219,8 +1219,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           ElementPath::Component field(&access.member().member(),
                                        found_in_interface, witness);
           CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> member,
-                                  object->GetMember(arena_, ElementPath(field),
-                                                    exp.source_loc(), object));
+                                  object->GetElement(arena_, ElementPath(field),
+                                                     exp.source_loc(), object));
           return todo_.FinishAction(member);
         }
       }
