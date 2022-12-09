@@ -12,7 +12,7 @@ package ExplorerTest api;
 class A { var n: i32; }
 
 external impl A as BitComplement where .Result = A {
-  fn Op[me: Self]() -> A { return {.n = ^me.n}; }
+  fn Op[self: Self]() -> A { return {.n = ^self.n}; }
 }
 
 fn Main() -> i32 {

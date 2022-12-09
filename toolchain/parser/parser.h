@@ -5,8 +5,10 @@
 #ifndef CARBON_TOOLCHAIN_PARSER_PARSER_H_
 #define CARBON_TOOLCHAIN_PARSER_PARSER_H_
 
+#include <optional>
+
 #include "common/check.h"
-#include "llvm/ADT/Optional.h"
+#include "common/vlog.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
@@ -23,10 +25,10 @@ class Parser {
   // Parses the tokens into a parse tree, emitting any errors encountered.
   //
   // This is the entry point to the parser implementation.
-  static auto Parse(TokenizedBuffer& tokens, TokenDiagnosticEmitter& emitter)
-      -> ParseTree {
+  static auto Parse(TokenizedBuffer& tokens, TokenDiagnosticEmitter& emitter,
+                    llvm::raw_ostream* vlog_stream) -> ParseTree {
     ParseTree tree(tokens);
-    Parser parser(tree, tokens, emitter);
+    Parser parser(tree, tokens, emitter, vlog_stream);
     parser.Parse();
     return tree;
   }
@@ -57,6 +59,12 @@ class Parser {
           lhs_precedence(lhs_precedence),
           token(token),
           subtree_start(subtree_start) {}
+
+    // Prints state information for verbose output.
+    auto Print(llvm::raw_ostream& output) const -> void {
+      output << state << " @" << token << " subtree_start=" << subtree_start
+             << " has_error=" << has_error;
+    };
 
     // The state.
     ParserState state;
@@ -92,7 +100,7 @@ class Parser {
                 "StateStackEntry has unexpected size!");
 
   Parser(ParseTree& tree, TokenizedBuffer& tokens,
-         TokenDiagnosticEmitter& emitter);
+         TokenDiagnosticEmitter& emitter, llvm::raw_ostream* vlog_stream);
 
   auto Parse() -> void;
 
@@ -124,14 +132,18 @@ class Parser {
   auto ConsumeAndAddLeafNodeIf(TokenKind token_kind, ParseNodeKind node_kind)
       -> bool;
 
+  // Returns the current position and moves past it. Requires the token is the
+  // expected kind.
+  auto ConsumeChecked(TokenKind kind) -> TokenizedBuffer::Token;
+
   // If the current position's token matches this `Kind`, returns it and
   // advances to the next position. Otherwise returns an empty optional.
-  auto ConsumeIf(TokenKind kind) -> llvm::Optional<TokenizedBuffer::Token>;
+  auto ConsumeIf(TokenKind kind) -> std::optional<TokenizedBuffer::Token>;
 
   // Find the next token of any of the given kinds at the current bracketing
   // level.
   auto FindNextOf(std::initializer_list<TokenKind> desired_kinds)
-      -> llvm::Optional<TokenizedBuffer::Token>;
+      -> std::optional<TokenizedBuffer::Token>;
 
   // If the token is an opening symbol for a matched group, skips to the matched
   // closing symbol and returns true. Otherwise, returns false.
@@ -154,7 +166,7 @@ class Parser {
   //
   // Returns a semicolon token if one is the likely end.
   auto SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
-      -> llvm::Optional<TokenizedBuffer::Token>;
+      -> std::optional<TokenizedBuffer::Token>;
 
   // Skip forward to the given token. Verifies that it is actually forward.
   auto SkipTo(TokenizedBuffer::Token t) -> void;
@@ -192,10 +204,18 @@ class Parser {
   }
 
   // Pops the state and keeps the value for inspection.
-  auto PopState() -> StateStackEntry { return state_stack_.pop_back_val(); }
+  auto PopState() -> StateStackEntry {
+    auto back = state_stack_.pop_back_val();
+    CARBON_VLOG() << "Pop " << state_stack_.size() << ": " << back << "\n";
+    return back;
+  }
 
   // Pops the state and discards it.
-  auto PopAndDiscardState() -> void { state_stack_.pop_back(); }
+  auto PopAndDiscardState() -> void {
+    CARBON_VLOG() << "PopAndDiscard " << state_stack_.size() - 1 << ": "
+                  << state_stack_.back() << "\n";
+    state_stack_.pop_back();
+  }
 
   // Pushes a new state with the current position for context.
   auto PushState(ParserState state) -> void {
@@ -221,6 +241,7 @@ class Parser {
 
   // Pushes a constructed state onto the stack.
   auto PushState(StateStackEntry state) -> void {
+    CARBON_VLOG() << "Push " << state_stack_.size() << ": " << state << "\n";
     state_stack_.push_back(state);
     CARBON_CHECK(state_stack_.size() < (1 << 20))
         << "Excessive stack size: likely infinite loop";
@@ -286,6 +307,9 @@ class Parser {
   ParseTree* tree_;
   TokenizedBuffer* tokens_;
   TokenDiagnosticEmitter* emitter_;
+
+  // Whether to print verbose output.
+  llvm::raw_ostream* vlog_stream_;
 
   // The current position within the token buffer.
   TokenizedBuffer::TokenIterator position_;

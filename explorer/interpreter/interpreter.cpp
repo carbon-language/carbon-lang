@@ -18,6 +18,7 @@
 #include "common/check.h"
 #include "common/error.h"
 #include "explorer/ast/declaration.h"
+#include "explorer/ast/element.h"
 #include "explorer/ast/expression.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
@@ -426,7 +427,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         //    { v :: [].f :: C, E, F} :: S, H}
         // -> { { &v.f :: C, E, F} :: S, H }
         Address object = cast<LValue>(*act.results()[0]).address();
-        Address member = object.SubobjectAddress(access.member());
+        Address member = object.ElementAddress(&access.member());
         return todo_.FinishAction(arena_->New<LValue>(member));
       }
     }
@@ -448,7 +449,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
             Convert(act.results()[0], *access.member().base_type(),
                     exp.source_loc()));
         Address object = cast<LValue>(*val).address();
-        Address field = object.SubobjectAddress(access.member().member());
+        Address field = object.ElementAddress(&access.member().member());
         return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
@@ -466,14 +467,9 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         //    { v :: [][i] :: C, E, F} :: S, H}
         // -> { { &v[i] :: C, E, F} :: S, H }
         Address object = cast<LValue>(*act.results()[0]).address();
-        // TODO: Add support to `Member` for naming tuple fields rather than
-        // pretending we have struct fields with numerical names.
-        std::string f =
-            std::to_string(cast<IntValue>(*act.results()[1]).value());
-        auto* tuple_field_as_struct_field =
-            arena_->New<NamedValue>(NamedValue{f, &exp.static_type()});
-        Address field =
-            object.SubobjectAddress(Member(tuple_field_as_struct_field));
+        const auto index = cast<IntValue>(*act.results()[1]).value();
+        Address field = object.ElementAddress(
+            arena_->New<PositionalElement>(index, &exp.static_type()));
         return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
@@ -879,7 +875,7 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
   BindingMap generic_args;
 
   // TODO: move this logic into PatternMatch, and call it here.
-  auto p = &method.me_pattern().value();
+  auto p = &method.self_pattern().value();
   const auto& placeholder = cast<BindingPlaceholderValue>(*p);
   if (placeholder.value_node().has_value()) {
     method_scope.Bind(*placeholder.value_node(), receiver);
@@ -960,8 +956,8 @@ auto Interpreter::CallFunction(const CallExpression& call,
                   call.source_loc()));
       RuntimeScope method_scope(&heap_);
       BindingMap generic_args;
-      // Bind the receiver to the `me` parameter.
-      auto p = &method.me_pattern().value();
+      // Bind the receiver to the `self` parameter.
+      auto p = &method.self_pattern().value();
       if (p->kind() == Value::Kind::BindingPlaceholderValue) {
         // TODO: move this logic into PatternMatch
         const auto& placeholder = cast<BindingPlaceholderValue>(*p);
@@ -969,7 +965,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
           method_scope.Bind(*placeholder.value_node(), m.receiver());
         }
       } else {
-        CARBON_CHECK(PatternMatch(&method.me_pattern().value(), m.receiver(),
+        CARBON_CHECK(PatternMatch(&method.self_pattern().value(), m.receiver(),
                                   call.source_loc(), &method_scope,
                                   generic_args, trace_stream_, this->arena_));
       }
@@ -1138,8 +1134,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           if (access.impl().has_value()) {
             witness = cast<Witness>(act.results()[1]);
           }
-          FieldPath::Component member(access.member(), found_in_interface,
-                                      witness);
+          ElementPath::Component member(&access.member(), found_in_interface,
+                                        witness);
           const Value* aggregate;
           if (access.is_type_access()) {
             CARBON_ASSIGN_OR_RETURN(
@@ -1154,8 +1150,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           }
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> member_value,
-              aggregate->GetMember(arena_, FieldPath(member), exp.source_loc(),
-                                   act.results()[0]));
+              aggregate->GetElement(arena_, ElementPath(member),
+                                    exp.source_loc(), act.results()[0]));
           return todo_.FinishAction(member_value);
         }
       }
@@ -1223,11 +1219,11 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                 object, Convert(object, *access.member().base_type(),
                                 exp.source_loc()));
           }
-          FieldPath::Component field(access.member().member(),
-                                     found_in_interface, witness);
+          ElementPath::Component field(&access.member().member(),
+                                       found_in_interface, witness);
           CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> member,
-                                  object->GetMember(arena_, FieldPath(field),
-                                                    exp.source_loc(), object));
+                                  object->GetElement(arena_, ElementPath(field),
+                                                     exp.source_loc(), object));
           return todo_.FinishAction(member);
         }
       }
@@ -1780,6 +1776,15 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
     }
     case StatementKind::VariableDefinition: {
       const auto& definition = cast<VariableDefinition>(stmt);
+      const auto* dest_type = &definition.pattern().static_type();
+      if (const auto* dest_class = dyn_cast<NominalClassType>(dest_type)) {
+        if (dest_class->declaration().extensibility() ==
+            ClassExtensibility::Abstract) {
+          return ProgramError(stmt.source_loc())
+                 << "Cannot instantiate abstract class "
+                 << dest_class->declaration().name();
+        }
+      }
       if (act.pos() == 0 && definition.has_init()) {
         //    { {(var x = e) :: C, E, F} :: S, H}
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
@@ -1793,8 +1798,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         Nonnull<const Value*> v;
         if (definition.has_init()) {
           CARBON_ASSIGN_OR_RETURN(
-              v, Convert(act.results()[0], &definition.pattern().static_type(),
-                         stmt.source_loc()));
+              v, Convert(act.results()[0], dest_type, stmt.source_loc()));
         } else {
           v = arena_->New<UninitializedValue>(p);
         }
@@ -2011,7 +2015,8 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
         const auto& member = class_decl.members()[index];
         if (const auto* var = dyn_cast<VariableDeclaration>(member)) {
           const Address object = destroy_act.lvalue()->address();
-          const Address var_addr = object.SubobjectAddress(Member(var));
+          const Address var_addr =
+              object.ElementAddress(arena_->New<NamedElement>(var));
           const auto v = heap_.Read(var_addr, SourceLocation("destructor", 1));
           CARBON_CHECK(v.ok())
               << "Failed to read member `" << var->binding().name()
@@ -2024,8 +2029,11 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
       } else if (act.pos() == member_count + 1) {
         // Destroy the parent, if there is one.
         if (auto base = class_obj->base()) {
+          const Address obj_addr = destroy_act.lvalue()->address();
+          const Address base_addr =
+              obj_addr.ElementAddress(arena_->New<BaseElement>(class_obj));
           return todo_.Spawn(std::make_unique<DestroyAction>(
-              destroy_act.lvalue(), base.value()));
+              arena_->New<LValue>(base_addr), base.value()));
         } else {
           return todo_.RunAgain();
         }
@@ -2041,10 +2049,8 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
         const size_t index = element_count - act.pos() - 1;
         const auto& item = tuple->elements()[index];
         const auto object_addr = destroy_act.lvalue()->address();
-        auto* tuple_field =
-            arena_->New<IndexedValue>(IndexedValue{index, item});
-        Address field_address =
-            object_addr.SubobjectAddress(Member(tuple_field));
+        Address field_address = object_addr.ElementAddress(
+            arena_->New<PositionalElement>(index, item));
         if (item->kind() == Value::Kind::NominalClassValue ||
             item->kind() == Value::Kind::TupleValue) {
           return todo_.Spawn(std::make_unique<DestroyAction>(

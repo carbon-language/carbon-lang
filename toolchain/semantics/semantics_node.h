@@ -16,12 +16,12 @@
 namespace Carbon {
 
 // Type-safe storage of Node IDs.
-struct SemanticsNodeId {
+struct SemanticsNodeId : public IndexBase {
   static constexpr int32_t CrossReferenceBit = 0x8000'0000;
 
   // Constructs a cross-reference node ID.
-  static auto MakeCrossReference(int32_t id) -> SemanticsNodeId {
-    return SemanticsNodeId(id | CrossReferenceBit);
+  static auto MakeCrossReference(int32_t index) -> SemanticsNodeId {
+    return SemanticsNodeId(index | CrossReferenceBit);
   }
   // Constructs a cross-reference node ID for a builtin. This relies on
   // SemanticsIR guarantees for builtin cross-reference placement.
@@ -30,91 +30,40 @@ struct SemanticsNodeId {
     return MakeCrossReference(kind.AsInt());
   }
 
-  SemanticsNodeId() : id(-1) {}
-  explicit SemanticsNodeId(int32_t id) : id(id) {}
-  SemanticsNodeId(SemanticsNodeId const&) = default;
-  auto operator=(const SemanticsNodeId& other) -> SemanticsNodeId& = default;
+  using IndexBase::IndexBase;
 
-  auto is_cross_reference() const -> bool { return id & CrossReferenceBit; }
+  auto is_cross_reference() const -> bool { return index & CrossReferenceBit; }
   // Returns the ID for a cross-reference, just handling removal of the marker
   // bit.
   auto GetAsCrossReference() const -> int32_t {
-    return id & ~CrossReferenceBit;
-  }
-
-  friend auto operator==(SemanticsNodeId lhs, SemanticsNodeId rhs) -> bool {
-    return lhs.id == rhs.id;
-  }
-  friend auto operator!=(SemanticsNodeId lhs, SemanticsNodeId rhs) -> bool {
-    return lhs.id != rhs.id;
+    return index & ~CrossReferenceBit;
   }
 
   auto Print(llvm::raw_ostream& out) const -> void {
     if (is_cross_reference()) {
       out << "node_xref" << GetAsCrossReference();
     } else {
-      out << "node" << id;
+      out << "node" << index;
     }
   }
-
-  int32_t id;
 };
 
 // Type-safe storage of identifiers.
-struct SemanticsIdentifierId {
-  SemanticsIdentifierId() : id(-1) {}
-  explicit SemanticsIdentifierId(int32_t id) : id(id) {}
-
-  friend auto operator==(SemanticsIdentifierId lhs, SemanticsIdentifierId rhs)
-      -> bool {
-    return lhs.id == rhs.id;
-  }
-  friend auto operator!=(SemanticsIdentifierId lhs, SemanticsIdentifierId rhs)
-      -> bool {
-    return lhs.id != rhs.id;
-  }
-
-  auto Print(llvm::raw_ostream& out) const -> void { out << "ident" << id; }
-
-  int32_t id;
+struct SemanticsIdentifierId : public IndexBase {
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void { out << "ident" << index; }
 };
 
 // Type-safe storage of integer literals.
-struct SemanticsIntegerLiteralId {
-  SemanticsIntegerLiteralId() : id(-1) {}
-  explicit SemanticsIntegerLiteralId(int32_t id) : id(id) {}
-
-  friend auto operator==(SemanticsIntegerLiteralId lhs,
-                         SemanticsIntegerLiteralId rhs) -> bool {
-    return lhs.id == rhs.id;
-  }
-  friend auto operator!=(SemanticsIntegerLiteralId lhs,
-                         SemanticsIntegerLiteralId rhs) -> bool {
-    return lhs.id != rhs.id;
-  }
-
-  auto Print(llvm::raw_ostream& out) const -> void { out << "int" << id; }
-
-  int32_t id;
+struct SemanticsIntegerLiteralId : public IndexBase {
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void { out << "int" << index; }
 };
 
 // Type-safe storage of node blocks.
-struct SemanticsNodeBlockId {
-  SemanticsNodeBlockId() : id(-1) {}
-  explicit SemanticsNodeBlockId(int32_t id) : id(id) {}
-
-  friend auto operator==(SemanticsNodeBlockId lhs, SemanticsNodeBlockId rhs)
-      -> bool {
-    return lhs.id == rhs.id;
-  }
-  friend auto operator!=(SemanticsNodeBlockId lhs, SemanticsNodeBlockId rhs)
-      -> bool {
-    return lhs.id != rhs.id;
-  }
-
-  auto Print(llvm::raw_ostream& out) const -> void { out << "block" << id; }
-
-  int32_t id;
+struct SemanticsNodeBlockId : public IndexBase {
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void { out << "block" << index; }
 };
 
 // The standard structure for nodes.
@@ -128,7 +77,7 @@ class SemanticsNode {
                                     SemanticsNodeId type, SemanticsNodeId lhs,
                                     SemanticsNodeId rhs) -> SemanticsNode {
     return SemanticsNode(parse_node, SemanticsNodeKind::BinaryOperatorAdd(),
-                         type, lhs.id, rhs.id);
+                         type, lhs.index, rhs.index);
   }
   auto GetAsBinaryOperatorAdd() const
       -> std::pair<SemanticsNodeId, SemanticsNodeId> {
@@ -140,7 +89,7 @@ class SemanticsNode {
                            SemanticsIdentifierId name, SemanticsNodeId node)
       -> SemanticsNode {
     return SemanticsNode(parse_node, SemanticsNodeKind::BindName(),
-                         SemanticsNodeId(), name.id, node.id);
+                         SemanticsNodeId(), name.index, node.index);
   }
   auto GetAsBindName() const
       -> std::pair<SemanticsIdentifierId, SemanticsNodeId> {
@@ -163,7 +112,7 @@ class SemanticsNode {
   static auto MakeCodeBlock(ParseTree::Node parse_node,
                             SemanticsNodeBlockId node_block) -> SemanticsNode {
     return SemanticsNode(parse_node, SemanticsNodeKind::CodeBlock(),
-                         SemanticsNodeId(), node_block.id);
+                         SemanticsNodeId(), node_block.index);
   }
   auto GetAsCodeBlock() const -> SemanticsNodeBlockId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::CodeBlock());
@@ -186,7 +135,7 @@ class SemanticsNode {
                                      SemanticsNodeBlockId node_block)
       -> SemanticsNode {
     return SemanticsNode(parse_node, SemanticsNodeKind::FunctionDefinition(),
-                         SemanticsNodeId(), decl.id, node_block.id);
+                         SemanticsNodeId(), decl.index, node_block.index);
   }
   auto GetAsFunctionDefinition() const
       -> std::pair<SemanticsNodeId, SemanticsNodeBlockId> {
@@ -200,7 +149,7 @@ class SemanticsNode {
     return SemanticsNode(parse_node, SemanticsNodeKind::IntegerLiteral(),
                          SemanticsNodeId::MakeBuiltinReference(
                              SemanticsBuiltinKind::IntegerLiteralType()),
-                         integer.id);
+                         integer.index);
   }
   auto GetAsIntegerLiteral() const -> SemanticsIntegerLiteralId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::IntegerLiteral());
@@ -233,7 +182,7 @@ class SemanticsNode {
                                    SemanticsNodeId type, SemanticsNodeId expr)
       -> SemanticsNode {
     return SemanticsNode(parse_node, SemanticsNodeKind::ReturnExpression(),
-                         type, expr.id);
+                         type, expr.index);
   }
   auto GetAsReturnExpression() const -> SemanticsNodeId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::ReturnExpression());

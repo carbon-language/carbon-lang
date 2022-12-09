@@ -129,14 +129,14 @@ class CallableDeclaration : public Declaration {
  public:
   CallableDeclaration(AstNodeKind kind, SourceLocation loc, std::string name,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,
-                      std::optional<Nonnull<Pattern*>> me_pattern,
+                      std::optional<Nonnull<Pattern*>> self_pattern,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
                       std::optional<Nonnull<Block*>> body)
       : Declaration(kind, loc),
         name_(std::move(name)),
         deduced_parameters_(std::move(deduced_params)),
-        me_pattern_(me_pattern),
+        self_pattern_(self_pattern),
         param_pattern_(param_pattern),
         return_term_(return_term),
         body_(body) {}
@@ -152,8 +152,8 @@ class CallableDeclaration : public Declaration {
   auto deduced_parameters() -> llvm::ArrayRef<Nonnull<GenericBinding*>> {
     return deduced_parameters_;
   }
-  auto me_pattern() const -> const Pattern& { return **me_pattern_; }
-  auto me_pattern() -> Pattern& { return **me_pattern_; }
+  auto self_pattern() const -> const Pattern& { return **self_pattern_; }
+  auto self_pattern() -> Pattern& { return **self_pattern_; }
   auto param_pattern() const -> const TuplePattern& { return *param_pattern_; }
   auto param_pattern() -> TuplePattern& { return *param_pattern_; }
   auto return_term() const -> const ReturnTerm& { return return_term_; }
@@ -163,12 +163,12 @@ class CallableDeclaration : public Declaration {
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
-  auto is_method() const -> bool { return me_pattern_.has_value(); }
+  auto is_method() const -> bool { return self_pattern_.has_value(); }
 
  private:
   std::string name_;
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
-  std::optional<Nonnull<Pattern*>> me_pattern_;
+  std::optional<Nonnull<Pattern*>> self_pattern_;
   Nonnull<TuplePattern*> param_pattern_;
   ReturnTerm return_term_;
   std::optional<Nonnull<Block*>> body_;
@@ -189,13 +189,13 @@ class FunctionDeclaration : public CallableDeclaration {
   // Use `Create()` instead. This is public only so Arena::New() can call it.
   FunctionDeclaration(SourceLocation source_loc, std::string name,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,
-                      std::optional<Nonnull<Pattern*>> me_pattern,
+                      std::optional<Nonnull<Pattern*>> self_pattern,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
                       std::optional<Nonnull<Block*>> body)
       : CallableDeclaration(AstNodeKind::FunctionDeclaration, source_loc,
                             std::move(name), std::move(deduced_params),
-                            me_pattern, param_pattern, return_term, body) {}
+                            self_pattern, param_pattern, return_term, body) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromFunctionDeclaration(node->kind());
@@ -216,13 +216,13 @@ class DestructorDeclaration : public CallableDeclaration {
   // Use `Create()` instead. This is public only so Arena::New() can call it.
   DestructorDeclaration(SourceLocation source_loc,
                         std::vector<Nonnull<GenericBinding*>> deduced_params,
-                        std::optional<Nonnull<Pattern*>> me_pattern,
+                        std::optional<Nonnull<Pattern*>> self_pattern,
                         Nonnull<TuplePattern*> param_pattern,
                         ReturnTerm return_term,
                         std::optional<Nonnull<Block*>> body)
       : CallableDeclaration(AstNodeKind::DestructorDeclaration, source_loc,
-                            "destructor", std::move(deduced_params), me_pattern,
-                            param_pattern, return_term, body) {}
+                            "destructor", std::move(deduced_params),
+                            self_pattern, param_pattern, return_term, body) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromDestructorDeclaration(node->kind());

@@ -1,0 +1,175 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    class_declaration {
+      name: "A"
+      members {
+        variable {
+          binding {
+            name: "n"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        int_type_literal {
+        }
+      }
+      interface {
+        call {
+          function {
+            identifier {
+              name: "ImplicitAs"
+            }
+          }
+          argument {
+            tuple_literal {
+              fields {
+                identifier {
+                  name: "A"
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name: "Convert"
+          self_pattern {
+            binding_pattern {
+              name: "self"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "A"
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  struct_literal {
+                    fields {
+                      name: "n"
+                      expression {
+                        identifier {
+                          name: "self"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "a"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "A"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              struct_literal {
+                fields {
+                  name: "n"
+                  expression {
+                    int_literal {
+                      value: 0
+                    }
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          assign {
+            lhs {
+              identifier {
+                name: "a"
+              }
+            }
+            rhs {
+              int_literal {
+                value: 1
+              }
+            }
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              simple_member_access {
+                field: "n"
+                object {
+                  identifier {
+                    name: "a"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

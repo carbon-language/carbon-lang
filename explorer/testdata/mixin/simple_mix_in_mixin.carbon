@@ -10,14 +10,14 @@
 package ExplorerTest api;
 
 __mixin M1 {
-  fn Scale10[me:Self](x:i32) -> i32{
+  fn Scale10[self: Self](x:i32) -> i32{
      return x * 10;
   }
 }
 
 __mixin M2 {
   __mix M1;
-  fn Square[me: Self](x:i32) -> i32{
+  fn Square[self: Self](x:i32) -> i32{
     return x * x;
   }
 }

@@ -184,7 +184,7 @@ class TokenizedBuffer::Lexer {
   }
 
   auto LexNumericLiteral(llvm::StringRef& source_text) -> LexResult {
-    llvm::Optional<LexedNumericLiteral> literal =
+    std::optional<LexedNumericLiteral> literal =
         LexedNumericLiteral::Lex(source_text);
     if (!literal) {
       return LexResult::NoMatch();
@@ -235,7 +235,7 @@ class TokenizedBuffer::Lexer {
   }
 
   auto LexStringLiteral(llvm::StringRef& source_text) -> LexResult {
-    llvm::Optional<LexedStringLiteral> literal =
+    std::optional<LexedStringLiteral> literal =
         LexedStringLiteral::Lex(source_text);
     if (!literal) {
       return LexResult::NoMatch();
@@ -360,7 +360,7 @@ class TokenizedBuffer::Lexer {
       return LexResult::NoMatch();
     }
 
-    llvm::Optional<TokenKind> kind;
+    std::optional<TokenKind> kind;
     switch (word.front()) {
       case 'i':
         kind = TokenKind::IntegerTypeLiteral();
@@ -621,7 +621,7 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
       token_info.kind == TokenKind::RealLiteral()) {
     const auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
-    llvm::Optional<LexedNumericLiteral> relexed_token =
+    std::optional<LexedNumericLiteral> relexed_token =
         LexedNumericLiteral::Lex(source_->text().substr(token_start));
     CARBON_CHECK(relexed_token) << "Could not reform numeric literal token.";
     return relexed_token->text();
@@ -632,7 +632,7 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
   if (token_info.kind == TokenKind::StringLiteral()) {
     const auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
-    llvm::Optional<LexedStringLiteral> relexed_token =
+    std::optional<LexedStringLiteral> relexed_token =
         LexedStringLiteral::Lex(source_->text().substr(token_start));
     CARBON_CHECK(relexed_token) << "Could not reform string literal token.";
     return relexed_token->text();
@@ -653,14 +653,14 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
   }
 
   CARBON_CHECK(token_info.kind == TokenKind::Identifier())
-      << "Only identifiers have stored text!";
+      << token_info.kind.Name();
   return GetIdentifierText(token_info.id);
 }
 
 auto TokenizedBuffer::GetIdentifier(Token token) const -> Identifier {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::Identifier())
-      << "The token must be an identifier!";
+      << token_info.kind.Name();
   return token_info.id;
 }
 
@@ -668,14 +668,14 @@ auto TokenizedBuffer::GetIntegerLiteral(Token token) const
     -> const llvm::APInt& {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::IntegerLiteral())
-      << "The token must be an integer literal!";
+      << token_info.kind.Name();
   return literal_int_storage_[token_info.literal_index];
 }
 
 auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealLiteralValue {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::RealLiteral())
-      << "The token must be a real literal!";
+      << token_info.kind.Name();
 
   // Note that every real literal is at least three characters long, so we can
   // safely look at the second character to determine whether we have a
@@ -691,15 +691,14 @@ auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealLiteralValue {
 auto TokenizedBuffer::GetStringLiteral(Token token) const -> llvm::StringRef {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::StringLiteral())
-      << "The token must be a string literal!";
+      << token_info.kind.Name();
   return literal_string_storage_[token_info.literal_index];
 }
 
 auto TokenizedBuffer::GetTypeLiteralSize(Token token) const
     -> const llvm::APInt& {
   const auto& token_info = GetTokenInfo(token);
-  CARBON_CHECK(token_info.kind.IsSizedTypeLiteral())
-      << "The token must be a sized type literal!";
+  CARBON_CHECK(token_info.kind.IsSizedTypeLiteral()) << token_info.kind.Name();
   return literal_int_storage_[token_info.literal_index];
 }
 
@@ -707,7 +706,7 @@ auto TokenizedBuffer::GetMatchedClosingToken(Token opening_token) const
     -> Token {
   const auto& opening_token_info = GetTokenInfo(opening_token);
   CARBON_CHECK(opening_token_info.kind.IsOpeningSymbol())
-      << "The token must be an opening group symbol!";
+      << opening_token_info.kind.Name();
   return opening_token_info.closing_token;
 }
 
@@ -715,7 +714,7 @@ auto TokenizedBuffer::GetMatchedOpeningToken(Token closing_token) const
     -> Token {
   const auto& closing_token_info = GetTokenInfo(closing_token);
   CARBON_CHECK(closing_token_info.kind.IsClosingSymbol())
-      << "The token must be an closing group symbol!";
+      << closing_token_info.kind.Name();
   return closing_token_info.opening_token;
 }
 
