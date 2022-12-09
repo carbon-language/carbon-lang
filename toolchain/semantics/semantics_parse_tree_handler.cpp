@@ -626,4 +626,33 @@ auto SemanticsParseTreeHandler::HandleWhileStatement(
   CARBON_FATAL() << "TODO";
 }
 
+auto SemanticsParseTreeHandler::HandleAddress(ParseTree::Node /*parse_node*/)
+    -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleSelfType(ParseTree::Node /*parse_node*/)
+    -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleDeducedParameterList(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleSelfDeducedParameter(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleDeducedParameterListStart(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleSelfDeducedParameterAddress(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
 }  // namespace Carbon
