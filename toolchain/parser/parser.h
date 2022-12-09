@@ -301,8 +301,9 @@ class Parser {
 
   // `clang-format` has a bug with spacing around `->` returns in macros. See
   // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
-#define CARBON_PARSER_STATE(Name) auto Handle##Name##State()->void;
-#include "toolchain/parser/parser_state.def"
+#define CARBON_PARSER_STATE_HANDLER(Name) auto Handle##Name##State()->void;
+  CARBON_PARSER_STATE(CARBON_PARSER_STATE_HANDLER)
+#undef CARBON_PARSER_STATE_HANDLER
 
   ParseTree* tree_;
   TokenizedBuffer* tokens_;

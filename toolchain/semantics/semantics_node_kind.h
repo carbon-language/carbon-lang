@@ -9,6 +9,7 @@
 
 namespace Carbon {
 
+// An X-macro for defining the enumeration of SemanticNode kinds.
 #define CARBON_SEMANTICS_NODE_KINDS(X) \
   X(Invalid)                           \
   X(BinaryOperatorAdd)                 \
@@ -24,7 +25,7 @@ namespace Carbon {
 
 CARBON_ENUM_BASE(SemanticsNodeKindBase, CARBON_SEMANTICS_NODE_KINDS)
 
-class SemanticsNodeKind : SemanticsNodeKindBase<SemanticsNodeKind> {
+class SemanticsNodeKind : public SemanticsNodeKindBase<SemanticsNodeKind> {
   using SemanticsNodeKindBase::SemanticsNodeKindBase;
 };
 

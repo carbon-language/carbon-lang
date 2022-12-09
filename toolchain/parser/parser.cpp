@@ -436,11 +436,12 @@ auto Parser::Parse() -> void {
   PushState(ParserState::DeclarationLoop());
   while (!state_stack_.empty()) {
     switch (state_stack_.back().state) {
-#define CARBON_PARSER_STATE(Name) \
-  case ParserState::Name():       \
-    Handle##Name##State();        \
+#define CARBON_PARSER_STATE_CASE(Name) \
+  case ParserState::Name():            \
+    Handle##Name##State();             \
     break;
-#include "toolchain/parser/parser_state.def"
+      CARBON_PARSER_STATE(CARBON_PARSER_STATE_CASE)
+#undef CARBON_PARSER_STATE_CASE
     }
   }
 

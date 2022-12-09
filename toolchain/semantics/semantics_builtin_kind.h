@@ -9,24 +9,30 @@
 
 namespace Carbon {
 
-#define CARBON_SEMANTICS_BUILTIN_KINDS(X)                                  \
-  /* Tracks expressions which are valid as types. */                       \
-  X(TypeType)                                                              \
-                                                                           \
-  /* Used when a SemanticNode has an invalid type, which should then be    \
-   * ignored for future type checking.                                     \
-   */                                                                      \
-  X(InvalidType)                                                           \
-                                                                           \
-  /* The type of an integer literal. */                                    \
-  X(IntegerLiteralType)                                                    \
-                                                                           \
-  /* The type of a real literal. */                                        \
-  X(RealLiteralType)                                                       \
-                                                                           \
-  /* Keep Invalid last, so that we can use values as array indices without \
-   * needing an invalid entry.                                             \
-   */                                                                      \
+// An X-macro for defining the enumeration of SemanticIR builtins.
+#define CARBON_SEMANTICS_BUILTIN_KINDS(X)                                     \
+  /* Tracks expressions which are valid as types.                             \
+   */                                                                         \
+  X(TypeType)                                                                 \
+                                                                              \
+  /* Used when a SemanticNode has an invalid type, which should then be       \
+   * ignored for future type checking.                                        \
+   */                                                                         \
+  X(InvalidType)                                                              \
+                                                                              \
+  /* The type of integers and integer literals, currently always i32.         \
+   * Long-term we may not want it this way, but for now this is the approach. \
+   */                                                                         \
+  X(IntegerType)                                                              \
+                                                                              \
+  /* The type of reals and real literals, currently always f64. Long-term     \
+   * we may not want it this way, but for now this is the approach.           \
+   */                                                                         \
+  X(RealType)                                                                 \
+                                                                              \
+  /* Keep invalid last, so that we can use values as array indices without    \
+   * needing an invalid entry.                                                \
+   */                                                                         \
   X(Invalid)
 
 CARBON_ENUM_BASE(SemanticsBuiltinKindBase, CARBON_SEMANTICS_BUILTIN_KINDS)
@@ -44,7 +50,7 @@ class SemanticsBuiltinKind
     return SemanticsBuiltinKind(static_cast<InternalEnum>(val));
   }
 
- protected:
+ private:
   using SemanticsBuiltinKindBase::SemanticsBuiltinKindBase;
 };
 

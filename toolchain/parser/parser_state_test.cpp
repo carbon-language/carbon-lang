@@ -15,9 +15,10 @@ namespace {
 
 // Not much to test here, so just verify that the API compiles and returns the
 // data in the `.def` file.
-#define CARBON_PARSER_STATE(Name) \
+#define CARBON_PARSER_STATE_TEST(Name) \
   TEST(ParserState, Name) { EXPECT_EQ(#Name, ParserState::Name().name()); }
-#include "toolchain/parser/parser_state.def"
+CARBON_PARSER_STATE(CARBON_PARSER_STATE_TEST)
+#undef CARBON_PARSER_STATE_TEST
 
 }  // namespace
 }  // namespace Carbon::Testing

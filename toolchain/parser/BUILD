@@ -32,11 +32,10 @@ cc_test(
 
 cc_library(
     name = "parser_state",
-    srcs = ["parser_state.cpp"],
     hdrs = ["parser_state.h"],
-    textual_hdrs = ["parser_state.def"],
     deps = [
         "//common:ostream",
+        "//toolchain/common:enum_base",
         "@llvm-project//llvm:Support",
     ],
 )

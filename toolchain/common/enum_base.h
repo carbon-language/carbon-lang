@@ -2,30 +2,6 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-// Provides an enum type with names for values.
-//
-// Uses should look like:
-//   #define CARBON_ENUM_BASE_NAME MyEnumBase
-//   #define CARBON_ENUM_DEF_PATH "my_xmacros.def"
-//   #include "toolchain/common/enum_base.def"
-//
-//   class MyEnum : MyEnumBase<MyEnum> {
-//    public:
-//     (any custom APIs)
-//    protected:
-//     using MyEnumBase::MyEnumBase;
-//   };
-//
-// my_xmacros.def will provide:
-//   #ifdef CARBON_ENUM_BASE_NAME
-//   #define MY_XMACRO(Name) CARBON_ENUM_ENTRY(Name)
-//   #endif
-//
-// Specific macro values are available as:
-//   MyEnum::Name()
-//
-// They will be usable in a switch statement, e.g. `case MyEnum::Name():`.
-
 #ifndef CARBON_TOOLCHAIN_COMMON_ENUM_BASE_H_
 #define CARBON_TOOLCHAIN_COMMON_ENUM_BASE_H_
 
@@ -33,17 +9,27 @@
 
 #include "common/ostream.h"
 
-#define CARBON_ENUM_BASE_INTERNAL_ENUM_ENTRY(Name) Name,
-
-#define CARBON_ENUM_BASE_INTERNAL_FACTORY(Name) \
-  static constexpr auto Name()->DerivedEnumT {  \
-    return DerivedEnumT(InternalEnum::Name);    \
-  }
-
-#define CARBON_ENUM_BASE_INTERNAL_NAMES(Name) #Name,
-
-// This uses CRTP to provide factory functions which create the derived enum.
+// Provides an enum type with names for values.
+//
+// Uses should look like:
+//
+//   #define CARBON_MY_ENUM(X) \
+//     X(FirstValue) \
+//     X(SecondValue) \
+//     ...
+//
+//   CARBON_ENUM_BASE(MyEnumBase, CARBON_MY_ENUM)
+//
+//   class MyEnum : public MyEnumBase<MyEnum> {
+//     using MyEnumBase::MyEnumBase;
+//   };
+//
+// Specific macro values are available as:
+//   MyEnum::Name()
+//
+// They will be usable in a switch statement, e.g. `case MyEnum::Name():`.
 #define CARBON_ENUM_BASE(EnumBaseName, X_NAMES)                                \
+  /* Uses CRTP to provide factory functions which create the derived enum. */  \
   template <typename DerivedEnumT>                                             \
   class EnumBaseName {                                                         \
    protected:                                                                  \
@@ -88,5 +74,18 @@
                                                                                \
     InternalEnum val_;                                                         \
   };
+
+// In CARBON_ENUM_BASE, combines with X_NAMES to generate `enum class` values.
+#define CARBON_ENUM_BASE_INTERNAL_ENUM_ENTRY(Name) Name,
+
+// In CARBON_ENUM_BASE, combines with X_NAMES to generate `MyEnum::Name()`
+// factory functions.
+#define CARBON_ENUM_BASE_INTERNAL_FACTORY(Name) \
+  static constexpr auto Name()->DerivedEnumT {  \
+    return DerivedEnumT(InternalEnum::Name);    \
+  }
+
+// In CARBON_ENUM_BASE, combines with X_NAMES to generate strings for `name()`.
+#define CARBON_ENUM_BASE_INTERNAL_NAMES(Name) #Name,
 
 #endif  // CARBON_TOOLCHAIN_COMMON_ENUM_BASE_H_
