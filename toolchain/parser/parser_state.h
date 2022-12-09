@@ -9,6 +9,19 @@
 
 namespace Carbon {
 
+// Enum values for ParserState, listing states for Parser.
+//
+// Each cluster of enum values has a comment explaining their use and possible
+// resulting state stacks. In a numbered state stack, "1" will be the first
+// state processed; in other words, the first popped off the stack after the
+// current state completes.
+//
+// Enum value clusters will have the form `XAsY`, where the `X` half indicates
+// common handling (typically `HandleX` on Parser) and the second half indicates
+// a processing nuance for the common handling.
+//
+// This is an X-macro; the argument should be a macro taking a single argument,
+// the name.
 #define CARBON_PARSER_STATE(X)                                                 \
   /* Handles the `{` of a brace expression.                                    \
    *                                                                           \

@@ -9,7 +9,10 @@
 
 namespace Carbon {
 
-// An X-macro for defining the enumeration of SemanticNode kinds.
+// Enum values for SemanticsNodeKind, listing kinds of SemanticNodes.
+//
+// This is an X-macro; the argument should be a macro taking a single argument,
+// the name.
 #define CARBON_SEMANTICS_NODE_KINDS(X) \
   X(Invalid)                           \
   X(BinaryOperatorAdd)                 \

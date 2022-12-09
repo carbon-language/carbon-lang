@@ -9,7 +9,11 @@
 
 namespace Carbon {
 
-// An X-macro for defining the enumeration of SemanticIR builtins.
+// Enum values for SemanticsBuiltinKind, listing the SemanticsIR
+// builtins.
+//
+// This is an X-macro; the argument should be a macro taking a single argument,
+// the name.
 #define CARBON_SEMANTICS_BUILTIN_KINDS(X)                                     \
   /* Tracks expressions which are valid as types.                             \
    */                                                                         \
