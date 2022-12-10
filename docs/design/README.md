@@ -3071,11 +3071,13 @@ The interfaces that correspond to each operator are given by:
         [`As(U)`](expressions/as_expressions.md#extensibility) interface
     -   Implicit conversions use
         [`ImplicitAs(U)`](expressions/implicit_conversions.md#extensibility)
+-   Indexing:
+    -   `x[y]` is rewritten to use the
+        [`IndexWith` or `IndirectIndexWith`](expressions/indexing.md) interface.
 -   **TODO:** [Assignment](#assignment-statements): `x = y`, `++x`, `x += y`,
     and so on
 -   **TODO:** Dereference: `*p`
 -   **TODO:** [Move](#move): `~x`
--   **TODO:** Indexing: `a[3]`
 -   **TODO:** Function call: `f(4)`
 
 The
