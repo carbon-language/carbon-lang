@@ -690,6 +690,9 @@ class NominalClassType : public Value {
     return declaration_->type_params().has_value() && type_args().empty();
   }
 
+  // Returns whether this class is, or inherits `other`.
+  auto InheritsClass(Nonnull<const Value*> other) const -> bool;
+
  private:
   Nonnull<const ClassDeclaration*> declaration_;
   Nonnull<const Bindings*> bindings_ = Bindings::None();

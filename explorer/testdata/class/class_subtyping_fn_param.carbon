@@ -3,12 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: Foo(&d): 1
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
-abstract class C {
+base class C {
   var a: i32;
 }
 
@@ -16,10 +18,13 @@ class D extends C {
   var b: i32;
 }
 
+fn Foo(c: C*) -> i32 {
+  return (*c).a;
+}
+
 fn Main() -> i32 {
   var d: D = { .base = {.a = 1}, .b = 2 };
-  // Not supported yet.
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_abstract_class_subtyping.carbon:[[@LINE+1]]: type error in name binding: 'class D*' is not implicitly convertible to 'class C*'
   var c: C* = &d;
+  Print("Foo(&d): {0}", Foo(&d));
   return 0;
 }

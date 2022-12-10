@@ -577,6 +577,22 @@ auto TypeChecker::IsImplicitlyConvertible(
       // work, because that depends on the source value, and we only have its
       // type.
       return IsTypeOfType(destination);
+    case Value::Kind::PointerType: {
+      if (destination->kind() != Value::Kind::PointerType) {
+        break;
+      }
+      const auto* src_ptr = cast<PointerType>(source);
+      const auto* dest_ptr = cast<PointerType>(destination);
+      if (src_ptr->type().kind() != Value::Kind::NominalClassType ||
+          dest_ptr->type().kind() != Value::Kind::NominalClassType) {
+        break;
+      }
+      const auto& src_class = cast<NominalClassType>(src_ptr->type());
+      if (src_class.InheritsClass(&dest_ptr->type())) {
+        return true;
+      }
+      break;
+    }
     default:
       break;
   }
@@ -987,8 +1003,13 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
       if (arg->kind() != Value::Kind::PointerType) {
         return handle_non_deduced_type();
       }
-      return Deduce(&cast<PointerType>(*param).type(),
-                    &cast<PointerType>(*arg).type(),
+      const auto& param_pointed = cast<PointerType>(param)->type();
+      const auto& arg_pointed = cast<PointerType>(arg)->type();
+      if (const auto* arg_class = dyn_cast<NominalClassType>(&arg_pointed);
+          arg_class->InheritsClass(&param_pointed)) {
+        return Success();
+      }
+      return Deduce(&param_pointed, &arg_pointed,
                     /*allow_implicit_conversion=*/false);
     }
     // Nothing to do in the case for `auto`.

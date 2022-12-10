@@ -1183,4 +1183,20 @@ void ImplBinding::PrintID(llvm::raw_ostream& out) const {
   out << *type_var_ << " as " << **iface_;
 }
 
+auto NominalClassType::InheritsClass(Nonnull<const Value*> other) const
+    -> bool {
+  const auto* other_class = dyn_cast<NominalClassType>(other);
+  if (!other_class) {
+    return false;
+  }
+  std::optional<Nonnull<const NominalClassType*>> class_type = this;
+  while (class_type) {
+    if (TypeEqual(class_type.value(), other_class, std::nullopt)) {
+      return true;
+    }
+    class_type = class_type.value()->base();
+  }
+  return false;
+}
+
 }  // namespace Carbon

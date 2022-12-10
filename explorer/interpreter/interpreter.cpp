@@ -638,6 +638,12 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
           EvalAssociatedConstant(cast<AssociatedConstant>(type), source_loc));
       return type_value;
     }
+    case Value::Kind::PointerType: {
+      const auto* ptr = cast<PointerType>(type);
+      CARBON_ASSIGN_OR_RETURN(const auto* actual_type,
+                              InstantiateType(&ptr->type(), source_loc));
+      return arena_->New<PointerType>(actual_type);
+    }
     default:
       return type;
   }
@@ -709,7 +715,6 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::FunctionValue:
     case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
-    case Value::Kind::PointerValue:
     case Value::Kind::LValue:
     case Value::Kind::BoolValue:
     case Value::Kind::NominalClassValue:
@@ -859,6 +864,42 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
                << "value of associated constant " << *value << " is not known";
       }
       return Convert(value, destination_type, source_loc);
+    }
+    case Value::Kind::PointerValue: {
+      if (destination_type->kind() != Value::Kind::PointerType ||
+          cast<PointerType>(destination_type)->type().kind() !=
+              Value::Kind::NominalClassType) {
+        // No conversion needed
+        return value;
+      }
+
+      // Get pointed value
+      const auto* src_ptr = cast<PointerValue>(value);
+      CARBON_ASSIGN_OR_RETURN(const auto* pointee,
+                              heap_.Read(src_ptr->address(), source_loc))
+      if (pointee->kind() == Value::Kind::NominalClassType) {
+        // TODO: When does that happen? Just return as-is.
+        return value;
+      }
+
+      const auto* dest_ptr = cast<PointerType>(destination_type);
+      std::optional<Nonnull<const NominalClassValue*>> class_subobj =
+          cast<NominalClassValue>(pointee);
+      auto new_addr = src_ptr->address();
+      while (class_subobj) {
+        if (TypeEqual(&class_subobj.value()->type(), &dest_ptr->type(),
+                      std::nullopt)) {
+          return arena_->New<PointerValue>(new_addr);
+        }
+        class_subobj = class_subobj.value()->base();
+        new_addr = new_addr.ElementAddress(
+            arena_->New<BaseElement>(&dest_ptr->type()));
+      }
+
+      // Unable to resolve, return as-is.
+      // TODO: Produce error instead once we can properly substitute
+      // parametrized types for pointers in function call parameters.
+      return value;
     }
   }
 }
