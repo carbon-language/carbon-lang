@@ -11,10 +11,11 @@
 #include "common/check.h"
 #include "common/error.h"
 #include "explorer/ast/declaration.h"
+#include "explorer/ast/element.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "explorer/interpreter/action.h"
-#include "explorer/interpreter/field_path.h"
+#include "explorer/interpreter/element_path.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
@@ -49,39 +50,48 @@ static auto FindClassField(Nonnull<const NominalClassValue*> object,
   return std::nullopt;
 }
 
-static auto GetPositionalMember(Nonnull<const Value*> v,
-                                const FieldPath::Component& field,
-                                SourceLocation source_loc)
+static auto GetBaseElement(Nonnull<const NominalClassValue*> class_value,
+                           SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
-  switch (v->kind()) {
-    case Value::Kind::TupleValue: {
-      const auto& tuple = cast<TupleValue>(*v);
-      const auto index = field.member().index();
-      if (index < 0 || index >= static_cast<int>(tuple.elements().size())) {
-        return ProgramError(source_loc)
-               << "index " << index << " out of range for " << *v;
-      }
-      return tuple.elements()[index];
-    }
-    default:
-      return ProgramError(source_loc)
-             << "Invalid positional argument for value " << *v;
+  const auto base = cast<NominalClassValue>(class_value)->base();
+  if (!base.has_value()) {
+    return ProgramError(source_loc)
+           << "Non-existent base class for " << *class_value;
   }
+  return base.value();
 }
 
-static auto GetNamedMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
-                           const FieldPath::Component& field,
-                           SourceLocation source_loc,
-                           Nonnull<const Value*> me_value)
+static auto GetPositionalElement(Nonnull<const TupleValue*> tuple,
+                                 const ElementPath::Component& path_comp,
+                                 SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
-  const auto f = field.member().name();
+  CARBON_CHECK(path_comp.element()->kind() == ElementKind::PositionalElement)
+      << "Invalid non-tuple member";
+  const auto* tuple_element = cast<PositionalElement>(path_comp.element());
+  const size_t index = tuple_element->index();
+  if (index < 0 || index >= tuple->elements().size()) {
+    return ProgramError(source_loc)
+           << "index " << index << " out of range for " << *tuple;
+  }
+  return tuple->elements()[index];
+}
+
+static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
+                            const ElementPath::Component& field,
+                            SourceLocation source_loc,
+                            Nonnull<const Value*> me_value)
+    -> ErrorOr<Nonnull<const Value*>> {
+  CARBON_CHECK(field.element()->kind() == ElementKind::NamedElement)
+      << "Invalid element, expecting NamedElement";
+  const auto* member = cast<NamedElement>(field.element());
+  const auto f = member->name();
   if (field.witness().has_value()) {
     const auto* witness = cast<Witness>(*field.witness());
 
     // Associated constants.
     if (const auto* assoc_const =
             dyn_cast_or_null<AssociatedConstantDeclaration>(
-                field.member().declaration().value_or(nullptr))) {
+                member->declaration().value_or(nullptr))) {
       CARBON_CHECK(field.interface()) << "have witness but no interface";
       // TODO: Use witness to find the value of the constant.
       return arena->New<AssociatedConstant>(v, *field.interface(), assoc_const,
@@ -169,35 +179,50 @@ static auto GetNamedMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                                        &class_type.bindings());
     }
     default:
-      CARBON_FATAL() << "field access not allowed for value " << *v;
+      CARBON_FATAL() << "named element access not supported for value " << *v;
   }
 }
 
-static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
-                      const FieldPath::Component& field,
-                      SourceLocation source_loc, Nonnull<const Value*> me_value)
+static auto GetElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
+                       const ElementPath::Component& path_comp,
+                       SourceLocation source_loc,
+                       Nonnull<const Value*> me_value)
     -> ErrorOr<Nonnull<const Value*>> {
-  return field.member().HasPosition()
-             ? GetPositionalMember(v, field, source_loc)
-             : GetNamedMember(arena, v, field, source_loc, me_value);
+  switch (path_comp.element()->kind()) {
+    case ElementKind::NamedElement:
+      return GetNamedElement(arena, v, path_comp, source_loc, me_value);
+    case ElementKind::PositionalElement: {
+      if (const auto* tuple = dyn_cast<TupleValue>(v)) {
+        return GetPositionalElement(tuple, path_comp, source_loc);
+      } else {
+        CARBON_FATAL() << "Invalid value for positional element";
+      }
+    }
+    case ElementKind::BaseElement:
+      if (const auto* class_value = dyn_cast<NominalClassValue>(v)) {
+        return GetBaseElement(class_value, source_loc);
+      } else {
+        CARBON_FATAL() << "Invalid value for base element";
+      }
+  }
 }
 
-auto Value::GetMember(Nonnull<Arena*> arena, const FieldPath& path,
-                      SourceLocation source_loc,
-                      Nonnull<const Value*> me_value) const
+auto Value::GetElement(Nonnull<Arena*> arena, const ElementPath& path,
+                       SourceLocation source_loc,
+                       Nonnull<const Value*> me_value) const
     -> ErrorOr<Nonnull<const Value*>> {
   Nonnull<const Value*> value(this);
-  for (const FieldPath::Component& field : path.components_) {
+  for (const ElementPath::Component& field : path.components_) {
     CARBON_ASSIGN_OR_RETURN(
-        value, Carbon::GetMember(arena, value, field, source_loc, me_value));
+        value, Carbon::GetElement(arena, value, field, source_loc, me_value));
   }
   return value;
 }
 
 static auto SetFieldImpl(
     Nonnull<Arena*> arena, Nonnull<const Value*> value,
-    std::vector<FieldPath::Component>::const_iterator path_begin,
-    std::vector<FieldPath::Component>::const_iterator path_end,
+    std::vector<ElementPath::Component>::const_iterator path_begin,
+    std::vector<ElementPath::Component>::const_iterator path_end,
     Nonnull<const Value*> field_value, SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
   if (path_begin == path_end) {
@@ -241,10 +266,14 @@ static auto SetFieldImpl(
     }
     case Value::Kind::TupleType:
     case Value::Kind::TupleValue: {
+      CARBON_CHECK((*path_begin).element()->kind() ==
+                   ElementKind::PositionalElement)
+          << "Invalid non-positional member for tuple";
       std::vector<Nonnull<const Value*>> elements =
           cast<TupleValueBase>(*value).elements();
-      const auto index = (*path_begin).member().index();
-      if (index < 0 || index >= static_cast<int>(elements.size())) {
+      const size_t index =
+          cast<PositionalElement>((*path_begin).element())->index();
+      if (index < 0 || index >= elements.size()) {
         return ProgramError(source_loc)
                << "index " << index << " out of range in " << *value;
       }
@@ -262,7 +291,7 @@ static auto SetFieldImpl(
   }
 }
 
-auto Value::SetField(Nonnull<Arena*> arena, const FieldPath& path,
+auto Value::SetField(Nonnull<Arena*> arena, const ElementPath& path,
                      Nonnull<const Value*> field_value,
                      SourceLocation source_loc) const
     -> ErrorOr<Nonnull<const Value*>> {

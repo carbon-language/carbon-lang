@@ -134,18 +134,30 @@ class ValueTransform : public TransformBase<Derived> {
     return value_node;
   }
 
+  // For a type that provides a `Visit` function to visit the most-derived
+  // object, visit and transform that most-derived object.
+  template <typename R, typename T>
+  auto TransformDerived(Nonnull<const T*> value) -> R {
+    return value->template Visit<R>([&](const auto* derived_value) {
+      using DerivedType = std::remove_pointer_t<decltype(derived_value)>;
+      static_assert(IsRecursivelyTransformable<DerivedType>);
+      return this->Transform(derived_value);
+    });
+  }
+
   // For values, dispatch on the value kind and recursively transform.
   auto operator()(Nonnull<const Value*> value) -> Nonnull<const Value*> {
-    switch (value->kind()) {
-#define CARBON_VALUE_KIND(T)                      \
-  case Value::Kind::T:                            \
-    static_assert(IsRecursivelyTransformable<T>); \
-    return this->Transform(llvm::cast<T>(value));
-#include "explorer/interpreter/value_kinds.def"
-    }
+    return TransformDerived<Nonnull<const Value*>>(value);
   }
+
+  // Provide a more precise type from transforming a `Witness`.
   auto operator()(Nonnull<const Witness*> value) -> Nonnull<const Witness*> {
     return llvm::cast<Witness>(this->Transform(llvm::cast<Value>(value)));
+  }
+
+  // For elements, dispatch on the element kind and recursively transform.
+  auto operator()(Nonnull<const Element*> elem) -> Nonnull<const Element*> {
+    return TransformDerived<Nonnull<const Element*>>(elem);
   }
 };
 

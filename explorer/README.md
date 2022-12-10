@@ -76,7 +76,7 @@ class MyType {
   MyType(Type1 arg1, Type2 arg2) : arg1_(arg1), arg2_(arg2) {}
 
   template <typename F>
-  auto Decompose(F f) { return f(arg1_, arg2_); }
+  auto Decompose(F f) const { return f(arg1_, arg2_); }
 
  private:
   Type1 arg1_;

@@ -35,13 +35,6 @@ class ParserState {
   // kind.
   ParserState() = delete;
 
-  friend auto operator==(ParserState lhs, ParserState rhs) -> bool {
-    return lhs.state_ == rhs.state_;
-  }
-  friend auto operator!=(ParserState lhs, ParserState rhs) -> bool {
-    return lhs.state_ != rhs.state_;
-  }
-
   // Gets a friendly name for the token for logging or debugging.
   [[nodiscard]] auto name() const -> llvm::StringRef;
 

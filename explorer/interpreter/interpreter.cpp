@@ -16,6 +16,7 @@
 
 #include "common/check.h"
 #include "explorer/ast/declaration.h"
+#include "explorer/ast/element.h"
 #include "explorer/ast/expression.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
@@ -423,7 +424,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         //    { v :: [].f :: C, E, F} :: S, H}
         // -> { { &v.f :: C, E, F} :: S, H }
         Address object = cast<LValue>(*act.results()[0]).address();
-        Address member = object.SubobjectAddress(access.member());
+        Address member = object.ElementAddress(&access.member());
         return todo_.FinishAction(arena_->New<LValue>(member));
       }
     }
@@ -445,7 +446,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
             Convert(act.results()[0], *access.member().base_type(),
                     exp.source_loc()));
         Address object = cast<LValue>(*val).address();
-        Address field = object.SubobjectAddress(access.member().member());
+        Address field = object.ElementAddress(&access.member().member());
         return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
@@ -464,9 +465,8 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         // -> { { &v[i] :: C, E, F} :: S, H }
         Address object = cast<LValue>(*act.results()[0]).address();
         const auto index = cast<IntValue>(*act.results()[1]).value();
-        auto* tuple_field =
-            arena_->New<IndexedValue>(IndexedValue{index, &exp.static_type()});
-        Address field = object.SubobjectAddress(Member(tuple_field));
+        Address field = object.ElementAddress(
+            arena_->New<PositionalElement>(index, &exp.static_type()));
         return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
@@ -1131,8 +1131,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           if (access.impl().has_value()) {
             witness = cast<Witness>(act.results()[1]);
           }
-          FieldPath::Component member(access.member(), found_in_interface,
-                                      witness);
+          ElementPath::Component member(&access.member(), found_in_interface,
+                                        witness);
           const Value* aggregate;
           if (access.is_type_access()) {
             CARBON_ASSIGN_OR_RETURN(
@@ -1147,8 +1147,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           }
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> member_value,
-              aggregate->GetMember(arena_, FieldPath(member), exp.source_loc(),
-                                   act.results()[0]));
+              aggregate->GetElement(arena_, ElementPath(member),
+                                    exp.source_loc(), act.results()[0]));
           return todo_.FinishAction(member_value);
         }
       }
@@ -1216,11 +1216,11 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                 object, Convert(object, *access.member().base_type(),
                                 exp.source_loc()));
           }
-          FieldPath::Component field(access.member().member(),
-                                     found_in_interface, witness);
+          ElementPath::Component field(&access.member().member(),
+                                       found_in_interface, witness);
           CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> member,
-                                  object->GetMember(arena_, FieldPath(field),
-                                                    exp.source_loc(), object));
+                                  object->GetElement(arena_, ElementPath(field),
+                                                     exp.source_loc(), object));
           return todo_.FinishAction(member);
         }
       }
@@ -2038,7 +2038,7 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
         const auto& member = class_dec.members()[index];
         if (const auto* var = dyn_cast<VariableDeclaration>(member)) {
           Address object = destroy_act.lvalue()->address();
-          Address mem = object.SubobjectAddress(Member(var));
+          Address mem = object.ElementAddress(arena_->New<NamedElement>(var));
           SourceLocation source_loc("destructor", 1);
           auto v = heap_.Read(mem, source_loc);
           return todo_.Spawn(
