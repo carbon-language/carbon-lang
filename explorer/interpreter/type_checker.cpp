@@ -1006,7 +1006,7 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
       const auto& param_pointed = cast<PointerType>(param)->type();
       const auto& arg_pointed = cast<PointerType>(arg)->type();
       if (const auto* arg_class = dyn_cast<NominalClassType>(&arg_pointed);
-          arg_class->InheritsClass(&param_pointed)) {
+          arg_class && arg_class->InheritsClass(&param_pointed)) {
         return Success();
       }
       return Deduce(&param_pointed, &arg_pointed,
