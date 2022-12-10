@@ -2408,19 +2408,26 @@ static void RewriteMemberAccess(Nonnull<MemberAccessExpression*> access,
 }
 
 // Determine whether the given member declaration declares an instance member.
-static auto IsInstanceMember(Member member) {
-  if (!member.declaration()) {
-    // This is a struct field.
-    return true;
-  }
-  Nonnull<const Declaration*> declaration = *member.declaration();
-  switch (declaration->kind()) {
-    case DeclarationKind::FunctionDeclaration:
-      return cast<FunctionDeclaration>(declaration)->is_method();
-    case DeclarationKind::VariableDeclaration:
+static auto IsInstanceMember(Nonnull<const Element*> element) {
+  switch (element->kind()) {
+    case ElementKind::BaseElement:
+    case ElementKind::PositionalElement:
       return true;
-    default:
-      return false;
+    case ElementKind::NamedElement:
+      const auto nom_element = cast<NamedElement>(element);
+      if (!nom_element->declaration()) {
+        // This is a struct field.
+        return true;
+      }
+      Nonnull<const Declaration*> declaration = *nom_element->declaration();
+      switch (declaration->kind()) {
+        case DeclarationKind::FunctionDeclaration:
+          return cast<FunctionDeclaration>(declaration)->is_method();
+        case DeclarationKind::VariableDeclaration:
+          return true;
+        default:
+          return false;
+      }
   }
 }
 
@@ -2555,7 +2562,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           const auto& struct_type = cast<StructType>(object_type);
           for (const auto& field : struct_type.fields()) {
             if (access.member_name() == field.name) {
-              access.set_member(Member(&field));
+              access.set_member(arena_->New<NamedElement>(&field));
               access.set_static_type(field.value);
               access.set_value_category(access.object().value_category());
               return Success();
@@ -2574,9 +2581,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             auto [member_type, member, member_t_class] = res.value();
             Nonnull<const Value*> field_type =
                 Substitute(member_t_class->bindings(), member_type);
-            access.set_member(Member(member));
+            access.set_member(arena_->New<NamedElement>(member));
             access.set_static_type(field_type);
-            access.set_is_type_access(!IsInstanceMember(access.member()));
+            access.set_is_type_access(!IsInstanceMember(&access.member()));
             switch (member->kind()) {
               case DeclarationKind::VariableDeclaration:
                 access.set_value_category(access.object().value_category());
@@ -2647,9 +2654,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           const Value& member_type = result.member->static_type();
           Nonnull<const Value*> inst_member_type =
               Substitute(bindings, &member_type);
-          access.set_member(Member(result.member));
+          access.set_member(arena_->New<NamedElement>(result.member));
           access.set_found_in_interface(result.interface);
-          access.set_is_type_access(!IsInstanceMember(access.member()));
+          access.set_is_type_access(!IsInstanceMember(&access.member()));
           access.set_static_type(inst_member_type);
 
           if (auto* func_decl = dyn_cast<FunctionDeclaration>(result.member)) {
@@ -2700,17 +2707,17 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           CARBON_ASSIGN_OR_RETURN(Nonnull<const Witness*> impl,
                                   impl_scope.Resolve(result.interface, type,
                                                      e->source_loc(), *this));
-          access.set_member(Member(result.member));
+          access.set_member(arena_->New<NamedElement>(result.member));
           access.set_impl(impl);
           access.set_found_in_interface(result.interface);
 
-          if (IsInstanceMember(access.member())) {
+          if (IsInstanceMember(&access.member())) {
             // This is a member name denoting an instance member.
             // TODO: Consider setting the static type of all instance member
             // declarations to be member name types, rather than special-casing
             // member accesses that name them.
             access.set_static_type(
-                arena_->New<TypeOfMemberName>(Member(result.member)));
+                arena_->New<TypeOfMemberName>(NamedElement(result.member)));
             access.set_value_category(ValueCategory::Let);
           } else {
             // This is a non-instance member whose value is found directly via
@@ -2738,9 +2745,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             case Value::Kind::StructType: {
               for (const auto& field : cast<StructType>(type)->fields()) {
                 if (access.member_name() == field.name) {
-                  access.set_member(Member(&field));
+                  access.set_member(arena_->New<NamedElement>(&field));
                   access.set_static_type(
-                      arena_->New<TypeOfMemberName>(Member(&field)));
+                      arena_->New<TypeOfMemberName>(NamedElement(&field)));
                   access.set_value_category(ValueCategory::Let);
                   return Success();
                 }
@@ -2769,8 +2776,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                   substituted_parameter_type, &choice);
               // TODO: Should there be a Declaration corresponding to each
               // choice type alternative?
-              access.set_member(Member(arena_->New<NamedValue>(
-                  NamedValue{access.member_name(), type})));
+              access.set_member(
+                  arena_->New<NamedElement>(arena_->New<NamedValue>(
+                      NamedValue{access.member_name(), type})));
               access.set_static_type(type);
               access.set_value_category(ValueCategory::Let);
               return Success();
@@ -2784,7 +2792,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                          &class_type));
               if (type_member.has_value()) {
                 auto [member_type, member] = type_member.value();
-                access.set_member(Member(member));
+                access.set_member(arena_->New<NamedElement>(member));
                 switch (member->kind()) {
                   case DeclarationKind::FunctionDeclaration: {
                     const auto& func = cast<FunctionDeclaration>(*member);
@@ -2801,7 +2809,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                     break;
                 }
                 access.set_static_type(
-                    arena_->New<TypeOfMemberName>(Member(member)));
+                    arena_->New<TypeOfMemberName>(NamedElement(member)));
                 access.set_value_category(ValueCategory::Let);
                 return Success();
               } else {
@@ -2817,10 +2825,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                   ConstraintLookupResult result,
                   LookupInConstraint(e->source_loc(), "member access", type,
                                      access.member_name()));
-              access.set_member(Member(result.member));
+              access.set_member(arena_->New<NamedElement>(result.member));
               access.set_found_in_interface(result.interface);
               access.set_static_type(
-                  arena_->New<TypeOfMemberName>(Member(result.member)));
+                  arena_->New<TypeOfMemberName>(NamedElement(result.member)));
               access.set_value_category(ValueCategory::Let);
               return Success();
             }
@@ -2853,7 +2861,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                               InterpExp(&access.path(), arena_, trace_stream_));
       const auto& member_name = cast<MemberName>(*member_name_value);
       access.set_member(&member_name);
-      bool is_instance_member = IsInstanceMember(member_name.member());
+      bool is_instance_member = IsInstanceMember(&member_name.member());
 
       bool has_instance = true;
       std::optional<Nonnull<const Value*>> base_type = member_name.base_type();

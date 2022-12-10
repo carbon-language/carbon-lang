@@ -13,11 +13,11 @@
 #include "common/ostream.h"
 #include "explorer/ast/bindings.h"
 #include "explorer/ast/declaration.h"
-#include "explorer/ast/member.h"
+#include "explorer/ast/element.h"
 #include "explorer/ast/statement.h"
 #include "explorer/common/nonnull.h"
 #include "explorer/interpreter/address.h"
-#include "explorer/interpreter/field_path.h"
+#include "explorer/interpreter/element_path.h"
 #include "explorer/interpreter/stack.h"
 #include "llvm/Support/Compiler.h"
 
@@ -90,18 +90,18 @@ class Value {
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-  // Returns the sub-Value specified by `path`, which must be a valid field
+  // Returns the sub-Value specified by `path`, which must be a valid element
   // path for *this. If the sub-Value is a method and its self_pattern is an
   // AddrPattern, then pass the LValue representing the receiver as `me_value`,
   // otherwise pass `*this`.
-  auto GetMember(Nonnull<Arena*> arena, const FieldPath& path,
-                 SourceLocation source_loc,
-                 Nonnull<const Value*> me_value) const
+  auto GetElement(Nonnull<Arena*> arena, const ElementPath& path,
+                  SourceLocation source_loc,
+                  Nonnull<const Value*> me_value) const
       -> ErrorOr<Nonnull<const Value*>>;
 
   // Returns a copy of *this, but with the sub-Value specified by `path`
   // set to `field_value`. `path` must be a valid field path for *this.
-  auto SetField(Nonnull<Arena*> arena, const FieldPath& path,
+  auto SetField(Nonnull<Arena*> arena, const ElementPath& path,
                 Nonnull<const Value*> field_value,
                 SourceLocation source_loc) const
       -> ErrorOr<Nonnull<const Value*>>;
@@ -1139,14 +1139,13 @@ class MemberName : public Value {
  public:
   MemberName(std::optional<Nonnull<const Value*>> base_type,
              std::optional<Nonnull<const InterfaceType*>> interface,
-             Member member)
+             NamedElement member)
       : Value(Kind::MemberName),
         base_type_(base_type),
         interface_(interface),
-        member_(member) {
+        member_(std::move(member)) {
     CARBON_CHECK(base_type || interface)
         << "member name must be in a type, an interface, or both";
-    CARBON_CHECK(member_.HasName()) << "member must have a name";
   }
 
   static auto classof(const Value* value) -> bool {
@@ -1165,14 +1164,14 @@ class MemberName : public Value {
     return interface_;
   }
   // The member.
-  auto member() const -> Member { return member_; }
+  auto member() const -> const NamedElement& { return member_; }
   // The name of the member.
   auto name() const -> std::string_view { return member().name(); }
 
  private:
   std::optional<Nonnull<const Value*>> base_type_;
   std::optional<Nonnull<const InterfaceType*>> interface_;
-  Member member_;
+  NamedElement member_;
 };
 
 // A symbolic value representing an associated constant.
@@ -1340,8 +1339,8 @@ class TypeOfParameterizedEntityName : public Value {
 // as the member name in a compound member access.
 class TypeOfMemberName : public Value {
  public:
-  explicit TypeOfMemberName(Member member)
-      : Value(Kind::TypeOfMemberName), member_(member) {}
+  explicit TypeOfMemberName(NamedElement member)
+      : Value(Kind::TypeOfMemberName), member_(std::move(member)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::TypeOfMemberName;
@@ -1349,10 +1348,10 @@ class TypeOfMemberName : public Value {
 
   // TODO: consider removing this or moving it elsewhere in the AST,
   // since it's arguably part of the expression value rather than its type.
-  auto member() const -> Member { return member_; }
+  auto member() const -> NamedElement { return member_; }
 
  private:
-  Member member_;
+  NamedElement member_;
 };
 
 // The type of a statically-sized array.

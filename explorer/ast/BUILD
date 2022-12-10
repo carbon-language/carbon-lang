@@ -39,8 +39,8 @@ cc_library(
     srcs = [
         "bindings.cpp",
         "declaration.cpp",
+        "element.cpp",
         "expression.cpp",
-        "member.cpp",
         "pattern.cpp",
         "statement.cpp",
     ],
@@ -48,9 +48,9 @@ cc_library(
         "ast.h",
         "bindings.h",
         "declaration.h",
+        "element.h",
         "expression.h",
         "impl_binding.h",
-        "member.h",
         "pattern.h",
         "return_term.h",
         "statement.h",
@@ -125,6 +125,20 @@ cc_library(
     deps = [
         "//explorer/common:error_builders",
         "//explorer/common:source_location",
+    ],
+)
+
+cc_test(
+    name = "element_test",
+    srcs = ["element_test.cpp"],
+    deps = [
+        ":ast",
+        ":paren_contents",
+        "//common:gtest_main",
+        "//explorer/common:arena",
+        "//explorer/interpreter:action_and_value",
+        "@com_google_googletest//:gtest",
+        "@llvm-project//llvm:Support",
     ],
 )
 
