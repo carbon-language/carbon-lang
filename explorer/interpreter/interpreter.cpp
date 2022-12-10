@@ -2001,7 +2001,7 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
       const auto* class_obj = cast<NominalClassValue>(destroy_act.value());
       const auto& class_decl =
           cast<NominalClassType>(class_obj->type()).declaration();
-      const auto member_count = static_cast<int>(class_decl.members().size());
+      const int member_count = class_decl.members().size();
       if (act.pos() == 0) {
         // Run the destructor, if there is one.
         if (auto destructor = class_decl.destructor()) {
