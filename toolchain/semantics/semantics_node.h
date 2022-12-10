@@ -23,12 +23,16 @@ struct SemanticsNodeId : public IndexBase {
   static auto MakeCrossReference(int32_t index) -> SemanticsNodeId {
     return SemanticsNodeId(index | CrossReferenceBit);
   }
+
   // Constructs a cross-reference node ID for a builtin. This relies on
   // SemanticsIR guarantees for builtin cross-reference placement.
   static auto MakeBuiltinReference(SemanticsBuiltinKind kind)
       -> SemanticsNodeId {
     return MakeCrossReference(kind.AsInt());
   }
+
+  // Constructs an explicitly invalid instance.
+  static auto MakeInvalid() -> SemanticsNodeId { return SemanticsNodeId(); }
 
   using IndexBase::IndexBase;
 
@@ -148,7 +152,7 @@ class SemanticsNode {
       -> SemanticsNode {
     return SemanticsNode(parse_node, SemanticsNodeKind::IntegerLiteral(),
                          SemanticsNodeId::MakeBuiltinReference(
-                             SemanticsBuiltinKind::IntegerLiteralType()),
+                             SemanticsBuiltinKind::IntegerType()),
                          integer.index);
   }
   auto GetAsIntegerLiteral() const -> SemanticsIntegerLiteralId {
@@ -159,7 +163,7 @@ class SemanticsNode {
   static auto MakeRealLiteral(ParseTree::Node parse_node) -> SemanticsNode {
     return SemanticsNode(parse_node, SemanticsNodeKind::RealLiteral(),
                          SemanticsNodeId::MakeBuiltinReference(
-                             SemanticsBuiltinKind::RealLiteralType()));
+                             SemanticsBuiltinKind::RealType()));
   }
   auto GetAsRealLiteral() const -> NoArgs {
     CARBON_CHECK(kind_ == SemanticsNodeKind::RealLiteral());

@@ -75,7 +75,7 @@ class Parser::PrettyStackTraceParseState : public llvm::PrettyStackTraceEntry {
     output << " @ " << parser_->tokens_->GetLineNumber(line) << ":"
            << parser_->tokens_->GetColumnNumber(token) << ":"
            << " token " << token << " : "
-           << parser_->tokens_->GetKind(token).Name() << "\n";
+           << parser_->tokens_->GetKind(token).name() << "\n";
   }
 
   const Parser* parser_;
@@ -93,7 +93,7 @@ Parser::Parser(ParseTree& tree, TokenizedBuffer& tokens,
   --end_;
   CARBON_CHECK(tokens_->GetKind(*end_) == TokenKind::EndOfFile())
       << "TokenizedBuffer should end with EndOfFile, ended with "
-      << tokens_->GetKind(*end_).Name();
+      << tokens_->GetKind(*end_).name();
 }
 
 auto Parser::AddLeafNode(ParseNodeKind kind, TokenizedBuffer::Token token,
@@ -160,7 +160,7 @@ auto Parser::ConsumeAndAddLeafNodeIf(TokenKind token_kind,
 
 auto Parser::ConsumeChecked(TokenKind kind) -> TokenizedBuffer::Token {
   CARBON_CHECK(PositionIs(kind))
-      << "Required " << kind.Name() << ", found " << PositionKind().Name();
+      << "Required " << kind.name() << ", found " << PositionKind().name();
   return Consume();
 }
 
@@ -183,10 +183,10 @@ auto Parser::FindNextOf(std::initializer_list<TokenKind> desired_kinds)
     }
 
     // Step to the next token at the current bracketing level.
-    if (kind.IsClosingSymbol() || kind == TokenKind::EndOfFile()) {
+    if (kind.is_closing_symbol() || kind == TokenKind::EndOfFile()) {
       // There are no more tokens at this level.
       return std::nullopt;
-    } else if (kind.IsOpeningSymbol()) {
+    } else if (kind.is_opening_symbol()) {
       new_position = TokenizedBuffer::TokenIterator(
           tokens_->GetMatchedClosingToken(token));
       // Advance past the closing token.
@@ -198,7 +198,7 @@ auto Parser::FindNextOf(std::initializer_list<TokenKind> desired_kinds)
 }
 
 auto Parser::SkipMatchingGroup() -> bool {
-  if (!PositionKind().IsOpeningSymbol()) {
+  if (!PositionKind().is_opening_symbol()) {
     return false;
   }
 
@@ -377,7 +377,7 @@ auto Parser::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
 
     // Whitespace is not permitted between a symbolic pre/postfix operator and
     // its operand.
-    if (PositionKind().IsSymbol() &&
+    if (PositionKind().is_symbol() &&
         (prefix ? tokens_->HasTrailingWhitespace(*position_)
                 : tokens_->HasLeadingWhitespace(*position_))) {
       CARBON_DIAGNOSTIC(UnaryOperatorHasWhitespace, Error,
@@ -414,7 +414,7 @@ auto Parser::ConsumeListToken(ParseNodeKind comma_kind, TokenKind close_kind,
     auto end_of_element = FindNextOf({TokenKind::Comma(), close_kind});
     // The lexer guarantees that parentheses are balanced.
     CARBON_CHECK(end_of_element)
-        << "missing matching `" << close_kind.GetOpeningSymbol() << "` for `"
+        << "missing matching `" << close_kind.opening_symbol() << "` for `"
         << close_kind << "`";
 
     SkipTo(*end_of_element);
@@ -433,8 +433,6 @@ auto Parser::Parse() -> void {
   // Traces state_stack_. This runs even in opt because it's low overhead.
   PrettyStackTraceParseState pretty_stack(this);
 
-  CARBON_VLOG() << "*** Parser::Parse Begin ***\n";
-
   PushState(ParserState::DeclarationLoop());
   while (!state_stack_.empty()) {
     switch (state_stack_.back().state) {
@@ -447,8 +445,6 @@ auto Parser::Parse() -> void {
   }
 
   AddLeafNode(ParseNodeKind::FileEnd(), *position_);
-
-  CARBON_VLOG() << "*** Parser::Parse End ***\n";
 }
 
 auto Parser::HandleBraceExpressionState() -> void {
@@ -768,7 +764,7 @@ auto Parser::HandleDesignator(bool as_struct) -> void {
     emitter_->Emit(*position_, ExpectedIdentifierAfterDot);
     // If we see a keyword, assume it was intended to be the designated name.
     // TODO: Should keywords be valid in designators?
-    if (PositionKind().IsKeyword()) {
+    if (PositionKind().is_keyword()) {
       AddLeafNode(ParseNodeKind::DesignatedName(), Consume(),
                   /*has_error=*/true);
     } else {

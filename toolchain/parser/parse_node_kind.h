@@ -46,13 +46,6 @@ class ParseNodeKind {
   // kind.
   ParseNodeKind() = delete;
 
-  friend auto operator==(ParseNodeKind lhs, ParseNodeKind rhs) -> bool {
-    return lhs.kind_ == rhs.kind_;
-  }
-  friend auto operator!=(ParseNodeKind lhs, ParseNodeKind rhs) -> bool {
-    return lhs.kind_ != rhs.kind_;
-  }
-
   // Gets a friendly name for the token for logging or debugging.
   [[nodiscard]] auto name() const -> llvm::StringRef;
 
