@@ -1021,35 +1021,26 @@ auto Parser::HandleFunctionIntroducerState() -> void {
     return;
   }
 
-  auto started_parsing_deduced_param_list = [&]() {
-    if (!PositionIs(TokenKind::OpenSquareBracket())) {
-      return false;
-    }
+  state.state = ParserState::FunctionAfterDeducedParameterList();
+  PushState(state);
 
-    state.state = ParserState::FunctionAfterDeducedParameterList();
-    PushState(state);
-
+  // If there are deduced params handle them next.
+  if (PositionIs(TokenKind::OpenSquareBracket())) {
     PushState(ParserState::DeducedParameterListFinish());
     // This is for sure a `[`, we can safely create the corresponding node.
     AddLeafNode(ParseNodeKind::DeducedParameterListStart(), Consume());
-    // TODO: For now only `me` is supported. When other types of deduced
+
+    if (PositionIs(TokenKind::CloseSquareBracket())) {
+      return;
+    }
+
+    // TODO: For now only `self` is supported. When other types of deduced
     // parameters need to be added, we will probably need to push a more
     // general state.
-    // Push state to handle `me`'s pattern binding.
+    // Push state to handle `self`'s pattern binding.
     PushState(ParserState::SelfPattern());
-    return true;
-  }();
-
-  if (started_parsing_deduced_param_list) {
-    // The remaining part of the function signature will be handled by
-    // `FunctionAfterDeducedParameterList`.
     return;
   }
-
-  // If there was no deduced parameter list, continue parsing as if we just
-  // finished handling the deduced parameter list.
-  state.state = ParserState::FunctionAfterDeducedParameterList();
-  PushState(state);
 }
 
 auto Parser::HandleDeducedParameterListFinishState() -> void {
@@ -1373,7 +1364,7 @@ auto Parser::HandleSelfPatternState() -> void {
   // Ensure the finish state always follows.
   state.state = ParserState::PatternFinish();
 
-  // me `:` type
+  // self `:` type
   auto possible_me_param =
       (PositionIs(TokenKind::SelfParameter()) &&
        tokens_->GetKind(*(position_ + 1)) == TokenKind::Colon());
@@ -1389,7 +1380,7 @@ auto Parser::HandleSelfPatternState() -> void {
     return;
   }
 
-  // addr me `:` type
+  // addr self `:` type
   auto possible_me_addr_param =
       (PositionIs(TokenKind::Addr()) &&
        tokens_->GetKind(*(position_ + 1)) == TokenKind::SelfParameter() &&

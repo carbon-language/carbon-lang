@@ -44,7 +44,7 @@
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'DeclaredName', text: 'Rem'},
 // CHECK:STDOUT:         {kind: 'DeducedParameterListStart', text: '['},
-// CHECK:STDOUT:       {kind: 'DeducedParameterList', text: ']', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'DeducedParameterList', text: ']', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'ParameterListStart', text: '('},
 // CHECK:STDOUT:           {kind: 'DeclaredName', text: 'b'},
 // CHECK:STDOUT:           {kind: 'SelfType', text: 'Self'},
@@ -73,6 +73,6 @@ interface foo {
   // Fix and uncomment this to test error handling.
   // fn Div[me: Self(b: Self) -> Self;
 
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/interface/fail_me_param_required.carbon:[[@LINE+1]]:10: Deduced parameters must be of the form: `<name>: <Type>` or `addr <name>: <Type>`.
+  // It is fine to have an empty deduced parameter list.
   fn Rem[](b: Self) -> Self;
 }
