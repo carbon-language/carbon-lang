@@ -139,6 +139,7 @@ cc_library(
         ":heap",
         ":stack",
         "//common:check",
+        "//common:error",
         "//common:ostream",
         "//explorer/ast",
         "//explorer/common:arena",

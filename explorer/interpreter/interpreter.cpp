@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "common/check.h"
+#include "common/error.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/element.h"
 #include "explorer/ast/expression.h"
@@ -622,8 +623,10 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Bindings*> bindings,
           InstantiateBindings(&class_type.bindings(), source_loc));
-      return arena_->New<NominalClassType>(&class_type.declaration(), bindings,
-                                           base);
+      return arena_->New<NominalClassType>(
+          &class_type.declaration(), bindings, base,
+          class_type.vtable() ? std::optional{*class_type.vtable().value()}
+                              : std::nullopt);
     }
     case Value::Kind::ChoiceType: {
       const auto& choice_type = cast<ChoiceType>(*type);
@@ -1045,7 +1048,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
         case DeclarationKind::ClassDeclaration: {
           const auto& class_decl = cast<ClassDeclaration>(decl);
           return todo_.FinishAction(arena_->New<NominalClassType>(
-              &class_decl, bindings, class_decl.base_type()));
+              &class_decl, bindings, class_decl.base_type(), std::nullopt));
         }
         case DeclarationKind::InterfaceDeclaration:
           return todo_.FinishAction(arena_->New<InterfaceType>(

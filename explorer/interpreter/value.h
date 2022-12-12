@@ -7,6 +7,7 @@
 
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -25,6 +26,9 @@ namespace Carbon {
 
 class Action;
 class AssociatedConstant;
+
+using VTable =
+    std::unordered_map<std::string, Nonnull<const CallableDeclaration*>>;
 
 // Abstract base class of all AST nodes representing values.
 //
@@ -329,11 +333,7 @@ class NominalClassValue : public Value {
   static constexpr llvm::StringLiteral BaseField{"base"};
 
   NominalClassValue(Nonnull<const Value*> type, Nonnull<const Value*> inits,
-                    std::optional<Nonnull<const NominalClassValue*>> base)
-      : Value(Kind::NominalClassValue),
-        type_(type),
-        inits_(inits),
-        base_(base) {}
+                    std::optional<Nonnull<const NominalClassValue*>> base);
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassValue;
@@ -344,10 +344,12 @@ class NominalClassValue : public Value {
   auto base() const -> std::optional<Nonnull<const NominalClassValue*>> {
     return base_;
   }
+  auto vtable() const -> std::optional<Nonnull<const VTable*>> { return vptr_; }
 
  private:
   Nonnull<const Value*> type_;
   Nonnull<const Value*> inits_;  // The initializing StructValue.
+  const std::optional<Nonnull<const VTable*>> vptr_;
   std::optional<Nonnull<const NominalClassValue*>> base_;
 };
 
@@ -648,8 +650,14 @@ class StructType : public Value {
 class NominalClassType : public Value {
  public:
   // Construct a non-generic class type.
-  explicit NominalClassType(Nonnull<const ClassDeclaration*> declaration)
-      : Value(Kind::NominalClassType), declaration_(declaration) {
+  explicit NominalClassType(
+      Nonnull<const ClassDeclaration*> declaration,
+      std::optional<Nonnull<const NominalClassType*>> base,
+      std::optional<VTable> class_vtable)
+      : Value(Kind::NominalClassType),
+        declaration_(declaration),
+        base_(base),
+        vtable_(std::move(class_vtable)) {
     CARBON_CHECK(!declaration->type_params().has_value())
         << "missing arguments for parameterized class type";
   }
@@ -659,11 +667,13 @@ class NominalClassType : public Value {
   explicit NominalClassType(
       Nonnull<const ClassDeclaration*> declaration,
       Nonnull<const Bindings*> bindings,
-      std::optional<Nonnull<const NominalClassType*>> base)
+      std::optional<Nonnull<const NominalClassType*>> base,
+      std::optional<VTable> class_vtable)
       : Value(Kind::NominalClassType),
         declaration_(declaration),
         bindings_(bindings),
-        base_(base) {}
+        base_(base),
+        vtable_(std::move(class_vtable)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassType;
@@ -684,6 +694,10 @@ class NominalClassType : public Value {
     return bindings_->witnesses();
   }
 
+  auto vtable() const -> std::optional<Nonnull<const VTable*>> {
+    return vtable_ ? std::optional{&vtable_.value()} : std::nullopt;
+  };
+
   // Returns whether this a parameterized class. That is, a class with
   // parameters and no corresponding arguments.
   auto IsParameterized() const -> bool {
@@ -696,7 +710,8 @@ class NominalClassType : public Value {
  private:
   Nonnull<const ClassDeclaration*> declaration_;
   Nonnull<const Bindings*> bindings_ = Bindings::None();
-  std::optional<Nonnull<const NominalClassType*>> base_;
+  const std::optional<Nonnull<const NominalClassType*>> base_;
+  const std::optional<VTable> vtable_;
 };
 
 class MixinPseudoType : public Value {

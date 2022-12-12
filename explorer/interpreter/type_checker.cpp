@@ -8,6 +8,7 @@
 #include <deque>
 #include <iterator>
 #include <map>
+#include <memory>
 #include <optional>
 #include <set>
 #include <string>
@@ -1925,7 +1926,9 @@ auto TypeChecker::SubstituteImpl(const Bindings& bindings,
       Nonnull<const NominalClassType*> new_class_type =
           arena_->New<NominalClassType>(
               &class_type.declaration(),
-              substitute_into_bindings(&class_type.bindings()), base_type);
+              substitute_into_bindings(&class_type.bindings()), base_type,
+              class_type.vtable() ? std::optional{*class_type.vtable().value()}
+                                  : std::nullopt);
       return new_class_type;
     }
     case Value::Kind::InterfaceType: {
@@ -4569,10 +4572,27 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     }
   }
 
+  // Generate vtable for the type if necessary
+  std::optional<VTable> class_vtable;
+  if (class_decl->extensibility() != ClassExtensibility::None) {
+    if (base_class && *base_class && (*base_class)->vtable()) {
+      class_vtable = *(*base_class)->vtable().value();
+    } else {
+      class_vtable = VTable();
+    }
+    for (const auto* m : class_decl->members()) {
+      if (const auto* method = dyn_cast<FunctionDeclaration>(m);
+          method && method->is_virtual()) {
+        (*class_vtable)[method->name()] = method;
+      }
+    }
+  }
+
   // For class declaration `class MyType(T:! Type, U:! AnInterface)`, `Self`
   // should have the value `MyType(T, U)`.
   Nonnull<NominalClassType*> self_type = arena_->New<NominalClassType>(
-      class_decl, Bindings::SymbolicIdentity(arena_, bindings), base_class);
+      class_decl, Bindings::SymbolicIdentity(arena_, bindings), base_class,
+      class_vtable);
   self->set_static_type(arena_->New<TypeType>());
   self->set_constant_value(self_type);
 
