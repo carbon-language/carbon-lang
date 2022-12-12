@@ -869,11 +869,11 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
       if (destination_type->kind() != Value::Kind::PointerType ||
           cast<PointerType>(destination_type)->type().kind() !=
               Value::Kind::NominalClassType) {
-        // No conversion needed
+        // No conversion needed.
         return value;
       }
 
-      // Get pointed value
+      // Get pointed value.
       const auto* src_ptr = cast<PointerValue>(value);
       CARBON_ASSIGN_OR_RETURN(const auto* pointee,
                               heap_.Read(src_ptr->address(), source_loc))
@@ -898,7 +898,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
 
       // Unable to resolve, return as-is.
       // TODO: Produce error instead once we can properly substitute
-      // parametrized types for pointers in function call parameters.
+      // parameterized types for pointers in function call parameters.
       return value;
     }
   }
