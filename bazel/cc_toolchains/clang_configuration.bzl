@@ -17,6 +17,10 @@ def _run(repository_ctx, cmd):
 
     return exec_result
 
+def _run_nofail(repository_ctx, cmd):
+    """Runs the provided `cmd`, no check for failure, and returns the result."""
+    return repository_ctx.execute(cmd)
+
 def _clang_version(version_output):
     """Returns version information, or a (None, "unknown") tuple if not found.
 
@@ -88,6 +92,21 @@ def _compute_mac_os_sysroot(repository_ctx):
         fail("`xcrun` not found: is Xcode installed?")
     output = _run(repository_ctx, [xcrun, "--show-sdk-path"]).stdout
     return output.splitlines()[0]
+
+def _compute_bsd_sysroot(repository_ctx):
+    """Look around sysroot. Return root(/) if nothing found."""
+    cmd = repository_ctx.which("printenv")
+    readlink = repository_ctx.which("readlink")
+
+    # 'it-just-works' for Cmake users
+    var = "CMAKE_SYSROOT"
+    path = _run_nofail(repository_ctx, (cmd, var)).stdout[:-1].split(" ")[0]
+    if path == "":
+        return "/"
+
+    # fail if the path does not make sense
+    abs_path = _run(repository_ctx, (readlink, "-f", path)).stdout
+    return abs_path
 
 def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
     """Runs the `clang` binary and extracts the include search paths.
@@ -172,6 +191,8 @@ def _configure_clang_toolchain_impl(repository_ctx):
     sysroot_dir = None
     if repository_ctx.os.name.lower().startswith("mac os"):
         sysroot_dir = _compute_mac_os_sysroot(repository_ctx)
+    if repository_ctx.os.name == "freebsd":
+        sysroot_dir = _compute_bsd_sysroot(repository_ctx)
     include_dirs = _compute_clang_cpp_include_search_paths(
         repository_ctx,
         clang_cpp,
