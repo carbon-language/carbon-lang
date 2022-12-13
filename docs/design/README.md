@@ -9,8 +9,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 > **STATUS:** Up-to-date on 09-Aug-2022, including proposals up through
 > [#1327](https://github.com/carbon-language/carbon-lang/pull/1327).
 
-> FIXME: add #2015
-
 <!-- toc -->
 
 ## Table of contents
@@ -469,6 +467,7 @@ may be limited to integers of at most 128 bits due to LLVM limitations.
 
 > References:
 >
+> -   [Numeric type literal expressions](expressions/literals.md#numeric-type-literals)
 > -   Question-for-leads issue
 >     [#543: pick names for fixed-size integer types](https://github.com/carbon-language/carbon-lang/issues/543)
 > -   Question-for-leads issue
@@ -534,6 +533,7 @@ number.
 
 > References:
 >
+> -   [Numeric type literal expressions](expressions/literals.md#numeric-type-literals)
 > -   Question-for-leads issue
 >     [#543: pick names for fixed-size integer types](https://github.com/carbon-language/carbon-lang/issues/543)
 > -   Question-for-leads issue
@@ -2049,6 +2049,7 @@ choice LikeABoolean { False, True }
 
 > References:
 >
+> -   [Sum types](sum_types.md)
 > -   Proposal
 >     [#157: Design direction for sum types](https://github.com/carbon-language/carbon-lang/pull/157)
 > -   Proposal
@@ -3071,11 +3072,13 @@ The interfaces that correspond to each operator are given by:
         [`As(U)`](expressions/as_expressions.md#extensibility) interface
     -   Implicit conversions use
         [`ImplicitAs(U)`](expressions/implicit_conversions.md#extensibility)
+-   Indexing:
+    -   `x[y]` is rewritten to use the
+        [`IndexWith` or `IndirectIndexWith`](expressions/indexing.md) interface.
 -   **TODO:** [Assignment](#assignment-statements): `x = y`, `++x`, `x += y`,
     and so on
 -   **TODO:** Dereference: `*p`
 -   **TODO:** [Move](#move): `~x`
--   **TODO:** Indexing: `a[3]`
 -   **TODO:** Function call: `f(4)`
 
 The

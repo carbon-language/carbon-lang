@@ -82,3 +82,7 @@ abstract class WhereClause : AstNode;
   class IsWhereClause : WhereClause;
   class EqualsWhereClause : WhereClause;
   class RewriteWhereClause : WhereClause;
+root class Element;
+  class NamedElement : Element;
+  class PositionalElement : Element;
+  class BaseElement : Element;
