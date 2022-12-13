@@ -1006,6 +1006,9 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
       const auto& param_pointee = cast<PointerType>(param)->type();
       const auto& arg_pointee = cast<PointerType>(arg)->type();
       if (allow_implicit_conversion) {
+        // TODO: Change based on whether we want to allow
+        // deduce-from-base-class, for parametrized base class. See
+        // https://github.com/carbon-language/carbon-lang/issues/2464.
         if (const auto* arg_class = dyn_cast<NominalClassType>(&arg_pointee);
             arg_class && arg_class->InheritsClass(&param_pointee)) {
           return Success();
