@@ -586,4 +586,6 @@ CARBON_PARSER_STATE(DeducedParameterListFinish)
 //   1. PatternFinish
 CARBON_PARSER_STATE(SelfPattern)
 
+CARBON_PARSER_STATE(PatternAddress)
+
 #undef CARBON_PARSER_STATE

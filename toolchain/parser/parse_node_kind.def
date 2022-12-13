@@ -295,8 +295,8 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfDeducedParameter, 0)
 //   `addr self`
 //   _external_: type expression
 // SelfDeducedParameter
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfDeducedParameterAddress, 1)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(Address, 0)
+// CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfDeducedParameterAddress, 1)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(Address, 1)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfType, 0)
 
 // Deduced parameters, such as `[self: Self]`:

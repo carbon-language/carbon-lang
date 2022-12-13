@@ -650,9 +650,4 @@ auto SemanticsParseTreeHandler::HandleDeducedParameterListStart(
     ParseTree::Node /*parse_node*/) -> void {
   CARBON_FATAL() << "TODO";
 }
-
-auto SemanticsParseTreeHandler::HandleSelfDeducedParameterAddress(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
-}
 }  // namespace Carbon

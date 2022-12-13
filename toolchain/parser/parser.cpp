@@ -1361,15 +1361,15 @@ auto Parser::HandleParenExpressionFinishAsTupleState() -> void {
 auto Parser::HandleSelfPatternState() -> void {
   auto state = PopState();
 
-  // Ensure the finish state always follows.
-  state.state = ParserState::PatternFinish();
-
   // self `:` type
-  auto possible_me_param =
+  auto possible_self_param =
       (PositionIs(TokenKind::SelfParameter()) &&
        tokens_->GetKind(*(position_ + 1)) == TokenKind::Colon());
 
-  if (possible_me_param) {
+  if (possible_self_param) {
+    // Ensure the finish state always follows.
+    state.state = ParserState::PatternFinish();
+
     // Switch the context token to the colon, so that it'll be used for the root
     // node.
     state.token = *(position_ + 1);
@@ -1381,20 +1381,26 @@ auto Parser::HandleSelfPatternState() -> void {
   }
 
   // addr self `:` type
-  auto possible_me_addr_param =
+  auto possible_addr_self_param =
       (PositionIs(TokenKind::Addr()) &&
        tokens_->GetKind(*(position_ + 1)) == TokenKind::SelfParameter() &&
        tokens_->GetKind(*(position_ + 2)) == TokenKind::Colon());
 
-  if (possible_me_addr_param) {
-    state.token = *(position_ + 2);
+  if (possible_addr_self_param) {
+    // Ensure the finish state always follows.
+    state.state = ParserState::PatternAddress();
+    state.token = Consume();
     PushState(state);
+
+    PushState(ParserState::PatternFinish());
+
     PushStateForExpression(PrecedenceGroup::ForType());
-    auto size = tree_->size();
-    AddLeafNode(ParseNodeKind::Address(), *position_);
-    AddNode(ParseNodeKind::SelfDeducedParameterAddress(), *(position_ + 1),
-            size, false);
-    position_ += 3;
+    // auto size = tree_->size();
+    // AddLeafNode(ParseNodeKind::Address(), *position_);
+    AddLeafNode(ParseNodeKind::SelfDeducedParameter(), *(position_ + 1));
+    // AddNode(ParseNodeKind::SelfDeducedParameterAddress(), *(position_ + 1),
+    //        size, false);
+    position_ += 2;
     return;
   }
 
@@ -1402,6 +1408,7 @@ auto Parser::HandleSelfPatternState() -> void {
                     "Deduced parameters must be of the form: `<name>: <Type>` "
                     "or `addr <name>: <Type>`.");
   emitter_->Emit(*position_, ExpectedDeducedParam);
+  state.state = ParserState::PatternFinish();
   state.has_error = true;
 
   // Try to recover by skipping to the next `]`.
@@ -1434,10 +1441,6 @@ auto Parser::HandlePattern(PatternKind pattern_kind) -> void {
         CARBON_DIAGNOSTIC(ExpectedVariableName, Error,
                           "Expected pattern in `var` declaration.");
         emitter_->Emit(*position_, ExpectedVariableName);
-        break;
-      }
-      case PatternKind::SelfParameter: {
-        // `self` param validation comes later.
         break;
       }
     }
@@ -1474,6 +1477,19 @@ auto Parser::HandlePatternFinishState() -> void {
 
   // TODO: may need to mark has_error if !type.
   AddNode(ParseNodeKind::PatternBinding(), state.token, state.subtree_start,
+          /*has_error=*/false);
+}
+
+auto Parser::HandlePatternAddressState() -> void {
+  auto state = PopState();
+
+  // If an error was encountered, propagate it without adding a node.
+  if (state.has_error) {
+    ReturnErrorOnState();
+    return;
+  }
+
+  AddNode(ParseNodeKind::Address(), state.token, state.subtree_start,
           /*has_error=*/false);
 }
 
