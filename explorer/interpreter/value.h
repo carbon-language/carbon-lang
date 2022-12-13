@@ -602,17 +602,19 @@ class FunctionType : public Value {
 // A pointer type.
 class PointerType : public Value {
  public:
-  explicit PointerType(Nonnull<const Value*> type)
-      : Value(Kind::PointerType), type_(type) {}
+  // Constructs a pointer type with the given pointee type.
+  explicit PointerType(Nonnull<const Value*> pointee_type)
+      : Value(Kind::PointerType), pointee_type_(pointee_type) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::PointerType;
   }
 
-  auto type() const -> const Value& { return *type_; }
+  // Returns the pointee type.
+  auto pointee_type() const -> const Value& { return *pointee_type_; }
 
  private:
-  Nonnull<const Value*> type_;
+  Nonnull<const Value*> pointee_type_;
 };
 
 // The `auto` type.

@@ -365,7 +365,7 @@ static auto TypeContainsAuto(Nonnull<const Value*> type) -> bool {
     case Value::Kind::TupleType:
       return llvm::any_of(cast<TupleType>(type)->elements(), TypeContainsAuto);
     case Value::Kind::PointerType:
-      return TypeContainsAuto(&cast<PointerType>(type)->type());
+      return TypeContainsAuto(&cast<PointerType>(type)->pointee_type());
     case Value::Kind::StaticArrayType:
       return TypeContainsAuto(&cast<StaticArrayType>(type)->element_type());
   }
@@ -987,8 +987,8 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
       if (arg->kind() != Value::Kind::PointerType) {
         return handle_non_deduced_type();
       }
-      return Deduce(&cast<PointerType>(*param).type(),
-                    &cast<PointerType>(*arg).type(),
+      return Deduce(&cast<PointerType>(*param).pointee_type(),
+                    &cast<PointerType>(*arg).pointee_type(),
                     /*allow_implicit_conversion=*/false);
     }
     // Nothing to do in the case for `auto`.
@@ -1892,7 +1892,7 @@ auto TypeChecker::SubstituteImpl(const Bindings& bindings,
     }
     case Value::Kind::PointerType: {
       return arena_->New<PointerType>(
-          SubstituteImpl(bindings, &cast<PointerType>(*type).type()));
+          SubstituteImpl(bindings, &cast<PointerType>(*type).pointee_type()));
     }
     case Value::Kind::NominalClassType: {
       const auto& class_type = cast<NominalClassType>(*type);
@@ -3187,7 +3187,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         case Operator::Deref:
           CARBON_RETURN_IF_ERROR(
               ExpectPointerType(e->source_loc(), "*", ts[0]));
-          op.set_static_type(&cast<PointerType>(*ts[0]).type());
+          op.set_static_type(&cast<PointerType>(*ts[0]).pointee_type());
           op.set_value_category(ValueCategory::Var);
           return Success();
         case Operator::Ptr:
@@ -3999,7 +3999,7 @@ auto TypeChecker::TypeCheckPattern(
 
       if (const auto* inner_binding_type =
               dyn_cast<PointerType>(&addr_pattern.binding().static_type())) {
-        addr_pattern.set_static_type(&inner_binding_type->type());
+        addr_pattern.set_static_type(&inner_binding_type->pointee_type());
       } else {
         return ProgramError(addr_pattern.source_loc())
                << "Type associated with addr must be a pointer type.";
