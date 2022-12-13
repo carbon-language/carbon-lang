@@ -1191,10 +1191,10 @@ auto NominalClassType::InheritsClass(Nonnull<const Value*> other) const
   }
   std::optional<Nonnull<const NominalClassType*>> ancestor_class = this;
   while (ancestor_class) {
-    if (TypeEqual(ancestor_class.value(), other_class, std::nullopt)) {
+    if (TypeEqual(*ancestor_class, other_class, std::nullopt)) {
       return true;
     }
-    ancestor_class = ancestor_class.value()->base();
+    ancestor_class = (*ancestor_class)->base();
   }
   return false;
 }

@@ -873,7 +873,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
         return value;
       }
 
-      // Get pointed value.
+      // Get pointee value.
       const auto* src_ptr = cast<PointerValue>(value);
       CARBON_ASSIGN_OR_RETURN(const auto* pointee,
                               heap_.Read(src_ptr->address(), source_loc))
@@ -887,11 +887,11 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
           cast<NominalClassValue>(pointee);
       auto new_addr = src_ptr->address();
       while (class_subobj) {
-        if (TypeEqual(&class_subobj.value()->type(), &dest_ptr->type(),
+        if (TypeEqual(&(*class_subobj)->type(), &dest_ptr->type(),
                       std::nullopt)) {
           return arena_->New<PointerValue>(new_addr);
         }
-        class_subobj = class_subobj.value()->base();
+        class_subobj = (*class_subobj)->base();
         new_addr = new_addr.ElementAddress(
             arena_->New<BaseElement>(&dest_ptr->type()));
       }
