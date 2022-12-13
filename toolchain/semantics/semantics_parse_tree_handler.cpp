@@ -260,8 +260,10 @@ auto SemanticsParseTreeHandler::HandleDesignatorExpression(
 }
 
 auto SemanticsParseTreeHandler::HandleEmptyDeclaration(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> void {
+  // Empty declarations have no actions associated, but we still balance the
+  // tree.
+  Push(parse_node);
 }
 
 auto SemanticsParseTreeHandler::HandleExpressionStatement(
