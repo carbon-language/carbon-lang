@@ -28,6 +28,7 @@
 #include "explorer/interpreter/interpreter.h"
 #include "explorer/interpreter/pattern_analysis.h"
 #include "explorer/interpreter/value.h"
+#include "explorer/interpreter/value_transform.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
@@ -436,8 +437,7 @@ auto TypeChecker::FieldTypes(const NominalClassType& class_type) const
         const auto& var = cast<VariableDeclaration>(*m);
         Nonnull<const Value*> field_type =
             Substitute(class_type.bindings(), &var.binding().static_type());
-        field_types.push_back(
-            {.name = var.binding().name(), .value = field_type});
+        field_types.push_back({var.binding().name(), field_type});
         break;
       }
       default:
@@ -933,11 +933,11 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
       };
       for (size_t i = 0; i < param_struct.fields().size(); ++i) {
         NamedValue param_field = param_struct.fields()[i];
-        NamedValue arg_field;
+        std::optional<NamedValue> arg_field;
         if (allow_implicit_conversion) {
           if (std::optional<NamedValue> maybe_arg_field =
                   FindField(arg_struct.fields(), param_field.name)) {
-            arg_field = *maybe_arg_field;
+            arg_field = maybe_arg_field;
           } else {
             return diagnose_missing_field(arg_struct, param_field, true);
           }
@@ -946,13 +946,13 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
             return diagnose_missing_field(arg_struct, param_field, true);
           }
           arg_field = arg_struct.fields()[i];
-          if (param_field.name != arg_field.name) {
+          if (param_field.name != arg_field->name) {
             return ProgramError(source_loc_)
                    << "mismatch in field names, `" << param_field.name
-                   << "` != `" << arg_field.name << "`";
+                   << "` != `" << arg_field->name << "`";
           }
         }
-        CARBON_RETURN_IF_ERROR(Deduce(param_field.value, arg_field.value,
+        CARBON_RETURN_IF_ERROR(Deduce(param_field.value, arg_field->value,
                                       allow_implicit_conversion));
       }
       if (param_struct.fields().size() != arg_struct.fields().size()) {
@@ -1786,259 +1786,149 @@ auto TypeChecker::RebuildValue(Nonnull<const Value*> value) const
   return SubstituteImpl(Bindings(), value);
 }
 
+class TypeChecker::SubstituteTransform
+    : public ValueTransform<SubstituteTransform> {
+ public:
+  SubstituteTransform(Nonnull<const TypeChecker*> type_checker,
+                      const Bindings& bindings)
+      : ValueTransform(type_checker->arena_),
+        type_checker_(type_checker),
+        bindings_(bindings) {}
+
+  using ValueTransform::operator();
+
+  // Replace a `VariableType` with its binding value if available.
+  auto operator()(Nonnull<const VariableType*> var_type)
+      -> Nonnull<const Value*> {
+    auto it = bindings_.args().find(&var_type->binding());
+    if (it == bindings_.args().end()) {
+      if (auto& trace_stream = type_checker_->trace_stream_) {
+        **trace_stream << "substitution: no value for binding " << *var_type
+                       << ", leaving alone\n";
+      }
+      return var_type;
+    } else {
+      return it->second;
+    }
+  }
+
+  // Replace a `BindingWitness` with its binding value if available.
+  auto operator()(Nonnull<const BindingWitness*> witness)
+      -> Nonnull<const Value*> {
+    auto it = bindings_.witnesses().find(witness->binding());
+    if (it == bindings_.witnesses().end()) {
+      if (auto& trace_stream = type_checker_->trace_stream_) {
+        **trace_stream << "substitution: no value for binding " << *witness
+                       << ", leaving alone\n";
+      }
+      return witness;
+    } else {
+      return it->second;
+    }
+  }
+
+  // For an associated constant, look for a rewrite.
+  auto operator()(Nonnull<const AssociatedConstant*> assoc)
+      -> Nonnull<const Value*> {
+    Nonnull<const Value*> base = Transform(&assoc->base());
+    Nonnull<const InterfaceType*> interface = Transform(&assoc->interface());
+    // If we're substituting into an associated constant, we may now be able
+    // to rewrite it to a concrete value.
+    if (auto rewritten_value = type_checker_->LookupRewriteInTypeOf(
+            base, interface, &assoc->constant())) {
+      return (*rewritten_value)->converted_replacement;
+    }
+    const auto* witness = cast<Witness>(Transform(&assoc->witness()));
+    witness = type_checker_->RefineWitness(witness, base, interface);
+    if (auto rewritten_value = type_checker_->LookupRewriteInWitness(
+            witness, interface, &assoc->constant())) {
+      return (*rewritten_value)->converted_replacement;
+    }
+    return type_checker_->arena_->New<AssociatedConstant>(
+        base, interface, &assoc->constant(), witness);
+  }
+
+  // Rebuilding a function type needs special handling to build new bindings.
+  // TODO: This is probably not specific to substitution, and would apply to
+  // other transforms too.
+  auto operator()(Nonnull<const FunctionType*> fn_type)
+      -> Nonnull<const FunctionType*> {
+    SubstitutedGenericBindings subst_bindings(type_checker_, bindings_);
+
+    // Apply substitution to into generic parameters and deduced bindings.
+    std::vector<FunctionType::GenericParameter> generic_parameters;
+    for (const FunctionType::GenericParameter& gp :
+         fn_type->generic_parameters()) {
+      generic_parameters.push_back(
+          {.index = gp.index,
+           .binding = subst_bindings.SubstituteIntoGenericBinding(gp.binding)});
+    }
+    std::vector<Nonnull<const GenericBinding*>> deduced_bindings;
+    for (Nonnull<const GenericBinding*> gb : fn_type->deduced_bindings()) {
+      deduced_bindings.push_back(
+          subst_bindings.SubstituteIntoGenericBinding(gb));
+    }
+
+    // Apply substitution to parameter and return types and create the new
+    // function type.
+    const auto* param = type_checker_->SubstituteImpl(subst_bindings.bindings(),
+                                                      &fn_type->parameters());
+    const auto* ret = type_checker_->SubstituteImpl(subst_bindings.bindings(),
+                                                    &fn_type->return_type());
+    return type_checker_->arena_->New<FunctionType>(
+        param, std::move(generic_parameters), ret, std::move(deduced_bindings),
+        std::move(subst_bindings).TakeImplBindings());
+  }
+
+  // Substituting into a `ConstraintType` needs special handling if we replace
+  // its self type.
+  auto operator()(Nonnull<const ConstraintType*> constraint)
+      -> Nonnull<const Value*> {
+    if (auto it = bindings_.args().find(constraint->self_binding());
+        it != bindings_.args().end()) {
+      // This happens when we substitute into the parameter type of a
+      // function that takes a `T:! Constraint` parameter. In this case we
+      // produce the new type-of-type of the replacement type.
+      Nonnull<const Value*> type_of_type;
+      if (const auto* var_type = dyn_cast<VariableType>(it->second)) {
+        type_of_type = &var_type->binding().static_type();
+      } else if (const auto* assoc_type =
+                     dyn_cast<AssociatedConstant>(it->second)) {
+        type_of_type = type_checker_->GetTypeForAssociatedConstant(assoc_type);
+      } else {
+        type_of_type = type_checker_->arena_->New<TypeType>();
+      }
+      if (auto& trace_stream = type_checker_->trace_stream_) {
+        **trace_stream << "substitution: self of constraint " << *constraint
+                       << " is substituted, new type of type is "
+                       << *type_of_type << "\n";
+      }
+      // TODO: Should we keep any part of the old constraint -- rewrites,
+      // equality constraints, etc?
+      return type_of_type;
+    }
+    ConstraintTypeBuilder builder(type_checker_->arena_,
+                                  constraint->self_binding()->source_loc());
+    builder.AddAndSubstitute(*type_checker_, constraint, builder.GetSelfType(),
+                             builder.GetSelfWitness(), bindings_,
+                             /*add_lookup_contexts=*/true);
+    Nonnull<const ConstraintType*> new_constraint = std::move(builder).Build();
+    if (auto& trace_stream = type_checker_->trace_stream_) {
+      **trace_stream << "substitution: " << *constraint << " => "
+                     << *new_constraint << "\n";
+    }
+    return new_constraint;
+  }
+
+ private:
+  Nonnull<const TypeChecker*> type_checker_;
+  const Bindings& bindings_;
+};
+
 auto TypeChecker::SubstituteImpl(const Bindings& bindings,
                                  Nonnull<const Value*> type) const
     -> Nonnull<const Value*> {
-  auto substitute_into_bindings =
-      [&](Nonnull<const Bindings*> inner_bindings) -> Nonnull<const Bindings*> {
-    BindingMap values;
-    for (const auto& [name, value] : inner_bindings->args()) {
-      values[name] = SubstituteImpl(bindings, value);
-    }
-    ImplWitnessMap witnesses;
-    for (const auto& [name, value] : inner_bindings->witnesses()) {
-      witnesses[name] = SubstituteImpl(bindings, value);
-    }
-    if (values == inner_bindings->args() &&
-        witnesses == inner_bindings->witnesses()) {
-      return inner_bindings;
-    }
-    return arena_->New<Bindings>(std::move(values), std::move(witnesses));
-  };
-
-  switch (type->kind()) {
-    case Value::Kind::VariableType: {
-      auto it = bindings.args().find(&cast<VariableType>(*type).binding());
-      if (it == bindings.args().end()) {
-        if (trace_stream_) {
-          **trace_stream_ << "substitution: no value for binding " << *type
-                          << ", leaving alone\n";
-        }
-        return type;
-      } else {
-        return it->second;
-      }
-    }
-    case Value::Kind::AssociatedConstant: {
-      const auto& assoc = cast<AssociatedConstant>(*type);
-      Nonnull<const Value*> base = SubstituteImpl(bindings, &assoc.base());
-      const auto* interface =
-          cast<InterfaceType>(SubstituteImpl(bindings, &assoc.interface()));
-      // If we're substituting into an associated constant, we may now be able
-      // to rewrite it to a concrete value.
-      if (auto rewritten_value =
-              LookupRewriteInTypeOf(base, interface, &assoc.constant())) {
-        return (*rewritten_value)->converted_replacement;
-      }
-      const auto* witness =
-          cast<Witness>(SubstituteImpl(bindings, &assoc.witness()));
-      witness = RefineWitness(witness, base, interface);
-      if (auto rewritten_value =
-              LookupRewriteInWitness(witness, interface, &assoc.constant())) {
-        return (*rewritten_value)->converted_replacement;
-      }
-      return arena_->New<AssociatedConstant>(base, interface, &assoc.constant(),
-                                             witness);
-    }
-    case Value::Kind::TupleType:
-    case Value::Kind::TupleValue: {
-      std::vector<Nonnull<const Value*>> elts;
-      for (const auto& elt : cast<TupleValueBase>(*type).elements()) {
-        elts.push_back(SubstituteImpl(bindings, elt));
-      }
-      if (isa<TupleType>(type)) {
-        return arena_->New<TupleType>(std::move(elts));
-      } else {
-        return arena_->New<TupleValue>(std::move(elts));
-      }
-    }
-    case Value::Kind::StructType: {
-      std::vector<NamedValue> fields;
-      for (const auto& [name, value] : cast<StructType>(*type).fields()) {
-        const auto* new_type = SubstituteImpl(bindings, value);
-        fields.push_back({name, new_type});
-      }
-      return arena_->New<StructType>(std::move(fields));
-    }
-    case Value::Kind::FunctionType: {
-      const auto& fn_type = cast<FunctionType>(*type);
-      SubstitutedGenericBindings subst_bindings(this, bindings);
-
-      // Apply substitution to into generic parameters and deduced bindings.
-      std::vector<FunctionType::GenericParameter> generic_parameters;
-      for (const FunctionType::GenericParameter& gp :
-           fn_type.generic_parameters()) {
-        generic_parameters.push_back(
-            {.index = gp.index,
-             .binding =
-                 subst_bindings.SubstituteIntoGenericBinding(gp.binding)});
-      }
-      std::vector<Nonnull<const GenericBinding*>> deduced_bindings;
-      for (Nonnull<const GenericBinding*> gb : fn_type.deduced_bindings()) {
-        deduced_bindings.push_back(
-            subst_bindings.SubstituteIntoGenericBinding(gb));
-      }
-
-      // Apply substitution to parameter and return types and create the new
-      // function type.
-      const auto* param =
-          SubstituteImpl(subst_bindings.bindings(), &fn_type.parameters());
-      const auto* ret =
-          SubstituteImpl(subst_bindings.bindings(), &fn_type.return_type());
-      return arena_->New<FunctionType>(
-          param, std::move(generic_parameters), ret,
-          std::move(deduced_bindings),
-          std::move(subst_bindings).TakeImplBindings());
-    }
-    case Value::Kind::PointerType: {
-      return arena_->New<PointerType>(
-          SubstituteImpl(bindings, &cast<PointerType>(*type).type()));
-    }
-    case Value::Kind::NominalClassType: {
-      const auto& class_type = cast<NominalClassType>(*type);
-      auto base_type = class_type.base();
-      if (base_type.has_value()) {
-        base_type = cast<NominalClassType>(
-            SubstituteImpl(base_type.value()->bindings(), base_type.value()));
-      }
-      Nonnull<const NominalClassType*> new_class_type =
-          arena_->New<NominalClassType>(
-              &class_type.declaration(),
-              substitute_into_bindings(&class_type.bindings()), base_type);
-      return new_class_type;
-    }
-    case Value::Kind::InterfaceType: {
-      const auto& iface_type = cast<InterfaceType>(*type);
-      Nonnull<const InterfaceType*> new_iface_type = arena_->New<InterfaceType>(
-          &iface_type.declaration(),
-          substitute_into_bindings(&iface_type.bindings()));
-      return new_iface_type;
-    }
-    case Value::Kind::NamedConstraintType: {
-      const auto& constraint_type = cast<NamedConstraintType>(*type);
-      Nonnull<const NamedConstraintType*> new_constraint_type =
-          arena_->New<NamedConstraintType>(
-              &constraint_type.declaration(),
-              substitute_into_bindings(&constraint_type.bindings()));
-      return new_constraint_type;
-    }
-    case Value::Kind::ConstraintType: {
-      const auto& constraint = cast<ConstraintType>(*type);
-      if (auto it = bindings.args().find(constraint.self_binding());
-          it != bindings.args().end()) {
-        // This happens when we substitute into the parameter type of a
-        // function that takes a `T:! Constraint` parameter. In this case we
-        // produce the new type-of-type of the replacement type.
-        Nonnull<const Value*> type_of_type;
-        if (const auto* var_type = dyn_cast<VariableType>(it->second)) {
-          type_of_type = &var_type->binding().static_type();
-        } else if (const auto* assoc_type =
-                       dyn_cast<AssociatedConstant>(it->second)) {
-          type_of_type = GetTypeForAssociatedConstant(assoc_type);
-        } else {
-          type_of_type = arena_->New<TypeType>();
-        }
-        if (trace_stream_) {
-          **trace_stream_ << "substitution: self of constraint " << constraint
-                          << " is substituted, new type of type is "
-                          << *type_of_type << "\n";
-        }
-        // TODO: Should we keep any part of the old constraint -- rewrites,
-        // equality constraints, etc?
-        return type_of_type;
-      }
-      ConstraintTypeBuilder builder(arena_,
-                                    constraint.self_binding()->source_loc());
-      builder.AddAndSubstitute(*this, &constraint, builder.GetSelfType(),
-                               builder.GetSelfWitness(), bindings,
-                               /*add_lookup_contexts=*/true);
-      Nonnull<const ConstraintType*> new_constraint =
-          std::move(builder).Build();
-      if (trace_stream_) {
-        **trace_stream_ << "substitution: " << constraint << " => "
-                        << *new_constraint << "\n";
-      }
-      return new_constraint;
-    }
-    case Value::Kind::ImplWitness: {
-      const auto& witness = cast<ImplWitness>(*type);
-      return arena_->New<ImplWitness>(
-          &witness.declaration(),
-          substitute_into_bindings(&witness.bindings()));
-    }
-    case Value::Kind::BindingWitness: {
-      auto it =
-          bindings.witnesses().find(cast<BindingWitness>(*type).binding());
-      if (it == bindings.witnesses().end()) {
-        if (trace_stream_) {
-          **trace_stream_ << "substitution: no value for binding " << *type
-                          << ", leaving alone\n";
-        }
-        return type;
-      } else {
-        return it->second;
-      }
-    }
-    case Value::Kind::ConstraintWitness: {
-      const auto& witness = cast<ConstraintWitness>(*type);
-      std::vector<Nonnull<const Witness*>> witnesses;
-      witnesses.reserve(witness.witnesses().size());
-      for (const auto* witness : witness.witnesses()) {
-        witnesses.push_back(cast<Witness>(SubstituteImpl(bindings, witness)));
-      }
-      return arena_->New<ConstraintWitness>(std::move(witnesses));
-    }
-    case Value::Kind::ConstraintImplWitness: {
-      const auto& witness = cast<ConstraintImplWitness>(*type);
-      return ConstraintImplWitness::Make(
-          arena_,
-          cast<Witness>(SubstituteImpl(bindings, witness.constraint_witness())),
-          witness.index());
-    }
-    case Value::Kind::StaticArrayType:
-    case Value::Kind::ChoiceType:
-    case Value::Kind::MixinPseudoType:
-      // TODO: These can contain bindings. We should substitute into them.
-      return type;
-    case Value::Kind::AutoType:
-    case Value::Kind::IntType:
-    case Value::Kind::BoolType:
-    case Value::Kind::TypeType:
-    case Value::Kind::ContinuationType:
-    case Value::Kind::StringType:
-      // These types cannot contain bindings or witnesses.
-      return type;
-    case Value::Kind::TypeOfMixinPseudoType:
-    case Value::Kind::TypeOfParameterizedEntityName:
-    case Value::Kind::TypeOfMemberName:
-      // TODO: We should substitute into the value and produce a new type of
-      // type for it.
-      return type;
-    case Value::Kind::ParameterizedEntityName:
-    case Value::Kind::MemberName:
-    case Value::Kind::FunctionValue:
-    case Value::Kind::DestructorValue:
-    case Value::Kind::BoundMethodValue:
-    case Value::Kind::StructValue:
-    case Value::Kind::NominalClassValue:
-    case Value::Kind::AlternativeValue:
-    case Value::Kind::BindingPlaceholderValue:
-    case Value::Kind::AddrValue:
-    case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::ContinuationValue:
-      // This can happen when substituting into the arguments of a class or
-      // interface.
-      // TODO: Implement substitution for these cases.
-      return type;
-    case Value::Kind::IntValue:
-    case Value::Kind::BoolValue:
-    case Value::Kind::PointerValue:
-    case Value::Kind::LValue:
-    case Value::Kind::StringValue:
-    case Value::Kind::UninitializedValue:
-      // These values cannot contain bindings or witnesses.
-      return type;
-  }
+  return SubstituteTransform(this, bindings).Transform(type);
 }
 
 auto TypeChecker::RefineWitness(Nonnull<const Witness*> witness,
@@ -2543,7 +2433,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> type,
             TypeCheckTypeExp(&arg.expression(), impl_scope));
-        fields.push_back({.name = arg.name(), .value = type});
+        fields.push_back({arg.name(), type});
       }
       struct_type.set_static_type(arena_->New<TypeType>());
       struct_type.set_value_category(ValueCategory::Let);
@@ -5303,7 +5193,7 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
     CARBON_ASSIGN_OR_RETURN(auto signature,
                             TypeCheckTypeExp(&alternative->signature(),
                                              *scope_info.innermost_scope));
-    alternatives.push_back({.name = alternative->name(), .value = signature});
+    alternatives.push_back({alternative->name(), signature});
   }
   choice->set_members(alternatives);
   if (choice->type_params().has_value()) {

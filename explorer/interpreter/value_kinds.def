@@ -1,0 +1,59 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+// This .def file expands the CARBON_VALUE_KIND macro once for each kind of
+// Value. The macro should be defined as taking a single argument, which is the
+// name of the Value type.
+
+#ifndef CARBON_VALUE_KIND
+#error #define CARBON_VALUE_KIND(kind) before including this header
+#endif
+
+CARBON_VALUE_KIND(IntValue)
+CARBON_VALUE_KIND(FunctionValue)
+CARBON_VALUE_KIND(DestructorValue)
+CARBON_VALUE_KIND(BoundMethodValue)
+CARBON_VALUE_KIND(PointerValue)
+CARBON_VALUE_KIND(LValue)
+CARBON_VALUE_KIND(BoolValue)
+CARBON_VALUE_KIND(StructValue)
+CARBON_VALUE_KIND(NominalClassValue)
+CARBON_VALUE_KIND(AlternativeValue)
+CARBON_VALUE_KIND(TupleValue)
+CARBON_VALUE_KIND(UninitializedValue)
+CARBON_VALUE_KIND(ImplWitness)
+CARBON_VALUE_KIND(BindingWitness)
+CARBON_VALUE_KIND(ConstraintWitness)
+CARBON_VALUE_KIND(ConstraintImplWitness)
+CARBON_VALUE_KIND(IntType)
+CARBON_VALUE_KIND(BoolType)
+CARBON_VALUE_KIND(TypeType)
+CARBON_VALUE_KIND(FunctionType)
+CARBON_VALUE_KIND(PointerType)
+CARBON_VALUE_KIND(AutoType)
+CARBON_VALUE_KIND(StructType)
+CARBON_VALUE_KIND(NominalClassType)
+CARBON_VALUE_KIND(TupleType)
+CARBON_VALUE_KIND(MixinPseudoType)
+CARBON_VALUE_KIND(InterfaceType)
+CARBON_VALUE_KIND(NamedConstraintType)
+CARBON_VALUE_KIND(ConstraintType)
+CARBON_VALUE_KIND(ChoiceType)
+CARBON_VALUE_KIND(ContinuationType)
+CARBON_VALUE_KIND(VariableType)
+CARBON_VALUE_KIND(AssociatedConstant)
+CARBON_VALUE_KIND(ParameterizedEntityName)
+CARBON_VALUE_KIND(MemberName)
+CARBON_VALUE_KIND(BindingPlaceholderValue)
+CARBON_VALUE_KIND(AddrValue)
+CARBON_VALUE_KIND(AlternativeConstructorValue)
+CARBON_VALUE_KIND(ContinuationValue)
+CARBON_VALUE_KIND(StringType)
+CARBON_VALUE_KIND(StringValue)
+CARBON_VALUE_KIND(TypeOfMixinPseudoType)
+CARBON_VALUE_KIND(TypeOfParameterizedEntityName)
+CARBON_VALUE_KIND(TypeOfMemberName)
+CARBON_VALUE_KIND(StaticArrayType)
+
+#undef CARBON_VALUE_KIND

@@ -264,7 +264,7 @@ auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
   CARBON_CHECK(fields.size() == values.size());
   std::vector<NamedValue> elements;
   for (size_t i = 0; i < fields.size(); ++i) {
-    elements.push_back({.name = fields[i].name(), .value = values[i]});
+    elements.push_back({fields[i].name(), values[i]});
   }
 
   return arena_->New<StructValue>(std::move(elements));
@@ -767,7 +767,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const Value*> val,
                 Convert(*old_value, field_type, source_loc));
-            new_elements.push_back({.name = field_name, .value = val});
+            new_elements.push_back({field_name, val});
           }
           return arena_->New<StructValue>(std::move(new_elements));
         }

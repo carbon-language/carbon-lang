@@ -44,6 +44,14 @@ auto NamedElement::declaration() const
   return std::nullopt;
 }
 
+auto NamedElement::struct_member() const
+    -> std::optional<Nonnull<const NamedValue*>> {
+  if (const auto* member = element_.dyn_cast<const NamedValue*>()) {
+    return member;
+  }
+  return std::nullopt;
+}
+
 void NamedElement::Print(llvm::raw_ostream& out) const { out << name(); }
 
 // Prints the Element

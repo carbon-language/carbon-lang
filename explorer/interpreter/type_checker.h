@@ -95,6 +95,7 @@ class TypeChecker {
  private:
   class ConstraintTypeBuilder;
   class SubstitutedGenericBindings;
+  class SubstituteTransform;
   class ArgumentDeduction;
 
   // Information about the currently enclosing scopes.
