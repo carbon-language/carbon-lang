@@ -5,7 +5,6 @@
 #include "toolchain/semantics/semantics_node.h"
 
 #include "toolchain/semantics/semantics_builtin_kind.h"
-#include "toolchain/semantics/semantics_node_kind.h"
 
 namespace Carbon {
 
@@ -29,7 +28,7 @@ void SemanticsNode::Print(llvm::raw_ostream& out) const {
   case SemanticsNodeKind::Name():        \
     PrintArgs(out, GetAs##Name());       \
     break;
-    CARBON_SEMANTICS_NODE_KINDS(CARBON_SEMANTICS_NODE_KIND)
+#include "toolchain/semantics/semantics_node_kind.def"
   }
   out << ")";
   if (type_.index != -1) {

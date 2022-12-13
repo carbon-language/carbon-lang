@@ -28,7 +28,13 @@
 //   MyEnum::Name()
 //
 // They will be usable in a switch statement, e.g. `case MyEnum::Name():`.
-#define CARBON_ENUM_BASE(EnumBaseName, X_NAMES)                                \
+
+// clang-format doesn't work well on this enum due to the separation of blocks
+// across defines.
+// clang-format off
+
+// Start the base class definition.
+#define CARBON_ENUM_BASE_1_OF_7(EnumBaseName) \
   /* Uses CRTP to provide factory functions which create the derived enum. */  \
   template <typename DerivedEnumT>                                             \
   class EnumBaseName {                                                         \
@@ -36,17 +42,26 @@
     /* The enum must be declared earlier in the class so that its type can be  \
      * used, for example in the conversion operator.                           \
      */                                                                        \
-    enum class InternalEnum : uint8_t {                                        \
-      X_NAMES(CARBON_ENUM_BASE_INTERNAL_ENUM_ENTRY)                            \
+    enum class InternalEnum : uint8_t {
+
+// Generate entries for the `enum class`.
+#define CARBON_ENUM_BASE_2_OF_7_ITER(Name) Name,
+
+// Resume the base class definition.
+#define CARBON_ENUM_BASE_3_OF_7(EnumBaseName)                                  \
     };                                                                         \
                                                                                \
    public:                                                                     \
     /* Defines factory functions for each enum name.                           \
-     *`clang-format` has a bug with spacing around `->` returns in macros. See \
-     * https://bugs.llvm.org/show_bug.cgi?id=48320 for details.                \
-     */                                                                        \
-    X_NAMES(CARBON_ENUM_BASE_INTERNAL_FACTORY)                                 \
-                                                                               \
+     */
+
+// Generate `MyEnum::Name()` factory functions.
+#define CARBON_ENUM_BASE_4_OF_7_ITER(Name)                                     \
+  static constexpr auto Name() -> DerivedEnumT {                               \
+    return DerivedEnumT(InternalEnum::Name);    \
+  }
+
+#define CARBON_ENUM_BASE_5_OF_7(EnumBaseName)                                  \
     /* The default constructor is deleted because objects of this type should  \
      * always be constructed using the above factory functions for each unique \
      * kind.                                                                   \
@@ -55,8 +70,12 @@
                                                                                \
     /* Gets a friendly name for the token for logging or debugging. */         \
     [[nodiscard]] inline auto name() const -> llvm::StringRef {                \
-      static constexpr llvm::StringLiteral Names[] = {                         \
-          X_NAMES(CARBON_ENUM_BASE_INTERNAL_NAMES)};                           \
+      static constexpr llvm::StringLiteral Names[] = {
+
+#define CARBON_ENUM_BASE_6_OF_7_ITER(Name) #Name,
+
+#define CARBON_ENUM_BASE_7_OF_7(EnumBaseName)                                  \
+      };                                                                       \
       return Names[static_cast<int>(val_)];                                    \
     }                                                                          \
                                                                                \
@@ -75,17 +94,6 @@
     InternalEnum val_;                                                         \
   };
 
-// In CARBON_ENUM_BASE, combines with X_NAMES to generate `enum class` values.
-#define CARBON_ENUM_BASE_INTERNAL_ENUM_ENTRY(Name) Name,
-
-// In CARBON_ENUM_BASE, combines with X_NAMES to generate `MyEnum::Name()`
-// factory functions.
-#define CARBON_ENUM_BASE_INTERNAL_FACTORY(Name) \
-  static constexpr auto Name()->DerivedEnumT {  \
-    return DerivedEnumT(InternalEnum::Name);    \
-  }
-
-// In CARBON_ENUM_BASE, combines with X_NAMES to generate strings for `name()`.
-#define CARBON_ENUM_BASE_INTERNAL_NAMES(Name) #Name,
+// clang-format on
 
 #endif  // CARBON_TOOLCHAIN_COMMON_ENUM_BASE_H_

@@ -1,0 +1,35 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// Note that this is an X-macro header.
+//
+// It does not use `#include` guards, and instead is designed to be `#include`ed
+// after the x-macro is defined in order for its inclusion to expand to the
+// desired output. The x-macro for this header is `CARBON_PARSE_NODE_KIND`. The
+// definition provided will be removed at the end of this file to clean up.
+
+#ifndef CARBON_SEMANTICS_BUILTIN_KIND
+#error "Must define the x-macro to use this file."
+#endif
+
+// Tracks expressions which are valid as types.
+CARBON_SEMANTICS_BUILTIN_KIND(TypeType)
+
+// Used when a SemanticNode has an invalid type, which should then be ignored
+// for future type checking.
+CARBON_SEMANTICS_BUILTIN_KIND(InvalidType)
+
+// The type of integers and integer literals, currently always i32. Long-term
+// we may not want it this way, but for now this is the approach.
+CARBON_SEMANTICS_BUILTIN_KIND(IntegerType)
+
+// The type of reals and real literals, currently always f64. Long-term
+// we may not want it this way, but for now this is the approach.
+CARBON_SEMANTICS_BUILTIN_KIND(RealType)
+
+// Keep invalid last, so that we can use values as array indices without needing
+// an invalid entry.
+CARBON_SEMANTICS_BUILTIN_KIND(Invalid)
+
+#undef CARBON_SEMANTICS_BUILTIN_KIND

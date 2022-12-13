@@ -9,37 +9,16 @@
 
 namespace Carbon {
 
-// Enum values for SemanticsBuiltinKind, listing the SemanticsIR
-// builtins.
-//
-// This is an X-macro; the argument should be a macro taking a single argument,
-// the name.
-#define CARBON_SEMANTICS_BUILTIN_KINDS(X)                                     \
-  /* Tracks expressions which are valid as types.                             \
-   */                                                                         \
-  X(TypeType)                                                                 \
-                                                                              \
-  /* Used when a SemanticNode has an invalid type, which should then be       \
-   * ignored for future type checking.                                        \
-   */                                                                         \
-  X(InvalidType)                                                              \
-                                                                              \
-  /* The type of integers and integer literals, currently always i32.         \
-   * Long-term we may not want it this way, but for now this is the approach. \
-   */                                                                         \
-  X(IntegerType)                                                              \
-                                                                              \
-  /* The type of reals and real literals, currently always f64. Long-term     \
-   * we may not want it this way, but for now this is the approach.           \
-   */                                                                         \
-  X(RealType)                                                                 \
-                                                                              \
-  /* Keep invalid last, so that we can use values as array indices without    \
-   * needing an invalid entry.                                                \
-   */                                                                         \
-  X(Invalid)
-
-CARBON_ENUM_BASE(SemanticsBuiltinKindBase, CARBON_SEMANTICS_BUILTIN_KINDS)
+CARBON_ENUM_BASE_1_OF_7(SemanticsBuiltinKindBase)
+#define CARBON_SEMANTICS_BUILTIN_KIND(Name) CARBON_ENUM_BASE_2_OF_7_ITER(Name)
+#include "toolchain/semantics/semantics_builtin_kind.def"
+CARBON_ENUM_BASE_3_OF_7(SemanticsBuiltinKindBase)
+#define CARBON_SEMANTICS_BUILTIN_KIND(Name) CARBON_ENUM_BASE_4_OF_7_ITER(Name)
+#include "toolchain/semantics/semantics_builtin_kind.def"
+CARBON_ENUM_BASE_5_OF_7(SemanticsBuiltinKindBase)
+#define CARBON_SEMANTICS_BUILTIN_KIND(Name) CARBON_ENUM_BASE_6_OF_7_ITER(Name)
+#include "toolchain/semantics/semantics_builtin_kind.def"
+CARBON_ENUM_BASE_7_OF_7(SemanticsBuiltinKindBase)
 
 class SemanticsBuiltinKind
     : public SemanticsBuiltinKindBase<SemanticsBuiltinKind> {

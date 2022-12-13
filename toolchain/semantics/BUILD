@@ -7,21 +7,15 @@ package(default_visibility = ["//visibility:public"])
 cc_library(
     name = "semantics_builtin_kind",
     hdrs = ["semantics_builtin_kind.h"],
-    deps = [
-        "//common:ostream",
-        "//toolchain/common:enum_base",
-        "@llvm-project//llvm:Support",
-    ],
+    textual_hdrs = ["semantics_builtin_kind.def"],
+    deps = ["//toolchain/common:enum_base"],
 )
 
 cc_library(
     name = "semantics_node_kind",
     hdrs = ["semantics_node_kind.h"],
-    deps = [
-        "//common:ostream",
-        "//toolchain/common:enum_base",
-        "@llvm-project//llvm:Support",
-    ],
+    textual_hdrs = ["semantics_node_kind.def"],
+    deps = ["//toolchain/common:enum_base"],
 )
 
 cc_library(

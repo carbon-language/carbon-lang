@@ -9,24 +9,16 @@
 
 namespace Carbon {
 
-// Enum values for SemanticsNodeKind, listing kinds of SemanticNodes.
-//
-// This is an X-macro; the argument should be a macro taking a single argument,
-// the name.
-#define CARBON_SEMANTICS_NODE_KINDS(X) \
-  X(Invalid)                           \
-  X(BinaryOperatorAdd)                 \
-  X(BindName)                          \
-  X(Builtin)                           \
-  X(CodeBlock)                         \
-  X(FunctionDeclaration)               \
-  X(FunctionDefinition)                \
-  X(IntegerLiteral)                    \
-  X(RealLiteral)                       \
-  X(Return)                            \
-  X(ReturnExpression)
-
-CARBON_ENUM_BASE(SemanticsNodeKindBase, CARBON_SEMANTICS_NODE_KINDS)
+CARBON_ENUM_BASE_1_OF_7(SemanticsNodeKindBase)
+#define CARBON_SEMANTICS_NODE_KIND(Name) CARBON_ENUM_BASE_2_OF_7_ITER(Name)
+#include "toolchain/semantics/semantics_node_kind.def"
+CARBON_ENUM_BASE_3_OF_7(SemanticsNodeKindBase)
+#define CARBON_SEMANTICS_NODE_KIND(Name) CARBON_ENUM_BASE_4_OF_7_ITER(Name)
+#include "toolchain/semantics/semantics_node_kind.def"
+CARBON_ENUM_BASE_5_OF_7(SemanticsNodeKindBase)
+#define CARBON_SEMANTICS_NODE_KIND(Name) CARBON_ENUM_BASE_6_OF_7_ITER(Name)
+#include "toolchain/semantics/semantics_node_kind.def"
+CARBON_ENUM_BASE_7_OF_7(SemanticsNodeKindBase)
 
 class SemanticsNodeKind : public SemanticsNodeKindBase<SemanticsNodeKind> {
   using SemanticsNodeKindBase::SemanticsNodeKindBase;
