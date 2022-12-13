@@ -9,19 +9,31 @@
 
 namespace Carbon {
 
-CARBON_ENUM_BASE_1_OF_7(SemanticsNodeKindBase)
-#define CARBON_SEMANTICS_NODE_KIND(Name) CARBON_ENUM_BASE_2_OF_7_ITER(Name)
+namespace Internal {
+enum class SemanticsNodeKindEnum : uint8_t {
+#define CARBON_SEMANTICS_NODE_KIND(Name) CARBON_ENUM_BASE_LITERAL(Name)
 #include "toolchain/semantics/semantics_node_kind.def"
-CARBON_ENUM_BASE_3_OF_7(SemanticsNodeKindBase)
-#define CARBON_SEMANTICS_NODE_KIND(Name) CARBON_ENUM_BASE_4_OF_7_ITER(Name)
-#include "toolchain/semantics/semantics_node_kind.def"
-CARBON_ENUM_BASE_5_OF_7(SemanticsNodeKindBase)
-#define CARBON_SEMANTICS_NODE_KIND(Name) CARBON_ENUM_BASE_6_OF_7_ITER(Name)
-#include "toolchain/semantics/semantics_node_kind.def"
-CARBON_ENUM_BASE_7_OF_7(SemanticsNodeKindBase)
+};
+}  // namespace Internal
 
-class SemanticsNodeKind : public SemanticsNodeKindBase<SemanticsNodeKind> {
-  using SemanticsNodeKindBase::SemanticsNodeKindBase;
+class SemanticsNodeKind
+    : public EnumBase<SemanticsNodeKind, Internal::SemanticsNodeKindEnum> {
+ public:
+#define CARBON_SEMANTICS_NODE_KIND(Name) \
+  CARBON_ENUM_BASE_FACTORY(SemanticsNodeKind, Name)
+#include "toolchain/semantics/semantics_node_kind.def"
+
+  // Gets a friendly name for the token for logging or debugging.
+  [[nodiscard]] inline auto name() const -> llvm::StringRef {
+    static constexpr llvm::StringLiteral Names[] = {
+#define CARBON_SEMANTICS_NODE_KIND(Name) CARBON_ENUM_BASE_STRING(Name)
+#include "toolchain/semantics/semantics_node_kind.def"
+    };
+    return Names[static_cast<int>(val_)];
+  }
+
+ private:
+  using EnumBase::EnumBase;
 };
 
 // We expect the node kind to fit compactly into 8 bits.

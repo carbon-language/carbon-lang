@@ -13,87 +13,76 @@
 //
 // Uses should look like:
 //
-//   #define CARBON_MY_ENUM(X) \
-//     X(FirstValue) \
-//     X(SecondValue) \
-//     ...
+// namespace Internal {
+// enum class MyEnum : uint8_t {
+// #define CARBON_MY_ENUM(Name) CARBON_ENUM_BASE_LITERAL(Name)
+// #include "my_enum.def"
+// };
+// }  // namespace Internal
 //
-//   CARBON_ENUM_BASE(MyEnumBase, CARBON_MY_ENUM)
+// class MyEnum : public EnumBase<MyEnum, Internal::MyEnum> {
+//  public:
+// #define CARBON_MY_ENUM(Name) CARBON_ENUM_BASE_FACTORY(MyEnum, Name)
+// #include "my_enum.def"
 //
-//   class MyEnum : public MyEnumBase<MyEnum> {
-//     using MyEnumBase::MyEnumBase;
-//   };
+//   // Gets a friendly name for the token for logging or debugging.
+//   [[nodiscard]] inline auto name() const -> llvm::StringRef {
+//     static constexpr llvm::StringLiteral Names[] = {
+// #define CARBON_MY_ENUM(Name) CARBON_ENUM_BASE_STRING(Name)
+// #include "my_enum.def"
+//     };
+//     return Names[static_cast<int>(val_)];
+//   }
 //
-// Specific macro values are available as:
-//   MyEnum::Name()
+//  private:
+//   using EnumBase::EnumBase;
+// };
 //
 // They will be usable in a switch statement, e.g. `case MyEnum::Name():`.
+//
+// Uses CRTP to provide the Print function.
+template <typename DerivedT, typename EnumT>
+class EnumBase {
+ protected:
+  using InternalEnum = EnumT;
 
-// clang-format doesn't work well on this enum due to the separation of blocks
-// across defines.
-// clang-format off
+ public:
+  // The default constructor is deleted because objects of this type should
+  // always be constructed using the above factory functions for each unique
+  // kind.
+  EnumBase() = delete;
 
-// Start the base class definition.
-#define CARBON_ENUM_BASE_1_OF_7(EnumBaseName) \
-  /* Uses CRTP to provide factory functions which create the derived enum. */  \
-  template <typename DerivedEnumT>                                             \
-  class EnumBaseName {                                                         \
-   protected:                                                                  \
-    /* The enum must be declared earlier in the class so that its type can be  \
-     * used, for example in the conversion operator.                           \
-     */                                                                        \
-    enum class InternalEnum : uint8_t {
+  // Enable conversion to our private enum, including in a `constexpr`
+  // context, to enable usage in `switch` and `case`. The enum remains
+  // private and nothing else should be using this function.
+  //
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr operator InternalEnum() const { return val_; }
 
-// Generate entries for the `enum class`.
-#define CARBON_ENUM_BASE_2_OF_7_ITER(Name) Name,
-
-// Resume the base class definition.
-#define CARBON_ENUM_BASE_3_OF_7(EnumBaseName)                                  \
-    };                                                                         \
-                                                                               \
-   public:                                                                     \
-    /* Defines factory functions for each enum name.                           \
-     */
-
-// Generate `MyEnum::Name()` factory functions.
-#define CARBON_ENUM_BASE_4_OF_7_ITER(Name)                                     \
-  static constexpr auto Name() -> DerivedEnumT {                               \
-    return DerivedEnumT(InternalEnum::Name);    \
+  void Print(llvm::raw_ostream& out) const {
+    out << reinterpret_cast<const DerivedT*>(this)->name();
   }
 
-#define CARBON_ENUM_BASE_5_OF_7(EnumBaseName)                                  \
-    /* The default constructor is deleted because objects of this type should  \
-     * always be constructed using the above factory functions for each unique \
-     * kind.                                                                   \
-     */                                                                        \
-    EnumBaseName() = delete;                                                   \
-                                                                               \
-    /* Gets a friendly name for the token for logging or debugging. */         \
-    [[nodiscard]] inline auto name() const -> llvm::StringRef {                \
-      static constexpr llvm::StringLiteral Names[] = {
+ protected:
+  constexpr explicit EnumBase(InternalEnum val) : val_(val) {}
 
-#define CARBON_ENUM_BASE_6_OF_7_ITER(Name) #Name,
+  InternalEnum val_;
+};
 
-#define CARBON_ENUM_BASE_7_OF_7(EnumBaseName)                                  \
-      };                                                                       \
-      return Names[static_cast<int>(val_)];                                    \
-    }                                                                          \
-                                                                               \
-    /* Enable conversion to our private enum, including in a `constexpr`       \
-     * context, to enable usage in `switch` and `case`. The enum remains       \
-     * private and nothing else should be using this function.                 \
-     */                                                                        \
-    /* NOLINTNEXTLINE(google-explicit-constructor) */                          \
-    constexpr operator InternalEnum() const { return val_; }                   \
-                                                                               \
-    void Print(llvm::raw_ostream& out) const { out << name(); }                \
-                                                                               \
-   protected:                                                                  \
-    constexpr explicit EnumBaseName(InternalEnum val) : val_(val) {}           \
-                                                                               \
-    InternalEnum val_;                                                         \
-  };
+// In CARBON_ENUM_BASE, combines with X_NAMES to generate `enum class` values.
+#define CARBON_ENUM_BASE_LITERAL(Name) Name,
 
-// clang-format on
+// In CARBON_ENUM_BASE, combines with X_NAMES to generate `MyEnum::Name()`
+// factory functions.
+//
+// `clang-format` has a bug with spacing around `->` returns in macros.
+// See https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
+#define CARBON_ENUM_BASE_FACTORY(ClassName, Name) \
+  static constexpr auto Name()->ClassName {       \
+    return ClassName(InternalEnum::Name);         \
+  }
+
+// In CARBON_ENUM_BASE, combines with X_NAMES to generate strings for `name()`.
+#define CARBON_ENUM_BASE_STRING(Name) #Name,
 
 #endif  // CARBON_TOOLCHAIN_COMMON_ENUM_BASE_H_
