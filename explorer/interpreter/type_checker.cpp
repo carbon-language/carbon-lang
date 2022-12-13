@@ -1003,13 +1003,15 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
       if (arg->kind() != Value::Kind::PointerType) {
         return handle_non_deduced_type();
       }
-      const auto& param_pointed = cast<PointerType>(param)->type();
-      const auto& arg_pointed = cast<PointerType>(arg)->type();
-      if (const auto* arg_class = dyn_cast<NominalClassType>(&arg_pointed);
-          arg_class && arg_class->InheritsClass(&param_pointed)) {
-        return Success();
+      const auto& param_pointee = cast<PointerType>(param)->type();
+      const auto& arg_pointee = cast<PointerType>(arg)->type();
+      if (allow_implicit_conversion) {
+        if (const auto* arg_class = dyn_cast<NominalClassType>(&arg_pointee);
+            arg_class && arg_class->InheritsClass(&param_pointee)) {
+          return Success();
+        }
       }
-      return Deduce(&param_pointed, &arg_pointed,
+      return Deduce(&param_pointee, &arg_pointee,
                     /*allow_implicit_conversion=*/false);
     }
     // Nothing to do in the case for `auto`.
