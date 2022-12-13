@@ -877,10 +877,8 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
       const auto* src_ptr = cast<PointerValue>(value);
       CARBON_ASSIGN_OR_RETURN(const auto* pointee,
                               heap_.Read(src_ptr->address(), source_loc))
-      if (pointee->kind() == Value::Kind::NominalClassType) {
-        // TODO: When does that happen? Just return as-is.
-        return value;
-      }
+      CARBON_CHECK(pointee->kind() == Value::Kind::NominalClassValue)
+          << "Unexpected pointer type";
 
       const auto* dest_ptr = cast<PointerType>(destination_type);
       std::optional<Nonnull<const NominalClassValue*>> class_subobj =
