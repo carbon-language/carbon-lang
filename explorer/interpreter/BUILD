@@ -15,6 +15,10 @@ cc_library(
     hdrs = [
         "action.h",
         "value.h",
+        "value_transform.h",
+    ],
+    textual_hdrs = [
+        "value_kinds.def",
     ],
     # Exposed to resolve `member_test` dependencies.
     visibility = ["//explorer/ast:__pkg__"],

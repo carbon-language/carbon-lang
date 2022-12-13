@@ -2049,6 +2049,7 @@ choice LikeABoolean { False, True }
 
 > References:
 >
+> -   [Sum types](sum_types.md)
 > -   Proposal
 >     [#157: Design direction for sum types](https://github.com/carbon-language/carbon-lang/pull/157)
 > -   Proposal
