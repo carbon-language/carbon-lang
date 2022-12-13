@@ -119,8 +119,8 @@ http_archive(
     build_file_content = "# empty",
     patch_args = ["-p1"],
     patches = [
-        "@carbon//bazel/llvm_patches:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
-        "@carbon//bazel/llvm_patches:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
+        "@carbon//bazel/pkg_patches/llvm:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
+        "@carbon//bazel/pkg_patches/llvm:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
     ],
     sha256 = "8e9cbb937b1a40536cd809e09603a1810d86a8c314fee0cca36fc493e78289e5",
     strip_prefix = "llvm-project-{0}".format(llvm_version),
@@ -152,13 +152,17 @@ llvm_zlib_system(name = "zlib")
 # Flex/Bison rules
 ###############################################################################
 
-rules_m4_version = "0.2.1-fbsd"
+rules_m4_version = "0.2.1"
 
 http_archive(
     name = "rules_m4",
-    sha256 = "1d9535d33351175e7cc080538634eaac0f28c56a03bfc126c12fcfea01476cd5",
+    patch_args = ["-p1"],
+    patches = [
+        "@carbon//bazel/pkg_patches/m4:0001_Support_M4_building_on_FreeBSD.patch",
+    ],
+    sha256 = "eaa674cd84546038ecbcc49cdd346134a20961a41fa1a541e80d8bf4b470c34d",
     strip_prefix = "rules_m4-{0}".format(rules_m4_version),
-    urls = ["https://github.com/micttyl/rules_m4/archive/refs/tags/v{0}.tar.gz".format(rules_m4_version)],
+    urls = ["https://github.com/jmillikin/rules_m4/archive/v{0}.tar.gz".format(rules_m4_version)],
 )
 
 load("@rules_m4//m4:m4.bzl", "m4_register_toolchains")
@@ -186,13 +190,17 @@ flex_register_toolchains(extra_copts = ["-w"])
 
 # TODO: Can switch to a normal release version when it includes:
 # https://github.com/jmillikin/rules_bison/commit/478079b28605a38000eaf83719568d756b3383a0
-rules_bison_version = "0.2.1-copt-fbsd"
+rules_bison_version = "478079b28605a38000eaf83719568d756b3383a0"
 
 http_archive(
     name = "rules_bison",
-    sha256 = "4dd298aa36b93f7c112f4186149a3c161e0e6a4e07c706672ceace9814b22ffa",
+    patch_args = ["-p1"],
+    patches = [
+        "@carbon//bazel/pkg_patches/bison:0001_Support_Bison_building_on_FreeBSD.patch",
+    ],
+    sha256 = "6bc2d382e4ffccd66e60a74521c24722fc8fdfe9af49ff182f79bb5994fa1ba4",
     strip_prefix = "rules_bison-{0}".format(rules_bison_version),
-    urls = ["https://github.com/micttyl/rules_bison/archive/refs/tags/v{0}.tar.gz".format(rules_bison_version)],
+    urls = ["https://github.com/jmillikin/rules_bison/archive/{0}.tar.gz".format(rules_bison_version)],
 )
 
 load("@rules_bison//bison:bison.bzl", "bison_register_toolchains")
