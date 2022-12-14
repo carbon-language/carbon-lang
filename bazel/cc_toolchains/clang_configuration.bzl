@@ -90,7 +90,7 @@ def _compute_mac_os_sysroot(repository_ctx):
     return output.splitlines()[0]
 
 def _compute_bsd_sysroot(repository_ctx):
-    """Look around for sysroot. Return root(/) if nothing found."""
+    """Look around for sysroot. Return root (/) if nothing found."""
 
     # Try it-just-works for CMake users.
     default = "/"
