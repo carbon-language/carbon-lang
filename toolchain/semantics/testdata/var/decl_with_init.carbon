@@ -16,6 +16,7 @@
 // CHECK:STDOUT:   ident1 = "x";
 // CHECK:STDOUT: },
 // CHECK:STDOUT: integer_literals = {
+// CHECK:STDOUT:   int0 = 0;
 // CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   block0 = {
@@ -26,9 +27,11 @@
 // CHECK:STDOUT:   block1 = {
 // CHECK:STDOUT:     node0 = VarStorage(): node_xref2;
 // CHECK:STDOUT:     node1 = BindName(ident1, node0): node_xref2;
+// CHECK:STDOUT:     node2 = IntegerLiteral(int0): node_xref2;
+// CHECK:STDOUT:     node3 = Assign(node0, node2): node_xref2;
 // CHECK:STDOUT:   },
 // CHECK:STDOUT: }
 
 fn Main() {
-  var x: i32;
+  var x: i32 = 0;
 }

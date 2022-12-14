@@ -71,6 +71,18 @@ class SemanticsParseTreeHandler {
   // returning the result_id. Must only be called for nodes that have results.
   auto PopWithResult(ParseNodeKind pop_parse_kind) -> SemanticsNodeId;
 
+  // Pops the top of the stack, verifying that it's the expected kind and
+  // returning the result_id. Must only be called for nodes that have results.
+  auto PopWithResultIf(ParseNodeKind pop_parse_kind)
+      -> std::optional<SemanticsNodeId>;
+
+  // Attempts a type conversion between arguments of the two arguments with
+  // provided types, returning the result type. The result type will be invalid
+  // for errors; this handles printing diagnostics.
+  auto TryTypeConversion(ParseTree::Node parse_node, SemanticsNodeId lhs_id,
+                         SemanticsNodeId rhs_id, bool can_convert_lhs)
+      -> SemanticsNodeId;
+
   // Parse node handlers.
 #define CARBON_PARSE_NODE_KIND(Name) \
   auto Handle##Name(ParseTree::Node parse_node)->void;
