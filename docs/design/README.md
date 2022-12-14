@@ -427,9 +427,9 @@ and [`while`](#while), and
 
 ### Integer types
 
-The signed-integer type with bit width `N` may be written `iN` or
-`Carbon.Int(N)`, as long as `N` is a positive multiple of 8. For example, `i32`
-is equivalent to `Carbon.Int(32)`. Signed-integer
+The signed-integer type with bit width `N` may be written `iN`, as long as `N`
+is a positive multiple of 8. For example, `i32` is a signed 32-bit integer.
+Signed-integer
 [overflow](expressions/arithmetic.md#overflow-and-other-error-conditions) is a
 programming error:
 
@@ -443,11 +443,11 @@ programming error:
     to a mathematically incorrect result, such as a two's complement result or
     zero.
 
-The unsigned-integer types are written `uN` or `Carbon.UInt(N)`, with `N` a
-positive multiple of 8. Unsigned integer types wrap around on overflow; we
-strongly advise that they are not used except when those semantics are desired.
-These types are intended for bit manipulation or modular arithmetic as often
-found in [hashing](https://en.wikipedia.org/wiki/Hash_function),
+The unsigned-integer types may be written `uN`, with `N` a positive multiple
+of 8. Unsigned integer types wrap around on overflow; we strongly advise that
+they are not used except when those semantics are desired. These types are
+intended for bit manipulation or modular arithmetic as often found in
+[hashing](https://en.wikipedia.org/wiki/Hash_function),
 [cryptography](https://en.wikipedia.org/wiki/Cryptography), and
 [PRNG](https://en.wikipedia.org/wiki/Pseudorandom_number_generator) use cases.
 Values which can never be negative, like sizes, but for which wrapping does not
@@ -499,7 +499,7 @@ represent that value.
 > References:
 >
 > -   [Integer literal syntax](lexical_conventions/numeric_literals.md#integer-literals)
-> -   [Numeric Literal Semantics](numeric_literals.md)
+> -   [Numeric literal expressions](expressions/literals.md#numeric-literals)
 > -   Proposal
 >     [#143: Numeric literals](https://github.com/carbon-language/carbon-lang/pull/143)
 > -   Proposal
@@ -514,8 +514,7 @@ represent that value.
 Floating-point types in Carbon have IEEE-754 semantics, use the round-to-nearest
 rounding mode, and do not set any floating-point exception state. They are named
 with a _type literals_, consisting of `f` and the number of bits, which must be
-a multiple of 8. The type literal `fN` results in the type `Carbon.Float(N)`.
-These types will always be available:
+a multiple of 8. These types will always be available:
 [`f16`](https://en.wikipedia.org/wiki/Half-precision_floating-point_format),
 [`f32`](https://en.wikipedia.org/wiki/Single-precision_floating-point_format),
 and
@@ -565,7 +564,7 @@ selected.
 > References:
 >
 > -   [Real-number literal syntax](lexical_conventions/numeric_literals.md#real-number-literals)
-> -   [Numeric Literal Semantics](numeric_literals.md)
+> -   [Numeric literal expressions](expressions/literals.md#numeric-literals)
 > -   Proposal
 >     [#143: Numeric literals](https://github.com/carbon-language/carbon-lang/pull/143)
 > -   Proposal
