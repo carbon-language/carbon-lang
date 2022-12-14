@@ -158,6 +158,7 @@ http_archive(
     name = "rules_m4",
     patch_args = ["-p1"],
     patches = [
+        // Trying to upstream: https://github.com/jmillikin/rules_m4/pull/15
         "@carbon//bazel/pkg_patches/m4:0001_Support_M4_building_on_FreeBSD.patch",
     ],
     sha256 = "eaa674cd84546038ecbcc49cdd346134a20961a41fa1a541e80d8bf4b470c34d",
