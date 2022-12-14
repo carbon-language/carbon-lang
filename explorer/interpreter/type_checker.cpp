@@ -583,12 +583,12 @@ auto TypeChecker::IsImplicitlyConvertible(
       }
       const auto* src_ptr = cast<PointerType>(source);
       const auto* dest_ptr = cast<PointerType>(destination);
-      if (src_ptr->type().kind() != Value::Kind::NominalClassType ||
-          dest_ptr->type().kind() != Value::Kind::NominalClassType) {
+      if (src_ptr->pointee_type().kind() != Value::Kind::NominalClassType ||
+          dest_ptr->pointee_type().kind() != Value::Kind::NominalClassType) {
         break;
       }
-      const auto& src_class = cast<NominalClassType>(src_ptr->type());
-      if (src_class.InheritsClass(&dest_ptr->type())) {
+      const auto& src_class = cast<NominalClassType>(src_ptr->pointee_type());
+      if (src_class.InheritsClass(&dest_ptr->pointee_type())) {
         return true;
       }
       break;
