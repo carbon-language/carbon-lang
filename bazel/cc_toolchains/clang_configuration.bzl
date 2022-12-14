@@ -92,7 +92,7 @@ def _compute_mac_os_sysroot(repository_ctx):
 def _compute_bsd_sysroot(repository_ctx):
     """Look around for sysroot. Return root(/) if nothing found."""
 
-    # Try it-just-works for CMake users
+    # Try it-just-works for CMake users.
     default = "/"
     sysroot = repository_ctx.os.environ.get("CMAKE_SYSROOT", default)
     sysroot_path = repository_ctx.path(sysroot)
