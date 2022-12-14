@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-semantics}
+// RUN: %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs.size == 2,
 // CHECK:STDOUT: cross_references = {
 // CHECK:STDOUT:   node_xref0 = xref(ir0, block0, node0);
@@ -32,6 +32,6 @@
 // CHECK:STDOUT: }
 
 fn Main() {
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/fail_init_type_mismatch.carbon:[[@LINE+1]]:19: Type mismatch
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/init_type_mismatch.carbon:[[@LINE+1]]:19: Type mismatch
   var x: i32 = 1.0;
 }
