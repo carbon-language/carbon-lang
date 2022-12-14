@@ -119,8 +119,8 @@ http_archive(
     build_file_content = "# empty",
     patch_args = ["-p1"],
     patches = [
-        "@carbon//bazel/llvm_patches:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
-        "@carbon//bazel/llvm_patches:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
+        "@carbon//bazel/patches/llvm:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
+        "@carbon//bazel/patches/llvm:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
     ],
     sha256 = "8e9cbb937b1a40536cd809e09603a1810d86a8c314fee0cca36fc493e78289e5",
     strip_prefix = "llvm-project-{0}".format(llvm_version),
