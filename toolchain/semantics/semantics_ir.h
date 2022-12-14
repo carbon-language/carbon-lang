@@ -56,6 +56,9 @@ class SemanticsIR {
   // Prints the full IR.
   auto Print(llvm::raw_ostream& out) const -> void;
 
+  // Returns true if there were errors creating the semantics IR.
+  auto has_errors() const -> bool { return has_errors_; }
+
  private:
   friend class SemanticsParseTreeHandler;
 
@@ -127,6 +130,8 @@ class SemanticsIR {
     block.push_back(node);
     return node_id;
   }
+
+  bool has_errors_ = false;
 
   // Related IRs. There will always be at least 2 entries, the builtin IR (used
   // for references of builtins) followed by the current IR (used for references

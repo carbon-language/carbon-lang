@@ -162,24 +162,28 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
     return false;
   }
 
+  bool has_errors = false;
+
   CARBON_VLOG() << "*** TokenizedBuffer::Lex ***\n";
   auto tokenized_source = TokenizedBuffer::Lex(*source, consumer);
+  has_errors |= tokenized_source.has_errors();
   CARBON_VLOG() << "*** TokenizedBuffer::Lex done ***\n";
   if (dump_mode == DumpMode::TokenizedBuffer) {
     CARBON_VLOG() << "Finishing output.";
     consumer.Flush();
     tokenized_source.Print(output_stream_);
-    return !tokenized_source.has_errors();
+    return !has_errors;
   }
   CARBON_VLOG() << "tokenized_buffer: " << tokenized_source;
 
   CARBON_VLOG() << "*** ParseTree::Parse ***\n";
   auto parse_tree = ParseTree::Parse(tokenized_source, consumer, vlog_stream_);
+  has_errors |= parse_tree.has_errors();
   CARBON_VLOG() << "*** ParseTree::Parse done ***\n";
   if (dump_mode == DumpMode::ParseTree) {
     consumer.Flush();
     parse_tree.Print(output_stream_, parse_tree_preorder);
-    return !tokenized_source.has_errors() && !parse_tree.has_errors();
+    return !has_errors;
   }
   CARBON_VLOG() << "parse_tree: " << parse_tree;
 
@@ -187,12 +191,12 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   CARBON_VLOG() << "*** SemanticsIR::MakeFromParseTree ***\n";
   const SemanticsIR semantics_ir = SemanticsIR::MakeFromParseTree(
       builtin_ir, tokenized_source, parse_tree, consumer, vlog_stream_);
+  has_errors |= semantics_ir.has_errors();
   CARBON_VLOG() << "*** SemanticsIR::MakeFromParseTree done ***\n";
   if (dump_mode == DumpMode::SemanticsIR) {
     consumer.Flush();
     semantics_ir.Print(output_stream_);
-    // TODO: Return false when SemanticsIR has errors (not supported right now).
-    return !tokenized_source.has_errors() && !parse_tree.has_errors();
+    return !has_errors;
   }
   CARBON_VLOG() << "semantics_ir: " << semantics_ir;
 

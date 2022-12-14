@@ -66,9 +66,11 @@ auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
 
   TokenizedBuffer::TokenLocationTranslator translator(
       &tokens, /*last_line_lexed_to_column=*/nullptr);
-  TokenDiagnosticEmitter emitter(translator, consumer);
+  ErrorTrackingDiagnosticConsumer err_tracker(consumer);
+  TokenDiagnosticEmitter emitter(translator, err_tracker);
   SemanticsParseTreeHandler(tokens, emitter, parse_tree, semantics, vlog_stream)
       .Build();
+  semantics.has_errors_ = err_tracker.seen_error();
   return semantics;
 }
 
