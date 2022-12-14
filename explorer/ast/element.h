@@ -20,6 +20,14 @@ class Value;
 
 // A NamedValue represents a value with a name, such as a single struct field.
 struct NamedValue {
+  NamedValue(std::string name, Nonnull<const Value*> value)
+      : name(std::move(name)), value(value) {}
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(name, value);
+  }
+
   // The field name.
   std::string name;
 
@@ -36,6 +44,11 @@ class Element {
 
  public:
   virtual ~Element() = default;
+
+  // Call `f` on this value, cast to its most-derived type. `R` specifies the
+  // expected return type of `f`.
+  template <typename R, typename F>
+  auto Visit(F f) const -> R;
 
   // Prints the Member
   virtual void Print(llvm::raw_ostream& out) const = 0;
@@ -63,6 +76,15 @@ class NamedElement : public Element {
   explicit NamedElement(Nonnull<const Declaration*> declaration);
   explicit NamedElement(Nonnull<const NamedValue*> struct_member);
 
+  template <typename F>
+  auto Decompose(F f) const {
+    if (auto decl = declaration()) {
+      return f(*decl);
+    } else {
+      return f(*struct_member());
+    }
+  }
+
   // Prints the element's name
   void Print(llvm::raw_ostream& out) const override;
 
@@ -77,6 +99,8 @@ class NamedElement : public Element {
   auto name() const -> std::string_view;
   // A declaration of the member, if any exists.
   auto declaration() const -> std::optional<Nonnull<const Declaration*>>;
+  // A name and type pair, if this is a struct member.
+  auto struct_member() const -> std::optional<Nonnull<const NamedValue*>>;
 
  private:
   const llvm::PointerUnion<Nonnull<const Declaration*>,
@@ -91,6 +115,11 @@ class PositionalElement : public Element {
  public:
   explicit PositionalElement(int index, Nonnull<const Value*> type)
       : Element(ElementKind::PositionalElement), index_(index), type_(type) {}
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(index_, type_);
+  }
 
   // Prints the element
   void Print(llvm::raw_ostream& out) const override;
@@ -118,6 +147,11 @@ class BaseElement : public Element {
   explicit BaseElement(Nonnull<const Value*> type)
       : Element(ElementKind::BaseElement), type_(type) {}
 
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(type_);
+  }
+
   // Prints the Member
   void Print(llvm::raw_ostream& out) const override;
 
@@ -133,6 +167,19 @@ class BaseElement : public Element {
  private:
   const Nonnull<const Value*> type_;
 };
+
+template <typename R, typename F>
+auto Element::Visit(F f) const -> R {
+  switch (kind()) {
+    case ElementKind::NamedElement:
+      return f(static_cast<const NamedElement*>(this));
+    case ElementKind::PositionalElement:
+      return f(static_cast<const PositionalElement*>(this));
+    case ElementKind::BaseElement:
+      return f(static_cast<const BaseElement*>(this));
+  }
+}
+
 }  // namespace Carbon
 
 #endif  // CARBON_EXPLORER_AST_ELEMENT_H_

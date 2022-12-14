@@ -55,6 +55,11 @@ class Bindings {
   Bindings(BindingMap args, NoWitnessesTag /*unused*/)
       : args_(std::move(args)) {}
 
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(args_, witnesses_);
+  }
+
   // Add a value, and perhaps a witness, for a generic binding.
   void Add(Nonnull<const GenericBinding*> binding, Nonnull<const Value*> value,
            std::optional<Nonnull<const Value*>> witness);

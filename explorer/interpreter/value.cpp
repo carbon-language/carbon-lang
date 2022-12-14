@@ -450,7 +450,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "Continuation";
       break;
     case Value::Kind::PointerType:
-      out << cast<PointerType>(*this).type() << "*";
+      out << cast<PointerType>(*this).pointee_type() << "*";
       break;
     case Value::Kind::FunctionType: {
       const auto& fn_type = cast<FunctionType>(*this);
@@ -722,8 +722,8 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
   }
   switch (t1->kind()) {
     case Value::Kind::PointerType:
-      return TypeEqual(&cast<PointerType>(*t1).type(),
-                       &cast<PointerType>(*t2).type(), equality_ctx);
+      return TypeEqual(&cast<PointerType>(*t1).pointee_type(),
+                       &cast<PointerType>(*t2).pointee_type(), equality_ctx);
     case Value::Kind::FunctionType: {
       const auto& fn1 = cast<FunctionType>(*t1);
       const auto& fn2 = cast<FunctionType>(*t2);

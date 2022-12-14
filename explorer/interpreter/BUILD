@@ -15,6 +15,10 @@ cc_library(
     hdrs = [
         "action.h",
         "value.h",
+        "value_transform.h",
+    ],
+    textual_hdrs = [
+        "value_kinds.def",
     ],
     # Exposed to resolve `member_test` dependencies.
     visibility = ["//explorer/ast:__pkg__"],
@@ -139,10 +143,12 @@ cc_library(
         ":heap",
         ":stack",
         "//common:check",
+        "//common:error",
         "//common:ostream",
         "//explorer/ast",
         "//explorer/common:arena",
         "//explorer/common:error_builders",
+        "//explorer/common:source_location",
         "@llvm-project//llvm:Support",
     ],
 )
