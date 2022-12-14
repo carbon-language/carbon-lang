@@ -197,6 +197,7 @@ http_archive(
     name = "rules_bison",
     patch_args = ["-p1"],
     patches = [
+        // Trying to upstream: https://github.com/jmillikin/rules_bison/pull/13
         "@carbon//bazel/pkg_patches/bison:0001_Support_Bison_building_on_FreeBSD.patch",
     ],
     sha256 = "6bc2d382e4ffccd66e60a74521c24722fc8fdfe9af49ff182f79bb5994fa1ba4",
