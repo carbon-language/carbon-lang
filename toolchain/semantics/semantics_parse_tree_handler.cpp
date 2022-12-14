@@ -150,6 +150,45 @@ auto SemanticsParseTreeHandler::PopWithResult(ParseNodeKind pop_parse_kind)
   return node_id;
 }
 
+auto SemanticsParseTreeHandler::PopWithResultIf(ParseNodeKind pop_parse_kind)
+    -> std::optional<SemanticsNodeId> {
+  auto parse_kind = parse_tree_->node_kind(node_stack_.back().parse_node);
+  if (parse_kind != pop_parse_kind) {
+    return std::nullopt;
+  }
+
+  auto back = node_stack_.pop_back_val();
+  auto node_id = back.result_id;
+  CARBON_VLOG() << "Pop " << node_stack_.size() << ": " << pop_parse_kind
+                << ") -> " << node_id << "\n";
+  CARBON_CHECK(node_id.is_valid())
+      << "Invalid PopWithResult with " << parse_kind;
+  return node_id;
+}
+
+auto SemanticsParseTreeHandler::TryTypeConversion(ParseTree::Node parse_node,
+                                                  SemanticsNodeId lhs_id,
+                                                  SemanticsNodeId rhs_id,
+                                                  bool /*can_convert_lhs*/)
+    -> SemanticsNodeId {
+  auto block = node_block_stack_.back();
+  auto lhs_type = semantics_->GetType(block, lhs_id);
+  auto rhs_type = semantics_->GetType(block, rhs_id);
+  // TODO: This should attempt a type conversion, but there's not enough
+  // implemented to do that right now.
+  if (lhs_type != rhs_type) {
+    auto invalid_type = SemanticsNodeId::MakeBuiltinReference(
+        SemanticsBuiltinKind::InvalidType());
+    if (lhs_type != invalid_type && rhs_type != invalid_type) {
+      // TODO: This is a poor diagnostic, and should be expanded.
+      CARBON_DIAGNOSTIC(TypeMismatch, Error, "Type mismatch");
+      emitter_->Emit(parse_tree_->node_token(parse_node), TypeMismatch);
+    }
+    return invalid_type;
+  }
+  return lhs_type;
+}
+
 auto SemanticsParseTreeHandler::AddIdentifier(ParseTree::Node decl_node)
     -> SemanticsIdentifierId {
   CARBON_CHECK(parse_tree_->node_kind(decl_node) ==
@@ -284,7 +323,9 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinitionStart(
   Pop(ParseNodeKind::FunctionIntroducer());
 
   auto decl_id = AddNode(SemanticsNode::MakeFunctionDeclaration(fn_node));
-  AddNode(SemanticsNode::MakeBindName(name_node, name, decl_id));
+  // TODO: Propagate the type of the function.
+  AddNode(SemanticsNode::MakeBindName(name_node, SemanticsNodeId::MakeInvalid(),
+                                      name, decl_id));
   auto block_id = semantics_->AddNodeBlock();
   AddNode(SemanticsNode::MakeFunctionDefinition(parse_node, decl_id, block_id));
   node_block_stack_.push_back(block_id);
@@ -321,23 +362,8 @@ auto SemanticsParseTreeHandler::HandleInfixOperator(ParseTree::Node parse_node)
     -> void {
   auto rhs_id = PopWithResult();
   auto lhs_id = PopWithResult();
-
-  auto block = node_block_stack_.back();
-  auto lhs_type = semantics_->GetType(block, lhs_id);
-  auto rhs_type = semantics_->GetType(block, rhs_id);
-  SemanticsNodeId result_type = lhs_type;
-  // TODO: This should attempt a type conversion, but there's not enough
-  // implemented to do that right now.
-  if (lhs_type != rhs_type) {
-    auto invalid_type = SemanticsNodeId::MakeBuiltinReference(
-        SemanticsBuiltinKind::InvalidType());
-    if (lhs_type != invalid_type && rhs_type != invalid_type) {
-      // TODO: This is a poor diagnostic, and should be expanded.
-      CARBON_DIAGNOSTIC(TypeMismatch, Error, "Type mismatch");
-      emitter_->Emit(parse_tree_->node_token(parse_node), TypeMismatch);
-    }
-    result_type = invalid_type;
-  }
+  SemanticsNodeId result_type =
+      TryTypeConversion(parse_node, lhs_id, rhs_id, /*can_convert_lhs=*/true);
 
   // Figure out the operator for the token.
   auto token = parse_tree_->node_token(parse_node);
@@ -454,16 +480,23 @@ auto SemanticsParseTreeHandler::HandleParenExpressionOrTupleLiteralStart(
 
 auto SemanticsParseTreeHandler::HandlePatternBinding(ParseTree::Node parse_node)
     -> void {
-  // TODO: Create storage for the type, use that for the bind instead of the
-  // type itself.
-  auto type_id = PopWithResult();
+  // Allocate storage.
+  auto type = node_stack_.pop_back_val();
+  CARBON_CHECK(type.result_id.is_valid());
+  auto storage_id =
+      AddNode(SemanticsNode::MakeVarStorage(parse_node, type.result_id));
 
-  auto name_node = node_stack_.back().parse_node;
-  auto name = AddIdentifier(name_node);
-  node_stack_.pop_back();
+  // Get the name.
+  auto name_node = node_stack_.pop_back_val().parse_node;
+  auto name_id = AddIdentifier(name_node);
 
-  Push(parse_node,
-       AddNode(SemanticsNode::MakeBindName(name_node, name, type_id)));
+  // Bind the name to storage.
+  AddNode(SemanticsNode::MakeBindName(name_node, type.result_id, name_id,
+                                      storage_id));
+
+  // If this node's result is used, it'll be for the storage address, so provide
+  // that.
+  Push(parse_node, storage_id);
 }
 
 auto SemanticsParseTreeHandler::HandlePostfixOperator(
@@ -554,11 +587,16 @@ auto SemanticsParseTreeHandler::HandleTupleLiteralComma(
 
 auto SemanticsParseTreeHandler::HandleVariableDeclaration(
     ParseTree::Node parse_node) -> void {
-  // TODO: Initializers would assign to the PatternBinding, but this code
-  // doesn't handle it right now.
-  PopWithResult();
+  auto init_id = PopWithResultIf(ParseNodeKind::VariableInitializer());
+  auto storage_id = PopWithResult(ParseNodeKind::PatternBinding());
+  if (init_id) {
+    auto storage_type = TryTypeConversion(parse_node, storage_id, *init_id,
+                                          /*can_convert_lhs=*/false);
+    AddNode(SemanticsNode::MakeAssign(parse_node, storage_type, storage_id,
+                                      *init_id));
+  }
   Pop(ParseNodeKind::VariableIntroducer());
-  Push(parse_node);
+  Push(parse_node, storage_id);
 }
 
 auto SemanticsParseTreeHandler::HandleVariableIntroducer(
@@ -568,8 +606,9 @@ auto SemanticsParseTreeHandler::HandleVariableIntroducer(
 }
 
 auto SemanticsParseTreeHandler::HandleVariableInitializer(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> void {
+  // The child is the expression; propagate it for the parent.
+  Push(parse_node, PopWithResult());
 }
 
 auto SemanticsParseTreeHandler::HandleWhileCondition(
