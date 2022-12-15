@@ -69,6 +69,19 @@ class SemanticsIR {
       : cross_reference_irs_({&builtins, this}),
         cross_references_(builtins.cross_references_) {}
 
+  // Returns the requested node, resolving cross references.
+  auto GetNode(SemanticsNodeBlockId block_id, SemanticsNodeId node_id)
+      -> SemanticsNode {
+    if (node_id.is_cross_reference()) {
+      auto ref = cross_references_[node_id.GetAsCrossReference()];
+      return cross_reference_irs_[ref.ir.index]
+          ->node_blocks_[ref.node_block.index][ref.node.index];
+    } else {
+      return node_blocks_[block_id.index][node_id.index];
+    }
+  }
+
+  // Returns the type of the requested node, resolving cross references.
   auto GetType(SemanticsNodeBlockId block_id, SemanticsNodeId node_id)
       -> SemanticsNodeId {
     if (node_id.is_cross_reference()) {
@@ -96,7 +109,8 @@ class SemanticsIR {
   // Adds a cross reference, returning an ID to reference it.
   auto AddCrossReference(SemanticsCrossReference cross_reference)
       -> SemanticsNodeId {
-    SemanticsNodeId id(cross_references_.size());
+    SemanticsNodeId id =
+        SemanticsNodeId::MakeCrossReference(cross_references_.size());
     cross_references_.push_back(cross_reference);
     return id;
   }

@@ -14,6 +14,8 @@
 // CHECK:STDOUT:   node_xref5 = xref(ir1, block1, node1);
 // CHECK:STDOUT: },
 // CHECK:STDOUT: integer_literals = {
+// CHECK:STDOUT:   int0 = 0;
+// CHECK:STDOUT:   int1 = 0;
 // CHECK:STDOUT: },
 // CHECK:STDOUT: strings = {
 // CHECK:STDOUT:   str0 = "Main";
@@ -28,12 +30,18 @@
 // CHECK:STDOUT:   block1 = {
 // CHECK:STDOUT:     node0 = VarStorage(): node_xref2;
 // CHECK:STDOUT:     node1 = BindName(str1, node0): node_xref2;
-// CHECK:STDOUT:     node2 = RealLiteral(): node_xref3;
-// CHECK:STDOUT:     node3 = Assign(node0, node2): node_xref1;
+// CHECK:STDOUT:     node2 = IntegerLiteral(int0): node_xref2;
+// CHECK:STDOUT:     node3 = Assign(node0, node2): node_xref2;
+// CHECK:STDOUT:     node4 = VarStorage(): node_xref2;
+// CHECK:STDOUT:     node5 = BindName(str1, node4): node_xref2;
+// CHECK:STDOUT:     node6 = IntegerLiteral(int1): node_xref2;
+// CHECK:STDOUT:     node7 = Assign(node4, node6): node_xref2;
 // CHECK:STDOUT:   },
 // CHECK:STDOUT: }
 
+
 fn Main() {
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/init_type_mismatch.carbon:[[@LINE+1]]:19: Type mismatch
-  var x: i32 = 1.0;
+  var x: i32 = 0;
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/bad_duplicate_decl.carbon:[[@LINE+1]]:7: Redefining x in the same scope; previous definition at TODO.carbon:[[@LINE-1]]:7
+  var x: i32 = 0;
 }

@@ -4,25 +4,30 @@
 //
 // AUTOUPDATE
 // RUN: %{carbon-run-semantics}
-// CHECK:STDERR: Please report issues to https://github.com/carbon-language/carbon-lang/issues and include the crash backtrace.
-// CHECK:STDERR: Stack dump:
-// CHECK:STDERR: 0.	Program arguments: ./bazel-bin/toolchain/driver/carbon dump semantics-ir {{.*}}/toolchain/semantics/testdata/basics/bad_name_lookup.carbon
-// CHECK:STDERR: 1.	node_stack_:
-// CHECK:STDERR: 	0.	FunctionDefinitionStart
-// CHECK:STDERR: 2.	node_block_stack_:
-// CHECK:STDERR: 	0.	block0
-// CHECK:STDERR: 	1.	block1
-// CHECK:STDERR: Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
-// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0xea6e3)[0x55c23d7126e3]
-// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0xe842e)[0x55c23d71042e]
-// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0xeaada)[0x55c23d712ada]
-// CHECK:STDERR: /lib/x86_64-linux-gnu/libc.so.6(+0x3daa0)[0x7fd848c3daa0]
-// CHECK:STDERR: /lib/x86_64-linux-gnu/libc.so.6(+0x8957c)[0x7fd848c8957c]
-// CHECK:STDERR: /lib/x86_64-linux-gnu/libc.so.6(raise+0x12)[0x7fd848c3da02]
-// CHECK:STDERR: /lib/x86_64-linux-gnu/libc.so.6(abort+0xcf)[0x7fd848c28469]
-// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0xbeff2)[0x55c23d6e6ff2]
-// CHECK:STDERR: CHECK failure at toolchain/semantics/semantics_parse_tree_handler.cpp:157: node_id.is_valid(): Invalid PopWithResult on NameReference
+// CHECK:STDOUT: cross_reference_irs.size == 2,
+// CHECK:STDOUT: cross_references = {
+// CHECK:STDOUT:   node_xref0 = xref(ir0, block0, node0);
+// CHECK:STDOUT:   node_xref1 = xref(ir0, block0, node1);
+// CHECK:STDOUT:   node_xref2 = xref(ir0, block0, node2);
+// CHECK:STDOUT:   node_xref3 = xref(ir0, block0, node3);
+// CHECK:STDOUT:   node_xref4 = xref(ir1, block0, node1);
+// CHECK:STDOUT: },
+// CHECK:STDOUT: integer_literals = {
+// CHECK:STDOUT: },
+// CHECK:STDOUT: strings = {
+// CHECK:STDOUT:   str0 = "Main";
+// CHECK:STDOUT: },
+// CHECK:STDOUT: node_blocks = {
+// CHECK:STDOUT:   block0 = {
+// CHECK:STDOUT:     node0 = FunctionDeclaration();
+// CHECK:STDOUT:     node1 = BindName(str0, node0);
+// CHECK:STDOUT:     node2 = FunctionDefinition(node0, block1);
+// CHECK:STDOUT:   },
+// CHECK:STDOUT:   block1 = {
+// CHECK:STDOUT:   },
+// CHECK:STDOUT: }
 
 fn Main() {
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/basics/bad_name_lookup.carbon:[[@LINE+1]]:3: Name x not found
   x;
 }

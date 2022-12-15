@@ -28,11 +28,11 @@
 // CHECK:STDOUT:   block1 = {
 // CHECK:STDOUT:     node0 = VarStorage(): node_xref2;
 // CHECK:STDOUT:     node1 = BindName(str1, node0): node_xref2;
-// CHECK:STDOUT:     node2 = Assign(node0, node5): node_xref1;
+// CHECK:STDOUT:     node2 = Assign(node0, node_xref5): node_xref2;
 // CHECK:STDOUT:   },
 // CHECK:STDOUT: }
 
 fn Main() {
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/bad_init_with_self.carbon:[[@LINE+1]]:17: Type mismatch
+  // TODO: This should fail with `x`... uninitialized? Not yet declared?
   var x: i32 = x;
 }

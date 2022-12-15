@@ -65,6 +65,7 @@ auto SemanticsParseTreeHandler::Build() -> void {
 
   // Add a block for the ParseTree.
   node_block_stack_.push_back(semantics_->AddNodeBlock());
+  PushScope();
 
   for (auto parse_node : parse_tree_->postorder()) {
     switch (auto parse_kind = parse_tree_->node_kind(parse_node)) {
@@ -76,6 +77,13 @@ auto SemanticsParseTreeHandler::Build() -> void {
 #include "toolchain/parser/parse_node_kind.def"
     }
   }
+
+  node_block_stack_.pop_back();
+  CARBON_CHECK(node_block_stack_.empty()) << node_block_stack_.size();
+
+  PopScope();
+  CARBON_CHECK(name_lookup_.empty()) << name_lookup_.size();
+  CARBON_CHECK(scope_stack_.empty()) << scope_stack_.size();
 }
 
 auto SemanticsParseTreeHandler::AddCrossReference(SemanticsNodeId node_id)
@@ -84,13 +92,12 @@ auto SemanticsParseTreeHandler::AddCrossReference(SemanticsNodeId node_id)
       << "Should use the existing cross-reference. Might want to return this, "
          "but lacking a use-case, it's treated as bad input.";
   return semantics_->AddCrossReference(SemanticsCrossReference(
-      SemanticsIR::ThisIR, node_block_stack_.back(), node_id));
+      SemanticsIR::ThisIR, current_block_id(), node_id));
 }
 
 auto SemanticsParseTreeHandler::AddNode(SemanticsNode node) -> SemanticsNodeId {
-  CARBON_VLOG() << "AddNode " << node_block_stack_.back() << ": " << node
-                << "\n";
-  return semantics_->AddNode(node_block_stack_.back(), node);
+  CARBON_VLOG() << "AddNode " << current_block_id() << ": " << node << "\n";
+  return semantics_->AddNode(current_block_id(), node);
 }
 
 auto SemanticsParseTreeHandler::BindName(ParseTree::Node name_node,
@@ -104,7 +111,21 @@ auto SemanticsParseTreeHandler::BindName(ParseTree::Node name_node,
 
   auto bind_id = AddNode(
       SemanticsNode::MakeBindName(name_node, type_id, name_id, target_id));
-  name_lookup_[name_id].push_back(AddCrossReference(bind_id));
+  auto [it, inserted] = current_scope().insert(name_id);
+  if (inserted) {
+    name_lookup_[name_id].push_back(AddCrossReference(bind_id));
+  } else {
+    auto prev_def_id = name_lookup_[name_id].back();
+    auto prev_def = semantics_->GetNode(current_block_id(), prev_def_id);
+    auto token = parse_tree_->node_token(prev_def.parse_node());
+    CARBON_DIAGNOSTIC(NameRedefined, Error,
+                      "Redefining {0} in the same scope; previous definition "
+                      "at TODO.carbon:{1}:{2}",
+                      llvm::StringRef, int32_t, int32_t);
+    emitter_->Emit(parse_tree_->node_token(name_node), NameRedefined, name_str,
+                   tokens_->GetLineNumber(token),
+                   tokens_->GetColumnNumber(token));
+  }
 }
 
 auto SemanticsParseTreeHandler::Push(ParseTree::Node parse_node) -> void {
@@ -189,12 +210,29 @@ auto SemanticsParseTreeHandler::PopWithResultIf(ParseNodeKind pop_parse_kind)
   return node_id;
 }
 
+auto SemanticsParseTreeHandler::PushScope() -> void {
+  scope_stack_.push_back({});
+}
+
+auto SemanticsParseTreeHandler::PopScope() -> void {
+  for (const auto& str_id : scope_stack_.back()) {
+    auto it = name_lookup_.find(str_id);
+    if (it->second.size() == 1) {
+      // Erase names that no longer resolve.
+      name_lookup_.erase(it);
+    } else {
+      it->second.pop_back();
+    }
+  }
+  scope_stack_.pop_back();
+}
+
 auto SemanticsParseTreeHandler::TryTypeConversion(ParseTree::Node parse_node,
                                                   SemanticsNodeId lhs_id,
                                                   SemanticsNodeId rhs_id,
                                                   bool /*can_convert_lhs*/)
     -> SemanticsNodeId {
-  auto block = node_block_stack_.back();
+  auto block = current_block_id();
   auto lhs_type = semantics_->GetType(block, lhs_id);
   auto rhs_type = semantics_->GetType(block, rhs_id);
   // TODO: This should attempt a type conversion, but there's not enough
@@ -204,8 +242,11 @@ auto SemanticsParseTreeHandler::TryTypeConversion(ParseTree::Node parse_node,
         SemanticsBuiltinKind::InvalidType());
     if (lhs_type != invalid_type && rhs_type != invalid_type) {
       // TODO: This is a poor diagnostic, and should be expanded.
-      CARBON_DIAGNOSTIC(TypeMismatch, Error, "Type mismatch");
-      emitter_->Emit(parse_tree_->node_token(parse_node), TypeMismatch);
+      CARBON_DIAGNOSTIC(TypeMismatch, Error,
+                        "Type mismatch: lhs is {0}, rhs is {1}",
+                        SemanticsNodeId, SemanticsNodeId);
+      emitter_->Emit(parse_tree_->node_token(parse_node), TypeMismatch,
+                     lhs_type, rhs_type);
     }
     return invalid_type;
   }
@@ -291,7 +332,7 @@ auto SemanticsParseTreeHandler::HandleExpressionStatement(
 
 auto SemanticsParseTreeHandler::HandleFileEnd(ParseTree::Node /*parse_node*/)
     -> void {
-  CARBON_CHECK(node_block_stack_.size() == 1) << node_block_stack_.size();
+  // Do nothing, no need to balance this node.
 }
 
 auto SemanticsParseTreeHandler::HandleForHeader(ParseTree::Node /*parse_node*/)
@@ -327,6 +368,7 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinition(
     node_stack_.pop_back();
   }
   Pop(ParseNodeKind::FunctionDefinitionStart());
+  PopScope();
   node_block_stack_.pop_back();
   Push(parse_node);
 }
@@ -345,6 +387,7 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinitionStart(
   auto block_id = semantics_->AddNodeBlock();
   AddNode(SemanticsNode::MakeFunctionDefinition(parse_node, decl_id, block_id));
   node_block_stack_.push_back(block_id);
+  PushScope();
   Push(parse_node);
 }
 
@@ -437,24 +480,31 @@ auto SemanticsParseTreeHandler::HandleLiteral(ParseTree::Node parse_node)
 
 auto SemanticsParseTreeHandler::HandleNameReference(ParseTree::Node parse_node)
     -> void {
-  CARBON_DIAGNOSTIC(NameNotFound, Error, "Name {0} not found", llvm::StringRef);
   auto name_str = parse_tree_->GetNodeText(parse_node);
+
+  auto name_not_found = [&] {
+    CARBON_DIAGNOSTIC(NameNotFound, Error, "Name {0} not found",
+                      llvm::StringRef);
+    emitter_->Emit(parse_tree_->node_token(parse_node), NameNotFound, name_str);
+    Push(parse_node, SemanticsNodeId::MakeBuiltinReference(
+                         SemanticsBuiltinKind::InvalidType()));
+  };
 
   auto name_id = semantics_->GetString(name_str);
   if (!name_id) {
-    emitter_->Emit(parse_tree_->node_token(parse_node), NameNotFound, name_str);
-    Push(parse_node);
+    name_not_found();
     return;
   }
 
-  auto name_lookup_it = name_lookup_.find(*name_id);
-  if (name_lookup_it == name_lookup_.end() || name_lookup_it->second.empty()) {
-    emitter_->Emit(parse_tree_->node_token(parse_node), NameNotFound, name_str);
-    Push(parse_node);
+  auto it = name_lookup_.find(*name_id);
+  if (it == name_lookup_.end()) {
+    name_not_found();
     return;
   }
+  CARBON_CHECK(!it->second.empty()) << "Should have been erased: " << name_str;
 
-  Push(parse_node, name_lookup_it->second.back());
+  // TODO: Check for ambiguous lookups.
+  Push(parse_node, it->second.back());
 }
 
 auto SemanticsParseTreeHandler::HandlePackageApi(ParseTree::Node /*parse_node*/)
@@ -525,8 +575,8 @@ auto SemanticsParseTreeHandler::HandlePatternBinding(ParseTree::Node parse_node)
   // Bind the name to storage.
   BindName(name_node, type.result_id, storage_id);
 
-  // If this node's result is used, it'll be for the storage address, so provide
-  // that.
+  // If this node's result is used, it'll be for the storage address, so
+  // provide that.
   Push(parse_node, storage_id);
 }
 
@@ -548,7 +598,7 @@ auto SemanticsParseTreeHandler::HandleReturnStatement(
     Push(parse_node, SemanticsNode::MakeReturn(parse_node));
   } else {
     auto arg = PopWithResult();
-    auto arg_type = semantics_->GetType(node_block_stack_.back(), arg);
+    auto arg_type = semantics_->GetType(current_block_id(), arg);
     Pop(ParseNodeKind::ReturnStatementStart());
     Push(parse_node,
          SemanticsNode::MakeReturnExpression(parse_node, arg_type, arg));
