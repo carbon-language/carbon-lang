@@ -119,8 +119,8 @@ http_archive(
     build_file_content = "# empty",
     patch_args = ["-p1"],
     patches = [
-        "@carbon//bazel/pkg_patches/llvm:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
-        "@carbon//bazel/pkg_patches/llvm:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
+        "@carbon//bazel/patches/llvm:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
+        "@carbon//bazel/patches/llvm:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
     ],
     sha256 = "8e9cbb937b1a40536cd809e09603a1810d86a8c314fee0cca36fc493e78289e5",
     strip_prefix = "llvm-project-{0}".format(llvm_version),
@@ -159,7 +159,7 @@ http_archive(
     patch_args = ["-p1"],
     patches = [
         // Trying to upstream: https://github.com/jmillikin/rules_m4/pull/15
-        "@carbon//bazel/pkg_patches/m4:0001_Support_M4_building_on_FreeBSD.patch",
+        "@carbon//bazel/patches/m4:0001_Support_M4_building_on_FreeBSD.patch",
     ],
     sha256 = "eaa674cd84546038ecbcc49cdd346134a20961a41fa1a541e80d8bf4b470c34d",
     strip_prefix = "rules_m4-{0}".format(rules_m4_version),
@@ -198,7 +198,7 @@ http_archive(
     patch_args = ["-p1"],
     patches = [
         // Trying to upstream: https://github.com/jmillikin/rules_bison/pull/13
-        "@carbon//bazel/pkg_patches/bison:0001_Support_Bison_building_on_FreeBSD.patch",
+        "@carbon//bazel/patches/bison:0001_Support_Bison_building_on_FreeBSD.patch",
     ],
     sha256 = "6bc2d382e4ffccd66e60a74521c24722fc8fdfe9af49ff182f79bb5994fa1ba4",
     strip_prefix = "rules_bison-{0}".format(rules_bison_version),
