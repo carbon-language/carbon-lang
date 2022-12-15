@@ -87,6 +87,7 @@ CARBON_DIAGNOSTIC_KIND(ExpectedInterfaceOpenCurlyBrace)
 // ============================================================================
 
 CARBON_DIAGNOSTIC_KIND(TypeMismatch)
+CARBON_DIAGNOSTIC_KIND(NameNotFound)
 
 // ============================================================================
 // Other diagnostics
