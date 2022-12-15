@@ -10,16 +10,17 @@
 // CHECK:STDOUT:   node_xref1 = xref(ir0, block0, node1);
 // CHECK:STDOUT:   node_xref2 = xref(ir0, block0, node2);
 // CHECK:STDOUT:   node_xref3 = xref(ir0, block0, node3);
-// CHECK:STDOUT: },
-// CHECK:STDOUT: identifiers = {
-// CHECK:STDOUT:   ident0 = "x";
+// CHECK:STDOUT:   node_xref4 = xref(ir1, block0, node1);
 // CHECK:STDOUT: },
 // CHECK:STDOUT: integer_literals = {
+// CHECK:STDOUT: },
+// CHECK:STDOUT: strings = {
+// CHECK:STDOUT:   str0 = "x";
 // CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   block0 = {
 // CHECK:STDOUT:     node0 = VarStorage(): node_xref2;
-// CHECK:STDOUT:     node1 = BindName(ident0, node0): node_xref2;
+// CHECK:STDOUT:     node1 = BindName(str0, node0): node_xref2;
 // CHECK:STDOUT:   },
 // CHECK:STDOUT: }
 

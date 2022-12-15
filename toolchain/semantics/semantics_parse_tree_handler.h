@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_PARSE_TREE_HANDLER_H_
 #define CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_PARSE_TREE_HANDLER_H_
 
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallVector.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node.h"
@@ -43,11 +45,34 @@ class SemanticsParseTreeHandler {
   static_assert(sizeof(TraversalStackEntry) == 8,
                 "Unexpected TraversalStackEntry size");
 
-  // Adds an identifier for a DeclaredName node, returning its reference.
-  auto AddIdentifier(ParseTree::Node decl_node) -> SemanticsIdentifierId;
+  // Provides DenseMapInfo for SemanticsStringId.
+  struct SemanticsStringIdMapInfo {
+    static inline auto getEmptyKey() -> SemanticsStringId {
+      return SemanticsStringId(llvm::DenseMapInfo<int32_t>::getEmptyKey());
+    }
+    static inline auto getTombstoneKey() -> SemanticsStringId {
+      return SemanticsStringId(llvm::DenseMapInfo<int32_t>::getTombstoneKey());
+    }
+
+    static auto getHashValue(const SemanticsStringId& val) -> unsigned {
+      return llvm::DenseMapInfo<int32_t>::getHashValue(val.index);
+    }
+
+    static auto isEqual(const SemanticsStringId& lhs,
+                        const SemanticsStringId& rhs) -> bool {
+      return lhs == rhs;
+    }
+  };
+
+  // Adds a cross-reference for a node_id in the current block.
+  auto AddCrossReference(SemanticsNodeId node_id) -> SemanticsNodeId;
 
   // Adds a node to the current block, returning the produced ID.
   auto AddNode(SemanticsNode node) -> SemanticsNodeId;
+
+  // Binds a DeclaredName to a target node with the given type.
+  auto BindName(ParseTree::Node name_node, SemanticsNodeId type_id,
+                SemanticsNodeId target_id) -> void;
 
   // Pushes a parse tree node onto the stack. Used when there is no IR generated
   // by the node.
@@ -109,6 +134,14 @@ class SemanticsParseTreeHandler {
   // The stack of node blocks during build. Only updated on ParseTree nodes that
   // affect the stack.
   llvm::SmallVector<SemanticsNodeBlockId> node_block_stack_;
+
+  // Provides name lookup functionality. Each string maps to a stack of
+  // SemanticsNodeIDs, where the last node added will correspond to the current
+  // block. All SemanticsNodeIDs must be cross-references, because names will
+  // frequently be used across blocks.
+  llvm::DenseMap<SemanticsStringId, llvm::SmallVector<SemanticsNodeId>,
+                 SemanticsStringIdMapInfo>
+      name_lookup_;
 };
 
 }  // namespace Carbon

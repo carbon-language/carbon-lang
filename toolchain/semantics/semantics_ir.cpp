@@ -85,18 +85,18 @@ auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
   }
   out << "},\n";
 
-  out << "identifiers = {\n";
-  for (int32_t i = 0; i < static_cast<int32_t>(identifiers_.size()); ++i) {
-    out.indent(Indent);
-    out << SemanticsIdentifierId(i) << " = \"" << identifiers_[i] << "\";\n";
-  }
-  out << "},\n";
-
   out << "integer_literals = {\n";
   for (int32_t i = 0; i < static_cast<int32_t>(integer_literals_.size()); ++i) {
     out.indent(Indent);
     out << SemanticsIntegerLiteralId(i) << " = " << integer_literals_[i]
         << ";\n";
+  }
+  out << "},\n";
+
+  out << "strings = {\n";
+  for (int32_t i = 0; i < static_cast<int32_t>(strings_.size()); ++i) {
+    out.indent(Indent);
+    out << SemanticsStringId(i) << " = \"" << strings_[i] << "\";\n";
   }
   out << "},\n";
 
