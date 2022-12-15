@@ -89,6 +89,17 @@ def _compute_mac_os_sysroot(repository_ctx):
     output = _run(repository_ctx, [xcrun, "--show-sdk-path"]).stdout
     return output.splitlines()[0]
 
+def _compute_bsd_sysroot(repository_ctx):
+    """Look around for sysroot. Return root (/) if nothing found."""
+
+    # Try it-just-works for CMake users.
+    default = "/"
+    sysroot = repository_ctx.os.environ.get("CMAKE_SYSROOT", default)
+    sysroot_path = repository_ctx.path(sysroot)
+    if sysroot_path.exists:
+        return sysroot_path.realpath
+    return default
+
 def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
     """Runs the `clang` binary and extracts the include search paths.
 
@@ -172,6 +183,8 @@ def _configure_clang_toolchain_impl(repository_ctx):
     sysroot_dir = None
     if repository_ctx.os.name.lower().startswith("mac os"):
         sysroot_dir = _compute_mac_os_sysroot(repository_ctx)
+    if repository_ctx.os.name == "freebsd":
+        sysroot_dir = _compute_bsd_sysroot(repository_ctx)
     include_dirs = _compute_clang_cpp_include_search_paths(
         repository_ctx,
         clang_cpp,

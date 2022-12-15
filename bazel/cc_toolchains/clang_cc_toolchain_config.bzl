@@ -600,6 +600,39 @@ def _impl(ctx):
         ],
     )
 
+    freebsd_flags_feature = feature(
+        name = "freebsd_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.c_compile,
+                    ACTION_NAMES.cpp_compile,
+                    ACTION_NAMES.cpp_header_parsing,
+                    ACTION_NAMES.cpp_module_compile,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = [
+                            "-DHAVE_MALLCTL",
+                        ],
+                    ),
+                ],
+            ),
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cpp_link_executable,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["-fpie"],
+                        expand_if_available = "force_pic",
+                    ),
+                ],
+            ),
+        ],
+    )
+
     default_link_libraries_feature = feature(
         name = "default_link_libraries",
         enabled = True,
@@ -836,6 +869,9 @@ def _impl(ctx):
         sysroot = None
     elif ctx.attr.target_cpu in ["darwin", "darwin_arm64"]:
         features += [macos_flags_feature]
+        sysroot = sysroot_dir
+    elif ctx.attr.target_cpu == "freebsd":
+        features += [freebsd_flags_feature]
         sysroot = sysroot_dir
     else:
         fail("Unsupported target platform!")
