@@ -1358,6 +1358,8 @@ auto Parser::HandleParenExpressionFinishAsTupleState() -> void {
           state.has_error);
 }
 
+// TODO: This can possibly be merged with `HandlePattern`. Regular function
+// parameters support `addr` as well but it is not implemented yet.
 auto Parser::HandleSelfPatternState() -> void {
   auto state = PopState();
 
