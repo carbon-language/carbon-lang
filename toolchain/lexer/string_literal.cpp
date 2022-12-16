@@ -380,40 +380,49 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
         // Trailing whitespace before a newline doesn't contribute to the string
         // literal value.
         while (!result.empty() && result.back() != '\n' &&
-               IsSpace(result.back())) {
+               result.back() == ' ' && --end_of_regular_text >= 0) {
           result.pop_back();
         }
-        result += '\n';
+        llvm::StringRef regular_text = contents.substr(0, end_of_regular_text);
+        contents = contents.substr(end_of_regular_text);
+        if (contents.startswith("\n")) {
+          // Trailing whitespace before a newline doesn't contribute to the string
+          // literal value.
+          regular_text = regular_text.rtrim(' ');
+        }
+        result += regular_text;
         // Move onto to the next line.
         break;
       }
 
-        // code 1 from comments
+//code 1 from comments
         // What happens for:
         //
         //   var s: String = """
         //   \u{0020}
         //   """;
-        //   ? I think in that case the final character of result here will be ' ' but we don't want to remove it.
+        //   ? I think in that case the final character of result here will be ' '
+        //but we don't want to remove it.
         //
-        //   I think we only ever want to remove the literal space characters we just added to result. Eg, something like:
-        while (!result.empty() && result.back() != '\n' &&
-               result.back() == ' ' && --end_of_regular_text >= 0) {
-}
+        //   I think we only ever want to remove the literal space
+        //characters we just added to result. Eg, something like:
+//        while (!result.empty() && result.back() != '\n' &&
+//               result.back() == ' ' && --end_of_regular_text >= 0) {
+//}
 
-// code 2 from comments
+//code 2 from comments
 //I think the ideal thing here would be to avoid adding anything to result
 //until after we've done this skipping backwards step.
 //We could do this scan before the result += ... line above, eg:
-llvm::StringRef regular_text = contents.substr(0, end_of_regular_text);
-contents = contents.substr(end_of_regular_text);
-if (contents.startswith("\n")) {
-  // Trailing whitespace before a newline doesn't contribute to the string
-  // literal value.
-  regular_text = regular_text.rtrim(' ');
-}
-result += regular_text;
-// end of code 1 and 2 from comments
+//llvm::StringRef regular_text = contents.substr(0, end_of_regular_text);
+//contents = contents.substr(end_of_regular_text);
+//if (contents.startswith("\n")) {
+//  // Trailing whitespace before a newline doesn't contribute to the string
+//  // literal value.
+//  regular_text = regular_text.rtrim(' ');
+//}
+//result += regular_text;
+//end of code 1 and 2 from comments
 
       if (IsHorizontalWhitespace(contents.front())) {
         // Horizontal whitespace other than ` ` is valid only at the end of a
@@ -444,15 +453,9 @@ result += regular_text;
         continue;
       }
 
-      //code 3 from comment
+//code 3 from comment
       //... and then remove this if (contents.consume_front("\n")) { ... } block entirely.
-      //end of code 3 from comment
-
-      if (contents.consume_front("\n")) {
-        // An escaped newline ends the line without producing any content and
-        // without trimming trailing whitespace.
-        break;
-      }
+//end of code 3 from comment
 
       // Handle this escape sequence.
       ExpandAndConsumeEscapeSequence(emitter, contents, result);
