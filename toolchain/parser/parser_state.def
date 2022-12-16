@@ -213,7 +213,7 @@ CARBON_PARSER_STATE(ExpressionStatementFinish)
 // If invalid:
 //   (state done)
 // If parenthesized parameters:
-//   1. PatternAsFunctionParameter
+//   1. FunctionParameter
 //   2. FunctionParameterListFinish
 //   3. FunctionAfterParameterList
 // Else:
@@ -556,5 +556,36 @@ CARBON_PARSER_STATE(VarAfterInitializer)
 //   (state done)
 CARBON_PARSER_STATE(VarFinishAsSemicolon)
 CARBON_PARSER_STATE(VarFinishAsFor)
+
+// Handles processing of a functions' syntax after the deduced parameter lists's
+// `]`. This applies only to interfaces and classes.
+//
+// If invalid:
+//   (state done)
+// If parenthesized parameters:
+//   1. FunctionParameter
+//   2. FunctionParameterListFinish
+//   3. FunctionAfterParameterList
+// Else:
+//   1. FunctionParameterListFinish
+//   2. FunctionAfterParameterList
+CARBON_PARSER_STATE(FunctionAfterDeducedParameterList)
+
+// To handle parsing deduced parameter list at the end.
+//
+// Always:
+//   (state done)
+CARBON_PARSER_STATE(DeducedParameterListFinish)
+
+// To start parsing `self` deduced parameter.
+//
+// If valid:
+//   1. Expression
+//   2. PatternFinish
+// Else:
+//   1. PatternFinish
+CARBON_PARSER_STATE(SelfPattern)
+
+CARBON_PARSER_STATE(PatternAddress)
 
 #undef CARBON_PARSER_STATE

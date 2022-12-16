@@ -285,6 +285,27 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(InterfaceBodyStart, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(InterfaceBody, InterfaceBodyStart)
 CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDefinition, DeclaredName)
 
+// A pattern binding for `self` deduced parameter:
+//   `self`
+//   _external_: type expression
+// SelfDeducedParameter
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfDeducedParameter, 0)
+
+// A pattern binding for `addr self` deduced parameter:
+//   `addr self`
+//   _external_: type expression
+// SelfDeducedParameter
+// CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfDeducedParameterAddress, 1)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(Address, 1)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfType, 0)
+
+// Deduced parameters, such as `[self: Self]`:
+//   DeducedParameterListStart
+//   _external_: Address or PatternBinding
+// DeducedParameterList
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(DeducedParameterListStart, 0)
+CARBON_PARSE_NODE_KIND_BRACKET(DeducedParameterList, DeducedParameterListStart)
+
 #undef CARBON_PARSE_NODE_KIND
 #undef CARBON_PARSE_NODE_KIND_BRACKET
 #undef CARBON_PARSE_NODE_KIND_CHILD_COUNT
