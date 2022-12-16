@@ -15,17 +15,13 @@ namespace Carbon {
 
 auto SemanticsIR::MakeBuiltinIR() -> SemanticsIR {
   SemanticsIR semantics;
-  static constexpr auto BuiltinIR = SemanticsCrossReferenceIRId(0);
   auto block_id = semantics.AddNodeBlock();
-  semantics.cross_references_.resize_for_overwrite(
-      SemanticsBuiltinKind::ValidCount);
+  semantics.nodes_.reserve(SemanticsBuiltinKind::ValidCount);
 
   constexpr int32_t TypeOfTypeType = 0;
   auto type_type = semantics.AddNode(
       block_id, SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::TypeType(),
                                            SemanticsNodeId(TypeOfTypeType)));
-  semantics.cross_references_[SemanticsBuiltinKind::TypeType().AsInt()] =
-      SemanticsCrossReference(BuiltinIR, block_id, type_type);
   CARBON_CHECK(type_type.index == TypeOfTypeType)
       << "TypeType's type must be self-referential.";
 
@@ -33,22 +29,15 @@ auto SemanticsIR::MakeBuiltinIR() -> SemanticsIR {
   auto invalid_type = semantics.AddNode(
       block_id, SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::InvalidType(),
                                            SemanticsNodeId(TypeOfInvalidType)));
-  semantics.cross_references_[SemanticsBuiltinKind::InvalidType().AsInt()] =
-      SemanticsCrossReference(BuiltinIR, block_id, invalid_type);
   CARBON_CHECK(invalid_type.index == TypeOfInvalidType)
       << "InvalidType's type must be self-referential.";
 
-  auto integer_literal_type = semantics.AddNode(
+  semantics.AddNode(
       block_id, SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::IntegerType(),
                                            type_type));
-  semantics.cross_references_[SemanticsBuiltinKind::IntegerType().AsInt()] =
-      SemanticsCrossReference(BuiltinIR, block_id, integer_literal_type);
 
-  auto real_literal_type = semantics.AddNode(
-      block_id,
-      SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::RealType(), type_type));
-  semantics.cross_references_[SemanticsBuiltinKind::RealType().AsInt()] =
-      SemanticsCrossReference(BuiltinIR, block_id, real_literal_type);
+  semantics.AddNode(block_id, SemanticsNode::MakeBuiltin(
+                                  SemanticsBuiltinKind::RealType(), type_type));
 
   CARBON_CHECK(semantics.node_blocks_.size() == 1)
       << "BuildBuiltins should only produce 1 block, actual: "
@@ -62,7 +51,7 @@ auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
                                     DiagnosticConsumer& consumer,
                                     llvm::raw_ostream* vlog_stream)
     -> SemanticsIR {
-  SemanticsIR semantics(builtin_ir);
+  SemanticsIR semantics(builtin_ir, FromBuiltins::Constructor);
 
   TokenizedBuffer::TokenLocationTranslator translator(
       &tokens, /*last_line_lexed_to_column=*/nullptr);
@@ -72,18 +61,24 @@ auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
   return semantics;
 }
 
+SemanticsIR::SemanticsIR(const SemanticsIR& builtins,
+                         FromBuiltins /*from_builtins*/)
+    : cross_reference_irs_({&builtins, this}) {
+  nodes_.resize_for_overwrite(SemanticsBuiltinKind::ValidCount);
+  static constexpr auto BuiltinIR = SemanticsCrossReferenceIRId(0);
+  for (int i = 0; i < SemanticsBuiltinKind::ValidCount; ++i) {
+    // We can reuse the type node ID because the offsets of cross-references
+    // will be the same in this IR.
+    auto type = builtins.nodes_[i].type();
+    nodes_[i] =
+        SemanticsNode::MakeCrossReference(type, BuiltinIR, SemanticsNodeId(i));
+  }
+}
+
 auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
   constexpr int Indent = 2;
 
   out << "cross_reference_irs.size == " << cross_reference_irs_.size() << ",\n";
-
-  out << "cross_references = {\n";
-  for (int32_t i = 0; i < static_cast<int32_t>(cross_references_.size()); ++i) {
-    out.indent(Indent);
-    out << SemanticsNodeId::MakeCrossReference(i) << " = "
-        << cross_references_[i] << ";\n";
-  }
-  out << "},\n";
 
   out << "identifiers = {\n";
   for (int32_t i = 0; i < static_cast<int32_t>(identifiers_.size()); ++i) {
@@ -100,6 +95,13 @@ auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
   }
   out << "},\n";
 
+  out << "nodes = {\n";
+  for (int32_t i = 0; i < static_cast<int32_t>(nodes_.size()); ++i) {
+    out.indent(Indent);
+    out << SemanticsNodeId(i) << " = " << nodes_[i] << ";\n";
+  }
+  out << "},\n";
+
   out << "node_blocks = {\n";
   for (int32_t i = 0; i < static_cast<int32_t>(node_blocks_.size()); ++i) {
     out.indent(Indent);
@@ -108,7 +110,7 @@ auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
     const auto& node_block = node_blocks_[i];
     for (int32_t i = 0; i < static_cast<int32_t>(node_block.size()); ++i) {
       out.indent(2 * Indent);
-      out << SemanticsNodeId(i) << " = " << node_block[i] << ";\n";
+      out << node_block[i] << ";\n";
     }
 
     out.indent(Indent);

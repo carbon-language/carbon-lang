@@ -171,9 +171,8 @@ auto SemanticsParseTreeHandler::TryTypeConversion(ParseTree::Node parse_node,
                                                   SemanticsNodeId rhs_id,
                                                   bool /*can_convert_lhs*/)
     -> SemanticsNodeId {
-  auto block = node_block_stack_.back();
-  auto lhs_type = semantics_->GetType(block, lhs_id);
-  auto rhs_type = semantics_->GetType(block, rhs_id);
+  auto lhs_type = semantics_->GetType(lhs_id);
+  auto rhs_type = semantics_->GetType(rhs_id);
   // TODO: This should attempt a type conversion, but there's not enough
   // implemented to do that right now.
   if (lhs_type != rhs_type) {
@@ -517,7 +516,7 @@ auto SemanticsParseTreeHandler::HandleReturnStatement(
     Push(parse_node, SemanticsNode::MakeReturn(parse_node));
   } else {
     auto arg = PopWithResult();
-    auto arg_type = semantics_->GetType(node_block_stack_.back(), arg);
+    auto arg_type = semantics_->GetType(arg);
     Pop(ParseNodeKind::ReturnStatementStart());
     Push(parse_node,
          SemanticsNode::MakeReturnExpression(parse_node, arg_type, arg));
