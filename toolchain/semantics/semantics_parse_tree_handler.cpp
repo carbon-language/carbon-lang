@@ -111,7 +111,7 @@ auto SemanticsParseTreeHandler::BindName(ParseTree::Node name_node,
 
   auto bind_id = AddNode(
       SemanticsNode::MakeBindName(name_node, type_id, name_id, target_id));
-  auto [it, inserted] = current_scope().insert(name_id);
+  auto [it, inserted] = current_scope().names.insert(name_id);
   if (inserted) {
     name_lookup_[name_id].push_back(AddCrossReference(bind_id));
   } else {
@@ -215,7 +215,8 @@ auto SemanticsParseTreeHandler::PushScope() -> void {
 }
 
 auto SemanticsParseTreeHandler::PopScope() -> void {
-  for (const auto& str_id : scope_stack_.back()) {
+  auto scope = scope_stack_.pop_back_val();
+  for (const auto& str_id : scope.names) {
     auto it = name_lookup_.find(str_id);
     if (it->second.size() == 1) {
       // Erase names that no longer resolve.
@@ -224,7 +225,6 @@ auto SemanticsParseTreeHandler::PopScope() -> void {
       it->second.pop_back();
     }
   }
-  scope_stack_.pop_back();
 }
 
 auto SemanticsParseTreeHandler::TryTypeConversion(ParseTree::Node parse_node,

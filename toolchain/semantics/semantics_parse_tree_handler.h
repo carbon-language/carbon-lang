@@ -38,14 +38,6 @@ class SemanticsParseTreeHandler {
   // Prints the node_block_stack_ on stack dumps.
   class PrettyStackTraceNodeBlockStack;
 
-  // An entry in node_stack_.
-  struct NodeStackEntry {
-    ParseTree::Node parse_node;
-    // The result_id may be invalid if there's no result.
-    SemanticsNodeId result_id;
-  };
-  static_assert(sizeof(NodeStackEntry) == 8, "Unexpected NodeStackEntry size");
-
   // Provides DenseMapInfo for SemanticsStringId.
   struct SemanticsStringIdMapInfo {
     static inline auto getEmptyKey() -> SemanticsStringId {
@@ -63,6 +55,23 @@ class SemanticsParseTreeHandler {
                         const SemanticsStringId& rhs) -> bool {
       return lhs == rhs;
     }
+  };
+
+  // An entry in node_stack_.
+  struct NodeStackEntry {
+    ParseTree::Node parse_node;
+    // The result_id may be invalid if there's no result.
+    SemanticsNodeId result_id;
+  };
+  static_assert(sizeof(NodeStackEntry) == 8, "Unexpected NodeStackEntry size");
+
+  // An entry in scope_stack_.
+  struct ScopeStackEntry {
+    // Names which are registered with name_lookup_, and will need to be
+    // deregistered when the scope ends.
+    llvm::DenseSet<SemanticsStringId, SemanticsStringIdMapInfo> names;
+
+    // TODO: This likely needs to track things which need to be destructed.
   };
 
   // Adds a cross-reference for a node_id in the current block.
@@ -124,10 +133,7 @@ class SemanticsParseTreeHandler {
     return node_block_stack_.back();
   }
 
-  auto current_scope()
-      -> llvm::DenseSet<SemanticsStringId, SemanticsStringIdMapInfo>& {
-    return scope_stack_.back();
-  }
+  auto current_scope() -> ScopeStackEntry& { return scope_stack_.back(); }
 
   // Tokens for getting data on literals.
   const TokenizedBuffer* tokens_;
@@ -151,9 +157,15 @@ class SemanticsParseTreeHandler {
   // affect the stack.
   llvm::SmallVector<SemanticsNodeBlockId> node_block_stack_;
 
-  llvm::SmallVector<llvm::DenseSet<SemanticsStringId, SemanticsStringIdMapInfo>>
-      scope_stack_;
+  // A stack for scope context.
+  llvm::SmallVector<ScopeStackEntry> scope_stack_;
 
+  // Maps identifiers to name lookup results. Values are a stack of name lookup
+  // results in the ancestor scopes. This offers constant-time lookup of names,
+  // regardless of how many scopes exist between the name declaration and
+  // reference.
+  //
+  // Names which no longer have lookup results are erased.
   llvm::DenseMap<SemanticsStringId, llvm::SmallVector<SemanticsNodeId>,
                  SemanticsStringIdMapInfo>
       name_lookup_;
