@@ -1789,6 +1789,8 @@ auto Parser::HandleVarFinishAsForState() -> void {
 
 auto Parser::HandleInterfaceIntroducerState() -> void {
   auto state = PopState();
+  CARBON_CHECK(stack_context_ == ParseContext::File)
+      << "TODO: Support nesting.";
   stack_context_ = ParseContext::Interface;
 
   if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
