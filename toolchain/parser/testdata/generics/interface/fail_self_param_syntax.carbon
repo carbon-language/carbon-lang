@@ -66,7 +66,7 @@ interface foo {
   // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/interface/fail_self_param_syntax.carbon:[[@LINE+1]]:10: Deduced parameters must be of the form: `<name>: <Type>` or `addr <name>: <Type>`.
   fn Mul[Self](b: Self) -> Self;
 
-  // TODO The recovery token is currently inserted after the `;`:
+  // TODO: The recovery token is currently inserted after the `;`:
   // ```
   // fn Div[me: Self(b: Self) -> Self;]
   // ```
