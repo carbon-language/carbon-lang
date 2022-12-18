@@ -138,6 +138,7 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
     case ExpressionKind::ValueLiteral:
     case ExpressionKind::IndexExpression:
     case ExpressionKind::CompoundMemberAccessExpression:
+    case ExpressionKind::BaseAccessExpression:
     case ExpressionKind::IfExpression:
     case ExpressionKind::WhereExpression:
     case ExpressionKind::StructTypeLiteral:

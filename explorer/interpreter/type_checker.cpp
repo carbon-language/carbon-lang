@@ -16,6 +16,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "common/check.h"
 #include "common/error.h"
 #include "common/ostream.h"
 #include "explorer/ast/declaration.h"
@@ -610,6 +611,31 @@ auto TypeChecker::IsImplicitlyConvertible(
          impl_scope.Resolve(*iface_type, source, source_loc, *this).ok();
 }
 
+auto TypeChecker::BuildSubtypeConversion(Nonnull<Expression*> source,
+                                         Nonnull<const PointerType*> src_ptr,
+                                         Nonnull<const PointerType*> dest_ptr)
+    -> ErrorOr<Nonnull<const Expression*>> {
+  const auto* src_class = dyn_cast<NominalClassType>(&src_ptr->pointee_type());
+  const auto* dst_class = dyn_cast<NominalClassType>(&dest_ptr->pointee_type());
+  const auto dest = dst_class->declaration().name();
+  CARBON_CHECK(src_class && dst_class)
+      << "Invalid source or destination pointee";
+  Nonnull<Expression*> last_expr = source;
+  const auto* cur_class = src_class;
+  while (!TypeEqual(cur_class, dst_class, std::nullopt)) {
+    const auto src = src_class->declaration().name();
+    const auto base_class = cur_class->base();
+    CARBON_CHECK(base_class) << "Invalid subtyping conversion";
+    auto* base_expr = arena_->New<BaseAccessExpression>(
+        source->source_loc(), last_expr,
+        arena_->New<BaseElement>(arena_->New<PointerType>(*base_class)));
+    last_expr = base_expr;
+    cur_class = *base_class;
+  }
+  CARBON_CHECK(last_expr) << "Error, no conversion was needed";
+  return last_expr;
+}
+
 auto TypeChecker::ImplicitlyConvert(std::string_view context,
                                     const ImplScope& impl_scope,
                                     Nonnull<Expression*> source,
@@ -671,7 +697,21 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
     }
 
     // Perform the builtin conversion.
-    return arena_->New<BuiltinConvertExpression>(source, destination);
+    auto* convert_expr =
+        arena_->New<BuiltinConvertExpression>(source, destination);
+
+    // For subtyping, rewritte into successive `.base` accesses.
+    if (isa<PointerType>(source_type) && isa<PointerType>(destination) &&
+        cast<PointerType>(destination)->pointee_type().kind() ==
+            Value::Kind::NominalClassType) {
+      CARBON_ASSIGN_OR_RETURN(
+          const auto* conv_expr,
+          BuildSubtypeConversion(source, cast<PointerType>(source_type),
+                                 cast<PointerType>(destination)))
+      convert_expr->set_rewritten_form(conv_expr);
+    }
+
+    return convert_expr;
   }
 
   ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
@@ -2385,6 +2425,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
   switch (e->kind()) {
     case ExpressionKind::ValueLiteral:
     case ExpressionKind::BuiltinConvertExpression:
+    case ExpressionKind::BaseAccessExpression:
       CARBON_FATAL() << "attempting to type check node " << *e
                      << " generated during type checking";
     case ExpressionKind::IndexExpression: {

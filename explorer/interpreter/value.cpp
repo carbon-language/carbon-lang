@@ -199,10 +199,16 @@ static auto GetElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       }
     }
     case ElementKind::BaseElement:
-      if (const auto* class_value = dyn_cast<NominalClassValue>(v)) {
-        return GetBaseElement(class_value, source_loc);
-      } else {
-        CARBON_FATAL() << "Invalid value for base element";
+      switch (v->kind()) {
+        case Value::Kind::NominalClassValue:
+          return GetBaseElement(cast<NominalClassValue>(v), source_loc);
+        case Value::Kind::PointerValue: {
+          const auto* ptr = cast<PointerValue>(v);
+          return arena->New<PointerValue>(
+              ptr->address().ElementAddress(path_comp.element()));
+        }
+        default:
+          CARBON_FATAL() << "Invalid value for base element";
       }
   }
 }

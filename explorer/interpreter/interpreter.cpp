@@ -453,6 +453,20 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
+    case ExpressionKind::BaseAccessExpression: {
+      const auto& access = cast<BaseAccessExpression>(exp);
+      if (act.pos() == 0) {
+        //    { {e.base :: C, E, F} :: S, H}
+        // -> { e :: [].base :: C, E, F} :: S, H}
+        return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
+      } else {
+        //    { v :: [].base :: C, E, F} :: S, H}
+        // -> { { &v.base :: C, E, F} :: S, H }
+        Address object = cast<LValue>(*act.results()[0]).address();
+        Address base = object.ElementAddress(&access.element());
+        return todo_.FinishAction(arena_->New<LValue>(base));
+      }
+    }
     case ExpressionKind::IndexExpression: {
       if (act.pos() == 0) {
         //    { {e[i] :: C, E, F} :: S, H}
@@ -729,6 +743,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::TypeType:
     case Value::Kind::FunctionType:
     case Value::Kind::PointerType:
+    case Value::Kind::PointerValue:
     case Value::Kind::TupleType:
     case Value::Kind::StructType:
     case Value::Kind::AutoType:
@@ -868,40 +883,6 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
                << "value of associated constant " << *value << " is not known";
       }
       return Convert(value, destination_type, source_loc);
-    }
-    case Value::Kind::PointerValue: {
-      if (destination_type->kind() != Value::Kind::PointerType ||
-          cast<PointerType>(destination_type)->pointee_type().kind() !=
-              Value::Kind::NominalClassType) {
-        // No conversion needed.
-        return value;
-      }
-
-      // Get pointee value.
-      const auto* src_ptr = cast<PointerValue>(value);
-      CARBON_ASSIGN_OR_RETURN(const auto* pointee,
-                              heap_.Read(src_ptr->address(), source_loc))
-      CARBON_CHECK(pointee->kind() == Value::Kind::NominalClassValue)
-          << "Unexpected pointer type";
-
-      const auto* dest_ptr = cast<PointerType>(destination_type);
-      std::optional<Nonnull<const NominalClassValue*>> class_subobj =
-          cast<NominalClassValue>(pointee);
-      auto new_addr = src_ptr->address();
-      while (class_subobj) {
-        if (TypeEqual(&(*class_subobj)->type(), &dest_ptr->pointee_type(),
-                      std::nullopt)) {
-          return arena_->New<PointerValue>(new_addr);
-        }
-        class_subobj = (*class_subobj)->base();
-        new_addr = new_addr.ElementAddress(
-            arena_->New<BaseElement>(&dest_ptr->pointee_type()));
-      }
-
-      // Unable to resolve, return as-is.
-      // TODO: Produce error instead once we can properly substitute
-      // parameterized types for pointers in function call parameters.
-      return value;
     }
   }
 }
@@ -1268,6 +1249,21 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         }
       }
     }
+    case ExpressionKind::BaseAccessExpression: {
+      const auto& access = cast<BaseAccessExpression>(exp);
+      if (act.pos() == 0) {
+        return todo_.Spawn(
+            std::make_unique<ExpressionAction>(&access.object()));
+      } else {
+        ElementPath::Component base_elt(&access.element(), std::nullopt,
+                                        std::nullopt);
+        const Value* value = act.results()[0];
+        CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> base_value,
+                                value->GetElement(arena_, ElementPath(base_elt),
+                                                  exp.source_loc(), value));
+        return todo_.FinishAction(base_value);
+      }
+    }
     case ExpressionKind::IdentifierExpression: {
       CARBON_CHECK(act.pos() == 0);
       const auto& ident = cast<IdentifierExpression>(exp);
@@ -1578,6 +1574,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     }
     case ExpressionKind::BuiltinConvertExpression: {
       const auto& convert_expr = cast<BuiltinConvertExpression>(exp);
+      if (auto rewrite = convert_expr.rewritten_form()) {
+        return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
+      }
       if (act.pos() == 0) {
         return todo_.Spawn(std::make_unique<ExpressionAction>(
             convert_expr.source_expression()));

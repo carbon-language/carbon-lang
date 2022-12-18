@@ -61,6 +61,7 @@ abstract class Expression : AstNode;
   abstract class MemberAccessExpression : Expression;
     class SimpleMemberAccessExpression : MemberAccessExpression;
     class CompoundMemberAccessExpression : MemberAccessExpression;
+    class BaseAccessExpression : MemberAccessExpression;
   class IndexExpression : Expression;
   class IntTypeLiteral : Expression;
   class ContinuationTypeLiteral : Expression;
