@@ -379,7 +379,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       if (contents.consume_front("\n")) {
         // Trailing whitespace before a newline doesn't contribute to the string
         // literal value.
-        // TODO issue 2132: read IsSpace() docs. IsSpace() maybe returns `false` for not yet expanded `\t`.
+        // TODO issue 2132: trailing `\t` not handled properly. IsSpace() maybe returns `false` for not yet expanded `\t`.
         while (!result.empty() && result.back() != '\n' &&
                IsSpace(result.back())) {
           result.pop_back();
