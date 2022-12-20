@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{carbon-run-semantics}
+// RUN: %{not} %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs.size == 2,
 // CHECK:STDOUT: cross_references = {
 // CHECK:STDOUT:   node_xref0 = xref(ir0, block0, node0);
@@ -11,13 +11,15 @@
 // CHECK:STDOUT:   node_xref2 = xref(ir0, block0, node2);
 // CHECK:STDOUT:   node_xref3 = xref(ir0, block0, node3);
 // CHECK:STDOUT:   node_xref4 = xref(ir1, block0, node1);
+// CHECK:STDOUT:   node_xref5 = xref(ir1, block1, node1);
 // CHECK:STDOUT: },
 // CHECK:STDOUT: integer_literals = {
-// CHECK:STDOUT:   int0 = 12;
-// CHECK:STDOUT:   int1 = 34;
+// CHECK:STDOUT:   int0 = 0;
+// CHECK:STDOUT:   int1 = 0;
 // CHECK:STDOUT: },
 // CHECK:STDOUT: strings = {
 // CHECK:STDOUT:   str0 = "Main";
+// CHECK:STDOUT:   str1 = "x";
 // CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   block0 = {
@@ -26,13 +28,21 @@
 // CHECK:STDOUT:     node2 = FunctionDefinition(node0, block1);
 // CHECK:STDOUT:   },
 // CHECK:STDOUT:   block1 = {
-// CHECK:STDOUT:     node0 = IntegerLiteral(int0): node_xref2;
-// CHECK:STDOUT:     node1 = IntegerLiteral(int1): node_xref2;
-// CHECK:STDOUT:     node2 = BinaryOperatorAdd(node0, node1): node_xref2;
-// CHECK:STDOUT:     node3 = ReturnExpression(node2): node_xref2;
+// CHECK:STDOUT:     node0 = VarStorage(): node_xref2;
+// CHECK:STDOUT:     node1 = BindName(str1, node0): node_xref2;
+// CHECK:STDOUT:     node2 = IntegerLiteral(int0): node_xref2;
+// CHECK:STDOUT:     node3 = Assign(node0, node2): node_xref2;
+// CHECK:STDOUT:     node4 = VarStorage(): node_xref2;
+// CHECK:STDOUT:     node5 = BindName(str1, node4): node_xref2;
+// CHECK:STDOUT:     node6 = IntegerLiteral(int1): node_xref2;
+// CHECK:STDOUT:     node7 = Assign(node4, node6): node_xref2;
 // CHECK:STDOUT:   },
 // CHECK:STDOUT: }
 
+
 fn Main() {
-  return 12 + 34;
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/fail_duplicate_decl.carbon:[[@LINE+1]]:7: Previous definition is here.
+  var x: i32 = 0;
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/fail_duplicate_decl.carbon:[[@LINE+1]]:7: Redefining x in the same scope.
+  var x: i32 = 0;
 }

@@ -52,12 +52,6 @@ struct SemanticsNodeId : public IndexBase {
   }
 };
 
-// Type-safe storage of identifiers.
-struct SemanticsIdentifierId : public IndexBase {
-  using IndexBase::IndexBase;
-  auto Print(llvm::raw_ostream& out) const -> void { out << "ident" << index; }
-};
-
 // Type-safe storage of integer literals.
 struct SemanticsIntegerLiteralId : public IndexBase {
   using IndexBase::IndexBase;
@@ -68,6 +62,12 @@ struct SemanticsIntegerLiteralId : public IndexBase {
 struct SemanticsNodeBlockId : public IndexBase {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void { out << "block" << index; }
+};
+
+// Type-safe storage of strings.
+struct SemanticsStringId : public IndexBase {
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void { out << "str" << index; }
 };
 
 // The standard structure for nodes.
@@ -101,15 +101,14 @@ class SemanticsNode {
   }
 
   static auto MakeBindName(ParseTree::Node parse_node, SemanticsNodeId type,
-                           SemanticsIdentifierId name, SemanticsNodeId node)
+                           SemanticsStringId name, SemanticsNodeId node)
       -> SemanticsNode {
     return SemanticsNode(parse_node, SemanticsNodeKind::BindName(), type,
                          name.index, node.index);
   }
-  auto GetAsBindName() const
-      -> std::pair<SemanticsIdentifierId, SemanticsNodeId> {
+  auto GetAsBindName() const -> std::pair<SemanticsStringId, SemanticsNodeId> {
     CARBON_CHECK(kind_ == SemanticsNodeKind::BindName());
-    return {SemanticsIdentifierId(arg0_), SemanticsNodeId(arg1_)};
+    return {SemanticsStringId(arg0_), SemanticsNodeId(arg1_)};
   }
 
   static auto MakeBuiltin(SemanticsBuiltinKind builtin_kind,

@@ -11,9 +11,9 @@
 // CHECK:STDOUT:   node_xref2 = xref(ir0, block0, node2);
 // CHECK:STDOUT:   node_xref3 = xref(ir0, block0, node3);
 // CHECK:STDOUT: },
-// CHECK:STDOUT: identifiers = {
-// CHECK:STDOUT: },
 // CHECK:STDOUT: integer_literals = {
+// CHECK:STDOUT: },
+// CHECK:STDOUT: strings = {
 // CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   block0 = {

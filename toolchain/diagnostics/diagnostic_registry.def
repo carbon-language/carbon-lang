@@ -91,6 +91,9 @@ CARBON_DIAGNOSTIC_KIND(ExpectedDeducedParam)
 // ============================================================================
 
 CARBON_DIAGNOSTIC_KIND(TypeMismatch)
+CARBON_DIAGNOSTIC_KIND(NameNotFound)
+CARBON_DIAGNOSTIC_KIND(NameRedefined)
+CARBON_DIAGNOSTIC_KIND(PreviousDefinition)
 
 // ============================================================================
 // Other diagnostics
