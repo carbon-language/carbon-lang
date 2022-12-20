@@ -21,8 +21,9 @@ using ::testing::MatchesRegex;
 constexpr llvm::StringLiteral SymbolRegex =
     R"([\[\]{}!@#%^&*()/?\\|;:.,<>=+~-]+)";
 
-// We restrict keywords to be lowercase ASCII letters and underscores.
-constexpr llvm::StringLiteral KeywordRegex = "[a-z_]+";
+// We restrict keywords to be lowercase ASCII letters and underscores with one
+// exception: `Self`.
+constexpr llvm::StringLiteral KeywordRegex = "[a-z_]+|Self";
 
 #define CARBON_TOKEN(TokenName)                             \
   TEST(TokenKindTest, TokenName) {                          \

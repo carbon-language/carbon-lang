@@ -577,6 +577,22 @@ auto TypeChecker::IsImplicitlyConvertible(
       // work, because that depends on the source value, and we only have its
       // type.
       return IsTypeOfType(destination);
+    case Value::Kind::PointerType: {
+      if (destination->kind() != Value::Kind::PointerType) {
+        break;
+      }
+      const auto* src_ptr = cast<PointerType>(source);
+      const auto* dest_ptr = cast<PointerType>(destination);
+      if (src_ptr->pointee_type().kind() != Value::Kind::NominalClassType ||
+          dest_ptr->pointee_type().kind() != Value::Kind::NominalClassType) {
+        break;
+      }
+      const auto& src_class = cast<NominalClassType>(src_ptr->pointee_type());
+      if (src_class.InheritsClass(&dest_ptr->pointee_type())) {
+        return true;
+      }
+      break;
+    }
     default:
       break;
   }
@@ -987,8 +1003,18 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
       if (arg->kind() != Value::Kind::PointerType) {
         return handle_non_deduced_type();
       }
-      return Deduce(&cast<PointerType>(*param).pointee_type(),
-                    &cast<PointerType>(*arg).pointee_type(),
+      const auto& param_pointee = cast<PointerType>(param)->pointee_type();
+      const auto& arg_pointee = cast<PointerType>(arg)->pointee_type();
+      if (allow_implicit_conversion) {
+        // TODO: Change based on whether we want to allow
+        // deduce-from-base-class, for parametrized base class. See
+        // https://github.com/carbon-language/carbon-lang/issues/2464.
+        if (const auto* arg_class = dyn_cast<NominalClassType>(&arg_pointee);
+            arg_class && arg_class->InheritsClass(&param_pointee)) {
+          return Success();
+        }
+      }
+      return Deduce(&param_pointee, &arg_pointee,
                     /*allow_implicit_conversion=*/false);
     }
     // Nothing to do in the case for `auto`.
