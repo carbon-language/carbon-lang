@@ -23,8 +23,8 @@ jobs:
             infrastructure:
               - 'BUILD'
               - 'WORKSPACE'
-              - '*.yaml'
-              - '.github/**'
+              - '.*'
+              - '.*/**'
               - 'bazel/**'
               - 'scripts/**'
             toolchain:
