@@ -119,8 +119,8 @@ http_archive(
     build_file_content = "# empty",
     patch_args = ["-p1"],
     patches = [
-        "@carbon//bazel/llvm_patches:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
-        "@carbon//bazel/llvm_patches:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
+        "@carbon//bazel/patches/llvm:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
+        "@carbon//bazel/patches/llvm:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
     ],
     sha256 = "8e9cbb937b1a40536cd809e09603a1810d86a8c314fee0cca36fc493e78289e5",
     strip_prefix = "llvm-project-{0}".format(llvm_version),
@@ -156,6 +156,11 @@ rules_m4_version = "0.2.1"
 
 http_archive(
     name = "rules_m4",
+    patch_args = ["-p1"],
+    patches = [
+        # Trying to upstream: https://github.com/jmillikin/rules_m4/pull/15
+        "@carbon//bazel/patches/m4:0001_Support_M4_building_on_FreeBSD.patch",
+    ],
     sha256 = "eaa674cd84546038ecbcc49cdd346134a20961a41fa1a541e80d8bf4b470c34d",
     strip_prefix = "rules_m4-{0}".format(rules_m4_version),
     urls = ["https://github.com/jmillikin/rules_m4/archive/v{0}.tar.gz".format(rules_m4_version)],
@@ -190,6 +195,11 @@ rules_bison_version = "478079b28605a38000eaf83719568d756b3383a0"
 
 http_archive(
     name = "rules_bison",
+    patch_args = ["-p1"],
+    patches = [
+        # Trying to upstream: https://github.com/jmillikin/rules_bison/pull/13
+        "@carbon//bazel/patches/bison:0001_Support_Bison_building_on_FreeBSD.patch",
+    ],
     sha256 = "6bc2d382e4ffccd66e60a74521c24722fc8fdfe9af49ff182f79bb5994fa1ba4",
     strip_prefix = "rules_bison-{0}".format(rules_bison_version),
     urls = ["https://github.com/jmillikin/rules_bison/archive/{0}.tar.gz".format(rules_bison_version)],

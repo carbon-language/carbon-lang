@@ -1,0 +1,327 @@
+From 491f7eda0033875ac26d8511b98e33189b0c389c Mon Sep 17 00:00:00 2001
+From: Luke Yoo <w.lukeyoo@gmail.com>
+Date: Tue, 13 Dec 2022 04:57:42 -0800
+Subject: [PATCH] Support Bison building on FreeBSD
+
+This is based on the OpenBSD support in `v0.2.1`
+For later versions, it may be supported without it
+---
+ bison/internal/gnulib/config-freebsd.h | 213 +++++++++++++++++++++++++
+ bison/internal/gnulib/gnulib.BUILD     |  11 ++
+ bison/internal/gnulib/gnulib.bzl       |  15 ++
+ bison/internal/repository.bzl          |   4 +
+ 4 files changed, 243 insertions(+)
+ create mode 100644 bison/internal/gnulib/config-freebsd.h
+
+diff --git a/bison/internal/gnulib/config-freebsd.h b/bison/internal/gnulib/config-freebsd.h
+new file mode 100644
+index 0000000..57df34f
+--- /dev/null
++++ b/bison/internal/gnulib/config-freebsd.h
+@@ -0,0 +1,213 @@
++{GNULIB_CONFIG_HEADER}
++
++#define _GL_ATTRIBUTE_FORMAT_PRINTF(x, y)
++
++#define O_BINARY 0
++#define O_TEXT 0
++
++extern char **environ;
++
++/******************************************************************************/
++
++#define CHECK_PRINTF_SAFE 1
++#define C_LOCALE_MAYBE_EILSEQ 1
++#define DBL_EXPBIT0_BIT 20
++#define DBL_EXPBIT0_WORD 1
++#define FLT_EXPBIT0_BIT 23
++#define FLT_EXPBIT0_WORD 0
++#define FUNC_REALPATH_WORKS 1
++#define GETTIMEOFDAY_TIMEZONE struct timezone
++#define GNULIB_CANONICALIZE_LGPL 1
++#define GNULIB_CLOSE_STREAM 1
++#define GNULIB_DIRNAME 1
++#define GNULIB_FD_SAFER_FLAG 1
++#define GNULIB_FOPEN_SAFER 1
++#define GNULIB_FSCANF 1
++#define GNULIB_LOCK 1
++#define GNULIB_MALLOC_GNU 1
++#define GNULIB_MSVC_NOTHROW 1
++#define GNULIB_PIPE2_SAFER 1
++#define GNULIB_SCANF 1
++#define GNULIB_SNPRINTF 1
++#define GNULIB_STRERROR 1
++#define GNULIB_STRERROR_R_POSIX 1
++#define HAVE_ALLOCA 0
++#define HAVE_CALLOC_POSIX 1
++#define HAVE_CANONICALIZE_FILE_NAME 1
++#define HAVE_CATGETS 1
++#define HAVE_CLOCK_GETTIME 1
++#define HAVE_CLOCK_SETTIME 1
++#define HAVE_DECL_ALARM 1
++#define HAVE_DECL_CLEARERR_UNLOCKED 0
++#define HAVE_DECL_FEOF_UNLOCKED 0
++#define HAVE_DECL_FERROR_UNLOCKED 0
++#define HAVE_DECL_FFLUSH_UNLOCKED 0
++#define HAVE_DECL_FGETS_UNLOCKED 1
++#define HAVE_DECL_FPUTC_UNLOCKED 0
++#define HAVE_DECL_FPUTS_UNLOCKED 0
++#define HAVE_DECL_FREAD_UNLOCKED 0
++#define HAVE_DECL_FWRITE_UNLOCKED 0
++#define HAVE_DECL_GETCHAR_UNLOCKED 1
++#define HAVE_DECL_GETC_UNLOCKED 1
++#define HAVE_DECL_GETDTABLESIZE 1
++#define HAVE_DECL_GETHRTIME 0
++#define HAVE_DECL_MBSWIDTH_IN_WCHAR_H 0
++#define HAVE_DECL_OBSTACK_PRINTF 1
++#define HAVE_DECL_PROGRAM_INVOCATION_NAME 0
++#define HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME 0
++#define HAVE_DECL_PUTCHAR_UNLOCKED 1
++#define HAVE_DECL_PUTC_UNLOCKED 1
++#define HAVE_DECL_SETENV 1
++#define HAVE_DECL_SNPRINTF 1
++#define HAVE_DECL_STRDUP 1
++#define HAVE_DECL_STRERROR_R 1
++#define HAVE_DECL_STRNDUP 1
++#define HAVE_DECL_STRNLEN 1
++#define HAVE_DECL_UNSETENV 1
++#define HAVE_DECL_VSNPRINTF 1
++#define HAVE_DECL_WCWIDTH 1
++#define HAVE_DECL__SNPRINTF 0
++#define HAVE_DECL___ARGV 0
++#define HAVE_DUP2 1
++#define HAVE_ENVIRON_DECL 1
++#define HAVE_FCNTL 1
++#define HAVE_FREXPL_IN_LIBC 1
++#define HAVE_FREXP_IN_LIBC 1
++#define HAVE_GETCWD 1
++#define HAVE_GETDTABLESIZE 1
++#define HAVE_GETOPT_H 1
++#define HAVE_GETOPT_LONG_ONLY 1
++#define HAVE_GETRUSAGE 1
++#define HAVE_GETTIMEOFDAY 1
++#define HAVE_INTMAX_T 1
++#define HAVE_INTTYPES_H 1
++#define HAVE_INTTYPES_H_WITH_UINTMAX 1
++#define HAVE_ISASCII 1
++#define HAVE_ISNAND_IN_LIBC 1
++#define HAVE_ISNANF_IN_LIBC 1
++#define HAVE_ISNANL_IN_LIBC 1
++#define HAVE_ISWCNTRL 1
++#define HAVE_LANGINFO_CODESET 1
++#define HAVE_LDEXPL 1
++#define HAVE_LDEXPL_IN_LIBC 1
++#define HAVE_LDEXP_IN_LIBC 1
++#define HAVE_LIMITS_H 1
++#define HAVE_LINK 1
++#define HAVE_LONG_LONG_INT 1
++#define HAVE_LSTAT 1
++#define HAVE_MALLOC_GNU 1
++#define HAVE_MALLOC_POSIX 1
++#define HAVE_MAP_ANONYMOUS 1
++#define HAVE_MATH_H 1
++#define HAVE_MBRTOWC 1
++#define HAVE_MBSINIT 1
++#define HAVE_MBSTATE_T 1
++#define HAVE_MEMORY_H 1
++#define HAVE_MINMAX_IN_SYS_PARAM_H 1
++#define HAVE_MPROTECT 1
++#define HAVE_OBSTACK_PRINTF 1
++#define HAVE_PIPE 1
++#define HAVE_PIPE2 1
++#define HAVE_POSIX_SPAWN 1
++#define HAVE_POSIX_SPAWNATTR_T 1
++#define HAVE_POSIX_SPAWN_FILE_ACTIONS_T 1
++#define HAVE_PTHREAD_MUTEX_RECURSIVE 1
++#define HAVE_PTHREAD_RWLOCK 1
++#define HAVE_RAISE 1
++#define HAVE_RAWMEMCHR 1
++#define HAVE_READLINK 1
++#define HAVE_READLINKAT 1
++#define HAVE_REALLOC_POSIX 1
++#define HAVE_REALPATH 1
++#define HAVE_SEARCH_H 1
++#define HAVE_SETENV 1
++#define HAVE_SIGACTION 1
++#define HAVE_SIGALTSTACK 1
++#define HAVE_SIGINTERRUPT 1
++#define HAVE_SIGSET_T 1
++#define HAVE_SIG_ATOMIC_T 1
++#define HAVE_SNPRINTF 0
++#define HAVE_SNPRINTF_RETVAL_C99 1
++#define HAVE_SPAWN_H 1
++#define HAVE_STDINT_H 1
++#define HAVE_STDINT_H_WITH_UINTMAX 1
++#define HAVE_STDLIB_H 1
++#define HAVE_STPCPY 1
++#define HAVE_STRCHRNUL 1
++#define HAVE_STRDUP 1
++#define HAVE_STRERROR_R 1
++#define HAVE_STRINGS_H 1
++#define HAVE_STRING_H 1
++#define HAVE_STRNDUP 1
++#define HAVE_STRNLEN 1
++#define HAVE_STRUCT_SIGACTION_SA_SIGACTION 1
++#define HAVE_STRUCT_STAT_ST_ATIM_TV_NSEC 1
++#define HAVE_STRUCT_TMS 1
++#define HAVE_STRVERSCMP 1
++#define HAVE_SYMLINK 1
++#define HAVE_SYS_CDEFS_H 1
++#define HAVE_SYS_MMAN_H 1
++#define HAVE_SYS_PARAM_H 1
++#define HAVE_SYS_RESOURCE_H 1
++#define HAVE_SYS_SOCKET_H 1
++#define HAVE_SYS_STAT_H 1
++#define HAVE_SYS_TIMES_H 1
++#define HAVE_SYS_TIME_H 1
++#define HAVE_SYS_TYPES_H 1
++#define HAVE_SYS_WAIT_H 1
++#define HAVE_TOWLOWER 1
++#define HAVE_TSEARCH 1
++#define HAVE_UNISTD_H 1
++#define HAVE_UNSETENV 1
++#define HAVE_UNSIGNED_LONG_LONG_INT 1
++#define HAVE_VAR___PROGNAME 1
++#define HAVE_VSNPRINTF 1
++#define HAVE_WAITID 1
++#define HAVE_WCHAR_H 1
++#define HAVE_WCHAR_T 1
++#define HAVE_WCRTOMB 1
++#define HAVE_WCSLEN 1
++#define HAVE_WCSNLEN 1
++#define HAVE_WCTYPE_H 1
++#define HAVE_WCWIDTH 1
++#define HAVE_WINT_T 1
++#define HAVE_WORKING_O_NOATIME 0
++#define HAVE_WORKING_O_NOFOLLOW 1
++#define HAVE__BOOL 1
++#define HAVE___XPG_STRERROR_R 1
++#define INSTALLPREFIX "/usr/local"
++#define LSTAT_FOLLOWS_SLASHED_SYMLINK 1
++#define MALLOC_0_IS_NONNULL 1
++# define __USE_MINGW_ANSI_STDIO 1
++#define PROMOTED_MODE_T mode_t
++#define REPLACE_FPRINTF_POSIX 1
++#define REPLACE_PRINTF_POSIX 1
++#define REPLACE_VFPRINTF_POSIX 1
++#define STDC_HEADERS 1
++#define TYPEOF_STRUCT_STAT_ST_ATIM_IS_STRUCT_TIMESPEC 1
++#define USER_LABEL_PREFIX
++#define USE_POSIX_THREADS 1
++#define USE_POSIX_THREADS_WEAK 1
++# define _ALL_SOURCE 1
++# define _DARWIN_C_SOURCE 1
++# define _GNU_SOURCE 1
++# define _NETBSD_SOURCE 1
++# define _OPENBSD_SOURCE 1
++# define _POSIX_PTHREAD_SEMANTICS 1
++# define __STDC_WANT_IEC_60559_ATTRIBS_EXT__ 1
++# define __STDC_WANT_IEC_60559_BFP_EXT__ 1
++# define __STDC_WANT_IEC_60559_DFP_EXT__ 1
++# define __STDC_WANT_IEC_60559_FUNCS_EXT__ 1
++# define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
++# define __STDC_WANT_LIB_EXT2__ 1
++# define __STDC_WANT_MATH_SPEC_FUNCS__ 1
++# define _TANDEM_SOURCE 1
++# define _HPUX_ALT_XOPEN_SOCKET_API 1
++# define __EXTENSIONS__ 1
++#define USE_UNLOCKED_IO 0
++#define _DARWIN_USE_64_BIT_INODE 1
++#define _NETBSD_SOURCE 1
++#define _USE_STD_STAT 1
++#define restrict __restrict
++
++{GNULIB_CONFIG_FOOTER}
+diff --git a/bison/internal/gnulib/gnulib.BUILD b/bison/internal/gnulib/gnulib.BUILD
+index e23b2b8..69d969b 100644
+--- a/bison/internal/gnulib/gnulib.BUILD
++++ b/bison/internal/gnulib/gnulib.BUILD
+@@ -19,6 +19,7 @@ cc_library(
+     hdrs = select({
+         "@bazel_tools//src/conditions:darwin": glob(["config-darwin/*.h"]),
+         "@bazel_tools//src/conditions:windows": glob(["config-windows/*.h"]),
++        "@bazel_tools//src/conditions:freebsd": glob(["config-freebsd/*.h"]),
+         "//conditions:default": glob(["config-linux/*.h"]),
+     }),
+     includes = select({
+@@ -28,6 +29,9 @@ cc_library(
+         "@bazel_tools//src/conditions:windows": [
+             "config-windows",
+         ],
++        "@bazel_tools//src/conditions:freebsd": [
++            "config-freebsd",
++        ],
+         "//conditions:default": [
+             "config-linux",
+         ],
+@@ -42,6 +46,12 @@ cc_library(
+     deps = [":config_h"],
+ )
+ 
++cc_library(
++    name = "maybe_alloca_h",
++    hdrs = ["maybe-alloca/alloca.h"],
++    includes = ["maybe-alloca"],
++)
++
+ _GNULIB_HDRS = glob([
+     "lib/*.h",
+     "lib/bitset/*.h",
+@@ -192,6 +202,7 @@ cc_library(
+         "//:timevar_def",
+     ] + select({
+         "@bazel_tools//src/conditions:windows": [":gnulib_windows_shims"],
++        "@bazel_tools//src/conditions:freebsd": [":maybe_alloca_h"],
+         "//conditions:default": [],
+     }),
+ )
+diff --git a/bison/internal/gnulib/gnulib.bzl b/bison/internal/gnulib/gnulib.bzl
+index 159ee4c..2038f4d 100644
+--- a/bison/internal/gnulib/gnulib.bzl
++++ b/bison/internal/gnulib/gnulib.bzl
+@@ -83,6 +83,7 @@ def gnulib_overlay(ctx, bison_version, extra_copts = []):
+         ("darwin", ctx.attr._gnulib_config_darwin_h),
+         ("linux", ctx.attr._gnulib_config_linux_h),
+         ("windows", ctx.attr._gnulib_config_windows_h),
++        ("freebsd", ctx.attr._gnulib_config_freebsd_h),
+     ]:
+         config_prefix = "gnulib/config-{}/".format(os)
+ 
+@@ -148,6 +149,20 @@ def gnulib_overlay(ctx, bison_version, extra_copts = []):
+         "(const char **) environ": "NULL",
+     }, executable = False)
+ 
++    # Some platforms have alloca() but in <stdlib.h>
++    ctx.file(
++        "gnulib/maybe-alloca/alloca.h",
++        content =
++            """
++    #if defined(__GLIBC__)
++    #include_next <alloca.h>
++    #else
++    #include <stdlib.h>
++    #endif
++    """,
++        executable = False,
++    )
++
+ _WINDOWS_STDLIB_SHIMS = [
+     "alloca",
+     "errno",
+diff --git a/bison/internal/repository.bzl b/bison/internal/repository.bzl
+index 7e17763..934e8c9 100644
+--- a/bison/internal/repository.bzl
++++ b/bison/internal/repository.bzl
+@@ -133,5 +133,9 @@ bison_repository = repository_rule(
+             default = "//bison/internal:gnulib/config-windows.h",
+             allow_single_file = True,
+         ),
++        "_gnulib_config_freebsd_h": attr.label(
++            default = "//bison/internal:gnulib/config-freebsd.h",
++            allow_single_file = True,
++        ),
+     },
+ )
+-- 
+2.38.1
+

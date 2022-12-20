@@ -180,7 +180,6 @@ repos:
               .github/pull_request_template.md|
               compile_flags.txt|
               third_party/.*|
-              bazel/llvm_patches/.*\.patch|
               .*\.def|
               .*\.svg|
               .*/fuzzer_corpus/.*|
@@ -188,10 +187,10 @@ repos:
           )$
       - id: check-links
 
-# Most third-party code is in submodules; local commits are excluded here.
-# We fully exclude fuzzer corpus directories as they are generated binary data.
+# This excludes third-party code, and patches to third-party code.
 exclude: |
   (?x)^(
+      bazel/patches/.*\.patch|
       third_party/examples/.*/carbon/.*|
       third_party/llvm-project/.*|
   )$

@@ -115,16 +115,18 @@ auto SemanticsParseTreeHandler::BindName(ParseTree::Node name_node,
   if (inserted) {
     name_lookup_[name_id].push_back(AddCrossReference(bind_id));
   } else {
+    CARBON_DIAGNOSTIC(NameRedefined, Error, "Redefining {0} in the same scope.",
+                      llvm::StringRef);
+    emitter_->Emit(parse_tree_->node_token(name_node), NameRedefined, name_str);
+
+    // TODO: This should be a note and sorted with the above diagnostic.
+    // But that depends on more diagnostic support we currently don't have.
     auto prev_def_id = name_lookup_[name_id].back();
     auto prev_def = semantics_->GetNode(current_block_id(), prev_def_id);
-    auto token = parse_tree_->node_token(prev_def.parse_node());
-    CARBON_DIAGNOSTIC(NameRedefined, Error,
-                      "Redefining {0} in the same scope; previous definition "
-                      "at TODO.carbon:{1}:{2}",
-                      llvm::StringRef, int32_t, int32_t);
-    emitter_->Emit(parse_tree_->node_token(name_node), NameRedefined, name_str,
-                   tokens_->GetLineNumber(token),
-                   tokens_->GetColumnNumber(token));
+    CARBON_DIAGNOSTIC(PreviousDefinition, Error,
+                      "Previous definition is here.");
+    emitter_->Emit(parse_tree_->node_token(prev_def.parse_node()),
+                   PreviousDefinition);
   }
 }
 
@@ -253,6 +255,11 @@ auto SemanticsParseTreeHandler::TryTypeConversion(ParseTree::Node parse_node,
   return lhs_type;
 }
 
+auto SemanticsParseTreeHandler::HandleAddress(ParseTree::Node /*parse_node*/)
+    -> void {
+  CARBON_FATAL() << "TODO";
+}
+
 auto SemanticsParseTreeHandler::HandleBreakStatement(
     ParseTree::Node /*parse_node*/) -> void {
   CARBON_FATAL() << "TODO";
@@ -302,6 +309,16 @@ auto SemanticsParseTreeHandler::HandleDeclaredName(ParseTree::Node parse_node)
     -> void {
   // The parent is responsible for binding the name.
   Push(parse_node);
+}
+
+auto SemanticsParseTreeHandler::HandleDeducedParameterList(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleDeducedParameterListStart(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
 }
 
 auto SemanticsParseTreeHandler::HandleDesignatedName(
@@ -612,6 +629,16 @@ auto SemanticsParseTreeHandler::HandleReturnStatementStart(
 }
 
 auto SemanticsParseTreeHandler::HandleReturnType(ParseTree::Node /*parse_node*/)
+    -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleSelfDeducedParameter(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleSelfType(ParseTree::Node /*parse_node*/)
     -> void {
   CARBON_FATAL() << "TODO";
 }
