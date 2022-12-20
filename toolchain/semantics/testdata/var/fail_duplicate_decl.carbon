@@ -3,14 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{carbon-run-semantics}
+// RUN: %{not} %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs.size == 2,
-// CHECK:STDOUT: identifiers = {
-// CHECK:STDOUT:   ident0 = "Main";
-// CHECK:STDOUT: },
 // CHECK:STDOUT: integer_literals = {
-// CHECK:STDOUT:   int0 = 12;
-// CHECK:STDOUT:   int1 = 12;
+// CHECK:STDOUT:   int0 = 0;
+// CHECK:STDOUT:   int1 = 0;
+// CHECK:STDOUT: },
+// CHECK:STDOUT: strings = {
+// CHECK:STDOUT:   str0 = "Main";
+// CHECK:STDOUT:   str1 = "x";
 // CHECK:STDOUT: },
 // CHECK:STDOUT: nodes = {
 // CHECK:STDOUT:   node0 = CrossReference(ir0, block0): node0;
@@ -18,14 +19,16 @@
 // CHECK:STDOUT:   node2 = CrossReference(ir0, block2): node0;
 // CHECK:STDOUT:   node3 = CrossReference(ir0, block3): node0;
 // CHECK:STDOUT:   node4 = FunctionDeclaration();
-// CHECK:STDOUT:   node5 = BindName(ident0, node4);
+// CHECK:STDOUT:   node5 = BindName(str0, node4);
 // CHECK:STDOUT:   node6 = FunctionDefinition(node4, block1);
-// CHECK:STDOUT:   node7 = IntegerLiteral(int0): node2;
-// CHECK:STDOUT:   node8 = RealLiteral(): node3;
-// CHECK:STDOUT:   node9 = BinaryOperatorAdd(node7, node8): node1;
-// CHECK:STDOUT:   node10 = IntegerLiteral(int1): node2;
-// CHECK:STDOUT:   node11 = BinaryOperatorAdd(node9, node10): node1;
-// CHECK:STDOUT:   node12 = ReturnExpression(node11): node1;
+// CHECK:STDOUT:   node7 = VarStorage(): node2;
+// CHECK:STDOUT:   node8 = BindName(str1, node7): node2;
+// CHECK:STDOUT:   node9 = IntegerLiteral(int0): node2;
+// CHECK:STDOUT:   node10 = Assign(node7, node9): node2;
+// CHECK:STDOUT:   node11 = VarStorage(): node2;
+// CHECK:STDOUT:   node12 = BindName(str1, node11): node2;
+// CHECK:STDOUT:   node13 = IntegerLiteral(int1): node2;
+// CHECK:STDOUT:   node14 = Assign(node11, node13): node2;
 // CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   block0 = {
@@ -40,12 +43,15 @@
 // CHECK:STDOUT:     node10;
 // CHECK:STDOUT:     node11;
 // CHECK:STDOUT:     node12;
+// CHECK:STDOUT:     node13;
+// CHECK:STDOUT:     node14;
 // CHECK:STDOUT:   },
 // CHECK:STDOUT: }
 
+
 fn Main() {
-  // The following line has two mismatches, but after the first, it shouldn't
-  // keep erroring.
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/operators/type_mismatch_once.carbon:[[@LINE+1]]:13: Type mismatch
-  return 12 + 3.4 + 12;
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/fail_duplicate_decl.carbon:[[@LINE+1]]:7: Previous definition is here.
+  var x: i32 = 0;
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/fail_duplicate_decl.carbon:[[@LINE+1]]:7: Redefining x in the same scope.
+  var x: i32 = 0;
 }

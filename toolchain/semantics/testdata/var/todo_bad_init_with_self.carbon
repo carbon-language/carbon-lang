@@ -9,6 +9,7 @@
 // CHECK:STDOUT: },
 // CHECK:STDOUT: strings = {
 // CHECK:STDOUT:   str0 = "Main";
+// CHECK:STDOUT:   str1 = "x";
 // CHECK:STDOUT: },
 // CHECK:STDOUT: nodes = {
 // CHECK:STDOUT:   node0 = CrossReference(ir0, block0): node0;
@@ -18,7 +19,9 @@
 // CHECK:STDOUT:   node4 = FunctionDeclaration();
 // CHECK:STDOUT:   node5 = BindName(str0, node4);
 // CHECK:STDOUT:   node6 = FunctionDefinition(node4, block1);
-// CHECK:STDOUT:   node7 = Return();
+// CHECK:STDOUT:   node7 = VarStorage(): node2;
+// CHECK:STDOUT:   node8 = BindName(str1, node7): node2;
+// CHECK:STDOUT:   node9 = Assign(node7, node8): node2;
 // CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   block0 = {
@@ -28,9 +31,12 @@
 // CHECK:STDOUT:   },
 // CHECK:STDOUT:   block1 = {
 // CHECK:STDOUT:     node7;
+// CHECK:STDOUT:     node8;
+// CHECK:STDOUT:     node9;
 // CHECK:STDOUT:   },
 // CHECK:STDOUT: }
 
 fn Main() {
-  return;
+  // TODO: This should fail with `x`... uninitialized? Not yet declared?
+  var x: i32 = x;
 }

@@ -5,10 +5,10 @@
 // AUTOUPDATE
 // RUN: %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs.size == 2,
-// CHECK:STDOUT: identifiers = {
-// CHECK:STDOUT:   ident0 = "x";
-// CHECK:STDOUT: },
 // CHECK:STDOUT: integer_literals = {
+// CHECK:STDOUT: },
+// CHECK:STDOUT: strings = {
+// CHECK:STDOUT:   str0 = "x";
 // CHECK:STDOUT: },
 // CHECK:STDOUT: nodes = {
 // CHECK:STDOUT:   node0 = CrossReference(ir0, block0): node0;
@@ -16,7 +16,7 @@
 // CHECK:STDOUT:   node2 = CrossReference(ir0, block2): node0;
 // CHECK:STDOUT:   node3 = CrossReference(ir0, block3): node0;
 // CHECK:STDOUT:   node4 = VarStorage(): node2;
-// CHECK:STDOUT:   node5 = BindName(ident0, node4): node2;
+// CHECK:STDOUT:   node5 = BindName(str0, node4): node2;
 // CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   block0 = {

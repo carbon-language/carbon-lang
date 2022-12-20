@@ -5,9 +5,9 @@
 // AUTOUPDATE
 // RUN: %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs.size == 2,
-// CHECK:STDOUT: identifiers = {
-// CHECK:STDOUT: },
 // CHECK:STDOUT: integer_literals = {
+// CHECK:STDOUT: },
+// CHECK:STDOUT: strings = {
 // CHECK:STDOUT: },
 // CHECK:STDOUT: nodes = {
 // CHECK:STDOUT:   node0 = CrossReference(ir0, block0): node0;

@@ -55,9 +55,11 @@ auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
 
   TokenizedBuffer::TokenLocationTranslator translator(
       &tokens, /*last_line_lexed_to_column=*/nullptr);
-  TokenDiagnosticEmitter emitter(translator, consumer);
+  ErrorTrackingDiagnosticConsumer err_tracker(consumer);
+  TokenDiagnosticEmitter emitter(translator, err_tracker);
   SemanticsParseTreeHandler(tokens, emitter, parse_tree, semantics, vlog_stream)
       .Build();
+  semantics.has_errors_ = err_tracker.seen_error();
   return semantics;
 }
 
@@ -80,18 +82,18 @@ auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
 
   out << "cross_reference_irs.size == " << cross_reference_irs_.size() << ",\n";
 
-  out << "identifiers = {\n";
-  for (int32_t i = 0; i < static_cast<int32_t>(identifiers_.size()); ++i) {
-    out.indent(Indent);
-    out << SemanticsIdentifierId(i) << " = \"" << identifiers_[i] << "\";\n";
-  }
-  out << "},\n";
-
   out << "integer_literals = {\n";
   for (int32_t i = 0; i < static_cast<int32_t>(integer_literals_.size()); ++i) {
     out.indent(Indent);
     out << SemanticsIntegerLiteralId(i) << " = " << integer_literals_[i]
         << ";\n";
+  }
+  out << "},\n";
+
+  out << "strings = {\n";
+  for (int32_t i = 0; i < static_cast<int32_t>(strings_.size()); ++i) {
+    out.indent(Indent);
+    out << SemanticsStringId(i) << " = \"" << strings_[i] << "\";\n";
   }
   out << "},\n";
 

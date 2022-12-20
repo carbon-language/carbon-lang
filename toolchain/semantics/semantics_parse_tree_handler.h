@@ -5,6 +5,9 @@
 #ifndef CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_PARSE_TREE_HANDLER_H_
 #define CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_PARSE_TREE_HANDLER_H_
 
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node.h"
@@ -35,19 +38,48 @@ class SemanticsParseTreeHandler {
   // Prints the node_block_stack_ on stack dumps.
   class PrettyStackTraceNodeBlockStack;
 
-  struct TraversalStackEntry {
+  // Provides DenseMapInfo for SemanticsStringId.
+  struct SemanticsStringIdMapInfo {
+    static inline auto getEmptyKey() -> SemanticsStringId {
+      return SemanticsStringId(llvm::DenseMapInfo<int32_t>::getEmptyKey());
+    }
+    static inline auto getTombstoneKey() -> SemanticsStringId {
+      return SemanticsStringId(llvm::DenseMapInfo<int32_t>::getTombstoneKey());
+    }
+
+    static auto getHashValue(const SemanticsStringId& val) -> unsigned {
+      return llvm::DenseMapInfo<int32_t>::getHashValue(val.index);
+    }
+
+    static auto isEqual(const SemanticsStringId& lhs,
+                        const SemanticsStringId& rhs) -> bool {
+      return lhs == rhs;
+    }
+  };
+
+  // An entry in node_stack_.
+  struct NodeStackEntry {
     ParseTree::Node parse_node;
     // The result_id may be invalid if there's no result.
     SemanticsNodeId result_id;
   };
-  static_assert(sizeof(TraversalStackEntry) == 8,
-                "Unexpected TraversalStackEntry size");
+  static_assert(sizeof(NodeStackEntry) == 8, "Unexpected NodeStackEntry size");
 
-  // Adds an identifier for a DeclaredName node, returning its reference.
-  auto AddIdentifier(ParseTree::Node decl_node) -> SemanticsIdentifierId;
+  // An entry in scope_stack_.
+  struct ScopeStackEntry {
+    // Names which are registered with name_lookup_, and will need to be
+    // deregistered when the scope ends.
+    llvm::DenseSet<SemanticsStringId, SemanticsStringIdMapInfo> names;
+
+    // TODO: This likely needs to track things which need to be destructed.
+  };
 
   // Adds a node to the current block, returning the produced ID.
   auto AddNode(SemanticsNode node) -> SemanticsNodeId;
+
+  // Binds a DeclaredName to a target node with the given type.
+  auto BindName(ParseTree::Node name_node, SemanticsNodeId type_id,
+                SemanticsNodeId target_id) -> void;
 
   // Pushes a parse tree node onto the stack. Used when there is no IR generated
   // by the node.
@@ -76,6 +108,12 @@ class SemanticsParseTreeHandler {
   auto PopWithResultIf(ParseNodeKind pop_parse_kind)
       -> std::optional<SemanticsNodeId>;
 
+  // Pushes a new scope onto scope_stack_.
+  auto PushScope() -> void;
+
+  // Pops the top scope from scope_stack_, cleaning up names from name_lookup_.
+  auto PopScope() -> void;
+
   // Attempts a type conversion between arguments of the two arguments with
   // provided types, returning the result type. The result type will be invalid
   // for errors; this handles printing diagnostics.
@@ -87,6 +125,12 @@ class SemanticsParseTreeHandler {
 #define CARBON_PARSE_NODE_KIND(Name) \
   auto Handle##Name(ParseTree::Node parse_node)->void;
 #include "toolchain/parser/parse_node_kind.def"
+
+  auto current_block_id() -> SemanticsNodeBlockId {
+    return node_block_stack_.back();
+  }
+
+  auto current_scope() -> ScopeStackEntry& { return scope_stack_.back(); }
 
   // Tokens for getting data on literals.
   const TokenizedBuffer* tokens_;
@@ -104,11 +148,24 @@ class SemanticsParseTreeHandler {
   llvm::raw_ostream* vlog_stream_;
 
   // The stack during Build. Will contain file-level parse nodes on return.
-  llvm::SmallVector<TraversalStackEntry> node_stack_;
+  llvm::SmallVector<NodeStackEntry> node_stack_;
 
   // The stack of node blocks during build. Only updated on ParseTree nodes that
   // affect the stack.
   llvm::SmallVector<SemanticsNodeBlockId> node_block_stack_;
+
+  // A stack for scope context.
+  llvm::SmallVector<ScopeStackEntry> scope_stack_;
+
+  // Maps identifiers to name lookup results. Values are a stack of name lookup
+  // results in the ancestor scopes. This offers constant-time lookup of names,
+  // regardless of how many scopes exist between the name declaration and
+  // reference.
+  //
+  // Names which no longer have lookup results are erased.
+  llvm::DenseMap<SemanticsStringId, llvm::SmallVector<SemanticsNodeId>,
+                 SemanticsStringIdMapInfo>
+      name_lookup_;
 };
 
 }  // namespace Carbon

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{carbon-run-semantics}
+// RUN: %{not} %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs.size == 2,
 // CHECK:STDOUT: integer_literals = {
 // CHECK:STDOUT: },
@@ -18,7 +18,6 @@
 // CHECK:STDOUT:   node4 = FunctionDeclaration();
 // CHECK:STDOUT:   node5 = BindName(str0, node4);
 // CHECK:STDOUT:   node6 = FunctionDefinition(node4, block1);
-// CHECK:STDOUT:   node7 = Return();
 // CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   block0 = {
@@ -27,10 +26,10 @@
 // CHECK:STDOUT:     node6;
 // CHECK:STDOUT:   },
 // CHECK:STDOUT:   block1 = {
-// CHECK:STDOUT:     node7;
 // CHECK:STDOUT:   },
 // CHECK:STDOUT: }
 
 fn Main() {
-  return;
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/basics/fail_name_lookup.carbon:[[@LINE+1]]:3: Name x not found
+  x;
 }
