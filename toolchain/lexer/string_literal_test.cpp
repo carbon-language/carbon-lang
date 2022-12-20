@@ -334,6 +334,8 @@ TEST_F(StringLiteralTest, TabInBlockString) {
   EXPECT_EQ(value, "x\ty\n");
 }
 
+// TODO issue 2132: more testing. test against `\t\n` and various other whitespaces including unicode whitespaces that `IsSpace()` should be catching. also test againt design.
+
 TEST_F(StringLiteralTest, UnicodeTooManyDigits) {
   std::string text = "u{";
   text.append(10000, '9');
@@ -342,8 +344,6 @@ TEST_F(StringLiteralTest, UnicodeTooManyDigits) {
   EXPECT_TRUE(error_tracker.seen_error());
   EXPECT_EQ(value, text);
 }
-
-// TODO issue 2132: more testing. test against `\t\n` and various other whitespaces including unicode whitespaces that `IsSpace()` should be catching. also test againt design.
 
 }  // namespace
 }  // namespace Carbon::Testing
