@@ -198,6 +198,11 @@ auto SemanticsParseTreeHandler::AddIdentifier(ParseTree::Node decl_node)
   return semantics_->AddIdentifier(text);
 }
 
+auto SemanticsParseTreeHandler::HandleAddress(ParseTree::Node /*parse_node*/)
+    -> void {
+  CARBON_FATAL() << "TODO";
+}
+
 auto SemanticsParseTreeHandler::HandleBreakStatement(
     ParseTree::Node /*parse_node*/) -> void {
   CARBON_FATAL() << "TODO";
@@ -247,6 +252,16 @@ auto SemanticsParseTreeHandler::HandleDeclaredName(ParseTree::Node parse_node)
     -> void {
   // The parent is responsible for binding the name.
   Push(parse_node);
+}
+
+auto SemanticsParseTreeHandler::HandleDeducedParameterList(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleDeducedParameterListStart(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
 }
 
 auto SemanticsParseTreeHandler::HandleDesignatedName(
@@ -531,6 +546,16 @@ auto SemanticsParseTreeHandler::HandleReturnStatementStart(
 }
 
 auto SemanticsParseTreeHandler::HandleReturnType(ParseTree::Node /*parse_node*/)
+    -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleSelfDeducedParameter(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleSelfType(ParseTree::Node /*parse_node*/)
     -> void {
   CARBON_FATAL() << "TODO";
 }

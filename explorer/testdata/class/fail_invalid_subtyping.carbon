@@ -8,18 +8,15 @@
 
 package ExplorerTest api;
 
-abstract class C {
-  var a: i32;
+base class C {
 }
 
-class D extends C {
-  var b: i32;
+class D {
 }
 
 fn Main() -> i32 {
-  var d: D = { .base = {.a = 1}, .b = 2 };
-  // Not supported yet.
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_abstract_class_subtyping.carbon:[[@LINE+1]]: type error in name binding: 'class D*' is not implicitly convertible to 'class C*'
+  var d: D = {};
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_invalid_subtyping.carbon:[[@LINE+1]]: type error in name binding: 'class D*' is not implicitly convertible to 'class C*'
   var c: C* = &d;
   return 0;
 }
