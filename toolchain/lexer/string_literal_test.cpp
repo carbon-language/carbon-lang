@@ -334,7 +334,7 @@ TEST_F(StringLiteralTest, TabInBlockString) {
   EXPECT_EQ(value, "x\ty\n");
 }
 
-// TODO issue 2132: more testing. test against `\t\n` and various other whitespaces including unicode whitespaces that `IsSpace()` should be catching. also test againt design.
+// TODO issue 2132: more testing. test against `\t\n` and various other whitespaces including unicode whitespaces that `IsSpace()` and `IsHorizontalSpace()` should be catching. Also test againt design, and do regression testing.
 
 TEST_F(StringLiteralTest, UnicodeTooManyDigits) {
   std::string text = "u{";
