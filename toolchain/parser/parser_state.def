@@ -560,16 +560,9 @@ CARBON_PARSER_STATE(VarAsFor)
 //
 // If `Equal`:
 //   1. Expression
-//   2. VarAfterInitializer
 // Else:
 //   (state done)
 CARBON_PARSER_STATE(VarAfterPattern)
-
-// Handles `var` after the initializer, wrapping up its subtree.
-//
-// Always:
-//   (state done)
-CARBON_PARSER_STATE(VarAfterInitializer)
 
 // Handles `var` parsing at the end.
 //

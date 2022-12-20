@@ -9,9 +9,9 @@
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'n'},
 // CHECK:STDOUT:     {kind: 'Literal', text: 'i8'},
 // CHECK:STDOUT:   {kind: 'PatternBinding', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'NameReference', text: 'n'},
-// CHECK:STDOUT:     {kind: 'PrefixOperator', text: '-', subtree_size: 2},
-// CHECK:STDOUT:   {kind: 'VariableInitializer', text: '=', subtree_size: 3},
+// CHECK:STDOUT:   {kind: 'VariableInitializer', text: '='},
+// CHECK:STDOUT:     {kind: 'NameReference', text: 'n'},
+// CHECK:STDOUT:   {kind: 'PrefixOperator', text: '-', subtree_size: 2},
 // CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 8},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]

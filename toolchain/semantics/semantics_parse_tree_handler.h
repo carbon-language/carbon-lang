@@ -60,8 +60,12 @@ class SemanticsParseTreeHandler {
   // An entry in node_stack_.
   struct NodeStackEntry {
     ParseTree::Node parse_node;
-    // The result_id may be invalid if there's no result.
-    SemanticsNodeId result_id;
+    union {
+      // The result_id may be invalid if there's no result.
+      SemanticsNodeId result_id;
+      // The name_id is provided for PatternBindings.
+      SemanticsStringId name_id;
+    };
   };
   static_assert(sizeof(NodeStackEntry) == 8, "Unexpected NodeStackEntry size");
 
@@ -80,9 +84,16 @@ class SemanticsParseTreeHandler {
   // Adds a node to the current block, returning the produced ID.
   auto AddNode(SemanticsNode node) -> SemanticsNodeId;
 
+  // Adds a name to name lookup. This is typically done through BindName, but
+  // can also be used to restore removed names.
+  auto AddNameToLookup(SemanticsStringId name_id, SemanticsNodeId storage_id)
+      -> void {
+    name_lookup_[name_id].push_back(storage_id);
+  }
+
   // Binds a DeclaredName to a target node with the given type.
   auto BindName(ParseTree::Node name_node, SemanticsNodeId type_id,
-                SemanticsNodeId target_id) -> void;
+                SemanticsNodeId target_id) -> SemanticsStringId;
 
   // Pushes a parse tree node onto the stack. Used when there is no IR generated
   // by the node.
@@ -94,6 +105,9 @@ class SemanticsParseTreeHandler {
 
   // Pushes a parse tree node onto the stack with an already-built node ID.
   auto Push(ParseTree::Node parse_node, SemanticsNodeId node_id) -> void;
+
+  // Pushes a PatternBinding parse tree node onto the stack with its name.
+  auto Push(ParseTree::Node parse_node, SemanticsStringId name_id) -> void;
 
   // Pops the top of the stack, verifying that it's the expected kind.
   auto Pop(ParseNodeKind pop_parse_kind) -> void;

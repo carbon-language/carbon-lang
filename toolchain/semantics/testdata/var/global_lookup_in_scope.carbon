@@ -27,7 +27,7 @@
 // CHECK:STDOUT:     node0 = VarStorage(): node_xref2;
 // CHECK:STDOUT:     node1 = BindName(str0, node0): node_xref2;
 // CHECK:STDOUT:     node2 = IntegerLiteral(int0): node_xref2;
-// CHECK:STDOUT:     node3 = Assign(node0, node2): node_xref2;
+// CHECK:STDOUT:     node3 = Assign(node_xref4, node2): node_xref2;
 // CHECK:STDOUT:     node4 = FunctionDeclaration();
 // CHECK:STDOUT:     node5 = BindName(str1, node4);
 // CHECK:STDOUT:     node6 = FunctionDefinition(node4, block1);
@@ -35,7 +35,7 @@
 // CHECK:STDOUT:   block1 = {
 // CHECK:STDOUT:     node0 = VarStorage(): node_xref2;
 // CHECK:STDOUT:     node1 = BindName(str2, node0): node_xref2;
-// CHECK:STDOUT:     node2 = Assign(node0, node_xref4): node_xref2;
+// CHECK:STDOUT:     node2 = Assign(node_xref6, node_xref4): node_xref2;
 // CHECK:STDOUT:   },
 // CHECK:STDOUT: }
 

@@ -29,7 +29,7 @@
 // CHECK:STDOUT:     node0 = VarStorage(): node_xref2;
 // CHECK:STDOUT:     node1 = BindName(str1, node0): node_xref2;
 // CHECK:STDOUT:     node2 = RealLiteral(): node_xref3;
-// CHECK:STDOUT:     node3 = Assign(node0, node2): node_xref1;
+// CHECK:STDOUT:     node3 = Assign(node_xref5, node2): node_xref1;
 // CHECK:STDOUT:   },
 // CHECK:STDOUT: }
 
