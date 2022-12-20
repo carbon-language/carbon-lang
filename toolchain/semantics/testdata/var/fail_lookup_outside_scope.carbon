@@ -3,13 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{carbon-run-semantics}
+// RUN: %{not} %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs.size == 2,
 // CHECK:STDOUT: integer_literals = {
 // CHECK:STDOUT: },
 // CHECK:STDOUT: strings = {
 // CHECK:STDOUT:   str0 = "Main";
 // CHECK:STDOUT:   str1 = "x";
+// CHECK:STDOUT:   str2 = "y";
 // CHECK:STDOUT: },
 // CHECK:STDOUT: nodes = {
 // CHECK:STDOUT:   node0 = CrossReference(ir0, block0): node0;
@@ -21,12 +22,18 @@
 // CHECK:STDOUT:   node6 = FunctionDefinition(node4, block1);
 // CHECK:STDOUT:   node7 = VarStorage(): node2;
 // CHECK:STDOUT:   node8 = BindName(str1, node7): node2;
+// CHECK:STDOUT:   node9 = VarStorage(): node2;
+// CHECK:STDOUT:   node10 = BindName(str2, node9): node2;
+// CHECK:STDOUT:   node11 = Assign(node9, node1): node1;
 // CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   block0 = {
 // CHECK:STDOUT:     node4;
 // CHECK:STDOUT:     node5;
 // CHECK:STDOUT:     node6;
+// CHECK:STDOUT:     node9;
+// CHECK:STDOUT:     node10;
+// CHECK:STDOUT:     node11;
 // CHECK:STDOUT:   },
 // CHECK:STDOUT:   block1 = {
 // CHECK:STDOUT:     node7;
@@ -38,7 +45,5 @@ fn Main() {
   var x: i32;
 }
 
-// TODO: This is a crash because the type of `x` is incorrect. That needs to be
-// fixed, but it crashes due to cross-reference handling which I intend to
-// rewrite, so leaving this as a TODO.
-// var y: i32 = x;
+// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/fail_lookup_outside_scope.carbon:[[@LINE+1]]:14: Name x not found
+var y: i32 = x;
