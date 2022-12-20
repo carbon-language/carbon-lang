@@ -343,5 +343,7 @@ TEST_F(StringLiteralTest, UnicodeTooManyDigits) {
   EXPECT_EQ(value, text);
 }
 
+// TODO issue 2132: more testing. test against `\t\n` and various other whitespaces including unicode whitespaces that `IsSpace()` should be catching. also test againt design.
+
 }  // namespace
 }  // namespace Carbon::Testing
