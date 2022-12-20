@@ -335,6 +335,11 @@ TEST_F(StringLiteralTest, TabInBlockString) {
 }
 
 // TODO issue 2132: more testing. test against `\t\n` and various other whitespaces including unicode whitespaces that `IsSpace()` and `IsHorizontalSpace()` should be catching. Also test againt design, and do regression testing.
+TEST_F(StringLiteralTest, TabEscapeSequenceExpanded) {
+  auto value = Parse("\t");
+  EXPECT_TRUE(error_tracker.seen_error());
+  EXPECT_EQ(value, std::expandTabEscapeSequence("\t"));
+}
 
 TEST_F(StringLiteralTest, UnicodeTooManyDigits) {
   std::string text = "u{";
