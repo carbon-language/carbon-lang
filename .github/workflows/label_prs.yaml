@@ -15,10 +15,28 @@ jobs:
         uses: dorny/paths-filter@v2
         with:
           filters: |
+            documentation:
+              - '*.md'
+              - 'docs/**'
             explorer:
               - 'explorer/**'
+            infrastructure:
+              - 'BUILD'
+              - 'WORKSPACE'
+              - '.*'
+              - '.*/**'
+              - 'bazel/**'
+              - 'scripts/**'
             toolchain:
               - 'toolchain/**'
+
+      - id: documentation
+        if: steps.filter.outputs.docs == 'true'
+        run: |
+          gh pr edit "${PR}" --add-label "documentation"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.html_url }}
 
       - id: explorer
         if: steps.filter.outputs.explorer == 'true'
@@ -28,7 +46,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
 
-      - id: assign-toolchain
+      - id: infrastructure
+        if: steps.filter.outputs.docs == 'true'
+        run: |
+          gh pr edit "${PR}" --add-label "infrastructure"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.html_url }}
+
+      - id: toolchain
         if: steps.filter.outputs.toolchain == 'true'
         run: |
           gh pr edit "${PR}" --add-label "toolchain"
