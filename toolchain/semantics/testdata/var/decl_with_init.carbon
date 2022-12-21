@@ -4,15 +4,7 @@
 //
 // AUTOUPDATE
 // RUN: %{carbon-run-semantics}
-// CHECK:STDOUT: cross_reference_irs.size == 2,
-// CHECK:STDOUT: cross_references = {
-// CHECK:STDOUT:   node_xref0 = xref(ir0, block0, node0);
-// CHECK:STDOUT:   node_xref1 = xref(ir0, block0, node1);
-// CHECK:STDOUT:   node_xref2 = xref(ir0, block0, node2);
-// CHECK:STDOUT:   node_xref3 = xref(ir0, block0, node3);
-// CHECK:STDOUT:   node_xref4 = xref(ir1, block0, node1);
-// CHECK:STDOUT:   node_xref5 = xref(ir1, block1, node1);
-// CHECK:STDOUT: },
+// CHECK:STDOUT: cross_reference_irs.size == 1,
 // CHECK:STDOUT: integer_literals = {
 // CHECK:STDOUT:   int0 = 0;
 // CHECK:STDOUT: },
@@ -20,17 +12,30 @@
 // CHECK:STDOUT:   str0 = "Main";
 // CHECK:STDOUT:   str1 = "x";
 // CHECK:STDOUT: },
+// CHECK:STDOUT: nodes = {
+// CHECK:STDOUT:   node0 = CrossReference(ir0, block0): node0;
+// CHECK:STDOUT:   node1 = CrossReference(ir0, block1): node1;
+// CHECK:STDOUT:   node2 = CrossReference(ir0, block2): node0;
+// CHECK:STDOUT:   node3 = CrossReference(ir0, block3): node0;
+// CHECK:STDOUT:   node4 = FunctionDeclaration();
+// CHECK:STDOUT:   node5 = BindName(str0, node4);
+// CHECK:STDOUT:   node6 = FunctionDefinition(node4, block1);
+// CHECK:STDOUT:   node7 = VarStorage(): node2;
+// CHECK:STDOUT:   node8 = BindName(str1, node7): node2;
+// CHECK:STDOUT:   node9 = IntegerLiteral(int0): node2;
+// CHECK:STDOUT:   node10 = Assign(node7, node9): node2;
+// CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   block0 = {
-// CHECK:STDOUT:     node0 = FunctionDeclaration();
-// CHECK:STDOUT:     node1 = BindName(str0, node0);
-// CHECK:STDOUT:     node2 = FunctionDefinition(node0, block1);
+// CHECK:STDOUT:     node4;
+// CHECK:STDOUT:     node5;
+// CHECK:STDOUT:     node6;
 // CHECK:STDOUT:   },
 // CHECK:STDOUT:   block1 = {
-// CHECK:STDOUT:     node0 = VarStorage(): node_xref2;
-// CHECK:STDOUT:     node1 = BindName(str1, node0): node_xref2;
-// CHECK:STDOUT:     node2 = IntegerLiteral(int0): node_xref2;
-// CHECK:STDOUT:     node3 = Assign(node_xref5, node2): node_xref2;
+// CHECK:STDOUT:     node7;
+// CHECK:STDOUT:     node8;
+// CHECK:STDOUT:     node9;
+// CHECK:STDOUT:     node10;
 // CHECK:STDOUT:   },
 // CHECK:STDOUT: }
 

@@ -16,36 +16,9 @@ class SemanticsIRForTest;
 
 namespace Carbon {
 
-// The ID of a cross-referenced IR (within cross_reference_irs_).
-struct SemanticsCrossReferenceIRId : public IndexBase {
-  using IndexBase::IndexBase;
-  auto Print(llvm::raw_ostream& out) const -> void { out << "ir" << index; }
-};
-
-// A cross-reference between node blocks or IRs; essentially, anything that's
-// not in the same SemanticsNodeBlock as the referencing node.
-struct SemanticsCrossReference {
-  SemanticsCrossReference() = default;
-  SemanticsCrossReference(SemanticsCrossReferenceIRId ir,
-                          SemanticsNodeBlockId node_block, SemanticsNodeId node)
-      : ir(ir), node_block(node_block), node(node) {}
-
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "xref(" << ir << ", " << node_block << ", " << node << ")";
-  }
-
-  SemanticsCrossReferenceIRId ir;
-  SemanticsNodeBlockId node_block;
-  SemanticsNodeId node;
-};
-
 // Provides semantic analysis on a ParseTree.
 class SemanticsIR {
  public:
-  // As noted under cross_reference_irs_, the current IR must always be at
-  // index 1. This is a constant for that.
-  static constexpr auto ThisIR = SemanticsCrossReferenceIRId(1);
-
   // Produces the builtins.
   static auto MakeBuiltinIR() -> SemanticsIR;
 
@@ -65,57 +38,17 @@ class SemanticsIR {
  private:
   friend class SemanticsParseTreeHandler;
 
-  // For the builtin IR only.
-  SemanticsIR() : SemanticsIR(*this) {}
-  // For most IRs.
-  SemanticsIR(const SemanticsIR& builtins)
-      : cross_reference_irs_({&builtins, this}),
-        cross_references_(builtins.cross_references_) {}
+  explicit SemanticsIR(const SemanticsIR* builtin_ir)
+      : cross_reference_irs_({builtin_ir == nullptr ? this : builtin_ir}) {}
 
-  // Returns the requested node, resolving cross references.
-  auto GetNode(SemanticsNodeBlockId block_id, SemanticsNodeId node_id)
-      -> SemanticsNode {
-    if (node_id.is_cross_reference()) {
-      auto ref = cross_references_[node_id.GetAsCrossReference()];
-      return cross_reference_irs_[ref.ir.index]
-          ->node_blocks_[ref.node_block.index][ref.node.index];
-    } else {
-      return node_blocks_[block_id.index][node_id.index];
-    }
+  // Returns the requested node.
+  auto GetNode(SemanticsNodeId node_id) const -> const SemanticsNode& {
+    return nodes_[node_id.index];
   }
 
-  // Returns the type of the requested node, resolving cross references.
-  auto GetType(SemanticsNodeBlockId block_id, SemanticsNodeId node_id)
-      -> SemanticsNodeId {
-    if (node_id.is_cross_reference()) {
-      auto ref = cross_references_[node_id.GetAsCrossReference()];
-      auto type = cross_reference_irs_[ref.ir.index]
-                      ->node_blocks_[ref.node_block.index][ref.node.index]
-                      .type();
-      if (type.is_cross_reference() ||
-          (ref.ir == ThisIR && ref.node_block == block_id)) {
-        return type;
-      } else {
-        // TODO: If the type is a local reference within a block other than the
-        // present one, we don't really want to add a cross reference at this
-        // point. Does this mean types should be required to be cross
-        // references? And maybe always with a presence in the current IR's
-        // cross-references, so that equality is straightforward even though
-        // resolving the actual type is a two-step process?
-        CARBON_FATAL() << "Need to think more about this case";
-      }
-    } else {
-      return node_blocks_[block_id.index][node_id.index].type();
-    }
-  }
-
-  // Adds a cross reference, returning an ID to reference it.
-  auto AddCrossReference(SemanticsCrossReference cross_reference)
-      -> SemanticsNodeId {
-    SemanticsNodeId id =
-        SemanticsNodeId::MakeCrossReference(cross_references_.size());
-    cross_references_.push_back(cross_reference);
-    return id;
+  // Returns the type of the requested node.
+  auto GetType(SemanticsNodeId node_id) -> SemanticsNodeId {
+    return GetNode(node_id).type();
   }
 
   // Adds an integer literal, returning an ID to reference it.
@@ -137,9 +70,9 @@ class SemanticsIR {
   // Adds a node to a specified block, returning an ID to reference the node.
   auto AddNode(SemanticsNodeBlockId block_id, SemanticsNode node)
       -> SemanticsNodeId {
-    auto& block = node_blocks_[block_id.index];
-    SemanticsNodeId node_id(block.size());
-    block.push_back(node);
+    SemanticsNodeId node_id(nodes_.size());
+    nodes_.push_back(node);
+    node_blocks_[block_id.index].push_back(node_id);
     return node_id;
   }
 
@@ -173,13 +106,6 @@ class SemanticsIR {
   // crossing node blocks).
   llvm::SmallVector<const SemanticsIR*> cross_reference_irs_;
 
-  // Cross-references within the current IR across node blocks, and to other
-  // IRs. The first entries will always be builtins, at indices matching
-  // SemanticsBuiltinKind ordering.
-  // TODO: Deduplicate cross-references after they can be added outside
-  // builtins.
-  llvm::SmallVector<SemanticsCrossReference> cross_references_;
-
   // Storage for integer literals.
   llvm::SmallVector<llvm::APInt> integer_literals_;
 
@@ -188,8 +114,12 @@ class SemanticsIR {
   llvm::StringMap<SemanticsStringId> string_to_id_;
   llvm::SmallVector<llvm::StringRef> strings_;
 
-  // Storage for blocks within the IR.
-  llvm::SmallVector<llvm::SmallVector<SemanticsNode>> node_blocks_;
+  // All nodes. The first entries will always be cross-references to builtins,
+  // at indices matching SemanticsBuiltinKind ordering.
+  llvm::SmallVector<SemanticsNode> nodes_;
+
+  // Storage for blocks within the IR. These reference entries in nodes_.
+  llvm::SmallVector<llvm::SmallVector<SemanticsNodeId>> node_blocks_;
 };
 
 }  // namespace Carbon

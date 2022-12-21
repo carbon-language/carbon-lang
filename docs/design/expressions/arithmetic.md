@@ -128,7 +128,7 @@ Signed integer arithmetic produces the usual mathematical result. Unsigned
 integer arithmetic in `uN` wraps around modulo 2<sup>`N`</sup>.
 
 Division truncates towards zero. The result of the `%` operator is defined by
-the equation `a % b == a - a / b * b`.
+the equation `a % b == a - (a / b) * b`.
 
 #### Overflow and other error conditions
 

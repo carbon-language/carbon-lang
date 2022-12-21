@@ -4,14 +4,7 @@
 //
 // AUTOUPDATE
 // RUN: %{not} %{carbon-run-semantics}
-// CHECK:STDOUT: cross_reference_irs.size == 2,
-// CHECK:STDOUT: cross_references = {
-// CHECK:STDOUT:   node_xref0 = xref(ir0, block0, node0);
-// CHECK:STDOUT:   node_xref1 = xref(ir0, block0, node1);
-// CHECK:STDOUT:   node_xref2 = xref(ir0, block0, node2);
-// CHECK:STDOUT:   node_xref3 = xref(ir0, block0, node3);
-// CHECK:STDOUT:   node_xref4 = xref(ir1, block0, node1);
-// CHECK:STDOUT: },
+// CHECK:STDOUT: cross_reference_irs.size == 1,
 // CHECK:STDOUT: integer_literals = {
 // CHECK:STDOUT:   int0 = 12;
 // CHECK:STDOUT:   int1 = 12;
@@ -19,25 +12,40 @@
 // CHECK:STDOUT: strings = {
 // CHECK:STDOUT:   str0 = "Main";
 // CHECK:STDOUT: },
+// CHECK:STDOUT: nodes = {
+// CHECK:STDOUT:   node0 = CrossReference(ir0, block0): node0;
+// CHECK:STDOUT:   node1 = CrossReference(ir0, block1): node1;
+// CHECK:STDOUT:   node2 = CrossReference(ir0, block2): node0;
+// CHECK:STDOUT:   node3 = CrossReference(ir0, block3): node0;
+// CHECK:STDOUT:   node4 = FunctionDeclaration();
+// CHECK:STDOUT:   node5 = BindName(str0, node4);
+// CHECK:STDOUT:   node6 = FunctionDefinition(node4, block1);
+// CHECK:STDOUT:   node7 = IntegerLiteral(int0): node2;
+// CHECK:STDOUT:   node8 = RealLiteral(): node3;
+// CHECK:STDOUT:   node9 = BinaryOperatorAdd(node7, node8): node1;
+// CHECK:STDOUT:   node10 = IntegerLiteral(int1): node2;
+// CHECK:STDOUT:   node11 = BinaryOperatorAdd(node9, node10): node1;
+// CHECK:STDOUT:   node12 = ReturnExpression(node11): node1;
+// CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   block0 = {
-// CHECK:STDOUT:     node0 = FunctionDeclaration();
-// CHECK:STDOUT:     node1 = BindName(str0, node0);
-// CHECK:STDOUT:     node2 = FunctionDefinition(node0, block1);
+// CHECK:STDOUT:     node4;
+// CHECK:STDOUT:     node5;
+// CHECK:STDOUT:     node6;
 // CHECK:STDOUT:   },
 // CHECK:STDOUT:   block1 = {
-// CHECK:STDOUT:     node0 = IntegerLiteral(int0): node_xref2;
-// CHECK:STDOUT:     node1 = RealLiteral(): node_xref3;
-// CHECK:STDOUT:     node2 = BinaryOperatorAdd(node0, node1): node_xref1;
-// CHECK:STDOUT:     node3 = IntegerLiteral(int1): node_xref2;
-// CHECK:STDOUT:     node4 = BinaryOperatorAdd(node2, node3): node_xref1;
-// CHECK:STDOUT:     node5 = ReturnExpression(node4): node_xref1;
+// CHECK:STDOUT:     node7;
+// CHECK:STDOUT:     node8;
+// CHECK:STDOUT:     node9;
+// CHECK:STDOUT:     node10;
+// CHECK:STDOUT:     node11;
+// CHECK:STDOUT:     node12;
 // CHECK:STDOUT:   },
 // CHECK:STDOUT: }
 
 fn Main() {
   // The following line has two mismatches, but after the first, it shouldn't
   // keep erroring.
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/operators/fail_type_mismatch_once.carbon:[[@LINE+1]]:13: Type mismatch: lhs is node_xref2, rhs is node_xref3
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/operators/fail_type_mismatch_once.carbon:[[@LINE+1]]:13: Type mismatch: lhs is node2, rhs is node3
   return 12 + 3.4 + 12;
 }

@@ -78,9 +78,6 @@ class SemanticsParseTreeHandler {
     // TODO: This likely needs to track things which need to be destructed.
   };
 
-  // Adds a cross-reference for a node_id in the current block.
-  auto AddCrossReference(SemanticsNodeId node_id) -> SemanticsNodeId;
-
   // Adds a node to the current block, returning the produced ID.
   auto AddNode(SemanticsNode node) -> SemanticsNodeId;
 

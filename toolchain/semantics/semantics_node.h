@@ -17,39 +17,24 @@ namespace Carbon {
 
 // Type-safe storage of Node IDs.
 struct SemanticsNodeId : public IndexBase {
-  static constexpr int32_t CrossReferenceBit = 0x8000'0000;
-
-  // Constructs a cross-reference node ID.
-  static auto MakeCrossReference(int32_t index) -> SemanticsNodeId {
-    return SemanticsNodeId(index | CrossReferenceBit);
-  }
-
-  // Constructs a cross-reference node ID for a builtin. This relies on
-  // SemanticsIR guarantees for builtin cross-reference placement.
+  // Uses the cross-reference node ID for a builtin. This relies on SemanticsIR
+  // guarantees for builtin cross-reference placement.
   static auto MakeBuiltinReference(SemanticsBuiltinKind kind)
       -> SemanticsNodeId {
-    return MakeCrossReference(kind.AsInt());
+    return SemanticsNodeId(kind.AsInt());
   }
 
   // Constructs an explicitly invalid instance.
   static auto MakeInvalid() -> SemanticsNodeId { return SemanticsNodeId(); }
 
   using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void { out << "node" << index; }
+};
 
-  auto is_cross_reference() const -> bool { return index & CrossReferenceBit; }
-  // Returns the ID for a cross-reference, just handling removal of the marker
-  // bit.
-  auto GetAsCrossReference() const -> int32_t {
-    return index & ~CrossReferenceBit;
-  }
-
-  auto Print(llvm::raw_ostream& out) const -> void {
-    if (is_cross_reference()) {
-      out << "node_xref" << GetAsCrossReference();
-    } else {
-      out << "node" << index;
-    }
-  }
+// The ID of a cross-referenced IR.
+struct SemanticsCrossReferenceIRId : public IndexBase {
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void { out << "ir" << index; }
 };
 
 // Type-safe storage of integer literals.
@@ -131,6 +116,19 @@ class SemanticsNode {
   auto GetAsCodeBlock() const -> SemanticsNodeBlockId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::CodeBlock());
     return SemanticsNodeBlockId(arg0_);
+  }
+
+  static auto MakeCrossReference(SemanticsNodeId type,
+                                 SemanticsCrossReferenceIRId ir,
+                                 SemanticsNodeId node) -> SemanticsNode {
+    return SemanticsNode(ParseTree::Node::MakeInvalid(),
+                         SemanticsNodeKind::CrossReference(), type, ir.index,
+                         node.index);
+  }
+  auto GetAsCrossReference() const
+      -> std::pair<SemanticsCrossReferenceIRId, SemanticsNodeBlockId> {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::CrossReference());
+    return {SemanticsCrossReferenceIRId(arg0_), SemanticsNodeBlockId(arg1_)};
   }
 
   // TODO: The signature should be added as a parameter.
