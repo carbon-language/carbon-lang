@@ -743,7 +743,6 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::TypeType:
     case Value::Kind::FunctionType:
     case Value::Kind::PointerType:
-    case Value::Kind::PointerValue:
     case Value::Kind::TupleType:
     case Value::Kind::StructType:
     case Value::Kind::AutoType:
@@ -883,6 +882,42 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
                << "value of associated constant " << *value << " is not known";
       }
       return Convert(value, destination_type, source_loc);
+    }
+    case Value::Kind::PointerValue: {
+      if (destination_type->kind() != Value::Kind::PointerType ||
+          cast<PointerType>(destination_type)->pointee_type().kind() !=
+              Value::Kind::NominalClassType) {
+        // No conversion needed.
+        return value;
+      }
+
+      // Get pointee value.
+      const auto* src_ptr = cast<PointerValue>(value);
+      CARBON_ASSIGN_OR_RETURN(const auto* pointee,
+                              heap_.Read(src_ptr->address(), source_loc))
+      CARBON_CHECK(pointee->kind() == Value::Kind::NominalClassValue)
+          << "Unexpected pointer type";
+
+      // Conversion logic for subtyping for function arguments only.
+      // TODO: Drop when able to rewrite subtyping in TypeChecker for arguments.
+      const auto* dest_ptr = cast<PointerType>(destination_type);
+      std::optional<Nonnull<const NominalClassValue*>> class_subobj =
+          cast<NominalClassValue>(pointee);
+      auto new_addr = src_ptr->address();
+      while (class_subobj) {
+        if (TypeEqual(&(*class_subobj)->type(), &dest_ptr->pointee_type(),
+                      std::nullopt)) {
+          return arena_->New<PointerValue>(new_addr);
+        }
+        class_subobj = (*class_subobj)->base();
+        new_addr = new_addr.ElementAddress(
+            arena_->New<BaseElement>(&dest_ptr->pointee_type()));
+      }
+
+      // Unable to resolve, return as-is.
+      // TODO: Produce error instead once we can properly substitute
+      // parameterized types for pointers in function call parameters.
+      return value;
     }
   }
 }

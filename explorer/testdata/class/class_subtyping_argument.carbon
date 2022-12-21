@@ -5,10 +5,10 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
-// CHECK:STDOUT: (*c1).val: 1
-// CHECK:STDOUT: (*c2).val: 1
-// CHECK:STDOUT: (*d).val: 2
-// CHECK:STDOUT: e.val: 3
+// CHECK:STDOUT: Foo(c1): 1
+// CHECK:STDOUT: Foo(c2): 1
+// CHECK:STDOUT: Foo(d): 1
+// CHECK:STDOUT: Foo(&e): 1
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
@@ -34,10 +34,11 @@ fn Main() -> i32 {
   var d: D* = &e;
   var c1: C* = &e;
   var c2: C* = d;
-  Print("(*c1).val: {0}", (*c1).val);
-  Print("(*c2).val: {0}", (*c2).val);
-  Print("(*d).val: {0}", (*d).val);
-  Print("e.val: {0}", e.val);
+
+  Print("Foo(c1): {0}", Foo(c1));
+  Print("Foo(c2): {0}", Foo(c2));
+  Print("Foo(d): {0}", Foo(d));
+  Print("Foo(&e): {0}", Foo(&e));
 
   return 0;
 }
