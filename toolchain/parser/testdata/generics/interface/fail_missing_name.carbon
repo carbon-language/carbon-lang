@@ -12,6 +12,6 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/interface/fail_missing_name.carbon:[[@LINE+1]]:11: Expected interface name after `interface` keyword.
+// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/interface/fail_missing_name.carbon:[[@LINE+1]]:11: Expected identifier after `interface` keyword.
 interface {
 }

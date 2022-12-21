@@ -275,6 +275,21 @@ auto SemanticsParseTreeHandler::HandleCallExpressionStart(
   CARBON_FATAL() << "TODO";
 }
 
+auto SemanticsParseTreeHandler::HandleClassBody(ParseTree::Node /*parse_node*/)
+    -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleClassBodyStart(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
+auto SemanticsParseTreeHandler::HandleClassDefinition(
+    ParseTree::Node /*parse_node*/) -> void {
+  CARBON_FATAL() << "TODO";
+}
+
 auto SemanticsParseTreeHandler::HandleCodeBlock(ParseTree::Node /*parse_node*/)
     -> void {
   CARBON_FATAL() << "TODO";

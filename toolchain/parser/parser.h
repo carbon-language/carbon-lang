@@ -22,6 +22,12 @@ namespace Carbon {
 // state documentation.
 class Parser {
  public:
+  enum class ParseContext {
+    File,  // Top-level context.
+    Interface,
+    Class,
+  };
+
   // Parses the tokens into a parse tree, emitting any errors encountered.
   //
   // This is the entry point to the parser implementation.
@@ -49,10 +55,6 @@ class Parser {
   // Gives information about the language construct/context being parsed. For
   // now, a simple enum but can be extended later to provide more information as
   // necessary.
-  enum class ParseContext {
-    File,  // Top-level context.
-    Interface,
-  };
 
   // Helper class for tracing state_stack_ on crashes.
   class PrettyStackTraceParseState;
@@ -306,6 +308,12 @@ class Parser {
 
   // Handles VarAs(Semicolon|For).
   auto HandleVar(ParserState finish_state) -> void;
+
+  auto HandleDeclarationLoopError() -> void;
+
+  auto HandleMemberDefinitionLoop();
+
+  auto HandleIntroducerState() -> void;
 
   // `clang-format` has a bug with spacing around `->` returns in macros. See
   // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.

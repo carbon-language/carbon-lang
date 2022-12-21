@@ -297,7 +297,7 @@ CARBON_PARSER_STATE(InterfaceDefinitionFinish)
 //   (state done)
 // Else:
 //   1. InterfaceDefinitionLoop
-CARBON_PARSER_STATE(InterfaceDefinitionLoop)
+CARBON_PARSER_STATE(MemberDefinitionLoop)
 
 // Handles processing of a intefaces's `interface <name> {`.
 //
@@ -591,5 +591,9 @@ CARBON_PARSER_STATE(VarFinishAsFor)
 //   1. FunctionParameterListFinish
 //   2. FunctionAfterParameterList
 CARBON_PARSER_STATE(FunctionAfterDeducedParameterList)
+
+CARBON_PARSER_STATE(ClassIntroducer)
+
+CARBON_PARSER_STATE(ClassDefinitionFinish)
 
 #undef CARBON_PARSER_STATE
