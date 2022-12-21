@@ -44,7 +44,7 @@ NominalClassValue::NominalClassValue(
     : Value(Kind::NominalClassValue),
       type_(type),
       inits_(inits),
-      vptr_(cast<NominalClassType>(type)->vtable()),
+      vptr_(&cast<NominalClassType>(type)->vtable()),
       base_(base) {}
 
 static auto FindClassField(Nonnull<const NominalClassValue*> object,
@@ -148,12 +148,11 @@ static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         return *field;
       } else {
         // Look for a method in the object's class
-        if (const auto& vtable = object.vtable()) {
-          if (const auto res = vtable.value()->find(std::string(f));
-              res != vtable.value()->end()) {
-            const auto& fun = cast<CallableDeclaration>(*res->second);
-            return &cast<FunctionValue>(**fun.constant_value());
-          }
+        const auto* vtable = object.vtable();
+        if (const auto res = vtable->find(std::string(f));
+            res != vtable->end()) {
+          const auto& fun = cast<CallableDeclaration>(*res->second);
+          return &cast<FunctionValue>(**fun.constant_value());
         }
         const auto& class_type = cast<NominalClassType>(object.type());
         std::optional<Nonnull<const FunctionValue*>> func =

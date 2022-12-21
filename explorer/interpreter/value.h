@@ -361,12 +361,13 @@ class NominalClassValue : public Value {
   auto base() const -> std::optional<Nonnull<const NominalClassValue*>> {
     return base_;
   }
-  auto vtable() const -> std::optional<Nonnull<const VTable*>> { return vptr_; }
+  auto has_vtable() const -> bool { return !vtable()->empty(); }
+  auto vtable() const -> Nonnull<const VTable*> { return vptr_; }
 
  private:
   Nonnull<const Value*> type_;
   Nonnull<const Value*> inits_;  // The initializing StructValue.
-  const std::optional<Nonnull<const VTable*>> vptr_;
+  const Nonnull<const VTable*> vptr_;
   std::optional<Nonnull<const NominalClassValue*>> base_;
 };
 
@@ -735,8 +736,7 @@ class NominalClassType : public Value {
   // Construct a non-generic class type.
   explicit NominalClassType(
       Nonnull<const ClassDeclaration*> declaration,
-      std::optional<Nonnull<const NominalClassType*>> base,
-      std::optional<VTable> class_vtable)
+      std::optional<Nonnull<const NominalClassType*>> base, VTable class_vtable)
       : Value(Kind::NominalClassType),
         declaration_(declaration),
         base_(base),
@@ -750,8 +750,7 @@ class NominalClassType : public Value {
   explicit NominalClassType(
       Nonnull<const ClassDeclaration*> declaration,
       Nonnull<const Bindings*> bindings,
-      std::optional<Nonnull<const NominalClassType*>> base,
-      std::optional<VTable> class_vtable)
+      std::optional<Nonnull<const NominalClassType*>> base, VTable class_vtable)
       : Value(Kind::NominalClassType),
         declaration_(declaration),
         bindings_(bindings),
@@ -764,8 +763,7 @@ class NominalClassType : public Value {
 
   template <typename F>
   auto Decompose(F f) const {
-    return f(declaration_, bindings_, base_,
-             vtable_ ? std::optional<VTable>(*vtable_) : std::nullopt);
+    return f(declaration_, bindings_, base_, vtable_);
   }
 
   auto declaration() const -> const ClassDeclaration& { return *declaration_; }
@@ -783,9 +781,7 @@ class NominalClassType : public Value {
     return bindings_->witnesses();
   }
 
-  auto vtable() const -> std::optional<Nonnull<const VTable*>> {
-    return vtable_ ? std::optional{&vtable_.value()} : std::nullopt;
-  };
+  auto vtable() const -> const VTable& { return vtable_; };
 
   // Returns whether this a parameterized class. That is, a class with
   // parameters and no corresponding arguments.
@@ -800,7 +796,7 @@ class NominalClassType : public Value {
   Nonnull<const ClassDeclaration*> declaration_;
   Nonnull<const Bindings*> bindings_ = Bindings::None();
   const std::optional<Nonnull<const NominalClassType*>> base_;
-  const std::optional<VTable> vtable_;
+  const VTable vtable_;
 };
 
 class MixinPseudoType : public Value {

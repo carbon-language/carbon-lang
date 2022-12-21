@@ -5,39 +5,41 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
-// CHECK:STDOUT: c.Foo() -> 5
-// CHECK:STDOUT: d.Foo() -> 4
-// CHECK:STDOUT: cc.Foo() -> 5
-// CHECK:STDOUT: cc.Bar() -> 10
+// CHECK:STDOUT: c.Foo() -> 1
+// CHECK:STDOUT: c.Bar() -> 2
+// CHECK:STDOUT: d.Foo() -> 3
+// CHECK:STDOUT: d.Bar() -> 4
+// CHECK:STDOUT: cc.Foo() -> 3
+// CHECK:STDOUT: cc.Bar() -> 2
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
 base class C {
-  var a: i32;
   virtual fn Foo[self: Self]() -> i32 {
-    return 5;
+    return 1;
   }
   fn Bar[self: Self]() -> i32 {
-    return 10;
+    return 2;
   }
 }
 
 class D extends C {
-  var b: i32;
   fn Foo[self: Self]() -> i32 {
-    return 4;
+    return 3;
   }
   fn Bar[self: Self]() -> i32 {
-    return 11;
+    return 4;
   }
 }
 
 fn Main() -> i32 {
-  var c: C = {.a = 1};
+  var c: C = {};
   Print("c.Foo() -> {0}", c.Foo());
-  var d: D = {.b = 3, .base = {.a = 2}};
+  Print("c.Bar() -> {0}", c.Bar());
+  var d: D = {.base = {}};
   Print("d.Foo() -> {0}", d.Foo());
+  Print("d.Bar() -> {0}", d.Bar());
   var cc: C* = &d;
   Print("cc.Foo() -> {0}", (*cc).Foo());
   Print("cc.Bar() -> {0}", (*cc).Bar());

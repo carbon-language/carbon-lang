@@ -4466,17 +4466,12 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   }
 
   // Generate vtable for the type if necessary
-  std::optional<VTable> class_vtable;
+  VTable class_vtable = base_class ? (*base_class)->vtable() : VTable();
   if (class_decl->extensibility() != ClassExtensibility::None) {
-    if (base_class && *base_class && (*base_class)->vtable()) {
-      class_vtable = *(*base_class)->vtable().value();
-    } else {
-      class_vtable = VTable();
-    }
     for (const auto* m : class_decl->members()) {
       if (const auto* method = dyn_cast<FunctionDeclaration>(m);
           method && method->is_virtual()) {
-        (*class_vtable)[method->name()] = method;
+        class_vtable[method->name()] = method;
       }
     }
   }
