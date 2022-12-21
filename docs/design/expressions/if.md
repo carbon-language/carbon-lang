@@ -89,8 +89,8 @@ The interface `CommonTypeWith` is used to customize the behavior of
 ```
 interface CommonTypeWith(U:! Type) {
   let Result:! Type
-    where Self is ImplicitAs(.Self) and
-          U is ImplicitAs(.Self);
+    where Self impls ImplicitAs(.Self) and
+          U impls ImplicitAs(.Self);
 }
 ```
 
@@ -122,8 +122,8 @@ The interface `SymmetricCommonTypeWith` is an implementation detail of the
 ```
 interface SymmetricCommonTypeWith(U:! Type) {
   let Result:! Type
-    where Self is ImplicitAs(.Self) and
-          U is ImplicitAs(.Self);
+    where Self impls ImplicitAs(.Self) and
+          U impls ImplicitAs(.Self);
 }
 match_first {
   impl forall [T:! Type, U:! CommonTypeWith(T)]

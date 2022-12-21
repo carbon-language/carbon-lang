@@ -287,10 +287,11 @@ static auto ResolveNames(WhereClause& clause,
     -> ErrorOr<Success> {
   switch (clause.kind()) {
     case WhereClauseKind::ImplsWhereClause: {
-      auto& is_clause = cast<ImplsWhereClause>(clause);
-      CARBON_RETURN_IF_ERROR(ResolveNames(is_clause.type(), enclosing_scope));
+      auto& impls_clause = cast<ImplsWhereClause>(clause);
       CARBON_RETURN_IF_ERROR(
-          ResolveNames(is_clause.constraint(), enclosing_scope));
+          ResolveNames(impls_clause.type(), enclosing_scope));
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(impls_clause.constraint(), enclosing_scope));
       break;
     }
     case WhereClauseKind::EqualsWhereClause: {

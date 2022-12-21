@@ -359,7 +359,7 @@ void WhereClause::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
     case WhereClauseKind::ImplsWhereClause: {
       const auto& clause = cast<ImplsWhereClause>(*this);
-      out << clause.type() << " is " << clause.constraint();
+      out << clause.type() << " impls " << clause.constraint();
       break;
     }
     case WhereClauseKind::EqualsWhereClause: {

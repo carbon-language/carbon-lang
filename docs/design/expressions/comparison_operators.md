@@ -445,8 +445,8 @@ should have no observable side-effects.
     `a.Compare(b) == a.Compare(c)`.
 
 `OrderedWith` implementations should also be _consistent under reversal_. That
-is, given types `T` and `U` where `T is OrderedWith(U)` and
-`U is OrderedWith(T)`, and values `a: T` and `b: U`:
+is, given types `T` and `U` where `T impls OrderedWith(U)` and
+`U impls OrderedWith(T)`, and values `a: T` and `b: U`:
 
 -   If `a.(OrderedWith.Compare)(b)` is `Ordering.Greater`, then
     `b.(OrderedWith.Compare)(a)` is `Ordering.Less`, and the other way around.

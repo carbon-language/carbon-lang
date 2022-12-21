@@ -3480,20 +3480,21 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
 
         switch (clause->kind()) {
           case WhereClauseKind::ImplsWhereClause: {
-            const auto& is_clause = cast<ImplsWhereClause>(*clause);
+            const auto& impls_clause = cast<ImplsWhereClause>(*clause);
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const Value*> type,
-                InterpExp(&is_clause.type(), arena_, trace_stream_));
+                InterpExp(&impls_clause.type(), arena_, trace_stream_));
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const Value*> constraint,
-                InterpExp(&is_clause.constraint(), arena_, trace_stream_));
+                InterpExp(&impls_clause.constraint(), arena_, trace_stream_));
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const ConstraintType*> constraint_type,
-                ConvertToConstraintType(is_clause.source_loc(),
+                ConvertToConstraintType(impls_clause.source_loc(),
                                         "expression after `impls`",
                                         constraint));
-            // Transform `where .B is (C where .D is E)` into `where .B is C
-            // and .B.D is E` then add all the resulting constraints.
+            // Transform `where .B impls (C where .D impls E)` into
+            // `where .B impls C and .B.D impls E` then add all the resulting
+            // constraints.
             builder.AddAndSubstitute(*this, constraint_type, type,
                                      builder.GetSelfWitness(), Bindings(),
                                      /*add_lookup_contexts=*/false);
@@ -3687,13 +3688,15 @@ auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
     -> ErrorOr<Success> {
   switch (clause->kind()) {
     case WhereClauseKind::ImplsWhereClause: {
-      auto& is_clause = cast<ImplsWhereClause>(*clause);
-      CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(&is_clause.type(), impl_scope));
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&is_clause.constraint(), impl_scope));
-      if (!isa<TypeType>(is_clause.constraint().static_type())) {
-        return ProgramError(is_clause.constraint().source_loc())
+      auto& impls_clause = cast<ImplsWhereClause>(*clause);
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckTypeExp(&impls_clause.type(), impl_scope));
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckExp(&impls_clause.constraint(), impl_scope));
+      if (!isa<TypeType>(impls_clause.constraint().static_type())) {
+        return ProgramError(impls_clause.constraint().source_loc())
                << "expression after `impls` does not resolve to a constraint, "
-               << "found " << is_clause.constraint().static_type();
+               << "found " << impls_clause.constraint().static_type();
       }
       return Success();
     }
@@ -3958,8 +3961,8 @@ auto TypeChecker::TypeCheckGenericBinding(GenericBinding& binding,
     binding.set_impl_binding(impl_binding);
 
     // Substitute the VariableType as `.Self` of the constraint to form the
-    // resolved type of the binding. Eg, `T:! X where .Self is Y` resolves
-    // to `T:! <constraint T is X and T is Y>`.
+    // resolved type of the binding. Eg, `T:! X where .Self impls Y` resolves
+    // to `T:! <constraint T impls X and T impls Y>`.
     ConstraintTypeBuilder builder(arena_, &binding, impl_binding);
     builder.AddAndSubstitute(*this, constraint, symbolic_value, witness,
                              Bindings(), /*add_lookup_contexts=*/true);

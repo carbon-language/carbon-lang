@@ -207,8 +207,8 @@ class IdentifierExpression : public Expression {
 // `A`, but with type `Type`.
 //
 // In a `where` binding, the type of `.Self` is the constraint preceding the
-// `where` keyword. For example, in `Foo where .Result is Bar(.Self)`, the type
-// of `.Self` is `Foo`.
+// `where` keyword. For example, in `Foo where .Result impls Bar(.Self)`, the
+// type of `.Self` is `Foo`.
 class DotSelfExpression : public Expression {
  public:
   explicit DotSelfExpression(SourceLocation source_loc)
@@ -828,7 +828,7 @@ class WhereClause : public AstNode {
 
 // An `impls` where clause.
 //
-// For example, `ConstraintA where .Type is ConstraintB` requires that the
+// For example, `ConstraintA where .Type impls ConstraintB` requires that the
 // associated type `.Type` implements the constraint `ConstraintB`.
 class ImplsWhereClause : public WhereClause {
  public:

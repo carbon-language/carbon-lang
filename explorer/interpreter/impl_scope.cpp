@@ -106,10 +106,10 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
     for (auto impl : constraint->impl_constraints()) {
       // Note that later impl constraints can refer to earlier impl constraints
       // via impl bindings. For example, in
-      //   `C where .Self.AssocType is D`,
-      // ... the `.Self.AssocType is D` constraint refers to the `.Self is C`
-      // constraint when naming `AssocType`. So incrementally build up a
-      // partial constraint witness as we go.
+      //   `C where .Self.AssocType impls D`,
+      // ... the `.Self.AssocType impls D` constraint refers to the
+      // `.Self impls C` constraint when naming `AssocType`. So incrementally
+      // build up a partial constraint witness as we go.
       std::optional<Nonnull<const Witness*>> witness;
       if (constraint->self_binding()->impl_binding()) {
         // Note, this is a partial impl binding covering only the impl

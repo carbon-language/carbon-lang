@@ -2652,7 +2652,7 @@ since it can be applied to associated type members as well.
 In the following example, normally the `ElementType` of a `Container` can be any
 type. The `SortContainer` function, however, takes a pointer to a type
 satisfying `Container` with the additional constraint that its `ElementType`
-must satisfy the `Comparable` interface.
+must satisfy the `Comparable` interface, using an `impls` constraint:
 
 ```
 interface Container {
@@ -2668,10 +2668,6 @@ fn SortContainer
 In contrast to [a same type constraint](#same-type-constraints), this does not
 say what type `ElementType` exactly is, just that it must satisfy some
 type-of-type.
-
-**Open question:** How do you spell that? Provisionally we are writing `impls`,
-following Swift, but maybe we should have another operator that more clearly
-returns a boolean like `has_type`?
 
 **Note:** `Container` defines `ElementType` as having type `Type`, but
 `ContainerType.ElementType` has type `Comparable`. This is because
@@ -2916,7 +2912,7 @@ fn F[A:! Type, B:! Type where A == .Self, C:! Type](a: A, b: B, c: C);
 This includes `where` clauses used in an `impl` declaration:
 
 ```
-// ❌ Error: `where T is B` does not use `.Self` or a designator
+// ❌ Error: `where T impls B` does not use `.Self` or a designator
 external impl forall [T:! Type] T as A where T impls B {}
 // ✅ Allowed
 external impl forall [T:! Type where .Self impls B] T as A {}
@@ -3851,7 +3847,7 @@ a vector type that only has a `Sort` method if its elements implement the
 
 ```
 class Vector(T:! Type) {
-  // `Vector(T)` has a `Sort()` method if `T` is `Comparable`.
+  // `Vector(T)` has a `Sort()` method if `T` impls `Comparable`.
   fn Sort[C:! Comparable, addr self: Vector(C)*]();
 }
 ```
@@ -5031,7 +5027,7 @@ fn ProcessVector(v: Vector(i32)) {
 }
 
 // Satisfies the requirement that `Vector(i32)` must
-// implement `Equatable` since `i32` is `Equatable`.
+// implement `Equatable` since `i32` impls `Equatable`.
 external impl forall [T:! Equatable] Vector(T) as Equatable { ... }
 ```
 
@@ -5061,7 +5057,7 @@ already satisfy the requirement of implementing `Iterable`:
 ```
 class Bar {}
 external impl Foo(Bar) as Equatable {}
-// Gives `Foo(Bar) is Iterable` using the blanket impl of
+// Gives `Foo(Bar) impls Iterable` using the blanket impl of
 // `Iterable` for `Foo(T)`.
 ```
 
@@ -5125,15 +5121,15 @@ fn RequiresD[T:! D](x: T) {
   // ❌ Illegal: No direct connection between `D` and `A`.
   // RequiresA(x);
 
-  // `T` is `D` and `D` directly requires `C` to be
+  // `T` impls `D` and `D` directly requires `C` to be
   // implemented.
   observe T impls C;
 
-  // `T` is `C` and `C` directly requires `B` to be
+  // `T` impls `C` and `C` directly requires `B` to be
   // implemented.
   observe T impls B;
 
-  // ✅ Allowed: `T` is `B` and `B` directly requires
+  // ✅ Allowed: `T` impls `B` and `B` directly requires
   //             `A` to be implemented.
   RequiresA(x);
 }
@@ -5372,7 +5368,7 @@ external impl forall [T:! ImplicitAs(f64)]
   }
 }
 // ✅ Allowed: uses `Meters as MultipliableWith(T)` impl
-//             with `T == f32` since `f32 is ImplicitAs(f64)`.
+//             with `T == f32` since `f32 impls ImplicitAs(f64)`.
 var now_allowed: Meters = height * scale;
 ```
 
@@ -5821,3 +5817,4 @@ parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 -   [#2107: Clarify rules around `Self` and `.Self`](https://github.com/carbon-language/carbon-lang/pull/2107)
 -   [#2347: What can be done with an incomplete interface](https://github.com/carbon-language/carbon-lang/pull/2347)
 -   [#2376: Constraints must use `Self`](https://github.com/carbon-language/carbon-lang/pull/2376)
+-   [#2483: Replace keyword `is` with `impls`](https://github.com/carbon-language/carbon-lang/pull/2483)

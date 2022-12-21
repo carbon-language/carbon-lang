@@ -23,7 +23,7 @@ class TypeChecker;
 // `baz` methods in the following class C and nested class D.
 //
 //     class C(U:! Type, T:! Type)  {
-//       class D(V:! Type where U is Fooable(T)) {
+//       class D(V:! Type where U impls Fooable(T)) {
 //         fn bar[self: Self](x: U, y : T) -> T{
 //           return x.foo(y)
 //         }
