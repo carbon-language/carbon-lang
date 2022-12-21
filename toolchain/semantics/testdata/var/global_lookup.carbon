@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 // RUN: %{carbon-run-semantics}
-// CHECK:STDOUT: cross_reference_irs.size == 2,
+// CHECK:STDOUT: cross_reference_irs.size == 1,
 // CHECK:STDOUT: integer_literals = {
 // CHECK:STDOUT:   int0 = 0;
 // CHECK:STDOUT: },

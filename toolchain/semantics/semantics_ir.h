@@ -38,13 +38,8 @@ class SemanticsIR {
  private:
   friend class SemanticsParseTreeHandler;
 
-  // As noted under cross_reference_irs_, the current IR must always be at
-  // index 1. This is a constant for that.
-  static constexpr auto ThisIR = SemanticsCrossReferenceIRId(1);
-
   explicit SemanticsIR(const SemanticsIR* builtin_ir)
-      : cross_reference_irs_(
-            {builtin_ir == nullptr ? this : builtin_ir, this}) {}
+      : cross_reference_irs_({builtin_ir == nullptr ? this : builtin_ir}) {}
 
   // Returns the requested node.
   auto GetNode(SemanticsNodeId node_id) const -> const SemanticsNode& {
