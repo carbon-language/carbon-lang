@@ -86,15 +86,6 @@ auto SemanticsParseTreeHandler::Build() -> void {
   CARBON_CHECK(scope_stack_.empty()) << scope_stack_.size();
 }
 
-auto SemanticsParseTreeHandler::AddCrossReference(SemanticsNodeId node_id)
-    -> SemanticsNodeId {
-  CARBON_CHECK(!node_id.is_cross_reference())
-      << "Should use the existing cross-reference. Might want to return this, "
-         "but lacking a use-case, it's treated as bad input.";
-  return semantics_->AddCrossReference(SemanticsCrossReference(
-      SemanticsIR::ThisIR, current_block_id(), node_id));
-}
-
 auto SemanticsParseTreeHandler::AddNode(SemanticsNode node) -> SemanticsNodeId {
   CARBON_VLOG() << "AddNode " << current_block_id() << ": " << node << "\n";
   return semantics_->AddNode(current_block_id(), node);
@@ -113,7 +104,7 @@ auto SemanticsParseTreeHandler::BindName(ParseTree::Node name_node,
       SemanticsNode::MakeBindName(name_node, type_id, name_id, target_id));
   auto [it, inserted] = current_scope().names.insert(name_id);
   if (inserted) {
-    name_lookup_[name_id].push_back(AddCrossReference(bind_id));
+    name_lookup_[name_id].push_back(bind_id);
   } else {
     CARBON_DIAGNOSTIC(NameRedefined, Error, "Redefining {0} in the same scope.",
                       llvm::StringRef);
@@ -122,7 +113,7 @@ auto SemanticsParseTreeHandler::BindName(ParseTree::Node name_node,
     // TODO: This should be a note and sorted with the above diagnostic.
     // But that depends on more diagnostic support we currently don't have.
     auto prev_def_id = name_lookup_[name_id].back();
-    auto prev_def = semantics_->GetNode(current_block_id(), prev_def_id);
+    auto prev_def = semantics_->GetNode(prev_def_id);
     CARBON_DIAGNOSTIC(PreviousDefinition, Error,
                       "Previous definition is here.");
     emitter_->Emit(parse_tree_->node_token(prev_def.parse_node()),
@@ -234,9 +225,8 @@ auto SemanticsParseTreeHandler::TryTypeConversion(ParseTree::Node parse_node,
                                                   SemanticsNodeId rhs_id,
                                                   bool /*can_convert_lhs*/)
     -> SemanticsNodeId {
-  auto block = current_block_id();
-  auto lhs_type = semantics_->GetType(block, lhs_id);
-  auto rhs_type = semantics_->GetType(block, rhs_id);
+  auto lhs_type = semantics_->GetType(lhs_id);
+  auto rhs_type = semantics_->GetType(rhs_id);
   // TODO: This should attempt a type conversion, but there's not enough
   // implemented to do that right now.
   if (lhs_type != rhs_type) {
@@ -615,7 +605,7 @@ auto SemanticsParseTreeHandler::HandleReturnStatement(
     Push(parse_node, SemanticsNode::MakeReturn(parse_node));
   } else {
     auto arg = PopWithResult();
-    auto arg_type = semantics_->GetType(current_block_id(), arg);
+    auto arg_type = semantics_->GetType(arg);
     Pop(ParseNodeKind::ReturnStatementStart());
     Push(parse_node,
          SemanticsNode::MakeReturnExpression(parse_node, arg_type, arg));

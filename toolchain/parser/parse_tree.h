@@ -242,6 +242,9 @@ class ParseTree {
 // That said, nodes can be compared and are part of a depth-first pre-order
 // sequence across all nodes in the parse tree.
 struct ParseTree::Node : public ComparableIndexBase {
+  // Constructs an explicitly invalid instance.
+  static auto MakeInvalid() -> Node { return Node(); }
+
   using ComparableIndexBase::ComparableIndexBase;
 };
 
