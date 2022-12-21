@@ -106,9 +106,9 @@ auto SemanticsParseTreeHandler::BindName(ParseTree::Node name_node,
   if (inserted) {
     name_lookup_[name_id].push_back(bind_id);
   } else {
-    CARBON_DIAGNOSTIC(PreviousDefinition, Note, "Previous definition is here.");
     CARBON_DIAGNOSTIC(NameRedefined, Error, "Redefining {0} in the same scope.",
                       llvm::StringRef);
+    CARBON_DIAGNOSTIC(PreviousDefinition, Note, "Previous definition is here.");
     auto prev_def_id = name_lookup_[name_id].back();
     auto prev_def = semantics_->GetNode(prev_def_id);
 
