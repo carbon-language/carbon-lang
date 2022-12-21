@@ -24,11 +24,11 @@
 // CHECK:STDOUT:   node7 = VarStorage(): node2;
 // CHECK:STDOUT:   node8 = BindName(str1, node7): node2;
 // CHECK:STDOUT:   node9 = IntegerLiteral(int0): node2;
-// CHECK:STDOUT:   node10 = Assign(node8, node9): node2;
+// CHECK:STDOUT:   node10 = Assign(node7, node9): node2;
 // CHECK:STDOUT:   node11 = VarStorage(): node2;
 // CHECK:STDOUT:   node12 = BindName(str1, node11): node2;
 // CHECK:STDOUT:   node13 = IntegerLiteral(int1): node2;
-// CHECK:STDOUT:   node14 = Assign(node8, node13): node2;
+// CHECK:STDOUT:   node14 = Assign(node7, node13): node2;
 // CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   block0 = {
@@ -50,7 +50,7 @@
 
 
 fn Main() {
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/fail_duplicate_decl.carbon:[[@LINE+1]]:7: Previous definition is here.
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/fail_duplicate_decl.carbon:[[@LINE+1]]:8: Previous definition is here.
   var x: i32 = 0;
   // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/fail_duplicate_decl.carbon:[[@LINE+1]]:7: Redefining x in the same scope.
   var x: i32 = 0;

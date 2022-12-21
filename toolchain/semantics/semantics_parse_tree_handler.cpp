@@ -105,11 +105,10 @@ auto SemanticsParseTreeHandler::BindName(ParseTree::Node name_node,
   auto name_str = parse_tree_->GetNodeText(name_node);
   auto name_id = semantics_->AddString(name_str);
 
-  auto bind_id = AddNode(
-      SemanticsNode::MakeBindName(name_node, type_id, name_id, target_id));
+  AddNode(SemanticsNode::MakeBindName(name_node, type_id, name_id, target_id));
   auto [it, inserted] = current_scope().names.insert(name_id);
   if (inserted) {
-    name_lookup_[name_id].push_back(bind_id);
+    name_lookup_[name_id].push_back(target_id);
   } else {
     CARBON_DIAGNOSTIC(NameRedefined, Error, "Redefining {0} in the same scope.",
                       llvm::StringRef);

@@ -21,7 +21,7 @@
 // CHECK:STDOUT:   node6 = FunctionDefinition(node4, block1);
 // CHECK:STDOUT:   node7 = VarStorage(): node2;
 // CHECK:STDOUT:   node8 = BindName(str1, node7): node2;
-// CHECK:STDOUT:   node9 = Assign(node8, node1): node1;
+// CHECK:STDOUT:   node9 = Assign(node7, node1): node1;
 // CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   block0 = {
