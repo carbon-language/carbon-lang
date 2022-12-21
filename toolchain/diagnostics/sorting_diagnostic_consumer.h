@@ -20,8 +20,8 @@ class SortingDiagnosticConsumer : public DiagnosticConsumer {
   ~SortingDiagnosticConsumer() override { Flush(); }
 
   // Buffers the diagnostic.
-  auto HandleDiagnostic(const Diagnostic& diagnostic) -> void override {
-    diagnostics_.push_back(diagnostic);
+  auto HandleDiagnostic(Diagnostic diagnostic) -> void override {
+    diagnostics_.push_back(std::move(diagnostic));
   }
 
   // Sorts and flushes buffered diagnostics.
@@ -31,8 +31,8 @@ class SortingDiagnosticConsumer : public DiagnosticConsumer {
       return std::tie(lhs.location.line_number, lhs.location.column_number) <
              std::tie(rhs.location.line_number, rhs.location.column_number);
     });
-    for (const auto& diagnostic : diagnostics_) {
-      next_consumer_->HandleDiagnostic(diagnostic);
+    for (auto& diag : diagnostics_) {
+      next_consumer_->HandleDiagnostic(std::move(diag));
     }
     diagnostics_.clear();
   }
