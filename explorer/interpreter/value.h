@@ -27,6 +27,16 @@ namespace Carbon {
 class Action;
 class AssociatedConstant;
 
+// A trait type that describes how to allocate an instance of `T` in an arena.
+// Returns the created object, which is not required to be of type `T`.
+template <typename T>
+struct AllocateTrait {
+  template <typename... Args>
+  static auto New(Nonnull<Arena*> arena, Args&&... args) -> Nonnull<const T*> {
+    return arena->New<T>(std::forward<Args>(args)...);
+  }
+};
+
 using VTable =
     std::unordered_map<std::string, Nonnull<const CallableDeclaration*>>;
 
@@ -41,55 +51,17 @@ using VTable =
 class Value {
  public:
   enum class Kind {
-    IntValue,
-    FunctionValue,
-    DestructorValue,
-    BoundMethodValue,
-    PointerValue,
-    LValue,
-    BoolValue,
-    StructValue,
-    NominalClassValue,
-    AlternativeValue,
-    TupleValue,
-    UninitializedValue,
-    ImplWitness,
-    BindingWitness,
-    ConstraintWitness,
-    ConstraintImplWitness,
-    IntType,
-    BoolType,
-    TypeType,
-    FunctionType,
-    PointerType,
-    AutoType,
-    StructType,
-    NominalClassType,
-    TupleType,
-    MixinPseudoType,
-    InterfaceType,
-    NamedConstraintType,
-    ConstraintType,
-    ChoiceType,
-    ContinuationType,  // The type of a continuation.
-    VariableType,      // e.g., generic type parameters.
-    AssociatedConstant,
-    ParameterizedEntityName,
-    MemberName,
-    BindingPlaceholderValue,
-    AddrValue,
-    AlternativeConstructorValue,
-    ContinuationValue,  // A first-class continuation value.
-    StringType,
-    StringValue,
-    TypeOfMixinPseudoType,
-    TypeOfParameterizedEntityName,
-    TypeOfMemberName,
-    StaticArrayType,
+#define CARBON_VALUE_KIND(kind) kind,
+#include "explorer/interpreter/value_kinds.def"
   };
 
   Value(const Value&) = delete;
   auto operator=(const Value&) -> Value& = delete;
+
+  // Call `f` on this value, cast to its most-derived type. `R` specifies the
+  // expected return type of `f`.
+  template <typename R, typename F>
+  auto Visit(F f) const -> R;
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
@@ -159,6 +131,11 @@ class IntValue : public Value {
     return value->kind() == Kind::IntValue;
   }
 
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(value_);
+  }
+
   auto value() const -> int { return value_; }
 
  private:
@@ -179,6 +156,11 @@ class FunctionValue : public Value {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionValue;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(declaration_, bindings_);
   }
 
   auto declaration() const -> const FunctionDeclaration& {
@@ -208,6 +190,11 @@ class DestructorValue : public Value {
     return value->kind() == Kind::DestructorValue;
   }
 
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(declaration_);
+  }
+
   auto declaration() const -> const DestructorDeclaration& {
     return *declaration_;
   }
@@ -235,6 +222,11 @@ class BoundMethodValue : public Value {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::BoundMethodValue;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(declaration_, receiver_, bindings_);
   }
 
   auto declaration() const -> const FunctionDeclaration& {
@@ -267,6 +259,11 @@ class LValue : public Value {
     return value->kind() == Kind::LValue;
   }
 
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(value_);
+  }
+
   auto address() const -> const Address& { return value_; }
 
  private:
@@ -283,6 +280,11 @@ class PointerValue : public Value {
     return value->kind() == Kind::PointerValue;
   }
 
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(value_);
+  }
+
   auto address() const -> const Address& { return value_; }
 
  private:
@@ -296,6 +298,11 @@ class BoolValue : public Value {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::BoolValue;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(value_);
   }
 
   auto value() const -> bool { return value_; }
@@ -314,6 +321,11 @@ class StructValue : public Value {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::StructValue;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(elements_);
   }
 
   auto elements() const -> llvm::ArrayRef<NamedValue> { return elements_; }
@@ -337,6 +349,11 @@ class NominalClassValue : public Value {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassValue;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(type_, inits_, base_);
   }
 
   auto type() const -> const Value& { return *type_; }
@@ -366,6 +383,11 @@ class AlternativeConstructorValue : public Value {
     return value->kind() == Kind::AlternativeConstructorValue;
   }
 
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(alt_name_, choice_name_);
+  }
+
   auto alt_name() const -> const std::string& { return alt_name_; }
   auto choice_name() const -> const std::string& { return choice_name_; }
 
@@ -386,6 +408,11 @@ class AlternativeValue : public Value {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::AlternativeValue;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(alt_name_, choice_name_, argument_);
   }
 
   auto alt_name() const -> const std::string& { return alt_name_; }
@@ -414,6 +441,11 @@ class TupleValueBase : public Value {
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::TupleValue ||
            value->kind() == Kind::TupleType;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(elements_);
   }
 
  private:
@@ -472,6 +504,11 @@ class BindingPlaceholderValue : public Value {
     return value->kind() == Kind::BindingPlaceholderValue;
   }
 
+  template <typename F>
+  auto Decompose(F f) const {
+    return value_node_ ? f(*value_node_) : f();
+  }
+
   auto value_node() const -> const std::optional<ValueNodeView>& {
     return value_node_;
   }
@@ -490,6 +527,11 @@ class AddrValue : public Value {
     return value->kind() == Kind::AddrValue;
   }
 
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(pattern_);
+  }
+
   auto pattern() const -> const Value& { return *pattern_; }
 
  private:
@@ -506,6 +548,11 @@ class UninitializedValue : public Value {
     return value->kind() == Kind::UninitializedValue;
   }
 
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(pattern_);
+  }
+
   auto pattern() const -> const Value& { return *pattern_; }
 
  private:
@@ -520,6 +567,11 @@ class IntType : public Value {
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::IntType;
   }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f();
+  }
 };
 
 // The bool type.
@@ -530,6 +582,11 @@ class BoolType : public Value {
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::BoolType;
   }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f();
+  }
 };
 
 // A type type.
@@ -539,6 +596,11 @@ class TypeType : public Value {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::TypeType;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f();
   }
 };
 
@@ -573,6 +635,12 @@ class FunctionType : public Value {
     return value->kind() == Kind::FunctionType;
   }
 
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(parameters_, generic_parameters_, return_type_, deduced_bindings_,
+             impl_bindings_);
+  }
+
   // The type of the function parameter tuple.
   auto parameters() const -> const Value& { return *parameters_; }
   // Parameters that use a generic `:!` binding at the top level.
@@ -604,17 +672,23 @@ class FunctionType : public Value {
 // A pointer type.
 class PointerType : public Value {
  public:
-  explicit PointerType(Nonnull<const Value*> type)
-      : Value(Kind::PointerType), type_(type) {}
+  // Constructs a pointer type with the given pointee type.
+  explicit PointerType(Nonnull<const Value*> pointee_type)
+      : Value(Kind::PointerType), pointee_type_(pointee_type) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::PointerType;
   }
 
-  auto type() const -> const Value& { return *type_; }
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(pointee_type_);
+  }
+
+  auto pointee_type() const -> const Value& { return *pointee_type_; }
 
  private:
-  Nonnull<const Value*> type_;
+  Nonnull<const Value*> pointee_type_;
 };
 
 // The `auto` type.
@@ -624,6 +698,11 @@ class AutoType : public Value {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::AutoType;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f();
   }
 };
 
@@ -639,6 +718,11 @@ class StructType : public Value {
     return value->kind() == Kind::StructType;
   }
 
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(fields_);
+  }
+
   auto fields() const -> llvm::ArrayRef<NamedValue> { return fields_; }
 
  private:
@@ -646,7 +730,6 @@ class StructType : public Value {
 };
 
 // A class type.
-// TODO: Consider splitting this class into several classes.
 class NominalClassType : public Value {
  public:
   // Construct a non-generic class type.
@@ -677,6 +760,12 @@ class NominalClassType : public Value {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassType;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(declaration_, bindings_, base_,
+             vtable_ ? std::optional<VTable>(*vtable_) : std::nullopt);
   }
 
   auto declaration() const -> const ClassDeclaration& { return *declaration_; }
@@ -729,6 +818,11 @@ class MixinPseudoType : public Value {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::MixinPseudoType;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(declaration_, bindings_);
   }
 
   auto declaration() const -> const MixinDeclaration& { return *declaration_; }
@@ -784,6 +878,11 @@ class InterfaceType : public Value {
     return value->kind() == Kind::InterfaceType;
   }
 
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(declaration_, bindings_);
+  }
+
   auto declaration() const -> const InterfaceDeclaration& {
     return *declaration_;
   }
@@ -813,6 +912,11 @@ class NamedConstraintType : public Value {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NamedConstraintType;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(declaration_, bindings_);
   }
 
   auto declaration() const -> const ConstraintDeclaration& {
@@ -903,6 +1007,12 @@ class ConstraintType : public Value {
     return value->kind() == Kind::ConstraintType;
   }
 
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(self_binding_, impl_constraints_, equality_constraints_,
+             rewrite_constraints_, lookup_contexts_);
+  }
+
   auto self_binding() const -> Nonnull<const GenericBinding*> {
     return self_binding_;
   }
@@ -969,6 +1079,12 @@ class ImplWitness : public Witness {
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ImplWitness;
   }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(declaration_, bindings_);
+  }
+
   auto declaration() const -> const ImplDeclaration& { return *declaration_; }
 
   auto bindings() const -> const Bindings& { return *bindings_; }
@@ -995,6 +1111,11 @@ class BindingWitness : public Witness {
     return value->kind() == Kind::BindingWitness;
   }
 
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(binding_);
+  }
+
   auto binding() const -> Nonnull<const ImplBinding*> { return binding_; }
 
  private:
@@ -1010,6 +1131,11 @@ class ConstraintWitness : public Witness {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ConstraintWitness;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(witnesses_);
   }
 
   auto witnesses() const -> llvm::ArrayRef<Nonnull<const Witness*>> {
@@ -1051,6 +1177,11 @@ class ConstraintImplWitness : public Witness {
     return value->kind() == Kind::ConstraintImplWitness;
   }
 
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(constraint_witness_, index_);
+  }
+
   // Get the witness for the complete `ConstraintType`.
   auto constraint_witness() const -> Nonnull<const Witness*> {
     return constraint_witness_;
@@ -1064,6 +1195,16 @@ class ConstraintImplWitness : public Witness {
   int index_;
 };
 
+// Allocate a `ConstraintImplWitness` using the custom `Make` function.
+template <>
+struct AllocateTrait<ConstraintImplWitness> {
+  template <typename... Args>
+  static auto New(Nonnull<Arena*> arena, Args&&... args)
+      -> Nonnull<const Witness*> {
+    return ConstraintImplWitness::Make(arena, std::forward<Args>(args)...);
+  }
+};
+
 // A choice type.
 class ChoiceType : public Value {
  public:
@@ -1075,6 +1216,11 @@ class ChoiceType : public Value {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ChoiceType;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(declaration_, bindings_);
   }
 
   auto name() const -> const std::string& { return declaration_->name(); }
@@ -1107,6 +1253,11 @@ class ContinuationType : public Value {
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ContinuationType;
   }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f();
+  }
 };
 
 // A variable type.
@@ -1117,6 +1268,11 @@ class VariableType : public Value {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::VariableType;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(binding_);
   }
 
   auto binding() const -> const GenericBinding& { return *binding_; }
@@ -1138,6 +1294,11 @@ class ParameterizedEntityName : public Value {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ParameterizedEntityName;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(declaration_, params_);
   }
 
   auto declaration() const -> const Declaration& { return *declaration_; }
@@ -1168,6 +1329,11 @@ class MemberName : public Value {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::MemberName;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(base_type_, interface_, member_);
   }
 
   // Prints the member name or identifier.
@@ -1210,6 +1376,11 @@ class AssociatedConstant : public Value {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::AssociatedConstant;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(base_, interface_, constant_, witness_);
   }
 
   // The type for which we denote an associated constant.
@@ -1278,6 +1449,11 @@ class ContinuationValue : public Value {
     return value->kind() == Kind::ContinuationValue;
   }
 
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(stack_);
+  }
+
   // The todo stack of the suspended continuation. Note that this provides
   // mutable access, even when *this is const, because of the reference-like
   // semantics of ContinuationValue.
@@ -1295,6 +1471,11 @@ class StringType : public Value {
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::StringType;
   }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f();
+  }
 };
 
 // A string value.
@@ -1305,6 +1486,11 @@ class StringValue : public Value {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::StringValue;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(value_);
   }
 
   auto value() const -> const std::string& { return value_; }
@@ -1320,6 +1506,11 @@ class TypeOfMixinPseudoType : public Value {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::TypeOfMixinPseudoType;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(mixin_type_);
   }
 
   auto mixin_type() const -> const MixinPseudoType& { return *mixin_type_; }
@@ -1339,6 +1530,11 @@ class TypeOfParameterizedEntityName : public Value {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::TypeOfParameterizedEntityName;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(name_);
   }
 
   auto name() const -> const ParameterizedEntityName& { return *name_; }
@@ -1362,6 +1558,11 @@ class TypeOfMemberName : public Value {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::TypeOfMemberName;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(member_);
   }
 
   // TODO: consider removing this or moving it elsewhere in the AST,
@@ -1388,6 +1589,11 @@ class StaticArrayType : public Value {
     return value->kind() == Kind::StaticArrayType;
   }
 
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(element_type_, size_);
+  }
+
   auto element_type() const -> const Value& { return *element_type_; }
   auto size() const -> size_t { return size_; }
 
@@ -1395,6 +1601,16 @@ class StaticArrayType : public Value {
   Nonnull<const Value*> element_type_;
   size_t size_;
 };
+
+template <typename R, typename F>
+auto Value::Visit(F f) const -> R {
+  switch (kind()) {
+#define CARBON_VALUE_KIND(kind) \
+  case Kind::kind:              \
+    return f(static_cast<const kind*>(this));
+#include "explorer/interpreter/value_kinds.def"
+  }
+}
 
 }  // namespace Carbon
 

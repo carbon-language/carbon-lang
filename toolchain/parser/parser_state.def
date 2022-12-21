@@ -130,6 +130,12 @@ CARBON_PARSER_STATE(CodeBlockFinish)
 //   1. DeclarationLoop
 CARBON_PARSER_STATE(DeclarationLoop)
 
+// To handle parsing deduced parameter list at the end.
+//
+// Always:
+//   (state done)
+CARBON_PARSER_STATE(DeducedParameterListFinish)
+
 // Handles a designator expression, such as `.z` in `x.(y.z)`.
 //
 // Always:
@@ -213,7 +219,7 @@ CARBON_PARSER_STATE(ExpressionStatementFinish)
 // If invalid:
 //   (state done)
 // If parenthesized parameters:
-//   1. PatternAsFunctionParameter
+//   1. FunctionParameter
 //   2. FunctionParameterListFinish
 //   3. FunctionAfterParameterList
 // Else:
@@ -369,11 +375,26 @@ CARBON_PARSER_STATE(ParenExpressionFinishAsTuple)
 CARBON_PARSER_STATE(PatternAsFunctionParameter)
 CARBON_PARSER_STATE(PatternAsVariable)
 
+// Handles `addr` in a pattern.
+//
+// Always:
+//   (state done)
+CARBON_PARSER_STATE(PatternAddress)
+
 // Finishes pattern processing.
 //
 // Always:
 //   (state done)
 CARBON_PARSER_STATE(PatternFinish)
+
+// To start parsing `self` deduced parameter.
+//
+// If valid:
+//   1. Expression
+//   2. PatternFinish
+// Else:
+//   1. PatternFinish
+CARBON_PARSER_STATE(SelfPattern)
 
 // Handles a single statement. While typically within a statement block, this
 // can also be used for error recovery where we expect a statement block and
@@ -556,5 +577,19 @@ CARBON_PARSER_STATE(VarAfterInitializer)
 //   (state done)
 CARBON_PARSER_STATE(VarFinishAsSemicolon)
 CARBON_PARSER_STATE(VarFinishAsFor)
+
+// Handles processing of a functions' syntax after the deduced parameter lists's
+// `]`. This applies only to interfaces and classes.
+//
+// If invalid:
+//   (state done)
+// If parenthesized parameters:
+//   1. FunctionParameter
+//   2. FunctionParameterListFinish
+//   3. FunctionAfterParameterList
+// Else:
+//   1. FunctionParameterListFinish
+//   2. FunctionAfterParameterList
+CARBON_PARSER_STATE(FunctionAfterDeducedParameterList)
 
 #undef CARBON_PARSER_STATE

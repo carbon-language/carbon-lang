@@ -52,12 +52,6 @@ struct SemanticsNodeId : public IndexBase {
   }
 };
 
-// Type-safe storage of identifiers.
-struct SemanticsIdentifierId : public IndexBase {
-  using IndexBase::IndexBase;
-  auto Print(llvm::raw_ostream& out) const -> void { out << "ident" << index; }
-};
-
 // Type-safe storage of integer literals.
 struct SemanticsIntegerLiteralId : public IndexBase {
   using IndexBase::IndexBase;
@@ -70,12 +64,29 @@ struct SemanticsNodeBlockId : public IndexBase {
   auto Print(llvm::raw_ostream& out) const -> void { out << "block" << index; }
 };
 
+// Type-safe storage of strings.
+struct SemanticsStringId : public IndexBase {
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void { out << "str" << index; }
+};
+
 // The standard structure for nodes.
 class SemanticsNode {
  public:
   struct NoArgs {};
 
   auto GetAsInvalid() const -> NoArgs { CARBON_FATAL() << "Invalid access"; }
+
+  static auto MakeAssign(ParseTree::Node parse_node, SemanticsNodeId type,
+                         SemanticsNodeId lhs, SemanticsNodeId rhs)
+      -> SemanticsNode {
+    return SemanticsNode(parse_node, SemanticsNodeKind::Assign(), type,
+                         lhs.index, rhs.index);
+  }
+  auto GetAsAssign() const -> std::pair<SemanticsNodeId, SemanticsNodeId> {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::Assign());
+    return {SemanticsNodeId(arg0_), SemanticsNodeId(arg1_)};
+  }
 
   static auto MakeBinaryOperatorAdd(ParseTree::Node parse_node,
                                     SemanticsNodeId type, SemanticsNodeId lhs,
@@ -89,16 +100,15 @@ class SemanticsNode {
     return {SemanticsNodeId(arg0_), SemanticsNodeId(arg1_)};
   }
 
-  static auto MakeBindName(ParseTree::Node parse_node,
-                           SemanticsIdentifierId name, SemanticsNodeId node)
+  static auto MakeBindName(ParseTree::Node parse_node, SemanticsNodeId type,
+                           SemanticsStringId name, SemanticsNodeId node)
       -> SemanticsNode {
-    return SemanticsNode(parse_node, SemanticsNodeKind::BindName(),
-                         SemanticsNodeId(), name.index, node.index);
+    return SemanticsNode(parse_node, SemanticsNodeKind::BindName(), type,
+                         name.index, node.index);
   }
-  auto GetAsBindName() const
-      -> std::pair<SemanticsIdentifierId, SemanticsNodeId> {
+  auto GetAsBindName() const -> std::pair<SemanticsStringId, SemanticsNodeId> {
     CARBON_CHECK(kind_ == SemanticsNodeKind::BindName());
-    return {SemanticsIdentifierId(arg0_), SemanticsNodeId(arg1_)};
+    return {SemanticsStringId(arg0_), SemanticsNodeId(arg1_)};
   }
 
   static auto MakeBuiltin(SemanticsBuiltinKind builtin_kind,
@@ -191,6 +201,15 @@ class SemanticsNode {
   auto GetAsReturnExpression() const -> SemanticsNodeId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::ReturnExpression());
     return SemanticsNodeId(arg0_);
+  }
+
+  static auto MakeVarStorage(ParseTree::Node parse_node, SemanticsNodeId type)
+      -> SemanticsNode {
+    return SemanticsNode(parse_node, SemanticsNodeKind::VarStorage(), type);
+  }
+  auto GetAsVarStorage() const -> NoArgs {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::VarStorage());
+    return NoArgs();
   }
 
   SemanticsNode()

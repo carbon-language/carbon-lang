@@ -466,7 +466,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "Continuation";
       break;
     case Value::Kind::PointerType:
-      out << cast<PointerType>(*this).type() << "*";
+      out << cast<PointerType>(*this).pointee_type() << "*";
       break;
     case Value::Kind::FunctionType: {
       const auto& fn_type = cast<FunctionType>(*this);
@@ -738,8 +738,8 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
   }
   switch (t1->kind()) {
     case Value::Kind::PointerType:
-      return TypeEqual(&cast<PointerType>(*t1).type(),
-                       &cast<PointerType>(*t2).type(), equality_ctx);
+      return TypeEqual(&cast<PointerType>(*t1).pointee_type(),
+                       &cast<PointerType>(*t2).pointee_type(), equality_ctx);
     case Value::Kind::FunctionType: {
       const auto& fn1 = cast<FunctionType>(*t1);
       const auto& fn2 = cast<FunctionType>(*t2);
@@ -1205,12 +1205,12 @@ auto NominalClassType::InheritsClass(Nonnull<const Value*> other) const
   if (!other_class) {
     return false;
   }
-  std::optional<Nonnull<const NominalClassType*>> class_type = this;
-  while (class_type) {
-    if (TypeEqual(class_type.value(), other_class, std::nullopt)) {
+  std::optional<Nonnull<const NominalClassType*>> ancestor_class = this;
+  while (ancestor_class) {
+    if (TypeEqual(*ancestor_class, other_class, std::nullopt)) {
       return true;
     }
-    class_type = class_type.value()->base();
+    ancestor_class = (*ancestor_class)->base();
   }
   return false;
 }

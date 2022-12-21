@@ -8,6 +8,7 @@
 
 #include <iterator>
 #include <map>
+#include <memory>
 #include <optional>
 #include <random>
 #include <utility>
@@ -21,6 +22,7 @@
 #include "explorer/ast/expression.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
+#include "explorer/common/source_location.h"
 #include "explorer/interpreter/action.h"
 #include "explorer/interpreter/action_stack.h"
 #include "explorer/interpreter/stack.h"
@@ -262,7 +264,7 @@ auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
   CARBON_CHECK(fields.size() == values.size());
   std::vector<NamedValue> elements;
   for (size_t i = 0; i < fields.size(); ++i) {
-    elements.push_back({.name = fields[i].name(), .value = values[i]});
+    elements.push_back({fields[i].name(), values[i]});
   }
 
   return arena_->New<StructValue>(std::move(elements));
@@ -643,8 +645,9 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
     }
     case Value::Kind::PointerType: {
       const auto* ptr = cast<PointerType>(type);
-      CARBON_ASSIGN_OR_RETURN(const auto* actual_type,
-                              InstantiateType(&ptr->type(), source_loc));
+      CARBON_ASSIGN_OR_RETURN(
+          const auto* actual_type,
+          InstantiateType(&ptr->pointee_type(), source_loc));
       return arena_->New<PointerType>(actual_type);
     }
     default:
@@ -772,7 +775,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const Value*> val,
                 Convert(*old_value, field_type, source_loc));
-            new_elements.push_back({.name = field_name, .value = val});
+            new_elements.push_back({field_name, val});
           }
           return arena_->New<StructValue>(std::move(new_elements));
         }
@@ -870,38 +873,36 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     }
     case Value::Kind::PointerValue: {
       if (destination_type->kind() != Value::Kind::PointerType ||
-          cast<PointerType>(destination_type)->type().kind() !=
+          cast<PointerType>(destination_type)->pointee_type().kind() !=
               Value::Kind::NominalClassType) {
-        // No conversion needed
+        // No conversion needed.
         return value;
       }
 
-      // Get pointed value
+      // Get pointee value.
       const auto* src_ptr = cast<PointerValue>(value);
       CARBON_ASSIGN_OR_RETURN(const auto* pointee,
                               heap_.Read(src_ptr->address(), source_loc))
-      if (pointee->kind() == Value::Kind::NominalClassType) {
-        // TODO: When does that happen? Just return as-is.
-        return value;
-      }
+      CARBON_CHECK(pointee->kind() == Value::Kind::NominalClassValue)
+          << "Unexpected pointer type";
 
       const auto* dest_ptr = cast<PointerType>(destination_type);
       std::optional<Nonnull<const NominalClassValue*>> class_subobj =
           cast<NominalClassValue>(pointee);
       auto new_addr = src_ptr->address();
       while (class_subobj) {
-        if (TypeEqual(&class_subobj.value()->type(), &dest_ptr->type(),
+        if (TypeEqual(&(*class_subobj)->type(), &dest_ptr->pointee_type(),
                       std::nullopt)) {
           return arena_->New<PointerValue>(new_addr);
         }
-        class_subobj = class_subobj.value()->base();
+        class_subobj = (*class_subobj)->base();
         new_addr = new_addr.ElementAddress(
-            arena_->New<BaseElement>(&dest_ptr->type()));
+            arena_->New<BaseElement>(&dest_ptr->pointee_type()));
       }
 
       // Unable to resolve, return as-is.
       // TODO: Produce error instead once we can properly substitute
-      // parametrized types for pointers in function call parameters.
+      // parameterized types for pointers in function call parameters.
       return value;
     }
   }
@@ -2035,64 +2036,83 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
 }
 
 auto Interpreter::StepDestroy() -> ErrorOr<Success> {
-  // TODO: find a way to avoid dyn_cast in this code, and instead use static
-  // type information the way the compiler would.
-  Action& act = todo_.CurrentAction();
-  DestroyAction& destroy_act = cast<DestroyAction>(act);
-  if (act.pos() == 0) {
-    if (const auto* class_obj =
-            dyn_cast<NominalClassValue>(destroy_act.value())) {
-      const auto& class_type = cast<NominalClassType>(class_obj->type());
-      const auto& class_dec = class_type.declaration();
-      if (class_dec.destructor().has_value()) {
-        return CallDestructor(*class_dec.destructor(), class_obj);
-      }
-    }
-  }
-
-  if (const auto* tuple = dyn_cast<TupleValue>(destroy_act.value())) {
-    if (tuple->elements().size() > 0) {
-      int index = tuple->elements().size() - act.pos() - 1;
-      if (index >= 0) {
-        const auto& item = tuple->elements()[index];
-        if (const auto* class_obj = dyn_cast<NominalClassValue>(item)) {
-          const auto& class_type = cast<NominalClassType>(class_obj->type());
-          const auto& class_dec = class_type.declaration();
-          if (class_dec.destructor().has_value()) {
-            return CallDestructor(*class_dec.destructor(), class_obj);
-          }
+  const Action& act = todo_.CurrentAction();
+  const auto& destroy_act = cast<DestroyAction>(act);
+  switch (destroy_act.value()->kind()) {
+    case Value::Kind::NominalClassValue: {
+      const auto* class_obj = cast<NominalClassValue>(destroy_act.value());
+      const auto& class_decl =
+          cast<NominalClassType>(class_obj->type()).declaration();
+      const int member_count = class_decl.members().size();
+      if (act.pos() == 0) {
+        // Run the destructor, if there is one.
+        if (auto destructor = class_decl.destructor()) {
+          return CallDestructor(*destructor, class_obj);
+        } else {
+          return todo_.RunAgain();
         }
-        if (item->kind() == Value::Kind::TupleValue) {
-          return todo_.Spawn(
-              std::make_unique<DestroyAction>(destroy_act.lvalue(), item));
-        }
-        // Type of tuple element is integral type e.g. i32
-        // or the type has no destructor
-      }
-    }
-  }
-
-  if (act.pos() > 0) {
-    if (const auto* class_obj =
-            dyn_cast<NominalClassValue>(destroy_act.value())) {
-      const auto& class_type = cast<NominalClassType>(class_obj->type());
-      const auto& class_dec = class_type.declaration();
-      int index = class_dec.members().size() - act.pos();
-      if (index >= 0 && index < static_cast<int>(class_dec.members().size())) {
-        const auto& member = class_dec.members()[index];
+      } else if (act.pos() <= member_count) {
+        // Destroy members.
+        const int index = class_decl.members().size() - act.pos();
+        const auto& member = class_decl.members()[index];
         if (const auto* var = dyn_cast<VariableDeclaration>(member)) {
-          Address object = destroy_act.lvalue()->address();
-          Address mem = object.ElementAddress(arena_->New<NamedElement>(var));
-          SourceLocation source_loc("destructor", 1);
-          auto v = heap_.Read(mem, source_loc);
-          return todo_.Spawn(
-              std::make_unique<DestroyAction>(destroy_act.lvalue(), *v));
+          const Address object = destroy_act.lvalue()->address();
+          const Address var_addr =
+              object.ElementAddress(arena_->New<NamedElement>(var));
+          const auto v = heap_.Read(var_addr, SourceLocation("destructor", 1));
+          CARBON_CHECK(v.ok())
+              << "Failed to read member `" << var->binding().name()
+              << "` from class `" << class_decl.name() << "`";
+          return todo_.Spawn(std::make_unique<DestroyAction>(
+              arena_->New<LValue>(var_addr), *v));
+        } else {
+          return todo_.RunAgain();
         }
+      } else if (act.pos() == member_count + 1) {
+        // Destroy the parent, if there is one.
+        if (auto base = class_obj->base()) {
+          const Address obj_addr = destroy_act.lvalue()->address();
+          const Address base_addr =
+              obj_addr.ElementAddress(arena_->New<BaseElement>(class_obj));
+          return todo_.Spawn(std::make_unique<DestroyAction>(
+              arena_->New<LValue>(base_addr), base.value()));
+        } else {
+          return todo_.RunAgain();
+        }
+      } else {
+        todo_.Pop();
+        return Success();
       }
     }
+    case Value::Kind::TupleValue: {
+      const auto* tuple = cast<TupleValue>(destroy_act.value());
+      const auto element_count = tuple->elements().size();
+      if (static_cast<size_t>(act.pos()) < element_count) {
+        const size_t index = element_count - act.pos() - 1;
+        const auto& item = tuple->elements()[index];
+        const auto object_addr = destroy_act.lvalue()->address();
+        Address field_address = object_addr.ElementAddress(
+            arena_->New<PositionalElement>(index, item));
+        if (item->kind() == Value::Kind::NominalClassValue ||
+            item->kind() == Value::Kind::TupleValue) {
+          return todo_.Spawn(std::make_unique<DestroyAction>(
+              arena_->New<LValue>(field_address), item));
+        } else {
+          // The tuple element's type is an integral type (e.g., i32)
+          // or the type doesn't support destruction.
+          return todo_.RunAgain();
+        }
+      } else {
+        todo_.Pop();
+        return Success();
+      }
+    }
+    default:
+      // These declarations have no run-time effects.
+      todo_.Pop();
+      return Success();
   }
-  todo_.Pop();
-  return Success();
+  CARBON_FATAL() << "Unreachable";
 }
 
 auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
