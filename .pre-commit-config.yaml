@@ -95,6 +95,16 @@ repos:
         entry: scripts/check_sha_filenames.py
         language: python
         files: ^.*/fuzzer_corpus/.*$
+      - id: check-toolchain-diagnostics
+        name: Check toolchain diagnostics
+        entry: toolchain/diagnostics/check_diagnostics.py
+        language: python
+        files: |
+          (?x)^(
+              toolchain/.*\.cpp|
+              toolchain/.*\.h|
+              toolchain/diagnostics/diagnostic_registry\.def
+          )$
 
   # Run linters last, as formatters and other checks may fix issues.
   - repo: local

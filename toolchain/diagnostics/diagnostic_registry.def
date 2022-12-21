@@ -61,11 +61,9 @@ CARBON_DIAGNOSTIC_KIND(ExpectedStructLiteralField)
 CARBON_DIAGNOSTIC_KIND(ExpectedVariableDeclaration)
 CARBON_DIAGNOSTIC_KIND(ExpectedVariableName)
 CARBON_DIAGNOSTIC_KIND(OperatorRequiresParentheses)
-CARBON_DIAGNOSTIC_KIND(StackLimitExceeded)
 CARBON_DIAGNOSTIC_KIND(UnaryOperatorHasWhitespace)
 CARBON_DIAGNOSTIC_KIND(UnaryOperatorRequiresWhitespace)
 CARBON_DIAGNOSTIC_KIND(UnexpectedTokenAfterListElement)
-CARBON_DIAGNOSTIC_KIND(UnexpectedTokenInCodeBlock)
 CARBON_DIAGNOSTIC_KIND(UnrecognizedDeclaration)
 
 // Package-related diagnostics.
@@ -77,6 +75,7 @@ CARBON_DIAGNOSTIC_KIND(ExpectedSemiToEndPackageDirective)
 
 // For-specific diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedIn)
+CARBON_DIAGNOSTIC_KIND(ExpectedInNotColon)
 
 // Interface-specific diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedInterfaceName)
