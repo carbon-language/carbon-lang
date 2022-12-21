@@ -2661,7 +2661,7 @@ interface Container {
 }
 
 fn SortContainer
-    [ContainerType:! Container where .ElementType is Comparable]
+    [ContainerType:! Container where .ElementType impls Comparable]
     (container_to_sort: ContainerType*);
 ```
 
@@ -2669,13 +2669,13 @@ In contrast to [a same type constraint](#same-type-constraints), this does not
 say what type `ElementType` exactly is, just that it must satisfy some
 type-of-type.
 
-**Open question:** How do you spell that? Provisionally we are writing `is`,
+**Open question:** How do you spell that? Provisionally we are writing `impls`,
 following Swift, but maybe we should have another operator that more clearly
 returns a boolean like `has_type`?
 
 **Note:** `Container` defines `ElementType` as having type `Type`, but
 `ContainerType.ElementType` has type `Comparable`. This is because
-`ContainerType` has type `Container where .ElementType is Comparable`, not
+`ContainerType` has type `Container where .ElementType impls Comparable`, not
 `Container`. This means we need to be a bit careful when talking about the type
 of `ContainerType` when there is a `where` clause modifying it.
 
@@ -2701,7 +2701,7 @@ We can then define a function that only accepts types that implement
 
 ```
 fn F[ContainerType:! ContainerInterface
-     where .IteratorType is RandomAccessIterator]
+     where .IteratorType impls RandomAccessIterator]
     (c: ContainerType);
 ```
 
@@ -2711,18 +2711,18 @@ We would like to be able to name this constraint, defining a
 
 ```
 let RandomAccessContainer:! auto =
-    ContainerInterface where .IteratorType is RandomAccessIterator;
+    ContainerInterface where .IteratorType impls RandomAccessIterator;
 // or
 constraint RandomAccessContainer {
   extends ContainerInterface
-      where .IteratorType is RandomAccessIterator;
+      where .IteratorType impls RandomAccessIterator;
 }
 
 // With the above definition:
 fn F[ContainerType:! RandomAccessContainer](c: ContainerType);
 // is equivalent to:
 fn F[ContainerType:! ContainerInterface
-     where .IteratorType is RandomAccessIterator]
+     where .IteratorType impls RandomAccessIterator]
     (c: ContainerType);
 ```
 
@@ -2735,7 +2735,7 @@ and satisfy an interface:
 ```
 fn EqualContainers
     [CT1:! Container,
-     CT2:! Container where .ElementType is HasEquality
+     CT2:! Container where .ElementType impls HasEquality
                        and .ElementType == CT1.ElementType]
     (c1: CT1*, c2: CT2*) -> bool;
 ```
@@ -2840,7 +2840,7 @@ it is an error if `.Self` could mean two different things, as in:
 
 ```
 // ❌ Illegal: `.Self` could mean `T` or `T.A`.
-fn F[T:! InterfaceA where .A is
+fn F[T:! InterfaceA where .A impls
            (InterfaceB where .B == .Self)](x: T);
 ```
 
@@ -2859,7 +2859,7 @@ external impl Vector(String) as Printable { ... }
 
 // Constraint: `T` such that `Vector(T)` implements `Printable`
 fn PrintThree
-    [T:! Type where Vector(.Self) is Printable]
+    [T:! Type where Vector(.Self) impls Printable]
     (a: T, b: T, c: T) {
   var v: Vector(T) = (a, b, c);
   Print(v);
@@ -2873,16 +2873,16 @@ fn PrintThree
 
 In this case, we need some other type to implement an interface parameterized by
 a generic type parameter. The syntax for this case follows the previous case,
-except now the `.Self` parameter is on the interface to the right of the `is`.
-For example, we might need a type parameter `T` to support explicit conversion
-from an integer type like `i32`:
+except now the `.Self` parameter is on the interface to the right of the
+`impls`. For example, we might need a type parameter `T` to support explicit
+conversion from an integer type like `i32`:
 
 ```
 interface As(T:! Type) {
   fn Convert[self: Self]() -> T;
 }
 
-fn Double[T:! Mul where i32 is As(.Self)](x: T) -> T {
+fn Double[T:! Mul where i32 impls As(.Self)](x: T) -> T {
   return x * (2 as T);
 }
 ```
@@ -2895,8 +2895,8 @@ current type. This means referring to some
 `.MemberName`, or [`.Self`](#recursive-constraints). Examples:
 
 -   `Container where .ElementType = i32`
--   `Type where Vector(.Self) is Sortable`
--   `Addable where i32 is AddableWith(.Result)`
+-   `Type where Vector(.Self) impls Sortable`
+-   `Addable where i32 impls AddableWith(.Result)`
 
 Constraints that only refer to other types should be moved to the type that is
 declared last. So:
@@ -2917,9 +2917,9 @@ This includes `where` clauses used in an `impl` declaration:
 
 ```
 // ❌ Error: `where T is B` does not use `.Self` or a designator
-external impl forall [T:! Type] T as A where T is B {}
+external impl forall [T:! Type] T as A where T impls B {}
 // ✅ Allowed
-external impl forall [T:! Type where .Self is B] T as A {}
+external impl forall [T:! Type where .Self impls B] T as A {}
 // ✅ Allowed
 external impl forall [T:! B] T as A {}
 ```
@@ -2961,13 +2961,13 @@ Effectively that means that these functions are automatically rewritten to add a
 ```
 fn LookUp[KeyType:! Type]
     (hm: HashMap(KeyType, i32)*
-        where KeyType is Hashable & EqualityComparable & Movable,
+        where KeyType impls Hashable & EqualityComparable & Movable,
      k: KeyType) -> i32;
 
 fn PrintValueOrDefault[KeyType:! Printable,
                        ValueT:! Printable & HasDefault]
     (map: HashMap(KeyType, ValueT)
-        where KeyType is Hashable & EqualityComparable & Movable,
+        where KeyType impls Hashable & EqualityComparable & Movable,
      key: KeyT);
 ```
 
@@ -3034,7 +3034,7 @@ them, needs them to be `Hashable` and so on. To say "`T` is a type where
 `HashSet(T)` is legal," we can write:
 
 ```
-fn NumDistinct[T:! Type where HashSet(.Self) is Type]
+fn NumDistinct[T:! Type where HashSet(.Self) impls Type]
     (a: T, b: T, c: T) -> i32 {
   var set: HashSet(T);
   set.Add(a);
@@ -3296,7 +3296,7 @@ interfaces to generic types, they may be added without breaking existing code.
 
 There are some constraints that we will naturally represent as named
 type-of-types. These can either be used directly to constrain a generic type
-parameter, or in a `where ... is ...` clause to constrain an associated type.
+parameter, or in a `where ... impls ...` clause to constrain an associated type.
 
 The compiler determines which types implement these interfaces, developers can
 not explicitly implement these interfaces for their own types.
@@ -3311,7 +3311,7 @@ subtypes of `T`.
 
 ```
 fn F[T:! Extends(BaseType)](p: T*);
-fn UpCast[T:! Type](p: T*, U:! Type where T is Extends(.Self)) -> U*;
+fn UpCast[T:! Type](p: T*, U:! Type where T impls Extends(.Self)) -> U*;
 fn DownCast[T:! Type](p: T*, U:! Extends(T)) -> U*;
 ```
 
@@ -3340,7 +3340,8 @@ have to include a "data representation requirement" option.
 
 `CompatibleWith` determines an equivalence relationship between types.
 Specifically, given two types `T1` and `T2`, they are equivalent if
-`T1 is CompatibleWith(T2)`. That is, if `T1` has the type `CompatibleWith(T2)`.
+`T1 impls CompatibleWith(T2)`. That is, if `T1` has the type
+`CompatibleWith(T2)`.
 
 **Note:** Just like interface parameters, we require the user to supply `U`,
 they may not be deduced. Specifically, this code would be illegal:
@@ -3372,7 +3373,7 @@ class HashSet(T:! Hashable) { ... }
 ```
 
 Then `HashSet(T)` may be cast to `HashSet(U)` if
-`T is CompatibleWith(U, Hashable)`. The one-parameter interpretation of
+`T impls CompatibleWith(U, Hashable)`. The one-parameter interpretation of
 `CompatibleWith(U)` is recovered by letting the default for the second `TT`
 parameter be `Type`.
 
@@ -4115,7 +4116,7 @@ interface True {}
 impl Y as True {}
 interface Z(T:! Type) { let Cond:! Type; }
 match_first {
-  impl forall [T:! Type, U:! Z(T) where .Cond is True] T as Z(U)
+  impl forall [T:! Type, U:! Z(T) where .Cond impls True] T as Z(U)
       where .Cond = N { }
   impl forall [T:! Type, U:! Type] T as Z(U)
       where .Cond = Y { }
@@ -4126,7 +4127,7 @@ What is `i8.(Z(i16).Cond)`? It depends on which of the two blanket impls are
 selected.
 
 -   An implementation of `Z(i16)` for `i8` could come from the first blanket
-    impl with `T == i8` and `U == i16` if `i16 is Z(i8)` and
+    impl with `T == i8` and `U == i16` if `i16 impls Z(i8)` and
     `i16.(Z(i8).Cond) == Y`. This condition is satisfied if `i16` implements
     `Z(i8)` using the second blanket impl. In this case,
     `i8.(Z(i16).Cond) == N`.
@@ -4193,16 +4194,16 @@ It is possible to define a set of impls where there isn't a cycle, but the graph
 is infinite. Without some rule to prevent exhaustive exploration of the graph,
 determining whether a type implements an interface could run forever.
 
-**Example:** It could be that `A` implements `B`, so `A is B` if
-`Optional(A) is B`, if `Optional(Optional(A)) is B`, and so on. This could be
-the result of a single impl:
+**Example:** It could be that `A` implements `B`, so `A impls B` if
+`Optional(A) impls B`, if `Optional(Optional(A)) impls B`, and so on. This could
+be the result of a single impl:
 
 ```
-impl forall [A:! Type where Optional(.Self) is B] A as B { ... }
+impl forall [A:! Type where Optional(.Self) impls B] A as B { ... }
 ```
 
-This problem can also result from a chain of impls, as in `A is B` if `A* is C`,
-if `Optional(A) is B`, and so on.
+This problem can also result from a chain of impls, as in `A impls B` if
+`A* impls C`, if `Optional(A) impls B`, and so on.
 
 Rust solves this problem by imposing a recursion limit, much like C++ compilers
 use to terminate template recursion. This goes against
@@ -4451,9 +4452,9 @@ be used in the following contexts:
     `as C; }`
     -   Nothing implied by implementing `C` will be visible until `C` is
         complete.
--   ✅ `T:! C` ... `T is C`
--   ✅ `T:! A & C` ... `T is C`
-    -   This includes constructs requiring `T is C` such as `T as C` or
+-   ✅ `T:! C` ... `T impls C`
+-   ✅ `T:! A & C` ... `T impls C`
+    -   This includes constructs requiring `T impls C` such as `T as C` or
         `U:! C = T`.
 -   ✅ `external impl `...` as C;`
     -   Checking that all associated constants of `C` are correctly assigned
@@ -4466,7 +4467,7 @@ An incomplete `C` cannot be used in the following contexts:
 -   ❌ `class `...` { impl as C; }`
     -   The names of `C` are added to the class, and so those names need to be
         known.
--   ❌ `T:! C` ... `T is A` where `A` is an interface or named constraint
+-   ❌ `T:! C` ... `T impls A` where `A` is an interface or named constraint
     different from `C`
     -   Need to see the definition of `C` to see if it implies `A`.
 -   ❌ `external impl` ... `as C {` ... `}`
@@ -5050,7 +5051,7 @@ class Foo(T:! Type) {}
 // This is allowed because we know that an `impl Foo(T) as Equatable`
 // will exist for all types `T` for which this impl is used, even
 // though there's neither an imported impl nor an impl in this file.
-external impl forall [T:! Type where Foo(T) is Equatable]
+external impl forall [T:! Type where Foo(T) impls Equatable]
     Foo(T) as Iterable {}
 ```
 
@@ -5103,7 +5104,7 @@ One situation where this occurs is when there is a chain of
 [interfaces requiring other interfaces](#interface-requiring-other-interfaces-revisited).
 During the `impl` validation done during type checking, Carbon will only
 consider the interfaces that are direct requirements of the interfaces the type
-is known to implement. An `observe...is` declaration can be used to add an
+is known to implement. An `observe...impls` declaration can be used to add an
 interface that is a direct requirement to the set of interfaces whose direct
 requirements will be considered for that type. This allows a developer to
 provide a proof that there is a sequence of requirements that demonstrate that a
@@ -5126,11 +5127,11 @@ fn RequiresD[T:! D](x: T) {
 
   // `T` is `D` and `D` directly requires `C` to be
   // implemented.
-  observe T is C;
+  observe T impls C;
 
   // `T` is `C` and `C` directly requires `B` to be
   // implemented.
-  observe T is B;
+  observe T impls B;
 
   // ✅ Allowed: `T` is `B` and `B` directly requires
   //             `A` to be implemented.
@@ -5146,9 +5147,9 @@ compiler can't determine the impl to select.
 
 ### Observing blanket impls
 
-An `observe...is` declaration can also be used to observe that a type implements
-an interface because there is a [blanket impl](#blanket-impls) in terms of
-requirements a type is already known to satisfy. Without an `observe`
+An `observe...impls` declaration can also be used to observe that a type
+implements an interface because there is a [blanket impl](#blanket-impls) in
+terms of requirements a type is already known to satisfy. Without an `observe`
 declaration, Carbon will only use blanket impls that are directly satisfied.
 
 ```
@@ -5175,11 +5176,11 @@ fn RequiresA(T:! A)(x: T) {
 
   // There is a blanket implementation of `B` for
   // types implementing `A`.
-  observe T is B;
+  observe T impls B;
 
   // There is a blanket implementation of `C` for
   // types implementing `B`.
-  observe T is C;
+  observe T impls C;
 
   // ✅ Allowed: There is a blanket implementation
   //             of `D` for types implementing `C`.

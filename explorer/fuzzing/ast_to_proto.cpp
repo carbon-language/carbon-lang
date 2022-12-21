@@ -227,12 +227,12 @@ static auto ExpressionToProto(const Expression& expression)
       for (const WhereClause* where : where.clauses()) {
         Fuzzing::WhereClause clause_proto;
         switch (where->kind()) {
-          case WhereClauseKind::IsWhereClause: {
-            auto* is_proto = clause_proto.mutable_is();
-            *is_proto->mutable_type() =
-                ExpressionToProto(cast<IsWhereClause>(where)->type());
-            *is_proto->mutable_constraint() =
-                ExpressionToProto(cast<IsWhereClause>(where)->constraint());
+          case WhereClauseKind::ImplsWhereClause: {
+            auto* impls_proto = clause_proto.mutable_impls();
+            *impls_proto->mutable_type() =
+                ExpressionToProto(cast<ImplsWhereClause>(where)->type());
+            *impls_proto->mutable_constraint() =
+                ExpressionToProto(cast<ImplsWhereClause>(where)->constraint());
             break;
           }
           case WhereClauseKind::EqualsWhereClause: {

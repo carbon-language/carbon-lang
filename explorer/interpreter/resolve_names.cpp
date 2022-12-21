@@ -286,8 +286,8 @@ static auto ResolveNames(WhereClause& clause,
                          const StaticScope& enclosing_scope)
     -> ErrorOr<Success> {
   switch (clause.kind()) {
-    case WhereClauseKind::IsWhereClause: {
-      auto& is_clause = cast<IsWhereClause>(clause);
+    case WhereClauseKind::ImplsWhereClause: {
+      auto& is_clause = cast<ImplsWhereClause>(clause);
       CARBON_RETURN_IF_ERROR(ResolveNames(is_clause.type(), enclosing_scope));
       CARBON_RETURN_IF_ERROR(
           ResolveNames(is_clause.constraint(), enclosing_scope));

@@ -357,8 +357,8 @@ WhereClause::~WhereClause() = default;
 
 void WhereClause::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
-    case WhereClauseKind::IsWhereClause: {
-      const auto& clause = cast<IsWhereClause>(*this);
+    case WhereClauseKind::ImplsWhereClause: {
+      const auto& clause = cast<ImplsWhereClause>(*this);
       out << clause.type() << " is " << clause.constraint();
       break;
     }

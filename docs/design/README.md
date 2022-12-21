@@ -3005,7 +3005,7 @@ interfaces the compiler knows that a type implements. It is also possible that
 knowing a type implements one interface implies that it implements another, from
 an
 [interface requirement](generics/details.md#interface-requiring-other-interfaces)
-or [generic implementation](#generic-implementations). An `observe`...`is`
+or [generic implementation](#generic-implementations). An `observe`...`impls`
 declaration may be used to
 [observe that a type implements an interface](generics/details.md#observing-a-type-implements-an-interface).
 

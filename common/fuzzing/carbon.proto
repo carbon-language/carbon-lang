@@ -129,7 +129,7 @@ message ArrayTypeLiteral {
   optional Expression size = 2;
 }
 
-message IsWhereClause {
+message ImplsWhereClause {
   optional Expression type = 1;
   optional Expression constraint = 2;
 }
@@ -146,7 +146,7 @@ message RewriteWhereClause {
 
 message WhereClause {
   oneof kind {
-    IsWhereClause is = 1;
+    ImplsWhereClause impls = 1;
     EqualsWhereClause equals = 2;
     RewriteWhereClause rewrite = 3;
   }

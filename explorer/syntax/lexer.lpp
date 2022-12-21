@@ -73,10 +73,10 @@ GREATER_EQUAL        ">="
 GREATER_GREATER      ">>"
 IF                   "if"
 IMPL                 "impl"
+IMPLS                "impls"
 IMPORT               "import"
 IN                   "in"
 INTERFACE            "interface"
-IS                   "is"
 LEFT_CURLY_BRACE     "{"
 LEFT_PARENTHESIS     "("
 LEFT_SQUARE_BRACKET  "["
@@ -179,11 +179,11 @@ operand_start         [(A-Za-z0-9_\"]
 {GREATER_GREATER}     { return CARBON_SIMPLE_TOKEN(GREATER_GREATER);     }
 {GREATER}             { return CARBON_SIMPLE_TOKEN(GREATER);             }
 {IF}                  { return CARBON_SIMPLE_TOKEN(IF);                  }
+{IMPLS}               { return CARBON_SIMPLE_TOKEN(IMPLS);               }
 {IMPL}                { return CARBON_SIMPLE_TOKEN(IMPL);                }
 {IMPORT}              { return CARBON_SIMPLE_TOKEN(IMPORT);              }
 {INTERFACE}           { return CARBON_SIMPLE_TOKEN(INTERFACE);           }
 {IN}                  { return CARBON_SIMPLE_TOKEN(IN);                  }
-{IS}                  { return CARBON_SIMPLE_TOKEN(IS);                  }
 {LEFT_CURLY_BRACE}    { return CARBON_SIMPLE_TOKEN(LEFT_CURLY_BRACE);    }
 {LEFT_PARENTHESIS}    { return CARBON_SIMPLE_TOKEN(LEFT_PARENTHESIS);    }
 {LEFT_SQUARE_BRACKET} { return CARBON_SIMPLE_TOKEN(LEFT_SQUARE_BRACKET); }

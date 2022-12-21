@@ -3479,8 +3479,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         CARBON_RETURN_IF_ERROR(TypeCheckWhereClause(clause, inner_impl_scope));
 
         switch (clause->kind()) {
-          case WhereClauseKind::IsWhereClause: {
-            const auto& is_clause = cast<IsWhereClause>(*clause);
+          case WhereClauseKind::ImplsWhereClause: {
+            const auto& is_clause = cast<ImplsWhereClause>(*clause);
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const Value*> type,
                 InterpExp(&is_clause.type(), arena_, trace_stream_));
@@ -3490,7 +3490,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const ConstraintType*> constraint_type,
                 ConvertToConstraintType(is_clause.source_loc(),
-                                        "expression after `is`", constraint));
+                                        "expression after `impls`",
+                                        constraint));
             // Transform `where .B is (C where .D is E)` into `where .B is C
             // and .B.D is E` then add all the resulting constraints.
             builder.AddAndSubstitute(*this, constraint_type, type,
@@ -3685,13 +3686,13 @@ auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
                                        const ImplScope& impl_scope)
     -> ErrorOr<Success> {
   switch (clause->kind()) {
-    case WhereClauseKind::IsWhereClause: {
-      auto& is_clause = cast<IsWhereClause>(*clause);
+    case WhereClauseKind::ImplsWhereClause: {
+      auto& is_clause = cast<ImplsWhereClause>(*clause);
       CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(&is_clause.type(), impl_scope));
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&is_clause.constraint(), impl_scope));
       if (!isa<TypeType>(is_clause.constraint().static_type())) {
         return ProgramError(is_clause.constraint().source_loc())
-               << "expression after `is` does not resolve to a constraint, "
+               << "expression after `impls` does not resolve to a constraint, "
                << "found " << is_clause.constraint().static_type();
       }
       return Success();

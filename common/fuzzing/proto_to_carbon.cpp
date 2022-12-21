@@ -399,10 +399,10 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
       for (const auto& clause : where.clauses()) {
         out << sep;
         switch (clause.kind_case()) {
-          case Fuzzing::WhereClause::kIs:
-            ExpressionToCarbon(clause.is().type(), out);
-            out << " is ";
-            ExpressionToCarbon(clause.is().constraint(), out);
+          case Fuzzing::WhereClause::kImpls:
+            ExpressionToCarbon(clause.impls().type(), out);
+            out << " impls ";
+            ExpressionToCarbon(clause.impls().constraint(), out);
             break;
           case Fuzzing::WhereClause::kEquals:
             ExpressionToCarbon(clause.equals().lhs(), out);

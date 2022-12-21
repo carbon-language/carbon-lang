@@ -594,7 +594,7 @@ fn FindFirstPrime[T:! Container where .Element == i32]
   ...
 }
 
-fn PrintContainer[T:! Container where .Element is Printable](c: T) {
+fn PrintContainer[T:! Container where .Element impls Printable](c: T) {
   // The type of the elements of `c` is not known, but we do know
   // that type satisfies the `Printable` interface.
   ...

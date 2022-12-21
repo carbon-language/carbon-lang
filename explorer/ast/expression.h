@@ -826,20 +826,21 @@ class WhereClause : public AstNode {
       : AstNode(static_cast<AstNodeKind>(kind), source_loc) {}
 };
 
-// An `is` where clause.
+// An `impls` where clause.
 //
 // For example, `ConstraintA where .Type is ConstraintB` requires that the
 // associated type `.Type` implements the constraint `ConstraintB`.
-class IsWhereClause : public WhereClause {
+class ImplsWhereClause : public WhereClause {
  public:
-  explicit IsWhereClause(SourceLocation source_loc, Nonnull<Expression*> type,
-                         Nonnull<Expression*> constraint)
-      : WhereClause(WhereClauseKind::IsWhereClause, source_loc),
+  explicit ImplsWhereClause(SourceLocation source_loc,
+                            Nonnull<Expression*> type,
+                            Nonnull<Expression*> constraint)
+      : WhereClause(WhereClauseKind::ImplsWhereClause, source_loc),
         type_(type),
         constraint_(constraint) {}
 
   static auto classof(const AstNode* node) {
-    return InheritsFromIsWhereClause(node->kind());
+    return InheritsFromImplsWhereClause(node->kind());
   }
 
   auto type() const -> const Expression& { return *type_; }
