@@ -40,12 +40,16 @@ auto StructValue::FindField(std::string_view name) const
 
 NominalClassValue::NominalClassValue(
     Nonnull<const Value*> type, Nonnull<const Value*> inits,
-    std::optional<Nonnull<const NominalClassValue*>> base)
+    std::optional<Nonnull<const NominalClassValue*>> base,
+    const VTable** const vptr)
     : Value(Kind::NominalClassValue),
       type_(type),
       inits_(inits),
-      vptr_(&cast<NominalClassType>(type)->vtable()),
-      base_(base) {}
+      base_(base),
+      vptr_(vptr) {
+  // Update object's pointee to match the type's vtable.
+  *vptr = &cast<NominalClassType>(type)->vtable();
+}
 
 static auto FindClassField(Nonnull<const NominalClassValue*> object,
                            std::string_view name)
@@ -148,9 +152,8 @@ static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         return *field;
       } else {
         // Look for a method in the object's class
-        const auto* vtable = object.vtable();
-        if (const auto res = vtable->find(std::string(f));
-            res != vtable->end()) {
+        if (const auto res = object.vtable().find(std::string(f));
+            res != object.vtable().end()) {
           const auto& fun = cast<CallableDeclaration>(*res->second);
           return &cast<FunctionValue>(**fun.constant_value());
         }
@@ -265,14 +268,14 @@ static auto SetFieldImpl(
                                     path_end, field_value, source_loc);
           inits.ok()) {
         return arena->New<NominalClassValue>(&object.type(), *inits,
-                                             object.base());
+                                             object.base(), object.vptr());
       } else if (object.base().has_value()) {
         auto new_base = SetFieldImpl(arena, object.base().value(), path_begin,
                                      path_end, field_value, source_loc);
         if (new_base.ok()) {
           return arena->New<NominalClassValue>(
               &object.type(), &object.inits(),
-              cast<NominalClassValue>(*new_base));
+              cast<NominalClassValue>(*new_base), object.vptr());
         }
       }
       // Failed to match, show full object content

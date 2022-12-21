@@ -706,8 +706,10 @@ auto Interpreter::ConvertStructToClass(
   }
   auto* converted_init_struct =
       arena_->New<StructValue>(std::move(struct_values));
+  Nonnull<const VTable** const> vptr =
+      base_instance ? (*base_instance)->vptr() : arena_->New<const VTable*>();
   return arena_->New<NominalClassValue>(inst_class, converted_init_struct,
-                                        base_instance);
+                                        base_instance, vptr);
 }
 
 auto Interpreter::Convert(Nonnull<const Value*> value,
