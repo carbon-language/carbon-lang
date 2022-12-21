@@ -14,7 +14,7 @@
 namespace Carbon {
 
 auto SemanticsIR::MakeBuiltinIR() -> SemanticsIR {
-  SemanticsIR semantics;
+  SemanticsIR semantics(/*builtin_ir=*/nullptr);
   auto block_id = semantics.AddNodeBlock();
   semantics.nodes_.reserve(SemanticsBuiltinKind::ValidCount);
 
@@ -51,7 +51,18 @@ auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
                                     DiagnosticConsumer& consumer,
                                     llvm::raw_ostream* vlog_stream)
     -> SemanticsIR {
-  SemanticsIR semantics(builtin_ir, FromBuiltins::Constructor);
+  SemanticsIR semantics(&builtin_ir);
+
+  // Copy builtins over.
+  semantics.nodes_.resize_for_overwrite(SemanticsBuiltinKind::ValidCount);
+  static constexpr auto BuiltinIR = SemanticsCrossReferenceIRId(0);
+  for (int i = 0; i < SemanticsBuiltinKind::ValidCount; ++i) {
+    // We can reuse the type node ID because the offsets of cross-references
+    // will be the same in this IR.
+    auto type = builtin_ir.nodes_[i].type();
+    semantics.nodes_[i] =
+        SemanticsNode::MakeCrossReference(type, BuiltinIR, SemanticsNodeId(i));
+  }
 
   TokenizedBuffer::TokenLocationTranslator translator(
       &tokens, /*last_line_lexed_to_column=*/nullptr);
@@ -61,20 +72,6 @@ auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
       .Build();
   semantics.has_errors_ = err_tracker.seen_error();
   return semantics;
-}
-
-SemanticsIR::SemanticsIR(const SemanticsIR& builtins,
-                         FromBuiltins /*from_builtins*/)
-    : cross_reference_irs_({&builtins, this}) {
-  nodes_.resize_for_overwrite(SemanticsBuiltinKind::ValidCount);
-  static constexpr auto BuiltinIR = SemanticsCrossReferenceIRId(0);
-  for (int i = 0; i < SemanticsBuiltinKind::ValidCount; ++i) {
-    // We can reuse the type node ID because the offsets of cross-references
-    // will be the same in this IR.
-    auto type = builtins.nodes_[i].type();
-    nodes_[i] =
-        SemanticsNode::MakeCrossReference(type, BuiltinIR, SemanticsNodeId(i));
-  }
 }
 
 auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {

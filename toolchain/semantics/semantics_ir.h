@@ -42,15 +42,9 @@ class SemanticsIR {
   // index 1. This is a constant for that.
   static constexpr auto ThisIR = SemanticsCrossReferenceIRId(1);
 
-  // Passed to the constructor to disambiguiate from a copy constructor.
-  enum FromBuiltins { Constructor };
-
-  // For the builtin IR only.
-  SemanticsIR() : SemanticsIR(*this) {}
-
-  // For most IRs. Has an unused argument to separate from a copy constructor,
-  // since it does not provide copy semantics (pass FromBuiltins).
-  explicit SemanticsIR(const SemanticsIR& builtins, FromBuiltins /*unused*/);
+  explicit SemanticsIR(const SemanticsIR* builtin_ir)
+      : cross_reference_irs_(
+            {builtin_ir == nullptr ? this : builtin_ir, this}) {}
 
   // Returns the requested node.
   auto GetNode(SemanticsNodeId node_id) const -> const SemanticsNode& {
