@@ -50,7 +50,7 @@
 
 
 fn Main() {
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/fail_duplicate_decl.carbon:[[@LINE+1]]:8: Previous definition is here.
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/fail_duplicate_decl.carbon:[[@LINE+1]]:7: Previous definition is here.
   var x: i32 = 0;
   // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/fail_duplicate_decl.carbon:[[@LINE+1]]:7: Redefining x in the same scope.
   var x: i32 = 0;
