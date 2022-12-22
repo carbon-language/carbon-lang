@@ -344,10 +344,9 @@ class NominalClassValue : public Value {
  public:
   static constexpr llvm::StringLiteral BaseField{"base"};
 
-  NominalClassValue(
-      Nonnull<const Value*> type, Nonnull<const Value*> inits,
-      std::optional<Nonnull<const NominalClassValue*>> base,
-      /*TODO Nonnull<*/ const VTable** const /*>*/ vptr = nullptr);
+  NominalClassValue(Nonnull<const Value*> type, Nonnull<const Value*> inits,
+                    std::optional<Nonnull<const NominalClassValue*>> base,
+                    Nonnull<const VTable** const> vptr);
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassValue;
@@ -355,7 +354,7 @@ class NominalClassValue : public Value {
 
   template <typename F>
   auto Decompose(F f) const {
-    return f(type_, inits_, base_ /*TODO, vptr_*/);
+    return f(type_, inits_, base_, vptr_);
   }
 
   auto type() const -> const Value& { return *type_; }
@@ -365,13 +364,13 @@ class NominalClassValue : public Value {
   }
   auto has_vtable() const -> bool { return !vtable().empty(); }
   auto vtable() const -> const VTable& { return **vptr_; }
-  auto vptr() const -> Nonnull<const VTable**> { return vptr_; }
+  auto vptr() const -> Nonnull<const VTable** const> { return vptr_; }
 
  private:
   Nonnull<const Value*> type_;
   Nonnull<const Value*> inits_;  // The initializing StructValue.
   std::optional<Nonnull<const NominalClassValue*>> base_;
-  const Nonnull<const VTable** const> vptr_;
+  Nonnull<const VTable** const> vptr_;
 };
 
 // An alternative constructor value.

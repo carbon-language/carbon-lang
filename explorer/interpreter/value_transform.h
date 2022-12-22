@@ -170,6 +170,9 @@ class ValueTransform : public TransformBase<Derived> {
   auto operator()(Nonnull<const Element*> elem) -> Nonnull<const Element*> {
     return TransformDerived<Nonnull<const Element*>>(elem);
   }
+
+  // Preserve vptr during transformation.
+  auto operator()(Nonnull<const VTable** const> vptr) -> auto{ return vptr; }
 };
 
 }  // namespace Carbon
