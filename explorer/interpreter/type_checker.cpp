@@ -4511,7 +4511,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   const int class_level = base_class ? (*base_class)->hierarchy_level() + 1 : 0;
   for (const auto* m : class_decl->members()) {
     const auto* fun = dyn_cast<FunctionDeclaration>(m);
-    if (!fun || !fun->is_virtual()) {
+    if (!fun || fun->override() == VirtualOverride::None) {
       continue;
     }
     // TODO: Implement complete declaration logic from
@@ -4520,6 +4520,20 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
       return ProgramError(fun->source_loc())
              << "Error declaring `" << fun->name() << "`"
              << ": class functions cannot be virtual.";
+    }
+    if (fun->override() == VirtualOverride::Virtual &&
+        class_vtable.find(fun->name()) != class_vtable.end()) {
+      return ProgramError(fun->source_loc())
+             << "Error declaring `" << fun->name() << "`"
+             << ": method is declared virtual in base class, use `impl` "
+                "instead to override it.";
+    }
+    if (fun->override() == VirtualOverride::Impl &&
+        class_vtable.find(fun->name()) == class_vtable.end()) {
+      return ProgramError(fun->source_loc())
+             << "Error declaring `" << fun->name() << "`"
+             << ": cannot override a method that is not declared `abstract` or "
+                "`virtual` in base class.";
     }
     class_vtable[fun->name()] = {fun, class_level};
   }

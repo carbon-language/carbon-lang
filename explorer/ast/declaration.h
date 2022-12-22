@@ -125,6 +125,8 @@ class Declaration : public AstNode {
   bool is_type_checked_ = false;
 };
 
+enum class VirtualOverride { None, Abstract, Virtual, Impl };
+
 class CallableDeclaration : public Declaration {
  public:
   CallableDeclaration(AstNodeKind kind, SourceLocation loc, std::string name,
@@ -132,7 +134,8 @@ class CallableDeclaration : public Declaration {
                       std::optional<Nonnull<Pattern*>> self_pattern,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
-                      std::optional<Nonnull<Block*>> body, bool is_virtual)
+                      std::optional<Nonnull<Block*>> body,
+                      VirtualOverride override)
       : Declaration(kind, loc),
         name_(std::move(name)),
         deduced_parameters_(std::move(deduced_params)),
@@ -140,7 +143,7 @@ class CallableDeclaration : public Declaration {
         param_pattern_(param_pattern),
         return_term_(return_term),
         body_(body),
-        is_virtual_(is_virtual) {}
+        override_(override) {}
 
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
 
@@ -161,7 +164,7 @@ class CallableDeclaration : public Declaration {
   auto return_term() -> ReturnTerm& { return return_term_; }
   auto body() const -> std::optional<Nonnull<const Block*>> { return body_; }
   auto body() -> std::optional<Nonnull<Block*>> { return body_; }
-  auto is_virtual() const -> bool { return is_virtual_; }
+  auto override() const -> VirtualOverride { return override_; }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
@@ -174,7 +177,7 @@ class CallableDeclaration : public Declaration {
   Nonnull<TuplePattern*> param_pattern_;
   ReturnTerm return_term_;
   std::optional<Nonnull<Block*>> body_;
-  bool is_virtual_;
+  VirtualOverride override_;
 };
 
 class FunctionDeclaration : public CallableDeclaration {
@@ -186,7 +189,8 @@ class FunctionDeclaration : public CallableDeclaration {
                      std::vector<Nonnull<AstNode*>> deduced_params,
                      Nonnull<TuplePattern*> param_pattern,
                      ReturnTerm return_term,
-                     std::optional<Nonnull<Block*>> body, bool is_virtual)
+                     std::optional<Nonnull<Block*>> body,
+                     VirtualOverride override)
       -> ErrorOr<Nonnull<FunctionDeclaration*>>;
 
   // Use `Create()` instead. This is public only so Arena::New() can call it.
@@ -195,11 +199,12 @@ class FunctionDeclaration : public CallableDeclaration {
                       std::optional<Nonnull<Pattern*>> self_pattern,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
-                      std::optional<Nonnull<Block*>> body, bool is_virtual)
+                      std::optional<Nonnull<Block*>> body,
+                      VirtualOverride override)
       : CallableDeclaration(AstNodeKind::FunctionDeclaration, source_loc,
                             std::move(name), std::move(deduced_params),
                             self_pattern, param_pattern, return_term, body,
-                            is_virtual) {}
+                            override) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromFunctionDeclaration(node->kind());
@@ -227,8 +232,8 @@ class DestructorDeclaration : public CallableDeclaration {
       : CallableDeclaration(AstNodeKind::DestructorDeclaration, source_loc,
                             "destructor", std::move(deduced_params),
                             self_pattern, param_pattern, return_term, body,
-                            // TODO: Add virtual destructors.
-                            /*is_virtual=*/false) {}
+                            // TODO: Add virtual destructors
+                            /*override=*/VirtualOverride::None) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromDestructorDeclaration(node->kind());
