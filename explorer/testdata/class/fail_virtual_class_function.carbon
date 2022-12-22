@@ -11,7 +11,7 @@ package ExplorerTest api;
 class C {
   virtual fn Foo() -> i32 {
     return 1;
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_virtual_class_function.carbon:[[@LINE+1]]: Class functions cannot be virtual, in function `Foo` declaration.
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_virtual_class_function.carbon:[[@LINE+1]]: Error declaring `Foo`: class functions cannot be virtual.
   }
 }
 

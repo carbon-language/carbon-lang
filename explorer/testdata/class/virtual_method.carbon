@@ -25,7 +25,8 @@ base class C {
 }
 
 class D extends C {
-  fn Foo[self: Self]() -> i32 {
+  // TODO: This should instead use `impl` when supported
+  virtual fn Foo[self: Self]() -> i32 {
     return 3;
   }
   fn Bar[self: Self]() -> i32 {

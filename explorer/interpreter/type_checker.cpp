@@ -4468,15 +4468,18 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   // Generate vtable for the type if necessary
   VTable class_vtable = base_class ? (*base_class)->vtable() : VTable();
   for (const auto* m : class_decl->members()) {
-    if (const auto* fun = dyn_cast<FunctionDeclaration>(m);
-        fun && fun->is_virtual()) {
-      if (!fun->is_method()) {
-        return ProgramError(fun->source_loc())
-               << "Class functions cannot be virtual, in function `"
-               << fun->name() << "` declaration.";
-      }
-      class_vtable[fun->name()] = fun;
+    const auto* fun = dyn_cast<FunctionDeclaration>(m);
+    if (!fun || !fun->is_virtual()) {
+      continue;
     }
+    // TODO: Implement complete declaration logic from
+    // /docs/design/classes.md#virtual-methods.
+    if (!fun->is_method()) {
+      return ProgramError(fun->source_loc())
+             << "Error declaring `" << fun->name() << "`"
+             << ": class functions cannot be virtual.";
+    }
+    class_vtable[fun->name()] = fun;
   }
 
   // For class declaration `class MyType(T:! Type, U:! AnInterface)`, `Self`
