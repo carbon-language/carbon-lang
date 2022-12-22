@@ -4521,6 +4521,11 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
              << "Error declaring `" << fun->name() << "`"
              << ": class functions cannot be virtual.";
     }
+    if (fun->override() == VirtualOverride::Abstract) {
+      return ProgramError(fun->source_loc())
+             << "Error declaring `" << fun->name() << "`"
+             << ": `abstract` methods are not yet supported.";
+    }
     if (fun->override() == VirtualOverride::Virtual &&
         class_vtable.find(fun->name()) != class_vtable.end()) {
       return ProgramError(fun->source_loc())
