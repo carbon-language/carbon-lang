@@ -132,8 +132,7 @@ class CallableDeclaration : public Declaration {
                       std::optional<Nonnull<Pattern*>> self_pattern,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
-                      std::optional<Nonnull<Block*>> body,
-                      bool is_virtual = false)
+                      std::optional<Nonnull<Block*>> body, bool is_virtual)
       : Declaration(kind, loc),
         name_(std::move(name)),
         deduced_parameters_(std::move(deduced_params)),
@@ -229,7 +228,9 @@ class DestructorDeclaration : public CallableDeclaration {
                         std::optional<Nonnull<Block*>> body)
       : CallableDeclaration(AstNodeKind::DestructorDeclaration, source_loc,
                             "destructor", std::move(deduced_params),
-                            self_pattern, param_pattern, return_term, body) {}
+                            self_pattern, param_pattern, return_term, body,
+                            // TODO: Add virtual destructors
+                            /*is_virtual=*/false) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromDestructorDeclaration(node->kind());
