@@ -456,12 +456,10 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
     case ExpressionKind::BaseAccessExpression: {
       const auto& access = cast<BaseAccessExpression>(exp);
       if (act.pos() == 0) {
-        //    { {e.base :: C, E, F} :: S, H}
-        // -> { e :: [].base :: C, E, F} :: S, H}
+        // Get LValue for expression.
         return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
       } else {
-        //    { v :: [].base :: C, E, F} :: S, H}
-        // -> { { &v.base :: C, E, F} :: S, H }
+        // Append `.base` element to the address, and return the new LValue.
         Address object = cast<LValue>(*act.results()[0]).address();
         Address base = object.ElementAddress(&access.element());
         return todo_.FinishAction(arena_->New<LValue>(base));
