@@ -12,6 +12,7 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
+import collections
 from concurrent import futures
 import itertools
 from pathlib import Path
@@ -56,14 +57,14 @@ def load_diagnostic_uses_in(
     line = 1
     line_offset = 0
 
-    found: Dict[str, List[Location]] = {}
+    found: Dict[str, List[Location]] = collections.defaultdict(lambda: [])
     for m in re.finditer(r"CARBON_DIAGNOSTIC\(\s*(\w+),", content):
         diag = m.group(1)
         if diag in IGNORED:
             continue
         line += content.count("\n", line_offset, m.start())
         line_offset = m.start()
-        found.setdefault(diag, []).append(Location(path, line))
+        found[diag].append(Location(path, line))
     return found
 
 
@@ -75,10 +76,10 @@ def load_diagnostic_uses() -> Dict[str, List[Location]]:
     with futures.ThreadPoolExecutor() as exec:
         results = exec.map(load_diagnostic_uses_in, globs)
 
-    found: Dict[str, List[Location]] = {}
+    found: Dict[str, List[Location]] = collections.defaultdict(lambda: [])
     for result in results:
         for diag, locations in result.items():
-            found.setdefault(diag, []).extend(locations)
+            found[diag].extend(locations)
     return found
 
 
