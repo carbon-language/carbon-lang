@@ -47,7 +47,7 @@ NominalClassValue::NominalClassValue(
       inits_(inits),
       base_(base),
       vptr_(vptr) {
-  // Update object's pointee to match the type's vtable.
+  // Update object's vptr to match the type's vtable.
   *vptr = &cast<NominalClassType>(type)->vtable();
 }
 
