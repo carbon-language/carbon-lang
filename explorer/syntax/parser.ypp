@@ -104,7 +104,7 @@
 %type <std::vector<LibraryName>> import_directives
 %type <std::string> optional_library_path
 %type <bool> api_or_impl
-%type <bool> virtual_override
+%type <bool> fn_virtual_override_intro
 %type <ClassExtensibility> class_declaration_extensibility
 %type <std::optional<Nonnull<Expression*>>> class_declaration_extends
 %type <Nonnull<Declaration*>> declaration
@@ -1064,17 +1064,17 @@ impl_deduced_params:
 | FORALL LEFT_SQUARE_BRACKET deduced_param_list RIGHT_SQUARE_BRACKET
     { $$ = $3; }
 ;
-virtual_override:
-  // Empty
+fn_virtual_override_intro:
+  FN
     { $$ = false; }
-| VIRTUAL
+| VIRTUAL FN
     { $$ = true; }
 ;
 function_declaration:
-  virtual_override FN identifier deduced_params maybe_empty_tuple_pattern return_term block
+  fn_virtual_override_intro identifier deduced_params maybe_empty_tuple_pattern return_term block
     {
       ErrorOr<FunctionDeclaration*> fn = FunctionDeclaration::Create(
-          arena, context.source_loc(), $3, $4, $5, $6, $7, $1);
+          arena, context.source_loc(), $2, $3, $4, $5, $6, $1);
       if (fn.ok()) {
         $$ = *fn;
       } else {
@@ -1082,10 +1082,10 @@ function_declaration:
         YYERROR;
       }
     }
-| virtual_override FN identifier deduced_params maybe_empty_tuple_pattern return_term SEMICOLON
+| fn_virtual_override_intro identifier deduced_params maybe_empty_tuple_pattern return_term SEMICOLON
     {
       ErrorOr<FunctionDeclaration*> fn = FunctionDeclaration::Create(
-          arena, context.source_loc(), $3, $4, $5, $6, std::nullopt, $1);
+          arena, context.source_loc(), $2, $3, $4, $5, std::nullopt, $1);
       if (fn.ok()) {
         $$ = *fn;
       } else {

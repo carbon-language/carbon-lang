@@ -9,7 +9,7 @@
 package ExplorerTest api;
 
 interface Bad {
-  // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/interface/fail_bad_member_kind.carbon:[[@LINE+1]]: syntax error, unexpected VAR, expecting FN
+  // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/interface/fail_bad_member_kind.carbon:[[@LINE+1]]: syntax error, unexpected VAR
   var V: i32;
 }
 
