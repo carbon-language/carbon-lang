@@ -220,6 +220,7 @@ cc_library(
         ":dictionary",
         ":interpreter",
         ":pattern_analysis",
+        "//common:check",
         "//common:error",
         "//common:ostream",
         "//explorer/ast",

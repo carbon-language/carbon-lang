@@ -275,6 +275,7 @@ static auto ResolveNames(Expression& expression,
       break;
     case ExpressionKind::ValueLiteral:
     case ExpressionKind::BuiltinConvertExpression:
+    case ExpressionKind::BaseAccessExpression:
       CARBON_FATAL() << "should not exist before type checking";
     case ExpressionKind::UnimplementedExpression:
       return ProgramError(expression.source_loc()) << "Unimplemented";

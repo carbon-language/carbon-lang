@@ -383,6 +383,13 @@ class TypeChecker {
   auto ExpectNonPlaceholderType(SourceLocation source_loc,
                                 Nonnull<const Value*> type) -> ErrorOr<Success>;
 
+  // Build and return class subtyping conversion expression, converting from
+  // `src_ptr` to `dest_ptr`.
+  auto BuildSubtypeConversion(Nonnull<Expression*> source,
+                              Nonnull<const PointerType*> src_ptr,
+                              Nonnull<const PointerType*> dest_ptr)
+      -> ErrorOr<Nonnull<const Expression*>>;
+
   // Determine whether `type1` and `type2` are considered to be the same type
   // in the given scope. This is true if they're structurally identical or if
   // there is an equality relation in scope that specifies that they are the
