@@ -1252,6 +1252,11 @@ auto Parser::HandleFunctionDefinitionFinishState() -> void {
 
 auto Parser::HandleMemberDefinitionFinishState() -> void {
   auto state = PopState();
+
+  CARBON_CHECK(stack_context_ == ParseContext::Interface ||
+               stack_context_ == ParseContext::Class)
+      << "Unexpected parser stack context.";
+
   AddNode(stack_context_ == ParseContext::Interface
               ? ParseNodeKind::InterfaceDefinition()
               : ParseNodeKind::ClassDefinition(),
@@ -1261,6 +1266,7 @@ auto Parser::HandleMemberDefinitionFinishState() -> void {
 
 auto Parser::HandleMemberDefinitionLoopState() -> void {
   // This maintains the current state unless we're at the end of the definition.
+
   CARBON_CHECK(stack_context_ == ParseContext::Interface ||
                stack_context_ == ParseContext::Class)
       << "Unexpected parser stack context.";
