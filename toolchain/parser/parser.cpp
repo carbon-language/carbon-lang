@@ -274,6 +274,53 @@ auto Parser::SkipTo(TokenizedBuffer::Token t) -> void {
   CARBON_CHECK(position_ != end_) << "Skipped past EOF.";
 }
 
+auto Parser::HandleAPIIntroducerState() -> void {
+  auto state = PopState();
+
+  CARBON_CHECK(stack_context_ == ParseContext::Interface ||
+               stack_context_ == ParseContext::Class)
+      << "Unexpected parser stack context.";
+
+  if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
+                               ParseNodeKind::DeclaredName())) {
+    CARBON_DIAGNOSTIC(ExpectedIdentifierName, Error,
+                      "Expected identifier after `{0}` keyword.", std::string);
+    emitter_->Emit(*position_, ExpectedIdentifierName,
+                   ToString(stack_context_));
+    state.has_error = true;
+
+    // Add a name node even when it's not present because it's used for subtree
+    // bracketing on interfaces.
+    // TODO: Either fix this or normalize it, still deciding on the right
+    // approach.
+    AddLeafNode(ParseNodeKind::DeclaredName(), state.token, /*has_error=*/true);
+  }
+
+  bool parse_body = true;
+
+  if (!PositionIs(TokenKind::OpenCurlyBrace())) {
+    CARBON_DIAGNOSTIC(ExpectedOpenCurlyBrace, Error,
+                      "Expected `{{` to start {0} definition.", std::string);
+    emitter_->Emit(*position_, ExpectedOpenCurlyBrace,
+                   ToString(stack_context_));
+    state.has_error = true;
+
+    SkipPastLikelyEnd(state.token);
+    parse_body = false;
+  }
+
+  state.state = ParserState::MemberDefinitionFinish();
+  PushState(state);
+
+  if (parse_body) {
+    PushState(ParserState::MemberDefinitionLoop());
+    AddLeafNode(stack_context_ == ParseContext::Interface
+                    ? ParseNodeKind::InterfaceBodyStart()
+                    : ParseNodeKind::ClassBodyStart(),
+                Consume());
+  }
+}
+
 auto Parser::HandleCodeBlockState() -> void {
   PopAndDiscardState();
 
@@ -1203,52 +1250,13 @@ auto Parser::HandleFunctionDefinitionFinishState() -> void {
           state.has_error);
 }
 
-auto Parser::HandleAPIIntroducerState() -> void {
+auto Parser::HandleMemberDefinitionFinishState() -> void {
   auto state = PopState();
-
-  CARBON_CHECK(stack_context_ == ParseContext::Interface ||
-               stack_context_ == ParseContext::Class)
-      << "Unexpected parser stack context.";
-
-  if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
-                               ParseNodeKind::DeclaredName())) {
-    CARBON_DIAGNOSTIC(ExpectedIdentifierName, Error,
-                      "Expected identifier after `{0}` keyword.", std::string);
-    emitter_->Emit(*position_, ExpectedIdentifierName,
-                   ToString(stack_context_));
-    state.has_error = true;
-
-    // Add a name node even when it's not present because it's used for subtree
-    // bracketing on interfaces.
-    // TODO: Either fix this or normalize it, still deciding on the right
-    // approach.
-    AddLeafNode(ParseNodeKind::DeclaredName(), state.token, /*has_error=*/true);
-  }
-
-  bool parse_body = true;
-
-  if (!PositionIs(TokenKind::OpenCurlyBrace())) {
-    // TODO Overload operator << for ParseContext.
-    CARBON_DIAGNOSTIC(ExpectedOpenCurlyBrace, Error,
-                      "Expected `{{` to start {0} definition.", std::string);
-    emitter_->Emit(*position_, ExpectedOpenCurlyBrace,
-                   ToString(stack_context_));
-    state.has_error = true;
-
-    SkipPastLikelyEnd(state.token);
-    parse_body = false;
-  }
-
-  state.state = ParserState::MemberDefinitionFinish();
-  PushState(state);
-
-  if (parse_body) {
-    PushState(ParserState::MemberDefinitionLoop());
-    AddLeafNode(stack_context_ == ParseContext::Interface
-                    ? ParseNodeKind::InterfaceBodyStart()
-                    : ParseNodeKind::ClassBodyStart(),
-                Consume());
-  }
+  AddNode(stack_context_ == ParseContext::Interface
+              ? ParseNodeKind::InterfaceDefinition()
+              : ParseNodeKind::ClassDefinition(),
+          state.token, state.subtree_start, state.has_error);
+  stack_context_ = ParseContext::File;
 }
 
 auto Parser::HandleMemberDefinitionLoopState() -> void {
@@ -1278,15 +1286,6 @@ auto Parser::HandleMemberDefinitionLoopState() -> void {
       break;
     }
   }
-}
-
-auto Parser::HandleMemberDefinitionFinishState() -> void {
-  auto state = PopState();
-  AddNode(stack_context_ == ParseContext::Interface
-              ? ParseNodeKind::InterfaceDefinition()
-              : ParseNodeKind::ClassDefinition(),
-          state.token, state.subtree_start, state.has_error);
-  stack_context_ = ParseContext::File;
 }
 
 auto Parser::HandlePackageState() -> void {

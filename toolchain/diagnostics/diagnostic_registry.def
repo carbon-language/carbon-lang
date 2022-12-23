@@ -79,13 +79,12 @@ CARBON_DIAGNOSTIC_KIND(ExpectedSemiToEndPackageDirective)
 CARBON_DIAGNOSTIC_KIND(ExpectedIn)
 
 // Interface-specific diagnostics.
-CARBON_DIAGNOSTIC_KIND(ExpectedInterfaceOpenCurlyBrace)
 CARBON_DIAGNOSTIC_KIND(MethodImplNotAllowed)
-CARBON_DIAGNOSTIC_KIND(ExpectedOpenCurlyBrace)
 
 // Class and interface diagnostics
 CARBON_DIAGNOSTIC_KIND(ExpectedDeducedParam)
 CARBON_DIAGNOSTIC_KIND(ExpectedIdentifierName)
+CARBON_DIAGNOSTIC_KIND(ExpectedOpenCurlyBrace)
 
 // ============================================================================
 // Semantics diagnostics
