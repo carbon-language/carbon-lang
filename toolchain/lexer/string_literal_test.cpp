@@ -349,10 +349,11 @@ TEST_F(StringLiteralTest, UnicodeTooManyDigits) {
 // advanced regression testing may be implemented within this string_literal_test.cpp file.
 //
 // Escape Sequences
-// TabsTEST_F(StringLiteralTest, TabEscapeSequenceExpanded) {
+// Tabs
+TEST_F(StringLiteralTest, TabEscapeSequenceExpanded) {
   auto value = Parse("\t");
   EXPECT_TRUE(error_tracker.seen_error());
-  EXPECT_EQ(value, std::expandTabEscapeSequence("\t"));
+  EXPECT_EQ(value, "\t");
 }
 
 }  // namespace
