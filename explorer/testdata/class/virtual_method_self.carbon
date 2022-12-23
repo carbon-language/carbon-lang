@@ -6,8 +6,8 @@
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
 // CHECK:STDOUT: c.Foo(): 1
-// CHECK:STDOUT: d.Foo(): 1
-// CHECK:STDOUT: (*cp).Foo(): 1
+// CHECK:STDOUT: d.Foo(): 2
+// CHECK:STDOUT: (*cp).Foo(): 2
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
