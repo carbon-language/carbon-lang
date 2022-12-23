@@ -152,11 +152,6 @@ static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         return *field;
       } else {
         // Look for a method in the object's class
-        if (const auto res = object.vtable().find(f);
-            res != object.vtable().end()) {
-          const auto& fun = cast<CallableDeclaration>(*res->second);
-          return &cast<FunctionValue>(**fun.constant_value());
-        }
         const auto& class_type = cast<NominalClassType>(object.type());
         std::optional<Nonnull<const FunctionValue*>> func =
             FindFunctionWithParents(f, class_type.declaration());
@@ -166,7 +161,15 @@ static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         } else if ((*func)->declaration().is_method()) {
           // Found a method. Turn it into a bound method.
           const auto& m = cast<FunctionValue>(**func);
-          return arena->New<BoundMethodValue>(&m.declaration(), me_value,
+          if (!m.declaration().is_virtual()) {
+            return arena->New<BoundMethodValue>(&m.declaration(), me_value,
+                                                &class_type.bindings());
+          }
+          // Method is virtual, perform vtable lookup.
+          const auto res = object.vtable().find(f);
+          CARBON_CHECK(res != object.vtable().end());
+          const auto* fun = cast<FunctionDeclaration>(res->second);
+          return arena->New<BoundMethodValue>(fun, me_value,
                                               &class_type.bindings());
         } else {
           // Found a class function
