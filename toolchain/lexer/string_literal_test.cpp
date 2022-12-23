@@ -334,13 +334,6 @@ TEST_F(StringLiteralTest, TabInBlockString) {
   EXPECT_EQ(value, "x\ty\n");
 }
 
-// TODO issue 2132: more testing. test against `\t\n` and various other whitespaces including unicode whitespaces that `IsSpace()` and `IsHorizontalSpace()` should be catching. Also test againt design, and do regression testing.
-TEST_F(StringLiteralTest, TabEscapeSequenceExpanded) {
-  auto value = Parse("\t");
-  EXPECT_TRUE(error_tracker.seen_error());
-  EXPECT_EQ(value, std::expandTabEscapeSequence("\t"));
-}
-
 TEST_F(StringLiteralTest, UnicodeTooManyDigits) {
   std::string text = "u{";
   text.append(10000, '9');
@@ -348,6 +341,18 @@ TEST_F(StringLiteralTest, UnicodeTooManyDigits) {
   auto value = Parse("\"\\" + text + "\"");
   EXPECT_TRUE(error_tracker.seen_error());
   EXPECT_EQ(value, text);
+}
+
+// TODO issue 2132: more testing. test against `\t\n` and various other whitespaces including unicode whitespaces that `IsSpace()` and `IsHorizontalSpace()` should be catching. Also test againt design, and do regression testing.
+// Regression testing permits an advanced implementation of Google Test libraries.
+// Tests written below will be organized in a way that
+// advanced regression testing may be implemented within this string_literal_test.cpp file.
+//
+// Escape Sequences
+// TabsTEST_F(StringLiteralTest, TabEscapeSequenceExpanded) {
+  auto value = Parse("\t");
+  EXPECT_TRUE(error_tracker.seen_error());
+  EXPECT_EQ(value, std::expandTabEscapeSequence("\t"));
 }
 
 }  // namespace
