@@ -227,7 +227,7 @@ class DestructorDeclaration : public CallableDeclaration {
       : CallableDeclaration(AstNodeKind::DestructorDeclaration, source_loc,
                             "destructor", std::move(deduced_params),
                             self_pattern, param_pattern, return_term, body,
-                            // TODO: Add virtual destructors
+                            // TODO: Add virtual destructors.
                             /*is_virtual=*/false) {}
 
   static auto classof(const AstNode* node) -> bool {

@@ -4464,7 +4464,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     }
   }
 
-  // Generate vtable for the type if necessary
+  // Generate vtable for the type if necessary.
   VTable class_vtable = base_class ? (*base_class)->vtable() : VTable();
   for (const auto* m : class_decl->members()) {
     const auto* fun = dyn_cast<FunctionDeclaration>(m);
