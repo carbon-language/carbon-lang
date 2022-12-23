@@ -745,7 +745,7 @@ auto Parser::HandleDeclarationLoopState() -> void {
       break;
     }
     case TokenKind::Interface(): {
-      PushState(ParserState::InterfaceIntroducer());
+      PushState(ParserState::APIIntroducer());
       ++position_;
       CARBON_CHECK(stack_context_ == ParseContext::File)
           << "TODO: Support nesting.";
@@ -753,7 +753,7 @@ auto Parser::HandleDeclarationLoopState() -> void {
       break;
     }
     case TokenKind::Class(): {
-      PushState(ParserState::ClassIntroducer());
+      PushState(ParserState::APIIntroducer());
       ++position_;
       CARBON_CHECK(stack_context_ == ParseContext::File)
           << "TODO: Support nesting.";
@@ -761,10 +761,22 @@ auto Parser::HandleDeclarationLoopState() -> void {
       break;
     }
     default: {
-      HandleDeclarationLoopError();
+      HandleDeclarationOrDefinitionLoopError();
       break;
     }
   }
+}
+
+auto Parser::HandleDeclarationOrDefinitionLoopError() -> void {
+  CARBON_DIAGNOSTIC(UnrecognizedDeclaration, Error,
+                    "Unrecognized declaration introducer.");
+  emitter_->Emit(*position_, UnrecognizedDeclaration);
+  auto cursor = *position_;
+  auto semi = SkipPastLikelyEnd(cursor);
+  // Locate the EmptyDeclaration at the semi when found, but use the
+  // original cursor location for an error when not.
+  AddLeafNode(ParseNodeKind::EmptyDeclaration(), semi ? *semi : cursor,
+              /*has_error=*/true);
 }
 
 auto Parser::HandleDeducedParameterListFinishState() -> void {
@@ -1191,7 +1203,7 @@ auto Parser::HandleFunctionDefinitionFinishState() -> void {
           state.has_error);
 }
 
-auto Parser::HandleIntroducerState() -> void {
+auto Parser::HandleAPIIntroducerState() -> void {
   auto state = PopState();
 
   CARBON_CHECK(stack_context_ == ParseContext::Interface ||
@@ -1200,7 +1212,6 @@ auto Parser::HandleIntroducerState() -> void {
 
   if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
                                ParseNodeKind::DeclaredName())) {
-    // TODO Overload operator << for ParseContext.
     CARBON_DIAGNOSTIC(ExpectedIdentifierName, Error,
                       "Expected identifier after `{0}` keyword.", std::string);
     emitter_->Emit(*position_, ExpectedIdentifierName,
@@ -1228,10 +1239,7 @@ auto Parser::HandleIntroducerState() -> void {
     parse_body = false;
   }
 
-  // TODO Convert both states to MemberDefintionFinish?
-  state.state = stack_context_ == ParseContext::Interface
-                    ? ParserState::InterfaceDefinitionFinish()
-                    : ParserState::ClassDefinitionFinish();
+  state.state = ParserState::MemberDefinitionFinish();
   PushState(state);
 
   if (parse_body) {
@@ -1242,12 +1250,6 @@ auto Parser::HandleIntroducerState() -> void {
                 Consume());
   }
 }
-
-auto Parser::HandleInterfaceIntroducerState() -> void {
-  HandleIntroducerState();
-}
-
-auto Parser::HandleClassIntroducerState() -> void { HandleIntroducerState(); }
 
 auto Parser::HandleMemberDefinitionLoopState() -> void {
   // This maintains the current state unless we're at the end of the definition.
@@ -1272,35 +1274,18 @@ auto Parser::HandleMemberDefinitionLoopState() -> void {
       break;
     }
     default: {
-      HandleDeclarationLoopError();
+      HandleDeclarationOrDefinitionLoopError();
       break;
     }
   }
 }
 
-auto Parser::HandleDeclarationLoopError() -> void {
-  CARBON_DIAGNOSTIC(UnrecognizedDeclaration, Error,
-                    "Unrecognized declaration introducer.");
-  emitter_->Emit(*position_, UnrecognizedDeclaration);
-  auto cursor = *position_;
-  auto semi = SkipPastLikelyEnd(cursor);
-  // Locate the EmptyDeclaration at the semi when found, but use the
-  // original cursor location for an error when not.
-  AddLeafNode(ParseNodeKind::EmptyDeclaration(), semi ? *semi : cursor,
-              /*has_error=*/true);
-}
-
-auto Parser::HandleInterfaceDefinitionFinishState() -> void {
+auto Parser::HandleMemberDefinitionFinishState() -> void {
   auto state = PopState();
-  AddNode(ParseNodeKind::InterfaceDefinition(), state.token,
-          state.subtree_start, state.has_error);
-  stack_context_ = ParseContext::File;
-}
-
-auto Parser::HandleClassDefinitionFinishState() -> void {
-  auto state = PopState();
-  AddNode(ParseNodeKind::ClassDefinition(), state.token, state.subtree_start,
-          state.has_error);
+  AddNode(stack_context_ == ParseContext::Interface
+              ? ParseNodeKind::InterfaceDefinition()
+              : ParseNodeKind::ClassDefinition(),
+          state.token, state.subtree_start, state.has_error);
   stack_context_ = ParseContext::File;
 }
 

@@ -306,6 +306,12 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfType, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(DeducedParameterListStart, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(DeducedParameterList, DeducedParameterListStart)
 
+// `class`:
+//   _external_: DeclaredName
+//     ClassBodyStart
+//     _external_: statements
+//   ClassBodyEnd
+// InterfaceDefinition
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ClassBodyStart, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(ClassBody, ClassBodyStart)
 CARBON_PARSE_NODE_KIND_BRACKET(ClassDefinition, DeclaredName)

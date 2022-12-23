@@ -284,6 +284,10 @@ class Parser {
   // Handles BraceExpressionFinishAs(Type|Value|Unknown).
   auto HandleBraceExpressionFinish(BraceExpressionKind kind) -> void;
 
+  // Handles unrecognized declaration errors in declaration/definition loop
+  // states; e.g. while parsing file-level declarations, interfaces, or classes.
+  auto HandleDeclarationOrDefinitionLoopError() -> void;
+
   // Handles DesignatorAs.
   auto HandleDesignator(bool as_struct) -> void;
 
@@ -309,11 +313,7 @@ class Parser {
   // Handles VarAs(Semicolon|For).
   auto HandleVar(ParserState finish_state) -> void;
 
-  auto HandleDeclarationLoopError() -> void;
-
   auto HandleMemberDefinitionLoop();
-
-  auto HandleIntroducerState() -> void;
 
   // `clang-format` has a bug with spacing around `->` returns in macros. See
   // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.

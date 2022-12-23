@@ -124,8 +124,13 @@ CARBON_PARSER_STATE(CodeBlockFinish)
 //   1. Var
 //   2. DeclarationLoop
 // If `interface`:
-//   1. InterfaceIntroducer
+//   1. APIIntroducer
 //   2. DeclarationLoop
+//   (Sets parse context to `Interface`)
+// If `class`:
+//   1. APIIntroducer
+//   2. DeclarationLoop
+//   (Sets parse context to `Class`)
 // Else:
 //   1. DeclarationLoop
 CARBON_PARSER_STATE(DeclarationLoop)
@@ -285,30 +290,33 @@ CARBON_PARSER_STATE(FunctionSignatureFinish)
 //   (state done)
 CARBON_PARSER_STATE(FunctionDefinitionFinish)
 
-// Finishes an interface definition.
+// Finishes an interface or a class definition.
 //
 // Always:
 //   (state done)
-CARBON_PARSER_STATE(InterfaceDefinitionFinish)
+//   (restores previous parse context)
+CARBON_PARSER_STATE(MemberDefinitionFinish)
 
-// Handles parsing the body of an interface.
+// Handles parsing the body of an interface or a class.
 //
 // If `}`:
 //   (state done)
 // Else:
-//   1. InterfaceDefinitionLoop
+//   1. MemberDefinitionLoop
 CARBON_PARSER_STATE(MemberDefinitionLoop)
 
-// Handles processing of a intefaces's `interface <name> {`.
+// Handles processing of:
+// - an intefaces's `interface <name> {`
+// - a class' `class <name> {`
 //
 // If invalid:
-//   1. InterfaceDefinitionFinish
+//   1. MemberDefinitionFinish
 // If `{` is missing:
-//   1. InterfaceDefinitionFinish
+//   1. MemberDefinitionFinish
 // Else:
-//   1. InterfaceDefinitionLoop
-//   2. InterfaceDefinitionFinish
-CARBON_PARSER_STATE(InterfaceIntroducer)
+//   1. MemerDefinitionLoop
+//   2. MemberDefinitionFinish
+CARBON_PARSER_STATE(APIIntroducer)
 
 // Handles `package`.
 //
@@ -592,8 +600,5 @@ CARBON_PARSER_STATE(VarFinishAsFor)
 //   2. FunctionAfterParameterList
 CARBON_PARSER_STATE(FunctionAfterDeducedParameterList)
 
-CARBON_PARSER_STATE(ClassIntroducer)
-
-CARBON_PARSER_STATE(ClassDefinitionFinish)
 
 #undef CARBON_PARSER_STATE
