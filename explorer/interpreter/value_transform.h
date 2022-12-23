@@ -70,6 +70,7 @@ class TransformBase {
     return v;
   }
   auto operator()(const std::string& str) -> const std::string& { return str; }
+  auto operator()(llvm::StringRef str) -> llvm::StringRef { return str; }
 
   // Transform `optional<T>` by transforming the `T` if it's present.
   template <typename T>
@@ -101,13 +102,12 @@ class TransformBase {
     return result;
   }
 
-  // Transform `unordered_map<T, U>` by transforming its keys and values.
-  template <typename T, typename U>
-  auto operator()(const std::unordered_map<T, U>& map)
-      -> std::unordered_map<T, U> {
-    std::unordered_map<T, U> result;
-    for (auto& [key, value] : map) {
-      result.insert({Transform(key), Transform(value)});
+  // Transform `llvm::StringMap<T>` by transforming its keys and values.
+  template <typename T>
+  auto operator()(const llvm::StringMap<T>& map) -> llvm::StringMap<T> {
+    llvm::StringMap<T> result;
+    for (const auto& it : map) {
+      result.insert({Transform(it.first()), Transform(it.second)});
     }
     return result;
   }

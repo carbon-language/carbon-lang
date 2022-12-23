@@ -20,6 +20,7 @@
 #include "explorer/interpreter/address.h"
 #include "explorer/interpreter/element_path.h"
 #include "explorer/interpreter/stack.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
@@ -37,8 +38,7 @@ struct AllocateTrait {
   }
 };
 
-using VTable =
-    std::unordered_map<std::string, Nonnull<const CallableDeclaration*>>;
+using VTable = llvm::StringMap<Nonnull<const CallableDeclaration*>>;
 
 // Abstract base class of all AST nodes representing values.
 //

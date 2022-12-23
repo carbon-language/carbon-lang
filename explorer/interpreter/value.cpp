@@ -152,7 +152,7 @@ static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         return *field;
       } else {
         // Look for a method in the object's class
-        if (const auto res = object.vtable().find(std::string(f));
+        if (const auto res = object.vtable().find(f);
             res != object.vtable().end()) {
           const auto& fun = cast<CallableDeclaration>(*res->second);
           return &cast<FunctionValue>(**fun.constant_value());
