@@ -172,7 +172,10 @@ class ValueTransform : public TransformBase<Derived> {
   }
 
   // Preserve vptr during transformation.
-  auto operator()(Nonnull<const VTable** const> vptr) -> auto{ return vptr; }
+  auto operator()(Nonnull<const VTable** const> vptr)
+      -> Nonnull<const VTable** const> {
+    return vptr;
+  }
 };
 
 }  // namespace Carbon

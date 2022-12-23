@@ -186,8 +186,7 @@ class FunctionDeclaration : public CallableDeclaration {
                      std::vector<Nonnull<AstNode*>> deduced_params,
                      Nonnull<TuplePattern*> param_pattern,
                      ReturnTerm return_term,
-                     std::optional<Nonnull<Block*>> body,
-                     bool is_virtual = false)
+                     std::optional<Nonnull<Block*>> body, bool is_virtual)
       -> ErrorOr<Nonnull<FunctionDeclaration*>>;
 
   // Use `Create()` instead. This is public only so Arena::New() can call it.
@@ -196,8 +195,7 @@ class FunctionDeclaration : public CallableDeclaration {
                       std::optional<Nonnull<Pattern*>> self_pattern,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
-                      std::optional<Nonnull<Block*>> body,
-                      bool is_virtual = false)
+                      std::optional<Nonnull<Block*>> body, bool is_virtual)
       : CallableDeclaration(AstNodeKind::FunctionDeclaration, source_loc,
                             std::move(name), std::move(deduced_params),
                             self_pattern, param_pattern, return_term, body,
