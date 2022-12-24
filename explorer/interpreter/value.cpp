@@ -177,6 +177,8 @@ static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
               cast<NominalClassType>(class_value.type()).hierarchy_level() -
               level;
           const auto* m_class_value = &class_value;
+          // Get class value matching the virtual method, and turn it into a
+          // bound method.
           for (int i = 0; i < level_diff; ++i) {
             CARBON_CHECK(m_class_value->base())
                 << "Error trying to access function class value";

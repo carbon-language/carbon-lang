@@ -366,9 +366,8 @@ class NominalClassValue : public Value {
   }
   auto has_vtable() const -> bool { return !vtable().empty(); }
   auto vtable() const -> const VTable& { return *vtable_; }
-  // Returns a pointer of pointer to the child-most class value. During the
-  // child class values construction, the pointee is updated to the proper
-  // value.
+  // Returns a pointer of pointer to the child-most class value. It is updated
+  // when `NominalClassValue`s are constructed to point to the right instance.
   auto class_value_ptr() const -> Nonnull<const NominalClassValue** const> {
     return class_value_ptr_;
   }

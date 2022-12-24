@@ -4466,6 +4466,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
 
   // Generate vtable for the type if necessary.
   VTable class_vtable = base_class ? (*base_class)->vtable() : VTable();
+  const int class_level = base_class ? (*base_class)->hierarchy_level() + 1 : 0;
   for (const auto* m : class_decl->members()) {
     const auto* fun = dyn_cast<FunctionDeclaration>(m);
     if (!fun || !fun->is_virtual()) {
@@ -4478,8 +4479,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
              << "Error declaring `" << fun->name() << "`"
              << ": class functions cannot be virtual.";
     }
-    class_vtable[fun->name()] = {
-        fun, base_class ? (*base_class)->hierarchy_level() + 1 : 0};
+    class_vtable[fun->name()] = {fun, class_level};
   }
 
   // For class declaration `class MyType(T:! Type, U:! AnInterface)`, `Self`
