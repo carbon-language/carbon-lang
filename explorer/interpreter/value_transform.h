@@ -81,6 +81,12 @@ class TransformBase {
     return Transform(*v);
   }
 
+  // Transform `pair<T, U>` by transforming T and U.
+  template <typename T, typename U>
+  auto operator()(const std::pair<T, U>& pair) -> std::pair<T, U> {
+    return std::pair<T, U>{Transform(pair.first), Transform(pair.second)};
+  }
+
   // Transform `vector<T>` by transforming its elements.
   template <typename T>
   auto operator()(const std::vector<T>& vec) -> std::vector<T> {
@@ -171,10 +177,16 @@ class ValueTransform : public TransformBase<Derived> {
     return TransformDerived<Nonnull<const Element*>>(elem);
   }
 
-  // Preserve vptr during transformation.
-  auto operator()(Nonnull<const VTable** const> vptr)
-      -> Nonnull<const VTable** const> {
-    return vptr;
+  // Preserve vtable during transformation.
+  auto operator()(Nonnull<const VTable* const> vtable)
+      -> Nonnull<const VTable* const> {
+    return vtable;
+  }
+
+  // Preserve class value ptr during transformation.
+  auto operator()(Nonnull<const NominalClassValue** const> value_ptr)
+      -> Nonnull<const NominalClassValue** const> {
+    return value_ptr;
   }
 };
 

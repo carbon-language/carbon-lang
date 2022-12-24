@@ -4478,7 +4478,8 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
              << "Error declaring `" << fun->name() << "`"
              << ": class functions cannot be virtual.";
     }
-    class_vtable[fun->name()] = fun;
+    class_vtable[fun->name()] = {
+        fun, base_class ? (*base_class)->hierarchy_level() + 1 : 0};
   }
 
   // For class declaration `class MyType(T:! Type, U:! AnInterface)`, `Self`

@@ -41,14 +41,16 @@ auto StructValue::FindField(std::string_view name) const
 NominalClassValue::NominalClassValue(
     Nonnull<const Value*> type, Nonnull<const Value*> inits,
     std::optional<Nonnull<const NominalClassValue*>> base,
-    const VTable** const vptr)
+    Nonnull<const NominalClassValue** const> class_value_ptr,
+    Nonnull<const VTable*> vtable)
     : Value(Kind::NominalClassValue),
       type_(type),
       inits_(inits),
       base_(base),
-      vptr_(vptr) {
-  // Update object's vptr to match the type's vtable.
-  *vptr = &cast<NominalClassType>(type)->vtable();
+      class_value_ptr_(class_value_ptr),
+      vtable_(vtable) {
+  // Update ancestors's class value to point to latest child.
+  *class_value_ptr_ = this;
 }
 
 static auto FindClassField(Nonnull<const NominalClassValue*> object,
@@ -165,12 +167,24 @@ static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
             return arena->New<BoundMethodValue>(&m.declaration(), me_value,
                                                 &class_type.bindings());
           }
-          // Method is virtual, perform vtable lookup.
-          const auto res = object.vtable().find(f);
+          // Method is virtual, get child-most class value and perform vtable
+          // lookup.
+          const auto& class_value = **object.class_value_ptr();
+          const auto res = class_value.vtable().find(f);
           CARBON_CHECK(res != object.vtable().end());
-          const auto* fun = cast<FunctionDeclaration>(res->second);
-          return arena->New<BoundMethodValue>(fun, me_value,
-                                              &class_type.bindings());
+          const auto [virtual_method, level] = res->second;
+          const auto level_diff =
+              cast<NominalClassType>(class_value.type()).hierarchy_level() -
+              level;
+          const auto* m_class_value = &class_value;
+          for (int i = 0; i < level_diff; ++i) {
+            CARBON_CHECK(m_class_value->base())
+                << "Error trying to access function class value";
+            m_class_value = *m_class_value->base();
+          }
+          return arena->New<BoundMethodValue>(
+              cast<FunctionDeclaration>(virtual_method), m_class_value,
+              &class_type.bindings());
         } else {
           // Found a class function
           // TODO: This should not be reachable.
@@ -270,15 +284,17 @@ static auto SetFieldImpl(
       if (auto inits = SetFieldImpl(arena, &object.inits(), path_begin,
                                     path_end, field_value, source_loc);
           inits.ok()) {
-        return arena->New<NominalClassValue>(&object.type(), *inits,
-                                             object.base(), object.vptr());
+        return arena->New<NominalClassValue>(
+            &object.type(), *inits, object.base(), object.class_value_ptr(),
+            &object.vtable());
       } else if (object.base().has_value()) {
         auto new_base = SetFieldImpl(arena, object.base().value(), path_begin,
                                      path_end, field_value, source_loc);
         if (new_base.ok()) {
           return arena->New<NominalClassValue>(
               &object.type(), &object.inits(),
-              cast<NominalClassValue>(*new_base), object.vptr());
+              cast<NominalClassValue>(*new_base), object.class_value_ptr(),
+              &object.vtable());
         }
       }
       // Failed to match, show full object content

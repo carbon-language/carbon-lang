@@ -38,7 +38,8 @@ struct AllocateTrait {
   }
 };
 
-using VTable = llvm::StringMap<Nonnull<const CallableDeclaration*>>;
+using VTable =
+    llvm::StringMap<std::pair<Nonnull<const CallableDeclaration*>, int>>;
 
 // Abstract base class of all AST nodes representing values.
 //
@@ -346,7 +347,8 @@ class NominalClassValue : public Value {
 
   NominalClassValue(Nonnull<const Value*> type, Nonnull<const Value*> inits,
                     std::optional<Nonnull<const NominalClassValue*>> base,
-                    Nonnull<const VTable** const> vptr);
+                    Nonnull<const NominalClassValue** const> class_value_ptr,
+                    Nonnull<const VTable*> vtable);
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassValue;
@@ -354,7 +356,7 @@ class NominalClassValue : public Value {
 
   template <typename F>
   auto Decompose(F f) const {
-    return f(type_, inits_, base_, vptr_);
+    return f(type_, inits_, base_, class_value_ptr_, vtable_);
   }
 
   auto type() const -> const Value& { return *type_; }
@@ -363,14 +365,20 @@ class NominalClassValue : public Value {
     return base_;
   }
   auto has_vtable() const -> bool { return !vtable().empty(); }
-  auto vtable() const -> const VTable& { return **vptr_; }
-  auto vptr() const -> Nonnull<const VTable** const> { return vptr_; }
+  auto vtable() const -> const VTable& { return *vtable_; }
+  // Returns a pointer of pointer to the child-most class value. During the
+  // child class values construction, the pointee is updated to the proper
+  // value.
+  auto class_value_ptr() const -> Nonnull<const NominalClassValue** const> {
+    return class_value_ptr_;
+  }
 
  private:
   Nonnull<const Value*> type_;
   Nonnull<const Value*> inits_;  // The initializing StructValue.
   std::optional<Nonnull<const NominalClassValue*>> base_;
-  Nonnull<const VTable** const> vptr_;
+  Nonnull<const NominalClassValue** const> class_value_ptr_;
+  Nonnull<const VTable*> vtable_;
 };
 
 // An alternative constructor value.
@@ -745,6 +753,7 @@ class NominalClassType : public Value {
         vtable_(std::move(class_vtable)) {
     CARBON_CHECK(!declaration->type_params().has_value())
         << "missing arguments for parameterized class type";
+    hierarchy_level_ = base ? (*base)->hierarchy_level() + 1 : 0;
   }
 
   // Construct a fully instantiated generic class type to represent the
@@ -757,7 +766,9 @@ class NominalClassType : public Value {
         declaration_(declaration),
         bindings_(bindings),
         base_(base),
-        vtable_(std::move(class_vtable)) {}
+        vtable_(std::move(class_vtable)) {
+    hierarchy_level_ = base ? (*base)->hierarchy_level() + 1 : 0;
+  }
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassType;
@@ -783,7 +794,9 @@ class NominalClassType : public Value {
     return bindings_->witnesses();
   }
 
-  auto vtable() const -> const VTable& { return vtable_; };
+  auto vtable() const -> const VTable& { return vtable_; }
+
+  auto hierarchy_level() const -> int { return hierarchy_level_; }
 
   // Returns whether this a parameterized class. That is, a class with
   // parameters and no corresponding arguments.
@@ -799,6 +812,7 @@ class NominalClassType : public Value {
   Nonnull<const Bindings*> bindings_ = Bindings::None();
   const std::optional<Nonnull<const NominalClassType*>> base_;
   const VTable vtable_;
+  int hierarchy_level_ = 0;
 };
 
 class MixinPseudoType : public Value {
