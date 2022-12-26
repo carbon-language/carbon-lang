@@ -710,8 +710,7 @@ auto Interpreter::ConvertStructToClass(
       base_instance ? (*base_instance)->class_value_ptr()
                     : arena_->New<const NominalClassValue*>();
   return arena_->New<NominalClassValue>(inst_class, converted_init_struct,
-                                        base_instance, class_value_ptr,
-                                        &class_type->vtable());
+                                        base_instance, class_value_ptr);
 }
 
 auto Interpreter::Convert(Nonnull<const Value*> value,

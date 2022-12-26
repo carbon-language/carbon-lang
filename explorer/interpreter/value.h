@@ -347,8 +347,7 @@ class NominalClassValue : public Value {
 
   NominalClassValue(Nonnull<const Value*> type, Nonnull<const Value*> inits,
                     std::optional<Nonnull<const NominalClassValue*>> base,
-                    Nonnull<const NominalClassValue** const> class_value_ptr,
-                    Nonnull<const VTable*> vtable);
+                    Nonnull<const NominalClassValue** const> class_value_ptr);
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassValue;
@@ -356,7 +355,7 @@ class NominalClassValue : public Value {
 
   template <typename F>
   auto Decompose(F f) const {
-    return f(type_, inits_, base_, class_value_ptr_, vtable_);
+    return f(type_, inits_, base_, class_value_ptr_);
   }
 
   auto type() const -> const Value& { return *type_; }
@@ -365,7 +364,7 @@ class NominalClassValue : public Value {
     return base_;
   }
   auto has_vtable() const -> bool { return !vtable().empty(); }
-  auto vtable() const -> const VTable& { return *vtable_; }
+  auto vtable() const -> const VTable&;
   // Returns a pointer of pointer to the child-most class value. It is updated
   // when `NominalClassValue`s are constructed to point to the right instance.
   auto class_value_ptr() const -> Nonnull<const NominalClassValue** const> {
@@ -377,7 +376,6 @@ class NominalClassValue : public Value {
   Nonnull<const Value*> inits_;  // The initializing StructValue.
   std::optional<Nonnull<const NominalClassValue*>> base_;
   Nonnull<const NominalClassValue** const> class_value_ptr_;
-  Nonnull<const VTable*> vtable_;
 };
 
 // An alternative constructor value.

@@ -41,16 +41,18 @@ auto StructValue::FindField(std::string_view name) const
 NominalClassValue::NominalClassValue(
     Nonnull<const Value*> type, Nonnull<const Value*> inits,
     std::optional<Nonnull<const NominalClassValue*>> base,
-    Nonnull<const NominalClassValue** const> class_value_ptr,
-    Nonnull<const VTable*> vtable)
+    Nonnull<const NominalClassValue** const> class_value_ptr)
     : Value(Kind::NominalClassValue),
       type_(type),
       inits_(inits),
       base_(base),
-      class_value_ptr_(class_value_ptr),
-      vtable_(vtable) {
+      class_value_ptr_(class_value_ptr) {
   // Update ancestors's class value to point to latest child.
   *class_value_ptr_ = this;
+}
+
+auto NominalClassValue::vtable() const -> const VTable& {
+  return llvm::cast<NominalClassType>(type_)->vtable();
 }
 
 static auto FindClassField(Nonnull<const NominalClassValue*> object,
@@ -287,16 +289,14 @@ static auto SetFieldImpl(
                                     path_end, field_value, source_loc);
           inits.ok()) {
         return arena->New<NominalClassValue>(
-            &object.type(), *inits, object.base(), object.class_value_ptr(),
-            &object.vtable());
+            &object.type(), *inits, object.base(), object.class_value_ptr());
       } else if (object.base().has_value()) {
         auto new_base = SetFieldImpl(arena, object.base().value(), path_begin,
                                      path_end, field_value, source_loc);
         if (new_base.ok()) {
           return arena->New<NominalClassValue>(
               &object.type(), &object.inits(),
-              cast<NominalClassValue>(*new_base), object.class_value_ptr(),
-              &object.vtable());
+              cast<NominalClassValue>(*new_base), object.class_value_ptr());
         }
       }
       // Failed to match, show full object content
