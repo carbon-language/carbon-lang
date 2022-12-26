@@ -48,7 +48,7 @@ class _Workflow:
             self._cpp_refactoring()
             self._rename_files()
             self._print_header("Done!")
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             # Discard the stack for subprocess errors.
             sys.exit(1)
 
