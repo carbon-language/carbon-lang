@@ -837,7 +837,7 @@ If the interfaces discussed above are the building blocks for type-of-types,
 may be composed together. Unlike interfaces which are nominal, the name of a
 named constraint is not a part of its value. Two different named constraints
 with the same definition are equivalent even if they have different names. This
-is because types don't explicitly specify which named constraints they
+is because types don't have to explicitly specify which named constraints they
 implement, types automatically implement any named constraints they can satisfy.
 
 A named constraint definition can contain interface requirements using `impl`
@@ -855,6 +855,35 @@ constraint VectorLegoFish {
   alias LFAdd = LegoFish.Add;
 }
 ```
+
+An `impl` requirement may alternatively be on a named constraint, instead of an
+interface, to add all the requirements of another named constraint without
+adding any of the names:
+
+```
+constraint DrawVectorLegoFish {
+  // The same as requiring both `Vector` and `LegoFish`.
+  impl as VectorLegoFish;
+  // A regular interface requirement. No syntactic difference.
+  impl as Drawable;
+}
+```
+
+In general, Carbon makes no syntactic distinction between the uses of named
+constraints and interfaces, so one may be replaced with the other without
+affecting users. To accomplish this, Carbon allows a named constraint to be used
+whenever an interface may be. This includes all of these
+[uses of interfaces](#interfaces-recap):
+
+-   A type may `impl` a named constraint to say that it implements all of the
+    requirements of the named constraint, as
+    [described below](#extends-and-impl-with-named-constraints).
+-   A named constraint may be used as a namespace name in
+    [a qualified name](#qualified-member-names-and-compound-member-access). For
+    example, `VectorLegoFish.VAdd` refers to the same name as `Vector.Add`.
+-   A named constraint may be used as a
+    [type-of-type](terminology.md#type-of-type) for
+    [a generic type parameter](#generics).
 
 We don't expect developers to directly define many named constraints, but other
 constructs we do expect them to use will be defined in terms of them. For
