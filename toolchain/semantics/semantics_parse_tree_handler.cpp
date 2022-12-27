@@ -723,9 +723,6 @@ auto SemanticsParseTreeHandler::HandleVariableDeclaration(
                                           /*can_convert_lhs=*/false);
     AddNode(SemanticsNode::MakeAssign(parse_node, storage_type, storage_id,
                                       init_id));
-  } else {
-    // No init.
-    last_child.result_id;
   }
 
   Pop(ParseNodeKind::VariableIntroducer());
