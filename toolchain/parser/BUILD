@@ -110,6 +110,12 @@ cc_fuzz_test(
 )
 
 cc_library(
+    name = "parse_tree_node_location_translator",
+    hdrs = ["parse_tree_node_location_translator.h"],
+    deps = [":parse_tree"],
+)
+
+cc_library(
     name = "precedence",
     srcs = ["precedence.cpp"],
     hdrs = ["precedence.h"],
