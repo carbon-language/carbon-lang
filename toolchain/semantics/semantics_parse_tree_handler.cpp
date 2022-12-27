@@ -706,7 +706,6 @@ auto SemanticsParseTreeHandler::HandleVariableDeclaration(
   auto last_child = node_stack_.pop_back_val();
   CARBON_CHECK(last_child.result_id.is_valid());
 
-  SemanticsNodeId storage_id;
   if (parse_tree_->node_kind(last_child.parse_node) !=
       ParseNodeKind::PatternBinding()) {
     SemanticsNodeId init_id = last_child.result_id;
@@ -726,7 +725,7 @@ auto SemanticsParseTreeHandler::HandleVariableDeclaration(
                                       init_id));
   } else {
     // No init.
-    storage_id = last_child.result_id;
+    last_child.result_id;
   }
 
   Pop(ParseNodeKind::VariableIntroducer());
