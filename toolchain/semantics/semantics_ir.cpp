@@ -5,8 +5,7 @@
 #include "toolchain/semantics/semantics_ir.h"
 
 #include "common/check.h"
-#include "llvm/Support/FormatVariadic.h"
-#include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/parser/parse_tree_node_location_translator.h"
 #include "toolchain/semantics/semantics_builtin_kind.h"
 #include "toolchain/semantics/semantics_node.h"
 #include "toolchain/semantics/semantics_parse_tree_handler.h"
@@ -64,10 +63,9 @@ auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
         SemanticsNode::MakeCrossReference(type, BuiltinIR, SemanticsNodeId(i));
   }
 
-  TokenizedBuffer::TokenLocationTranslator translator(
-      &tokens, /*last_line_lexed_to_column=*/nullptr);
+  ParseTreeNodeLocationTranslator translator(&tokens, &parse_tree);
   ErrorTrackingDiagnosticConsumer err_tracker(consumer);
-  TokenDiagnosticEmitter emitter(translator, err_tracker);
+  DiagnosticEmitter<ParseTree::Node> emitter(translator, err_tracker);
   SemanticsParseTreeHandler(tokens, emitter, parse_tree, semantics, vlog_stream)
       .Build();
   semantics.has_errors_ = err_tracker.seen_error();

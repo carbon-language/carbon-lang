@@ -112,9 +112,8 @@ auto SemanticsParseTreeHandler::BindName(ParseTree::Node name_node,
     auto prev_def_id = name_lookup_[name_id].back();
     auto prev_def = semantics_->GetNode(prev_def_id);
 
-    emitter_->Build(parse_tree_->node_token(name_node), NameRedefined, name_str)
-        .WithContext(parse_tree_->node_token(prev_def.parse_node()),
-                     PreviousDefinition)
+    emitter_->Build(name_node, NameRedefined, name_str)
+        .Note(prev_def.parse_node(), PreviousDefinition)
         .Emit();
   }
 }
@@ -235,8 +234,7 @@ auto SemanticsParseTreeHandler::TryTypeConversion(ParseTree::Node parse_node,
       CARBON_DIAGNOSTIC(TypeMismatch, Error,
                         "Type mismatch: lhs is {0}, rhs is {1}",
                         SemanticsNodeId, SemanticsNodeId);
-      emitter_->Emit(parse_tree_->node_token(parse_node), TypeMismatch,
-                     lhs_type, rhs_type);
+      emitter_->Emit(parse_node, TypeMismatch, lhs_type, rhs_type);
     }
     return invalid_type;
   }
@@ -490,7 +488,7 @@ auto SemanticsParseTreeHandler::HandleNameReference(ParseTree::Node parse_node)
   auto name_not_found = [&] {
     CARBON_DIAGNOSTIC(NameNotFound, Error, "Name {0} not found",
                       llvm::StringRef);
-    emitter_->Emit(parse_tree_->node_token(parse_node), NameNotFound, name_str);
+    emitter_->Emit(parse_node, NameNotFound, name_str);
     Push(parse_node, SemanticsNodeId::MakeBuiltinReference(
                          SemanticsBuiltinKind::InvalidType()));
   };

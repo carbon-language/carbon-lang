@@ -110,6 +110,7 @@ static auto ExpressionToProto(const Expression& expression)
     -> Fuzzing::Expression {
   Fuzzing::Expression expression_proto;
   switch (expression.kind()) {
+    case ExpressionKind::BaseAccessExpression:
     case ExpressionKind::ValueLiteral: {
       // This does not correspond to source syntax.
       break;

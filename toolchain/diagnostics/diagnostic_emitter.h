@@ -8,6 +8,7 @@
 #include <functional>
 #include <string>
 #include <type_traits>
+#include <utility>
 
 #include "llvm/ADT/Any.h"
 #include "llvm/ADT/SmallVector.h"
@@ -62,22 +63,21 @@ struct Diagnostic {
              DiagnosticLocation location, llvm::StringLiteral format,
              llvm::SmallVector<llvm::Any, 0> format_args,
              std::function<std::string(const Diagnostic&)> format_fn,
-             llvm::SmallVector<std::unique_ptr<Diagnostic>> context)
+             llvm::SmallVector<std::unique_ptr<Diagnostic>> notes)
       : kind(kind),
         level(level),
-        location(location),
+        location(std::move(location)),
         format(format),
         format_args(std::move(format_args)),
-        format_fn(format_fn),
-        context(std::move(context)) {}
+        format_fn(std::move(format_fn)),
+        notes(std::move(notes)) {}
 
   Diagnostic(Diagnostic&& other) = default;
-  Diagnostic& operator=(Diagnostic&& other) = default;
+  auto operator=(Diagnostic&& other) -> Diagnostic& = default;
 
-  // The copy operations are implicitly deleted, but you can
-  // spell that out explicitly if you want:
+  // The copy operations are implicitly deleted -- this is just being explicit.
   Diagnostic(const Diagnostic&) = delete;
-  Diagnostic& operator=(const Diagnostic&) = delete;
+  auto operator=(const Diagnostic&) -> Diagnostic& = delete;
 
   // The diagnostic's kind.
   DiagnosticKind kind;
@@ -104,7 +104,7 @@ struct Diagnostic {
   std::function<std::string(const Diagnostic&)> format_fn;
 
   // Context for the diagnostic.
-  llvm::SmallVector<std::unique_ptr<Diagnostic>> context;
+  llvm::SmallVector<std::unique_ptr<Diagnostic>> notes;
 };
 
 // Receives diagnostics as they are emitted.
@@ -181,16 +181,17 @@ struct DiagnosticBase {
 template <typename LocationT>
 class DiagnosticEmitter {
  public:
+  // Builds a diagnostic for emitting. See `DiagnosticEmitter::Build` for use.
   class DiagnosticBuilder {
    public:
+    // Adds a note. See `DiagnosticEmitter::Build` for use.
     template <typename... Args>
-    auto WithContext(
-        LocationT location,
-        const Internal::DiagnosticBase<Args...>& diagnostic_base,
-        // Disable type deduction based on `args`; the type of
-        // `diagnostic_base` determines the diagnostic's parameter types.
-        typename std::common_type_t<Args>... args) -> DiagnosticBuilder& {
-      diagnostic_.context.emplace_back(std::make_unique<Diagnostic>(
+    auto Note(LocationT location,
+              const Internal::DiagnosticBase<Args...>& diagnostic_base,
+              // Disable type deduction based on `args`; the type of
+              // `diagnostic_base` determines the diagnostic's parameter types.
+              typename std::common_type_t<Args>... args) -> DiagnosticBuilder& {
+      diagnostic_.notes.emplace_back(std::make_unique<Diagnostic>(
           diagnostic_base.Kind, diagnostic_base.Level,
           emitter_->translator_->GetLocation(location), diagnostic_base.Format,
           llvm::SmallVector<llvm::Any, 0>({std::move(args)...}),
@@ -201,6 +202,7 @@ class DiagnosticEmitter {
       return *this;
     }
 
+    // Emits the diagnostic. See `DiagnosticEmitter::Build` for use.
     template <typename... Args>
     auto Emit() -> void {
       emitter_->consumer_->HandleDiagnostic(std::move(diagnostic_));
@@ -252,6 +254,11 @@ class DiagnosticEmitter {
         .Emit();
   }
 
+  // Builds a diagnostic to emit. For example:
+  //
+  //   emitter_.Build(location1, MyDiagnostic)
+  //     .Note(location2, MyDiagnosticNote)
+  //     .Emit()
   template <typename... Args>
   auto Build(LocationT location,
              const Internal::DiagnosticBase<Args...>& diagnostic_base,
@@ -271,8 +278,8 @@ inline auto ConsoleDiagnosticConsumer() -> DiagnosticConsumer& {
   class Consumer : public DiagnosticConsumer {
     auto HandleDiagnostic(Diagnostic diagnostic) -> void override {
       Print(diagnostic);
-      for (auto& context : diagnostic.context) {
-        Print(*context);
+      for (auto& note : diagnostic.notes) {
+        Print(*note);
       }
     }
     auto Print(const Diagnostic& diagnostic) -> void {
