@@ -419,6 +419,28 @@ class IndexExpression : public Expression {
   Nonnull<Expression*> offset_;
 };
 
+class BaseAccessExpression : public MemberAccessExpression {
+ public:
+  explicit BaseAccessExpression(SourceLocation source_loc,
+                                Nonnull<Expression*> object,
+                                Nonnull<const BaseElement*> base)
+      : MemberAccessExpression(AstNodeKind::BaseAccessExpression, source_loc,
+                               object),
+        base_(base) {
+    set_static_type(&base->type());
+    set_value_category(ValueCategory::Let);
+  }
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromBaseAccessExpression(node->kind());
+  }
+
+  auto element() const -> const BaseElement& { return *base_; }
+
+ private:
+  const Nonnull<const BaseElement*> base_;
+};
+
 class IntLiteral : public Expression {
  public:
   explicit IntLiteral(SourceLocation source_loc, int value)
@@ -975,8 +997,22 @@ class BuiltinConvertExpression : public Expression {
     return source_expression_;
   }
 
+  // Set the rewritten form of this expression. Can only be called during type
+  // checking.
+  auto set_rewritten_form(Nonnull<const Expression*> rewritten_form) -> void {
+    CARBON_CHECK(!rewritten_form_.has_value()) << "rewritten form set twice";
+    rewritten_form_ = rewritten_form;
+  }
+
+  // Get the rewritten form of this expression. A rewritten form can be used to
+  // prepare the conversion during type checking.
+  auto rewritten_form() const -> std::optional<Nonnull<const Expression*>> {
+    return rewritten_form_;
+  }
+
  private:
   Nonnull<Expression*> source_expression_;
+  std::optional<Nonnull<const Expression*>> rewritten_form_;
 };
 
 // An expression whose semantics have not been implemented. This can be used

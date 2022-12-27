@@ -112,7 +112,7 @@ auto SemanticsParseTreeHandler::BindName(ParseTree::Node name_node,
   } else {
     CARBON_DIAGNOSTIC(NameRedefined, Error, "Redefining {0} in the same scope.",
                       llvm::StringRef);
-    emitter_->Emit(parse_tree_->node_token(name_node), NameRedefined, name_str);
+    emitter_->Emit(name_node, NameRedefined, name_str);
 
     // TODO: This should be a note and sorted with the above diagnostic.
     // But that depends on more diagnostic support we currently don't have.
@@ -120,8 +120,7 @@ auto SemanticsParseTreeHandler::BindName(ParseTree::Node name_node,
     auto prev_def = semantics_->GetNode(prev_def_id);
     CARBON_DIAGNOSTIC(PreviousDefinition, Error,
                       "Previous definition is here.");
-    emitter_->Emit(parse_tree_->node_token(prev_def.parse_node()),
-                   PreviousDefinition);
+    emitter_->Emit(prev_def.parse_node(), PreviousDefinition);
   }
   return name_id;
 }
@@ -255,8 +254,7 @@ auto SemanticsParseTreeHandler::TryTypeConversion(ParseTree::Node parse_node,
       CARBON_DIAGNOSTIC(TypeMismatch, Error,
                         "Type mismatch: lhs is {0}, rhs is {1}",
                         SemanticsNodeId, SemanticsNodeId);
-      emitter_->Emit(parse_tree_->node_token(parse_node), TypeMismatch,
-                     lhs_type, rhs_type);
+      emitter_->Emit(parse_node, TypeMismatch, lhs_type, rhs_type);
     }
     return invalid_type;
   }
@@ -510,7 +508,7 @@ auto SemanticsParseTreeHandler::HandleNameReference(ParseTree::Node parse_node)
   auto name_not_found = [&] {
     CARBON_DIAGNOSTIC(NameNotFound, Error, "Name {0} not found",
                       llvm::StringRef);
-    emitter_->Emit(parse_tree_->node_token(parse_node), NameNotFound, name_str);
+    emitter_->Emit(parse_node, NameNotFound, name_str);
     Push(parse_node, SemanticsNodeId::MakeBuiltinReference(
                          SemanticsBuiltinKind::InvalidType()));
   };

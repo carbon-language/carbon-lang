@@ -18,11 +18,10 @@ namespace Carbon {
 class SemanticsParseTreeHandler {
  public:
   // Stores references for work.
-  explicit SemanticsParseTreeHandler(const TokenizedBuffer& tokens,
-                                     TokenDiagnosticEmitter& emitter,
-                                     const ParseTree& parse_tree,
-                                     SemanticsIR& semantics,
-                                     llvm::raw_ostream* vlog_stream)
+  explicit SemanticsParseTreeHandler(
+      const TokenizedBuffer& tokens,
+      DiagnosticEmitter<ParseTree::Node>& emitter, const ParseTree& parse_tree,
+      SemanticsIR& semantics, llvm::raw_ostream* vlog_stream)
       : tokens_(&tokens),
         emitter_(&emitter),
         parse_tree_(&parse_tree),
@@ -150,7 +149,7 @@ class SemanticsParseTreeHandler {
   const TokenizedBuffer* tokens_;
 
   // Handles diagnostics.
-  TokenDiagnosticEmitter* emitter_;
+  DiagnosticEmitter<ParseTree::Node>* emitter_;
 
   // The file's parse tree.
   const ParseTree* parse_tree_;

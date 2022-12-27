@@ -28,6 +28,9 @@ CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "Expected `(` after `{0}`.",
 CARBON_DIAGNOSTIC(ExpectedSemiAfterExpression, Error,
                   "Expected `;` after expression.");
 
+CARBON_DIAGNOSTIC(UnrecognizedDeclaration, Error,
+                  "Unrecognized declaration introducer.");
+
 // A relative location for characters in errors.
 enum class RelativeLocation : int8_t {
   Around,
@@ -738,8 +741,6 @@ auto Parser::HandleDeclarationLoopState() -> void {
       break;
     }
     default: {
-      CARBON_DIAGNOSTIC(UnrecognizedDeclaration, Error,
-                        "Unrecognized declaration introducer.");
       emitter_->Emit(*position_, UnrecognizedDeclaration);
       auto cursor = *position_;
       auto semi = SkipPastLikelyEnd(cursor);
@@ -1236,8 +1237,6 @@ auto Parser::HandleInterfaceDefinitionLoopState() -> void {
       break;
     }
     default: {
-      CARBON_DIAGNOSTIC(UnrecognizedDeclaration, Error,
-                        "Unrecognized declaration introducer.");
       emitter_->Emit(*position_, UnrecognizedDeclaration);
       if (auto semi = SkipPastLikelyEnd(*position_)) {
         AddLeafNode(ParseNodeKind::EmptyDeclaration(), *semi,
@@ -1842,8 +1841,9 @@ auto Parser::HandleVarFinishAsForState() -> void {
   if (PositionIs(TokenKind::In())) {
     end_token = Consume();
   } else if (PositionIs(TokenKind::Colon())) {
-    CARBON_DIAGNOSTIC(ExpectedIn, Error, "`:` should be replaced by `in`.");
-    emitter_->Emit(*position_, ExpectedIn);
+    CARBON_DIAGNOSTIC(ExpectedInNotColon, Error,
+                      "`:` should be replaced by `in`.");
+    emitter_->Emit(*position_, ExpectedInNotColon);
     state.has_error = true;
     end_token = Consume();
   } else {
