@@ -202,7 +202,8 @@ class DiagnosticEmitter {
       return *this;
     }
 
-    // Emits the diagnostic. See `DiagnosticEmitter::Build` for use.
+    // Emits the built diagnostic and its attached notes.
+    // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
     template <typename... Args>
     auto Emit() -> void {
       emitter_->consumer_->HandleDiagnostic(std::move(diagnostic_));
