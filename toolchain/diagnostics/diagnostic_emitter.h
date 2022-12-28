@@ -56,28 +56,19 @@ struct DiagnosticLocation {
   int32_t column_number;
 };
 
-// An instance of a single error or warning.  Information about the diagnostic
-// can be recorded into it for more complex consumers.
-struct Diagnostic {
-  Diagnostic(DiagnosticKind kind, DiagnosticLevel level,
-             DiagnosticLocation location, llvm::StringLiteral format,
-             llvm::SmallVector<llvm::Any, 0> format_args,
-             std::function<std::string(const Diagnostic&)> format_fn,
-             llvm::SmallVector<std::unique_ptr<Diagnostic>> notes)
+// A message composing a diagnostic. This may be the main message, but can also
+// be notes providing more information.
+struct DiagnosticMessage {
+  DiagnosticMessage(
+      DiagnosticKind kind, DiagnosticLevel level, DiagnosticLocation location,
+      llvm::StringLiteral format, llvm::SmallVector<llvm::Any, 0> format_args,
+      std::function<std::string(const DiagnosticMessage&)> format_fn)
       : kind(kind),
         level(level),
         location(std::move(location)),
         format(format),
         format_args(std::move(format_args)),
-        format_fn(std::move(format_fn)),
-        notes(std::move(notes)) {}
-
-  Diagnostic(Diagnostic&& other) = default;
-  auto operator=(Diagnostic&& other) -> Diagnostic& = default;
-
-  // The copy operations are implicitly deleted -- this is just being explicit.
-  Diagnostic(const Diagnostic&) = delete;
-  auto operator=(const Diagnostic&) -> Diagnostic& = delete;
+        format_fn(std::move(format_fn)) {}
 
   // The diagnostic's kind.
   DiagnosticKind kind;
@@ -101,10 +92,17 @@ struct Diagnostic {
   llvm::SmallVector<llvm::Any, 0> format_args;
 
   // Returns the formatted string. By default, this uses llvm::formatv.
-  std::function<std::string(const Diagnostic&)> format_fn;
+  std::function<std::string(const DiagnosticMessage&)> format_fn;
+};
+
+// An instance of a single error or warning.  Information about the diagnostic
+// can be recorded into it for more complex consumers.
+struct Diagnostic {
+  // The main error or warning.
+  DiagnosticMessage main;
 
   // Notes that add context or supplemental information to the diagnostic.
-  llvm::SmallVector<std::unique_ptr<Diagnostic>> notes;
+  llvm::SmallVector<DiagnosticMessage> notes;
 };
 
 // Receives diagnostics as they are emitted.
@@ -159,7 +157,7 @@ struct DiagnosticBase {
  private:
   // Handles the cast of llvm::Any to Args types for formatv.
   template <std::size_t... N>
-  inline auto FormatFnImpl(const Diagnostic& diagnostic,
+  inline auto FormatFnImpl(const DiagnosticMessage& diagnostic,
                            std::index_sequence<N...> /*indices*/) const
       -> std::string {
     assert(diagnostic.format_args.size() == sizeof...(Args));
