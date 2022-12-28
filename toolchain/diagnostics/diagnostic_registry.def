@@ -100,5 +100,6 @@ CARBON_DIAGNOSTIC_KIND(PreviousDefinition)
 
 // TestDiagnostic is only for unit tests.
 CARBON_DIAGNOSTIC_KIND(TestDiagnostic)
+CARBON_DIAGNOSTIC_KIND(TestDiagnosticNote)
 
 #undef CARBON_DIAGNOSTIC_KIND

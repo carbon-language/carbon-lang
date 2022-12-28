@@ -10,6 +10,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "common/check.h"
 #include "llvm/ADT/Any.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -60,11 +61,10 @@ struct DiagnosticLocation {
 // be notes providing more information.
 struct DiagnosticMessage {
   DiagnosticMessage(
-      DiagnosticKind kind, DiagnosticLevel level, DiagnosticLocation location,
+      DiagnosticKind kind, DiagnosticLocation location,
       llvm::StringLiteral format, llvm::SmallVector<llvm::Any, 0> format_args,
       std::function<std::string(const DiagnosticMessage&)> format_fn)
       : kind(kind),
-        level(level),
         location(std::move(location)),
         format(format),
         format_args(std::move(format_args)),
@@ -72,9 +72,6 @@ struct DiagnosticMessage {
 
   // The diagnostic's kind.
   DiagnosticKind kind;
-
-  // The diagnostic's level.
-  DiagnosticLevel level;
 
   // The calculated location of the diagnostic.
   DiagnosticLocation location;
@@ -98,6 +95,9 @@ struct DiagnosticMessage {
 // An instance of a single error or warning.  Information about the diagnostic
 // can be recorded into it for more complex consumers.
 struct Diagnostic {
+  // The diagnostic's level.
+  DiagnosticLevel level;
+
   // The main error or warning.
   DiagnosticMessage main;
 
@@ -111,6 +111,19 @@ class DiagnosticConsumer {
   virtual ~DiagnosticConsumer() = default;
 
   // Handle a diagnostic.
+  //
+  // This relies on moves of the Diagnostic. At present, diagnostics are
+  // allocated on the stack, so there lifetime is that of HandleDiagnostic.
+  // However, SortingDiagnosticConsumer needs a longer lifetime, until all
+  // diagnostics have been produced. As a consequence, it needs to either copy
+  // or move the Diagnostic, and right now we're moving due to the overhead of
+  // notes.
+  //
+  // At present, there is no single ownership of diagnostics partly because IDEs
+  // would be fine with diagnostics being printed immediately, without
+  // SortingDiagnosticConsumer. If this becomes a performance issue, we may want
+  // to investigate alternative ownership models that address both IDE and CLI
+  // user needs.
   virtual auto HandleDiagnostic(Diagnostic diagnostic) -> void = 0;
 
   // Flushes any buffered input.
@@ -142,9 +155,8 @@ struct DiagnosticBase {
       : Kind(kind), Level(level), Format(format) {}
 
   // Calls formatv with the diagnostic's arguments.
-  auto FormatFn(const Diagnostic& diagnostic) const -> std::string {
-    return FormatFnImpl(diagnostic,
-                        std::make_index_sequence<sizeof...(Args)>());
+  auto FormatFn(const DiagnosticMessage& message) const -> std::string {
+    return FormatFnImpl(message, std::make_index_sequence<sizeof...(Args)>());
   };
 
   // The diagnostic's kind.
@@ -165,6 +177,11 @@ struct DiagnosticBase {
                          llvm::any_cast<Args>(diagnostic.format_args[N])...);
   }
 };
+
+// Disable type deduction based on `args`; the type of `diagnostic_base`
+// determines the diagnostic's parameter types.
+template <typename Arg>
+using NoTypeDeduction = std::common_type_t<Arg>;
 
 }  // namespace Internal
 
@@ -190,17 +207,11 @@ class DiagnosticEmitter {
     template <typename... Args>
     auto Note(LocationT location,
               const Internal::DiagnosticBase<Args...>& diagnostic_base,
-              // Disable type deduction based on `args`; the type of
-              // `diagnostic_base` determines the diagnostic's parameter types.
-              typename std::common_type_t<Args>... args) -> DiagnosticBuilder& {
-      diagnostic_.notes.emplace_back(std::make_unique<Diagnostic>(
-          diagnostic_base.Kind, diagnostic_base.Level,
-          emitter_->translator_->GetLocation(location), diagnostic_base.Format,
-          llvm::SmallVector<llvm::Any, 0>({std::move(args)...}),
-          [&diagnostic_base](const Diagnostic& diagnostic) -> std::string {
-            return diagnostic_base.FormatFn(diagnostic);
-          },
-          llvm::SmallVector<std::unique_ptr<Diagnostic>>()));
+              Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder& {
+      CARBON_CHECK(diagnostic_base.Level == DiagnosticLevel::Note)
+          << static_cast<int>(diagnostic_base.Level);
+      diagnostic_.notes.push_back(
+          MakeMessage(location, diagnostic_base, std::move(args)...));
       return *this;
     }
 
@@ -218,18 +229,26 @@ class DiagnosticEmitter {
     explicit DiagnosticBuilder(
         DiagnosticEmitter<LocationT>* emitter, LocationT location,
         const Internal::DiagnosticBase<Args...>& diagnostic_base,
-        // Disable type deduction based on `args`; the type of
-        // `diagnostic_base` determines the diagnostic's parameter types.
-        typename std::common_type_t<Args>... args)
+        Internal::NoTypeDeduction<Args>... args)
         : emitter_(emitter),
-          diagnostic_(
-              diagnostic_base.Kind, diagnostic_base.Level,
-              emitter_->translator_->GetLocation(location),
-              diagnostic_base.Format, {std::move(args)...},
-              [&diagnostic_base](const Diagnostic& diagnostic) -> std::string {
-                return diagnostic_base.FormatFn(diagnostic);
-              },
-              {}) {}
+          diagnostic_({.level = diagnostic_base.Level,
+                       .main = MakeMessage(location, diagnostic_base,
+                                           std::move(args)...)}) {
+      CARBON_CHECK(diagnostic_base.Level != DiagnosticLevel::Note);
+    }
+
+    template <typename... Args>
+    auto MakeMessage(LocationT location,
+                     const Internal::DiagnosticBase<Args...>& diagnostic_base,
+                     Internal::NoTypeDeduction<Args>... args)
+        -> DiagnosticMessage {
+      return DiagnosticMessage(
+          diagnostic_base.Kind, emitter_->translator_->GetLocation(location),
+          diagnostic_base.Format, {std::move(args)...},
+          [&diagnostic_base](const DiagnosticMessage& message) -> std::string {
+            return diagnostic_base.FormatFn(message);
+          });
+    }
 
     DiagnosticEmitter<LocationT>* emitter_;
     Diagnostic diagnostic_;
@@ -250,9 +269,7 @@ class DiagnosticEmitter {
   template <typename... Args>
   auto Emit(LocationT location,
             const Internal::DiagnosticBase<Args...>& diagnostic_base,
-            // Disable type deduction based on `args`; the type of
-            // `diagnostic_base` determines the diagnostic's parameter types.
-            typename std::common_type_t<Args>... args) -> void {
+            Internal::NoTypeDeduction<Args>... args) -> void {
     DiagnosticBuilder(this, location, diagnostic_base, std::move(args)...)
         .Emit();
   }
@@ -266,9 +283,7 @@ class DiagnosticEmitter {
   template <typename... Args>
   auto Build(LocationT location,
              const Internal::DiagnosticBase<Args...>& diagnostic_base,
-             // Disable type deduction based on `args`; the type of
-             // `diagnostic_base` determines the diagnostic's parameter types.
-             typename std::common_type_t<Args>... args) -> DiagnosticBuilder {
+             Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder {
     return DiagnosticBuilder(this, location, diagnostic_base,
                              std::move(args)...);
   }
@@ -281,16 +296,16 @@ class DiagnosticEmitter {
 inline auto ConsoleDiagnosticConsumer() -> DiagnosticConsumer& {
   class Consumer : public DiagnosticConsumer {
     auto HandleDiagnostic(Diagnostic diagnostic) -> void override {
-      Print(diagnostic);
-      for (auto& note : diagnostic.notes) {
-        Print(*note);
+      Print(diagnostic.main);
+      for (const auto& note : diagnostic.notes) {
+        Print(note);
       }
     }
-    auto Print(const Diagnostic& diagnostic) -> void {
-      llvm::errs() << diagnostic.location.file_name << ":"
-                   << diagnostic.location.line_number << ":"
-                   << diagnostic.location.column_number << ": "
-                   << diagnostic.format_fn(diagnostic) << "\n";
+    auto Print(const DiagnosticMessage& message) -> void {
+      llvm::errs() << message.location.file_name << ":"
+                   << message.location.line_number << ":"
+                   << message.location.column_number << ": "
+                   << message.format_fn(message) << "\n";
     }
   };
   static auto* consumer = new Consumer;

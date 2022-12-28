@@ -60,11 +60,12 @@ TEST_F(DiagnosticEmitterTest, EmitOneArgDiagnostic) {
 
 TEST_F(DiagnosticEmitterTest, EmitNote) {
   CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
+  CARBON_DIAGNOSTIC(TestDiagnosticNote, Note, "note");
   EXPECT_CALL(consumer_,
               HandleDiagnostic(IsDiagnostic(DiagnosticKind::TestDiagnostic,
                                             DiagnosticLevel::Warning, 1, 1,
                                             "simple warning")));
-  emitter_.Build(1, TestDiagnostic).Note(2, TestDiagnostic).Emit();
+  emitter_.Build(1, TestDiagnostic).Note(2, TestDiagnosticNote).Emit();
 }
 
 }  // namespace
