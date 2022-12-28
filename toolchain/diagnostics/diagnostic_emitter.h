@@ -181,7 +181,9 @@ struct DiagnosticBase {
 template <typename LocationT>
 class DiagnosticEmitter {
  public:
-  // Builds a diagnostic for emitting. See `DiagnosticEmitter::Build` for use.
+  // A builder-pattern type to provide a fluent interface for constructing
+  // a more complex diagnostic. See `DiagnosticEmitter::Build` for the
+  // expected usage.
   class DiagnosticBuilder {
    public:
     // Adds a note. See `DiagnosticEmitter::Build` for use.
