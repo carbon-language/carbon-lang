@@ -186,7 +186,9 @@ class DiagnosticEmitter {
   // expected usage.
   class DiagnosticBuilder {
    public:
-    // Adds a note. See `DiagnosticEmitter::Build` for use.
+    // Adds a note diagnostic attached to the main diagnostic being built.
+    // The API mirrors the main emission API: `DiagnosticEmitter::Emit`.
+    // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
     template <typename... Args>
     auto Note(LocationT location,
               const Internal::DiagnosticBase<Args...>& diagnostic_base,
