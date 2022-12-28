@@ -108,15 +108,13 @@ auto SemanticsParseTreeHandler::BindName(ParseTree::Node name_node,
   } else {
     CARBON_DIAGNOSTIC(NameRedefined, Error, "Redefining {0} in the same scope.",
                       llvm::StringRef);
-    emitter_->Emit(name_node, NameRedefined, name_str);
-
-    // TODO: This should be a note and sorted with the above diagnostic.
-    // But that depends on more diagnostic support we currently don't have.
+    CARBON_DIAGNOSTIC(PreviousDefinition, Note, "Previous definition is here.");
     auto prev_def_id = name_lookup_[name_id].back();
     auto prev_def = semantics_->GetNode(prev_def_id);
-    CARBON_DIAGNOSTIC(PreviousDefinition, Error,
-                      "Previous definition is here.");
-    emitter_->Emit(prev_def.parse_node(), PreviousDefinition);
+
+    emitter_->Build(name_node, NameRedefined, name_str)
+        .Note(prev_def.parse_node(), PreviousDefinition)
+        .Emit();
   }
 }
 

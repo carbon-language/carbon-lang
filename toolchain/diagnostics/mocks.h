@@ -13,8 +13,7 @@ namespace Carbon::Testing {
 
 class MockDiagnosticConsumer : public DiagnosticConsumer {
  public:
-  MOCK_METHOD(void, HandleDiagnostic, (const Diagnostic& diagnostic),
-              (override));
+  MOCK_METHOD(void, HandleDiagnostic, (Diagnostic diagnostic), (override));
 };
 
 MATCHER_P(IsDiagnosticMessage, matcher, "") {

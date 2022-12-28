@@ -8,9 +8,9 @@
 #include <functional>
 #include <string>
 #include <type_traits>
+#include <utility>
 
 #include "llvm/ADT/Any.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FormatVariadic.h"
@@ -20,6 +20,9 @@
 namespace Carbon {
 
 enum class DiagnosticLevel : int8_t {
+  // A note, not indicating an error on its own, but possibly providing context
+  // for an error.
+  Note,
   // A warning diagnostic, indicating a likely problem with the program.
   Warning,
   // An error diagnostic, indicating that the program is not valid.
@@ -56,6 +59,26 @@ struct DiagnosticLocation {
 // An instance of a single error or warning.  Information about the diagnostic
 // can be recorded into it for more complex consumers.
 struct Diagnostic {
+  Diagnostic(DiagnosticKind kind, DiagnosticLevel level,
+             DiagnosticLocation location, llvm::StringLiteral format,
+             llvm::SmallVector<llvm::Any, 0> format_args,
+             std::function<std::string(const Diagnostic&)> format_fn,
+             llvm::SmallVector<std::unique_ptr<Diagnostic>> notes)
+      : kind(kind),
+        level(level),
+        location(std::move(location)),
+        format(format),
+        format_args(std::move(format_args)),
+        format_fn(std::move(format_fn)),
+        notes(std::move(notes)) {}
+
+  Diagnostic(Diagnostic&& other) = default;
+  auto operator=(Diagnostic&& other) -> Diagnostic& = default;
+
+  // The copy operations are implicitly deleted -- this is just being explicit.
+  Diagnostic(const Diagnostic&) = delete;
+  auto operator=(const Diagnostic&) -> Diagnostic& = delete;
+
   // The diagnostic's kind.
   DiagnosticKind kind;
 
@@ -79,6 +102,9 @@ struct Diagnostic {
 
   // Returns the formatted string. By default, this uses llvm::formatv.
   std::function<std::string(const Diagnostic&)> format_fn;
+
+  // Notes that add context or supplemental information to the diagnostic.
+  llvm::SmallVector<std::unique_ptr<Diagnostic>> notes;
 };
 
 // Receives diagnostics as they are emitted.
@@ -87,7 +113,7 @@ class DiagnosticConsumer {
   virtual ~DiagnosticConsumer() = default;
 
   // Handle a diagnostic.
-  virtual auto HandleDiagnostic(const Diagnostic& diagnostic) -> void = 0;
+  virtual auto HandleDiagnostic(Diagnostic diagnostic) -> void = 0;
 
   // Flushes any buffered input.
   virtual auto Flush() -> void {}
@@ -155,6 +181,62 @@ struct DiagnosticBase {
 template <typename LocationT>
 class DiagnosticEmitter {
  public:
+  // A builder-pattern type to provide a fluent interface for constructing
+  // a more complex diagnostic. See `DiagnosticEmitter::Build` for the
+  // expected usage.
+  class DiagnosticBuilder {
+   public:
+    // Adds a note diagnostic attached to the main diagnostic being built.
+    // The API mirrors the main emission API: `DiagnosticEmitter::Emit`.
+    // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
+    template <typename... Args>
+    auto Note(LocationT location,
+              const Internal::DiagnosticBase<Args...>& diagnostic_base,
+              // Disable type deduction based on `args`; the type of
+              // `diagnostic_base` determines the diagnostic's parameter types.
+              typename std::common_type_t<Args>... args) -> DiagnosticBuilder& {
+      diagnostic_.notes.emplace_back(std::make_unique<Diagnostic>(
+          diagnostic_base.Kind, diagnostic_base.Level,
+          emitter_->translator_->GetLocation(location), diagnostic_base.Format,
+          llvm::SmallVector<llvm::Any, 0>({std::move(args)...}),
+          [&diagnostic_base](const Diagnostic& diagnostic) -> std::string {
+            return diagnostic_base.FormatFn(diagnostic);
+          },
+          llvm::SmallVector<std::unique_ptr<Diagnostic>>()));
+      return *this;
+    }
+
+    // Emits the built diagnostic and its attached notes.
+    // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
+    template <typename... Args>
+    auto Emit() -> void {
+      emitter_->consumer_->HandleDiagnostic(std::move(diagnostic_));
+    }
+
+   private:
+    friend class DiagnosticEmitter<LocationT>;
+
+    template <typename... Args>
+    explicit DiagnosticBuilder(
+        DiagnosticEmitter<LocationT>* emitter, LocationT location,
+        const Internal::DiagnosticBase<Args...>& diagnostic_base,
+        // Disable type deduction based on `args`; the type of
+        // `diagnostic_base` determines the diagnostic's parameter types.
+        typename std::common_type_t<Args>... args)
+        : emitter_(emitter),
+          diagnostic_(
+              diagnostic_base.Kind, diagnostic_base.Level,
+              emitter_->translator_->GetLocation(location),
+              diagnostic_base.Format, {std::move(args)...},
+              [&diagnostic_base](const Diagnostic& diagnostic) -> std::string {
+                return diagnostic_base.FormatFn(diagnostic);
+              },
+              {}) {}
+
+    DiagnosticEmitter<LocationT>* emitter_;
+    Diagnostic diagnostic_;
+  };
+
   // The `translator` and `consumer` are required to outlive the diagnostic
   // emitter.
   explicit DiagnosticEmitter(
@@ -168,20 +250,29 @@ class DiagnosticEmitter {
   // When passing arguments, they may be buffered. As a consequence, lifetimes
   // may outlive the `Emit` call.
   template <typename... Args>
-  void Emit(LocationT location,
+  auto Emit(LocationT location,
             const Internal::DiagnosticBase<Args...>& diagnostic_base,
             // Disable type deduction based on `args`; the type of
             // `diagnostic_base` determines the diagnostic's parameter types.
-            typename std::common_type_t<Args>... args) {
-    consumer_->HandleDiagnostic({
-        .kind = diagnostic_base.Kind,
-        .level = diagnostic_base.Level,
-        .location = translator_->GetLocation(location),
-        .format = diagnostic_base.Format,
-        .format_args = {std::move(args)...},
-        .format_fn = [&diagnostic_base](const Diagnostic& diagnostic)
-            -> std::string { return diagnostic_base.FormatFn(diagnostic); },
-    });
+            typename std::common_type_t<Args>... args) -> void {
+    DiagnosticBuilder(this, location, diagnostic_base, std::move(args)...)
+        .Emit();
+  }
+
+  // A fluent interface for building a diagnostic and attaching notes for added
+  // context or information. For example:
+  //
+  //   emitter_.Build(location1, MyDiagnostic)
+  //     .Note(location2, MyDiagnosticNote)
+  //     .Emit();
+  template <typename... Args>
+  auto Build(LocationT location,
+             const Internal::DiagnosticBase<Args...>& diagnostic_base,
+             // Disable type deduction based on `args`; the type of
+             // `diagnostic_base` determines the diagnostic's parameter types.
+             typename std::common_type_t<Args>... args) -> DiagnosticBuilder {
+    return DiagnosticBuilder(this, location, diagnostic_base,
+                             std::move(args)...);
   }
 
  private:
@@ -190,8 +281,14 @@ class DiagnosticEmitter {
 };
 
 inline auto ConsoleDiagnosticConsumer() -> DiagnosticConsumer& {
-  struct Consumer : DiagnosticConsumer {
-    auto HandleDiagnostic(const Diagnostic& diagnostic) -> void override {
+  class Consumer : public DiagnosticConsumer {
+    auto HandleDiagnostic(Diagnostic diagnostic) -> void override {
+      Print(diagnostic);
+      for (auto& note : diagnostic.notes) {
+        Print(*note);
+      }
+    }
+    auto Print(const Diagnostic& diagnostic) -> void {
       llvm::errs() << diagnostic.location.file_name << ":"
                    << diagnostic.location.line_number << ":"
                    << diagnostic.location.column_number << ": "
@@ -209,9 +306,9 @@ class ErrorTrackingDiagnosticConsumer : public DiagnosticConsumer {
   explicit ErrorTrackingDiagnosticConsumer(DiagnosticConsumer& next_consumer)
       : next_consumer_(&next_consumer) {}
 
-  auto HandleDiagnostic(const Diagnostic& diagnostic) -> void override {
+  auto HandleDiagnostic(Diagnostic diagnostic) -> void override {
     seen_error_ |= diagnostic.level == DiagnosticLevel::Error;
-    next_consumer_->HandleDiagnostic(diagnostic);
+    next_consumer_->HandleDiagnostic(std::move(diagnostic));
   }
 
   // Reset whether we've seen an error.
