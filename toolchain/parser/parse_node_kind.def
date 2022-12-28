@@ -104,11 +104,14 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(PatternBinding, 2)
 // `var`:
 //   VariableIntroducer
 //   _external_: PatternBinding
-//     _external_: expression
 //   optional VariableInitializer
+//   optional _external_: expression
 // VariableDeclaration
+//
+// The VariableInitializer and following expression are paired: either both will
+// be present, or neither will.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableIntroducer, 0)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableInitializer, 1)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableInitializer, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(VariableDeclaration, VariableIntroducer)
 
 // An expression statement:

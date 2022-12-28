@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{carbon-run-semantics}
+// RUN: %{not} %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs.size == 1,
 // CHECK:STDOUT: integer_literals = {
 // CHECK:STDOUT: },
@@ -21,7 +21,7 @@
 // CHECK:STDOUT:   node6 = FunctionDefinition(node4, block1);
 // CHECK:STDOUT:   node7 = VarStorage(): node2;
 // CHECK:STDOUT:   node8 = BindName(str1, node7): node2;
-// CHECK:STDOUT:   node9 = Assign(node7, node8): node2;
+// CHECK:STDOUT:   node9 = Assign(node7, node1): node1;
 // CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   block0 = {
@@ -37,6 +37,6 @@
 // CHECK:STDOUT: }
 
 fn Main() {
-  // TODO: This should fail with `x`... uninitialized? Not yet declared?
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/fail_init_with_self.carbon:[[@LINE+1]]:16: Name x not found
   var x: i32 = x;
 }

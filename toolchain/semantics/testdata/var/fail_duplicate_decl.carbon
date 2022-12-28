@@ -28,7 +28,7 @@
 // CHECK:STDOUT:   node11 = VarStorage(): node2;
 // CHECK:STDOUT:   node12 = BindName(str1, node11): node2;
 // CHECK:STDOUT:   node13 = IntegerLiteral(int1): node2;
-// CHECK:STDOUT:   node14 = Assign(node11, node13): node2;
+// CHECK:STDOUT:   node14 = Assign(node7, node13): node2;
 // CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   block0 = {
