@@ -257,11 +257,12 @@ class DiagnosticEmitter {
         .Emit();
   }
 
-  // Builds a diagnostic to emit. For example:
+  // A fluent interface for building a diagnostic and attaching notes for added
+  // context or information. For example:
   //
   //   emitter_.Build(location1, MyDiagnostic)
   //     .Note(location2, MyDiagnosticNote)
-  //     .Emit()
+  //     .Emit();
   template <typename... Args>
   auto Build(LocationT location,
              const Internal::DiagnosticBase<Args...>& diagnostic_base,
