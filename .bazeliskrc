@@ -4,4 +4,4 @@
 
 # Keep pinned to a recent release, listed at
 # https://github.com/bazelbuild/bazel.
-USE_BAZEL_VERSION=5.1.1
+USE_BAZEL_VERSION=6.0.0

@@ -1565,7 +1565,7 @@ class TypeChecker::ConstraintTypeBuilder {
   // when simply forming a constraint type for later use in the type of a
   // declared name.
   auto Resolve(TypeChecker& type_checker, SourceLocation source_loc,
-               const ImplScope& impl_scope) -> ErrorOr<Success> {
+               const ImplScope& /*impl_scope*/) -> ErrorOr<Success> {
     CARBON_RETURN_IF_ERROR(DeduplicateRewrites(source_loc));
     CARBON_RETURN_IF_ERROR(ApplyRewritesToRewrites(type_checker, source_loc));
     ApplyRewritesToConstraints(type_checker);

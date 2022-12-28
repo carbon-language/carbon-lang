@@ -215,24 +215,22 @@ bison_register_toolchains(extra_copts = ["-w"])
 # Protocol buffers - for structured fuzzer testing.
 ###############################################################################
 
-# TODO: `rules_proto` pulls in a version of `rules_cc` with a frozenset bug.
-rules_cc_version = "0.0.1"
+rules_cc_version = "0.0.4"
 
 http_archive(
     name = "rules_cc",
-    sha256 = "4dccbfd22c0def164c8f47458bd50e0c7148f3d92002cdb459c2a96a68498241",
+    sha256 = "af6cc82d87db94585bceeda2561cb8a9d55ad435318ccb4ddfee18a43580fb5d",
+    strip_prefix = "rules_cc-{0}".format(rules_cc_version),
     urls = ["https://github.com/bazelbuild/rules_cc/releases/download/{0}/rules_cc-{0}.tar.gz".format(rules_cc_version)],
 )
 
-rules_proto_version = "4.0.0-3.20.0"
+rules_proto_version = "5.3.0-21.7"
 
 http_archive(
     name = "rules_proto",
-    sha256 = "e017528fd1c91c5a33f15493e3a398181a9e821a804eb7ff5acdd1d2d6c2b18d",
+    sha256 = "dc3fb206a2cb3441b485eb1e423165b231235a1ea9b031b4433cf7bc1fa460dd",
     strip_prefix = "rules_proto-{0}".format(rules_proto_version),
-    urls = [
-        "https://github.com/bazelbuild/rules_proto/archive/refs/tags/{0}.tar.gz".format(rules_proto_version),
-    ],
+    urls = ["https://github.com/bazelbuild/rules_proto/archive/refs/tags/{0}.tar.gz".format(rules_proto_version)],
 )
 
 load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
@@ -245,15 +243,14 @@ rules_proto_toolchains()
 # libprotobuf_mutator - for structured fuzzer testing.
 ###############################################################################
 
-# Head as of 2022-09-13.
-libprotobuf_mutator_version = "a304ec48dcf15d942607032151f7e9ee504b5dcf"
+libprotobuf_mutator_version = "1.1"
 
 http_archive(
     name = "com_google_libprotobuf_mutator",
     build_file = "@//:third_party/libprotobuf_mutator/BUILD.txt",
-    sha256 = "0ce80217393fe6b01dac9818127e664801d865fefd708b98183181c0ed457878",
+    sha256 = "fd299fd72c5cf664259d9bd43a72cb74dc6a8b9604d107fe2d2e90885aeb7c16",
     strip_prefix = "libprotobuf-mutator-{0}".format(libprotobuf_mutator_version),
-    urls = ["https://github.com/google/libprotobuf-mutator/archive/{0}.tar.gz".format(libprotobuf_mutator_version)],
+    urls = ["https://github.com/google/libprotobuf-mutator/archive/v{0}.tar.gz".format(libprotobuf_mutator_version)],
 )
 
 ###############################################################################
