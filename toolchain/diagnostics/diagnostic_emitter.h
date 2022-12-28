@@ -103,7 +103,7 @@ struct Diagnostic {
   // Returns the formatted string. By default, this uses llvm::formatv.
   std::function<std::string(const Diagnostic&)> format_fn;
 
-  // Context for the diagnostic.
+  // Notes that add context or supplemental information to the diagnostic.
   llvm::SmallVector<std::unique_ptr<Diagnostic>> notes;
 };
 
