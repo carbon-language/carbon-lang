@@ -21,6 +21,8 @@ module.exports = grammar({
     package_directive: ($) =>
       seq('package', $.identifier, $.package_api_or_impl, ';'),
 
+    declaration_list: ($) => 'todo',
+
     package_api_or_impl: ($) => choice('api', 'impl'),
 
     comment: ($) => token(seq('//', /.*/)),
