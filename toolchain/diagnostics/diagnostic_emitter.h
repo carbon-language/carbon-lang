@@ -113,7 +113,7 @@ class DiagnosticConsumer {
   // Handle a diagnostic.
   //
   // This relies on moves of the Diagnostic. At present, diagnostics are
-  // allocated on the stack, so there lifetime is that of HandleDiagnostic.
+  // allocated on the stack, so their lifetime is that of HandleDiagnostic.
   // However, SortingDiagnosticConsumer needs a longer lifetime, until all
   // diagnostics have been produced. As a consequence, it needs to either copy
   // or move the Diagnostic, and right now we're moving due to the overhead of
