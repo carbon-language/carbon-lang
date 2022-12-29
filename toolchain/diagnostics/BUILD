@@ -9,6 +9,7 @@ cc_library(
     hdrs = ["diagnostic_emitter.h"],
     deps = [
         ":diagnostic_kind",
+        "//common:check",
         "@llvm-project//llvm:Support",
     ],
 )

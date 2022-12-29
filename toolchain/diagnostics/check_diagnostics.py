@@ -23,7 +23,7 @@ from typing import Dict, List, NamedTuple, Set
 
 
 # Example or test diagnostics, ignored because they're expected to not pass.
-IGNORED = set(["MyDiagnostic", "TestDiagnostic"])
+IGNORED = set(["MyDiagnostic", "TestDiagnostic", "TestDiagnosticNote"])
 
 
 class Location(NamedTuple):
