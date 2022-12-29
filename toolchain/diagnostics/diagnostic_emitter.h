@@ -119,8 +119,8 @@ class DiagnosticConsumer {
   // or move the Diagnostic, and right now we're moving due to the overhead of
   // notes.
   //
-  // At present, there is no single ownership of diagnostics partly because IDEs
-  // would be fine with diagnostics being printed immediately, without
+  // At present, there is no persistent storage of diagnostics because IDEs
+  // would be fine with diagnostics being printed immediately and discarded, without
   // SortingDiagnosticConsumer. If this becomes a performance issue, we may want
   // to investigate alternative ownership models that address both IDE and CLI
   // user needs.
