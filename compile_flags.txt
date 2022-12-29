@@ -106,6 +106,10 @@ bazel-bin/external/com_google_libprotobuf_mutator/src
 bazel-execroot/external/com_github_protocolbuffers_protobuf/src
 -isystem
 bazel-bin/external/com_github_protocolbuffers_protobuf/src
+-isystem
+bazel-execroot/external/tree_sitter/lib/include
+-isystem
+bazel-bin/external/tree_sitter/lib/include
 -std=c++17
 -stdlib=libc++
 -no-canonical-prefixes

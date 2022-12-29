@@ -7,19 +7,37 @@
 def tree_sitter(
         name,
         grammar):
+    tools = ["@tree_sitter_bin//:tree-sitter", "@nodejs_host//:node_bin"]
+
     # This only saves parser.c because it's all that's really needed for C++.
     # Outputs are listed at:
     # https://tree-sitter.github.io/tree-sitter/creating-parsers#command-generate
-    outs = [
-        ("src/parser.c", "{0}/tree_sitter/parser.c".format(name)),
-        ("src/tree_sitter/parser.h", "{0}/tree_sitter/parser.h".format(name)),
-    ]
+    parser_c = "{0}.c".format(name)
     native.genrule(
-        name = "{0}.parser".format(name),
-        tools = ["@tree_sitter_bin//:tree-sitter", "@nodejs_host//:node_bin"],
+        name = "{0}.generate".format(name),
+        tools = tools,
         srcs = [grammar],
-        cmd = "PATH=$$PATH:$$(dirname $(location @nodejs_host//:node_bin)) $(location @tree_sitter_bin//:tree-sitter) generate $<; " +
-              "mv src/tree_sitter/parser.h $@",
-        outs = ["{0}.c".format(name)],
+        cmd = "PATH=$$PATH:$$(dirname $(location @nodejs_host//:node_bin)) " +
+              "$(location @tree_sitter_bin//:tree-sitter) generate $<; " +
+              "mv src/parser.c $@",
+        outs = [parser_c],
     )
-    #cc_library(name = name, src = [])
+    native.cc_library(
+        name = name,
+        srcs = [parser_c],
+        deps = ["@tree_sitter//:tree_sitter"],
+    )
+
+    # Allow running tree-sitter directly with `name.tree-sitter`.
+    tree_sitter_sh = "{0}.tree-sitter.sh".format(name)
+    native.genrule(
+        name = "{0}.genrule".format(tree_sitter_sh),
+        cmd = "echo '$(location @tree_sitter_bin//:tree-sitter) \"$$@\"' > $@",
+        outs = [tree_sitter_sh],
+        tools = tools,
+    )
+    native.sh_binary(
+        name = "{0}.tree-sitter".format(name),
+        srcs = [tree_sitter_sh],
+        data = tools,
+    )

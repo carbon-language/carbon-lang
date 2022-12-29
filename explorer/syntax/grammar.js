@@ -8,10 +8,23 @@
  * @fileoverview Description of this file.
  */
 module.exports = grammar({
-  name: 'YOUR_LANGUAGE_NAME',
+  name: 'carbon',
+
+  source_file: ($) => $.package,
+
+  extras: ($) => [/\s/, $.comment],
 
   rules: {
     // TODO: add the actual grammar rules
-    source_file: ($) => 'hello',
+    source_file: ($) => seq($.package_directive, $.declaration_list),
+
+    package_directive: ($) =>
+      seq('package', $.identifier, $.package_api_or_impl, ';'),
+
+    package_api_or_impl: ($) => choice('api', 'impl'),
+
+    comment: ($) => token(seq('//', /.*/)),
+
+    identifier: ($) => /[A-Za-z_][A-Za-z0-9_]*/,
   },
 });

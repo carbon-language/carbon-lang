@@ -135,6 +135,7 @@ subprocess.check_call(
         "@com_github_google_benchmark//:benchmark",
         "@com_google_libprotobuf_mutator//:LICENSE",
         "@com_google_protobuf//:any_proto",
+        "@tree_sitter//:BUILD.bazel",
     ]
 )
 

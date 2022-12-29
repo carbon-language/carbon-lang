@@ -2,4 +2,6 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-# Empty BUILD file to allow access to Bazel extensions.
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["BUILD.tree_sitter"])

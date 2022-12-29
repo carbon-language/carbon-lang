@@ -2,6 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//bazel/tree_sitter:rules.bzl", "tree_sitter")
 
 package(default_visibility = [
@@ -12,6 +13,19 @@ package(default_visibility = [
 tree_sitter(
     name = "grammar",
     grammar = "grammar.js",
+)
+
+cc_binary(
+    name = "dump_grammar",
+    srcs = ["dump_grammar.cpp"],
+    env = cc_env(),
+    deps = [
+        ":grammar",
+        "//common:bazel_working_dir",
+        "//common:check",
+        "@llvm-project//llvm:Support",
+        "@tree_sitter",
+    ],
 )
 
 cc_library(

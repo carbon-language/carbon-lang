@@ -238,9 +238,9 @@ nodejs_register_toolchains(
 # Tree sitter
 ###############################################################################
 
-load("//bazel/tree_sitter:bin_repository.bzl", "tree_sitter_bin_repository")
+load("//bazel/tree_sitter:repositories.bzl", "tree_sitter_repositories")
 
-tree_sitter_bin_repository(name = "tree_sitter_bin")
+tree_sitter_repositories()
 
 ###############################################################################
 # Protocol buffers - for structured fuzzer testing.
