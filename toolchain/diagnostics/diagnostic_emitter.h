@@ -169,10 +169,10 @@ struct DiagnosticBase {
  private:
   // Handles the cast of llvm::Any to Args types for formatv.
   template <std::size_t... N>
-  inline auto FormatFnImpl(const DiagnosticMessage& diagnostic,
+  inline auto FormatFnImpl(const DiagnosticMessage& message,
                            std::index_sequence<N...> /*indices*/) const
       -> std::string {
-    assert(diagnostic.format_args.size() == sizeof...(Args));
+    assert(message.format_args.size() == sizeof...(Args));
     return llvm::formatv(diagnostic.format.data(),
                          llvm::any_cast<Args>(diagnostic.format_args[N])...);
   }
