@@ -246,7 +246,7 @@ auto SemanticsParseTreeHandler::TryTypeConversion(ParseTree::Node parse_node,
   // implemented to do that right now.
   if (lhs_type != rhs_type) {
     auto invalid_type = SemanticsNodeId::MakeBuiltinReference(
-        SemanticsBuiltinKind::InvalidType());
+        SemanticsBuiltinKind::InvalidType);
     if (lhs_type != invalid_type && rhs_type != invalid_type) {
       // TODO: This is a poor diagnostic, and should be expanded.
       CARBON_DIAGNOSTIC(TypeMismatch, Error,
@@ -491,7 +491,7 @@ auto SemanticsParseTreeHandler::HandleLiteral(ParseTree::Node parse_node)
       auto text = tokens_->GetTokenText(token);
       CARBON_CHECK(text == "i32") << "Currently only i32 is allowed";
       Push(parse_node, SemanticsNodeId::MakeBuiltinReference(
-                           SemanticsBuiltinKind::IntegerType()));
+                           SemanticsBuiltinKind::IntegerType));
       break;
     }
     default:
@@ -508,7 +508,7 @@ auto SemanticsParseTreeHandler::HandleNameReference(ParseTree::Node parse_node)
                       llvm::StringRef);
     emitter_->Emit(parse_node, NameNotFound, name_str);
     Push(parse_node, SemanticsNodeId::MakeBuiltinReference(
-                         SemanticsBuiltinKind::InvalidType()));
+                         SemanticsBuiltinKind::InvalidType));
   };
 
   auto name_id = semantics_->GetString(name_str);

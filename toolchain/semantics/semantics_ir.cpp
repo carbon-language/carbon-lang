@@ -19,24 +19,24 @@ auto SemanticsIR::MakeBuiltinIR() -> SemanticsIR {
 
   constexpr int32_t TypeOfTypeType = 0;
   auto type_type = semantics.AddNode(
-      block_id, SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::TypeType(),
+      block_id, SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::TypeType,
                                            SemanticsNodeId(TypeOfTypeType)));
   CARBON_CHECK(type_type.index == TypeOfTypeType)
       << "TypeType's type must be self-referential.";
 
   constexpr int32_t TypeOfInvalidType = 1;
   auto invalid_type = semantics.AddNode(
-      block_id, SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::InvalidType(),
+      block_id, SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::InvalidType,
                                            SemanticsNodeId(TypeOfInvalidType)));
   CARBON_CHECK(invalid_type.index == TypeOfInvalidType)
       << "InvalidType's type must be self-referential.";
 
   semantics.AddNode(
-      block_id, SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::IntegerType(),
-                                           type_type));
+      block_id,
+      SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::IntegerType, type_type));
 
   semantics.AddNode(block_id, SemanticsNode::MakeBuiltin(
-                                  SemanticsBuiltinKind::RealType(), type_type));
+                                  SemanticsBuiltinKind::RealType, type_type));
 
   CARBON_CHECK(semantics.node_blocks_.size() == 1)
       << "BuildBuiltins should only produce 1 block, actual: "
