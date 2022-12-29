@@ -58,5 +58,15 @@ TEST_F(DiagnosticEmitterTest, EmitOneArgDiagnostic) {
   emitter_.Emit(1, TestDiagnostic, "str");
 }
 
+TEST_F(DiagnosticEmitterTest, EmitNote) {
+  CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
+  CARBON_DIAGNOSTIC(TestDiagnosticNote, Note, "note");
+  EXPECT_CALL(consumer_,
+              HandleDiagnostic(IsDiagnostic(DiagnosticKind::TestDiagnostic,
+                                            DiagnosticLevel::Warning, 1, 1,
+                                            "simple warning")));
+  emitter_.Build(1, TestDiagnostic).Note(2, TestDiagnosticNote).Emit();
+}
+
 }  // namespace
 }  // namespace Carbon::Testing

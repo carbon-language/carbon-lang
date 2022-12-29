@@ -23,7 +23,7 @@
 // CHECK:STDOUT:   node7 = Assign(node4, node6): node2;
 // CHECK:STDOUT:   node8 = VarStorage(): node2;
 // CHECK:STDOUT:   node9 = BindName(str1, node8): node2;
-// CHECK:STDOUT:   node10 = Assign(node8, node5): node2;
+// CHECK:STDOUT:   node10 = Assign(node8, node4): node2;
 // CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   block0 = {

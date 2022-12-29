@@ -1811,19 +1811,10 @@ auto Parser::HandleVarAfterPatternState() -> void {
     }
   }
 
-  if (PositionIs(TokenKind::Equal())) {
-    PushState(ParserState::VarAfterInitializer());
-    ++position_;
+  if (auto equals = ConsumeIf(TokenKind::Equal())) {
+    AddLeafNode(ParseNodeKind::VariableInitializer(), *equals);
     PushState(ParserState::Expression());
-    return;
   }
-}
-
-auto Parser::HandleVarAfterInitializerState() -> void {
-  auto state = PopState();
-
-  AddNode(ParseNodeKind::VariableInitializer(), state.token,
-          state.subtree_start, state.has_error);
 }
 
 auto Parser::HandleVarFinishAsSemicolonState() -> void {
