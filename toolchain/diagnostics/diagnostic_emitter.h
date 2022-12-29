@@ -99,7 +99,7 @@ struct Diagnostic {
   DiagnosticLevel level;
 
   // The main error or warning.
-  DiagnosticMessage main;
+  DiagnosticMessage message;
 
   // Notes that add context or supplemental information to the diagnostic.
   llvm::SmallVector<DiagnosticMessage> notes;
@@ -173,8 +173,8 @@ struct DiagnosticBase {
                            std::index_sequence<N...> /*indices*/) const
       -> std::string {
     assert(message.format_args.size() == sizeof...(Args));
-    return llvm::formatv(diagnostic.format.data(),
-                         llvm::any_cast<Args>(diagnostic.format_args[N])...);
+    return llvm::formatv(message.format.data(),
+                         llvm::any_cast<Args>(message.format_args[N])...);
   }
 };
 
@@ -232,8 +232,8 @@ class DiagnosticEmitter {
         Internal::NoTypeDeduction<Args>... args)
         : emitter_(emitter),
           diagnostic_({.level = diagnostic_base.Level,
-                       .main = MakeMessage(location, diagnostic_base,
-                                           std::move(args)...)}) {
+                       .message = MakeMessage(location, diagnostic_base,
+                                              std::move(args)...)}) {
       CARBON_CHECK(diagnostic_base.Level != DiagnosticLevel::Note);
     }
 
@@ -296,7 +296,7 @@ class DiagnosticEmitter {
 inline auto ConsoleDiagnosticConsumer() -> DiagnosticConsumer& {
   class Consumer : public DiagnosticConsumer {
     auto HandleDiagnostic(Diagnostic diagnostic) -> void override {
-      Print(diagnostic.main);
+      Print(diagnostic.message);
       for (const auto& note : diagnostic.notes) {
         Print(note);
       }

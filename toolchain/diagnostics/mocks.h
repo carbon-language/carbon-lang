@@ -18,8 +18,8 @@ class MockDiagnosticConsumer : public DiagnosticConsumer {
 
 MATCHER_P(IsDiagnosticMessage, matcher, "") {
   const Diagnostic& diag = arg;
-  return testing::ExplainMatchResult(matcher, diag.main.format_fn(diag.main),
-                                     result_listener);
+  return testing::ExplainMatchResult(
+      matcher, diag.message.format_fn(diag.message), result_listener);
 }
 
 inline auto IsDiagnostic(testing::Matcher<DiagnosticKind> kind,
@@ -30,7 +30,7 @@ inline auto IsDiagnostic(testing::Matcher<DiagnosticKind> kind,
   return testing::AllOf(
       testing::Field("level", &Diagnostic::level, level),
       testing::Field(
-          "main", &Diagnostic::main,
+          "message", &Diagnostic::message,
           testing::AllOf(
               testing::Field("kind", &DiagnosticMessage::kind, kind),
               testing::Field(
