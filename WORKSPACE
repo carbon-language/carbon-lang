@@ -6,6 +6,10 @@ workspace(name = "carbon")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+###############################################################################
+# Bazel skylib
+###############################################################################
+
 skylib_version = "1.3.0"
 
 http_archive(
@@ -210,6 +214,33 @@ load("@rules_bison//bison:bison.bzl", "bison_register_toolchains")
 # When building Bison, disable all compiler warnings as we can't realistically
 # fix them anyways.
 bison_register_toolchains(extra_copts = ["-w"])
+
+###############################################################################
+# NodeJS, for tree sitter.
+###############################################################################
+
+rules_nodejs_version = "5.8.0"
+
+http_archive(
+    name = "rules_nodejs",
+    sha256 = "08337d4fffc78f7fe648a93be12ea2fc4e8eb9795a4e6aa48595b66b34555626",
+    urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/{0}/rules_nodejs-core-{0}.tar.gz".format(rules_nodejs_version)],
+)
+
+load("@rules_nodejs//nodejs:repositories.bzl", "DEFAULT_NODE_VERSION", "nodejs_register_toolchains")
+
+nodejs_register_toolchains(
+    name = "nodejs",
+    node_version = DEFAULT_NODE_VERSION,
+)
+
+###############################################################################
+# Tree sitter
+###############################################################################
+
+load("//bazel/tree_sitter:bin_repository.bzl", "tree_sitter_bin_repository")
+
+tree_sitter_bin_repository(name = "tree_sitter_bin")
 
 ###############################################################################
 # Protocol buffers - for structured fuzzer testing.

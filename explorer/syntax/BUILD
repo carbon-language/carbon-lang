@@ -2,10 +2,17 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("//bazel/tree_sitter:rules.bzl", "tree_sitter")
+
 package(default_visibility = [
     "//explorer:__pkg__",
     "//explorer/fuzzing:__pkg__",
 ])
+
+tree_sitter(
+    name = "grammar",
+    grammar = "grammar.js",
+)
 
 cc_library(
     name = "bison_wrap",
