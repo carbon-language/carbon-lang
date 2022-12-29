@@ -120,10 +120,10 @@ class DiagnosticConsumer {
   // notes.
   //
   // At present, there is no persistent storage of diagnostics because IDEs
-  // would be fine with diagnostics being printed immediately and discarded, without
-  // SortingDiagnosticConsumer. If this becomes a performance issue, we may want
-  // to investigate alternative ownership models that address both IDE and CLI
-  // user needs.
+  // would be fine with diagnostics being printed immediately and discarded,
+  // without SortingDiagnosticConsumer. If this becomes a performance issue, we
+  // may want to investigate alternative ownership models that address both IDE
+  // and CLI user needs.
   virtual auto HandleDiagnostic(Diagnostic diagnostic) -> void = 0;
 
   // Flushes any buffered input.
