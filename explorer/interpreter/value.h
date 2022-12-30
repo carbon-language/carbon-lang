@@ -345,6 +345,11 @@ class NominalClassValue : public Value {
  public:
   static constexpr llvm::StringLiteral BaseField{"base"};
 
+  // Takes the class type, inits, an optional base, a pointer to a
+  // NominalClassValue*, that must be common to all NominalClassValue of the
+  // same object. The pointee is updated, when `NominalClassValue`s are
+  // constructed, to point to the `NominalClassValue` corresponding to the
+  // child-most class type.
   NominalClassValue(Nonnull<const Value*> type, Nonnull<const Value*> inits,
                     std::optional<Nonnull<const NominalClassValue*>> base,
                     Nonnull<const NominalClassValue** const> class_value_ptr);
@@ -363,10 +368,7 @@ class NominalClassValue : public Value {
   auto base() const -> std::optional<Nonnull<const NominalClassValue*>> {
     return base_;
   }
-  auto has_vtable() const -> bool { return !vtable().empty(); }
-  auto vtable() const -> const VTable&;
-  // Returns a pointer of pointer to the child-most class value. It is updated
-  // when `NominalClassValue`s are constructed to point to the right instance.
+  // Returns a pointer of pointer to the child-most class value.
   auto class_value_ptr() const -> Nonnull<const NominalClassValue** const> {
     return class_value_ptr_;
   }
@@ -747,10 +749,10 @@ class NominalClassType : public Value {
       : Value(Kind::NominalClassType),
         declaration_(declaration),
         base_(base),
-        vtable_(std::move(class_vtable)) {
+        vtable_(std::move(class_vtable)),
+        hierarchy_level_(base ? (*base)->hierarchy_level() + 1 : 0) {
     CARBON_CHECK(!declaration->type_params().has_value())
         << "missing arguments for parameterized class type";
-    hierarchy_level_ = base ? (*base)->hierarchy_level() + 1 : 0;
   }
 
   // Construct a fully instantiated generic class type to represent the
@@ -763,9 +765,8 @@ class NominalClassType : public Value {
         declaration_(declaration),
         bindings_(bindings),
         base_(base),
-        vtable_(std::move(class_vtable)) {
-    hierarchy_level_ = base ? (*base)->hierarchy_level() + 1 : 0;
-  }
+        vtable_(std::move(class_vtable)),
+        hierarchy_level_(base ? (*base)->hierarchy_level() + 1 : 0) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassType;
@@ -809,7 +810,7 @@ class NominalClassType : public Value {
   Nonnull<const Bindings*> bindings_ = Bindings::None();
   const std::optional<Nonnull<const NominalClassType*>> base_;
   const VTable vtable_;
-  int hierarchy_level_ = 0;
+  int hierarchy_level_;
 };
 
 class MixinPseudoType : public Value {

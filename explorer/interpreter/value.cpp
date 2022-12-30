@@ -51,10 +51,6 @@ NominalClassValue::NominalClassValue(
   *class_value_ptr_ = this;
 }
 
-auto NominalClassValue::vtable() const -> const VTable& {
-  return llvm::cast<NominalClassType>(type_)->vtable();
-}
-
 static auto FindClassField(Nonnull<const NominalClassValue*> object,
                            std::string_view name)
     -> std::optional<Nonnull<const Value*>> {
@@ -171,14 +167,14 @@ static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
           }
           // Method is virtual, get child-most class value and perform vtable
           // lookup.
-          const auto& class_value = **object.class_value_ptr();
-          const auto res = class_value.vtable().find(f);
-          CARBON_CHECK(res != object.vtable().end());
+          const auto& last_child_value = **object.class_value_ptr();
+          const auto& last_child_type =
+              cast<NominalClassType>(last_child_value.type());
+          const auto res = last_child_type.vtable().find(f);
+          CARBON_CHECK(res != last_child_type.vtable().end());
           const auto [virtual_method, level] = res->second;
-          const auto level_diff =
-              cast<NominalClassType>(class_value.type()).hierarchy_level() -
-              level;
-          const auto* m_class_value = &class_value;
+          const auto level_diff = last_child_type.hierarchy_level() - level;
+          const auto* m_class_value = &last_child_value;
           // Get class value matching the virtual method, and turn it into a
           // bound method.
           for (int i = 0; i < level_diff; ++i) {

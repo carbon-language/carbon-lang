@@ -1064,6 +1064,7 @@ impl_deduced_params:
 | FORALL LEFT_SQUARE_BRACKET deduced_param_list RIGHT_SQUARE_BRACKET
     { $$ = $3; }
 ;
+// This includes the FN keyword to work around a shift-reduce conflict between virtual function's `IMPL FN` and interfaces `IMPL`.
 fn_virtual_override_intro:
   FN
     { $$ = false; }

@@ -4464,7 +4464,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     }
   }
 
-  // Generate vtable for the type if necessary.
+  // Generate a vtable for the type if necessary.
   VTable class_vtable = base_class ? (*base_class)->vtable() : VTable();
   const int class_level = base_class ? (*base_class)->hierarchy_level() + 1 : 0;
   for (const auto* m : class_decl->members()) {
@@ -4486,7 +4486,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   // should have the value `MyType(T, U)`.
   Nonnull<NominalClassType*> self_type = arena_->New<NominalClassType>(
       class_decl, Bindings::SymbolicIdentity(arena_, bindings), base_class,
-      class_vtable);
+      std::move(class_vtable));
   self->set_static_type(arena_->New<TypeType>());
   self->set_constant_value(self_type);
 
