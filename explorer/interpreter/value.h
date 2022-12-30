@@ -7,7 +7,6 @@
 
 #include <optional>
 #include <string>
-#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -794,6 +793,9 @@ class NominalClassType : public Value {
 
   auto vtable() const -> const VTable& { return vtable_; }
 
+  // Returns how many levels from the top ancestor class it is. i.e. a class
+  // with no base returns `0`, while a class with a `.base` and `.base.base`
+  // returns `2`.
   auto hierarchy_level() const -> int { return hierarchy_level_; }
 
   // Returns whether this a parameterized class. That is, a class with
