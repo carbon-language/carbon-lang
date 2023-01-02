@@ -23,16 +23,14 @@ base class C {
 
 base class D extends C {
   var value_d: i32;
-  // TODO: This should instead use `impl` when supported
-  virtual fn Foo[self: Self]() -> i32 {
+  impl fn Foo[self: Self]() -> i32 {
     return self.value_d;
   }
 }
 
 class E extends D {
   var value_e: i32;
-  // TODO: This should instead use `impl` when supported
-  virtual fn Foo[self: Self]() -> i32 {
+  impl fn Foo[self: Self]() -> i32 {
     return self.value_e;
   }
 }

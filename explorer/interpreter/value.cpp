@@ -161,7 +161,7 @@ static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         } else if ((*func)->declaration().is_method()) {
           // Found a method. Turn it into a bound method.
           const auto& m = cast<FunctionValue>(**func);
-          if (!m.declaration().is_virtual()) {
+          if (m.declaration().override() == VirtualOverride::None) {
             return arena->New<BoundMethodValue>(&m.declaration(), me_value,
                                                 &class_type.bindings());
           }
