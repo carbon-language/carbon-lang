@@ -4506,10 +4506,29 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     }
   }
 
+  // Generate a vtable for the type if necessary.
+  VTable class_vtable = base_class ? (*base_class)->vtable() : VTable();
+  const int class_level = base_class ? (*base_class)->hierarchy_level() + 1 : 0;
+  for (const auto* m : class_decl->members()) {
+    const auto* fun = dyn_cast<FunctionDeclaration>(m);
+    if (!fun || !fun->is_virtual()) {
+      continue;
+    }
+    // TODO: Implement complete declaration logic from
+    // /docs/design/classes.md#virtual-methods.
+    if (!fun->is_method()) {
+      return ProgramError(fun->source_loc())
+             << "Error declaring `" << fun->name() << "`"
+             << ": class functions cannot be virtual.";
+    }
+    class_vtable[fun->name()] = {fun, class_level};
+  }
+
   // For class declaration `class MyType(T:! Type, U:! AnInterface)`, `Self`
   // should have the value `MyType(T, U)`.
   Nonnull<NominalClassType*> self_type = arena_->New<NominalClassType>(
-      class_decl, Bindings::SymbolicIdentity(arena_, bindings), base_class);
+      class_decl, Bindings::SymbolicIdentity(arena_, bindings), base_class,
+      std::move(class_vtable));
   self->set_static_type(arena_->New<TypeType>());
   self->set_constant_value(self_type);
 

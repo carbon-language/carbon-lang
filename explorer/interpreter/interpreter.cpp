@@ -638,7 +638,7 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
           Nonnull<const Bindings*> bindings,
           InstantiateBindings(&class_type.bindings(), source_loc));
       return arena_->New<NominalClassType>(&class_type.declaration(), bindings,
-                                           base);
+                                           base, class_type.vtable());
     }
     case Value::Kind::ChoiceType: {
       const auto& choice_type = cast<ChoiceType>(*type);
@@ -718,8 +718,11 @@ auto Interpreter::ConvertStructToClass(
   }
   auto* converted_init_struct =
       arena_->New<StructValue>(std::move(struct_values));
+  Nonnull<const NominalClassValue** const> class_value_ptr =
+      base_instance ? (*base_instance)->class_value_ptr()
+                    : arena_->New<const NominalClassValue*>();
   return arena_->New<NominalClassValue>(inst_class, converted_init_struct,
-                                        base_instance);
+                                        base_instance, class_value_ptr);
 }
 
 auto Interpreter::Convert(Nonnull<const Value*> value,
@@ -1061,7 +1064,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
         case DeclarationKind::ClassDeclaration: {
           const auto& class_decl = cast<ClassDeclaration>(decl);
           return todo_.FinishAction(arena_->New<NominalClassType>(
-              &class_decl, bindings, class_decl.base_type()));
+              &class_decl, bindings, class_decl.base_type(), VTable()));
         }
         case DeclarationKind::InterfaceDeclaration:
           return todo_.FinishAction(arena_->New<InterfaceType>(

@@ -19,6 +19,7 @@
 #include "explorer/interpreter/address.h"
 #include "explorer/interpreter/element_path.h"
 #include "explorer/interpreter/stack.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
@@ -35,6 +36,9 @@ struct AllocateTrait {
     return arena->New<T>(std::forward<Args>(args)...);
   }
 };
+
+using VTable =
+    llvm::StringMap<std::pair<Nonnull<const CallableDeclaration*>, int>>;
 
 // Abstract base class of all AST nodes representing values.
 //
@@ -340,12 +344,14 @@ class NominalClassValue : public Value {
  public:
   static constexpr llvm::StringLiteral BaseField{"base"};
 
+  // Takes the class type, inits, an optional base, a pointer to a
+  // NominalClassValue*, that must be common to all NominalClassValue of the
+  // same object. The pointee is updated, when `NominalClassValue`s are
+  // constructed, to point to the `NominalClassValue` corresponding to the
+  // child-most class type.
   NominalClassValue(Nonnull<const Value*> type, Nonnull<const Value*> inits,
-                    std::optional<Nonnull<const NominalClassValue*>> base)
-      : Value(Kind::NominalClassValue),
-        type_(type),
-        inits_(inits),
-        base_(base) {}
+                    std::optional<Nonnull<const NominalClassValue*>> base,
+                    Nonnull<const NominalClassValue** const> class_value_ptr);
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassValue;
@@ -353,7 +359,7 @@ class NominalClassValue : public Value {
 
   template <typename F>
   auto Decompose(F f) const {
-    return f(type_, inits_, base_);
+    return f(type_, inits_, base_, class_value_ptr_);
   }
 
   auto type() const -> const Value& { return *type_; }
@@ -361,11 +367,16 @@ class NominalClassValue : public Value {
   auto base() const -> std::optional<Nonnull<const NominalClassValue*>> {
     return base_;
   }
+  // Returns a pointer of pointer to the child-most class value.
+  auto class_value_ptr() const -> Nonnull<const NominalClassValue** const> {
+    return class_value_ptr_;
+  }
 
  private:
   Nonnull<const Value*> type_;
   Nonnull<const Value*> inits_;  // The initializing StructValue.
   std::optional<Nonnull<const NominalClassValue*>> base_;
+  Nonnull<const NominalClassValue** const> class_value_ptr_;
 };
 
 // An alternative constructor value.
@@ -731,8 +742,14 @@ class StructType : public Value {
 class NominalClassType : public Value {
  public:
   // Construct a non-generic class type.
-  explicit NominalClassType(Nonnull<const ClassDeclaration*> declaration)
-      : Value(Kind::NominalClassType), declaration_(declaration) {
+  explicit NominalClassType(
+      Nonnull<const ClassDeclaration*> declaration,
+      std::optional<Nonnull<const NominalClassType*>> base, VTable class_vtable)
+      : Value(Kind::NominalClassType),
+        declaration_(declaration),
+        base_(base),
+        vtable_(std::move(class_vtable)),
+        hierarchy_level_(base ? (*base)->hierarchy_level() + 1 : 0) {
     CARBON_CHECK(!declaration->type_params().has_value())
         << "missing arguments for parameterized class type";
   }
@@ -742,11 +759,13 @@ class NominalClassType : public Value {
   explicit NominalClassType(
       Nonnull<const ClassDeclaration*> declaration,
       Nonnull<const Bindings*> bindings,
-      std::optional<Nonnull<const NominalClassType*>> base)
+      std::optional<Nonnull<const NominalClassType*>> base, VTable class_vtable)
       : Value(Kind::NominalClassType),
         declaration_(declaration),
         bindings_(bindings),
-        base_(base) {}
+        base_(base),
+        vtable_(std::move(class_vtable)),
+        hierarchy_level_(base ? (*base)->hierarchy_level() + 1 : 0) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassType;
@@ -754,7 +773,7 @@ class NominalClassType : public Value {
 
   template <typename F>
   auto Decompose(F f) const {
-    return f(declaration_, bindings_, base_);
+    return f(declaration_, bindings_, base_, vtable_);
   }
 
   auto declaration() const -> const ClassDeclaration& { return *declaration_; }
@@ -772,6 +791,13 @@ class NominalClassType : public Value {
     return bindings_->witnesses();
   }
 
+  auto vtable() const -> const VTable& { return vtable_; }
+
+  // Returns how many levels from the top ancestor class it is. i.e. a class
+  // with no base returns `0`, while a class with a `.base` and `.base.base`
+  // returns `2`.
+  auto hierarchy_level() const -> int { return hierarchy_level_; }
+
   // Returns whether this a parameterized class. That is, a class with
   // parameters and no corresponding arguments.
   auto IsParameterized() const -> bool {
@@ -784,7 +810,9 @@ class NominalClassType : public Value {
  private:
   Nonnull<const ClassDeclaration*> declaration_;
   Nonnull<const Bindings*> bindings_ = Bindings::None();
-  std::optional<Nonnull<const NominalClassType*>> base_;
+  const std::optional<Nonnull<const NominalClassType*>> base_;
+  const VTable vtable_;
+  int hierarchy_level_;
 };
 
 class MixinPseudoType : public Value {

@@ -70,6 +70,7 @@ class TransformBase {
     return v;
   }
   auto operator()(const std::string& str) -> const std::string& { return str; }
+  auto operator()(llvm::StringRef str) -> llvm::StringRef { return str; }
 
   // Transform `optional<T>` by transforming the `T` if it's present.
   template <typename T>
@@ -78,6 +79,12 @@ class TransformBase {
       return std::nullopt;
     }
     return Transform(*v);
+  }
+
+  // Transform `pair<T, U>` by transforming T and U.
+  template <typename T, typename U>
+  auto operator()(const std::pair<T, U>& pair) -> std::pair<T, U> {
+    return std::pair<T, U>{Transform(pair.first), Transform(pair.second)};
   }
 
   // Transform `vector<T>` by transforming its elements.
@@ -97,6 +104,16 @@ class TransformBase {
     std::map<T, U> result;
     for (auto& [key, value] : map) {
       result.insert({Transform(key), Transform(value)});
+    }
+    return result;
+  }
+
+  // Transform `llvm::StringMap<T>` by transforming its keys and values.
+  template <typename T>
+  auto operator()(const llvm::StringMap<T>& map) -> llvm::StringMap<T> {
+    llvm::StringMap<T> result;
+    for (const auto& it : map) {
+      result.insert({Transform(it.first()), Transform(it.second)});
     }
     return result;
   }
@@ -158,6 +175,18 @@ class ValueTransform : public TransformBase<Derived> {
   // For elements, dispatch on the element kind and recursively transform.
   auto operator()(Nonnull<const Element*> elem) -> Nonnull<const Element*> {
     return TransformDerived<Nonnull<const Element*>>(elem);
+  }
+
+  // Preserve vtable during transformation.
+  auto operator()(Nonnull<const VTable* const> vtable)
+      -> Nonnull<const VTable* const> {
+    return vtable;
+  }
+
+  // Preserve class value ptr during transformation.
+  auto operator()(Nonnull<const NominalClassValue** const> value_ptr)
+      -> Nonnull<const NominalClassValue** const> {
+    return value_ptr;
   }
 };
 
