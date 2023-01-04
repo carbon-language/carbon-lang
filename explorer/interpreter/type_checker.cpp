@@ -4511,15 +4511,47 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   const int class_level = base_class ? (*base_class)->hierarchy_level() + 1 : 0;
   for (const auto* m : class_decl->members()) {
     const auto* fun = dyn_cast<FunctionDeclaration>(m);
-    if (!fun || !fun->is_virtual()) {
+    if (!fun) {
       continue;
     }
-    // TODO: Implement complete declaration logic from
-    // /docs/design/classes.md#virtual-methods.
-    if (!fun->is_method()) {
+    if (fun->virt_override() != VirtualOverride::None && !fun->is_method()) {
       return ProgramError(fun->source_loc())
              << "Error declaring `" << fun->name() << "`"
              << ": class functions cannot be virtual.";
+    }
+    bool has_vtable_entry =
+        class_vtable.find(fun->name()) != class_vtable.end();
+    // TODO: Implement complete declaration logic from
+    // `/docs/design/classes.md#virtual-methods`.
+    switch (fun->virt_override()) {
+      case VirtualOverride::Abstract:
+        // Not supported yet.
+        return ProgramError(fun->source_loc())
+               << "Error declaring `" << fun->name() << "`"
+               << ": `abstract` methods are not yet supported.";
+      case VirtualOverride::None:
+      case VirtualOverride::Virtual:
+        if (has_vtable_entry) {
+          return ProgramError(fun->source_loc())
+                 << "Error declaring `" << fun->name() << "`"
+                 << ": method is declared virtual in base class, use `impl` "
+                    "to override it.";
+        }
+        // TODO: Error if declaring virtual method shadowing non-virtual method.
+        // See https://github.com/carbon-language/carbon-lang/issues/2355.
+        if (fun->virt_override() == VirtualOverride::None) {
+          // Not added to the vtable.
+          continue;
+        }
+        break;
+      case VirtualOverride::Impl:
+        if (!has_vtable_entry) {
+          return ProgramError(fun->source_loc())
+                 << "Error declaring `" << fun->name() << "`"
+                 << ": cannot override a method that is not declared "
+                    "`abstract` or `virtual` in base class.";
+        }
+        break;
     }
     class_vtable[fun->name()] = {fun, class_level};
   }

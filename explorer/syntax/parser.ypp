@@ -97,14 +97,14 @@
 %token <std::string> sized_type_literal
 %token <std::string> string_literal
 %type <std::string> designator
-%type <ImplKind> impl_kind
+%type <ImplKind> impl_kind_intro
 %type <Nonnull<Expression*>> impl_type
 %type <std::pair<LibraryName, bool>> package_directive
 %type <LibraryName> import_directive
 %type <std::vector<LibraryName>> import_directives
 %type <std::string> optional_library_path
 %type <bool> api_or_impl
-%type <bool> fn_virtual_override_intro
+%type <VirtualOverride> fn_virtual_override_intro
 %type <ClassExtensibility> class_declaration_extensibility
 %type <std::optional<Nonnull<Expression*>>> class_declaration_extends
 %type <Nonnull<Declaration*>> declaration
@@ -1067,9 +1067,13 @@ impl_deduced_params:
 // This includes the FN keyword to work around a shift-reduce conflict between virtual function's `IMPL FN` and interfaces `IMPL`.
 fn_virtual_override_intro:
   FN
-    { $$ = false; }
+    { $$ = VirtualOverride::None; }
+| ABSTRACT FN
+    { $$ = VirtualOverride::Abstract; }
 | VIRTUAL FN
-    { $$ = true; }
+    { $$ = VirtualOverride::Virtual; }
+| IMPL FN
+    { $$ = VirtualOverride::Impl; }
 ;
 function_declaration:
   fn_virtual_override_intro identifier deduced_params maybe_empty_tuple_pattern return_term block
@@ -1210,10 +1214,10 @@ declaration:
       $$ = arena->New<ConstraintDeclaration>(arena, context.source_loc(), $2,
                                              $3, $5);
     }
-| impl_kind IMPL impl_deduced_params impl_type AS type_or_where_expression LEFT_CURLY_BRACE impl_body RIGHT_CURLY_BRACE
+| impl_kind_intro impl_deduced_params impl_type AS type_or_where_expression LEFT_CURLY_BRACE impl_body RIGHT_CURLY_BRACE
     {
       ErrorOr<ImplDeclaration*> impl = ImplDeclaration::Create(
-          arena, context.source_loc(), $1, $4, $6, $3, $8);
+          arena, context.source_loc(), $1, $3, $5, $2, $7);
       if (impl.ok()) {
         $$ = *impl;
       } else {
@@ -1224,10 +1228,10 @@ declaration:
 | alias_declaration
     { $$ = $1; }
 ;
-impl_kind:
-  // Internal
+impl_kind_intro:
+  IMPL // Internal
     { $$ = Carbon::ImplKind::InternalImpl; }
-| EXTERNAL
+| EXTERNAL IMPL
     { $$ = Carbon::ImplKind::ExternalImpl; }
 ;
 impl_type:
