@@ -128,7 +128,7 @@ class Interpreter {
   // appear in constraints:
   //
   //   interface Iface { let N:! i32; }
-  //   fn PickType(N: i32) -> Type { return i32; }
+  //   fn PickType(N: i32) -> type { return i32; }
   //   fn F[T:! Iface where .N == 5](x: T) {
   //     var x: PickType(T.N) = 0;
   //   }
@@ -805,7 +805,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
         case Value::Kind::NamedConstraintType:
         case Value::Kind::InterfaceType: {
           CARBON_CHECK(struct_val.elements().empty())
-              << "only empty structs convert to Type";
+              << "only empty structs convert to `type`";
           return arena_->New<StructType>();
         }
         default: {

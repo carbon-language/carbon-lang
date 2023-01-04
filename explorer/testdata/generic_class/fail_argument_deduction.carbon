@@ -8,19 +8,19 @@
 
 package ExplorerTest api;
 
-class Point(T:! Type) {
+class Point(T:! type) {
   var x: T;
   var y: T;
 }
 
-fn FirstOfTwoPoints[T:! Type](a: Point(T), b: Point(T)) -> Point(T) {
+fn FirstOfTwoPoints[T:! type](a: Point(T), b: Point(T)) -> Point(T) {
   return a;
 }
 
 fn Main() -> i32 {
   var p: Point(i32) = {.x = 0, .y = 1};
   var q: Point(bool) = {.x = true, .y = false};
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_argument_deduction.carbon:[[@LINE+3]]: deduced multiple different values for T:! Type:
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_argument_deduction.carbon:[[@LINE+3]]: deduced multiple different values for T:! type:
   // CHECK:STDERR:   i32
   // CHECK:STDERR:   bool
   return FirstOfTwoPoints(p, q).x;

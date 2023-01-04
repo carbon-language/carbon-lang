@@ -371,7 +371,7 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
       break;
 
     case Fuzzing::Expression::kTypeTypeLiteral:
-      out << "Type";
+      out << "type";
       break;
 
     case Fuzzing::Expression::kUnimplementedExpression:

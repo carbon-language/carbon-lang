@@ -75,7 +75,7 @@ and binary integer literals, and decimal and hexadecimal real number literals.
 The following types are defined in the Carbon prelude:
 
 -   `Core.BigInt`, an arbitrary-precision integer type;
--   `Core.Rational(T:! Type)`, a rational type, parameterized by a type used for
+-   `Core.Rational(T:! type)`, a rational type, parameterized by a type used for
     its numerator and denominator -- the exact constraints on `T` are not yet
     decided;
 -   `Core.IntLiteral(N:! Core.BigInt)`, a type representing integer literals;
@@ -145,7 +145,7 @@ var z: f64 = 1.0 / 3.0;
 // This is an error: 300 cannot be represented in type `i8`.
 var c: i8 = 300;
 
-fn F[template T:! Type](v: T) {
+fn F[template T:! type](v: T) {
   var x: i32 = v * 2;
 }
 
@@ -156,7 +156,7 @@ F(1_000_000_000);
 F(2_000_000_000);
 
 // No storage required for the bound when it's of integer literal type.
-struct Span(template T:! Type, template BoundT:! Type) {
+struct Span(template T:! type, template BoundT:! type) {
   var begin: T*;
   var bound: BoundT;
 }

@@ -207,7 +207,7 @@ extends
 [the `As` interface used to implement `as` expressions](as_expressions.md#extensibility):
 
 ```
-interface ImplicitAs(Dest:! Type) {
+interface ImplicitAs(Dest:! type) {
   extends As(Dest);
   // Inherited from As(Dest):
   // fn Convert[self: Self]() -> Dest;

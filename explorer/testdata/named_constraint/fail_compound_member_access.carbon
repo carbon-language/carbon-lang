@@ -8,8 +8,8 @@
 
 package ExplorerTest api;
 
-interface MyAddWith(T:! Type) {
-  let Result:! Type;
+interface MyAddWith(T:! type) {
+  let Result:! type;
   fn Op[self: Self](other: T) -> Result;
 }
 

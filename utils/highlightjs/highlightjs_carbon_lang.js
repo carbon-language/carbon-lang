@@ -69,6 +69,7 @@ export default function (hljs) {
       'return',
       'returned',
       'then',
+      'type',
       '_',
       'var',
       'virtual',
@@ -77,7 +78,7 @@ export default function (hljs) {
     ],
     literal: ['false', 'true'],
     type: ['bool'],
-    built_in: ['Type', 'As'],
+    built_in: ['As'],
   };
 
   // Punctuation and operator regex lists that are expanded into the expression

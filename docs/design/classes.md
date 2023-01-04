@@ -1084,7 +1084,7 @@ Other type constants can be defined using a `let` declaration:
 ```
 class MyClass {
   let Pi:! f32 = 3.141592653589793;
-  let IndexType:! Type = i32;
+  let IndexType:! type = i32;
 }
 ```
 

@@ -10,7 +10,7 @@ package ExplorerTest api;
 
 interface Iface { let N:! i32; }
 
-fn PickType(N: i32) -> Type { return i32; }
+fn PickType(N: i32) -> type { return i32; }
 
 fn F[T:! Iface where .N == 5](x: T) -> i32 {
   // TODO: This should be valid: the value of T.N is known to be 5 here.

@@ -9,7 +9,7 @@
 package ExplorerTest api;
 
 interface A {
-  // TODO: Use `let T:! Type;` here once we support it.
+  // TODO: Use `let T:! type;` here once we support it.
   fn T();
 }
 

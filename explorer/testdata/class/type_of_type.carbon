@@ -13,7 +13,7 @@ class C {}
 
 fn Main() -> i32 {
   var a: auto = C;
-  // OK: Type of `C` is `Type`.
+  // OK: type of `C` is `type`.
   a = i32;
   return 0;
 }

@@ -8,7 +8,7 @@
 
 package ExplorerTest api;
 
-class Point(T:! Type) {
+class Point(T:! type) {
   // The return type should be Point(T). Point by itself is not a type.
   // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_return_type_is_type.carbon:[[@LINE+1]]: 'Point' must be given an argument list
   fn Create(x: T, y: T) -> Point {

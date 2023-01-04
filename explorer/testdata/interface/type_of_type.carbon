@@ -13,7 +13,7 @@ interface I {}
 
 fn Main() -> i32 {
   var a: auto = I;
-  // OK: Type of `I` is `Type`.
+  // OK: type of `I` is `type`.
   a = i32;
   return 0;
 }

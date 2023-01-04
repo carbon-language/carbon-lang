@@ -8,7 +8,7 @@
 
 package ExplorerTest api;
 
-interface Vector(Scalar:! Type) {
+interface Vector(Scalar:! type) {
 }
 
 // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_impl_as_parameterized.carbon:[[@LINE+1]]: 'Vector' must be given an argument list

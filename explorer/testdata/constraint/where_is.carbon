@@ -18,7 +18,7 @@ interface Extension {
   extends Base;
 }
 
-fn F[T:! Type where .Self is Extension](x: T) {
+fn F[T:! type where .Self is Extension](x: T) {
   x.(Extension.F)();
 }
 

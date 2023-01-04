@@ -12,7 +12,7 @@ package ExplorerTest api;
 interface X { fn F(); }
 impl i32 as X { fn F() {} }
 
-fn G[T:! X](v: T) -> Type {
+fn G[T:! X](v: T) -> type {
   v.F();
   return i32;
 }

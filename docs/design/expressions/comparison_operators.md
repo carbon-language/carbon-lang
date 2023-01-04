@@ -253,7 +253,7 @@ The `EqWith` interface is used to define the semantics of the `==` and `!=`
 operators for a given pair of types:
 
 ```
-interface EqWith(U:! Type) {
+interface EqWith(U:! type) {
   fn Equal[self: Self](u: U) -> bool;
   default fn NotEqual[self: Self](u: U) -> bool {
     return not (self == u);
@@ -353,7 +353,7 @@ choice Ordering {
   Greater,
   Incomparable
 }
-interface OrderedWith(U:! Type) {
+interface OrderedWith(U:! type) {
   fn Compare[self: Self](u: U) -> Ordering;
   default fn Less[self: Self](u: U) -> bool {
     return self.Compare(u) == Ordering.Less;
@@ -432,7 +432,7 @@ implemented. The behaviors of such overrides should follow those of the above
 default implementations, and the members of an `OrderedWith` implementation
 should have no observable side-effects.
 
-`OrderedWith` implementations should be _transitive_. That is, given `V:! Type`,
+`OrderedWith` implementations should be _transitive_. That is, given `V:! type`,
 `U:! OrderedWith(V)`, `T:! OrderedWith(U) & OrderedWith(V)`, `a: T`, `b: U`,
 `c: V`, then:
 
