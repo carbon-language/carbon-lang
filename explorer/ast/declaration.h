@@ -144,7 +144,7 @@ class CallableDeclaration : public Declaration {
         param_pattern_(param_pattern),
         return_term_(return_term),
         body_(body),
-        override_(virt_override) {}
+        virt_override_(virt_override) {}
 
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
 
@@ -165,7 +165,7 @@ class CallableDeclaration : public Declaration {
   auto return_term() -> ReturnTerm& { return return_term_; }
   auto body() const -> std::optional<Nonnull<const Block*>> { return body_; }
   auto body() -> std::optional<Nonnull<Block*>> { return body_; }
-  auto override() const -> VirtualOverride { return override_; }
+  auto virt_override() const -> VirtualOverride { return virt_override_; }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
@@ -178,7 +178,7 @@ class CallableDeclaration : public Declaration {
   Nonnull<TuplePattern*> param_pattern_;
   ReturnTerm return_term_;
   std::optional<Nonnull<Block*>> body_;
-  VirtualOverride override_;
+  VirtualOverride virt_override_;
 };
 
 class FunctionDeclaration : public CallableDeclaration {

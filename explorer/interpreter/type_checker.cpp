@@ -4514,7 +4514,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     if (!fun) {
       continue;
     }
-    if (fun->override() != VirtualOverride::None && !fun->is_method()) {
+    if (fun->virt_override() != VirtualOverride::None && !fun->is_method()) {
       return ProgramError(fun->source_loc())
              << "Error declaring `" << fun->name() << "`"
              << ": class functions cannot be virtual.";
@@ -4523,7 +4523,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
         class_vtable.find(fun->name()) != class_vtable.end();
     // TODO: Implement complete declaration logic from
     // `/docs/design/classes.md#virtual-methods`.
-    switch (fun->override()) {
+    switch (fun->virt_override()) {
       case VirtualOverride::Abstract:
         // Not supported yet.
         return ProgramError(fun->source_loc())
@@ -4539,7 +4539,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
         }
         // TODO: Error if declaring virtual method shadowing non-virtual method.
         // See https://github.com/carbon-language/carbon-lang/issues/2355.
-        if (fun->override() == VirtualOverride::None) {
+        if (fun->virt_override() == VirtualOverride::None) {
           // Not added to the vtable.
           continue;
         }
@@ -4549,8 +4549,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
           return ProgramError(fun->source_loc())
                  << "Error declaring `" << fun->name() << "`"
                  << ": cannot override a method that is not declared "
-                    "`abstract` or "
-                    "`virtual` in base class.";
+                    "`abstract` or `virtual` in base class.";
         }
         break;
     }
