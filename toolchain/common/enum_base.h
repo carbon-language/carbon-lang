@@ -27,6 +27,7 @@ namespace Carbon::Internal {
 // the underlying type of the enumerator.
 //
 // Users must be in the `Carbon` namespace and should look like the following.
+//
 // In `my_kind.h`:
 //   ```
 //   CARBON_DEFINE_RAW_ENUM_CLASS(MyKind, uint8_t){
@@ -43,6 +44,7 @@ namespace Carbon::Internal {
 //   #define CARBON_MY_KIND(Name) CARBON_ENUM_CONSTANT_DEFINITION(MyKind, Name)
 //   #include "toolchain/.../my_kind.def"
 //   ```
+//
 // In `my_kind.cpp`:
 //   ```
 //   CARBON_DEFINE_ENUM_CLASS_NAMES(MyKind) = {
@@ -91,8 +93,7 @@ class EnumBase {
   // the base itself. This should only be used in the `Create` function below.
   constexpr EnumBase() = default;
 
-  // Create an instance from the raw enumerator. This should only be used to
-  // initialize the named constants in the derived type.
+  // Create an instance from the raw enumerator, for internal use.
   static constexpr auto Create(RawEnumType value) -> EnumType {
     EnumType result;
     result.value_ = value;
@@ -152,12 +153,16 @@ class EnumBase {
 // Use this in the `.cpp` file for an enum class to start the definition of the
 // constant names array for each enumerator. It is followed by the desired
 // constant initializer.
+//
+// `clang-format` has a bug with spacing around `->` returns in macros. See
+// https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
 #define CARBON_DEFINE_ENUM_CLASS_NAMES(EnumClassName)                         \
   /* First declare an explicit specialization of the names array so we can    \
    * reference it from an explicit function specialization. */                \
   template <>                                                                 \
   llvm::StringLiteral Internal::EnumBase<                                     \
       EnumClassName, Internal::EnumClassName##RawEnum>::names[];              \
+                                                                              \
   /* Now define an explicit function specialization for the `name` method, as \
    * it can now reference our specialized array. */                           \
   template <>                                                                 \
@@ -166,6 +171,7 @@ class EnumBase {
       const->llvm::StringRef {                                                \
     return names[static_cast<int>(value_)];                                   \
   }                                                                           \
+                                                                              \
   /* Finally, open up the definition of our specialized array for the user to \
    * populate using the x-macro include. */                                   \
   template <>                                                                 \
