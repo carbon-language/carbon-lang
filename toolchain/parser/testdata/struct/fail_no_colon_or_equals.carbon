@@ -20,5 +20,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/struct/fail_no_colon_or_equals.carbon:[[@LINE+1]]:11: Expected `.field: Type` or `.field = value`.
+// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/struct/fail_no_colon_or_equals.carbon:[[@LINE+1]]:11: Expected `.field: field_type` or `.field = value`.
 var x: {.a} = {};

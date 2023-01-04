@@ -25,5 +25,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/struct/fail_mix_type_and_value.carbon:[[@LINE+1]]:21: Expected `.field: Type`.
+// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/struct/fail_mix_type_and_value.carbon:[[@LINE+1]]:21: Expected `.field: field_type`.
 var x: {.a: i32, .b = 0} = {};
