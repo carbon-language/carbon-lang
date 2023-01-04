@@ -30,7 +30,7 @@ namespace Carbon::Internal {
 //
 // In `my_kind.h`:
 //   ```
-//   CARBON_DEFINE_RAW_ENUM_CLASS(MyKind, uint8_t){
+//   enum class CARBON_RAW_ENUM_NAME(MyKind) : uint8_t {
 //   #define CARBON_MY_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
 //   #include "toolchain/.../my_kind.def"
 //   };
@@ -123,12 +123,7 @@ class EnumBase {
 // Use this before defining a class that derives from `EnumBase` to begin the
 // definition of the raw `enum class`. It should be followed by the body of that
 // raw enum class.
-#define CARBON_DEFINE_RAW_ENUM_CLASS(EnumClassName, UnderlyingType) \
-  namespace Internal {                                              \
-  /* NOLINTNEXTLINE(bugprone-macro-parentheses) */                  \
-  enum class EnumClassName##RawEnum : UnderlyingType;               \
-  }                                                                 \
-  enum class ::Carbon::Internal::EnumClassName##RawEnum : UnderlyingType
+#define CARBON_RAW_ENUM_NAME(EnumClassName) Internal##EnumClassName##RawEnum
 
 // In CARBON_DEFINE_RAW_ENUM_CLASS block, use this to generate each enumerator.
 #define CARBON_RAW_ENUM_ENUMERATOR(Name) Name,
@@ -138,7 +133,7 @@ class EnumBase {
 // namespaces are correct.
 #define CARBON_ENUM_BASE(EnumClassName)       \
   ::Carbon::Internal::EnumBase<EnumClassName, \
-                               ::Carbon::Internal::EnumClassName##RawEnum>
+                               CARBON_RAW_ENUM_NAME(EnumClassName)>
 
 // Use this within the Carbon enum class body to generate named constant
 // declarations for each value.
@@ -161,13 +156,13 @@ class EnumBase {
    * reference it from an explicit function specialization. */                \
   template <>                                                                 \
   llvm::StringLiteral Internal::EnumBase<                                     \
-      EnumClassName, Internal::EnumClassName##RawEnum>::names[];              \
+      EnumClassName, CARBON_RAW_ENUM_NAME(EnumClassName)>::names[];           \
                                                                               \
   /* Now define an explicit function specialization for the `name` method, as \
    * it can now reference our specialized array. */                           \
   template <>                                                                 \
-  auto                                                                        \
-  Internal::EnumBase<EnumClassName, Internal::EnumClassName##RawEnum>::name() \
+  auto Internal::EnumBase<EnumClassName,                                      \
+                          CARBON_RAW_ENUM_NAME(EnumClassName)>::name()        \
       const->llvm::StringRef {                                                \
     return names[static_cast<int>(value_)];                                   \
   }                                                                           \
@@ -176,7 +171,7 @@ class EnumBase {
    * populate using the x-macro include. */                                   \
   template <>                                                                 \
   llvm::StringLiteral Internal::EnumBase<                                     \
-      EnumClassName, Internal::EnumClassName##RawEnum>::names[]
+      EnumClassName, CARBON_RAW_ENUM_NAME(EnumClassName)>::names[]
 
 // Use this within the names array initializer to generate a string for each
 // name.

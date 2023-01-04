@@ -9,7 +9,7 @@
 
 namespace Carbon {
 
-CARBON_DEFINE_RAW_ENUM_CLASS(SemanticsBuiltinKind, uint8_t){
+enum class CARBON_RAW_ENUM_NAME(SemanticsBuiltinKind) : uint8_t {
 #define CARBON_SEMANTICS_BUILTIN_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
 #include "toolchain/semantics/semantics_builtin_kind.def"
 };
